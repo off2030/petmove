@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useConfirm } from '@petmove/ui'
 import { destCode } from '@/lib/country-code'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
@@ -18,6 +19,10 @@ import { resolveTabActiveDest, type CaseRow } from '@petmove/domain'
  *
  * dismissAction: 옵션. 드롭다운 하단에 "X 내리기" 항목 추가. 신고 탭에서 사용해
  * 케이스를 탭에서 명시적으로 제외하는 용도.
+ *  - dismissKey: optimistic 로 즉시 true 로 박아 행을 숨김(로컬 반영용).
+ *  - action: 옵션. 있으면 dismissKey 단순 patch 대신 이 서버 액션을 호출(예: 신고 취소 —
+ *    숨김 + 수입·수출 필드 클리어를 원자적으로). 데이터를 비우는 파괴적 동작이라 confirm 권장.
+ *  - confirm: 옵션. 있으면 실행 전 확인창을 띄운다.
  */
 export function DestinationCell({
   row,
@@ -28,8 +33,14 @@ export function DestinationCell({
   row: CaseRow
   overrideKey: string
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
-  dismissAction?: { label: string; dismissKey: string }
+  dismissAction?: {
+    label: string
+    dismissKey: string
+    action?: (caseId: string) => Promise<{ ok: boolean; error?: string }>
+    confirm?: { message: string; description?: string; okLabel?: string }
+  }
 }) {
+  const confirm = useConfirm()
   const dests = (row.destination ?? '').split(',').map(s => s.trim()).filter(Boolean)
   // 활성 목적지: override ?? 출국일 있는 목적지 ?? 첫 목적지. todos 탭의 날짜 flatten 과
   // 동일 기준(resolveTabActiveDest)이라 칩과 표시 데이터가 일치.
@@ -79,8 +90,17 @@ export function DestinationCell({
   async function dismiss() {
     if (!dismissAction) return
     setOpen(false)
+    if (dismissAction.confirm) {
+      const ok = await confirm(dismissAction.confirm)
+      if (!ok) return
+    }
+    // optimistic 숨김 — 액션이 필드도 비우지만, 행은 dismissKey 만으로 즉시 사라진다.
     onUpdate(row.id, 'data', dismissAction.dismissKey, true)
-    await updateCaseField(row.id, 'data', dismissAction.dismissKey, true)
+    if (dismissAction.action) {
+      await dismissAction.action(row.id)
+    } else {
+      await updateCaseField(row.id, 'data', dismissAction.dismissKey, true)
+    }
   }
 
   return (

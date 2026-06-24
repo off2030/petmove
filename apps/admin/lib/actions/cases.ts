@@ -840,3 +840,58 @@ export async function setJpExportQuarantineReportStatus(
   return { ok: true, autoFilled: { data: next } }
 }
 
+/**
+ * 신고 내리기 = 신고 취소. 단순 숨김(import_report_dismissed=true)에 더해, 수입(사전 신고)·
+ * 수출(수출검역) 진행 정보를 모두 비운다 — 두 setter 의 'not_started' 클리어와 동일한 필드를
+ * 한 번의 read/write 로 처리. 비운 뒤에도 dismissed=true 로 신고 탭에서 계속 숨김.
+ *
+ * 수출 신청일은 by_dest 스코핑(DESTINATION_SCOPED_FIELD_KEYS)이라, 다중 목적지는 top-level
+ * delete 만으로 부족하고 활성 목적지 by_dest 도 null sentinel 로 비워야 derive 가 'in_progress'
+ * 로 되살아나지 않는다(setJpExportQuarantineReportStatus not_started 와 동일 처리).
+ */
+export async function dismissImportReport(caseId: string): Promise<UpdateResult> {
+  const supabase = await createClient()
+  const { data: row, error: fetchErr } = await supabase
+    .from('cases')
+    .select('data, destination, departure_date')
+    .eq('id', caseId)
+    .single()
+  if (fetchErr) return { ok: false, error: fetchErr.message }
+  const current = ((row?.data as Record<string, unknown> | null) ?? {}) as Record<string, unknown>
+  const destination = (row?.destination as string | null) ?? null
+
+  let next: Record<string, unknown> = { ...current }
+
+  // 수입(사전 신고) 클리어 — setAdvanceNotificationReportStatus('not_started') 와 동일.
+  delete next.import_import_status
+  delete next.advance_notification_date
+  delete next.advance_notification_approval_skipped
+  delete next.advance_notification_admin_demoted_at
+
+  // 수출(수출검역) 클리어 — setJpExportQuarantineReportStatus('not_started') 와 동일.
+  const isMulti = parseDestinations(destination).length > 1
+  const activeDest = resolveTabActiveDest(
+    {
+      destination,
+      data: current,
+      departure_date: (row?.departure_date as string | null) ?? null,
+    } as CaseRow,
+    'import_report_active_dest',
+  )
+  delete next.import_export_status
+  delete next.jp_export_quarantine_application_date
+  if (isMulti && activeDest) {
+    next = writeByDestValue(next, activeDest, 'jp_export_quarantine_application_date', null)
+  }
+  delete next.jp_export_quarantine_reservation_skipped
+  delete next.jp_export_quarantine_confirmed
+  delete next.jp_export_quarantine_admin_demoted_at
+
+  // 숨김 유지.
+  next.import_report_dismissed = true
+
+  const { error } = await supabase.from('cases').update({ data: next }).eq('id', caseId)
+  if (error) return { ok: false, error: error.message }
+  return { ok: true, autoFilled: { data: next } }
+}
+

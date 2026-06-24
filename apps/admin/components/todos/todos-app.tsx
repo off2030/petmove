@@ -19,6 +19,7 @@ import {
   resolveTabActiveDest,
 } from '@petmove/domain'
 import { cn } from '@/lib/utils'
+import { dismissImportReport } from '@/lib/actions/cases'
 import { TodoTable, type TodoColumn } from './todo-table'
 import { InspectionTable, readInspectionStatus, type InspectionRow } from './inspection-table'
 import { DestinationCell } from './destination-cell'
@@ -581,7 +582,17 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
         row={row}
         overrideKey="import_report_active_dest"
         onUpdate={onUpdate}
-        dismissAction={{ label: '신고 내리기', dismissKey: 'import_report_dismissed' }}
+        dismissAction={{
+          label: '신고 내리기',
+          dismissKey: 'import_report_dismissed',
+          action: dismissImportReport,
+          confirm: {
+            message: '신고를 취소할까요?',
+            description:
+              '수입·수출 신고 진행 정보(신청일·완료 표시)가 모두 지워지고 신고 탭에서 숨겨집니다. 보호자가 첨부한 허가서는 유지됩니다.',
+            okLabel: '신고 취소',
+          },
+        }}
       />
     ),
   },
