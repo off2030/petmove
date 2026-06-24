@@ -14,6 +14,7 @@ import {
   type StepDefinition,
 } from '@petmove/domain'
 import { activeDestinationView } from '@/lib/cases/active-destination'
+import { mergeRabiesDatesRaw } from './rabies-scheduled'
 
 /**
  * Portal 여정(/journey) 화면 데이터 모델.
@@ -376,7 +377,17 @@ export function buildJourney(
   if (ctx.destinationKey) {
     // 다중 목적지 케이스에서 by_dest 조회를 위해 destination 토큰 전달 (caseRow.destination
     // 그대로 — 단일 목적지면 그 값, 다중이면 read 시 헬퍼가 토큰을 파싱).
-    const all = runChecksForCase(ctx.destinationKey, { caseRow, destination: caseRow.destination })
+    // 고객 절차검증은 실제 + 예정(미래 계획)을 합친 뷰로 — 고객이 잡아둔 계획(2차/추가)도 체인·
+    // 간격 검증을 받게. 완료판정(resolveDone)은 실제 rabies_dates 만 봐서 미래로 안 완료된다.
+    const checksData = (caseRow.data ?? {}) as Record<string, unknown>
+    const checksCaseRow =
+      Array.isArray(checksData.rabies_dates_scheduled) && checksData.rabies_dates_scheduled.length > 0
+        ? { ...caseRow, data: { ...checksData, rabies_dates: mergeRabiesDatesRaw(checksData) } }
+        : caseRow
+    const all = runChecksForCase(ctx.destinationKey, {
+      caseRow: checksCaseRow,
+      destination: caseRow.destination,
+    })
     for (const { check, result } of all) {
       if (result.ok) continue
       let stepId = findStepForCheck(check.id)
@@ -521,7 +532,7 @@ export function buildJourney(
     const rabiesExtraUpcomingDate =
       step.id === 'rabies-vaccine-extra'
         ? latestEntryDate(
-            caseData.rabies_dates,
+            mergeRabiesDatesRaw(caseData),
             SINGLE_DOSE_RABIES_DESTINATIONS.includes(ctx.destinationKey ?? '') ? 1 : 2,
           )
         : null
@@ -670,18 +681,24 @@ export function buildJourney(
     //  done 이면 max ≤ 오늘이라 datedUpcoming=null — done 분기와 충돌 없음.)
     const datedUpcoming = (() => {
       if (step.id === 'rabies-vaccine-1' || step.id === 'rabies-vaccine-2') {
+        // 예정(미래) 회차는 rabies_dates_scheduled 에 있으므로 합친 뷰로 배지를 계산한다.
         // 1회 접종국 단일카드(rabies-vaccine-1)는 1·2·n차 목록 — 최신일 기준(general-vaccine 동일).
+        const merged = mergeRabiesDatesRaw(caseData)
         if (
           step.id === 'rabies-vaccine-1' &&
           SINGLE_DOSE_RABIES_DESTINATIONS.includes(ctx.destinationKey ?? '')
         ) {
-          const max = latestEntryDate(caseData.rabies_dates, 0)
+          const max = latestEntryDate(merged, 0)
           return max && max > today ? max : null
         }
         const i = step.id === 'rabies-vaccine-2' ? 1 : 0
-        const arr = Array.isArray(caseData.rabies_dates) ? caseData.rabies_dates : []
-        const slot = arr[i] as Record<string, unknown> | undefined
-        const d = slot && typeof slot.date === 'string' ? slot.date.slice(0, 10) : ''
+        const slot = merged[i] as Record<string, unknown> | string | undefined
+        const d =
+          typeof slot === 'string'
+            ? slot.slice(0, 10)
+            : slot && typeof slot.date === 'string'
+              ? slot.date.slice(0, 10)
+              : ''
         return d.length >= 10 && d > today ? d : null
       }
       const arrKey: Record<string, string> = {
