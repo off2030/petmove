@@ -69,7 +69,6 @@ export const CN_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -104,7 +103,6 @@ export const CN_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못해요. ${reason}.`,
-          fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월) 둘 다 충족 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -127,7 +125,6 @@ export const CN_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `광견병 접종이 1회(${rabies[0].date})만 기록되어 있어요. 2회가 필요해요.`,
-          fixHint: '30일 후 2차(부스터)를 접종하세요.',
           offendingPaths: [`rabies_dates[${rabies[0].originalIndex}].date`],
         }
       }
@@ -174,7 +171,6 @@ export const CN_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: issues.join(' / '),
-          fixHint: '도즈 간격은 30일 이상이면서 직전 접종 유효기간 이내여야 해요.',
           offendingPaths: Array.from(new Set(offending)),
         }
       }
@@ -213,7 +209,6 @@ export const CN_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '1년 라이선스 백신으로 추가 접종을 해야 해요.',
           offendingPaths: offending,
         }
       }
@@ -241,7 +236,6 @@ export const CN_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 부스터 접종이 필요해요. 만료 후 접종은 1차로 간주돼요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -277,7 +271,6 @@ export const CN_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: problems.join(' / '),
-          fixHint: '광견병 접종 이후 채혈하세요.',
           offendingPaths: offending,
         }
       }
@@ -311,7 +304,6 @@ export const CN_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `최신 RNATT(${newest.date})의 유효기간(${expiry})이 출국일(${dep})보다 빨라 1년을 초과했어요.`,
-        fixHint: '추가 검사를 하거나 출국일을 채혈일 + 1년 이내로 조정하세요.',
         offendingPaths: offending,
       }
     },
@@ -334,7 +326,6 @@ export const CN_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `같은 보호자(${caseRow.customer_name})가 중국 목적 케이스를 ${others.length + 1}건 등록하여 GACC 1인 1마리 한도를 초과했어요.`,
-          fixHint: 'GACC 규정상 1인 1회 1마리만 동반할 수 있어요. 별도 보호자(가족 등) 명의로 분리 등록해야 해요.',
           offendingPaths: ['customer_name'],
         }
       }

@@ -66,7 +66,6 @@ export const UA_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -101,7 +100,6 @@ export const UA_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못해요. ${reason}.`,
-          fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월)을 모두 충족한 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -129,7 +127,6 @@ export const UA_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -172,7 +169,6 @@ export const UA_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: problems.join(' / '),
-          fixHint: '채혈일을 직전 광견병 접종일로부터 30일 이후로 조정하세요.',
           offendingPaths: offending,
         }
       }
@@ -205,7 +201,6 @@ export const UA_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `최신 항체 검사(${newest.date}) 기준 출국 가능일(${requiredDate})이 출국일(${dep})보다 늦어요.`,
-        fixHint: '출국일을 채혈일 + 3개월 이후로 조정하거나 더 이른 항체 검사가 필요해요.',
         offendingPaths: offending,
       }
     },
@@ -235,7 +230,6 @@ export const UA_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `최신 항체 검사(${newest.date})의 유효기간(${expiry})이 출국일(${dep})보다 빨라요. 1년을 초과했어요.`,
-        fixHint: '추가 검사를 받거나 출국일을 채혈일 + 1년 이내로 조정하세요.',
         offendingPaths: offending,
       }
     },
@@ -273,7 +267,6 @@ export const UA_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: problems.join(' / '),
-          fixHint: '항체가는 0.5 IU/ml 이상이어야 하며, 미달 시 추가 접종 후 추가 검사가 필요해요.',
           offendingPaths: offending,
         }
       }

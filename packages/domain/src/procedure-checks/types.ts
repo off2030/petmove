@@ -46,8 +46,6 @@ export interface CheckContext {
 export interface CheckResult {
   ok: boolean
   message: string
-  /** 사용자가 어떻게 고치면 되는지 힌트 (선택). */
-  fixHint?: string
   /**
    * 문제 원인이 되는 데이터 경로들. 필드 렌더러에서 색상·툴팁을 띄울 때 사용.
    * 예: 'rabies_dates[1].date', 'departure_date'

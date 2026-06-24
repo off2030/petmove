@@ -122,7 +122,6 @@ export const TH_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 생후 ${age}일령이에요. 최소 84일령(12주) 이상이어야 해요.`,
-          fixHint: `${birth} 기준 84일 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -156,7 +155,6 @@ export const TH_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})부터 출국(${dep})까지 ${days}일이에요. 21일 이상이어야 해요.`,
-          fixHint: `출국일을 ${latest.date} 기준 21일 이후로 조정하거나 부스터를 더 일찍 접종하세요.`,
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -184,7 +182,6 @@ export const TH_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -217,7 +214,6 @@ export const TH_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 종합백신(${latest.date})부터 출국(${dep})까지 ${days}일이에요. 21일 이상이어야 해요.`,
-          fixHint: `출국일을 ${latest.date} 기준 21일 이후로 조정하거나 부스터를 더 일찍 접종하세요.`,
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
@@ -245,7 +241,6 @@ export const TH_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
@@ -278,7 +273,6 @@ export const TH_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `견종 "${breed.ko || breed.en}"은 태국 수입이 금지되어 있어요 (매치: ${match}).`,
-          fixHint: '태국 내 사육은 합법이나 수입은 법으로 금지되어 있어요.',
           offendingPaths: ['breed', 'breed_en'],
         }
       }

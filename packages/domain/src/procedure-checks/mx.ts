@@ -63,7 +63,6 @@ export const MX_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -98,7 +97,6 @@ export const MX_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못해요. ${reason}.`,
-          fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월) 둘 다 충족 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -127,7 +125,6 @@ export const MX_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `광견병 접종일(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 30일 이상이어야 해요.`,
-          fixHint: `광견병 접종을 출국일 ${dep} 기준 30일 이전에 완료하세요.`,
           offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
         }
       }
@@ -155,7 +152,6 @@ export const MX_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -192,7 +188,6 @@ export const MX_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `외부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 6개월(180일) 이내여야 해요.`,
-          fixHint: `외부구충일을 ${dep} 기준 6개월 이내로 조정하세요.`,
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
@@ -227,7 +222,6 @@ export const MX_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `내부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 6개월(180일) 이내여야 해요.`,
-          fixHint: `내부구충일을 ${dep} 기준 6개월 이내로 조정하세요.`,
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }

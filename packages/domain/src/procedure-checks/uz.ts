@@ -57,7 +57,6 @@ export const UZ_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -90,7 +89,6 @@ export const UZ_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 않아요. ${reason}.`,
-          fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월)을 둘 다 충족한 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -118,7 +116,6 @@ export const UZ_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `광견병 접종(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 30일 이상이어야 해요.`,
-          fixHint: `광견병 접종을 출국일 ${dep} 기준 30일 이전에 완료하세요.`,
           offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
         }
       }
@@ -157,7 +154,6 @@ export const UZ_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '1년 라이선스 백신으로 추가 접종을 하세요.',
           offendingPaths: offending,
         }
       }
@@ -185,7 +181,6 @@ export const UZ_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }

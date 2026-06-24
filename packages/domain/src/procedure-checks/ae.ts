@@ -70,7 +70,6 @@ export const AE_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -105,7 +104,6 @@ export const AE_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못해요. ${reason}.`,
-          fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월)을 모두 충족한 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -133,7 +131,6 @@ export const AE_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `광견병 접종(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 21일 이상이어야 해요.`,
-          fixHint: `광견병 접종을 출국일 ${dep} 기준 21일 이전에 완료하세요.`,
           offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
         }
       }
@@ -161,7 +158,6 @@ export const AE_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -185,7 +181,6 @@ export const AE_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: '종합백신 기록이 없어요.',
-          fixHint: '강아지는 DHPL, 고양이는 FVRCP 접종 후 등록하세요.',
         }
       }
       return { ok: true, message: `종합백신 ${entries.length}회 기록됨.` }
@@ -212,7 +207,6 @@ export const AE_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 종합백신(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 21일 이상이어야 해요.`,
-          fixHint: `종합백신을 출국일 ${dep} 기준 21일 이전에 접종하세요.`,
           offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
@@ -249,7 +243,6 @@ export const AE_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `외부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 출국 포함 14일 이내(13일 전 이후)여야 해요.`,
-          fixHint: `외부구충일을 ${dep} 기준 13일 전 이후로 조정하세요.`,
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
@@ -284,7 +277,6 @@ export const AE_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `내부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 출국 포함 14일 이내(13일 전 이후)여야 해요.`,
-          fixHint: `내부구충일을 ${dep} 기준 13일 전 이후로 조정하세요.`,
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
@@ -323,7 +315,6 @@ export const AE_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `견종 "${breed.ko || breed.en}"은 UAE 수입 금지 견종이에요 (매치: ${match}).`,
-          fixHint: 'MOCCAE 수입 금지 견종으로, 별도의 가능 절차가 없어요.',
           offendingPaths: ['breed', 'breed_en'],
         }
       }
@@ -348,7 +339,6 @@ export const AE_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `같은 보호자(${caseRow.customer_name})가 UAE 목적 케이스를 ${others.length + 1}건 등록하여 개인당 연간 2마리 한도를 초과해요.`,
-          fixHint: 'MOCCAE 기준 개인당 연간 2마리 한도이므로, 보호자 분리 또는 출국 시점 분산을 검토하세요.',
           offendingPaths: ['customer_name'],
         }
       }

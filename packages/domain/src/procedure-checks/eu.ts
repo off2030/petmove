@@ -104,7 +104,6 @@ export const EU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 생후 ${age}일령이에요. 최소 84일령(12주) 이상이어야 해요.`,
-          fixHint: `${birth} 기준 84일 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -160,7 +159,6 @@ export const EU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: problems.join(' / '),
-          fixHint: '채혈일을 직전 광견병 접종일로부터 30일 이후로 조정하세요.',
           offendingPaths,
         }
       }
@@ -208,7 +206,6 @@ export const EU_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message,
-        fixHint: `출국일을 ${earliestDep} 이후로 조정하거나 더 이른 항체 검사가 필요해요.`,
         offendingPaths: offending,
       }
     },
@@ -235,7 +232,6 @@ export const EU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 이전에 만료돼요.`,
-          fixHint: '출국 전 추가 접종이 필요해요. 부스터 chain이 끊기면 RNATT 추가 검사가 필요해요.',
           offendingPaths: [
             'departure_date',
             `rabies_dates[${latest.originalIndex}].date`,
@@ -268,7 +264,6 @@ export const EU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `촌충구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 1~3일 범위여야 해요 (24-120시간 보수 적용).`,
-          fixHint: `촌충구충일을 ${dep} 기준 1~3일 전 사이로 조정하세요.`,
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }

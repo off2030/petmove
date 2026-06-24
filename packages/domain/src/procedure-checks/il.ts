@@ -71,7 +71,6 @@ export const IL_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -106,7 +105,6 @@ export const IL_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 않아요. ${reason}.`,
-          fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월)을 둘 다 충족한 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -144,7 +142,6 @@ export const IL_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date}, ${label})부터 출국일(${dep})까지 ${days}일이에요. ${requiredDays}일 이상이어야 해요.`,
-          fixHint: `광견병 접종을 출국일 ${dep} 기준 ${requiredDays}일 이전에 완료하세요.`,
           offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
@@ -172,7 +169,6 @@ export const IL_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -215,7 +211,6 @@ export const IL_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: problems.join(' / '),
-          fixHint: '채혈일을 직전 광견병 접종일로부터 30일 이후로 조정하세요.',
           offendingPaths: offending,
         }
       }
@@ -253,7 +248,6 @@ export const IL_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `견종 "${breed.ko || breed.en}"은(는) 이스라엘 수입 금지 견종이에요 (매치: ${match}).`,
-          fixHint: 'gov.il 수의국 수입 금지 견종으로, 별도로 가능한 절차가 없어요.',
           offendingPaths: ['breed', 'breed_en'],
         }
       }
@@ -287,7 +281,6 @@ export const IL_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `생년월일(${birth}) + 4개월(${earliestDep})이 출국일(${dep})보다 늦어 4개월령에 미달해요 (생후 ${ageDays ?? '?'}일).`,
-        fixHint: `출국일을 ${earliestDep} 이후로 조정하세요.`,
         offendingPaths: ['departure_date', 'birth_date'],
       }
     },
@@ -310,7 +303,6 @@ export const IL_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `같은 보호자(${caseRow.customer_name})가 이스라엘 목적 케이스를 ${others.length + 1}건 등록하여 Import License가 필요해요.`,
-          fixHint: '3마리 이상 동반 시 이스라엘 수의국장이 발급하는 사전 Import License가 필수예요 (1974 동물질병규칙).',
           offendingPaths: ['customer_name'],
         }
       }

@@ -61,7 +61,6 @@ export const HI_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -96,7 +95,6 @@ export const HI_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못해요. ${reason}.`,
-          fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월) 둘 다 충족 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -119,7 +117,6 @@ export const HI_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `광견병 접종이 1회(${rabies[0].date})만 기록되어 있어요. 2회가 필요해요.`,
-          fixHint: '31일 후 부스터를 추가하세요.',
           offendingPaths: [`rabies_dates[${rabies[0].originalIndex}].date`],
         }
       }
@@ -161,7 +158,6 @@ export const HI_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '도즈 간 최소 31일(more than 30 days) 간격을 확보하세요.',
           offendingPaths: Array.from(new Set(offending)),
         }
       }
@@ -189,7 +185,6 @@ export const HI_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})부터 출국(${dep})까지 ${days}일이에요. 31일 이상이어야 해요.`,
-          fixHint: `출국일을 ${latest.date} 기준 31일 이후로 조정하거나 추가 부스터를 더 일찍 접종하세요.`,
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -217,7 +212,6 @@ export const HI_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 부스터를 접종하세요. 3년 라이선스 백신을 사용한 경우 valid_until을 직접 입력하세요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -279,7 +273,6 @@ export const HI_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: reason,
-        fixHint: '출국일을 조정하거나 FAVN 추가 검사를 하세요. 실제 lab 수령일을 입력하지 않은 경우 채혈일에서 며칠 더 여유를 두는 것이 안전해요.',
         offendingPaths: offending,
       }
     },
@@ -314,7 +307,6 @@ export const HI_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 진드기 처치(${latest.date})부터 출국(${dep})까지 ${days}일이에요. 출국일 포함 14일 이내(13일 전부터)여야 해요.`,
-          fixHint: `처치일을 ${dep} 기준 13일 전 이후로 조정하세요. Long-acting tick 제품을 사용해야 해요 (Revolution 불가).`,
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }

@@ -58,7 +58,6 @@ export const TW_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -87,7 +86,6 @@ export const TW_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 생후 ${age}일령이에요. 최소 90일령 이상이어야 해요.`,
-          fixHint: `${birth} 기준 90일 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -115,7 +113,6 @@ export const TW_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -151,7 +148,6 @@ export const TW_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: problems.join(' / '),
-          fixHint: '광견병 접종 이후 채혈하세요.',
           offendingPaths: offending,
         }
       }
@@ -201,7 +197,6 @@ export const TW_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: reason,
-        fixHint: `출국일을 ${newest.date} 기준 180일 이후 ~ ${upper} 사이로 조정하거나 RNATT 추가 검사를 하세요.`,
         offendingPaths: offending,
       }
     },

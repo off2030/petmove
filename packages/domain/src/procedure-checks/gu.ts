@@ -72,7 +72,6 @@ export const GU_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -102,7 +101,6 @@ export const GU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 3개월령(${earliestValid}) 이전이에요. 생후 ${age ?? '?'}일이에요.`,
-          fixHint: `${birth} 기준 3개월(${earliestValid}) 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -125,7 +123,6 @@ export const GU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `광견병 접종이 1회(${rabies[0].date})만 기록되어 있어요. 2회 이상 접종해야 해요.`,
-          fixHint: '30일 후 2차 접종을 추가하세요.',
           offendingPaths: [`rabies_dates[${rabies[0].originalIndex}].date`],
         }
       }
@@ -167,7 +164,6 @@ export const GU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '도즈 간 최소 30일(1개월) 간격을 확보하세요.',
           offendingPaths: Array.from(new Set(offending)),
         }
       }
@@ -195,7 +191,6 @@ export const GU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -238,7 +233,6 @@ export const GU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: problems.join(' / '),
-          fixHint: '직전 광견병 접종 후 10일 이상 경과 후 채혈하세요.',
           offendingPaths: offending,
         }
       }
@@ -283,7 +277,6 @@ export const GU_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `${label}(${earliestBasis})부터 출국일(${dep})까지 ${days ?? '?'}일이에요. 120일 이상이어야 해요.`,
-        fixHint: `출국일을 ${earliestBasis} 기준 120일 이후로 조정하세요.`,
         offendingPaths: offending,
       }
     },
@@ -372,7 +365,6 @@ function buildAnnualVaccineRule(opts: {
         return {
           ok: false,
           message: issues.join(' / '),
-          fixHint: '부스터를 추가하거나 출국일을 조정하여 출국 10일 이전 ~ 1년 이내가 되도록 하세요.',
           offendingPaths: ['departure_date', `${opts.dataKey}[${latest.originalIndex}].date`],
         }
       }
@@ -420,7 +412,6 @@ function buildWithin14DaysRule(opts: {
         return {
           ok: false,
           message: `최근 ${opts.label}(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 출국일 포함 14일 이내(13일 전부터)여야 해요.`,
-          fixHint: `처치일을 ${dep} 기준 13일 전 이후로 조정하세요.`,
           offendingPaths: [`${opts.dataKey}[${latest.originalIndex}].date`],
         }
       }

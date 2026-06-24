@@ -2162,9 +2162,6 @@ export function StepDetailView({
                     {result.message && (
                       <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>{result.message}</div>
                     )}
-                    {result.fixHint && (
-                      <div style={{ fontSize: 13, color: C.ink3, marginTop: result.message ? 4 : 2, lineHeight: 1.5 }}>↳ {result.fixHint}</div>
-                    )}
                   </li>
                 ))}
               </ul>
@@ -2192,9 +2189,6 @@ export function StepDetailView({
                   <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, marginBottom: 2 }}>{check.title}</div>
                   {result.message && (
                     <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>{result.message}</div>
-                  )}
-                  {result.fixHint && (
-                    <div style={{ fontSize: 13, color: C.ink3, marginTop: result.message ? 4 : 2, lineHeight: 1.5 }}>↳ {result.fixHint}</div>
                   )}
                 </li>
               ))}

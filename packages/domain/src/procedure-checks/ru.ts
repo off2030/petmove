@@ -60,7 +60,6 @@ export const RU_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -95,7 +94,6 @@ export const RU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못해요. ${reason}.`,
-          fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월) 둘 다 충족 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -134,7 +132,6 @@ export const RU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '1년 라이선스 백신으로 추가 접종을 해야 해요.',
           offendingPaths: offending,
         }
       }
@@ -162,7 +159,6 @@ export const RU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `광견병 접종(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 30일 이상이어야 해요.`,
-          fixHint: `광견병 접종을 출국일 ${dep} 기준 30일 이전에 완료하세요. (부스터 chain 유효 시 면제 가능하나 보수 적용)`,
           offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
         }
       }
@@ -190,7 +186,6 @@ export const RU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -214,7 +209,6 @@ export const RU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: '종합백신 기록이 없어요.',
-          fixHint: '강아지는 DHPPL/파라인플루엔자, 고양이는 FVRCP 접종 후 등록하세요.',
         }
       }
       return { ok: true, message: `종합백신 ${entries.length}회 기록됨.` }
@@ -252,7 +246,6 @@ export const RU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '1년 라이선스 백신으로 추가 접종을 해야 해요.',
           offendingPaths: offending,
         }
       }
@@ -280,7 +273,6 @@ export const RU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 추가 접종이 필요해요.',
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
@@ -305,7 +297,6 @@ export const RU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `같은 보호자(${caseRow.customer_name})가 러시아 목적 케이스를 ${others.length + 1}건 등록하여 개인용 2마리 한도를 초과했어요.`,
-          fixHint: 'EAEU 결정 No.317에 따라 1인 최대 2마리까지 가능해요. 3마리 이상이면 Rosselkhoznadzor 사전허가와 상업 수입 절차가 필요해요.',
           offendingPaths: ['customer_name'],
         }
       }

@@ -67,7 +67,6 @@ export const HK_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `마이크로칩(${microchip})이 모든 광견병 접종(최근 ${last.date})보다 늦어요.`,
-        fixHint: '시술 후 광견병 접종이 다시 필요해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -102,7 +101,6 @@ export const HK_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못해요. ${reason}.`,
-          fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월)을 모두 충족한 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -130,7 +128,6 @@ export const HK_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `광견병 접종(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 30일 이상이어야 해요.`,
-          fixHint: `광견병 접종을 출국일 ${dep} 기준 30일 이전에 완료하세요.`,
           offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
         }
       }
@@ -158,7 +155,6 @@ export const HK_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -182,7 +178,6 @@ export const HK_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: '종합백신 기록이 없어요.',
-          fixHint: '강아지는 DHP, 고양이는 FVRCP 접종 후 등록하세요.',
         }
       }
       return { ok: true, message: `종합백신 ${entries.length}회 기록됨.` }
@@ -209,7 +204,6 @@ export const HK_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 종합백신(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 14일 이상이어야 해요.`,
-          fixHint: `종합백신을 출국일 ${dep} 기준 14일 이전에 접종하세요.`,
           offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
@@ -237,7 +231,6 @@ export const HK_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
-          fixHint: '출국 전 추가 접종이 필요해요.',
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }

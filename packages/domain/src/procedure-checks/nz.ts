@@ -70,7 +70,6 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -100,7 +99,6 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 3개월령(${earliestValid}) 이전이에요. 생후 ${age ?? '?'}일이에요.`,
-          fixHint: `${birth} 기준 3개월(${earliestValid}) 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -130,7 +128,6 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})과 출국일(${dep})의 차이가 ${cushion}일이라 검역 10일을 cover할 수 없어요.`,
-          fixHint: '출국 전 추가 접종이 필요해요. 만료 후 접종은 1차로 간주되어 RNATT 추가 검사가 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -166,7 +163,6 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `1차 접종(${primary.date}) + 6개월(${earliestValidDep})이 출국일(${dep})보다 늦어요. ${days}일밖에 되지 않아요.`,
-        fixHint: `출국일을 ${earliestValidDep} 이후로 조정하세요. RNATT는 별도로 3개월 대기가 필요해요.`,
         offendingPaths: ['departure_date', `rabies_dates[${primary.originalIndex}].date`],
       }
     },
@@ -206,7 +202,6 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '만료 후 접종은 primary 로 취급되어 6-12개월 대기 + RNATT 추가 검사가 필요해요.',
           offendingPaths: Array.from(new Set(offending)),
         }
       }
@@ -257,7 +252,6 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: reason,
-        fixHint: `출국일을 ${lower} ~ ${upper} 범위로 조정하거나 RNATT 추가 검사를 하세요.`,
         offendingPaths: offending,
       }
     },
@@ -288,7 +282,6 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `생년월일(${birth}) + 9개월(${earliestDep})이 출국일(${dep})보다 늦어 9개월에 미달해요.`,
-        fixHint: `출국일을 ${earliestDep} 이후로 조정하세요.`,
         offendingPaths: ['departure_date', 'birth_date'],
       }
     },
@@ -313,7 +306,6 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `내부구충이 1회만 기록되어 있어요(${entries[0].date}). 2회가 필요해요.`,
-          fixHint: '14일 이상 간격으로 2차를 추가하세요 (2차는 출국 4일 이내).',
           offendingPaths: [`internal_parasite_dates[${entries[0].originalIndex}].date`],
         }
       }
@@ -368,7 +360,6 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `외부구충이 1회만 기록되어 있어요(${entries[0].date}). 2회가 필요해요.`,
-          fixHint: '14일 이상 간격으로 2차를 추가하세요 (2차는 출국 2일 이내).',
           offendingPaths: [`external_parasite_dates[${entries[0].originalIndex}].date`],
         }
       }
@@ -436,7 +427,6 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 심장사상충 투약(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 출국 4일 이내(4일 전 이후)여야 해요.`,
-          fixHint: `투약일을 ${dep} 기준 4일 전 이후로 조정하세요.`,
           offendingPaths: [`heartworm_dates[${latest.originalIndex}].date`],
         }
       }
@@ -474,7 +464,6 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 전염병검사(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 출국 16일 이내(16일 전 이후)여야 해요.`,
-          fixHint: `검사일을 ${dep} 기준 16일 전 이후로 다시 실시하세요.`,
           offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`],
         }
       }
@@ -583,7 +572,6 @@ function buildAnnualVaccineRule(opts: {
         return {
           ok: false,
           message: issues.join(' / '),
-          fixHint: '부스터를 추가하거나 출국일을 조정하여 출국 14일 전 + 검역 10일까지 유효하도록 하세요.',
           offendingPaths: ['departure_date', `${opts.dataKey}[${latest.originalIndex}].date`],
         }
       }
