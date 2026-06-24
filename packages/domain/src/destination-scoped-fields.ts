@@ -176,6 +176,8 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   //                          컨테이너는 전역). arrival_confirmed 와 같은 패턴이라 demote(by_dest 삭제) 후에도
   //                          의견 데이터는 살아남는다. 완료 게이트 아님. legacy 단일 객체는 read/write 시점 호환.
   'vet_available_date', //   출국일 파생 내원가능일(admin) — 단일 목적지에서만 기록(다중 부수효과 스킵)이라 누수 없음
+  'import_report_dismissed', // 신고 탭 '신고 내리기'(취소) 플래그 — 케이스를 신고 탭에서 숨김.
+  //                            케이스 단위(목적지 무관)로 한 줄을 내리는 동작이라 전역. isDismissedImportReport 가 top-level read.
   // 일본 전용 단계 신호 — 케이스당 일본 1개뿐이라 동시 다중목적지 누수 없음. portal·admin 양쪽이
   // top-level 로 read/write 해 정합(스코핑하면 양쪽 다 고쳐야 하고 실익 없음).
   'advance_notification_date',

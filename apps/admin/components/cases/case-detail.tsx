@@ -12,7 +12,7 @@ import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffect
 import { buildShareFieldDescriptors } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Trash2, ChevronDown } from 'lucide-react'
+import { Trash2, ChevronDown, Check } from 'lucide-react'
 import { useConfirm } from '@petmove/ui'
 import { AttachButton } from '@/components/ui/attach-button'
 import { cn } from '@/lib/utils'
@@ -384,6 +384,12 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
           // (stepId='advance-notification'). 첨부 = 완료 시그널이라 업로드 시점에
           // admin_demoted_at 자동 해제됨 (step-documents 액션 내부).
           const showNaccsRow = matchesDestinationKey(viewDestination, 'japan')
+          // 태국·필리핀 왕복 — 귀국 항공편 날짜 + '미정' 행. 편도 항공권만 끊은 경우 운영자가
+          // '미정' 체크로 출국편만으로 항공권 step 완료 처리(펫무브앱 미정 토글의 admin 짝).
+          const showReturnFlightRow =
+            tripType === 'round' &&
+            (matchesDestinationKey(viewDestination, 'thailand') ||
+              matchesDestinationKey(viewDestination, 'philippines'))
           return (
             <SimpleExtraSection
               caseId={caseRow.id}
@@ -393,9 +399,17 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
               destination={viewDestination}
               isCollapsed={collapsed.has('추가정보')}
               onToggleCollapsed={() => toggleCollapsed('추가정보')}
-              trailing={showNaccsRow ? (({ onTakeoverDrag }) => (
-                <AdvanceNotificationAttachmentsRow caseId={caseRow.id} caseRow={caseRow} onTakeoverDrag={onTakeoverDrag} />
-              )) : undefined}
+              trailing={
+                showNaccsRow
+                  ? (({ onTakeoverDrag }) => (
+                      <AdvanceNotificationAttachmentsRow caseId={caseRow.id} caseRow={caseRow} onTakeoverDrag={onTakeoverDrag} />
+                    ))
+                  : showReturnFlightRow
+                    ? (() => (
+                        <ReturnFlightRow caseId={caseRow.id} caseRow={caseRow} activeDest={activeDestToken} />
+                      ))
+                    : undefined
+              }
             />
           )
         })()}
@@ -978,6 +992,80 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow, onTakeoverDrag }: 
           {uploading ? '업로드 중…' : '+ 첨부'}
         </button>
         {error && <span className="text-xs text-destructive">{error}</span>}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * 귀국 항공편 날짜 + '미정' 체크 — 태국·필리핀 왕복 한정. 추가정보 마지막 행으로 통합.
+ * 펫무브앱(portal)의 ReturnUndecidedToggle 과 동작 동일:
+ *  - 귀국일 입력 시 '미정' 자동 해제, '미정' 체크는 귀국일이 비었을 때만 노출.
+ *  - '미정' = 출국편만으로 항공권 step 완료 인정(done-resolver has-flight-date, return_undecided='1').
+ * return_date·return_undecided 는 by_dest 스코핑 키라 활성 목적지 칸으로 저장(updateCaseField 5번째 인자).
+ * portal 은 활성 목적지로 flatten 해 읽으므로 같은 칸에 쓰면 보호자 앱에서도 완료로 보인다.
+ */
+function ReturnFlightRow({ caseId, caseRow, activeDest }: {
+  caseId: string
+  caseRow: CaseRow
+  activeDest: string | null
+}) {
+  const { updateLocalCaseField } = useCases()
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const destArgFor = (key: string): string | null | undefined =>
+    activeDest && isDestinationScopedKey(key) ? activeDest : undefined
+  const rdRaw = readEffectiveExtraValue(data, 'return_date', activeDest)
+  const returnDate = typeof rdRaw === 'string' ? rdRaw : ''
+  const undecided = readEffectiveExtraValue(data, 'return_undecided', activeDest) === '1'
+
+  function save(key: string, value: string | null) {
+    updateLocalCaseField(caseId, 'data', key, value, destArgFor(key))
+    void updateCaseField(caseId, 'data', key, value, destArgFor(key))
+  }
+  function onChangeDate(next: string) {
+    const v = next || null
+    save('return_date', v)
+    // 귀국일이 들어오면 '미정' 자동 해제 (펫무브앱과 동일 — done 은 어차피 인정되지만 데이터 정합).
+    if (v && undecided) save('return_undecided', null)
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors hover:bg-accent/60">
+      <SectionLabel className="pt-1">귀국 항공편</SectionLabel>
+      <div className="min-w-0">
+        <div className="flex items-center gap-3">
+          <span className="w-12 shrink-0 font-mono text-[12px] text-muted-foreground/80">날짜</span>
+          <DateTextField
+            value={returnDate}
+            onChange={onChangeDate}
+            placeholder="YYYY-MM-DD"
+            className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+          />
+        </div>
+        {/* 귀국일이 비었을 때만 '미정' 노출 — 펫무브앱과 동일. */}
+        {returnDate.trim().length === 0 && (
+          <button
+            type="button"
+            onClick={() => save('return_undecided', undecided ? null : '1')}
+            aria-pressed={undecided}
+            className="mt-2.5 ml-[60px] inline-flex items-center gap-2"
+          >
+            <span
+              className={cn(
+                'flex h-[18px] w-[18px] items-center justify-center rounded-[5px] border transition-colors',
+                undecided ? 'border-foreground bg-foreground text-background' : 'border-muted-foreground/50',
+              )}
+            >
+              {undecided && <Check className="h-3 w-3" strokeWidth={3} />}
+            </span>
+            <span className={cn('text-[14px] font-medium', undecided ? 'text-foreground' : 'text-muted-foreground')}>
+              미정
+            </span>
+          </button>
+        )}
+        <p className="mt-1.5 ml-[60px] text-[12px] text-muted-foreground/80">
+          편도 항공권만 끊은 경우 ‘미정’을 체크하면 출국편만으로 항공권 단계가 완료돼요.
+        </p>
       </div>
     </div>
   )
