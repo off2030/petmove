@@ -176,7 +176,7 @@ export function validateThEntryDate(v: string, ctx: DateRuleContext): string | n
     if (!latest) continue
     const earliest = addDays(latest, 21)
     if (earliest && v < earliest) {
-      return `${label} 접종일(${fmt(latest)})로부터 21일이 지난 ${fmt(earliest)} 이후에 태국 입국이 가능해요.`
+      return `${label} 접종 후 21일이 지나야 태국에 입국할 수 있어요`
     }
   }
   return null

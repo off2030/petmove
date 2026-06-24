@@ -386,7 +386,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (entry && raw < entry) {
         return {
           ok: false,
-          message: '태국 수입 동물검역일은 태국 입국일보다 빠를 수 없어요.',
+          message: '태국 수입 동물검역일은 태국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
           offendingPaths: ['th_import_quarantine_date'],
         }
       }
@@ -420,14 +420,14 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (entry && raw < entry) {
         return {
           ok: false,
-          message: '태국 수출 동물검역일은 태국 입국일보다 빠를 수 없어요.',
+          message: '태국 수출 동물검역일은 태국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
           offendingPaths: ['th_export_quarantine_date'],
         }
       }
       if (ret && raw > ret) {
         return {
           ok: false,
-          message: '태국 수출 동물검역일은 한국 귀국일보다 늦을 수 없어요.',
+          message: '태국 수출 동물검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.',
           offendingPaths: ['th_export_quarantine_date'],
         }
       }
