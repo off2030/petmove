@@ -98,6 +98,12 @@ export interface JourneyData {
      * 그 전엔 '최소 N일 남음' 상대 기간. 출국일이 있으면 D-day 가 우선이라 이 값은 안 쓴다.
      */
     prep: { label: string } | null
+    /**
+     * 케이스 생성일(created_at) 기준 '며칠째 준비 중' 카운트업 (1일째 = 생성 당일). created_at 없으면 null.
+     * 출국일이 없을 때 링 보조줄에 D-day 대신 표시 — 전 나라 공통(절차 floor 와 무관한 단순 경과일).
+     * 출국일이 있으면 D-day 가 우선이라 이 값은 안 쓴다.
+     */
+    elapsedDays: number | null
   }
   stages: JourneyStage[]
   /**
@@ -360,6 +366,11 @@ export function buildJourney(
     !dep && ctx.destinationKey === 'japan'
       ? jpPrepHint((caseRow.data ?? {}) as Record<string, unknown>, today)
       : null
+  // 출국일이 없을 때 링 보조줄에 표시할 '며칠째 준비 중' 카운트업 — 케이스 생성일(created_at) 기준,
+  // 1일째 = 생성 당일. 전 나라 공통(절차 floor 와 무관한 단순 경과일). 출국일이 있으면 D-day 우선.
+  const createdAt = caseRow.created_at ? caseRow.created_at.slice(0, 10) : null
+  const elapsed = createdAt ? daysBetween(createdAt, today) : null
+  const elapsedDays = elapsed != null && elapsed >= 0 ? elapsed + 1 : null
 
   const applicableSteps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
 
@@ -981,6 +992,7 @@ export function buildJourney(
       daysLeft,
       tripType: ctx.tripType,
       prep,
+      elapsedDays,
     },
     stages,
     nextStages,
