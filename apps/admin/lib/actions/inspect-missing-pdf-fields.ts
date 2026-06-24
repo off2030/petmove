@@ -55,6 +55,50 @@ function isEmpty(v: unknown): boolean {
   return false
 }
 
+const TITER_DATE_LABEL = '광견병 항체검사 검사일'
+const TITER_LAB_LABEL = '광견병 항체검사 검사기관'
+
+/**
+ * 이 폼이 항체검사(rabies_titer_records) 의 어떤 서브칸을 실제로 출력하는지.
+ * PDF 는 검사일·검사기관을 레코드별 칸으로 따로 찍으므로, 폼이 그 칸을 가질 때만
+ * 해당 누락을 알린다. (검사일만 찍는 NZ·SGP·AnnexIII 등에서 검사기관 오탐 방지.)
+ */
+function renderedTiterProps(fields: Record<string, FieldMapping>): { date: boolean; lab: boolean } {
+  let date = false
+  let lab = false
+  for (const fm of Object.values(fields)) {
+    if (fm.source !== 'rabies_titer_records') continue
+    const t = fm.transform ?? ''
+    if (/\.lab$/.test(t)) lab = true // array[i].lab / if_multi[i].lab (lab_country 는 제외)
+    else if (/\.date$/.test(t) || /^titer_date_asc\[/.test(t) || /^titer_part\[\d+\]:date_/.test(t)) date = true
+  }
+  return { date, lab }
+}
+
+/**
+ * 항체검사 기록의 누락 라벨.
+ *  - 기록(내용 있는 레코드)이 하나도 없으면 "광견병 항체 검사 기록" 전체 누락 1건.
+ *  - 기록은 있는데 검사일/검사기관이 빈 레코드가 하나라도 있으면 각각 안내.
+ *    값(value)만 입력하고 검사일·기관을 비워두면 배열 자체는 비어있지 않아
+ *    기존 isEmpty(배열) 검사로는 놓쳤다 — 그래서 레코드 서브칸까지 본다.
+ */
+function missingTiterLabels(fields: Record<string, FieldMapping>, raw: unknown): string[] {
+  const rendered = renderedTiterProps(fields)
+  if (!rendered.date && !rendered.lab) return [] // 항체검사 칸이 없는 폼
+  const records = Array.isArray(raw)
+    ? raw.filter((r): r is Record<string, unknown> => !!r && typeof r === 'object' && !Array.isArray(r))
+    : []
+  // 검사를 했다고 볼 만한(어느 칸이든 입력된) 레코드만 완결성 검사.
+  const meaningful = records.filter((r) =>
+    ['date', 'lab', 'value', 'lab_country'].some((k) => !isEmpty(r[k])),
+  )
+  if (meaningful.length === 0) return [labelForSource('rabies_titer_records')]
+  const out: string[] = []
+  if (rendered.date && meaningful.some((r) => isEmpty(r.date))) out.push(TITER_DATE_LABEL)
+  if (rendered.lab && meaningful.some((r) => isEmpty(r.lab))) out.push(TITER_LAB_LABEL)
+  return out
+}
+
 /**
  * groupKey 가 가리키는 base 데이터를 caseRow/data 에서 읽는다.
  * pdf-fill.ts 의 readSource 와 동일한 polarity 의 단순화 버전 — empty 판정만 필요하므로
@@ -148,8 +192,18 @@ export async function inspectMissingPdfFields(
     )
 
     const missingLabels = new Set<string>()
+
+    // 항체검사 기록은 배열 전체 유무가 아니라 폼이 출력하는 검사일·검사기관 칸 기준으로
+    // 레코드별 누락까지 본다 (값만 입력하고 검사일·기관을 비운 레코드 포함).
+    if (allowedVaccines.has('rabies_titer')) {
+      for (const label of missingTiterLabels(mapping.fields, data.rabies_titer_records)) {
+        missingLabels.add(label)
+      }
+    }
+
     for (const fm of Object.values(mapping.fields)) {
       if (!fm.source) continue
+      if (fm.source === 'rabies_titer_records') continue // 위에서 별도 처리
       if (shouldSkipSourceForMissingCheck(fm.source)) continue
       if (fm.speciesOnly && fm.speciesOnly !== species) continue
 
