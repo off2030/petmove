@@ -279,7 +279,7 @@ export function SettingsView() {
       <SectionCard label="알림" marginTop={8}>
         <ToggleRow
           label="일정 알림"
-          desc="예정, 마감, 유효기간 만료 등 일정 안내를 받을 수 있어요. 설치형 앱에서만 작동해요."
+          desc="주요 일정 안내를 받을 수 있어요."
           on={remindersOn}
           disabled={remindersBusy}
           onToggle={toggleReminders}
