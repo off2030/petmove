@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/browser'
+import { nativeGoogleLogin } from '@/lib/native/native-oauth'
 
 const buttonBaseClass =
   'inline-flex w-full items-center justify-center rounded-md h-10 px-md text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D99A58]/40 disabled:pointer-events-none disabled:opacity-50 select-none'
@@ -34,6 +35,20 @@ export function LoginForm({
     setLoading(provider)
     setError(null)
     setInfo(null)
+
+    // 구글은 네이티브 앱에서 WebView OAuth 가 차단됨(disallowed_useragent) → Custom Tab +
+    // 딥링크 경로로 처리. 웹/PWA 면 handled=false 라 아래 builtin 흐름으로 이어진다.
+    if (provider === 'google') {
+      const res = await nativeGoogleLogin(next)
+      if (res.handled) {
+        if (res.error) {
+          setError(res.error)
+          setLoading(null)
+        }
+        // 성공: Custom Tab 열림 → 복귀는 NativeAuthListener 가 처리. loading 유지.
+        return
+      }
+    }
 
     // next 는 cookie 로 — Supabase OAuth 의 redirect_to allowlist 가 query 포함
     // URL 을 정확 매칭 못 해서 query 는 비우고 callback 에서 cookie 로 읽음.

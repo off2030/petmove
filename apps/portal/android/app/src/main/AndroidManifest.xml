@@ -22,6 +22,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- 딥링크: 구글 로그인이 Custom Tab 에서 끝나면 Supabase 가
+                 com.petmove.portal://auth/callback 로 앱을 깨운다(native-auth-listener 가 처리). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.petmove.portal" />
+            </intent-filter>
+
         </activity>
 
         <provider
