@@ -366,10 +366,23 @@ export function buildJourney(
     !dep && ctx.destinationKey === 'japan'
       ? jpPrepHint((caseRow.data ?? {}) as Record<string, unknown>, today)
       : null
-  // 출국일이 없을 때 링 보조줄에 표시할 '며칠째 준비 중' 카운트업 — 케이스 생성일(created_at) 기준,
-  // 1일째 = 생성 당일. 전 나라 공통(절차 floor 와 무관한 단순 경과일). 출국일이 있으면 D-day 우선.
+  // 출국일이 없을 때 링 보조줄에 표시할 '며칠째 준비 중' 카운트업 — 그 목적지의 준비 시작일 기준,
+  // 1일째 = 시작 당일. 전 나라 공통(절차 floor 와 무관한 단순 경과일). 출국일이 있으면 D-day 우선.
+  // 기준일: 그 목적지를 추가한 날(data.dest_started_at[활성목적지], addCaseDestination 이 기록) →
+  // 없으면 케이스 생성일(created_at)로 폴백. 폴백이 처음 등록한 목적지·기존 케이스를 자동 backfill —
+  // 첫 고객 화면은 그대로, 재이용 고객의 새 여정만 시작일부터 다시 센다. caseRow 는 활성 목적지 뷰라
+  // caseRow.destination = 활성 토큰, dest_started_at(top-level 맵)은 flatten 후에도 보존된다.
+  const startedMap = (caseRow.data as Record<string, unknown> | null)?.dest_started_at as
+    | Record<string, string>
+    | undefined
+  const activeDest = caseRow.destination ?? null
+  const destStartedAt =
+    activeDest && typeof startedMap?.[activeDest] === 'string'
+      ? startedMap[activeDest].slice(0, 10)
+      : null
   const createdAt = caseRow.created_at ? caseRow.created_at.slice(0, 10) : null
-  const elapsed = createdAt ? daysBetween(createdAt, today) : null
+  const countupAnchor = destStartedAt ?? createdAt
+  const elapsed = countupAnchor ? daysBetween(countupAnchor, today) : null
   const elapsedDays = elapsed != null && elapsed >= 0 ? elapsed + 1 : null
 
   const applicableSteps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)

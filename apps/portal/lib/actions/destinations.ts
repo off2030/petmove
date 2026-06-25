@@ -138,12 +138,19 @@ export async function addCaseDestination(
     remaining.push(dest)
     tripTypeAll[dest] = tripType
     byDestAll[dest] = {}
+    // 그 목적지의 준비 시작일 = 추가한 날(today). 일정 카드 'N일째' 카운트업이 첫 등록일이 아니라
+    // 이 시작일 기준으로 세도록(재이용 고객의 새 여정은 1일째부터). created_at 폴백은 scenario.ts.
+    const startedAtAll = {
+      ...((data.dest_started_at as Record<string, string> | undefined) ?? {}),
+      [dest]: today,
+    }
     const nextDest = joinDestTokens(remaining)
     const nextData: Record<string, unknown> = {
       ...data,
       trip_type: tripTypeAll,
       by_dest: byDestAll,
       past_journeys: pastJourneys,
+      dest_started_at: startedAtAll,
     }
     const updatePayload: Record<string, unknown> = { destination: nextDest, data: nextData }
 

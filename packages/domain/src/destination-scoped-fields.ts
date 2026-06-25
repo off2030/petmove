@@ -169,6 +169,10 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'by_dest', //              destination 별 분기를 담는 컨테이너 그 자체
   'trip_type', //            destination 키 맵(내부적으로 목적지별 — 컨테이너는 전역)
   'arrival_confirmed', //    destination 키 맵(도착확인 — 컨테이너는 전역)
+  'dest_started_at', //      destination 키 맵({[dest]: 'YYYY-MM-DD'}) — 그 목적지 준비 시작일.
+  //                          addCaseDestination 이 추가한 날을 기록. 일정 카드 'N일째' 카운트업 기준일이
+  //                          첫 등록일이 아니라 그 목적지 시작일이 되게(재이용 고객 새 여정). 없으면 created_at
+  //                          폴백(처음 등록 목적지·기존 케이스). trip_type 과 같은 패턴(컨테이너 전역, 내부 목적지별).
   'past_journeys', //        완료된 여정 비석 목록(케이스 단위)
   // 3) 첨부 파일 — **의도적으로 케이스 공유**. 보호자가 올린 파일은 동물/케이스의 자산이라
   //    목적지와 무관하게 서류함에서 늘 보여야 한다(목적지 분리해도 기존 첨부 사라지지 않게).
