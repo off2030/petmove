@@ -14,30 +14,46 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
 
-function run(cmd, args, label) {
+function run(cmd, args, label, options = {}) {
   return new Promise((resolve) => {
     console.log(`\n─── ${label} ───`)
     const child = spawn(cmd, args, {
-      cwd: ROOT,
+      cwd: options.cwd ?? ROOT,
       stdio: 'inherit',
-      shell: process.platform === 'win32',
+      shell: options.shell ?? false,
     })
     child.on('exit', (code) => resolve(code ?? 1))
     child.on('error', () => resolve(1))
   })
 }
 
-const eslintCode = await run('pnpm', ['exec', 'turbo', 'lint'], 'turbo lint (eslint)')
-const rlsCode = await run('node', ['scripts/lint-rls.mjs'], 'RLS recursion lint')
-const scopeCode = await run('node', ['scripts/lint-destination-scoping.mjs'], 'destination scoping lint')
-const journeyCode = await run('node', ['scripts/lint-journey-catalog.mjs'], 'journey catalog lint')
+function localBin(name) {
+  return path.join(ROOT, 'node_modules', '.bin', process.platform === 'win32' ? `${name}.CMD` : name)
+}
+
+const eslintCode = await run(
+  localBin('eslint'),
+  ['.'],
+  'admin eslint',
+  { cwd: path.join(ROOT, 'apps/admin'), shell: process.platform === 'win32' },
+)
+const portalEslintCode = await run(
+  localBin('eslint'),
+  ['.'],
+  'portal eslint',
+  { cwd: path.join(ROOT, 'apps/portal'), shell: process.platform === 'win32' },
+)
+const rlsCode = await run(process.execPath, ['scripts/lint-rls.mjs'], 'RLS recursion lint')
+const scopeCode = await run(process.execPath, ['scripts/lint-destination-scoping.mjs'], 'destination scoping lint')
+const journeyCode = await run(process.execPath, ['scripts/lint-journey-catalog.mjs'], 'journey catalog lint')
 
 const summary = [
-  `  turbo lint:   ${eslintCode === 0 ? '✓ pass' : `✗ exit ${eslintCode}`}`,
-  `  lint:rls:     ${rlsCode === 0 ? '✓ pass' : `✗ exit ${rlsCode}`}`,
-  `  lint:scope:   ${scopeCode === 0 ? '✓ pass' : `✗ exit ${scopeCode}`}`,
-  `  lint:journey: ${journeyCode === 0 ? '✓ pass' : `✗ exit ${journeyCode}`}`,
+  `  admin eslint:  ${eslintCode === 0 ? '✓ pass' : `✗ exit ${eslintCode}`}`,
+  `  portal eslint: ${portalEslintCode === 0 ? '✓ pass' : `✗ exit ${portalEslintCode}`}`,
+  `  lint:rls:      ${rlsCode === 0 ? '✓ pass' : `✗ exit ${rlsCode}`}`,
+  `  lint:scope:    ${scopeCode === 0 ? '✓ pass' : `✗ exit ${scopeCode}`}`,
+  `  lint:journey:  ${journeyCode === 0 ? '✓ pass' : `✗ exit ${journeyCode}`}`,
 ].join('\n')
 console.log(`\n─── summary ───\n${summary}`)
 
-process.exit(Math.max(eslintCode, rlsCode, scopeCode, journeyCode))
+process.exit(Math.max(eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode))
