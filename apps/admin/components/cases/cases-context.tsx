@@ -487,9 +487,10 @@ export function CasesProvider({
         prev.map((c) => {
           if (c.id !== caseId) return c
           const now = new Date().toISOString()
-          // by_dest 경로 — 다중 목적지 + destination 지정 + scoped 키일 때만.
-          const isMultiDest = parseDestinations(c.destination).length > 1
-          if (destination && isDestinationScopedKey(key) && isMultiDest) {
+          // by_dest 경로 — 서버 updateCaseField 와 동일하게 destination 지정 + scoped 키면
+          // 단일 목적지도 by_dest 에 반영한다. 표시 헬퍼는 by_dest 를 먼저 읽고, 서버가
+          // 필요한 legacy column 동기화를 뒤따라 보낸다.
+          if (destination && isDestinationScopedKey(key)) {
             const nextData = writeByDestValue(
               (c.data as Record<string, unknown>) ?? null,
               destination,

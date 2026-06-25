@@ -467,8 +467,9 @@ export function resolveRequiredDocs(
   const flags = readBoolFlags(caseRow, 'required_doc_flags')
   const naFlags = readBoolFlags(caseRow, 'required_doc_na')
   // 운영자(펫무브워크 서류탭)가 준비상태를 '완료'로 바꾸면(export_doc_status='done') 수기 서류
-  // (별지25·FormAC)를 보유로 인정 — 보호자 수기 토글·사본 첨부와 OR. export_doc_status 는
-  // 케이스 단위(top-level) 상태라 케이스 전체에 적용된다. (내원일·출국일 변경 시 admin 이
+  // (별지25·FormAC)를 보유로 인정 — 보호자 수기 토글·사본 첨부와 OR. 다중 목적지는 호출 전
+  // 활성 목적지로 flatten 되어 by_dest 의 export_doc_status 만 surface 되므로, 한 목적지의 완료가
+  // 다른 목적지 체크리스트로 번지지 않는다. (내원일·출국일 변경 시 admin 이 해당 스코프의
   // export_doc_status 를 리셋하므로 단계 되돌리기 시 서류도 자동으로 '발급 예정'으로 복귀.)
   const exportDocDone =
     ((caseRow.data ?? {}) as Record<string, unknown>).export_doc_status === 'done'

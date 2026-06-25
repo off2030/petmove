@@ -239,13 +239,16 @@ function SelectCell({
   row,
   col,
   onUpdate,
+  activeDest,
 }: {
   row: CaseRow
   col: TodoColumn
   onUpdate: OnUpdate
+  /** 다중/단일 목적지 scoped key 저장을 by_dest 로 라우팅할 활성 목적지. */
+  activeDest?: string | null
 }) {
   const value = getCellValue(row, col)
-  const { replaceLocalCaseData } = useCases()
+  const { replaceLocalCaseData, updateLocalCaseField } = useCases()
   const confirm = useConfirm()
   // 일본 케이스 + 신고탭 status 컬럼은 portal data 필드를 직접 patch (양방향 sync).
   // 다른 컬럼·다른 국가는 기존 단일키 path 그대로.
@@ -297,8 +300,15 @@ function SelectCell({
       }
       return
     }
-    onUpdate(row.id, col.storage, col.key, v || null)
-    await updateCaseField(row.id, col.storage, col.key, v || null)
+    const dest = isDestinationScopedKey(col.key) ? (activeDest ?? undefined) : undefined
+    onUpdate(row.id, col.storage, col.key, v || null, dest)
+    const res = await updateCaseField(row.id, col.storage, col.key, v || null, dest)
+    if (res.ok && res.autoFilled) {
+      replaceLocalCaseData(row.id, res.autoFilled.data)
+      for (const [k, nextValue] of Object.entries(res.autoFilled.columns ?? {})) {
+        updateLocalCaseField(row.id, 'column', k, nextValue)
+      }
+    }
   }
   const isActive = value === 'in_progress' || value === 'testing'
   return (
@@ -418,7 +428,7 @@ export function TodoTable({
                   ) : col.readonly ? (
                     <ReadonlyCell row={row} col={col} />
                   ) : col.type === 'select' && col.options ? (
-                    <SelectCell row={row} col={col} onUpdate={onUpdate} />
+                    <SelectCell row={row} col={col} onUpdate={onUpdate} activeDest={activeDestById?.get(row.id) ?? null} />
                   ) : (
                     <EditableCell row={row} col={col} onUpdate={onUpdate} activeDest={activeDestById?.get(row.id) ?? null} />
                   )}

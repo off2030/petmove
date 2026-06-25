@@ -167,6 +167,11 @@ export async function updateCaseField(
     nextByDest[destination!] = nextDestObj
     const nextData = { ...currentData }
     nextData['by_dest'] = nextByDest
+    // 신규 scoped 서류 탭 값은 by_dest 를 truth 로 둔다. top-level legacy 잔존은 flatten 단일
+    // fallback 에서 되살아나지 않도록 같이 정리.
+    if (key === 'export_doc_status' || key === 'export_doc_memo') {
+      delete nextData[key]
+    }
 
     // 공용 부수효과 패리티 — 단일 목적지 케이스 한정.
     // B(단일도 by_dest) 전환으로 단일 케이스의 scoped 키 저장이 이 분기로 들어온다. 종전 top-level
@@ -190,9 +195,14 @@ export async function updateCaseField(
           } catch { /* 날짜 계산 실패 무시 */ }
         }
       }
-      // 서류/신고 상태 리셋 — 내원일/출국일 변경 시 'done' 클리어 (재출국 정리). top-level 경로와 동일.
+      // 서류/신고 상태 리셋 — 내원일/출국일 변경 시 'done' 클리어 (재출국 정리). scoped
+      // 서류 상태는 활성 목적지 by_dest 를 비우고, legacy top-level 잔존도 제거한다.
       if ((key === 'vet_visit_date' || key === 'departure_date') && changed) {
-        if (currentData.export_doc_status === 'done') {
+        const scopedExportDocStatus =
+          typeof destObjPrev['export_doc_status'] === 'string'
+            ? destObjPrev['export_doc_status']
+            : currentData.export_doc_status
+        if (scopedExportDocStatus === 'done') {
           let shouldReset = false
           if (key === 'vet_visit_date') {
             shouldReset = true
@@ -200,7 +210,10 @@ export async function updateCaseField(
             const visit = readScopedVisit()
             if (!visit || visit < today) shouldReset = true
           }
-          if (shouldReset) delete nextData.export_doc_status
+          if (shouldReset) {
+            nextDestObj['export_doc_status'] = null
+            delete nextData.export_doc_status
+          }
         }
         if (key === 'departure_date') {
           const prevDep =
@@ -220,7 +233,8 @@ export async function updateCaseField(
     }
 
     // 서류 체크리스트 완료일 — 이 목적지 기준 '모두 ✓' 전환 시 박거나(미완료 복귀 시) 지운다.
-    updateObj['data'] = stampDocsChecklistCompletion(row as CaseRow, nextData, destination)
+    const stampedData = stampDocsChecklistCompletion(row as CaseRow, nextData, destination)
+    updateObj['data'] = stampedData
 
     const { error: updErr } = await supabase
       .from('cases')
@@ -263,7 +277,7 @@ export async function updateCaseField(
       } catch { /* best-effort */ }
     }
     await evaluateAndNotify(caseId)
-    return autoFilled ? { ok: true, autoFilled } : { ok: true }
+    return autoFilled ? { ok: true, autoFilled } : { ok: true, autoFilled: { data: stampedData } }
   }
 
   let oldValue: string | null
@@ -353,7 +367,7 @@ export async function updateCaseField(
       const vetArrived = newVet.length >= 10 && newVet <= today
       if (vetArrived) {
         if (currentData.export_doc_status !== 'done') {
-          nextData.export_doc_status = 'done'
+          nextData.export_doc_status = 'done' // scoping-fallback-ok: destination 미지정 legacy path
           dataMutated = true
         }
       } else if (currentData.export_doc_status === 'done') {
@@ -459,7 +473,11 @@ export async function updateCaseField(
   // 로 optimistic update, 타 클라이언트는 Realtime UPDATE 로 동기화. revalidate 는 RSC
   // refetch 를 트리거해 (dashboard) 레이아웃 재실행 → 그 안의 Promise.all 이 transient
   // throw 하면 global-error 거쳐 리마운트, 결국 상세→목록 튕김으로 이어지던 원인.
-  return autoFilled ? { ok: true, autoFilled } : { ok: true }
+  if (autoFilled) return { ok: true, autoFilled }
+  if (updateObj.data && typeof updateObj.data === 'object') {
+    return { ok: true, autoFilled: { data: updateObj.data as Record<string, unknown> } }
+  }
+  return { ok: true }
 }
 
 /**

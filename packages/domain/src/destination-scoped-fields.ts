@@ -114,6 +114,10 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 서류 체크리스트(document-checklist)가 모두 ✓ 된 시점('YYYY-MM-DD', KST) — 일정 표시일용.
   // 완료 판정(required_doc_flags/na·첨부·step done)이 목적지별이라 완료 시점도 by_dest 분리.
   'required_docs_completed_at',
+  // 펫무브워크 서류 탭의 수기 준비 상태/메모 — 한 목적지 서류 완료·메모가 다른 목적지
+  // 필수서류 체크리스트로 새면 완료 판정이 오염된다.
+  'export_doc_status',
+  'export_doc_memo',
 ])
 
 export function isDestinationScopedKey(key: string): boolean {

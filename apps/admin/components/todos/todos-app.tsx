@@ -181,6 +181,22 @@ function exportDocDeparture(row: CaseRow): string {
 function exportDocVetVisit(row: CaseRow): string {
   return getVetVisitDate(row, resolveTabActiveDest(row, EXPORT_DOC_DEST_KEY)) ?? ''
 }
+/** 서류 탭 활성 목적지 기준으로 평탄화한 뷰. */
+function exportDocView(row: CaseRow): CaseRow {
+  return flattenCaseForDestination(row, resolveTabActiveDest(row, EXPORT_DOC_DEST_KEY))
+}
+/** 서류 탭 준비상태 — 활성 목적지 by_dest 우선. */
+function exportDocStatus(row: CaseRow): string {
+  const data = (exportDocView(row).data ?? {}) as Record<string, unknown>
+  const status = data.export_doc_status
+  return typeof status === 'string' && status ? status : 'not_started'
+}
+/** 서류 탭 메모 — 활성 목적지 by_dest 우선. */
+function exportDocMemo(row: CaseRow): string {
+  const data = (exportDocView(row).data ?? {}) as Record<string, unknown>
+  const memo = data.export_doc_memo
+  return typeof memo === 'string' ? memo : ''
+}
 /** 신고 탭 활성 목적지 출국일. */
 function importReportDeparture(row: CaseRow): string {
   return getDepartureDate(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)) ?? ''
@@ -403,9 +419,7 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
       d.setHours(0, 0, 0, 0)
       const diffDays = Math.floor((d.getTime() - today.getTime()) / 86400000)
       if (diffDays > 7) return ''
-      const data = (row.data ?? {}) as Record<string, unknown>
-      const status = typeof data.export_doc_status === 'string' ? data.export_doc_status : 'not_started'
-      if (status === 'done') return ''
+      if (exportDocStatus(row) === 'done') return ''
       return 'text-pmw-warning'
     },
   },
@@ -447,8 +461,17 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
       <DestinationCell row={row} overrideKey="export_doc_active_dest" onUpdate={onUpdate} />
     ),
   },
-  { key: 'export_doc_status', label: '준비상태', storage: 'data', type: 'select', width: EXPORT_DOC_COL_W, options: STATUS_OPTIONS, defaultValue: 'not_started' },
-  { key: 'export_doc_memo', label: '메모', storage: 'data', type: 'text', width: EXPORT_DOC_COL_W },
+  {
+    key: 'export_doc_status',
+    label: '준비상태',
+    storage: 'data',
+    type: 'select',
+    width: EXPORT_DOC_COL_W,
+    options: STATUS_OPTIONS,
+    defaultValue: 'not_started',
+    resolveValue: exportDocStatus,
+  },
+  { key: 'export_doc_memo', label: '메모', storage: 'data', type: 'text', width: EXPORT_DOC_COL_W, resolveValue: exportDocMemo },
 ]
 
 
@@ -580,8 +603,7 @@ function isPastDeparture(row: CaseRow): boolean {
  */
 function isExportDocFinishedNoDeparture(row: CaseRow): boolean {
   if (exportDocDeparture(row)) return false
-  const data = (row.data ?? {}) as Record<string, unknown>
-  if (data.export_doc_status !== 'done') return false
+  if (exportDocStatus(row) !== 'done') return false
   const v = exportDocVetVisit(row)
   if (!v) return false
   return v < new Date().toISOString().slice(0, 10)
