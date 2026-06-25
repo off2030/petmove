@@ -7,6 +7,7 @@ import { signOut, updateMyProfile } from '@/lib/actions/profile'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { C, EditPageShell, SectionCard } from '@/components/me/settings-shared'
 import { ThemeSwitcher } from './theme-switcher'
+import { InstallAppSheet } from './install-app-sheet'
 import { collectReminders } from '@/lib/journey/reminders'
 import {
   disableReminders,
@@ -202,6 +203,8 @@ export function SettingsView() {
   const [remindersBusy, setRemindersBusy] = useState(false)
   const [remindersNote, setRemindersNote] = useState<string | null>(null)
   const [testNote, setTestNote] = useState<string | null>(null)
+  // 웹에서 알림을 켜려 할 때 뜨는 앱 설치 안내 바텀시트.
+  const [installSheetOpen, setInstallSheetOpen] = useState(false)
   useEffect(() => {
     // localStorage 는 SSR 에 없어 마운트 후 1회 읽어 동기화 — 의도된 패턴.
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -220,7 +223,8 @@ export function SettingsView() {
         setRemindersOn(true)
         await syncReminders(collectReminders(cases, new Date()))
       } else if (res.reason === 'web') {
-        setRemindersNote('알림은 설치형 앱(안드로이드·iOS)에서만 켤 수 있어요.')
+        // 웹은 알림 불가 → 문구 대신 앱 설치 안내 바텀시트로 유도.
+        setInstallSheetOpen(true)
       } else if (res.reason === 'denied') {
         setRemindersNote('기기 설정에서 알림 권한을 허용해야 켤 수 있어요.')
       } else {
@@ -275,6 +279,7 @@ export function SettingsView() {
     : null
 
   return (
+    <>
     <EditPageShell title="설정" backHref="/me" backLabel="내 정보">
       <SectionCard label="알림" marginTop={8}>
         <ToggleRow
@@ -419,5 +424,7 @@ export function SettingsView() {
         </Link>
       </SectionCard>
     </EditPageShell>
+    <InstallAppSheet open={installSheetOpen} onClose={() => setInstallSheetOpen(false)} />
+    </>
   )
 }
