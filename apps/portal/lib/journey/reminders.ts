@@ -1,17 +1,31 @@
-import type { CaseRow } from '@petmove/domain'
+import {
+  addYears,
+  buildCaseJourneyContext,
+  deriveAdvanceNotificationStatus,
+  deriveImportPermitStatus,
+  deriveJpExportQuarantineStatus,
+  flattenCaseForDestination,
+  rabiesBoosterChainEnd,
+  readCivEntries,
+  readGeneralVaccineEntries,
+  readRabiesEntries,
+  readTiterEntries,
+  resolveValidUntil,
+  type CaseRow,
+} from '@petmove/domain'
 
 /**
  * 로컬(기기) 알림용 일정 수집 — 순수 함수(Capacitor 의존 X, 테스트 가능).
  *
- * 여기서는 "무엇을 언제 알릴지"만 계산하고, 실제 기기 예약은
- * `@/lib/native/local-reminders` 가 담당한다(네이티브 전용).
+ * 실제 기기 예약은 `@/lib/native/local-reminders` 가 담당한다(네이티브 전용·웹 no-op).
  *
- * v1 = 예약 리마인더만: 예정 날짜가 있는 카드(접종·검사·구충·임상검사·검역)에 대해
- *   - 하루 전(D-1) 오전 9시
- *   - 당일 오전 9시
- * 두 건씩 예약. 일본 수출 동물검역은 예약 시간(있으면)을 문구에 포함.
- *
- * 유효기간 만료 알림(백신·항체검사)·목적지별 신청 마감 알림은 후속 단계(reminders-deadline).
+ * 세 종류:
+ *   A. 예약 리마인더 — 예정일 있는 카드(접종·검사·구충·임상검사·검역) D-1·당일 오전 9시.
+ *      일본 수출 동물검역은 예약 시간(있으면) 문구 포함.
+ *   B. 유효기간 만료 — 광견병 백신·종합백신·CIV·광견병 항체검사(=titer)만. 만료 30일 전,
+ *      그리고 출국 전 만료 시 경고. (도메인 계산 재활용)
+ *   C. 목적지별 신청 마감 — 일본 사전신고(입국 40·47일 전)·일본 수출검역 신청(귀국 10·17일 전)
+ *      ·태국 수입허가(출국 14일 전)·필리핀 수입허가(출국 7일 전). 이미 완료면 제외.
  */
 
 export interface AppReminder {
@@ -25,6 +39,8 @@ export interface AppReminder {
 
 const FIRE_HOUR = 9 // 오전 9시
 const APP_TITLE = '펫무브'
+
+// ── A. 예약 리마인더 필드 ────────────────────────────────────────────────
 
 /** GLOBAL(목적지 무관) date_array 필드 → 항목 라벨. 실제+예정 키를 함께 본다. */
 const GLOBAL_ARRAY_FIELDS: Array<{ keys: string[]; label: string }> = [
@@ -67,6 +83,8 @@ interface RawEvent {
   time?: string // 한국식 표기(예: '오전 10시')
 }
 
+// ── 공통 헬퍼 ────────────────────────────────────────────────────────────
+
 function isIsoDate(v: unknown): v is string {
   return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)
 }
@@ -95,6 +113,12 @@ function koreanTime(hhmm: unknown): string | null {
   return min === 0 ? `${period} ${h12}시` : `${period} ${h12}시 ${min}분`
 }
 
+/** 'YYYY-MM-DD' → 'M월 D일'. */
+function koreanDate(iso: string): string {
+  const [, m, d] = iso.slice(0, 10).split('-')
+  return `${Number(m)}월 ${Number(d)}일`
+}
+
 function pad(n: number): string {
   return String(n).padStart(2, '0')
 }
@@ -115,6 +139,18 @@ function asRecord(v: unknown): Record<string, unknown> | null {
   return v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : null
 }
 
+function str(v: unknown): string {
+  return typeof v === 'string' ? v : ''
+}
+
+/** fireAtIso 가 now 이후면 알림 1건 생성, 아니면 null. */
+function reminderAt(id: string, fireAtIso: string, body: string, now: Date): AppReminder | null {
+  if (new Date(fireAtIso).getTime() <= now.getTime()) return null
+  return { id, fireAtIso, title: APP_TITLE, body }
+}
+
+// ── A. 예약 리마인더 ──────────────────────────────────────────────────────
+
 /** 한 케이스에서 미래(>= 오늘) 예정 이벤트 수집(라벨+날짜 단위 dedup). */
 function collectEventsForCase(caseRow: CaseRow, today: string): RawEvent[] {
   const data = asRecord(caseRow.data) ?? {}
@@ -126,11 +162,9 @@ function collectEventsForCase(caseRow: CaseRow, today: string): RawEvent[] {
     if (d < today) return // 지난 일정은 제외
     const key = `${label}|${d}`
     const prev = out.get(key)
-    // 시간 정보가 있는 쪽을 우선 보존.
     if (!prev || (!prev.time && time)) out.set(key, { date: d, label, time: time ?? undefined })
   }
 
-  // GLOBAL date_array
   for (const field of GLOBAL_ARRAY_FIELDS) {
     for (const key of field.keys) {
       const arr = data[key]
@@ -142,14 +176,12 @@ function collectEventsForCase(caseRow: CaseRow, today: string): RawEvent[] {
     }
   }
 
-  // GLOBAL 단일 date
   for (const field of GLOBAL_DATE_FIELDS) {
     for (const key of field.keys) {
       if (isIsoDate(data[key])) add(data[key] as string, field.label)
     }
   }
 
-  // 목적지별(by_dest) + top-level 스코프 스캔
   const byDest = asRecord(data.by_dest)
   const scopes: Array<Record<string, unknown>> = [data]
   if (byDest) {
@@ -170,44 +202,261 @@ function collectEventsForCase(caseRow: CaseRow, today: string): RawEvent[] {
   return [...out.values()]
 }
 
-/** 예정 이벤트 → 알림 2건(D-1 9시, 당일 9시). now 이전 발사 시각은 제외. */
-function eventToReminders(caseRow: CaseRow, ev: RawEvent, pet: string, now: Date): AppReminder[] {
-  const nowMs = now.getTime()
+/** 예정 이벤트 → 알림 2건(D-1 9시, 당일 9시). */
+function eventReminders(caseRow: CaseRow, ev: RawEvent, pet: string, now: Date): AppReminder[] {
   const timeClause = ev.time ? ` 예약 시간은 ${ev.time}예요.` : ''
   const out: AppReminder[] = []
+  const d1 = reminderAt(
+    `${caseRow.id}|${ev.label}|${ev.date}|d1`,
+    localDateTime(ev.date, FIRE_HOUR, -1),
+    `내일은 ${pet} ${ev.label} 예정일이에요 🐾${timeClause}`,
+    now,
+  )
+  if (d1) out.push(d1)
+  const day = reminderAt(
+    `${caseRow.id}|${ev.label}|${ev.date}|day`,
+    localDateTime(ev.date, FIRE_HOUR, 0),
+    `오늘은 ${pet} ${ev.label} 예정일이에요${timeClause}`,
+    now,
+  )
+  if (day) out.push(day)
+  return out
+}
 
-  const d1Fire = localDateTime(ev.date, FIRE_HOUR, -1)
-  if (new Date(d1Fire).getTime() > nowMs) {
-    out.push({
-      id: `${caseRow.id}|${ev.label}|${ev.date}|d1`,
-      fireAtIso: d1Fire,
-      title: APP_TITLE,
-      body: `내일은 ${pet} ${ev.label} 예정일이에요 🐾${timeClause}`,
-    })
+// ── B. 유효기간 만료 알림 ─────────────────────────────────────────────────
+
+/** 케이스의 가장 이른 여행 앵커(입국/출국/출국편) — 유효기간 '출국 전 만료' 비교용. */
+function earliestTripDate(caseRow: CaseRow): string {
+  const data = asRecord(caseRow.data) ?? {}
+  const cands: string[] = []
+  const push = (v: unknown) => {
+    if (isIsoDate(v)) cands.push((v as string).slice(0, 10))
+  }
+  const tripKeys = ['entry_date', 'departure_date', 'departure_flight_date']
+  push(caseRow.departure_date)
+  for (const k of tripKeys) push(data[k])
+  const byDest = asRecord(data.by_dest)
+  if (byDest) {
+    for (const v of Object.values(byDest)) {
+      const rec = asRecord(v)
+      if (rec) for (const k of tripKeys) push(rec[k])
+    }
+  }
+  return cands.length ? cands.slice().sort()[0] : ''
+}
+
+/** 한 항목(백신/검사)의 유효기간 만료 알림: 30일 전 + (해당 시) 출국 전 만료 경고. */
+function validityRemindersForItem(
+  caseRow: CaseRow,
+  pet: string,
+  label: string,
+  validEnd: string,
+  action: { prepare: string; act: string },
+  trip: string,
+  today: string,
+  now: Date,
+): AppReminder[] {
+  if (!isIsoDate(validEnd)) return []
+  const out: AppReminder[] = []
+  const end = validEnd.slice(0, 10)
+  const expiresBeforeTrip = !!trip && end < trip
+
+  // 1) 만료 30일 전
+  const fire30 = localDateTime(end, FIRE_HOUR, -30)
+  const body30 = expiresBeforeTrip
+    ? `${pet} ${label} 유효기간이 출국 전(${koreanDate(end)})에 만료돼요. ${koreanDate(end)}까지 ${action.act}.`
+    : `${pet} ${label} 유효기간이 한 달 뒤(${koreanDate(end)}) 만료돼요. ${action.prepare}.`
+  const r30 = reminderAt(`${caseRow.id}|validity|${label}|${end}|d30`, fire30, body30, now)
+  if (r30) out.push(r30)
+  else if (expiresBeforeTrip && trip > today) {
+    // 30일 알림 시점이 이미 지났는데 출국 전 만료 + 출국이 미래 — 다음 오전 9시에 즉시 경고.
+    const nine = localDateTime(today, FIRE_HOUR, 0)
+    const urgentFire =
+      new Date(nine).getTime() > now.getTime() ? nine : localDateTime(today, FIRE_HOUR, 1)
+    if (new Date(urgentFire).getTime() < new Date(localDateTime(trip, FIRE_HOUR, 0)).getTime()) {
+      const r = reminderAt(
+        `${caseRow.id}|validity|${label}|${end}|trip`,
+        urgentFire,
+        `${pet} ${label} 유효기간이 출국 전에 만료돼요. ${koreanDate(end)}까지 ${action.act}.`,
+        now,
+      )
+      if (r) out.push(r)
+    }
+  }
+  return out
+}
+
+const VACCINE_ACTION = { prepare: '추가 접종을 준비하세요', act: '추가 접종을 하세요' }
+const TITER_ACTION = { prepare: '추가 검사를 준비하세요', act: '추가 검사를 받으세요' }
+
+function collectValidityReminders(caseRow: CaseRow, pet: string, today: string, now: Date): AppReminder[] {
+  const trip = earliestTripDate(caseRow)
+  const out: AppReminder[] = []
+
+  // 광견병 백신 — 부스터 chain 의 면역 최종 만료일(도메인 계산 재활용).
+  const rabies = readRabiesEntries(caseRow)
+  if (rabies.length) {
+    const end = rabiesBoosterChainEnd(rabies.map((e) => ({ date: e.date, valid_until: e.valid_until })))
+    out.push(...validityRemindersForItem(caseRow, pet, '광견병 백신', end, VACCINE_ACTION, trip, today, now))
   }
 
-  const dayFire = localDateTime(ev.date, FIRE_HOUR, 0)
-  if (new Date(dayFire).getTime() > nowMs) {
-    out.push({
-      id: `${caseRow.id}|${ev.label}|${ev.date}|day`,
-      fireAtIso: dayFire,
-      title: APP_TITLE,
-      body: `오늘은 ${pet} ${ev.label} 예정일이에요${timeClause}`,
-    })
+  // 종합백신 / CIV — 최근 접종의 유효기간.
+  for (const [label, entries] of [
+    ['종합백신', readGeneralVaccineEntries(caseRow)],
+    ['독감(CIV) 백신', readCivEntries(caseRow)],
+  ] as const) {
+    if (!entries.length) continue
+    const latest = entries[entries.length - 1] // reader 가 날짜 오름차순 정렬
+    const end = resolveValidUntil(latest.date, latest.valid_until)
+    out.push(...validityRemindersForItem(caseRow, pet, label, end, VACCINE_ACTION, trip, today, now))
+  }
+
+  // 광견병 항체 검사(titer) — 채혈일 + 2년. (검사 중 만료 알림은 항체검사만 — 전염병검사 등 X)
+  const titers = readTiterEntries(caseRow)
+  if (titers.length) {
+    const latest = titers.map((t) => t.date).sort().slice(-1)[0]
+    const end = addYears(latest, 2)
+    out.push(...validityRemindersForItem(caseRow, pet, '광견병 항체 검사', end, TITER_ACTION, trip, today, now))
   }
 
   return out
 }
 
-/** 모든 케이스에서 예약 리마인더 수집. fireAt 오름차순 정렬. */
+// ── C. 목적지별 신청 마감 알림 ─────────────────────────────────────────────
+
+/** 케이스의 목적지 토큰들(by_dest 키 + 활성 토큰). */
+function destinationTokens(caseRow: CaseRow): string[] {
+  const set = new Set<string>()
+  const byDest = asRecord(asRecord(caseRow.data)?.by_dest)
+  if (byDest) Object.keys(byDest).forEach((k) => set.add(k))
+  try {
+    const t = buildCaseJourneyContext(caseRow).destinationToken
+    if (t) set.add(t)
+  } catch {
+    /* 컨텍스트 산출 실패 — by_dest 키만 사용 */
+  }
+  return [...set]
+}
+
+/** 앵커 N일 전 오전 9시 알림(미래일 때만). */
+function leadReminder(
+  caseRow: CaseRow,
+  idTag: string,
+  anchor: string,
+  daysBefore: number,
+  body: string,
+  now: Date,
+): AppReminder | null {
+  if (!isIsoDate(anchor)) return null
+  return reminderAt(
+    `${caseRow.id}|deadline|${idTag}`,
+    localDateTime(anchor.slice(0, 10), FIRE_HOUR, -daysBefore),
+    body,
+    now,
+  )
+}
+
+function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
+  const out: AppReminder[] = []
+  for (const token of destinationTokens(caseRow)) {
+    let flat: CaseRow
+    try {
+      flat = flattenCaseForDestination(caseRow, token)
+    } catch {
+      continue
+    }
+    const data = asRecord(flat.data) ?? {}
+    const entry = str(data.entry_date) || str(flat.departure_date)
+    const departure = str(flat.departure_date) || str(data.departure_date) || str(data.departure_flight_date)
+    const ret = str(data.return_date)
+
+    if (token === 'japan') {
+      // 사전 신고 — 입국 40일 전 마감. 완료 전에만.
+      if (entry && deriveAdvanceNotificationStatus(flat) !== 'done') {
+        const r47 = leadReminder(
+          flat,
+          `${token}|jp-advance-47`,
+          entry,
+          47,
+          '일본 사전 신고 마감이 일주일 남았어요. 입국 40일 전까지 NACCS에서 사전 신고를 하세요.',
+          now,
+        )
+        if (r47) out.push(r47)
+        const r40 = leadReminder(
+          flat,
+          `${token}|jp-advance-40`,
+          entry,
+          40,
+          '오늘까지 일본 사전 신고가 필요해요(입국 40일 전). NACCS에서 신고하세요.',
+          now,
+        )
+        if (r40) out.push(r40)
+      }
+      // 일본 수출 동물검역 신청 — 귀국 10일 전. 왕복(귀국일 있음) + 완료 전에만.
+      if (ret && deriveJpExportQuarantineStatus(flat) !== 'done') {
+        const r17 = leadReminder(
+          flat,
+          `${token}|jp-export-17`,
+          ret,
+          17,
+          '일본 수출 동물검역 신청 마감이 일주일 남았어요. 귀국 10일 전까지 신청·예약하세요.',
+          now,
+        )
+        if (r17) out.push(r17)
+        const r10 = leadReminder(
+          flat,
+          `${token}|jp-export-10`,
+          ret,
+          10,
+          '오늘까지 일본 수출 동물검역 신청이 필요해요(귀국 10일 전).',
+          now,
+        )
+        if (r10) out.push(r10)
+      }
+    } else if (token === 'thailand') {
+      // 태국 수입 허가증 — 영업일 기준이라 여유 있게 출국 2주 전 안내.
+      if (departure && deriveImportPermitStatus(flat) !== 'done') {
+        const r = leadReminder(
+          flat,
+          `${token}|th-permit`,
+          departure,
+          14,
+          '태국 수입 허가증 신청을 준비하세요. 출국 7영업일 전까지 신청해야 해요(영업일 기준이라 여유 있게 하세요).',
+          now,
+        )
+        if (r) out.push(r)
+      }
+    } else if (token === 'philippines') {
+      // 필리핀 수입 허가증 — 정해진 기한 없어 출국 1주 전 안내.
+      if (departure && deriveImportPermitStatus(flat) !== 'done') {
+        const r = leadReminder(
+          flat,
+          `${token}|ph-permit`,
+          departure,
+          7,
+          '필리핀 수입 허가증 신청을 준비하세요. 출국 1주일 전쯤 신청하세요.',
+          now,
+        )
+        if (r) out.push(r)
+      }
+    }
+  }
+  return out
+}
+
+// ── 진입점 ────────────────────────────────────────────────────────────────
+
+/** 모든 케이스에서 알림(A 예약 + B 유효기간 + C 신청마감) 수집. fireAt 오름차순. */
 export function collectReminders(cases: CaseRow[], now: Date): AppReminder[] {
   const today = localToday(now)
   const all: AppReminder[] = []
   for (const c of cases) {
     const pet = petLabel(c.pet_name)
     for (const ev of collectEventsForCase(c, today)) {
-      all.push(...eventToReminders(c, ev, pet, now))
+      all.push(...eventReminders(c, ev, pet, now))
     }
+    all.push(...collectValidityReminders(c, pet, today, now))
+    all.push(...collectDeadlineReminders(c, now))
   }
   all.sort((a, b) => a.fireAtIso.localeCompare(b.fireAtIso))
   return all
