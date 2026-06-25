@@ -20,6 +20,11 @@ import type { CapacitorConfig } from '@capacitor/cli'
 const config: CapacitorConfig = {
   appId: 'com.petmove.portal',
   appName: '펫무브',
+  // WebView UA 에 'PetmoveApp' 표식 추가 — 웹 코드가 "네이티브 앱"임을 식별하는 용도.
+  // ⚠️ 핵심: 원격 URL 모드 + 서비스 워커가 함께면 Capacitor 네이티브 브릿지가 주입되지
+  // 않아 isNativePlatform()=false → 플러그인(로컬 알림 등) 전멸한다(Capacitor #5278).
+  // 이 표식으로 sw-register 가 네이티브에선 SW 를 등록/사용하지 않게 해 브릿지를 살린다.
+  appendUserAgent: 'PetmoveApp',
   // webDir 는 static export 모드에서 사용. remote URL 모드에선 형식상만 필요 (빌드 산출물 폴더).
   webDir: 'out',
   server: {
