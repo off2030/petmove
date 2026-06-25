@@ -2,4 +2,6 @@
 <resources>
     <!-- 앱 톤(Stone) — 스플래시/상태바 배경. 웹 라이트 배경(#F5EFE8)과 동일. -->
     <color name="splash_background">#F5EFE8</color>
+    <!-- 브랜드 앰버 — 스플래시 아이콘 원형 배경(로고색과 동일). -->
+    <color name="splash_amber">#D99A58</color>
 </resources>
