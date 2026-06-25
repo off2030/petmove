@@ -1,12 +1,19 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useConfirm } from '@petmove/ui'
 import { signOut, updateMyProfile } from '@/lib/actions/profile'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { C, EditPageShell, SectionCard } from '@/components/me/settings-shared'
 import { ThemeSwitcher } from './theme-switcher'
+import { collectReminders } from '@/lib/journey/reminders'
+import {
+  disableReminders,
+  enableReminders,
+  remindersEnabled,
+  syncReminders,
+} from '@/lib/native/local-reminders'
 
 const DELETION_GRACE_DAYS = 7
 const MS_PER_DAY = 24 * 3600 * 1000
@@ -105,28 +112,6 @@ function ExtRow({
   )
 }
 
-/** 값 표시 전용 행 (이동 없음). placeholder 톤(ink3) 또는 본문 톤(ink) 선택. */
-function ValueRow({
-  label,
-  value,
-  muted = true,
-  last,
-}: {
-  label: string
-  value: string
-  /** 값을 placeholder 톤(ink3)으로 — '준비 중' 같은 미구현 표시용. 기본 true. */
-  muted?: boolean
-  last?: boolean
-}) {
-  return (
-    <Row
-      label={label}
-      right={<span style={{ fontSize: 15, color: muted ? C.ink3 : C.ink2 }}>{value}</span>}
-      last={last}
-    />
-  )
-}
-
 /** iOS 톤 on/off 스위치. on=accent 트랙, off=옅은 잉크 트랙. */
 function Switch({ on, onClick, disabled }: { on: boolean; onClick: () => void; disabled?: boolean }) {
   return (
@@ -207,9 +192,41 @@ function ToggleRow({
 export function SettingsView() {
   const version = process.env.NEXT_PUBLIC_APP_VERSION
   const gitSha = process.env.NEXT_PUBLIC_GIT_SHA
-  const { profile, updateProfile } = useCases()
+  const { profile, updateProfile, cases } = useCases()
   const confirm = useConfirm()
   const scheduledAt = profile?.deletion_scheduled_at ?? null
+
+  // 일정 알림(로컬 알림) 토글 — 켜짐 여부는 기기 localStorage 플래그. 네이티브 앱 전용.
+  const [remindersOn, setRemindersOn] = useState(false)
+  const [remindersBusy, setRemindersBusy] = useState(false)
+  const [remindersNote, setRemindersNote] = useState<string | null>(null)
+  useEffect(() => {
+    // localStorage 는 SSR 에 없어 마운트 후 1회 읽어 동기화 — 의도된 패턴.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRemindersOn(remindersEnabled())
+  }, [])
+  async function toggleReminders() {
+    if (remindersBusy) return
+    setRemindersBusy(true)
+    setRemindersNote(null)
+    if (remindersOn) {
+      await disableReminders()
+      setRemindersOn(false)
+    } else {
+      const res = await enableReminders()
+      if (res.ok) {
+        setRemindersOn(true)
+        await syncReminders(collectReminders(cases, new Date()))
+      } else if (res.reason === 'web') {
+        setRemindersNote('알림은 설치형 앱(안드로이드·iOS)에서만 켤 수 있어요.')
+      } else if (res.reason === 'denied') {
+        setRemindersNote('기기 설정에서 알림 권한을 허용해야 켤 수 있어요.')
+      } else {
+        setRemindersNote('알림을 켜지 못했어요. 잠시 후 다시 시도해주세요.')
+      }
+    }
+    setRemindersBusy(false)
+  }
 
   // 고급 토글 — customer_profiles 에 저장(계정 전체). 저장 중인 키만 disable.
   // 표시는 '긍정 기능 + 기본 ON' — DB 필드는 부정 플래그(free_input_mode/hide_step_descriptions,
@@ -250,7 +267,21 @@ export function SettingsView() {
   return (
     <EditPageShell title="설정" backHref="/me" backLabel="내 정보">
       <SectionCard label="알림" marginTop={8}>
-        <ValueRow label="푸시 알림" value="준비 중" last />
+        <ToggleRow
+          label="일정 알림"
+          desc="백신·검사·검역 등 예정일 하루 전과 당일 아침에 알려드려요. 설치형 앱에서만 작동해요."
+          on={remindersOn}
+          disabled={remindersBusy}
+          onToggle={toggleReminders}
+          last
+        />
+        {remindersNote && (
+          <div
+            style={{ fontSize: 11.5, color: C.ink3, padding: '0 0 12px', lineHeight: 1.45 }}
+          >
+            {remindersNote}
+          </div>
+        )}
       </SectionCard>
 
       <SectionCard label="화면">

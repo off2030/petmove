@@ -309,6 +309,33 @@ export function CaseDataProvider({
     }
   }, [refreshCases, refreshProfile])
 
+  // 일정 알림(로컬 알림) 재예약 — 네이티브 앱 + 설정 ON + 권한 있을 때만(웹은 no-op).
+  // 케이스가 실제로 바뀔 때만(업데이트 시각 기준) 재계산 — focus refetch 의 새 array reference 로
+  // 매번 재예약되지 않도록 remindersKey 로 좁힌다.
+  const remindersKey = useMemo(
+    () => cases.map((c) => `${c.id}:${c.updated_at}`).join('|'),
+    [cases],
+  )
+  useEffect(() => {
+    if (previewMode) return
+    let cancelled = false
+    void (async () => {
+      try {
+        const { remindersEnabled, syncReminders } = await import('@/lib/native/local-reminders')
+        if (cancelled || !remindersEnabled()) return
+        const { collectReminders } = await import('@/lib/journey/reminders')
+        await syncReminders(collectReminders(cases, new Date()))
+      } catch {
+        /* best-effort — 알림 재예약 실패가 앱을 막지 않게 */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+    // cases 는 remindersKey(아이디+수정시각)로 대표 — 내용이 실제로 바뀔 때만 재실행.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remindersKey, previewMode])
+
   const value = useMemo(
     () => ({
       cases,
