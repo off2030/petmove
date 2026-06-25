@@ -317,7 +317,7 @@ export function SettingsView() {
               알림 테스트
             </button>
             <div style={{ fontSize: 11.5, color: C.ink3, lineHeight: 1.45 }}>
-              알림 작동을 확인하세요. 클릭 후 화면을 잠그고 10초 정도 기다리면 알림이 도착해요.
+              알림 작동을 확인하세요. 버튼을 누르면 바로 알림이 떠요.
             </div>
             {testNote && (
               <div style={{ fontSize: 11.5, color: C.ink3, lineHeight: 1.45 }}>{testNote}</div>

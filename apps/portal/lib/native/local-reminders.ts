@@ -81,8 +81,32 @@ export async function disableReminders(): Promise<void> {
 }
 
 /**
- * 테스트 알림 — 약 10초 뒤 1건 발송. 알림이 이 기기에 실제로 도착하는지 확인용
- * (특히 삼성폰의 배터리 절약이 알림을 막지 않는지). 권한 없으면 요청.
+ * Android 헤드업(포그라운드에서도 즉시 팝업)용 HIGH importance 채널을 보장하고 그 id 를 반환.
+ * 기본 채널은 앱을 보고 있을 때 상단바로만 조용히 들어가 "안 떴다"고 오해하기 쉬움 → 테스트는
+ * HIGH 채널로 띄운다. iOS/웹은 채널 개념이 없어(또는 플러그인이 포그라운드 표시 담당) undefined.
+ */
+async function ensureTestChannel(): Promise<string | undefined> {
+  try {
+    const { Capacitor } = await import('@capacitor/core')
+    if (Capacitor.getPlatform() !== 'android') return undefined
+    const { LocalNotifications } = await import('@capacitor/local-notifications')
+    const id = 'pm-test'
+    await LocalNotifications.createChannel({
+      id,
+      name: '테스트 알림',
+      description: '알림 작동 테스트용',
+      importance: 5, // HIGH — 포그라운드에서도 헤드업으로 즉시 표시
+    })
+    return id
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * 테스트 알림 — 누르면 **즉시** 1건 발송(schedule 생략). 앱을 보고 있을 때도 바로 뜨도록
+ * Android 는 HIGH importance 채널(헤드업), iOS 는 플러그인 기본 포그라운드 표시를 쓴다.
+ * 알림이 이 기기에 실제로 도착하는지 확인용(특히 삼성폰 배터리 절약이 막지 않는지). 권한 없으면 요청.
  */
 export async function sendTestReminder(): Promise<{ ok: boolean; reason?: string }> {
   try {
@@ -91,13 +115,15 @@ export async function sendTestReminder(): Promise<{ ok: boolean; reason?: string
     let perm = await LocalNotifications.checkPermissions()
     if (perm.display !== 'granted') perm = await LocalNotifications.requestPermissions()
     if (perm.display !== 'granted') return { ok: false, reason: 'denied' }
+    const channelId = await ensureTestChannel()
     await LocalNotifications.schedule({
       notifications: [
         {
           id: TEST_ID,
           title: '펫무브',
           body: '일정 알림이 정상 작동해요! 🐾',
-          schedule: { at: new Date(Date.now() + 10_000) },
+          // schedule 생략 = 즉시 발송. channelId 는 Android 에서만(iOS 는 undefined → 미포함).
+          ...(channelId ? { channelId } : {}),
         },
       ],
     })
