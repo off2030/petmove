@@ -164,10 +164,10 @@ export function TimelineCalm({
   const animOffset = CIRC * (1 - animPct)
 
   const dDayLabel = formatDDay(trip.daysLeft)
-  // 링 둘째 줄 '상태' — 출국일 있으면 D-day(카운트다운), 없으면 '며칠째 준비 중' 카운트업(생성일 기준).
+  // 링 둘째 줄 '상태' — 출국일 있으면 D-day(카운트다운), 없으면 'N일째' 카운트업(생성일 기준).
   // 항상 '단계' 줄 아래 별도 줄로, 한 단계 짙게(ink2) 강조 — 가장 actionable 한 정보.
   // (출국일 없을 때 일본 prep 힌트(trip.prep)는 잠시 보류 — 되돌릴 땐 아래 한 줄만 복구.)
-  const prepCountupLabel = trip.elapsedDays != null ? `${trip.elapsedDays}일째 준비 중` : null
+  const prepCountupLabel = trip.elapsedDays != null ? `${trip.elapsedDays}일째` : null
   const ringStatus = dDayLabel ?? prepCountupLabel
 
   // 완료 배너 날짜 — 왕복은 출발~도착(귀국) 범위, 편도는 도착일만.
