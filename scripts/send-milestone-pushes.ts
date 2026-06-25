@@ -44,12 +44,13 @@ async function getMessaging(): Promise<FcmMessaging> {
     messagingPromise = (async () => {
       const raw = process.env.FCM_SERVICE_ACCOUNT
       if (!raw) throw new Error('FCM_SERVICE_ACCOUNT 환경변수가 필요합니다.')
-      const admin = await import('firebase-admin')
+      // firebase-admin v14 는 모듈형 API — 서브경로 import 의 named export 를 쓴다.
+      // (메인 'firebase-admin' namespace 엔 apps/credential/messaging 이 없어 undefined.length 로 터졌음.)
+      const { initializeApp, getApps, cert } = await import('firebase-admin/app')
+      const { getMessaging } = await import('firebase-admin/messaging')
       const sa = JSON.parse(raw)
-      const app = admin.apps.length
-        ? admin.app()
-        : admin.initializeApp({ credential: admin.credential.cert(sa) })
-      return admin.messaging(app) as unknown as FcmMessaging
+      const app = getApps().length ? getApps()[0] : initializeApp({ credential: cert(sa) })
+      return getMessaging(app) as unknown as FcmMessaging
     })()
   }
   return messagingPromise
