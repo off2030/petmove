@@ -24,6 +24,9 @@ const BREEDS = breedsData as Breed[]
 interface Color { ko: string; en: string; alias?: string[] }
 const COLORS = colorsData as Color[]
 
+// Cloudflare Turnstile site key (공개 신청폼 봇 차단). 미설정 시 위젯 미표시 + 서버 검증도 스킵.
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+
 type Lang = 'ko' | 'en'
 
 const messages = {
@@ -527,6 +530,11 @@ export function ApplyForm({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [missing, setMissing] = useState<Set<string>>(() => new Set())
+  // honeypot — 사람에겐 숨김. 봇이 채우면 서버가 silent reject.
+  const [website, setWebsite] = useState('')
+  // Cloudflare Turnstile token (공개 폼 + site key 설정 시만; 위젯 콜백에서 갱신).
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const turnstileRef = useRef<HTMLDivElement>(null)
   // 보호자 정보가 prefill 되면 소유주(step 2) 를 건너뛴 흐름.
   // 펫무브앱은 추가 정보(마이크로칩·광견병 등 선택 입력)를 등록 시 받지 않는다 — 목적지→
   // (소유주)→반려동물 필수 정보까지만. 추가 정보는 등록 후 앱에서 입력. (펫무브워크와 분리)
@@ -582,6 +590,55 @@ export function ApplyForm({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [showAddrModal])
+
+  // Cloudflare Turnstile — 공개(조직별) 폼 + site key 설정 시에만 로드·렌더.
+  // 마지막 단계 진입 시 위젯 렌더, 떠나면 제거(뒤로갔다 다시 와도 재렌더). 키 미설정/직영은 no-op.
+  useEffect(() => {
+    if (!isPublic || !TURNSTILE_SITE_KEY || !isLastStep) return
+    interface TurnstileGlobal {
+      render(el: HTMLElement, opts: {
+        sitekey: string
+        callback?: (token: string) => void
+        'expired-callback'?: () => void
+        'error-callback'?: () => void
+      }): string | undefined
+      remove(widgetId: string): void
+    }
+    type WindowWithTurnstile = Window & { turnstile?: TurnstileGlobal }
+    const w = window as WindowWithTurnstile
+    let widgetId: string | undefined
+    function render() {
+      if (!w.turnstile || !turnstileRef.current) return false
+      widgetId = w.turnstile.render(turnstileRef.current, {
+        sitekey: TURNSTILE_SITE_KEY!,
+        callback: (token) => setTurnstileToken(token),
+        'expired-callback': () => setTurnstileToken(''),
+        'error-callback': () => setTurnstileToken(''),
+      })
+      return true
+    }
+    if (!render()) {
+      const existing = document.querySelector<HTMLScriptElement>(
+        'script[src^="https://challenges.cloudflare.com/turnstile"]',
+      )
+      if (existing) {
+        existing.addEventListener('load', render, { once: true })
+      } else {
+        const script = document.createElement('script')
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
+        script.async = true
+        script.defer = true
+        script.onload = render
+        document.head.appendChild(script)
+      }
+    }
+    return () => {
+      if (widgetId && w.turnstile?.remove) {
+        try { w.turnstile.remove(widgetId) } catch { /* 이미 제거됨 */ }
+      }
+      setTurnstileToken('')
+    }
+  }, [isPublic, isLastStep])
 
   function handleAddrSearch() {
     if (!scriptLoaded || !window.daum?.Postcode) return
@@ -762,6 +819,8 @@ export function ApplyForm({
     // 막 마지막 단계로 전환된 직후(모바일 ghost click/더블탭)의 자동 제출 차단.
     // 사용자가 '제출'을 의도적으로 누르려면 단계 전환 후 잠깐(>0.6s) 뒤여야 함.
     if (Date.now() - lastAdvanceRef.current < 600) return
+    // 공개 폼 + Turnstile 활성 시 토큰이 아직 안 왔으면 제출 보류 (위젯이 곧 해결, 버튼도 disabled).
+    if (isPublic && TURNSTILE_SITE_KEY && !turnstileToken) return
 
     // 최종 제출 — 보이는 단계만 재검증(skipOwner 면 소유주 단계 제외), 이상 있으면 해당 단계로 이동.
     for (const s of visibleSteps) {
@@ -778,22 +837,22 @@ export function ApplyForm({
     setMissing(new Set())
     setError(null)
     setSubmitting(true)
-    let allOk = true
-    for (const p of pets) {
-      const result = await applyCase({
-        org_id: orgId,
-        destination,
-        trip_type: tripType,
-        customer_name: customerName.trim(),
-        customer_last_name_en: capitalize(customerLastNameEn.trim()),
-        customer_first_name_en: capitalize(customerFirstNameEn.trim()),
-        phone: phone.trim(),
-        email: isPublic ? email.trim() : undefined,
-        address_kr: addressDetail.trim() ? `${addressKr.trim()} ${addressDetail.trim()}` : addressKr.trim(),
-        address_en: addressEn.trim(),
-        address_zipcode: addressZipcode,
-        address_sido: addressSido,
-        address_sigungu: addressSigungu,
+    // 한 신청 = 여러 동물 = 여러 case. 봇 검증(Turnstile 1회용)을 제출당 1회만 하도록 배치 호출.
+    const result = await applyCase({
+      org_id: orgId,
+      destination,
+      trip_type: tripType,
+      customer_name: customerName.trim(),
+      customer_last_name_en: capitalize(customerLastNameEn.trim()),
+      customer_first_name_en: capitalize(customerFirstNameEn.trim()),
+      phone: phone.trim(),
+      email: isPublic ? email.trim() : undefined,
+      address_kr: addressDetail.trim() ? `${addressKr.trim()} ${addressDetail.trim()}` : addressKr.trim(),
+      address_en: addressEn.trim(),
+      address_zipcode: addressZipcode,
+      address_sido: addressSido,
+      address_sigungu: addressSigungu,
+      pets: pets.map((p) => ({
         pet_name: p.petName.trim(),
         pet_name_en: capitalize(p.petNameEn.trim()),
         birth_date: p.birthDate,
@@ -812,9 +871,12 @@ export function ApplyForm({
         })(),
         microchip_implant_date: p.microchipDate || undefined,
         rabies_date: p.rabiesDate || undefined,
-      })
-      if (!result.ok) { setError(result.error); allOk = false; break }
-    }
+      })),
+      website,
+      cf_turnstile_token: turnstileToken || undefined,
+    })
+    const allOk = result.ok
+    if (!result.ok) setError(result.error)
 
     if (allOk) {
       // 조직별 공개폼(미로그인): /me 는 로그인 필요 → '접수 완료' 화면을 보여준다.
@@ -1062,6 +1124,13 @@ export function ApplyForm({
           )}
           </>)}
 
+          {/* Cloudflare Turnstile — 공개 폼 봇 차단. key 미설정 시 미표시(서버도 스킵). */}
+          {isPublic && TURNSTILE_SITE_KEY && isLastStep && (
+            <div className="flex justify-center pt-1">
+              <div ref={turnstileRef} />
+            </div>
+          )}
+
           {/* Error */}
           {error && (
             <div className={destructiveBoxClass}>
@@ -1081,10 +1150,30 @@ export function ApplyForm({
                 {m.next}
               </button>
             ) : (
-              <button type="submit" disabled={submitting} className={cn(primaryButtonClass, 'flex-1')}>
+              <button
+                type="submit"
+                disabled={submitting || (isPublic && !!TURNSTILE_SITE_KEY && !turnstileToken)}
+                className={cn(primaryButtonClass, 'flex-1')}
+              >
                 {submitting ? m.submitting : m.submit}
               </button>
             )}
+          </div>
+
+          {/* honeypot — 사람에겐 보이지 않는 필드. 봇이 자동 채우면 서버가 silent reject.
+              화면 밖으로 보내고 tabIndex/autoComplete 로 사람·브라우저는 건드리지 않게 함. */}
+          <div aria-hidden="true" className="absolute -left-[9999px] top-0 h-0 w-0 overflow-hidden" tabIndex={-1}>
+            <label>
+              Website
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+              />
+            </label>
           </div>
 
           {/* submitFooter 폐기 — 마지막 단계의 안내 문구는 표시하지 않음. */}
