@@ -54,9 +54,9 @@ function StoreButton({ label, glyph, url }: { label: string; glyph: ReactNode; u
         alignItems: 'center',
         justifyContent: 'center',
         gap: 7,
-        // 라이트=짙은 알약/밝은 글씨, 다크=밝은 알약/짙은 글씨 (ink↔bg 반전으로 양쪽 대비 확보).
-        background: C.ink,
-        color: C.bg,
+        // 강조색(amber) 알약 + 흰 글씨 — 토글·저장 버튼·로고와 같은 primary 액션 색(라이트/다크 공통).
+        background: C.accent,
+        color: '#fff',
         border: 'none',
         borderRadius: 14,
         padding: '13px 10px',
