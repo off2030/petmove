@@ -2,6 +2,7 @@ import {
   deriveAdvanceNotificationStatus,
   deriveImportPermitStatus,
   deriveJpExportQuarantineStatus,
+  findDestinationKey,
   flattenCaseForDestination,
   resolveDone,
   type CaseRow,
@@ -21,6 +22,10 @@ import { destinationTokens, petLabel } from './reminders'
  *   - 일본: 광견병 항체검사 / 사전 신고 / 일본 수출 동물검역 신청·예약
  *   - 태국·필리핀: 광견병 항체검사 / 수입 허가증
  * 완료 판정은 모두 기존 도메인 함수 재사용(resolveDone·derive*) — 새 판정 로직 없음.
+ *
+ * ⚠️ 목적지 토큰은 **한글 국가명**('일본'·'태국'·'필리핀')이라, derive 분기는 반드시
+ *    `findDestinationKey` 로 영어 키('japan'·'thailand'·'philippines')로 정규화한 뒤 비교한다.
+ *    (정규화 없이 토큰을 'japan' 과 직접 비교하면 한글 토큰이 안 잡혀 한 건도 발송 안 됨.)
  */
 
 export interface MilestonePush {
@@ -32,22 +37,26 @@ export interface MilestonePush {
 
 const APP_TITLE = '펫무브'
 
-/** 항체검사 완료 푸시를 보낼 목적지(사용자 확정 3개). 그 외 목적지는 미발송. */
-const TITER_DESTINATIONS = new Set(['japan', 'thailand', 'philippines'])
+/** 항체검사 완료 푸시를 보낼 목적지 키(사용자 확정 3개). 그 외 목적지는 미발송. */
+const TITER_KEYS = new Set(['japan', 'thailand', 'philippines'])
 
 /**
  * 한 케이스에서 "지금 완료 상태인" 마일스톤 푸시들을 수집. 목적지(by_dest) 토큰별로 본다.
  * - 항체검사: 글로벌 검사라 케이스당 1회(여러 목적지여도 중복 X).
- * - 사전 신고·일본 수출검역: 일본 목적지만.
- * - 수입 허가증: 태국·필리핀 목적지만(목적지별 허가라 토큰별 key).
+ * - 사전 신고·일본 수출검역: 일본(key='japan') 목적지만.
+ * - 수입 허가증: 태국·필리핀(key='thailand'|'philippines') 목적지만(목적지별 허가라 key별 dedup).
  */
 export function collectMilestonePushes(caseRow: CaseRow): MilestonePush[] {
   const pet = petLabel(caseRow.pet_name)
-  const tokens = destinationTokens(caseRow)
+  const tokens = destinationTokens(caseRow) // 한글 국가명 토큰들(예: ['일본'])
   const out: MilestonePush[] = []
 
   // 광견병 항체검사 — 글로벌(rabies_titer_records) 검사라 케이스당 1회. 대상 목적지에만.
-  if (tokens.some((t) => TITER_DESTINATIONS.has(t)) && resolveDone('has-titer-entry', caseRow)) {
+  const hasTiterDest = tokens.some((t) => {
+    const key = findDestinationKey(t)
+    return !!key && TITER_KEYS.has(key)
+  })
+  if (hasTiterDest && resolveDone('has-titer-entry', caseRow)) {
     out.push({
       key: `${caseRow.id}|titer`,
       title: APP_TITLE,
@@ -56,7 +65,9 @@ export function collectMilestonePushes(caseRow: CaseRow): MilestonePush[] {
   }
 
   for (const token of tokens) {
-    // 목적지별 필드(수입 허가증 등)는 활성 목적지로 flatten 한 view 로 판정(검역과 동일 컨벤션).
+    const key = findDestinationKey(token) // '일본' → 'japan'
+    if (!key) continue
+    // 목적지별 필드(수입 허가증 등)는 **네이티브 토큰**으로 flatten(by_dest 키가 한글이라).
     let flat: CaseRow
     try {
       flat = flattenCaseForDestination(caseRow, token)
@@ -64,7 +75,7 @@ export function collectMilestonePushes(caseRow: CaseRow): MilestonePush[] {
       continue
     }
 
-    if (token === 'japan') {
+    if (key === 'japan') {
       if (deriveAdvanceNotificationStatus(flat) === 'done') {
         out.push({
           key: `${caseRow.id}|japan|advance`,
@@ -79,10 +90,10 @@ export function collectMilestonePushes(caseRow: CaseRow): MilestonePush[] {
           body: `${pet} 일본 수출 동물검역 신청과 예약이 완료됐어요. 예약 일시를 앱에서 확인하세요. ✨`,
         })
       }
-    } else if (token === 'thailand' || token === 'philippines') {
+    } else if (key === 'thailand' || key === 'philippines') {
       if (deriveImportPermitStatus(flat) === 'done') {
         out.push({
-          key: `${caseRow.id}|${token}|import-permit`,
+          key: `${caseRow.id}|${key}|import-permit`,
           title: APP_TITLE,
           body: `${pet} 수입 허가증이 나왔어요. ✨`,
         })

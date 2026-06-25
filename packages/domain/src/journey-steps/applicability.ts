@@ -89,7 +89,7 @@ export function isSingleDoseRabiesCase(caseRow: CaseRow): boolean {
 }
 
 /** destination 토큰(예: '일본', 'france')을 DESTINATION_OVERRIDES 키('japan', 'eu')로 정규화. */
-function findDestinationKey(destinationToken: string): string | null {
+export function findDestinationKey(destinationToken: string): string | null {
   const override = getDestinationOverride(destinationToken)
   if (!override) return null
   for (const [key, value] of Object.entries(DESTINATION_OVERRIDES)) {

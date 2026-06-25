@@ -4,6 +4,7 @@ import {
   deriveAdvanceNotificationStatus,
   deriveImportPermitStatus,
   deriveJpExportQuarantineStatus,
+  findDestinationKey,
   flattenCaseForDestination,
   rabiesBoosterChainEnd,
   readCivEntries,
@@ -369,8 +370,9 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
     const entry = str(data.entry_date) || str(flat.departure_date)
     const departure = str(flat.departure_date) || str(data.departure_date) || str(data.departure_flight_date)
     const ret = str(data.return_date)
+    const key = findDestinationKey(token) // 목적지 토큰이 한글('일본')이라 영어 키로 정규화
 
-    if (token === 'japan') {
+    if (key === 'japan') {
       // 사전 신고 — 입국 40일 전 마감. 완료 전에만.
       if (entry && deriveAdvanceNotificationStatus(flat) !== 'done') {
         const r47 = leadReminder(
@@ -413,7 +415,7 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r10) out.push(r10)
       }
-    } else if (token === 'thailand') {
+    } else if (key === 'thailand') {
       // 태국 수입 허가증 — 영업일 기준이라 여유 있게 출국 2주 전 안내.
       if (departure && deriveImportPermitStatus(flat) !== 'done') {
         const r = leadReminder(
@@ -426,7 +428,7 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r) out.push(r)
       }
-    } else if (token === 'philippines') {
+    } else if (key === 'philippines') {
       // 필리핀 수입 허가증 — 정해진 기한 없어 출국 1주 전 안내.
       if (departure && deriveImportPermitStatus(flat) !== 'done') {
         const r = leadReminder(
