@@ -592,12 +592,14 @@ export function ApplyForm({
   }, [showAddrModal])
 
   // Cloudflare Turnstile — 공개(조직별) 폼 + site key 설정 시에만 로드·렌더.
-  // 마지막 단계 진입 시 위젯 렌더, 떠나면 제거(뒤로갔다 다시 와도 재렌더). 키 미설정/직영은 no-op.
+  // appearance:'interaction-only' = 평상시 투명(고객에겐 안 보임), 봇 의심 시에만 챌린지 표시.
+  // 마지막 단계 진입 시 실행, 떠나면 제거(뒤로갔다 다시 와도 재실행). 키 미설정/직영은 no-op.
   useEffect(() => {
     if (!isPublic || !TURNSTILE_SITE_KEY || !isLastStep) return
     interface TurnstileGlobal {
       render(el: HTMLElement, opts: {
         sitekey: string
+        appearance?: 'always' | 'execute' | 'interaction-only'
         callback?: (token: string) => void
         'expired-callback'?: () => void
         'error-callback'?: () => void
@@ -611,6 +613,8 @@ export function ApplyForm({
       if (!w.turnstile || !turnstileRef.current) return false
       widgetId = w.turnstile.render(turnstileRef.current, {
         sitekey: TURNSTILE_SITE_KEY!,
+        // 투명 모드 — 정상 고객에겐 위젯이 안 뜨고 백그라운드 검증만. 수상할 때만 챌린지 노출.
+        appearance: 'interaction-only',
         callback: (token) => setTurnstileToken(token),
         'expired-callback': () => setTurnstileToken(''),
         'error-callback': () => setTurnstileToken(''),
@@ -1124,9 +1128,10 @@ export function ApplyForm({
           )}
           </>)}
 
-          {/* Cloudflare Turnstile — 공개 폼 봇 차단. key 미설정 시 미표시(서버도 스킵). */}
+          {/* Cloudflare Turnstile (투명 모드) — 평상시엔 비어 있고(고객에겐 안 보임), 봇 의심
+              시에만 이 자리에 챌린지가 뜬다. key 미설정 시 미표시(서버도 스킵). */}
           {isPublic && TURNSTILE_SITE_KEY && isLastStep && (
-            <div className="flex justify-center pt-1">
+            <div className="flex justify-center">
               <div ref={turnstileRef} />
             </div>
           )}
