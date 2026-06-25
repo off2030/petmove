@@ -16,12 +16,15 @@ import { useEffect } from 'react'
 export function NativeAuthListener() {
   useEffect(() => {
     let remove: (() => void) | undefined
+    let handledUrl: string | null = null
     void (async () => {
       try {
         const { Capacitor } = await import('@capacitor/core')
         if (!Capacitor.isNativePlatform()) return
         const { App } = await import('@capacitor/app')
         const handle = await App.addListener('appUrlOpen', ({ url }) => {
+          if (url === handledUrl) return
+          handledUrl = url
           void handleAuthDeepLink(url)
         })
         remove = () => void handle.remove()
@@ -36,7 +39,22 @@ export function NativeAuthListener() {
   return null
 }
 
-async function handleAuthDeepLink(url: string) {
+function closeCustomTabBestEffort() {
+  void (async () => {
+    try {
+      const { Browser } = await import('@capacitor/browser')
+      await Browser.close()
+    } catch {
+      /* 무시 */
+    }
+  })()
+}
+
+function navigateReplace(path: string) {
+  window.location.replace(path)
+}
+
+function handleAuthDeepLink(url: string) {
   // 우리 인증 딥링크만 처리.
   if (!url.includes('auth/callback')) return
 
@@ -47,18 +65,14 @@ async function handleAuthDeepLink(url: string) {
   const code = params.get('code')
   const err = params.get('error_description') ?? params.get('error')
 
-  // Custom Tab 닫기(베스트에포트).
-  try {
-    const { Browser } = await import('@capacitor/browser')
-    await Browser.close()
-  } catch {
-    /* 무시 */
-  }
+  // Custom Tab 닫기는 베스트에포트로 뒤에서 처리한다. Android 일부 환경에서 close() 가
+  // 늦게 resolve 되면 로그인 화면의 "이동 중..." 잔상이 길어지므로 콜백 이동을 먼저 건다.
+  closeCustomTabBestEffort()
 
   if (code) {
     // 기존 서버 콜백이 PKCE 교환·세션 설정·next 리다이렉트까지 처리.
-    window.location.href = `/auth/callback?code=${encodeURIComponent(code)}`
+    navigateReplace(`/auth/callback?code=${encodeURIComponent(code)}`)
   } else if (err) {
-    window.location.href = `/login?error=${encodeURIComponent(err)}`
+    navigateReplace(`/login?error=${encodeURIComponent(err)}`)
   }
 }

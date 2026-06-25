@@ -28,7 +28,7 @@ async function rehostAvatarToBucket(
   try {
     const res = await fetch(externalUrl, {
       cache: 'no-store',
-      signal: AbortSignal.timeout(8_000),
+      signal: AbortSignal.timeout(2_000),
     })
     if (!res.ok) return null
     const contentType = res.headers.get('content-type') ?? 'image/jpeg'
@@ -62,8 +62,11 @@ async function rehostAvatarToBucket(
 export async function ensureCustomerProfile(
   supabase: SupabaseClient,
   user: User,
-  opts?: { avatarUrl?: string | null },
-): Promise<void> {
+  opts?: {
+    avatarUrl?: string | null
+    resolveAvatarUrl?: () => Promise<string | null>
+  },
+): Promise<{ created: boolean }> {
   // 이미 있으면 no-op
   const { data: existing } = await supabase
     .from('customer_profiles')
@@ -71,7 +74,7 @@ export async function ensureCustomerProfile(
     .eq('user_id', user.id)
     .maybeSingle()
 
-  if (existing) return
+  if (existing) return { created: false }
 
   const email = user.email ?? null
   const emailNormalized = email ? email.toLowerCase() : null
@@ -82,18 +85,26 @@ export async function ensureCustomerProfile(
   const displayName = metaName ?? (email ? email.split('@')[0] : null)
 
   // 소셜 프로필 사진 → 보호자 아바타. best-effort: 실패해도 아래 insert 는 진행.
-  const externalAvatar = opts?.avatarUrl ?? extractAvatarUrl(user)
+  const resolvedAvatar = opts?.avatarUrl ?? (opts?.resolveAvatarUrl ? await opts.resolveAvatarUrl() : null)
+  const externalAvatar = resolvedAvatar ?? extractAvatarUrl(user)
   const avatarPhotoUrl = externalAvatar
     ? await rehostAvatarToBucket(user.id, externalAvatar)
     : null
 
-  await supabase.from('customer_profiles').insert({
+  const { error } = await supabase.from('customer_profiles').insert({
     user_id: user.id,
     display_name: displayName,
     email_normalized: emailNormalized,
     ...(avatarPhotoUrl ? { avatar_photo_url: avatarPhotoUrl } : {}),
     // phone 은 사용자가 프로파일에서 직접 입력 (OAuth 가 보장 못 함)
   })
+
+  if (error) {
+    console.warn('[ensureCustomerProfile] insert failed:', error.message)
+    return { created: false }
+  }
+
+  return { created: true }
 }
 
 /**

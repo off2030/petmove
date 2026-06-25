@@ -76,21 +76,29 @@ export async function GET(request: Request) {
     }
 
     // 첫 로그인이면 customer_profiles 생성. 실패해도 로그인 자체는 성공으로 처리.
-    const { data: { user } } = await supabase.auth.getUser()
+    // exchangeCodeForSession already returns the signed-in user, so avoid an extra
+    // auth-server getUser() round trip before redirecting into the app.
+    const user = exchangeData.user
     if (user) {
       // 카카오는 user_metadata 에 사진이 안 담겨오는 경우가 있어 provider_token 으로 직접 조회.
       // 구글은 user_metadata(avatar_url/picture) 로 충분 → ensureCustomerProfile 내부 처리.
-      let kakaoAvatar: string | null = null
-      if (user.app_metadata?.provider === 'kakao' && exchangeData.session?.provider_token) {
-        kakaoAvatar = await fetchKakaoProfileImage(exchangeData.session.provider_token)
-      }
-      try { await ensureCustomerProfile(supabase, user, { avatarUrl: kakaoAvatar }) } catch { /* best-effort */ }
+      const kakaoProviderToken =
+        user.app_metadata?.provider === 'kakao' ? exchangeData.session?.provider_token : null
+      const profileResult = await ensureCustomerProfile(
+        supabase,
+        user,
+        kakaoProviderToken
+          ? { resolveAvatarUrl: () => fetchKakaoProfileImage(kakaoProviderToken) }
+          : undefined,
+      ).catch(() => ({ created: false }))
       // 자동 매칭 — 보호자 이메일과 일치하는 기존 admin 케이스를 case_customer_links 로 연결.
       // service role 우회 (RLS insert 는 org_member 만 허용이라).
-      try {
-        const admin = createAdminClient()
-        await autoLinkCasesByEmail(admin, user)
-      } catch { /* best-effort */ }
+      if (profileResult.created) {
+        try {
+          const admin = createAdminClient()
+          await autoLinkCasesByEmail(admin, user)
+        } catch { /* best-effort */ }
+      }
     }
   }
 

@@ -178,8 +178,14 @@ export async function GET(request: Request) {
     // 5. portal 특화 — customer_profiles 자동 생성 + 이메일 기준 자동 매칭
     const { data: { user: sessionUser } } = await supabase.auth.getUser()
     if (sessionUser) {
-      try { await ensureCustomerProfile(supabase, sessionUser, { avatarUrl: profileImage }) } catch { /* best-effort */ }
-      try { await autoLinkCasesByEmail(admin, sessionUser) } catch { /* best-effort */ }
+      const profileResult = await ensureCustomerProfile(
+        supabase,
+        sessionUser,
+        { avatarUrl: profileImage },
+      ).catch(() => ({ created: false }))
+      if (profileResult.created) {
+        try { await autoLinkCasesByEmail(admin, sessionUser) } catch { /* best-effort */ }
+      }
     }
   } catch (e) {
     return loginRedirect(url.origin, `naver_session: ${(e as Error).message}`)
