@@ -2,14 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Pretendard — 한글 글리프 전용. Google Fonts 미등록이라 jsdelivr CDN 경유.
-   latin 폰트(Inter Tight/Source Serif) 뒤 fallback 으로 스택. */
+/* Pretendard — self-hosted so release builds never depend on font CDNs. */
 @font-face {
   font-family: 'Pretendard';
   font-style: normal;
   font-weight: 45 920;
   font-display: swap;
-  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2-subset/PretendardVariable.woff2') format('woff2-variations');
+  src: url('/fonts/PretendardVariable.woff2') format('woff2');
 }
 
 /* Alonzo ExtraLight — 좌측 상단 로고 워드마크 전용. self-hosted .otf. */
@@ -39,8 +38,16 @@
 
 @layer base {
   :root {
+    --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    --font-sans-flat: var(--font-sans);
+    --font-sans-neu: var(--font-sans);
+    --font-sans-kr: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    --font-serif: Georgia, 'Times New Roman', serif;
+    --font-serif-kr: 'Pretendard', Georgia, 'Times New Roman', serif;
+    --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
     /* ── PMW tokens (editorial spec) ──────────────────────────── */
-    /* Fonts: next/font 가 --font-* 를 주입 → 이름 있는 alias 로 노출 */
+    /* Fonts: release-safe tokens backed by self-hosted/system fallbacks. */
     --pmw-font-serif: var(--font-serif), var(--font-serif-kr), Georgia, 'Times New Roman', serif;
     --pmw-font-sans: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
     --pmw-font-mono: var(--font-mono), 'Pretendard', ui-monospace, 'SF Mono', Menlo, monospace;
@@ -1945,7 +1952,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    font-family: var(--pmw-font-sans);
     font-feature-settings: 'rlig' 1, 'calt' 1;
     /* 모바일 — 탭 하이라이트 회색 박스 제거 (포커스 링은 :focus-visible 로 별도) */
     -webkit-tap-highlight-color: transparent;
@@ -1953,13 +1960,13 @@
 
   /* Editorial serif — use via .font-serif on headlines and pet names */
   .font-serif {
-    font-family: "Source Serif 4", var(--font-serif-kr), Georgia, "Times New Roman", serif;
+    font-family: var(--pmw-font-serif);
     font-weight: 500;
     letter-spacing: -0.1px;
   }
 
   .font-mono {
-    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-family: var(--pmw-font-mono);
   }
 
   /* input[type="search"] 의 브라우저 기본 X(clear) 버튼 제거 — 앱이 자체 X 버튼을 그리므로 중복 회피.

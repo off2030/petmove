@@ -1,60 +1,11 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Inter_Tight, Manrope, Source_Serif_4, JetBrains_Mono, Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import { ConfirmProvider } from '@petmove/ui'
 import { ServiceWorkerRegister } from '@/components/sw-register'
 
-// next/font — 동일 오리진에서 폰트 서빙, Turbopack/CSS @import 이슈 우회.
-// CSS 변수로 노출해서 tailwind fontFamily 가 참조.
-const interTight = Inter_Tight({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  style: ['normal', 'italic'],
-  variable: '--font-sans',
-  display: 'swap',
-})
-// flat 스킨 전용 — Linear/Notion 톤. Inter Tight 보다 넓은 여백, 차분한 인상.
-// italic 미로드 — flat 은 italic 안 씀 (CSS 로 .italic strip), 30~40KB 절약.
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-sans-flat',
-  display: 'swap',
-})
-// hygge 스킨 전용 — soft geometric. italic 없음 (CSS 로 .italic strip).
-const manrope = Manrope({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-sans-neu',
-  display: 'swap',
-})
-const sourceSerif = Source_Serif_4({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  style: ['normal', 'italic'],
-  variable: '--font-serif',
-  display: 'swap',
-})
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
-  variable: '--font-mono',
-  display: 'swap',
-})
-// 한글 글리프 — latin 폰트 뒤 fallback 으로 사용. Pretendard 와 비슷한 현대 톤.
-const notoSansKr = Noto_Sans_KR({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-sans-kr',
-  display: 'swap',
-})
-const notoSerifKr = Noto_Serif_KR({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-serif-kr',
-  display: 'swap',
-})
+// Font tokens are declared in globals.css and use self-hosted assets/system fallbacks.
+// Keeping fonts out of next/font/google makes release builds independent of Google Fonts fetches.
 
 export const metadata: Metadata = {
   title: '펫무브워크',
@@ -106,7 +57,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ko" suppressHydrationWarning className={`${interTight.variable} ${inter.variable} ${manrope.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} ${notoSansKr.variable} ${notoSerifKr.variable}`}>
+    <html lang="ko" suppressHydrationWarning>
       <head>
         {/* 웹폰트 preload — Alonzo(좌측 워드마크), Pretendard(한글 글리프).
             font-display: swap 라 로딩 늦으면 fallback → 실폰트 스왑 시 폭 변경 →
@@ -120,7 +71,7 @@ export default function RootLayout({
         />
         <link
           rel="preload"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2-subset/PretendardVariable.woff2"
+          href="/fonts/PretendardVariable.woff2"
           as="font"
           type="font/woff2"
           crossOrigin="anonymous"

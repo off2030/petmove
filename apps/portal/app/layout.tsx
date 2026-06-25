@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter_Tight } from 'next/font/google'
 import './globals.css'
 import { ConfirmProvider } from '@petmove/ui'
 import { ServiceWorkerRegister } from '@/components/sw-register'
@@ -14,17 +13,8 @@ import { NavGuardProvider } from '@/components/portal-shell/nav-guard'
 // 저장된 pm-theme(없으면 light) → 'system' 일 때만 OS 따라감. ThemeProvider 가 이후 상태를 이어받음.
 const themeNoFlash = `(function(){try{var m=localStorage.getItem('pm-theme')||'light';var d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.classList.toggle('dark',d);var c=d?'#1C1916':'#F5EFE8';var e=document.querySelector('meta[name="theme-color"]');if(!e){e=document.createElement('meta');e.setAttribute('name','theme-color');document.head.appendChild(e);}e.setAttribute('content',c);}catch(_){}})();`
 
-// Portal 폰트 스택 — next/font self-host Inter Tight + globals.css @font-face 의 Pretendard/Alonzo.
-// CSS 변수 --font-sans 로 노출하고, globals.css 가 semantic 토큰
-// (--pm-font-display, --pm-font-body, --pm-font-mark) 으로 한 번 더 추상화. UI 코드는
-// semantic 토큰만 참조 → 폰트 출처를 바꿔도 컴포넌트 손 안 댐.
-const interTight = Inter_Tight({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  style: ['normal', 'italic'],
-  variable: '--font-sans',
-  display: 'swap',
-})
+// Portal 폰트는 globals.css 의 self-hosted @font-face(Pretendard/Alonzo)만 사용한다.
+// next/font/google 은 빌드 때 Google Fonts 네트워크 fetch 가 필요해 재현 가능한 출시 빌드를 막는다.
 
 export const metadata: Metadata = {
   title: '펫무브',
@@ -56,7 +46,6 @@ export default function RootLayout({
     <html
       lang="ko"
       suppressHydrationWarning
-      className={interTight.variable}
     >
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <script dangerouslySetInnerHTML={{ __html: themeNoFlash }} />
