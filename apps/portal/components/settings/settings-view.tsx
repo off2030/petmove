@@ -202,51 +202,10 @@ export function SettingsView() {
   const [remindersBusy, setRemindersBusy] = useState(false)
   const [remindersNote, setRemindersNote] = useState<string | null>(null)
   const [testNote, setTestNote] = useState<string | null>(null)
-  const [diag, setDiag] = useState('')
   useEffect(() => {
     // localStorage 는 SSR 에 없어 마운트 후 1회 읽어 동기화 — 의도된 패턴.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setRemindersOn(remindersEnabled())
-    // 임시 진단 — 네이티브 인식 문제 추적용(원인 잡히면 제거).
-    void (async () => {
-      try {
-        const ua = navigator.userAgent || ''
-        const w = window as unknown as {
-          Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string }
-        }
-        const cap = w.Capacitor
-        const native = (() => {
-          try {
-            return String(cap?.isNativePlatform?.())
-          } catch {
-            return 'err'
-          }
-        })()
-        const plat = (() => {
-          try {
-            return String(cap?.getPlatform?.())
-          } catch {
-            return 'err'
-          }
-        })()
-        const keys = cap ? Object.keys(cap).slice(0, 12).join(',') : 'none'
-        let ctrl = 'n/a'
-        let regs = 'n/a'
-        if ('serviceWorker' in navigator) {
-          ctrl = navigator.serviceWorker.controller ? 'yes' : 'no'
-          try {
-            regs = String((await navigator.serviceWorker.getRegistrations()).length)
-          } catch {
-            /* ignore */
-          }
-        }
-        setDiag(
-          `platform:${plat} · isNative:${native}\nSW: ctrl=${ctrl}, regs=${regs}\nCap keys: ${keys}\nUA: ${ua}`,
-        )
-      } catch (e) {
-        setDiag('diag err: ' + String(e))
-      }
-    })()
   }, [])
   async function toggleReminders() {
     if (remindersBusy) return
@@ -355,20 +314,6 @@ export function SettingsView() {
             {testNote && (
               <div style={{ fontSize: 11.5, color: C.ink3, lineHeight: 1.45 }}>{testNote}</div>
             )}
-          </div>
-        )}
-        {diag && (
-          <div
-            style={{
-              fontSize: 10.5,
-              color: C.ink3,
-              padding: '8px 0 2px',
-              fontFamily: 'monospace',
-              wordBreak: 'break-all',
-              whiteSpace: 'pre-wrap',
-            }}
-          >
-            {diag}
           </div>
         )}
       </SectionCard>
