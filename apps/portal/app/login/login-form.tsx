@@ -19,6 +19,7 @@ export function LoginForm({
   const [loading, setLoading] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(initialError)
+  const [diag, setDiag] = useState('')
 
   useEffect(() => {
     if (!initialError || typeof window === 'undefined') return
@@ -28,6 +29,23 @@ export function LoginForm({
       window.history.replaceState(null, '', url.pathname + url.search)
     }
   }, [initialError])
+
+  // 임시 진단 — 네이티브 앱이 실제로 띄우는 주소(origin)·플랫폼 확인용(원인 잡히면 제거).
+  useEffect(() => {
+    try {
+      const w = window as unknown as { Capacitor?: { getPlatform?: () => string } }
+      let plat = 'n/a'
+      try {
+        plat = String(w.Capacitor?.getPlatform?.())
+      } catch {
+        /* ignore */
+      }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDiag(`href: ${window.location.href}\nplatform: ${plat}`)
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   // Google·카카오는 둘 다 Supabase builtin OAuth — provider 만 다름.
   async function oauthLogin(provider: 'google' | 'kakao') {
@@ -163,6 +181,11 @@ export function LoginForm({
           <p className="rounded-md border border-[#C26A4A]/30 bg-[#C26A4A]/10 p-sm text-xs text-[#C26A4A]">
             {error}
           </p>
+        )}
+        {diag && (
+          <pre className="whitespace-pre-wrap break-all text-center text-[10px] text-[#9A9286]">
+            {diag}
+          </pre>
         )}
       </div>
     </div>
