@@ -14,7 +14,17 @@ import { useEffect } from 'react'
  * 브릿지가 정상 주입된다.)
  */
 function isNativeApp(): boolean {
-  return typeof navigator !== 'undefined' && navigator.userAgent.includes('PetmoveApp')
+  if (typeof navigator !== 'undefined' && navigator.userAgent.includes('PetmoveApp')) return true
+  // 브릿지 직접 감지 — 서비스워커가 아직 없는 첫 로드(앱 데이터 비운 직후)엔 Capacitor
+  // 네이티브 브릿지가 살아 있어 isNativePlatform()=true 다. 이때 SW 를 등록하지 않으면
+  // 이후로 브릿지가 계속 주입돼 정상 작동(부트스트랩). appendUserAgent 표식이 안 먹는
+  // 환경 대비 1차 감지 수단.
+  try {
+    const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor
+    return !!cap?.isNativePlatform?.()
+  } catch {
+    return false
+  }
 }
 
 export function ServiceWorkerRegister() {
