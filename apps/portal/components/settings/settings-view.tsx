@@ -232,7 +232,7 @@ export function SettingsView() {
   async function testReminder() {
     setTestNote(null)
     const res = await sendTestReminder()
-    if (res.ok) setTestNote('약 10초 뒤 테스트 알림이 도착해요. 화면을 잠그고 기다려보세요.')
+    if (res.ok) setTestNote('테스트 알림을 보냈어요 🔔')
     else if (res.reason === 'web') setTestNote('테스트는 설치형 앱에서만 돼요.')
     else if (res.reason === 'denied') setTestNote('기기 설정에서 알림 권한을 허용해야 테스트할 수 있어요.')
     else setTestNote('테스트 알림을 보내지 못했어요. 잠시 후 다시 시도해주세요.')
@@ -279,7 +279,7 @@ export function SettingsView() {
       <SectionCard label="알림" marginTop={8}>
         <ToggleRow
           label="일정 알림"
-          desc="백신·검사·검역 등 예정일 하루 전과 당일 아침에 알려드려요. 설치형 앱에서만 작동해요."
+          desc="다양한 일정 알림을 통해 실수 없이 준비하세요. 설치형 앱에서만 작동해요."
           on={remindersOn}
           disabled={remindersBusy}
           onToggle={toggleReminders}
@@ -311,6 +311,9 @@ export function SettingsView() {
             >
               알림 테스트
             </button>
+            <div style={{ fontSize: 11.5, color: C.ink3, lineHeight: 1.45 }}>
+              알림 작동을 확인하세요. 화면을 잠그고 약 10초 기다리면 알림이 도착해요.
+            </div>
             {testNote && (
               <div style={{ fontSize: 11.5, color: C.ink3, lineHeight: 1.45 }}>{testNote}</div>
             )}

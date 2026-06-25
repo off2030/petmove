@@ -96,7 +96,7 @@ export async function sendTestReminder(): Promise<{ ok: boolean; reason?: string
         {
           id: TEST_ID,
           title: '펫무브',
-          body: '알림이 잘 도착해요! 🐾 일정 알림이 정상 작동 중이에요.',
+          body: '일정 알림이 정상 작동해요! 🐾',
           schedule: { at: new Date(Date.now() + 10_000) },
         },
       ],
