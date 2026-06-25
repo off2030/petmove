@@ -109,6 +109,22 @@ export function LoginForm({
     setInfo(`${email} 로 로그인 링크를 발송했습니다. 메일을 확인하세요.`)
   }
 
+  // 소셜 로그인 진행 중(특히 구글은 외부 브라우저를 다녀오는 ~2초)에는 로그인 폼 대신 깔끔한
+  // "로그인 중…" 화면을 보여준다 — 구글 복귀 시 로그인 폼이 다시 뜬 것처럼 보이던 것을 방지.
+  // (2초 자체는 구글의 외부 브라우저 강제라 못 줄임 — 그 동안의 '되돌아간 느낌'만 없앤다.)
+  // 매직링크(magic)는 같은 화면에서 끝나며 안내문을 보여줘야 하므로 제외.
+  if (loading === 'google' || loading === 'kakao' || loading === 'naver') {
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-md bg-[#F5EFE8] px-md py-xl">
+        <div
+          className="h-8 w-8 animate-spin rounded-full border-2 border-[#D99A58]/30 border-t-[#D99A58]"
+          aria-hidden
+        />
+        <p className="text-sm text-[#9A9286]">로그인 중…</p>
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-h-dvh items-center justify-center bg-[#F5EFE8] px-md py-xl">
       <div className="w-full max-w-sm space-y-lg">
