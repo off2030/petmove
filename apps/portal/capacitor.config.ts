@@ -33,6 +33,11 @@ const config: CapacitorConfig = {
     url: 'https://app.petmove.co.kr',
     // cleartext 는 dev/staging 에서 http 로 로드할 때만. production https 면 불필요.
     cleartext: false,
+    // OAuth(카카오·네이버)·Supabase 인증을 외부 브라우저로 내보내지 않고 WebView 안에서
+    // 진행 → 인증 후 app.petmove.co.kr 로 돌아와 세션이 앱 안에 잡힌다(로그인이 크롬으로
+    // 새던 문제 해결). ⚠️ 구글은 임베디드 WebView OAuth 를 차단(disallowed_useragent)하므로
+    // 여기 넣지 않는다 — 구글은 추후 @capacitor/browser+딥링크로 별도 처리.
+    allowNavigation: ['*.kakao.com', '*.naver.com', '*.supabase.co'],
   },
   ios: {
     contentInset: 'always',
