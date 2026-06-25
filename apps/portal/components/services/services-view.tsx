@@ -185,6 +185,30 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
     ],
     reviews: JAPAN_REVIEWS,
   },
+  // 태국 편도(한국→태국). 왕복(태국→한국 재입국)은 광견병 항체검사 등 절차가 달라 별도 키로 분리.
+  '태국:one_way': {
+    intro:
+      '로잔동물의료센터에서 검역 준비를 해 드려요. 의료 절차는 물론 태국 수입허가증 신청, 서류 준비까지 빈틈없이 진행해 드려요. 앱을 통해 쉽게 진행 상황, 정보를 확인할 수 있어요.',
+    included: [
+      { label: '마이크로칩 삽입 · 동물등록' },
+      { label: '광견병 백신 접종' },
+      { label: '종합백신 접종' },
+      { label: '수입 허가 신청' },
+      { label: '출국 전 임상검사' },
+      { label: '서류 준비' },
+    ],
+    steps: ['예약', '내원', '상담', '시작'],
+    faq: [
+      {
+        q: '어디로 방문하나요?',
+        a: '로잔동물의료센터로 방문해 주세요.',
+        link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
+      },
+      { q: '비용은 얼마인가요?', a: '오프라인 올케어의 비용은 약 20~32만원이에요. 정확한 비용은 상담 후 결정돼요.' },
+      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 2~4주 정도 걸려요.' },
+    ],
+    reviews: [],
+  },
   default: {
     intro: '복잡한 검역 절차, 수의사가 처음부터 끝까지 직접 준비·관리해 드려요.',
     included: [
@@ -257,8 +281,17 @@ const HIGHLIGHTS: Highlight[] = [
   },
 ]
 
-/** 카드 본체는 공통, 상세 본문(DestDetail)만 목적지별. 미정 목적지는 default 폴백. */
-function buildOffers(dest: string | null, _trip: TripType): Offer[] {
+/**
+ * 상세 본문(DestDetail) 선택 — `목적지:왕복편도` → `목적지`(트립 공통) → `default` 순.
+ * 같은 목적지라도 왕복/편도는 절차가 달라(예: 한국 재입국 시 광견병 항체검사) 트립별로 나눈다.
+ * 트립 구분이 없는 목적지(일본 등)는 `목적지` 키 하나로 두 트립 모두 커버한다.
+ */
+function resolveDetail(map: Record<string, DestDetail>, dest: string, trip: TripType): DestDetail {
+  return map[`${dest}:${trip}`] ?? map[dest] ?? map.default
+}
+
+/** 카드 본체는 공통, 상세 본문(DestDetail)만 목적지·왕복편도별. 미정 조합은 default 폴백. */
+function buildOffers(dest: string | null, trip: TripType): Offer[] {
   const d = dest ?? ''
   return [
     {
@@ -275,7 +308,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
       ],
       recommended: true,
       highlights: HIGHLIGHTS,
-      ...(OFFLINE_DETAIL[d] ?? OFFLINE_DETAIL.default),
+      ...resolveDetail(OFFLINE_DETAIL, d, trip),
     },
     {
       accent: SAGE,
@@ -290,7 +323,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
         '어려운 부분만 도움받고 싶어요',
       ],
       highlights: HIGHLIGHTS,
-      ...(ONLINE_DETAIL[d] ?? ONLINE_DETAIL.default),
+      ...resolveDetail(ONLINE_DETAIL, d, trip),
     },
   ]
 }
