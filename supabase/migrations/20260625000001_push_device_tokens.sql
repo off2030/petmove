@@ -23,14 +23,19 @@ create index if not exists push_device_tokens_user_id_idx
 
 alter table public.push_device_tokens enable row level security;
 
+-- 정책은 drop-if-exists 후 생성 — 재실행(또는 db push 재시도)에도 안전(멱등).
+drop policy if exists push_device_tokens_select_own on public.push_device_tokens;
 create policy push_device_tokens_select_own on public.push_device_tokens
   for select using (user_id = auth.uid());
 
+drop policy if exists push_device_tokens_insert_own on public.push_device_tokens;
 create policy push_device_tokens_insert_own on public.push_device_tokens
   for insert with check (user_id = auth.uid());
 
+drop policy if exists push_device_tokens_update_own on public.push_device_tokens;
 create policy push_device_tokens_update_own on public.push_device_tokens
   for update using (user_id = auth.uid()) with check (user_id = auth.uid());
 
+drop policy if exists push_device_tokens_delete_own on public.push_device_tokens;
 create policy push_device_tokens_delete_own on public.push_device_tokens
   for delete using (user_id = auth.uid());

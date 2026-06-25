@@ -16,7 +16,11 @@
     "backfill:case-links:apply": "node scripts/backfill-case-customer-links.mjs --apply"
   },
   "devDependencies": {
+    "@types/pg": "^8.20.0",
+    "firebase-admin": "^14.1.0",
+    "pg": "^8.22.0",
     "supabase": "^2.89.1",
+    "tsx": "^4.22.4",
     "turbo": "^2.3.3"
   },
   "packageManager": "pnpm@10.33.0",
@@ -24,6 +28,8 @@
     "node": ">=20"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@sentry/cli"]
+    "onlyBuiltDependencies": [
+      "@sentry/cli"
+    ]
   }
 }

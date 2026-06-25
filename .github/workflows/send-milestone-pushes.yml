@@ -1,0 +1,44 @@
+name: Send milestone pushes
+
+# 관리자 완료 → 펫무브 앱 푸시. 30분마다 완료 마일스톤을 스캔해 FCM 발송한다.
+# (이벤트형 즉시 발송이 아니라 폴링 — 무료 Actions 한도를 아끼고 인프라를 단순하게.
+#  관리자 완료 후 최대 ~30분 내 도착. 더 빠르게 하려면 간격을 줄이거나 webhook 으로 전환.)
+# 비밀은 기존 것 재사용(SUPABASE_DB_URL) + FCM_SERVICE_ACCOUNT(서비스 계정 키) 1개만 추가.
+
+on:
+  schedule:
+    - cron: '13,43 * * * *' # 매시 13분·43분 (GitHub 스케줄 지연 고려해 정각 회피)
+  workflow_dispatch:
+
+concurrency:
+  group: send-milestone-pushes
+  cancel-in-progress: false
+
+jobs:
+  send:
+    name: Scan + send FCM
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Send
+        run: pnpm tsx scripts/send-milestone-pushes.ts
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          FCM_SERVICE_ACCOUNT: ${{ secrets.FCM_SERVICE_ACCOUNT }}
