@@ -22,10 +22,10 @@
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <!-- Android 12+ 시스템 스플래시: 배경색 미지정 시 검정으로 뜨던 문제 수정. 스플래시 후
              AppTheme.NoActionBar 로 전환(상태바 설정 적용). -->
-        <!-- 배경을 앰버로 — 흰 P 가 밝은 배경에 안 보이던 문제 해결(마스터처럼 앰버 바탕+흰 P).
-             iconBackgroundColor(원형 배경)는 기기에서 안 그려져 제거하고 전체 배경을 앰버로. -->
-        <item name="windowSplashScreenBackground">@color/splash_amber</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+        <!-- 스플래시 = 홈 런처 아이콘(앰버+P, 80%)을 stone 배경 위에 표시(아이콘 on 배경 형태,
+             홈 화면과 통일). 별도 아이콘/풀앰버 안 씀 — animatedIcon 미지정 시 시스템이 런처
+             아이콘을 쓴다. P 는 아이콘의 앰버 위에 있어 stone 배경에서도 또렷. -->
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
         <item name="android:background">@drawable/splash</item>
     </style>
