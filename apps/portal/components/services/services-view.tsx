@@ -243,7 +243,7 @@ const HIGHLIGHTS: Highlight[] = [
     label: '전문 의료진',
   },
   {
-    icon: <span style={{ ...serif, fontSize: 15, fontWeight: 500 }}>20y</span>,
+    icon: <span style={{ ...serif, fontSize: 12.5, fontWeight: 500, letterSpacing: '-0.02em' }}>20y</span>,
     label: '풍부한 경험',
   },
   {
