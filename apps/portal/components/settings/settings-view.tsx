@@ -12,6 +12,7 @@ import {
   disableReminders,
   enableReminders,
   remindersEnabled,
+  sendTestReminder,
   syncReminders,
 } from '@/lib/native/local-reminders'
 
@@ -200,6 +201,7 @@ export function SettingsView() {
   const [remindersOn, setRemindersOn] = useState(false)
   const [remindersBusy, setRemindersBusy] = useState(false)
   const [remindersNote, setRemindersNote] = useState<string | null>(null)
+  const [testNote, setTestNote] = useState<string | null>(null)
   useEffect(() => {
     // localStorage 는 SSR 에 없어 마운트 후 1회 읽어 동기화 — 의도된 패턴.
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -226,6 +228,14 @@ export function SettingsView() {
       }
     }
     setRemindersBusy(false)
+  }
+  async function testReminder() {
+    setTestNote(null)
+    const res = await sendTestReminder()
+    if (res.ok) setTestNote('약 10초 뒤 테스트 알림이 도착해요. 화면을 잠그고 기다려보세요.')
+    else if (res.reason === 'web') setTestNote('테스트는 설치형 앱에서만 돼요.')
+    else if (res.reason === 'denied') setTestNote('기기 설정에서 알림 권한을 허용해야 테스트할 수 있어요.')
+    else setTestNote('테스트 알림을 보내지 못했어요. 잠시 후 다시 시도해주세요.')
   }
 
   // 고급 토글 — customer_profiles 에 저장(계정 전체). 저장 중인 키만 disable.
@@ -273,13 +283,37 @@ export function SettingsView() {
           on={remindersOn}
           disabled={remindersBusy}
           onToggle={toggleReminders}
-          last
+          last={!remindersOn}
         />
         {remindersNote && (
           <div
             style={{ fontSize: 11.5, color: C.ink3, padding: '0 0 12px', lineHeight: 1.45 }}
           >
             {remindersNote}
+          </div>
+        )}
+        {remindersOn && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '12px 0 4px' }}>
+            <button
+              type="button"
+              onClick={testReminder}
+              style={{
+                alignSelf: 'flex-start',
+                background: 'transparent',
+                border: `.5px solid ${C.line}`,
+                borderRadius: 999,
+                padding: '6px 14px',
+                fontSize: 12.5,
+                color: C.ink2,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              알림 테스트
+            </button>
+            {testNote && (
+              <div style={{ fontSize: 11.5, color: C.ink3, lineHeight: 1.45 }}>{testNote}</div>
+            )}
           </div>
         )}
       </SectionCard>
