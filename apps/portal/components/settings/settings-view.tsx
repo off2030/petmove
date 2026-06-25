@@ -279,7 +279,7 @@ export function SettingsView() {
       <SectionCard label="알림" marginTop={8}>
         <ToggleRow
           label="일정 알림"
-          desc="다양한 일정 알림을 통해 실수 없이 준비하세요. 설치형 앱에서만 작동해요."
+          desc="예정, 마감, 유효기간 만료 등 일정 안내를 받을 수 있어요. 설치형 앱에서만 작동해요."
           on={remindersOn}
           disabled={remindersBusy}
           onToggle={toggleReminders}
@@ -312,7 +312,7 @@ export function SettingsView() {
               알림 테스트
             </button>
             <div style={{ fontSize: 11.5, color: C.ink3, lineHeight: 1.45 }}>
-              알림 작동을 확인하세요. 화면을 잠그고 약 10초 기다리면 알림이 도착해요.
+              알림 작동을 확인하세요. 클릭 후 화면을 잠그고 10초 정도 기다리면 알림이 도착해요.
             </div>
             {testNote && (
               <div style={{ fontSize: 11.5, color: C.ink3, lineHeight: 1.45 }}>{testNote}</div>
