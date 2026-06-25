@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "207906073804",
+    "project_id": "petmove-52aa3",
+    "storage_bucket": "petmove-52aa3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:207906073804:android:757300ece8a7a0cdf36669",
+        "android_client_info": {
+          "package_name": "com.petmove.portal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqevte7UlbE-TF3zn_y7XRIq9DOlY1EQU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

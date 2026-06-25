@@ -325,7 +325,7 @@ function collectValidityReminders(caseRow: CaseRow, pet: string, today: string, 
 // ── C. 목적지별 신청 마감 알림 ─────────────────────────────────────────────
 
 /** 케이스의 목적지 토큰들(by_dest 키 + 활성 토큰). */
-function destinationTokens(caseRow: CaseRow): string[] {
+export function destinationTokens(caseRow: CaseRow): string[] {
   const set = new Set<string>()
   const byDest = asRecord(asRecord(caseRow.data)?.by_dest)
   if (byDest) Object.keys(byDest).forEach((k) => set.add(k))

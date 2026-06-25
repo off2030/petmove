@@ -16,6 +16,7 @@ import {
   sendTestReminder,
   syncReminders,
 } from '@/lib/native/local-reminders'
+import { registerAndSaveDeviceToken } from '@/lib/native/push-register'
 
 const DELETION_GRACE_DAYS = 7
 const MS_PER_DAY = 24 * 3600 * 1000
@@ -222,6 +223,8 @@ export function SettingsView() {
       if (res.ok) {
         setRemindersOn(true)
         await syncReminders(collectReminders(cases, new Date()))
+        // 같은 알림 옵트인으로 서버 푸시(관리자 완료 알림)도 받도록 기기 토큰 등록.
+        void registerAndSaveDeviceToken()
       } else if (res.reason === 'web') {
         // 웹은 알림 불가 → 문구 대신 앱 설치 안내 바텀시트로 유도.
         setInstallSheetOpen(true)

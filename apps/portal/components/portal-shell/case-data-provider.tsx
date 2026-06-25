@@ -336,6 +336,23 @@ export function CaseDataProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remindersKey, previewMode])
 
+  // 서버 푸시(관리자 완료 알림) 기기 토큰 등록 — 네이티브 앱 + 알림 ON 일 때 앱 시작 1회.
+  // 권한이 이미 있으면 추가 팝업 없이 토큰만 갱신(웹/미설정은 no-op). 설정에서 알림을 처음 켤
+  // 때는 settings-view 가 직접 등록하므로, 여기는 이미 켜둔 채 앱을 재실행한 경우를 커버한다.
+  useEffect(() => {
+    if (previewMode) return
+    void (async () => {
+      try {
+        const { remindersEnabled } = await import('@/lib/native/local-reminders')
+        if (!remindersEnabled()) return
+        const { registerAndSaveDeviceToken } = await import('@/lib/native/push-register')
+        await registerAndSaveDeviceToken()
+      } catch {
+        /* best-effort — 토큰 등록 실패가 앱을 막지 않게 */
+      }
+    })()
+  }, [previewMode])
+
   const value = useMemo(
     () => ({
       cases,
