@@ -208,28 +208,45 @@ export function SettingsView() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setRemindersOn(remindersEnabled())
     // 임시 진단 — 네이티브 인식 문제 추적용(원인 잡히면 제거).
-    try {
-      const ua = navigator.userAgent || ''
-      const w = window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }
-      const bridge = !!w.Capacitor && typeof w.Capacitor === 'object'
-      let native = 'n/a'
+    void (async () => {
       try {
-        native = String(w.Capacitor?.isNativePlatform?.())
-      } catch {
-        /* ignore */
+        const ua = navigator.userAgent || ''
+        const w = window as unknown as {
+          Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string }
+        }
+        const cap = w.Capacitor
+        const native = (() => {
+          try {
+            return String(cap?.isNativePlatform?.())
+          } catch {
+            return 'err'
+          }
+        })()
+        const plat = (() => {
+          try {
+            return String(cap?.getPlatform?.())
+          } catch {
+            return 'err'
+          }
+        })()
+        const keys = cap ? Object.keys(cap).slice(0, 12).join(',') : 'none'
+        let ctrl = 'n/a'
+        let regs = 'n/a'
+        if ('serviceWorker' in navigator) {
+          ctrl = navigator.serviceWorker.controller ? 'yes' : 'no'
+          try {
+            regs = String((await navigator.serviceWorker.getRegistrations()).length)
+          } catch {
+            /* ignore */
+          }
+        }
+        setDiag(
+          `platform:${plat} · isNative:${native}\nSW: ctrl=${ctrl}, regs=${regs}\nCap keys: ${keys}\nUA: ${ua}`,
+        )
+      } catch (e) {
+        setDiag('diag err: ' + String(e))
       }
-      const sw =
-        'serviceWorker' in navigator
-          ? navigator.serviceWorker.controller
-            ? '제어중'
-            : '없음'
-          : 'n/a'
-      setDiag(
-        `표식:${ua.includes('PetmoveApp') ? 'O' : 'X'} · 브릿지:${bridge ? 'O' : 'X'} · 네이티브:${native} · SW:${sw}`,
-      )
-    } catch {
-      /* ignore */
-    }
+    })()
   }, [])
   async function toggleReminders() {
     if (remindersBusy) return
@@ -348,9 +365,10 @@ export function SettingsView() {
               padding: '8px 0 2px',
               fontFamily: 'monospace',
               wordBreak: 'break-all',
+              whiteSpace: 'pre-wrap',
             }}
           >
-            진단: {diag}
+            {diag}
           </div>
         )}
       </SectionCard>
