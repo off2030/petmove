@@ -13,49 +13,64 @@ import { useEffect } from 'react'
  *
  * 안전: 내부 케이스 경로('/cases/...')만 허용(알림 데이터로 임의 URL 이동 차단).
  * 일반 웹/PWA 에서는 no-op. 마운트: 루트 레이아웃(어느 화면에서나 탭될 수 있어 전역).
+ *
+ * ⚠️ 등록을 **첫 진입 후로 약간 지연**한다 — 루트 레이아웃이라 로그인·콜백 화면에서도 마운트되는데,
+ * 네이티브 푸시 플러그인 초기화가 로그인→내 여정 진입과 경쟁하면 진입이 느려졌던 회귀 때문.
+ * 알림 탭으로 콜드스타트되면 그 액션은 Capacitor 가 큐잉했다가 리스너 등록 시 전달하므로
+ * 지연돼도 딥링크는 놓치지 않는다.
  */
 export function NotificationTapListener() {
   useEffect(() => {
     const removers: Array<() => void> = []
-    void (async () => {
-      try {
-        const { Capacitor } = await import('@capacitor/core')
-        if (!Capacitor.isNativePlatform()) return
+    let cancelled = false
 
-        // 푸시 알림(FCM) 탭
+    const timer = window.setTimeout(() => {
+      void (async () => {
         try {
-          const { PushNotifications } = await import('@capacitor/push-notifications')
-          const h = await PushNotifications.addListener(
-            'pushNotificationActionPerformed',
-            (action) => {
-              const data = action.notification?.data as Record<string, unknown> | undefined
-              navigateTo(typeof data?.path === 'string' ? data.path : null)
-            },
-          )
-          removers.push(() => void h.remove())
-        } catch {
-          /* 푸시 플러그인 미존재 — 무시 */
-        }
+          if (cancelled) return
+          const { Capacitor } = await import('@capacitor/core')
+          if (!Capacitor.isNativePlatform()) return
 
-        // 로컬 알림(일정 리마인더) 탭
-        try {
-          const { LocalNotifications } = await import('@capacitor/local-notifications')
-          const h = await LocalNotifications.addListener(
-            'localNotificationActionPerformed',
-            (action) => {
-              const extra = action.notification?.extra as Record<string, unknown> | undefined
-              navigateTo(typeof extra?.path === 'string' ? extra.path : null)
-            },
-          )
-          removers.push(() => void h.remove())
+          // 푸시 알림(FCM) 탭
+          try {
+            const { PushNotifications } = await import('@capacitor/push-notifications')
+            const h = await PushNotifications.addListener(
+              'pushNotificationActionPerformed',
+              (action) => {
+                const data = action.notification?.data as Record<string, unknown> | undefined
+                navigateTo(typeof data?.path === 'string' ? data.path : null)
+              },
+            )
+            if (cancelled) void h.remove()
+            else removers.push(() => void h.remove())
+          } catch {
+            /* 푸시 플러그인 미존재 — 무시 */
+          }
+
+          // 로컬 알림(일정 리마인더) 탭
+          try {
+            const { LocalNotifications } = await import('@capacitor/local-notifications')
+            const h = await LocalNotifications.addListener(
+              'localNotificationActionPerformed',
+              (action) => {
+                const extra = action.notification?.extra as Record<string, unknown> | undefined
+                navigateTo(typeof extra?.path === 'string' ? extra.path : null)
+              },
+            )
+            if (cancelled) void h.remove()
+            else removers.push(() => void h.remove())
+          } catch {
+            /* 로컬 알림 플러그인 미존재 — 무시 */
+          }
         } catch {
-          /* 로컬 알림 플러그인 미존재 — 무시 */
+          /* 네이티브 미존재 — 무시 */
         }
-      } catch {
-        /* 네이티브 미존재 — 무시 */
-      }
-    })()
+      })()
+    }, 1500)
+
     return () => {
+      cancelled = true
+      clearTimeout(timer)
       removers.forEach((f) => f())
     }
   }, [])
