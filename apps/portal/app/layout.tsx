@@ -5,6 +5,7 @@ import { ConfirmProvider } from '@petmove/ui'
 import { ServiceWorkerRegister } from '@/components/sw-register'
 import { NativeSplash } from '@/components/native-splash'
 import { NativeAuthListener } from '@/components/native-auth-listener'
+import { NativeStatusBar } from '@/components/native-statusbar'
 import { ThemeProvider } from '@/components/portal-shell/theme-provider'
 import { NavGuardProvider } from '@/components/portal-shell/nav-guard'
 
@@ -61,6 +62,7 @@ export default function RootLayout({
         <ServiceWorkerRegister />
         <NativeSplash />
         <NativeAuthListener />
+        <NativeStatusBar />
         <ThemeProvider>
           <ConfirmProvider>
             <NavGuardProvider>

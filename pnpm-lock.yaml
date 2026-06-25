@@ -104,7 +104,7 @@ importers:
         version: 9.39.4(jiti@1.21.7)
       eslint-config-next:
         specifier: ^16.2.4
-        version: 16.2.4(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3)
+        version: 16.2.4(@typescript-eslint/parser@8.59.1(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3))(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3)
       opentype.js:
         specifier: ^2.0.0
         version: 2.0.0
@@ -147,6 +147,9 @@ importers:
       '@capacitor/splash-screen':
         specifier: ^8.0.1
         version: 8.0.1(@capacitor/core@8.3.3)
+      '@capacitor/status-bar':
+        specifier: ^8.0.0
+        version: 8.0.2(@capacitor/core@8.3.3)
       '@petmove/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -207,7 +210,7 @@ importers:
         version: 9.39.4(jiti@1.21.7)
       eslint-config-next:
         specifier: ^16.2.4
-        version: 16.2.4(@typescript-eslint/parser@8.59.1(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3))(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3)
+        version: 16.2.4(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3)
       postcss:
         specifier: ^8.5.9
         version: 8.5.10
@@ -375,6 +378,11 @@ packages:
 
   '@capacitor/splash-screen@8.0.1':
     resolution: {integrity: sha512-c/ew/Z3eA7z8l06WoRAtzVF16VwYYrExmHmfGq1Cg675pVzaC/yuucB8/1xG1vhEfnW4fZ1KhSf/kzR1RiVYgg==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capacitor/status-bar@8.0.2':
+    resolution: {integrity: sha512-WXs8YB8B9eEaPZz+bcdY6t2nForF1FLoj/JU0Dl9RRgQnddnS98FEEyDooQhaY7wivr000j4+SC1FyeJkrFO7A==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -4017,6 +4025,10 @@ snapshots:
       '@capacitor/core': 8.3.3
 
   '@capacitor/splash-screen@8.0.1(@capacitor/core@8.3.3)':
+    dependencies:
+      '@capacitor/core': 8.3.3
+
+  '@capacitor/status-bar@8.0.2(@capacitor/core@8.3.3)':
     dependencies:
       '@capacitor/core': 8.3.3
 
