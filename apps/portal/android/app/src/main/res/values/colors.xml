@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 앱 톤(Stone) — 스플래시/상태바 배경. 웹 라이트 배경(#F5EFE8)과 동일. -->
+    <color name="splash_background">#F5EFE8</color>
+</resources>

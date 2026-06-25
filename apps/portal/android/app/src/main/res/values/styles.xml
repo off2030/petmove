@@ -13,10 +13,17 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- 상태바: 라이트 앱 배경(stone)에 맞춰 배경색 + 어두운 아이콘(흰 아이콘이 안 보이던 문제 수정). -->
+        <item name="android:statusBarColor">@color/splash_background</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <!-- Android 12+ 시스템 스플래시: 배경색 미지정 시 검정으로 뜨던 문제 수정. 스플래시 후
+             AppTheme.NoActionBar 로 전환(상태바 설정 적용). -->
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
         <item name="android:background">@drawable/splash</item>
     </style>
 </resources>
