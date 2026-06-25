@@ -964,9 +964,11 @@ export function ServicesView() {
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'baseline',
-                    padding: '13px 0',
-                    borderBottom: `.5px solid ${C.line}`,
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '12px 12px',
+                    margin: '1px 0',
+                    borderRadius: 12,
                     background: isSel ? C.soft : 'transparent',
                     border: 'none',
                     cursor: 'pointer',
@@ -974,8 +976,17 @@ export function ServicesView() {
                     textAlign: 'left',
                   }}
                 >
-                  <span style={{ fontSize: 15, color: C.ink, paddingLeft: isSel ? 8 : 0 }}>{d.ko}</span>
-                  <span style={{ fontSize: 13, color: C.ink3 }}>{d.en}</span>
+                  <span style={{ fontSize: 15, fontWeight: isSel ? 600 : 400, color: isSel ? C.accent : C.ink }}>
+                    {d.ko}
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <span style={{ fontSize: 13, color: C.ink3 }}>{d.en}</span>
+                    {isSel && (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                    )}
+                  </span>
                 </button>
               )
             })
