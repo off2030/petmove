@@ -32,6 +32,7 @@ type FcmMessaging = {
   sendEachForMulticast: (msg: {
     tokens: string[]
     notification: { title: string; body: string }
+    data?: Record<string, string>
   }) => Promise<{
     successCount: number
     responses: Array<{ success: boolean; error?: { code?: string } }>
@@ -138,6 +139,8 @@ async function main(): Promise<void> {
           const resp = await messaging.sendEachForMulticast({
             tokens,
             notification: { title: push.title, body: push.body },
+            // 탭하면 해당 동물 일정 페이지로 — notification-tap-listener 가 data.path 로 이동.
+            data: { path: `/cases/${caseRow.id}/journey` },
           })
           delivered += resp.successCount
           await cleanupInvalidTokens(client, tokens, resp.responses)

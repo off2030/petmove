@@ -149,6 +149,8 @@ export async function syncReminders(reminders: AppReminder[]): Promise<void> {
       title: r.title,
       body: r.body,
       schedule: { at: new Date(r.fireAtIso) },
+      // 탭하면 해당 동물 일정 페이지로 — 알림 id 의 첫 구간이 caseId(notification-tap-listener 가 읽음).
+      extra: { path: `/cases/${r.id.split('|')[0]}/journey` },
     }))
     if (toSchedule.length) await LocalNotifications.schedule({ notifications: toSchedule })
   } catch {
