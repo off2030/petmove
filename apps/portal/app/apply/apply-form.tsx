@@ -9,7 +9,6 @@ import { DateTextField } from '@petmove/ui'
 import { applyCase } from '@/lib/actions/apply-case'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import destsData from '@petmove/domain/data/destinations.json'
-import { APP_DESTINATIONS } from '@/lib/app-destinations'
 import breedsData from '@petmove/domain/data/breeds.json'
 import colorsData from '@petmove/domain/data/colors.json'
 
@@ -721,8 +720,10 @@ export function ApplyForm({
     })
   }
 
-  // 펫무브 앱 목적지 선택지 = 앱 지원 국가(APP_DESTINATIONS) 한정. (DESTS 는 선택값 라벨 조회용으로 유지.)
-  const filteredDests = APP_DESTINATIONS.filter(d => {
+  // 신청 폼은 병원(펫무브워크) 고객 인테이크 — 전체 국가(DESTS) 선택 가능.
+  // (APP_DESTINATIONS 3개국 화이트리스트는 B2C 앱의 셀프 목적지 가이드(서비스·목적지 추가)
+  //  surface 한정. 인테이크까지 막으면 가이드 없는 나라로 가는 고객이 등록 자체를 못 함.)
+  const filteredDests = DESTS.filter(d => {
     if (!destQuery.trim()) return true
     const q = destQuery.toLowerCase()
     return d.ko.includes(q) || d.en.toLowerCase().includes(q)
