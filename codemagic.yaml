@@ -53,6 +53,10 @@ workflows:
           cd apps/portal
           npx cap add ios
           npx cap sync ios
+          # cap sync 가 pod install 을 돌리지만, App.xcworkspace 생성을 확실히 하려고
+          # 명시적으로 한 번 더(없으면 build-ipa 의 --workspace 가 실패).
+          cd ios/App
+          pod install
 
       - name: Sign in with Apple 엔타이틀먼트 주입
         # Capacitor 기본 템플릿엔 엔타이틀먼트 파일이 없다. Apple 로그인이 런타임에 동작하려면
