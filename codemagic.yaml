@@ -28,8 +28,13 @@ workflows:
       app_store_connect: petmove_asc
 
     environment:
-      # ios_signing 자동 블록은 기존 프로파일만 매칭(자동 생성 X)이라 첫 빌드에서
-      # "No matching profiles" 실패 → 아래 스크립트에서 app-store-connect 로 명시적 생성한다.
+      # 코드 서명 = Codemagic 자동 서명. Code signing identities 에 저장한 배포 인증서
+      # (petmove_dist, Apple Distribution)를 쓰고, App Store Connect 통합으로 com.petmove.portal
+      # 의 app_store 프로비저닝 프로파일을 자동 발급/적용한다. (첫 빌드 "No matching profiles"
+      # 는 인증서가 없어서였고, 인증서를 저장한 뒤로 프로파일 생성이 된다.)
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.petmove.portal
       vars:
         BUNDLE_ID: "com.petmove.portal"
         APP_STORE_APPLE_ID: 6784567864
@@ -74,13 +79,10 @@ workflows:
           # 변수 분리: 엔타이틀먼트 파일만 만들고 프로젝트엔 연결하지 않는다(첫 GREEN 빌드
           # 확보 후 안전한 방법으로 재연결 예정 — Apple 로그인은 그때부터 동작).
 
-      - name: 코드 서명 — 배포 인증서·프로파일 자동 생성·적용
-        # App Store Connect API 키(integration)로 배포 인증서 + IOS_APP_STORE 프로파일을
-        # 없으면 생성(--create)해 받아오고, 키체인에 넣은 뒤 Xcode 프로젝트에 적용한다.
+      - name: 코드 서명 프로파일 적용
+        # ios_signing 블록이 저장 인증서 fetch + 프로파일 생성/fetch + 키체인까지 자동 처리.
+        # 여기선 받아온 프로파일을 Xcode 프로젝트(App.xcodeproj)에 적용만 한다.
         script: |
-          keychain initialize
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
-          keychain add-certificates
           cd apps/portal/ios/App
           xcode-project use-profiles
 
