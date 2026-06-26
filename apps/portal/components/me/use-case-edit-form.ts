@@ -92,15 +92,26 @@ export function useCaseEditForm(caseRow: CaseRow, caseId: string): UseCaseEditFo
     }
     // 일본 입국일 — 광견병 항체 검사 + 180일 이내면 server 가 거부할 입력. 즉시 차단해
     // 빨간 박스로 분명히 보이게 (server 결과만 의지하면 토스트가 짧게 사라질 수 있음).
-    const jpEntryErr = validateJpEntryDate(form.departure_date.trim(), {
-      data: (caseRow.data ?? {}) as Record<string, unknown>,
-      destination: form.destination,
-      departureDate: caseRow.departure_date ?? null,
-    })
-    if (jpEntryErr) {
-      setStatus('error')
-      setError(jpEntryErr)
-      return
+    //
+    // 단, 사용자가 출국일·목적지·생년월일을 **실제로 바꾼 경우에만** 검증한다. 이 폼 hook 은
+    // 보호자·동물·여행 sub-page 가 공유하므로, 그 칸들을 안 건드린 화면(예: 보호자 연락처)에서
+    // 이미 저장돼 있던 출국일의 기존 위반으로 무관한 저장이 막히면 안 된다. (출국일을 바꾸는
+    // 여행 화면에선 그대로 차단.) server updateCaseInfoFields 도 동일 조건(base 비교)으로 검증.
+    const entryInputsChanged =
+      form.departure_date !== base.departure_date ||
+      form.destination !== base.destination ||
+      form.birth_date !== base.birth_date
+    if (entryInputsChanged) {
+      const jpEntryErr = validateJpEntryDate(form.departure_date.trim(), {
+        data: (caseRow.data ?? {}) as Record<string, unknown>,
+        destination: form.destination,
+        departureDate: caseRow.departure_date ?? null,
+      })
+      if (jpEntryErr) {
+        setStatus('error')
+        setError(jpEntryErr)
+        return
+      }
     }
     setStatus('saving')
     setError(null)

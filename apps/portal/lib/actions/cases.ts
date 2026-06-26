@@ -2519,7 +2519,16 @@ export async function updateCaseInfoFields(
     // 태국 노선 — 출국일이 광견병·종합백신 최근 접종일 + 21일 이전이면 저장 거부.
     // 필리핀 노선 — 출국일이 생후 120일 이전이면 저장 거부.
     // updateFlightFields 와 같은 정책 — 회복 경로 없는 위반만 hard 차단.
-    {
+    //
+    // 단, 사용자가 출국일·목적지·생년월일을 **실제로 바꾼 경우에만** 검증한다(base 비교). 공유 폼이
+    // 보호자·동물·여행 sub-page 를 모두 거치므로, 그 칸들을 안 건드린 저장(보호자 연락처 등)이 이미
+    // 저장된 출국일의 기존 위반으로 막히면 안 된다. base 없으면(구 호출) 종전대로 항상 검증.
+    const entryInputsChanged =
+      !base ||
+      input.departure_date !== base.departure_date ||
+      input.destination !== base.destination ||
+      input.birth_date !== base.birth_date
+    if (entryInputsChanged) {
       const ruleCtx = {
         // birth_date 는 이 폼에서 함께 수정될 수 있어 폼 값을 우선 (prev 는 stale).
         // 저장이 아니라 검증용 로컬 view — data 쓰기 아님.
