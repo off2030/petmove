@@ -102,6 +102,20 @@ workflows:
           xcodebuild -list -project App.xcodeproj || true
           xcodebuild -project App.xcodeproj -scheme App -resolvePackageDependencies
 
+      - name: 진단 — archive 직접 실행(실제 에러 노출)
+        # xcode-project build-ipa 가 xcodebuild stderr 를 삼켜 "Failed to archive" 만 보임.
+        # 동일 archive 를 직접 돌려 실제 에러(엔타이틀먼트 미스매치 vs 컴파일)를 로그에 노출.
+        script: |
+          cd apps/portal/ios/App
+          set -o pipefail
+          xcodebuild -project App.xcodeproj -scheme App \
+            -archivePath build/diag.xcarchive -destination 'generic/platform=iOS' archive \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            CODE_SIGN_ENTITLEMENTS=App/App.entitlements \
+            DEVELOPMENT_TEAM=FVFZ724G27 \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            CODE_SIGN_STYLE=Manual 2>&1 | tail -80
+
       - name: IPA 빌드
         # Capacitor 8 = SPM 이라 .xcworkspace 없음 → App.xcodeproj 를 직접 빌드.
         # --archive-xcargs: 기본값(COMPILER_INDEX_STORE_ENABLE=NO) + Apple 로그인 엔타이틀먼트
