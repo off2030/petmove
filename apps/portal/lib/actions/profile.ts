@@ -17,6 +17,7 @@ import { createClient, getCurrentUser } from '@petmove/auth/server'
 import type { CaseRow } from '@petmove/domain'
 import { revalidatePath } from 'next/cache'
 import { AVATAR_COLOR_IDS } from '@/lib/avatar'
+import { autoLinkCasesByEmail, ensureCustomerProfile } from '@/lib/supabase/customer'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
@@ -64,6 +65,52 @@ export async function getMyProfile(): Promise<Result<CustomerProfileRow | null>>
       .eq('user_id', user.id)
       .maybeSingle()
     if (error) return { ok: false, error: error.message }
+    return { ok: true, value: (data as CustomerProfileRow | null) ?? null }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * 프로필 행을 보장 — 없으면 생성 후 반환.
+ *
+ * Apple 로그인은 signInWithIdToken 으로 세션을 client 에서 잡고 바로 navigate 하므로
+ * /auth/callback 을 거치지 않는다 → 거기서 하던 ensureCustomerProfile 이 호출되지 않아
+ * 보호자 프로필 행이 아예 없다. 그 결과 updateMyProfile(색상·토글)은 행을 못 찾고
+ * ("프로파일을 찾을 수 없습니다"), 아바타 업로드는 userId(profile.user_id) 가 비어
+ * 스토리지 RLS 에 막힌다("new row violates row-level security policy").
+ *
+ * authed 레이아웃이 진입마다 이 함수로 프로필을 읽어, 누락 시 즉시 자가 생성한다(이미 있으면
+ * select 1회로 no-op). 기존에 Apple 로 로그인해 둔 세션도 다음 진입에 자동 복구된다.
+ */
+export async function ensureMyProfile(): Promise<Result<CustomerProfileRow | null>> {
+  try {
+    const user = await getCurrentUser()
+    if (!user) return { ok: false, error: '인증 필요' }
+    const supabase = await createClient()
+
+    const { data: existing } = await supabase
+      .from('customer_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (existing) return { ok: true, value: existing as CustomerProfileRow }
+
+    // 누락 — /auth/callback 과 동일하게 생성. self_insert RLS(auth.uid()=user_id)로 통과.
+    const { created } = await ensureCustomerProfile(supabase, user).catch(() => ({ created: false }))
+    if (created) {
+      // 이메일 일치 기존 케이스 자동 링크(서비스롤 우회) — /auth/callback 과 동일. best-effort.
+      try {
+        await autoLinkCasesByEmail(createAdminClient(), user)
+      } catch {
+        /* best-effort */
+      }
+    }
+    const { data } = await supabase
+      .from('customer_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle()
     return { ok: true, value: (data as CustomerProfileRow | null) ?? null }
   } catch (e) {
     return { ok: false, error: (e as Error).message }

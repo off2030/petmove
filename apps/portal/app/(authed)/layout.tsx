@@ -9,7 +9,7 @@ import { CaseDataProvider } from '@/components/portal-shell/case-data-provider'
 import { SwipeTabs } from '@/components/portal-shell/swipe-tabs'
 import { TopBar } from '@/components/portal-shell/top-bar'
 import { listMyCases } from '@/lib/actions/cases'
-import { getMyProfile } from '@/lib/actions/profile'
+import { ensureMyProfile } from '@/lib/actions/profile'
 import { getPartnerOrgsByIds } from '@/lib/actions/partners'
 
 export const dynamic = 'force-dynamic'
@@ -47,7 +47,9 @@ export default async function AuthedLayout({ children }: { children: React.React
   const user = await getCurrentUser()
   if (!user) redirect('/login?next=/cases')
 
-  const [casesResult, profileResult] = await Promise.all([listMyCases(), getMyProfile()])
+  // ensureMyProfile: 프로필 행이 없으면(Apple 로그인이 /auth/callback 을 우회해 생성 안 됨)
+  // 진입 시 자가 생성 — 아바타·설정 저장이 "프로파일을 찾을 수 없습니다"로 실패하던 것 해소.
+  const [casesResult, profileResult] = await Promise.all([listMyCases(), ensureMyProfile()])
   const cases = casesResult.ok ? casesResult.value : []
   const profile = profileResult.ok ? profileResult.value : null
 
