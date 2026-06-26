@@ -286,10 +286,17 @@ export function TextField({
 }) {
   const composingRef = useRef(false)
   const display =
-    mask === 'phone' ? formatPhone(value) : mask === 'microchip' ? formatChip(value) : value
+    mask === 'phone'
+      ? formatPhone(value)
+      : mask === 'microchip'
+        ? formatChip(value)
+        : inputMode === 'email'
+          ? value.toLowerCase()
+          : value
 
   function handle(raw: string) {
-    if (mask === 'phone') onChange(raw.replace(/\D/g, '').slice(0, 11))
+    if (inputMode === 'email') onChange(raw.toLowerCase())
+    else if (mask === 'phone') onChange(raw.replace(/\D/g, '').slice(0, 11))
     else if (mask === 'microchip') onChange(raw.replace(/\D/g, '').slice(0, 15))
     else if (mask === 'weight') {
       // 숫자 + 소수점 1개만.
@@ -1031,6 +1038,7 @@ export function ColorField({
                 fontFamily: 'inherit',
                 fontSize: 13,
                 fontWeight: 500,
+                whiteSpace: 'nowrap',
                 cursor: blocked ? 'not-allowed' : 'pointer',
                 opacity: blocked ? 0.4 : 1,
                 transition: 'background .12s, color .12s, border-color .12s',
