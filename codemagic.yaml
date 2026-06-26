@@ -67,6 +67,9 @@ workflows:
           # TestFlight/심사 제출 때마다 "앱 암호화 문서" 질문이 안 뜬다.
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" ios/App/App/Info.plist 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" ios/App/App/Info.plist
+          # 빌드 번호(CFBundleVersion)를 Codemagic 빌드 카운터로 — TestFlight 는 매 업로드마다
+          # 이전보다 높은 빌드 번호를 요구한다(중복이면 "must be higher than previously uploaded" 거부).
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUMBER:-2}" ios/App/App/Info.plist
 
       - name: Sign in with Apple 엔타이틀먼트 주입
         # Capacitor 기본 템플릿엔 엔타이틀먼트 파일이 없다. Apple 로그인이 런타임에 동작하려면
