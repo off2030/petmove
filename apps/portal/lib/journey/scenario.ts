@@ -893,9 +893,14 @@ export function buildJourney(
       // 보호자가 놓치면 안 될 내용이라.
       desc: failedMsg
         ? failedMsg
-        : hideStepDescriptions && (desc === summary || desc === step.doneSummary)
-          ? undefined
-          : desc,
+        : done && !isFutureDate
+          ? // 완료된 절차(과거·오늘)는 설명문 숨김 — doneSummary 과거형 narration("…했습니다")은
+            // 제목을 반복할 뿐 정보가 없다. 주의(failedMsg)는 위에서 우선, 미래 예약(done+future)은
+            // 아래 분기로 현재형 안내를 유지한다.
+            undefined
+          : hideStepDescriptions && (desc === summary || desc === step.doneSummary)
+            ? undefined
+            : desc,
       cardDesc,
       failedChecks: failedChecks > 0 ? failedChecks : undefined,
       infoChecks: infoChecks > 0 ? infoChecks : undefined,
