@@ -168,7 +168,7 @@ function applyGuardianToCase(input: GuardianContactInput, prevData: Record<strin
   setOrDel('customer_first_name_en', firstEn)
   setOrDel('customer_last_name_en', lastEn)
   setOrDel('phone', input.phone.trim())
-  setOrDel('email', input.contact_email.trim())
+  setOrDel('email', input.contact_email.trim().toLowerCase())
   setOrDel('address_kr', input.address_kr.trim())
   setOrDel('address_detail_kr', input.address_detail_kr.trim())
   setOrDel('address_zipcode', input.address_zipcode.trim())

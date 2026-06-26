@@ -331,6 +331,9 @@ export function TextField({
         className="pm-field-input"
         type="text"
         inputMode={inputMode}
+        autoCapitalize={inputMode === 'email' ? 'none' : undefined}
+        autoCorrect={inputMode === 'email' ? 'off' : undefined}
+        spellCheck={inputMode === 'email' ? false : undefined}
         value={display}
         readOnly={readOnly}
         onClick={onClick}
