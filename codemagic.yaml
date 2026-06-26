@@ -126,5 +126,8 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        # TestFlight 내부 테스트로 올린다(심사 자동제출 X — 수동으로 출시 결정).
-        submit_to_testflight: true
+        # 업로드만(App Store Connect 에 빌드 등록). submit_to_testflight:true 는 테스터 그룹이
+        # 없으면 "App Store distribution" 후처리가 실패(빨강)해 매 빌드가 실패로 보인다 —
+        # 업로드는 이미 성공하므로 자동배포는 끄고, TestFlight 테스터 배포·심사는 App Store
+        # Connect 에서 수동으로 한다(표준 워크플로).
+        submit_to_testflight: false
