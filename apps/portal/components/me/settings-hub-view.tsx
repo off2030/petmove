@@ -85,7 +85,7 @@ function HeroLinkCard({
         {avatar}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ ...serif, fontSize: 20, color: C.ink, fontVariantNumeric: 'tabular-nums' }}>
+            <span style={{ ...serif, fontSize: 18, color: C.ink, fontVariantNumeric: 'tabular-nums' }}>
               {nameKo ?? '이름 미설정'}
             </span>
             {nameEn && (
@@ -309,7 +309,7 @@ function PartnerCard({
         <OrgAvatar name={org.name} url={org.avatar_url} size={PARTNER_AVATAR} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ ...serif, fontSize: 18, color: C.ink }}>{org.name}</span>
+            <span style={{ ...serif, fontSize: 17, color: C.ink }}>{org.name}</span>
             {org.org_type === 'both' && (
               <span
                 style={{

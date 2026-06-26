@@ -354,7 +354,7 @@ function ChecklistRow({
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontSize: 17,
+            fontSize: 16,
             fontWeight: 500,
             color: ok ? C.ink : na ? C.ink3 : C.ink2,
           }}
@@ -414,7 +414,7 @@ function DocRow({
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span
             style={{
-              fontSize: 17,
+              fontSize: 16,
               fontWeight: 500,
               color: pending ? C.ink2 : C.ink,
               overflow: 'hidden',
