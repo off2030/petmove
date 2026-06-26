@@ -33,7 +33,7 @@ workflows:
       vars:
         BUNDLE_ID: "com.petmove.portal"
         APP_STORE_APPLE_ID: 6784567864
-      node: 20
+      node: 22 # Capacitor 8 CLI 는 Node >=22 필요(20 이면 cap 명령이 fatal)
       xcode: latest
       cocoapods: default
 
