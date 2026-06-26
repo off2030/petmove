@@ -30,7 +30,7 @@ export function ComingSoon({ title, hint }: { title: string; hint?: string }) {
       <h1
         style={{
           fontFamily: 'var(--pm-font-display)',
-          fontSize: 22,
+          fontSize: 20,
           fontWeight: 500,
           letterSpacing: '-0.01em',
           margin: 0,

@@ -177,7 +177,7 @@ export function CaseHeader({
           <PetAvatar size={36} />
         )}
       </span>
-      <h1 style={{ ...serif, fontSize: 22, lineHeight: 1.12, margin: 0, color: ink }}>
+      <h1 style={{ ...serif, fontSize: 20, lineHeight: 1.12, margin: 0, color: ink }}>
         {petName}
       </h1>
       {routeEl}

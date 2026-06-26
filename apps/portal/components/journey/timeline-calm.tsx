@@ -295,7 +295,7 @@ export function TimelineCalm({
           >
             <div
               style={{
-                fontSize: 17,
+                fontSize: 16,
                 lineHeight: '22px',
                 color: hasWarn ? C.warn : isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
                 fontWeight: isCurr || hasWarn ? 600 : 500,
@@ -705,7 +705,7 @@ export function TimelineCalm({
                   style={{
                     ...serif,
                     margin: 0,
-                    fontSize: 22,
+                    fontSize: 19,
                     lineHeight: 1.18,
                     color: 'var(--pm-ink)',
                     fontWeight: 500,
@@ -779,7 +779,7 @@ export function TimelineCalm({
                   style={{
                     ...serif,
                     margin: 0,
-                    fontSize: 22,
+                    fontSize: 19,
                     lineHeight: 1.18,
                     color: 'var(--pm-ink)',
                     fontWeight: 500,
@@ -854,7 +854,7 @@ export function TimelineCalm({
         </div>
 
         {/* 단계 리스트 — 한국(출국 준비)·일본·한국(귀국) 구간별 카드. */}
-        <h3 style={{ ...serif, margin: '24px 0 12px', fontSize: 20 }}>전체 일정</h3>
+        <h3 style={{ ...serif, margin: '24px 0 12px', fontSize: 17 }}>전체 일정</h3>
         {stageZones.flatMap((zone, zi) => {
           const card = (
             <div
