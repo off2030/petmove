@@ -6,9 +6,8 @@ import { ComingSoonView } from '@/components/me/coming-soon-view'
 
 export default function MeGuardianPage() {
   const { cases } = useCases()
-  const primary = cases[0]
-  if (!primary) {
+  if (cases.length === 0) {
     return <ComingSoonView title="보호자" message="먼저 케이스를 등록하세요." />
   }
-  return <GuardianEditView caseRow={primary} caseId={primary.id} />
+  return <GuardianEditView />
 }

@@ -71,15 +71,20 @@ export function buildProfileView({
 }: BuildArgs): ProfileViewData {
   const data = (primaryCase?.data ?? {}) as Record<string, unknown>
 
-  const customerNameKo = primaryCase?.customer_name || customerProfile?.display_name || null
-  const customerNameEn = primaryCase?.customer_name_en || null
+  // 보호자 연락처는 customer_profiles 가 권위 소유 — profile 우선, 비면 케이스 폴백(백필 전 호환).
+  const customerNameKo = customerProfile?.display_name || primaryCase?.customer_name || null
+  const profileNameEn = [customerProfile?.name_first_en, customerProfile?.name_last_en]
+    .filter((s) => s && s.trim())
+    .join(' ')
+    .trim()
+  const customerNameEn = profileNameEn || primaryCase?.customer_name_en || null
 
   const guardian: GuardianBlock = {
     name: customerNameKo,
     nameEn: customerNameEn,
     relation: '보호자',
-    phone: pickString(data, 'phone') ?? customerProfile?.phone ?? null,
-    email: userEmail ?? pickString(data, 'email'),
+    phone: customerProfile?.phone ?? pickString(data, 'phone') ?? null,
+    email: customerProfile?.contact_email ?? userEmail ?? pickString(data, 'email'),
     initials: deriveInitials(customerNameKo, customerNameEn, userEmail),
     avatarEmoji: customerProfile?.avatar_emoji ?? null,
     avatarColor: customerProfile?.avatar_color ?? null,

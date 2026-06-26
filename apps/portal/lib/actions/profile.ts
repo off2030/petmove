@@ -12,7 +12,9 @@
  */
 
 import { redirect } from 'next/navigation'
+import { createAdminClient } from '@petmove/auth'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
+import type { CaseRow } from '@petmove/domain'
 import { revalidatePath } from 'next/cache'
 import { AVATAR_COLOR_IDS } from '@/lib/avatar'
 
@@ -23,6 +25,15 @@ export interface CustomerProfileRow {
   display_name: string | null
   phone: string | null
   email_normalized: string | null
+  /** 보호자 연락처 — profile 이 권위 소유, 편집 시 모든 연결 케이스로 전파. (display_name=이름, phone=전화 재사용) */
+  name_first_en: string | null
+  name_last_en: string | null
+  /** 연락용 이메일 — 로그인 이메일(email_normalized)과 구분. /me/guardian 에서 직접 편집. */
+  contact_email: string | null
+  address_kr: string | null
+  address_detail_kr: string | null
+  address_zipcode: string | null
+  address_en: string | null
   preferred_language: string
   marketing_opt_in: boolean
   terms_accepted_at: string | null
@@ -123,6 +134,125 @@ export async function updateMyProfile(
 
     revalidatePath('/me')
     return { ok: true, value: data as CustomerProfileRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/** /me/guardian 편집 입력 — 보호자 연락처(profile 권위 소유). 모두 trim/검증은 서버에서. */
+export interface GuardianContactInput {
+  /** 이름(한글) — display_name 으로 저장. */
+  display_name: string
+  name_first_en: string
+  name_last_en: string
+  phone: string
+  contact_email: string
+  /** 도로명+상세 합본 (admin pdf splitKrAddress 가정과 동일 형식). */
+  address_kr: string
+  address_detail_kr: string
+  address_zipcode: string
+  address_en: string
+}
+
+/** 보호자 연락처를 각 케이스 row 로 materialize — 동물 고유 필드는 보존하고 보호자 칸만 덮는다. */
+function applyGuardianToCase(input: GuardianContactInput, prevData: Record<string, unknown>) {
+  const firstEn = input.name_first_en.trim()
+  const lastEn = input.name_last_en.trim()
+  const nameEnColumn = [firstEn, lastEn].filter(Boolean).join(' ').trim() || null
+  const data = { ...prevData }
+  const setOrDel = (key: string, v: string) => {
+    if (v) data[key] = v
+    else delete data[key]
+  }
+  // 영문 성·이름 분리 저장 (readForm·admin pdf-fill 권위 소스).
+  setOrDel('customer_first_name_en', firstEn)
+  setOrDel('customer_last_name_en', lastEn)
+  setOrDel('phone', input.phone.trim())
+  setOrDel('email', input.contact_email.trim())
+  setOrDel('address_kr', input.address_kr.trim())
+  setOrDel('address_detail_kr', input.address_detail_kr.trim())
+  setOrDel('address_zipcode', input.address_zipcode.trim())
+  setOrDel('address_en', input.address_en.trim())
+  return {
+    customer_name: input.display_name.trim() || null,
+    customer_name_en: nameEnColumn,
+    data,
+  }
+}
+
+/**
+ * 보호자 연락처 저장 — profile(권위) + 연결된 **모든** 케이스로 전파.
+ *
+ * 그동안 /me/guardian 이 primary 케이스 하나만 갱신해, 동물이 여러 마리면 한 마리만
+ * 바뀌던 버그를 고친다. profile 은 RLS(self_update)로, 케이스는 admin client 로 쓴다
+ * (cases_update 는 org 멤버만 허용 — link 확인 후 우회). 동물 고유 필드는 보존.
+ */
+export async function updateGuardianContact(
+  input: GuardianContactInput,
+): Promise<Result<{ profile: CustomerProfileRow; cases: CaseRow[] }>> {
+  try {
+    const user = await getCurrentUser()
+    if (!user) return { ok: false, error: '인증 필요' }
+
+    // 검증 — use-case-edit-form/updateCaseInfoFields 와 동일 규칙.
+    const phone = input.phone.replace(/\D/g, '')
+    if (phone && !/^010\d{8}$/.test(phone)) {
+      return { ok: false, error: '전화번호는 010-XXXX-XXXX 형식으로 입력하세요.' }
+    }
+    const email = input.contact_email.trim()
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return { ok: false, error: '이메일 형식이 올바르지 않습니다.' }
+    }
+    const normalized: GuardianContactInput = { ...input, phone, contact_email: email }
+
+    const supabase = await createClient()
+
+    // 1) profile 갱신 (권위 소유) — self_update RLS.
+    const { data: prof, error: profErr } = await supabase
+      .from('customer_profiles')
+      .update({
+        display_name: normalized.display_name.trim() || null,
+        name_first_en: normalized.name_first_en.trim() || null,
+        name_last_en: normalized.name_last_en.trim() || null,
+        phone: phone || null,
+        contact_email: email || null,
+        address_kr: normalized.address_kr.trim() || null,
+        address_detail_kr: normalized.address_detail_kr.trim() || null,
+        address_zipcode: normalized.address_zipcode.trim() || null,
+        address_en: normalized.address_en.trim() || null,
+      })
+      .eq('user_id', user.id)
+      .select('*')
+      .maybeSingle()
+    if (profErr) return { ok: false, error: profErr.message }
+    if (!prof) return { ok: false, error: '프로파일을 찾을 수 없습니다' }
+
+    // 2) 연결된 모든 케이스로 전파 — link 는 RLS 로 조회, 쓰기는 admin(cases_update org 전용 우회).
+    const { data: linked, error: linkErr } = await supabase
+      .from('cases')
+      .select('*, case_customer_links!inner(user_id)')
+      .eq('case_customer_links.user_id', user.id)
+      .is('deleted_at', null)
+    if (linkErr) return { ok: false, error: linkErr.message }
+
+    const admin = createAdminClient()
+    const updated: CaseRow[] = []
+    for (const raw of linked ?? []) {
+      const { case_customer_links: _l, ...rest } = raw as Record<string, unknown>
+      const row = rest as unknown as CaseRow
+      const patch = applyGuardianToCase(normalized, (row.data ?? {}) as Record<string, unknown>)
+      const { data: u, error: upErr } = await admin
+        .from('cases')
+        .update(patch)
+        .eq('id', row.id)
+        .select('*')
+        .single()
+      if (upErr) return { ok: false, error: upErr.message }
+      updated.push(u as CaseRow)
+    }
+
+    revalidatePath('/me')
+    return { ok: true, value: { profile: prof as CustomerProfileRow, cases: updated } }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }

@@ -1,26 +1,27 @@
 'use client'
 
-import type { CaseRow } from '@petmove/domain'
 import { AddressSearchField, SplitNameField, TextField } from '@/components/fields/info-fields'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import { deriveInitials } from '@/lib/profile/catalog'
 import { C, EditPageShell, SectionCard, StickySaveBar } from './settings-shared'
 import { GuardianAvatarPicker } from './guardian-avatar-picker'
-import { useCaseEditForm } from './use-case-edit-form'
+import { useGuardianEditForm } from './use-guardian-edit-form'
 
 /**
  * 설정 > 보호자 — /me/guardian.
- * 현 InfoView 의 "보호자 정보" 섹션 7개 필드. 저장은 useCaseEditForm → updateCaseInfoFields.
- * (base 대비 바뀐 칸만 반영 → 다른 화면·주체가 채운 나머지 필드는 안 지워진다.)
+ * 보호자 연락처 7개 필드. 저장은 useGuardianEditForm → updateGuardianContact 가 profile(권위)
+ * + 연결된 모든 케이스로 전파한다. (옛 useCaseEditForm 은 primary 케이스 1건만 저장해 동물이
+ * 여러 마리면 한 마리만 반영되던 버그가 있었음.)
  */
-export function GuardianEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string }) {
-  const { form, set, dirty, status, error, handleSave } = useCaseEditForm(caseRow, caseId)
+export function GuardianEditView() {
+  const { form, set, dirty, status, error, handleSave } = useGuardianEditForm()
   useUnsavedGuard(dirty)
-  const { profile, userEmail, updateProfile } = useCases()
+  const { cases, profile, userEmail, updateProfile } = useCases()
+  const primary = cases[0] ?? null
   const initials = deriveInitials(
-    caseRow.customer_name ?? profile?.display_name ?? null,
-    caseRow.customer_name_en ?? null,
+    form.customer_name || profile?.display_name || primary?.customer_name || null,
+    primary?.customer_name_en ?? null,
     userEmail,
   )
 
