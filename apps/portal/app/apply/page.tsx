@@ -54,6 +54,6 @@ export default async function ApplyPage() {
   // 기존 케이스가 있으면 보호자 정보 prefill → 소유주 단계 건너뜀.
   const prefillOwner = await loadOwnerPrefill()
   return (
-    <ApplyForm orgId={DIRECT_ORG_ID} orgName="펫무브" isPublic={false} prefillOwner={prefillOwner} />
+    <ApplyForm orgId={DIRECT_ORG_ID} orgName="펫무브" isPublic={false} appDestinationsOnly prefillOwner={prefillOwner} />
   )
 }

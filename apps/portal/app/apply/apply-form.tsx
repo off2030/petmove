@@ -9,6 +9,7 @@ import { DateTextField } from '@petmove/ui'
 import { applyCase } from '@/lib/actions/apply-case'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import destsData from '@petmove/domain/data/destinations.json'
+import { APP_DESTINATIONS } from '@/lib/app-destinations'
 import breedsData from '@petmove/domain/data/breeds.json'
 import colorsData from '@petmove/domain/data/colors.json'
 
@@ -515,11 +516,18 @@ export function ApplyForm({
   orgId,
   orgName,
   isPublic,
+  appDestinationsOnly = false,
   prefillOwner,
 }: {
   orgId: string
   orgName: string
   isPublic: boolean
+  /**
+   * 목적지를 앱 지원 국가(APP_DESTINATIONS: 일본·태국·필리핀)로 제한할지.
+   * 직영 펫무브(B2C 앱 서비스)는 가이드 있는 3개국만 → true.
+   * 펫무브워크 병원·업체 신청서(/apply/<slug>)는 전 목적지 취급 → false(기본).
+   */
+  appDestinationsOnly?: boolean
   /** 직영 '동물 추가' — 기존 보호자 정보. 있으면 소유주 단계 건너뜀. */
   prefillOwner?: OwnerPrefill | null
 }) {
@@ -720,10 +728,10 @@ export function ApplyForm({
     })
   }
 
-  // 신청 폼은 병원(펫무브워크) 고객 인테이크 — 전체 국가(DESTS) 선택 가능.
-  // (APP_DESTINATIONS 3개국 화이트리스트는 B2C 앱의 셀프 목적지 가이드(서비스·목적지 추가)
-  //  surface 한정. 인테이크까지 막으면 가이드 없는 나라로 가는 고객이 등록 자체를 못 함.)
-  const filteredDests = DESTS.filter(d => {
+  // 목적지 선택지: 직영 펫무브(B2C 앱)는 가이드 있는 3개국(APP_DESTINATIONS) 한정,
+  // 펫무브워크 병원·업체 신청서는 전체 국가(DESTS). appDestinationsOnly 로 분기.
+  const destSource = appDestinationsOnly ? APP_DESTINATIONS : DESTS
+  const filteredDests = destSource.filter(d => {
     if (!destQuery.trim()) return true
     const q = destQuery.toLowerCase()
     return d.ko.includes(q) || d.en.toLowerCase().includes(q)
