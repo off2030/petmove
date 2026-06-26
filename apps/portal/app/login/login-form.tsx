@@ -10,8 +10,9 @@ const buttonBaseClass =
 const socialButtonClass = `${buttonBaseClass} border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] text-[#2A2620] hover:bg-[#F0E8DC]`
 const primaryButtonClass = `${buttonBaseClass} bg-[#D99A58] text-[#FBF7F1] hover:bg-[#C98B45]`
 // Apple 가이드라인: Sign in with Apple 버튼은 검정/흰색 + Apple 로고, 다른 소셜 버튼과
-// 동등한 크기·위치(Guideline 4.8). iOS 네이티브에서만 노출.
-const appleButtonClass = `${buttonBaseClass} bg-black text-white hover:bg-[#1A1A1A]`
+// 동등한 크기·위치(Guideline 4.8). 흰색(아웃라인) 변형 — 카카오·네이버·구글의 크림 톤과
+// 어울리도록. 로고·글자는 검정(currentColor). iOS 네이티브에서만 노출.
+const appleButtonClass = `${buttonBaseClass} border border-[rgba(0,0,0,0.18)] bg-white text-black hover:bg-[#F4F4F4]`
 
 export function LoginForm({
   next,

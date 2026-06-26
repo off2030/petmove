@@ -470,6 +470,10 @@
     font-feature-settings: 'rlig' 1, 'calt' 1;
     /* 모바일 — 탭 하이라이트 회색 박스 제거 (포커스 링은 :focus-visible 로 별도) */
     -webkit-tap-highlight-color: transparent;
+    /* 모바일 앱은 페이지 단위 가로 스크롤이 없어야 함 — 살짝 넘치는 요소(그림자·음수 마진
+       등)로 화면이 좌우로 출렁이던 것 차단. overflow-x:hidden 과 달리 clip 은 스크롤
+       컨테이너를 만들지 않아 position:sticky(상단바 등)를 깨지 않는다. */
+    overflow-x: clip;
   }
 
   /* Editorial serif — use via .font-serif on headlines and pet names */

@@ -140,7 +140,10 @@ export function EditPageShell({
         color: C.ink,
         minHeight: '100%',
         paddingTop: 24,
-        paddingBottom: hasBar ? 132 : 80,
+        // hasBar: StickySaveBar(저장 버튼 + 하단 nav 공간 + safe-area)가 ~147px 까지 차지 —
+        // 콘텐츠가 그 뒤로 가려지지 않게 safe-area 포함 넉넉히 확보(영문 주소 마지막 줄이 저장
+        // 버튼에 가려지던 버그 수정).
+        paddingBottom: hasBar ? 'calc(env(safe-area-inset-bottom, 0px) + 150px)' : 80,
         overflow: 'auto',
       }}
     >

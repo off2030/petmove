@@ -26,6 +26,10 @@ export function BottomSheet({
 }) {
   const [render, setRender] = useState(open)
   const [shown, setShown] = useState(false)
+  // 키보드(visualViewport) 추적 — iOS 는 키보드가 올라와도 position:fixed 가 layout
+  // viewport(전체 높이)에 고정돼 시트가 키보드 뒤(화면 밖 아래)로 밀린다. 보이는 영역
+  // (visualViewport)의 높이·offset 으로 컨테이너를 잡아 시트를 키보드 위에 붙인다.
+  const [vp, setVp] = useState<{ top: number; height: number } | null>(null)
 
   useEffect(() => {
     if (open) {
@@ -37,6 +41,20 @@ export function BottomSheet({
     const t = window.setTimeout(() => setRender(false), 260)
     return () => window.clearTimeout(t)
   }, [open])
+
+  useEffect(() => {
+    if (!render || typeof window === 'undefined') return
+    const vv = window.visualViewport
+    if (!vv) return
+    const update = () => setVp({ top: vv.offsetTop, height: vv.height })
+    update()
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
+  }, [render])
 
   useEffect(() => {
     if (!render) return
@@ -58,7 +76,13 @@ export function BottomSheet({
     <div
       style={{
         position: 'fixed',
-        inset: 0,
+        left: 0,
+        right: 0,
+        // 키보드 열림(vp) 시: 보이는 영역만큼만 차지 → flex-end 가 시트를 키보드 위에 붙임.
+        // 닫힘: 전체 화면(inset:0 동등).
+        top: vp ? vp.top : 0,
+        bottom: vp ? undefined : 0,
+        height: vp ? vp.height : undefined,
         zIndex: 80,
         display: 'flex',
         flexDirection: 'column',
@@ -83,7 +107,9 @@ export function BottomSheet({
           position: 'relative',
           background: C.surface,
           borderRadius: '22px 22px 0 0',
-          maxHeight: '85vh',
+          // 키보드 열림 시엔 보이는 영역 기준(vp.height)으로 제한 — 85vh(전체 높이)는 키보드
+          // 위 공간을 넘겨 시트가 다시 잘리므로.
+          maxHeight: vp ? Math.round(vp.height * 0.94) : '85vh',
           display: 'flex',
           flexDirection: 'column',
           transform: shown ? 'translateY(0)' : 'translateY(100%)',

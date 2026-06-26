@@ -249,10 +249,12 @@ export function SettingsView() {
   // 표시는 '긍정 기능 + 기본 ON' — DB 필드는 부정 플래그(free_input_mode/hide_step_descriptions,
   // 기본 false)라 토글 ON(기능 켜짐) = 필드 false 로 매핑한다(마이그레이션 불필요).
   const [savingKey, setSavingKey] = useState<string | null>(null)
+  const [featureNote, setFeatureNote] = useState<string | null>(null)
   const autoValidate = !(profile?.free_input_mode === true) // ON = 자동 검증 켜짐
   const showDesc = !(profile?.hide_step_descriptions === true) // ON = 설명문 표시
   async function setFeature(field: 'free_input_mode' | 'hide_step_descriptions', turnOn: boolean) {
     if (savingKey) return
+    setFeatureNote(null)
     // 자동 검증 기능을 '끌' 때만 부드러운 안내 1회.
     if (field === 'free_input_mode' && !turnOn) {
       const ok = await confirm({
@@ -268,7 +270,9 @@ export function SettingsView() {
     const res = await updateMyProfile(
       field === 'free_input_mode' ? { free_input_mode: dbValue } : { hide_step_descriptions: dbValue },
     )
+    // 실패를 조용히 삼키지 않는다 — 토글이 안 움직이는 원인을 화면에 드러낸다.
     if (res.ok) updateProfile(res.value)
+    else setFeatureNote(res.error || '설정을 저장하지 못했어요. 잠시 후 다시 시도해주세요.')
     setSavingKey(null)
   }
   const daysLeft = scheduledAt
@@ -348,6 +352,11 @@ export function SettingsView() {
           onToggle={() => setFeature('free_input_mode', !autoValidate)}
           last
         />
+        {featureNote && (
+          <div style={{ fontSize: 11.5, color: C.warn, padding: '0 0 12px', lineHeight: 1.45 }}>
+            {featureNote}
+          </div>
+        )}
       </SectionCard>
 
       <SectionCard label="약관·정책">
