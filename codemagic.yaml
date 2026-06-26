@@ -80,10 +80,17 @@ workflows:
           fi
           /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin array" "$ENT" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin:0 string Default" "$ENT" 2>/dev/null || true
-          # 프로젝트(pbxproj) 직접 수정(xcodeproj gem)은 Xcode 26 포맷 손상 우려가 있어
-          # 피한다. 대신 IPA 빌드 스텝에서 --archive-xcargs 로 CODE_SIGN_ENTITLEMENTS 를 넘겨
-          # 이 파일을 서명에 포함시킨다(프로비저닝 프로파일은 App ID 의 applesignin capability 를
-          # 포함하므로 매칭됨). → Apple 로그인 런타임 동작.
+          # CODE_SIGN_ENTITLEMENTS 는 App 타깃에만 설정해야 한다. 전역 xcarg 로 주면 SPM
+          # 패키지(facebook-ios-sdk 등)도 자기 경로에서 App/App.entitlements 를 찾다 실패한다.
+          # → xcodeproj gem 으로 App 타깃 빌드설정에만 연결(gem 최신화로 Xcode 26 포맷 지원).
+          gem install xcodeproj --no-document 2>/dev/null || true
+          ruby -e '
+            require "xcodeproj"
+            proj = Xcodeproj::Project.open("App.xcodeproj")
+            t = proj.targets.find { |x| x.name == "App" }
+            t.build_configurations.each { |c| c.build_settings["CODE_SIGN_ENTITLEMENTS"] = "App/App.entitlements" }
+            proj.save
+          '
 
       - name: 코드 서명 프로파일 적용
         # ios_signing 블록이 저장 인증서 fetch + 프로파일 생성/fetch + 키체인까지 자동 처리.
@@ -102,29 +109,12 @@ workflows:
           xcodebuild -list -project App.xcodeproj || true
           xcodebuild -project App.xcodeproj -scheme App -resolvePackageDependencies
 
-      - name: 진단 — archive 직접 실행(실제 에러 노출)
-        # xcode-project build-ipa 가 xcodebuild stderr 를 삼켜 "Failed to archive" 만 보임.
-        # 동일 archive 를 직접 돌려 실제 에러(엔타이틀먼트 미스매치 vs 컴파일)를 로그에 노출.
-        script: |
-          cd apps/portal/ios/App
-          set -o pipefail
-          xcodebuild -project App.xcodeproj -scheme App \
-            -archivePath build/diag.xcarchive -destination 'generic/platform=iOS' archive \
-            COMPILER_INDEX_STORE_ENABLE=NO \
-            CODE_SIGN_ENTITLEMENTS=App/App.entitlements \
-            DEVELOPMENT_TEAM=FVFZ724G27 \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            CODE_SIGN_STYLE=Manual 2>&1 | tail -80
-
       - name: IPA 빌드
         # Capacitor 8 = SPM 이라 .xcworkspace 없음 → App.xcodeproj 를 직접 빌드.
-        # --archive-xcargs: 기본값(COMPILER_INDEX_STORE_ENABLE=NO) + Apple 로그인 엔타이틀먼트
-        # 연결(CODE_SIGN_ENTITLEMENTS, SRCROOT 기준 상대경로). CODE_SIGN_STYLE=Manual·프로파일은
-        # ios_signing 이 프로젝트에 이미 설정하므로 여기서 안 건드림.
+        # 엔타이틀먼트는 위 스텝에서 App 타깃 빌드설정에 연결했으므로 여기선 기본값으로 빌드.
         script: |
           cd apps/portal/ios/App
-          xcode-project build-ipa --project App.xcodeproj --scheme App \
-            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_ENTITLEMENTS=App/App.entitlements"
+          xcode-project build-ipa --project App.xcodeproj --scheme App
 
     artifacts:
       - apps/portal/ios/App/build/ios/ipa/*.ipa
