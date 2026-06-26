@@ -116,7 +116,7 @@ importers:
         version: 9.39.4(jiti@1.21.7)
       eslint-config-next:
         specifier: ^16.2.4
-        version: 16.2.4(@typescript-eslint/parser@8.59.1(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3))(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3)
+        version: 16.2.4(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3)
       opentype.js:
         specifier: ^2.0.0
         version: 2.0.0
@@ -162,6 +162,9 @@ importers:
       '@capacitor/status-bar':
         specifier: ^8.0.0
         version: 8.0.2(@capacitor/core@8.3.3)
+      '@capgo/capacitor-social-login':
+        specifier: ^8.3.30
+        version: 8.3.30(@capacitor/core@8.3.3)
       '@petmove/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -222,7 +225,7 @@ importers:
         version: 9.39.4(jiti@1.21.7)
       eslint-config-next:
         specifier: ^16.2.4
-        version: 16.2.4(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3)
+        version: 16.2.4(@typescript-eslint/parser@8.59.1(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3))(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3)
       postcss:
         specifier: ^8.5.9
         version: 8.5.10
@@ -395,6 +398,11 @@ packages:
 
   '@capacitor/status-bar@8.0.2':
     resolution: {integrity: sha512-WXs8YB8B9eEaPZz+bcdY6t2nForF1FLoj/JU0Dl9RRgQnddnS98FEEyDooQhaY7wivr000j4+SC1FyeJkrFO7A==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capgo/capacitor-social-login@8.3.30':
+    resolution: {integrity: sha512-DW3V9Cy5qXlIeMXpMLCkOXLI7MwmzI7PxuvJ2sT/qTSKe3ha4VsS60sbCnklGc4AqivpQnavjUxChFeYXMGdGg==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -4719,6 +4727,11 @@ snapshots:
   '@capacitor/status-bar@8.0.2(@capacitor/core@8.3.3)':
     dependencies:
       '@capacitor/core': 8.3.3
+
+  '@capgo/capacitor-social-login@8.3.30(@capacitor/core@8.3.3)':
+    dependencies:
+      '@capacitor/core': 8.3.3
+      tslib: 2.8.1
 
   '@date-fns/tz@1.4.1': {}
 

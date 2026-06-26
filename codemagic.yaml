@@ -80,10 +80,10 @@ workflows:
           fi
           /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin array" "$ENT" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin:0 string Default" "$ENT" 2>/dev/null || true
-          # ⚠️ pbxproj 에 CODE_SIGN_ENTITLEMENTS 연결을 xcodeproj gem 으로 했더니 Xcode 26
-          # 프로젝트 포맷을 깨뜨려 build-ipa 의 showBuildSettings 실패(빌드#5, exit 74).
-          # 변수 분리: 엔타이틀먼트 파일만 만들고 프로젝트엔 연결하지 않는다(첫 GREEN 빌드
-          # 확보 후 안전한 방법으로 재연결 예정 — Apple 로그인은 그때부터 동작).
+          # 프로젝트(pbxproj) 직접 수정(xcodeproj gem)은 Xcode 26 포맷 손상 우려가 있어
+          # 피한다. 대신 IPA 빌드 스텝에서 --archive-xcargs 로 CODE_SIGN_ENTITLEMENTS 를 넘겨
+          # 이 파일을 서명에 포함시킨다(프로비저닝 프로파일은 App ID 의 applesignin capability 를
+          # 포함하므로 매칭됨). → Apple 로그인 런타임 동작.
 
       - name: 코드 서명 프로파일 적용
         # ios_signing 블록이 저장 인증서 fetch + 프로파일 생성/fetch + 키체인까지 자동 처리.
@@ -104,9 +104,13 @@ workflows:
 
       - name: IPA 빌드
         # Capacitor 8 = SPM 이라 .xcworkspace 없음 → App.xcodeproj 를 직접 빌드.
+        # --archive-xcargs: 기본값(COMPILER_INDEX_STORE_ENABLE=NO) + Apple 로그인 엔타이틀먼트
+        # 연결(CODE_SIGN_ENTITLEMENTS, SRCROOT 기준 상대경로). CODE_SIGN_STYLE=Manual·프로파일은
+        # ios_signing 이 프로젝트에 이미 설정하므로 여기서 안 건드림.
         script: |
           cd apps/portal/ios/App
-          xcode-project build-ipa --project App.xcodeproj --scheme App
+          xcode-project build-ipa --project App.xcodeproj --scheme App \
+            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_ENTITLEMENTS=App/App.entitlements"
 
     artifacts:
       - apps/portal/ios/App/build/ios/ipa/*.ipa
