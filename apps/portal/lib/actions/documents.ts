@@ -204,9 +204,12 @@ export async function getStepDocumentUrl(
     )
     if (!doc) return { ok: false, error: '파일을 찾을 수 없습니다.' }
 
+    // storage 경로는 한글을 '_' 로 치환한 safeName 이라, 그대로 다운로드하면
+    // 파일명이 '광견병_항체_검사_결과지.jpg' 처럼 깨진다. download 옵션으로
+    // Content-Disposition 파일명을 표시명(doc.name)으로 강제해 업로드 라벨과 통일.
     const { data, error } = await admin.storage
       .from(BUCKET)
-      .createSignedUrl(doc.path, 60 * 60)
+      .createSignedUrl(doc.path, 60 * 60, { download: doc.name })
     if (error || !data?.signedUrl) {
       return { ok: false, error: error?.message ?? '링크 생성에 실패했습니다.' }
     }

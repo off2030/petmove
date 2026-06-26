@@ -80,16 +80,22 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   // 첨부파일 path 들 모아서 signed URL 일괄 발급. 버킷 private 이라 매 렌더마다 갱신 필요.
   // notes 의 file note 만 대상; text note 는 무관.
   useEffect(() => {
-    const paths = notes
-      .filter((n): n is FileNote => n.type === 'file')
-      .map(derivePath)
-      .filter((p): p is string => !!p)
+    const fileNotes = notes.filter((n): n is FileNote => n.type === 'file')
+    const paths: string[] = []
+    // path → 표시명: 다운로드 시 storage safeName(한글→'_') 대신 업로드명을 쓰도록.
+    const names: Record<string, string> = {}
+    for (const n of fileNotes) {
+      const p = derivePath(n)
+      if (!p) continue
+      paths.push(p)
+      names[p] = n.name
+    }
     if (paths.length === 0) {
       setSignedUrls({})
       return
     }
     let cancelled = false
-    signAttachmentUrls(paths).then((map) => {
+    signAttachmentUrls(paths, names).then((map) => {
       if (!cancelled) setSignedUrls(map)
     }).catch(() => {})
     return () => { cancelled = true }

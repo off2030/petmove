@@ -58,10 +58,18 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
 
   // 첨부파일 path → signed URL 매핑 갱신. private 버킷이라 매번 발급 필요.
   useEffect(() => {
-    const paths = attachments.map(derivePath).filter((p): p is string => !!p)
+    const paths: string[] = []
+    // path → 표시명: 다운로드 시 storage safeName 대신 업로드명을 쓰도록.
+    const names: Record<string, string> = {}
+    for (const att of attachments) {
+      const p = derivePath(att)
+      if (!p) continue
+      paths.push(p)
+      names[p] = att.name
+    }
     if (paths.length === 0) { setSignedUrls({}); return }
     let cancelled = false
-    signAttachmentUrls(paths).then((map) => {
+    signAttachmentUrls(paths, names).then((map) => {
       if (!cancelled) setSignedUrls(map)
     }).catch(() => {})
     return () => { cancelled = true }

@@ -194,9 +194,11 @@ export async function getStepDocumentUrlAdmin(
     const target = docs.find((d) => d.id === docId)
     if (!target) return { ok: false, error: '파일을 찾을 수 없습니다.' }
 
+    // storage 경로는 한글을 '_' 로 치환한 safeName 이라, download 옵션으로
+    // Content-Disposition 파일명을 표시명(target.name)으로 강제해 업로드명과 통일.
     const { data: signed, error } = await supabase.storage
       .from(BUCKET)
-      .createSignedUrl(target.path, 3600)
+      .createSignedUrl(target.path, 3600, { download: target.name })
     if (error || !signed) return { ok: false, error: error?.message ?? '서명 URL 생성 실패' }
     return { ok: true, url: signed.signedUrl }
   } catch (e) {
