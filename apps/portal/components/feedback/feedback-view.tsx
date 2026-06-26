@@ -149,7 +149,7 @@ export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | 
           일정
         </Link>
 
-        <h1 style={{ ...serif, fontSize: 24, lineHeight: 1.2, margin: '12px 0 0', color: C.ink }}>
+        <h1 style={{ ...serif, fontSize: 20, lineHeight: 1.2, margin: '12px 0 0', color: C.ink }}>
           의견 남기기
         </h1>
 

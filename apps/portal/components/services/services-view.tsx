@@ -1035,7 +1035,7 @@ export function ServicesView() {
         />
       ) : (
         <div style={{ padding: '0 24px' }}>
-          <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>
+          <h1 style={{ ...serif, fontSize: 24, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>
             서비스
           </h1>
 

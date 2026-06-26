@@ -1942,7 +1942,7 @@ export function StepDetailView({
               stepNumber
             )}
           </div>
-          <h1 style={{ ...serif, fontSize: 24, lineHeight: 1.2, margin: 0, color: C.ink, minWidth: 0 }}>
+          <h1 style={{ ...serif, fontSize: 20, lineHeight: 1.2, margin: 0, color: C.ink, minWidth: 0 }}>
             {step.title}
           </h1>
         </div>
@@ -1964,22 +1964,25 @@ export function StepDetailView({
               \n\n 으로 구분된 단락의 경계는 marginTop 으로 단락 간 간격을 살짝 줌. */}
           {(() => {
             const lines = step.description.split('\n')
-            let paraBreakBefore = false
+            const items = lines.reduce<Array<{ line: string; key: number; paraBreakBefore: boolean }>>(
+              (acc, line, i) => {
+                if (line.trim() === '') return acc
+                const prevLine = i > 0 ? lines[i - 1] : null
+                acc.push({ line, key: i, paraBreakBefore: prevLine?.trim() === '' })
+                return acc
+              },
+              [],
+            )
             return (
               <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                {lines.flatMap((line, i) => {
-                  if (line.trim() === '') {
-                    paraBreakBefore = true
-                    return []
-                  }
-                  const item = (
+                {items.map(({ line, key, paraBreakBefore }, itemIndex) => (
                     <li
-                      key={i}
+                      key={key}
                       style={{
                         display: 'flex',
                         gap: 8,
                         alignItems: 'flex-start',
-                        marginTop: i === 0 ? 0 : paraBreakBefore ? 14 : 8,
+                        marginTop: itemIndex === 0 ? 0 : paraBreakBefore ? 14 : 8,
                       }}
                     >
                       <span style={{ flexShrink: 0, color: C.ink3 }} aria-hidden>
@@ -1987,10 +1990,7 @@ export function StepDetailView({
                       </span>
                       <span>{line}</span>
                     </li>
-                  )
-                  paraBreakBefore = false
-                  return [item]
-                })}
+                ))}
               </ul>
             )
           })()}
