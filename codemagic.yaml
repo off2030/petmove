@@ -69,14 +69,10 @@ workflows:
           fi
           /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin array" "$ENT" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin:0 string Default" "$ENT" 2>/dev/null || true
-          # pbxproj 의 App 타깃에 CODE_SIGN_ENTITLEMENTS 빌드 설정 연결(xcodeproj gem).
-          ruby -e '
-            require "xcodeproj"
-            proj = Xcodeproj::Project.open("App.xcodeproj")
-            t = proj.targets.find { |x| x.name == "App" }
-            t.build_configurations.each { |c| c.build_settings["CODE_SIGN_ENTITLEMENTS"] = "App/App.entitlements" }
-            proj.save
-          '
+          # ⚠️ pbxproj 에 CODE_SIGN_ENTITLEMENTS 연결을 xcodeproj gem 으로 했더니 Xcode 26
+          # 프로젝트 포맷을 깨뜨려 build-ipa 의 showBuildSettings 실패(빌드#5, exit 74).
+          # 변수 분리: 엔타이틀먼트 파일만 만들고 프로젝트엔 연결하지 않는다(첫 GREEN 빌드
+          # 확보 후 안전한 방법으로 재연결 예정 — Apple 로그인은 그때부터 동작).
 
       - name: 코드 서명 — 배포 인증서·프로파일 자동 생성·적용
         # App Store Connect API 키(integration)로 배포 인증서 + IOS_APP_STORE 프로파일을
