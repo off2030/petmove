@@ -9,7 +9,7 @@
  * journey step 첨부·필수 서류 미리보기와 자동 연동된다.
  */
 
-import { supabaseBrowser as supabase } from '@petmove/auth'
+import { supabaseBrowser as supabase } from '@/lib/supabase/browser'
 import { updateCaseField } from '@/lib/actions/cases'
 import { resolveAttachmentName, resolveStepAttachmentName, type CaseRow } from '@petmove/domain'
 

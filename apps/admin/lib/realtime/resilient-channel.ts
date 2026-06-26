@@ -9,7 +9,7 @@
 // onSubscribed 는 최초 구독과 "모든 재연결" 시 호출 — 재연결은 끊긴 동안의
 // 이벤트를 replay 하지 않으므로, 호출자가 여기서 전체 refetch 로 공백을 메운다.
 
-import { supabaseBrowser } from '@petmove/auth'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 
 type Channel = ReturnType<typeof supabaseBrowser.channel>
 type ChannelBuilder = (channel: Channel) => Channel

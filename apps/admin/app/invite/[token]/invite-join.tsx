@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabaseBrowser } from '@petmove/auth'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import { sendInviteMagicLink, type InviteSummary } from '@/lib/actions/invites'
 
 const ROLE_LABEL: Record<'admin' | 'member', string> = { admin: '관리자', member: '멤버' }

@@ -31,7 +31,7 @@ import {
   X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { supabaseBrowser } from '@petmove/auth'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import { subscribeRealtime } from '@/lib/realtime/resilient-channel'
 import { useConfirm } from '@petmove/ui'
 import { HandoffCard } from './handoff-card'
