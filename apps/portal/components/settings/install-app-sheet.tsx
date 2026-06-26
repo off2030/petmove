@@ -15,7 +15,8 @@ import { LogoMark } from '@/components/portal-shell/logo-mark'
  *    (출시 전엔 빈 값 → 버튼은 보이되 눌러도 이동 X. 출시 전 실사용자 없음.)
  */
 const STORE_URL = {
-  ios: '', // TODO(출시): 'https://apps.apple.com/app/id<APPLE_APP_ID>'
+  // App Store Connect 앱 "펫무브" Apple ID = 6784567864 (2026-06-26 앱 생성 시 부여).
+  ios: 'https://apps.apple.com/app/id6784567864',
   android: 'https://play.google.com/store/apps/details?id=com.petmove.portal',
 } as const
 
