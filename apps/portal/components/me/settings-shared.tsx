@@ -149,7 +149,7 @@ export function EditPageShell({
         <h1
           style={{
             ...serif,
-            fontSize: 24,
+            fontSize: 22,
             lineHeight: 1.12,
             margin: '12px 0 0',
             color: C.ink,

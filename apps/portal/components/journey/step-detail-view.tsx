@@ -1942,7 +1942,7 @@ export function StepDetailView({
               stepNumber
             )}
           </div>
-          <h1 style={{ ...serif, fontSize: 20, lineHeight: 1.2, margin: 0, color: C.ink, minWidth: 0 }}>
+          <h1 style={{ ...serif, fontSize: 18, lineHeight: 1.2, margin: 0, color: C.ink, minWidth: 0 }}>
             {step.title}
           </h1>
         </div>
