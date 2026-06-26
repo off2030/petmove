@@ -53,10 +53,9 @@ workflows:
           cd apps/portal
           npx cap add ios
           npx cap sync ios
-          # cap sync 가 pod install 을 돌리지만, App.xcworkspace 생성을 확실히 하려고
-          # 명시적으로 한 번 더(없으면 build-ipa 의 --workspace 가 실패).
-          cd ios/App
-          pod install
+          # Capacitor 8 은 CocoaPods 가 아니라 Swift Package Manager(Package.swift) 사용 →
+          # Podfile·pod install·.xcworkspace 가 없다. xcodebuild 가 App.xcodeproj 를 직접
+          # 빌드하며 SPM 의존성을 자동 resolve 한다.
 
       - name: Sign in with Apple 엔타이틀먼트 주입
         # Capacitor 기본 템플릿엔 엔타이틀먼트 파일이 없다. Apple 로그인이 런타임에 동작하려면
@@ -90,9 +89,10 @@ workflows:
           xcode-project use-profiles
 
       - name: IPA 빌드
+        # Capacitor 8 = SPM 이라 .xcworkspace 없음 → App.xcodeproj 를 직접 빌드.
         script: |
           cd apps/portal/ios/App
-          xcode-project build-ipa --workspace App.xcworkspace --scheme App
+          xcode-project build-ipa --project App.xcodeproj --scheme App
 
     artifacts:
       - apps/portal/ios/App/build/ios/ipa/*.ipa
