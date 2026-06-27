@@ -37,11 +37,6 @@ export function MicrochipInputs({
     color: C.ink,
     fontWeight: 500,
   }
-  const helpStyle: React.CSSProperties = {
-    fontSize: 12,
-    color: C.ink3,
-    marginTop: 2,
-  }
   const inputStyle: React.CSSProperties = {
     width: '100%',
     marginTop: 8,
@@ -63,7 +58,6 @@ export function MicrochipInputs({
     <div style={cardStyle}>
       <div style={fieldStyle}>
         <div style={labelStyle}>마이크로칩 번호</div>
-        <div style={helpStyle}>000 000 000 000 000 형식 (3자리씩 공백 구분)</div>
         <input
           type="text"
           inputMode="numeric"
@@ -79,7 +73,6 @@ export function MicrochipInputs({
       </div>
       <div style={{ ...fieldStyle, borderTop: `.5px solid ${C.line}` }}>
         <div style={labelStyle}>삽입일</div>
-        <div style={helpStyle}>달력에서 선택하거나 YYYY-MM-DD 로 입력하세요.</div>
         <div style={{ marginTop: 8 }}>
           <DateTextField
             value={date}
