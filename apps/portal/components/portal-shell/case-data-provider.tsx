@@ -392,11 +392,3 @@ export function useCase(caseId: string): CaseRow | null {
   const { cases } = useCases()
   return cases.find((c) => c.id === caseId) ?? null
 }
-
-export function useProfile(): {
-  profile: CustomerProfileRow | null
-  userEmail: string | null
-} {
-  const { profile, userEmail } = useCases()
-  return { profile, userEmail }
-}

@@ -5,6 +5,7 @@ import { C } from '@/lib/palette'
 import type { ReactNode } from 'react'
 import { DateTextField } from '@petmove/ui'
 import { CollapsibleSection } from './collapsible-section'
+import { ChipSelect } from './field-selects'
 
 /**
  * 항공권 구매 step 입력 필드 — 출국·귀국 항공권. controlled — 부모(step-detail-view)가
@@ -438,35 +439,15 @@ function FlightGroup({
   )
 }
 
-/** 운송 방법 — 고객용 3지 chip 선택. 선택된 항목을 다시 누르면 해제. */
+/** 운송 방법 — 고객용 chip 선택(알약형). 선택된 항목을 다시 누르면 해제. */
 function TransportSelect({ value, onChange }: { value: string; onChange: (next: string) => void }) {
   return (
-    <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-      {TRANSPORT_OPTIONS.map((o) => {
-        const selected = value === o.value
-        return (
-          <button
-            key={o.value}
-            type="button"
-            onClick={() => onChange(selected ? '' : o.value)}
-            aria-pressed={selected}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 999,
-              border: `1px solid ${selected ? C.ink : C.line}`,
-              background: selected ? C.ink : 'var(--pm-surface)',
-              color: selected ? C.surface : C.ink2,
-              fontFamily: 'inherit',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: 'pointer',
-              transition: 'background .12s, color .12s, border-color .12s',
-            }}
-          >
-            {o.label}
-          </button>
-        )
-      })}
-    </div>
+    <ChipSelect
+      options={TRANSPORT_OPTIONS}
+      value={value}
+      onChange={onChange}
+      shape="pill"
+      allowDeselect
+    />
   )
 }

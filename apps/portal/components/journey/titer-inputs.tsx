@@ -1,10 +1,11 @@
 'use client'
 
 
-import { C as PM } from '@/lib/palette'
+import { C } from '@/lib/palette'
 import { useState } from 'react'
 import { DateTextField } from '@petmove/ui'
 import { getTiterLabOptions, isKnownTiterLab, isSameTiterLab } from '@petmove/domain'
+import { OptionList } from './field-selects'
 
 /**
  * 광견병 항체 검사 step 입력 필드 — 채혈일 + 검사기관 + 검사결과. controlled — 부모
@@ -35,10 +36,6 @@ export function TiterInputs({
 }) {
   // 검사기관 선택지 — 목적지별(@petmove/domain) + '기타'(직접 입력) 마지막에 덧붙임.
   const LAB_OPTIONS = [...getTiterLabOptions(destinationKey), { value: CUSTOM_LAB, label: '기타' }]
-  const C = {
-    ...PM,
-    accentSoft: 'color-mix(in srgb, var(--pm-accent) 14%, transparent)',
-  } as const
 
   // 검사기관 — lab 이 코드 목록에 없으면 직접 입력 모드. lab 이 비었지만 사용자가
   // 방금 '직접 입력' 을 고른 경우(아직 미입력)도 직접 입력 모드로 본다.
@@ -98,55 +95,12 @@ export function TiterInputs({
 
       <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
         <div style={labelStyle}>검사기관</div>
-        <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {LAB_OPTIONS.map((o) => {
-            // APQA 변형(seoul/eu/hq)은 같은 '농림축산검역본부'로 보고 선택 표시.
-            const selected = isSameTiterLab(selectedLab, o.value)
-            return (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() => handleLabSelect(o.value)}
-                aria-pressed={selected}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 8,
-                  padding: '11px 12px',
-                  border: `1px solid ${selected ? C.accent : C.line}`,
-                  borderRadius: 10,
-                  background: selected ? C.accentSoft : 'var(--pm-surface)',
-                  fontFamily: 'inherit',
-                  fontSize: 15,
-                  color: C.ink,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'border-color .12s, background .12s',
-                }}
-              >
-                <span>{o.label}</span>
-                {selected && (
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke={C.accent}
-                    strokeWidth="2.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{ flexShrink: 0 }}
-                    aria-hidden
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                )}
-              </button>
-            )
-          })}
-        </div>
+        {/* APQA 변형(seoul/eu/hq)은 같은 '농림축산검역본부'로 보고 선택 표시. */}
+        <OptionList
+          options={LAB_OPTIONS}
+          isSelected={(v) => isSameTiterLab(selectedLab, v)}
+          onSelect={handleLabSelect}
+        />
         {customMode && (
           <input
             type="text"

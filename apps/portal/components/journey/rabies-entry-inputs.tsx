@@ -4,6 +4,7 @@
 import { C } from '@/lib/palette'
 import { DateTextField } from '@petmove/ui'
 import { CollapsibleSection } from './collapsible-section'
+import { YearSelect } from './field-selects'
 
 /**
  * 광견병 백신 step(1·2차) 입력 필드. controlled — 부모(step-detail-view)가 state·save 보유.
@@ -48,16 +49,6 @@ const FIELDS: ReadonlyArray<{
   { key: 'expiry', label: '제품 유효기간', kind: 'date' },
 ]
 
-/**
- * valid_until 문자열에서 선택된 연수를 추출. "N년" → "N", 미입력 → "1"(기본),
- * 그 외(날짜 등 legacy 값) → null. 펫무브워크 ValidUntilSelector 와 동일 규칙.
- */
-function selectedYear(value: string): string | null {
-  const m = value.match(/^(\d+)\s*년$/)
-  if (m) return m[1]
-  if (value.trim() === '') return '1'
-  return null
-}
 
 /**
  * 약품 정보 필드(product/manufacturer/lot/expiry)의 지정 약품 힌트를 반환.
@@ -153,33 +144,7 @@ export function RabiesEntryInputs({
             )}
           </div>
           {field.kind === 'years' ? (
-            <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-              {(['1', '2', '3'] as const).map((n) => {
-                const selected = selectedYear(value[field.key]) === n
-                return (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => onChange(field.key, `${n}년`)}
-                    style={{
-                      flex: 1,
-                      padding: '9px 0',
-                      borderRadius: 10,
-                      border: `1px solid ${selected ? C.ink : C.line}`,
-                      background: selected ? C.ink : 'var(--pm-surface)',
-                      color: selected ? C.surface : C.ink2,
-                      fontFamily: 'inherit',
-                      fontSize: 14,
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      transition: 'background .12s, color .12s, border-color .12s',
-                    }}
-                  >
-                    {n}년
-                  </button>
-                )
-              })}
-            </div>
+            <YearSelect value={value[field.key]} onChange={(v) => onChange(field.key, v)} />
           ) : designated ? (
             <div style={designatedStyle}>{hint || <span style={{ color: C.ink3 }}>—</span>}</div>
           ) : field.kind === 'date' ? (
