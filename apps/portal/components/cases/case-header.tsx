@@ -142,7 +142,6 @@ export function CaseHeader({
         display: 'flex',
         alignItems: 'center',
         gap: 6,
-        transform: 'translateY(-2px)',
         background: 'transparent',
         border: 'none',
         padding: 0,
@@ -161,7 +160,6 @@ export function CaseHeader({
         display: 'flex',
         alignItems: 'center',
         gap: 6,
-        transform: 'translateY(-2px)',
       }}
     >
       {routeContent}
@@ -170,17 +168,25 @@ export function CaseHeader({
 
   const leftGroup = (
     <>
-      <span style={{ alignSelf: 'center' }}>
-        {case_ ? (
-          <PetAvatarDisplay case_={case_} index={caseIndex} size={36} />
-        ) : (
-          <PetAvatar size={36} />
-        )}
-      </span>
-      <h1 style={{ ...serif, fontSize: 20, lineHeight: 1.12, margin: 0, color: ink }}>
-        {petName}
-      </h1>
-      {routeEl}
+      {case_ ? (
+        <PetAvatarDisplay case_={case_} index={caseIndex} size={36} />
+      ) : (
+        <PetAvatar size={36} />
+      )}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 12,
+          flexWrap: 'wrap',
+          minWidth: 0,
+        }}
+      >
+        <h1 style={{ ...serif, fontSize: 20, lineHeight: 1.12, margin: 0, color: ink }}>
+          {petName}
+        </h1>
+        {routeEl}
+      </div>
     </>
   )
 
@@ -206,7 +212,7 @@ export function CaseHeader({
         <div
           style={{
             display: 'flex',
-            alignItems: 'baseline',
+            alignItems: 'center',
             gap: 12,
             flexWrap: 'wrap',
             minWidth: 0,
@@ -230,7 +236,7 @@ export function CaseHeader({
         <div
           style={{
             display: 'flex',
-            alignItems: 'baseline',
+            alignItems: 'center',
             gap: 12,
             flexWrap: 'wrap',
             flex: wrapped ? undefined : 1,
