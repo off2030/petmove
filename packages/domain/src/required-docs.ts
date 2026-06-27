@@ -350,7 +350,10 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
  * 나라 이름('프랑스' 등)이라 SPECS(토큰 키)에 못 담는다 — destinationKey 기반 SPECS_BY_KEY 로
  * 조회 (resolveRequiredDocs 의 2차 lookup).
  */
-function euFamilyDocSpecs(label: string, opts?: { withImportPermit?: boolean }): RequiredDocSpec[] {
+function euFamilyDocSpecs(
+  label: string,
+  opts?: { withImportPermit?: boolean; euAhc?: boolean },
+): RequiredDocSpec[] {
   const specs: RequiredDocSpec[] = [
     {
       id: 'eu-rabies-titer-result',
@@ -365,7 +368,9 @@ function euFamilyDocSpecs(label: string, opts?: { withImportPermit?: boolean }):
     },
     {
       id: 'eu-health-cert',
-      name: '건강증명서(입국용)',
+      // EU 회원국(eu 키)은 공식 명칭 'EU 동물건강증명서(Annex III)'. 영국·노르웨이·스위스 등
+      // 비EU 패밀리는 자체 증명서라 일반 명칭('건강증명서(입국용)') 유지.
+      name: opts?.euAhc ? 'EU 동물건강증명서(Annex III)' : '건강증명서(입국용)',
       source: '동물병원·농림축산검역본부',
       kind: 'manual',
       issuanceStepId: 'vet-visit',
@@ -429,7 +434,7 @@ function euFamilyDocSpecs(label: string, opts?: { withImportPermit?: boolean }):
  * 시 여기로 폴백.
  */
 const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
-  eu: euFamilyDocSpecs('유럽연합(EU)'),
+  eu: euFamilyDocSpecs('유럽연합(EU)', { euAhc: true }),
   uk: euFamilyDocSpecs('영국'),
   ireland: euFamilyDocSpecs('아일랜드'),
   malta: euFamilyDocSpecs('몰타'),

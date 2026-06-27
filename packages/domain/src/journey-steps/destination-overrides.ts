@@ -262,7 +262,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   // 사전 통지 카드는 catalog 의 applicability 가 담당 — 여기는 문구·검증 매핑만.
   // 출처: EU Reg 576/2013·2018/772 + petmove.co.kr EU/영국/스위스 가이드 + gov.ie.
   // 항체 검사 기관: 2026-04-22부터 농림축산검역본부 단일화 (petmove.co.kr 공지).
-  eu: euFamilyOverrides({ label: '유럽연합(EU)' }),
+  eu: euFamilyOverrides({ label: '유럽연합(EU)', euAhc: true }),
   uk: euFamilyOverrides({
     label: '영국',
     flightExtraLine:
@@ -313,9 +313,12 @@ function euFamilyOverrides(opts: {
   flightExtraLine?: string
   /** 입국 검사 카드 본문 교체 (기본: 여행자 입국 지점 TPE 안내). */
   departureDescription?: string
+  /** EU 회원국(24개국)만 true — 출국 전 임상검사 카드에 EU 동물건강증명서(Annex III) 안내를
+   *  덧붙인다. 비EU(영국·노르웨이·스위스)는 자체 증명서라 끈다. */
+  euAhc?: boolean
 }): Partial<Record<string, Partial<StepDefinition>>> {
-  const { label, flightExtraLine, departureDescription } = opts
-  return {
+  const { label, flightExtraLine, departureDescription, euAhc } = opts
+  const overrides: Partial<Record<string, Partial<StepDefinition>>> = {
     // 광견병 백신 — 1회 + 항체 검사 모델(2차 카드 제외). 생후 12주(84일), 마이크로칩 이후.
     'rabies-vaccine-1': {
       title: '광견병 백신',
@@ -363,6 +366,15 @@ function euFamilyOverrides(opts: {
       validationIds: ['eu.import-quarantine-date-valid'],
     },
   }
+  if (euAhc) {
+    // base 'vet-visit'(별지25만 안내)에 EU 동물건강증명서(Annex III) 발급 안내를 추가한다.
+    // EU 회원국 입국 필수 서류(Reg. (EU) 2026/705 Annex III). 비EU(영국·스위스 등)엔 미적용.
+    overrides['vet-visit'] = {
+      description:
+        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 EU 동물건강증명서(Annex III)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+    }
+  }
+  return overrides
 }
 
 /**
@@ -395,7 +407,7 @@ export function resolveStepForDestination(
   if (!destinationKey) return step
   const overrides =
     destinationKey === 'eu'
-      ? euFamilyOverrides({ label: euLabelFromToken(destinationToken) })
+      ? euFamilyOverrides({ label: euLabelFromToken(destinationToken), euAhc: true })
       : STEP_DESTINATION_OVERRIDES[destinationKey]
   const override = overrides?.[step.id]
   if (!override) return step
