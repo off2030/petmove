@@ -371,7 +371,7 @@ function euFamilyDocSpecs(
       // EU 회원국(eu 키)은 공식 명칭 'EU 동물건강증명서(Annex III)'. 영국·노르웨이·스위스 등
       // 비EU 패밀리는 자체 증명서라 일반 명칭('건강증명서(입국용)') 유지.
       name: opts?.euAhc ? 'EU 동물건강증명서(Annex III)' : '건강증명서(입국용)',
-      source: '동물병원·농림축산검역본부',
+      source: '동물병원 · 농림축산검역본부',
       kind: 'manual',
       issuanceStepId: 'vet-visit',
       description:
@@ -391,7 +391,7 @@ function euFamilyDocSpecs(
     {
       id: 'eu-export-cert-doc',
       name: '현지 검역증명서',
-      source: '현지 동물병원·정부 기관',
+      source: '현지 동물병원 · 정부 기관',
       kind: 'step',
       stepRef: 'eu-export-cert',
       group: 'quarantine',
