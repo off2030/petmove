@@ -30,15 +30,17 @@ function Documents({ scenario }) {
       paddingTop: 72, paddingBottom: 100, overflow: 'auto',
     }}>
       <div style={{ padding: '0 24px' }}>
-        <div style={{ paddingTop: 8, display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ alignSelf: 'center' }}><PetAvatar size={36}/></span>
-          <h1 style={{ ...docsSerif, fontSize: 30, lineHeight: 1.12, margin: 0, color: DOCS_C.ink }}>
-            {pet.name}
-          </h1>
-          <div style={{ fontSize: 12.5, color: DOCS_C.ink2, display: 'flex', alignItems: 'center', gap: 6, transform: 'translateY(-2px)' }}>
-            <span>{trip.fromCity}</span>
-            <span style={{ color: DOCS_C.ink3 }}>{trip.tripType === 'roundtrip' ? '⇄' : '→'}</span>
-            <span>{trip.toCity}</span>
+        <div style={{ paddingTop: 8, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <PetAvatar size={36}/>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', minWidth: 0 }}>
+            <h1 style={{ ...docsSerif, fontSize: 30, lineHeight: 1.12, margin: 0, color: DOCS_C.ink }}>
+              {pet.name}
+            </h1>
+            <div style={{ fontSize: 12.5, color: DOCS_C.ink2, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>{trip.fromCity}</span>
+              <span style={{ color: DOCS_C.ink3 }}>{trip.tripType === 'roundtrip' ? '⇄' : '→'}</span>
+              <span>{trip.toCity}</span>
+            </div>
           </div>
         </div>
         <div style={{ ...docsMonoCap, marginTop: 10 }}>
