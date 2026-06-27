@@ -1879,7 +1879,7 @@ function resolveField(
     if (attr === 'name_with_manufacturer') {
       // EU(AnnexIII)·UK 서식의 "Name and manufacturer of vaccine" 단일 칸 —
       // 이름 / 제조사 병기. 칸이 좁아 긴 제조사명은 약어로 축약.
-      const MFR_ABBREV: Record<string, string> = { 'Boehringer Ingelheim': 'BI' }
+      const MFR_ABBREV: Record<string, string> = { 'Boehringer Ingelheim': 'B.I.' }
       const nm = (merged.name ?? '').trim()
       const mfRaw = (merged.manufacturer ?? '').trim()
       const mf = MFR_ABBREV[mfRaw] ?? mfRaw
