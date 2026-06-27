@@ -590,8 +590,8 @@ function resolveStepDone(stepId: string, caseRow: CaseRow): boolean {
   if (!step) return false
   // 목적지 오버라이드된 done 우선 — 예: 'departure'는 일본에서 'has-jp-import-quarantine'로
   // 교체된다(base 'departure-past'면 검역 완료를 잘못 판정). done 미오버라이드면 base 그대로.
-  const { destinationKey } = buildCaseJourneyContext(caseRow)
-  const resolved = resolveStepForDestination(step, destinationKey)
+  const { destinationKey, destinationToken } = buildCaseJourneyContext(caseRow)
+  const resolved = resolveStepForDestination(step, destinationKey, destinationToken)
   return resolveDone(resolved.done, caseRow)
 }
 

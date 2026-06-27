@@ -238,7 +238,7 @@ export function getStepsForCase(
   return catalog
     .filter((s) => isStepApplicable(s.applicability, ctx))
     .filter((s) => appliesWhenMatches(s.appliesWhen, caseRow))
-    .map((s) => resolveStepForDestination(s, ctx.destinationKey))
+    .map((s) => resolveStepForDestination(s, ctx.destinationKey, ctx.destinationToken))
     .map((s) => resolveStepForSpecies(s, ctx.species))
     .sort((a, b) => a.order - b.order)
 }

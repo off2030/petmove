@@ -359,15 +359,38 @@ function euFamilyOverrides(opts: {
 }
 
 /**
+ * EU 패밀리(eu 키) 카드 라벨 — 실제 선택 국가 토큰을 그대로 표기한다(앱은 ko 국가명
+ * '프랑스'·'독일' 을 토큰으로 저장). 토큰이 없거나 generic('유럽연합'·'eu'·'유럽')이면
+ * '유럽연합(EU)' 으로 폴백. (영국·아일랜드 등 1:1 키는 각자 고정 라벨을 쓰므로 무관.)
+ */
+function euLabelFromToken(token: string | null | undefined): string {
+  const t = (token ?? '').trim()
+  if (!t) return '유럽연합(EU)'
+  const lower = t.toLowerCase()
+  if (lower === 'eu' || lower === 'europe' || t.includes('유럽')) return '유럽연합(EU)'
+  return t
+}
+
+/**
  * base step + destination override 를 머지해 최종 StepDefinition 반환.
  * destinationKey 가 null 이거나 매칭 override 가 없으면 base 그대로.
+ *
+ * EU 패밀리(eu 키)는 24개국이 한 오버라이드를 공유하므로, 카드 라벨만 실제 선택 국가명
+ * (destinationToken)으로 동적 생성한다 — '프랑스' → '프랑스 입국 검사'. validationIds 등
+ * 검증 시그널은 라벨과 무관하게 동일해서 check-mapping(정적 eu 엔트리를 읽음)과 어긋나지 않는다.
+ * destinationToken 미전달(레거시 호출)이면 '유럽연합(EU)' 공통 라벨로 폴백.
  */
 export function resolveStepForDestination(
   step: StepDefinition,
   destinationKey: string | null | undefined,
+  destinationToken?: string | null,
 ): StepDefinition {
   if (!destinationKey) return step
-  const override = STEP_DESTINATION_OVERRIDES[destinationKey]?.[step.id]
+  const overrides =
+    destinationKey === 'eu'
+      ? euFamilyOverrides({ label: euLabelFromToken(destinationToken) })
+      : STEP_DESTINATION_OVERRIDES[destinationKey]
+  const override = overrides?.[step.id]
   if (!override) return step
   return { ...step, ...override }
 }
