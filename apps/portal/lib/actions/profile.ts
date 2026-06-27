@@ -215,7 +215,10 @@ function applyGuardianToCase(input: GuardianContactInput, prevData: Record<strin
   setOrDel('customer_first_name_en', firstEn)
   setOrDel('customer_last_name_en', lastEn)
   setOrDel('phone', input.phone.trim())
-  setOrDel('email', input.contact_email.trim().toLowerCase())
+  // A안: 연락 이메일은 cases.data.email(소유권 매칭키)에 전파하지 않는다. 매칭키를
+  // 고객이 건드리면 추가 전용 트리거(20260627000001)에서 "남의 로그인 이메일로 바꿔
+  // 타인 자동 링크" 누수가 생기고, 본인 소유권도 흔들린다. contact_email 은
+  // customer_profiles 에만 저장(updateGuardianContact). 매칭키는 가입/케이스 생성 시점 고정.
   setOrDel('address_kr', input.address_kr.trim())
   setOrDel('address_detail_kr', input.address_detail_kr.trim())
   setOrDel('address_zipcode', input.address_zipcode.trim())
