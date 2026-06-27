@@ -16,7 +16,7 @@
 
 type UrlResult = { ok: true; value: string } | { ok: false; error: string }
 
-function isNativePlatform(): boolean {
+export function isNativePlatform(): boolean {
   if (typeof window === 'undefined') return false
   const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor
   return !!cap?.isNativePlatform?.()

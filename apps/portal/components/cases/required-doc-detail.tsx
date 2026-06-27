@@ -7,7 +7,7 @@ import { useEffect, useState, useTransition } from 'react'
 import type { RequiredDocItem } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { deleteStepDocument, getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
-import { openExternalUrl } from '@/lib/native/open-external'
+import { isNativePlatform, openExternalUrl } from '@/lib/native/open-external'
 import { setRequiredDocComplete, setRequiredDocNa } from '@/lib/actions/required-docs'
 import { StepAttachments } from '@/components/journey/step-attachments'
 import { type CaseDocument } from '@/lib/documents'
@@ -254,6 +254,14 @@ export function RequiredDocDetail({
                   download={t.filename}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={(e) => {
+                    // 네이티브 앱: target=_blank 가 인앱 WebView 를 양식 PDF 로 덮어 되돌아갈
+                    // 버튼이 사라진다 → 인앱 브라우저(Done 버튼 있음)로 연다. 웹은 기본 동작 유지.
+                    if (isNativePlatform()) {
+                      e.preventDefault()
+                      void openExternalUrl(t.href)
+                    }
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
