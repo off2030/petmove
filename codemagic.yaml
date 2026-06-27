@@ -70,6 +70,17 @@ workflows:
           # 빌드 번호(CFBundleVersion)를 Codemagic 빌드 카운터로 — TestFlight 는 매 업로드마다
           # 이전보다 높은 빌드 번호를 요구한다(중복이면 "must be higher than previously uploaded" 거부).
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUMBER:-2}" ios/App/App/Info.plist
+          # 구글 로그인 딥링크용 커스텀 URL scheme 등록. 구글은 임베디드 WebView OAuth 를
+          # 차단하므로 Custom Tab(외부 브라우저)에서 인증 후 com.petmove.portal://auth/callback
+          # 딥링크로 앱에 복귀하는데, iOS 는 안드로이드(Capacitor 가 appId 를 자동 등록)와 달리
+          # 이 scheme 을 Info.plist 에 직접 선언해야 라우팅된다. 없으면 인증을 마쳐도 앱으로
+          # 못 돌아와 구글 로그인이 멈춘다. (애플·카카오·네이버는 딥링크를 안 써서 영향 없음.)
+          PLIST="ios/App/App/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string com.petmove.portal" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string com.petmove.portal" "$PLIST" 2>/dev/null || true
 
       - name: Sign in with Apple 엔타이틀먼트 주입
         # Capacitor 기본 템플릿엔 엔타이틀먼트 파일이 없다. Apple 로그인이 런타임에 동작하려면
