@@ -96,13 +96,20 @@ export function LoginForm({
   }
 
   async function appleLogin() {
-    // iOS 네이티브 시트로 인라인 완결 — 성공이면 nativeAppleLogin 이 navigate 한다.
-    // 여기 도달하면 = 사용자 취소(에러 없음) 또는 실패. 어느 쪽이든 loading 해제.
     setLoading('apple')
     setError(null)
     setInfo(null)
     const res = await nativeAppleLogin(next)
-    if (res.error) setError(res.error)
+    if (res.error) {
+      setError(res.error)
+      setLoading(null)
+      return
+    }
+    // 성공(success): nativeAppleLogin 이 window.location.href 로 전체 리로드를 건 상태 →
+    // loading 을 풀지 않고 '로그인 중…' 스피너를 유지한다(리로드가 끝날 때까지). 풀면 그 사이
+    // 로그인 폼(첫 화면)이 잠깐 보였다가 로그인됨. 구글(handled 시 return)과 동일한 처리.
+    if (res.success) return
+    // 성공도 에러도 아니면 = 사용자가 Apple 시트를 취소 → 폼으로 복귀.
     setLoading(null)
   }
 

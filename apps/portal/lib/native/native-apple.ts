@@ -52,7 +52,7 @@ async function ensureInitialized(): Promise<void> {
  */
 export async function nativeAppleLogin(
   next: string,
-): Promise<{ handled: boolean; error?: string }> {
+): Promise<{ handled: boolean; error?: string; success?: boolean }> {
   try {
     const { Capacitor } = await import('@capacitor/core')
     if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') {
@@ -82,7 +82,9 @@ export async function nativeAppleLogin(
 
     // 세션이 쿠키에 설정됨 → 서버가 인식. next 로 전체 이동(서버 세션 반영).
     window.location.href = next && next !== '/' ? next : '/'
-    return { handled: true }
+    // success=true → 호출부가 '로그인 중…' 스피너를 유지(전체 리로드가 끝날 때까지). 구글과 동일.
+    // 이 신호가 없으면 호출부가 loading 을 풀어 리로드 도중 로그인 폼(첫 화면)이 잠깐 보인다.
+    return { handled: true, success: true }
   } catch (e) {
     // 사용자가 Apple 시트를 취소하면 에러를 던진다 — 조용히 폼으로 복귀.
     const msg = (e as { message?: string })?.message ?? ''
