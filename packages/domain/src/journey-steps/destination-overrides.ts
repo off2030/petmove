@@ -38,6 +38,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         { url: '/guide/japan-airport-quarantine', label: '일본 주요 공항 동물검역소 위치' },
       ],
     },
+    // 출국 전 임상검사 — 일본은 별지 제25호 외에 FormAC(혹은 RE)도 발급받아야 한다.
+    // base 카드(destinations:'all')는 별지 제25호만 안내(태국·필리핀 등 공용). FormAC 안내는
+    // 일본 전용이라 여기서만 description 을 덮어쓴다. (base 를 직접 고치면 전 목적지에 누수됨.)
+    'vet-visit': {
+      description:
+        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 FormAC(혹은 RE)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+    },
   },
   // 일본을 뼈대로 — 'departure' 공용 카드를 그 나라 '[국가] 수입 동물검역' 도착 카드로 교체.
   // 목적지마다 따로 작성(검역일 필드도 나라별: {국가}_import_quarantine_date). 제목·설명은
