@@ -7,7 +7,9 @@ import { useEffect, useState, useTransition } from 'react'
 import type { RequiredDocItem } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { deleteStepDocument, getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
-import { isNativePlatform, openExternalUrl } from '@/lib/native/open-external'
+import { isNativePlatform } from '@/lib/native/open-external'
+import { downloadFile } from '@/lib/native/download'
+import { useMediaViewer } from '@/components/portal-shell/media-viewer'
 import { setRequiredDocComplete, setRequiredDocNa } from '@/lib/actions/required-docs'
 import { StepAttachments } from '@/components/journey/step-attachments'
 import { type CaseDocument } from '@/lib/documents'
@@ -255,11 +257,11 @@ export function RequiredDocDetail({
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => {
-                    // 네이티브 앱: target=_blank 가 인앱 WebView 를 양식 PDF 로 덮어 되돌아갈
-                    // 버튼이 사라진다 → 인앱 브라우저(Done 버튼 있음)로 연다. 웹은 기본 동작 유지.
+                    // 네이티브 앱: target=_blank 는 인앱 WebView 를 덮거나 무반응 → 다운로드(저장·
+                    // 공유 시트)로 처리. 웹은 기본 <a download> 동작 유지.
                     if (isNativePlatform()) {
                       e.preventDefault()
-                      void openExternalUrl(t.href)
+                      void downloadFile(t.href, t.filename)
                     }
                   }}
                   style={{
@@ -452,6 +454,7 @@ function PreviewCard({
   /** 있으면 카드 헤더에 삭제(×) 노출. */
   onDelete?: () => void
 }) {
+  const { openImage } = useMediaViewer()
   const [url, setUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -541,10 +544,10 @@ function PreviewCard({
           </div>
         ) : isPdf ? (
           // 모바일 WebView 는 iframe 내 PDF 인라인 렌더를 지원하지 않아 빈 화면이 됨.
-          // 인라인 대신 기기 기본 뷰어로 여는 버튼.
+          // PDF 는 다운로드(네이티브는 저장·공유 시트, 웹은 새 탭/다운로드)로 처리.
           <button
             type="button"
-            onClick={() => void openExternalUrl(url)}
+            onClick={() => void downloadFile(url, doc.name)}
             style={{
               width: '100%',
               padding: '20px 16px',
@@ -565,13 +568,15 @@ function PreviewCard({
               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
               <path d="M15 3h6v6M10 14 21 3" />
             </svg>
-            PDF 열기
+            PDF 다운로드
           </button>
         ) : (
+          // 이미지: 탭하면 앱 내장 전체화면 뷰어(저장 버튼 포함)로 크게 본다.
           <img
             src={url}
             alt={doc.name}
-            style={{ width: '100%', height: 'auto', display: 'block' }}
+            onClick={() => openImage(url, doc.name)}
+            style={{ width: '100%', height: 'auto', display: 'block', cursor: 'pointer' }}
           />
         )}
       </div>

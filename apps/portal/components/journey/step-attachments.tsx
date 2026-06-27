@@ -9,7 +9,8 @@ import {
   getStepDocumentUrl,
   uploadStepDocument,
 } from '@/lib/actions/documents'
-import { openExternalUrlAsync } from '@/lib/native/open-external'
+import { downloadFile } from '@/lib/native/download'
+import { useMediaViewer } from '@/components/portal-shell/media-viewer'
 import { type CaseDocument, formatFileSize, MAX_DOCUMENT_BYTES } from '@/lib/documents'
 
 /**
@@ -35,6 +36,7 @@ export function StepAttachments({
   hideList?: boolean
 }) {
   const { updateCase } = useCases()
+  const { openImage } = useMediaViewer()
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -60,14 +62,20 @@ export function StepAttachments({
     })
   }
 
-  function handleOpen(docId: string) {
+  function handleOpen(doc: CaseDocument) {
     if (openingId) return
     setError(null)
-    setOpeningId(docId)
-    // openExternalUrlAsync: await 뒤 window.open 팝업 차단 우회 + 네이티브 인앱 브라우저 처리.
-    openExternalUrlAsync(getStepDocumentUrl(caseId, docId)).then((res) => {
+    setOpeningId(doc.id)
+    // 이미지 = 앱 내장 뷰어로 보기, 그 외(PDF) = 다운로드(네이티브는 저장·공유 시트).
+    const isImage = doc.mime.startsWith('image/')
+    getStepDocumentUrl(caseId, doc.id, isImage ? 'view' : 'download').then((res) => {
       setOpeningId(null)
-      if (!res.ok) setError(res.error)
+      if (!res.ok) {
+        setError(res.error)
+        return
+      }
+      if (isImage) openImage(res.value, doc.name)
+      else void downloadFile(res.value, doc.name)
     })
   }
 
@@ -108,7 +116,7 @@ export function StepAttachments({
               <FileBadge mime={doc.mime} />
               <button
                 type="button"
-                onClick={() => handleOpen(doc.id)}
+                onClick={() => handleOpen(doc)}
                 style={{
                   flex: 1,
                   minWidth: 0,

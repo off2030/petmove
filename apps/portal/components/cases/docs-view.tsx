@@ -5,7 +5,8 @@ import { C } from '@/lib/palette'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
-import { openExternalUrlAsync } from '@/lib/native/open-external'
+import { downloadFile } from '@/lib/native/download'
+import { useMediaViewer } from '@/components/portal-shell/media-viewer'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { CaseHeader } from '@/components/cases/case-header'
 import { StepAttachments } from '@/components/journey/step-attachments'
@@ -49,6 +50,7 @@ export function DocsView({
   }
 
   const { updateCase } = useCases()
+  const { openImage } = useMediaViewer()
   // 진입 시 orphan(삭제됐는데 기록만 남은) 문서 정리 — storedDocs·미리보기의
   // 'Object not found' 항목 제거. 변경 있을 때만 케이스 갱신.
   useEffect(() => {
@@ -74,9 +76,14 @@ export function DocsView({
   const requiredTotal = curatedChecklist.filter((d) => !d.na).length
   const quarantineDone = quarantineCerts.filter((d) => d.verified).length
 
-  function handleOpenDoc(docId: string) {
-    // openExternalUrlAsync: await 뒤 window.open 팝업 차단 우회 + 네이티브 인앱 브라우저 처리.
-    void openExternalUrlAsync(getStepDocumentUrl(caseId, docId))
+  function handleOpenDoc(doc: { id: string; name: string; type: string }) {
+    // 이미지(type 'IMG') = 앱 내장 뷰어, 그 외(PDF) = 다운로드(네이티브는 저장·공유 시트).
+    const isImage = doc.type === 'IMG'
+    getStepDocumentUrl(caseId, doc.id, isImage ? 'view' : 'download').then((res) => {
+      if (!res.ok) return
+      if (isImage) openImage(res.value, doc.name)
+      else void downloadFile(res.value, doc.name)
+    })
   }
 
   return (
@@ -200,7 +207,7 @@ export function DocsView({
                   C={C}
                   num={num}
                   monoCap={monoCap}
-                  onDownload={() => handleOpenDoc(d.id)}
+                  onDownload={() => handleOpenDoc(d)}
                 />
               </div>
             ))}
