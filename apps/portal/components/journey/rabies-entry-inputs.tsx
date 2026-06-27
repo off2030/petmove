@@ -70,6 +70,7 @@ export function RabiesEntryInputs({
   onChange,
   productHints,
   otherHospital,
+  hideExpiry = false,
 }: {
   value: RabiesEntryForm
   onChange: (key: keyof RabiesEntryForm, next: string) => void
@@ -77,7 +78,10 @@ export function RabiesEntryInputs({
   productHints?: RabiesProductHints | null
   /** 타병원 접종 여부. 본병원이면 약품칸은 지정 약품 읽기 전용, 타병원이면 직접 입력. */
   otherHospital?: boolean
+  /** 제품 유효기간 행 숨김 — EU 입국은 광견병 백신에 제품 유효기간 정보가 불필요. */
+  hideExpiry?: boolean
 }) {
+  const fields = hideExpiry ? FIELDS.filter((f) => f.key !== 'expiry') : FIELDS
 
   const cardStyle: React.CSSProperties = {
     background: C.surface,
@@ -170,19 +174,19 @@ export function RabiesEntryInputs({
     })
 
   // 접종일만 항상 노출, 나머지(면역 유효기간·약품 정보)는 '세부 정보' 접기.
-  const detailFields = FIELDS.slice(1)
+  const detailFields = fields.slice(1)
   // 본병원이면 약품 4필드는 직접 입력값(value)이 아니라 병원 지정 약품(productHints)으로
   // 읽기 전용 표시된다 — 그 값도 '내용 있음'으로 쳐야 채워진 카드가 펼친 상태로 뜬다.
+  const designatedKeys = (
+    hideExpiry ? (['product', 'manufacturer', 'lot'] as const) : (['product', 'manufacturer', 'lot', 'expiry'] as const)
+  )
   const hasDesignated =
-    !otherHospital &&
-    (['product', 'manufacturer', 'lot', 'expiry'] as const).some(
-      (k) => (productHints?.[k] ?? '').trim() !== '',
-    )
+    !otherHospital && designatedKeys.some((k) => (productHints?.[k] ?? '').trim() !== '')
   const detailHasData =
     hasDesignated || detailFields.some((f) => value[f.key].trim() !== '')
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={cardStyle}>{renderRows(FIELDS.slice(0, 1))}</div>
+      <div style={cardStyle}>{renderRows(fields.slice(0, 1))}</div>
       <CollapsibleSection label="세부 정보 (선택)" defaultOpen={detailHasData}>
         <div style={cardStyle}>{renderRows(detailFields)}</div>
       </CollapsibleSection>

@@ -56,6 +56,7 @@ export function RabiesExtraInputs({
   onAdd,
   productHintsFor,
   startDose = 3,
+  hideExpiry = false,
 }: {
   entries: RabiesExtraEntry[]
   onChange: (index: number, key: keyof RabiesEntryForm, next: string) => void
@@ -65,6 +66,8 @@ export function RabiesExtraInputs({
   productHintsFor: (index: number) => RabiesProductHints | null
   /** 첫 카드의 차수 — 일본 3(차), 1회 접종국(태국 등) 2(차). */
   startDose?: number
+  /** 제품 유효기간 행 숨김 — EU 입국은 광견병 백신에 제품 유효기간 정보가 불필요. */
+  hideExpiry?: boolean
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -76,6 +79,7 @@ export function RabiesExtraInputs({
           onChange={(key, next) => onChange(i, key, next)}
           onRemove={() => onRemove(i)}
           productHints={productHintsFor(i)}
+          hideExpiry={hideExpiry}
         />
       ))}
       <button
@@ -106,14 +110,17 @@ function ExtraCard({
   onChange,
   onRemove,
   productHints,
+  hideExpiry = false,
 }: {
   entry: RabiesExtraEntry
   doseNumber: number
   onChange: (key: keyof RabiesEntryForm, next: string) => void
   onRemove: () => void
   productHints: RabiesProductHints | null
+  hideExpiry?: boolean
 }) {
   const otherHospital = entry.other_hospital !== false
+  const fields = hideExpiry ? FIELDS.filter((f) => f.key !== 'expiry') : FIELDS
 
   const cardStyle: React.CSSProperties = {
     background: C.surface,
@@ -198,7 +205,7 @@ function ExtraCard({
           </svg>
         </button>
       </div>
-      {FIELDS.map((field) => {
+      {fields.map((field) => {
         const isProduct =
           field.key === 'product' ||
           field.key === 'manufacturer' ||

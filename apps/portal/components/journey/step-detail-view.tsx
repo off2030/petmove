@@ -165,6 +165,8 @@ export function StepDetailView({
   // (종합백신과 동일 모델). 일본·하와이(2회국)는 기존 1차 단일 + 별도 추가 백신 카드 유지.
   const isRabiesSingleCard =
     isRabies1 && !!destinationKey && SINGLE_DOSE_RABIES_DESTINATIONS.includes(destinationKey)
+  // EU 입국 목적지는 광견병 백신 카드에서 '제품 유효기간' 행을 숨긴다 (입국 요건에 불필요).
+  const hideRabiesExpiry = !!destinationKey && EU_ENTRY_FAMILY.includes(destinationKey)
   // rabies_dates 배열 내 위치 — 1차=0, 2차=1.
   const rabiesIndex = isRabies2 ? 1 : 0
   const isTiter = step.id === 'rabies-titer'
@@ -2211,6 +2213,7 @@ export function StepDetailView({
               onChange={(key, next) => setRabies((prev) => ({ ...prev, [key]: next }))}
               productHints={rabiesProductHints}
               otherHospital={rabiesOtherHospital}
+              hideExpiry={hideRabiesExpiry}
             />
           </section>
         )}
@@ -2231,6 +2234,7 @@ export function StepDetailView({
               }
               onAdd={() => setRabiesList((prev) => [...prev, makeEmptyExtra()])}
               productHintsFor={(idx) => rabiesListProductHints[idx] ?? null}
+              hideExpiry={hideRabiesExpiry}
             />
           </section>
         )}
@@ -2254,6 +2258,7 @@ export function StepDetailView({
               }
               onAdd={() => setRabiesExtra((prev) => [...prev, makeEmptyExtra()])}
               productHintsFor={(idx) => rabiesExtraProductHints[idx] ?? null}
+              hideExpiry={hideRabiesExpiry}
             />
           </section>
         )}
