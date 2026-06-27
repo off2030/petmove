@@ -1,0 +1,3 @@
+# 여정 문구 골든 스냅샷은 LF 로 고정 — Windows 체크아웃 시 CRLF 변환을 막아
+# scripts/lint-journey-copy.ts 가드가 줄바꿈 차이로 헛failure 내지 않게 한다.
+scripts/journey-copy.snapshot.txt text eol=lf

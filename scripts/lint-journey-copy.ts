@@ -114,7 +114,8 @@ if (write) {
 
 let golden = ''
 try {
-  golden = readFileSync(GOLDEN, 'utf-8')
+  // Windows(CRLF)/CI(LF) 차이로 헛failure 나지 않게 줄바꿈 정규화 후 비교.
+  golden = readFileSync(GOLDEN, 'utf-8').replace(/\r\n/g, '\n')
 } catch {
   console.error('✗ journey-copy 골든 스냅샷이 없습니다.')
   console.error('  처음이라면 `pnpm lint:copy:write` 로 생성하세요.')
