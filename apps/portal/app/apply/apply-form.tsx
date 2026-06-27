@@ -523,8 +523,8 @@ export function ApplyForm({
   orgName: string
   isPublic: boolean
   /**
-   * 목적지를 앱 지원 국가(APP_DESTINATIONS: 일본·태국·필리핀)로 제한할지.
-   * 직영 펫무브(B2C 앱 서비스)는 가이드 있는 3개국만 → true.
+   * 목적지를 앱 지원 국가(APP_DESTINATIONS: 일본·태국·필리핀·EU 24개국)로 제한할지.
+   * 직영 펫무브(B2C 앱 서비스)는 여정·가이드가 구성된 국가만 → true.
    * 펫무브워크 병원·업체 신청서(/apply/<slug>)는 전 목적지 취급 → false(기본).
    */
   appDestinationsOnly?: boolean
@@ -728,7 +728,7 @@ export function ApplyForm({
     })
   }
 
-  // 목적지 선택지: 직영 펫무브(B2C 앱)는 가이드 있는 3개국(APP_DESTINATIONS) 한정,
+  // 목적지 선택지: 직영 펫무브(B2C 앱)는 여정·가이드가 구성된 국가(APP_DESTINATIONS) 한정,
   // 펫무브워크 병원·업체 신청서는 전체 국가(DESTS). appDestinationsOnly 로 분기.
   const destSource = appDestinationsOnly ? APP_DESTINATIONS : DESTS
   const filteredDests = destSource.filter(d => {
