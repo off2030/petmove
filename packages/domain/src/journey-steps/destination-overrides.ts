@@ -319,9 +319,9 @@ function euFamilyOverrides(opts: {
       done: 'has-rabies-valid',
       validationIds: ['eu.rabies-prime-after-12weeks', 'eu.microchip-before-rabies'],
     },
-    // 항체 검사 — 접종 30일 후 채혈. 2026-04-22부터 농림축산검역본부 단일 검사.
+    // 항체 검사 — 접종 30일 후 채혈. EU 승인 검사기관(2000/258/EC 등재) 안내.
     'rabies-titer': {
-      description: `${label} 입국을 위한 광견병 항체 검사를 받으세요.\n\n광견병 백신 접종 후 30일이 지나서 채혈해야 해요.\n검사는 농림축산검역본부에서 해요. 동물병원을 통해 의뢰하세요.\n0.5 IU/mL 이상이면 합격이에요.\n광견병 백신을 유효기간 안에 계속 추가 접종하면 검사 결과는 계속 유효해요.`,
+      description: `EU 승인 검사기관에서 광견병 항체 검사를 받으세요.\n\n광견병 접종 후 30일 이상 지나서 검사하세요.\n동물병원을 통해 의뢰할 수 있어요.\n0.5 IU/mL 이상이면 합격이에요.`,
       validationIds: ['eu.titer-min-30days-after-vaccine'],
     },
     // 항공권 — 채혈 + 3개월(캘린더) 대기. 입력 차단(validateEuEntryDate)과 짝.
