@@ -81,6 +81,14 @@ workflows:
           /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string com.petmove.portal" "$PLIST" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$PLIST" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string com.petmove.portal" "$PLIST" 2>/dev/null || true
+          # 카메라·사진보관함 사용 설명. 서류·아바타 첨부가 <input type=file accept=image/*> 라
+          # iOS 가 "사진 촬영" 옵션을 띄우는데, NSCameraUsageDescription 이 없으면 카메라 접근
+          # 순간 앱이 강제 종료된다(권한 거부가 아니라 무조건 크래시 — iOS 규칙). 사진 선택용
+          # NSPhotoLibraryUsageDescription 도 함께(방어적). 문구는 사용자 권한 팝업·심사에 노출됨.
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 반려동물 사진과 서류를 촬영해 첨부하기 위해 카메라를 사용합니다." "$PLIST" 2>/dev/null \
+            || /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 반려동물 사진과 서류를 촬영해 첨부하기 위해 카메라를 사용합니다." "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 반려동물 사진과 서류를 선택해 첨부하기 위해 사진 보관함을 사용합니다." "$PLIST" 2>/dev/null \
+            || /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 반려동물 사진과 서류를 선택해 첨부하기 위해 사진 보관함을 사용합니다." "$PLIST"
 
       - name: Sign in with Apple 엔타이틀먼트 주입
         # Capacitor 기본 템플릿엔 엔타이틀먼트 파일이 없다. Apple 로그인이 런타임에 동작하려면
