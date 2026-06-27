@@ -565,6 +565,7 @@ function ServiceCard({ offer, onOpen }: { offer: Offer; onOpen: () => void }) {
     <div
       role="button"
       tabIndex={0}
+      data-swipe-allow="true"
       onClick={onOpen}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

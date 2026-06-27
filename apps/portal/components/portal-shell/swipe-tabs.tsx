@@ -71,6 +71,10 @@ function startsOnNoSwipeZone(target: EventTarget | null): boolean {
   let el = target as HTMLElement | null
   while (el && el !== document.body) {
     if (el.dataset && el.dataset.noSwipe === 'true') return true
+    // 큰 '탭→이동' 카드(예: 서비스 카드)는 role="button" 이지만 링크처럼 동작 —
+    // 가로 스와이프는 탭 전환으로 흘려보내야 한다(탭은 60px+ 필요해 클릭과 안 겹침).
+    // data-swipe-allow 로 명시 opt-out. 폼 컨트롤 검사보다 먼저 둬 role=button 차단을 면제.
+    if (el.dataset && el.dataset.swipeAllow === 'true') return false
     if (isInteractiveElement(el)) return true
     if (el.scrollWidth > el.clientWidth + 1) {
       const cs = window.getComputedStyle(el)
