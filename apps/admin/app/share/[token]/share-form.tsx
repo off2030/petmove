@@ -5,7 +5,7 @@ import { COAT_COLOR_HEX as COLOR_HEX } from '@/lib/coat-colors'
 import { Fragment, useEffect, useRef, useState, useTransition } from 'react'
 import { CheckCircle2, Plus, X } from 'lucide-react'
 import { DateTextField } from '@petmove/ui'
-import { submitShareLink } from '@/lib/actions/share-links'
+import { submitShareLink } from '@/lib/actions/share-links-public'
 import { cardContainer } from '@petmove/ui'
 import { cn } from '@petmove/ui'
 import type {

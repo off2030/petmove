@@ -1,6 +1,4 @@
-import type { Metadata } from 'next'
-import { getShareLinkByToken } from '@/lib/actions/share-links'
-import { ShareForm } from './share-form'
+import { permanentRedirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,44 +6,18 @@ interface Props {
   params: Promise<{ token: string }>
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+/**
+ * 정보 입력 폼은 work(펫무브워크, admin) 도메인으로 회귀했다. portal 로 들어온
+ * 구 링크(예: petmove.vercel.app/share/<token>)는 work 도메인으로 영구 redirect.
+ *
+ * 폼은 "스태프가 보내는 정보 수집 폼" 이라 work.petmove.co.kr 이 호스팅한다.
+ * 제출 정보는 cases 테이블에 직접 반영되므로 펫무브 앱 연동은 DB 로 그대로 유지.
+ *
+ * NEXT_PUBLIC_WORK_BASE_URL 우선, 미설정 시 운영 도메인 하드코드 폴백.
+ */
+export default async function ShareLinkRedirect({ params }: Props) {
   const { token } = await params
-  const r = await getShareLinkByToken(token)
-  // org 이름만 노출 — 보호자/펫 이름은 PII 라 미리보기에 안 띄움.
-  // fallback 은 고객 친화 브랜드 "펫무브" (직원용 admin 앱 이름인 "펫무브워크" X).
-  const orgName = r.ok ? (r.value.org_name || '펫무브') : '펫무브'
-  const title = `${orgName} - 다음 정보를 입력하세요!`
-  const description = '링크를 열어 반려동물 해외 이동에 필요한 정보를 입력하세요.'
-  return {
-    title,
-    description,
-    openGraph: { title, description, type: 'website' },
-    twitter: { card: 'summary', title, description },
-    robots: { index: false, follow: false },
-  }
-}
-
-export default async function ShareLinkPage({ params }: Props) {
-  const { token } = await params
-  const r = await getShareLinkByToken(token)
-  if (!r.ok) {
-    return <ShareError message={r.error} />
-  }
-  return <ShareForm initial={r.value} />
-}
-
-function ShareError({ message }: { message: string }) {
-  return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
-      <div className="mx-auto w-full max-w-md py-20 text-center">
-        <p className="mb-4 font-mono text-[11px] uppercase tracking-[2px] text-muted-foreground">
-          Unavailable
-        </p>
-        <h1 className="mb-3 font-serif text-2xl font-medium tracking-tight text-foreground">
-          링크를 사용할 수 없습니다
-        </h1>
-        <p className="text-[15px] leading-relaxed text-muted-foreground">{message}</p>
-      </div>
-    </div>
-  )
+  const base =
+    process.env.NEXT_PUBLIC_WORK_BASE_URL?.replace(/\/$/, '') || 'https://work.petmove.co.kr'
+  permanentRedirect(`${base}/share/${encodeURIComponent(token)}`)
 }

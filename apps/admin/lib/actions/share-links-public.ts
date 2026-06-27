@@ -1,16 +1,24 @@
 'use server'
 
 /**
- * 외부 정보 입력용 매직 링크 — 수신자 측 액션 (anon).
+ * 외부 정보 입력용 매직 링크 — 수신자(보호자) 측 액션 (anon).
  *
- * 발신 측(createShareLink/revoke 등)은 admin 앱의 동일 모듈 (apps/admin/lib/actions/
- * share-links.ts) 에 살아있다. portal 은 토큰 진입 흐름만 호스팅.
+ * 발신 측(createShareLink/revoke 등)은 같은 디렉터리의 share-links.ts.
+ * 본 모듈은 토큰 진입 흐름(/share/[token]) 만 호스팅한다.
  *
  * 흐름:
  *  /share/[token] 열기 → getShareLinkByToken 으로 폼 표시 → submitShareLink 로 제출
  *  → 결과: 케이스에 직접 반영, submitted_at 마킹
  *
- * 도메인 헬퍼는 @petmove/domain 에서 import — admin 과 단일 출처 공유.
+ * 인증 모델: 토큰 자체가 인증이다 (/apply 공개 신청폼과 동일 패턴). createAdminClient
+ *  (service role, RLS 우회) 를 쓰지만 UUID 토큰 검증 + field_keys 화이트리스트로
+ *  접근 범위를 케이스 1건의 허용 필드로 한정 — proxy.ts 의 /share PUBLIC_PREFIXES 통과.
+ *
+ * 도메인 헬퍼는 @petmove/domain 에서 import — 발신 측과 단일 출처 공유.
+ *
+ * 이력: Phase 11.0.5 에서 portal 로 이전됐다가, share 폼이 펫무브워크 Editorial 톤
+ *  (@petmove/ui) 그대로였고 "스태프가 보내는 정보 수집 폼" 성격이라 work 도메인으로
+ *  회귀. 입력 정보는 cases 테이블에 직접 반영되므로 펫무브 앱 연동은 DB 로 그대로 유지.
  */
 
 import { createAdminClient } from '@petmove/auth'
@@ -46,7 +54,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 /**
  * fieldKeys → ShareFieldSpec[] 조립.
- * (admin/lib/actions/share-links.ts 와 동일 — 좌표 권위는 buildShareFieldDescriptors)
+ * (좌표 권위는 buildShareFieldDescriptors)
  */
 async function buildFieldSpecs(
   fieldKeys: string[],
@@ -523,7 +531,7 @@ export async function submitShareLink(
 
       // 매직링크 입력 후 org_auto_fill_rules 트리거 — 예: 일본 departure_flight_date ↔
       // departure_date 양방향 sync, departure_date 변경 시 백신 일정 자동 계산 등이
-      // admin 의 updateCaseField 와 동일하게 portal 입력에서도 적용되도록.
+      // admin 의 updateCaseField 와 동일하게 매직링크 입력에서도 적용되도록.
       //  - useByDest 면 활성 목적지 scope 를 넘겨 by_dest 경로로 라우팅.
       //  - userEditedKey 는 명시 안 함 — 본 share-link 는 다중 키 입력이므로 전부 유효.
       //    각 룰의 overwrite_existing 플래그로 사용자가 방금 입력한 값 보호 (기본 false).
@@ -531,10 +539,6 @@ export async function submitShareLink(
         await applyAutoFillRules(admin, row.case_id, undefined, useByDest ? scope : null)
       } catch { /* best-effort — 실패해도 share-link 제출 자체는 성공 */ }
     }
-
-    // portal 은 아직 /cases 라우트가 없어 revalidatePath 생략. admin 측은 자체 캐시
-    // 컨텍스트라 portal 의 revalidate 가 admin 에 전파되지 않음 — admin 은 자연 만료 또는
-    // 실시간 채널(realtime) 로 refresh.
 
     return { ok: true, value: null }
   } catch (e) {
