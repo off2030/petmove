@@ -42,8 +42,11 @@ const TITER_LAB_CODES_BY_DEST: Record<string, string[]> = {
   japan: ['apqa_seoul', 'ksvdl_r'],
   thailand: ['apqa_seoul', 'krsl'],
   philippines: ['apqa_seoul', 'krsl'],
-  // 유럽(EU·EEA·영국·스위스 = EU_ENTRY_FAMILY): EU 인정 양식(apqa_eu) + 코미팜.
+  // 유럽 패밀리(EEA·영국·스위스 등 EU_ENTRY_FAMILY): EU 인정 양식(apqa_eu) + 코미팜.
   ...Object.fromEntries(EU_ENTRY_FAMILY.map((k) => [k, ['apqa_eu', 'krsl']])),
+  // EU 24개국('eu')은 농림축산검역본부(apqa_eu)만 — 코미팜 제외('기타'는 UI 가 덧붙임).
+  // 위 spread 보다 뒤에 둬서 'eu' 키를 덮어쓴다. 스위스·영국 등 나머지 패밀리는 그대로.
+  eu: ['apqa_eu'],
 }
 
 /** 목적지의 검사기관 코드 목록. 매핑 없으면 기본값. */
