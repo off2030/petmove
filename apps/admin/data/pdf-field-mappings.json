@@ -1289,7 +1289,7 @@
       },
       "vacc_row1_vaccine_name": {
         "source": "rabies_dates",
-        "transform": "vaccine:rabies:name[0]"
+        "transform": "vaccine:rabies:name_with_manufacturer[0]"
       },
       "vacc_row1_batch_number": {
         "source": "rabies_dates",
@@ -1321,7 +1321,7 @@
       },
       "vacc_row2_vaccine_name": {
         "source": "rabies_dates",
-        "transform": "vaccine:rabies:name[1]"
+        "transform": "vaccine:rabies:name_with_manufacturer[1]"
       },
       "vacc_row2_batch_number": {
         "source": "rabies_dates",
@@ -1353,7 +1353,7 @@
       },
       "vacc_row3_vaccine_name": {
         "source": "rabies_dates",
-        "transform": "vaccine:rabies:name[2]"
+        "transform": "vaccine:rabies:name_with_manufacturer[2]"
       },
       "vacc_row3_batch_number": {
         "source": "rabies_dates",
@@ -1385,7 +1385,7 @@
       },
       "vacc_row4_vaccine_name": {
         "source": "rabies_dates",
-        "transform": "vaccine:rabies:name[3]"
+        "transform": "vaccine:rabies:name_with_manufacturer[3]"
       },
       "vacc_row4_batch_number": {
         "source": "rabies_dates",
@@ -1417,7 +1417,7 @@
       },
       "vacc_row5_vaccine_name": {
         "source": "rabies_dates",
-        "transform": "vaccine:rabies:name[4]"
+        "transform": "vaccine:rabies:name_with_manufacturer[4]"
       },
       "vacc_row5_batch_number": {
         "source": "rabies_dates",
@@ -1701,7 +1701,7 @@
       },
       "vacc_row1_vaccine_name": {
         "source": "rabies_dates",
-        "transform": "vaccine:rabies:name[0]"
+        "transform": "vaccine:rabies:name_with_manufacturer[0]"
       },
       "vacc_row1_batch_number": {
         "source": "rabies_dates",
@@ -1733,7 +1733,7 @@
       },
       "vacc_row2_vaccine_name": {
         "source": "rabies_dates",
-        "transform": "vaccine:rabies:name[1]"
+        "transform": "vaccine:rabies:name_with_manufacturer[1]"
       },
       "vacc_row2_batch_number": {
         "source": "rabies_dates",
@@ -1765,7 +1765,7 @@
       },
       "vacc_row3_vaccine_name": {
         "source": "rabies_dates",
-        "transform": "vaccine:rabies:name[2]"
+        "transform": "vaccine:rabies:name_with_manufacturer[2]"
       },
       "vacc_row3_batch_number": {
         "source": "rabies_dates",
@@ -1797,7 +1797,7 @@
       },
       "vacc_row4_vaccine_name": {
         "source": "rabies_dates",
-        "transform": "vaccine:rabies:name[3]"
+        "transform": "vaccine:rabies:name_with_manufacturer[3]"
       },
       "vacc_row4_batch_number": {
         "source": "rabies_dates",
@@ -1829,7 +1829,7 @@
       },
       "vacc_row5_vaccine_name": {
         "source": "rabies_dates",
-        "transform": "vaccine:rabies:name[4]"
+        "transform": "vaccine:rabies:name_with_manufacturer[4]"
       },
       "vacc_row5_batch_number": {
         "source": "rabies_dates",

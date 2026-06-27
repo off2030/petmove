@@ -1853,7 +1853,7 @@ function resolveField(
   // `serial_with_expiry` attr concatenates batch + 면역유효기간 for rabies
   // (vaccination), used by Form25AuNz where rows need "batch / 2027/05/01" in the
   // batch cell. Parasite kinds fall back to the product batch expiry.
-  const vacMatch = transform?.match(/^vaccine:(rabies|ext_parasite|int_parasite):(name|manufacturer|serial|serial_with_expiry|date|validity_from|validity_to)\[(\d+)\]$/)
+  const vacMatch = transform?.match(/^vaccine:(rabies|ext_parasite|int_parasite):(name|manufacturer|name_with_manufacturer|serial|serial_with_expiry|date|validity_from|validity_to)\[(\d+)\]$/)
   if (vacMatch) {
     const kind = vacMatch[1]
     const attr = vacMatch[2]
@@ -1876,6 +1876,15 @@ function resolveField(
     const merged = applyRecOverrides(rec, p)
     if (attr === 'name') return merged.name
     if (attr === 'manufacturer') return merged.manufacturer
+    if (attr === 'name_with_manufacturer') {
+      // EU(AnnexIII)·UK 서식의 "Name and manufacturer of vaccine" 단일 칸 —
+      // 이름 / 제조사 병기. 칸이 좁아 긴 제조사명은 약어로 축약.
+      const MFR_ABBREV: Record<string, string> = { 'Boehringer Ingelheim': 'BI' }
+      const nm = (merged.name ?? '').trim()
+      const mfRaw = (merged.manufacturer ?? '').trim()
+      const mf = MFR_ABBREV[mfRaw] ?? mfRaw
+      return mf ? (nm ? `${nm} / ${mf}` : mf) : nm
+    }
     if (attr === 'serial') return merged.serial
     if (attr === 'serial_with_expiry') {
       // 광견병 = 면역유효기간(접종일+valid_until) 병기 — 호주·뉴질랜드 목적지 한정.
