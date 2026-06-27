@@ -2236,6 +2236,8 @@ export function StepDetailView({
               onAdd={() => setRabiesList((prev) => [...prev, makeEmptyExtra()])}
               productHintsFor={(idx) => rabiesListProductHints[idx] ?? null}
               hideExpiry={hideRabiesExpiry}
+              // 접종일만 노출 + 나머지 접기 — 1·2차(RabiesEntryInputs)와 동일한 시각.
+              collapsible
             />
           </section>
         )}
@@ -2315,8 +2317,17 @@ export function StepDetailView({
               // 일본 — 날짜 주필드 + 공항·편명·운송방법 접기(출발=도착 동일 시간대라 분리 불필요).
               collapsible={destinationKey === 'japan'}
               // 필리핀 — 수입 허가(SPSIC)엔 항공편 일정만 필요: 출국 [날짜·도착공항] / 귀국 [날짜](+미정).
-              entryFieldKeys={destinationKey === 'philippines' ? ['entry_date', 'entry_airport'] : undefined}
-              returnFieldKeys={destinationKey === 'philippines' ? ['return_date'] : undefined}
+              // EU 패밀리 — 입국 가능 시기 계산에 날짜만 쓰므로 출·귀국 모두 날짜만 받는다(공항·편명 생략).
+              entryFieldKeys={
+                destinationKey === 'philippines'
+                  ? ['entry_date', 'entry_airport']
+                  : destinationKey === 'eu'
+                    ? ['entry_date']
+                    : undefined
+              }
+              returnFieldKeys={
+                destinationKey === 'philippines' || destinationKey === 'eu' ? ['return_date'] : undefined
+              }
               // 도착 공항 예시 — 기본값(나리타 NRT)이 일본 기준이라 목적지별 현지 공항으로 교체.
               fieldPlaceholders={
                 destinationKey && FLIGHT_ARRIVAL_AIRPORT_EXAMPLE[destinationKey]

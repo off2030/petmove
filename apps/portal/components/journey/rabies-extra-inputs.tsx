@@ -5,6 +5,7 @@ import { C } from '@/lib/palette'
 import { DateTextField } from '@petmove/ui'
 import type { RabiesEntryForm, RabiesProductHints } from './rabies-entry-inputs'
 import { YearSelect } from './field-selects'
+import { CollapsibleSection } from './collapsible-section'
 
 /**
  * 광견병 추가 백신(3차 이상) step 입력 — 가변 길이 배열 + 추가/삭제.
@@ -57,6 +58,7 @@ export function RabiesExtraInputs({
   productHintsFor,
   startDose = 3,
   hideExpiry = false,
+  collapsible = false,
 }: {
   entries: RabiesExtraEntry[]
   onChange: (index: number, key: keyof RabiesEntryForm, next: string) => void
@@ -68,6 +70,8 @@ export function RabiesExtraInputs({
   startDose?: number
   /** 제품 유효기간 행 숨김 — EU 입국은 광견병 백신에 제품 유효기간 정보가 불필요. */
   hideExpiry?: boolean
+  /** 접종일만 노출하고 나머지(면역 유효기간·약품 정보)는 '세부 정보' 접기 — 1·2차(RabiesEntryInputs)와 동일. */
+  collapsible?: boolean
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -80,6 +84,7 @@ export function RabiesExtraInputs({
           onRemove={() => onRemove(i)}
           productHints={productHintsFor(i)}
           hideExpiry={hideExpiry}
+          collapsible={collapsible}
         />
       ))}
       <button
@@ -111,6 +116,7 @@ function ExtraCard({
   onRemove,
   productHints,
   hideExpiry = false,
+  collapsible = false,
 }: {
   entry: RabiesExtraEntry
   doseNumber: number
@@ -118,6 +124,7 @@ function ExtraCard({
   onRemove: () => void
   productHints: RabiesProductHints | null
   hideExpiry?: boolean
+  collapsible?: boolean
 }) {
   const otherHospital = entry.other_hospital !== false
   const fields = hideExpiry ? FIELDS.filter((f) => f.key !== 'expiry') : FIELDS
@@ -159,100 +166,130 @@ function ExtraCard({
     boxSizing: 'border-box',
   }
 
-  return (
-    <div style={cardStyle}>
+  const renderField = (field: (typeof FIELDS)[number], withTopBorder: boolean) => {
+    const isProduct =
+      field.key === 'product' ||
+      field.key === 'manufacturer' ||
+      field.key === 'lot' ||
+      field.key === 'expiry'
+    const designated = isProduct && !otherHospital
+    const hint = designated ? hintForKey(field.key, productHints) : undefined
+    return (
       <div
+        key={field.key}
+        style={{ padding: '14px 0', borderTop: withTopBorder ? `.5px solid ${C.line}` : undefined }}
+      >
+        <div style={labelStyle}>
+          {field.label}
+          {designated && (
+            <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, color: C.ink3 }}>
+              병원 지정
+            </span>
+          )}
+        </div>
+        {field.kind === 'years' ? (
+          <YearSelect value={entry[field.key]} onChange={(v) => onChange(field.key, v)} />
+        ) : designated ? (
+          <div style={designatedStyle}>
+            {hint || <span style={{ color: C.ink3 }}>—</span>}
+          </div>
+        ) : field.kind === 'date' ? (
+          <div style={{ marginTop: 8 }}>
+            <DateTextField
+              value={entry[field.key]}
+              onChange={(v) => onChange(field.key, v)}
+              placeholder="YYYY-MM-DD"
+              block
+            />
+          </div>
+        ) : (
+          <input
+            type="text"
+            value={entry[field.key]}
+            onChange={(e) => onChange(field.key, e.target.value)}
+            placeholder={field.placeholder}
+            style={inputStyle}
+          />
+        )}
+      </div>
+    )
+  }
+
+  const header = (
+    <div
+      style={{
+        padding: '12px 0 4px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}
+    >
+      <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>
+        {doseNumber === 1 ? '광견병 백신' : `광견병 백신 ${doseNumber}차`}
+      </div>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label="삭제"
         style={{
-          padding: '12px 0 4px',
-          display: 'flex',
+          display: 'inline-flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: 'center',
+          width: 32,
+          height: 32,
+          borderRadius: 999,
+          border: 0,
+          background: 'transparent',
+          color: C.ink3,
+          cursor: 'pointer',
         }}
       >
-        <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>
-          {doseNumber === 1 ? '광견병 백신' : `광견병 백신 ${doseNumber}차`}
-        </div>
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label="삭제"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 32,
-            height: 32,
-            borderRadius: 999,
-            border: 0,
-            background: 'transparent',
-            color: C.ink3,
-            cursor: 'pointer',
-          }}
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M3 6h18" />
-            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-          </svg>
-        </button>
+          <path d="M3 6h18" />
+          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+        </svg>
+      </button>
+    </div>
+  )
+
+  // 접힘 레이아웃 — 접종일(첫 필드)만 카드에 노출, 나머지는 '세부 정보' 접기.
+  // 1·2차(RabiesEntryInputs)와 동일한 시각. 입력값이 있으면 기본 펼침.
+  if (collapsible) {
+    const detailFields = fields.slice(1)
+    const designatedKeys = hideExpiry
+      ? (['product', 'manufacturer', 'lot'] as const)
+      : (['product', 'manufacturer', 'lot', 'expiry'] as const)
+    const hasDesignated =
+      !otherHospital && designatedKeys.some((k) => (productHints?.[k] ?? '').trim() !== '')
+    const detailHasData =
+      hasDesignated || detailFields.some((f) => (entry[f.key] ?? '').trim() !== '')
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={cardStyle}>
+          {header}
+          {renderField(fields[0], true)}
+        </div>
+        <CollapsibleSection label="세부 정보 (선택)" defaultOpen={detailHasData}>
+          <div style={cardStyle}>{detailFields.map((f, i) => renderField(f, i !== 0))}</div>
+        </CollapsibleSection>
       </div>
-      {fields.map((field) => {
-        const isProduct =
-          field.key === 'product' ||
-          field.key === 'manufacturer' ||
-          field.key === 'lot' ||
-          field.key === 'expiry'
-        const designated = isProduct && !otherHospital
-        const hint = designated ? hintForKey(field.key, productHints) : undefined
-        return (
-          <div
-            key={field.key}
-            style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}
-          >
-            <div style={labelStyle}>
-              {field.label}
-              {designated && (
-                <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, color: C.ink3 }}>
-                  병원 지정
-                </span>
-              )}
-            </div>
-            {field.kind === 'years' ? (
-              <YearSelect value={entry[field.key]} onChange={(v) => onChange(field.key, v)} />
-            ) : designated ? (
-              <div style={designatedStyle}>
-                {hint || <span style={{ color: C.ink3 }}>—</span>}
-              </div>
-            ) : field.kind === 'date' ? (
-              <div style={{ marginTop: 8 }}>
-                <DateTextField
-                  value={entry[field.key]}
-                  onChange={(v) => onChange(field.key, v)}
-                  placeholder="YYYY-MM-DD"
-                  block
-                />
-              </div>
-            ) : (
-              <input
-                type="text"
-                value={entry[field.key]}
-                onChange={(e) => onChange(field.key, e.target.value)}
-                placeholder={field.placeholder}
-                style={inputStyle}
-              />
-            )}
-          </div>
-        )
-      })}
+    )
+  }
+
+  return (
+    <div style={cardStyle}>
+      {header}
+      {fields.map((field) => renderField(field, true))}
     </div>
   )
 }
