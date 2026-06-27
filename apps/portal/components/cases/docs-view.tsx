@@ -5,6 +5,7 @@ import { C } from '@/lib/palette'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
+import { openExternalUrlAsync } from '@/lib/native/open-external'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { CaseHeader } from '@/components/cases/case-header'
 import { StepAttachments } from '@/components/journey/step-attachments'
@@ -74,9 +75,8 @@ export function DocsView({
   const quarantineDone = quarantineCerts.filter((d) => d.verified).length
 
   function handleOpenDoc(docId: string) {
-    getStepDocumentUrl(caseId, docId).then((res) => {
-      if (res.ok) window.open(res.value, '_blank')
-    })
+    // openExternalUrlAsync: await 뒤 window.open 팝업 차단 우회 + 네이티브 인앱 브라우저 처리.
+    void openExternalUrlAsync(getStepDocumentUrl(caseId, docId))
   }
 
   return (

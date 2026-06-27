@@ -7,6 +7,7 @@ import { useEffect, useState, useTransition } from 'react'
 import type { RequiredDocItem } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { deleteStepDocument, getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
+import { openExternalUrl } from '@/lib/native/open-external'
 import { setRequiredDocComplete, setRequiredDocNa } from '@/lib/actions/required-docs'
 import { StepAttachments } from '@/components/journey/step-attachments'
 import { type CaseDocument } from '@/lib/documents'
@@ -535,7 +536,7 @@ function PreviewCard({
           // 인라인 대신 기기 기본 뷰어로 여는 버튼.
           <button
             type="button"
-            onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
+            onClick={() => void openExternalUrl(url)}
             style={{
               width: '100%',
               padding: '20px 16px',

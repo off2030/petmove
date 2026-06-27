@@ -186,6 +186,7 @@ export async function deleteStepDocument(
 export async function getStepDocumentUrl(
   caseId: string,
   docId: string,
+  mode: 'view' | 'download' = 'view',
 ): Promise<Result<string>> {
   try {
     const access = await assertCaseAccess(caseId)
@@ -204,12 +205,13 @@ export async function getStepDocumentUrl(
     )
     if (!doc) return { ok: false, error: '파일을 찾을 수 없습니다.' }
 
-    // storage 경로는 한글을 '_' 로 치환한 safeName 이라, 그대로 다운로드하면
-    // 파일명이 '광견병_항체_검사_결과지.jpg' 처럼 깨진다. download 옵션으로
-    // Content-Disposition 파일명을 표시명(doc.name)으로 강제해 업로드 라벨과 통일.
+    // 'view'(기본) = 인라인 표시 — 이미지/PDF 를 새 화면에서 바로 본다. 모바일/네이티브에서
+    // '열기'가 동작하려면 인라인이어야 한다(download 면 보기 대신 파일이 받아져 버림).
+    // 'download' = 기기에 저장. storage 경로는 한글을 '_' 로 치환한 safeName 이라 그냥 받으면
+    // 파일명이 깨지므로, download 옵션으로 Content-Disposition 파일명을 표시명(doc.name)으로 강제.
     const { data, error } = await admin.storage
       .from(BUCKET)
-      .createSignedUrl(doc.path, 60 * 60, { download: doc.name })
+      .createSignedUrl(doc.path, 60 * 60, mode === 'download' ? { download: doc.name } : undefined)
     if (error || !data?.signedUrl) {
       return { ok: false, error: error?.message ?? '링크 생성에 실패했습니다.' }
     }

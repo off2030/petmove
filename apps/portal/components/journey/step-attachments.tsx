@@ -9,6 +9,7 @@ import {
   getStepDocumentUrl,
   uploadStepDocument,
 } from '@/lib/actions/documents'
+import { openExternalUrlAsync } from '@/lib/native/open-external'
 import { type CaseDocument, formatFileSize, MAX_DOCUMENT_BYTES } from '@/lib/documents'
 
 /**
@@ -63,10 +64,10 @@ export function StepAttachments({
     if (openingId) return
     setError(null)
     setOpeningId(docId)
-    getStepDocumentUrl(caseId, docId).then((res) => {
+    // openExternalUrlAsync: await 뒤 window.open 팝업 차단 우회 + 네이티브 인앱 브라우저 처리.
+    openExternalUrlAsync(getStepDocumentUrl(caseId, docId)).then((res) => {
       setOpeningId(null)
-      if (res.ok) window.open(res.value, '_blank')
-      else setError(res.error)
+      if (!res.ok) setError(res.error)
     })
   }
 
