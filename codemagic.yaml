@@ -89,6 +89,10 @@ workflows:
             || /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 반려동물 사진과 서류를 촬영해 첨부하기 위해 카메라를 사용합니다." "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 반려동물 사진과 서류를 선택해 첨부하기 위해 사진 보관함을 사용합니다." "$PLIST" 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 반려동물 사진과 서류를 선택해 첨부하기 위해 사진 보관함을 사용합니다." "$PLIST"
+          # 사진 보관함 '추가' 권한 — 첨부 이미지를 저장·공유 시트의 "사진에 저장"으로 내보낼 때
+          # NSPhotoLibraryAddUsageDescription 이 없으면 저장 순간 앱이 강제 종료된다(읽기용과 별개 키).
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 받은 서류·사진을 기기 사진 보관함에 저장하기 위해 사용합니다." "$PLIST" 2>/dev/null \
+            || /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryAddUsageDescription 받은 서류·사진을 기기 사진 보관함에 저장하기 위해 사용합니다." "$PLIST"
 
       - name: Sign in with Apple 엔타이틀먼트 주입
         # Capacitor 기본 템플릿엔 엔타이틀먼트 파일이 없다. Apple 로그인이 런타임에 동작하려면
