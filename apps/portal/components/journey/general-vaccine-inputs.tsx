@@ -58,6 +58,7 @@ export function GeneralVaccineInputs({
   dateLabel = '접종일',
   showValidUntil = true,
   showProduct = true,
+  hideExpiry = false,
   addLabel = '+ 접종 기록 추가',
   productHintsFor,
   productPlaceholders,
@@ -74,6 +75,8 @@ export function GeneralVaccineInputs({
   showValidUntil?: boolean
   /** 약품 4필드(약품명·제조사·제조번호·제품유효기간) 노출 — 백신만. 구충은 숨김. */
   showProduct?: boolean
+  /** '제품 유효기간'(expiry) 행만 숨김 — 호주·뉴질랜드 외 목적지는 입국 요건에 불필요. */
+  hideExpiry?: boolean
   addLabel?: string
   /** 각 entry 접종일 기준 카탈로그 자동추천 — 본병원일 때 약품 4필드에 읽기 전용 표시(광견병과 동일). */
   productHintsFor?: (index: number) => RabiesProductHints | null
@@ -90,6 +93,7 @@ export function GeneralVaccineInputs({
           dateLabel={dateLabel}
           showValidUntil={showValidUntil}
           showProduct={showProduct}
+          hideExpiry={hideExpiry}
           productHints={productHintsFor?.(i) ?? null}
           productPlaceholders={productPlaceholders}
           onChange={(key, next) => onChange(i, key, next)}
@@ -124,6 +128,7 @@ function EntryCard({
   dateLabel,
   showValidUntil,
   showProduct,
+  hideExpiry,
   productHints,
   productPlaceholders,
   onChange,
@@ -134,6 +139,7 @@ function EntryCard({
   dateLabel: string
   showValidUntil: boolean
   showProduct: boolean
+  hideExpiry: boolean
   productHints: RabiesProductHints | null
   productPlaceholders?: ProductPlaceholders
   onChange: (key: keyof GeneralVaccineEntry, next: string) => void
@@ -173,6 +179,11 @@ function EntryCard({
     boxSizing: 'border-box',
   }
 
+  // '제품 유효기간'(expiry)은 호주·뉴질랜드 외 목적지에선 숨긴다 — 그 행만 제외한 약품 필드.
+  const productFields = hideExpiry
+    ? PRODUCT_FIELDS.filter((f) => f.key !== 'expiry')
+    : PRODUCT_FIELDS
+
   // 접종일만 항상 노출, 면역 유효기간·약품 정보는 '세부 정보' 접기. 구충(둘 다 false)은 접을 게 없어 미노출.
   const hasDetail = showValidUntil || showProduct
   // 본병원이면 약품 4필드는 직접 입력값(entry)이 아니라 병원 지정 약품(productHints)으로
@@ -180,11 +191,11 @@ function EntryCard({
   const hasDesignated =
     showProduct &&
     !otherHospital &&
-    PRODUCT_FIELDS.some((f) => (productHints?.[f.key] ?? '').trim() !== '')
+    productFields.some((f) => (productHints?.[f.key] ?? '').trim() !== '')
   const detailHasData =
     hasDesignated ||
     (showValidUntil && entry.valid_until.trim() !== '') ||
-    (showProduct && PRODUCT_FIELDS.some((f) => entry[f.key].trim() !== ''))
+    (showProduct && productFields.some((f) => entry[f.key].trim() !== ''))
 
   const validUntilRow = showValidUntil && (
     <div style={{ padding: '14px 0' }}>
@@ -195,7 +206,7 @@ function EntryCard({
 
   const productRows =
     showProduct &&
-    PRODUCT_FIELDS.map((field, idx) => {
+    productFields.map((field, idx) => {
       const designated = !otherHospital
       const hint = designated ? productHints?.[field.key] : undefined
       // 세부 카드의 첫 행만 구분선 없음 — 유효기간이 앞에 있으면 약품은 항상 구분선.

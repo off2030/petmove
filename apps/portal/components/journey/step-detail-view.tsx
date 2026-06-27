@@ -165,9 +165,10 @@ export function StepDetailView({
   // (종합백신과 동일 모델). 일본·하와이(2회국)는 기존 1차 단일 + 별도 추가 백신 카드 유지.
   const isRabiesSingleCard =
     isRabies1 && !!destinationKey && SINGLE_DOSE_RABIES_DESTINATIONS.includes(destinationKey)
-  // EU(24개국, 키 'eu')는 광견병 백신 카드에서 '제품 유효기간' 행을 숨긴다 (입국 요건에 불필요).
-  // 스위스·영국·노르웨이 등 다른 EU_ENTRY_FAMILY 목적지는 카드 구성이 달라 제외 — 'eu' 한정.
-  const hideRabiesExpiry = destinationKey === 'eu'
+  // '제품 유효기간'(약품 expiry 행)은 호주·뉴질랜드 입국 요건에만 필요하다. 그 외 목적지
+  // (일본·태국·필리핀·EU 등)에선 광견병·종합백신 약품 정보에서 이 행을 숨긴다.
+  const showProductExpiry = destinationKey === 'australia' || destinationKey === 'new_zealand'
+  const hideRabiesExpiry = !showProductExpiry
   // rabies_dates 배열 내 위치 — 1차=0, 2차=1.
   const rabiesIndex = isRabies2 ? 1 : 0
   const isTiter = step.id === 'rabies-titer'
@@ -2346,6 +2347,7 @@ export function StepDetailView({
             <GeneralVaccineInputs
               entries={generalVaccine}
               vaccineLabel={generalVaccineCardLabel(caseRow?.data, destinationKey)}
+              hideExpiry={!showProductExpiry}
               productHintsFor={(idx) => generalVaccineProductHints[idx] ?? null}
               onChange={(idx, key, next) =>
                 setGeneralVaccine((prev) =>
