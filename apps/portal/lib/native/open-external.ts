@@ -22,9 +22,22 @@ export function isNativePlatform(): boolean {
   return !!cap?.isNativePlatform?.()
 }
 
+/**
+ * 상대경로(/forms/form25.pdf 등)를 절대 URL 로 변환. @capacitor/browser 의 Browser.open 은
+ * 절대 URL 만 받아 상대경로면 아무 동작도 안 한다(버튼 무반응의 원인). signed URL 처럼 이미
+ * 절대 URL 이면 그대로 둔다.
+ */
+function toAbsoluteUrl(url: string): string {
+  try {
+    return new URL(url, window.location.href).href
+  } catch {
+    return url
+  }
+}
+
 async function openOnNative(url: string): Promise<void> {
   const { Browser } = await import('@capacitor/browser')
-  await Browser.open({ url })
+  await Browser.open({ url: toAbsoluteUrl(url) })
 }
 
 /**
