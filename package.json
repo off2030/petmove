@@ -12,6 +12,8 @@
     "db:diff": "supabase db diff",
     "db:link": "supabase link --project-ref ugywxiyivfzflqkcnqvu",
     "lint:rls": "node scripts/lint-rls.mjs",
+    "lint:copy": "tsx scripts/lint-journey-copy.ts",
+    "lint:copy:write": "tsx scripts/lint-journey-copy.ts --write",
     "backfill:case-links": "node scripts/backfill-case-customer-links.mjs",
     "backfill:case-links:apply": "node scripts/backfill-case-customer-links.mjs --apply"
   },

@@ -46,6 +46,12 @@ const portalEslintCode = await run(
 const rlsCode = await run(process.execPath, ['scripts/lint-rls.mjs'], 'RLS recursion lint')
 const scopeCode = await run(process.execPath, ['scripts/lint-destination-scoping.mjs'], 'destination scoping lint')
 const journeyCode = await run(process.execPath, ['scripts/lint-journey-catalog.mjs'], 'journey catalog lint')
+const copyCode = await run(
+  localBin('tsx'),
+  ['scripts/lint-journey-copy.ts'],
+  'journey copy snapshot',
+  { shell: process.platform === 'win32' },
+)
 
 const summary = [
   `  admin eslint:  ${eslintCode === 0 ? '✓ pass' : `✗ exit ${eslintCode}`}`,
@@ -53,7 +59,8 @@ const summary = [
   `  lint:rls:      ${rlsCode === 0 ? '✓ pass' : `✗ exit ${rlsCode}`}`,
   `  lint:scope:    ${scopeCode === 0 ? '✓ pass' : `✗ exit ${scopeCode}`}`,
   `  lint:journey:  ${journeyCode === 0 ? '✓ pass' : `✗ exit ${journeyCode}`}`,
+  `  lint:copy:     ${copyCode === 0 ? '✓ pass' : `✗ exit ${copyCode}`}`,
 ].join('\n')
 console.log(`\n─── summary ───\n${summary}`)
 
-process.exit(Math.max(eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode))
+process.exit(Math.max(eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode, copyCode))

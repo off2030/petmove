@@ -1,0 +1,165 @@
+#!/usr/bin/env tsx
+/**
+ * 여정 카드 문구(copy) 목적지별 스냅샷 가드 — "한 목적지를 고치려다 다른 목적지까지 조용히
+ * 바뀌는" 사고를 빌드에서 잡는다.
+ *
+ * 배경: vet-visit 같은 공용 카드(destinations:'all')의 description 은 한 군데에만 있어서,
+ * base 문구를 고치면 그 카드를 쓰는 모든 목적지가 함께 바뀐다. 어디까지 바뀌는지 알려주는
+ * 신호가 없어 의도 밖 목적지가 딸려 변하는 일이 반복됐다(예: 태국·필리핀 작업 중 base 를
+ * 고쳐 일본 FormAC 안내가 사라진 회귀, 커밋 cb81b59b).
+ *
+ * 동작: 모든 (목적지 × 카드)의 '최종 해석된 문구'(base + destination-override 머지 결과)를
+ * 골든 스냅샷 파일 하나로 떠놓는다. 문구를 바꾸면 이 파일의 git diff 가 곧 "어떤 목적지의
+ * 어떤 카드가 바뀌었는지" 보고서가 된다. 일본만 바꿨는데 태국·필리핀 블록도 함께 떠 있으면
+ * base 를 잘못 건드린 것 — 커밋 전에 바로 눈에 띈다.
+ *
+ * 골든 파일과 실제 코드가 어긋나면 (이 가드가) exit 1 → CI 가 빌드를 막는다.
+ *
+ * Usage:
+ *   tsx scripts/lint-journey-copy.ts          # 검사 (CI). 골든과 다르면 exit 1.
+ *   tsx scripts/lint-journey-copy.ts --write   # 문구를 의도적으로 바꾼 뒤 골든 재생성.
+ */
+
+import { readFileSync, writeFileSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+import { JOURNEY_STEP_CATALOG } from '../packages/domain/src/journey-steps/catalog'
+import {
+  STEP_DESTINATION_OVERRIDES,
+  resolveStepForDestination,
+} from '../packages/domain/src/journey-steps/destination-overrides'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const GOLDEN = path.join(__dirname, 'journey-copy.snapshot.txt')
+
+// 스냅샷 대상 목적지 키 = '기본(override 없음)' + override 가 정의된 모든 목적지.
+// override 없는 목적지(싱가포르·호주·말레이시아 등)는 전부 base 와 동일하므로 '기본' 블록이
+// 대표한다. 새 override 목적지를 추가하면 여기 자동 포함된다(별도 명단 관리 불필요).
+const BASE = '__base__'
+const DEST_KEYS = [BASE, ...Object.keys(STEP_DESTINATION_OVERRIDES)]
+
+// 사람이 읽고 git diff 로 추적할 카피 필드만 스냅샷한다.
+const COPY_FIELDS = ['title', 'shortLabel', 'cardLine', 'doneSummary', 'descriptionBySpecies', 'description'] as const
+
+function destLabel(key: string): string {
+  if (key === BASE) return '기본 — override 없는 모든 목적지(싱가포르·호주·말레이시아 등) 공용'
+  return key
+}
+
+function renderField(name: string, value: unknown): string[] {
+  if (value == null) return []
+  if (name === 'descriptionBySpecies' && typeof value === 'object') {
+    const out: string[] = []
+    for (const [sp, text] of Object.entries(value as Record<string, string>)) {
+      out.push(`  desc[${sp}]:`)
+      for (const line of String(text).split('\n')) out.push(`      ${line}`)
+    }
+    return out
+  }
+  if (name === 'description') {
+    const out: string[] = ['  desc:']
+    for (const line of String(value).split('\n')) out.push(`      ${line}`)
+    return out
+  }
+  const short: Record<string, string> = {
+    title: 'title',
+    shortLabel: 'short',
+    cardLine: 'card',
+    doneSummary: 'done',
+  }
+  return [`  ${short[name]}: ${String(value)}`]
+}
+
+function buildSnapshot(): string {
+  const lines: string[] = []
+  lines.push('# 여정 카드 문구 — 목적지별 최종본 (자동 생성: scripts/lint-journey-copy.ts)')
+  lines.push('#')
+  lines.push('# ⚠️ 이 파일을 손으로 고치지 마세요. 카드 문구를 바꾼 뒤 아래로 재생성합니다:')
+  lines.push('#     pnpm lint:copy:write')
+  lines.push('#')
+  lines.push('# 이 파일의 git diff 가 곧 "어떤 목적지의 어떤 카드 문구가 바뀌었는지" 보고서입니다.')
+  lines.push('# 한 목적지만 바꿨는데 다른 목적지 블록도 함께 바뀌어 있으면, 공용(base) 문구를')
+  lines.push('# 잘못 건드린 것입니다 — destination-overrides.ts 의 해당 목적지 override 에서만 고치세요.')
+  lines.push('')
+
+  for (const key of DEST_KEYS) {
+    lines.push('═'.repeat(72))
+    lines.push(`[${key}]  ${destLabel(key)}`)
+    lines.push('═'.repeat(72))
+    const destKey = key === BASE ? null : key
+    for (const step of JOURNEY_STEP_CATALOG) {
+      const resolved = resolveStepForDestination(step, destKey) as Record<string, unknown>
+      lines.push('')
+      lines.push(`▸ ${step.id}`)
+      for (const f of COPY_FIELDS) {
+        for (const l of renderField(f, resolved[f])) lines.push(l)
+      }
+    }
+    lines.push('')
+  }
+
+  return lines.join('\n').replace(/\s+$/, '') + '\n'
+}
+
+const snapshot = buildSnapshot()
+const write = process.argv.includes('--write')
+
+if (write) {
+  writeFileSync(GOLDEN, snapshot, 'utf-8')
+  console.log(`✓ journey-copy 스냅샷 재생성: ${path.relative(path.join(__dirname, '..'), GOLDEN)}`)
+  console.log('  git diff 로 어떤 목적지가 바뀌었는지 확인한 뒤 함께 커밋하세요.')
+  process.exit(0)
+}
+
+let golden = ''
+try {
+  golden = readFileSync(GOLDEN, 'utf-8')
+} catch {
+  console.error('✗ journey-copy 골든 스냅샷이 없습니다.')
+  console.error('  처음이라면 `pnpm lint:copy:write` 로 생성하세요.')
+  process.exit(1)
+}
+
+if (golden === snapshot) {
+  console.log('✓ journey-copy lint: 목적지별 문구가 골든 스냅샷과 일치')
+  process.exit(0)
+}
+
+// 어떤 목적지 블록이 바뀌었는지 요약(라인 비교).
+const goldenBlocks = splitBlocks(golden)
+const liveBlocks = splitBlocks(snapshot)
+const changed: string[] = []
+for (const key of DEST_KEYS) {
+  if ((goldenBlocks[key] ?? '') !== (liveBlocks[key] ?? '')) changed.push(key)
+}
+
+console.error('✗ journey-copy lint: 목적지별 문구가 골든 스냅샷과 다릅니다.')
+if (changed.length > 0) {
+  console.error(`\n  바뀐 목적지 블록 (${changed.length}개):`)
+  for (const k of changed) console.error(`    • ${destLabel(k)}`)
+  console.error('\n  의도한 목적지만 바뀌었나요?')
+  console.error('    - 한 목적지만 바꾸려 했는데 여러 목적지(특히 "기본")가 떴다면, 공용 base 문구를')
+  console.error('      잘못 고친 것입니다. destination-overrides.ts 의 해당 목적지 override 에서만 고치세요.')
+  console.error('    - 의도한 변경이 맞다면 `pnpm lint:copy:write` 로 골든을 재생성해 함께 커밋하세요.')
+}
+process.exit(1)
+
+/** 골든/라이브 텍스트를 목적지 키별 블록 문자열로 쪼갠다(변경 목적지 요약용). */
+function splitBlocks(text: string): Record<string, string> {
+  const blocks: Record<string, string> = {}
+  let current: string | null = null
+  let buf: string[] = []
+  for (const line of text.split('\n')) {
+    const m = line.match(/^\[([^\]]+)\]/)
+    if (m) {
+      if (current) blocks[current] = buf.join('\n')
+      current = m[1]
+      buf = []
+    } else if (current) {
+      buf.push(line)
+    }
+  }
+  if (current) blocks[current] = buf.join('\n')
+  return blocks
+}
