@@ -1,7 +1,6 @@
 'use client'
 
 import { useTransition, type CSSProperties } from 'react'
-import { buildCaseJourneyContext, type CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { requestAccountDeletion, cancelAccountDeletion } from '@/lib/actions/profile'
@@ -30,16 +29,8 @@ function daysUntil(iso: string): number {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / MS_PER_DAY))
 }
 
-/** '한국 ⇄ 일본' (왕복) 또는 '한국 → 일본' (편도). 목적지 미설정이면 null. */
-function travelSummary(case_: CaseRow): string | null {
-  const dest = case_.destination?.trim() || null
-  if (!dest) return null
-  const arrow = buildCaseJourneyContext(case_).tripType === 'round' ? '⇄' : '→'
-  return `한국 ${arrow} ${dest}`
-}
-
 export function AccountDeleteView() {
-  const { cases, profile, refreshProfile } = useCases()
+  const { profile, refreshProfile } = useCases()
   const confirm = useConfirm()
   const [pending, startTransition] = useTransition()
 
@@ -47,7 +38,6 @@ export function AccountDeleteView() {
   const deletionAt = scheduledAt
     ? new Date(new Date(scheduledAt).getTime() + GRACE_DAYS * MS_PER_DAY).toISOString()
     : null
-  const caseCount = cases.length
 
   async function handleRequest() {
     const ok = await confirm({
@@ -117,33 +107,6 @@ export function AccountDeleteView() {
               유예 중에는 이 메뉴에서 취소할 수 있습니다.
             </p>
           </SectionCard>
-
-          {caseCount > 0 && (
-            <SectionCard label="현재 등록된 여정">
-              {cases.map((c, i) => {
-                const name = c.pet_name?.trim() || '이름 미설정'
-                const travel = travelSummary(c)
-                return (
-                  <div
-                    key={c.id}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'baseline',
-                      padding: '11px 0',
-                      borderBottom: i === cases.length - 1 ? 'none' : `.5px solid ${C.line}`,
-                      gap: 12,
-                    }}
-                  >
-                    <span style={{ fontSize: 15, color: C.ink }}>{name}</span>
-                    <span style={{ fontSize: 13, color: travel ? C.ink2 : C.ink3 }}>
-                      {travel ?? '목적지 미설정'}
-                    </span>
-                  </div>
-                )
-              })}
-            </SectionCard>
-          )}
 
           <SectionCard>
             <button
