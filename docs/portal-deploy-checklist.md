@@ -30,10 +30,15 @@ Region 은 코드의 `apps/portal/vercel.json` 이 `icn1` 으로 강제 — 추�
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://ugywxiyivfzflqkcnqvu.supabase.co` | client |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | admin/.env.local 동일 | client |
 | `SUPABASE_SERVICE_ROLE_KEY` | admin/.env.local 동일 | **server-only** ⚠️ |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key | client |
+| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key | **server-only** ⚠️ |
 
 `SUPABASE_SERVICE_ROLE_KEY` 는 절대 client/preview 환경에 노출되지 않도록 Vercel
 환경변수 추가 시 "Sensitive" 토글 활성. portal 의 `/share/[token]`, `/apply` 가
 service role 로 RLS 우회.
+
+`TURNSTILE_SECRET_KEY` 가 비어 있으면 공개 `/apply/<slug>` 서버 검증이 개발 편의를 위해
+skip 되므로, Production/Preview 에서는 두 Turnstile 값을 반드시 같이 설정하고 redeploy.
 
 ### 선택
 | 변수 | 의미 |

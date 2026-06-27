@@ -132,7 +132,6 @@ export async function GET(request: Request) {
       const currentMeta = (userResp?.user?.app_metadata ?? {}) as Record<string, unknown>
       const currentProviders = (currentMeta.providers as string[] | undefined) ?? []
       if (!currentProviders.includes('naver')) {
-        console.log(`[naver-auth portal] linking naver to existing user ${userId} (${email})`)
         await admin.auth.admin.updateUserById(userId, {
           app_metadata: { ...currentMeta, providers: [...currentProviders, 'naver'] },
         })

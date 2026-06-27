@@ -307,7 +307,7 @@ export function CaseDataProvider({
       window.removeEventListener('focus', onRefresh)
       document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [refreshCases, refreshProfile])
+  }, [previewMode, refreshCases, refreshProfile])
 
   // 일정 알림(로컬 알림) 재예약 — 네이티브 앱 + 설정 ON + 권한 있을 때만(웹은 no-op).
   // 케이스가 실제로 바뀔 때만(업데이트 시각 기준) 재계산 — focus refetch 의 새 array reference 로
