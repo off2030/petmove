@@ -75,7 +75,7 @@ const SCOPED_DATE_FIELDS: Array<{ key: string; label: string; timeKey?: string }
   { key: 'ph_export_quarantine_date', label: '필리핀 수출 검역' },
   { key: 'ph_import_quarantine_date', label: '필리핀 수입 검역' },
   { key: 'ph_local_vet_visit_date', label: '필리핀 현지 동물병원 방문' },
-  { key: 'eu_export_quarantine_date', label: '현지 검역증명서 발급' },
+  { key: 'eu_export_quarantine_date', label: '귀국 서류 준비' },
 ]
 
 interface RawEvent {

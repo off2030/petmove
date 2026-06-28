@@ -393,14 +393,14 @@ function euFamilyDocSpecs(
     },
     {
       id: 'eu-export-cert-doc',
-      name: '현지 검역증명서',
+      name: '한국 입국용 건강증명서',
       source: '현지 동물병원 · 정부 기관',
       kind: 'step',
       stepRef: 'eu-export-cert',
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '한국으로 돌아오기 전 현지 동물병원·정부 기관에서 발급받는 한국 입국용 건강증명서(검역증명서)예요.\n\n한국 수입 검역 때 제출해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '출발하는 나라의 정부가 인증한 한국 입국용 건강증명서예요.\n\n현지 동물병원이 작성한 뒤 그 나라 관할 당국의 인증을 받아요. 마이크로칩 번호와 광견병 항체 검사 결과(채혈 24개월 이내)가 기재돼야 해요.\n\nEU 반려동물 여권(EU 거주자 한정), 또는 한국 출국 때 받은 대한민국 수출 검역증명서로 대신할 수 있어요.\n\n한국 수입 검역 때 제출해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'eu-export-cert',
     },
     {

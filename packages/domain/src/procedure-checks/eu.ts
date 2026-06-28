@@ -367,8 +367,8 @@ export const EU_CHECKS: ProcedureCheck[] = [
     id: 'eu.export-cert-date-valid',
     country: EU_REGIME,
     category: '검역',
-    title: '현지 검역증명서 발급일',
-    description: '현지 검역증명서 발급일은 도착(입국)일 이후·한국 귀국일 이전이어야 함.',
+    title: '귀국 서류 준비 완료일',
+    description: '귀국 서류 준비 완료일은 도착(입국)일 이후·한국 귀국일 이전이어야 함.',
     severity: 'warning',
     addedAt: '2026-06-12',
     run: ({ caseRow, destination }) => {
@@ -390,18 +390,18 @@ export const EU_CHECKS: ProcedureCheck[] = [
       if (entry && raw < entry) {
         return {
           ok: false,
-          message: '현지 검역증명서 발급일은 도착(입국)일보다 빠를 수 없어요.',
+          message: '귀국 서류 준비 완료일은 도착(입국)일보다 빠를 수 없어요.',
           offendingPaths: ['eu_export_quarantine_date'],
         }
       }
       if (ret && raw > ret) {
         return {
           ok: false,
-          message: '현지 검역증명서 발급일은 한국 귀국일보다 늦을 수 없어요.',
+          message: '귀국 서류 준비 완료일은 한국 귀국일보다 늦을 수 없어요.',
           offendingPaths: ['eu_export_quarantine_date'],
         }
       }
-      return { ok: true, message: `발급일(${raw}) 체류 구간 내.` }
+      return { ok: true, message: `준비 완료일(${raw}) 체류 구간 내.` }
     },
   },
 ]
