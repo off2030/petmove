@@ -23,7 +23,7 @@ export function StartHereEmpty({
       className="pm-fade-up"
       style={{
         // main 본문 영역(100dvh − 상단 safe+48 − 하단 88)을 채워 세로 중앙 정렬.
-        minHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - 48px - 88px)',
+        minHeight: 'calc(100dvh - var(--pm-top-inset) - 48px - 88px)',
         padding: '24px',
         display: 'flex',
         flexDirection: 'column',

@@ -107,7 +107,7 @@ function Shell({
       <main
         style={{
           flex: 1,
-          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 48px)',
+          paddingTop: 'calc(var(--pm-top-inset) + 48px)',
           paddingBottom: 88,
         }}
       >

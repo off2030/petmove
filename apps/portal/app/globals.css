@@ -318,6 +318,11 @@
     --safe-right: env(safe-area-inset-right, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
+
+    /* 상단바 안전영역 — env() 가 0(안드로이드 edge-to-edge)이거나 첫 렌더에
+       미반영(iOS WebView 버그)이어도 상태바를 비우고 숨 쉴 공간을 보장.
+       노치/다이내믹 아일랜드가 있으면 그 값이 더 커서 자동으로 우선. */
+    --pm-top-inset: max(env(safe-area-inset-top, 0px), 34px);
   }
 
   .dark {
