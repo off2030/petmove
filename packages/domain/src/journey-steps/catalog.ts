@@ -592,7 +592,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '사전 신고',
     shortLabel: '신고',
     description:
-      '일본 입국 40일 전까지 신고하세요.\n\nNACCS에서 신청하고 일본 동물검역소의 이메일 안내에 따르세요.\n절차가 완료되면 허가서(Approval)가 발급돼요.\n왕복 일정이면 일본 수출 동물검역 신청도 함께 하세요.',
+      '일본 입국 40일 전까지 신고하세요.\n\nNACCS에서 신청하고 일본 동물검역소의 이메일 안내에 따르세요.\n절차가 완료되면 허가서(Approval)가 발급돼요.\n왕복 일정이면 출국 검역 신청도 함께 하세요.',
     doneSummary: '일본 동물검역소에 사전 신고를 했어요.',
     cardLine: '일본 동물검역소에 사전 신고를 하세요.',
     // 진행 상태는 [[deriveAdvanceNotificationStatus]] 가 단일 출처 — admin 신고탭과 동일.
@@ -678,15 +678,15 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['eu.ie-advance-notice-24h-before-entry'],
   },
 
-  // ── 사전 신고 다음 — 일본 수출 동물검역 (왕복 케이스 한정) ──────────────
+  // ── 사전 신고 다음 — 출국 검역 (왕복 케이스 한정) ──────────────
   {
     id: 'jp-export-quarantine',
     category: 'permit',
-    title: '일본 수출 동물검역 신청',
-    shortLabel: '수출',
+    title: '출국 검역 신청',
+    shortLabel: '출국',
     description:
-      '일본 동물검역소에 수출 동물검역 신청과 예약을 하세요.\n\n수출 동물검역은 일본에서 한국으로 돌아오기 전에 받아야 하는 필수 절차로, 최소 10일 전까지 신청·예약해야 해요.\nNACCS에서 신청하고 일본 동물검역소의 이메일 안내에 따르세요.\n예약은 이메일로만 가능해요. 방문 예정 동물검역소에 이메일로 문의하세요.',
-    doneSummary: '일본 수출 동물검역 신청·예약을 완료했어요.',
+      '일본 동물검역소에 출국 검역 신청과 예약을 하세요.\n\n출국 검역은 일본에서 한국으로 돌아오기 전에 받아야 하는 필수 절차로, 최소 10일 전까지 신청·예약해야 해요.\nNACCS에서 신청하고 일본 동물검역소의 이메일 안내에 따르세요.\n예약은 이메일로만 가능해요. 방문 예정 동물검역소에 이메일로 문의하세요.',
+    doneSummary: '출국 검역 신청·예약을 완료했어요.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
     order: 48,
     // 마감 없음 — 예약 기준일이 검역소 방문일(= 예약일, 사용자 입력)이라 고정 앵커가 없다.
@@ -723,7 +723,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 예약일·시간은 '희망' 데이터일 뿐 완료 판정에 영향 없음 — 보호자가 '완료' 버튼을 직접
       // 눌러야 step 이 done. 사전 신고와 동일 모델.
       // 예약 일정 안내는 방문 step([[jp-export-quarantine-visit]])이 맡고, 여기는 진행 중 안내만.
-      const msg = '일본 수출 동물검역 신청·예약이 진행 중이에요. 예약이 확정되면 완료 버튼을 누르세요.'
+      const msg = '출국 검역 신청·예약이 진행 중이에요. 예약이 확정되면 완료 버튼을 누르세요.'
       return { desc: msg, cardDesc: msg }
     },
     inputs: [
@@ -1069,15 +1069,15 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     done: 'all-required-docs',
   },
 
-  // ── 12. 한국 수출 동물검역 ────────────────────────────────────────────
+  // ── 12. 출국 검역 ────────────────────────────────────────────
   {
     id: 'certificate-issue',
     category: 'document',
-    title: '한국 수출 동물검역',
+    title: '출국 검역',
     shortLabel: '검역소',
     description:
       '출국일 기준 10일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
-    doneSummary: '한국 수출 동물검역을 받았어요.',
+    doneSummary: '출국 검역을 받았어요.',
     cardLine: '동물검역소를 방문해 검역을 받으세요.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 120,
@@ -1110,7 +1110,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 140,
     deadline: { anchor: 'departure', daysBefore: 0 },
     done: 'departure-past',
-    // base departure 는 첨부 불가 — 일본 override(일본 수입 동물검역)만 allowAttachments.
+    // base departure 는 첨부 불가 — 일본 override(입국 검역)만 allowAttachments.
     // 첨부 명명은 base catalog 의 attachmentLabel 을 읽으므로 여기 둔다 (일본에서만 효과).
     attachmentLabel: 'Import Quarantine Certificate',
     // 일본 override 가 jp_import_quarantine_date 입력으로 사용 — 이 룰은 non-JP 케이스에선
@@ -1118,16 +1118,16 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['jp.import-quarantine-date-valid'],
   },
 
-  // ── 14. 일본 수출 동물검역 (왕복 케이스 한정 — 귀국편) ──────────────────
+  // ── 14. 출국 검역 (왕복 케이스 한정 — 귀국편) ──────────────────
   {
     id: 'jp-export-quarantine-visit',
     category: 'document',
-    title: '일본 수출 동물검역',
+    title: '출국 검역',
     shortLabel: '검역',
     description:
-      '일본 출국 전 동물검역소를 방문해 수출 동물검역을 받으세요.\n반려동물을 데리고 예약한 일정에 방문하세요.\n일본 수출 동물검역증(Export Quarantine Certificate)은 향후 일본에 재입국하게 되면 필요할 수 있으니 잘 보관해두세요.',
-    doneSummary: '일본 수출 동물검역을 받았어요.',
-    cardLine: '일본 동물검역소를 방문해 수출 검역을 받으세요.',
+      '일본 출국 전 동물검역소를 방문해 출국 검역을 받으세요.\n반려동물을 데리고 예약한 일정에 방문하세요.\n일본 수출 동물검역증(Export Quarantine Certificate)은 향후 일본에 재입국하게 되면 필요할 수 있으니 잘 보관해두세요.',
+    doneSummary: '출국 검역을 받았어요.',
+    cardLine: '일본 동물검역소를 방문해 출국 검역을 받으세요.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
     order: 150,
     done: 'has-jp-export-quarantine-visit',
@@ -1162,18 +1162,18 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentLabel: 'Export Quarantine Certificate',
   },
 
-  // ── 태국 수출 동물검역 (왕복 — 귀국 출국 시, 태국 전용) ───────────────────
+  // ── 출국 검역 (왕복 — 귀국 출국 시, 태국 전용) ───────────────────
   // 태국 축산국(DLD) 출국 검역. 일본의 수출검역(검역소 방문)에 대응하는 태국판 — 나라별 단계.
   // 완료신호 'quarantine:<필드>' 로 도착 수입검역과 같은 confirm 메커니즘 재사용(검역일+완료).
   {
     id: 'th-export-quarantine',
     category: 'document',
-    title: '태국 수출 동물검역',
-    shortLabel: '수출',
+    title: '출국 검역',
+    shortLabel: '출국',
     description:
-      '출국 전 공항 동물검역소에서 수출 동물검역을 받으세요.\n출국 직전(1~3일 전 권장)에 방문하세요. 주말·공휴일·야간에는 검역을 받을 수 없어요.\n접종 증명서를 꼭 챙기세요.\n검사를 통과하면 수출허가서(R.9)와 건강증명서가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
-    doneSummary: '태국 수출 동물검역을 받았어요.',
-    cardLine: '태국 동물검역소에서 수출 검역을 받으세요.',
+      '출국 전 공항 동물검역소에서 출국 검역을 받으세요.\n출국 직전(1~3일 전 권장)에 방문하세요. 주말·공휴일·야간에는 검역을 받을 수 없어요.\n접종 증명서를 꼭 챙기세요.\n검사를 통과하면 수출허가서(R.9)와 건강증명서가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
+    doneSummary: '출국 검역을 받았어요.',
+    cardLine: '태국 동물검역소에서 출국 검역을 받으세요.',
     applicability: { destinations: ['thailand'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'quarantine:th_export_quarantine_date',
@@ -1184,7 +1184,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         key: 'th_export_quarantine_date',
         label: '검역일',
         type: 'date',
-        helpText: '태국 동물검역소에서 수출 검역을 받은 날짜',
+        helpText: '태국 동물검역소에서 출국 검역을 받은 날짜',
       },
     ],
     allowAttachments: true,
@@ -1201,7 +1201,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '현지 검역증명서 발급',
     shortLabel: '증명서',
     description:
-      '한국으로 돌아오기 전, 현지 동물병원 또는 정부 기관에서 한국 입국용 건강증명서(검역증명서)를 발급받으세요.\n마이크로칩 번호와 광견병 백신 접종 내용이 기재되어야 해요.\n광견병 항체 검사 결과지 원본을 함께 준비하세요.\n발급받은 서류는 한국 수입 동물검역 때 제출해요.',
+      '한국으로 돌아오기 전, 현지 동물병원 또는 정부 기관에서 한국 입국용 건강증명서(검역증명서)를 발급받으세요.\n마이크로칩 번호와 광견병 백신 접종 내용이 기재되어야 해요.\n광견병 항체 검사 결과지 원본을 함께 준비하세요.\n발급받은 서류는 입국 검역 때 제출해요.',
     doneSummary: '현지 검역증명서를 발급받았어요.',
     cardLine: '한국 입국용 검역증명서를 발급받으세요.',
     applicability: {
@@ -1233,7 +1233,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '현지 동물병원 방문',
     shortLabel: '현지검진',
     description:
-      '필리핀 출국 전 현지 동물병원을 방문해 임상 검진을 받고 건강증명서를 발급받으세요.\n이 건강증명서가 있어야 BAI 동물검역소에서 수출 동물검역을 받을 수 있어요.\nBAI 동물검역 방문 직전에 받아야 해요. (3일 이내 권장)',
+      '필리핀 출국 전 현지 동물병원을 방문해 임상 검진을 받고 건강증명서를 발급받으세요.\n이 건강증명서가 있어야 BAI 동물검역소에서 출국 검역을 받을 수 있어요.\nBAI 동물검역 방문 직전에 받아야 해요. (3일 이내 권장)',
     doneSummary: '현지 동물병원에서 검진·건강증명서를 받았어요.',
     cardLine: '필리핀 현지 동물병원에서 검진·건강증명서를 받으세요.',
     applicability: { destinations: ['philippines'], species: 'all', tripType: 'round' },
@@ -1251,18 +1251,18 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '건강증명서 사본을 사진, PDF로 저장하세요.',
   },
 
-  // ── 필리핀 수출 동물검역 (왕복 — 귀국 출국 시, 필리핀 전용) ───────────────
+  // ── 출국 검역 (왕복 — 귀국 출국 시, 필리핀 전용) ───────────────
   // 태국 수출검역과 동일 모델 — 완료신호 'quarantine:<필드>' confirm 메커니즘 재사용.
   // 현지 건강증명서는 직전 단계(ph-local-vet-visit)에서 발급 — 여기선 그 서류로 BAI 검역.
   {
     id: 'ph-export-quarantine',
     category: 'document',
-    title: '필리핀 수출 동물검역',
-    shortLabel: '수출',
+    title: '출국 검역',
+    shortLabel: '출국',
     description:
-      '필리핀 출국 전 BAI 동물검역소에서 수출 동물검역을 받으세요.\n현지 동물병원에서 받은 건강증명서가 있어야 해요.\n수출 허가증·국제 수의건강증명서가 발급돼요.',
-    doneSummary: '필리핀 수출 동물검역을 받았어요.',
-    cardLine: '필리핀 BAI 동물검역소에서 수출 검역을 받으세요.',
+      '필리핀 출국 전 BAI 동물검역소에서 출국 검역을 받으세요.\n현지 동물병원에서 받은 건강증명서가 있어야 해요.\n수출 허가증·국제 수의건강증명서가 발급돼요.',
+    doneSummary: '출국 검역을 받았어요.',
+    cardLine: '필리핀 BAI 동물검역소에서 출국 검역을 받으세요.',
     applicability: { destinations: ['philippines'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'quarantine:ph_export_quarantine_date',
@@ -1272,23 +1272,23 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         key: 'ph_export_quarantine_date',
         label: '검역일',
         type: 'date',
-        helpText: '필리핀 BAI 동물검역소에서 수출 검역을 받은 날짜',
+        helpText: '필리핀 BAI 동물검역소에서 출국 검역을 받은 날짜',
       },
     ],
     allowAttachments: true,
     attachmentHint: '수출 허가증·국제 수의건강증명서 사본을 사진, PDF로 저장하세요.',
   },
 
-  // ── 15. 한국 수입 동물검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
+  // ── 15. 입국 검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
   {
     id: 'kr-import-quarantine',
     category: 'document',
-    title: '한국 수입 동물검역',
-    shortLabel: '수입',
+    title: '입국 검역',
+    shortLabel: '입국',
     description:
-      '한국 도착 후 공항 동물검역소에서 수입 동물검역을 받으세요.',
-    doneSummary: '한국 수입 동물검역을 받았어요.',
-    cardLine: '한국 공항 동물검역소에서 수입 검역을 받으세요.',
+      '한국 도착 후 공항 동물검역소에서 입국 검역을 받으세요.',
+    doneSummary: '입국 검역을 받았어요.',
+    cardLine: '한국 공항 동물검역소에서 입국 검역을 받으세요.',
     // 모든 나라 왕복의 공통 마지막 — 귀국 후 한국 공항 검역. (일본 전용 → 전 목적지 왕복 공통)
     applicability: { destinations: 'all', species: 'all', tripType: 'round' },
     order: 160,
