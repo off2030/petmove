@@ -94,7 +94,9 @@ export function DocsView({
         color: C.ink,
         minHeight: '100%',
         paddingTop: 24,
-        paddingBottom: 24,
+        // 맨 아래 '파일 추가'(StepAttachments) 가 플로팅 하단 탭바(bottom-nav, fixed)에
+        // 가리지 않도록 탭바 높이 + iOS 안전영역만큼 비운다.
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 88px)',
         overflow: 'auto',
       }}
     >
