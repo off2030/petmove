@@ -76,8 +76,11 @@ export function TopBar() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 22px',
-        paddingBlock: 0,
+        // ⚠️ padding 단축/paddingBlock 을 쓰면 위의 paddingTop(var(--pm-top-inset))
+        // 이 덮여 0 이 된다 — 네 방향을 명시해 상단 안전영역 여백을 보존한다.
+        paddingRight: 22,
+        paddingLeft: 22,
+        paddingBottom: 0,
         boxSizing: 'border-box',
         pointerEvents: 'none',
         // 하단 바 카드 모양(둥근 22, 알파 0.50)과 어울리도록 — 상단도 하단 모서리만
