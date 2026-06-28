@@ -14,6 +14,7 @@ const PUBLIC_PREFIXES = [
   '/api/auth',  // Naver OAuth 등 자체 라우트 — 미로그인 통과 필요
   '/terms',
   '/privacy',
+  '/support', // 고객지원 페이지 — 앱스토어 지원 URL. 미인증 공개 필수.
   '/apply/',  // 조직별 공개 신청폼 (/apply/<slug>) — 병원 손님이 로그인 없이 작성.
               // 슬래시 포함이라 직영 '/apply'(정확히) 는 매칭 안 됨 → 직영은 로그인 유지.
   '/forms/', // 빈 지정 양식(별지25·FormAC 등) 정적 파일 — 인앱 브라우저(세션 없음)·외부에서
