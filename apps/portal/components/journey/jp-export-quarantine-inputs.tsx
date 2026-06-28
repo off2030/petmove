@@ -43,7 +43,7 @@ export function JpExportQuarantineInputs({
       <div style={{ padding: '14px 0', borderBottom: `.5px solid ${C.line}` }}>
         <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>신청일</div>
         <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-          NACCS로 수출 동물검역을 신청한 날짜
+          NACCS로 출국 검역을 신청한 날짜
         </div>
         <div style={{ marginTop: 8 }}>
           <DateTextField

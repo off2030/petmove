@@ -22,7 +22,7 @@ import {
  *
  * 세 종류:
  *   A. 예약 리마인더 — 예정일 있는 카드(접종·검사·구충·임상검사·검역) D-1·당일 오전 9시.
- *      일본 수출 동물검역은 예약 시간(있으면) 문구 포함.
+ *      일본 출국 검역은 예약 시간(있으면) 문구 포함.
  *   B. 유효기간 만료 — 광견병 백신·종합백신·CIV·광견병 항체검사(=titer)만. 만료 30일 전,
  *      그리고 출국 전 만료 시 경고. (도메인 계산 재활용)
  *   C. 목적지별 신청 마감 — 일본 사전신고(입국 40·47일 전)·일본 수출검역 신청(귀국 10·17일 전)
@@ -61,19 +61,19 @@ const GLOBAL_DATE_FIELDS: Array<{ keys: string[]; label: string }> = [
 
 /**
  * 목적지별(by_dest) + top-level 단일 date 필드 → 항목 라벨.
- * timeKey 가 있으면 같은 스코프의 예약 시간을 문구에 포함(일본 수출 동물검역).
+ * timeKey 가 있으면 같은 스코프의 예약 시간을 문구에 포함(일본 출국 검역).
  */
 const SCOPED_DATE_FIELDS: Array<{ key: string; label: string; timeKey?: string }> = [
   { key: 'vet_visit_date', label: '출국 전 임상검사' },
   { key: 'vet_visit_date_scheduled', label: '출국 전 임상검사' },
-  { key: 'kr_export_quarantine_date', label: '한국 수출 동물검역' },
-  { key: 'kr_import_quarantine_date', label: '한국 수입 동물검역' },
-  { key: 'jp_export_quarantine_date', label: '일본 수출 동물검역', timeKey: 'jp_export_quarantine_time' },
-  { key: 'jp_import_quarantine_date', label: '일본 수입 동물검역' },
-  { key: 'th_export_quarantine_date', label: '태국 수출 동물검역' },
-  { key: 'th_import_quarantine_date', label: '태국 수입 동물검역' },
-  { key: 'ph_export_quarantine_date', label: '필리핀 수출 동물검역' },
-  { key: 'ph_import_quarantine_date', label: '필리핀 수입 동물검역' },
+  { key: 'kr_export_quarantine_date', label: '한국 출국 검역' },
+  { key: 'kr_import_quarantine_date', label: '한국 입국 검역' },
+  { key: 'jp_export_quarantine_date', label: '일본 출국 검역', timeKey: 'jp_export_quarantine_time' },
+  { key: 'jp_import_quarantine_date', label: '일본 입국 검역' },
+  { key: 'th_export_quarantine_date', label: '태국 출국 검역' },
+  { key: 'th_import_quarantine_date', label: '태국 입국 검역' },
+  { key: 'ph_export_quarantine_date', label: '필리핀 출국 검역' },
+  { key: 'ph_import_quarantine_date', label: '필리핀 입국 검역' },
   { key: 'ph_local_vet_visit_date', label: '필리핀 현지 동물병원 방문' },
   { key: 'eu_export_quarantine_date', label: '현지 검역증명서 발급' },
 ]
@@ -394,14 +394,14 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r40) out.push(r40)
       }
-      // 일본 수출 동물검역 신청 — 귀국 10일 전. 왕복(귀국일 있음) + 완료 전에만.
+      // 일본 출국 검역 신청 — 귀국 10일 전. 왕복(귀국일 있음) + 완료 전에만.
       if (ret && deriveJpExportQuarantineStatus(flat) !== 'done') {
         const r17 = leadReminder(
           flat,
           `${token}|jp-export-17`,
           ret,
           17,
-          '일본 수출 동물검역 신청 마감이 일주일 남았어요. 귀국 10일 전까지 신청·예약하세요.',
+          '일본 출국 검역 신청 마감이 일주일 남았어요. 귀국 10일 전까지 신청·예약하세요.',
           now,
         )
         if (r17) out.push(r17)
@@ -410,7 +410,7 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
           `${token}|jp-export-10`,
           ret,
           10,
-          '오늘까지 일본 수출 동물검역 신청이 필요해요(귀국 10일 전).',
+          '오늘까지 일본 출국 검역 신청이 필요해요(귀국 10일 전).',
           now,
         )
         if (r10) out.push(r10)

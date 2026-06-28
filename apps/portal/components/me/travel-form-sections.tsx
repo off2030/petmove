@@ -166,7 +166,7 @@ export function TravelFormSections({
       )}
 
       {isRound && isJapan && (
-        <SectionCard label="일본 수출검역">
+        <SectionCard label="일본 출국 검역">
           <DateField
             label="예약일"
             value={form.jp_export_quarantine_date}
