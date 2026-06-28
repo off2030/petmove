@@ -445,6 +445,13 @@
     line-height: var(--pmw-leading-base, 1.5);
   }
 
+  /* iOS WebView 고무줄(rubber-band) 스크롤이 상단 고정 바(TopBar)를 위아래로
+     끌고 다니는 현상 방지. 데스크톱·안드로이드는 바운스가 없어 영향 없음. */
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
+
   /* Editorial card "raised paper" — hairline border 는 base layer 에서 이미 적용됨 (* { border-border }).
      여기서 미세 shadow 추가 — 1px y-offset, 거의 투명한 warm shadow (paper 위에 살짝 떠 있는 느낌).
      editorial 만 — :not([data-skin]) 로 다른 스킨 영향 X. */
