@@ -14,6 +14,10 @@ const primaryButtonClass = `${buttonBaseClass} bg-[#D99A58] text-[#FBF7F1] hover
 // 어울리도록. 로고·글자는 검정(currentColor). iOS 네이티브에서만 노출.
 const appleButtonClass = `${buttonBaseClass} border border-[rgba(0,0,0,0.18)] bg-white text-black hover:bg-[#F4F4F4]`
 
+// 앱스토어/플레이 심사용 숨김 로그인 — 이 이메일을 입력할 때만 비밀번호칸이 나타나고
+// 비밀번호 로그인으로 전환된다. 일반 사용자는 평소처럼 매직링크. (계정 비번은 코드에 없음)
+const REVIEW_EMAIL = 'review@petmove.co.kr'
+
 export function LoginForm({
   next,
   initialError = null,
@@ -22,6 +26,7 @@ export function LoginForm({
   initialError?: string | null
 }) {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(initialError)
@@ -113,15 +118,35 @@ export function LoginForm({
     setLoading(null)
   }
 
+  const isReviewLogin = email.trim().toLowerCase() === REVIEW_EMAIL
+
   async function sendMagicLink(e: React.FormEvent) {
     e.preventDefault()
     if (!email) {
       setError('이메일을 먼저 입력하세요.')
       return
     }
-    setLoading('magic')
     setError(null)
     setInfo(null)
+
+    // 심사용 비밀번호 로그인 (숨김) — 지정 이메일일 때만.
+    if (isReviewLogin) {
+      if (!password) {
+        setError('비밀번호를 입력하세요.')
+        return
+      }
+      setLoading('magic')
+      const { error } = await supabaseBrowser.auth.signInWithPassword({ email, password })
+      setLoading(null)
+      if (error) {
+        setError(error.message)
+        return
+      }
+      window.location.href = next && next !== '/' ? next : '/cases'
+      return
+    }
+
+    setLoading('magic')
 
     if (next && next !== '/') {
       document.cookie = `pm_oauth_next=${encodeURIComponent(next)}; path=/; max-age=600; samesite=lax`
@@ -224,8 +249,28 @@ export function LoginForm({
             autoComplete="email"
             className="w-full rounded-md border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] px-sm py-2 text-sm text-[#2A2620] placeholder:text-[#9A9286]/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D99A58]/40"
           />
-          <button type="submit" className={primaryButtonClass} disabled={loading !== null || !email}>
-            {loading === 'magic' ? '발송 중…' : '이메일로 로그인 링크 받기'}
+          {isReviewLogin && (
+            <input
+              type="password"
+              placeholder="비밀번호"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              className="w-full rounded-md border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] px-sm py-2 text-sm text-[#2A2620] placeholder:text-[#9A9286]/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D99A58]/40"
+            />
+          )}
+          <button
+            type="submit"
+            className={primaryButtonClass}
+            disabled={loading !== null || !email || (isReviewLogin && !password)}
+          >
+            {isReviewLogin
+              ? loading === 'magic'
+                ? '로그인 중…'
+                : '로그인'
+              : loading === 'magic'
+                ? '발송 중…'
+                : '이메일로 로그인 링크 받기'}
           </button>
         </form>
 
