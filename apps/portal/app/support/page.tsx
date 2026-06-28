@@ -3,6 +3,7 @@ import { renderLegalDoc } from '@/lib/legal'
 import { LegalBackBar } from '@/components/legal-back-bar'
 
 // 요청마다 docs/legal/support.md 를 새로 읽어 렌더 (terms/privacy 와 동일 패턴).
+// 앱스토어 지원 URL = /support.
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
