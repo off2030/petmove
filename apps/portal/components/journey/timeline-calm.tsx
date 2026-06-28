@@ -554,7 +554,7 @@ export function TimelineCalm({
                 marginTop: 12,
                 fontSize: 12,
                 letterSpacing: '0.01em',
-                color: 'rgba(45,38,28,.6)',
+                color: 'rgb(var(--pm-ink-rgb) / .6)',
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
@@ -567,7 +567,7 @@ export function TimelineCalm({
               </span>
               {journeyDateText && (
                 <>
-                  <span style={{ color: 'rgba(45,38,28,.3)', margin: '0 6px' }}>·</span>
+                  <span style={{ color: 'rgb(var(--pm-ink-rgb) / .3)', margin: '0 6px' }}>·</span>
                   <span>{journeyDateText}</span>
                 </>
               )}
@@ -686,7 +686,7 @@ export function TimelineCalm({
             }}
           >
             {/* D-day 는 진행률 링 카드에만 — 중복 방지로 헤더는 라벨만. */}
-            <div style={{ ...monoCap, color: 'rgba(45,38,28,.55)' }}>다음 할 일</div>
+            <div style={{ ...monoCap, color: 'rgb(var(--pm-ink-rgb) / .55)' }}>다음 할 일</div>
             {nextStages.map((stage, i) => (
               <Link
                 key={stage.id}
@@ -698,7 +698,7 @@ export function TimelineCalm({
                   color: 'inherit',
                   marginTop: i === 0 ? 12 : 14,
                   paddingTop: i === 0 ? 0 : 14,
-                  borderTop: i === 0 ? 0 : '1px solid rgba(45,38,28,.12)',
+                  borderTop: i === 0 ? 0 : '1px solid rgb(var(--pm-ink-rgb) / .12)',
                 }}
               >
                 <h3
@@ -715,7 +715,7 @@ export function TimelineCalm({
                   {stage.label}
                 </h3>
                 {(stage.cardDesc ?? stage.desc) && (
-                  <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
+                  <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgb(var(--pm-ink-rgb) / .65)' }}>
                     {stage.cardDesc ?? stage.desc}
                   </p>
                 )}
@@ -734,7 +734,7 @@ export function TimelineCalm({
                           margin: '8px 0 0',
                           fontSize: 13,
                           lineHeight: 1.55,
-                          color: 'rgba(45,38,28,.65)',
+                          color: 'rgb(var(--pm-ink-rgb) / .65)',
                           whiteSpace: 'pre-line',
                         }}
                       >
@@ -772,7 +772,7 @@ export function TimelineCalm({
                   color: 'inherit',
                   marginTop: i === 0 ? 12 : 14,
                   paddingTop: i === 0 ? 0 : 14,
-                  borderTop: i === 0 ? 0 : '1px solid rgba(45,38,28,.12)',
+                  borderTop: i === 0 ? 0 : '1px solid rgb(var(--pm-ink-rgb) / .12)',
                 }}
               >
                 <h3
@@ -789,7 +789,7 @@ export function TimelineCalm({
                   {stage.label}
                 </h3>
                 {stage.infoMessage && (
-                  <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
+                  <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgb(var(--pm-ink-rgb) / .65)' }}>
                     {stage.infoMessage}
                   </p>
                 )}
