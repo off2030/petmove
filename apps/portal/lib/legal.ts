@@ -11,7 +11,7 @@ import { marked } from 'marked'
  * 1차 초안 placeholder (`[운영주체 법인명]` 등) 가 그대로 들어 있어도 페이지는 렌더 — 게시 전
  * 사용자가 placeholder 채우고 외부 법무 검토 마치는 것이 사용자 액션 (docs/portal-plan.md §10).
  */
-export async function renderLegalDoc(slug: 'terms' | 'privacy'): Promise<string> {
+export async function renderLegalDoc(slug: 'terms' | 'privacy' | 'support'): Promise<string> {
   const filePath = path.join(process.cwd(), '..', '..', 'docs', 'legal', `${slug}.md`)
   const md = await readFile(filePath, 'utf-8')
   return marked.parse(md, { gfm: true, async: false }) as string

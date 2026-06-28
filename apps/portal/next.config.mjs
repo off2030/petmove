@@ -54,6 +54,7 @@ const nextConfig = {
   outputFileTracingIncludes: {
     '/terms': ['../../docs/legal/terms.md'],
     '/privacy': ['../../docs/legal/privacy.md'],
+    '/support': ['../../docs/legal/support.md'],
   },
 }
 
