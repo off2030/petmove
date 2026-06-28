@@ -350,7 +350,7 @@ function euFamilyOverrides(opts: {
       shortLabel: '입국',
       description:
         departureDescription ??
-        `${label} 도착 후 공항 세관 혹은 검역 당국에서 입국 검사를 받으세요.\n마이크로칩과 서류를 확인합니다.`,
+        `${label} 도착 후 공항 세관/검역 당국에서 입국 검사를 받으세요.\n마이크로칩과 서류를 확인해요.`,
       doneSummary: `${label} 입국 검사를 받았어요.`,
       done: 'quarantine:eu_import_quarantine_date',
       inputs: [
