@@ -98,7 +98,12 @@ function Shell({
       style={{
         background: 'var(--pm-bg)',
         color: 'var(--pm-ink)',
-        minHeight: '100dvh',
+        // WKWebView 의 루트 문서를 스크롤시키면 iOS rubber-band 중 position:fixed
+        // 상·하단 바도 함께 움직여 보인다. 앱 셸은 viewport 에 고정하고 main 만
+        // 스크롤시켜 고정 바를 WebView 루트 바운스에서 분리한다.
+        height: '100dvh',
+        minHeight: 0,
+        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -107,6 +112,10 @@ function Shell({
       <main
         style={{
           flex: 1,
+          minHeight: 0,
+          overflowY: 'auto',
+          overscrollBehaviorY: 'none',
+          WebkitOverflowScrolling: 'touch',
           paddingTop: 'calc(var(--pm-top-inset) + 48px)',
           paddingBottom: 88,
         }}
