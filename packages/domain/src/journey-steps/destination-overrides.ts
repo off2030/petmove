@@ -350,7 +350,7 @@ function euFamilyOverrides(opts: {
       shortLabel: '입국',
       description:
         departureDescription ??
-        `${label} 도착 후 공항의 여행자 입국 지점(Travellers' Point of Entry)에서 입국 검사를 받으세요.\n검역관이 마이크로칩과 서류(건강증명서·광견병 항체 검사 결과지)를 확인해요.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도돼요.`,
+        `${label} 도착 후 공항 세관 혹은 검역 당국에서 입국 검사를 받으세요.\n마이크로칩과 서류를 확인합니다.`,
       doneSummary: `${label} 입국 검사를 받았어요.`,
       done: 'quarantine:eu_import_quarantine_date',
       inputs: [
