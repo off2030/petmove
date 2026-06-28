@@ -25,7 +25,7 @@ export interface RequiredDocItem {
   verified: boolean
   /** 수기 완료 토글이 필요한 항목 (kind='manual'). 상세 페이지에서 발급완료 버튼 노출. */
   manual: boolean
-  /** '해당없음' 토글을 허용하는 서류 (예: 일본 첫 입국 시 출국 검역증). */
+  /** '해당없음' 토글을 허용하는 서류 (예: 일본 첫 입국 시 수출 검역증). */
   naAllowed: boolean
   /** 보호자가 '해당없음' 으로 표시함 (case.data.required_doc_na[id]). 체크리스트 카운트에서 제외. */
   na: boolean
@@ -75,7 +75,7 @@ interface RequiredDocSpec {
   kind: 'step' | 'manual'
   /** kind='step' 시 verified 판정에 쓸 step.id. manual 은 무시. */
   stepRef?: string
-  /** 케이스에 따라 불필요할 수 있는 서류 — 상세에서 '해당없음' 토글 노출(예: 첫 입국 시 출국 검역증). */
+  /** 케이스에 따라 불필요할 수 있는 서류 — 상세에서 '해당없음' 토글 노출(예: 첫 입국 시 수출 검역증). */
   naAllowed?: boolean
   /**
    * 왕복 케이스에만 필요한 서류 (예: 태국 — 광견병 항체 검사 결과지는 한국 귀국용).
@@ -110,7 +110,7 @@ const KR_FORM25_VACCINATION_HEALTH_CERT: RequiredDocSpec = {
   kind: 'manual',
   issuanceStepId: 'vet-visit',
   description:
-    '농림축산검역본부 지정 양식의 접종 및 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급해요.\n\n원본 2부를 준비해서, 한국 출국 검역 때 1부를 제출해요.\n\n접종과 출국 전 임상검사를 한 동물병원이 다른 경우, 각 동물병원에서 따로 증명서를 받아야 해요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    '농림축산검역본부 지정 양식의 접종 및 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급해요.\n\n원본 2부를 준비해서, 한국 수출 검역 때 1부를 제출해요.\n\n접종과 출국 전 임상검사를 한 동물병원이 다른 경우, 각 동물병원에서 따로 증명서를 받아야 해요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
   templates: [
     { label: 'PDF', href: '/forms/form25.pdf', filename: '별지 제 25호 서식.pdf' },
     { label: '한글(HWP)', href: '/forms/form25.hwp', filename: '별지 제 25호 서식.hwp' },
@@ -154,7 +154,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'manual',
       issuanceStepId: 'vet-visit',
       description:
-        '일본 지정 양식의 접종, 검사 및 건강증명서예요.\n출국일 기준 10일 이내에 동물병원에서 발급받아요. 이 서류는 발급하지 않는 동물병원이 많으므로 미리 확인하세요.\n\n재입국인 경우 Form AC 대신 Form RE와 일본 수출 동물검역증(Export Quarantine Certificate)을 준비해야 할 수 있어요. 일본 동물검역소 혹은 담당 동물병원에 확인하세요.\n한국 출국 검역 때 검역관 확인·서명을 받아야 해요.\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '일본 지정 양식의 접종, 검사 및 건강증명서예요.\n출국일 기준 10일 이내에 동물병원에서 발급받아요. 이 서류는 발급하지 않는 동물병원이 많으므로 미리 확인하세요.\n\n재입국인 경우 Form AC 대신 Form RE와 일본 수출 동물검역증(Export Quarantine Certificate)을 준비해야 할 수 있어요. 일본 동물검역소 혹은 담당 동물병원에 확인하세요.\n한국 수출 검역 때 검역관 확인·서명을 받아야 해요.\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       templates: [
         { label: 'Form AC (PDF)', href: '/forms/form-ac.pdf', filename: 'FormAC.pdf' },
         { label: 'Form AC (Excel)', href: '/forms/form-ac.xlsx', filename: 'FormAC.xlsx' },
@@ -170,7 +170,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'certificate-issue',
       group: 'quarantine',
       description:
-        '한국 출국 검역 후 발급돼요.\n\n일본 입국 검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '한국 수출 검역 후 발급돼요.\n\n일본 수입 검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'certificate-issue',
     },
     {
@@ -181,7 +181,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'departure',
       group: 'quarantine',
       description:
-        '일본 입국 검역 후 발급받아요.\n\n정확한 서류 이름은 Import Quarantine Certificate 입니다.\n\n일본에서 출국할 때 필요할 수 있으므로 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '일본 수입 검역 후 발급받아요.\n\n정확한 서류 이름은 Import Quarantine Certificate 입니다.\n\n일본에서 출국할 때 필요할 수 있으므로 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'departure',
     },
     {
@@ -193,7 +193,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '일본 출국 검역 후 발급받아요.\n\n정확한 서류 이름은 Export Quarantine Certificate 입니다.\n\n향후 일본 재입국 시 필요할 수 있으니 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '일본 수출 검역 후 발급받아요.\n\n정확한 서류 이름은 Export Quarantine Certificate 입니다.\n\n향후 일본 재입국 시 필요할 수 있으니 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'jp-export-quarantine-visit',
     },
     {
@@ -205,7 +205,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '한국 입국 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '한국 수입 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'kr-import-quarantine',
     },
   ],
@@ -241,7 +241,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'certificate-issue',
       group: 'quarantine',
       description:
-        '한국 출국 검역 후 발급돼요.\n\n태국 입국 검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '한국 수출 검역 후 발급돼요.\n\n태국 수입 검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'certificate-issue',
     },
     {
@@ -252,7 +252,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'departure',
       group: 'quarantine',
       description:
-        '태국 입국 검역 후 발급받아요.\n\n정확한 서류 이름은 Import License(R.7) 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '태국 수입 검역 후 발급받아요.\n\n정확한 서류 이름은 Import License(R.7) 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'departure',
     },
     {
@@ -264,7 +264,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '태국 출국 검역 후 발급돼요.\n\n정확한 서류 이름은 Export License(R.9), Official Animal Health Certificate 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '태국 수출 검역 후 발급돼요.\n\n정확한 서류 이름은 Export License(R.9), Official Animal Health Certificate 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'th-export-quarantine',
     },
     {
@@ -276,7 +276,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '한국 입국 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '한국 수입 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'kr-import-quarantine',
     },
   ],
@@ -315,7 +315,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'certificate-issue',
       group: 'quarantine',
       description:
-        '한국 출국 검역 후 발급돼요.\n\n필리핀 입국 검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '한국 수출 검역 후 발급돼요.\n\n필리핀 수입 검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'certificate-issue',
     },
     {
@@ -327,7 +327,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '필리핀 출국 검역 후 발급돼요.\n\n정확한 서류 이름은 Export Permit, International Veterinary Health Certificate 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '필리핀 수출 검역 후 발급돼요.\n\n정확한 서류 이름은 Export Permit, International Veterinary Health Certificate 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'ph-export-quarantine',
     },
     {
@@ -339,7 +339,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '한국 입국 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '한국 수입 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'kr-import-quarantine',
     },
   ],
@@ -375,7 +375,7 @@ function euFamilyDocSpecs(
       kind: 'manual',
       issuanceStepId: 'vet-visit',
       description:
-        `${label} 입국용 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 출국 검역 때 검역관의 확인을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재되어야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
+        `${label} 입국용 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재되어야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
     },
     {
       id: 'eu-kr-export-quarantine-cert',
@@ -385,7 +385,7 @@ function euFamilyDocSpecs(
       stepRef: 'certificate-issue',
       group: 'quarantine',
       description:
-        `한국 출국 검역 후 발급돼요.\n\n${label} 입국 검사 때 제시해야 할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
+        `한국 수출 검역 후 발급돼요.\n\n${label} 입국 검사 때 제시해야 할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
       previewStepId: 'certificate-issue',
     },
     {
@@ -397,7 +397,7 @@ function euFamilyDocSpecs(
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '한국으로 돌아오기 전 현지 동물병원·정부 기관에서 발급받는 한국 입국용 건강증명서(검역증명서)예요.\n\n한국 입국 검역 때 제출해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '한국으로 돌아오기 전 현지 동물병원·정부 기관에서 발급받는 한국 입국용 건강증명서(검역증명서)예요.\n\n한국 수입 검역 때 제출해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'eu-export-cert',
     },
     {
@@ -409,7 +409,7 @@ function euFamilyDocSpecs(
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '한국 입국 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '한국 수입 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'kr-import-quarantine',
     },
   ]

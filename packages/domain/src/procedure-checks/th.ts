@@ -367,8 +367,8 @@ export const TH_CHECKS: ProcedureCheck[] = [
     id: 'th.import-quarantine-date-valid',
     country: COUNTRY,
     category: '검역',
-    title: '태국 입국 검역일',
-    description: '태국 입국 검역일은 태국 입국일 이후여야 함.',
+    title: '태국 수입 검역일',
+    description: '태국 수입 검역일은 태국 입국일 이후여야 함.',
     severity: 'warning',
     addedAt: '2026-06-12',
     run: ({ caseRow, destination }) => {
@@ -386,7 +386,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (entry && raw < entry) {
         return {
           ok: false,
-          message: '태국 입국 검역일은 태국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          message: '태국 수입 검역일은 태국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
           offendingPaths: ['th_import_quarantine_date'],
         }
       }
@@ -397,8 +397,8 @@ export const TH_CHECKS: ProcedureCheck[] = [
     id: 'th.export-quarantine-date-valid',
     country: COUNTRY,
     category: '검역',
-    title: '태국 출국 검역일',
-    description: '태국 출국 검역일은 태국 입국일 이후·한국 귀국일 이전이어야 함.',
+    title: '태국 수출 검역일',
+    description: '태국 수출 검역일은 태국 입국일 이후·한국 귀국일 이전이어야 함.',
     severity: 'warning',
     addedAt: '2026-06-12',
     run: ({ caseRow, destination }) => {
@@ -420,14 +420,14 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (entry && raw < entry) {
         return {
           ok: false,
-          message: '태국 출국 검역일은 태국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          message: '태국 수출 검역일은 태국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
           offendingPaths: ['th_export_quarantine_date'],
         }
       }
       if (ret && raw > ret) {
         return {
           ok: false,
-          message: '태국 출국 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.',
+          message: '태국 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.',
           offendingPaths: ['th_export_quarantine_date'],
         }
       }

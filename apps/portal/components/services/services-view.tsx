@@ -213,7 +213,7 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
       { label: '광견병 백신 접종' },
       { label: '광견병 항체 검사' },
       { label: '사전 신고' },
-      { label: '일본 출국 검역 신청 · 예약' },
+      { label: '일본 수출 검역 신청 · 예약' },
       { label: '출국 전 임상검사' },
       { label: '서류 준비' },
     ],
@@ -345,11 +345,11 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
 const ONLINE_DETAIL: Record<string, DestDetail> = {
   일본: {
     intro:
-      '안심하고 준비할 수 있도록 곁에서 도와드려요. 단계별 가이드, 사전 신고, 일본 출국 검역 신청 및 예약, 서류 점검을 해 드려요. 준비 중 궁금한 것은 언제든 문의할 수 있어요.',
+      '안심하고 준비할 수 있도록 곁에서 도와드려요. 단계별 가이드, 사전 신고, 일본 수출 검역 신청 및 예약, 서류 점검을 해 드려요. 준비 중 궁금한 것은 언제든 문의할 수 있어요.',
     included: [
       { label: '단계별 가이드' },
       { label: '사전 신고' },
-      { label: '일본 출국 검역 신청 · 예약' },
+      { label: '일본 수출 검역 신청 · 예약' },
       { label: '일본 검역소와의 소통' },
       { label: '서류 점검' },
     ],

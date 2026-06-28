@@ -178,7 +178,7 @@ export function StepDetailView({
   const isVetVisit = step.id === 'vet-visit'
   const isJpExportQuarantine = step.id === 'jp-export-quarantine'
   const isCertificateIssue = step.id === 'certificate-issue'
-  // 일본 입국 검역 = 'departure' step 의 일본 override (override 가 검역일 input 을 실음).
+  // 일본 수입 검역 = 'departure' step 의 일본 override (override 가 검역일 input 을 실음).
   const isJpImportQuarantine =
     step.id === 'departure' &&
     (step.inputs ?? []).some((i) => i.key === 'jp_import_quarantine_date')
@@ -334,7 +334,7 @@ export function StepDetailView({
   const savedKrExportQuarantineDate = readKrExportQuarantineDate(caseRow?.data)
   const [krExportQuarantineDate, setKrExportQuarantineDate] = useState(savedKrExportQuarantineDate)
 
-  // 입력칸은 자기 검역일만(항공편 날짜 자동 채움 X) — 한국 출국 검역(certificate-issue)과
+  // 입력칸은 자기 검역일만(항공편 날짜 자동 채움 X) — 한국 수출 검역(certificate-issue)과
   // 동일하게 비운 채로 시작해 보호자가 직접 검역일을 입력한다. 타임라인 '예정' 배지는
   // scenario.ts 가 항공편 날짜를 폴백으로 계속 띄우므로(기본 동작 유지) 상세 입력만 비운다.
   const savedJpImportQuarantineDate = readJpImportQuarantineDate(caseRow?.data)
@@ -1113,7 +1113,7 @@ export function StepDetailView({
         departureDate: null,
       })
     }
-    // 나라별 도착(수입)·현지 출국 검역(태국·필리핀·EU 등) — 검역일이 입국일 이전(수입·수출)이거나
+    // 나라별 도착(수입)·현지 수출 검역(태국·필리핀·EU 등) — 검역일이 입국일 이전(수입·수출)이거나
     // 귀국일 이후(수출)면 입력 차단. 일본 검역(jp_*)은 위 전용 분기가 따로 담당.
     if (isImportQuarantine && importQuarantineField && /_quarantine_date$/.test(importQuarantineField)) {
       const ctx = { data, destination: caseRow?.destination ?? null, departureDate: null }
@@ -1131,7 +1131,7 @@ export function StepDetailView({
         const returnDate = typeof data.return_date === 'string' ? data.return_date : ''
         const anchor = reserved || (returnDate.length >= 10 ? returnDate.slice(0, 10) : '')
         if (anchor && app > addDays(anchor, -10)) {
-          return '일본 출국 검역은 최소 10일 전에 신청, 예약해야 해요.'
+          return '일본 수출 검역은 최소 10일 전에 신청, 예약해야 해요.'
         }
       }
       return null
@@ -1858,7 +1858,7 @@ export function StepDetailView({
     const ok = await confirm({
       message: '편도 일정으로 전환하시겠어요?',
       description:
-        '일본 출국 검역·한국 입국 검역 등 귀국편 단계가 일정에서 빠져요.\n\n정보탭 → 여행 정보 → 유형 메뉴에서 왕복으로 다시 전환할 수 있어요.',
+        '일본 수출 검역·한국 수입 검역 등 귀국편 단계가 일정에서 빠져요.\n\n정보탭 → 여행 정보 → 유형 메뉴에서 왕복으로 다시 전환할 수 있어요.',
       okLabel: '편도로 전환',
     })
     if (!ok) return
@@ -3324,21 +3324,21 @@ function readVetVisitDate(data: Record<string, unknown> | null | undefined): str
   return typeof v === 'string' ? v : ''
 }
 
-/** 한국 출국 검역 검역일 — caseRow.data.kr_export_quarantine_date. */
+/** 한국 수출 검역 검역일 — caseRow.data.kr_export_quarantine_date. */
 function readKrExportQuarantineDate(data: Record<string, unknown> | null | undefined): string {
   if (!data) return ''
   const v = data['kr_export_quarantine_date']
   return typeof v === 'string' ? v : ''
 }
 
-/** 일본 입국 검역 검역일 — caseRow.data.jp_import_quarantine_date. */
+/** 일본 수입 검역 검역일 — caseRow.data.jp_import_quarantine_date. */
 function readJpImportQuarantineDate(data: Record<string, unknown> | null | undefined): string {
   if (!data) return ''
   const v = data['jp_import_quarantine_date']
   return typeof v === 'string' ? v : ''
 }
 
-/** 일본 출국 검역 검역일 — caseRow.data.jp_export_quarantine_visit_date. */
+/** 일본 수출 검역 검역일 — caseRow.data.jp_export_quarantine_visit_date. */
 function readJpExportQuarantineVisitDate(
   data: Record<string, unknown> | null | undefined,
 ): string {
@@ -3347,7 +3347,7 @@ function readJpExportQuarantineVisitDate(
   return typeof v === 'string' ? v : ''
 }
 
-/** 한국 입국 검역 검역일 — caseRow.data.kr_import_quarantine_date. */
+/** 한국 수입 검역 검역일 — caseRow.data.kr_import_quarantine_date. */
 function readKrImportQuarantineDate(data: Record<string, unknown> | null | undefined): string {
   if (!data) return ''
   const v = data['kr_import_quarantine_date']

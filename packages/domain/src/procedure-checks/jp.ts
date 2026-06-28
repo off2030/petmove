@@ -571,8 +571,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.export-quarantine-reservation-date-valid',
     country: 'japan',
     category: '검역',
-    title: '일본 출국 검역 예약일',
-    description: '일본 출국 검역 예약일은 일본 입국일 이후·한국 귀국일 이전이어야 함.',
+    title: '일본 수출 검역 예약일',
+    description: '일본 수출 검역 예약일은 일본 입국일 이후·한국 귀국일 이전이어야 함.',
     severity: 'warning',
     addedAt: '2026-06-04',
     run: ({ caseRow, destination }) => {
@@ -594,8 +594,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.export-quarantine-visit-date-valid',
     country: 'japan',
     category: '검역',
-    title: '일본 출국 검역일',
-    description: '일본 출국 검역일은 일본 입국일 이후·한국 귀국일 이전이어야 함.',
+    title: '일본 수출 검역일',
+    description: '일본 수출 검역일은 일본 입국일 이후·한국 귀국일 이전이어야 함.',
     severity: 'warning',
     addedAt: '2026-06-04',
     run: ({ caseRow, destination }) => {
@@ -617,8 +617,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.import-quarantine-date-valid',
     country: 'japan',
     category: '검역',
-    title: '일본 입국 검역일',
-    description: '일본 입국 검역일은 일본 입국일 이후여야 함.',
+    title: '일본 수입 검역일',
+    description: '일본 수입 검역일은 일본 입국일 이후여야 함.',
     severity: 'warning',
     addedAt: '2026-06-04',
     run: ({ caseRow, destination }) => {

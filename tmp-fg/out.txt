@@ -1,0 +1,409 @@
+OJ L, 27.3.2026                                                                                                                                                                               EN
+
+                                                                                                        ANNEX III
+
+                                                                                                          PART 1
+
+                                            Model animal health certificate for non-commercial movements of pet dogs, pet cats or
+                                                         pet ferrets into a Member State from a third country or territory,
+                                                         referred to in Article 18(1) of Delegated Regulation (EU) 2026/131
+
+COUNTRY:                                                                                    I.2. Certificate reference No                 Animal health certificate to the EU
+                                                                                                                                               I.2.a.
+        I.1. Consignor
+                Name                                                                        I.3. Central competent authority
+                Address
+Part I : Details of dispatched consignment                                                  I.4. Local competent authority
+                Tel.                                                                        I.6. Person responsible for the consignment in the EU
+
+        I.5. Consignee
+                Name
+                Address
+
+                Postal code
+                Tel.
+
+                                            I.7. Country of        ISO code   I.8. Region of origin Code I.9. Country                     of ISO code I.10. Region of               Code
+                                                 origin                                                                      destination                               destination
+
+                                            I.11. Place of origin                           I.12. Place of destination
+
+                                            I.13. Place of loading                          I.14. Date of departure
+                                            I.15. Means of transport                        I.16. Entry BCP in EU
+
+                                                                                            I.17. No.(s) of CITES
+
+                                            I.18. Description of commodity                                                                I.19. Commodity code (HS code)
+                                                                                                                                                                   010619
+                                            I.21. Temperature of products
+                                                                                                                                                              I.20. Quantity
+                                            I.23. Seal/Container No
+                                                                                                                                                              I.22. Total number of packages
+
+                                                                                                                                                              I.24. Type of packaging
+
+                                            I.25. Commodities certified for:
+
+                                            Pets               
+
+                                            I.26. For transit to 3rd Country                I.27. For import or admission into EU
+
+                                            I.28. Identification of the commodities
+
+                                            Species            Sex    Colour         Breed  Identification number  Identification system   Date of birth
+                                                                                                                       and location       [dd/mm/yyyy]
+                                            (Scientific name)
+
+ELI: http://data.europa.eu/eli/reg_impl/2026/705/oj                                                                                                                                           37/54
+EN                                                                                                                                                              OJ L, 27.3.2026
+
+       COUNTRY:                                                                      Animal health certificate to the EU
+
+       II.  Health information               II.a.         Certificate reference No  II.b.
+
+       I, the undersigned official veterinarian (1)/veterinarian authorised by the competent authority (1) of
+       ______________________________________ (insert name of territory or third country) certify that:
+
+       (1) either [II.1. the animals described in Box I.28 are moved in a number of five or less;]
+
+       (1) or [II.1. the animals described in Box I.28 are moved in a number of more than five, are more than six
+                              months old and are going to participate in competitions, exhibitions or sporting events or in
+                              training for those events, and the owner or the natural person has provided evidence (2) that the
+                              animals are registered
+
+                 (1) either [to attend such event;]
+
+                 (1) or [with an association organising such events;]
+
+            [II.2.        the animals described in Box I.28 show no disease symptoms and are fit for the non-commercial
+                          movement on ___________________(insert date dd/mm/yyyy);]
+
+            [II.3. the animals described in Box I.28 were at least 12 weeks old at the time of vaccination against
+                        rabies and at least 21 days have elapsed since the completion of the primary anti-rabies
+                        vaccination (3) carried out in accordance with the validity requirements set out in Part I of Annex
+                        VII to Commission Delegated Regulation (EU) 2020/688 and any subsequent revaccination was
+                        carried out within the period of validity of the preceding vaccination (4); and:
+
+            (1) either [II.3.1. the animals described in Box I.28 come from a third country or a territory listed in Annex
+                                    II to Commission Implementing Regulation (EU) 2026/636, either 1) directly, or 2)
+                                    through a third country or territory listed in that Annex or 3) through a third country or
+                                    territory other than those listed in that Annex in accordance with Article 17(2) of
+                                    Commission Delegated Regulation (EU) 2026/131(5), and the details of the relevant anti-
+                                    rabies vaccination(s) are provided in the table below;]
+
+            (1) or [II.3.1. the animals described in Box I.28 come from, or are scheduled to transit through, a third
+                                    country or territory other than those listed in Annex I or Annex II to Implementing
+                                    Regulation (EU) 2026/636 and a rabies antibody titration test (6), carried out on a blood
+                                    sample taken by the veterinarian authorised by the competent authority, on the date
+                                    indicated in the table below at least 30 days after the date of the primary vaccination, or
+                                    within a current valid vaccination series, and not less than 90 days prior to the date of
+                                    issue of this animal health certificate, proved an antibody titre equal to or greater than
+                                    0,5 IU/ml (7) and any subsequent revaccination was carried out within the period of
+                                    validity of the preceding vaccination (4), and the details of the relevant anti-rabies
+                                    vaccination(s) and the date of sampling for testing the immune response are provided in
+                                    the table below:
+       Part II: Certification
+
+                                                                                                                             Fro m
+                                                                                                                                 [dd/mm/yyyy
+
+                                                                                                                                     ]
+                                                                                                                                               to
+                                                                                                                                                   [dd/mm/yyyy
+
+                                                                                                                                                       ]
+            Transponder or tattoo                                                   Validity of vaccination
+
+       Alphanumeric code       Date of           Date of      Name and       Batch                                                                              Date of the
+          of the animal     implantation      vaccination  manufacturer of  number                                                                                 blood
+                          and/or reading(8)  [dd/mm/yyyy]
+                                                                vaccine                                                                                          sampling
+                           [dd/mm/yyyy]                                                                                                                         [dd/mm/yy
+
+                                                                                                                                                                    yy]
+
+38/54                                                                       ELI: http://data.europa.eu/eli/reg_impl/2026/705/oj
+OJ L, 27.3.2026                                                                                                                                EN
+
+                 (1) either [II.4.  the dogs described in Box I.28 are destined for a Member State or zone thereof with disease free
+                 (1) or [II.4.      status from Echinococcus multilocularis (9) and have been treated against Echinococcus
+                                    multilocularis, and the details of the treatment carried out by the administering veterinarian in
+                                    accordance with Annex XXI to Commission Delegated Regulation (EU) 2020/692 are provided in
+                                    the table below (10)(11).]
+
+                                    the dogs described in Box I.28 have not been treated against Echinococcus multilocularis (12).]
+
+                 Transponder or tattoo               Anti-echinococcus                        Administering veterinarian
+                  number of the dog                       treatment                     Name in capitals, stamp and signature
+
+                                             Name and        Date [dd/mm/yyyy] and
+                                        manufacturer of the  time of treatment [00:00]
+
+                                               product
+
+                 (1) either [II.5. the owner has declared (13) that the movement of the pet animals is a non-commercial movement.]
+
+                 (1) or     [II.5.  the owner has authorised the non-commercial movement of the pet animal in a signed declaration (14)
+                                    and provided evidence (2) of his/her/their movement and the owner/authorised person has
+                                    declared (13) that the movement of the pet animal is a non-commercial movement.]]
+
+                 Notes
+
+                 (a)        This animal health certificate is meant for pet dogs (Canis lupus familiaris), pet cats (Felis silvestris catus)
+
+                            and pet ferrets (Mustela putorius furo).
+
+                 (b)        This animal health certificate is valid for 10 days from the date of issue by the official veterinarian or in the
+
+                            case of the authorised veterinarian, the date of endorsement by the competent authority until the date of the
+
+                            documentary and identity checks at the designated travellers' point of entry into the Union.
+
+                            In the case of transport by sea, that period of 10 days is extended by an additional period corresponding to
+                            the duration of the journey by sea.
+
+                            For the purpose of further movement into other Member States, this animal health certificate is valid for a
+                            total period of six months from the date of the documentary and identity checks carried out at the travellers'
+                            point of entry into the Union or until the date of expiry of the validity of the anti-rabies vaccination,
+                            whichever date is earlier.
+
+                 Part I:    Consignee: Indicate Member State of first destination.
+                 Box I.5:   Identification system: Select one of the following: transponder or tattoo.
+                 Box I.28:  Identification number: Indicate the transponder or tattoo alphanumeric code.
+                            Date of birth: As stated by the owner.
+                 Part II:
+                 (1)        Keep as appropriate.
+                 (2)        The evidence referred to in point II.1 (e.g. receipt of entry to the event, proof of membership) and II.5 (e.g.
+                            boarding pass, flight ticket) shall be surrendered on request by the competent authorities responsible for the
+                            checks referred to in point (b) of the Notes.
+
+ELI: http://data.europa.eu/eli/reg_impl/2026/705/oj                                                                                            39/54
+EN                                                                                              OJ L, 27.3.2026
+
+       (3)   Any revaccination must be considered a primary vaccination if it was not carried out within the period of
+
+             validity of a previous vaccination
+
+       (4)   A certified copy of the identification and vaccination details of the animals concerned shall be attached to
+
+             the animal health certificate.
+
+       (5)   The third option is subject to the condition that the owner or the natural person who has authorisation in
+
+             writing from the owner to carry out the non-commercial movement of the animals on behalf of the owner,
+
+             provides on request by the competent authorities responsible for the checks referred to in Notes, point (b), a
+
+             declaration stating that the animals have had no contact with animals of species susceptible of rabies and
+
+             remain secure within the means of transport or the perimeter of an international airport during the transit
+
+             through a territory or a third country other than those listed in the Annexes to Implementing Regulation (EU)
+
+             2026/636. This declaration shall comply with the format, layout and language requirements set out in Parts
+
+             5 and 6 of Annex V to Commission Implementing Regulation (EU) 2026/705.
+
+       (6)   The rabies antibody titration test referred to in point II.3.1:
+
+             - must be carried out without undue delay on a sample collected by an official veterinarian or an authorised
+                 veterinarian, at least 30 days after the date of the primary vaccination, or within a current valid
+                 vaccination series, and not less than 90 days prior to the date of issue of this animal health certificate;
+
+             - must measure a level of neutralising antibody to rabies virus in serum equal to or greater than 0.5 IU/ml;
+
+             - must be performed by an official laboratory designated in accordance with Article 37 of Regulation (EU)
+                 2017/625 of the European Parliament and of the Council or a laboratory in a third country or territory
+                 listed in Annex VIII to Commission Implementing Regulation (EU) 2021/404 designated in accordance
+                with Article 37(4) and (5) of Regulation (EU) 2017/625 for the performance of the rabies antibody
+                titration test as provided in point 1 of Annex XXI to Delegated Regulation (EU) 2020/692;
+
+             - does not have to be renewed on an animal, which following that test with satisfactory results, has been
+                 revaccinated against rabies within the period of validity of a previous vaccination.
+
+             A certified copy of the official report from the designated laboratory on the results of the rabies antibody
+             test referred to in point II.3.1 shall be attached to the animal health certificate.
+
+       (7)   By certifying this result, the official veterinarian confirms that he has verified, to the best of his ability and
+
+             where necessary with contacts with the laboratory indicated in the report, the authenticity of the laboratory
+
+             report on the results of the antibody titration test referred to in point II.3.1.
+
+       (8)   In conjunction with note (4), the marking of the animals concerned by the implantation of a transponder or
+
+             by a clearly readable tattoo applied before 3 July 2011 must be verified before any entry is made in this
+
+             animal health certificate and must always precede any vaccination, or where applicable, testing carried out
+
+             on those animals.
+
+       (9)   Member States or zones thereof listed in Annex XIX to Commission Implementing Regulation (EU)
+
+             2021/620.
+
+       (10)  The table referred to in point II.4 must be used to document the details of a further treatment if administered
+
+             after the date the animal health certificate was signed and prior to the scheduled entry into a Member State
+
+             or zone thereof with disease free status from Echinococcus multilocularis.
+
+       (11)  The table referred to in point II.4 must be used to document the details of treatments if administered after
+
+             the date the animal health certificate was signed for the purpose of further movement into other Member
+
+             States described in point (b) of the Notes and in conjunction with note (12).
+
+       (12)  The treatment against Echinococcus multilocularis referred to in point II.4 must:
+
+             - be administered by a veterinarian within a period of not more than 120 hours and not less than 24 hours
+                 before the time of the scheduled entry of the dogs into a Member State or zone thereof with disease free
+                 status from Echinococcus multilocularis;
+
+             - consist of an approved medicinal product which contains the appropriate dose of praziquantel or
+                 pharmacologically active substances, which alone or in combination, have been proven to reduce the
+                 burden of mature and immature intestinal forms of Echinococcus multilocularis in the host species
+                 concerned.
+
+40/54                                                                         ELI: http://data.europa.eu/eli/reg_impl/2026/705/oj
+OJ L, 27.3.2026                                                                                                                              EN
+
+                 (13)         The declaration referred to in point II.5 shall be attached to this animal health certificate and comply with
+
+                              the model and additional requirements set out in Parts 2 and 6 of Annex V to Implementing Regulation (EU)
+
+                              2026/705.
+
+                 (14)         The declaration referred to in point II.5 shall be attached to this animal health certificate and comply with
+
+                              the model and additional requirements set out in Parts 1 and 6 of Annex V to Implementing Regulation (EU)
+
+                              2026/705.
+
+                 Official veterinarian/Authorised veterinarian
+
+                       Name (in capital letters):                                  Qualification and title:
+
+                       Address:
+
+                       Telephone:
+
+                       Date:
+
+                       Signature:                                                  Stamp:
+
+                 Endorsement by the competent authority (not necessary when the animal health certificate is signed by an official
+                 veterinarian)
+
+                       Name (in capital letters):                                  Qualification and title:
+
+                       Address:
+
+                       Telephone:
+
+                       Date:
+
+                       Signature:                                                  Stamp:
+
+                 Official at the travellers' point of entry
+
+                       Name of the official or of the relevant public authority (in capital letters):
+
+                       Address:
+
+                       Telephone:
+
+                       E-mail address:
+
+                       Date of completion of the documentary and identity checks:
+
+                       Signature:                                                  Stamp:
+
+ELI: http://data.europa.eu/eli/reg_impl/2026/705/oj                                                                                          41/54
+EN            OJ L, 27.3.2026
+
+                                                                  PART 2
+
+       Explanatory notes for completing the model animal health certificate referred to in
+                           Article 18(1) of Delegated Regulation (EU) 2026/131
+
+       1. Where the animal health certificate states that certain statements shall be kept as
+            appropriate, statements which are not relevant may be crossed out and initialled and
+            stamped by the official veterinarian or completely deleted from the animal health
+            certificate.
+
+       2. The original of each animal health certificate shall consist of a single sheet of paper, or,
+            where more text is required, it shall be in such a form that all sheets of paper required
+            are part of an integrated whole and indivisible.
+
+       3. The animal health certificate shall be drawn up in at least one of the official languages
+            of the Member State of entry and in English. It shall be completed in block letters.
+
+       4. If additional sheets of paper or supporting documents are attached to the animal health
+            certificate, those sheets of paper or documents shall also be considered as forming part
+            of the original of the animal health certificate by the application of the signature and
+            stamp of the official veterinarian, on each of the pages.
+
+       5. When the animal health certificate, including additional sheets of paper referred to in
+            point 4, comprises more than one page, each page shall be numbered (page number of
+            total number of pages) at the end of the page and shall bear at the top of each page the
+            animal health certificate reference number that has been assigned by the competent
+            authority.
+
+       6. The original of the animal health certificate shall be issued by an official veterinarian of
+            the third country or territory of dispatch or by an authorised veterinarian and
+            subsequently endorsed by the competent authority of the third country or territory of
+            dispatch. The competent authority of the third country or territory of dispatch shall
+            ensure that rules and principles of certification equivalent to those laid down in
+            Regulation (EU) 2017/625 are followed.
+
+       7. The colour of the signature shall be different from that of the printing. This requirement
+            also applies to stamps other than those embossed or watermarked.
+
+       8. The animal health certificate reference number referred to in boxes I.2 and II.a shall be
+            issued by the competent authority of the third country or territory of dispatch.
+
+       _____
+
+42/54         ELI: http://data.europa.eu/eli/reg_impl/2026/705/oj
+OJ L, 27.3.2026                                                                                                                 EN
+
+                                                               PART 2
+
+  Format and layout of the written declaration referred to in Article 18(3) of Delegated
+                                        Regulation (EU) 2026/131
+
+                                                         DECLARATION
+
+I, the undersigned
+_________________________________________________________________________
+[owner of the pet animals detailed in the table below or the natural person who has authorisation in writing from the owner to
+
+                 carry out the non-commercial movement of the pet animals on behalf of the owner (1)]
+
+declare that the movement of the following pet animals is a non-commercial movement and
+does not have as its aim either the sale of or another form of transfer of ownership of the pet
+animals concerned.
+
+                 Details of the pet animals subject to the non-commercial movement
+
+                 Animal identification number        Animal health certificate number
+
+During the non-commercial movement, the above animals will remain under the responsibility
+of:
+(1) either[the owner.]
+(1) or [the natural person who has authorisation in writing from the owner to carry out the
+
+          non-commercial movement on behalf of the owner.]
+
+Place and date: ____________________________________________________________
+
+Signature of the owner or natural person who has authorisation in writing from the owner to
+          carry out the non-commercial movement on behalf of the owner (1):
+          _____________________
+
+_________
+(1) Delete as appropriate.
+
+ELI: http://data.europa.eu/eli/reg_impl/2026/705/oj                                                                             49/54
+

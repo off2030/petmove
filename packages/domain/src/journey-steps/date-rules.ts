@@ -405,9 +405,9 @@ export function validateChImportPermitDate(filedDate: string, entryDate: string)
 export function validateJpExportReservationDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const ret = readDate(ctx.data, 'return_date')
-  if (ret && v > ret) return '출국 검역 예약일은 귀국일보다 늦을 수 없어요.'
+  if (ret && v > ret) return '수출 검역 예약일은 귀국일보다 늦을 수 없어요.'
   const entry = readDate(ctx.data, 'entry_date')
-  if (entry && v < entry) return `출국 검역 예약일은 일본 입국일(${fmt(entry)})보다 빠를 수 없어요.`
+  if (entry && v < entry) return `수출 검역 예약일은 일본 입국일(${fmt(entry)})보다 빠를 수 없어요.`
   return null
 }
 
@@ -415,9 +415,9 @@ export function validateJpExportReservationDate(v: string, ctx: DateRuleContext)
 export function validateJpExportVisitDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const entry = readDate(ctx.data, 'entry_date')
-  if (entry && v < entry) return `일본 출국 검역일은 일본 입국일(${fmt(entry)})보다 빠를 수 없어요.`
+  if (entry && v < entry) return `일본 수출 검역일은 일본 입국일(${fmt(entry)})보다 빠를 수 없어요.`
   const ret = readDate(ctx.data, 'return_date')
-  if (ret && v > ret) return `일본 출국 검역일은 귀국일(${fmt(ret)})보다 늦을 수 없어요.`
+  if (ret && v > ret) return `일본 수출 검역일은 귀국일(${fmt(ret)})보다 늦을 수 없어요.`
   return null
 }
 
@@ -425,13 +425,13 @@ export function validateJpExportVisitDate(v: string, ctx: DateRuleContext): stri
 export function validateKrExportDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const vet = readDate(ctx.data, 'vet_visit_date')
-  if (vet && v < vet) return `한국 출국 검역은 출국 전 임상검사 후 받을 수 있어요.`
+  if (vet && v < vet) return `한국 수출 검역은 출국 전 임상검사 후 받을 수 있어요.`
   const depart = departFromData(ctx.data)
   if (depart) {
-    if (v > depart) return `한국 출국 검역일은 출국일(${fmt(depart)})보다 늦어요. 날짜를 확인하세요.`
+    if (v > depart) return `한국 수출 검역일은 출국일(${fmt(depart)})보다 늦어요. 날짜를 확인하세요.`
     const windowDays = getVetVisitWindowDays(ctx.destination)
     if (daysBetween(v, depart) >= windowDays) {
-      return `한국 출국 검역일은 출국일 기준 ${windowDays}일 이내여야 해요.`
+      return `한국 수출 검역일은 출국일 기준 ${windowDays}일 이내여야 해요.`
     }
   }
   return null
@@ -443,7 +443,7 @@ export function validateJpImportDate(v: string, ctx: DateRuleContext): string | 
   const entry = departFromData(ctx.data)
   if (!entry) return null
   // 일본 도착(출국 항공편) 전에는 받을 수 없음. 도착 이후 날짜는 입력 허용(상한 없음).
-  if (v < entry) return '일본 입국 검역일은 일본 입국일보다 빠를 수 없어요.'
+  if (v < entry) return '일본 수입 검역일은 일본 입국일보다 빠를 수 없어요.'
   return null
 }
 
@@ -453,7 +453,7 @@ export function validateKrImportDate(v: string, ctx: DateRuleContext): string | 
   const ret = readDate(ctx.data, 'return_date')
   if (!ret) return null
   // 한국 도착(귀국 항공편) 전에는 받을 수 없음. 도착 이후 날짜는 입력 허용(상한 없음).
-  if (v < ret) return '한국 입국 검역일은 입국일보다 빠를 수 없어요.'
+  if (v < ret) return '한국 수입 검역일은 입국일보다 빠를 수 없어요.'
   return null
 }
 
@@ -465,20 +465,20 @@ export function validateKrImportDate(v: string, ctx: DateRuleContext): string | 
 export function validateImportQuarantineDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const entry = readDate(ctx.data, 'entry_date')
-  if (entry && v < entry) return '입국 검역일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.'
+  if (entry && v < entry) return '수입 검역일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.'
   return null
 }
 
 /**
- * 나라별 현지 출국 검역일: 그 나라 입국일(entry_date) ≤ 검역일 ≤ 귀국일(return_date).
+ * 나라별 현지 수출 검역일: 그 나라 입국일(entry_date) ≤ 검역일 ≤ 귀국일(return_date).
  * 'quarantine:<나라>_export_quarantine_date' step(태국·필리핀 등)의 입력 차단용.
  */
 export function validateExportQuarantineDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const entry = readDate(ctx.data, 'entry_date')
-  if (entry && v < entry) return '출국 검역일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.'
+  if (entry && v < entry) return '수출 검역일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.'
   const ret = readDate(ctx.data, 'return_date')
-  if (ret && v > ret) return '출국 검역일은 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.'
+  if (ret && v > ret) return '수출 검역일은 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.'
   return null
 }
 

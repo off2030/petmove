@@ -19,7 +19,7 @@ import { destinationTokens, petLabel } from './reminders'
  * "케이스당 1회만" 발송하는 중복 제거는 발송 측(서버)이 key 로 처리한다.
  *
  * 목적지별 (사용자 확정, 2026-06-25):
- *   - 일본: 광견병 항체검사 / 사전 신고 / 일본 출국 검역 신청·예약
+ *   - 일본: 광견병 항체검사 / 사전 신고 / 일본 수출 검역 신청·예약
  *   - 태국·필리핀: 광견병 항체검사 / 수입 허가증
  * 완료 판정은 모두 기존 도메인 함수 재사용(resolveDone·derive*) — 새 판정 로직 없음.
  *
@@ -87,7 +87,7 @@ export function collectMilestonePushes(caseRow: CaseRow): MilestonePush[] {
         out.push({
           key: `${caseRow.id}|japan|jp-export`,
           title: APP_TITLE,
-          body: `${pet} 일본 출국 검역 신청과 예약이 완료됐어요. 예약 일시를 앱에서 확인하세요. ✨`,
+          body: `${pet} 일본 수출 검역 신청과 예약이 완료됐어요. 예약 일시를 앱에서 확인하세요. ✨`,
         })
       }
     } else if (key === 'thailand' || key === 'philippines') {

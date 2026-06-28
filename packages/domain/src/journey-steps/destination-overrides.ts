@@ -19,13 +19,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
 > = {
   japan: {
     // 'departure'(출국·도착)은 전 목적지 공용 — 일본은 도착 후 공항 검역이 핵심이라
-    // 일본 케이스에서만 '일본 입국 검역'으로 표시. 다른 목적지는 base 그대로.
+    // 일본 케이스에서만 '일본 수입 검역'으로 표시. 다른 목적지는 base 그대로.
     departure: {
-      title: '일본 입국 검역',
-      shortLabel: '입국',
+      title: '일본 수입 검역',
+      shortLabel: '수입',
       description:
         '일본 도착 후 공항 동물검역소에서 검역을 받으세요.\n위치는 공항마다 달라요. 일반적으로 입국 심사대를 지나 수화물 찾는 곳 근처에 있어요. 세관 심사대를 지나기 전에 검역을 먼저 받아야 해요.',
-      doneSummary: '일본 입국 검역을 받았어요.',
+      doneSummary: '일본 수입 검역을 받았어요.',
       // 일본 수입검역은 도착 후 공항 검역소 방문이 핵심 — 출국일 경과(base 의
       // departure-past)가 아니라 검역일 입력 시 완료 처리. 검역일 필드도 노출.
       done: 'has-jp-import-quarantine',
@@ -46,7 +46,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 FormAC를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
     },
   },
-  // 일본을 뼈대로 — 'departure' 공용 카드를 그 나라 '[국가] 입국 검역' 도착 카드로 교체.
+  // 일본을 뼈대로 — 'departure' 공용 카드를 그 나라 '[국가] 수입 검역' 도착 카드로 교체.
   // 목적지마다 따로 작성(검역일 필드도 나라별: {국가}_import_quarantine_date). 제목·설명은
   // 그 나라 가이드 기준, 일본과 같은 부분은 같은 문구. 완료신호는 그 나라 검역일 필드를 실어 보낸다.
   //
@@ -122,7 +122,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // 가 없어도 동작한다(신청일=in_progress, 첨부 or 완료 버튼=done).
       inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
       // 출국 전 이메일로 받는 R.6(수입 허가 통지서) — base 의 '수입 허가증' 라벨을 태국 명칭으로 교체.
-      // (입국 검역 때 받는 R.7 수입 허가서는 별개 — '태국 입국 검역' departure 카드에서 다룸.)
+      // (입국 검역 때 받는 R.7 수입 허가서는 별개 — '태국 수입 검역' departure 카드에서 다룸.)
       attachmentHint: '수입 허가 통지서(R.6)를 사진, PDF로 보관하세요.',
       attachmentLabel: '수입 허가 통지서(R.6)',
       // situational·완료 판정은 base catalog 의 import-permit 그대로 사용 — base 문구가 이미
@@ -138,18 +138,18 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
     },
     departure: {
-      title: '태국 입국 검역',
-      shortLabel: '입국',
+      title: '태국 수입 검역',
+      shortLabel: '수입',
       description:
-        '태국 도착 후 공항 동물검역소(AQS)에서 입국 검역을 받으세요.\n검사를 통과하면 수입 허가서(R.7)를 받아요.',
-      doneSummary: '태국 입국 검역을 받았어요.',
+        '태국 도착 후 공항 동물검역소(AQS)에서 수입 검역을 받으세요.\n검사를 통과하면 수입 허가서(R.7)를 받아요.',
+      doneSummary: '태국 수입 검역을 받았어요.',
       done: 'quarantine:th_import_quarantine_date',
       inputs: [
         {
           key: 'th_import_quarantine_date',
           label: '검역일',
           type: 'date',
-          helpText: '태국 동물검역소(AQS)에서 입국 검역을 받은 날짜',
+          helpText: '태국 동물검역소(AQS)에서 수입 검역을 받은 날짜',
         },
       ],
       allowAttachments: true,
@@ -236,18 +236,18 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['ph.import-permit-14days-after-vaccines'],
     },
     departure: {
-      title: '필리핀 입국 검역',
-      shortLabel: '입국',
+      title: '필리핀 수입 검역',
+      shortLabel: '수입',
       description:
-        '필리핀 도착 후 공항 동물검역소에서 BAI 동물검역관(VQO)에게 입국 검역을 받으세요.',
-      doneSummary: '필리핀 입국 검역을 받았어요.',
+        '필리핀 도착 후 공항 동물검역소에서 BAI 동물검역관(VQO)에게 수입 검역을 받으세요.',
+      doneSummary: '필리핀 수입 검역을 받았어요.',
       done: 'quarantine:ph_import_quarantine_date',
       inputs: [
         {
           key: 'ph_import_quarantine_date',
           label: '검역일',
           type: 'date',
-          helpText: 'BAI 동물검역관(VQO)에게 입국 검역을 받은 날짜',
+          helpText: 'BAI 동물검역관(VQO)에게 수입 검역을 받은 날짜',
         },
       ],
       allowAttachments: true,

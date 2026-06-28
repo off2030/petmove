@@ -11,7 +11,7 @@ import { readVetVisitDate, SKIP } from './utils'
 /**
  * 목적지 무관 — 한국 출입국 측 공통 절차 검증.
  *
- * 출국 전 임상검사·한국 출국 검역·한국 입국 검역(왕복 귀국)은 어느 목적지든 한국발
+ * 출국 전 임상검사·한국 수출 검역·한국 수입 검역(왕복 귀국)은 어느 목적지든 한국발
  * 케이스가 거치는 한국 측 단계라 모든 목적지에 적용된다. 이는 메모리의 "공통룰 금지(country: 'all' 누수)"가 막는 *특정국
  * 룰 누수*가 아니라, 진짜로 전 목적지가 대상인 절차다. 그래서 'all' 같은 매직 토큰 대신
  * 실제 지원 목적지 키 전체를 명시 배열로 선언한다 — `findDestinationKey` 가 돌려줄 수 있는
@@ -49,9 +49,9 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
     id: 'common.kr-export-quarantine-date-valid',
     country: ALL_DESTINATION_KEYS,
     category: '검역',
-    title: '한국 출국 검역일',
+    title: '한국 수출 검역일',
     description:
-      '한국 출국 검역일은 출국 전 임상검사 이후·출국일 이전이며 출국일 기준 윈도우 이내여야 함.',
+      '한국 수출 검역일은 출국 전 임상검사 이후·출국일 이전이며 출국일 기준 윈도우 이내여야 함.',
     severity: 'warning',
     addedAt: '2026-06-11',
     run: ({ caseRow, destination }) => {
@@ -69,14 +69,14 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `한국 수출검역일(${raw}) 출국 전 윈도우 내.` }
     },
   },
-  // 한국 입국 검역(왕복 마지막) — 귀국 후 한국 공항 검역. 검역일 ≥ 귀국일.
+  // 한국 수입 검역(왕복 마지막) — 귀국 후 한국 공항 검역. 검역일 ≥ 귀국일.
   // 전 목적지 왕복 공통이라 국가별(jp/th/ph/eu) 분리 대신 common 1개로 통합(kr-export 와 동일).
   {
     id: 'common.kr-import-quarantine-date-valid',
     country: ALL_DESTINATION_KEYS,
     category: '검역',
-    title: '한국 입국 검역일',
-    description: '한국 입국 검역일은 한국 귀국일 이후여야 함.',
+    title: '한국 수입 검역일',
+    description: '한국 수입 검역일은 한국 귀국일 이후여야 함.',
     severity: 'warning',
     addedAt: '2026-06-17',
     run: ({ caseRow, destination }) => {
