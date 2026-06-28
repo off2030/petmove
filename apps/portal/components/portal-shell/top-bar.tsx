@@ -116,7 +116,7 @@ export function TopBar() {
           }}
         >
           <LogoMark size={22} />
-          <span>PETMOVE</span>
+          <span>펫무브</span>
         </Link>
       )}
       <div
