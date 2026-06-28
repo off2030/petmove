@@ -366,6 +366,9 @@ function euFamilyDocSpecs(
         `${label} 입국 검사 때 반드시 원본이 필요해요.\n\n광견병 백신을 유효기간 안에 계속 추가 접종하면 결과지는 계속 유효해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.`,
       previewStepId: 'rabies-titer',
     },
+    // 별지 제25호(접종 및 건강증명서) — 한국 수출 검역에 필요한 모든 목적지 공통 서류.
+    // EU 패밀리도 예외 없이 필요하다(factory 최초 작성 시 누락됐던 것 보강).
+    KR_FORM25_VACCINATION_HEALTH_CERT,
     {
       id: 'eu-health-cert',
       // EU 회원국(eu 키)은 공식 명칭 'EU 동물건강증명서(Annex III)'. 영국·노르웨이·스위스 등
