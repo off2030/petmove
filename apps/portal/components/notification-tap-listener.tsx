@@ -83,6 +83,9 @@ function navigateTo(path: string | null) {
   if (!path || !path.startsWith('/cases/')) return // 안전: 내부 케이스 경로만
   try {
     if (window.location.pathname + window.location.search === path) return // 이미 그 화면이면 생략
+    // 콜드스타트 깜빡임 방지: NativeSplash 가 이 플래그를 보고 스플래시를 안 내린다 →
+    // 아래 리로드가 스플래시 아래에서 일어나 '동물 선택' 화면을 안 거치고 일정으로 직행.
+    ;(window as unknown as { __pmHoldSplash?: boolean }).__pmHoldSplash = true
     window.location.href = path
   } catch {
     /* 무시 */
