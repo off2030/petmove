@@ -239,6 +239,9 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     return best
   }
 
+  // 전역(document) 리스너로 추적 — grip 은 12px 라 포인터가 즉시 벗어나고, 리렌더(realtime
+  // 구독 등)가 grip 의 포인터 캡처를 끊는다. document 리스너는 캡처·엘리먼트 식별과 무관하게
+  // 포인터를 끝까지 따라가므로 어떤 리렌더에도 안전하다.
   function onGripPointerDown(idx: number, e: React.PointerEvent) {
     if (!multi || !editMode) return
     e.preventDefault()
@@ -246,24 +249,27 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     dragRef.current = { from: idx, over: idx }
     setDragIdx(idx)
     setOverIdx(idx)
-    e.currentTarget.setPointerCapture(e.pointerId)
-  }
 
-  function onGripPointerMove(e: React.PointerEvent) {
-    if (!dragRef.current) return
-    const over = chipIndexAtPoint(e.clientX, e.clientY)
-    if (over === null || over === dragRef.current.over) return
-    dragRef.current.over = over
-    setOverIdx(over)
-  }
-
-  function onGripPointerUp(e: React.PointerEvent) {
-    const st = dragRef.current
-    dragRef.current = null
-    try { e.currentTarget.releasePointerCapture(e.pointerId) } catch { /* noop */ }
-    setDragIdx(null)
-    setOverIdx(null)
-    if (st && st.over !== st.from) void reorderDests(st.from, st.over)
+    const handleMove = (ev: PointerEvent) => {
+      if (!dragRef.current) return
+      const over = chipIndexAtPoint(ev.clientX, ev.clientY)
+      if (over === null || over === dragRef.current.over) return
+      dragRef.current.over = over
+      setOverIdx(over)
+    }
+    const handleUp = () => {
+      const st = dragRef.current
+      dragRef.current = null
+      document.removeEventListener('pointermove', handleMove)
+      document.removeEventListener('pointerup', handleUp)
+      document.removeEventListener('pointercancel', handleUp)
+      setDragIdx(null)
+      setOverIdx(null)
+      if (st && st.over !== st.from) void reorderDests(st.from, st.over)
+    }
+    document.addEventListener('pointermove', handleMove)
+    document.addEventListener('pointerup', handleUp)
+    document.addEventListener('pointercancel', handleUp)
   }
 
   return (
@@ -299,9 +305,6 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                   {multi && editMode && (
                     <span
                       onPointerDown={(e) => onGripPointerDown(idx, e)}
-                      onPointerMove={onGripPointerMove}
-                      onPointerUp={onGripPointerUp}
-                      onPointerCancel={onGripPointerUp}
                       className="shrink-0 self-center -ml-1 touch-none cursor-grab active:cursor-grabbing text-pmw-tag-foreground/40 hover:text-pmw-tag-foreground/70 transition-colors"
                       title="드래그하여 순서 변경"
                       aria-label="순서 변경 핸들"
