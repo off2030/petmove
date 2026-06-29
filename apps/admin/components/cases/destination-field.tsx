@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Trash2, Archive, GripVertical } from 'lucide-react'
+import { Trash2, Archive } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
@@ -239,23 +239,32 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     return best
   }
 
-  // 전역(document) 리스너로 추적 — grip 은 12px 라 포인터가 즉시 벗어나고, 리렌더(realtime
-  // 구독 등)가 grip 의 포인터 캡처를 끊는다. document 리스너는 캡처·엘리먼트 식별과 무관하게
-  // 포인터를 끝까지 따라가므로 어떤 리렌더에도 안전하다.
-  function onGripPointerDown(idx: number, e: React.PointerEvent) {
-    if (!multi || !editMode) return
-    e.preventDefault()
-    e.stopPropagation()
+  // 칩 전체가 드래그 영역. 탭(이동<임계)=활성 목적지 전환, 드래그(이동≥임계, 편집모드)=순서 변경.
+  // 전역(document) 리스너로 추적 — 리렌더(realtime 구독 등)·포인터 캡처 상실과 무관하게 끝까지
+  // 따라간다. 보관/삭제 버튼 위 누름은 무시(그쪽 클릭이 처리).
+  const DRAG_THRESHOLD = 5
+  function onChipPointerDown(idx: number, ko: string, e: React.PointerEvent) {
+    if (!multi) return
+    if ((e.target as HTMLElement).closest('[data-chip-action]')) return
+    const startX = e.clientX
+    const startY = e.clientY
+    let dragging = false
     dragRef.current = { from: idx, over: idx }
-    setDragIdx(idx)
-    setOverIdx(idx)
 
     const handleMove = (ev: PointerEvent) => {
       if (!dragRef.current) return
+      if (!dragging) {
+        if (!editMode) return // 읽기 모드 — 드래그 비활성(탭만)
+        if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < DRAG_THRESHOLD) return
+        dragging = true
+        setDragIdx(idx)
+      }
+      ev.preventDefault()
       const over = chipIndexAtPoint(ev.clientX, ev.clientY)
-      if (over === null || over === dragRef.current.over) return
-      dragRef.current.over = over
-      setOverIdx(over)
+      if (over !== null && over !== dragRef.current.over) {
+        dragRef.current.over = over
+        setOverIdx(over)
+      }
     }
     const handleUp = () => {
       const st = dragRef.current
@@ -265,7 +274,11 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
       document.removeEventListener('pointercancel', handleUp)
       setDragIdx(null)
       setOverIdx(null)
-      if (st && st.over !== st.from) void reorderDests(st.from, st.over)
+      if (dragging) {
+        if (st && st.over !== st.from) void reorderDests(st.from, st.over)
+      } else {
+        setActiveDestination(ko) // 탭 — 활성 목적지 전환
+      }
     }
     document.addEventListener('pointermove', handleMove)
     document.addEventListener('pointerup', handleUp)
@@ -294,39 +307,44 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                 <span
                   key={ko}
                   data-dest-idx={idx}
+                  // 칩 전체가 드래그/탭 영역. 네이티브 드래그(텍스트·SVG)는 차단해 포인터 스트림 유지.
+                  onPointerDown={(e) => onChipPointerDown(idx, ko, e)}
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                  role={multi ? 'button' : undefined}
+                  tabIndex={multi ? 0 : undefined}
+                  onKeyDown={
+                    multi
+                      ? (e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            setActiveDestination(ko)
+                          }
+                        }
+                      : undefined
+                  }
+                  title={
+                    multi
+                      ? editMode
+                        ? '클릭하여 활성 · 드래그하여 순서 변경'
+                        : '클릭하여 이 국가 항목 보기'
+                      : undefined
+                  }
                   className={cn(
                     'group/chip shrink-0 inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 transition-all select-none',
                     'bg-pmw-tag text-pmw-tag-foreground',
+                    multi && editMode && 'cursor-grab active:cursor-grabbing',
+                    multi && !editMode && 'cursor-pointer',
                     multi && isActive && 'ring-1 ring-pmw-accent/45',
                     dragIdx === idx && 'opacity-30',
                     isDragOver && 'ring-2 ring-pmw-tag-foreground/50',
                   )}
                 >
-                  {multi && editMode && (
-                    <span
-                      onPointerDown={(e) => onGripPointerDown(idx, e)}
-                      // 실제 마우스로 끌면 인라인 SVG 가 네이티브 이미지 드래그를 발동 →
-                      // pointercancel 로 pointermove 가 끊겨 이동 추적이 죽는다. 네이티브
-                      // 드래그를 막아 포인터 스트림을 유지(합성 이벤트는 이걸 안 띄워 가려졌던 버그).
-                      draggable={false}
-                      onDragStart={(e) => e.preventDefault()}
-                      className="shrink-0 self-center -ml-1 touch-none select-none cursor-grab active:cursor-grabbing text-pmw-tag-foreground/40 hover:text-pmw-tag-foreground/70 transition-colors"
-                      title="드래그하여 순서 변경"
-                      aria-label="순서 변경 핸들"
-                    >
-                      <GripVertical size={12} className="pointer-events-none" />
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => { if (multi) setActiveDestination(ko) }}
+                  <span
                     className={cn(
-                      'inline-flex items-baseline gap-1.5 -mx-2.5 -my-0.5 px-2.5 py-0.5 transition-opacity',
-                      multi && 'cursor-pointer',
+                      'inline-flex items-baseline gap-1.5 transition-opacity',
                       multi && !isActive && 'opacity-55 group-hover/chip:opacity-90',
                     )}
-                    title={multi ? '클릭하여 이 국가 항목 보기' : undefined}
-                    disabled={!multi}
                   >
                     {code && (
                       <span className="font-mono text-[13px] uppercase tracking-[1px] text-pmw-code">
@@ -336,24 +354,26 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                     <span className="font-serif text-[15px] text-pmw-tag-foreground">
                       {ko}
                     </span>
-                  </button>
+                  </span>
                   {editMode && (
                     <>
                       <button
                         type="button"
+                        data-chip-action
                         onClick={(e) => { e.stopPropagation(); demoteToPast(ko) }}
                         className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-pmw-tag-foreground/60 hover:text-pmw-accent hover:bg-pmw-accent/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
                         title="지난 여정으로 보관"
                       >
-                        <Archive size={12} />
+                        <Archive size={12} className="pointer-events-none" />
                       </button>
                       <button
                         type="button"
+                        data-chip-action
                         onClick={(e) => { e.stopPropagation(); removeDest(ko) }}
                         className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-pmw-tag-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
                         title="목적지 삭제"
                       >
-                        <Trash2 size={12} />
+                        <Trash2 size={12} className="pointer-events-none" />
                       </button>
                     </>
                   )}
