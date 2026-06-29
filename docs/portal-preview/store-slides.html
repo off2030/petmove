@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>펫무브 — 스토어 자산 슬라이드 생성기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet"/>
+<link rel="stylesheet" href="tokens.css"/>
+<style>
+  html, body { margin: 0; padding: 0; background: #ECE6E0; }
+  body { font-family: 'Pretendard Variable', Pretendard, -apple-system, system-ui, sans-serif; }
+  /* 캡처 대상: #slide 단일 노드. body 마진 0 + 슬라이드를 좌상단 고정 → 뷰포트=슬라이드 크기로 맞추면 정확히 한 장이 잡힌다. */
+  #root { position: fixed; left: -9999px; top: -9999px; width: 390px; height: 844px; }  /* app.jsx 가 강제 렌더하는 인터랙티브 셸 — 숨김 */
+  #slide { position: absolute; left: 0; top: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="slide"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+
+<!-- 디자인 단일 출처 컴포넌트 (전역 함수로 노출됨) -->
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="shared.jsx"></script>
+<script type="text/babel" src="timeline.jsx"></script>
+<script type="text/babel" src="docs.jsx"></script>
+<script type="text/babel" src="app.jsx"></script>
+
+<!-- 스토어 슬라이드 합성 레이어 -->
+<script type="text/babel">
+const PHONE_W = 390, PHONE_H = 844;
+
+// Calm 라벤더→피치 그라데이션 (app.jsx 배경과 동일 톤)
+const BG = 'linear-gradient(155deg, oklch(0.93 0.035 295) 0%, oklch(0.92 0.045 320) 42%, oklch(0.92 0.045 40) 76%, oklch(0.93 0.035 60) 100%)';
+
+const INK = '#2A2620', INK2 = '#6B6457';
+const serif = { fontFamily: "'Fraunces','Pretendard Variable',serif", letterSpacing: '-0.02em' };
+
+// 세로 스토어 스크린샷: 상단 카피 + 하단 기기프레임 화면
+const PHONE_SLIDES = {
+  timeline: { screen: 'timeline', headline: '출국까지,\n다음 할 일만 따라가세요', sub: '복잡한 검역 절차를 단계별로 안내해드려요' },
+  docs:     { screen: 'docs',     headline: '검역 서류,\n자동으로 준비해드려요', sub: '필요한 서류를 빠짐없이 챙기고 보관까지' },
+  info:     { screen: 'info',     headline: '내 아이 정보를\n한 곳에', sub: '마이크로칩·여권·항공권까지 한눈에' },
+  profile:  { screen: 'profile',  headline: '함께하는 사람들을\n한눈에', sub: '담당 병원과 에이전시까지 연결해드려요' },
+};
+
+function PhoneFrame({ screen, scale }) {
+  return (
+    <div style={{
+      width: PHONE_W * scale, height: PHONE_H * scale,
+      position: 'relative', flexShrink: 0,
+    }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+        <PhoneShell screen={screen} onNav={() => {}} scenario={window.SCENARIO} ringShape="B" />
+      </div>
+    </div>
+  );
+}
+
+function PhoneSlide({ cfg, W, H }) {
+  const phoneW = Math.round(W * 0.80);
+  const scale = phoneW / PHONE_W;
+  const phoneH = PHONE_H * scale;
+  const bottomGap = Math.round(H * 0.028);
+  return (
+    <div style={{
+      width: W, height: H, background: BG, position: 'relative', overflow: 'hidden',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+    }}>
+      {/* 카피 영역 */}
+      <div style={{
+        width: '100%', boxSizing: 'border-box', padding: `${Math.round(H*0.058)}px ${Math.round(W*0.085)}px 0`,
+        textAlign: 'center',
+      }}>
+        <h1 style={{
+          ...serif, fontWeight: 600, color: INK, margin: 0,
+          fontSize: Math.round(W * 0.066), lineHeight: 1.22, whiteSpace: 'pre-line',
+        }}>{cfg.headline}</h1>
+        <p style={{
+          margin: `${Math.round(H*0.014)}px 0 0`, color: INK2,
+          fontSize: Math.round(W * 0.030), lineHeight: 1.5, fontWeight: 500,
+        }}>{cfg.sub}</p>
+      </div>
+      {/* 기기프레임 — 하단 고정 */}
+      <div style={{
+        position: 'absolute', left: '50%', bottom: bottomGap, transform: 'translateX(-50%)',
+        width: phoneW, height: phoneH,
+      }}>
+        <PhoneFrame screen={cfg.screen} scale={scale} />
+      </div>
+    </div>
+  );
+}
+
+// 가로 피처 그래픽 (Play 1024×500)
+function FeatureSlide({ W, H }) {
+  const scale = (H * 1.18) / PHONE_H;   // 화면을 키워 아래로 살짝 잘리게(peek)
+  const phoneW = PHONE_W * scale, phoneH = PHONE_H * scale;
+  return (
+    <div style={{ width: W, height: H, background: BG, position: 'relative', overflow: 'hidden' }}>
+      {/* 좌측 텍스트 */}
+      <div style={{ position: 'absolute', left: Math.round(W*0.07), top: 0, bottom: 0, width: W*0.52,
+        display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{
+          fontFamily: "'Alonzo','Bodoni Moda','Playfair Display',serif", fontWeight: 700,
+          fontSize: 26, letterSpacing: '0.04em', color: INK2, marginBottom: 18,
+        }}>PETMOVE</div>
+        <h1 style={{ ...serif, fontWeight: 600, color: INK, margin: 0, fontSize: 52, lineHeight: 1.18 }}>
+          반려동물 해외 출국,<br/>혼자가 아니에요
+        </h1>
+        <p style={{ margin: '16px 0 0', color: INK2, fontSize: 21, lineHeight: 1.5, fontWeight: 500 }}>
+          검역 일정부터 서류·항공까지, 펫무브가 함께합니다
+        </p>
+      </div>
+      {/* 우측 기기 peek */}
+      <div style={{ position: 'absolute', right: Math.round(W*0.05), top: Math.round((H - phoneH)/2 + H*0.10),
+        width: phoneW, height: phoneH }}>
+        <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+          <PhoneShell screen="timeline" onNav={() => {}} scenario={window.SCENARIO} ringShape="B" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 기준 크기: 폰 1242×2688(App Store 6.5"), 피처 1024×500. scale 로 드래프트 축소 캡처.
+let _root = null;
+function render(name, scale) {
+  scale = scale || 1;
+  if (!_root) _root = ReactDOM.createRoot(document.getElementById('slide'));
+  if (name === 'feature') {
+    _root.render(<FeatureSlide W={Math.round(1024*scale)} H={Math.round(500*scale)} />);
+  } else {
+    const cfg = PHONE_SLIDES[name] || PHONE_SLIDES.timeline;
+    _root.render(<PhoneSlide cfg={cfg} W={Math.round(1242*scale)} H={Math.round(2688*scale)} />);
+  }
+}
+
+window.setSlide = render;
+
+// 초기 슬라이드 = ?slide= (없으면 timeline), ?scale= (없으면 1).
+(function boot() {
+  if (typeof PhoneShell === 'undefined' || typeof window.SCENARIO === 'undefined') {
+    return setTimeout(boot, 30);
+  }
+  const params = new URLSearchParams(location.search);
+  render(params.get('slide') || 'timeline', parseFloat(params.get('scale')) || 1);
+})();
+</script>
+</body>
+</html>

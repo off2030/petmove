@@ -14,14 +14,15 @@ const SCENARIO = {
     photo: 'ellie',
   },
   guardian: {
-    name: '강경훈',
-    nameEn: 'Gyeonghun Kang',
+    // 데모 데이터 — 실 개인정보 금지 (이 프리뷰는 스토어 스크린샷 등 공개물 소스로 쓰임)
+    name: '이서연',
+    nameEn: 'Seoyeon Lee',
     relation: '보호자',
-    phone: '010-6644-1142',
-    email: 'khoon5276@gmail.com',
-    addressKo: '경기 안성시 양성면 노곡길 50-51',
-    addressEn: '50-51 Nogok-gil, Yangseong-myeon, Anseong-si, Gyeonggi-do, Republic of Korea',
-    postalCode: '17500',
+    phone: '010-1234-5678',
+    email: 'demo@petmove.co.kr',
+    addressKo: '서울 중구 세종대로 110',
+    addressEn: '110 Sejong-daero, Jung-gu, Seoul, Republic of Korea',
+    postalCode: '04524',
   },
   trip: {
     fromCity: '한국',
