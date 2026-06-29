@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Trash2, Archive } from 'lucide-react'
+import { Trash2, Archive, GripVertical } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
@@ -237,13 +237,8 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
               return (
                 <span
                   key={ko}
-                  draggable={multi && editMode}
-                  onDragStart={(e) => {
-                    if (!multi || !editMode) return
-                    setDragIdx(idx)
-                    e.dataTransfer.effectAllowed = 'move'
-                    e.dataTransfer.setData('text/plain', String(idx))
-                  }}
+                  // 드롭 대상. 드래그 시작은 아래 grip 핸들에서만 — 칩 본문이 버튼이라
+                  // span 을 직접 잡으면 네이티브 드래그가 시작되지 않기 때문(크로미움).
                   onDragOver={(e) => {
                     if (!multi || !editMode || dragIdx === null) return
                     e.preventDefault()
@@ -259,16 +254,33 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                     void reorderDests(dragIdx, idx)
                     setDragIdx(null); setOverIdx(null)
                   }}
-                  onDragEnd={() => { setDragIdx(null); setOverIdx(null) }}
                   className={cn(
-                    'group/chip shrink-0 inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 transition-all',
+                    'group/chip shrink-0 inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 transition-all select-none',
                     'bg-pmw-tag text-pmw-tag-foreground',
                     multi && isActive && 'ring-1 ring-pmw-accent/45',
-                    multi && editMode && 'cursor-grab active:cursor-grabbing',
                     dragIdx === idx && 'opacity-30',
                     isDragOver && 'ring-2 ring-pmw-tag-foreground/50',
                   )}
                 >
+                  {multi && editMode && (
+                    <span
+                      draggable
+                      onDragStart={(e) => {
+                        setDragIdx(idx)
+                        e.dataTransfer.effectAllowed = 'move'
+                        e.dataTransfer.setData('text/plain', String(idx))
+                        // 드래그 이미지로 칩 전체(핸들의 부모 span) 사용.
+                        const chip = e.currentTarget.parentElement
+                        if (chip) e.dataTransfer.setDragImage(chip, 0, 0)
+                      }}
+                      onDragEnd={() => { setDragIdx(null); setOverIdx(null) }}
+                      className="shrink-0 self-center -ml-1 cursor-grab active:cursor-grabbing text-pmw-tag-foreground/40 hover:text-pmw-tag-foreground/70 transition-colors"
+                      title="드래그하여 순서 변경"
+                      aria-label="순서 변경 핸들"
+                    >
+                      <GripVertical size={12} />
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={() => { if (multi) setActiveDestination(ko) }}
