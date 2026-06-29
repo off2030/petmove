@@ -14,63 +14,64 @@ import { useEffect } from 'react'
  * 안전: 내부 케이스 경로('/cases/...')만 허용(알림 데이터로 임의 URL 이동 차단).
  * 일반 웹/PWA 에서는 no-op. 마운트: 루트 레이아웃(어느 화면에서나 탭될 수 있어 전역).
  *
- * ⚠️ 등록을 **첫 진입 후로 약간 지연**한다 — 루트 레이아웃이라 로그인·콜백 화면에서도 마운트되는데,
- * 네이티브 푸시 플러그인 초기화가 로그인→내 여정 진입과 경쟁하면 진입이 느려졌던 회귀 때문.
- * 알림 탭으로 콜드스타트되면 그 액션은 Capacitor 가 큐잉했다가 리스너 등록 시 전달하므로
- * 지연돼도 딥링크는 놓치지 않는다.
+ * 리스너는 마운트 **즉시** 등록한다 — 콜드스타트 탭일수록 빨리 등록해야 '선택 화면 깜빡임'
+ * 없이 바로 일정으로 넘어간다. (플러그인의 무거운 초기화는 네이티브 launch 시 한 번 일어나고,
+ * addListener 는 가벼워 로그인 진입과 경쟁하지 않는다. 토큰 등록 같은 무거운 작업은 별도로
+ * case-data-provider 에서 지연/옵트인 처리한다.) 콜드스타트 액션은 플러그인이 retain 했다가
+ * 리스너 등록 시 전달하므로 놓치지 않는다.
+ *
+ * ⚠️ Android 콜드스타트(앱 완전 종료 상태 탭): @capacitor-firebase/messaging 은 탭을
+ * onNewIntent 로만 처리해 launch 인텐트(onCreate)를 못 받는다 → MainActivity.onCreate 에서
+ * onNewIntent 로 재전달해 보완(네이티브). 그래야 이 리스너로 액션이 전달된다.
  */
 export function NotificationTapListener() {
   useEffect(() => {
     const removers: Array<() => void> = []
     let cancelled = false
 
-    const timer = window.setTimeout(() => {
-      void (async () => {
+    void (async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core')
+        if (!Capacitor.isNativePlatform()) return
+
+        // 푸시 알림(FCM) 탭 — @capacitor-firebase/messaging
         try {
-          if (cancelled) return
-          const { Capacitor } = await import('@capacitor/core')
-          if (!Capacitor.isNativePlatform()) return
-
-          // 푸시 알림(FCM) 탭 — @capacitor-firebase/messaging
-          try {
-            const { FirebaseMessaging } = await import('@capacitor-firebase/messaging')
-            const h = await FirebaseMessaging.addListener(
-              'notificationActionPerformed',
-              (action) => {
-                const data = action.notification?.data as Record<string, unknown> | undefined
-                navigateTo(typeof data?.path === 'string' ? data.path : null)
-              },
-            )
-            if (cancelled) void h.remove()
-            else removers.push(() => void h.remove())
-          } catch {
-            /* 푸시 플러그인 미존재 — 무시 */
-          }
-
-          // 로컬 알림(일정 리마인더) 탭
-          try {
-            const { LocalNotifications } = await import('@capacitor/local-notifications')
-            const h = await LocalNotifications.addListener(
-              'localNotificationActionPerformed',
-              (action) => {
-                const extra = action.notification?.extra as Record<string, unknown> | undefined
-                navigateTo(typeof extra?.path === 'string' ? extra.path : null)
-              },
-            )
-            if (cancelled) void h.remove()
-            else removers.push(() => void h.remove())
-          } catch {
-            /* 로컬 알림 플러그인 미존재 — 무시 */
-          }
+          const { FirebaseMessaging } = await import('@capacitor-firebase/messaging')
+          const h = await FirebaseMessaging.addListener(
+            'notificationActionPerformed',
+            (action) => {
+              const data = action.notification?.data as Record<string, unknown> | undefined
+              navigateTo(typeof data?.path === 'string' ? data.path : null)
+            },
+          )
+          if (cancelled) void h.remove()
+          else removers.push(() => void h.remove())
         } catch {
-          /* 네이티브 미존재 — 무시 */
+          /* 푸시 플러그인 미존재 — 무시 */
         }
-      })()
-    }, 1500)
+
+        // 로컬 알림(일정 리마인더) 탭
+        try {
+          const { LocalNotifications } = await import('@capacitor/local-notifications')
+          const h = await LocalNotifications.addListener(
+            'localNotificationActionPerformed',
+            (action) => {
+              const extra = action.notification?.extra as Record<string, unknown> | undefined
+              navigateTo(typeof extra?.path === 'string' ? extra.path : null)
+            },
+          )
+          if (cancelled) void h.remove()
+          else removers.push(() => void h.remove())
+        } catch {
+          /* 로컬 알림 플러그인 미존재 — 무시 */
+        }
+      } catch {
+        /* 네이티브 미존재 — 무시 */
+      }
+    })()
 
     return () => {
       cancelled = true
-      clearTimeout(timer)
       removers.forEach((f) => f())
     }
   }, [])
