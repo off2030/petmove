@@ -1,30 +1,25 @@
 'use client'
 
 /**
- * Capacitor 푸시 알림 등록 헬퍼 — Capacitor 환경 (iOS/Android 네이티브 앱) 에서만 동작.
- * 일반 웹 브라우저 (PWA) 에서는 no-op — Web Push 는 portal/components/sw-register 의
- * service worker 가 별도 처리.
+ * Capacitor 푸시 알림 등록 헬퍼 — 네이티브 앱(iOS/Android)에서만 동작.
+ *
+ * **@capacitor-firebase/messaging 사용** — iOS·Android 양쪽 모두 **FCM 토큰**을 돌려준다.
+ * (이전엔 @capacitor/push-notifications 였는데, iOS 에선 raw APNs 토큰을 줘서 firebase-admin
+ * 의 FCM 발송(getMessaging().send)과 토큰 종류가 안 맞았다. 이 플러그인은 iOS 도 내부적으로
+ * APNs→FCM 교환을 처리해 항상 FCM 토큰을 준다.)
+ *
+ * 일반 웹 브라우저(PWA)에서는 no-op — isNativePlatform() 으로 먼저 걸러 플러그인 import 자체를
+ * 피한다(웹 구현이 firebase JS SDK 를 끌어오므로 진입 전 차단).
  *
  * 흐름:
- *   1. Capacitor 환경인지 확인 (`Capacitor.isNativePlatform()`)
- *   2. 권한 요청 (`PushNotifications.requestPermissions()`)
- *   3. APNs/FCM 등록 (`PushNotifications.register()`) — 이벤트로 token 수신
- *   4. token 을 서버로 전송 (Supabase push_subscriptions 테이블 — 미래 작업)
- *   5. 푸시 수신 리스너 등록 (`pushNotificationReceived` / `pushNotificationActionPerformed`)
+ *   1. Capacitor 네이티브 환경 확인
+ *   2. 권한 요청 (FirebaseMessaging.requestPermissions)
+ *   3. FCM 토큰 획득 (FirebaseMessaging.getToken) — iOS 는 플러그인이 APNs 등록까지 처리
  *
- * 사용자 액션 (가입 시·설정 페이지):
- *   import { registerPushNotifications } from '@/lib/native/push-notifications'
- *   const result = await registerPushNotifications()
- *   if (result.token) saveTokenToServer(result.token)
- *
- * 필요한 platform 설정 (별도):
- *   - iOS: Apple Developer Portal → Identifiers → com.petmove.portal → Capabilities →
- *          Push Notifications 활성화 + APNs Key 발급
- *   - Android: Firebase Console → 프로젝트 생성 → Android 앱 추가 (applicationId
- *              com.petmove.portal) → google-services.json 다운로드 →
- *              apps/portal/android/app/ 에 배치
- *   - Supabase: push_subscriptions 테이블 추가 (user_id, platform, token, created_at)
- *   - 발송 인프라: Web Push 와 통합하거나 별도 worker (Vercel Edge Function 등)
+ * 필요한 platform 설정 (별도, codemagic.yaml / android):
+ *   - iOS: Apple Developer App ID 에 Push Notifications capability + APNs 키를 Firebase 에
+ *          업로드 + GoogleService-Info.plist 를 앱 번들에 포함 + FirebaseApp.configure()
+ *   - Android: google-services.json (apps/portal/android/app/) — 이미 배치됨
  */
 
 export interface PushRegistrationResult {
@@ -32,63 +27,32 @@ export interface PushRegistrationResult {
   skipped?: true
   /** 사용자가 권한 거부 */
   denied?: true
-  /** 정상 등록 후 받은 디바이스 토큰 (APNs/FCM) */
+  /** 정상 등록 후 받은 FCM 디바이스 토큰 */
   token?: string
   /** 등록 실패 — error.message */
   error?: string
 }
 
 export async function registerPushNotifications(): Promise<PushRegistrationResult> {
-  // 브라우저 환경에서는 skip — Capacitor 가 없으면 import 자체가 실패할 수 있어서 dynamic.
+  // 브라우저 환경에서는 skip — 네이티브가 아니면 플러그인을 import 하지 않는다.
   try {
     const { Capacitor } = await import('@capacitor/core')
     if (!Capacitor.isNativePlatform()) {
       return { skipped: true }
     }
 
-    const { PushNotifications } = await import('@capacitor/push-notifications')
+    const { FirebaseMessaging } = await import('@capacitor-firebase/messaging')
 
-    // 1) 권한 요청
-    const perm = await PushNotifications.requestPermissions()
+    // 1) 권한 요청 (이미 허용돼 있으면 추가 팝업 없이 통과)
+    const perm = await FirebaseMessaging.requestPermissions()
     if (perm.receive !== 'granted') {
       return { denied: true }
     }
 
-    // 2) 등록 — 결과 token 은 'registration' 이벤트로 비동기 전달
-    return await new Promise<PushRegistrationResult>((resolve) => {
-      let resolved = false
-      const cleanup: Array<() => void> = []
-
-      const onReg = (token: { value: string }) => {
-        if (resolved) return
-        resolved = true
-        cleanup.forEach((f) => f())
-        resolve({ token: token.value })
-      }
-      const onErr = (e: { error: string }) => {
-        if (resolved) return
-        resolved = true
-        cleanup.forEach((f) => f())
-        resolve({ error: e.error })
-      }
-
-      PushNotifications.addListener('registration', onReg).then((h) =>
-        cleanup.push(() => h.remove()),
-      )
-      PushNotifications.addListener('registrationError', onErr).then((h) =>
-        cleanup.push(() => h.remove()),
-      )
-
-      void PushNotifications.register()
-
-      // 10초 타임아웃 — APNs/FCM 응답 못 받으면 fail-soft
-      setTimeout(() => {
-        if (resolved) return
-        resolved = true
-        cleanup.forEach((f) => f())
-        resolve({ error: 'registration timeout (10s)' })
-      }, 10_000)
-    })
+    // 2) FCM 토큰 — iOS 는 플러그인이 APNs 등록 후 FCM 토큰으로 교환해 돌려준다.
+    const { token } = await FirebaseMessaging.getToken()
+    if (!token) return { error: 'no token returned' }
+    return { token }
   } catch (e) {
     return { error: (e as Error).message }
   }

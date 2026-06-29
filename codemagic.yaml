@@ -93,10 +93,19 @@ workflows:
           # NSPhotoLibraryAddUsageDescription 이 없으면 저장 순간 앱이 강제 종료된다(읽기용과 별개 키).
           /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 받은 서류·사진을 기기 사진 보관함에 저장하기 위해 사용합니다." "$PLIST" 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryAddUsageDescription 받은 서류·사진을 기기 사진 보관함에 저장하기 위해 사용합니다." "$PLIST"
+          # ── 파이어베이스(FCM) 푸시 구성 파일 + 백그라운드 모드 ──
+          # GoogleService-Info.plist 를 앱 번들에 복사. ios/ 는 매빌드 생성되므로 레포의
+          # apps/portal/firebase/ 에 보관해 두고 여기서 넣는다. 플러그인의 FirebaseApp.configure()
+          # 가 번들에서 이 파일을 읽어 FCM 을 초기화한다(비밀 아님=공개 client config).
+          cp firebase/GoogleService-Info.plist ios/App/App/GoogleService-Info.plist
+          # 원격 알림 백그라운드 수신 모드.
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string remote-notification" "$PLIST" 2>/dev/null || true
 
-      - name: Sign in with Apple 엔타이틀먼트 주입
+      - name: Sign in with Apple + 푸시 엔타이틀먼트 주입 + FCM plist 등록
         # Capacitor 기본 템플릿엔 엔타이틀먼트 파일이 없다. Apple 로그인이 런타임에 동작하려면
         # 바이너리가 com.apple.developer.applesignin 권한을 선언해야 한다(App ID capability 와 짝).
+        # 푸시도 aps-environment 엔타이틀먼트가 필요(App ID Push capability + 재생성 프로파일과 짝).
         script: |
           cd apps/portal/ios/App
           ENT="App/App.entitlements"
@@ -106,15 +115,25 @@ workflows:
           fi
           /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin array" "$ENT" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin:0 string Default" "$ENT" 2>/dev/null || true
+          # 푸시(APNs) 엔타이틀먼트 — App Store/TestFlight 빌드라 production.
+          /usr/libexec/PlistBuddy -c "Add :aps-environment string production" "$ENT" 2>/dev/null \
+            || /usr/libexec/PlistBuddy -c "Set :aps-environment production" "$ENT"
           # CODE_SIGN_ENTITLEMENTS 는 App 타깃에만 설정해야 한다. 전역 xcarg 로 주면 SPM
           # 패키지(facebook-ios-sdk 등)도 자기 경로에서 App/App.entitlements 를 찾다 실패한다.
           # → xcodeproj gem 으로 App 타깃 빌드설정에만 연결(gem 최신화로 Xcode 26 포맷 지원).
+          # 같은 김에 GoogleService-Info.plist(위 스텝에서 ios/App/App/ 에 복사됨)를 App 타깃
+          # 리소스로 등록해 .app 번들에 포함시킨다(없으면 FirebaseApp.configure() 가 못 읽음).
           gem install xcodeproj --no-document 2>/dev/null || true
           ruby -e '
             require "xcodeproj"
             proj = Xcodeproj::Project.open("App.xcodeproj")
             t = proj.targets.find { |x| x.name == "App" }
             t.build_configurations.each { |c| c.build_settings["CODE_SIGN_ENTITLEMENTS"] = "App/App.entitlements" }
+            appgrp = proj.main_group["App"] || proj.main_group
+            ref = appgrp.files.find { |f| f.path == "GoogleService-Info.plist" } || appgrp.new_reference("GoogleService-Info.plist")
+            unless t.resources_build_phase.files_references.include?(ref)
+              t.resources_build_phase.add_file_reference(ref)
+            end
             proj.save
           '
 

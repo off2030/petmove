@@ -8,7 +8,7 @@ import { useEffect } from 'react'
  * 안 그러면 알림을 눌러도 앱 기본 화면(동물 선택)으로만 열린다. 알림이 가리키는 케이스의
  * 일정(`/cases/[id]/journey`)으로 바로 보낸다.
  *
- *  - 푸시(FCM, pushNotificationActionPerformed): notification.data.path
+ *  - 푸시(FCM, @capacitor-firebase/messaging notificationActionPerformed): notification.data.path
  *  - 로컬(LocalNotifications, localNotificationActionPerformed): notification.extra.path
  *
  * 안전: 내부 케이스 경로('/cases/...')만 허용(알림 데이터로 임의 URL 이동 차단).
@@ -31,11 +31,11 @@ export function NotificationTapListener() {
           const { Capacitor } = await import('@capacitor/core')
           if (!Capacitor.isNativePlatform()) return
 
-          // 푸시 알림(FCM) 탭
+          // 푸시 알림(FCM) 탭 — @capacitor-firebase/messaging
           try {
-            const { PushNotifications } = await import('@capacitor/push-notifications')
-            const h = await PushNotifications.addListener(
-              'pushNotificationActionPerformed',
+            const { FirebaseMessaging } = await import('@capacitor-firebase/messaging')
+            const h = await FirebaseMessaging.addListener(
+              'notificationActionPerformed',
               (action) => {
                 const data = action.notification?.data as Record<string, unknown> | undefined
                 navigateTo(typeof data?.path === 'string' ? data.path : null)
