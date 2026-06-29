@@ -146,6 +146,12 @@ function readInfectiousRecords(row: CaseRow): InfectiousRecord[] {
   return Array.isArray(arr) ? (arr as InfectiousRecord[]) : []
 }
 
+/** 케이스 종(dog/cat). 도메인 procedure-check 와 동일 컨벤션(data.species). */
+function caseSpecies(row: CaseRow): string {
+  const data = (row.data ?? {}) as Record<string, unknown>
+  return typeof data.species === 'string' ? data.species : ''
+}
+
 /** 뉴질랜드 전염병검사 자동 검사일 = 출국일 - 15일 (YYYY-MM-DD). */
 function computeNZInspectionDate(departureDate: string): string {
   return addDays(departureDate, -15)
@@ -293,8 +299,9 @@ function buildInspectionRows(
     // 2) 전염병검사 — 호주/뉴질랜드
     const isAU = matchesDestinationKey(c.destination, 'australia')
     const isNZ = matchesDestinationKey(c.destination, 'new_zealand')
-    if (isAU) {
-      // 호주: 검사일(infectious ksvdl.date) 또는 호주 출국일(by_dest 우선) 중 하나라도
+    if (isAU && caseSpecies(c) === 'dog') {
+      // 호주 전염병검사(KSVDL)는 강아지 전용 — 고양이 제외 (au.ts 도메인 룰과 일치).
+      // 검사일(infectious ksvdl.date) 또는 호주 출국일(by_dest 우선) 중 하나라도
       // 있으면 탭에 올림. 날짜 컬럼은 검사일 있으면 그것, 없으면 빈 값(직접 입력).
       const recs = readInfectiousRecords(c)
       const existing = recs.find(r => r.lab === 'ksvdl')
@@ -312,8 +319,9 @@ function buildInspectionRows(
       }
     }
     const nzDeparture = destDeparture(c, 'new_zealand')
-    if (isNZ && nzDeparture) {
-      // 뉴질랜드: 설정 labs 순서대로 묶음 한 행으로 표시.
+    if (isNZ && nzDeparture && caseSpecies(c) === 'dog') {
+      // 뉴질랜드 전염병검사도 강아지 전용 — 고양이 제외 (nz.ts 도메인 룰과 일치).
+      // 설정 labs 순서대로 묶음 한 행으로 표시.
       // 검사일 수정 시 묶음 내 모든 record에 동시 저장.
       // 표시 날짜는 저장값 우선(설정 순서대로 첫 hit), 없으면 뉴질랜드 출국일 - 15일 자동.
       const recs = readInfectiousRecords(c)
