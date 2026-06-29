@@ -19,7 +19,9 @@ import { useEffect } from 'react'
 // 딥링크로 이동(window.__pmHoldSplash=true + window.location.href)하면, 스플래시를 안 내려
 // 리로드가 그 아래에서 일어난다 → 사용자는 '동물 선택' 화면을 안 거치고 스플래시→일정으로 직행.
 // 일반 실행이면 이 시간만큼만 스플래시가 더 보인 뒤 내려간다(실기기에서 값 조정 가능).
-const SPLASH_HOLD_GRACE_MS = 700
+// iOS 는 WKWebView 로드+알림 액션 전달이 안드로이드보다 느려 grace 를 더 길게 잡는다
+// (700ms 면 액션 오기 전에 스플래시가 내려가 깜빡임). 못 내려도 launchAutoHide 3초 백스톱.
+const SPLASH_HOLD_GRACE_MS = { ios: 1800, android: 700 } as const
 
 export function NativeSplash() {
   useEffect(() => {
@@ -28,10 +30,12 @@ export function NativeSplash() {
       try {
         const { Capacitor } = await import('@capacitor/core')
         if (!Capacitor.isNativePlatform()) return
+        const grace =
+          Capacitor.getPlatform() === 'ios' ? SPLASH_HOLD_GRACE_MS.ios : SPLASH_HOLD_GRACE_MS.android
         const { SplashScreen } = await import('@capacitor/splash-screen')
         // grace 동안 딥링크 이동을 기다린다. 이동하면 페이지가 리로드되며 이 타이머/컴포넌트가
         // 사라지고 스플래시는 그대로 유지된다(리로드된 일정 페이지의 새 NativeSplash 가 내림).
-        await new Promise((r) => setTimeout(r, SPLASH_HOLD_GRACE_MS))
+        await new Promise((r) => setTimeout(r, grace))
         if (cancelled) return
         // 딥링크 이동이 진행 중이면 내리지 않는다(리로드가 처리). 그 외엔 정상적으로 내린다.
         if ((window as unknown as { __pmHoldSplash?: boolean }).__pmHoldSplash) return
