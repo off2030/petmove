@@ -59,15 +59,25 @@ export function inspectionStatusKey(row: InspectionRow): string {
 }
 
 /**
+ * legacy 케이스단위 `inspection_status` 일괄 done cutoff.
+ * 20260425000004_inspection_done_pre_march.sql 가 검사일 < 2026-03-01 케이스를
+ * 일괄 done 처리했고, 단일행 시절 UI 도 이 필드만 썼다. 이 날짜 이후 검사일을 가진
+ * 행은 "옛 케이스에 새로 추가된 검사"이므로 케이스단위 done 을 상속하면 안 된다.
+ */
+const INSPECTION_LEGACY_DONE_CUTOFF = '2026-03-01'
+
+/**
  * 행 진행상태 조회. 행별 키 우선, 없으면 legacy 폴백.
  *
- * legacy `inspection_status` 폴백은 케이스당 행 1개로 보장되는 경우에만 적용 —
- * 재검사로 추가된 titer record idx ≥ 1 만 상속을 막으면 됨 (단일행 시절 'done'
- * 이 신규 회차로 잘못 번지는 문제).
- *  - titer idx 0: `inspection_status_titer` → `inspection_status`.
- *  - infectious / infectious_multi: 케이스당 행 1개 (호주 ksvdl / 뉴질랜드 묶음)
- *    → `inspection_status` 폴백 안전. 옛 케이스 done 상태 유지.
- *  - titer idx ≥ 1: legacy 무시, 신규 record 는 'waiting' 출발.
+ * legacy `inspection_status` 는 단일행 시절·pre-March 일괄 done 마이그레이션에서만
+ * 쓰인 케이스단위 필드다. 같은 케이스에 새 검사 행이 추가되면 옛 'done' 이 잘못
+ * 번지므로, "옛 행"에만 상속해야 한다 — 옛 행 판별:
+ *  - titer idx 0: 단일행 시절부터 있던 행 → `inspection_status_titer` → `inspection_status`.
+ *  - titer idx ≥ 1: 재검사 신규 record → legacy 무시, 'waiting' 출발.
+ *  - infectious / infectious_multi: 검사일이 cutoff 이전이면 옛 행 → legacy 상속,
+ *    cutoff 이후(=옛 케이스에 새로 추가된 검사)면 무시하고 'waiting'.
+ *    (titer 의 idx 분리와 동일 취지를 날짜로 판별. 호주행 노견에 광견병항체 done
+ *    이후 새 전염병검사를 추가하면 stale done 을 물려받던 버그 방지.)
  */
 export function readInspectionStatus(row: InspectionRow): string {
   const data = (row.caseRow.data ?? {}) as Record<string, unknown>
@@ -84,7 +94,11 @@ export function readInspectionStatus(row: InspectionRow): string {
   }
   if (row.dateStorage.kind === 'infectious' || row.dateStorage.kind === 'infectious_multi') {
     const legacy = data.inspection_status
-    if (typeof legacy === 'string') return legacy
+    // 검사일이 있고 cutoff 이전인 옛 행만 케이스단위 done 을 상속.
+    // 검사일이 없거나(아직 미검사 → waiting) cutoff 이후면 상속 안 함.
+    if (typeof legacy === 'string' && row.date && row.date < INSPECTION_LEGACY_DONE_CUTOFF) {
+      return legacy
+    }
   }
   return 'waiting'
 }
