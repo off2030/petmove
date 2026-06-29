@@ -2595,7 +2595,10 @@ function resolveMultiTransform(transform: string | undefined, doc: PackedDoc): s
     if (doc.cases.length === 1) {
       const mc = (doc.cases[0] as unknown as Record<string, unknown>).microchip
       const s = typeof mc === 'string' ? mc : ''
-      return s ? `\n${s}` : ''
+      // Text76 은 멀티라인 필드(box y488~510). 문장 "confirmed as ___" 빈칸은
+      // 윗줄(baseline≈510)에 있다. 과거엔 앞에 \n 을 붙여 아랫줄로 밀었는데,
+      // 그러면 칩이 박스 바닥(점선 아래)으로 내려가 반쯤 잘렸다 → \n 제거해 윗줄에 둠.
+      return s
     }
     const lines: string[] = []
     for (let i = 0; i < doc.cases.length; i++) {
