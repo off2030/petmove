@@ -3424,7 +3424,7 @@
         "source": "pet_name_en",
         "note": "p1 Row1 — Name"
       },
-      "Text15": {
+      "text_67okkk": {
         "source": "birth_date",
         "transform": "age_years",
         "note": "p1 Row1 — Age (years)"
@@ -3433,30 +3433,30 @@
       "Text17": { "source": null, "transform": "multi:animal[1].breed",   "note": "p1 Row2 — Breed" },
       "Text18": { "source": null, "transform": "multi:animal[1].microchip","note": "p1 Row2 — Microchip" },
       "Text19": { "source": null, "transform": "multi:animal[1].name",    "note": "p1 Row2 — Name" },
-      "Text22": { "source": null, "transform": "multi:animal[1].age",     "note": "p1 Row2 — Age" },
-      "Dropdown20": { "source": null, "transform": "multi:animal[1].sex_mf_only",         "note": "p1 Row2 — Sex" },
-      "Dropdown21": { "source": null, "transform": "multi:animal[1].sex_neutered_status", "note": "p1 Row2 — Neutered" },
+      "text_66mklc": { "source": null, "transform": "multi:animal[1].age",     "note": "p1 Row2 — Age" },
+      "text_75pjuu": { "source": null, "transform": "multi:animal[1].sex_mf_only",         "note": "p1 Row2 — Sex" },
+      "text_70amej": { "source": null, "transform": "multi:animal[1].sex_neutered_status", "note": "p1 Row2 — Neutered" },
       "Text23": { "source": null, "transform": "multi:animal[2].species", "note": "p1 Row3 — Species" },
       "Text24": { "source": null, "transform": "multi:animal[2].breed",   "note": "p1 Row3 — Breed" },
       "Text25": { "source": null, "transform": "multi:animal[2].microchip","note": "p1 Row3 — Microchip" },
       "Text26": { "source": null, "transform": "multi:animal[2].name",    "note": "p1 Row3 — Name" },
       "Text30": { "source": null, "transform": "multi:animal[2].age",     "note": "p1 Row3 — Age" },
-      "Dropdown28": { "source": null, "transform": "multi:animal[2].sex_mf_only",         "note": "p1 Row3 — Sex" },
-      "Dropdown29": { "source": null, "transform": "multi:animal[2].sex_neutered_status", "note": "p1 Row3 — Neutered" },
+      "text_76ssll": { "source": null, "transform": "multi:animal[2].sex_mf_only",         "note": "p1 Row3 — Sex" },
+      "text_71yolw": { "source": null, "transform": "multi:animal[2].sex_neutered_status", "note": "p1 Row3 — Neutered" },
       "Text31": { "source": null, "transform": "multi:animal[3].species", "note": "p1 Row4 — Species" },
       "Text32": { "source": null, "transform": "multi:animal[3].breed",   "note": "p1 Row4 — Breed" },
       "Text33": { "source": null, "transform": "multi:animal[3].microchip","note": "p1 Row4 — Microchip" },
       "Text34": { "source": null, "transform": "multi:animal[3].name",    "note": "p1 Row4 — Name" },
       "Text38": { "source": null, "transform": "multi:animal[3].age",     "note": "p1 Row4 — Age" },
-      "Dropdown35": { "source": null, "transform": "multi:animal[3].sex_mf_only",         "note": "p1 Row4 — Sex" },
-      "Dropdown37": { "source": null, "transform": "multi:animal[3].sex_neutered_status", "note": "p1 Row4 — Neutered" },
+      "text_77ygby": { "source": null, "transform": "multi:animal[3].sex_mf_only",         "note": "p1 Row4 — Sex" },
+      "text_72okko": { "source": null, "transform": "multi:animal[3].sex_neutered_status", "note": "p1 Row4 — Neutered" },
       "Text39": { "source": null, "transform": "multi:animal[4].species", "note": "p1 Row5 — Species" },
       "Text40": { "source": null, "transform": "multi:animal[4].breed",   "note": "p1 Row5 — Breed" },
       "Text42": { "source": null, "transform": "multi:animal[4].microchip","note": "p1 Row5 — Microchip" },
       "Text43": { "source": null, "transform": "multi:animal[4].name",    "note": "p1 Row5 — Name" },
       "Text46": { "source": null, "transform": "multi:animal[4].age",     "note": "p1 Row5 — Age" },
-      "Dropdown44": { "source": null, "transform": "multi:animal[4].sex_mf_only",         "note": "p1 Row5 — Sex" },
-      "Dropdown45": { "source": null, "transform": "multi:animal[4].sex_neutered_status", "note": "p1 Row5 — Neutered" },
+      "text_78msym": { "source": null, "transform": "multi:animal[4].sex_mf_only",         "note": "p1 Row5 — Sex" },
+      "text_73sehu": { "source": null, "transform": "multi:animal[4].sex_neutered_status", "note": "p1 Row5 — Neutered" },
       "Text48": {
         "source": "address_en",
         "note": "p1 (1) Name and address line 2 (owner address)"
@@ -3585,12 +3585,12 @@
         "source": "vet_visit_date",
         "note": "p4 Date of certification (발급일) — 새 템플릿에서 text_78egqu 대체"
       },
-      "Dropdown13": {
+      "text_74kanj": {
         "source": "sex",
         "transform": "sex_mf_only",
-        "note": "p1 Row1 — Sex (Male/Female only — 중성화는 Dropdown14)"
+        "note": "p1 Row1 — Sex (Male/Female only — 중성화는 text_69drkf)"
       },
-      "Dropdown14": {
+      "text_69drkf": {
         "source": "sex",
         "transform": "sex_neutered_status",
         "note": "p1 Row1 — Neutered or entire"
