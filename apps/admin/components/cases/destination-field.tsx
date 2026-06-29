@@ -106,6 +106,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   const [highlightIdx, setHighlightIdx] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const chipRowRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
   const popupRef = useRef<HTMLDivElement>(null)
   type PopupPos =
@@ -213,8 +214,57 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     await updateCaseField(caseId, 'column', 'destination', val)
   }
 
+  // 포인터 기반 드래그 재정렬 — 네이티브 HTML5 DnD 는 칩 본문 버튼이 mousedown 을
+  // 가로채 시작이 안 되고 환경 편차도 커서 포인터 이벤트로 직접 구현(dnd-kit 방식).
   const [dragIdx, setDragIdx] = useState<number | null>(null)
   const [overIdx, setOverIdx] = useState<number | null>(null)
+  const dragRef = useRef<{ from: number; over: number } | null>(null)
+
+  /** 현재 포인터 좌표 아래의 칩 인덱스 (없으면 가장 가까운 칩). */
+  function chipIndexAtPoint(x: number, y: number): number | null {
+    const row = chipRowRef.current
+    if (!row) return null
+    const els = Array.from(row.querySelectorAll<HTMLElement>('[data-dest-idx]'))
+    let best: number | null = null
+    let bestDist = Infinity
+    for (const el of els) {
+      const r = el.getBoundingClientRect()
+      const i = Number(el.dataset.destIdx)
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return i
+      const cx = (r.left + r.right) / 2
+      const cy = (r.top + r.bottom) / 2
+      const d = Math.hypot(x - cx, y - cy)
+      if (d < bestDist) { bestDist = d; best = i }
+    }
+    return best
+  }
+
+  function onGripPointerDown(idx: number, e: React.PointerEvent) {
+    if (!multi || !editMode) return
+    e.preventDefault()
+    e.stopPropagation()
+    dragRef.current = { from: idx, over: idx }
+    setDragIdx(idx)
+    setOverIdx(idx)
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  function onGripPointerMove(e: React.PointerEvent) {
+    if (!dragRef.current) return
+    const over = chipIndexAtPoint(e.clientX, e.clientY)
+    if (over === null || over === dragRef.current.over) return
+    dragRef.current.over = over
+    setOverIdx(over)
+  }
+
+  function onGripPointerUp(e: React.PointerEvent) {
+    const st = dragRef.current
+    dragRef.current = null
+    try { e.currentTarget.releasePointerCapture(e.pointerId) } catch { /* noop */ }
+    setDragIdx(null)
+    setOverIdx(null)
+    if (st && st.over !== st.from) void reorderDests(st.from, st.over)
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
@@ -229,7 +279,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
       <div ref={containerRef} className="relative min-w-0 flex flex-col md:flex-row items-start gap-md">
         <div className="flex-1 min-w-0">
         {selected.length > 0 ? (
-          <div className="group/val flex items-center gap-md flex-nowrap overflow-x-auto scrollbar-minimal md:flex-wrap md:overflow-x-visible">
+          <div ref={chipRowRef} className="group/val flex items-center gap-md flex-nowrap overflow-x-auto scrollbar-minimal md:flex-wrap md:overflow-x-visible">
             {selected.map((ko, idx) => {
               const code = destCode(ko)
               const isActive = multi && (activeDestination ?? selected[0]) === ko
@@ -237,23 +287,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
               return (
                 <span
                   key={ko}
-                  // 드롭 대상. 드래그 시작은 아래 grip 핸들에서만 — 칩 본문이 버튼이라
-                  // span 을 직접 잡으면 네이티브 드래그가 시작되지 않기 때문(크로미움).
-                  onDragOver={(e) => {
-                    if (!multi || !editMode || dragIdx === null) return
-                    e.preventDefault()
-                    e.dataTransfer.dropEffect = 'move'
-                    if (overIdx !== idx) setOverIdx(idx)
-                  }}
-                  onDragLeave={() => {
-                    if (overIdx === idx) setOverIdx(null)
-                  }}
-                  onDrop={(e) => {
-                    if (!multi || !editMode || dragIdx === null) return
-                    e.preventDefault()
-                    void reorderDests(dragIdx, idx)
-                    setDragIdx(null); setOverIdx(null)
-                  }}
+                  data-dest-idx={idx}
                   className={cn(
                     'group/chip shrink-0 inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 transition-all select-none',
                     'bg-pmw-tag text-pmw-tag-foreground',
@@ -264,17 +298,11 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                 >
                   {multi && editMode && (
                     <span
-                      draggable
-                      onDragStart={(e) => {
-                        setDragIdx(idx)
-                        e.dataTransfer.effectAllowed = 'move'
-                        e.dataTransfer.setData('text/plain', String(idx))
-                        // 드래그 이미지로 칩 전체(핸들의 부모 span) 사용.
-                        const chip = e.currentTarget.parentElement
-                        if (chip) e.dataTransfer.setDragImage(chip, 0, 0)
-                      }}
-                      onDragEnd={() => { setDragIdx(null); setOverIdx(null) }}
-                      className="shrink-0 self-center -ml-1 cursor-grab active:cursor-grabbing text-pmw-tag-foreground/40 hover:text-pmw-tag-foreground/70 transition-colors"
+                      onPointerDown={(e) => onGripPointerDown(idx, e)}
+                      onPointerMove={onGripPointerMove}
+                      onPointerUp={onGripPointerUp}
+                      onPointerCancel={onGripPointerUp}
+                      className="shrink-0 self-center -ml-1 touch-none cursor-grab active:cursor-grabbing text-pmw-tag-foreground/40 hover:text-pmw-tag-foreground/70 transition-colors"
                       title="드래그하여 순서 변경"
                       aria-label="순서 변경 핸들"
                     >
