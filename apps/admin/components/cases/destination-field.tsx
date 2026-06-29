@@ -305,11 +305,16 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                   {multi && editMode && (
                     <span
                       onPointerDown={(e) => onGripPointerDown(idx, e)}
-                      className="shrink-0 self-center -ml-1 touch-none cursor-grab active:cursor-grabbing text-pmw-tag-foreground/40 hover:text-pmw-tag-foreground/70 transition-colors"
+                      // 실제 마우스로 끌면 인라인 SVG 가 네이티브 이미지 드래그를 발동 →
+                      // pointercancel 로 pointermove 가 끊겨 이동 추적이 죽는다. 네이티브
+                      // 드래그를 막아 포인터 스트림을 유지(합성 이벤트는 이걸 안 띄워 가려졌던 버그).
+                      draggable={false}
+                      onDragStart={(e) => e.preventDefault()}
+                      className="shrink-0 self-center -ml-1 touch-none select-none cursor-grab active:cursor-grabbing text-pmw-tag-foreground/40 hover:text-pmw-tag-foreground/70 transition-colors"
                       title="드래그하여 순서 변경"
                       aria-label="순서 변경 핸들"
                     >
-                      <GripVertical size={12} />
+                      <GripVertical size={12} className="pointer-events-none" />
                     </span>
                   )}
                   <button
