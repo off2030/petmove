@@ -363,6 +363,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     done: 'has-extra-rabies',
     allowAttachments: true,
     attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
+    // 1·2차와 같은 라벨 — 보관함에서 광견병백신_3, _4 … 로 번호가 이어진다.
+    attachmentLabel: '광견병백신',
     validationIds: [
       'jp.rabies-validity-expires-soon',
       'jp.rabies-extra-within-previous-validity',
@@ -511,6 +513,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     done: 'has-extra-titer',
     allowAttachments: true,
     attachmentHint: '검사결과지 사본을 사진, PDF로 보관하세요.',
+    // 본 항체검사와 같은 라벨 — 보관함에서 '광견병 항체 검사 결과지_2, _3 …' 으로 번호가 이어진다.
+    attachmentLabel: '광견병 항체 검사 결과지',
     validationIds: ['jp.titer-validity-expires-soon', 'jp.titer-extra-within-rabies-validity'],
   },
 
