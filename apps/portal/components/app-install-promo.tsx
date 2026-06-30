@@ -76,8 +76,9 @@ export function AppInstallPromo() {
     <InstallAppSheet
       open={open}
       onClose={close}
-      title="펫무브 앱에서 더 편하게"
-      subtitle="알림·서류 등 모든 기능은 앱에서 매끄럽게 이용할 수 있어요."
+      // 앱과 웹의 차이는 '알림'뿐 — 과장 없이 알림 가치만 정직하게.
+      title="앱에서 편하게 준비하세요"
+      subtitle="일정 알림 기능을 사용할 수 있어요"
       closeLabel="웹으로 둘러볼게요"
     />
   )
