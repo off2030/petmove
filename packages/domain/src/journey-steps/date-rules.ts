@@ -394,6 +394,27 @@ export function validateChImportPermitDate(filedDate: string, entryDate: string)
   return null
 }
 
+/**
+ * 촌충(에키노코쿠스) 구충 — 출국(=목적지 입국) `1~maxDays`일 전에 받아야 함. EU echinococcus-free
+ * 국(영국·아일랜드·몰타·노르웨이·핀란드)은 입국 직전 24~120시간(1~5일)에만 유효한 절차라, 그
+ * 밖(너무 이르거나 늦음)의 구충은 의미가 없어 입력불가로 막는다. maxDays 는 앱별로 다름 —
+ * 펫무브앱(portal)=5(법적 상한), 펫무브워크(admin)는 별도 1~3일 주의(eu.tapeworm-1to3days)를
+ * 그대로 유지(portal 에선 그 주의를 숨김). 처치·출국 한쪽 비면 통과.
+ */
+export function validateEchinococcusWindow(
+  treatmentDate: string,
+  departureDate: string,
+  maxDays: number,
+): string | null {
+  if (!treatmentDate || !departureDate) return null
+  const days = daysBetween(treatmentDate, departureDate)
+  if (days === null) return null
+  if (days < 1 || days > maxDays) {
+    return `촌충 구충은 출국 1~${maxDays}일 전에 받아야 해요.`
+  }
+  return null
+}
+
 /** 일본 수출검역 예약일: 일본 입국일 ≤ 예약일 ≤ 귀국일. */
 export function validateJpExportReservationDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null

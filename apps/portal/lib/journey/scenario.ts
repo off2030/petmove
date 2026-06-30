@@ -342,6 +342,16 @@ const ADVISORY_DEFERRED_CHECKS = new Set<string>([
   'eu.rabies-valid-until-on-departure',
 ])
 
+/**
+ * 펫무브앱(portal) 전용 표시 제외 — admin 과 검증 기준이 다른 룰만.
+ *  - eu.tapeworm-1to3days-before-departure: admin 은 1~3일 주의 유지, portal 은 1~5일(법적
+ *    24~120시간) 입력불가(getSaveBlockError → validateEchinococcusWindow)로 대체. portal 에선
+ *    이 1~3 주의를 숨겨 1~5 기준만 노출한다(촌충은 출국 직전에만 의미 있는 절차).
+ */
+const PORTAL_SUPPRESSED_CHECKS = new Set<string>([
+  'eu.tapeworm-1to3days-before-departure',
+])
+
 export function buildJourney(
   caseRowInput: CaseRow,
   activeDestination?: string | null,
@@ -414,6 +424,8 @@ export function buildJourney(
     })
     for (const { check, result } of all) {
       if (result.ok) continue
+      // portal 전용 표시 제외(admin 과 기준 다른 룰) — 위 PORTAL_SUPPRESSED_CHECKS 주석 참고.
+      if (PORTAL_SUPPRESSED_CHECKS.has(check.id)) continue
       let stepId = findStepForCheck(check.id)
       if (!stepId) {
         // advisory step(추가 백신·추가 검사)이 같은 조건을 안내로 처리 — 상단 주의로 중복 노출 안 함.

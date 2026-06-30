@@ -24,6 +24,7 @@ import {
   validateRabiesInterval,
   validateRabiesPrimeAge,
   validateChImportPermitDate,
+  validateEchinococcusWindow,
   validateEuEntryDate,
   validateEuTiterAfterVaccine,
   validateIeAdvanceNoticeDate,
@@ -1053,6 +1054,16 @@ export function StepDetailView({
       for (const e of parasite) {
         if (e.date && birth && e.date < birth) {
           return '처치일이 출생일보다 빨라요. 날짜를 확인하세요.'
+        }
+      }
+      // 촌충(에키노코쿠스)은 출국 직전 1~5일(법적 24~120시간)에만 유효 — 그 밖은 의미 없어 차단.
+      // (펫무브앱=5일 상한 입력불가. admin 은 1~3일 주의 유지 — portal 에선 그 주의 숨김.)
+      if (isEchinococcus) {
+        const dep = (caseRow?.departure_date ?? '').slice(0, 10)
+        for (const e of parasite) {
+          if (!e.date) continue
+          const err = validateEchinococcusWindow(e.date, dep, 5)
+          if (err) return err
         }
       }
       return null
