@@ -1964,37 +1964,70 @@ export function StepDetailView({
             color: C.ink2,
           }}
         >
-          {/* description 의 모든 비어있지 않은 줄을 bullet 항목으로 표시.
-              \n\n 으로 구분된 단락의 경계는 marginTop 으로 단락 간 간격을 살짝 줌. */}
+          {/* description 의 모든 비어있지 않은 줄을 항목으로 표시.
+              경량 마크업(opt-in): '## ' 줄 = 소제목(불릿 X, 볼드), '- ' 줄 = 하위 ✓ 항목(amber),
+              그 외 = 일반 • 불릿. \n\n 으로 구분된 단락 경계는 marginTop 으로 간격을 살짝 줌. */}
           {(() => {
             const lines = step.description.split('\n')
-            const items = lines.reduce<Array<{ line: string; key: number; paraBreakBefore: boolean }>>(
-              (acc, line, i) => {
-                if (line.trim() === '') return acc
-                const prevLine = i > 0 ? lines[i - 1] : null
-                acc.push({ line, key: i, paraBreakBefore: prevLine?.trim() === '' })
-                return acc
-              },
-              [],
-            )
+            type DescItem = {
+              text: string
+              key: number
+              kind: 'heading' | 'sub' | 'bullet'
+              paraBreakBefore: boolean
+            }
+            const items = lines.reduce<Array<DescItem>>((acc, line, i) => {
+              if (line.trim() === '') return acc
+              const paraBreakBefore = i > 0 ? lines[i - 1].trim() === '' : false
+              if (line.startsWith('## ')) acc.push({ text: line.slice(3), key: i, kind: 'heading', paraBreakBefore })
+              else if (line.startsWith('- ')) acc.push({ text: line.slice(2), key: i, kind: 'sub', paraBreakBefore })
+              else acc.push({ text: line, key: i, kind: 'bullet', paraBreakBefore })
+              return acc
+            }, [])
             return (
               <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                {items.map(({ line, key, paraBreakBefore }, itemIndex) => (
+                {items.map(({ text, key, kind, paraBreakBefore }, itemIndex) => {
+                  const marginTop =
+                    itemIndex === 0
+                      ? 0
+                      : kind === 'heading'
+                        ? 16
+                        : kind === 'sub'
+                          ? 8
+                          : paraBreakBefore
+                            ? 14
+                            : 8
+                  if (kind === 'heading') {
+                    return (
+                      <li key={key} style={{ marginTop, fontWeight: 600, color: C.ink }}>
+                        {text}
+                      </li>
+                    )
+                  }
+                  return (
                     <li
                       key={key}
                       style={{
                         display: 'flex',
                         gap: 8,
                         alignItems: 'flex-start',
-                        marginTop: itemIndex === 0 ? 0 : paraBreakBefore ? 14 : 8,
+                        marginTop,
+                        paddingLeft: kind === 'sub' ? 4 : 0,
                       }}
                     >
-                      <span style={{ flexShrink: 0, color: C.ink3 }} aria-hidden>
-                        •
+                      <span
+                        style={{
+                          flexShrink: 0,
+                          color: kind === 'sub' ? C.accent : C.ink3,
+                          fontWeight: kind === 'sub' ? 700 : 400,
+                        }}
+                        aria-hidden
+                      >
+                        {kind === 'sub' ? '✓' : '•'}
                       </span>
-                      <span>{line}</span>
+                      <span>{text}</span>
                     </li>
-                ))}
+                  )
+                })}
               </ul>
             )
           })()}
