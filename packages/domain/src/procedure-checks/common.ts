@@ -134,7 +134,7 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
       const expireKr = formatKoreanDate(addYears(newest.date, 2))
       return {
         ok: false,
-        message: `광견병 항체 검사 유효기간(2년)이 ${expireKr}에 만료돼요. 한국 귀국 전 재검사가 필요할 수 있어요. (광견병 비발생 지역은 면제 — 지정은 수시 변동하니 출국 전 검역본부 054-912-0427 확인)`,
+        message: `광견병 항체 검사 유효기간(2년)이 ${expireKr}에 만료돼요. 한국 귀국 전 재검사가 필요할 수 있어요. (광견병 비발생 지역은 면제)`,
         offendingPaths: titers.map((t) => `rabies_titer_records[${t.originalIndex}].date`),
       }
     },
