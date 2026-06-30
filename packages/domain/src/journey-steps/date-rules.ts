@@ -270,8 +270,7 @@ export function validateEuTiterAfterVaccine(
     else break
   }
   if (daysBetween(chainStart.date, titerDate) < 30) {
-    const earliest = addDays(chainStart.date, 30)
-    return `광견병 항체 검사는 백신 접종일(${fmt(chainStart.date)})로부터 30일이 지난 후에 받을 수 있어요.${earliest ? ` ${fmt(earliest)} 이후로 입력하세요.` : ''}`
+    return `광견병 항체 검사는 백신 접종일(${fmt(chainStart.date)})로부터 30일이 지난 후에 받아야 해요.`
   }
   return null
 }
@@ -373,8 +372,7 @@ export function validateEuEntryDate(v: string, ctx: DateRuleContext): string | n
   })
   if (ok) return null
   const earliestTiter = titerDates[0]
-  const earliest = addMonths(earliestTiter, 3)
-  return `광견병 항체 검사일(${fmt(earliestTiter)})로부터 3개월이 지난 ${earliest ? fmt(earliest) : ''} 이후에 입국이 가능해요.`
+  return `광견병 항체 검사일(${fmt(earliestTiter)})로부터 3개월이 지나면 입국할 수 있어요`
 }
 
 /**
@@ -384,7 +382,7 @@ export function validateEuEntryDate(v: string, ctx: DateRuleContext): string | n
 export function validateIeAdvanceNoticeDate(noticeDate: string, entryDate: string): string | null {
   if (!noticeDate || !entryDate) return null
   if (daysBetween(noticeDate, entryDate) < 1) {
-    return '아일랜드 입국 24시간(1일) 전까지 사전 통지를 해야 해요. 통지가 늦은 경우 입국일을 변경해야 해요.'
+    return '입국 24시간(1일) 전까지 사전 통지를 해야 해요. 통지가 늦은 경우 입국일을 변경해야 해요.'
   }
   return null
 }
@@ -396,7 +394,7 @@ export function validateIeAdvanceNoticeDate(noticeDate: string, entryDate: strin
 export function validateChImportPermitDate(filedDate: string, entryDate: string): string | null {
   if (!filedDate || !entryDate) return null
   if (daysBetween(filedDate, entryDate) < 21) {
-    return '스위스 입국 3주(21일) 전까지 수입허가를 신청해야 해요. 신청이 늦은 경우 입국일을 변경해야 해요.'
+    return '입국 3주(21일) 전까지 수입허가를 신청해야 해요. 신청이 늦은 경우 입국일을 변경해야 해요.'
   }
   return null
 }
