@@ -17,17 +17,13 @@ const themeNoFlash = `(function(){try{var m=localStorage.getItem('pm-theme')||'l
 // Portal 폰트는 globals.css 의 self-hosted @font-face(Pretendard/Alonzo)만 사용한다.
 // next/font/google 은 빌드 때 Google Fonts 네트워크 fetch 가 필요해 재현 가능한 출시 빌드를 막는다.
 
+// PWA(홈 화면 추가) 비활성 — 네이티브 앱으로만 설치 유도(manifest.ts 와 한 쌍).
+// apple-mobile-web-app-capable 을 켜지 않으면 iOS 에서 홈 화면에 추가해도 standalone PWA 가
+// 아니라 Safari 로 열린다(= 앱처럼 설치되지 않음). Capacitor 네이티브 WKWebView 는 이 태그를
+// 참조하지 않으므로(상태바는 StatusBar 플러그인이 제어) 네이티브 앱엔 영향 없음.
 export const metadata: Metadata = {
   title: '펫무브',
   description: '반려동물 해외 출국 — 보호자 셀프서비스',
-  appleWebApp: {
-    capable: true,
-    title: '펫무브',
-    statusBarStyle: 'default',
-  },
-  other: {
-    'apple-mobile-web-app-capable': 'yes',
-  },
 }
 
 export const viewport: Viewport = {
