@@ -195,6 +195,8 @@ function ToggleRow({
 export function SettingsView() {
   const version = process.env.NEXT_PUBLIC_APP_VERSION
   const gitSha = process.env.NEXT_PUBLIC_GIT_SHA
+  // 0.x 버전 = 베타. 1.0.0 으로 올리면 '(베타)' 라벨이 자동으로 사라진다(코드 수정 불필요).
+  const isBeta = version?.startsWith('0.') ?? false
   const { profile, updateProfile, cases } = useCases()
   const confirm = useConfirm()
   const scheduledAt = profile?.deletion_scheduled_at ?? null
@@ -373,7 +375,9 @@ export function SettingsView() {
           label="버전"
           right={
             <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontSize: 15, color: C.ink2 }}>{version ? `v${version}` : '—'}</span>
+              <span style={{ fontSize: 15, color: C.ink2 }}>
+                {version ? `v${version}${isBeta ? ' (베타)' : ''}` : '—'}
+              </span>
               {gitSha && (
                 <span style={{ fontSize: 11, color: C.ink3, fontVariantNumeric: 'tabular-nums' }}>
                   {gitSha}
