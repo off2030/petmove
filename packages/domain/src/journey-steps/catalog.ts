@@ -1233,7 +1233,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '건강증명서·여권 등 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentHint: '건강증명서·EU 반려동물 여권 등 서류 사본을 사진·PDF로 보관하세요.',
   },
 
   // ── 필리핀 현지 동물병원 방문 (왕복 — 귀국 출국 전, BAI 수출검역 신청용 건강증명서 발급) ──
