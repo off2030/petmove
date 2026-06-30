@@ -1,5 +1,4 @@
 import {
-  addYears,
   buildCaseJourneyContext,
   deriveAdvanceNotificationStatus,
   deriveImportPermitStatus,
@@ -12,6 +11,7 @@ import {
   readRabiesEntries,
   readTiterEntries,
   resolveValidUntil,
+  titerReminderTargets,
   type CaseRow,
 } from '@petmove/domain'
 
@@ -256,29 +256,33 @@ function validityRemindersForItem(
   trip: string,
   today: string,
   now: Date,
+  // anchorLabel: '출국 전 만료' / '귀국 전 만료' 구분(기본 출국). idTag: ID 고유화(목적지별 titer 등).
+  opts?: { anchorLabel?: string; idTag?: string },
 ): AppReminder[] {
   if (!isIsoDate(validEnd)) return []
   const out: AppReminder[] = []
   const end = validEnd.slice(0, 10)
   const expiresBeforeTrip = !!trip && end < trip
+  const anchor = opts?.anchorLabel ?? '출국'
+  const idBase = opts?.idTag ?? label
 
   // 1) 만료 30일 전
   const fire30 = localDateTime(end, FIRE_HOUR, -30)
   const body30 = expiresBeforeTrip
-    ? `${pet} ${label} 유효기간이 출국 전(${koreanDate(end)})에 만료돼요. ${koreanDate(end)}까지 ${action.act}.`
+    ? `${pet} ${label} 유효기간이 ${anchor} 전(${koreanDate(end)})에 만료돼요. ${koreanDate(end)}까지 ${action.act}.`
     : `${pet} ${label} 유효기간이 한 달 뒤(${koreanDate(end)}) 만료돼요. ${action.prepare}.`
-  const r30 = reminderAt(`${caseRow.id}|validity|${label}|${end}|d30`, fire30, body30, now)
+  const r30 = reminderAt(`${caseRow.id}|validity|${idBase}|${end}|d30`, fire30, body30, now)
   if (r30) out.push(r30)
   else if (expiresBeforeTrip && trip > today) {
-    // 30일 알림 시점이 이미 지났는데 출국 전 만료 + 출국이 미래 — 다음 오전 9시에 즉시 경고.
+    // 30일 알림 시점이 이미 지났는데 기준일 전 만료 + 기준일이 미래 — 다음 오전 9시에 즉시 경고.
     const nine = localDateTime(today, FIRE_HOUR, 0)
     const urgentFire =
       new Date(nine).getTime() > now.getTime() ? nine : localDateTime(today, FIRE_HOUR, 1)
     if (new Date(urgentFire).getTime() < new Date(localDateTime(trip, FIRE_HOUR, 0)).getTime()) {
       const r = reminderAt(
-        `${caseRow.id}|validity|${label}|${end}|trip`,
+        `${caseRow.id}|validity|${idBase}|${end}|trip`,
         urgentFire,
-        `${pet} ${label} 유효기간이 출국 전에 만료돼요. ${koreanDate(end)}까지 ${action.act}.`,
+        `${pet} ${label} 유효기간이 ${anchor} 전에 만료돼요. ${koreanDate(end)}까지 ${action.act}.`,
         now,
       )
       if (r) out.push(r)
@@ -312,12 +316,44 @@ function collectValidityReminders(caseRow: CaseRow, pet: string, today: string, 
     out.push(...validityRemindersForItem(caseRow, pet, label, end, VACCINE_ACTION, trip, today, now))
   }
 
-  // 광견병 항체 검사(titer) — 채혈일 + 2년. (검사 중 만료 알림은 항체검사만 — 전염병검사 등 X)
+  // 광견병 항체 검사(titer) — 목적지별 유효기간(입국용 + 귀국용). 목적지마다 기준일·유효기간이
+  // 달라(일본 입국 2년 / 태국·필리핀·EU 귀국 2년 / EU 입국 무기한) 케이스 1개가 아니라
+  // 목적지별로 만료 알림을 만든다. 유효기간 산정·적용여부는 도메인(titerReminderTargets) 단일 출처.
   const titers = readTiterEntries(caseRow)
   if (titers.length) {
-    const latest = titers.map((t) => t.date).sort().slice(-1)[0]
-    const end = addYears(latest, 2)
-    out.push(...validityRemindersForItem(caseRow, pet, '광견병 항체 검사', end, TITER_ACTION, trip, today, now))
+    const latestTiter = titers.map((t) => t.date).sort().slice(-1)[0]
+    for (const token of destinationTokens(caseRow)) {
+      let flat: CaseRow
+      try {
+        flat = flattenCaseForDestination(caseRow, token)
+      } catch {
+        continue
+      }
+      const d = asRecord(flat.data) ?? {}
+      const entryDate = str(d.entry_date) || str(flat.departure_date)
+      const returnDate = str(d.return_date)
+      const targets = titerReminderTargets({
+        destinationToken: token,
+        latestTiterDate: latestTiter,
+        entryDate,
+        returnDate,
+      })
+      for (const tg of targets) {
+        out.push(
+          ...validityRemindersForItem(
+            caseRow,
+            pet,
+            '광견병 항체 검사',
+            tg.validUntil,
+            TITER_ACTION,
+            tg.anchorDate,
+            today,
+            now,
+            { anchorLabel: tg.anchorLabel, idTag: `titer-${tg.kind}-${token}` },
+          ),
+        )
+      }
+    }
   }
 
   return out
