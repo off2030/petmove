@@ -365,6 +365,11 @@ function euFamilyOverrides(opts: {
       attachmentHint: '확인받은 서류 사본을 사진, PDF로 저장하세요.',
       validationIds: ['eu.import-quarantine-date-valid'],
     },
+    // 귀국 서류 — EU 패밀리. 나라명(label) 동적 표기 + 대체 서류(EU 여권·한국 검역증) 안내.
+    // base(catalog) 는 비EU 유럽(영국·노르웨이 등)이 공유하므로 EU 키만 여기서 갈아끼운다.
+    'eu-export-cert': {
+      description: `${label} 정부가 인증한 건강증명서 또는 대체 서류를 준비하세요.\n현지 동물병원에서 건강증명서를 받은 뒤, 관할 당국(공무 수의사)의 최종 인증을 받으세요.\n\n다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요.\nEU 반려동물 여권\n한국 출국 시 받은 동물검역증`,
+    },
   }
   if (euAhc) {
     // base 'vet-visit'(별지25만 안내)에 EU 동물건강증명서(Annex III) 발급 안내를 추가한다.
