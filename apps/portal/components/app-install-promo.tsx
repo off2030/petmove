@@ -77,7 +77,7 @@ export function AppInstallPromo() {
       open={open}
       onClose={close}
       // 앱과 웹의 차이는 '알림'뿐 — 과장 없이 알림 가치만 정직하게.
-      title="앱에서 편하게 준비하세요"
+      title="펫무브 앱에서 편하게 준비하세요"
       subtitle="일정 알림 기능을 사용할 수 있어요"
       closeLabel="웹으로 둘러볼게요"
     />
