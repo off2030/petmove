@@ -103,7 +103,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
       if (age < 84) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령이에요. 최소 84일령(12주) 이상이어야 해요.`,
+          message: '광견병 접종은 생후 84일(12주)이 지나서 할 수 있어요',
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -231,7 +231,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 이전에 만료돼요.`,
+          message: '광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.',
           offendingPaths: [
             'departure_date',
             `rabies_dates[${latest.originalIndex}].date`,
@@ -356,7 +356,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
       if (entry && raw < entry) {
         return {
           ok: false,
-          message: '입국 검사일은 도착(입국)일보다 빠를 수 없어요.',
+          message: '입국 검사일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
           offendingPaths: ['eu_import_quarantine_date'],
         }
       }
