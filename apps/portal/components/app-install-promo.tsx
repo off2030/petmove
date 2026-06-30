@@ -32,7 +32,14 @@ function isNativeApp(): boolean {
 
 function isMobileBrowser(): boolean {
   if (typeof navigator === 'undefined') return false
-  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '')
+  const ua = navigator.userAgent || ''
+  if (/iPhone|iPad|iPod|Android/i.test(ua)) return true
+  // iPadOS 13+ Safari 는 데스크톱 Mac UA('Macintosh', 'iPad' 문자열 없음)로 위장한다 →
+  // 터치 지원되는 Mac 은 iPad 로 간주. (데스크톱 Mac 은 maxTouchPoints 0~1 이라 제외)
+  if (/Macintosh/i.test(ua) && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1) {
+    return true
+  }
+  return false
 }
 
 function recentlyDismissed(): boolean {
