@@ -72,7 +72,21 @@ function StoreButton({ label, glyph, url }: { label: string; glyph: ReactNode; u
   )
 }
 
-export function InstallAppSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function InstallAppSheet({
+  open,
+  onClose,
+  // 문구 기본값 = 알림 토글에서 띄울 때(알림 맥락). 일반 설치 유도(접속 시 자동 배너)에서는
+  // AppInstallPromo 가 일반 문구를 넘긴다.
+  title = '앱에서 알림을 받아보세요',
+  subtitle = '펫무브 앱을 설치하고 일정 알림을 받으세요.',
+  closeLabel = '나중에 할게요',
+}: {
+  open: boolean
+  onClose: () => void
+  title?: string
+  subtitle?: string
+  closeLabel?: string
+}) {
   const [target, setTarget] = useState<Target>('both')
 
   // 기기 추정은 마운트 후 1회 — SSR/첫 렌더는 'both'(버튼 둘)로 그려 하이드레이션 불일치를 피하고,
@@ -149,7 +163,7 @@ export function InstallAppSheet({ open, onClose }: { open: boolean; onClose: () 
             marginBottom: 10,
           }}
         >
-          앱에서 알림을 받아보세요
+          {title}
         </div>
         <div
           style={{
@@ -161,7 +175,7 @@ export function InstallAppSheet({ open, onClose }: { open: boolean; onClose: () 
             padding: '0 6px',
           }}
         >
-          펫무브 앱을 설치하고 일정 알림을 받으세요.
+          {subtitle}
         </div>
         <div
           style={{
@@ -190,7 +204,7 @@ export function InstallAppSheet({ open, onClose }: { open: boolean; onClose: () 
             fontFamily: 'inherit',
           }}
         >
-          나중에 할게요
+          {closeLabel}
         </button>
       </div>
     </div>

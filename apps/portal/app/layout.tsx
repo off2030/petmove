@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { ConfirmProvider } from '@petmove/ui'
 import { ServiceWorkerRegister } from '@/components/sw-register'
+import { AppInstallPromo } from '@/components/app-install-promo'
 import { NativeSplash } from '@/components/native-splash'
 import { NativeAuthListener } from '@/components/native-auth-listener'
 import { NotificationTapListener } from '@/components/notification-tap-listener'
@@ -47,6 +48,7 @@ export default function RootLayout({
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <script dangerouslySetInnerHTML={{ __html: themeNoFlash }} />
         <ServiceWorkerRegister />
+        <AppInstallPromo />
         <NativeSplash />
         <NativeAuthListener />
         <NotificationTapListener />
