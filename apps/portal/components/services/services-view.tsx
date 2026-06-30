@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import type { CaseRow } from '@petmove/domain'
+import { matchesDestinationKey, type CaseRow } from '@petmove/domain'
 import destsData from '@petmove/domain/data/destinations.json'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { readLastCaseId, readLastDest } from '@/components/portal-shell/last-case'
@@ -329,6 +329,30 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
     ],
     reviews: PHILIPPINE_REVIEWS,
   },
+  // 유럽(EU 24개국) — EU Reg 576/2013 공통 절차라 한 벌로 공유(resolveDetail 가 'eu' 로 정규화).
+  // 한국은 EU 비지정국이라 광견병 항체검사 필수. 일본과 달리 검역소 사전신고·수출검역 신청 절차는 없음.
+  eu: {
+    intro:
+      '로잔동물의료센터에서 검역 준비를 해 드려요. 의료 절차와 서류 준비까지 빈틈없이 진행해 드려요. 앱을 통해 쉽게 진행 상황, 정보를 확인할 수 있어요.',
+    included: [
+      { label: '마이크로칩 삽입 · 동물등록' },
+      { label: '광견병 백신 접종' },
+      { label: '광견병 항체 검사' },
+      { label: '출국 전 임상검사' },
+      { label: '서류 준비' },
+    ],
+    steps: ['예약', '내원', '상담', '시작'],
+    faq: [
+      {
+        q: '어디로 방문하나요?',
+        a: '로잔동물의료센터로 방문해 주세요.',
+        link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
+      },
+      { q: '비용은 얼마인가요?', a: '오프라인 올케어의 비용은 약 36~46만원이에요. 정확한 비용은 상담 후 결정돼요.' },
+      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 3~4개월 정도 걸려요.' },
+    ],
+    reviews: [],
+  },
   default: {
     intro: '복잡한 검역 절차, 수의사가 처음부터 끝까지 직접 준비·관리해 드려요.',
     included: [
@@ -427,6 +451,23 @@ const ONLINE_DETAIL: Record<string, DestDetail> = {
     ],
     reviews: PHILIPPINE_REVIEWS,
   },
+  // 유럽(EU 24개국) 온라인 안심케어 — EU Reg 576/2013 공통, resolveDetail 가 'eu' 로 정규화.
+  eu: {
+    intro:
+      '안심하고 준비할 수 있도록 곁에서 도와드려요. 단계별 가이드, EU 동물건강증명서(Annex III) 준비, 서류 점검을 해 드려요. 준비 중 궁금한 것은 언제든 문의할 수 있어요.',
+    included: [
+      { label: '단계별 가이드' },
+      { label: 'EU 동물건강증명서(Annex III) 준비' },
+      { label: '서류 점검' },
+    ],
+    steps: ['상담', '신청', '결제', '시작'],
+    faq: [
+      { q: '어떻게 도움을 받나요?', a: '온라인 안심케어는 앱과 카카오톡을 이용한 비대면 서비스예요. 필요에 따라 전화 연결도 가능해요.' },
+      { q: '비용은 얼마인가요?', a: '온라인 안심케어는 서비스 내용에 따라 비용이 달라져요. 정확한 비용은 상담 후 결정돼요.' },
+      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 3~4개월 정도 걸려요.' },
+    ],
+    reviews: [],
+  },
   default: {
     intro: '직접 준비하시되 혼자 헤매지 않게, 실패 없는 안전한 준비를 곁에서 도와드려요.',
     included: [
@@ -471,9 +512,12 @@ const HIGHLIGHTS: Highlight[] = [
  * 상세 본문(DestDetail) 선택 — `목적지:왕복편도` → `목적지`(트립 공통) → `default` 순.
  * 같은 목적지라도 왕복/편도는 절차가 달라(예: 한국 재입국 시 광견병 항체검사) 트립별로 나눈다.
  * 트립 구분이 없는 목적지(일본 등)는 `목적지` 키 하나로 두 트립 모두 커버한다.
+ * EU 회원국 24개국은 개별 국가명 대신 'eu' 묶음 키 한 벌로 정규화해 공유한다.
  */
 function resolveDetail(map: Record<string, DestDetail>, dest: string, trip: TripType): DestDetail {
-  return map[`${dest}:${trip}`] ?? map[dest] ?? map.default
+  // EU 회원국 24개국은 EU Reg 576/2013 공통 절차라 개별 국가 키 대신 'eu' 한 벌로 본다.
+  const key = matchesDestinationKey(dest, 'eu') ? 'eu' : dest
+  return map[`${key}:${trip}`] ?? map[key] ?? map.default
 }
 
 /** 카드 본체는 공통, 상세 본문(DestDetail)만 목적지·왕복편도별. 미정 조합은 default 폴백. */
