@@ -913,6 +913,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'external_parasite_dates', label: '처치일', type: 'date_array' },
     ],
     allowAttachments: true,
+    attachmentLabel: '기생충 치료',
   },
 
   // ── 9. 내부구충 ────────────────────────────────────────────────────────
@@ -948,6 +949,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '증명서, 수첩 등을 사진, PDF로 보관하세요.',
+    // 외부구충과 같은 라벨 — 보관함에서 '기생충 치료_2, _3 …' 으로 번호가 이어진다.
+    attachmentLabel: '기생충 치료',
   },
 
   // ── 촌충 구충 (에키노코쿠스) — 영국·아일랜드·몰타·노르웨이·핀란드, 강아지 한정 ─────
