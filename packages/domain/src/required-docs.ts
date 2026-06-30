@@ -149,12 +149,12 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     KR_FORM25_VACCINATION_HEALTH_CERT,
     {
       id: 'form-ac-or-re',
-      name: '일본 증명서(Form AC)',
+      name: '일본 건강증명서(Form AC)',
       source: '동물병원',
       kind: 'manual',
       issuanceStepId: 'vet-visit',
       description:
-        '일본 지정 양식의 접종, 검사 및 건강증명서예요.\n출국일 기준 10일 이내에 동물병원에서 발급받아요. 이 서류는 발급하지 않는 동물병원이 많으므로 미리 확인하세요.\n\n재입국인 경우 Form AC 대신 Form RE와 일본 수출 동물검역증(Export Quarantine Certificate)을 준비해야 할 수 있어요. 일본 동물검역소 혹은 담당 동물병원에 확인하세요.\n한국 수출 검역 때 검역관 확인·서명을 받아야 해요.\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '일본 지정 양식의 건강증명서예요.\n출국일 기준 10일 이내에 동물병원에서 발급받아요. 이 서류는 발급하지 않는 동물병원이 많으므로 미리 확인하세요.\n\n재입국인 경우 Form AC 대신 Form RE와 일본 수출 동물검역증(Export Quarantine Certificate)을 준비해야 할 수 있어요. 일본 동물검역소 혹은 담당 동물병원에 확인하세요.\n한국 수출 검역 때 검역관 확인·서명을 받아야 해요.\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       templates: [
         { label: 'Form AC (PDF)', href: '/forms/form-ac.pdf', filename: 'FormAC.pdf' },
         { label: 'Form AC (Excel)', href: '/forms/form-ac.xlsx', filename: 'FormAC.xlsx' },
