@@ -246,9 +246,10 @@ function readDateArray(data: Record<string, unknown>, key: string): string[] {
 }
 
 /**
- * EU 패밀리 — 항체 검사 채혈일은 직전 유효 광견병 접종으로부터 30일 이후여야 함.
- * 부스터 chain 이 끊기지 않았으면(직전 접종 면역 유효 중 추가 접종) 30일 시계는 chain 시작
- * 접종 기준 — 채혈 당일 부스터를 맞아도 리셋되지 않는다. (eu.titer-min-30days-after-vaccine
+ * EU 패밀리 — 항체 검사 채혈일은 **직전(가장 최근) 광견병 접종**으로부터 30일 이후여야 함.
+ * (EU Reg 576/2013 Annex IV — "접종 후 30일 이후 채혈".) 부스터 chain(연속 재접종)은 *이미
+ * 합격한 항체검사를 재검사 안 해도 되게* 하는 별개 조항일 뿐, 새 채혈의 30일 기산점을 더 이른
+ * 접종으로 당기지 않는다 — 즉 직전 접종 이전의 접종은 무관. (eu.titer-min-30days-after-vaccine
  * 과 동일 알고리즘 — client 채혈 입력 차단용 단일 함수.)
  *
  * doses = rabies_dates 형태의 [{date, valid_until}] (입력 순서 무관). 채혈·접종 한쪽 비면 통과.
@@ -262,15 +263,9 @@ export function validateEuTiterAfterVaccine(
     .filter((d) => typeof d.date === 'string' && d.date.length >= 10 && d.date <= titerDate)
     .sort((a, b) => a.date.localeCompare(b.date))
   if (prior.length === 0) return null // 접종-채혈 순서 자체는 validateTiterAfterBooster 담당
-  let chainStart = prior[prior.length - 1]
-  for (let i = prior.length - 2; i >= 0; i--) {
-    const earlier = prior[i]
-    const validUntil = resolveValidUntil(earlier.date, earlier.valid_until)
-    if (validUntil && validUntil >= chainStart.date) chainStart = earlier
-    else break
-  }
-  if (daysBetween(chainStart.date, titerDate) < 30) {
-    return `광견병 항체 검사는 백신 접종일(${fmt(chainStart.date)})로부터 30일이 지난 후에 받아야 해요.`
+  const latest = prior[prior.length - 1] // 채혈 직전(가장 최근) 접종 — 그 이전 접종은 무관
+  if (daysBetween(latest.date, titerDate) < 30) {
+    return `광견병 항체 검사는 백신 접종일(${fmt(latest.date)})로부터 30일이 지난 후에 받아야 해요.`
   }
   return null
 }
