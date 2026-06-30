@@ -225,7 +225,7 @@ export function DocsView({
             stepId="misc"
             documents={[]}
             hideList
-            hint="추가로 보관하고 싶은 사진, PDF를 저장하세요."
+            hint="추가 서류를 사진·PDF로 보관하세요."
           />
         </div>
       </div>

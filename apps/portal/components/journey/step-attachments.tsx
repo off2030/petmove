@@ -228,7 +228,7 @@ export function StepAttachments({
             {busy ? '처리 중…' : '파일 추가'}
           </div>
           <div style={{ fontSize: 12, color: C.ink3, marginTop: 2, lineHeight: 1.5 }}>
-            {hint ?? '관련 서류 사진/PDF 를 올릴 수 있습니다.'}
+            {hint ?? '관련 서류를 사진·PDF로 보관하세요.'}
           </div>
         </div>
       </button>

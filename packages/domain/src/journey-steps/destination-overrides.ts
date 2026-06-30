@@ -33,7 +33,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         { key: 'jp_import_quarantine_date', label: '검역일', type: 'date' },
       ],
       allowAttachments: true,
-      attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
+      attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
       links: [
         { url: '/guide/japan-airport-quarantine', label: '일본 주요 공항 동물검역소 위치' },
       ],
@@ -123,7 +123,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
       // 출국 전 이메일로 받는 R.6(수입 허가 통지서) — base 의 '수입 허가증' 라벨을 태국 명칭으로 교체.
       // (입국 검역 때 받는 R.7 수입 허가서는 별개 — '태국 수입 검역' departure 카드에서 다룸.)
-      attachmentHint: '수입 허가 통지서(R.6)를 사진, PDF로 보관하세요.',
+      attachmentHint: '수입 허가 통지서(R.6)를 사진·PDF로 보관하세요.',
       attachmentLabel: '수입 허가 통지서(R.6)',
       // situational·완료 판정은 base catalog 의 import-permit 그대로 사용 — base 문구가 이미
       // '허가 번호' 언급을 뺀 어요체("진행 중이에요…")라 태국 전용 override 불필요. ack 게이트 없이
@@ -153,7 +153,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         },
       ],
       allowAttachments: true,
-      attachmentHint: '수입 허가서(R.7) 사본을 사진, PDF로 저장하세요.',
+      attachmentHint: '수입 허가서(R.7) 사본을 사진·PDF로 보관하세요.',
       validationIds: ['th.import-quarantine-date-valid'],
     },
   },
@@ -251,7 +251,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         },
       ],
       allowAttachments: true,
-      attachmentHint: '검역 서류 사본을 사진, PDF로 저장하세요.',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       validationIds: ['ph.import-quarantine-date-valid'],
     },
   },
@@ -362,7 +362,7 @@ function euFamilyOverrides(opts: {
         },
       ],
       allowAttachments: true,
-      attachmentHint: '확인받은 서류 사본을 사진, PDF로 저장하세요.',
+      attachmentHint: '확인받은 서류 사본을 사진·PDF로 보관하세요.',
       validationIds: ['eu.import-quarantine-date-valid'],
     },
     // 귀국 서류 — EU 패밀리. 나라명(label) 동적 표기 + 대체 서류(EU 여권·한국 검역증) 안내.

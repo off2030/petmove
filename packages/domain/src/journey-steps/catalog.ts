@@ -226,7 +226,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'rabies_1_product_expiry', label: '제품 유효기간', type: 'date' },
     ],
     allowAttachments: true,
-    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
+    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.',
     attachmentLabel: '광견병백신',
     // 1차 입력 시 client 입력 불가, 출생일·1차 수정 후 주의(jp.rabies-prime-after-91days-old).
     validationIds: ['jp.rabies-prime-after-91days-old'],
@@ -269,7 +269,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'rabies_2_product_expiry', label: '제품 유효기간', type: 'date' },
     ],
     allowAttachments: true,
-    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
+    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.',
     attachmentLabel: '광견병백신',
     validationIds: [
       // 1차 입력 차단(client)이 막는 1·2차 관계를, 1차를 나중에 수정해 깨진 경우엔 2차 step
@@ -362,7 +362,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 37,
     done: 'has-extra-rabies',
     allowAttachments: true,
-    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
+    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.',
     // 1·2차와 같은 라벨 — 보관함에서 광견병백신_3, _4 … 로 번호가 이어진다.
     attachmentLabel: '광견병백신',
     validationIds: [
@@ -432,7 +432,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'rabies_titer_value', label: '검사결과', type: 'text' },
     ],
     allowAttachments: true,
-    attachmentHint: '검사결과지 사본을 사진, PDF로 보관하세요.',
+    attachmentHint: '검사결과지 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '광견병 항체 검사 결과지',
     validationIds: [
       'jp.rabies-titer-vs-booster',
@@ -512,7 +512,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 41,
     done: 'has-extra-titer',
     allowAttachments: true,
-    attachmentHint: '검사결과지 사본을 사진, PDF로 보관하세요.',
+    attachmentHint: '검사결과지 사본을 사진·PDF로 보관하세요.',
     // 본 항체검사와 같은 라벨 — 보관함에서 '광견병 항체 검사 결과지_2, _3 …' 으로 번호가 이어진다.
     attachmentLabel: '광견병 항체 검사 결과지',
     validationIds: ['jp.titer-validity-expires-soon', 'jp.titer-extra-within-rabies-validity'],
@@ -579,7 +579,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'return_transport', label: '운송 방법', type: 'select' },
     ],
     allowAttachments: true,
-    attachmentHint: '구매한 항공권(e-티켓)을 사진, PDF로 보관하세요.',
+    attachmentHint: '구매한 항공권(e-티켓)을 사진·PDF로 보관하세요.',
     attachmentLabel: '항공권',
     validationIds: [
       'jp.entry-180days-after-titer',
@@ -637,7 +637,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     },
     inputs: [{ key: 'advance_notification_date', label: '신청일', type: 'date' }],
     allowAttachments: true,
-    attachmentHint: '허가서를 사진, PDF로 보관하세요.',
+    attachmentHint: '허가서를 사진·PDF로 보관하세요.',
     attachmentLabel: '허가서(Approval)',
     links: [
       { url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O', label: 'NACCS 신청 페이지' },
@@ -672,7 +672,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '제출 확인·안내 이메일을 사진, PDF로 보관하세요.',
+    attachmentHint: '제출 확인·안내 이메일을 사진·PDF로 보관하세요.',
     links: [
       {
         url: 'http://www.pettravel.gov.ie/pets/dogscatsferrets/outsideeu/',
@@ -818,7 +818,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'general_vaccine_dates', label: '접종일', type: 'date_array', hasValidUntil: true },
     ],
     allowAttachments: true,
-    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
+    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.',
     attachmentLabel: '종합백신',
   },
 
@@ -913,6 +913,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'external_parasite_dates', label: '처치일', type: 'date_array' },
     ],
     allowAttachments: true,
+    attachmentHint: '증명서, 수첩 등을 사진·PDF로 보관하세요.',
     attachmentLabel: '기생충 치료',
   },
 
@@ -948,7 +949,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'internal_parasite_dates', label: '투약일', type: 'date_array' },
     ],
     allowAttachments: true,
-    attachmentHint: '증명서, 수첩 등을 사진, PDF로 보관하세요.',
+    attachmentHint: '증명서, 수첩 등을 사진·PDF로 보관하세요.',
     // 외부구충과 같은 라벨 — 보관함에서 '기생충 치료_2, _3 …' 으로 번호가 이어진다.
     attachmentLabel: '기생충 치료',
   },
@@ -982,7 +983,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'internal_parasite_dates', label: '구충일', type: 'date_array' },
     ],
     allowAttachments: true,
-    attachmentHint: '구충 기록(증명서·수첩)을 사진, PDF로 보관하세요.',
+    attachmentHint: '구충 기록(증명서·수첩)을 사진·PDF로 보관하세요.',
     // 내부·외부구충과 같은 라벨 — 보관함에서 '기생충 치료_N' 으로 번호가 이어진다.
     attachmentLabel: '기생충 치료',
     validationIds: ['eu.tapeworm-1to3days-before-departure'],
@@ -1031,7 +1032,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'permit_no', label: '허가 번호', type: 'text' },
     ],
     allowAttachments: true,
-    attachmentHint: '수입 허가증을 사진, PDF로 보관하세요.',
+    attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
     attachmentLabel: '수입 허가증',
   },
 
@@ -1098,7 +1099,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     validationIds: ['common.kr-export-quarantine-date-valid'],
     allowAttachments: true,
-    attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
+    attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '동물검역증',
     links: [
       { url: '/guide/quarantine-stations', label: '동물검역소 위치' },
@@ -1167,7 +1168,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     validationIds: ['jp.export-quarantine-visit-date-valid'],
     allowAttachments: true,
-    attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
+    attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: 'Export Quarantine Certificate',
   },
 
@@ -1197,7 +1198,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '수출허가서(R.9)·건강증명서 사본을 사진, PDF로 저장하세요.',
+    attachmentHint: '수출허가서(R.9)·건강증명서 사본을 사진·PDF로 보관하세요.',
   },
 
   // ── 귀국 서류 준비 (왕복 — 귀국 전, EU 패밀리 전용) ─────────────
@@ -1232,7 +1233,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '건강증명서·여권 등 서류 사본을 사진, PDF로 저장하세요.',
+    attachmentHint: '건강증명서·여권 등 서류 사본을 사진·PDF로 보관하세요.',
   },
 
   // ── 필리핀 현지 동물병원 방문 (왕복 — 귀국 출국 전, BAI 수출검역 신청용 건강증명서 발급) ──
@@ -1259,7 +1260,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '건강증명서 사본을 사진, PDF로 저장하세요.',
+    attachmentHint: '건강증명서 사본을 사진·PDF로 보관하세요.',
   },
 
   // ── 필리핀 수출 검역 (왕복 — 귀국 출국 시, 필리핀 전용) ───────────────
@@ -1287,7 +1288,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '수출 허가증·국제 수의건강증명서 사본을 사진, PDF로 저장하세요.',
+    attachmentHint: '수출 허가증·국제 수의건강증명서 사본을 사진·PDF로 보관하세요.',
   },
 
   // ── 15. 한국 수입 검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
@@ -1309,7 +1310,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     validationIds: ['common.kr-import-quarantine-date-valid'],
     allowAttachments: true,
-    attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
+    attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
   },
 
   // ── 16. 도착 완료 — 여정 마무리 마일스톤 ───────────────────────────────
