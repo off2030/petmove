@@ -983,6 +983,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '구충 기록(증명서·수첩)을 사진, PDF로 보관하세요.',
+    // 내부·외부구충과 같은 라벨 — 보관함에서 '기생충 치료_N' 으로 번호가 이어진다.
+    attachmentLabel: '기생충 치료',
     validationIds: ['eu.tapeworm-1to3days-before-departure'],
   },
 
