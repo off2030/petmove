@@ -37,6 +37,8 @@ type CaseDataContextValue = {
   userEmail: string | null
   /** 담당 병원·운송 조직 — 첫 케이스의 org_id/transport_org_id 기준, 서버 초기 로드로 채움. */
   partners: PartnerOrgs
+  /** 선택 가능한 운송 조직이 하나라도 있는지 — false 면 '담당 운송업체' 메뉴를 숨긴다. */
+  transportAvailable: boolean
   refreshCases: () => Promise<void>
   refreshProfile: () => Promise<void>
   updateCase: (next: CaseRow) => void
@@ -51,6 +53,7 @@ export function CaseDataProvider({
   initialCases,
   initialProfile,
   initialPartners,
+  initialTransportAvailable = false,
   userEmail,
   previewMode = false,
   children,
@@ -58,6 +61,8 @@ export function CaseDataProvider({
   initialCases: CaseRow[]
   initialProfile: CustomerProfileRow | null
   initialPartners: PartnerOrgs
+  /** 선택 가능한 운송 조직 존재 여부 — 서버에서 한 번 계산해 내려준다(세션 중 정적). */
+  initialTransportAvailable?: boolean
   userEmail: string | null
   /** 펫무브워크 고객앱 미리보기 — 보호자 세션이 없어 Realtime·refetch 를 끈다. */
   previewMode?: boolean
@@ -370,13 +375,14 @@ export function CaseDataProvider({
       profile,
       userEmail,
       partners,
+      transportAvailable: initialTransportAvailable,
       refreshCases,
       refreshProfile,
       updateCase,
       updateProfile,
       removeCase,
     }),
-    [cases, profile, userEmail, partners, refreshCases, refreshProfile, updateCase, updateProfile, removeCase],
+    [cases, profile, userEmail, partners, initialTransportAvailable, refreshCases, refreshProfile, updateCase, updateProfile, removeCase],
   )
 
   return <CaseDataContext.Provider value={value}>{children}</CaseDataContext.Provider>

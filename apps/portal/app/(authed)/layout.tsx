@@ -10,7 +10,7 @@ import { SwipeTabs } from '@/components/portal-shell/swipe-tabs'
 import { TopBar } from '@/components/portal-shell/top-bar'
 import { listMyCases } from '@/lib/actions/cases'
 import { ensureMyProfile } from '@/lib/actions/profile'
-import { getPartnerOrgsByIds } from '@/lib/actions/partners'
+import { getPartnerOrgsByIds, listAvailableOrgs } from '@/lib/actions/partners'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +36,7 @@ export default async function AuthedLayout({ children }: { children: React.React
         initialCases={caseRow ? [caseRow] : []}
         initialProfile={null}
         initialPartners={{ vet: null, transport: null }}
+        initialTransportAvailable={false}
         userEmail={null}
         previewMode
       >
@@ -57,16 +58,24 @@ export default async function AuthedLayout({ children }: { children: React.React
   // 한 번만 조회. client useEffect 로 따로 fetch 하던 [내 정보] 병원 카드의 "빈칸→이름→로고"
   // 3단 깜빡임을 없애기 위함. 미연결이면 쿼리 자체를 건너뜀.
   const primary = cases[0] ?? null
-  const partnersResult = primary
-    ? await getPartnerOrgsByIds(primary.org_id ?? null, primary.transport_org_id ?? null)
-    : null
+  // 담당 운송업체 메뉴는 선택 가능한 운송 조직이 하나라도 있을 때만 노출한다(없으면 빈
+  // 선택지를 보여주는 미완성 인상 방지). 카탈로그 유무를 partners 조회와 병렬로 미리 읽어
+  // 내려보내, client 에서 따로 fetch 하지 않고 깜빡임 없이 섹션을 숨긴다.
+  const [partnersResult, transportOrgsResult] = await Promise.all([
+    primary
+      ? getPartnerOrgsByIds(primary.org_id ?? null, primary.transport_org_id ?? null)
+      : Promise.resolve(null),
+    listAvailableOrgs('transport'),
+  ])
   const partners = partnersResult?.ok ? partnersResult.value : { vet: null, transport: null }
+  const transportAvailable = transportOrgsResult.ok && transportOrgsResult.value.length > 0
 
   return (
     <CaseDataProvider
       initialCases={cases}
       initialProfile={profile}
       initialPartners={partners}
+      initialTransportAvailable={transportAvailable}
       userEmail={user.email ?? null}
     >
       <Shell>{children}</Shell>

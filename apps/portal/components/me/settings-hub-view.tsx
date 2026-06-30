@@ -389,7 +389,7 @@ function AddAnimalCard({ href }: { href: string }) {
 // ── Hub ────────────────────────────────────────────────────────────────────
 
 export function SettingsHubView() {
-  const { cases, profile, userEmail, partners } = useCases()
+  const { cases, profile, userEmail, partners, transportAvailable } = useCases()
   const primary = cases[0] ?? null
   const view = buildProfileView({ userEmail, customerProfile: profile, primaryCase: primary })
 
@@ -445,13 +445,18 @@ export function SettingsHubView() {
           />
         </Section>
 
-        <Section label="담당 운송업체">
-          <PartnerCard
-            org={partners.transport}
-            placeholder="담당 운송업체를 연결해 보세요"
-            href="/me/agency"
-          />
-        </Section>
+        {/* 담당 운송업체 — 선택 가능한 운송 조직이 있거나 이미 연결됐을 때만 노출.
+            아직 등록된 운송업체가 없으면(빈 카탈로그) 섹션 자체를 숨겨 빈 선택지를 보이지 않게 한다.
+            운영자가 운송업체를 추가하면 다음 진입부터 자동으로 다시 나타난다. */}
+        {(transportAvailable || partners.transport) && (
+          <Section label="담당 운송업체">
+            <PartnerCard
+              org={partners.transport}
+              placeholder="담당 운송업체를 연결해 보세요"
+              href="/me/agency"
+            />
+          </Section>
+        )}
       </div>
     </div>
   )
