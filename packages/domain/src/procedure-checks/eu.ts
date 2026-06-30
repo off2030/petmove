@@ -184,15 +184,14 @@ export const EU_CHECKS: ProcedureCheck[] = [
       // 모두 실패 — 가장 최신 titer 기준 메시지
       const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
       const days = daysBetween(newest.date, dep)
-      const earliestDep = addMonths(newest.date, 3)
       const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       const message =
         days === null
           ? '항체 검사일과 출국일을 확인할 수 없어요.'
           : days < 0
-            ? `항체 검사일(${newest.date})이 출국일(${dep})보다 이후예요. 채혈은 출국 전에 완료되어야 해요.`
-            : `항체 검사(${newest.date}) + 3개월(${earliestDep})이 출국일(${dep})보다 늦어요. 출국까지 ${days}일로 3개월에 미달해요.`
+            ? `출국일(${dep})이 광견병 항체 검사일(${newest.date}) 보다 빨라요. 날짜를 확인하세요.`
+            : `광견병 항체 검사(${newest.date}) 후 3개월 이상 지나야 해요.`
       return {
         ok: false,
         message,
