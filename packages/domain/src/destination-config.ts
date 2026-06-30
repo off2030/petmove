@@ -393,6 +393,47 @@ export function matchesDestinationKey(
 }
 
 /**
+ * 한국 농림축산검역본부 지정 '광견병 비발생 지역'. 이 지역(국가)에서 한국으로 (재)입국하는
+ * 개·고양이는 광견병 중화항체가(RNATT) 검사를 면제받는다 → 귀국 항체검사 2년 룰
+ * (common.kr-return-titer-within-2years)도 비발생국이면 적용하지 않는다.
+ *
+ * ⚠️ APQA 는 이 목록을 정적으로 공표하지 않으며 발생 상황에 따라 **실시간 변동**한다. 당국도
+ * "입국 전 검역기관(동물검역과 054-912-0427) 확인"을 요구한다(qia.go.kr). 아래는 petmove
+ * 블로그(/blog/rabies-free-countries/) **2024-01-04 스냅샷** 기준 초기값으로, 확정 데이터가
+ * 아니라 '안내(info)'용이다. 갱신은 이 두 상수만 고친다.
+ *
+ * 매칭은 목적지 토큰(원본 국가명) 기준 — eu 묶음 24개국이 비발생/발생으로 섞여 있어
+ * (독일=비발생, 프랑스=발생) destinationKey 가 아닌 실제 국가명 기준이 필수다.
+ */
+// 비발생국에 해당하는 1:1 destinationKey (eu 묶음 제외).
+const RABIES_FREE_DESTINATION_KEYS: Array<keyof typeof DESTINATION_OVERRIDES> = [
+  'japan', 'australia', 'new_zealand', 'uk', 'ireland', 'malta', 'finland',
+  'switzerland', 'singapore', 'hongkong', 'hawaii', 'guam', 'uae',
+]
+// eu 묶음(24개국) 중 비발생 회원국 토큰(소문자). 발생국(프랑스·스페인·네덜란드·덴마크·폴란드·
+// 그리스·헝가리·루마니아·크로아티아·슬로바키아)은 제외 — 그쪽은 귀국 2년 룰 적용.
+const RABIES_FREE_EU_MEMBERS = new Set<string>([
+  '독일', 'germany', '이탈리아', 'italy', '벨기에', 'belgium', '오스트리아', 'austria',
+  '스웨덴', 'sweden', '체코', 'czech', '포르투갈', 'portugal', '불가리아', 'bulgaria',
+  '슬로베니아', 'slovenia', '리투아니아', 'lithuania', '라트비아', 'latvia',
+  '에스토니아', 'estonia', '룩셈부르크', 'luxembourg', '키프로스', 'cyprus',
+])
+
+/**
+ * 활성 목적지가 한국 지정 광견병 비발생 지역인지 — 귀국 항체검사 면제 판정용.
+ * (위 RABIES_FREE_* 주석의 변동성·면책 참고. 코드 단정이 아니라 안내 기준값.)
+ */
+export function isRabiesFreeOrigin(destination: string | null | undefined): boolean {
+  if (!destination) return false
+  if (RABIES_FREE_DESTINATION_KEYS.some((k) => matchesDestinationKey(destination, k))) return true
+  // eu 묶음은 실제 국가 토큰으로 비발생/발생이 갈린다.
+  if (matchesDestinationKey(destination, 'eu')) {
+    return parseDestinations(destination).some((t) => RABIES_FREE_EU_MEMBERS.has(t.toLowerCase()))
+  }
+  return false
+}
+
+/**
  * 내원·임상검진일은 출국일 포함 N일 이내여야 함 — 목적지별 윈도우 N.
  * 한국 APQA 디폴트 10일. 비표준만 명시; 값은 규정 문구의 "N일 이내" N 그대로.
  * 다중 목적지 시 가장 엄격한 윈도우(최소값) 적용.

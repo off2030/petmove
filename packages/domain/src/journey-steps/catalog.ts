@@ -445,6 +445,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 'common.' 이던 것을 'jp.' 로 정정 — 매핑 누락(findStepForCheck null) 으로 이 주의가
       // 항체 step 배지 대신 caseAlert(상단)로 새던 버그 수정.
       'jp.rabies-titer-chain-consistent',
+      // 한국 귀국 항체검사 2년(왕복·비발생국 외) — 전 목적지 공통, 체크가 자체 게이트.
+      'common.kr-return-titer-within-2years',
     ],
   },
 

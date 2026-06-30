@@ -1,4 +1,4 @@
-import { DESTINATION_OVERRIDES } from '../destination-config'
+import { DESTINATION_OVERRIDES, isRabiesFreeOrigin } from '../destination-config'
 import {
   buildDateRuleContext,
   validateKrExportDate,
@@ -6,7 +6,7 @@ import {
   validateVetVisitDate,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
-import { readVetVisitDate, SKIP } from './utils'
+import { addYears, formatKoreanDate, readTiterEntries, readVetVisitDate, SKIP } from './utils'
 
 /**
  * 목적지 무관 — 한국 출입국 측 공통 절차 검증.
@@ -92,6 +92,51 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
         return { ok: false, message: msg, offendingPaths: ['kr_import_quarantine_date'] }
       }
       return { ok: true, message: `한국 수입검역일(${raw}) 귀국 이후.` }
+    },
+  },
+  // 한국 귀국 광견병 항체검사 유효기간(2년) — 왕복 귀국 시 한국은 채혈일 2년 이내 검사만
+  // 인정(채혈 + 2년 ≥ 귀국일). EU 처럼 입국용 항체는 부스터 chain 유지 시 무기한이라도,
+  // 귀국엔 2년 룰이 별도로 걸린다. 단 광견병 비발생 지역(일본·호주·영국 등)산은 한국이
+  // 항체검사 자체를 면제 → isRabiesFreeOrigin 이면 SKIP. 편도(귀국일 없음)도 SKIP.
+  // 비발생 지정은 수시 변동(APQA 정적 미공표)이라 입력불가·강한 주의가 아닌 info(안내) +
+  // 검역본부 확인 권고로 둔다. (isRabiesFreeOrigin 주석의 변동성·면책 참고.)
+  {
+    id: 'common.kr-return-titer-within-2years',
+    country: ALL_DESTINATION_KEYS,
+    category: '광견병',
+    title: '한국 귀국 광견병 항체 검사 유효기간(2년)',
+    description:
+      '왕복 귀국 시 한국은 광견병 항체검사를 채혈일 2년 이내로만 인정(채혈 + 2년 ≥ 귀국일). 광견병 비발생 지역산은 면제 — 비발생 지정은 수시 변동하므로 검역본부 확인 안내.',
+    severity: 'info',
+    addedAt: '2026-06-30',
+    run: ({ caseRow, destination }) => {
+      // 비발생국 = 한국 귀국 시 항체검사 면제 → 적용 안 함.
+      if (isRabiesFreeOrigin(destination)) return SKIP
+      // 편도(귀국일 없음) → 적용 안 함. (caseRow.data 는 활성 목적지로 flatten 된 상태.)
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const ret =
+        typeof data.return_date === 'string' ? data.return_date.slice(0, 10) : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(ret)) return SKIP
+      const titers = readTiterEntries(caseRow)
+      if (titers.length === 0) return SKIP
+      // 귀국일 이전 채혈 중 채혈 + 2년 ≥ 귀국일 인 검사가 하나라도 있으면 유효.
+      const valid = titers.find((t) => t.date <= ret && addYears(t.date, 2) >= ret)
+      if (valid) {
+        return {
+          ok: true,
+          message: `항체 검사(${valid.date}) 유효기간(${addYears(valid.date, 2)}) ≥ 귀국일(${ret}).`,
+        }
+      }
+      const prior = titers.filter((t) => t.date <= ret)
+      const newest = [...(prior.length ? prior : titers)].sort((a, b) =>
+        b.date.localeCompare(a.date),
+      )[0]
+      const expireKr = formatKoreanDate(addYears(newest.date, 2))
+      return {
+        ok: false,
+        message: `광견병 항체 검사 유효기간(2년)이 ${expireKr}에 만료돼요. 한국 귀국 전 재검사가 필요할 수 있어요. (광견병 비발생 지역은 면제 — 지정은 수시 변동하니 출국 전 검역본부 054-912-0427 확인)`,
+        offendingPaths: titers.map((t) => `rabies_titer_records[${t.originalIndex}].date`),
+      }
     },
   },
 ]
