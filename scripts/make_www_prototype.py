@@ -78,6 +78,7 @@ html = f"""<!DOCTYPE html>
   .hero .scrim{{padding:40px 0 34px;
     background:linear-gradient(to top, rgba(30,26,20,.82), rgba(30,26,20,.34) 55%, rgba(30,26,20,0))}}
   .hero-content{{max-width:540px}}
+  .hero-photo{{display:none}}
   .eyebrow{{display:inline-block;font-size:12px;font-weight:600;color:var(--ink);background:#F5DFB8;
     border-radius:999px;padding:5px 13px;margin-bottom:16px}}
   .hero h1{{font-size:34px;line-height:1.18;letter-spacing:-.02em;color:#fff;margin:0;font-weight:700}}
@@ -179,11 +180,22 @@ html = f"""<!DOCTYPE html>
   }}
   /* ── 데스크톱 ── */
   @media(min-width:1100px){{
-    .hero{{min-height:680px}}
-    .hero h1{{font-size:54px}}
+    .hero h1{{font-size:52px}}
     section{{padding:76px 0}}
     .h2{{font-size:34px}}
     .band{{min-height:600px}}
+  }}
+  /* ── PC 히어로 = 스플릿(글+사진 카드), 모바일은 풀블리드 유지 ── */
+  @media(min-width:960px){{
+    .hero{{background:var(--surface);background-image:none;min-height:0;justify-content:stretch}}
+    .hero .scrim{{background:none;padding:72px 0}}
+    .hero .container{{display:grid;grid-template-columns:1.05fr .95fr;gap:46px;align-items:center}}
+    .hero-content{{max-width:none}}
+    .hero h1{{color:var(--ink)}}
+    .hero p{{color:var(--ink2);max-width:none}}
+    .btn-ghost{{border-color:rgba(42,38,32,.28);color:var(--ink)}}
+    .hero-photo{{display:block;height:470px;border-radius:22px;box-shadow:0 18px 40px rgba(31,27,46,.14);
+      background:url('{hero_p}') center 32% / cover no-repeat}}
   }}
 </style>
 </head>
@@ -211,6 +223,7 @@ html = f"""<!DOCTYPE html>
             <a class="btn-ghost"><i class="ti ti-headset" style="font-size:17px"></i>전문가 올케어 상담</a>
           </div>
         </div>
+        <div class="hero-photo"></div>
       </div>
     </div>
   </section>
