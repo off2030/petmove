@@ -297,9 +297,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer'],
   },
   south_africa: {
-    // 광견병 + RNATT + 전염병검사(Brucella/Babesia/Ehrlichia/Trypanosoma 등) 음성 확인.
+    // 광견병 + RNATT + 전염병검사(ARC-OVI, Brucella/Babesia/Ehrlichia/Trypanosoma 등) + 심장사상충.
     keywords: ['남아프리카공화국', '남아공', 'south africa'],
-    vaccines: ['rabies', 'rabies_titer', 'infectious_disease'],
+    vaccines: ['rabies', 'rabies_titer', 'infectious_disease', 'heartworm'],
   },
 }
 

@@ -22,6 +22,7 @@ import { TH_CHECKS } from './th'
 import { TR_CHECKS } from './tr'
 import { TW_CHECKS } from './tw'
 import { UA_CHECKS } from './ua'
+import { ZA_CHECKS } from './za'
 import type { CheckContext, CheckResult, CountryKey, ProcedureCheck } from './types'
 
 /**
@@ -56,6 +57,7 @@ export const ALL_PROCEDURE_CHECKS: ProcedureCheck[] = [
   ...IL_CHECKS,
   ...ID_CHECKS,
   ...CA_CHECKS,
+  ...ZA_CHECKS,
 ]
 
 /** check 의 country 가 target 키에 매칭되는지. 배열에 포함되면 true. */
