@@ -215,7 +215,7 @@ html = f"""<!DOCTYPE html>
       <div class="container">
         <div class="hero-content">
           <span class="eyebrow">반려동물 해외 이동 · 준비부터 출국까지</span>
-          <h1>가족과 함께,<br>어디든 안전하게</h1>
+          <h1>가족이니까,<br>언제나 함께</h1>
           <p>검역·접종·서류 준비, 앱으로 직접 챙기거나 전문가에게 맡기세요.</p>
           <div class="cta">
             <a class="btn-primary"><i class="ti ti-download" style="font-size:17px"></i>펫무브 앱 무료로 시작</a>
