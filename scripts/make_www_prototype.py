@@ -17,7 +17,7 @@ def b64(name, width, quality=76):
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
 
 hero = b64("oscar-sutton-yihlaRCCvd4-unsplash.jpg", 1100)
-band = b64("patrick-hendry-jd0hS7Vhn_A-unsplash.jpg", 1400)
+band = b64("patrick-hendry-jd0hS7Vhn_A-unsplash.jpg", 2200)
 
 LOGO = ('<svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true">'
         '<rect width="100" height="100" rx="22.5" fill="#D99A58"/>'
@@ -113,8 +113,8 @@ html = f"""<!DOCTYPE html>
   .note{{display:flex;align-items:center;gap:7px;justify-content:center;margin-top:16px;font-size:12px;color:var(--ink2)}}
   .note .dot{{width:6px;height:6px;border-radius:50%;background:var(--sage);display:inline-block}}
 
-  .band{{position:relative;min-height:320px;display:flex;align-items:flex-end;
-    background:url('{band}') center / cover no-repeat}}
+  .band{{position:relative;min-height:360px;display:flex;align-items:flex-end;
+    background:url('{band}') center 42% / cover no-repeat}}
   .band .scrim{{width:100%;padding:30px 0;background:linear-gradient(to top, rgba(30,26,20,.74), rgba(30,26,20,.10))}}
   .band h2{{font-size:23px;color:#fff;margin:0;font-weight:700;line-height:1.3;max-width:520px}}
   .band p{{font-size:13.5px;color:#EDE4D3;margin:9px 0 0;line-height:1.6}}
@@ -152,7 +152,7 @@ html = f"""<!DOCTYPE html>
     .path{{padding:30px 28px}}
     .grid{{grid-template-columns:repeat(6,1fr)}}
     .trust .n{{font-size:30px}} .trust .l{{font-size:13px}}
-    .band{{min-height:420px}}
+    .band{{min-height:480px}}
     .band h2{{font-size:30px}}
     .final h2{{font-size:30px}}
   }}
@@ -162,6 +162,7 @@ html = f"""<!DOCTYPE html>
     .hero h1{{font-size:54px}}
     section{{padding:76px 0}}
     .h2{{font-size:34px}}
+    .band{{min-height:600px}}
   }}
 </style>
 </head>
