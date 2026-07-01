@@ -62,7 +62,7 @@ html = f"""<!DOCTYPE html>
     color:var(--ink);-webkit-font-smoothing:antialiased}}
   a{{text-decoration:none;color:inherit}}
   .container{{max-width:1080px;margin:0 auto;padding:0 22px;width:100%}}
-  .wm{{font-size:14px;letter-spacing:.34em;font-weight:300}}
+  .wm{{font-size:18px;letter-spacing:.015em;font-weight:700}}
 
   header{{position:sticky;top:0;z-index:20;background:rgba(245,239,232,.92);backdrop-filter:blur(8px);
     border-bottom:0.5px solid var(--border)}}
@@ -201,7 +201,7 @@ html = f"""<!DOCTYPE html>
 <body>
   <header>
     <div class="container">
-      <span style="display:flex;align-items:center;gap:9px">{LOGO}<span class="wm">PETMOVE</span></span>
+      <span style="display:flex;align-items:center;gap:8px">{LOGO}<span class="wm">펫무브</span></span>
       <span class="nav-links"><a>서비스</a><a>가이드</a><a>블로그</a></span>
       <span class="nav-right">
         <a class="nav-app">앱 다운로드</a>
