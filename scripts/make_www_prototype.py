@@ -32,13 +32,12 @@ def b64_crop(name, out_w, out_h, focus_y=0.5, focus_x=0.5, quality=78):
     im = im.crop((l, t, l + cw, t + ch)).resize((out_w, out_h), Image.LANCZOS)
     return _enc(im, quality)
 
-HERO_SRC = "oscar-sutton-yihlaRCCvd4-unsplash.jpg"
-hero_p = b64(HERO_SRC, 1080)                          # 폰: 세로 원본
-hero_l = b64_crop(HERO_SRC, 2000, 1000, focus_y=0.46) # PC: 가로 크롭(2:1)
+HERO_SRC = "hero-cardog-2x.png"                       # 밝은 차 창밖(AI·2배 업스케일 5056px). ✦워터마크 크롭 제외
+hero_p    = b64_crop(HERO_SRC, 1440, 1900, focus_x=0.66, focus_y=0.28)  # 폰 세로(강아지 우측·고해상도)
+hero_card = b64_crop(HERO_SRC, 1200, 1300, focus_x=0.66, focus_y=0.34)  # PC 카드(중앙)
+hero_l    = b64_crop(HERO_SRC, 2000, 1050, focus_x=0.56, focus_y=0.40)  # 760-959 가로
 
-BAND_SRC = "shutterstock_1338240053.jpg"              # 발자국 해변 강아지
-band_l = b64_crop(BAND_SRC, 2000, 720, focus_y=0.30)             # PC: 가로 파노라마(바다·강아지)
-band_p = b64_crop(BAND_SRC, 1100, 1000, focus_x=0.68, focus_y=0.32)  # 폰: 정사각(강아지·바다)
+band = b64("patrick-hendry-jd0hS7Vhn_A-unsplash.jpg", 3000)  # 협곡 뒷모습(감성). PC 풀블리드용 고해상도
 
 LOGO = ('<svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true">'
         '<rect width="100" height="100" rx="22.5" fill="#D99A58"/>'
@@ -136,7 +135,7 @@ html = f"""<!DOCTYPE html>
   .note .dot{{width:6px;height:6px;border-radius:50%;background:var(--sage);display:inline-block}}
 
   .band{{position:relative;min-height:360px;display:flex;align-items:flex-end;
-    background:url('{band_p}') center / cover no-repeat}}
+    background:url('{band}') center 72% / cover no-repeat}}
   .band .scrim{{width:100%;padding:30px 0;background:linear-gradient(to top, rgba(30,26,20,.74), rgba(30,26,20,.10))}}
   .band h2{{font-size:23px;color:#fff;margin:0;font-weight:700;line-height:1.3;max-width:520px}}
   .band p{{font-size:13.5px;color:#EDE4D3;margin:9px 0 0;line-height:1.6}}
@@ -174,7 +173,7 @@ html = f"""<!DOCTYPE html>
     .path{{padding:30px 28px}}
     .grid{{grid-template-columns:repeat(6,1fr)}}
     .trust .n{{font-size:30px}} .trust .l{{font-size:13px}}
-    .band{{min-height:480px;background-image:url('{band_l}')}}
+    .band{{min-height:480px}}
     .band h2{{font-size:30px}}
     .final h2{{font-size:30px}}
   }}
@@ -195,7 +194,7 @@ html = f"""<!DOCTYPE html>
     .hero p{{color:var(--ink2);max-width:none}}
     .btn-ghost{{border-color:rgba(42,38,32,.28);color:var(--ink)}}
     .hero-photo{{display:block;height:470px;border-radius:22px;box-shadow:0 18px 40px rgba(31,27,46,.14);
-      background:url('{hero_p}') center 32% / cover no-repeat}}
+      background:url('{hero_card}') center 32% / cover no-repeat}}
   }}
 </style>
 </head>
