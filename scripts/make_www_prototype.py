@@ -9,14 +9,32 @@ from PIL import Image
 IMG_DIR = r"G:\내 드라이브\PETMOVE\기타\이미지"
 OUT = r"C:\dev\petmove\docs\www-redesign\prototype-mobile.html"
 
-def b64(name, width, quality=76):
-    im = Image.open(os.path.join(IMG_DIR, name)).convert("RGB")
-    w, h = im.size
-    im = im.resize((width, int(h*width/w)), Image.LANCZOS)
+def _enc(im, quality=76):
     buf = io.BytesIO(); im.save(buf, "JPEG", quality=quality, optimize=True)
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
 
-hero = b64("oscar-sutton-yihlaRCCvd4-unsplash.jpg", 1100)
+def b64(name, width, quality=76):
+    im = Image.open(os.path.join(IMG_DIR, name)).convert("RGB")
+    w, h = im.size
+    return _enc(im.resize((width, int(h*width/w)), Image.LANCZOS), quality)
+
+def b64_crop(name, out_w, out_h, focus_y=0.5, focus_x=0.5, quality=78):
+    """지정한 가로세로 비율로 초점(focus) 기준 크롭 후 리사이즈."""
+    Image.MAX_IMAGE_PIXELS = None
+    im = Image.open(os.path.join(IMG_DIR, name)).convert("RGB")
+    w, h = im.size
+    ar = out_w / out_h
+    if w / h > ar:            # 원본이 더 넓음 → 폭을 자름
+        cw = int(h * ar); ch = h
+    else:                      # 원본이 더 높음 → 높이를 자름
+        cw = w; ch = int(w / ar)
+    l = int((w - cw) * focus_x); t = int((h - ch) * focus_y)
+    im = im.crop((l, t, l + cw, t + ch)).resize((out_w, out_h), Image.LANCZOS)
+    return _enc(im, quality)
+
+HERO_SRC = "oscar-sutton-yihlaRCCvd4-unsplash.jpg"
+hero_p = b64(HERO_SRC, 1080)                          # 폰: 세로 원본
+hero_l = b64_crop(HERO_SRC, 2000, 1000, focus_y=0.46) # PC: 가로 크롭(2:1)
 band = b64("patrick-hendry-jd0hS7Vhn_A-unsplash.jpg", 2200)
 
 LOGO = ('<svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true">'
@@ -53,7 +71,7 @@ html = f"""<!DOCTYPE html>
   .burger{{font-size:22px;color:var(--ink2)}}
 
   .hero{{position:relative;min-height:600px;display:flex;flex-direction:column;justify-content:flex-end;
-    background:url('{hero}') center 30% / cover no-repeat}}
+    background:url('{hero_p}') center 30% / cover no-repeat}}
   .hero .scrim{{padding:40px 0 34px;
     background:linear-gradient(to top, rgba(30,26,20,.82), rgba(30,26,20,.34) 55%, rgba(30,26,20,0))}}
   .hero-content{{max-width:540px}}
@@ -134,7 +152,7 @@ html = f"""<!DOCTYPE html>
   @media(min-width:760px){{
     .nav-links{{display:flex}}
     .burger{{display:none}}
-    .hero{{min-height:640px}}
+    .hero{{min-height:640px;background-image:url('{hero_l}');background-position:center 46%}}
     .hero .scrim{{padding:56px 0 46px}}
     .hero h1{{font-size:48px}}
     .hero p{{font-size:17px;max-width:460px}}
