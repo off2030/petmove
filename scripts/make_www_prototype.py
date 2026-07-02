@@ -229,7 +229,7 @@ html = f"""<!DOCTYPE html>
   </section>
 
   <div class="trust">
-    <div><div class="n">3,200<span>+</span></div><div class="l">안전 출국</div></div>
+    <div><div class="n">5,300<span>+</span></div><div class="l">안전 출국</div></div>
     <div><div class="n">40<span>+</span></div><div class="l">목적지 국가</div></div>
     <div><div class="n">20<span>년</span></div><div class="l">경험</div></div>
   </div>
