@@ -258,7 +258,7 @@ html = f"""<!DOCTYPE html>
           <div class="pt">주요 서비스</div>
           <ul>
             <li><i class="ti ti-check" style="color:var(--sage)"></i>마이크로칩, 접종, 검사</li>
-            <li><i class="ti ti-check" style="color:var(--sage)"></i>각종 신고 · 허가증 신청</li>
+            <li><i class="ti ti-check" style="color:var(--sage)"></i>신고 · 허가증 신청 대행</li>
             <li><i class="ti ti-check" style="color:var(--sage)"></i>출국 전 임상검사 · 서류 준비</li>
           </ul>
           <span class="go">상담 신청<i class="ti ti-arrow-right"></i></span>
