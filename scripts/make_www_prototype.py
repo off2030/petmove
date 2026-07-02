@@ -74,7 +74,7 @@ html = f"""<!DOCTYPE html>
 
   .hero{{position:relative;min-height:600px;display:flex;flex-direction:column;justify-content:flex-end;
     background:url('{hero_p}') center 30% / cover no-repeat}}
-  .hero .scrim{{flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:40px 0 34px;
+  .hero .scrim{{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:40px 0 34px;
     background:linear-gradient(to top, rgba(30,26,20,.82), rgba(30,26,20,.34) 55%, rgba(30,26,20,0))}}
   .hero-content{{max-width:540px}}
   .hero-photo{{display:none}}
@@ -187,7 +187,7 @@ html = f"""<!DOCTYPE html>
   /* ── PC 히어로 = 스플릿(글+사진 카드), 모바일은 풀블리드 유지 ── */
   @media(min-width:960px){{
     .hero{{background:var(--surface);background-image:none;min-height:0;justify-content:stretch}}
-    .hero .scrim{{background:none;padding:72px 0;justify-content:center}}
+    .hero .scrim{{position:static;inset:auto;background:none;padding:72px 0;justify-content:center}}
     .hero .container{{display:grid;grid-template-columns:1.05fr .95fr;gap:46px;align-items:center}}
     .hero-content{{max-width:none}}
     .hero h1{{color:var(--ink)}}
