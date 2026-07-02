@@ -296,6 +296,13 @@ function destinationIsChina(dest: unknown): boolean {
   return dest.split(',').map(s => s.trim()).includes('중국')
 }
 
+/** 호주·뉴질랜드 목적지 — 별지25 제조번호 칸에 제품 유효기간 병기 대상. */
+function destinationIsAuNz(dest: unknown): boolean {
+  if (typeof dest !== 'string' || !dest) return false
+  const tokens = dest.split(',').map(s => s.trim())
+  return tokens.includes('호주') || tokens.includes('뉴질랜드')
+}
+
 /** YYYY-MM-DD → YYYY/MM/DD for Japan forms. */
 function fmtDate(s: unknown): string {
   if (typeof s !== 'string' || !s) return ''
@@ -1665,7 +1672,8 @@ function resolveField(
   // Form25 "기타 예방접종" slot filler. `other_vacc_seq:<attr>[<n>]`.
   // Pulls the nth entry of the compressed vaccine sequence built from
   // comprehensive → external → internal (skipping missing types).
-  // `serial_with_expiry` — 별지25 제조번호 칸에 batch + 제품 유효기간(제품 사용기한) 병기.
+  // `serial_with_expiry` — 호주·뉴질랜드 목적지에서만 batch + 제품 유효기간(제품 사용기한) 병기.
+  // 그 외 목적지는 batch 만. (별지25는 모든 목적지 공용이라 destination gating.)
   // 면역유효기간은 별도 1Y/2Y/3Y 체크박스가 담당하므로 여기 병기하지 않는다.
   const seqMatch = transform?.match(/^other_vacc_seq:(type|name|manufacturer|serial|serial_with_expiry|date)\[(\d+)\]$/)
   if (seqMatch) {
@@ -1674,15 +1682,16 @@ function resolveField(
     const entry = buildOtherVaccineSequence(data, allowedVaccines)[idx]
     if (!entry) return ''
     if (attr === 'serial_with_expiry') {
-      return joinBatchExpiry(entry.serial, entry.expiry)
+      const suffix = destinationIsAuNz(caseRow.destination) ? entry.expiry : ''
+      return joinBatchExpiry(entry.serial, suffix)
     }
     return entry[attr as keyof OtherVacEntry]
   }
 
   // Form25AuNz expanded filler (8 slots, 3 doses per type).
   // Order: 종합백신 → CIV → 켄넬코프(미구현) → 외부구충 → 내부구충.
-  // `serial_with_expiry` — combines batch + 제품 유효기간(제품 사용기한) into one cell
-  // (e.g. "G98321 / 2027/10/07"). 면역유효기간은 별도 1Y/2Y/3Y 체크박스가 담당한다.
+  // `serial_with_expiry` — 호주·뉴질랜드 한정으로 batch + 제품 유효기간(제품 사용기한)을
+  // 한 칸에 병기 (e.g. "G98321 / 2027/10/07"). 면역유효기간은 별도 1Y/2Y/3Y 체크박스가 담당.
   const expSeqMatch = transform?.match(/^expanded_vacc_seq:(type|name|manufacturer|serial|serial_with_expiry|date)\[(\d+)\]$/)
   if (expSeqMatch) {
     const attr = expSeqMatch[1]
@@ -1690,7 +1699,8 @@ function resolveField(
     const entry = buildExpandedVaccineSequence(data, 3, allowedVaccines)[idx]
     if (!entry) return ''
     if (attr === 'serial_with_expiry') {
-      return joinBatchExpiry(entry.serial, entry.expiry)
+      const suffix = destinationIsAuNz(caseRow.destination) ? entry.expiry : ''
+      return joinBatchExpiry(entry.serial, suffix)
     }
     return entry[attr as keyof OtherVacEntry]
   }
@@ -1875,9 +1885,10 @@ function resolveField(
     }
     if (attr === 'serial') return merged.serial
     if (attr === 'serial_with_expiry') {
-      // 별지25 제조번호 칸 = 제품 유효기간(입력/카탈로그 제품 사용기한). 광견병·구충 공통.
-      // 면역유효기간은 별도 1Y/2Y/3Y 체크박스가 담당하므로 여기 병기하지 않는다.
-      return joinBatchExpiry(merged.serial, merged.expiry ?? '')
+      // 별지25 제조번호 칸 = 제품 유효기간(입력/카탈로그 제품 사용기한) — 호주·뉴질랜드 한정.
+      // 그 외 목적지는 batch 만. 면역유효기간은 별도 1Y/2Y/3Y 체크박스가 담당.
+      const suffix = destinationIsAuNz(caseRow.destination) ? (merged.expiry ?? '') : ''
+      return joinBatchExpiry(merged.serial, suffix)
     }
     if (attr === 'validity_from') return fmtDate(p?.validityFrom ?? '')
     if (attr === 'validity_to') return fmtDate(p?.validityTo ?? '')

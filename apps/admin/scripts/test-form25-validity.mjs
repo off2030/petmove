@@ -12,6 +12,11 @@ function joinBatchExpiry(batch, expiry) {
   if (!batch) return expiry
   return `${batch} / ${expiry}`
 }
+function destinationIsAuNz(d) {
+  if (typeof d !== 'string' || !d) return false
+  const t = d.split(',').map(s => s.trim())
+  return t.includes('호주') || t.includes('뉴질랜드')
+}
 function lookupRabies(date) { const y = Number(String(date).slice(0, 4)); return vaccines.rabies.find(r => r.year === y) ?? null }
 function lookupByDateRange(list, date) {
   if (!date) return null
@@ -44,7 +49,7 @@ function buildOtherSeq(data) {
   return out
 }
 
-// pdf-fill.ts serial_with_expiry 신 로직 미러: 제품 유효기간(expiry)만 병기, destination 무관.
+// pdf-fill.ts serial_with_expiry 신 로직 미러: 호주·뉴질랜드 한정으로 제품 유효기간(expiry) 병기.
 function resolve(mp, caseRow) {
   const { transform } = mp
   const data = caseRow.data
@@ -53,12 +58,14 @@ function resolve(mp, caseRow) {
     const rec = sortedDescRecords(data.rabies_dates).slice().reverse()[+m[3]]
     if (!rec) return ''
     const merged = applyRecOverrides(rec, lookupRabies(rec.date))
-    return joinBatchExpiry(merged.serial, merged.expiry ?? '')
+    const suffix = destinationIsAuNz(caseRow.destination) ? (merged.expiry ?? '') : ''
+    return joinBatchExpiry(merged.serial, suffix)
   }
   if ((m = transform?.match(/^other_vacc_seq:(serial_with_expiry)\[(\d+)\]$/))) {
     const entry = buildOtherSeq(data)[+m[2]]
     if (!entry) return ''
-    return joinBatchExpiry(entry.serial, entry.expiry)
+    const suffix = destinationIsAuNz(caseRow.destination) ? entry.expiry : ''
+    return joinBatchExpiry(entry.serial, suffix)
   }
   return '(other transform)'
 }
@@ -72,14 +79,14 @@ const base = {
   },
 }
 
-// 2026 광견병 배치 G98321 의 제품 유효기간 = 2027/10/07 (면역유효기간 2027/03/23 아님).
-const expectRabies = 'G98321 / 2027/10/07'
-
+// 2026 광견병 배치 G98321. 호주·뉴질랜드 = 제품 유효기간 2027/10/07 병기,
+// 그 외 목적지 = batch(G98321)만. (면역유효기간 2027/03/23 은 어디에도 안 나옴.)
 for (const dest of ['호주', '뉴질랜드', '일본']) {
   const caseRow = { ...base, destination: dest }
   const r1 = resolve(mappings.Form25.fields.rabies1_serial, caseRow)
   const o1 = resolve(mappings.Form25.fields.other1_serial, caseRow)
-  const ok = r1 === expectRabies ? 'OK' : `FAIL (expected "${expectRabies}")`
+  const expect = (dest === '호주' || dest === '뉴질랜드') ? 'G98321 / 2027/10/07' : 'G98321'
+  const ok = r1 === expect ? 'OK' : `FAIL (expected "${expect}")`
   console.log(`[${dest}]`)
   console.log(`  rabies1_serial value    : "${r1}"  ${ok}`)
   console.log(`  other1_serial  value    : "${o1}"`)
