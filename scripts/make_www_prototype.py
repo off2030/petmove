@@ -120,6 +120,8 @@ html = f"""<!DOCTYPE html>
   .path h3{{font-size:19px;margin:0 0 6px;font-weight:700}}
   .path .pd{{font-size:13.5px;line-height:1.6;margin:0 0 15px}}
   .path.app .pd{{color:#CFC6B6}} .path.care .pd{{color:var(--ink2)}}
+  .path .pt{{font-size:11.5px;font-weight:600;letter-spacing:.03em;margin:15px 0 11px}}
+  .path.app .pt{{color:#A79E8E}} .path.care .pt{{color:var(--ink3)}}
   .path ul{{list-style:none;padding:0;margin:0 0 17px;display:flex;flex-direction:column;gap:9px}}
   .path li{{font-size:13px;display:flex;align-items:center;gap:8px}}
   .path.app li{{color:#E7DECE}} .path.care li{{color:var(--ink)}}
@@ -241,23 +243,23 @@ html = f"""<!DOCTYPE html>
       <div class="paths">
         <div class="path app">
           <span class="tag">펫무브 앱</span>
-          <h3>직접 준비</h3>
-          <p class="pd">앱의 친절한 안내에 따라 직접 준비해요.</p>
+          <h3>앱으로 직접 준비해요</h3>
+          <div class="pt">주요 기능</div>
           <ul>
             <li><i class="ti ti-check" style="color:var(--accent)"></i>단계별 가이드</li>
             <li><i class="ti ti-check" style="color:var(--accent)"></i>서류 체크리스트</li>
-            <li><i class="ti ti-check" style="color:var(--accent)"></i>기한 알림 · 실수 방지 등</li>
+            <li><i class="ti ti-check" style="color:var(--accent)"></i>기한 알림 · 실수 방지</li>
           </ul>
           <span class="go">무료 앱 받기<i class="ti ti-arrow-right"></i></span>
         </div>
         <div class="path care">
           <span class="tag">로잔동물의료센터</span>
-          <h3>전문가 올케어</h3>
-          <p class="pd">검역·서류·운송까지 전담팀이 대신 준비해 드려요.</p>
+          <h3>전문가에게 맡겨요</h3>
+          <div class="pt">주요 서비스</div>
           <ul>
-            <li><i class="ti ti-check" style="color:var(--sage)"></i>수의사 검역·건강증명 발급</li>
-            <li><i class="ti ti-check" style="color:var(--sage)"></i>서류·수속 대행</li>
-            <li><i class="ti ti-check" style="color:var(--sage)"></i>모든 목적지 상담 가능</li>
+            <li><i class="ti ti-check" style="color:var(--sage)"></i>마이크로칩, 접종, 검사</li>
+            <li><i class="ti ti-check" style="color:var(--sage)"></i>각종 신고 · 허가증 신청</li>
+            <li><i class="ti ti-check" style="color:var(--sage)"></i>서류 준비 · 점검</li>
           </ul>
           <span class="go">상담 신청<i class="ti ti-arrow-right"></i></span>
         </div>
