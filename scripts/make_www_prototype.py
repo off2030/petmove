@@ -216,7 +216,7 @@ html = f"""<!DOCTYPE html>
         <div class="hero-content">
           <span class="eyebrow">반려동물 해외여행 · 검역 준비</span>
           <h1>우리 아이 해외여행,<br>펫무브가 챙길게요</h1>
-          <p>단계별 가이드 · 서류 체크리스트 · 실수 방지 기능 · 대행 서비스까지 펫무브에 맡기세요</p>
+          <p>앱으로 쉽게 준비하고,<br>필요할 땐 전문가에게 맡기세요</p>
           <div class="cta">
             <a class="btn-primary"><i class="ti ti-download" style="font-size:17px"></i>펫무브 앱 무료로 시작</a>
             <a class="btn-ghost"><i class="ti ti-headset" style="font-size:17px"></i>전문가 올케어 상담</a>
