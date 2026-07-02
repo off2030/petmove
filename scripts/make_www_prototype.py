@@ -217,7 +217,7 @@ html = f"""<!DOCTYPE html>
         <div class="hero-content">
           <span class="eyebrow">반려동물 해외여행 · 검역 준비</span>
           <h1>우리 아이 해외여행,<br>펫무브가 챙길게요</h1>
-          <p>앱으로 쉽게 준비하고, <br class="mbr">필요할 땐 전문가에게 맡기세요</p>
+          <p>앱으로 쉽게 준비하고, <br class="mbr">복잡한 절차는 전문가에게 맡기세요</p>
           <div class="cta">
             <a class="btn-primary"><i class="ti ti-download" style="font-size:17px"></i>무료 앱으로 시작하기</a>
             <a class="btn-ghost"><i class="ti ti-message-circle" style="font-size:17px"></i>전문가에게 맡기기</a>
