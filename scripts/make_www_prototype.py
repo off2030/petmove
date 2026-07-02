@@ -39,6 +39,26 @@ hero_l    = b64_crop(HERO_SRC, 2000, 1050, focus_x=0.56, focus_y=0.40)  # 760-95
 
 band = b64("patrick-hendry-jd0hS7Vhn_A-unsplash.jpg", 3000)  # 협곡 뒷모습(감성). PC 풀블리드용 고해상도
 
+def talk_mask():
+    """TALK 말풍선 PNG → 알파 마스크 data URI (버튼 색 상속용).
+    Gemini 이미지는 가짜 체크무늬 배경(불투명)이라, 밝기(흰 아이콘)로 알파를 만든 뒤
+    ✦반짝이 제거 + 여백 트림."""
+    g = Image.open(os.path.join(IMG_DIR, "talk-bubble.png")).convert("L")  # 밝기
+    # 밝은 흰색(아이콘)=불투명, 어두운 체크배경=투명. 가장자리 안티에일리어싱 유지.
+    alpha = g.point(lambda v: 0 if v < 100 else (255 if v > 175 else int((v-100)/75*255)))
+    w, h = alpha.size; ap = alpha.load()
+    for y in range(int(h*0.72), h):        # 우하단 ✦ 반짝이 제거
+        for x in range(int(w*0.78), w):
+            ap[x, y] = 0
+    out = Image.new("RGBA", (w, h), (255, 255, 255, 0)); out.putalpha(alpha)
+    out = out.crop(out.getbbox())          # 실제 아이콘 영역만 트림
+    tw = 260; out = out.resize((tw, int(out.height*tw/out.width)), Image.LANCZOS)
+    buf = io.BytesIO(); out.save(buf, "PNG", optimize=True)
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode(), out.width/out.height
+
+talk_uri, talk_ar = talk_mask()
+talk_w = round(20 * talk_ar)
+
 LOGO = ('<svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true">'
         '<rect width="100" height="100" rx="22.5" fill="#D99A58"/>'
         '<path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" '
@@ -87,6 +107,8 @@ html = f"""<!DOCTYPE html>
     font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px}}
   .btn-ghost{{border:1.5px solid rgba(245,239,232,.85);color:#F5EFE8;font-weight:500;border-radius:14px;
     padding:14px 22px;font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:8px}}
+  .talk-ico{{display:inline-block;width:{talk_w}px;height:20px;flex-shrink:0;background-color:currentColor;
+    -webkit-mask:url('{talk_uri}') center/contain no-repeat;mask:url('{talk_uri}') center/contain no-repeat}}
 
   section{{padding:38px 0}}
   .kicker{{font-size:12.5px;font-weight:600;color:var(--accent-ink);letter-spacing:.03em;text-align:center;margin-bottom:8px}}
@@ -220,7 +242,7 @@ html = f"""<!DOCTYPE html>
           <p>앱으로 쉽게 준비하고, <br class="mbr">복잡한 절차는 전문가에게 맡기세요</p>
           <div class="cta">
             <a class="btn-primary"><i class="ti ti-download" style="font-size:17px"></i>무료 앱으로 시작하기</a>
-            <a class="btn-ghost"><i class="ti ti-message-circle" style="font-size:17px"></i>전문가에게 맡기기</a>
+            <a class="btn-ghost"><span class="talk-ico" aria-hidden="true"></span>전문가에게 맡기기</a>
           </div>
         </div>
         <div class="hero-photo"></div>
