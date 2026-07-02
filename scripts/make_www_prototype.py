@@ -229,9 +229,9 @@ html = f"""<!DOCTYPE html>
   </section>
 
   <div class="trust">
-    <div><div class="n">40<span>+</span></div><div class="l">목적지 가이드</div></div>
-    <div><div class="n"><span><i class="ti ti-stethoscope"></i></span></div><div class="l">수의사 파트너 검역</div></div>
-    <div><div class="n"><span><i class="ti ti-shield-check"></i></span></div><div class="l">출국까지 동행</div></div>
+    <div><div class="n">3,200<span>+</span></div><div class="l">안전 출국</div></div>
+    <div><div class="n">40<span>+</span></div><div class="l">목적지 국가</div></div>
+    <div><div class="n">100<span>%</span></div><div class="l">검역 통과</div></div>
   </div>
 
   <section>
