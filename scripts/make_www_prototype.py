@@ -236,9 +236,8 @@ html = f"""<!DOCTYPE html>
 
   <section>
     <div class="container">
-      <div class="kicker">두 가지 방법</div>
-      <div class="h2">직접, 또는 맡기고</div>
-      <div class="sub">준비에 익숙하면 앱으로 직접. 처음이거나 복잡한 나라면 전문가 올케어로.</div>
+      <div class="kicker">두 가지 준비 방법</div>
+      <div class="h2">앱으로 간편하게,<br>복잡할 땐 전문가에게</div>
       <div class="paths">
         <div class="path app">
           <span class="tag">펫무브 앱 · 무료</span>
