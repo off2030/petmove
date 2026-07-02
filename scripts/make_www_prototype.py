@@ -44,6 +44,14 @@ LOGO = ('<svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true">'
         '<path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" '
         'fill="none" stroke="#fff" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>')
 
+# 카톡 말풍선 + TALK (보조 버튼용). 색 없이 버튼 색 따라가는 윤곽선(currentColor).
+KAKAO = ('<svg viewBox="0 0 48 44" width="23" height="21" fill="none" aria-hidden="true" style="flex-shrink:0">'
+         '<rect x="2.5" y="2.5" width="43" height="29" rx="9.5" fill="none" stroke="currentColor" stroke-width="2.4"/>'
+         '<path d="M13 31.5 L13 41 L22.5 32" fill="none" stroke="currentColor" stroke-width="2.4" '
+         'stroke-linecap="round" stroke-linejoin="round"/>'
+         '<text x="24" y="22.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" '
+         'font-size="12.5" font-weight="600" letter-spacing="0.3" fill="currentColor">TALK</text></svg>')
+
 html = f"""<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -220,7 +228,7 @@ html = f"""<!DOCTYPE html>
           <p>앱으로 쉽게 준비하고, <br class="mbr">복잡한 절차는 전문가에게 맡기세요</p>
           <div class="cta">
             <a class="btn-primary"><i class="ti ti-download" style="font-size:17px"></i>무료 앱으로 시작하기</a>
-            <a class="btn-ghost"><i class="ti ti-message-circle" style="font-size:17px"></i>전문가에게 맡기기</a>
+            <a class="btn-ghost">{KAKAO}전문가에게 맡기기</a>
           </div>
         </div>
         <div class="hero-photo"></div>
