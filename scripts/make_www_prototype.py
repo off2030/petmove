@@ -240,18 +240,19 @@ html = f"""<!DOCTYPE html>
       <div class="h2">앱으로 간편하게,<br>복잡할 땐 전문가에게</div>
       <div class="paths">
         <div class="path app">
-          <span class="tag">펫무브 앱 · 무료</span>
-          <h3>앱으로 직접 준비</h3>
-          <p class="pd">일정·서류·알림을 한 화면에서 스스로 관리해요.</p>
+          <span class="tag">펫무브 앱</span>
+          <h3>직접 준비</h3>
+          <p class="pd">앱의 친절한 안내에 따라 직접 준비해요.</p>
           <ul>
-            <li><i class="ti ti-check" style="color:var(--accent)"></i>목적지별 맞춤 일정 자동 계산</li>
-            <li><i class="ti ti-check" style="color:var(--accent)"></i>할 일 리마인더 알림</li>
-            <li><i class="ti ti-check" style="color:var(--accent)"></i>서류 보관·체크</li>
+            <li><i class="ti ti-check" style="color:var(--accent)"></i>단계별 가이드</li>
+            <li><i class="ti ti-check" style="color:var(--accent)"></i>서류 체크리스트</li>
+            <li><i class="ti ti-check" style="color:var(--accent)"></i>주요 기한 알림</li>
+            <li><i class="ti ti-check" style="color:var(--accent)"></i>실수 방지 기능</li>
           </ul>
-          <span class="go">앱 받기<i class="ti ti-arrow-right"></i></span>
+          <span class="go">무료 앱 받기<i class="ti ti-arrow-right"></i></span>
         </div>
         <div class="path care">
-          <span class="tag">로잔동물의료센터 직영</span>
+          <span class="tag">로잔동물의료센터</span>
           <h3>전문가 올케어</h3>
           <p class="pd">검역·서류·운송까지 전담팀이 대신 준비해 드려요.</p>
           <ul>
