@@ -1,32 +1,16 @@
-// 별지25(Form25) 제조번호 칸 면역유효기간 병기 검증 (호주·뉴질랜드 목적지 gating).
-// 실제 pdf-field-mappings.json 의 Form25 transform 문자열을 그대로 읽어, serial 필드가
-// serial_with_expiry 로 바뀌었는지 + 값 포맷이 'batch / YYYY/MM/DD' 인지 확인.
+// 별지25(Form25) 제조번호 칸 = 제품 유효기간(제품 사용기한) 병기 검증.
+// 면역유효기간(접종일+valid_until)이 아니라 카탈로그/입력 제품 유효기간이 병기되는지 확인.
+// (면역유효기간은 별도 1Y/2Y/3Y 체크박스가 담당.)
 import { readFile } from 'node:fs/promises'
 
 const mappings = JSON.parse(await readFile('data/pdf-field-mappings.json', 'utf8'))
 const vaccines = JSON.parse(await readFile('data/vaccine-products.json', 'utf8'))
 
 function fmtDate(s) { return typeof s === 'string' && s ? s.replace(/-/g, '/') : '' }
-function addYears(date, n) {
-  const m = String(date).match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!m) return ''
-  return `${Number(m[1]) + n}-${m[2]}-${m[3]}`
-}
-function resolveValidityTo(rec, date, fb = 1) {
-  const raw = rec?.valid_until?.trim()
-  const ym = raw?.match(/^(\d+)\s*(?:년|yrs?|years?|y)$/i)
-  if (raw && !ym) return fmtDate(raw)
-  const years = ym ? Number(ym[1]) : fb
-  return fmtDate(addYears(date, years))
-}
 function joinBatchExpiry(batch, expiry) {
   if (!expiry) return batch
   if (!batch) return expiry
   return `${batch} / ${expiry}`
-}
-function destinationIsAuNz(d) {
-  if (typeof d !== 'string' || !d) return false
-  const t = d.split(',').map(s => s.trim())
-  return t.includes('호주') || t.includes('뉴질랜드')
 }
 function lookupRabies(date) { const y = Number(String(date).slice(0, 4)); return vaccines.rabies.find(r => r.year === y) ?? null }
 function lookupByDateRange(list, date) {
@@ -55,11 +39,12 @@ function buildOtherSeq(data) {
   const rec = sortedDescRecords(data.general_vaccine_dates).slice(0, 1).reverse()[0]
   if (rec) {
     const p = lookupComprehensive(sp, rec.date)
-    out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), validity: resolveValidityTo(rec, rec.date, 1), date: fmtDate(rec.date) })
+    out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
   }
   return out
 }
 
+// pdf-fill.ts serial_with_expiry 신 로직 미러: 제품 유효기간(expiry)만 병기, destination 무관.
 function resolve(mp, caseRow) {
   const { transform } = mp
   const data = caseRow.data
@@ -68,14 +53,12 @@ function resolve(mp, caseRow) {
     const rec = sortedDescRecords(data.rabies_dates).slice().reverse()[+m[3]]
     if (!rec) return ''
     const merged = applyRecOverrides(rec, lookupRabies(rec.date))
-    const suffix = destinationIsAuNz(caseRow.destination) ? resolveValidityTo(rec, rec.date, 1) : ''
-    return joinBatchExpiry(merged.serial, suffix)
+    return joinBatchExpiry(merged.serial, merged.expiry ?? '')
   }
   if ((m = transform?.match(/^other_vacc_seq:(serial_with_expiry)\[(\d+)\]$/))) {
     const entry = buildOtherSeq(data)[+m[2]]
     if (!entry) return ''
-    const suffix = destinationIsAuNz(caseRow.destination) ? entry.validity : ''
-    return joinBatchExpiry(entry.serial, suffix)
+    return joinBatchExpiry(entry.serial, entry.expiry)
   }
   return '(other transform)'
 }
@@ -89,13 +72,15 @@ const base = {
   },
 }
 
+// 2026 광견병 배치 G98321 의 제품 유효기간 = 2027/10/07 (면역유효기간 2027/03/23 아님).
+const expectRabies = 'G98321 / 2027/10/07'
+
 for (const dest of ['호주', '뉴질랜드', '일본']) {
   const caseRow = { ...base, destination: dest }
   const r1 = resolve(mappings.Form25.fields.rabies1_serial, caseRow)
   const o1 = resolve(mappings.Form25.fields.other1_serial, caseRow)
+  const ok = r1 === expectRabies ? 'OK' : `FAIL (expected "${expectRabies}")`
   console.log(`[${dest}]`)
-  console.log(`  rabies1_serial transform: ${mappings.Form25.fields.rabies1_serial.transform}`)
-  console.log(`  rabies1_serial value    : "${r1}"`)
-  console.log(`  other1_serial  transform: ${mappings.Form25.fields.other1_serial.transform}`)
+  console.log(`  rabies1_serial value    : "${r1}"  ${ok}`)
   console.log(`  other1_serial  value    : "${o1}"`)
 }
