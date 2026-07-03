@@ -18,9 +18,11 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // versionCode 는 Play 가 업로드마다 이전보다 커야 함 → Codemagic 빌드 카운터 사용.
-        // 로컬 빌드(BUILD_NUMBER 없음)에선 1 로 폴백.
-        versionCode (System.getenv("BUILD_NUMBER") ?: "1").toInteger()
-        versionName "1.0"
+        // 로컬 빌드(BUILD_NUMBER 없음/빈값)에선 1 로 폴백. 명시적 대입(=)으로 써서
+        // Groovy 명령 체인 파싱 모호성(값이 null 로 평가되는 문제)을 제거한다.
+        def buildNumberEnv = System.getenv("BUILD_NUMBER")
+        versionCode = (buildNumberEnv != null && !buildNumberEnv.isEmpty()) ? buildNumberEnv.toInteger() : 1
+        versionName = "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
