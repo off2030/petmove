@@ -69,42 +69,21 @@ PH2 = '<div class="notch"></div><div class="b sm"></div><div class="cm"></div><d
 PH3 = '<div class="notch"></div><div class="b"></div><div class="b am"></div><div class="b sm"></div><div class="cm"></div>'
 PHT = '<div class="notch"></div><div class="b am"></div><div class="b sm"></div><div class="b"></div><div class="cm"></div><div class="b sm" style="margin-top:9px"></div><div class="b xs"></div>'
 
-# ── 앱 소개 섹션 비교용 4변형(원안 + 방법1·2·3) ── 하나 고른 뒤 나머지 제거 예정
+# ── 앱 소개 섹션 (한 줄 1카드: 아이콘+제목 / 설명, 마지막 점선 '이 외에도' 카드) ──
 APP_SECTIONS = f"""
   <section>
     <div class="container">
-      <div class="vlabel-wrap"><span class="vlabel"><i class="ti ti-layout-grid"></i>방법 1 · 아이콘 그리드</span></div>
-      <div class="kicker">펫무브 앱 소개</div>
+      <div class="kicker">펫무브 앱을 소개해요</div>
       <div class="h2">이런 걸 할 수 있어요</div>
-      <div class="fgrid">
-        <div class="fcell"><div class="fi"><i class="ti ti-route"></i></div><p class="ft">단계별 가이드</p><p class="fd">무엇을 언제 할지</p></div>
-        <div class="fcell"><div class="fi"><i class="ti ti-shield-check"></i></div><p class="ft">실수 예방</p><p class="fd">놓치기 쉬운 조건까지</p></div>
-        <div class="fcell"><div class="fi"><i class="ti ti-bell"></i></div><p class="ft">일정 알림</p><p class="fd">중요한 날짜를 미리</p></div>
-        <div class="fcell"><div class="fi"><i class="ti ti-clipboard-check"></i></div><p class="ft">서류 체크리스트</p><p class="fd">빠짐없이 한눈에</p></div>
-        <div class="fcell"><div class="fi"><i class="ti ti-folder"></i></div><p class="ft">정보 보관함</p><p class="fd">아이 정보를 한 곳에</p></div>
-        <div class="fcell"><div class="fi"><i class="ti ti-plane"></i></div><p class="ft">항공·검역</p><p class="fd">출국까지 관리</p></div>
+      <div class="alist">
+        <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-route"></i></span><span class="at">단계별 가이드</span></div><p class="ad">각 단계, 무엇을 언제 할지까지 알려드려요</p></div>
+        <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-shield-check"></i></span><span class="at">실수 예방</span></div><p class="ad">잘못된 날짜를 입력하면 미리 알려드려요</p></div>
+        <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-bell"></i></span><span class="at">일정 알림</span></div><p class="ad">다음 할 일과 마감을 놓치지 않게</p></div>
+        <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-clipboard-check"></i></span><span class="at">서류 체크리스트</span></div><p class="ad">필요한 서류를 빠짐없이 확인해요</p></div>
+        <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-folder"></i></span><span class="at">정보 보관함</span></div><p class="ad">백신·증명서·허가증을 한 곳에 저장</p></div>
+        <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-plane"></i></span><span class="at">항공·검역</span></div><p class="ad">출국까지 빠짐없이 관리해요</p></div>
+        <div class="acard more"><i class="ti ti-dots"></i>이 외에도 다양한 기능이 있어요</div>
       </div>
-      <div class="appcta-wrap"><a class="appcta"><i class="ti ti-download"></i>무료 앱 받기</a></div>
-    </div>
-  </section>
-
-  <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
-    <div class="container">
-      <div class="vlabel-wrap"><span class="vlabel"><i class="ti ti-photo"></i>방법 3 · 하이브리드</span></div>
-      <div class="kicker">펫무브 앱 소개</div>
-      <div class="h2">이런 걸 할 수 있어요</div>
-      <div class="hybrid">
-        <img class="realshot hero-shot" src="{p_hero}" alt="">
-        <div class="hlist">
-          <div class="hrow"><i class="ti ti-route"></i><span>단계별 가이드</span></div>
-          <div class="hrow"><i class="ti ti-shield-check"></i><span>실수 예방</span></div>
-          <div class="hrow"><i class="ti ti-bell"></i><span>일정 알림</span></div>
-          <div class="hrow"><i class="ti ti-clipboard-check"></i><span>서류 체크</span></div>
-          <div class="hrow"><i class="ti ti-folder"></i><span>정보 보관함</span></div>
-          <div class="hrow"><i class="ti ti-plane"></i><span>항공·검역</span></div>
-        </div>
-      </div>
-      <p class="more-line">대표 화면으로 보고, 기능은 <b>한눈에</b></p>
       <div class="appcta-wrap"><a class="appcta"><i class="ti ti-download"></i>무료 앱 받기</a></div>
     </div>
   </section>
@@ -257,6 +236,14 @@ html = f"""<!DOCTYPE html>
   .realshot{{width:100%;display:block}}
   .fslide .realshot{{margin-bottom:9px}}
   .hero-shot{{width:160px;margin:0 auto 18px;display:block}}
+  .alist{{max-width:460px;margin:24px auto 0;display:flex;flex-direction:column;gap:10px}}
+  .acard{{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:15px 16px}}
+  .acard-h{{display:flex;align-items:center;gap:11px}}
+  .acard .ai{{width:34px;height:34px;border-radius:10px;background:#EFE0C9;color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}}
+  .acard .at{{font-size:15.5px;font-weight:600}}
+  .acard .ad{{font-size:13px;color:var(--ink2);margin:9px 0 0;line-height:1.5}}
+  .acard.more{{border-style:dashed;background:transparent;text-align:center;color:var(--ink3);font-size:13px;padding:15px;display:flex;align-items:center;justify-content:center;gap:7px}}
+  .acard.more i{{color:var(--accent-ink);font-size:16px}}
   .hybrid .hero-ph{{width:130px;height:224px;margin:0 auto 18px}}
   .hlist{{display:grid;grid-template-columns:1fr 1fr;gap:9px}}
   .hrow{{display:flex;align-items:center;gap:9px;background:var(--surface);border:0.5px solid var(--border);border-radius:11px;padding:11px 12px}}
