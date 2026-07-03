@@ -59,6 +59,13 @@ workflows:
         script: |
           cd apps/portal
           npx cap add ios
+          # ── 앱 아이콘·스플래시 생성 (Guideline 2.3.8 반려 수정, 2026-07-03) ──
+          # `cap add ios` 는 Capacitor 기본 플레이스홀더 아이콘을 넣는다. 실제 펫무브 아이콘
+          # (assets/icon.png = 앰버 리본P)을 iOS AppIcon 으로 구워 넣지 않으면 App Review 가
+          # "placeholder icon"(2.3.8 Accurate Metadata)으로 반려한다(1.0 빌드20이 이걸로 반려됨).
+          # assets/ 의 icon.png·splash*.png 를 읽어 ios/App/App/Assets.xcassets 에 아이콘·스플래시
+          # 이미지를 생성한다. --yes = CI 비대화형에서 npx 설치 자동 확인.
+          npx --yes @capacitor/assets generate --ios
           npx cap sync ios
           # Capacitor 8 은 CocoaPods 가 아니라 Swift Package Manager(Package.swift) 사용 →
           # Podfile·pod install·.xcworkspace 가 없다. xcodebuild 가 App.xcodeproj 를 직접
