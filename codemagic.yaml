@@ -180,3 +180,67 @@ workflows:
         # 업로드는 이미 성공하므로 자동배포는 끄고, TestFlight 테스터 배포·심사는 App Store
         # Connect 에서 수동으로 한다(표준 워크플로).
         submit_to_testflight: false
+
+  # ───────────────────────────────────────────────────────────────────────────
+  android-portal:
+    name: 펫무브 Android (AAB)
+    # Android 는 Linux 인스턴스로 충분(Mac 불필요) — 더 빠르고 저렴.
+    instance_type: linux_x2
+    max_build_duration: 60
+
+    environment:
+      # ⬇️ Codemagic UI 에 등록한 Android keystore 의 "reference name" 과 정확히 일치해야 함.
+      #   Codemagic → Teams/App settings → Code signing identities → Android keystores →
+      #   Generate keystore(또는 Upload) → reference name 을 petmove_upload 로.
+      #   생성 후 반드시 Download 해서 안전한 곳에 백업(분실 시 앱 업데이트 서명 불가).
+      #   이 블록이 있으면 빌드 중 CM_KEYSTORE_PATH / CM_KEYSTORE_PASSWORD /
+      #   CM_KEY_ALIAS / CM_KEY_PASSWORD 환경변수가 자동 주입된다.
+      android_signing:
+        - petmove_upload
+      vars:
+        PACKAGE_NAME: "com.petmove.portal"
+      node: 22 # Capacitor 8 CLI 는 Node >=22 필요
+
+    scripts:
+      - name: 의존성 설치 (pnpm 모노레포)
+        script: |
+          npm install -g pnpm@10.33.0
+          pnpm install --frozen-lockfile
+
+      - name: 웹 자산 플레이스홀더 (원격 URL 방식 — out/ 는 git 무시)
+        script: |
+          mkdir -p apps/portal/out
+          printf '<!doctype html><meta charset="utf-8"><title>펫무브</title>' > apps/portal/out/index.html
+
+      - name: Android 플랫폼 동기화 + 아이콘·스플래시 생성
+        script: |
+          cd apps/portal
+          npx cap sync android
+          # cap sync 는 Capacitor 기본 placeholder 아이콘을 넣는다. 실제 펫무브 아이콘
+          # (assets/icon.png = 앰버 리본P)을 launcher 아이콘으로 구워넣지 않으면 스토어에
+          # placeholder 로 뜬다(iOS 2.3.8 반려와 같은 부류). --yes = 비대화형 자동 설치 확인.
+          npx --yes @capacitor/assets generate --android
+
+      - name: keystore 서명 설정 주입 (key.properties)
+        script: |
+          # android_signing 블록이 주입한 CM_* 변수로 app/build.gradle 이 읽는 key.properties 생성.
+          KP="$CM_BUILD_DIR/apps/portal/android/key.properties"
+          {
+            echo "storeFile=$CM_KEYSTORE_PATH"
+            echo "storePassword=$CM_KEYSTORE_PASSWORD"
+            echo "keyAlias=$CM_KEY_ALIAS"
+            echo "keyPassword=$CM_KEY_PASSWORD"
+          } > "$KP"
+
+      - name: AAB 빌드 (release, 서명)
+        script: |
+          cd apps/portal/android
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon
+
+    artifacts:
+      # 서명된 App Bundle — Codemagic 빌드 결과에서 다운로드해 Play Console 에 업로드.
+      - apps/portal/android/app/build/outputs/bundle/**/*.aab
+
+    # 참고: Play Console 자동 업로드(google_play publishing)는 서비스 계정 JSON 설정이 필요해
+    # 최초 릴리스에선 생략. AAB 를 수동 업로드해 첫 트랙을 만든 뒤, 원하면 추후 추가한다.

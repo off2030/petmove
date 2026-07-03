@@ -57,6 +57,8 @@ captures/
 *.jks
 *.keystore
 keystore.properties
+# Codemagic 이 빌드 중 생성하는 서명 설정(비밀번호 포함) — 절대 커밋 금지.
+key.properties
 
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
