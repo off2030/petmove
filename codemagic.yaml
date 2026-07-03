@@ -235,9 +235,14 @@ workflows:
 
       - name: AAB 빌드 (release, 서명)
         script: |
+          # Capacitor 8 코어(capacitor-android)는 sourceCompatibility=21 → JDK 21 로 컴파일해야 함.
+          # Codemagic mac 기본 JDK 는 17 이라 'invalid source release: 21' 로 실패 → java_home 으로 21 선택.
+          export JAVA_HOME="$(/usr/libexec/java_home -v 21)"
+          echo "Using JAVA_HOME=$JAVA_HOME"
+          java -version
           cd apps/portal/android
           chmod +x gradlew
-          ./gradlew bundleRelease --no-daemon
+          ./gradlew bundleRelease --no-daemon -Dorg.gradle.java.home="$JAVA_HOME"
 
     artifacts:
       # 서명된 App Bundle — Codemagic 빌드 결과에서 다운로드해 Play Console 에 업로드.
