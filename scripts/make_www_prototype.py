@@ -56,11 +56,6 @@ def b64_phone(name, bg, out_w=440, q=82):
     canvas = canvas.resize((out_w, int(h * out_w / w)), Image.LANCZOS)
     return _enc(canvas, q)
 
-p_guide   = b64_phone("play_shot_2.png", SURF)   # 단계별 가이드(전체 일정)
-p_docs    = b64_phone("play_shot_6.png", SURF)   # 서류 체크리스트
-p_alarm   = b64_phone("play_shot_5.png", SURF)   # 일정 알림(알림)
-p_prevent = b64_phone("play_shot_4.png", SURF)   # 실수 예방(날짜 검증)
-p_store   = b64_phone("play_shot_8.png", SURF)   # 정보 보관함
 p_hero    = b64_phone("play_shot_3.png", STONE)  # 방법3 대표 화면(홈 55%)
 
 LOGO = ('<svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true">'
@@ -94,24 +89,6 @@ APP_SECTIONS = f"""
   </section>
 
   <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
-    <div class="container">
-      <div class="vlabel-wrap"><span class="vlabel"><i class="ti ti-arrows-horizontal"></i>방법 2 · 가로 스와이프</span></div>
-      <div class="kicker">펫무브 앱 소개</div>
-      <div class="h2">이런 걸 할 수 있어요</div>
-      <div class="fscroll">
-        <div class="fslide"><img class="realshot" src="{p_guide}" alt=""><div class="fcap">단계별 가이드</div></div>
-        <div class="fslide"><img class="realshot" src="{p_docs}" alt=""><div class="fcap">서류 체크리스트</div></div>
-        <div class="fslide"><img class="realshot" src="{p_alarm}" alt=""><div class="fcap">일정 알림</div></div>
-        <div class="fslide"><img class="realshot" src="{p_prevent}" alt=""><div class="fcap">실수 예방</div></div>
-        <div class="fslide"><img class="realshot" src="{p_store}" alt=""><div class="fcap">정보 보관함</div></div>
-      </div>
-      <div class="fdots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
-      <div class="swipe-hint">← 옆으로 넘겨보세요</div>
-      <div class="appcta-wrap"><a class="appcta"><i class="ti ti-download"></i>무료 앱 받기</a></div>
-    </div>
-  </section>
-
-  <section>
     <div class="container">
       <div class="vlabel-wrap"><span class="vlabel"><i class="ti ti-photo"></i>방법 3 · 하이브리드</span></div>
       <div class="kicker">펫무브 앱 소개</div>
