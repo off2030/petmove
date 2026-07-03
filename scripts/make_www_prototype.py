@@ -4,7 +4,7 @@
 폰/태블릿/PC 반응형. 실제 사진 base64 인라인 → 단일 HTML.
 """
 import base64, io, os
-from PIL import Image
+from PIL import Image, ImageDraw
 
 IMG_DIR = r"G:\내 드라이브\PETMOVE\기타\이미지"
 OUT = r"C:\dev\petmove\docs\www-redesign\prototype-mobile.html"
@@ -38,6 +38,30 @@ hero_card = b64_crop(HERO_SRC, 1200, 1300, focus_x=0.66, focus_y=0.34)  # PC 카
 hero_l    = b64_crop(HERO_SRC, 2000, 1050, focus_x=0.56, focus_y=0.40)  # 760-959 가로
 
 band = b64("patrick-hendry-jd0hS7Vhn_A-unsplash.jpg", 3000)  # 협곡 뒷모습(감성). PC 풀블리드용 고해상도
+
+# ── 실제 앱 화면(Play 스토어 스샷에서 반듯한 폰만 잘라냄) ──
+SHOT_DIR = r"C:\Users\off20\Desktop\스크린샷\play"
+PHONE_BOX = (240, 610, 1164, 2628)      # 생성기 공통 폰 위치(고정)
+SURF = (251, 247, 241)                   # --surface (방법2 배경)
+STONE = (245, 239, 232)                  # --bg (방법3 배경)
+
+def b64_phone(name, bg, out_w=440, q=82):
+    """스토어 스샷에서 폰 영역만 크롭 + 라운드 코너를 섹션 배경색으로 합성."""
+    im = Image.open(os.path.join(SHOT_DIR, name)).convert("RGB").crop(PHONE_BOX)
+    w, h = im.size
+    mask = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, w, h], radius=int(w * 0.115), fill=255)
+    canvas = Image.new("RGB", (w, h), bg)
+    canvas.paste(im, (0, 0), mask)
+    canvas = canvas.resize((out_w, int(h * out_w / w)), Image.LANCZOS)
+    return _enc(canvas, q)
+
+p_guide   = b64_phone("play_shot_2.png", SURF)   # 단계별 가이드(전체 일정)
+p_docs    = b64_phone("play_shot_6.png", SURF)   # 서류 체크리스트
+p_alarm   = b64_phone("play_shot_5.png", SURF)   # 일정 알림(알림)
+p_prevent = b64_phone("play_shot_4.png", SURF)   # 실수 예방(날짜 검증)
+p_store   = b64_phone("play_shot_8.png", SURF)   # 정보 보관함
+p_hero    = b64_phone("play_shot_3.png", STONE)  # 방법3 대표 화면(홈 55%)
 
 LOGO = ('<svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true">'
         '<rect width="100" height="100" rx="22.5" fill="#D99A58"/>'
@@ -75,11 +99,11 @@ APP_SECTIONS = f"""
       <div class="kicker">펫무브 앱 소개</div>
       <div class="h2">이런 걸 할 수 있어요</div>
       <div class="fscroll">
-        <div class="fslide"><div class="ph">{PH1}</div><div class="fcap">단계별 가이드</div></div>
-        <div class="fslide"><div class="ph">{PH2}</div><div class="fcap">서류 체크리스트</div></div>
-        <div class="fslide"><div class="ph">{PH3}</div><div class="fcap">일정 알림</div></div>
-        <div class="fslide"><div class="ph">{PH1}</div><div class="fcap">실수 예방</div></div>
-        <div class="fslide"><div class="ph">{PH2}</div><div class="fcap">정보 보관함</div></div>
+        <div class="fslide"><img class="realshot" src="{p_guide}" alt=""><div class="fcap">단계별 가이드</div></div>
+        <div class="fslide"><img class="realshot" src="{p_docs}" alt=""><div class="fcap">서류 체크리스트</div></div>
+        <div class="fslide"><img class="realshot" src="{p_alarm}" alt=""><div class="fcap">일정 알림</div></div>
+        <div class="fslide"><img class="realshot" src="{p_prevent}" alt=""><div class="fcap">실수 예방</div></div>
+        <div class="fslide"><img class="realshot" src="{p_store}" alt=""><div class="fcap">정보 보관함</div></div>
       </div>
       <div class="fdots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
       <div class="swipe-hint">← 옆으로 넘겨보세요</div>
@@ -93,7 +117,7 @@ APP_SECTIONS = f"""
       <div class="kicker">펫무브 앱 소개</div>
       <div class="h2">이런 걸 할 수 있어요</div>
       <div class="hybrid">
-        <div class="ph hero-ph">{PHT}</div>
+        <img class="realshot hero-shot" src="{p_hero}" alt="">
         <div class="hlist">
           <div class="hrow"><i class="ti ti-route"></i><span>단계별 가이드</span></div>
           <div class="hrow"><i class="ti ti-shield-check"></i><span>실수 예방</span></div>
@@ -253,6 +277,9 @@ html = f"""<!DOCTYPE html>
   .fdots i{{width:6px;height:6px;border-radius:50%;background:rgba(42,38,32,.16)}}
   .fdots i.on{{background:var(--accent);width:17px;border-radius:3px}}
   .swipe-hint{{text-align:center;font-size:11.5px;color:var(--ink3);margin-top:9px}}
+  .realshot{{width:100%;display:block}}
+  .fslide .realshot{{margin-bottom:9px}}
+  .hero-shot{{width:160px;margin:0 auto 18px;display:block}}
   .hybrid .hero-ph{{width:130px;height:224px;margin:0 auto 18px}}
   .hlist{{display:grid;grid-template-columns:1fr 1fr;gap:9px}}
   .hrow{{display:flex;align-items:center;gap:9px;background:var(--surface);border:0.5px solid var(--border);border-radius:11px;padding:11px 12px}}
