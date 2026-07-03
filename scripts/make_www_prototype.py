@@ -54,21 +54,6 @@ PHT = '<div class="notch"></div><div class="b am"></div><div class="b sm"></div>
 APP_SECTIONS = f"""
   <section>
     <div class="container">
-      <div class="vlabel-wrap"><span class="vlabel"><i class="ti ti-eye"></i>원안 · 스샷 3행</span></div>
-      <div class="kicker">펫무브 앱 소개</div>
-      <div class="h2">이런 걸 할 수 있어요</div>
-      <div class="frows">
-        <div class="frow"><div class="ph fthumb">{PH1}</div><div><span class="fnum">1</span><p class="ft">단계별 가이드</p><p class="fd">각 단계, 무엇을 언제 할지까지</p></div></div>
-        <div class="frow"><div class="ph fthumb">{PH2}</div><div><span class="fnum">2</span><p class="ft">서류 체크리스트</p><p class="fd">필요한 서류, 빠짐없이 체크해요</p></div></div>
-        <div class="frow"><div class="ph fthumb">{PH3}</div><div><span class="fnum">3</span><p class="ft">할 일 알림</p><p class="fd">다음 할 일을 바로 알려드려요</p></div></div>
-      </div>
-      <p class="more-line">그 밖에 <b>다양한 기능</b>을 앱에 담았어요</p>
-      <div class="appcta-wrap"><a class="appcta"><i class="ti ti-download"></i>무료 앱 받기</a></div>
-    </div>
-  </section>
-
-  <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
-    <div class="container">
       <div class="vlabel-wrap"><span class="vlabel"><i class="ti ti-layout-grid"></i>방법 1 · 아이콘 그리드</span></div>
       <div class="kicker">펫무브 앱 소개</div>
       <div class="h2">이런 걸 할 수 있어요</div>
@@ -84,7 +69,7 @@ APP_SECTIONS = f"""
     </div>
   </section>
 
-  <section>
+  <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
     <div class="container">
       <div class="vlabel-wrap"><span class="vlabel"><i class="ti ti-arrows-horizontal"></i>방법 2 · 가로 스와이프</span></div>
       <div class="kicker">펫무브 앱 소개</div>
@@ -102,7 +87,7 @@ APP_SECTIONS = f"""
     </div>
   </section>
 
-  <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
+  <section>
     <div class="container">
       <div class="vlabel-wrap"><span class="vlabel"><i class="ti ti-photo"></i>방법 3 · 하이브리드</span></div>
       <div class="kicker">펫무브 앱 소개</div>
