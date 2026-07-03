@@ -107,6 +107,47 @@
   .flag{background:#FFF6E5;border:0.5px solid #F0DBA8;color:#7A5A1E;font-size:11.5px;border-radius:8px;
     padding:10px 13px;margin:14px auto 0;max-width:1036px;line-height:1.5}
 
+  /* ── 앱 소개 비교 섹션(임시) ── */
+  .vlabel-wrap{text-align:center}
+  .vlabel{display:inline-flex;align-items:center;gap:6px;background:var(--dark);color:#F5EFE8;font-size:12px;font-weight:600;border-radius:999px;padding:6px 14px;margin:0 0 16px}
+  .more-line{text-align:center;font-size:12.5px;color:var(--ink3);margin-top:18px}
+  .more-line b{color:var(--accent-ink);font-weight:600}
+  .appcta-wrap{text-align:center}
+  .appcta{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:var(--ink);font-weight:600;border-radius:13px;padding:13px 24px;font-size:14px;margin:22px auto 0}
+  .ph{background:var(--surface);border:1.5px solid rgba(42,38,32,.16);border-radius:16px;padding:9px 8px}
+  .ph .notch{width:22px;height:4px;background:rgba(42,38,32,.18);border-radius:3px;margin:1px auto 9px}
+  .ph .b{height:7px;border-radius:4px;background:#EADCC9;margin-bottom:6px}
+  .ph .b.am{background:var(--accent);width:58%}
+  .ph .b.sm{width:80%}
+  .ph .b.xs{width:46%}
+  .ph .cm{background:#F4E7D2;border:0.5px solid rgba(217,154,88,.4);border-radius:8px;height:38px;margin-top:8px}
+  .frows{margin-top:22px}
+  .frow{display:flex;gap:15px;align-items:center;padding:15px 0;border-top:0.5px solid var(--border)}
+  .frow:first-child{border-top:none}
+  .frow .fthumb{flex:0 0 66px;height:118px}
+  .fnum{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#EFE0C9;color:var(--accent-ink);font-size:11px;font-weight:700;margin-bottom:7px}
+  .frow .ft{font-size:15px;font-weight:600;margin:0 0 3px}
+  .frow .fd{font-size:12.5px;color:var(--ink2);margin:0;line-height:1.5}
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
+  .fcell{background:var(--surface);border:0.5px solid var(--border);border-radius:13px;padding:14px 13px}
+  .fcell .fi{width:34px;height:34px;border-radius:10px;background:#EFE0C9;color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:9px}
+  .fcell .ft{font-size:13.5px;font-weight:600;margin:0 0 2px}
+  .fcell .fd{font-size:11.5px;color:var(--ink2);margin:0;line-height:1.4}
+  .fscroll{display:flex;gap:13px;overflow-x:auto;margin-top:22px;padding-bottom:6px;scroll-snap-type:x mandatory}
+  .fscroll::-webkit-scrollbar{height:0}
+  .fslide{flex:0 0 132px;scroll-snap-align:center}
+  .fslide .ph{height:210px;margin-bottom:9px}
+  .fslide .fcap{font-size:12.5px;color:var(--ink);text-align:center;font-weight:500}
+  .fdots{display:flex;gap:5px;justify-content:center;margin-top:14px}
+  .fdots i{width:6px;height:6px;border-radius:50%;background:rgba(42,38,32,.16)}
+  .fdots i.on{background:var(--accent);width:17px;border-radius:3px}
+  .swipe-hint{text-align:center;font-size:11.5px;color:var(--ink3);margin-top:9px}
+  .hybrid .hero-ph{width:130px;height:224px;margin:0 auto 18px}
+  .hlist{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .hrow{display:flex;align-items:center;gap:9px;background:var(--surface);border:0.5px solid var(--border);border-radius:11px;padding:11px 12px}
+  .hrow i{color:var(--accent-ink);font-size:17px;flex:0 0 auto}
+  .hrow span{font-size:12.5px;font-weight:500}
+
   /* ── 태블릿 이상 ── */
   @media(min-width:760px){
     .nav-links{display:flex}
@@ -127,6 +168,8 @@
     .step .num{margin:0;position:absolute}
     .step{position:relative}
     .paths{grid-template-columns:1fr 1fr;gap:18px}
+    .fgrid,.hlist{grid-template-columns:repeat(3,1fr)}
+    .frows{max-width:620px;margin-left:auto;margin-right:auto}
     .path{padding:30px 28px}
     .grid{grid-template-columns:repeat(6,1fr)}
     .trust .n{font-size:30px} .trust .l{font-size:13px}
@@ -190,48 +233,78 @@
     <div><div class="n"><span id="yrs" style="color:inherit">20</span>년<span>+</span></div><div class="l">경험</div></div>
   </div>
 
+
   <section>
     <div class="container">
-      <div class="kicker">두 가지 준비 방법</div>
-      <div class="h2">앱으로 간편하게,<br>복잡할 땐 전문가에게</div>
-      <div class="paths">
-        <div class="path app">
-          <span class="tag">펫무브 앱</span>
-          <h3>앱으로 직접 준비해요</h3>
-          <div class="pt">주요 기능</div>
-          <ul>
-            <li><i class="ti ti-check" style="color:var(--accent)"></i>단계별 가이드</li>
-            <li><i class="ti ti-check" style="color:var(--accent)"></i>서류 체크리스트</li>
-            <li><i class="ti ti-check" style="color:var(--accent)"></i>기한 알림 · 실수 방지</li>
-          </ul>
-          <span class="go">무료 앱 받기<i class="ti ti-arrow-right"></i></span>
-        </div>
-        <div class="path care">
-          <span class="tag">로잔동물의료센터</span>
-          <h3>전문가에게 맡겨요</h3>
-          <div class="pt">주요 서비스</div>
-          <ul>
-            <li><i class="ti ti-check" style="color:var(--sage)"></i>마이크로칩, 접종, 검사</li>
-            <li><i class="ti ti-check" style="color:var(--sage)"></i>신고 · 허가증 신청 대행</li>
-            <li><i class="ti ti-check" style="color:var(--sage)"></i>출국 전 임상검사 · 서류 준비</li>
-          </ul>
-          <span class="go">상담 신청<i class="ti ti-arrow-right"></i></span>
-        </div>
+      <div class="vlabel-wrap"><span class="vlabel"><i class="ti ti-eye"></i>원안 · 스샷 3행</span></div>
+      <div class="kicker">펫무브 앱 소개</div>
+      <div class="h2">이런 걸 할 수 있어요</div>
+      <div class="frows">
+        <div class="frow"><div class="ph fthumb"><div class="notch"></div><div class="b am"></div><div class="b sm"></div><div class="b"></div><div class="cm"></div></div><div><span class="fnum">1</span><p class="ft">단계별 가이드</p><p class="fd">각 단계, 무엇을 언제 할지까지</p></div></div>
+        <div class="frow"><div class="ph fthumb"><div class="notch"></div><div class="b sm"></div><div class="cm"></div><div class="b" style="margin-top:7px"></div><div class="b xs"></div></div><div><span class="fnum">2</span><p class="ft">서류 체크리스트</p><p class="fd">필요한 서류, 빠짐없이 체크해요</p></div></div>
+        <div class="frow"><div class="ph fthumb"><div class="notch"></div><div class="b"></div><div class="b am"></div><div class="b sm"></div><div class="cm"></div></div><div><span class="fnum">3</span><p class="ft">할 일 알림</p><p class="fd">다음 할 일을 바로 알려드려요</p></div></div>
       </div>
+      <p class="more-line">그 밖에 <b>다양한 기능</b>을 앱에 담았어요</p>
+      <div class="appcta-wrap"><a class="appcta"><i class="ti ti-download"></i>무료 앱 받기</a></div>
     </div>
   </section>
 
   <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
     <div class="container">
-      <div class="kicker">앱으로 준비하면</div>
-      <div class="h2">3단계면 충분해요</div>
-      <div class="steps">
-        <div class="step"><div class="ic"><i class="ti ti-map-pin"></i></div><div><div class="t">목적지 선택</div><div class="d">가는 나라만 고르면 준비가 시작돼요</div></div><span class="num">01</span></div>
-        <div class="step"><div class="ic"><i class="ti ti-calendar"></i></div><div><div class="t">자동 일정</div><div class="d">검역·접종 날짜를 역산해 알려드려요</div></div><span class="num">02</span></div>
-        <div class="step"><div class="ic"><i class="ti ti-plane"></i></div><div><div class="t">출국</div><div class="d">필요 서류까지 완비된 채로</div></div><span class="num">03</span></div>
+      <div class="vlabel-wrap"><span class="vlabel"><i class="ti ti-layout-grid"></i>방법 1 · 아이콘 그리드</span></div>
+      <div class="kicker">펫무브 앱 소개</div>
+      <div class="h2">이런 걸 할 수 있어요</div>
+      <div class="fgrid">
+        <div class="fcell"><div class="fi"><i class="ti ti-route"></i></div><p class="ft">단계별 가이드</p><p class="fd">무엇을 언제 할지</p></div>
+        <div class="fcell"><div class="fi"><i class="ti ti-shield-check"></i></div><p class="ft">실수 예방</p><p class="fd">놓치기 쉬운 조건까지</p></div>
+        <div class="fcell"><div class="fi"><i class="ti ti-bell"></i></div><p class="ft">일정 알림</p><p class="fd">중요한 날짜를 미리</p></div>
+        <div class="fcell"><div class="fi"><i class="ti ti-clipboard-check"></i></div><p class="ft">서류 체크리스트</p><p class="fd">빠짐없이 한눈에</p></div>
+        <div class="fcell"><div class="fi"><i class="ti ti-folder"></i></div><p class="ft">정보 보관함</p><p class="fd">아이 정보를 한 곳에</p></div>
+        <div class="fcell"><div class="fi"><i class="ti ti-plane"></i></div><p class="ft">항공·검역</p><p class="fd">출국까지 관리</p></div>
       </div>
+      <div class="appcta-wrap"><a class="appcta"><i class="ti ti-download"></i>무료 앱 받기</a></div>
     </div>
   </section>
+
+  <section>
+    <div class="container">
+      <div class="vlabel-wrap"><span class="vlabel"><i class="ti ti-arrows-horizontal"></i>방법 2 · 가로 스와이프</span></div>
+      <div class="kicker">펫무브 앱 소개</div>
+      <div class="h2">이런 걸 할 수 있어요</div>
+      <div class="fscroll">
+        <div class="fslide"><div class="ph"><div class="notch"></div><div class="b am"></div><div class="b sm"></div><div class="b"></div><div class="cm"></div></div><div class="fcap">단계별 가이드</div></div>
+        <div class="fslide"><div class="ph"><div class="notch"></div><div class="b sm"></div><div class="cm"></div><div class="b" style="margin-top:7px"></div><div class="b xs"></div></div><div class="fcap">서류 체크리스트</div></div>
+        <div class="fslide"><div class="ph"><div class="notch"></div><div class="b"></div><div class="b am"></div><div class="b sm"></div><div class="cm"></div></div><div class="fcap">일정 알림</div></div>
+        <div class="fslide"><div class="ph"><div class="notch"></div><div class="b am"></div><div class="b sm"></div><div class="b"></div><div class="cm"></div></div><div class="fcap">실수 예방</div></div>
+        <div class="fslide"><div class="ph"><div class="notch"></div><div class="b sm"></div><div class="cm"></div><div class="b" style="margin-top:7px"></div><div class="b xs"></div></div><div class="fcap">정보 보관함</div></div>
+      </div>
+      <div class="fdots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+      <div class="swipe-hint">← 옆으로 넘겨보세요</div>
+      <div class="appcta-wrap"><a class="appcta"><i class="ti ti-download"></i>무료 앱 받기</a></div>
+    </div>
+  </section>
+
+  <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
+    <div class="container">
+      <div class="vlabel-wrap"><span class="vlabel"><i class="ti ti-photo"></i>방법 3 · 하이브리드</span></div>
+      <div class="kicker">펫무브 앱 소개</div>
+      <div class="h2">이런 걸 할 수 있어요</div>
+      <div class="hybrid">
+        <div class="ph hero-ph"><div class="notch"></div><div class="b am"></div><div class="b sm"></div><div class="b"></div><div class="cm"></div><div class="b sm" style="margin-top:9px"></div><div class="b xs"></div></div>
+        <div class="hlist">
+          <div class="hrow"><i class="ti ti-route"></i><span>단계별 가이드</span></div>
+          <div class="hrow"><i class="ti ti-shield-check"></i><span>실수 예방</span></div>
+          <div class="hrow"><i class="ti ti-bell"></i><span>일정 알림</span></div>
+          <div class="hrow"><i class="ti ti-clipboard-check"></i><span>서류 체크</span></div>
+          <div class="hrow"><i class="ti ti-folder"></i><span>정보 보관함</span></div>
+          <div class="hrow"><i class="ti ti-plane"></i><span>항공·검역</span></div>
+        </div>
+      </div>
+      <p class="more-line">대표 화면으로 보고, 기능은 <b>한눈에</b></p>
+      <div class="appcta-wrap"><a class="appcta"><i class="ti ti-download"></i>무료 앱 받기</a></div>
+    </div>
+  </section>
+
 
   <section>
     <div class="container">
