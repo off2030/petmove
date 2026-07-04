@@ -97,7 +97,7 @@ SERVICE_SECTION = """
       <div class="score-list">
         <div class="score">
           <div class="score-h"><i class="ti ti-heart-plus si"></i><span class="st">로잔동물의료센터</span></div>
-          <p class="sd">수의사가 준비하니까 믿고 맡길 수 있어요</p>
+          <p class="sd">수의사가 직접 준비해 믿고 맡길 수 있어요</p>
         </div>
         <div class="score">
           <div class="score-h"><i class="ti ti-device-mobile si"></i><span class="st">펫무브 앱 연동</span></div>
