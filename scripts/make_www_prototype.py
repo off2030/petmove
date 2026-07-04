@@ -212,7 +212,7 @@ html = f"""<!DOCTYPE html>
   .band p{{font-size:13.5px;color:#EDE4D3;margin:9px 0 0;line-height:1.6}}
 
   .final{{background:var(--dark);padding:44px 0;text-align:center}}
-  .final h2{{font-size:24px;color:#F5EFE8;margin:0 0 10px;font-weight:700}}
+  .final h2{{font-size:24px;color:#F5EFE8;margin:0 0 22px;font-weight:700}}
   .final p{{font-size:13.5px;color:#B0A896;margin:0 0 22px}}
   .store-row{{display:flex;gap:11px;justify-content:center;flex-wrap:wrap}}
   .store{{background:#F5EFE8;color:var(--ink);border-radius:13px;padding:13px 18px;display:flex;align-items:center;
@@ -407,8 +407,7 @@ html = f"""<!DOCTYPE html>
 
   <div class="final">
     <div class="container">
-      <h2>오늘부터 준비하세요</h2>
-      <p>앱은 무료 · 목적지만 고르면 첫 일정이 잡혀요</p>
+      <h2>무료 앱으로 시작하세요</h2>
       <div class="store-row">
         <a class="store"><i class="ti ti-brand-apple" style="font-size:18px"></i>App Store</a>
         <a class="store"><i class="ti ti-brand-google-play" style="font-size:16px"></i>Google Play</a>
