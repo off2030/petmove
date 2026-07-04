@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>펫무브 · 2–3 섹션 흐름 제안</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    :root {
+      --bg:#ebe5dc; --paper:#f5efe8; --surface:#fbf7f1; --ink:#2a2620;
+      --ink2:#6b6457; --ink3:#847b6c; --accent:#d99a58; --accent2:#f1d4b4;
+      --sage:#8fa68c; --sage2:#dce5da; --line:#e3d9c6; --white:#fffdf9;
+      --shadow:0 22px 70px rgba(49,40,27,.13);
+    }
+    * { box-sizing:border-box }
+    html { scroll-behavior:smooth }
+    body { margin:0; color:var(--ink); background:var(--bg); font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; -webkit-font-smoothing:antialiased }
+    button { font:inherit }
+    .compare-head { position:sticky; top:0; z-index:20; padding:18px 18px 14px; background:rgba(235,229,220,.92); backdrop-filter:blur(14px); border-bottom:1px solid rgba(93,75,50,.1) }
+    .compare-head-inner { width:min(960px,100%); margin:auto }
+    .compare-head h1 { margin:0 0 5px; font-size:18px; letter-spacing:-.03em }
+    .compare-head p { margin:0; color:var(--ink2); font-size:12px; line-height:1.5 }
+    .tabs { display:flex; gap:8px; margin-top:13px; overflow:auto; scrollbar-width:none }
+    .tabs::-webkit-scrollbar { display:none }
+    .tab { flex:0 0 auto; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--ink2); padding:9px 13px; cursor:pointer }
+    .tab strong { margin-right:4px; color:var(--ink) }
+    .tab[aria-selected="true"] { background:var(--ink); border-color:var(--ink); color:#d7cfc2 }
+    .tab[aria-selected="true"] strong { color:white }
+    main { padding:30px 16px 70px }
+    .variant { display:none }
+    .variant.active { display:block }
+    .variant-intro { width:min(390px,100%); margin:0 auto 16px }
+    .variant-title { display:flex; align-items:center; gap:9px; margin:0 0 7px; font-size:22px; letter-spacing:-.04em }
+    .recommend { border-radius:999px; background:var(--accent); padding:5px 8px; font-size:10px; letter-spacing:0 }
+    .variant-intro p { margin:0; color:var(--ink2); font-size:13px; line-height:1.65 }
+    .phone { width:min(390px,100%); margin:auto; overflow:hidden; border:1px solid rgba(80,62,38,.14); border-radius:30px; background:var(--paper); box-shadow:var(--shadow) }
+    .continuity { position:relative; display:flex; min-height:165px; align-items:flex-end; padding:26px 22px 20px; color:white; background:linear-gradient(145deg,#363028,#191714) }
+    .continuity:after { position:absolute; right:-40px; top:-68px; width:180px; height:180px; border-radius:50%; background:radial-gradient(circle,rgba(217,154,88,.55),rgba(217,154,88,0) 68%); content:"" }
+    .continuity small { color:#d99a58; font-weight:700; letter-spacing:.08em }
+    .continuity h2 { margin:7px 0 0; font-size:25px; line-height:1.18; letter-spacing:-.05em }
+    .trust { display:grid; grid-template-columns:repeat(3,1fr); padding:14px 12px; border-bottom:1px solid var(--line); background:var(--surface); text-align:center }
+    .trust strong { display:block; font-size:15px }
+    .trust span { color:var(--ink3); font-size:9px }
+    .site-section { padding:56px 22px }
+    .site-section + .site-section { border-top:1px solid var(--line) }
+    .surface { background:var(--surface) }
+    .dark { color:white; background:var(--ink) }
+    .kicker { margin-bottom:10px; color:var(--accent-ink,#9a5a2e); font-size:11px; font-weight:800; letter-spacing:.08em }
+    .headline { margin:0; font-size:27px; line-height:1.25; letter-spacing:-.055em }
+    .sub { margin:12px 0 0; color:var(--ink2); font-size:13px; line-height:1.65 }
+    .dark .sub { color:#c6bfb4 }
+    .journey { position:relative; margin-top:32px }
+    .journey:before { position:absolute; left:19px; top:24px; bottom:28px; width:1px; background:linear-gradient(var(--accent),var(--sage)); content:"" }
+    .journey-row { position:relative; display:grid; grid-template-columns:40px 1fr; gap:14px; padding-bottom:27px }
+    .journey-row:last-child { padding-bottom:0 }
+    .journey-icon { position:relative; z-index:1; display:grid; width:40px; height:40px; place-items:center; border:1px solid #e5c39d; border-radius:13px; background:#fff8ef; color:#9a5a2e; font-size:13px; font-weight:800 }
+    .journey-copy { padding-top:1px }
+    .journey-copy strong { display:block; margin-bottom:5px; font-size:15px }
+    .journey-copy span { color:var(--ink2); font-size:12px; line-height:1.55 }
+    .handoff { position:relative; margin-top:32px; overflow:hidden; border-radius:21px; background:var(--ink); color:white; padding:22px }
+    .handoff:after { position:absolute; right:-38px; top:-38px; width:110px; height:110px; border:1px solid rgba(255,255,255,.08); border-radius:50%; content:"" }
+    .handoff-label { display:inline-flex; gap:5px; align-items:center; color:#a9bea6; font-size:10px; font-weight:800 }
+    .handoff h4 { margin:11px 0 7px; font-size:18px; line-height:1.35; letter-spacing:-.035em }
+    .handoff p { margin:0; color:#c6bfb4; font-size:12px; line-height:1.6 }
+    .handoff ul { display:grid; gap:9px; margin:17px 0 19px; padding:16px 0; border-top:1px solid rgba(255,255,255,.1); border-bottom:1px solid rgba(255,255,255,.1); list-style:none }
+    .handoff li { display:flex; gap:8px; color:#f0ebe4; font-size:12px }
+    .check { color:#a9bea6 }
+    .btn { display:flex; min-height:46px; align-items:center; justify-content:center; border-radius:13px; background:var(--accent); color:var(--ink); font-size:13px; font-weight:800 }
+    .btn.secondary { border:1px solid var(--line); background:transparent }
+    .bridge { display:flex; align-items:center; gap:12px; padding:18px 22px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#eee3d4 }
+    .bridge .mark { display:grid; flex:0 0 34px; width:34px; height:34px; place-items:center; border-radius:50%; background:var(--accent); font-weight:800 }
+    .bridge strong { display:block; font-size:12px }
+    .bridge span { display:block; margin-top:3px; color:var(--ink2); font-size:10px; line-height:1.4 }
+    .app-card { margin-top:26px; padding:16px; border:1px solid var(--line); border-radius:20px; background:var(--white) }
+    .screen { overflow:hidden; border-radius:15px; background:var(--paper) }
+    .screen-top { display:flex; justify-content:space-between; padding:13px 14px; font-size:10px; font-weight:700 }
+    .progress { height:5px; background:#ece3d6 }
+    .progress span { display:block; width:58%; height:100%; border-radius:0 99px 99px 0; background:var(--accent) }
+    .screen-body { padding:18px 14px }
+    .screen-body small { color:var(--ink3); font-size:9px }
+    .screen-body h4 { margin:5px 0 15px; font-size:16px }
+    .todo { display:flex; align-items:center; gap:9px; margin-top:8px; padding:10px; border-radius:10px; background:white; font-size:10px }
+    .todo b { display:grid; width:18px; height:18px; place-items:center; border:1px solid #d7c6af; border-radius:50%; color:#9a5a2e; font-size:9px }
+    .service-list { display:grid; gap:10px; margin-top:27px }
+    .service { display:grid; grid-template-columns:37px 1fr; gap:12px; padding:15px; border:1px solid var(--line); border-radius:16px; background:var(--white) }
+    .service i { display:grid; width:37px; height:37px; place-items:center; border-radius:11px; background:var(--sage2); color:#526650; font-style:normal; font-weight:800 }
+    .service strong { display:block; font-size:13px }
+    .service span { display:block; margin-top:4px; color:var(--ink2); font-size:10px; line-height:1.5 }
+    .mode-list { display:grid; gap:12px; margin-top:29px }
+    .mode { position:relative; overflow:hidden; padding:19px; border:1px solid var(--line); border-radius:19px; background:var(--white) }
+    .mode.featured { border-color:#d5a46c; background:#fff7ed }
+    .mode small { display:flex; align-items:center; gap:6px; color:var(--ink3); font-size:10px; font-weight:700 }
+    .mode .dot { width:7px; height:7px; border-radius:50%; background:var(--accent) }
+    .mode h4 { margin:9px 0 6px; font-size:17px }
+    .mode p { margin:0; color:var(--ink2); font-size:11px; line-height:1.55 }
+    .mode .route { display:flex; gap:5px; margin-top:14px; color:#9a5a2e; font-size:10px; font-weight:800 }
+    .mode .route span { padding:5px 8px; border-radius:999px; background:#f3dfc7 }
+    .same-record { margin-top:21px; padding:18px; border-radius:16px; background:var(--ink); color:white; text-align:center }
+    .same-record strong { display:block; font-size:13px }
+    .same-record span { display:block; margin-top:5px; color:#c6bfb4; font-size:10px; line-height:1.5 }
+    .choice-note { width:min(390px,100%); margin:20px auto 0; padding:16px 18px; border-radius:16px; background:rgba(255,253,249,.58); color:var(--ink2); font-size:12px; line-height:1.65 }
+    .choice-note strong { color:var(--ink) }
+    @media (min-width:760px) {
+      main { padding-top:42px }
+      .variant-intro,.phone,.choice-note { width:390px }
+    }
+  </style>
+</head>
+<body>
+  <header class="compare-head">
+    <div class="compare-head-inner">
+      <h1>2–3 섹션 흐름 제안</h1>
+      <p>완성된 히어로와 신뢰 스트립 다음에 이어지는 모바일 화면입니다.</p>
+      <div class="tabs" role="tablist" aria-label="시안 선택">
+        <button class="tab" role="tab" aria-selected="true" aria-controls="option-a" data-target="option-a"><strong>A</strong> 하나의 여정</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="option-b" data-target="option-b"><strong>B</strong> 인계가 있는 2섹션</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="option-c" data-target="option-c"><strong>C</strong> 준비 강도 선택</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <article class="variant active" id="option-a" role="tabpanel">
+      <div class="variant-intro">
+        <h2 class="variant-title">A. 하나의 이어지는 여정 <span class="recommend">추천</span></h2>
+        <p>앱과 전문가를 두 상품으로 나누지 않고, 앱이 기본적으로 챙기다가 어려운 순간 전문가가 그대로 이어받는 흐름입니다.</p>
+      </div>
+      <div class="phone">
+        <div class="continuity"><div><small>첫 섹션 마지막 화면</small><h2>우리 아이 해외여행,<br>펫무브가 챙길게요</h2></div></div>
+        <div class="trust"><div><strong>5,300+</strong><span>누적 출국</span></div><div><strong>50+</strong><span>지원 국가</span></div><div><strong>20년+</strong><span>경험</span></div></div>
+        <section class="site-section surface">
+          <div class="kicker">앱에서 시작해요</div>
+          <h3 class="headline">준비는 가볍게,<br>도움은 필요한 만큼</h3>
+          <p class="sub">먼저 앱이 일정과 서류를 챙겨드려요. 직접 하기 어려운 단계가 생기면 준비 내역 그대로 전문가에게 연결됩니다.</p>
+          <div class="journey">
+            <div class="journey-row"><div class="journey-icon">01</div><div class="journey-copy"><strong>여행 정보를 입력해요</strong><span>목적지와 출국일만 고르면 준비가 시작돼요.</span></div></div>
+            <div class="journey-row"><div class="journey-icon">02</div><div class="journey-copy"><strong>앱이 할 일을 챙겨요</strong><span>접종·검사 일정, 서류와 마감일을 놓치지 않게 알려드려요.</span></div></div>
+            <div class="journey-row"><div class="journey-icon">03</div><div class="journey-copy"><strong>하나씩 완료해요</strong><span>체크리스트를 따라 직접 준비하고 진행 상황을 한눈에 확인해요.</span></div></div>
+          </div>
+          <div class="handoff">
+            <div class="handoff-label">● 전문가 연결</div>
+            <h4>직접 하기 어렵다면,<br>여기서부터 맡기세요</h4>
+            <p>앱에 입력한 여행 정보와 준비 현황을 바탕으로 필요한 일만 정확히 도와드려요.</p>
+            <ul><li><span class="check">✓</span>마이크로칩 · 접종 · 항체검사</li><li><span class="check">✓</span>신고 · 허가증 신청 대행</li><li><span class="check">✓</span>출국 전 임상검사 · 최종 서류</li></ul>
+            <div class="btn">앱으로 준비 시작하기 →</div>
+          </div>
+        </section>
+      </div>
+      <div class="choice-note"><strong>섹션 수: 1개.</strong> 메시지 이해가 가장 빠르고, “우선 앱 다운로드”라는 사이트 목표도 흐리지 않습니다. 전문가 서비스는 막혔을 때의 자연스러운 다음 행동으로 등장합니다.</div>
+    </article>
+
+    <article class="variant" id="option-b" role="tabpanel" hidden>
+      <div class="variant-intro">
+        <h2 class="variant-title">B. 인계가 있는 2섹션</h2>
+        <p>앱의 편리함을 충분히 보여준 다음, 한 문장짜리 인계 장면을 사이에 두고 전문가 서비스의 범위를 구체적으로 설명합니다.</p>
+      </div>
+      <div class="phone">
+        <div class="continuity"><div><small>첫 섹션 마지막 화면</small><h2>우리 아이 해외여행,<br>펫무브가 챙길게요</h2></div></div>
+        <div class="trust"><div><strong>5,300+</strong><span>누적 출국</span></div><div><strong>50+</strong><span>지원 국가</span></div><div><strong>20년+</strong><span>경험</span></div></div>
+        <section class="site-section surface">
+          <div class="kicker">SECTION 02 · 펫무브 앱</div>
+          <h3 class="headline">목적지만 고르면<br>준비가 시작돼요</h3>
+          <p class="sub">나라별 절차를 찾고 일정을 계산하는 일은 앱이 맡을게요.</p>
+          <div class="app-card">
+            <div class="screen"><div class="screen-top"><span>일본 출국 준비</span><span>58%</span></div><div class="progress"><span></span></div><div class="screen-body"><small>이번 주 할 일</small><h4>광견병 2차 접종</h4><div class="todo"><b>✓</b>접종 예약 확인하기</div><div class="todo"><b>2</b>항체검사 일정 확인하기</div><div class="todo"><b>3</b>서류 보관하기</div></div></div>
+          </div>
+        </section>
+        <div class="bridge"><div class="mark">↘</div><div><strong>혼자 준비하다 어려운 단계가 생겼나요?</strong><span>지금까지의 준비 내역 그대로 전문가에게 이어집니다.</span></div></div>
+        <section class="site-section">
+          <div class="kicker">SECTION 03 · 전문가 올케어</div>
+          <h3 class="headline">복잡한 일은<br>펫무브가 직접</h3>
+          <p class="sub">로잔동물의료센터에서 검사와 접종부터 국가별 신청, 최종 서류까지 맡아드려요.</p>
+          <div class="service-list">
+            <div class="service"><i>1</i><div><strong>병원에서 해야 하는 일</strong><span>마이크로칩, 예방접종, 항체검사</span></div></div>
+            <div class="service"><i>2</i><div><strong>기관에 신청해야 하는 일</strong><span>수입 신고, 허가증, 사전 통보</span></div></div>
+            <div class="service"><i>3</i><div><strong>출국 직전에 해야 하는 일</strong><span>임상검사, 검역증명서, 서류 점검</span></div></div>
+          </div>
+          <div class="btn" style="margin-top:19px">전문가에게 맡기기 →</div>
+        </section>
+      </div>
+      <div class="choice-note"><strong>섹션 수: 2개.</strong> 앱과 서비스 각각의 설명력이 가장 좋습니다. 다만 현재 시안보다 세로 길이가 길고, 두 섹션을 잇는 ‘준비 내역 그대로 이어짐’ 문구가 반드시 있어야 합니다.</div>
+    </article>
+
+    <article class="variant" id="option-c" role="tabpanel" hidden>
+      <div class="variant-intro">
+        <h2 class="variant-title">C. 준비 강도 선택</h2>
+        <p>고객이 자신의 시간, 난이도, 불안 정도에 맞춰 도움의 범위를 선택하게 합니다. 상품 구조가 실제로 세 단계일 때 특히 강합니다.</p>
+      </div>
+      <div class="phone">
+        <div class="continuity"><div><small>첫 섹션 마지막 화면</small><h2>우리 아이 해외여행,<br>펫무브가 챙길게요</h2></div></div>
+        <div class="trust"><div><strong>5,300+</strong><span>누적 출국</span></div><div><strong>50+</strong><span>지원 국가</span></div><div><strong>20년+</strong><span>경험</span></div></div>
+        <section class="site-section surface">
+          <div class="kicker">나에게 맞는 준비 방식</div>
+          <h3 class="headline">얼마나 맡길지<br>내가 정해요</h3>
+          <p class="sub">앱으로 직접 시작하고, 여행과 상황에 따라 전문가의 도움을 더할 수 있어요.</p>
+          <div class="mode-list">
+            <div class="mode"><small><span class="dot"></span>가볍게 시작</small><h4>앱으로 직접 준비</h4><p>일정, 체크리스트와 알림을 따라 내가 하나씩 진행해요.</p><div class="route"><span>앱</span></div></div>
+            <div class="mode featured"><small><span class="dot"></span>가장 유연한 방법</small><h4>앱 + 필요한 일만 의뢰</h4><p>직접 준비하다 검사·신청처럼 어려운 단계만 전문가에게 맡겨요.</p><div class="route"><span>앱</span><b>→</b><span>전문가</span></div></div>
+            <div class="mode"><small><span class="dot"></span>처음부터 안심</small><h4>전문가에게 모두 맡기기</h4><p>여행 정보를 상담하고 준비 전 과정을 올케어로 진행해요.</p><div class="route"><span>올케어</span></div></div>
+          </div>
+          <div class="same-record"><strong>어떤 방식이든 하나의 준비 기록으로</strong><span>도중에 방식을 바꿔도 처음부터 다시 설명하지 않아요.</span></div>
+        </section>
+      </div>
+      <div class="choice-note"><strong>섹션 수: 1개.</strong> 선택지가 명료하고 부분 의뢰를 강조하기 좋습니다. 반대로 실제 가격·서비스가 세 단계로 운영되지 않으면 고객이 존재하지 않는 요금제를 기대할 수 있어, 운영 구조 확인이 필요한 안입니다.</div>
+    </article>
+  </main>
+
+  <script>
+    const tabs = [...document.querySelectorAll('.tab')];
+    const variants = [...document.querySelectorAll('.variant')];
+    tabs.forEach(tab => tab.addEventListener('click', () => {
+      tabs.forEach(item => item.setAttribute('aria-selected', String(item === tab)));
+      variants.forEach(variant => {
+        const active = variant.id === tab.dataset.target;
+        variant.classList.toggle('active', active);
+        variant.hidden = !active;
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }));
+  </script>
+</body>
+</html>
