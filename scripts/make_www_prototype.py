@@ -103,6 +103,10 @@ SERVICE_SECTION = """
           <div class="score-h"><i class="ti ti-device-mobile si"></i><span class="st">펫무브 앱 연동</span></div>
           <p class="sd">앱으로 진행 상황·정보를 쉽게 확인할 수 있어요</p>
         </div>
+        <div class="score">
+          <div class="score-h"><i class="ti ti-adjustments-horizontal si"></i><span class="st">전체 의뢰 · 부분 의뢰</span></div>
+          <p class="sd">전 과정을 맡기거나, 필요한 부분만 골라 도움받을 수 있어요</p>
+        </div>
       </div>
       <div class="svc-cta-wrap">
         <a class="svc-cta" href="https://pf.kakao.com/_zDDxhj/chat" target="_blank" rel="noopener"><i class="ti ti-message-circle"></i>상담 신청</a>
