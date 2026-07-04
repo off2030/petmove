@@ -12,6 +12,9 @@
     --accent:#D99A58; --accent-ink:#9A5A2E; --sage:#8FA68C; --border:#E3D9C6; --dark:#2A2620;
   }
   *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html{scroll-behavior:smooth}
+  #service{scroll-margin-top:64px}
   body{margin:0;background:var(--bg);font-family:'Pretendard',-apple-system,system-ui,sans-serif;
     color:var(--ink);-webkit-font-smoothing:antialiased}
   a{text-decoration:none;color:inherit}
@@ -83,6 +86,11 @@
   .path.app .go{color:var(--accent)} .path.care .go{color:var(--accent-ink)}
 
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px}
+  .dest.soon[role=button]{cursor:pointer}
+  .dest-region{font-size:12.5px;font-weight:600;color:var(--accent-ink);letter-spacing:.02em;text-align:center;margin:24px 0 12px}
+  #destFull .grid{margin-top:0}
+  .dest-collapse{display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink3);margin-top:20px}
+  .dest-collapse i{font-size:15px}
   .dest{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:15px 8px;
     text-align:center;position:relative;font-size:13.5px}
   .dest.soon{border-style:dashed;color:var(--ink3)}
@@ -244,7 +252,7 @@
   <header>
     <div class="container">
       <span style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true"><rect width="100" height="100" rx="22.5" fill="#D99A58"/><path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" fill="none" stroke="#fff" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="wm">펫무브</span></span>
-      <span class="nav-links"><a>서비스</a><a>가이드</a><a>블로그</a></span>
+      <span class="nav-links"><a href="#service">서비스</a><a>가이드</a><a>블로그</a></span>
       <span class="nav-right">
         <a class="nav-app">앱 다운로드</a>
         <i class="ti ti-menu-2 burger"></i>
@@ -261,7 +269,7 @@
           <p>앱으로 쉽게 준비하고, <br class="mbr">복잡한 절차는 전문가에게 맡기세요</p>
           <div class="cta">
             <a class="btn-primary"><i class="ti ti-download" style="font-size:17px"></i>무료 앱으로 시작하기</a>
-            <a class="btn-ghost"><i class="ti ti-message-circle" style="font-size:17px"></i>전문가에게 맡기기</a>
+            <a class="btn-ghost" href="#service"><i class="ti ti-message-circle" style="font-size:17px"></i>전문가에게 맡기기</a>
           </div>
         </div>
         <div class="hero-photo"></div>
@@ -293,7 +301,7 @@
   </section>
 
 
-  <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
+  <section id="service" style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
     <div class="container">
       <div class="kicker">펫무브 서비스 소개</div>
       <div class="h2">전문가에게 안심하고 맡기세요</div>
@@ -327,13 +335,49 @@
     <div class="container">
       <div class="kicker">앱 지원 국가</div>
       <div class="h2">27개국, 앞으로 더 추가돼요</div>
-      <div class="grid">
+      <div class="grid" id="destGrid">
         <div class="dest">일본<span class="dot"></span></div>
         <div class="dest">태국<span class="dot"></span></div>
         <div class="dest">필리핀<span class="dot"></span></div>
         <div class="dest">프랑스<span class="dot"></span></div>
         <div class="dest">독일<span class="dot"></span></div>
-        <div class="dest soon">+ 더보기</div>
+        <div class="dest soon" id="destMore" role="button" tabindex="0">+ 더보기</div>
+      </div>
+      <div id="destFull" hidden>
+        <div class="dest-region">아시아</div>
+        <div class="grid">
+          <div class="dest">일본<span class="dot"></span></div>
+          <div class="dest">태국<span class="dot"></span></div>
+          <div class="dest">필리핀<span class="dot"></span></div>
+        </div>
+        <div class="dest-region">유럽 · EU 24개국</div>
+        <div class="grid">
+          <div class="dest">프랑스<span class="dot"></span></div>
+          <div class="dest">독일<span class="dot"></span></div>
+          <div class="dest">이탈리아<span class="dot"></span></div>
+          <div class="dest">스페인<span class="dot"></span></div>
+          <div class="dest">네덜란드<span class="dot"></span></div>
+          <div class="dest">벨기에<span class="dot"></span></div>
+          <div class="dest">오스트리아<span class="dot"></span></div>
+          <div class="dest">스웨덴<span class="dot"></span></div>
+          <div class="dest">덴마크<span class="dot"></span></div>
+          <div class="dest">폴란드<span class="dot"></span></div>
+          <div class="dest">체코<span class="dot"></span></div>
+          <div class="dest">포르투갈<span class="dot"></span></div>
+          <div class="dest">그리스<span class="dot"></span></div>
+          <div class="dest">헝가리<span class="dot"></span></div>
+          <div class="dest">루마니아<span class="dot"></span></div>
+          <div class="dest">불가리아<span class="dot"></span></div>
+          <div class="dest">크로아티아<span class="dot"></span></div>
+          <div class="dest">슬로바키아<span class="dot"></span></div>
+          <div class="dest">슬로베니아<span class="dot"></span></div>
+          <div class="dest">리투아니아<span class="dot"></span></div>
+          <div class="dest">라트비아<span class="dot"></span></div>
+          <div class="dest">에스토니아<span class="dot"></span></div>
+          <div class="dest">룩셈부르크<span class="dot"></span></div>
+          <div class="dest">키프로스<span class="dot"></span></div>
+        </div>
+        <div style="text-align:center"><span class="dest-collapse" id="destLess" role="button" tabindex="0"><i class="ti ti-chevron-up"></i>접기</span></div>
       </div>
       <div class="soon-block">
         <div class="soon-label"><i class="ti ti-calendar-plus"></i>2026년 추가 예정</div>
@@ -395,5 +439,6 @@
 
   <div class="flag">⚠️ 신뢰 스트립: 5,300+(DB 외삽 추정) · 50+ 목적지 국가(EU 24개국 포함) · 20+년(2006~, 자동 증가). 게시 전 5,300+ 근거만 최종 확인.</div>
   <script>(function(){var y=new Date().getFullYear()-2006;var e=document.getElementById('yrs');if(e)e.textContent=y;})();</script>
+  <script>(function(){var m=document.getElementById('destMore'),l=document.getElementById('destLess');var g=document.getElementById('destGrid'),f=document.getElementById('destFull');function set(open){if(g)g.hidden=open;if(f)f.hidden=!open;}function bind(el,fn){if(!el)return;el.addEventListener('click',fn);el.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();fn();}});}bind(m,function(){set(true);});bind(l,function(){set(false);});})();</script>
 </body>
 </html>
