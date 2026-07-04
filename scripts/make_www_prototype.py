@@ -378,7 +378,7 @@ html = f"""<!DOCTYPE html>
   <section>
     <div class="container">
       <div class="kicker">앱 지원 국가</div>
-      <div class="h2">앱에서 바로 준비</div>
+      <div class="h2">어디로 떠나시나요</div>
       <div class="grid">
         <div class="dest">일본<span class="dot"></span></div>
         <div class="dest">태국<span class="dot"></span></div>
