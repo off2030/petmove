@@ -80,8 +80,7 @@ APP_SECTIONS = f"""
         <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-shield-check"></i></span><span class="at">실수 예방</span></div><p class="ad">잘못된 날짜를 입력하면 미리 알려드려요</p></div>
         <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-bell"></i></span><span class="at">일정 알림</span></div><p class="ad">다음 할 일과 마감을 놓치지 않게</p></div>
         <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-clipboard-check"></i></span><span class="at">서류 체크리스트</span></div><p class="ad">필요한 서류를 빠짐없이 확인해요</p></div>
-        <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-folder"></i></span><span class="at">정보 보관함</span></div><p class="ad">백신·증명서·허가증을 한 곳에 저장</p></div>
-        <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-plane"></i></span><span class="at">항공·검역</span></div><p class="ad">출국까지 빠짐없이 관리해요</p></div>
+        <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-folder"></i></span><span class="at">보관함</span></div><p class="ad">백신·증명서·허가증을 한 곳에 저장</p></div>
         <div class="acard more"><i class="ti ti-dots"></i>이 외에도 다양한 기능이 있어요</div>
       </div>
       <div class="appcta-wrap"><a class="appcta"><i class="ti ti-download"></i>무료 앱 받기</a></div>
@@ -204,7 +203,7 @@ html = f"""<!DOCTYPE html>
   .more-line{{text-align:center;font-size:12.5px;color:var(--ink3);margin-top:18px}}
   .more-line b{{color:var(--accent-ink);font-weight:600}}
   .appcta-wrap{{text-align:center}}
-  .appcta{{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:var(--ink);font-weight:600;border-radius:13px;padding:13px 24px;font-size:14px;margin:22px auto 0}}
+  .appcta{{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:var(--ink);font-weight:600;border-radius:14px;padding:15px;font-size:15px;width:100%;max-width:460px;margin:24px auto 0}}
   .ph{{background:var(--surface);border:1.5px solid rgba(42,38,32,.16);border-radius:16px;padding:9px 8px}}
   .ph .notch{{width:22px;height:4px;background:rgba(42,38,32,.18);border-radius:3px;margin:1px auto 9px}}
   .ph .b{{height:7px;border-radius:4px;background:#EADCC9;margin-bottom:6px}}
