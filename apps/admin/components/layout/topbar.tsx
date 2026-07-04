@@ -23,9 +23,28 @@ export const NAV_ITEMS: Array<{ id: TabId; icon: typeof Folder; label: string }>
 //   full         : 사람+강아지 일러스트 + PETMOVE / WORK (정사각형)
 //   alonzo       : PETMOVE 단일 워드 SVG (Alonzo Extralight, Bold weight)
 //   alonzo-text  : "PETMOVE Work" HTML 텍스트 (self-hosted Alonzo Cnd, bold)
-const LOGO_VARIANT: 'text' | 'wordmark' | 'full' | 'alonzo' | 'alonzo-text' = 'alonzo-text'
+//   icon-text    : 마스터 아이콘(icon.svg) + "PETMOVE Work" HTML 텍스트 (웹 기본 폰트)
+const LOGO_VARIANT: 'text' | 'wordmark' | 'full' | 'alonzo' | 'alonzo-text' | 'icon-text' = 'icon-text'
 
 function LogoMark() {
+  if (LOGO_VARIANT === 'icon-text') {
+    // 마스터 아이콘(발바닥 마크) + 기본 웹 폰트 워드마크. 아이콘은 100x100 라운드.
+    return (
+      <span className="inline-flex items-center gap-2">
+        <img
+          src="/icon.svg"
+          alt=""
+          aria-hidden
+          className="h-7 w-7 select-none rounded-[6px]"
+          draggable={false}
+        />
+        <span className="inline-flex items-baseline gap-[5px] text-foreground leading-none whitespace-nowrap">
+          <span className="text-[18px] font-semibold tracking-tight">PETMOVE</span>
+          <span className="text-[13px] font-medium tracking-wide text-muted-foreground">Work</span>
+        </span>
+      </span>
+    )
+  }
   if (LOGO_VARIANT === 'text') {
     return (
       <span className="font-serif text-[18px] font-medium tracking-tight text-foreground whitespace-nowrap">
