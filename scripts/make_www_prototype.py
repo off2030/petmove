@@ -96,12 +96,12 @@ SERVICE_SECTION = """
       <div class="h2">전문가에게 안심하고 맡기세요</div>
       <div class="score-list">
         <div class="score">
-          <div class="score-h"><i class="ti ti-heart-plus si"></i><span class="st">로잔동물의료센터에서 준비해요</span></div>
-          <p class="sd">수의사가 모든 준비를 해드려요</p>
+          <div class="score-h"><i class="ti ti-heart-plus si"></i><span class="st">로잔동물의료센터</span></div>
+          <p class="sd">믿을 수 있는 동물병원·수의사가 준비해드려요</p>
         </div>
         <div class="score">
-          <div class="score-h"><i class="ti ti-device-mobile si"></i><span class="st">펫무브 앱과 연동돼요</span></div>
-          <p class="sd">앱으로 쉽게 진행 상황 정보를 확인할 수 있어요</p>
+          <div class="score-h"><i class="ti ti-device-mobile si"></i><span class="st">펫무브 앱 연동</span></div>
+          <p class="sd">앱으로 진행 상황·정보를 쉽게 확인할 수 있어요</p>
         </div>
       </div>
       <div class="svc-cta-wrap"><a class="svc-cta"><i class="ti ti-message-circle"></i>상담 신청</a></div>
