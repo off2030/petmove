@@ -238,6 +238,8 @@ html = f"""<!DOCTYPE html>
     gap:8px;font-size:13.5px;font-weight:500}}
   footer{{background:#211E19;color:#8B8578;padding:28px 0;font-size:12px;line-height:1.85}}
   footer a{{color:#B0A896}}
+  footer .fsns{{display:inline-flex;align-items:center;gap:5px;margin:9px 0 4px;font-weight:600}}
+  footer .fsns .nlogo{{font-weight:800;font-size:13px;line-height:1}}
   .flag{{background:#FFF6E5;border:0.5px solid #F0DBA8;color:#7A5A1E;font-size:11.5px;border-radius:8px;
     padding:10px 13px;margin:14px auto 0;max-width:1036px;line-height:1.5}}
 
@@ -510,6 +512,7 @@ html = f"""<!DOCTYPE html>
       <div style="color:#C7C0B2;font-weight:500;margin-bottom:6px">펫무브 · PETMOVE</div>
       로잔동물의료센터 · 사업자등록번호 124-18-42859<br>
       서울시 관악구 관악로29길 3 · 02-872-7588<br>
+      <a href="https://blog.naver.com/petmove" target="_blank" rel="noopener" class="fsns"><span class="nlogo">N</span>네이버 블로그</a><br>
       <a href="https://app.petmove.co.kr/terms">이용약관</a> · <a href="https://app.petmove.co.kr/privacy">개인정보처리방침</a> · <a href="https://app.petmove.co.kr/support">고객지원</a>
     </div>
   </footer>
