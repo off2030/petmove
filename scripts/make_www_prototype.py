@@ -97,11 +97,11 @@ SERVICE_SECTION = """
       <div class="score-list">
         <div class="score">
           <div class="score-h"><i class="ti ti-building-hospital si"></i><span class="st">로잔동물의료센터에서 준비해요</span></div>
-          <p class="sd">마이크로칩·접종·검사·서류 준비 등 모든 것을 쉽고 빠르게 준비할 수 있어요</p>
+          <p class="sd">수의사가 모든 준비를 해드려요</p>
         </div>
         <div class="score">
           <div class="score-h"><i class="ti ti-device-mobile si"></i><span class="st">펫무브 앱과 연동돼요</span></div>
-          <p class="sd">앱으로 한눈에 진행 상황을 확인할 수 있어요</p>
+          <p class="sd">앱으로 쉽게 진행 상황 정보를 확인할 수 있어요</p>
         </div>
       </div>
       <div class="svc-cta-wrap"><a class="svc-cta"><i class="ti ti-message-circle"></i>상담 신청</a></div>
