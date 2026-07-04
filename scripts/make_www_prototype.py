@@ -201,7 +201,7 @@ html = f"""<!DOCTYPE html>
   .note{{display:flex;align-items:center;gap:7px;justify-content:center;margin-top:16px;font-size:12px;color:var(--ink2)}}
   .note .dot{{width:6px;height:6px;border-radius:50%;background:var(--sage);display:inline-block}}
   .soon-block{{text-align:center;margin-top:24px}}
-  .soon-label{{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--accent-ink);margin-bottom:12px}}
+  .soon-label{{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500;color:var(--ink3);background:var(--surface);border:0.5px solid var(--border);border-radius:999px;padding:5px 13px;margin-bottom:13px}}
   .soon-chips{{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;max-width:440px;margin:0 auto}}
   .soon-chips span{{font-size:12.5px;color:var(--ink3);background:var(--surface);border:0.5px dashed var(--border);border-radius:999px;padding:6px 13px}}
 
@@ -378,8 +378,7 @@ html = f"""<!DOCTYPE html>
   <section>
     <div class="container">
       <div class="kicker">앱 지원 국가</div>
-      <div class="h2">어디로 떠나시나요</div>
-      <div class="sub">27개국 지원 · 앞으로 계속 늘어나요</div>
+      <div class="h2">27개국 지원 · 앞으로 계속 늘어나요</div>
       <div class="grid">
         <div class="dest">일본<span class="dot"></span></div>
         <div class="dest">태국<span class="dot"></span></div>
