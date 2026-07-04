@@ -73,6 +73,72 @@ function validateVetVisitVsDeparture(
 }
 
 /**
+ * 재출국(이전 출국일이 과거 → 새 출국일 입력) 시 이전 여정의 **신고 완료·진행 시그널**을 모두
+ * 비운다. 옛 코드는 legacy stored(`import_import_status`/`import_export_status`)만 지웠는데,
+ * 일본·태국·필리핀은 derive 모델로 전환돼 완료가 stored 가 아닌 시그널(skip 플래그·신청일)에서
+ * 도출된다(report-status.ts). 그래서 stored 만 지우면 신고 탭에서 이미 다녀온 케이스가 새 출국일로
+ * 다시 올라와도 '완료'로 남는다(=버그). dismissImportReport 의 'not_started' 클리어와 동일한
+ * 필드를 비운다. 첨부(documents)·허가번호(permit_no)는 실제 산출물이라 손대지 않는다(dismiss 동일).
+ *
+ * scoped 키(jp_export_quarantine_application_date, import_permit_*)는 활성 목적지 by_dest 잔존도
+ * null sentinel 로 비워야 derive 가 되살아나지 않는다. `data` 는 in-place 로 정리(top-level delete +
+ * by_dest 는 새 객체로 교체 — 호출측 currentData 앨리어싱 방지). 시그널이 하나라도 있어 실제로
+ * 비웠으면 true.
+ */
+const REDEPARTURE_REPORT_SIGNAL_KEYS = [
+  // 사전 신고(NACCS)
+  'import_import_status',
+  'advance_notification_date',
+  'advance_notification_approval_skipped',
+  'advance_notification_admin_demoted_at',
+  'advance_notification_in_progress',
+  // 일본 수출검역
+  'import_export_status',
+  'jp_export_quarantine_application_date',
+  'jp_export_quarantine_reservation_skipped',
+  'jp_export_quarantine_confirmed',
+  'jp_export_quarantine_admin_demoted_at',
+  'jp_export_quarantine_in_progress',
+  // 수입 허가(태국·필리핀 등)
+  'import_permit_application_date',
+  'import_permit_issued_skipped',
+  'import_permit_in_progress',
+  // 재출국이므로 숨김 해제 — 다시 신고 탭에 노출
+  'import_report_dismissed',
+] as const
+const REDEPARTURE_SCOPED_SIGNAL_KEYS = [
+  'jp_export_quarantine_application_date',
+  'import_permit_application_date',
+  'import_permit_issued_skipped',
+  'import_permit_in_progress',
+] as const
+
+function clearReportSignalsOnRedeparture(
+  data: Record<string, unknown>,
+  activeDest: string | null,
+): boolean {
+  const hadTop = REDEPARTURE_REPORT_SIGNAL_KEYS.some((k) => data[k] !== undefined)
+  const hadScoped =
+    !!activeDest &&
+    REDEPARTURE_SCOPED_SIGNAL_KEYS.some((k) => {
+      const v = readByDestValue(data, activeDest, k)
+      return v !== undefined && v !== null
+    })
+  if (!hadTop && !hadScoped) return false
+  for (const k of REDEPARTURE_REPORT_SIGNAL_KEYS) delete data[k]
+  if (activeDest) {
+    const byDest = {
+      ...((data['by_dest'] as Record<string, Record<string, unknown>> | undefined) ?? {}),
+    }
+    const destObj = { ...(byDest[activeDest] ?? {}) }
+    for (const k of REDEPARTURE_SCOPED_SIGNAL_KEYS) destObj[k] = null
+    byDest[activeDest] = destObj
+    data['by_dest'] = byDest
+  }
+  return true
+}
+
+/**
  * Update a single field on a case. Records change in case_history for undo.
  *
  * P1 #7 — 단일 SELECT + 단일 UPDATE 로 통합. 이전엔 column 경로의 vet_available_date
@@ -221,13 +287,11 @@ export async function updateCaseField(
               ? (destObjPrev['departure_date'] as string)
               : ((row as { departure_date: string | null }).departure_date ?? '')
           const wasPast = !!prevDep && prevDep < today
-          const someDone =
-            currentData.import_import_status === 'done' || currentData.import_export_status === 'done'
-          if (wasPast && someDone) {
-            delete nextData.import_import_status
-            delete nextData.import_export_status
-            delete nextData.import_report_dismissed
-          }
+          // 재출국 — legacy stored 뿐 아니라 derive 시그널(사전 신고·수출검역·수입 허가)까지
+          // 활성 목적지(destination) 스코프로 비운다. nextData.by_dest[destination] 는 위에서
+          // 새 출국일이 이미 반영된 nextDestObj 이지만, 헬퍼는 by_dest 를 새 객체로 교체하며
+          // 출국일은 건드리지 않으므로(scoped 키 목록에 없음) 그대로 보존된다.
+          if (wasPast) clearReportSignalsOnRedeparture(nextData, destination)
         }
       }
     }
@@ -384,13 +448,15 @@ export async function updateCaseField(
     }
     if (isDeparture) {
       const wasPast = !!oldValue && oldValue < today
-      const someDone =
-        currentData.import_import_status === 'done' || currentData.import_export_status === 'done'
-      if (wasPast && someDone) {
-        delete nextData.import_import_status
-        delete nextData.import_export_status
-        delete nextData.import_report_dismissed
-        dataMutated = true
+      if (wasPast) {
+        // 재출국 — legacy stored 만이 아니라 derive 시그널(사전 신고·수출검역·수입 허가)까지 비운다.
+        // 완료가 derive(skip 플래그·신청일)에서 나오는 일본·태국·필리핀 케이스는 stored 만 지우면
+        // 신고 탭에서 '완료'로 남는 버그가 있었다. 활성 목적지 by_dest 잔존도 함께 정리.
+        const activeDest = resolveTabActiveDest(
+          { destination: destinationRaw, data: nextData, departure_date: oldValue } as CaseRow,
+          'import_report_active_dest',
+        )
+        if (clearReportSignalsOnRedeparture(nextData, activeDest)) dataMutated = true
       }
     }
   }
