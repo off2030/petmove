@@ -399,8 +399,8 @@ html = f"""<!DOCTYPE html>
   <div class="band">
     <div class="scrim">
       <div class="container">
-        <h2>낯선 나라로 떠나는 길,<br>펫무브가 곁을 지킬게요</h2>
-        <p>준비의 처음부터 도착 그 후까지.</p>
+        <h2>가족이니까, 언제나 함께</h2>
+        <p>펫무브가 챙길게요</p>
       </div>
     </div>
   </div>
