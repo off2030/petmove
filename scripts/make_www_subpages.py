@@ -221,9 +221,8 @@ def build_guide():
 {header('guide')}
   <div class="phead">
     <div class="container">
-      <div class="kicker">가이드</div>
-      <h1>나라별 준비를 한눈에</h1>
-      <p class="lead">나라별 준비부터 최신 소식·실제 사례까지, 우리 아이 해외여행에 필요한 모든 정보를 한곳에 모았어요.</p>
+      <h1>가이드</h1>
+      <p class="lead">나라별 준비부터 최신 소식까지 한눈에</p>
       <div class="search"><i class="ti ti-search"></i><input id="q" type="text" placeholder="나라 이름으로 찾기 (예: 일본)"></div>
     </div>
   </div>
@@ -269,9 +268,8 @@ def build_contact():
 {header('contact')}
   <div class="phead">
     <div class="container">
-      <div class="kicker">문의</div>
-      <h1>편하게 연락 주세요</h1>
-      <p class="lead">궁금한 점이나 상담이 필요하시면 아래 채널로 문의해 주세요. 확인 후 순차적으로 답변드려요.</p>
+      <h1>문의</h1>
+      <p class="lead">편하게 연락 주세요</p>
     </div>
   </div>
 
@@ -291,7 +289,6 @@ def build_contact():
         <a class="chan" href="mailto:petmove@naver.com">
           <i class="ti ti-mail"></i><span><span class="cv">petmove@naver.com</span><div class="cs">제휴·업무 관련 문의</div></span></a>
       </div>
-      <p class="cnote">로잔동물의료센터 · 사업자등록번호 124-18-42859<br>서울시 관악구 관악로29길 3</p>
     </div>
   </section>
 
