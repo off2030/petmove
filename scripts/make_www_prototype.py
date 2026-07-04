@@ -88,6 +88,34 @@ APP_SECTIONS = f"""
   </section>
 """
 
+# ── 서비스 소개 섹션(3번째): 두 핵심(수의사 직접 · 앱 연동) + 맡길 수 있는 것 + 상담 CTA ──
+SERVICE_SECTION = """
+  <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
+    <div class="container">
+      <div class="kicker">펫무브 서비스</div>
+      <div class="h2">수의사가 대신 준비해드려요</div>
+      <p class="slead">직접 하기 어렵거나 시간이 없다면, 전문가에게 맡기세요</p>
+      <div class="score-list">
+        <div class="score">
+          <div class="score-h"><i class="ti ti-stethoscope si"></i><span class="st">로잔동물의료센터 수의사가 직접</span></div>
+          <p class="sd">접종·검사부터 서류까지, 수의사가 직접 준비해요</p>
+        </div>
+        <div class="score">
+          <div class="score-h"><i class="ti ti-device-mobile si"></i><span class="st">펫무브 앱과 연동돼요</span></div>
+          <p class="sd">앱에서 바로 신청하고, 진행 상황도 앱에서 확인해요</p>
+        </div>
+      </div>
+      <div class="svc-cap">맡길 수 있는 것</div>
+      <div class="svc-items">
+        <div class="svc-item"><i class="ti ti-check"></i>마이크로칩·접종·검사</div>
+        <div class="svc-item"><i class="ti ti-check"></i>신고·허가증 신청 대행</div>
+        <div class="svc-item"><i class="ti ti-check"></i>출국 전 임상검사·서류 준비</div>
+      </div>
+      <div class="svc-cta-wrap"><a class="svc-cta"><i class="ti ti-message-circle"></i>상담 신청</a></div>
+    </div>
+  </section>
+"""
+
 html = f"""<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -243,6 +271,19 @@ html = f"""<!DOCTYPE html>
   .acard .ad{{font-size:13px;color:var(--ink2);margin:9px 0 0;line-height:1.5}}
   .acard.more{{border-style:dashed;background:transparent;text-align:center;color:var(--ink3);font-size:13px;padding:15px;display:flex;align-items:center;justify-content:center;gap:7px}}
   .acard.more i{{color:var(--accent-ink);font-size:16px}}
+  .slead{{font-size:13px;color:var(--ink2);text-align:center;max-width:400px;margin:0 auto 22px;line-height:1.6}}
+  .score-list{{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:12px}}
+  .score{{background:#FBF1E3;border:0.5px solid rgba(217,154,88,.4);border-radius:14px;padding:16px 17px}}
+  .score-h{{display:flex;align-items:center;gap:11px;margin-bottom:8px}}
+  .score .si{{color:var(--accent-ink);font-size:22px;flex-shrink:0}}
+  .score .st{{font-size:15px;font-weight:600}}
+  .score .sd{{font-size:13px;color:var(--ink2);margin:0;line-height:1.55}}
+  .svc-cap{{max-width:460px;margin:20px auto 10px;font-size:11.5px;font-weight:600;letter-spacing:.03em;color:var(--ink3)}}
+  .svc-items{{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:9px}}
+  .svc-item{{font-size:13.5px;color:var(--ink);display:flex;align-items:center;gap:8px}}
+  .svc-item i{{color:var(--accent-ink);font-size:15px}}
+  .svc-cta-wrap{{text-align:center}}
+  .svc-cta{{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1.5px solid var(--accent);color:var(--accent-ink);font-weight:600;border-radius:14px;padding:14px;font-size:15px;width:100%;max-width:460px;margin:24px auto 0}}
   .hybrid .hero-ph{{width:130px;height:224px;margin:0 auto 18px}}
   .hlist{{display:grid;grid-template-columns:1fr 1fr;gap:9px}}
   .hrow{{display:flex;align-items:center;gap:9px;background:var(--surface);border:0.5px solid var(--border);border-radius:11px;padding:11px 12px}}
@@ -335,6 +376,7 @@ html = f"""<!DOCTYPE html>
   </div>
 
 {APP_SECTIONS}
+{SERVICE_SECTION}
 
   <section>
     <div class="container">
