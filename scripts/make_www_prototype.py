@@ -78,9 +78,9 @@ APP_SECTIONS = f"""
       <div class="alist">
         <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-route"></i></span><span class="at">단계별 가이드</span></div><p class="ad">언제 무엇을 해야 할지 알려드려요</p></div>
         <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-shield-check"></i></span><span class="at">실수 예방</span></div><p class="ad">입력 정보가 규정에 맞지 않을 경우 알려드려요</p></div>
-        <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-bell"></i></span><span class="at">일정 알림</span></div><p class="ad">예정일, 만료일, 마감일 등에 알림을 드려요</p></div>
+        <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-bell"></i></span><span class="at">일정 알림</span></div><p class="ad">예정일·만료일·마감일 등에 알림을 드려요</p></div>
         <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-clipboard-check"></i></span><span class="at">서류 체크리스트</span></div><p class="ad">준비할 서류를 한눈에 보고 관리할 수 있어요</p></div>
-        <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-folder"></i></span><span class="at">보관함</span></div><p class="ad">백신 라벨, 수첩, 각종 서류 사진, PDF를 보관할 수 있어요</p></div>
+        <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-folder"></i></span><span class="at">보관함</span></div><p class="ad">백신 라벨·수첩·각종 서류 사진·PDF를 보관할 수 있어요</p></div>
         <div class="acard more"><i class="ti ti-dots"></i>이 외에도 다양한 기능이 있어요</div>
       </div>
       <div class="appcta-wrap"><a class="appcta"><i class="ti ti-download"></i>무료 앱 받기</a></div>
