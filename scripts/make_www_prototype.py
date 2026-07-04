@@ -376,7 +376,7 @@ html = f"""<!DOCTYPE html>
   <header>
     <div class="container">
       <span style="display:flex;align-items:center;gap:8px">{LOGO}<span class="wm">펫무브</span></span>
-      <span class="nav-links"><a href="#service">서비스</a><a>가이드</a><a>블로그</a></span>
+      <span class="nav-links"><a href="#service">서비스</a><a href="guide.html">가이드</a><a href="contact.html">문의</a></span>
       <span class="nav-right">
         <a class="nav-app">앱 다운로드</a>
         <i class="ti ti-menu-2 burger"></i>
