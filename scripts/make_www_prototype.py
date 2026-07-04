@@ -200,6 +200,10 @@ html = f"""<!DOCTYPE html>
   .dest .dot{{position:absolute;top:9px;right:9px;width:6px;height:6px;border-radius:50%;background:var(--sage)}}
   .note{{display:flex;align-items:center;gap:7px;justify-content:center;margin-top:16px;font-size:12px;color:var(--ink2)}}
   .note .dot{{width:6px;height:6px;border-radius:50%;background:var(--sage);display:inline-block}}
+  .soon-block{{text-align:center;margin-top:24px}}
+  .soon-label{{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--accent-ink);margin-bottom:12px}}
+  .soon-chips{{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;max-width:440px;margin:0 auto}}
+  .soon-chips span{{font-size:12.5px;color:var(--ink3);background:var(--surface);border:0.5px dashed var(--border);border-radius:999px;padding:6px 13px}}
 
   .band{{position:relative;min-height:360px;display:flex;align-items:flex-end;
     background:url('{band}') center 72% / cover no-repeat}}
@@ -378,12 +382,18 @@ html = f"""<!DOCTYPE html>
       <div class="grid">
         <div class="dest">일본<span class="dot"></span></div>
         <div class="dest">태국<span class="dot"></span></div>
-        <div class="dest">EU<span class="dot"></span></div>
         <div class="dest">필리핀<span class="dot"></span></div>
-        <div class="dest">싱가포르<span class="dot"></span></div>
+        <div class="dest">프랑스<span class="dot"></span></div>
+        <div class="dest">독일<span class="dot"></span></div>
         <div class="dest soon">+ 더보기</div>
       </div>
-      <div class="note"><span class="dot"></span>앱 준비 가능 국가 · 그 외 국가는 직영 올케어로 대행</div>
+      <div class="note"><span class="dot"></span>현재 27개국 지원 · 앞으로 계속 늘어나요</div>
+      <div class="soon-block">
+        <div class="soon-label"><i class="ti ti-calendar-plus"></i>2026 하반기 업데이트 예정</div>
+        <div class="soon-chips">
+          <span>하와이</span><span>싱가포르</span><span>중국</span><span>대만</span><span>미국</span><span>캐나다</span><span>영국</span><span>인도네시아</span><span>말레이시아</span><span>호주</span><span>뉴질랜드</span>
+        </div>
+      </div>
     </div>
   </section>
 
