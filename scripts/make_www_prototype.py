@@ -96,7 +96,7 @@ SERVICE_SECTION = """
       <div class="h2">전문가에게 안심하고 맡기세요</div>
       <div class="score-list">
         <div class="score">
-          <div class="score-h"><i class="ti ti-building-hospital si"></i><span class="st">로잔동물의료센터에서 준비해요</span></div>
+          <div class="score-h"><i class="ti ti-heart-plus si"></i><span class="st">로잔동물의료센터에서 준비해요</span></div>
           <p class="sd">수의사가 모든 준비를 해드려요</p>
         </div>
         <div class="score">
