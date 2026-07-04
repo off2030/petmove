@@ -97,7 +97,7 @@ SERVICE_SECTION = """
       <div class="score-list">
         <div class="score">
           <div class="score-h"><i class="ti ti-heart-plus si"></i><span class="st">로잔동물의료센터</span></div>
-          <p class="sd">수의사의 준비로 믿고 맡길 수 있어요</p>
+          <p class="sd">수의사가 준비하니까 믿고 맡길 수 있어요</p>
         </div>
         <div class="score">
           <div class="score-h"><i class="ti ti-device-mobile si"></i><span class="st">펫무브 앱 연동</span></div>
@@ -113,7 +113,7 @@ SERVICE_SECTION = """
         <div class="svc-sub">
           <a class="nv" href="https://naver.me/GUwSYQ9h" target="_blank" rel="noopener"><span class="nlogo">N</span>네이버예약</a>
           <span class="sep">·</span>
-          <a href="tel:02-872-7588"><i class="ti ti-phone"></i>02-872-7588</a>
+          <a href="tel:02-872-7588"><span class="tlogo">TEL</span>02-872-7588</a>
         </div>
       </div>
     </div>
@@ -297,6 +297,7 @@ html = f"""<!DOCTYPE html>
   .svc-sub a i{{font-size:14px}}
   .svc-sub .nv{{color:var(--ink2)}}
   .svc-sub .nlogo{{font-weight:800;font-size:14px;line-height:1}}
+  .svc-sub .tlogo{{font-weight:800;font-size:12px;line-height:1;letter-spacing:-0.02em}}
   .svc-sub .sep{{color:var(--ink3)}}
   .rlist{{max-width:460px;margin:24px auto 0;display:flex;flex-direction:column;gap:12px}}
   .rcard{{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:17px 18px}}
