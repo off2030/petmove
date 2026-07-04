@@ -388,7 +388,7 @@ html = f"""<!DOCTYPE html>
         <div class="dest soon">+ 더보기</div>
       </div>
       <div class="soon-block">
-        <div class="soon-label"><i class="ti ti-calendar-plus"></i>2026 하반기 업데이트 예정</div>
+        <div class="soon-label"><i class="ti ti-calendar-plus"></i>2026년 추가 예정</div>
         <div class="soon-chips">
           <span>하와이</span><span>싱가포르</span><span>중국</span><span>대만</span><span>미국</span><span>캐나다</span><span>영국</span><span>인도네시아</span><span>말레이시아</span><span>호주</span><span>뉴질랜드</span>
         </div>
