@@ -74,7 +74,7 @@ APP_SECTIONS = f"""
   <section>
     <div class="container">
       <div class="kicker">펫무브 앱을 소개해요</div>
-      <div class="h2">이런 걸 할 수 있어요</div>
+      <div class="h2">복잡한 준비, 앱으로 관리해요</div>
       <div class="alist">
         <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-route"></i></span><span class="at">단계별 가이드</span></div><p class="ad">언제 무엇을 해야 할지 알려드려요</p></div>
         <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-shield-check"></i></span><span class="at">실수 예방</span></div><p class="ad">입력 정보가 규정에 맞지 않을 경우 알려드려요</p></div>
@@ -92,9 +92,8 @@ APP_SECTIONS = f"""
 SERVICE_SECTION = """
   <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
     <div class="container">
-      <div class="kicker">펫무브 서비스</div>
-      <div class="h2">수의사가 준비해드려요</div>
-      <p class="slead">전문가에게 안심하고 맡기세요</p>
+      <div class="kicker">펫무브 서비스를 소개해요</div>
+      <div class="h2">전문가에게 안심하고 맡기세요</div>
       <div class="score-list">
         <div class="score">
           <div class="score-h"><i class="ti ti-building-hospital si"></i><span class="st">로잔동물의료센터에서 준비해요</span></div>
@@ -266,7 +265,7 @@ html = f"""<!DOCTYPE html>
   .acard.more{{border-style:dashed;background:transparent;text-align:center;color:var(--ink3);font-size:13px;padding:15px;display:flex;align-items:center;justify-content:center;gap:7px}}
   .acard.more i{{color:var(--accent-ink);font-size:16px}}
   .slead{{font-size:13px;color:var(--ink2);text-align:center;max-width:400px;margin:0 auto 22px;line-height:1.6}}
-  .score-list{{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:12px}}
+  .score-list{{max-width:460px;margin:24px auto 0;display:flex;flex-direction:column;gap:12px}}
   .score{{background:#FBF1E3;border:0.5px solid rgba(217,154,88,.4);border-radius:14px;padding:16px 17px}}
   .score-h{{display:flex;align-items:center;gap:11px;margin-bottom:8px}}
   .score .si{{color:var(--accent-ink);font-size:22px;flex-shrink:0}}
