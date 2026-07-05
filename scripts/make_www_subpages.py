@@ -37,7 +37,7 @@ REGIONS = ["아시아", "유럽·중동", "미주", "오세아니아·기타"]
 
 # ── 추천 가이드(featured) — 인기·시의성·도구. (제목, 부제, docs|blog, 슬러그) ──
 FEATURED = [
-    ("일본 입국 준비 총정리", "가장 많이 가는 목적지", "docs", "japan-pet-travel-guide"),
+    ("일본 입국 준비 총정리", "가장 많이 가는 여행지", "docs", "japan-pet-travel-guide"),
     ("[2026] 유럽 입국 광견병 검사 변경", "최신 규정 업데이트", "blog", "eu-pet-rabies-test"),
     ("일본 입국 일정 계산기", "언제 뭘 할지 자동 계산", "blog", "japan-pet-entry-scheduler"),
 ]
@@ -227,7 +227,7 @@ def build_guide():
   <div class="phead">
     <div class="container">
       <h1>가이드</h1>
-      <div class="search"><i class="ti ti-search"></i><input id="q" type="text" placeholder="목적지 검색 (예: 일본)"></div>
+      <div class="search"><i class="ti ti-search"></i><input id="q" type="text" placeholder="여행지 검색 (예: 일본)"></div>
     </div>
   </div>
 
@@ -240,7 +240,7 @@ def build_guide():
 
   <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
     <div class="container">
-      <div class="sec-h">목적지별 가이드</div>
+      <div class="sec-h">여행지별 가이드</div>
       <div id="regions">{regions_html}</div>
     </div>
   </section>
