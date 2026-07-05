@@ -298,7 +298,7 @@ def build_contact():
   <section>
     <div class="container"><div class="csec">
       <div class="cblock">
-        <div class="cl">상담 · 문의 (보호자)</div>
+        <div class="cl">상담 · 문의</div>
         <a class="chan" href="https://pf.kakao.com/_zDDxhj/chat" target="_blank" rel="noopener">
           <i class="ti ti-message-circle"></i><span><span class="cv">카카오톡 상담</span><div class="cs">가장 빠르게 답변받는 방법이에요</div></span></a>
         <a class="chan" href="tel:02-872-7588">
@@ -307,7 +307,7 @@ def build_contact():
           <span class="nlogo">N</span><span><span class="cv">네이버 예약</span><div class="cs">방문 상담 예약</div></span></a>
       </div>
       <div class="cblock">
-        <div class="cl">제휴 · 업무 문의 (병원 · 운송사 · 에이전시)</div>
+        <div class="cl">제휴 · 업무 문의</div>
         <a class="chan" href="mailto:petmove@naver.com">
           <i class="ti ti-mail"></i><span><span class="cv">petmove@naver.com</span><div class="cs">제휴·업무 관련 문의</div></span></a>
       </div>
