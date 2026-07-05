@@ -135,6 +135,44 @@ CSS = """
   .chan .cs{font-size:12px;color:var(--ink3);margin-top:1px}
   .cnote{font-size:12px;color:var(--ink3);text-align:center;line-height:1.7;margin-top:20px}
 
+  /* 글 본문 템플릿 */
+  .article{max-width:720px;margin:0 auto;padding:0 22px}
+  .crumb{font-size:12.5px;color:var(--ink3);padding:22px 0 0}
+  .crumb a{color:var(--ink3)}
+  .crumb .sep{margin:0 6px}
+  .art-head{padding:14px 0 20px;border-bottom:0.5px solid var(--border);margin-bottom:26px}
+  .art-cat{display:inline-block;font-size:12px;font-weight:600;color:var(--accent-ink);background:#F3E3CE;
+    border-radius:999px;padding:4px 11px;margin-bottom:14px}
+  .art-head h1{font-size:26px;line-height:1.32;letter-spacing:-.02em;margin:0;font-weight:700}
+  .art-meta{font-size:12.5px;color:var(--ink3);margin-top:13px}
+  .prose{font-size:15.5px;line-height:1.8;color:var(--ink)}
+  .prose h2{font-size:19px;font-weight:700;margin:34px 0 12px;letter-spacing:-.01em}
+  .prose h3{font-size:16px;font-weight:600;margin:24px 0 8px}
+  .prose p{margin:0 0 16px}
+  .prose ul,.prose ol{margin:0 0 16px;padding-left:20px}
+  .prose li{margin:6px 0}
+  .prose a{color:var(--accent-ink);text-decoration:underline;text-underline-offset:2px}
+  .prose strong{font-weight:600}
+  .prose blockquote{margin:18px 0;padding:12px 16px;border-left:3px solid var(--accent);background:var(--surface);
+    border-radius:0 8px 8px 0;color:var(--ink2);font-size:14.5px;line-height:1.7}
+  .prose table{width:100%;border-collapse:collapse;margin:0 0 18px;font-size:13.5px}
+  .prose th,.prose td{border:0.5px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top}
+  .prose th{background:var(--surface);font-weight:600;white-space:nowrap}
+  .callout{background:#FBF1E3;border:0.5px solid rgba(217,154,88,.4);border-radius:14px;padding:16px 18px;margin:24px 0}
+  .callout .ch{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14.5px;margin-bottom:6px}
+  .callout .ch i{color:var(--accent-ink);font-size:19px}
+  .callout .cp{font-size:13.5px;color:var(--ink2);margin:0;line-height:1.65}
+  .callout .cbtn{display:inline-block;margin-top:11px;font-size:13px;font-weight:600;color:var(--accent-ink)}
+  .art-cta{background:#211E19;border-radius:18px;padding:26px 22px;text-align:center;margin:36px 0 8px}
+  .art-cta h3{color:#fff;font-size:18px;margin:0 0 7px;font-weight:700}
+  .art-cta p{color:#CFC6B6;font-size:13px;margin:0 0 16px;line-height:1.6}
+  .art-cta a{display:inline-block;background:var(--accent);color:var(--ink);font-weight:600;border-radius:12px;padding:12px 22px;font-size:14px}
+  .related{border-top:0.5px solid var(--border);padding-top:18px;margin-top:30px}
+  .related .rl-h{font-size:13px;font-weight:700;margin-bottom:8px}
+  .related a{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid var(--border);font-size:14px;color:var(--ink)}
+  .related a:last-child{border-bottom:0}
+  .related a i{color:var(--ink3);font-size:16px}
+
   footer{background:#211E19;color:#8B8578;padding:28px 0;font-size:12px;line-height:1.85;margin-top:auto}
   footer a{color:#B0A896}
   footer .fsns{display:inline-flex;align-items:center;gap:5px;margin:9px 0 4px;font-weight:600}
@@ -301,8 +339,84 @@ def build_contact():
 {FOOTER}"""
 
 
+def build_article():
+    """글 본문 공통 템플릿 — 샘플(일본 가이드)로 채워 실제 글 모습 시연.
+    69개 글이 이 틀(크럼브·제목·prose·표·콜아웃·CTA·관련글)을 공유한다."""
+    return f"""{head('일본 반려동물 입국 가이드 · 펫무브')}
+{header('guide')}
+  <article class="article">
+    <div class="crumb"><a href="guide.html">가이드</a><span class="sep">›</span><a href="guide.html">여행지별</a><span class="sep">›</span>일본</div>
+    <div class="art-head">
+      <span class="art-cat">여행지 가이드 · 일본</span>
+      <h1>일본 반려동물 입국 가이드</h1>
+      <div class="art-meta">마지막 업데이트 2026.07.04 · 읽는 데 약 5분</div>
+    </div>
+
+    <div class="prose">
+      <p>강아지·고양이와 함께 일본에 입국하려면 <strong>출발 최소 7개월 전</strong>부터 준비를 시작해야 해요. 마이크로칩 → 광견병 예방접종 → 항체검사 → 사전 신고 순서가 정해져 있어서, 하나라도 순서가 어긋나면 출국이 미뤄질 수 있어요. 이 글에서 전체 흐름과 단계별 준비물을 정리했어요.</p>
+
+      <h2>한눈에 보기</h2>
+      <table>
+        <tr><th>준비 기간</th><td>출발 최소 7개월 전 시작</td></tr>
+        <tr><th>필수 준비물</th><td>마이크로칩 · 광견병 예방접종 2회 · 광견병 항체검사 · 검역증명서</td></tr>
+        <tr><th>사전 신고</th><td>도착 40일 전까지 일본 동물검역소에 신고</td></tr>
+        <tr><th>도착 검역</th><td>공항 동물검역소에서 서류 확인 (통상 당일 통과)</td></tr>
+      </table>
+
+      <h2>1. 마이크로칩 (ISO 규격)</h2>
+      <p>가장 먼저 <strong>ISO 11784/11785 규격</strong>의 마이크로칩을 이식해야 해요. 이후의 모든 접종·검사가 이 칩 번호를 기준으로 기록되기 때문에, <strong>반드시 광견병 접종보다 먼저</strong> 이식해야 합니다. 칩을 나중에 넣으면 이전 기록이 인정되지 않아 처음부터 다시 해야 해요.</p>
+
+      <h2>2. 광견병 예방접종 (2회)</h2>
+      <p>마이크로칩 이식 <strong>후에</strong> 광견병 백신을 접종해요. 일본 입국은 유효한 접종이 <strong>2회 이상</strong> 필요합니다.</p>
+      <ul>
+        <li>1차: 생후 91일 이후 접종</li>
+        <li>2차: 1차 접종의 유효기간 내에, 30일 이상 간격을 두고 접종</li>
+      </ul>
+
+      <h2>3. 광견병 항체검사</h2>
+      <p>2차 접종 후 지정 기관에서 항체가 검사를 받아요. 결과가 <strong>0.5 IU/㎖ 이상</strong>이어야 합니다.</p>
+      <blockquote>⚠️ 가장 놓치기 쉬운 부분 — 항체검사 <strong>채혈일로부터 180일(약 6개월)</strong>이 지나야 일본 입국이 가능해요. 이 대기 기간 때문에 전체 준비가 최소 7개월 걸리는 거예요.</blockquote>
+
+      <div class="callout">
+        <div class="ch"><i class="ti ti-device-mobile"></i>펫무브 앱으로 자동 관리</div>
+        <p class="cp">칩 이식일·접종일·항체검사 채혈일만 입력하면, 앱이 <strong>180일 대기 만료일</strong>과 다음에 할 일을 자동으로 알려줘요. 날짜 계산으로 헷갈릴 일이 없어요.</p>
+        <a class="cbtn" href="prototype-mobile.html">무료 앱으로 준비하기 ›</a>
+      </div>
+
+      <h2>4. 도착 40일 전 사전 신고</h2>
+      <p>일본 도착 예정일 <strong>40일 전까지</strong> 도착 공항의 동물검역소에 수입 신고서를 제출해요. 신고가 접수되면 검역소에서 확인 통지를 보내줍니다.</p>
+
+      <h2>5. 출국 검역 (검역증명서)</h2>
+      <p>출국 직전 국내 검역본부에서 수출 검역을 받고 <strong>검역증명서</strong>를 발급받아요. 이 서류를 도착지 검역소에 제출하면 됩니다.</p>
+
+      <h2>자주 묻는 질문</h2>
+      <h3>고양이도 준비 과정이 같나요?</h3>
+      <p>네, 개와 고양이 모두 동일한 절차(칩·광견병 2회·항체검사·검역)를 따라요.</p>
+      <h3>비용은 얼마나 드나요?</h3>
+      <p>백신·검사·검역 항목에 따라 달라져요. 정확한 견적은 <a href="contact.html">문의</a>로 안내해 드려요.</p>
+    </div>
+
+    <div class="art-cta">
+      <h3>복잡한 준비, 펫무브가 도와드려요</h3>
+      <p>앱으로 직접 준비하거나, 전 과정을 전문가에게 맡길 수 있어요.</p>
+      <a href="prototype-mobile.html">무료 앱으로 시작하기</a>
+    </div>
+
+    <div class="related">
+      <div class="rl-h">관련 가이드</div>
+      <a href="guide.html">일본 검역소 안내 <i class="ti ti-chevron-right"></i></a>
+      <a href="guide.html">기내 반입 준비 <i class="ti ti-chevron-right"></i></a>
+      <a href="guide.html">광견병 항체검사 <i class="ti ti-chevron-right"></i></a>
+    </div>
+  </article>
+
+{FOOTER}"""
+
+
 with open(os.path.join(OUT_DIR, "guide.html"), "w", encoding="utf-8") as f:
     f.write(build_guide())
 with open(os.path.join(OUT_DIR, "contact.html"), "w", encoding="utf-8") as f:
     f.write(build_contact())
-print("wrote guide.html + contact.html")
+with open(os.path.join(OUT_DIR, "article.html"), "w", encoding="utf-8") as f:
+    f.write(build_article())
+print("wrote guide.html + contact.html + article.html")
