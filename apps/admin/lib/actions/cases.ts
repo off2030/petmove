@@ -11,6 +11,7 @@ import {
   stampDocsChecklistCompletion,
   writeByDestValue,
   flattenCaseForDestination,
+  clearExtraValueWithLegacy,
   type CaseRow,
 } from '@petmove/domain'
 
@@ -388,7 +389,12 @@ export async function updateCaseField(
     }
   } else {
     if (value === null || value === undefined || value === '') {
-      delete nextData[key]
+      // top-level + legacy *_extra 잔존까지 제거 — 아니면 read fallback 으로 옛 값이 부활한다
+      // (예: 해외주소가 japan_extra.address_overseas 에 남아 삭제가 안 먹히던 버그).
+      // nextData 참조는 유지(뒤 부수효과가 같은 객체를 계속 mutate)하고 내용만 교체.
+      const cleared = clearExtraValueWithLegacy(nextData, key)
+      for (const k of Object.keys(nextData)) delete nextData[k]
+      Object.assign(nextData, cleared)
     } else {
       nextData[key] = value
     }

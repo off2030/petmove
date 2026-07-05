@@ -11,7 +11,7 @@ import {
 } from 'react'
 import * as Sentry from '@sentry/nextjs'
 import type { CaseRow, FieldDefinition } from '@petmove/domain'
-import { parseDestinations, isDestinationScopedKey, writeByDestValue } from '@petmove/domain'
+import { parseDestinations, isDestinationScopedKey, writeByDestValue, clearExtraValueWithLegacy } from '@petmove/domain'
 import type { InspectionConfig } from '@petmove/domain'
 import type { CertConfig } from '@petmove/domain'
 import { subscribeRealtime } from '@/lib/realtime/resilient-channel'
@@ -502,14 +502,19 @@ export function CasesProvider({
           if (storage === 'column') {
             return { ...c, [key]: value, updated_at: now } as CaseRow
           }
+          if (value === null || value === undefined || value === '') {
+            // 서버 updateCaseField 와 동일 — top-level + legacy *_extra 잔존까지 제거해
+            // read fallback 으로 옛 값이 부활하지 않게(해외주소 등 삭제가 즉시 반영되도록).
+            const nextData = clearExtraValueWithLegacy(
+              (c.data as Record<string, unknown>) ?? null,
+              key,
+            )
+            return { ...c, data: nextData, updated_at: now } as CaseRow
+          }
           const nextData = {
             ...((c.data as Record<string, unknown>) ?? {}),
           }
-          if (value === null || value === undefined || value === '') {
-            delete nextData[key]
-          } else {
-            nextData[key] = value
-          }
+          nextData[key] = value
           return { ...c, data: nextData, updated_at: now } as CaseRow
         }),
       )

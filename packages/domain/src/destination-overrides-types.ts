@@ -268,6 +268,40 @@ export function readEffectiveExtraValue(
   return null
 }
 
+/**
+ * top-level `data[key]` 와 그 key 의 모든 legacy `*_extra` 경로 값을 함께 제거한 새 data 반환.
+ * (immutable — 입력 data 와 그 중첩 객체는 변형하지 않는다.)
+ *
+ * '비우기'(삭제) 액션이 top-level 만 지우면, read(readEffectiveExtraValue)가 legacy country_extra
+ * 경로로 fallback 해 옛 값이 부활한다 — 예: 해외주소가 `data.japan_extra.address_overseas` 에
+ * 남아 있어 삭제 버튼을 눌러도 되살아나는 버그. 이 헬퍼로 legacy 잔존까지 지워 '삭제'가 실제로
+ * 반영되게 한다. (by_dest 경로는 null sentinel 로 이미 차단되므로 top-level clear 전용.)
+ */
+export function clearExtraValueWithLegacy(
+  data: Record<string, unknown> | null | undefined,
+  key: string,
+): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...(data ?? {}) }
+  delete next[key]
+  const paths = LEGACY_EXTRA_PATHS[key]
+  if (!paths) return next
+  for (const path of paths) {
+    if (path.length === 0) continue
+    // 부모 체인을 얕은 복사하며 내려가 리프만 제거 (원본 중첩 객체는 건드리지 않음).
+    let cursor: Record<string, unknown> = next
+    let reachable = true
+    for (let i = 0; i < path.length - 1; i++) {
+      const child = cursor[path[i]]
+      if (!child || typeof child !== 'object') { reachable = false; break }
+      const cloned = { ...(child as Record<string, unknown>) }
+      cursor[path[i]] = cloned
+      cursor = cloned
+    }
+    if (reachable) delete cursor[path[path.length - 1]]
+  }
+  return next
+}
+
 /** 사용자 정의 목적지 1개. */
 export interface CustomDestination {
   /** 안정적인 슬러그(소문자 영문 + 숫자 + '_'). 새 추가 시 클라이언트가 생성. */
