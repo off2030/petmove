@@ -186,6 +186,14 @@ CSS = """
   .related a{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid var(--border);font-size:14px;color:var(--ink)}
   .related a:last-child{border-bottom:0}
   .related a i{color:var(--ink3);font-size:16px}
+  a.bookmark{display:flex;border:0.5px solid var(--border);border-radius:12px;overflow:hidden;margin:16px 0;background:var(--surface);text-decoration:none;color:inherit}
+  a.bookmark .bk-text{flex:1 1 auto;padding:14px 16px;min-width:0}
+  a.bookmark .bk-title{font-size:14px;font-weight:600;color:var(--ink);line-height:1.4}
+  a.bookmark .bk-host{font-size:12px;color:var(--ink3);margin-top:10px}
+  a.bookmark .bk-thumb{width:104px;flex:0 0 104px;object-fit:cover;background:var(--border)}
+  .prose .embed{position:relative;padding-top:56.25%;margin:18px 0;border-radius:12px;overflow:hidden;background:#000}
+  .prose .embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  @media(min-width:760px){.prose a.bookmark .bk-thumb{width:180px;flex-basis:180px}}
 
   footer{background:#211E19;color:#8B8578;padding:28px 0;font-size:12px;line-height:1.85;margin-top:auto}
   footer a{color:#B0A896}
@@ -434,6 +442,18 @@ def build_article_sample():
     KKO = "http://pf.kakao.com/_zDDxhj/chat?ref=petmove.co.kr"
     SCHED = "https://www.petmove.co.kr/blog/japan-pet-entry-scheduler/"
     SELF = "https://www.petmove.co.kr/blog/japan-pet-entry-self-check/"
+    QOFFICE = "https://www.petmove.co.kr/blog/japan-pet-quarantine-office/"
+    QSTATION = "https://www.petmove.co.kr/docs/pet-quarantine-station/"
+    EXPORT = "https://www.petmove.co.kr/docs/pet-export-inspection/"
+    NACCS = "https://webaps-nss.nac.naccs.jp/apsapp/UCCU01/CCU01W01E_Init01?ref=petmove.co.kr"
+    NAVER_LAB = "https://naver.me/xpPWdXTT?ref=petmove.co.kr"
+    YT = "https://www.youtube.com/embed/A3bnLxIZuW8"
+    def bk(href, title, thumb):
+        return (f'<a class="bookmark" href="{href}" target="_blank" rel="noopener">'
+                f'<div class="bk-text"><div class="bk-title">{title}</div>'
+                f'<div class="bk-host">petmove.co.kr</div></div>'
+                f'<img class="bk-thumb" src="{thumb}" alt="" loading="lazy"></a>')
+    TH = "https://storage.ghost.io/c/61/a2/61a2ac22-42e3-487b-9a3b-d0ed58d1ec8a/content/images"
     return f'''{head('[2026] 강아지·고양이 일본 입국 준비 총정리 · 펫무브', 'reading')}
 {header('guide')}
   <article class="article">
@@ -543,7 +563,7 @@ def build_article_sample():
         <li>임상 수의사만 검사 신청 가능하며 개인 신청은 불가</li>
         <li>0.5IU/ml 이상일 경우 통과</li>
         <li>유효기간 2년(⚠️ 백신 면역유효기간이 지나면 자동 종료)</li>
-        <li>검사 의뢰 [펫무브 X 로잔동물의료센터]</li>
+        <li>검사 의뢰 <a href="{NAVER_LAB}" target="_blank" rel="noopener">펫무브 X 로잔동물의료센터</a></li>
       </ul>
       <details class="more"><summary><span>더 자세한 설명</span><i class="ti ti-chevron-down"></i></summary><div class="more-body">
       <h3>광견병항체검사가 뭔가요?</h3>
@@ -569,6 +589,7 @@ def build_article_sample():
         <li>접종 면역유효기간을 넘긴 경우</li>
       </ul>
       <p>🎥 텍스트가 어렵다면? 요약된 영상으로 확인하세요!</p>
+      <div class="embed"><iframe src="{YT}" title="강아지·고양이 일본 입국 준비 영상" loading="lazy" allowfullscreen></iframe></div>
       </div></details>
 
       <h2>대기기간(180일)</h2>
@@ -595,7 +616,7 @@ def build_article_sample():
         <li>각 지역 동물검역소마다 요구사항에 차이가 있을 수 있습니다.</li>
         <li>커뮤니케이션은 일본어와 영어로만 가능</li>
         <li>완료되면 허가증(Approval) 발급</li>
-        <li>신고 대행 [펫무브 카카오톡]</li>
+        <li>신고 대행 <a href="{KKO}" target="_blank" rel="noopener">펫무브 카카오톡</a></li>
       </ul>
       <details class="more"><summary><span>더 자세한 설명</span><i class="ti ti-chevron-down"></i></summary><div class="more-body">
       <h3>사전 신고가 뭔가요?</h3>
@@ -610,11 +631,11 @@ def build_article_sample():
       <h3>사전 신고는 어떻게 하나요?</h3>
       <p>사전 신고는 크게 두가지 방식으로 할 수 있습니다.</p>
       <ul>
-        <li>NACCS(웹사이트 온라인 신고)</li>
+        <li><a href="{NACCS}" target="_blank" rel="noopener">NACCS(웹사이트 온라인 신고)</a></li>
         <li>이메일 신고</li>
       </ul>
       <p>NACCS를 통한 접수가 편리한 점이 많지만, 웹사이트의 유저 인터페이스(UI)와 사용자 경험(UX)이 좋지 않아서 처음 해보는 경우 어려울 수 있습니다.</p>
-      <p>이메일 신고를 할 경우 각 동물검역소의 이메일 주소는 [일본 동물검역소 연락처] 글을 참고해주세요.</p>
+      <p>이메일 신고를 할 경우 각 동물검역소의 이메일 주소는 <a href="{QOFFICE}" target="_blank" rel="noopener">일본 동물검역소 연락처</a> 글을 참고해주세요.</p>
       <h3>신고 후에는 어떻게 되나요?</h3>
       <p>사전 신고를 하면 일본 동물검역소에서는 신고 내용을 검토합니다. 이때 일본 동물검역소와 여러 번 이메일을 주고 받게 될 수 있습니다. 증명서류, 제출정보 수정, 추가 정보 요청 등을 받을 수 있습니다. 준비 절차에 문제가 있는 경우 일본 입국을 할 수 없다는 답변을 받을 수도 있습니다.</p>
       <p>모든 검토가 끝나면 허가증(Aprroval)이 발급됩니다. 이 허가증이 있어야 반려동물 일본 입국이 가능합니다. 사전 신고 후 허가증을 받을 때까지 일반적으로 수 주가 걸리게 됩니다.</p>
@@ -627,7 +648,7 @@ def build_article_sample():
         <li>일본 동물검역소에 신청(귀국을 위해 방문하는 공항, 항구 아니어도 가능)</li>
         <li>일본 동물검역소 웹사이트(NACCS) 또는 이메일 접수</li>
         <li>⚠️ 신청 후 방문 날짜, 시간 예약 필수</li>
-        <li>신고 대행 [펫무브 카카오톡]</li>
+        <li>신고 대행 <a href="{KKO}" target="_blank" rel="noopener">펫무브 카카오톡</a></li>
       </ul>
       <details class="more"><summary><span>더 자세한 설명</span><i class="ti ti-chevron-down"></i></summary><div class="more-body">
       <h3>일본 수출동물검역 신청이란?</h3>
@@ -639,11 +660,11 @@ def build_article_sample():
       <h3>일본 수출동물검역 신청은 어떻게 하나요?</h3>
       <p>일본 수출동물검역 신청은 두가지 방식으로 할 수 있습니다.</p>
       <ul>
-        <li>NACCS(웹사이트 온라인 신고)</li>
+        <li><a href="{NACCS}" target="_blank" rel="noopener">NACCS(웹사이트 온라인 신고)</a></li>
         <li>이메일 신청</li>
       </ul>
       <p>NACCS를 통한 접수가 편리하지만, 웹사이트의 유저 인터페이스(UI)와 사용자 경험(UX)이 좋지 않아서 처음 해보는 경우 어려울 수 있습니다.</p>
-      <p>이메일 신고를 할 경우 각 동물검역소의 이메일 주소는 [일본 동물검역소 연락처] 글을 참고해주세요.</p>
+      <p>이메일 신고를 할 경우 각 동물검역소의 이메일 주소는 <a href="{QOFFICE}" target="_blank" rel="noopener">일본 동물검역소 연락처</a> 글을 참고해주세요.</p>
       <h3>신청하면 그 다음은 어떻게 되나요?</h3>
       <p>일본 동물검역소에 수출동물검역 신청을 하면, 사전 신고 때와는 달리 허가증이나 다른 서류가 발급되지는 않습니다. 대신 이메일이 발송됩니다.</p>
       <p>일본 동물검역소에서 보내준 이메일 지시에 따라서 정보를 주고 받으며 예약을 진행할 수 있습니다.</p>
@@ -688,9 +709,9 @@ def build_article_sample():
       <h3>수출동물검역은 어떤 절차인가요?</h3>
       <p>한국 농림축산검역본부에서 실시하는 검역으로, 반려동물이 해외로 출국하기에 적합한 건강 상태인지 확인하고 "수출검역증명서"를 발급하는 절차입니다. 이 증명서가 있어야 항공사 탑승과 하와이 입국이 가능합니다.</p>
       <h3>어디에서 검역을 받나요?</h3>
-      <p>인천공항, 김포공항 등 출발 공항의 동물검역소 또는 가까운 지역 동물검역소에서 받을 수 있습니다. 정확한 위치와 연락처는 [동물검역소 위치 안내]에서 확인하세요.</p>
+      <p>인천공항, 김포공항 등 출발 공항의 동물검역소 또는 가까운 지역 동물검역소에서 받을 수 있습니다. 정확한 위치와 연락처는 <a href="{QSTATION}" target="_blank" rel="noopener">동물검역소 위치 안내</a>에서 확인하세요.</p>
       <h3>수출검역 시 주의사항은?</h3>
-      <p>반드시 반려동물을 데리고 가야 하며 보호자 신분증과 준비한 증명서류 원본이 필요합니다. 서류상 정보와 실제 반려동물 정보가 일치하지 않으면 검역이 거부될 수 있습니다. 자세한 절차는 [수출동물검역 안내]를 참고하세요.</p>
+      <p>반드시 반려동물을 데리고 가야 하며 보호자 신분증과 준비한 증명서류 원본이 필요합니다. 서류상 정보와 실제 반려동물 정보가 일치하지 않으면 검역이 거부될 수 있습니다. 자세한 절차는 <a href="{EXPORT}" target="_blank" rel="noopener">수출동물검역 안내</a>를 참고하세요.</p>
       </div></details>
 
       <h2>일본 도착 및 공항 검역</h2>
@@ -710,8 +731,10 @@ def build_article_sample():
       <p>일본에서 한국으로 귀국할 때에도 "일본 동물검역소에서 수출 검역"을 받아야 합니다. 과거에는 당일 공항에서 간단히 처리되었으나, 현재는 수요 증가로 "예약제"로 운영되고 있으므로 반드시 사전에 신청 및 예약해야 합니다. 한국 도착 후에는 한국 농림축산검역본부에서 "수출국 검역증명서 원본"과 "광견병 항체가 검사 결과지"를 제출하고 검역을 받습니다. 일본은 광견병 비발생국이므로 한국 입국 시 항체가 검사는 면제됩니다.</p>
       </div></details>
 
-      <p>준비 일정 계산이 어려우시다면 펫무브에서 제공하는 <a href="{SCHED}" target="_blank" rel="noopener">강아지·고양이 일본 입국 일정 계산기</a>를 이용해보세요.</p>
-      <p>준비를 시작했는데 맞게 한 것인지 불안하시다면 펫무브에서 제공하는 <a href="{SELF}" target="_blank" rel="noopener">강아지·고양이 일본 입국 준비 자가진단기 (Self-Check)</a>에서 체크해보세요.</p>
+      <p>준비 일정 계산이 어려우시다면 펫무브에서 제공하는 강아지·고양이 일본 입국 일정 계산기를 이용해보세요.</p>
+      {bk(SCHED, "강아지·고양이 일본 입국 일정 계산기", TH + "/thumbnail/japan-pet-entry-scheduler-og.webp")}
+      <p>준비를 시작했는데 맞게 한 것인지 불안하시다면 펫무브에서 제공하는 강아지·고양이 일본 입국 준비 자가진단기 (Self-Check)에서 체크해보세요.</p>
+      {bk(SELF, "강아지·고양이 일본 입국 준비 일정 확인 | Self-Check", TH + "/thumbnail/japan-pet-entry-selfcheck-og.webp")}
     </div>
 
     <div class="art-cta">
@@ -724,14 +747,14 @@ def build_article_sample():
       </div>
     </div>
 
-    <div class="related">
-      <div class="rl-h">관련 블로그 포스트</div>
-      <a href="https://www.petmove.co.kr/blog/gangaji-dongban-ilbonyeohaeng-a-to-z/" target="_blank" rel="noopener">강아지 동반 일본여행 <i class="ti ti-chevron-right"></i></a>
-      <a href="https://www.petmove.co.kr/blog/gangaji-simjangsusuleul-wihan-ilbon-ibgug-junbi-annae/" target="_blank" rel="noopener">강아지 심장수술을 위한 일본 입국 준비 안내 <i class="ti ti-chevron-right"></i></a>
-      <a href="https://www.petmove.co.kr/blog/gangajireul-derigo-hanguggwa-ilboneul-yeoreobeon-wangboghaneun-gyeongu/" target="_blank" rel="noopener">강아지를 데리고 한국과 일본을 여러번 왕복해야 하는 경우 <i class="ti ti-chevron-right"></i></a>
-      <a href="https://www.petmove.co.kr/blog/gangaji-goyangi-ilbon-geomyeog-junbi-jeolca/" target="_blank" rel="noopener">강아지 일본 입국 준비절차, 기간, 비용 <i class="ti ti-chevron-right"></i></a>
-      <a href="https://www.petmove.co.kr/blog/ilbon-juyo-gonghang-dongmulgeomyeogso-wici/" target="_blank" rel="noopener">일본 수입동물검역 및 일본 주요 공항 동물검역소 위치 안내 <i class="ti ti-chevron-right"></i></a>
-      <a href="https://www.petmove.co.kr/blog/ilbon-juyo-gonghang/" target="_blank" rel="noopener">일본 동물검역소 연락처 <i class="ti ti-chevron-right"></i></a>
+    <div class="article" style="padding-top:6px">
+      <div class="rl-h" style="font-size:16px;font-weight:700;margin:14px 0 4px">관련 블로그 포스트</div>
+      {bk("https://www.petmove.co.kr/blog/gangaji-dongban-ilbonyeohaeng-a-to-z/", "강아지 동반 일본여행", TH + "/size/w1200/2023/09/ying-zhu-4UZfmxvc5Qk-unsplash.jpg")}
+      {bk("https://www.petmove.co.kr/blog/gangaji-simjangsusuleul-wihan-ilbon-ibgug-junbi-annae/", "강아지 심장수술을 위한 일본 입국 준비 안내", TH + "/2023/10/owner-img01.jpg")}
+      {bk("https://www.petmove.co.kr/blog/gangajireul-derigo-hanguggwa-ilboneul-yeoreobeon-wangboghaneun-gyeongu/", "강아지를 데리고 한국과 일본을 여러번 왕복해야 하는 경우", TH + "/size/w1200/2023/12/alison-pang-McNaYD-pYvw-unsplash.jpg")}
+      {bk("https://www.petmove.co.kr/blog/gangaji-goyangi-ilbon-geomyeog-junbi-jeolca/", "강아지 일본 입국 준비절차, 기간, 비용", TH + "/size/w1200/2023/11/jaycee-xie-aH9Uskj8XTU-unsplash-1.jpg")}
+      {bk("https://www.petmove.co.kr/blog/ilbon-juyo-gonghang-dongmulgeomyeogso-wici/", "일본 수입동물검역 및 일본 주요 공항 동물검역소 위치 안내", TH + "/thumbnail/DALL-E-2024-10-13-17.15.48---A-simple--wide-illustration-suitable-for-a-blog-header--depicting-a-pet-owner-with-a-small-dog-at-a-Japanese-airport--focusing-on-the-animal-quarantin.webp")}
+      {bk("https://www.petmove.co.kr/blog/ilbon-juyo-gonghang/", "일본 동물검역소 연락처", TH + "/size/w1200/2024/10/DALL-E-2024-10-17-12.28.40---Design-a-blog-header-image-combining-elements-of-an-airport--traditional-Japanese-aesthetics--and-a-modern-communication-icon-like-an-email-symbol.-Th.webp")}
     </div>
   </article>
 
