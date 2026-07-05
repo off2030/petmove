@@ -35,31 +35,26 @@ COUNTRIES = [
 ]
 REGIONS = ["아시아", "유럽·중동", "미주", "오세아니아·기타"]
 
-# ── 주제(절차) 카테고리 ──
-TOPICS = [
-    ("ti-clipboard-check", "검역", "출국 전 검역 신청·검역소·예약 절차", [
-        ("수출검역 신청", "pet-export-inspection"),
-        ("검역소 안내", "pet-quarantine-station"),
-        ("검역 예약 방법", "pet-quarantine-reservation"),
-    ]),
-    ("ti-plane-tilt", "항공", "기내 반입 준비·규정·요금", [
-        ("기내 반입 준비", "dog-flight-preparation"),
-        ("기내 반입 규정", "airline-pet-cabin-policy"),
-        ("기내 반입 요금", "airline-pet-cabin-fees"),
-    ]),
-    ("ti-vaccine", "기타 준비", "마이크로칩·광견병 항체검사 등", [
-        ("마이크로칩 안전성", "pet-microchip-safety", "blog"),
-        ("광견병 항체검사(일-한)", "rabies-titer-test-japan-korea", "blog"),
-        ("광견병 청정국 목록", "rabies-free-countries", "blog"),
-    ]),
+# ── 추천 가이드(featured) — 인기·시의성·도구. (제목, 부제, docs|blog, 슬러그) ──
+FEATURED = [
+    ("일본 입국 준비 총정리", "가장 많이 가는 목적지", "docs", "japan-pet-travel-guide"),
+    ("[2026] 유럽 입국 광견병 검사 변경", "최신 규정 업데이트", "blog", "eu-pet-rabies-test"),
+    ("일본 입국 일정 계산기", "언제 뭘 할지 자동 계산", "blog", "japan-pet-entry-scheduler"),
 ]
 
-# ── 최근 업데이트(블로그) ──
-RECENT = [
-    ("2026.04.23", "[2026] 반려동물 유럽 입국, 광견병항체검사 기관 변경 안내", "eu-pet-rabies-test"),
-    ("2026.03.19", "[2026] 고양이 호주 입국 준비 총정리 | 절차·서류·기간", "australia-cat-travel-guide"),
-    ("2026.01.27", "강아지·고양이 일본 입국 일정 계산기", "japan-pet-entry-scheduler"),
-    ("2026.01.04", "강아지·고양이 일본 입국 준비 자가진단(Self-Check)", "japan-pet-entry-self-check"),
+# ── 그 외 준비 — 검역·항공·기타 한 덩어리(플랫). (제목, docs|blog, 슬러그) ──
+OTHER = [
+    ("수출검역 신청", "docs", "pet-export-inspection"),
+    ("검역소 안내", "docs", "pet-quarantine-station"),
+    ("검역 예약", "docs", "pet-quarantine-reservation"),
+    ("기내 반입 준비", "docs", "dog-flight-preparation"),
+    ("기내 반입 규정", "docs", "airline-pet-cabin-policy"),
+    ("기내 반입 요금", "docs", "airline-pet-cabin-fees"),
+    ("기내 진정제", "blog", "dog-flight-medication"),
+    ("마이크로칩 안전성", "blog", "pet-microchip-safety"),
+    ("광견병 항체검사", "blog", "rabies-titer-test-japan-korea"),
+    ("광견병 청정국 목록", "blog", "rabies-free-countries"),
+    ("해외여행 기본 안내", "blog", "dog-international-travel"),
 ]
 
 CSS = """
@@ -108,12 +103,11 @@ CSS = """
     padding:14px 16px 14px 44px;font-size:14px;font-family:inherit;color:var(--ink)}
   .search input:focus{outline:none;border-color:var(--accent)}
 
-  /* 최근 업데이트 카드 */
-  .recent{display:grid;grid-template-columns:1fr;gap:10px}
-  .rcard{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:0.5px solid var(--border);
-    border-radius:14px;padding:15px 16px}
-  .rcard .rd{font-size:11.5px;color:var(--accent-ink);font-weight:600;flex:0 0 auto;padding-top:2px}
-  .rcard .rt{font-size:13.5px;color:var(--ink);line-height:1.5;font-weight:500}
+  /* 추천 가이드(featured) */
+  .feat{display:grid;grid-template-columns:1fr;gap:10px}
+  .fcard{display:block;background:#FBF1E3;border:0.5px solid rgba(217,154,88,.4);border-radius:16px;padding:16px 17px}
+  .fcard .ft{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.42}
+  .fcard .fd{font-size:12px;color:var(--accent-ink);margin-top:6px}
 
   /* 나라 그리드 */
   .region{font-size:12.5px;font-weight:600;color:var(--accent-ink);margin:20px 0 11px}
@@ -121,16 +115,13 @@ CSS = """
   .chip{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:13px 8px;
     text-align:center;font-size:13px;color:var(--ink)}
 
-  /* 주제 카드 */
-  .topics{display:grid;grid-template-columns:1fr;gap:12px;margin-top:6px}
-  .topic{background:var(--surface);border:0.5px solid var(--border);border-radius:16px;padding:17px 18px}
-  .topic-h{display:flex;align-items:center;gap:10px;margin-bottom:4px}
-  .topic-h i{color:var(--accent-ink);font-size:21px}
-  .topic-h .tt{font-size:15px;font-weight:600}
-  .topic .td{font-size:12.5px;color:var(--ink2);margin:0 0 12px;line-height:1.5}
-  .topic-links{display:flex;flex-wrap:wrap;gap:7px}
-  .topic-links a{font-size:12.5px;color:var(--accent-ink);background:#FBF1E3;border:0.5px solid rgba(217,154,88,.35);
-    border-radius:999px;padding:6px 12px}
+  /* 그 외 준비 */
+  .other-group{margin-top:18px}
+  .other-group:first-child{margin-top:2px}
+  .other-label{font-size:12.5px;font-weight:600;color:var(--accent-ink);margin-bottom:11px}
+  .other-links{display:flex;flex-wrap:wrap;gap:8px}
+  .other-links a{font-size:13px;color:var(--ink);background:var(--surface);border:0.5px solid var(--border);
+    border-radius:999px;padding:8px 14px}
 
   /* 문의 채널 */
   .csec{max-width:520px;margin:0 auto}
@@ -154,9 +145,8 @@ CSS = """
     .burger{display:none}
     .drawer,.drawer-ov{display:none}
     .phead h1{font-size:38px}
-    .recent{grid-template-columns:repeat(2,1fr)}
+    .feat{grid-template-columns:repeat(3,1fr)}
     .cgrid{grid-template-columns:repeat(4,1fr)}
-    .topics{grid-template-columns:repeat(3,1fr)}
   }
 """
 
@@ -216,10 +206,10 @@ FOOTER = f"""  <footer>
 
 
 def build_guide():
-    recent = "".join(
-        f'<a class="rcard" href="{LIVE}/blog/{slug}/" target="_blank" rel="noopener">'
-        f'<span class="rd">{d}</span><span class="rt">{t}</span></a>'
-        for d, t, slug in RECENT
+    feat = "".join(
+        f'<a class="fcard" href="{LIVE}/{kind}/{slug}/" target="_blank" rel="noopener">'
+        f'<div class="ft">{title}</div><div class="fd">{sub}</div></a>'
+        for title, sub, kind, slug in FEATURED
     )
     regions_html = ""
     for reg in REGIONS:
@@ -228,45 +218,38 @@ def build_guide():
             for ko, slug, r in COUNTRIES if r == reg
         )
         regions_html += f'<div class="region">{reg}</div><div class="cgrid">{chips}</div>'
-    topics_html = ""
-    for icon, name, desc, links in TOPICS:
-        ls = "".join(
-            f'<a href="{LIVE}/{(l[2] if len(l) > 2 else "docs")}/{l[1]}/" target="_blank" rel="noopener">{l[0]}</a>'
-            for l in links
-        )
-        topics_html += (
-            f'<div class="topic"><div class="topic-h"><i class="ti {icon}"></i>'
-            f'<span class="tt">{name}</span></div><p class="td">{desc}</p>'
-            f'<div class="topic-links">{ls}</div></div>'
-        )
+    other_html = "".join(
+        f'<a href="{LIVE}/{kind}/{slug}/" target="_blank" rel="noopener">{name}</a>'
+        for name, kind, slug in OTHER
+    )
     return f"""{head('가이드 · 펫무브')}
 {header('guide')}
   <div class="phead">
     <div class="container">
       <h1>가이드</h1>
-      <p class="lead">나라별 준비부터 최신 소식까지 한눈에</p>
-      <div class="search"><i class="ti ti-search"></i><input id="q" type="text" placeholder="나라 이름으로 찾기 (예: 일본)"></div>
+      <p class="lead">유용한 정보를 알려드려요</p>
+      <div class="search"><i class="ti ti-search"></i><input id="q" type="text" placeholder="목적지 검색 (예: 일본)"></div>
     </div>
   </div>
 
   <section>
     <div class="container">
-      <div class="sec-h">최근 업데이트</div>
-      <div class="recent">{recent}</div>
+      <div class="sec-h">추천 가이드</div>
+      <div class="feat">{feat}</div>
     </div>
   </section>
 
   <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
     <div class="container">
-      <div class="sec-h">나라별로 찾기</div>
+      <div class="sec-h">목적지별 가이드</div>
       <div id="regions">{regions_html}</div>
     </div>
   </section>
 
   <section>
     <div class="container">
-      <div class="sec-h">주제별로 찾기</div>
-      <div class="topics">{topics_html}</div>
+      <div class="sec-h">그 외 준비</div>
+      <div class="other-links">{other_html}</div>
     </div>
   </section>
 
@@ -276,10 +259,13 @@ def build_guide():
     var q=document.getElementById('q');if(!q)return;
     q.addEventListener('input',function(){{
       var v=q.value.trim().toLowerCase();
-      document.querySelectorAll('#regions .chip').forEach(function(c){{
-        c.style.display = !v || c.textContent.toLowerCase().indexOf(v)>=0 ? '' : 'none';
+      document.querySelectorAll('#regions .region').forEach(function(rg){{
+        var grid=rg.nextElementSibling,any=false;
+        grid.querySelectorAll('.chip').forEach(function(c){{
+          var m=!v||c.textContent.toLowerCase().indexOf(v)>=0;c.style.display=m?'':'none';if(m)any=true;
+        }});
+        rg.style.display=any?'':'none';grid.style.display=any?'':'none';
       }});
-      document.querySelectorAll('#regions .region, #regions .cgrid').forEach(function(){{}});
     }});
   }})();
   </script>"""
