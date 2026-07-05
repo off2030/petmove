@@ -396,6 +396,7 @@ html = f"""<!DOCTYPE html>
   <aside class="drawer" id="drawer">
     <button class="drawer-close" id="drawerClose" aria-label="닫기"><i class="ti ti-x"></i></button>
     <nav class="drawer-nav">
+      <a href="prototype-mobile.html">홈</a>
       <a href="#service">서비스</a>
       <a href="guide.html">가이드</a>
       <a href="contact.html">문의</a>
