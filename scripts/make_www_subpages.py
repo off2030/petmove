@@ -69,9 +69,9 @@ CSS = """
   }
   *{box-sizing:border-box}
   [hidden]{display:none!important}
-  html{scroll-behavior:smooth;scrollbar-gutter:stable}
-  body{margin:0;background:var(--bg);font-family:'Pretendard',-apple-system,system-ui,sans-serif;
-    color:var(--ink);-webkit-font-smoothing:antialiased}
+  html{scroll-behavior:smooth;scrollbar-gutter:stable;background:var(--bg)}
+  body{margin:0;background:var(--bg);font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,"Segoe UI",Roboto,sans-serif;
+    color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column}
   a{text-decoration:none;color:inherit}
   .container{max-width:1080px;margin:0 auto;padding:0 22px;width:100%}
   .wm{font-size:18px;letter-spacing:.015em;font-weight:700}
@@ -144,7 +144,7 @@ CSS = """
   .chan .cs{font-size:12px;color:var(--ink3);margin-top:1px}
   .cnote{font-size:12px;color:var(--ink3);text-align:center;line-height:1.7;margin-top:20px}
 
-  footer{background:#211E19;color:#8B8578;padding:28px 0;font-size:12px;line-height:1.85;margin-top:14px}
+  footer{background:#211E19;color:#8B8578;padding:28px 0;font-size:12px;line-height:1.85;margin-top:auto}
   footer a{color:#B0A896}
   footer .fsns{display:inline-flex;align-items:center;gap:5px;margin:9px 0 4px;font-weight:600}
   footer .fsns .nlogo{font-weight:800;font-size:13px;line-height:1}
@@ -168,7 +168,6 @@ def head(title):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
 <style>{CSS}</style>
 </head>

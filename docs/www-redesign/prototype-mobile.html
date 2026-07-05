@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>펫무브 · 반려동물 해외 이동</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
 <style>
   :root{
@@ -14,10 +13,10 @@
   }
   *{box-sizing:border-box}
   [hidden]{display:none!important}
-  html{scroll-behavior:smooth;scrollbar-gutter:stable}
+  html{scroll-behavior:smooth;scrollbar-gutter:stable;background:var(--bg)}
   #service{scroll-margin-top:64px}
-  body{margin:0;background:var(--bg);font-family:'Pretendard',-apple-system,system-ui,sans-serif;
-    color:var(--ink);-webkit-font-smoothing:antialiased}
+  body{margin:0;background:var(--bg);font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,"Segoe UI",Roboto,sans-serif;
+    color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column}
   a{text-decoration:none;color:inherit}
   .container{max-width:1080px;margin:0 auto;padding:0 22px;width:100%}
   .wm{font-size:18px;letter-spacing:.015em;font-weight:700}
@@ -123,12 +122,10 @@
   .store-row{display:flex;gap:11px;justify-content:center;flex-wrap:wrap}
   .store{background:#F5EFE8;color:var(--ink);border-radius:13px;padding:13px 18px;display:flex;align-items:center;
     gap:8px;font-size:13.5px;font-weight:500}
-  footer{background:#211E19;color:#8B8578;padding:28px 0;font-size:12px;line-height:1.85}
+  footer{background:#211E19;color:#8B8578;padding:28px 0;font-size:12px;line-height:1.85;margin-top:auto}
   footer a{color:#B0A896}
   footer .fsns{display:inline-flex;align-items:center;gap:5px;margin:9px 0 4px;font-weight:600}
   footer .fsns .nlogo{font-weight:800;font-size:13px;line-height:1}
-  .flag{background:#FFF6E5;border:0.5px solid #F0DBA8;color:#7A5A1E;font-size:11.5px;border-radius:8px;
-    padding:10px 13px;margin:14px auto 0;max-width:1036px;line-height:1.5}
 
   /* ── 앱 소개 비교 섹션(임시) ── */
   .vlabel-wrap{text-align:center}
@@ -461,7 +458,6 @@
     </div>
   </footer>
 
-  <div class="flag">⚠️ 신뢰 스트립: 5,300+(DB 외삽 추정) · 50+ 목적지 국가(EU 24개국 포함) · 20+년(2006~, 자동 증가). 게시 전 5,300+ 근거만 최종 확인.</div>
   <script>(function(){var y=new Date().getFullYear()-2006;var e=document.getElementById('yrs');if(e)e.textContent=y;})();</script>
   <script>(function(){var b=document.getElementById('burger'),d=document.getElementById('drawer'),o=document.getElementById('drawerOv'),c=document.getElementById('drawerClose');if(!b||!d||!o)return;function open(){d.classList.add('open');o.classList.add('open');}function close(){d.classList.remove('open');o.classList.remove('open');}b.addEventListener('click',open);b.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});o.addEventListener('click',close);if(c)c.addEventListener('click',close);d.addEventListener('click',function(e){if(e.target.tagName==='A')close();});})();</script>
   <script>(function(){var m=document.getElementById('destMore'),l=document.getElementById('destLess');var g=document.getElementById('destGrid'),f=document.getElementById('destFull');function set(open){if(g)g.hidden=open;if(f)f.hidden=!open;}function bind(el,fn){if(!el)return;el.addEventListener('click',fn);el.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();fn();}});}bind(m,function(){set(true);});bind(l,function(){set(false);});})();</script>
