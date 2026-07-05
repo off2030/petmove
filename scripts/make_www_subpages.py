@@ -183,6 +183,28 @@ CSS = """
   .art-cta h3{color:#fff;font-size:18px;margin:0 0 7px;font-weight:700}
   .art-cta p{color:#CFC6B6;font-size:13px;margin:0 0 16px;line-height:1.6}
   .art-cta a{display:inline-block;background:var(--accent);color:var(--ink);font-weight:600;border-radius:12px;padding:12px 22px;font-size:14px}
+  /* A · 랜딩 서비스 섹션 그대로 (밝은 앰버 패널 + 아웃라인 버튼 + 회색 링크) */
+  .svc-block{background:#FBF1E3;border:0.5px solid rgba(217,154,88,.4);border-radius:16px;padding:22px 20px;text-align:center;margin:34px 0 8px}
+  .svc-block .svc-title{font-size:16px;font-weight:700;color:var(--ink)}
+  .svc-block .svc-desc{font-size:13px;color:var(--ink2);margin-top:6px}
+  .svc-cta{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1.5px solid var(--accent);color:var(--accent-ink);font-weight:600;border-radius:14px;padding:14px;font-size:15px;width:100%;max-width:460px;margin:16px auto 0;text-decoration:none}
+  .svc-sub{display:flex;align-items:center;justify-content:center;gap:16px;margin:12px 0 0;font-size:13px}
+  .svc-sub a{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--ink2);font-weight:600}
+  .svc-sub .lmk{font-weight:800}
+  .svc-sub .sep{color:var(--ink3)}
+  .svc-app{margin:14px 0 0;font-size:12.5px;color:var(--ink3)}
+  .svc-app a{color:var(--accent-ink);font-weight:600;text-decoration:none}
+  /* B · 두 갈래 카드 (앱=앰버 채움 / 서비스=앰버 아웃라인 — 랜딩 버튼 규칙) */
+  .two-path{display:grid;grid-template-columns:1fr;gap:12px;margin:34px 0 8px}
+  .pcard{border:0.5px solid var(--border);border-radius:16px;padding:20px 18px;text-align:center;background:var(--surface)}
+  .pcard.accent{background:#FBF1E3;border-color:rgba(217,154,88,.4)}
+  .pcard>i{font-size:25px;color:var(--accent-ink)}
+  .pcard .pt{font-size:15px;font-weight:700;margin:9px 0 3px}
+  .pcard .pd{font-size:12.5px;color:var(--ink2);margin:0 0 14px;line-height:1.5}
+  .pcard .pbtn{display:block;width:100%;text-align:center;background:var(--accent);color:var(--ink);font-weight:600;border-radius:12px;padding:12px;font-size:14px;text-decoration:none}
+  .pcard .pbtn.outline{background:transparent;border:1.5px solid var(--accent);color:var(--accent-ink);padding:calc(12px - 1.5px)}
+  .pcard .psub{display:block;margin-top:11px;font-size:12px;color:var(--ink3)}
+  @media(min-width:620px){.two-path{grid-template-columns:1fr 1fr}}
   .related{border-top:0.5px solid var(--border);padding-top:18px;margin-top:30px}
   .related .rl-h{font-size:13px;font-weight:700;margin-bottom:8px}
   .related a{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid var(--border);font-size:14px;color:var(--ink)}
@@ -733,31 +755,17 @@ def build_article_sample():
       <p>일본에서 한국으로 귀국할 때에도 "일본 동물검역소에서 수출 검역"을 받아야 합니다. 과거에는 당일 공항에서 간단히 처리되었으나, 현재는 수요 증가로 "예약제"로 운영되고 있으므로 반드시 사전에 신청 및 예약해야 합니다. 한국 도착 후에는 한국 농림축산검역본부에서 "수출국 검역증명서 원본"과 "광견병 항체가 검사 결과지"를 제출하고 검역을 받습니다. 일본은 광견병 비발생국이므로 한국 입국 시 항체가 검사는 면제됩니다.</p>
       </div></details>
 
-      <p>준비 일정 계산이 어려우시다면 펫무브에서 제공하는 강아지·고양이 일본 입국 일정 계산기를 이용해보세요.</p>
-      {bk(SCHED, "강아지·고양이 일본 입국 일정 계산기", TH + "/thumbnail/japan-pet-entry-scheduler-og.webp")}
-      <p>준비를 시작했는데 맞게 한 것인지 불안하시다면 펫무브에서 제공하는 강아지·고양이 일본 입국 준비 자가진단기 (Self-Check)에서 체크해보세요.</p>
-      {bk(SELF, "강아지·고양이 일본 입국 준비 일정 확인 | Self-Check", TH + "/thumbnail/japan-pet-entry-selfcheck-og.webp")}
+      <p>준비 일정 계산이 어려우시다면 펫무브 <a href="{SCHED}" target="_blank" rel="noopener">일본 입국 일정 계산기</a>로 날짜를 자동 계산해보세요. 맞게 준비 중인지 불안하다면 <a href="{SELF}" target="_blank" rel="noopener">자가진단(Self-Check)</a>으로 확인할 수 있어요.</p>
     </div>
 
-    <div class="art-cta">
-      <h3>반려동물 일본 여행은 펫무브(로잔동물의료센터)에서 준비하세요!</h3>
-      <p>지금 바로 예약하세요!</p>
-      <div style="display:flex;flex-wrap:wrap;gap:9px;justify-content:center">
-        <a href="{NAVER}" target="_blank" rel="noopener">네이버예약</a>
-        <a href="{KKO}" target="_blank" rel="noopener">카카오톡 문의</a>
-        <a href="tel:02-872-7588">전화 02-872-7588</a>
-      </div>
+    <div class="svc-block">
+      <div class="svc-title">복잡한 일본 준비, 펫무브가 도와드릴게요</div>
+      <div class="svc-desc">로잔동물의료센터 수의사가 직접 준비해드려요</div>
+      <a class="svc-cta" href="{KKO}" target="_blank" rel="noopener"><i class="ti ti-message-circle"></i>서비스 의뢰하기</a>
+      <div class="svc-sub"><a href="{NAVER}" target="_blank" rel="noopener"><span class="lmk">N</span> 네이버예약</a><span class="sep">·</span><a href="tel:02-872-7588"><span class="lmk">TEL</span> 02-872-7588</a></div>
+      <div class="svc-app">앱으로 직접 준비하고 싶다면 <a href="prototype-mobile.html">무료 앱 받기 →</a></div>
     </div>
 
-    <div class="article" style="padding-top:6px">
-      <div class="rl-h" style="font-size:16px;font-weight:700;margin:14px 0 4px">관련 블로그 포스트</div>
-      {bk("https://www.petmove.co.kr/blog/gangaji-dongban-ilbonyeohaeng-a-to-z/", "강아지 동반 일본여행", TH + "/size/w1200/2023/09/ying-zhu-4UZfmxvc5Qk-unsplash.jpg")}
-      {bk("https://www.petmove.co.kr/blog/gangaji-simjangsusuleul-wihan-ilbon-ibgug-junbi-annae/", "강아지 심장수술을 위한 일본 입국 준비 안내", TH + "/2023/10/owner-img01.jpg")}
-      {bk("https://www.petmove.co.kr/blog/gangajireul-derigo-hanguggwa-ilboneul-yeoreobeon-wangboghaneun-gyeongu/", "강아지를 데리고 한국과 일본을 여러번 왕복해야 하는 경우", TH + "/size/w1200/2023/12/alison-pang-McNaYD-pYvw-unsplash.jpg")}
-      {bk("https://www.petmove.co.kr/blog/gangaji-goyangi-ilbon-geomyeog-junbi-jeolca/", "강아지 일본 입국 준비절차, 기간, 비용", TH + "/size/w1200/2023/11/jaycee-xie-aH9Uskj8XTU-unsplash-1.jpg")}
-      {bk("https://www.petmove.co.kr/blog/ilbon-juyo-gonghang-dongmulgeomyeogso-wici/", "일본 수입동물검역 및 일본 주요 공항 동물검역소 위치 안내", TH + "/thumbnail/DALL-E-2024-10-13-17.15.48---A-simple--wide-illustration-suitable-for-a-blog-header--depicting-a-pet-owner-with-a-small-dog-at-a-Japanese-airport--focusing-on-the-animal-quarantin.webp")}
-      {bk("https://www.petmove.co.kr/blog/ilbon-juyo-gonghang/", "일본 동물검역소 연락처", TH + "/size/w1200/2024/10/DALL-E-2024-10-17-12.28.40---Design-a-blog-header-image-combining-elements-of-an-airport--traditional-Japanese-aesthetics--and-a-modern-communication-icon-like-an-email-symbol.-Th.webp")}
-    </div>
   </article>
 
 {FOOTER}'''
