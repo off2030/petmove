@@ -248,7 +248,7 @@ def build_guide():
 
   <section>
     <div class="container">
-      <div class="sec-h">그 외 준비</div>
+      <div class="sec-h">주제별 가이드</div>
       <div class="other-links">{other_html}</div>
     </div>
   </section>
