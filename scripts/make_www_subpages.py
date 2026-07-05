@@ -69,7 +69,7 @@ CSS = """
   }
   *{box-sizing:border-box}
   [hidden]{display:none!important}
-  html{scroll-behavior:smooth}
+  html{scroll-behavior:smooth;scrollbar-gutter:stable}
   body{margin:0;background:var(--bg);font-family:'Pretendard',-apple-system,system-ui,sans-serif;
     color:var(--ink);-webkit-font-smoothing:antialiased}
   a{text-decoration:none;color:inherit}
@@ -167,6 +167,7 @@ def head(title):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
 <style>{CSS}</style>

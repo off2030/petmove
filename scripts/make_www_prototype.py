@@ -126,6 +126,7 @@ html = f"""<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>펫무브 · 반려동물 해외 이동</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
 <style>
@@ -135,7 +136,7 @@ html = f"""<!DOCTYPE html>
   }}
   *{{box-sizing:border-box}}
   [hidden]{{display:none!important}}
-  html{{scroll-behavior:smooth}}
+  html{{scroll-behavior:smooth;scrollbar-gutter:stable}}
   #service{{scroll-margin-top:64px}}
   body{{margin:0;background:var(--bg);font-family:'Pretendard',-apple-system,system-ui,sans-serif;
     color:var(--ink);-webkit-font-smoothing:antialiased}}
