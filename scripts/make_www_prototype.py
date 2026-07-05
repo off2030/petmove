@@ -421,7 +421,7 @@ html = f"""<!DOCTYPE html>
 
   <div class="trust">
     <div><div class="n">5,300<span>+</span></div><div class="l">누적 출국</div></div>
-    <div><div class="n">50<span>+</span></div><div class="l">지원 국가</div></div>
+    <div><div class="n">50<span>+</span></div><div class="l">지원 목적지</div></div>
     <div><div class="n"><span id="yrs" style="color:inherit">20</span>년<span>+</span></div><div class="l">경험</div></div>
   </div>
 
@@ -430,8 +430,8 @@ html = f"""<!DOCTYPE html>
 
   <section>
     <div class="container">
-      <div class="kicker">앱 지원 국가</div>
-      <div class="h2">27개국, 앞으로 더 추가돼요</div>
+      <div class="kicker">앱 지원 목적지</div>
+      <div class="h2">27곳, 앞으로 더 추가돼요</div>
       <div class="grid" id="destGrid">
         <div class="dest">일본<span class="dot"></span></div>
         <div class="dest">태국<span class="dot"></span></div>

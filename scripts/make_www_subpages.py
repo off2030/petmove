@@ -227,7 +227,6 @@ def build_guide():
   <div class="phead">
     <div class="container">
       <h1>가이드</h1>
-      <p class="lead">유용한 정보를 알려드려요</p>
       <div class="search"><i class="ti ti-search"></i><input id="q" type="text" placeholder="목적지 검색 (예: 일본)"></div>
     </div>
   </div>
@@ -277,7 +276,6 @@ def build_contact():
   <div class="phead">
     <div class="container">
       <h1>문의</h1>
-      <p class="lead">편하게 연락 주세요</p>
     </div>
   </div>
 
