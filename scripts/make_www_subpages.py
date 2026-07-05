@@ -135,7 +135,8 @@ CSS = """
   .chan .cs{font-size:12px;color:var(--ink3);margin-top:1px}
   .cnote{font-size:12px;color:var(--ink3);text-align:center;line-height:1.7;margin-top:20px}
 
-  /* 글 본문 템플릿 */
+  /* 글 본문 템플릿 — 읽기 페이지는 웜 화이트 배경(크림보다 밝게, 장문 가독성) */
+  body.reading{background:#FDFBF7}
   .article{max-width:720px;margin:0 auto;padding:0 22px}
   .crumb{font-size:12.5px;color:var(--ink3);padding:22px 0 0}
   .crumb a{color:var(--ink3)}
@@ -188,7 +189,8 @@ CSS = """
   }
 """
 
-def head(title):
+def head(title, body_class=""):
+    body_open = f'<body class="{body_class}">' if body_class else "<body>"
     return f"""<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -199,7 +201,7 @@ def head(title):
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
 <style>{CSS}</style>
 </head>
-<body>"""
+{body_open}"""
 
 def header(active):
     def cls(name): return ' class="on"' if name == active else ''
@@ -342,7 +344,7 @@ def build_contact():
 def build_article():
     """글 본문 공통 템플릿 — 샘플(일본 가이드)로 채워 실제 글 모습 시연.
     69개 글이 이 틀(크럼브·제목·prose·표·콜아웃·CTA·관련글)을 공유한다."""
-    return f"""{head('일본 반려동물 입국 가이드 · 펫무브')}
+    return f"""{head('일본 반려동물 입국 가이드 · 펫무브', 'reading')}
 {header('guide')}
   <article class="article">
     <div class="crumb"><a href="guide.html">가이드</a><span class="sep">›</span><a href="guide.html">여행지별</a><span class="sep">›</span>일본</div>
