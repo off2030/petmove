@@ -149,7 +149,11 @@ html = f"""<!DOCTYPE html>
   .nav-links{{display:none;align-items:center;gap:26px;font-size:14px;color:var(--ink2)}}
   .nav-right{{display:flex;align-items:center;gap:14px}}
   .nav-app{{background:var(--accent);color:var(--ink);font-weight:600;border-radius:11px;padding:8px 15px;font-size:13px}}
-  .burger{{font-size:22px;color:var(--ink2)}}
+  .burger{{font-size:22px;color:var(--ink2);cursor:pointer}}
+  .mmenu{{border-top:0.5px solid var(--border);background:rgba(245,239,232,.98)}}
+  .mmenu .container{{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding-top:2px;padding-bottom:8px}}
+  .mmenu a{{padding:13px 2px;font-size:15px;font-weight:500;color:var(--ink);border-bottom:0.5px solid var(--border)}}
+  .mmenu a:last-child{{border-bottom:0}}
 
   .hero{{position:relative;min-height:600px;display:flex;flex-direction:column;justify-content:flex-end;
     background:url('{hero_p}') center 30% / cover no-repeat}}
@@ -326,6 +330,7 @@ html = f"""<!DOCTYPE html>
   @media(min-width:760px){{
     .nav-links{{display:flex}}
     .burger{{display:none}}
+    .mmenu{{display:none}}
     .hero{{min-height:640px;background-image:url('{hero_l}');background-position:center 46%}}
     .hero .scrim{{padding:56px 0 46px}}
     .hero h1{{font-size:48px}}
@@ -379,9 +384,16 @@ html = f"""<!DOCTYPE html>
       <span class="nav-links"><a href="#service">서비스</a><a href="guide.html">가이드</a><a href="contact.html">문의</a></span>
       <span class="nav-right">
         <a class="nav-app">앱 다운로드</a>
-        <i class="ti ti-menu-2 burger"></i>
+        <i class="ti ti-menu-2 burger" id="burger" role="button" tabindex="0" aria-label="메뉴"></i>
       </span>
     </div>
+    <nav class="mmenu" id="mmenu" hidden>
+      <div class="container">
+        <a href="#service">서비스</a>
+        <a href="guide.html">가이드</a>
+        <a href="contact.html">문의</a>
+      </div>
+    </nav>
   </header>
 
   <section class="hero">
@@ -519,6 +531,7 @@ html = f"""<!DOCTYPE html>
 
   <div class="flag">⚠️ 신뢰 스트립: 5,300+(DB 외삽 추정) · 50+ 목적지 국가(EU 24개국 포함) · 20+년(2006~, 자동 증가). 게시 전 5,300+ 근거만 최종 확인.</div>
   <script>(function(){{var y=new Date().getFullYear()-2006;var e=document.getElementById('yrs');if(e)e.textContent=y;}})();</script>
+  <script>(function(){{var b=document.getElementById('burger'),m=document.getElementById('mmenu');if(!b||!m)return;function t(){{var o=m.hidden;m.hidden=!o;b.classList.toggle('ti-x',o);b.classList.toggle('ti-menu-2',!o);}}b.addEventListener('click',t);b.addEventListener('keydown',function(e){{if(e.key==='Enter'||e.key===' '){{e.preventDefault();t();}}}});m.addEventListener('click',function(e){{if(e.target.tagName==='A'){{m.hidden=true;b.classList.add('ti-menu-2');b.classList.remove('ti-x');}}}});}})();</script>
   <script>(function(){{var m=document.getElementById('destMore'),l=document.getElementById('destLess');var g=document.getElementById('destGrid'),f=document.getElementById('destFull');function set(open){{if(g)g.hidden=open;if(f)f.hidden=!open;}}function bind(el,fn){{if(!el)return;el.addEventListener('click',fn);el.addEventListener('keydown',function(ev){{if(ev.key==='Enter'||ev.key===' '){{ev.preventDefault();fn();}}}});}}bind(m,function(){{set(true);}});bind(l,function(){{set(false);}});}})();</script>
 </body>
 </html>

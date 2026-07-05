@@ -83,7 +83,11 @@ CSS = """
   .nav-links a.on{color:var(--ink);font-weight:600}
   .nav-right{display:flex;align-items:center;gap:14px}
   .nav-app{background:var(--accent);color:var(--ink);font-weight:600;border-radius:11px;padding:8px 15px;font-size:13px}
-  .burger{font-size:22px;color:var(--ink2)}
+  .burger{font-size:22px;color:var(--ink2);cursor:pointer}
+  .mmenu{border-top:0.5px solid var(--border);background:rgba(245,239,232,.98)}
+  .mmenu .container{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding-top:2px;padding-bottom:8px}
+  .mmenu a{padding:13px 2px;font-size:15px;font-weight:500;color:var(--ink);border-bottom:0.5px solid var(--border)}
+  .mmenu a:last-child{border-bottom:0}
 
   .phead{padding:38px 0 6px;text-align:center}
   .kicker{font-size:12.5px;font-weight:600;color:var(--accent-ink);letter-spacing:.03em;margin-bottom:9px}
@@ -143,6 +147,8 @@ CSS = """
 
   @media(min-width:760px){
     .nav-links{display:flex}
+    .burger{display:none}
+    .mmenu{display:none}
     .phead h1{font-size:38px}
     .recent{grid-template-columns:repeat(2,1fr)}
     .cgrid{grid-template-columns:repeat(4,1fr)}
@@ -175,9 +181,16 @@ def header(active):
       </span>
       <span class="nav-right">
         <a class="nav-app">앱 다운로드</a>
-        <i class="ti ti-menu-2 burger"></i>
+        <i class="ti ti-menu-2 burger" id="burger" role="button" tabindex="0" aria-label="메뉴"></i>
       </span>
     </div>
+    <nav class="mmenu" id="mmenu" hidden>
+      <div class="container">
+        <a href="prototype-mobile.html#service">서비스</a>
+        <a href="guide.html">가이드</a>
+        <a href="contact.html">문의</a>
+      </div>
+    </nav>
   </header>"""
 
 FOOTER = f"""  <footer>
@@ -189,6 +202,7 @@ FOOTER = f"""  <footer>
       <a href="https://app.petmove.co.kr/terms">이용약관</a> · <a href="https://app.petmove.co.kr/privacy">개인정보처리방침</a> · <a href="https://app.petmove.co.kr/support">고객지원</a>
     </div>
   </footer>
+  <script>(function(){{var b=document.getElementById('burger'),m=document.getElementById('mmenu');if(!b||!m)return;function t(){{var o=m.hidden;m.hidden=!o;b.classList.toggle('ti-x',o);b.classList.toggle('ti-menu-2',!o);}}b.addEventListener('click',t);b.addEventListener('keydown',function(e){{if(e.key==='Enter'||e.key===' '){{e.preventDefault();t();}}}});m.addEventListener('click',function(e){{if(e.target.tagName==='A'){{m.hidden=true;b.classList.add('ti-menu-2');b.classList.remove('ti-x');}}}});}})();</script>
 </body>
 </html>"""
 
