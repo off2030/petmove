@@ -88,6 +88,16 @@
   body.reading{background:#FFFFFF}
   .art-cover{width:100%;border-radius:14px;margin:2px 0 4px;display:block}
   .prose .more-label{font-size:12px;font-weight:700;color:var(--accent-ink);letter-spacing:.02em;margin:26px 0 2px}
+  .prose details.more{border:0.5px solid var(--border);border-radius:12px;background:var(--surface);margin:20px 0}
+  .prose details.more>summary{list-style:none;cursor:pointer;padding:13px 16px;font-size:13.5px;font-weight:600;color:var(--accent-ink);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .prose details.more>summary::-webkit-details-marker{display:none}
+  .prose details.more>summary i{transition:transform .2s;font-size:18px;flex:0 0 auto}
+  .prose details.more[open]>summary i{transform:rotate(180deg)}
+  .prose details.more[open]>summary{border-bottom:0.5px solid var(--border)}
+  .prose .more-body{padding:4px 16px 14px}
+  .prose .more-body h3{margin-top:18px}
+  .prose .more-body h3:first-child{margin-top:12px}
+  .prose .more-body p:last-child,.prose .more-body blockquote:last-child{margin-bottom:0}
   .prose h3{scroll-margin-top:70px}
   .article{max-width:720px;margin:0 auto;padding:0 22px}
   .crumb{font-size:12.5px;color:var(--ink3);padding:22px 0 0}
@@ -202,7 +212,7 @@
         <li>동물등록(강아지 필수, 고양이 선택)</li>
         <li>⚠️ 이후 매 준비 단계마다 마이크로칩 스캔 필요</li>
       </ul>
-      <p class="more-label">더 자세한 설명</p>
+      <details class="more"><summary><span>더 자세한 설명</span><i class="ti ti-chevron-down"></i></summary><div class="more-body">
       <h3>왜 마이크로칩을 가장 먼저 해야 하나요?</h3>
       <p>마이크로칩은 반려동물의 신분증과 같습니다. 마이크로칩이 있어야 동일한 동물에게 필요한 접종, 검사를 했다는 것을 증명할 수 있습니다.</p>
       <h3>외장형 마이크로칩이 있는데 꼭 내장형을 해야 하나요?</h3>
@@ -210,7 +220,7 @@
       <h3>동물등록을 꼭 해야 하나요?</h3>
       <p>고양이는 하지 않아도 되지만 강아지는 필수입니다. 동물등록은 일본 입국에 필요한 절차는 아니지만 한국에서 검역을 받기 위해서는 필요합니다. 단, 소유주가 외국인이거나 외국 거주자인 경우에는 동물등록을 하지 않아도 됩니다.</p>
       <h3>마이크로칩으로 생길 수 있는 문제에는 어떤 것이 있을까요?</h3>
-      <p>크게 마이크로칩 스캔이 되지 않는 경우, 마이크로칩 번호가 다른 경우, 마이크로칩이 두 개인 경우로 나누어 볼 수 있습니다. 대부분은 반복된 스캔으로 예방할 수 있어, <strong>매 단계마다 마이크로칩을 스캔해 반복 확인</strong>하면 사전에 발견·해결할 수 있습니다.</p>
+      <p>크게 마이크로칩 스캔이 되지 않는 경우, 마이크로칩 번호가 다른 경우, 마이크로칩이 두 개인 경우로 나누어 볼 수 있습니다. 대부분은 반복된 스캔으로 예방할 수 있어, <strong>매 단계마다 마이크로칩을 스캔해 반복 확인</strong>하면 사전에 발견·해결할 수 있습니다.</p></div></details>
 
       <h2>광견병 예방접종 1차</h2>
       <ul>
@@ -225,12 +235,12 @@
         <li>1차 접종 면역 유효기간 이내에 실시</li>
         <li>⚠️ 일본 입국 때 면역유효기간이 남아 있어야 하며, 끝나기 전 재접종하면 연장 가능</li>
       </ul>
-      <p class="more-label">더 자세한 설명</p>
+      <details class="more"><summary><span>더 자세한 설명</span><i class="ti ti-chevron-down"></i></summary><div class="more-body">
       <h3>광견병 예방접종은 언제 해야 하나요?</h3>
       <p>일본 입국을 위해서는 광견병 예방접종을 2번 해야 합니다. 마이크로칩 이식 후 30일 이상 간격으로 접종하며, 두 번째 접종은 첫 번째 접종의 면역 유효기간 안에 실시해야 합니다. 강아지 나이가 91일령 이상이어야 하는 점도 주의해 주세요.</p>
       <blockquote>💡 최적의 접종 타이밍 — <strong>마이크로칩 이식 + 광견병 1차(동시)</strong> → 30일 대기 → <strong>광견병 2차 + 항체검사(동시)</strong>. 병원 방문을 최소화하면서 가장 빠르게 준비를 마칠 수 있어요.</blockquote>
       <h3>오래전 광견병 예방접종을 한 적이 있어요. 그래도 2회가 필요한가요?</h3>
-      <p>이전에 접종했어도 면역유효기간이 지났다면 2회 접종을 해야 합니다. 유효기간이 남았더라도 증명서 발행에 필요한 백신 상세 정보가 없다면 2회 접종이 필요합니다.</p>
+      <p>이전에 접종했어도 면역유효기간이 지났다면 2회 접종을 해야 합니다. 유효기간이 남았더라도 증명서 발행에 필요한 백신 상세 정보가 없다면 2회 접종이 필요합니다.</p></div></details>
 
       <h2>광견병항체검사</h2>
       <ul>
@@ -240,11 +250,11 @@
         <li>0.5 IU/㎖ 이상일 경우 통과</li>
         <li>유효기간 2년(⚠️ 백신 면역유효기간이 지나면 자동 종료)</li>
       </ul>
-      <p class="more-label">더 자세한 설명</p>
+      <details class="more"><summary><span>더 자세한 설명</span><i class="ti ti-chevron-down"></i></summary><div class="more-body">
       <h3>광견병항체검사는 언제 하나요?</h3>
       <p>마이크로칩 이식과 광견병 예방접종 2회를 마친 후 실시합니다. 2차 접종과 같은 날 검사도 가능합니다. <strong>검사 채혈일로부터 180일이 지나야 일본에 갈 수 있어</strong>, 일본 여행 180일 전에는 검사를 마쳐야 합니다.</p>
       <h3>합격 기준은 어떻게 되나요?</h3>
-      <p>합격 기준은 0.5 IU/㎖ 입니다. 이 수치보다 높으면 입국이 가능합니다. 불합격인 경우 합격이 될 때까지 접종과 검사를 반복할 수 있습니다.</p>
+      <p>합격 기준은 0.5 IU/㎖ 입니다. 이 수치보다 높으면 입국이 가능합니다. 불합격인 경우 합격이 될 때까지 접종과 검사를 반복할 수 있습니다.</p></div></details>
 
       <div class="callout">
         <div class="ch"><i class="ti ti-device-mobile"></i>펫무브 앱으로 자동 관리</div>
@@ -272,11 +282,11 @@
         <li>일본 동물검역소 웹사이트(NACCS) 또는 이메일로 신고</li>
         <li>완료되면 허가증(Approval) 발급</li>
       </ul>
-      <p class="more-label">더 자세한 설명</p>
+      <details class="more"><summary><span>더 자세한 설명</span><i class="ti ti-chevron-down"></i></summary><div class="more-body">
       <h3>사전 신고가 뭔가요?</h3>
       <p>어느 날짜에, 어느 공항(항구)으로, 어떤 반려동물을 데려가는지 일본 동물검역소에 미리 알리고 준비에 문제가 없는지 사전 검토를 받는 절차입니다. 일본 입국을 위한 필수 절차입니다.</p>
       <h3>사전 신고는 언제 해야 하나요?</h3>
-      <p>입국 최소 40일 전까지 해야 합니다. 처음이면 시간이 오래 걸릴 수 있어 최소 2달 전 준비 시작을 권장합니다. 정확한 항공편 정보가 필요하므로 항공권 구매도 미리 하셔야 합니다.</p>
+      <p>입국 최소 40일 전까지 해야 합니다. 처음이면 시간이 오래 걸릴 수 있어 최소 2달 전 준비 시작을 권장합니다. 정확한 항공편 정보가 필요하므로 항공권 구매도 미리 하셔야 합니다.</p></div></details>
 
       <h2>일본 수출동물검역 신청</h2>
       <ul>
@@ -309,9 +319,9 @@
         <li>입국 가능 공항: 나리타(NRT)·간사이(KIX)·하네다(HND)·추부(NGO)·삿포로(CTS) 등 검역소가 있는 공항</li>
         <li>⚠️ 도착 후 별도 안내가 없으니 소유주가 직접 동물검역소를 찾아가야 함</li>
       </ul>
-      <p class="more-label">더 자세한 설명</p>
+      <details class="more"><summary><span>더 자세한 설명</span><i class="ti ti-chevron-down"></i></summary><div class="more-body">
       <h3>일본에서 귀국할 때는 어떻게 하나요?</h3>
-      <p>귀국 시에도 일본 동물검역소에서 수출 검역을 받아야 합니다. 현재는 예약제로 운영되므로 반드시 사전에 신청·예약해야 합니다. 한국 도착 후에는 농림축산검역본부에 수출국 검역증명서 원본과 항체검사 결과지를 제출합니다. 일본은 광견병 비발생국이라 한국 입국 시 항체가 검사는 면제됩니다.</p>
+      <p>귀국 시에도 일본 동물검역소에서 수출 검역을 받아야 합니다. 현재는 예약제로 운영되므로 반드시 사전에 신청·예약해야 합니다. 한국 도착 후에는 농림축산검역본부에 수출국 검역증명서 원본과 항체검사 결과지를 제출합니다. 일본은 광견병 비발생국이라 한국 입국 시 항체가 검사는 면제됩니다.</p></div></details>
     </div>
 
     <div class="callout">
