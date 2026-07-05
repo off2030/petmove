@@ -177,6 +177,8 @@ CSS = """
   .callout .ch i{color:var(--accent-ink);font-size:19px}
   .callout .cp{font-size:13.5px;color:var(--ink2);margin:0;line-height:1.65}
   .callout .cbtn{display:inline-block;margin-top:11px;font-size:13px;font-weight:600;color:var(--accent-ink)}
+  .prose .callout-note{background:#FBF1E3;border:0.5px solid rgba(217,154,88,.4);border-radius:12px;padding:15px 17px;margin:18px 0;font-size:14.5px;line-height:1.7;color:var(--ink)}
+  .prose .callout-note .ce{margin-right:7px}
   .art-cta{background:#211E19;border-radius:18px;padding:26px 22px;text-align:center;margin:36px 0 8px}
   .art-cta h3{color:#fff;font-size:18px;margin:0 0 7px;font-weight:700}
   .art-cta p{color:#CFC6B6;font-size:13px;margin:0 0 16px;line-height:1.6}
@@ -461,11 +463,11 @@ def build_article_sample():
     <div class="art-head">
       <span class="art-cat">여행지 가이드 · 일본</span>
       <h1>[2026] 강아지·고양이 일본 입국 준비 총정리 | 동물검역 절차·서류·기간</h1>
-      <div class="art-meta">마지막 업데이트 2026.01 · 읽는 데 약 15분</div>
+      <div class="art-meta">마지막 업데이트 2026.03.18 · 읽는 데 약 15분</div>
     </div>
     <div class="prose">
       <img class="art-cover" src="https://storage.ghost.io/c/61/a2/61a2ac22-42e3-487b-9a3b-d0ed58d1ec8a/content/images/size/w1600/2026/01/japan-pet-travel-cover.webp" alt="[2026] 강아지·고양이 일본 입국 준비 총정리 | 동물검역 절차·서류·기간">
-      <p>수의사가 직접 정리한 2026년 최신 가이드입니다. 100% 믿을 수 있는 강아지·고양이 일본 입국 준비 방법을 알려드립니다.</p>
+      <div class="callout-note">수의사가 직접 정리한 2026년 최신 가이드입니다. 100% 믿을 수 있는 강아지·고양이 일본 입국 준비 방법을 알려드립니다.</div>
 
       <h2>핵심절차 요약</h2>
       <h3>일본 입국 준비 11단계</h3>
