@@ -84,10 +84,14 @@ CSS = """
   .nav-right{display:flex;align-items:center;gap:14px}
   .nav-app{background:var(--accent);color:var(--ink);font-weight:600;border-radius:11px;padding:8px 15px;font-size:13px}
   .burger{font-size:22px;color:var(--ink2);cursor:pointer}
-  .mmenu{border-top:0.5px solid var(--border);background:rgba(245,239,232,.98)}
-  .mmenu .container{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding-top:2px;padding-bottom:8px}
-  .mmenu a{padding:13px 2px;font-size:15px;font-weight:500;color:var(--ink);border-bottom:0.5px solid var(--border)}
-  .mmenu a:last-child{border-bottom:0}
+  .drawer-ov{position:fixed;inset:0;background:rgba(20,17,13,.42);opacity:0;visibility:hidden;transition:opacity .22s;z-index:30}
+  .drawer-ov.open{opacity:1;visibility:visible}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(78vw,300px);background:var(--bg);z-index:31;box-shadow:-8px 0 30px rgba(20,17,13,.18);transform:translateX(100%);transition:transform .24s ease;display:flex;flex-direction:column;padding:14px 20px 24px}
+  .drawer.open{transform:translateX(0)}
+  .drawer-close{align-self:flex-end;background:transparent;border:0;color:var(--ink2);font-size:24px;cursor:pointer;padding:6px;line-height:1}
+  .drawer-nav{display:flex;flex-direction:column;margin-top:6px}
+  .drawer-nav a{padding:15px 2px;font-size:16px;font-weight:500;color:var(--ink);border-bottom:0.5px solid var(--border)}
+  .drawer-app{margin-top:20px;background:var(--accent);color:var(--ink);font-weight:600;border-radius:12px;padding:13px;text-align:center;font-size:14px}
 
   .phead{padding:38px 0 6px;text-align:center}
   .kicker{font-size:12.5px;font-weight:600;color:var(--accent-ink);letter-spacing:.03em;margin-bottom:9px}
@@ -148,7 +152,7 @@ CSS = """
   @media(min-width:760px){
     .nav-links{display:flex}
     .burger{display:none}
-    .mmenu{display:none}
+    .drawer,.drawer-ov{display:none}
     .phead h1{font-size:38px}
     .recent{grid-template-columns:repeat(2,1fr)}
     .cgrid{grid-template-columns:repeat(4,1fr)}
@@ -184,14 +188,17 @@ def header(active):
         <i class="ti ti-menu-2 burger" id="burger" role="button" tabindex="0" aria-label="메뉴"></i>
       </span>
     </div>
-    <nav class="mmenu" id="mmenu" hidden>
-      <div class="container">
-        <a href="prototype-mobile.html#service">서비스</a>
-        <a href="guide.html">가이드</a>
-        <a href="contact.html">문의</a>
-      </div>
+  </header>
+  <div class="drawer-ov" id="drawerOv"></div>
+  <aside class="drawer" id="drawer">
+    <button class="drawer-close" id="drawerClose" aria-label="닫기"><i class="ti ti-x"></i></button>
+    <nav class="drawer-nav">
+      <a href="prototype-mobile.html#service">서비스</a>
+      <a href="guide.html">가이드</a>
+      <a href="contact.html">문의</a>
     </nav>
-  </header>"""
+    <a class="drawer-app">앱 다운로드</a>
+  </aside>"""
 
 FOOTER = f"""  <footer>
     <div class="container">
@@ -202,7 +209,7 @@ FOOTER = f"""  <footer>
       <a href="https://app.petmove.co.kr/terms">이용약관</a> · <a href="https://app.petmove.co.kr/privacy">개인정보처리방침</a> · <a href="https://app.petmove.co.kr/support">고객지원</a>
     </div>
   </footer>
-  <script>(function(){{var b=document.getElementById('burger'),m=document.getElementById('mmenu');if(!b||!m)return;function t(){{var o=m.hidden;m.hidden=!o;b.classList.toggle('ti-x',o);b.classList.toggle('ti-menu-2',!o);}}b.addEventListener('click',t);b.addEventListener('keydown',function(e){{if(e.key==='Enter'||e.key===' '){{e.preventDefault();t();}}}});m.addEventListener('click',function(e){{if(e.target.tagName==='A'){{m.hidden=true;b.classList.add('ti-menu-2');b.classList.remove('ti-x');}}}});}})();</script>
+  <script>(function(){{var b=document.getElementById('burger'),d=document.getElementById('drawer'),o=document.getElementById('drawerOv'),c=document.getElementById('drawerClose');if(!b||!d||!o)return;function open(){{d.classList.add('open');o.classList.add('open');}}function close(){{d.classList.remove('open');o.classList.remove('open');}}b.addEventListener('click',open);b.addEventListener('keydown',function(e){{if(e.key==='Enter'||e.key===' '){{e.preventDefault();open();}}}});o.addEventListener('click',close);if(c)c.addEventListener('click',close);d.addEventListener('click',function(e){{if(e.target.tagName==='A')close();}});}})();</script>
 </body>
 </html>"""
 
@@ -288,7 +295,7 @@ def build_contact():
   </div>
 
   <section>
-    <div class="csec">
+    <div class="container"><div class="csec">
       <div class="cblock">
         <div class="cl">상담 · 문의 (보호자)</div>
         <a class="chan" href="https://pf.kakao.com/_zDDxhj/chat" target="_blank" rel="noopener">
@@ -303,7 +310,7 @@ def build_contact():
         <a class="chan" href="mailto:petmove@naver.com">
           <i class="ti ti-mail"></i><span><span class="cv">petmove@naver.com</span><div class="cs">제휴·업무 관련 문의</div></span></a>
       </div>
-    </div>
+    </div></div>
   </section>
 
 {FOOTER}"""
