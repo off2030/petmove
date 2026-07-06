@@ -104,9 +104,36 @@
 - **글 끝 CTA = 풀폭 2버튼 세로 스택(`.cta2`)**: ① 무료 앱으로 시작하기(앰버 채움 `--accent`+짙은 잉크, `ti-download`) ② 서비스 의뢰하기(앰버 아웃라인, `ti-message-circle`). 랜딩 히어로 `.btn-primary`/`.btn-ghost` 스펙 차용(radius14·padding15/22·gap8). **서비스 버튼 → 랜딩 `#service`**(프로토타입 `prototype-mobile.html#service`, 이식 시 `/#service`) — 카톡 직링크 대신 서비스 섹션 한 번 거침(연락수단 단일 관리+맥락 후 전환). 여백 `margin:40px auto 48px`(푸터에 붙던 것 해소).
 - **카카오 링크 https 교정**(본문 신고대행 2곳; CTA는 #service로 대체).
 
+## 2026-07-07 세션 — 고스트→템플릿 변환 파이프라인 완성 + 78글 전수 감사
+
+**핵심: "모든 글이 이 템플릿에 깔끔히 옮겨지나?" → 실제 export 78글 전수로 YES 확정.** 손 변환 X, 규칙 기반 변환기 1벌.
+
+**받은 원본:** 고스트 전체 export JSON `C:\Users\off20\Downloads\pesmubeu.ghost.*.json`(사용자 로컬, 3.5MB). 공개글 78 = post 74 + page 4, 초안 11 제외.
+
+**만든 스크립트(scripts/):**
+- `www_lib.py` — 공용 헬퍼. `relativize`(도메인·`__GHOST_URL__` 제거), `short_image_path`(60자+ 파일명→`img-<md5>` 결정적 단축), `norm_link`/`norm_image`. **다운로더·변환기가 이걸 공유해야 경로 어긋남 없음.**
+- `www_convert.py` — 변환기. `article-sample.html` 셸 재사용(HEAD/FOOT 슬라이스, FOOT 마커=`<hr class="cta-sep">`). kg-* 카드 전종 매핑 + 글끝 정리. `python scripts/www_convert.py [slug...]`(기본 3글) → `docs/www-redesign/converted-<slug>.html`(gitignore).
+- `www_audit.py` — 78글 전수 감사. `python scripts/www_audit.py`.
+- `www_download_images.py` — 이미지 백업 다운로더.
+
+**변환 규칙(www_convert 구현, MIGRATION-RULES.md 와 일치):**
+- kg 매핑: button-card=삭제, bookmark=`a.bookmark`, callout=`.callout-note`, toggle=`details.more`, image=`figure/figcaption`, embed=`.embed`, file=`a.dl`, product=수동플래그. HTML주석(kg-card-begin/end)·h1(제목은 art-head 승격) 제거.
+- **글끝 정리(2026-07-06 확정 규칙 코드화):** ①`관련 블로그 포스트/포스팅/글` 마커+뒤 형제 전부 삭제 ②도구 북마크(href에 `scheduler|self-check`)→글끝 `유용한 자료` info-list로 추출(큰카드·소개문장 제거) ③끝 홍보/예약 꼬리 정리(`naver.me|booking.naver|pf.kakao|tel:` 링크·`예약/준비/연락/맡겨/지금바로` 문구·hr·빈문단·제목없는 끝 북마크묶음, 끝에서부터 진짜본문 만나면 중단).
+- 경로: 내부링크 상대화, 이미지 `/content/images/...`(재호스팅 대비), 긴 파일명 단축.
+
+**템플릿 보강(article-sample.html):** `.table-wrap`(4열+ 가로스크롤), `figure/figcaption`(본문 중간 이미지+캡션), `a.dl`(파일 다운로드), `.cta-sep`(본문→CTA 0.5px 구분선, cta2 상단여백 40→24). 글끝 서비스 버튼 라벨 `서비스 의뢰하기`→`전문가에게 맡기기`(히어로와 통일).
+
+**이미지 재호스팅 백업:** 참조 이미지 170개(74.9MB) 다운→`docs/www-redesign/ghost-images/content/images/...` 구조 보존. **GitHub 커밋 완료(로컬+off-site 안전망, 해지 전 필수).** 로컬 프리뷰용 junction `docs/www-redesign/content`→`ghost-images/content`(gitignore). 나중에 `(www)` public 폴더로 이동. 최대파일 5.8MB.
+
+**감사 결과(78글): 71 클린.** 잔여는 변환실패 아님: 인터랙티브 2(scheduler·self-check→별도 재구현) / whypetmove 등 page 상품카드 수동 / 오탐(본문중간 참고 북마크·아코디언 속 인라인 링크·본문에 녹인 소프트 홍보문장 "…로잔동물의료센터를 클릭해주세요"=편집 판단).
+
+**로컬 확인:** `cd docs/www-redesign && python -m http.server 8777` → `http://localhost:8777/converted-<slug>.html`. (`file://`·크롬확장 navigate 버그 주의는 위 참고.)
+
+**다음 진입점:** ①`(www)` Next.js 이식(변환기 출력→MDX/route group, next/font Pretendard, 이미지 public 이동, URL 슬러그 보존, `trailingSlash:true`) ②인터랙티브 2개 재구현 ③편집 판단(인라인 소프트홍보·중간 북마크 인라인화 여부) ④whypetmove 상품카드.
+
 ## 남은 할 일 (다음 세션 진입점)
 
-**우선순위: ① 글 본문 템플릿(69개 공유) → ② Next.js `(www)` 이식·배포(next/font Pretendard·Ghost 이관·URL 보존) → ③ 앱 스토어 버튼 연결(앱 출시 후) → ④ 서비스 드롭다운(운송견적·에이전시, 향후).** (가이드 다듬기·모바일 메뉴·워드마크는 완료/폐기.)
+**우선순위: ① ~~글 본문 템플릿(69개 공유)~~ ✅완료(변환기 78글 전수 검증) → ② Next.js `(www)` 이식·배포(next/font Pretendard·Ghost 이관·URL 보존) → ③ 앱 스토어 버튼 연결(앱 출시 후) → ④ 서비스 드롭다운(운송견적·에이전시, 향후).** (가이드 다듬기·모바일 메뉴·워드마크는 완료/폐기.)
 
 (아래는 구 목록 — 상당수 완료됨, 참고용)
 
