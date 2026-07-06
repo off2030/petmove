@@ -24,12 +24,62 @@ tpl = open(TPL, encoding='utf-8').read()
 HEAD = tpl[:tpl.index('<article class="article">')]
 FOOT = tpl[tpl.index('    <div class="cta2">'):]   # cta2 + /article + footer + script
 
+# --- 글 끝 정리 패턴 (템플릿 확정 규칙) ---
+TOOL_RE       = re.compile(r'(scheduler|self-check)', re.I)          # 도구 = 계산기·자가진단기
+RELATED_RE    = re.compile(r'^관련\s*(블로그\s*)?(포스트|글)$')        # '관련 블로그 포스트' 마커
+PROMO_LINK_RE = re.compile(r'(naver\.me|booking\.naver|pf\.kakao|tel:)', re.I)  # 예약/연락 링크
+PROMO_TEXT_RE = re.compile(r'(예약하세요|준비하세요|연락주세요|문의하세요|맡겨|맡기세요|바로가기|지금\s*바로)')
+
 def convert_body(html, soup_feature=None):
     soup = BeautifulSoup(html, 'html.parser')
 
     # 1. 연락 버튼 카드 제거
     for c in soup.select('.kg-button-card'):
         c.decompose()
+
+    # 1.5 '관련 블로그 포스트' 블록 제거 (마커 + 그 뒤 형제 전부)
+    for el in soup.find_all(['p', 'h2', 'h3', 'h4']):
+        if RELATED_RE.match(el.get_text(strip=True)):
+            for sib in el.find_next_siblings():
+                sib.decompose()
+            el.decompose()
+            break
+
+    # 1.6 도구 북마크(계산기·자가진단기) 추출 -> 글 끝 '유용한 자료' 리스트로
+    tools = []
+    for fig in soup.select('figure.kg-bookmark-card'):
+        a = fig.find('a', href=True)
+        if a and TOOL_RE.search(a['href']):
+            title = fig.select_one('.kg-bookmark-title')
+            desc  = fig.select_one('.kg-bookmark-description')
+            href  = norm_link(a['href'])
+            if not any(t['href'] == href for t in tools):
+                tools.append({'href': href,
+                              'title': title.get_text(strip=True) if title else '',
+                              'desc':  desc.get_text(strip=True) if desc else ''})
+            fig.decompose()
+    # 도구를 소개하던 본문 문장(<p> 안 도구 링크)도 제거 — 유용한 자료로 일원화
+    for p in soup.find_all('p'):
+        if p.find('a', href=TOOL_RE):
+            p.decompose()
+
+    # 1.7 남은 홍보/예약 문구·구분선 꼬리 정리 (끝에서부터, 진짜 본문 만나면 중단)
+    def _is_promo(el):
+        if el.name == 'hr':
+            return True
+        if el.name == 'p':
+            if not el.get_text(strip=True) and not el.find(['img', 'iframe', 'br']):
+                return True   # 빈 문단은 꼬리에서 건너뛰기(진짜 본문 아님)
+            if el.find('a', href=PROMO_LINK_RE):
+                return True
+            if PROMO_TEXT_RE.search(el.get_text(strip=True)):
+                return True
+        return False
+    for el in reversed([c for c in soup.contents if getattr(c, 'name', None)]):
+        if _is_promo(el):
+            el.decompose()
+        else:
+            break
 
     # 2. 북마크 카드 -> a.bookmark
     for fig in soup.select('figure.kg-bookmark-card'):
@@ -154,7 +204,7 @@ def convert_body(html, soup_feature=None):
 
     # 커버리지 체크: 남은 kg-* 있는지
     leftover = sorted(set(re.findall(r'kg-[a-z0-9-]+', str(soup))))
-    return str(soup), leftover
+    return str(soup), leftover, tools
 
 def fmt_date(s):
     try:
@@ -164,7 +214,7 @@ def fmt_date(s):
 
 def build(slug):
     p = posts[slug]
-    body, leftover = convert_body(p.get('html') or '')
+    body, leftover, tools = convert_body(p.get('html') or '')
     # art-head
     cats = [c for c in tag_by_post.get(p['id'], []) if c]
     cat = cats[0] if cats else '가이드'
@@ -185,7 +235,16 @@ def build(slug):
         f'      <div class="art-meta">마지막 업데이트 {date} · 읽는 데 약 {mins}분</div>\n'
         f'    </div>\n'
     )
-    prose = f'    <div class="prose">\n{cover}{intro}{body}\n    </div>\n'
+    # 도구(계산기·자가진단기) -> 글 끝 '유용한 자료' 리스트 (템플릿 확정 형태)
+    info = ''
+    if tools:
+        rows = ''
+        for t in tools:
+            rows += (f'\n      <a href="{t["href"]}">'
+                     f'<span class="it">{t["title"]} <i class="ti ti-arrow-right"></i></span>'
+                     f'<span class="id">{t["desc"]}</span></a>')
+        info = f'\n<h2>유용한 자료</h2>\n<div class="info-list">{rows}\n</div>\n'
+    prose = f'    <div class="prose">\n{cover}{intro}{body}\n{info}    </div>\n'
     out = HEAD + '<article class="article">\n' + arthead + prose + FOOT
     # 제목 태그 교체
     out = re.sub(r'<title>.*?</title>', f'<title>{p["title"]} · 펫무브</title>', out, count=1)
