@@ -88,13 +88,13 @@
   body.reading{background:#FFFFFF}
   .art-cover{width:100%;border-radius:14px;margin:2px 0 4px;display:block}
   .prose .more-label{font-size:12px;font-weight:700;color:var(--accent-ink);letter-spacing:.02em;margin:26px 0 2px}
-  .prose details.more{border:0.5px solid var(--border);border-radius:12px;background:var(--surface);margin:20px 0}
-  .prose details.more>summary{list-style:none;cursor:pointer;padding:13px 16px;font-size:13.5px;font-weight:600;color:var(--accent-ink);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .prose details.more{margin:16px 0}
+  .prose details.more>summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;color:var(--ink2)}
   .prose details.more>summary::-webkit-details-marker{display:none}
-  .prose details.more>summary i{transition:transform .2s;font-size:18px;flex:0 0 auto}
+  .prose details.more>summary:hover{color:var(--ink)}
+  .prose details.more>summary i{transition:transform .2s;font-size:17px;flex:0 0 auto}
   .prose details.more[open]>summary i{transform:rotate(180deg)}
-  .prose details.more[open]>summary{border-bottom:0.5px solid var(--border)}
-  .prose .more-body{padding:4px 16px 14px}
+  .prose .more-body{padding:10px 0 0}
   .prose .more-body h3{margin-top:18px}
   .prose .more-body h3:first-child{margin-top:12px}
   .prose .more-body p:last-child,.prose .more-body blockquote:last-child{margin-bottom:0}
@@ -143,6 +143,19 @@
   .svc-sub .sep{color:var(--ink3)}
   .svc-app{margin:14px 0 0;font-size:12.5px;color:var(--ink3)}
   .svc-app a{color:var(--accent-ink);font-weight:600;text-decoration:none}
+  /* 심플 2버튼 CTA — 랜딩 히어로처럼 풀폭 세로 스택 (앱=앰버 채움·짙은 잉크 / 서비스=앰버 아웃라인) */
+  .cta2{display:flex;flex-direction:column;gap:11px;max-width:440px;margin:40px auto 48px}
+  .cta2 a{display:flex;align-items:center;justify-content:center;gap:8px;
+    border-radius:14px;text-decoration:none}
+  .cta2 a.app{background:var(--accent);color:var(--ink);font-weight:600;padding:15px 22px;font-size:15px}
+  .cta2 a.svc{border:1.5px solid var(--accent);color:var(--accent-ink);font-weight:600;padding:14px 22px;font-size:14.5px}
+  .cta2 a i{font-size:17px}
+  /* 유용한 정보 — 도구 링크를 별개 항목으로(행 전체 클릭) */
+  .prose .info-list{margin:14px 0 4px;border-top:0.5px solid var(--border)}
+  .prose .info-list a{display:block;padding:14px 4px;border-bottom:0.5px solid var(--border);text-decoration:none}
+  .prose .info-list .it{display:flex;align-items:center;gap:6px;font-size:14.5px;font-weight:700;color:var(--accent-ink)}
+  .prose .info-list .it i{font-size:16px;flex:0 0 auto}
+  .prose .info-list .id{display:block;font-size:13px;color:var(--ink2);margin-top:3px;line-height:1.5}
   /* B · 두 갈래 카드 (앱=앰버 채움 / 서비스=앰버 아웃라인 — 랜딩 버튼 규칙) */
   .two-path{display:grid;grid-template-columns:1fr;gap:12px;margin:34px 0 8px}
   .pcard{border:0.5px solid var(--border);border-radius:16px;padding:20px 18px;text-align:center;background:var(--surface)}
@@ -369,7 +382,7 @@
         <li>각 지역 동물검역소마다 요구사항에 차이가 있을 수 있습니다.</li>
         <li>커뮤니케이션은 일본어와 영어로만 가능</li>
         <li>완료되면 허가증(Approval) 발급</li>
-        <li>신고 대행 <a href="http://pf.kakao.com/_zDDxhj/chat?ref=petmove.co.kr" target="_blank" rel="noopener">펫무브 카카오톡</a></li>
+        <li>신고 대행 <a href="https://pf.kakao.com/_zDDxhj/chat?ref=petmove.co.kr" target="_blank" rel="noopener">펫무브 카카오톡</a></li>
       </ul>
       <details class="more"><summary><span>더 자세한 설명</span><i class="ti ti-chevron-down"></i></summary><div class="more-body">
       <h3>사전 신고가 뭔가요?</h3>
@@ -401,7 +414,7 @@
         <li>일본 동물검역소에 신청(귀국을 위해 방문하는 공항, 항구 아니어도 가능)</li>
         <li>일본 동물검역소 웹사이트(NACCS) 또는 이메일 접수</li>
         <li>⚠️ 신청 후 방문 날짜, 시간 예약 필수</li>
-        <li>신고 대행 <a href="http://pf.kakao.com/_zDDxhj/chat?ref=petmove.co.kr" target="_blank" rel="noopener">펫무브 카카오톡</a></li>
+        <li>신고 대행 <a href="https://pf.kakao.com/_zDDxhj/chat?ref=petmove.co.kr" target="_blank" rel="noopener">펫무브 카카오톡</a></li>
       </ul>
       <details class="more"><summary><span>더 자세한 설명</span><i class="ti ti-chevron-down"></i></summary><div class="more-body">
       <h3>일본 수출동물검역 신청이란?</h3>
@@ -484,15 +497,22 @@
       <p>일본에서 한국으로 귀국할 때에도 "일본 동물검역소에서 수출 검역"을 받아야 합니다. 과거에는 당일 공항에서 간단히 처리되었으나, 현재는 수요 증가로 "예약제"로 운영되고 있으므로 반드시 사전에 신청 및 예약해야 합니다. 한국 도착 후에는 한국 농림축산검역본부에서 "수출국 검역증명서 원본"과 "광견병 항체가 검사 결과지"를 제출하고 검역을 받습니다. 일본은 광견병 비발생국이므로 한국 입국 시 항체가 검사는 면제됩니다.</p>
       </div></details>
 
-      <p>준비 일정 계산이 어려우시다면 펫무브 <a href="https://www.petmove.co.kr/blog/japan-pet-entry-scheduler/" target="_blank" rel="noopener">일본 입국 일정 계산기</a>로 날짜를 자동 계산해보세요. 맞게 준비 중인지 불안하다면 <a href="https://www.petmove.co.kr/blog/japan-pet-entry-self-check/" target="_blank" rel="noopener">자가진단(Self-Check)</a>으로 확인할 수 있어요.</p>
+      <h2>유용한 자료</h2>
+      <div class="info-list">
+        <a href="https://www.petmove.co.kr/blog/japan-pet-entry-scheduler/">
+          <span class="it">일본 입국 일정 계산기 <i class="ti ti-arrow-right"></i></span>
+          <span class="id">출발일만 넣으면 각 단계 준비 날짜를 자동으로 계산해드려요</span>
+        </a>
+        <a href="https://www.petmove.co.kr/blog/japan-pet-entry-self-check/">
+          <span class="it">일본 검역 준비 자가 진단기 <i class="ti ti-arrow-right"></i></span>
+          <span class="id">지금까지 맞게 준비하고 있는지 스스로 점검해볼 수 있어요</span>
+        </a>
+      </div>
     </div>
 
-    <div class="svc-block">
-      <div class="svc-title">복잡한 일본 준비, 펫무브가 도와드릴게요</div>
-      <div class="svc-desc">로잔동물의료센터 수의사가 직접 준비해드려요</div>
-      <a class="svc-cta" href="http://pf.kakao.com/_zDDxhj/chat?ref=petmove.co.kr" target="_blank" rel="noopener"><i class="ti ti-message-circle"></i>서비스 의뢰하기</a>
-      <div class="svc-sub"><a href="https://booking.naver.com/booking/13/bizes/1539273?ref=petmove.co.kr" target="_blank" rel="noopener"><span class="lmk">N</span> 네이버예약</a><span class="sep">·</span><a href="tel:02-872-7588"><span class="lmk">TEL</span> 02-872-7588</a></div>
-      <div class="svc-app">앱으로 직접 준비하고 싶다면 <a href="prototype-mobile.html">무료 앱 받기 →</a></div>
+    <div class="cta2">
+      <a class="app" href="prototype-mobile.html"><i class="ti ti-download"></i>무료 앱으로 시작하기</a>
+      <a class="svc" href="prototype-mobile.html#service"><i class="ti ti-message-circle"></i>서비스 의뢰하기</a>
     </div>
 
   </article>

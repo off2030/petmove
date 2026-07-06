@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>더 자세한 설명 — 표현안 비교</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
+<style>
+  :root{
+    --bg:#F5EFE8; --surface:#FBF7F1; --ink:#2A2620; --ink2:#6B6457; --ink3:#847B6C;
+    --accent:#D99A58; --accent-ink:#9A5A2E; --sage:#8FA68C; --border:#E3D9C6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#fff;color:var(--ink);
+    font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:680px;margin:0 auto;padding:26px 20px 80px}
+  .pgtitle{font-size:15px;font-weight:700;color:var(--ink3);letter-spacing:.02em;margin:0 0 4px}
+  .pgsub{font-size:13px;color:var(--ink3);margin:0 0 30px;line-height:1.6}
+
+  /* variant frame */
+  .variant{margin:0 0 40px;padding:0 0 34px;border-bottom:1px dashed #E7E3DB}
+  .variant:last-child{border-bottom:0}
+  .vlabel{display:inline-block;font-size:12px;font-weight:700;color:#fff;background:var(--ink2);
+    border-radius:6px;padding:3px 9px;margin-bottom:4px;letter-spacing:.02em}
+  .vname{font-size:14px;font-weight:700;color:var(--ink);margin:8px 0 2px}
+  .vdesc{font-size:12.5px;color:var(--ink3);margin:0 0 16px;line-height:1.6}
+
+  /* shared prose context */
+  .prose h3{font-size:17px;font-weight:700;margin:0 0 10px}
+  .prose p{font-size:15px;line-height:1.75;color:var(--ink);margin:0 0 12px}
+  .prose ul{margin:0 0 12px;padding-left:19px}
+  .prose li{font-size:14.5px;line-height:1.8;color:var(--ink)}
+  .prose .body p{font-size:14px;color:var(--ink2)}
+  summary{cursor:pointer}
+  summary::-webkit-details-marker{display:none}
+
+  /* ========== A · 현재 카드(기준) ========== */
+  .m-card{border:0.5px solid #E7E3DB;border-radius:12px;background:#F4F2EE;margin:14px 0}
+  .m-card>summary{list-style:none;padding:13px 16px;font-size:13.5px;font-weight:600;color:var(--ink2);
+    display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .m-card>summary i{transition:transform .2s;font-size:18px}
+  .m-card[open]>summary i{transform:rotate(180deg)}
+  .m-card[open]>summary{border-bottom:0.5px solid #E7E3DB}
+  .m-card .body{padding:6px 16px 14px}
+
+  /* ========== B · 인라인 텍스트 링크(박스 없음) ========== */
+  .m-link{margin:14px 0}
+  .m-link>summary{list-style:none;display:inline-flex;align-items:center;gap:6px;
+    font-size:13.5px;font-weight:600;color:var(--ink2)}
+  .m-link>summary:hover{color:var(--ink)}
+  .m-link>summary i{transition:transform .2s;font-size:17px}
+  .m-link[open]>summary i{transform:rotate(180deg)}
+  .m-link .body{padding:10px 0 0}
+
+  /* ========== C · 좌측 세로선(인용문 스타일) ========== */
+  .m-rule{margin:16px 0}
+  .m-rule>summary{list-style:none;display:inline-flex;align-items:center;gap:7px;
+    font-size:13.5px;font-weight:600;color:var(--ink2)}
+  .m-rule>summary:hover{color:var(--ink)}
+  .m-rule>summary i{transition:transform .2s;font-size:17px;color:var(--ink3)}
+  .m-rule[open]>summary i{transform:rotate(180deg)}
+  .m-rule .body{margin:12px 0 0;padding:2px 0 2px 16px;border-left:2px solid #E3D9C6}
+
+  /* ========== D · 가운데 구분선 토글(에디토리얼) ========== */
+  .m-div{margin:22px 0}
+  .m-div>summary{list-style:none;display:flex;align-items:center;gap:12px;
+    font-size:12.5px;font-weight:600;color:var(--ink3);letter-spacing:.02em;text-align:center}
+  .m-div>summary::before,.m-div>summary::after{content:"";flex:1;height:1px;background:#E7E3DB}
+  .m-div>summary .lbl{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .m-div>summary i{transition:transform .2s;font-size:16px}
+  .m-div[open]>summary i{transform:rotate(180deg)}
+  .m-div .body{padding:14px 2px 0}
+
+  /* ========== E · 밑줄 링크형(점선 밑줄) ========== */
+  .m-udl{margin:14px 0}
+  .m-udl>summary{list-style:none;display:inline-flex;align-items:baseline;gap:5px;
+    font-size:14px;font-weight:600;color:var(--accent-ink)}
+  .m-udl>summary .lbl{border-bottom:1px dashed currentColor;padding-bottom:1px}
+  .m-udl>summary i{font-size:14px;position:relative;top:2px;transition:transform .2s}
+  .m-udl[open]>summary i{transform:rotate(180deg)}
+  .m-udl .body{padding:11px 0 0}
+
+  /* ========== F · 색 칩 태그형(작은 pill 트리거) ========== */
+  .m-pill{margin:14px 0}
+  .m-pill>summary{list-style:none;display:inline-flex;align-items:center;gap:6px;
+    font-size:12.5px;font-weight:600;color:var(--ink2);
+    background:#F4F2EE;border:0.5px solid #E7E3DB;border-radius:999px;padding:6px 13px 6px 14px}
+  .m-pill>summary:hover{background:#EEEBE5}
+  .m-pill>summary i{transition:transform .2s;font-size:15px}
+  .m-pill[open]>summary i{transform:rotate(180deg)}
+  .m-pill .body{padding:12px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="pgtitle">"더 자세한 설명" 표현안 6종 — 카드 대안 비교</p>
+  <p class="pgsub">실제 글 흐름(문단 · 리스트 다음에 오는 접기)을 그대로 재현했습니다. 각 항목을 눌러 펼쳐보세요. 전부 웜스톤 팔레트 유지 · 순백 본문 기준.</p>
+
+  <!-- A -->
+  <div class="variant prose">
+    <span class="vlabel">A</span>
+    <div class="vname">현재 카드 (기준)</div>
+    <p class="vdesc">지금 적용된 옅은 회색 카드. 경계가 뚜렷해 "블록"으로 인식됨.</p>
+    <h3>마이크로칩 이식</h3>
+    <ul><li>모든 준비 중 가장 먼저 실시</li><li>ISO 11784/11785 표준 마이크로칩(15자리)</li></ul>
+    <details class="m-card"><summary><span>더 자세한 설명</span><i class="ti ti-chevron-down"></i></summary>
+      <div class="body"><p>이미 다른 규격의 칩이 있다면 ISO 칩을 추가로 이식하거나, 판독기를 함께 지참해야 합니다. 이식 위치와 스캔 여부를 매 단계마다 확인하세요.</p></div>
+    </details>
+  </div>
+
+  <!-- B -->
+  <div class="variant prose">
+    <span class="vlabel">B</span>
+    <div class="vname">인라인 텍스트 링크 (박스 없음)</div>
+    <p class="vdesc">가장 가벼움. 본문 흐름에 자연스럽게 얹혀 거의 안 튐. 펼치면 바로 아래 이어짐.</p>
+    <h3>마이크로칩 이식</h3>
+    <ul><li>모든 준비 중 가장 먼저 실시</li><li>ISO 11784/11785 표준 마이크로칩(15자리)</li></ul>
+    <details class="m-link"><summary><i class="ti ti-chevron-down"></i><span>더 자세한 설명</span></summary>
+      <div class="body"><p>이미 다른 규격의 칩이 있다면 ISO 칩을 추가로 이식하거나, 판독기를 함께 지참해야 합니다. 이식 위치와 스캔 여부를 매 단계마다 확인하세요.</p></div>
+    </details>
+  </div>
+
+  <!-- C -->
+  <div class="variant prose">
+    <span class="vlabel">C</span>
+    <div class="vname">좌측 세로선 (인용문 스타일)</div>
+    <p class="vdesc">닫힌 상태는 텍스트 링크처럼 조용, 펼치면 왼쪽 앰버 세로선으로 "부연"임을 은은히 구분.</p>
+    <h3>마이크로칩 이식</h3>
+    <ul><li>모든 준비 중 가장 먼저 실시</li><li>ISO 11784/11785 표준 마이크로칩(15자리)</li></ul>
+    <details class="m-rule"><summary><i class="ti ti-chevron-down"></i><span>더 자세한 설명</span></summary>
+      <div class="body"><p>이미 다른 규격의 칩이 있다면 ISO 칩을 추가로 이식하거나, 판독기를 함께 지참해야 합니다. 이식 위치와 스캔 여부를 매 단계마다 확인하세요.</p></div>
+    </details>
+  </div>
+
+  <!-- D -->
+  <div class="variant prose">
+    <span class="vlabel">D</span>
+    <div class="vname">가운데 구분선 토글 (에디토리얼)</div>
+    <p class="vdesc">양옆 얇은 선 사이에 라벨. 섹션 사이 "쉼표"처럼 읽혀 잡지 느낌. 넓게 쓸 때 좋음.</p>
+    <h3>마이크로칩 이식</h3>
+    <ul><li>모든 준비 중 가장 먼저 실시</li><li>ISO 11784/11785 표준 마이크로칩(15자리)</li></ul>
+    <details class="m-div"><summary><span class="lbl">더 자세히 보기 <i class="ti ti-chevron-down"></i></span></summary>
+      <div class="body"><p>이미 다른 규격의 칩이 있다면 ISO 칩을 추가로 이식하거나, 판독기를 함께 지참해야 합니다. 이식 위치와 스캔 여부를 매 단계마다 확인하세요.</p></div>
+    </details>
+  </div>
+
+  <!-- E -->
+  <div class="variant prose">
+    <span class="vlabel">E</span>
+    <div class="vname">점선 밑줄 링크형</div>
+    <p class="vdesc">테라코타 유지 + 점선 밑줄로 "더 있음" 신호. 클릭 유도력은 가장 강함(덜 조용).</p>
+    <h3>마이크로칩 이식</h3>
+    <ul><li>모든 준비 중 가장 먼저 실시</li><li>ISO 11784/11785 표준 마이크로칩(15자리)</li></ul>
+    <details class="m-udl"><summary><span class="lbl">더 자세한 설명</span><i class="ti ti-chevron-down"></i></summary>
+      <div class="body"><p>이미 다른 규격의 칩이 있다면 ISO 칩을 추가로 이식하거나, 판독기를 함께 지참해야 합니다. 이식 위치와 스캔 여부를 매 단계마다 확인하세요.</p></div>
+    </details>
+  </div>
+
+  <!-- F -->
+  <div class="variant prose">
+    <span class="vlabel">F</span>
+    <div class="vname">작은 pill 태그형</div>
+    <p class="vdesc">카드보다 작은 알약 버튼. "누를 것"임이 분명하면서도 폭을 안 차지함.</p>
+    <h3>마이크로칩 이식</h3>
+    <ul><li>모든 준비 중 가장 먼저 실시</li><li>ISO 11784/11785 표준 마이크로칩(15자리)</li></ul>
+    <details class="m-pill"><summary><i class="ti ti-chevron-down"></i><span>더 자세한 설명</span></summary>
+      <div class="body"><p>이미 다른 규격의 칩이 있다면 ISO 칩을 추가로 이식하거나, 판독기를 함께 지참해야 합니다. 이식 위치와 스캔 여부를 매 단계마다 확인하세요.</p></div>
+    </details>
+  </div>
+
+</div>
+</body>
+</html>

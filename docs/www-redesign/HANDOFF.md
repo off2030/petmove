@@ -92,6 +92,18 @@
 - **하위 페이지 프로토타입**: `scripts/make_www_subpages.py` → `guide.html`(허브: 최근업데이트·나라별34국·검색·주제별) + `contact.html`(채널만·종합창구). 상단 심플(제목+한 줄). 나라·글 링크는 라이브 고스트로 연결.
 - **연락처 확정값**: 카카오 `pf.kakao.com/_zDDxhj/chat` · 네이버예약 `naver.me/GUwSYQ9h` · 전화 `02-872-7588` · 이메일 `petmove@naver.com` · 네이버블로그 `blog.naver.com/petmove`.
 
+## 2026-07-06 세션 — 글 본문 템플릿(article-sample.html) 다듬기
+
+**대상 = `docs/www-redesign/article-sample.html`**(일본 가이드 전문 샘플 = 본문 공통 템플릿). 거의 완성 단계.
+
+⚠️ **크롬 확인법**: `file://` 직접 열기는 크롬 확장 navigate 버그(`https://` 강제 prepend)로 안 열림 → `cd docs/www-redesign && python -m http.server 8777` 실행 후 `http://localhost:8777/article-sample.html`. 파일 수정→새로고침 즉시 반영. (navigate 툴은 `http://`로 시작하는 URL만 통과, `file://`·bare domain은 mangle됨.)
+
+**이번 세션 확정:**
+- **"더 자세한 설명" 아코디언 = B 인라인 텍스트 링크** (박스·선 없음, 왼쪽 정렬 `더 자세한 설명 ⌄`). 카드(옅은 회색)·D(가운데 구분선 토글)도 실험 → 8회 반복 시 D가 섹션 divider와 혼동돼 **B로 확정**. 표현안 6종 비교 = **`more-variants.html`**(A카드/B인라인/C좌측세로선/D구분선/E점선밑줄/F pill).
+- **글 끝 "유용한 자료" 섹션(신규)**: h2 "유용한 자료" + `.info-list` **2개 별개 항목**(행 전체 클릭) — ① 일본 입국 일정 계산기 ② 일본 검역 준비 자가 진단기. 각 제목(테라코타)+**→ 수평화살표(내부 이동, 외부 ↗ 아님)**+회색 설명 1줄. 링크=라이브 고스트(scheduler·self-check), 내부라 `target=_blank` 제거. (원래 썸네일 배너 `.bookmark`가 산만 → 인라인화했더니 글 끝 orphan 문장 → 별도 라벨 섹션으로 정리. 서술 흐름 중간엔 안 넣음.)
+- **글 끝 CTA = 풀폭 2버튼 세로 스택(`.cta2`)**: ① 무료 앱으로 시작하기(앰버 채움 `--accent`+짙은 잉크, `ti-download`) ② 서비스 의뢰하기(앰버 아웃라인, `ti-message-circle`). 랜딩 히어로 `.btn-primary`/`.btn-ghost` 스펙 차용(radius14·padding15/22·gap8). **서비스 버튼 → 랜딩 `#service`**(프로토타입 `prototype-mobile.html#service`, 이식 시 `/#service`) — 카톡 직링크 대신 서비스 섹션 한 번 거침(연락수단 단일 관리+맥락 후 전환). 여백 `margin:40px auto 48px`(푸터에 붙던 것 해소).
+- **카카오 링크 https 교정**(본문 신고대행 2곳; CTA는 #service로 대체).
+
 ## 남은 할 일 (다음 세션 진입점)
 
 **우선순위: ① 글 본문 템플릿(69개 공유) → ② Next.js `(www)` 이식·배포(next/font Pretendard·Ghost 이관·URL 보존) → ③ 앱 스토어 버튼 연결(앱 출시 후) → ④ 서비스 드롭다운(운송견적·에이전시, 향후).** (가이드 다듬기·모바일 메뉴·워드마크는 완료/폐기.)
