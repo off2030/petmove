@@ -1,5 +1,6 @@
 import { ApplyForm, type OwnerPrefill } from './apply-form'
 import { listMyCases } from '@/lib/actions/cases'
+import { getMyProfile } from '@/lib/actions/profile'
 
 // 조직 표시 없는 /apply = 펫무브 직영(platform). 어느 병원/운송 업체에도 안 속하는
 // 고객 직접 신청 → 직영 org 로 귀속, super_admin 만 관리. (조직별 신청은 /apply/<slug>)
@@ -52,8 +53,24 @@ async function loadOwnerPrefill(): Promise<OwnerPrefill | null> {
 export default async function ApplyPage() {
   // 직영(펫무브 플랫폼) 자체 신청 — 로그인 후 진입(계정 이메일 사용). isPublic=false.
   // 기존 케이스가 있으면 보호자 정보 prefill → 소유주 단계 건너뜀.
-  const prefillOwner = await loadOwnerPrefill()
+  const [prefillOwner, profileRes] = await Promise.all([loadOwnerPrefill(), getMyProfile()])
+
+  // 첫 신청(케이스 prefill 없음)이라도 로그인 계정 이름(Apple·카카오·네이버·구글이 제공)을
+  // 이름 칸에 prefill → 재입력 강요 방지(App Store Guideline 4.0). 단, display_name 이
+  // 이메일 앞부분(이름 미제공 시 fallback)이면 가짜 이름이므로 prefill 하지 않는다.
+  const profile = profileRes.ok ? profileRes.value : null
+  const emailPrefix = profile?.email_normalized?.split('@')[0]?.toLowerCase() ?? null
+  const rawName = profile?.display_name?.trim() ?? null
+  const prefillName = rawName && rawName.toLowerCase() !== emailPrefix ? rawName : null
+
   return (
-    <ApplyForm orgId={DIRECT_ORG_ID} orgName="펫무브" isPublic={false} appDestinationsOnly prefillOwner={prefillOwner} />
+    <ApplyForm
+      orgId={DIRECT_ORG_ID}
+      orgName="펫무브"
+      isPublic={false}
+      appDestinationsOnly
+      prefillOwner={prefillOwner}
+      prefillName={prefillName}
+    />
   )
 }

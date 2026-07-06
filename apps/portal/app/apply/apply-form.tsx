@@ -518,6 +518,7 @@ export function ApplyForm({
   isPublic,
   appDestinationsOnly = false,
   prefillOwner,
+  prefillName,
 }: {
   orgId: string
   orgName: string
@@ -530,6 +531,12 @@ export function ApplyForm({
   appDestinationsOnly?: boolean
   /** 직영 '동물 추가' — 기존 보호자 정보. 있으면 소유주 단계 건너뜀. */
   prefillOwner?: OwnerPrefill | null
+  /**
+   * 로그인 계정 이름(소셜 provider 제공) — 소유주 케이스 prefill 이 없는 첫 신청에서
+   * 이름 칸 초기값. Apple 로그인 후 이름 재입력을 강요하지 않기 위함(Guideline 4.0).
+   * prefillOwner 가 있으면 소유주 단계를 건너뛰므로 이 값은 무시된다.
+   */
+  prefillName?: string | null
 }) {
   const router = useRouter()
   const [lang, setLang] = useState<Lang>('ko')
@@ -560,7 +567,7 @@ export function ApplyForm({
   const [destQuery, setDestQuery] = useState('')
   const [destSheetOpen, setDestSheetOpen] = useState(false)
   const [tripType, setTripType] = useState<'round' | 'one_way'>('round')
-  const [customerName, setCustomerName] = useState(prefillOwner?.customerName ?? '')
+  const [customerName, setCustomerName] = useState(prefillOwner?.customerName ?? prefillName ?? '')
   const [customerLastNameEn, setCustomerLastNameEn] = useState(prefillOwner?.lastNameEn ?? '')
   const [customerFirstNameEn, setCustomerFirstNameEn] = useState(prefillOwner?.firstNameEn ?? '')
   const [phone, setPhone] = useState(prefillOwner?.phone ?? '')

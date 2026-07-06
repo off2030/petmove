@@ -80,6 +80,26 @@ export async function nativeAppleLogin(
     })
     if (error) return { handled: true, error: error.message }
 
+    // Apple 은 이름을 '최초 인가 때 한 번만' 네이티브 응답(profile)으로 준다(idToken 엔 없음).
+    // 그 이름을 auth user_metadata.full_name 에 저장 → ensureCustomerProfile 이 display_name 으로
+    // 채택하고 /apply 소유주 단계가 이름을 prefill 한다. App Store Guideline 4.0: Apple 이 이미
+    // 제공한 이름을 사용자에게 재입력받지 말 것. 재로그인 시엔 name 이 비어 오므로 best-effort.
+    const appleProfile = (res.result as {
+      profile?: { givenName?: string | null; familyName?: string | null }
+    }).profile
+    const given = (appleProfile?.givenName ?? '').trim()
+    const family = (appleProfile?.familyName ?? '').trim()
+    if (given || family) {
+      // 한글은 성+이름(공백 없음), 로마자는 이름 성(공백). 사용자가 이후 수정 가능.
+      const isLatin = /[A-Za-z]/.test(given + family)
+      const fullName = isLatin ? `${given} ${family}`.trim() : `${family}${given}`
+      try {
+        await supabaseBrowser.auth.updateUser({ data: { full_name: fullName } })
+      } catch {
+        /* best-effort — 이름 저장 실패해도 로그인은 진행 */
+      }
+    }
+
     // 세션이 쿠키에 설정됨 → 서버가 인식. next 로 전체 이동(서버 세션 반영).
     window.location.href = next && next !== '/' ? next : '/'
     // success=true → 호출부가 '로그인 중…' 스피너를 유지(전체 리로드가 끝날 때까지). 구글과 동일.
