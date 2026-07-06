@@ -82,7 +82,7 @@
   {"ko":"카바푸","en":"Cavapoo","type":"dog"},
   {"ko":"쉬파두들","en":"Sheepadoodle","type":"dog"},
   {"ko":"믹스","en":"Mixed Breed","type":"dog","alias":["잡종","혼합","믹스견","mix","mutt","mongrel"]},
-  {"ko":"코리안 숏헤어","en":"Domestic Shorthair","type":"cat","alias":["코숏","DSH","도메스틱 숏헤어","Korean Shorthair","한국 고양이","길냥이"]},
+  {"ko":"코리안 숏헤어","en":"Korean Shorthair","type":"cat","alias":["코숏","한국 고양이","길냥이"]},
   {"ko":"페르시안","en":"Persian","type":"cat"},
   {"ko":"페르시안 친칠라","en":"Persian Chinchilla","type":"cat"},
   {"ko":"랙돌","en":"Ragdoll","type":"cat"},
@@ -123,7 +123,7 @@
   {"ko":"하이랜드 폴드","en":"Highland Fold","type":"cat"},
   {"ko":"시베리안","en":"Siberian","type":"cat"},
   {"ko":"미뉴엣","en":"Minuet","type":"cat"},
-  {"ko":"도메스틱 숏헤어","en":"Domestic Shorthair","type":"cat","alias":["코숏","DSH","코리안 숏헤어","Korean Shorthair"]},
+  {"ko":"도메스틱 숏헤어","en":"Domestic Shorthair","type":"cat","alias":["도숏","DSH"]},
   {"ko":"도메스틱 롱헤어","en":"Domestic Longhair","type":"cat"},
   {"ko":"믹스","en":"Mixed Breed","type":"cat","alias":["잡종","혼합","믹스묘","mix","길고양이"]}
 ]
