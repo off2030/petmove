@@ -4,6 +4,7 @@ MIGRATION-RULES.md 규칙을 실제 데이터에 적용. 한 개 이상 글을 �
 import json, re, sys, io
 from datetime import datetime
 from bs4 import BeautifulSoup, NavigableString
+from www_lib import norm_link, norm_image
 
 JSON = r"C:\Users\off20\Downloads\pesmubeu.ghost.2026-07-06-13-32-13.json"
 TPL  = r"C:\dev\petmove\docs\www-redesign\article-sample.html"
@@ -23,10 +24,6 @@ tpl = open(TPL, encoding='utf-8').read()
 HEAD = tpl[:tpl.index('<article class="article">')]
 FOOT = tpl[tpl.index('    <div class="cta2">'):]   # cta2 + /article + footer + script
 
-def relativize(href):
-    # __GHOST_URL__ = 고스트 export가 내부 링크를 저장하는 플레이스홀더
-    return re.sub(r'(https?://(www\.)?petmove\.co\.kr|__GHOST_URL__)', '', href or '')
-
 def convert_body(html, soup_feature=None):
     soup = BeautifulSoup(html, 'html.parser')
 
@@ -37,7 +34,7 @@ def convert_body(html, soup_feature=None):
     # 2. 북마크 카드 -> a.bookmark
     for fig in soup.select('figure.kg-bookmark-card'):
         a = fig.find('a')
-        href = relativize(a.get('href')) if a else '#'
+        href = norm_link(a.get('href')) if a else '#'
         title = fig.select_one('.kg-bookmark-title')
         pub   = fig.select_one('.kg-bookmark-publisher')
         thumb = fig.select_one('.kg-bookmark-thumbnail img')
@@ -50,7 +47,7 @@ def convert_body(html, soup_feature=None):
             txt.append(h)
         new.append(txt)
         if thumb and thumb.get('src'):
-            im = soup.new_tag('img', src=relativize(thumb['src'])); im['class'] = 'bk-thumb'
+            im = soup.new_tag('img', src=norm_image(thumb['src'])); im['class'] = 'bk-thumb'
             new.append(im)
         fig.replace_with(new)
 
@@ -109,7 +106,7 @@ def convert_body(html, soup_feature=None):
 
     # 7. 파일 카드 -> a.dl
     for c in soup.select('.kg-file-card'):
-        a = c.find('a'); href = relativize(a.get('href')) if a else '#'
+        a = c.find('a'); href = norm_link(a.get('href')) if a else '#'
         name = c.select_one('.kg-file-card-filename') or c.select_one('.kg-file-card-title')
         new = soup.new_tag('a', href=href); new['class'] = 'dl'; new['download'] = ''
         ic = soup.new_tag('i'); ic['class'] = 'ti ti-file-download'; new.append(ic)
@@ -144,11 +141,11 @@ def convert_body(html, soup_feature=None):
     for h in soup.find_all('h1'):
         h.decompose()
 
-    # 12. 내부 링크·이미지 경로 정규화 (__GHOST_URL__ 제거)
+    # 12. 내부 링크·이미지 경로 정규화 (__GHOST_URL__ 제거 + 긴 이미지 파일명 단축)
     for a in soup.find_all('a', href=True):
-        a['href'] = relativize(a['href'])
+        a['href'] = norm_link(a['href'])
     for tag in soup.find_all(['img', 'iframe', 'source'], src=True):
-        tag['src'] = relativize(tag['src'])
+        tag['src'] = norm_image(tag['src'])
 
     # 13. 빈 문단 정리
     for p in soup.find_all('p'):
@@ -175,7 +172,7 @@ def build(slug):
     mins = max(3, len(p.get('plaintext') or '') // 900)
     cover = ''
     if p.get('feature_image'):
-        cover = f'<img class="art-cover" src="{relativize(p["feature_image"])}" alt="{p["title"]}">\n'
+        cover = f'<img class="art-cover" src="{norm_image(p["feature_image"])}" alt="{p["title"]}">\n'
     intro = ''
     if p.get('custom_excerpt'):
         intro = f'<div class="callout-note">{p["custom_excerpt"]}</div>\n'
