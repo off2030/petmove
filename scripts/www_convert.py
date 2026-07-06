@@ -3,7 +3,7 @@
 MIGRATION-RULES.md 규칙을 실제 데이터에 적용. 한 개 이상 글을 골라 standalone HTML로 출력."""
 import json, re, sys, io
 from datetime import datetime
-from bs4 import BeautifulSoup, NavigableString
+from bs4 import BeautifulSoup, NavigableString, Comment
 from www_lib import norm_link, norm_image
 
 JSON = r"C:\Users\off20\Downloads\pesmubeu.ghost.2026-07-06-13-32-13.json"
@@ -22,16 +22,20 @@ for pt in sorted(ptags, key=lambda x: x.get('sort_order', 0)):
 # --- 템플릿 셸 분리 ---
 tpl = open(TPL, encoding='utf-8').read()
 HEAD = tpl[:tpl.index('<article class="article">')]
-FOOT = tpl[tpl.index('    <div class="cta2">'):]   # cta2 + /article + footer + script
+FOOT = tpl[tpl.index('    <hr class="cta-sep">'):]   # 구분선 + cta2 + /article + footer + script
 
 # --- 글 끝 정리 패턴 (템플릿 확정 규칙) ---
 TOOL_RE       = re.compile(r'(scheduler|self-check)', re.I)          # 도구 = 계산기·자가진단기
-RELATED_RE    = re.compile(r'^관련\s*(블로그\s*)?(포스트|글)$')        # '관련 블로그 포스트' 마커
+RELATED_RE    = re.compile(r'^관련\s*(블로그|포스트|포스팅|글)')        # '관련 블로그 포스트/포스팅/글' 마커
 PROMO_LINK_RE = re.compile(r'(naver\.me|booking\.naver|pf\.kakao|tel:)', re.I)  # 예약/연락 링크
 PROMO_TEXT_RE = re.compile(r'(예약하세요|준비하세요|연락주세요|문의하세요|맡겨|맡기세요|바로가기|지금\s*바로)')
 
 def convert_body(html, soup_feature=None):
     soup = BeautifulSoup(html, 'html.parser')
+
+    # 0. HTML 주석(kg-card-begin/end 등) 제거
+    for cm in soup.find_all(string=lambda t: isinstance(t, Comment)):
+        cm.extract()
 
     # 1. 연락 버튼 카드 제거
     for c in soup.select('.kg-button-card'):
@@ -67,6 +71,8 @@ def convert_body(html, soup_feature=None):
     def _is_promo(el):
         if el.name == 'hr':
             return True
+        if el.name == 'figure' and 'kg-bookmark-card' in (el.get('class') or []):
+            return True   # 제목 없이 끝에 붙은 관련글 북마크 묶음
         if el.name == 'p':
             if not el.get_text(strip=True) and not el.find(['img', 'iframe', 'br']):
                 return True   # 빈 문단은 꼬리에서 건너뛰기(진짜 본문 아님)

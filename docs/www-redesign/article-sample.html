@@ -143,8 +143,10 @@
   .svc-sub .sep{color:var(--ink3)}
   .svc-app{margin:14px 0 0;font-size:12.5px;color:var(--ink3)}
   .svc-app a{color:var(--accent-ink);font-weight:600;text-decoration:none}
+  /* 본문 → CTA 전환 구분선 (얇은 하프라인, 섹션 톤과 일치) */
+  .cta-sep{border:0;border-top:0.5px solid var(--border);margin:40px 0 0}
   /* 심플 2버튼 CTA — 랜딩 히어로처럼 풀폭 세로 스택 (앱=앰버 채움·짙은 잉크 / 서비스=앰버 아웃라인) */
-  .cta2{display:flex;flex-direction:column;gap:11px;max-width:440px;margin:40px auto 48px}
+  .cta2{display:flex;flex-direction:column;gap:11px;max-width:440px;margin:24px auto 48px}
   .cta2 a{display:flex;align-items:center;justify-content:center;gap:8px;
     border-radius:14px;text-decoration:none}
   .cta2 a.app{background:var(--accent);color:var(--ink);font-weight:600;padding:15px 22px;font-size:15px}
@@ -523,6 +525,7 @@
       </div>
     </div>
 
+    <hr class="cta-sep">
     <div class="cta2">
       <a class="app" href="prototype-mobile.html"><i class="ti ti-download"></i>무료 앱으로 시작하기</a>
       <a class="svc" href="prototype-mobile.html#service"><i class="ti ti-message-circle"></i>전문가에게 맡기기</a>
