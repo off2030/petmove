@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
-import { isDestinationScopedKey, parseDestinations, readEffectiveExtraValue, resolveActiveDestination } from '@petmove/domain'
+import { isDestinationScopedKey, readEffectiveExtraValue, resolveActiveDestination } from '@petmove/domain'
 import { CopyButton } from './copy-button'
 import { SectionLabel } from '@/components/ui/section-label'
 import { useSectionEditMode } from './section-edit-mode-context'
@@ -26,11 +26,13 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
     })
     if (ok) save(null)
   }
-  // 다중 목적지 + 활성 목적지 + scoped 키 → by_dest 경로 read/write.
+  // 활성 목적지 + scoped 키 → by_dest 경로 read/write. 단일 목적지도 resolveActiveDestination
+  // 이 유일 토큰을 돌려줘 by_dest 로 저장/삭제한다(B: 단일도 by_dest 통일 — 서버 useByDest·다른
+  // scoped 필드와 동일 패턴). read 도 by_dest 우선이므로 읽기/쓰기 경로가 일치해야 한다.
+  // isMultiDest 게이트를 두면 값은 by_dest 에 있는데 삭제는 top-level 로 가 삭제가 안 먹혔다(버그).
   const activeDest = resolveActiveDestination(caseRow.destination, activeDestination)
-  const isMultiDest = parseDestinations(caseRow.destination).length > 1
   const destArg: string | null | undefined =
-    isMultiDest && activeDest && isDestinationScopedKey(DATA_KEY) ? activeDest : undefined
+    activeDest && isDestinationScopedKey(DATA_KEY) ? activeDest : undefined
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const raw = readEffectiveExtraValue(data, DATA_KEY, activeDest)
   const value: string | null = typeof raw === 'string' ? raw : null
