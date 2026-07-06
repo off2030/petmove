@@ -550,10 +550,12 @@ export function ApplyForm({
   const [turnstileToken, setTurnstileToken] = useState('')
   const turnstileRef = useRef<HTMLDivElement>(null)
   // 보호자 정보가 prefill 되면 소유주(step 2) 를 건너뛴 흐름.
-  // 펫무브앱은 추가 정보(마이크로칩·광견병 등 선택 입력)를 등록 시 받지 않는다 — 목적지→
-  // (소유주)→반려동물 필수 정보까지만. 추가 정보는 등록 후 앱에서 입력. (펫무브워크와 분리)
+  // 펫무브앱(직영·로그인)은 추가 정보(마이크로칩·광견병 등 선택 입력)를 등록 시 받지 않는다 —
+  // 목적지→(소유주)→반려동물 필수 정보까지만. 추가 정보는 등록 후 앱에서 입력.
+  // 조직 공개폼(isPublic — 병원·업체 신청서, 예: /apply/lvmc)은 마지막에 추가 정보(step 4)를
+  // 선택 입력으로 더 받는다. (펫무브워크와 분리)
   const skipOwner = !!prefillOwner
-  const visibleSteps = skipOwner ? [1, 3] : [1, 2, 3]
+  const visibleSteps = skipOwner ? [1, 3] : isPublic ? [1, 2, 3, 4] : [1, 2, 3]
   const [step, setStep] = useState(1)
   const stepPos = Math.max(0, visibleSteps.indexOf(step))
   const isFirstStep = stepPos === 0
@@ -770,6 +772,16 @@ export function ApplyForm({
         if (p.selectedColors.length === 0) miss.add(`pet${i}.colors`)
         if (!p.sex) miss.add(`pet${i}.sex`)
         if (!p.weight.trim()) miss.add(`pet${i}.weight`)
+      }
+    } else if (s === 4) {
+      // 추가 정보(선택) — 마이크로칩 번호는 입력했다면 15자리여야 함. 나머지는 자유 입력.
+      for (let i = 0; i < pets.length; i++) {
+        const p = pets[i]
+        if (p.microchip && p.microchip.length !== 15) {
+          const prefix = pets.length > 1 ? m.microchipFormatErrorPrefixN(i + 1) : m.microchipFormatErrorPrefixSingle
+          formatError = `${prefix}${m.microchipFormatError}`
+          break
+        }
       }
     }
     return { miss, formatError }
@@ -1142,6 +1154,35 @@ export function ApplyForm({
               + {m.petAdd}
             </button>
           )}
+          </>)}
+
+          {/* Step 4 · 추가 정보 (선택) — 마이크로칩 번호·삽입일·최근 광견병 접종일. 아는 만큼만.
+              조직 공개폼(isPublic)에서만 노출. 직영 앱은 등록 후 앱에서 입력. */}
+          {step === 4 && (<>
+          {pets.map((pet, pi) => (
+          <section key={pi} className={sectionCardClass}>
+            <div className="flex items-baseline justify-between gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
+              <h2 className={sectionTitleClass}>
+                {pets.length > 1 ? `${m.petInfoN(pi + 1)} · ${m.optionalStepTitle}` : m.optionalStepTitle}
+              </h2>
+              <span className="shrink-0 text-[12px] text-[#9A9286]">{m.optionalHint}</span>
+            </div>
+            <PetFormSection
+              part="optional"
+              pet={pet}
+              index={pi}
+              updatePet={updatePet}
+              enWarnings={enWarnings}
+              composingRef={composingRef}
+              handleEnInput={handleEnInput}
+              handleEnCompositionEnd={handleEnCompositionEnd}
+              getFilteredBreeds={getFilteredBreeds}
+              missing={missing}
+              m={m}
+              lang={lang}
+            />
+          </section>
+          ))}
           </>)}
 
           {/* Cloudflare Turnstile (투명 모드) — 평상시엔 비어 있고(고객에겐 안 보임), 봇 의심
