@@ -180,6 +180,19 @@
   .prose .embed{position:relative;padding-top:56.25%;margin:18px 0;border-radius:12px;overflow:hidden;background:#000}
   .prose .embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
   @media(min-width:760px){.prose a.bookmark .bk-thumb{width:180px;flex-basis:180px}}
+  /* 넓은 표 — 모바일에서 가로 스크롤 (5열 등 폭 넓은 표) */
+  .prose img{max-width:100%;height:auto}
+  .prose .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 0 18px}
+  .prose .table-wrap table{margin:0;min-width:540px}
+  /* 본문 중간 이미지 (커버 외) + 캡션 */
+  .prose figure{margin:20px 0}
+  .prose figure img{width:100%;border-radius:12px;display:block}
+  .prose figcaption{font-size:12.5px;color:var(--ink3);text-align:center;margin-top:8px;line-height:1.5}
+  .prose p>img{border-radius:12px;display:block;margin:18px auto}
+  /* 파일 다운로드 링크 (PDF·양식 등) */
+  .prose a.dl{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:0.5px solid var(--border);border-radius:11px;padding:11px 15px;font-size:13.5px;font-weight:600;color:var(--accent-ink);text-decoration:none;margin:6px 0}
+  .prose a.dl i{font-size:18px;flex:0 0 auto}
+  .prose a.dl:hover{border-color:var(--accent)}
 
   footer{background:#211E19;color:#8B8578;padding:28px 0;font-size:12px;line-height:1.85;margin-top:auto}
   footer a{color:#B0A896}
@@ -512,7 +525,7 @@
 
     <div class="cta2">
       <a class="app" href="prototype-mobile.html"><i class="ti ti-download"></i>무료 앱으로 시작하기</a>
-      <a class="svc" href="prototype-mobile.html#service"><i class="ti ti-message-circle"></i>서비스 의뢰하기</a>
+      <a class="svc" href="prototype-mobile.html#service"><i class="ti ti-message-circle"></i>전문가에게 맡기기</a>
     </div>
 
   </article>
