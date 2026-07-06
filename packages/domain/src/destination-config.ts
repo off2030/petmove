@@ -51,8 +51,11 @@ interface DestinationOverride {
   /**
    * 이 목적지가 활용하는 추가정보 필드 키 목록 (EXTRA_FIELD_DEFS 의 키).
    * extraSection 컴포넌트가 있어도 이 목록을 채우면 설정 UI 에 노출됨.
+   *
+   * 문자열이면 모든 종에 표시. 종별로 제한하려면 `{ key, species }` 형태로 지정
+   * (예: 영국·아일랜드 등 촌충국의 구충시간은 개 전용 → `{ key: 'deworming_time', species: 'dog' }`).
    */
-  extraFields?: string[]
+  extraFields?: Array<string | DestinationExtraFieldEntry>
   /**
    * 편도(trip_type='one_way')일 때 광견병 항체 검사(rabies_titer)를 표시하지 않을지.
    * 입국국 자체는 RNATT 비요구지만 한국 귀국용으로 디폴트 표시 중인 국가들에 사용.
@@ -86,22 +89,23 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   ireland: {
     keywords: ['아일랜드', 'ireland'],
     vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
-    extraFields: ['address_overseas', 'deworming_time'],
+    // 촌충약(Echinococcus, praziquantel)은 규정상 개 전용 — 고양이는 면제(EU Reg 2018/772).
+    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
   malta: {
     keywords: ['몰타', 'malta'],
     vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
-    extraFields: ['address_overseas', 'deworming_time'],
+    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
   norway: {
     keywords: ['노르웨이', 'norway'],
     vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
-    extraFields: ['address_overseas', 'deworming_time'],
+    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
   finland: {
     keywords: ['핀란드', 'finland'],
     vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
-    extraFields: ['address_overseas', 'deworming_time'],
+    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
   eu: {
     keywords: [
@@ -127,7 +131,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['영국', '북아일랜드', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'],
     vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
     extraSection: 'uk',
-    extraFields: ['address_overseas', 'deworming_time'],
+    // 촌충약(Echinococcus)은 규정상 개 전용 — 고양이는 구충시간 미표시.
+    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
   australia: {
     keywords: ['호주', 'australia'],
@@ -659,7 +664,7 @@ function deriveDisplayName(id: string, keywords: string[]): string {
 export function getHardcodedDestinationsAsCustom(): CustomDestination[] {
   return Object.entries(DESTINATION_OVERRIDES).map(([id, override]) => {
     const baseKeys = override.vaccines ?? DEFAULT_CONFIG.vaccines
-    const extraFields: DestinationExtraFieldEntry[] = (override.extraFields ?? []).map((k) => ({ key: k }))
+    const extraFields: DestinationExtraFieldEntry[] = (override.extraFields ?? []).map((k) => (typeof k === 'string' ? { key: k } : k))
     const out: CustomDestination = {
       id,
       name: deriveDisplayName(id, override.keywords),
@@ -682,7 +687,7 @@ export function getEffectiveExtraFieldEntries(
   const custom = findCustomDestination(destination, customConfig)
   if (custom) return custom.extraFields ?? []
   const override = getDestinationOverride(destination)
-  return (override?.extraFields ?? []).map((k) => ({ key: k }))
+  return (override?.extraFields ?? []).map((k) => (typeof k === 'string' ? { key: k } : k))
 }
 
 /** 한 extra-field entry 가 현재 케이스 종에 적용되는지. */
