@@ -55,12 +55,13 @@ export function CaseHeader({ caseRow }: { caseRow: CaseRow }) {
             {petName || <span className="text-muted-foreground/50">이름 없음</span>}
           </span>
           {customerName && (
-            <span className="font-serif text-[22px] font-normal tracking-tight text-muted-foreground leading-tight">
-              {customerName}
-            </span>
+            <span className="text-[14px] text-muted-foreground">{customerName}</span>
+          )}
+          {customerName && metaParts.length > 0 && (
+            <span className="text-muted-foreground/30 select-none">|</span>
           )}
           {metaParts.length > 0 && (
-            <span className="text-[13px] text-muted-foreground ml-0.5">
+            <span className="text-[13px] text-muted-foreground">
               {metaParts.map((p, i) => (
                 <span key={i}>
                   {i > 0 && <span className="text-muted-foreground/40 mx-1.5 select-none">·</span>}
