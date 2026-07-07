@@ -44,8 +44,12 @@ export const DEFAULT_CONFIG = {
 interface DestinationOverride {
   /** 목적지 매칭 키워드 (대소문자 무시) */
   keywords: string[]
-  /** 백신/검사 오버라이드 (생략 시 디폴트) */
-  vaccines?: string[]
+  /**
+   * 백신/검사 오버라이드 (생략 시 디폴트).
+   * 문자열이면 모든 종에 표시. 종별로 제한하려면 `{ key, species }` 형태로 지정
+   * (예: 영국·아일랜드 등 촌충국의 내부구충은 개 전용 → `{ key: 'internal_parasite', species: 'dog' }`).
+   */
+  vaccines?: Array<string | DestinationVaccineEntry>
   /** 추가정보 섹션 컴포넌트 키 (생략 시 추가정보 없음) */
   extraSection?: string
   /**
@@ -88,23 +92,23 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   // → 상세페이지에 내부구충 기본 표시. eu 보다 먼저 매칭되어야 하므로 위에 둠.
   ireland: {
     keywords: ['아일랜드', 'ireland'],
-    vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
+    vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     // 촌충약(Echinococcus, praziquantel)은 규정상 개 전용 — 고양이는 면제(EU Reg 2018/772).
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
   malta: {
     keywords: ['몰타', 'malta'],
-    vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
+    vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
   norway: {
     keywords: ['노르웨이', 'norway'],
-    vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
+    vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
   finland: {
     keywords: ['핀란드', 'finland'],
-    vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
+    vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
   eu: {
@@ -129,7 +133,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   uk: {
     keywords: ['영국', '북아일랜드', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'],
-    vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
+    vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraSection: 'uk',
     // 촌충약(Echinococcus)은 규정상 개 전용 — 고양이는 구충시간 미표시.
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
@@ -525,10 +529,21 @@ export function getEffectiveVaccineList(destination: string | null | undefined, 
   return result
 }
 
-/** 목적지별 백신/검사 목록. */
+/** 목적지별 백신/검사 목록 (키만). */
 export function getVaccineList(destination: string | null | undefined): string[] {
   const override = getDestinationOverride(destination)
-  return override?.vaccines ?? DEFAULT_CONFIG.vaccines
+  const vaccines = override?.vaccines ?? DEFAULT_CONFIG.vaccines
+  return vaccines.map((v) => (typeof v === 'string' ? v : v.key))
+}
+
+/**
+ * 목적지별 백신/검사 entries (종 필터 포함). 명시 species > 하드코딩 디폴트.
+ * 예: 촌충국 uk 는 internal_parasite 를 { species: 'dog' } 로 명시 → 고양이 미표시.
+ */
+function getHardcodedVaccineEntries(destination: string | null | undefined): DestinationVaccineEntry[] {
+  const override = getDestinationOverride(destination)
+  const vaccines = override?.vaccines ?? DEFAULT_CONFIG.vaccines
+  return vaccines.map((v) => (typeof v === 'string' ? applyHardcodedSpecies(v) : v))
 }
 
 // ── Custom 목적지 (조직별 설정) 통합 헬퍼 ──
@@ -570,9 +585,8 @@ export function getEffectiveVaccineEntries(
     appendToggleVaccines(result, extraFields)
     return result
   }
-  // 2) 하드코딩 폴백 (디폴트 종 필터 자동 적용).
-  const baseKeys = getVaccineList(destination)
-  const result = baseKeys.map(applyHardcodedSpecies)
+  // 2) 하드코딩 폴백 (명시 species 우선 + 디폴트 종 필터 자동 적용).
+  const result = getHardcodedVaccineEntries(destination)
   appendToggleVaccines(result, extraFields)
   return result
 }
@@ -663,13 +677,14 @@ function deriveDisplayName(id: string, keywords: string[]): string {
  */
 export function getHardcodedDestinationsAsCustom(): CustomDestination[] {
   return Object.entries(DESTINATION_OVERRIDES).map(([id, override]) => {
-    const baseKeys = override.vaccines ?? DEFAULT_CONFIG.vaccines
+    const baseVaccines = override.vaccines ?? DEFAULT_CONFIG.vaccines
     const extraFields: DestinationExtraFieldEntry[] = (override.extraFields ?? []).map((k) => (typeof k === 'string' ? { key: k } : k))
     const out: CustomDestination = {
       id,
       name: deriveDisplayName(id, override.keywords),
       keywords: [...override.keywords],
-      vaccines: baseKeys.map(applyHardcodedSpecies),
+      // 명시 species(예: 촌충국 internal_parasite='dog') 는 그대로, 문자열은 하드코딩 디폴트 적용.
+      vaccines: baseVaccines.map((v) => (typeof v === 'string' ? applyHardcodedSpecies(v) : v)),
     }
     if (extraFields.length > 0) out.extraFields = extraFields
     if (override.extraSection) out.extraSection = override.extraSection
