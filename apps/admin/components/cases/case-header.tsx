@@ -30,11 +30,9 @@ export function CaseHeader({ caseRow }: { caseRow: CaseRow }) {
   }
 
   const speciesLabel = selectLabel('species', data.species)
-  const sexLabel = selectLabel('sex', data.sex)
   const breedLabel = ((data.breed as string) || (data.breed_en as string) || '').trim()
-  const colorLabel = ((data.color as string) || (data.color_en as string) || '').trim()
-  // 요청 순서: 종 · 품종 · 성별 · 모색.
-  const metaParts = [speciesLabel, breedLabel, sexLabel, colorLabel].filter(Boolean)
+  // 종 · 품종만 표시 (성별·모색 제외).
+  const metaParts = [speciesLabel, breedLabel].filter(Boolean)
 
   const petName = (caseRow.pet_name ?? '').trim()
   const customerName = (caseRow.customer_name ?? '').trim()
