@@ -48,7 +48,7 @@ export function CaseHeader({ caseRow }: { caseRow: CaseRow }) {
   const extraCount = dests.length > 1 ? dests.length - 1 : 0
 
   return (
-    <div className="shrink-0 pb-4 border-b border-border/60">
+    <div className="shrink-0 px-md md:px-lg pb-4 border-b border-border/60">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex items-baseline gap-x-2.5 gap-y-1 flex-wrap">
           <span className="font-serif text-[22px] font-semibold tracking-tight text-foreground leading-tight">
