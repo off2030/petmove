@@ -5,6 +5,7 @@ import { useCases } from './cases-context'
 import { formatDate } from '@/lib/utils'
 import { CaseList, filterCases } from './case-list'
 import { CaseDetail, CaseDetailEmpty } from './case-detail'
+import { CaseHeader } from './case-header'
 import { CaseHistory } from './case-history'
 import { createCase } from '@/lib/actions/create-case'
 import { createCaseWithData } from '@/lib/actions/create-case-with-data'
@@ -738,6 +739,9 @@ function Inner() {
                   </div>
                 )}
               </div>
+
+              {/* 상세 상단 고정 헤더 — 스크롤되는 필드 위에 남아 케이스 정체성을 잡아준다. */}
+              {selectedCase && <CaseHeader caseRow={selectedCase} />}
 
               {/* Card (scrolls inside) — 홈과 동일 패턴
                   peer: 모바일에서 카드 내부 input/textarea 포커스 시
