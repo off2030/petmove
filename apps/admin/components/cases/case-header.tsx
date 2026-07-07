@@ -50,24 +50,24 @@ export function CaseHeader({ caseRow }: { caseRow: CaseRow }) {
   return (
     <div className="shrink-0 pb-4 border-b border-border/60">
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-baseline gap-2.5 flex-wrap">
-            <span className="font-serif text-[22px] font-semibold tracking-tight text-foreground leading-tight">
-              {petName || <span className="text-muted-foreground/50">이름 없음</span>}
+        <div className="min-w-0 flex items-baseline gap-x-2.5 gap-y-1 flex-wrap">
+          <span className="font-serif text-[22px] font-semibold tracking-tight text-foreground leading-tight">
+            {petName || <span className="text-muted-foreground/50">이름 없음</span>}
+          </span>
+          {customerName && (
+            <span className="font-serif text-[22px] font-normal tracking-tight text-muted-foreground leading-tight">
+              {customerName}
             </span>
-            {customerName && (
-              <span className="text-[14px] text-muted-foreground">{customerName}</span>
-            )}
-          </div>
+          )}
           {metaParts.length > 0 && (
-            <div className="mt-1 text-[13px] text-muted-foreground">
+            <span className="text-[13px] text-muted-foreground ml-0.5">
               {metaParts.map((p, i) => (
                 <span key={i}>
                   {i > 0 && <span className="text-muted-foreground/40 mx-1.5 select-none">·</span>}
                   {p}
                 </span>
               ))}
-            </div>
+            </span>
           )}
         </div>
 
