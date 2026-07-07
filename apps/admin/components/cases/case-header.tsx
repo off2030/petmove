@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import type { CaseRow } from '@petmove/domain'
-import { buildFieldSpecs, renderFieldValue } from '@petmove/domain'
+import { buildFieldSpecs } from '@petmove/domain'
 import { useCases } from './cases-context'
 import { destCode } from '@/lib/country-code'
 
@@ -20,12 +20,13 @@ export function CaseHeader({ caseRow }: { caseRow: CaseRow }) {
   const specs = useMemo(() => buildFieldSpecs(fieldDefs), [fieldDefs])
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
-  // select 필드(종·성별) → 옵션 라벨. 빈 값이면 '—' 대신 빈 문자열.
+  // select 필드(종·성별) → 옵션의 한글 라벨. renderFieldValue 는 영문 우선이라
+  // 헤더에선 label_ko 를 직접 뽑는다 (종을 '강아지/고양이'로 한글 표시).
   function selectLabel(key: string, raw: unknown): string {
+    if (raw === null || raw === undefined || raw === '') return ''
     const spec = specs.find((s) => s.key === key)
-    if (!spec) return ''
-    const r = renderFieldValue(spec, raw)
-    return r === '—' ? '' : r
+    const opt = spec?.options?.find((o) => o.value === raw)
+    return opt?.label_ko ?? String(raw)
   }
 
   const speciesLabel = selectLabel('species', data.species)
@@ -54,19 +55,19 @@ export function CaseHeader({ caseRow }: { caseRow: CaseRow }) {
             <span className="font-serif text-[22px] font-semibold tracking-tight text-foreground leading-tight">
               {petName || <span className="text-muted-foreground/50">이름 없음</span>}
             </span>
-            {metaParts.length > 0 && (
-              <span className="text-[13px] text-muted-foreground">
-                {metaParts.map((p, i) => (
-                  <span key={i}>
-                    {i > 0 && <span className="text-muted-foreground/40 mx-1.5 select-none">·</span>}
-                    {p}
-                  </span>
-                ))}
-              </span>
+            {customerName && (
+              <span className="text-[14px] text-muted-foreground">{customerName}</span>
             )}
           </div>
-          {customerName && (
-            <div className="mt-1 text-[14px] text-muted-foreground truncate">{customerName}</div>
+          {metaParts.length > 0 && (
+            <div className="mt-1 text-[13px] text-muted-foreground">
+              {metaParts.map((p, i) => (
+                <span key={i}>
+                  {i > 0 && <span className="text-muted-foreground/40 mx-1.5 select-none">·</span>}
+                  {p}
+                </span>
+              ))}
+            </div>
           )}
         </div>
 
