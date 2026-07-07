@@ -396,6 +396,70 @@ function sanitizeForFont(text: string): string {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC')
 }
 
+/**
+ * 해외주소(자유텍스트 한 칸)에서 우편번호를 분리한다.
+ * 별도 우편번호 필드가 없는 address_overseas 를 EU/UK 증명서의
+ * Address / Address2 / Postal code 3칸으로 쪼갤 때 사용.
+ *
+ * 오추출 방지를 위해 **마지막 콤마 조각만** 검사한다 (거리번호 "1060 …" 등이
+ * 우편번호로 잘못 잡히지 않도록). 조각이 1개뿐이면 손대지 않는다.
+ * 지원 형식: 영국(SW7 5RR) → 미국 ZIP(12345/12345-6789) → 일반 숫자(4~6자리,
+ * 조각의 맨앞·맨뒤). 독일 "10115 Berlin"·프랑스 "75001 Paris" 는 US ZIP 규칙이 잡음.
+ */
+/** 한 콤마 조각에서 우편번호를 탐지. 없으면 null. */
+function detectPostalInSegment(seg: string): { postal: string; rest: string } | null {
+  // 1) 영국 우편번호 (outward + space + inward, 예: SW7 5RR, EC1A 1BB)
+  let m = seg.match(/\b([A-Z]{1,2}\d[A-Z\d]?)\s+(\d[A-Z]{2})\b/i)
+  if (m) return { postal: `${m[1]} ${m[2]}`.toUpperCase(), rest: seg.replace(m[0], '') }
+  // 2) 미국 ZIP (5자리·ZIP+4) — 독일/프랑스 5자리 숫자 우편번호도 포함
+  m = seg.match(/\b(\d{5}(?:-\d{4})?)\b/)
+  if (m) return { postal: m[1], rest: seg.replace(m[0], '') }
+  // 3) 일반 숫자 우편번호 (4~6자리) — 조각의 맨앞 또는 맨뒤일 때만 (거리번호 오추출 방지)
+  m = seg.match(/^(\d{4,6})\b/) || seg.match(/\b(\d{4,6})$/)
+  if (m) return { postal: m[1], rest: seg.replace(m[1], '') }
+  return null
+}
+
+function extractOverseasPostal(raw: unknown): { postal: string; rest: string } {
+  const s = typeof raw === 'string' ? raw.trim() : ''
+  if (!s) return { postal: '', rest: '' }
+  const segments = s.split(',').map(x => x.trim()).filter(Boolean)
+  if (segments.length < 2) return { postal: '', rest: s } // 단일 조각 — 거리번호 오추출 방지
+  // 마지막 조각을 먼저 본다. 마지막이 순수 알파벳(국가명일 확률↑)이고 조각이 3개 이상이면
+  // 바로 앞 조각(도시+우편)까지 본다 — "street, 10115 Berlin, Germany" 형태 대응.
+  const tryIdx = [segments.length - 1]
+  if (segments.length >= 3 && /^[A-Za-z.\s]+$/.test(segments[segments.length - 1])) {
+    tryIdx.push(segments.length - 2)
+  }
+  for (const idx of tryIdx) {
+    const d = detectPostalInSegment(segments[idx])
+    if (!d) continue
+    const newSeg = d.rest.replace(/^[,\s]+|[,\s]+$/g, '').trim()
+    const out = segments.slice()
+    if (newSeg) out[idx] = newSeg
+    else out.splice(idx, 1)
+    return { postal: d.postal, rest: out.join(', ') }
+  }
+  return { postal: '', rest: s }
+}
+
+/**
+ * 해외주소를 Address / Address2 / Postal code 로 분리.
+ * 우편번호를 먼저 떼어낸 나머지를 address_part 와 동일 규칙으로 street/locality 로 쪼갠다
+ * (앞부분=street, 뒤 최대 3조각=locality). 우편번호는 locality 에서 빠져 중복 표기 방지.
+ */
+function splitOverseasAddress(raw: unknown): { street: string; locality: string; postal: string } {
+  const { postal, rest } = extractOverseasPostal(raw)
+  const segments = rest.split(',').map(x => x.trim()).filter(Boolean)
+  if (segments.length <= 1) return { street: rest, locality: '', postal }
+  const streetCount = Math.max(1, segments.length - 3)
+  return {
+    street: segments.slice(0, streetCount).join(', '),
+    locality: segments.slice(streetCount).join(', '),
+    postal,
+  }
+}
+
 /** rabies_dates: string[] 또는 {date, ...}[] 둘 다 지원 → 최신순 날짜 배열 */
 function sortedDesc(dates: unknown): string[] {
   if (!Array.isArray(dates)) return []
@@ -2263,6 +2327,13 @@ function resolveField(
     const streetCount = Math.max(1, segments.length - 3)
     if (part === 'street') return segments.slice(0, streetCount).join(', ')
     return segments.slice(streetCount).join(', ')
+  }
+
+  // 해외주소 → street / locality / postal 분리 (우편번호를 자유텍스트에서 추출).
+  const ovMatch = transform?.match(/^overseas_addr:(street|locality|postal)$/)
+  if (ovMatch) {
+    const parts = splitOverseasAddress(raw)
+    return parts[ovMatch[1] as 'street' | 'locality' | 'postal']
   }
 
   if (transform === 'date_or_age') {

@@ -1186,16 +1186,18 @@
       },
       "I5_consignee_address": {
         "source": "address_overseas",
-        "transform": "address_part:street",
-        "note": "1=스트리트"
+        "transform": "overseas_addr:street",
+        "note": "1=스트리트 (우편번호 제외)"
       },
       "I5_consignee_address2": {
         "source": "address_overseas",
-        "transform": "address_part:locality",
-        "note": "2=시/지역/국가"
+        "transform": "overseas_addr:locality",
+        "note": "2=시/지역/국가 (우편번호 제외)"
       },
       "I5_consignee_postal_code": {
-        "source": null
+        "source": "address_overseas",
+        "transform": "overseas_addr:postal",
+        "note": "해외주소 자유텍스트 끝의 우편번호 자동 추출"
       },
       "I5_consignee_tel": {
         "source": "phone",
@@ -1556,16 +1558,18 @@
       },
       "I3_consignee_address": {
         "source": "address_overseas",
-        "transform": "address_part:street",
-        "note": "1=스트리트"
+        "transform": "overseas_addr:street",
+        "note": "1=스트리트 (우편번호 제외)"
       },
       "I3_consignee_address2": {
         "source": "address_overseas",
-        "transform": "address_part:locality",
-        "note": "2=시/지역/국가"
+        "transform": "overseas_addr:locality",
+        "note": "2=시/지역/국가 (우편번호 제외)"
       },
       "I3_consignee_postal_code": {
-        "source": null
+        "source": "address_overseas",
+        "transform": "overseas_addr:postal",
+        "note": "해외주소 자유텍스트 끝의 우편번호 자동 추출"
       },
       "I3_consignee_tel": {
         "source": "phone",
