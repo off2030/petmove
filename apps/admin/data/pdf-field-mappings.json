@@ -1159,7 +1159,7 @@
   },
   "AnnexIII": {
     "template": "ANNEX_III.pdf",
-    "description": "ANNEX III — EU/영국/스위스/아일랜드 수입용 반려동물 건강증명서",
+    "description": "ANNEX III (Reg. (EU) 2026/131) — EU 회원국 수입용 반려동물 건강증명서 + Annex V Part 2 소유자 비상업적 이동 선언",
     "filename": "Annex_III_{pet_name}.pdf",
     "dateFormat": "dmy",
     "flatten": true,
