@@ -519,6 +519,7 @@ export function ApplyForm({
   appDestinationsOnly = false,
   prefillOwner,
   prefillName,
+  isAppleLogin = false,
 }: {
   orgId: string
   orgName: string
@@ -537,6 +538,13 @@ export function ApplyForm({
    * prefillOwner 가 있으면 소유주 단계를 건너뛰므로 이 값은 무시된다.
    */
   prefillName?: string | null
+  /**
+   * Apple 로그인 사용자 여부. true 면 온보딩(step 2)에서 영문 이름을 필수 검사에서 제외한다.
+   * App Store Guideline 4.0(Sign in with Apple): Apple 로그인 직후 이름 재입력을 강요하지 말 것.
+   * 영문 이름(여권 로마자 실명)은 Apple 이 제공할 수 없어 자동 채움이 불가 → 로그인 후
+   * '내 정보 > 보호자 정보'에서 입력·수정 가능(서류 생성 시 반영). 다른 provider 는 기존대로 필수.
+   */
+  isAppleLogin?: boolean
 }) {
   const router = useRouter()
   const [lang, setLang] = useState<Lang>('ko')
@@ -754,7 +762,9 @@ export function ApplyForm({
       if (!destination) miss.add('destination')
     } else if (s === 2) {
       if (!customerName.trim()) miss.add('customerName')
-      if (!customerLastNameEn.trim() || !customerFirstNameEn.trim()) miss.add('customerNameEn')
+      // Apple 로그인은 영문 이름을 필수로 강요하지 않는다(App Store Guideline 4.0).
+      // 비워도 다음 단계 진행 가능 → 로그인 후 '내 정보 > 보호자 정보'에서 입력.
+      if (!isAppleLogin && (!customerLastNameEn.trim() || !customerFirstNameEn.trim())) miss.add('customerNameEn')
       if (!phone.trim()) miss.add('phone')
       if (!addressKr.trim()) miss.add('addressKr')
       if (!miss.has('phone') && !/^010\d{8}$/.test(phone)) {

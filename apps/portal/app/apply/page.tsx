@@ -1,6 +1,7 @@
 import { ApplyForm, type OwnerPrefill } from './apply-form'
 import { listMyCases } from '@/lib/actions/cases'
 import { getMyProfile } from '@/lib/actions/profile'
+import { getCurrentUser } from '@petmove/auth/server'
 
 // 조직 표시 없는 /apply = 펫무브 직영(platform). 어느 병원/운송 업체에도 안 속하는
 // 고객 직접 신청 → 직영 org 로 귀속, super_admin 만 관리. (조직별 신청은 /apply/<slug>)
@@ -63,6 +64,14 @@ export default async function ApplyPage() {
   const rawName = profile?.display_name?.trim() ?? null
   const prefillName = rawName && rawName.toLowerCase() !== emailPrefix ? rawName : null
 
+  // Apple 로그인 사용자는 온보딩에서 영문 이름을 필수로 받지 않는다(App Store Guideline 4.0:
+  // Sign in with Apple 직후 이름 입력을 강요하면 반려). 영문 이름은 애플이 제공할 수 없는 값
+  // (여권 일치 로마자 실명)이라 자동 채움이 불가 → 로그인 후 '내 정보 > 보호자 정보'에서
+  // 입력·수정하고 서류 생성 시 반영. 구글·카카오 등 다른 로그인은 기존대로 필수 유지.
+  // getCurrentUser 는 cache() 되어 getMyProfile 이 이미 부른 것을 재사용(추가 왕복 없음).
+  const authUser = await getCurrentUser()
+  const isAppleLogin = authUser?.app_metadata?.provider === 'apple'
+
   return (
     <ApplyForm
       orgId={DIRECT_ORG_ID}
@@ -71,6 +80,7 @@ export default async function ApplyPage() {
       appDestinationsOnly
       prefillOwner={prefillOwner}
       prefillName={prefillName}
+      isAppleLogin={isAppleLogin}
     />
   )
 }

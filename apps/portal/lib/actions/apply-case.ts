@@ -137,11 +137,14 @@ export async function applyCase(input: ApplyInput): Promise<
   if (pets.length === 0 || pets.length > 5) {
     return { ok: false, error: '반려동물 정보가 올바르지 않습니다.' }
   }
+  // Apple 로그인 사용자는 영문 이름을 필수에서 제외(App Store Guideline 4.0 — 클라이언트
+  // 검증과 동일한 백스톱). 영문 이름은 로그인 후 '내 정보 > 보호자 정보'에서 입력·수정 가능.
+  const isAppleLogin = user?.app_metadata?.provider === 'apple'
   const sharedMissing =
     !input.destination?.trim() ||
     !input.customer_name?.trim() ||
-    !input.customer_last_name_en?.trim() ||
-    !input.customer_first_name_en?.trim() ||
+    (!isAppleLogin &&
+      (!input.customer_last_name_en?.trim() || !input.customer_first_name_en?.trim())) ||
     !input.phone?.trim() ||
     !input.address_kr?.trim()
   const petMissing = pets.some(
@@ -293,7 +296,8 @@ export async function applyCase(input: ApplyInput): Promise<
         // 공개 신청폼 출처 표시 — DB 트리거가 이 값으로 운영자 봇 알림을 발송한다.
         source: 'apply_form',
         customer_name: input.customer_name,
-        customer_name_en: `${input.customer_first_name_en} ${input.customer_last_name_en}`,
+        // 영문 이름 미입력(Apple 로그인 후 나중 입력) 시 빈 문자열로 저장 — 외톨이 공백 방지.
+        customer_name_en: `${input.customer_first_name_en} ${input.customer_last_name_en}`.trim(),
         pet_name: p.pet_name,
         pet_name_en: p.pet_name_en,
         destination: input.destination,
