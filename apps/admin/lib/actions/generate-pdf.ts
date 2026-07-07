@@ -653,18 +653,11 @@ async function generateMulti(
   const { data: rows, error } = await supabase.from('cases').select('*').in('id', caseIds)
   if (error) return { ok: false, error: error.message }
   // Preserve the order of caseIds + 활성 목적지 기준 평탄화.
-  // destination 미지정(구 클라이언트 번들·destination 없이 호출) + 단일 목적지면 그 토큰으로
-  // 폴백 — 단일 목적지도 by_dest 통일(B) 이후 scoped 값(해외주소·내원일 등)이 by_dest 에만
-  // 있으므로, flatten 을 no-op 으로 두면 그 값들이 top-level 로 안 올라와 PDF 에서 통째로
-  // 빈다(예: UK 증명서 해외주소 누락). 단일 `generate`/`recommendForm25RabiesSelection` 와 동일 폴백.
   const byId = new Map((rows ?? []).map(r => [(r as CaseRow).id, r as CaseRow]))
   const ordered = caseIds
     .map(id => byId.get(id))
     .filter((c): c is CaseRow => !!c)
-    .map(c => flattenCaseForDestination(
-      c,
-      options?.destination ?? (parseDestinations(c.destination).length === 1 ? c.destination : null),
-    ))
+    .map(c => flattenCaseForDestination(c, options?.destination ?? null))
   if (ordered.length === 0) return { ok: false, error: '대상 동물을 찾을 수 없습니다' }
 
   const results = await fillPdfMulti(formKey, ordered, options)
