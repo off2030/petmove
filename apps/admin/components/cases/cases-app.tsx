@@ -651,7 +651,7 @@ function Inner() {
               )}
               <div className="h-full flex flex-col gap-4">
               {/* Top menu bar: 돌아가기 / 변경이력 · 복제 · 삭제 — Editorial 서브 메뉴 */}
-              <div className="h-9 shrink-0 flex items-center justify-between">
+              <div className="h-9 shrink-0 px-md md:px-lg flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => {
@@ -756,7 +756,7 @@ function Inner() {
               </div>
 
               {/* Footer: 접수일/수정일 + 이력/삭제 */}
-              <div className="shrink-0 pt-2 text-[13px] text-muted-foreground flex items-center justify-between flex-wrap gap-y-2 max-md:peer-focus-within:hidden">
+              <div className="shrink-0 px-md md:px-lg pt-2 text-[13px] text-muted-foreground flex items-center justify-between flex-wrap gap-y-2 max-md:peer-focus-within:hidden">
                 {selectedCase ? (
                   <>
                     <span className="hidden md:inline">
