@@ -30,6 +30,7 @@ import { getDepartureDate, resolveCerts, buildCaseJourneyContext, SINGLE_DOSE_RA
 import type { CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { evaluateCase } from './verification-context'
+import { toastError, toastInfo } from '@/lib/toast-bus'
 import { listOrgDisabledChecks } from '@/lib/actions/org-disabled-checks'
 import { inspectMissingPdfFields } from '@/lib/actions/inspect-missing-pdf-fields'
 
@@ -357,7 +358,7 @@ function Inner() {
     if (result.ok) {
       addLocalCase(result.case)
     } else {
-      alert(`케이스 생성 실패: ${result.error}`)
+      toastError('케이스 생성 실패', result.error)
     }
   }, [addLocalCase])
 
@@ -408,8 +409,9 @@ function Inner() {
         if (existing.ok && existing.case) {
           selectCase(existing.case.id)
           await uploadFilesToNotes(existing.case, files)
-          alert(
-            `이미 등록된 마이크로칩입니다 — 기존 케이스(${existing.case.pet_name ?? existing.case.customer_name ?? '이름없음'})에 파일을 추가했습니다.`,
+          toastInfo(
+            '이미 등록된 마이크로칩',
+            `기존 케이스(${existing.case.pet_name ?? existing.case.customer_name ?? '이름없음'})에 파일을 추가했습니다.`,
           )
           return
         }
@@ -417,7 +419,7 @@ function Inner() {
 
       // 4. 새 케이스 생성
       const created = await createCaseWithData(seed)
-      if (!created.ok) { alert(created.error); return }
+      if (!created.ok) { toastError('케이스 생성 실패', created.error); return }
       addLocalCase(created.case)  // context가 자동 선택
 
       // 5. 파일을 새 케이스의 notes에 업로드
@@ -499,7 +501,7 @@ function Inner() {
           ...(rabiesIndices ? { rabiesIndices } : {}),
         })
       } catch (error) {
-        alert(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
+        toastError('PDF 다운로드 실패', error instanceof Error ? error.message : '잠시 후 다시 시도하세요.')
       }
     },
     [includeSignature, includeVet, cases, confirmIfFailing],
@@ -529,13 +531,13 @@ function Inner() {
     const row = cases.find((c) => c.id === caseId)
     if (row && !(await confirmIfFailing(row, destination))) return
     const p = await previewSiblings(caseId, formKey, destination)
-    if (!p.ok) { alert(p.error); return }
+    if (!p.ok) { toastError('서류 준비 실패', p.error); return }
     if (p.preview.cases.length <= 1) {
       const ids = p.preview.cases.map(c => c.id)
       try {
         await downloadMultipartPdfRequest({ kind: 'multi', formKey, caseIds: ids, includeVet, destination }, p.preview.docCount)
       } catch (error) {
-        alert(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
+        toastError('PDF 다운로드 실패', error instanceof Error ? error.message : '잠시 후 다시 시도하세요.')
       }
       return
     }

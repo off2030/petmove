@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import type { FieldSpec } from '@petmove/domain'
 import { calculateAge, coerceInputValue, renderFieldValue, isDestinationScopedKey, resolveActiveDestination } from '@petmove/domain'
 import { updateCaseField } from '@/lib/actions/cases'
+import { persistField } from '@/lib/toast-bus'
 import { CopyButton } from '@/components/cases/copy-button'
 import { useCases } from '@/components/cases/cases-context'
 import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
@@ -227,18 +228,13 @@ export function EditableField({
       variant: 'destructive',
     })
     if (!ok) return
-    // Optimistic — UI 즉시 반영. 실패 시 rollback.
-    const prevValue = rawValue
+    // Optimistic — UI 즉시 반영. 실패 시 값 보존 + '다시 시도' 토스트(persistField).
     updateLocalCaseField(caseId, spec.storage, spec.key, null, destArg)
     setError(null)
     setEditing(false)
-    void (async () => {
-      const result = await updateCaseField(caseId, spec.storage, spec.key, null, destArg)
-      if (!result.ok) {
-        updateLocalCaseField(caseId, spec.storage, spec.key, prevValue, destArg)
-        setError(result.error)
-      }
-    })()
+    void persistField(spec.label, () =>
+      updateCaseField(caseId, spec.storage, spec.key, null, destArg),
+    )
   }
 
   function handleEnterEdit() {
@@ -281,20 +277,15 @@ export function EditableField({
     }
 
     const coerced = coerceInputValue(spec, value)
-    const prev = rawValue
-    // Optimistic — UI 즉시 반영. 실패 시 rollback.
+    // Optimistic — UI 즉시 반영. 실패 시 값 보존 + '다시 시도' 토스트(persistField).
     updateLocalCaseField(caseId, spec.storage, spec.key, coerced, destArg)
     setError(null)
     setEditing(false)
     setSavedFlash(true)
     setTimeout(() => setSavedFlash(false), 1500)
-    void (async () => {
-      const result = await updateCaseField(caseId, spec.storage, spec.key, coerced, destArg)
-      if (!result.ok) {
-        updateLocalCaseField(caseId, spec.storage, spec.key, prev, destArg)
-        setError(result.error)
-      }
-    })()
+    void persistField(spec.label, () =>
+      updateCaseField(caseId, spec.storage, spec.key, coerced, destArg),
+    )
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -309,16 +300,11 @@ export function EditableField({
 
   /** Save without closing edit mode (used by date inputs that auto-save on change) */
   function autoSave(coerced: unknown) {
-    const prev = rawValue
     updateLocalCaseField(caseId, spec.storage, spec.key, coerced, destArg)
     setError(null)
-    void (async () => {
-      const result = await updateCaseField(caseId, spec.storage, spec.key, coerced, destArg)
-      if (!result.ok) {
-        updateLocalCaseField(caseId, spec.storage, spec.key, prev, destArg)
-        setError(result.error)
-      }
-    })()
+    void persistField(spec.label, () =>
+      updateCaseField(caseId, spec.storage, spec.key, coerced, destArg),
+    )
   }
 
   function handleBlur() {
@@ -338,17 +324,14 @@ export function EditableField({
 
   function saveDateValue(v: string) {
     const value = v.trim() || null
-    const prev = rawValue
     updateLocalCaseField(caseId, spec.storage, spec.key, value, destArg)
     setError(null)
     setEditing(false)
     void (async () => {
-      const result = await updateCaseField(caseId, spec.storage, spec.key, value, destArg)
-      if (!result.ok) {
-        updateLocalCaseField(caseId, spec.storage, spec.key, prev, destArg)
-        setError(result.error)
-        return
-      }
+      const result = await persistField(spec.label, () =>
+        updateCaseField(caseId, spec.storage, spec.key, value, destArg),
+      )
+      if (!result || !result.ok) return
       // 자동 채움 결과 반영 — 엔진이 다른 필드들을 채웠으면 data 통째 교체 + 컬럼도 갱신.
       // (by_dest 경로에선 server action 이 auto-fill skip — autoFilled 없음.)
       if (result.autoFilled) {
@@ -402,16 +385,11 @@ export function EditableField({
 
   function handleSelectChange_custom(val: string | null) {
     const coerced = val ? coerceInputValue(spec, val) : null
-    const prev = rawValue
     updateLocalCaseField(caseId, spec.storage, spec.key, coerced, destArg)
     setError(null)
-    void (async () => {
-      const result = await updateCaseField(caseId, spec.storage, spec.key, coerced, destArg)
-      if (!result.ok) {
-        updateLocalCaseField(caseId, spec.storage, spec.key, prev, destArg)
-        setError(result.error)
-      }
-    })()
+    void persistField(spec.label, () =>
+      updateCaseField(caseId, spec.storage, spec.key, coerced, destArg),
+    )
   }
 
   const valueCell = (

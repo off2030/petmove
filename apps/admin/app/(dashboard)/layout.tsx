@@ -19,6 +19,7 @@ import { getActiveOrgId, getImpersonationInfo } from '@/lib/supabase/active-org'
 import { listAllOrgs, listSuperAdminsAll, type OrgSummary, type SuperAdminEntry } from '@/lib/actions/super-admin'
 import { listMyConversations, listConversationMessages, type ConversationListItem, type ConversationMessagesResult } from '@/lib/actions/chat'
 import { InstallPrompt } from '@/components/pwa/install-prompt'
+import { Toaster } from '@/components/ui/toaster'
 
 export const dynamic = 'force-dynamic'
 
@@ -170,6 +171,7 @@ export default async function DashboardLayout({
               initialConvSnapshots={initialConvSnapshots}
             />
             <InstallPrompt />
+            <Toaster />
           </CalculatorDataProvider>
         </VaccineDataProvider>
         </DestinationOverridesProvider>
