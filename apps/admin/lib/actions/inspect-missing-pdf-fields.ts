@@ -2,7 +2,7 @@
 
 import { createClient } from '@petmove/auth/server'
 import type { CaseRow } from '@petmove/domain'
-import { flattenCaseForDestination, getEffectiveVaccineList } from '@petmove/domain'
+import { flattenCaseForDestination, getEffectiveVaccineEntries, vaccineMatchesSpecies } from '@petmove/domain'
 import mappingsRaw from '@/data/pdf-field-mappings.json'
 import {
   groupSourceKey,
@@ -187,8 +187,14 @@ export async function inspectMissingPdfFields(
     const data = (caseRow.data ?? {}) as Record<string, unknown>
     const species = String(data.species ?? '').toLowerCase()
     const extraFields = (data.extra_visible_fields as string[] | undefined) ?? []
+    // 종 필터 포함 entries 로 allowed 백신 계산 — 촌충국 내부구충처럼 개 전용
+    // 항목이 고양이 케이스에서 "비어 있는 정보"로 오탐되지 않도록. 렌더(case-detail·
+    // 공유 다이얼로그)와 동일하게 vaccineMatchesSpecies 로 걸러낸다. (org 커스텀
+    // 목적지 config 는 기존 getEffectiveVaccineList 도 안 봤으므로 null 유지.)
     const allowedVaccines = new Set(
-      getEffectiveVaccineList(destination ?? caseRow.destination, extraFields),
+      getEffectiveVaccineEntries(destination ?? caseRow.destination, extraFields, null)
+        .filter((e) => vaccineMatchesSpecies(e, species))
+        .map((e) => e.key),
     )
 
     const missingLabels = new Set<string>()
