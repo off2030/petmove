@@ -346,7 +346,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       </div>
 
       {/* 인라인: 날짜 chips. 클릭하면 모달 열림. */}
-      <div className="min-w-0 flex items-baseline gap-[10px] pt-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
+      <div className="min-w-0 flex items-baseline gap-[10px] pt-1 overflow-x-auto whitespace-nowrap scrollbar-hide pl-2.5 -ml-2.5">
         {sortedForExpand.length === 0 ? (
           editMode ? (
             <button type="button" onClick={openEditModal}
