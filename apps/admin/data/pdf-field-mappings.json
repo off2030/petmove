@@ -4701,7 +4701,7 @@
   },
   "VHC_MIP": {
     "template": "VHC_MIP.pdf",
-    "description": "남아공 Onderstepoort 진단시료 수입용 Veterinary Health Certificate (MIP, April 2019). ARC-OVI 시료 발송에 동봉. page1=식별/원산지(text_1~16), page2=수취/운송/건강확약/발급(text_17~31). 발송 병원=수출자/발급수의사, 수취=ARC-Onderstepoort 고정. RESPONSIBLE VETERINARY AUTHORITY·SA IMPORT NUMBER·Net weight·ID marks·Means of transport·Seal numbers 는 수동/케이스별이라 비움.",
+    "description": "남아공 Onderstepoort 진단시료 수입용 Veterinary Health Certificate (MIP, April 2019). ARC-OVI 시료 발송에 동봉. page1=식별/원산지(text_1~16), page2=수취/운송/건강확약/발급(text_17~31). 발송 병원=수출자/발급수의사, 수취=ARC-Onderstepoort 고정. SA IMPORT NUMBER·Means of transport·Seal numbers 는 수동/케이스별이라 비움. Net weight=0.3kg 고정.",
     "filename": "VHC_MIP_{pet_name}.pdf",
     "dateFormat": "ymd_dash",
     "flatten": true,
@@ -4712,6 +4712,7 @@
       "text_5atie":  { "source": null, "default": "Serum 3ml × 3, Unstained blood smear × 3, EDTA whole blood 0.5ml × 10", "note": "p1 A.1.a) Type of sample — 수량 포함(ARC-OVI 시료 내역과 동일)" },
       "text_6vgec":  { "source": "species", "transform": "species_paren_en", "note": "p1 A.1.b) Species of origin — Canine(Dog)/Feline(Cat)" },
       "text_7krhr":  { "source": null, "default": "1 package", "note": "p1 A.2 Type and number of packages" },
+      "text_9wcbo":  { "source": null, "default": "0.3kg", "note": "p1 A.3 Net weight of consignment — ARC-OVI 표준 시료 무게 고정" },
       "text_10jlvd": { "source": "microchip_combined", "transform": "prefix:Microchip No. ", "note": "p1 A.4 Identification marks — 'Microchip No. {칩번호}'(주칩+보조칩)" },
       "text_12jirj": { "source": null, "transform": "vet:country", "note": "p1 B.1 Origin of specimen/s — 국가명만 (검체 원산지 국가)" },
       "text_14iwcs": { "source": null, "transform": "vet:clinic_en", "note": "p1 B.2 Name and Address of exporter — 병원명" },
