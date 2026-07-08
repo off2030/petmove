@@ -671,10 +671,11 @@ export function InspectionTable({
               </td>
             )}
             {!hidden.has('date') && (
-              <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
+              <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }}>
                 <DateCell
                   value={row.date}
-                  editable={row.dateEditable}
+                  // 검사 탭에서는 검사일 편집 불가 — 수정은 상세페이지에서만.
+                  editable={false}
                   onSave={(v) => handleDateSave(row, v)}
                   overdueDays={
                     readInspectionStatus(row) === 'waiting'
