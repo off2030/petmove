@@ -26,7 +26,7 @@ import { InspectionTable, readInspectionStatus, type InspectionRow } from './ins
 import { DestinationCell } from './destination-cell'
 import { updateCaseField } from '@/lib/actions/cases'
 import { downloadPdfRequest, type PdfDownloadRequest } from '@/lib/pdf-download'
-import { PageShell, PageTabs } from '@petmove/ui'
+import { PageShell, PageTabs, DateTextField } from '@petmove/ui'
 
 
 /* DestinationCell 은 ./destination-cell 로 이동 — 검사·신고·서류·목록 공통 사용. */
@@ -1438,13 +1438,11 @@ function ShipmentPackDialog({ label, rows, variant, consigneeLab, onClose }: {
           </div>
           <div className="flex-1">
             <label className="text-[12px] text-muted-foreground mb-1 block">발송일 <span className="text-muted-foreground/50">(비우면 오늘)</span></label>
-            <input
-              type="text"
+            <DateTextField
               value={shipDate}
-              onChange={(e) => setShipDate(e.target.value)}
-              placeholder="YYYY-MM-DD"
-              inputMode="numeric"
-              className="w-full h-9 px-2 rounded-md border border-border/80 bg-background text-sm text-foreground placeholder:text-muted-foreground"
+              onChange={setShipDate}
+              block
+              className="h-9 rounded-md border border-border/80 bg-background pl-2 text-sm text-foreground focus-visible:outline-none placeholder:text-muted-foreground"
             />
           </div>
         </div>
