@@ -644,6 +644,25 @@ function reportDeadline(row: CaseRow): string {
 }
 
 /**
+ * 신고기한 임박 경고 여부 — 기한이 7일 이내(경과분 포함)이고 수입·수출이 아직 '진행중/완료'가
+ * 아닐 때. 신고기한·출국일 날짜를 함께 경고색으로 물들이는 데 쓴다.
+ */
+function isImportDeadlineWarning(row: CaseRow): boolean {
+  const deadline = reportDeadline(row)
+  if (!deadline) return false
+  const d = new Date(deadline)
+  if (isNaN(d.getTime())) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  d.setHours(0, 0, 0, 0)
+  const diffDays = Math.floor((d.getTime() - today.getTime()) / 86400000)
+  if (diffDays > 7) return false
+  const suppressed = (s: string) => s === 'in_progress' || s === 'done'
+  if (suppressed(effectiveImportStatus(row)) || suppressed(effectiveExportStatus(row))) return false
+  return true
+}
+
+/**
  * 미완료 그룹 내 진행 순위 — 0=대기중(아무것도 시작 안 됨), 1=진행중(수입/수출 중 하나라도 진행·완료).
  * 같은 목적지 안에서 대기중을 진행중보다 앞에 둔다.
  */
@@ -711,23 +730,19 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     width: BASE_COL_W,
     // 일본: 저장된 값이 없으면 활성 목적지 출국일 - 40일로 자동 계산하여 표시.
     resolveValue: (row) => reportDeadline(row),
-    // 기한이 7일 이내(포함 경과분)이고 수입·수출 상태가 모두 '진행중/완료'가 아닐 때 주황.
-    cellClass: (row) => {
-      const deadline = reportDeadline(row)
-      if (!deadline) return ''
-      const d = new Date(deadline)
-      if (isNaN(d.getTime())) return ''
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      d.setHours(0, 0, 0, 0)
-      const diffDays = Math.floor((d.getTime() - today.getTime()) / 86400000)
-      if (diffDays > 7) return ''
-      const suppressed = (s: string) => s === 'in_progress' || s === 'done'
-      if (suppressed(effectiveImportStatus(row)) || suppressed(effectiveExportStatus(row))) return ''
-      return 'text-pmw-warning'
-    },
+    // 기한 임박 시 주황 — 출국일 날짜도 함께 물든다.
+    cellClass: (row) => (isImportDeadlineWarning(row) ? 'text-pmw-warning' : ''),
   },
-  { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: BASE_COL_W, resolveValue: (row) => importReportDeparture(row) },
+  {
+    key: 'departure_date',
+    label: '출국일',
+    storage: 'column',
+    type: 'date',
+    width: BASE_COL_W,
+    resolveValue: (row) => importReportDeparture(row),
+    // 신고기한이 임박하면 출국일도 함께 경고색.
+    cellClass: (row) => (isImportDeadlineWarning(row) ? 'text-pmw-warning' : ''),
+  },
   { key: 'return_date', label: '귀국일', storage: 'data', type: 'date', width: BASE_COL_W, resolveValue: (row) => importReportReturnDate(row) },
   {
     key: 'import_import_status',
