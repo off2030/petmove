@@ -8,7 +8,7 @@ import {
   HIDDEN_EN_KEYS,
   readCaseField,
 } from '@petmove/domain'
-import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, matchesDestinationKey, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, isDestinationScopedKey, applyDestinationFieldOverride, type ExtraFieldDef } from '@petmove/domain'
+import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, matchesDestinationKey, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, isDestinationScopedKey, applyDestinationFieldOverride, HARDCODED_VACCINE_SPECIES_DEFAULTS, type ExtraFieldDef } from '@petmove/domain'
 import { buildShareFieldDescriptors } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
@@ -114,10 +114,12 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
     if (key === 'rabies_titer' && hideRabiesTiterOneWay) return false
     const e = vaccineEntries.find(v => v.key === key)
     if (!e) return false
-    // 사용자가 항목 메뉴에서 명시적으로 켠 백신(예: 켄넬코프·독감)은 종 필터를 무시하고 표시.
-    // 종 제한(dog 전용 등)은 목적지 디폴트 자동 포함용이지, 수동 추가한 항목까지 숨기면
-    // "보이기를 해도 안 나타나는" 혼란이 생긴다(종 미설정 케이스 포함).
-    if (extraFields.includes(`vaccine:${key}`)) return true
+    // 사용자가 항목 메뉴에서 명시적으로 켠 백신(예: 켄넬코프·독감)은:
+    //  - 종 미설정(알 수 없음)이면 표시 — "보이기 눌렀는데 안 나오는" 혼란 방지.
+    //  - 종이 정해졌고 백신 종과 다르면 숨김 — 예: 고양이 + 강아지전용(켄넬코프)은 부적합.
+    if (extraFields.includes(`vaccine:${key}`)) {
+      return !speciesValue || vaccineMatchesSpecies(e, speciesValue)
+    }
     return vaccineMatchesSpecies(e, speciesValue)
   }
 
@@ -125,7 +127,11 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
   const toggleableForDest = TOGGLEABLE_FIELDS.filter((t) => {
     if (t.key.startsWith('vaccine:')) {
       const v = t.key.slice('vaccine:'.length)
-      return !baseVaccineKeys.includes(v) // not in destination default → toggleable
+      if (baseVaccineKeys.includes(v)) return false // already in destination default
+      // 종이 정해졌고 그 백신이 다른 종 전용이면 메뉴에서도 숨김 (예: 고양이에 켄넬코프 제안 X).
+      const sp = HARDCODED_VACCINE_SPECIES_DEFAULTS[v]
+      if (speciesValue && sp && sp !== speciesValue) return false
+      return true
     }
     return !allowedFields.has(t.key)
   })
