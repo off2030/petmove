@@ -536,13 +536,14 @@ function LabPicker({ row, options, chip, onUpdate }: {
 
 // 모든 데이터 컬럼 통일 너비.
 const BASE_W = 116
-const COLUMNS = [
-  { key: 'lab', label: '검사기관', width: 146 },
-  { key: 'date', label: '검사일', width: BASE_W },
+export type InspectionSortKey = 'lab' | 'date' | 'status'
+const COLUMNS: { key: string; label: string; width: number; sortKey?: InspectionSortKey }[] = [
+  { key: 'lab', label: '검사기관', width: 146, sortKey: 'lab' },
+  { key: 'date', label: '검사일', width: BASE_W, sortKey: 'date' },
   { key: 'pet_name', label: '반려동물', width: BASE_W },
   { key: 'customer_name', label: '보호자', width: BASE_W },
   { key: 'destination', label: '목적지', width: 146 },
-  { key: 'status', label: '진행상태', width: BASE_W },
+  { key: 'status', label: '진행상태', width: BASE_W, sortKey: 'status' },
   { key: 'departure_date', label: '출국일', width: BASE_W },
   { key: 'memo', label: '메모', width: 120 },
 ]
@@ -553,6 +554,8 @@ export function InspectionTable({
   statusOptions,
   onUpdate,
   hiddenColumns = [],
+  sortMode,
+  onSortChange,
 }: {
   rows: InspectionRow[]
   labOptions: LabOption[]
@@ -566,6 +569,9 @@ export function InspectionTable({
   ) => void
   /** 설정 → 검사 에서 숨김 처리된 컬럼 key. */
   hiddenColumns?: string[]
+  /** 현재 정렬 기준 — 상단 라벨 클릭으로 전환. */
+  sortMode?: InspectionSortKey
+  onSortChange?: (mode: InspectionSortKey) => void
 }) {
   const hidden = new Set(hiddenColumns)
   const visibleColumns = COLUMNS.filter(c => !hidden.has(c.key))
@@ -612,7 +618,22 @@ export function InspectionTable({
               className="text-left font-sans font-normal text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80 px-2 py-2.5 whitespace-nowrap border-b border-border/80"
               style={{ width: col.width, minWidth: col.width }}
             >
-              {col.label}
+              {col.sortKey && onSortChange ? (
+                <button
+                  type="button"
+                  onClick={() => onSortChange(col.sortKey!)}
+                  title={`${col.label} 기준으로 정렬`}
+                  className={cn(
+                    'inline-flex items-center gap-1 uppercase tracking-[0.14em] transition-colors',
+                    sortMode === col.sortKey ? 'text-foreground font-medium' : 'hover:text-foreground',
+                  )}
+                >
+                  {col.label}
+                  {sortMode === col.sortKey && <span aria-hidden className="text-[8px] leading-none">▼</span>}
+                </button>
+              ) : (
+                col.label
+              )}
             </th>
           ))}
         </tr>
