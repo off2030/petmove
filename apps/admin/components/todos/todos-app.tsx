@@ -810,16 +810,35 @@ export function TodosApp({
           const ca = isImportReportComplete(a) ? 1 : 0
           const cb = isImportReportComplete(b) ? 1 : 0
           if (ca !== cb) return ca - cb
-          // 2차: 같은 그룹 내에서는 활성 목적지 출국일 빠른 순(asc).
+
           const da = importReportDeparture(a)
           const db = importReportDeparture(b)
-          if (da !== db) {
+          const byDeparture = () => {
+            if (da === db) return 0
             if (!da) return 1
             if (!db) return -1
             return da.localeCompare(db)
           }
-          // 3차: 동일 출국일이면 일본 우선 + 가나다.
-          return compareByCountryOrder(a, b)
+
+          if (ca === 1) {
+            // 완료 그룹: 출국일 빠른 순(asc), 동일하면 일본 우선 + 가나다.
+            const d = byDeparture()
+            return d !== 0 ? d : compareByCountryOrder(a, b)
+          }
+
+          // 미완료(대기·진행중) 그룹: 목적지 순(일본→태국→필리핀→하와이→그 외 가나다).
+          const ra = reportDestRank(a)
+          const rb = reportDestRank(b)
+          if (ra !== rb) return ra - rb
+          // 같은 순위가 '그 외'면 활성 목적지 라벨 가나다로 정렬.
+          if (ra === IMPORT_REPORT_DEST_ORDER.length) {
+            const la = resolveTabActiveDest(a, IMPORT_REPORT_DEST_KEY) ?? ''
+            const lb = resolveTabActiveDest(b, IMPORT_REPORT_DEST_KEY) ?? ''
+            const cmp = la.localeCompare(lb, 'ko')
+            if (cmp !== 0) return cmp
+          }
+          // 같은 목적지면 출국일 빠른 순.
+          return byDeparture()
         })
     }
     if (activeTab === 'export_doc') {
