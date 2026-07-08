@@ -412,7 +412,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                 onChange={(e) => setTitle(e.target.value)}
                 rows={2}
                 maxLength={300}
-                className="mt-1 w-full px-3 py-2 rounded-md border border-muted-foreground/40 bg-background font-serif text-[14px] resize-none focus:outline-none focus:border-foreground/40"
+                className="mt-1 w-full px-3 py-2 rounded-md border border-muted-foreground/60 bg-background font-serif text-[14px] resize-none focus:outline-none focus:border-foreground/40"
               />
             </label>
             <label className="block max-w-[180px]">
@@ -422,7 +422,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
               <select
                 value={expiresInDays}
                 onChange={(e) => setExpiresInDays(Number(e.target.value))}
-                className="mt-1 w-full px-3 py-2 rounded-md border border-muted-foreground/40 bg-background font-serif text-[14px] focus:outline-none focus:border-foreground/40"
+                className="mt-1 w-full px-3 py-2 rounded-md border border-muted-foreground/60 bg-background font-serif text-[14px] focus:outline-none focus:border-foreground/40"
               >
                 <option value={1}>1일</option>
                 <option value={3}>3일</option>

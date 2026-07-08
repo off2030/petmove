@@ -183,7 +183,7 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
               maxHeight: popupPos.maxHeight,
               width: 300,
             }}
-            className="z-50 flex flex-col rounded-md border border-muted-foreground/40 bg-background shadow-md p-3 overflow-hidden"
+            className="z-50 flex flex-col rounded-md border border-muted-foreground/60 bg-background shadow-md p-3 overflow-hidden"
           >
             <div className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal flex flex-wrap gap-sm mb-3">
               {COLORS.map((c) => {

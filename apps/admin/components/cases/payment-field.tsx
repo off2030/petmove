@@ -335,7 +335,7 @@ function AmountInput({ initial, onSave, onCancel, saving }: {
       }}
       onBlur={() => setTimeout(() => { if (!saving) save() }, 150)}
       placeholder="금액"
-      className="w-28 h-8 rounded-md border border-muted-foreground/40 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="w-28 h-8 rounded-md border border-muted-foreground/60 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }
@@ -360,7 +360,7 @@ function DateInput({ initial, onSave, onCancel }: {
       onKeyDown={(e) => {
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
-      className="h-8 w-40 rounded-md border border-muted-foreground/40 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="h-8 w-40 rounded-md border border-muted-foreground/60 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }

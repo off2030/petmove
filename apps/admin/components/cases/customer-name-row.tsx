@@ -147,7 +147,7 @@ export function CustomerNameRow({
 
   const koValueCls = 'rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-muted-foreground'
   const enValueCls = 'rounded-md px-2 py-1 -mx-2 font-serif italic text-[17px] text-foreground'
-  const inputCls = 'h-8 rounded-md border border-muted-foreground/40 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
+  const inputCls = 'h-8 rounded-md border border-muted-foreground/60 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
 
   return (
     <div data-field="customer_name" className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">

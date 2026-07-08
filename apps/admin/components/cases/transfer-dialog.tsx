@@ -246,7 +246,7 @@ export function TransferDialog({ caseId, caseLabel, onClose, onSent }: Props) {
                 onChange={(e) => { setQuery(e.target.value); setOpen(true) }}
                 onFocus={() => setOpen(true)}
                 placeholder={inDrillMode ? `${drillOrg!.name} 의 멤버 검색…` : '조직명 또는 사람 이름·이메일'}
-                className="w-full pl-9 pr-3 py-2 rounded-md border border-muted-foreground/40 bg-background font-serif text-[15px] focus:outline-none focus:border-foreground/40"
+                className="w-full pl-9 pr-3 py-2 rounded-md border border-muted-foreground/60 bg-background font-serif text-[15px] focus:outline-none focus:border-foreground/40"
               />
 
               {showDropdown && (
@@ -369,7 +369,7 @@ export function TransferDialog({ caseId, caseLabel, onClose, onSent }: Props) {
               rows={3}
               maxLength={500}
               placeholder="받는 쪽에 전달할 메시지가 있다면 적어주세요."
-              className="mt-1 w-full px-3 py-2 rounded-md border border-muted-foreground/40 bg-background font-serif text-[14px] resize-none focus:outline-none focus:border-foreground/40"
+              className="mt-1 w-full px-3 py-2 rounded-md border border-muted-foreground/60 bg-background font-serif text-[14px] resize-none focus:outline-none focus:border-foreground/40"
             />
           </label>
 
