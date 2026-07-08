@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
-import { Menu, MoreHorizontal, Plus, Search } from 'lucide-react'
+import { ChevronDown, Menu, MoreHorizontal, Plus, Search } from 'lucide-react'
 import type { CaseRow } from '@petmove/domain'
 import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
@@ -26,7 +26,7 @@ import { InspectionTable, readInspectionStatus, type InspectionRow } from './ins
 import { DestinationCell } from './destination-cell'
 import { updateCaseField } from '@/lib/actions/cases'
 import { downloadPdfRequest, type PdfDownloadRequest } from '@/lib/pdf-download'
-import { PageShell, PageTabs } from '@petmove/ui'
+import { PageShell, PageTabs, DropdownSelect } from '@petmove/ui'
 
 
 /* DestinationCell 은 ./destination-cell 로 이동 — 검사·신고·서류·목록 공통 사용. */
@@ -44,6 +44,17 @@ const INSPECTION_STATUS_OPTIONS = [
   { value: 'testing', label: '검사중' },
   { value: 'done', label: '완료' },
 ]
+
+// 검사 탭 정렬 모드 — 사용자 선택을 localStorage 에 기억.
+type InspectionSort = 'lab' | 'date' | 'status'
+const INSPECTION_SORT_KEY = 'petmove:inspection-sort'
+const INSPECTION_SORT_OPTIONS = [
+  { value: 'lab', label: '검사기관별' },
+  { value: 'date', label: '검사일 최신순' },
+  { value: 'status', label: '진행상태' },
+]
+// 진행상태 정렬 순서 — 대기 → 검사중 → 완료.
+const INSPECTION_STATUS_ORDER: Record<string, number> = { waiting: 0, testing: 1, done: 2 }
 
 // 서류 탭 준비상태 — 대기/완료 2지. (export_doc_status 전용. 기존 'in_progress' 값은
 // 운영 DB 에 0건이라 옵션 제거. 다른 column 은 INSPECTION_STATUS_OPTIONS /
@@ -760,6 +771,19 @@ export function TodosApp({
   const query = forcedQuery ?? internalQuery
   const setQuery = setInternalQuery
 
+  // 검사 탭 정렬 모드 — 마운트 시 localStorage 에서 복원, 변경 시 저장.
+  const [inspectionSort, setInspectionSort] = useState<InspectionSort>('lab')
+  useEffect(() => {
+    try {
+      const s = localStorage.getItem(INSPECTION_SORT_KEY)
+      if (s === 'lab' || s === 'date' || s === 'status') setInspectionSort(s)
+    } catch {}
+  }, [])
+  function changeInspectionSort(s: InspectionSort) {
+    setInspectionSort(s)
+    try { localStorage.setItem(INSPECTION_SORT_KEY, s) } catch {}
+  }
+
   const q = query.trim().toLowerCase()
 
   const filteredCases = useMemo(() => {
@@ -835,38 +859,58 @@ export function TodosApp({
     return m
   }, [filteredCases, activeTab])
 
-  const inspectionRows = useMemo(
-    () => buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault, inspectionConfig.infectiousRules)
+  const inspectionRows = useMemo(() => {
+    const built = buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault, inspectionConfig.infectiousRules)
       .filter(r => matchesQuery(r.caseRow, q))
-      .sort((a, b) => {
-        // 0순위: 완료(done)는 무조건 가장 뒤
-        const aDone = readInspectionStatus(a) === 'done'
-        const bDone = readInspectionStatus(b) === 'done'
-        if (aDone !== bDone) return aDone ? 1 : -1
-        const da = a.date || ''
-        const db = b.date || ''
-        // 완료 그룹: 검사일 최신순(DESC)만 적용
-        if (aDone && bDone) {
-          if (!da) return 1
-          if (!db) return -1
-          return db.localeCompare(da)
-        }
-        // 비완료 그룹: 1) 검사기관 → 2) 검사일 ASC(가까운 검사일 먼저) → 3) 출국일
-        const labCmp = (LAB_SORT_ORDER[a.lab] ?? 99) - (LAB_SORT_ORDER[b.lab] ?? 99)
-        if (labCmp !== 0) return labCmp
-        if (da !== db) {
-          if (!da) return 1
-          if (!db) return -1
-          return da.localeCompare(db)
-        }
-        const ea = getDepartureDate(a.caseRow, resolveTabActiveDest(a.caseRow, 'inspection_active_dest')) ?? ''
-        const eb = getDepartureDate(b.caseRow, resolveTabActiveDest(b.caseRow, 'inspection_active_dest')) ?? ''
-        if (!ea) return 1
-        if (!eb) return -1
-        return ea.localeCompare(eb)
-      }),
-    [cases, q, inspectionConfig],
-  )
+
+    // 검사기관별(기본): 완료는 맨 뒤 → 검사기관 → 검사일 ASC(가까운 순) → 출국일.
+    const byLab = (a: InspectionRow, b: InspectionRow): number => {
+      const aDone = readInspectionStatus(a) === 'done'
+      const bDone = readInspectionStatus(b) === 'done'
+      if (aDone !== bDone) return aDone ? 1 : -1
+      const da = a.date || ''
+      const db = b.date || ''
+      if (aDone && bDone) {
+        if (!da) return 1
+        if (!db) return -1
+        return db.localeCompare(da)
+      }
+      const labCmp = (LAB_SORT_ORDER[a.lab] ?? 99) - (LAB_SORT_ORDER[b.lab] ?? 99)
+      if (labCmp !== 0) return labCmp
+      if (da !== db) {
+        if (!da) return 1
+        if (!db) return -1
+        return da.localeCompare(db)
+      }
+      const ea = getDepartureDate(a.caseRow, resolveTabActiveDest(a.caseRow, 'inspection_active_dest')) ?? ''
+      const eb = getDepartureDate(b.caseRow, resolveTabActiveDest(b.caseRow, 'inspection_active_dest')) ?? ''
+      if (!ea) return 1
+      if (!eb) return -1
+      return ea.localeCompare(eb)
+    }
+    // 검사일 최신순: 날짜 DESC(빈 날짜는 맨 뒤).
+    const byDate = (a: InspectionRow, b: InspectionRow): number => {
+      const da = a.date || ''
+      const db = b.date || ''
+      if (!da && !db) return 0
+      if (!da) return 1
+      if (!db) return -1
+      return db.localeCompare(da)
+    }
+    // 진행상태: 대기 → 검사중 → 완료, 같은 상태면 검사일 ASC.
+    const byStatus = (a: InspectionRow, b: InspectionRow): number => {
+      const sa = INSPECTION_STATUS_ORDER[readInspectionStatus(a)] ?? 0
+      const sb = INSPECTION_STATUS_ORDER[readInspectionStatus(b)] ?? 0
+      if (sa !== sb) return sa - sb
+      const da = a.date || ''
+      const db = b.date || ''
+      if (!da) return 1
+      if (!db) return -1
+      return da.localeCompare(db)
+    }
+    const cmp = inspectionSort === 'date' ? byDate : inspectionSort === 'status' ? byStatus : byLab
+    return built.sort(cmp)
+  }, [cases, q, inspectionConfig, inspectionSort])
 
   // 상세 좌우 화살표가 순회할 순서를 현재 탭의 정렬·필터 결과로 publish.
   // 검사 탭은 한 케이스가 항체 record 수만큼 여러 행이 될 수 있어 id 중복 제거.
@@ -972,13 +1016,32 @@ export function TodosApp({
   const body = (
     <div className="px-md">
       {activeTab === 'inspection' ? (
-        <InspectionTable
-          rows={inspectionRows}
-          labOptions={LAB_OPTIONS}
-          statusOptions={INSPECTION_STATUS_OPTIONS}
-          onUpdate={updateLocalCaseField}
-          hiddenColumns={todoColumnsConfig.hiddenColumns.inspection}
-        />
+        <>
+          {/* 정렬 선택 — 검사기관별 / 검사일 최신순 / 진행상태. 선택은 기억됨. */}
+          <div className="flex items-center justify-end gap-1.5 pt-1 pb-1.5">
+            <span className="font-mono text-[10px] uppercase tracking-[1px] text-muted-foreground/70">정렬</span>
+            <DropdownSelect
+              value={inspectionSort}
+              options={INSPECTION_SORT_OPTIONS}
+              onChange={(v) => changeInspectionSort(v as InspectionSort)}
+              portal
+              triggerClassName="inline-flex items-center gap-1 font-serif text-[14px] text-foreground hover:text-muted-foreground transition-colors"
+              renderTrigger={() => (
+                <>
+                  {INSPECTION_SORT_OPTIONS.find((o) => o.value === inspectionSort)?.label ?? '검사기관별'}
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </>
+              )}
+            />
+          </div>
+          <InspectionTable
+            rows={inspectionRows}
+            labOptions={LAB_OPTIONS}
+            statusOptions={INSPECTION_STATUS_OPTIONS}
+            onUpdate={updateLocalCaseField}
+            hiddenColumns={todoColumnsConfig.hiddenColumns.inspection}
+          />
+        </>
       ) : (
         <TodoTable
           cases={filteredCases}
