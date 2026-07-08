@@ -404,7 +404,7 @@ export function TodoTable({
           <tr
             key={row.id}
             className={cn(
-              'border-b border-dashed border-border/80 hover:bg-accent transition-colors cursor-pointer',
+              'border-b border-dashed border-border/80 hover:bg-accent/40 transition-colors cursor-pointer',
               rowClass?.(row),
             )}
             onClick={() => openCase(row.id)}

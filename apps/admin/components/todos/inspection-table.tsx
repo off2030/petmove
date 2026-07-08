@@ -648,7 +648,7 @@ export function InspectionTable({
           <tr
             key={row.id}
             className={cn(
-              'group/insprow border-b border-dashed border-border/80 hover:bg-accent transition-colors cursor-pointer',
+              'group/insprow border-b border-dashed border-border/80 hover:bg-accent/40 transition-colors cursor-pointer',
               isDone && 'opacity-50 hover:opacity-100',
             )}
             onClick={() => openCase(row.caseRow.id)}

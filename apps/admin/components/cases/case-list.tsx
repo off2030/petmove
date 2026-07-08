@@ -77,7 +77,7 @@ const CaseRowItem = memo(function CaseRowItem({
         onClick={() => onSelect(c.id)}
         className={cn(
           'group relative block w-full px-lg py-4 text-left transition-colors',
-          'hover:bg-accent',
+          'hover:bg-accent/40',
           isSelected && 'bg-accent',
           isHighlighted && 'bg-accent/70',
           isNew && !isSelected && 'bg-primary/5',
