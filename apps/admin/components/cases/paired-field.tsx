@@ -218,7 +218,7 @@ export function PairedField({
                   )}
                 >
                   {koEmpty ? (
-                    <span className="inline-block min-w-[2.5rem] select-none" aria-hidden>&nbsp;</span>
+                    <span className="inline-block min-w-[2.5rem] select-none text-muted-foreground/40" aria-hidden>—</span>
                   ) : (
                     koDisplay
                   )}
@@ -248,7 +248,7 @@ export function PairedField({
                     )}
                   >
                     {enEmpty ? (
-                      <span className="inline-block min-w-[2.5rem] select-none" aria-hidden>&nbsp;</span>
+                      <span className="inline-block min-w-[2.5rem] select-none text-muted-foreground/40" aria-hidden>—</span>
                     ) : (
                       enDisplay
                     )}

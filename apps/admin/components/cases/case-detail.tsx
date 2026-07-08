@@ -1097,7 +1097,7 @@ function ReturnFlightRow({ caseId, caseRow, activeDest }: {
                   : 'font-sans text-base font-normal text-muted-foreground/60',
               )}
             >
-              {returnDate || <span className="inline-block min-w-[2.5rem] select-none" aria-hidden>&nbsp;</span>}
+              {returnDate || <span className="inline-block min-w-[2.5rem] select-none text-muted-foreground/40" aria-hidden>—</span>}
             </button>
           )}
           {/* 귀국일이 비었고 편집 중이 아닐 때만 '미정' 노출 — 날짜 우측 한 줄. */}
@@ -1400,7 +1400,7 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                   !implantDate && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
                   implantColorCls,
                 )}>
-                {implantDate || <span className="inline-block min-w-[2.5rem] select-none" aria-hidden>&nbsp;</span>}
+                {implantDate || <span className="inline-block min-w-[2.5rem] select-none text-muted-foreground/40" aria-hidden>—</span>}
               </button>
             ) : (
               <span title={implantTitle}
@@ -1409,7 +1409,7 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                   !implantDate && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
                   implantColorCls,
                 )}>
-                {implantDate || <span className="inline-block min-w-[2.5rem] select-none" aria-hidden>&nbsp;</span>}
+                {implantDate || <span className="inline-block min-w-[2.5rem] select-none text-muted-foreground/40" aria-hidden>—</span>}
               </span>
             )}
           </span>

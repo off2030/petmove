@@ -215,7 +215,7 @@ export function EditableField({
   ) : isEmpty ? (
     // 빈 값일 때: '—' 대신 투명 placeholder — 클릭 영역은 유지하면서 시각적 잡음 제거.
     // 좌측 라벨 클릭으로도 편집 진입 가능 (SectionLabel onClick).
-    <span className="inline-block min-w-[2.5rem] select-none" aria-hidden>&nbsp;</span>
+    <span className="inline-block min-w-[2.5rem] select-none text-muted-foreground/40" aria-hidden>—</span>
   ) : (
     display
   )

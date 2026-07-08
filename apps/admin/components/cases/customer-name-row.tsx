@@ -252,7 +252,7 @@ export function CustomerNameRow({
                   )}
                 >
                   {koEmpty ? (
-                    <span className="inline-block min-w-[2.5rem] select-none" aria-hidden>&nbsp;</span>
+                    <span className="inline-block min-w-[2.5rem] select-none text-muted-foreground/40" aria-hidden>—</span>
                   ) : (
                     displayKo
                   )}
@@ -283,7 +283,7 @@ export function CustomerNameRow({
                   title="클릭하여 편집 (First / Last)"
                 >
                   {enEmpty ? (
-                    <span className="inline-block min-w-[2.5rem] select-none" aria-hidden>&nbsp;</span>
+                    <span className="inline-block min-w-[2.5rem] select-none text-muted-foreground/40" aria-hidden>—</span>
                   ) : (
                     displayEn
                   )}

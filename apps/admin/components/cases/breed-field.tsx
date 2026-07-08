@@ -46,7 +46,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
       <span className="italic text-foreground">{breedEn}</span>
     </>
   ) : isEmpty ? (
-    <span className="inline-block min-w-[2.5rem] select-none" aria-hidden>&nbsp;</span>
+    <span className="inline-block min-w-[2.5rem] select-none text-muted-foreground/40" aria-hidden>—</span>
   ) : (
     fallback
   )
