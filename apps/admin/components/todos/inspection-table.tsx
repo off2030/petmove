@@ -540,10 +540,10 @@ export type InspectionSortKey = 'lab' | 'date' | 'status'
 const COLUMNS: { key: string; label: string; width: number; sortKey?: InspectionSortKey }[] = [
   { key: 'lab', label: '검사기관', width: 146, sortKey: 'lab' },
   { key: 'date', label: '검사일', width: BASE_W, sortKey: 'date' },
+  { key: 'status', label: '진행상태', width: BASE_W, sortKey: 'status' },
   { key: 'pet_name', label: '반려동물', width: BASE_W },
   { key: 'customer_name', label: '보호자', width: BASE_W },
   { key: 'destination', label: '목적지', width: 146 },
-  { key: 'status', label: '진행상태', width: BASE_W, sortKey: 'status' },
   { key: 'departure_date', label: '출국일', width: BASE_W },
   { key: 'memo', label: '메모', width: 120 },
 ]
@@ -668,6 +668,11 @@ export function InspectionTable({
                 />
               </td>
             )}
+            {!hidden.has('status') && (
+              <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
+                <StatusCell row={row} options={statusOptions} onUpdate={onUpdate} />
+              </td>
+            )}
             {!hidden.has('pet_name') && (
               <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }}>
                 <StaticCell value={row.caseRow.pet_name ?? ''} variant="pet" />
@@ -681,11 +686,6 @@ export function InspectionTable({
             {!hidden.has('destination') && (
               <td className="px-2 py-4" style={{ width: 146, minWidth: 146 }}>
                 <DestinationCell row={row.caseRow} overrideKey="inspection_active_dest" onUpdate={onUpdate} />
-              </td>
-            )}
-            {!hidden.has('status') && (
-              <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
-                <StatusCell row={row} options={statusOptions} onUpdate={onUpdate} />
               </td>
             )}
             {!hidden.has('departure_date') && (
