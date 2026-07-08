@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { FileText, MoreHorizontal, Plus, Search } from 'lucide-react'
+import { Files, MoreHorizontal, Plus, Search } from 'lucide-react'
 import type { CaseRow } from '@petmove/domain'
 import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
@@ -548,6 +548,18 @@ function compareByCountryOrder(a: CaseRow, b: CaseRow): number {
   return da.localeCompare(db, 'ko')
 }
 
+/**
+ * 신고 탭 미완료(대기·진행중) 그룹 목적지 정렬 순서.
+ * 일본 → 태국 → 필리핀 → 하와이 순으로 고정, 그 외 국가(스위스·수동 추가 등)는 뒤에 가나다순.
+ * 활성 목적지(import_report_active_dest ?? 첫 목적지) 라벨 기준으로 순위를 매긴다.
+ */
+const IMPORT_REPORT_DEST_ORDER = ['일본', '태국', '필리핀', '하와이']
+function reportDestRank(row: CaseRow): number {
+  const active = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY) ?? ''
+  const idx = IMPORT_REPORT_DEST_ORDER.indexOf(active)
+  return idx === -1 ? IMPORT_REPORT_DEST_ORDER.length : idx
+}
+
 function isJapan(row: CaseRow): boolean {
   return matchesDestinationKey(row.destination, 'japan')
 }
@@ -1088,7 +1100,7 @@ export function TodosInspectionActions({ query }: { query: string }) {
         aria-label="검사 신청서 메뉴"
         className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
       >
-        <FileText className="h-4 w-4" />
+        <Files className="h-4 w-4" />
       </button>
       {menuOpen && (
         <div className="absolute right-0 top-full mt-1 z-30 min-w-[180px] rounded-md border border-border bg-popover p-1 shadow-md">
