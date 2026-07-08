@@ -317,12 +317,22 @@ function SelectCell({
       options={col.options!}
       onChange={pick}
       portal
-      triggerClassName="-mx-1 px-1 text-left min-h-[24px] flex items-center"
+      // 검사 탭 진행상태와 동일: 평소엔 차분한 텍스트, hover 시 여백 있는 알약(하이라인 링)+꺾쇠(▼)로
+      // '눌러서 바꾸는 드롭다운'임을 신호.
+      triggerClassName={cn(
+        'group inline-flex items-center -ml-1 px-2.5 py-1 min-h-[24px] text-left',
+        'hover:ring-1 hover:ring-inset hover:ring-border/60',
+      )}
       triggerProps={{
         'data-status-pill': '',
         ...(isActive ? { 'data-status-active': 'true' } : {}),
       } as React.ButtonHTMLAttributes<HTMLButtonElement>}
-      renderTrigger={() => <StatusBadge value={value} options={col.options!} />}
+      renderTrigger={() => (
+        <>
+          <StatusBadge value={value} options={col.options!} />
+          <span aria-hidden className="not-italic ml-1 text-[10px] leading-none opacity-0 transition-opacity group-hover:opacity-70">▼</span>
+        </>
+      )}
       renderOption={(o) => {
         const optActive = o.value === 'in_progress' || o.value === 'testing'
         const optDone = o.value === 'done'

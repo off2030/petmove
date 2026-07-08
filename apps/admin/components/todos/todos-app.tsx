@@ -53,16 +53,16 @@ const INSPECTION_STATUS_ORDER: Record<string, number> = { waiting: 0, testing: 1
 
 // 서류 탭 준비상태 — 대기/완료 2지. (export_doc_status 전용. 기존 'in_progress' 값은
 // 운영 DB 에 0건이라 옵션 제거. 다른 column 은 INSPECTION_STATUS_OPTIONS /
-// STATUS_WITH_NA 를 별도로 씀.)
+// IMPORT_STATUS_OPTIONS 를 별도로 씀.)
 const STATUS_OPTIONS = [
   { value: 'not_started', label: '대기' },
   { value: 'done', label: '완료' },
 ]
 
-const STATUS_WITH_NA = [
+// 신고 탭 수입·수출 진행상태 — 대기중 / 진행중 / 완료 (N/A 없음).
+const IMPORT_STATUS_OPTIONS = [
   { value: 'not_started', label: '대기중' },
-  { value: 'na', label: 'N/A' },
-  { value: 'in_progress', label: '진행 중' },
+  { value: 'in_progress', label: '진행중' },
   { value: 'done', label: '완료' },
 ]
 
@@ -565,6 +565,14 @@ function isJapan(row: CaseRow): boolean {
 }
 
 /**
+ * 수출(수출검역) 칸을 표시·집계하는 조건 — 일본 + 왕복(귀국일 있음)인 경우만.
+ * 그 외(비일본, 또는 편도)는 수출 칸을 숨기고 완료 판정에서도 제외한다.
+ */
+function exportApplies(row: CaseRow): boolean {
+  return isJapan(row) && !!importReportReturnDate(row)
+}
+
+/**
  * 수입 허가(import-permit) step 으로 신고 상태를 도출하는 목적지 — 태국·필리핀.
  * 이들은 일본식 사전신고가 아니라 수입 허가증 신청·발급 2단계라, 신고 탭 '수입' 칸을
  * portal 의 허가 step 시그널과 같은 derive 로 잇는다. (명시 분류 — country='all' 누수 금지)
@@ -617,10 +625,33 @@ function effectiveExportStatus(row: CaseRow): string {
   return 'not_started'
 }
 
-/** 수입·수출 둘 다 완료(done) 혹은 N/A이면 신고 처리 끝난 건. */
+/**
+ * 신고 처리 완료 판정 — 수입 완료 + (수출 적용되면 수출도 완료).
+ * 수출은 일본·왕복일 때만 집계(그 외는 수입만으로 완료).
+ */
 function isImportReportComplete(row: CaseRow): boolean {
-  const done = (s: string) => s === 'done' || s === 'na'
-  return done(effectiveImportStatus(row)) && done(effectiveExportStatus(row))
+  if (effectiveImportStatus(row) !== 'done') return false
+  if (exportApplies(row)) return effectiveExportStatus(row) === 'done'
+  return true
+}
+
+/** 신고기한 — 저장값 우선, 없으면 자동 계산(일본: 출국일-40일). */
+function reportDeadline(row: CaseRow): string {
+  const data = (row.data ?? {}) as Record<string, unknown>
+  const stored = data.import_deadline
+  if (stored != null && String(stored) !== '') return String(stored)
+  return autoImportDeadline(row)
+}
+
+/**
+ * 미완료 그룹 내 진행 순위 — 0=대기중(아무것도 시작 안 됨), 1=진행중(수입/수출 중 하나라도 진행·완료).
+ * 같은 목적지 안에서 대기중을 진행중보다 앞에 둔다.
+ */
+function reportProgressRank(row: CaseRow): number {
+  const started = (s: string) => s === 'in_progress' || s === 'done'
+  if (started(effectiveImportStatus(row))) return 1
+  if (exportApplies(row) && started(effectiveExportStatus(row))) return 1
+  return 0
 }
 
 /** 활성 목적지 출국일이 오늘보다 전 = 이미 출국한 케이스. */
@@ -679,19 +710,10 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     type: 'date',
     width: BASE_COL_W,
     // 일본: 저장된 값이 없으면 활성 목적지 출국일 - 40일로 자동 계산하여 표시.
-    resolveValue: (row) => {
-      const data = (row.data ?? {}) as Record<string, unknown>
-      const stored = data.import_deadline
-      if (stored != null && String(stored) !== '') return String(stored)
-      return autoImportDeadline(row)
-    },
+    resolveValue: (row) => reportDeadline(row),
     // 기한이 7일 이내(포함 경과분)이고 수입·수출 상태가 모두 '진행중/완료'가 아닐 때 주황.
     cellClass: (row) => {
-      const data = (row.data ?? {}) as Record<string, unknown>
-      const stored = data.import_deadline
-      const deadline = stored != null && String(stored) !== ''
-        ? String(stored)
-        : autoImportDeadline(row)
+      const deadline = reportDeadline(row)
       if (!deadline) return ''
       const d = new Date(deadline)
       if (isNaN(d.getTime())) return ''
@@ -713,7 +735,7 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     storage: 'data',
     type: 'select',
     width: BASE_COL_W,
-    options: STATUS_WITH_NA,
+    options: IMPORT_STATUS_OPTIONS,
     resolveValue: effectiveImportStatus,
   },
   {
@@ -722,8 +744,10 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     storage: 'data',
     type: 'select',
     width: BASE_COL_W,
-    options: STATUS_WITH_NA,
+    options: IMPORT_STATUS_OPTIONS,
     resolveValue: effectiveExportStatus,
+    // 수출은 일본 + 왕복(귀국일 있음)일 때만 표시 — 그 외는 '—'.
+    condition: (row) => exportApplies(row),
   },
   { key: 'import_memo', label: '메모', storage: 'data', type: 'text', width: BASE_COL_W + 6 },
   {
@@ -806,7 +830,7 @@ export function TodosApp({
         .filter(c => (isAutoImportReport(c, importReportCountries) || isManualImportReport(c)) && !isDismissedImportReport(c))
         .filter(c => matchesQuery(c, q))
         .sort((a, b) => {
-          // 1차: 완료(수입·수출 모두 done/na)는 무조건 미완료(시작전·진행중)보다 뒤.
+          // 1차: 완료(수입 완료 + 수출 적용 시 수출도 완료)는 무조건 미완료보다 뒤.
           const ca = isImportReportComplete(a) ? 1 : 0
           const cb = isImportReportComplete(b) ? 1 : 0
           if (ca !== cb) return ca - cb
@@ -837,7 +861,19 @@ export function TodosApp({
             const cmp = la.localeCompare(lb, 'ko')
             if (cmp !== 0) return cmp
           }
-          // 같은 목적지면 출국일 빠른 순.
+          // 같은 목적지 안: ① 대기중 → 진행중.
+          const pa = reportProgressRank(a)
+          const pb = reportProgressRank(b)
+          if (pa !== pb) return pa - pb
+          // ② 신고기한 빠른(짧은) 순, 기한 없으면 뒤로.
+          const la = reportDeadline(a)
+          const lb = reportDeadline(b)
+          if (la !== lb) {
+            if (!la) return 1
+            if (!lb) return -1
+            return la.localeCompare(lb)
+          }
+          // ③ 최후: 출국일 빠른 순.
           return byDeparture()
         })
     }
