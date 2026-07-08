@@ -50,12 +50,9 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
     void persistField('해외주소', () => updateCaseField(caseId, 'data', DATA_KEY, val, destArg))
   }
 
-  // 라벨 클릭으로도 편집 진입 — 빈 값일 때 클릭 영역 잘 안 보이는 문제 해결.
-  const labelOnClick = editMode && !editing ? () => setEditing(true) : undefined
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
-      <SectionLabel className="pt-1" onClick={labelOnClick}>해외주소</SectionLabel>
+      <SectionLabel className="pt-1">해외주소</SectionLabel>
       {editMode && editing ? (
         <AddressInput
           initial={value ?? ''}

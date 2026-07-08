@@ -110,10 +110,7 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
   return (
     <div data-field={DATA_KEY} className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
-        <SectionLabel
-          onClick={editMode && records.length === 0 ? () => setAddingNew(true) : undefined}
-          title={editMode && records.length === 0 ? '전염병검사 추가' : undefined}
-        >
+        <SectionLabel>
           전염병검사
         </SectionLabel>
       </div>

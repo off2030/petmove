@@ -151,11 +151,7 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
-      <SectionLabel
-        className="pt-1"
-        onClick={() => setOpen(!open)}
-        title={isEmpty ? '모색 추가' : '모색 변경'}
-      >
+      <SectionLabel className="pt-1">
         모색
       </SectionLabel>
       <div ref={containerRef} className="relative min-w-0">

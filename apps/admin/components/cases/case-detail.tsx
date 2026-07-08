@@ -1085,8 +1085,7 @@ function ReturnFlightRow({ caseId, caseRow, activeDest }: {
       {/* 좌측 라벨 — 출국 항공편(ExtraGroupRow groupName)과 동일 스타일로 일치. */}
       <span className="pt-1 font-serif text-[14px] font-semibold text-foreground">귀국 항공편</span>
       <div className="min-w-0 grid grid-cols-1 md:grid-cols-[100px_1fr] items-center gap-md py-1">
-        {/* 라벨 클릭으로도 편집 진입 — 출국 항공편(EditableField)과 동일. */}
-        <SectionLabel onClick={editing ? undefined : () => setEditing(true)}>날짜</SectionLabel>
+        <SectionLabel>날짜</SectionLabel>
         <div className="min-w-0 flex items-center gap-3">
           {editing ? (
             <DateTextField
@@ -1235,7 +1234,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel
           onClick={editMode && canAdd ? addNew : undefined}
-          title={editMode ? (canAdd ? '마이크로칩 추가 (최대 2개)' : '최대 2개까지 추가 가능') : undefined}
+          title={editMode && canAdd ? '마이크로칩 추가 (최대 2개)' : undefined}
         >
           {spec.label}
         </SectionLabel>
@@ -1405,10 +1404,7 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   return (
     <div data-field="microchip_implant_date" className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors">
       <div className="flex items-center gap-[6px] pt-1">
-        <SectionLabel
-          onClick={editMode && !editing ? () => setEditing(true) : undefined}
-          title={editMode ? (implantDate ? '삽입일 수정' : '삽입일 추가') : undefined}
-        >
+        <SectionLabel>
           마이크로칩
         </SectionLabel>
       </div>

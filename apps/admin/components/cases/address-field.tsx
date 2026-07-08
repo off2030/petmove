@@ -240,11 +240,7 @@ export function AddressField({
     <>
       {/* Korean address */}
       <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
-        <SectionLabel
-          className="pt-1"
-          onClick={editingKr ? undefined : (krEmpty ? handleSearch : startEditKr)}
-          title={krEmpty ? '클릭하여 주소 검색' : '클릭하여 편집'}
-        >
+        <SectionLabel className="pt-1">
           한국주소
         </SectionLabel>
         <div className="flex items-center gap-sm min-w-0">
@@ -321,11 +317,7 @@ export function AddressField({
 
       {/* English address */}
       <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
-        <SectionLabel
-          className="pt-1"
-          onClick={editingEn ? undefined : startEditEn}
-          title="클릭하여 편집"
-        >
+        <SectionLabel className="pt-1">
           영문주소
         </SectionLabel>
         <div className="min-w-0">

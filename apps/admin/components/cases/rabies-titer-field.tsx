@@ -331,18 +331,9 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors"
     >
       <div className="flex items-center gap-[6px] pt-1">
-        <button
-          type="button"
-          onClick={openEditModal}
-          disabled={!editMode || saving}
-          className={cn(
-            'font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground transition-colors',
-            editMode && 'hover:text-foreground cursor-pointer',
-          )}
-          title={editMode ? '광견병항체검사 편집' : undefined}
-        >
+        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">
           광견병항체검사
-        </button>
+        </span>
       </div>
 
       {/* 인라인: 날짜 chips. 클릭하면 모달 열림. */}

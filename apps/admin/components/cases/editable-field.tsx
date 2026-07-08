@@ -541,15 +541,6 @@ export function EditableField({
     </button>
   ) : null
 
-  // 라벨 클릭으로 편집 진입 — 빈 값일 때 좌측 라벨만 보여서 사용자가 어디를 눌러야 할지 모르는 상황을 해결.
-  const labelOnClick = (() => {
-    if (!editMode) return undefined
-    if (spec.key === 'age') return undefined
-    if (editing) return undefined
-    if (isSelect) return () => setEditing(true)
-    return handleEnterEdit
-  })()
-
   return (
     <div data-field={spec.key} className={cn(
       compact
@@ -557,7 +548,7 @@ export function EditableField({
         : "grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0",
       clearable && "group/row",
     )}>
-      <SectionLabel className={compact ? undefined : "pt-1"} onClick={labelOnClick}>{spec.label}</SectionLabel>
+      <SectionLabel className={compact ? undefined : "pt-1"}>{spec.label}</SectionLabel>
       {/* flex-wrap md:flex-nowrap — phone row 의 인라인 email chip 이 모바일에서 다음 줄로 떨어지게.
           데스크톱은 한 줄 유지 (address-field 의 우편번호 chip 과 동일 패턴). */}
       <div className="min-w-0 flex flex-wrap md:flex-nowrap items-baseline gap-sm">

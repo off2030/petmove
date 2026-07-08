@@ -151,10 +151,7 @@ export function CustomerNameRow({
 
   return (
     <div data-field="customer_name" className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
-      <SectionLabel
-        className="pt-1"
-        onClick={editMode && !editing ? () => startEdit('ko') : undefined}
-      >
+      <SectionLabel className="pt-1">
         성함
       </SectionLabel>
 

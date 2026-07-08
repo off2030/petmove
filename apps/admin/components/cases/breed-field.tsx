@@ -136,11 +136,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
   return (
     <div data-field="breed" className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
-      <SectionLabel
-        className="pt-1"
-        onClick={() => { setOpen(!open); setQuery('') }}
-        title={isEmpty ? '품종 추가' : '품종 변경'}
-      >
+      <SectionLabel className="pt-1">
         품종
       </SectionLabel>
       <div ref={containerRef} className="relative min-w-0">
