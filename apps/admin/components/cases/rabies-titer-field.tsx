@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { Paperclip, Trash2 } from 'lucide-react'
 import { AttachButton } from '@/components/ui/attach-button'
+import { SectionLabel } from '@/components/ui/section-label'
 import { DropdownSelect } from '@petmove/ui'
 import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
@@ -331,9 +332,12 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors"
     >
       <div className="flex items-center gap-[6px] pt-1">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">
+        <SectionLabel
+          onClick={editMode ? openEditModal : undefined}
+          title={editMode ? '광견병항체검사 편집' : undefined}
+        >
           광견병항체검사
-        </span>
+        </SectionLabel>
       </div>
 
       {/* 인라인: 날짜 chips. 클릭하면 모달 열림. */}

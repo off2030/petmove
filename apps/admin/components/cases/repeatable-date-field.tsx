@@ -15,6 +15,7 @@ import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 import { AttachButton } from '@/components/ui/attach-button'
+import { SectionLabel } from '@/components/ui/section-label'
 import { DateTextField } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@petmove/ui'
@@ -519,9 +520,12 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors"
     >
       <div className="flex items-center gap-[6px] pt-1">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">
+        <SectionLabel
+          onClick={editMode ? openEditModal : undefined}
+          title={editMode ? `${label} 편집` : undefined}
+        >
           {label}
-        </span>
+        </SectionLabel>
       </div>
 
       {/* 인라인: 날짜 chips 만 (간결). 클릭하면 모달 열림.
