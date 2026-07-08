@@ -113,7 +113,12 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
     // 편도 + 입국국이 RNATT 비요구이면 광견병항체검사 숨김 (한국 귀국 시는 필요하므로 왕복은 그대로).
     if (key === 'rabies_titer' && hideRabiesTiterOneWay) return false
     const e = vaccineEntries.find(v => v.key === key)
-    return !!e && vaccineMatchesSpecies(e, speciesValue)
+    if (!e) return false
+    // 사용자가 항목 메뉴에서 명시적으로 켠 백신(예: 켄넬코프·독감)은 종 필터를 무시하고 표시.
+    // 종 제한(dog 전용 등)은 목적지 디폴트 자동 포함용이지, 수동 추가한 항목까지 숨기면
+    // "보이기를 해도 안 나타나는" 혼란이 생긴다(종 미설정 케이스 포함).
+    if (extraFields.includes(`vaccine:${key}`)) return true
+    return vaccineMatchesSpecies(e, speciesValue)
   }
 
   // Toggleable fields not in the base destination config (can be toggled on/off)
