@@ -284,10 +284,6 @@ export function AddressField({
               {krFlash && (
                 <span className="text-pmw-positive text-sm select-none" aria-label="저장됨">✓</span>
               )}
-              <button type="button" onClick={handleSearch} disabled={!scriptLoaded || saving}
-                className="shrink-0 inline-flex h-7 items-center rounded px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50 opacity-0 group-hover/kr:opacity-100">
-                검색
-              </button>
               <CopyButton value={krEmpty ? '' : krDisplay}
                 className="opacity-0 group-hover/kr:opacity-100 shrink-0" />
               {zipDisplay && (
