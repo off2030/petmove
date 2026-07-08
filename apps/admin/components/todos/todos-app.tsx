@@ -733,16 +733,7 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     // 기한 임박 시 주황 — 출국일 날짜도 함께 물든다.
     cellClass: (row) => (isImportDeadlineWarning(row) ? 'text-pmw-warning' : ''),
   },
-  {
-    key: 'departure_date',
-    label: '출국일',
-    storage: 'column',
-    type: 'date',
-    width: BASE_COL_W,
-    resolveValue: (row) => importReportDeparture(row),
-    // 신고기한이 임박하면 출국일도 함께 경고색.
-    cellClass: (row) => (isImportDeadlineWarning(row) ? 'text-pmw-warning' : ''),
-  },
+  { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: BASE_COL_W, resolveValue: (row) => importReportDeparture(row) },
   { key: 'return_date', label: '귀국일', storage: 'data', type: 'date', width: BASE_COL_W, resolveValue: (row) => importReportReturnDate(row) },
   {
     key: 'import_import_status',
