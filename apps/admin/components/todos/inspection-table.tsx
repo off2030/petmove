@@ -377,7 +377,8 @@ function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
         options={options}
         onChange={pick}
         portal
-        triggerClassName={cn(cls, '-mx-1 px-1')}
+        // hover 시 옅은 알약 배경 + 꺾쇠로 '눌러서 바꾸는 컨트롤'임을 신호(평소엔 차분).
+        triggerClassName={cn('group inline-flex items-center rounded-full -mx-2 px-2 py-0.5 transition-colors hover:bg-accent/60', cls)}
         triggerProps={{
           'data-status-pill': '',
           ...(value === 'testing' ? { 'data-status-active': 'true' } : {}),
@@ -387,6 +388,7 @@ function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
             {value === 'testing' && <span className="not-italic mr-1">↻</span>}
             {isDone && <span className="not-italic mr-1">✓</span>}
             {label}
+            <span aria-hidden className="not-italic ml-1 text-[9px] leading-none opacity-0 transition-opacity group-hover:opacity-60">▼</span>
           </>
         )}
         renderOption={(o) => {
