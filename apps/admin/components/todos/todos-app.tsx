@@ -59,9 +59,9 @@ const STATUS_OPTIONS = [
   { value: 'done', label: '완료' },
 ]
 
-// 신고 탭 수입·수출 진행상태 — 대기중 / 진행중 / 완료 (N/A 없음).
+// 신고 탭 수입·수출 진행상태 — 대기 / 진행중 / 완료 (N/A 없음). '대기' 라벨은 검사·서류 탭과 통일.
 const IMPORT_STATUS_OPTIONS = [
-  { value: 'not_started', label: '대기중' },
+  { value: 'not_started', label: '대기' },
   { value: 'in_progress', label: '진행중' },
   { value: 'done', label: '완료' },
 ]
@@ -752,6 +752,8 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     width: BASE_COL_W,
     options: IMPORT_STATUS_OPTIONS,
     resolveValue: effectiveImportStatus,
+    // 신고기한 임박 시 '대기' 뱃지도 경고색(날짜와 함께 물든다).
+    warn: (row) => isImportDeadlineWarning(row),
   },
   {
     key: 'import_export_status',
@@ -763,6 +765,8 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     resolveValue: effectiveExportStatus,
     // 수출은 일본 + 왕복(귀국일 있음)일 때만 표시 — 그 외는 '—'.
     condition: (row) => exportApplies(row),
+    // 신고기한 임박 시 '대기' 뱃지도 경고색.
+    warn: (row) => isImportDeadlineWarning(row),
   },
   { key: 'import_memo', label: '메모', storage: 'data', type: 'text', width: BASE_COL_W + 6 },
   {

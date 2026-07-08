@@ -63,6 +63,8 @@ export interface TodoColumn {
   readonly?: boolean
   /** 표시 모드 셀에 추가로 붙일 className (예: 경고 색상). */
   cellClass?: (row: CaseRow) => string
+  /** select 셀 '대기' 뱃지를 경고색으로 물들일 조건 (예: 신고기한 임박). */
+  warn?: (row: CaseRow) => boolean
 }
 
 function getCellValue(row: CaseRow, col: TodoColumn): string {
@@ -78,20 +80,23 @@ function getCellValue(row: CaseRow, col: TodoColumn): string {
   return col.defaultValue ?? ''
 }
 
-function StatusBadge({ value, options }: { value: string; options: Array<{ value: string; label: string }> }) {
+function StatusBadge({ value, options, warn = false }: { value: string; options: Array<{ value: string; label: string }>; warn?: boolean }) {
   const opt = options.find((o) => o.value === value)
   if (!opt) {
     return <span className="font-serif italic text-[15px] text-muted-foreground/40">—</span>
   }
 
   // Editorial tone: 배지 제거, 이탤릭 세리프로 표시.
-  // 진행 중 → primary(테라코타, warm). 완료 → sage(차분한 녹색, cool 대비). 그 외 → muted.
+  // 진행 중 → primary(테라코타, warm). 완료 → sage(차분한 녹색, cool 대비).
+  // 대기(그 외) → 기본 muted, 단 warn(신고기한 임박)이면 경고색 — 날짜와 함께 물든다.
   const isActive = value === 'in_progress' || value === 'testing'
   const isDone = value === 'done'
   const cls = isActive
     ? 'font-serif italic text-[16px] text-primary'
     : isDone
     ? 'font-serif italic text-[16px] text-pmw-positive'
+    : warn
+    ? 'font-serif italic text-[16px] text-pmw-warning'
     : 'font-serif italic text-[16px] text-muted-foreground'
 
   return (
@@ -265,7 +270,7 @@ function SelectCell({
     if (isImportPermitReport && (v === 'not_started' || v === 'in_progress' || v === 'done')) {
       if (v === 'not_started') {
         const ok = await confirm({
-          message: '대기중으로 되돌리시겠어요?',
+          message: '대기로 되돌리시겠어요?',
           description:
             '수입 허가 진행 정보(신청일·완료 표시)가 지워집니다. 보호자가 첨부한 허가증이나 입력된 허가번호는 그대로 유지됩니다.',
           okLabel: '대기로 되돌리기',
@@ -281,7 +286,7 @@ function SelectCell({
     if (isJapanReport && (v === 'not_started' || v === 'in_progress' || v === 'done')) {
       if (v === 'not_started') {
         const ok = await confirm({
-          message: '대기중으로 되돌리시겠어요?',
+          message: '대기로 되돌리시겠어요?',
           description:
             col.key === 'import_import_status'
               ? '사전 신고 진행 정보(신청일·완료 표시)가 지워집니다. 보호자가 첨부한 허가서는 그대로 유지됩니다.'
@@ -329,7 +334,7 @@ function SelectCell({
       } as React.ButtonHTMLAttributes<HTMLButtonElement>}
       renderTrigger={() => (
         <>
-          <StatusBadge value={value} options={col.options!} />
+          <StatusBadge value={value} options={col.options!} warn={col.warn?.(row) ?? false} />
           <span aria-hidden className="not-italic ml-1 text-[10px] leading-none opacity-0 transition-opacity group-hover:opacity-70">▼</span>
         </>
       )}
