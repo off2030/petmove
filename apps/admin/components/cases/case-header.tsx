@@ -1,9 +1,13 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Check, TriangleAlert } from 'lucide-react'
 import type { CaseRow } from '@petmove/domain'
 import { buildFieldSpecs } from '@petmove/domain'
+import { cn } from '@/lib/utils'
 import { useCases } from './cases-context'
+import { evaluateCase } from './verification-context'
+import { listOrgDisabledChecks } from '@/lib/actions/org-disabled-checks'
 import { destCode } from '@/lib/country-code'
 
 /**
@@ -16,9 +20,30 @@ import { destCode } from '@/lib/country-code'
  *  - 다중 목적지는 활성 칩 하나 + "+N".
  */
 export function CaseHeader({ caseRow }: { caseRow: CaseRow }) {
-  const { fieldDefs, activeDestination } = useCases()
+  const { fieldDefs, activeDestination, cases } = useCases()
   const specs = useMemo(() => buildFieldSpecs(fieldDefs), [fieldDefs])
   const data = (caseRow.data ?? {}) as Record<string, unknown>
+
+  // 절차 검증 요약 배지 — 상세 필드 색칠·PDF 발급 게이트와 동일한 evaluateCase 엔진.
+  // 조직이 끈 규칙(disabledIds)은 마운트 후 1회 로드(그 전엔 전부 실행).
+  const [disabledIds, setDisabledIds] = useState<Set<string>>(() => new Set())
+  useEffect(() => {
+    void (async () => {
+      const r = await listOrgDisabledChecks()
+      if (r.ok) setDisabledIds(new Set(r.value))
+    })()
+  }, [])
+  const viewDestination = activeDestination ?? caseRow.destination
+  const verify = useMemo(() => {
+    const results = evaluateCase(caseRow, viewDestination, disabledIds, cases)
+    // info(안내·"적합")는 제외 — blocker/warning 만 문제로 집계 (PDF 발급 게이트와 동일 기준).
+    const failing = results.filter((e) => !e.result.ok && e.check.severity !== 'info')
+    return {
+      count: failing.length,
+      hasBlocker: failing.some((e) => e.check.severity === 'blocker'),
+      messages: failing.map((e) => e.result.message),
+    }
+  }, [caseRow, viewDestination, disabledIds, cases])
 
   // select 필드(종·성별) → 옵션의 한글 라벨. renderFieldValue 는 영문 우선이라
   // 헤더에선 label_ko 를 직접 뽑는다 (종을 '강아지/고양이'로 한글 표시).
@@ -70,21 +95,45 @@ export function CaseHeader({ caseRow }: { caseRow: CaseRow }) {
           )}
         </div>
 
-        {activeDest && (
-          <span className="shrink-0 inline-flex items-baseline gap-1.5 rounded-full bg-pmw-tag px-3 py-1 text-pmw-tag-foreground">
-            {activeCode && (
-              <span className="font-mono text-[10px] uppercase tracking-[1px] text-pmw-tag-foreground/60">
-                {activeCode}
-              </span>
-            )}
-            <span className="font-serif text-[14px] leading-none">{activeDest}</span>
-            {extraCount > 0 && (
-              <span className="font-mono text-[11px] tabular-nums text-pmw-tag-foreground/60">
-                +{extraCount}
-              </span>
-            )}
-          </span>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {/* 절차 검증 배지 — 이상 없음(초록) / 주의 N건(앰버·심각 시 빨강). hover 로 문제 목록. */}
+          {verify.count === 0 ? (
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-pmw-positive/12 px-2.5 py-1 text-[12.5px] text-pmw-positive"
+              title="절차 검증 이상 없음"
+            >
+              <Check className="h-3.5 w-3.5" />
+              이상 없음
+            </span>
+          ) : (
+            <span
+              title={verify.messages.map((m) => `• ${m}`).join('\n')}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12.5px]',
+                verify.hasBlocker ? 'bg-destructive/10 text-destructive' : 'bg-pmw-warning/15 text-pmw-warning',
+              )}
+            >
+              <TriangleAlert className="h-3.5 w-3.5" />
+              주의 {verify.count}건
+            </span>
+          )}
+
+          {activeDest && (
+            <span className="inline-flex items-baseline gap-1.5 rounded-full bg-pmw-tag px-3 py-1 text-pmw-tag-foreground">
+              {activeCode && (
+                <span className="font-mono text-[10px] uppercase tracking-[1px] text-pmw-tag-foreground/60">
+                  {activeCode}
+                </span>
+              )}
+              <span className="font-serif text-[14px] leading-none">{activeDest}</span>
+              {extraCount > 0 && (
+                <span className="font-mono text-[11px] tabular-nums text-pmw-tag-foreground/60">
+                  +{extraCount}
+                </span>
+              )}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )
