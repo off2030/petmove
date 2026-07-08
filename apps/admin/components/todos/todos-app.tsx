@@ -867,32 +867,27 @@ export function TodosApp({
       if (!db) return -1
       return db.localeCompare(da)
     }
-    // 날짜 ASC(가까운 순) — 빈 날짜는 맨 뒤.
-    const dateAsc = (da: string, db: string): number => {
-      if (!da && !db) return 0
-      if (!da) return 1
-      if (!db) return -1
-      return da.localeCompare(db)
-    }
-    // 미완료 그룹(대기·검사중) 정렬 — 선택된 라벨 기준.
+    const labOrder = (a: InspectionRow, b: InspectionRow): number =>
+      (LAB_SORT_ORDER[a.lab] ?? 99) - (LAB_SORT_ORDER[b.lab] ?? 99)
+    // 미완료 그룹(대기·검사중) 정렬 — 선택된 라벨 기준 + 2차 정렬.
     function comparePending(a: InspectionRow, b: InspectionRow): number {
       const da = a.date || ''
       const db = b.date || ''
-      if (inspectionSort === 'date') return dateDesc(da, db)
+      if (inspectionSort === 'date') {
+        // 검사일 최신순 → 같은 날짜면 검사기관 순.
+        const d = dateDesc(da, db)
+        return d !== 0 ? d : labOrder(a, b)
+      }
       if (inspectionSort === 'status') {
+        // 대기 → 검사중 → 같은 상태면 검사기관 순.
         const sa = INSPECTION_STATUS_ORDER[readInspectionStatus(a)] ?? 0
         const sb = INSPECTION_STATUS_ORDER[readInspectionStatus(b)] ?? 0
         if (sa !== sb) return sa - sb
-        return dateAsc(da, db)
+        return labOrder(a, b)
       }
-      // 'lab' (기본): 검사기관 순 → 검사일 가까운 순 → 출국일.
-      const labCmp = (LAB_SORT_ORDER[a.lab] ?? 99) - (LAB_SORT_ORDER[b.lab] ?? 99)
-      if (labCmp !== 0) return labCmp
-      const d = dateAsc(da, db)
-      if (d !== 0) return d
-      const ea = getDepartureDate(a.caseRow, resolveTabActiveDest(a.caseRow, 'inspection_active_dest')) ?? ''
-      const eb = getDepartureDate(b.caseRow, resolveTabActiveDest(b.caseRow, 'inspection_active_dest')) ?? ''
-      return dateAsc(ea, eb)
+      // 'lab' (기본): 검사기관 순 → 같은 기관이면 검사일 최신순.
+      const lc = labOrder(a, b)
+      return lc !== 0 ? lc : dateDesc(da, db)
     }
     // 완료는 정렬 기준과 무관하게 항상 맨 아래 + 완료 그룹 내부는 항상 날짜 최신순.
     return built.sort((a, b) => {
