@@ -1094,6 +1094,15 @@ export function TodosInspectionActions({ query }: { query: string }) {
         <div className="absolute right-0 top-full mt-1 z-30 min-w-[180px] rounded-md border border-border bg-popover p-1 shadow-md">
           <button
             type="button"
+            onClick={() => { if (euApqaRows.length > 0) { setActiveDialog('apqa_eu'); setMenuOpen(false) } }}
+            disabled={euApqaRows.length === 0}
+            className={itemClass(euApqaRows.length === 0)}
+            title={euApqaRows.length === 0 ? '대상 케이스가 없습니다' : undefined}
+          >
+            APQA EU
+          </button>
+          <button
+            type="button"
             onClick={() => { if (ksvdlrRows.length > 0) { setActiveDialog('ksvdl_r'); setMenuOpen(false) } }}
             disabled={ksvdlrRows.length === 0}
             className={itemClass(ksvdlrRows.length === 0)}
@@ -1127,15 +1136,6 @@ export function TodosInspectionActions({ query }: { query: string }) {
             title={arcRows.length === 0 ? '대상 케이스가 없습니다' : '인보이스 + 시료제출서·VHC·면허증'}
           >
             ARC-OVI
-          </button>
-          <button
-            type="button"
-            onClick={() => { if (euApqaRows.length > 0) { setActiveDialog('apqa_eu'); setMenuOpen(false) } }}
-            disabled={euApqaRows.length === 0}
-            className={itemClass(euApqaRows.length === 0)}
-            title={euApqaRows.length === 0 ? '대상 케이스가 없습니다' : undefined}
-          >
-            APQA EU
           </button>
         </div>
       )}
