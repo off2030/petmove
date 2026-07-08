@@ -198,7 +198,8 @@ function DateCell({
 }) {
   const [editing, setEditing] = useState(false)
 
-  const baseCls = 'w-full px-1 py-1 min-h-[24px] flex items-center gap-1.5'
+  // 점은 absolute(흐름 밖)로 두어 날짜 x 위치가 지연/비지연 행에서 동일 — 열 정렬 유지.
+  const baseCls = 'relative w-full px-1 py-1 min-h-[24px] flex items-center'
   const dateCls = 'font-mono text-[12px] tabular-nums tracking-[0.3px] truncate'
   const isOverdue = overdueDays != null
 
@@ -208,7 +209,7 @@ function DateCell({
         <span
           aria-hidden
           title={`검사 접수 후 ${overdueDays}일 경과 — 결과 확인 필요`}
-          className="shrink-0 w-[7px] h-[7px] rounded-full bg-pmw-warning"
+          className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-[7px] h-[7px] rounded-full bg-pmw-warning"
         />
       )}
       <span className={cn(dateCls, isOverdue ? 'text-pmw-warning' : 'text-muted-foreground/80')}>
