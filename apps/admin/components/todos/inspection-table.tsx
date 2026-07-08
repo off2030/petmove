@@ -13,19 +13,15 @@ import { DestinationCell } from './destination-cell'
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
 
-/**
- * 검사일이 오늘 기준 threshold 일 이상 경과했으면 경과일수, 아니면 undefined.
- * YYYY-MM-DD 기준. (지연 배지 표시용)
- */
-function overdueDays(dateStr: string, threshold: number): number | undefined {
-  if (!dateStr) return undefined
+/** 검사일이 오늘 기준 N일 이상 경과했는지. YYYY-MM-DD 기준. (대기 지연 표시용) */
+function isOverdue(dateStr: string, days: number): boolean {
+  if (!dateStr) return false
   const d = new Date(dateStr)
-  if (isNaN(d.getTime())) return undefined
+  if (isNaN(d.getTime())) return false
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   d.setHours(0, 0, 0, 0)
-  const diffDays = Math.floor((today.getTime() - d.getTime()) / 86400000)
-  return diffDays >= threshold ? diffDays : undefined
+  return Math.floor((today.getTime() - d.getTime()) / 86400000) >= days
 }
 
 /**
@@ -188,34 +184,24 @@ function DateCell({
   value,
   editable,
   onSave,
-  overdueDays,
+  overdue = false,
 }: {
   value: string
   editable: boolean
   onSave: (v: string) => void
-  /** 대기중 + 검사일 5일 이상 경과 시 경과일수. 미지연이면 undefined. */
-  overdueDays?: number
+  /** 대기중 + 검사일 5일 이상 경과 시 날짜를 경고색으로. */
+  overdue?: boolean
 }) {
   const [editing, setEditing] = useState(false)
 
-  // 점은 absolute(흐름 밖)로 두어 날짜 x 위치가 지연/비지연 행에서 동일 — 열 정렬 유지.
-  const baseCls = 'relative w-full px-1 py-1 min-h-[24px] flex items-center'
-  const dateCls = 'font-mono text-[12px] tabular-nums tracking-[0.3px] truncate'
-  const isOverdue = overdueDays != null
+  const baseCls = 'w-full px-1 py-1 min-h-[24px] flex items-center'
+  const dateCls = cn(
+    'font-mono text-[12px] tabular-nums tracking-[0.3px] truncate',
+    overdue ? 'text-pmw-warning' : 'text-muted-foreground/80',
+  )
 
   const body = value ? (
-    <>
-      {isOverdue && (
-        <span
-          aria-hidden
-          title={`검사 접수 후 ${overdueDays}일 경과 — 결과 확인 필요`}
-          className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-[7px] h-[7px] rounded-full bg-pmw-warning"
-        />
-      )}
-      <span className={cn(dateCls, isOverdue ? 'text-pmw-warning' : 'text-muted-foreground/80')}>
-        {formatDateDotted(value)}
-      </span>
-    </>
+    <span className={dateCls}>{formatDateDotted(value)}</span>
   ) : (
     <span className="font-serif italic text-[15px] text-muted-foreground/40">—</span>
   )
@@ -337,22 +323,27 @@ function MemoCell({ row, onUpdate }: {
  * Status — 배지 없음. 이탤릭 세리프 + "검사중" 활성 상태만 브랜드 색으로 강조.
  * 상세페이지의 Status 규칙과 동일.
  */
-function StatusCell({ row, options, onUpdate }: {
+function StatusCell({ row, options, onUpdate, overdue = false }: {
   row: InspectionRow
   options: StatusOption[]
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+  /** 대기 + 검사일 5일 이상 경과 시 '대기'를 경고색으로. */
+  overdue?: boolean
 }) {
   const value = readInspectionStatus(row)
   const opt = options.find(o => o.value === value)
   const label = opt?.label ?? '대기'
 
-  // "검사중" → primary(테라코타, warm). "완료" → sage(차분한 녹색, cool 대비). 대기 → muted.
+  // "검사중" → primary(테라코타, warm). "완료" → sage(차분한 녹색). 대기 → muted,
+  // 단 검사일 5일 이상 지난 대기는 경고색(날짜와 동일)으로 지연 신호.
   const isActive = value === 'testing'
   const isDone = value === 'done'
   const cls = isActive
     ? 'font-serif italic text-[16px] text-primary'
     : isDone
     ? 'font-serif italic text-[16px] text-pmw-positive'
+    : overdue
+    ? 'font-serif italic text-[16px] text-pmw-warning'
     : 'font-serif italic text-[16px] text-muted-foreground'
 
   return <StatusPicker row={row} options={options} value={value} label={label} cls={cls} isDone={isDone} onUpdate={onUpdate} />
@@ -571,6 +562,8 @@ export function InspectionTable({
       <tbody>
         {visibleRows.map(row => {
           const isDone = readInspectionStatus(row) === 'done'
+          // 대기 상태 + 검사일 5일 이상 경과 = 지연. 날짜·진행상태를 같은 경고색으로.
+          const overdue = readInspectionStatus(row) === 'waiting' && isOverdue(row.date, 5)
           return (
           <tr
             key={row.id}
@@ -592,17 +585,13 @@ export function InspectionTable({
                   // 검사 탭에서는 검사일 편집 불가 — 수정은 상세페이지에서만.
                   editable={false}
                   onSave={(v) => handleDateSave(row, v)}
-                  overdueDays={
-                    readInspectionStatus(row) === 'waiting'
-                      ? overdueDays(row.date, 5)
-                      : undefined
-                  }
+                  overdue={overdue}
                 />
               </td>
             )}
             {!hidden.has('status') && (
               <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
-                <StatusCell row={row} options={statusOptions} onUpdate={onUpdate} />
+                <StatusCell row={row} options={statusOptions} onUpdate={onUpdate} overdue={overdue} />
               </td>
             )}
             {!hidden.has('pet_name') && (
