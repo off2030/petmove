@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import type { FieldSpec } from '@petmove/domain'
 import { renderFieldValue } from '@petmove/domain'
 import { updateCaseField } from '@/lib/actions/cases'
+import { persistField } from '@/lib/toast-bus'
 import { useCases } from './cases-context'
 import { CopyButton } from './copy-button'
 import { SectionLabel } from '@/components/ui/section-label'
@@ -100,32 +101,24 @@ export function PairedField({
       setEditing(false)
       return
     }
-    // Optimistic — UI 즉시 반영. 실패 시 rollback.
-    const koPrev = koRaw
-    const enPrev = enRaw
+    // Optimistic — 실패해도 입력값 보존 + '다시 시도' 토스트(persistField).
     setEditing(false)
     setError(null)
     setSavedFlash(true)
     setTimeout(() => setSavedFlash(false), 1500)
     if (koNew !== koCurr) updateLocalCaseField(caseId, koSpec.storage, koSpec.key, koNew)
     if (enSpec && enNew !== enCurr) updateLocalCaseField(caseId, enSpec.storage, enSpec.key, enNew)
-    void (async () => {
+    void persistField(koSpec.label, async () => {
       if (koNew !== koCurr) {
         const r = await updateCaseField(caseId, koSpec.storage, koSpec.key, koNew)
-        if (!r.ok) {
-          updateLocalCaseField(caseId, koSpec.storage, koSpec.key, koPrev)
-          setError(r.error)
-          return
-        }
+        if (!r.ok) return r
       }
       if (enSpec && enNew !== enCurr) {
         const r = await updateCaseField(caseId, enSpec.storage, enSpec.key, enNew)
-        if (!r.ok) {
-          updateLocalCaseField(caseId, enSpec.storage, enSpec.key, enPrev)
-          setError(r.error)
-        }
+        if (!r.ok) return r
       }
-    })()
+      return { ok: true as const }
+    })
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {

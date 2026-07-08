@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
+import { persistField } from '@/lib/toast-bus'
 import { CopyButton } from './copy-button'
 import { useCases } from './cases-context'
 import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
@@ -126,10 +127,11 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     // Optimistic — UI 즉시 반영.
     updateLocalCaseField(caseId, 'data', 'breed', breed.ko)
     updateLocalCaseField(caseId, 'data', 'breed_en', breed.en)
-    void (async () => {
-      await updateCaseField(caseId, 'data', 'breed', breed.ko)
-      await updateCaseField(caseId, 'data', 'breed_en', breed.en)
-    })()
+    void persistField('품종', async () => {
+      const r1 = await updateCaseField(caseId, 'data', 'breed', breed.ko)
+      if (!r1.ok) return r1
+      return updateCaseField(caseId, 'data', 'breed_en', breed.en)
+    })
   }
 
   return (

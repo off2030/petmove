@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
+import { persistField } from '@/lib/toast-bus'
 import { CopyButton } from './copy-button'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
@@ -121,20 +122,22 @@ export function CustomerNameRow({
     if (ko !== koCurr) updateLocalCaseField(caseId, 'column', 'customer_name', ko)
     if (first !== firstCurr) updateLocalCaseField(caseId, 'data', 'customer_first_name_en', first)
     if (last !== lastCurr) updateLocalCaseField(caseId, 'data', 'customer_last_name_en', last)
-    void (async () => {
+    // 실패해도 입력값 보존 + '다시 시도' 토스트(persistField) — 세 필드를 한 저장으로 묶는다.
+    void persistField('고객명', async () => {
       if (ko !== koCurr) {
         const r = await updateCaseField(caseId, 'column', 'customer_name', ko)
-        if (!r.ok) { updateLocalCaseField(caseId, 'column', 'customer_name', koCurr); setError(r.error); return }
+        if (!r.ok) return r
       }
       if (first !== firstCurr) {
         const r = await updateCaseField(caseId, 'data', 'customer_first_name_en', first)
-        if (!r.ok) { updateLocalCaseField(caseId, 'data', 'customer_first_name_en', firstCurr); setError(r.error); return }
+        if (!r.ok) return r
       }
       if (last !== lastCurr) {
         const r = await updateCaseField(caseId, 'data', 'customer_last_name_en', last)
-        if (!r.ok) { updateLocalCaseField(caseId, 'data', 'customer_last_name_en', lastCurr); setError(r.error) }
+        if (!r.ok) return r
       }
-    })()
+      return { ok: true as const }
+    })
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {

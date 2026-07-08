@@ -17,6 +17,7 @@ import { useConfirm } from '@petmove/ui'
 import { AttachButton } from '@/components/ui/attach-button'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
+import { persistField } from '@/lib/toast-bus'
 import { uploadStepDocumentAdmin } from '@/lib/actions/step-documents'
 import { CopyButton } from './copy-button'
 import { DateTextField } from '@petmove/ui'
@@ -137,13 +138,9 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
     const idx = current.indexOf(key)
     const next = idx >= 0 ? current.filter((_, i) => i !== idx) : [...current, key]
     const val = next.length > 0 ? next : null
-    // Optimistic — UI 즉시 반영. 실패 시 rollback.
-    const prev = current.length > 0 ? current : null
+    // Optimistic — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
     updateLocalCaseField(caseRow.id, 'data', 'extra_visible_fields', val)
-    void (async () => {
-      const r = await updateCaseField(caseRow.id, 'data', 'extra_visible_fields', val)
-      if (!r.ok) updateLocalCaseField(caseRow.id, 'data', 'extra_visible_fields', prev)
-    })()
+    void persistField('항목 표시', () => updateCaseField(caseRow.id, 'data', 'extra_visible_fields', val))
   }
 
   return (
@@ -1061,7 +1058,7 @@ function ReturnFlightRow({ caseId, caseRow, activeDest }: {
 
   function save(key: string, value: string | null) {
     updateLocalCaseField(caseId, 'data', key, value, destArgFor(key))
-    void updateCaseField(caseId, 'data', key, value, destArgFor(key))
+    void persistField('귀국 항공편', () => updateCaseField(caseId, 'data', key, value, destArgFor(key)))
   }
   function onChangeDate(next: string) {
     const v = next || null
@@ -1186,15 +1183,11 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
     const storage = isMain ? 'column' : 'data'
     const key = isMain ? 'microchip' : 'microchip_secondary'
     const setEditing = isMain ? setEditingMain : setEditingSec
-    const prevRaw = isMain ? mainRaw : secRaw
     if (!digits) {
-      // Optimistic clear.
+      // Optimistic clear — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
       updateLocalCaseField(caseId, storage, key, null)
       setEditing(false)
-      void (async () => {
-        const r = await updateCaseField(caseId, storage, key, null)
-        if (!r.ok) updateLocalCaseField(caseId, storage, key, prevRaw || null)
-      })()
+      void persistField('마이크로칩', () => updateCaseField(caseId, storage, key, null))
       return
     }
     if (digits.length !== 15) { setError('유효한 번호가 아닙니다'); return }
@@ -1210,13 +1203,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
     setEditing(false)
     setFlashed(which)
     setTimeout(() => setFlashed(null), 1500)
-    void (async () => {
-      const r = await updateCaseField(caseId, storage, key, formatted)
-      if (!r.ok) {
-        updateLocalCaseField(caseId, storage, key, prevRaw || null)
-        setError(r.error)
-      }
-    })()
+    void persistField('마이크로칩', () => updateCaseField(caseId, storage, key, formatted))
   }
 
   // 라벨 클릭 동작: 주칩 비어있으면 주칩 / 주칩 있고 보조칩 비어있으면 보조칩 / 둘 다 있으면 비활성.
@@ -1338,13 +1325,9 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
                 <button
                   type="button"
                   onClick={() => {
-                    const prev = secRaw
                     updateLocalCaseField(caseId, 'data', 'microchip_secondary', null)
                     setError(null)
-                    void (async () => {
-                      const r = await updateCaseField(caseId, 'data', 'microchip_secondary', null)
-                      if (!r.ok) updateLocalCaseField(caseId, 'data', 'microchip_secondary', prev || null)
-                    })()
+                    void persistField('마이크로칩', () => updateCaseField(caseId, 'data', 'microchip_secondary', null))
                   }}
                   title="보조칩 삭제"
                   className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover/sec:opacity-70 hover:!opacity-100"
@@ -1389,14 +1372,10 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }, [caseId])
 
   function saveDate(value: string | null) {
-    const prev = implantDate
-    // Optimistic.
+    // Optimistic — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
     updateLocalCaseField(caseId, 'data', 'microchip_implant_date', value)
     setEditing(false)
-    void (async () => {
-      const r = await updateCaseField(caseId, 'data', 'microchip_implant_date', value)
-      if (!r.ok) updateLocalCaseField(caseId, 'data', 'microchip_implant_date', prev || null)
-    })()
+    void persistField('마이크로칩 삽입일', () => updateCaseField(caseId, 'data', 'microchip_implant_date', value))
   }
 
   return (

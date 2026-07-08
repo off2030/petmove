@@ -5,6 +5,7 @@ import { Calculator as CalculatorIcon, Trash2 } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
+import { persistField } from '@/lib/toast-bus'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
 import { DateTextField } from '@petmove/ui'
@@ -88,13 +89,9 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
 
   async function savePayments(next: PaymentRecord[]) {
     const val = next.length > 0 ? next : null
-    // Optimistic — UI 즉시 반영. 실패 시 rollback.
-    const prevSnapshot = payments
+    // Optimistic — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
     updateLocalCaseField(caseId, 'data', 'payments', val)
-    const r = await updateCaseField(caseId, 'data', 'payments', val)
-    if (!r.ok) {
-      updateLocalCaseField(caseId, 'data', 'payments', prevSnapshot.length > 0 ? prevSnapshot : null)
-    }
+    await persistField('결제', () => updateCaseField(caseId, 'data', 'payments', val))
   }
 
   async function deletePayment(idx: number) {

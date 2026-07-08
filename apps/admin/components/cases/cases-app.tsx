@@ -30,7 +30,7 @@ import { getDepartureDate, resolveCerts, buildCaseJourneyContext, SINGLE_DOSE_RA
 import type { CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { evaluateCase } from './verification-context'
-import { toastError, toastInfo } from '@/lib/toast-bus'
+import { toastError, toastInfo, persistField } from '@/lib/toast-bus'
 import { listOrgDisabledChecks } from '@/lib/actions/org-disabled-checks'
 import { inspectMissingPdfFields } from '@/lib/actions/inspect-missing-pdf-fields'
 
@@ -158,7 +158,7 @@ function ImportReportToggle({
           type="button"
           onClick={async () => {
             onUpdate(caseRow.id, 'data', 'import_report_dismissed', null)
-            await updateCaseField(caseRow.id, 'data', 'import_report_dismissed', null)
+            await persistField('신고', () => updateCaseField(caseRow.id, 'data', 'import_report_dismissed', null))
           }}
           className="rounded-md px-1.5 py-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors text-[13px]"
           title="신고 탭으로 다시 올리기"
@@ -187,12 +187,16 @@ function ImportReportToggle({
       type="button"
       onClick={async () => {
         onUpdate(caseRow.id, 'data', 'import_report_manual', nextVal || null)
-        await updateCaseField(caseRow.id, 'data', 'import_report_manual', nextVal || null)
-        // 신고 등록 시 활성 목적지를 신고 탭 active_dest에 영속 저장.
-        if (nextVal) {
-          onUpdate(caseRow.id, 'data', 'import_report_active_dest', focusDest)
-          await updateCaseField(caseRow.id, 'data', 'import_report_active_dest', focusDest)
-        }
+        await persistField('신고', async () => {
+          const r = await updateCaseField(caseRow.id, 'data', 'import_report_manual', nextVal || null)
+          if (!r.ok) return r
+          // 신고 등록 시 활성 목적지를 신고 탭 active_dest에 영속 저장.
+          if (nextVal) {
+            onUpdate(caseRow.id, 'data', 'import_report_active_dest', focusDest)
+            return updateCaseField(caseRow.id, 'data', 'import_report_active_dest', focusDest)
+          }
+          return r
+        })
       }}
       className={included
         ? 'shrink-0 whitespace-nowrap rounded-md px-2 py-1 text-pmw-info/70 hover:bg-accent hover:text-pmw-info transition-colors'

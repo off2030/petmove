@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { Paperclip, Plus, Trash2 } from 'lucide-react'
 import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
+import { persistField } from '@/lib/toast-bus'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
 import { listParasiteFamilies, normalizeRabiesOrder, type VaccineLookups } from '@petmove/domain'
@@ -239,18 +240,15 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     // 때만 정렬하므로 portal 이 만든 배열엔 개입하지 않음. 다른 백신은 그대로.
     const next = dataKey === 'rabies_dates' ? normalizeRabiesOrder(rawNext) : rawNext
     const val = next.length > 0 ? next : null
-    // Optimistic — UI 즉시 반영. 서버 응답이 늦어도 토글이 즉시 반응함.
-    const prevSnapshot = records
+    // Optimistic — UI 즉시 반영. 실패해도 값 보존 + '다시 시도' 토스트(persistField).
     updateLocalCaseField(caseId, 'data', dataKey, val)
     if (legacyKey && data[legacyKey]) {
       updateLocalCaseField(caseId, 'data', legacyKey, null)
       updateCaseField(caseId, 'data', legacyKey, null).catch(() => {})
     }
-    const r = await updateCaseField(caseId, 'data', dataKey, val)
-    if (!r.ok) {
-      // 실패 시 rollback.
-      updateLocalCaseField(caseId, 'data', dataKey, prevSnapshot.length > 0 ? prevSnapshot : null)
-    } else if (r.autoFilled?.data) {
+    const r = await persistField(label, () => updateCaseField(caseId, 'data', dataKey, val))
+    if (!r || !r.ok) return
+    if (r.autoFilled?.data) {
       // 자동 채움 결과를 로컬 케이스 컨텍스트에 통째 반영 + 컬럼도 갱신.
       replaceLocalCaseData(caseId, r.autoFilled.data)
       for (const [k, v] of Object.entries(r.autoFilled.columns ?? {})) {

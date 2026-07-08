@@ -638,17 +638,10 @@ function EmailChip({ caseId }: { caseId: string }) {
   function save() {
     const trimmed = value.trim()
     const next = trimmed || null
-    const prev = emailStr ? emailStr : null
     updateLocalCaseField(caseId, 'data', 'email', next)
     setEditing(false)
     setError(null)
-    void (async () => {
-      const result = await updateCaseField(caseId, 'data', 'email', next)
-      if (!result.ok) {
-        updateLocalCaseField(caseId, 'data', 'email', prev)
-        setError(result.error)
-      }
-    })()
+    void persistField('이메일', () => updateCaseField(caseId, 'data', 'email', next))
   }
 
   function cancel() {

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
+import { persistField } from '@/lib/toast-bus'
 import { CopyButton } from './copy-button'
 import { useCases } from './cases-context'
 import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
@@ -141,10 +142,11 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     // Optimistic — UI 즉시 반영.
     updateLocalCaseField(caseId, 'data', 'color', ko || null)
     updateLocalCaseField(caseId, 'data', 'color_en', en || null)
-    void (async () => {
-      await updateCaseField(caseId, 'data', 'color', ko || null)
-      await updateCaseField(caseId, 'data', 'color_en', en || null)
-    })()
+    void persistField('모색', async () => {
+      const r1 = await updateCaseField(caseId, 'data', 'color', ko || null)
+      if (!r1.ok) return r1
+      return updateCaseField(caseId, 'data', 'color_en', en || null)
+    })
   }
 
   return (

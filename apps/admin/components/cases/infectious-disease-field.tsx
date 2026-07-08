@@ -5,6 +5,7 @@ import { Trash2 } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
+import { persistField } from '@/lib/toast-bus'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
 import { labColor } from '@/lib/lab-color'
@@ -53,19 +54,15 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
 
   async function saveRecords(next: InfectiousRecord[]) {
     const val = next.length > 0 ? next : null
-    // Optimistic — UI 즉시 반영. 실패 시 rollback.
-    const prevSnapshot = records
+    // Optimistic — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
     updateLocalCaseField(caseId, 'data', DATA_KEY, val)
     // Also clear legacy flat key if it exists
     if (data.infectious_disease_test) {
       updateLocalCaseField(caseId, 'data', 'infectious_disease_test', null)
       updateCaseField(caseId, 'data', 'infectious_disease_test', null).catch(() => {})
     }
-    const r = await updateCaseField(caseId, 'data', DATA_KEY, val)
-    if (!r.ok) {
-      updateLocalCaseField(caseId, 'data', DATA_KEY, prevSnapshot.length > 0 ? prevSnapshot : null)
-      return
-    }
+    const r = await persistField('전염병 검사', () => updateCaseField(caseId, 'data', DATA_KEY, val))
+    if (!r) return
 
     // If clearing all records, remove from toggleable fields
     if (val === null) {

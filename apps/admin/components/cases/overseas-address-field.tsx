@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
+import { persistField } from '@/lib/toast-bus'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
 import { isDestinationScopedKey, readEffectiveExtraValue, resolveActiveDestination } from '@petmove/domain'
@@ -43,14 +44,10 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
 
   function save(v: string | null) {
     const val = v?.trim() || null
-    const prev = value
-    // Optimistic
+    // Optimistic — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
     updateLocalCaseField(caseId, 'data', DATA_KEY, val, destArg)
     setEditing(false)
-    void (async () => {
-      const r = await updateCaseField(caseId, 'data', DATA_KEY, val, destArg)
-      if (!r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, prev, destArg)
-    })()
+    void persistField('해외주소', () => updateCaseField(caseId, 'data', DATA_KEY, val, destArg))
   }
 
   // 라벨 클릭으로도 편집 진입 — 빈 값일 때 클릭 영역 잘 안 보이는 문제 해결.

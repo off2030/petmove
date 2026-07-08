@@ -6,6 +6,7 @@ import { Trash2, Archive } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
+import { persistField } from '@/lib/toast-bus'
 import { markJourneyCompleteAdmin } from '@/lib/actions/journey-complete'
 import { useCases } from './cases-context'
 import destsData from '@petmove/domain/data/destinations.json'
@@ -56,7 +57,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     if (!targetDest) return
     const next: Record<string, TripType> = { ...tripTypeMap, [targetDest]: value }
     updateLocalCaseField(caseId, 'data', 'trip_type', next)
-    await updateCaseField(caseId, 'data', 'trip_type', next)
+    await persistField('여정 유형', () => updateCaseField(caseId, 'data', 'trip_type', next))
   }
 
   // 동시 진행 — 같은 보호자의 다른 동물 케이스에 절차·추가 정보를 함께 반영. 디폴트 on.
@@ -90,7 +91,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     })
   async function setCoProgress(value: boolean) {
     updateLocalCaseField(caseId, 'data', 'co_progress', value)
-    await updateCaseField(caseId, 'data', 'co_progress', value)
+    await persistField('동시 진행', () => updateCaseField(caseId, 'data', 'co_progress', value))
   }
 
   // Display: show English names
@@ -171,7 +172,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     const val = joinDests(next)
     // Optimistic update first
     updateLocalCaseField(caseId, 'column', 'destination', val)
-    await updateCaseField(caseId, 'column', 'destination', val)
+    await persistField('목적지', () => updateCaseField(caseId, 'column', 'destination', val))
   }
 
   async function removeDest(ko: string) {
@@ -184,7 +185,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     const next = selected.filter(s => s !== ko)
     const val = joinDests(next)
     updateLocalCaseField(caseId, 'column', 'destination', val)
-    await updateCaseField(caseId, 'column', 'destination', val)
+    await persistField('목적지', () => updateCaseField(caseId, 'column', 'destination', val))
   }
 
   // 스태프 수동 전환 — 완료된(혹은 다녀온) 여정을 '지난 여정'으로 보관. 삭제와 달리
@@ -211,7 +212,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     next.splice(toIdx, 0, moved)
     const val = joinDests(next)
     updateLocalCaseField(caseId, 'column', 'destination', val)
-    await updateCaseField(caseId, 'column', 'destination', val)
+    await persistField('목적지', () => updateCaseField(caseId, 'column', 'destination', val))
   }
 
   // 포인터 기반 드래그 재정렬 — 네이티브 HTML5 DnD 는 칩 본문 버튼이 mousedown 을

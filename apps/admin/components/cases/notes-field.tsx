@@ -6,6 +6,7 @@ import { SectionLabel } from '@/components/ui/section-label'
 import { AttachButton } from '@/components/ui/attach-button'
 import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
+import { persistField } from '@/lib/toast-bus'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
 import { supabaseBrowser as supabase } from '@/lib/supabase/browser'
@@ -108,8 +109,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
   async function saveNotes(next: NoteItem[]) {
     const val = next.length > 0 ? next : null
-    // Optimistic — UI 즉시 반영. 실패 시 rollback.
-    const prevSnapshot = notes
+    // Optimistic — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
     updateLocalCaseField(caseId, 'data', DATA_KEY, val)
     // Clear legacy keys on first save (fire-and-forget)
     if (data.memo) {
@@ -124,10 +124,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
       updateLocalCaseField(caseId, 'data', 'attachments', null)
       updateCaseField(caseId, 'data', 'attachments', null).catch(() => {})
     }
-    const r = await updateCaseField(caseId, 'data', DATA_KEY, val)
-    if (!r.ok) {
-      updateLocalCaseField(caseId, 'data', DATA_KEY, prevSnapshot.length > 0 ? prevSnapshot : null)
-    }
+    await persistField('메모', () => updateCaseField(caseId, 'data', DATA_KEY, val))
   }
 
   /* ── Text actions ── */

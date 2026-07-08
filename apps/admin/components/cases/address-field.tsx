@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { renderFieldValue } from '@petmove/domain'
 import type { FieldSpec } from '@petmove/domain'
 import { updateCaseField } from '@/lib/actions/cases'
+import { persistField } from '@/lib/toast-bus'
 import { CopyButton } from './copy-button'
 import { useCases } from './cases-context'
 import { SectionLabel } from '@/components/ui/section-label'
@@ -158,13 +159,21 @@ export function AddressField({
           for (const [key, val] of Object.entries(components)) {
             if (val) updateLocalCaseField(caseId, 'data', key, val)
           }
-          void (async () => {
-            await updateCaseField(caseId, 'data', krSpec.key, kr)
-            if (enSpec && en) await updateCaseField(caseId, 'data', enSpec.key, en)
-            for (const [key, val] of Object.entries(components)) {
-              if (val) await updateCaseField(caseId, 'data', key, val)
+          void persistField('주소', async () => {
+            const r = await updateCaseField(caseId, 'data', krSpec.key, kr)
+            if (!r.ok) return r
+            if (enSpec && en) {
+              const re = await updateCaseField(caseId, 'data', enSpec.key, en)
+              if (!re.ok) return re
             }
-          })()
+            for (const [key, val] of Object.entries(components)) {
+              if (val) {
+                const rc = await updateCaseField(caseId, 'data', key, val)
+                if (!rc.ok) return rc
+              }
+            }
+            return { ok: true as const }
+          })
 
           setDetailAddr('')
           setShowDetail(true)
@@ -183,12 +192,11 @@ export function AddressField({
     updateLocalCaseField(caseId, 'data', krSpec.key, full)
     updateLocalCaseField(caseId, 'data', 'address_detail_kr', detail)
     setShowDetail(false)
-    void (async () => {
+    void persistField('한국주소', async () => {
       const r = await updateCaseField(caseId, 'data', krSpec.key, full)
-      if (!r.ok) updateLocalCaseField(caseId, 'data', krSpec.key, currentKr || null)
-      const r2 = await updateCaseField(caseId, 'data', 'address_detail_kr', detail)
-      if (!r2.ok) updateLocalCaseField(caseId, 'data', 'address_detail_kr', null)
-    })()
+      if (!r.ok) return r
+      return updateCaseField(caseId, 'data', 'address_detail_kr', detail)
+    })
   }
 
   function startEditKr() {
@@ -205,10 +213,7 @@ export function AddressField({
     setEditingKr(false)
     setKrFlash(true)
     setTimeout(() => setKrFlash(false), 1500)
-    void (async () => {
-      const r = await updateCaseField(caseId, 'data', krSpec.key, v)
-      if (!r.ok) updateLocalCaseField(caseId, 'data', krSpec.key, current)
-    })()
+    void persistField('한국주소', () => updateCaseField(caseId, 'data', krSpec.key, v))
   }
   function startEditEn() {
     setEnVal(String(enRaw ?? ''))
@@ -225,10 +230,7 @@ export function AddressField({
     setEditingEn(false)
     setEnFlash(true)
     setTimeout(() => setEnFlash(false), 1500)
-    void (async () => {
-      const r = await updateCaseField(caseId, 'data', enSpec.key, v)
-      if (!r.ok) updateLocalCaseField(caseId, 'data', enSpec.key, current)
-    })()
+    void persistField('영문주소', () => updateCaseField(caseId, 'data', enSpec.key, v))
   }
 
   const inputClass =

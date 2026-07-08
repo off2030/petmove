@@ -7,6 +7,7 @@ import { AttachButton } from '@/components/ui/attach-button'
 import { DropdownSelect } from '@petmove/ui'
 import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
+import { persistField } from '@/lib/toast-bus'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
 import { labColor } from '@/lib/lab-color'
@@ -136,12 +137,9 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 
   async function saveRecords(next: TiterRecord[]) {
     const val = next.length > 0 ? next : null
-    const prevSnapshot = records
+    // Optimistic — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
     updateLocalCaseField(caseId, 'data', DATA_KEY, val)
-    const r = await updateCaseField(caseId, 'data', DATA_KEY, val)
-    if (!r.ok) {
-      updateLocalCaseField(caseId, 'data', DATA_KEY, prevSnapshot.length > 0 ? prevSnapshot : null)
-    }
+    await persistField('광견병 항체가', () => updateCaseField(caseId, 'data', DATA_KEY, val))
   }
 
   async function runTiterExtract(input: { imageBase64?: string; mediaType?: string; text?: string }, targetIdx: number | null) {
