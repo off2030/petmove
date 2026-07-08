@@ -44,7 +44,7 @@ export type TabId = (typeof TABS)[number]['id']
 
 const INSPECTION_STATUS_OPTIONS = [
   { value: 'waiting', label: '대기' },
-  { value: 'testing', label: '검사중' },
+  { value: 'testing', label: '검사' },
   { value: 'done', label: '완료' },
 ]
 
@@ -62,10 +62,10 @@ const STATUS_OPTIONS = [
   { value: 'done', label: '완료' },
 ]
 
-// 신고 탭 수입·수출 진행상태 — 대기 / 진행중 / 완료 (N/A 없음). '대기' 라벨은 검사·서류 탭과 통일.
+// 신고 탭 수입·수출 진행상태 — 대기 / 진행 / 완료 (N/A 없음). '대기' 라벨은 검사·서류 탭과 통일.
 const IMPORT_STATUS_OPTIONS = [
   { value: 'not_started', label: '대기' },
-  { value: 'in_progress', label: '진행중' },
+  { value: 'in_progress', label: '진행' },
   { value: 'done', label: '완료' },
 ]
 
