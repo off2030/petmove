@@ -469,6 +469,16 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
       return ''
     },
   },
+  {
+    key: 'export_doc_status',
+    label: '준비상태',
+    storage: 'data',
+    type: 'select',
+    width: EXPORT_DOC_COL_W,
+    options: STATUS_OPTIONS,
+    defaultValue: 'not_started',
+    resolveValue: exportDocStatus,
+  },
   { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: EXPORT_DOC_COL_W, readonly: true },
   { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: EXPORT_DOC_COL_W, readonly: true },
   {
@@ -481,16 +491,6 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
     render: (row, onUpdate) => (
       <DestinationCell row={row} overrideKey="export_doc_active_dest" onUpdate={onUpdate} />
     ),
-  },
-  {
-    key: 'export_doc_status',
-    label: '준비상태',
-    storage: 'data',
-    type: 'select',
-    width: EXPORT_DOC_COL_W,
-    options: STATUS_OPTIONS,
-    defaultValue: 'not_started',
-    resolveValue: exportDocStatus,
   },
   { key: 'export_doc_memo', label: '메모', storage: 'data', type: 'text', width: EXPORT_DOC_COL_W, resolveValue: exportDocMemo },
 ]
