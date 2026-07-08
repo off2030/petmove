@@ -14,6 +14,7 @@ import {
   flattenCaseForDestination,
   getDepartureDate,
   getVetVisitDate,
+  getVetVisitWindowDays,
   matchesDestinationKey,
   parseDestinations,
   readByDestValue,
@@ -192,6 +193,21 @@ function exportDocDeparture(row: CaseRow): string {
 /** 서류 탭 활성 목적지 내원일. */
 function exportDocVetVisit(row: CaseRow): string {
   return getVetVisitDate(row, resolveTabActiveDest(row, EXPORT_DOC_DEST_KEY)) ?? ''
+}
+/**
+ * 서류 탭 내원가능일 — 저장값 우선, 없으면 활성 목적지·종의 임상검사 윈도우로 자동 계산.
+ * 내원가능일(가장 이른 날) = 출국일 - (윈도우 - 1). 기본 10일 → -9, 촌충국 강아지(영국 등) 4일 → -3.
+ */
+function exportDocVetAvailable(row: CaseRow): string {
+  const data = (row.data ?? {}) as Record<string, unknown>
+  const stored = data.vet_available_date
+  if (stored != null && String(stored) !== '') return String(stored)
+  const departure = exportDocDeparture(row)
+  if (!departure) return ''
+  const dest = resolveTabActiveDest(row, EXPORT_DOC_DEST_KEY)
+  const species = typeof data.species === 'string' ? data.species : undefined
+  const windowDays = getVetVisitWindowDays(dest, species)
+  return addDays(departure, -(windowDays - 1))
 }
 /** 서류 탭 활성 목적지 기준으로 평탄화한 뷰. */
 function exportDocView(row: CaseRow): CaseRow {
@@ -459,15 +475,8 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
     storage: 'data',
     type: 'date',
     width: EXPORT_DOC_COL_W,
-    // 저장된 값이 없으면 활성 목적지 출국일 - 9일로 자동 계산하여 표시.
-    resolveValue: (row) => {
-      const data = (row.data ?? {}) as Record<string, unknown>
-      const stored = data.vet_available_date
-      if (stored != null && String(stored) !== '') return String(stored)
-      const departure = exportDocDeparture(row)
-      if (departure) return addDays(departure, -9)
-      return ''
-    },
+    // 저장값 우선, 없으면 목적지·종별 임상검사 윈도우로 자동 계산(기본 -9, 촌충국 강아지 -3 등).
+    resolveValue: (row) => exportDocVetAvailable(row),
   },
   {
     key: 'export_doc_status',

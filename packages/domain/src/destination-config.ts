@@ -457,6 +457,8 @@ export function isRabiesFreeOrigin(destination: string | null | undefined): bool
 const VET_VISIT_WINDOW_OVERRIDES: Array<{
   key: keyof typeof DESTINATION_OVERRIDES
   window: number
+  /** 지정 시 해당 종에만 적용 (미지정=모든 종). 예: 촌충 구충은 개 전용. */
+  species?: 'dog' | 'cat'
 }> = [
   { key: 'malaysia', window: 7 },
   { key: 'singapore', window: 7 },
@@ -464,6 +466,14 @@ const VET_VISIT_WINDOW_OVERRIDES: Array<{
   { key: 'russia', window: 5 },
   { key: 'new_zealand', window: 3 },
   { key: 'turkey', window: 3 },
+  // EU 촌충-free 국(영국·아일랜드·몰타·노르웨이·핀란드) 강아지 — 촌충 구충이 출국 1~3일 전(admin
+  // 보수: eu.tapeworm-1to3days, 법정 24~120h)에만 유효하고, 구충을 겸하는 내원도 그 안에 들어와야
+  // 하므로 window=4 (=출국일 -3일). 고양이는 촌충 면제(EU Reg 2018/772) → 기본 10일.
+  { key: 'uk', window: 4, species: 'dog' },
+  { key: 'ireland', window: 4, species: 'dog' },
+  { key: 'malta', window: 4, species: 'dog' },
+  { key: 'norway', window: 4, species: 'dog' },
+  { key: 'finland', window: 4, species: 'dog' },
 ]
 
 const VET_VISIT_DEFAULT_WINDOW_DAYS = 10
@@ -471,11 +481,16 @@ const VET_VISIT_DEFAULT_WINDOW_DAYS = 10
 /**
  * 입력된 목적지(콤마 구분 가능)에 대한 내원일↔출국일 윈도우 일수.
  * 반환값은 규정의 "N일 이내" N. 다중 목적지 시 가장 엄격한 윈도우(최소값) 반환.
+ * species 를 주면 종별 override(촌충 구충 등)를 반영 — 미지정 시 종 제한 override 는 건너뛴다.
  */
-export function getVetVisitWindowDays(destination: string | null | undefined): number {
+export function getVetVisitWindowDays(
+  destination: string | null | undefined,
+  species?: string | null,
+): number {
   if (!destination) return VET_VISIT_DEFAULT_WINDOW_DAYS
   let min = VET_VISIT_DEFAULT_WINDOW_DAYS
   for (const ov of VET_VISIT_WINDOW_OVERRIDES) {
+    if (ov.species && ov.species !== species) continue
     if (matchesDestinationKey(destination, ov.key) && ov.window < min) {
       min = ov.window
     }

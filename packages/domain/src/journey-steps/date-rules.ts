@@ -34,6 +34,11 @@ function fmt(iso: string): string {
   return `${y}년 ${Number(m)}월 ${Number(d)}일`
 }
 
+/** case.data.species — 'dog' | 'cat' | undefined. 종별 내원 윈도우(촌충 구충) 산정용. */
+function readSpecies(data: Record<string, unknown>): string | undefined {
+  return typeof data.species === 'string' ? data.species : undefined
+}
+
 /** data[key] 를 'YYYY-MM-DD' 로 읽음 — 없거나 형식이 아니면 ''. */
 function readDate(data: Record<string, unknown>, key: string): string {
   const v = data[key]
@@ -443,7 +448,7 @@ export function validateKrExportDate(v: string, ctx: DateRuleContext): string | 
   const depart = departFromData(ctx.data)
   if (depart) {
     if (v > depart) return `한국 수출 검역일은 출국일(${fmt(depart)})보다 늦어요. 날짜를 확인하세요.`
-    const windowDays = getVetVisitWindowDays(ctx.destination)
+    const windowDays = getVetVisitWindowDays(ctx.destination, readSpecies(ctx.data))
     if (daysBetween(v, depart) >= windowDays) {
       return `한국 수출 검역일은 출국일 기준 ${windowDays}일 이내여야 해요.`
     }
@@ -509,7 +514,7 @@ export function validateVetVisitDate(v: string, ctx: DateRuleContext): string | 
   const dep = ctx.departureDate ? ctx.departureDate.slice(0, 10) : ''
   if (dep && /^\d{4}-\d{2}-\d{2}$/.test(dep)) {
     if (v > dep) return '입력한 날짜가 출국일보다 늦어요. 출국 전 임상검사는 출국 전에 받아야 해요.'
-    const windowDays = getVetVisitWindowDays(ctx.destination)
+    const windowDays = getVetVisitWindowDays(ctx.destination, readSpecies(ctx.data))
     if (daysBetween(v, dep) >= windowDays) {
       return `출국 전 임상검사는 출국일 기준 ${windowDays}일 이내에 받아야 해요.`
     }
