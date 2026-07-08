@@ -199,19 +199,21 @@ function DateCell({
   const [editing, setEditing] = useState(false)
 
   const baseCls = 'w-full px-1 py-1 min-h-[24px] flex items-center gap-1.5'
-  const dateCls = 'font-mono text-[12px] tabular-nums tracking-[0.3px] truncate text-muted-foreground/80'
+  const dateCls = 'font-mono text-[12px] tabular-nums tracking-[0.3px] truncate'
+  const isOverdue = overdueDays != null
 
   const body = value ? (
     <>
-      <span className={dateCls}>{formatDateDotted(value)}</span>
-      {overdueDays != null && (
+      {isOverdue && (
         <span
+          aria-hidden
           title={`검사 접수 후 ${overdueDays}일 경과 — 결과 확인 필요`}
-          className="shrink-0 inline-flex items-center rounded-full bg-pmw-warning-bg px-1.5 py-[3px] font-mono text-[10px] font-semibold leading-none text-pmw-warning"
-        >
-          {overdueDays}일
-        </span>
+          className="shrink-0 w-[7px] h-[7px] rounded-full bg-pmw-warning"
+        />
       )}
+      <span className={cn(dateCls, isOverdue ? 'text-pmw-warning' : 'text-muted-foreground/80')}>
+        {formatDateDotted(value)}
+      </span>
     </>
   ) : (
     <span className="font-serif italic text-[15px] text-muted-foreground/40">—</span>
