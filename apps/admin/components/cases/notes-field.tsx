@@ -486,7 +486,7 @@ function NoteTextInput({ initial, onSave, onCancel, saving }: {
         }}
         onBlur={() => setTimeout(() => { if (!saving) onSave(val.trim()) }, 150)}
         placeholder="메모 입력 (Shift+Enter로 줄바꿈)"
-        className="flex-1 min-w-0 min-h-[2rem] rounded-md border border-border/80 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
+        className="flex-1 min-w-0 min-h-[2rem] rounded-md border border-border/80 bg-background p-2 text-sm focus-visible:outline-none resize-none"
       />
       <button
         type="button"

@@ -1087,7 +1087,7 @@ function TextInput({ initial, placeholder, onSave, onCancel, saving, onClearAuto
         onKeyDown={(e) => { if (e.key === 'Enter') submit(val.trim()); if (e.key === 'Escape') onCancel() }}
         onBlur={() => setTimeout(() => { if (!saving) submit(val.trim()) }, 150)}
         placeholder={placeholder}
-        className="w-28 h-7 rounded-md border border-border/80 bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+        className="w-28 h-7 rounded-md border border-border/80 bg-background px-2 text-xs focus-visible:outline-none"
       />
       {onClearAuto && (
         <button
@@ -1122,7 +1122,7 @@ function DateInput({ initial, onSave, onCancel, onClearAuto }: {
           if (e.key === 'Escape') { e.preventDefault(); onCancel() }
         }}
         skipClearConfirm
-        className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+        className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none"
       />
       {onClearAuto && (
         <button

@@ -431,7 +431,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                   }
                 }}
                 placeholder="국가 검색 (한글/영문)"
-                className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none"
               />
             </div>
             <ul ref={listRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal py-1">

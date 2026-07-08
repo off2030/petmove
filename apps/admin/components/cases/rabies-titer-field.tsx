@@ -693,7 +693,7 @@ function DateInput({ initial, onSave, onCancel }: {
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
       skipClearConfirm
-      className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none"
     />
   )
 }
@@ -726,7 +726,7 @@ function ValueInput({ initial, onSave, onCancel, saving }: {
       onKeyDown={(e) => { if (e.key === 'Enter') submit(val.trim()); if (e.key === 'Escape') onCancel() }}
       onBlur={() => setTimeout(() => { if (!saving) submit(val.trim()) }, 150)}
       placeholder="수치"
-      className="w-24 h-8 rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="w-24 h-8 rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none"
     />
   )
 }

@@ -464,7 +464,7 @@ export function EditableField({
             onKeyDown={(e) => {
               if (e.key === 'Escape') { e.preventDefault(); handleCancel() }
             }}
-            className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+            className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none"
           />
         </div>
       ) : isPhone && editing ? (
@@ -475,7 +475,7 @@ export function EditableField({
             onChange={setValue}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            className="flex-1 h-8 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+            className="flex-1 h-8 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none"
           />
           <button
             type="button"
@@ -665,7 +665,7 @@ function EmailChip({ caseId }: { caseId: string }) {
             }}
             onBlur={() => { setTimeout(() => cancel(), 150) }}
             placeholder="name@example.com"
-            className="flex-1 min-w-0 h-7 rounded-md border border-border/80 bg-background px-2 font-mono text-[12px] tracking-[0.5px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+            className="flex-1 min-w-0 h-7 rounded-md border border-border/80 bg-background px-2 font-mono text-[12px] tracking-[0.5px] focus-visible:outline-none"
           />
           <button
             type="button"
@@ -804,7 +804,7 @@ function renderInput(
         'px-2 py-1 -mx-2 w-full min-w-0',
         'focus:bg-accent/40',
       )
-    : 'flex-1 h-8 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
+    : 'flex-1 h-8 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none'
 
   if (spec.type === 'longtext') {
     return (
@@ -822,7 +822,7 @@ function renderInput(
               'p-2 -mx-2 w-full min-h-[4.5rem] resize-y',
               'focus:bg-accent/40',
             )
-          : 'flex-1 min-h-[4.5rem] rounded-md border border-border/80 bg-background p-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-y'}
+          : 'flex-1 min-h-[4.5rem] rounded-md border border-border/80 bg-background p-2 text-base focus-visible:outline-none resize-y'}
       />
     )
   }

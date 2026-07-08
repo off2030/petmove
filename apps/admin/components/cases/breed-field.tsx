@@ -200,7 +200,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                   }
                 }}
                 placeholder="품종 검색 (한글/영문)"
-                className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none"
               />
             </div>
             {/* Options list */}
