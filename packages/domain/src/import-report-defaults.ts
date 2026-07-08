@@ -11,17 +11,18 @@ export const DEFAULT_IMPORT_REPORT_COUNTRIES: string[] = [
 ]
 
 /**
- * 상세페이지에 신고 버튼이 노출되는 국가 기본 목록.
- * 자동 포함 국가는 이 목록의 부분집합이어야 의미가 있다(설정 화면에서 안내).
+ * 설정 화면 신고 체크박스에 후보로 뜨는 국가 목록.
+ * 여기 체크된 국가는 출국일 입력 시 신고 탭에 자동으로 올라온다.
+ * 목록에 없는 국가는 설정의 검색 추가로 넣을 수 있고, 개별 케이스는 신고 탭의 + 버튼으로 수동 등록한다.
  */
-export const DEFAULT_IMPORT_REPORT_BUTTON_COUNTRIES: string[] = [
+export const IMPORT_REPORT_CANDIDATE_COUNTRIES: string[] = [
   '괌',
   '뉴질랜드',
   '대만',
   '말레이시아',
   '미국',
-  '싱가포르',
   '스위스',
+  '싱가포르',
   '아랍에미레이트',
   '아일랜드',
   '이스라엘',

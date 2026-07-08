@@ -7,7 +7,7 @@ import { VaccineDataProvider } from '@/components/providers/vaccine-data-provide
 import { CalculatorDataProvider } from '@/components/providers/calculator-data-provider'
 import { DetailViewSettingsProvider } from '@/components/providers/detail-view-settings-provider'
 import { DestinationOverridesProvider } from '@/components/providers/destination-overrides-provider'
-import { loadImportReportCountries, loadImportReportButtonCountries } from '@/lib/import-report-config'
+import { loadImportReportCountries } from '@/lib/import-report-config'
 import { loadInspectionConfig } from '@/lib/inspection-config'
 import { loadCertConfig } from '@/lib/cert-config'
 import { loadExternalLinks } from '@/lib/external-links'
@@ -87,11 +87,10 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [initialCases, fieldDefs, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, impersonation, externalLinks, convsR] = await Promise.all([
+  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, impersonation, externalLinks, convsR] = await Promise.all([
     traceLayoutFetch('listActiveOrgCases', listActiveOrgCases()),
     traceLayoutFetch('fetchFieldDefs', fetchFieldDefs()),
     traceLayoutFetch('loadImportReportCountries', loadImportReportCountries()),
-    traceLayoutFetch('loadImportReportButtonCountries', loadImportReportButtonCountries()),
     traceLayoutFetch('loadInspectionConfig', loadInspectionConfig()),
     traceLayoutFetch('loadCertConfig', loadCertConfig()),
     traceLayoutFetch('fetchUserContext', fetchUserContext()),
@@ -139,7 +138,6 @@ export default async function DashboardLayout({
       initialCases={initialCases}
       fieldDefs={fieldDefs}
       initialImportReportCountries={importReportCountries}
-      initialImportReportButtonCountries={importReportButtonCountries}
       initialInspectionConfig={inspectionConfig}
       initialCertConfig={certConfig}
       initialTodoColumnsConfig={settingsBootstrap?.todoColumnsConfig}

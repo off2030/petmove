@@ -20,11 +20,11 @@ import { TransferDialog } from './transfer-dialog'
 import { AssigneePicker } from './assignee-picker'
 import { ShareLinkDialog } from './share-link-dialog'
 import { PortalPreviewDialog } from './portal-preview-dialog'
-import { getDepartureDate, resolveCerts, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly } from '@petmove/domain'
+import { resolveCerts, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly } from '@petmove/domain'
 import type { CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { evaluateCase } from './verification-context'
-import { toastError, persistField } from '@/lib/toast-bus'
+import { toastError } from '@/lib/toast-bus'
 import { listOrgDisabledChecks } from '@/lib/actions/org-disabled-checks'
 import { inspectMissingPdfFields } from '@/lib/actions/inspect-missing-pdf-fields'
 
@@ -101,105 +101,11 @@ function computeFirstTiterDate(records: unknown): string | null {
   return dates[0] ?? null
 }
 
-/**
- * 신고 탭 포함 토글. 두 종류의 국가 목록을 사용한다(설정 > 신고 에서 편집):
- *  - buttonCountries: 신고 버튼이 노출되는 국가
- *  - autoCountries:   buttonCountries 의 부분집합. 출국일 입력 시 자동 포함
- *
- * - buttonCountries 아님 → 버튼 숨김(신고 대상이 아님)
- * - autoCountries + 출국일 → "신고 자동" (회색 읽기전용)
- * - 그 외(buttonCountries 안에 있고 자동 조건 미충족) → "신고 추가" 클릭해 수동 포함
- */
 /** 케이스의 표시 순서상 첫 번째 destination 만 추출. multi 일 때 신고/서류 탭은 이 값만 사용. */
 function firstDestination(row: CaseRow): string | null {
   if (!row.destination) return null
   const dests = row.destination.split(',').map(s => s.trim()).filter(Boolean)
   return dests[0] ?? null
-}
-
-function ImportReportToggle({
-  caseRow,
-  onUpdate,
-}: {
-  caseRow: CaseRow
-  onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
-}) {
-  const { importReportCountries, importReportButtonCountries, activeDestination } = useCases()
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
-
-  // 토글 노출 여부는 활성 목적지(사용자 칩 선택) 기준. 미선택 시 첫 목적지로 폴백.
-  const focusDest = activeDestination ?? firstDestination(caseRow)
-  if (!focusDest || !importReportButtonCountries.includes(focusDest)) return null
-
-  const manual = data.import_report_manual === true
-  const dismissed = data.import_report_dismissed === true
-  // 자동 포함 = 활성 목적지가 신고 대상국 + 그 목적지 출국일 있음(by_dest 우선).
-  // (isAutoImportReport 와 동일 의도 — 다중 목적지에서 목적지별 출국일 인지.)
-  const auto = importReportCountries.includes(focusDest) && !!getDepartureDate(caseRow, focusDest)
-  const included = auto || manual
-
-  // "신고 내리기" 로 비활성화된 상태 — 회색 라벨 + 리셋 버튼.
-  if (dismissed) {
-    return (
-      <span className="shrink-0 whitespace-nowrap inline-flex items-center gap-1">
-        <span
-          className="rounded-md px-2 py-1 text-muted-foreground/40 select-none cursor-default line-through"
-          title="신고 탭에서 내려진 상태"
-        >
-          신고
-        </span>
-        <button
-          type="button"
-          onClick={async () => {
-            onUpdate(caseRow.id, 'data', 'import_report_dismissed', null)
-            await persistField('신고', () => updateCaseField(caseRow.id, 'data', 'import_report_dismissed', null))
-          }}
-          className="rounded-md px-1.5 py-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors text-[13px]"
-          title="신고 탭으로 다시 올리기"
-        >
-          ↻ 리셋
-        </button>
-      </span>
-    )
-  }
-
-  if (auto) {
-    return (
-      <span
-        className="shrink-0 whitespace-nowrap rounded-md px-2 py-1 text-muted-foreground/40 select-none cursor-default"
-        title={`${focusDest} 자동 포함됨 (출국일+신고 대상국)`}
-      >
-        신고
-      </span>
-    )
-  }
-
-  const label = included ? '신고 제외' : '신고'
-  const nextVal = !manual
-  return (
-    <button
-      type="button"
-      onClick={async () => {
-        onUpdate(caseRow.id, 'data', 'import_report_manual', nextVal || null)
-        await persistField('신고', async () => {
-          const r = await updateCaseField(caseRow.id, 'data', 'import_report_manual', nextVal || null)
-          if (!r.ok) return r
-          // 신고 등록 시 활성 목적지를 신고 탭 active_dest에 영속 저장.
-          if (nextVal) {
-            onUpdate(caseRow.id, 'data', 'import_report_active_dest', focusDest)
-            return updateCaseField(caseRow.id, 'data', 'import_report_active_dest', focusDest)
-          }
-          return r
-        })
-      }}
-      className={included
-        ? 'shrink-0 whitespace-nowrap rounded-md px-2 py-1 text-pmw-info/70 hover:bg-accent hover:text-pmw-info transition-colors'
-        : 'shrink-0 whitespace-nowrap rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors'}
-      title={included ? `신고 탭에서 제거 (${focusDest})` : `신고 탭에 추가 (${focusDest})`}
-    >
-      {label}
-    </button>
-  )
 }
 
 function Inner() {
@@ -814,7 +720,6 @@ function Inner() {
                           ),
                         )
                       })()}
-                      <ImportReportToggle caseRow={selectedCase} onUpdate={updateLocalCaseField} />
                     </div>
                   </>
                 ) : '\u00A0'}
