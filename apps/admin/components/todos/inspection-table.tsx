@@ -135,18 +135,6 @@ async function saveTiterDate(caseRow: CaseRow, idx: number, newDate: string): Pr
   return val
 }
 
-/** Update rabies_titer_records[idx].lab. */
-async function saveTiterLab(caseRow: CaseRow, idx: number, newLab: string | null): Promise<Array<{ date?: string | null; value?: string | null; lab?: string | null }> | null> {
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const current = Array.isArray(data.rabies_titer_records)
-    ? (data.rabies_titer_records as Array<{ date?: string | null; value?: string | null; lab?: string | null }>)
-    : []
-  if (idx >= current.length) return current.length > 0 ? current : null
-  const next = current.map((r, i) => i === idx ? { ...r, lab: newLab } : r)
-  await updateCaseField(caseRow.id, 'data', 'rabies_titer_records', next)
-  return next
-}
-
 /**
  * Upsert infectious_disease_records entries for one or more labs.
  * Empty newDate → 해당 lab들의 entry 제거(행 사라짐).
@@ -390,8 +378,13 @@ function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
         options={options}
         onChange={pick}
         portal
-        // hover 시 꺾쇠(▼)만으로 '눌러서 바꾸는 드롭다운'임을 신호(평소엔 차분).
-        triggerClassName={cn('group inline-flex items-center', cls)}
+        // 평소엔 차분한 텍스트, hover 시 여백 있는 알약(배경+하이라인 링)+꺾쇠(▼)로
+        // '눌러서 바꾸는 드롭다운'임을 분명히 신호. 링은 행 hover(accent/40) 위에서도 구분됨.
+        triggerClassName={cn(
+          'group inline-flex items-center -ml-1 px-2.5 py-1',
+          'hover:ring-1 hover:ring-inset hover:ring-border/60',
+          cls,
+        )}
         triggerProps={{
           'data-status-pill': '',
           ...(value === 'testing' ? { 'data-status-active': 'true' } : {}),
@@ -401,7 +394,7 @@ function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
             {value === 'testing' && <span className="not-italic mr-1">↻</span>}
             {isDone && <span className="not-italic mr-1">✓</span>}
             {label}
-            <span aria-hidden className="not-italic ml-1 text-[9px] leading-none opacity-0 transition-opacity group-hover:opacity-60">▼</span>
+            <span aria-hidden className="not-italic ml-1 text-[10px] leading-none opacity-0 transition-opacity group-hover:opacity-70">▼</span>
           </>
         )}
         renderOption={(o) => {
@@ -426,10 +419,9 @@ function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
 }
 
 /** Lab select. For titer rows it saves to inspection_lab. Infectious rows are fixed per rule (read-only label). */
-function LabCell({ row, options, onUpdate }: {
+function LabCell({ row, options }: {
   row: InspectionRow
   options: LabOption[]
-  onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
 }) {
   // Editorial pill: rounded-full + MONO uppercase (목적지 pill과 동일 shape, 각 lab 고유 tone 유지).
   const pillCls = 'inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap'
@@ -465,88 +457,8 @@ function LabCell({ row, options, onUpdate }: {
     </span>
   )
 
-  if (row.kind !== 'titer') {
-    return <div className="w-full min-h-[24px] flex items-center">{chip}</div>
-  }
-
-  return <LabPicker row={row} options={options} chip={chip} onUpdate={onUpdate} />
-}
-
-/** Editorial 커스텀 드롭다운 — 네이티브 select 제거. Lab pill 스타일 그대로 유지. */
-function LabPicker({ row, options, chip, onUpdate }: {
-  row: InspectionRow
-  options: LabOption[]
-  chip: React.ReactNode
-  onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    function onClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onClickOutside)
-    return () => document.removeEventListener('mousedown', onClickOutside)
-  }, [open])
-
-  async function pick(v: string) {
-    setOpen(false)
-    if (v === row.lab) return
-    if (row.dateStorage.kind === 'titer') {
-      // record 별 lab 저장 — 옛 case-level inspection_lab 키는 더 이상 쓰지 않음.
-      const val = await saveTiterLab(row.caseRow, row.dateStorage.recordIdx, v || null)
-      onUpdate(row.caseRow.id, 'data', 'rabies_titer_records', val)
-    } else {
-      onUpdate(row.caseRow.id, 'data', 'inspection_lab', v || null)
-      await updateCaseField(row.caseRow.id, 'data', 'inspection_lab', v || null)
-    }
-  }
-
-  return (
-    <div ref={ref} className="relative min-h-[24px] flex items-center">
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-      >
-        {chip}
-      </button>
-      {open && (
-        <ul className="absolute left-0 top-full mt-1 z-30 min-w-[140px] rounded-md border border-border/80 bg-background py-1 shadow-md">
-          {options.map(o => {
-            const isCurrent = row.lab === o.value
-            const oTone = labColor(o.value)
-            return (
-              <li key={o.value}>
-                <button
-                  type="button"
-                  onClick={() => pick(o.value)}
-                  className={cn(
-                    'w-full text-left px-sm py-1.5 hover:bg-accent/60 transition-colors flex items-center gap-sm',
-                    isCurrent && 'bg-accent/40',
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.8px] whitespace-nowrap',
-                      oTone ? cn(oTone.bg, oTone.text) : 'bg-muted/60 text-muted-foreground',
-                    )}
-                  >
-                    {o.label}
-                  </span>
-                  {isCurrent && (
-                    <span className="ml-auto text-primary text-xs" aria-hidden="true">✓</span>
-                  )}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </div>
-  )
+  // 검사기관은 검사 탭에서 읽기 전용 — 수정은 상세페이지에서만.
+  return <div className="w-full min-h-[24px] flex items-center">{chip}</div>
 }
 
 // 모든 데이터 컬럼 통일 너비.
@@ -666,8 +578,8 @@ export function InspectionTable({
             onClick={() => openCase(row.caseRow.id)}
           >
             {!hidden.has('lab') && (
-              <td className="px-2 py-4" style={{ width: 146, minWidth: 146 }} onClick={(e) => e.stopPropagation()}>
-                <LabCell row={row} options={labOptions} onUpdate={onUpdate} />
+              <td className="px-2 py-4" style={{ width: 146, minWidth: 146 }}>
+                <LabCell row={row} options={labOptions} />
               </td>
             )}
             {!hidden.has('date') && (
