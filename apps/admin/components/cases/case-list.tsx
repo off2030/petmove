@@ -451,22 +451,39 @@ export function CaseList({
         </div>
       ) : (
         <div className="flex-1 min-h-0 flex flex-col">
-          {/* Column header — editorial caption */}
-          <div className="shrink-0 px-lg pb-3 border-b border-border/80">
-            <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm font-sans text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
-              <span>보호자</span>
-              <span>반려동물</span>
-              <span>목적지</span>
-              <span className="hidden md:block">마이크로칩</span>
+          {/* Column header — editorial caption. 케이스 0건(온보딩)일 땐 숨김. */}
+          {cases.length > 0 && (
+            <div className="shrink-0 px-lg pb-3 border-b border-border/80">
+              <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm font-sans text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
+                <span>보호자</span>
+                <span>반려동물</span>
+                <span>목적지</span>
+                <span className="hidden md:block">마이크로칩</span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Scrollable list */}
           <div className="flex-1 overflow-y-auto scrollbar-minimal">
             {visibleCases.length === 0 ? (
-              <div className="py-16 text-center text-sm text-muted-foreground italic font-serif">
-                결과가 없습니다
-              </div>
+              cases.length === 0 ? (
+                // 최초 사용자 온보딩 — 검색 결과 없음과 구분. 등록된 케이스가 아예 없을 때만.
+                <div className="flex flex-col items-center gap-4 py-24 text-center">
+                  <p className="font-serif text-[19px] text-foreground">아직 등록된 케이스가 없어요</p>
+                  <button
+                    type="button"
+                    onClick={() => onAdd?.()}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-pmw-accent bg-pmw-accent/15 px-4 py-2 text-[14px] text-pmw-accent-strong hover:bg-pmw-accent/25 transition-colors"
+                  >
+                    <Plus className="h-4 w-4" />
+                    새 케이스 추가
+                  </button>
+                </div>
+              ) : (
+                <div className="py-16 text-center text-sm text-muted-foreground italic font-serif">
+                  결과가 없습니다
+                </div>
+              )
             ) : (
               <ul>
                 {visibleCases.map((c, i) => (
