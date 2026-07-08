@@ -238,7 +238,7 @@ export function CustomerNameRow({
             {error && <div className="w-full text-xs text-destructive">{error}</div>}
           </div>
         ) : (
-          <div className="flex items-baseline gap-[10px] min-w-0 overflow-x-auto whitespace-nowrap scrollbar-hide">
+          <div className="flex items-baseline gap-[10px] min-w-0 overflow-x-auto whitespace-nowrap scrollbar-hide pl-1 -ml-1">
             {/* Korean name */}
             <div className="group/ko inline-flex items-baseline">
               {editMode ? (
