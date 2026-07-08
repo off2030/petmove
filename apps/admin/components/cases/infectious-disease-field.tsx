@@ -142,6 +142,18 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
           />
         ))}
 
+        {/* 빈 상태 — 다른 필드와 동일한 옅은 — (클릭 시 검사 추가). */}
+        {records.length === 0 && !addingNew && (
+          editMode ? (
+            <button type="button" onClick={() => setAddingNew(true)}
+              className="text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-pointer text-muted-foreground/40 select-none">
+              —
+            </button>
+          ) : (
+            <span className="text-muted-foreground/40 select-none px-2 py-1 -mx-2 inline-block" aria-hidden>—</span>
+          )
+        )}
+
         {addingNew && (
           <DateInput
             initial=""
@@ -285,7 +297,7 @@ function DateInput({ initial, onSave, onCancel }: {
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
       skipClearConfirm
-      className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="h-8 w-40 rounded-md border border-muted-foreground/40 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }

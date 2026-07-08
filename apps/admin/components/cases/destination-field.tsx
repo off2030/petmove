@@ -404,7 +404,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
               width: 256,
               maxHeight: popupPos.maxHeight,
             }}
-            className="z-50 flex flex-col rounded-md border border-border/80 bg-background shadow-md overflow-hidden"
+            className="z-50 flex flex-col rounded-md border border-muted-foreground/40 bg-background shadow-md overflow-hidden"
           >
             <div className="shrink-0 p-2 border-b border-border/30">
               <input
@@ -431,7 +431,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                   }
                 }}
                 placeholder="국가 검색 (한글/영문)"
-                className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                className="w-full h-8 rounded border border-muted-foreground/40 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               />
             </div>
             <ul ref={listRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal py-1">

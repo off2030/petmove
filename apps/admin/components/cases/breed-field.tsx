@@ -174,7 +174,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
               width: popupPos.width,
               maxHeight: popupPos.maxHeight,
             }}
-            className="z-50 flex flex-col rounded-md border border-border/80 bg-background shadow-md overflow-hidden"
+            className="z-50 flex flex-col rounded-md border border-muted-foreground/40 bg-background shadow-md overflow-hidden"
           >
             {/* Search input */}
             <div className="shrink-0 p-2 border-b border-border/30">
@@ -204,7 +204,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                   }
                 }}
                 placeholder="품종 검색 (한글/영문)"
-                className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                className="w-full h-8 rounded border border-muted-foreground/40 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               />
             </div>
             {/* Options list */}

@@ -1096,7 +1096,7 @@ function ReturnFlightRow({ caseId, caseRow, activeDest }: {
               onBlur={() => setEditing(false)}
               onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); setEditing(false) } }}
               placeholder="YYYY-MM-DD"
-              className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+              className="h-8 w-40 rounded-md border border-muted-foreground/40 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
             />
           ) : (
             <button
@@ -1226,7 +1226,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
     else if (!secRaw) { setSecVal(''); setEditingSec(true); setError(null) }
   }
 
-  const inputCls = 'w-52 h-8 rounded-md border border-border/80 bg-background px-2 text-sm font-mono tracking-[0.3px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
+  const inputCls = 'w-52 h-8 rounded-md border border-muted-foreground/40 bg-background px-2 text-sm font-mono tracking-[0.3px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
   const showMain = editingMain || !!mainRaw
   const showSec = editingSec || !!secRaw
 
@@ -1466,7 +1466,7 @@ function MicrochipDateInput({ initial, onSave, onCancel }: {
       onKeyDown={(e) => {
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
-      className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="h-8 w-40 rounded-md border border-muted-foreground/40 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }

@@ -570,7 +570,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
             onDragLeave={handleDragLeave}
             onDrop={handleDropNew}
             className={cn(
-              "relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-lg border border-border/80 bg-background shadow-xl transition-colors",
+              "relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-lg border border-muted-foreground/40 bg-background shadow-xl transition-colors",
               dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
             )}
           >
@@ -1093,7 +1093,7 @@ function TextInput({ initial, placeholder, onSave, onCancel, saving, onClearAuto
         onKeyDown={(e) => { if (e.key === 'Enter') submit(val.trim()); if (e.key === 'Escape') onCancel() }}
         onBlur={() => setTimeout(() => { if (!saving) submit(val.trim()) }, 150)}
         placeholder={placeholder}
-        className="w-28 h-7 rounded-md border border-border/80 bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+        className="w-28 h-7 rounded-md border border-muted-foreground/40 bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
       />
       {onClearAuto && (
         <button
@@ -1128,7 +1128,7 @@ function DateInput({ initial, onSave, onCancel, onClearAuto }: {
           if (e.key === 'Escape') { e.preventDefault(); onCancel() }
         }}
         skipClearConfirm
-        className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+        className="h-8 w-40 rounded-md border border-muted-foreground/40 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
       />
       {onClearAuto && (
         <button
