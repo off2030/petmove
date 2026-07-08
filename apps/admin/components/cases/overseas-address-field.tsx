@@ -73,7 +73,7 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
                 !value && 'font-sans not-italic text-base text-muted-foreground/60',
               )}
             >
-              {value || <span className="inline-block min-w-[6rem] select-none" aria-hidden>&nbsp;</span>}
+              {value || <span className="inline-block min-w-[6rem] select-none text-muted-foreground/40" aria-hidden>—</span>}
             </button>
           ) : (
             <span
