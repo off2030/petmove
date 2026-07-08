@@ -8,6 +8,7 @@ import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
+  buildDateRuleContext,
   deriveAdvanceNotificationStatus,
   deriveImportPermitStatus,
   deriveJpExportQuarantineStatus,
@@ -19,6 +20,7 @@ import {
   parseDestinations,
   readByDestValue,
   resolveTabActiveDest,
+  validateVetVisitDate,
 } from '@petmove/domain'
 import { cn } from '@/lib/utils'
 import { dismissImportReport } from '@/lib/actions/cases'
@@ -194,6 +196,30 @@ function exportDocDeparture(row: CaseRow): string {
 function exportDocVetVisit(row: CaseRow): string {
   return getVetVisitDate(row, resolveTabActiveDest(row, EXPORT_DOC_DEST_KEY)) ?? ''
 }
+/** 서류 탭 내원일이 오늘 기준 7일 이내(경과 포함) — 임박·경과 신호. */
+function isExportDocVisitImminent(row: CaseRow): boolean {
+  const visit = exportDocVetVisit(row)
+  if (!visit) return false
+  const d = new Date(visit)
+  if (isNaN(d.getTime())) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  d.setHours(0, 0, 0, 0)
+  return Math.floor((d.getTime() - today.getTime()) / 86400000) <= 7
+}
+
+/**
+ * 서류 탭 내원일이 가능일 윈도우 밖(너무 이름) 또는 출국일 이후 — 상세페이지의
+ * common.vet-visit-date-valid 와 동일 검증(validateVetVisitDate + by_dest 컨텍스트).
+ */
+function isExportDocVisitOutOfWindow(row: CaseRow): boolean {
+  const visit = exportDocVetVisit(row).slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(visit)) return false
+  const dest = resolveTabActiveDest(row, EXPORT_DOC_DEST_KEY)
+  const ctx = buildDateRuleContext(row, dest)
+  return validateVetVisitDate(visit, ctx) !== null
+}
+
 /**
  * 서류 탭 내원가능일 — 저장값 우선, 없으면 활성 목적지·종의 임상검사 윈도우로 자동 계산.
  * 내원가능일(가장 이른 날) = 출국일 - (윈도우 - 1). 기본 10일 → -9, 촌충국 강아지(영국 등) 4일 → -3.
@@ -445,19 +471,12 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
     width: EXPORT_DOC_COL_W,
     // 활성 목적지 내원일 (by_dest 우선) 표시. 편집은 TodoTable 이 active dest 로 라우팅.
     resolveValue: (row) => exportDocVetVisit(row),
-    // 내원일이 7일 이내(포함 경과분)이고 준비상태 ≠ done 이면 주황.
+    // 경고색 조건: ① 가능일 윈도우 밖(상세페이지와 동일 — 완료여도 표시)
+    //             ② 오늘 기준 7일 이내(경과 포함) + 준비 미완료.
     cellClass: (row) => {
-      const visit = exportDocVetVisit(row)
-      if (!visit) return ''
-      const d = new Date(visit)
-      if (isNaN(d.getTime())) return ''
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      d.setHours(0, 0, 0, 0)
-      const diffDays = Math.floor((d.getTime() - today.getTime()) / 86400000)
-      if (diffDays > 7) return ''
-      if (exportDocStatus(row) === 'done') return ''
-      return 'text-pmw-warning'
+      if (isExportDocVisitOutOfWindow(row)) return 'text-pmw-warning'
+      if (isExportDocVisitImminent(row) && exportDocStatus(row) !== 'done') return 'text-pmw-warning'
+      return ''
     },
   },
   {
@@ -487,6 +506,8 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
     options: STATUS_OPTIONS,
     defaultValue: 'not_started',
     resolveValue: exportDocStatus,
+    // 내원일 D-7 임박 시 '대기' 뱃지도 경고색(내원일 날짜와 함께 물든다).
+    warn: (row) => isExportDocVisitImminent(row),
   },
   { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: EXPORT_DOC_COL_W, readonly: true },
   { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: EXPORT_DOC_COL_W, readonly: true },
