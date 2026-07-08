@@ -720,8 +720,6 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
       />
     ),
   },
-  { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: BASE_COL_W, readonly: true },
-  { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: BASE_COL_W, readonly: true },
   {
     key: 'import_deadline',
     label: '신고기한',
@@ -759,6 +757,8 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     // 신고기한 임박 시 '대기' 뱃지도 경고색.
     warn: (row) => isImportDeadlineWarning(row),
   },
+  { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: BASE_COL_W, readonly: true },
+  { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: BASE_COL_W, readonly: true },
   { key: 'import_memo', label: '메모', storage: 'data', type: 'text', width: BASE_COL_W + 6 },
   {
     key: 'import_report_manual_remove',
