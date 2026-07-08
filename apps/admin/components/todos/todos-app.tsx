@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Menu, MoreHorizontal, Plus, Search } from 'lucide-react'
+import { FileText, MoreHorizontal, Plus, Search } from 'lucide-react'
 import type { CaseRow } from '@petmove/domain'
 import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
@@ -1088,7 +1088,7 @@ export function TodosInspectionActions({ query }: { query: string }) {
         aria-label="검사 신청서 메뉴"
         className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
       >
-        <Menu className="h-4 w-4" />
+        <FileText className="h-4 w-4" />
       </button>
       {menuOpen && (
         <div className="absolute right-0 top-full mt-1 z-30 min-w-[180px] rounded-md border border-border bg-popover p-1 shadow-md">
