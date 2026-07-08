@@ -13,16 +13,19 @@ import { DestinationCell } from './destination-cell'
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
 
-/** 검사일이 오늘 기준 N일 이상 경과했는지. YYYY-MM-DD 기준. */
-function isOverdue(dateStr: string, days: number): boolean {
-  if (!dateStr) return false
+/**
+ * 검사일이 오늘 기준 threshold 일 이상 경과했으면 경과일수, 아니면 undefined.
+ * YYYY-MM-DD 기준. (지연 배지 표시용)
+ */
+function overdueDays(dateStr: string, threshold: number): number | undefined {
+  if (!dateStr) return undefined
   const d = new Date(dateStr)
-  if (isNaN(d.getTime())) return false
+  if (isNaN(d.getTime())) return undefined
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   d.setHours(0, 0, 0, 0)
   const diffDays = Math.floor((today.getTime() - d.getTime()) / 86400000)
-  return diffDays >= days
+  return diffDays >= threshold ? diffDays : undefined
 }
 
 /**
@@ -197,33 +200,43 @@ function DateCell({
   value,
   editable,
   onSave,
-  overdue = false,
+  overdueDays,
 }: {
   value: string
   editable: boolean
   onSave: (v: string) => void
-  overdue?: boolean
+  /** 대기중 + 검사일 5일 이상 경과 시 경과일수. 미지연이면 undefined. */
+  overdueDays?: number
 }) {
   const [editing, setEditing] = useState(false)
 
-  const overdueCls = overdue && value ? 'text-pmw-warning' : ''
-  const baseCls = 'w-full px-1 py-1 font-mono text-[12px] tabular-nums tracking-[0.3px] truncate min-h-[24px]'
+  const baseCls = 'w-full px-1 py-1 min-h-[24px] flex items-center gap-1.5'
+  const dateCls = 'font-mono text-[12px] tabular-nums tracking-[0.3px] truncate text-muted-foreground/80'
+
+  const body = value ? (
+    <>
+      <span className={dateCls}>{formatDateDotted(value)}</span>
+      {overdueDays != null && (
+        <span
+          title={`검사 접수 후 ${overdueDays}일 경과 — 결과 확인 필요`}
+          className="shrink-0 inline-flex items-center rounded-full bg-pmw-warning-bg px-1.5 py-[3px] font-mono text-[10px] font-semibold leading-none text-pmw-warning"
+        >
+          {overdueDays}일
+        </span>
+      )}
+    </>
+  ) : (
+    <span className="font-serif italic text-[15px] text-muted-foreground/40">—</span>
+  )
 
   if (!editable) {
-    return (
-      <div className={cn(baseCls, 'text-muted-foreground/80', overdueCls)}>
-        {value ? formatDateDotted(value) : <span className="font-serif italic text-[15px] text-muted-foreground/40">—</span>}
-      </div>
-    )
+    return <div className={baseCls}>{body}</div>
   }
 
   if (!editing) {
     return (
-      <div
-        className={cn(baseCls, 'cursor-text', overdueCls)}
-        onClick={() => setEditing(true)}
-      >
-        {value ? formatDateDotted(value) : <span className="font-serif italic text-[15px] text-muted-foreground/40">—</span>}
+      <div className={cn(baseCls, 'cursor-text')} onClick={() => setEditing(true)}>
+        {body}
       </div>
     )
   }
@@ -663,9 +676,10 @@ export function InspectionTable({
                   value={row.date}
                   editable={row.dateEditable}
                   onSave={(v) => handleDateSave(row, v)}
-                  overdue={
+                  overdueDays={
                     readInspectionStatus(row) === 'waiting'
-                    && isOverdue(row.date, 5)
+                      ? overdueDays(row.date, 5)
+                      : undefined
                   }
                 />
               </td>
