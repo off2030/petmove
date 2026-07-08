@@ -1202,7 +1202,11 @@ function BulkApplyDialog({
   request: (caseId: string) => PdfDownloadRequest
   onClose: () => void
 }) {
-  const [selected, setSelected] = useState<Set<string>>(new Set())
+  // 후보가 1마리뿐이면 자동 선택 — 굳이 체크할 필요 없음.
+  const isSingle = rows.length === 1
+  const [selected, setSelected] = useState<Set<string>>(
+    () => (isSingle ? new Set([rows[0].caseRow.id]) : new Set()),
+  )
   const allSelected = rows.length > 0 && selected.size === rows.length
 
   function toggle(caseId: string) {
@@ -1247,26 +1251,22 @@ function BulkApplyDialog({
       >
         <div className="flex items-baseline justify-between mb-4">
           <h2 className="text-base font-semibold text-primary">{label}</h2>
-          <button
-            type="button"
-            onClick={toggleAll}
-            className="text-[12px] text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {allSelected ? '전체 해제' : '전체 선택'}
-          </button>
+          {!isSingle && (
+            <button
+              type="button"
+              onClick={toggleAll}
+              className="text-[12px] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {allSelected ? '전체 해제' : '전체 선택'}
+            </button>
+          )}
         </div>
         <ul className="max-h-80 overflow-y-auto scrollbar-minimal -mx-2 mb-4">
           {rows.map((r) => {
             const isChecked = selected.has(r.caseRow.id)
-            return (
-              <li key={r.id}>
-                <label className="w-full px-sm py-2 rounded-md hover:bg-accent/60 transition-colors flex items-center gap-sm cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={() => toggle(r.caseRow.id)}
-                    className="peer sr-only"
-                  />
+            const inner = (
+              <>
+                {!isSingle && (
                   <span
                     className={cn(
                       'w-[22px] h-[22px] shrink-0 rounded-[3px] border border-foreground/40 bg-transparent transition-colors relative',
@@ -1276,16 +1276,33 @@ function BulkApplyDialog({
                     )}
                     aria-hidden="true"
                   />
-                  <span className="font-serif font-semibold text-[15px] text-foreground">
-                    {r.caseRow.pet_name ?? '—'}
-                  </span>
-                  <span className="font-sans text-[13px] text-muted-foreground">
-                    {r.caseRow.customer_name ?? ''}
-                  </span>
-                  <span className="ml-auto font-mono text-[11px] tracking-[0.3px] text-muted-foreground/70">
-                    {r.caseRow.destination ?? ''}
-                  </span>
-                </label>
+                )}
+                <span className="font-serif font-semibold text-[15px] text-foreground">
+                  {r.caseRow.pet_name ?? '—'}
+                </span>
+                <span className="font-sans text-[13px] text-muted-foreground">
+                  {r.caseRow.customer_name ?? ''}
+                </span>
+                <span className="ml-auto font-mono text-[11px] tracking-[0.3px] text-muted-foreground/70">
+                  {r.caseRow.destination ?? ''}
+                </span>
+              </>
+            )
+            return (
+              <li key={r.id}>
+                {isSingle ? (
+                  <div className="w-full px-sm py-2 rounded-md flex items-center gap-sm">{inner}</div>
+                ) : (
+                  <label className="w-full px-sm py-2 rounded-md hover:bg-accent/60 transition-colors flex items-center gap-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggle(r.caseRow.id)}
+                      className="peer sr-only"
+                    />
+                    {inner}
+                  </label>
+                )}
               </li>
             )
           })}
