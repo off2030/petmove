@@ -378,7 +378,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
               // dragOver 에 bg-accent/40 를 주면 모달이 투명해져 뒤의 detail 페이지
               // (인라인 칩·헤더 배지)가 비쳐 보임. 배경은 bg-background 로 유지하고
               // ring 으로만 드롭 가능 영역 신호.
-              'relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-lg border border-muted-foreground/60 bg-background shadow-xl transition-colors',
+              'relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-lg border border-muted-foreground/80 bg-background shadow-xl transition-colors',
               dragOver && 'ring-2 ring-ring/30 ring-dashed',
             )}
           >
@@ -693,7 +693,7 @@ function DateInput({ initial, onSave, onCancel }: {
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
       skipClearConfirm
-      className="h-8 w-40 rounded-md border border-muted-foreground/60 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="h-8 w-40 rounded-md border border-muted-foreground/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }
@@ -726,7 +726,7 @@ function ValueInput({ initial, onSave, onCancel, saving }: {
       onKeyDown={(e) => { if (e.key === 'Enter') submit(val.trim()); if (e.key === 'Escape') onCancel() }}
       onBlur={() => setTimeout(() => { if (!saving) submit(val.trim()) }, 150)}
       placeholder="수치"
-      className="w-24 h-8 rounded-md border border-muted-foreground/60 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="w-24 h-8 rounded-md border border-muted-foreground/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }

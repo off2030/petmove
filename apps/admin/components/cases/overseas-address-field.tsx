@@ -124,7 +124,7 @@ function AddressInput({ initial, onSave, onCancel }: {
         }}
         onBlur={() => setTimeout(() => onSave(val), 150)}
         placeholder="Destination address"
-        className="flex-1 h-8 max-w-[400px] rounded-md border border-muted-foreground/60 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+        className="flex-1 h-8 max-w-[400px] rounded-md border border-muted-foreground/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
       />
       <button
         type="button"

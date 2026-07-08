@@ -160,7 +160,7 @@ export function PairedField({
               }}
               onKeyDown={handleKeyDown}
               placeholder={koSpec.label}
-              className="h-8 w-40 rounded-md border border-muted-foreground/60 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+              className="h-8 w-40 rounded-md border border-muted-foreground/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
             />
             {enSpec && (
               <>
@@ -186,7 +186,7 @@ export function PairedField({
                   }}
                   onKeyDown={handleKeyDown}
                   placeholder={enSpec.label}
-                  className="h-8 w-40 rounded-md border border-muted-foreground/60 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                  className="h-8 w-40 rounded-md border border-muted-foreground/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
                 />
               </>
             )}
