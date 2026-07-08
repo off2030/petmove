@@ -1093,7 +1093,7 @@ function ReturnFlightRow({ caseId, caseRow, activeDest }: {
               onClick={() => setEditing(true)}
               title="클릭하여 편집"
               className={cn(
-                'text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/60 cursor-text',
+                'text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-text',
                 returnDate
                   ? 'font-mono text-[15px] tracking-[0.3px] text-foreground'
                   : 'font-sans text-base font-normal text-muted-foreground/60',
@@ -1261,7 +1261,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
                 </span>
               ) : editMode ? (
                 <button type="button" onClick={() => { setMainVal(mainRaw); setEditingMain(true); setError(null) }}
-                  className="text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text">
+                  className="text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-text">
                   {formatChip(mainRaw)}
                 </button>
               ) : (
@@ -1309,7 +1309,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
                 </span>
               ) : editMode ? (
                 <button type="button" onClick={() => { setSecVal(secRaw); setEditingSec(true); setError(null) }}
-                  className="text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text">
+                  className="text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-text">
                   {formatChip(secRaw)}
                 </button>
               ) : (

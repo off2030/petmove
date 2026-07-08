@@ -69,7 +69,7 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
               type="button"
               onClick={() => setEditing(true)}
               className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif italic text-[17px] text-muted-foreground transition-colors hover:bg-accent/60 cursor-text',
+                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif italic text-[17px] text-muted-foreground transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-text',
                 !value && 'font-sans not-italic text-base text-muted-foreground/60',
               )}
             >

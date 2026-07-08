@@ -246,7 +246,7 @@ export function CustomerNameRow({
                   type="button"
                   onClick={() => startEdit('ko')}
                   className={cn(
-                    'text-left transition-colors hover:bg-accent/60 cursor-text',
+                    'text-left transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-text',
                     koValueCls,
                     koEmpty && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
                   )}
@@ -276,7 +276,7 @@ export function CustomerNameRow({
                   type="button"
                   onClick={() => startEdit('first')}
                   className={cn(
-                    'text-left transition-colors hover:bg-accent/60 cursor-text',
+                    'text-left transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-text',
                     enValueCls,
                     enEmpty && 'font-sans not-italic text-base font-normal tracking-normal text-muted-foreground/60',
                   )}

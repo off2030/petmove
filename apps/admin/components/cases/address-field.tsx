@@ -274,7 +274,7 @@ export function AddressField({
           ) : (
             <div className="group/kr relative flex flex-wrap items-center gap-xs min-w-0 flex-1">
               <button type="button" onClick={krEmpty ? handleSearch : startEditKr}
-                className={cn('text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text', krEmpty && 'text-muted-foreground/60')}>
+                className={cn('text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-text', krEmpty && 'text-muted-foreground/60')}>
                 {krEmpty ? (
                   <span className="inline-block min-w-[3rem] select-none" aria-hidden>&nbsp;</span>
                 ) : (
@@ -365,7 +365,7 @@ export function AddressField({
           ) : (
             <div className="group/en relative w-fit inline-flex items-baseline">
               <button type="button" onClick={startEditEn}
-                className={cn('text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text', enEmpty && 'text-muted-foreground/60')}>
+                className={cn('text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-text', enEmpty && 'text-muted-foreground/60')}>
                 {enEmpty ? (
                   <span className="inline-block min-w-[3rem] select-none" aria-hidden>&nbsp;</span>
                 ) : (

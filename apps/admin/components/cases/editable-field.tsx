@@ -403,7 +403,8 @@ export function EditableField({
                 type="button"
                 onClick={() => setEditing(!editing)}
                 className={cn(
-                  'text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/60 cursor-pointer',
+                  'text-left rounded-md px-2 py-1 -mx-2 transition-colors cursor-pointer',
+                  'hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border',
                   getValueClass(spec),
                   isEmpty && 'font-sans not-italic text-base font-normal tracking-normal text-muted-foreground/60',
                 )}
@@ -765,7 +766,8 @@ function VerifiedDisplayButton({ spec, path, display, isEmpty, isLongText, onCli
       onClick={onClick}
       className={cn(
         'text-left rounded-md px-2 py-1 -mx-2 transition-colors',
-        'hover:bg-accent/60 cursor-text',
+        // 하이브리드 어포던스 — 평소엔 평문처럼 보이고, hover 시 편집 가능한 '셀' 테두리로 신호.
+        'hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-text',
         valueCls,
         isEmpty && 'font-sans text-base font-normal tracking-normal not-italic text-muted-foreground/60',
         colorCls,

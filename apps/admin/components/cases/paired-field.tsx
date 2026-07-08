@@ -212,7 +212,7 @@ export function PairedField({
                   type="button"
                   onClick={() => startEdit('ko')}
                   className={cn(
-                    'text-left transition-colors hover:bg-accent/60 cursor-text',
+                    'text-left transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-text',
                     valueCls,
                     koEmpty && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
                   )}
@@ -242,7 +242,7 @@ export function PairedField({
                     type="button"
                     onClick={() => startEdit('en')}
                     className={cn(
-                      'text-left transition-colors hover:bg-accent/60 cursor-text',
+                      'text-left transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-text',
                       valueClsEn,
                       enEmpty && 'font-sans not-italic text-base font-normal tracking-normal text-muted-foreground/60',
                     )}
