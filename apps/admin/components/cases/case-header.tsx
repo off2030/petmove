@@ -38,12 +38,30 @@ export function CaseHeader({ caseRow }: { caseRow: CaseRow }) {
     const results = evaluateCase(caseRow, viewDestination, disabledIds, cases)
     // info(안내·"적합")는 제외 — blocker/warning 만 문제로 집계 (PDF 발급 게이트와 동일 기준).
     const failing = results.filter((e) => !e.result.ok && e.check.severity !== 'info')
+    // 첫 문제의 대상 필드 경로 — 배지 클릭 시 스크롤 목표. (예: 'rabies_dates[0].date' → 'rabies_dates')
+    let firstPath: string | null = null
+    for (const e of failing) {
+      const p = e.result.offendingPaths?.[0]
+      if (p) { firstPath = p; break }
+    }
     return {
       count: failing.length,
       hasBlocker: failing.some((e) => e.check.severity === 'blocker'),
       messages: failing.map((e) => e.result.message),
+      firstPath,
     }
   }, [caseRow, viewDestination, disabledIds, cases])
+
+  // 배지 클릭 → 첫 문제 필드로 스크롤 + 잠깐 강조. 필드 행에 data-field=키 를 붙여 찾는다.
+  function scrollToFirstProblem() {
+    if (!verify.firstPath) return
+    const base = verify.firstPath.split('[')[0]
+    const el = document.querySelector(`[data-field="${base}"]`) as HTMLElement | null
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.classList.add('bg-pmw-warning/15')
+    setTimeout(() => el.classList.remove('bg-pmw-warning/15'), 1600)
+  }
 
   // select 필드(종·성별) → 옵션의 한글 라벨. renderFieldValue 는 영문 우선이라
   // 헤더에선 label_ko 를 직접 뽑는다 (종을 '강아지/고양이'로 한글 표시).
@@ -106,16 +124,18 @@ export function CaseHeader({ caseRow }: { caseRow: CaseRow }) {
               이상 없음
             </span>
           ) : (
-            <span
-              title={verify.messages.map((m) => `• ${m}`).join('\n')}
+            <button
+              type="button"
+              onClick={scrollToFirstProblem}
+              title={`${verify.messages.map((m) => `• ${m}`).join('\n')}\n\n클릭하면 문제 항목으로 이동`}
               className={cn(
-                'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12.5px]',
+                'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12.5px] transition-opacity hover:opacity-80',
                 verify.hasBlocker ? 'bg-destructive/10 text-destructive' : 'bg-pmw-warning/15 text-pmw-warning',
               )}
             >
               <TriangleAlert className="h-3.5 w-3.5" />
               주의 {verify.count}건
-            </span>
+            </button>
           )}
 
           {activeDest && (

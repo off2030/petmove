@@ -550,7 +550,7 @@ export function EditableField({
   })()
 
   return (
-    <div className={cn(
+    <div data-field={spec.key} className={cn(
       compact
         ? "grid grid-cols-1 md:grid-cols-[100px_1fr] items-baseline gap-md py-1"
         : "grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0",

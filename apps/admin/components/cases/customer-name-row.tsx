@@ -150,7 +150,7 @@ export function CustomerNameRow({
   const inputCls = 'h-8 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
+    <div data-field="customer_name" className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <SectionLabel
         className="pt-1"
         onClick={editMode && !editing ? () => startEdit('ko') : undefined}

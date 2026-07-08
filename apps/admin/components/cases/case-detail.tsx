@@ -16,7 +16,7 @@ import { Trash2, ChevronDown, Check } from 'lucide-react'
 import { useConfirm } from '@petmove/ui'
 import { AttachButton } from '@/components/ui/attach-button'
 import { cn } from '@/lib/utils'
-import { updateCaseField } from '@/lib/actions/cases'
+import { updateCaseField, updateCaseDataBulk } from '@/lib/actions/cases'
 import { persistField } from '@/lib/toast-bus'
 import { uploadStepDocumentAdmin } from '@/lib/actions/step-documents'
 import { CopyButton } from './copy-button'
@@ -608,9 +608,10 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
     for (const k of allKeys) {
       updateLocalCaseField(caseId, 'data', k, null, destArgFor(k))
     }
-    void (async () => {
-      for (const k of allKeys) await updateCaseField(caseId, 'data', k, null, destArgFor(k))
-    })()
+    // 배치 1회 저장(순차 N 왕복 → 1 왕복). 실패 시 '다시 시도' 토스트.
+    void persistField('추가정보', () =>
+      updateCaseDataBulk(caseId, allKeys.map((k) => ({ key: k, value: null, destination: destArgFor(k) }))),
+    )
   }
 
   async function tryExtract(input: { images?: { base64: string; mediaType: string }[]; text?: string }) {
@@ -630,9 +631,10 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
         updateLocalCaseField(caseId, 'column', 'departure_date', unified.entry_date, destArgFor('departure_date'))
         void updateCaseField(caseId, 'column', 'departure_date', unified.entry_date, destArgFor('departure_date'))
       }
-      void (async () => {
-        for (const k of keys) await updateCaseField(caseId, 'data', k, unified[k], destArgFor(k))
-      })()
+      // 배치 1회 저장(순차 N 왕복 → 1 왕복). 실패 시 '다시 시도' 토스트.
+      void persistField('추가정보', () =>
+        updateCaseDataBulk(caseId, keys.map((k) => ({ key: k, value: unified[k], destination: destArgFor(k) }))),
+      )
       const labels = keys.map(k => EXTRA_FIELD_KEY_LABELS[k] ?? k)
       const shown = labels.slice(0, 4).join(', ')
       setExtractMsg(`입력됨: ${shown}${labels.length > 4 ? ` 외 ${labels.length - 4}` : ''}`)
@@ -1379,7 +1381,7 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60">
+    <div data-field="microchip_implant_date" className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel
           onClick={editMode && !editing ? () => setEditing(true) : undefined}

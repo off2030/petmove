@@ -553,6 +553,84 @@ export async function updateCaseField(
 }
 
 /**
+ * 여러 data 키를 1회 read-modify-write 로 저장하는 배치 액션.
+ * '전체 삭제'·이미지 자동추출처럼 여러 필드를 한꺼번에 바꾸는 UI 전용 — updateCaseField 를
+ * N 번 순차 호출(N 왕복)하던 것을 1 왕복으로 줄인다.
+ *
+ * data storage 만 지원한다. 컬럼 쓰기·출국일 auto-fill·서류/신고 상태 리셋 같은 단일 함수의
+ * 부수효과는 적용하지 않는다(추가정보/추출 대상 필드엔 불필요). by_dest scoped 키 라우팅과
+ * 빈 값의 legacy 정리(clearExtraValueWithLegacy), 키별 case_history 기록(undo 모델 유지)은
+ * 단일 함수와 동일하게 처리한다. 인증은 RLS(user client)로 보장.
+ */
+export async function updateCaseDataBulk(
+  caseId: string,
+  updates: { key: string; value: unknown; destination?: string | null }[],
+): Promise<UpdateResult & { data?: Record<string, unknown> }> {
+  if (!caseId) return { ok: false, error: 'caseId is required' }
+  if (updates.length === 0) return { ok: true }
+
+  const supabase = await createClient()
+  const { data: row, error: fetchErr } = await supabase
+    .from('cases')
+    .select('id, org_id, data')
+    .eq('id', caseId)
+    .single()
+  if (fetchErr) return { ok: false, error: fetchErr.message }
+  const orgId = (row as { org_id: string }).org_id
+  const currentData = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<string, unknown>
+
+  let nextData: Record<string, unknown> = { ...currentData }
+  const historyRows: {
+    case_id: string
+    org_id: string
+    field_key: string
+    field_storage: 'data'
+    old_value: string | null
+    new_value: string | null
+  }[] = []
+
+  for (const u of updates) {
+    if (!u.key) continue
+    const empty = u.value === null || u.value === undefined || u.value === ''
+    const useByDest = !!u.destination && isDestinationScopedKey(u.key)
+    if (useByDest) {
+      const byDest = { ...((nextData['by_dest'] as Record<string, Record<string, unknown>> | undefined) ?? {}) }
+      const destObjPrev = byDest[u.destination!] ?? {}
+      const oldV = serializeForHistory('data', destObjPrev[u.key])
+      const destObj = { ...destObjPrev }
+      // 빈 값도 키 삭제 X — null sentinel(top-level fallback 부활 방지).
+      destObj[u.key] = empty ? null : u.value
+      byDest[u.destination!] = destObj
+      nextData['by_dest'] = byDest
+      const newV = serializeForHistory('data', empty ? null : u.value)
+      if (oldV !== newV) {
+        historyRows.push({ case_id: caseId, org_id: orgId, field_key: `by_dest:${u.destination}:${u.key}`, field_storage: 'data', old_value: oldV, new_value: newV })
+      }
+    } else {
+      const oldV = serializeForHistory('data', nextData[u.key])
+      if (empty) {
+        // top-level + legacy *_extra 잔존까지 제거(read fallback 으로 부활 방지).
+        nextData = { ...clearExtraValueWithLegacy(nextData, u.key) }
+      } else {
+        nextData[u.key] = u.value
+      }
+      const newV = serializeForHistory('data', empty ? null : u.value)
+      if (oldV !== newV) {
+        historyRows.push({ case_id: caseId, org_id: orgId, field_key: u.key, field_storage: 'data', old_value: oldV, new_value: newV })
+      }
+    }
+  }
+
+  const { error: updErr } = await supabase.from('cases').update({ data: nextData }).eq('id', caseId)
+  if (updErr) return { ok: false, error: updErr.message }
+  if (historyRows.length > 0 && orgId) {
+    await supabase.from('case_history').insert(historyRows)
+  }
+  await evaluateAndNotify(caseId)
+  return { ok: true, data: nextData }
+}
+
+/**
  * Undo the most recent change for a case. Returns the restored field info.
  */
 export async function undoLastChange(
