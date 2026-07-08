@@ -847,7 +847,7 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel, activ
 }) {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors hover:bg-accent/60">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors">
       {/* 그룹명 — 우측 항목 라벨(mono muted)과 톤 차이 두기 위해 serif + semibold + foreground. */}
       <span className="pt-1 font-serif text-[14px] font-semibold text-foreground">
         {groupName}
@@ -1000,7 +1000,7 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow, onTakeoverDrag }: 
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        'grid grid-cols-1 md:grid-cols-[180px_1fr] items-center gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors hover:bg-accent/60',
+        'grid grid-cols-1 md:grid-cols-[180px_1fr] items-center gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors',
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
@@ -1070,7 +1070,7 @@ function ReturnFlightRow({ caseId, caseRow, activeDest }: {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors hover:bg-accent/60">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors">
       {/* 좌측 라벨 — 출국 항공편(ExtraGroupRow groupName)과 동일 스타일로 일치. */}
       <span className="pt-1 font-serif text-[14px] font-semibold text-foreground">귀국 항공편</span>
       <div className="min-w-0 grid grid-cols-1 md:grid-cols-[100px_1fr] items-center gap-md py-1">
@@ -1220,7 +1220,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
   const showSec = editingSec || !!secRaw
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel
           onClick={editMode && canAdd ? addNew : undefined}
@@ -1381,7 +1381,7 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }
 
   return (
-    <div data-field="microchip_implant_date" className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60">
+    <div data-field="microchip_implant_date" className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel
           onClick={editMode && !editing ? () => setEditing(true) : undefined}

@@ -54,7 +54,7 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
   const labelOnClick = editMode && !editing ? () => setEditing(true) : undefined
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
       <SectionLabel className="pt-1" onClick={labelOnClick}>해외주소</SectionLabel>
       {editMode && editing ? (
         <AddressInput

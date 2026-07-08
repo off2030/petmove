@@ -239,7 +239,7 @@ export function AddressField({
   return (
     <>
       {/* Korean address */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
         <SectionLabel
           className="pt-1"
           onClick={editingKr ? undefined : (krEmpty ? handleSearch : startEditKr)}
@@ -307,7 +307,7 @@ export function AddressField({
 
       {/* Detail address input */}
       {showDetail && (
-        <div className="grid grid-cols-[140px_1fr_auto] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60">
+        <div className="grid grid-cols-[140px_1fr_auto] items-start gap-md py-2.5 border-b border-border/80 transition-colors">
           <SectionLabel className="pt-1">상세 주소</SectionLabel>
           <div className="flex items-center gap-sm min-w-0">
             <input ref={detailRef} type="text" value={detailAddr} onChange={(e) => setDetailAddr(e.target.value)}
@@ -324,7 +324,7 @@ export function AddressField({
       )}
 
       {/* English address */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
         <SectionLabel
           className="pt-1"
           onClick={editingEn ? undefined : startEditEn}

@@ -279,7 +279,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   /* ── Render ── */
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel
           onClick={editMode ? () => setAddingText(true) : undefined}
