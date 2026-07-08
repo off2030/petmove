@@ -377,9 +377,8 @@ function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
         options={options}
         onChange={pick}
         portal
-        // hover 시 옅은 테두리 알약 + 꺾쇠로 '눌러서 바꾸는 컨트롤'임을 신호(평소엔 차분).
-        // 배경 채움은 행 hover(accent)와 같은 색이라 안 보임 → 테두리(outline)로 표시.
-        triggerClassName={cn('group inline-flex items-center rounded-full -mx-2 px-2 py-0.5 transition-colors hover:ring-1 hover:ring-inset hover:ring-muted-foreground/30', cls)}
+        // hover 시 꺾쇠(▼)만으로 '눌러서 바꾸는 드롭다운'임을 신호(평소엔 차분).
+        triggerClassName={cn('group inline-flex items-center', cls)}
         triggerProps={{
           'data-status-pill': '',
           ...(value === 'testing' ? { 'data-status-active': 'true' } : {}),
