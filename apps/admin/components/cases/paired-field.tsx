@@ -235,7 +235,8 @@ export function PairedField({
               <span className="text-muted-foreground/30 select-none">|</span>
             )}
 
-            {enSpec && (
+            {/* 둘 다 비었을 땐 영문 숨김 — 클릭 시 한/영 함께 열리는 단일 필드라 — 하나로. */}
+            {enSpec && !(koEmpty && enEmpty) && (
               <div className="group/en relative inline-flex items-baseline">
                 {editMode ? (
                   <button

@@ -265,9 +265,10 @@ export function CustomerNameRow({
               )}
             </div>
 
-            {(!koEmpty || !enEmpty) && (
+            {/* 둘 다 비었을 땐 영문·구분선 숨김 — 클릭 시 한/영 함께 열리는 단일 필드라 — 하나로. */}
+            {!(koEmpty && enEmpty) && (
+              <>
               <span className="text-muted-foreground/30 select-none">|</span>
-            )}
 
             {/* English name */}
             <div className="group/en relative inline-flex items-baseline">
@@ -296,6 +297,8 @@ export function CustomerNameRow({
                 className="absolute left-full ml-1 z-10 opacity-0 group-hover/en:opacity-100 shrink-0"
               />
             </div>
+              </>
+            )}
           </div>
         )}
       </div>
