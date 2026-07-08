@@ -8,15 +8,9 @@ import { CaseDetail, CaseDetailEmpty } from './case-detail'
 import { CaseHeader } from './case-header'
 import { CaseHistory } from './case-history'
 import { createCase } from '@/lib/actions/create-case'
-import { createCaseWithData } from '@/lib/actions/create-case-with-data'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { duplicateCase } from '@/lib/actions/duplicate-case'
 import { undoLastChange, updateCaseField } from '@/lib/actions/cases'
-import { extractAll } from '@/lib/actions/extract-all'
-import { extractResultToSeed } from '@/lib/extract-to-seed'
-import { filesToBase64, filesToPdfText } from '@/lib/file-to-base64'
-import { uploadFileToNotes } from '@/lib/notes-upload'
-import { lookupCaseByMicrochip } from '@/lib/actions/lookup-case-by-chip'
 import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateVBC, generateSGP, generateTW, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti, recommendForm25RabiesSelection } from '@/lib/actions/generate-pdf'
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import { MultiFormDialog } from './multi-form-dialog'
@@ -30,7 +24,7 @@ import { getDepartureDate, resolveCerts, buildCaseJourneyContext, SINGLE_DOSE_RA
 import type { CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { evaluateCase } from './verification-context'
-import { toastError, toastInfo, persistField } from '@/lib/toast-bus'
+import { toastError, persistField } from '@/lib/toast-bus'
 import { listOrgDisabledChecks } from '@/lib/actions/org-disabled-checks'
 import { inspectMissingPdfFields } from '@/lib/actions/inspect-missing-pdf-fields'
 
@@ -244,7 +238,6 @@ function Inner() {
   // 수의사/병원/발급일 노출 토글 — 기본 ON. 끄면 vet:*, vet_visit_date, today_* 계열 및
   // vet_/hospital_/issue_date 필드를 공백으로 출력 (서명 토글과 독립).
   const [includeVet, setIncludeVet] = useState(true)
-  const [addingFromFiles, setAddingFromFiles] = useState(false)
   // org_disabled_checks 캐시 — 마운트 후 한 번 로드. PDF 발급 게이트가 사용.
   const [disabledChecks, setDisabledChecks] = useState<Set<string>>(() => new Set())
   useEffect(() => {
@@ -365,75 +358,6 @@ function Inner() {
       toastError('케이스 생성 실패', result.error)
     }
   }, [addLocalCase])
-
-  // 파일(이미지/PDF) 여러 개를 한 케이스로 묶어 처리:
-  // 1) 이미지화 → extractAll로 한 번에 정보 추출
-  // 2) 추출된 마이크로칩이 기존 케이스에 있으면 그 케이스를 선택해 파일만 첨부
-  //    (유령/중복 케이스 방지)
-  // 3) 없으면 새 케이스 생성 후 파일 첨부
-  const uploadFilesToNotes = useCallback(
-    async (caseRow: CaseRow, files: File[]) => {
-      let runningData = { ...((caseRow.data as Record<string, unknown>) ?? {}) }
-      for (const file of files) {
-        const snapshot = { ...caseRow, data: runningData } as CaseRow
-        const captured: Record<string, unknown> = runningData
-        await uploadFileToNotes(caseRow.id, snapshot, file, (cid, storage, key, val) => {
-          if (storage === 'data' && cid === caseRow.id) {
-            if (val === null || val === undefined || val === '') delete captured[key]
-            else captured[key] = val
-          }
-          updateLocalCaseField(cid, storage, key, val)
-        })
-        runningData = captured
-      }
-    },
-    [updateLocalCaseField],
-  )
-
-  const handleAddFromFiles = useCallback(async (files: File[]) => {
-    if (files.length === 0) return
-    setAddingFromFiles(true)
-    try {
-      // 1. 파일 → AI 입력용 이미지 배열
-      const [images, pdfTexts] = await Promise.all([
-        filesToBase64(files),
-        filesToPdfText(files),
-      ])
-
-      // 2. 추출 (실패해도 빈 케이스는 만든다 — 사용자가 수동 입력할 수 있도록)
-      const extract = images.length > 0 || pdfTexts.length > 0
-        ? await extractAll({ images, pdfTexts })
-        : { ok: false as const, error: 'no images' }
-      const seed = extract.ok ? extractResultToSeed(extract.data) : { column: {}, data: {} }
-
-      // 3. 마이크로칩으로 기존 케이스 찾기 — 있으면 그쪽에 파일만 추가
-      const chip = seed.column?.microchip as string | undefined
-      if (chip) {
-        const existing = await lookupCaseByMicrochip(chip)
-        if (existing.ok && existing.case) {
-          selectCase(existing.case.id)
-          await uploadFilesToNotes(existing.case, files)
-          toastInfo(
-            '이미 등록된 마이크로칩',
-            `기존 케이스(${existing.case.pet_name ?? existing.case.customer_name ?? '이름없음'})에 파일을 추가했습니다.`,
-          )
-          return
-        }
-      }
-
-      // 4. 새 케이스 생성
-      const created = await createCaseWithData(seed)
-      if (!created.ok) { toastError('케이스 생성 실패', created.error); return }
-      addLocalCase(created.case)  // context가 자동 선택
-
-      // 5. 파일을 새 케이스의 notes에 업로드
-      await uploadFilesToNotes(created.case, files)
-
-      if (!extract.ok) console.warn('extract failed:', extract.error)
-    } finally {
-      setAddingFromFiles(false)
-    }
-  }, [addLocalCase, selectCase, uploadFilesToNotes])
 
   // Ctrl+Z: undo last change on selected case
   // Ctrl+←/→: 이전/다음 케이스로 이동 (인풋 포커스 중에는 커서 이동과 충돌하므로 무시)
@@ -563,7 +487,7 @@ function Inner() {
         <div className="w-1/2 h-full">
           <div className="h-full overflow-hidden px-md md:px-lg py-md md:py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
             <div className="h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl">
-              <CaseList onAdd={handleAdd} onAddFromFiles={handleAddFromFiles} busy={addingFromFiles} />
+              <CaseList onAdd={handleAdd} />
             </div>
           </div>
         </div>
