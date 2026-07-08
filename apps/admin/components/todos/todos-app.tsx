@@ -325,24 +325,29 @@ function buildInspectionRows(
       }
     }
     const nzDeparture = destDeparture(c, 'new_zealand')
-    if (isNZ && nzDeparture && caseSpecies(c) === 'dog') {
+    if (isNZ && caseSpecies(c) === 'dog') {
       // 뉴질랜드 전염병검사도 강아지 전용 — 고양이 제외 (nz.ts 도메인 룰과 일치).
       // 설정 labs 순서대로 묶음 한 행으로 표시.
       // 검사일 수정 시 묶음 내 모든 record에 동시 저장.
       // 표시 날짜는 저장값 우선(설정 순서대로 첫 hit), 없으면 뉴질랜드 출국일 - 15일 자동.
+      // 호주(AU)와 동일: 검사 기록 또는 출국일 중 하나라도 있으면 탭에 올린다.
+      // (출국일 없이 전염병검사만 직접 입력한 경우도 검사 탭에 나와야 함.)
       const recs = readInfectiousRecords(c)
       const existing = nzLabs.map(lab => recs.find(r => r.lab === lab)).find(Boolean)
-      const autoDate = computeNZInspectionDate(nzDeparture)
-      const date = existing?.date || autoDate
-      rows.push({
-        id: `${c.id}:inf:nz`,
-        caseRow: c,
-        kind: 'infectious',
-        lab: 'nz_combined',
-        date,
-        dateEditable: true,
-        dateStorage: { kind: 'infectious_multi', labs: nzLabs },
-      })
+      const referenceDate = existing?.date || nzDeparture
+      if (referenceDate) {
+        const autoDate = nzDeparture ? computeNZInspectionDate(nzDeparture) : ''
+        const date = existing?.date || autoDate
+        rows.push({
+          id: `${c.id}:inf:nz`,
+          caseRow: c,
+          kind: 'infectious',
+          lab: 'nz_combined',
+          date,
+          dateEditable: true,
+          dateStorage: { kind: 'infectious_multi', labs: nzLabs },
+        })
+      }
     }
     // 3) 전염병검사 — 그 외 국가 (설정 infectiousRules 매칭). AU/NZ 는 위에서 전용 처리.
     //    케이스의 목적지 토큰마다 매칭 규칙의 lab 별로 1행. 검사일(해당 lab record) 또는
