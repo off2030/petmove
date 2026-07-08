@@ -382,7 +382,16 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
               )
             })}
           </div>
-        ) : null}
+        ) : (
+          editMode ? (
+            <button type="button" onClick={() => { setOpen(true); setQuery(''); setHighlightIdx(0) }}
+              className="text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-pointer text-muted-foreground/40 select-none">
+              —
+            </button>
+          ) : (
+            <span className="text-muted-foreground/40 select-none" aria-hidden>—</span>
+          )
+        )}
 
         {open && popupPos && typeof document !== 'undefined' && createPortal(
           <div

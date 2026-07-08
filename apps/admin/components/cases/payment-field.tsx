@@ -159,6 +159,18 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
             />
           ))}
 
+          {/* 빈 상태 — 다른 필드와 동일한 옅은 — (클릭 시 결제 추가). */}
+          {payments.length === 0 && !addingNew && (
+            editMode ? (
+              <button type="button" onClick={() => setAddingNew(true)}
+                className="text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-pointer text-muted-foreground/40 select-none">
+                —
+              </button>
+            ) : (
+              <span className="text-muted-foreground/40 select-none px-2 py-1 -mx-2 inline-block" aria-hidden>—</span>
+            )
+          )}
+
           {/* New row being added — amount input only, not yet saved */}
           {addingNew && (
             <div className="flex items-baseline gap-[10px] min-w-0">

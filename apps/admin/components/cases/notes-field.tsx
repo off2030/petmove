@@ -365,6 +365,18 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
             </div>
           ))}
 
+          {/* 빈 상태 — 다른 필드와 동일한 옅은 — (클릭 시 메모 입력 시작). */}
+          {notes.length === 0 && !addingText && (
+            editMode ? (
+              <button type="button" onClick={() => setAddingText(true)}
+                className="text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-pointer text-muted-foreground/40 select-none">
+                —
+              </button>
+            ) : (
+              <span className="text-muted-foreground/40 select-none px-2 py-1 -mx-2 inline-block" aria-hidden>—</span>
+            )
+          )}
+
           {/* ── Text input (new) — 입력칸 우측에 [저장][클립] 한 줄 배치, 같은 높이.
                 저장은 NoteTextInput 내부, 클립은 외부 — 부모 flex 가 items-start 로 textarea
                 상단에 두 버튼 모두 정렬해 textarea 가 multi-line 으로 늘어나도 어긋나지 않음. ── */}

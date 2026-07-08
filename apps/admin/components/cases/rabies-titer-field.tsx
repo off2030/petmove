@@ -347,7 +347,16 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 
       {/* 인라인: 날짜 chips. 클릭하면 모달 열림. */}
       <div className="min-w-0 flex items-baseline gap-[10px] pt-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
-        {sortedForExpand.length === 0 ? null : (
+        {sortedForExpand.length === 0 ? (
+          editMode ? (
+            <button type="button" onClick={openEditModal}
+              className="text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-pointer text-muted-foreground/40 select-none">
+              —
+            </button>
+          ) : (
+            <span className="text-muted-foreground/40 select-none" aria-hidden>—</span>
+          )
+        ) : (
           sortedForExpand.map((rec, si) => (
             <InlineDateChip
               key={si}

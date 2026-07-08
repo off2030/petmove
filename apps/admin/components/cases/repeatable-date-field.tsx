@@ -537,7 +537,16 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       {/* 인라인: 날짜 chips 만 (간결). 클릭하면 모달 열림.
           많아질 경우 줄 바꿈 대신 가로 스크롤. */}
       <div className="min-w-0 flex items-baseline gap-[10px] pt-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
-        {sortedForInline.length === 0 ? null : (
+        {sortedForInline.length === 0 ? (
+          editMode ? (
+            <button type="button" onClick={openEditModal}
+              className="text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-pointer text-muted-foreground/40 select-none">
+              —
+            </button>
+          ) : (
+            <span className="text-muted-foreground/40 select-none" aria-hidden>—</span>
+          )
+        ) : (
           sortedForInline.map((rec, si) => (
             <InlineDateChip
               key={si}

@@ -1231,6 +1231,17 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-[20px] overflow-x-auto whitespace-nowrap scrollbar-hide pl-2.5 -ml-2.5">
+          {/* 빈 상태 — 다른 필드와 동일한 옅은 — (클릭 시 입력 시작). */}
+          {!showMain && !showSec && (
+            editMode ? (
+              <button type="button" onClick={addNew}
+                className="text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-pointer text-muted-foreground/40 select-none">
+                —
+              </button>
+            ) : (
+              <span className="text-muted-foreground/40 select-none" aria-hidden>—</span>
+            )
+          )}
           {/* Main chip */}
           {showMain && (
             <div className="group/main inline-flex items-baseline gap-[6px]">
