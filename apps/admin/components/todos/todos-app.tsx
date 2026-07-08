@@ -1084,22 +1084,17 @@ export function TodosInspectionActions({ query }: { query: string }) {
   const pendingRows = inspectionRows.filter(
     (r) => readInspectionStatus(r) === 'waiting',
   )
+  // KSVDL-R(광견병항체) — 인보이스만. 나머지는 인보이스 + 케이스별 서류 병합.
+  const ksvdlrRows = pendingRows.filter((r) => r.kind === 'titer' && r.lab === 'ksvdl_r')
   const ksvdlRows = pendingRows.filter((r) => r.lab === 'ksvdl')
   const arcRows = pendingRows.filter((r) => r.lab === 'arc_ovi')
   const nzRows = pendingRows.filter((r) => r.lab === 'nz_combined')
   // APQA EU titer 행 = EU/영국/스위스/터키 광견병중화항체검사 신청 대상.
   // inspection-config 의 titerRules 가 EU·UK·CH·TR → apqa_eu 로 매핑.
   const euApqaRows = pendingRows.filter((r) => r.kind === 'titer' && r.lab === 'apqa_eu')
-  // Invoice 활성화: KSVDL-R(titer) · KSVDL(호주 infectious) · VBDDL(뉴질랜드 묶음) 중 한 건이라도 진행 중이면 활성.
-  const invoiceRows = pendingRows.filter(
-    (r) =>
-      (r.kind === 'titer' && r.lab === 'ksvdl_r') ||
-      r.lab === 'ksvdl' ||
-      r.lab === 'nz_combined',
-  )
 
   const [menuOpen, setMenuOpen] = useState(false)
-  const [activeDialog, setActiveDialog] = useState<'invoice' | 'ksvdl' | 'arc_ovi' | 'vbddl_apqa' | 'apqa_eu' | null>(null)
+  const [activeDialog, setActiveDialog] = useState<'ksvdl_r' | 'ksvdl' | 'vbddl_apqa' | 'arc_ovi' | 'apqa_eu' | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -1136,39 +1131,39 @@ export function TodosInspectionActions({ query }: { query: string }) {
         <div className="absolute right-0 top-full mt-1 z-30 min-w-[180px] rounded-md border border-border bg-popover p-1 shadow-md">
           <button
             type="button"
-            onClick={() => { if (invoiceRows.length > 0) { setActiveDialog('invoice'); setMenuOpen(false) } }}
-            disabled={invoiceRows.length === 0}
-            className={itemClass(invoiceRows.length === 0)}
-            title={invoiceRows.length === 0 ? '대상 케이스가 없습니다' : undefined}
+            onClick={() => { if (ksvdlrRows.length > 0) { setActiveDialog('ksvdl_r'); setMenuOpen(false) } }}
+            disabled={ksvdlrRows.length === 0}
+            className={itemClass(ksvdlrRows.length === 0)}
+            title={ksvdlrRows.length === 0 ? '대상 케이스가 없습니다' : '인보이스만'}
           >
-            Invoice
+            KSVDL-R
           </button>
           <button
             type="button"
             onClick={() => { if (ksvdlRows.length > 0) { setActiveDialog('ksvdl'); setMenuOpen(false) } }}
             disabled={ksvdlRows.length === 0}
             className={itemClass(ksvdlRows.length === 0)}
-            title={ksvdlRows.length === 0 ? '대상 케이스가 없습니다' : undefined}
+            title={ksvdlRows.length === 0 ? '대상 케이스가 없습니다' : '인보이스 + KSVDL 시료제출서'}
           >
             KSVDL
-          </button>
-          <button
-            type="button"
-            onClick={() => { if (arcRows.length > 0) { setActiveDialog('arc_ovi'); setMenuOpen(false) } }}
-            disabled={arcRows.length === 0}
-            className={itemClass(arcRows.length === 0)}
-            title={arcRows.length === 0 ? '대상 케이스가 없습니다' : '시료제출서 + VHC + 수의사면허증 3종 병합'}
-          >
-            ARC-OVI
           </button>
           <button
             type="button"
             onClick={() => { if (nzRows.length > 0) { setActiveDialog('vbddl_apqa'); setMenuOpen(false) } }}
             disabled={nzRows.length === 0}
             className={itemClass(nzRows.length === 0)}
-            title={nzRows.length === 0 ? '대상 케이스가 없습니다' : undefined}
+            title={nzRows.length === 0 ? '대상 케이스가 없습니다' : '인보이스 + VBDDL·APQA HQ(국/영)'}
           >
             VBDDL + APQA HQ
+          </button>
+          <button
+            type="button"
+            onClick={() => { if (arcRows.length > 0) { setActiveDialog('arc_ovi'); setMenuOpen(false) } }}
+            disabled={arcRows.length === 0}
+            className={itemClass(arcRows.length === 0)}
+            title={arcRows.length === 0 ? '대상 케이스가 없습니다' : '인보이스 + 시료제출서·VHC·면허증'}
+          >
+            ARC-OVI
           </button>
           <button
             type="button"
@@ -1181,30 +1176,39 @@ export function TodosInspectionActions({ query }: { query: string }) {
           </button>
         </div>
       )}
-      {activeDialog === 'invoice' && (
-        <InvoiceDialog onClose={() => setActiveDialog(null)} />
-      )}
-      {activeDialog === 'ksvdl' && (
-        <BulkApplyDialog
-          label="KSVDL"
-          rows={ksvdlRows}
-          request={(caseId) => ({ kind: 'single', formKey: 'KSVDL', caseId })}
+      {activeDialog === 'ksvdl_r' && (
+        <ShipmentPackDialog
+          label="KSVDL-R"
+          rows={ksvdlrRows}
+          variant="invoice-only"
+          consigneeLab="ksvdl_r"
           onClose={() => setActiveDialog(null)}
         />
       )}
-      {activeDialog === 'arc_ovi' && (
-        <BulkApplyDialog
-          label="ARC-OVI (시료제출서+VHC+면허증)"
-          rows={arcRows}
-          request={(caseId) => ({ kind: 'bundle', variant: 'arc-ovi-pack', caseId })}
+      {activeDialog === 'ksvdl' && (
+        <ShipmentPackDialog
+          label="KSVDL"
+          rows={ksvdlRows}
+          variant="ksvdl"
+          consigneeLab="ksvdl"
           onClose={() => setActiveDialog(null)}
         />
       )}
       {activeDialog === 'vbddl_apqa' && (
-        <BulkApplyDialog
+        <ShipmentPackDialog
           label="VBDDL + APQA HQ"
           rows={nzRows}
-          request={(caseId) => ({ kind: 'bundle', variant: 'nz-infection-pack', caseId })}
+          variant="nz"
+          consigneeLab="vbddl"
+          onClose={() => setActiveDialog(null)}
+        />
+      )}
+      {activeDialog === 'arc_ovi' && (
+        <ShipmentPackDialog
+          label="ARC-OVI"
+          rows={arcRows}
+          variant="arc"
+          consigneeLab="arc_ovr"
           onClose={() => setActiveDialog(null)}
         />
       )}
@@ -1592,19 +1596,145 @@ function BulkApplyDialog({
 }
 
 /**
- * Invoice + ESD 생성 다이얼로그 래퍼. ShipmentDocsDialog 에 submit 핸들러를 붙여
- * 외부에서 open 제어 가능하게 만듦.
+ * 발송 팩 다이얼로그 — 케이스 체크 + 검체수 + 발송일 입력 → 인보이스(맨 앞) + 선택 케이스별
+ * 검사 서류를 하나의 PDF 로 병합 생성. 검체수 기본값 = 선택 마리 수(수정 가능). ARC 는 16점 고정.
+ * 인보이스 수신처(consigneeLab)는 항목별 고정.
  */
-function InvoiceDialog({ onClose }: { onClose: () => void }) {
-  async function handle(opts: { tube_count: number; consignee_lab: string; species: ('dog' | 'cat')[]; ship_date?: string }) {
+function ShipmentPackDialog({ label, rows, variant, consigneeLab, onClose }: {
+  label: string
+  rows: InspectionRow[]
+  variant: 'invoice-only' | 'ksvdl' | 'nz' | 'arc'
+  consigneeLab: string
+  onClose: () => void
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [tube, setTube] = useState('')
+  const [shipDate, setShipDate] = useState('')
+  const allSelected = rows.length > 0 && selected.size === rows.length
+  const isArc = variant === 'arc'
+  const selCount = selected.size
+  // 검체수: 빈 칸이면 선택 마리 수, 입력하면 그 값(1~99). ARC 는 16 고정.
+  const effectiveTube = isArc
+    ? 16
+    : tube.trim()
+    ? Math.max(1, Math.min(99, Math.trunc(Number(tube)) || selCount))
+    : selCount
+
+  function toggle(caseId: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(caseId)) next.delete(caseId)
+      else next.add(caseId)
+      return next
+    })
+  }
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.caseRow.id)))
+  }
+
+  async function handleGenerate() {
+    if (selected.size === 0) return
+    const ids = Array.from(selected)
     onClose()
     try {
-      await downloadPdfRequest({ kind: 'shipment', variant: 'invoice-esd', ...opts })
+      await downloadPdfRequest({
+        kind: 'shipment-pack',
+        variant,
+        caseIds: ids,
+        tube_count: effectiveTube,
+        consignee_lab: consigneeLab,
+        ship_date: shipDate || undefined,
+      })
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
+      alert(error instanceof Error ? error.message : '서류 생성 중 오류가 발생했습니다.')
     }
   }
-  return <ShipmentDocsDialog onClose={onClose} onSubmit={handle} />
+
+  if (typeof document === 'undefined') return null
+  return createPortal(
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={onClose}>
+      <div
+        className="bg-background border border-border/80 rounded-lg shadow-lg p-6 max-w-sm w-full mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="text-base font-semibold text-primary">{label}</h2>
+          <button
+            type="button"
+            onClick={toggleAll}
+            className="text-[12px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {allSelected ? '전체 해제' : '전체 선택'}
+          </button>
+        </div>
+        <ul className="max-h-64 overflow-y-auto scrollbar-minimal -mx-2 mb-4">
+          {rows.map((r) => {
+            const isChecked = selected.has(r.caseRow.id)
+            return (
+              <li key={r.id}>
+                <label className="w-full px-sm py-2 rounded-md hover:bg-accent/60 transition-colors flex items-center gap-sm cursor-pointer">
+                  <input type="checkbox" checked={isChecked} onChange={() => toggle(r.caseRow.id)} className="peer sr-only" />
+                  <span
+                    className={cn(
+                      'w-[22px] h-[22px] shrink-0 rounded-[3px] border border-foreground/40 bg-transparent transition-colors relative',
+                      'peer-checked:bg-pmw-accent peer-checked:border-pmw-accent',
+                      'peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background',
+                      "before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-pmw-accent-foreground before:text-[14px] before:font-bold before:leading-none before:opacity-0 peer-checked:before:opacity-100",
+                    )}
+                    aria-hidden="true"
+                  />
+                  <span className="font-serif font-semibold text-[15px] text-foreground">{r.caseRow.pet_name ?? '—'}</span>
+                  <span className="font-sans text-[13px] text-muted-foreground">{r.caseRow.customer_name ?? ''}</span>
+                  <span className="ml-auto font-mono text-[11px] tracking-[0.3px] text-muted-foreground/70">{r.caseRow.destination ?? ''}</span>
+                </label>
+              </li>
+            )
+          })}
+        </ul>
+
+        {/* 인보이스 정보 — 검체수(기본=선택 수) + 발송일. ARC 는 16점 고정. */}
+        <div className="flex items-center gap-md mb-4">
+          <div className="flex-1">
+            <label className="text-[12px] text-muted-foreground mb-1 block">검체수</label>
+            {isArc ? (
+              <div className="h-9 flex items-center text-sm text-foreground">ARC 표준 <span className="font-medium ml-1">16점</span></div>
+            ) : (
+              <input
+                type="number"
+                min={1}
+                max={99}
+                inputMode="numeric"
+                value={tube}
+                onChange={(e) => setTube(e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder={String(selCount || 1)}
+                aria-label="검체수"
+                className="w-full h-9 px-2 rounded-md border border-border/80 bg-background text-sm text-foreground"
+              />
+            )}
+          </div>
+          <div className="flex-1">
+            <label className="text-[12px] text-muted-foreground mb-1 block">발송일 <span className="text-muted-foreground/50">(비우면 오늘)</span></label>
+            <input
+              type="text"
+              value={shipDate}
+              onChange={(e) => setShipDate(e.target.value)}
+              placeholder="YYYY-MM-DD"
+              inputMode="numeric"
+              className="w-full h-9 px-2 rounded-md border border-border/80 bg-background text-sm text-foreground placeholder:text-muted-foreground"
+            />
+          </div>
+        </div>
+
+        <DialogFooter
+          onCancel={onClose}
+          onPrimary={handleGenerate}
+          primaryLabel={selected.size > 0 ? `생성 (${selected.size})` : '생성'}
+          primaryDisabled={selected.size === 0}
+        />
+      </div>
+    </div>,
+    document.body,
+  )
 }
 
 /**

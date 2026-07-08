@@ -28,6 +28,7 @@ import {
   generateNZMulti,
   generateVBCMulti,
   generateNzInfectionPack,
+  generateShipmentPack,
   generateOVD,
   generateVBC,
   generateSGP,
@@ -105,7 +106,16 @@ type BundlePdfBody = {
   destination?: string | null
 }
 
-type PdfRequestBody = SinglePdfBody | MultiPdfBody | ShipmentPdfBody | BundlePdfBody
+type ShipmentPackBody = {
+  kind: 'shipment-pack'
+  variant: 'invoice-only' | 'ksvdl' | 'nz' | 'arc'
+  caseIds: string[]
+  tube_count: number
+  consignee_lab: string
+  ship_date?: string
+}
+
+type PdfRequestBody = SinglePdfBody | MultiPdfBody | ShipmentPdfBody | BundlePdfBody | ShipmentPackBody
 
 const SINGLE_GENERATORS = {
   Form25: generateForm25,
@@ -206,6 +216,21 @@ export async function POST(req: NextRequest) {
         body.variant === 'arc-ovi-pack'
           ? await generateArcOviPack(body.caseId, opts)
           : await generateNzInfectionPack(body.caseId, opts)
+      if (!result.ok) return jsonError(result.error, 500)
+      return pdfResponse(result.pdf, result.filename)
+    }
+
+    if (body.kind === 'shipment-pack') {
+      if (!Array.isArray(body.caseIds) || (body.variant !== 'invoice-only' && body.caseIds.length === 0)) {
+        return jsonError('선택된 케이스가 없습니다.', 400)
+      }
+      const result = await generateShipmentPack({
+        variant: body.variant,
+        caseIds: body.caseIds,
+        tube_count: body.tube_count,
+        consignee_lab: body.consignee_lab,
+        ship_date: body.ship_date,
+      })
       if (!result.ok) return jsonError(result.error, 500)
       return pdfResponse(result.pdf, result.filename)
     }

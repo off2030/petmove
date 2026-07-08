@@ -64,11 +64,22 @@ export type BundlePdfRequest = {
   destination?: string | null
 }
 
+/** 발송 팩 — 인보이스(맨 앞) + 선택 케이스별 검사 서류 병합. 검사 탭 '신청서' 메뉴. */
+export type ShipmentPackRequest = {
+  kind: 'shipment-pack'
+  variant: 'invoice-only' | 'ksvdl' | 'nz' | 'arc'
+  caseIds: string[]
+  tube_count: number
+  consignee_lab: string
+  ship_date?: string
+}
+
 export type PdfDownloadRequest =
   | SinglePdfRequest
   | MultiPdfRequest
   | ShipmentPdfRequest
   | BundlePdfRequest
+  | ShipmentPackRequest
 
 function parseFilename(disposition: string | null): string | null {
   if (!disposition) return null

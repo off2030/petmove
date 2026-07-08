@@ -433,6 +433,59 @@ export async function generateNzInfectionPack(caseId: string, opts?: GenerateOpt
   }
 }
 
+/**
+ * 발송 팩 — 인보이스 1장 + 선택한 케이스별 검사 서류 N장을 하나의 PDF 로 병합.
+ * 인보이스가 맨 앞. 검사 탭 '신청서' 메뉴(KSVDL-R·KSVDL·VBDDL+APQA HQ·ARC-OVI)에서 사용.
+ *  - invoice-only: 인보이스만 (KSVDL-R 광견병항체 발송용)
+ *  - ksvdl: 인보이스 + 케이스별 KSVDL 시료제출서
+ *  - nz:    인보이스 + 케이스별 NZ 전염병검사 팩(VBDDL+APQA HQ 국/영)
+ *  - arc:   인보이스 + 케이스별 ARC-OVI 팩(시료제출서+VHC+면허)
+ * 인보이스 수신처(consignee_lab)·검체수(tube_count)·발송일(ship_date)은 호출부에서 지정.
+ */
+export async function generateShipmentPack(params: {
+  variant: 'invoice-only' | 'ksvdl' | 'nz' | 'arc'
+  caseIds: string[]
+  tube_count: number
+  consignee_lab: string
+  ship_date?: string
+  opts?: GenerateOpts
+}): Promise<GeneratePdfResult> {
+  const { PDFDocument } = await import('pdf-lib')
+  const invoice = await generateInvoice({
+    tube_count: params.tube_count,
+    consignee_lab: params.consignee_lab,
+    ship_date: params.ship_date,
+  })
+  if (!invoice.ok) return invoice
+  // KSVDL-R 등은 인보이스만.
+  if (params.variant === 'invoice-only') return invoice
+
+  const parts: string[] = [invoice.pdf]
+  for (const caseId of params.caseIds) {
+    const r =
+      params.variant === 'ksvdl'
+        ? await generateKsvdl(caseId, params.opts)
+        : params.variant === 'nz'
+        ? await generateNzInfectionPack(caseId, params.opts)
+        : await generateArcOviPack(caseId, params.opts)
+    if (!r.ok) return r
+    parts.push(r.pdf)
+  }
+
+  const merged = await PDFDocument.create()
+  for (const b64 of parts) {
+    const doc = await PDFDocument.load(Buffer.from(b64, 'base64'))
+    const pages = await merged.copyPages(doc, doc.getPageIndices())
+    pages.forEach((p) => merged.addPage(p))
+  }
+  const pdfBytes = await merged.save()
+  return {
+    ok: true,
+    pdf: Buffer.from(pdfBytes).toString('base64'),
+    filename: `${params.consignee_lab}_shipment_${params.tube_count}tubes.pdf`,
+  }
+}
+
 export async function generateOVD(caseId: string, opts?: GenerateOpts) {
   return generate('OVD', caseId, opts)
 }
