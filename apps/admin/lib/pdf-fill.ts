@@ -137,6 +137,13 @@ type FormMapping = {
    */
   textOverlays?: { page?: number; x: number; y: number; text: string; size?: number }[]
   /**
+   * Static line overlays — always drawn. Use to strike out printed template
+   * text that has no form field (e.g. TK "Means of Transport (Lorry, rail
+   * wagon, ship, or aircraft)": strike every option except aircraft).
+   * Coordinates are PDF user-space (origin = bottom-left). thickness 기본 0.8pt.
+   */
+  lineOverlays?: { page?: number; x1: number; y1: number; x2: number; y2: number; thickness?: number }[]
+  /**
    * Conditional ellipse (circle) overlays driven by a data value. For forms
    * where an option must be circled rather than typed — e.g. SGP's
    * "Sex (please circle): Male / Neutered Male / Female / Neutered female",
@@ -3379,6 +3386,23 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
       const page = pages[t.page ?? 0]
       if (!page) continue
       page.drawText(sanitizeForFont(t.text), { x: t.x, y: t.y, size: t.size ?? 10, font: customFont })
+    }
+  }
+
+  // Static line overlays — strike out printed template text (e.g. TK Means of
+  // Transport: strike every mode except aircraft). Drawn on page content so it
+  // survives flatten.
+  if (form.lineOverlays?.length) {
+    const pages = pdf.getPages()
+    for (const l of form.lineOverlays) {
+      const page = pages[l.page ?? 0]
+      if (!page) continue
+      page.drawLine({
+        start: { x: l.x1, y: l.y1 },
+        end: { x: l.x2, y: l.y2 },
+        thickness: l.thickness ?? 0.8,
+        color: rgb(0, 0, 0),
+      })
     }
   }
 

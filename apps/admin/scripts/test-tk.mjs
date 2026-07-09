@@ -114,7 +114,7 @@ for (const [label, k] of [
   ['Origin', 'text_1hpqx'], ['Dispatch', 'text_3xyve'], ['Loading', 'text_4qrwb'],
   ['Consignor', 'text_5pdah'], ['Consignor addr', 'text_6epwu'], ['Flight no', 'text_8juia'], ['Consignee', 'text_10ploi'], ['Consignee addr', 'text_12gwyq'],
   ['Species', 'text_14ibfi'], ['Breed', 'text_18xspx'], ['Sex', 'text_22khgf'], ['DOB', 'text_26durx'], ['Microchip', 'text_30fjuk'],
-  ['Rabies product', 'rabies_product'], ['Batch', 'text_37rji'], ['Vacc date', 'text_38ktmy'], ['Valid until', 'text_39quav'],
+  ['Rabies product', 'text_34eelb'], ['Batch', 'text_37rji'], ['Vacc date', 'text_38ktmy'], ['Valid until', 'text_39quav'],
   ['Titer date', 'text_36mpqj'],
 ]) console.log(`  ${label.padEnd(15)} ${k.padEnd(15)} ${JSON.stringify(filled[k] ?? (empty.includes(k) ? '(empty)' : '?'))}`)
 

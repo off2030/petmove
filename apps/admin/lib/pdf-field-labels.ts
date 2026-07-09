@@ -52,6 +52,9 @@ export const SOURCE_LABELS: Record<string, string> = {
   heartworm_dates: '심장사상충 기록',
   infectious_disease_records: '전염병 검사 기록',
 
+  // 항공편
+  entry_flight_number: '항공편명',
+
   // 일정
   departure_date: '출국일',
   vet_visit_date: '내원일 (증명서 발급일)',

@@ -3958,10 +3958,15 @@
     "filename": "TK_{pet_name}.pdf",
     "dateFormat": "dmy",
     "flatten": true,
+    "_lineOverlays_note": "Means of Transport(Nakil Vasıtası) 줄 — 항공 운송만 유효하므로 aircraft/uçak 만 남기고 나머지 옵션에 취소선. 좌표: 라인 중앙 pdf_y≈563.2. 영어 '( Lorry, rail wagon, ship, or ' = x 70→176(aircraft x0=178 앞), 터키어 '(Kamyon, tren, gemi veya ' = x 220→315(uçak x0=316.4 앞).",
+    "lineOverlays": [
+      { "x1": 70, "y1": 563.2, "x2": 176, "y2": 563.2, "thickness": 0.8 },
+      { "x1": 220, "y1": 563.2, "x2": 315, "y2": 563.2, "thickness": 0.8 }
+    ],
     "fields": {
       "text_1hpqx": { "source": null, "default": "Republic of Korea", "note": "p1 Menşe Ülke/Country of Origin — 한국 고정" },
       "text_3xyve": { "source": null, "default": "Republic of Korea", "note": "p1 Sevkeden Ülke/Country of dispatch — 한국 고정" },
-      "text_4qrwb": { "source": null, "default": "Incheon International Airport, Republic of Korea", "note": "p1 Yükleme Yeri/Place of Loading — 한국→튀르키예는 사실상 전부 인천 출발이라 고정 default. 예외 노선이면 생성된 PDF에서 직접 수정." },
+      "text_4qrwb": { "source": null, "default": "Incheon International Airport", "note": "p1 Yükleme Yeri/Place of Loading — 한국→튀르키예는 사실상 전부 인천 출발이라 고정 default. 국가명은 위 Country of Origin/Dispatch 와 중복이라 생략. 예외 노선이면 생성된 PDF에서 직접 수정." },
       "text_5pdah": { "source": "customer_name_en", "note": "p1 Consignor name (Gönderenin adı) — 보호자 영문명" },
       "text_6epwu": { "source": "address_en", "note": "p1 Consignor address — 한국 주소 영문" },
       "text_8juia": { "source": "entry_flight_number", "note": "p1 Registration no/ship name/flight number — 상세페이지 '항공편명'(entry_flight_number) 자동 채움. 미입력 시 공란." },
@@ -3974,7 +3979,7 @@
       "text_26durx": { "source": "birth_date", "note": "p1 동물표 1행 Doğum tarihi/Date of Birth (dd/mm/yyyy)" },
       "text_30fjuk": { "source": "microchip", "note": "p1 동물표 1행 마이크로칩 번호 (ISO 11784/11785)" },
 
-      "rabies_product": { "source": "rabies_dates", "transform": "vaccine_combined:rabies:name", "note": "p1 Üretici ve ürünün adı/Manufacturer and name of product (4) — add-tk-rabies-product.mjs 로 추가한 필드. 광견병 제품명 자동 결합." },
+      "text_34eelb": { "source": "rabies_dates", "transform": "vaccine_combined:rabies:name", "note": "p1 Üretici ve ürünün adı/Manufacturer and name of product (4) — 사용자가 템플릿에 직접 추가한 필드(라벨 오른쪽 인라인, x302~535). 광견병 제품명 자동 결합. (구 rabies_product 떠다니는 필드 대체 — add-tk-rabies-product.mjs 는 더 이상 불필요.)" },
       "text_37rji": { "source": "rabies_dates", "transform": "vaccine_desc:rabies:serial[0]", "note": "p1 Parti No/Batch Number — 최신 회차 lot" },
       "text_38ktmy": { "source": "rabies_dates", "transform": "vaccine_desc:rabies:date[0]", "note": "p1 Aşılama Tarihi/Vaccination Date — 최신 회차 (dd/mm/yyyy)" },
       "text_39quav": { "source": "rabies_dates", "transform": "vaccine_desc:rabies:validity_to[0]", "note": "p1 Geçerlilik Süresi/Valid until — 최신 회차 면역 유효기간 (기본 1년)" },
