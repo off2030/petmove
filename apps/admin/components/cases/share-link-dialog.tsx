@@ -456,9 +456,6 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                     {showFilled ? '숨기기' : '모두 보기'}
                   </button>
                 )}
-                <span className="font-sans text-[11px] text-muted-foreground/70">
-                  {selectedFields.length}개 선택됨
-                </span>
                 {selectedFieldIds.size > 0 && (
                   <button
                     type="button"
