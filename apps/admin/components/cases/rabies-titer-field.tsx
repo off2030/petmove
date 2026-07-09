@@ -32,7 +32,6 @@ interface TiterRecord {
 const LABS = [
   { value: 'krsl', label: 'KRSL' },
   { value: 'apqa_seoul', label: 'APQA Seoul' },
-  { value: 'apqa_hq', label: 'APQA HQ' },
   { value: 'apqa_eu', label: 'APQA EU' },
   { value: 'ksvdl_r', label: 'KSVDL-R' },
 ]
