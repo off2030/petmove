@@ -3961,7 +3961,7 @@
     "fields": {
       "text_1hpqx": { "source": null, "default": "Republic of Korea", "note": "p1 Menşe Ülke/Country of Origin — 한국 고정" },
       "text_3xyve": { "source": null, "default": "Republic of Korea", "note": "p1 Sevkeden Ülke/Country of dispatch — 한국 고정" },
-      "text_4qrwb": { "source": null, "note": "p1 Yükleme Yeri/Place of Loading — 출발 공항(노선별 상이) 수동 입력" },
+      "text_4qrwb": { "source": null, "default": "Incheon International Airport, Republic of Korea", "note": "p1 Yükleme Yeri/Place of Loading — 한국→튀르키예는 사실상 전부 인천 출발이라 고정 default. 예외 노선이면 생성된 PDF에서 직접 수정." },
       "text_5pdah": { "source": "customer_name_en", "note": "p1 Consignor name (Gönderenin adı) — 보호자 영문명" },
       "text_6epwu": { "source": "address_en", "note": "p1 Consignor address — 한국 주소 영문" },
       "text_8juia": { "source": "entry_flight_number", "note": "p1 Registration no/ship name/flight number — 상세페이지 '항공편명'(entry_flight_number) 자동 채움. 미입력 시 공란." },
