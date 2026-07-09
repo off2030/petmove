@@ -5,14 +5,11 @@ import { createPortal } from 'react-dom'
 import { Palette, Check } from 'lucide-react'
 import { useSkin, setSkin, SKIN_LIST, SKIN_LABELS, type Skin } from '@/lib/use-skin'
 
-// 스킨 비교 위해 cycle 대신 popover picker. 4개 이상 되면 cycle 은 비교 불편.
+// 스킨 비교 위해 cycle 대신 popover picker.
 // 각 항목에 mini swatch (배경 + 액센트 2-tone) 로 한눈에 톤 구분.
 const SKIN_PREVIEW: Record<Skin, { bg: string; accent: string }> = {
   editorial: { bg: '#F5F4ED', accent: '#9B4A2D' },
   flat: { bg: '#FFFFFF', accent: '#18181B' },
-  hygge: { bg: '#EFE6D6', accent: '#B89070' },
-  'scandi-minimal': { bg: '#E8E5DD', accent: '#1F1F1B' },
-  'baby-blue': { bg: '#DCE7F2', accent: '#4A7AB8' },
 }
 
 export function SkinPicker() {

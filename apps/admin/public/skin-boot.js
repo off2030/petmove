@@ -13,7 +13,7 @@
     var dark = !force && (m === 'dark' || ((!m || m === 'system') && matchMedia('(prefers-color-scheme: dark)').matches))
     if (dark) h.classList.add('dark')
     var s = force ? null : localStorage.getItem('skin')
-    var V = ['baby-blue', 'scandi-minimal', 'flat', 'hygge']
+    var V = ['flat']
     if (s && V.indexOf(s) >= 0) h.setAttribute('data-skin', s)
   } catch (e) {}
 })()
