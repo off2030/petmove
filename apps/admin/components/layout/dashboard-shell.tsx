@@ -344,9 +344,9 @@ export function DashboardShell({
                   ? `안 읽은 알림 ${messagesUnread}개`
                   : '알림'
             }
-            className="fixed bottom-6 right-6 z-50 h-14 w-14 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-105 active:scale-95 transition-transform max-md:peer-focus-within:hidden"
+            className="fixed bottom-6 right-6 z-50 h-12 w-12 inline-flex items-center justify-center rounded-full border border-border/70 bg-secondary text-secondary-foreground shadow-md hover:bg-accent hover:scale-105 active:scale-95 transition-all max-md:peer-focus-within:hidden"
           >
-            {alertsPopupOpen ? <X size={22} /> : <Bell size={22} />}
+            {alertsPopupOpen ? <X size={20} /> : <Bell size={20} />}
             {!alertsPopupOpen && messagesUnread > 0 && (
               <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full bg-destructive text-white font-mono text-[11px] font-semibold leading-none flex items-center justify-center ring-2 ring-background">
                 {messagesUnread > 99 ? '99+' : messagesUnread}

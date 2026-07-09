@@ -154,6 +154,29 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
     void persistField('항목 표시', () => updateCaseField(caseRow.id, 'data', 'extra_visible_fields', val))
   }
 
+  // ── 섹션 번호 정렬 ────────────────────────────────────────────
+  // 추가정보 섹션은 절차정보 바로 뒤에 렌더되지만, 번호가 groups.length+1 로 매겨져
+  // '05 추가정보' 가 '04 기타정보' 앞에 나오는 역전이 있었다. 추가정보가 실제로 렌더될지
+  // 여기서 한 번 계산해(원래 map 안 절차정보 iteration 에서 하던 것과 동일 비용),
+  // 절차정보 뒤 그룹(기타정보 등)의 번호를 한 칸 밀어 시각 순서와 일치시킨다.
+  const procedureIdx = groups.findIndex((g) => g.group === '절차정보')
+  const extraDescriptors = (() => {
+    if (procedureIdx < 0) return []
+    const rawExtraEntries = getEffectiveExtraFieldEntries(viewDestination, destOverridesConfig)
+    const extraEntriesFiltered = tripType === 'one_way'
+      ? rawExtraEntries.filter((e) => !e.key.startsWith('return_') && !e.key.startsWith('jp_export_quarantine_'))
+      : rawExtraEntries
+    return buildShareFieldDescriptors({
+      fieldDefs,
+      destinationScope: viewDestination,
+      extraFieldEntries: extraEntriesFiltered,
+      caseScoped: { allowedFields, vaccineApplies: () => false, speciesValue },
+    }).filter((d) => d.category === '추가정보')
+  })()
+  const hasExtraSection = extraDescriptors.length > 0
+  // 추가정보 = 절차정보(procedureIdx+1) 바로 뒤 → procedureIdx+2 (1-based).
+  const extraSectionNumber = String(procedureIdx + 2).padStart(2, '0')
+
   return (
     <VerificationProvider caseRow={caseRow} destination={viewDestination}>
     <div
@@ -173,7 +196,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
         >
           <div className="mb-4 flex items-baseline gap-3">
             <span className="font-mono text-[14px] tracking-[1.2px] text-muted-foreground">
-              {String(groupIdx + 1).padStart(2, '0')}
+              {String(groupIdx + 1 + (hasExtraSection && groupIdx > procedureIdx ? 1 : 0)).padStart(2, '0')}
             </span>
             {isProcedure && toggleableForDest.length > 0 ? (
               <SectionTitleWithMenu
@@ -350,23 +373,9 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
           </div>
           </SectionEditModeProvider>
         </section>
-        {/* ─── 추가정보 — 절차정보 바로 뒤. 좌표는 buildShareFieldDescriptors 가 산출 (다이얼로그·프리셋·수신자 폼과 동일 권위). ─── */}
-        {g.group === '절차정보' && (() => {
-          // 추가정보 카테고리만 추출 — 절차/고객/동물 카테고리는 case-detail 가 자체 렌더 (buildAllFieldSpecs + EditableField 라우팅).
-          // descriptor.subgroup 이 그대로 SimpleExtraSection 의 group/flat 분기 입력. species·email 필터는 빌더가 처리.
-          // 편도 시 'return_*'(귀국편 항공권)·'jp_export_quarantine_*'(수출검역 예약) 제외 — 왕복 전용.
-          const rawExtraEntries = getEffectiveExtraFieldEntries(viewDestination, destOverridesConfig)
-          const extraEntriesFiltered = tripType === 'one_way'
-            ? rawExtraEntries.filter(e => !e.key.startsWith('return_') && !e.key.startsWith('jp_export_quarantine_'))
-            : rawExtraEntries
-          const extraDescriptors = buildShareFieldDescriptors({
-            fieldDefs,
-            destinationScope: viewDestination,
-            extraFieldEntries: extraEntriesFiltered,
-            caseScoped: { allowedFields, vaccineApplies: () => false, speciesValue },
-          }).filter((d) => d.category === '추가정보')
-          if (extraDescriptors.length === 0) return null
-          const sectionNumber = String(groups.length + 1).padStart(2, '0')
+        {/* ─── 추가정보 — 절차정보 바로 뒤. descriptors·번호는 컴포넌트 상단에서 한 번 계산(extraDescriptors/extraSectionNumber). ─── */}
+        {g.group === '절차정보' && hasExtraSection && (() => {
+          const sectionNumber = extraSectionNumber
           // descriptor.subgroup 으로 인접 그룹화 — 빌더가 이미 ≥2 일 때만 subgroup 을 박았으므로 1개짜리는 자동 평면.
           const segments: ExtraSegment[] = []
           for (const d of extraDescriptors) {
