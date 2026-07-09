@@ -152,12 +152,12 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     }))
   }, [destination, importReportCountries, allDescriptors])
 
-  // '전체 선택' — 현재 보이는(=아직 안 채워진) 모든 필드 id.
-  const allVisibleIds = useMemo(() => {
-    const ids: string[] = []
-    for (const g of groupedFields) for (const b of g.blocks) for (const f of b.fields) ids.push(f.id)
-    return ids
-  }, [groupedFields])
+  // '전체 선택' 대상 = 아직 안 채워진 필드만. '모두 보기'로 이미 입력된 항목을 펼쳐도
+  // 전체 선택엔 포함되지 않는다(이 링크는 안 받은 정보 수집용). 재수집은 개별 칩 클릭.
+  const allVisibleIds = useMemo(
+    () => allDescriptors.filter((d) => !shareDescriptorHasValue(d, caseRow, destination)).map((d) => d.id),
+    [allDescriptors, caseRow, destination],
+  )
 
   const [selectedFieldIds, setSelectedFieldIds] = useState<Set<string>>(() => new Set())
 
