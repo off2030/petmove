@@ -222,7 +222,8 @@ export function AlertsApp({
 
   return (
     <PageShell title="알림" mobileFlush>
-      <div className="mx-auto w-full max-w-3xl pb-lg">{list}</div>
+      {/* 폭은 다른 탭(설정·도구)과 동일하게 PageShell 기본(max-w-5xl)을 따른다. */}
+      <div className="w-full pb-lg">{list}</div>
     </PageShell>
   )
 }
