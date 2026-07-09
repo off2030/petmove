@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import { ConfirmProvider } from '@petmove/ui'
@@ -76,7 +77,11 @@ export default function RootLayout({
           type="font/woff2"
           crossOrigin="anonymous"
         />
-        <script dangerouslySetInnerHTML={{ __html: SKIN_BOOT_SCRIPT }} />
+        {/* next/script beforeInteractive — hydration 전 head 에 주입돼 동기 실행(FOUC 방지 유지).
+            raw <script> 대신 써서 React 19/Next 16 의 "script tag while rendering" 경고 제거. */}
+        <Script id="skin-boot" strategy="beforeInteractive">
+          {SKIN_BOOT_SCRIPT}
+        </Script>
       </head>
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <ThemeProvider />
