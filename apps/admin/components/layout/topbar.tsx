@@ -1,6 +1,6 @@
 'use client'
 
-import { Folder, LayoutGrid, Bell, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut, UserCog, X } from 'lucide-react'
+import { Folder, LayoutGrid, Bell, Settings, Menu, Monitor, Sun, Moon, User, LogOut, UserCog, X } from 'lucide-react'
 import { SkinPicker } from './skin-picker'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -122,11 +122,9 @@ type TopBarProps = {
 export function TopBar({
   activeTab = null,
   onTabChange,
-  isSuperAdmin = false,
   userEmail,
   userName = null,
   userAvatarUrl = null,
-  superAdminActive = false,
   messagesUnread = 0,
 }: TopBarProps) {
   const vaccineLookups = useVaccineLookups()
@@ -160,14 +158,6 @@ export function TopBar({
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [userMenuOpen])
-
-  const tabClass = (active: boolean) =>
-    cn(
-      'relative h-9 inline-flex items-center gap-sm px-sm rounded-md transition-colors text-sm font-medium whitespace-nowrap',
-      active
-        ? 'bg-accent text-foreground'
-        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-    )
 
   function tabBadge(id: TabId) {
     if (id !== 'messages' || messagesUnread <= 0) return null
@@ -374,70 +364,9 @@ export function TopBar({
         </button>
         </div>
 
-        {/* Nav tabs — right side, hidden on mobile (replaced by hamburger).
-            '알림'은 텍스트 탭이 아니라 우측 아이콘 영역(설정 왼쪽)에 종 아이콘으로 둔다. */}
-        <nav className="hidden md:flex items-center gap-xs">
-          {NAV_ITEMS.filter((item) => item.id !== 'messages' && item.id !== 'calculator').map(({ id, label }) => {
-            const active = activeTab === id
-            if (onTabChange) {
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => {
-                    onTabChange(id)
-                    if (id === 'cases') dispatchHomeReset()
-                  }}
-                  className={tabClass(active)}
-                >
-                  <span>{label}</span>
-                  {tabBadge(id)}
-                </button>
-              )
-            }
-            return (
-              <Link
-                key={id}
-                href={`/${id}`}
-                prefetch={false}
-                onClick={() => { if (id === 'cases') dispatchHomeReset() }}
-                className={tabClass(active)}
-              >
-                <span>{label}</span>
-                {tabBadge(id)}
-              </Link>
-            )
-          })}
-        </nav>
-
-        {/* Vertical divider — 데스크톱 전용 (모바일은 drawer 로 통합) */}
-        <div className="hidden md:block h-6 w-px bg-foreground/20" aria-hidden />
-
-        {/* Right-side actions — 모바일에서는 drawer 안으로 이전, 여기선 숨김 */}
+        {/* Right-side actions — 모바일에서는 drawer 안으로 이전, 여기선 숨김.
+            홈은 좌측 로고, 슈퍼어드민은 설정 탭 안으로 이전되어 상단 텍스트 탭·아이콘 없음. */}
         <div className="hidden md:flex items-center gap-xs">
-          {isSuperAdmin && (
-            onTabChange ? (
-              <button
-                type="button"
-                onClick={() => onTabChange('super-admin')}
-                title="Super Admin"
-                aria-label="Super Admin"
-                className={iconSlotClass(superAdminActive || activeTab === 'super-admin')}
-              >
-                <Shield size={18} />
-              </button>
-            ) : (
-              <Link
-                href="/super-admin"
-                prefetch={false}
-                title="Super Admin"
-                aria-label="Super Admin"
-                className={iconSlotClass(superAdminActive)}
-              >
-                <Shield size={18} />
-              </Link>
-            )
-          )}
           <SkinPicker />
           <button
             type="button"

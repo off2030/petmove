@@ -266,7 +266,13 @@ export function DashboardShell({
         )}
 {mounted.has('settings') && (
           <div className="h-full" style={{ display: activeTab === 'settings' ? 'block' : 'none' }}>
-            <MemoizedSettings initialBootstrap={initialSettingsBootstrap} />
+            <MemoizedSettings
+              initialBootstrap={initialSettingsBootstrap}
+              superAdminOrgs={initialOrgs}
+              superAdminInitialAdmins={initialSuperAdmins}
+              userEmail={userEmail}
+              currentUserId={currentUserId}
+            />
           </div>
         )}
         {isSuperAdmin && mounted.has('super-admin') && (

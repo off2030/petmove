@@ -16,7 +16,9 @@ import { DetailViewSection } from './detail-view-section'
 import { TransfersSection } from './transfers-section'
 import { SystemBotSection } from './system-bot-section'
 import { FeedbackSection } from './feedback-section'
+import { SuperAdminApp } from '@/components/super-admin/super-admin-app'
 import { getSettingsBootstrap, type SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
+import type { OrgSummary, SuperAdminEntry } from '@/lib/actions/super-admin'
 
 /**
  * 설정 탭 메타데이터.
@@ -26,19 +28,22 @@ import { getSettingsBootstrap, type SettingsBootstrap } from '@/lib/actions/sett
  * - visibility: `super_admin` 인 경우 슈퍼 어드민에게만 노출. 미지정 = 전체 노출.
  *   (조직 admin 만 보이는 탭은 현재 없으므로 옵션에 포함하지 않음.)
  */
-type TabCategory = 'account' | 'case' | 'work' | 'data'
+type TabCategory = 'super' | 'account' | 'case' | 'work' | 'data'
 
 const CATEGORY_LABELS: Record<TabCategory, string> = {
+  super: '운영',
   account: '계정·조직',
   case: '케이스',
   work: '업무',
   data: '데이터',
 }
 
-const CATEGORY_ORDER: readonly TabCategory[] = ['account', 'case', 'work', 'data'] as const
+// '운영'(슈퍼어드민 전용)은 계정·조직 왼쪽 맨 앞. 슈퍼어드민이 아니면 렌더 시 필터됨.
+const CATEGORY_ORDER: readonly TabCategory[] = ['super', 'account', 'case', 'work', 'data'] as const
 
 type TabDef = {
   id:
+    | 'super_admin'
     | 'profile'
     | 'company'
     | 'members'
@@ -59,6 +64,7 @@ type TabDef = {
 }
 
 const TABS: readonly TabDef[] = [
+  { id: 'super_admin', label: '조직 관리', category: 'super', visibility: 'super_admin' },
   { id: 'profile', label: '내 프로필', category: 'account' },
   { id: 'company', label: '조직정보', category: 'account' },
   { id: 'members', label: '멤버', category: 'account' },
@@ -178,8 +184,17 @@ function hashToTab(): TabId | null {
 
 export function SettingsApp({
   initialBootstrap = null,
+  superAdminOrgs = [],
+  superAdminInitialAdmins = [],
+  userEmail = null,
+  currentUserId = null,
 }: {
   initialBootstrap?: SettingsBootstrap | null
+  /** 슈퍼어드민 전용 '운영 > 조직 관리' 탭 데이터. 비-슈퍼어드민에겐 빈 배열. */
+  superAdminOrgs?: OrgSummary[]
+  superAdminInitialAdmins?: SuperAdminEntry[]
+  userEmail?: string | null
+  currentUserId?: string | null
 } = {}) {
   // 서버/클라이언트 일치를 위해 초기값은 'profile' 고정. hash 는 mount 후 읽음.
   const [activeTab, setActiveTab] = useState<TabId>('profile')
@@ -238,7 +253,9 @@ export function SettingsApp({
              모바일 가로 스크롤 (settings 는 데스크톱 전용이지만 안전 차원). */}
         <div className="border-b border-border/80 shrink-0 px-md md:px-lg overflow-x-auto scrollbar-hide">
           <div className="flex gap-lg">
-            {CATEGORY_ORDER.map((cat) => (
+            {CATEGORY_ORDER
+              .filter((cat) => cat !== 'super' || (bootstrap?.myRole?.isSuperAdmin ?? false))
+              .map((cat) => (
               <button
                 key={cat}
                 type="button"
@@ -282,6 +299,15 @@ export function SettingsApp({
         </div>
 
         <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal px-md md:px-lg">
+          {activeTab === 'super_admin' && (bootstrap?.myRole?.isSuperAdmin ?? false) && (
+            <SuperAdminApp
+              embedded
+              initialOrgs={superAdminOrgs}
+              initialSuperAdmins={superAdminInitialAdmins}
+              userEmail={userEmail}
+              currentUserId={currentUserId}
+            />
+          )}
           {activeTab === 'profile' && (
             <ProfileSection initialProfile={bootstrap?.myProfile ?? null} />
           )}
