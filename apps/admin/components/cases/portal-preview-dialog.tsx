@@ -96,13 +96,14 @@ export function PortalPreviewDialog({ caseId, caseLabel, onClose }: Props) {
           </div>
         </div>
 
-        {/* Phone frame — 폭은 요즘 폰 기준 390px(실기기와 일치). iframe 은 프레임보다 데스크톱
-            클래식 스크롤바 폭(~17px)만큼 넓혀, 그 스크롤바를 overflow-hidden 으로 가린다 →
-            콘텐츠 폭이 실폰(오버레이 스크롤바=0px)과 정확히 같아져 제목이 거짓으로 잘리지 않는다. */}
-        <div className="rounded-[44px] bg-neutral-900 p-3 shadow-2xl">
+        {/* Phone frame — 아이폰 15/16 논리 해상도 393×852(≈19.5:9)를 기준으로 aspect-ratio 를
+            고정해 실기기 비율 그대로 보이게. 높이는 뷰포트에 맞춰 축소하되 비율은 유지.
+            베젤은 얇게(6px) + 미세 림 하이라이트로 세련되게. iframe 은 데스크톱 클래식 스크롤바
+            폭(~17px)만큼 넓혀 overflow-hidden 으로 가린다 → 콘텐츠 폭이 실폰과 동일. */}
+        <div className="rounded-[46px] bg-neutral-950 p-[6px] shadow-[0_25px_70px_-20px_rgba(0,0,0,0.7)] ring-1 ring-white/10">
           <div
-            className="overflow-hidden rounded-[32px] bg-[#F5EFE8]"
-            style={{ width: 390, height: 'min(760px, 80vh)' }}
+            className="overflow-hidden rounded-[40px] bg-[#F5EFE8]"
+            style={{ height: 'min(852px, 80vh)', aspectRatio: '393 / 852' }}
           >
             {error ? (
               <div className="flex h-full items-center justify-center px-8 text-center">
