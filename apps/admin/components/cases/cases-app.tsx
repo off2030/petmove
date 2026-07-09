@@ -526,6 +526,8 @@ function Inner() {
                     >
                       <Link2 className="h-3.5 w-3.5" />
                     </button>
+                    {/* 삭제는 파괴적 동작 — 안전한 아이콘들과 얇은 구분선으로 시각적으로 떼어 눈에 띄게(오클릭 방지는 확인 팝업이 담당). */}
+                    <span aria-hidden className="mx-0.5 h-4 w-px bg-border/70" />
                     <button
                       type="button"
                       onClick={() => handleDelete(selectedCase.id)}
