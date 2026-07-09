@@ -697,14 +697,18 @@ function isImportDeadlineWarning(row: CaseRow): boolean {
 }
 
 /**
- * 미완료 그룹 내 진행 순위 — 0=대기중(아무것도 시작 안 됨), 1=진행중(수입/수출 중 하나라도 진행·완료).
- * 같은 목적지 안에서 대기중을 진행중보다 앞에 둔다.
+ * 미완료 그룹 내 진행 순위 — 0=대기중, 1=진행중. 같은 목적지 안에서 대기중을 위에 둔다.
+ * 진행중 판정 = 적용되는 모든 쪽(수입 + 수출 적용 시 수출)이 시작됨. 한쪽만 진행이면 대기중 유지.
  */
 function reportProgressRank(row: CaseRow): number {
   const started = (s: string) => s === 'in_progress' || s === 'done'
-  if (started(effectiveImportStatus(row))) return 1
-  if (exportApplies(row) && started(effectiveExportStatus(row))) return 1
-  return 0
+  const importStarted = started(effectiveImportStatus(row))
+  if (exportApplies(row)) {
+    // 일본+왕복: 수입·수출 둘 다 시작돼야 진행중. 한쪽만이면 대기중.
+    return importStarted && started(effectiveExportStatus(row)) ? 1 : 0
+  }
+  // 수출 미해당(비일본·편도): 수입만으로 판정.
+  return importStarted ? 1 : 0
 }
 
 /** 활성 목적지 출국일이 오늘보다 전 = 이미 출국한 케이스. */
