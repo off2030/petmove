@@ -37,6 +37,11 @@ import type { SharePreset } from '@/lib/share-presets-types'
 // 정보 요청 링크 만료 — 외부(보호자) 개인정보가 담기므로 무기한은 지양, 30일 고정(UI 미노출).
 const SHARE_LINK_EXPIRY_DAYS = 30
 
+// 빠른선택 프리셋에서 기본 제외할 추가정보 필드 — 특정 상황에서만 필요한 항목.
+// (직접 선택 목록엔 그대로 남아 필요할 때 수동으로 추가 가능.)
+//  - certificate_no(일본 수출동물검역증 번호): 일부 케이스만 해당.
+const PRESET_EXCLUDED_FIELD_KEYS = new Set(['certificate_no'])
+
 // 신고 국가별 빠른선택 프리셋 라벨 — 국가마다 절차명이 달라 개별 지정. 명단 밖은 '{국가} 신고'.
 const REPORT_PRESET_LABEL: Record<string, string> = {
   일본: '일본 사전 신고',
@@ -143,7 +148,11 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     const matched = importReportCountries.filter((c) => tokens.includes(c))
     if (matched.length === 0) return []
     const extraKeys = Array.from(
-      new Set(allDescriptors.filter((d) => d.category === '추가정보').map((d) => d.key)),
+      new Set(
+        allDescriptors
+          .filter((d) => d.category === '추가정보' && !PRESET_EXCLUDED_FIELD_KEYS.has(d.key))
+          .map((d) => d.key),
+      ),
     )
     if (extraKeys.length === 0) return []
     return matched.map((c) => ({
