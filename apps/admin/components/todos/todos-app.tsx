@@ -1169,7 +1169,7 @@ export function TodosInspectionActions({ query }: { query: string }) {
   const ksvdlRows = pendingRows.filter((r) => r.lab === 'ksvdl')
   const arcRows = pendingRows.filter((r) => r.lab === 'arc_ovi')
   const nzRows = pendingRows.filter((r) => r.lab === 'nz_combined')
-  // APQA EU titer 행 = EU/영국/스위스/터키 광견병중화항체검사 신청 대상.
+  // APQA EU titer 행 = EU/영국/스위스/튀르키예 광견병중화항체검사 신청 대상.
   // inspection-config 의 titerRules 가 EU·UK·CH·TR → apqa_eu 로 매핑.
   const euApqaRows = pendingRows.filter((r) => r.kind === 'titer' && r.lab === 'apqa_eu')
 

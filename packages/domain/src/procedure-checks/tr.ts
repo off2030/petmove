@@ -20,8 +20,8 @@ import {
  *
  * 출처:
  *  - Tarım ve Orman Bakanlığı — https://www.tarimorman.gov.tr/
- *  - 터키 외교부 공관 안내(LA, NY) — https://losangeles-cg.mfa.gov.tr/Mission/ShowInfoNote/410171, https://newyork-cg.mfa.gov.tr/Mission/ShowInfoNote/254102
- *  - CFIA 터키 수출 — https://inspection.canada.ca/en/animal-health/terrestrial-animals/exports/pets/republic-turkiye
+ *  - 튀르키예 외교부 공관 안내(LA, NY) — https://losangeles-cg.mfa.gov.tr/Mission/ShowInfoNote/410171, https://newyork-cg.mfa.gov.tr/Mission/ShowInfoNote/254102
+ *  - CFIA 튀르키예 수출 — https://inspection.canada.ca/en/animal-health/terrestrial-animals/exports/pets/republic-turkiye
  *  - EU Reg. 576/2013 (unlisted third country 차용)
  *
  * 한국 = unlisted third country (EU 분류 차용). RNATT 의무.
@@ -31,7 +31,7 @@ import {
  *  - 광견병: 1차 ≥ 생후 12주(84일, EU Reg 576/2013 일치) + 출국 30일 전 + 출국일 면역 유효
  *  - **RNATT 필수**: 채혈 ≥ 광견병 + 30일, 0.5 IU/ml 이상, 출국 ≤ 채혈 + 1년
  *  - 구충: 외부(진드기) + 내부(촌충) **출국 전날(하루 전)** — 임상검사·검역과 같은 날 처치
- *  - 임상검사(Clinical Examination): **출국 24시간 이내**(TK.pdf 각주 6) — common.vet-visit-date-valid + 터키 window=2(전날/당일)로 검증
+ *  - 임상검사(Clinical Examination): **출국 24시간 이내**(TK.pdf 각주 6) — common.vet-visit-date-valid + 튀르키예 window=2(전날/당일)로 검증
  *  - 핏불·도사·도고 아르헨티노·필라 등 견종 수입 금지 (추가 권고)
  *
  * 별도 (시스템 검증 제외 또는 추가 권고):

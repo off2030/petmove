@@ -186,7 +186,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'covid'],
   },
   turkey: {
-    keywords: ['터키', 'turkey', 'türkiye', 'turkiye'],
+    keywords: ['튀르키예', '터키', 'turkey', 'türkiye', 'turkiye'],
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
   },
   usa: {
@@ -451,8 +451,9 @@ export function isRabiesFreeOrigin(destination: string | null | undefined): bool
  *
  * 비교 규칙: `days >= window` 면 거부. 예) window=10 → days 0~9 OK, 10+ 거부.
  *
- * NOTE: 뉴질랜드/터키는 규정상 "2일 이내(48시간/MPI 2일)" 이지만 max-2-days-before
- * 해석으로 window=3 적용 중. 규정 문구와 표시 disconnect — 별도 정리 대상.
+ * NOTE: 뉴질랜드는 규정상 "2일 이내(MPI 2일)" 이지만 max-2-days-before 해석으로 window=3
+ * 적용 중(규정 문구와 표시 disconnect — 별도 정리 대상). 튀르키예는 임상검사 24시간 이내
+ * (TK.pdf 각주 6)라 window=2(전날/당일).
  */
 const VET_VISIT_WINDOW_OVERRIDES: Array<{
   key: keyof typeof DESTINATION_OVERRIDES

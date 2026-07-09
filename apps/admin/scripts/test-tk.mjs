@@ -1,4 +1,4 @@
-// TK smoke test — fills TK.pdf with the new mapping and a realistic 터키 case.
+// TK smoke test — fills TK.pdf with the new mapping and a realistic 튀르키예 case.
 // Verifies field placement + value plumbing. Writes data/pdf-analysis/tk_test.pdf.
 import { PDFDocument, PDFName, PDFString, PDFDict } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
@@ -60,7 +60,7 @@ function resolve(mp, c) {
 const c = {
   id: 'tk-test', customer_name: '홍길동', customer_name_en: 'Gildong Hong',
   microchip: '900111222333444', pet_name_en: 'Coco',
-  destination: '터키', departure_date: '2026-08-01', vet_visit_date: '2026-07-31',
+  destination: '튀르키예', departure_date: '2026-08-01', vet_visit_date: '2026-07-31',
   address_en: '3, Gwanak-ro 29-gil, Gwanak-gu, Seoul, Republic of Korea',
   address_overseas: 'Bagdat Cad. No:123, Kadikoy, Istanbul, Turkey',
   data: {

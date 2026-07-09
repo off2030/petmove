@@ -50,6 +50,7 @@ const COUNTRY_TO_TONE: Record<string, ToneKey> = {
   '노르웨이': 'blue',
   '덴마크': 'blue',
   '네덜란드': 'blue',
+  '튀르키예': 'blue',
   '터키': 'blue',
 
   // === 미주 (olive) ===

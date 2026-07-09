@@ -47,7 +47,7 @@ function deserializeFromHistory(storage: 'column' | 'data', raw: string | null):
 /**
  * 내원·임상검진일은 출국일 포함 N일 이내여야 함 — 목적지별 윈도우(@petmove/domain
  * getVetVisitWindowDays). 한국 APQA 디폴트 10일, 말레이·싱가포르 7일,
- * 호주·러시아 5일, 뉴질랜드·터키 3일. 다중 목적지 시 가장 엄격한 윈도우.
+ * 호주·러시아 5일, 뉴질랜드 3일, 튀르키예 2일(임상검사 24h). 다중 목적지 시 가장 엄격한 윈도우.
  */
 function validateVetVisitVsDeparture(
   visit: string | null | undefined,

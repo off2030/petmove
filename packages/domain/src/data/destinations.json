@@ -38,7 +38,7 @@
   {"ko":"폴란드","en":"Poland"},
   {"ko":"헝가리","en":"Hungary"},
   {"ko":"그리스","en":"Greece"},
-  {"ko":"터키","en":"Turkey","alias":["튀르키예"]},
+  {"ko":"튀르키예","en":"Turkey","alias":["터키"]},
   {"ko":"인도","en":"India"},
   {"ko":"러시아","en":"Russia"},
   {"ko":"멕시코","en":"Mexico"},

@@ -36,7 +36,7 @@ const DESTINATION_OPTIONS: { key: string; label: string }[] = [
   { key: 'thailand', label: '태국' },
   { key: 'philippines', label: '필리핀' },
   { key: 'indonesia', label: '인도네시아' },
-  { key: 'turkey', label: '터키' },
+  { key: 'turkey', label: '튀르키예' },
   { key: 'mexico', label: '멕시코' },
   { key: 'russia', label: '러시아' },
   { key: 'uae', label: '아랍에미리트' },
