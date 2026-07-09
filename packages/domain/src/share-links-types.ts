@@ -245,7 +245,7 @@ export const SHARE_RECIPIENT_LABEL_OVERRIDE: Record<string, string> = {
   pet_name_en:      '영문이름 (English)',
   weight:           '몸무게 (kg)',
   // 추가정보 — admin 도메인 약어(EQC No.) 를 보호자 친화 풀 라벨로 풀어쓰기.
-  certificate_no:   '일본 수출동물검역증 번호',
+  certificate_no:   '일본 수출 동물검역증 번호(기존 일본 방문 이력이 있는 경우)',
 }
 
 /**
@@ -262,7 +262,7 @@ export interface ShareRecipientSubgroupMeta {
 export const SHARE_RECIPIENT_SUBGROUP_META: Record<string, ShareRecipientSubgroupMeta> = {
   // 보호자 다수가 '수출검역 예약' 만 보면 뭘 묻는지 모름 → 풀라벨 + 한 줄 설명.
   '수출검역 예약': {
-    label: '일본 수출동물검역 예약',
+    label: '일본 수출 동물검역 예약',
     description:
       '한국으로 귀국하기 전, 일본 동물검역소에서 수출동물검역을 받아야 합니다. 희망 날짜와 시간을 알려주시면 일본 동물검역소에 문의해드립니다. 동물검역소 상황에 따라 예약이 거절될 수 있습니다.',
   },

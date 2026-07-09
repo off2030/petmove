@@ -153,12 +153,6 @@ export function ShareForm({ initial }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    // 필수 파일 검증 — 안 올린 필수 슬롯이 있으면 제출 차단.
-    const missing = view.file_requests.filter((r) => r.required && (filesBySlot[r.key]?.length ?? 0) === 0)
-    if (missing.length > 0) {
-      setError(`필수 파일을 첨부해주세요: ${missing.map((r) => r.label).join(', ')}`)
-      return
-    }
     startTransition(async () => {
       // 파일이 있으면 값 제출 전에 먼저 업로드(링크가 active 인 동안). 성공 시 재제출에서 재업로드 안 함.
       const hasFiles = Object.values(filesBySlot).some((arr) => arr.length > 0)
@@ -305,22 +299,12 @@ export function ShareForm({ initial }: Props) {
           {view.file_requests.length > 0 && (
             <section className={sectionCardClass}>
               <p className="mb-3 font-serif text-[13px] leading-relaxed text-muted-foreground">
-                아래 파일을 첨부해주세요. <span className="text-destructive">필수</span> 표시는 반드시 올려야 제출됩니다. (이미지 또는 PDF, 각 12MB 이하)
+                아래 파일을 첨부해주세요. (이미지 또는 PDF, 각 12MB 이하)
               </p>
               {view.file_requests.map((r) => {
                 const slotFiles = filesBySlot[r.key] ?? []
                 return (
-                  <FieldRow
-                    key={r.key}
-                    label={
-                      <span className="inline-flex items-center gap-1.5">
-                        {r.label}
-                        {r.required
-                          ? <span className="rounded-sm bg-destructive/10 px-1.5 py-0.5 font-sans text-[10px] font-medium text-destructive">필수</span>
-                          : <span className="rounded-sm bg-muted px-1.5 py-0.5 font-sans text-[10px] font-medium text-muted-foreground">선택</span>}
-                      </span>
-                    }
-                  >
+                  <FieldRow key={r.key} label={r.label}>
                     <div className="w-full">
                       <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border/80 px-3 py-1.5 font-serif text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
                         <Plus size={14} /> 파일 선택
