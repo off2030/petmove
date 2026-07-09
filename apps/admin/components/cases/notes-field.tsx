@@ -278,49 +278,23 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
   /* ── Render ── */
 
+  const hasText = notes.some((n) => n.type === 'text')
+  const hasFile = notes.some((n) => n.type === 'file')
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
-      <div className="flex items-center gap-[6px] pt-1">
-        <SectionLabel
-          onClick={editMode ? () => setAddingText(true) : undefined}
-          title={editMode ? '메모 추가' : undefined}
-        >
-          메모
-        </SectionLabel>
-        {/* 모바일 전용 첨부 — 데스크톱은 드래그·붙여넣기·메모추가 클립을 쓰지만
-            모바일엔 그 경로가 없다. addingText 블록 밖에 두어 textarea blur 로
-            언마운트되지 않게 함(언마운트 시 ScanFlow·input 이 사라져 저장 실패). */}
-        <AttachButton
-          multiple
-          scan={false}
-          onFile={(file) => uploadFiles([file])}
-          className="md:hidden inline-flex ml-auto h-7 w-7 rounded-full border border-border/80 bg-popover"
-          title="파일 첨부"
-        >
-          <Paperclip size={14} />
-        </AttachButton>
-      </div>
+    <>
+      {/* ── 메모 (텍스트) ── */}
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors">
+        <div className="flex items-center gap-[6px] pt-1">
+          <SectionLabel
+            onClick={editMode ? () => setAddingText(true) : undefined}
+            title={editMode ? '메모 추가' : undefined}
+          >
+            메모
+          </SectionLabel>
+        </div>
 
-      <div className="min-w-0 flex items-start gap-md">
-        <div
-          ref={dropRef}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          className={cn(
-            'flex-1 min-w-0 space-y-1 rounded-md transition-colors',
-            dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
-          )}
-        >
-          {/* Hidden file input */}
-          <input
-            ref={fileRef}
-            type="file"
-            multiple
-            onChange={handleInputChange}
-            className="hidden"
-          />
-
+        <div className="min-w-0 space-y-1">
           {/* ── Text memos ── */}
           {notes.map((note, i) => note.type === 'text' && (
             <div key={i} className="group/item flex items-start gap-sm">
@@ -365,8 +339,8 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
             </div>
           ))}
 
-          {/* 빈 상태 — 다른 필드와 동일한 옅은 — (클릭 시 메모 입력 시작). */}
-          {notes.length === 0 && !addingText && (
+          {/* 빈 상태 — 텍스트 메모 없음 (클릭 시 메모 입력 시작). */}
+          {!hasText && !addingText && (
             editMode ? (
               <button type="button" onClick={() => setAddingText(true)}
                 className="text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-pointer text-muted-foreground/40 select-none">
@@ -377,9 +351,6 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
             )
           )}
 
-          {/* ── Text input (new) — 입력칸 우측에 [저장][클립] 한 줄 배치, 같은 높이.
-                저장은 NoteTextInput 내부, 클립은 외부 — 부모 flex 가 items-start 로 textarea
-                상단에 두 버튼 모두 정렬해 textarea 가 multi-line 으로 늘어나도 어긋나지 않음. ── */}
           {addingText && (
             <div className="flex items-start gap-sm">
               <div className="flex-1 min-w-0">
@@ -390,17 +361,44 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                   saving={saving}
                 />
               </div>
-              <AttachButton
-                multiple
-                scan={false}
-                onFile={(file) => uploadFiles([file])}
-                className="shrink-0 hidden md:inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
-                title="파일 첨부"
-              >
-                <Paperclip size={14} />
-              </AttachButton>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* ── 첨부 파일 (메모와 분리) ── */}
+      <div
+        ref={dropRef}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={cn(
+          'grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0 rounded-md',
+          dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
+        )}
+      >
+        <div className="flex items-center gap-[6px] pt-1">
+          <SectionLabel>첨부 파일</SectionLabel>
+          <AttachButton
+            multiple
+            scan={false}
+            onFile={(file) => uploadFiles([file])}
+            className="inline-flex ml-auto md:ml-2 h-7 w-7 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
+            title="파일 첨부"
+          >
+            <Paperclip size={14} />
+          </AttachButton>
+        </div>
+
+        <div className="min-w-0 space-y-1">
+          {/* Hidden file input */}
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            onChange={handleInputChange}
+            className="hidden"
+          />
 
           {/* ── File attachments ── */}
           {notes.map((note, i) => note.type === 'file' && (
@@ -436,6 +434,11 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
             </div>
           ))}
 
+          {/* 빈 상태 — 첨부 파일 없음 */}
+          {!hasFile && !uploading && (
+            <span className="text-muted-foreground/40 select-none px-2 py-1 -mx-2 inline-block" aria-hidden>—</span>
+          )}
+
           {uploading && (
             <div className="text-xs text-muted-foreground py-1">업로드 중...</div>
           )}
@@ -448,9 +451,8 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
           {error && <div className="mt-1 text-xs text-destructive">{error}</div>}
         </div>
-
       </div>
-    </div>
+    </>
   )
 }
 
