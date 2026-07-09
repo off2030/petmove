@@ -39,6 +39,7 @@ import {
   applyAutoFillRules,
   SHARE_FILE_REQUESTS,
   shareFileRequestByKey,
+  SHARE_RECIPIENT_FIELD_DESCRIPTION,
   type CaseRow,
   type FieldDefinition,
   type DestinationExtraFieldEntry,
@@ -110,6 +111,7 @@ function toShareFieldSpec(
     label: d.label,
     category: d.category,
     subgroup: d.subgroup,
+    description: SHARE_RECIPIENT_FIELD_DESCRIPTION[d.key],
   } as const
   // 다중 목적지 + scope 지정 + scoped 키: by_dest 우선 (null sentinel 도 인식).
   const isMulti = parseDestinations(caseRow.destination).length > 1

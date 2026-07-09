@@ -47,6 +47,8 @@ export interface ShareFieldSpec {
   category?: string
   /** 공유 폼 서브그룹 — '출국 항공편' | '귀국 항공편' 등 (EXTRA_FIELD_DEFS.group). */
   subgroup?: string
+  /** 수신자(고객) 폼 전용 설명 — 라벨 아래 한 줄. admin 다이얼로그엔 없음. */
+  description?: string
 }
 
 /**
@@ -245,7 +247,15 @@ export const SHARE_RECIPIENT_LABEL_OVERRIDE: Record<string, string> = {
   pet_name_en:      '영문이름 (English)',
   weight:           '몸무게 (kg)',
   // 추가정보 — admin 도메인 약어(EQC No.) 를 보호자 친화 풀 라벨로 풀어쓰기.
-  certificate_no:   '일본 수출 동물검역증 번호(기존 일본 방문 이력이 있는 경우)',
+  certificate_no:   '일본 수출 동물검역증 번호',
+}
+
+/**
+ * 수신자(고객) 폼 전용 필드 설명 — 라벨 아래 한 줄로 노출(왜/언제 입력하는지).
+ * admin 다이얼로그 칩에는 나오지 않는다(라벨만 사용). key = 필드 key.
+ */
+export const SHARE_RECIPIENT_FIELD_DESCRIPTION: Record<string, string> = {
+  certificate_no: '기존 일본 방문 이력이 있는 경우에만 입력하세요.',
 }
 
 /**

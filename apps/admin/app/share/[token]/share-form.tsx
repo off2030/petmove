@@ -412,11 +412,13 @@ function StatusScreen({
 function FieldRow({
   label,
   hint,
+  description,
   children,
   className,
 }: {
   label: React.ReactNode
   hint?: string
+  description?: string
   children: React.ReactNode
   className?: string
 }) {
@@ -426,6 +428,9 @@ function FieldRow({
         <span className={labelClass}>{label}</span>
         {hint && <span className="font-serif italic text-[12px] text-muted-foreground/80">{hint}</span>}
       </div>
+      {description && (
+        <p className="mb-1.5 font-serif text-[12px] leading-relaxed text-muted-foreground/85">{description}</p>
+      )}
       {children}
     </div>
   )
@@ -640,7 +645,7 @@ function FieldInput({
   }
 
   return (
-    <FieldRow label={field.label}>
+    <FieldRow label={field.label} description={field.description}>
       {field.type === 'longtext' ? (
         <textarea
           value={strVal}

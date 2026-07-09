@@ -197,15 +197,25 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
 
   const [selectedFieldIds, setSelectedFieldIds] = useState<Set<string>>(() => new Set())
 
-  const allSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedFieldIds.has(id))
+  // 전체 선택 = 안 채워진 필드 + 파일 요청 전부.
+  const allSelected =
+    allVisibleIds.length + fileRequests.length > 0 &&
+    allVisibleIds.every((id) => selectedFieldIds.has(id)) &&
+    fileRequests.every((r) => selectedFileKeys.has(r.key))
   function toggleSelectAll() {
+    const fileKeys = fileRequests.map((r) => r.key)
+    const allOn =
+      allVisibleIds.every((id) => selectedFieldIds.has(id)) &&
+      fileKeys.every((k) => selectedFileKeys.has(k))
     setSelectedFieldIds((prev) => {
-      if (allVisibleIds.length > 0 && allVisibleIds.every((id) => prev.has(id))) {
-        const next = new Set(prev)
-        for (const id of allVisibleIds) next.delete(id)
-        return next
-      }
-      return new Set([...prev, ...allVisibleIds])
+      const next = new Set(prev)
+      for (const id of allVisibleIds) allOn ? next.delete(id) : next.add(id)
+      return next
+    })
+    setSelectedFileKeys((prev) => {
+      const next = new Set(prev)
+      for (const k of fileKeys) allOn ? next.delete(k) : next.add(k)
+      return next
     })
   }
 
