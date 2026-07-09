@@ -31,11 +31,15 @@ import {
   parseDestinations,
   shareDescriptorHasValue,
   shareFileRequestsForDestination,
+  SHARE_FILE_REQUESTS,
 } from '@petmove/domain'
 import type { SharePreset } from '@/lib/share-presets-types'
 
 // 정보 요청 링크 만료 — 외부(보호자) 개인정보가 담기므로 무기한은 지양, 30일 고정(UI 미노출).
 const SHARE_LINK_EXPIRY_DAYS = 30
+
+// 국가 프리셋 = 필드(field_keys) + 그 국가 필수 파일(fileKeys) 를 함께 선택.
+type AutoPreset = SharePreset & { fileKeys: string[] }
 
 // 빠른선택 프리셋에서 기본 제외할 추가정보 필드 — 특정 상황에서만 필요한 항목.
 // (직접 선택 목록엔 그대로 남아 필요할 때 수동으로 추가 가능.)
@@ -143,7 +147,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
 
   // 빠른 선택 = 신고 탭에 오르는 국가 중 이 케이스 목적지에 해당하는 국가의 "{국가} 신고" 프리셋.
   // 그 국가의 추가정보(항공편·해외주소·검역증 번호 등)를 한 번에 선택. (이미 입력된 항목은 자동 숨김)
-  const autoPresets = useMemo<SharePreset[]>(() => {
+  const autoPresets = useMemo<AutoPreset[]>(() => {
     const tokens = parseDestinations(destination)
     const matched = importReportCountries.filter((c) => tokens.includes(c))
     if (matched.length === 0) return []
@@ -154,12 +158,17 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
           .map((d) => d.key),
       ),
     )
-    if (extraKeys.length === 0) return []
-    return matched.map((c) => ({
-      id: `__report_${c}`,
-      name: REPORT_PRESET_LABEL[c] ?? `${c} 신고`,
-      field_keys: extraKeys,
-    }))
+    return matched
+      .map((c) => ({
+        id: `__report_${c}`,
+        name: REPORT_PRESET_LABEL[c] ?? `${c} 신고`,
+        field_keys: extraKeys,
+        // 그 국가의 필수 파일도 함께 선택(예: 일본 사전 신고 → 이동 가방 사진). 선택 파일은 미선택.
+        fileKeys: SHARE_FILE_REQUESTS
+          .filter((r) => r.required && r.destinations !== 'all' && r.destinations.includes(c))
+          .map((r) => r.key),
+      }))
+      .filter((p) => p.field_keys.length > 0 || p.fileKeys.length > 0)
   }, [destination, importReportCountries, allDescriptors])
 
   // '전체 선택' 대상 = 아직 안 채워진 필드만. '모두 보기'로 이미 입력된 항목을 펼쳐도
@@ -169,17 +178,16 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     [allDescriptors, caseRow, destination],
   )
 
-  // 목적지별 파일 요청 — 필수는 항상 포함, 선택은 토글.
+  // 목적지별 파일 요청 — 필수/선택 구분 없이 한 줄로 나열, 모두 토글. 프리셋이 기본 선택을 잡는다.
+  // (필수/선택의 성격은 정의에 남아 고객 폼에서 '필수' 배지·검증으로 살아있음.)
   const fileRequests = useMemo(() => shareFileRequestsForDestination(destination), [destination])
-  const requiredFileReqs = useMemo(() => fileRequests.filter((r) => r.required), [fileRequests])
-  const optionalFileReqs = useMemo(() => fileRequests.filter((r) => !r.required), [fileRequests])
-  const [selectedOptionalFileKeys, setSelectedOptionalFileKeys] = useState<Set<string>>(() => new Set())
+  const [selectedFileKeys, setSelectedFileKeys] = useState<Set<string>>(() => new Set())
   const requestedFileKeys = useMemo(
-    () => [...requiredFileReqs.map((r) => r.key), ...optionalFileReqs.filter((r) => selectedOptionalFileKeys.has(r.key)).map((r) => r.key)],
-    [requiredFileReqs, optionalFileReqs, selectedOptionalFileKeys],
+    () => fileRequests.filter((r) => selectedFileKeys.has(r.key)).map((r) => r.key),
+    [fileRequests, selectedFileKeys],
   )
-  function toggleOptionalFile(key: string) {
-    setSelectedOptionalFileKeys((prev) => {
+  function toggleFile(key: string) {
+    setSelectedFileKeys((prev) => {
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
       else next.add(key)
@@ -229,13 +237,6 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     [links],
   )
 
-  /** 프리셋 — 현재 케이스에서 적용 가능한 키만 추출 (목적지·종 필터 통과한 키만). */
-  const allAvailableKeys = useMemo(() => {
-    const set = new Set<string>()
-    for (const g of groupedFields) for (const b of g.blocks) for (const f of b.fields) set.add(f.key)
-    return set
-  }, [groupedFields])
-
   const fieldsByKey = useMemo(() => {
     const map = new Map<string, Array<{ id: string; key: string; label: string }>>()
     for (const g of groupedFields) {
@@ -262,34 +263,40 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     return out
   }, [groupedFields, selectedFieldIds])
 
-  function applicableKeysForPreset(preset: SharePreset): string[] {
-    return preset.field_keys.filter((k) => allAvailableKeys.has(k))
-  }
-
-  function applicableFieldIdsForPreset(preset: SharePreset): string[] {
+  function applicableFieldIdsForPreset(preset: AutoPreset): string[] {
     return preset.field_keys.flatMap((k) => fieldsByKey.get(k)?.map((f) => f.id) ?? [])
   }
 
-  /** 프리셋이 현재 모두 선택돼 있는지 (적용 가능한 키 한정). */
-  function isPresetFullySelected(preset: SharePreset): boolean {
-    const keys = applicableKeysForPreset(preset)
-    if (keys.length === 0) return false
-    const ids = applicableFieldIdsForPreset(preset)
-    return ids.length > 0 && ids.every((id) => selectedFieldIds.has(id))
+  /** 프리셋이 담는 것(적용 가능한 필드 + 파일) 개수 — 0이면 비활성. */
+  function presetApplicableCount(preset: AutoPreset): number {
+    return applicableFieldIdsForPreset(preset).length + preset.fileKeys.length
   }
 
-  /** 빠른 선택 — 프리셋 토글식. 적용 가능한 키만 추가/제거. 다른 선택은 보존. */
-  function pickPreset(preset: SharePreset) {
-    const keys = applicableKeysForPreset(preset)
-    if (keys.length === 0) return
+  /** 프리셋이 현재 모두 선택돼 있는지 (필드 + 파일). */
+  function isPresetFullySelected(preset: AutoPreset): boolean {
     const ids = applicableFieldIdsForPreset(preset)
+    if (ids.length === 0 && preset.fileKeys.length === 0) return false
+    return (
+      ids.every((id) => selectedFieldIds.has(id)) &&
+      preset.fileKeys.every((k) => selectedFileKeys.has(k))
+    )
+  }
+
+  /** 빠른 선택 — 프리셋 토글식. 필드 + 파일을 함께 추가/제거. 다른 선택은 보존. */
+  function pickPreset(preset: AutoPreset) {
+    const ids = applicableFieldIdsForPreset(preset)
+    const fileKeys = preset.fileKeys
+    if (ids.length === 0 && fileKeys.length === 0) return
+    const allOn =
+      ids.every((id) => selectedFieldIds.has(id)) && fileKeys.every((k) => selectedFileKeys.has(k))
     setSelectedFieldIds((prev) => {
       const next = new Set(prev)
-      if (ids.every((id) => next.has(id))) {
-        for (const id of ids) next.delete(id)
-      } else {
-        for (const id of ids) next.add(id)
-      }
+      for (const id of ids) allOn ? next.delete(id) : next.add(id)
+      return next
+    })
+    setSelectedFileKeys((prev) => {
+      const next = new Set(prev)
+      for (const k of fileKeys) allOn ? next.delete(k) : next.add(k)
       return next
     })
   }
@@ -305,6 +312,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
 
   function clearAll() {
     setSelectedFieldIds(new Set())
+    setSelectedFileKeys(new Set())
   }
 
   function handleCreate() {
@@ -348,7 +356,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
       setTimeout(() => setSuccessMsg(null), 5000)
       // 폼 초기화
       setSelectedFieldIds(new Set())
-      setSelectedOptionalFileKeys(new Set())
+      setSelectedFileKeys(new Set())
       await refresh()
     })
   }
@@ -444,7 +452,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                 </button>
                 {autoPresets.map((p) => {
                   const active = isPresetFullySelected(p)
-                  const applicable = applicableKeysForPreset(p).length
+                  const applicable = presetApplicableCount(p)
                   return (
                     <button
                       key={p.id}
@@ -452,7 +460,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                       onClick={() => pickPreset(p)}
                       aria-pressed={active}
                       disabled={applicable === 0}
-                      title={applicable === 0 ? '요청할 추가정보가 없습니다 (이미 모두 입력됨)' : `추가정보 ${applicable}개 선택`}
+                      title={applicable === 0 ? '요청할 항목이 없습니다 (이미 모두 입력됨)' : `${applicable}개 선택`}
                       className={cn(
                         'h-8 px-3 rounded-full border font-serif text-[13px] transition-colors',
                         active
@@ -486,7 +494,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                     {showFilled ? '숨기기' : '모두 보기'}
                   </button>
                 )}
-                {selectedFieldIds.size > 0 && (
+                {(selectedFieldIds.size > 0 || selectedFileKeys.size > 0) && (
                   <button
                     type="button"
                     onClick={clearAll}
@@ -553,48 +561,27 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                 <h3 className="font-sans text-[12px] font-semibold text-foreground/80">파일 요청</h3>
                 <span className="font-sans text-[11px] text-muted-foreground/70">보호자가 올릴 파일</span>
               </div>
-              {requiredFileReqs.length > 0 && (
-                <div className="mb-2">
-                  <p className="mb-1 font-sans text-[11px] font-medium text-muted-foreground/70">필수 (항상 요청)</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {requiredFileReqs.map((r) => (
-                      <span
-                        key={r.key}
-                        className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-foreground bg-foreground text-background font-serif text-[12px]"
-                        title="필수 — 항상 요청됩니다"
-                      >
-                        {r.label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {optionalFileReqs.length > 0 && (
-                <div>
-                  <p className="mb-1 font-sans text-[11px] font-medium text-muted-foreground/70">선택 (필요 시 켜기)</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {optionalFileReqs.map((r) => {
-                      const active = selectedOptionalFileKeys.has(r.key)
-                      return (
-                        <button
-                          key={r.key}
-                          type="button"
-                          onClick={() => toggleOptionalFile(r.key)}
-                          aria-pressed={active}
-                          className={cn(
-                            'h-7 px-2.5 rounded-full border font-serif text-[12px] transition-colors',
-                            active
-                              ? 'border-foreground bg-foreground text-background'
-                              : 'border-border/80 text-muted-foreground hover:bg-accent hover:text-foreground',
-                          )}
-                        >
-                          {r.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
+              <div className="flex flex-wrap gap-1.5">
+                {fileRequests.map((r) => {
+                  const active = selectedFileKeys.has(r.key)
+                  return (
+                    <button
+                      key={r.key}
+                      type="button"
+                      onClick={() => toggleFile(r.key)}
+                      aria-pressed={active}
+                      className={cn(
+                        'h-7 px-2.5 rounded-full border font-serif text-[12px] transition-colors',
+                        active
+                          ? 'border-foreground bg-foreground text-background'
+                          : 'border-border/80 text-muted-foreground hover:bg-accent hover:text-foreground',
+                      )}
+                    >
+                      {r.label}
+                    </button>
+                  )
+                })}
+              </div>
             </section>
           )}
 
