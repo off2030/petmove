@@ -588,7 +588,9 @@ function normalizeValue(key: string, raw: unknown): unknown {
 // ─────────────────────────────────────────────────
 
 const SHARE_UPLOAD_BUCKET = 'attachments'
-const SHARE_UPLOAD_MAX_BYTES = 12 * 1024 * 1024
+// 서버 액션 요청 본문 상한(next.config serverActions.bodySizeLimit=10mb)에 맞춘 per-file 한도.
+// 클라이언트가 파일을 하나씩 보내고 이미지는 자동 축소하므로, 실질적으로 PDF 등에만 걸린다.
+const SHARE_UPLOAD_MAX_BYTES = 8 * 1024 * 1024
 const SHARE_UPLOAD_MAX_FILES = 10
 
 function shareFileAllowed(mime: string): boolean {
@@ -633,7 +635,7 @@ export async function uploadShareSubmissionFiles(
         return { ok: false, error: '이미지 또는 PDF 파일만 올릴 수 있습니다.' }
       }
       if (file.size > SHARE_UPLOAD_MAX_BYTES) {
-        return { ok: false, error: '파일 크기는 각 12MB 이하여야 합니다.' }
+        return { ok: false, error: '파일 크기는 각 8MB 이하여야 합니다.' }
       }
     }
 

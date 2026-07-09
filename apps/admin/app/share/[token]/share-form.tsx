@@ -76,6 +76,36 @@ const compactDateClass =
   'h-7 min-w-0 rounded-md border border-transparent bg-transparent px-1 font-mono text-[13px] tracking-[0.3px] text-foreground placeholder:font-serif placeholder:italic placeholder:text-muted-foreground/55 focus-visible:border-border/80 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
 const inlineMetaLabelClass =
   'whitespace-nowrap font-serif text-[12px] italic text-muted-foreground/70'
+// 약품만료일 날짜 — 고정 폭 + 아이콘 여백(pr 미지정 → DateTextField sm 의 pr-8 유지). 겹침 방지.
+const expiryDateClass =
+  'h-7 w-[164px] max-w-full bg-transparent pl-1 font-mono text-[13px] tracking-[0.3px] text-foreground placeholder:font-serif placeholder:italic placeholder:text-[12px] placeholder:text-muted-foreground/55 focus:outline-none'
+
+/**
+ * 이미지 업로드 전 자동 축소(리사이즈+JPEG) — 서버로 보내는 요청 크기를 줄여 큰 폰 사진도
+ * 안정적으로 올라가게 한다. 이미지가 아니거나 디코드 실패(HEIC 등)·이미 작으면 원본 그대로.
+ */
+async function compressImage(file: File): Promise<File> {
+  if (!file.type.startsWith('image/')) return file
+  try {
+    const bitmap = await createImageBitmap(file)
+    const maxDim = 2000
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height))
+    const width = Math.round(bitmap.width * scale)
+    const height = Math.round(bitmap.height * scale)
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return file
+    ctx.drawImage(bitmap, 0, 0, width, height)
+    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', 0.82))
+    if (!blob || blob.size >= file.size) return file
+    const name = file.name.replace(/\.\w+$/, '') + '.jpg'
+    return new File([blob], name, { type: 'image/jpeg' })
+  } catch {
+    return file
+  }
+}
 
 /** 필드 값이 비어있는지 — date_array 는 날짜가 하나도 없으면 빈 것으로 본다. */
 function isEmptyValue(field: ShareFieldSpec, v: unknown): boolean {
@@ -104,8 +134,8 @@ export function ShareForm({ initial }: Props) {
   })
   // 파일 요청 슬롯별 선택 파일 (key = file_requests[].key).
   const [filesBySlot, setFilesBySlot] = useState<Record<string, File[]>>({})
-  // 업로드 성공 후 재제출 시 중복 업로드 방지.
-  const uploadedRef = useRef(false)
+  // 이미 업로드된 파일 식별자(slot:name:size) — 재제출 시 중복 업로드 방지.
+  const uploadedIdsRef = useRef<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [pending, startTransition] = useTransition()
@@ -207,22 +237,24 @@ export function ShareForm({ initial }: Props) {
     }
     setEmptyWarn(null)
     startTransition(async () => {
-      // 파일이 있으면 값 제출 전에 먼저 업로드(링크가 active 인 동안). 성공 시 재제출에서 재업로드 안 함.
-      const hasFiles = Object.values(filesBySlot).some((arr) => arr.length > 0)
-      if (hasFiles && !uploadedRef.current) {
-        const fd = new FormData()
-        fd.append('token', view.token)
-        for (const [key, arr] of Object.entries(filesBySlot)) {
-          if (arr.length === 0) continue
+      // 파일은 값 제출 전에 먼저 올린다. 요청 크기 상한(플랫폼)에 걸리지 않도록 한 번에 묶지 않고
+      // 파일 하나씩 순차 업로드하고, 이미지는 자동 축소한다. 이미 올린 건 건너뛴다(재제출 대비).
+      for (const [key, arr] of Object.entries(filesBySlot)) {
+        for (const original of arr) {
+          const id = `${key}:${original.name}:${original.size}`
+          if (uploadedIdsRef.current.has(id)) continue
+          const prepared = await compressImage(original)
+          const fd = new FormData()
+          fd.append('token', view.token)
           fd.append('slotKeys', key)
-          for (const f of arr) fd.append(`slot:${key}`, f)
+          fd.append(`slot:${key}`, prepared)
+          const up = await uploadShareSubmissionFiles(fd)
+          if (!up.ok) {
+            setError(up.error)
+            return
+          }
+          uploadedIdsRef.current.add(id)
         }
-        const up = await uploadShareSubmissionFiles(fd)
-        if (!up.ok) {
-          setError(up.error)
-          return
-        }
-        uploadedRef.current = true
       }
       const result = await submitShareLink({
         token: view.token,
@@ -353,7 +385,7 @@ export function ShareForm({ initial }: Props) {
           {view.file_requests.length > 0 && (
             <section className={sectionCardClass}>
               <p className="mb-3 font-serif text-[13px] leading-relaxed text-muted-foreground">
-                아래 파일을 첨부해주세요. (이미지 또는 PDF, 각 12MB 이하)
+                아래 파일을 첨부해주세요. 사진은 올릴 때 자동으로 최적화됩니다. (이미지 또는 PDF)
               </p>
               {view.file_requests.map((r) => {
                 const slotFiles = filesBySlot[r.key] ?? []
@@ -1330,9 +1362,9 @@ function DateArrayInput({
                   <DateTextField
                     value={record.expiry ?? ''}
                     onChange={(next) => setAt(index, { expiry: next })}
-                    placeholder="약품만료일 · YYYY-MM-DD"
+                    placeholder="만료일 · YYYY-MM-DD"
                     size="sm"
-                    className={compactInputClass}
+                    className={expiryDateClass}
                   />
                 </>
               )}
