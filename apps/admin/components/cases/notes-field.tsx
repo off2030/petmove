@@ -278,6 +278,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
   /* ── Render ── */
 
+  // 메모(텍스트)와 첨부 파일을 각각 별도 필드 행으로 분리 렌더 (아래 두 그리드 행).
   const hasText = notes.some((n) => n.type === 'text')
   const hasFile = notes.some((n) => n.type === 'file')
 
