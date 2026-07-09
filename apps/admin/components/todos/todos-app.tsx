@@ -760,12 +760,14 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     storage: 'data',
     type: 'date',
     width: BASE_COL_W,
+    // 신고 탭에서는 읽기 전용 — 수정은 상세페이지에서만.
+    readonly: true,
     // 일본: 저장된 값이 없으면 활성 목적지 출국일 - 40일로 자동 계산하여 표시.
     resolveValue: (row) => reportDeadline(row),
     // 기한 임박 시 주황 — 출국일 날짜도 함께 물든다.
     cellClass: (row) => (isImportDeadlineWarning(row) ? 'text-pmw-warning' : ''),
   },
-  { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: BASE_COL_W, resolveValue: (row) => importReportDeparture(row) },
+  { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: BASE_COL_W, readonly: true, resolveValue: (row) => importReportDeparture(row) },
   { key: 'return_date', label: '귀국일', storage: 'data', type: 'date', width: BASE_COL_W, resolveValue: (row) => importReportReturnDate(row) },
   {
     key: 'import_import_status',
