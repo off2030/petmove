@@ -188,6 +188,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   turkey: {
     keywords: ['튀르키예', '터키', 'turkey', 'türkiye', 'turkiye'],
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
+    // TK.pdf: 현지 수령인 주소(Consignee address) = 해외주소, 항공편명(Flight number) =
+    // Registration no./flight number 칸. 둘 다 상세페이지에서 입력받아 자동 채움.
+    extraFields: ['address_overseas', 'entry_flight_number'],
   },
   usa: {
     keywords: ['미국', 'usa', 'united states', 'america'],

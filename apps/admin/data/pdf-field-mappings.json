@@ -3964,7 +3964,7 @@
       "text_4qrwb": { "source": null, "note": "p1 Yükleme Yeri/Place of Loading — 출발 공항(노선별 상이) 수동 입력" },
       "text_5pdah": { "source": "customer_name_en", "note": "p1 Consignor name (Gönderenin adı) — 보호자 영문명" },
       "text_6epwu": { "source": "address_en", "note": "p1 Consignor address — 한국 주소 영문" },
-      "text_8juia": { "source": null, "note": "p1 Registration no/ship name/flight number — 항공편명(확정 늦음) 수동 입력" },
+      "text_8juia": { "source": "entry_flight_number", "note": "p1 Registration no/ship name/flight number — 상세페이지 '항공편명'(entry_flight_number) 자동 채움. 미입력 시 공란." },
       "text_10ploi": { "source": "customer_name_en", "note": "p1 Consignee name (Alıcının adı) — 동일 보호자가 현지 수령" },
       "text_12gwyq": { "source": "address_overseas", "note": "p1 Consignee address — 튀르키예 현지 주소" },
 

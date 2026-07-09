@@ -64,6 +64,7 @@ const c = {
   address_en: '3, Gwanak-ro 29-gil, Gwanak-gu, Seoul, Republic of Korea',
   address_overseas: 'Bagdat Cad. No:123, Kadikoy, Istanbul, Turkey',
   data: {
+    entry_flight_number: 'TK 91',
     species: 'dog', breed_en: 'Maltese', sex: 'neutered_male', birth_date: '2020-03-15',
     rabies_dates: [
       { date: '2024-09-14', valid_until: '2025-09-14', product: 'Rabisin', lot: 'L123' },
@@ -111,7 +112,7 @@ if (missing.length) console.warn('  ⚠ getField failed:', missing)
 console.log('\nkey values:')
 for (const [label, k] of [
   ['Origin', 'text_1hpqx'], ['Dispatch', 'text_3xyve'], ['Loading', 'text_4qrwb'],
-  ['Consignor', 'text_5pdah'], ['Consignor addr', 'text_6epwu'], ['Consignee', 'text_10ploi'], ['Consignee addr', 'text_12gwyq'],
+  ['Consignor', 'text_5pdah'], ['Consignor addr', 'text_6epwu'], ['Flight no', 'text_8juia'], ['Consignee', 'text_10ploi'], ['Consignee addr', 'text_12gwyq'],
   ['Species', 'text_14ibfi'], ['Breed', 'text_18xspx'], ['Sex', 'text_22khgf'], ['DOB', 'text_26durx'], ['Microchip', 'text_30fjuk'],
   ['Rabies product', 'rabies_product'], ['Batch', 'text_37rji'], ['Vacc date', 'text_38ktmy'], ['Valid until', 'text_39quav'],
   ['Titer date', 'text_36mpqj'],
