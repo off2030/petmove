@@ -385,7 +385,7 @@ export function ShareForm({ initial }: Props) {
           {view.file_requests.length > 0 && (
             <section className={sectionCardClass}>
               <p className="mb-3 font-serif text-[13px] leading-relaxed text-muted-foreground">
-                아래 파일을 첨부해주세요. 사진은 올릴 때 자동으로 최적화됩니다. (이미지 또는 PDF)
+                아래 파일을 첨부해주세요.
               </p>
               {view.file_requests.map((r) => {
                 const slotFiles = filesBySlot[r.key] ?? []
