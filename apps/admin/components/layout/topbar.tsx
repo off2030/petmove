@@ -1,6 +1,6 @@
 'use client'
 
-import { Folder, LayoutGrid, MessageSquare, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut, UserCog, X } from 'lucide-react'
+import { Folder, LayoutGrid, Bell, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut, UserCog, X } from 'lucide-react'
 import { SkinPicker } from './skin-picker'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -14,7 +14,7 @@ export type TabId = 'cases' | 'calculator' | 'messages' | 'settings' | 'super-ad
 export const NAV_ITEMS: Array<{ id: TabId; icon: typeof Folder; label: string }> = [
   { id: 'cases', icon: Folder, label: '홈' },
   { id: 'calculator', icon: LayoutGrid, label: '도구' },
-  { id: 'messages', icon: MessageSquare, label: '메시지' },
+  { id: 'messages', icon: Bell, label: '알림' },
 ]
 
 // 좌측 상단 로고 시안 — 시안 비교용.
