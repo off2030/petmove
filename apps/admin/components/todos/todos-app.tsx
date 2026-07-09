@@ -485,6 +485,8 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
     storage: 'column',
     type: 'date',
     width: EXPORT_DOC_COL_W,
+    // 서류 탭에서는 읽기 전용 — 수정은 상세페이지에서. (내원일만 탭에서 편집 가능)
+    readonly: true,
     // 활성 목적지 출국일 (by_dest 우선) 표시.
     resolveValue: (row) => exportDocDeparture(row),
   },
@@ -494,6 +496,8 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
     storage: 'data',
     type: 'date',
     width: EXPORT_DOC_COL_W,
+    // 내원가능일은 출국일·목적지에서 자동 계산되는 값이라 직접 수정 불가(읽기 전용).
+    readonly: true,
     // 저장값 우선, 없으면 목적지·종별 임상검사 윈도우로 자동 계산(기본 -9, 촌충국 강아지 -3 등).
     resolveValue: (row) => exportDocVetAvailable(row),
   },

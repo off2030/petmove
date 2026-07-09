@@ -226,6 +226,17 @@ function EditableCell({
 
 function ReadonlyCell({ row, col }: { row: CaseRow; col: TodoColumn }) {
   const value = getCellValue(row, col)
+  // 읽기 전용 날짜 — 편집 셀 표시 모드와 동일 포맷(Mono·점 구분자·경고색). 클릭은 행 네비.
+  if (col.type === 'date') {
+    const extraCls = col.cellClass?.(row) ?? ''
+    return (
+      <div className={cn('w-full px-1 py-1 min-h-[24px] font-mono text-[12px] tabular-nums tracking-[0.3px] text-foreground', extraCls)}>
+        {value
+          ? formatDateDotted(value)
+          : <span className="font-serif italic font-normal text-[15px] text-muted-foreground/40">—</span>}
+      </div>
+    )
+  }
   // 홈 화면과 동일한 typography — 보호자는 Sans 16px, 반려동물은 Serif Semibold 17px.
   const cls =
     col.key === 'pet_name'
