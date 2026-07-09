@@ -14,6 +14,7 @@ export type SinglePdfRequest = {
     | 'OVD'
     | 'SGP'
     | 'TW'
+    | 'TK'
     | 'AQS_279'
     | 'CH'
     | 'Form_R11'

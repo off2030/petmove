@@ -10,7 +10,7 @@ import { CaseHistory } from './case-history'
 import { createCase } from '@/lib/actions/create-case'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { undoLastChange, updateCaseField } from '@/lib/actions/cases'
-import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateVBC, generateSGP, generateTW, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti, recommendForm25RabiesSelection } from '@/lib/actions/generate-pdf'
+import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateVBC, generateSGP, generateTW, generateTK, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti, recommendForm25RabiesSelection } from '@/lib/actions/generate-pdf'
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import { MultiFormDialog } from './multi-form-dialog'
 import { RabiesSelectDialog, RABIES_SLOT_CAP } from './rabies-select-dialog'
@@ -54,6 +54,7 @@ const CERT_ACTIONS: Record<string, CertAction> = {
   vbc: generateVBC,
   sgp: generateSGP,
   tw: generateTW,
+  tk: generateTK,
   aqs: generateAQS,
   ch: generateCH,
   formR11: generateFormR11,
@@ -75,6 +76,7 @@ const CERT_FORM_KEYS: Record<string, string> = {
   vbc: 'VBC',
   sgp: 'SGP',
   tw: 'TW',
+  tk: 'TK',
   aqs: 'AQS_279',
   ch: 'CH',
   formR11: 'Form_R11',
@@ -321,6 +323,7 @@ function Inner() {
             | 'OVD'
             | 'SGP'
             | 'TW'
+            | 'TK'
             | 'AQS_279'
             | 'CH'
             | 'Form_R11'

@@ -33,6 +33,7 @@ import {
   generateVBC,
   generateSGP,
   generateTW,
+  generateTK,
   generateUKMulti,
   generateVbddl,
   generateVHC,
@@ -58,6 +59,7 @@ type SinglePdfBody = {
     | 'VBC'
     | 'SGP'
     | 'TW'
+    | 'TK'
     | 'AQS_279'
     | 'CH'
     | 'Form_R11'
@@ -132,6 +134,7 @@ const SINGLE_GENERATORS = {
   VBC: generateVBC,
   SGP: generateSGP,
   TW: generateTW,
+  TK: generateTK,
   AQS_279: generateAQS,
   CH: generateCH,
   Form_R11: generateFormR11,

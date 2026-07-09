@@ -208,6 +208,11 @@ export async function generateTW(caseId: string, opts?: GenerateOpts) {
   return generate('TW', caseId, opts)
 }
 
+/** 튀르키예(Türkiye) 수입용 오리진·수의 건강증명서 (TK.pdf). */
+export async function generateTK(caseId: string, opts?: GenerateOpts) {
+  return generate('TK', caseId, opts)
+}
+
 export async function generateCH(caseId: string, opts?: GenerateOpts) {
   return generate('CH', caseId, opts)
 }

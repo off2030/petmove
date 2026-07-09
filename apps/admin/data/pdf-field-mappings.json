@@ -3952,6 +3952,52 @@
       "text_21niip": { "source": null, "note": "p1 Signature — 잉크 서명 위해 공란 유지 (수의사가 직접 서명)" }
     }
   },
+  "TK": {
+    "template": "TK.pdf",
+    "description": "튀르키예(Türkiye) 수입용 반려동물 오리진·수의 건강증명서 (Veterinary Health and Origin Certificate for domestic dogs, cats and ferrets entering Republic of Turkey). 한국=unlisted 제3국 → RNATT(광견병 항체 0.5 IU/ml 이상) 필수. 임상검사는 출국 24시간 이내(각주 6). 성별은 sex_label(Male/Female/N. male/N. female). 날짜는 dd/mm/yyyy. '광견병 제품명' 칸은 원본 템플릿에 폼 필드가 없어 scripts/add-tk-rabies-product.mjs 로 rabies_product 필드를 추가함. 동물표 2~4행은 1마리/케이스라 공란.",
+    "filename": "TK_{pet_name}.pdf",
+    "dateFormat": "dmy",
+    "flatten": true,
+    "fields": {
+      "text_1hpqx": { "source": null, "default": "Republic of Korea", "note": "p1 Menşe Ülke/Country of Origin — 한국 고정" },
+      "text_3xyve": { "source": null, "default": "Republic of Korea", "note": "p1 Sevkeden Ülke/Country of dispatch — 한국 고정" },
+      "text_4qrwb": { "source": null, "note": "p1 Yükleme Yeri/Place of Loading — 출발 공항(노선별 상이) 수동 입력" },
+      "text_5pdah": { "source": "customer_name_en", "note": "p1 Consignor name (Gönderenin adı) — 보호자 영문명" },
+      "text_6epwu": { "source": "address_en", "note": "p1 Consignor address — 한국 주소 영문" },
+      "text_8juia": { "source": null, "note": "p1 Registration no/ship name/flight number — 항공편명(확정 늦음) 수동 입력" },
+      "text_10ploi": { "source": "customer_name_en", "note": "p1 Consignee name (Alıcının adı) — 동일 보호자가 현지 수령" },
+      "text_12gwyq": { "source": "address_overseas", "note": "p1 Consignee address — 튀르키예 현지 주소" },
+
+      "text_14ibfi": { "source": "species", "transform": "en", "note": "p1 동물표 1행 Türü/Species (Dog/Cat)" },
+      "text_18xspx": { "source": "breed_en", "note": "p1 동물표 1행 Irkı/Breed" },
+      "text_22khgf": { "source": "sex", "transform": "sex_label", "note": "p1 동물표 1행 Cinsiyeti/Sex (Male/Female/N. male/N. female)" },
+      "text_26durx": { "source": "birth_date", "note": "p1 동물표 1행 Doğum tarihi/Date of Birth (dd/mm/yyyy)" },
+      "text_30fjuk": { "source": "microchip", "note": "p1 동물표 1행 마이크로칩 번호 (ISO 11784/11785)" },
+
+      "rabies_product": { "source": "rabies_dates", "transform": "vaccine_combined:rabies:name", "note": "p1 Üretici ve ürünün adı/Manufacturer and name of product (4) — add-tk-rabies-product.mjs 로 추가한 필드. 광견병 제품명 자동 결합." },
+      "text_37rji": { "source": "rabies_dates", "transform": "vaccine_desc:rabies:serial[0]", "note": "p1 Parti No/Batch Number — 최신 회차 lot" },
+      "text_38ktmy": { "source": "rabies_dates", "transform": "vaccine_desc:rabies:date[0]", "note": "p1 Aşılama Tarihi/Vaccination Date — 최신 회차 (dd/mm/yyyy)" },
+      "text_39quav": { "source": "rabies_dates", "transform": "vaccine_desc:rabies:validity_to[0]", "note": "p1 Geçerlilik Süresi/Valid until — 최신 회차 면역 유효기간 (기본 1년)" },
+
+      "text_36mpqj": { "source": "rabies_titer_records", "transform": "array[0].date", "note": "p1 serolojik test 채혈일 (RNATT sample date, ...(5) 칸)" },
+
+      "text_15jodo": { "source": null, "note": "p1 동물표 2행 Species (공란)" },
+      "text_19rrja": { "source": null, "note": "p1 동물표 2행 Breed (공란)" },
+      "text_23qdgg": { "source": null, "note": "p1 동물표 2행 Sex (공란)" },
+      "text_27bxdi": { "source": null, "note": "p1 동물표 2행 DOB (공란)" },
+      "text_31srhs": { "source": null, "note": "p1 동물표 2행 Microchip (공란)" },
+      "text_16bpxo": { "source": null, "note": "p1 동물표 3행 Species (공란)" },
+      "text_20wvrw": { "source": null, "note": "p1 동물표 3행 Breed (공란)" },
+      "text_24lzzk": { "source": null, "note": "p1 동물표 3행 Sex (공란)" },
+      "text_28xmle": { "source": null, "note": "p1 동물표 3행 DOB (공란)" },
+      "text_32nfdf": { "source": null, "note": "p1 동물표 3행 Microchip (공란)" },
+      "text_17yyec": { "source": null, "note": "p1 동물표 4행 Species (공란)" },
+      "text_21hhqb": { "source": null, "note": "p1 동물표 4행 Breed (공란)" },
+      "text_25ftjl": { "source": null, "note": "p1 동물표 4행 Sex (공란)" },
+      "text_29aqsw": { "source": null, "note": "p1 동물표 4행 DOB (공란)" },
+      "text_33kfhi": { "source": null, "note": "p1 동물표 4행 Microchip (공란)" }
+    }
+  },
   "AQS_279": {
     "template": "AQS_279.pdf",
     "description": "Hawaii 입주 신고서 (Animal Quarantine Station AQS-279 — Dog and Cat Entry Form for Hawaii). Page 1: 1) PLANNED DATE OF ARRIVAL, 2) PET INFORMATION, 3) PRIMARY OWNER INFORMATION. Page 3: Print Name & Date",
