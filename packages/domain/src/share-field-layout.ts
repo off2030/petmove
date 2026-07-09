@@ -315,10 +315,11 @@ export function shareDescriptorHasValue(
     if (g.storage_mode === 'array' && g.array_key) {
       const arr = data[g.array_key]
       if (Array.isArray(arr)) {
+        // '이미 아는 정보는 안 받기' — 자체/타병원 구분 없이 접종 기록이 하나라도 있으면 채워진 것으로 본다.
+        // (슬롯 자체는 타병원 접종 수집용이지만, 기록이 있는데 다시 요청하면 혼란. 타병원 추가는 '모두 보기'로.)
         return arr.some((item) => {
           if (!item || typeof item !== 'object' || Array.isArray(item)) return false
           const obj = item as Record<string, unknown>
-          if (g.has_other_hospital && obj.other_hospital !== true) return false
           return typeof obj.date === 'string' && obj.date.trim() !== ''
         })
       }
