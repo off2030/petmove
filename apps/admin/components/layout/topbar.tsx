@@ -377,7 +377,7 @@ export function TopBar({
         {/* Nav tabs — right side, hidden on mobile (replaced by hamburger).
             '알림'은 텍스트 탭이 아니라 우측 아이콘 영역(설정 왼쪽)에 종 아이콘으로 둔다. */}
         <nav className="hidden md:flex items-center gap-xs">
-          {NAV_ITEMS.filter((item) => item.id !== 'messages').map(({ id, label }) => {
+          {NAV_ITEMS.filter((item) => item.id !== 'messages' && item.id !== 'calculator').map(({ id, label }) => {
             const active = activeTab === id
             if (onTabChange) {
               return (
@@ -451,6 +451,28 @@ export function TopBar({
             <Sun size={18} className="theme-icon-light" />
             <Moon size={18} className="theme-icon-dark" />
           </button>
+          {/* 도구 — 알림 왼쪽. 아이콘만 (텍스트 탭에서 이전). */}
+          {onTabChange ? (
+            <button
+              type="button"
+              onClick={() => onTabChange('calculator')}
+              title="도구"
+              aria-label="도구"
+              className={iconSlotClass(activeTab === 'calculator')}
+            >
+              <LayoutGrid size={18} />
+            </button>
+          ) : (
+            <Link
+              href="/calculator"
+              prefetch={false}
+              title="도구"
+              aria-label="도구"
+              className={iconSlotClass(false)}
+            >
+              <LayoutGrid size={18} />
+            </Link>
+          )}
           {/* 알림 — 설정 왼쪽. 안 읽은 개수 배지 표시. */}
           {onTabChange ? (
             <button
