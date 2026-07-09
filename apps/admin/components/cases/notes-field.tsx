@@ -379,7 +379,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
       >
         <div className="flex items-center gap-[6px] pt-1">
           <SectionLabel onClick={() => fileRef.current?.click()} title="클릭 · 드래그 · Ctrl+V 로 첨부">
-            첨부 파일
+            보관함
           </SectionLabel>
         </div>
 
@@ -427,9 +427,15 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
             </div>
           ))}
 
-          {/* 빈 상태 — 첨부 파일 없음 */}
+          {/* 빈 상태 — 파일 없음. 클릭하면 파일 선택창. */}
           {!hasFile && !uploading && (
-            <span className="text-muted-foreground/40 select-none px-2 py-1 -mx-2 inline-block" aria-hidden>—</span>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-pointer text-muted-foreground/40 select-none"
+            >
+              —
+            </button>
           )}
 
           {uploading && (

@@ -1046,7 +1046,13 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, onTakeoverDrag }: {
         {uploading ? (
           <span className="text-xs text-muted-foreground">업로드 중…</span>
         ) : (
-          <span className="text-muted-foreground/40 select-none" aria-hidden>—</span>
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-pointer text-muted-foreground/40 select-none"
+          >
+            —
+          </button>
         )}
         {error && <span className="text-xs text-destructive">{error}</span>}
       </div>
