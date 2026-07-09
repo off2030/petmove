@@ -102,7 +102,7 @@ const CaseRowItem = memo(function CaseRowItem({
                   return (
                     <span key={primary} className="inline-flex items-baseline gap-1.5">
                       {code && (
-                        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                           {code}
                         </span>
                       )}
@@ -112,7 +112,7 @@ const CaseRowItem = memo(function CaseRowItem({
                 })()}
                 {dests.length > 1 && (
                   <span
-                    className="font-mono text-[11px] tabular-nums text-muted-foreground/60"
+                    className="font-mono text-[11px] tabular-nums text-muted-foreground/80"
                     title={dests.slice(1).join(', ')}
                   >
                     +{dests.length - 1}
@@ -123,7 +123,7 @@ const CaseRowItem = memo(function CaseRowItem({
               <span className="text-muted-foreground">—</span>
             )}
           </span>
-          <span className="hidden md:block font-mono text-[12px] text-muted-foreground/80 tabular-nums tracking-wide">
+          <span className="hidden md:block font-mono text-[12px] text-muted-foreground tabular-nums tracking-wide">
             {formatMicrochip(c.microchip) ?? c.microchip ?? (
               <span className="italic font-serif tracking-normal">미등록</span>
             )}
@@ -326,7 +326,7 @@ export function CaseList({
               'font-serif text-[14px] md:text-[15px] transition-colors',
               mode === 'cases'
                 ? 'text-foreground font-semibold'
-                : 'text-muted-foreground/70 hover:text-foreground',
+                : 'text-muted-foreground hover:text-foreground',
             )}
             title="고객 목록"
           >
@@ -342,7 +342,7 @@ export function CaseList({
                 'font-serif text-[14px] md:text-[15px] transition-colors',
                 mode === t.id
                   ? 'text-foreground font-semibold'
-                  : 'text-muted-foreground/70 hover:text-foreground',
+                  : 'text-muted-foreground hover:text-foreground',
               )}
             >
               {t.label}
@@ -454,7 +454,7 @@ export function CaseList({
           {/* Column header — editorial caption. 케이스 0건(온보딩)일 땐 숨김. */}
           {cases.length > 0 && (
             <div className="shrink-0 px-lg pb-3 border-b border-border/80">
-              <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm font-sans text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
+              <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm font-sans text-[12px] uppercase tracking-[0.08em] text-muted-foreground">
                 <span>보호자</span>
                 <span>반려동물</span>
                 <span>목적지</span>

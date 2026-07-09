@@ -16,7 +16,7 @@ export function SectionLabel({
   onClick?: () => void
   title?: string
 }) {
-  const baseCls = 'font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground'
+  const baseCls = 'font-mono text-[13px] uppercase tracking-[0.5px] text-muted-foreground'
   if (onClick) {
     return (
       <button

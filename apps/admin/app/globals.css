@@ -56,7 +56,7 @@
 
     /* Neutral text */
     --pmw-near-black: #28201A;       /* warm ink */
-    --pmw-olive-gray: #6B5F4F;       /* warm dark olive */
+    --pmw-olive-gray: #5E5240;       /* warm dark olive — 가독성 위해 한 단계 진하게 */
     --pmw-stone-gray: #918975;       /* warm gray */
 
     /* Accent — burgundy / clay */
@@ -105,8 +105,8 @@
 
     /* Muted: page bg 와 같은 family, 채도 ↓ — 상대 말풍선 */
     --muted: 36 22% 86%;
-    /* Muted foreground: warm dark olive (#6B5F4F) */
-    --muted-foreground: 35 15% 36%;
+    /* Muted foreground: warm dark olive (#5E5240) — 라벨 가독성 위해 진하게 */
+    --muted-foreground: 35 16% 30%;
 
     /* Accent: warm sand */
     --accent: 40 36% 84%;
@@ -143,8 +143,8 @@
 
     /* 텍스트 색 4-tier — warm 잉크 */
     --pmw-text-primary:    29 19% 13%;   /* #28201A deep ink */
-    --pmw-text-secondary:  35 15% 36%;   /* #6B5F4F warm dark olive */
-    --pmw-text-tertiary:   32 11% 58%;   /* #9F968A warm gray */
+    --pmw-text-secondary:  35 16% 30%;   /* #5E5240 warm dark olive */
+    --pmw-text-tertiary:   32 12% 50%;   /* #8F8574 warm gray — 한 단계 진하게 */
     --pmw-text-disabled:   39 19% 73%;   /* #C9C0AE warm light */
 
     /* Warning/overdue/info — semantic 보조 색 */
@@ -199,7 +199,7 @@
   .dark {
     /* === Warm Stationery raw PMW 토큰 dark === */
     --pmw-near-black: #F4EDE0;       /* cream */
-    --pmw-olive-gray: #B8AC97;       /* warm light */
+    --pmw-olive-gray: #C4B9A6;       /* warm light — 가독성 위해 한 단계 밝게 */
     --pmw-stone-gray: #918975;       /* warm gray */
     --pmw-deep: #B85555;             /* lighter burgundy */
     --pmw-clay-soft: #3D3530;        /* dark warm */
@@ -235,8 +235,8 @@
     --secondary-foreground: 32 30% 92%;
 
     --muted: 25 12% 21%;
-    /* Muted foreground: warm light (#B8AC97) */
-    --muted-foreground: 36 18% 66%;
+    /* Muted foreground: warm light (#C4B9A6) — 라벨 가독성 위해 밝게 */
+    --muted-foreground: 36 18% 72%;
 
     --accent: 25 12% 21%;
     --accent-foreground: 32 30% 92%;
@@ -264,8 +264,8 @@
 
     /* 텍스트 색 4-tier (warm dark) */
     --pmw-text-primary:    32 30% 92%;   /* cream */
-    --pmw-text-secondary:  36 18% 66%;   /* warm light */
-    --pmw-text-tertiary:   32 11% 50%;   /* warm med gray */
+    --pmw-text-secondary:  36 18% 72%;   /* warm light */
+    --pmw-text-tertiary:   32 11% 56%;   /* warm med gray — 한 단계 밝게 */
     --pmw-text-disabled:   25 12% 30%;   /* dark warm gray */
 
     /* Warning/info dark */
@@ -2016,7 +2016,7 @@ select:-webkit-autofill {
   }
   .pmw-st__group-title {
     font-family: var(--pmw-font-mono);
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.6px;

@@ -172,7 +172,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
           )}
         >
           <div className="mb-4 flex items-baseline gap-3">
-            <span className="font-mono text-[14px] tracking-[1.2px] text-muted-foreground/80">
+            <span className="font-mono text-[14px] tracking-[1.2px] text-muted-foreground">
               {String(groupIdx + 1).padStart(2, '0')}
             </span>
             {isProcedure && toggleableForDest.length > 0 ? (
@@ -759,7 +759,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
         onFile={(f) => handleFiles([f])}
       />
       <div className="mb-4 flex items-baseline gap-3">
-        <span className="font-mono text-[14px] tracking-[1.2px] text-muted-foreground/80">
+        <span className="font-mono text-[14px] tracking-[1.2px] text-muted-foreground">
           {sectionNumber}
         </span>
         {/* 타이틀 클릭 — 값 있으면 삭제 버튼 노출, 없으면 바로 파일 선택창. */}

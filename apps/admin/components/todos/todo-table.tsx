@@ -417,7 +417,7 @@ export function TodoTable({
           {columns.map((col) => (
             <th
               key={col.key}
-              className="text-left font-sans font-normal text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80 px-2 py-2.5 whitespace-nowrap border-b border-border/80"
+              className="text-left font-sans font-normal text-[12px] uppercase tracking-[0.08em] text-muted-foreground px-2 py-2.5 whitespace-nowrap border-b border-border/80"
               style={{ width: col.width, minWidth: col.width }}
             >
               {col.label}
