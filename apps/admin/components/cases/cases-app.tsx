@@ -517,8 +517,8 @@ function Inner() {
                         case: selectedCase,
                         label: `${selectedCase.customer_name || '(이름 없음)'}${selectedCase.pet_name ? ` · ${selectedCase.pet_name}` : ''}`,
                       })}
-                      title="정보 요청 (보호자에게 추가 정보 요청)"
-                      aria-label="정보 요청"
+                      title="정보 요청 링크 (보호자에게 추가 정보 요청)"
+                      aria-label="정보 요청 링크"
                       className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                     >
                       <Link2 className="h-3.5 w-3.5" />

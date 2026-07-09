@@ -136,10 +136,29 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
       new Set(allDescriptors.filter((d) => d.category === '추가정보').map((d) => d.key)),
     )
     if (extraKeys.length === 0) return []
-    return matched.map((c) => ({ id: `__report_${c}`, name: `${c} 신고`, field_keys: extraKeys }))
+    return matched.map((c) => ({ id: `__report_${c}`, name: `${c} 사전 신고`, field_keys: extraKeys }))
   }, [destination, importReportCountries, allDescriptors])
 
+  // '전체 선택' — 현재 보이는(=아직 안 채워진) 모든 필드 id.
+  const allVisibleIds = useMemo(() => {
+    const ids: string[] = []
+    for (const g of groupedFields) for (const b of g.blocks) for (const f of b.fields) ids.push(f.id)
+    return ids
+  }, [groupedFields])
+
   const [selectedFieldIds, setSelectedFieldIds] = useState<Set<string>>(() => new Set())
+
+  const allSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedFieldIds.has(id))
+  function toggleSelectAll() {
+    setSelectedFieldIds((prev) => {
+      if (allVisibleIds.length > 0 && allVisibleIds.every((id) => prev.has(id))) {
+        const next = new Set(prev)
+        for (const id of allVisibleIds) next.delete(id)
+        return next
+      }
+      return new Set([...prev, ...allVisibleIds])
+    })
+  }
 
   const [links, setLinks] = useState<ShareLinkRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -342,7 +361,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
         <div className="shrink-0 flex items-start justify-between gap-md px-lg pt-lg pb-md border-b border-border/60">
           <div className="min-w-0">
             <h2 className="font-serif text-[18px] font-medium leading-tight text-foreground truncate">
-              정보 요청
+              정보 요청 링크
               <span className="ml-2 font-serif text-[13px] font-normal text-muted-foreground">
                 {caseLabel}
               </span>
@@ -359,13 +378,27 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-lg py-md space-y-lg">
-          {/* 빠른 선택 — 목적지 신고 국가 자동 프리셋 (그 국가의 추가정보 한 번에 선택) */}
-          {autoPresets.length > 0 && (
+          {/* 빠른 선택 — 전체 선택 + 목적지 신고 국가 사전신고 프리셋 */}
+          {groupedFields.length > 0 && (
             <section>
               <h3 className="font-sans text-[12px] font-semibold text-foreground/80 mb-2 pb-1.5 border-b border-border/60">
                 빠른 선택
               </h3>
               <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={toggleSelectAll}
+                  aria-pressed={allSelected}
+                  title="아직 안 채워진 모든 항목 선택"
+                  className={cn(
+                    'h-8 px-3 rounded-full border font-serif text-[13px] transition-colors',
+                    allSelected
+                      ? 'border-foreground bg-foreground text-background'
+                      : 'border-border/80 text-muted-foreground hover:bg-accent hover:text-foreground',
+                  )}
+                >
+                  전체 선택
+                </button>
                 {autoPresets.map((p) => {
                   const active = isPresetFullySelected(p)
                   const applicable = applicableKeysForPreset(p).length
@@ -389,15 +422,6 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                     </button>
                   )
                 })}
-                {selectedFieldIds.size > 0 && (
-                  <button
-                    type="button"
-                    onClick={clearAll}
-                    className="h-8 px-3 rounded-full border border-dashed border-border/70 font-serif text-[12px] text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    선택 초기화
-                  </button>
-                )}
               </div>
             </section>
           )}
@@ -416,7 +440,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                     className="font-serif text-[12px] text-muted-foreground/70 hover:text-foreground transition-colors"
                     title="이 링크는 아직 안 받은 정보를 수집합니다 — 이미 입력된 항목은 기본 숨김"
                   >
-                    {showFilled ? `입력된 ${filledCount}개 숨기기` : `입력된 ${filledCount}개 보기`}
+                    {showFilled ? '숨기기' : '모두 보기'}
                   </button>
                 )}
                 <span className="font-sans text-[11px] text-muted-foreground/70">
