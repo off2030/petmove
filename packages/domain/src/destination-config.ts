@@ -190,6 +190,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
     // TK.pdf: 현지 수령인 주소(Consignee address) = 해외주소, 항공편명(Flight number) =
     // Registration no./flight number 칸. 둘 다 상세페이지에서 입력받아 자동 채움.
+    // (Place of Loading 는 인천공항 고정 default — pdf-field-mappings.json text_4qrwb 참고.)
     extraFields: ['address_overseas', 'entry_flight_number'],
   },
   usa: {
