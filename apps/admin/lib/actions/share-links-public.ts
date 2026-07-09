@@ -21,6 +21,7 @@
  *  회귀. 입력 정보는 cases 테이블에 직접 반영되므로 펫무브 앱 연동은 DB 로 그대로 유지.
  */
 
+import { randomUUID } from 'node:crypto'
 import { createAdminClient } from '@petmove/auth'
 import {
   formatMicrochip,
@@ -567,4 +568,111 @@ function normalizeValue(key: string, raw: unknown): unknown {
     return raw
   }
   return raw
+}
+
+// ─────────────────────────────────────────────────
+// 수신자 파일 첨부 (anon) — 보호자가 서류 사진·PDF 를 올려 제출
+// ─────────────────────────────────────────────────
+
+const SHARE_UPLOAD_BUCKET = 'attachments'
+const SHARE_UPLOAD_MAX_BYTES = 12 * 1024 * 1024
+const SHARE_UPLOAD_MAX_FILES = 10
+
+function shareFileAllowed(mime: string): boolean {
+  return mime.startsWith('image/') || mime === 'application/pdf'
+}
+
+/**
+ * 유효(active) 정보요청 링크의 수신자가 올린 파일을 케이스 첨부(attachments 버킷 +
+ * case.data.documents/notes)로 저장. 운영자는 기존 케이스 첨부 화면에서 그대로 본다.
+ * anon 경로라 토큰 유효성으로만 게이트한다(submitShareLink 와 동일). 값 제출 전에 호출.
+ */
+export async function uploadShareSubmissionFiles(
+  formData: FormData,
+): Promise<Result<{ count: number }>> {
+  try {
+    const token = formData.get('token')
+    if (typeof token !== 'string' || !UUID_RE.test(token)) {
+      return { ok: false, error: '유효하지 않은 링크입니다' }
+    }
+    const files = formData
+      .getAll('files')
+      .filter((f): f is File => f instanceof File && f.size > 0)
+    if (files.length === 0) return { ok: true, value: { count: 0 } }
+    if (files.length > SHARE_UPLOAD_MAX_FILES) {
+      return { ok: false, error: `파일은 최대 ${SHARE_UPLOAD_MAX_FILES}개까지 첨부할 수 있습니다.` }
+    }
+    for (const f of files) {
+      if (!shareFileAllowed(f.type)) {
+        return { ok: false, error: '이미지 또는 PDF 파일만 올릴 수 있습니다.' }
+      }
+      if (f.size > SHARE_UPLOAD_MAX_BYTES) {
+        return { ok: false, error: '파일 크기는 각 12MB 이하여야 합니다.' }
+      }
+    }
+
+    const admin = createAdminClient()
+    const { data: link } = await admin
+      .from('case_share_links')
+      .select('*')
+      .eq('token', token)
+      .maybeSingle()
+    if (!link) return { ok: false, error: '유효하지 않은 링크입니다' }
+    const row = link as ShareLinkRow
+    if (shareLinkStatus(row) !== 'active') {
+      return { ok: false, error: '이 링크로는 더 이상 제출할 수 없습니다.' }
+    }
+
+    const { data: caseInfo } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', row.case_id)
+      .maybeSingle()
+    const current = (caseInfo?.data as Record<string, unknown> | null) ?? {}
+    const existingDocs = Array.isArray(current.documents) ? (current.documents as unknown[]) : []
+    const existingNotes = Array.isArray(current.notes) ? (current.notes as unknown[]) : []
+
+    const newDocs: Record<string, unknown>[] = []
+    const newNotes: Record<string, unknown>[] = []
+    const uploadedPaths: string[] = []
+    for (const file of files) {
+      const safeName = (file.name || 'file').replace(/[^a-zA-Z0-9._-]/g, '_')
+      const path = `${row.case_id}/${Date.now()}_${randomUUID().slice(0, 8)}_${safeName}`
+      const buffer = Buffer.from(await file.arrayBuffer())
+      const { error: upErr } = await admin.storage
+        .from(SHARE_UPLOAD_BUCKET)
+        .upload(path, buffer, { contentType: file.type, upsert: false })
+      if (upErr) {
+        if (uploadedPaths.length) await admin.storage.from(SHARE_UPLOAD_BUCKET).remove(uploadedPaths)
+        return { ok: false, error: upErr.message }
+      }
+      uploadedPaths.push(path)
+      const uploadedAt = new Date().toISOString()
+      const displayName = file.name || safeName
+      newDocs.push({
+        id: randomUUID(),
+        name: displayName,
+        path,
+        size: file.size,
+        mime: file.type,
+        stepId: 'share-submission',
+        uploadedAt,
+      })
+      newNotes.push({ type: 'file', name: displayName, path, size: file.size, createdAt: uploadedAt })
+    }
+
+    const nextData: Record<string, unknown> = {
+      ...current,
+      documents: [...existingDocs, ...newDocs],
+      notes: [...existingNotes, ...newNotes],
+    }
+    const { error } = await admin.from('cases').update({ data: nextData }).eq('id', row.case_id)
+    if (error) {
+      await admin.storage.from(SHARE_UPLOAD_BUCKET).remove(uploadedPaths)
+      return { ok: false, error: error.message }
+    }
+    return { ok: true, value: { count: files.length } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
 }

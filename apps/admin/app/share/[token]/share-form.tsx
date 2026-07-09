@@ -5,7 +5,7 @@ import { COAT_COLOR_HEX as COLOR_HEX } from '@/lib/coat-colors'
 import { Fragment, useEffect, useRef, useState, useTransition } from 'react'
 import { CheckCircle2, Plus, X } from 'lucide-react'
 import { DateTextField } from '@petmove/ui'
-import { submitShareLink } from '@/lib/actions/share-links-public'
+import { submitShareLink, uploadShareSubmissionFiles } from '@/lib/actions/share-links-public'
 import { cardContainer } from '@petmove/ui'
 import { cn } from '@petmove/ui'
 import type {
@@ -88,6 +88,9 @@ export function ShareForm({ initial }: Props) {
     return out
   })
   const [submitterNote, setSubmitterNote] = useState('')
+  const [files, setFiles] = useState<File[]>([])
+  // 업로드 성공 후 재제출 시 중복 업로드 방지.
+  const uploadedRef = useRef(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [pending, startTransition] = useTransition()
@@ -138,10 +141,30 @@ export function ShareForm({ initial }: Props) {
     setValues((prev) => ({ ...prev, [key]: value }))
   }
 
+  function addFiles(list: FileList | null) {
+    if (!list || list.length === 0) return
+    setFiles((prev) => [...prev, ...Array.from(list)].slice(0, 10))
+  }
+  function removeFile(idx: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== idx))
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     startTransition(async () => {
+      // 파일이 있으면 값 제출 전에 먼저 업로드(링크가 active 인 동안). 성공 시 재제출에서 재업로드 안 함.
+      if (files.length > 0 && !uploadedRef.current) {
+        const fd = new FormData()
+        fd.append('token', view.token)
+        for (const f of files) fd.append('files', f)
+        const up = await uploadShareSubmissionFiles(fd)
+        if (!up.ok) {
+          setError(up.error)
+          return
+        }
+        uploadedRef.current = true
+      }
       const result = await submitShareLink({
         token: view.token,
         values,
@@ -266,6 +289,51 @@ export function ShareForm({ initial }: Props) {
               })}
             </section>
           ))}
+
+          <section className={sectionCardClass}>
+            <FieldRow label="파일 첨부" hint="선택">
+              <div className="w-full">
+                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border/80 px-3 py-1.5 font-serif text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                  <Plus size={14} /> 파일 선택
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,application/pdf"
+                    className="hidden"
+                    onChange={(e) => { addFiles(e.target.files); e.currentTarget.value = '' }}
+                  />
+                </label>
+                <p className="mt-1.5 font-serif text-[12px] italic text-muted-foreground/60">
+                  여권 사본·서류 사진 등 · 이미지 또는 PDF, 각 12MB 이하 (최대 10개)
+                </p>
+                {files.length > 0 && (
+                  <ul className="mt-2 space-y-1">
+                    {files.map((f, i) => (
+                      <li
+                        key={`${f.name}-${i}`}
+                        className="flex items-center justify-between gap-2 rounded-md border border-border/60 px-2.5 py-1.5"
+                      >
+                        <span className="min-w-0 truncate font-serif text-[13px] text-foreground">{f.name}</span>
+                        <span className="flex shrink-0 items-center gap-2">
+                          <span className="font-mono text-[11px] text-muted-foreground/60">
+                            {(f.size / 1024 / 1024).toFixed(1)}MB
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeFile(i)}
+                            className="text-muted-foreground/50 transition-colors hover:text-destructive"
+                            aria-label="파일 제거"
+                          >
+                            <X size={13} />
+                          </button>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </FieldRow>
+          </section>
 
           <section className={sectionCardClass}>
             <FieldRow label="메모" hint="선택">
