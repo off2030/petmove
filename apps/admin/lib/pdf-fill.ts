@@ -737,7 +737,7 @@ const EN_FALLBACK: Record<string, string> = {
   // address_overseas: 폴백 없음 — 비어있으면 그대로 비움 (목적지 해외 주소는 한국 주소로 대체 불가)
 }
 
-function readSource(
+export function readSource(
   source: string,
   caseRow: CaseRow,
   data: Record<string, unknown>,

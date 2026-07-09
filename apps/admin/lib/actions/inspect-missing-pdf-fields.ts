@@ -4,6 +4,7 @@ import { createClient } from '@petmove/auth/server'
 import type { CaseRow } from '@petmove/domain'
 import { flattenCaseForDestination, getEffectiveVaccineEntries, vaccineMatchesSpecies } from '@petmove/domain'
 import mappingsRaw from '@/data/pdf-field-mappings.json'
+import { readSource } from '@/lib/pdf-fill'
 import {
   groupSourceKey,
   labelForSource,
@@ -53,6 +54,57 @@ function isEmpty(v: unknown): boolean {
   if (Array.isArray(v)) return v.length === 0
   if (typeof v === 'object') return Object.keys(v).length === 0
   return false
+}
+
+/** 병합 객체/배열 안에 의미 있는(비어있지 않은) 값이 하나라도 있는지 재귀 확인. */
+function hasAnyValue(v: unknown): boolean {
+  if (isEmpty(v)) return false
+  if (Array.isArray(v)) return v.some(hasAnyValue)
+  if (typeof v === 'object') return Object.values(v as Record<string, unknown>).some(hasAnyValue)
+  return true
+}
+
+/** 국가별 추가정보 객체 source (top-level 낱개 필드로도 저장될 수 있는 것들). */
+const NESTED_EXTRA_SOURCES = new Set([
+  'japan_extra',
+  'usa_extra',
+  'philippines_extra',
+  'hawaii_extra',
+  'thailand_extra',
+  'switzerland_extra',
+  'australia_extra',
+  'new_zealand_extra',
+])
+
+/**
+ * _extra·해외주소 source 의 빈칸 여부를, 실제 PDF 출력(pdf-fill 의 readSource)과
+ * 동일한 폴백 병합 기준으로 판정한다.
+ *
+ * 왜: 이 값들은 국가별 묶음 객체(예 data.japan_extra) 또는 top-level 낱개 필드
+ * (예 data.certificate_no) 어느 쪽으로도 저장된다. 실제 fill 은 readSource 에서 둘을
+ * 병합해 읽는데, 예전 검사는 묶음 객체만 봐서 낱개 필드에만 값이 있으면 '비었다'고
+ * 오탐했다 (일본: japan_extra 없이 certificate_no 만 저장 → EQC No. 는 정상 인쇄되는데
+ * 경고만 뜸). readSource 를 그대로 재사용해 drift 를 없앤다.
+ *
+ * 반환: 대상 아님 → null (호출부에서 일반 검사로 폴백). 대상이면 빈칸 여부(boolean).
+ */
+function readEffectiveExtraEmpty(
+  source: string,
+  transform: string | undefined,
+  caseRow: CaseRow,
+  data: Record<string, unknown>,
+): boolean | null {
+  // 해외주소: readSource 가 top-level ↔ 각 _extra 병합해 최종 문자열을 돌려준다.
+  if (groupSourceKey(source) === 'address_overseas') {
+    return isEmpty(readSource('address_overseas', caseRow, data))
+  }
+  if (!NESTED_EXTRA_SOURCES.has(source)) return null
+  const eff = readSource(source, caseRow, data) as Record<string, unknown> | null
+  // json:<key> / json_last_4_digits:<key> — PDF 가 그 한 칸만 뽑아 인쇄 → 그 값만 검사.
+  const keyMatch = transform?.match(/^(?:json|json_last_4_digits):(.+)$/)
+  if (keyMatch) return isEmpty(eff?.[keyMatch[1]])
+  // 체크박스(json_eq/json_in)·주소포맷 등 — 객체에 의미값이 하나라도 있으면 채워진 것.
+  return !hasAnyValue(eff)
 }
 
 const TITER_DATE_LABEL = '광견병 항체검사 검사일'
@@ -216,6 +268,13 @@ export async function inspectMissingPdfFields(
       // 백신 source 가 보여주기 설정 OFF → PDF 에 안 들어가니 검사도 X
       const vaccineKey = DATA_KEY_TO_VACCINE_KEY[fm.source]
       if (vaccineKey && !allowedVaccines.has(vaccineKey)) continue
+
+      // 국가별 추가정보·해외주소 → 실제 PDF 출력과 동일한 폴백 병합으로 판정.
+      const extraEmpty = readEffectiveExtraEmpty(fm.source, fm.transform, caseRow, data)
+      if (extraEmpty !== null) {
+        if (extraEmpty) missingLabels.add(labelForSource(fm.source))
+        continue
+      }
 
       const groupKey = groupSourceKey(fm.source)
       const rawValue = readGroupValue(groupKey, caseRow, data)
