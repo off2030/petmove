@@ -19,6 +19,8 @@ export interface ShareFileRequestDef {
   required: boolean
   /** 적용 목적지 (한글 라벨 배열) 또는 'all'(모든 목적지). */
   destinations: string[] | 'all'
+  /** 제외 목적지 — 'all' 이어도 여기 목적지는 요청 안 함 (예: 구충 증명서는 일본 불필요). */
+  excludeDestinations?: string[]
 }
 
 export const SHARE_FILE_REQUESTS: ShareFileRequestDef[] = [
@@ -30,7 +32,7 @@ export const SHARE_FILE_REQUESTS: ShareFileRequestDef[] = [
   // 선택 — 상황에 따라
   { key: 'jp_export_cert', label: '일본 수출 동물검역증', required: false, destinations: ['일본'] },
   { key: 'other_hospital_vaccine', label: '타병원 접종 증명서', required: false, destinations: 'all' },
-  { key: 'deworming_cert', label: '구충 증명서', required: false, destinations: 'all' },
+  { key: 'deworming_cert', label: '구충 증명서', required: false, destinations: 'all', excludeDestinations: ['일본'] },
 ]
 
 const BY_KEY = new Map(SHARE_FILE_REQUESTS.map((r) => [r.key, r]))
@@ -45,6 +47,7 @@ export function shareFileRequestsForDestination(
 ): ShareFileRequestDef[] {
   const tokens = parseDestinations(destination)
   return SHARE_FILE_REQUESTS.filter((r) => {
+    if (r.excludeDestinations?.some((d) => tokens.includes(d))) return false
     if (r.destinations === 'all') return true
     return r.destinations.some((d) => tokens.includes(d))
   })
