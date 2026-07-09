@@ -9,14 +9,12 @@ import { CaseHeader } from './case-header'
 import { CaseHistory } from './case-history'
 import { createCase } from '@/lib/actions/create-case'
 import { deleteCase } from '@/lib/actions/delete-case'
-import { duplicateCase } from '@/lib/actions/duplicate-case'
 import { undoLastChange, updateCaseField } from '@/lib/actions/cases'
 import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateVBC, generateSGP, generateTW, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti, recommendForm25RabiesSelection } from '@/lib/actions/generate-pdf'
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import { MultiFormDialog } from './multi-form-dialog'
 import { RabiesSelectDialog, RABIES_SLOT_CAP } from './rabies-select-dialog'
-import { ChevronLeft, ChevronRight, Copy, Link2, Send, Smartphone, Trash2 } from 'lucide-react'
-import { TransferDialog } from './transfer-dialog'
+import { ChevronLeft, ChevronRight, Link2, Smartphone, Trash2 } from 'lucide-react'
 import { AssigneePicker } from './assignee-picker'
 import { ShareLinkDialog } from './share-link-dialog'
 import { PortalPreviewDialog } from './portal-preview-dialog'
@@ -132,7 +130,6 @@ function Inner() {
   }, [navCaseIds, cases, searchQuery, selectedCase])
   const detailScrollRef = useRef<HTMLDivElement>(null)
   const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC'; destination: string | null } | null>(null)
-  const [transferOpen, setTransferOpen] = useState<{ caseId: string; label: string } | null>(null)
   const [shareOpen, setShareOpen] = useState<{ case: CaseRow; label: string } | null>(null)
   const [previewOpen, setPreviewOpen] = useState<{ caseId: string; label: string } | null>(null)
   // 별지 25호/EX 의 광견병 슬롯이 부족할 때 띄우는 선택 모달.
@@ -341,14 +338,6 @@ function Inner() {
     [includeSignature, includeVet, cases, confirmIfFailing],
   )
 
-  const handleDuplicate = useCallback(async (id: string) => {
-    const result = await duplicateCase(id)
-    if (result.ok) {
-      addLocalCase(result.case)
-      selectCase(result.case.id)
-    }
-  }, [addLocalCase, selectCase])
-
   const handleDelete = useCallback(async (id: string) => {
     if (!await confirm({ message: '이 케이스를 삭제하시겠습니까?', okLabel: '삭제', variant: 'destructive' })) return
     const result = await deleteCase(id)
@@ -406,14 +395,6 @@ function Inner() {
             destination={multiForm.destination}
             onPreflightConfirm={preflightConfirmMulti}
             onClose={() => setMultiForm(null)}
-          />
-        )}
-
-        {transferOpen && (
-          <TransferDialog
-            caseId={transferOpen.caseId}
-            caseLabel={transferOpen.label}
-            onClose={() => setTransferOpen(null)}
           />
         )}
 
@@ -541,27 +522,6 @@ function Inner() {
                       className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                     >
                       <Link2 className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTransferOpen({
-                        caseId: selectedCase.id,
-                        label: `${selectedCase.customer_name || '(이름 없음)'}${selectedCase.pet_name ? ` / ${selectedCase.pet_name}` : ''}`,
-                      })}
-                      title="다른 조직으로 전달"
-                      aria-label="다른 조직으로 전달"
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                    >
-                      <Send className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDuplicate(selectedCase.id)}
-                      title="복제"
-                      aria-label="복제"
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                    >
-                      <Copy className="h-3.5 w-3.5" />
                     </button>
                     <button
                       type="button"
