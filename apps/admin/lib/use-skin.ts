@@ -3,18 +3,15 @@
 import { useEffect, useState } from 'react'
 
 /** 색·radius·폰트가 함께 바뀌는 비주얼 스킨. dark 모드와 직교. */
-export type Skin = 'editorial' | 'flat' | 'glassmorphism' | 'art-deco' | 'hygge' | 'scandi-minimal' | 'sakura' | 'baby-blue'
+export type Skin = 'editorial' | 'flat' | 'hygge' | 'scandi-minimal' | 'baby-blue'
 
 const STORAGE_KEY = 'skin'
 const EVENT = 'skinchange'
 
 // 가나다 순 (한글 라벨 기준). default = editorial.
 export const SKIN_LIST: Skin[] = [
-  'glassmorphism',  // 글라스
-  'sakura',         // 벚꽃
   'baby-blue',      // 베이비 블루
   'scandi-minimal', // 스칸디 미니멀
-  'art-deco',       // 아르데코
   'editorial',      // 에디토리얼 (default)
   'flat',           // 플랫
   'hygge',          // 휘게
@@ -23,11 +20,8 @@ export const SKIN_LIST: Skin[] = [
 export const SKIN_LABELS: Record<Skin, string> = {
   editorial: '에디토리얼',
   flat: '플랫',
-  glassmorphism: '글라스',
-  'art-deco': '아르데코',
   hygge: '휘게',
   'scandi-minimal': '스칸디 미니멀',
-  sakura: '벚꽃',
   'baby-blue': '베이비 블루',
 }
 

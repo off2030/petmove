@@ -10,11 +10,8 @@ import { useSkin, setSkin, SKIN_LIST, SKIN_LABELS, type Skin } from '@/lib/use-s
 const SKIN_PREVIEW: Record<Skin, { bg: string; accent: string }> = {
   editorial: { bg: '#F5F4ED', accent: '#9B4A2D' },
   flat: { bg: '#FFFFFF', accent: '#18181B' },
-  glassmorphism: { bg: 'linear-gradient(135deg,#C7D2FE,#A78BFA)', accent: '#4F46E5' },
-  'art-deco': { bg: '#0F1B30', accent: '#C9A961' },
   hygge: { bg: '#EFE6D6', accent: '#B89070' },
   'scandi-minimal': { bg: '#E8E5DD', accent: '#1F1F1B' },
-  sakura: { bg: 'linear-gradient(180deg,#FCE4EC,#F8D0DA)', accent: 'linear-gradient(180deg,#F5C0CB,#E8A0B0)' },
   'baby-blue': { bg: '#DCE7F2', accent: '#4A7AB8' },
 }
 
