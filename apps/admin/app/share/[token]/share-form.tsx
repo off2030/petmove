@@ -68,17 +68,14 @@ const primaryButtonClass = cn(
   'w-full h-12 text-base tracking-[0.1px]',
   'bg-primary text-primary-foreground hover:bg-primary/90',
 )
-const dateFieldClass =
-  'h-10 w-60 max-w-full bg-transparent px-0 font-mono text-[16px] tracking-[0.3px] tabular-nums text-foreground placeholder:font-serif placeholder:italic placeholder:text-[14px] placeholder:text-muted-foreground/50 focus:outline-none transition-colors'
-const compactInputClass =
-  'h-7 min-w-[80px] bg-transparent px-1 font-serif text-[13px] text-foreground placeholder:font-serif placeholder:italic placeholder:text-muted-foreground/55 focus:outline-none focus:bg-accent/40 rounded [field-sizing:content]'
-const compactDateClass =
-  'h-7 min-w-0 rounded-md border border-transparent bg-transparent px-1 font-mono text-[13px] tracking-[0.3px] text-foreground placeholder:font-serif placeholder:italic placeholder:text-muted-foreground/55 focus-visible:border-border/80 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
-const inlineMetaLabelClass =
-  'whitespace-nowrap font-serif text-[12px] italic text-muted-foreground/70'
-// 약품만료일 날짜 — 고정 폭 + 아이콘 여백(pr 미지정 → DateTextField sm 의 pr-8 유지). 겹침 방지.
-const expiryDateClass =
-  'h-7 w-[164px] max-w-full bg-transparent pl-1 font-mono text-[13px] tracking-[0.3px] text-foreground placeholder:font-serif placeholder:italic placeholder:text-[12px] placeholder:text-muted-foreground/55 focus:outline-none'
+// 접종/구충 기록 — 모바일 세로형 레이아웃용 (항목별 라벨 + 풀폭 입력).
+const recSubLabelClass = 'mb-1 block font-serif text-[13px] text-muted-foreground/80'
+// 날짜 입력: pr 미지정(px 세팅 X) → DateTextField 기본 size 의 pr-12(아이콘 여백) 유지, 16px(확대 방지).
+const recDateClass =
+  'h-10 w-full bg-transparent pl-0 font-mono text-[16px] tracking-[0.3px] tabular-nums text-foreground placeholder:font-serif placeholder:italic placeholder:text-[14px] placeholder:text-muted-foreground/45 focus:outline-none border-b border-border/40 focus:border-foreground/40 transition-colors'
+// 약품명/제조사/로트 텍스트: 풀폭 + 밑줄 + 16px.
+const recTextClass =
+  'w-full h-10 bg-transparent px-0 font-serif text-[16px] text-foreground placeholder:font-serif placeholder:italic placeholder:text-[14px] placeholder:text-muted-foreground/45 focus:outline-none border-b border-border/40 focus:border-foreground/40 transition-colors'
 
 /**
  * 이미지 업로드 전 자동 축소(리사이즈+JPEG) — 서버로 보내는 요청 크기를 줄여 큰 폰 사진도
@@ -1303,70 +1300,90 @@ function DateArrayInput({
         {display.map((record, index) => (
           <div
             key={index}
-            className="group/item rounded-md border border-border/40 p-2 transition-colors hover:bg-accent/40"
+            className="rounded-lg border border-border/50 p-3.5"
           >
-            <div className="flex flex-wrap items-baseline gap-[10px]">
-              <span className="w-6 shrink-0 font-mono text-[11px] tracking-[0.8px] text-muted-foreground/70">
-                {String(index + 1).padStart(2, '0')}
+            <div className="mb-3 flex items-center justify-between">
+              <span className="font-mono text-[12px] tracking-[0.6px] text-muted-foreground/70">
+                {String(index + 1).padStart(2, '0')}회차
               </span>
-              <div className="inline-flex items-baseline gap-2">
-                <span className={inlineMetaLabelClass}>접종일</span>
-                <DateTextField
-                  value={record.date ?? ''}
-                  onChange={(next) => setAt(index, { date: next })}
-                  placeholder="YYYY-MM-DD"
-                  className={dateFieldClass}
-                />
-              </div>
-
-              {showValidUntil && (
-                <ValidityYearsSelector
-                  value={record.valid_until}
-                  onChange={(validity) => setAt(index, { valid_until: validity })}
-                />
-              )}
-
               {records.length > 0 && (
                 <button
                   type="button"
                   onClick={() => removeAt(index)}
                   aria-label="삭제"
-                  className="ml-auto shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                  className="-mr-1 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
                 >
-                  <X size={13} />
+                  <X size={16} />
                 </button>
               )}
             </div>
 
-            <div className="ml-8 mt-1 flex flex-wrap items-baseline gap-x-[10px] gap-y-1">
-              <CompactTextInput
-                value={record.product}
-                placeholder="약품명"
-                onChange={(next) => setAt(index, { product: next })}
-              />
-              <Separator />
-              <CompactTextInput
-                value={record.manufacturer}
-                placeholder="제조사"
-                onChange={(next) => setAt(index, { manufacturer: next })}
-              />
-              <Separator />
-              <CompactTextInput
-                value={record.lot}
-                placeholder="로트번호"
-                onChange={(next) => setAt(index, { lot: next })}
-              />
+            <div className="space-y-3">
+              <div>
+                <span className={recSubLabelClass}>접종일</span>
+                <DateTextField
+                  block
+                  value={record.date ?? ''}
+                  onChange={(next) => setAt(index, { date: next })}
+                  placeholder="YYYY-MM-DD"
+                  className={recDateClass}
+                />
+              </div>
+
               {showValidUntil && (
-                <>
-                  <Separator />
+                <div>
+                  <span className={recSubLabelClass}>유효기간</span>
+                  <ValidityYearsSelector
+                    value={record.valid_until}
+                    onChange={(validity) => setAt(index, { valid_until: validity })}
+                  />
+                </div>
+              )}
+
+              <div>
+                <span className={recSubLabelClass}>약품명</span>
+                <input
+                  type="text"
+                  value={record.product ?? ''}
+                  onChange={(e) => setAt(index, { product: e.target.value || null })}
+                  placeholder="증명서에 적힌 약품명"
+                  className={recTextClass}
+                />
+              </div>
+
+              <div>
+                <span className={recSubLabelClass}>제조사</span>
+                <input
+                  type="text"
+                  value={record.manufacturer ?? ''}
+                  onChange={(e) => setAt(index, { manufacturer: e.target.value || null })}
+                  placeholder="제조사"
+                  className={recTextClass}
+                />
+              </div>
+
+              <div>
+                <span className={recSubLabelClass}>로트번호</span>
+                <input
+                  type="text"
+                  value={record.lot ?? ''}
+                  onChange={(e) => setAt(index, { lot: e.target.value || null })}
+                  placeholder="로트번호"
+                  className={recTextClass}
+                />
+              </div>
+
+              {showValidUntil && (
+                <div>
+                  <span className={recSubLabelClass}>약품 만료일</span>
                   <DateTextField
+                    block
                     value={record.expiry ?? ''}
                     onChange={(next) => setAt(index, { expiry: next })}
-                    placeholder="만료일 · YYYY-MM-DD"
-                    size="sm"
-                    className={expiryDateClass}
+                    placeholder="YYYY-MM-DD"
+                    className={recDateClass}
                   />
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -1403,7 +1420,7 @@ function ValidityYearsSelector({
           onClick={() => onChange(`${year}년`)}
           aria-pressed={selected === year}
           className={cn(
-            'rounded px-2 py-0.5 text-xs transition-colors',
+            'rounded px-3.5 py-1.5 text-[14px] transition-colors',
             selected === year
               ? 'bg-foreground text-background'
               : 'text-muted-foreground/70 hover:bg-accent/60 hover:text-foreground',
@@ -1414,30 +1431,6 @@ function ValidityYearsSelector({
       ))}
     </div>
   )
-}
-
-function CompactTextInput({
-  value,
-  placeholder,
-  onChange,
-}: {
-  value?: string | null
-  placeholder: string
-  onChange: (value: string | null) => void
-}) {
-  return (
-    <input
-      type="text"
-      value={value ?? ''}
-      placeholder={placeholder}
-      onChange={(e) => onChange(e.target.value || null)}
-      className={compactInputClass}
-    />
-  )
-}
-
-function Separator() {
-  return <span className="select-none text-muted-foreground/30">|</span>
 }
 
 function getFieldPlaceholder(field: ShareFieldSpec): string {
