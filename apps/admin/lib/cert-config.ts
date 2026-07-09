@@ -51,6 +51,25 @@ function normalize(raw: unknown): CertConfig {
   }
 }
 
+/**
+ * 저장된 조직 cert_config 는 defaults 를 **전면 대체**한다. 그래서 새 증명서 유형(예: 튀르키예 TK)을
+ * DEFAULT_CERT_CONFIG 에 추가해도, 과거에 한 번이라도 설정을 저장한 조직은 그 스냅샷에 갇혀
+ * 새 규칙을 못 받는다. → 저장된 config 가 **건드리지 않은 목적지**의 default 규칙을 덧붙여 병합한다.
+ *
+ * 병합 규칙: default 규칙의 countries 중 **하나라도** 저장 config 에 이미 등장하면(그 목적지를
+ * 조직이 직접 설정한 것으로 보고) 그대로 존중해 건너뛴다. 전혀 등장하지 않는(uncovered) default
+ * 규칙만 추가한다. → 조직의 커스터마이즈는 보존하고, 새로 생긴 목적지·증명서는 자동 노출.
+ */
+export function mergeCertDefaults(saved: CertConfig): CertConfig {
+  const covered = new Set<string>()
+  for (const r of saved.rules) for (const c of r.countries) covered.add(c)
+  const rules = [...saved.rules]
+  for (const dr of DEFAULT_CERT_CONFIG.rules) {
+    if (!dr.countries.some((c) => covered.has(c))) rules.push(dr)
+  }
+  return { defaultCerts: saved.defaultCerts, rules }
+}
+
 export async function loadCertConfig(): Promise<CertConfig> {
   try {
     const { createClient } = await import('@petmove/auth/server')
@@ -63,7 +82,7 @@ export async function loadCertConfig(): Promise<CertConfig> {
       .eq('org_id', orgId)
       .eq('key', APP_SETTINGS_KEY)
       .maybeSingle()
-    if (data?.value) return normalize(data.value)
+    if (data?.value) return mergeCertDefaults(normalize(data.value))
     return DEFAULT_CERT_CONFIG
   } catch {
     return DEFAULT_CERT_CONFIG
