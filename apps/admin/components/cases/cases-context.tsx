@@ -87,6 +87,7 @@ interface CasesContextValue {
   orgMembers: Array<{ user_id: string; name: string | null; email: string }>
   /** 공유 링크 발급 시 빠른 선택용 사용자 정의 프리셋. */
   sharePresets: SharePreset[]
+  setSharePresets: (list: SharePreset[]) => void
   /**
    * 검사/신고/서류 탭 컬럼 표시 설정. organization_settings.todo_columns_config.
    * hiddenColumns[tab] 에 들어있는 키는 테이블 헤더·셀에서 제외.
@@ -157,7 +158,7 @@ export function CasesProvider({
   orgId = null,
   caseAssigneeEnabled = false,
   orgMembers = [],
-  sharePresets = [],
+  sharePresets: initialSharePresets = [],
   children,
 }: {
   initialCases: CaseRow[]
@@ -183,6 +184,7 @@ export function CasesProvider({
   const [inspectionConfig, setInspectionConfig] = useState<InspectionConfig>(initialInspectionConfig)
   const [certConfig, setCertConfig] = useState<CertConfig>(initialCertConfig)
   const [todoColumnsConfig, setTodoColumnsConfig] = useState<TodoColumnsConfig>(initialTodoColumnsConfig)
+  const [sharePresets, setSharePresets] = useState<SharePreset[]>(initialSharePresets)
   const [newCaseIds, setNewCaseIds] = useState<Set<string>>(() => new Set())
   const [searchQuery, setSearchQuery] = useState('')
   const [navCaseIds, setNavCaseIds] = useState<string[]>([])
@@ -536,6 +538,7 @@ export function CasesProvider({
       caseAssigneeEnabled,
       orgMembers,
       sharePresets,
+      setSharePresets,
       todoColumnsConfig,
       setTodoColumnsConfig,
       searchQuery,
@@ -543,7 +546,7 @@ export function CasesProvider({
       navCaseIds,
       setNavCaseIds,
     }),
-    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, inspectionConfig, certConfig, newCaseIds, caseAssigneeEnabled, orgMembers, sharePresets, todoColumnsConfig, searchQuery, navCaseIds],
+    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, inspectionConfig, certConfig, newCaseIds, caseAssigneeEnabled, orgMembers, sharePresets, setSharePresets, todoColumnsConfig, searchQuery, navCaseIds],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

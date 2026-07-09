@@ -25,8 +25,18 @@ import {
   type ShareLinkRow,
   type ShareLinkStatus,
 } from '@petmove/domain'
-import { buildShareFieldLayout } from '@petmove/domain'
+import {
+  buildShareFieldDescriptors,
+  groupShareDescriptorsByCategory,
+  shareDescriptorHasValue,
+} from '@petmove/domain'
+import { saveSharePresets } from '@/lib/actions/share-presets'
 import type { SharePreset } from '@/lib/share-presets-types'
+
+function genPresetId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
+  return `preset_${Date.now()}_${Math.floor(Math.random() * 1e6)}`
+}
 
 interface Props {
   caseRow: CaseRow
@@ -62,7 +72,7 @@ function formatDateTime(iso: string): string {
 export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
   const caseId = caseRow.id
   const confirm = useConfirm()
-  const { fieldDefs, activeDestination, sharePresets } = useCases()
+  const { fieldDefs, activeDestination, sharePresets, setSharePresets } = useCases()
   const { config: destOverridesConfig } = useDestinationOverrides()
 
   // 목적지 기반 필터링 — case detail 과 동일하게 activeDestination 우선.
@@ -89,9 +99,12 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     return !!entry && vaccineMatchesSpecies(entry, speciesValue)
   }
 
-  // 4개 카테고리로 정규화 — buildShareFieldLayout 헬퍼가 case-detail/프리셋/수신자 폼과 동일 좌표계 보장.
-  const groupedFields = useMemo(
-    () => buildShareFieldLayout({
+  // 이미 입력된 항목 표시 여부 — 공유 링크는 '아직 안 받은 정보' 수집용이라 기본은 빈 필드만.
+  const [showFilled, setShowFilled] = useState(false)
+
+  // 좌표 권위(descriptor) — case-detail/프리셋/수신자 폼과 동일. source 메타로 값 유무 판정.
+  const allDescriptors = useMemo(
+    () => buildShareFieldDescriptors({
       fieldDefs,
       destinationScope: destination,
       extraFieldEntries,
@@ -100,6 +113,20 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [fieldDefs, destination, allowedFields, vaccineEntries, extraFieldEntries, speciesValue],
   )
+
+  // 이미 값이 있는 필드 수(숨김 대상). caseRow.data 기준.
+  const filledCount = useMemo(
+    () => allDescriptors.filter((d) => shareDescriptorHasValue(d, caseRow, destination)).length,
+    [allDescriptors, caseRow, destination],
+  )
+
+  // 4개 카테고리로 정규화 — 기본은 빈 필드만, 토글 시 전체.
+  const groupedFields = useMemo(() => {
+    const visible = showFilled
+      ? allDescriptors
+      : allDescriptors.filter((d) => !shareDescriptorHasValue(d, caseRow, destination))
+    return groupShareDescriptorsByCategory(visible)
+  }, [allDescriptors, showFilled, caseRow, destination])
 
   const [selectedFieldIds, setSelectedFieldIds] = useState<Set<string>>(() => new Set())
   const [title, setTitle] = useState('')
@@ -110,6 +137,13 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
+  // 생성 성공 배너(자동복사 안내). 화면 하단 고정 위치에 잠깐 노출.
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  // "현재 선택을 프리셋으로" 저장 — 이름 입력 인라인.
+  const [presetName, setPresetName] = useState('')
+  const [presetInputOpen, setPresetInputOpen] = useState(false)
+  const [savingPreset, setSavingPreset] = useState(false)
+  const [presetMsg, setPresetMsg] = useState<string | null>(null)
 
   async function refresh() {
     setLoading(true)
@@ -200,7 +234,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
   }
 
   function handleCreate() {
-    if (selectedFieldIds.size === 0) {
+    if (selectedFields.length === 0) {
       setError('최소 1개 이상의 필드를 선택해주세요')
       return
     }
@@ -221,18 +255,46 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
       if (!r.ok) { setError(r.error); return }
       // 생성 직후 자동 복사 시도
       const url = shareUrl(r.value.token)
+      let copied = false
       try {
         await navigator.clipboard.writeText(url)
+        copied = true
         setCopiedToken(r.value.token)
         setTimeout(() => setCopiedToken(null), 2000)
       } catch {
         // best-effort
       }
+      // 성공 배너 — 필드 목록이 길어 아래 '발급된 링크'가 안 보여도 결과를 알린다.
+      setSuccessMsg(
+        copied
+          ? '링크가 만들어졌고 클립보드에 복사되었습니다.'
+          : '링크가 만들어졌습니다. 아래 목록에서 복사하세요.',
+      )
+      setTimeout(() => setSuccessMsg(null), 5000)
       // 폼 초기화
       setSelectedFieldIds(new Set())
       setTitle('')
       await refresh()
     })
+  }
+
+  /** 현재 선택을 조직 프리셋으로 저장 — saveSharePresets 는 전체 목록을 upsert 한다. */
+  async function handleSavePreset() {
+    const name = presetName.trim()
+    if (!name || selectedFields.length === 0) return
+    setSavingPreset(true)
+    setPresetMsg(null)
+    // 선택된 필드의 key(중복 제거) — 프리셋은 key 배열로 저장.
+    const keys = Array.from(new Set(selectedFields.map((f) => f.key)))
+    const next: SharePreset[] = [...sharePresets, { id: genPresetId(), name, field_keys: keys }]
+    const r = await saveSharePresets(next)
+    setSavingPreset(false)
+    if (!r.ok) { setPresetMsg('저장 실패: ' + r.error); return }
+    setSharePresets(next)
+    setPresetInputOpen(false)
+    setPresetName('')
+    setPresetMsg('프리셋으로 저장되었습니다.')
+    setTimeout(() => setPresetMsg(null), 3000)
   }
 
   async function handleCopy(token: string) {
@@ -304,16 +366,16 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
         <div className="flex-1 min-h-0 overflow-y-auto px-lg py-md space-y-lg">
           {/* 빠른 선택 — 사용자 정의 프리셋 */}
           <section>
-            <h3 className="font-mono text-[11px] uppercase tracking-[1.4px] font-medium text-foreground/90 mb-2 pb-1.5 border-b border-border/60">
+            <h3 className="font-sans text-[12px] font-semibold text-foreground/80 mb-2 pb-1.5 border-b border-border/60">
               빠른 선택
             </h3>
-            {sharePresets.length === 0 ? (
-              <p className="font-serif italic text-[12px] text-muted-foreground/70">
-                프리셋이 없습니다 — 설정 &gt; 상세에서 만들 수 있습니다.
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {sharePresets.map((p) => {
+            <div className="flex flex-wrap items-center gap-1.5">
+              {sharePresets.length === 0 ? (
+                <p className="font-serif italic text-[12px] text-muted-foreground/70">
+                  프리셋이 없습니다 — 필드를 고른 뒤 아래 “프리셋으로 저장”을 눌러 만들 수 있습니다.
+                </p>
+              ) : (
+                sharePresets.map((p) => {
                   const active = isPresetFullySelected(p)
                   const applicable = applicableKeysForPreset(p).length
                   return (
@@ -323,7 +385,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                       onClick={() => pickPreset(p)}
                       aria-pressed={active}
                       disabled={applicable === 0}
-                      title={applicable === 0 ? '이 케이스 목적지에 적용 가능한 필드가 없음' : `${applicable}개 필드`}
+                      title={applicable === 0 ? '이 케이스에 적용 가능한(아직 안 채워진) 필드가 없음' : `${applicable}개 필드`}
                       className={cn(
                         'h-8 px-3 rounded-full border font-serif text-[13px] transition-colors',
                         active
@@ -335,15 +397,63 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                       {p.name}
                     </button>
                   )
-                })}
-                {selectedFieldIds.size > 0 && (
+                })
+              )}
+              {selectedFieldIds.size > 0 && (
+                <button
+                  type="button"
+                  onClick={clearAll}
+                  className="h-8 px-3 rounded-full border border-dashed border-border/70 font-serif text-[12px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  선택 초기화
+                </button>
+              )}
+            </div>
+
+            {/* 현재 선택을 프리셋으로 저장 */}
+            {selectedFields.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {presetInputOpen ? (
+                  <>
+                    <input
+                      value={presetName}
+                      onChange={(e) => setPresetName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); handleSavePreset() }
+                        if (e.key === 'Escape') { setPresetInputOpen(false); setPresetName('') }
+                      }}
+                      autoFocus
+                      placeholder="프리셋 이름"
+                      maxLength={40}
+                      className="h-8 px-3 rounded-full border border-border/80 bg-background font-serif text-[12px] focus:outline-none focus:border-foreground/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSavePreset}
+                      disabled={savingPreset || !presetName.trim()}
+                      className="h-8 px-3 rounded-full border border-foreground bg-foreground text-background font-serif text-[12px] transition-colors disabled:opacity-40"
+                    >
+                      {savingPreset ? '저장 중…' : '저장'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setPresetInputOpen(false); setPresetName('') }}
+                      className="h-8 px-3 rounded-full font-serif text-[12px] text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      취소
+                    </button>
+                  </>
+                ) : (
                   <button
                     type="button"
-                    onClick={clearAll}
+                    onClick={() => setPresetInputOpen(true)}
                     className="h-8 px-3 rounded-full border border-dashed border-border/70 font-serif text-[12px] text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    선택 초기화
+                    ＋ 현재 선택을 프리셋으로 저장 ({selectedFields.length})
                   </button>
+                )}
+                {presetMsg && (
+                  <span className="font-serif text-[12px] text-muted-foreground">{presetMsg}</span>
                 )}
               </div>
             )}
@@ -351,14 +461,33 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
 
           {/* 커스텀 필드 선택 */}
           <section>
-            <div className="flex items-baseline justify-between mb-2 pb-1.5 border-b border-border/60">
-              <h3 className="font-mono text-[11px] uppercase tracking-[1.4px] font-medium text-foreground/90">
+            <div className="flex items-baseline justify-between gap-md mb-2 pb-1.5 border-b border-border/60">
+              <h3 className="font-sans text-[12px] font-semibold text-foreground/80">
                 직접 선택
               </h3>
-              <span className="font-mono text-[10.5px] text-muted-foreground/70">
-                {selectedFieldIds.size} 개 선택됨
-              </span>
+              <div className="flex items-baseline gap-3">
+                {filledCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowFilled((v) => !v)}
+                    className="font-serif text-[12px] text-muted-foreground/70 hover:text-foreground transition-colors"
+                    title="이 링크는 아직 안 받은 정보를 수집합니다 — 이미 입력된 항목은 기본 숨김"
+                  >
+                    {showFilled ? `입력된 ${filledCount}개 숨기기` : `입력된 ${filledCount}개 보기`}
+                  </button>
+                )}
+                <span className="font-sans text-[11px] text-muted-foreground/70">
+                  {selectedFields.length}개 선택됨
+                </span>
+              </div>
             </div>
+            {groupedFields.length === 0 && (
+              <p className="py-3 font-serif italic text-[13px] text-muted-foreground/70">
+                {filledCount > 0
+                  ? '받을 항목이 없습니다 — 모두 이미 입력되어 있어요. (위 “입력된 N개 보기”로 확인 가능)'
+                  : '표시할 필드가 없습니다.'}
+              </p>
+            )}
             <div className="space-y-lg">
               {groupedFields.map((g) => (
                 <div key={g.category}>
@@ -369,7 +498,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                     {g.blocks.map((block, bi) => (
                       <div key={block.subgroup ?? `__flat-${bi}`} className="pl-2">
                         {block.subgroup && (
-                          <p className="font-mono text-[10px] uppercase tracking-[1.1px] text-muted-foreground/70 mb-1">
+                          <p className="font-sans text-[11px] font-medium text-muted-foreground/70 mb-1">
                             {block.subgroup}
                           </p>
                         )}
@@ -404,7 +533,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
           {/* 안내 메시지 + 만료 */}
           <section className="space-y-md">
             <label className="block">
-              <span className="font-mono text-[10.5px] uppercase tracking-[1.2px] text-muted-foreground/80">
+              <span className="font-sans text-[11px] font-medium text-muted-foreground/80">
                 받는 사람에게 보일 안내 (선택)
               </span>
               <textarea
@@ -416,7 +545,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
               />
             </label>
             <label className="block max-w-[180px]">
-              <span className="font-mono text-[10.5px] uppercase tracking-[1.2px] text-muted-foreground/80">
+              <span className="font-sans text-[11px] font-medium text-muted-foreground/80">
                 만료
               </span>
               <select
@@ -440,7 +569,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
 
           {/* 기존 링크 목록 */}
           <section>
-            <h3 className="font-mono text-[11px] uppercase tracking-[1.4px] font-medium text-foreground/90 mb-2 pb-1.5 border-b border-border/60">
+            <h3 className="font-sans text-[12px] font-semibold text-foreground/80 mb-2 pb-1.5 border-b border-border/60">
               발급된 링크 · {links.length}
             </h3>
             <div className="border-t border-border/80">
@@ -511,13 +640,19 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
         </div>
 
         <div className="shrink-0 px-lg pb-md pt-1 border-t border-border/40">
+          {successMsg && (
+            <div className="mb-2 flex items-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-2 font-serif text-[13px] text-emerald-700 dark:text-emerald-400">
+              <Check size={14} className="shrink-0" />
+              {successMsg}
+            </div>
+          )}
           <DialogFooter
             onCancel={onClose}
             onPrimary={handleCreate}
             primaryLabel="링크 만들기"
             savingLabel="만드는 중…"
             saving={pending}
-            primaryDisabled={selectedFieldIds.size === 0}
+            primaryDisabled={selectedFields.length === 0}
           />
         </div>
       </div>

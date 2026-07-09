@@ -23,9 +23,10 @@ import {
   type DestinationExtraFieldEntry,
   type ExtraFieldDef,
 } from './destination-overrides-types'
-import { extraFieldMatchesSpecies, getDestinationOverride } from './destination-config'
+import { extraFieldMatchesSpecies, getDestinationOverride, parseDestinations } from './destination-config'
+import { isDestinationScopedKey, readByDestValue } from './destination-scoped-fields'
 import { buildFieldSpecs as buildAllFieldSpecs } from './fields'
-import type { FieldDefinition } from './types'
+import type { CaseRow, FieldDefinition } from './types'
 import {
   SHARE_COLUMN_META,
   SHARE_EXCLUDED_KEYS,
@@ -292,6 +293,52 @@ export function buildShareFieldLayout(
   opts: ShareFieldLayoutOptions,
 ): ShareFieldLayoutCategory[] {
   return groupShareDescriptorsByCategory(buildShareFieldDescriptors(opts))
+}
+
+/**
+ * 케이스에 이 필드 값이 이미 채워져 있는지 — 공유 다이얼로그의 "입력된 항목 숨김"용.
+ * 서버 toShareFieldSpec 의 current_value 도출과 같은 by_dest 규칙을 따른다(값 유무만 판정).
+ * 공유 링크는 '아직 안 받은 정보'를 수집하는 용도라, 이미 값이 있는 필드는 기본 숨김 대상.
+ */
+export function shareDescriptorHasValue(
+  d: ShareFieldDescriptor,
+  caseRow: CaseRow,
+  destinationScope?: string | null,
+): boolean {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const isMulti = parseDestinations(caseRow.destination).length > 1
+  const useByDest = isMulti && !!destinationScope && isDestinationScopedKey(d.key)
+  const byDestVal = useByDest ? readByDestValue(data, destinationScope ?? null, d.key) : undefined
+
+  if (d.source.kind === 'synthetic-vaccine') {
+    const g = d.source.group
+    if (g.storage_mode === 'array' && g.array_key) {
+      const arr = data[g.array_key]
+      if (Array.isArray(arr)) {
+        return arr.some((item) => {
+          if (!item || typeof item !== 'object' || Array.isArray(item)) return false
+          const obj = item as Record<string, unknown>
+          if (g.has_other_hospital && obj.other_hospital !== true) return false
+          return typeof obj.date === 'string' && obj.date.trim() !== ''
+        })
+      }
+    }
+    return false
+  }
+
+  const raw =
+    d.source.kind === 'column'
+      ? useByDest && byDestVal !== undefined
+        ? byDestVal
+        : (caseRow as unknown as Record<string, unknown>)[d.key]
+      : useByDest && byDestVal !== undefined
+        ? byDestVal
+        : data[d.key]
+
+  if (raw == null) return false
+  if (typeof raw === 'string') return raw.trim() !== ''
+  if (Array.isArray(raw)) return raw.length > 0
+  return true
 }
 
 function normalizeShareScope(scope: string | null | undefined): string {
