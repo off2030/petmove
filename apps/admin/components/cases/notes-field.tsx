@@ -1,10 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { Trash2, Paperclip } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
-import { AttachButton } from '@/components/ui/attach-button'
-import { cn, roundIconBtn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { persistField } from '@/lib/toast-bus'
 import { useCases } from './cases-context'
@@ -379,16 +378,9 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
         )}
       >
         <div className="flex items-center gap-[6px] pt-1">
-          <SectionLabel>첨부 파일</SectionLabel>
-          <AttachButton
-            multiple
-            scan={false}
-            onFile={(file) => uploadFiles([file])}
-            className="inline-flex ml-auto md:ml-2 h-7 w-7 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
-            title="파일 첨부"
-          >
-            <Paperclip size={14} />
-          </AttachButton>
+          <SectionLabel onClick={() => fileRef.current?.click()} title="클릭 · 드래그 · Ctrl+V 로 첨부">
+            첨부 파일
+          </SectionLabel>
         </div>
 
         <div className="min-w-0 space-y-1">

@@ -1028,9 +1028,10 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, onTakeoverDrag }: {
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
-      <SectionLabel>{label}</SectionLabel>
-      {/* 다른 추가정보 행처럼 첨부 버튼만. 올린 파일은 메모(notes)에 모여 표시되며
-          (업로드 시 documents+notes 동시 기록) 인라인 리스트는 두지 않는다. */}
+      {/* 라벨 클릭으로 파일 선택. 드래그·Ctrl+V 도 지원. 올린 파일은 '첨부 파일' 행(메모 분리)에 표시. */}
+      <SectionLabel onClick={() => inputRef.current?.click()} title="클릭 · 드래그 · Ctrl+V 로 첨부">
+        {label}
+      </SectionLabel>
       <div className="min-w-0 flex items-center flex-wrap gap-2">
         <input
           ref={inputRef}
@@ -1042,17 +1043,11 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, onTakeoverDrag }: {
             if (f) handleFile(f)
           }}
         />
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={uploading}
-          className={cn(
-            'text-xs px-2 py-0.5 rounded-md border border-border/60 hover:bg-accent/60',
-            uploading && 'opacity-60 cursor-progress',
-          )}
-        >
-          {uploading ? '업로드 중…' : '+ 첨부'}
-        </button>
+        {uploading ? (
+          <span className="text-xs text-muted-foreground">업로드 중…</span>
+        ) : (
+          <span className="text-muted-foreground/40 select-none" aria-hidden>—</span>
+        )}
         {error && <span className="text-xs text-destructive">{error}</span>}
       </div>
     </div>
