@@ -37,6 +37,8 @@ import {
   readByDestValue,
   writeByDestValue,
   applyAutoFillRules,
+  SHARE_FILE_REQUESTS,
+  shareFileRequestByKey,
   type CaseRow,
   type FieldDefinition,
   type DestinationExtraFieldEntry,
@@ -258,6 +260,14 @@ export async function getShareLinkByToken(
       extraEntries,
     )
 
+    // 요청된 파일 슬롯 — 저장된 key 를 도메인 정의로 라벨·필수여부 복원(정의 순서).
+    const requestedKeys = new Set(row.file_request_keys ?? [])
+    const fileRequests = SHARE_FILE_REQUESTS.filter((r) => requestedKeys.has(r.key)).map((r) => ({
+      key: r.key,
+      label: r.label,
+      required: r.required,
+    }))
+
     return {
       ok: true,
       value: {
@@ -267,6 +277,7 @@ export async function getShareLinkByToken(
         org_name_en: (orgRow?.name_en as string | undefined) ?? '',
         title: row.title,
         fields,
+        file_requests: fileRequests,
         status,
         expires_at: row.expires_at,
         submitted_at: row.submitted_at,
@@ -586,6 +597,10 @@ function shareFileAllowed(mime: string): boolean {
  * 유효(active) 정보요청 링크의 수신자가 올린 파일을 케이스 첨부(attachments 버킷 +
  * case.data.documents/notes)로 저장. 운영자는 기존 케이스 첨부 화면에서 그대로 본다.
  * anon 경로라 토큰 유효성으로만 게이트한다(submitShareLink 와 동일). 값 제출 전에 호출.
+ *
+ * FormData 규약: 'slotKeys' = 파일이 담긴 슬롯 key 목록, 각 슬롯 파일은 `slot:<key>` 로 append.
+ * 첨부 파일명은 슬롯 라벨을 앞에 붙여("이동 가방 사진 - xxx.jpg") 운영자가 뭐가 뭔지 알게 한다.
+ * 필수 슬롯 검증은 값 제출 흐름(고객 폼)에서 하고, 여기선 저장에 집중한다.
  */
 export async function uploadShareSubmissionFiles(
   formData: FormData,
@@ -595,18 +610,27 @@ export async function uploadShareSubmissionFiles(
     if (typeof token !== 'string' || !UUID_RE.test(token)) {
       return { ok: false, error: '유효하지 않은 링크입니다' }
     }
-    const files = formData
-      .getAll('files')
-      .filter((f): f is File => f instanceof File && f.size > 0)
-    if (files.length === 0) return { ok: true, value: { count: 0 } }
-    if (files.length > SHARE_UPLOAD_MAX_FILES) {
+    // 슬롯 key → 파일 목록. 슬롯 없는 경우(구 방식) 'files' 도 라벨 없이 수용.
+    const slotKeys = formData.getAll('slotKeys').filter((k): k is string => typeof k === 'string')
+    const collected: { file: File; label: string | null }[] = []
+    for (const key of slotKeys) {
+      const def = shareFileRequestByKey(key)
+      for (const f of formData.getAll(`slot:${key}`)) {
+        if (f instanceof File && f.size > 0) collected.push({ file: f, label: def?.label ?? null })
+      }
+    }
+    for (const f of formData.getAll('files')) {
+      if (f instanceof File && f.size > 0) collected.push({ file: f, label: null })
+    }
+    if (collected.length === 0) return { ok: true, value: { count: 0 } }
+    if (collected.length > SHARE_UPLOAD_MAX_FILES) {
       return { ok: false, error: `파일은 최대 ${SHARE_UPLOAD_MAX_FILES}개까지 첨부할 수 있습니다.` }
     }
-    for (const f of files) {
-      if (!shareFileAllowed(f.type)) {
+    for (const { file } of collected) {
+      if (!shareFileAllowed(file.type)) {
         return { ok: false, error: '이미지 또는 PDF 파일만 올릴 수 있습니다.' }
       }
-      if (f.size > SHARE_UPLOAD_MAX_BYTES) {
+      if (file.size > SHARE_UPLOAD_MAX_BYTES) {
         return { ok: false, error: '파일 크기는 각 12MB 이하여야 합니다.' }
       }
     }
@@ -635,8 +659,10 @@ export async function uploadShareSubmissionFiles(
     const newDocs: Record<string, unknown>[] = []
     const newNotes: Record<string, unknown>[] = []
     const uploadedPaths: string[] = []
-    for (const file of files) {
-      const safeName = (file.name || 'file').replace(/[^a-zA-Z0-9._-]/g, '_')
+    for (const { file, label } of collected) {
+      const rawName = file.name || 'file'
+      const displayName = label ? `${label} - ${rawName}` : rawName
+      const safeName = displayName.replace(/[^a-zA-Z0-9._-]/g, '_')
       const path = `${row.case_id}/${Date.now()}_${randomUUID().slice(0, 8)}_${safeName}`
       const buffer = Buffer.from(await file.arrayBuffer())
       const { error: upErr } = await admin.storage
@@ -648,7 +674,6 @@ export async function uploadShareSubmissionFiles(
       }
       uploadedPaths.push(path)
       const uploadedAt = new Date().toISOString()
-      const displayName = file.name || safeName
       newDocs.push({
         id: randomUUID(),
         name: displayName,
@@ -671,7 +696,7 @@ export async function uploadShareSubmissionFiles(
       await admin.storage.from(SHARE_UPLOAD_BUCKET).remove(uploadedPaths)
       return { ok: false, error: error.message }
     }
-    return { ok: true, value: { count: files.length } }
+    return { ok: true, value: { count: collected.length } }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }

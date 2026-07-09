@@ -30,6 +30,7 @@ import {
   groupShareDescriptorsByCategory,
   parseDestinations,
   shareDescriptorHasValue,
+  shareFileRequestsForDestination,
 } from '@petmove/domain'
 import type { SharePreset } from '@/lib/share-presets-types'
 
@@ -159,6 +160,24 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     [allDescriptors, caseRow, destination],
   )
 
+  // 목적지별 파일 요청 — 필수는 항상 포함, 선택은 토글.
+  const fileRequests = useMemo(() => shareFileRequestsForDestination(destination), [destination])
+  const requiredFileReqs = useMemo(() => fileRequests.filter((r) => r.required), [fileRequests])
+  const optionalFileReqs = useMemo(() => fileRequests.filter((r) => !r.required), [fileRequests])
+  const [selectedOptionalFileKeys, setSelectedOptionalFileKeys] = useState<Set<string>>(() => new Set())
+  const requestedFileKeys = useMemo(
+    () => [...requiredFileReqs.map((r) => r.key), ...optionalFileReqs.filter((r) => selectedOptionalFileKeys.has(r.key)).map((r) => r.key)],
+    [requiredFileReqs, optionalFileReqs, selectedOptionalFileKeys],
+  )
+  function toggleOptionalFile(key: string) {
+    setSelectedOptionalFileKeys((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
   const [selectedFieldIds, setSelectedFieldIds] = useState<Set<string>>(() => new Set())
 
   const allSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedFieldIds.has(id))
@@ -280,8 +299,8 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
   }
 
   function handleCreate() {
-    if (selectedFields.length === 0) {
-      setError('최소 1개 이상의 필드를 선택해주세요')
+    if (selectedFields.length === 0 && requestedFileKeys.length === 0) {
+      setError('요청할 정보나 파일을 최소 1개 선택해주세요')
       return
     }
     setError(null)
@@ -294,6 +313,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
         template: templateLabel,
         fieldKeys: selectedFields.map((f) => f.key),
         fieldIds: selectedFields.map((f) => f.id),
+        fileRequestKeys: requestedFileKeys,
         destinationScope: destination,
         title: null,
         expiresInDays: SHARE_LINK_EXPIRY_DAYS,
@@ -319,6 +339,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
       setTimeout(() => setSuccessMsg(null), 5000)
       // 폼 초기화
       setSelectedFieldIds(new Set())
+      setSelectedOptionalFileKeys(new Set())
       await refresh()
     })
   }
@@ -516,6 +537,58 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
             </div>
           </section>
 
+          {/* 파일 첨부 요청 — 목적지별 필수/선택 슬롯 */}
+          {fileRequests.length > 0 && (
+            <section>
+              <div className="flex items-baseline justify-between gap-md mb-2 pb-1.5 border-b border-border/60">
+                <h3 className="font-sans text-[12px] font-semibold text-foreground/80">파일 요청</h3>
+                <span className="font-sans text-[11px] text-muted-foreground/70">보호자가 올릴 파일</span>
+              </div>
+              {requiredFileReqs.length > 0 && (
+                <div className="mb-2">
+                  <p className="mb-1 font-sans text-[11px] font-medium text-muted-foreground/70">필수 (항상 요청)</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {requiredFileReqs.map((r) => (
+                      <span
+                        key={r.key}
+                        className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-foreground bg-foreground text-background font-serif text-[12px]"
+                        title="필수 — 항상 요청됩니다"
+                      >
+                        {r.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {optionalFileReqs.length > 0 && (
+                <div>
+                  <p className="mb-1 font-sans text-[11px] font-medium text-muted-foreground/70">선택 (필요 시 켜기)</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {optionalFileReqs.map((r) => {
+                      const active = selectedOptionalFileKeys.has(r.key)
+                      return (
+                        <button
+                          key={r.key}
+                          type="button"
+                          onClick={() => toggleOptionalFile(r.key)}
+                          aria-pressed={active}
+                          className={cn(
+                            'h-7 px-2.5 rounded-full border font-serif text-[12px] transition-colors',
+                            active
+                              ? 'border-foreground bg-foreground text-background'
+                              : 'border-border/80 text-muted-foreground hover:bg-accent hover:text-foreground',
+                          )}
+                        >
+                          {r.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
           {error && (
             <p className="font-serif text-[13px] text-destructive">{error}</p>
           )}
@@ -605,7 +678,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
             primaryLabel="링크 만들기"
             savingLabel="만드는 중…"
             saving={pending}
-            primaryDisabled={selectedFields.length === 0}
+            primaryDisabled={selectedFields.length === 0 && requestedFileKeys.length === 0}
           />
         </div>
       </div>

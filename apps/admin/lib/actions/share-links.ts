@@ -24,6 +24,8 @@ export interface CreateShareLinkInput {
   template: string | null
   fieldKeys: string[]
   fieldIds?: string[]
+  /** 요청할 파일 첨부 슬롯 key (SHARE_FILE_REQUESTS.key). */
+  fileRequestKeys?: string[]
   destinationScope?: string | null
   title?: string | null
   expiresInDays?: number
@@ -38,8 +40,9 @@ export async function createShareLink(
     if (!user) return { ok: false, error: '인증 필요' }
     const orgId = await getActiveOrgId()
 
-    if (input.fieldKeys.length === 0) {
-      return { ok: false, error: '최소 1개 이상의 필드를 선택해주세요' }
+    const fileRequestKeys = input.fileRequestKeys ?? []
+    if (input.fieldKeys.length === 0 && fileRequestKeys.length === 0) {
+      return { ok: false, error: '요청할 정보나 파일을 최소 1개 선택해주세요' }
     }
 
     // 케이스 소유 확인
@@ -64,6 +67,7 @@ export async function createShareLink(
         template: input.template,
         field_keys: input.fieldKeys,
         field_ids: input.fieldIds ?? input.fieldKeys,
+        file_request_keys: fileRequestKeys.length > 0 ? fileRequestKeys : null,
         destination_scope: input.destinationScope?.trim() || null,
         title: input.title?.trim() || null,
         created_by: user.id,

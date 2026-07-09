@@ -88,7 +88,8 @@ export function ShareForm({ initial }: Props) {
     return out
   })
   const [submitterNote, setSubmitterNote] = useState('')
-  const [files, setFiles] = useState<File[]>([])
+  // 파일 요청 슬롯별 선택 파일 (key = file_requests[].key).
+  const [filesBySlot, setFilesBySlot] = useState<Record<string, File[]>>({})
   // 업로드 성공 후 재제출 시 중복 업로드 방지.
   const uploadedRef = useRef(false)
   const [error, setError] = useState<string | null>(null)
@@ -141,23 +142,34 @@ export function ShareForm({ initial }: Props) {
     setValues((prev) => ({ ...prev, [key]: value }))
   }
 
-  function addFiles(list: FileList | null) {
+  function addSlotFiles(key: string, list: FileList | null) {
     if (!list || list.length === 0) return
-    setFiles((prev) => [...prev, ...Array.from(list)].slice(0, 10))
+    setFilesBySlot((prev) => ({ ...prev, [key]: [...(prev[key] ?? []), ...Array.from(list)] }))
   }
-  function removeFile(idx: number) {
-    setFiles((prev) => prev.filter((_, i) => i !== idx))
+  function removeSlotFile(key: string, idx: number) {
+    setFilesBySlot((prev) => ({ ...prev, [key]: (prev[key] ?? []).filter((_, i) => i !== idx) }))
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    // 필수 파일 검증 — 안 올린 필수 슬롯이 있으면 제출 차단.
+    const missing = view.file_requests.filter((r) => r.required && (filesBySlot[r.key]?.length ?? 0) === 0)
+    if (missing.length > 0) {
+      setError(`필수 파일을 첨부해주세요: ${missing.map((r) => r.label).join(', ')}`)
+      return
+    }
     startTransition(async () => {
       // 파일이 있으면 값 제출 전에 먼저 업로드(링크가 active 인 동안). 성공 시 재제출에서 재업로드 안 함.
-      if (files.length > 0 && !uploadedRef.current) {
+      const hasFiles = Object.values(filesBySlot).some((arr) => arr.length > 0)
+      if (hasFiles && !uploadedRef.current) {
         const fd = new FormData()
         fd.append('token', view.token)
-        for (const f of files) fd.append('files', f)
+        for (const [key, arr] of Object.entries(filesBySlot)) {
+          if (arr.length === 0) continue
+          fd.append('slotKeys', key)
+          for (const f of arr) fd.append(`slot:${key}`, f)
+        }
         const up = await uploadShareSubmissionFiles(fd)
         if (!up.ok) {
           setError(up.error)
@@ -290,50 +302,67 @@ export function ShareForm({ initial }: Props) {
             </section>
           ))}
 
-          <section className={sectionCardClass}>
-            <FieldRow label="파일 첨부" hint="선택">
-              <div className="w-full">
-                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border/80 px-3 py-1.5 font-serif text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-                  <Plus size={14} /> 파일 선택
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*,application/pdf"
-                    className="hidden"
-                    onChange={(e) => { addFiles(e.target.files); e.currentTarget.value = '' }}
-                  />
-                </label>
-                <p className="mt-1.5 font-serif text-[12px] italic text-muted-foreground/60">
-                  여권 사본·서류 사진 등 · 이미지 또는 PDF, 각 12MB 이하 (최대 10개)
-                </p>
-                {files.length > 0 && (
-                  <ul className="mt-2 space-y-1">
-                    {files.map((f, i) => (
-                      <li
-                        key={`${f.name}-${i}`}
-                        className="flex items-center justify-between gap-2 rounded-md border border-border/60 px-2.5 py-1.5"
-                      >
-                        <span className="min-w-0 truncate font-serif text-[13px] text-foreground">{f.name}</span>
-                        <span className="flex shrink-0 items-center gap-2">
-                          <span className="font-mono text-[11px] text-muted-foreground/60">
-                            {(f.size / 1024 / 1024).toFixed(1)}MB
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeFile(i)}
-                            className="text-muted-foreground/50 transition-colors hover:text-destructive"
-                            aria-label="파일 제거"
-                          >
-                            <X size={13} />
-                          </button>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </FieldRow>
-          </section>
+          {view.file_requests.length > 0 && (
+            <section className={sectionCardClass}>
+              <p className="mb-3 font-serif text-[13px] leading-relaxed text-muted-foreground">
+                아래 파일을 첨부해주세요. <span className="text-destructive">필수</span> 표시는 반드시 올려야 제출됩니다. (이미지 또는 PDF, 각 12MB 이하)
+              </p>
+              {view.file_requests.map((r) => {
+                const slotFiles = filesBySlot[r.key] ?? []
+                return (
+                  <FieldRow
+                    key={r.key}
+                    label={
+                      <span className="inline-flex items-center gap-1.5">
+                        {r.label}
+                        {r.required
+                          ? <span className="rounded-sm bg-destructive/10 px-1.5 py-0.5 font-sans text-[10px] font-medium text-destructive">필수</span>
+                          : <span className="rounded-sm bg-muted px-1.5 py-0.5 font-sans text-[10px] font-medium text-muted-foreground">선택</span>}
+                      </span>
+                    }
+                  >
+                    <div className="w-full">
+                      <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border/80 px-3 py-1.5 font-serif text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                        <Plus size={14} /> 파일 선택
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*,application/pdf"
+                          className="hidden"
+                          onChange={(e) => { addSlotFiles(r.key, e.target.files); e.currentTarget.value = '' }}
+                        />
+                      </label>
+                      {slotFiles.length > 0 && (
+                        <ul className="mt-2 space-y-1">
+                          {slotFiles.map((f, i) => (
+                            <li
+                              key={`${f.name}-${i}`}
+                              className="flex items-center justify-between gap-2 rounded-md border border-border/60 px-2.5 py-1.5"
+                            >
+                              <span className="min-w-0 truncate font-serif text-[13px] text-foreground">{f.name}</span>
+                              <span className="flex shrink-0 items-center gap-2">
+                                <span className="font-mono text-[11px] text-muted-foreground/60">
+                                  {(f.size / 1024 / 1024).toFixed(1)}MB
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeSlotFile(r.key, i)}
+                                  className="text-muted-foreground/50 transition-colors hover:text-destructive"
+                                  aria-label="파일 제거"
+                                >
+                                  <X size={13} />
+                                </button>
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </FieldRow>
+                )
+              })}
+            </section>
+          )}
 
           <section className={sectionCardClass}>
             <FieldRow label="메모" hint="선택">

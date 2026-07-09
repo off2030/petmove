@@ -9,6 +9,8 @@ export interface ShareLinkRow {
   template: string | null
   field_keys: string[]
   field_ids: string[] | null
+  /** 요청된 파일 첨부 슬롯 key (SHARE_FILE_REQUESTS.key). 라벨·필수여부는 정의로 되살림. */
+  file_request_keys: string[] | null
   destination_scope: string | null
   title: string | null
   created_by: string | null
@@ -186,9 +188,17 @@ export interface ShareLinkPublicView {
   org_name_en: string
   title: string | null
   fields: ShareFieldSpec[]
+  /** 고객이 올려야 할 파일 슬롯 — 라벨·필수여부 포함(도메인 정의로 되살림). */
+  file_requests: ShareFileRequestView[]
   status: ShareLinkStatus
   expires_at: string
   submitted_at: string | null
+}
+
+export interface ShareFileRequestView {
+  key: string
+  label: string
+  required: boolean
 }
 
 /** cases 테이블 컬럼 중 외부에서 채울 수 있는 것 — 식별·내부 컬럼 제외. */
