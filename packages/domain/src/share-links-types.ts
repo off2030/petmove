@@ -255,7 +255,7 @@ export const SHARE_RECIPIENT_LABEL_OVERRIDE: Record<string, string> = {
  * admin 다이얼로그 칩에는 나오지 않는다(라벨만 사용). key = 필드 key.
  */
 export const SHARE_RECIPIENT_FIELD_DESCRIPTION: Record<string, string> = {
-  certificate_no: '기존 일본 방문 이력이 있는 경우에만 입력하세요.',
+  certificate_no: '일본 방문 이력이 있는 경우 입력하세요.',
 }
 
 /**

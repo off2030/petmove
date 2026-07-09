@@ -87,7 +87,6 @@ export function ShareForm({ initial }: Props) {
     }
     return out
   })
-  const [submitterNote, setSubmitterNote] = useState('')
   // 파일 요청 슬롯별 선택 파일 (key = file_requests[].key).
   const [filesBySlot, setFilesBySlot] = useState<Record<string, File[]>>({})
   // 업로드 성공 후 재제출 시 중복 업로드 방지.
@@ -174,7 +173,7 @@ export function ShareForm({ initial }: Props) {
       const result = await submitShareLink({
         token: view.token,
         values,
-        submitterNote: submitterNote || null,
+        submitterNote: null,
       })
       if (!result.ok) {
         setError(result.error)
@@ -347,19 +346,6 @@ export function ShareForm({ initial }: Props) {
               })}
             </section>
           )}
-
-          <section className={sectionCardClass}>
-            <FieldRow label="메모" hint="선택">
-              <textarea
-                value={submitterNote}
-                onChange={(e) => setSubmitterNote(e.target.value)}
-                rows={3}
-                maxLength={500}
-                placeholder="담당자에게 전달할 메시지가 있다면 적어주세요."
-                className={textareaClass}
-              />
-            </FieldRow>
-          </section>
 
           {error && (
             <div className="rounded-md border border-destructive/20 bg-destructive/10 px-md py-2.5 text-sm text-destructive">
