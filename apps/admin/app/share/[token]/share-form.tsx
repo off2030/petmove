@@ -54,12 +54,13 @@ const inputClass =
   'w-full h-10 bg-transparent px-0 font-serif font-semibold text-[17px] leading-tight text-foreground placeholder:font-serif placeholder:italic placeholder:font-normal placeholder:text-[14px] placeholder:text-muted-foreground/50 focus:outline-none transition-colors'
 const inputEnClass =
   'w-full h-10 bg-transparent px-0 font-serif italic text-[17px] text-foreground placeholder:font-serif placeholder:italic placeholder:font-normal placeholder:text-[14px] placeholder:text-muted-foreground/50 focus:outline-none transition-colors'
+// 모바일: 입력 폰트 16px 이상이라야 iOS 포커스 시 확대(zoom)가 안 남 — 15→16.
 const numericInputClass =
-  'w-full h-10 bg-transparent px-0 font-mono text-[15px] tracking-[0.3px] tabular-nums text-foreground placeholder:font-serif placeholder:italic placeholder:font-normal placeholder:text-[14px] placeholder:text-muted-foreground/50 focus:outline-none transition-colors'
+  'w-full h-10 bg-transparent px-0 font-mono text-[16px] tracking-[0.3px] tabular-nums text-foreground placeholder:font-serif placeholder:italic placeholder:font-normal placeholder:text-[14px] placeholder:text-muted-foreground/50 focus:outline-none transition-colors'
 const textareaClass =
   'w-full min-h-[88px] bg-transparent px-0 py-1 font-serif font-semibold text-[17px] leading-relaxed text-foreground placeholder:font-serif placeholder:italic placeholder:font-normal placeholder:text-[14px] placeholder:text-muted-foreground/50 focus:outline-none resize-none transition-colors'
 const selectClass =
-  'w-full h-10 rounded-md border border-border/80 bg-background px-3 font-serif text-[15px] text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
+  'w-full h-10 rounded-md border border-border/80 bg-background px-3 font-serif text-[16px] text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
 const primaryButtonClass = cn(
   'inline-flex items-center justify-center rounded-md font-medium transition-colors',
   'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
@@ -68,13 +69,27 @@ const primaryButtonClass = cn(
   'bg-primary text-primary-foreground hover:bg-primary/90',
 )
 const dateFieldClass =
-  'h-10 w-60 max-w-full bg-transparent px-0 font-mono text-[15px] tracking-[0.3px] tabular-nums text-foreground placeholder:font-serif placeholder:italic placeholder:text-[14px] placeholder:text-muted-foreground/50 focus:outline-none transition-colors'
+  'h-10 w-60 max-w-full bg-transparent px-0 font-mono text-[16px] tracking-[0.3px] tabular-nums text-foreground placeholder:font-serif placeholder:italic placeholder:text-[14px] placeholder:text-muted-foreground/50 focus:outline-none transition-colors'
 const compactInputClass =
   'h-7 min-w-[80px] bg-transparent px-1 font-serif text-[13px] text-foreground placeholder:font-serif placeholder:italic placeholder:text-muted-foreground/55 focus:outline-none focus:bg-accent/40 rounded [field-sizing:content]'
 const compactDateClass =
   'h-7 min-w-0 rounded-md border border-transparent bg-transparent px-1 font-mono text-[13px] tracking-[0.3px] text-foreground placeholder:font-serif placeholder:italic placeholder:text-muted-foreground/55 focus-visible:border-border/80 focus-visible:bg-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
 const inlineMetaLabelClass =
   'whitespace-nowrap font-serif text-[12px] italic text-muted-foreground/70'
+
+/** 필드 값이 비어있는지 — date_array 는 날짜가 하나도 없으면 빈 것으로 본다. */
+function isEmptyValue(field: ShareFieldSpec, v: unknown): boolean {
+  if (field.type === 'date_array') {
+    return (
+      !Array.isArray(v) ||
+      !v.some((r) => r && typeof r === 'object' && typeof (r as { date?: unknown }).date === 'string' && ((r as { date: string }).date).trim() !== '')
+    )
+  }
+  if (v == null) return true
+  if (typeof v === 'string') return v.trim() === ''
+  if (Array.isArray(v)) return v.length === 0
+  return false
+}
 
 export function ShareForm({ initial }: Props) {
   const [view] = useState(initial)
@@ -95,10 +110,39 @@ export function ShareForm({ initial }: Props) {
   const [done, setDone] = useState(false)
   const [pending, startTransition] = useTransition()
   const [expiresLabel, setExpiresLabel] = useState('')
+  // #3 미입력 확인 — 비어있는 항목이 있으면 한 번 알리고, 다시 누르면 그대로 전송.
+  const [emptyWarn, setEmptyWarn] = useState<string[] | null>(null)
+  const emptyConfirmedRef = useRef(false)
+  // #5 자동 임시 저장 (localStorage).
+  const storageKey = `petmove:share:${view.token}`
+  const savedReadyRef = useRef(false)
 
   useEffect(() => {
     setExpiresLabel(new Date(view.expires_at).toLocaleString('ko-KR'))
   }, [view.expires_at])
+
+  // #5 마운트 후 임시 저장 복원 (SSR 하이드레이션 불일치 방지 위해 initializer 아닌 effect 에서).
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey)
+      if (saved) {
+        const parsed = JSON.parse(saved) as Record<string, unknown>
+        setValues((prev) => {
+          const next = { ...prev }
+          for (const k of Object.keys(prev)) if (k in parsed) next[k] = parsed[k]
+          return next
+        })
+      }
+    } catch {}
+    savedReadyRef.current = true
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // #5 값 변경 시 임시 저장 (복원 완료 후에만).
+  useEffect(() => {
+    if (!savedReadyRef.current) return
+    try { localStorage.setItem(storageKey, JSON.stringify(values)) } catch {}
+  }, [values, storageKey])
 
   if (view.status === 'submitted' || done) {
     return (
@@ -152,6 +196,16 @@ export function ShareForm({ initial }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    // #3 비어있는 항목 확인 — address_en 은 주소검색으로 자동 채워지므로 제외.
+    const empties = view.fields.filter(
+      (f) => f.key !== 'address_en' && isEmptyValue(f, values[f.key]),
+    )
+    if (empties.length > 0 && !emptyConfirmedRef.current) {
+      setEmptyWarn(empties.map((f) => f.label))
+      emptyConfirmedRef.current = true
+      return
+    }
+    setEmptyWarn(null)
     startTransition(async () => {
       // 파일이 있으면 값 제출 전에 먼저 업로드(링크가 active 인 동안). 성공 시 재제출에서 재업로드 안 함.
       const hasFiles = Object.values(filesBySlot).some((arr) => arr.length > 0)
@@ -179,6 +233,7 @@ export function ShareForm({ initial }: Props) {
         setError(result.error)
         return
       }
+      try { localStorage.removeItem(storageKey) } catch {}
       setDone(true)
     })
   }
@@ -322,7 +377,10 @@ export function ShareForm({ initial }: Props) {
                               key={`${f.name}-${i}`}
                               className="flex items-center justify-between gap-2 rounded-md border border-border/60 px-2.5 py-1.5"
                             >
-                              <span className="min-w-0 truncate font-serif text-[13px] text-foreground">{f.name}</span>
+                              <span className="flex min-w-0 items-center gap-2.5">
+                                <FilePreview file={f} />
+                                <span className="min-w-0 truncate font-serif text-[13px] text-foreground">{f.name}</span>
+                              </span>
                               <span className="flex shrink-0 items-center gap-2">
                                 <span className="font-mono text-[11px] text-muted-foreground/60">
                                   {(f.size / 1024 / 1024).toFixed(1)}MB
@@ -347,6 +405,13 @@ export function ShareForm({ initial }: Props) {
             </section>
           )}
 
+          {emptyWarn && emptyWarn.length > 0 && (
+            <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-md py-2.5 font-serif text-[13px] leading-relaxed text-amber-800 dark:text-amber-300">
+              <span className="font-medium">{emptyWarn.slice(0, 4).join(', ')}{emptyWarn.length > 4 ? ` 외 ${emptyWarn.length - 4}개` : ''}</span>
+              {' '}항목이 비어 있어요. 그대로 보내시려면 아래 <span className="font-medium">‘그대로 보내기’</span>를 눌러주세요.
+            </div>
+          )}
+
           {error && (
             <div className="rounded-md border border-destructive/20 bg-destructive/10 px-md py-2.5 text-sm text-destructive">
               {error}
@@ -354,7 +419,7 @@ export function ShareForm({ initial }: Props) {
           )}
 
           <button type="submit" disabled={pending} className={primaryButtonClass}>
-            {pending ? '보내는 중' : '보내기'}
+            {pending ? '보내는 중' : emptyWarn && emptyWarn.length > 0 ? '그대로 보내기' : '보내기'}
           </button>
 
           <p className="pb-10 text-center font-mono text-[11px] uppercase tracking-[1.5px] text-muted-foreground" suppressHydrationWarning>
@@ -392,6 +457,26 @@ function StatusScreen({
         </p>
       </div>
     </div>
+  )
+}
+
+/** 첨부 파일 미리보기 — 이미지는 썸네일, 그 외(PDF)는 라벨 배지. */
+function FilePreview({ file }: { file: File }) {
+  const [url, setUrl] = useState<string | null>(null)
+  useEffect(() => {
+    if (!file.type.startsWith('image/')) return
+    const u = URL.createObjectURL(file)
+    setUrl(u)
+    return () => URL.revokeObjectURL(u)
+  }, [file])
+  if (url) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={url} alt="" className="h-10 w-10 shrink-0 rounded border border-border/60 object-cover" />
+  }
+  return (
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded border border-border/60 bg-muted/40 font-mono text-[10px] uppercase tracking-[0.5px] text-muted-foreground">
+      {file.type === 'application/pdf' ? 'PDF' : '파일'}
+    </span>
   )
 }
 
@@ -671,6 +756,7 @@ function FieldInput({
       ) : (
         <input
           type="text"
+          inputMode={field.key === 'microchip' ? 'numeric' : undefined}
           value={strVal}
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
