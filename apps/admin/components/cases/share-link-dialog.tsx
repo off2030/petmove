@@ -33,6 +33,9 @@ import {
 } from '@petmove/domain'
 import type { SharePreset } from '@/lib/share-presets-types'
 
+// 정보 요청 링크 만료 — 외부(보호자) 개인정보가 담기므로 무기한은 지양, 30일 고정(UI 미노출).
+const SHARE_LINK_EXPIRY_DAYS = 30
+
 interface Props {
   caseRow: CaseRow
   caseLabel: string
@@ -137,8 +140,6 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
   }, [destination, importReportCountries, allDescriptors])
 
   const [selectedFieldIds, setSelectedFieldIds] = useState<Set<string>>(() => new Set())
-  const [title, setTitle] = useState('')
-  const [expiresInDays, setExpiresInDays] = useState(30)
 
   const [links, setLinks] = useState<ShareLinkRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -262,8 +263,8 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
         fieldKeys: selectedFields.map((f) => f.key),
         fieldIds: selectedFields.map((f) => f.id),
         destinationScope: destination,
-        title: title.trim() || null,
-        expiresInDays,
+        title: null,
+        expiresInDays: SHARE_LINK_EXPIRY_DAYS,
       })
       if (!r.ok) { setError(r.error); return }
       // 생성 직후 자동 복사 시도
@@ -286,7 +287,6 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
       setTimeout(() => setSuccessMsg(null), 5000)
       // 폼 초기화
       setSelectedFieldIds(new Set())
-      setTitle('')
       await refresh()
     })
   }
@@ -480,39 +480,6 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                 </div>
               ))}
             </div>
-          </section>
-
-          {/* 안내 메시지 + 만료 */}
-          <section className="space-y-md">
-            <label className="block">
-              <span className="font-sans text-[11px] font-medium text-muted-foreground/80">
-                받는 사람에게 보일 안내 (선택)
-              </span>
-              <textarea
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                rows={2}
-                maxLength={300}
-                className="mt-1 w-full px-3 py-2 rounded-md border border-border/80 bg-background font-serif text-[14px] resize-none focus:outline-none focus:border-foreground/40"
-              />
-            </label>
-            <label className="block max-w-[180px]">
-              <span className="font-sans text-[11px] font-medium text-muted-foreground/80">
-                만료
-              </span>
-              <select
-                value={expiresInDays}
-                onChange={(e) => setExpiresInDays(Number(e.target.value))}
-                className="mt-1 w-full px-3 py-2 rounded-md border border-border/80 bg-background font-serif text-[14px] focus:outline-none focus:border-foreground/40"
-              >
-                <option value={1}>1일</option>
-                <option value={3}>3일</option>
-                <option value={7}>7일</option>
-                <option value={14}>14일</option>
-                <option value={30}>30일</option>
-                <option value={90}>90일</option>
-              </select>
-            </label>
           </section>
 
           {error && (
