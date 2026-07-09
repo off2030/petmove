@@ -374,9 +374,10 @@ export function TopBar({
         </button>
         </div>
 
-        {/* Nav tabs — right side, hidden on mobile (replaced by hamburger) */}
+        {/* Nav tabs — right side, hidden on mobile (replaced by hamburger).
+            '알림'은 텍스트 탭이 아니라 우측 아이콘 영역(설정 왼쪽)에 종 아이콘으로 둔다. */}
         <nav className="hidden md:flex items-center gap-xs">
-          {NAV_ITEMS.map(({ id, label }) => {
+          {NAV_ITEMS.filter((item) => item.id !== 'messages').map(({ id, label }) => {
             const active = activeTab === id
             if (onTabChange) {
               return (
@@ -450,6 +451,38 @@ export function TopBar({
             <Sun size={18} className="theme-icon-light" />
             <Moon size={18} className="theme-icon-dark" />
           </button>
+          {/* 알림 — 설정 왼쪽. 안 읽은 개수 배지 표시. */}
+          {onTabChange ? (
+            <button
+              type="button"
+              onClick={() => onTabChange('messages')}
+              title={messagesUnread > 0 ? `안 읽은 알림 ${messagesUnread}개` : '알림'}
+              aria-label="알림"
+              className={iconSlotClass(activeTab === 'messages')}
+            >
+              <Bell size={18} />
+              {messagesUnread > 0 && (
+                <span className="absolute top-0.5 right-0.5 min-w-[15px] h-[15px] px-1 rounded-full bg-destructive text-white font-mono text-[9px] font-semibold leading-none flex items-center justify-center ring-2 ring-background">
+                  {messagesUnread > 99 ? '99+' : messagesUnread}
+                </span>
+              )}
+            </button>
+          ) : (
+            <Link
+              href="/messages"
+              prefetch={false}
+              title={messagesUnread > 0 ? `안 읽은 알림 ${messagesUnread}개` : '알림'}
+              aria-label="알림"
+              className={iconSlotClass(false)}
+            >
+              <Bell size={18} />
+              {messagesUnread > 0 && (
+                <span className="absolute top-0.5 right-0.5 min-w-[15px] h-[15px] px-1 rounded-full bg-destructive text-white font-mono text-[9px] font-semibold leading-none flex items-center justify-center ring-2 ring-background">
+                  {messagesUnread > 99 ? '99+' : messagesUnread}
+                </span>
+              )}
+            </Link>
+          )}
           {onTabChange ? (
             <button
               type="button"
