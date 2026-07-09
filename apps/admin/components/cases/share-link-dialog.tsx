@@ -155,6 +155,16 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
 
   useEffect(() => { refresh() }, [caseId])
 
+  // 발급된 링크는 살아있는 것만 — 대기(복사·취소 가능) + 제출됨(입력 완료 확인).
+  // 만료·취소는 동작 없는 죽은 기록이라 목록에서 제외해 단순하게.
+  const visibleLinks = useMemo(
+    () => links.filter((l) => {
+      const s = shareLinkStatus(l)
+      return s === 'active' || s === 'submitted'
+    }),
+    [links],
+  )
+
   /** 프리셋 — 현재 케이스에서 적용 가능한 키만 추출 (목적지·종 필터 통과한 키만). */
   const allAvailableKeys = useMemo(() => {
     const set = new Set<string>()
@@ -570,15 +580,15 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
           {/* 기존 링크 목록 */}
           <section>
             <h3 className="font-sans text-[12px] font-semibold text-foreground/80 mb-2 pb-1.5 border-b border-border/60">
-              발급된 링크 · {links.length}
+              발급된 링크 · {visibleLinks.length}
             </h3>
             <div className="border-t border-border/80">
               {loading ? (
                 <p className="py-4 font-serif italic text-[13px] text-muted-foreground">불러오는 중…</p>
-              ) : links.length === 0 ? (
+              ) : visibleLinks.length === 0 ? (
                 <p className="py-4 font-serif italic text-[13px] text-muted-foreground">아직 발급된 링크가 없습니다.</p>
               ) : (
-                links.map((l) => {
+                visibleLinks.map((l) => {
                   const status = shareLinkStatus(l)
                   return (
                     <div key={l.id} className="grid grid-cols-[1fr_auto] gap-md py-3 border-b border-dotted border-border/80">
