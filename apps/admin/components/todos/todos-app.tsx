@@ -772,7 +772,8 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     cellClass: (row) => (isImportDeadlineWarning(row) ? 'text-pmw-warning' : ''),
   },
   { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: BASE_COL_W, readonly: true, resolveValue: (row) => importReportDeparture(row) },
-  { key: 'return_date', label: '귀국일', storage: 'data', type: 'date', width: BASE_COL_W, resolveValue: (row) => importReportReturnDate(row) },
+  // 신고 탭에서는 읽기 전용 — 수정은 상세페이지에서만.
+  { key: 'return_date', label: '귀국일', storage: 'data', type: 'date', width: BASE_COL_W, readonly: true, resolveValue: (row) => importReportReturnDate(row) },
   {
     key: 'import_import_status',
     label: '수입',
