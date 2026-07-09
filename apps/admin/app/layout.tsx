@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import Script from 'next/script'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import { ConfirmProvider } from '@petmove/ui'
@@ -35,23 +34,6 @@ export const viewport: Viewport = {
   themeColor: '#F5F4ED',
 }
 
-// hydration 전에 동기 실행 — localStorage 읽어 data-skin/.dark 미리 박아 FOUC 방지.
-// ThemeProvider 의 useEffect 가 같은 값을 다시 쓰지만 깜빡임 없음. VALID_SKINS 와
-// FORCE_DEFAULT_PATHS 는 theme-provider.tsx 와 동기화 유지.
-const SKIN_BOOT_SCRIPT = `(function(){try{
-var p=location.pathname;
-var force=p.indexOf('/apply')===0||p.indexOf('/share')===0;
-var h=document.documentElement;
-var m=localStorage.getItem('theme');
-var theme=force?'system':(m==='dark'||m==='light'?m:'system');
-h.setAttribute('data-theme',theme);
-var dark=!force&&(m==='dark'||((!m||m==='system')&&matchMedia('(prefers-color-scheme: dark)').matches));
-if(dark)h.classList.add('dark');
-var s=force?null:localStorage.getItem('skin');
-var V=['glassmorphism','sakura','baby-blue','scandi-minimal','art-deco','flat','hygge'];
-if(s&&V.indexOf(s)>=0)h.setAttribute('data-skin',s);
-}catch(e){}})()`
-
 export default function RootLayout({
   children,
 }: {
@@ -77,11 +59,10 @@ export default function RootLayout({
           type="font/woff2"
           crossOrigin="anonymous"
         />
-        {/* next/script beforeInteractive — hydration 전 head 에 주입돼 동기 실행(FOUC 방지 유지).
-            raw <script> 대신 써서 React 19/Next 16 의 "script tag while rendering" 경고 제거. */}
-        <Script id="skin-boot" strategy="beforeInteractive">
-          {SKIN_BOOT_SCRIPT}
-        </Script>
+        {/* FOUC 방지 부트 스크립트 — head 에서 블로킹 로드돼 hydration 전 동기 실행.
+            외부 파일(public/skin-boot.js) src 참조라 React 19/Next 16 의 인라인
+            "script tag while rendering" 경고가 뜨지 않음. */}
+        <script src="/skin-boot.js" />
       </head>
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <ThemeProvider />
