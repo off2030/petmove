@@ -30,8 +30,8 @@ import {
  *  - 마이크로칩 (ISO 11784/11785) ≤ 광견병 1차
  *  - 광견병: 1차 ≥ 생후 12주(84일, EU Reg 576/2013 일치) + 출국 30일 전 + 출국일 면역 유효
  *  - **RNATT 필수**: 채혈 ≥ 광견병 + 30일, 0.5 IU/ml 이상, 출국 ≤ 채혈 + 1년
- *  - 구충: 외부(진드기) + 내부(촌충) 출국 30일 이내
- *  - 건강증명서: **공식 배서 출국 48시간(2일) 이내** (보수 ≤1) — Tarım Bakanlığı 명시. 임상검사는 96시간 이내(별도)
+ *  - 구충: 외부(진드기) + 내부(촌충) **출국 전날(하루 전)** — 임상검사·검역과 같은 날 처치
+ *  - 임상검사(Clinical Examination): **출국 24시간 이내**(TK.pdf 각주 6) — common.vet-visit-date-valid + 터키 window=2(전날/당일)로 검증
  *  - 핏불·도사·도고 아르헨티노·필라 등 견종 수입 금지 (추가 권고)
  *
  * 별도 (시스템 검증 제외 또는 추가 권고):
@@ -276,14 +276,14 @@ export const TR_CHECKS: ProcedureCheck[] = [
 
   // ── 구충 ──
   {
-    id: 'tr.external-parasite-within-30days',
+    id: 'tr.external-parasite-day-before-departure',
     country: COUNTRY,
     category: '구충',
-    title: '외부구충(진드기)은 출국 포함 30일 이내 (29일 전 이후)',
+    title: '외부구충(진드기)은 출국 전날(하루 전)',
     description:
-      '진드기에 효과적인 외부 기생충 치료제 처치는 출국 포함 30일 이내 = 출국일 기준 29일 전 이후. (Tarım Bakanlığı / EU 표준)',
+      '진드기에 효과적인 외부 기생충 치료제 처치는 출국 전날(출국일 기준 하루 전)에 받아요. 임상검사·검역과 같은 날(출국 전날) 함께 처치.',
     severity: 'info',
-    addedAt: '2026-05-07',
+    addedAt: '2026-07-09',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
       const entries = readExternalParasiteEntries(caseRow)
@@ -292,32 +292,35 @@ export const TR_CHECKS: ProcedureCheck[] = [
       const latest = entries[entries.length - 1]
       const diff = daysBetween(latest.date, dep)
       if (diff === null) return SKIP
-      if (diff < 0) {
+      if (diff < 1) {
         return {
           ok: false,
-          message: `외부구충(${latest.date})이 출국일(${dep})보다 늦어요.`,
+          message:
+            diff < 0
+              ? `외부구충(${latest.date})이 출국일(${dep})보다 늦어요. 출국 전날에 받아야 해요.`
+              : `외부구충(${latest.date})이 출국 당일이에요. 출국 전날(하루 전)에 받아야 해요.`,
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
-      if (diff > 29) {
+      if (diff > 1) {
         return {
           ok: false,
-          message: `외부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 출국 포함 30일 이내(29일 전 이후)여야 해요.`,
+          message: `외부구충(${latest.date})은 출국일(${dep}) ${diff}일 전이에요. 출국 전날(하루 전)에 받아야 해요.`,
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `외부구충(${latest.date}) → 출국일(${dep}): ${diff}일.` }
+      return { ok: true, message: `외부구충(${latest.date}) = 출국 전날(${dep} 하루 전).` }
     },
   },
   {
-    id: 'tr.internal-parasite-within-30days',
+    id: 'tr.internal-parasite-day-before-departure',
     country: COUNTRY,
     category: '구충',
-    title: '내부구충(촌충)은 출국 포함 30일 이내 (29일 전 이후)',
+    title: '내부구충(촌충)은 출국 전날(하루 전)',
     description:
-      '촌충에 효과적인 내부 구충제 처치는 출국 포함 30일 이내 = 출국일 기준 29일 전 이후. (Tarım Bakanlığı / EU 표준)',
+      '촌충에 효과적인 내부 구충제 처치는 출국 전날(출국일 기준 하루 전)에 받아요. 임상검사·검역과 같은 날(출국 전날) 함께 처치.',
     severity: 'info',
-    addedAt: '2026-05-07',
+    addedAt: '2026-07-09',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
       const entries = readInternalParasiteEntries(caseRow)
@@ -326,21 +329,24 @@ export const TR_CHECKS: ProcedureCheck[] = [
       const latest = entries[entries.length - 1]
       const diff = daysBetween(latest.date, dep)
       if (diff === null) return SKIP
-      if (diff < 0) {
+      if (diff < 1) {
         return {
           ok: false,
-          message: `내부구충(${latest.date})이 출국일(${dep})보다 늦어요.`,
+          message:
+            diff < 0
+              ? `내부구충(${latest.date})이 출국일(${dep})보다 늦어요. 출국 전날에 받아야 해요.`
+              : `내부구충(${latest.date})이 출국 당일이에요. 출국 전날(하루 전)에 받아야 해요.`,
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
-      if (diff > 29) {
+      if (diff > 1) {
         return {
           ok: false,
-          message: `내부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 출국 포함 30일 이내(29일 전 이후)여야 해요.`,
+          message: `내부구충(${latest.date})은 출국일(${dep}) ${diff}일 전이에요. 출국 전날(하루 전)에 받아야 해요.`,
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `내부구충(${latest.date}) → 출국일(${dep}): ${diff}일.` }
+      return { ok: true, message: `내부구충(${latest.date}) = 출국 전날(${dep} 하루 전).` }
     },
   },
 

@@ -465,7 +465,10 @@ const VET_VISIT_WINDOW_OVERRIDES: Array<{
   { key: 'australia', window: 5 },
   { key: 'russia', window: 5 },
   { key: 'new_zealand', window: 3 },
-  { key: 'turkey', window: 3 },
+  // 튀르키예: 임상검사(Clinical Examination)는 출국 24시간 이내 — TK.pdf 각주 6
+  // "The clinical examination must be done within 24 hours before movement".
+  // window=2 → 출국일 기준 diff<2 = 전날(1)·당일(0)만 유효(=24시간 이내). 한국 수출검역도 동일 창.
+  { key: 'turkey', window: 2 },
   // EU 촌충-free 국(영국·아일랜드·몰타·노르웨이·핀란드) 강아지 — 촌충 구충이 출국 1~3일 전(admin
   // 보수: eu.tapeworm-1to3days, 법정 24~120h)에만 유효하고, 구충을 겸하는 내원도 그 안에 들어와야
   // 하므로 window=4 (=출국일 -3일). 고양이는 촌충 면제(EU Reg 2018/772) → 기본 10일.
