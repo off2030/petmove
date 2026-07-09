@@ -339,12 +339,12 @@ function StatusCell({ row, options, onUpdate, overdue = false }: {
   const isActive = value === 'testing'
   const isDone = value === 'done'
   const cls = isActive
-    ? 'font-serif italic text-[16px] text-primary'
+    ? 'font-serif text-[16px] text-primary'
     : isDone
-    ? 'font-serif italic text-[16px] text-pmw-positive'
+    ? 'font-serif text-[16px] text-pmw-positive'
     : overdue
-    ? 'font-serif italic text-[16px] text-pmw-warning'
-    : 'font-serif italic text-[16px] text-muted-foreground'
+    ? 'font-serif text-[16px] text-pmw-warning'
+    : 'font-serif text-[16px] text-muted-foreground'
 
   return <StatusPicker row={row} options={options} value={value} label={label} cls={cls} isDone={isDone} onUpdate={onUpdate} />
 }
@@ -385,24 +385,22 @@ function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
         } as React.ButtonHTMLAttributes<HTMLButtonElement>}
         renderTrigger={() => (
           <>
-            {value === 'testing' && <span className="not-italic mr-1">↻</span>}
-            {isDone && <span className="not-italic mr-1">✓</span>}
+            <span aria-hidden className="mr-1.5 inline-block h-[7px] w-[7px] shrink-0 rounded-full bg-current align-middle" />
             {label}
-            <span aria-hidden className="not-italic ml-1 text-[10px] leading-none opacity-0 transition-opacity group-hover:opacity-70">▼</span>
+            <span aria-hidden className="ml-1 text-[10px] leading-none opacity-0 transition-opacity group-hover:opacity-70">▼</span>
           </>
         )}
         renderOption={(o) => {
           const optActive = o.value === 'testing'
           const optDone = o.value === 'done'
           const optCls = optActive
-            ? 'font-serif italic text-[15px] text-primary'
+            ? 'text-primary'
             : optDone
-              ? 'font-serif italic text-[15px] text-pmw-positive'
-              : 'font-serif italic text-[15px] text-muted-foreground'
+              ? 'text-pmw-positive'
+              : 'text-muted-foreground'
           return (
-            <span className={optCls}>
-              {optActive && <span className="not-italic mr-1">↻</span>}
-              {optDone && <span className="not-italic mr-1">✓</span>}
+            <span className={cn('inline-flex items-center font-serif text-[15px]', optCls)}>
+              <span aria-hidden className="mr-1.5 inline-block h-[7px] w-[7px] shrink-0 rounded-full bg-current" />
               {o.label}
             </span>
           )

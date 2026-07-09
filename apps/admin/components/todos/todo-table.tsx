@@ -92,17 +92,16 @@ function StatusBadge({ value, options, warn = false }: { value: string; options:
   const isActive = value === 'in_progress' || value === 'testing'
   const isDone = value === 'done'
   const cls = isActive
-    ? 'font-serif italic text-[16px] text-primary'
+    ? 'text-primary'
     : isDone
-    ? 'font-serif italic text-[16px] text-pmw-positive'
+    ? 'text-pmw-positive'
     : warn
-    ? 'font-serif italic text-[16px] text-pmw-warning'
-    : 'font-serif italic text-[16px] text-muted-foreground'
+    ? 'text-pmw-warning'
+    : 'text-muted-foreground'
 
   return (
-    <span className={cls}>
-      {isActive && <span className="not-italic mr-1">↻</span>}
-      {isDone && <span className="not-italic mr-1">✓</span>}
+    <span className={cn('inline-flex items-center font-serif text-[16px]', cls)}>
+      <span aria-hidden className="mr-1.5 inline-block h-[7px] w-[7px] shrink-0 rounded-full bg-current align-middle" />
       {opt.label}
     </span>
   )
@@ -353,14 +352,13 @@ function SelectCell({
         const optActive = o.value === 'in_progress' || o.value === 'testing'
         const optDone = o.value === 'done'
         const cls = optActive
-          ? 'font-serif italic text-[15px] text-primary'
+          ? 'text-primary'
           : optDone
-            ? 'font-serif italic text-[15px] text-pmw-positive'
-            : 'font-serif italic text-[15px] text-muted-foreground'
+            ? 'text-pmw-positive'
+            : 'text-muted-foreground'
         return (
-          <span className={cls}>
-            {optActive && <span className="not-italic mr-1">↻</span>}
-            {optDone && <span className="not-italic mr-1">✓</span>}
+          <span className={cn('inline-flex items-center font-serif text-[15px]', cls)}>
+            <span aria-hidden className="mr-1.5 inline-block h-[7px] w-[7px] shrink-0 rounded-full bg-current" />
             {o.label}
           </span>
         )
