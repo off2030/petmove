@@ -31,9 +31,9 @@ export const SHARE_FILE_REQUESTS: ShareFileRequestDef[] = [
   { key: 'flight_itinerary', label: '항공 일정표 또는 항공권', required: true, destinations: ['태국'] },
   // 선택 — 상황에 따라
   { key: 'jp_export_cert', label: '일본 수출 동물검역증', required: false, destinations: ['일본'] },
-  // 구충은 필리핀만 해당 — 필리핀은 '타병원 접종 및 구충 증명서'로 통일, 그 외는 '타병원 접종 증명서'.
-  { key: 'other_hospital_vaccine', label: '타병원 접종 증명서', required: false, destinations: 'all', excludeDestinations: ['필리핀'] },
-  { key: 'other_hospital_deworming', label: '타병원 접종 및 구충 증명서', required: false, destinations: ['필리핀'] },
+  // 구충은 필리핀만 해당 — 필리핀은 '타병원 접종 및 구충증명서'로 통일, 그 외는 '타병원 접종증명서'.
+  { key: 'other_hospital_vaccine', label: '타병원 접종증명서', required: false, destinations: 'all', excludeDestinations: ['필리핀'] },
+  { key: 'other_hospital_deworming', label: '타병원 접종 및 구충증명서', required: false, destinations: ['필리핀'] },
 ]
 
 const BY_KEY = new Map(SHARE_FILE_REQUESTS.map((r) => [r.key, r]))

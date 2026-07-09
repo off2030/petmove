@@ -665,7 +665,10 @@ export async function uploadShareSubmissionFiles(
     const uploadedPaths: string[] = []
     for (const { file, label } of collected) {
       const rawName = file.name || 'file'
-      const displayName = label ? `${label} - ${rawName}` : rawName
+      // 슬롯이 있으면 파일명을 그 지정명(라벨)으로 변환해 저장 — 메모에서 서류 종류가 바로 보임.
+      // 확장자는 원본 유지. 슬롯 없는 파일(구 방식)은 원본명 그대로.
+      const ext = rawName.match(/\.[a-zA-Z0-9]+$/)?.[0] ?? ''
+      const displayName = label ? `${label}${ext}` : rawName
       const safeName = displayName.replace(/[^a-zA-Z0-9._-]/g, '_')
       const path = `${row.case_id}/${Date.now()}_${randomUUID().slice(0, 8)}_${safeName}`
       const buffer = Buffer.from(await file.arrayBuffer())
