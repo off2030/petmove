@@ -11,6 +11,7 @@ import {
   resolveValidUntil,
   todayKst,
 } from '../procedure-checks/utils'
+import { matchesDestinationKey } from '../destination-config'
 import {
   buildCaseJourneyContext,
   isSingleDoseRabiesCase,
@@ -1321,3 +1322,26 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // 완료 배너로 노출한다 (scenario.ts journeyComplete + timeline-calm). 완료 시그널은
   // done-resolver 의 'has-arrived' (trip-type 으로 분기) 를 그대로 사용.
 ]
+
+/**
+ * 운영자→고객 전달 서류(허가 서류) 목록 — 활성 목적지 기준.
+ * catalog 에서 category='permit' + 첨부 허용(attachmentLabel 있음) 스텝을 파생한다.
+ * 단일 출처(catalog)라 새 목적지·허가 서류가 catalog 에 추가되면 자동으로 따라온다.
+ * 반환: { stepId(고객앱 여정 스텝과 연결되는 통로), label(첨부 행·파일명 라벨) }.
+ */
+export function permitDeliverablesForDestination(
+  destination: string | null | undefined,
+): Array<{ stepId: string; label: string }> {
+  if (!destination) return []
+  const out: Array<{ stepId: string; label: string }> = []
+  for (const s of JOURNEY_STEP_CATALOG) {
+    if (s.category !== 'permit') continue
+    if (!s.allowAttachments || !s.attachmentLabel) continue
+    const dests = s.applicability?.destinations
+    if (!Array.isArray(dests)) continue
+    if (dests.some((k) => matchesDestinationKey(destination, k))) {
+      out.push({ stepId: s.id, label: s.attachmentLabel })
+    }
+  }
+  return out
+}

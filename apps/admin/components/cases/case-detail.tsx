@@ -9,7 +9,7 @@ import {
   readCaseField,
 } from '@petmove/domain'
 import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, matchesDestinationKey, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, isDestinationScopedKey, applyDestinationFieldOverride, HARDCODED_VACCINE_SPECIES_DEFAULTS, type ExtraFieldDef } from '@petmove/domain'
-import { buildShareFieldDescriptors } from '@petmove/domain'
+import { buildShareFieldDescriptors, permitDeliverablesForDestination } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Trash2, ChevronDown, Check } from 'lucide-react'
@@ -399,12 +399,11 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
               flightGroup.items.unshift({ key: 'departure_date', label: '출발일', type: 'date' })
             }
           }
-          // 사전신고 허가서 첨부 — 활성 목적지가 일본일 때만 추가정보 마지막 row 로 표시.
-          // 케이스가 다중 목적지(예: '일본, 필리핀')이고 활성이 일본 외이면 안 노출.
-          // portal 보호자·admin 운영자 모두 업로드 가능, case.data.documents 배열 공유
-          // (stepId='advance-notification'). 첨부 = 완료 시그널이라 업로드 시점에
-          // admin_demoted_at 자동 해제됨 (step-documents 액션 내부).
-          const showNaccsRow = matchesDestinationKey(viewDestination, 'japan')
+          // 전달 서류(허가 서류) 첨부 — 활성 목적지의 permit 서류를 catalog 에서 파생해 행으로 노출.
+          // (일본=허가서(Approval), 태국·필리핀·스위스·호주·NZ 등=수입 허가증). 다중 목적지면 활성 기준.
+          // portal 보호자·admin 운영자 모두 업로드, case.data.documents 공유(stepId 로 고객앱과 연결).
+          // 첨부 = 완료 시그널(advance-notification 은 업로드 시 admin_demoted_at 해제 — step-documents 내부).
+          const permitDocs = permitDeliverablesForDestination(viewDestination)
           // 태국·필리핀 왕복 — 귀국 항공편 날짜 + '미정' 행. 편도 항공권만 끊은 경우 운영자가
           // '미정' 체크로 출국편만으로 항공권 step 완료 처리(펫무브앱 미정 토글의 admin 짝).
           const showReturnFlightRow =
@@ -421,15 +420,25 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
               isCollapsed={collapsed.has('추가정보')}
               onToggleCollapsed={() => toggleCollapsed('추가정보')}
               trailing={
-                showNaccsRow
+                permitDocs.length > 0 || showReturnFlightRow
                   ? (({ onTakeoverDrag }) => (
-                      <AdvanceNotificationAttachmentsRow caseId={caseRow.id} caseRow={caseRow} onTakeoverDrag={onTakeoverDrag} />
+                      <>
+                        {permitDocs.map((doc) => (
+                          <DeliverableDocRow
+                            key={doc.stepId}
+                            caseId={caseRow.id}
+                            caseRow={caseRow}
+                            stepId={doc.stepId}
+                            label={doc.label}
+                            onTakeoverDrag={onTakeoverDrag}
+                          />
+                        ))}
+                        {showReturnFlightRow && (
+                          <ReturnFlightRow caseId={caseRow.id} caseRow={caseRow} activeDest={activeDestToken} />
+                        )}
+                      </>
                     ))
-                  : showReturnFlightRow
-                    ? (() => (
-                        <ReturnFlightRow caseId={caseRow.id} caseRow={caseRow} activeDest={activeDestToken} />
-                      ))
-                    : undefined
+                  : undefined
               }
             />
           )
@@ -913,9 +922,13 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel, activ
  * case.data.documents 배열에서 stepId='advance-notification' 만 필터해 표시.
  * portal 보호자가 올린 파일도 같은 자리에 보이고, 운영자가 추가 업로드 가능.
  */
-function AdvanceNotificationAttachmentsRow({ caseId, caseRow, onTakeoverDrag }: {
+function DeliverableDocRow({ caseId, caseRow, stepId, label, onTakeoverDrag }: {
   caseId: string
   caseRow: CaseRow
+  /** case.data.documents 의 stepId — 고객앱 여정 스텝과 연결되는 통로. */
+  stepId: string
+  /** 행 좌측 라벨 (허가서/수입허가증 등). */
+  label: string
   /** row 가 drag/drop 을 가로챘음을 부모(SimpleExtraSection) 에 알려 자기 ring 끄게 함.
    *  row 가 stopPropagation 하므로 부모 dragLeave/drop 이 안 와서 state 가 stuck 되는 걸 방지. */
   onTakeoverDrag?: () => void
@@ -933,7 +946,7 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow, onTakeoverDrag }: 
     try {
       const fd = new FormData()
       fd.set('caseId', caseId)
-      fd.set('stepId', 'advance-notification')
+      fd.set('stepId', stepId)
       fd.set('file', file)
       const res = await uploadStepDocumentAdmin(fd)
       if (res.ok) {
@@ -1015,7 +1028,7 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow, onTakeoverDrag }: 
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
-      <SectionLabel>허가서</SectionLabel>
+      <SectionLabel>{label}</SectionLabel>
       {/* 다른 추가정보 행처럼 첨부 버튼만. 올린 파일은 메모(notes)에 모여 표시되며
           (업로드 시 documents+notes 동시 기록) 인라인 리스트는 두지 않는다. */}
       <div className="min-w-0 flex items-center flex-wrap gap-2">
