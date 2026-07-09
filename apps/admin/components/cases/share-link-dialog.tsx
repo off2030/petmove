@@ -28,15 +28,10 @@ import {
 import {
   buildShareFieldDescriptors,
   groupShareDescriptorsByCategory,
+  parseDestinations,
   shareDescriptorHasValue,
 } from '@petmove/domain'
-import { saveSharePresets } from '@/lib/actions/share-presets'
 import type { SharePreset } from '@/lib/share-presets-types'
-
-function genPresetId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
-  return `preset_${Date.now()}_${Math.floor(Math.random() * 1e6)}`
-}
 
 interface Props {
   caseRow: CaseRow
@@ -72,7 +67,7 @@ function formatDateTime(iso: string): string {
 export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
   const caseId = caseRow.id
   const confirm = useConfirm()
-  const { fieldDefs, activeDestination, sharePresets, setSharePresets } = useCases()
+  const { fieldDefs, activeDestination, importReportCountries } = useCases()
   const { config: destOverridesConfig } = useDestinationOverrides()
 
   // 목적지 기반 필터링 — case detail 과 동일하게 activeDestination 우선.
@@ -128,6 +123,19 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     return groupShareDescriptorsByCategory(visible)
   }, [allDescriptors, showFilled, caseRow, destination])
 
+  // 빠른 선택 = 신고 탭에 오르는 국가 중 이 케이스 목적지에 해당하는 국가의 "{국가} 신고" 프리셋.
+  // 그 국가의 추가정보(항공편·해외주소·검역증 번호 등)를 한 번에 선택. (이미 입력된 항목은 자동 숨김)
+  const autoPresets = useMemo<SharePreset[]>(() => {
+    const tokens = parseDestinations(destination)
+    const matched = importReportCountries.filter((c) => tokens.includes(c))
+    if (matched.length === 0) return []
+    const extraKeys = Array.from(
+      new Set(allDescriptors.filter((d) => d.category === '추가정보').map((d) => d.key)),
+    )
+    if (extraKeys.length === 0) return []
+    return matched.map((c) => ({ id: `__report_${c}`, name: `${c} 신고`, field_keys: extraKeys }))
+  }, [destination, importReportCountries, allDescriptors])
+
   const [selectedFieldIds, setSelectedFieldIds] = useState<Set<string>>(() => new Set())
   const [title, setTitle] = useState('')
   const [expiresInDays, setExpiresInDays] = useState(30)
@@ -139,11 +147,6 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
   // 생성 성공 배너(자동복사 안내). 화면 하단 고정 위치에 잠깐 노출.
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
-  // "현재 선택을 프리셋으로" 저장 — 이름 입력 인라인.
-  const [presetName, setPresetName] = useState('')
-  const [presetInputOpen, setPresetInputOpen] = useState(false)
-  const [savingPreset, setSavingPreset] = useState(false)
-  const [presetMsg, setPresetMsg] = useState<string | null>(null)
 
   async function refresh() {
     setLoading(true)
@@ -251,7 +254,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     setError(null)
     startTransition(async () => {
       // 적용된 프리셋이 있으면 그 이름을 template 라벨로 (감사용 메타).
-      const matchedPreset = sharePresets.find((p) => isPresetFullySelected(p))
+      const matchedPreset = autoPresets.find((p) => isPresetFullySelected(p))
       const templateLabel = matchedPreset?.name ?? null
       const r = await createShareLink({
         caseId,
@@ -288,24 +291,6 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     })
   }
 
-  /** 현재 선택을 조직 프리셋으로 저장 — saveSharePresets 는 전체 목록을 upsert 한다. */
-  async function handleSavePreset() {
-    const name = presetName.trim()
-    if (!name || selectedFields.length === 0) return
-    setSavingPreset(true)
-    setPresetMsg(null)
-    // 선택된 필드의 key(중복 제거) — 프리셋은 key 배열로 저장.
-    const keys = Array.from(new Set(selectedFields.map((f) => f.key)))
-    const next: SharePreset[] = [...sharePresets, { id: genPresetId(), name, field_keys: keys }]
-    const r = await saveSharePresets(next)
-    setSavingPreset(false)
-    if (!r.ok) { setPresetMsg('저장 실패: ' + r.error); return }
-    setSharePresets(next)
-    setPresetInputOpen(false)
-    setPresetName('')
-    setPresetMsg('프리셋으로 저장되었습니다.')
-    setTimeout(() => setPresetMsg(null), 3000)
-  }
 
   async function handleCopy(token: string) {
     try {
@@ -356,12 +341,12 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
         {/* Header */}
         <div className="shrink-0 flex items-start justify-between gap-md px-lg pt-lg pb-md border-b border-border/60">
           <div className="min-w-0">
-            <h2 className="font-serif text-[18px] font-medium leading-tight text-foreground">
-              공유 링크
+            <h2 className="font-serif text-[18px] font-medium leading-tight text-foreground truncate">
+              정보 요청
+              <span className="ml-2 font-serif text-[13px] font-normal text-muted-foreground">
+                {caseLabel}
+              </span>
             </h2>
-            <p className="mt-1 font-serif text-[13px] text-muted-foreground truncate">
-              {caseLabel}
-            </p>
           </div>
           <button
             type="button"
@@ -374,18 +359,14 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-lg py-md space-y-lg">
-          {/* 빠른 선택 — 사용자 정의 프리셋 */}
-          <section>
-            <h3 className="font-sans text-[12px] font-semibold text-foreground/80 mb-2 pb-1.5 border-b border-border/60">
-              빠른 선택
-            </h3>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {sharePresets.length === 0 ? (
-                <p className="font-serif italic text-[12px] text-muted-foreground/70">
-                  프리셋이 없습니다 — 필드를 고른 뒤 아래 “프리셋으로 저장”을 눌러 만들 수 있습니다.
-                </p>
-              ) : (
-                sharePresets.map((p) => {
+          {/* 빠른 선택 — 목적지 신고 국가 자동 프리셋 (그 국가의 추가정보 한 번에 선택) */}
+          {autoPresets.length > 0 && (
+            <section>
+              <h3 className="font-sans text-[12px] font-semibold text-foreground/80 mb-2 pb-1.5 border-b border-border/60">
+                빠른 선택
+              </h3>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {autoPresets.map((p) => {
                   const active = isPresetFullySelected(p)
                   const applicable = applicableKeysForPreset(p).length
                   return (
@@ -395,7 +376,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                       onClick={() => pickPreset(p)}
                       aria-pressed={active}
                       disabled={applicable === 0}
-                      title={applicable === 0 ? '이 케이스에 적용 가능한(아직 안 채워진) 필드가 없음' : `${applicable}개 필드`}
+                      title={applicable === 0 ? '요청할 추가정보가 없습니다 (이미 모두 입력됨)' : `추가정보 ${applicable}개 선택`}
                       className={cn(
                         'h-8 px-3 rounded-full border font-serif text-[13px] transition-colors',
                         active
@@ -407,67 +388,19 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                       {p.name}
                     </button>
                   )
-                })
-              )}
-              {selectedFieldIds.size > 0 && (
-                <button
-                  type="button"
-                  onClick={clearAll}
-                  className="h-8 px-3 rounded-full border border-dashed border-border/70 font-serif text-[12px] text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  선택 초기화
-                </button>
-              )}
-            </div>
-
-            {/* 현재 선택을 프리셋으로 저장 */}
-            {selectedFields.length > 0 && (
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                {presetInputOpen ? (
-                  <>
-                    <input
-                      value={presetName}
-                      onChange={(e) => setPresetName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') { e.preventDefault(); handleSavePreset() }
-                        if (e.key === 'Escape') { setPresetInputOpen(false); setPresetName('') }
-                      }}
-                      autoFocus
-                      placeholder="프리셋 이름"
-                      maxLength={40}
-                      className="h-8 px-3 rounded-full border border-border/80 bg-background font-serif text-[12px] focus:outline-none focus:border-foreground/40"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSavePreset}
-                      disabled={savingPreset || !presetName.trim()}
-                      className="h-8 px-3 rounded-full border border-foreground bg-foreground text-background font-serif text-[12px] transition-colors disabled:opacity-40"
-                    >
-                      {savingPreset ? '저장 중…' : '저장'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setPresetInputOpen(false); setPresetName('') }}
-                      className="h-8 px-3 rounded-full font-serif text-[12px] text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      취소
-                    </button>
-                  </>
-                ) : (
+                })}
+                {selectedFieldIds.size > 0 && (
                   <button
                     type="button"
-                    onClick={() => setPresetInputOpen(true)}
+                    onClick={clearAll}
                     className="h-8 px-3 rounded-full border border-dashed border-border/70 font-serif text-[12px] text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    ＋ 현재 선택을 프리셋으로 저장 ({selectedFields.length})
+                    선택 초기화
                   </button>
                 )}
-                {presetMsg && (
-                  <span className="font-serif text-[12px] text-muted-foreground">{presetMsg}</span>
-                )}
               </div>
-            )}
-          </section>
+            </section>
+          )}
 
           {/* 커스텀 필드 선택 */}
           <section>
@@ -489,6 +422,15 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                 <span className="font-sans text-[11px] text-muted-foreground/70">
                   {selectedFields.length}개 선택됨
                 </span>
+                {selectedFieldIds.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearAll}
+                    className="font-serif text-[12px] text-muted-foreground/70 hover:text-foreground transition-colors"
+                  >
+                    초기화
+                  </button>
+                )}
               </div>
             </div>
             {groupedFields.length === 0 && (
