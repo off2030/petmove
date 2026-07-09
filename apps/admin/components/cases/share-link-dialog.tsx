@@ -36,6 +36,15 @@ import type { SharePreset } from '@/lib/share-presets-types'
 // 정보 요청 링크 만료 — 외부(보호자) 개인정보가 담기므로 무기한은 지양, 30일 고정(UI 미노출).
 const SHARE_LINK_EXPIRY_DAYS = 30
 
+// 신고 국가별 빠른선택 프리셋 라벨 — 국가마다 절차명이 달라 개별 지정. 명단 밖은 '{국가} 신고'.
+const REPORT_PRESET_LABEL: Record<string, string> = {
+  일본: '일본 사전 신고',
+  태국: '태국 수입허가증 신청',
+  필리핀: '필리핀 수입허가증 신청',
+  하와이: '하와이 수입신고',
+  스위스: '스위스 수입허가증 신청',
+}
+
 interface Props {
   caseRow: CaseRow
   caseLabel: string
@@ -136,7 +145,11 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
       new Set(allDescriptors.filter((d) => d.category === '추가정보').map((d) => d.key)),
     )
     if (extraKeys.length === 0) return []
-    return matched.map((c) => ({ id: `__report_${c}`, name: `${c} 사전 신고`, field_keys: extraKeys }))
+    return matched.map((c) => ({
+      id: `__report_${c}`,
+      name: REPORT_PRESET_LABEL[c] ?? `${c} 신고`,
+      field_keys: extraKeys,
+    }))
   }, [destination, importReportCountries, allDescriptors])
 
   // '전체 선택' — 현재 보이는(=아직 안 채워진) 모든 필드 id.
