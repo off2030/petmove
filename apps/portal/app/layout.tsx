@@ -13,7 +13,7 @@ import { MediaViewerProvider } from '@/components/portal-shell/media-viewer'
 
 // 최초 paint 전(하이드레이션 전) <html data-theme> + theme-color 를 동기 설정해 다크모드 FOUC 방지.
 // 저장된 pm-theme(없으면 light) → 'system' 일 때만 OS 따라감. ThemeProvider 가 이후 상태를 이어받음.
-const themeNoFlash = `(function(){try{var m=localStorage.getItem('pm-theme')||'light';var d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.classList.toggle('dark',d);var c=d?'#1C1916':'#F5EFE8';var e=document.querySelector('meta[name="theme-color"]');if(!e){e=document.createElement('meta');e.setAttribute('name','theme-color');document.head.appendChild(e);}e.setAttribute('content',c);}catch(_){}})();`
+const themeNoFlash = `(function(){try{var m=localStorage.getItem('pm-theme')||'light';var d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.classList.toggle('dark',d);var c=d?'#17171A':'#FFFFFF';var e=document.querySelector('meta[name="theme-color"]');if(!e){e=document.createElement('meta');e.setAttribute('name','theme-color');document.head.appendChild(e);}e.setAttribute('content',c);}catch(_){}})();`
 
 // Portal 폰트는 globals.css 의 self-hosted @font-face(Pretendard/Alonzo)만 사용한다.
 // next/font/google 은 빌드 때 Google Fonts 네트워크 fetch 가 필요해 재현 가능한 출시 빌드를 막는다.
@@ -32,7 +32,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   interactiveWidget: 'resizes-content',
-  themeColor: '#F5F4ED',
+  themeColor: '#FFFFFF',
 }
 
 export default function RootLayout({

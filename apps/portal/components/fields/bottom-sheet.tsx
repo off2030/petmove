@@ -95,7 +95,7 @@ export function BottomSheet({
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'rgba(42,38,32,.45)',
+          background: 'rgba(33,33,36,.45)',
           opacity: shown ? 1 : 0,
           transition: 'opacity .24s ease',
         }}
@@ -115,7 +115,7 @@ export function BottomSheet({
           transform: shown ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform .26s cubic-bezier(.2,.8,.2,1)',
           paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)',
-          boxShadow: '0 -8px 40px rgba(42,38,32,.18)',
+          boxShadow: '0 -8px 40px rgba(33,33,36,.18)',
         }}
       >
         <div

@@ -197,11 +197,9 @@ function PickerGrid({
   onRemovePhoto: () => void
 }) {
   const monoCap: React.CSSProperties = {
-    fontSize: 10,
-    letterSpacing: '0.16em',
-    textTransform: 'uppercase',
+    fontSize: 11,
     color: C.ink3,
-    fontWeight: 500,
+    fontWeight: 600,
   }
   const slotBase: React.CSSProperties = {
     width: 34,
@@ -264,7 +262,7 @@ function PickerGrid({
                 ...slotBase,
                 background: AVATAR_GRADIENTS[id],
                 boxShadow: selected
-                  ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #735B3D'
+                  ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #212124'
                   : 'inset 0 1px 1px rgba(255,255,255,.25)',
               }}
             />
@@ -282,7 +280,7 @@ function PickerGrid({
             background: AVATAR_GRADIENTS[defaultColor],
             boxShadow:
               currentColor === null
-                ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #735B3D'
+                ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #212124'
                 : `inset 0 0 0 .5px ${C.line}`,
           }}
         >

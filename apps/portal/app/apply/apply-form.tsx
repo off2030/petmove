@@ -274,51 +274,51 @@ function emptyPet(): PetForm {
 }
 
 const pageShellClass =
-  'min-h-screen bg-[#F5EFE8] text-[#2A2620]'
+  'min-h-screen bg-white text-[#212124]'
 const pageInnerClass =
   'mx-auto w-full max-w-[680px] px-6 py-12 sm:px-8 lg:px-10'
-const sectionCardClass = 'rounded-xl bg-[#FBF7F1] p-lg'
+const sectionCardClass = 'rounded-xl bg-[#F7F7F8] p-lg'
 const sectionTitleClass =
-  'font-display text-[15px] font-medium uppercase tracking-[0.4px] text-[#2A2620]'
+  'font-display text-[15px] font-medium uppercase tracking-[0.4px] text-[#212124]'
 // Field row: vertical container with top divider between rows (first row has no top border)
-const fieldRowClass = 'py-4 border-t border-[rgba(42,38,32,0.1)] first:border-t-0 first:pt-1'
+const fieldRowClass = 'py-4 border-t border-[rgba(33,33,36,0.1)] first:border-t-0 first:pt-1'
 // Header row: label left, REQ badge + hint on right
 const fieldHeaderClass = 'flex items-baseline justify-between gap-3 mb-2'
 const labelClass =
-  'font-display text-[15px] text-[#2A2620]'
+  'font-display text-[15px] text-[#212124]'
 // Right meta (REQ + hint) — stacked horizontally, right-aligned
 const fieldMetaClass = 'flex items-baseline gap-2 shrink-0'
 // Optional hint text on the right of header
 const hintRightClass =
-  'font-display text-[12px] text-[#9A9286]'
+  'font-display text-[12px] text-[#97979C]'
 // Borderless input — no box, relies on row divider
 const placeholderClass =
-  'placeholder:font-normal placeholder:text-[14px] placeholder:text-[#9A9286]/70'
+  'placeholder:font-normal placeholder:text-[14px] placeholder:text-[#97979C]/70'
 const inputClass =
-  `w-full h-10 bg-transparent px-0 font-display font-semibold text-[17px] leading-tight text-[#2A2620] ${placeholderClass} focus:outline-none transition-colors`
+  `w-full h-10 bg-transparent px-0 font-display font-semibold text-[17px] leading-tight text-[#212124] ${placeholderClass} focus:outline-none transition-colors`
 const inputEnClass =
-  `w-full h-10 bg-transparent px-0 font-display text-[17px] text-[#2A2620] ${placeholderClass} focus:outline-none transition-colors`
+  `w-full h-10 bg-transparent px-0 font-display text-[17px] text-[#212124] ${placeholderClass} focus:outline-none transition-colors`
 const numericInputClass =
-  `w-full h-10 bg-transparent px-0 font-display text-[15px] tracking-[0.3px] tabular-nums text-[#2A2620] ${placeholderClass} focus:outline-none transition-colors`
+  `w-full h-10 bg-transparent px-0 font-display text-[15px] tracking-[0.3px] tabular-nums text-[#212124] ${placeholderClass} focus:outline-none transition-colors`
 const chipButtonActive =
-  'border-[#D99A58] bg-[#D99A58] text-[#FBF7F1]'
+  'border-[#212124] bg-[#212124] text-white'
 const chipButtonInactive =
-  'border-[rgba(42,38,32,0.14)] bg-[#FBF7F1] text-[#2A2620] hover:bg-[#F0E8DC]'
+  'border-[rgba(33,33,36,0.14)] bg-white text-[#212124] hover:bg-[#F2F2F4]'
 const destructiveBoxClass =
   'rounded-md border border-[#C26A4A]/30 bg-[#C26A4A]/10 px-md py-2.5 text-sm text-[#C26A4A]'
 const primaryButtonClass = cn(
   'inline-flex items-center justify-center rounded-md font-medium transition-colors',
-  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D99A58]/40',
+  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#212124]/30',
   'disabled:pointer-events-none disabled:opacity-50 select-none',
   'w-full h-12 text-base tracking-[0.1px]',
-  'bg-[#D99A58] text-[#FBF7F1] hover:bg-[#C98B45]',
+  'bg-[#212124] text-white hover:bg-[#3A3A3E]',
 )
 const secondaryButtonClass = cn(
   'inline-flex items-center justify-center rounded-md font-medium transition-colors',
-  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D99A58]/40',
+  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#212124]/30',
   'disabled:pointer-events-none disabled:opacity-50 select-none',
   'h-12 px-6 text-base tracking-[0.1px]',
-  'border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] text-[#2A2620] hover:bg-[#F0E8DC]',
+  'border border-[rgba(33,33,36,0.16)] bg-white text-[#212124] hover:bg-[#F2F2F4]',
 )
 
 /**
@@ -361,18 +361,18 @@ function FieldRow({
 }) {
   return (
     <div
-      className={cn(fieldRowClass, className, missing && 'relative pl-3 -ml-3 bg-[#D99A58]/10 rounded-sm')}
+      className={cn(fieldRowClass, className, missing && 'relative pl-3 -ml-3 bg-[#212124]/10 rounded-sm')}
       data-field-key={fieldKey}
     >
       {missing && (
-        <span aria-hidden className="absolute left-0 top-2 bottom-2 w-[3px] bg-[#D99A58] rounded" />
+        <span aria-hidden className="absolute left-0 top-2 bottom-2 w-[3px] bg-[#212124] rounded" />
       )}
       <div className={fieldHeaderClass}>
         <span className={labelClass}>{label}</span>
         <span className={fieldMetaClass}>
           {hint && !missing && <span className={hintRightClass}>{hint}</span>}
           {missing && (
-            <span className="font-display text-[12px] text-[#D99A58]">{m.fillRequest}</span>
+            <span className="font-display text-[12px] text-[#212124]">{m.fillRequest}</span>
           )}
         </span>
       </div>
@@ -418,15 +418,15 @@ function SearchSheetField({
       >
         {selected ? (
           <span className="min-w-0 flex items-baseline gap-2">
-            <span className="font-display font-semibold text-[17px] leading-tight text-[#2A2620] truncate">{triggerPrimary}</span>
-            {triggerSecondary && <span className="font-display text-[15px] text-[#9A9286] truncate">{triggerSecondary}</span>}
+            <span className="font-display font-semibold text-[17px] leading-tight text-[#212124] truncate">{triggerPrimary}</span>
+            {triggerSecondary && <span className="font-display text-[15px] text-[#97979C] truncate">{triggerSecondary}</span>}
           </span>
         ) : (
-          <span className="font-display text-[17px] text-[#9A9286]/70 truncate">
+          <span className="font-display text-[17px] text-[#97979C]/70 truncate">
             {disabled ? (disabledPlaceholder ?? placeholder) : placeholder}
           </span>
         )}
-        <svg aria-hidden viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px] shrink-0 text-[#9A9286]">
+        <svg aria-hidden viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px] shrink-0 text-[#97979C]">
           <path d="M8 10l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
@@ -437,11 +437,11 @@ function SearchSheetField({
           value={query}
           onChange={(e) => onQuery(e.target.value)}
           placeholder={searchPlaceholder}
-          className="mb-2.5 w-full rounded-lg border border-[rgba(42,38,32,0.16)] bg-white px-3 py-2.5 text-[15px] text-[#2A2620] placeholder:text-[#9A9286]/70 focus:outline-none focus:ring-1 focus:ring-[#D99A58]/40"
+          className="mb-2.5 w-full rounded-lg border border-[rgba(33,33,36,0.16)] bg-white px-3 py-2.5 text-[15px] text-[#212124] placeholder:text-[#97979C]/70 focus:outline-none focus:ring-1 focus:ring-[#212124]/40"
         />
         <div className="pm-noscroll flex flex-col gap-1 overflow-y-auto" style={{ height: '52vh' }}>
           {items.length === 0 ? (
-            <p className="px-1 py-3 text-[13px] text-[#9A9286]">{noResults}</p>
+            <p className="px-1 py-3 text-[13px] text-[#97979C]">{noResults}</p>
           ) : (
             items.map((it) => {
               const primary = lang === 'en' ? (it.en || it.ko) : it.ko
@@ -454,15 +454,15 @@ function SearchSheetField({
                   onClick={() => onPick(it)}
                   className={cn(
                     'flex w-full items-baseline justify-between gap-2 rounded-md px-3 py-3 text-left transition-colors',
-                    isSel ? 'bg-[#F0E8DC]' : 'hover:bg-[#F0E8DC]',
+                    isSel ? 'bg-[#F2F2F4]' : 'hover:bg-[#F2F2F4]',
                   )}
                 >
                   <span className="min-w-0 flex items-baseline gap-2">
-                    <span className="text-[16px] text-[#2A2620] truncate">{primary}</span>
-                    {secondary && <span className="text-[13px] text-[#9A9286] truncate">{secondary}</span>}
+                    <span className="text-[16px] text-[#212124] truncate">{primary}</span>
+                    {secondary && <span className="text-[13px] text-[#97979C] truncate">{secondary}</span>}
                   </span>
                   {isSel && (
-                    <svg aria-hidden viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-[#D99A58]">
+                    <svg aria-hidden viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-[#212124]">
                       <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
@@ -500,12 +500,12 @@ function StepProgress({ step, total }: { step: number; total: number }) {
             key={i}
             className={cn(
               'h-1 flex-1 rounded-full transition-colors',
-              i < step ? 'bg-[#D99A58]' : 'bg-[rgba(42,38,32,0.14)]',
+              i < step ? 'bg-[#212124]' : 'bg-[rgba(33,33,36,0.14)]',
             )}
           />
         ))}
       </div>
-      <span className="shrink-0 font-display text-[11px] tracking-[1.3px] tabular-nums text-[#9A9286]">
+      <span className="shrink-0 font-display text-[11px] tracking-[1.3px] tabular-nums text-[#97979C]">
         {step} / {total}
       </span>
     </div>
@@ -947,8 +947,8 @@ export function ApplyForm({
       <div className={pageShellClass}>
         <div className={pageInnerClass}>
           <div className="min-h-[70vh] flex flex-col items-center justify-center text-center gap-3">
-            <p className="font-display text-[20px] font-semibold text-[#2A2620]">신청이 접수되었습니다</p>
-            <p className="font-display text-[14px] text-[#9A9286] leading-relaxed">
+            <p className="font-display text-[20px] font-semibold text-[#212124]">신청이 접수되었습니다</p>
+            <p className="font-display text-[14px] text-[#97979C] leading-relaxed">
               {orgName}에서 확인 후 연락드릴게요.<br />감사합니다.
             </p>
           </div>
@@ -963,7 +963,7 @@ export function ApplyForm({
         {/* Header — lang toggle + step progress */}
         <header className="mb-8">
           <div className="mb-5 flex items-baseline justify-between gap-3">
-            <p className="font-display text-[14px] font-semibold tracking-[0.2px] text-[#2A2620] truncate">
+            <p className="font-display text-[14px] font-semibold tracking-[0.2px] text-[#212124] truncate">
               {orgName}
             </p>
             <div className="shrink-0 flex items-baseline gap-2 font-display text-[11px] uppercase tracking-[1.5px]">
@@ -972,19 +972,19 @@ export function ApplyForm({
                 onClick={() => setLang('ko')}
                 className={cn(
                   'transition-colors',
-                  lang === 'ko' ? 'text-[#2A2620]' : 'text-[#9A9286] hover:text-[#2A2620]',
+                  lang === 'ko' ? 'text-[#212124]' : 'text-[#97979C] hover:text-[#212124]',
                 )}
                 aria-pressed={lang === 'ko'}
               >
                 한국어
               </button>
-              <span className="text-[#9A9286]/60">·</span>
+              <span className="text-[#97979C]/60">·</span>
               <button
                 type="button"
                 onClick={() => setLang('en')}
                 className={cn(
                   'transition-colors',
-                  lang === 'en' ? 'text-[#2A2620]' : 'text-[#9A9286] hover:text-[#2A2620]',
+                  lang === 'en' ? 'text-[#212124]' : 'text-[#97979C] hover:text-[#212124]',
                 )}
                 aria-pressed={lang === 'en'}
               >
@@ -1031,7 +1031,7 @@ export function ApplyForm({
           {/* Step 1 · 목적지 */}
           {step === 1 && (
           <section className={sectionCardClass}>
-            <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
+            <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(33,33,36,0.12)] mb-1">
               <h2 className={sectionTitleClass}>{m.sec1}</h2>
             </div>
             <FieldRow m={m} label={m.destination} required fieldKey="destination" missing={missing.has('destination')}>
@@ -1069,7 +1069,7 @@ export function ApplyForm({
           {/* Step 2 · 소유주 */}
           {step === 2 && (
           <section className={sectionCardClass}>
-            <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
+            <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(33,33,36,0.12)] mb-1">
               <h2 className={sectionTitleClass}>{m.sec2}</h2>
             </div>
             <FieldRow m={m} label={m.name} required fieldKey="customerName" missing={missing.has('customerName')}>
@@ -1104,7 +1104,7 @@ export function ApplyForm({
                   placeholder={m.addressClickToSearch} className={inputClass + ' flex-1 cursor-pointer'} readOnly
                   onFocus={() => { if (!addressKr) handleAddrSearch() }} />
                 <button type="button" onClick={handleAddrSearch}
-                  className="shrink-0 h-8 rounded-full border border-[rgba(42,38,32,0.12)] bg-transparent px-3 font-display text-[12px] text-[#2A2620] transition-colors hover:bg-[#F0E8DC]">
+                  className="shrink-0 h-8 rounded-full border border-[rgba(33,33,36,0.12)] bg-transparent px-3 font-display text-[12px] text-[#212124] transition-colors hover:bg-[#F2F2F4]">
                   {m.addressSearch}
                 </button>
               </div>
@@ -1114,7 +1114,7 @@ export function ApplyForm({
                   className={inputClass + ' mt-1'} />
               )}
               {addressEn && (
-                <p className="mt-1 font-display text-[15px] text-[#2A2620]">{addressEn}</p>
+                <p className="mt-1 font-display text-[15px] text-[#212124]">{addressEn}</p>
               )}
             </FieldRow>
             {isPublic && (
@@ -1131,13 +1131,13 @@ export function ApplyForm({
           {step === 3 && (<>
           {pets.map((pet, pi) => (
           <section key={pi} className={sectionCardClass}>
-            <div className="flex items-baseline justify-between gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
+            <div className="flex items-baseline justify-between gap-[10px] pb-3 border-b border-[rgba(33,33,36,0.12)] mb-1">
               <h2 className={sectionTitleClass}>
                 {pets.length > 1 ? m.petInfoN(pi + 1) : m.petInfo}
               </h2>
               {pi > 0 && (
                 <button type="button" onClick={() => removePet(pi)}
-                  className="shrink-0 text-[12px] text-[#9A9286] transition-colors hover:text-[#C26A4A]">
+                  className="shrink-0 text-[12px] text-[#97979C] transition-colors hover:text-[#C26A4A]">
                   {m.petRemove}
                 </button>
               )}
@@ -1160,7 +1160,7 @@ export function ApplyForm({
           ))}
           {pets.length < MAX_PETS && (
             <button type="button" onClick={addPet}
-              className="w-full rounded-xl border border-dashed border-[rgba(42,38,32,0.25)] bg-transparent py-3.5 text-center text-[14px] font-medium text-[#6B6457] transition-colors hover:bg-[#FBF7F1] hover:text-[#2A2620]">
+              className="w-full rounded-xl border border-dashed border-[rgba(33,33,36,0.25)] bg-transparent py-3.5 text-center text-[14px] font-medium text-[#5C5C60] transition-colors hover:bg-[#F7F7F8] hover:text-[#212124]">
               + {m.petAdd}
             </button>
           )}
@@ -1171,11 +1171,11 @@ export function ApplyForm({
           {step === 4 && (<>
           {pets.map((pet, pi) => (
           <section key={pi} className={sectionCardClass}>
-            <div className="flex items-baseline justify-between gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
+            <div className="flex items-baseline justify-between gap-[10px] pb-3 border-b border-[rgba(33,33,36,0.12)] mb-1">
               <h2 className={sectionTitleClass}>
                 {pets.length > 1 ? `${m.petInfoN(pi + 1)} · ${m.optionalStepTitle}` : m.optionalStepTitle}
               </h2>
-              <span className="shrink-0 text-[12px] text-[#9A9286]">{m.optionalHint}</span>
+              <span className="shrink-0 text-[12px] text-[#97979C]">{m.optionalHint}</span>
             </div>
             <PetFormSection
               part="optional"
@@ -1254,12 +1254,12 @@ export function ApplyForm({
 
       {/* Daum Postcode Modal */}
       {showAddrModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-[6vh] bg-[#2A2620]/40 backdrop-blur-[2px] sm:items-center sm:py-0 sm:overflow-y-visible" onClick={() => setShowAddrModal(false)}>
-          <div className="relative mx-4 w-full max-w-lg overflow-hidden rounded-xl border border-[rgba(42,38,32,0.12)] bg-[#FBF7F1] shadow-md" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-md py-3 border-b border-[rgba(42,38,32,0.12)]">
-              <span className="font-display text-[12px] uppercase tracking-[1.3px] text-[#9A9286]">{m.addressModalTitle}</span>
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-[6vh] bg-[#212124]/40 backdrop-blur-[2px] sm:items-center sm:py-0 sm:overflow-y-visible" onClick={() => setShowAddrModal(false)}>
+          <div className="relative mx-4 w-full max-w-lg overflow-hidden rounded-xl border border-[rgba(33,33,36,0.12)] bg-[#F7F7F8] shadow-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-md py-3 border-b border-[rgba(33,33,36,0.12)]">
+              <span className="font-display text-[12px] uppercase tracking-[1.3px] text-[#97979C]">{m.addressModalTitle}</span>
               <button type="button" onClick={() => setShowAddrModal(false)}
-                className="text-[#9A9286] hover:text-[#2A2620] text-lg leading-none">&times;</button>
+                className="text-[#97979C] hover:text-[#212124] text-lg leading-none">&times;</button>
             </div>
             <div ref={addrModalRef} className="h-[450px]" />
           </div>

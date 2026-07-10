@@ -35,44 +35,49 @@
    에서 사용. admin Editorial(--pmw-*) 과 별개.
    ───────────────────────────────────────────────────────────── */
 :root {
-  --pm-bg: #F5EFE8;
-  --pm-surface: #FBF7F1;
-  --pm-ink: #2A2620;
-  --pm-ink-2: #6B6457;
-  --pm-ink-3: #9A9286;
-  --pm-line: rgba(42, 38, 32, 0.10);
-  --pm-line-2: rgba(42, 38, 32, 0.14);
-  --pm-accent: #D99A58;
-  --pm-accent-soft: #E8DCC4;
+  --pm-bg: #FFFFFF;
+  --pm-surface: #FFFFFF;
+  /* 잉크 — 웜 브라운블랙(#2A2620 계열)에서 중립 그레이 스케일로 전환 (2026-07 리디자인).
+     일반 앱 문법: 본문 진회색 / 보조 중회색 / 캡션 연회색. */
+  --pm-ink: #212124;
+  --pm-ink-2: #5C5C60;
+  --pm-ink-3: #97979C;
+  --pm-line: rgba(33, 33, 36, 0.10);
+  --pm-line-2: rgba(33, 33, 36, 0.14);
+  /* accent — 브랜드 색 미정, 우선 그레이 스케일(진회색 = 주 액션). 브랜드 색 결정 시 여기만 교체.
+     sage/warn/info 는 의미 전달용 상태색이라 유지. */
+  --pm-accent: #212124;
+  --pm-accent-soft: #E9E9EB;
   --pm-sage: #8FA68C;
   --pm-warn: #C26A4A;
   --pm-info: #5E83A6;
 
   /* bg/surface 의 rgb 트리플 — 인라인 그라디언트/반투명 오버레이(상단바·하단바·저장바)가
      rgb(var(--pm-bg-rgb) / α) 로 테마를 따라가도록. (다크에서 dark 블록이 트리플을 교체) */
-  --pm-bg-rgb: 245 239 232;
-  --pm-surface-rgb: 251 247 241;
+  --pm-bg-rgb: 255 255 255;
+  --pm-surface-rgb: 255 255 255;
   /* glass 톤 — 페이지 배경(살구 톤)과 의도적으로 다른 색.
      하단 플로팅 nav 의 Liquid Glass 효과가 비치도록 흰색(라이트)/딥브라운(다크). */
   --pm-glass-rgb: 255 255 255;
 
-  /* timeline 카드 그라데이션 — 다크 분기 필요해 토큰화. 단계 카드(cardList),
+  /* timeline 카드 — 다크 분기 필요해 토큰화. 단계 카드(cardList),
      소프트 카드(cardSoft), hero 카드(cardHero), sage 합성 베이스(cardSageBase).
-     라이트는 베이지 paper 톤, 다크는 페이지 배경(#1C1916) 위 살짝 밝은 warm 다크. */
-  --pm-card-soft: linear-gradient(160deg, #F0E8DB 0%, #EDE4D7 50%, #E6DDCD 100%);
-  --pm-card-list: linear-gradient(160deg, #F5EDE0 0%, #F2E9DC 50%, #ECE3D3 100%);
-  --pm-card-hero: radial-gradient(140% 100% at 80% 18%, #E8DECC 0%, #DCD2BD 45%, #CBC1AB 100%);
-  --pm-card-sage-base: #F1E9DC;
-  /* paper 카드 상단의 흰색 1px inset highlight — 라이트에선 종이 위 빛 반사,
-     다크에선 두드러지지 않게 매우 약하게(0.06) 둠. */
-  --pm-card-rim: 0 1px 0 rgba(255, 255, 255, 0.45) inset;
-  --pm-card-rim-soft: 0 1px 0 rgba(255, 255, 255, 0.35) inset;
-  /* ink 의 rgb 트리플 — 하드코딩 hairline/틴트(rgba(42,38,32,.NN))가
+     라이트는 흰 배경 위 옅은 회색 tint 카드(스타벅스·오늘의집 문법) — 색 차이가 곧
+     구분이라 테두리·그림자 불필요. 다크는 페이지 배경 위 살짝 밝은 그레이. */
+  --pm-card-soft: #F7F7F8;
+  --pm-card-list: #F7F7F8;
+  --pm-card-hero: #F7F7F8;
+  --pm-card-sage-base: #F7F7F8;
+  /* 카드 분리 — 라이트는 tint 색 차이만으로 구분(테두리·그림자 없음),
+     다크는 흰색 inset highlight 를 매우 약하게(0.06) 둠. */
+  --pm-card-rim: none;
+  --pm-card-rim-soft: none;
+  /* ink 의 rgb 트리플 — 하드코딩 hairline/틴트가
      rgb(var(--pm-ink-rgb) / .NN) 로 다크에서 반전되도록. (스크림·그림자는 제외, literal 유지) */
-  --pm-ink-rgb: 42 38 32;
-  /* 상단바 펫 아바타 active ring — 배경색 ring + 브라운 ring. 다크에서 교체. */
-  --pm-ring-bg: #F5EFE8;
-  --pm-ring-accent: #735B3D;
+  --pm-ink-rgb: 33 33 36;
+  /* 상단바 펫 아바타 active ring — 배경색 ring + 잉크 ring. 다크에서 교체. */
+  --pm-ring-bg: #FFFFFF;
+  --pm-ring-accent: #212124;
 
   /* Semantic font tokens — UI 코드는 이것만 참조.
      --font-* 는 self-hosted Pretendard 로 고정한다. next/font/google 은 빌드 때
@@ -96,32 +101,33 @@
    ───────────────────────────────────────────────────────────── */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --pm-bg: #1C1916;
-  --pm-surface: #262220;
-  --pm-ink: #ECE4D8;
-  --pm-ink-2: #B3A993;
-  --pm-ink-3: #847C6E;
-  --pm-line: rgba(236, 228, 216, 0.12);
-  --pm-line-2: rgba(236, 228, 216, 0.16);
-  --pm-accent: #DEA86A;
-  --pm-accent-soft: #3A3328;
+  /* 다크도 중립 그레이 스케일 (2026-07 리디자인, warm Stone 에서 전환). */
+  --pm-bg: #17171A;
+  --pm-surface: #202024;
+  --pm-ink: #E6E6EA;
+  --pm-ink-2: #A8A8AE;
+  --pm-ink-3: #78787E;
+  --pm-line: rgba(230, 230, 234, 0.12);
+  --pm-line-2: rgba(230, 230, 234, 0.16);
+  --pm-accent: #E4E4E8;
+  --pm-accent-soft: #2E2E32;
   --pm-sage: #9DB89A;
   --pm-warn: #D67E5C;
   --pm-info: #84A6C6;
-  --pm-bg-rgb: 28 25 22;
-  --pm-surface-rgb: 38 34 32;
-  --pm-ink-rgb: 236 228 216;
-  --pm-glass-rgb: 60 55 50;
-  /* 다크: 페이지 #1C1916 위에서 카드가 살짝 떠보이도록 warm 다크 베이지. */
-  --pm-card-soft: linear-gradient(160deg, #2A2520 0%, #2F2924 50%, #322C27 100%);
-  --pm-card-list: linear-gradient(160deg, #2D2823 0%, #322C27 50%, #36302A 100%);
-  --pm-card-hero: radial-gradient(140% 100% at 80% 18%, #36302A 0%, #3A332D 45%, #3F362F 100%);
-  --pm-card-sage-base: #2C2724;
+  --pm-bg-rgb: 23 23 26;
+  --pm-surface-rgb: 32 32 36;
+  --pm-ink-rgb: 230 230 234;
+  --pm-glass-rgb: 55 55 60;
+  /* 다크: 페이지 #17171A 위에서 카드가 살짝 떠보이도록 한 단계 밝은 그레이. */
+  --pm-card-soft: #232327;
+  --pm-card-list: #232327;
+  --pm-card-hero: #232327;
+  --pm-card-sage-base: #232327;
   /* 다크에선 흰색 highlight 가 두드러져 어색 — 거의 안 보이게. */
   --pm-card-rim: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
   --pm-card-rim-soft: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
-  --pm-ring-bg: #1C1916;
-  --pm-ring-accent: #DEA86A;
+  --pm-ring-bg: #17171A;
+  --pm-ring-accent: #E4E4E8;
 }
 
 @keyframes pm-fade-up {
@@ -219,9 +225,9 @@
     --popover: 40 56% 96%;
     --popover-foreground: 29 19% 13%;
 
-    /* Primary: 펫무브 amber (#D99A58) — 공용 부품(달력 선택일 등)도 펫무브 톤 */
-    --primary: 31 63% 60%;
-    --primary-foreground: 32 30% 92%;
+    /* Primary: 그레이 스케일(브랜드 색 미정) — 공용 부품(달력 선택일 등)도 진회색 */
+    --primary: 240 4% 14%;
+    --primary-foreground: 0 0% 100%;
 
     /* Secondary: warm sand (#E8DEC4) */
     --secondary: 40 36% 84%;
@@ -243,8 +249,8 @@
     /* Border: warm hairline (#D9CFB8) */
     --border: 40 26% 79%;
     --input: 40 26% 79%;
-    /* Ring (focus): 펫무브 amber (#D99A58) */
-    --ring: 31 63% 60%;
+    /* Ring (focus): 그레이 스케일(브랜드 색 미정) */
+    --ring: 240 4% 14%;
 
     --radius: 0.5rem;
 
@@ -257,7 +263,7 @@
     --pmw-accent-strong: 32 30% 43%;     /* #8C6F4E warm brown — tinted/hover */
     --pmw-tag-bg: 40 36% 83%;            /* #E5D9C2 warm cream */
     --pmw-tag-fg: 35 27% 30%;            /* #5E4D38 dark olive */
-    --pmw-cal-today: 31 63% 60%;         /* 펫무브 amber #D99A58 */
+    --pmw-cal-today: 240 4% 14%;         /* 그레이 스케일 (브랜드 색 미정, 이전 amber #D99A58) */
     --pmw-cal-sunday: 16 56% 40%;        /* #A04A2D rust orange */
     --pmw-cal-saturday: 215 32% 27%;     /* #2F4459 ink blue */
     --pmw-positive: 120 20% 31%;         /* #3F5F3F forest green */

@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { OtherCasesRow } from '@/components/cases/other-cases-row'
-import { PetAvatar } from '@/components/cases/pet-avatar'
-import { PetAvatarDisplay } from '@/components/me/pet-avatar-display'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 
 type Tab = 'journey' | 'docs'
@@ -14,9 +12,9 @@ type Tab = 'journey' | 'docs'
  * 일정/서류 페이지 공통 헤더.
  *
  * 레이아웃:
- *  - 한 줄에 들어가면: [PetAvatar 36] [이름] [route] ─────── [OtherCasesRow]  (우측 정렬)
+ *  - 한 줄에 들어가면: [이름] [route] ─────── [OtherCasesRow]  (우측 정렬)
  *  - 안 들어가면 (wrap):  [OtherCasesRow]
- *                          [PetAvatar 36] [이름] [route]            (column, 아바타 위로)
+ *                          [이름] [route]            (column, 스위처 위로)
  *
  * 감지 방법: 보이지 않는 probe DOM 한 벌을 항상 row+flexWrap 으로 두고, probe 안
  * 두 자식(좌측 그룹 / OtherCasesRow) 의 offsetTop 을 비교한다. wrap 됐으면 둘째
@@ -166,13 +164,13 @@ export function CaseHeader({
     </div>
   )
 
+  // 좌측 장식 아바타(36px)는 제거 — 다마리에선 우측 스위처의 활성 아바타와 중복,
+  // 한 마리에선 히어로 사진 카드가 화면의 얼굴 역할.
+  // 일정 탭: 제목 "OO의 여행"(트리플식) + 라우트 제거 — 목적지·전환은 히어로 칩이 담당.
+  // 서류 탭: 히어로 카드가 없어 기존(이름 + 라우트 전환 버튼) 유지.
+  const isJourney = tab === 'journey'
   const leftGroup = (
     <>
-      {case_ ? (
-        <PetAvatarDisplay case_={case_} index={caseIndex} size={36} />
-      ) : (
-        <PetAvatar size={36} />
-      )}
       <div
         style={{
           display: 'flex',
@@ -182,10 +180,10 @@ export function CaseHeader({
           minWidth: 0,
         }}
       >
-        <h1 style={{ ...serif, fontSize: 20, lineHeight: 1.12, margin: 0, color: ink }}>
-          {petName}
+        <h1 style={{ ...serif, fontSize: 24, fontWeight: 600, lineHeight: 1.15, margin: 0, color: ink }}>
+          {isJourney ? `${petName}의 여행` : petName}
         </h1>
-        {routeEl}
+        {!isJourney && routeEl}
       </div>
     </>
   )

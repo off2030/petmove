@@ -6,9 +6,9 @@ import { nativeGoogleLogin } from '@/lib/native/native-oauth'
 import { nativeAppleLogin } from '@/lib/native/native-apple'
 
 const buttonBaseClass =
-  'inline-flex w-full items-center justify-center gap-1.5 rounded-md h-10 px-md text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D99A58]/40 disabled:pointer-events-none disabled:opacity-50 select-none'
-const socialButtonClass = `${buttonBaseClass} border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] text-[#2A2620] hover:bg-[#F0E8DC]`
-const primaryButtonClass = `${buttonBaseClass} bg-[#D99A58] text-[#FBF7F1] hover:bg-[#C98B45]`
+  'inline-flex w-full items-center justify-center gap-1.5 rounded-md h-10 px-md text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#212124]/30 disabled:pointer-events-none disabled:opacity-50 select-none'
+const socialButtonClass = `${buttonBaseClass} border border-[rgba(33,33,36,0.16)] bg-white text-[#212124] hover:bg-[#F2F2F4]`
+const primaryButtonClass = `${buttonBaseClass} bg-[#212124] text-white hover:bg-[#3A3A3E]`
 // Apple 가이드라인: Sign in with Apple 버튼은 검정/흰색 + Apple 로고, 다른 소셜 버튼과
 // 동등한 크기·위치(Guideline 4.8). 흰색(아웃라인) 변형 — 카카오·네이버·구글의 크림 톤과
 // 어울리도록. 로고·글자는 검정(currentColor). iOS 네이티브에서만 노출.
@@ -171,22 +171,22 @@ export function LoginForm({
   // 매직링크(magic)는 같은 화면에서 끝나며 안내문을 보여줘야 하므로 제외.
   if (loading === 'google' || loading === 'kakao' || loading === 'naver' || loading === 'apple') {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-md bg-[#F5EFE8] px-md py-xl">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-md bg-white px-md py-xl">
         <div
-          className="h-8 w-8 animate-spin rounded-full border-2 border-[#D99A58]/30 border-t-[#D99A58]"
+          className="h-8 w-8 animate-spin rounded-full border-2 border-[#212124]/20 border-t-[#212124]"
           aria-hidden
         />
-        <p className="text-sm text-[#9A9286]">로그인 중…</p>
+        <p className="text-sm text-[#97979C]">로그인 중…</p>
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[#F5EFE8] px-md py-xl">
+    <div className="flex min-h-dvh items-center justify-center bg-white px-md py-xl">
       <div className="w-full max-w-sm space-y-lg">
         <div className="space-y-md text-center">
-          <h1 className="font-display text-[28px] leading-tight text-[#2A2620]">펫무브</h1>
-          <p className="text-sm leading-snug text-[#9A9286]">
+          <h1 className="font-display text-[28px] leading-tight text-[#212124]">펫무브</h1>
+          <p className="text-sm leading-snug text-[#97979C]">
             반려동물과 함께하는 해외여행
             <br />
             펫무브 앱으로 쉽게 준비하세요!
@@ -233,10 +233,10 @@ export function LoginForm({
           </button>
         </div>
 
-        <div className="flex items-center gap-sm text-xs text-[#9A9286]">
-          <div className="h-px flex-1 bg-[rgba(42,38,32,0.12)]" />
+        <div className="flex items-center gap-sm text-xs text-[#97979C]">
+          <div className="h-px flex-1 bg-[rgba(33,33,36,0.12)]" />
           <span>또는 이메일</span>
-          <div className="h-px flex-1 bg-[rgba(42,38,32,0.12)]" />
+          <div className="h-px flex-1 bg-[rgba(33,33,36,0.12)]" />
         </div>
 
         <form onSubmit={sendMagicLink} className="space-y-sm">
@@ -247,7 +247,7 @@ export function LoginForm({
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            className="w-full rounded-md border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] px-sm py-2 text-sm text-[#2A2620] placeholder:text-[#9A9286]/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D99A58]/40"
+            className="w-full rounded-md border border-[rgba(33,33,36,0.16)] bg-white px-sm py-2 text-sm text-[#212124] placeholder:text-[#97979C]/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#212124]/30"
           />
           {isReviewLogin && (
             <input
@@ -256,7 +256,7 @@ export function LoginForm({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
-              className="w-full rounded-md border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] px-sm py-2 text-sm text-[#2A2620] placeholder:text-[#9A9286]/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D99A58]/40"
+              className="w-full rounded-md border border-[rgba(33,33,36,0.16)] bg-white px-sm py-2 text-sm text-[#212124] placeholder:text-[#97979C]/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#212124]/30"
             />
           )}
           <button
@@ -275,7 +275,7 @@ export function LoginForm({
         </form>
 
         {info && (
-          <p className="rounded-md border border-[#D99A58]/30 bg-[#D99A58]/10 p-sm text-xs text-[#6B6457]">
+          <p className="rounded-md border border-[rgba(33,33,36,0.16)] bg-[#F7F7F8] p-sm text-xs text-[#5C5C60]">
             {info}
           </p>
         )}

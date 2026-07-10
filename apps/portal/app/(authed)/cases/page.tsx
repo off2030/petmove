@@ -57,10 +57,9 @@ export default async function CasesPage() {
               display: 'block',
               padding: '18px 18px',
               borderRadius: 14,
-              background: 'var(--pm-surface)',
+              background: 'var(--pm-card-soft)',
               textDecoration: 'none',
               color: 'var(--pm-ink)',
-              border: '1px solid rgba(0,0,0,0.04)',
             }}
           >
             <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em' }}>{petName}</div>

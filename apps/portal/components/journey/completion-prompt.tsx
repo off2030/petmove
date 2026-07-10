@@ -62,7 +62,7 @@ export function CompletionPrompt({
     >
       <div
         onClick={busy ? undefined : onDismiss}
-        style={{ position: 'absolute', inset: 0, background: 'rgba(42,38,32,.42)' }}
+        style={{ position: 'absolute', inset: 0, background: 'rgba(33,33,36,.42)' }}
       />
       <div
         style={{
@@ -72,7 +72,7 @@ export function CompletionPrompt({
           margin: '0 12px max(12px, env(safe-area-inset-bottom))',
           borderRadius: 22,
           background: C.surface,
-          boxShadow: '0 14px 44px rgba(42,38,32,.24)',
+          boxShadow: '0 14px 44px rgba(33,33,36,.24)',
           padding: '10px 20px 22px',
           animation: 'pm-fade-up .28s cubic-bezier(0.2,0.8,0.2,1) both',
         }}
@@ -91,7 +91,7 @@ export function CompletionPrompt({
             type="button"
             disabled={busy}
             onClick={onDone}
-            style={{ ...btnBase, background: C.accent, color: '#FBF7F1', border: 'none', fontWeight: 600 }}
+            style={{ ...btnBase, background: C.accent, color: '#FFFFFF', border: 'none', fontWeight: 600 }}
           >
             잘 다녀왔어요
           </button>

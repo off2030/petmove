@@ -42,11 +42,9 @@ export function DocsView({
     fontWeight: 400,
   }
   const monoCap: React.CSSProperties = {
-    fontSize: 11,
-    letterSpacing: '0.16em',
-    textTransform: 'uppercase',
+    fontSize: 12,
     color: C.ink3,
-    fontWeight: 500,
+    fontWeight: 600,
   }
 
   const { updateCase } = useCases()
@@ -237,11 +235,9 @@ export function DocsView({
 
 function SectionLabel({ children, right }: { children: React.ReactNode; right?: string }) {
   const monoCap: React.CSSProperties = {
-    fontSize: 11,
-    letterSpacing: '0.16em',
-    textTransform: 'uppercase',
+    fontSize: 12,
     color: 'var(--pm-ink-3)',
-    fontWeight: 500,
+    fontWeight: 600,
   }
   return (
     <div

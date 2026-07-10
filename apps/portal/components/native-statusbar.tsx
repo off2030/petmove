@@ -29,7 +29,7 @@ export function NativeStatusBar() {
           // Style.Light = 라이트 배경(어두운 아이콘), Style.Dark = 다크 배경(밝은 아이콘).
           void StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light })
           // 배경색은 edge-to-edge 강제 환경(신버전)에선 무시될 수 있어 best-effort.
-          StatusBar.setBackgroundColor({ color: dark ? '#1C1916' : '#F5EFE8' }).catch(() => {})
+          StatusBar.setBackgroundColor({ color: dark ? '#17171A' : '#FFFFFF' }).catch(() => {})
         }
         apply()
         observer = new MutationObserver(apply)

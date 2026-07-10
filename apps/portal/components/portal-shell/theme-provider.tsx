@@ -19,7 +19,7 @@ export type ThemeMode = 'system' | 'light' | 'dark'
 type Resolved = 'light' | 'dark'
 
 const STORAGE_KEY = 'pm-theme'
-const BG = { light: '#F5EFE8', dark: '#1C1916' } as const
+const BG = { light: '#FFFFFF', dark: '#17171A' } as const
 
 type ThemeCtx = { mode: ThemeMode; resolved: Resolved; setMode: (m: ThemeMode) => void }
 const Ctx = createContext<ThemeCtx | null>(null)

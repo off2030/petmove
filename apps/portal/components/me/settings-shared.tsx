@@ -20,11 +20,9 @@ export const serif: CSSProperties = {
 }
 
 export const monoCap: CSSProperties = {
-  fontSize: 11,
-  letterSpacing: '0.16em',
-  textTransform: 'uppercase',
+  fontSize: 12,
   color: C.ink3,
-  fontWeight: 500,
+  fontWeight: 600,
 }
 
 /**

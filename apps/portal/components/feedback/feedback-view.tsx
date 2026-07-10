@@ -103,11 +103,9 @@ export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | 
     letterSpacing: '-0.01em',
   }
   const monoCap: CSSProperties = {
-    fontSize: 11,
-    letterSpacing: '0.16em',
-    textTransform: 'uppercase',
+    fontSize: 12,
     color: C.ink3,
-    fontWeight: 500,
+    fontWeight: 600,
   }
 
   return (
@@ -176,7 +174,7 @@ export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | 
                     padding: '12px 2px',
                     borderRadius: 14,
                     border: selected ? `1px solid ${C.accent}` : `.5px solid ${C.line}`,
-                    background: selected ? 'rgba(217,154,88,.10)' : C.surface,
+                    background: selected ? 'rgba(33,33,36,.06)' : C.surface,
                     color: selected ? C.accent : C.ink3,
                     fontFamily: 'inherit',
                     cursor: 'pointer',

@@ -43,11 +43,9 @@ export function RequiredDocDetail({
     fontVariantNumeric: 'tabular-nums',
   }
   const monoCap: React.CSSProperties = {
-    fontSize: 11,
-    letterSpacing: '0.16em',
-    textTransform: 'uppercase',
+    fontSize: 12,
     color: C.ink3,
-    fontWeight: 500,
+    fontWeight: 600,
   }
 
   const { updateCase } = useCases()
@@ -338,11 +336,9 @@ export function RequiredDocDetail({
 
 function SectionLabel({ children, right }: { children: React.ReactNode; right?: string }) {
   const monoCap: React.CSSProperties = {
-    fontSize: 11,
-    letterSpacing: '0.16em',
-    textTransform: 'uppercase',
+    fontSize: 12,
     color: 'var(--pm-ink-3)',
-    fontWeight: 500,
+    fontWeight: 600,
   }
   return (
     <div

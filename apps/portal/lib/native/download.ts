@@ -99,7 +99,7 @@ function chooseSaveOrShare(filename: string): Promise<'save' | 'share' | null> {
         'display:block', 'width:100%', 'box-sizing:border-box',
         'padding:14px', 'margin-bottom:9px', 'border:0', 'border-radius:13px',
         'font-size:15px', 'font-weight:600', 'font-family:inherit', 'cursor:pointer',
-        primary ? 'background:#D99A58;color:#1f1d1b' : 'background:rgba(255,255,255,0.13);color:#fff',
+        primary ? 'background:#FFFFFF;color:#212124' : 'background:rgba(255,255,255,0.13);color:#fff',
       ].join(';')
       b.addEventListener('click', on)
       return b
