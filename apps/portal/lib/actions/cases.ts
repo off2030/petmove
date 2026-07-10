@@ -645,10 +645,20 @@ export async function updateTiterFields(
     } else {
       delete nextData.rabies_titer_scheduled
     }
-    if (!hasValidDate(entry) && arr.length <= 1) {
-      delete nextData.rabies_titer_records
+    arr[0] = entry
+    // index-0(1회차) 이 유효 채혈일(또는 예정 채혈)을 잃으면 빈 shell 로 남기지 않고 압축한다.
+    // 남기면: 검사기관만 선택된 채 채혈일이 비어 보이고, 뒤(2회차+) 의 유효 기록이 그 shell
+    // 뒤에 갇혀 '광견병 항체 검사 일정' 주의를 계속 띄우면서도 이 화면에선 못 지우는 유령 상태가
+    // 된다. 단, 예정(rabies_titer_scheduled) 채혈은 도래 전까지 lab/value 를 보존해야 하므로
+    // shell 을 유지한다.
+    const titerScheduled =
+      typeof nextData.rabies_titer_scheduled === 'string' &&
+      (nextData.rabies_titer_scheduled as string).length >= 10
+    if (!hasValidDate(entry) && !titerScheduled) {
+      const compact = arr.filter((r) => hasValidDate(r))
+      if (compact.length === 0) delete nextData.rabies_titer_records
+      else nextData.rabies_titer_records = compact
     } else {
-      arr[0] = entry
       nextData.rabies_titer_records = arr
     }
     // 채혈일(1회차 검사일)이 바뀌거나 지워지면 '완료(결과 확인)' 플래그 해제 — 이전
