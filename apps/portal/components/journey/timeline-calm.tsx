@@ -208,9 +208,15 @@ export function TimelineCalm({
       ? formatDateRange(trip.departureDate, journeyCompleteDate)
       : arrivalText
 
-  // 일정 카드 한 행 — 동그라미(번호·상태) + 항목명 + 날짜. index 는 전체 일정 기준
-  // 0-based, isLast 는 소속 카드 내 마지막 행 여부(구분선 생략).
-  const renderStageRow = (s: JourneyStage, index: number, isLast: boolean) => {
+  // 일정 한 행 — 동그라미(번호·상태) + 항목명 + 날짜. index 는 전체 일정 기준 0-based.
+  // 카드 면 없이 세로 레일(타임라인)로 잇는다 — 완료 구간은 진한 선, 남은 구간은 흐린 선.
+  // first/last 는 소속 구간(zone) 내 위치(레일 시작·끝), prevDone 은 직전 행 완료 여부
+  // (윗선 채움 판단).
+  const renderStageRow = (
+    s: JourneyStage,
+    index: number,
+    opts: { first: boolean; last: boolean; prevDone: boolean },
+  ) => {
     const isDone = s.state === 'done'
     const isCurr = s.state === 'current'
     // advisory(추가 백신·추가 검사) 가 미완료면 본 흐름의 다음 단계는 못 가리지만 미래
@@ -226,23 +232,54 @@ export function TimelineCalm({
     // warn 색으로 'overdue' 신호를 줘야 한다.
     const showDeadlinePill = s.dateLabel === '마감' && !!s.date && !isDone
     const isOverdueDeadline = showDeadlinePill && !hasFutureDate
+    // 세로 레일 — 완료(지나온 길)는 진하게, 남은 길은 흐리게. 위 반절은 직전 행,
+    // 아래 반절은 이 행의 완료 상태를 따른다.
+    const railDone = 'rgb(var(--pm-ink-rgb) / .28)'
+    const railTodo = 'rgb(var(--pm-ink-rgb) / .09)'
+    const padY = s.desc ? 13 : 18
     return (
       <Link
         key={s.id}
         href={stageHref(s)}
         style={{
+          position: 'relative',
           display: 'flex',
           alignItems: 'flex-start',
           gap: 14,
           // 보조줄(desc) 없는 행은 제목 한 줄이라 빽빽해진다 — 설명문 숨김 모드 등에서
           // 세로 여백을 키워 호흡을 준다. 보조줄 있는 행은 기존 간격 유지.
-          padding: s.desc ? '13px 0' : '18px 0',
-          borderBottom: isLast ? 'none' : `.5px solid ${C.line}`,
+          padding: `${padY}px 0`,
           textDecoration: 'none',
           color: 'inherit',
           cursor: 'pointer',
         }}
       >
+        {!opts.first && (
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              left: 10,
+              top: 0,
+              height: padY,
+              width: 2,
+              background: opts.prevDone && isDone ? railDone : railTodo,
+            }}
+          />
+        )}
+        {!opts.last && (
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              left: 10,
+              top: padY + 22,
+              bottom: 0,
+              width: 2,
+              background: isDone ? railDone : railTodo,
+            }}
+          />
+        )}
         <div
           style={{
             width: 22,
@@ -255,8 +292,9 @@ export function TimelineCalm({
             // 우선순위: 주의(실제 문제) > done(완료 체크) > current(다음 할 일 톤) > 안내 > upcoming.
             // current 와 안내가 동시이면 current 톤 유지 — 보호자의 다음 액션이 시각의 무게중심.
             // 안내는 우측 칩 + 별도 카드로 보조 노출.
-            background: hasWarn ? C.warn : isDone ? C.sage : isCurr ? C.accent : hasInfo ? C.info : 'transparent',
-            border: !hasWarn && !isDone && !isCurr && !hasInfo ? `1px solid ${C.line}` : 'none',
+            // upcoming 은 레일이 원 뒤로 비치지 않게 페이지 배경으로 채운다.
+            background: hasWarn ? C.warn : isDone ? C.sage : isCurr ? C.accent : hasInfo ? C.info : C.bg,
+            border: !hasWarn && !isDone && !isCurr && !hasInfo ? `1px solid rgb(var(--pm-ink-rgb) / .14)` : 'none',
             color: hasWarn || isDone || isCurr || hasInfo ? C.surface : C.ink3,
             ...num,
             fontSize: 11,
@@ -1249,31 +1287,63 @@ export function TimelineCalm({
           </div>
         )}
 
-        {/* 단계 리스트 — 한국(출국 준비)·일본·한국(귀국) 구간별 카드. */}
-        <h3 style={{ ...serif, margin: '32px 0 12px', fontSize: 17 }}>전체 일정</h3>
+        {/* 단계 리스트 — 한국(출국 준비)·일본·한국(귀국) 구간별. 카드 면 없이 페이지 배경
+            위에 바로, 세로 레일(타임라인)이 구간 안의 행들을 잇는다. */}
+        <h3 style={{ ...serif, margin: '32px 0 4px', fontSize: 17 }}>전체 일정</h3>
         {stageZones.flatMap((zone, zi) => {
-          const card = (
-            <div
-              key={`zone-${zi}`}
-              style={{
-                background: C.cardList,
-                borderRadius: 16,
-                boxShadow: 'var(--pm-card-rim)',
-                padding: '4px 14px',
-              }}
-            >
+          const list = (
+            <div key={`zone-${zi}`}>
               {zone.rows.map(({ stage, index }, k) =>
-                renderStageRow(stage, index, k === zone.rows.length - 1),
+                renderStageRow(stage, index, {
+                  first: k === 0,
+                  last: k === zone.rows.length - 1,
+                  prevDone: k > 0 && zone.rows[k - 1].stage.state === 'done',
+                }),
               )}
             </div>
           )
-          // caption 이 있는 구간(일본·귀국)은 카드 위에 구분 캡션을 얹는다.
-          if (!zone.caption) return [card]
+          // caption 이 있는 구간(일본·귀국)은 '이동' 노드로 잇는다 — 단계 동그라미들과
+          // 같은 세로축에 비행기 아이콘, 옆에 캡션. 소제목이 아니라 여정 경로 위에서
+          // 실제로 건너가는 마디로 읽히도록.
+          if (!zone.caption) return [list]
           return [
-            <div key={`zone-${zi}-cap`} style={{ ...monoCap, margin: '22px 0 10px' }}>
-              {zone.caption}
+            <div
+              key={`zone-${zi}-cap`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                margin: '24px 0',
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  width: 22,
+                  height: 22,
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: C.ink3,
+                }}
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
+                </svg>
+              </span>
+              <span style={{ ...monoCap }}>{zone.caption}</span>
             </div>,
-            card,
+            list,
           ]
         })}
       </div>

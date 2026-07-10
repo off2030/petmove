@@ -83,13 +83,10 @@ export function TopBar() {
         paddingBottom: 0,
         boxSizing: 'border-box',
         pointerEvents: 'none',
-        // 하단 바 카드 모양(둥근 22, 알파 0.50)과 어울리도록 — 상단도 하단 모서리만
-        // 살짝 둥글리고, 그라데이션 끝 알파를 0 → 0.50 으로 두어 라운드가 보이게.
-        // 풀-와이드는 유지 — 카드로 갇히면 답답함.
-        borderBottomLeftRadius: 18,
-        borderBottomRightRadius: 18,
-        background:
-          'linear-gradient(180deg, rgb(var(--pm-bg-rgb) / .85) 0%, rgb(var(--pm-bg-rgb) / .70) 60%, rgb(var(--pm-bg-rgb) / .50) 100%)',
+        // 직선 풀-와이드 바 — 라운드·그라데이션 없이 균일한 반투명 + 블러.
+        // (흰 페이지 위 반투명 흰 바라 라운드가 안 보였음 — 밝고 심플 리디자인에서 정리.)
+        // 반투명+블러는 유지 — 고정 바 밑으로 스크롤되는 내용과 글자가 겹치지 않게.
+        background: 'rgb(var(--pm-bg-rgb) / .85)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
       }}
@@ -111,7 +108,9 @@ export function TopBar() {
             fontWeight: 700,
             fontSize: 17,
             letterSpacing: '0.025em',
-            color: 'var(--pm-ink-3)',
+            // 워드마크 = 본문 잉크 — 화면에서 가장 흐린 색(ink-3)이던 것을 올려 브랜드
+            // 존재감 확보. 브랜드 색 확정 시 이 자리가 첫 적용처.
+            color: 'var(--pm-ink)',
             pointerEvents: 'auto',
             flexShrink: 0,
             textDecoration: 'none',

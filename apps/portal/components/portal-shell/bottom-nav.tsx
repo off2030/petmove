@@ -127,7 +127,8 @@ export function BottomNav() {
         background: 'rgb(var(--pm-bg-rgb) / 0.60)',
         backdropFilter: 'blur(20px) saturate(160%)',
         WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-        border: '1px solid rgba(42, 38, 32, 0.06)',
+        // 테두리 = 중립 잉크 기반 — 구 웜 브라운(42,38,32) 잔재를 그레이 리디자인에 맞춰 정리.
+        border: '1px solid rgb(var(--pm-ink-rgb) / .06)',
         boxShadow:
           '0 12px 28px -10px rgba(0, 0, 0, 0.16),' +
           ' 0 2px 6px -2px rgba(0, 0, 0, 0.06)',
