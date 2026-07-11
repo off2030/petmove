@@ -210,10 +210,15 @@ function NavIcon({ name, stroke = 1.7 }: { name: Icon; stroke?: number }) {
         </svg>
       )
     case 'user':
+      // 보호자 + 곁의 작은 동물(뾰족귀 머리) — 사람만 있는 범용 '내 정보'와 달리
+      // 반려동물 앱의 계정은 '나와 내 동물'이라는 걸 형태로 말한다.
       return (
         <svg {...p}>
-          <circle cx="12" cy="7.8" r="3.8" />
-          <path d="M5.5 20.2a6.5 6.5 0 0 1 13 0" />
+          <circle cx="10" cy="7.2" r="3.6" />
+          <path d="M3.8 20a6.2 6.2 0 0 1 12.4 0" />
+          <circle cx="18.6" cy="16.4" r="2.6" />
+          <path d="M17.3 14.2l-.9-1.9" />
+          <path d="M19.9 14.2l.9-1.9" />
         </svg>
       )
   }
