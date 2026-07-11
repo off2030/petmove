@@ -583,11 +583,10 @@ export function TimelineCalm({
             )}
 
             <div style={{ padding: '14px 18px 18px' }}>
-              {/* 헤더 행 — 사진 있으면 '다음 할 일' 라벨만(목적지·D-day·진행률은 사진 칩에),
-                  없으면 목적지·D-day + 진행률 을 먼저 놓고 라벨은 아래에. */}
-              {heroPhoto ? (
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.accentInk }}>다음 할 일</div>
-              ) : (
+              {/* 헤더 행 — 사진 있으면 목적지·D-day·진행률은 사진 칩에 있고 '다음 할 일'
+                  라벨은 아래 제목 행에 인라인으로. 사진 없으면 여기서 목적지·D-day + 진행률
+                  을 먼저 놓는다. ('다음 할 일' 라벨은 두 경우 모두 제목과 한 줄.) */}
+              {!heroPhoto && (
                 <>
                   <div
                     style={{
@@ -669,9 +668,6 @@ export function TimelineCalm({
                       </span>
                     </span>
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: C.accentInk, marginTop: 14 }}>
-                    다음 할 일
-                  </div>
                 </>
               )}
 
@@ -680,7 +676,12 @@ export function TimelineCalm({
                   <Link
                     href={stageHref(nextStages[0])}
                     className="pm-pressable"
-                    style={{ display: 'block', textDecoration: 'none', color: 'inherit', marginTop: 4 }}
+                    style={{
+                      display: 'block',
+                      textDecoration: 'none',
+                      color: 'inherit',
+                      marginTop: heroPhoto ? 0 : 14,
+                    }}
                   >
                     <div
                       style={{
@@ -690,19 +691,32 @@ export function TimelineCalm({
                         gap: 8,
                       }}
                     >
-                      <h3
-                        style={{
-                          ...serif,
-                          margin: 0,
-                          fontSize: 19,
-                          lineHeight: 1.2,
-                          color: C.ink,
-                          fontWeight: 500,
-                          textWrap: 'balance' as React.CSSProperties['textWrap'],
-                        }}
-                      >
-                        {nextStages[0].label}
-                      </h3>
+                      {/* '다음 할 일' 라벨 + 일정명 한 줄 — 라벨은 제목 baseline 에 맞춘 인라인 eyebrow */}
+                      <span style={{ display: 'flex', alignItems: 'baseline', gap: 9, minWidth: 0 }}>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: C.accentInk,
+                            flexShrink: 0,
+                          }}
+                        >
+                          다음 할 일
+                        </span>
+                        <h3
+                          style={{
+                            ...serif,
+                            margin: 0,
+                            fontSize: 19,
+                            lineHeight: 1.2,
+                            color: C.ink,
+                            fontWeight: 500,
+                            textWrap: 'balance' as React.CSSProperties['textWrap'],
+                          }}
+                        >
+                          {nextStages[0].label}
+                        </h3>
+                      </span>
                       <svg
                         width="18"
                         height="18"
