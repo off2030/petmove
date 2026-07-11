@@ -116,7 +116,9 @@ export function TopBar() {
           }}
         >
           <LogoMark size={22} />
-          <span>펫무브</span>
+          {/* 광학 보정 — 한글 글리프는 라인박스 안에서 살짝 아래로 앉는다(베이스라인 위
+              잉크·아래 여백 비대칭). 박스 중심은 로고와 일치해도 눈에는 낮아 보여 1px 올림. */}
+          <span style={{ position: 'relative', top: -1 }}>펫무브</span>
         </Link>
       )}
       {/* 설정 ⚙ 는 하단 '더보기' 탭으로 이관 — 환영(온보딩) 화면에서만 유지. 등록 전엔
