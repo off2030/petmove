@@ -179,6 +179,15 @@
 .pm-field-input::placeholder { color: var(--pm-ink-3); opacity: 1; }
 .pm-field-input { caret-color: var(--pm-accent); }
 
+/* 텍스트 입력 공통 포커스 링 — 브라우저 기본(검정 아웃라인)을 브랜드 하늘로 대체.
+   자체 링을 정의한 입력(focus-visible:outline-none + ring 클래스)은 그쪽이 우선(특이도). */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--pm-accent);
+  outline-offset: 1px;
+}
+
 /* ─────────────────────────────────────────────────────────────
    @petmove/ui 호환 레이어 — 공유 부품(DateTextField 달력·드롭다운 등)이 읽는
    --pmw-*·shadcn 토큰을 portal 새 디자인 시스템(흰 카드 + 회색 캔버스 + 하늘 파랑)
