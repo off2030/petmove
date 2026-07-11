@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { CaseHeader } from '@/components/cases/case-header'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
 import { APP_EU_DESTINATIONS_KO } from '@/lib/app-destinations'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
@@ -360,21 +361,7 @@ export function TimelineCalm({
           // 노치는 이 배지가 놓인 카드 면(zone 카드, C.cardList)의 색으로 뚫어야 펀칭 효과가 난다.
           notchBg: C.cardList,
           children: hasWarn ? (
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-label="주의"
-            >
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-            </svg>
+            <StormCloudIcon size={13} strokeWidth={2.3} label="주의" />
           ) : isDone ? (
             <svg
               width="11"
@@ -391,20 +378,7 @@ export function TimelineCalm({
           ) : isCurr ? (
             index + 1
           ) : hasInfo ? (
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-label="안내"
-            >
-              <line x1="12" y1="11" x2="12" y2="17" />
-              <line x1="12" y1="7" x2="12.01" y2="7" />
-            </svg>
+            <CloudIcon size={13} strokeWidth={2.3} label="안내" />
           ) : (
             index + 1
           ),
@@ -922,22 +896,7 @@ export function TimelineCalm({
                       textAlign: 'left',
                     }}
                   >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{ flexShrink: 0 }}
-                      aria-hidden
-                    >
-                      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                      <line x1="12" y1="9" x2="12" y2="13" />
-                      <line x1="12" y1="17" x2="12.01" y2="17" />
-                    </svg>
+                    <StormCloudIcon size={15} />
                     <span
                       style={{
                         flex: 1,
@@ -1085,11 +1044,7 @@ export function TimelineCalm({
             }}
           >
             <div style={{ ...monoCap, color: C.warn, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
+              <StormCloudIcon size={13} />
               <span>주의</span>
             </div>
             {caseAlerts.map((alert, i) => (
@@ -1144,11 +1099,7 @@ export function TimelineCalm({
               fontWeight: 500,
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
+            <StormCloudIcon size={15} />
             <span>주의 {warnedStages.length}건 — {warnedStages.map((s) => s.label).join(', ')}</span>
           </Link>
         )}

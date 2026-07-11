@@ -47,6 +47,7 @@ import {
 import { useConfirm } from '@petmove/ui'
 import { activeDestinationView } from '@/lib/cases/active-destination'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
+import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
 import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import {
   getCaseVaccineData,
@@ -2156,8 +2157,9 @@ export function StepDetailView({
               border: `.5px solid color-mix(in srgb, ${C.info} 35%, transparent)`,
             }}
           >
-            <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8 }}>
-              안내{noticeCount > 1 ? ` ${noticeCount}건` : ''}
+            <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <CloudIcon size={13} />
+              <span>안내{noticeCount > 1 ? ` ${noticeCount}건` : ''}</span>
             </div>
             {situationalDesc && (
               <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5, whiteSpace: 'pre-line' }}>
@@ -2226,8 +2228,9 @@ export function StepDetailView({
               border: `.5px solid color-mix(in srgb, ${C.warn} 20%, transparent)`,
             }}
           >
-            <div style={{ ...monoCap, color: C.warn, fontWeight: 700, marginBottom: 8 }}>
-              주의 {failed.length}건
+            <div style={{ ...monoCap, color: C.warn, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <StormCloudIcon size={13} />
+              <span>주의 {failed.length}건</span>
             </div>
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {failed.map(({ check, result }) => (
