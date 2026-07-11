@@ -133,7 +133,6 @@ export function GuardianAvatarPicker({ profile, userId, initials, onUpdated }: P
             currentPhoto={currentPhoto}
             busy={busy}
             onPickColor={(c) => commit({ avatar_color: c })}
-            onResetColor={() => commit({ avatar_color: null })}
             onPickPhotoClick={() => fileRef.current?.click()}
             onRemovePhoto={() => commit({ avatar_photo_url: null })}
           />
@@ -160,7 +159,6 @@ function PickerGrid({
   currentPhoto,
   busy,
   onPickColor,
-  onResetColor,
   onPickPhotoClick,
   onRemovePhoto,
 }: {
@@ -168,7 +166,6 @@ function PickerGrid({
   currentPhoto: string | null
   busy: boolean
   onPickColor: (c: AvatarColorId) => void
-  onResetColor: () => void
   onPickPhotoClick: () => void
   onRemovePhoto: () => void
 }) {
@@ -247,34 +244,8 @@ function PickerGrid({
             />
           )
         })}
-        {/* 기본(색상 없음) — 다른 swatch 와 동일한 원형. 사선으로 "없음" 표현. */}
-        <button
-          type="button"
-          disabled={busy}
-          onClick={onResetColor}
-          aria-label="기본 색상"
-          aria-pressed={currentColor === null}
-          style={{
-            ...slotBase,
-            background: 'var(--pm-accent-soft)',
-            boxShadow:
-              currentColor === null
-                ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px var(--pm-ink)'
-                : `inset 0 0 0 .5px ${C.line}`,
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-            <line
-              x1="3.5"
-              y1="12.5"
-              x2="12.5"
-              y2="3.5"
-              stroke="var(--pm-accent)"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
+        {/* '색상 해제(사선)' 버튼 제거(2026-07-11) — 기본값이 곧 브랜드 하늘이라 해제와
+            하늘색 선택이 사실상 동일, 의미 전달 안 되는 미스터리 버튼이었음. */}
       </div>
     </div>
   )
