@@ -85,6 +85,9 @@ export function TimelineCalm({
   const total = stages.length
   const done = stages.filter((s) => s.state === 'done').length
   const pct = done / total
+  // '다음 할 일' 스텝 배지 번호 — 전체 일정에서의 1-based 위치. 아래 타임라인 번호와 연결.
+  const nextStageNo =
+    nextStages.length > 0 ? stages.findIndex((s) => s.id === nextStages[0].id) + 1 : 0
 
   // Stone palette — scoped to this view (globals.css 의 --pm-* 와 같은 값, 인라인 fidelity).
   const C = {
@@ -203,6 +206,10 @@ export function TimelineCalm({
   // (출국일 없을 때 일본 prep 힌트(trip.prep)는 잠시 보류 — 되돌릴 땐 아래 한 줄만 복구.)
   const prepCountupLabel = trip.elapsedDays != null ? `${trip.elapsedDays}일째` : null
   const ringStatus = dDayLabel ?? prepCountupLabel
+  // 사진 하단 오버레이 우측 — '10월 11일 출국'. 연도는 생략(출국은 대개 1년 이내).
+  const departText = trip.departureDate
+    ? `${formatKoreanDate(trip.departureDate).replace(/^\d+년\s*/, '')} 출국`
+    : null
 
   // 완료 배너 날짜 — 왕복은 출발~도착(귀국) 범위, 편도는 도착일만.
   const arrivalText = journeyCompleteDate ? formatKoreanDate(journeyCompleteDate) : ''
@@ -469,12 +476,12 @@ export function TimelineCalm({
           serif={serif}
         />
 
-        {/* 히어로 카드 — 첫 화면의 얼굴. 상단은 목적지 사진(스크림 없이 원본 밝기 그대로,
-            칩 2개: 목적지·D-day / 진행률), 아래는 흰 본문이 직선으로 이어지며 다음 할 일과
-            주의를 담는다. 텍스트는 전부 사진 밖 흰 영역 — 사진 톤과 무관하게 항상 읽힌다.
-            기존 진행률 링·다음 할 일·주의 카드 3장을 합친 것 — 여정 완료 후엔 완료 배너가
-            이 역할을 대신하므로 가린다. */}
+        {/* 상태 창 + 다음 할 일 카드 — 히어로를 둘로 분리(나안).
+            상태 창: 사진(목적지 칩 + D-day·출국일 오버레이) + 세그먼트 진행 바.
+            다음 할 일: 별도 카드, 스텝 배지로 아래 타임라인과 연결. 주의 스트립 포함.
+            여정 완료 후엔 완료 배너가 이 역할을 대신하므로 둘 다 가린다. */}
         {!journeyComplete && (
+          <>
           <div
             style={{
               marginTop: 32,
@@ -517,7 +524,6 @@ export function TimelineCalm({
                     }}
                   >
                     {trip.toCity}
-                    {ringStatus ? ` · ${ringStatus}` : ''}
                     <svg
                       width="11"
                       height="11"
@@ -540,225 +546,220 @@ export function TimelineCalm({
                 ) : (
                   <span style={{ ...destChipStyle, position: 'absolute', top: 12, left: 12 }}>
                     {trip.toCity}
-                    {ringStatus ? ` · ${ringStatus}` : ''}
                   </span>
                 )}
-                <span
+                {/* 하단 오버레이 — D-day(출국일 없으면 N일째) + 출국일. 스크림 대신 옅은
+                    텍스트 섀도 — 밝은 사진에서도 읽히되 사진 원본 밝기는 유지. */}
+                <div
                   style={{
                     position: 'absolute',
-                    top: 12,
-                    right: 12,
-                    background: 'rgba(255,255,255,0.92)',
-                    borderRadius: 999,
-                    padding: '5px 12px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
+                    left: 16,
+                    right: 16,
+                    bottom: 12,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'baseline',
+                    gap: 8,
+                    textShadow: '0 1px 14px rgba(0,0,0,.45)',
                   }}
                 >
-                  <span
-                    style={{
-                      width: 40,
-                      height: 3,
-                      borderRadius: 2,
-                      background: 'rgba(33,33,36,0.18)',
-                      overflow: 'hidden',
-                      display: 'inline-block',
-                    }}
-                  >
-                    <span
-                      style={{
-                        display: 'block',
-                        width: `${Math.round(pct * 100)}%`,
-                        height: '100%',
-                        background: 'var(--pm-accent)',
-                      }}
-                    />
-                  </span>
-                  <span style={{ ...num, fontSize: 12, color: '#212124' }}>
-                    {done}/{total}
-                  </span>
-                </span>
+                  {ringStatus && (
+                    <span style={{ ...serif, fontSize: 30, lineHeight: 1, color: '#FFFFFF' }}>
+                      {ringStatus}
+                    </span>
+                  )}
+                  {departText && (
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,.92)' }}>
+                      {departText}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 
-            <div style={{ padding: '14px 18px 18px' }}>
-              {/* 헤더 행 — 사진 있으면 목적지·D-day·진행률은 사진 칩에 있고 '다음 할 일'
-                  라벨은 아래 제목 행에 인라인으로. 사진 없으면 여기서 목적지·D-day + 진행률
-                  을 먼저 놓는다. ('다음 할 일' 라벨은 두 경우 모두 제목과 한 줄.) */}
+            <div style={{ padding: heroPhoto ? '14px 18px 16px' : '16px 18px' }}>
+              {/* 사진 없으면 목적지·D-day 를 본문 첫 줄에 — 사진의 칩·오버레이 대체. */}
               {!heroPhoto && (
-                <>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    {multiDest ? (
-                      <button
-                        type="button"
-                        onClick={() => setDestSheetOpen(true)}
-                        aria-haspopup="dialog"
-                        aria-expanded={destSheetOpen}
-                        aria-label="목적지 전환"
+                <div style={{ marginBottom: 13 }}>
+                  {multiDest ? (
+                    <button
+                      type="button"
+                      onClick={() => setDestSheetOpen(true)}
+                      aria-haspopup="dialog"
+                      aria-expanded={destSheetOpen}
+                      aria-label="목적지 전환"
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: C.ink2,
+                        background: 'transparent',
+                        border: 'none',
+                        padding: 0,
+                        fontFamily: 'inherit',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {trip.toCity}
+                      {ringStatus ? ` · ${ringStatus}` : ''}
+                      <svg
+                        width="11"
+                        height="11"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
                         style={{
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: C.ink2,
-                          background: 'transparent',
-                          border: 'none',
-                          padding: 0,
-                          fontFamily: 'inherit',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          cursor: 'pointer',
+                          flexShrink: 0,
+                          transform: destSheetOpen ? 'rotate(180deg)' : 'none',
+                          transition: 'transform .18s',
                         }}
                       >
-                        {trip.toCity}
-                        {ringStatus ? ` · ${ringStatus}` : ''}
-                        <svg
-                          width="11"
-                          height="11"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.6"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden
-                          style={{
-                            flexShrink: 0,
-                            transform: destSheetOpen ? 'rotate(180deg)' : 'none',
-                            transition: 'transform .18s',
-                          }}
-                        >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </button>
-                    ) : (
-                      <span style={{ fontSize: 13, fontWeight: 600, color: C.ink2 }}>
-                        {trip.toCity}
-                        {ringStatus ? ` · ${ringStatus}` : ''}
-                      </span>
-                    )}
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      <span
-                        style={{
-                          width: 48,
-                          height: 4,
-                          borderRadius: 2,
-                          background: 'rgb(var(--pm-ink-rgb) / .12)',
-                          overflow: 'hidden',
-                          display: 'inline-block',
-                        }}
-                      >
-                        <span
-                          style={{
-                            display: 'block',
-                            width: `${Math.round(pct * 100)}%`,
-                            height: '100%',
-                            background: C.accent,
-                          }}
-                        />
-                      </span>
-                      <span style={{ ...num, fontSize: 12, color: C.ink3 }}>
-                        {done}/{total}
-                      </span>
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.ink2 }}>
+                      {trip.toCity}
+                      {ringStatus ? ` · ${ringStatus}` : ''}
                     </span>
-                  </div>
-                </>
+                  )}
+                </div>
               )}
+              {/* 준비 진행 세그먼트 바 — 일정 1개 = 1칸, 아래 타임라인의 축소판. */}
+              <div style={{ display: 'flex', gap: 3 }}>
+                {stages.map((s) => (
+                  <span
+                    key={s.id}
+                    aria-hidden
+                    style={{
+                      flex: 1,
+                      height: 6,
+                      borderRadius: 2,
+                      background:
+                        s.state === 'done' ? C.accent : 'rgb(var(--pm-ink-rgb) / .08)',
+                    }}
+                  />
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                <span style={{ fontSize: 12, color: C.ink3 }}>준비 진행</span>
+                <span style={{ ...num, fontSize: 12, color: C.ink }}>
+                  {done}/{total}
+                </span>
+              </div>
+            </div>
+          </div>
 
+          {/* 다음 할 일 카드 — 상태 창과 분리. 스텝 배지가 아래 타임라인 번호와 연결. */}
+          {(nextStages.length > 0 || caseAlerts.length > 0) && (
+            <div
+              style={{
+                marginTop: 10,
+                borderRadius: 16,
+                background: C.cardSoft,
+                boxShadow: 'var(--pm-card-rim)',
+                padding: '15px 18px',
+              }}
+            >
               {nextStages.length > 0 && (
                 <>
                   <Link
                     href={stageHref(nextStages[0])}
                     className="pm-pressable"
                     style={{
-                      display: 'block',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 12,
                       textDecoration: 'none',
                       color: 'inherit',
-                      marginTop: heroPhoto ? 0 : 14,
                     }}
                   >
-                    <div
+                    <span
                       style={{
+                        width: 27,
+                        height: 27,
+                        borderRadius: '50%',
+                        background: C.accent,
+                        color: '#FFFFFF',
                         display: 'flex',
-                        justifyContent: 'space-between',
                         alignItems: 'center',
-                        gap: 8,
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        marginTop: 1,
+                        ...num,
+                        fontSize: 13,
+                        fontWeight: 600,
                       }}
                     >
-                      {/* '다음 할 일' 라벨 + 일정명 한 줄 — 라벨은 제목 baseline 에 맞춘 인라인 eyebrow */}
-                      <span style={{ display: 'flex', alignItems: 'baseline', gap: 9, minWidth: 0 }}>
-                        <span
-                          style={{
-                            fontSize: 12,
-                            fontWeight: 600,
-                            color: C.accentInk,
-                            flexShrink: 0,
-                          }}
-                        >
-                          다음 할 일
-                        </span>
-                        <h3
-                          style={{
-                            ...serif,
-                            margin: 0,
-                            fontSize: 19,
-                            lineHeight: 1.2,
-                            color: C.ink,
-                            fontWeight: 500,
-                            textWrap: 'balance' as React.CSSProperties['textWrap'],
-                          }}
-                        >
-                          {nextStages[0].label}
-                        </h3>
-                      </span>
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        style={{ color: C.ink3, flexShrink: 0 }}
-                        aria-hidden
+                      {nextStageNo}
+                    </span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span
+                        style={{ display: 'block', fontSize: 11, fontWeight: 600, color: C.ink3 }}
                       >
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                    </div>
-                    {(nextStages[0].cardDesc ?? nextStages[0].desc) && (
-                      <p
+                        다음 할 일
+                      </span>
+                      <h3
                         style={{
-                          margin: '5px 0 0',
-                          fontSize: 13,
-                          lineHeight: 1.55,
-                          color: 'rgb(var(--pm-ink-rgb) / .65)',
+                          ...serif,
+                          margin: '2px 0 0',
+                          fontSize: 19,
+                          lineHeight: 1.2,
+                          color: C.ink,
+                          fontWeight: 500,
+                          textWrap: 'balance' as React.CSSProperties['textWrap'],
                         }}
                       >
-                        {nextStages[0].cardDesc ?? nextStages[0].desc}
-                      </p>
-                    )}
-                    {nextStages[0].infoMessage &&
-                      ((nextStages[0].infoChecks ?? 0) > 0 || nextStages[0].advisory) &&
-                      nextStages[0].infoMessage !== (nextStages[0].cardDesc ?? nextStages[0].desc) && (
+                        {nextStages[0].label}
+                      </h3>
+                      {(nextStages[0].cardDesc ?? nextStages[0].desc) && (
                         <p
                           style={{
-                            margin: '8px 0 0',
+                            margin: '5px 0 0',
                             fontSize: 13,
                             lineHeight: 1.55,
-                            color: C.info,
-                            whiteSpace: 'pre-line',
+                            color: 'rgb(var(--pm-ink-rgb) / .65)',
                           }}
                         >
-                          {nextStages[0].infoMessage}
+                          {nextStages[0].cardDesc ?? nextStages[0].desc}
                         </p>
                       )}
+                      {nextStages[0].infoMessage &&
+                        ((nextStages[0].infoChecks ?? 0) > 0 || nextStages[0].advisory) &&
+                        nextStages[0].infoMessage !== (nextStages[0].cardDesc ?? nextStages[0].desc) && (
+                          <p
+                            style={{
+                              margin: '8px 0 0',
+                              fontSize: 13,
+                              lineHeight: 1.55,
+                              color: C.info,
+                              whiteSpace: 'pre-line',
+                            }}
+                          >
+                            {nextStages[0].infoMessage}
+                          </p>
+                        )}
+                    </span>
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ color: C.ink3, flexShrink: 0, marginTop: 7 }}
+                      aria-hidden
+                    >
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
                   </Link>
                   {/* 이어서 — 둘째 할 일부터는 압축 행. */}
                   {nextStages.slice(1).map((stage) => (
@@ -907,7 +908,8 @@ export function TimelineCalm({
                 </div>
               )}
             </div>
-          </div>
+          )}
+          </>
         )}
 
         {/* 목적지 전환 바텀시트 — 히어로 목적지 칩(다목적지)에서 연다. UI 는 헤더 시절과 동일. */}
