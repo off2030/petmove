@@ -35,7 +35,9 @@
    에서 사용. admin Editorial(--pmw-*) 과 별개.
    ───────────────────────────────────────────────────────────── */
 :root {
-  --pm-bg: #FFFFFF;
+  /* 배경↔카드 반전 실험 (2026-07-11): 옅은 회색 캔버스 + 흰 카드 (토스·오늘의집 문법).
+     다크(배경 어둡고 카드 밝음)와 같은 논리로 통일. 이전: 흰 배경 + 회색 카드. */
+  --pm-bg: #F4F6F8;
   --pm-surface: #FFFFFF;
   /* 잉크 — 웜 브라운블랙(#2A2620 계열)에서 중립 그레이 스케일로 전환 (2026-07 리디자인).
      일반 앱 문법: 본문 진회색 / 보조 중회색 / 캡션 연회색. */
@@ -44,17 +46,22 @@
   --pm-ink-3: #97979C;
   --pm-line: rgba(33, 33, 36, 0.10);
   --pm-line-2: rgba(33, 33, 36, 0.14);
-  /* accent — 브랜드 색 미정, 우선 그레이 스케일(진회색 = 주 액션). 브랜드 색 결정 시 여기만 교체.
+  /* accent — 브랜드 색 후보 '트래블월렛 블루 #0BAEFF' 시착 (2026-07-11, 미확정).
+     3벌 체계: accent(선명 — 채움·그래픽용) / accent-soft(연한 틴트 — 배경용) /
+     accent-ink(진한 — 흰 바탕 글자용, 밝은 하늘색은 작은 글자 대비가 모자라 별도 톤).
      sage/warn/info 는 의미 전달용 상태색이라 유지. */
-  --pm-accent: #212124;
-  --pm-accent-soft: #E9E9EB;
+  /* 트래블월렛 원색 (2026-07-11). 채도 낮춘 실험(#21A9ED)은 탁해져서 원색 복귀. */
+  --pm-accent: #0BAEFF;
+  --pm-accent-soft: #E4F4FF;
+  /* 원색 그대로 실험 중 — 글자용도 accent 동일 (진한 변형 #0678B6 는 보류). */
+  --pm-accent-ink: #0BAEFF;
   --pm-sage: #8FA68C;
   --pm-warn: #C26A4A;
   --pm-info: #5E83A6;
 
   /* bg/surface 의 rgb 트리플 — 인라인 그라디언트/반투명 오버레이(상단바·하단바·저장바)가
      rgb(var(--pm-bg-rgb) / α) 로 테마를 따라가도록. (다크에서 dark 블록이 트리플을 교체) */
-  --pm-bg-rgb: 255 255 255;
+  --pm-bg-rgb: 244 246 248;
   --pm-surface-rgb: 255 255 255;
   /* glass 톤 — 페이지 배경(살구 톤)과 의도적으로 다른 색.
      하단 플로팅 nav 의 Liquid Glass 효과가 비치도록 흰색(라이트)/딥브라운(다크). */
@@ -64,10 +71,10 @@
      소프트 카드(cardSoft), hero 카드(cardHero), sage 합성 베이스(cardSageBase).
      라이트는 흰 배경 위 옅은 회색 tint 카드(스타벅스·오늘의집 문법) — 색 차이가 곧
      구분이라 테두리·그림자 불필요. 다크는 페이지 배경 위 살짝 밝은 그레이. */
-  --pm-card-soft: #F7F7F8;
-  --pm-card-list: #F7F7F8;
-  --pm-card-hero: #F7F7F8;
-  --pm-card-sage-base: #F7F7F8;
+  --pm-card-soft: #FFFFFF;
+  --pm-card-list: #FFFFFF;
+  --pm-card-hero: #FFFFFF;
+  --pm-card-sage-base: #FFFFFF;
   /* 카드 분리 — 라이트는 tint 색 차이만으로 구분(테두리·그림자 없음),
      다크는 흰색 inset highlight 를 매우 약하게(0.06) 둠. */
   --pm-card-rim: none;
@@ -77,7 +84,7 @@
   --pm-ink-rgb: 33 33 36;
   /* 상단바 펫 아바타 active ring — 배경색 ring + 잉크 ring. 다크에서 교체. */
   --pm-ring-bg: #FFFFFF;
-  --pm-ring-accent: #212124;
+  --pm-ring-accent: #0BAEFF;
 
   /* Semantic font tokens — UI 코드는 이것만 참조.
      --font-* 는 self-hosted Pretendard 로 고정한다. next/font/google 은 빌드 때
@@ -109,8 +116,9 @@
   --pm-ink-3: #78787E;
   --pm-line: rgba(230, 230, 234, 0.12);
   --pm-line-2: rgba(230, 230, 234, 0.16);
-  --pm-accent: #E4E4E8;
-  --pm-accent-soft: #2E2E32;
+  --pm-accent: #3FC0FF;
+  --pm-accent-soft: #0F3348;
+  --pm-accent-ink: #3FC0FF;
   --pm-sage: #9DB89A;
   --pm-warn: #D67E5C;
   --pm-info: #84A6C6;
@@ -127,7 +135,7 @@
   --pm-card-rim: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
   --pm-card-rim-soft: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
   --pm-ring-bg: #17171A;
-  --pm-ring-accent: #E4E4E8;
+  --pm-ring-accent: #3FC0FF;
 }
 
 @keyframes pm-fade-up {

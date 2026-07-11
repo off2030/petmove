@@ -150,8 +150,11 @@ export function BottomNav() {
               flex: 1,
               borderRadius: 16,
               textDecoration: 'none',
-              color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
-              transition: 'color 180ms ease',
+              // 활성 탭 = 연한 브랜드 틴트 알약 + 진한 브랜드 글자 — 색 하나(위치)만으로
+              // 부족하던 현재 탭 표시를 브랜드 색 체계로.
+              color: active ? 'var(--pm-accent-ink)' : 'var(--pm-ink-3)',
+              background: active ? 'var(--pm-accent-soft)' : 'transparent',
+              transition: 'color 180ms ease, background 180ms ease',
             }}
           >
             <NavIcon name={t.icon} stroke={active ? 2 : 1.7} />

@@ -8,15 +8,18 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { CaseHeader } from '@/components/cases/case-header'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { APP_EU_DESTINATIONS_KO } from '@/lib/app-destinations'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
 /** 목적지별 히어로 사진 — public/destinations 에 번들(무료 라이선스 큐레이션).
-    없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다. */
+    없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
+    EU 24개국은 여정 카드처럼 사진도 한 벌(europe.jpg, 파리 상점 거리)을 공유한다. */
 const DEST_PHOTOS: Record<string, string> = {
   // 색감 비교 테스트 중 — 후보: japan.jpg(파스텔 후지) / japan-bright.jpg(쨍한 후지)
   // / japan-sakura.jpg(벚꽃 클로즈업, 하늘색 배경) / japan-tokyo-tower.jpg(도쿄타워 노을 항공뷰).
   // 하나로 정리할 것.
   일본: '/destinations/japan-sakura.jpg',
+  ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, '/destinations/europe.jpg'])),
 }
 
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
@@ -292,8 +295,8 @@ export function TimelineCalm({
             // 우선순위: 주의(실제 문제) > done(완료 체크) > current(다음 할 일 톤) > 안내 > upcoming.
             // current 와 안내가 동시이면 current 톤 유지 — 보호자의 다음 액션이 시각의 무게중심.
             // 안내는 우측 칩 + 별도 카드로 보조 노출.
-            // upcoming 은 레일이 원 뒤로 비치지 않게 페이지 배경으로 채운다.
-            background: hasWarn ? C.warn : isDone ? C.sage : isCurr ? C.accent : hasInfo ? C.info : C.bg,
+            // upcoming 은 레일이 원 뒤로 비치지 않게 컨테이너(카드) 배경으로 채운다.
+            background: hasWarn ? C.warn : isDone ? C.sage : isCurr ? C.accent : hasInfo ? C.info : C.cardList,
             border: !hasWarn && !isDone && !isCurr && !hasInfo ? `1px solid rgb(var(--pm-ink-rgb) / .14)` : 'none',
             color: hasWarn || isDone || isCurr || hasInfo ? C.surface : C.ink3,
             ...num,
@@ -379,7 +382,8 @@ export function TimelineCalm({
             <div
               style={{
                 ...monoCap,
-                color: hasWarn ? C.warn : hasInfo ? C.info : isCurr ? C.accent : C.ink3,
+                // 작은 글자는 accentInk — 밝은 accent 원색은 12px 대비가 모자란다.
+                color: hasWarn ? C.warn : hasInfo ? C.info : isCurr ? C.accentInk : C.ink3,
                 fontWeight: hasWarn ? 700 : hasInfo ? 600 : isCurr ? 700 : 500,
                 textAlign: 'right',
                 flexShrink: 0,
@@ -398,10 +402,10 @@ export function TimelineCalm({
                     display: 'inline-block',
                     padding: '2px 8px',
                     borderRadius: 6,
-                    background: 'rgba(33,33,36,0.08)',
-                    border: '.5px solid var(--pm-accent)',
-                    color: C.accent,
-                    fontWeight: 700,
+                    // 연한 브랜드 틴트 + 진한 브랜드 글자 — 테두리 없이 면으로만(잔장식 정리).
+                    background: C.soft,
+                    color: C.accentInk,
+                    fontWeight: 600,
                   }}
                 >
                   {s.dateLabel ?? '예정'} {formatStageDate(s)}
@@ -414,10 +418,9 @@ export function TimelineCalm({
                     display: 'inline-block',
                     padding: '2px 8px',
                     borderRadius: 6,
-                    background: isOverdueDeadline ? C.warnBg : 'rgba(33,33,36,0.08)',
-                    border: `.5px solid ${isOverdueDeadline ? `color-mix(in srgb, ${C.warn} 33%, transparent)` : 'var(--pm-accent)'}`,
-                    color: isOverdueDeadline ? C.warn : C.accent,
-                    fontWeight: 700,
+                    background: isOverdueDeadline ? C.warnBg : C.soft,
+                    color: isOverdueDeadline ? C.warn : C.accentInk,
+                    fontWeight: 600,
                   }}
                 >
                   마감 {formatStageDate(s)}
@@ -567,7 +570,7 @@ export function TimelineCalm({
                         display: 'block',
                         width: `${Math.round(pct * 100)}%`,
                         height: '100%',
-                        background: '#212124',
+                        background: 'var(--pm-accent)',
                       }}
                     />
                   </span>
@@ -582,7 +585,7 @@ export function TimelineCalm({
               {/* 헤더 행 — 사진 있으면 '다음 할 일' 라벨만(목적지·D-day·진행률은 사진 칩에),
                   없으면 목적지·D-day + 진행률 을 먼저 놓고 라벨은 아래에. */}
               {heroPhoto ? (
-                <div style={{ fontSize: 12, color: C.ink3 }}>다음 할 일</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.accentInk }}>다음 할 일</div>
               ) : (
                 <>
                   <div
@@ -665,7 +668,9 @@ export function TimelineCalm({
                       </span>
                     </span>
                   </div>
-                  <div style={{ fontSize: 12, color: C.ink3, marginTop: 14 }}>다음 할 일</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: C.accentInk, marginTop: 14 }}>
+                    다음 할 일
+                  </div>
                 </>
               )}
 
@@ -1287,12 +1292,20 @@ export function TimelineCalm({
           </div>
         )}
 
-        {/* 단계 리스트 — 한국(출국 준비)·일본·한국(귀국) 구간별. 카드 면 없이 페이지 배경
-            위에 바로, 세로 레일(타임라인)이 구간 안의 행들을 잇는다. */}
-        <h3 style={{ ...serif, margin: '32px 0 4px', fontSize: 17 }}>전체 일정</h3>
+        {/* 단계 리스트 — 한국(출국 준비)·일본·한국(귀국) 구간별 카드 + 카드 안 세로
+            레일(타임라인). 카드 없는 버전과 비교 중 (2026-07-11). */}
+        <h3 style={{ ...serif, margin: '32px 0 12px', fontSize: 17 }}>전체 일정</h3>
         {stageZones.flatMap((zone, zi) => {
           const list = (
-            <div key={`zone-${zi}`}>
+            <div
+              key={`zone-${zi}`}
+              style={{
+                background: C.cardList,
+                borderRadius: 16,
+                boxShadow: 'var(--pm-card-rim)',
+                padding: '4px 16px',
+              }}
+            >
               {zone.rows.map(({ stage, index }, k) =>
                 renderStageRow(stage, index, {
                   first: k === 0,

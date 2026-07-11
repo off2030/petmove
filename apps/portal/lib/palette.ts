@@ -16,6 +16,8 @@ export const C = {
   line: 'var(--pm-line)',
   line2: 'var(--pm-line-2)',
   accent: 'var(--pm-accent)',
+  /** 흰 바탕 위 작은 글자용 진한 강조색 — 밝은 accent 는 텍스트 대비가 모자란다. */
+  accentInk: 'var(--pm-accent-ink)',
   soft: 'var(--pm-accent-soft)',
   sage: 'var(--pm-sage)',
   warn: 'var(--pm-warn)',

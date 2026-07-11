@@ -4,6 +4,7 @@ import { createAdminClient } from '@petmove/auth'
 import { getCurrentUser } from '@petmove/auth/server'
 import { verifyPreviewToken } from '@petmove/auth/preview-token'
 import type { CaseRow } from '@petmove/domain'
+import { AccentTrial } from '@/components/portal-shell/accent-trial'
 import { BottomNav } from '@/components/portal-shell/bottom-nav'
 import { CaseDataProvider } from '@/components/portal-shell/case-data-provider'
 import { SwipeTabs } from '@/components/portal-shell/swipe-tabs'
@@ -144,6 +145,8 @@ function Shell({
         </SwipeTabs>
       </main>
       <BottomNav />
+      {/* 브랜드 색 후보 시착 — 개발 모드 전용, 확정 후 삭제. */}
+      <AccentTrial />
     </div>
   )
 }

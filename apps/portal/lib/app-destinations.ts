@@ -20,17 +20,22 @@ const DESTS = destsData as Dest[]
  *
  * 정책 메모: memory project_app_supported_destinations.
  */
-export const APP_DESTINATIONS_KO: readonly string[] = [
-  '일본', '태국', '필리핀',
-  // EU 회원국 — 에키노코쿠스(촌충) 구충이 필요한 3국(핀란드·아일랜드·몰타)은 제외하고
-  // 나머지 24개국. 여정 카드는 destination-config 의 'eu' 오버라이드 + journey-steps 의
-  // euFamilyOverrides 한 벌로 전부 공유한다(EU Reg 576/2013 규정 동일). 카드 라벨은
-  // 'eu' 키 공통으로 '유럽연합(EU)' 표기. 핀란드·아일랜드·몰타는 촌충 카드가 별도라
-  // 여정 구성이 끝나면 추후 추가.
+// EU 회원국 — 에키노코쿠스(촌충) 구충이 필요한 3국(핀란드·아일랜드·몰타)은 제외하고
+// 나머지 24개국. 여정 카드는 destination-config 의 'eu' 오버라이드 + journey-steps 의
+// euFamilyOverrides 한 벌로 전부 공유한다(EU Reg 576/2013 규정 동일). 카드 라벨은
+// 'eu' 키 공통으로 '유럽연합(EU)' 표기. 핀란드·아일랜드·몰타는 촌충 카드가 별도라
+// 여정 구성이 끝나면 추후 추가.
+// 별도 export — 목적지 사진 등 'EU 한 벌 공유' 자산이 이 목록을 단일 출처로 쓴다.
+export const APP_EU_DESTINATIONS_KO: readonly string[] = [
   '프랑스', '독일', '이탈리아', '스페인', '네덜란드', '벨기에', '오스트리아',
   '스웨덴', '덴마크', '폴란드', '체코', '포르투갈', '그리스',
   '헝가리', '루마니아', '불가리아', '크로아티아', '슬로바키아',
   '슬로베니아', '리투아니아', '라트비아', '에스토니아', '룩셈부르크', '키프로스',
+]
+
+export const APP_DESTINATIONS_KO: readonly string[] = [
+  '일본', '태국', '필리핀',
+  ...APP_EU_DESTINATIONS_KO,
 ]
 
 /** APP_DESTINATIONS_KO 를 destinations.json 의 {ko,en} 으로 — 등록 순서 보존. */
