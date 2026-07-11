@@ -227,28 +227,30 @@ export function TimelineCalm({
       ? formatDateRange(trip.departureDate, journeyCompleteDate)
       : arrivalText
 
-  // 티켓 노치 배지 — 원형 대신 반원 컷아웃 2개(좌우)를 낸 라운드 사각. 배지가 놓이는
-  // 면의 배경색(notchBg)으로 컷아웃을 채워 '펀칭된' 효과를 낸다. 일반 함수로 호출
-  // (컴포넌트 태그로 안 씀) — 매 렌더마다 재정의돼도 리마운트 걱정 없음.
+  // 티켓 노치 배지 — 가로가 세로보다 긴 라운드 사각 + 우측(텍스트 쪽)에만 반원 컷아웃.
+  // 좌측은 세로 레일이 붙는 쪽이라 온전히 두고, 우측만 '뜯겨 열린' 효과를 준다.
+  // 컷아웃은 배지가 놓이는 면의 배경색(notchBg)으로 채워 펀칭된 것처럼 보이게 한다.
+  // 일반 함수로 호출(컴포넌트 태그로 안 씀) — 매 렌더마다 재정의돼도 리마운트 걱정 없음.
   const renderTicketBadge = (opts: {
     bg: string
     color: string
     notchBg: string
     border?: string
-    size?: number
+    height?: number
     fontSize?: number
     fontWeight?: number
     children: React.ReactNode
   }) => {
-    const size = opts.size ?? 22
-    const notchSize = size >= 26 ? 9 : 8
+    const height = opts.height ?? 22
+    const width = height + 5
+    const notchSize = height >= 26 ? 9 : 8
     return (
       <span
         style={{
           position: 'relative',
-          width: size,
-          height: size,
-          borderRadius: size >= 26 ? 8 : 6,
+          width,
+          height,
+          borderRadius: height >= 26 ? 8 : 6,
           flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
@@ -262,19 +264,6 @@ export function TimelineCalm({
         }}
       >
         {opts.children}
-        <span
-          aria-hidden
-          style={{
-            position: 'absolute',
-            left: -notchSize / 2,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: notchSize,
-            height: notchSize,
-            borderRadius: '50%',
-            background: opts.notchBg,
-          }}
-        />
         <span
           aria-hidden
           style={{
@@ -780,7 +769,7 @@ export function TimelineCalm({
                   >
                     <span style={{ marginTop: 1 }}>
                       {renderTicketBadge({
-                        size: 27,
+                        height: 27,
                         fontSize: 13,
                         fontWeight: 600,
                         bg: C.accent,
