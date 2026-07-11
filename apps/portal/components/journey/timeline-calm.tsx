@@ -304,7 +304,9 @@ export function TimelineCalm({
     // 아래 반절은 이 행의 완료 상태를 따른다.
     const railDone = 'rgb(var(--pm-ink-rgb) / .28)'
     const railTodo = 'rgb(var(--pm-ink-rgb) / .09)'
-    const padY = s.desc ? 13 : 18
+    // 간격 실험(2026-07-11): 제목만 나열될 때 텍스트 나열이 답답하다는 피드백 —
+    // 18→23(행 사이 ~36→46px), 설명문 행도 13→15로 반 단계.
+    const padY = s.desc ? 15 : 23
     return (
       <Link
         key={s.id}
