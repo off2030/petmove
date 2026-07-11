@@ -27,6 +27,7 @@ export function CaseHeader({
   caseId,
   tab,
   petName,
+  petNameEn,
   fromCity,
   toCity,
   tripType,
@@ -38,6 +39,8 @@ export function CaseHeader({
   caseId: string
   tab: Tab
   petName: string
+  /** 로마자 표기 — 여권식 병기(일정 탭). admin 생성 케이스는 null 가능 → 이름 단독. */
+  petNameEn?: string | null
   fromCity: string
   toCity: string
   tripType: string
@@ -166,9 +169,11 @@ export function CaseHeader({
 
   // 좌측 장식 아바타(36px)는 제거 — 다마리에선 우측 스위처의 활성 아바타와 중복,
   // 한 마리에선 히어로 사진 카드가 화면의 얼굴 역할.
-  // 일정 탭: 제목 "OO의 여행"(트리플식) + 라우트 제거 — 목적지·전환은 히어로 칩이 담당.
+  // 일정 탭: 제목 = 여권식 병기 "이름 · NAME"(한글 크게 + 로마자 소문자 캡션) — 증명서에
+  // 찍히는 로마자 표기를 동물의 '공식 여행 신분'으로 보여준다. 영문 없으면 이름 단독.
   // 서류 탭: 히어로 카드가 없어 기존(이름 + 라우트 전환 버튼) 유지.
   const isJourney = tab === 'journey'
+  const nameEn = isJourney ? petNameEn?.trim() || null : null
   const leftGroup = (
     <>
       <div
@@ -181,8 +186,22 @@ export function CaseHeader({
         }}
       >
         <h1 style={{ ...serif, fontSize: 24, fontWeight: 600, lineHeight: 1.15, margin: 0, color: ink }}>
-          {isJourney ? `${petName}의 여행` : petName}
+          {petName}
         </h1>
+        {nameEn && (
+          <span
+            aria-hidden
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: '0.09em',
+              textTransform: 'uppercase',
+              color: ink3,
+            }}
+          >
+            {nameEn}
+          </span>
+        )}
         {!isJourney && routeEl}
       </div>
     </>

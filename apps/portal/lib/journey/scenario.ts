@@ -85,7 +85,8 @@ export interface CaseAlert {
 }
 
 export interface JourneyData {
-  pet: { name: string }
+  /** nameEn — 증명서 로마자 표기. 앱 온보딩은 필수라 항상 있고, admin 생성 케이스만 null 가능. */
+  pet: { name: string; nameEn: string | null }
   trip: {
     fromCity: string
     toCity: string
@@ -1014,7 +1015,7 @@ export function buildJourney(
   const totalInfoChecks = stages.reduce((sum, s) => sum + (s.infoChecks ?? 0), 0)
 
   return {
-    pet: { name: caseRow.pet_name ?? '반려동물' },
+    pet: { name: caseRow.pet_name ?? '반려동물', nameEn: caseRow.pet_name_en },
     trip: {
       fromCity: '한국',
       toCity: ctx.destinationToken ?? caseRow.destination ?? '—',

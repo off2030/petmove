@@ -459,6 +459,7 @@ export function TimelineCalm({
           caseId={caseId}
           tab="journey"
           petName={pet.name}
+          petNameEn={pet.nameEn}
           fromCity={trip.fromCity}
           toCity={trip.toCity}
           tripType={trip.tripType}
