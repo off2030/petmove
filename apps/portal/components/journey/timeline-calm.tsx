@@ -576,8 +576,9 @@ export function TimelineCalm({
                     style={{
                       ...destChipStyle,
                       position: 'absolute',
-                      top: 12,
-                      left: 12,
+                      // 인셋 16 — 하단 오버레이(left 16)와 좌측 라인 통일 + 카드 라운드(16)와 조화.
+                      top: 14,
+                      left: 16,
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                     }}
@@ -606,7 +607,7 @@ export function TimelineCalm({
                     </svg>
                   </button>
                 ) : (
-                  <span style={{ ...destChipStyle, position: 'absolute', top: 12, left: 12 }}>
+                  <span style={{ ...destChipStyle, position: 'absolute', top: 14, left: 16 }}>
                     {trip.toCity}
                     <span style={{ opacity: 0.6 }}>
                       · {trip.tripType === 'round' ? '왕복' : '편도'}
