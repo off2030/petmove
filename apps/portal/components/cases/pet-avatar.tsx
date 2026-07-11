@@ -1,7 +1,7 @@
 /**
- * 펫 아바타 placeholder — Stone/peach gradient + shiba 실루엣 SVG.
+ * 펫 아바타 placeholder — 하늘 그라데이션 + shiba 실루엣 SVG.
  * 일정(TimelineCalm)·서류(DocsView)·정보(InfoView) 헤더 공용.
- * 시각 소스: docs/portal-preview/shared.jsx.
+ * (2026-07-11 새 디자인: 배경 구 피치 → 브랜드 하늘 틴트. 강아지 털색은 자연색 유지.)
  */
 export function PetAvatar({ size = 44 }: { size?: number }) {
   return (
@@ -10,7 +10,7 @@ export function PetAvatar({ size = 44 }: { size?: number }) {
         width: size,
         height: size,
         borderRadius: '50%',
-        background: 'linear-gradient(135deg, #F2C9A4 0%, #E5A776 100%)',
+        background: 'linear-gradient(135deg, #A9DEFF 0%, #5FC4F8 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
