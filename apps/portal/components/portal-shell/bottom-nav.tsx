@@ -23,7 +23,7 @@ type Icon = 'route' | 'doc' | 'grid' | 'user'
 type Tab = { key: 'journey' | 'docs' | 'services' | 'me'; label: string; icon: Icon }
 
 const TABS: Tab[] = [
-  { key: 'journey', label: '일정', icon: 'route' },
+  { key: 'journey', label: '준비', icon: 'route' },
   { key: 'docs', label: '서류', icon: 'doc' },
   { key: 'services', label: '서비스', icon: 'grid' },
   { key: 'me', label: '내 정보', icon: 'user' },

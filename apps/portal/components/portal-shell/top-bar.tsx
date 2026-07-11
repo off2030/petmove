@@ -96,7 +96,7 @@ export function TopBar() {
         <Link
           href={homeHref}
           prefetch
-          aria-label="일정"
+          aria-label="준비"
           style={{
             // 별도 웹폰트 없이 각 운영체제의 표준 UI sans-serif로 표시.
             display: 'flex',

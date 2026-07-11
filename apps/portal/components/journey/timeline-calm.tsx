@@ -734,7 +734,7 @@ export function TimelineCalm({
                 ))}
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                <span style={{ fontSize: 12, color: C.ink3 }}>준비 진행</span>
+                <span style={{ fontSize: 12, color: C.ink3 }}>진행률</span>
                 <span style={{ ...num, fontSize: 12, color: C.ink }}>
                   {done}/{total}
                 </span>
@@ -1436,7 +1436,7 @@ export function TimelineCalm({
 
         {/* 단계 리스트 — 한국(출국 준비)·일본·한국(귀국) 구간별 카드 + 카드 안 세로
             레일(타임라인). 카드 없는 버전과 비교 중 (2026-07-11). */}
-        <h3 style={{ ...serif, margin: '32px 0 12px', fontSize: 17 }}>전체 일정</h3>
+        <h3 style={{ ...serif, margin: '32px 0 12px', fontSize: 17 }}>준비 단계</h3>
         {stageZones.flatMap((zone, zi) => {
           const list = (
             <div
