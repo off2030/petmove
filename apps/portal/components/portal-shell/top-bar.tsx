@@ -83,12 +83,10 @@ export function TopBar() {
         paddingBottom: 0,
         boxSizing: 'border-box',
         pointerEvents: 'none',
-        // 직선 풀-와이드 바 — 라운드·그라데이션 없이 균일한 반투명 + 블러.
+        // 직선 풀-와이드 바 — 라운드·그라데이션 없이 균일한 불투명 배경.
         // (흰 페이지 위 반투명 흰 바라 라운드가 안 보였음 — 밝고 심플 리디자인에서 정리.)
-        // 반투명+블러는 유지 — 고정 바 밑으로 스크롤되는 내용과 글자가 겹치지 않게.
-        background: 'rgb(var(--pm-bg-rgb) / .85)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        // 반투명+블러 제거 — 불투명 배경이라 밑으로 스크롤되는 내용은 그대로 가려진다.
+        background: 'rgb(var(--pm-bg-rgb))',
       }}
     >
       {onboarding ? (
