@@ -163,6 +163,9 @@ export function TimelineCalm({
   // 스위처는 createPortal(body) — 페이지 루트 pm-fade-up 의 transform 이 fixed 의
   // 기준이 돼 뷰포트 밖으로 밀리는 문제를 우회한다.
   const [heroVariant, setHeroVariant] = useState<'na' | 'na2'>('na')
+  // 노치 위치 비교(2026-07-11) — 중앙(현행)/위 치우침/우상단 코너 컷. dev 스위처로
+  // 실기기 비교 후 확정 예정. 확정되면 상태 제거하고 renderTicketBadge 에 고정.
+  const [notchVariant, setNotchVariant] = useState<'center' | 'top' | 'corner'>('center')
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
@@ -269,12 +272,16 @@ export function TimelineCalm({
           style={{
             position: 'absolute',
             right: -notchSize / 2,
-            top: '50%',
-            transform: 'translateY(-50%)',
             width: notchSize,
             height: notchSize,
             borderRadius: '50%',
             background: opts.notchBg,
+            // 노치 위치 비교 — center: 우측 정중앙(현행) / top: 위로 치우침 / corner: 우상단 코너 컷.
+            ...(notchVariant === 'corner'
+              ? { top: -notchSize / 2 }
+              : notchVariant === 'top'
+                ? { top: '25%', transform: 'translateY(-50%)' }
+                : { top: '50%', transform: 'translateY(-50%)' }),
           }}
         />
       </span>
@@ -1031,6 +1038,30 @@ export function TimelineCalm({
                 }}
               >
                 {v === 'na' ? '나' : '나-2'}
+              </button>
+            ))}
+            <span
+              aria-hidden
+              style={{ width: 1, alignSelf: 'stretch', background: 'rgba(33,33,36,.12)' }}
+            />
+            {(['center', 'top', 'corner'] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setNotchVariant(v)}
+                style={{
+                  padding: '5px 10px',
+                  borderRadius: 999,
+                  border: 'none',
+                  background: notchVariant === v ? '#212124' : 'transparent',
+                  color: notchVariant === v ? '#FFFFFF' : '#5C5C60',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {v === 'center' ? '중앙' : v === 'top' ? '위' : '코너'}
               </button>
             ))}
           </div>,
