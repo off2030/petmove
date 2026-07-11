@@ -19,11 +19,11 @@ import { readLastCaseId, readLastDest, writeLastCaseId, writeLastDest } from './
  * 앱 설정(계정·테마·약관 등)은 상단바 ⚙ → /settings.
  */
 
-type Icon = 'route' | 'doc' | 'grid' | 'user'
+type Icon = 'luggage' | 'doc' | 'grid' | 'user'
 type Tab = { key: 'journey' | 'docs' | 'services' | 'me'; label: string; icon: Icon }
 
 const TABS: Tab[] = [
-  { key: 'journey', label: '준비', icon: 'route' },
+  { key: 'journey', label: '준비', icon: 'luggage' },
   { key: 'docs', label: '서류', icon: 'doc' },
   { key: 'services', label: '서비스', icon: 'grid' },
   { key: 'me', label: '내 정보', icon: 'user' },
@@ -179,35 +179,39 @@ function NavIcon({ name, stroke = 1.7 }: { name: Icon; stroke?: number }) {
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
   }
+  // 트래블월렛·오늘의집 문법 — 도톰한 라운드 스트로크, 큰 코너 라운드, 최소 디테일.
   switch (name) {
-    case 'route':
+    case 'luggage':
+      // 캐리어 — 몸통(rx 3) + 손잡이 + 세로 스트랩 2줄. '준비' 탭 = 떠날 채비.
       return (
-        <svg {...p} strokeWidth={stroke + 0.7}>
-          <circle cx="12" cy="12" r="9" opacity=".3" />
-          <path d="M12 3a9 9 0 0 1 6.4 15.4" />
+        <svg {...p}>
+          <rect x="4" y="7" width="16" height="13" rx="3" />
+          <path d="M9 7V5.6A2.6 2.6 0 0 1 11.6 3h.8A2.6 2.6 0 0 1 15 5.6V7" />
+          <path d="M8.8 11v5M15.2 11v5" />
         </svg>
       )
     case 'doc':
       return (
         <svg {...p}>
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <path d="M14 2v6h6M9 13h6M9 17h6" />
+          <path d="M14 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8z" />
+          <path d="M14 3v3.5A1.5 1.5 0 0 0 15.5 8H19" />
+          <path d="M9 14.5h6" />
         </svg>
       )
     case 'grid':
       return (
         <svg {...p}>
-          <rect x="4" y="4" width="7" height="7" rx="1.6" />
-          <rect x="13" y="4" width="7" height="7" rx="1.6" />
-          <rect x="4" y="13" width="7" height="7" rx="1.6" />
-          <rect x="13" y="13" width="7" height="7" rx="1.6" />
+          <rect x="4" y="4" width="7" height="7" rx="2.4" />
+          <rect x="13" y="4" width="7" height="7" rx="2.4" />
+          <rect x="4" y="13" width="7" height="7" rx="2.4" />
+          <rect x="13" y="13" width="7" height="7" rx="2.4" />
         </svg>
       )
     case 'user':
       return (
         <svg {...p}>
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
+          <circle cx="12" cy="7.8" r="3.8" />
+          <path d="M5.5 20.2a6.5 6.5 0 0 1 13 0" />
         </svg>
       )
   }
