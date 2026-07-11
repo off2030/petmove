@@ -24,12 +24,14 @@ export default function manifest(): MetadataRoute.Manifest {
       },
       { platform: 'itunes', url: 'https://apps.apple.com/app/id6784567864' },
     ],
-    background_color: '#F5F4ED',
-    theme_color: '#F5F4ED',
+    // 새 디자인 시스템(2026-07-11): 옅은 회색 캔버스 --pm-bg. (구 양피지 #F5F4ED 폐기)
+    background_color: '#F4F6F8',
+    theme_color: '#F4F6F8',
     lang: 'ko',
     orientation: 'portrait',
     icons: [
-      // 펫무브 전용 — 리본P (amber #D99A58, 강조색과 동일). SVG vector 라 어떤 사이즈에서도 또렷.
+      // ⚠️ /icon.svg·/icon-maskable.svg 는 아직 구 amber 리본P — 새 하늘 구름 아이콘
+      //   (docs/brand/downloads)으로 교체 예정(네이티브/PWA 자산 트랙). SVG vector.
       {
         src: '/icon.svg',
         sizes: 'any',
