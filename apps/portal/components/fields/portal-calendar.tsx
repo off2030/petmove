@@ -14,7 +14,7 @@ import { useState } from 'react'
 
 const C = {
   ...PM,
-  sun: 'var(--pm-warn)',
+  sun: 'var(--pm-danger)',
 } as const
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']

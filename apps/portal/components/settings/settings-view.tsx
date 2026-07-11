@@ -356,7 +356,7 @@ export function SettingsView() {
           last
         />
         {featureNote && (
-          <div style={{ fontSize: 11.5, color: C.warn, padding: '0 0 12px', lineHeight: 1.45 }}>
+          <div style={{ fontSize: 11.5, color: C.danger, padding: '0 0 12px', lineHeight: 1.45 }}>
             {featureNote}
           </div>
         )}
@@ -426,7 +426,7 @@ export function SettingsView() {
             right={
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 {daysLeft !== null && (
-                  <span style={{ fontSize: 13, color: C.warn }}>
+                  <span style={{ fontSize: 13, color: C.danger }}>
                     {daysLeft > 0 ? `${daysLeft}일 후 삭제 예정` : '오늘 삭제 예정'}
                   </span>
                 )}

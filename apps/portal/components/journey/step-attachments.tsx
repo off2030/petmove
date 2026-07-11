@@ -242,7 +242,7 @@ export function StepAttachments({
       />
 
       {error && (
-        <p style={{ marginTop: 8, fontSize: 12, color: C.warn, lineHeight: 1.5 }}>{error}</p>
+        <p style={{ marginTop: 8, fontSize: 12, color: C.danger, lineHeight: 1.5 }}>{error}</p>
       )}
     </div>
   )

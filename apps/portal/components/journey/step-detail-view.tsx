@@ -2633,8 +2633,8 @@ export function StepDetailView({
                 borderRadius: 10,
                 // 불투명 배경 — 뒤 콘텐츠(첨부 영역)가 비쳐 겹쳐 보이지 않도록.
                 background: C.surface,
-                border: `.5px solid color-mix(in srgb, ${C.warn} 33%, transparent)`,
-                color: C.warn,
+                border: `.5px solid color-mix(in srgb, ${C.danger} 33%, transparent)`,
+                color: C.danger,
                 fontSize: 12,
                 textAlign: 'center',
               }}

@@ -31,16 +31,37 @@ export function ServiceWorkerRegister() {
   useEffect(() => {
     if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return
 
-    // 네이티브 앱: SW 등록 금지 + 기존 SW 해제(브릿지 주입 복구).
-    if (isNativeApp()) {
+    const unregisterExisting = () => {
       navigator.serviceWorker
         .getRegistrations()
         .then((regs) => regs.forEach((r) => void r.unregister()))
         .catch(() => {})
+
+      if ('caches' in window) {
+        caches
+          .keys()
+          .then((keys) =>
+            Promise.all(
+              keys
+                .filter((key) => key.startsWith('portal-'))
+                .map((key) => caches.delete(key)),
+            ),
+          )
+          .catch(() => {})
+      }
+    }
+
+    // 네이티브 앱: SW 등록 금지 + 기존 SW 해제(브릿지 주입 복구).
+    if (isNativeApp()) {
+      unregisterExisting()
       return
     }
 
-    if (process.env.NODE_ENV !== 'production') return
+    if (process.env.NODE_ENV !== 'production') {
+      unregisterExisting()
+      return
+    }
+
     const onLoad = () => {
       navigator.serviceWorker
         .register('/sw.js', { scope: '/' })

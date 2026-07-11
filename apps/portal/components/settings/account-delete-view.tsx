@@ -113,7 +113,7 @@ export function AccountDeleteView() {
               type="button"
               onClick={handleRequest}
               disabled={pending}
-              style={{ ...buttonStyle, color: C.warn, opacity: pending ? 0.5 : 1 }}
+              style={{ ...buttonStyle, color: C.danger, opacity: pending ? 0.5 : 1 }}
             >
               계정 삭제 요청
             </button>

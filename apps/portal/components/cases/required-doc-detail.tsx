@@ -325,7 +325,7 @@ export function RequiredDocDetail({
               </>
             )}
             {error && (
-              <p style={{ marginTop: 8, fontSize: 12, color: C.warn, lineHeight: 1.5 }}>{error}</p>
+              <p style={{ marginTop: 8, fontSize: 12, color: C.danger, lineHeight: 1.5 }}>{error}</p>
             )}
           </div>
         )}
@@ -465,7 +465,7 @@ function PreviewCard({
       </div>
       <div style={{ borderTop: `.5px solid ${C.line}`, background: 'var(--pm-surface)' }}>
         {error ? (
-          <div style={{ padding: 16, fontSize: 12, color: C.warn, textAlign: 'center' }}>
+          <div style={{ padding: 16, fontSize: 12, color: C.danger, textAlign: 'center' }}>
             {error}
           </div>
         ) : !url ? (

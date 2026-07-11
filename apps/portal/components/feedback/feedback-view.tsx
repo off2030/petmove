@@ -250,8 +250,8 @@ export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | 
               padding: '10px 12px',
               borderRadius: 10,
               background: C.surface,
-              border: `.5px solid color-mix(in srgb, ${C.warn} 33%, transparent)`,
-              color: C.warn,
+              border: `.5px solid color-mix(in srgb, ${C.danger} 33%, transparent)`,
+              color: C.danger,
               fontSize: 12,
               textAlign: 'center',
             }}

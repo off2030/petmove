@@ -59,6 +59,9 @@
      트래블월렛 블루 옆에서 이질감. 블루와 같은 cool 계열 민트 틸로 교체(2026-07-11). */
   --pm-sage: #14B8A6;
   --pm-warn: #C26A4A;
+  /* 위험 동작·오류 전용 표준 빨강 (2026-07-12 warn 에서 분리) — 삭제 버튼·오류 문구·
+     달력 일요일. warn(테라코타)은 절차 검증 '주의' 배지 전용으로 유지. */
+  --pm-danger: #E5484D;
   --pm-info: #5E83A6;
 
   /* bg/surface 의 rgb 트리플 — 인라인 그라디언트/반투명 오버레이(상단바·하단바·저장바)가
@@ -123,6 +126,7 @@
   --pm-accent-ink: #3FC0FF;
   --pm-sage: #2DD4BF;
   --pm-warn: #D67E5C;
+  --pm-danger: #F2555A;
   --pm-info: #84A6C6;
   --pm-bg-rgb: 23 23 26;
   --pm-surface-rgb: 32 32 36;
@@ -229,7 +233,7 @@ select:focus-visible {
     --pmw-sage-soft: hsl(210 22% 93%); /* 옅은 회색 — active row */
     --pmw-sage-paper: hsl(210 22% 96%); /* page bg(--pm-bg) 와 동일 */
     --pmw-amber: #0BAEFF;            /* calendar today = 브랜드 */
-    --pmw-rust: #C26A4A;             /* warn (destructive) */
+    --pmw-rust: #E5484D;             /* danger (destructive — 표준 빨강) */
 
     /* Surface */
     --pmw-border-warm: #E4E6EA;      /* neutral hairline */
@@ -269,7 +273,7 @@ select:focus-visible {
     --accent-foreground: 240 4% 14%;
 
     /* Destructive: 펫무브 경고색 (#C26A4A) — 다른 경고(주의 배지·삭제 버튼)와 통일 */
-    --destructive: 16 50% 53%;
+    --destructive: 358 75% 59%;      /* #E5484D danger */
     --destructive-foreground: 0 0% 100%;
 
     /* Border: neutral hairline (#E4E6EA) */
@@ -290,7 +294,7 @@ select:focus-visible {
     --pmw-tag-bg: 204 100% 95%;          /* #E4F4FF soft sky */
     --pmw-tag-fg: 203 60% 30%;           /* deep sky ink */
     --pmw-cal-today: 200 100% 52%;       /* 브랜드 하늘 */
-    --pmw-cal-sunday: 16 50% 53%;        /* #C26A4A warn */
+    --pmw-cal-sunday: 358 75% 59%;       /* #E5484D danger (표준 빨강 일요일) */
     --pmw-cal-saturday: 209 29% 51%;     /* #5E83A6 info blue */
     --pmw-positive: 172 80% 40%;         /* #14B8A6 teal */
     --pmw-avatar-bg: 204 100% 92%;       /* soft sky */
@@ -366,7 +370,7 @@ select:focus-visible {
     --pmw-sage-soft: #232327;        /* dark gray soft */
     --pmw-sage-paper: #17171A;       /* page bg dark */
     --pmw-amber: #3FC0FF;            /* calendar today = 브랜드 */
-    --pmw-rust: #D67E5C;             /* light warn */
+    --pmw-rust: #F2555A;             /* danger dark */
     --pmw-border-warm: #2E2E33;      /* dark hairline */
     --pmw-parchment: #17171A;        /* page bg dark */
     --pmw-paper: #202024;            /* card bg dark */
@@ -400,7 +404,7 @@ select:focus-visible {
     --accent: 240 5% 16%;
     --accent-foreground: 240 8% 91%;
 
-    --destructive: 14 51% 60%;
+    --destructive: 358 86% 64%;      /* #F2555A danger dark */
     --destructive-foreground: 0 0% 100%;
 
     --border: 240 5% 18%;
@@ -414,7 +418,7 @@ select:focus-visible {
     --pmw-tag-bg: 205 45% 18%;           /* deep sky tint */
     --pmw-tag-fg: 200 80% 80%;           /* light sky */
     --pmw-cal-today: 199 100% 62%;       /* 브랜드 하늘 dark */
-    --pmw-cal-sunday: 14 51% 60%;        /* light warn */
+    --pmw-cal-sunday: 358 86% 64%;       /* #F2555A danger dark */
     --pmw-cal-saturday: 209 30% 65%;     /* light info blue */
     --pmw-positive: 172 66% 50%;         /* #2DD4BF light teal */
     --pmw-avatar-bg: 205 45% 20%;        /* deep sky tint */

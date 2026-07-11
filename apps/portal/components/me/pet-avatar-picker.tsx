@@ -164,7 +164,7 @@ export function PetAvatarPicker({ case_ }: { case_: CaseRow }) {
             onChange={(e) => handleFile(e.target.files?.[0])}
             style={{ display: 'none' }}
           />
-          {error && <div style={{ fontSize: 12, color: C.warn }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: C.danger }}>{error}</div>}
         </>
       )}
     </div>

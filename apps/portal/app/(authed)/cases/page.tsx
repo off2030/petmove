@@ -200,7 +200,7 @@ function NoJourneyState() {
 function ErrorState({ message }: { message: string }) {
   return (
     <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-      <p style={{ fontSize: 15, color: 'var(--pm-warn)' }}>여정을 불러오지 못했습니다.</p>
+      <p style={{ fontSize: 15, color: 'var(--pm-danger)' }}>여정을 불러오지 못했습니다.</p>
       <p style={{ fontSize: 12, color: 'var(--pm-ink-3)', marginTop: 8 }}>{message}</p>
     </div>
   )
