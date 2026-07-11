@@ -587,11 +587,9 @@ export function TimelineCalm({
                     }}
                   >
                     {trip.toCity}
-                    {heroVariant === 'na2' && (
-                      <span style={{ opacity: 0.6 }}>
-                        · {trip.tripType === 'round' ? '왕복' : '편도'}
-                      </span>
-                    )}
+                    <span style={{ opacity: 0.6 }}>
+                      · {trip.tripType === 'round' ? '왕복' : '편도'}
+                    </span>
                     <svg
                       width="11"
                       height="11"
@@ -614,11 +612,9 @@ export function TimelineCalm({
                 ) : (
                   <span style={{ ...destChipStyle, position: 'absolute', top: 12, left: 12 }}>
                     {trip.toCity}
-                    {heroVariant === 'na2' && (
-                      <span style={{ opacity: 0.6 }}>
-                        · {trip.tripType === 'round' ? '왕복' : '편도'}
-                      </span>
-                    )}
+                    <span style={{ opacity: 0.6 }}>
+                      · {trip.tripType === 'round' ? '왕복' : '편도'}
+                    </span>
                   </span>
                 )}
                 {/* 하단 오버레이 — 나: D-day+출국일 / 나-2: 진행 바까지 사진 안.
