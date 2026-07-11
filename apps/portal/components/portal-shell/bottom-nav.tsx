@@ -19,14 +19,14 @@ import { readLastCaseId, readLastDest, writeLastCaseId, writeLastDest } from './
  * 앱 설정(계정·테마·약관 등)은 상단바 ⚙ → /settings.
  */
 
-type Icon = 'luggage' | 'doc' | 'stethoscope' | 'user'
+type Icon = 'luggage' | 'doc' | 'heartPlus' | 'user'
 type Tab = { key: 'journey' | 'docs' | 'services' | 'me'; label: string; icon: Icon }
 
 const TABS: Tab[] = [
   { key: 'journey', label: '준비', icon: 'luggage' },
   { key: 'docs', label: '서류', icon: 'doc' },
   // '맡기기' — 유료 대행·파트너·견적의 공통분모 = 위임. 준비(직접)와 의도 대비.
-  { key: 'services', label: '맡기기', icon: 'stethoscope' },
+  { key: 'services', label: '맡기기', icon: 'heartPlus' },
   { key: 'me', label: '내 정보', icon: 'user' },
 ]
 
@@ -199,13 +199,14 @@ function NavIcon({ name, stroke = 1.7 }: { name: Icon; stroke?: number }) {
           <path d="M9 14.5h6" />
         </svg>
       )
-    case 'stethoscope':
-      // 청진기 — '맡기기'의 주력이 동물병원(진료·증명서 발급)이라 진료를 직접 상징.
+    case 'heartPlus':
+      // 하트+플러스 — www 시안(로잔동물의료센터 카드, "전문가에게 안심하고 맡기세요")과
+      // 같은 심벌. 접점(웹·앱)에서 반복해 '펫무브 전문가 케어' 마크로 굳힌다.
       return (
         <svg {...p}>
-          <path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1" />
-          <path d="M8 15a6 6 0 0 0 12 0v-3" />
-          <circle cx="20" cy="10" r="2" />
+          <path d="M12 19.8 5.2 13a4.9 4.9 0 1 1 6.8-7 4.9 4.9 0 0 1 8.6 4.3" />
+          <path d="M15.5 18.5h5.5" />
+          <path d="M18.25 15.75v5.5" />
         </svg>
       )
     case 'user':
