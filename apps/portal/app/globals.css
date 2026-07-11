@@ -55,7 +55,9 @@
   --pm-accent-soft: #E4F4FF;
   /* 원색 그대로 실험 중 — 글자용도 accent 동일 (진한 변형 #0678B6 는 보류). */
   --pm-accent-ink: #0BAEFF;
-  --pm-sage: #8FA68C;
+  /* 완료(sage) — 기존 웜 세이지그린(#8FA68C)은 Editorial(Parchment/Terracotta) 잔재라
+     트래블월렛 블루 옆에서 이질감. 블루와 같은 cool 계열 민트 틸로 교체(2026-07-11). */
+  --pm-sage: #14B8A6;
   --pm-warn: #C26A4A;
   --pm-info: #5E83A6;
 
@@ -119,7 +121,7 @@
   --pm-accent: #3FC0FF;
   --pm-accent-soft: #0F3348;
   --pm-accent-ink: #3FC0FF;
-  --pm-sage: #9DB89A;
+  --pm-sage: #2DD4BF;
   --pm-warn: #D67E5C;
   --pm-info: #84A6C6;
   --pm-bg-rgb: 23 23 26;
