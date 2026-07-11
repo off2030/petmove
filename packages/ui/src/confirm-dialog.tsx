@@ -94,7 +94,7 @@ function ConfirmDialog({ state, onClose }: { state: PendingState; onClose: (ok: 
             <button
               type="button"
               onClick={() => onClose(false)}
-              className="px-md py-1.5 text-sm rounded-md border border-border hover:bg-accent/60 transition-colors"
+              className="px-md py-1.5 text-sm rounded-md border border-border hover:bg-accent/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {cancelLabel}
             </button>
@@ -104,7 +104,9 @@ function ConfirmDialog({ state, onClose }: { state: PendingState; onClose: (ok: 
             type="button"
             onClick={() => onClose(true)}
             className={cn(
-              'px-md py-1.5 text-sm rounded-md transition-colors',
+              // autofocus(okRef) 되는 버튼 — UA 기본 포커스 링(브라우저마다 색 다름, 삼성=주황)
+              // 대신 브랜드 ring 을 키보드 포커스에만 보여준다.
+              'px-md py-1.5 text-sm rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               variant === 'destructive'
                 ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
                 : 'bg-primary text-primary-foreground hover:bg-primary/90',
