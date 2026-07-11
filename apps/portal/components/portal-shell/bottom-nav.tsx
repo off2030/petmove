@@ -19,13 +19,14 @@ import { readLastCaseId, readLastDest, writeLastCaseId, writeLastDest } from './
  * 앱 설정(계정·테마·약관 등)은 상단바 ⚙ → /settings.
  */
 
-type Icon = 'luggage' | 'doc' | 'grid' | 'user'
+type Icon = 'luggage' | 'doc' | 'stethoscope' | 'user'
 type Tab = { key: 'journey' | 'docs' | 'services' | 'me'; label: string; icon: Icon }
 
 const TABS: Tab[] = [
   { key: 'journey', label: '준비', icon: 'luggage' },
   { key: 'docs', label: '서류', icon: 'doc' },
-  { key: 'services', label: '서비스', icon: 'grid' },
+  // '맡기기' — 유료 대행·파트너·견적의 공통분모 = 위임. 준비(직접)와 의도 대비.
+  { key: 'services', label: '맡기기', icon: 'stethoscope' },
   { key: 'me', label: '내 정보', icon: 'user' },
 ]
 
@@ -198,13 +199,13 @@ function NavIcon({ name, stroke = 1.7 }: { name: Icon; stroke?: number }) {
           <path d="M9 14.5h6" />
         </svg>
       )
-    case 'grid':
+    case 'stethoscope':
+      // 청진기 — '맡기기'의 주력이 동물병원(진료·증명서 발급)이라 진료를 직접 상징.
       return (
         <svg {...p}>
-          <rect x="4" y="4" width="7" height="7" rx="2.4" />
-          <rect x="13" y="4" width="7" height="7" rx="2.4" />
-          <rect x="4" y="13" width="7" height="7" rx="2.4" />
-          <rect x="13" y="13" width="7" height="7" rx="2.4" />
+          <path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1" />
+          <path d="M8 15a6 6 0 0 0 12 0v-3" />
+          <circle cx="20" cy="10" r="2" />
         </svg>
       )
     case 'user':
