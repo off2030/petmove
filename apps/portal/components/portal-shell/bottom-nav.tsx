@@ -149,11 +149,13 @@ export function BottomNav() {
               padding: '8px 6px',
               flex: 1,
               textDecoration: 'none',
-              color: active ? 'var(--pm-accent-ink)' : 'var(--pm-ink-3)',
+              // 활성 = 잉크색 filled(반전), 비활성 = 회색 outline — 오늘의집 문법.
+              // 브랜드 블루는 하단바에서 제외해 '지금 할 일/진행' 표시에만 남긴다.
+              color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
               transition: 'color 180ms ease',
             }}
           >
-            <NavIcon name={t.icon} stroke={active ? 2 : 1.7} />
+            <NavIcon name={t.icon} active={active} />
             <span style={{ fontSize: 10, fontWeight: active ? 700 : 500 }}>{t.label}</span>
           </Link>
         )
@@ -177,22 +179,30 @@ function isActive(key: Tab['key'], pathname: string): boolean {
   return new RegExp(`^/cases/[^/]+/${key}(?:/|$)`).test(pathname)
 }
 
-function NavIcon({ name, stroke = 1.7 }: { name: Icon; stroke?: number }) {
+function NavIcon({ name, active = false }: { name: Icon; active?: boolean }) {
   const p = {
     width: 20,
     height: 20,
     viewBox: '0 0 24 24',
     fill: 'none' as const,
     stroke: 'currentColor',
-    strokeWidth: stroke,
+    strokeWidth: 1.7,
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
   }
-  // 트래블월렛·오늘의집 문법 — 도톰한 라운드 스트로크, 큰 코너 라운드, 최소 디테일.
+  // 바 배경색 — 활성(filled) 아이콘의 네거티브 디테일(스트랩·접힘선 등)용.
+  const bg = 'rgb(var(--pm-bg-rgb))'
+  // 트래블월렛·오늘의집 문법 — 비활성: 도톰한 라운드 스트로크 / 활성: 잉크 면(fill) 반전.
   switch (name) {
     case 'luggage':
       // 캐리어 — 몸통(rx 3) + 손잡이 + 세로 스트랩 2줄. '준비' 탭 = 떠날 채비.
-      return (
+      return active ? (
+        <svg {...p}>
+          <path d="M9 6.5V5.6A2.6 2.6 0 0 1 11.6 3h.8A2.6 2.6 0 0 1 15 5.6v.9" strokeWidth="2" />
+          <rect x="4" y="7" width="16" height="13" rx="3" fill="currentColor" stroke="none" />
+          <path d="M8.8 10.5v6M15.2 10.5v6" stroke={bg} strokeWidth="1.6" />
+        </svg>
+      ) : (
         <svg {...p}>
           <rect x="4" y="7" width="16" height="13" rx="3" />
           <path d="M9 7V5.6A2.6 2.6 0 0 1 11.6 3h.8A2.6 2.6 0 0 1 15 5.6V7" />
@@ -200,7 +210,17 @@ function NavIcon({ name, stroke = 1.7 }: { name: Icon; stroke?: number }) {
         </svg>
       )
     case 'doc':
-      return (
+      return active ? (
+        <svg {...p}>
+          <path
+            d="M14 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8z"
+            fill="currentColor"
+            stroke="none"
+          />
+          <path d="M14 3v3.5A1.5 1.5 0 0 0 15.5 8H19" stroke={bg} strokeWidth="1.6" fill="none" />
+          <path d="M9 14.5h6" stroke={bg} strokeWidth="1.6" />
+        </svg>
+      ) : (
         <svg {...p}>
           <path d="M14 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8z" />
           <path d="M14 3v3.5A1.5 1.5 0 0 0 15.5 8H19" />
@@ -208,18 +228,28 @@ function NavIcon({ name, stroke = 1.7 }: { name: Icon; stroke?: number }) {
         </svg>
       )
     case 'dots':
-      // 더보기 — 가로 점 3개. 스트로크 세트 안에서 점만 면(fill)으로.
+      // 더보기 — 가로 점 3개. 이미 면(fill) 아이콘 — 활성 시 점만 살짝 커짐.
       return (
         <svg {...p} stroke="none" fill="currentColor">
-          <circle cx="5" cy="12" r="1.5" />
-          <circle cx="12" cy="12" r="1.5" />
-          <circle cx="19" cy="12" r="1.5" />
+          <circle cx="5" cy="12" r={active ? 1.8 : 1.5} />
+          <circle cx="12" cy="12" r={active ? 1.8 : 1.5} />
+          <circle cx="19" cy="12" r={active ? 1.8 : 1.5} />
         </svg>
       )
     case 'heartPlus':
-      // 하트+플러스 — www 시안(로잔동물의료센터 카드, "전문가에게 안심하고 맡기세요")과
-      // 같은 심벌. 접점(웹·앱)에서 반복해 '펫무브 전문가 케어' 마크로 굳힌다.
-      return (
+      // 하트+플러스 — www 시안(로잔동물의료센터 카드)과 같은 심벌.
+      // 활성: 닫힌 하트 면 + 플러스(배경색 헤일로로 하트에서 분리).
+      return active ? (
+        <svg {...p}>
+          <path
+            d="M12 19.8 5.1 13a4.9 4.9 0 1 1 6.9-7 4.9 4.9 0 1 1 6.9 7z"
+            fill="currentColor"
+            stroke="none"
+          />
+          <path d="M15.5 18.5h5.5M18.25 15.75v5.5" stroke={bg} strokeWidth="4.2" />
+          <path d="M15.5 18.5h5.5M18.25 15.75v5.5" strokeWidth="2" />
+        </svg>
+      ) : (
         <svg {...p}>
           <path d="M12 19.8 5.2 13a4.9 4.9 0 1 1 6.8-7 4.9 4.9 0 0 1 8.6 4.3" />
           <path d="M15.5 18.5h5.5" />
@@ -228,11 +258,22 @@ function NavIcon({ name, stroke = 1.7 }: { name: Icon; stroke?: number }) {
       )
     case 'user':
       // 보호자 + 엎드린 동물 — 스케치 트레이싱(2026-07-11 확정 구도).
-      // 보이지 않는 바닥선 y=20 에 4개 접지점이 정렬: 몸통 왼끝(2.8)·물결 시작(10.2)
-      // ·골 바닥(13.8)·물결 끝(21.6). 몸통은 원호(중심 9.78,19.78 r6.98) 하나가
-      // (15.2,15.4) 허공에서 끊겨 물결과 최단 ~3 간격(하트+플러스와 같은 컷 기법).
-      // 물결은 접선 수평 ease 4구간: 작은 마루(1.3) → 바닥 터치 → 큰 마루(2.6) → 착지.
-      return (
+      // 활성: 머리·어깨 면 + 물결(배경색 헤일로로 몸통에서 분리).
+      return active ? (
+        <svg {...p}>
+          <circle cx="9.4" cy="7.6" r="3.9" fill="currentColor" stroke="none" />
+          <path d="M2.8 20A6.98 6.98 0 0 1 15.2 15.4 L15.2 20 Z" fill="currentColor" stroke="none" />
+          <path
+            d="M10.2 20c.81 0 .99-1.3 1.8-1.3c.81 0 .99 1.3 1.8 1.3c1.71 0 2.09-2.6 3.8-2.6c1.8 0 2.2 2.6 4 2.6"
+            stroke={bg}
+            strokeWidth="3.8"
+          />
+          <path
+            d="M10.2 20c.81 0 .99-1.3 1.8-1.3c.81 0 .99 1.3 1.8 1.3c1.71 0 2.09-2.6 3.8-2.6c1.8 0 2.2 2.6 4 2.6"
+            strokeWidth="2"
+          />
+        </svg>
+      ) : (
         <svg {...p}>
           <circle cx="9.4" cy="7.6" r="3.3" />
           <path d="M2.8 20A6.98 6.98 0 0 1 15.2 15.4" />
