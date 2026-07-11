@@ -111,27 +111,20 @@ export function BottomNav() {
   const fallbackId = lastIdValid ? lastCaseId : journeyCases[0]?.id ?? null
   const caseId = caseIdInPath ?? fallbackId
 
-  // 둥근 카드형 플로팅 바 — 좌우·아래 마진, 라벨 항상 보임. Calm 톤.
-  // portal-preview/app.jsx 의 BottomNav 와 동일 디자인 (truth source).
+  // 풀와이드 플랫 바 — 상단바와 같은 문법(가장자리 크롬 = 캔버스의 연장). 불투명 배경
+  // + 상단 헤어라인만. 활성 탭 표시는 배경 알약 없이 아이콘·라벨 색 전환 하나로.
   return (
     <nav
       style={{
         position: 'fixed',
-        left: 12,
-        right: 12,
-        bottom: 'max(env(safe-area-inset-bottom), 14px)',
+        left: 0,
+        right: 0,
+        bottom: 0,
         zIndex: 40,
         display: 'flex',
-        padding: '6px 4px',
-        borderRadius: 22,
-        background: 'rgb(var(--pm-bg-rgb) / 0.60)',
-        backdropFilter: 'blur(20px) saturate(160%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-        // 테두리 = 중립 잉크 기반 — 구 웜 브라운(42,38,32) 잔재를 그레이 리디자인에 맞춰 정리.
-        border: '1px solid rgb(var(--pm-ink-rgb) / .06)',
-        boxShadow:
-          '0 12px 28px -10px rgba(0, 0, 0, 0.16),' +
-          ' 0 2px 6px -2px rgba(0, 0, 0, 0.06)',
+        padding: '6px 10px calc(env(safe-area-inset-bottom, 0px) + 6px)',
+        background: 'rgb(var(--pm-bg-rgb))',
+        borderTop: '.5px solid var(--pm-line)',
       }}
     >
       {TABS.map((t) => {
@@ -148,13 +141,9 @@ export function BottomNav() {
               gap: 3,
               padding: '8px 6px',
               flex: 1,
-              borderRadius: 16,
               textDecoration: 'none',
-              // 활성 탭 = 연한 브랜드 틴트 알약 + 진한 브랜드 글자 — 색 하나(위치)만으로
-              // 부족하던 현재 탭 표시를 브랜드 색 체계로.
               color: active ? 'var(--pm-accent-ink)' : 'var(--pm-ink-3)',
-              background: active ? 'var(--pm-accent-soft)' : 'transparent',
-              transition: 'color 180ms ease, background 180ms ease',
+              transition: 'color 180ms ease',
             }}
           >
             <NavIcon name={t.icon} stroke={active ? 2 : 1.7} />
