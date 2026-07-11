@@ -144,7 +144,7 @@ export function GuardianAvatarPicker({ profile, userId, initials, onUpdated }: P
             style={{ display: 'none' }}
           />
           {error && (
-            <div style={{ fontSize: 12, color: '#B45C5C' }}>{error}</div>
+            <div style={{ fontSize: 12, color: PM.warn }}>{error}</div>
           )}
         </>
       )}
