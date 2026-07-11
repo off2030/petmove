@@ -18,6 +18,18 @@ const appleButtonClass = `${buttonBaseClass} border border-[rgba(0,0,0,0.18)] bg
 // 비밀번호 로그인으로 전환된다. 일반 사용자는 평소처럼 매직링크. (계정 비번은 코드에 없음)
 const REVIEW_EMAIL = 'review@petmove.co.kr'
 
+// 모바일 키보드가 이메일에 끼워넣는 공백·비가시 문자(NBSP·zero-width 등)까지 제거해
+// 비교한다 — 심사관/운영자가 손으로 입력해도 판정이 어긋나지 않도록. 이메일엔 내부 공백이
+// 없으므로 전부 제거해도 안전.
+// ⚠️ 유니코드 property escape(\p{...})는 일부 구형 모바일 브라우저가 파싱 못 해 청크 전체를
+//   깨뜨린다 → \s + 명시적 \u 이스케이프만 사용(전 브라우저 안전).
+function normalizeEmail(raw: string): string {
+  return raw
+    .replace(/\s+/g, '')
+    .replace(/[\u200B\u200C\u200D\u2060\uFEFF]/g, '')
+    .toLowerCase()
+}
+
 export function LoginForm({
   next,
   initialError = null,
@@ -118,7 +130,7 @@ export function LoginForm({
     setLoading(null)
   }
 
-  const isReviewLogin = email.trim().toLowerCase() === REVIEW_EMAIL
+  const isReviewLogin = normalizeEmail(email) === REVIEW_EMAIL
 
   async function sendMagicLink(e: React.FormEvent) {
     e.preventDefault()
@@ -136,7 +148,8 @@ export function LoginForm({
         return
       }
       setLoading('magic')
-      const { error } = await supabaseBrowser.auth.signInWithPassword({ email, password })
+      // 판정이 통과했으니 실제 로그인엔 깨끗한 상수 이메일을 쓴다(입력에 낀 비가시 문자 방지).
+      const { error } = await supabaseBrowser.auth.signInWithPassword({ email: REVIEW_EMAIL, password })
       setLoading(null)
       if (error) {
         setError(error.message)
@@ -245,6 +258,11 @@ export function LoginForm({
             placeholder="email@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onInput={(e) => setEmail(e.currentTarget.value)}
+            onCompositionEnd={(e) => setEmail(e.currentTarget.value)}
+            // 일부 모바일 키보드는 조합 중 onChange 를 늦게 흘려 state 가 안 갱신될 수 있다 —
+            // 포커스가 빠질 때(빈 화면 탭 등) DOM 실제 값으로 한 번 더 동기화.
+            onBlur={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
             className="w-full rounded-md border border-[rgba(33,33,36,0.16)] bg-white px-sm py-2 text-sm text-[#212124] placeholder:text-[#97979C]/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#212124]/30"
