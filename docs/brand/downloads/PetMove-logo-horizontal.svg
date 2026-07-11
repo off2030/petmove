@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="128" viewBox="0 0 230 64" role="img" aria-label="PetMove logo">
+  <defs>
+    <clipPath id="lsq"><rect x="0" y="8" width="48" height="48" rx="11"></rect></clipPath>
+    <linearGradient id="lsky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#63C9FF"></stop>
+      <stop offset="1" stop-color="#0BAEFF"></stop>
+    </linearGradient>
+  </defs>
+  <g clip-path="url(#lsq)">
+    <g transform="translate(0,8) scale(0.24)">
+      <rect width="200" height="200" fill="url(#lsky)"></rect>
+      <rect x="0" y="160" width="200" height="40" fill="#ffffff"></rect>
+      <circle cx="46" cy="168" r="52" fill="#ffffff"></circle>
+      <circle cx="72" cy="120" r="48" fill="#ffffff"></circle>
+      <circle cx="112" cy="148" r="34" fill="#ffffff"></circle>
+      <circle cx="146" cy="138" r="38" fill="#ffffff"></circle>
+      <circle cx="178" cy="154" r="24" fill="#ffffff"></circle>
+    </g>
+  </g>
+  <text x="60" y="41" font-family="Manrope, &#39;Helvetica Neue&#39;, Arial, sans-serif" font-size="27" font-weight="800" letter-spacing="0.6">
+    <tspan fill="#132635">PET</tspan><tspan fill="#0BAEFF">MOVE</tspan>
+  </text>
+</svg>

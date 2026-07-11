@@ -1,0 +1,177 @@
+/* ========================================================================
+   PetMove (펫무브) — Colors & Type
+   국제 반려동물 이동 동반자 앱 / International pet relocation companion
+   ------------------------------------------------------------------------
+   Visual DNA: warm cream canvas + coral-peach primary + soft sky accent.
+   Inspired by Claude's editorial warmth, retuned for an emotional,
+   trust-heavy domain (preparing a pet for an international move).
+   Fonts: Pretendard (Korean+Latin sans body) + EB Garamond (display serif)
+   + JetBrains Mono (timestamps, doc numbers).
+   ======================================================================== */
+
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
+@import url("https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap");
+
+/* ---- Brand wordmark face: Alonzo ExtraLight ----
+   Used ONLY for the "PETMOVE" wordmark (uppercase, tracked).
+   Not for body or display headlines — those stay EB Garamond + Pretendard. */
+@font-face {
+  font-family: "Alonzo";
+  src: url("./fonts/Alonzo-ExtraLight.otf") format("opentype");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---- Body face: Pretendard (local, self-contained) ----
+   The remote @import above also serves Pretendard; these local @font-face
+   declarations guarantee the family resolves offline and in the DS compiler. */
+@font-face {
+  font-family: "Pretendard";
+  src: url("./fonts/Pretendard-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("./fonts/Pretendard-Light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("./fonts/Pretendard-ExtraLight.woff2") format("woff2");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("./fonts/Pretendard-Thin.woff2") format("woff2");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* ---------- Brand & Accent ----------
+     Coral-peach is PetMove's voltage — softer than Claude's coral so it
+     reads kinder for an anxious-customer domain. Sky-mint is the trust
+     accent used on "approved", schedule confirmations, document status. */
+  --pm-primary:           #e08a64;  /* warm coral-peach — primary CTAs, brand mark */
+  --pm-primary-active:    #b96846;  /* press / pressed state */
+  --pm-primary-soft:      #f6d9c8;  /* soft fill for badges, selection backgrounds */
+  --pm-primary-disabled:  #ead9cc;  /* disabled state on cream */
+
+  --pm-accent-sky:        #6fa8c4;  /* sky blue — destination tags, travel chrome */
+  --pm-accent-sky-soft:   #d8e7ef;  /* soft fill */
+  --pm-accent-mint:       #6fb89a;  /* mint — "approved" / completed checklist */
+  --pm-accent-mint-soft:  #d8ebde;  /* soft fill */
+  --pm-accent-amber:      #e8a55a;  /* amber — "due soon" / warnings */
+  --pm-accent-amber-soft: #f8e8d0;
+
+  /* ---------- Surface (cream-floor system) ---------- */
+  --pm-canvas:               #fbf8f2;  /* page floor — tinted cream, NOT pure white */
+  --pm-surface-soft:         #f5efe4;  /* subtle band, section divider */
+  --pm-surface-card:         #efe7d8;  /* feature & content cards */
+  --pm-surface-cream-strong: #e7dcc8;  /* selected tabs, emphasized chips */
+  --pm-surface-paper:        #ffffff;  /* document / form panels — paper white */
+
+  --pm-surface-dark:          #1f1c17;  /* dark mockup surface (warm-shifted black) */
+  --pm-surface-dark-soft:     #272420;  /* code / detail blocks inside dark */
+  --pm-surface-dark-elevated: #312d28;  /* elevated cards on dark */
+
+  --pm-hairline:      #e8ddc9;  /* 1px borders on cream */
+  --pm-hairline-soft: #efe7d6;  /* faint internal dividers */
+
+  /* ---------- Text ---------- */
+  --pm-ink:          #1a1814;  /* warm-black headlines */
+  --pm-body-strong:  #2c2924;  /* lead paragraphs */
+  --pm-body:         #423f38;  /* default running text */
+  --pm-muted:        #6f6a5d;  /* sub-headings, breadcrumbs */
+  --pm-muted-soft:   #948e7e;  /* captions, fine print */
+  --pm-on-primary:   #ffffff;
+  --pm-on-dark:      #fbf8f2;
+  --pm-on-dark-soft: #a8a294;
+
+  /* ---------- Semantic ---------- */
+  --pm-success: #5fa775;
+  --pm-warning: #d49417;
+  --pm-error:   #c64545;
+  --pm-info:    #6fa8c4;
+
+  /* ---------- Type families ---------- */
+  --pm-wordmark: "Alonzo", "EB Garamond", Georgia, serif; /* @kind font */
+  --pm-display: "EB Garamond", "Tiempos Headline", Georgia, serif; /* @kind font */
+  --pm-body-font: "Pretendard", "Pretendard Variable", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif; /* @kind font */
+  --pm-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace; /* @kind font */
+
+  /* ---------- Spacing (4-base) ---------- */
+  --pm-space-xxs: 4px;
+  --pm-space-xs:  8px;
+  --pm-space-sm:  12px;
+  --pm-space-md:  16px;
+  --pm-space-lg:  24px;
+  --pm-space-xl:  32px;
+  --pm-space-2xl: 48px;
+  --pm-space-section: 96px;
+
+  /* ---------- Radius ---------- */
+  --pm-radius-xs:   4px;
+  --pm-radius-sm:   6px;
+  --pm-radius-md:   10px;  /* buttons, inputs */
+  --pm-radius-lg:   14px;  /* cards */
+  --pm-radius-xl:   20px;  /* hero containers, sheet tops */
+  --pm-radius-pill: 9999px;
+
+  /* ---------- Elevation (color-block first; shadow rare) ---------- */
+  --pm-shadow-soft:  0 1px 2px rgba(26, 24, 20, 0.04), 0 2px 8px rgba(26, 24, 20, 0.05);
+  --pm-shadow-pop:   0 4px 14px rgba(26, 24, 20, 0.10), 0 1px 3px rgba(26, 24, 20, 0.06);
+  --pm-shadow-sheet: 0 -8px 30px rgba(26, 24, 20, 0.08); /* bottom-sheet upward shadow */
+
+  /* ---------- Type scale (display = serif, body = Pretendard sans) ----------
+     *-lh tokens are unitless line-heights, intentionally uncategorized. */
+  --pm-display-xl-size: 56px;
+  --pm-display-xl-lh: 1.05; /* @kind other */
+  --pm-display-xl-tracking: -1.2px;
+  --pm-display-lg-size: 42px;
+  --pm-display-lg-lh: 1.10; /* @kind other */
+  --pm-display-lg-tracking: -0.8px;
+  --pm-display-md-size: 32px;
+  --pm-display-md-lh: 1.15; /* @kind other */
+  --pm-display-md-tracking: -0.5px;
+  --pm-display-sm-size: 24px;
+  --pm-display-sm-lh: 1.25; /* @kind other */
+  --pm-display-sm-tracking: -0.3px;
+
+  --pm-title-lg-size: 20px;
+  --pm-title-lg-lh: 1.3; /* @kind other */
+  --pm-title-md-size: 17px;
+  --pm-title-md-lh: 1.4; /* @kind other */
+  --pm-title-sm-size: 15px;
+  --pm-title-sm-lh: 1.4; /* @kind other */
+
+  --pm-body-md-size: 15px;
+  --pm-body-md-lh: 1.6; /* @kind other */
+  --pm-body-sm-size: 13px;
+  --pm-body-sm-lh: 1.55; /* @kind other */
+  --pm-caption-size: 12px;
+  --pm-caption-lh: 1.4; /* @kind other */
+  --pm-overline-size: 11px;
+  --pm-overline-lh: 1.4; /* @kind other */
+  --pm-overline-tracking: 1.5px;
+}
+
+/* ---------- Semantic primitives ---------- */
+.pm-canvas { background: var(--pm-canvas); color: var(--pm-body); }
+.pm-h1 { font-family: var(--pm-display); font-weight: 400; font-size: var(--pm-display-xl-size); line-height: var(--pm-display-xl-lh); letter-spacing: var(--pm-display-xl-tracking); color: var(--pm-ink); }
+.pm-h2 { font-family: var(--pm-display); font-weight: 400; font-size: var(--pm-display-lg-size); line-height: var(--pm-display-lg-lh); letter-spacing: var(--pm-display-lg-tracking); color: var(--pm-ink); }
+.pm-h3 { font-family: var(--pm-display); font-weight: 400; font-size: var(--pm-display-md-size); line-height: var(--pm-display-md-lh); letter-spacing: var(--pm-display-md-tracking); color: var(--pm-ink); }
+.pm-h4 { font-family: var(--pm-display); font-weight: 400; font-size: var(--pm-display-sm-size); line-height: var(--pm-display-sm-lh); letter-spacing: var(--pm-display-sm-tracking); color: var(--pm-ink); }
+.pm-title { font-family: var(--pm-body-font); font-weight: 600; font-size: var(--pm-title-md-size); line-height: var(--pm-title-md-lh); color: var(--pm-ink); }
+.pm-body { font-family: var(--pm-body-font); font-weight: 400; font-size: var(--pm-body-md-size); line-height: var(--pm-body-md-lh); color: var(--pm-body); }
+.pm-caption { font-family: var(--pm-body-font); font-weight: 500; font-size: var(--pm-caption-size); line-height: var(--pm-caption-lh); color: var(--pm-muted); }
+.pm-overline { font-family: var(--pm-body-font); font-weight: 600; font-size: var(--pm-overline-size); line-height: var(--pm-overline-lh); letter-spacing: var(--pm-overline-tracking); text-transform: uppercase; color: var(--pm-muted); }
+.pm-mono { font-family: var(--pm-mono); font-feature-settings: "tnum" 1; }
