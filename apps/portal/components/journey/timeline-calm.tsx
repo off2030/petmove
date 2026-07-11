@@ -649,7 +649,17 @@ export function TimelineCalm({
                     )}
                   </div>
                   {heroVariant === 'na2' && (
-                    <div style={{ display: 'flex', gap: 3, marginTop: 9 }}>
+                    // 사진 위 바 — 빈 칸은 어두운 반투명(대비 방향 확보: 밝은 사진에서도
+                    // 항상 배경보다 어두움), 채움 칸은 흰색 + 드롭섀도(텍스트 섀도와 같은
+                    // 언어). 흰색 반투명 빈 칸은 흰 하늘·설경에서 소실돼 교체(2026-07-11).
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 3,
+                        marginTop: 9,
+                        filter: 'drop-shadow(0 1px 6px rgba(0,0,0,.3))',
+                      }}
+                    >
                       {stages.map((s) => (
                         <span
                           key={s.id}
@@ -659,7 +669,7 @@ export function TimelineCalm({
                             height: 5,
                             borderRadius: 2,
                             background:
-                              s.state === 'done' ? '#FFFFFF' : 'rgba(255,255,255,.38)',
+                              s.state === 'done' ? '#FFFFFF' : 'rgba(0,0,0,.22)',
                           }}
                         />
                       ))}
