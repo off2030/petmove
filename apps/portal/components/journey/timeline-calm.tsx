@@ -227,6 +227,71 @@ export function TimelineCalm({
       ? formatDateRange(trip.departureDate, journeyCompleteDate)
       : arrivalText
 
+  // 티켓 노치 배지 — 원형 대신 반원 컷아웃 2개(좌우)를 낸 라운드 사각. 배지가 놓이는
+  // 면의 배경색(notchBg)으로 컷아웃을 채워 '펀칭된' 효과를 낸다. 일반 함수로 호출
+  // (컴포넌트 태그로 안 씀) — 매 렌더마다 재정의돼도 리마운트 걱정 없음.
+  const renderTicketBadge = (opts: {
+    bg: string
+    color: string
+    notchBg: string
+    border?: string
+    size?: number
+    fontSize?: number
+    fontWeight?: number
+    children: React.ReactNode
+  }) => {
+    const size = opts.size ?? 22
+    const notchSize = size >= 26 ? 9 : 8
+    return (
+      <span
+        style={{
+          position: 'relative',
+          width: size,
+          height: size,
+          borderRadius: size >= 26 ? 8 : 6,
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: opts.bg,
+          color: opts.color,
+          border: opts.border ?? 'none',
+          ...num,
+          fontSize: opts.fontSize ?? 11,
+          ...(opts.fontWeight != null ? { fontWeight: opts.fontWeight } : {}),
+        }}
+      >
+        {opts.children}
+        <span
+          aria-hidden
+          style={{
+            position: 'absolute',
+            left: -notchSize / 2,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: notchSize,
+            height: notchSize,
+            borderRadius: '50%',
+            background: opts.notchBg,
+          }}
+        />
+        <span
+          aria-hidden
+          style={{
+            position: 'absolute',
+            right: -notchSize / 2,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: notchSize,
+            height: notchSize,
+            borderRadius: '50%',
+            background: opts.notchBg,
+          }}
+        />
+      </span>
+    )
+  }
+
   // 일정 한 행 — 동그라미(번호·상태) + 항목명 + 날짜. index 는 전체 일정 기준 0-based.
   // 카드 면 없이 세로 레일(타임라인)로 잇는다 — 완료 구간은 진한 선, 남은 구간은 흐린 선.
   // first/last 는 소속 구간(zone) 내 위치(레일 시작·끝), prevDone 은 직전 행 완료 여부
@@ -299,27 +364,16 @@ export function TimelineCalm({
             }}
           />
         )}
-        <div
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: '50%',
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            // 우선순위: 주의(실제 문제) > done(완료 체크) > current(다음 할 일 톤) > 안내 > upcoming.
-            // current 와 안내가 동시이면 current 톤 유지 — 보호자의 다음 액션이 시각의 무게중심.
-            // 안내는 우측 칩 + 별도 카드로 보조 노출.
-            // upcoming 은 레일이 원 뒤로 비치지 않게 컨테이너(카드) 배경으로 채운다.
-            background: hasWarn ? C.warn : isDone ? C.sage : isCurr ? C.accent : hasInfo ? C.info : C.cardList,
-            border: !hasWarn && !isDone && !isCurr && !hasInfo ? `1px solid rgb(var(--pm-ink-rgb) / .14)` : 'none',
-            color: hasWarn || isDone || isCurr || hasInfo ? C.surface : C.ink3,
-            ...num,
-            fontSize: 11,
-          }}
-        >
-          {hasWarn ? (
+        {renderTicketBadge({
+          // 우선순위: 주의(실제 문제) > done(완료 체크) > current(다음 할 일 톤) > 안내 > upcoming.
+          // current 와 안내가 동시이면 current 톤 유지 — 보호자의 다음 액션이 시각의 무게중심.
+          // 안내는 우측 칩 + 별도 카드로 보조 노출.
+          bg: hasWarn ? C.warn : isDone ? C.sage : isCurr ? C.accent : hasInfo ? C.info : C.cardList,
+          border: !hasWarn && !isDone && !isCurr && !hasInfo ? `1px solid rgb(var(--pm-ink-rgb) / .14)` : undefined,
+          color: hasWarn || isDone || isCurr || hasInfo ? C.surface : C.ink3,
+          // 노치는 이 배지가 놓인 카드 면(zone 카드, C.cardList)의 색으로 뚫어야 펀칭 효과가 난다.
+          notchBg: C.cardList,
+          children: hasWarn ? (
             <svg
               width="12"
               height="12"
@@ -367,8 +421,8 @@ export function TimelineCalm({
             </svg>
           ) : (
             index + 1
-          )}
-        </div>
+          ),
+        })}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -728,24 +782,17 @@ export function TimelineCalm({
                       color: 'inherit',
                     }}
                   >
-                    <span
-                      style={{
-                        width: 27,
-                        height: 27,
-                        borderRadius: '50%',
-                        background: C.accent,
-                        color: '#FFFFFF',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        marginTop: 1,
-                        ...num,
+                    <span style={{ marginTop: 1 }}>
+                      {renderTicketBadge({
+                        size: 27,
                         fontSize: 13,
                         fontWeight: 600,
-                      }}
-                    >
-                      {nextStageNo}
+                        bg: C.accent,
+                        color: '#FFFFFF',
+                        // 이 배지는 다음 할 일 카드(C.cardSoft) 위에 놓인다 — 노치는 그 배경색으로.
+                        notchBg: C.cardSoft,
+                        children: nextStageNo,
+                      })}
                     </span>
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span
