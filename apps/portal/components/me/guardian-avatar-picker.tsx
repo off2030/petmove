@@ -241,7 +241,7 @@ function PickerGrid({
                 ...slotBase,
                 background: AVATAR_GRADIENTS[id],
                 boxShadow: selected
-                  ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #212124'
+                  ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px var(--pm-ink)'
                   : 'inset 0 1px 1px rgba(255,255,255,.25)',
               }}
             />
@@ -259,7 +259,7 @@ function PickerGrid({
             background: 'var(--pm-accent-soft)',
             boxShadow:
               currentColor === null
-                ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #212124'
+                ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px var(--pm-ink)'
                 : `inset 0 0 0 .5px ${C.line}`,
           }}
         >
