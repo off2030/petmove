@@ -565,6 +565,21 @@ export function TimelineCalm({
                     display: 'block',
                   }}
                 />
+                {/* 하단 한정 그라데이션 스크림 — '원본 밝기 유지' 원칙의 부분 양보(하단 76px).
+                    흰 오버레이(D-day·진행 바)가 사진 밝기와 무관하게 항상 성립하게 한다.
+                    빈 칸 색 단방향 실험(흰38%↔검22%)이 사진에 따라 서로 반대로 무너져 채택. */}
+                <div
+                  aria-hidden
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: 76,
+                    background:
+                      'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.34) 100%)',
+                  }}
+                />
                 {multiDest ? (
                   <button
                     type="button"
@@ -658,8 +673,10 @@ export function TimelineCalm({
                             flex: 1,
                             height: 5,
                             borderRadius: 2,
+                            // 하단 스크림이 바닥을 어둡게 보장 — 흰 채움/흰 반투명 빈 칸이
+                            // 사진 밝기와 무관하게 성립한다.
                             background:
-                              s.state === 'done' ? '#FFFFFF' : 'rgba(255,255,255,.38)',
+                              s.state === 'done' ? '#FFFFFF' : 'rgba(255,255,255,.42)',
                           }}
                         />
                       ))}
