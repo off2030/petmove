@@ -3,7 +3,8 @@
 
 import { C as PM } from '@/lib/palette'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { CaseHeader } from '@/components/cases/case-header'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
@@ -156,6 +157,14 @@ export function TimelineCalm({
 
   // 히어로 카드의 주의 스트립 펼침 상태 — 평소엔 한 줄, 탭하면 상세 목록.
   const [alertsOpen, setAlertsOpen] = useState(false)
+
+  // 나/나-2 상태 창 비교 — dev 전용 스위처(하단 좌측). 방향 확정 후 상태·스위처 제거.
+  // 나: D-day 사진 위 + 진행 바 본문 / 나-2: 진행 바까지 사진 안(본문 없는 풀 포토).
+  // 스위처는 createPortal(body) — 페이지 루트 pm-fade-up 의 transform 이 fixed 의
+  // 기준이 돼 뷰포트 밖으로 밀리는 문제를 우회한다.
+  const [heroVariant, setHeroVariant] = useState<'na' | 'na2'>('na')
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
   const heroPhoto = DEST_PHOTOS[trip.toCity] ?? null
 
@@ -548,35 +557,63 @@ export function TimelineCalm({
                     {trip.toCity}
                   </span>
                 )}
-                {/* 하단 오버레이 — D-day(출국일 없으면 N일째) + 출국일. 스크림 대신 옅은
-                    텍스트 섀도 — 밝은 사진에서도 읽히되 사진 원본 밝기는 유지. */}
+                {/* 하단 오버레이 — 나: D-day+출국일 / 나-2: 진행 바까지 사진 안.
+                    스크림 대신 옅은 텍스트 섀도 — 밝은 사진에서도 읽히되 원본 밝기는 유지. */}
                 <div
                   style={{
                     position: 'absolute',
                     left: 16,
                     right: 16,
                     bottom: 12,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'baseline',
-                    gap: 8,
                     textShadow: '0 1px 14px rgba(0,0,0,.45)',
                   }}
                 >
-                  {ringStatus && (
-                    <span style={{ ...serif, fontSize: 30, lineHeight: 1, color: '#FFFFFF' }}>
-                      {ringStatus}
-                    </span>
-                  )}
-                  {departText && (
-                    <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,.92)' }}>
-                      {departText}
-                    </span>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                      gap: 8,
+                    }}
+                  >
+                    {ringStatus && (
+                      <span style={{ ...serif, fontSize: 30, lineHeight: 1, color: '#FFFFFF' }}>
+                        {ringStatus}
+                      </span>
+                    )}
+                    {(heroVariant === 'na2' || departText) && (
+                      <span
+                        style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,.92)' }}
+                      >
+                        {heroVariant === 'na2'
+                          ? [departText, `${done}/${total}`].filter(Boolean).join(' · ')
+                          : departText}
+                      </span>
+                    )}
+                  </div>
+                  {heroVariant === 'na2' && (
+                    <div style={{ display: 'flex', gap: 3, marginTop: 9 }}>
+                      {stages.map((s) => (
+                        <span
+                          key={s.id}
+                          aria-hidden
+                          style={{
+                            flex: 1,
+                            height: 5,
+                            borderRadius: 2,
+                            background:
+                              s.state === 'done' ? '#FFFFFF' : 'rgba(255,255,255,.38)',
+                          }}
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
             )}
 
+            {/* 본문(세그먼트 바) — 나-2(풀 포토)에선 바가 사진 안으로 들어가 본문이 없다. */}
+            {(!heroPhoto || heroVariant === 'na') && (
             <div style={{ padding: heroPhoto ? '14px 18px 16px' : '16px 18px' }}>
               {/* 사진 없으면 목적지·D-day 를 본문 첫 줄에 — 사진의 칩·오버레이 대체. */}
               {!heroPhoto && (
@@ -654,6 +691,7 @@ export function TimelineCalm({
                 </span>
               </div>
             </div>
+            )}
           </div>
 
           {/* 다음 할 일 카드 — 상태 창과 분리. 스텝 배지가 아래 타임라인 번호와 연결. */}
@@ -910,6 +948,51 @@ export function TimelineCalm({
             </div>
           )}
           </>
+        )}
+
+        {/* 나/나-2 비교 스위처 — dev 전용. AccentTrial(bottom 96) 위에 겹치지 않게 배치.
+            방향 확정 후 heroVariant 상태와 함께 삭제할 것. */}
+        {process.env.NODE_ENV === 'development' &&
+          mounted &&
+          heroPhoto &&
+          !journeyComplete &&
+          createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              left: 14,
+              bottom: 148,
+              zIndex: 60,
+              display: 'flex',
+              gap: 6,
+              padding: '6px 8px',
+              borderRadius: 999,
+              background: 'rgba(255,255,255,0.92)',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.14)',
+            }}
+          >
+            {(['na', 'na2'] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setHeroVariant(v)}
+                style={{
+                  padding: '5px 10px',
+                  borderRadius: 999,
+                  border: 'none',
+                  background: heroVariant === v ? '#212124' : 'transparent',
+                  color: heroVariant === v ? '#FFFFFF' : '#5C5C60',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {v === 'na' ? '나' : '나-2'}
+              </button>
+            ))}
+          </div>,
+          document.body,
         )}
 
         {/* 목적지 전환 바텀시트 — 히어로 목적지 칩(다목적지)에서 연다. UI 는 헤더 시절과 동일. */}
