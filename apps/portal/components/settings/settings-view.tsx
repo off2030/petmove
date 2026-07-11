@@ -289,7 +289,8 @@ export function SettingsView() {
 
   return (
     <>
-    <EditPageShell title="설정" backHref="/me" backLabel="내 정보">
+    {/* 더보기 탭 루트 — 하단 탭으로 진입하므로 뒤로가기 없음. (구 상단바 ⚙ 진입은 폐지) */}
+    <EditPageShell title="설정" backHref={null}>
       <SectionCard label="알림" marginTop={8}>
         <ToggleRow
           label="일정 알림"

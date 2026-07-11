@@ -123,7 +123,8 @@ export function EditPageShell({
   children,
   bottomBar,
 }: {
-  backHref?: string
+  /** null 이면 뒤로가기 링크 미표시 — 탭 루트로 쓰는 페이지(설정=더보기 탭)용. */
+  backHref?: string | null
   backLabel?: string
   title: string
   children: ReactNode
@@ -146,13 +147,13 @@ export function EditPageShell({
       }}
     >
       <div style={{ padding: '0 24px' }}>
-        <BackLink href={backHref} label={backLabel} />
+        {backHref && <BackLink href={backHref} label={backLabel} />}
         <h1
           style={{
             ...serif,
             fontSize: 20,
             lineHeight: 1.12,
-            margin: '12px 0 0',
+            margin: backHref ? '12px 0 0' : 0,
             color: C.ink,
           }}
         >

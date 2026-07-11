@@ -119,6 +119,9 @@ export function TopBar() {
           <span>펫무브</span>
         </Link>
       )}
+      {/* 설정 ⚙ 는 하단 '더보기' 탭으로 이관 — 환영(온보딩) 화면에서만 유지. 등록 전엔
+          하단 탭이 통째로 숨어 이 ⚙ 가 설정·로그아웃의 유일한 비상구이기 때문. */}
+      {onboarding ? (
       <div
         style={{
           display: 'flex',
@@ -128,7 +131,6 @@ export function TopBar() {
           minWidth: 0,
         }}
       >
-        {/* 설정 진입 — 계정·테마·약관·문의 등 앱 설정은 /settings 로. 동물전환은 그대로 우측에 유지. */}
         <Link href="/settings" prefetch aria-label="설정" title="설정" style={btn}>
           {/* Heroicons cog-6-tooth (outline) — 8-tooth lucide 보다 톱니 수가 적고 모서리가 둥글어 Calm 톤에 부드럽게 녹음. */}
           <svg
@@ -146,6 +148,9 @@ export function TopBar() {
           </svg>
         </Link>
       </div>
+      ) : (
+        <span aria-hidden />
+      )}
     </div>
   )
 }

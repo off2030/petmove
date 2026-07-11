@@ -19,8 +19,12 @@ import { readLastCaseId, readLastDest, writeLastCaseId, writeLastDest } from './
  * 앱 설정(계정·테마·약관 등)은 상단바 ⚙ → /settings.
  */
 
-type Icon = 'luggage' | 'doc' | 'heartPlus' | 'user'
-type Tab = { key: 'journey' | 'docs' | 'services' | 'me'; label: string; icon: Icon }
+type Icon = 'luggage' | 'doc' | 'heartPlus' | 'user' | 'dots'
+type Tab = {
+  key: 'journey' | 'docs' | 'services' | 'me' | 'more'
+  label: string
+  icon: Icon
+}
 
 const TABS: Tab[] = [
   { key: 'journey', label: '준비', icon: 'luggage' },
@@ -28,6 +32,8 @@ const TABS: Tab[] = [
   // '맡기기' — 유료 대행·파트너·견적의 공통분모 = 위임. 준비(직접)와 의도 대비.
   { key: 'services', label: '맡기기', icon: 'heartPlus' },
   { key: 'me', label: '내 정보', icon: 'user' },
+  // '더보기' — 상단바 ⚙ 를 이관. 지금은 /settings 직행, 항목 늘면 /more 허브로 승격.
+  { key: 'more', label: '더보기', icon: 'dots' },
 ]
 
 function caseIdFromPath(pathname: string): string | null {
@@ -159,6 +165,7 @@ export function BottomNav() {
 function hrefFor(key: Tab['key'], caseId: string | null, dest: string | null): string {
   if (key === 'me') return '/me'
   if (key === 'services') return '/services'
+  if (key === 'more') return '/settings'
   if (!caseId) return '/cases'
   return `/cases/${caseId}/${key}${dest ? `?dest=${encodeURIComponent(dest)}` : ''}`
 }
@@ -166,6 +173,7 @@ function hrefFor(key: Tab['key'], caseId: string | null, dest: string | null): s
 function isActive(key: Tab['key'], pathname: string): boolean {
   if (key === 'me') return pathname === '/me' || pathname.startsWith('/me/')
   if (key === 'services') return pathname === '/services' || pathname.startsWith('/services/')
+  if (key === 'more') return pathname === '/settings' || pathname.startsWith('/settings/')
   return new RegExp(`^/cases/[^/]+/${key}(?:/|$)`).test(pathname)
 }
 
@@ -197,6 +205,15 @@ function NavIcon({ name, stroke = 1.7 }: { name: Icon; stroke?: number }) {
           <path d="M14 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8z" />
           <path d="M14 3v3.5A1.5 1.5 0 0 0 15.5 8H19" />
           <path d="M9 14.5h6" />
+        </svg>
+      )
+    case 'dots':
+      // 더보기 — 가로 점 3개. 스트로크 세트 안에서 점만 면(fill)으로.
+      return (
+        <svg {...p} stroke="none" fill="currentColor">
+          <circle cx="5" cy="12" r="1.5" />
+          <circle cx="12" cy="12" r="1.5" />
+          <circle cx="19" cy="12" r="1.5" />
         </svg>
       )
     case 'heartPlus':
