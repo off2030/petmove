@@ -106,8 +106,9 @@ export function TopBar() {
             fontWeight: 700,
             fontSize: 17,
             letterSpacing: '0.025em',
-            // 워드마크 = 본문 잉크 — 화면에서 가장 흐린 색(ink-3)이던 것을 올려 브랜드
-            // 존재감 확보. 브랜드 색 확정 시 이 자리가 첫 적용처.
+            // 워드마크 확정(2026-07-11): 한글 '펫무브' + 잉크색. 색은 심벌(블루) 하나로
+            // 충분 — 원색 블루는 대비 부족(2.2:1), 짙은 네이비(#123B5C) 투톤안은 보류.
+            // 영문(PETMOVE)안 폐기 — 로마자는 여권식 표기(이름 병기 등) 전용 레이어.
             color: 'var(--pm-ink)',
             pointerEvents: 'auto',
             flexShrink: 0,
