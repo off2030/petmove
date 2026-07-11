@@ -188,6 +188,16 @@ select:focus-visible {
   outline-offset: 1px;
 }
 
+/* 텍스트 입력 공통 기본 배경 — color-scheme: dark 에서 브라우저 UA 가 배경 미지정 입력에
+   기본 회색(#3B3B3B 띠)을 칠하는 것을 차단. 입력은 카드 위에 얹히는 전제라 투명이 기본.
+   :where(0 특이도) + @layer base 라서 자체 배경을 정한 입력(인라인·bg-* 유틸)이 항상 우선. */
+@layer base {
+  :where(input:not([type='checkbox'], [type='radio'], [type='range'], [type='file'], [type='color'])),
+  :where(textarea, select) {
+    background-color: transparent;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────
    @petmove/ui 호환 레이어 — 공유 부품(DateTextField 달력·드롭다운 등)이 읽는
    --pmw-*·shadcn 토큰을 portal 새 디자인 시스템(흰 카드 + 회색 캔버스 + 하늘 파랑)
