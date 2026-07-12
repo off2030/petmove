@@ -24,10 +24,8 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   일본: [
     '/destinations/japan-fuji-umbrella-field.jpg',
     '/destinations/japan-fuji-pagoda-snow.jpg',
-    '/destinations/japan-akihabara-street.jpg',
     '/destinations/japan-tokyo-tower-dusk.jpg',
-    '/destinations/japan-torii-tunnel.jpg',
-    '/destinations/japan-sakura-riverwalk.jpg',
+    '/destinations/japan-bamboo-forest.jpg',
     '/destinations/japan-sakura-blossom-macro.jpg',
   ],
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
@@ -39,9 +37,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
 const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/japan-fuji-umbrella-field.jpg': 'bottom',
   '/destinations/japan-fuji-pagoda-snow.jpg': 'top',
-  '/destinations/japan-akihabara-street.jpg': 'top',
   '/destinations/japan-tokyo-tower-dusk.jpg': 'top',
-  '/destinations/japan-sakura-riverwalk.jpg': 'bottom',
   '/destinations/japan-sakura-blossom-macro.jpg': 'top',
 }
 
