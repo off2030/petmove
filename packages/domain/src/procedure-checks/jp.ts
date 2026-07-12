@@ -180,7 +180,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         const broken = entries[brk.brokenAt - 1]
         return {
           ok: false,
-          message: `${brk.brokenAt - 1}차 백신 면역 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했어요. 접종일을 확인하세요.`,
+          message: `${brk.brokenAt - 1}차 백신 면역 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했어요. 날짜를 확인하세요.`,
           offendingPaths: [`rabies_dates[${broken.originalIndex}].date`],
         }
       }
@@ -274,7 +274,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (second && second.date < microchip) {
         return {
           ok: false,
-          message: '마이크로칩이 2차 광견병 백신보다 늦어요. 마이크로칩 삽입일 혹은 접종일을 수정하세요.',
+          message: '마이크로칩이 2차 광견병 백신보다 늦어요. 날짜를 확인하세요.',
           offendingPaths: [
             'microchip_implant_date',
             `rabies_dates[${first.originalIndex}].date`,
@@ -318,7 +318,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (validateTiterWithinChain(boosters, primary.date)) {
         return {
           ok: false,
-          message: '채혈일이 광견병 백신 면역 유효기간을 벗어났어요. 접종일, 유효기간, 채혈일을 수정하세요.',
+          message: '채혈일이 광견병 백신 면역 유효기간을 벗어났어요. 날짜를 확인하세요.',
           offendingPaths: ['rabies_titer_records[0].date'],
         }
       }
@@ -352,7 +352,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message:
-            '추가 검사일이 직전 광견병 백신 면역 유효기간을 벗어났어요. 접종일·유효기간·채혈일을 확인하세요.',
+            '추가 검사일이 직전 광견병 백신 면역 유효기간을 벗어났어요. 날짜를 확인하세요.',
           offendingPaths,
         }
       }
