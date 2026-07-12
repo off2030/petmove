@@ -9,7 +9,8 @@ import { downloadFile } from '@/lib/native/download'
 import { useMediaViewer } from '@/components/portal-shell/media-viewer'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { CaseHeader } from '@/components/cases/case-header'
-import { monoCap, num, serif } from '@/components/me/settings-shared'
+import { monoCap, num } from '@/components/me/settings-shared'
+import { PAGE_TOP } from '@/lib/tokens'
 import { StepAttachments } from '@/components/journey/step-attachments'
 import type { AutoDocItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalog'
 
@@ -75,7 +76,7 @@ export function DocsView({
         background: C.bg,
         color: C.ink,
         minHeight: '100%',
-        paddingTop: 24,
+        paddingTop: PAGE_TOP,
         // 맨 아래 '파일 추가'(StepAttachments) 가 플로팅 하단 탭바(bottom-nav, fixed)에
         // 가리지 않도록 탭바 높이 + iOS 안전영역만큼 비운다.
         paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 88px)',
@@ -89,9 +90,7 @@ export function DocsView({
           tab="docs"
           petName={pet.name}
           petNameEn={pet.nameEn}
-          ink={C.ink}
           ink3={C.ink3}
-          serif={serif}
         />
 
         {useCurated ? (

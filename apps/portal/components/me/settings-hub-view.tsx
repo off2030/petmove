@@ -15,6 +15,7 @@ import { dDayLabel } from '@/lib/cases/info-form'
 import { type PartnerOrg } from '@/lib/actions/partners'
 import { PetAvatarDisplay } from './pet-avatar-display'
 import { C, serif, monoCap, OrgAvatar } from './settings-shared'
+import { PAGE_TOP, pageTitle } from '@/lib/tokens'
 
 /**
  * 내 정보 탭 허브 (/me) — 카테고리별 카드 리스트. (앱 설정은 상단바 ⚙ → /settings)
@@ -414,15 +415,13 @@ export function SettingsHubView() {
         background: C.bg,
         color: C.ink,
         minHeight: '100%',
-        paddingTop: 24,
+        paddingTop: PAGE_TOP,
         paddingBottom: 80,
         overflow: 'auto',
       }}
     >
       <div style={{ padding: '0 24px' }}>
-        <h1 style={{ ...serif, fontSize: 20, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>
-          내 정보
-        </h1>
+        <h1 style={pageTitle}>내 정보</h1>
 
         <Section label="보호자" first>
           <GuardianCard data={view.guardian} href="/me/guardian" />

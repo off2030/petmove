@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { isSurfacePage } from '@/components/portal-shell/surface-page'
 import { C } from '@/lib/palette'
+import { PAGE_TOP, pageTitle } from '@/lib/tokens'
 
 /**
  * 설정 sub-page 공유 컴포넌트: 팔레트 / 헤더+뒤로 / 섹션 카드 / 하단 sticky 저장 바.
@@ -172,7 +173,7 @@ export function EditPageShell({
         background: surface ? C.surface : C.bg,
         color: C.ink,
         minHeight: '100%',
-        paddingTop: 24,
+        paddingTop: PAGE_TOP,
         // hasBar: StickySaveBar(저장 버튼 + 하단 nav 공간 + safe-area)가 ~147px 까지 차지 —
         // 콘텐츠가 그 뒤로 가려지지 않게 safe-area 포함 넉넉히 확보(영문 주소 마지막 줄이 저장
         // 버튼에 가려지던 버그 수정).
@@ -182,14 +183,14 @@ export function EditPageShell({
     >
       <div style={{ padding: '0 24px' }}>
         {backHref && <BackLink href={backHref} label={backLabel} />}
+        {/* backHref 없음 = 탭 루트(설정=더보기) → 전 탭 공통 제목(pageTitle 24/600).
+            하위 페이지(뒤로가기 있음)는 한 단계 아래 20 유지. */}
         <h1
-          style={{
-            ...serif,
-            fontSize: 20,
-            lineHeight: 1.12,
-            margin: backHref ? '12px 0 0' : 0,
-            color: C.ink,
-          }}
+          style={
+            backHref
+              ? { ...serif, fontSize: 20, lineHeight: 1.12, margin: '12px 0 0', color: C.ink }
+              : pageTitle
+          }
         >
           {title}
         </h1>

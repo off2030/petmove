@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { OtherCasesRow } from '@/components/cases/other-cases-row'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { pageTitle } from '@/lib/tokens'
 
 type Tab = 'journey' | 'docs'
 
@@ -26,18 +27,14 @@ export function CaseHeader({
   tab,
   petName,
   petNameEn,
-  ink,
   ink3,
-  serif,
 }: {
   caseId: string
   tab: Tab
   petName: string
   /** 로마자 표기 — 여권식 병기(일정 탭). admin 생성 케이스는 null 가능 → 이름 단독. */
   petNameEn?: string | null
-  ink: string
   ink3: string
-  serif: React.CSSProperties
 }) {
   const { cases } = useCases()
   const probeRef = useRef<HTMLDivElement>(null)
@@ -82,9 +79,7 @@ export function CaseHeader({
           minWidth: 0,
         }}
       >
-        <h1 style={{ ...serif, fontSize: 24, fontWeight: 600, lineHeight: 1.15, margin: 0, color: ink }}>
-          {petName}
-        </h1>
+        <h1 style={pageTitle}>{petName}</h1>
         {nameEn && (
           <span
             aria-hidden
@@ -104,7 +99,8 @@ export function CaseHeader({
   )
 
   return (
-    <div style={{ position: 'relative', paddingTop: 8 }}>
+    // 위 공백 없음 — 상단 바→제목 간격은 페이지 컨테이너의 PAGE_TOP(32) 하나가 담당.
+    <div style={{ position: 'relative' }}>
       {/* 측정 probe — 항상 row + wrap. 시각/이벤트 차단. */}
       <div
         ref={probeRef}

@@ -10,6 +10,7 @@ import { StartHereEmpty } from '@/components/portal-shell/start-here-empty'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { type FieldOption } from '@/components/fields/info-fields'
 import { C, serif } from '@/components/me/settings-shared'
+import { PAGE_TOP, pageTitle } from '@/lib/tokens'
 import { APP_DESTINATIONS_KO } from '@/lib/app-destinations'
 import { buildProfileView } from '@/lib/profile/catalog'
 import { notifyServiceInquiry } from '@/lib/actions/service-inquiry'
@@ -1113,7 +1114,7 @@ export function ServicesView() {
         background: C.bg,
         color: C.ink,
         minHeight: '100%',
-        paddingTop: 24,
+        paddingTop: PAGE_TOP,
         paddingBottom: 80,
         overflow: 'auto',
       }}
@@ -1126,9 +1127,7 @@ export function ServicesView() {
         />
       ) : (
         <div style={{ padding: '0 24px' }}>
-          <h1 style={{ ...serif, fontSize: 20, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>
-            서비스
-          </h1>
+          <h1 style={pageTitle}>서비스</h1>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
             <button

@@ -48,3 +48,22 @@ export const SPACE = {
   /** 바깥 카드 패딩. */
   card: 18,
 } as const
+
+/** 탭 루트 리듬 — 상단 바 아래 → 제목 시작 공백. 준비·서류·맡기기·내 정보·더보기·내 여정
+ *  전 탭 공통 (2026-07-13 통일 — 탭마다 24/32/40/44 로 제각각이던 것을 박제).
+ *  탭 루트 컨테이너는 paddingTop 에 이 값만 쓰고, 제목엔 위 마진을 주지 않는다. */
+export const PAGE_TOP = 32
+
+/** 탭 루트 페이지 제목 — 전 탭 공통 24/600 디스플레이 서체 (2026-07-13 통일).
+ *  준비·서류는 동물 이름, 나머지는 화면 이름이지만 위계는 하나다.
+ *  화면마다 크기·마진을 덧쓰지 말 것 — 시작 위치는 PAGE_TOP 이 담당. */
+export const pageTitle = {
+  fontFamily: 'var(--pm-font-display)',
+  fontWeight: 600,
+  fontSize: 24,
+  letterSpacing: '-0.01em',
+  fontVariantNumeric: 'tabular-nums',
+  lineHeight: 1.15,
+  margin: 0,
+  color: 'var(--pm-ink)',
+} as const

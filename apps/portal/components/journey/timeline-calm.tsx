@@ -13,6 +13,7 @@ import { useCases } from '@/components/portal-shell/case-data-provider'
 import { monoCap, num, serif } from '@/components/me/settings-shared'
 import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
 import { APP_EU_DESTINATIONS_KO } from '@/lib/app-destinations'
+import { PAGE_TOP } from '@/lib/tokens'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
 /** 목적지별 히어로 사진 — public/destinations 에 번들(무료 라이선스 큐레이션).
@@ -501,7 +502,7 @@ export function TimelineCalm({
         color: C.ink,
         minHeight: '100%',
         // 섹션 리듬 32 (여백 중시 톤) / 라벨→콘텐츠 12. 하단은 nav 여백이 더해져 24 유지.
-        paddingTop: 32,
+        paddingTop: PAGE_TOP,
         paddingBottom: 24,
         overflow: 'auto',
       }}
@@ -513,9 +514,7 @@ export function TimelineCalm({
           tab="journey"
           petName={pet.name}
           petNameEn={pet.nameEn}
-          ink={C.ink}
           ink3={C.ink3}
-          serif={serif}
         />
 
         {/* 상태 창 + 다음 할 일 카드 — 히어로를 둘로 분리(나안).

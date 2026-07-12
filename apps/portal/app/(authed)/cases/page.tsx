@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { buildCaseJourneyContext } from '@petmove/domain'
 import { listMyCases } from '@/lib/actions/cases'
 import { hasJourney } from '@/lib/cases/journey-filter'
+import { PAGE_TOP, pageTitle } from '@/lib/tokens'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,20 +26,16 @@ export default async function CasesPage() {
   if (journeyCases.length === 1) redirect(`/cases/${journeyCases[0].id}/journey`)
 
   return (
-    <div style={{ padding: '32px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* 페이지 제목 — 준비·서류 헤더(이름 24/600)와 동급으로 정렬 (2026-07-12, 구 28/500). */}
-      <h1
-        style={{
-          fontFamily: 'var(--pm-font-display)',
-          fontSize: 24,
-          fontWeight: 600,
-          letterSpacing: '-0.01em',
-          fontVariantNumeric: 'tabular-nums',
-          margin: '12px 0 16px',
-        }}
-      >
-        내 여정
-      </h1>
+    <div
+      style={{
+        padding: `${PAGE_TOP}px 24px 32px`,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+      }}
+    >
+      {/* 전 탭 공통 제목·리듬(pageTitle·PAGE_TOP) — 제목→첫 카드 4+gap12=16 (타 탭과 동일). */}
+      <h1 style={{ ...pageTitle, margin: '0 0 4px' }}>내 여정</h1>
       {journeyCases.map((c) => {
         const petName = c.pet_name ?? '이름 미정'
         const tokens = (c.destination ?? '')
