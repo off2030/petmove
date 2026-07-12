@@ -6,7 +6,7 @@ import { verifyPreviewToken } from '@petmove/auth/preview-token'
 import type { CaseRow } from '@petmove/domain'
 import { BottomNav } from '@/components/portal-shell/bottom-nav'
 import { CaseDataProvider } from '@/components/portal-shell/case-data-provider'
-import { SwipeTabs } from '@/components/portal-shell/swipe-tabs'
+import { CaseSwipe } from '@/components/portal-shell/case-swipe'
 import { TopBar } from '@/components/portal-shell/top-bar'
 import { listMyCases } from '@/lib/actions/cases'
 import { ensureMyProfile } from '@/lib/actions/profile'
@@ -129,7 +129,9 @@ function Shell({
           paddingBottom: 88,
         }}
       >
-        <SwipeTabs>
+        {/* 좌우 스와이프 = 동물 전환 (준비·서류에서만) — 옛 탭 스와이프는 제거,
+            탭 이동은 하단 바 탭으로만 (2026-07-12 사용자 확정). */}
+        <CaseSwipe>
           {preview ? (
             // 미리보기: 입력 폼(input/textarea/select)과 액션 버튼만 비활성 — 읽기 전용.
             // 단, '세부 정보' 펼침 토글([data-preview-allow])은 동작을 유지해 내용을 볼 수 있게 한다.
@@ -141,7 +143,7 @@ function Shell({
           ) : (
             children
           )}
-        </SwipeTabs>
+        </CaseSwipe>
       </main>
       <BottomNav />
     </div>

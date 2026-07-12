@@ -10,7 +10,7 @@ import { useConfirm } from '@petmove/ui'
  *
  * 동작 범위(앱 안에서 화면을 떠나는 모든 경로):
  *  1) 화면 안의 링크(<a>/Next <Link>) 클릭 — 뒤로(← 내 정보)·하단 탭·상단 ⚙ 등. (캡처 단계에서 가로채 차단)
- *  2) 좌우 스와이프 탭 전환 — SwipeTabs 가 guard() 로 router.push 를 감싼다.
+ *  2) 좌우 스와이프 동물 전환 — CaseSwipe 가 guard() 로 router.push 를 감싼다.
  *  3) 브라우저/안드로이드 뒤로가기(popstate) — dirty 동안 sentinel 한 칸을 history 에 심어 잡는다.
  *  4) 새로고침·앱 종료·외부 이동(beforeunload) — 브라우저 기본 경고.
  *
@@ -170,7 +170,7 @@ export function NavGuardProvider({ children }: { children: React.ReactNode }) {
   return <NavGuardContext.Provider value={value}>{children}</NavGuardContext.Provider>
 }
 
-/** 프로그램적 내비게이션 가드가 필요한 곳(예: SwipeTabs)에서 사용. provider 밖이면 null. */
+/** 프로그램적 내비게이션 가드가 필요한 곳(예: CaseSwipe)에서 사용. provider 밖이면 null. */
 export function useNavGuard(): NavGuardValue | null {
   return useContext(NavGuardContext)
 }
