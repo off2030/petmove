@@ -89,11 +89,7 @@ export function DocsView({
           tab="docs"
           petName={pet.name}
           petNameEn={pet.nameEn}
-          fromCity={trip.fromCity}
-          toCity={trip.toCity}
-          tripType={trip.tripType}
           ink={C.ink}
-          ink2={C.ink2}
           ink3={C.ink3}
           serif={serif}
         />
