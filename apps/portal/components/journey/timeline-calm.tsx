@@ -250,19 +250,6 @@ export function TimelineCalm({
       ? formatDateRange(trip.departureDate, journeyCompleteDate)
       : arrivalText
 
-  // 완료 후 사진 오버레이 좌하단 — 'N일째' 카운트업 대신 여행 기간(왕복=출발~도착,
-  // 편도=도착일)으로 교체(2026-07-12 사용자 확정 ①안). 완료 미리보기는 완료일 데이터가
-  // 없어 오늘 날짜를 임시로 채워 모양만 확인한다.
-  const completedDateText =
-    journeyDateText ||
-    (demoComplete
-      ? (() => {
-          const todayIso = new Date().toISOString().slice(0, 10)
-          return trip.departureDate
-            ? formatDateRange(trip.departureDate, todayIso)
-            : formatKoreanDate(todayIso)
-        })()
-      : '')
 
   // 티켓 노치 배지 — 가로가 세로보다 긴 라운드 사각 + 우측(텍스트 쪽)에만 반원 컷아웃.
   // 좌측은 세로 레일이 붙는 쪽이라 온전히 두고, 우측만 '뜯겨 열린' 효과를 준다.
@@ -638,8 +625,9 @@ export function TimelineCalm({
                   </span>
                 )}
                 {/* 날씨 칩 — 여행지 하늘에 뜬 오늘의 날씨. 주의(뇌우)·안내(구름)가 있으면
-                    우상단에 요약 칩만(내용은 탭 → 해당 단계 or 바텀시트). 안내는 완료 후 숨김. */}
-                {(warnItems.length > 0 || (!complete && infoStages.length > 0)) && (
+                    우상단에 요약 칩만(내용은 탭 → 해당 단계 or 바텀시트).
+                    여정 완료 후엔 둘 다 숨김(2026-07-12 사용자 확정) — 완료 화면은 도장에 집중. */}
+                {!complete && (warnItems.length > 0 || infoStages.length > 0) && (
                   <div
                     style={{
                       position: 'absolute',
@@ -668,7 +656,7 @@ export function TimelineCalm({
                         주의 {warnItems.length}
                       </button>
                     )}
-                    {!complete && infoStages.length > 0 && (
+                    {infoStages.length > 0 && (
                       <button
                         type="button"
                         onClick={onInfoChip}
@@ -709,12 +697,10 @@ export function TimelineCalm({
                     }}
                   >
                     {complete ? (
-                      completedDateText && (
-                        // 완료 후엔 카운트업 대신 여행 기간 — 날짜 문자열이 길어 30px 대신 한 단계 작게.
-                        <span style={{ ...serif, fontSize: 19, lineHeight: 1.2, color: '#FFFFFF' }}>
-                          {completedDateText}
-                        </span>
-                      )
+                      // 완료 후엔 카운트업 대신 상태 문구(2026-07-12 사용자 확정 ②안).
+                      <span style={{ ...serif, fontSize: 30, lineHeight: 1, color: '#FFFFFF' }}>
+                        여정 완료
+                      </span>
                     ) : (
                       ringStatus && (
                         <span style={{ ...serif, fontSize: 30, lineHeight: 1, color: '#FFFFFF' }}>
@@ -760,12 +746,12 @@ export function TimelineCalm({
                     role="img"
                     style={{
                       position: 'absolute',
-                      top: 56,
+                      top: 20,
                       right: 18,
-                      width: 76,
-                      height: 76,
+                      width: 96,
+                      height: 96,
                       borderRadius: '50%',
-                      border: '2px solid rgba(255,255,255,.85)',
+                      border: '2.5px solid rgba(255,255,255,.85)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -776,20 +762,20 @@ export function TimelineCalm({
                   >
                     <div
                       style={{
-                        width: 64,
-                        height: 64,
+                        width: 82,
+                        height: 82,
                         borderRadius: '50%',
                         border: '1px solid rgba(255,255,255,.65)',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: 1,
+                        gap: 2,
                         textAlign: 'center',
                       }}
                     >
-                      <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.04em' }}>도착</span>
-                      <span style={{ fontSize: 9, letterSpacing: '0.22em', fontWeight: 600 }}>ARRIVED</span>
+                      <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '0.04em' }}>도착</span>
+                      <span style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 600 }}>ARRIVED</span>
                     </div>
                   </div>
                 )}
@@ -834,7 +820,7 @@ export function TimelineCalm({
                       }}
                     >
                       {trip.toCity}
-                      {(complete ? completedDateText : ringStatus) ? ` · ${complete ? completedDateText : ringStatus}` : ''}
+                      {!complete && ringStatus ? ` · ${ringStatus}` : ''}
                       <svg
                         width="11"
                         height="11"
@@ -857,10 +843,10 @@ export function TimelineCalm({
                   ) : (
                     <span style={{ fontSize: 13, fontWeight: 600, color: C.ink2 }}>
                       {trip.toCity}
-                      {(complete ? completedDateText : ringStatus) ? ` · ${complete ? completedDateText : ringStatus}` : ''}
+                      {!complete && ringStatus ? ` · ${ringStatus}` : ''}
                     </span>
                   )}
-                  {(warnItems.length > 0 || (!complete && infoStages.length > 0)) && (
+                  {!complete && (warnItems.length > 0 || infoStages.length > 0) && (
                     <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                       {warnItems.length > 0 && (
                         <button
@@ -887,7 +873,7 @@ export function TimelineCalm({
                           주의 {warnItems.length}
                         </button>
                       )}
-                      {!complete && infoStages.length > 0 && (
+                      {infoStages.length > 0 && (
                         <button
                           type="button"
                           onClick={onInfoChip}
