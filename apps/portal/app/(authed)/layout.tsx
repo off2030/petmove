@@ -7,6 +7,7 @@ import type { CaseRow } from '@petmove/domain'
 import { BottomNav } from '@/components/portal-shell/bottom-nav'
 import { CaseDataProvider } from '@/components/portal-shell/case-data-provider'
 import { CaseSwipe } from '@/components/portal-shell/case-swipe'
+import { TabHost } from '@/components/portal-shell/tab-host'
 import { TopBar } from '@/components/portal-shell/top-bar'
 import { listMyCases } from '@/lib/actions/cases'
 import { ensureMyProfile } from '@/lib/actions/profile'
@@ -118,15 +119,14 @@ function Shell({
       }}
     >
       <TopBar />
+      {/* 탭 화면들은 TabHost 가 상주 mount — main 은 스크롤하지 않고(overflow hidden)
+          각 pane/children 컨테이너가 자기 스크롤을 가진다. iOS 고정바 격리는 동일 유지. */}
       <main
         style={{
           flex: 1,
           minHeight: 0,
-          overflowY: 'auto',
-          overscrollBehaviorY: 'none',
-          WebkitOverflowScrolling: 'touch',
-          paddingTop: 'calc(var(--pm-top-inset) + 48px)',
-          paddingBottom: 88,
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
         {/* 좌우 스와이프 = 동물 전환 (준비·서류에서만) — 옛 탭 스와이프는 제거,
@@ -136,12 +136,13 @@ function Shell({
             // 미리보기: 입력 폼(input/textarea/select)과 액션 버튼만 비활성 — 읽기 전용.
             // 단, '세부 정보' 펼침 토글([data-preview-allow])은 동작을 유지해 내용을 볼 수 있게 한다.
             // (이전엔 <fieldset disabled> 라 내부 <button> 까지 모두 막혀 펼침이 안 됐음.)
-            // <a> 네비게이션(탭·단계 이동)은 영향 없음.
+            // <a> 네비게이션(탭·단계 이동)은 영향 없음. pane 도 함께 읽기 전용이어야
+            // 하므로 TabHost 전체를 감싼다.
             <div className="pm-preview-ro" style={{ display: 'contents' }}>
-              {children}
+              <TabHost>{children}</TabHost>
             </div>
           ) : (
-            children
+            <TabHost>{children}</TabHost>
           )}
         </CaseSwipe>
       </main>

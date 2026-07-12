@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useCases } from './case-data-provider'
 import { readLastDest } from './last-case'
 import { useNavGuard } from './nav-guard'
+import { pushTab } from './tab-nav'
 
 /**
  * 좌우 스와이프 = 동물(케이스) 전환. 준비(journey)·서류(docs) 루트에서만, 동물 2마리+.
@@ -185,7 +186,8 @@ export function CaseSwipe({ children }: { children: React.ReactNode }) {
         // 진행 방향으로 살짝 밀려나가며 전환 — 새 페이지의 fade-up 과 이어진다.
         setAnimate(true)
         setDragX(dir === 1 ? -EXIT_SLIDE_PX : EXIT_SLIDE_PX)
-        window.setTimeout(() => router.push(hrefFor(ids[nextIdx])), 90)
+        // pane 라우트라 pushTab = pushState — 상주 pane 이 새 caseId 로 즉시 다시 그림.
+        window.setTimeout(() => pushTab(router, hrefFor(ids[nextIdx])), 90)
       }
       if (navGuard) navGuard.guard(proceed)
       else proceed()
@@ -222,7 +224,10 @@ export function CaseSwipe({ children }: { children: React.ReactNode }) {
         transform: dragX !== 0 ? `translateX(${dragX}px)` : undefined,
         transition: animate ? 'transform .18s ease-out' : 'none',
         willChange: active ? 'transform' : undefined,
-        minHeight: '100%',
+        // TabHost 의 absolute pane 들의 기준 박스 — main 은 overflow hidden 이라
+        // 이 래퍼가 viewport 영역을 꽉 채우는 positioned 컨테이너여야 한다.
+        position: 'relative',
+        height: '100%',
       }}
     >
       {children}

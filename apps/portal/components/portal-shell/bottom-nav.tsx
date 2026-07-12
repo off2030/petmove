@@ -1,12 +1,12 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useCases } from './case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
 import { readLastCaseId, readLastDest, writeLastCaseId, writeLastDest } from './last-case'
 import { isSurfacePage } from './surface-page'
+import { pushTab } from './tab-nav'
 
 /**
  * 보호자 앱 하단 4탭 — case-aware.
@@ -44,6 +44,7 @@ function caseIdFromPath(pathname: string): string | null {
 
 export function BottomNav() {
   const pathname = usePathname()
+  const router = useRouter()
   const caseIdInPath = caseIdFromPath(pathname)
   // 흰 배경 화면(설정·내 정보 하위)에선 바도 흰색 — top-bar 와 동일 규칙.
   const onSurfacePage = isSurfacePage(pathname)
@@ -142,9 +143,18 @@ export function BottomNav() {
         const href = hrefFor(t.key, caseId, lastDest?.id === caseId ? lastDest.dest : null)
         const active = isActive(t.key, pathname)
         return (
-          <Link
+          // <Link> 대신 pushTab — 탭 루트는 TabHost 상주 pane 이라 네비게이션 없이
+          // pushState 만으로 즉시 전환된다(활성 색도 같은 프레임에 바뀜). pane 이 아닌
+          // 목적지(/cases 목록)는 pushTab 이 router.push 로 폴백.
+          <a
             key={t.key}
             href={href}
+            onClick={(e) => {
+              e.preventDefault()
+              // 이미 그 주소면 no-op. active 로 판정하면 안 됨 — 하위 페이지(/me/animal,
+              // step 상세)에서 같은 탭을 눌러 루트로 복귀하는 동작이 막힌다.
+              if (href !== window.location.pathname + window.location.search) pushTab(router, href)
+            }}
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -161,7 +171,7 @@ export function BottomNav() {
           >
             <NavIcon name={t.icon} active={active} surface={onSurfacePage} />
             <span style={{ fontSize: 10, fontWeight: active ? 700 : 500 }}>{t.label}</span>
-          </Link>
+          </a>
         )
       })}
     </nav>

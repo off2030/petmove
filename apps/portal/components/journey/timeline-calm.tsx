@@ -235,7 +235,8 @@ export function TimelineCalm({
     setDestSheetOpen(false)
     const params = new URLSearchParams(searchParams.toString())
     params.set('dest', dest)
-    router.replace(`?${params.toString()}`, { scroll: false })
+    // pane 라우트 — replaceState 만으로 TabHost 가 dest 를 다시 내려준다(서버 왕복 0).
+    window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`)
   }
 
   // 사진 위 목적지·D-day 칩 공통 스타일 — 반투명 흰 배경(사진은 테마 무관 고정이라 하드코딩).

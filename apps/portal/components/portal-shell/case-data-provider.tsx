@@ -2,7 +2,6 @@
 
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import type { CaseRow } from '@petmove/domain'
-import { useRouter } from 'next/navigation'
 import {
   createContext,
   useCallback,
@@ -68,80 +67,16 @@ export function CaseDataProvider({
   previewMode?: boolean
   children: React.ReactNode
 }) {
-  const router = useRouter()
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
   const [profile, setProfile] = useState<CustomerProfileRow | null>(initialProfile)
   const [partners, setPartners] = useState<PartnerOrgs>(initialPartners)
 
-  // 모든 케이스 × 탭 URL 을 백그라운드 prefetch — 케이스 전환 시 RSC 캐시 적중.
-  //
-  // dep 을 cases 가 아니라 caseIdsKey (정렬된 ID 문자열) 로 — focus refresh / Realtime
-  // UPDATE 가 새 array reference 를 만들어도 ID 집합이 같으면 useEffect 재실행 X.
-  // (이전 [cases, router] dep 은 매 cases 갱신마다 모든 URL prefetch 가 재발사돼
-  // 네트워크 큐를 압박, 진짜 click 한 URL 의 RSC 가 그 뒤에 줄 서서 case 전환 lag 유발했음.)
-  //
-  // prefetchedRef 로 이미 prefetch 한 URL 추적 — 케이스가 추가되어도 새 URL 만 보충.
-  const prefetchedRef = useRef<Set<string>>(new Set())
+  // (구) 탭 URL RSC prefetch 는 제거 — 탭 루트는 TabHost 상주 pane 이 되어 탭·케이스
+  // 전환에 네비게이션 자체가 없다(tab-host.tsx 가 pane 예열을 담당).
   const caseIdsKey = useMemo(
     () => cases.map((c) => c.id).sort().join(','),
     [cases],
   )
-
-  useEffect(() => {
-    if (!caseIdsKey) return
-    const ids = caseIdsKey.split(',')
-    const urls: string[] = []
-    const tabs = ['journey', 'docs', 'info'] as const
-    for (const id of ids) {
-      for (const t of tabs) {
-        const url = `/cases/${id}/${t}`
-        if (!prefetchedRef.current.has(url)) urls.push(url)
-      }
-    }
-    if (!prefetchedRef.current.has('/me')) urls.push('/me')
-    if (urls.length === 0) return
-
-    // 첫 paint 와 경쟁하지 않도록 — window 'load' 이벤트 (모든 리소스 완료) + 1500ms 뒤 실행.
-    // 또는 사용자의 첫 입력 (touch/scroll) — 어느 쪽이든 먼저 발생한 것을 트리거로.
-    // (이전 requestIdleCallback 은 idle 이 너무 빨리 와서 첫 paint 직후 경쟁 발생했음.)
-    let cancelled = false
-    let timer: number | undefined
-
-    const start = () => {
-      if (cancelled) return
-      cancelled = true
-      timer = window.setTimeout(() => {
-        for (const url of urls) {
-          try {
-            // @ts-expect-error PrefetchKind enum not publicly exported; runtime 'full' matches.
-            router.prefetch(url, { kind: 'full' })
-            prefetchedRef.current.add(url)
-          } catch {
-            /* best-effort */
-          }
-        }
-      }, 1500)
-    }
-
-    const onInteract = () => start()
-
-    if (document.readyState === 'complete') {
-      // 이미 load 끝났으면 1500ms 만 추가 대기
-      start()
-    } else {
-      window.addEventListener('load', start, { once: true })
-    }
-    window.addEventListener('touchstart', onInteract, { once: true, passive: true })
-    window.addEventListener('scroll', onInteract, { once: true, passive: true })
-
-    return () => {
-      cancelled = true
-      if (timer !== undefined) clearTimeout(timer)
-      window.removeEventListener('load', start)
-      window.removeEventListener('touchstart', onInteract)
-      window.removeEventListener('scroll', onInteract)
-    }
-  }, [caseIdsKey, router])
 
   // 담당 병원·운송 카드 데이터. 초기값은 서버(layout)가 첫 케이스 org_id 로 채워 넘긴다 —
   // 그래서 첫 마운트엔 재fetch 하지 않는다(빈칸 깜빡임 방지). 보호자가 /me/vet·/me/agency

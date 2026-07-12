@@ -1,13 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useCases } from './case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
 import { readLastCaseId } from './last-case'
 import { LogoMark } from './logo-mark'
 import { isSurfacePage } from './surface-page'
+import { pushTab } from './tab-nav'
 
 /**
  * Portal 상단 chrome — portal-preview/app.jsx 의 ThemeControls 포팅.
@@ -27,6 +28,7 @@ function caseIdFromPath(pathname: string): string | null {
 
 export function TopBar() {
   const pathname = usePathname()
+  const router = useRouter()
   const activeCaseId = caseIdFromPath(pathname)
   // 흰 배경 화면(설정·내 정보 하위)에선 바도 흰색 — 회색 띠가 남지 않게.
   const onSurfacePage = isSurfacePage(pathname)
@@ -96,9 +98,14 @@ export function TopBar() {
         // 환영 화면 — 로고 자리는 비우되, space-between 으로 ⚙ 가 우측에 유지되도록 placeholder.
         <span aria-hidden />
       ) : (
-        <Link
+        // 워드마크 = 준비 탭 복귀 — TabHost pane 이라 pushTab 으로 즉시 전환.
+        <a
           href={homeHref}
-          prefetch
+          onClick={(e) => {
+            e.preventDefault()
+            if (homeHref !== window.location.pathname + window.location.search)
+              pushTab(router, homeHref)
+          }}
           aria-label="준비"
           style={{
             // 별도 웹폰트 없이 각 운영체제의 표준 UI sans-serif로 표시.
@@ -123,7 +130,7 @@ export function TopBar() {
           {/* 광학 보정 — 로고 타일에 아래 그림자가 생기며 시각 무게중심이 내려가
               (2026-07-11), 이전의 1px 올림을 되돌려 0 으로. */}
           <span style={{ position: 'relative', top: 0 }}>펫무브</span>
-        </Link>
+        </a>
       )}
       {/* 설정 ⚙ 는 하단 '더보기' 탭으로 이관 — 환영(온보딩) 화면에서만 유지. 등록 전엔
           하단 탭이 통째로 숨어 이 ⚙ 가 설정·로그아웃의 유일한 비상구이기 때문. */}
