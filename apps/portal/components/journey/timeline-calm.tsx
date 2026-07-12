@@ -774,8 +774,14 @@ export function TimelineCalm({
                         textAlign: 'center',
                       }}
                     >
-                      <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '0.04em' }}>도착</span>
-                      <span style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 600 }}>ARRIVED</span>
+                      {/* 왕복의 완료 = 한국 귀국 — 목적지 사진 위 '도착'은 뜻이 어긋나 '귀국'으로.
+                          편도(이주)만 '도착'. (2026-07-12 사용자 지적) */}
+                      <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '0.04em' }}>
+                        {trip.tripType === 'round' ? '귀국' : '도착'}
+                      </span>
+                      <span style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 600 }}>
+                        {trip.tripType === 'round' ? 'RETURNED' : 'ARRIVED'}
+                      </span>
                     </div>
                   </div>
                 )}
