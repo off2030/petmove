@@ -21,13 +21,16 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
     없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
     EU 24개국은 여정 카드처럼 사진도 한 벌(europe.jpg, 파리 상점 거리)을 공유한다. */
 const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
+  일본: ['/destinations/japan-fuji-umbrella-field.jpg'],
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
 }
 
 /** 히어로 사진 크롭 위치 — 200px 고정 높이 박스라 세로 사진은 object-fit: cover 로
     위/아래가 크게 잘린다. 기본은 정중앙, 위/아래 중 살려야 할 피사체가 있는 사진만
     개별 지정(사용자 확인 후 추가). */
-const HERO_PHOTO_POSITION: Record<string, string> = {}
+const HERO_PHOTO_POSITION: Record<string, string> = {
+  '/destinations/japan-fuji-umbrella-field.jpg': 'bottom',
+}
 
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
 function withWaGwa(name: string): string {
