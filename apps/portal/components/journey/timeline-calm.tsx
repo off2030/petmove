@@ -3,7 +3,7 @@
 
 import { C as PM } from '@/lib/palette'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { readJourneyFeedback } from '@petmove/domain'
 import { CaseHeader } from '@/components/cases/case-header'
@@ -16,19 +16,31 @@ import { APP_EU_DESTINATIONS_KO } from '@/lib/app-destinations'
 import { PAGE_TOP, groupLabel, sectionTitle } from '@/lib/tokens'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
-/** 목적지별 히어로 사진 후보 — public/destinations 에 번들. 첫 장이 기본 노출,
-    후보가 2장 이상이면 사진을 탭해 다음 후보로 넘겨볼 수 있다(고르는 동안 임시 기능).
+/** 목적지별 히어로 사진 후보 — public/destinations 에 번들. 앱을 열 때마다 이 순서대로
+    한 장씩 넘어가며 반복된다(로컬 저장 회전 인덱스, HERO_PHOTO_ROTATION_KEY 참고).
+    후보가 2장 이상이면 사진을 탭해서도 다음 후보로 넘겨볼 수 있다.
     없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
     EU 24개국은 여정 카드처럼 사진도 한 벌(europe.jpg, 파리 상점 거리)을 공유한다. */
 const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   일본: [
-    '/destinations/japan-fuji-umbrella-field.jpg',
-    '/destinations/japan-fuji-pagoda-snow.jpg',
+    '/destinations/japan-sakura-blossom-macro.jpg',
     '/destinations/japan-torii-tunnel.jpg',
     '/destinations/japan-bamboo-forest.jpg',
-    '/destinations/japan-sakura-blossom-macro.jpg',
+    '/destinations/japan-fuji-pagoda-snow.jpg',
+    '/destinations/japan-fuji-umbrella-field.jpg',
   ],
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
+}
+
+/** 히어로 사진 회전 인덱스를 목적지별로 localStorage 에 저장 — 앱을 열 때마다
+    다음 인덱스를 읽어 보여주고, 그다음 것을 미리 저장해둔다(한 바퀴 돌면 처음으로). */
+function nextHeroPhotoIndex(destKey: string, length: number): number {
+  if (typeof window === 'undefined' || length <= 1) return 0
+  const storageKey = `pm-hero-photo-rotation:${destKey}`
+  const raw = window.localStorage.getItem(storageKey)
+  const current = raw ? ((parseInt(raw, 10) % length) + length) % length : 0
+  window.localStorage.setItem(storageKey, String((current + 1) % length))
+  return current
 }
 
 /** 히어로 사진 크롭 위치 — 200px 고정 높이 박스라 세로 사진은 object-fit: cover 로
@@ -178,6 +190,10 @@ export function TimelineCalm({
 
   const heroPhotoCandidates = DEST_PHOTO_CANDIDATES[trip.toCity] ?? []
   const [heroPhotoIndex, setHeroPhotoIndex] = useState(0)
+  useEffect(() => {
+    setHeroPhotoIndex(nextHeroPhotoIndex(trip.toCity, heroPhotoCandidates.length))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip.toCity])
   const heroPhoto = heroPhotoCandidates[heroPhotoIndex] ?? null
   const cycleHeroPhoto = () =>
     setHeroPhotoIndex((i) => (i + 1) % heroPhotoCandidates.length)
