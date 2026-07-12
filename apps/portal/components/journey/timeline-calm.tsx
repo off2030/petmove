@@ -23,13 +23,11 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   일본: [
     '/destinations/japan-snow-tree.jpg',
-    '/destinations/japan-snow-tree-ai.jpg',
     '/destinations/japan-fushimi-torii.jpg',
     '/destinations/japan-fushimi-torii-close.jpg',
     '/destinations/japan-sakura.jpg',
     '/destinations/japan-sakura-riverside.jpg',
     '/destinations/japan-tokyo-tower.jpg',
-    '/destinations/japan-tokyo-tower-ai.jpg',
     '/destinations/japan-akihabara-1.jpg',
     '/destinations/japan-akihabara-2.jpg',
     '/destinations/japan-izakaya-alley.jpg',
