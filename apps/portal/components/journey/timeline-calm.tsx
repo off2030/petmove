@@ -49,7 +49,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/philippines-elnido-white-beach.jpg',
     '/destinations/philippines-elnido-big-lagoon.jpg',
     '/destinations/philippines-palm-row-beach.jpg',
-    '/destinations/philippines-bay-islet-aerial.jpg',
   ],
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
 }
