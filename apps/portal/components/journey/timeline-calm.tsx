@@ -40,7 +40,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   필리핀: [
     '/destinations/philippines-island-cove-boats.jpg',
     '/destinations/philippines-palm-beach-boat.jpg',
-    '/destinations/philippines-pinatubo-crater-lake.jpg',
     '/destinations/philippines-island-hopping-sea.jpg',
     '/destinations/philippines-curved-bay-aerial.jpg',
   ],
