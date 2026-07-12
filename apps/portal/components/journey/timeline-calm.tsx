@@ -37,6 +37,9 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/thailand-cliff-cove-aerial.jpg',
     '/destinations/thailand-elephant-jungle-road.jpg',
     '/destinations/thailand-longtail-boats-beach.jpg',
+    '/destinations/thailand-cliff-coast-road.jpg',
+    '/destinations/thailand-beach-horizon-sky.jpg',
+    '/destinations/thailand-cove-swimmers.jpg',
   ],
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
 }
@@ -60,6 +63,8 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/japan-fuji-pagoda-snow.jpg': 'top',
   '/destinations/japan-sakura-blossom-macro.jpg': 'top',
   '/destinations/thailand-aerial-beach-waves-vertical.jpg': 'top',
+  '/destinations/thailand-cliff-coast-road.jpg': 'top',
+  '/destinations/thailand-beach-horizon-sky.jpg': 'top',
 }
 
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
