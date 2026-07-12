@@ -7,6 +7,7 @@ import { useCases } from './case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
 import { readLastCaseId } from './last-case'
 import { LogoMark } from './logo-mark'
+import { isSurfacePage } from './surface-page'
 
 /**
  * Portal 상단 chrome — portal-preview/app.jsx 의 ThemeControls 포팅.
@@ -27,8 +28,8 @@ function caseIdFromPath(pathname: string): string | null {
 export function TopBar() {
   const pathname = usePathname()
   const activeCaseId = caseIdFromPath(pathname)
-  // 흰 배경 화면(설정, 2026-07-12 실험)에선 바도 흰색 — 회색 띠가 남지 않게.
-  const onSurfacePage = pathname === '/settings' || pathname.startsWith('/settings/')
+  // 흰 배경 화면(설정·내 정보 하위)에선 바도 흰색 — 회색 띠가 남지 않게.
+  const onSurfacePage = isSurfacePage(pathname)
 
   // PETMOVE 워드마크는 "현재 일정"으로 — bottom-nav 와 동일한 case 결정 패턴.
   // path 에 caseId 가 있으면 그걸, 아니면 sessionStorage 의 마지막 case, 둘 다 없으면 /cases.

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { useCases } from './case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
 import { readLastCaseId, readLastDest, writeLastCaseId, writeLastDest } from './last-case'
+import { isSurfacePage } from './surface-page'
 
 /**
  * 보호자 앱 하단 4탭 — case-aware.
@@ -44,8 +45,8 @@ function caseIdFromPath(pathname: string): string | null {
 export function BottomNav() {
   const pathname = usePathname()
   const caseIdInPath = caseIdFromPath(pathname)
-  // 흰 배경 화면(설정)에선 바도 흰색 — top-bar 와 동일 규칙.
-  const onSurfacePage = pathname === '/settings' || pathname.startsWith('/settings/')
+  // 흰 배경 화면(설정·내 정보 하위)에선 바도 흰색 — top-bar 와 동일 규칙.
+  const onSurfacePage = isSurfacePage(pathname)
   const { cases } = useCases()
   const [lastCaseId, setLastCaseId] = useState<string | null>(null)
   // 다중 목적지 — 활성 목적지(?dest=)를 케이스별로 기억해 탭 전환 시 링크에 붙인다.

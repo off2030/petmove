@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { isSurfacePage } from '@/components/portal-shell/surface-page'
 import { C } from '@/lib/palette'
 
 /**
@@ -122,7 +124,7 @@ export function EditPageShell({
   title,
   children,
   bottomBar,
-  surface = false,
+  surface: surfaceProp,
 }: {
   /** null 이면 뒤로가기 링크 미표시 — 탭 루트로 쓰는 페이지(설정=더보기 탭)용. */
   backHref?: string | null
@@ -130,10 +132,12 @@ export function EditPageShell({
   title: string
   children: ReactNode
   bottomBar?: ReactNode
-  /** true 면 회색 캔버스 대신 흰 배경 — 메뉴 나열형 화면(설정)용 (2026-07-12 실험). */
+  /** 회색 캔버스 대신 흰 배경. 미지정 시 경로로 자동 판정(isSurfacePage — 설정·내 정보 하위). */
   surface?: boolean
 }) {
   const hasBar = !!bottomBar
+  const pathname = usePathname()
+  const surface = surfaceProp ?? isSurfacePage(pathname)
   // surface: 스크롤 영역(<main>)의 하단 여백(88px)은 이 페이지 밖이라 셸의 회색이 비쳐
   // 하단 바 위에 회색 띠가 남는다 — 흰 배경 모드 동안 main 자체를 흰색으로 칠한다.
   const rootRef = (el: HTMLDivElement | null) => {
@@ -185,18 +189,21 @@ export function EditPageShell({
 }
 
 /** mono-cap 라벨 + 라운드 surface 카드. label 없으면 카드만.
- *  plain=true 면 카드 껍데기(배경·테두리·라운드) 없이 행만 — 흰 배경 화면(설정)용. */
+ *  plain=true 면 카드 껍데기(배경·테두리·라운드) 없이 행만 — 흰 배경 화면용.
+ *  미지정 시 경로로 자동 판정(isSurfacePage 와 동일 규칙). */
 export function SectionCard({
   label,
   children,
   marginTop = 24,
-  plain = false,
+  plain: plainProp,
 }: {
   label?: string
   children: ReactNode
   marginTop?: number
   plain?: boolean
 }) {
+  const pathname = usePathname()
+  const plain = plainProp ?? isSurfacePage(pathname)
   return (
     <>
       {label && (
@@ -247,6 +254,8 @@ export function StickySaveBar({
 }) {
   const justSaved = status === 'saved' && !dirty
   const canSave = dirty && status !== 'saving'
+  const stickyPathname = usePathname()
+  const barRgbVar = isSurfacePage(stickyPathname) ? '--pm-surface-rgb' : '--pm-bg-rgb'
 
   // 모바일 키보드가 올라오면 fixed bar 가 viewport bottom 에 붙은 채 input 위로 올라와
   // 입력 필드를 가린다.
@@ -296,8 +305,8 @@ export function StickySaveBar({
         paddingLeft: 20,
         paddingRight: 20,
         paddingBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 12px) + 53px)',
-        background:
-          'linear-gradient(180deg, rgb(var(--pm-bg-rgb) / 0) 0%, rgb(var(--pm-bg-rgb) / .92) 30%, rgb(var(--pm-bg-rgb) / .92) 100%)',
+        // 흰 배경 화면에선 그라데이션도 흰색 기반 — 회색 띠 방지 (경로 자동 판정).
+        background: `linear-gradient(180deg, rgb(var(${barRgbVar}) / 0) 0%, rgb(var(${barRgbVar}) / .92) 30%, rgb(var(${barRgbVar}) / .92) 100%)`,
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         zIndex: 39,

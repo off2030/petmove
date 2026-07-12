@@ -32,16 +32,9 @@ export function GuardianEditView() {
         <StickySaveBar dirty={dirty} status={status} error={error} onSave={handleSave} />
       }
     >
-      {/* 아바타 — 이모지·색·사진 picker. PetAvatarPicker 와 동일 위치(상단). */}
-      <div
-        style={{
-          marginTop: 8,
-          padding: 18,
-          borderRadius: 18,
-          background: C.surface,
-          border: `.5px solid ${C.line}`,
-        }}
-      >
+      {/* 아바타 — 이모지·색·사진 picker. PetAvatarPicker 와 동일 위치(상단).
+          흰 배경 화면이라 카드 껍데기 없이 블록만 (2026-07-12). */}
+      <div style={{ marginTop: 8, padding: '14px 0 4px' }}>
         <GuardianAvatarPicker
           profile={profile}
           userId={profile?.user_id ?? ''}
