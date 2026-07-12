@@ -48,7 +48,7 @@ import { useConfirm } from '@petmove/ui'
 import { activeDestinationView } from '@/lib/cases/active-destination'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import { monoCap, num, serif } from '@/components/me/settings-shared'
-import { pageTitle } from '@/lib/tokens'
+import { subTitle } from '@/lib/tokens'
 import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
 import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import {
@@ -1943,7 +1943,7 @@ export function StepDetailView({
               stepNumber
             )}
           </div>
-          <h1 style={{ ...pageTitle, minWidth: 0 }}>{step.title}</h1>
+          <h1 style={{ ...subTitle, minWidth: 0 }}>{step.title}</h1>
         </div>
 
         {/* Description */}

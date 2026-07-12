@@ -56,10 +56,11 @@ export const PAGE_TOP = 32
 
 /**
  * 타이포 위계 — 앱 전체 단일 출처 (2026-07-13 통일).
- * 3단 제목 + 라벨. 촘촘하던 24/20/18/17 을 24 → 17 → 16 으로 벌리고, 라벨은 하나로.
+ * 제목 3단(화면 24 > 하위/상세 20 > 구획 17) + 항목 16 + 라벨 12. 서체는 전부 Pretendard.
  * 화면 코드는 여기서 import 해서 쓰고 fontSize/weight/color 를 직접 박지 말 것.
  *
- *   pageTitle   24/600  화면 제목 — 탭 루트·동물 이름·하위 페이지 제목
+ *   pageTitle   24/600  화면 제목 — 탭 루트·동물 이름 (탭의 최상단 제목)
+ *   subTitle    20/600  하위/상세 페이지 제목 — 내 정보 편집·서류 상세·일정 상세·의견
  *   sectionTitle 17/600 구획 제목 — 준비 단계·서류 체크리스트·검역증·보관함
  *   itemTitle   16/500  항목 제목 — 카드 이름(동물·조직)·리스트 행 이름
  *   groupLabel  12/600  라벨(ink3) — 보호자·알림·일본으로 떠나요 등 회색 소제목
@@ -72,6 +73,18 @@ export const pageTitle = {
   fontVariantNumeric: 'tabular-nums',
   lineHeight: 1.15,
   margin: 0,
+  color: 'var(--pm-ink)',
+} as const
+
+/** 하위/상세 페이지 제목 — 탭 루트(24)보다 한 단계 아래. 뒤로가기 링크와 함께 쓰는
+ *  페이지의 제목(내 정보 편집·서류 상세·일정 상세·의견). margin 은 호출자가. */
+export const subTitle = {
+  fontFamily: 'var(--pm-font-display)',
+  fontWeight: 600,
+  fontSize: 20,
+  letterSpacing: '-0.01em',
+  fontVariantNumeric: 'tabular-nums',
+  lineHeight: 1.2,
   color: 'var(--pm-ink)',
 } as const
 

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { isSurfacePage } from '@/components/portal-shell/surface-page'
 import { C } from '@/lib/palette'
-import { PAGE_TOP, pageTitle } from '@/lib/tokens'
+import { PAGE_TOP, pageTitle, subTitle } from '@/lib/tokens'
 
 /**
  * 설정 sub-page 공유 컴포넌트: 팔레트 / 헤더+뒤로 / 섹션 카드 / 하단 sticky 저장 바.
@@ -183,10 +183,9 @@ export function EditPageShell({
     >
       <div style={{ padding: '0 24px' }}>
         {backHref && <BackLink href={backHref} label={backLabel} />}
-        {/* 화면 제목 = 전 화면 공통 pageTitle(24/600). 하위 페이지도 동일 크기 —
-            "하위"는 위 뒤로가기 링크가 알려주므로 제목까지 줄이지 않는다(2026-07-13 통일).
-            뒤로가기 있을 때만 그 아래로 12 띄운다. */}
-        <h1 style={backHref ? { ...pageTitle, margin: '12px 0 0' } : pageTitle}>{title}</h1>
+        {/* 뒤로가기 있음 = 하위/상세 페이지 → subTitle(20). 없음 = 탭 루트(설정=더보기)
+            → pageTitle(24). 하위 제목이 24로 너무 컸던 것 20 으로 내림(2026-07-13). */}
+        <h1 style={backHref ? { ...subTitle, margin: '12px 0 0' } : pageTitle}>{title}</h1>
         <div style={{ marginTop: 16 }}>{children}</div>
       </div>
       {hasBar && bottomBar}

@@ -7,7 +7,7 @@ import { useEffect, useState, useTransition } from 'react'
 import type { RequiredDocItem } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { monoCap, serif } from '@/components/me/settings-shared'
-import { pageTitle } from '@/lib/tokens'
+import { subTitle } from '@/lib/tokens'
 import { deleteStepDocument, getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
 import { downloadFile } from '@/lib/native/download'
 import { useMediaViewer } from '@/components/portal-shell/media-viewer'
@@ -177,7 +177,7 @@ export function RequiredDocDetail({
             ) : null}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h1 style={pageTitle}>{doc.name}</h1>
+            <h1 style={subTitle}>{doc.name}</h1>
           </div>
         </div>
 
