@@ -250,7 +250,7 @@ html = f"""<!DOCTYPE html>
   .final{{background:linear-gradient(180deg,#4EC3FF,#0BA2F2);padding:52px 0 0;text-align:center}}
   .final h2{{font-size:24px;color:#fff;margin:0 0 22px;font-weight:700;text-shadow:0 1px 3px rgba(2,62,102,.20)}}
   .final p{{font-size:13.5px;color:#EAF6FF;margin:0 0 22px}}
-  .final .clouds{{display:block;width:min(560px,92%);height:auto;margin:30px auto 0}}
+  .final .clouds{{display:block;width:min(460px,86%);height:auto;margin:30px auto 0}}
   .store-row{{display:flex;gap:11px;justify-content:center;flex-wrap:wrap}}
   .store{{background:#FFFFFF;color:var(--ink);border-radius:13px;padding:13px 18px;display:flex;align-items:center;
     gap:8px;font-size:13.5px;font-weight:500}}
@@ -536,7 +536,7 @@ html = f"""<!DOCTYPE html>
         <a class="store"><i class="ti ti-brand-google-play" style="font-size:16px"></i>Google Play</a>
       </div>
     </div>
-    <svg class="clouds" viewBox="0 0 520 150" aria-hidden="true"><circle cx="196" cy="196" r="152" fill="#fff"/><circle cx="392" cy="216" r="146" fill="#fff"/></svg>
+    <svg class="clouds" viewBox="-6 66 208 94" aria-hidden="true"><circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/><circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/><circle cx="178" cy="154" r="24" fill="#fff"/></svg>
   </div>
 
   <footer>
