@@ -231,7 +231,9 @@ CSS = """
   }
 """
 
-def head(title, body_class=""):
+DESC_DEFAULT = "반려동물 해외 이동 준비 — 펫무브"
+
+def head(title, desc=DESC_DEFAULT, og_type="website", body_class=""):
     body_open = f'<body class="{body_class}">' if body_class else "<body>"
     return f"""<!DOCTYPE html>
 <html lang="ko">
@@ -239,6 +241,14 @@ def head(title, body_class=""):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
+<meta name="description" content="{desc}">
+<meta property="og:type" content="{og_type}">
+<meta property="og:site_name" content="펫무브">
+<meta property="og:title" content="{title}">
+<meta property="og:description" content="{desc}">
+<meta property="og:locale" content="ko_KR">
+<!-- og:image 는 배포 이미지 자산 확정 후 추가(/og.png) — Next 이식 때 -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Cdefs%3E%3CclipPath id=%22s%22%3E%3Crect width=%22200%22 height=%22200%22 rx=%2246%22/%3E%3C/clipPath%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%2363C9FF%22/%3E%3Cstop offset=%221%22 stop-color=%22%230BAEFF%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg clip-path=%22url(%23s)%22%3E%3Crect width=%22200%22 height=%22200%22 fill=%22url(%23g)%22/%3E%3Cpath d=%22M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106%22 fill=%22none%22 stroke=%22%23FFC93C%22 stroke-width=%2218%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3Crect x=%220%22 y=%22160%22 width=%22200%22 height=%2240%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2246%22 cy=%22168%22 r=%2252%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2272%22 cy=%22120%22 r=%2248%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22112%22 cy=%22148%22 r=%2234%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22146%22 cy=%22138%22 r=%2238%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22178%22 cy=%22154%22 r=%2224%22 fill=%22%23fff%22/%3E%3Cpath d=%22M116 132 L116 118%22 fill=%22none%22 stroke=%22%23FFC93C%22 stroke-width=%2218%22 stroke-linecap=%22round%22 opacity=%220.34%22/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
 <style>{CSS}</style>
@@ -304,7 +314,7 @@ def build_guide():
         f'<a href="{LIVE}/{kind}/{slug}/" target="_blank" rel="noopener">{name}</a>'
         for name, kind, slug in OTHER
     )
-    return f"""{head('가이드 · 펫무브')}
+    return f"""{head('가이드 · 펫무브', '나라별 반려동물 출국 가이드 — 일본·태국·필리핀 등 34개국의 검역 준비 방법을 확인하세요.')}
 {header('guide')}
   <div class="phead">
     <div class="container">
@@ -353,7 +363,7 @@ def build_guide():
 
 
 def build_contact():
-    return f"""{head('문의 · 펫무브')}
+    return f"""{head('문의 · 펫무브', '펫무브 상담·문의 — 카카오톡 상담·전화·네이버 예약으로 편하게 연락주세요.')}
 {header('contact')}
   <div class="phead">
     <div class="container">

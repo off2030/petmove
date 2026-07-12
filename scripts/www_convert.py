@@ -254,6 +254,19 @@ def build(slug):
     out = HEAD + '<article class="article">\n' + arthead + prose + FOOT
     # 제목 태그 교체
     out = re.sub(r'<title>.*?</title>', f'<title>{p["title"]} · 펫무브</title>', out, count=1)
+    # 메타 설명·og — 글별로 교체(excerpt 우선, 없으면 본문 첫 150자)
+    desc = (p.get('custom_excerpt') or '').strip()
+    if not desc:
+        desc = re.sub(r'\s+', ' ', (p.get('plaintext') or '')).strip()[:150]
+        # 마지막 단어·매달린 번호(예: '7. ')를 정리하고 말줄임표
+        desc = re.sub(r'\s+\S*$', '', desc)
+        desc = re.sub(r'\s*\d+\.?$', '', desc) + '…'
+    desc = desc.replace('"', '&quot;')
+    full_title = f'{p["title"]} · 펫무브'.replace('"', '&quot;')
+    out = re.sub(r'<meta name="description" content=".*?">', f'<meta name="description" content="{desc}">', out, count=1)
+    out = re.sub(r'<meta property="og:type" content=".*?">', '<meta property="og:type" content="article">', out, count=1)
+    out = re.sub(r'<meta property="og:title" content=".*?">', f'<meta property="og:title" content="{full_title}">', out, count=1)
+    out = re.sub(r'<meta property="og:description" content=".*?">', f'<meta property="og:description" content="{desc}">', out, count=1)
     path = fr'{OUTDIR}\converted-{slug}.html'
     open(path, 'w', encoding='utf-8').write(out)
     return slug, leftover, path
