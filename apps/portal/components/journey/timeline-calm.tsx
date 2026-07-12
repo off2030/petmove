@@ -45,6 +45,8 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/philippines-palm-beach-turquoise.jpg',
     '/destinations/philippines-elnido-lagoon.jpg',
     '/destinations/philippines-beach-two-boats.jpg',
+    '/destinations/philippines-kayak-turquoise.jpg',
+    '/destinations/philippines-sandbar-boat.jpg',
   ],
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
 }
