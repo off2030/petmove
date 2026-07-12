@@ -2,6 +2,11 @@
 
 작성 2026-07-01. 세션 간 인계용. 새 세션은 이 문서 + `mockups.html` 먼저 읽을 것.
 
+> ⚠️ **2026-07-12 리브랜딩** — 아래 본문의 "웜 스톤+앰버" 브랜드 서술은 **폐기**됐다.
+> 새 브랜드 = 회색 캔버스(#F4F6F8) + 흰 카드 + 하늘 파랑(#0BAEFF) + 잉크 그레이(#212124),
+> 로고 = **떠오르는 P**(`docs/brand/logo-rising-p1-transparent.svg`). §2026-07-12 세션 참고.
+> 진실 출처 = `apps/portal/app/globals.css` 의 `--pm-*` (라이트 값).
+
 ## 목표
 
 펫무브 **앱 출시**를 앞두고 소비자 사이트 `www.petmove.co.kr` 개편. 현재는 **Ghost 블로그**(Spiritix 테마). Ghost Pro 비용이 비싸 **자체 제작으로 전환**하려는 상황이고, "웹업체 없이 내가 만들 수 있나"를 테스트 중.
@@ -130,6 +135,17 @@
 **로컬 확인:** `cd docs/www-redesign && python -m http.server 8777` → `http://localhost:8777/converted-<slug>.html`. (`file://`·크롬확장 navigate 버그 주의는 위 참고.)
 
 **다음 진입점:** ①`(www)` Next.js 이식(변환기 출력→MDX/route group, next/font Pretendard, 이미지 public 이동, URL 슬러그 보존, `trailingSlash:true`) ②인터랙티브 2개 재구현 ③편집 판단(인라인 소프트홍보·중간 북마크 인라인화 여부) ④whypetmove 상품카드.
+
+## 2026-07-12 세션 — 새 브랜드 리브랜딩 (로고 '떠오르는 P' + 하늘 팔레트)
+
+앱(portal)이 2026-07-11 새 브랜드로 전환(웜 스톤 폐기)됨에 따라 www 3벌(랜딩·하위페이지·글 템플릿)을 함께 전환. 사용자 지시: 로고는 **'떠오르는 P-1 투명'**(`docs/brand/logo-rising-p1-transparent.svg` — 하늘 그라데 스퀘어 + 흰 구름 + 노란 #FFC93C P, 비침 기둥 34%)만 참고.
+
+**팔레트 매핑(구→신):** bg `#F5EFE8→#F4F6F8` · surface `#FBF7F1→#FFFFFF` · ink `#2A2620→#212124` · ink2 `#6B6457→#5C5C60` · ink3 `#847B6C→#97979C` · accent `#D99A58→#0BAEFF` · accent-ink `#9A5A2E→#0887D6`(텍스트용 한 단계 진한 블루 — #0BAEFF 는 12px 대 텍스트 대비 2.4:1) · sage `#8FA68C→#14B8A6` · border `#E3D9C6→#E1E5E9` · dark/푸터 `#2A2620·#211E19→#212124·#17171A`. 웜 하드코드 20여 종(스크림·아이콘타일·서비스카드 틴트 등)도 전부 중성/하늘 계열로.
+**버튼 문법 변경:** 앰버 시절 "accent 배경 + 잉크 글자"(대비 교정) → **하늘 배경 + 흰 글자**(앱과 동일).
+**로고:** 헤더 임베드 SVG 3곳(랜딩 생성기·하위페이지 생성기·article-sample) 교체 — id 는 `pmlg-*` 네임스페이스.
+**적용 파일:** `scripts/make_www_prototype.py` · `scripts/make_www_subpages.py` · `article-sample.html`(+재생성: prototype-mobile·guide·contact·article·converted-*).
+**⚠️ 사고·수정:** `make_www_subpages.py` 가 **article-sample.html 을 구버전으로 덮어쓰는 버그** — 손편집 truth(아코디언 B·cta-sep 등)가 날아가 www_convert 마커 실패. git 복원 후, 생성기에서 article-sample 출력 제거(주석으로 사유 기록). **앞으로도 article-sample 은 손편집이 truth.**
+**검증:** Edge 헤드리스 470px 풀캡처 — 히어로·앱카드·서비스·지원여행지·후기·밴드·CTA·푸터 전 섹션 새 팔레트 확인. guide/contact/article 은 computed style 로 토큰 적용 확인.
 
 ## 남은 할 일 (다음 세션 진입점)
 

@@ -42,8 +42,8 @@ band = b64("patrick-hendry-jd0hS7Vhn_A-unsplash.jpg", 3000)  # 협곡 뒷모습(
 # ── 실제 앱 화면(Play 스토어 스샷에서 반듯한 폰만 잘라냄) ──
 SHOT_DIR = r"C:\Users\off20\Desktop\스크린샷\play"
 PHONE_BOX = (240, 610, 1164, 2628)      # 생성기 공통 폰 위치(고정)
-SURF = (251, 247, 241)                   # --surface (방법2 배경)
-STONE = (245, 239, 232)                  # --bg (방법3 배경)
+SURF = (255, 255, 255)                   # --surface (방법2 배경)
+STONE = (244, 246, 248)                  # --bg (방법3 배경)
 
 def b64_phone(name, bg, out_w=440, q=82):
     """스토어 스샷에서 폰 영역만 크롭 + 라운드 코너를 섹션 배경색으로 합성."""
@@ -58,10 +58,7 @@ def b64_phone(name, bg, out_w=440, q=82):
 
 p_hero    = b64_phone("play_shot_3.png", STONE)  # 방법3 대표 화면(홈 55%)
 
-LOGO = ('<svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true">'
-        '<rect width="100" height="100" rx="22.5" fill="#D99A58"/>'
-        '<path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" '
-        'fill="none" stroke="#fff" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+LOGO = ('<svg viewBox="0 0 200 200" width="26" height="26" aria-hidden="true"><defs><clipPath id="pmlg-sq"><rect width="200" height="200" rx="46"/></clipPath><linearGradient id="pmlg-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63C9FF"/><stop offset="1" stop-color="#0BAEFF"/></linearGradient></defs><g clip-path="url(#pmlg-sq)"><rect width="200" height="200" fill="url(#pmlg-sky)"/><path d="M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106" fill="none" stroke="#FFC93C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="0" y="160" width="200" height="40" fill="#fff"/><circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/><circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/><circle cx="178" cy="154" r="24" fill="#fff"/><path d="M116 132 L116 118" fill="none" stroke="#FFC93C" stroke-width="18" stroke-linecap="round" opacity="0.34"/></g></svg>')
 
 # ── CSS로 그린 폰 목업 내부(실제 스샷 대체 전 임시) ──
 PH1 = '<div class="notch"></div><div class="b am"></div><div class="b sm"></div><div class="b"></div><div class="cm"></div>'
@@ -130,8 +127,8 @@ html = f"""<!DOCTYPE html>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
 <style>
   :root{{
-    --bg:#F5EFE8; --surface:#FBF7F1; --ink:#2A2620; --ink2:#6B6457; --ink3:#847B6C;
-    --accent:#D99A58; --accent-ink:#9A5A2E; --sage:#8FA68C; --border:#E3D9C6; --dark:#2A2620;
+    --bg:#F4F6F8; --surface:#FFFFFF; --ink:#212124; --ink2:#5C5C60; --ink3:#97979C;
+    --accent:#0BAEFF; --accent-ink:#0887D6; --sage:#14B8A6; --border:#E1E5E9; --dark:#212124;
   }}
   *{{box-sizing:border-box}}
   [hidden]{{display:none!important}}
@@ -143,36 +140,36 @@ html = f"""<!DOCTYPE html>
   .container{{max-width:1080px;margin:0 auto;padding:0 22px;width:100%}}
   .wm{{font-size:18px;letter-spacing:.015em;font-weight:700}}
 
-  header{{position:sticky;top:0;z-index:20;background:rgba(245,239,232,.92);backdrop-filter:blur(8px);
+  header{{position:sticky;top:0;z-index:20;background:rgba(244,246,248,.92);backdrop-filter:blur(8px);
     border-bottom:0.5px solid var(--border)}}
   header .container{{display:flex;align-items:center;justify-content:space-between;padding-top:13px;padding-bottom:13px}}
   .nav-links{{display:none;align-items:center;gap:26px;font-size:14px;color:var(--ink2)}}
   .nav-right{{display:flex;align-items:center;gap:14px}}
-  .nav-app{{background:var(--accent);color:var(--ink);font-weight:600;border-radius:11px;padding:8px 15px;font-size:13px}}
+  .nav-app{{background:var(--accent);color:#fff;font-weight:600;border-radius:11px;padding:8px 15px;font-size:13px}}
   .burger{{font-size:22px;color:var(--ink2);cursor:pointer}}
-  .drawer-ov{{position:fixed;inset:0;background:rgba(20,17,13,.42);opacity:0;visibility:hidden;transition:opacity .22s;z-index:30}}
+  .drawer-ov{{position:fixed;inset:0;background:rgba(21,23,26,.42);opacity:0;visibility:hidden;transition:opacity .22s;z-index:30}}
   .drawer-ov.open{{opacity:1;visibility:visible}}
-  .drawer{{position:fixed;top:0;right:0;height:100%;width:min(78vw,300px);background:var(--bg);z-index:31;box-shadow:-8px 0 30px rgba(20,17,13,.18);transform:translateX(100%);transition:transform .24s ease;display:flex;flex-direction:column;padding:14px 20px 24px}}
+  .drawer{{position:fixed;top:0;right:0;height:100%;width:min(78vw,300px);background:var(--bg);z-index:31;box-shadow:-8px 0 30px rgba(21,23,26,.18);transform:translateX(100%);transition:transform .24s ease;display:flex;flex-direction:column;padding:14px 20px 24px}}
   .drawer.open{{transform:translateX(0)}}
   .drawer-close{{align-self:flex-end;background:transparent;border:0;color:var(--ink2);font-size:24px;cursor:pointer;padding:6px;line-height:1}}
   .drawer-nav{{display:flex;flex-direction:column;margin-top:6px}}
   .drawer-nav a{{padding:15px 2px;font-size:16px;font-weight:500;color:var(--ink);border-bottom:0.5px solid var(--border)}}
-  .drawer-app{{margin-top:20px;background:var(--accent);color:var(--ink);font-weight:600;border-radius:12px;padding:13px;text-align:center;font-size:14px}}
+  .drawer-app{{margin-top:20px;background:var(--accent);color:#fff;font-weight:600;border-radius:12px;padding:13px;text-align:center;font-size:14px}}
 
   .hero{{position:relative;min-height:600px;display:flex;flex-direction:column;justify-content:flex-end;
     background:url('{hero_p}') center 30% / cover no-repeat}}
   .hero .scrim{{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:40px 0 34px;
-    background:linear-gradient(to top, rgba(30,26,20,.82), rgba(30,26,20,.34) 55%, rgba(30,26,20,0))}}
+    background:linear-gradient(to top, rgba(23,23,26,.82), rgba(23,23,26,.34) 55%, rgba(23,23,26,0))}}
   .hero-content{{max-width:540px}}
   .hero-photo{{display:none}}
-  .eyebrow{{display:inline-block;font-size:12px;font-weight:600;color:var(--ink);background:#F5DFB8;
+  .eyebrow{{display:inline-block;font-size:12px;font-weight:600;color:var(--ink);background:#E4F4FF;
     border-radius:999px;padding:5px 13px;margin-bottom:16px}}
   .hero h1{{font-size:34px;line-height:1.18;letter-spacing:-.02em;color:#fff;margin:0;font-weight:700}}
-  .hero p{{font-size:15px;color:#F0E7DA;margin:15px 0 22px;line-height:1.62}}
+  .hero p{{font-size:15px;color:#EAF1F6;margin:15px 0 22px;line-height:1.62}}
   .cta{{display:flex;flex-direction:column;gap:11px}}
-  .btn-primary{{background:var(--accent);color:var(--ink);font-weight:600;border-radius:14px;padding:15px 22px;
+  .btn-primary{{background:var(--accent);color:#fff;font-weight:600;border-radius:14px;padding:15px 22px;
     font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px}}
-  .btn-ghost{{border:1.5px solid rgba(245,239,232,.85);color:#F5EFE8;font-weight:500;border-radius:14px;
+  .btn-ghost{{border:1.5px solid rgba(255,255,255,.85);color:#FFFFFF;font-weight:500;border-radius:14px;
     padding:14px 22px;font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:8px}}
 
   section{{padding:38px 0}}
@@ -186,12 +183,12 @@ html = f"""<!DOCTYPE html>
   .trust .n{{font-size:24px;font-weight:700;letter-spacing:-.01em;line-height:1.1}}
   .trust .n span{{color:var(--accent-ink)}}
   .trust .l{{font-size:12px;color:var(--ink2);margin-top:5px}}
-  .trust > div + div{{border-left:0.5px solid rgba(42,38,32,.08)}}
+  .trust > div + div{{border-left:0.5px solid rgba(33,33,36,.08)}}
 
   .steps{{display:grid;grid-template-columns:1fr;gap:14px;margin-top:26px}}
   .step{{display:flex;gap:15px;align-items:flex-start;background:var(--surface);border:0.5px solid var(--border);
     border-radius:16px;padding:18px 18px}}
-  .step .ic{{width:44px;height:44px;border-radius:12px;background:#EFE0C9;color:var(--accent-ink);
+  .step .ic{{width:44px;height:44px;border-radius:12px;background:#E4F4FF;color:var(--accent-ink);
     display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}}
   .step .t{{font-size:15px;font-weight:600}}
   .step .d{{font-size:13px;color:var(--ink2);margin-top:4px;line-height:1.55}}
@@ -199,19 +196,19 @@ html = f"""<!DOCTYPE html>
 
   .paths{{display:grid;grid-template-columns:1fr;gap:14px;margin-top:26px}}
   .path{{border-radius:18px;padding:24px 22px;border:0.5px solid var(--border)}}
-  .path.app{{background:var(--dark);color:#F5EFE8}}
+  .path.app{{background:var(--dark);color:#FFFFFF}}
   .path.care{{background:var(--surface)}}
   .path .tag{{font-size:12px;font-weight:600;border-radius:999px;padding:4px 12px;display:inline-block;margin-bottom:13px}}
-  .path.app .tag{{background:var(--accent);color:var(--ink)}}
-  .path.care .tag{{background:#EAD9BF;color:var(--accent-ink)}}
+  .path.app .tag{{background:var(--accent);color:#fff}}
+  .path.care .tag{{background:#D6EEFF;color:var(--accent-ink)}}
   .path h3{{font-size:19px;margin:0 0 6px;font-weight:700}}
   .path .pd{{font-size:13.5px;line-height:1.6;margin:0 0 15px}}
-  .path.app .pd{{color:#CFC6B6}} .path.care .pd{{color:var(--ink2)}}
+  .path.app .pd{{color:#B9BDC4}} .path.care .pd{{color:var(--ink2)}}
   .path .pt{{font-size:11.5px;font-weight:600;letter-spacing:.03em;margin:15px 0 11px}}
-  .path.app .pt{{color:#A79E8E}} .path.care .pt{{color:var(--ink3)}}
+  .path.app .pt{{color:#8E9298}} .path.care .pt{{color:var(--ink3)}}
   .path ul{{list-style:none;padding:0;margin:0 0 17px;display:flex;flex-direction:column;gap:9px}}
   .path li{{font-size:13px;display:flex;align-items:center;gap:8px}}
-  .path.app li{{color:#E7DECE}} .path.care li{{color:var(--ink)}}
+  .path.app li{{color:#E4E7EB}} .path.care li{{color:var(--ink)}}
   .path .go{{font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px}}
   .path.app .go{{color:var(--accent)}} .path.care .go{{color:var(--accent-ink)}}
 
@@ -234,45 +231,45 @@ html = f"""<!DOCTYPE html>
 
   .band{{position:relative;min-height:360px;display:flex;align-items:flex-end;
     background:url('{band}') center 72% / cover no-repeat}}
-  .band .scrim{{width:100%;padding:30px 0;background:linear-gradient(to top, rgba(30,26,20,.74), rgba(30,26,20,.10))}}
+  .band .scrim{{width:100%;padding:30px 0;background:linear-gradient(to top, rgba(23,23,26,.74), rgba(23,23,26,.10))}}
   .band h2{{font-size:23px;color:#fff;margin:0;font-weight:700;line-height:1.3;max-width:520px}}
-  .band p{{font-size:13.5px;color:#EDE4D3;margin:9px 0 0;line-height:1.6}}
+  .band p{{font-size:13.5px;color:#E4E9ED;margin:9px 0 0;line-height:1.6}}
 
   .final{{background:var(--dark);padding:44px 0;text-align:center}}
-  .final h2{{font-size:24px;color:#F5EFE8;margin:0 0 22px;font-weight:700}}
-  .final p{{font-size:13.5px;color:#B0A896;margin:0 0 22px}}
+  .final h2{{font-size:24px;color:#FFFFFF;margin:0 0 22px;font-weight:700}}
+  .final p{{font-size:13.5px;color:#A8A8AE;margin:0 0 22px}}
   .store-row{{display:flex;gap:11px;justify-content:center;flex-wrap:wrap}}
-  .store{{background:#F5EFE8;color:var(--ink);border-radius:13px;padding:13px 18px;display:flex;align-items:center;
+  .store{{background:#FFFFFF;color:var(--ink);border-radius:13px;padding:13px 18px;display:flex;align-items:center;
     gap:8px;font-size:13.5px;font-weight:500}}
-  footer{{background:#211E19;color:#8B8578;padding:28px 0;font-size:12px;line-height:1.85;margin-top:auto}}
-  footer a{{color:#B0A896}}
+  footer{{background:#17171A;color:#85858B;padding:28px 0;font-size:12px;line-height:1.85;margin-top:auto}}
+  footer a{{color:#A8A8AE}}
   footer .fsns{{display:inline-flex;align-items:center;gap:5px;margin:9px 0 4px;font-weight:600}}
   footer .fsns .nlogo{{font-weight:800;font-size:13px;line-height:1}}
 
   /* ── 앱 소개 비교 섹션(임시) ── */
   .vlabel-wrap{{text-align:center}}
-  .vlabel{{display:inline-flex;align-items:center;gap:6px;background:var(--dark);color:#F5EFE8;font-size:12px;font-weight:600;border-radius:999px;padding:6px 14px;margin:0 0 16px}}
+  .vlabel{{display:inline-flex;align-items:center;gap:6px;background:var(--dark);color:#FFFFFF;font-size:12px;font-weight:600;border-radius:999px;padding:6px 14px;margin:0 0 16px}}
   .more-line{{text-align:center;font-size:12.5px;color:var(--ink3);margin-top:18px}}
   .more-line b{{color:var(--accent-ink);font-weight:600}}
   .appcta-wrap{{text-align:center}}
-  .appcta{{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:var(--ink);font-weight:600;border-radius:14px;padding:15px;font-size:15px;width:100%;max-width:460px;margin:24px auto 0}}
-  .ph{{background:var(--surface);border:1.5px solid rgba(42,38,32,.16);border-radius:16px;padding:9px 8px}}
-  .ph .notch{{width:22px;height:4px;background:rgba(42,38,32,.18);border-radius:3px;margin:1px auto 9px}}
-  .ph .b{{height:7px;border-radius:4px;background:#EADCC9;margin-bottom:6px}}
+  .appcta{{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#fff;font-weight:600;border-radius:14px;padding:15px;font-size:15px;width:100%;max-width:460px;margin:24px auto 0}}
+  .ph{{background:var(--surface);border:1.5px solid rgba(33,33,36,.16);border-radius:16px;padding:9px 8px}}
+  .ph .notch{{width:22px;height:4px;background:rgba(33,33,36,.18);border-radius:3px;margin:1px auto 9px}}
+  .ph .b{{height:7px;border-radius:4px;background:#E3E9EF;margin-bottom:6px}}
   .ph .b.am{{background:var(--accent);width:58%}}
   .ph .b.sm{{width:80%}}
   .ph .b.xs{{width:46%}}
-  .ph .cm{{background:#F4E7D2;border:0.5px solid rgba(217,154,88,.4);border-radius:8px;height:38px;margin-top:8px}}
+  .ph .cm{{background:#EAF5FD;border:0.5px solid rgba(11,174,255,.35);border-radius:8px;height:38px;margin-top:8px}}
   .frows{{margin-top:22px}}
   .frow{{display:flex;gap:15px;align-items:center;padding:15px 0;border-top:0.5px solid var(--border)}}
   .frow:first-child{{border-top:none}}
   .frow .fthumb{{flex:0 0 66px;height:118px}}
-  .fnum{{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#EFE0C9;color:var(--accent-ink);font-size:11px;font-weight:700;margin-bottom:7px}}
+  .fnum{{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#E4F4FF;color:var(--accent-ink);font-size:11px;font-weight:700;margin-bottom:7px}}
   .frow .ft{{font-size:15px;font-weight:600;margin:0 0 3px}}
   .frow .fd{{font-size:12.5px;color:var(--ink2);margin:0;line-height:1.5}}
   .fgrid{{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}}
   .fcell{{background:var(--surface);border:0.5px solid var(--border);border-radius:13px;padding:14px 13px}}
-  .fcell .fi{{width:34px;height:34px;border-radius:10px;background:#EFE0C9;color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:9px}}
+  .fcell .fi{{width:34px;height:34px;border-radius:10px;background:#E4F4FF;color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:9px}}
   .fcell .ft{{font-size:13.5px;font-weight:600;margin:0 0 2px}}
   .fcell .fd{{font-size:11.5px;color:var(--ink2);margin:0;line-height:1.4}}
   .fscroll{{display:flex;gap:13px;overflow-x:auto;margin-top:22px;padding-bottom:6px;scroll-snap-type:x mandatory}}
@@ -281,7 +278,7 @@ html = f"""<!DOCTYPE html>
   .fslide .ph{{height:210px;margin-bottom:9px}}
   .fslide .fcap{{font-size:12.5px;color:var(--ink);text-align:center;font-weight:500}}
   .fdots{{display:flex;gap:5px;justify-content:center;margin-top:14px}}
-  .fdots i{{width:6px;height:6px;border-radius:50%;background:rgba(42,38,32,.16)}}
+  .fdots i{{width:6px;height:6px;border-radius:50%;background:rgba(33,33,36,.16)}}
   .fdots i.on{{background:var(--accent);width:17px;border-radius:3px}}
   .swipe-hint{{text-align:center;font-size:11.5px;color:var(--ink3);margin-top:9px}}
   .realshot{{width:100%;display:block}}
@@ -297,7 +294,7 @@ html = f"""<!DOCTYPE html>
   .acard.more i{{color:var(--accent-ink);font-size:16px}}
   .slead{{font-size:13px;color:var(--ink2);text-align:center;max-width:400px;margin:0 auto 22px;line-height:1.6}}
   .score-list{{max-width:460px;margin:24px auto 0;display:flex;flex-direction:column;gap:12px}}
-  .score{{background:#FBF1E3;border:0.5px solid rgba(217,154,88,.4);border-radius:14px;padding:16px 17px}}
+  .score{{background:#E4F4FF;border:0.5px solid rgba(11,174,255,.35);border-radius:14px;padding:16px 17px}}
   .score-h{{display:flex;align-items:center;gap:11px;margin-bottom:8px}}
   .score .si{{color:var(--accent-ink);font-size:22px;flex-shrink:0}}
   .score .st{{font-size:15px;font-weight:600}}
@@ -318,7 +315,7 @@ html = f"""<!DOCTYPE html>
   .rlist{{max-width:460px;margin:24px auto 0;display:flex;flex-direction:column;gap:12px}}
   .rcard{{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:17px 18px}}
   .rhead{{display:flex;align-items:center;gap:11px;margin-bottom:11px}}
-  .ravatar{{width:38px;height:38px;border-radius:50%;background:#EFE0C9;color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}}
+  .ravatar{{width:38px;height:38px;border-radius:50%;background:#E4F4FF;color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}}
   .rname{{font-size:14px;font-weight:600;color:var(--ink)}}
   .rmeta{{font-size:12px;color:var(--ink3)}}
   .rtext{{font-size:13.5px;color:var(--ink2);line-height:1.72;margin:0}}
@@ -373,7 +370,7 @@ html = f"""<!DOCTYPE html>
     .hero-content{{max-width:none}}
     .hero h1{{color:var(--ink)}}
     .hero p{{color:var(--ink2);max-width:none}}
-    .btn-ghost{{border-color:rgba(42,38,32,.28);color:var(--ink)}}
+    .btn-ghost{{border-color:rgba(33,33,36,.28);color:var(--ink)}}
     .hero-photo{{display:block;height:470px;border-radius:22px;box-shadow:0 18px 40px rgba(31,27,46,.14);
       background:url('{hero_card}') center 32% / cover no-repeat}}
   }}
@@ -527,7 +524,7 @@ html = f"""<!DOCTYPE html>
 
   <footer>
     <div class="container">
-      <div style="color:#C7C0B2;font-weight:500;margin-bottom:6px">펫무브 · PETMOVE</div>
+      <div style="color:#C9C9CE;font-weight:500;margin-bottom:6px">펫무브 · PETMOVE</div>
       로잔동물의료센터 · 사업자등록번호 124-18-42859<br>
       서울시 관악구 관악로29길 3 · 02-872-7588<br>
       <a href="https://blog.naver.com/petmove" target="_blank" rel="noopener" class="fsns"><span class="nlogo">N</span>네이버 블로그</a><br>
