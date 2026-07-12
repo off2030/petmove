@@ -44,6 +44,8 @@ function caseIdFromPath(pathname: string): string | null {
 export function BottomNav() {
   const pathname = usePathname()
   const caseIdInPath = caseIdFromPath(pathname)
+  // 흰 배경 화면(설정)에선 바도 흰색 — top-bar 와 동일 규칙.
+  const onSurfacePage = pathname === '/settings' || pathname.startsWith('/settings/')
   const { cases } = useCases()
   const [lastCaseId, setLastCaseId] = useState<string | null>(null)
   // 다중 목적지 — 활성 목적지(?dest=)를 케이스별로 기억해 탭 전환 시 링크에 붙인다.
@@ -130,7 +132,8 @@ export function BottomNav() {
         zIndex: 40,
         display: 'flex',
         padding: '6px 10px calc(env(safe-area-inset-bottom, 0px) + 6px)',
-        background: 'rgb(var(--pm-bg-rgb))',
+        // 흰 배경 화면(설정, 2026-07-12 실험)에선 바도 흰색 — 회색 띠가 남지 않게.
+        background: onSurfacePage ? 'rgb(var(--pm-surface-rgb))' : 'rgb(var(--pm-bg-rgb))',
         borderTop: '.5px solid var(--pm-line)',
       }}
     >
@@ -155,7 +158,7 @@ export function BottomNav() {
               transition: 'color 180ms ease',
             }}
           >
-            <NavIcon name={t.icon} active={active} />
+            <NavIcon name={t.icon} active={active} surface={onSurfacePage} />
             <span style={{ fontSize: 10, fontWeight: active ? 700 : 500 }}>{t.label}</span>
           </Link>
         )
@@ -179,7 +182,7 @@ function isActive(key: Tab['key'], pathname: string): boolean {
   return new RegExp(`^/cases/[^/]+/${key}(?:/|$)`).test(pathname)
 }
 
-function NavIcon({ name, active = false }: { name: Icon; active?: boolean }) {
+function NavIcon({ name, active = false, surface = false }: { name: Icon; active?: boolean; surface?: boolean }) {
   const p = {
     width: 20,
     height: 20,
@@ -191,7 +194,7 @@ function NavIcon({ name, active = false }: { name: Icon; active?: boolean }) {
     strokeLinejoin: 'round' as const,
   }
   // 바 배경색 — 활성(filled) 아이콘의 네거티브 디테일(스트랩·접힘선 등)용.
-  const bg = 'rgb(var(--pm-bg-rgb))'
+  const bg = surface ? 'rgb(var(--pm-surface-rgb))' : 'rgb(var(--pm-bg-rgb))'
   // 트래블월렛·오늘의집 문법 — 비활성: 도톰한 라운드 스트로크 / 활성: 잉크 면(fill) 반전.
   switch (name) {
     case 'luggage':

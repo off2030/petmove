@@ -27,6 +27,8 @@ function caseIdFromPath(pathname: string): string | null {
 export function TopBar() {
   const pathname = usePathname()
   const activeCaseId = caseIdFromPath(pathname)
+  // 흰 배경 화면(설정, 2026-07-12 실험)에선 바도 흰색 — 회색 띠가 남지 않게.
+  const onSurfacePage = pathname === '/settings' || pathname.startsWith('/settings/')
 
   // PETMOVE 워드마크는 "현재 일정"으로 — bottom-nav 와 동일한 case 결정 패턴.
   // path 에 caseId 가 있으면 그걸, 아니면 sessionStorage 의 마지막 case, 둘 다 없으면 /cases.
@@ -86,7 +88,7 @@ export function TopBar() {
         // 직선 풀-와이드 바 — 라운드·그라데이션 없이 균일한 불투명 배경.
         // (흰 페이지 위 반투명 흰 바라 라운드가 안 보였음 — 밝고 심플 리디자인에서 정리.)
         // 반투명+블러 제거 — 불투명 배경이라 밑으로 스크롤되는 내용은 그대로 가려진다.
-        background: 'rgb(var(--pm-bg-rgb))',
+        background: onSurfacePage ? 'rgb(var(--pm-surface-rgb))' : 'rgb(var(--pm-bg-rgb))',
       }}
     >
       {onboarding ? (

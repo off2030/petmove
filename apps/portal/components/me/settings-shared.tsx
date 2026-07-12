@@ -122,6 +122,7 @@ export function EditPageShell({
   title,
   children,
   bottomBar,
+  surface = false,
 }: {
   /** null 이면 뒤로가기 링크 미표시 — 탭 루트로 쓰는 페이지(설정=더보기 탭)용. */
   backHref?: string | null
@@ -129,13 +130,15 @@ export function EditPageShell({
   title: string
   children: ReactNode
   bottomBar?: ReactNode
+  /** true 면 회색 캔버스 대신 흰 배경 — 메뉴 나열형 화면(설정)용 (2026-07-12 실험). */
+  surface?: boolean
 }) {
   const hasBar = !!bottomBar
   return (
     <div
       className="pm-fade-up pm-noscroll"
       style={{
-        background: C.bg,
+        background: surface ? C.surface : C.bg,
         color: C.ink,
         minHeight: '100%',
         paddingTop: 24,
@@ -166,15 +169,18 @@ export function EditPageShell({
   )
 }
 
-/** mono-cap 라벨 + 라운드 surface 카드. label 없으면 카드만. */
+/** mono-cap 라벨 + 라운드 surface 카드. label 없으면 카드만.
+ *  plain=true 면 카드 껍데기(배경·테두리·라운드) 없이 행만 — 흰 배경 화면(설정)용. */
 export function SectionCard({
   label,
   children,
   marginTop = 24,
+  plain = false,
 }: {
   label?: string
   children: ReactNode
   marginTop?: number
+  plain?: boolean
 }) {
   return (
     <>
@@ -183,21 +189,25 @@ export function SectionCard({
           style={{
             ...monoCap,
             marginTop,
-            marginBottom: 10,
-            padding: '0 4px',
+            marginBottom: plain ? 2 : 10,
+            padding: plain ? 0 : '0 4px',
           }}
         >
           {label}
         </div>
       )}
       <div
-        style={{
-          marginTop: label ? 0 : marginTop,
-          background: C.surface,
-          border: `.5px solid ${C.line}`,
-          borderRadius: 18,
-          padding: '2px 16px',
-        }}
+        style={
+          plain
+            ? { marginTop: label ? 0 : marginTop }
+            : {
+                marginTop: label ? 0 : marginTop,
+                background: C.surface,
+                border: `.5px solid ${C.line}`,
+                borderRadius: 18,
+                padding: '2px 16px',
+              }
+        }
       >
         {children}
       </div>

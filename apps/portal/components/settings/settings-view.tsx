@@ -290,8 +290,8 @@ export function SettingsView() {
   return (
     <>
     {/* 더보기 탭 루트 — 하단 탭으로 진입하므로 뒤로가기 없음. (구 상단바 ⚙ 진입은 폐지) */}
-    <EditPageShell title="설정" backHref={null}>
-      <SectionCard label="알림" marginTop={8}>
+    <EditPageShell title="설정" backHref={null} surface>
+      <SectionCard label="알림" marginTop={8} plain>
         <ToggleRow
           label="일정 알림"
           desc="주요 일정 안내를 받을 수 있어요."
@@ -333,13 +333,13 @@ export function SettingsView() {
         )}
       </SectionCard>
 
-      <SectionCard label="화면">
+      <SectionCard label="화면" plain>
         <div style={{ padding: '14px 0' }}>
           <ThemeSwitcher />
         </div>
       </SectionCard>
 
-      <SectionCard label="고급">
+      <SectionCard label="고급" plain>
         <ToggleRow
           label="일정 설명문 표시"
           desc="전체 일정 카드에 간략한 설명문을 표시해요."
@@ -362,16 +362,16 @@ export function SettingsView() {
         )}
       </SectionCard>
 
-      <SectionCard label="약관·정책">
+      <SectionCard label="약관·정책" plain>
         <LinkRow href="/terms" label="이용약관" />
         <LinkRow href="/privacy" label="개인정보 처리방침" last />
       </SectionCard>
 
-      <SectionCard label="지원">
+      <SectionCard label="지원" plain>
         <ExtRow href={`mailto:${SUPPORT_EMAIL}`} label="이메일" value={SUPPORT_EMAIL} last />
       </SectionCard>
 
-      <SectionCard label="앱 정보">
+      <SectionCard label="앱 정보" plain>
         <Row
           label="버전"
           right={
@@ -393,7 +393,7 @@ export function SettingsView() {
       {/* 계정 — 로그아웃 + 계정 삭제. 단독 카드 두 개로 분리하던 것을 한 카드로 묶어
           마지막 라벨('앱 정보')이 시각적으로 흡수해 보이는 문제 해결. 계정 삭제 우측엔
           유예 중이면 'D-N 일 후 삭제 예정' 부제 노출. */}
-      <SectionCard label="계정">
+      <SectionCard label="계정" plain>
         <form action={signOut}>
           <button
             type="submit"
