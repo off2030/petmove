@@ -28,7 +28,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/japan-fushimi-torii-close.jpg',
     '/destinations/japan-sakura.jpg',
     '/destinations/japan-sakura-riverside.jpg',
-    '/destinations/japan.jpg',
     '/destinations/japan-tokyo-tower.jpg',
     '/destinations/japan-tokyo-tower-ai.jpg',
     '/destinations/japan-akihabara-1.jpg',
