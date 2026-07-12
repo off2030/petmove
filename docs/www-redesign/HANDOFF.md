@@ -19,7 +19,19 @@
 5. **브랜드 = 앱(portal) 팔레트 그대로.** 웜 스톤 + 앰버. admin(펫무브워크)의 Editorial/Terracotta `--pmw-*`와 혼동 금지.
 6. **로고 = `apps/portal/public/icon.svg`** (앰버 라운드 스퀘어 + 흰 마크) + 워드마크 = 텍스트 "펫무브"(시스템 폰트). ~~Alonzo~~ **폐기(2026-07-04, 어디서도 안 씀)**. `petmove-full.svg`/`petmove-wordmark.svg`는 "PETMOVE/WORK" = B2B용이라 **쓰지 말 것.**
 
-## 브랜드 토큰 (출처: `apps/portal/app/globals.css` 의 `--pm-*`)
+## 2026-07-12 — 새 브랜드(구름·하늘) 리브랜딩 ⚠️ 아래 웜 스톤 토큰 표는 구버전
+
+로고·브랜드 칼라 전면 교체(사용자 제공 `기본 로고-구름(한글/영문).zip`, `Desktop\스크린샷\로고\`).
+- **로고**: 하늘 그라데이션(#63C9FF→#0BAEFF) 라운드 스퀘어(rx 46/200) + 흰 구름(원 5개+바닥 rect). SVG 지오메트리는 zip 의 `downloads/PetMove-logo-korean.svg` 그대로 — 생성기 LOGO 상수·article-sample 헤더에 인라인.
+- **워드마크**: 텍스트 "펫무브" Pretendard 800 (영문은 PET(잉크)+MOVE(블루), Manrope 800 — www 미사용).
+- **새 토큰(www 3벌 공통)**: `--bg:#F6FAFD --surface:#FFF --ink:#132635 --ink2:#4A6072 --ink3:#6B8092 --accent:#0BAEFF --accent-deep:#0B84D6 --accent-ink:#096FB3(작은 글씨용 AA) --sky-soft:#EAF6FF --sage:#3FB25A --border:#DFE6EC --dark:#0F1B2A(네이비)`. 푸터 #0C1520.
+- **버튼 = 블루 채움 + 흰 글씨**(브랜드 목업 준수. 흰/블루 대비 ~2.6:1로 AA 미달이지만 브랜드 결정 — 본문 소형 텍스트에는 블루 채움 금지, accent-ink 사용).
+- **최종 CTA 섹션 = 스플래시 문법**: 하늘 그라데이션 + 반투명 흰 구름 SVG + 흰 스토어 버튼.
+- **본문 서체 = Pretendard**(jsdelivr variable dynamic-subset CDN — Next.js 이식 시 next/font 로).
+- 적용 범위: `make_www_prototype.py`(랜딩) + `make_www_subpages.py`(guide/contact) + `article-sample.html`(직접 수정) + 변환기 재실행으로 converted 전체 재생성. ⚠️`make_www_subpages.py` 의 article/article-sample 출력은 구버전 → 재생성 후 git restore (스크립트 docstring 에 명시).
+- 잔여 판단(사용자): 히어로 사진(웜톤 AI 이미지)·감성 밴드 사진(협곡, 웜톤)이 쿨톤 새 브랜드와 어울리는지. 구름 zip 의 `_ds/` 번들은 코랄-크림 구시안이라 **무시**(진짜 truth = 로고 SVG + Brand Applications HTML 팔레트).
+
+## 브랜드 토큰 — 구버전(웜 스톤, 2026-07-12 이전) (출처: `apps/portal/app/globals.css` 의 `--pm-*`)
 
 | 역할 | 토큰 | 값 |
 |---|---|---|

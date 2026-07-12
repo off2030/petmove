@@ -6,36 +6,38 @@
 <title>[2026] 강아지·고양이 일본 입국 준비 총정리 · 펫무브</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
   :root{
-    --bg:#F5EFE8; --surface:#FBF7F1; --ink:#2A2620; --ink2:#6B6457; --ink3:#847B6C;
-    --accent:#D99A58; --accent-ink:#9A5A2E; --sage:#8FA68C; --border:#E3D9C6; --dark:#211E19;
+    --bg:#F6FAFD; --surface:#FFFFFF; --ink:#132635; --ink2:#4A6072; --ink3:#6B8092;
+    --accent:#0BAEFF; --accent-deep:#0B84D6; --accent-ink:#096FB3; --sky-soft:#EAF6FF;
+    --sage:#3FB25A; --border:#DFE6EC; --dark:#0F1B2A;
   }
   *{box-sizing:border-box}
   [hidden]{display:none!important}
   html{scroll-behavior:smooth;scrollbar-gutter:stable;background:var(--bg)}
-  body{margin:0;background:var(--bg);font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,"Segoe UI",Roboto,sans-serif;
+  body{margin:0;background:var(--bg);font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,"Segoe UI",Roboto,sans-serif;
     color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column}
   a{text-decoration:none;color:inherit}
   .container{max-width:1080px;margin:0 auto;padding:0 22px;width:100%}
-  .wm{font-size:18px;letter-spacing:.015em;font-weight:700}
+  .wm{font-size:18px;letter-spacing:-.01em;font-weight:800}
 
-  header{position:sticky;top:0;z-index:20;background:rgba(245,239,232,.92);backdrop-filter:blur(8px);
+  header{position:sticky;top:0;z-index:20;background:rgba(246,250,253,.92);backdrop-filter:blur(8px);
     border-bottom:0.5px solid var(--border)}
   header .container{display:flex;align-items:center;justify-content:space-between;padding-top:13px;padding-bottom:13px}
   .nav-links{display:none;align-items:center;gap:26px;font-size:14px;color:var(--ink2)}
   .nav-links a.on{color:var(--ink);font-weight:600}
   .nav-right{display:flex;align-items:center;gap:14px}
-  .nav-app{background:var(--accent);color:var(--ink);font-weight:600;border-radius:11px;padding:8px 15px;font-size:13px}
+  .nav-app{background:var(--accent);color:#fff;font-weight:600;border-radius:11px;padding:8px 15px;font-size:13px}
   .burger{font-size:22px;color:var(--ink2);cursor:pointer}
-  .drawer-ov{position:fixed;inset:0;background:rgba(20,17,13,.42);opacity:0;visibility:hidden;transition:opacity .22s;z-index:30}
+  .drawer-ov{position:fixed;inset:0;background:rgba(10,22,35,.42);opacity:0;visibility:hidden;transition:opacity .22s;z-index:30}
   .drawer-ov.open{opacity:1;visibility:visible}
-  .drawer{position:fixed;top:0;right:0;height:100%;width:min(78vw,300px);background:var(--bg);z-index:31;box-shadow:-8px 0 30px rgba(20,17,13,.18);transform:translateX(100%);transition:transform .24s ease;display:flex;flex-direction:column;padding:14px 20px 24px}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(78vw,300px);background:var(--surface);z-index:31;box-shadow:-8px 0 30px rgba(10,22,35,.18);transform:translateX(100%);transition:transform .24s ease;display:flex;flex-direction:column;padding:14px 20px 24px}
   .drawer.open{transform:translateX(0)}
   .drawer-close{align-self:flex-end;background:transparent;border:0;color:var(--ink2);font-size:24px;cursor:pointer;padding:6px;line-height:1}
   .drawer-nav{display:flex;flex-direction:column;margin-top:6px}
   .drawer-nav a{padding:15px 2px;font-size:16px;font-weight:500;color:var(--ink);border-bottom:0.5px solid var(--border)}
-  .drawer-app{margin-top:20px;background:var(--accent);color:var(--ink);font-weight:600;border-radius:12px;padding:13px;text-align:center;font-size:14px}
+  .drawer-app{margin-top:20px;background:var(--accent);color:#fff;font-weight:600;border-radius:12px;padding:13px;text-align:center;font-size:14px}
 
   .phead{padding:38px 0 6px;text-align:center}
   .kicker{font-size:12.5px;font-weight:600;color:var(--accent-ink);letter-spacing:.03em;margin-bottom:9px}
@@ -54,7 +56,7 @@
 
   /* 추천 가이드(featured) */
   .feat{display:grid;grid-template-columns:1fr;gap:10px}
-  .fcard{display:block;background:#FBF1E3;border:0.5px solid rgba(217,154,88,.4);border-radius:16px;padding:16px 17px}
+  .fcard{display:block;background:var(--sky-soft);border:0.5px solid rgba(11,174,255,.4);border-radius:16px;padding:16px 17px}
   .fcard .ft{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.42}
   .fcard .fd{font-size:12px;color:var(--accent-ink);margin-top:6px}
 
@@ -104,7 +106,7 @@
   .crumb a{color:var(--ink3)}
   .crumb .sep{margin:0 6px}
   .art-head{padding:14px 0 20px;border-bottom:0.5px solid var(--border);margin-bottom:26px}
-  .art-cat{display:inline-block;font-size:12px;font-weight:600;color:var(--accent-ink);background:#F3E3CE;
+  .art-cat{display:inline-block;font-size:12px;font-weight:600;color:var(--accent-ink);background:#D9F0FF;
     border-radius:999px;padding:4px 11px;margin-bottom:14px}
   .art-head h1{font-size:26px;line-height:1.32;letter-spacing:-.02em;margin:0;font-weight:700}
   .art-meta{font-size:12.5px;color:var(--ink3);margin-top:13px}
@@ -121,19 +123,19 @@
   .prose table{width:100%;border-collapse:collapse;margin:0 0 18px;font-size:13.5px}
   .prose th,.prose td{border:0.5px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top}
   .prose th{background:var(--surface);font-weight:600;white-space:nowrap}
-  .callout{background:#FBF1E3;border:0.5px solid rgba(217,154,88,.4);border-radius:14px;padding:16px 18px;margin:24px 0}
+  .callout{background:var(--sky-soft);border:0.5px solid rgba(11,174,255,.4);border-radius:14px;padding:16px 18px;margin:24px 0}
   .callout .ch{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14.5px;margin-bottom:6px}
   .callout .ch i{color:var(--accent-ink);font-size:19px}
   .callout .cp{font-size:13.5px;color:var(--ink2);margin:0;line-height:1.65}
   .callout .cbtn{display:inline-block;margin-top:11px;font-size:13px;font-weight:600;color:var(--accent-ink)}
-  .prose .callout-note{background:#FBF1E3;border:0.5px solid rgba(217,154,88,.4);border-radius:12px;padding:15px 17px;margin:18px 0;font-size:14.5px;line-height:1.7;color:var(--ink)}
+  .prose .callout-note{background:var(--sky-soft);border:0.5px solid rgba(11,174,255,.4);border-radius:12px;padding:15px 17px;margin:18px 0;font-size:14.5px;line-height:1.7;color:var(--ink)}
   .prose .callout-note .ce{margin-right:7px}
-  .art-cta{background:#211E19;border-radius:18px;padding:26px 22px;text-align:center;margin:36px 0 8px}
+  .art-cta{background:var(--dark);border-radius:18px;padding:26px 22px;text-align:center;margin:36px 0 8px}
   .art-cta h3{color:#fff;font-size:18px;margin:0 0 7px;font-weight:700}
-  .art-cta p{color:#CFC6B6;font-size:13px;margin:0 0 16px;line-height:1.6}
-  .art-cta a{display:inline-block;background:var(--accent);color:var(--ink);font-weight:600;border-radius:12px;padding:12px 22px;font-size:14px}
-  /* A · 랜딩 서비스 섹션 그대로 (밝은 앰버 패널 + 아웃라인 버튼 + 회색 링크) */
-  .svc-block{background:#FBF1E3;border:0.5px solid rgba(217,154,88,.4);border-radius:16px;padding:22px 20px;text-align:center;margin:34px 0 8px}
+  .art-cta p{color:#AFC4D4;font-size:13px;margin:0 0 16px;line-height:1.6}
+  .art-cta a{display:inline-block;background:var(--accent);color:#fff;font-weight:600;border-radius:12px;padding:12px 22px;font-size:14px}
+  /* A · 랜딩 서비스 섹션 그대로 (밝은 스카이 패널 + 아웃라인 버튼 + 회색 링크) */
+  .svc-block{background:var(--sky-soft);border:0.5px solid rgba(11,174,255,.4);border-radius:16px;padding:22px 20px;text-align:center;margin:34px 0 8px}
   .svc-block .svc-title{font-size:16px;font-weight:700;color:var(--ink)}
   .svc-block .svc-desc{font-size:13px;color:var(--ink2);margin-top:6px}
   .svc-cta{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1.5px solid var(--accent);color:var(--accent-ink);font-weight:600;border-radius:14px;padding:14px;font-size:15px;width:100%;max-width:460px;margin:16px auto 0;text-decoration:none}
@@ -145,11 +147,11 @@
   .svc-app a{color:var(--accent-ink);font-weight:600;text-decoration:none}
   /* 본문 → CTA 전환 구분선 (얇은 하프라인, 섹션 톤과 일치) */
   .cta-sep{border:0;border-top:0.5px solid var(--border);margin:40px 0 0}
-  /* 심플 2버튼 CTA — 랜딩 히어로처럼 풀폭 세로 스택 (앱=앰버 채움·짙은 잉크 / 서비스=앰버 아웃라인) */
+  /* 심플 2버튼 CTA — 랜딩 히어로처럼 풀폭 세로 스택 (앱=블루 채움·흰 글씨 / 서비스=블루 아웃라인) */
   .cta2{display:flex;flex-direction:column;gap:11px;max-width:440px;margin:24px auto 48px}
   .cta2 a{display:flex;align-items:center;justify-content:center;gap:8px;
     border-radius:14px;text-decoration:none}
-  .cta2 a.app{background:var(--accent);color:var(--ink);font-weight:600;padding:15px 22px;font-size:15px}
+  .cta2 a.app{background:var(--accent);color:#fff;font-weight:600;padding:15px 22px;font-size:15px}
   .cta2 a.svc{border:1.5px solid var(--accent);color:var(--accent-ink);font-weight:600;padding:14px 22px;font-size:14.5px}
   .cta2 a i{font-size:17px}
   /* 유용한 정보 — 도구 링크를 별개 항목으로(행 전체 클릭) */
@@ -158,14 +160,14 @@
   .prose .info-list .it{display:flex;align-items:center;gap:6px;font-size:14.5px;font-weight:700;color:var(--accent-ink)}
   .prose .info-list .it i{font-size:16px;flex:0 0 auto}
   .prose .info-list .id{display:block;font-size:13px;color:var(--ink2);margin-top:3px;line-height:1.5}
-  /* B · 두 갈래 카드 (앱=앰버 채움 / 서비스=앰버 아웃라인 — 랜딩 버튼 규칙) */
+  /* B · 두 갈래 카드 (앱=블루 채움 / 서비스=블루 아웃라인 — 랜딩 버튼 규칙) */
   .two-path{display:grid;grid-template-columns:1fr;gap:12px;margin:34px 0 8px}
   .pcard{border:0.5px solid var(--border);border-radius:16px;padding:20px 18px;text-align:center;background:var(--surface)}
-  .pcard.accent{background:#FBF1E3;border-color:rgba(217,154,88,.4)}
+  .pcard.accent{background:var(--sky-soft);border-color:rgba(11,174,255,.4)}
   .pcard>i{font-size:25px;color:var(--accent-ink)}
   .pcard .pt{font-size:15px;font-weight:700;margin:9px 0 3px}
   .pcard .pd{font-size:12.5px;color:var(--ink2);margin:0 0 14px;line-height:1.5}
-  .pcard .pbtn{display:block;width:100%;text-align:center;background:var(--accent);color:var(--ink);font-weight:600;border-radius:12px;padding:12px;font-size:14px;text-decoration:none}
+  .pcard .pbtn{display:block;width:100%;text-align:center;background:var(--accent);color:#fff;font-weight:600;border-radius:12px;padding:12px;font-size:14px;text-decoration:none}
   .pcard .pbtn.outline{background:transparent;border:1.5px solid var(--accent);color:var(--accent-ink);padding:calc(12px - 1.5px)}
   .pcard .psub{display:block;margin-top:11px;font-size:12px;color:var(--ink3)}
   @media(min-width:620px){.two-path{grid-template-columns:1fr 1fr}}
@@ -196,8 +198,8 @@
   .prose a.dl i{font-size:18px;flex:0 0 auto}
   .prose a.dl:hover{border-color:var(--accent)}
 
-  footer{background:#211E19;color:#8B8578;padding:28px 0;font-size:12px;line-height:1.85;margin-top:auto}
-  footer a{color:#B0A896}
+  footer{background:#0C1520;color:#7E93A6;padding:28px 0;font-size:12px;line-height:1.85;margin-top:auto}
+  footer a{color:#A9C0D4}
   footer .fsns{display:inline-flex;align-items:center;gap:5px;margin:9px 0 4px;font-weight:600}
   footer .fsns .nlogo{font-weight:800;font-size:13px;line-height:1}
 
@@ -214,7 +216,7 @@
 <body class="reading">
   <header>
     <div class="container">
-      <a href="prototype-mobile.html" style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true"><rect width="100" height="100" rx="22.5" fill="#D99A58"/><path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" fill="none" stroke="#fff" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="wm">펫무브</span></a>
+      <a href="prototype-mobile.html" style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 200 200" width="26" height="26" aria-hidden="true"><defs><linearGradient id="pmsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63C9FF"/><stop offset="1" stop-color="#0BAEFF"/></linearGradient><clipPath id="pmsq"><rect width="200" height="200" rx="46"/></clipPath></defs><g clip-path="url(#pmsq)"><rect width="200" height="200" fill="url(#pmsky)"/><rect x="0" y="160" width="200" height="40" fill="#fff"/><circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/><circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/><circle cx="178" cy="154" r="24" fill="#fff"/></g></svg><span class="wm">펫무브</span></a>
       <span class="nav-links">
         <a href="prototype-mobile.html#service">서비스</a>
         <a href="guide.html" class="on">가이드</a>
@@ -535,7 +537,7 @@
 
   <footer>
     <div class="container">
-      <div style="color:#C7C0B2;font-weight:500;margin-bottom:6px">펫무브 · PETMOVE</div>
+      <div style="color:#D7E4EF;font-weight:600;margin-bottom:6px">펫무브 · PETMOVE</div>
       로잔동물의료센터 · 사업자등록번호 124-18-42859<br>
       서울시 관악구 관악로29길 3 · 02-872-7588<br>
       <a href="https://blog.naver.com/petmove" target="_blank" rel="noopener" class="fsns"><span class="nlogo">N</span>네이버 블로그</a><br>
