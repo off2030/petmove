@@ -21,16 +21,27 @@ export function isPaneHref(href: string): boolean {
   return /^\/cases\/[^/]+\/(journey|docs)\/?$/.test(path)
 }
 
+/** guide/* 중 셸이 그리는 안내 페이지 슬러그 — tab-host 의 GUIDE_SCREENS 와 같은 명단. */
+export const SHELL_GUIDE_SLUGS = [
+  'jp-quarantine-contacts',
+  'japan-airport-quarantine',
+  'quarantine-stations',
+  'th-aqs-contacts',
+] as const
+
 /**
  * TabHost 가 detail 레이어로 그리는 상세 화면 주소 — pane 처럼 pushState 로 전환한다.
- * 명단 = context 만으로 그릴 수 있는 client 화면들. 서버 페치가 필요한 페이지
- * (/me/vet·/me/agency 등)와 일반 라우트(/cases 목록, guide, feedback)는 제외 —
- * pushTab 이 자동으로 router.push 폴백하므로 여기 없어도 동작은 같다(속도만 라우트).
+ * 명단 = context 만으로(또는 정적 데이터로) 그릴 수 있는 client 화면들. 서버 페치가
+ * 필요한 페이지(/me/vet·/me/agency)와 리다이렉트 전용(/me/travel, /cases/[id]/info)은
+ * 제외 — pushTab 이 자동으로 router.push 폴백하므로 여기 없어도 동작은 같다.
  */
 export function isDetailHref(href: string): boolean {
   const path = href.split('?')[0]
-  if (path === '/me/guardian' || path === '/settings/account-delete') return true
+  if (path === '/me/guardian' || path === '/settings/account-delete' || path === '/cases') return true
   if (/^\/me\/animal\/[^/]+\/?$/.test(path)) return true
+  const guide = path.match(/^\/guide\/([^/]+)\/?$/)
+  if (guide) return (SHELL_GUIDE_SLUGS as readonly string[]).includes(guide[1])
+  if (/^\/cases\/[^/]+\/feedback\/?$/.test(path)) return true
   return /^\/cases\/[^/]+\/(journey|docs)\/[^/]+\/?$/.test(path)
 }
 

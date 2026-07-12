@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useCase, useCases } from './case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
@@ -79,6 +79,29 @@ const ComingSoonView = dynamic(
   () => import('@/components/me/coming-soon-view').then((m) => m.ComingSoonView),
   { loading: () => <TabSkeleton rows={3} /> },
 )
+const CasesHubScreen = dynamic(
+  () => import('@/components/cases/cases-hub-screen').then((m) => m.CasesHubScreen),
+  { loading: () => <TabSkeleton rows={3} /> },
+)
+const FeedbackScreen = dynamic(
+  () => import('@/components/feedback/feedback-screen').then((m) => m.FeedbackScreen),
+  { loading: () => <TabSkeleton rows={3} /> },
+)
+// 안내(leaf) 페이지 — 정적 데이터 client 화면. 슬러그 명단은 tab-nav 의 SHELL_GUIDE_SLUGS.
+const GUIDE_SCREENS: Record<string, ReturnType<typeof dynamic>> = {
+  'jp-quarantine-contacts': dynamic(() => import('@/components/guide/jp-quarantine-contacts'), {
+    loading: () => <TabSkeleton rows={3} />,
+  }),
+  'japan-airport-quarantine': dynamic(() => import('@/components/guide/japan-airport-quarantine'), {
+    loading: () => <TabSkeleton rows={3} />,
+  }),
+  'quarantine-stations': dynamic(() => import('@/components/guide/quarantine-stations'), {
+    loading: () => <TabSkeleton rows={3} />,
+  }),
+  'th-aqs-contacts': dynamic(() => import('@/components/guide/th-aqs-contacts'), {
+    loading: () => <TabSkeleton rows={3} />,
+  }),
+}
 
 type PaneKey = 'journey' | 'docs' | 'services' | 'me' | 'settings'
 const ALL_PANES: PaneKey[] = ['journey', 'docs', 'me', 'services', 'settings']
@@ -103,12 +126,20 @@ type DetailMatch =
   | { kind: 'guardian' }
   | { kind: 'animal'; caseId: string }
   | { kind: 'account-delete' }
+  | { kind: 'cases' }
+  | { kind: 'feedback'; caseId: string }
+  | { kind: 'guide'; slug: string }
 
 function detailFromPath(pathname: string): DetailMatch | null {
   if (pathname === '/me/guardian') return { kind: 'guardian' }
   if (pathname === '/settings/account-delete') return { kind: 'account-delete' }
+  if (pathname === '/cases') return { kind: 'cases' }
+  const guide = pathname.match(/^\/guide\/([^/]+)\/?$/)
+  if (guide) return GUIDE_SCREENS[guide[1]] ? { kind: 'guide', slug: guide[1] } : null
   const animal = pathname.match(/^\/me\/animal\/([^/]+)\/?$/)
   if (animal) return { kind: 'animal', caseId: animal[1] }
+  const feedback = pathname.match(/^\/cases\/([^/]+)\/feedback\/?$/)
+  if (feedback) return { kind: 'feedback', caseId: feedback[1] }
   const caseDetail = pathname.match(/^\/cases\/([^/]+)\/(journey|docs)\/([^/]+)\/?$/)
   if (caseDetail) {
     return caseDetail[2] === 'journey'
@@ -121,6 +152,7 @@ function detailFromPath(pathname: string): DetailMatch | null {
 export function TabHost({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const { cases } = useCases()
 
   const activePane = paneFromPath(pathname)
@@ -215,6 +247,17 @@ export function TabHost({ children }: { children: React.ReactNode }) {
           void import('@/components/journey/step-detail-screen')
           void import('@/components/cases/doc-detail-screen')
           void import('@/components/me/animal-edit-view')
+          // 셸이 못 그리는 서버 페치 페이지(담당 병원·운송)는 라우터 캐시를 미리 데운다
+          // — staleTimes(30분) 동안 진입이 즉시. 연락처가 바뀌는 드문 경우는
+          // PartnerEditView 가 client 에서 스스로 갱신한다.
+          for (const url of ['/me/vet', '/me/agency']) {
+            try {
+              // @ts-expect-error PrefetchKind enum not publicly exported; runtime 'full' matches.
+              router.prefetch(url, { kind: 'full' })
+            } catch {
+              /* best-effort */
+            }
+          }
           return
         }
         const key = queue[i++]
@@ -302,6 +345,19 @@ export function TabHost({ children }: { children: React.ReactNode }) {
           {detail.kind === 'guardian' && <GuardianDetail />}
           {detail.kind === 'animal' && <AnimalDetail caseId={detail.caseId} />}
           {detail.kind === 'account-delete' && <AccountDeleteView />}
+          {detail.kind === 'cases' && <CasesHubScreen />}
+          {detail.kind === 'feedback' && (
+            <FeedbackScreen
+              caseId={detail.caseId}
+              dest={searchParams.get('dest')}
+              rating={searchParams.get('rating')}
+            />
+          )}
+          {detail.kind === 'guide' &&
+            (() => {
+              const Guide = GUIDE_SCREENS[detail.slug]
+              return Guide ? <Guide /> : null
+            })()}
         </Pane>
       )}
       {/* 라우트 children — /me/vet·agency(서버 페치), /cases 목록, guide, feedback 등

@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createAdminClient } from '@petmove/auth'
@@ -12,11 +13,16 @@ import { TopBar } from '@/components/portal-shell/top-bar'
 import { listMyCases } from '@/lib/actions/cases'
 import { ensureMyProfile } from '@/lib/actions/profile'
 import { getPartnerOrgsByIds, listAvailableOrgs } from '@/lib/actions/partners'
+import { TabSkeleton } from '@/components/portal-shell/tab-skeleton'
 
 export const dynamic = 'force-dynamic'
 
 /**
  * 인증된 보호자 셸. 4탭 (일정/서류/서비스/내 정보) 공통 레이아웃.
+ *
+ * 콜드 스타트 스트리밍(2026-07-12): 데이터(getUser+cases+profile)를 기다리는 동안 아무것도
+ * 안 보이던 것을, 정적 스켈레톤을 먼저 흘려보내고(첫 페인트 즉시) 본체가 준비되면 교체하는
+ * 구조로. 네이티브 스플래시가 빈 화면 대신 스켈레톤 위에서 걷힌다.
  *
  * 일반 진입: getUser + listMyCases + getMyProfile (모두 RLS 위 단일 쿼리). CaseDataProvider
  * 가 cases + profile 을 client Context 로 공유 — 모든 탭 페이지가 추가 fetch 없이 메모리에서
@@ -26,7 +32,32 @@ export const dynamic = 'force-dynamic'
  * 세션 없이 service-role 로 해당 케이스 한 건만 읽어 같은 셸을 읽기 전용으로 렌더한다.
  * 입력 폼은 <fieldset disabled> 로 일괄 비활성 — 네비게이션(<a>)은 그대로 동작한다.
  */
-export default async function AuthedLayout({ children }: { children: React.ReactNode }) {
+export default function AuthedLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<BootSkeleton />}>
+      <AuthedBody>{children}</AuthedBody>
+    </Suspense>
+  )
+}
+
+/** 데이터 준비 전 첫 페인트 — Shell 과 같은 프레임(배경·상단 여백)에 스켈레톤만. */
+function BootSkeleton() {
+  return (
+    <div
+      style={{
+        background: 'var(--pm-bg)',
+        color: 'var(--pm-ink)',
+        height: '100dvh',
+        overflow: 'hidden',
+        paddingTop: 'calc(var(--pm-top-inset) + 48px)',
+      }}
+    >
+      <TabSkeleton rows={3} />
+    </div>
+  )
+}
+
+async function AuthedBody({ children }: { children: React.ReactNode }) {
   const previewToken = (await cookies()).get('pm_preview')?.value
   const previewPayload = previewToken ? verifyPreviewToken(previewToken) : null
 
@@ -51,25 +82,27 @@ export default async function AuthedLayout({ children }: { children: React.React
 
   // ensureMyProfile: 프로필 행이 없으면(Apple 로그인이 /auth/callback 을 우회해 생성 안 됨)
   // 진입 시 자가 생성 — 아바타·설정 저장이 "프로파일을 찾을 수 없습니다"로 실패하던 것 해소.
-  const [casesResult, profileResult] = await Promise.all([listMyCases(), ensureMyProfile()])
+  // listAvailableOrgs 는 cases 와 무관 — 첫 라운드에 같이 태워 왕복 한 번을 줄인다(콜드 스타트).
+  const [casesResult, profileResult, transportOrgsResult] = await Promise.all([
+    listMyCases(),
+    ensureMyProfile(),
+    listAvailableOrgs('transport'),
+  ])
   const cases = casesResult.ok ? casesResult.value : []
   const profile = profileResult.ok ? profileResult.value : null
+  // 담당 운송업체 메뉴는 선택 가능한 운송 조직이 하나라도 있을 때만 노출한다(없으면 빈
+  // 선택지를 보여주는 미완성 인상 방지). 카탈로그 유무를 미리 읽어 내려보내, client 에서
+  // 따로 fetch 하지 않고 깜빡임 없이 섹션을 숨긴다.
+  const transportAvailable = transportOrgsResult.ok && transportOrgsResult.value.length > 0
 
   // 담당 병원·운송 카드도 첫 진입에 같이 채운다 — cases 에 이미 있는 org_id 로 organizations
   // 한 번만 조회. client useEffect 로 따로 fetch 하던 [내 정보] 병원 카드의 "빈칸→이름→로고"
   // 3단 깜빡임을 없애기 위함. 미연결이면 쿼리 자체를 건너뜀.
   const primary = cases[0] ?? null
-  // 담당 운송업체 메뉴는 선택 가능한 운송 조직이 하나라도 있을 때만 노출한다(없으면 빈
-  // 선택지를 보여주는 미완성 인상 방지). 카탈로그 유무를 partners 조회와 병렬로 미리 읽어
-  // 내려보내, client 에서 따로 fetch 하지 않고 깜빡임 없이 섹션을 숨긴다.
-  const [partnersResult, transportOrgsResult] = await Promise.all([
-    primary
-      ? getPartnerOrgsByIds(primary.org_id ?? null, primary.transport_org_id ?? null)
-      : Promise.resolve(null),
-    listAvailableOrgs('transport'),
-  ])
+  const partnersResult = primary
+    ? await getPartnerOrgsByIds(primary.org_id ?? null, primary.transport_org_id ?? null)
+    : null
   const partners = partnersResult?.ok ? partnersResult.value : { vet: null, transport: null }
-  const transportAvailable = transportOrgsResult.ok && transportOrgsResult.value.length > 0
 
   return (
     <CaseDataProvider
