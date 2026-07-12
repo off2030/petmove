@@ -63,7 +63,7 @@ export const PAGE_TOP = 32
  *   subTitle    20/600  하위/상세 페이지 제목 — 내 정보 편집·서류 상세·일정 상세·의견
  *   sectionTitle 16/600 구획 제목 — 준비 단계·서류 체크리스트·검역증·보관함 (항목과 같은 16, 굵기로 구분)
  *   itemTitle   16/500  항목 제목 — 카드 이름(동물·조직)·리스트 행 이름
- *   groupLabel  12/600  라벨(ink3) — 보호자·알림·일본으로 떠나요 등 회색 소제목
+ *   groupLabel  12/600  라벨(ink2) — 보호자·알림·일본으로 떠나요 등 회색 소제목
  */
 export const pageTitle = {
   fontFamily: 'var(--pm-font-display)',
@@ -107,9 +107,11 @@ export const itemTitle = {
   color: 'var(--pm-ink)',
 } as const
 
-/** 라벨 — 회색 소제목(구획 라벨·구간 캡션). 12/600 ink3. settings-shared 의 monoCap 과 동일. */
+/** 라벨 — 회색 소제목(구획 라벨·구간 캡션). 12/600 **ink2** — ink3(#97979c)는 12px 에서
+ *  대비 2.65:1 로 접근성 미달이라 ink2(#5c5c60, ~6:1)로 올림(2026-07-13). settings-shared
+ *  의 monoCap 과 동일값. */
 export const groupLabel = {
   fontSize: 12,
   fontWeight: 600,
-  color: 'var(--pm-ink-3)',
+  color: 'var(--pm-ink-2)',
 } as const

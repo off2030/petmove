@@ -32,11 +32,12 @@ export const num: CSSProperties = {
   fontWeight: 400,
 }
 
-/** 그룹 라벨(필드 묶음: 입력·첨부·알림·보호자 등) — 12/600/ink3.
- *  화면 구획 제목(준비 단계·서류 체크리스트급)은 이게 아니라 17px serif ink. */
+/** 그룹 라벨(필드 묶음: 입력·첨부·알림·보호자 등) — 12/600/**ink2**.
+ *  ink3 는 12px 대비 2.65:1 로 접근성 미달이라 ink2(~6:1)로 올림(2026-07-13, tokens.groupLabel 과 동일).
+ *  화면 구획 제목은 이게 아니라 sectionTitle(16/600). */
 export const monoCap: CSSProperties = {
   fontSize: 12,
-  color: C.ink3,
+  color: C.ink2,
   fontWeight: 600,
 }
 
