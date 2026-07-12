@@ -43,7 +43,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/philippines-pinatubo-crater-lake.jpg',
     '/destinations/philippines-island-hopping-sea.jpg',
     '/destinations/philippines-curved-bay-aerial.jpg',
-    '/destinations/philippines-beach-hut-panorama.jpg',
   ],
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
 }
