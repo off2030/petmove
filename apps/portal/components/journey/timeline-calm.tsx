@@ -37,6 +37,10 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/thailand-beach-horizon-sky.jpg',
     '/destinations/thailand-cove-swimmers.jpg',
   ],
+  필리핀: [
+    '/destinations/philippines-island-cove-boats.jpg',
+    '/destinations/philippines-beach-hut-panorama.jpg',
+  ],
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
 }
 
