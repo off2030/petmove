@@ -399,7 +399,9 @@ export function TimelineCalm({
               style={{
                 fontSize: 16,
                 lineHeight: '22px',
-                color: hasWarn ? C.warn : isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
+                // 카드 배경도 흰색으로 중립화한 것과 짝 — 제목 글자색은 항상 중립(ink/ink2/ink3),
+                // '주의' 신호는 배지 아이콘 + 우측 작은 라벨(색 유지)이 담당. 굵기만 올려 강조.
+                color: isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
                 fontWeight: isCurr || hasWarn ? 600 : 500,
                 minWidth: 0,
                 overflow: 'hidden',
@@ -1038,8 +1040,8 @@ export function TimelineCalm({
               marginTop: 18,
               padding: 22,
               borderRadius: 16,
-              background: C.warnBg,
-              border: `.5px solid color-mix(in srgb, ${C.warn} 20%, transparent)`,
+              background: C.cardSoft,
+              border: `.5px solid ${C.line}`,
               boxShadow: 'var(--pm-card-rim)',
             }}
           >

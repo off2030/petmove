@@ -2153,8 +2153,8 @@ export function StepDetailView({
               marginTop: 16,
               padding: '14px 16px',
               borderRadius: 16,
-              background: C.infoBg,
-              border: `.5px solid color-mix(in srgb, ${C.info} 35%, transparent)`,
+              background: C.surface,
+              border: `.5px solid ${C.line}`,
             }}
           >
             <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -2195,7 +2195,7 @@ export function StepDetailView({
                 style={{
                   margin: situationalDesc ? '12px 0 0' : 0,
                   padding: situationalDesc ? '12px 0 0' : 0,
-                  borderTop: situationalDesc ? `.5px solid color-mix(in srgb, ${C.info} 25%, transparent)` : 'none',
+                  borderTop: situationalDesc ? `.5px solid ${C.line}` : 'none',
                   listStyle: 'none',
                   display: 'flex',
                   flexDirection: 'column',
@@ -2217,15 +2217,16 @@ export function StepDetailView({
           </section>
         )}
 
-        {/* Warnings */}
+        {/* Warnings — 카드 배경은 다른 흰 카드와 동일 중립화, 색은 아이콘·라벨에만
+            (2026-07-12: 옅은 색 배경+색 테두리 → 흰 배경+기본 테두리). */}
         {failed.length > 0 && (
           <section
             style={{
               marginTop: 16,
               padding: '14px 16px',
               borderRadius: 16,
-              background: C.warnBg,
-              border: `.5px solid color-mix(in srgb, ${C.warn} 20%, transparent)`,
+              background: C.surface,
+              border: `.5px solid ${C.line}`,
             }}
           >
             <div style={{ ...monoCap, color: C.warn, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
