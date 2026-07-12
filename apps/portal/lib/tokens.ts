@@ -61,7 +61,7 @@ export const PAGE_TOP = 32
  *
  *   pageTitle   24/600  화면 제목 — 탭 루트·동물 이름 (탭의 최상단 제목)
  *   subTitle    20/600  하위/상세 페이지 제목 — 내 정보 편집·서류 상세·일정 상세·의견
- *   sectionTitle 17/600 구획 제목 — 준비 단계·서류 체크리스트·검역증·보관함
+ *   sectionTitle 16/600 구획 제목 — 준비 단계·서류 체크리스트·검역증·보관함 (항목과 같은 16, 굵기로 구분)
  *   itemTitle   16/500  항목 제목 — 카드 이름(동물·조직)·리스트 행 이름
  *   groupLabel  12/600  라벨(ink3) — 보호자·알림·일본으로 떠나요 등 회색 소제목
  */
@@ -88,11 +88,12 @@ export const subTitle = {
   color: 'var(--pm-ink)',
 } as const
 
-/** 구획 제목 — 화면을 큰 덩어리로 나누는 제목. 17/600 잉크. margin 은 호출자가. */
+/** 구획 제목 — 화면을 큰 덩어리로 나누는 제목. 16/600 잉크(항목 16/500 과 같은 크기,
+ *  굵기로만 구분 — 1px 차이 없앰, 2026-07-13 사용자 확정). margin 은 호출자가. */
 export const sectionTitle = {
   fontFamily: 'var(--pm-font-display)',
   fontWeight: 600,
-  fontSize: 17,
+  fontSize: 16,
   letterSpacing: '-0.01em',
   fontVariantNumeric: 'tabular-nums',
   color: 'var(--pm-ink)',
