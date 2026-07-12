@@ -199,6 +199,10 @@ export function TimelineCalm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip.toCity])
   const heroPhoto = heroPhotoCandidates[heroPhotoIndex] ?? null
+  // 사진 후보 여러 장을 고르는 동안의 임시 비교용 — 탭하면 바로 다음 후보로 넘긴다.
+  // (앱은 keep-alive 라 자동 회전은 새로고침 때만 도는데, 비교엔 즉시 전환이 필요.)
+  const cycleHeroPhoto = () =>
+    setHeroPhotoIndex((i) => (i + 1) % heroPhotoCandidates.length)
 
   // 다목적지 전환 — 헤더의 라우트(한국 ⇄ 일본) 버튼을 없애고 히어로의 목적지 칩이 담당.
   // 목적지 2개 이상이면 칩에 꺾쇠가 붙고, 탭하면 바텀시트로 활성 목적지를 바꾼다.
@@ -574,6 +578,7 @@ export function TimelineCalm({
                 <img
                   src={heroPhoto}
                   alt=""
+                  onClick={heroPhotoCandidates.length > 1 ? cycleHeroPhoto : undefined}
                   style={{
                     position: 'absolute',
                     inset: 0,
@@ -582,8 +587,39 @@ export function TimelineCalm({
                     objectFit: 'cover',
                     objectPosition: HERO_PHOTO_POSITION[heroPhoto] ?? 'center',
                     display: 'block',
+                    cursor: heroPhotoCandidates.length > 1 ? 'pointer' : undefined,
                   }}
                 />
+                {/* 사진 후보 여러 장 고르는 동안의 임시 리뷰용 — 탭하면 다음 후보로,
+                    점으로 현재 위치 표시. 하나로 확정되면 후보를 1장으로 줄이고 함께 제거. */}
+                {heroPhotoCandidates.length > 1 && (
+                  <div
+                    aria-hidden
+                    style={{
+                      position: 'absolute',
+                      top: 14,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      display: 'flex',
+                      gap: 4,
+                      padding: '4px 8px',
+                      borderRadius: 999,
+                      background: 'rgba(0,0,0,.28)',
+                    }}
+                  >
+                    {heroPhotoCandidates.map((_, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: '50%',
+                          background: i === heroPhotoIndex ? '#FFFFFF' : 'rgba(255,255,255,.4)',
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
                 {/* 하단 한정 그라데이션 스크림 — '원본 밝기 유지' 원칙의 부분 양보(하단 76px).
                     흰 오버레이(D-day·진행 바)가 사진 밝기와 무관하게 항상 성립하게 한다.
                     빈 칸 색 단방향 실험(흰38%↔검22%)이 사진에 따라 서로 반대로 무너져 채택. */}
