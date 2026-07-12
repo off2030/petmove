@@ -100,80 +100,12 @@ export function CaseHeader({
     return () => ro.disconnect()
   }, [petName, fromCity, toCity, tripType, cases.length, tokens.length])
 
-  const routeContent = (
-    <>
-      <span>{fromCity}</span>
-      <span style={{ color: ink3 }}>{tripType === 'round' ? '⇄' : '→'}</span>
-      <span>{toCity}</span>
-      {multiDest && (
-        <svg
-          width="11"
-          height="11"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke={ink3}
-          strokeWidth="2.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-          style={{
-            flexShrink: 0,
-            marginLeft: 1,
-            transform: destSheetOpen ? 'rotate(180deg)' : 'none',
-            transition: 'transform .18s',
-          }}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      )}
-    </>
-  )
-
-  // 라우트(출발 ⇄ 목적지). 목적지 2개 이상이면 버튼(꺾쇠 + 바텀시트), 1개면 평문.
-  const routeEl = multiDest ? (
-    <button
-      type="button"
-      onClick={() => setDestSheetOpen(true)}
-      aria-haspopup="dialog"
-      aria-expanded={destSheetOpen}
-      aria-label="목적지 전환"
-      style={{
-        fontSize: 12,
-        color: ink2,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        background: 'transparent',
-        border: 'none',
-        padding: 0,
-        margin: 0,
-        fontFamily: 'inherit',
-        cursor: 'pointer',
-      }}
-    >
-      {routeContent}
-    </button>
-  ) : (
-    <div
-      style={{
-        fontSize: 12,
-        color: ink2,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-      }}
-    >
-      {routeContent}
-    </div>
-  )
-
   // 좌측 장식 아바타(36px)는 제거 — 다마리에선 우측 스위처의 활성 아바타와 중복,
   // 한 마리에선 히어로 사진 카드가 화면의 얼굴 역할.
-  // 일정 탭: 제목 = 여권식 병기 "이름 · NAME"(한글 크게 + 로마자 소문자 캡션) — 증명서에
-  // 찍히는 로마자 표기를 동물의 '공식 여행 신분'으로 보여준다. 영문 없으면 이름 단독.
-  // 서류 탭: 히어로 카드가 없어 기존(이름 + 라우트 전환 버튼) 유지.
-  const isJourney = tab === 'journey'
-  const nameEn = isJourney ? petNameEn?.trim() || null : null
+  // 제목 = 여권식 병기 "이름 · NAME"(한글 크게 + 로마자 소문자 캡션) — 두 탭 동일
+  // (2026-07-12 사용자 확정: 서류도 준비와 같은 헤더). 영문 없으면 이름 단독.
+  // 서류 탭의 목적지 전환은 아래 destPill(준비 탭 히어로 칩과 같은 문법)이 담당.
+  const nameEn = petNameEn?.trim() || null
   const leftGroup = (
     <>
       <div
@@ -202,10 +134,70 @@ export function CaseHeader({
             {nameEn}
           </span>
         )}
-        {!isJourney && routeEl}
       </div>
     </>
   )
+
+  // 서류 탭 목적지 칩 — 준비 탭 히어로 사진 위 '일본 · 왕복 ⌄' 칩과 같은 문법.
+  // 사진이 없으니 흰 알약(면+헤어라인)으로 캔버스 위에 얹는다. 다목적지면 탭 → 바텀시트.
+  const destPillContent = (
+    <>
+      {toCity}
+      <span style={{ opacity: 0.6 }}>· {tripType === 'round' ? '왕복' : '편도'}</span>
+      {multiDest && (
+        <svg
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+          style={{
+            flexShrink: 0,
+            transform: destSheetOpen ? 'rotate(180deg)' : 'none',
+            transition: 'transform .18s',
+          }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      )}
+    </>
+  )
+  const destPillStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 12,
+    padding: '5px 12px',
+    borderRadius: 999,
+    background: 'var(--pm-surface)',
+    border: '.5px solid var(--pm-line)',
+    color: ink,
+    fontSize: 12,
+    fontWeight: 600,
+    lineHeight: 1.4,
+  }
+  const destPill =
+    tab === 'docs' ? (
+      multiDest ? (
+        <button
+          type="button"
+          onClick={() => setDestSheetOpen(true)}
+          aria-haspopup="dialog"
+          aria-expanded={destSheetOpen}
+          aria-label="목적지 전환"
+          className="pm-pressable"
+          style={{ ...destPillStyle, cursor: 'pointer', fontFamily: 'inherit' }}
+        >
+          {destPillContent}
+        </button>
+      ) : (
+        <span style={destPillStyle}>{destPillContent}</span>
+      )
+    ) : null
 
   return (
     <div style={{ position: 'relative', paddingTop: 8 }}>
@@ -265,6 +257,7 @@ export function CaseHeader({
         </div>
         {!wrapped && <OtherCasesRow currentCaseId={caseId} tab={tab} />}
       </div>
+      {destPill}
       {multiDest && (
         <BottomSheet
           open={destSheetOpen}

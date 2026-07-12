@@ -26,7 +26,7 @@ import { formatFileSize, readCaseDocuments } from '@/lib/documents'
  */
 
 export interface DocsViewData {
-  pet: { name: string }
+  pet: { name: string; nameEn: string | null }
   trip: { fromCity: string; toCity: string; tripType: 'round' | 'one_way' }
   /**
    * 국가별 큐레이션된 '필수 서류' (예: 일본 5개). spec 이 있는 목적지면 portal 은
@@ -127,7 +127,7 @@ export function buildDocsView(
     }))
 
   return {
-    pet: { name: caseRow.pet_name ?? '반려동물' },
+    pet: { name: caseRow.pet_name ?? '반려동물', nameEn: caseRow.pet_name_en },
     trip: {
       fromCity: '한국',
       toCity: ctx.destinationToken ?? caseRow.destination ?? '—',

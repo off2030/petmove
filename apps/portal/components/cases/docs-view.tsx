@@ -104,6 +104,7 @@ export function DocsView({
           caseId={caseId}
           tab="docs"
           petName={pet.name}
+          petNameEn={pet.nameEn}
           fromCity={trip.fromCity}
           toCity={trip.toCity}
           tripType={trip.tripType}
