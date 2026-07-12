@@ -58,9 +58,16 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
 
   return (
     <EditPageShell title="반려동물">
-      {/* 아바타 — ProfileView hero 카드에서 쓰던 picker 재사용.
-          흰 배경 화면이라 카드 껍데기 없이 블록만 (2026-07-12). */}
-      <div style={{ marginTop: 8, padding: '14px 0 4px' }}>
+      {/* 아바타 — ProfileView hero 카드에서 쓰던 picker 재사용 */}
+      <div
+        style={{
+          marginTop: 8,
+          padding: 18,
+          borderRadius: 18,
+          background: C.surface,
+          border: `.5px solid ${C.line}`,
+        }}
+      >
         <PetAvatarPicker case_={caseRow} />
       </div>
 
