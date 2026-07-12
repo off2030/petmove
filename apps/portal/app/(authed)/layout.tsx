@@ -5,7 +5,6 @@ import { getCurrentUser } from '@petmove/auth/server'
 import { verifyPreviewToken } from '@petmove/auth/preview-token'
 import type { CaseRow } from '@petmove/domain'
 import { BottomNav } from '@/components/portal-shell/bottom-nav'
-import { WarnColorSwitcher } from '@/components/dev/warn-color-switcher'
 import { CaseDataProvider } from '@/components/portal-shell/case-data-provider'
 import { SwipeTabs } from '@/components/portal-shell/swipe-tabs'
 import { TopBar } from '@/components/portal-shell/top-bar'
@@ -145,7 +144,6 @@ function Shell({
         </SwipeTabs>
       </main>
       <BottomNav />
-      {process.env.NODE_ENV !== 'production' && !preview && <WarnColorSwitcher />}
     </div>
   )
 }

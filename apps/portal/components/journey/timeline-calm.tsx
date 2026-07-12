@@ -652,7 +652,9 @@ export function TimelineCalm({
                         style={{
                           ...destChipStyle,
                           gap: 5,
-                          color: 'var(--pm-warn)',
+                          // 사진 위 칩은 테마 무관 고정(destChipStyle 관례) — 다크의 밝은
+                          // warn(#FACC15)이 흰 칩 위에서 씻기지 않게 라이트 값을 하드코딩.
+                          color: '#EAB308',
                           fontWeight: 700,
                           cursor: 'pointer',
                           fontFamily: 'inherit',
@@ -671,7 +673,8 @@ export function TimelineCalm({
                         style={{
                           ...destChipStyle,
                           gap: 5,
-                          color: 'var(--pm-info)',
+                          // 사진 위 칩 고정 색 — info 라이트 값(맑은 슬레이트).
+                          color: '#4B8CBF',
                           fontWeight: 700,
                           cursor: 'pointer',
                           fontFamily: 'inherit',
