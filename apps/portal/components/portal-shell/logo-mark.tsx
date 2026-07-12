@@ -7,19 +7,69 @@ import { useEffect, useState } from 'react'
  * + 타일 플로팅 섀도. 색은 아이콘 원본 고정(하늘 블루) — 다크에서도 그대로.
  *
  * 개발 전용 variant 비교(2026-07-12 재시도): '떠오르는 P'(노란 P가 구름 뒤에서 떠오름)
- * 1·2안 — LogoSwitcher(components/dev) 가 localStorage['pm-dev-logo'] + 커스텀 이벤트로
- * 전환. 프로덕션은 항상 구름 원안. 확정되면 variant 분기·스위처 제거.
+ * 불투명 1·2안 + 투명 1·2안(구름에 가린 기둥이 34% 투명도로 비침) — LogoSwitcher 가
+ * localStorage['pm-dev-logo'] + 커스텀 이벤트로 전환. 프로덕션은 항상 구름 원안.
+ * 확정되면 variant 분기·스위처 제거.
  */
 
-export type LogoVariant = 'cloud' | 'rising1' | 'rising2'
+export type LogoVariant = 'cloud' | 'rising1' | 'rising2' | 'rising1t' | 'rising2t'
 
 export const LOGO_DEV_KEY = 'pm-dev-logo'
 export const LOGO_DEV_EVENT = 'pm-dev-logo-change'
 
+const RISING_VARIANTS: Record<
+  Exclude<LogoVariant, 'cloud'>,
+  { ty: number; stemEnd: number; ghost: boolean }
+> = {
+  // 불투명 — 기둥이 구름 아래(150)까지, 가린 부분은 안 보임.
+  rising1: { ty: 0, stemEnd: 150, ghost: false },
+  rising2: { ty: -16, stemEnd: 150, ghost: false },
+  // 투명 — 기둥은 132까지, 구름과 겹치는 132→118 구간을 34% 투명으로 구름 위에 비침.
+  rising1t: { ty: 0, stemEnd: 132, ghost: true },
+  rising2t: { ty: -16, stemEnd: 132, ghost: true },
+}
+
 function readDevVariant(): LogoVariant {
   if (process.env.NODE_ENV === 'production' || typeof window === 'undefined') return 'cloud'
   const v = window.localStorage.getItem(LOGO_DEV_KEY)
-  return v === 'rising1' || v === 'rising2' ? v : 'cloud'
+  return v && v in RISING_VARIANTS ? (v as LogoVariant) : 'cloud'
+}
+
+/** 떠오르는 P 본체 — 구름보다 먼저 그려 구름 뒤로 가려진다. */
+export function RisingPMain({ variant }: { variant: LogoVariant }) {
+  if (variant === 'cloud') return null
+  const cfg = RISING_VARIANTS[variant]
+  return (
+    <g transform={cfg.ty ? `translate(0,${cfg.ty})` : undefined}>
+      <path
+        d={`M116 ${cfg.stemEnd} L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106`}
+        fill="none"
+        stroke="#FFC93C"
+        strokeWidth="18"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </g>
+  )
+}
+
+/** 투명안의 비침 기둥 — 구름 뒤에 가린 구간을 구름 위에 34% 투명으로 겹쳐 그린다. */
+export function RisingPGhost({ variant }: { variant: LogoVariant }) {
+  if (variant === 'cloud') return null
+  const cfg = RISING_VARIANTS[variant]
+  if (!cfg.ghost) return null
+  return (
+    <g transform={cfg.ty ? `translate(0,${cfg.ty})` : undefined}>
+      <path
+        d="M116 132 L116 118"
+        fill="none"
+        stroke="#FFC93C"
+        strokeWidth="18"
+        strokeLinecap="round"
+        opacity="0.34"
+      />
+    </g>
+  )
 }
 
 export function LogoMark({ size = 22 }: { size?: number }) {
@@ -58,26 +108,14 @@ export function LogoMark({ size = 22 }: { size?: number }) {
       <g filter="url(#pm-logo-float)">
         <g clipPath="url(#pm-logo-sq)">
           <rect width="200" height="200" fill="url(#pm-logo-sky)" />
-          {/* 떠오르는 P — 노란 P 가 구름 언덕 뒤에서 해처럼 떠오른다(구름보다 먼저 그려 뒤로).
-              1안=수평선 걸침, 2안=한 뼘 더 떠오름(translate -16). */}
-          {variant !== 'cloud' && (
-            <g transform={variant === 'rising2' ? 'translate(0,-16)' : undefined}>
-              <path
-                d="M116 150 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106"
-                fill="none"
-                stroke="#FFC93C"
-                strokeWidth="18"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </g>
-          )}
+          <RisingPMain variant={variant} />
           <rect x="0" y="160" width="200" height="40" fill="#ffffff" />
           <circle cx="46" cy="168" r="52" fill="#ffffff" />
           <circle cx="72" cy="120" r="48" fill="#ffffff" />
           <circle cx="112" cy="148" r="34" fill="#ffffff" />
           <circle cx="146" cy="138" r="38" fill="#ffffff" />
           <circle cx="178" cy="154" r="24" fill="#ffffff" />
+          <RisingPGhost variant={variant} />
         </g>
       </g>
     </svg>

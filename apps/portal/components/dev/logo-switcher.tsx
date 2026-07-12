@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react'
 import {
   LOGO_DEV_EVENT,
   LOGO_DEV_KEY,
+  RisingPGhost,
+  RisingPMain,
   type LogoVariant,
 } from '@/components/portal-shell/logo-mark'
 
 /**
- * 개발 전용 — 로고 variant 비교 스위처(구름 원안 vs 떠오르는 P 1·2안).
+ * 개발 전용 — 로고 variant 비교 스위처(구름 원안 vs 떠오르는 P 불투명·투명 각 1·2안).
  * localStorage + 커스텀 이벤트로 상단바 LogoMark 가 라이브 전환된다.
  * 확정되면 이 파일·Shell 마운트·LogoMark 의 variant 분기를 제거할 것.
  */
@@ -17,6 +19,8 @@ const CANDIDATES: { id: LogoVariant; label: string }[] = [
   { id: 'cloud', label: '구름 (현재)' },
   { id: 'rising1', label: '떠오르는 P-1' },
   { id: 'rising2', label: '떠오르는 P-2 (더 위)' },
+  { id: 'rising1t', label: 'P-1 투명 (비침)' },
+  { id: 'rising2t', label: 'P-2 투명 (비침)' },
 ]
 
 export function LogoSwitcher() {
@@ -24,7 +28,7 @@ export function LogoSwitcher() {
 
   useEffect(() => {
     const v = window.localStorage.getItem(LOGO_DEV_KEY)
-    if (v === 'rising1' || v === 'rising2') setSelected(v)
+    if (v && CANDIDATES.some((c) => c.id === v)) setSelected(v as LogoVariant)
   }, [])
 
   function select(id: LogoVariant) {
@@ -75,11 +79,11 @@ export function LogoSwitcher() {
   )
 }
 
-/** 패널 안 미리보기용 미니 로고 — LogoMark 와 동일 구성(그림자 없이). */
+/** 패널 안 미리보기용 미니 로고 — LogoMark 와 동일 구성(그림자 없이, 살짝 크게). */
 function MiniLogo({ variant }: { variant: LogoVariant }) {
   const uid = `mini-${variant}`
   return (
-    <svg width="20" height="20" viewBox="0 0 200 200" aria-hidden style={{ flexShrink: 0 }}>
+    <svg width="24" height="24" viewBox="0 0 200 200" aria-hidden style={{ flexShrink: 0 }}>
       <defs>
         <clipPath id={`${uid}-sq`}>
           <rect width="200" height="200" rx="46" />
@@ -91,24 +95,14 @@ function MiniLogo({ variant }: { variant: LogoVariant }) {
       </defs>
       <g clipPath={`url(#${uid}-sq)`}>
         <rect width="200" height="200" fill={`url(#${uid}-sky)`} />
-        {variant !== 'cloud' && (
-          <g transform={variant === 'rising2' ? 'translate(0,-16)' : undefined}>
-            <path
-              d="M116 150 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106"
-              fill="none"
-              stroke="#FFC93C"
-              strokeWidth="18"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </g>
-        )}
+        <RisingPMain variant={variant} />
         <rect x="0" y="160" width="200" height="40" fill="#ffffff" />
         <circle cx="46" cy="168" r="52" fill="#ffffff" />
         <circle cx="72" cy="120" r="48" fill="#ffffff" />
         <circle cx="112" cy="148" r="34" fill="#ffffff" />
         <circle cx="146" cy="138" r="38" fill="#ffffff" />
         <circle cx="178" cy="154" r="24" fill="#ffffff" />
+        <RisingPGhost variant={variant} />
       </g>
     </svg>
   )
