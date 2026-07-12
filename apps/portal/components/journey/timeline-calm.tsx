@@ -725,7 +725,11 @@ export function TimelineCalm({
                     <span
                       style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,.92)' }}
                     >
-                      {[departText, `${done}/${total}`].filter(Boolean).join(' · ')}
+                      {/* 완료 미리보기(demo)는 단계 데이터가 그대로라 카운트·바를 가득 채워
+                          실제 완료 모습으로 보정한다(실제 완료는 원래 전부 done). */}
+                      {[departText, `${demoComplete ? total : done}/${total}`]
+                        .filter(Boolean)
+                        .join(' · ')}
                     </span>
                   </div>
                   <div style={{ display: 'flex', gap: 3, marginTop: 9 }}>
@@ -740,12 +744,55 @@ export function TimelineCalm({
                             // 하단 스크림이 바닥을 어둡게 보장 — 흰 채움/흰 반투명 빈 칸이
                             // 사진 밝기와 무관하게 성립한다.
                             background:
-                              s.state === 'done' ? '#FFFFFF' : 'rgba(255,255,255,.42)',
+                              s.state === 'done' || demoComplete
+                                ? '#FFFFFF'
+                                : 'rgba(255,255,255,.42)',
                           }}
                         />
                       ))}
                   </div>
                 </div>
+                {/* 도착 도장 — 여정 완료 시 사진에 여권 스탬프처럼 직접 찍는다(별도 완료
+                    배너 대체). 칩(상단)과 하단 오버레이 사이 우측, 살짝 기울인 이중 링. */}
+                {complete && (
+                  <div
+                    aria-label="여정 완료"
+                    role="img"
+                    style={{
+                      position: 'absolute',
+                      top: 56,
+                      right: 18,
+                      width: 76,
+                      height: 76,
+                      borderRadius: '50%',
+                      border: '2px solid rgba(255,255,255,.85)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transform: 'rotate(-11deg)',
+                      color: '#FFFFFF',
+                      filter: 'drop-shadow(0 1px 8px rgba(0,0,0,.3))',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 64,
+                        height: 64,
+                        borderRadius: '50%',
+                        border: '1px solid rgba(255,255,255,.65)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 1,
+                        textAlign: 'center',
+                      }}
+                    >
+                      <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.04em' }}>도착</span>
+                      <span style={{ fontSize: 9, letterSpacing: '0.22em', fontWeight: 600 }}>ARRIVED</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -880,15 +927,19 @@ export function TimelineCalm({
                       height: 6,
                       borderRadius: 2,
                       background:
-                        s.state === 'done' ? C.accent : 'rgb(var(--pm-ink-rgb) / .08)',
+                        s.state === 'done' || demoComplete
+                          ? C.accent
+                          : 'rgb(var(--pm-ink-rgb) / .08)',
                     }}
                   />
                 ))}
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                <span style={{ fontSize: 12, color: C.ink3 }}>진행률</span>
+                <span style={{ fontSize: 12, color: complete ? C.sage : C.ink3, fontWeight: complete ? 600 : 400 }}>
+                  {complete ? '여정 완료' : '진행률'}
+                </span>
                 <span style={{ ...num, fontSize: 12, color: C.ink }}>
-                  {done}/{total}
+                  {demoComplete ? total : done}/{total}
                 </span>
               </div>
             </div>
@@ -1176,104 +1227,13 @@ export function TimelineCalm({
           </BottomSheet>
         )}
 
-        {/* 여정 완료 배너 — 마지막 절차가 끝나면 '다음 할 일' 자리에 노출(사진 카드는 유지).
-            완료의 긍정 톤(sage)으로 구분. 남은 주의는 사진 위 날씨 칩이 담당. */}
+        {/* 여정 완료 — 별도 배너 없이 히어로 사진에 도착 도장을 직접 찍는다(2026-07-12
+            사용자 확정, 중복 제거). 경로=목적지 칩, 기간=좌하단 날짜가 이미 담당.
+            아래엔 소감 카드와 '여정 마무리하기'만 남는다. */}
         {complete && (
           <>
-          <div
-            style={{
-              position: 'relative',
-              marginTop: 10,
-              padding: 22,
-              borderRadius: 16,
-              overflow: 'hidden',
-              background: 'color-mix(in srgb, var(--pm-sage) 11%, var(--pm-card-sage-base))',
-              boxShadow: 'var(--pm-card-rim)',
-            }}
-          >
-            {/* 도착 도장 — 여권 스탬프 톤. 살짝 기울인 이중 링 + 텍스트, 반투명 sage. */}
-            <div
-              aria-hidden
-              style={{
-                position: 'absolute',
-                top: 14,
-                right: 12,
-                width: 76,
-                height: 76,
-                borderRadius: '50%',
-                border: `2px solid color-mix(in srgb, var(--pm-sage) 60%, transparent)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transform: 'rotate(-11deg)',
-                color: 'color-mix(in srgb, var(--pm-sage) 78%, var(--pm-ink))',
-                opacity: 0.7,
-              }}
-            >
-              <div
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: '50%',
-                  border: `1px solid color-mix(in srgb, var(--pm-sage) 50%, transparent)`,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 1,
-                  textAlign: 'center',
-                }}
-              >
-                <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.04em' }}>도착</span>
-                <span style={{ fontSize: 9, letterSpacing: '0.22em', fontWeight: 600 }}>ARRIVED</span>
-              </div>
-            </div>
-
-            <div style={{ ...monoCap, color: C.sage }}>여정 완료</div>
-
-            {/* 헤드라인 — 아바타는 상단 헤더와 중복이라 제외. */}
-            <h3
-              style={{
-                ...serif,
-                margin: '14px 0 0',
-                fontSize: 21,
-                lineHeight: 1.18,
-                color: 'var(--pm-ink)',
-                fontWeight: 500,
-                textWrap: 'balance' as React.CSSProperties['textWrap'],
-              }}
-            >
-              {withWaGwa(pet.name)} 잘 도착했어요
-            </h3>
-
-            {/* 경로 + 날짜 — 경로 '한국 - 일본', 날짜는 왕복=출발~도착 / 편도=도착일만. */}
-            <div
-              style={{
-                marginTop: 12,
-                fontSize: 12,
-                letterSpacing: '0.01em',
-                color: 'rgb(var(--pm-ink-rgb) / .6)',
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
-              <span>
-                {trip.fromCity}
-                <span style={{ color: C.sage, margin: '0 6px' }}>
-                  {trip.tripType === 'round' ? '⇄' : '→'}
-                </span>
-                {trip.toCity}
-              </span>
-              {journeyDateText && (
-                <>
-                  <span style={{ color: 'rgb(var(--pm-ink-rgb) / .3)', margin: '0 6px' }}>·</span>
-                  <span>{journeyDateText}</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* 소감 카드 — 완료 카드에서 분리. 도착(완료)의 긍정 톤과 별개로, 차분한 taupe
-              면에 소감 유도만 담는다. design journey-lifecycle §5. */}
+          {/* 소감 카드 — 도착(완료)의 긍정 톤과 별개로, 차분한 면에 소감 유도만 담는다.
+              design journey-lifecycle §5. */}
           <div
             style={{
               marginTop: 14,
