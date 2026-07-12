@@ -32,6 +32,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   태국: [
     '/destinations/thailand-aerial-beach-waves.jpg',
     '/destinations/thailand-aerial-beach-waves-vertical.jpg',
+    '/destinations/thailand-doi-inthanon-pagodas-sunset.jpg',
   ],
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
 }
