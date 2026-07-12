@@ -21,14 +21,32 @@ export function isPaneHref(href: string): boolean {
   return /^\/cases\/[^/]+\/(journey|docs)\/?$/.test(path)
 }
 
-/** 하단 탭·스와이프의 이동 — pane 이면 pushState(즉시), 아니면 일반 네비게이션. */
+/**
+ * TabHost 가 detail 레이어로 그리는 상세 화면 주소 — pane 처럼 pushState 로 전환한다.
+ * 명단 = context 만으로 그릴 수 있는 client 화면들. 서버 페치가 필요한 페이지
+ * (/me/vet·/me/agency 등)와 일반 라우트(/cases 목록, guide, feedback)는 제외 —
+ * pushTab 이 자동으로 router.push 폴백하므로 여기 없어도 동작은 같다(속도만 라우트).
+ */
+export function isDetailHref(href: string): boolean {
+  const path = href.split('?')[0]
+  if (path === '/me/guardian' || path === '/settings/account-delete') return true
+  if (/^\/me\/animal\/[^/]+\/?$/.test(path)) return true
+  return /^\/cases\/[^/]+\/(journey|docs)\/[^/]+\/?$/.test(path)
+}
+
+/** TabHost 셸(상주 pane + detail 레이어)이 그리는 주소인지 — pushState 전환 대상. */
+export function isShellHref(href: string): boolean {
+  return isPaneHref(href) || isDetailHref(href)
+}
+
+/** 하단 탭·스와이프·행 링크의 이동 — 셸 주소면 pushState(즉시), 아니면 일반 네비게이션. */
 export function pushTab(router: AppRouter, href: string): void {
-  if (isPaneHref(href)) window.history.pushState(null, '', href)
+  if (isShellHref(href)) window.history.pushState(null, '', href)
   else router.push(href)
 }
 
 /** replace 판 — 히스토리에 쌓지 않는 전환(여정 마무리 후 목적지 교체 등). */
 export function replaceTab(router: AppRouter, href: string): void {
-  if (isPaneHref(href)) window.history.replaceState(null, '', href)
+  if (isShellHref(href)) window.history.replaceState(null, '', href)
   else router.replace(href)
 }

@@ -6,7 +6,6 @@ import { useCases } from './case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
 import { readLastCaseId, readLastDest, writeLastCaseId, writeLastDest } from './last-case'
 import { isSurfacePage } from './surface-page'
-import { pushTab } from './tab-nav'
 
 /**
  * 보호자 앱 하단 4탭 — case-aware.
@@ -143,17 +142,16 @@ export function BottomNav() {
         const href = hrefFor(t.key, caseId, lastDest?.id === caseId ? lastDest.dest : null)
         const active = isActive(t.key, pathname)
         return (
-          // <Link> 대신 pushTab — 탭 루트는 TabHost 상주 pane 이라 네비게이션 없이
-          // pushState 만으로 즉시 전환된다(활성 색도 같은 프레임에 바뀜). pane 이 아닌
-          // 목적지(/cases 목록)는 pushTab 이 router.push 로 폴백.
+          // 평범한 <a> — 셸 주소 클릭은 TabHost 의 전역 인터셉터가 pushState 로 처리해
+          // 네비게이션 없이 즉시 전환된다(여기 onClick 을 두면 이중 push). pane 이 아닌
+          // 목적지(/cases 목록)만 클릭 시 여기서 router.push.
           <a
             key={t.key}
             href={href}
             onClick={(e) => {
+              if (e.defaultPrevented) return // 인터셉터가 처리함(셸 주소)
               e.preventDefault()
-              // 이미 그 주소면 no-op. active 로 판정하면 안 됨 — 하위 페이지(/me/animal,
-              // step 상세)에서 같은 탭을 눌러 루트로 복귀하는 동작이 막힌다.
-              if (href !== window.location.pathname + window.location.search) pushTab(router, href)
+              if (href !== window.location.pathname + window.location.search) router.push(href)
             }}
             style={{
               display: 'flex',

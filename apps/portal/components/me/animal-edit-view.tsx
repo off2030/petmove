@@ -14,6 +14,7 @@ import {
 import { PetAvatarPicker } from '@/components/me/pet-avatar-picker'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
+import { replaceTab } from '@/components/portal-shell/tab-nav'
 import { softDeleteMyCase } from '@/lib/actions/cases'
 import { buildPetBlock } from '@/lib/profile/catalog'
 import { C, EditPageShell, SectionCard } from './settings-shared'
@@ -274,7 +275,7 @@ function DeleteAnimalSection({ caseId, petName }: { caseId: string; petName: str
       removeCase(caseId)
       // 먼저 내 정보로 이동 — 이 페이지(useCase(caseId))가 삭제된 케이스로 notFound()
       // 를 띄우기 전에 떠난다. 목록 갱신은 이동 후 백그라운드로 (provider 는 layout 에 살아있음).
-      router.replace('/me')
+      replaceTab(router, '/me')
       void refreshCases()
     })
   }

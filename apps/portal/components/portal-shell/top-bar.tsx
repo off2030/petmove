@@ -8,7 +8,6 @@ import { hasJourney } from '@/lib/cases/journey-filter'
 import { readLastCaseId } from './last-case'
 import { LogoMark } from './logo-mark'
 import { isSurfacePage } from './surface-page'
-import { pushTab } from './tab-nav'
 
 /**
  * Portal 상단 chrome — portal-preview/app.jsx 의 ThemeControls 포팅.
@@ -98,13 +97,15 @@ export function TopBar() {
         // 환영 화면 — 로고 자리는 비우되, space-between 으로 ⚙ 가 우측에 유지되도록 placeholder.
         <span aria-hidden />
       ) : (
-        // 워드마크 = 준비 탭 복귀 — TabHost pane 이라 pushTab 으로 즉시 전환.
+        // 워드마크 = 준비 탭 복귀 — 셸 주소면 TabHost 전역 인터셉터가 pushState 로 처리.
+        // /cases 폴백(여정 케이스 없음)만 여기서 router.push.
         <a
           href={homeHref}
           onClick={(e) => {
+            if (e.defaultPrevented) return
             e.preventDefault()
             if (homeHref !== window.location.pathname + window.location.search)
-              pushTab(router, homeHref)
+              router.push(homeHref)
           }}
           aria-label="준비"
           style={{

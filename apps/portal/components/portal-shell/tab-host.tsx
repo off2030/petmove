@@ -3,9 +3,11 @@
 import dynamic from 'next/dynamic'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { useCases } from './case-data-provider'
+import { useCase, useCases } from './case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
 import { readLastCaseId, readLastDest } from './last-case'
+import { useNavGuard } from './nav-guard'
+import { isShellHref } from './tab-nav'
 import { TabSkeleton } from './tab-skeleton'
 
 /**
@@ -52,6 +54,32 @@ const SettingsView = dynamic(
   { loading: () => <TabSkeleton rows={3} /> },
 )
 
+// ── detail 레이어 화면들 — pane 과 달리 진입할 때 mount, 떠나면 unmount (매번 새 상태·맨위 스크롤).
+const StepDetailScreen = dynamic(
+  () => import('@/components/journey/step-detail-screen').then((m) => m.StepDetailScreen),
+  { loading: () => <TabSkeleton rows={3} /> },
+)
+const DocDetailScreen = dynamic(
+  () => import('@/components/cases/doc-detail-screen').then((m) => m.DocDetailScreen),
+  { loading: () => <TabSkeleton rows={3} /> },
+)
+const GuardianEditView = dynamic(
+  () => import('@/components/me/guardian-edit-view').then((m) => m.GuardianEditView),
+  { loading: () => <TabSkeleton rows={3} /> },
+)
+const AnimalEditView = dynamic(
+  () => import('@/components/me/animal-edit-view').then((m) => m.AnimalEditView),
+  { loading: () => <TabSkeleton rows={3} /> },
+)
+const AccountDeleteView = dynamic(
+  () => import('@/components/settings/account-delete-view').then((m) => m.AccountDeleteView),
+  { loading: () => <TabSkeleton rows={3} /> },
+)
+const ComingSoonView = dynamic(
+  () => import('@/components/me/coming-soon-view').then((m) => m.ComingSoonView),
+  { loading: () => <TabSkeleton rows={3} /> },
+)
+
 type PaneKey = 'journey' | 'docs' | 'services' | 'me' | 'settings'
 const ALL_PANES: PaneKey[] = ['journey', 'docs', 'me', 'services', 'settings']
 
@@ -68,14 +96,71 @@ function caseIdFromPath(pathname: string): string | null {
   return m && m[1] !== 'page' ? m[1] : null
 }
 
+// detail 레이어 판정 — tab-nav 의 isDetailHref 와 같은 명단(한쪽만 고치면 안 됨).
+type DetailMatch =
+  | { kind: 'step'; caseId: string; stepId: string }
+  | { kind: 'doc'; caseId: string; docId: string }
+  | { kind: 'guardian' }
+  | { kind: 'animal'; caseId: string }
+  | { kind: 'account-delete' }
+
+function detailFromPath(pathname: string): DetailMatch | null {
+  if (pathname === '/me/guardian') return { kind: 'guardian' }
+  if (pathname === '/settings/account-delete') return { kind: 'account-delete' }
+  const animal = pathname.match(/^\/me\/animal\/([^/]+)\/?$/)
+  if (animal) return { kind: 'animal', caseId: animal[1] }
+  const caseDetail = pathname.match(/^\/cases\/([^/]+)\/(journey|docs)\/([^/]+)\/?$/)
+  if (caseDetail) {
+    return caseDetail[2] === 'journey'
+      ? { kind: 'step', caseId: caseDetail[1], stepId: caseDetail[3] }
+      : { kind: 'doc', caseId: caseDetail[1], docId: caseDetail[3] }
+  }
+  return null
+}
+
 export function TabHost({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { cases } = useCases()
 
   const activePane = paneFromPath(pathname)
+  const detail = activePane ? null : detailFromPath(pathname)
+  const detailDest = detail ? searchParams.get('dest') : null
   const urlCaseId = caseIdFromPath(pathname)
   const destInUrl = urlCaseId ? searchParams.get('dest') : null
+
+  // 셸 주소로 가는 모든 <a>/<Link> 클릭을 한 곳에서 가로채 pushState 로 — 타임라인 step 행,
+  // 서류 행, 내 정보 카드, 상세의 '뒤로' 링크까지 파일마다 고치지 않고 전부 즉시 전환.
+  // capture 단계라 Next Link 의 자체 핸들러보다 먼저 실행되고, preventDefault 를 보면
+  // Link 는 네비게이션을 건너뛴다. 새 탭/수식키/download/외부 링크는 건드리지 않는다.
+  //
+  // 미저장 가드와의 합: 이동은 navGuard.guard() 를 통해서만 — dirty 편집 중이면
+  // "저장하지 않고 나갈까요?" confirm 후에만 pushState. nav-guard 자체 클릭 핸들러와는
+  // defaultPrevented 로 서로 양보해 어느 쪽이 먼저 등록돼도 confirm 은 한 번만 뜬다.
+  const navGuard = useNavGuard()
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0) return
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+      const t = e.target as HTMLElement | null
+      const a = t?.closest?.('a')
+      if (!a || a.target === '_blank' || a.hasAttribute('download')) return
+      const href = a.getAttribute('href')
+      if (!href || !href.startsWith('/')) return
+      if (!isShellHref(href)) return
+      e.preventDefault()
+      const go = () => {
+        // 이미 그 주소면 no-op (같은 탭 재탭 등).
+        if (href !== window.location.pathname + window.location.search) {
+          window.history.pushState(null, '', href)
+        }
+      }
+      if (navGuard) navGuard.guard(go)
+      else go()
+    }
+    document.addEventListener('click', onClick, true)
+    return () => document.removeEventListener('click', onClick, true)
+  }, [navGuard])
 
   // 준비·서류 pane 이 그릴 케이스 — bottom-nav 와 같은 결정 규칙:
   // URL 의 caseId > sessionStorage 마지막 caseId(유효할 때) > 첫 여정 케이스.
@@ -123,7 +208,15 @@ export function TabHost({ children }: { children: React.ReactNode }) {
       const queue = ALL_PANES.filter((k) => !mountedPanes.includes(k))
       let i = 0
       const step = () => {
-        if (cancelled || i >= queue.length) return
+        if (cancelled) return
+        if (i >= queue.length) {
+          // pane 예열이 끝나면 detail 레이어의 무거운 청크(step·doc 상세)도 미리 당겨
+          // 온다 — 첫 상세 진입까지 스켈레톤 없이 즉시 뜨게. (mount 는 진입 시에만.)
+          void import('@/components/journey/step-detail-screen')
+          void import('@/components/cases/doc-detail-screen')
+          void import('@/components/me/animal-edit-view')
+          return
+        }
         const key = queue[i++]
         setMountedPanes((prev) => (prev.includes(key) ? prev : [...prev, key]))
         stepTimer = window.setTimeout(step, 300)
@@ -195,8 +288,24 @@ export function TabHost({ children }: { children: React.ReactNode }) {
           <SettingsView />
         </Pane>
       )}
-      {/* 라우트 children — step·doc 상세, /me/*·/settings/* 하위, /cases 목록 등.
-          pane 라우트에선 children 이 null page 라 숨겨도 잃는 것이 없다. */}
+      {/* detail 레이어 — step·doc 상세, 보호자·동물 편집, 계정 삭제. pane 위에 겹치는
+          '푸시된 화면'. key=pathname 으로 진입마다 새 mount (새 상태·맨위 스크롤 = 종전
+          라우트 진입과 동일), 떠나면 unmount — 아래 pane 은 스크롤 그대로 대기. */}
+      {detail && (
+        <Pane key={pathname} active detail>
+          {detail.kind === 'step' && (
+            <StepDetailScreen caseId={detail.caseId} stepId={detail.stepId} dest={detailDest} />
+          )}
+          {detail.kind === 'doc' && (
+            <DocDetailScreen caseId={detail.caseId} docId={detail.docId} dest={detailDest} />
+          )}
+          {detail.kind === 'guardian' && <GuardianDetail />}
+          {detail.kind === 'animal' && <AnimalDetail caseId={detail.caseId} />}
+          {detail.kind === 'account-delete' && <AccountDeleteView />}
+        </Pane>
+      )}
+      {/* 라우트 children — /me/vet·agency(서버 페치), /cases 목록, guide, feedback 등
+          셸이 안 그리는 나머지. 셸 주소에선 children 이 null page 라 숨겨도 잃는 것이 없다. */}
       <div
         style={{
           position: 'absolute',
@@ -206,8 +315,8 @@ export function TabHost({ children }: { children: React.ReactNode }) {
           WebkitOverflowScrolling: 'touch',
           paddingTop: 'calc(var(--pm-top-inset) + 48px)',
           paddingBottom: 88,
-          display: activePane ? 'none' : undefined,
-          zIndex: activePane ? 0 : 1,
+          display: activePane || detail ? 'none' : undefined,
+          zIndex: activePane || detail ? 0 : 1,
         }}
       >
         {children}
@@ -216,8 +325,36 @@ export function TabHost({ children }: { children: React.ReactNode }) {
   )
 }
 
-/** pane 스크롤 컨테이너 — 종전 (authed) layout main 의 스크롤·패딩 문법을 그대로 이관. */
-function Pane({ active, children }: { active: boolean; children: React.ReactNode }) {
+/** 보호자 편집 — 구 /me/guardian page 의 빈 케이스 가드 포함. */
+function GuardianDetail() {
+  const { cases } = useCases()
+  if (cases.length === 0) {
+    return <ComingSoonView title="보호자" message="먼저 케이스를 등록하세요." />
+  }
+  return <GuardianEditView />
+}
+
+/** 동물 편집 — 구 /me/animal/[caseId] page. 케이스 없으면(삭제 직후 등) /me 로 복귀. */
+function AnimalDetail({ caseId }: { caseId: string }) {
+  const caseRow = useCase(caseId)
+  useEffect(() => {
+    if (!caseRow) window.history.replaceState(null, '', '/me')
+  }, [caseRow])
+  if (!caseRow) return null
+  return <AnimalEditView caseRow={caseRow} caseId={caseId} />
+}
+
+/** pane/detail 스크롤 컨테이너 — 종전 (authed) layout main 의 스크롤·패딩 문법을 그대로 이관. */
+function Pane({
+  active,
+  detail = false,
+  children,
+}: {
+  active: boolean
+  /** detail 레이어 — 상주 pane 위(zIndex)에 겹치는 푸시 화면. */
+  detail?: boolean
+  children: React.ReactNode
+}) {
   return (
     <div
       aria-hidden={!active}
@@ -232,7 +369,7 @@ function Pane({ active, children }: { active: boolean; children: React.ReactNode
         paddingBottom: 88,
         // display:none 은 스크롤 위치를 버림 — visibility 로 숨겨 각 탭의 위치 보존.
         visibility: active ? 'visible' : 'hidden',
-        zIndex: active ? 1 : 0,
+        zIndex: active ? (detail ? 2 : 1) : 0,
       }}
     >
       {children}

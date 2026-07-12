@@ -51,6 +51,7 @@ import { monoCap, num, serif } from '@/components/me/settings-shared'
 import { subTitle } from '@/lib/tokens'
 import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
 import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
+import { replaceTab } from '@/components/portal-shell/tab-nav'
 import {
   getCaseVaccineData,
   markAdvanceNotificationApprovalSkipped,
@@ -1706,7 +1707,7 @@ export function StepDetailView({
       setSkippingApproval(false)
       if (res.ok) {
         updateCase(res.value)
-        router.replace(journeyHref)
+        replaceTab(router, journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1737,7 +1738,7 @@ export function StepDetailView({
       setSkippingJpExport(false)
       if (res.ok) {
         updateCase(res.value)
-        router.replace(journeyHref)
+        replaceTab(router, journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1763,7 +1764,7 @@ export function StepDetailView({
       setCompletingImportPermit(false)
       if (res.ok) {
         updateCase(res.value)
-        router.replace(journeyHref)
+        replaceTab(router, journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1788,7 +1789,7 @@ export function StepDetailView({
       setCompletingTiter(false)
       if (res.ok) {
         updateCase(res.value)
-        router.replace(journeyHref)
+        replaceTab(router, journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1866,7 +1867,7 @@ export function StepDetailView({
       if (res.ok) {
         updateCase(res.value)
         // 전환 후 일정으로 — 사전 신고가 다음 할 일로 자동 승격된 상태를 보여준다.
-        router.replace(journeyHref)
+        replaceTab(router, journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
