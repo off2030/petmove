@@ -42,11 +42,9 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/philippines-beach-two-boats.jpg',
     '/destinations/philippines-kayak-turquoise.jpg',
     '/destinations/philippines-elnido-white-beach.jpg',
-    '/destinations/philippines-palm-row-beach.jpg',
     '/destinations/philippines-moored-boats-beach.jpg',
     '/destinations/philippines-bangka-wake-reef.jpg',
     '/destinations/philippines-palm-resort-cove.jpg',
-    '/destinations/philippines-karst-lagoon-kayaks.jpg',
   ],
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
 }
