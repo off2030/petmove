@@ -40,6 +40,13 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
 }
 
+/** 히어로 사진 크롭 위치 — 200px 고정 높이 박스라 세로 사진은 object-fit: cover 로
+    위/아래가 크게 잘린다. 기본은 정중앙, 위쪽 피사체(산·처마)를 살려야 하는 사진만
+    개별 지정(사용자 확인 후 추가). */
+const HERO_PHOTO_POSITION: Record<string, string> = {
+  '/destinations/japan-fuji-pagoda-snow.jpg': 'top',
+}
+
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
 function withWaGwa(name: string): string {
   if (!name) return name
@@ -562,6 +569,7 @@ export function TimelineCalm({
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
+                    objectPosition: HERO_PHOTO_POSITION[heroPhoto] ?? 'center',
                     display: 'block',
                     cursor: heroPhotoCandidates.length > 1 ? 'pointer' : undefined,
                   }}
