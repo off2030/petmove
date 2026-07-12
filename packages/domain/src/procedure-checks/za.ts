@@ -83,7 +83,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
       if (days < 0) {
         return {
           ok: false,
-          message: `검사일(${latest.date})이 출국일(${dep})보다 늦어요.`,
+          message: `검사일(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.`,
           offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`],
         }
       }

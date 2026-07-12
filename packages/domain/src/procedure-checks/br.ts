@@ -63,7 +63,7 @@ export const BR_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
+        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요. 날짜를 확인하세요.`,
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -180,7 +180,7 @@ export const BR_CHECKS: ProcedureCheck[] = [
       if (diff < 0) {
         return {
           ok: false,
-          message: `외부구충(${latest.date})이 출국일(${dep})보다 늦어요.`,
+          message: `외부구충(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.`,
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
@@ -214,7 +214,7 @@ export const BR_CHECKS: ProcedureCheck[] = [
       if (diff < 0) {
         return {
           ok: false,
-          message: `내부구충(${latest.date})이 출국일(${dep})보다 늦어요.`,
+          message: `내부구충(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.`,
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
