@@ -124,9 +124,12 @@
   .band h2{font-size:23px;color:#fff;margin:0;font-weight:700;line-height:1.3;max-width:520px}
   .band p{font-size:13.5px;color:#E4E9ED;margin:9px 0 0;line-height:1.6}
 
-  .final{background:var(--dark);padding:44px 0;text-align:center}
-  .final h2{font-size:24px;color:#FFFFFF;margin:0 0 22px;font-weight:700}
-  .final p{font-size:13.5px;color:#A8A8AE;margin:0 0 22px}
+  /* 최종 CTA = 로고 문법(하늘 그라데이션 + 구름) — 2026-07-12 사용자 확정.
+     흰 큰 제목 대비 확보를 위해 그라데이션을 로고보다 반 톤 진하게 + 얕은 텍스트 섀도. */
+  .final{background:linear-gradient(180deg,#4EC3FF,#0BA2F2);padding:52px 0 0;text-align:center}
+  .final h2{font-size:24px;color:#fff;margin:0 0 22px;font-weight:700;text-shadow:0 1px 3px rgba(2,62,102,.20)}
+  .final p{font-size:13.5px;color:#EAF6FF;margin:0 0 22px}
+  .final .clouds{display:block;width:100%;height:84px;margin-top:40px}
   .store-row{display:flex;gap:11px;justify-content:center;flex-wrap:wrap}
   .store{background:#FFFFFF;color:var(--ink);border-radius:13px;padding:13px 18px;display:flex;align-items:center;
     gap:8px;font-size:13.5px;font-weight:500}
@@ -239,6 +242,8 @@
     .frows{max-width:620px;margin-left:auto;margin-right:auto}
     .path{padding:30px 28px}
     .grid{grid-template-columns:repeat(6,1fr)}
+    .rlist{max-width:none;flex-direction:row;gap:14px;align-items:stretch}
+    .rcard{flex:1 1 0}
     .trust .n{font-size:30px} .trust .l{font-size:13px}
     .band{min-height:480px}
     .band h2{font-size:30px}
@@ -455,6 +460,7 @@
         <a class="store"><i class="ti ti-brand-google-play" style="font-size:16px"></i>Google Play</a>
       </div>
     </div>
+    <svg class="clouds" viewBox="0 0 1440 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><rect y="96" width="1440" height="24" fill="#fff"/><circle cx="40" cy="116" r="46" fill="#fff"/><circle cx="128" cy="102" r="64" fill="#fff"/><circle cx="222" cy="116" r="46" fill="#fff"/><circle cx="424" cy="112" r="52" fill="#fff"/><circle cx="506" cy="100" r="68" fill="#fff"/><circle cx="596" cy="114" r="48" fill="#fff"/><circle cx="784" cy="114" r="44" fill="#fff"/><circle cx="856" cy="102" r="60" fill="#fff"/><circle cx="938" cy="114" r="46" fill="#fff"/><circle cx="1140" cy="112" r="54" fill="#fff"/><circle cx="1226" cy="100" r="68" fill="#fff"/><circle cx="1322" cy="114" r="50" fill="#fff"/><circle cx="1420" cy="118" r="42" fill="#fff"/></svg>
   </div>
 
   <footer>
