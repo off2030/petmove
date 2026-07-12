@@ -29,7 +29,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/japan-sakura.jpg',
     '/destinations/japan-sakura-riverside.jpg',
     '/destinations/japan.jpg',
-    '/destinations/japan-bright.jpg',
     '/destinations/japan-tokyo-tower.jpg',
     '/destinations/japan-tokyo-night.jpg',
     '/destinations/japan-tokyo-sunset-street.jpg',
