@@ -17,6 +17,15 @@ import { C } from '@/lib/palette'
 
 // 표시 순서는 '아주 좋아요'(level 5)를 맨 앞으로 — 긍정 선택을 앞세워 응답 문턱을 낮춘다.
 // level(저장값)은 그대로라 점수 의미는 불변, 화면 순서만 역순.
+/** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
+function withWaGwa(name: string): string {
+  const last = name.charCodeAt(name.length - 1)
+  if (last >= 0xac00 && last <= 0xd7a3) {
+    return (last - 0xac00) % 28 !== 0 ? `${name}과` : `${name}와`
+  }
+  return `${name}와`
+}
+
 /** 만족도 얼굴 5단계 — 좋은 순. 완료 히어로 아래 소감 카드(timeline-calm)와 공유. */
 export const FACES: { level: number; label: string }[] = [
   { level: 5, label: '아주 좋아요' },
@@ -164,8 +173,10 @@ export function FeedbackView({
           일정
         </Link>
 
+        {/* 제목 = 소감 카드와 같은 질문 — 카드→페이지가 한 번의 대화로 이어지게.
+            '의견 남기기' 기능명은 하단 버튼('남기기')이 담당. */}
         <h1 style={{ ...serif, fontSize: 18, lineHeight: 1.2, margin: '12px 0 0', color: C.ink }}>
-          의견 남기기
+          {caseRow?.pet_name ? `${withWaGwa(caseRow.pet_name)}의 여정, 어떠셨나요?` : '이번 여정, 어떠셨나요?'}
         </h1>
 
         {/* 만족도 — 얼굴 5단계 (모노톤) */}
@@ -239,6 +250,10 @@ export function FeedbackView({
               outline: 'none',
             }}
           />
+          {/* 읽힌다는 확신 — 자유 의견 응답률을 위한 신뢰 한 줄. */}
+          <p style={{ margin: '8px 2px 0', fontSize: 12, color: C.ink3, lineHeight: 1.5 }}>
+            남겨주신 의견은 펫무브 팀이 모두 읽어요
+          </p>
         </section>
 
         {/* 보낸 뒤 안내 */}
@@ -256,7 +271,8 @@ export function FeedbackView({
               lineHeight: 1.5,
             }}
           >
-            소중한 의견 감사합니다. 즐거운 하루 되세요 ❤️
+            소중한 의견 감사합니다.{' '}
+            {caseRow?.pet_name ? `${withWaGwa(caseRow.pet_name)} 행복한 시간 보내세요` : '즐거운 하루 되세요'} ❤️
           </div>
         )}
         {status === 'error' && (
