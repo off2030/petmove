@@ -23,6 +23,116 @@ const DEST_PHOTOS: Record<string, string> = {
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, '/destinations/europe.jpg'])),
 }
 
+/**
+ * 주의·안내 공용 접이식 스트립 — 평소엔 한 줄 요약, 탭하면 카드 안에서 상세를 펼친다.
+ * 상세(제목+본문)를 기본 노출하지 않는 게 원칙 — 두 톤(주의/주황, 안내/블루그레이)이
+ * 이 하나의 컴포넌트를 공유해 구조가 어긋나지 않는다.
+ */
+function AlertStrip({
+  icon,
+  color,
+  bg,
+  label,
+  items,
+  open,
+  onToggle,
+}: {
+  icon: React.ReactNode
+  color: string
+  bg: string
+  label: string
+  items: { id: string; title: string; message: string | null | undefined }[]
+  open: boolean
+  onToggle: () => void
+}) {
+  if (items.length === 0) return null
+  return (
+    <div style={{ borderRadius: 10, background: bg }}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="pm-pressable"
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '10px 12px',
+          borderRadius: 10,
+          border: 'none',
+          background: 'transparent',
+          color,
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          textAlign: 'left',
+        }}
+      >
+        {icon}
+        <span
+          style={{
+            flex: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {label} {items.length}건 — {items.map((it) => it.title).join(' · ')}
+        </span>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+            flexShrink: 0,
+            transform: open ? 'rotate(180deg)' : 'none',
+            transition: 'transform .18s ease',
+          }}
+          aria-hidden
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div style={{ padding: '0 12px 12px' }}>
+          {items.map((item, i) => (
+            <div
+              key={item.id}
+              style={{
+                marginTop: i === 0 ? 2 : 12,
+                paddingTop: i === 0 ? 0 : 12,
+                borderTop: i === 0 ? 'none' : `.5px solid rgb(var(--pm-ink-rgb) / .12)`,
+              }}
+            >
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--pm-ink)' }}>
+                {item.title}
+              </div>
+              {item.message && (
+                <p
+                  style={{
+                    margin: '4px 0 0',
+                    fontSize: 13,
+                    lineHeight: 1.55,
+                    color: 'rgb(var(--pm-ink-rgb) / .65)',
+                  }}
+                >
+                  {item.message}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
 function withWaGwa(name: string): string {
   if (!name) return name
@@ -155,8 +265,9 @@ export function TimelineCalm({
     fontWeight: 600,
   }
 
-  // 히어로 카드의 주의 스트립 펼침 상태 — 평소엔 한 줄, 탭하면 상세 목록.
+  // 히어로 카드의 주의·안내 스트립 펼침 상태 — 평소엔 한 줄, 탭하면 상세 목록.
   const [alertsOpen, setAlertsOpen] = useState(false)
+  const [infoOpen, setInfoOpen] = useState(false)
 
   // 상태 창(히어로 카드) = 나-2 확정 — 진행 바까지 사진 안으로 들어간 풀 포토.
   // 티켓 노치 = 우측 정중앙 확정. (2026-07-11 실기기 비교 후 확정, dev 스위처 제거.)
@@ -870,92 +981,16 @@ export function TimelineCalm({
               {/* 주의 스트립 — 케이스 차원 결격(견종·마릿수·거주 등). 평소엔 존재하지 않고,
                   발생 시 한 줄 앰버 스트립. 탭하면 카드 안에서 상세를 펼친다. */}
               {caseAlerts.length > 0 && (
-                <div
-                  style={{
-                    marginTop: nextStages.length > 0 ? 14 : 0,
-                    borderRadius: 10,
-                    background: C.warnBg,
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setAlertsOpen((v) => !v)}
-                    className="pm-pressable"
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '10px 12px',
-                      borderRadius: 10,
-                      border: 'none',
-                      background: 'transparent',
-                      color: C.warn,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <StormCloudIcon size={15} />
-                    <span
-                      style={{
-                        flex: 1,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      주의 {caseAlerts.length}건 — {caseAlerts.map((a) => a.title).join(' · ')}
-                    </span>
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{
-                        flexShrink: 0,
-                        transform: alertsOpen ? 'rotate(180deg)' : 'none',
-                        transition: 'transform .18s ease',
-                      }}
-                      aria-hidden
-                    >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-                  {alertsOpen && (
-                    <div style={{ padding: '0 12px 12px' }}>
-                      {caseAlerts.map((alert, i) => (
-                        <div
-                          key={alert.id}
-                          style={{
-                            marginTop: i === 0 ? 2 : 12,
-                            paddingTop: i === 0 ? 0 : 12,
-                            borderTop: i === 0 ? 'none' : `.5px solid ${C.line}`,
-                          }}
-                        >
-                          <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>
-                            {alert.title}
-                          </div>
-                          <p
-                            style={{
-                              margin: '4px 0 0',
-                              fontSize: 13,
-                              lineHeight: 1.55,
-                              color: C.ink2,
-                            }}
-                          >
-                            {alert.message}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                <div style={{ marginTop: nextStages.length > 0 ? 14 : 0 }}>
+                  <AlertStrip
+                    icon={<StormCloudIcon size={15} />}
+                    color={C.warn}
+                    bg={C.warnBg}
+                    label="주의"
+                    items={caseAlerts}
+                    open={alertsOpen}
+                    onToggle={() => setAlertsOpen((v) => !v)}
+                  />
                 </div>
               )}
             </div>
@@ -1301,54 +1336,19 @@ export function TimelineCalm({
           </>
         )}
 
-        {/* 안내 카드 — 다음 할 일 카드와 같은 톤·구조. 단 헤더 라벨은 info 색으로 구분.
-            안내별 카드 1장씩 (다건이면 N장) — step 이름 + 안내문 첫 줄 + 해당 step 링크.
-            여정 완료 후엔 완료 배너에 집중하도록 가린다. */}
+        {/* 안내 스트립 — 주의 스트립과 같은 컴포넌트(AlertStrip) 공유. 평소엔 한 줄 요약,
+            탭하면 펼쳐 각 stage 의 안내문을 본다. 여정 완료 후엔 완료 배너에 집중하도록 가린다. */}
         {!journeyComplete && infoStages.length > 0 && (
-          <div
-            style={{
-              marginTop: nextStages.length > 0 ? 14 : 22,
-              padding: 22,
-              borderRadius: 16,
-              background: C.cardSoft,
-              boxShadow: 'var(--pm-card-rim)',
-            }}
-          >
-            <div style={{ ...monoCap, color: C.info }}>안내</div>
-            {infoStages.map((stage, i) => (
-              <Link
-                key={stage.id}
-                href={stageHref(stage)}
-                className="pm-pressable"
-                style={{
-                  display: 'block',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  marginTop: i === 0 ? 12 : 14,
-                  paddingTop: i === 0 ? 0 : 14,
-                  borderTop: i === 0 ? 0 : '1px solid rgb(var(--pm-ink-rgb) / .12)',
-                }}
-              >
-                <h3
-                  style={{
-                    ...serif,
-                    margin: 0,
-                    fontSize: 19,
-                    lineHeight: 1.18,
-                    color: 'var(--pm-ink)',
-                    fontWeight: 500,
-                    textWrap: 'balance' as React.CSSProperties['textWrap'],
-                  }}
-                >
-                  {stage.label}
-                </h3>
-                {stage.infoMessage && (
-                  <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgb(var(--pm-ink-rgb) / .65)' }}>
-                    {stage.infoMessage}
-                  </p>
-                )}
-              </Link>
-            ))}
+          <div style={{ marginTop: nextStages.length > 0 ? 14 : 22 }}>
+            <AlertStrip
+              icon={<CloudIcon size={14} />}
+              color={C.info}
+              bg={C.infoBg}
+              label="안내"
+              items={infoStages.map((s) => ({ id: s.id, title: s.label, message: s.infoMessage }))}
+              open={infoOpen}
+              onToggle={() => setInfoOpen((v) => !v)}
+            />
           </div>
         )}
 
