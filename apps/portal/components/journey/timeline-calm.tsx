@@ -22,9 +22,6 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
     EU 24개국은 여정 카드처럼 사진도 한 벌(europe.jpg, 파리 상점 거리)을 공유한다. */
 const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   일본: [
-    '/destinations/japan-kiyomizu-sunset.jpg',
-    '/destinations/japan-kiyomizu-crowd.jpg',
-    '/destinations/japan-kiyomizu-pagoda-sunset.jpg',
     '/destinations/japan-snow-tree.jpg',
     '/destinations/japan-fushimi-torii.jpg',
     '/destinations/japan-fushimi-torii-lantern.jpg',
