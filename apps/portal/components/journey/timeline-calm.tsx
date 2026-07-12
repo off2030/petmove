@@ -29,7 +29,10 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/japan-fuji-pagoda-snow.jpg',
     '/destinations/japan-fuji-umbrella-field.jpg',
   ],
-  태국: ['/destinations/thailand-aerial-beach-waves.jpg'],
+  태국: [
+    '/destinations/thailand-aerial-beach-waves.jpg',
+    '/destinations/thailand-turquoise-islands-aerial.jpg',
+  ],
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
 }
 
