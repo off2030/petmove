@@ -12,7 +12,6 @@ import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { monoCap, num, serif } from '@/components/me/settings-shared'
 import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
-import { APP_EU_DESTINATIONS_KO } from '@/lib/app-destinations'
 import { PAGE_TOP, groupLabel, sectionTitle } from '@/lib/tokens'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
@@ -20,7 +19,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
     한 장씩 넘어가며 반복된다(로컬 저장 회전 인덱스, HERO_PHOTO_ROTATION_KEY 참고).
     후보가 2장 이상이면 사진을 탭해서도 다음 후보로 넘겨볼 수 있다.
     없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
-    EU 24개국은 여정 카드처럼 사진도 한 벌(europe.jpg, 파리 상점 거리)을 공유한다. */
+    EU 국가는 프랑스만 사진(france.jpg, 파리 상점 거리)을 갖고, 나머지는 사진 없이 메타 행. */
 const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   일본: [
     '/destinations/japan-sakura-blossom-macro.jpg',
@@ -46,7 +45,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/philippines-bangka-wake-reef.jpg',
     '/destinations/philippines-palm-resort-cove.jpg',
   ],
-  ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
+  프랑스: ['/destinations/france.jpg'],
 }
 
 /** 히어로 사진 회전 인덱스를 목적지별로 localStorage 에 저장 — 앱을 열 때마다
