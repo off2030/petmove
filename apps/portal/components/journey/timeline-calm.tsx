@@ -250,6 +250,20 @@ export function TimelineCalm({
       ? formatDateRange(trip.departureDate, journeyCompleteDate)
       : arrivalText
 
+  // 완료 후 사진 오버레이 좌하단 — 'N일째' 카운트업 대신 여행 기간(왕복=출발~도착,
+  // 편도=도착일)으로 교체(2026-07-12 사용자 확정 ①안). 완료 미리보기는 완료일 데이터가
+  // 없어 오늘 날짜를 임시로 채워 모양만 확인한다.
+  const completedDateText =
+    journeyDateText ||
+    (demoComplete
+      ? (() => {
+          const todayIso = new Date().toISOString().slice(0, 10)
+          return trip.departureDate
+            ? formatDateRange(trip.departureDate, todayIso)
+            : formatKoreanDate(todayIso)
+        })()
+      : '')
+
   // 티켓 노치 배지 — 가로가 세로보다 긴 라운드 사각 + 우측(텍스트 쪽)에만 반원 컷아웃.
   // 좌측은 세로 레일이 붙는 쪽이라 온전히 두고, 우측만 '뜯겨 열린' 효과를 준다.
   // 컷아웃은 배지가 놓이는 면의 배경색(notchBg)으로 채워 펀칭된 것처럼 보이게 한다.
@@ -694,10 +708,19 @@ export function TimelineCalm({
                       gap: 8,
                     }}
                   >
-                    {ringStatus && (
-                      <span style={{ ...serif, fontSize: 30, lineHeight: 1, color: '#FFFFFF' }}>
-                        {ringStatus}
-                      </span>
+                    {complete ? (
+                      completedDateText && (
+                        // 완료 후엔 카운트업 대신 여행 기간 — 날짜 문자열이 길어 30px 대신 한 단계 작게.
+                        <span style={{ ...serif, fontSize: 19, lineHeight: 1.2, color: '#FFFFFF' }}>
+                          {completedDateText}
+                        </span>
+                      )
+                    ) : (
+                      ringStatus && (
+                        <span style={{ ...serif, fontSize: 30, lineHeight: 1, color: '#FFFFFF' }}>
+                          {ringStatus}
+                        </span>
+                      )
                     )}
                     <span
                       style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,.92)' }}
@@ -764,7 +787,7 @@ export function TimelineCalm({
                       }}
                     >
                       {trip.toCity}
-                      {ringStatus ? ` · ${ringStatus}` : ''}
+                      {(complete ? completedDateText : ringStatus) ? ` · ${complete ? completedDateText : ringStatus}` : ''}
                       <svg
                         width="11"
                         height="11"
@@ -787,7 +810,7 @@ export function TimelineCalm({
                   ) : (
                     <span style={{ fontSize: 13, fontWeight: 600, color: C.ink2 }}>
                       {trip.toCity}
-                      {ringStatus ? ` · ${ringStatus}` : ''}
+                      {(complete ? completedDateText : ringStatus) ? ` · ${complete ? completedDateText : ringStatus}` : ''}
                     </span>
                   )}
                   {(warnItems.length > 0 || (!complete && infoStages.length > 0)) && (
