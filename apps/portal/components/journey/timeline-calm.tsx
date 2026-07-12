@@ -1269,7 +1269,9 @@ export function TimelineCalm({
               }}
             >
               {FACES.map((f) => {
-                const selected = savedRating === f.level
+                // 기본 = '아주 좋아요' 선택 표시(2026-07-12 사용자 확정) — 이미 남긴
+                // 만족도가 있으면 그 얼굴로 대체. 페이지의 기본 선택(initialShown)과 짝.
+                const selected = (savedRating ?? 5) === f.level
                 return (
                   <Link
                     key={f.level}
