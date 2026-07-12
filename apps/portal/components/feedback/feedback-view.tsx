@@ -75,20 +75,27 @@ export function FeedbackView({
   const fb = readJourneyFeedback(caseRow?.data, dest ?? firstToken, firstToken)
   const saved = { rating: fb?.rating ?? null, text: fb?.text ?? '' }
 
-  const [rating, setRating] = useState<number | null>(initialRating ?? saved.rating)
+  // 시작 선택값 — 원탭 진입(?rating) > 저장된 값 > '아주 좋아요'(5) 기본 선택.
+  // (2026-07-12 사용자 확정: 빈 상태 대신 첫 얼굴이 선택된 채 시작 — 만족한 보호자는
+  // 열자마자 '남기기' 한 번이면 끝.)
+  const initialShown = initialRating ?? saved.rating ?? 5
+  const [rating, setRating] = useState<number | null>(initialShown)
   const [text, setText] = useState(saved.text)
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
-  const dirty = rating !== saved.rating || text.trim() !== saved.text
-  useUnsavedGuard(dirty)
+  // 저장 기준 변경 여부(보내기 활성) vs 사용자 조작 여부(이탈 경고) 를 분리 —
+  // 기본 선택(5)만 붙은 채 아무것도 안 만졌다면 경고 없이 떠날 수 있어야 한다.
+  const changedFromSaved = rating !== saved.rating || text.trim() !== saved.text
+  const touched = rating !== initialShown || text.trim() !== saved.text
+  useUnsavedGuard(touched)
   const hasContent = rating !== null || text.trim().length > 0
   const alreadySent = saved.rating !== null || saved.text.length > 0
-  const justSaved = status === 'saved' && !dirty
-  // 내용이 있으면 저장, 또는 이미 남긴 의견을 비웠으면(삭제) 그 비움도 저장. 빈 상태에서
-  // 처음부터 빈 채로는 저장할 게 없음(dirty=false). 저장 액션은 빈 값이면 feedback 을 삭제.
-  const canSend = (hasContent || alreadySent) && dirty && status !== 'saving'
+  const justSaved = status === 'saved' && !changedFromSaved
+  // 내용이 있으면 저장, 또는 이미 남긴 의견을 비웠으면(삭제) 그 비움도 저장.
+  // 저장 액션은 빈 값이면 feedback 을 삭제.
+  const canSend = (hasContent || alreadySent) && changedFromSaved && status !== 'saving'
 
   function handleSubmit() {
     if (!canSend) return
@@ -235,7 +242,7 @@ export function FeedbackView({
         </section>
 
         {/* 보낸 뒤 안내 */}
-        {alreadySent && !dirty && status !== 'error' && (
+        {alreadySent && !changedFromSaved && status !== 'error' && (
           <div
             role="status"
             style={{
@@ -296,7 +303,7 @@ export function FeedbackView({
             ? '남기는 중…'
             : justSaved
               ? '✓ 남겼어요'
-              : dirty
+              : changedFromSaved
                 ? alreadySent
                   ? '수정해서 남기기'
                   : '남기기'
