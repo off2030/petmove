@@ -41,10 +41,11 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
 }
 
 /** 히어로 사진 크롭 위치 — 200px 고정 높이 박스라 세로 사진은 object-fit: cover 로
-    위/아래가 크게 잘린다. 기본은 정중앙, 위쪽 피사체(산·처마)를 살려야 하는 사진만
+    위/아래가 크게 잘린다. 기본은 정중앙, 위/아래 중 살려야 할 피사체가 있는 사진만
     개별 지정(사용자 확인 후 추가). */
 const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/japan-fuji-pagoda-snow.jpg': 'top',
+  '/destinations/japan-fuji-sakura-vertical.jpg': 'bottom',
 }
 
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
