@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useEffect, useState, useTransition } from 'react'
 import type { RequiredDocItem } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { monoCap, serif } from '@/components/me/settings-shared'
 import { deleteStepDocument, getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
 import { downloadFile } from '@/lib/native/download'
 import { useMediaViewer } from '@/components/portal-shell/media-viewer'
@@ -36,18 +37,7 @@ export function RequiredDocDetail({
   activeDest?: string | null
 }) {
 
-  const serif: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontWeight: 500,
-    letterSpacing: '-0.01em',
-    fontVariantNumeric: 'tabular-nums',
-  }
-  const monoCap: React.CSSProperties = {
-    fontSize: 12,
-    color: C.ink3,
-    fontWeight: 600,
-  }
-
+  // 타이포 정의는 settings-shared 단일 출처(serif·monoCap import) — 2026-07-12 통합.
   const { updateCase } = useCases()
   const [busy, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -335,11 +325,6 @@ export function RequiredDocDetail({
 }
 
 function SectionLabel({ children, right }: { children: React.ReactNode; right?: string }) {
-  const monoCap: React.CSSProperties = {
-    fontSize: 12,
-    color: 'var(--pm-ink-3)',
-    fontWeight: 600,
-  }
   return (
     <div
       style={{

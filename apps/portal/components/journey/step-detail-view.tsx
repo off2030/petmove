@@ -47,6 +47,7 @@ import {
 import { useConfirm } from '@petmove/ui'
 import { activeDestinationView } from '@/lib/cases/active-destination'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
+import { monoCap, num, serif } from '@/components/me/settings-shared'
 import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
 import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import {
@@ -1627,22 +1628,7 @@ export function StepDetailView({
   }
 
 
-  const serif: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontWeight: 500,
-    letterSpacing: '-0.01em',
-    fontVariantNumeric: 'tabular-nums',
-  }
-  const num: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontVariantNumeric: 'tabular-nums',
-    fontWeight: 400,
-  }
-  const monoCap: React.CSSProperties = {
-    fontSize: 12,
-    color: C.ink3,
-    fontWeight: 600,
-  }
+  // 타이포 정의는 settings-shared 단일 출처(serif·num·monoCap import) — 2026-07-12 통합.
 
   // ok=false 체크를 톤별로 분리 — '주의'(blocker/warning) vs '안내'(info).
   const failed = checkResults.filter((c) => !c.result.ok && c.check.severity !== 'info')

@@ -15,12 +15,24 @@ import { C } from '@/lib/palette'
 // import 하던 기존 코드 호환). 색을 바꾸려면 globals.css 의 --pm-* 토큰만 고치면 됨.
 export { C }
 
+/** 제목·이름용 디스플레이 서체 — 앱 전체 단일 출처 (2026-07-12 타이포 정렬로 통합).
+ *  journey/docs 계열 로컬 정의와 동일값(tabular-nums 포함 — 날짜·숫자 폭 고정). */
 export const serif: CSSProperties = {
   fontFamily: 'var(--pm-font-display)',
   fontWeight: 500,
   letterSpacing: '-0.01em',
+  fontVariantNumeric: 'tabular-nums',
 }
 
+/** 숫자·식별자용 — 날짜, 카운트, 전화번호. */
+export const num: CSSProperties = {
+  fontFamily: 'var(--pm-font-display)',
+  fontVariantNumeric: 'tabular-nums',
+  fontWeight: 400,
+}
+
+/** 그룹 라벨(필드 묶음: 입력·첨부·알림·보호자 등) — 12/600/ink3.
+ *  화면 구획 제목(준비 단계·서류 체크리스트급)은 이게 아니라 17px serif ink. */
 export const monoCap: CSSProperties = {
   fontSize: 12,
   color: C.ink3,

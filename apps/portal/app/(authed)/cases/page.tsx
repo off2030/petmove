@@ -26,12 +26,14 @@ export default async function CasesPage() {
 
   return (
     <div style={{ padding: '32px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* 페이지 제목 — 준비·서류 헤더(이름 24/600)와 동급으로 정렬 (2026-07-12, 구 28/500). */}
       <h1
         style={{
           fontFamily: 'var(--pm-font-display)',
-          fontSize: 28,
-          fontWeight: 500,
+          fontSize: 24,
+          fontWeight: 600,
           letterSpacing: '-0.01em',
+          fontVariantNumeric: 'tabular-nums',
           margin: '12px 0 16px',
         }}
       >
@@ -175,7 +177,7 @@ function NoJourneyState() {
         아직 준비 중인 여정이 없어요
       </h1>
       <p style={{ fontSize: 14, color: 'var(--pm-ink-3)', margin: 0, lineHeight: 1.5 }}>
-        목적지를 추가해보세요
+        여행지를 추가해보세요
       </p>
       <Link
         href="/me"

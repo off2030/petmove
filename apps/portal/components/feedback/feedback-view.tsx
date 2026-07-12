@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useTransition, type CSSProperties } from 'react'
+import { useState, useTransition } from 'react'
 import { parseDestinations, readJourneyFeedback } from '@petmove/domain'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
+import { monoCap, serif } from '@/components/me/settings-shared'
 import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import { saveCaseFeedback } from '@/lib/actions/cases'
 
@@ -123,16 +124,7 @@ export function FeedbackView({
     })
   }
 
-  const serif: CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontWeight: 500,
-    letterSpacing: '-0.01em',
-  }
-  const monoCap: CSSProperties = {
-    fontSize: 12,
-    color: C.ink3,
-    fontWeight: 600,
-  }
+  // 타이포 정의는 settings-shared 단일 출처(serif·monoCap import) — 2026-07-12 통합.
 
   return (
     <div

@@ -9,6 +9,7 @@ import { downloadFile } from '@/lib/native/download'
 import { useMediaViewer } from '@/components/portal-shell/media-viewer'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { CaseHeader } from '@/components/cases/case-header'
+import { monoCap, num, serif } from '@/components/me/settings-shared'
 import { StepAttachments } from '@/components/journey/step-attachments'
 import type { AutoDocItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalog'
 
@@ -29,23 +30,6 @@ export function DocsView({
   activeDest?: string | null
 }) {
   const destQuery = activeDest ? `?dest=${encodeURIComponent(activeDest)}` : ''
-
-  const serif: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontWeight: 500,
-    letterSpacing: '-0.01em',
-    fontVariantNumeric: 'tabular-nums',
-  }
-  const num: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontVariantNumeric: 'tabular-nums',
-    fontWeight: 400,
-  }
-  const monoCap: React.CSSProperties = {
-    fontSize: 12,
-    color: C.ink3,
-    fontWeight: 600,
-  }
 
   const { updateCase } = useCases()
   const { openImage } = useMediaViewer()
@@ -136,7 +120,7 @@ export function DocsView({
             {/* 1) Checklist */}
             <SectionLabel right={`${checklistDone}/${checklist.length}`}>서류 체크리스트</SectionLabel>
             {checklist.length === 0 ? (
-              <EmptyHint>이 목적지에는 보호자가 따로 챙길 서류가 없습니다.</EmptyHint>
+              <EmptyHint>이 여행지에는 보호자가 따로 챙길 서류가 없습니다.</EmptyHint>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {checklist.map((d) => (
@@ -148,7 +132,7 @@ export function DocsView({
             {/* 2) 증명서 자동 작성 */}
             <SectionLabel right={`${autoDocs.length}건`}>증명서 자동 작성</SectionLabel>
             {autoDocs.length === 0 ? (
-              <EmptyHint>이 목적지는 자동 작성 증명서가 없습니다.</EmptyHint>
+              <EmptyHint>이 여행지는 자동 작성 증명서가 없습니다.</EmptyHint>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {autoDocs.map((d) => (
@@ -235,6 +219,8 @@ export function DocsView({
 // ── 하위 컴포넌트 ────────────────────────────────────────────────────────
 
 function SectionLabel({ children, right }: { children: React.ReactNode; right?: string }) {
+  // 화면 구획 제목 — 준비 탭 '준비 단계'(17px 세리프 잉크)와 같은 위계로 통일
+  // (2026-07-12 타이포 정렬). 우측 카운트(0/4)는 보조 정보라 회색 유지.
   const monoCap: React.CSSProperties = {
     fontSize: 12,
     color: 'var(--pm-ink-3)',
@@ -246,12 +232,23 @@ function SectionLabel({ children, right }: { children: React.ReactNode; right?: 
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'baseline',
-        marginTop: 22,
-        marginBottom: 10,
-        padding: '0 4px',
+        marginTop: 32,
+        marginBottom: 12,
       }}
     >
-      <span style={monoCap}>{children}</span>
+      <h3
+        style={{
+          fontFamily: 'var(--pm-font-display)',
+          fontWeight: 500,
+          letterSpacing: '-0.01em',
+          fontVariantNumeric: 'tabular-nums',
+          fontSize: 17,
+          color: 'var(--pm-ink)',
+          margin: 0,
+        }}
+      >
+        {children}
+      </h3>
       {right && <span style={monoCap}>{right}</span>}
     </div>
   )

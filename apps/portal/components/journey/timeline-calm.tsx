@@ -10,6 +10,7 @@ import { CaseHeader } from '@/components/cases/case-header'
 import { FACES, FaceIcon } from '@/components/feedback/feedback-view'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { monoCap, num, serif } from '@/components/me/settings-shared'
 import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
 import { APP_EU_DESTINATIONS_KO } from '@/lib/app-destinations'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
@@ -152,22 +153,7 @@ export function TimelineCalm({
     })
   })()
 
-  const serif: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontWeight: 500,
-    letterSpacing: '-0.01em',
-    fontVariantNumeric: 'tabular-nums',
-  }
-  const num: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontVariantNumeric: 'tabular-nums',
-    fontWeight: 400,
-  }
-  const monoCap: React.CSSProperties = {
-    fontSize: 12,
-    color: C.ink3,
-    fontWeight: 600,
-  }
+  // 타이포 정의는 settings-shared 단일 출처(serif·num·monoCap import) — 2026-07-12 통합.
 
   // 히어로 날씨 칩 탭 → 목록 바텀시트 (여러 건일 때. 1건이고 이동 가능하면 바로 이동).
   const [warnSheetOpen, setWarnSheetOpen] = useState(false)
@@ -587,7 +573,7 @@ export function TimelineCalm({
                     onClick={() => setDestSheetOpen(true)}
                     aria-haspopup="dialog"
                     aria-expanded={destSheetOpen}
-                    aria-label="목적지 전환"
+                    aria-label="여행지 전환"
                     className="pm-pressable"
                     style={{
                       ...destChipStyle,
@@ -819,7 +805,7 @@ export function TimelineCalm({
                       onClick={() => setDestSheetOpen(true)}
                       aria-haspopup="dialog"
                       aria-expanded={destSheetOpen}
-                      aria-label="목적지 전환"
+                      aria-label="여행지 전환"
                       style={{
                         fontSize: 13,
                         fontWeight: 600,
@@ -1164,7 +1150,7 @@ export function TimelineCalm({
           <BottomSheet
             open={destSheetOpen}
             onClose={() => setDestSheetOpen(false)}
-            title="목적지"
+            title="여행지"
           >
             <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 4 }}>
               {destTokens.map((t) => {
