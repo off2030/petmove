@@ -10,7 +10,7 @@ import { StartHereEmpty } from '@/components/portal-shell/start-here-empty'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { type FieldOption } from '@/components/fields/info-fields'
 import { C, serif } from '@/components/me/settings-shared'
-import { PAGE_TOP, pageTitle } from '@/lib/tokens'
+import { PAGE_TOP, pageTitle, sectionTitle } from '@/lib/tokens'
 import { APP_DESTINATIONS_KO } from '@/lib/app-destinations'
 import { buildProfileView } from '@/lib/profile/catalog'
 import { notifyServiceInquiry } from '@/lib/actions/service-inquiry'
@@ -826,8 +826,8 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         </div>
       )}
 
-      {/* 화면 구획 제목 — 준비 '준비 단계'와 같은 위계(17px 세리프 잉크, 2026-07-12 정렬). */}
-      <h2 style={{ ...serif, fontSize: 17, color: C.ink, margin: '26px 0 12px' }}>이런 걸 대신해 드려요</h2>
+      {/* 화면 구획 제목 = sectionTitle(17/600 잉크) — 준비 '준비 단계'와 같은 위계. */}
+      <h2 style={{ ...sectionTitle, margin: '26px 0 12px' }}>이런 걸 대신해 드려요</h2>
       <div style={{ background: C.surface, border: `.5px solid ${C.line}`, borderRadius: 16, padding: '4px 16px' }}>
         {offer.included.map((item, i) => (
           <div
@@ -861,7 +861,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         ))}
       </div>
 
-      <h2 style={{ ...serif, fontSize: 17, color: C.ink, margin: '28px 0 12px' }}>이렇게 진행돼요</h2>
+      <h2 style={{ ...sectionTitle, margin: '28px 0 12px' }}>이렇게 진행돼요</h2>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         {offer.steps.map((s, i) => (
           <Fragment key={s}>
@@ -904,7 +904,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         ))}
       </div>
 
-      <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 6px' }}>자주 묻는 질문</h2>
+      <h2 style={{ ...sectionTitle, margin: '26px 0 6px' }}>자주 묻는 질문</h2>
       <div>
         {offer.faq.map((f, i) => {
           const open = openFaq === i
@@ -971,7 +971,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
 
       {offer.reviews.length > 0 && (
         <>
-          <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 10px' }}>먼저 경험한 분들</h2>
+          <h2 style={{ ...sectionTitle, margin: '26px 0 10px' }}>먼저 경험한 분들</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {offer.reviews.map((r) => (
               <div key={r.name} style={{ background: C.surface, border: `.5px solid ${C.line}`, borderRadius: 14, padding: '12px 16px' }}>

@@ -54,9 +54,16 @@ export const SPACE = {
  *  탭 루트 컨테이너는 paddingTop 에 이 값만 쓰고, 제목엔 위 마진을 주지 않는다. */
 export const PAGE_TOP = 32
 
-/** 탭 루트 페이지 제목 — 전 탭 공통 24/600 디스플레이 서체 (2026-07-13 통일).
- *  준비·서류는 동물 이름, 나머지는 화면 이름이지만 위계는 하나다.
- *  화면마다 크기·마진을 덧쓰지 말 것 — 시작 위치는 PAGE_TOP 이 담당. */
+/**
+ * 타이포 위계 — 앱 전체 단일 출처 (2026-07-13 통일).
+ * 3단 제목 + 라벨. 촘촘하던 24/20/18/17 을 24 → 17 → 16 으로 벌리고, 라벨은 하나로.
+ * 화면 코드는 여기서 import 해서 쓰고 fontSize/weight/color 를 직접 박지 말 것.
+ *
+ *   pageTitle   24/600  화면 제목 — 탭 루트·동물 이름·하위 페이지 제목
+ *   sectionTitle 17/600 구획 제목 — 준비 단계·서류 체크리스트·검역증·보관함
+ *   itemTitle   16/500  항목 제목 — 카드 이름(동물·조직)·리스트 행 이름
+ *   groupLabel  12/600  라벨(ink3) — 보호자·알림·일본으로 떠나요 등 회색 소제목
+ */
 export const pageTitle = {
   fontFamily: 'var(--pm-font-display)',
   fontWeight: 600,
@@ -66,4 +73,29 @@ export const pageTitle = {
   lineHeight: 1.15,
   margin: 0,
   color: 'var(--pm-ink)',
+} as const
+
+/** 구획 제목 — 화면을 큰 덩어리로 나누는 제목. 17/600 잉크. margin 은 호출자가. */
+export const sectionTitle = {
+  fontFamily: 'var(--pm-font-display)',
+  fontWeight: 600,
+  fontSize: 17,
+  letterSpacing: '-0.01em',
+  fontVariantNumeric: 'tabular-nums',
+  color: 'var(--pm-ink)',
+} as const
+
+/** 항목 제목 — 카드/행 안의 이름. 16/500 잉크. */
+export const itemTitle = {
+  fontFamily: 'var(--pm-font-display)',
+  fontWeight: 500,
+  fontSize: 16,
+  color: 'var(--pm-ink)',
+} as const
+
+/** 라벨 — 회색 소제목(구획 라벨·구간 캡션). 12/600 ink3. settings-shared 의 monoCap 과 동일. */
+export const groupLabel = {
+  fontSize: 12,
+  fontWeight: 600,
+  color: 'var(--pm-ink-3)',
 } as const

@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import { parseDestinations, readJourneyFeedback } from '@petmove/domain'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
-import { monoCap, serif } from '@/components/me/settings-shared'
+import { monoCap } from '@/components/me/settings-shared'
+import { pageTitle } from '@/lib/tokens'
 import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import { saveCaseFeedback } from '@/lib/actions/cases'
 
@@ -167,7 +168,7 @@ export function FeedbackView({
 
         {/* 제목 = 소감 카드와 같은 질문 — 카드→페이지가 한 번의 대화로 이어지게.
             '의견 남기기' 기능명은 하단 버튼('남기기')이 담당. */}
-        <h1 style={{ ...serif, fontSize: 18, lineHeight: 1.2, margin: '12px 0 0', color: C.ink }}>
+        <h1 style={{ ...pageTitle, margin: '12px 0 0' }}>
           {caseRow?.pet_name ? `${withWaGwa(caseRow.pet_name)}의 여정, 어떠셨나요?` : '이번 여정, 어떠셨나요?'}
         </h1>
 

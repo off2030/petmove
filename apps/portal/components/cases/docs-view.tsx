@@ -10,7 +10,7 @@ import { useMediaViewer } from '@/components/portal-shell/media-viewer'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { CaseHeader } from '@/components/cases/case-header'
 import { monoCap, num } from '@/components/me/settings-shared'
-import { PAGE_TOP } from '@/lib/tokens'
+import { PAGE_TOP, groupLabel, sectionTitle } from '@/lib/tokens'
 import { StepAttachments } from '@/components/journey/step-attachments'
 import type { AutoDocItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalog'
 
@@ -214,13 +214,8 @@ export function DocsView({
 // ── 하위 컴포넌트 ────────────────────────────────────────────────────────
 
 function SectionLabel({ children, right }: { children: React.ReactNode; right?: string }) {
-  // 화면 구획 제목 — 준비 탭 '준비 단계'(17px 세리프 잉크)와 같은 위계로 통일
-  // (2026-07-12 타이포 정렬). 우측 카운트(0/4)는 보조 정보라 회색 유지.
-  const monoCap: React.CSSProperties = {
-    fontSize: 12,
-    color: 'var(--pm-ink-3)',
-    fontWeight: 600,
-  }
+  // 화면 구획 제목 — 준비 탭 '준비 단계'와 같은 sectionTitle(17/600 잉크) 위계.
+  // 우측 카운트(0/4)는 보조 정보라 groupLabel(회색) 유지.
   return (
     <div
       style={{
@@ -231,20 +226,8 @@ function SectionLabel({ children, right }: { children: React.ReactNode; right?: 
         marginBottom: 12,
       }}
     >
-      <h3
-        style={{
-          fontFamily: 'var(--pm-font-display)',
-          fontWeight: 500,
-          letterSpacing: '-0.01em',
-          fontVariantNumeric: 'tabular-nums',
-          fontSize: 17,
-          color: 'var(--pm-ink)',
-          margin: 0,
-        }}
-      >
-        {children}
-      </h3>
-      {right && <span style={monoCap}>{right}</span>}
+      <h3 style={{ ...sectionTitle, margin: 0 }}>{children}</h3>
+      {right && <span style={groupLabel}>{right}</span>}
     </div>
   )
 }

@@ -13,18 +13,47 @@ import { useCases } from '@/components/portal-shell/case-data-provider'
 import { monoCap, num, serif } from '@/components/me/settings-shared'
 import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
 import { APP_EU_DESTINATIONS_KO } from '@/lib/app-destinations'
-import { PAGE_TOP } from '@/lib/tokens'
+import { PAGE_TOP, groupLabel, sectionTitle } from '@/lib/tokens'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
-/** 목적지별 히어로 사진 — public/destinations 에 번들(무료 라이선스 큐레이션).
+/** 목적지별 히어로 사진 후보 — public/destinations 에 번들. 첫 장이 기본 노출,
+    후보가 2장 이상이면 사진을 탭해 다음 후보로 넘겨볼 수 있다(고르는 동안 임시 기능).
     없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
     EU 24개국은 여정 카드처럼 사진도 한 벌(europe.jpg, 파리 상점 거리)을 공유한다. */
-const DEST_PHOTOS: Record<string, string> = {
-  // 색감 비교 테스트 중 — 후보: japan.jpg(파스텔 후지) / japan-bright.jpg(쨍한 후지)
-  // / japan-sakura.jpg(벚꽃 클로즈업, 하늘색 배경) / japan-tokyo-tower.jpg(도쿄타워 노을 항공뷰).
-  // 하나로 정리할 것.
-  일본: '/destinations/japan-sakura.jpg',
-  ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, '/destinations/europe.jpg'])),
+const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
+  일본: [
+    '/destinations/japan-kiyomizu-sunset.jpg',
+    '/destinations/japan-kiyomizu-crowd.jpg',
+    '/destinations/japan-kiyomizu-pagoda-sunset.jpg',
+    '/destinations/japan-snow-tree.jpg',
+    '/destinations/japan-fushimi-torii.jpg',
+    '/destinations/japan-fushimi-torii-lantern.jpg',
+    '/destinations/japan-fushimi-torii-close.jpg',
+    '/destinations/japan-sakura.jpg',
+    '/destinations/japan-sakura-riverside.jpg',
+    '/destinations/japan.jpg',
+    '/destinations/japan-bright.jpg',
+    '/destinations/japan-tokyo-tower.jpg',
+    '/destinations/japan-tokyo-night.jpg',
+    '/destinations/japan-tokyo-sunset-street.jpg',
+    '/destinations/japan-akihabara-1.jpg',
+    '/destinations/japan-akihabara-2.jpg',
+    '/destinations/japan-izakaya-alley.jpg',
+    '/destinations/japan-shopfront.jpg',
+    '/destinations/japan-higashiyama-sunset.jpg',
+    '/destinations/japan-kamakura-beach-1.jpg',
+    '/destinations/japan-kamakura-beach-2.jpg',
+    '/destinations/japan-okinawa-sunset.jpg',
+    '/destinations/japan-okinawa-arch.jpg',
+    '/destinations/japan-fuji-pagoda-day.jpg',
+    '/destinations/japan-fuji-pagoda-dusk.jpg',
+    '/destinations/japan-fuji-sakura-vertical.jpg',
+    '/destinations/japan-aso-highlands.jpg',
+    '/destinations/japan-bamboo-forest.jpg',
+    '/destinations/japan-garden-pond-2.jpg',
+    '/destinations/japan-tatami-garden.jpg',
+  ],
+  ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
 }
 
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
@@ -163,7 +192,11 @@ export function TimelineCalm({
   // 상태 창(히어로 카드) = 나-2 확정 — 진행 바까지 사진 안으로 들어간 풀 포토.
   // 티켓 노치 = 우측 정중앙 확정. (2026-07-11 실기기 비교 후 확정, dev 스위처 제거.)
 
-  const heroPhoto = DEST_PHOTOS[trip.toCity] ?? null
+  const heroPhotoCandidates = DEST_PHOTO_CANDIDATES[trip.toCity] ?? []
+  const [heroPhotoIndex, setHeroPhotoIndex] = useState(0)
+  const heroPhoto = heroPhotoCandidates[heroPhotoIndex] ?? null
+  const cycleHeroPhoto = () =>
+    setHeroPhotoIndex((i) => (i + 1) % heroPhotoCandidates.length)
 
   // 다목적지 전환 — 헤더의 라우트(한국 ⇄ 일본) 버튼을 없애고 히어로의 목적지 칩이 담당.
   // 목적지 2개 이상이면 칩에 꺾쇠가 붙고, 탭하면 바텀시트로 활성 목적지를 바꾼다.
@@ -538,6 +571,7 @@ export function TimelineCalm({
                 <img
                   src={heroPhoto}
                   alt=""
+                  onClick={heroPhotoCandidates.length > 1 ? cycleHeroPhoto : undefined}
                   style={{
                     position: 'absolute',
                     inset: 0,
@@ -545,8 +579,39 @@ export function TimelineCalm({
                     height: '100%',
                     objectFit: 'cover',
                     display: 'block',
+                    cursor: heroPhotoCandidates.length > 1 ? 'pointer' : undefined,
                   }}
                 />
+                {/* 사진 후보 여러 장 고르는 동안의 임시 리뷰용 — 탭하면 다음 후보로,
+                    점으로 현재 위치 표시. 하나로 확정되면 후보를 1장으로 줄이고 함께 제거. */}
+                {heroPhotoCandidates.length > 1 && (
+                  <div
+                    aria-hidden
+                    style={{
+                      position: 'absolute',
+                      top: 14,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      display: 'flex',
+                      gap: 4,
+                      padding: '4px 8px',
+                      borderRadius: 999,
+                      background: 'rgba(0,0,0,.28)',
+                    }}
+                  >
+                    {heroPhotoCandidates.map((_, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: '50%',
+                          background: i === heroPhotoIndex ? '#FFFFFF' : 'rgba(255,255,255,.4)',
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
                 {/* 하단 한정 그라데이션 스크림 — '원본 밝기 유지' 원칙의 부분 양보(하단 76px).
                     흰 오버레이(D-day·진행 바)가 사진 밝기와 무관하게 항상 성립하게 한다.
                     빈 칸 색 단방향 실험(흰38%↔검22%)이 사진에 따라 서로 반대로 무너져 채택. */}
@@ -1333,7 +1398,7 @@ export function TimelineCalm({
 
         {/* 단계 리스트 — 한국(출국 준비)·일본·한국(귀국) 구간별 카드 + 카드 안 세로
             레일(타임라인). 카드 없는 버전과 비교 중 (2026-07-11). */}
-        <h3 style={{ ...serif, margin: '32px 0 12px', fontSize: 17 }}>준비 단계</h3>
+        <h3 style={{ ...sectionTitle, margin: '32px 0 12px' }}>준비 단계</h3>
         {stageZones.flatMap((zone, zi) => {
           const list = (
             <div
@@ -1392,9 +1457,9 @@ export function TimelineCalm({
                   <path d="M186.62 464H160a16 16 0 0 1-14.57-22.6l64.46-142.25L113.1 297l-35.3 42.77C71.07 348.23 65.7 352 52 352H34.08a17.66 17.66 0 0 1-14.7-7.06c-2.38-3.21-4.72-8.65-2.44-16.41l19.82-71c.15-.53.33-1.06.53-1.58a.38.38 0 0 0 0-.15 14.82 14.82 0 0 1-.53-1.59l-19.84-71.45c-2.15-7.61.2-12.93 2.56-16.06a16.83 16.83 0 0 1 13.6-6.7H52c10.23 0 20.16 4.59 26 12l34.57 42.05 97.32-1.44-64.44-142A16 16 0 0 1 160 48h26.91a25 25 0 0 1 19.35 9.8l125.05 152 57.77-1.52c4.23-.23 15.95-.31 18.66-.31C463 208 496 225.94 496 256c0 9.46-3.78 27-29.07 38.16-14.93 6.6-34.85 9.94-59.21 9.94-2.68 0-14.37-.08-18.66-.31l-57.76-1.54-125.36 152a25 25 0 0 1-19.32 9.75z" />
                 </svg>
               </span>
-              {/* 구간 caption 은 실제 정보(구간 전환) — ink3 은 12px 에서 대비 미달이라 ink2 로.
-                  비행기 아이콘은 장식이라 ink3 유지(라벨은 읽히고 아이콘은 속삭이게). */}
-              <span style={{ ...monoCap, color: C.ink2 }}>{zone.caption}</span>
+              {/* 구간 caption = 라벨 위계로 통일(2026-07-13) — 보호자·알림과 같은 groupLabel(ink3).
+                  이전엔 이 캡션만 ink2 로 진했음(색 불일치). 비행기 아이콘은 장식이라 ink3 유지. */}
+              <span style={groupLabel}>{zone.caption}</span>
             </div>,
             list,
           ]

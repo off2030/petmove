@@ -183,17 +183,10 @@ export function EditPageShell({
     >
       <div style={{ padding: '0 24px' }}>
         {backHref && <BackLink href={backHref} label={backLabel} />}
-        {/* backHref 없음 = 탭 루트(설정=더보기) → 전 탭 공통 제목(pageTitle 24/600).
-            하위 페이지(뒤로가기 있음)는 한 단계 아래 20 유지. */}
-        <h1
-          style={
-            backHref
-              ? { ...serif, fontSize: 20, lineHeight: 1.12, margin: '12px 0 0', color: C.ink }
-              : pageTitle
-          }
-        >
-          {title}
-        </h1>
+        {/* 화면 제목 = 전 화면 공통 pageTitle(24/600). 하위 페이지도 동일 크기 —
+            "하위"는 위 뒤로가기 링크가 알려주므로 제목까지 줄이지 않는다(2026-07-13 통일).
+            뒤로가기 있을 때만 그 아래로 12 띄운다. */}
+        <h1 style={backHref ? { ...pageTitle, margin: '12px 0 0' } : pageTitle}>{title}</h1>
         <div style={{ marginTop: 16 }}>{children}</div>
       </div>
       {hasBar && bottomBar}
