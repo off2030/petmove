@@ -31,10 +31,10 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   ],
   태국: [
     '/destinations/thailand-aerial-beach-waves.jpg',
-    '/destinations/thailand-doi-inthanon-pagodas-sunset.jpg',
+    '/destinations/thailand-aerial-beach-waves-vertical.jpg',
     '/destinations/thailand-maya-bay-boats.jpg',
     '/destinations/thailand-cliff-cove-aerial.jpg',
-    '/destinations/thailand-longtail-boats-beach.jpg',
+    '/destinations/thailand-elephant-jungle-road.jpg',
     '/destinations/thailand-cliff-coast-road.jpg',
     '/destinations/thailand-beach-horizon-sky.jpg',
     '/destinations/thailand-cove-swimmers.jpg',
@@ -60,6 +60,7 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/japan-fuji-umbrella-field.jpg': 'bottom',
   '/destinations/japan-fuji-pagoda-snow.jpg': 'top',
   '/destinations/japan-sakura-blossom-macro.jpg': 'top',
+  '/destinations/thailand-aerial-beach-waves-vertical.jpg': 'top',
   '/destinations/thailand-cliff-coast-road.jpg': 'top',
   '/destinations/thailand-beach-horizon-sky.jpg': 'top',
 }
