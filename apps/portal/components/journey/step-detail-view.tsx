@@ -2231,15 +2231,16 @@ export function StepDetailView({
           >
             <div style={{ ...monoCap, color: C.warn, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
               <StormCloudIcon size={13} />
-              <span>주의 {failed.length}건</span>
+              <span>주의{failed.length > 1 ? ` ${failed.length}건` : ''}</span>
             </div>
+            {/* 안내 박스와 동일 구조 — 본문만(제목 X). 이 페이지 자체가 해당 step 이라
+                check.title 은 대부분 step 이름의 반복. (2026-07-12 주의·안내 표시 전수 통일) */}
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {failed.map(({ check, result }) => (
                 <li key={check.id}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, marginBottom: 2 }}>{check.title}</div>
-                  {result.message && (
-                    <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>{result.message}</div>
-                  )}
+                  <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
+                    {result.message ?? check.title}
+                  </div>
                 </li>
               ))}
             </ul>

@@ -25,21 +25,22 @@ const DEST_PHOTOS: Record<string, string> = {
 
 /**
  * 주의·안내 공용 접이식 스트립 — 평소엔 한 줄 요약, 탭하면 카드 안에서 상세를 펼친다.
- * 상세(제목+본문)를 기본 노출하지 않는 게 원칙 — 두 톤(주의/주황, 안내/블루그레이)이
- * 이 하나의 컴포넌트를 공유해 구조가 어긋나지 않는다.
+ * 주의·안내가 이 하나의 컴포넌트를 공유해 구조가 어긋나지 않는다.
+ *
+ * 스타일 원칙(2026-07-12 사용자 확정): 카드 배경은 다른 카드와 동일한 중립(cardSoft),
+ * 색은 아이콘 + 상태 라벨("주의 N건")에만. 제목 나열·상세 본문은 중립 잉크.
  */
 function AlertStrip({
   icon,
   color,
-  bg,
   label,
   items,
   open,
   onToggle,
 }: {
   icon: React.ReactNode
+  /** 아이콘·상태 라벨에만 쓰는 상태색 (주의=warn, 안내=info). */
   color: string
-  bg: string
   label: string
   items: { id: string; title: string; message: string | null | undefined }[]
   open: boolean
@@ -47,7 +48,13 @@ function AlertStrip({
 }) {
   if (items.length === 0) return null
   return (
-    <div style={{ borderRadius: 10, background: bg }}>
+    <div
+      style={{
+        borderRadius: 16,
+        background: 'var(--pm-card-soft)',
+        boxShadow: 'var(--pm-card-rim)',
+      }}
+    >
       <button
         type="button"
         onClick={onToggle}
@@ -57,28 +64,41 @@ function AlertStrip({
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          padding: '10px 12px',
-          borderRadius: 10,
+          padding: '12px 16px',
+          borderRadius: 16,
           border: 'none',
           background: 'transparent',
-          color,
           fontSize: 13,
-          fontWeight: 600,
           cursor: 'pointer',
           fontFamily: 'inherit',
           textAlign: 'left',
+          color: 'inherit',
         }}
       >
-        {icon}
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            color,
+            fontWeight: 700,
+            flexShrink: 0,
+          }}
+        >
+          {icon}
+          {label} {items.length}건
+        </span>
         <span
           style={{
             flex: 1,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            color: 'rgb(var(--pm-ink-rgb) / .65)',
+            fontWeight: 500,
           }}
         >
-          {label} {items.length}건 — {items.map((it) => it.title).join(' · ')}
+          {items.map((it) => it.title).join(' · ')}
         </span>
         <svg
           width="14"
@@ -91,6 +111,7 @@ function AlertStrip({
           strokeLinejoin="round"
           style={{
             flexShrink: 0,
+            color: 'var(--pm-ink-3)',
             transform: open ? 'rotate(180deg)' : 'none',
             transition: 'transform .18s ease',
           }}
@@ -100,7 +121,7 @@ function AlertStrip({
         </svg>
       </button>
       {open && (
-        <div style={{ padding: '0 12px 12px' }}>
+        <div style={{ padding: '0 16px 14px' }}>
           {items.map((item, i) => (
             <div
               key={item.id}
@@ -208,7 +229,13 @@ export function TimelineCalm({
 
   // 주의가 발생한 stage 들 — 실패한 비-info 체크(실제 문제)가 있는 경우만.
   const warnedStages = stages.filter((s) => (s.failedChecks ?? 0) > 0)
-  const firstWarnedStage = warnedStages[0] ?? null
+  // 주의 스트립 항목 — 케이스 차원(caseAlerts: 견종·마릿수 등)과 단계 차원(warnedStages:
+  // 절차 검증 어긋남)을 한 스트립으로 합친다. stage 의 desc 는 주의 발생 시 첫 주의
+  // 메시지를 담는다(scenario 의 failedMsg 우선 규칙).
+  const warnItems = [
+    ...caseAlerts,
+    ...warnedStages.map((s) => ({ id: s.id, title: s.label, message: s.desc })),
+  ]
   // 안내 stage 들 — info 체크가 있거나, advisory step(추가 백신·추가 검사)이 미완료인 경우.
   // advisory 는 면역이 아직 유효한 '미래 만료 대비' reminder — 문제(주의)가 아니라
   // 차분한 안내 톤으로 묶는다. 이미 주의로 잡힌 stage 는 제외(한 stage = 한 배너).
@@ -510,10 +537,10 @@ export function TimelineCalm({
               style={{
                 fontSize: 16,
                 lineHeight: '22px',
-                // 카드 배경도 흰색으로 중립화한 것과 짝 — 제목 글자색은 항상 중립(ink/ink2/ink3),
-                // '주의' 신호는 배지 아이콘 + 우측 작은 라벨(색 유지)이 담당. 굵기만 올려 강조.
+                // 제목은 주의·안내 무관하게 상태(진행/완료/예정)만 따른다 — 색·굵기 신호는
+                // 배지 아이콘 + 우측 상태 라벨이 전담(2026-07-12 주의·안내 표시 전수 통일).
                 color: isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
-                fontWeight: isCurr || hasWarn ? 600 : 500,
+                fontWeight: isCurr ? 600 : 500,
                 minWidth: 0,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -841,7 +868,7 @@ export function TimelineCalm({
           </div>
 
           {/* 다음 할 일 카드 — 상태 창과 분리. 스텝 배지가 아래 타임라인 번호와 연결. */}
-          {(nextStages.length > 0 || caseAlerts.length > 0) && (
+          {nextStages.length > 0 && (
             <div
               style={{
                 marginTop: 10,
@@ -978,24 +1005,41 @@ export function TimelineCalm({
                 </>
               )}
 
-              {/* 주의 스트립 — 케이스 차원 결격(견종·마릿수·거주 등). 평소엔 존재하지 않고,
-                  발생 시 한 줄 앰버 스트립. 탭하면 카드 안에서 상세를 펼친다. */}
-              {caseAlerts.length > 0 && (
-                <div style={{ marginTop: nextStages.length > 0 ? 14 : 0 }}>
-                  <AlertStrip
-                    icon={<StormCloudIcon size={15} />}
-                    color={C.warn}
-                    bg={C.warnBg}
-                    label="주의"
-                    items={caseAlerts}
-                    open={alertsOpen}
-                    onToggle={() => setAlertsOpen((v) => !v)}
-                  />
-                </div>
-              )}
             </div>
           )}
           </>
+        )}
+
+        {/* 주의 스트립 — 케이스 차원 결격(견종·마릿수 등, caseAlerts) + 절차 검증이 실제
+            어긋난 단계(warnedStages)를 하나로 합쳐 한 줄 요약. 탭하면 상세를 펼친다.
+            여정 완료 후에도 유지(옛 '완료 후 주의 카드' 대체) — 주의는 완료와 무관하게
+            보호자가 봐야 할 신호라서. 안내 스트립과 같은 AlertStrip 공유. */}
+        {warnItems.length > 0 && (
+          <div style={{ marginTop: journeyComplete ? 18 : 14 }}>
+            <AlertStrip
+              icon={<StormCloudIcon size={15} />}
+              color={C.warn}
+              label="주의"
+              items={warnItems}
+              open={alertsOpen}
+              onToggle={() => setAlertsOpen((v) => !v)}
+            />
+          </div>
+        )}
+
+        {/* 안내 스트립 — 주의 스트립 바로 아래, 같은 AlertStrip. 여정 완료 후엔 완료
+            배너에 집중하도록 가린다(주의는 완료 무관 신호라 유지, 안내는 참고 정보). */}
+        {!journeyComplete && infoStages.length > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <AlertStrip
+              icon={<CloudIcon size={14} />}
+              color={C.info}
+              label="안내"
+              items={infoStages.map((s) => ({ id: s.id, title: s.label, message: s.infoMessage }))}
+              open={infoOpen}
+              onToggle={() => setInfoOpen((v) => !v)}
+            />
+          </div>
         )}
 
         {/* 목적지 전환 바텀시트 — 히어로 목적지 칩(다목적지)에서 연다. UI 는 헤더 시절과 동일. */}
@@ -1067,82 +1111,10 @@ export function TimelineCalm({
           </BottomSheet>
         )}
 
-        {/* 주의 카드 — 여정 완료 후에만 별도 카드로 (완료 중 히어로가 없으므로).
-            진행 중엔 히어로 카드의 주의 스트립이 담당한다. */}
-        {journeyComplete && caseAlerts.length > 0 && (
-          <div
-            style={{
-              marginTop: 18,
-              padding: 22,
-              borderRadius: 16,
-              background: C.cardSoft,
-              border: `.5px solid ${C.line}`,
-              boxShadow: 'var(--pm-card-rim)',
-            }}
-          >
-            <div style={{ ...monoCap, color: C.warn, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <StormCloudIcon size={13} />
-              <span>주의</span>
-            </div>
-            {caseAlerts.map((alert, i) => (
-              <div
-                key={alert.id}
-                style={{
-                  marginTop: i === 0 ? 12 : 14,
-                  paddingTop: i === 0 ? 0 : 14,
-                  borderTop: i === 0 ? 0 : `1px solid color-mix(in srgb, ${C.warn} 13%, transparent)`,
-                }}
-              >
-                <h3
-                  style={{
-                    ...serif,
-                    margin: 0,
-                    fontSize: 20,
-                    lineHeight: 1.2,
-                    color: C.ink,
-                    fontWeight: 500,
-                    textWrap: 'balance' as React.CSSProperties['textWrap'],
-                  }}
-                >
-                  {alert.title}
-                </h3>
-                <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: C.ink2 }}>
-                  {alert.message}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* (구) 주의 알림 — stage 차원 procedure-check 가 트리거되면 표시되던 한 줄 배너.
-            severity 재분류 이후 stage-level 주의는 더 이상 발생하지 않지만, 향후
-            입력 차단 외 stage-level 룰이 추가될 가능성을 위해 로직은 유지. */}
-        {warnedStages.length > 0 && firstWarnedStage && (
-          <Link
-            href={stageHref(firstWarnedStage)}
-            className="pm-pressable"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              marginTop: 18,
-              padding: '10px 14px',
-              borderRadius: 12,
-              background: C.warnBg,
-              border: `.5px solid color-mix(in srgb, ${C.warn} 20%, transparent)`,
-              color: C.warn,
-              fontSize: 13,
-              textDecoration: 'none',
-              fontWeight: 500,
-            }}
-          >
-            <StormCloudIcon size={15} />
-            <span>주의 {warnedStages.length}건 — {warnedStages.map((s) => s.label).join(', ')}</span>
-          </Link>
-        )}
-
         {/* 여정 완료 배너 — 마지막 절차가 끝나면 '다음 할 일' 자리에 노출. 옛 journey-complete
-            마커 step 을 대체. 완료의 긍정 톤(sage)으로 다음 할 일·안내 카드와 구분. */}
+            마커 step 을 대체. 완료의 긍정 톤(sage)으로 다음 할 일·안내 카드와 구분.
+            (옛 '완료 후 주의 카드'와 stage 주의 Link 배너는 위 통합 주의 스트립이 대체 —
+            2026-07-12 주의·안내 표시 전수 통일.) */}
         {journeyComplete && (
           <>
           <div
@@ -1334,22 +1306,6 @@ export function TimelineCalm({
             </div>
           )}
           </>
-        )}
-
-        {/* 안내 스트립 — 주의 스트립과 같은 컴포넌트(AlertStrip) 공유. 평소엔 한 줄 요약,
-            탭하면 펼쳐 각 stage 의 안내문을 본다. 여정 완료 후엔 완료 배너에 집중하도록 가린다. */}
-        {!journeyComplete && infoStages.length > 0 && (
-          <div style={{ marginTop: nextStages.length > 0 ? 14 : 22 }}>
-            <AlertStrip
-              icon={<CloudIcon size={14} />}
-              color={C.info}
-              bg={C.infoBg}
-              label="안내"
-              items={infoStages.map((s) => ({ id: s.id, title: s.label, message: s.infoMessage }))}
-              open={infoOpen}
-              onToggle={() => setInfoOpen((v) => !v)}
-            />
-          </div>
         )}
 
         {/* 단계 리스트 — 한국(출국 준비)·일본·한국(귀국) 구간별 카드 + 카드 안 세로
