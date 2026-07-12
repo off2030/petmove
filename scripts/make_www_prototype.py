@@ -32,10 +32,12 @@ def b64_crop(name, out_w, out_h, focus_y=0.5, focus_x=0.5, quality=78):
     im = im.crop((l, t, l + cw, t + ch)).resize((out_w, out_h), Image.LANCZOS)
     return _enc(im, quality)
 
-HERO_SRC = "hero-cardog-2x.png"                       # 밝은 차 창밖(AI·2배 업스케일 5056px). ✦워터마크 크롭 제외
-hero_p    = b64_crop(HERO_SRC, 1440, 1900, focus_x=0.66, focus_y=0.28)  # 폰 세로(강아지 우측·고해상도)
-hero_card = b64_crop(HERO_SRC, 1200, 1300, focus_x=0.66, focus_y=0.34)  # PC 카드(중앙)
-hero_l    = b64_crop(HERO_SRC, 2000, 1050, focus_x=0.56, focus_y=0.40)  # 760-959 가로
+# 히어로 = 실사 스톡(사용자 확정 2026-07-12). 구 AI 이미지(hero-cardog-2x)는 이 사진을
+# 본뜬 것이었음 — 원본 실사로 회귀. ⚠️shutterstock — 실제 게시 전 정식 라이선스 구매 필요.
+HERO_SRC = "shutterstock_437791615.jpg"               # 흰 강아지 차 창밖(5000×3337, 쿨톤)
+hero_p    = b64_crop(HERO_SRC, 1440, 1900, focus_x=0.72, focus_y=0.22)  # 폰 세로(강아지 우측·고해상도)
+hero_card = b64_crop(HERO_SRC, 1200, 1300, focus_x=0.72, focus_y=0.35)  # PC 카드(중앙)
+hero_l    = b64_crop(HERO_SRC, 2000, 1050, focus_x=0.60, focus_y=0.35)  # 760-959 가로
 
 band = b64("patrick-hendry-jd0hS7Vhn_A-unsplash.jpg", 3000)  # 협곡 뒷모습(감성). PC 풀블리드용 고해상도
 
