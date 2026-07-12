@@ -30,7 +30,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/japan-sakura-riverside.jpg',
     '/destinations/japan.jpg',
     '/destinations/japan-tokyo-tower.jpg',
-    '/destinations/japan-tokyo-night.jpg',
     '/destinations/japan-akihabara-1.jpg',
     '/destinations/japan-akihabara-2.jpg',
     '/destinations/japan-izakaya-alley.jpg',
