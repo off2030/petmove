@@ -26,9 +26,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/japan-fuji-pagoda-snow.jpg',
     '/destinations/japan-akihabara-street.jpg',
     '/destinations/japan-tokyo-tower-dusk.jpg',
-    '/destinations/japan-tatami-garden.jpg',
     '/destinations/japan-torii-tunnel.jpg',
-    '/destinations/japan-bamboo-forest.jpg',
     '/destinations/japan-sakura-riverwalk.jpg',
     '/destinations/japan-sakura-blossom-macro.jpg',
   ],
@@ -43,7 +41,6 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/japan-fuji-pagoda-snow.jpg': 'top',
   '/destinations/japan-akihabara-street.jpg': 'top',
   '/destinations/japan-tokyo-tower-dusk.jpg': 'top',
-  '/destinations/japan-tatami-garden.jpg': 'bottom',
   '/destinations/japan-sakura-riverwalk.jpg': 'bottom',
   '/destinations/japan-sakura-blossom-macro.jpg': 'top',
 }
