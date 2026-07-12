@@ -41,7 +41,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/philippines-island-cove-boats.jpg',
     '/destinations/philippines-palm-beach-boat.jpg',
     '/destinations/philippines-island-hopping-sea.jpg',
-    '/destinations/philippines-curved-bay-aerial.jpg',
     '/destinations/philippines-palm-beach-turquoise.jpg',
     '/destinations/philippines-elnido-lagoon.jpg',
     '/destinations/philippines-beach-two-boats.jpg',
