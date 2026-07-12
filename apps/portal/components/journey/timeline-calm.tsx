@@ -30,6 +30,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/japan-fuji-umbrella-field.jpg',
   ],
   태국: [
+    '/destinations/thailand-aerial-beach-waves.jpg',
     '/destinations/thailand-cliff-cove-aerial.jpg',
     '/destinations/thailand-elephant-jungle-road.jpg',
     '/destinations/thailand-cliff-coast-road.jpg',
