@@ -23,137 +23,6 @@ const DEST_PHOTOS: Record<string, string> = {
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, '/destinations/europe.jpg'])),
 }
 
-/**
- * 주의·안내 공용 접이식 스트립 — 평소엔 한 줄 요약, 탭하면 카드 안에서 상세를 펼친다.
- * 주의·안내가 이 하나의 컴포넌트를 공유해 구조가 어긋나지 않는다.
- *
- * 스타일 원칙(2026-07-12 사용자 확정): 카드 배경은 다른 카드와 동일한 중립(cardSoft),
- * 색은 아이콘 + 상태 라벨("주의 N건")에만. 제목 나열·상세 본문은 중립 잉크.
- */
-function AlertStrip({
-  icon,
-  color,
-  label,
-  items,
-  open,
-  onToggle,
-}: {
-  icon: React.ReactNode
-  /** 아이콘·상태 라벨에만 쓰는 상태색 (주의=warn, 안내=info). */
-  color: string
-  label: string
-  items: { id: string; title: string; message: string | null | undefined }[]
-  open: boolean
-  onToggle: () => void
-}) {
-  if (items.length === 0) return null
-  return (
-    <div
-      style={{
-        borderRadius: 16,
-        background: 'var(--pm-card-soft)',
-        boxShadow: 'var(--pm-card-rim)',
-      }}
-    >
-      <button
-        type="button"
-        onClick={onToggle}
-        className="pm-pressable"
-        style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '12px 16px',
-          borderRadius: 16,
-          border: 'none',
-          background: 'transparent',
-          fontSize: 13,
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          textAlign: 'left',
-          color: 'inherit',
-        }}
-      >
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            color,
-            fontWeight: 700,
-            flexShrink: 0,
-          }}
-        >
-          {icon}
-          {label} {items.length}건
-        </span>
-        <span
-          style={{
-            flex: 1,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            color: 'rgb(var(--pm-ink-rgb) / .65)',
-            fontWeight: 500,
-          }}
-        >
-          {items.map((it) => it.title).join(' · ')}
-        </span>
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{
-            flexShrink: 0,
-            color: 'var(--pm-ink-3)',
-            transform: open ? 'rotate(180deg)' : 'none',
-            transition: 'transform .18s ease',
-          }}
-          aria-hidden
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-      {open && (
-        <div style={{ padding: '0 16px 14px' }}>
-          {items.map((item, i) => (
-            <div
-              key={item.id}
-              style={{
-                marginTop: i === 0 ? 2 : 12,
-                paddingTop: i === 0 ? 0 : 12,
-                borderTop: i === 0 ? 'none' : `.5px solid rgb(var(--pm-ink-rgb) / .12)`,
-              }}
-            >
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--pm-ink)' }}>
-                {item.title}
-              </div>
-              {item.message && (
-                <p
-                  style={{
-                    margin: '4px 0 0',
-                    fontSize: 13,
-                    lineHeight: 1.55,
-                    color: 'rgb(var(--pm-ink-rgb) / .65)',
-                  }}
-                >
-                  {item.message}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
 function withWaGwa(name: string): string {
   if (!name) return name
@@ -232,9 +101,15 @@ export function TimelineCalm({
   // 주의 스트립 항목 — 케이스 차원(caseAlerts: 견종·마릿수 등)과 단계 차원(warnedStages:
   // 절차 검증 어긋남)을 한 스트립으로 합친다. stage 의 desc 는 주의 발생 시 첫 주의
   // 메시지를 담는다(scenario 의 failedMsg 우선 규칙).
-  const warnItems = [
-    ...caseAlerts,
-    ...warnedStages.map((s) => ({ id: s.id, title: s.label, message: s.desc })),
+  const warnItems: { id: string; title: string; message: string | undefined; href?: string }[] = [
+    ...caseAlerts.map((a) => ({ id: a.id, title: a.title, message: a.message ?? undefined })),
+    ...warnedStages.map((s) => ({
+      id: s.id,
+      title: s.label,
+      // warnMessage — '설명문 표시' 토글과 무관하게 항상 있는 주의 본문(desc 는 토글로 비워짐).
+      message: s.warnMessage,
+      href: stageHref(s),
+    })),
   ]
   // 안내 stage 들 — info 체크가 있거나, advisory step(추가 백신·추가 검사)이 미완료인 경우.
   // advisory 는 면역이 아직 유효한 '미래 만료 대비' reminder — 문제(주의)가 아니라
@@ -292,9 +167,9 @@ export function TimelineCalm({
     fontWeight: 600,
   }
 
-  // 히어로 카드의 주의·안내 스트립 펼침 상태 — 평소엔 한 줄, 탭하면 상세 목록.
-  const [alertsOpen, setAlertsOpen] = useState(false)
-  const [infoOpen, setInfoOpen] = useState(false)
+  // 히어로 날씨 칩 탭 → 목록 바텀시트 (여러 건일 때. 1건이고 이동 가능하면 바로 이동).
+  const [warnSheetOpen, setWarnSheetOpen] = useState(false)
+  const [infoSheetOpen, setInfoSheetOpen] = useState(false)
 
   // 상태 창(히어로 카드) = 나-2 확정 — 진행 바까지 사진 안으로 들어간 풀 포토.
   // 티켓 노치 = 우측 정중앙 확정. (2026-07-11 실기기 비교 후 확정, dev 스위처 제거.)
@@ -314,6 +189,21 @@ export function TimelineCalm({
   const router = useRouter()
   const searchParams = useSearchParams()
   const activeDestResolved = activeDest ?? searchParams.get('dest') ?? destTokens[0] ?? ''
+
+  // 여정 완료 미리보기 — 개발 전용 (?pmDemoComplete=1). 실데이터 없이 완료 화면을 확인.
+  const demoComplete =
+    process.env.NODE_ENV !== 'production' && searchParams.get('pmDemoComplete') === '1'
+  const complete = journeyComplete || demoComplete
+
+  // 날씨 칩 탭 — 1건이고 이동 가능한 단계면 바로 그 단계로, 그 외엔 목록 바텀시트.
+  const onWarnChip = () => {
+    if (warnItems.length === 1 && warnItems[0].href) router.push(warnItems[0].href)
+    else setWarnSheetOpen(true)
+  }
+  const onInfoChip = () => {
+    if (infoStages.length === 1) router.push(stageHref(infoStages[0]))
+    else setInfoSheetOpen(true)
+  }
   const tripTypeRaw = (case_?.data as Record<string, unknown> | null | undefined)?.trip_type
   const tripTypeByDest =
     tripTypeRaw && typeof tripTypeRaw === 'object' && !Array.isArray(tripTypeRaw)
@@ -640,10 +530,10 @@ export function TimelineCalm({
         />
 
         {/* 상태 창 + 다음 할 일 카드 — 히어로를 둘로 분리(나안).
-            상태 창: 사진(목적지 칩 + D-day·출국일 오버레이) + 세그먼트 진행 바.
-            다음 할 일: 별도 카드, 스텝 배지로 아래 타임라인과 연결. 주의 스트립 포함.
-            여정 완료 후엔 완료 배너가 이 역할을 대신하므로 둘 다 가린다. */}
-        {!journeyComplete && (
+            상태 창: 사진(목적지 칩 + 날씨 칩 + D-day·출국일 오버레이) + 세그먼트 진행 바.
+            다음 할 일: 별도 카드, 스텝 배지로 아래 타임라인과 연결.
+            여정 완료 후에도 상태 창(사진)은 유지 — 원 설계(2026-06-02)대로 '다음 할 일'
+            자리만 완료 배너로 바뀐다(리디자인 때 사진까지 가려지던 회귀를 복원, 2026-07-13). */}
           <>
           <div
             style={{
@@ -733,6 +623,58 @@ export function TimelineCalm({
                     </span>
                   </span>
                 )}
+                {/* 날씨 칩 — 여행지 하늘에 뜬 오늘의 날씨. 주의(뇌우)·안내(구름)가 있으면
+                    우상단에 요약 칩만(내용은 탭 → 해당 단계 or 바텀시트). 안내는 완료 후 숨김. */}
+                {(warnItems.length > 0 || (!complete && infoStages.length > 0)) && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 14,
+                      right: 16,
+                      display: 'flex',
+                      gap: 6,
+                    }}
+                  >
+                    {warnItems.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={onWarnChip}
+                        className="pm-pressable"
+                        aria-label={`주의 ${warnItems.length}건 보기`}
+                        style={{
+                          ...destChipStyle,
+                          gap: 5,
+                          color: 'var(--pm-warn)',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        <StormCloudIcon size={13} />
+                        주의 {warnItems.length}
+                      </button>
+                    )}
+                    {!complete && infoStages.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={onInfoChip}
+                        className="pm-pressable"
+                        aria-label={`안내 ${infoStages.length}건 보기`}
+                        style={{
+                          ...destChipStyle,
+                          gap: 5,
+                          color: 'var(--pm-info)',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        <CloudIcon size={13} />
+                        안내 {infoStages.length}
+                      </button>
+                    )}
+                  </div>
+                )}
                 {/* 하단 오버레이(나-2 확정) — 진행 바까지 사진 안으로.
                     스크림 대신 옅은 텍스트 섀도 — 밝은 사진에서도 읽히되 원본 밝기는 유지. */}
                 <div
@@ -788,9 +730,18 @@ export function TimelineCalm({
                 들어가 본문이 없다. 사진 없는 목적지만 본문 세그먼트 바를 그린다. */}
             {!heroPhoto && (
             <div style={{ padding: heroPhoto ? '14px 18px 16px' : '16px 18px' }}>
-              {/* 사진 없으면 목적지·D-day 를 본문 첫 줄에 — 사진의 칩·오버레이 대체. */}
+              {/* 사진 없으면 목적지·D-day 를 본문 첫 줄에 — 사진의 칩·오버레이 대체.
+                  날씨 칩도 같은 줄 우측에(사진판과 동일 역할, 카드 위라 틴트 필 스타일). */}
               {!heroPhoto && (
-                <div style={{ marginBottom: 13 }}>
+                <div
+                  style={{
+                    marginBottom: 13,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                  }}
+                >
                   {multiDest ? (
                     <button
                       type="button"
@@ -839,6 +790,60 @@ export function TimelineCalm({
                       {ringStatus ? ` · ${ringStatus}` : ''}
                     </span>
                   )}
+                  {(warnItems.length > 0 || (!complete && infoStages.length > 0)) && (
+                    <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                      {warnItems.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={onWarnChip}
+                          className="pm-pressable"
+                          aria-label={`주의 ${warnItems.length}건 보기`}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 5,
+                            padding: '4px 10px',
+                            borderRadius: 999,
+                            border: 'none',
+                            background: C.warnBg,
+                            color: C.warn,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                          }}
+                        >
+                          <StormCloudIcon size={13} />
+                          주의 {warnItems.length}
+                        </button>
+                      )}
+                      {!complete && infoStages.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={onInfoChip}
+                          className="pm-pressable"
+                          aria-label={`안내 ${infoStages.length}건 보기`}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 5,
+                            padding: '4px 10px',
+                            borderRadius: 999,
+                            border: 'none',
+                            background: C.infoBg,
+                            color: C.info,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                          }}
+                        >
+                          <CloudIcon size={13} />
+                          안내 {infoStages.length}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               {/* 준비 진행 세그먼트 바 — 일정 1개 = 1칸, 아래 타임라인의 축소판. */}
@@ -867,8 +872,9 @@ export function TimelineCalm({
             )}
           </div>
 
-          {/* 다음 할 일 카드 — 상태 창과 분리. 스텝 배지가 아래 타임라인 번호와 연결. */}
-          {nextStages.length > 0 && (
+          {/* 다음 할 일 카드 — 상태 창과 분리. 스텝 배지가 아래 타임라인 번호와 연결.
+              여정 완료 후엔 이 자리를 완료 배너가 대신한다. */}
+          {!complete && nextStages.length > 0 && (
             <div
               style={{
                 marginTop: 10,
@@ -1008,39 +1014,75 @@ export function TimelineCalm({
             </div>
           )}
           </>
-        )}
 
-        {/* 주의 스트립 — 케이스 차원 결격(견종·마릿수 등, caseAlerts) + 절차 검증이 실제
-            어긋난 단계(warnedStages)를 하나로 합쳐 한 줄 요약. 탭하면 상세를 펼친다.
-            여정 완료 후에도 유지(옛 '완료 후 주의 카드' 대체) — 주의는 완료와 무관하게
-            보호자가 봐야 할 신호라서. 안내 스트립과 같은 AlertStrip 공유. */}
-        {warnItems.length > 0 && (
-          <div style={{ marginTop: journeyComplete ? 18 : 14 }}>
-            <AlertStrip
-              icon={<StormCloudIcon size={15} />}
-              color={C.warn}
-              label="주의"
-              items={warnItems}
-              open={alertsOpen}
-              onToggle={() => setAlertsOpen((v) => !v)}
-            />
+        {/* 주의·안내 목록 바텀시트 — 날씨 칩이 여러 건일 때 연다. 항목 구조는 상세 카드와
+            동일(제목+본문), 단계 항목은 탭하면 해당 단계로 이동. */}
+        <BottomSheet open={warnSheetOpen} onClose={() => setWarnSheetOpen(false)} title="주의">
+          <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 8 }}>
+            {warnItems.map((item, i) => {
+              const body = (
+                <>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{item.title}</div>
+                  {item.message && (
+                    <p style={{ margin: '4px 0 0', fontSize: 13, lineHeight: 1.55, color: C.ink2 }}>
+                      {item.message}
+                    </p>
+                  )}
+                </>
+              )
+              const rowStyle: React.CSSProperties = {
+                display: 'block',
+                textAlign: 'left',
+                padding: '14px 4px',
+                borderTop: i === 0 ? 'none' : `.5px solid ${C.line}`,
+                textDecoration: 'none',
+                color: 'inherit',
+              }
+              return item.href ? (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="pm-pressable"
+                  style={rowStyle}
+                  onClick={() => setWarnSheetOpen(false)}
+                >
+                  {body}
+                </Link>
+              ) : (
+                <div key={item.id} style={rowStyle}>
+                  {body}
+                </div>
+              )
+            })}
           </div>
-        )}
-
-        {/* 안내 스트립 — 주의 스트립 바로 아래, 같은 AlertStrip. 여정 완료 후엔 완료
-            배너에 집중하도록 가린다(주의는 완료 무관 신호라 유지, 안내는 참고 정보). */}
-        {!journeyComplete && infoStages.length > 0 && (
-          <div style={{ marginTop: 14 }}>
-            <AlertStrip
-              icon={<CloudIcon size={14} />}
-              color={C.info}
-              label="안내"
-              items={infoStages.map((s) => ({ id: s.id, title: s.label, message: s.infoMessage }))}
-              open={infoOpen}
-              onToggle={() => setInfoOpen((v) => !v)}
-            />
+        </BottomSheet>
+        <BottomSheet open={infoSheetOpen} onClose={() => setInfoSheetOpen(false)} title="안내">
+          <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 8 }}>
+            {infoStages.map((s, i) => (
+              <Link
+                key={s.id}
+                href={stageHref(s)}
+                className="pm-pressable"
+                style={{
+                  display: 'block',
+                  textAlign: 'left',
+                  padding: '14px 4px',
+                  borderTop: i === 0 ? 'none' : `.5px solid ${C.line}`,
+                  textDecoration: 'none',
+                  color: 'inherit',
+                }}
+                onClick={() => setInfoSheetOpen(false)}
+              >
+                <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{s.label}</div>
+                {s.infoMessage && (
+                  <p style={{ margin: '4px 0 0', fontSize: 13, lineHeight: 1.55, color: C.ink2 }}>
+                    {s.infoMessage}
+                  </p>
+                )}
+              </Link>
+            ))}
           </div>
-        )}
+        </BottomSheet>
 
         {/* 목적지 전환 바텀시트 — 히어로 목적지 칩(다목적지)에서 연다. UI 는 헤더 시절과 동일. */}
         {multiDest && (
@@ -1111,16 +1153,14 @@ export function TimelineCalm({
           </BottomSheet>
         )}
 
-        {/* 여정 완료 배너 — 마지막 절차가 끝나면 '다음 할 일' 자리에 노출. 옛 journey-complete
-            마커 step 을 대체. 완료의 긍정 톤(sage)으로 다음 할 일·안내 카드와 구분.
-            (옛 '완료 후 주의 카드'와 stage 주의 Link 배너는 위 통합 주의 스트립이 대체 —
-            2026-07-12 주의·안내 표시 전수 통일.) */}
-        {journeyComplete && (
+        {/* 여정 완료 배너 — 마지막 절차가 끝나면 '다음 할 일' 자리에 노출(사진 카드는 유지).
+            완료의 긍정 톤(sage)으로 구분. 남은 주의는 사진 위 날씨 칩이 담당. */}
+        {complete && (
           <>
           <div
             style={{
               position: 'relative',
-              marginTop: 22,
+              marginTop: 10,
               padding: 22,
               borderRadius: 16,
               overflow: 'hidden',
