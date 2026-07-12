@@ -24,7 +24,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   일본: [
     '/destinations/japan-fuji-umbrella-field.jpg',
     '/destinations/japan-fuji-pagoda-snow.jpg',
-    '/destinations/japan-tokyo-tower-dusk.jpg',
+    '/destinations/japan-torii-tunnel.jpg',
     '/destinations/japan-bamboo-forest.jpg',
     '/destinations/japan-sakura-blossom-macro.jpg',
   ],
@@ -37,7 +37,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
 const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/japan-fuji-umbrella-field.jpg': 'bottom',
   '/destinations/japan-fuji-pagoda-snow.jpg': 'top',
-  '/destinations/japan-tokyo-tower-dusk.jpg': 'top',
   '/destinations/japan-sakura-blossom-macro.jpg': 'top',
 }
 
