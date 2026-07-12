@@ -41,7 +41,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/japan-fuji-sakura-vertical.jpg',
     '/destinations/japan-aso-highlands.jpg',
     '/destinations/japan-bamboo-forest.jpg',
-    '/destinations/japan-garden-pond-2.jpg',
     '/destinations/japan-tatami-garden.jpg',
   ],
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
