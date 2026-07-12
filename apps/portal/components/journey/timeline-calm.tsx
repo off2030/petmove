@@ -25,6 +25,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/japan-fuji-umbrella-field.jpg',
     '/destinations/japan-fuji-pagoda-snow.jpg',
     '/destinations/japan-akihabara-street.jpg',
+    '/destinations/japan-akihabara-bridge.jpg',
   ],
   ...Object.fromEntries(APP_EU_DESTINATIONS_KO.map((ko) => [ko, ['/destinations/europe.jpg']])),
 }
@@ -36,6 +37,7 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/japan-fuji-umbrella-field.jpg': 'bottom',
   '/destinations/japan-fuji-pagoda-snow.jpg': 'top',
   '/destinations/japan-akihabara-street.jpg': 'top',
+  '/destinations/japan-akihabara-bridge.jpg': 'bottom',
 }
 
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
