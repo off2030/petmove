@@ -5,7 +5,9 @@ import { C as PM } from '@/lib/palette'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { readJourneyFeedback } from '@petmove/domain'
 import { CaseHeader } from '@/components/cases/case-header'
+import { FACES, FaceIcon } from '@/components/feedback/feedback-view'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
@@ -194,6 +196,10 @@ export function TimelineCalm({
   const demoComplete =
     process.env.NODE_ENV !== 'production' && searchParams.get('pmDemoComplete') === '1'
   const complete = journeyComplete || demoComplete
+
+  // 이미 남긴 만족도 — 소감 카드의 얼굴 행에서 해당 얼굴만 틴트 표시.
+  const savedRating =
+    readJourneyFeedback(case_?.data, trip.toCity, destTokens[0] ?? null)?.rating ?? null
 
   // 날씨 칩 탭 — 1건이고 이동 가능한 단계면 바로 그 단계로, 그 외엔 목록 바텀시트.
   const onWarnChip = () => {
@@ -1224,8 +1230,10 @@ export function TimelineCalm({
             아래엔 소감 카드와 '여정 마무리하기'만 남는다. */}
         {complete && (
           <>
-          {/* 소감 카드 — 도착(완료)의 긍정 톤과 별개로, 차분한 면에 소감 유도만 담는다.
-              design journey-lifecycle §5. */}
+          {/* 소감 카드 — 버튼 대신 만족도 얼굴 5개를 카드에 직접(원탭 = 첫 답변, 2026-07-12
+              사용자 확정). 얼굴은 의견 페이지와 같은 모노톤 라인 얼굴, 좋은 순. 탭하면 그
+              만족도가 선택된 채(?rating=) 의견 페이지가 열려 글은 선택으로 잇는다.
+              이미 남긴 만족도가 있으면 그 얼굴만 하늘 틴트로 표시. */}
           <div
             style={{
               marginTop: 14,
@@ -1246,30 +1254,44 @@ export function TimelineCalm({
                 textWrap: 'balance' as React.CSSProperties['textWrap'],
               }}
             >
-              펫무브와 함께한 여정 어떠셨나요?
+              {withWaGwa(pet.name)}의 여정, 어떠셨나요?
             </h3>
-            <Link
-              href={`/cases/${caseId}/feedback?dest=${encodeURIComponent(trip.toCity)}`}
-              className="pm-pressable"
+            <p style={{ margin: '6px 0 0', fontSize: 13, color: C.ink3 }}>
+              얼굴을 눌러 알려주세요
+            </p>
+            <div
               style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: 8,
                 marginTop: 16,
-                padding: '10px 16px',
-                borderRadius: 999,
-                border: `.5px solid color-mix(in srgb, var(--pm-sage) 45%, transparent)`,
-                background: 'var(--pm-surface)',
-                color: 'var(--pm-ink)',
-                fontSize: 13,
-                fontWeight: 600,
-                letterSpacing: '-0.005em',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                textDecoration: 'none',
+                maxWidth: 320,
               }}
             >
-              의견 남기기
-              <span style={{ color: C.sage }}>→</span>
-            </Link>
+              {FACES.map((f) => {
+                const selected = savedRating === f.level
+                return (
+                  <Link
+                    key={f.level}
+                    href={`/cases/${caseId}/feedback?dest=${encodeURIComponent(trip.toCity)}&rating=${f.level}`}
+                    className="pm-pressable"
+                    aria-label={f.label}
+                    style={{
+                      width: 46,
+                      height: 46,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: selected ? C.accent : C.ink3,
+                      background: selected ? C.soft : 'transparent',
+                    }}
+                  >
+                    <FaceIcon level={f.level} size={38} />
+                  </Link>
+                )
+              })}
+            </div>
           </div>
 
           {/* 여정 마무리하기 — 다중 목적지 중 이 여정이 완료됐을 때만. 누르면 '지난 여정'으로

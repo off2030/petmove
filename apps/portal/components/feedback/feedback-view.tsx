@@ -17,7 +17,8 @@ import { C } from '@/lib/palette'
 
 // 표시 순서는 '아주 좋아요'(level 5)를 맨 앞으로 — 긍정 선택을 앞세워 응답 문턱을 낮춘다.
 // level(저장값)은 그대로라 점수 의미는 불변, 화면 순서만 역순.
-const FACES: { level: number; label: string }[] = [
+/** 만족도 얼굴 5단계 — 좋은 순. 완료 히어로 아래 소감 카드(timeline-calm)와 공유. */
+export const FACES: { level: number; label: string }[] = [
   { level: 5, label: '아주 좋아요' },
   { level: 4, label: '좋았어요' },
   { level: 3, label: '보통이에요' },
@@ -26,7 +27,7 @@ const FACES: { level: number; label: string }[] = [
 ]
 
 /** 모노톤 라인 얼굴 — level(1~5)에 따라 입 곡선이 찡그림→미소로 변한다. */
-function FaceIcon({ level, size = 30 }: { level: number; size?: number }) {
+export function FaceIcon({ level, size = 30 }: { level: number; size?: number }) {
   const mouth =
     level === 1
       ? 'M8 16.5 Q12 12.5 16 16.5'
@@ -57,7 +58,16 @@ function FaceIcon({ level, size = 30 }: { level: number; size?: number }) {
   )
 }
 
-export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | null }) {
+export function FeedbackView({
+  caseId,
+  dest,
+  initialRating = null,
+}: {
+  caseId: string
+  dest: string | null
+  /** 소감 카드의 얼굴 원탭으로 진입 시 미리 선택할 만족도(?rating=). 저장 전 초기값. */
+  initialRating?: number | null
+}) {
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
   // 목적지 칸의 의견 읽기 — legacy 단일 객체는 첫 목적지 것으로 호환.
@@ -65,7 +75,7 @@ export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | 
   const fb = readJourneyFeedback(caseRow?.data, dest ?? firstToken, firstToken)
   const saved = { rating: fb?.rating ?? null, text: fb?.text ?? '' }
 
-  const [rating, setRating] = useState<number | null>(saved.rating)
+  const [rating, setRating] = useState<number | null>(initialRating ?? saved.rating)
   const [text, setText] = useState(saved.text)
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)

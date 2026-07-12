@@ -24,6 +24,10 @@ export default function CaseFeedbackPage({
   const tokens = parseDestinations(caseRow.destination)
   const raw = searchParams.get('dest')
   const dest = raw && tokens.includes(raw) ? raw : tokens[0] ?? null
+  // 소감 카드의 얼굴 원탭 진입(?rating=1~5) — 그 만족도가 선택된 채 시작.
+  const ratingRaw = Number(searchParams.get('rating'))
+  const initialRating =
+    Number.isInteger(ratingRaw) && ratingRaw >= 1 && ratingRaw <= 5 ? ratingRaw : null
 
-  return <FeedbackView caseId={id} dest={dest} />
+  return <FeedbackView caseId={id} dest={dest} initialRating={initialRating} />
 }
