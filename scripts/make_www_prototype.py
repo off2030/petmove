@@ -250,12 +250,12 @@ html = f"""<!DOCTYPE html>
   .final{{background:linear-gradient(180deg,#4EC3FF,#0BA2F2);padding:52px 0 0;text-align:center}}
   .final h2{{font-size:24px;color:#fff;margin:0 0 22px;font-weight:700;text-shadow:0 1px 3px rgba(2,62,102,.20)}}
   .final p{{font-size:13.5px;color:#EAF6FF;margin:0 0 22px}}
-  .final .clouds{{display:block;width:min(400px,72%);height:auto;margin:34px auto 0}}
+  .final .clouds{{display:block;width:min(560px,92%);height:auto;margin:30px auto 0}}
   .store-row{{display:flex;gap:11px;justify-content:center;flex-wrap:wrap}}
   .store{{background:#FFFFFF;color:var(--ink);border-radius:13px;padding:13px 18px;display:flex;align-items:center;
     gap:8px;font-size:13.5px;font-weight:500}}
-  footer{{background:#17171A;color:#85858B;padding:28px 0;font-size:12px;line-height:1.85;margin-top:auto}}
-  footer a{{color:#A8A8AE}}
+  footer{{background:#fff;color:#5C5C60;padding:26px 0 30px;font-size:12px;line-height:1.85;margin-top:auto}}
+  footer a{{color:#454549}}
   footer .fsns{{display:inline-flex;align-items:center;gap:5px;margin:9px 0 4px;font-weight:600}}
   footer .fsns .nlogo{{font-weight:800;font-size:13px;line-height:1}}
 
@@ -536,12 +536,12 @@ html = f"""<!DOCTYPE html>
         <a class="store"><i class="ti ti-brand-google-play" style="font-size:16px"></i>Google Play</a>
       </div>
     </div>
-    <svg class="clouds" viewBox="-6 72 208 128" aria-hidden="true"><rect x="0" y="160" width="182" height="40" fill="#fff"/><circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/><circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/><circle cx="178" cy="154" r="24" fill="#fff"/><circle cx="182" cy="182" r="18" fill="#fff"/></svg>
+    <svg class="clouds" viewBox="0 0 520 150" aria-hidden="true"><circle cx="196" cy="196" r="152" fill="#fff"/><circle cx="392" cy="216" r="146" fill="#fff"/></svg>
   </div>
 
   <footer>
     <div class="container">
-      <div style="color:#C9C9CE;font-weight:500;margin-bottom:6px">펫무브 · PETMOVE</div>
+      <div style="color:#212124;font-weight:600;margin-bottom:6px">펫무브 · PETMOVE</div>
       로잔동물의료센터 · 사업자등록번호 124-18-42859<br>
       서울시 관악구 관악로29길 3 · 02-872-7588<br>
       <a href="https://blog.naver.com/petmove" target="_blank" rel="noopener" class="fsns"><span class="nlogo">N</span>네이버 블로그</a><br>
