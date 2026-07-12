@@ -1085,7 +1085,7 @@ export async function updateCaseTripType(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const destToken = (existing?.destination ?? '').split(',')[0]?.trim() ?? ''
-    if (!destToken) return { ok: false, error: '목적지가 설정되지 않은 여정입니다.' }
+    if (!destToken) return { ok: false, error: '여행지가 설정되지 않은 여정입니다.' }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }

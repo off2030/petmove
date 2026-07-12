@@ -34,7 +34,7 @@ const messages = {
     eyebrow: 'PetMove · Registration',
     title: '펫무브 등록 신청서',
     sec1: '어디로 가시나요?',
-    destination: '목적지',
+    destination: '여행지',
     required: '필수',
     destPlaceholder: '예: 일본 · Japan',
     noResults: '검색 결과 없음',
@@ -105,7 +105,7 @@ const messages = {
     microchipFormatErrorPrefixN: (n: number) => `반려동물 ${n}: `,
     microchipFormatError: '15자리 숫자를 입력하세요.',
     topLabels: {
-      destination: '목적지',
+      destination: '여행지',
       customerName: '이름',
       customerNameEn: '영문 이름',
       phone: '전화번호',

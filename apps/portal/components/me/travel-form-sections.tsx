@@ -59,7 +59,7 @@ export function TravelFormSections({
     return (
       <SectionCard marginTop={marginTop}>
         <DestinationField
-          label="목적지"
+          label="여행지"
           value={form.destination}
           onChange={(v) => set('destination', v)}
         />

@@ -188,7 +188,7 @@ export function CaseHeader({
           onClick={() => setDestSheetOpen(true)}
           aria-haspopup="dialog"
           aria-expanded={destSheetOpen}
-          aria-label="목적지 전환"
+          aria-label="여행지 전환"
           className="pm-pressable"
           style={{ ...destPillStyle, cursor: 'pointer', fontFamily: 'inherit' }}
         >
@@ -262,7 +262,7 @@ export function CaseHeader({
         <BottomSheet
           open={destSheetOpen}
           onClose={() => setDestSheetOpen(false)}
-          title="목적지"
+          title="여행지"
         >
           <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 4 }}>
             {tokens.map((t) => {
