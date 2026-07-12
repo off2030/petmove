@@ -73,7 +73,7 @@ APP_SECTIONS = f"""
   <section>
     <div class="container">
       <div class="kicker">펫무브 앱 소개</div>
-      <div class="h2">복잡한 준비, 앱으로 관리해요</div>
+      <h2 class="h2">복잡한 준비, 앱으로 관리해요</h2>
       <div class="alist">
         <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-route"></i></span><span class="at">단계별 가이드</span></div><p class="ad">언제 무엇을 해야 할지 알려드려요</p></div>
         <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-shield-check"></i></span><span class="at">실수 예방</span></div><p class="ad">입력 정보가 규정에 맞지 않을 경우 알려드려요</p></div>
@@ -92,7 +92,7 @@ SERVICE_SECTION = """
   <section id="service" style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
     <div class="container">
       <div class="kicker">펫무브 서비스 소개</div>
-      <div class="h2">전문가에게 안심하고 맡기세요</div>
+      <h2 class="h2">전문가에게 안심하고 맡기세요</h2>
       <div class="score-list">
         <div class="score">
           <div class="score-h"><i class="ti ti-heart-plus si"></i><span class="st">로잔동물의료센터</span></div>
@@ -130,7 +130,7 @@ html = f"""<!DOCTYPE html>
 <style>
   :root{{
     --bg:#F4F6F8; --surface:#FFFFFF; --ink:#212124; --ink2:#5C5C60; --ink3:#97979C;
-    --accent:#0BAEFF; --accent-ink:#0887D6; --sage:#14B8A6; --border:#E1E5E9; --dark:#212124;
+    --accent:#0BAEFF; --accent-ink:#0778BF; --sage:#14B8A6; --border:#E1E5E9; --dark:#212124;
   }}
   *{{box-sizing:border-box}}
   [hidden]{{display:none!important}}
@@ -420,7 +420,7 @@ html = f"""<!DOCTYPE html>
 
   <div class="trust">
     <div><div class="n">5,300<span>+</span></div><div class="l">누적 출국</div></div>
-    <div><div class="n">50<span>+</span></div><div class="l">지원 여행지</div></div>
+    <div><div class="n">50<span>+</span></div><div class="l">누적 여행지</div></div>
     <div><div class="n"><span id="yrs" style="color:inherit">20</span>년<span>+</span></div><div class="l">경험</div></div>
   </div>
 
@@ -430,7 +430,7 @@ html = f"""<!DOCTYPE html>
   <section>
     <div class="container">
       <div class="kicker">앱 지원 여행지</div>
-      <div class="h2">27곳, 앞으로 더 추가돼요</div>
+      <h2 class="h2">27곳, 앞으로 더 추가돼요</h2>
       <div class="grid" id="destGrid">
         <div class="dest">일본<span class="dot"></span></div>
         <div class="dest">태국<span class="dot"></span></div>
@@ -487,7 +487,8 @@ html = f"""<!DOCTYPE html>
   <section style="border-top:0.5px solid var(--border)">
     <div class="container">
       <div class="kicker">고객 후기</div>
-      <div class="h2">이미 함께한 가족들</div>
+      <h2 class="h2">이미 함께한 가족들</h2>
+      <p class="sub">전문가에게 준비를 맡기신 가족들의 이야기예요</p>
       <div class="rlist">
         <div class="rcard">
           <div class="rhead"><span class="ravatar">모</span><div><div class="rname">최○지님</div><div class="rmeta">모짜·렐라 · 일본</div></div></div>

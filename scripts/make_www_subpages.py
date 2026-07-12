@@ -57,7 +57,7 @@ OTHER = [
 CSS = """
   :root{
     --bg:#F4F6F8; --surface:#FFFFFF; --ink:#212124; --ink2:#5C5C60; --ink3:#97979C;
-    --accent:#0BAEFF; --accent-ink:#0887D6; --sage:#14B8A6; --border:#E1E5E9; --dark:#212124;
+    --accent:#0BAEFF; --accent-ink:#0778BF; --sage:#14B8A6; --border:#E1E5E9; --dark:#212124;
   }
   *{box-sizing:border-box}
   [hidden]{display:none!important}
@@ -315,21 +315,21 @@ def build_guide():
 
   <section>
     <div class="container">
-      <div class="sec-h">추천 가이드</div>
+      <h2 class="sec-h">추천 가이드</h2>
       <div class="feat">{feat}</div>
     </div>
   </section>
 
   <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
     <div class="container">
-      <div class="sec-h">여행지별 가이드</div>
+      <h2 class="sec-h">여행지별 가이드</h2>
       <div id="regions">{regions_html}</div>
     </div>
   </section>
 
   <section>
     <div class="container">
-      <div class="sec-h">주제별 가이드</div>
+      <h2 class="sec-h">주제별 가이드</h2>
       <div class="other-links">{other_html}</div>
     </div>
   </section>
@@ -364,7 +364,7 @@ def build_contact():
   <section>
     <div class="container"><div class="csec">
       <div class="cblock">
-        <div class="cl">상담 · 문의</div>
+        <h2 class="cl">상담 · 문의</h2>
         <a class="chan" href="https://pf.kakao.com/_zDDxhj/chat" target="_blank" rel="noopener">
           <i class="ti ti-message-circle"></i><span><span class="cv">카카오톡 상담</span></span></a>
         <a class="chan" href="tel:02-872-7588">
@@ -373,7 +373,7 @@ def build_contact():
           <span class="nlogo">N</span><span><span class="cv">네이버 예약</span><div class="cs">로잔동물의료센터</div></span></a>
       </div>
       <div class="cblock">
-        <div class="cl">제휴 · 업무 문의</div>
+        <h2 class="cl">제휴 · 업무 문의</h2>
         <a class="chan" href="mailto:petmove@naver.com">
           <i class="ti ti-mail"></i><span><span class="cv">petmove@naver.com</span></span></a>
       </div>
