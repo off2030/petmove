@@ -134,8 +134,23 @@ export function EditPageShell({
   surface?: boolean
 }) {
   const hasBar = !!bottomBar
+  // surface: 스크롤 영역(<main>)의 하단 여백(88px)은 이 페이지 밖이라 셸의 회색이 비쳐
+  // 하단 바 위에 회색 띠가 남는다 — 흰 배경 모드 동안 main 자체를 흰색으로 칠한다.
+  const rootRef = (el: HTMLDivElement | null) => {
+    const main = el?.closest('main')
+    if (!main) return
+    if (surface) main.style.background = 'var(--pm-surface)'
+  }
+  useEffect(() => {
+    if (!surface) return
+    return () => {
+      // 페이지를 떠날 때 원복 — 다른 탭(회색 캔버스)에 흰 main 이 남지 않게.
+      document.querySelector('main')?.style.removeProperty('background')
+    }
+  }, [surface])
   return (
     <div
+      ref={rootRef}
       className="pm-fade-up pm-noscroll"
       style={{
         background: surface ? C.surface : C.bg,
