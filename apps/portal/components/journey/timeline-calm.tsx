@@ -95,6 +95,9 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/japan-fuji-pagoda-snow.jpg': 'top',
   '/destinations/japan-sakura-blossom-macro.jpg': 'top',
   '/destinations/thailand-cliff-coast-road.jpg': 'top',
+  '/destinations/france-19.jpg': 'center 30%',
+  '/destinations/france-09.jpg': 'center 70%',
+  '/destinations/france-10.jpg': 'center 30%',
 }
 
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
