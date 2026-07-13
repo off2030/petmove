@@ -17,7 +17,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
 /** 목적지별 히어로 사진 후보 — public/destinations 에 번들. 기본은 앱을 열 때마다 이 순서대로
     한 장씩 넘어가며 반복된다(로컬 저장 회전 인덱스, HERO_PHOTO_ROTATION_KEY 참고).
-    단, HERO_LEAD_THEN_RANDOM 목적지(태국)는 첫 장을 고정으로 먼저 보여주고 나머지는 매 로드 무작위.
+    단, HERO_LEAD_THEN_RANDOM 목적지(태국·필리핀)는 첫 장을 고정으로 먼저 보여주고 나머지는 매 로드 무작위.
     후보가 2장 이상이면 사진을 탭해서도 다음 후보로 넘겨볼 수 있다.
     없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
     EU 국가는 프랑스만 사진(france.jpg, 파리 상점 거리)을 갖고, 나머지는 사진 없이 메타 행. */
@@ -37,9 +37,9 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/thailand-cove-swimmers.jpg',
   ],
   필리핀: [
+    '/destinations/philippines-beach-two-boats.jpg',
     '/destinations/philippines-palm-beach-turquoise.jpg',
     '/destinations/philippines-elnido-lagoon.jpg',
-    '/destinations/philippines-beach-two-boats.jpg',
     '/destinations/philippines-kayak-turquoise.jpg',
     '/destinations/philippines-elnido-white-beach.jpg',
     '/destinations/philippines-moored-boats-beach.jpg',
@@ -61,8 +61,8 @@ function nextHeroPhotoIndex(destKey: string, length: number): number {
 }
 
 /** 첫 장은 고정으로 먼저 보여주고, 나머지 후보는 매 로드마다 무작위 순서로.
-    (순차 회전 대신) — 현재 태국만 적용. */
-const HERO_LEAD_THEN_RANDOM = new Set(['태국'])
+    (순차 회전 대신) — 현재 태국·필리핀 적용. */
+const HERO_LEAD_THEN_RANDOM = new Set(['태국', '필리핀'])
 
 /** Fisher–Yates 셔플 — 원본 불변, 새 배열 반환. */
 function shuffleArray<T>(arr: readonly T[]): T[] {
