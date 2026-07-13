@@ -57,7 +57,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   ],
   독일: [
     '/destinations/germany-02.jpg',  // 눈숲 도로 항공
-    '/destinations/germany-04.jpg',  // 게롤트 호수 오두막
     '/destinations/germany-06.jpg',  // 가로수길 가을
     '/destinations/germany-07.jpg',  // 노이슈반슈타인 항공 봄
     '/destinations/germany-08.jpg',  // 브레멘 마르크트 광장
