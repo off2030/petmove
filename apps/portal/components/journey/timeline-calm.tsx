@@ -49,7 +49,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   프랑스: [
     '/destinations/france-02.jpg',
     '/destinations/france-09.jpg',
-    '/destinations/france-10.jpg',
     '/destinations/france-13.jpg',
     '/destinations/france-18.jpg',
     '/destinations/france-19.jpg',
@@ -96,7 +95,6 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/thailand-cliff-coast-road.jpg': 'top',
   '/destinations/france-19.jpg': 'bottom',
   '/destinations/france-09.jpg': 'center 70%',
-  '/destinations/france-10.jpg': 'center 30%',
   '/destinations/france-18.jpg': 'center 30%',
 }
 
