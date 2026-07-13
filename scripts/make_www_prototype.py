@@ -58,7 +58,8 @@ def b64_phone(name, bg, out_w=440, q=82):
     canvas = canvas.resize((out_w, int(h * out_w / w)), Image.LANCZOS)
     return _enc(canvas, q)
 
-p_hero    = b64_phone("play_shot_3.png", STONE)  # 방법3 대표 화면(홈 55%)
+# p_hero 미사용 — 랜딩에서 앱 스샷 제거됨. 스샷 폴더 없는 PC에서도 생성되도록 비활성.
+# p_hero    = b64_phone("play_shot_3.png", STONE)  # 방법3 대표 화면(홈 55%)
 
 LOGO = ('<svg viewBox="0 0 200 200" width="26" height="26" aria-hidden="true"><defs><clipPath id="pmlg-sq"><rect width="200" height="200" rx="46"/></clipPath><linearGradient id="pmlg-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63C9FF"/><stop offset="1" stop-color="#0BAEFF"/></linearGradient></defs><g clip-path="url(#pmlg-sq)"><rect width="200" height="200" fill="url(#pmlg-sky)"/><path d="M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106" fill="none" stroke="#FFC93C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="0" y="160" width="200" height="40" fill="#fff"/><circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/><circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/><circle cx="178" cy="154" r="24" fill="#fff"/><path d="M116 132 L116 118" fill="none" stroke="#FFC93C" stroke-width="18" stroke-linecap="round" opacity="0.34"/></g></svg>')
 
@@ -500,8 +501,7 @@ html = f"""<!DOCTYPE html>
   <section style="border-top:0.5px solid var(--border)">
     <div class="container">
       <div class="kicker">고객 후기</div>
-      <h2 class="h2">이미 함께한 가족들</h2>
-      <p class="sub">전문가에게 준비를 맡기신 가족들의 이야기예요</p>
+      <h2 class="h2">펫무브와 함께한 이야기</h2>
       <div class="rlist">
         <div class="rcard">
           <div class="rhead"><span class="ravatar">모</span><div><div class="rname">최○지님</div><div class="rmeta">모짜·렐라 · 일본</div></div></div>
