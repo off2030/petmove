@@ -7,6 +7,7 @@ import type { ProcedureCheck } from './types'
 import {
   addMonths,
   daysBetween,
+  formatKoreanDate,
   readInternalParasiteEntries,
   readRabiesEntries,
   readScopedImportPermitFiled,
@@ -133,7 +134,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
           .sort((a, b) => a.date.localeCompare(b.date))
         if (priorDoses.length === 0) {
           offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date}) 이전의 광견병 접종 기록이 없어요.`)
+          problems.push('채혈일 이전의 광견병 접종 기록이 없어요. 날짜를 확인하세요.')
           continue
         }
         // 30일 기산점 = 채혈 직전(가장 최근) 접종. 그 이전 접종은 무관 — chain 거슬러가기 X.
@@ -142,13 +143,14 @@ export const EU_CHECKS: ProcedureCheck[] = [
         const gap = daysBetween(latest.date, t.date)
         if (gap === null || gap < 30) {
           offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date})과 직전 접종(${latest.date})의 간격이 ${gap ?? '?'}일로 30일 미만이에요.`)
+          problems.push('광견병 항체 검사는 직전 접종일로부터 30일이 지난 후에 받아야 해요.')
         }
       }
       if (offendingPaths.length > 0) {
         return {
           ok: false,
-          message: problems.join(' / '),
+          // 날짜 제거로 titer 여러 건이 같은 문장이 될 수 있어 중복 제거 후 결합.
+          message: [...new Set(problems)].join(' / '),
           offendingPaths,
         }
       }
@@ -184,14 +186,21 @@ export const EU_CHECKS: ProcedureCheck[] = [
       // 모두 실패 — 가장 최신 titer 기준 메시지
       const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
       const days = daysBetween(newest.date, dep)
+      // 입국 가능일 = 가장 이른 채혈 + 3개월 (일본 180일 룰과 동일한 '날짜 유지' 포맷).
+      const earliestEntry = addMonths(
+        [...titers].sort((a, b) => a.date.localeCompare(b.date))[0].date,
+        3,
+      )
       const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       const message =
         days === null
           ? '항체 검사일과 출국일을 확인할 수 없어요.'
           : days < 0
-            ? `출국일(${dep})이 광견병 항체 검사일(${newest.date}) 보다 빨라요. 날짜를 확인하세요.`
-            : `광견병 항체 검사(${newest.date}) 후 3개월 이상 지나야 해요.`
+            ? '출국일이 광견병 항체 검사일보다 빨라요. 날짜를 확인하세요.'
+            : earliestEntry
+              ? `검사일로부터 3개월 후 ${formatKoreanDate(earliestEntry)}에 입국할 수 있어요.`
+              : '광견병 항체 검사일로부터 3개월이 지나야 입국할 수 있어요.'
       return {
         ok: false,
         message,

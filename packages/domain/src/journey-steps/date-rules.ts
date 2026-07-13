@@ -96,7 +96,7 @@ export function validateJpEntryDate(v: string, ctx: DateRuleContext): string | n
   const latestTiter = titerDates[titerDates.length - 1]
   const earliest = addDays(latestTiter, 180)
   if (earliest && v < earliest) {
-    return `광견병 항체 검사일(${fmt(latestTiter)})로부터 180일이 지난 ${fmt(earliest)} 이후에 일본 입국이 가능해요.`
+    return `검사일로부터 180일 후 ${fmt(earliest)}에 일본에 입국할 수 있어요.`
   }
   return null
 }
@@ -270,7 +270,7 @@ export function validateEuTiterAfterVaccine(
   if (prior.length === 0) return null // 접종-채혈 순서 자체는 validateTiterAfterBooster 담당
   const latest = prior[prior.length - 1] // 채혈 직전(가장 최근) 접종 — 그 이전 접종은 무관
   if (daysBetween(latest.date, titerDate) < 30) {
-    return `광견병 항체 검사는 백신 접종일(${fmt(latest.date)})로부터 30일이 지난 후에 받아야 해요.`
+    return '광견병 항체 검사는 백신 접종일로부터 30일이 지난 후에 받아야 해요.'
   }
   return null
 }
@@ -372,7 +372,10 @@ export function validateEuEntryDate(v: string, ctx: DateRuleContext): string | n
   })
   if (ok) return null
   const earliestTiter = titerDates[0]
-  return `광견병 항체 검사일(${fmt(earliestTiter)})로부터 3개월이 지나면 입국할 수 있어요`
+  const earliestEntry = addMonths(earliestTiter, 3)
+  return earliestEntry
+    ? `검사일로부터 3개월 후 ${fmt(earliestEntry)}에 입국할 수 있어요.`
+    : '광견병 항체 검사일로부터 3개월이 지나면 입국할 수 있어요.'
 }
 
 /**
@@ -424,9 +427,9 @@ export function validateEchinococcusWindow(
 export function validateJpExportReservationDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const ret = readDate(ctx.data, 'return_date')
-  if (ret && v > ret) return '수출 검역 예약일은 귀국일보다 늦을 수 없어요.'
+  if (ret && v > ret) return '수출 검역 예약일은 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.'
   const entry = readDate(ctx.data, 'entry_date')
-  if (entry && v < entry) return `수출 검역 예약일은 일본 입국일(${fmt(entry)})보다 빠를 수 없어요.`
+  if (entry && v < entry) return '수출 검역 예약일은 일본 입국일보다 빠를 수 없어요. 날짜를 확인하세요.'
   return null
 }
 
@@ -434,9 +437,9 @@ export function validateJpExportReservationDate(v: string, ctx: DateRuleContext)
 export function validateJpExportVisitDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const entry = readDate(ctx.data, 'entry_date')
-  if (entry && v < entry) return `일본 수출 검역일은 일본 입국일(${fmt(entry)})보다 빠를 수 없어요.`
+  if (entry && v < entry) return '일본 수출 검역일은 일본 입국일보다 빠를 수 없어요. 날짜를 확인하세요.'
   const ret = readDate(ctx.data, 'return_date')
-  if (ret && v > ret) return `일본 수출 검역일은 귀국일(${fmt(ret)})보다 늦을 수 없어요.`
+  if (ret && v > ret) return '일본 수출 검역일은 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.'
   return null
 }
 
@@ -447,7 +450,7 @@ export function validateKrExportDate(v: string, ctx: DateRuleContext): string | 
   if (vet && v < vet) return `한국 수출 검역은 출국 전 임상검사 후 받을 수 있어요.`
   const depart = departFromData(ctx.data)
   if (depart) {
-    if (v > depart) return `한국 수출 검역일은 출국일(${fmt(depart)})보다 늦어요. 날짜를 확인하세요.`
+    if (v > depart) return '한국 수출 검역일은 출국일보다 늦을 수 없어요. 날짜를 확인하세요.'
     const windowDays = getVetVisitWindowDays(ctx.destination, readSpecies(ctx.data))
     if (daysBetween(v, depart) >= windowDays) {
       return `한국 수출 검역일은 출국일 기준 ${windowDays}일 이내여야 해요.`

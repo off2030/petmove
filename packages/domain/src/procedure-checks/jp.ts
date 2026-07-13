@@ -393,7 +393,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const earliestKr = formatKoreanDate(addDays(best.titer.date, 180))
       return {
         ok: false,
-        message: `검사일로부터 180일 후에 일본에 입국할 수 있어요. ${earliestKr} 이후 일본에 입국할 수 있어요.`,
+        message: `검사일로부터 180일 후 ${earliestKr}에 일본에 입국할 수 있어요.`,
         offendingPaths: offending,
       }
     },
