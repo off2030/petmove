@@ -270,7 +270,10 @@ export function validateEuTiterAfterVaccine(
   if (prior.length === 0) return null // 접종-채혈 순서 자체는 validateTiterAfterBooster 담당
   const latest = prior[prior.length - 1] // 채혈 직전(가장 최근) 접종 — 그 이전 접종은 무관
   if (daysBetween(latest.date, titerDate) < 30) {
-    return '광견병 항체 검사는 백신 접종일로부터 30일이 지난 후에 받아야 해요.'
+    const earliest = addDays(latest.date, 30)
+    return earliest
+      ? `접종일로부터 30일 후 ${fmt(earliest)}에 광견병 항체 검사를 받을 수 있어요.`
+      : '광견병 항체 검사는 백신 접종일로부터 30일이 지난 후에 받아야 해요.'
   }
   return null
 }
@@ -336,7 +339,7 @@ export function validatePhImportPermitWithin60Days(
   if (!filedDate || !departureDate) return null
   const earliest = addDays(departureDate.slice(0, 10), -60)
   if (earliest && filedDate.slice(0, 10) < earliest) {
-    return `수입 허가증(SPSIC)은 발급일로부터 60일간 유효해요. 출국 60일 이내(${fmt(earliest)} 이후)에 신청하세요.`
+    return `수입 허가증(SPSIC)은 발급일로부터 60일간 유효해요. 출국 60일 전 ${fmt(earliest)}부터 신청할 수 있어요.`
   }
   return null
 }
