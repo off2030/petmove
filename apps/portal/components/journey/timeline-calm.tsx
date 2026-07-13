@@ -15,8 +15,9 @@ import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
 import { PAGE_TOP, groupLabel, sectionTitle } from '@/lib/tokens'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
-/** 목적지별 히어로 사진 후보 — public/destinations 에 번들. 앱을 열 때마다 이 순서대로
+/** 목적지별 히어로 사진 후보 — public/destinations 에 번들. 기본은 앱을 열 때마다 이 순서대로
     한 장씩 넘어가며 반복된다(로컬 저장 회전 인덱스, HERO_PHOTO_ROTATION_KEY 참고).
+    단, HERO_LEAD_THEN_RANDOM 목적지(태국)는 첫 장을 고정으로 먼저 보여주고 나머지는 매 로드 무작위.
     후보가 2장 이상이면 사진을 탭해서도 다음 후보로 넘겨볼 수 있다.
     없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
     EU 국가는 프랑스만 사진(france.jpg, 파리 상점 거리)을 갖고, 나머지는 사진 없이 메타 행. */
@@ -57,6 +58,20 @@ function nextHeroPhotoIndex(destKey: string, length: number): number {
   const current = raw ? ((parseInt(raw, 10) % length) + length) % length : 0
   window.localStorage.setItem(storageKey, String((current + 1) % length))
   return current
+}
+
+/** 첫 장은 고정으로 먼저 보여주고, 나머지 후보는 매 로드마다 무작위 순서로.
+    (순차 회전 대신) — 현재 태국만 적용. */
+const HERO_LEAD_THEN_RANDOM = new Set(['태국'])
+
+/** Fisher–Yates 셔플 — 원본 불변, 새 배열 반환. */
+function shuffleArray<T>(arr: readonly T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
 }
 
 /** 히어로 사진 크롭 위치 — 200px 고정 높이 박스라 세로 사진은 object-fit: cover 로
@@ -205,10 +220,20 @@ export function TimelineCalm({
   // 상태 창(히어로 카드) = 나-2 확정 — 진행 바까지 사진 안으로 들어간 풀 포토.
   // 티켓 노치 = 우측 정중앙 확정. (2026-07-11 실기기 비교 후 확정, dev 스위처 제거.)
 
-  const heroPhotoCandidates = DEST_PHOTO_CANDIDATES[trip.toCity] ?? []
+  const baseHeroCandidates = DEST_PHOTO_CANDIDATES[trip.toCity] ?? []
+  // 후보 표시 순서 — 기본은 배열 그대로(순차 회전). 태국 등 lead-then-random 목적지는
+  // 첫 장 고정 + 나머지 셔플을 마운트 후(useEffect)에만 적용해 SSR/hydration 은 안정.
+  const [heroPhotoCandidates, setHeroPhotoCandidates] = useState<string[]>(baseHeroCandidates)
   const [heroPhotoIndex, setHeroPhotoIndex] = useState(0)
   useEffect(() => {
-    setHeroPhotoIndex(nextHeroPhotoIndex(trip.toCity, heroPhotoCandidates.length))
+    const base = DEST_PHOTO_CANDIDATES[trip.toCity] ?? []
+    if (HERO_LEAD_THEN_RANDOM.has(trip.toCity) && base.length > 2) {
+      setHeroPhotoCandidates([base[0], ...shuffleArray(base.slice(1))])
+      setHeroPhotoIndex(0) // 첫 장(파도) 항상 먼저
+    } else {
+      setHeroPhotoCandidates(base)
+      setHeroPhotoIndex(nextHeroPhotoIndex(trip.toCity, base.length))
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip.toCity])
   const heroPhoto = heroPhotoCandidates[heroPhotoIndex] ?? null
