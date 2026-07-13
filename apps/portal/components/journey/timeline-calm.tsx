@@ -49,14 +49,9 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   프랑스: [
     '/destinations/france-02.jpg',
     '/destinations/france-03.jpg',
-    '/destinations/france-04.jpg',
-    '/destinations/france-05.jpg',
     '/destinations/france-06.jpg',
-    '/destinations/france-07.jpg',
-    '/destinations/france-08.jpg',
     '/destinations/france-09.jpg',
     '/destinations/france-10.jpg',
-    '/destinations/france-11.jpg',
     '/destinations/france-13.jpg',
     '/destinations/france-14.jpg',
     '/destinations/france-15.jpg',
@@ -74,7 +69,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/france-30.jpg',
     '/destinations/france-31.jpg',
     '/destinations/france-32.jpg',
-    '/destinations/france-33.jpg',
   ],
 }
 
