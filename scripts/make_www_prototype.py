@@ -536,7 +536,7 @@ html = f"""<!DOCTYPE html>
         <a class="store"><i class="ti ti-brand-google-play" style="font-size:16px"></i>Google Play</a>
       </div>
     </div>
-    <svg class="clouds" viewBox="-6 99 208 61" aria-hidden="true"><g transform="translate(0,44.8) scale(1,0.72) translate(0,12)"><circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/><circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/><circle cx="178" cy="154" r="24" fill="#fff"/></g></svg>
+    <svg class="clouds" viewBox="-6 92 208 68" aria-hidden="true"><g transform="translate(0,26)"><circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/><circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/><circle cx="178" cy="154" r="24" fill="#fff"/></g></svg>
   </div>
 
   <footer>
