@@ -53,9 +53,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/france-13.jpg',
     '/destinations/france-18.jpg',
     '/destinations/france-19.jpg',
-    '/destinations/france-25.jpg',
     '/destinations/france-30.jpg',
-    '/destinations/france-31.jpg',
     '/destinations/france-32.jpg',
   ],
 }
@@ -97,7 +95,6 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/france-09.jpg': 'center 70%',
   '/destinations/france-10.jpg': 'center 30%',
   '/destinations/france-18.jpg': 'center 30%',
-  '/destinations/france-31.jpg': 'top',
 }
 
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
