@@ -57,7 +57,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   ],
   독일: [
     '/destinations/germany-02.jpg',  // 눈숲 도로 항공
-    '/destinations/germany-07.jpg',  // 노이슈반슈타인 항공 봄
     '/destinations/germany-08.jpg',  // 브레멘 마르크트 광장
     '/destinations/germany-09.jpg',  // 노이슈반슈타인 파란하늘
     '/destinations/germany-11.jpg',  // 노이슈반슈타인 항공 새벽안개
@@ -105,7 +104,6 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/france-09.jpg': 'center 70%',
   '/destinations/france-18.jpg': 'center 30%',
   '/destinations/germany-02.jpg': 'top',
-  '/destinations/germany-07.jpg': 'top',
 }
 
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
