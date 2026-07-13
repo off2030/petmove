@@ -56,7 +56,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/france-36.jpg',
   ],
   독일: [
-    '/destinations/germany-01.jpg',  // 초원 언덕 폭풍구름
     '/destinations/germany-02.jpg',  // 눈숲 도로 항공
     '/destinations/germany-04.jpg',  // 게롤트 호수 오두막
     '/destinations/germany-06.jpg',  // 가로수길 가을
@@ -65,7 +64,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/germany-09.jpg',  // 노이슈반슈타인 파란하늘
     '/destinations/germany-11.jpg',  // 노이슈반슈타인 항공 새벽안개
     '/destinations/germany-13.jpg',  // 소 방목 초원 가을
-    '/destinations/germany-14.jpg',  // 슐리어제 가을 교회
     '/destinations/germany-15.jpg',  // 아이브제 섬 카누 노란단풍
     '/destinations/germany-16.jpg',  // 브란덴부르크 문 전경
     '/destinations/germany-17.jpg',  // 아이브제 설산
