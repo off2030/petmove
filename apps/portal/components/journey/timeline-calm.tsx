@@ -64,6 +64,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/germany-13.jpg',  // 소 방목 초원 가을
     '/destinations/germany-16.jpg',  // 브란덴부르크 문 전경
     '/destinations/germany-20.jpg',  // 초원 가문비나무
+    '/destinations/germany-21.jpg',  // 브레멘 마르크트 광장 (맑음)
   ],
 }
 
