@@ -20,7 +20,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
     단, HERO_LEAD_THEN_RANDOM 목적지(태국·필리핀)는 첫 장을 고정으로 먼저 보여주고 나머지는 매 로드 무작위.
     후보가 2장 이상이면 사진을 탭해서도 다음 후보로 넘겨볼 수 있다.
     없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
-    EU 국가는 프랑스만 사진(france.jpg, 파리 상점 거리)을 갖고, 나머지는 사진 없이 메타 행. */
+    EU 국가는 프랑스·독일만 사진을 갖고, 나머지는 사진 없이 메타 행. */
 const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   일본: [
     '/destinations/japan-sakura-blossom-macro.jpg',
@@ -54,6 +54,13 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/france-19.jpg',
     '/destinations/france-32.jpg',
     '/destinations/france-36.jpg',
+  ],
+  독일: [
+    '/destinations/germany-01.jpg',
+    '/destinations/germany-02.jpg',
+    '/destinations/germany-03.jpg',
+    '/destinations/germany-04.jpg',
+    '/destinations/germany-05.jpg',
   ],
 }
 
