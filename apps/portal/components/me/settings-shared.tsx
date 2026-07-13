@@ -252,42 +252,34 @@ export function StickySaveBar({
   const stickyPathname = usePathname()
   const barRgbVar = isSurfacePage(stickyPathname) ? '--pm-surface-rgb' : '--pm-bg-rgb'
 
-  // 모바일 키보드가 올라오면 fixed bar 가 viewport bottom 에 붙은 채 input 위로 올라와
-  // 입력 필드를 가린다.
+  // 모바일 키보드가 올라와도 저장 버튼은 항상 눌리게 한다.
   //
-  // 안드로이드 크롬: viewport meta interactiveWidget=resizes-content 가 layout viewport
-  // 도 같이 작아지게 해 visualViewport 차이로는 감지 불가 → focusin/focusout 으로 잡는다.
-  // input·textarea 포커스 시 키보드 올라옴 = 동등 신호.
-  // iOS Safari: focusin 도 정상 발화 → 같은 처리로 커버.
-  const [keyboardOpen, setKeyboardOpen] = useState(false)
+  // (구) 키보드가 뜨면 focusin, 내려가면 focusout 으로 감지해 바를 통째로 unmount 했는데,
+  // 안드로이드에서 '시스템 뒤로가기'로 키보드를 내리면 input 이 blur 되지 않아 focusout 이
+  // 안 뜬다 → keyboardOpen 이 true 로 박제 → 저장 버튼이 영영 사라진다(2026-07-13 심사
+  // 데모 계정에서 발견). unmount 대신 visualViewport 로 키보드 높이를 재서 바를 그 위로 띄운다.
+  // - 안드로이드(resizes-content): 키보드가 뜨면 layout viewport(innerHeight)도 함께 줄어
+  //   inset≈0 → bottom:0 그대로 키보드 바로 위에 앉는다.
+  // - iOS(WKWebView): innerHeight 는 그대로고 visualViewport.height 만 줄어 inset=키보드
+  //   높이 → 그만큼 위로 띄운다. 어느 쪽이든 바는 사라지지 않는다.
+  const [kbInset, setKbInset] = useState(0)
   useEffect(() => {
     if (typeof window === 'undefined') return
-    function isEditable(t: EventTarget | null): boolean {
-      if (!(t instanceof HTMLElement)) return false
-      if (t.tagName === 'INPUT') {
-        const type = (t as HTMLInputElement).type
-        const nonEditable = ['button', 'submit', 'reset', 'checkbox', 'radio', 'file', 'image', 'hidden', 'range', 'color']
-        return !nonEditable.includes(type)
-      }
-      return t.tagName === 'TEXTAREA' || t.isContentEditable
+    const vv = window.visualViewport
+    if (!vv) return
+    const update = () => {
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+      setKbInset(inset > 1 ? inset : 0) // 1px 미만 흔들림은 키보드 없음으로 간주
     }
-    function onFocusIn(e: FocusEvent) {
-      if (isEditable(e.target)) setKeyboardOpen(true)
-    }
-    function onFocusOut(e: FocusEvent) {
-      if (isEditable(e.target)) setKeyboardOpen(false)
-    }
-    document.addEventListener('focusin', onFocusIn)
-    document.addEventListener('focusout', onFocusOut)
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    update()
     return () => {
-      document.removeEventListener('focusin', onFocusIn)
-      document.removeEventListener('focusout', onFocusOut)
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
     }
   }, [])
-
-  // 키보드 올라오면 bar 자체를 unmount — bottom 음수·transform·display 처리 모두 일부
-  // 안드로이드 크롬에서 무시되는 케이스가 있어 가장 확실한 컴포넌트 미렌더로 처리.
-  if (keyboardOpen) return null
+  const keyboardUp = kbInset > 0
 
   return (
     <div
@@ -295,11 +287,12 @@ export function StickySaveBar({
         position: 'fixed',
         left: 0,
         right: 0,
-        bottom: 0,
+        bottom: kbInset,
         paddingTop: 12,
         paddingLeft: 20,
         paddingRight: 20,
-        paddingBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 12px) + 53px)',
+        // 키보드가 올라오면 하단 탭바가 숨으므로 탭바 자리(53px)는 뺀다.
+        paddingBottom: keyboardUp ? 12 : 'calc(max(env(safe-area-inset-bottom, 0px), 12px) + 53px)',
         // 흰 배경 화면에선 그라데이션도 흰색 기반 — 회색 띠 방지 (경로 자동 판정).
         background: `linear-gradient(180deg, rgb(var(${barRgbVar}) / 0) 0%, rgb(var(${barRgbVar}) / .92) 30%, rgb(var(${barRgbVar}) / .92) 100%)`,
         backdropFilter: 'blur(20px)',
