@@ -59,10 +59,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/germany-01.jpg',  // 초원 언덕 폭풍구름
     '/destinations/germany-02.jpg',  // 눈숲 도로 항공
     '/destinations/germany-04.jpg',  // 게롤트 호수 오두막
-    '/destinations/germany-05.jpg',  // 슐리어제 가을 교회
     '/destinations/germany-06.jpg',  // 가로수길 가을
-    '/destinations/germany-07.jpg',  // 노이슈반슈타인 숲 (초록 언덕)
-    '/destinations/germany-08.jpg',  // 뮌헨 지붕 노을
     '/destinations/germany-09.jpg',  // 노이슈반슈타인 파란하늘
     '/destinations/germany-10.jpg',  // 물류창고 트럭 항공
     '/destinations/germany-11.jpg',  // 노이슈반슈타인 항공 새벽안개
