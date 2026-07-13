@@ -7,6 +7,7 @@ import { useCase, useCases } from './case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
 import { readLastCaseId, readLastDest } from './last-case'
 import { useNavGuard } from './nav-guard'
+import { isSurfacePage } from './surface-page'
 import { isShellHref } from './tab-nav'
 import { TabSkeleton } from './tab-skeleton'
 
@@ -326,8 +327,10 @@ export function TabHost({ children }: { children: React.ReactNode }) {
           <ServicesView />
         </Pane>
       )}
+      {/* 설정 = 흰 배경(surface) 페이지 — pane 이 스스로 흰색을 칠한다. (구 EditPageShell
+          의 main 직접 칠하기 핵은 keep-alive 에서 원복이 안 돼 흰 띠 버그 → 제거됨.) */}
       {shouldRender('settings') && (
-        <Pane active={activePane === 'settings'}>
+        <Pane active={activePane === 'settings'} surface>
           <SettingsView />
         </Pane>
       )}
@@ -335,7 +338,7 @@ export function TabHost({ children }: { children: React.ReactNode }) {
           '푸시된 화면'. key=pathname 으로 진입마다 새 mount (새 상태·맨위 스크롤 = 종전
           라우트 진입과 동일), 떠나면 unmount — 아래 pane 은 스크롤 그대로 대기. */}
       {detail && (
-        <Pane key={pathname} active detail>
+        <Pane key={pathname} active detail surface={isSurfacePage(pathname)}>
           {detail.kind === 'step' && (
             <StepDetailScreen caseId={detail.caseId} stepId={detail.stepId} dest={detailDest} />
           )}
@@ -371,6 +374,8 @@ export function TabHost({ children }: { children: React.ReactNode }) {
           WebkitOverflowScrolling: 'touch',
           paddingTop: 'calc(var(--pm-top-inset) + 48px)',
           paddingBottom: 88,
+          // 흰 배경(surface) 라우트는 컨테이너가 스스로 칠한다 — 패딩 영역까지 흰색.
+          background: isSurfacePage(pathname) ? 'var(--pm-surface)' : undefined,
           display: activePane || detail ? 'none' : undefined,
           zIndex: activePane || detail ? 0 : 1,
         }}
@@ -404,11 +409,14 @@ function AnimalDetail({ caseId }: { caseId: string }) {
 function Pane({
   active,
   detail = false,
+  surface = false,
   children,
 }: {
   active: boolean
   /** detail 레이어 — 상주 pane 위(zIndex)에 겹치는 푸시 화면. */
   detail?: boolean
+  /** 흰 배경(surface) 화면 — 패딩 영역까지 컨테이너가 흰색을 칠한다(isSurfacePage 규칙). */
+  surface?: boolean
   children: React.ReactNode
 }) {
   return (
@@ -423,6 +431,7 @@ function Pane({
         WebkitOverflowScrolling: 'touch',
         paddingTop: 'calc(var(--pm-top-inset) + 48px)',
         paddingBottom: 88,
+        background: surface ? 'var(--pm-surface)' : undefined,
         // display:none 은 스크롤 위치를 버림 — visibility 로 숨겨 각 탭의 위치 보존.
         visibility: active ? 'visible' : 'hidden',
         zIndex: active ? (detail ? 2 : 1) : 0,

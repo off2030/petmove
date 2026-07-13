@@ -152,23 +152,12 @@ export function EditPageShell({
   const hasBar = !!bottomBar
   const pathname = usePathname()
   const surface = surfaceProp ?? isSurfacePage(pathname)
-  // surface: 스크롤 영역(<main>)의 하단 여백(88px)은 이 페이지 밖이라 셸의 회색이 비쳐
-  // 하단 바 위에 회색 띠가 남는다 — 흰 배경 모드 동안 main 자체를 흰색으로 칠한다.
-  const rootRef = (el: HTMLDivElement | null) => {
-    const main = el?.closest('main')
-    if (!main) return
-    if (surface) main.style.background = 'var(--pm-surface)'
-  }
-  useEffect(() => {
-    if (!surface) return
-    return () => {
-      // 페이지를 떠날 때 원복 — 다른 탭(회색 캔버스)에 흰 main 이 남지 않게.
-      document.querySelector('main')?.style.removeProperty('background')
-    }
-  }, [surface])
+  // (구) surface 일 때 <main> 을 직접 흰색으로 칠하던 핵은 제거 — TabHost 상주 구조에선
+  // 화면이 언마운트되지 않아 원복 cleanup 이 안 돌고, 설정을 한 번 연 뒤 모든 회색 탭
+  // 하단에 흰 띠가 남는 버그가 됐다(2026-07-13). 흰 배경은 이제 TabHost 의 pane/children
+  // 컨테이너가 isSurfacePage 로 스스로 칠한다.
   return (
     <div
-      ref={rootRef}
       className="pm-fade-up pm-noscroll"
       style={{
         background: surface ? C.surface : C.bg,
