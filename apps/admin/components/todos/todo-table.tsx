@@ -267,13 +267,17 @@ function SelectCell({
   const confirm = useConfirm()
   // 일본 케이스 + 신고탭 status 컬럼은 portal data 필드를 직접 patch (양방향 sync).
   // 다른 컬럼·다른 국가는 기존 단일키 path 그대로.
+  // 국가 판정은 활성 목적지 기준 — destination 전체 문자열("일본, 태국")로 매칭하면 일본·태국
+  // 분기에 동시에 걸려, 아래 순서상 태국 액션이 이기고 read(todos-app effectiveImportStatus,
+  // 활성 목적지=일본이면 일본 derive)와 엇갈린다 — 수입 칸이 대기로 되돌아오던 버그.
+  const reportDest = activeDest ?? row.destination
   const isJapanReport =
-    matchesDestinationKey(row.destination, 'japan') &&
+    matchesDestinationKey(reportDest, 'japan') &&
     (col.key === 'import_import_status' || col.key === 'import_export_status')
   // 태국·필리핀 '수입' 칸 = 수입 허가 step 과 양방향 sync (일본 사전신고의 짝, '수출'은 해당 없음).
   const isImportPermitReport =
-    (matchesDestinationKey(row.destination, 'thailand') ||
-      matchesDestinationKey(row.destination, 'philippines')) &&
+    (matchesDestinationKey(reportDest, 'thailand') ||
+      matchesDestinationKey(reportDest, 'philippines')) &&
     col.key === 'import_import_status'
   async function pick(v: string) {
     if (v === value) return
