@@ -532,17 +532,14 @@ export function validateVetVisitDate(v: string, ctx: DateRuleContext): string | 
  *
  * 단일 출처: 펫무브 client(2차 입력 시 입력 불가) + procedure-check(1차 수정 후 2차 step '주의')
  * 가 같은 함수를 호출한다. 순서 위반(2차 < 1차)과 간격 부족(< 30일)은 모두 같은 요건
- * (2차 ≥ 1차 + 30일) 위반이므로, 어느 쪽이든 **실행 가능한 목표 날짜(1차 + 30일)** 를 안내한다.
- * 어느 한쪽 날짜가 비면 비교 불가라 null(통과).
+ * (2차 ≥ 1차 + 30일) 위반이므로 같은 문구 하나로 안내한다(주의 문구는 날짜 없이 담백한
+ * 설명문 — 통일 정책). 어느 한쪽 날짜가 비면 비교 불가라 null(통과).
  */
 export function validateRabiesInterval(primeDate: string, boosterDate: string): string | null {
   if (!primeDate || !boosterDate) return null
   const gap = daysBetween(primeDate, boosterDate)
   if (gap >= 30) return null
-  const earliest = addDays(primeDate, 30)
-  return earliest
-    ? `2차 광견병 접종은 1차 접종일(${fmt(primeDate)})로부터 30일 이후에 해야 해요. ${fmt(earliest)} 이후로 입력하세요.`
-    : `2차 광견병 접종은 1차 접종일(${fmt(primeDate)})로부터 30일 이후에 해야 해요.`
+  return '2차 광견병 접종은 1차 접종일로부터 30일이 지난 후에 해야 해요.'
 }
 
 /**
