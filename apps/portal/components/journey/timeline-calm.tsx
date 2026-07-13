@@ -61,6 +61,11 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/germany-03.jpg',
     '/destinations/germany-04.jpg',
     '/destinations/germany-05.jpg',
+    '/destinations/germany-06.jpg',  // 코헴 성·모젤강 마을 (석양)
+    '/destinations/germany-07.jpg',  // 노이슈반슈타인 숲 (초록 언덕)
+    '/destinations/germany-08.jpg',  // 크베들린부르크 붉은 지붕
+    '/destinations/germany-09.jpg',  // 알프제 터키색 호수 + 호엔슈방가우
+    '/destinations/germany-10.jpg',  // 브란덴부르크 문 콰드리가
   ],
 }
 
