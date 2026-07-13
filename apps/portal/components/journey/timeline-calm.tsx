@@ -95,7 +95,7 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/japan-fuji-pagoda-snow.jpg': 'top',
   '/destinations/japan-sakura-blossom-macro.jpg': 'top',
   '/destinations/thailand-cliff-coast-road.jpg': 'top',
-  '/destinations/france-19.jpg': 'center 30%',
+  '/destinations/france-19.jpg': 'center 55%',
   '/destinations/france-09.jpg': 'center 70%',
   '/destinations/france-10.jpg': 'center 30%',
   '/destinations/france-18.jpg': 'center 30%',
