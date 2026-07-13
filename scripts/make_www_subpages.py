@@ -68,7 +68,7 @@ CSS = """
   .container{max-width:1080px;margin:0 auto;padding:0 22px;width:100%}
   .wm{font-size:18px;letter-spacing:.015em;font-weight:700}
 
-  header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);
+  header{position:sticky;top:0;z-index:20;background:#fff;
     border-bottom:0.5px solid var(--border)}
   header .container{display:flex;align-items:center;justify-content:space-between;padding-top:13px;padding-bottom:13px}
   .nav-links{display:none;align-items:center;gap:26px;font-size:14px;color:var(--ink2)}
@@ -789,4 +789,4 @@ with open(os.path.join(OUT_DIR, "article.html"), "w", encoding="utf-8") as f:
 # 다듬은 본문 공통 템플릿(아코디언 B·유용한 자료·cta-sep 등)이 진실이고, www_convert.py 가
 # 그 파일을 셸로 읽는다. 이 생성기의 build_article_sample() 은 구버전이라 덮으면
 # 변환기 마커(<hr class="cta-sep">)가 사라져 78글 변환이 깨진다(2026-07-12 실제 사고).
-print("wrote guide.html + contact.html + article.html (article-sample.html은 손편집 truth — 미출력)")
+print("wrote guide.html + contact.html + article.html (article-sample.html은 손편집 truth, 미출력)")
