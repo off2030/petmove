@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """www.petmove.co.kr 하위 페이지 프로토타입 — 가이드 허브 + 문의.
-랜딩(make_www_prototype.py)과 같은 웜 스톤/앰버 토큰·헤더·푸터 재사용.
+랜딩(make_www_prototype.py)과 같은 브랜드(구름·하늘: 화이트+스카이블루) 토큰·헤더·푸터 재사용.
+⚠️ article.html·article-sample.html 출력은 구버전 — article-sample.html 은 손으로 더 발전됨(표 스크롤·cta-sep 등).
+   재생성 시 두 article 파일은 git restore 로 되돌릴 것 (진짜 템플릿 truth = docs/www-redesign/article-sample.html).
 이미지 base64 불필요(텍스트·칩·카드 위주) → 가벼운 단독 생성기.
 나라·글 링크는 현재 라이브 고스트(www.petmove.co.kr/docs·/blog)로 연결해 눌러볼 수 있게.
 """
@@ -63,11 +65,11 @@ CSS = """
   *{box-sizing:border-box}
   [hidden]{display:none!important}
   html{scroll-behavior:smooth;scrollbar-gutter:stable;background:var(--bg)}
-  body{margin:0;background:var(--bg);font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,"Segoe UI",Roboto,sans-serif;
+  body{margin:0;background:var(--bg);font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,"Segoe UI",Roboto,sans-serif;
     color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column}
   a{text-decoration:none;color:inherit}
   .container{max-width:1080px;margin:0 auto;padding:0 22px;width:100%}
-  .wm{font-size:18px;letter-spacing:.015em;font-weight:700}
+  .wm{font-size:18px;letter-spacing:-.01em;font-weight:800}
 
   header{position:sticky;top:0;z-index:20;background:#fff;
     border-bottom:0.5px solid var(--border)}
@@ -252,6 +254,7 @@ def head(title, desc=DESC_DEFAULT, og_type="website", body_class=""):
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Cdefs%3E%3CclipPath id=%22s%22%3E%3Crect width=%22200%22 height=%22200%22 rx=%2246%22/%3E%3C/clipPath%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%2363C9FF%22/%3E%3Cstop offset=%221%22 stop-color=%22%230BAEFF%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg clip-path=%22url(%23s)%22%3E%3Crect width=%22200%22 height=%22200%22 fill=%22url(%23g)%22/%3E%3Cpath d=%22M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106%22 fill=%22none%22 stroke=%22%23FFC93C%22 stroke-width=%2218%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3Crect x=%220%22 y=%22160%22 width=%22200%22 height=%2240%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2246%22 cy=%22168%22 r=%2252%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2272%22 cy=%22120%22 r=%2248%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22112%22 cy=%22148%22 r=%2234%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22146%22 cy=%22138%22 r=%2238%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22178%22 cy=%22154%22 r=%2224%22 fill=%22%23fff%22/%3E%3Cpath d=%22M116 132 L116 118%22 fill=%22none%22 stroke=%22%23FFC93C%22 stroke-width=%2218%22 stroke-linecap=%22round%22 opacity=%220.34%22/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>{CSS}</style>
 </head>
 {body_open}"""
