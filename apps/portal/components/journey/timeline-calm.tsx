@@ -65,9 +65,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/germany-11.jpg',  // 노이슈반슈타인 항공 새벽안개
     '/destinations/germany-13.jpg',  // 소 방목 초원 가을
     '/destinations/germany-16.jpg',  // 브란덴부르크 문 전경
-    '/destinations/germany-17.jpg',  // 아이브제 설산
-    '/destinations/germany-18.jpg',  // 오버제 초록 호수
-    '/destinations/germany-19.jpg',  // 아이브제 안개 햇살
     '/destinations/germany-20.jpg',  // 초원 가문비나무
   ],
 }
