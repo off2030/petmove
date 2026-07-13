@@ -53,7 +53,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/france-13.jpg',
     '/destinations/france-18.jpg',
     '/destinations/france-19.jpg',
-    '/destinations/france-30.jpg',
     '/destinations/france-32.jpg',
   ],
 }
