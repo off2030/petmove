@@ -133,9 +133,8 @@ export async function sendTestReminder(): Promise<{ ok: boolean; reason?: string
         id: TEST_ID - i,
         title: '펫무브',
         body,
-        // 스크린샷용: 버튼 탭 15초 뒤부터 4초 간격 도착 — 홈/잠금 화면으로 나가서
-        // '알림이 도착하는' 실제 수신 장면을 찍을 수 있게. (원복 시 schedule 제거 = 즉시 발송)
-        schedule: { at: new Date(Date.now() + (15 + i * 4) * 1000), allowWhileIdle: true },
+        // schedule 생략 = 즉시 발송. (예약(at:) 방식은 화면 꺼짐/도즈에서 부정확 알람이
+        // 미뤄져 잠금 중엔 안 오고 깨울 때 배달됨 — 잠금화면 컷은 즉시 발송 후 화면 껐다 켜기.)
         // channelId 는 Android 에서만(iOS 는 undefined → 미포함).
         ...(channelId ? { channelId } : {}),
       })),
