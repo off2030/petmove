@@ -238,11 +238,29 @@ export async function removeCaseDestination(
     delete tripType[dest]
     const byDest = { ...((data.by_dest as Record<string, Record<string, unknown>> | undefined) ?? {}) }
     delete byDest[dest]
-    const nextData = { ...data, trip_type: tripType, by_dest: byDest }
+    const nextData: Record<string, unknown> = { ...data, trip_type: tripType, by_dest: byDest }
+    const updatePayload: Record<string, unknown> = { destination: nextDest, data: nextData }
+
+    // 제거 정리 (addCaseDestination demote·finishJourney 와 동일) — 남은(특히 단일 결과) 목적지가
+    // 제거된 여정의 공용 잔존(top-level scoped·출국일 컬럼)을 물려받지 않게 비운다. 단일 결과는
+    // 읽기 가드(다중 전용)가 없어 컬럼/top-level fallback 이 살아 있으므로, 안 비우면 남은 목적지가
+    // 이전 출국일을 물려받아 D-day·항공권 안내가 유령 데이터로 뜬다(2026-07-14 스페인 D-261 버그).
+    for (const k of DESTINATION_SCOPED_FIELD_KEYS) delete nextData[k]
+    updatePayload.departure_date = null
+    // 제거된 목적지의 키 맵 정리 — 같은 목적지를 나중에 다시 추가할 때 stale 도착확인이
+    // 유령 '완료'를 만들지 않게 한다(prompt dismiss 앵커도 함께).
+    const ac = { ...((nextData.arrival_confirmed as Record<string, unknown> | undefined) ?? {}) }
+    delete ac[dest]
+    nextData.arrival_confirmed = ac
+    const cpd = {
+      ...((nextData.completion_prompt_dismissed as Record<string, unknown> | undefined) ?? {}),
+    }
+    delete cpd[dest]
+    nextData.completion_prompt_dismissed = cpd
 
     const { error: updErr } = await admin
       .from('cases')
-      .update({ destination: nextDest, data: nextData })
+      .update(updatePayload)
       .eq('id', caseId)
     if (updErr) return { ok: false, error: updErr.message }
 
