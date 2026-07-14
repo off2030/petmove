@@ -4,11 +4,17 @@ import { useEffect, useState } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { nativeGoogleLogin } from '@/lib/native/native-oauth'
 import { nativeAppleLogin } from '@/lib/native/native-apple'
+import { LogoMark } from '@/components/portal-shell/logo-mark'
 
 const buttonBaseClass =
   'inline-flex w-full items-center justify-center gap-1.5 rounded-md h-10 px-md text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#212124]/30 disabled:pointer-events-none disabled:opacity-50 select-none'
 const socialButtonClass = `${buttonBaseClass} border border-[rgba(33,33,36,0.16)] bg-white text-[#212124] hover:bg-[#F2F2F4]`
-const primaryButtonClass = `${buttonBaseClass} bg-[#212124] text-white hover:bg-[#3A3A3E]`
+// 카카오·네이버 = 각 사 공식 버튼 색(카카오 노랑 #FEE500+검정 85%, 네이버 초록 #03C75A+흰색).
+// 구글은 공식 가이드가 흰 아웃라인이라 socialButtonClass 그대로.
+const kakaoButtonClass = `${buttonBaseClass} bg-[#FEE500] text-[rgba(0,0,0,0.85)] hover:bg-[#F2DA00]`
+const naverButtonClass = `${buttonBaseClass} bg-[#03C75A] text-white hover:bg-[#02B351]`
+// 주 버튼 = 브랜드 하늘색(#0BAEFF, --pm-accent). 이 화면은 bg-white 고정이라 라이트 값 사용.
+const primaryButtonClass = `${buttonBaseClass} bg-[#0BAEFF] text-white hover:bg-[#099CE6] focus-visible:ring-[#0BAEFF]/40`
 // Apple 가이드라인: Sign in with Apple 버튼은 검정/흰색 + Apple 로고, 다른 소셜 버튼과
 // 동등한 크기·위치(Guideline 4.8). 흰색(아웃라인) 변형 — 카카오·네이버·구글의 크림 톤과
 // 어울리도록. 로고·글자는 검정(currentColor). iOS 네이티브에서만 노출.
@@ -186,7 +192,7 @@ export function LoginForm({
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-md bg-white px-md py-xl">
         <div
-          className="h-8 w-8 animate-spin rounded-full border-2 border-[#212124]/20 border-t-[#212124]"
+          className="h-8 w-8 animate-spin rounded-full border-2 border-[#0BAEFF]/20 border-t-[#0BAEFF]"
           aria-hidden
         />
         <p className="text-sm text-[#97979C]">로그인 중…</p>
@@ -198,6 +204,10 @@ export function LoginForm({
     <div className="flex min-h-dvh items-center justify-center bg-white px-md py-xl">
       <div className="w-full max-w-sm space-y-lg">
         <div className="space-y-md text-center">
+          {/* 브랜드 로고 — 스플래시(하늘·구름·P)와 이어지는 인상. 상단바 LogoMark 재사용. */}
+          <div className="flex justify-center">
+            <LogoMark size={56} />
+          </div>
           <h1 className="font-display text-[28px] leading-tight text-[#212124]">펫무브</h1>
           <p className="text-sm leading-snug text-[#97979C]">
             반려동물과 함께하는 해외여행
@@ -222,7 +232,7 @@ export function LoginForm({
           )}
           <button
             type="button"
-            className={socialButtonClass}
+            className={kakaoButtonClass}
             disabled={loading !== null}
             onClick={() => oauthLogin('kakao')}
           >
@@ -230,7 +240,7 @@ export function LoginForm({
           </button>
           <button
             type="button"
-            className={socialButtonClass}
+            className={naverButtonClass}
             disabled={loading !== null}
             onClick={naverOAuth}
           >
