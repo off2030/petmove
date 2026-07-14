@@ -64,6 +64,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/germany-21.jpg',  // 브레멘 마르크트 광장 (맑음)
   ],
   이탈리아: [
+    '/destinations/italy-27.jpg',
     '/destinations/italy-02.jpg',
     '/destinations/italy-04.jpg',
     '/destinations/italy-05.jpg',
@@ -71,7 +72,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/italy-11.jpg',
     '/destinations/italy-12.jpg',
     '/destinations/italy-25.jpg',
-    '/destinations/italy-27.jpg',
     '/destinations/italy-28.jpg',
   ],
   스페인: [
@@ -128,7 +128,7 @@ function nextHeroPhotoIndex(destKey: string, length: number): number {
 
 /** 첫 장은 고정으로 먼저 보여주고, 나머지 후보는 매 로드마다 무작위 순서로.
     (순차 회전 대신) — 현재 태국·필리핀 적용. */
-const HERO_LEAD_THEN_RANDOM = new Set(['태국', '필리핀'])
+const HERO_LEAD_THEN_RANDOM = new Set(['태국', '필리핀', '이탈리아'])
 
 /** Fisher–Yates 셔플 — 원본 불변, 새 배열 반환. */
 function shuffleArray<T>(arr: readonly T[]): T[] {
