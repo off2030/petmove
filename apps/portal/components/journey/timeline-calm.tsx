@@ -139,6 +139,7 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/italy-06.jpg': 'top',
   '/destinations/italy-07.jpg': 'top',
   '/destinations/italy-08.jpg': 'bottom',
+  '/destinations/italy-11.jpg': 'bottom',
 }
 
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
