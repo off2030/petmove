@@ -68,7 +68,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/italy-04.jpg',
     '/destinations/italy-05.jpg',
     '/destinations/italy-06.jpg',
-    '/destinations/italy-08.jpg',
     '/destinations/italy-09.jpg',
     '/destinations/italy-11.jpg',
     '/destinations/italy-12.jpg',
@@ -79,9 +78,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/italy-27.jpg',
     '/destinations/italy-28.jpg',
     '/destinations/italy-31.jpg',
-    '/destinations/italy-32.jpg',
     '/destinations/italy-33.jpg',
-    '/destinations/italy-34.jpg',
   ],
 }
 
@@ -125,7 +122,6 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/germany-21.jpg': 'top',
   '/destinations/italy-04.jpg': 'bottom',
   '/destinations/italy-06.jpg': 'top',
-  '/destinations/italy-08.jpg': 'bottom',
   '/destinations/italy-11.jpg': 'bottom',
   '/destinations/italy-12.jpg': 'top',
   '/destinations/italy-25.jpg': 'top',
