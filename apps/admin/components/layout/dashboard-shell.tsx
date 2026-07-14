@@ -1,16 +1,16 @@
 'use client'
 
-import { memo, useCallback, useEffect, useMemo, useState, useTransition } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { Bell, Maximize2, X } from 'lucide-react'
 import { TopBar, type TabId } from './topbar'
+import { PlatformCasesMover } from './platform-cases-mover'
 import { useCases } from '@/components/cases/cases-context'
 import { CasesApp } from '@/components/cases/cases-app'
 import { SettingsApp } from '@/components/settings/settings-app'
 import { CalculatorApp } from '@/components/calculator/calculator-app'
 import { AlertsApp } from '@/components/alerts/alerts-app'
 import { SuperAdminApp } from '@/components/super-admin/super-admin-app'
-import { clearImpersonation } from '@/lib/actions/super-admin'
 import { migrateMyOAuthAvatar } from '@/lib/actions/profile'
 import { listMyConversations } from '@/lib/actions/chat'
 import { subscribeRealtime } from '@/lib/realtime/resilient-channel'
@@ -24,6 +24,10 @@ const MemoizedSettings = memo(SettingsApp)
 const MemoizedCalculator = memo(CalculatorApp)
 const MemoizedAlerts = memo(AlertsApp)
 const MemoizedSuperAdmin = memo(SuperAdminApp)
+
+// 펫무브 직영(platform) 고정 UUID. active-org.ts(server-only, next/headers) 를 client 에서
+// import 할 수 없어 여기 상수로 둔다.
+const PLATFORM_ORG_ID = '00000000-0000-0000-0000-000000000002'
 
 function pathToTab(pathname: string): TabId {
   if (pathname.startsWith('/calculator')) return 'calculator'
@@ -42,7 +46,8 @@ export function DashboardShell({
   initialSettingsBootstrap = null,
   initialOrgs = [],
   initialSuperAdmins = [],
-  impersonation = null,
+  activeOrgId = null,
+  homeOrg = null,
   initialExternalLinks,
   initialConversations = [],
   initialConvSnapshots = {},
@@ -55,7 +60,10 @@ export function DashboardShell({
   initialSettingsBootstrap?: SettingsBootstrap | null
   initialOrgs?: OrgSummary[]
   initialSuperAdmins?: SuperAdminEntry[]
-  impersonation?: { orgId: string; orgName: string } | null
+  /** 현재 활성 조직 id (impersonation 반영). 조직 스위처·미배정 이동 조건 판별. */
+  activeOrgId?: string | null
+  /** 본인 home org(원래 소속). 미배정 신청 이동 대상 라벨. */
+  homeOrg?: { id: string; name: string } | null
   initialExternalLinks: ExternalLinksConfig
   initialConversations?: ConversationListItem[]
   initialConvSnapshots?: Record<string, ConversationMessagesResult>
@@ -65,7 +73,6 @@ export function DashboardShell({
   // 'messages' 는 항상 프리마운트 — 첫 로그인 시점부터 백그라운드 prefetch 워커가
   // 돌아 채팅창을 어떤 시점에 열어도 캐시 적중. 보이지는 않음 (display:none).
   const [mounted, setMounted] = useState<Set<TabId>>(() => new Set([activeTab, 'messages']))
-  const [endingImpersonation, startEndImpersonation] = useTransition()
   const [conversations, setConversations] = useState<ConversationListItem[]>(initialConversations)
   const [resolvedAvatarUrl, setResolvedAvatarUrl] = useState<string | null>(userAvatarUrl ?? null)
   // 우측 하단 플로팅 버튼이 여는 알림 팝업. 알림 탭으로 이동하지 않고 그 자리에서 본다.
@@ -163,16 +170,6 @@ export function DashboardShell({
     else nav.clearAppBadge?.().catch(() => {})
   }, [messagesUnread])
 
-  const onEndImpersonation = useCallback(() => {
-    startEndImpersonation(async () => {
-      await clearImpersonation()
-      // hard reload — 들어갈 때(onImpersonate)와 동일. DashboardShell 의 SPA 탭·케이스 목록
-      // 상태는 router.refresh() 로는 안 바뀌어 직영 목록이 그대로 남는다. 쿠키 해제 후
-      // 케이스 페이지를 SSR 로 재호출해 home org(로잔)으로 확실히 복귀.
-      window.location.href = '/cases'
-    })
-  }, [])
-
   const { selectCase } = useCases()
 
   const handleTabChange = useCallback((tab: TabId) => {
@@ -206,21 +203,8 @@ export function DashboardShell({
 
   return (
     <>
-      {impersonation && (
-        <div className="shrink-0 flex items-center justify-center gap-md px-md py-1.5 bg-pmw-warning-bg border-b border-pmw-warning/40 text-pmw-warning-foreground text-[13px] font-serif">
-          <span>
-            <span className="italic">임시 보기 중</span>{' '}
-            <span className="font-semibold">{impersonation.orgName}</span>
-          </span>
-          <button
-            type="button"
-            onClick={onEndImpersonation}
-            disabled={endingImpersonation}
-            className="px-2 py-0.5 rounded-full border border-pmw-warning/50 text-[12px] hover:bg-pmw-warning/10 transition-colors disabled:opacity-40"
-          >
-            원래대로
-          </button>
-        </div>
+      {isSuperAdmin && activeOrgId === PLATFORM_ORG_ID && homeOrg && homeOrg.id !== PLATFORM_ORG_ID && (
+        <PlatformCasesMover homeOrgName={homeOrg.name} />
       )}
       {!userName && userEmail && (
         <div className="shrink-0 flex items-center justify-center gap-md px-md py-1.5 bg-amber-500/10 border-b border-amber-500/30 text-amber-900 dark:text-amber-300 text-[13px] font-serif">
@@ -240,7 +224,17 @@ export function DashboardShell({
           </button>
         </div>
       )}
-      <TopBar activeTab={activeTab} onTabChange={handleTabChange} isSuperAdmin={isSuperAdmin} userEmail={userEmail} userName={userName} userAvatarUrl={resolvedAvatarUrl} messagesUnread={messagesUnread} />
+      <TopBar
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        isSuperAdmin={isSuperAdmin}
+        userEmail={userEmail}
+        userName={userName}
+        userAvatarUrl={resolvedAvatarUrl}
+        messagesUnread={messagesUnread}
+        orgs={isSuperAdmin ? initialOrgs.map((o) => ({ id: o.id, name: o.name })) : []}
+        activeOrgId={activeOrgId}
+      />
       <main className="peer flex-1 min-w-0 overflow-hidden">
         {mounted.has('cases') && (
           <div className="h-full" style={{ display: activeTab === 'cases' ? 'block' : 'none' }}>

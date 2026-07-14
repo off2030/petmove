@@ -6,7 +6,7 @@ import { createClient } from '@petmove/auth/server'
 import { createAdminClient } from '@petmove/auth'
 import { sendEmail, inviteFromAddress } from '@/lib/email/resend'
 import { inviteEmailHtml, inviteEmailSubject } from '@/lib/email/invite-template'
-import { IMPERSONATION_COOKIE } from '@/lib/supabase/active-org'
+import { IMPERSONATION_COOKIE, PLATFORM_ORG_ID } from '@/lib/supabase/active-org'
 import type { InviteRole } from './invites'
 import type { VetInfo } from '@/lib/vet-info'
 import type { OrgType } from '@/lib/actions/company-info'
@@ -550,6 +550,138 @@ export async function clearImpersonation(): Promise<Result<null>> {
   }
 }
 
+/**
+ * 조직 스위처 — super_admin 이 상단바에서 로잔/펫무브(직영) 등 조직을 전환.
+ * 고른 조직이 home org(가장 오래된 membership)면 impersonation 쿠키를 지워 원래대로,
+ * 아니면 쿠키를 세팅해 그 조직으로 본다. (기존 임시보기와 같은 메커니즘, UI 만 상단바로 승격.)
+ */
+export async function switchActiveOrg(orgId: string): Promise<Result<null>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { ok: false, error: '로그인이 필요합니다' }
+
+    const admin = createAdminClient()
+    const { data: org } = await admin
+      .from('organizations')
+      .select('id')
+      .eq('id', orgId)
+      .maybeSingle()
+    if (!org) return { ok: false, error: '조직을 찾을 수 없음' }
+
+    const { data: mem } = await admin
+      .from('memberships')
+      .select('org_id')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    const homeOrgId = mem?.org_id as string | undefined
+
+    const cookieStore = await cookies()
+    if (homeOrgId && orgId === homeOrgId) {
+      cookieStore.delete(IMPERSONATION_COOKIE)
+    } else {
+      cookieStore.set({
+        name: IMPERSONATION_COOKIE,
+        value: orgId,
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 12,
+      })
+    }
+    revalidatePath('/', 'layout')
+    return { ok: true, value: null }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+export interface PlatformCase {
+  id: string
+  customer_name: string | null
+  pet_name: string | null
+  destination: string | null
+  created_at: string
+  source: string | null
+}
+
+/** 펫무브 직영(platform)에 귀속된 미배정 신청(케이스) 목록. 이동 UI 용. */
+export async function listPlatformCases(): Promise<Result<PlatformCase[]>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  try {
+    const admin = createAdminClient()
+    const { data, error } = await admin
+      .from('cases')
+      .select('id, customer_name, pet_name, destination, created_at, source')
+      .eq('org_id', PLATFORM_ORG_ID)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: (data ?? []) as PlatformCase[] }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * 펫무브 직영으로 잘못 들어온 신청을 본인 home org(예: 로잔)로 이동.
+ * caseIds 중 "실제로 펫무브 소속인" 케이스만 옮긴다(안전 가드). 데모/테스트 건은
+ * 호출측에서 선택 해제하여 제외한다.
+ */
+export async function moveCasesToHome(
+  caseIds: string[],
+): Promise<Result<{ moved: number; orgName: string }>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  if (!Array.isArray(caseIds) || caseIds.length === 0) {
+    return { ok: false, error: '이동할 신청을 선택하세요' }
+  }
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { ok: false, error: '로그인이 필요합니다' }
+
+    const admin = createAdminClient()
+    const { data: mem } = await admin
+      .from('memberships')
+      .select('org_id')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    const homeOrgId = mem?.org_id as string | undefined
+    if (!homeOrgId) return { ok: false, error: '홈 조직을 찾을 수 없음' }
+    if (homeOrgId === PLATFORM_ORG_ID) {
+      return { ok: false, error: '홈 조직이 펫무브(직영)이라 이동 대상이 없습니다' }
+    }
+
+    const { data: moved, error } = await admin
+      .from('cases')
+      .update({ org_id: homeOrgId })
+      .in('id', caseIds)
+      .eq('org_id', PLATFORM_ORG_ID)
+      .is('deleted_at', null)
+      .select('id')
+    if (error) return { ok: false, error: error.message }
+
+    const { data: org } = await admin
+      .from('organizations')
+      .select('name')
+      .eq('id', homeOrgId)
+      .maybeSingle()
+
+    revalidatePath('/', 'layout')
+    return { ok: true, value: { moved: (moved ?? []).length, orgName: (org?.name as string) ?? '' } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 export async function createOrg(input: { name: string; orgType?: OrgType }): Promise<Result<{ id: string }>> {
   const gate = await requireSuperAdmin()
   if (!gate.ok) return gate
@@ -601,9 +733,6 @@ export async function updateOrgCompanyInfo(input: {
     return { ok: false, error: (e as Error).message }
   }
 }
-
-// 펫무브 직영(platform) 고정 UUID — 유형은 항상 'platform' 으로 고정(변경 불가).
-const PLATFORM_ORG_ID = '00000000-0000-0000-0000-000000000002'
 
 /** 조직 유형 설정 (organizations.org_type). */
 export async function setOrgType(input: {

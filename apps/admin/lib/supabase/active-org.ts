@@ -4,6 +4,9 @@ import { createClient } from '@petmove/auth/server'
 
 export const IMPERSONATION_COOKIE = 'pm_impersonated_org'
 
+/** 펫무브 직영(platform) 고정 UUID — 조직별 병원이 아닌 미배정(직영) 신청이 귀속되는 조직. */
+export const PLATFORM_ORG_ID = '00000000-0000-0000-0000-000000000002'
+
 /**
  * 현재 로그인 유저의 활성 org_id 를 반환.
  *
@@ -94,3 +97,29 @@ export async function getImpersonationInfo(): Promise<{ orgId: string; orgName: 
   if (!org) return null
   return { orgId: org.id as string, orgName: org.name as string }
 }
+
+/**
+ * 로그인 유저의 home org(가장 오래된 membership) — impersonation 과 무관한 "원래 소속".
+ * 조직 스위처의 홈 판별·미배정 신청 이동 대상(예: 로잔) 라벨에 사용.
+ */
+export const getHomeOrg = cache(async (): Promise<{ id: string; name: string } | null> => {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data: mem } = await supabase
+    .from('memberships')
+    .select('org_id')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  if (!mem) return null
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('id, name')
+    .eq('id', mem.org_id as string)
+    .maybeSingle()
+  return org ? { id: org.id as string, name: org.name as string } : null
+})

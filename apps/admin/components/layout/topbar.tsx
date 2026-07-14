@@ -2,6 +2,7 @@
 
 import { Folder, LayoutGrid, Bell, Settings, Menu, Monitor, Sun, Moon, User, LogOut, UserCog, X } from 'lucide-react'
 import { SkinPicker } from './skin-picker'
+import { OrgSwitcher } from './org-switcher'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVaccineLookups } from '@/components/providers/vaccine-data-provider'
@@ -117,6 +118,10 @@ type TopBarProps = {
   superAdminActive?: boolean
   /** 메시지 탭 위 안 읽은 메시지 수 — 0 이면 뱃지 미표시. */
   messagesUnread?: number
+  /** super_admin 조직 스위처용 조직 목록. 2개 미만이면 스위처 미표시. */
+  orgs?: { id: string; name: string }[]
+  /** 현재 활성 조직 id (impersonation 반영). 스위처 체크 표시용. */
+  activeOrgId?: string | null
 }
 
 export function TopBar({
@@ -126,6 +131,8 @@ export function TopBar({
   userName = null,
   userAvatarUrl = null,
   messagesUnread = 0,
+  orgs = [],
+  activeOrgId = null,
 }: TopBarProps) {
   const vaccineLookups = useVaccineLookups()
   const expiringCount = useMemo(() => vaccineLookups.countExpiringProducts(), [vaccineLookups])
@@ -244,6 +251,14 @@ export function TopBar({
                 <X size={20} />
               </button>
             </div>
+
+            {/* 조직 스위처 (super_admin, 조직 2개+). 드로어 헤더 바로 아래 — 스크롤 밖이라
+                드롭다운이 안 잘림. */}
+            {orgs.length >= 2 && (
+              <div className="shrink-0 px-md py-2 border-b border-border/80">
+                <OrgSwitcher orgs={orgs} activeOrgId={activeOrgId} />
+              </div>
+            )}
 
             {/* 메인 nav + 보조 메뉴 (스크롤 가능)
                 홈/도구/메시지는 데스크톱 우측 nav 와 동일하게 텍스트만 (87259c2 와 일관). */}
@@ -367,6 +382,7 @@ export function TopBar({
         {/* Right-side actions — 모바일에서는 drawer 안으로 이전, 여기선 숨김.
             홈은 좌측 로고, 슈퍼어드민은 설정 탭 안으로 이전되어 상단 텍스트 탭·아이콘 없음. */}
         <div className="hidden md:flex items-center gap-xs">
+          <OrgSwitcher orgs={orgs} activeOrgId={activeOrgId} />
           <SkinPicker />
           <button
             type="button"
