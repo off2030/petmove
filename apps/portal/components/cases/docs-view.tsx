@@ -3,9 +3,14 @@
 
 import { C } from '@/lib/palette'
 import Link from 'next/link'
-import { useEffect } from 'react'
-import { getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
+import { useEffect, useTransition } from 'react'
+import {
+  deleteStepDocument,
+  getStepDocumentUrl,
+  pruneMissingStepDocuments,
+} from '@/lib/actions/documents'
 import { downloadFile } from '@/lib/native/download'
+import { useConfirm } from '@petmove/ui'
 import { useMediaViewer } from '@/components/portal-shell/media-viewer'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { CaseHeader } from '@/components/cases/case-header'
@@ -58,6 +63,24 @@ export function DocsView({
   // '해당없음' 으로 표시한 서류는 분모에서 제외 — 보유/해당없음을 다 정리하면 X/X.
   const requiredTotal = curatedChecklist.filter((d) => !d.na).length
   const quarantineDone = quarantineCerts.filter((d) => d.verified).length
+
+  const confirm = useConfirm()
+  const [deleting, startDelete] = useTransition()
+  // 보관함 파일 삭제 — 단계 상세 첨부(StepAttachments)와 같은 확인창·서버 동작.
+  async function handleDeleteDoc(docId: string) {
+    if (deleting) return
+    const ok = await confirm({
+      message: '이 파일을 삭제할까요?',
+      okLabel: '삭제',
+      cancelLabel: '취소',
+      variant: 'destructive',
+    })
+    if (!ok) return
+    startDelete(async () => {
+      const res = await deleteStepDocument(caseId, docId)
+      if (res.ok) updateCase(res.value)
+    })
+  }
 
   function handleOpenDoc(doc: { id: string; name: string; type: string }) {
     // 이미지(type 'IMG') = 앱 내장 뷰어, 그 외(PDF) = 다운로드(네이티브는 저장·공유 시트).
@@ -188,6 +211,7 @@ export function DocsView({
                   num={num}
                   monoCap={monoCap}
                   onDownload={() => handleOpenDoc(d)}
+                  onDelete={() => handleDeleteDoc(d.id)}
                 />
               </div>
             ))}
@@ -371,6 +395,7 @@ function DocRow({
   num,
   monoCap,
   onDownload,
+  onDelete,
 }: {
   doc: AutoDocItem | StoredDocItem
   pending: boolean
@@ -379,6 +404,8 @@ function DocRow({
   monoCap: React.CSSProperties
   /** 있으면 다운로드 버튼이 활성화돼 클릭 시 호출 (보관 중인 서류 한정). */
   onDownload?: () => void
+  /** 있으면 삭제(X) 버튼 표시 — 보관함 직접 업로드 파일 한정. */
+  onDelete?: () => void
 }) {
   const sized = 'size' in doc && doc.size ? doc.size : null
   return (
@@ -466,6 +493,38 @@ function DocRow({
             strokeLinejoin="round"
           >
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+          </svg>
+        </button>
+      )}
+      {onDelete && (
+        <button
+          type="button"
+          aria-label="삭제"
+          onClick={onDelete}
+          style={{
+            width: 32,
+            height: 32,
+            flexShrink: 0,
+            borderRadius: '50%',
+            border: `.5px solid ${C.line}`,
+            background: 'transparent',
+            color: C.ink3,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          >
+            <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         </button>
       )}

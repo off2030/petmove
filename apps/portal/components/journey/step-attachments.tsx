@@ -10,6 +10,7 @@ import {
   uploadStepDocument,
 } from '@/lib/actions/documents'
 import { downloadFile } from '@/lib/native/download'
+import { useConfirm } from '@petmove/ui'
 import { useMediaViewer } from '@/components/portal-shell/media-viewer'
 import { type CaseDocument, formatFileSize, MAX_DOCUMENT_BYTES } from '@/lib/documents'
 
@@ -37,6 +38,7 @@ export function StepAttachments({
 }) {
   const { updateCase } = useCases()
   const { openImage } = useMediaViewer()
+  const confirm = useConfirm()
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -79,9 +81,16 @@ export function StepAttachments({
     })
   }
 
-  function handleDelete(docId: string) {
+  async function handleDelete(docId: string) {
     if (busy) return
-    if (!window.confirm('이 파일을 삭제할까요?')) return
+    // 시스템 window.confirm 대신 앱 공용 확인창 — 다른 삭제 확인과 디자인 통일.
+    const ok = await confirm({
+      message: '이 파일을 삭제할까요?',
+      okLabel: '삭제',
+      cancelLabel: '취소',
+      variant: 'destructive',
+    })
+    if (!ok) return
     setError(null)
     startTransition(async () => {
       const res = await deleteStepDocument(caseId, docId)
