@@ -439,12 +439,13 @@ export async function generateNzInfectionPack(caseId: string, opts?: GenerateOpt
 }
 
 /**
- * 발송 팩 — 인보이스 1장 + 선택한 케이스별 검사 서류 N장을 하나의 PDF 로 병합.
- * 인보이스가 맨 앞. 검사 탭 '신청서' 메뉴(KSVDL-R·KSVDL·VBDDL+APQA HQ·ARC-OVI)에서 사용.
- *  - invoice-only: 인보이스만 (KSVDL-R 광견병항체 발송용)
- *  - ksvdl: 인보이스 + 케이스별 KSVDL 시료제출서
- *  - nz:    인보이스 + 케이스별 NZ 전염병검사 팩(VBDDL+APQA HQ 국/영)
- *  - arc:   인보이스 + 케이스별 ARC-OVI 팩(시료제출서+VHC+면허)
+ * 발송 팩 — 인보이스+ESD 앞장 + 선택한 케이스별 검사 서류 N장을 하나의 PDF 로 병합.
+ * 앞장(인보이스+ESD)이 맨 앞. 검사 탭 '신청서' 메뉴(KSVDL-R·KSVDL·VBDDL+APQA HQ·ARC-OVI)에서 사용.
+ *  - invoice-only: 인보이스 + ESD + 미국 세관신고서 (KSVDL-R 광견병항체 발송용)
+ *  - ksvdl: 인보이스 + ESD + 케이스별 KSVDL 시료제출서
+ *  - nz:    인보이스 + ESD + 케이스별 NZ 전염병검사 팩(VBDDL+APQA HQ 국/영)
+ *  - arc:   인보이스(ESD 없음, 남아공) + 케이스별 ARC-OVI 팩(시료제출서+VHC+면허)
+ * ESD/Customs 분기는 앞장 생성기 generateInvoiceAndESD 가 consignee_lab 기준으로 처리.
  * 인보이스 수신처(consignee_lab)·검체수(tube_count)·발송일(ship_date)은 호출부에서 지정.
  */
 export async function generateShipmentPack(params: {
@@ -456,16 +457,23 @@ export async function generateShipmentPack(params: {
   opts?: GenerateOpts
 }): Promise<GeneratePdfResult> {
   const { PDFDocument } = await import('pdf-lib')
-  const invoice = await generateInvoice({
+  // 발송 건당 앞장 서류 — 인보이스 + ESD(해외 발송 세관 통관용 검체 선언서).
+  // generateInvoiceAndESD 가 consignee 별 분기를 이미 처리:
+  //  - ksvdl_r → 인보이스 + ESD + 미국 세관신고서(Customs)
+  //  - ksvdl·vbddl → 인보이스 + ESD
+  //  - arc_ovr(남아공) → ESD 불필요, 인보이스만
+  const front = await generateInvoiceAndESD({
     tube_count: params.tube_count,
     consignee_lab: params.consignee_lab,
     ship_date: params.ship_date,
   })
-  if (!invoice.ok) return invoice
-  // KSVDL-R 등은 인보이스만.
-  if (params.variant === 'invoice-only') return invoice
+  if (!front.ok) return front
+  // KSVDL-R 등 invoice-only 는 케이스별 서류가 없으므로 앞장 서류가 곧 발송 팩.
+  if (params.variant === 'invoice-only') {
+    return { ...front, filename: `${params.consignee_lab}_shipment_${params.tube_count}tubes.pdf` }
+  }
 
-  const parts: string[] = [invoice.pdf]
+  const parts: string[] = [front.pdf]
   for (const caseId of params.caseIds) {
     const r =
       params.variant === 'ksvdl'
