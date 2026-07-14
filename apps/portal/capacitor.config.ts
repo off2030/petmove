@@ -41,12 +41,12 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: 'always',
-    // B — WebView 배경색. 콜드 스타트 때 웹이 페인트되기 전 흰 화면 대신 앱 톤(stone)을 깐다.
-    backgroundColor: '#F5EFE8',
+    // B — WebView 배경색. 콜드 스타트 때 웹이 페인트되기 전 흰 화면 대신 브랜드 하늘색을 깐다.
+    backgroundColor: '#0BAEFF',
   },
   android: {
     allowMixedContent: false,
-    backgroundColor: '#F5EFE8',
+    backgroundColor: '#0BAEFF',
   },
   plugins: {
     // A — 네이티브 스플래시. Remote URL 모드라 앱 실행 시 웹을 처음부터 받아오는 동안
@@ -57,7 +57,7 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 3000,
       launchAutoHide: true,
-      backgroundColor: '#F5EFE8',
+      backgroundColor: '#0BAEFF',
       showSpinner: false,
       androidScaleType: 'CENTER_CROP',
       splashFullScreen: true,

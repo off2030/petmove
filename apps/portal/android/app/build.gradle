@@ -22,7 +22,8 @@ android {
         // Groovy 명령 체인 파싱 모호성(값이 null 로 평가되는 문제)을 제거한다.
         def buildNumberEnv = System.getenv("BUILD_NUMBER")
         versionCode = (buildNumberEnv != null && !buildNumberEnv.isEmpty()) ? buildNumberEnv.toInteger() : 1
-        versionName = "1.0"
+        // 1.1 = 새 브랜드 아이콘·스플래시 (2026-07-14). iOS 쪽은 codemagic.yaml MARKETING_VERSION 과 함께 올릴 것.
+        versionName = "1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
