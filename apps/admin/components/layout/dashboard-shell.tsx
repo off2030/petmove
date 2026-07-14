@@ -4,7 +4,6 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { Bell, Maximize2, X } from 'lucide-react'
 import { TopBar, type TabId } from './topbar'
-import { PlatformCasesMover } from './platform-cases-mover'
 import { useCases } from '@/components/cases/cases-context'
 import { CasesApp } from '@/components/cases/cases-app'
 import { SettingsApp } from '@/components/settings/settings-app'
@@ -203,9 +202,6 @@ export function DashboardShell({
 
   return (
     <>
-      {isSuperAdmin && activeOrgId === PLATFORM_ORG_ID && homeOrg && homeOrg.id !== PLATFORM_ORG_ID && (
-        <PlatformCasesMover homeOrgName={homeOrg.name} />
-      )}
       {!userName && userEmail && (
         <div className="shrink-0 flex items-center justify-center gap-md px-md py-1.5 bg-amber-500/10 border-b border-amber-500/30 text-amber-900 dark:text-amber-300 text-[13px] font-serif">
           <span>
@@ -234,6 +230,13 @@ export function DashboardShell({
         messagesUnread={messagesUnread}
         orgs={isSuperAdmin ? initialOrgs.map((o) => ({ id: o.id, name: o.name })) : []}
         activeOrgId={activeOrgId}
+        platformMoverActive={
+          isSuperAdmin &&
+          activeOrgId === PLATFORM_ORG_ID &&
+          !!homeOrg &&
+          homeOrg.id !== PLATFORM_ORG_ID
+        }
+        platformHomeName={homeOrg?.name ?? ''}
       />
       <main className="peer flex-1 min-w-0 overflow-hidden">
         {mounted.has('cases') && (

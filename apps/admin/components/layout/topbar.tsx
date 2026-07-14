@@ -3,6 +3,7 @@
 import { Folder, LayoutGrid, Bell, Settings, Menu, Monitor, Sun, Moon, User, LogOut, UserCog, X } from 'lucide-react'
 import { SkinPicker } from './skin-picker'
 import { OrgSwitcher } from './org-switcher'
+import { PlatformCasesMover } from './platform-cases-mover'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVaccineLookups } from '@/components/providers/vaccine-data-provider'
@@ -120,8 +121,12 @@ type TopBarProps = {
   messagesUnread?: number
   /** super_admin 조직 스위처용 조직 목록. 2개 미만이면 스위처 미표시. */
   orgs?: { id: string; name: string }[]
-  /** 현재 활성 조직 id (impersonation 반영). 스위처 체크 표시용. */
+  /** 현재 활성 조직 id (impersonation 반영). 스위처 토글 기준. */
   activeOrgId?: string | null
+  /** 펫무브 직영 보기 중(super_admin) — 미배정 신청 정리 아이콘 표시 조건. */
+  platformMoverActive?: boolean
+  /** 미배정 신청 이동 대상(home org) 이름. */
+  platformHomeName?: string
 }
 
 export function TopBar({
@@ -133,6 +138,8 @@ export function TopBar({
   messagesUnread = 0,
   orgs = [],
   activeOrgId = null,
+  platformMoverActive = false,
+  platformHomeName = '',
 }: TopBarProps) {
   const vaccineLookups = useVaccineLookups()
   const expiringCount = useMemo(() => vaccineLookups.countExpiringProducts(), [vaccineLookups])
@@ -383,6 +390,7 @@ export function TopBar({
             홈은 좌측 로고, 슈퍼어드민은 설정 탭 안으로 이전되어 상단 텍스트 탭·아이콘 없음. */}
         <div className="hidden md:flex items-center gap-xs">
           <OrgSwitcher orgs={orgs} activeOrgId={activeOrgId} />
+          <PlatformCasesMover active={platformMoverActive} homeOrgName={platformHomeName} />
           <SkinPicker />
           <button
             type="button"

@@ -1,16 +1,24 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
-import { ArrowRight, X } from 'lucide-react'
+import { Inbox, X } from 'lucide-react'
 import { listPlatformCases, moveCasesToHome, type PlatformCase } from '@/lib/actions/super-admin'
 import { cn } from '@/lib/utils'
 
 /**
- * 펫무브 직영(platform)을 보고 있을 때만 뜨는 배너 + 이동 모달.
+ * 펫무브 직영(platform)을 보고 있을 때만 상단바에 뜨는 작은 아이콘 버튼 + 이동 모달.
  * 병원 링크(/apply/<slug>) 를 안 거치고 앱에서 직접 신청해 "미배정(펫무브 직영)"으로
  * 들어온 케이스를 home org(예: 로잔)로 옮긴다. 데모/테스트 건은 목록에서 선택 해제해 제외.
+ *
+ * active=false(펫무브가 아닌 조직 보기)면 아무것도 렌더 안 함(조회도 안 함).
  */
-export function PlatformCasesMover({ homeOrgName }: { homeOrgName: string }) {
+export function PlatformCasesMover({
+  active,
+  homeOrgName,
+}: {
+  active: boolean
+  homeOrgName: string
+}) {
   const [cases, setCases] = useState<PlatformCase[] | null>(null)
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -18,6 +26,9 @@ export function PlatformCasesMover({ homeOrgName }: { homeOrgName: string }) {
   const [pending, startTransition] = useTransition()
 
   useEffect(() => {
+    // 조직 전환은 full reload(window.location) 라 컴포넌트가 새로 마운트 → active=true 일 때만
+    // 조회하면 충분(stale 걱정 없음).
+    if (!active) return
     let alive = true
     listPlatformCases().then((r) => {
       if (alive && r.ok) setCases(r.value)
@@ -25,7 +36,7 @@ export function PlatformCasesMover({ homeOrgName }: { homeOrgName: string }) {
     return () => {
       alive = false
     }
-  }, [])
+  }, [active])
 
   function openModal() {
     setSelected(new Set(cases?.map((c) => c.id) ?? []))
@@ -61,23 +72,22 @@ export function PlatformCasesMover({ homeOrgName }: { homeOrgName: string }) {
     })
   }
 
-  if (!cases || cases.length === 0) return null
+  if (!active || !cases || cases.length === 0) return null
 
   return (
     <>
-      <div className="shrink-0 flex items-center justify-center gap-md px-md py-1.5 bg-amber-500/10 border-b border-amber-500/30 text-amber-900 dark:text-amber-200 text-[13px]">
-        <span>
-          펫무브(직영)에 들어온 미배정 신청{' '}
-          <span className="font-semibold font-mono tabular-nums">{cases.length}</span>건
+      <button
+        type="button"
+        onClick={openModal}
+        title={`펫무브 미배정 신청 ${cases.length}건 — ${homeOrgName}(으)로 정리`}
+        aria-label={`미배정 신청 ${cases.length}건 정리`}
+        className="relative h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+      >
+        <Inbox size={18} />
+        <span className="absolute top-0.5 right-0.5 min-w-[15px] h-[15px] px-1 rounded-full bg-primary text-primary-foreground font-mono text-[9px] font-semibold leading-none flex items-center justify-center ring-2 ring-background">
+          {cases.length > 99 ? '99+' : cases.length}
         </span>
-        <button
-          type="button"
-          onClick={openModal}
-          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-amber-500/50 text-[12px] hover:bg-amber-500/10 transition-colors"
-        >
-          {homeOrgName}(으)로 이동 <ArrowRight size={12} />
-        </button>
-      </div>
+      </button>
 
       {open && (
         <div role="dialog" aria-modal="true" aria-label="미배정 신청 이동" className="fixed inset-0 z-[60] flex items-center justify-center p-4">
