@@ -116,16 +116,26 @@ export async function sendTestReminder(): Promise<{ ok: boolean; reason?: string
     if (perm.display !== 'granted') perm = await LocalNotifications.requestPermissions()
     if (perm.display !== 'granted') return { ok: false, reason: 'denied' }
     const channelId = await ensureTestChannel()
+    // ⚠️ 스토어 스크린샷용 임시(2026-07-14): 실전 문구 3건을 한 번에 발송.
+    // 작업 끝나면 아래 STORE_SHOT_SET 을 false 로 되돌려 원래 1건 테스트로 복원.
+    const STORE_SHOT_SET = true
+    const bodies = STORE_SHOT_SET
+      ? [
+          '내일은 밀꾸 광견병 항체 검사 예정일이에요 🐾 예약 시간은 오전 10시 30분이에요.',
+          '밀꾸 수입 허가증이 나왔어요. ✨',
+          '밀꾸 광견병 백신 유효기간이 한 달 뒤(2026년 8월 13일) 만료돼요. 추가 접종을 준비하세요.',
+        ]
+      : ['일정 알림이 정상 작동해요! 🐾']
     await LocalNotifications.schedule({
-      notifications: [
-        {
-          id: TEST_ID,
-          title: '펫무브',
-          body: '일정 알림이 정상 작동해요! 🐾',
-          // schedule 생략 = 즉시 발송. channelId 는 Android 에서만(iOS 는 undefined → 미포함).
-          ...(channelId ? { channelId } : {}),
-        },
-      ],
+      notifications: bodies.map((body, i) => ({
+        // TEST_ID 아래로 내려가며 부여(99999·99998·99997) — ID_BASE(100000) 이상은
+        // 예약 리마인더 네임스페이스라 침범하면 cancelOurs 에 걸리고 실제 알림과 충돌.
+        id: TEST_ID - i,
+        title: '펫무브',
+        body,
+        // schedule 생략 = 즉시 발송. channelId 는 Android 에서만(iOS 는 undefined → 미포함).
+        ...(channelId ? { channelId } : {}),
+      })),
     })
     return { ok: true }
   } catch (e) {
