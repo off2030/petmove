@@ -1,6 +1,5 @@
 'use client'
 
-
 import { C as PM } from '@/lib/palette'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -74,18 +73,14 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/italy-07.jpg',
     '/destinations/italy-08.jpg',
     '/destinations/italy-09.jpg',
-    '/destinations/italy-10.jpg',
     '/destinations/italy-11.jpg',
     '/destinations/italy-12.jpg',
     '/destinations/italy-13.jpg',
     '/destinations/italy-14.jpg',
     '/destinations/italy-15.jpg',
-    '/destinations/italy-16.jpg',
     '/destinations/italy-17.jpg',
     '/destinations/italy-18.jpg',
     '/destinations/italy-19.jpg',
-    '/destinations/italy-20.jpg',
-    '/destinations/italy-21.jpg',
     '/destinations/italy-22.jpg',
     '/destinations/italy-23.jpg',
     '/destinations/italy-24.jpg',
@@ -93,7 +88,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/italy-26.jpg',
     '/destinations/italy-27.jpg',
     '/destinations/italy-28.jpg',
-    '/destinations/italy-29.jpg',
     '/destinations/italy-30.jpg',
     '/destinations/italy-31.jpg',
     '/destinations/italy-32.jpg',
@@ -378,7 +372,6 @@ export function TimelineCalm({
     trip.tripType === 'round' && trip.departureDate && journeyCompleteDate
       ? formatDateRange(trip.departureDate, journeyCompleteDate)
       : arrivalText
-
 
   // 티켓 노치 배지 — 가로가 세로보다 긴 라운드 사각 + 우측(텍스트 쪽)에만 반원 컷아웃.
   // 좌측은 세로 레일이 붙는 쪽이라 온전히 두고, 우측만 '뜯겨 열린' 효과를 준다.
