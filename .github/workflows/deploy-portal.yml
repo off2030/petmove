@@ -5,20 +5,18 @@ name: Deploy Portal
 # trigger: master 에 push 되고 portal 빌드에 영향 있는 파일이 변경됐을 때만.
 
 on:
-  # ⚠️ [임시] 포털 자동 배포 OFF — 무료 배포 한도 절약을 위해 packages 변경이 포털까지
-  #   배포되지 않도록 push 트리거를 잠시 끔(정보요청 등 펫무브워크 전용 작업 중). 수동 배포는
-  #   아래 workflow_dispatch(GitHub → Actions → Deploy Portal → Run workflow)로 가능.
-  #   ▶ 포털 작업 재개 시 아래 push: 블록 주석을 반드시 원복할 것.
-  # push:
-  #   branches: [master]
-  #   paths:
-  #     - 'apps/portal/**'
-  #     - 'packages/**'
-  #     - 'pnpm-lock.yaml'
-  #     - 'pnpm-workspace.yaml'
-  #     - 'turbo.json'
-  #     - '.github/workflows/deploy-portal.yml'
-  #     - '!**/*.md'
+  # 포털 자동 배포 재활성화 (2026-07-14) — 플레이스토어/App Store 심사 완료 후 리디자인
+  # 배포 재개. 심사 대비로 잠시 껐던 push 트리거를 원복.
+  push:
+    branches: [master]
+    paths:
+      - 'apps/portal/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - '.github/workflows/deploy-portal.yml'
+      - '!**/*.md'
   workflow_dispatch:
 
 concurrency:
