@@ -91,7 +91,7 @@ APP_SECTIONS = f"""
 
 # ── 서비스 소개 섹션(3번째): 두 핵심(수의사 직접 · 앱 연동) + 맡길 수 있는 것 + 상담 CTA ──
 SERVICE_SECTION = """
-  <section id="service" style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
+  <section id="service" style="border-top:0.5px solid var(--border)">
     <div class="container">
       <div class="kicker">펫무브 서비스 소개</div>
       <h2 class="h2">전문가에게 안심하고 맡기세요</h2>
@@ -311,7 +311,7 @@ html = f"""<!DOCTYPE html>
   .acard.more i{{color:var(--ink3);font-size:16px}}
   .slead{{font-size:13px;color:var(--ink2);text-align:center;max-width:400px;margin:0 auto 22px;line-height:1.6}}
   .score-list{{max-width:460px;margin:24px auto 0;display:flex;flex-direction:column;gap:12px}}
-  .score{{background:var(--bg);border:0.5px solid var(--border);border-radius:14px;padding:16px 17px}}
+  .score{{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:16px 17px}}
   .score-h{{display:flex;align-items:center;gap:11px;margin-bottom:8px}}
   .score .si{{color:var(--ink);display:inline-flex;align-items:center;font-size:22px;flex-shrink:0}}
   .score .st{{font-size:15px;font-weight:600}}
