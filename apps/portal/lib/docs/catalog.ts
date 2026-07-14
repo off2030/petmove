@@ -106,13 +106,10 @@ export function buildDocsView(
     fresh: false,
   }))
 
-  // 3) 보관함 — 체크리스트·검역증(필수 서류)에 묶이지 않은 '기타' 첨부만. 그 서류들은 각
-  //    상세 페이지(서류탭)에서 보므로 여기선 중복 노출하지 않는다(misc 등 자유 첨부만).
-  const linkedStepIds = new Set<string>()
-  if (requiredDocs) requiredDocs.forEach((d) => linkedStepIds.add(d.attachStepId))
-  else checklist.forEach((d) => linkedStepIds.add(d.id))
+  // 3) 보관함 — 어디서 올렸든(단계 상세·필수 서류·보관함 직접) 앱에 저장한 모든 첨부.
+  //    필수 서류 상세와 중복 노출되지만 '전부 한곳에서 보인다'가 우선(2026-07-14 사용자 확정,
+  //    이전의 '기타 첨부만' 필터는 허가서 첨부가 안 보인다는 혼란을 낳아 제거).
   const storedDocs: StoredDocItem[] = readCaseDocuments(caseRow.data)
-    .filter((d) => !linkedStepIds.has(d.stepId ?? ''))
     .slice()
     .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt))
     .map((d) => ({
