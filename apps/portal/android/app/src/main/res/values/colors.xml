@@ -2,6 +2,6 @@
 <resources>
     <!-- 브랜드 하늘색 — 시스템 스플래시 배경(스플래시 이미지 하단 그라디언트와 동일). -->
     <color name="splash_background">#0BAEFF</color>
-    <!-- 앱 캔버스(라이트) — 상태바/내비바/창 배경. 웹 라이트 배경(--pm-bg #F4F6F8)과 동일. -->
+    <!-- 앱 캔버스(라이트) — 상태바/내비바/창 배경. 웹 라이트 배경(pm-bg 토큰 #F4F6F8)과 동일. -->
     <color name="app_background">#F4F6F8</color>
 </resources>
