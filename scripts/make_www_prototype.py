@@ -142,6 +142,7 @@ html = f"""<!DOCTYPE html>
   :root{{
     --bg:#F4F6F8; --surface:#FFFFFF; --ink:#212124; --ink2:#5C5C60; --ink3:#97979C;
     --accent:#0BAEFF; --accent-ink:#0778BF; --sage:#14B8A6; --border:#E1E5E9; --dark:#212124;
+    --yellow-tint:#FFF4D6;
   }}
   *{{box-sizing:border-box}}
   [hidden]{{display:none!important}}
@@ -175,7 +176,7 @@ html = f"""<!DOCTYPE html>
     background:linear-gradient(to top, rgba(23,23,26,.82), rgba(23,23,26,.34) 55%, rgba(23,23,26,0))}}
   .hero-content{{max-width:540px}}
   .hero-photo{{display:none}}
-  .eyebrow{{display:inline-block;font-size:12px;font-weight:600;color:var(--ink);background:#E4F4FF;
+  .eyebrow{{display:inline-block;font-size:12px;font-weight:600;color:var(--ink);background:var(--yellow-tint);
     border-radius:999px;padding:5px 13px;margin-bottom:16px}}
   .hero h1{{font-size:34px;line-height:1.18;letter-spacing:-.02em;color:#fff;margin:0;font-weight:700}}
   .hero p{{font-size:15px;color:#EAF1F6;margin:15px 0 22px;line-height:1.62}}
@@ -186,7 +187,7 @@ html = f"""<!DOCTYPE html>
     padding:14px 22px;font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:8px}}
 
   section{{padding:38px 0}}
-  .kicker{{font-size:12.5px;font-weight:600;color:var(--accent-ink);letter-spacing:.03em;text-align:center;margin-bottom:8px}}
+  .kicker{{font-size:12.5px;font-weight:600;color:var(--ink2);letter-spacing:.06em;text-align:center;margin-bottom:8px}}
   .h2{{font-size:24px;line-height:1.32;letter-spacing:-.01em;text-align:center;margin:0 0 6px;font-weight:700}}
   .sub{{font-size:14px;color:var(--ink2);text-align:center;line-height:1.66;margin:0 auto;max-width:440px}}
 
@@ -227,7 +228,7 @@ html = f"""<!DOCTYPE html>
 
   .grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px}}
   .dest.soon[role=button]{{cursor:pointer}}
-  .dest-region{{font-size:12.5px;font-weight:600;color:var(--accent-ink);letter-spacing:.02em;text-align:center;margin:24px 0 12px}}
+  .dest-region{{font-size:12.5px;font-weight:600;color:var(--ink2);letter-spacing:.05em;text-align:center;margin:24px 0 12px}}
   #destFull .grid{{margin-top:0}}
   .dest-collapse{{display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink3);margin-top:20px}}
   .dest-collapse i{{font-size:15px}}
@@ -303,16 +304,16 @@ html = f"""<!DOCTYPE html>
   .alist{{max-width:460px;margin:24px auto 0;display:flex;flex-direction:column;gap:10px}}
   .acard{{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:15px 16px}}
   .acard-h{{display:flex;align-items:center;gap:11px}}
-  .acard .ai{{color:var(--accent-ink);display:inline-flex;align-items:center;font-size:21px;flex-shrink:0}}
+  .acard .ai{{width:38px;height:38px;border-radius:11px;background:var(--yellow-tint);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}}
   .acard .at{{font-size:15.5px;font-weight:600}}
   .acard .ad{{font-size:13px;color:var(--ink2);margin:9px 0 0;line-height:1.5}}
   .acard.more{{border-style:dashed;background:transparent;text-align:center;color:var(--ink3);font-size:13px;padding:15px;display:flex;align-items:center;justify-content:center;gap:7px}}
-  .acard.more i{{color:var(--accent-ink);font-size:16px}}
+  .acard.more i{{color:var(--ink3);font-size:16px}}
   .slead{{font-size:13px;color:var(--ink2);text-align:center;max-width:400px;margin:0 auto 22px;line-height:1.6}}
   .score-list{{max-width:460px;margin:24px auto 0;display:flex;flex-direction:column;gap:12px}}
   .score{{background:var(--bg);border:0.5px solid var(--border);border-radius:14px;padding:16px 17px}}
   .score-h{{display:flex;align-items:center;gap:11px;margin-bottom:8px}}
-  .score .si{{color:var(--accent-ink);font-size:22px;flex-shrink:0}}
+  .score .si{{width:38px;height:38px;border-radius:11px;background:var(--yellow-tint);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}}
   .score .st{{font-size:15px;font-weight:600}}
   .score .sd{{font-size:13px;color:var(--ink2);margin:0;line-height:1.55}}
   .svc-cap{{max-width:460px;margin:20px auto 10px;font-size:11.5px;font-weight:600;letter-spacing:.03em;color:var(--ink3)}}
@@ -331,7 +332,7 @@ html = f"""<!DOCTYPE html>
   .rlist{{max-width:460px;margin:24px auto 0;display:flex;flex-direction:column;gap:12px}}
   .rcard{{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:17px 18px}}
   .rhead{{display:flex;align-items:center;gap:11px;margin-bottom:11px}}
-  .ravatar{{width:38px;height:38px;border-radius:50%;background:#E4F4FF;color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}}
+  .ravatar{{width:38px;height:38px;border-radius:50%;background:var(--yellow-tint);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}}
   .rname{{font-size:14px;font-weight:600;color:var(--ink)}}
   .rmeta{{font-size:12px;color:var(--ink3)}}
   .rtext{{font-size:13.5px;color:var(--ink2);line-height:1.72;margin:0}}
@@ -531,7 +532,6 @@ html = f"""<!DOCTYPE html>
   </div>
 
   <div class="final">
-    <svg class="cloud" viewBox="0 0 400 100" aria-hidden="true"><g fill="#fff"><rect y="70" width="400" height="30"/><circle cx="60" cy="72" r="34"/><circle cx="120" cy="52" r="42"/><circle cx="190" cy="66" r="30"/><circle cx="255" cy="50" r="40"/><circle cx="320" cy="68" r="34"/><circle cx="372" cy="78" r="26"/></g></svg>
     <div class="container">
       <h2>무료 앱으로 시작하세요</h2>
       <div class="store-row">
