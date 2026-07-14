@@ -104,7 +104,7 @@ export function DestinationChips({
                 minHeight: 46,
               }}
             >
-              <span style={{ fontSize: 13, color: C.ink2, flexShrink: 0, width: 88 }}>목적지</span>
+              <span style={{ fontSize: 13, color: C.ink2, flexShrink: 0, width: 88 }}>여행지</span>
               <span
                 style={{
                   flex: 1,
@@ -219,10 +219,10 @@ export function DestinationChips({
           opacity: atLimit ? 0.5 : 1,
         }}
       >
-        {atLimit ? `목적지는 최대 ${MAX_DESTINATIONS_PER_CASE}개까지` : '+ 목적지 추가'}
+        {atLimit ? `여행지는 최대 ${MAX_DESTINATIONS_PER_CASE}개까지` : '+ 여행지 추가'}
       </button>
 
-      <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="목적지 추가">
+      <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="여행지 추가">
         <input
           className="pm-field-input"
           type="text"
@@ -244,7 +244,7 @@ export function DestinationChips({
         <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 4 }}>
           {filtered.length === 0 ? (
             <div style={{ padding: '24px 0', fontSize: 13, color: C.ink3, textAlign: 'center' }}>
-              일치하는 목적지가 없습니다.
+              일치하는 여행지가 없습니다.
             </div>
           ) : (
             filtered.map((d) => (

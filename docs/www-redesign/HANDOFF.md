@@ -2,6 +2,11 @@
 
 작성 2026-07-01. 세션 간 인계용. 새 세션은 이 문서 + `mockups.html` 먼저 읽을 것.
 
+> ⚠️ **2026-07-12 리브랜딩** — 아래 본문의 "웜 스톤+앰버" 브랜드 서술은 **폐기**됐다.
+> 새 브랜드 = 회색 캔버스(#F4F6F8) + 흰 카드 + 하늘 파랑(#0BAEFF) + 잉크 그레이(#212124),
+> 로고 = **떠오르는 P**(`docs/brand/logo-rising-p1-transparent.svg`). §2026-07-12 세션 참고.
+> 진실 출처 = `apps/portal/app/globals.css` 의 `--pm-*` (라이트 값).
+
 ## 목표
 
 펫무브 **앱 출시**를 앞두고 소비자 사이트 `www.petmove.co.kr` 개편. 현재는 **Ghost 블로그**(Spiritix 테마). Ghost Pro 비용이 비싸 **자체 제작으로 전환**하려는 상황이고, "웹업체 없이 내가 만들 수 있나"를 테스트 중.
@@ -142,6 +147,34 @@
 **로컬 확인:** `cd docs/www-redesign && python -m http.server 8777` → `http://localhost:8777/converted-<slug>.html`. (`file://`·크롬확장 navigate 버그 주의는 위 참고.)
 
 **다음 진입점:** ①`(www)` Next.js 이식(변환기 출력→MDX/route group, next/font Pretendard, 이미지 public 이동, URL 슬러그 보존, `trailingSlash:true`) ②인터랙티브 2개 재구현 ③편집 판단(인라인 소프트홍보·중간 북마크 인라인화 여부) ④whypetmove 상품카드.
+
+## 2026-07-12 세션 — 새 브랜드 리브랜딩 (로고 '떠오르는 P' + 하늘 팔레트)
+
+앱(portal)이 2026-07-11 새 브랜드로 전환(웜 스톤 폐기)됨에 따라 www 3벌(랜딩·하위페이지·글 템플릿)을 함께 전환. 사용자 지시: 로고는 **'떠오르는 P-1 투명'**(`docs/brand/logo-rising-p1-transparent.svg` — 하늘 그라데 스퀘어 + 흰 구름 + 노란 #FFC93C P, 비침 기둥 34%)만 참고.
+
+**팔레트 매핑(구→신):** bg `#F5EFE8→#F4F6F8` · surface `#FBF7F1→#FFFFFF` · ink `#2A2620→#212124` · ink2 `#6B6457→#5C5C60` · ink3 `#847B6C→#97979C` · accent `#D99A58→#0BAEFF` · accent-ink `#9A5A2E→#0887D6`(텍스트용 한 단계 진한 블루 — #0BAEFF 는 12px 대 텍스트 대비 2.4:1) · sage `#8FA68C→#14B8A6` · border `#E3D9C6→#E1E5E9` · dark/푸터 `#2A2620·#211E19→#212124·#17171A`. 웜 하드코드 20여 종(스크림·아이콘타일·서비스카드 틴트 등)도 전부 중성/하늘 계열로.
+**버튼 문법 변경:** 앰버 시절 "accent 배경 + 잉크 글자"(대비 교정) → **하늘 배경 + 흰 글자**(앱과 동일).
+**로고:** 헤더 임베드 SVG 3곳(랜딩 생성기·하위페이지 생성기·article-sample) 교체 — id 는 `pmlg-*` 네임스페이스.
+**적용 파일:** `scripts/make_www_prototype.py` · `scripts/make_www_subpages.py` · `article-sample.html`(+재생성: prototype-mobile·guide·contact·article·converted-*).
+**⚠️ 사고·수정:** `make_www_subpages.py` 가 **article-sample.html 을 구버전으로 덮어쓰는 버그** — 손편집 truth(아코디언 B·cta-sep 등)가 날아가 www_convert 마커 실패. git 복원 후, 생성기에서 article-sample 출력 제거(주석으로 사유 기록). **앞으로도 article-sample 은 손편집이 truth.**
+**검증:** Edge 헤드리스 470px 풀캡처 — 히어로·앱카드·서비스·지원여행지·후기·밴드·CTA·푸터 전 섹션 새 팔레트 확인. guide/contact/article 은 computed style 로 토큰 적용 확인.
+
+## 2026-07-13 세션 — 최종 CTA·푸터 확정 (사용자와 반복 조정)
+
+- **최종 CTA = 하늘 그라데이션(#4EC3FF→#0BA2F2) + 시안(brand-applications 5A/5B) 문법의 구름.** 확정 형태 = **넓고 낮은 흰 돔 2개(큰 돔+작은 돔)가 아래에서 솟아 흰 푸터로 녹아드는** 구성. 시행착오 기록: 반복 물결 밴드 ①slice 스케일(와이드서 상단 잘림) ②심리스 타일(펼치면 반복 어색 — 사용자 기각) ③로고 좌표 1:1 단독 구름(뭉툭한 블롭 — 기각) → ④시안 돔+흰 푸터 merge 로 확정.
+- **푸터 = 흰색 확정**(구 다크 #17171A 폐기, 3벌 공통). 랜딩은 구름과 한 몸이라 경계선 없음, 가이드·문의·글은 헤어라인(border-top) 구분. 텍스트 잉크 그레이(#5C5C60/#454549, 상단 브랜드줄 #212124).
+- 리뷰 개선 반영 이력: 시맨틱 h2(랜딩4·가이드3·문의2)·텍스트 블루 #0778BF(AA)·후기 부제 추가. 신뢰 스트립 라벨은 "지원 여행지" 유지(사용자 지시로 원복). ② 선반영: meta description/OG(변환기가 글별 excerpt 자동)·파비콘(SVG data URI)·글 목차 TOC(h2, 없으면 h3, 3개 이상 시 자동 — 78글 공통). og:image 만 이식 때(/og.png).
+- **앱 버튼 미연결 = 의도**: iOS 심사 통과, **Google Play 승인 시 스토어 링크 연결 + 사이트 공개 동시 진행**(사용자 확정).
+
+## 2026-07-14 세션 — 파랑 과다 해소 (색 역할 분리: 파랑=액션, 노랑=장식)
+
+사용자 지적 "파랑이 너무 많다"에서 출발. **원칙 확정: 파랑(#0BAEFF)은 액션(버튼·CTA·링크)에만, 노랑 틴트(#FFF4D6, 로고 P의 #FFC93C 유래)는 장식(아이콘 타일·포인트)에.** 세 번째 브랜드 색 추가는 검토 후 기각(색이 부족한 게 아니라 파랑 역할 과다가 문제).
+
+- **kicker 라벨**: accent-ink 파랑 → `ink2` 회색 + 자간 .06em ("라벨 회색+제목 검정" 에디토리얼 위계, 사용자 선택). 3벌 공통(랜딩·하위페이지·article-sample).
+- **앱 카드(.acard)·서비스 카드(.score) 아이콘**: 파랑 선 아이콘 → **노랑 틴트 타일(38px, r11) + 잉크 아이콘**. 두 섹션 짝짓기 비교(안1 동일노랑/안2 앱노랑·svc하늘/안3 앱하늘·svc노랑 — `icon-variants.html`) 후 사용자 "파랑은 안 쓰면 좋겠어" → **안1(둘 다 노랑) 확정**. 카드 골격은 두 섹션 동일 유지.
+- **후속 일괄 정리**: 후기 아바타(.ravatar)·히어로 eyebrow 칩 = 하늘 틴트 #E4F4FF → 노랑 틴트 / .dest-region 지역 라벨 = 파랑 → 회색. `.acard.more` 점 아이콘 → ink3.
+- **최종 CTA 고아 구름 제거**: `.final` 상단의 `.cloud` SVG(CSS 정의 없는 구버전 잔재)가 돔과 겹쳐 구름 2개로 보이던 버그 — 삭제, 푸터로 녹는 돔(`.clouds`) 하나만 유지.
+- 남은 파랑 = 헤더 앱 다운로드·히어로 버튼·무료 앱 받기·서비스 의뢰하기(아웃라인)·최종 CTA 그라데이션. dead CSS(.step·.path·.fnum·.fcell·.hrow·.svc-item·.more-line)에 accent-ink 잔존하나 HTML 미사용.
 
 ## 남은 할 일 (다음 세션 진입점)
 

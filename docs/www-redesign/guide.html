@@ -4,14 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>가이드 · 펫무브</title>
+<meta name="description" content="나라별 반려동물 출국 가이드 — 일본·태국·필리핀 등 34개국의 검역 준비 방법을 확인하세요.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="펫무브">
+<meta property="og:title" content="가이드 · 펫무브">
+<meta property="og:description" content="나라별 반려동물 출국 가이드 — 일본·태국·필리핀 등 34개국의 검역 준비 방법을 확인하세요.">
+<meta property="og:locale" content="ko_KR">
+<!-- og:image 는 배포 이미지 자산 확정 후 추가(/og.png) — Next 이식 때 -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Cdefs%3E%3CclipPath id=%22s%22%3E%3Crect width=%22200%22 height=%22200%22 rx=%2246%22/%3E%3C/clipPath%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%2363C9FF%22/%3E%3Cstop offset=%221%22 stop-color=%22%230BAEFF%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg clip-path=%22url(%23s)%22%3E%3Crect width=%22200%22 height=%22200%22 fill=%22url(%23g)%22/%3E%3Cpath d=%22M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106%22 fill=%22none%22 stroke=%22%23FFC93C%22 stroke-width=%2218%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3Crect x=%220%22 y=%22160%22 width=%22200%22 height=%2240%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2246%22 cy=%22168%22 r=%2252%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2272%22 cy=%22120%22 r=%2248%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22112%22 cy=%22148%22 r=%2234%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22146%22 cy=%22138%22 r=%2238%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22178%22 cy=%22154%22 r=%2224%22 fill=%22%23fff%22/%3E%3Cpath d=%22M116 132 L116 118%22 fill=%22none%22 stroke=%22%23FFC93C%22 stroke-width=%2218%22 stroke-linecap=%22round%22 opacity=%220.34%22/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
   :root{
-    --bg:#F6FAFD; --surface:#FFFFFF; --ink:#132635; --ink2:#4A6072; --ink3:#6B8092;
-    --accent:#0BAEFF; --accent-deep:#0B84D6; --accent-ink:#096FB3; --sky-soft:#EAF6FF;
-    --sage:#3FB25A; --border:#DFE6EC; --dark:#0F1B2A;
+    --bg:#F4F6F8; --surface:#FFFFFF; --ink:#212124; --ink2:#5C5C60; --ink3:#97979C;
+    --accent:#0BAEFF; --accent-ink:#0778BF; --sage:#14B8A6; --border:#E1E5E9; --dark:#212124;
   }
   *{box-sizing:border-box}
   [hidden]{display:none!important}
@@ -22,7 +29,7 @@
   .container{max-width:1080px;margin:0 auto;padding:0 22px;width:100%}
   .wm{font-size:18px;letter-spacing:-.01em;font-weight:800}
 
-  header{position:sticky;top:0;z-index:20;background:rgba(246,250,253,.92);backdrop-filter:blur(8px);
+  header{position:sticky;top:0;z-index:20;background:#fff;
     border-bottom:0.5px solid var(--border)}
   header .container{display:flex;align-items:center;justify-content:space-between;padding-top:13px;padding-bottom:13px}
   .nav-links{display:none;align-items:center;gap:26px;font-size:14px;color:var(--ink2)}
@@ -30,9 +37,9 @@
   .nav-right{display:flex;align-items:center;gap:14px}
   .nav-app{background:var(--accent);color:#fff;font-weight:600;border-radius:11px;padding:8px 15px;font-size:13px}
   .burger{font-size:22px;color:var(--ink2);cursor:pointer}
-  .drawer-ov{position:fixed;inset:0;background:rgba(10,22,35,.42);opacity:0;visibility:hidden;transition:opacity .22s;z-index:30}
+  .drawer-ov{position:fixed;inset:0;background:rgba(21,23,26,.42);opacity:0;visibility:hidden;transition:opacity .22s;z-index:30}
   .drawer-ov.open{opacity:1;visibility:visible}
-  .drawer{position:fixed;top:0;right:0;height:100%;width:min(78vw,300px);background:var(--surface);z-index:31;box-shadow:-8px 0 30px rgba(10,22,35,.18);transform:translateX(100%);transition:transform .24s ease;display:flex;flex-direction:column;padding:14px 20px 24px}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(78vw,300px);background:var(--bg);z-index:31;box-shadow:-8px 0 30px rgba(21,23,26,.18);transform:translateX(100%);transition:transform .24s ease;display:flex;flex-direction:column;padding:14px 20px 24px}
   .drawer.open{transform:translateX(0)}
   .drawer-close{align-self:flex-end;background:transparent;border:0;color:var(--ink2);font-size:24px;cursor:pointer;padding:6px;line-height:1}
   .drawer-nav{display:flex;flex-direction:column;margin-top:6px}
@@ -40,7 +47,7 @@
   .drawer-app{margin-top:20px;background:var(--accent);color:#fff;font-weight:600;border-radius:12px;padding:13px;text-align:center;font-size:14px}
 
   .phead{padding:38px 0 6px;text-align:center}
-  .kicker{font-size:12.5px;font-weight:600;color:var(--accent-ink);letter-spacing:.03em;margin-bottom:9px}
+  .kicker{font-size:12.5px;font-weight:600;color:var(--ink2);letter-spacing:.06em;margin-bottom:9px}
   .phead h1{font-size:30px;letter-spacing:-.02em;margin:0;font-weight:700}
   .phead .lead{font-size:14px;color:var(--ink2);margin:12px auto 0;max-width:460px;line-height:1.66}
 
@@ -56,7 +63,7 @@
 
   /* 추천 가이드(featured) */
   .feat{display:grid;grid-template-columns:1fr;gap:10px}
-  .fcard{display:block;background:var(--sky-soft);border:0.5px solid rgba(11,174,255,.4);border-radius:16px;padding:16px 17px}
+  .fcard{display:block;background:#E4F4FF;border:0.5px solid rgba(11,174,255,.35);border-radius:16px;padding:16px 17px}
   .fcard .ft{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.42}
   .fcard .fd{font-size:12px;color:var(--accent-ink);margin-top:6px}
 
@@ -106,7 +113,7 @@
   .crumb a{color:var(--ink3)}
   .crumb .sep{margin:0 6px}
   .art-head{padding:14px 0 20px;border-bottom:0.5px solid var(--border);margin-bottom:26px}
-  .art-cat{display:inline-block;font-size:12px;font-weight:600;color:var(--accent-ink);background:#D9F0FF;
+  .art-cat{display:inline-block;font-size:12px;font-weight:600;color:var(--accent-ink);background:#E4F4FF;
     border-radius:999px;padding:4px 11px;margin-bottom:14px}
   .art-head h1{font-size:26px;line-height:1.32;letter-spacing:-.02em;margin:0;font-weight:700}
   .art-meta{font-size:12.5px;color:var(--ink3);margin-top:13px}
@@ -123,19 +130,19 @@
   .prose table{width:100%;border-collapse:collapse;margin:0 0 18px;font-size:13.5px}
   .prose th,.prose td{border:0.5px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top}
   .prose th{background:var(--surface);font-weight:600;white-space:nowrap}
-  .callout{background:var(--sky-soft);border:0.5px solid rgba(11,174,255,.4);border-radius:14px;padding:16px 18px;margin:24px 0}
+  .callout{background:#E4F4FF;border:0.5px solid rgba(11,174,255,.35);border-radius:14px;padding:16px 18px;margin:24px 0}
   .callout .ch{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14.5px;margin-bottom:6px}
   .callout .ch i{color:var(--accent-ink);font-size:19px}
   .callout .cp{font-size:13.5px;color:var(--ink2);margin:0;line-height:1.65}
   .callout .cbtn{display:inline-block;margin-top:11px;font-size:13px;font-weight:600;color:var(--accent-ink)}
-  .prose .callout-note{background:var(--sky-soft);border:0.5px solid rgba(11,174,255,.4);border-radius:12px;padding:15px 17px;margin:18px 0;font-size:14.5px;line-height:1.7;color:var(--ink)}
+  .prose .callout-note{background:#E4F4FF;border:0.5px solid rgba(11,174,255,.35);border-radius:12px;padding:15px 17px;margin:18px 0;font-size:14.5px;line-height:1.7;color:var(--ink)}
   .prose .callout-note .ce{margin-right:7px}
-  .art-cta{background:var(--dark);border-radius:18px;padding:26px 22px;text-align:center;margin:36px 0 8px}
+  .art-cta{background:#17171A;border-radius:18px;padding:26px 22px;text-align:center;margin:36px 0 8px}
   .art-cta h3{color:#fff;font-size:18px;margin:0 0 7px;font-weight:700}
-  .art-cta p{color:#AFC4D4;font-size:13px;margin:0 0 16px;line-height:1.6}
+  .art-cta p{color:#B9BDC4;font-size:13px;margin:0 0 16px;line-height:1.6}
   .art-cta a{display:inline-block;background:var(--accent);color:#fff;font-weight:600;border-radius:12px;padding:12px 22px;font-size:14px}
-  /* A · 랜딩 서비스 섹션 그대로 (밝은 스카이 패널 + 아웃라인 버튼 + 회색 링크) */
-  .svc-block{background:var(--sky-soft);border:0.5px solid rgba(11,174,255,.4);border-radius:16px;padding:22px 20px;text-align:center;margin:34px 0 8px}
+  /* A · 랜딩 서비스 섹션 그대로 (밝은 앰버 패널 + 아웃라인 버튼 + 회색 링크) */
+  .svc-block{background:#E4F4FF;border:0.5px solid rgba(11,174,255,.35);border-radius:16px;padding:22px 20px;text-align:center;margin:34px 0 8px}
   .svc-block .svc-title{font-size:16px;font-weight:700;color:var(--ink)}
   .svc-block .svc-desc{font-size:13px;color:var(--ink2);margin-top:6px}
   .svc-cta{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1.5px solid var(--accent);color:var(--accent-ink);font-weight:600;border-radius:14px;padding:14px;font-size:15px;width:100%;max-width:460px;margin:16px auto 0;text-decoration:none}
@@ -148,7 +155,7 @@
   /* B · 두 갈래 카드 (앱=앰버 채움 / 서비스=앰버 아웃라인 — 랜딩 버튼 규칙) */
   .two-path{display:grid;grid-template-columns:1fr;gap:12px;margin:34px 0 8px}
   .pcard{border:0.5px solid var(--border);border-radius:16px;padding:20px 18px;text-align:center;background:var(--surface)}
-  .pcard.accent{background:var(--sky-soft);border-color:rgba(11,174,255,.4)}
+  .pcard.accent{background:#E4F4FF;border-color:rgba(11,174,255,.35)}
   .pcard>i{font-size:25px;color:var(--accent-ink)}
   .pcard .pt{font-size:15px;font-weight:700;margin:9px 0 3px}
   .pcard .pd{font-size:12.5px;color:var(--ink2);margin:0 0 14px;line-height:1.5}
@@ -170,8 +177,8 @@
   .prose .embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
   @media(min-width:760px){.prose a.bookmark .bk-thumb{width:180px;flex-basis:180px}}
 
-  footer{background:#0C1520;color:#7E93A6;padding:28px 0;font-size:12px;line-height:1.85;margin-top:auto}
-  footer a{color:#A9C0D4}
+  footer{background:#fff;color:#5C5C60;border-top:0.5px solid var(--border);padding:26px 0 30px;font-size:12px;line-height:1.85;margin-top:auto}
+  footer a{color:#454549}
   footer .fsns{display:inline-flex;align-items:center;gap:5px;margin:9px 0 4px;font-weight:600}
   footer .fsns .nlogo{font-weight:800;font-size:13px;line-height:1}
 
@@ -188,7 +195,7 @@
 <body>
   <header>
     <div class="container">
-      <a href="prototype-mobile.html" style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 200 200" width="26" height="26" aria-hidden="true"><defs><linearGradient id="pmsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63C9FF"/><stop offset="1" stop-color="#0BAEFF"/></linearGradient><clipPath id="pmsq"><rect width="200" height="200" rx="46"/></clipPath></defs><g clip-path="url(#pmsq)"><rect width="200" height="200" fill="url(#pmsky)"/><rect x="0" y="160" width="200" height="40" fill="#fff"/><circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/><circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/><circle cx="178" cy="154" r="24" fill="#fff"/></g></svg><span class="wm">펫무브</span></a>
+      <a href="prototype-mobile.html" style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 200 200" width="26" height="26" aria-hidden="true" style="overflow:visible"><defs><clipPath id="pmlg-sq"><rect width="200" height="200" rx="46"/></clipPath><linearGradient id="pmlg-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63C9FF"/><stop offset="1" stop-color="#0BAEFF"/></linearGradient><filter id="pmlg-float" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#0868A8" flood-opacity="0.35"/></filter></defs><g filter="url(#pmlg-float)"><g clip-path="url(#pmlg-sq)"><rect width="200" height="200" fill="url(#pmlg-sky)"/><path d="M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106" fill="none" stroke="#FFC93C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="0" y="160" width="200" height="40" fill="#fff"/><circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/><circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/><circle cx="178" cy="154" r="24" fill="#fff"/><path d="M116 132 L116 118" fill="none" stroke="#FFC93C" stroke-width="18" stroke-linecap="round" opacity="0.34"/></g></g></svg><span class="wm">펫무브</span></a>
       <span class="nav-links">
         <a href="prototype-mobile.html#service">서비스</a>
         <a href="guide.html" class="on">가이드</a>
@@ -220,28 +227,28 @@
 
   <section>
     <div class="container">
-      <div class="sec-h">추천 가이드</div>
+      <h2 class="sec-h">추천 가이드</h2>
       <div class="feat"><a class="fcard" href="https://www.petmove.co.kr/docs/japan-pet-travel-guide/" target="_blank" rel="noopener"><div class="ft">일본 입국 준비 총정리</div><div class="fd">가장 많이 가는 여행지</div></a><a class="fcard" href="https://www.petmove.co.kr/blog/eu-pet-rabies-test/" target="_blank" rel="noopener"><div class="ft">[2026] 유럽 입국 광견병 검사 변경</div><div class="fd">최신 규정 업데이트</div></a><a class="fcard" href="https://www.petmove.co.kr/blog/japan-pet-entry-scheduler/" target="_blank" rel="noopener"><div class="ft">일본 입국 일정 계산기</div><div class="fd">언제 뭘 할지 자동 계산</div></a></div>
     </div>
   </section>
 
   <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
     <div class="container">
-      <div class="sec-h">여행지별 가이드</div>
+      <h2 class="sec-h">여행지별 가이드</h2>
       <div id="regions"><div class="region">아시아</div><div class="cgrid"><a class="chip" href="https://www.petmove.co.kr/docs/japan-pet-travel-guide/" target="_blank" rel="noopener">일본</a><a class="chip" href="https://www.petmove.co.kr/docs/china-pet-travel-guide/" target="_blank" rel="noopener">중국</a><a class="chip" href="https://www.petmove.co.kr/docs/taiwan-pet-travel-guide/" target="_blank" rel="noopener">대만</a><a class="chip" href="https://www.petmove.co.kr/docs/hongkong-pet-travel-guide/" target="_blank" rel="noopener">홍콩</a><a class="chip" href="https://www.petmove.co.kr/docs/thailand-pet-travel-guide/" target="_blank" rel="noopener">태국</a><a class="chip" href="https://www.petmove.co.kr/docs/philippines-pet-travel-guide/" target="_blank" rel="noopener">필리핀</a><a class="chip" href="https://www.petmove.co.kr/docs/singapore-pet-travel-guide/" target="_blank" rel="noopener">싱가포르</a><a class="chip" href="https://www.petmove.co.kr/docs/malaysia-pet-travel-guide/" target="_blank" rel="noopener">말레이시아</a><a class="chip" href="https://www.petmove.co.kr/docs/indonesia-pet-travel-guide/" target="_blank" rel="noopener">인도네시아</a><a class="chip" href="https://www.petmove.co.kr/docs/vietnam-pet-travel-guide/" target="_blank" rel="noopener">베트남</a><a class="chip" href="https://www.petmove.co.kr/docs/cambodia-pet-travel-guide/" target="_blank" rel="noopener">캄보디아</a><a class="chip" href="https://www.petmove.co.kr/docs/mongolia-pet-travel-guide/" target="_blank" rel="noopener">몽골</a><a class="chip" href="https://www.petmove.co.kr/docs/india-pet-travel-guide/" target="_blank" rel="noopener">인도</a><a class="chip" href="https://www.petmove.co.kr/docs/kazakhstan-pet-travel-guide/" target="_blank" rel="noopener">카자흐스탄</a><a class="chip" href="https://www.petmove.co.kr/docs/uzbekistan-pet-travel-guide/" target="_blank" rel="noopener">우즈베키스탄</a><a class="chip" href="https://www.petmove.co.kr/docs/guam-pet-travel-guide/" target="_blank" rel="noopener">괌</a></div><div class="region">유럽·중동</div><div class="cgrid"><a class="chip" href="https://www.petmove.co.kr/docs/eu-pet-travel-guide/" target="_blank" rel="noopener">유럽(EU)</a><a class="chip" href="https://www.petmove.co.kr/docs/uk-pet-travel-guide/" target="_blank" rel="noopener">영국</a><a class="chip" href="https://www.petmove.co.kr/docs/switzerland-pet-travel-guide/" target="_blank" rel="noopener">스위스</a><a class="chip" href="https://www.petmove.co.kr/docs/ireland-pet-travel-guide/" target="_blank" rel="noopener">아일랜드</a><a class="chip" href="https://www.petmove.co.kr/docs/ukraine-pet-travel-guide/" target="_blank" rel="noopener">우크라이나</a><a class="chip" href="https://www.petmove.co.kr/docs/russia-pet-travel-guide/" target="_blank" rel="noopener">러시아</a><a class="chip" href="https://www.petmove.co.kr/docs/israel-pet-travel-guide/" target="_blank" rel="noopener">이스라엘</a><a class="chip" href="https://www.petmove.co.kr/docs/uae-pet-travel-guide/" target="_blank" rel="noopener">아랍에미리트</a><a class="chip" href="https://www.petmove.co.kr/docs/turkey-pet-travel-guide/" target="_blank" rel="noopener">튀르키예</a></div><div class="region">미주</div><div class="cgrid"><a class="chip" href="https://www.petmove.co.kr/docs/usa-pet-travel-guide/" target="_blank" rel="noopener">미국</a><a class="chip" href="https://www.petmove.co.kr/docs/hawaii-pet-travel-guide/" target="_blank" rel="noopener">하와이</a><a class="chip" href="https://www.petmove.co.kr/docs/canada-pet-travel-guide/" target="_blank" rel="noopener">캐나다</a><a class="chip" href="https://www.petmove.co.kr/docs/mexico-pet-travel-guide/" target="_blank" rel="noopener">멕시코</a><a class="chip" href="https://www.petmove.co.kr/docs/brazil-pet-travel-guide/" target="_blank" rel="noopener">브라질</a><a class="chip" href="https://www.petmove.co.kr/docs/argentina-pet-travel-guide/" target="_blank" rel="noopener">아르헨티나</a></div><div class="region">오세아니아·기타</div><div class="cgrid"><a class="chip" href="https://www.petmove.co.kr/docs/australia-pet-travel-guide/" target="_blank" rel="noopener">호주</a><a class="chip" href="https://www.petmove.co.kr/docs/newzealand-pet-travel-guide/" target="_blank" rel="noopener">뉴질랜드</a><a class="chip" href="https://www.petmove.co.kr/docs/morocco-pet-travel-guide/" target="_blank" rel="noopener">모로코</a></div></div>
     </div>
   </section>
 
   <section>
     <div class="container">
-      <div class="sec-h">주제별 가이드</div>
+      <h2 class="sec-h">주제별 가이드</h2>
       <div class="other-links"><a href="https://www.petmove.co.kr/docs/pet-export-inspection/" target="_blank" rel="noopener">수출검역 신청</a><a href="https://www.petmove.co.kr/docs/pet-quarantine-station/" target="_blank" rel="noopener">검역소 안내</a><a href="https://www.petmove.co.kr/docs/pet-quarantine-reservation/" target="_blank" rel="noopener">검역 예약</a><a href="https://www.petmove.co.kr/docs/dog-flight-preparation/" target="_blank" rel="noopener">기내 반입 준비</a><a href="https://www.petmove.co.kr/docs/airline-pet-cabin-policy/" target="_blank" rel="noopener">기내 반입 규정</a><a href="https://www.petmove.co.kr/docs/airline-pet-cabin-fees/" target="_blank" rel="noopener">기내 반입 요금</a><a href="https://www.petmove.co.kr/blog/dog-flight-medication/" target="_blank" rel="noopener">기내 진정제</a><a href="https://www.petmove.co.kr/blog/pet-microchip-safety/" target="_blank" rel="noopener">마이크로칩 안전성</a><a href="https://www.petmove.co.kr/blog/rabies-titer-test-japan-korea/" target="_blank" rel="noopener">광견병 항체검사</a><a href="https://www.petmove.co.kr/blog/rabies-free-countries/" target="_blank" rel="noopener">광견병 청정국 목록</a><a href="https://www.petmove.co.kr/blog/dog-international-travel/" target="_blank" rel="noopener">해외여행 기본 안내</a></div>
     </div>
   </section>
 
   <footer>
     <div class="container">
-      <div style="color:#D7E4EF;font-weight:600;margin-bottom:6px">펫무브 · PETMOVE</div>
+      <div style="color:#212124;font-weight:600;margin-bottom:6px">펫무브 · PETMOVE</div>
       로잔동물의료센터 · 사업자등록번호 124-18-42859<br>
       서울시 관악구 관악로29길 3 · 02-872-7588<br>
       <a href="https://blog.naver.com/petmove" target="_blank" rel="noopener" class="fsns"><span class="nlogo">N</span>네이버 블로그</a><br>

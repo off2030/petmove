@@ -2,7 +2,7 @@
 
 
 import { C as PM } from '@/lib/palette'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /**
  * Portal 전용 월 달력 그리드. Stone 팔레트 — @petmove/ui 의 Editorial(clay/olive)
@@ -10,11 +10,15 @@ import { useState } from 'react'
  *
  * 순수 그리드 + 월 이동만 담당. '오늘'·'지우기' 액션은 호출 측(CalendarSheet)이 둠.
  * 모바일 전용 — hover 없이 selected/today 상태만으로 표현.
+ *
+ * 헤더 가운데 '2026년 7월'을 탭하면 연도 → 월 빠른 점프 모드로 전환된다 — 생년월일처럼
+ * 먼 과거는 화살표로 100번+ 눌러야 했던 문제 해결(2026-07-13). 화살표는 모드별로
+ * 일=±1개월 / 월=±1년 / 연=±12년 이동.
  */
 
 const C = {
   ...PM,
-  sun: 'var(--pm-warn)',
+  sun: 'var(--pm-danger)',
 } as const
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
@@ -66,6 +70,8 @@ export function PortalCalendar({
     const base = selected ?? today
     return new Date(base.getFullYear(), base.getMonth(), 1)
   })
+  // 'day'=날짜 그리드(기본), 'year'=연도 12칸, 'month'=월 12칸. 연→월→일 순 드릴다운.
+  const [mode, setMode] = useState<'day' | 'year' | 'month'>('day')
   const year = view.getFullYear()
   const month = view.getMonth()
 
@@ -91,9 +97,51 @@ export function PortalCalendar({
     flexShrink: 0,
   }
 
+  // 연도 목록 — 최신이 위, 미래 5년 ~ 과거 50년. 스크롤 한 줄 리스트(드롭다운 느낌).
+  const thisYear = today.getFullYear()
+  const YEARS: number[] = []
+  for (let y = thisYear + 5; y >= thisYear - 50; y--) YEARS.push(y)
+  const YEAR_ROW_H = 44
+  const yearListRef = useRef<HTMLDivElement | null>(null)
+  // 연도 모드 진입 시 현재 view 연도가 목록 가운데 오도록 스크롤.
+  useEffect(() => {
+    if (mode !== 'year') return
+    const el = yearListRef.current
+    if (!el) return
+    const idx = YEARS.indexOf(year)
+    if (idx >= 0) el.scrollTop = idx * YEAR_ROW_H - el.clientHeight / 2 + YEAR_ROW_H / 2
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode])
+
+  // 화살표 이동량 — 일=±1개월, 월=±1년. 연도 모드는 스크롤로 이동(화살표 숨김).
+  function nav(dir: -1 | 1) {
+    if (mode === 'day') setView(new Date(year, month + dir, 1))
+    else setView(new Date(year + dir, month, 1))
+  }
+
+  const headerLabel =
+    mode === 'year' ? '연도 선택'
+    : mode === 'month' ? `${year}년`
+    : `${year}년 ${month + 1}월`
+
+  // 연/월 선택 12칸 그리드 공통 셀 스타일.
+  const jumpCell = (active: boolean): React.CSSProperties => ({
+    height: 44,
+    borderRadius: 12,
+    border: '1px solid transparent',
+    background: active ? C.accent : 'transparent',
+    color: active ? '#fff' : C.ink,
+    fontFamily: 'var(--pm-font-display)',
+    fontSize: 15,
+    fontWeight: active ? 600 : 400,
+    fontVariantNumeric: 'tabular-nums',
+    cursor: 'pointer',
+    transition: 'background .12s, color .12s',
+  })
+
   return (
     <div style={{ userSelect: 'none' }}>
-      {/* 월 이동 헤더 */}
+      {/* 이동 헤더 — 가운데 라벨 탭 = 연도 점프 모드 진입 */}
       <div
         style={{
           display: 'flex',
@@ -102,32 +150,48 @@ export function PortalCalendar({
           marginBottom: 8,
         }}
       >
+        {/* 연도 모드는 스크롤이 이동 수단 — 화살표 자리는 유지(가운데 라벨 흔들림 방지)하되 숨김 */}
         <button
           type="button"
-          aria-label="이전 달"
-          onClick={() => setView(new Date(year, month - 1, 1))}
-          style={navBtn}
+          aria-label={mode === 'day' ? '이전 달' : '이전 해'}
+          onClick={() => nav(-1)}
+          style={{ ...navBtn, visibility: mode === 'year' ? 'hidden' : 'visible' }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <div
+        <button
+          type="button"
+          aria-label="연도·월 바로 선택"
+          onClick={() => setMode(mode === 'day' ? 'year' : 'day')}
           style={{
+            border: 0,
+            background: 'transparent',
+            padding: '4px 10px',
+            borderRadius: 10,
             fontFamily: 'var(--pm-font-display)',
             fontSize: 17,
             fontWeight: 500,
-            color: C.ink,
+            color: mode === 'day' ? C.ink : C.accent,
             fontVariantNumeric: 'tabular-nums',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
           }}
         >
-          {year}년 {month + 1}월
-        </div>
+          {headerLabel}
+          {/* 탭 가능함을 알리는 작은 셰브론 — 점프 모드에선 접기(위) 방향 */}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.55 }}>
+            {mode === 'day' ? <polyline points="6 9 12 15 18 9" /> : <polyline points="6 15 12 9 18 15" />}
+          </svg>
+        </button>
         <button
           type="button"
-          aria-label="다음 달"
-          onClick={() => setView(new Date(year, month + 1, 1))}
-          style={navBtn}
+          aria-label={mode === 'day' ? '다음 달' : '다음 해'}
+          onClick={() => nav(1)}
+          style={{ ...navBtn, visibility: mode === 'year' ? 'hidden' : 'visible' }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="9 18 15 12 9 6" />
@@ -135,6 +199,64 @@ export function PortalCalendar({
         </button>
       </div>
 
+      {/* 연도 선택 — 한 줄 스크롤 목록(드롭다운). 진입 시 현재 연도가 가운데. 탭하면 월 선택으로. */}
+      {mode === 'year' && (
+        <div
+          ref={yearListRef}
+          style={{
+            height: YEAR_ROW_H * 7, // 7줄 보임 — 날짜 그리드와 비슷한 높이
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            padding: '0 48px', // 좌우 여백 — 가운데 열 하나만
+            // 위·아래 가장자리 페이드 — 더 있음을 암시.
+            maskImage: 'linear-gradient(180deg, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(180deg, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%)',
+          }}
+        >
+          {YEARS.map((y) => (
+            <button
+              key={y}
+              type="button"
+              onClick={() => {
+                setView(new Date(y, month, 1))
+                setMode('month')
+              }}
+              style={{
+                ...jumpCell(y === (selected?.getFullYear() ?? -1)),
+                display: 'block',
+                width: '100%',
+                height: YEAR_ROW_H,
+              }}
+            >
+              {y}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* 월 선택 — 12칸. 탭하면 날짜 그리드로 복귀. */}
+      {mode === 'month' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, padding: '4px 0 8px' }}>
+          {Array.from({ length: 12 }, (_, i) => i).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => {
+                setView(new Date(year, m, 1))
+                setMode('day')
+              }}
+              style={jumpCell(
+                selected != null && year === selected.getFullYear() && m === selected.getMonth(),
+              )}
+            >
+              {m + 1}월
+            </button>
+          ))}
+        </div>
+      )}
+
+      {mode === 'day' && (
+        <>
       {/* 요일 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
         {WEEKDAY_LABELS.map((w, i) => (
@@ -198,6 +320,8 @@ export function PortalCalendar({
           )
         })}
       </div>
+        </>
+      )}
     </div>
   )
 }

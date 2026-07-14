@@ -1,12 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useCases } from './case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
 import { readLastCaseId } from './last-case'
 import { LogoMark } from './logo-mark'
+import { isSurfacePage } from './surface-page'
 
 /**
  * Portal 상단 chrome — portal-preview/app.jsx 의 ThemeControls 포팅.
@@ -26,7 +27,10 @@ function caseIdFromPath(pathname: string): string | null {
 
 export function TopBar() {
   const pathname = usePathname()
+  const router = useRouter()
   const activeCaseId = caseIdFromPath(pathname)
+  // 흰 배경 화면(설정·내 정보 하위)에선 바도 흰색 — 회색 띠가 남지 않게.
+  const onSurfacePage = isSurfacePage(pathname)
 
   // PETMOVE 워드마크는 "현재 일정"으로 — bottom-nav 와 동일한 case 결정 패턴.
   // path 에 caseId 가 있으면 그걸, 아니면 sessionStorage 의 마지막 case, 둘 다 없으면 /cases.
@@ -83,25 +87,27 @@ export function TopBar() {
         paddingBottom: 0,
         boxSizing: 'border-box',
         pointerEvents: 'none',
-        // 하단 바 카드 모양(둥근 22, 알파 0.50)과 어울리도록 — 상단도 하단 모서리만
-        // 살짝 둥글리고, 그라데이션 끝 알파를 0 → 0.50 으로 두어 라운드가 보이게.
-        // 풀-와이드는 유지 — 카드로 갇히면 답답함.
-        borderBottomLeftRadius: 18,
-        borderBottomRightRadius: 18,
-        background:
-          'linear-gradient(180deg, rgb(var(--pm-bg-rgb) / .85) 0%, rgb(var(--pm-bg-rgb) / .70) 60%, rgb(var(--pm-bg-rgb) / .50) 100%)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        // 직선 풀-와이드 바 — 라운드·그라데이션 없이 균일한 불투명 배경.
+        // (흰 페이지 위 반투명 흰 바라 라운드가 안 보였음 — 밝고 심플 리디자인에서 정리.)
+        // 반투명+블러 제거 — 불투명 배경이라 밑으로 스크롤되는 내용은 그대로 가려진다.
+        background: onSurfacePage ? 'rgb(var(--pm-surface-rgb))' : 'rgb(var(--pm-bg-rgb))',
       }}
     >
       {onboarding ? (
         // 환영 화면 — 로고 자리는 비우되, space-between 으로 ⚙ 가 우측에 유지되도록 placeholder.
         <span aria-hidden />
       ) : (
-        <Link
+        // 워드마크 = 준비 탭 복귀 — 셸 주소면 TabHost 전역 인터셉터가 pushState 로 처리.
+        // /cases 폴백(여정 케이스 없음)만 여기서 router.push.
+        <a
           href={homeHref}
-          prefetch
-          aria-label="일정"
+          onClick={(e) => {
+            if (e.defaultPrevented) return
+            e.preventDefault()
+            if (homeHref !== window.location.pathname + window.location.search)
+              router.push(homeHref)
+          }}
+          aria-label="준비"
           style={{
             // 별도 웹폰트 없이 각 운영체제의 표준 UI sans-serif로 표시.
             display: 'flex',
@@ -111,7 +117,10 @@ export function TopBar() {
             fontWeight: 700,
             fontSize: 17,
             letterSpacing: '0.025em',
-            color: 'var(--pm-ink-3)',
+            // 워드마크 확정(2026-07-11): 한글 '펫무브' + 잉크색. 색은 심벌(블루) 하나로
+            // 충분 — 원색 블루는 대비 부족(2.2:1), 짙은 네이비(#123B5C) 투톤안은 보류.
+            // 영문(PETMOVE)안 폐기 — 로마자는 여권식 표기(이름 병기 등) 전용 레이어.
+            color: 'var(--pm-ink)',
             pointerEvents: 'auto',
             flexShrink: 0,
             textDecoration: 'none',
@@ -119,9 +128,14 @@ export function TopBar() {
           }}
         >
           <LogoMark size={22} />
-          <span>펫무브</span>
-        </Link>
+          {/* 광학 보정 — 로고 타일에 아래 그림자가 생기며 시각 무게중심이 내려가
+              (2026-07-11), 이전의 1px 올림을 되돌려 0 으로. */}
+          <span style={{ position: 'relative', top: 0 }}>펫무브</span>
+        </a>
       )}
+      {/* 설정 ⚙ 는 하단 '더보기' 탭으로 이관 — 환영(온보딩) 화면에서만 유지. 등록 전엔
+          하단 탭이 통째로 숨어 이 ⚙ 가 설정·로그아웃의 유일한 비상구이기 때문. */}
+      {onboarding ? (
       <div
         style={{
           display: 'flex',
@@ -131,7 +145,6 @@ export function TopBar() {
           minWidth: 0,
         }}
       >
-        {/* 설정 진입 — 계정·테마·약관·문의 등 앱 설정은 /settings 로. 동물전환은 그대로 우측에 유지. */}
         <Link href="/settings" prefetch aria-label="설정" title="설정" style={btn}>
           {/* Heroicons cog-6-tooth (outline) — 8-tooth lucide 보다 톱니 수가 적고 모서리가 둥글어 Calm 톤에 부드럽게 녹음. */}
           <svg
@@ -149,6 +162,9 @@ export function TopBar() {
           </svg>
         </Link>
       </div>
+      ) : (
+        <span aria-hidden />
+      )}
     </div>
   )
 }

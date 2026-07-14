@@ -9,6 +9,8 @@ import { downloadFile } from '@/lib/native/download'
 import { useMediaViewer } from '@/components/portal-shell/media-viewer'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { CaseHeader } from '@/components/cases/case-header'
+import { monoCap, num } from '@/components/me/settings-shared'
+import { PAGE_TOP, groupLabel, sectionTitle } from '@/lib/tokens'
 import { StepAttachments } from '@/components/journey/step-attachments'
 import type { AutoDocItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalog'
 
@@ -29,23 +31,6 @@ export function DocsView({
   activeDest?: string | null
 }) {
   const destQuery = activeDest ? `?dest=${encodeURIComponent(activeDest)}` : ''
-
-  const serif: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontWeight: 500,
-    letterSpacing: '-0.01em',
-    fontVariantNumeric: 'tabular-nums',
-  }
-  const num: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontVariantNumeric: 'tabular-nums',
-    fontWeight: 400,
-  }
-  const monoCap: React.CSSProperties = {
-    fontSize: 12,
-    color: C.ink3,
-    fontWeight: 600,
-  }
 
   const { updateCase } = useCases()
   const { openImage } = useMediaViewer()
@@ -91,7 +76,7 @@ export function DocsView({
         background: C.bg,
         color: C.ink,
         minHeight: '100%',
-        paddingTop: 24,
+        paddingTop: PAGE_TOP,
         // 맨 아래 '파일 추가'(StepAttachments) 가 플로팅 하단 탭바(bottom-nav, fixed)에
         // 가리지 않도록 탭바 높이 + iOS 안전영역만큼 비운다.
         paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 88px)',
@@ -104,13 +89,8 @@ export function DocsView({
           caseId={caseId}
           tab="docs"
           petName={pet.name}
-          fromCity={trip.fromCity}
-          toCity={trip.toCity}
-          tripType={trip.tripType}
-          ink={C.ink}
-          ink2={C.ink2}
+          petNameEn={pet.nameEn}
           ink3={C.ink3}
-          serif={serif}
         />
 
         {useCurated ? (
@@ -135,7 +115,7 @@ export function DocsView({
             {/* 1) Checklist */}
             <SectionLabel right={`${checklistDone}/${checklist.length}`}>서류 체크리스트</SectionLabel>
             {checklist.length === 0 ? (
-              <EmptyHint>이 목적지에는 보호자가 따로 챙길 서류가 없습니다.</EmptyHint>
+              <EmptyHint>이 여행지에는 보호자가 따로 챙길 서류가 없습니다.</EmptyHint>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {checklist.map((d) => (
@@ -147,7 +127,7 @@ export function DocsView({
             {/* 2) 증명서 자동 작성 */}
             <SectionLabel right={`${autoDocs.length}건`}>증명서 자동 작성</SectionLabel>
             {autoDocs.length === 0 ? (
-              <EmptyHint>이 목적지는 자동 작성 증명서가 없습니다.</EmptyHint>
+              <EmptyHint>이 여행지는 자동 작성 증명서가 없습니다.</EmptyHint>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {autoDocs.map((d) => (
@@ -234,24 +214,20 @@ export function DocsView({
 // ── 하위 컴포넌트 ────────────────────────────────────────────────────────
 
 function SectionLabel({ children, right }: { children: React.ReactNode; right?: string }) {
-  const monoCap: React.CSSProperties = {
-    fontSize: 12,
-    color: 'var(--pm-ink-3)',
-    fontWeight: 600,
-  }
+  // 화면 구획 제목 — 준비 탭 '준비 단계'와 같은 sectionTitle(17/600 잉크) 위계.
+  // 우측 카운트(0/4)는 보조 정보라 groupLabel(회색) 유지.
   return (
     <div
       style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'baseline',
-        marginTop: 22,
-        marginBottom: 10,
-        padding: '0 4px',
+        marginTop: 32,
+        marginBottom: 12,
       }}
     >
-      <span style={monoCap}>{children}</span>
-      {right && <span style={monoCap}>{right}</span>}
+      <h3 style={{ ...sectionTitle, margin: 0 }}>{children}</h3>
+      {right && <span style={groupLabel}>{right}</span>}
     </div>
   )
 }

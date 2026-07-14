@@ -594,8 +594,13 @@ function reportDestRank(row: CaseRow): number {
   return idx === -1 ? IMPORT_REPORT_DEST_ORDER.length : idx
 }
 
+/**
+ * 신고 탭 국가 분기 — 활성 목적지 기준. destination 전체 문자열("일본, 태국")로 매칭하면
+ * 일본·태국 분기에 동시에 걸려 read(일본 derive)와 write(태국 액션)가 엇갈린다 —
+ * 수입 칸을 진행중으로 바꿔도 대기로 되돌아오던 버그. todo-table 의 셀 분기와 같은 기준.
+ */
 function isJapan(row: CaseRow): boolean {
-  return matchesDestinationKey(row.destination, 'japan')
+  return matchesDestinationKey(resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY), 'japan')
 }
 
 /**
@@ -612,9 +617,10 @@ function exportApplies(row: CaseRow): boolean {
  * portal 의 허가 step 시그널과 같은 derive 로 잇는다. (명시 분류 — country='all' 누수 금지)
  */
 function usesImportPermitReport(row: CaseRow): boolean {
+  const active = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
   return (
-    matchesDestinationKey(row.destination, 'thailand') ||
-    matchesDestinationKey(row.destination, 'philippines')
+    matchesDestinationKey(active, 'thailand') ||
+    matchesDestinationKey(active, 'philippines')
   )
 }
 

@@ -1,11 +1,11 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useCases } from './case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
 import { readLastCaseId, readLastDest, writeLastCaseId, writeLastDest } from './last-case'
+import { isSurfacePage } from './surface-page'
 
 /**
  * 보호자 앱 하단 4탭 — case-aware.
@@ -19,14 +19,21 @@ import { readLastCaseId, readLastDest, writeLastCaseId, writeLastDest } from './
  * 앱 설정(계정·테마·약관 등)은 상단바 ⚙ → /settings.
  */
 
-type Icon = 'route' | 'doc' | 'grid' | 'user'
-type Tab = { key: 'journey' | 'docs' | 'services' | 'me'; label: string; icon: Icon }
+type Icon = 'luggage' | 'doc' | 'heartPlus' | 'user' | 'dots'
+type Tab = {
+  key: 'journey' | 'docs' | 'services' | 'me' | 'more'
+  label: string
+  icon: Icon
+}
 
 const TABS: Tab[] = [
-  { key: 'journey', label: '일정', icon: 'route' },
+  { key: 'journey', label: '준비', icon: 'luggage' },
   { key: 'docs', label: '서류', icon: 'doc' },
-  { key: 'services', label: '서비스', icon: 'grid' },
+  // '맡기기' — 유료 대행·파트너·견적의 공통분모 = 위임. 준비(직접)와 의도 대비.
+  { key: 'services', label: '맡기기', icon: 'heartPlus' },
   { key: 'me', label: '내 정보', icon: 'user' },
+  // '더보기' — 상단바 ⚙ 를 이관. 지금은 /settings 직행, 항목 늘면 /more 허브로 승격.
+  { key: 'more', label: '더보기', icon: 'dots' },
 ]
 
 function caseIdFromPath(pathname: string): string | null {
@@ -36,7 +43,10 @@ function caseIdFromPath(pathname: string): string | null {
 
 export function BottomNav() {
   const pathname = usePathname()
+  const router = useRouter()
   const caseIdInPath = caseIdFromPath(pathname)
+  // 흰 배경 화면(설정·내 정보 하위)에선 바도 흰색 — top-bar 와 동일 규칙.
+  const onSurfacePage = isSurfacePage(pathname)
   const { cases } = useCases()
   const [lastCaseId, setLastCaseId] = useState<string | null>(null)
   // 다중 목적지 — 활성 목적지(?dest=)를 케이스별로 기억해 탭 전환 시 링크에 붙인다.
@@ -111,35 +121,38 @@ export function BottomNav() {
   const fallbackId = lastIdValid ? lastCaseId : journeyCases[0]?.id ?? null
   const caseId = caseIdInPath ?? fallbackId
 
-  // 둥근 카드형 플로팅 바 — 좌우·아래 마진, 라벨 항상 보임. Calm 톤.
-  // portal-preview/app.jsx 의 BottomNav 와 동일 디자인 (truth source).
+  // 풀와이드 플랫 바 — 상단바와 같은 문법(가장자리 크롬 = 캔버스의 연장). 불투명 배경
+  // + 상단 헤어라인만. 활성 탭 표시는 배경 알약 없이 아이콘·라벨 색 전환 하나로.
   return (
     <nav
       style={{
         position: 'fixed',
-        left: 12,
-        right: 12,
-        bottom: 'max(env(safe-area-inset-bottom), 14px)',
+        left: 0,
+        right: 0,
+        bottom: 0,
         zIndex: 40,
         display: 'flex',
-        padding: '6px 4px',
-        borderRadius: 22,
-        background: 'rgb(var(--pm-bg-rgb) / 0.60)',
-        backdropFilter: 'blur(20px) saturate(160%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-        border: '1px solid rgba(42, 38, 32, 0.06)',
-        boxShadow:
-          '0 12px 28px -10px rgba(0, 0, 0, 0.16),' +
-          ' 0 2px 6px -2px rgba(0, 0, 0, 0.06)',
+        padding: '6px 10px calc(env(safe-area-inset-bottom, 0px) + 6px)',
+        // 흰 배경 화면(설정, 2026-07-12 실험)에선 바도 흰색 — 회색 띠가 남지 않게.
+        background: onSurfacePage ? 'rgb(var(--pm-surface-rgb))' : 'rgb(var(--pm-bg-rgb))',
+        borderTop: '.5px solid var(--pm-line)',
       }}
     >
       {TABS.map((t) => {
         const href = hrefFor(t.key, caseId, lastDest?.id === caseId ? lastDest.dest : null)
         const active = isActive(t.key, pathname)
         return (
-          <Link
+          // 평범한 <a> — 셸 주소 클릭은 TabHost 의 전역 인터셉터가 pushState 로 처리해
+          // 네비게이션 없이 즉시 전환된다(여기 onClick 을 두면 이중 push). pane 이 아닌
+          // 목적지(/cases 목록)만 클릭 시 여기서 router.push.
+          <a
             key={t.key}
             href={href}
+            onClick={(e) => {
+              if (e.defaultPrevented) return // 인터셉터가 처리함(셸 주소)
+              e.preventDefault()
+              if (href !== window.location.pathname + window.location.search) router.push(href)
+            }}
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -147,15 +160,16 @@ export function BottomNav() {
               gap: 3,
               padding: '8px 6px',
               flex: 1,
-              borderRadius: 16,
               textDecoration: 'none',
+              // 활성 = 잉크색 filled(반전), 비활성 = 회색 outline — 오늘의집 문법.
+              // 브랜드 블루는 하단바에서 제외해 '지금 할 일/진행' 표시에만 남긴다.
               color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
               transition: 'color 180ms ease',
             }}
           >
-            <NavIcon name={t.icon} stroke={active ? 2 : 1.7} />
+            <NavIcon name={t.icon} active={active} surface={onSurfacePage} />
             <span style={{ fontSize: 10, fontWeight: active ? 700 : 500 }}>{t.label}</span>
-          </Link>
+          </a>
         )
       })}
     </nav>
@@ -165,6 +179,7 @@ export function BottomNav() {
 function hrefFor(key: Tab['key'], caseId: string | null, dest: string | null): string {
   if (key === 'me') return '/me'
   if (key === 'services') return '/services'
+  if (key === 'more') return '/settings'
   if (!caseId) return '/cases'
   return `/cases/${caseId}/${key}${dest ? `?dest=${encodeURIComponent(dest)}` : ''}`
 }
@@ -172,49 +187,109 @@ function hrefFor(key: Tab['key'], caseId: string | null, dest: string | null): s
 function isActive(key: Tab['key'], pathname: string): boolean {
   if (key === 'me') return pathname === '/me' || pathname.startsWith('/me/')
   if (key === 'services') return pathname === '/services' || pathname.startsWith('/services/')
+  if (key === 'more') return pathname === '/settings' || pathname.startsWith('/settings/')
   return new RegExp(`^/cases/[^/]+/${key}(?:/|$)`).test(pathname)
 }
 
-function NavIcon({ name, stroke = 1.7 }: { name: Icon; stroke?: number }) {
+function NavIcon({ name, active = false, surface = false }: { name: Icon; active?: boolean; surface?: boolean }) {
   const p = {
     width: 20,
     height: 20,
     viewBox: '0 0 24 24',
     fill: 'none' as const,
     stroke: 'currentColor',
-    strokeWidth: stroke,
+    strokeWidth: 1.7,
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
   }
+  // 바 배경색 — 활성(filled) 아이콘의 네거티브 디테일(스트랩·접힘선 등)용.
+  const bg = surface ? 'rgb(var(--pm-surface-rgb))' : 'rgb(var(--pm-bg-rgb))'
+  // 트래블월렛·오늘의집 문법 — 비활성: 도톰한 라운드 스트로크 / 활성: 잉크 면(fill) 반전.
   switch (name) {
-    case 'route':
-      return (
-        <svg {...p} strokeWidth={stroke + 0.7}>
-          <circle cx="12" cy="12" r="9" opacity=".3" />
-          <path d="M12 3a9 9 0 0 1 6.4 15.4" />
+    case 'luggage':
+      // 캐리어 — 몸통(rx 3) + 손잡이 + 세로 스트랩 2줄. '준비' 탭 = 떠날 채비.
+      return active ? (
+        <svg {...p}>
+          <path d="M9 6.5V5.6A2.6 2.6 0 0 1 11.6 3h.8A2.6 2.6 0 0 1 15 5.6v.9" strokeWidth="2" />
+          <rect x="4" y="7" width="16" height="13" rx="3" fill="currentColor" stroke="none" />
+          <path d="M8.8 10.5v6M15.2 10.5v6" stroke={bg} strokeWidth="1.6" />
+        </svg>
+      ) : (
+        <svg {...p}>
+          <rect x="4" y="7" width="16" height="13" rx="3" />
+          <path d="M9 7V5.6A2.6 2.6 0 0 1 11.6 3h.8A2.6 2.6 0 0 1 15 5.6V7" />
+          <path d="M8.8 11v5M15.2 11v5" />
         </svg>
       )
     case 'doc':
-      return (
+      return active ? (
         <svg {...p}>
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <path d="M14 2v6h6M9 13h6M9 17h6" />
+          <path
+            d="M14 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8z"
+            fill="currentColor"
+            stroke="none"
+          />
+          <path d="M14 3v3.5A1.5 1.5 0 0 0 15.5 8H19" stroke={bg} strokeWidth="1.6" fill="none" />
+          <path d="M9 14.5h6" stroke={bg} strokeWidth="1.6" />
+        </svg>
+      ) : (
+        <svg {...p}>
+          <path d="M14 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8z" />
+          <path d="M14 3v3.5A1.5 1.5 0 0 0 15.5 8H19" />
+          <path d="M9 14.5h6" />
         </svg>
       )
-    case 'grid':
+    case 'dots':
+      // 더보기 — 가로 점 3개. 이미 면(fill) 아이콘 — 활성 시 점만 살짝 커짐.
       return (
+        <svg {...p} stroke="none" fill="currentColor">
+          <circle cx="5" cy="12" r={active ? 1.8 : 1.5} />
+          <circle cx="12" cy="12" r={active ? 1.8 : 1.5} />
+          <circle cx="19" cy="12" r={active ? 1.8 : 1.5} />
+        </svg>
+      )
+    case 'heartPlus':
+      // 하트+플러스 — www 시안(로잔동물의료센터 카드)과 같은 심벌.
+      // 활성: 닫힌 하트 면 + 플러스(배경색 헤일로로 하트에서 분리).
+      return active ? (
         <svg {...p}>
-          <rect x="4" y="4" width="7" height="7" rx="1.6" />
-          <rect x="13" y="4" width="7" height="7" rx="1.6" />
-          <rect x="4" y="13" width="7" height="7" rx="1.6" />
-          <rect x="13" y="13" width="7" height="7" rx="1.6" />
+          <path
+            d="M12 19.8 5.1 13a4.9 4.9 0 1 1 6.9-7 4.9 4.9 0 1 1 6.9 7z"
+            fill="currentColor"
+            stroke="none"
+          />
+          <path d="M15.5 18.5h5.5M18.25 15.75v5.5" stroke={bg} strokeWidth="4.2" />
+          <path d="M15.5 18.5h5.5M18.25 15.75v5.5" strokeWidth="2" />
+        </svg>
+      ) : (
+        <svg {...p}>
+          <path d="M12 19.8 5.2 13a4.9 4.9 0 1 1 6.8-7 4.9 4.9 0 0 1 8.6 4.3" />
+          <path d="M15.5 18.5h5.5" />
+          <path d="M18.25 15.75v5.5" />
         </svg>
       )
     case 'user':
-      return (
+      // 보호자 + 엎드린 동물 — 스케치 트레이싱(2026-07-11 확정 구도).
+      // 활성: 머리·어깨 면 + 물결(배경색 헤일로로 몸통에서 분리).
+      return active ? (
         <svg {...p}>
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
+          <circle cx="9.4" cy="7.6" r="3.9" fill="currentColor" stroke="none" />
+          <path d="M2.8 20A6.98 6.98 0 0 1 15.2 15.4 L15.2 20 Z" fill="currentColor" stroke="none" />
+          <path
+            d="M10.2 20c.81 0 .99-1.3 1.8-1.3c.81 0 .99 1.3 1.8 1.3c1.71 0 2.09-2.6 3.8-2.6c1.8 0 2.2 2.6 4 2.6"
+            stroke={bg}
+            strokeWidth="3.8"
+          />
+          <path
+            d="M10.2 20c.81 0 .99-1.3 1.8-1.3c.81 0 .99 1.3 1.8 1.3c1.71 0 2.09-2.6 3.8-2.6c1.8 0 2.2 2.6 4 2.6"
+            strokeWidth="2"
+          />
+        </svg>
+      ) : (
+        <svg {...p}>
+          <circle cx="9.4" cy="7.6" r="3.3" />
+          <path d="M2.8 20A6.98 6.98 0 0 1 15.2 15.4" />
+          <path d="M10.2 20c.81 0 .99-1.3 1.8-1.3c.81 0 .99 1.3 1.8 1.3c1.71 0 2.09-2.6 3.8-2.6c1.8 0 2.2 2.6 4 2.6" />
         </svg>
       )
   }

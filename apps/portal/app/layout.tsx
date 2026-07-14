@@ -47,6 +47,11 @@ export default function RootLayout({
     >
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <script dangerouslySetInnerHTML={{ __html: themeNoFlash }} />
+        {/* Supabase 사전 연결 — 첫 client 호출(realtime·auth·storage)의 DNS+TLS 왕복 절약.
+            React 19 가 <head> 로 호이스팅. CORS fetch 재사용을 위해 crossOrigin 명시. */}
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
+        )}
         <ServiceWorkerRegister />
         <AppInstallPromo />
         <NativeSplash />

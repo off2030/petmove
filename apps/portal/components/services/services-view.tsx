@@ -10,6 +10,7 @@ import { StartHereEmpty } from '@/components/portal-shell/start-here-empty'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { type FieldOption } from '@/components/fields/info-fields'
 import { C, serif } from '@/components/me/settings-shared'
+import { PAGE_TOP, pageTitle, sectionTitle } from '@/lib/tokens'
 import { APP_DESTINATIONS_KO } from '@/lib/app-destinations'
 import { buildProfileView } from '@/lib/profile/catalog'
 import { notifyServiceInquiry } from '@/lib/actions/service-inquiry'
@@ -127,10 +128,10 @@ interface Offer {
  * 후기(reviews)는 default 로 공유하지 않는다 — 한 나라 후기가 다른 나라에 새지 않도록 빈 배열.
  */
 const DEFAULT_FAQ: Faq[] = [
-  { q: '비용은 얼마인가요?', a: '목적지와 반려동물 상태에 따라 달라져요. 카카오톡으로 문의 주시면 정확히 안내해 드려요.' },
+  { q: '비용은 얼마인가요?', a: '여행지와 반려동물 상태에 따라 달라져요. 카카오톡으로 문의 주시면 정확히 안내해 드려요.' },
   {
     q: '준비 기간은 얼마나 걸리나요?',
-    a: '나라마다 달라요. 광견병 항체검사가 필요한 곳은 몇 달 전부터 준비해야 해서, 상담 때 목적지에 맞는 일정표를 만들어 드려요.',
+    a: '나라마다 달라요. 광견병 항체검사가 필요한 곳은 몇 달 전부터 준비해야 해서, 상담 때 여행지에 맞는 일정표를 만들어 드려요.',
   },
   {
     q: '예약을 취소·변경할 수 있나요?',
@@ -358,7 +359,7 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
     included: [
       { label: '검역·백신 일정 관리', sub: '놓치면 안 되는 날짜를 대신 챙겨요' },
       { label: '서류 발급 대행', sub: '건강증명서·검사 서류까지 발급해요' },
-      { label: '수입허가증 신청', sub: '목적지 정부 허가 신청을 대신해요' },
+      { label: '수입허가증 신청', sub: '여행지 정부 허가 신청을 대신해요' },
     ],
     steps: ['상담', '준비·관리', '출국'],
     faq: DEFAULT_FAQ,
@@ -681,7 +682,8 @@ function ServiceCard({ offer, onOpen }: { offer: Offer; onOpen: () => void }) {
       <p style={{ fontSize: 13, color: C.ink2, lineHeight: 1.6, margin: '14px 0 0' }}>{offer.desc}</p>
 
       <div style={{ marginTop: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: C.ink3, fontWeight: 500 }}>
+        {/* 그룹 라벨 — 표준 monoCap(12/600/ink3)으로 정렬 (2026-07-12). */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: C.ink3, fontWeight: 600 }}>
           <svg
             width="13"
             height="13"
@@ -824,7 +826,8 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         </div>
       )}
 
-      <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '24px 0 10px' }}>이런 걸 대신해 드려요</h2>
+      {/* 화면 구획 제목 = sectionTitle(17/600 잉크) — 준비 '준비 단계'와 같은 위계. */}
+      <h2 style={{ ...sectionTitle, margin: '26px 0 12px' }}>이런 걸 대신해 드려요</h2>
       <div style={{ background: C.surface, border: `.5px solid ${C.line}`, borderRadius: 16, padding: '4px 16px' }}>
         {offer.included.map((item, i) => (
           <div
@@ -858,7 +861,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         ))}
       </div>
 
-      <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 12px' }}>이렇게 진행돼요</h2>
+      <h2 style={{ ...sectionTitle, margin: '28px 0 12px' }}>이렇게 진행돼요</h2>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         {offer.steps.map((s, i) => (
           <Fragment key={s}>
@@ -901,7 +904,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         ))}
       </div>
 
-      <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 6px' }}>자주 묻는 질문</h2>
+      <h2 style={{ ...sectionTitle, margin: '26px 0 6px' }}>자주 묻는 질문</h2>
       <div>
         {offer.faq.map((f, i) => {
           const open = openFaq === i
@@ -968,7 +971,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
 
       {offer.reviews.length > 0 && (
         <>
-          <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 10px' }}>먼저 경험한 분들</h2>
+          <h2 style={{ ...sectionTitle, margin: '26px 0 10px' }}>먼저 경험한 분들</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {offer.reviews.map((r) => (
               <div key={r.name} style={{ background: C.surface, border: `.5px solid ${C.line}`, borderRadius: 14, padding: '12px 16px' }}>
@@ -1091,7 +1094,7 @@ export function ServicesView() {
     return (
       <StartHereEmpty
         title="반려동물을 먼저 등록해주세요"
-        subtitle="등록하면 목적지에 맞는 서비스를 안내해 드려요"
+        subtitle="등록하면 여행지에 맞는 서비스를 안내해 드려요"
       />
     )
   }
@@ -1111,7 +1114,7 @@ export function ServicesView() {
         background: C.bg,
         color: C.ink,
         minHeight: '100%',
-        paddingTop: 24,
+        paddingTop: PAGE_TOP,
         paddingBottom: 80,
         overflow: 'auto',
       }}
@@ -1124,9 +1127,7 @@ export function ServicesView() {
         />
       ) : (
         <div style={{ padding: '0 24px' }}>
-          <h1 style={{ ...serif, fontSize: 20, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>
-            서비스
-          </h1>
+          <h1 style={pageTitle}>서비스</h1>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
             <button
@@ -1190,7 +1191,7 @@ export function ServicesView() {
         </div>
       )}
 
-      <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="목적지 선택">
+      <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="여행지 선택">
         <input
           className="pm-field-input"
           type="text"
@@ -1212,7 +1213,7 @@ export function ServicesView() {
         <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 4 }}>
           {filtered.length === 0 ? (
             <div style={{ padding: '24px 0', fontSize: 13, color: C.ink3, textAlign: 'center' }}>
-              일치하는 목적지가 없습니다.
+              일치하는 여행지가 없습니다.
             </div>
           ) : (
             filtered.map((d) => {

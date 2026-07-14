@@ -24,6 +24,11 @@ jobs:
       contents: read
       issues: write
     steps:
+      # 펫무브 앱 서버 워밍 — 10분마다 한 번 찔러 Vercel 함수 콜드 스타트(첫 실행 렉)를
+      # 완화한다. 이 cron 에 얹혀 별도 워크플로 없이 공짜. 실패해도 푸시 발송엔 영향 X.
+      - name: Warm portal
+        run: curl -s -o /dev/null -m 10 https://app.petmove.co.kr/support || true
+
       - name: Checkout
         uses: actions/checkout@v4
 

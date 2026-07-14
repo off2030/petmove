@@ -66,7 +66,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
       const last = rabies[rabies.length - 1]
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 모든 광견병 접종(최근 ${last.date})보다 늦어요.`,
+        message: `마이크로칩(${microchip})이 모든 광견병 접종(최근 ${last.date})보다 늦어요. 날짜를 확인하세요.`,
         offendingPaths: ['microchip_implant_date'],
       }
     },

@@ -1,22 +1,123 @@
 'use client'
 
-
 import { C as PM } from '@/lib/palette'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { readJourneyFeedback } from '@petmove/domain'
 import { CaseHeader } from '@/components/cases/case-header'
+import { FACES, FaceIcon } from '@/components/feedback/feedback-view'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { monoCap, num, serif } from '@/components/me/settings-shared'
+import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
+import { PAGE_TOP, groupLabel, sectionTitle } from '@/lib/tokens'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
-/** 목적지별 히어로 사진 — public/destinations 에 번들(무료 라이선스 큐레이션).
-    없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다. */
-const DEST_PHOTOS: Record<string, string> = {
-  // 색감 비교 테스트 중 — 후보: japan.jpg(파스텔 후지) / japan-bright.jpg(쨍한 후지)
-  // / japan-sakura.jpg(벚꽃 클로즈업, 하늘색 배경) / japan-tokyo-tower.jpg(도쿄타워 노을 항공뷰).
-  // 하나로 정리할 것.
-  일본: '/destinations/japan-sakura.jpg',
+/** 목적지별 히어로 사진 후보 — public/destinations 에 번들. 기본은 앱을 열 때마다 이 순서대로
+    한 장씩 넘어가며 반복된다(로컬 저장 회전 인덱스, HERO_PHOTO_ROTATION_KEY 참고).
+    단, HERO_LEAD_THEN_RANDOM 목적지(태국·필리핀)는 첫 장을 고정으로 먼저 보여주고 나머지는 매 로드 무작위.
+    후보가 2장 이상이면 사진을 탭해서도 다음 후보로 넘겨볼 수 있다.
+    없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
+    EU 국가는 프랑스·독일·이탈리아만 사진을 갖고, 나머지는 사진 없이 메타 행. */
+const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
+  일본: [
+    '/destinations/japan-sakura-blossom-macro.jpg',
+    '/destinations/japan-torii-tunnel.jpg',
+    '/destinations/japan-bamboo-forest.jpg',
+    '/destinations/japan-fuji-pagoda-snow.jpg',
+    '/destinations/japan-fuji-umbrella-field.jpg',
+  ],
+  태국: [
+    '/destinations/thailand-aerial-beach-waves.jpg',
+    '/destinations/thailand-cliff-cove-aerial.jpg',
+    '/destinations/thailand-elephant-jungle-road.jpg',
+    '/destinations/thailand-cliff-coast-road.jpg',
+    '/destinations/thailand-cove-swimmers.jpg',
+  ],
+  필리핀: [
+    '/destinations/philippines-beach-two-boats.jpg',
+    '/destinations/philippines-palm-beach-turquoise.jpg',
+    '/destinations/philippines-elnido-lagoon.jpg',
+    '/destinations/philippines-kayak-turquoise.jpg',
+    '/destinations/philippines-elnido-white-beach.jpg',
+    '/destinations/philippines-moored-boats-beach.jpg',
+    '/destinations/philippines-bangka-wake-reef.jpg',
+    '/destinations/philippines-palm-resort-cove.jpg',
+  ],
+  프랑스: [
+    '/destinations/france-02.jpg',
+    '/destinations/france-09.jpg',
+    '/destinations/france-13.jpg',
+    '/destinations/france-18.jpg',
+    '/destinations/france-19.jpg',
+    '/destinations/france-32.jpg',
+    '/destinations/france-36.jpg',
+  ],
+  독일: [
+    '/destinations/germany-02.jpg',  // 눈숲 도로 항공
+    '/destinations/germany-09.jpg',  // 노이슈반슈타인 파란하늘
+    '/destinations/germany-11.jpg',  // 노이슈반슈타인 항공 새벽안개
+    '/destinations/germany-13.jpg',  // 소 방목 초원 가을
+    '/destinations/germany-16.jpg',  // 브란덴부르크 문 전경
+    '/destinations/germany-20.jpg',  // 초원 가문비나무
+    '/destinations/germany-21.jpg',  // 브레멘 마르크트 광장 (맑음)
+  ],
+  이탈리아: [
+    '/destinations/italy-02.jpg',
+    '/destinations/italy-04.jpg',
+    '/destinations/italy-05.jpg',
+    '/destinations/italy-09.jpg',
+    '/destinations/italy-11.jpg',
+    '/destinations/italy-12.jpg',
+    '/destinations/italy-25.jpg',
+    '/destinations/italy-27.jpg',
+    '/destinations/italy-28.jpg',
+  ],
+}
+
+/** 히어로 사진 회전 인덱스를 목적지별로 localStorage 에 저장 — 앱을 열 때마다
+    다음 인덱스를 읽어 보여주고, 그다음 것을 미리 저장해둔다(한 바퀴 돌면 처음으로). */
+function nextHeroPhotoIndex(destKey: string, length: number): number {
+  if (typeof window === 'undefined' || length <= 1) return 0
+  const storageKey = `pm-hero-photo-rotation:${destKey}`
+  const raw = window.localStorage.getItem(storageKey)
+  const current = raw ? ((parseInt(raw, 10) % length) + length) % length : 0
+  window.localStorage.setItem(storageKey, String((current + 1) % length))
+  return current
+}
+
+/** 첫 장은 고정으로 먼저 보여주고, 나머지 후보는 매 로드마다 무작위 순서로.
+    (순차 회전 대신) — 현재 태국·필리핀 적용. */
+const HERO_LEAD_THEN_RANDOM = new Set(['태국', '필리핀'])
+
+/** Fisher–Yates 셔플 — 원본 불변, 새 배열 반환. */
+function shuffleArray<T>(arr: readonly T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+/** 히어로 사진 크롭 위치 — 200px 고정 높이 박스라 세로 사진은 object-fit: cover 로
+    위/아래가 크게 잘린다. 기본은 정중앙, 위/아래 중 살려야 할 피사체가 있는 사진만
+    개별 지정(사용자 확인 후 추가). */
+const HERO_PHOTO_POSITION: Record<string, string> = {
+  '/destinations/japan-fuji-umbrella-field.jpg': 'bottom',
+  '/destinations/japan-fuji-pagoda-snow.jpg': 'top',
+  '/destinations/japan-sakura-blossom-macro.jpg': 'top',
+  '/destinations/thailand-cliff-coast-road.jpg': 'top',
+  '/destinations/france-19.jpg': 'bottom',
+  '/destinations/france-09.jpg': 'center 70%',
+  '/destinations/france-18.jpg': 'center 30%',
+  '/destinations/germany-02.jpg': 'top',
+  '/destinations/germany-21.jpg': 'top',
+  '/destinations/italy-04.jpg': 'bottom',
+  '/destinations/italy-11.jpg': 'bottom',
+  '/destinations/italy-12.jpg': 'top',
+  '/destinations/italy-25.jpg': 'top',
 }
 
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
@@ -82,6 +183,9 @@ export function TimelineCalm({
   const total = stages.length
   const done = stages.filter((s) => s.state === 'done').length
   const pct = done / total
+  // '다음 할 일' 스텝 배지 번호 — 전체 일정에서의 1-based 위치. 아래 타임라인 번호와 연결.
+  const nextStageNo =
+    nextStages.length > 0 ? stages.findIndex((s) => s.id === nextStages[0].id) + 1 : 0
 
   // Stone palette — scoped to this view (globals.css 의 --pm-* 와 같은 값, 인라인 fidelity).
   const C = {
@@ -91,7 +195,19 @@ export function TimelineCalm({
 
   // 주의가 발생한 stage 들 — 실패한 비-info 체크(실제 문제)가 있는 경우만.
   const warnedStages = stages.filter((s) => (s.failedChecks ?? 0) > 0)
-  const firstWarnedStage = warnedStages[0] ?? null
+  // 주의 스트립 항목 — 케이스 차원(caseAlerts: 견종·마릿수 등)과 단계 차원(warnedStages:
+  // 절차 검증 어긋남)을 한 스트립으로 합친다. stage 의 desc 는 주의 발생 시 첫 주의
+  // 메시지를 담는다(scenario 의 failedMsg 우선 규칙).
+  const warnItems: { id: string; title: string; message: string | undefined; href?: string }[] = [
+    ...caseAlerts.map((a) => ({ id: a.id, title: a.title, message: a.message ?? undefined })),
+    ...warnedStages.map((s) => ({
+      id: s.id,
+      title: s.label,
+      // warnMessage — '설명문 표시' 토글과 무관하게 항상 있는 주의 본문(desc 는 토글로 비워짐).
+      message: s.warnMessage,
+      href: stageHref(s),
+    })),
+  ]
   // 안내 stage 들 — info 체크가 있거나, advisory step(추가 백신·추가 검사)이 미완료인 경우.
   // advisory 는 면역이 아직 유효한 '미래 만료 대비' reminder — 문제(주의)가 아니라
   // 차분한 안내 톤으로 묶는다. 이미 주의로 잡힌 stage 는 제외(한 stage = 한 배너).
@@ -131,27 +247,36 @@ export function TimelineCalm({
     })
   })()
 
-  const serif: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontWeight: 500,
-    letterSpacing: '-0.01em',
-    fontVariantNumeric: 'tabular-nums',
-  }
-  const num: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontVariantNumeric: 'tabular-nums',
-    fontWeight: 400,
-  }
-  const monoCap: React.CSSProperties = {
-    fontSize: 12,
-    color: C.ink3,
-    fontWeight: 600,
-  }
+  // 타이포 정의는 settings-shared 단일 출처(serif·num·monoCap import) — 2026-07-12 통합.
 
-  // 히어로 카드의 주의 스트립 펼침 상태 — 평소엔 한 줄, 탭하면 상세 목록.
-  const [alertsOpen, setAlertsOpen] = useState(false)
+  // 히어로 날씨 칩 탭 → 목록 바텀시트 (여러 건일 때. 1건이고 이동 가능하면 바로 이동).
+  const [warnSheetOpen, setWarnSheetOpen] = useState(false)
+  const [infoSheetOpen, setInfoSheetOpen] = useState(false)
 
-  const heroPhoto = DEST_PHOTOS[trip.toCity] ?? null
+  // 상태 창(히어로 카드) = 나-2 확정 — 진행 바까지 사진 안으로 들어간 풀 포토.
+  // 티켓 노치 = 우측 정중앙 확정. (2026-07-11 실기기 비교 후 확정, dev 스위처 제거.)
+
+  const baseHeroCandidates = DEST_PHOTO_CANDIDATES[trip.toCity] ?? []
+  // 후보 표시 순서 — 기본은 배열 그대로(순차 회전). 태국 등 lead-then-random 목적지는
+  // 첫 장 고정 + 나머지 셔플을 마운트 후(useEffect)에만 적용해 SSR/hydration 은 안정.
+  const [heroPhotoCandidates, setHeroPhotoCandidates] = useState<string[]>(baseHeroCandidates)
+  const [heroPhotoIndex, setHeroPhotoIndex] = useState(0)
+  useEffect(() => {
+    const base = DEST_PHOTO_CANDIDATES[trip.toCity] ?? []
+    if (HERO_LEAD_THEN_RANDOM.has(trip.toCity) && base.length > 2) {
+      setHeroPhotoCandidates([base[0], ...shuffleArray(base.slice(1))])
+      setHeroPhotoIndex(0) // 첫 장(파도) 항상 먼저
+    } else {
+      setHeroPhotoCandidates(base)
+      setHeroPhotoIndex(nextHeroPhotoIndex(trip.toCity, base.length))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip.toCity])
+  const heroPhoto = heroPhotoCandidates[heroPhotoIndex] ?? null
+  // 사진 후보 여러 장을 고르는 동안의 임시 비교용 — 탭하면 바로 다음 후보로 넘긴다.
+  // (앱은 keep-alive 라 자동 회전은 새로고침 때만 도는데, 비교엔 즉시 전환이 필요.)
+  const cycleHeroPhoto = () =>
+    setHeroPhotoIndex((i) => (i + 1) % heroPhotoCandidates.length)
 
   // 다목적지 전환 — 헤더의 라우트(한국 ⇄ 일본) 버튼을 없애고 히어로의 목적지 칩이 담당.
   // 목적지 2개 이상이면 칩에 꺾쇠가 붙고, 탭하면 바텀시트로 활성 목적지를 바꾼다.
@@ -166,6 +291,25 @@ export function TimelineCalm({
   const router = useRouter()
   const searchParams = useSearchParams()
   const activeDestResolved = activeDest ?? searchParams.get('dest') ?? destTokens[0] ?? ''
+
+  // 여정 완료 미리보기 — 개발 전용 (?pmDemoComplete=1). 실데이터 없이 완료 화면을 확인.
+  const demoComplete =
+    process.env.NODE_ENV !== 'production' && searchParams.get('pmDemoComplete') === '1'
+  const complete = journeyComplete || demoComplete
+
+  // 이미 남긴 만족도 — 소감 카드의 얼굴 행에서 해당 얼굴만 틴트 표시.
+  const savedRating =
+    readJourneyFeedback(case_?.data, trip.toCity, destTokens[0] ?? null)?.rating ?? null
+
+  // 날씨 칩 탭 — 1건이고 이동 가능한 단계면 바로 그 단계로, 그 외엔 목록 바텀시트.
+  const onWarnChip = () => {
+    if (warnItems.length === 1 && warnItems[0].href) router.push(warnItems[0].href)
+    else setWarnSheetOpen(true)
+  }
+  const onInfoChip = () => {
+    if (infoStages.length === 1) router.push(stageHref(infoStages[0]))
+    else setInfoSheetOpen(true)
+  }
   const tripTypeRaw = (case_?.data as Record<string, unknown> | null | undefined)?.trip_type
   const tripTypeByDest =
     tripTypeRaw && typeof tripTypeRaw === 'object' && !Array.isArray(tripTypeRaw)
@@ -176,7 +320,8 @@ export function TimelineCalm({
     setDestSheetOpen(false)
     const params = new URLSearchParams(searchParams.toString())
     params.set('dest', dest)
-    router.replace(`?${params.toString()}`, { scroll: false })
+    // pane 라우트 — replaceState 만으로 TabHost 가 dest 를 다시 내려준다(서버 왕복 0).
+    window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`)
   }
 
   // 사진 위 목적지·D-day 칩 공통 스타일 — 반투명 흰 배경(사진은 테마 무관 고정이라 하드코딩).
@@ -200,6 +345,10 @@ export function TimelineCalm({
   // (출국일 없을 때 일본 prep 힌트(trip.prep)는 잠시 보류 — 되돌릴 땐 아래 한 줄만 복구.)
   const prepCountupLabel = trip.elapsedDays != null ? `${trip.elapsedDays}일째` : null
   const ringStatus = dDayLabel ?? prepCountupLabel
+  // 사진 하단 오버레이 우측 — '10월 11일 출국'. 연도는 생략(출국은 대개 1년 이내).
+  const departText = trip.departureDate
+    ? `${formatKoreanDate(trip.departureDate).replace(/^\d+년\s*/, '')} 출국`
+    : null
 
   // 완료 배너 날짜 — 왕복은 출발~도착(귀국) 범위, 편도는 도착일만.
   const arrivalText = journeyCompleteDate ? formatKoreanDate(journeyCompleteDate) : ''
@@ -208,9 +357,70 @@ export function TimelineCalm({
       ? formatDateRange(trip.departureDate, journeyCompleteDate)
       : arrivalText
 
-  // 일정 카드 한 행 — 동그라미(번호·상태) + 항목명 + 날짜. index 는 전체 일정 기준
-  // 0-based, isLast 는 소속 카드 내 마지막 행 여부(구분선 생략).
-  const renderStageRow = (s: JourneyStage, index: number, isLast: boolean) => {
+  // 티켓 노치 배지 — 가로가 세로보다 긴 라운드 사각 + 우측(텍스트 쪽)에만 반원 컷아웃.
+  // 좌측은 세로 레일이 붙는 쪽이라 온전히 두고, 우측만 '뜯겨 열린' 효과를 준다.
+  // 컷아웃은 배지가 놓이는 면의 배경색(notchBg)으로 채워 펀칭된 것처럼 보이게 한다.
+  // 일반 함수로 호출(컴포넌트 태그로 안 씀) — 매 렌더마다 재정의돼도 리마운트 걱정 없음.
+  const renderTicketBadge = (opts: {
+    bg: string
+    color: string
+    notchBg: string
+    border?: string
+    height?: number
+    fontSize?: number
+    fontWeight?: number
+    children: React.ReactNode
+  }) => {
+    const height = opts.height ?? 22
+    const width = height + 5
+    const notchSize = height >= 26 ? 9 : 8
+    return (
+      <span
+        style={{
+          position: 'relative',
+          width,
+          height,
+          borderRadius: height >= 26 ? 8 : 6,
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: opts.bg,
+          color: opts.color,
+          border: opts.border ?? 'none',
+          ...num,
+          fontSize: opts.fontSize ?? 11,
+          ...(opts.fontWeight != null ? { fontWeight: opts.fontWeight } : {}),
+        }}
+      >
+        {opts.children}
+        <span
+          aria-hidden
+          style={{
+            position: 'absolute',
+            right: -notchSize / 2,
+            width: notchSize,
+            height: notchSize,
+            borderRadius: '50%',
+            background: opts.notchBg,
+            // 노치 = 우측 정중앙 확정.
+            top: '50%',
+            transform: 'translateY(-50%)',
+          }}
+        />
+      </span>
+    )
+  }
+
+  // 일정 한 행 — 동그라미(번호·상태) + 항목명 + 날짜. index 는 전체 일정 기준 0-based.
+  // 카드 면 없이 세로 레일(타임라인)로 잇는다 — 완료 구간은 진한 선, 남은 구간은 흐린 선.
+  // first/last 는 소속 구간(zone) 내 위치(레일 시작·끝), prevDone 은 직전 행 완료 여부
+  // (윗선 채움 판단).
+  const renderStageRow = (
+    s: JourneyStage,
+    index: number,
+    opts: { first: boolean; last: boolean; prevDone: boolean },
+  ) => {
     const isDone = s.state === 'done'
     const isCurr = s.state === 'current'
     // advisory(추가 백신·추가 검사) 가 미완료면 본 흐름의 다음 단계는 못 가리지만 미래
@@ -226,58 +436,67 @@ export function TimelineCalm({
     // warn 색으로 'overdue' 신호를 줘야 한다.
     const showDeadlinePill = s.dateLabel === '마감' && !!s.date && !isDone
     const isOverdueDeadline = showDeadlinePill && !hasFutureDate
+    // 세로 레일 — 완료(지나온 길)는 진하게, 남은 길은 흐리게. 위 반절은 직전 행,
+    // 아래 반절은 이 행의 완료 상태를 따른다.
+    const railDone = 'rgb(var(--pm-ink-rgb) / .28)'
+    const railTodo = 'rgb(var(--pm-ink-rgb) / .09)'
+    // 간격 실험(2026-07-11): 제목만 나열될 때 텍스트 나열이 답답하다는 피드백 —
+    // 18→23(행 사이 ~36→46px), 설명문 행도 13→15로 반 단계.
+    const padY = s.desc ? 15 : 23
     return (
       <Link
         key={s.id}
         href={stageHref(s)}
         style={{
+          position: 'relative',
           display: 'flex',
           alignItems: 'flex-start',
           gap: 14,
           // 보조줄(desc) 없는 행은 제목 한 줄이라 빽빽해진다 — 설명문 숨김 모드 등에서
           // 세로 여백을 키워 호흡을 준다. 보조줄 있는 행은 기존 간격 유지.
-          padding: s.desc ? '13px 0' : '18px 0',
-          borderBottom: isLast ? 'none' : `.5px solid ${C.line}`,
+          padding: `${padY}px 0`,
           textDecoration: 'none',
           color: 'inherit',
           cursor: 'pointer',
         }}
       >
-        <div
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: '50%',
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            // 우선순위: 주의(실제 문제) > done(완료 체크) > current(다음 할 일 톤) > 안내 > upcoming.
-            // current 와 안내가 동시이면 current 톤 유지 — 보호자의 다음 액션이 시각의 무게중심.
-            // 안내는 우측 칩 + 별도 카드로 보조 노출.
-            background: hasWarn ? C.warn : isDone ? C.sage : isCurr ? C.accent : hasInfo ? C.info : 'transparent',
-            border: !hasWarn && !isDone && !isCurr && !hasInfo ? `1px solid ${C.line}` : 'none',
-            color: hasWarn || isDone || isCurr || hasInfo ? C.surface : C.ink3,
-            ...num,
-            fontSize: 11,
-          }}
-        >
-          {hasWarn ? (
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-label="주의"
-            >
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-            </svg>
+        {!opts.first && (
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              left: 10,
+              top: 0,
+              height: padY,
+              width: 2,
+              background: opts.prevDone && isDone ? railDone : railTodo,
+            }}
+          />
+        )}
+        {!opts.last && (
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              left: 10,
+              top: padY + 22,
+              bottom: 0,
+              width: 2,
+              background: isDone ? railDone : railTodo,
+            }}
+          />
+        )}
+        {renderTicketBadge({
+          // 우선순위: 주의(실제 문제) > done(완료 체크) > current(다음 할 일 톤) > 안내 > upcoming.
+          // current 와 안내가 동시이면 current 톤 유지 — 보호자의 다음 액션이 시각의 무게중심.
+          // 안내는 우측 칩 + 별도 카드로 보조 노출.
+          bg: hasWarn ? C.warn : isDone ? C.sage : isCurr ? C.accent : hasInfo ? C.info : C.cardList,
+          border: !hasWarn && !isDone && !isCurr && !hasInfo ? `1px solid rgb(var(--pm-ink-rgb) / .14)` : undefined,
+          color: hasWarn || isDone || isCurr || hasInfo ? C.surface : C.ink3,
+          // 노치는 이 배지가 놓인 카드 면(zone 카드, C.cardList)의 색으로 뚫어야 펀칭 효과가 난다.
+          notchBg: C.cardList,
+          children: hasWarn ? (
+            <StormCloudIcon size={13} strokeWidth={2.3} label="주의" />
           ) : isDone ? (
             <svg
               width="11"
@@ -294,24 +513,11 @@ export function TimelineCalm({
           ) : isCurr ? (
             index + 1
           ) : hasInfo ? (
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-label="안내"
-            >
-              <line x1="12" y1="11" x2="12" y2="17" />
-              <line x1="12" y1="7" x2="12.01" y2="7" />
-            </svg>
+            <CloudIcon size={13} strokeWidth={2.3} label="안내" />
           ) : (
             index + 1
-          )}
-        </div>
+          ),
+        })}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -328,8 +534,10 @@ export function TimelineCalm({
               style={{
                 fontSize: 16,
                 lineHeight: '22px',
-                color: hasWarn ? C.warn : isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
-                fontWeight: isCurr || hasWarn ? 600 : 500,
+                // 제목은 주의·안내 무관하게 상태(진행/완료/예정)만 따른다 — 색·굵기 신호는
+                // 배지 아이콘 + 우측 상태 라벨이 전담(2026-07-12 주의·안내 표시 전수 통일).
+                color: isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
+                fontWeight: isCurr ? 600 : 500,
                 minWidth: 0,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -341,7 +549,8 @@ export function TimelineCalm({
             <div
               style={{
                 ...monoCap,
-                color: hasWarn ? C.warn : hasInfo ? C.info : isCurr ? C.accent : C.ink3,
+                // 작은 글자는 accentInk — 밝은 accent 원색은 12px 대비가 모자란다.
+                color: hasWarn ? C.warn : hasInfo ? C.info : isCurr ? C.accentInk : C.ink3,
                 fontWeight: hasWarn ? 700 : hasInfo ? 600 : isCurr ? 700 : 500,
                 textAlign: 'right',
                 flexShrink: 0,
@@ -360,10 +569,10 @@ export function TimelineCalm({
                     display: 'inline-block',
                     padding: '2px 8px',
                     borderRadius: 6,
-                    background: 'rgba(33,33,36,0.08)',
-                    border: '.5px solid var(--pm-accent)',
-                    color: C.accent,
-                    fontWeight: 700,
+                    // 연한 브랜드 틴트 + 진한 브랜드 글자 — 테두리 없이 면으로만(잔장식 정리).
+                    background: C.soft,
+                    color: C.accentInk,
+                    fontWeight: 600,
                   }}
                 >
                   {s.dateLabel ?? '예정'} {formatStageDate(s)}
@@ -376,10 +585,9 @@ export function TimelineCalm({
                     display: 'inline-block',
                     padding: '2px 8px',
                     borderRadius: 6,
-                    background: isOverdueDeadline ? C.warnBg : 'rgba(33,33,36,0.08)',
-                    border: `.5px solid ${isOverdueDeadline ? `color-mix(in srgb, ${C.warn} 33%, transparent)` : 'var(--pm-accent)'}`,
-                    color: isOverdueDeadline ? C.warn : C.accent,
-                    fontWeight: 700,
+                    background: isOverdueDeadline ? C.warnBg : C.soft,
+                    color: isOverdueDeadline ? C.warn : C.accentInk,
+                    fontWeight: 600,
                   }}
                 >
                   마감 {formatStageDate(s)}
@@ -407,7 +615,7 @@ export function TimelineCalm({
         color: C.ink,
         minHeight: '100%',
         // 섹션 리듬 32 (여백 중시 톤) / 라벨→콘텐츠 12. 하단은 nav 여백이 더해져 24 유지.
-        paddingTop: 32,
+        paddingTop: PAGE_TOP,
         paddingBottom: 24,
         overflow: 'auto',
       }}
@@ -418,21 +626,16 @@ export function TimelineCalm({
           caseId={caseId}
           tab="journey"
           petName={pet.name}
-          fromCity={trip.fromCity}
-          toCity={trip.toCity}
-          tripType={trip.tripType}
-          ink={C.ink}
-          ink2={C.ink2}
+          petNameEn={pet.nameEn}
           ink3={C.ink3}
-          serif={serif}
         />
 
-        {/* 히어로 카드 — 첫 화면의 얼굴. 상단은 목적지 사진(스크림 없이 원본 밝기 그대로,
-            칩 2개: 목적지·D-day / 진행률), 아래는 흰 본문이 직선으로 이어지며 다음 할 일과
-            주의를 담는다. 텍스트는 전부 사진 밖 흰 영역 — 사진 톤과 무관하게 항상 읽힌다.
-            기존 진행률 링·다음 할 일·주의 카드 3장을 합친 것 — 여정 완료 후엔 완료 배너가
-            이 역할을 대신하므로 가린다. */}
-        {!journeyComplete && (
+        {/* 상태 창 + 다음 할 일 카드 — 히어로를 둘로 분리(나안).
+            상태 창: 사진(목적지 칩 + 날씨 칩 + D-day·출국일 오버레이) + 세그먼트 진행 바.
+            다음 할 일: 별도 카드, 스텝 배지로 아래 타임라인과 연결.
+            여정 완료 후에도 상태 창(사진)은 유지 — 원 설계(2026-06-02)대로 '다음 할 일'
+            자리만 완료 배너로 바뀐다(리디자인 때 사진까지 가려지던 회귀를 복원, 2026-07-13). */}
+          <>
           <div
             style={{
               marginTop: 32,
@@ -448,13 +651,61 @@ export function TimelineCalm({
                 <img
                   src={heroPhoto}
                   alt=""
+                  onClick={heroPhotoCandidates.length > 1 ? cycleHeroPhoto : undefined}
                   style={{
                     position: 'absolute',
                     inset: 0,
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
+                    objectPosition: HERO_PHOTO_POSITION[heroPhoto] ?? 'center',
                     display: 'block',
+                    cursor: heroPhotoCandidates.length > 1 ? 'pointer' : undefined,
+                  }}
+                />
+                {/* 사진 후보 여러 장 고르는 동안의 임시 리뷰용 — 탭하면 다음 후보로,
+                    점으로 현재 위치 표시. 하나로 확정되면 후보를 1장으로 줄이고 함께 제거. */}
+                {heroPhotoCandidates.length > 1 && (
+                  <div
+                    aria-hidden
+                    style={{
+                      position: 'absolute',
+                      top: 14,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      display: 'flex',
+                      gap: 4,
+                      padding: '4px 8px',
+                      borderRadius: 999,
+                      background: 'rgba(0,0,0,.28)',
+                    }}
+                  >
+                    {heroPhotoCandidates.map((_, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: '50%',
+                          background: i === heroPhotoIndex ? '#FFFFFF' : 'rgba(255,255,255,.4)',
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+                {/* 하단 한정 그라데이션 스크림 — '원본 밝기 유지' 원칙의 부분 양보(하단 76px).
+                    흰 오버레이(D-day·진행 바)가 사진 밝기와 무관하게 항상 성립하게 한다.
+                    빈 칸 색 단방향 실험(흰38%↔검22%)이 사진에 따라 서로 반대로 무너져 채택. */}
+                <div
+                  aria-hidden
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: 76,
+                    background:
+                      'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.34) 100%)',
                   }}
                 />
                 {multiDest ? (
@@ -463,19 +714,22 @@ export function TimelineCalm({
                     onClick={() => setDestSheetOpen(true)}
                     aria-haspopup="dialog"
                     aria-expanded={destSheetOpen}
-                    aria-label="목적지 전환"
+                    aria-label="여행지 전환"
                     className="pm-pressable"
                     style={{
                       ...destChipStyle,
                       position: 'absolute',
-                      top: 12,
-                      left: 12,
+                      // 인셋 16 — 하단 오버레이(left 16)와 좌측 라인 통일 + 카드 라운드(16)와 조화.
+                      top: 14,
+                      left: 16,
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                     }}
                   >
                     {trip.toCity}
-                    {ringStatus ? ` · ${ringStatus}` : ''}
+                    <span style={{ opacity: 0.6 }}>
+                      · {trip.tripType === 'round' ? '왕복' : '편도'}
+                    </span>
                     <svg
                       width="11"
                       height="11"
@@ -496,160 +750,377 @@ export function TimelineCalm({
                     </svg>
                   </button>
                 ) : (
-                  <span style={{ ...destChipStyle, position: 'absolute', top: 12, left: 12 }}>
+                  <span style={{ ...destChipStyle, position: 'absolute', top: 14, left: 16 }}>
                     {trip.toCity}
-                    {ringStatus ? ` · ${ringStatus}` : ''}
+                    <span style={{ opacity: 0.6 }}>
+                      · {trip.tripType === 'round' ? '왕복' : '편도'}
+                    </span>
                   </span>
                 )}
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: 12,
-                    right: 12,
-                    background: 'rgba(255,255,255,0.92)',
-                    borderRadius: 999,
-                    padding: '5px 12px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <span
+                {/* 날씨 칩 — 여행지 하늘에 뜬 오늘의 날씨. 주의(뇌우)·안내(구름)가 있으면
+                    우상단에 요약 칩만(내용은 탭 → 해당 단계 or 바텀시트).
+                    여정 완료 후엔 둘 다 숨김(2026-07-12 사용자 확정) — 완료 화면은 도장에 집중. */}
+                {!complete && (warnItems.length > 0 || infoStages.length > 0) && (
+                  <div
                     style={{
-                      width: 40,
-                      height: 3,
-                      borderRadius: 2,
-                      background: 'rgba(33,33,36,0.18)',
-                      overflow: 'hidden',
-                      display: 'inline-block',
+                      position: 'absolute',
+                      top: 14,
+                      right: 16,
+                      display: 'flex',
+                      gap: 6,
                     }}
                   >
-                    <span
-                      style={{
-                        display: 'block',
-                        width: `${Math.round(pct * 100)}%`,
-                        height: '100%',
-                        background: '#212124',
-                      }}
-                    />
-                  </span>
-                  <span style={{ ...num, fontSize: 12, color: '#212124' }}>
-                    {done}/{total}
-                  </span>
-                </span>
-              </div>
-            )}
-
-            <div style={{ padding: '14px 18px 18px' }}>
-              {/* 헤더 행 — 사진 있으면 '다음 할 일' 라벨만(목적지·D-day·진행률은 사진 칩에),
-                  없으면 목적지·D-day + 진행률 을 먼저 놓고 라벨은 아래에. */}
-              {heroPhoto ? (
-                <div style={{ fontSize: 12, color: C.ink3 }}>다음 할 일</div>
-              ) : (
-                <>
+                    {warnItems.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={onWarnChip}
+                        className="pm-pressable"
+                        aria-label={`주의 ${warnItems.length}건 보기`}
+                        style={{
+                          ...destChipStyle,
+                          gap: 5,
+                          // 사진 위 칩은 테마 무관 고정(destChipStyle 관례) — 다크의 밝은
+                          // warn(#FACC15)이 흰 칩 위에서 씻기지 않게 라이트 값을 하드코딩.
+                          color: '#EAB308',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        <StormCloudIcon size={13} />
+                        주의 {warnItems.length}
+                      </button>
+                    )}
+                    {infoStages.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={onInfoChip}
+                        className="pm-pressable"
+                        aria-label={`안내 ${infoStages.length}건 보기`}
+                        style={{
+                          ...destChipStyle,
+                          gap: 5,
+                          // 사진 위 칩 고정 색 — info 라이트 값(맑은 슬레이트).
+                          color: '#4B8CBF',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        <CloudIcon size={13} />
+                        안내 {infoStages.length}
+                      </button>
+                    )}
+                  </div>
+                )}
+                {/* 하단 오버레이(나-2 확정) — 진행 바까지 사진 안으로.
+                    스크림 대신 옅은 텍스트 섀도 — 밝은 사진에서도 읽히되 원본 밝기는 유지. */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 16,
+                    right: 16,
+                    bottom: 12,
+                    textShadow: '0 1px 14px rgba(0,0,0,.45)',
+                  }}
+                >
                   <div
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
-                      alignItems: 'center',
+                      alignItems: 'baseline',
+                      gap: 8,
                     }}
                   >
-                    {multiDest ? (
-                      <button
-                        type="button"
-                        onClick={() => setDestSheetOpen(true)}
-                        aria-haspopup="dialog"
-                        aria-expanded={destSheetOpen}
-                        aria-label="목적지 전환"
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: C.ink2,
-                          background: 'transparent',
-                          border: 'none',
-                          padding: 0,
-                          fontFamily: 'inherit',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {trip.toCity}
-                        {ringStatus ? ` · ${ringStatus}` : ''}
-                        <svg
-                          width="11"
-                          height="11"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.6"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden
-                          style={{
-                            flexShrink: 0,
-                            transform: destSheetOpen ? 'rotate(180deg)' : 'none',
-                            transition: 'transform .18s',
-                          }}
-                        >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </button>
+                    {complete ? (
+                      // 완료 후엔 카운트업 대신 상태 문구(2026-07-12 사용자 확정 ②안).
+                      <span style={{ ...serif, fontSize: 30, lineHeight: 1, color: '#FFFFFF' }}>
+                        여정 완료
+                      </span>
                     ) : (
-                      <span style={{ fontSize: 13, fontWeight: 600, color: C.ink2 }}>
-                        {trip.toCity}
-                        {ringStatus ? ` · ${ringStatus}` : ''}
-                      </span>
+                      ringStatus && (
+                        <span style={{ ...serif, fontSize: 30, lineHeight: 1, color: '#FFFFFF' }}>
+                          {ringStatus}
+                        </span>
+                      )
                     )}
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      <span
-                        style={{
-                          width: 48,
-                          height: 4,
-                          borderRadius: 2,
-                          background: 'rgb(var(--pm-ink-rgb) / .12)',
-                          overflow: 'hidden',
-                          display: 'inline-block',
-                        }}
-                      >
-                        <span
-                          style={{
-                            display: 'block',
-                            width: `${Math.round(pct * 100)}%`,
-                            height: '100%',
-                            background: C.accent,
-                          }}
-                        />
-                      </span>
-                      <span style={{ ...num, fontSize: 12, color: C.ink3 }}>
-                        {done}/{total}
-                      </span>
+                    <span
+                      style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,.92)' }}
+                    >
+                      {/* 완료 미리보기(demo)는 단계 데이터가 그대로라 카운트·바를 가득 채워
+                          실제 완료 모습으로 보정한다(실제 완료는 원래 전부 done). */}
+                      {[departText, `${demoComplete ? total : done}/${total}`]
+                        .filter(Boolean)
+                        .join(' · ')}
                     </span>
                   </div>
-                  <div style={{ fontSize: 12, color: C.ink3, marginTop: 14 }}>다음 할 일</div>
-                </>
-              )}
+                  <div style={{ display: 'flex', gap: 3, marginTop: 9 }}>
+                      {stages.map((s) => (
+                        <span
+                          key={s.id}
+                          aria-hidden
+                          style={{
+                            flex: 1,
+                            height: 5,
+                            borderRadius: 2,
+                            // 하단 스크림이 바닥을 어둡게 보장 — 흰 채움/흰 반투명 빈 칸이
+                            // 사진 밝기와 무관하게 성립한다.
+                            background:
+                              s.state === 'done' || demoComplete
+                                ? '#FFFFFF'
+                                : 'rgba(255,255,255,.42)',
+                          }}
+                        />
+                      ))}
+                  </div>
+                </div>
+                {/* 도착 도장 — 여정 완료 시 사진에 여권 스탬프처럼 직접 찍는다(별도 완료
+                    배너 대체). 칩(상단)과 하단 오버레이 사이 우측, 살짝 기울인 이중 링. */}
+                {complete && (
+                  <div
+                    aria-label="여정 완료"
+                    role="img"
+                    style={{
+                      position: 'absolute',
+                      top: 20,
+                      right: 18,
+                      width: 96,
+                      height: 96,
+                      borderRadius: '50%',
+                      border: '2.5px solid rgba(255,255,255,.85)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transform: 'rotate(-11deg)',
+                      color: '#FFFFFF',
+                      filter: 'drop-shadow(0 1px 8px rgba(0,0,0,.3))',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 82,
+                        height: 82,
+                        borderRadius: '50%',
+                        border: '1px solid rgba(255,255,255,.65)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 2,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {/* 왕복의 완료 = 한국 귀국 — 목적지 사진 위 '도착'은 뜻이 어긋나 '귀국'으로.
+                          편도(이주)만 '도착'. (2026-07-12 사용자 지적) */}
+                      <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '0.04em' }}>
+                        {trip.tripType === 'round' ? '귀국' : '도착'}
+                      </span>
+                      <span style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 600 }}>
+                        {trip.tripType === 'round' ? 'RETURNED' : 'ARRIVED'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
+            {/* 본문(세그먼트 바) — 나-2(풀 포토, 사진 있음)에선 바가 사진 안으로
+                들어가 본문이 없다. 사진 없는 목적지만 본문 세그먼트 바를 그린다. */}
+            {!heroPhoto && (
+            <div style={{ padding: heroPhoto ? '14px 18px 16px' : '16px 18px' }}>
+              {/* 사진 없으면 목적지·D-day 를 본문 첫 줄에 — 사진의 칩·오버레이 대체.
+                  날씨 칩도 같은 줄 우측에(사진판과 동일 역할, 카드 위라 틴트 필 스타일). */}
+              {!heroPhoto && (
+                <div
+                  style={{
+                    marginBottom: 13,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                  }}
+                >
+                  {multiDest ? (
+                    <button
+                      type="button"
+                      onClick={() => setDestSheetOpen(true)}
+                      aria-haspopup="dialog"
+                      aria-expanded={destSheetOpen}
+                      aria-label="여행지 전환"
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: C.ink2,
+                        background: 'transparent',
+                        border: 'none',
+                        padding: 0,
+                        fontFamily: 'inherit',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {trip.toCity}
+                      {!complete && ringStatus ? ` · ${ringStatus}` : ''}
+                      <svg
+                        width="11"
+                        height="11"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
+                        style={{
+                          flexShrink: 0,
+                          transform: destSheetOpen ? 'rotate(180deg)' : 'none',
+                          transition: 'transform .18s',
+                        }}
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.ink2 }}>
+                      {trip.toCity}
+                      {!complete && ringStatus ? ` · ${ringStatus}` : ''}
+                    </span>
+                  )}
+                  {!complete && (warnItems.length > 0 || infoStages.length > 0) && (
+                    <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                      {warnItems.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={onWarnChip}
+                          className="pm-pressable"
+                          aria-label={`주의 ${warnItems.length}건 보기`}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 5,
+                            padding: '4px 10px',
+                            borderRadius: 999,
+                            border: 'none',
+                            background: C.warnBg,
+                            color: C.warn,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                          }}
+                        >
+                          <StormCloudIcon size={13} />
+                          주의 {warnItems.length}
+                        </button>
+                      )}
+                      {infoStages.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={onInfoChip}
+                          className="pm-pressable"
+                          aria-label={`안내 ${infoStages.length}건 보기`}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 5,
+                            padding: '4px 10px',
+                            borderRadius: 999,
+                            border: 'none',
+                            background: C.infoBg,
+                            color: C.info,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                          }}
+                        >
+                          <CloudIcon size={13} />
+                          안내 {infoStages.length}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* 준비 진행 세그먼트 바 — 일정 1개 = 1칸, 아래 타임라인의 축소판. */}
+              <div style={{ display: 'flex', gap: 3 }}>
+                {stages.map((s) => (
+                  <span
+                    key={s.id}
+                    aria-hidden
+                    style={{
+                      flex: 1,
+                      height: 6,
+                      borderRadius: 2,
+                      background:
+                        s.state === 'done' || demoComplete
+                          ? C.accent
+                          : 'rgb(var(--pm-ink-rgb) / .08)',
+                    }}
+                  />
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                <span style={{ fontSize: 12, color: complete ? C.sage : C.ink3, fontWeight: complete ? 600 : 400 }}>
+                  {complete ? '여정 완료' : '진행률'}
+                </span>
+                <span style={{ ...num, fontSize: 12, color: C.ink }}>
+                  {demoComplete ? total : done}/{total}
+                </span>
+              </div>
+            </div>
+            )}
+          </div>
+
+          {/* 다음 할 일 카드 — 상태 창과 분리. 스텝 배지가 아래 타임라인 번호와 연결.
+              여정 완료 후엔 이 자리를 완료 배너가 대신한다. */}
+          {!complete && nextStages.length > 0 && (
+            <div
+              style={{
+                marginTop: 10,
+                borderRadius: 16,
+                background: C.cardSoft,
+                boxShadow: 'var(--pm-card-rim)',
+                padding: '15px 18px',
+              }}
+            >
               {nextStages.length > 0 && (
                 <>
                   <Link
                     href={stageHref(nextStages[0])}
                     className="pm-pressable"
-                    style={{ display: 'block', textDecoration: 'none', color: 'inherit', marginTop: 4 }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 12,
+                      textDecoration: 'none',
+                      color: 'inherit',
+                    }}
                   >
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        gap: 8,
-                      }}
-                    >
+                    <span style={{ marginTop: 1 }}>
+                      {renderTicketBadge({
+                        height: 27,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        bg: C.accent,
+                        color: '#FFFFFF',
+                        // 이 배지는 다음 할 일 카드(C.cardSoft) 위에 놓인다 — 노치는 그 배경색으로.
+                        notchBg: C.cardSoft,
+                        children: nextStageNo,
+                      })}
+                    </span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span
+                        style={{ display: 'block', fontSize: 11, fontWeight: 600, color: C.ink3 }}
+                      >
+                        다음 할 일
+                      </span>
                       <h3
                         style={{
                           ...serif,
-                          margin: 0,
+                          margin: '2px 0 0',
                           fontSize: 19,
                           lineHeight: 1.2,
                           color: C.ink,
@@ -659,48 +1130,48 @@ export function TimelineCalm({
                       >
                         {nextStages[0].label}
                       </h3>
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        style={{ color: C.ink3, flexShrink: 0 }}
-                        aria-hidden
-                      >
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                    </div>
-                    {(nextStages[0].cardDesc ?? nextStages[0].desc) && (
-                      <p
-                        style={{
-                          margin: '5px 0 0',
-                          fontSize: 13,
-                          lineHeight: 1.55,
-                          color: 'rgb(var(--pm-ink-rgb) / .65)',
-                        }}
-                      >
-                        {nextStages[0].cardDesc ?? nextStages[0].desc}
-                      </p>
-                    )}
-                    {nextStages[0].infoMessage &&
-                      ((nextStages[0].infoChecks ?? 0) > 0 || nextStages[0].advisory) &&
-                      nextStages[0].infoMessage !== (nextStages[0].cardDesc ?? nextStages[0].desc) && (
+                      {(nextStages[0].cardDesc ?? nextStages[0].desc) && (
                         <p
                           style={{
-                            margin: '8px 0 0',
+                            margin: '5px 0 0',
                             fontSize: 13,
                             lineHeight: 1.55,
-                            color: C.info,
-                            whiteSpace: 'pre-line',
+                            color: 'rgb(var(--pm-ink-rgb) / .65)',
                           }}
                         >
-                          {nextStages[0].infoMessage}
+                          {nextStages[0].cardDesc ?? nextStages[0].desc}
                         </p>
                       )}
+                      {nextStages[0].infoMessage &&
+                        ((nextStages[0].infoChecks ?? 0) > 0 || nextStages[0].advisory) &&
+                        nextStages[0].infoMessage !== (nextStages[0].cardDesc ?? nextStages[0].desc) && (
+                          <p
+                            style={{
+                              margin: '8px 0 0',
+                              fontSize: 13,
+                              lineHeight: 1.55,
+                              color: C.info,
+                              whiteSpace: 'pre-line',
+                            }}
+                          >
+                            {nextStages[0].infoMessage}
+                          </p>
+                        )}
+                    </span>
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ color: C.ink3, flexShrink: 0, marginTop: 7 }}
+                      aria-hidden
+                    >
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
                   </Link>
                   {/* 이어서 — 둘째 할 일부터는 압축 행. */}
                   {nextStages.slice(1).map((stage) => (
@@ -742,122 +1213,85 @@ export function TimelineCalm({
                 </>
               )}
 
-              {/* 주의 스트립 — 케이스 차원 결격(견종·마릿수·거주 등). 평소엔 존재하지 않고,
-                  발생 시 한 줄 앰버 스트립. 탭하면 카드 안에서 상세를 펼친다. */}
-              {caseAlerts.length > 0 && (
-                <div
-                  style={{
-                    marginTop: nextStages.length > 0 ? 14 : 0,
-                    borderRadius: 10,
-                    background: C.warnBg,
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setAlertsOpen((v) => !v)}
-                    className="pm-pressable"
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '10px 12px',
-                      borderRadius: 10,
-                      border: 'none',
-                      background: 'transparent',
-                      color: C.warn,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{ flexShrink: 0 }}
-                      aria-hidden
-                    >
-                      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                      <line x1="12" y1="9" x2="12" y2="13" />
-                      <line x1="12" y1="17" x2="12.01" y2="17" />
-                    </svg>
-                    <span
-                      style={{
-                        flex: 1,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      주의 {caseAlerts.length}건 — {caseAlerts.map((a) => a.title).join(' · ')}
-                    </span>
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{
-                        flexShrink: 0,
-                        transform: alertsOpen ? 'rotate(180deg)' : 'none',
-                        transition: 'transform .18s ease',
-                      }}
-                      aria-hidden
-                    >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-                  {alertsOpen && (
-                    <div style={{ padding: '0 12px 12px' }}>
-                      {caseAlerts.map((alert, i) => (
-                        <div
-                          key={alert.id}
-                          style={{
-                            marginTop: i === 0 ? 2 : 12,
-                            paddingTop: i === 0 ? 0 : 12,
-                            borderTop: i === 0 ? 'none' : `.5px solid ${C.line}`,
-                          }}
-                        >
-                          <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>
-                            {alert.title}
-                          </div>
-                          <p
-                            style={{
-                              margin: '4px 0 0',
-                              fontSize: 13,
-                              lineHeight: 1.55,
-                              color: C.ink2,
-                            }}
-                          >
-                            {alert.message}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
+          )}
+          </>
+
+        {/* 주의·안내 목록 바텀시트 — 날씨 칩이 여러 건일 때 연다. 항목 구조는 상세 카드와
+            동일(제목+본문), 단계 항목은 탭하면 해당 단계로 이동. */}
+        <BottomSheet open={warnSheetOpen} onClose={() => setWarnSheetOpen(false)} title="주의">
+          <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 8 }}>
+            {warnItems.map((item, i) => {
+              const body = (
+                <>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{item.title}</div>
+                  {item.message && (
+                    <p style={{ margin: '4px 0 0', fontSize: 13, lineHeight: 1.55, color: C.ink2 }}>
+                      {item.message}
+                    </p>
+                  )}
+                </>
+              )
+              const rowStyle: React.CSSProperties = {
+                display: 'block',
+                textAlign: 'left',
+                padding: '14px 4px',
+                borderTop: i === 0 ? 'none' : `.5px solid ${C.line}`,
+                textDecoration: 'none',
+                color: 'inherit',
+              }
+              return item.href ? (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="pm-pressable"
+                  style={rowStyle}
+                  onClick={() => setWarnSheetOpen(false)}
+                >
+                  {body}
+                </Link>
+              ) : (
+                <div key={item.id} style={rowStyle}>
+                  {body}
+                </div>
+              )
+            })}
           </div>
-        )}
+        </BottomSheet>
+        <BottomSheet open={infoSheetOpen} onClose={() => setInfoSheetOpen(false)} title="안내">
+          <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 8 }}>
+            {infoStages.map((s, i) => (
+              <Link
+                key={s.id}
+                href={stageHref(s)}
+                className="pm-pressable"
+                style={{
+                  display: 'block',
+                  textAlign: 'left',
+                  padding: '14px 4px',
+                  borderTop: i === 0 ? 'none' : `.5px solid ${C.line}`,
+                  textDecoration: 'none',
+                  color: 'inherit',
+                }}
+                onClick={() => setInfoSheetOpen(false)}
+              >
+                <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{s.label}</div>
+                {s.infoMessage && (
+                  <p style={{ margin: '4px 0 0', fontSize: 13, lineHeight: 1.55, color: C.ink2 }}>
+                    {s.infoMessage}
+                  </p>
+                )}
+              </Link>
+            ))}
+          </div>
+        </BottomSheet>
 
         {/* 목적지 전환 바텀시트 — 히어로 목적지 칩(다목적지)에서 연다. UI 는 헤더 시절과 동일. */}
         {multiDest && (
           <BottomSheet
             open={destSheetOpen}
             onClose={() => setDestSheetOpen(false)}
-            title="목적지"
+            title="여행지"
           >
             <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 4 }}>
               {destTokens.map((t) => {
@@ -921,186 +1355,15 @@ export function TimelineCalm({
           </BottomSheet>
         )}
 
-        {/* 주의 카드 — 여정 완료 후에만 별도 카드로 (완료 중 히어로가 없으므로).
-            진행 중엔 히어로 카드의 주의 스트립이 담당한다. */}
-        {journeyComplete && caseAlerts.length > 0 && (
-          <div
-            style={{
-              marginTop: 18,
-              padding: 22,
-              borderRadius: 16,
-              background: C.warnBg,
-              border: `.5px solid color-mix(in srgb, ${C.warn} 20%, transparent)`,
-              boxShadow: 'var(--pm-card-rim)',
-            }}
-          >
-            <div style={{ ...monoCap, color: C.warn, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              <span>주의</span>
-            </div>
-            {caseAlerts.map((alert, i) => (
-              <div
-                key={alert.id}
-                style={{
-                  marginTop: i === 0 ? 12 : 14,
-                  paddingTop: i === 0 ? 0 : 14,
-                  borderTop: i === 0 ? 0 : `1px solid color-mix(in srgb, ${C.warn} 13%, transparent)`,
-                }}
-              >
-                <h3
-                  style={{
-                    ...serif,
-                    margin: 0,
-                    fontSize: 20,
-                    lineHeight: 1.2,
-                    color: C.ink,
-                    fontWeight: 500,
-                    textWrap: 'balance' as React.CSSProperties['textWrap'],
-                  }}
-                >
-                  {alert.title}
-                </h3>
-                <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: C.ink2 }}>
-                  {alert.message}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* (구) 주의 알림 — stage 차원 procedure-check 가 트리거되면 표시되던 한 줄 배너.
-            severity 재분류 이후 stage-level 주의는 더 이상 발생하지 않지만, 향후
-            입력 차단 외 stage-level 룰이 추가될 가능성을 위해 로직은 유지. */}
-        {warnedStages.length > 0 && firstWarnedStage && (
-          <Link
-            href={stageHref(firstWarnedStage)}
-            className="pm-pressable"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              marginTop: 18,
-              padding: '10px 14px',
-              borderRadius: 12,
-              background: C.warnBg,
-              border: `.5px solid color-mix(in srgb, ${C.warn} 20%, transparent)`,
-              color: C.warn,
-              fontSize: 13,
-              textDecoration: 'none',
-              fontWeight: 500,
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-            <span>주의 {warnedStages.length}건 — {warnedStages.map((s) => s.label).join(', ')}</span>
-          </Link>
-        )}
-
-        {/* 여정 완료 배너 — 마지막 절차가 끝나면 '다음 할 일' 자리에 노출. 옛 journey-complete
-            마커 step 을 대체. 완료의 긍정 톤(sage)으로 다음 할 일·안내 카드와 구분. */}
-        {journeyComplete && (
+        {/* 여정 완료 — 별도 배너 없이 히어로 사진에 도착 도장을 직접 찍는다(2026-07-12
+            사용자 확정, 중복 제거). 경로=목적지 칩, 기간=좌하단 날짜가 이미 담당.
+            아래엔 소감 카드와 '여정 마무리하기'만 남는다. */}
+        {complete && (
           <>
-          <div
-            style={{
-              position: 'relative',
-              marginTop: 22,
-              padding: 22,
-              borderRadius: 16,
-              overflow: 'hidden',
-              background: 'color-mix(in srgb, var(--pm-sage) 11%, var(--pm-card-sage-base))',
-              boxShadow: 'var(--pm-card-rim)',
-            }}
-          >
-            {/* 도착 도장 — 여권 스탬프 톤. 살짝 기울인 이중 링 + 텍스트, 반투명 sage. */}
-            <div
-              aria-hidden
-              style={{
-                position: 'absolute',
-                top: 14,
-                right: 12,
-                width: 76,
-                height: 76,
-                borderRadius: '50%',
-                border: `2px solid color-mix(in srgb, var(--pm-sage) 60%, transparent)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transform: 'rotate(-11deg)',
-                color: 'color-mix(in srgb, var(--pm-sage) 78%, var(--pm-ink))',
-                opacity: 0.7,
-              }}
-            >
-              <div
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: '50%',
-                  border: `1px solid color-mix(in srgb, var(--pm-sage) 50%, transparent)`,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 1,
-                  textAlign: 'center',
-                }}
-              >
-                <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.04em' }}>도착</span>
-                <span style={{ fontSize: 9, letterSpacing: '0.22em', fontWeight: 600 }}>ARRIVED</span>
-              </div>
-            </div>
-
-            <div style={{ ...monoCap, color: C.sage }}>여정 완료</div>
-
-            {/* 헤드라인 — 아바타는 상단 헤더와 중복이라 제외. */}
-            <h3
-              style={{
-                ...serif,
-                margin: '14px 0 0',
-                fontSize: 21,
-                lineHeight: 1.18,
-                color: 'var(--pm-ink)',
-                fontWeight: 500,
-                textWrap: 'balance' as React.CSSProperties['textWrap'],
-              }}
-            >
-              {withWaGwa(pet.name)} 잘 도착했어요
-            </h3>
-
-            {/* 경로 + 날짜 — 경로 '한국 - 일본', 날짜는 왕복=출발~도착 / 편도=도착일만. */}
-            <div
-              style={{
-                marginTop: 12,
-                fontSize: 12,
-                letterSpacing: '0.01em',
-                color: 'rgb(var(--pm-ink-rgb) / .6)',
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
-              <span>
-                {trip.fromCity}
-                <span style={{ color: C.sage, margin: '0 6px' }}>
-                  {trip.tripType === 'round' ? '⇄' : '→'}
-                </span>
-                {trip.toCity}
-              </span>
-              {journeyDateText && (
-                <>
-                  <span style={{ color: 'rgb(var(--pm-ink-rgb) / .3)', margin: '0 6px' }}>·</span>
-                  <span>{journeyDateText}</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* 소감 카드 — 완료 카드에서 분리. 도착(완료)의 긍정 톤과 별개로, 차분한 taupe
-              면에 소감 유도만 담는다. design journey-lifecycle §5. */}
+          {/* 소감 카드 — 버튼 대신 만족도 얼굴 5개를 카드에 직접(원탭 = 첫 답변, 2026-07-12
+              사용자 확정). 얼굴은 의견 페이지와 같은 모노톤 라인 얼굴, 좋은 순. 탭하면 그
+              만족도가 선택된 채(?rating=) 의견 페이지가 열려 글은 선택으로 잇는다.
+              이미 남긴 만족도가 있으면 그 얼굴만 하늘 틴트로 표시. */}
           <div
             style={{
               marginTop: 14,
@@ -1121,30 +1384,46 @@ export function TimelineCalm({
                 textWrap: 'balance' as React.CSSProperties['textWrap'],
               }}
             >
-              펫무브와 함께한 여정 어떠셨나요?
+              {withWaGwa(pet.name)}의 여정, 어떠셨나요?
             </h3>
-            <Link
-              href={`/cases/${caseId}/feedback?dest=${encodeURIComponent(trip.toCity)}`}
-              className="pm-pressable"
+            <p style={{ margin: '6px 0 0', fontSize: 13, color: C.ink3 }}>
+              얼굴을 눌러 알려주세요
+            </p>
+            <div
               style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: 8,
                 marginTop: 16,
-                padding: '10px 16px',
-                borderRadius: 999,
-                border: `.5px solid color-mix(in srgb, var(--pm-sage) 45%, transparent)`,
-                background: 'var(--pm-surface)',
-                color: 'var(--pm-ink)',
-                fontSize: 13,
-                fontWeight: 600,
-                letterSpacing: '-0.005em',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                textDecoration: 'none',
+                maxWidth: 320,
               }}
             >
-              의견 남기기
-              <span style={{ color: C.sage }}>→</span>
-            </Link>
+              {FACES.map((f) => {
+                // 기본 = '아주 좋아요' 선택 표시(2026-07-12 사용자 확정) — 이미 남긴
+                // 만족도가 있으면 그 얼굴로 대체. 페이지의 기본 선택(initialShown)과 짝.
+                const selected = (savedRating ?? 5) === f.level
+                return (
+                  <Link
+                    key={f.level}
+                    href={`/cases/${caseId}/feedback?dest=${encodeURIComponent(trip.toCity)}&rating=${f.level}`}
+                    className="pm-pressable"
+                    aria-label={f.label}
+                    style={{
+                      width: 46,
+                      height: 46,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: selected ? C.accent : C.ink3,
+                      background: selected ? C.soft : 'transparent',
+                    }}
+                  >
+                    <FaceIcon level={f.level} size={38} />
+                  </Link>
+                )
+              })}
+            </div>
           </div>
 
           {/* 여정 마무리하기 — 다중 목적지 중 이 여정이 완료됐을 때만. 누르면 '지난 여정'으로
@@ -1198,82 +1477,72 @@ export function TimelineCalm({
           </>
         )}
 
-        {/* 안내 카드 — 다음 할 일 카드와 같은 톤·구조. 단 헤더 라벨은 info 색으로 구분.
-            안내별 카드 1장씩 (다건이면 N장) — step 이름 + 안내문 첫 줄 + 해당 step 링크.
-            여정 완료 후엔 완료 배너에 집중하도록 가린다. */}
-        {!journeyComplete && infoStages.length > 0 && (
-          <div
-            style={{
-              marginTop: nextStages.length > 0 ? 14 : 22,
-              padding: 22,
-              borderRadius: 16,
-              background: C.cardSoft,
-              boxShadow: 'var(--pm-card-rim)',
-            }}
-          >
-            <div style={{ ...monoCap, color: C.info }}>안내</div>
-            {infoStages.map((stage, i) => (
-              <Link
-                key={stage.id}
-                href={stageHref(stage)}
-                className="pm-pressable"
-                style={{
-                  display: 'block',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  marginTop: i === 0 ? 12 : 14,
-                  paddingTop: i === 0 ? 0 : 14,
-                  borderTop: i === 0 ? 0 : '1px solid rgb(var(--pm-ink-rgb) / .12)',
-                }}
-              >
-                <h3
-                  style={{
-                    ...serif,
-                    margin: 0,
-                    fontSize: 19,
-                    lineHeight: 1.18,
-                    color: 'var(--pm-ink)',
-                    fontWeight: 500,
-                    textWrap: 'balance' as React.CSSProperties['textWrap'],
-                  }}
-                >
-                  {stage.label}
-                </h3>
-                {stage.infoMessage && (
-                  <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgb(var(--pm-ink-rgb) / .65)' }}>
-                    {stage.infoMessage}
-                  </p>
-                )}
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {/* 단계 리스트 — 한국(출국 준비)·일본·한국(귀국) 구간별 카드. */}
-        <h3 style={{ ...serif, margin: '32px 0 12px', fontSize: 17 }}>전체 일정</h3>
+        {/* 단계 리스트 — 한국(출국 준비)·일본·한국(귀국) 구간별 카드 + 카드 안 세로
+            레일(타임라인). 카드 없는 버전과 비교 중 (2026-07-11). */}
+        <h3 style={{ ...sectionTitle, margin: '32px 0 12px' }}>준비 단계</h3>
         {stageZones.flatMap((zone, zi) => {
-          const card = (
+          const list = (
             <div
               key={`zone-${zi}`}
               style={{
                 background: C.cardList,
                 borderRadius: 16,
                 boxShadow: 'var(--pm-card-rim)',
-                padding: '4px 14px',
+                padding: '4px 16px',
               }}
             >
               {zone.rows.map(({ stage, index }, k) =>
-                renderStageRow(stage, index, k === zone.rows.length - 1),
+                renderStageRow(stage, index, {
+                  first: k === 0,
+                  last: k === zone.rows.length - 1,
+                  prevDone: k > 0 && zone.rows[k - 1].stage.state === 'done',
+                }),
               )}
             </div>
           )
-          // caption 이 있는 구간(일본·귀국)은 카드 위에 구분 캡션을 얹는다.
-          if (!zone.caption) return [card]
+          // caption 이 있는 구간(일본·귀국)은 '이동' 노드로 잇는다 — 단계 동그라미들과
+          // 같은 세로축에 비행기 아이콘, 옆에 캡션. 소제목이 아니라 여정 경로 위에서
+          // 실제로 건너가는 마디로 읽히도록.
+          if (!zone.caption) return [list]
           return [
-            <div key={`zone-${zi}-cap`} style={{ ...monoCap, margin: '22px 0 10px' }}>
-              {zone.caption}
+            <div
+              key={`zone-${zi}-cap`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                margin: '24px 0',
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  width: 22,
+                  height: 22,
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: C.ink3,
+                }}
+              >
+                {/* 통통한 비행기 — 각진 픽토그램 대신 둥근 조인트·두툼한 몸통 실루엣(iOS 계열).
+                    크기는 15 유지, 살짝 들린 기수로 이륙 느낌. */}
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 512 512"
+                  fill="currentColor"
+                  style={{ transform: 'rotate(-18deg)' }}
+                >
+                  <path d="M186.62 464H160a16 16 0 0 1-14.57-22.6l64.46-142.25L113.1 297l-35.3 42.77C71.07 348.23 65.7 352 52 352H34.08a17.66 17.66 0 0 1-14.7-7.06c-2.38-3.21-4.72-8.65-2.44-16.41l19.82-71c.15-.53.33-1.06.53-1.58a.38.38 0 0 0 0-.15 14.82 14.82 0 0 1-.53-1.59l-19.84-71.45c-2.15-7.61.2-12.93 2.56-16.06a16.83 16.83 0 0 1 13.6-6.7H52c10.23 0 20.16 4.59 26 12l34.57 42.05 97.32-1.44-64.44-142A16 16 0 0 1 160 48h26.91a25 25 0 0 1 19.35 9.8l125.05 152 57.77-1.52c4.23-.23 15.95-.31 18.66-.31C463 208 496 225.94 496 256c0 9.46-3.78 27-29.07 38.16-14.93 6.6-34.85 9.94-59.21 9.94-2.68 0-14.37-.08-18.66-.31l-57.76-1.54-125.36 152a25 25 0 0 1-19.32 9.75z" />
+                </svg>
+              </span>
+              {/* 구간 caption = 라벨 위계로 통일(2026-07-13) — 보호자·알림과 같은 groupLabel(ink3).
+                  이전엔 이 캡션만 ink2 로 진했음(색 불일치). 비행기 아이콘은 장식이라 ink3 유지. */}
+              <span style={groupLabel}>{zone.caption}</span>
             </div>,
-            card,
+            list,
           ]
         })}
       </div>

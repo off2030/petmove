@@ -16,10 +16,14 @@ export const C = {
   line: 'var(--pm-line)',
   line2: 'var(--pm-line-2)',
   accent: 'var(--pm-accent)',
+  /** 흰 바탕 위 작은 글자용 진한 강조색 — 밝은 accent 는 텍스트 대비가 모자란다. */
+  accentInk: 'var(--pm-accent-ink)',
   soft: 'var(--pm-accent-soft)',
   sage: 'var(--pm-sage)',
   warn: 'var(--pm-warn)',
   warnBg: 'color-mix(in srgb, var(--pm-warn) 8%, transparent)',
+  /** 위험 동작·오류 전용 표준 빨강 — 삭제 버튼·오류 문구. '주의' 배지는 warn 을 쓴다. */
+  danger: 'var(--pm-danger)',
   info: 'var(--pm-info)',
   infoBg: 'color-mix(in srgb, var(--pm-info) 8%, transparent)',
   cardSoft: 'var(--pm-card-soft)',

@@ -35,7 +35,9 @@
    에서 사용. admin Editorial(--pmw-*) 과 별개.
    ───────────────────────────────────────────────────────────── */
 :root {
-  --pm-bg: #FFFFFF;
+  /* 배경↔카드 반전 실험 (2026-07-11): 옅은 회색 캔버스 + 흰 카드 (토스·오늘의집 문법).
+     다크(배경 어둡고 카드 밝음)와 같은 논리로 통일. 이전: 흰 배경 + 회색 카드. */
+  --pm-bg: #F4F6F8;
   --pm-surface: #FFFFFF;
   /* 잉크 — 웜 브라운블랙(#2A2620 계열)에서 중립 그레이 스케일로 전환 (2026-07 리디자인).
      일반 앱 문법: 본문 진회색 / 보조 중회색 / 캡션 연회색. */
@@ -44,17 +46,32 @@
   --pm-ink-3: #97979C;
   --pm-line: rgba(33, 33, 36, 0.10);
   --pm-line-2: rgba(33, 33, 36, 0.14);
-  /* accent — 브랜드 색 미정, 우선 그레이 스케일(진회색 = 주 액션). 브랜드 색 결정 시 여기만 교체.
+  /* accent — 브랜드 색 후보 '트래블월렛 블루 #0BAEFF' 시착 (2026-07-11, 미확정).
+     3벌 체계: accent(선명 — 채움·그래픽용) / accent-soft(연한 틴트 — 배경용) /
+     accent-ink(진한 — 흰 바탕 글자용, 밝은 하늘색은 작은 글자 대비가 모자라 별도 톤).
      sage/warn/info 는 의미 전달용 상태색이라 유지. */
-  --pm-accent: #212124;
-  --pm-accent-soft: #E9E9EB;
-  --pm-sage: #8FA68C;
-  --pm-warn: #C26A4A;
-  --pm-info: #5E83A6;
+  /* 트래블월렛 원색 (2026-07-11). 채도 낮춘 실험(#21A9ED)은 탁해져서 원색 복귀. */
+  --pm-accent: #0BAEFF;
+  --pm-accent-soft: #E4F4FF;
+  /* 원색 그대로 실험 중 — 글자용도 accent 동일 (진한 변형 #0678B6 는 보류). */
+  --pm-accent-ink: #0BAEFF;
+  /* 완료(sage) — 기존 웜 세이지그린(#8FA68C)은 Editorial(Parchment/Terracotta) 잔재라
+     트래블월렛 블루 옆에서 이질감. 블루와 같은 cool 계열 민트 틸로 교체(2026-07-11). */
+  --pm-sage: #14B8A6;
+  /* 주의 — 순수 노랑 (2026-07-12 사용자 확정). 구 테라코타(#C26A4A, 웜 팔레트 잔재)에서
+     교체 — 하늘·민트·빨강과 같은 밝은 원색 계열. 흰 바탕 글자 대비(≈2.7:1)가 경계선임을
+     알고 내린 선택(사용처가 작은 굵은 라벨·아이콘·칩뿐이라 감수). 큰 글자·본문에 쓰지 말 것. */
+  --pm-warn: #EAB308;
+  /* 위험 동작·오류 전용 표준 빨강 (2026-07-12 warn 에서 분리) — 삭제 버튼·오류 문구·
+     달력 일요일. */
+  --pm-danger: #E5484D;
+  /* 안내 — 맑은 슬레이트 (2026-07-12 사용자 확정). 구 #5E83A6(웜 팔레트 잔재, 회탁)에서
+     하늘 hue 로 정렬·채도 상향. 진행(accent 하늘)보다는 차분해 위계 유지. */
+  --pm-info: #4B8CBF;
 
   /* bg/surface 의 rgb 트리플 — 인라인 그라디언트/반투명 오버레이(상단바·하단바·저장바)가
      rgb(var(--pm-bg-rgb) / α) 로 테마를 따라가도록. (다크에서 dark 블록이 트리플을 교체) */
-  --pm-bg-rgb: 255 255 255;
+  --pm-bg-rgb: 244 246 248;
   --pm-surface-rgb: 255 255 255;
   /* glass 톤 — 페이지 배경(살구 톤)과 의도적으로 다른 색.
      하단 플로팅 nav 의 Liquid Glass 효과가 비치도록 흰색(라이트)/딥브라운(다크). */
@@ -64,10 +81,10 @@
      소프트 카드(cardSoft), hero 카드(cardHero), sage 합성 베이스(cardSageBase).
      라이트는 흰 배경 위 옅은 회색 tint 카드(스타벅스·오늘의집 문법) — 색 차이가 곧
      구분이라 테두리·그림자 불필요. 다크는 페이지 배경 위 살짝 밝은 그레이. */
-  --pm-card-soft: #F7F7F8;
-  --pm-card-list: #F7F7F8;
-  --pm-card-hero: #F7F7F8;
-  --pm-card-sage-base: #F7F7F8;
+  --pm-card-soft: #FFFFFF;
+  --pm-card-list: #FFFFFF;
+  --pm-card-hero: #FFFFFF;
+  --pm-card-sage-base: #FFFFFF;
   /* 카드 분리 — 라이트는 tint 색 차이만으로 구분(테두리·그림자 없음),
      다크는 흰색 inset highlight 를 매우 약하게(0.06) 둠. */
   --pm-card-rim: none;
@@ -77,7 +94,7 @@
   --pm-ink-rgb: 33 33 36;
   /* 상단바 펫 아바타 active ring — 배경색 ring + 잉크 ring. 다크에서 교체. */
   --pm-ring-bg: #FFFFFF;
-  --pm-ring-accent: #212124;
+  --pm-ring-accent: #0BAEFF;
 
   /* Semantic font tokens — UI 코드는 이것만 참조.
      --font-* 는 self-hosted Pretendard 로 고정한다. next/font/google 은 빌드 때
@@ -109,11 +126,13 @@
   --pm-ink-3: #78787E;
   --pm-line: rgba(230, 230, 234, 0.12);
   --pm-line-2: rgba(230, 230, 234, 0.16);
-  --pm-accent: #E4E4E8;
-  --pm-accent-soft: #2E2E32;
-  --pm-sage: #9DB89A;
-  --pm-warn: #D67E5C;
-  --pm-info: #84A6C6;
+  --pm-accent: #3FC0FF;
+  --pm-accent-soft: #0F3348;
+  --pm-accent-ink: #3FC0FF;
+  --pm-sage: #2DD4BF;
+  --pm-warn: #FACC15;
+  --pm-danger: #F2555A;
+  --pm-info: #7FB5DC;
   --pm-bg-rgb: 23 23 26;
   --pm-surface-rgb: 32 32 36;
   --pm-ink-rgb: 230 230 234;
@@ -127,7 +146,7 @@
   --pm-card-rim: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
   --pm-card-rim-soft: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
   --pm-ring-bg: #17171A;
-  --pm-ring-accent: #E4E4E8;
+  --pm-ring-accent: #3FC0FF;
 }
 
 @keyframes pm-fade-up {
@@ -169,138 +188,153 @@
 .pm-field-input::placeholder { color: var(--pm-ink-3); opacity: 1; }
 .pm-field-input { caret-color: var(--pm-accent); }
 
+/* 텍스트 입력 공통 포커스 링 — 브라우저 기본(검정 아웃라인)을 브랜드 하늘로 대체.
+   자체 링을 정의한 입력(focus-visible:outline-none + ring 클래스)은 그쪽이 우선(특이도). */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--pm-accent);
+  outline-offset: 1px;
+}
+
+/* 텍스트 입력 공통 기본 배경 — color-scheme: dark 에서 브라우저 UA 가 배경 미지정 입력에
+   기본 회색(#3B3B3B 띠)을 칠하는 것을 차단. 입력은 카드 위에 얹히는 전제라 투명이 기본.
+   :where(0 특이도) + @layer base 라서 자체 배경을 정한 입력(인라인·bg-* 유틸)이 항상 우선. */
+@layer base {
+  :where(input:not([type='checkbox'], [type='radio'], [type='range'], [type='file'], [type='color'])),
+  :where(textarea, select) {
+    background-color: transparent;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────
-   PetMove — Editorial tone (펫무브워크 Design System)
-   Parchment + Terracotta + Near-black. 모든 뉴트럴은 따뜻한 계열.
+   @petmove/ui 호환 레이어 — 공유 부품(DateTextField 달력·드롭다운 등)이 읽는
+   --pmw-*·shadcn 토큰을 portal 새 디자인 시스템(흰 카드 + 회색 캔버스 + 하늘 파랑)
+   값으로 재정의. (2026-07-12: 구 Editorial 웜톤 → 새 팔레트 전면 교체.
+   값의 진실은 위 --pm-* 토큰 — 여기는 그 값을 pmw 이름으로 비추는 거울.)
    ───────────────────────────────────────────────────────────── */
 
 @layer base {
   :root {
-    /* ── PMW tokens (editorial spec) ──────────────────────────── */
-    /* Fonts: next/font 가 --font-* 를 주입 → 이름 있는 alias 로 노출 */
-    --pmw-font-serif: var(--font-serif), var(--font-serif-kr), Georgia, 'Times New Roman', serif;
-    --pmw-font-sans: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    /* ── PMW tokens (호환 alias) ──────────────────────────────── */
+    /* Fonts: portal 은 전부 Pretendard — serif alias 도 sans 로 평탄화 */
+    --pmw-font-serif: var(--pm-font-display);
+    --pmw-font-sans: var(--pm-font-body);
     --pmw-font-mono: var(--font-mono), 'Pretendard', ui-monospace, 'SF Mono', Menlo, monospace;
 
-    /* === Warm Stationery raw PMW 토큰 — 채팅 패널 / 카드 surface 등 직접 참조용 === */
+    /* === raw PMW 토큰 — 직접 참조용 (새 팔레트 값) === */
 
     /* Neutral text */
-    --pmw-near-black: #28201A;       /* warm ink */
-    --pmw-olive-gray: #6B5F4F;       /* warm dark olive */
-    --pmw-stone-gray: #918975;       /* warm gray */
+    --pmw-near-black: #212124;       /* ink */
+    --pmw-olive-gray: #5C5C60;       /* ink-2 */
+    --pmw-stone-gray: #97979C;       /* ink-3 */
 
-    /* Accent — burgundy / clay */
-    --pmw-deep: #7A2E2E;             /* deep burgundy (primary 와 일치) */
-    --pmw-clay-soft: #E5D9C2;        /* warm cream tag */
+    /* Accent — 브랜드 하늘 */
+    --pmw-deep: #0BAEFF;             /* sky (primary 와 일치) */
+    --pmw-clay-soft: #E4F4FF;        /* soft sky tag */
 
-    /* Status (forest / olive / rust trio) */
-    --pmw-sage: #3F5F3F;             /* forest green (positive) */
-    --pmw-sage-soft: hsl(35 22% 86%); /* warm stone — 채팅 active row, page bg 와 같은 family */
-    --pmw-sage-paper: hsl(32 30% 92%); /* page bg(--background) 와 동일 — border만 경계 */
-    --pmw-amber: #8B7E4F;            /* olive (calendar today) */
-    --pmw-rust: #A04525;             /* rust red (destructive) */
+    /* Status */
+    --pmw-sage: #14B8A6;             /* teal (positive) */
+    --pmw-sage-soft: hsl(210 22% 93%); /* 옅은 회색 — active row */
+    --pmw-sage-paper: hsl(210 22% 96%); /* page bg(--pm-bg) 와 동일 */
+    --pmw-amber: #0BAEFF;            /* calendar today = 브랜드 */
+    --pmw-rust: #E5484D;             /* danger (destructive — 표준 빨강) */
 
     /* Surface */
-    --pmw-border-warm: #D9CFB8;      /* warm hairline */
-    --pmw-parchment: #F4EDE0;        /* page bg */
-    --pmw-paper: #FBF7ED;            /* card bg */
+    --pmw-border-warm: #E4E6EA;      /* neutral hairline */
+    --pmw-parchment: #F4F6F8;        /* page bg */
+    --pmw-paper: #FFFFFF;            /* card bg */
 
-    /* Warm editorial palette — HSL pairs */
+    /* === shadcn HSL pairs — 새 팔레트 === */
 
-    /* Page: Parchment #f5f4ed */
-    /* === Editorial fresh design: "Warm Stationery / Library" ===
-       매거진·편지지·도서관 톤. 따뜻한 종이 + 깊은 burgundy 액센트.
-       ============================================================ */
+    /* Page bg: 옅은 회색 캔버스 (--pm-bg #F4F6F8) */
+    --background: 210 22% 96%;
+    /* Primary text: ink (#212124) */
+    --foreground: 240 4% 14%;
 
-    /* Page bg: 따뜻한 bone (#F4EDE0) — 종이 느낌 강함 */
-    --background: 32 30% 92%;
-    /* Primary text: 깊은 warm ink (#28201A) — 갈색 ondertone, 책 잉크 톤 */
-    --foreground: 29 19% 13%;
+    /* Card: 순백 — 회색 캔버스 위 흰 카드 */
+    --card: 0 0% 100%;
+    --card-foreground: 240 4% 14%;
 
-    /* Card: 페이지보다 명확히 밝은 cream (#FBF7ED) — "raised paper" */
-    --card: 40 56% 96%;
-    --card-foreground: 29 19% 13%;
+    /* Popover: 순백 — dropdown/달력 떠 있음 */
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 4% 14%;
 
-    /* Popover: 가장 밝은 ivory — dropdown 떠 있음 */
-    --popover: 40 56% 96%;
-    --popover-foreground: 29 19% 13%;
-
-    /* Primary: 그레이 스케일(브랜드 색 미정) — 공용 부품(달력 선택일 등)도 진회색 */
-    --primary: 240 4% 14%;
+    /* Primary: 브랜드 하늘 (#0BAEFF) — 달력 선택일·공용 버튼 */
+    --primary: 200 100% 52%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: warm sand (#E8DEC4) */
-    --secondary: 40 36% 84%;
-    --secondary-foreground: 29 19% 13%;
+    /* Secondary: 옅은 중립 회색 */
+    --secondary: 216 15% 94%;
+    --secondary-foreground: 240 4% 14%;
 
-    /* Muted: page bg 와 같은 family, 채도 ↓ — 상대 말풍선 */
-    --muted: 36 22% 86%;
-    /* Muted foreground: warm dark olive (#6B5F4F) */
-    --muted-foreground: 35 15% 36%;
+    /* Muted: 옅은 중립 회색 */
+    --muted: 216 15% 94%;
+    /* Muted foreground: ink-2 (#5C5C60) */
+    --muted-foreground: 240 2% 37%;
 
-    /* Accent: warm sand */
-    --accent: 40 36% 84%;
-    --accent-foreground: 29 19% 13%;
+    /* Accent(hover tint): 옅은 중립 회색 */
+    --accent: 216 15% 94%;
+    --accent-foreground: 240 4% 14%;
 
     /* Destructive: 펫무브 경고색 (#C26A4A) — 다른 경고(주의 배지·삭제 버튼)와 통일 */
-    --destructive: 16 50% 53%;
-    --destructive-foreground: 32 30% 92%;
+    --destructive: 358 75% 59%;      /* #E5484D danger */
+    --destructive-foreground: 0 0% 100%;
 
-    /* Border: warm hairline (#D9CFB8) */
-    --border: 40 26% 79%;
-    --input: 40 26% 79%;
-    /* Ring (focus): 그레이 스케일(브랜드 색 미정) */
-    --ring: 240 4% 14%;
+    /* Border: neutral hairline (#E4E6EA) */
+    --border: 220 12% 91%;
+    --input: 220 12% 91%;
+    /* Ring (focus): 브랜드 하늘 */
+    --ring: 200 100% 52%;
 
     --radius: 0.5rem;
 
     /* ── Semantic 색 토큰 (HSL 컴포넌트만 — Tailwind opacity modifier 'bg-pmw-accent/15' 호환).
        하드코딩된 editorial brand 색을 의미 기반 토큰으로 추출 — 다른 스킨에서 다른 값 정의 가능.
        각 스킨이 같은 의미 다른 색으로 매핑. */
-    /* PMW semantic — Warm Stationery 팔레트 */
-    --pmw-accent: 30 36% 65%;            /* #C9A580 muted clay — 편집 모드/surface */
-    --pmw-accent-fg: 32 30% 92%;         /* #F4EDE0 cream — solid accent 위 */
-    --pmw-accent-strong: 32 30% 43%;     /* #8C6F4E warm brown — tinted/hover */
-    --pmw-tag-bg: 40 36% 83%;            /* #E5D9C2 warm cream */
-    --pmw-tag-fg: 35 27% 30%;            /* #5E4D38 dark olive */
-    --pmw-cal-today: 240 4% 14%;         /* 그레이 스케일 (브랜드 색 미정, 이전 amber #D99A58) */
-    --pmw-cal-sunday: 16 56% 40%;        /* #A04A2D rust orange */
-    --pmw-cal-saturday: 215 32% 27%;     /* #2F4459 ink blue */
-    --pmw-positive: 120 20% 31%;         /* #3F5F3F forest green */
-    --pmw-avatar-bg: 33 41% 78%;         /* #DEC8AE warm peach */
-    --pmw-avatar-fg: 24 53% 28%;         /* #6B4521 deep brown */
-    --pmw-code-label: 32 16% 49%;        /* #918068 warm gray */
+    /* PMW semantic — 새 팔레트 (하늘 + 중립 회색) */
+    --pmw-accent: 200 100% 52%;          /* #0BAEFF sky — 편집 모드/surface */
+    --pmw-accent-fg: 0 0% 100%;          /* white — solid accent 위 */
+    --pmw-accent-strong: 202 88% 40%;    /* #0C7AC0 deep sky — tinted/hover */
+    --pmw-tag-bg: 204 100% 95%;          /* #E4F4FF soft sky */
+    --pmw-tag-fg: 203 60% 30%;           /* deep sky ink */
+    --pmw-cal-today: 200 100% 52%;       /* 브랜드 하늘 */
+    --pmw-cal-sunday: 358 75% 59%;       /* #E5484D danger (표준 빨강 일요일) */
+    --pmw-cal-saturday: 206 48% 52%;     /* #4B8CBF info(맑은 슬레이트) */
+    --pmw-positive: 172 80% 40%;         /* #14B8A6 teal */
+    --pmw-avatar-bg: 204 100% 92%;       /* soft sky */
+    --pmw-avatar-fg: 203 65% 32%;        /* deep sky ink */
+    --pmw-code-label: 240 2% 49%;        /* neutral gray */
 
-    /* 텍스트 색 4-tier — warm 잉크 */
-    --pmw-text-primary:    29 19% 13%;   /* #28201A deep ink */
-    --pmw-text-secondary:  35 15% 36%;   /* #6B5F4F warm dark olive */
-    --pmw-text-tertiary:   32 11% 58%;   /* #9F968A warm gray */
-    --pmw-text-disabled:   39 19% 73%;   /* #C9C0AE warm light */
+    /* 텍스트 색 4-tier — 중립 잉크 */
+    --pmw-text-primary:    240 4% 14%;   /* #212124 ink */
+    --pmw-text-secondary:  240 2% 37%;   /* #5C5C60 ink-2 */
+    --pmw-text-tertiary:   240 2% 60%;   /* #97979C ink-3 */
+    --pmw-text-disabled:   220 8% 78%;   /* light gray */
 
     /* Warning/overdue/info — semantic 보조 색 */
-    --pmw-warning: 36 67% 37%;           /* #A0741F warm honey amber — text */
-    --pmw-warning-bg: 39 70% 88%;        /* #F1E5C4 light cream — banner bg */
-    --pmw-warning-fg: 35 50% 22%;        /* #5A4520 dark amber — banner text */
-    --pmw-info: 215 32% 35%;             /* #3D5274 ink blue — links/info */
+    --pmw-warning: 30 60% 38%;           /* honey amber — text */
+    --pmw-warning-bg: 36 70% 94%;        /* light amber tint — banner bg */
+    --pmw-warning-fg: 28 50% 25%;        /* deep amber — banner text */
+    --pmw-info: 209 29% 45%;             /* info blue — links/info */
 
-    /* Chip 8-tone universal palette — 검사기관·목적지 chip 통합.
-       editorial: warm cream variants (Warm Stationery 톤 일관). */
-    --pmw-chip-red-bg:     348 24% 86%;  /* dusty rose (KSVDL-R) */
-    --pmw-chip-red-fg:     348 36% 34%;  /* dark rose */
-    --pmw-chip-amber-bg:   40 36% 83%;   /* warm cream (APQA Seoul) */
-    --pmw-chip-amber-fg:   35 27% 30%;   /* dark olive brown */
-    --pmw-chip-olive-bg:   212 12% 82%;  /* slate ink cream (KRSL) */
-    --pmw-chip-olive-fg:   218 22% 30%;  /* dark slate ink */
-    --pmw-chip-moss-bg:    90 16% 84%;   /* muted sage olive (APQA HQ) */
-    --pmw-chip-moss-fg:    95 22% 30%;   /* dark sage */
-    --pmw-chip-blue-bg:    216 25% 87%;  /* warm-leaning cream blue (APQA EU) */
-    --pmw-chip-blue-fg:    218 28% 31%;  /* dark navy */
-    --pmw-chip-plum-bg:    30 8% 84%;    /* warm stone grey (VBDDL) */
-    --pmw-chip-plum-fg:    32 14% 30%;   /* dark warm stone */
-    --pmw-chip-mauve-bg:   25 14% 80%;   /* warm walnut (KSVDL) */
-    --pmw-chip-mauve-fg:   25 26% 28%;   /* dark walnut */
-    --pmw-chip-neutral-bg: 36 14% 84%;   /* warm gray */
-    --pmw-chip-neutral-fg: 36 9% 28%;    /* dark warm gray */
+    /* Chip 8-tone universal palette — 검사기관·목적지 chip 통합. (cool 파스텔) */
+    --pmw-chip-red-bg:     350 65% 94%;
+    --pmw-chip-red-fg:     350 55% 38%;
+    --pmw-chip-amber-bg:   35 80% 92%;
+    --pmw-chip-amber-fg:   30 60% 32%;
+    --pmw-chip-olive-bg:   210 15% 92%;
+    --pmw-chip-olive-fg:   215 25% 32%;
+    --pmw-chip-moss-bg:    150 30% 92%;
+    --pmw-chip-moss-fg:    160 35% 28%;
+    --pmw-chip-blue-bg:    208 70% 93%;
+    --pmw-chip-blue-fg:    210 60% 34%;
+    --pmw-chip-plum-bg:    260 40% 94%;
+    --pmw-chip-plum-fg:    260 35% 38%;
+    --pmw-chip-mauve-bg:   330 35% 93%;
+    --pmw-chip-mauve-fg:   330 35% 36%;
+    --pmw-chip-neutral-bg: 220 12% 93%;
+    --pmw-chip-neutral-fg: 220 10% 32%;
 
     /* Typography 스케일 — Editorial (서체가 주인공: serif 헤더 + sans 본문 + italic 시그니처) */
     --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
@@ -312,10 +346,9 @@
     --pmw-text-xl:   28px;   --pmw-leading-xl:   1.2;   --pmw-tracking-xl:   -0.02em;
     --pmw-text-2xl:  36px;   --pmw-leading-2xl:  1.15;  --pmw-tracking-2xl:  -0.02em;
 
-    /* ── Bot avatar (PMW 워드마크 아바타) — 에디토리얼 브랜드 브라운.
-       다른 스킨은 아래 [data-skin] 룰에서 --primary 로 자동 override. */
-    --pmw-bot-bg: #A56D54;
-    --pmw-bot-fg: #F5F4ED;
+    /* ── Bot avatar (PMW 워드마크 아바타) — 브랜드 하늘. */
+    --pmw-bot-bg: #0BAEFF;
+    --pmw-bot-fg: #FFFFFF;
 
     /* ── Mobile — safe-area-inset alias (iOS notch/home-indicator)
        env() 를 직접 못 쓰는 utility-first Tailwind 환경에서 var() 로 우회.
@@ -332,104 +365,104 @@
   }
 
   .dark {
-    /* === Warm Stationery raw PMW 토큰 dark === */
-    --pmw-near-black: #F4EDE0;       /* cream */
-    --pmw-olive-gray: #B8AC97;       /* warm light */
-    --pmw-stone-gray: #918975;       /* warm gray */
-    --pmw-deep: #B85555;             /* lighter burgundy */
-    --pmw-clay-soft: #3D3530;        /* dark warm */
-    --pmw-sage: #8FA888;             /* light forest */
-    --pmw-sage-soft: #2C2925;        /* dark warm soft */
-    --pmw-sage-paper: #1F1B17;       /* deep warm paper */
-    --pmw-amber: #C5B98A;            /* light olive */
-    --pmw-rust: #C46347;             /* light rust */
-    --pmw-border-warm: #3D3530;      /* dark warm hairline */
-    --pmw-parchment: #1A1612;        /* page bg dark */
-    --pmw-paper: #221F1B;            /* card bg dark */
+    /* === raw PMW 토큰 dark — 새 팔레트(중립 그레이 + 하늘) === */
+    --pmw-near-black: #E6E6EA;       /* light ink */
+    --pmw-olive-gray: #A8A8AE;       /* ink-2 dark */
+    --pmw-stone-gray: #78787E;       /* ink-3 dark */
+    --pmw-deep: #3FC0FF;             /* lifted sky */
+    --pmw-clay-soft: #0F3348;        /* deep sky soft */
+    --pmw-sage: #2DD4BF;             /* light teal */
+    --pmw-sage-soft: #232327;        /* dark gray soft */
+    --pmw-sage-paper: #17171A;       /* page bg dark */
+    --pmw-amber: #3FC0FF;            /* calendar today = 브랜드 */
+    --pmw-rust: #F2555A;             /* danger dark */
+    --pmw-border-warm: #2E2E33;      /* dark hairline */
+    --pmw-parchment: #17171A;        /* page bg dark */
+    --pmw-paper: #202024;            /* card bg dark */
 
     color-scheme: dark;
-    /* Page bg: deep warm dark (#1A1612) — 책 잉크 종이의 reverse */
-    --background: 32 14% 9%;
-    /* Foreground: cream (#F4EDE0) */
-    --foreground: 32 30% 92%;
+    /* Page bg: 중립 딥 그레이 (#17171A) */
+    --background: 240 6% 10%;
+    /* Foreground: light ink (#E6E6EA) */
+    --foreground: 240 8% 91%;
 
-    /* Card 살짝 밝은 dark warm (#211C18) — 페이지보다 위로 떠 있는 paper */
-    --card: 30 12% 12%;
-    --card-foreground: 32 30% 92%;
+    /* Card: 페이지보다 한 단계 밝은 그레이 (#202024) */
+    --card: 240 6% 13%;
+    --card-foreground: 240 8% 91%;
 
-    /* Popover: 가장 밝은 dark warm (#2C251F) */
-    --popover: 30 18% 15%;
-    --popover-foreground: 32 30% 92%;
+    /* Popover: 카드보다 살짝 밝게 — dropdown 떠 있음 */
+    --popover: 240 6% 15%;
+    --popover-foreground: 240 8% 91%;
 
-    /* Primary: 펫무브 amber dark (#DEA86A) */
-    --primary: 32 64% 64%;
-    --primary-foreground: 32 30% 92%;
+    /* Primary: lifted sky (#3FC0FF) */
+    --primary: 199 100% 62%;
+    --primary-foreground: 240 6% 10%;
 
-    /* Secondary/muted: deep warm gray (#3D3530) */
-    --secondary: 25 12% 21%;
-    --secondary-foreground: 32 30% 92%;
+    /* Secondary/muted: dark gray */
+    --secondary: 240 5% 16%;
+    --secondary-foreground: 240 8% 91%;
 
-    --muted: 25 12% 21%;
-    /* Muted foreground: warm light (#B8AC97) */
-    --muted-foreground: 36 18% 66%;
+    --muted: 240 5% 16%;
+    /* Muted foreground: ink-2 dark (#A8A8AE) */
+    --muted-foreground: 240 3% 67%;
 
-    --accent: 25 12% 21%;
-    --accent-foreground: 32 30% 92%;
+    --accent: 240 5% 16%;
+    --accent-foreground: 240 8% 91%;
 
-    --destructive: 16 60% 60%;
-    --destructive-foreground: 32 30% 92%;
+    --destructive: 358 86% 64%;      /* #F2555A danger dark */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 25 12% 21%;
-    --input: 25 12% 21%;
-    --ring: 32 64% 64%;
+    --border: 240 5% 18%;
+    --input: 240 5% 18%;
+    --ring: 199 100% 62%;
 
-    /* PMW semantic — Warm Stationery dark */
-    --pmw-accent: 30 38% 71%;            /* #D4B69A lighter clay */
-    --pmw-accent-fg: 32 14% 9%;          /* deep dark — solid accent 위 */
-    --pmw-accent-strong: 30 30% 58%;     /* #B89876 muted clay */
-    --pmw-tag-bg: 25 12% 21%;            /* dark warm */
-    --pmw-tag-fg: 40 36% 83%;            /* warm cream */
-    --pmw-cal-today: 32 64% 64%;         /* 펫무브 amber dark #DEA86A */
-    --pmw-cal-sunday: 16 47% 58%;        /* #C77E5E light rust */
-    --pmw-cal-saturday: 213 17% 61%;     /* #8E9BAB light ink */
-    --pmw-positive: 113 17% 60%;         /* #8FA888 light forest */
-    --pmw-avatar-bg: 30 22% 28%;         /* dark warm peach */
-    --pmw-avatar-fg: 33 41% 78%;         /* light peach */
-    --pmw-code-label: 36 14% 60%;        /* warm gray */
+    /* PMW semantic — dark (하늘 + 중립 회색) */
+    --pmw-accent: 199 100% 62%;          /* #3FC0FF lifted sky */
+    --pmw-accent-fg: 240 6% 10%;         /* deep dark — solid accent 위 */
+    --pmw-accent-strong: 200 85% 72%;    /* lighter sky */
+    --pmw-tag-bg: 205 45% 18%;           /* deep sky tint */
+    --pmw-tag-fg: 200 80% 80%;           /* light sky */
+    --pmw-cal-today: 199 100% 62%;       /* 브랜드 하늘 dark */
+    --pmw-cal-sunday: 358 86% 64%;       /* #F2555A danger dark */
+    --pmw-cal-saturday: 205 57% 68%;     /* #7FB5DC info dark */
+    --pmw-positive: 172 66% 50%;         /* #2DD4BF light teal */
+    --pmw-avatar-bg: 205 45% 20%;        /* deep sky tint */
+    --pmw-avatar-fg: 200 80% 82%;        /* light sky */
+    --pmw-code-label: 240 3% 60%;        /* neutral gray */
 
-    /* 텍스트 색 4-tier (warm dark) */
-    --pmw-text-primary:    32 30% 92%;   /* cream */
-    --pmw-text-secondary:  36 18% 66%;   /* warm light */
-    --pmw-text-tertiary:   32 11% 50%;   /* warm med gray */
-    --pmw-text-disabled:   25 12% 30%;   /* dark warm gray */
+    /* 텍스트 색 4-tier (dark) */
+    --pmw-text-primary:    240 8% 91%;   /* light ink */
+    --pmw-text-secondary:  240 3% 67%;   /* ink-2 dark */
+    --pmw-text-tertiary:   240 3% 50%;   /* ink-3 dark */
+    --pmw-text-disabled:   240 4% 30%;   /* dark gray */
 
     /* Warning/info dark */
-    --pmw-warning: 36 60% 60%;           /* #C9A05E light honey */
-    --pmw-warning-bg: 35 25% 18%;        /* dark warm */
-    --pmw-warning-fg: 39 70% 80%;        /* light cream */
-    --pmw-info: 215 35% 60%;             /* light ink blue */
+    --pmw-warning: 36 60% 60%;           /* light honey */
+    --pmw-warning-bg: 30 30% 16%;        /* dark amber tint */
+    --pmw-warning-fg: 36 70% 80%;        /* light amber */
+    --pmw-info: 209 35% 62%;             /* light info blue */
 
-    /* Chip 8-tone editorial dark */
-    --pmw-chip-red-bg:     348 20% 22%;  /* dusty rose (KSVDL-R) */
-    --pmw-chip-red-fg:     348 36% 80%;
-    --pmw-chip-amber-bg:   35 25% 22%;
-    --pmw-chip-amber-fg:   40 50% 78%;
-    --pmw-chip-olive-bg:   215 12% 22%;  /* slate ink (KRSL) */
-    --pmw-chip-olive-fg:   216 20% 80%;
-    --pmw-chip-moss-bg:    90 14% 22%;   /* muted sage olive (APQA HQ) */
-    --pmw-chip-moss-fg:    95 26% 78%;
-    --pmw-chip-blue-bg:    218 18% 22%;
-    --pmw-chip-blue-fg:    216 28% 80%;
-    --pmw-chip-plum-bg:    30 8% 22%;    /* warm stone grey (VBDDL) */
-    --pmw-chip-plum-fg:    32 16% 78%;
-    --pmw-chip-mauve-bg:   25 14% 22%;   /* warm walnut (KSVDL) */
-    --pmw-chip-mauve-fg:   25 30% 78%;
-    --pmw-chip-neutral-bg: 36 9% 22%;
-    --pmw-chip-neutral-fg: 36 14% 78%;
+    /* Chip 8-tone dark (cool) */
+    --pmw-chip-red-bg:     350 25% 22%;
+    --pmw-chip-red-fg:     350 55% 78%;
+    --pmw-chip-amber-bg:   32 30% 20%;
+    --pmw-chip-amber-fg:   36 65% 75%;
+    --pmw-chip-olive-bg:   215 12% 20%;
+    --pmw-chip-olive-fg:   214 25% 78%;
+    --pmw-chip-moss-bg:    160 20% 18%;
+    --pmw-chip-moss-fg:    155 35% 72%;
+    --pmw-chip-blue-bg:    210 35% 20%;
+    --pmw-chip-blue-fg:    208 65% 78%;
+    --pmw-chip-plum-bg:    260 22% 22%;
+    --pmw-chip-plum-fg:    260 40% 80%;
+    --pmw-chip-mauve-bg:   330 20% 21%;
+    --pmw-chip-mauve-fg:   330 40% 78%;
+    --pmw-chip-neutral-bg: 220 8% 20%;
+    --pmw-chip-neutral-fg: 220 10% 75%;
 
-    /* Bot avatar (editorial dark) — lifted clay 로 어두운 배경에서도 떠 보임. */
-    --pmw-bot-bg: #C58066;
-    --pmw-bot-fg: #F5F4ED;
+    /* Bot avatar (dark) — lifted sky 로 어두운 배경에서도 떠 보임. */
+    --pmw-bot-bg: #3FC0FF;
+    --pmw-bot-fg: #0E2A3C;
 
     /* Typography 스케일 (size/leading/tracking 은 light/dark 무관) */
     --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
@@ -451,22 +484,19 @@
     line-height: var(--pmw-leading-base, 1.5);
   }
 
-  /* Editorial card "raised paper" — hairline border 는 base layer 에서 이미 적용됨 (* { border-border }).
-     여기서 미세 shadow 추가 — 1px y-offset, 거의 투명한 warm shadow (paper 위에 살짝 떠 있는 느낌).
-     editorial 만 — :not([data-skin]) 로 다른 스킨 영향 X. */
+  /* 카드 미세 shadow — 흰 카드가 회색 캔버스 위에 살짝 떠 있는 느낌(중립 그림자). */
   html:not([data-skin]) .bg-card,
   html:not([data-skin]) .bg-popover {
-    box-shadow: 0 1px 3px rgba(60, 50, 35, 0.04), 0 1px 2px rgba(60, 50, 35, 0.03);
+    box-shadow: 0 1px 3px rgba(20, 25, 35, 0.05), 0 1px 2px rgba(20, 25, 35, 0.03);
   }
 
-  /* Editorial 채팅 버블 — own/other 모두 warm stone family 로 통일.
-     own: 약간 더 진한 stone (page bg 위 한 단계 lift). text 는 기본 foreground. */
+  /* 채팅 버블 — own 은 소프트 스카이 틴트(브랜드), 글자는 기본 잉크. */
   html:not([data-skin]) [data-bubble="own"] {
-    background-color: hsl(28 20% 80%);
+    background-color: hsl(204 100% 92%);
     color: hsl(var(--foreground));
   }
   html:not([data-skin]).dark [data-bubble="own"] {
-    background-color: hsl(28 12% 30%);
+    background-color: hsl(205 45% 24%);
     color: hsl(var(--foreground));
   }
 
@@ -487,11 +517,11 @@
     overflow-x: clip;
   }
 
-  /* Editorial serif — use via .font-serif on headlines and pet names */
+  /* .font-serif — 구 Editorial serif 클래스 호환. 새 시스템은 세리프 폐기 → Pretendard 로 평탄화. */
   .font-serif {
-    font-family: "Source Serif 4", var(--font-serif-kr), Georgia, "Times New Roman", serif;
-    font-weight: 500;
-    letter-spacing: -0.1px;
+    font-family: var(--pm-font-display);
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
   .font-mono {

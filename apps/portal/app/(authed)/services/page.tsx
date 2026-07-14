@@ -1,12 +1,6 @@
-'use client'
-
-import { ServicesView } from '@/components/services/services-view'
-
 /**
- * 서비스 탭 (/services) — bottom-nav 의 '서비스' 탭 도착지.
- * 펫무브 유료 상품 안내(오프라인 올케어 / 온라인 안심케어).
- * case-외(내 정보처럼 caseId 불필요) 화면.
+ * 맡기기 탭 라우트 (/services) — 실제 화면은 TabHost 상주 pane(ServicesView).
  */
 export default function ServicesPage() {
-  return <ServicesView />
+  return null
 }

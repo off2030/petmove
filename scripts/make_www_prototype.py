@@ -32,18 +32,20 @@ def b64_crop(name, out_w, out_h, focus_y=0.5, focus_x=0.5, quality=78):
     im = im.crop((l, t, l + cw, t + ch)).resize((out_w, out_h), Image.LANCZOS)
     return _enc(im, quality)
 
-HERO_SRC = "hero-cardog-2x.png"                       # 밝은 차 창밖(AI·2배 업스케일 5056px). ✦워터마크 크롭 제외
-hero_p    = b64_crop(HERO_SRC, 1440, 1900, focus_x=0.66, focus_y=0.28)  # 폰 세로(강아지 우측·고해상도)
-hero_card = b64_crop(HERO_SRC, 1200, 1300, focus_x=0.66, focus_y=0.34)  # PC 카드(중앙)
-hero_l    = b64_crop(HERO_SRC, 2000, 1050, focus_x=0.56, focus_y=0.40)  # 760-959 가로
+# 히어로 = 실사 스톡(사용자 확정 2026-07-12). 구 AI 이미지(hero-cardog-2x)는 이 사진을
+# 본뜬 것이었음 — 원본 실사로 회귀. ⚠️shutterstock — 실제 게시 전 정식 라이선스 구매 필요.
+HERO_SRC = "shutterstock_437791615.jpg"               # 흰 강아지 차 창밖(5000×3337, 쿨톤)
+hero_p    = b64_crop(HERO_SRC, 1440, 1900, focus_x=0.72, focus_y=0.22)  # 폰 세로(강아지 우측·고해상도)
+hero_card = b64_crop(HERO_SRC, 1200, 1300, focus_x=0.72, focus_y=0.35)  # PC 카드(중앙)
+hero_l    = b64_crop(HERO_SRC, 2000, 1050, focus_x=0.60, focus_y=0.35)  # 760-959 가로
 
 band = b64("patrick-hendry-jd0hS7Vhn_A-unsplash.jpg", 3000)  # 협곡 뒷모습(감성). PC 풀블리드용 고해상도
 
 # ── 실제 앱 화면(Play 스토어 스샷에서 반듯한 폰만 잘라냄) ──
 SHOT_DIR = r"C:\Users\off20\Desktop\스크린샷\play"
 PHONE_BOX = (240, 610, 1164, 2628)      # 생성기 공통 폰 위치(고정)
-SURF = (255, 255, 255)                   # --surface (흰 카드/밴드 배경)
-STONE = (246, 250, 253)                  # --bg (쿨 라이트 페이지 배경)
+SURF = (255, 255, 255)                   # --surface (방법2 배경)
+STONE = (244, 246, 248)                  # --bg (방법3 배경)
 
 def b64_phone(name, bg, out_w=440, q=82):
     """스토어 스샷에서 폰 영역만 크롭 + 라운드 코너를 섹션 배경색으로 합성."""
@@ -56,18 +58,11 @@ def b64_phone(name, bg, out_w=440, q=82):
     canvas = canvas.resize((out_w, int(h * out_w / w)), Image.LANCZOS)
     return _enc(canvas, q)
 
-p_hero    = b64_phone("play_shot_3.png", STONE)  # 방법3 대표 화면(홈 55%)
+# p_hero 미사용 — 랜딩에서 앱 스샷 제거됨. 스샷 폴더 없는 PC에서도 생성되도록 비활성.
+# p_hero    = b64_phone("play_shot_3.png", STONE)  # 방법3 대표 화면(홈 55%)
 
-# 새 브랜드 로고: 하늘 그라데이션 라운드 스퀘어 + 흰 구름 (downloads/PetMove-logo-korean.svg 과 동일 지오메트리)
-LOGO = ('<svg viewBox="0 0 200 200" width="26" height="26" aria-hidden="true">'
-        '<defs><linearGradient id="pmsky" x1="0" y1="0" x2="0" y2="1">'
-        '<stop offset="0" stop-color="#63C9FF"/><stop offset="1" stop-color="#0BAEFF"/></linearGradient>'
-        '<clipPath id="pmsq"><rect width="200" height="200" rx="46"/></clipPath></defs>'
-        '<g clip-path="url(#pmsq)"><rect width="200" height="200" fill="url(#pmsky)"/>'
-        '<rect x="0" y="160" width="200" height="40" fill="#fff"/>'
-        '<circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/>'
-        '<circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/>'
-        '<circle cx="178" cy="154" r="24" fill="#fff"/></g></svg>')
+# 타일 플로팅 섀도 = 앱 LogoMark(pm-logo-float)와 동일 문법. overflow:visible 없으면 그림자 잘림.
+LOGO = ('<svg viewBox="0 0 200 200" width="26" height="26" aria-hidden="true" style="overflow:visible"><defs><clipPath id="pmlg-sq"><rect width="200" height="200" rx="46"/></clipPath><linearGradient id="pmlg-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63C9FF"/><stop offset="1" stop-color="#0BAEFF"/></linearGradient><filter id="pmlg-float" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#0868A8" flood-opacity="0.35"/></filter></defs><g filter="url(#pmlg-float)"><g clip-path="url(#pmlg-sq)"><rect width="200" height="200" fill="url(#pmlg-sky)"/><path d="M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106" fill="none" stroke="#FFC93C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="0" y="160" width="200" height="40" fill="#fff"/><circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/><circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/><circle cx="178" cy="154" r="24" fill="#fff"/><path d="M116 132 L116 118" fill="none" stroke="#FFC93C" stroke-width="18" stroke-linecap="round" opacity="0.34"/></g></g></svg>')
 
 # ── CSS로 그린 폰 목업 내부(실제 스샷 대체 전 임시) ──
 PH1 = '<div class="notch"></div><div class="b am"></div><div class="b sm"></div><div class="b"></div><div class="cm"></div>'
@@ -80,7 +75,7 @@ APP_SECTIONS = f"""
   <section>
     <div class="container">
       <div class="kicker">펫무브 앱 소개</div>
-      <div class="h2">복잡한 준비, 앱으로 관리해요</div>
+      <h2 class="h2">복잡한 준비, 앱으로 관리해요</h2>
       <div class="alist">
         <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-route"></i></span><span class="at">단계별 가이드</span></div><p class="ad">언제 무엇을 해야 할지 알려드려요</p></div>
         <div class="acard"><div class="acard-h"><span class="ai"><i class="ti ti-shield-check"></i></span><span class="at">실수 예방</span></div><p class="ad">입력 정보가 규정에 맞지 않을 경우 알려드려요</p></div>
@@ -96,21 +91,21 @@ APP_SECTIONS = f"""
 
 # ── 서비스 소개 섹션(3번째): 두 핵심(수의사 직접 · 앱 연동) + 맡길 수 있는 것 + 상담 CTA ──
 SERVICE_SECTION = """
-  <section id="service" style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
+  <section id="service" style="border-top:0.5px solid var(--border)">
     <div class="container">
       <div class="kicker">펫무브 서비스 소개</div>
-      <div class="h2">전문가에게 안심하고 맡기세요</div>
+      <h2 class="h2">전문가에게 안심하고 맡기세요</h2>
       <div class="score-list">
         <div class="score">
-          <div class="score-h"><i class="ti ti-heart-plus si"></i><span class="st">로잔동물의료센터</span></div>
+          <div class="score-h"><i class="ti ti-heart-plus si" style="color:#E5484D"></i><span class="st">로잔동물의료센터</span></div>
           <p class="sd">수의사가 직접 준비해 믿고 맡길 수 있어요</p>
         </div>
         <div class="score">
-          <div class="score-h"><i class="ti ti-device-mobile si"></i><span class="st">펫무브 앱 연동</span></div>
+          <div class="score-h"><i class="ti ti-device-mobile si" style="color:#0BAEFF"></i><span class="st">펫무브 앱 연동</span></div>
           <p class="sd">앱으로 진행 상황을 쉽게 확인할 수 있어요</p>
         </div>
         <div class="score">
-          <div class="score-h"><i class="ti ti-adjustments-horizontal si"></i><span class="st">전체 대행 · 부분 의뢰</span></div>
+          <div class="score-h"><i class="ti ti-adjustments-horizontal si" style="color:#E9A800"></i><span class="st">전체 대행 · 부분 의뢰</span></div>
           <p class="sd">전 과정을 맡기거나, 필요한 단계만 도움받을 수 있어요</p>
         </div>
       </div>
@@ -132,14 +127,22 @@ html = f"""<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>펫무브 · 반려동물 해외 이동</title>
+<meta name="description" content="우리 아이 해외여행, 펫무브가 챙길게요. 앱으로 쉽게 준비하고, 복잡한 검역 절차는 전문가에게 맡기세요.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="펫무브">
+<meta property="og:title" content="펫무브 · 반려동물 해외 이동">
+<meta property="og:description" content="우리 아이 해외여행, 펫무브가 챙길게요. 앱으로 쉽게 준비하고, 복잡한 검역 절차는 전문가에게 맡기세요.">
+<meta property="og:locale" content="ko_KR">
+<!-- og:image 는 배포 이미지 자산 확정 후 추가(/og.png) — Next 이식 때 -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Cdefs%3E%3CclipPath id=%22s%22%3E%3Crect width=%22200%22 height=%22200%22 rx=%2246%22/%3E%3C/clipPath%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%2363C9FF%22/%3E%3Cstop offset=%221%22 stop-color=%22%230BAEFF%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg clip-path=%22url(%23s)%22%3E%3Crect width=%22200%22 height=%22200%22 fill=%22url(%23g)%22/%3E%3Cpath d=%22M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106%22 fill=%22none%22 stroke=%22%23FFC93C%22 stroke-width=%2218%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3Crect x=%220%22 y=%22160%22 width=%22200%22 height=%2240%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2246%22 cy=%22168%22 r=%2252%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2272%22 cy=%22120%22 r=%2248%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22112%22 cy=%22148%22 r=%2234%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22146%22 cy=%22138%22 r=%2238%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22178%22 cy=%22154%22 r=%2224%22 fill=%22%23fff%22/%3E%3Cpath d=%22M116 132 L116 118%22 fill=%22none%22 stroke=%22%23FFC93C%22 stroke-width=%2218%22 stroke-linecap=%22round%22 opacity=%220.34%22/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
   :root{{
-    --bg:#F6FAFD; --surface:#FFFFFF; --ink:#132635; --ink2:#4A6072; --ink3:#6B8092;
-    --accent:#0BAEFF; --accent-deep:#0B84D6; --accent-ink:#096FB3; --sky-soft:#EAF6FF;
-    --sage:#3FB25A; --border:#DFE6EC; --dark:#0F1B2A;
+    --bg:#F4F6F8; --surface:#FFFFFF; --ink:#212124; --ink2:#5C5C60; --ink3:#97979C;
+    --accent:#0BAEFF; --accent-ink:#0778BF; --sage:#14B8A6; --border:#E1E5E9; --dark:#212124;
+    --yellow-tint:#FFF4D6;
   }}
   *{{box-sizing:border-box}}
   [hidden]{{display:none!important}}
@@ -151,16 +154,16 @@ html = f"""<!DOCTYPE html>
   .container{{max-width:1080px;margin:0 auto;padding:0 22px;width:100%}}
   .wm{{font-size:18px;letter-spacing:-.01em;font-weight:800}}
 
-  header{{position:sticky;top:0;z-index:20;background:rgba(246,250,253,.92);backdrop-filter:blur(8px);
+  header{{position:sticky;top:0;z-index:20;background:#fff;
     border-bottom:0.5px solid var(--border)}}
   header .container{{display:flex;align-items:center;justify-content:space-between;padding-top:13px;padding-bottom:13px}}
   .nav-links{{display:none;align-items:center;gap:26px;font-size:14px;color:var(--ink2)}}
   .nav-right{{display:flex;align-items:center;gap:14px}}
   .nav-app{{background:var(--accent);color:#fff;font-weight:600;border-radius:11px;padding:8px 15px;font-size:13px}}
   .burger{{font-size:22px;color:var(--ink2);cursor:pointer}}
-  .drawer-ov{{position:fixed;inset:0;background:rgba(10,22,35,.42);opacity:0;visibility:hidden;transition:opacity .22s;z-index:30}}
+  .drawer-ov{{position:fixed;inset:0;background:rgba(21,23,26,.42);opacity:0;visibility:hidden;transition:opacity .22s;z-index:30}}
   .drawer-ov.open{{opacity:1;visibility:visible}}
-  .drawer{{position:fixed;top:0;right:0;height:100%;width:min(78vw,300px);background:var(--surface);z-index:31;box-shadow:-8px 0 30px rgba(10,22,35,.18);transform:translateX(100%);transition:transform .24s ease;display:flex;flex-direction:column;padding:14px 20px 24px}}
+  .drawer{{position:fixed;top:0;right:0;height:100%;width:min(78vw,300px);background:var(--bg);z-index:31;box-shadow:-8px 0 30px rgba(21,23,26,.18);transform:translateX(100%);transition:transform .24s ease;display:flex;flex-direction:column;padding:14px 20px 24px}}
   .drawer.open{{transform:translateX(0)}}
   .drawer-close{{align-self:flex-end;background:transparent;border:0;color:var(--ink2);font-size:24px;cursor:pointer;padding:6px;line-height:1}}
   .drawer-nav{{display:flex;flex-direction:column;margin-top:6px}}
@@ -170,21 +173,21 @@ html = f"""<!DOCTYPE html>
   .hero{{position:relative;min-height:600px;display:flex;flex-direction:column;justify-content:flex-end;
     background:url('{hero_p}') center 30% / cover no-repeat}}
   .hero .scrim{{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:40px 0 34px;
-    background:linear-gradient(to top, rgba(10,26,40,.82), rgba(10,26,40,.34) 55%, rgba(10,26,40,0))}}
+    background:linear-gradient(to top, rgba(23,23,26,.82), rgba(23,23,26,.34) 55%, rgba(23,23,26,0))}}
   .hero-content{{max-width:540px}}
   .hero-photo{{display:none}}
-  .eyebrow{{display:inline-block;font-size:12px;font-weight:600;color:var(--accent-ink);background:rgba(255,255,255,.94);
+  .eyebrow{{display:inline-block;font-size:12px;font-weight:600;color:var(--ink);background:var(--yellow-tint);
     border-radius:999px;padding:5px 13px;margin-bottom:16px}}
   .hero h1{{font-size:34px;line-height:1.18;letter-spacing:-.02em;color:#fff;margin:0;font-weight:700}}
-  .hero p{{font-size:15px;color:#DCEEF9;margin:15px 0 22px;line-height:1.62}}
+  .hero p{{font-size:15px;color:#EAF1F6;margin:15px 0 22px;line-height:1.62}}
   .cta{{display:flex;flex-direction:column;gap:11px}}
   .btn-primary{{background:var(--accent);color:#fff;font-weight:600;border-radius:14px;padding:15px 22px;
     font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px}}
-  .btn-ghost{{border:1.5px solid rgba(255,255,255,.85);color:#fff;font-weight:500;border-radius:14px;
+  .btn-ghost{{border:1.5px solid rgba(255,255,255,.85);color:#FFFFFF;font-weight:500;border-radius:14px;
     padding:14px 22px;font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:8px}}
 
   section{{padding:38px 0}}
-  .kicker{{font-size:12.5px;font-weight:600;color:var(--accent-ink);letter-spacing:.03em;text-align:center;margin-bottom:8px}}
+  .kicker{{font-size:12.5px;font-weight:600;color:var(--ink2);letter-spacing:.06em;text-align:center;margin-bottom:8px}}
   .h2{{font-size:24px;line-height:1.32;letter-spacing:-.01em;text-align:center;margin:0 0 6px;font-weight:700}}
   .sub{{font-size:14px;color:var(--ink2);text-align:center;line-height:1.66;margin:0 auto;max-width:440px}}
 
@@ -192,14 +195,14 @@ html = f"""<!DOCTYPE html>
     border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)}}
   .trust > div{{text-align:center;padding:22px 6px}}
   .trust .n{{font-size:24px;font-weight:700;letter-spacing:-.01em;line-height:1.1}}
-  .trust .n span{{color:var(--accent-ink)}}
+  .trust .n span{{color:#FFC93C}} /* 로고의 해 노랑 — 파랑 일색을 깨는 유일한 웜 포인트 */
   .trust .l{{font-size:12px;color:var(--ink2);margin-top:5px}}
-  .trust > div + div{{border-left:0.5px solid rgba(19,38,53,.08)}}
+  .trust > div + div{{border-left:0.5px solid rgba(33,33,36,.08)}}
 
   .steps{{display:grid;grid-template-columns:1fr;gap:14px;margin-top:26px}}
   .step{{display:flex;gap:15px;align-items:flex-start;background:var(--surface);border:0.5px solid var(--border);
     border-radius:16px;padding:18px 18px}}
-  .step .ic{{width:44px;height:44px;border-radius:12px;background:var(--sky-soft);color:var(--accent-ink);
+  .step .ic{{width:44px;height:44px;border-radius:12px;background:#E4F4FF;color:var(--accent-ink);
     display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}}
   .step .t{{font-size:15px;font-weight:600}}
   .step .d{{font-size:13px;color:var(--ink2);margin-top:4px;line-height:1.55}}
@@ -207,25 +210,25 @@ html = f"""<!DOCTYPE html>
 
   .paths{{display:grid;grid-template-columns:1fr;gap:14px;margin-top:26px}}
   .path{{border-radius:18px;padding:24px 22px;border:0.5px solid var(--border)}}
-  .path.app{{background:var(--dark);color:#F0F7FC}}
+  .path.app{{background:var(--dark);color:#FFFFFF}}
   .path.care{{background:var(--surface)}}
   .path .tag{{font-size:12px;font-weight:600;border-radius:999px;padding:4px 12px;display:inline-block;margin-bottom:13px}}
   .path.app .tag{{background:var(--accent);color:#fff}}
-  .path.care .tag{{background:var(--sky-soft);color:var(--accent-ink)}}
+  .path.care .tag{{background:#D6EEFF;color:var(--accent-ink)}}
   .path h3{{font-size:19px;margin:0 0 6px;font-weight:700}}
   .path .pd{{font-size:13.5px;line-height:1.6;margin:0 0 15px}}
-  .path.app .pd{{color:#AFC4D4}} .path.care .pd{{color:var(--ink2)}}
+  .path.app .pd{{color:#B9BDC4}} .path.care .pd{{color:var(--ink2)}}
   .path .pt{{font-size:11.5px;font-weight:600;letter-spacing:.03em;margin:15px 0 11px}}
-  .path.app .pt{{color:#7E93A6}} .path.care .pt{{color:var(--ink3)}}
+  .path.app .pt{{color:#8E9298}} .path.care .pt{{color:var(--ink3)}}
   .path ul{{list-style:none;padding:0;margin:0 0 17px;display:flex;flex-direction:column;gap:9px}}
   .path li{{font-size:13px;display:flex;align-items:center;gap:8px}}
-  .path.app li{{color:#DCEAF4}} .path.care li{{color:var(--ink)}}
+  .path.app li{{color:#E4E7EB}} .path.care li{{color:var(--ink)}}
   .path .go{{font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px}}
   .path.app .go{{color:var(--accent)}} .path.care .go{{color:var(--accent-ink)}}
 
   .grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px}}
   .dest.soon[role=button]{{cursor:pointer}}
-  .dest-region{{font-size:12.5px;font-weight:600;color:var(--accent-ink);letter-spacing:.02em;text-align:center;margin:24px 0 12px}}
+  .dest-region{{font-size:12.5px;font-weight:600;color:var(--ink2);letter-spacing:.05em;text-align:center;margin:24px 0 12px}}
   #destFull .grid{{margin-top:0}}
   .dest-collapse{{display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink3);margin-top:20px}}
   .dest-collapse i{{font-size:15px}}
@@ -242,48 +245,48 @@ html = f"""<!DOCTYPE html>
 
   .band{{position:relative;min-height:360px;display:flex;align-items:flex-end;
     background:url('{band}') center 72% / cover no-repeat}}
-  .band .scrim{{width:100%;padding:30px 0;background:linear-gradient(to top, rgba(10,26,40,.74), rgba(10,26,40,.10))}}
+  .band .scrim{{width:100%;padding:30px 0;background:linear-gradient(to top, rgba(23,23,26,.74), rgba(23,23,26,.10))}}
   .band h2{{font-size:23px;color:#fff;margin:0;font-weight:700;line-height:1.3;max-width:520px}}
-  .band p{{font-size:13.5px;color:#DCEEF9;margin:9px 0 0;line-height:1.6}}
+  .band p{{font-size:13.5px;color:#E4E9ED;margin:9px 0 0;line-height:1.6}}
 
-  /* 최종 CTA = 브랜드 스플래시 문법(하늘 그라데이션 + 흰 구름) */
-  .final{{position:relative;overflow:hidden;background:linear-gradient(180deg,#63C9FF,#0BAEFF);padding:52px 0 64px;text-align:center}}
-  .final .cloud{{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);width:min(720px,120%);height:auto;opacity:.28;pointer-events:none}}
-  .final .container{{position:relative}}
-  .final h2{{font-size:24px;color:#fff;margin:0 0 22px;font-weight:700;text-shadow:0 1px 6px rgba(9,111,179,.25)}}
-  .final p{{font-size:13.5px;color:#E3F4FF;margin:0 0 22px}}
+  /* 최종 CTA = 로고 문법(하늘 그라데이션 + 구름) — 2026-07-12 사용자 확정.
+     흰 큰 제목 대비 확보를 위해 그라데이션을 로고보다 반 톤 진하게 + 얕은 텍스트 섀도. */
+  .final{{background:linear-gradient(180deg,#4EC3FF,#0BA2F2);padding:52px 0 0;text-align:center}}
+  .final h2{{font-size:24px;color:#fff;margin:0 0 22px;font-weight:700;text-shadow:0 1px 3px rgba(2,62,102,.20)}}
+  .final p{{font-size:13.5px;color:#EAF6FF;margin:0 0 22px}}
+  .final .clouds{{display:block;width:min(460px,86%);height:auto;margin:30px auto 0}}
   .store-row{{display:flex;gap:11px;justify-content:center;flex-wrap:wrap}}
-  .store{{background:#fff;color:var(--ink);border-radius:13px;padding:13px 18px;display:flex;align-items:center;
-    gap:8px;font-size:13.5px;font-weight:500;box-shadow:0 4px 14px rgba(9,111,179,.18)}}
-  footer{{background:#0C1520;color:#7E93A6;padding:28px 0;font-size:12px;line-height:1.85;margin-top:auto}}
-  footer a{{color:#A9C0D4}}
+  .store{{background:#FFFFFF;color:var(--ink);border-radius:13px;padding:13px 18px;display:flex;align-items:center;
+    gap:8px;font-size:13.5px;font-weight:500}}
+  footer{{background:#fff;color:#5C5C60;padding:26px 0 30px;font-size:12px;line-height:1.85;margin-top:auto}}
+  footer a{{color:#454549}}
   footer .fsns{{display:inline-flex;align-items:center;gap:5px;margin:9px 0 4px;font-weight:600}}
   footer .fsns .nlogo{{font-weight:800;font-size:13px;line-height:1}}
 
   /* ── 앱 소개 비교 섹션(임시) ── */
   .vlabel-wrap{{text-align:center}}
-  .vlabel{{display:inline-flex;align-items:center;gap:6px;background:var(--dark);color:#F0F7FC;font-size:12px;font-weight:600;border-radius:999px;padding:6px 14px;margin:0 0 16px}}
+  .vlabel{{display:inline-flex;align-items:center;gap:6px;background:var(--dark);color:#FFFFFF;font-size:12px;font-weight:600;border-radius:999px;padding:6px 14px;margin:0 0 16px}}
   .more-line{{text-align:center;font-size:12.5px;color:var(--ink3);margin-top:18px}}
   .more-line b{{color:var(--accent-ink);font-weight:600}}
   .appcta-wrap{{text-align:center}}
   .appcta{{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#fff;font-weight:600;border-radius:14px;padding:15px;font-size:15px;width:100%;max-width:460px;margin:24px auto 0}}
-  .ph{{background:var(--surface);border:1.5px solid rgba(19,38,53,.16);border-radius:16px;padding:9px 8px}}
-  .ph .notch{{width:22px;height:4px;background:rgba(19,38,53,.18);border-radius:3px;margin:1px auto 9px}}
-  .ph .b{{height:7px;border-radius:4px;background:#DCEBF5;margin-bottom:6px}}
+  .ph{{background:var(--surface);border:1.5px solid rgba(33,33,36,.16);border-radius:16px;padding:9px 8px}}
+  .ph .notch{{width:22px;height:4px;background:rgba(33,33,36,.18);border-radius:3px;margin:1px auto 9px}}
+  .ph .b{{height:7px;border-radius:4px;background:#E3E9EF;margin-bottom:6px}}
   .ph .b.am{{background:var(--accent);width:58%}}
   .ph .b.sm{{width:80%}}
   .ph .b.xs{{width:46%}}
-  .ph .cm{{background:var(--sky-soft);border:0.5px solid rgba(11,174,255,.4);border-radius:8px;height:38px;margin-top:8px}}
+  .ph .cm{{background:#EAF5FD;border:0.5px solid rgba(11,174,255,.35);border-radius:8px;height:38px;margin-top:8px}}
   .frows{{margin-top:22px}}
   .frow{{display:flex;gap:15px;align-items:center;padding:15px 0;border-top:0.5px solid var(--border)}}
   .frow:first-child{{border-top:none}}
   .frow .fthumb{{flex:0 0 66px;height:118px}}
-  .fnum{{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--sky-soft);color:var(--accent-ink);font-size:11px;font-weight:700;margin-bottom:7px}}
+  .fnum{{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#E4F4FF;color:var(--accent-ink);font-size:11px;font-weight:700;margin-bottom:7px}}
   .frow .ft{{font-size:15px;font-weight:600;margin:0 0 3px}}
   .frow .fd{{font-size:12.5px;color:var(--ink2);margin:0;line-height:1.5}}
   .fgrid{{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}}
   .fcell{{background:var(--surface);border:0.5px solid var(--border);border-radius:13px;padding:14px 13px}}
-  .fcell .fi{{width:34px;height:34px;border-radius:10px;background:var(--sky-soft);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:9px}}
+  .fcell .fi{{width:34px;height:34px;border-radius:10px;background:#E4F4FF;color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:9px}}
   .fcell .ft{{font-size:13.5px;font-weight:600;margin:0 0 2px}}
   .fcell .fd{{font-size:11.5px;color:var(--ink2);margin:0;line-height:1.4}}
   .fscroll{{display:flex;gap:13px;overflow-x:auto;margin-top:22px;padding-bottom:6px;scroll-snap-type:x mandatory}}
@@ -292,7 +295,7 @@ html = f"""<!DOCTYPE html>
   .fslide .ph{{height:210px;margin-bottom:9px}}
   .fslide .fcap{{font-size:12.5px;color:var(--ink);text-align:center;font-weight:500}}
   .fdots{{display:flex;gap:5px;justify-content:center;margin-top:14px}}
-  .fdots i{{width:6px;height:6px;border-radius:50%;background:rgba(19,38,53,.16)}}
+  .fdots i{{width:6px;height:6px;border-radius:50%;background:rgba(33,33,36,.16)}}
   .fdots i.on{{background:var(--accent);width:17px;border-radius:3px}}
   .swipe-hint{{text-align:center;font-size:11.5px;color:var(--ink3);margin-top:9px}}
   .realshot{{width:100%;display:block}}
@@ -301,16 +304,16 @@ html = f"""<!DOCTYPE html>
   .alist{{max-width:460px;margin:24px auto 0;display:flex;flex-direction:column;gap:10px}}
   .acard{{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:15px 16px}}
   .acard-h{{display:flex;align-items:center;gap:11px}}
-  .acard .ai{{color:var(--accent-ink);display:inline-flex;align-items:center;font-size:21px;flex-shrink:0}}
+  .acard .ai{{color:var(--ink);display:inline-flex;align-items:center;font-size:22px;flex-shrink:0}}
   .acard .at{{font-size:15.5px;font-weight:600}}
   .acard .ad{{font-size:13px;color:var(--ink2);margin:9px 0 0;line-height:1.5}}
   .acard.more{{border-style:dashed;background:transparent;text-align:center;color:var(--ink3);font-size:13px;padding:15px;display:flex;align-items:center;justify-content:center;gap:7px}}
-  .acard.more i{{color:var(--accent-ink);font-size:16px}}
+  .acard.more i{{color:var(--ink3);font-size:16px}}
   .slead{{font-size:13px;color:var(--ink2);text-align:center;max-width:400px;margin:0 auto 22px;line-height:1.6}}
   .score-list{{max-width:460px;margin:24px auto 0;display:flex;flex-direction:column;gap:12px}}
-  .score{{background:var(--sky-soft);border:0.5px solid rgba(11,174,255,.4);border-radius:14px;padding:16px 17px}}
+  .score{{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:16px 17px}}
   .score-h{{display:flex;align-items:center;gap:11px;margin-bottom:8px}}
-  .score .si{{color:var(--accent-ink);font-size:22px;flex-shrink:0}}
+  .score .si{{color:var(--ink);display:inline-flex;align-items:center;font-size:22px;flex-shrink:0}}
   .score .st{{font-size:15px;font-weight:600}}
   .score .sd{{font-size:13px;color:var(--ink2);margin:0;line-height:1.55}}
   .svc-cap{{max-width:460px;margin:20px auto 10px;font-size:11.5px;font-weight:600;letter-spacing:.03em;color:var(--ink3)}}
@@ -329,7 +332,7 @@ html = f"""<!DOCTYPE html>
   .rlist{{max-width:460px;margin:24px auto 0;display:flex;flex-direction:column;gap:12px}}
   .rcard{{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:17px 18px}}
   .rhead{{display:flex;align-items:center;gap:11px;margin-bottom:11px}}
-  .ravatar{{width:38px;height:38px;border-radius:50%;background:var(--sky-soft);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}}
+  .ravatar{{width:38px;height:38px;border-radius:50%;background:var(--yellow-tint);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}}
   .rname{{font-size:14px;font-weight:600;color:var(--ink)}}
   .rmeta{{font-size:12px;color:var(--ink3)}}
   .rtext{{font-size:13.5px;color:var(--ink2);line-height:1.72;margin:0}}
@@ -364,6 +367,8 @@ html = f"""<!DOCTYPE html>
     .frows{{max-width:620px;margin-left:auto;margin-right:auto}}
     .path{{padding:30px 28px}}
     .grid{{grid-template-columns:repeat(6,1fr)}}
+    .rlist{{max-width:none;flex-direction:row;gap:14px;align-items:stretch}}
+    .rcard{{flex:1 1 0}}
     .trust .n{{font-size:30px}} .trust .l{{font-size:13px}}
     .band{{min-height:480px}}
     .band h2{{font-size:30px}}
@@ -384,7 +389,7 @@ html = f"""<!DOCTYPE html>
     .hero-content{{max-width:none}}
     .hero h1{{color:var(--ink)}}
     .hero p{{color:var(--ink2);max-width:none}}
-    .btn-ghost{{border-color:rgba(19,38,53,.28);color:var(--ink)}}
+    .btn-ghost{{border-color:rgba(33,33,36,.28);color:var(--ink)}}
     .hero-photo{{display:block;height:470px;border-radius:22px;box-shadow:0 18px 40px rgba(31,27,46,.14);
       background:url('{hero_card}') center 32% / cover no-repeat}}
   }}
@@ -437,12 +442,11 @@ html = f"""<!DOCTYPE html>
   </div>
 
 {APP_SECTIONS}
-{SERVICE_SECTION}
 
-  <section>
+  <section style="border-top:0.5px solid var(--border)">
     <div class="container">
       <div class="kicker">앱 지원 여행지</div>
-      <div class="h2">27곳, 앞으로 더 추가돼요</div>
+      <h2 class="h2">27곳, 앞으로 더 추가돼요</h2>
       <div class="grid" id="destGrid">
         <div class="dest">일본<span class="dot"></span></div>
         <div class="dest">태국<span class="dot"></span></div>
@@ -495,11 +499,11 @@ html = f"""<!DOCTYPE html>
       </div>
     </div>
   </section>
-
+{SERVICE_SECTION}
   <section style="border-top:0.5px solid var(--border)">
     <div class="container">
       <div class="kicker">고객 후기</div>
-      <div class="h2">이미 함께한 가족들</div>
+      <h2 class="h2">펫무브와 함께한 이야기</h2>
       <div class="rlist">
         <div class="rcard">
           <div class="rhead"><span class="ravatar">모</span><div><div class="rname">최○지님</div><div class="rmeta">모짜·렐라 · 일본</div></div></div>
@@ -527,7 +531,6 @@ html = f"""<!DOCTYPE html>
   </div>
 
   <div class="final">
-    <svg class="cloud" viewBox="0 0 400 100" aria-hidden="true"><g fill="#fff"><rect y="70" width="400" height="30"/><circle cx="60" cy="72" r="34"/><circle cx="120" cy="52" r="42"/><circle cx="190" cy="66" r="30"/><circle cx="255" cy="50" r="40"/><circle cx="320" cy="68" r="34"/><circle cx="372" cy="78" r="26"/></g></svg>
     <div class="container">
       <h2>무료 앱으로 시작하세요</h2>
       <div class="store-row">
@@ -535,11 +538,12 @@ html = f"""<!DOCTYPE html>
         <a class="store"><i class="ti ti-brand-google-play" style="font-size:16px"></i>Google Play</a>
       </div>
     </div>
+    <svg class="clouds" viewBox="-6 92 208 68" aria-hidden="true"><g transform="translate(0,26)"><circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/><circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/><circle cx="178" cy="154" r="24" fill="#fff"/></g></svg>
   </div>
 
   <footer>
     <div class="container">
-      <div style="color:#D7E4EF;font-weight:600;margin-bottom:6px">펫무브 · PETMOVE</div>
+      <div style="color:#212124;font-weight:600;margin-bottom:6px">펫무브 · PETMOVE</div>
       로잔동물의료센터 · 사업자등록번호 124-18-42859<br>
       서울시 관악구 관악로29길 3 · 02-872-7588<br>
       <a href="https://blog.naver.com/petmove" target="_blank" rel="noopener" class="fsns"><span class="nlogo">N</span>네이버 블로그</a><br>

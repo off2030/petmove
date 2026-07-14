@@ -14,6 +14,7 @@ import {
 import { PetAvatarPicker } from '@/components/me/pet-avatar-picker'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
+import { replaceTab } from '@/components/portal-shell/tab-nav'
 import { softDeleteMyCase } from '@/lib/actions/cases'
 import { buildPetBlock } from '@/lib/profile/catalog'
 import { C, EditPageShell, SectionCard } from './settings-shared'
@@ -205,8 +206,8 @@ function InlineSaveButton({
             padding: '9px 12px',
             borderRadius: 10,
             background: C.surface,
-            border: `.5px solid color-mix(in srgb, ${C.warn} 33%, transparent)`,
-            color: C.warn,
+            border: `.5px solid color-mix(in srgb, ${C.danger} 33%, transparent)`,
+            color: C.danger,
             fontSize: 12,
             textAlign: 'center',
           }}
@@ -274,7 +275,7 @@ function DeleteAnimalSection({ caseId, petName }: { caseId: string; petName: str
       removeCase(caseId)
       // 먼저 내 정보로 이동 — 이 페이지(useCase(caseId))가 삭제된 케이스로 notFound()
       // 를 띄우기 전에 떠난다. 목록 갱신은 이동 후 백그라운드로 (provider 는 layout 에 살아있음).
-      router.replace('/me')
+      replaceTab(router, '/me')
       void refreshCases()
     })
   }
@@ -299,9 +300,9 @@ function DeleteAnimalSection({ caseId, petName }: { caseId: string; petName: str
             width: '100%',
             padding: '13px 0',
             borderRadius: 14,
-            border: `1px solid color-mix(in srgb, ${C.warn} 30%, transparent)`,
+            border: `1px solid color-mix(in srgb, ${C.danger} 30%, transparent)`,
             background: 'transparent',
-            color: C.warn,
+            color: C.danger,
             fontFamily: 'inherit',
             fontSize: 14,
             fontWeight: 600,
@@ -326,7 +327,7 @@ function DeleteAnimalSection({ caseId, petName }: { caseId: string; petName: str
             {petName ? `${petName}의` : '이 동물의'} 모든 기록이 삭제됩니다.
           </p>
           {error && (
-            <p style={{ margin: '10px 0 0', fontSize: 12, color: C.warn, lineHeight: 1.5 }}>{error}</p>
+            <p style={{ margin: '10px 0 0', fontSize: 12, color: C.danger, lineHeight: 1.5 }}>{error}</p>
           )}
           <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
             <button
@@ -352,7 +353,7 @@ function DeleteAnimalSection({ caseId, petName }: { caseId: string; petName: str
               style={{
                 ...btn,
                 border: 0,
-                background: C.warn,
+                background: C.danger,
                 color: '#fff',
               }}
             >

@@ -18,6 +18,21 @@ const gitSha = (() => {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // 검증용 dev 서버를 기존 dev 서버와 동시에 띄울 때 .next 디렉터리 충돌(락·캐시 오염)
+  // 을 피하기 위한 격리 스위치 — 평소(미설정)엔 기본 .next 그대로.
+  ...(process.env.PM_DIST_DIR ? { distDir: process.env.PM_DIST_DIR } : {}),
+  // 같은 와이파이의 실기기(폰)에서 dev 서버 접속 허용 — 없으면 Next 가 localhost 외
+  // origin 의 /_next/* 요청을 차단해 페이지가 겉만 뜨고 JS 가 죽는다(버튼 무반응).
+  // 프로덕션 빌드에는 영향 없음. PC IP 대역이 바뀌면(다른 와이파이) 여기에 추가.
+  //   172.30.1.* = 직장, 192.168.45.* = 집(SK), 나머지 = 흔한 공유기 기본 대역.
+  allowedDevOrigins: [
+    '172.30.1.*',
+    '192.168.45.*',
+    '192.168.0.*',
+    '192.168.1.*',
+    '192.168.35.*',
+    '10.0.0.*',
+  ],
   env: {
     NEXT_PUBLIC_APP_VERSION: pkgVersion,
     NEXT_PUBLIC_GIT_SHA: gitSha,

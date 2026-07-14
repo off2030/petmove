@@ -10,7 +10,6 @@ import { updateCaseAvatar } from '@/lib/actions/cases'
 import {
   AVATAR_COLOR_IDS,
   AVATAR_GRADIENTS,
-  avatarColorId,
   avatarGlyph,
   avatarGlyphColor,
   avatarGradient,
@@ -155,7 +154,6 @@ export function PetAvatarPicker({ case_ }: { case_: CaseRow }) {
             currentPhoto={currentPhoto}
             busy={busy}
             onPickColor={(c) => commit({ avatar_color: c })}
-            onResetColor={() => commit({ avatar_color: null })}
             onPickPhotoClick={() => fileRef.current?.click()}
             onRemovePhoto={() => commit({ avatar_photo_url: null })}
           />
@@ -166,7 +164,7 @@ export function PetAvatarPicker({ case_ }: { case_: CaseRow }) {
             onChange={(e) => handleFile(e.target.files?.[0])}
             style={{ display: 'none' }}
           />
-          {error && <div style={{ fontSize: 12, color: '#B45C5C' }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: C.danger }}>{error}</div>}
         </>
       )}
     </div>
@@ -182,7 +180,6 @@ function PickerGrid({
   currentPhoto,
   busy,
   onPickColor,
-  onResetColor,
   onPickPhotoClick,
   onRemovePhoto,
 }: {
@@ -192,7 +189,6 @@ function PickerGrid({
   currentPhoto: string | null
   busy: boolean
   onPickColor: (c: AvatarColorId) => void
-  onResetColor: () => void
   onPickPhotoClick: () => void
   onRemovePhoto: () => void
 }) {
@@ -230,7 +226,6 @@ function PickerGrid({
   }
 
   // '기본' 색 = avatar_color 미설정 시 실제 적용되는 cyclic/hash 색 — 그 색을 미리보기로.
-  const defaultColor = avatarColorId({ id: case_.id, avatar_color: null }, index)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, opacity: busy ? 0.6 : 1 }}>
@@ -262,32 +257,14 @@ function PickerGrid({
                 ...slotBase,
                 background: AVATAR_GRADIENTS[id],
                 boxShadow: selected
-                  ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #212124'
+                  ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px var(--pm-ink)'
                   : 'inset 0 1px 1px rgba(255,255,255,.25)',
               }}
             />
           )
         })}
-        {/* 기본(색상 자동) — 다른 swatch 와 동일한 원형. 실제 자동색 미리보기 + 사선으로 "자동". */}
-        <button
-          type="button"
-          disabled={busy}
-          onClick={onResetColor}
-          aria-label="기본 색상"
-          aria-pressed={currentColor === null}
-          style={{
-            ...slotBase,
-            background: AVATAR_GRADIENTS[defaultColor],
-            boxShadow:
-              currentColor === null
-                ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #212124'
-                : `inset 0 0 0 .5px ${C.line}`,
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-            <line x1="3.5" y1="12.5" x2="12.5" y2="3.5" stroke="#fff" strokeWidth="1.4" strokeLinecap="round" />
-          </svg>
-        </button>
+        {/* '색상 자동(사선)' 버튼 제거(2026-07-11) — 기본값이 곧 브랜드 하늘이라 자동과
+            하늘색 선택이 사실상 동일, 의미 전달 안 되는 미스터리 버튼이었음. */}
       </div>
     </div>
   )

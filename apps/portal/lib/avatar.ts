@@ -21,44 +21,48 @@ export type AvatarColorId =
   | 'slate'
   | 'terracotta'
 
-// 순서가 곧 "n번째 케이스에 어떤 색을 줄지". 첫 동물(index 0)은 펫무브 로고색(amber=orange)
-// 으로 시작 — 브랜드 첫인상. 이어서 화사한 색들, 어두운 2색(slate/purple)을 뒤로.
-// picker grid 표시 순서도 이 배열을 그대로 따라가므로 로고색이 맨 앞에 보인다.
+// 순서가 곧 "n번째 케이스에 어떤 색을 줄지". 첫 동물(index 0)은 브랜드 하늘색(ocean)
+// 으로 시작 — 로고 타일과 같은 그라데이션(브랜드 첫인상). 이어서 화사한 파스텔,
+// 차분한 2색(slate/purple)을 뒤로. picker grid 표시 순서도 이 배열 그대로.
+// (2026-07-11 새 디자인 시스템: 구 에디토리얼 웜톤 → 하늘/파스텔 6종. id 는 DB 저장값이라
+//  유지하고 각 id 의 색값만 같은 계열의 새 톤으로 교체 — 저장된 선택이 자연스럽게 이어짐.
+//  sand·terracotta 는 팔레트에서 은퇴 — 그리드·새 저장에선 빠지되(profile.ts 화이트리스트가
+//  이 배열 참조) 이미 저장된 동물은 아래 GRADIENTS 의 legacy 값으로 계속 렌더된다.)
 export const AVATAR_COLOR_IDS: readonly AvatarColorId[] = [
-  'orange',
+  'ocean',
   'sage',
   'rose',
-  'ocean',
-  'sand',
-  'terracotta',
+  'orange',
   'slate',
   'purple',
 ] as const
 
 export const AVATAR_GRADIENTS: Record<AvatarColorId, string> = {
-  orange: 'linear-gradient(135deg, #E5A776 0%, #C9824D 100%)',
-  purple: 'linear-gradient(135deg, #4A4458 0%, #28252E 100%)',
-  sage: 'linear-gradient(135deg, #C9DBCB 0%, #97B69A 100%)',
-  rose: 'linear-gradient(135deg, #E8B4B0 0%, #D49591 100%)',
-  ocean: 'linear-gradient(135deg, #A4C5D6 0%, #6E9DB6 100%)',
-  sand: 'linear-gradient(135deg, #E8D7A8 0%, #C9B377 100%)',
-  slate: 'linear-gradient(135deg, #B6BCC8 0%, #7E8794 100%)',
-  terracotta: 'linear-gradient(135deg, #D69570 0%, #B47453 100%)',
+  /** 브랜드 하늘 — 로고 타일과 동일 그라데이션. */
+  ocean: 'linear-gradient(135deg, #63C9FF 0%, #0BAEFF 100%)',
+  sage: 'linear-gradient(135deg, #7FE3C6 0%, #2EC79E 100%)',
+  rose: 'linear-gradient(135deg, #F8BCCB 0%, #EE8FA9 100%)',
+  orange: 'linear-gradient(135deg, #FFC08A 0%, #F59A4B 100%)',
+  slate: 'linear-gradient(135deg, #C7CFDD 0%, #96A2B6 100%)',
+  purple: 'linear-gradient(135deg, #CBC2F6 0%, #9787E6 100%)',
+  /* legacy — 그리드에서 은퇴(새 저장 불가), 기존 저장 동물 렌더 전용. */
+  sand: 'linear-gradient(135deg, #F6DDA2 0%, #E3BA60 100%)',
+  terracotta: 'linear-gradient(135deg, #F4C4A6 0%, #DB9067 100%)',
 }
 
 /**
- * 각 그라데이션 위에 올리는 이니셜 글자색. 밝은 파스텔(sage·rose·ocean·sand·slate)은
- * 같은 계열 진한 색, 어두운/채도 높은 색(orange·terracotta·purple)은 흰색 — 대비 확보.
+ * 각 그라데이션 위에 올리는 이니셜 글자색. 밝은 파스텔은 같은 계열 진한 색,
+ * 채도 있는 중간톤(ocean·purple)은 흰색 — 대비 확보.
  */
 export const AVATAR_TEXT_COLORS: Record<AvatarColorId, string> = {
-  orange: '#FFFFFF',
+  ocean: '#FFFFFF',
   purple: '#FFFFFF',
-  terracotta: '#FFFFFF',
-  sage: '#3F5C43',
-  rose: '#8A4744',
-  ocean: '#2F5167',
-  sand: '#6E5727',
-  slate: '#3A4150',
+  sage: '#075E48',
+  rose: '#93395A',
+  sand: '#77571A',
+  orange: '#7E4A12',
+  terracotta: '#7C401E',
+  slate: '#3B495E',
 }
 
 /** 아바타 배경색에 맞는 이니셜 글자색. color 없으면 기본(accent-soft 위 accent). */
@@ -73,7 +77,9 @@ export function avatarTextColor(color: AvatarColorId | null): string {
 const HASH_CYCLE: readonly AvatarColorId[] = AVATAR_COLOR_IDS
 
 export function isAvatarColorId(value: string | null | undefined): value is AvatarColorId {
-  return !!value && (AVATAR_COLOR_IDS as readonly string[]).includes(value)
+  // AVATAR_COLOR_IDS(그리드 6종)가 아니라 GRADIENTS 전체 키 기준 — 은퇴한 색(sand 등)을
+  // 이미 저장해둔 동물의 아바타가 하루아침에 다른 색으로 바뀌지 않도록 legacy 렌더 유지.
+  return !!value && value in AVATAR_GRADIENTS
 }
 
 function hashColorFor(id: string): AvatarColorId {

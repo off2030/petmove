@@ -69,7 +69,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
+        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요. 날짜를 확인하세요.`,
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -419,7 +419,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (days < 0) {
         return {
           ok: false,
-          message: `심장사상충 투약일(${latest.date})이 출국일(${dep})보다 늦어요.`,
+          message: `심장사상충 투약일(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.`,
           offendingPaths: [`heartworm_dates[${latest.originalIndex}].date`],
         }
       }
@@ -456,7 +456,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (days < 0) {
         return {
           ok: false,
-          message: `검사일(${latest.date})이 출국일(${dep})보다 늦어요.`,
+          message: `검사일(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.`,
           offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`],
         }
       }

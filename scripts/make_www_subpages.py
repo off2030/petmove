@@ -11,16 +11,8 @@ import os
 OUT_DIR = r"C:\dev\petmove\docs\www-redesign"
 LIVE = "https://www.petmove.co.kr"
 
-# 새 브랜드 로고: 하늘 그라데이션 라운드 스퀘어 + 흰 구름 (downloads/PetMove-logo-korean.svg 과 동일 지오메트리)
-LOGO = ('<svg viewBox="0 0 200 200" width="26" height="26" aria-hidden="true">'
-        '<defs><linearGradient id="pmsky" x1="0" y1="0" x2="0" y2="1">'
-        '<stop offset="0" stop-color="#63C9FF"/><stop offset="1" stop-color="#0BAEFF"/></linearGradient>'
-        '<clipPath id="pmsq"><rect width="200" height="200" rx="46"/></clipPath></defs>'
-        '<g clip-path="url(#pmsq)"><rect width="200" height="200" fill="url(#pmsky)"/>'
-        '<rect x="0" y="160" width="200" height="40" fill="#fff"/>'
-        '<circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/>'
-        '<circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/>'
-        '<circle cx="178" cy="154" r="24" fill="#fff"/></g></svg>')
+# 타일 플로팅 섀도 = 앱 LogoMark(pm-logo-float)와 동일 문법. overflow:visible 없으면 그림자 잘림.
+LOGO = ('<svg viewBox="0 0 200 200" width="26" height="26" aria-hidden="true" style="overflow:visible"><defs><clipPath id="pmlg-sq"><rect width="200" height="200" rx="46"/></clipPath><linearGradient id="pmlg-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63C9FF"/><stop offset="1" stop-color="#0BAEFF"/></linearGradient><filter id="pmlg-float" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#0868A8" flood-opacity="0.35"/></filter></defs><g filter="url(#pmlg-float)"><g clip-path="url(#pmlg-sq)"><rect width="200" height="200" fill="url(#pmlg-sky)"/><path d="M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106" fill="none" stroke="#FFC93C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="0" y="160" width="200" height="40" fill="#fff"/><circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/><circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/><circle cx="178" cy="154" r="24" fill="#fff"/><path d="M116 132 L116 118" fill="none" stroke="#FFC93C" stroke-width="18" stroke-linecap="round" opacity="0.34"/></g></g></svg>')
 
 # ── 나라별 가이드 34개국 (한글, docs 슬러그, 지역) ──
 COUNTRIES = [
@@ -67,9 +59,8 @@ OTHER = [
 
 CSS = """
   :root{
-    --bg:#F6FAFD; --surface:#FFFFFF; --ink:#132635; --ink2:#4A6072; --ink3:#6B8092;
-    --accent:#0BAEFF; --accent-deep:#0B84D6; --accent-ink:#096FB3; --sky-soft:#EAF6FF;
-    --sage:#3FB25A; --border:#DFE6EC; --dark:#0F1B2A;
+    --bg:#F4F6F8; --surface:#FFFFFF; --ink:#212124; --ink2:#5C5C60; --ink3:#97979C;
+    --accent:#0BAEFF; --accent-ink:#0778BF; --sage:#14B8A6; --border:#E1E5E9; --dark:#212124;
   }
   *{box-sizing:border-box}
   [hidden]{display:none!important}
@@ -80,7 +71,7 @@ CSS = """
   .container{max-width:1080px;margin:0 auto;padding:0 22px;width:100%}
   .wm{font-size:18px;letter-spacing:-.01em;font-weight:800}
 
-  header{position:sticky;top:0;z-index:20;background:rgba(246,250,253,.92);backdrop-filter:blur(8px);
+  header{position:sticky;top:0;z-index:20;background:#fff;
     border-bottom:0.5px solid var(--border)}
   header .container{display:flex;align-items:center;justify-content:space-between;padding-top:13px;padding-bottom:13px}
   .nav-links{display:none;align-items:center;gap:26px;font-size:14px;color:var(--ink2)}
@@ -88,9 +79,9 @@ CSS = """
   .nav-right{display:flex;align-items:center;gap:14px}
   .nav-app{background:var(--accent);color:#fff;font-weight:600;border-radius:11px;padding:8px 15px;font-size:13px}
   .burger{font-size:22px;color:var(--ink2);cursor:pointer}
-  .drawer-ov{position:fixed;inset:0;background:rgba(10,22,35,.42);opacity:0;visibility:hidden;transition:opacity .22s;z-index:30}
+  .drawer-ov{position:fixed;inset:0;background:rgba(21,23,26,.42);opacity:0;visibility:hidden;transition:opacity .22s;z-index:30}
   .drawer-ov.open{opacity:1;visibility:visible}
-  .drawer{position:fixed;top:0;right:0;height:100%;width:min(78vw,300px);background:var(--surface);z-index:31;box-shadow:-8px 0 30px rgba(10,22,35,.18);transform:translateX(100%);transition:transform .24s ease;display:flex;flex-direction:column;padding:14px 20px 24px}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(78vw,300px);background:var(--bg);z-index:31;box-shadow:-8px 0 30px rgba(21,23,26,.18);transform:translateX(100%);transition:transform .24s ease;display:flex;flex-direction:column;padding:14px 20px 24px}
   .drawer.open{transform:translateX(0)}
   .drawer-close{align-self:flex-end;background:transparent;border:0;color:var(--ink2);font-size:24px;cursor:pointer;padding:6px;line-height:1}
   .drawer-nav{display:flex;flex-direction:column;margin-top:6px}
@@ -98,7 +89,7 @@ CSS = """
   .drawer-app{margin-top:20px;background:var(--accent);color:#fff;font-weight:600;border-radius:12px;padding:13px;text-align:center;font-size:14px}
 
   .phead{padding:38px 0 6px;text-align:center}
-  .kicker{font-size:12.5px;font-weight:600;color:var(--accent-ink);letter-spacing:.03em;margin-bottom:9px}
+  .kicker{font-size:12.5px;font-weight:600;color:var(--ink2);letter-spacing:.06em;margin-bottom:9px}
   .phead h1{font-size:30px;letter-spacing:-.02em;margin:0;font-weight:700}
   .phead .lead{font-size:14px;color:var(--ink2);margin:12px auto 0;max-width:460px;line-height:1.66}
 
@@ -114,7 +105,7 @@ CSS = """
 
   /* 추천 가이드(featured) */
   .feat{display:grid;grid-template-columns:1fr;gap:10px}
-  .fcard{display:block;background:var(--sky-soft);border:0.5px solid rgba(11,174,255,.4);border-radius:16px;padding:16px 17px}
+  .fcard{display:block;background:#E4F4FF;border:0.5px solid rgba(11,174,255,.35);border-radius:16px;padding:16px 17px}
   .fcard .ft{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.42}
   .fcard .fd{font-size:12px;color:var(--accent-ink);margin-top:6px}
 
@@ -164,7 +155,7 @@ CSS = """
   .crumb a{color:var(--ink3)}
   .crumb .sep{margin:0 6px}
   .art-head{padding:14px 0 20px;border-bottom:0.5px solid var(--border);margin-bottom:26px}
-  .art-cat{display:inline-block;font-size:12px;font-weight:600;color:var(--accent-ink);background:#D9F0FF;
+  .art-cat{display:inline-block;font-size:12px;font-weight:600;color:var(--accent-ink);background:#E4F4FF;
     border-radius:999px;padding:4px 11px;margin-bottom:14px}
   .art-head h1{font-size:26px;line-height:1.32;letter-spacing:-.02em;margin:0;font-weight:700}
   .art-meta{font-size:12.5px;color:var(--ink3);margin-top:13px}
@@ -181,19 +172,19 @@ CSS = """
   .prose table{width:100%;border-collapse:collapse;margin:0 0 18px;font-size:13.5px}
   .prose th,.prose td{border:0.5px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top}
   .prose th{background:var(--surface);font-weight:600;white-space:nowrap}
-  .callout{background:var(--sky-soft);border:0.5px solid rgba(11,174,255,.4);border-radius:14px;padding:16px 18px;margin:24px 0}
+  .callout{background:#E4F4FF;border:0.5px solid rgba(11,174,255,.35);border-radius:14px;padding:16px 18px;margin:24px 0}
   .callout .ch{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14.5px;margin-bottom:6px}
   .callout .ch i{color:var(--accent-ink);font-size:19px}
   .callout .cp{font-size:13.5px;color:var(--ink2);margin:0;line-height:1.65}
   .callout .cbtn{display:inline-block;margin-top:11px;font-size:13px;font-weight:600;color:var(--accent-ink)}
-  .prose .callout-note{background:var(--sky-soft);border:0.5px solid rgba(11,174,255,.4);border-radius:12px;padding:15px 17px;margin:18px 0;font-size:14.5px;line-height:1.7;color:var(--ink)}
+  .prose .callout-note{background:#E4F4FF;border:0.5px solid rgba(11,174,255,.35);border-radius:12px;padding:15px 17px;margin:18px 0;font-size:14.5px;line-height:1.7;color:var(--ink)}
   .prose .callout-note .ce{margin-right:7px}
-  .art-cta{background:var(--dark);border-radius:18px;padding:26px 22px;text-align:center;margin:36px 0 8px}
+  .art-cta{background:#17171A;border-radius:18px;padding:26px 22px;text-align:center;margin:36px 0 8px}
   .art-cta h3{color:#fff;font-size:18px;margin:0 0 7px;font-weight:700}
-  .art-cta p{color:#AFC4D4;font-size:13px;margin:0 0 16px;line-height:1.6}
+  .art-cta p{color:#B9BDC4;font-size:13px;margin:0 0 16px;line-height:1.6}
   .art-cta a{display:inline-block;background:var(--accent);color:#fff;font-weight:600;border-radius:12px;padding:12px 22px;font-size:14px}
-  /* A · 랜딩 서비스 섹션 그대로 (밝은 스카이 패널 + 아웃라인 버튼 + 회색 링크) */
-  .svc-block{background:var(--sky-soft);border:0.5px solid rgba(11,174,255,.4);border-radius:16px;padding:22px 20px;text-align:center;margin:34px 0 8px}
+  /* A · 랜딩 서비스 섹션 그대로 (밝은 앰버 패널 + 아웃라인 버튼 + 회색 링크) */
+  .svc-block{background:#E4F4FF;border:0.5px solid rgba(11,174,255,.35);border-radius:16px;padding:22px 20px;text-align:center;margin:34px 0 8px}
   .svc-block .svc-title{font-size:16px;font-weight:700;color:var(--ink)}
   .svc-block .svc-desc{font-size:13px;color:var(--ink2);margin-top:6px}
   .svc-cta{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1.5px solid var(--accent);color:var(--accent-ink);font-weight:600;border-radius:14px;padding:14px;font-size:15px;width:100%;max-width:460px;margin:16px auto 0;text-decoration:none}
@@ -206,7 +197,7 @@ CSS = """
   /* B · 두 갈래 카드 (앱=앰버 채움 / 서비스=앰버 아웃라인 — 랜딩 버튼 규칙) */
   .two-path{display:grid;grid-template-columns:1fr;gap:12px;margin:34px 0 8px}
   .pcard{border:0.5px solid var(--border);border-radius:16px;padding:20px 18px;text-align:center;background:var(--surface)}
-  .pcard.accent{background:var(--sky-soft);border-color:rgba(11,174,255,.4)}
+  .pcard.accent{background:#E4F4FF;border-color:rgba(11,174,255,.35)}
   .pcard>i{font-size:25px;color:var(--accent-ink)}
   .pcard .pt{font-size:15px;font-weight:700;margin:9px 0 3px}
   .pcard .pd{font-size:12.5px;color:var(--ink2);margin:0 0 14px;line-height:1.5}
@@ -228,8 +219,8 @@ CSS = """
   .prose .embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
   @media(min-width:760px){.prose a.bookmark .bk-thumb{width:180px;flex-basis:180px}}
 
-  footer{background:#0C1520;color:#7E93A6;padding:28px 0;font-size:12px;line-height:1.85;margin-top:auto}
-  footer a{color:#A9C0D4}
+  footer{background:#fff;color:#5C5C60;border-top:0.5px solid var(--border);padding:26px 0 30px;font-size:12px;line-height:1.85;margin-top:auto}
+  footer a{color:#454549}
   footer .fsns{display:inline-flex;align-items:center;gap:5px;margin:9px 0 4px;font-weight:600}
   footer .fsns .nlogo{font-weight:800;font-size:13px;line-height:1}
 
@@ -243,7 +234,9 @@ CSS = """
   }
 """
 
-def head(title, body_class=""):
+DESC_DEFAULT = "반려동물 해외 이동 준비 — 펫무브"
+
+def head(title, desc=DESC_DEFAULT, og_type="website", body_class=""):
     body_open = f'<body class="{body_class}">' if body_class else "<body>"
     return f"""<!DOCTYPE html>
 <html lang="ko">
@@ -251,6 +244,14 @@ def head(title, body_class=""):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
+<meta name="description" content="{desc}">
+<meta property="og:type" content="{og_type}">
+<meta property="og:site_name" content="펫무브">
+<meta property="og:title" content="{title}">
+<meta property="og:description" content="{desc}">
+<meta property="og:locale" content="ko_KR">
+<!-- og:image 는 배포 이미지 자산 확정 후 추가(/og.png) — Next 이식 때 -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Cdefs%3E%3CclipPath id=%22s%22%3E%3Crect width=%22200%22 height=%22200%22 rx=%2246%22/%3E%3C/clipPath%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%2363C9FF%22/%3E%3Cstop offset=%221%22 stop-color=%22%230BAEFF%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg clip-path=%22url(%23s)%22%3E%3Crect width=%22200%22 height=%22200%22 fill=%22url(%23g)%22/%3E%3Cpath d=%22M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106%22 fill=%22none%22 stroke=%22%23FFC93C%22 stroke-width=%2218%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3Crect x=%220%22 y=%22160%22 width=%22200%22 height=%2240%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2246%22 cy=%22168%22 r=%2252%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2272%22 cy=%22120%22 r=%2248%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22112%22 cy=%22148%22 r=%2234%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22146%22 cy=%22138%22 r=%2238%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22178%22 cy=%22154%22 r=%2224%22 fill=%22%23fff%22/%3E%3Cpath d=%22M116 132 L116 118%22 fill=%22none%22 stroke=%22%23FFC93C%22 stroke-width=%2218%22 stroke-linecap=%22round%22 opacity=%220.34%22/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -288,7 +289,7 @@ def header(active):
 
 FOOTER = f"""  <footer>
     <div class="container">
-      <div style="color:#D7E4EF;font-weight:600;margin-bottom:6px">펫무브 · PETMOVE</div>
+      <div style="color:#212124;font-weight:600;margin-bottom:6px">펫무브 · PETMOVE</div>
       로잔동물의료센터 · 사업자등록번호 124-18-42859<br>
       서울시 관악구 관악로29길 3 · 02-872-7588<br>
       <a href="https://blog.naver.com/petmove" target="_blank" rel="noopener" class="fsns"><span class="nlogo">N</span>네이버 블로그</a><br>
@@ -317,7 +318,7 @@ def build_guide():
         f'<a href="{LIVE}/{kind}/{slug}/" target="_blank" rel="noopener">{name}</a>'
         for name, kind, slug in OTHER
     )
-    return f"""{head('가이드 · 펫무브')}
+    return f"""{head('가이드 · 펫무브', '나라별 반려동물 출국 가이드 — 일본·태국·필리핀 등 34개국의 검역 준비 방법을 확인하세요.')}
 {header('guide')}
   <div class="phead">
     <div class="container">
@@ -328,21 +329,21 @@ def build_guide():
 
   <section>
     <div class="container">
-      <div class="sec-h">추천 가이드</div>
+      <h2 class="sec-h">추천 가이드</h2>
       <div class="feat">{feat}</div>
     </div>
   </section>
 
   <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
     <div class="container">
-      <div class="sec-h">여행지별 가이드</div>
+      <h2 class="sec-h">여행지별 가이드</h2>
       <div id="regions">{regions_html}</div>
     </div>
   </section>
 
   <section>
     <div class="container">
-      <div class="sec-h">주제별 가이드</div>
+      <h2 class="sec-h">주제별 가이드</h2>
       <div class="other-links">{other_html}</div>
     </div>
   </section>
@@ -366,7 +367,7 @@ def build_guide():
 
 
 def build_contact():
-    return f"""{head('문의 · 펫무브')}
+    return f"""{head('문의 · 펫무브', '펫무브 상담·문의 — 카카오톡 상담·전화·네이버 예약으로 편하게 연락주세요.')}
 {header('contact')}
   <div class="phead">
     <div class="container">
@@ -377,7 +378,7 @@ def build_contact():
   <section>
     <div class="container"><div class="csec">
       <div class="cblock">
-        <div class="cl">상담 · 문의</div>
+        <h2 class="cl">상담 · 문의</h2>
         <a class="chan" href="https://pf.kakao.com/_zDDxhj/chat" target="_blank" rel="noopener">
           <i class="ti ti-message-circle"></i><span><span class="cv">카카오톡 상담</span></span></a>
         <a class="chan" href="tel:02-872-7588">
@@ -386,7 +387,7 @@ def build_contact():
           <span class="nlogo">N</span><span><span class="cv">네이버 예약</span><div class="cs">로잔동물의료센터</div></span></a>
       </div>
       <div class="cblock">
-        <div class="cl">제휴 · 업무 문의</div>
+        <h2 class="cl">제휴 · 업무 문의</h2>
         <a class="chan" href="mailto:petmove@naver.com">
           <i class="ti ti-mail"></i><span><span class="cv">petmove@naver.com</span></span></a>
       </div>
@@ -788,6 +789,8 @@ with open(os.path.join(OUT_DIR, "contact.html"), "w", encoding="utf-8") as f:
     f.write(build_contact())
 with open(os.path.join(OUT_DIR, "article.html"), "w", encoding="utf-8") as f:
     f.write(build_article())
-with open(os.path.join(OUT_DIR, "article-sample.html"), "w", encoding="utf-8") as f:
-    f.write(build_article_sample())
-print("wrote guide.html + contact.html + article.html + article-sample.html")
+# ⚠️ article-sample.html 은 더 이상 여기서 쓰지 않는다 — 2026-07-06 세션부터 손으로
+# 다듬은 본문 공통 템플릿(아코디언 B·유용한 자료·cta-sep 등)이 진실이고, www_convert.py 가
+# 그 파일을 셸로 읽는다. 이 생성기의 build_article_sample() 은 구버전이라 덮으면
+# 변환기 마커(<hr class="cta-sep">)가 사라져 78글 변환이 깨진다(2026-07-12 실제 사고).
+print("wrote guide.html + contact.html + article.html (article-sample.html은 손편집 truth, 미출력)")

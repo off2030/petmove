@@ -54,6 +54,11 @@ export interface JourneyStage {
    */
   infoMessage?: string
   /**
+   * 주의 본문 — 실패한 비-info 체크의 첫 메시지. desc 와 달리 '설명문 표시' 토글과
+   * 무관하게 항상 채워진다 — 히어로 날씨 칩·바텀시트가 내용을 보여줄 수 있도록.
+   */
+  warnMessage?: string
+  /**
    * advisoryOnly step (추가 백신·추가 검사 등 미래 만료 대비 reminder) 여부.
    * 미완료(upcoming) 상태일 때 본 흐름의 다음 단계는 못 가리되, 일정 row 에서는
    * '안내' 톤으로 표시해 보호자가 인지하도록 한다. (deferrable 한 미래 대비라
@@ -85,7 +90,8 @@ export interface CaseAlert {
 }
 
 export interface JourneyData {
-  pet: { name: string }
+  /** nameEn — 증명서 로마자 표기. 앱 온보딩은 필수라 항상 있고, admin 생성 케이스만 null 가능. */
+  pet: { name: string; nameEn: string | null }
   trip: {
     fromCity: string
     toCity: string
@@ -900,24 +906,25 @@ export function buildJourney(
       date,
       dateLabel,
       state: done ? 'done' : 'upcoming',
-      // 설명문 숨김 토글: 정적 설명문(summary) + 완료 narration(doneSummary)을 감춘다.
-      // 주의(failedMsg)·상태 안내(situational desc — 오늘 예정일·진행 중 등)는 유지 —
-      // 보호자가 놓치면 안 될 내용이라.
-      desc: failedMsg
-        ? failedMsg
-        : done && !isFutureDate
-          ? // 완료된 절차(과거·오늘)는 설명문 숨김 — doneSummary 과거형 narration("…했습니다")은
-            // 제목을 반복할 뿐 정보가 없다. 주의(failedMsg)는 위에서 우선, 미래 예약(done+future)은
-            // 아래 분기로 현재형 안내를 유지한다.
-            undefined
-          : hideStepDescriptions && (desc === summary || desc === step.doneSummary)
-            ? undefined
+      // 설명문 숨김 토글: 켜져 있으면(표시 OFF) 일정 리스트의 보조 줄을 전부 감춘다 —
+      // 주의(failedMsg)·상태 안내(situational)도 포함(2026-07-12 사용자 확정). 주의의
+      // 존재 자체는 배지 아이콘 + 우측 '주의' 라벨 + 히어로 날씨 칩이 항상 알리고,
+      // 내용은 warnMessage(칩·바텀시트)와 상세 페이지가 담당한다.
+      desc: hideStepDescriptions
+        ? undefined
+        : failedMsg
+          ? failedMsg
+          : done && !isFutureDate
+            ? // 완료된 절차(과거·오늘)는 설명문 숨김 — doneSummary 과거형 narration("…했습니다")은
+              // 제목을 반복할 뿐 정보가 없다. 미래 예약(done+future)은 아래 분기로 현재형 안내 유지.
+              undefined
             : desc,
       cardDesc,
       failedChecks: failedChecks > 0 ? failedChecks : undefined,
       infoChecks: infoChecks > 0 ? infoChecks : undefined,
       advisory: isAdvisory ? true : undefined,
       infoMessage,
+      warnMessage: failedMsg,
       inProgress:
         titerInProgress || advanceInProgress || jpExportInProgress || importPermitInProgress
           ? true
@@ -1014,7 +1021,7 @@ export function buildJourney(
   const totalInfoChecks = stages.reduce((sum, s) => sum + (s.infoChecks ?? 0), 0)
 
   return {
-    pet: { name: caseRow.pet_name ?? '반려동물' },
+    pet: { name: caseRow.pet_name ?? '반려동물', nameEn: caseRow.pet_name_en },
     trip: {
       fromCity: '한국',
       toCity: ctx.destinationToken ?? caseRow.destination ?? '—',

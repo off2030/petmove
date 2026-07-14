@@ -1,13 +1,6 @@
-'use client'
-
-import { useCases } from '@/components/portal-shell/case-data-provider'
-import { GuardianEditView } from '@/components/me/guardian-edit-view'
-import { ComingSoonView } from '@/components/me/coming-soon-view'
-
+/**
+ * 보호자 편집 라우트 (/me/guardian) — 실제 화면은 TabHost detail 레이어(GuardianDetail).
+ */
 export default function MeGuardianPage() {
-  const { cases } = useCases()
-  if (cases.length === 0) {
-    return <ComingSoonView title="보호자" message="먼저 케이스를 등록하세요." />
-  }
-  return <GuardianEditView />
+  return null
 }

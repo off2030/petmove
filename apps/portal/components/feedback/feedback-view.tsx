@@ -1,9 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useTransition, type CSSProperties } from 'react'
+import { useState, useTransition } from 'react'
 import { parseDestinations, readJourneyFeedback } from '@petmove/domain'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
+import { monoCap } from '@/components/me/settings-shared'
+import { subTitle } from '@/lib/tokens'
 import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import { saveCaseFeedback } from '@/lib/actions/cases'
 
@@ -17,7 +19,17 @@ import { C } from '@/lib/palette'
 
 // 표시 순서는 '아주 좋아요'(level 5)를 맨 앞으로 — 긍정 선택을 앞세워 응답 문턱을 낮춘다.
 // level(저장값)은 그대로라 점수 의미는 불변, 화면 순서만 역순.
-const FACES: { level: number; label: string }[] = [
+/** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
+function withWaGwa(name: string): string {
+  const last = name.charCodeAt(name.length - 1)
+  if (last >= 0xac00 && last <= 0xd7a3) {
+    return (last - 0xac00) % 28 !== 0 ? `${name}과` : `${name}와`
+  }
+  return `${name}와`
+}
+
+/** 만족도 얼굴 5단계 — 좋은 순. 완료 히어로 아래 소감 카드(timeline-calm)와 공유. */
+export const FACES: { level: number; label: string }[] = [
   { level: 5, label: '아주 좋아요' },
   { level: 4, label: '좋았어요' },
   { level: 3, label: '보통이에요' },
@@ -26,7 +38,7 @@ const FACES: { level: number; label: string }[] = [
 ]
 
 /** 모노톤 라인 얼굴 — level(1~5)에 따라 입 곡선이 찡그림→미소로 변한다. */
-function FaceIcon({ level, size = 30 }: { level: number; size?: number }) {
+export function FaceIcon({ level, size = 30 }: { level: number; size?: number }) {
   const mouth =
     level === 1
       ? 'M8 16.5 Q12 12.5 16 16.5'
@@ -57,7 +69,16 @@ function FaceIcon({ level, size = 30 }: { level: number; size?: number }) {
   )
 }
 
-export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | null }) {
+export function FeedbackView({
+  caseId,
+  dest,
+  initialRating = null,
+}: {
+  caseId: string
+  dest: string | null
+  /** 소감 카드의 얼굴 원탭으로 진입 시 미리 선택할 만족도(?rating=). 저장 전 초기값. */
+  initialRating?: number | null
+}) {
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
   // 목적지 칸의 의견 읽기 — legacy 단일 객체는 첫 목적지 것으로 호환.
@@ -65,20 +86,27 @@ export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | 
   const fb = readJourneyFeedback(caseRow?.data, dest ?? firstToken, firstToken)
   const saved = { rating: fb?.rating ?? null, text: fb?.text ?? '' }
 
-  const [rating, setRating] = useState<number | null>(saved.rating)
+  // 시작 선택값 — 원탭 진입(?rating) > 저장된 값 > '아주 좋아요'(5) 기본 선택.
+  // (2026-07-12 사용자 확정: 빈 상태 대신 첫 얼굴이 선택된 채 시작 — 만족한 보호자는
+  // 열자마자 '남기기' 한 번이면 끝.)
+  const initialShown = initialRating ?? saved.rating ?? 5
+  const [rating, setRating] = useState<number | null>(initialShown)
   const [text, setText] = useState(saved.text)
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
-  const dirty = rating !== saved.rating || text.trim() !== saved.text
-  useUnsavedGuard(dirty)
+  // 저장 기준 변경 여부(보내기 활성) vs 사용자 조작 여부(이탈 경고) 를 분리 —
+  // 기본 선택(5)만 붙은 채 아무것도 안 만졌다면 경고 없이 떠날 수 있어야 한다.
+  const changedFromSaved = rating !== saved.rating || text.trim() !== saved.text
+  const touched = rating !== initialShown || text.trim() !== saved.text
+  useUnsavedGuard(touched)
   const hasContent = rating !== null || text.trim().length > 0
   const alreadySent = saved.rating !== null || saved.text.length > 0
-  const justSaved = status === 'saved' && !dirty
-  // 내용이 있으면 저장, 또는 이미 남긴 의견을 비웠으면(삭제) 그 비움도 저장. 빈 상태에서
-  // 처음부터 빈 채로는 저장할 게 없음(dirty=false). 저장 액션은 빈 값이면 feedback 을 삭제.
-  const canSend = (hasContent || alreadySent) && dirty && status !== 'saving'
+  const justSaved = status === 'saved' && !changedFromSaved
+  // 내용이 있으면 저장, 또는 이미 남긴 의견을 비웠으면(삭제) 그 비움도 저장.
+  // 저장 액션은 빈 값이면 feedback 을 삭제.
+  const canSend = (hasContent || alreadySent) && changedFromSaved && status !== 'saving'
 
   function handleSubmit() {
     if (!canSend) return
@@ -97,16 +125,7 @@ export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | 
     })
   }
 
-  const serif: CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontWeight: 500,
-    letterSpacing: '-0.01em',
-  }
-  const monoCap: CSSProperties = {
-    fontSize: 12,
-    color: C.ink3,
-    fontWeight: 600,
-  }
+  // 타이포 정의는 settings-shared 단일 출처(serif·monoCap import) — 2026-07-12 통합.
 
   return (
     <div
@@ -147,8 +166,10 @@ export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | 
           일정
         </Link>
 
-        <h1 style={{ ...serif, fontSize: 18, lineHeight: 1.2, margin: '12px 0 0', color: C.ink }}>
-          의견 남기기
+        {/* 제목 = 소감 카드와 같은 질문 — 카드→페이지가 한 번의 대화로 이어지게.
+            '의견 남기기' 기능명은 하단 버튼('남기기')이 담당. */}
+        <h1 style={{ ...subTitle, margin: '12px 0 0' }}>
+          {caseRow?.pet_name ? `${withWaGwa(caseRow.pet_name)}의 여정, 어떠셨나요?` : '이번 여정, 어떠셨나요?'}
         </h1>
 
         {/* 만족도 — 얼굴 5단계 (모노톤) */}
@@ -222,10 +243,14 @@ export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | 
               outline: 'none',
             }}
           />
+          {/* 읽힌다는 확신 — 자유 의견 응답률을 위한 신뢰 한 줄. */}
+          <p style={{ margin: '8px 2px 0', fontSize: 12, color: C.ink3, lineHeight: 1.5 }}>
+            남겨주신 의견은 펫무브 팀이 모두 읽어요
+          </p>
         </section>
 
         {/* 보낸 뒤 안내 */}
-        {alreadySent && !dirty && status !== 'error' && (
+        {alreadySent && !changedFromSaved && status !== 'error' && (
           <div
             role="status"
             style={{
@@ -239,7 +264,8 @@ export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | 
               lineHeight: 1.5,
             }}
           >
-            소중한 의견 감사합니다. 즐거운 하루 되세요 ❤️
+            소중한 의견 감사합니다.{' '}
+            {caseRow?.pet_name ? `${withWaGwa(caseRow.pet_name)} 행복한 시간 보내세요` : '즐거운 하루 되세요'} ❤️
           </div>
         )}
         {status === 'error' && (
@@ -250,8 +276,8 @@ export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | 
               padding: '10px 12px',
               borderRadius: 10,
               background: C.surface,
-              border: `.5px solid color-mix(in srgb, ${C.warn} 33%, transparent)`,
-              color: C.warn,
+              border: `.5px solid color-mix(in srgb, ${C.danger} 33%, transparent)`,
+              color: C.danger,
               fontSize: 12,
               textAlign: 'center',
             }}
@@ -286,7 +312,7 @@ export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | 
             ? '남기는 중…'
             : justSaved
               ? '✓ 남겼어요'
-              : dirty
+              : changedFromSaved
                 ? alreadySent
                   ? '수정해서 남기기'
                   : '남기기'

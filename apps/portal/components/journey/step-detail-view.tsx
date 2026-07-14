@@ -47,7 +47,11 @@ import {
 import { useConfirm } from '@petmove/ui'
 import { activeDestinationView } from '@/lib/cases/active-destination'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
+import { monoCap, num, serif } from '@/components/me/settings-shared'
+import { subTitle } from '@/lib/tokens'
+import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
 import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
+import { replaceTab } from '@/components/portal-shell/tab-nav'
 import {
   getCaseVaccineData,
   markAdvanceNotificationApprovalSkipped,
@@ -1626,22 +1630,7 @@ export function StepDetailView({
   }
 
 
-  const serif: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontWeight: 500,
-    letterSpacing: '-0.01em',
-    fontVariantNumeric: 'tabular-nums',
-  }
-  const num: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontVariantNumeric: 'tabular-nums',
-    fontWeight: 400,
-  }
-  const monoCap: React.CSSProperties = {
-    fontSize: 12,
-    color: C.ink3,
-    fontWeight: 600,
-  }
+  // 타이포 정의는 settings-shared 단일 출처(serif·num·monoCap import) — 2026-07-12 통합.
 
   // ok=false 체크를 톤별로 분리 — '주의'(blocker/warning) vs '안내'(info).
   const failed = checkResults.filter((c) => !c.result.ok && c.check.severity !== 'info')
@@ -1718,7 +1707,7 @@ export function StepDetailView({
       setSkippingApproval(false)
       if (res.ok) {
         updateCase(res.value)
-        router.replace(journeyHref)
+        replaceTab(router, journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1749,7 +1738,7 @@ export function StepDetailView({
       setSkippingJpExport(false)
       if (res.ok) {
         updateCase(res.value)
-        router.replace(journeyHref)
+        replaceTab(router, journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1775,7 +1764,7 @@ export function StepDetailView({
       setCompletingImportPermit(false)
       if (res.ok) {
         updateCase(res.value)
-        router.replace(journeyHref)
+        replaceTab(router, journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1800,7 +1789,7 @@ export function StepDetailView({
       setCompletingTiter(false)
       if (res.ok) {
         updateCase(res.value)
-        router.replace(journeyHref)
+        replaceTab(router, journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1878,7 +1867,7 @@ export function StepDetailView({
       if (res.ok) {
         updateCase(res.value)
         // 전환 후 일정으로 — 사전 신고가 다음 할 일로 자동 승격된 상태를 보여준다.
-        router.replace(journeyHref)
+        replaceTab(router, journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1955,9 +1944,7 @@ export function StepDetailView({
               stepNumber
             )}
           </div>
-          <h1 style={{ ...serif, fontSize: 18, lineHeight: 1.2, margin: 0, color: C.ink, minWidth: 0 }}>
-            {step.title}
-          </h1>
+          <h1 style={{ ...subTitle, minWidth: 0 }}>{step.title}</h1>
         </div>
 
         {/* Description */}
@@ -2152,12 +2139,13 @@ export function StepDetailView({
               marginTop: 16,
               padding: '14px 16px',
               borderRadius: 16,
-              background: C.infoBg,
-              border: `.5px solid color-mix(in srgb, ${C.info} 35%, transparent)`,
+              background: C.surface,
+              border: `.5px solid ${C.line}`,
             }}
           >
-            <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8 }}>
-              안내{noticeCount > 1 ? ` ${noticeCount}건` : ''}
+            <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <CloudIcon size={13} />
+              <span>안내{noticeCount > 1 ? ` ${noticeCount}건` : ''}</span>
             </div>
             {situationalDesc && (
               <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5, whiteSpace: 'pre-line' }}>
@@ -2193,7 +2181,7 @@ export function StepDetailView({
                 style={{
                   margin: situationalDesc ? '12px 0 0' : 0,
                   padding: situationalDesc ? '12px 0 0' : 0,
-                  borderTop: situationalDesc ? `.5px solid color-mix(in srgb, ${C.info} 25%, transparent)` : 'none',
+                  borderTop: situationalDesc ? `.5px solid ${C.line}` : 'none',
                   listStyle: 'none',
                   display: 'flex',
                   flexDirection: 'column',
@@ -2215,27 +2203,30 @@ export function StepDetailView({
           </section>
         )}
 
-        {/* Warnings */}
+        {/* Warnings — 카드 배경은 다른 흰 카드와 동일 중립화, 색은 아이콘·라벨에만
+            (2026-07-12: 옅은 색 배경+색 테두리 → 흰 배경+기본 테두리). */}
         {failed.length > 0 && (
           <section
             style={{
               marginTop: 16,
               padding: '14px 16px',
               borderRadius: 16,
-              background: C.warnBg,
-              border: `.5px solid color-mix(in srgb, ${C.warn} 20%, transparent)`,
+              background: C.surface,
+              border: `.5px solid ${C.line}`,
             }}
           >
-            <div style={{ ...monoCap, color: C.warn, fontWeight: 700, marginBottom: 8 }}>
-              주의 {failed.length}건
+            <div style={{ ...monoCap, color: C.warn, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <StormCloudIcon size={13} />
+              <span>주의{failed.length > 1 ? ` ${failed.length}건` : ''}</span>
             </div>
+            {/* 안내 박스와 동일 구조 — 본문만(제목 X). 이 페이지 자체가 해당 step 이라
+                check.title 은 대부분 step 이름의 반복. (2026-07-12 주의·안내 표시 전수 통일) */}
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {failed.map(({ check, result }) => (
                 <li key={check.id}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, marginBottom: 2 }}>{check.title}</div>
-                  {result.message && (
-                    <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>{result.message}</div>
-                  )}
+                  <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
+                    {result.message ?? check.title}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -2633,8 +2624,8 @@ export function StepDetailView({
                 borderRadius: 10,
                 // 불투명 배경 — 뒤 콘텐츠(첨부 영역)가 비쳐 겹쳐 보이지 않도록.
                 background: C.surface,
-                border: `.5px solid color-mix(in srgb, ${C.warn} 33%, transparent)`,
-                color: C.warn,
+                border: `.5px solid color-mix(in srgb, ${C.danger} 33%, transparent)`,
+                color: C.danger,
                 fontSize: 12,
                 textAlign: 'center',
               }}

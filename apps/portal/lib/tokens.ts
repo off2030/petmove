@@ -48,3 +48,70 @@ export const SPACE = {
   /** 바깥 카드 패딩. */
   card: 18,
 } as const
+
+/** 탭 루트 리듬 — 상단 바 아래 → 제목 시작 공백. 준비·서류·맡기기·내 정보·더보기·내 여정
+ *  전 탭 공통 (2026-07-13 통일 — 탭마다 24/32/40/44 로 제각각이던 것을 박제).
+ *  탭 루트 컨테이너는 paddingTop 에 이 값만 쓰고, 제목엔 위 마진을 주지 않는다. */
+export const PAGE_TOP = 32
+
+/**
+ * 타이포 위계 — 앱 전체 단일 출처 (2026-07-13 통일).
+ * 제목 3단(화면 24 > 하위/상세 20 > 구획 17) + 항목 16 + 라벨 12. 서체는 전부 Pretendard.
+ * 화면 코드는 여기서 import 해서 쓰고 fontSize/weight/color 를 직접 박지 말 것.
+ *
+ *   pageTitle   24/600  화면 제목 — 탭 루트·동물 이름 (탭의 최상단 제목)
+ *   subTitle    20/600  하위/상세 페이지 제목 — 내 정보 편집·서류 상세·일정 상세·의견
+ *   sectionTitle 16/600 구획 제목 — 준비 단계·서류 체크리스트·검역증·보관함 (항목과 같은 16, 굵기로 구분)
+ *   itemTitle   16/500  항목 제목 — 카드 이름(동물·조직)·리스트 행 이름
+ *   groupLabel  12/600  라벨(ink2) — 보호자·알림·일본으로 떠나요 등 회색 소제목
+ */
+export const pageTitle = {
+  fontFamily: 'var(--pm-font-display)',
+  fontWeight: 600,
+  fontSize: 24,
+  letterSpacing: '-0.01em',
+  fontVariantNumeric: 'tabular-nums',
+  lineHeight: 1.15,
+  margin: 0,
+  color: 'var(--pm-ink)',
+} as const
+
+/** 하위/상세 페이지 제목 — 탭 루트(24)보다 한 단계 아래. 뒤로가기 링크와 함께 쓰는
+ *  페이지의 제목(내 정보 편집·서류 상세·일정 상세·의견). margin 은 호출자가. */
+export const subTitle = {
+  fontFamily: 'var(--pm-font-display)',
+  fontWeight: 600,
+  fontSize: 20,
+  letterSpacing: '-0.01em',
+  fontVariantNumeric: 'tabular-nums',
+  lineHeight: 1.2,
+  color: 'var(--pm-ink)',
+} as const
+
+/** 구획 제목 — 화면을 큰 덩어리로 나누는 제목. 16/600 잉크(항목 16/500 과 같은 크기,
+ *  굵기로만 구분 — 1px 차이 없앰, 2026-07-13 사용자 확정). margin 은 호출자가. */
+export const sectionTitle = {
+  fontFamily: 'var(--pm-font-display)',
+  fontWeight: 600,
+  fontSize: 16,
+  letterSpacing: '-0.01em',
+  fontVariantNumeric: 'tabular-nums',
+  color: 'var(--pm-ink)',
+} as const
+
+/** 항목 제목 — 카드/행 안의 이름. 16/500 잉크. */
+export const itemTitle = {
+  fontFamily: 'var(--pm-font-display)',
+  fontWeight: 500,
+  fontSize: 16,
+  color: 'var(--pm-ink)',
+} as const
+
+/** 라벨 — 회색 소제목(구획 라벨·구간 캡션). 12/600 **ink2** — ink3(#97979c)는 12px 에서
+ *  대비 2.65:1 로 접근성 미달이라 ink2(#5c5c60, ~6:1)로 올림(2026-07-13). settings-shared
+ *  의 monoCap 과 동일값. */
+export const groupLabel = {
+  fontSize: 12,
+  fontWeight: 600,
+  color: 'var(--pm-ink-2)',
+} as const

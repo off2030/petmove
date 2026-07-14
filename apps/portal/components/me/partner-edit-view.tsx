@@ -247,7 +247,7 @@ export function PartnerEditView({
                 opacity: pending ? 0.5 : 1,
               }}
             >
-              <span style={{ fontSize: 13, color: C.warn }}>연결 해제</span>
+              <span style={{ fontSize: 13, color: C.danger }}>연결 해제</span>
               <span />
             </button>
           </SectionCard>

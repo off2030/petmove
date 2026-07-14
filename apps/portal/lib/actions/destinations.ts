@@ -60,7 +60,7 @@ export async function addCaseDestination(
 ): Promise<Result<{ destinations: string[]; added: boolean }>> {
   try {
     const dest = destination.trim()
-    if (!dest) return { ok: false, error: '목적지가 비어 있습니다.' }
+    if (!dest) return { ok: false, error: '여행지가 비어 있습니다.' }
 
     const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
@@ -130,7 +130,7 @@ export async function addCaseDestination(
     if (remaining.length >= MAX_DESTINATIONS_PER_CASE) {
       return {
         ok: false,
-        error: `목적지는 최대 ${MAX_DESTINATIONS_PER_CASE}개까지 추가할 수 있어요.`,
+        error: `여행지는 최대 ${MAX_DESTINATIONS_PER_CASE}개까지 추가할 수 있어요.`,
       }
     }
 
@@ -202,7 +202,7 @@ export async function removeCaseDestination(
 ): Promise<Result<{ destinations: string[] }>> {
   try {
     const dest = destination.trim()
-    if (!dest) return { ok: false, error: '목적지가 비어 있습니다.' }
+    if (!dest) return { ok: false, error: '여행지가 비어 있습니다.' }
 
     const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
@@ -267,7 +267,7 @@ export async function setCaseDestinationTripType(
 ): Promise<Result<true>> {
   try {
     const dest = destination.trim()
-    if (!dest) return { ok: false, error: '목적지가 비어 있습니다.' }
+    if (!dest) return { ok: false, error: '여행지가 비어 있습니다.' }
 
     const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
@@ -393,7 +393,7 @@ export async function dismissCompletionPrompt(
 ): Promise<Result<true>> {
   try {
     const dest = destination.trim()
-    if (!dest) return { ok: false, error: '목적지가 비어 있습니다.' }
+    if (!dest) return { ok: false, error: '여행지가 비어 있습니다.' }
 
     const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
@@ -447,7 +447,7 @@ export async function dismissCompletionPrompt(
 export async function confirmArrival(caseId: string, destination: string): Promise<Result<true>> {
   try {
     const dest = destination.trim()
-    if (!dest) return { ok: false, error: '목적지가 비어 있습니다.' }
+    if (!dest) return { ok: false, error: '여행지가 비어 있습니다.' }
 
     const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
@@ -526,7 +526,7 @@ export async function finishJourney(
 ): Promise<Result<{ destinations: string[] }>> {
   try {
     const dest = destination.trim()
-    if (!dest) return { ok: false, error: '목적지가 비어 있습니다.' }
+    if (!dest) return { ok: false, error: '여행지가 비어 있습니다.' }
 
     const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
@@ -639,7 +639,7 @@ export async function restoreJourney(
 ): Promise<Result<{ destinations: string[] }>> {
   try {
     const dest = destination.trim()
-    if (!dest) return { ok: false, error: '목적지가 비어 있습니다.' }
+    if (!dest) return { ok: false, error: '여행지가 비어 있습니다.' }
 
     const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
