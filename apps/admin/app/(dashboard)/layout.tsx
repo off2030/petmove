@@ -15,7 +15,7 @@ import { getOrgVaccineData, getOrgVaccineDefaults } from '@/lib/vaccine-data'
 import { getCalculatorItems } from '@/lib/calculator-data'
 import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import { listActiveOrgCases } from '@/lib/actions/list-cases'
-import { getActiveOrgId, getImpersonationInfo } from '@/lib/supabase/active-org'
+import { getActiveOrgId, getHomeOrg } from '@/lib/supabase/active-org'
 import { listAllOrgs, listSuperAdminsAll, type OrgSummary, type SuperAdminEntry } from '@/lib/actions/super-admin'
 import { listMyConversations, listConversationMessages, type ConversationListItem, type ConversationMessagesResult } from '@/lib/actions/chat'
 import { InstallPrompt } from '@/components/pwa/install-prompt'
@@ -87,7 +87,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, impersonation, externalLinks, convsR] = await Promise.all([
+  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, homeOrg, externalLinks, convsR] = await Promise.all([
     traceLayoutFetch('listActiveOrgCases', listActiveOrgCases()),
     traceLayoutFetch('fetchFieldDefs', fetchFieldDefs()),
     traceLayoutFetch('loadImportReportCountries', loadImportReportCountries()),
@@ -99,7 +99,7 @@ export default async function DashboardLayout({
     traceLayoutFetch('getCalculatorItems', getCalculatorItems()),
     getSettingsBootstrap().catch(() => null),
     getActiveOrgId().catch(() => null),
-    getImpersonationInfo().catch(() => null),
+    getHomeOrg().catch(() => null),
     traceLayoutFetch('loadExternalLinks', loadExternalLinks()),
     listMyConversations().catch(() => ({ ok: false as const, error: 'failed' })),
   ])
@@ -163,7 +163,8 @@ export default async function DashboardLayout({
               initialSettingsBootstrap={settingsBootstrap}
               initialOrgs={initialOrgs}
               initialSuperAdmins={initialSuperAdmins}
-              impersonation={impersonation}
+              activeOrgId={orgId}
+              homeOrg={homeOrg}
               initialExternalLinks={externalLinks}
               initialConversations={initialConversations}
               initialConvSnapshots={initialConvSnapshots}
