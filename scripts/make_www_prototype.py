@@ -304,7 +304,7 @@ html = f"""<!DOCTYPE html>
   .alist{{max-width:460px;margin:24px auto 0;display:flex;flex-direction:column;gap:10px}}
   .acard{{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:15px 16px}}
   .acard-h{{display:flex;align-items:center;gap:11px}}
-  .acard .ai{{width:38px;height:38px;border-radius:11px;background:var(--yellow-tint);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}}
+  .acard .ai{{color:var(--ink);display:inline-flex;align-items:center;font-size:22px;flex-shrink:0}}
   .acard .at{{font-size:15.5px;font-weight:600}}
   .acard .ad{{font-size:13px;color:var(--ink2);margin:9px 0 0;line-height:1.5}}
   .acard.more{{border-style:dashed;background:transparent;text-align:center;color:var(--ink3);font-size:13px;padding:15px;display:flex;align-items:center;justify-content:center;gap:7px}}
@@ -442,9 +442,8 @@ html = f"""<!DOCTYPE html>
   </div>
 
 {APP_SECTIONS}
-{SERVICE_SECTION}
 
-  <section>
+  <section style="border-top:0.5px solid var(--border)">
     <div class="container">
       <div class="kicker">앱 지원 여행지</div>
       <h2 class="h2">27곳, 앞으로 더 추가돼요</h2>
@@ -500,7 +499,7 @@ html = f"""<!DOCTYPE html>
       </div>
     </div>
   </section>
-
+{SERVICE_SECTION}
   <section style="border-top:0.5px solid var(--border)">
     <div class="container">
       <div class="kicker">고객 후기</div>
