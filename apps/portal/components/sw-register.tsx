@@ -62,14 +62,30 @@ export function ServiceWorkerRegister() {
       return
     }
 
+    // 새 SW 가 활성화되어 페이지를 넘겨받으면(controllerchange) 한 번만 자동 새로고침 →
+    // 배포 후 옛 캐시를 비운 최신 자산으로 즉시 교체(사용자가 수동 새로고침 안 해도 됨).
+    // 단, 최초 방문(기존 컨트롤러 없음)엔 새로고침 불필요 — 기존 SW 가 있던 경우만.
+    const hadController = !!navigator.serviceWorker.controller
+    let refreshing = false
+    const onControllerChange = () => {
+      if (refreshing || !hadController) return
+      refreshing = true
+      window.location.reload()
+    }
+    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange)
+
     const onLoad = () => {
       navigator.serviceWorker
         .register('/sw.js', { scope: '/' })
+        .then((reg) => reg.update())
         .catch((err) => console.warn('[sw] register failed', err))
     }
     if (document.readyState === 'complete') onLoad()
     else window.addEventListener('load', onLoad)
-    return () => window.removeEventListener('load', onLoad)
+    return () => {
+      window.removeEventListener('load', onLoad)
+      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange)
+    }
   }, [])
   return null
 }

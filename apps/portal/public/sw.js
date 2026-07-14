@@ -4,11 +4,15 @@
  * 도메인 dev 환경에서 열려도 캐시 충돌 없음. 도메인 분리 후엔 origin 자연 격리.
  *
  * 캐시 전략:
- *   - GET 정적 자산 (_next/static, /icon.svg 등) → cache-first.
+ *   - GET 불변 해시 자산 (_next/static) → cache-first (파일명에 해시라 안전).
+ *   - GET 가변 정적 자산 (/destinations 사진·아이콘 등, 파일명 고정) → stale-while-revalidate.
+ *     (cache-first 면 파일 내용이 바뀌거나 삭제돼도 옛것을 영영 줌 — 사진 교체가 반영 안 되던 버그.)
  *   - GET HTML 문서 → network-first (실패 시 cache, 캐시도 없으면 /offline 폴백).
  *   - POST / Server Actions / Supabase → 항상 network 직통.
+ *
+ * ⚠️ 캐시 내용을 바꾸는(사진 교체·삭제 등) 배포에서는 VERSION 을 올려 옛 캐시를 강제 폐기한다.
  */
-const VERSION = 'portal-v21'
+const VERSION = 'portal-v22'
 const STATIC_CACHE = `portal-static-${VERSION}`
 const PAGE_CACHE = `portal-page-${VERSION}`
 const OFFLINE_URL = '/offline'
@@ -50,14 +54,21 @@ self.addEventListener('fetch', (event) => {
   // 다른 origin (Supabase, Sentry 등) 은 패스
   if (url.origin !== self.location.origin) return
 
-  // 정적 자산 — cache-first
+  // 불변 해시 자산 (_next/static) — cache-first (파일명 해시라 바뀌면 URL 도 바뀜)
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(cacheFirst(req, STATIC_CACHE))
+    return
+  }
+
+  // 가변 정적 자산 (사진·아이콘 등, 파일명 고정) — stale-while-revalidate
+  // 캐시를 즉시 주되 뒤에서 새로 받아 갱신 → 사진 교체·삭제가 다음 로드에 반영된다.
   if (
-    url.pathname.startsWith('/_next/static/') ||
+    url.pathname.startsWith('/destinations/') ||
     url.pathname === '/icon.svg' ||
     url.pathname === '/manifest.webmanifest' ||
-    /\.(?:woff2?|ttf|otf|css|js|png|jpg|jpeg|svg|ico)$/.test(url.pathname)
+    /\.(?:woff2?|ttf|otf|css|png|jpg|jpeg|svg|ico)$/.test(url.pathname)
   ) {
-    event.respondWith(cacheFirst(req, STATIC_CACHE))
+    event.respondWith(staleWhileRevalidate(req, STATIC_CACHE))
     return
   }
 
@@ -78,6 +89,19 @@ async function cacheFirst(req, cacheName) {
   } catch (e) {
     return new Response('offline', { status: 503 })
   }
+}
+
+async function staleWhileRevalidate(req, cacheName) {
+  const cache = await caches.open(cacheName)
+  const cached = await cache.match(req)
+  const network = fetch(req)
+    .then((res) => {
+      if (res.ok) cache.put(req, res.clone())
+      return res
+    })
+    .catch(() => cached)
+  // 캐시가 있으면 즉시 반환하고 갱신은 뒤에서(위 then 이 캐시에 씀). 없으면 네트워크 대기.
+  return cached || network
 }
 
 async function networkFirst(req, cacheName) {
