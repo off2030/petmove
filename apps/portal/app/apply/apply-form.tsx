@@ -300,18 +300,19 @@ const inputEnClass =
   `w-full h-10 bg-transparent px-0 font-display text-[17px] text-[#212124] ${placeholderClass} focus:outline-none transition-colors`
 const numericInputClass =
   `w-full h-10 bg-transparent px-0 font-display text-[15px] tracking-[0.3px] tabular-nums text-[#212124] ${placeholderClass} focus:outline-none transition-colors`
+// 강조 = 브랜드 하늘 파랑(#0BAEFF) — 선택 칩·진행 바·주 버튼 3곳만(과하지 않게, 2026-07-14).
 const chipButtonActive =
-  'border-[#212124] bg-[#212124] text-white'
+  'border-[#0BAEFF] bg-[#0BAEFF] text-white'
 const chipButtonInactive =
   'border-[rgba(33,33,36,0.14)] bg-white text-[#212124] hover:bg-[#F2F2F4]'
 const destructiveBoxClass =
   'rounded-md border border-[#C26A4A]/30 bg-[#C26A4A]/10 px-md py-2.5 text-sm text-[#C26A4A]'
 const primaryButtonClass = cn(
   'inline-flex items-center justify-center rounded-md font-medium transition-colors',
-  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#212124]/30',
+  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0BAEFF]/40',
   'disabled:pointer-events-none disabled:opacity-50 select-none',
   'w-full h-12 text-base tracking-[0.1px]',
-  'bg-[#212124] text-white hover:bg-[#3A3A3E]',
+  'bg-[#0BAEFF] text-white hover:bg-[#0999E5]',
 )
 const secondaryButtonClass = cn(
   'inline-flex items-center justify-center rounded-md font-medium transition-colors',
@@ -500,7 +501,7 @@ function StepProgress({ step, total }: { step: number; total: number }) {
             key={i}
             className={cn(
               'h-1 flex-1 rounded-full transition-colors',
-              i < step ? 'bg-[#212124]' : 'bg-[rgba(33,33,36,0.14)]',
+              i < step ? 'bg-[#0BAEFF]' : 'bg-[rgba(33,33,36,0.14)]',
             )}
           />
         ))}
