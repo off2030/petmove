@@ -678,12 +678,15 @@ export function TimelineCalm({
                     objectFit: 'cover',
                     objectPosition: HERO_PHOTO_POSITION[heroPhoto] ?? 'center',
                     display: 'block',
-                    cursor: heroPhotoCandidates.length > 1 ? 'pointer' : undefined,
+                    cursor:
+                      HERO_TAP_SWITCHER && heroPhotoCandidates.length > 1
+                        ? 'pointer'
+                        : undefined,
                   }}
                 />
                 {/* 사진 후보 여러 장 고르는 동안의 임시 리뷰용 — 탭하면 다음 후보로,
                     점으로 현재 위치 표시. 하나로 확정되면 후보를 1장으로 줄이고 함께 제거. */}
-                {heroPhotoCandidates.length > 1 && (
+                {HERO_TAP_SWITCHER && heroPhotoCandidates.length > 1 && (
                   <div
                     aria-hidden
                     style={{
