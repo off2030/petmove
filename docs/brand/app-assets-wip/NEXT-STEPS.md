@@ -25,16 +25,14 @@
 재렌더 예: `FONTCONFIG_PATH=<이폴더> node -e "sharp('splash-c2.svg',{density:96}).resize(2732,2732).flatten({background:'#0BAEFF'})..."`
 
 ## 다음 할일 (순서대로)
-1. **`apps/portal/assets/` 교체** — 기존 파일과 같은 이름·규격 유지(@capacitor/assets가 codemagic.yaml에서 읽음):
-   - `icon.png` ← icon-1024.png (1024 정사각)
-   - `icon-foreground.png` / `icon-background.png` (적응형 — **분리 렌더 필요**: fg=구름+P 투명배경, bg=하늘 그라디언트)
-   - `icon-only.png` ← icon-1024.png
-   - `splash.png` / `splash-dark.png` ← splash-2732.png (2732, light/dark 동일)
-2. **`apps/portal/capacitor.config.ts`** — 배경색 3곳 `#F5EFE8` → `#0BAEFF` (ios.backgroundColor / android.backgroundColor / SplashScreen.backgroundColor)
-3. **커밋·푸시** (웹 배포 영향 없음 — assets는 네이티브 전용. portal 웹 재배포는 되지만 무해)
-4. **Codemagic 빌드** — push 트리거 없음. Codemagic UI에서 `ios-portal`·`android-portal` 수동 실행.
-   - ⚠️ **앱 버전 올려야** 스토어가 새 버전으로 받음. iOS는 CFBundleVersion(빌드번호)만 CI 자동, **마케팅 버전(CFBundleShortVersionString)·Android versionName/versionCode 올리는 방법 확인 필요** (codemagic.yaml / build.gradle).
-5. **스토어 제출**: Play Console AAB 수동 업로드 + App Store Connect(자동 업로드됨) → 재심사.
+1. ✅ **`apps/portal/assets/` 교체 완료** (2026-07-14, 커밋 5803d447) — icon/icon-only/적응형 fg·bg 분리 렌더/splash·splash-dark 전부 교체.
+2. ✅ **`capacitor.config.ts`** 배경색 3곳 `#0BAEFF` 완료.
+   - 추가로 **Android 네이티브 res 도 갱신**(같은 커밋): colors.xml 분리 — `splash_background`=#0BAEFF(시스템 스플래시), `app_background`=#F4F6F8(상태바·내비바·창배경=웹 --pm-bg). 런처 mipmap·스플래시 drawable 로컬 재생성(`npx @capacitor/assets generate --android`).
+3. ✅ **커밋·푸시 완료** (5803d447).
+   - **버전 업도 완료**: Android `versionName = "1.1"`(build.gradle), iOS 마케팅 버전 = codemagic.yaml `MARKETING_VERSION: "1.1"`(CFBundleShortVersionString PlistBuddy 주입 추가). versionCode/CFBundleVersion 은 기존대로 Codemagic 빌드번호 자동.
+4. ⬜ **Codemagic 빌드** — push 트리거 없음. Codemagic UI에서 `ios-portal`·`android-portal` 수동 실행.
+5. ⬜ **스토어 제출**: Play Console AAB 수동 업로드 + App Store Connect(자동 업로드됨) → 재심사.
+   - ⚠️ Android 1.0 이 아직 검토 중이면(관리형 게시) 1.1 제출 타이밍은 승인 후 권장.
 
 ## 별도 작업 (빌드 불필요 — Console 직접 업로드)
 - 구글플레이: 512×512 스토어 아이콘, 피처 그래픽 1024×500, 폰 스크린샷(리디자인 화면)
