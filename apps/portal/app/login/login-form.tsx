@@ -184,18 +184,61 @@ export function LoginForm({
     setInfo(`${email} 로 로그인 링크를 발송했습니다. 메일을 확인하세요.`)
   }
 
-  // 소셜 로그인 진행 중(특히 구글은 외부 브라우저를 다녀오는 ~2초)에는 로그인 폼 대신 깔끔한
-  // "로그인 중…" 화면을 보여준다 — 구글 복귀 시 로그인 폼이 다시 뜬 것처럼 보이던 것을 방지.
-  // (2초 자체는 구글의 외부 브라우저 강제라 못 줄임 — 그 동안의 '되돌아간 느낌'만 없앤다.)
+  // 소셜 로그인 진행 중(특히 구글은 외부 브라우저를 다녀오는 ~2초)에는 로그인 폼 대신
+  // 스플래시와 같은 화면(하늘 그라디언트+"펫무브"+구름·P)을 보여준다 — 앱 시작→로그인→진입이
+  // 한 장면처럼 이어지고, 구글 복귀 시 로그인 폼이 다시 뜬 것처럼 보이던 것도 방지.
+  // 레이아웃 수치는 네이티브 스플래시 스펙(docs/brand/app-assets-wip/SPEC.md)과 동일:
+  // 워드마크 상단 42%·화면폭 10%·자간 -0.03em, 구름 하단 고정·폭 100%·높이 67vw.
   // 매직링크(magic)는 같은 화면에서 끝나며 안내문을 보여줘야 하므로 제외.
   if (loading === 'google' || loading === 'kakao' || loading === 'naver' || loading === 'apple') {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-md bg-white px-md py-xl">
-        <div
-          className="h-8 w-8 animate-spin rounded-full border-2 border-[#0BAEFF]/20 border-t-[#0BAEFF]"
+      <div
+        className="relative min-h-dvh overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, #63C9FF, #0BAEFF)' }}
+      >
+        <span
+          className="absolute inset-x-0 top-[42%] text-center text-white"
+          style={{ fontSize: 'clamp(34px, 10vw, 48px)', fontWeight: 800, letterSpacing: '-0.03em' }}
+        >
+          펫무브
+        </span>
+        <div className="absolute inset-x-0 top-[58%] flex flex-col items-center gap-sm">
+          <div
+            className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-white"
+            aria-hidden
+          />
+          <p className="text-sm text-white/90">로그인 중…</p>
+        </div>
+        <svg
+          className="pointer-events-none absolute bottom-0 left-0 w-full"
+          style={{ height: 'min(67vw, 55vh)' }}
+          viewBox="0 66 200 134"
+          preserveAspectRatio="xMidYMax slice"
           aria-hidden
-        />
-        <p className="text-sm text-[#97979C]">로그인 중…</p>
+        >
+          <path
+            d="M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106"
+            fill="none"
+            stroke="#FFC93C"
+            strokeWidth="18"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <rect x="0" y="160" width="200" height="40" fill="#ffffff" />
+          <circle cx="46" cy="168" r="52" fill="#ffffff" />
+          <circle cx="72" cy="120" r="48" fill="#ffffff" />
+          <circle cx="112" cy="148" r="34" fill="#ffffff" />
+          <circle cx="146" cy="138" r="38" fill="#ffffff" />
+          <circle cx="178" cy="154" r="24" fill="#ffffff" />
+          <path
+            d="M116 132 L116 118"
+            fill="none"
+            stroke="#FFC93C"
+            strokeWidth="18"
+            strokeLinecap="round"
+            opacity="0.34"
+          />
+        </svg>
       </div>
     )
   }
