@@ -227,6 +227,9 @@ workflows:
           # (assets/icon.png = 앰버 리본P)을 launcher 아이콘으로 구워넣지 않으면 스토어에
           # placeholder 로 뜬다(iOS 2.3.8 반려와 같은 부류). --yes = 비대화형 자동 설치 확인.
           npx --yes @capacitor/assets generate --android
+          # ⚠️ generate 가 adaptive icon XML 을 <inset 16.7%> 형태로 덮어씀 — 배경이 108dp 를
+          # 못 채워 삼성 런처에서 검은 모서리(2026-06-25 실기기 확인). 커밋된 no-inset 원본으로 원복.
+          git checkout -- android/app/src/main/res/mipmap-anydpi-v26/
 
       - name: keystore 서명 설정 주입 (key.properties)
         script: |

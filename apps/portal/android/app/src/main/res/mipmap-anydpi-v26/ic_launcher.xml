@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- ⚠️ inset 16.7% 금지 — @capacitor/assets generate 가 <inset 16.7%> 형태로 덮어쓰는데,
+     배경이 108dp 캔버스를 못 채워 삼성 런처(줌 표시)에서 검은 모서리가 생긴다(2026-06-25 실기기 확인).
+     fg/bg PNG 는 풀블리드 소스라 inset 없이 그대로 쓴다. CI(codemagic.yaml)는 generate 후
+     이 파일을 git checkout 으로 원복한다. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background>
-        <inset android:drawable="@mipmap/ic_launcher_background" android:inset="16.7%" />
-    </background>
-    <foreground>
-        <inset android:drawable="@mipmap/ic_launcher_foreground" android:inset="16.7%" />
-    </foreground>
+    <background android:drawable="@mipmap/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
 </adaptive-icon>
