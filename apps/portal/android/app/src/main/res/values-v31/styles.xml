@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- API 31+ 전용 런치 테마 오버라이드. 시스템 스플래시(아이콘 단계)의 배경을 검정 기본값
+         대신 브랜드 하늘색으로. android:windowSplashScreenBackground 는 플랫폼 attr 라
+         values-v31 에만 둔다. 리소스 오버라이드는 base 를 통째로 대체하므로 base 의
+         android:background 항목도 반복해야 한다.
+         ⚠️ parent 를 Theme.SplashScreen 으로 바꾸지 말 것 (values/styles.xml 주석 참고). -->
+    <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="android:background">@drawable/splash</item>
+    </style>
+</resources>

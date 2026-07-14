@@ -27,14 +27,14 @@
     </style>
 
 
-    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <!-- Android 12+ 시스템 스플래시: 배경색 미지정 시 검정으로 뜨던 문제 수정. 스플래시 후
-             AppTheme.NoActionBar 로 전환(상태바 설정 적용). -->
-        <!-- 스플래시 = 홈 런처 아이콘(하늘+구름+노란P)을 브랜드 하늘색(#0BAEFF) 배경 위에 표시.
-             animatedIcon 미지정 시 시스템이 런처 아이콘을 쓴다. 배경 그라디언트 하단색과 같아
-             아이콘 배경이 자연스럽게 녹아든다. -->
-        <item name="windowSplashScreenBackground">@color/splash_background</item>
-        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+    <!-- 런치 테마. ⚠️ parent 를 Theme.SplashScreen 으로 바꾸지 말 것!
+         Theme.SplashScreen 계열이면 @capacitor/splash-screen 이 Android 12+ 시스템 스플래시
+         (아이콘+단색만 가능)를 로드 내내 유지해, drawable/splash 풀화면 시안(하늘+구름+펫무브)이
+         한 번도 안 보인다(2026-07-15 실기기 확인). 일반 테마면 플러그인의 Android12 API 가
+         의도적으로 실패("Android 12 Splash API failed" 경고는 정상)하고 레거시 경로로 폴백해
+         drawable/splash 를 풀화면으로 띄운다. 시스템 아이콘 단계(첫 0.5초 안팎, OS 강제)의
+         배경색은 values-v31/styles.xml 이 지정한다. -->
+    <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
         <item name="android:background">@drawable/splash</item>
     </style>
 </resources>
