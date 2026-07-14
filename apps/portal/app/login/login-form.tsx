@@ -209,11 +209,8 @@ export function LoginForm({
             <LogoMark size={56} />
           </div>
           <h1 className="font-display text-[28px] leading-tight text-[#212124]">펫무브</h1>
-          <p className="text-sm leading-snug text-[#97979C]">
-            반려동물과 함께하는 해외여행
-            <br />
-            펫무브 앱으로 쉽게 준비하세요!
-          </p>
+          {/* 첫 방문자용 한 줄 소개 — "무슨 앱인지"만. 홍보 문구(두 번째 줄)는 2026-07-15 제거. */}
+          <p className="text-sm leading-snug text-[#97979C]">반려동물과 함께하는 해외여행</p>
         </div>
 
         <div className="space-y-sm">
@@ -236,6 +233,10 @@ export function LoginForm({
             disabled={loading !== null}
             onClick={() => oauthLogin('kakao')}
           >
+            {/* 카카오 공식 심볼 — 말풍선 */}
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden>
+              <path d="M12 3C6.48 3 2 6.58 2 11c0 2.84 1.87 5.33 4.68 6.75-.15.52-.96 3.33-1 3.55 0 0-.02.17.09.24.11.07.24.02.24.02.32-.04 3.66-2.4 4.24-2.81.57.08 1.15.13 1.75.13 5.52 0 10-3.58 10-8s-4.48-8-10-8z" />
+            </svg>
             {loading === 'kakao' ? '이동 중…' : '카카오 계정으로 계속'}
           </button>
           <button
@@ -244,6 +245,10 @@ export function LoginForm({
             disabled={loading !== null}
             onClick={naverOAuth}
           >
+            {/* 네이버 공식 심볼 — N */}
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden>
+              <path d="M16.273 12.845 7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z" />
+            </svg>
             {loading === 'naver' ? '이동 중…' : '네이버 계정으로 계속'}
           </button>
           <button
