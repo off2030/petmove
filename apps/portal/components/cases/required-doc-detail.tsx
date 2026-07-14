@@ -10,6 +10,7 @@ import { monoCap, serif } from '@/components/me/settings-shared'
 import { subTitle } from '@/lib/tokens'
 import { deleteStepDocument, getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
 import { downloadFile } from '@/lib/native/download'
+import { useConfirm } from '@petmove/ui'
 import { useMediaViewer } from '@/components/portal-shell/media-viewer'
 import { setRequiredDocComplete, setRequiredDocNa } from '@/lib/actions/required-docs'
 import { StepAttachments } from '@/components/journey/step-attachments'
@@ -40,6 +41,7 @@ export function RequiredDocDetail({
 
   // 타이포 정의는 settings-shared 단일 출처(serif·monoCap import) — 2026-07-12 통합.
   const { updateCase } = useCases()
+  const confirm = useConfirm()
   const [busy, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
@@ -247,7 +249,15 @@ export function RequiredDocDetail({
                 doc={d}
                 C={C}
                 monoCap={monoCap}
-                onDelete={() => {
+                onDelete={async () => {
+                  // 다른 파일 삭제와 동일한 앱 공용 확인창 — X 즉시 삭제 방지.
+                  const ok = await confirm({
+                    message: '이 파일을 삭제할까요?',
+                    okLabel: '삭제',
+                    cancelLabel: '취소',
+                    variant: 'destructive',
+                  })
+                  if (!ok) return
                   deleteStepDocument(caseId, d.id).then((res) => {
                     if (res.ok) updateCase(res.value)
                   })
