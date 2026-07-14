@@ -30,15 +30,15 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: 'ko',
     orientation: 'portrait',
     icons: [
-      // ⚠️ /icon.svg·/icon-maskable.svg 는 아직 구 amber 리본P — 새 하늘 구름 아이콘
-      //   (docs/brand/downloads)으로 교체 예정(네이티브/PWA 자산 트랙). SVG vector.
+      // 새 브랜드 아이콘(하늘 그라디언트 + 구름 + 노란 P, 2026-07-14 교체) — 원본
+      //   docs/brand/app-assets-wip/icon-master.svg. SVG vector.
       {
         src: '/icon.svg',
         sizes: 'any',
         type: 'image/svg+xml',
         purpose: 'any',
       },
-      // maskable — Android 적응형(둥근/사각/물방울 crop). full-bleed amber + 안전영역 리본P.
+      // maskable — Android 적응형(둥근/사각/물방울 crop). full-bleed 하늘 배경 + 안전영역 구름P.
       {
         src: '/icon-maskable.svg',
         sizes: 'any',

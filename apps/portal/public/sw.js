@@ -134,8 +134,8 @@ self.addEventListener('push', (event) => {
   const title = payload.title || '펫무브'
   const options = {
     body: payload.body || '',
-    icon: '/icon',
-    badge: '/icon',
+    icon: '/icon.svg',
+    badge: '/icon.svg',
     // tag 동일하면 같은 알림 갱신 (중복 알림 방지)
     tag: payload.tag || 'default',
     data: { url: payload.url || '/' },
