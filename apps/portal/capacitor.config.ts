@@ -54,6 +54,13 @@ const config: CapacitorConfig = {
     // NativeSplash 컴포넌트가 SplashScreen.hide() 로 내린다(그 자리에 스켈레톤/콘텐츠).
     // launchAutoHide:true + 3초 백스톱 — hide() 가 못 불려도(오프라인·로드 실패) 스플래시가
     // 영원히 안 멈추도록. 스켈레톤이 있으니 백스톱이 일찍 떠도 흰 화면은 안 보인다.
+    //
+    // ⚠️ 이 블록은 사실상 iOS 전용이다. Android 12+ 는 이 플러그인이 "시스템 스플래시"
+    // (아이콘+단색만 가능)를 유지할 뿐 풀화면 스플래시 이미지를 못 띄워서, 안드로이드는
+    // MainActivity 의 부트 스플래시(ImageView)+BootSplash 플러그인으로 직접 구현했다.
+    // cap sync android 뒤 scripts/patch-android-splash-config.mjs 가 안드로이드 사본
+    // json 의 launchShowDuration 을 0 으로 바꿔 플러그인 런치 스플래시를 끈다(여기 값은
+    // iOS 용으로 3000 유지).
     SplashScreen: {
       launchShowDuration: 3000,
       launchAutoHide: true,

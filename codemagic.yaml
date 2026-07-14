@@ -223,6 +223,9 @@ workflows:
         script: |
           cd apps/portal
           npx cap sync android
+          # 안드로이드에선 플러그인 런치 스플래시(시스템 아이콘 화면 유지)를 끄고
+          # MainActivity 부트 스플래시(풀화면 시안)를 쓴다 — 스크립트 주석 참고.
+          node scripts/patch-android-splash-config.mjs
           # cap sync 는 Capacitor 기본 placeholder 아이콘을 넣는다. 실제 펫무브 아이콘
           # (assets/icon.png = 앰버 리본P)을 launcher 아이콘으로 구워넣지 않으면 스토어에
           # placeholder 로 뜬다(iOS 2.3.8 반려와 같은 부류). --yes = 비대화형 자동 설치 확인.

@@ -27,13 +27,12 @@
     </style>
 
 
-    <!-- 런치 테마. ⚠️ parent 를 Theme.SplashScreen 으로 바꾸지 말 것!
-         Theme.SplashScreen 계열이면 @capacitor/splash-screen 이 Android 12+ 시스템 스플래시
-         (아이콘+단색만 가능)를 로드 내내 유지해, drawable/splash 풀화면 시안(하늘+구름+펫무브)이
-         한 번도 안 보인다(2026-07-15 실기기 확인). 일반 테마면 플러그인의 Android12 API 가
-         의도적으로 실패("Android 12 Splash API failed" 경고는 정상)하고 레거시 경로로 폴백해
-         drawable/splash 를 풀화면으로 띄운다. 시스템 아이콘 단계(첫 0.5초 안팎, OS 강제)의
-         배경색은 values-v31/styles.xml 이 지정한다. -->
+    <!-- 런치 테마. Android 12+ 시스템 스플래시(아이콘+단색, OS 강제·첫 0.5초 안팎)의
+         배경색은 values-v31/styles.xml 이 지정하고, 그 뒤 풀화면 시안(하늘+구름+펫무브)은
+         MainActivity 의 부트 스플래시(ImageView)가 띄운다. @capacitor/splash-screen 은
+         12+ 런치에서 시스템 스플래시만 유지할 뿐 풀화면 이미지를 못 띄워서(2026-07-15
+         실기기 확인) 안드로이드에선 launchShowDuration=0 으로 꺼 둔다
+         (apps/portal/scripts/patch-android-splash-config.mjs). -->
     <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
         <item name="android:background">@drawable/splash</item>
     </style>

@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "cap:sync": "cap sync",
+    "cap:sync": "cap sync && node scripts/patch-android-splash-config.mjs",
     "cap:open:ios": "cap open ios",
     "cap:open:android": "cap open android"
   },

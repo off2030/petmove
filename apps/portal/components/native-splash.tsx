@@ -28,10 +28,10 @@ export function NativeSplash() {
     let cancelled = false
     void (async () => {
       try {
-        const { Capacitor } = await import('@capacitor/core')
+        const { Capacitor, registerPlugin } = await import('@capacitor/core')
         if (!Capacitor.isNativePlatform()) return
-        const grace =
-          Capacitor.getPlatform() === 'ios' ? SPLASH_HOLD_GRACE_MS.ios : SPLASH_HOLD_GRACE_MS.android
+        const isAndroid = Capacitor.getPlatform() === 'android'
+        const grace = isAndroid ? SPLASH_HOLD_GRACE_MS.android : SPLASH_HOLD_GRACE_MS.ios
         const { SplashScreen } = await import('@capacitor/splash-screen')
         // grace 동안 딥링크 이동을 기다린다. 이동하면 페이지가 리로드되며 이 타이머/컴포넌트가
         // 사라지고 스플래시는 그대로 유지된다(리로드된 일정 페이지의 새 NativeSplash 가 내림).
@@ -39,10 +39,20 @@ export function NativeSplash() {
         if (cancelled) return
         // 딥링크 이동이 진행 중이면 내리지 않는다(리로드가 처리). 그 외엔 정상적으로 내린다.
         if ((window as unknown as { __pmHoldSplash?: boolean }).__pmHoldSplash) return
-        // paint 후 내려 흰 깜빡임 방지(2x rAF). 못 내려도 config 의 launchAutoHide(3초)가 백스톱.
+        // paint 후 내려 흰 깜빡임 방지(2x rAF). 못 내려도 네이티브 백스톱(3초)이 처리.
         requestAnimationFrame(() =>
           requestAnimationFrame(() => {
-            if (!cancelled) void SplashScreen.hide({ fadeOutDuration: 200 })
+            if (cancelled) return
+            // iOS(및 안드로이드 구빌드): 플러그인 런치 스플래시.
+            void SplashScreen.hide({ fadeOutDuration: 200 })
+            // 안드로이드 새 빌드: MainActivity 부트 스플래시(풀화면 시안). Android 12+ 는
+            // @capacitor/splash-screen 이 풀화면 이미지를 런치에 못 띄워 앱이 직접 띄운다.
+            // 플러그인이 없는 구빌드에선 reject — 조용히 무시.
+            if (isAndroid) {
+              registerPlugin<{ hide(): Promise<void> }>('BootSplash')
+                .hide()
+                .catch(() => {})
+            }
           }),
         )
       } catch {
