@@ -97,15 +97,15 @@ SERVICE_SECTION = """
       <h2 class="h2">전문가에게 안심하고 맡기세요</h2>
       <div class="score-list">
         <div class="score">
-          <div class="score-h"><i class="ti ti-heart-plus si" style="color:#F0567A"></i><span class="st">로잔동물의료센터</span></div>
+          <div class="score-h"><i class="ti ti-heart-plus si" style="color:#E5484D"></i><span class="st">로잔동물의료센터</span></div>
           <p class="sd">수의사가 직접 준비해 믿고 맡길 수 있어요</p>
         </div>
         <div class="score">
-          <div class="score-h"><i class="ti ti-device-mobile si" style="color:#2E5077"></i><span class="st">펫무브 앱 연동</span></div>
+          <div class="score-h"><i class="ti ti-device-mobile si" style="color:#0BAEFF"></i><span class="st">펫무브 앱 연동</span></div>
           <p class="sd">앱으로 진행 상황을 쉽게 확인할 수 있어요</p>
         </div>
         <div class="score">
-          <div class="score-h"><i class="ti ti-adjustments-horizontal si" style="color:#14B8A6"></i><span class="st">전체 대행 · 부분 의뢰</span></div>
+          <div class="score-h"><i class="ti ti-adjustments-horizontal si" style="color:#E9A800"></i><span class="st">전체 대행 · 부분 의뢰</span></div>
           <p class="sd">전 과정을 맡기거나, 필요한 단계만 도움받을 수 있어요</p>
         </div>
       </div>
