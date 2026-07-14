@@ -19,7 +19,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
     단, HERO_LEAD_THEN_RANDOM 목적지(태국·필리핀)는 첫 장을 고정으로 먼저 보여주고 나머지는 매 로드 무작위.
     후보가 2장 이상이면 사진을 탭해서도 다음 후보로 넘겨볼 수 있다.
     없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
-    EU 국가는 프랑스·독일·이탈리아만 사진을 갖고, 나머지는 사진 없이 메타 행. */
+    EU 국가는 프랑스·독일·이탈리아·스페인만 사진을 갖고, 나머지는 사진 없이 메타 행. */
 const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   일본: [
     '/destinations/japan-sakura-blossom-macro.jpg',
@@ -73,6 +73,45 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/italy-25.jpg',
     '/destinations/italy-27.jpg',
     '/destinations/italy-28.jpg',
+  ],
+  스페인: [
+    '/destinations/spain-01.jpg',
+    '/destinations/spain-02.jpg',
+    '/destinations/spain-03.jpg',
+    '/destinations/spain-04.jpg',
+    '/destinations/spain-05.jpg',
+    '/destinations/spain-06.jpg',
+    '/destinations/spain-07.jpg',
+    '/destinations/spain-08.jpg',
+    '/destinations/spain-09.jpg',
+    '/destinations/spain-10.jpg',
+    '/destinations/spain-11.jpg',
+    '/destinations/spain-12.jpg',
+    '/destinations/spain-13.jpg',
+    '/destinations/spain-14.jpg',
+    '/destinations/spain-15.jpg',
+    '/destinations/spain-16.jpg',
+    '/destinations/spain-17.jpg',
+    '/destinations/spain-18.jpg',
+    '/destinations/spain-19.jpg',
+    '/destinations/spain-20.jpg',
+    '/destinations/spain-21.jpg',
+    '/destinations/spain-22.jpg',
+    '/destinations/spain-23.jpg',
+    '/destinations/spain-24.jpg',
+    '/destinations/spain-25.jpg',
+    '/destinations/spain-26.jpg',
+    '/destinations/spain-27.jpg',
+    '/destinations/spain-28.jpg',
+    '/destinations/spain-29.jpg',
+    '/destinations/spain-30.jpg',
+    '/destinations/spain-31.jpg',
+    '/destinations/spain-32.jpg',
+    '/destinations/spain-33.jpg',
+    '/destinations/spain-34.jpg',
+    '/destinations/spain-35.jpg',
+    '/destinations/spain-36.jpg',
+    '/destinations/spain-37.jpg',
   ],
 }
 
