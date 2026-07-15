@@ -113,21 +113,27 @@ FEATURED = [
      "docs", "australia-pet-travel-guide", "content/images/2026/03/Gemini_Generated_Image_3prrqm3prrqm3prr.png"),
 ]
 
-# ── 그 외 준비 — 검역·항공·기타 한 덩어리(플랫). (제목, docs|blog, 슬러그) ──
-OTHER = [
-    ("수출검역 신청", "docs", "pet-export-inspection"),
-    ("검역소 안내", "docs", "pet-quarantine-station"),
-    ("검역 예약", "docs", "pet-quarantine-reservation"),
-    ("기내 반입 준비", "docs", "dog-flight-preparation"),
-    ("기내 반입 규정", "docs", "airline-pet-cabin-policy"),
-    ("기내 반입 요금", "docs", "airline-pet-cabin-fees"),
-    ("기내 진정제", "blog", "dog-flight-medication"),
-    ("마이크로칩 안전성", "blog", "pet-microchip-safety"),
-    ("광견병 항체검사", "blog", "rabies-titer-test-japan-korea"),
-    ("광견병 청정국 목록", "blog", "rabies-free-countries"),
-    ("해외여행 기본 안내", "blog", "dog-international-travel"),
-    ("동물검역 기본", "blog", "pet-quarantine-guide"),
-    ("한국으로 데려오기", "blog", "bring-dog-to-korea"),
+# ── 주제별 가이드 — 3그룹(검역·항공·운송·기타, 2026-07-15 사용자 확정). (그룹, [(라벨, docs|blog, 슬러그)]) ──
+OTHER_GROUPS = [
+    ("검역", [
+        ("동물검역 기본", "blog", "pet-quarantine-guide"),
+        ("수출검역 신청", "docs", "pet-export-inspection"),
+        ("검역소 안내", "docs", "pet-quarantine-station"),
+        ("검역 예약", "docs", "pet-quarantine-reservation"),
+    ]),
+    ("항공·운송", [
+        ("기내 반입 준비", "docs", "dog-flight-preparation"),
+        ("기내 반입 규정", "docs", "airline-pet-cabin-policy"),
+        ("기내 반입 요금", "docs", "airline-pet-cabin-fees"),
+        ("기내 진정제", "blog", "dog-flight-medication"),
+    ]),
+    ("기타", [
+        ("광견병 항체검사", "blog", "rabies-titer-test-japan-korea"),
+        ("광견병 청정국 목록", "blog", "rabies-free-countries"),
+        ("마이크로칩 안전성", "blog", "pet-microchip-safety"),
+        ("해외여행 기본 안내", "blog", "dog-international-travel"),
+        ("한국으로 데려오기", "blog", "bring-dog-to-korea"),
+    ]),
 ]
 
 CSS = """
@@ -185,7 +191,7 @@ CSS = """
   .fcard .fthumb{width:96px;height:72px;border-radius:10px;object-fit:cover;flex-shrink:0;background:var(--bg)}
 
   /* 나라 그리드 */
-  .region{font-size:12.5px;font-weight:600;color:var(--accent-ink);margin:20px 0 11px}
+  .region{font-size:12.5px;font-weight:600;color:var(--ink2);margin:20px 0 11px}
   .cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
   .chip{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:13px 8px;
     text-align:center;font-size:13px;color:var(--ink)}
@@ -193,7 +199,7 @@ CSS = """
   /* 그 외 준비 */
   .other-group{margin-top:18px}
   .other-group:first-child{margin-top:2px}
-  .other-label{font-size:12.5px;font-weight:600;color:var(--accent-ink);margin-bottom:11px}
+  .other-label{font-size:12.5px;font-weight:600;color:var(--ink2);margin-bottom:11px}
   .other-links{display:flex;flex-wrap:wrap;gap:8px}
   .no-hit{text-align:center;font-size:13.5px;color:var(--ink3);padding:16px 0 4px}
   .chip.chip-m{cursor:pointer}
@@ -427,10 +433,11 @@ def build_guide():
                 continue
             seen.add(pslug)
             idx.append({"t": t, "g": ko, "u": f"{LIVE}/{kind}/{pslug}/"})
-    for name, kind, pslug in OTHER:
-        if pslug not in seen:
-            seen.add(pslug)
-            idx.append({"t": name, "g": "주제별", "u": f"{LIVE}/{kind}/{pslug}/"})
+    for label, items in OTHER_GROUPS:
+        for name, kind, pslug in items:
+            if pslug not in seen:
+                seen.add(pslug)
+                idx.append({"t": name, "g": label, "u": f"{LIVE}/{kind}/{pslug}/"})
     idx_json = json.dumps(idx, ensure_ascii=False)
 
     regions_html = ""
@@ -446,8 +453,13 @@ def build_guide():
         )
         regions_html += f'<div class="region">{reg}</div><div class="cgrid">{chips}</div>{panels}'
     other_html = "".join(
-        f'<a href="{LIVE}/{kind}/{slug}/" target="_blank" rel="noopener">{name}</a>'
-        for name, kind, slug in OTHER
+        f'<div class="other-group"><div class="other-label">{label}</div><div class="other-links">'
+        + "".join(
+            f'<a href="{LIVE}/{kind}/{slug}/" target="_blank" rel="noopener">{name}</a>'
+            for name, kind, slug in items
+        )
+        + "</div></div>"
+        for label, items in OTHER_GROUPS
     )
     return f"""{head('가이드 · 펫무브', '나라별 반려동물 출국 가이드 — 일본·태국·필리핀 등 34개국의 검역 준비 방법을 확인하세요.')}
 {header('guide')}
@@ -483,7 +495,7 @@ def build_guide():
   <section id="secOther">
     <div class="container">
       <h2 class="sec-h">주제별 가이드</h2>
-      <div class="other-links">{other_html}</div>
+      {other_html}
     </div>
   </section>
 
