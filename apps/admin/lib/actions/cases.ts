@@ -45,6 +45,27 @@ function deserializeFromHistory(storage: 'column' | 'data', raw: string | null):
 }
 
 /**
+ * cases 행 조회 실패를 사용자 언어로 번역. `.single()` 이 0행이면 PostgREST 가
+ * "Cannot coerce the result to a single JSON object"(PGRST116) 를 그대로 돌려주는데,
+ * RLS(cases SELECT = org 멤버 ∨ super_admin) 특성상 실제 원인은 둘 중 하나다:
+ *   1) 세션 만료·무효 — 탭을 오래 열어둔 채 저장하면 RLS 가 모든 행을 감춰 0행
+ *      (2026-07-15 광견병·메모·결제 저장 동시 실패 사례)
+ *   2) 케이스가 삭제됐거나 접근 권한 없는 org 의 케이스
+ * getUser() 로 어느 쪽인지 구분해 사용자가 조치 가능한 메시지를 돌려준다.
+ */
+async function explainCaseFetchError(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  err: { code?: string; message: string },
+): Promise<string> {
+  if (err.code !== 'PGRST116') return err.message
+  try {
+    const { data } = await supabase.auth.getUser()
+    if (data.user) return '케이스를 찾을 수 없습니다. 삭제됐거나 접근 권한이 없는 케이스입니다.'
+  } catch { /* getUser 실패 = 세션 문제로 간주 */ }
+  return '로그인 세션이 만료됐습니다. 페이지를 새로고침해 다시 로그인한 뒤 저장해 주세요.'
+}
+
+/**
  * 내원·임상검진일은 출국일 포함 N일 이내여야 함 — 목적지별 윈도우(@petmove/domain
  * getVetVisitWindowDays). 한국 APQA 디폴트 10일, 말레이·싱가포르 7일,
  * 호주·러시아 5일, 뉴질랜드 3일, 튀르키예 2일(임상검사 24h). 다중 목적지 시 가장 엄격한 윈도우.
@@ -176,7 +197,7 @@ export async function updateCaseField(
     .select('*')
     .eq('id', caseId)
     .single()
-  if (fetchErr) return { ok: false, error: fetchErr.message }
+  if (fetchErr) return { ok: false, error: await explainCaseFetchError(supabase, fetchErr) }
   const orgId = (row as { org_id: string }).org_id
   const currentData = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<string, unknown>
   const destinationRaw = (row as { destination: string | null }).destination
@@ -575,7 +596,7 @@ export async function updateCaseDataBulk(
     .select('id, org_id, data')
     .eq('id', caseId)
     .single()
-  if (fetchErr) return { ok: false, error: fetchErr.message }
+  if (fetchErr) return { ok: false, error: await explainCaseFetchError(supabase, fetchErr) }
   const orgId = (row as { org_id: string }).org_id
   const currentData = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<string, unknown>
 
@@ -671,7 +692,7 @@ export async function undoLastChange(
       .select('data')
       .eq('id', caseId)
       .single()
-    if (fetchErr) return { ok: false, error: fetchErr.message }
+    if (fetchErr) return { ok: false, error: await explainCaseFetchError(supabase, fetchErr) }
 
     const current: Record<string, unknown> =
       (row?.data as Record<string, unknown> | null) ?? {}
@@ -779,7 +800,7 @@ export async function restoreToHistoryPoint(
       .select('data')
       .eq('id', caseId)
       .single()
-    if (dFetchErr) return { ok: false, error: dFetchErr.message }
+    if (dFetchErr) return { ok: false, error: await explainCaseFetchError(supabase, dFetchErr) }
     const current: Record<string, unknown> = (row?.data as Record<string, unknown> | null) ?? {}
     const next = { ...current }
     for (const [k, v] of dataKeyUpdates) {
@@ -867,7 +888,7 @@ async function patchCaseData(
     .select('data')
     .eq('id', caseId)
     .single()
-  if (fetchErr) return { ok: false, error: fetchErr.message }
+  if (fetchErr) return { ok: false, error: await explainCaseFetchError(supabase, fetchErr) }
   const current = ((row?.data as Record<string, unknown> | null) ?? {}) as Record<string, unknown>
   const next = { ...current }
   mutate(next)
@@ -935,7 +956,7 @@ export async function setJpExportQuarantineReportStatus(
     .select('data, destination, departure_date')
     .eq('id', caseId)
     .single()
-  if (fetchErr) return { ok: false, error: fetchErr.message }
+  if (fetchErr) return { ok: false, error: await explainCaseFetchError(supabase, fetchErr) }
   const current = ((row?.data as Record<string, unknown> | null) ?? {}) as Record<string, unknown>
   const destination = (row?.destination as string | null) ?? null
 
@@ -1045,7 +1066,7 @@ export async function setImportPermitReportStatus(
     .select('data, destination, departure_date')
     .eq('id', caseId)
     .single()
-  if (fetchErr) return { ok: false, error: fetchErr.message }
+  if (fetchErr) return { ok: false, error: await explainCaseFetchError(supabase, fetchErr) }
   const current = ((row?.data as Record<string, unknown> | null) ?? {}) as Record<string, unknown>
   const caseRow = {
     destination: (row?.destination as string | null) ?? null,
@@ -1114,7 +1135,7 @@ export async function dismissImportReport(caseId: string): Promise<UpdateResult>
     .select('data, destination, departure_date')
     .eq('id', caseId)
     .single()
-  if (fetchErr) return { ok: false, error: fetchErr.message }
+  if (fetchErr) return { ok: false, error: await explainCaseFetchError(supabase, fetchErr) }
   const current = ((row?.data as Record<string, unknown> | null) ?? {}) as Record<string, unknown>
   const destination = (row?.destination as string | null) ?? null
 
