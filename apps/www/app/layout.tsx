@@ -7,12 +7,12 @@ import '@/styles/article.css'
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.petmove.co.kr'),
   title: '펫무브 · 반려동물 해외 이동',
-  description: '우리 아이 해외여행, 펫무브가 챙길게요. 앱으로 쉽게 준비하고, 복잡한 검역 절차는 전문가에게 맡기세요.',
+  description: '반려동물 해외여행, 펫무브가 챙길게요. 앱으로 쉽게 준비하고, 복잡한 검역 절차는 전문가에게 맡기세요.',
   openGraph: {
     type: 'website',
     siteName: '펫무브',
     title: '펫무브 · 반려동물 해외 이동',
-    description: '우리 아이 해외여행, 펫무브가 챙길게요. 앱으로 쉽게 준비하고, 복잡한 검역 절차는 전문가에게 맡기세요.',
+    description: '반려동물 해외여행, 펫무브가 챙길게요. 앱으로 쉽게 준비하고, 복잡한 검역 절차는 전문가에게 맡기세요.',
     locale: 'ko_KR',
   },
 }
