@@ -1,0 +1,16 @@
+/* 공통 베이스 — 브랜드 토큰·리셋·페이지 래퍼. 페이지별 스타일은 landing.css/hub.css 의
+   .pg-* 네이티브 중첩 스코프에 있음(동명 선택자 값 차이로 전역 로드하면 충돌). */
+:root{
+    --bg:#F4F6F8; --surface:#FFFFFF; --ink:#212124; --ink2:#5C5C60; --ink3:#97979C;
+    --accent:#0BAEFF; --accent-ink:#0778BF; --sage:#14B8A6; --border:#E1E5E9; --dark:#212124;
+    --yellow-tint:#FFF4D6;
+  }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;scrollbar-gutter:stable;background:var(--bg)}
+body{margin:0;background:var(--bg);font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,"Segoe UI",Roboto,sans-serif;
+  color:var(--ink);-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}
+/* 페이지 래퍼 — 프로토타입에선 body 가 flex column(짧은 페이지에서 footer 바닥 고정) 이었던 것을 이관 */
+.pg{min-height:100dvh;display:flex;flex-direction:column}
+.pg>footer{margin-top:auto}

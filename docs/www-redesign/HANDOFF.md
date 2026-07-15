@@ -188,6 +188,18 @@
 - **최종 CTA 고아 구름 제거**: `.final` 상단의 `.cloud` SVG(CSS 정의 없는 구버전 잔재)가 돔과 겹쳐 구름 2개로 보이던 버그 — 삭제, 푸터로 녹는 돔(`.clouds`) 하나만 유지.
 - 남은 파랑 = 헤더 앱 다운로드·히어로 버튼·무료 앱 받기·서비스 의뢰하기(아웃라인)·최종 CTA 그라데이션. dead CSS(.step·.path·.fnum·.fcell·.hrow·.svc-item·.more-line)에 accent-ink 잔존하나 HTML 미사용.
 
+## 2026-07-15 세션(오후) — Next.js `apps/www` 이식 (사실상 완료, 배포만 남음)
+
+**Ghost 대체 Next.js 앱 = `apps/www`** (Next 16 App Router, trailingSlash:true, 전 라우트 SSG). 프로토타입 3벌 + 글 69개 전부 이식·검증 완료.
+
+- **구조**: `app/`(landing·guide·contact·docs/[slug]·blog/[slug]·sitemap·robots·404·icon) / `components/`(site-header(드로어)·site-footer·app-link(스마트링크)·guide-explorer(검색+칩패널)·dest-grid·article-shell·toc·logo-mark) / `lib/site-data.ts`(인기가이드·34국·COUNTRY_POSTS·주제별·검색인덱스·랜딩 데이터 — **단일 출처, 이제 여기만 수정**) / `content/{docs,blog}/<slug>.json`(글 69) / `styles/`(site+landing+hub+article, `.pg-*` 네이티브 중첩 스코프 — 동명 선택자 충돌 방지) / `public/`(img 히어로·밴드, content/images 170개 ← ghost-images 에서 git mv).
+- **콘텐츠 파이프라인**: `scripts/www_export_content.py` — export JSON(Downloads 최신 자동 선택) → www_convert 규칙 재사용 → content JSON(제목·설명·카테고리·날짜·분·커버·본문 HTML). 69/69, kg-* 잔여 0. Ghost 에서 글 수정하면 재실행.
+- **인터랙티브 2글**(계산기·자가진단): 본문 이관 + "도구 이전 중, 앱에서 사용 가능" 콜아웃. 재구현 = 백로그.
+- **검증**: 빌드 전 라우트 SSG ✓ / 라이브 sitemap 69 URL + 핵심 5 페이지 = 로컬 74/74 200 ✓ / 일본 가이드(TOC 13·커버·콜아웃·흰 배경), 가이드 허브(일본 패널 11행·검색 7건·복원), 스케줄러 안내 콜아웃 실측 ✓.
+- **로컬 dev**: `.claude/launch.json` `www-dev`(port 3004).
+- **구 프로토타입/생성기**(docs/www-redesign/*.html·make_www_*.py) = **이제 아카이브**. 디자인·데이터 수정은 apps/www 에서. 프리뷰 이미지 junction 은 apps/www/public/content 로 재타겟.
+- **남은 것 = 배포**: Vercel 새 프로젝트(root=apps/www) → preview 전수 검증 → www.petmove.co.kr(+apex) 도메인 전환 → 며칠 뒤 Ghost 해지. 후속 백로그: next/font Pretendard·next/image·og.png·관련 글 자동 3개·/blog/ 목록·인터랙티브 재구현·새 글 MDX 파이프라인.
+
 ## 남은 할 일 (다음 세션 진입점)
 
 **우선순위: ① ~~글 본문 템플릿(69개 공유)~~ ✅완료(변환기 78글 전수 검증) → ② Next.js `(www)` 이식·배포(next/font Pretendard·Ghost 이관·URL 보존) → ③ 앱 스토어 버튼 연결(앱 출시 후) → ④ 서비스 드롭다운(운송견적·에이전시, 향후).** (가이드 다듬기·모바일 메뉴·워드마크는 완료/폐기.)

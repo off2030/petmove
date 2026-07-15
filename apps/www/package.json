@@ -1,0 +1,25 @@
+{
+  "name": "@petmove/www",
+  "version": "0.1.0",
+  "private": true,
+  "description": "펫무브 소비자 사이트 www.petmove.co.kr — 랜딩 + 가이드(78글) + 문의 (구 Ghost 대체)",
+  "scripts": {
+    "dev": "next dev --port 3004",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "next": "^16.2.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.4",
+    "typescript": "^6.0.2"
+  }
+}

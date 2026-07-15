@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """고스트 export JSON -> 새 본문 템플릿(article-sample.html) 변환 시제품.
 MIGRATION-RULES.md 규칙을 실제 데이터에 적용. 한 개 이상 글을 골라 standalone HTML로 출력."""
-import json, re, sys, io
+import glob, json, re, sys, io
 from datetime import datetime
 from bs4 import BeautifulSoup, NavigableString, Comment
 from www_lib import norm_link, norm_image
 
-JSON = r"C:\Users\off20\Downloads\pesmubeu.ghost.2026-07-06-13-32-13.json"
+# 최신 export 를 자동 선택 — 파일명에 export 시각이 박혀 있어 사전순 = 시간순.
+_exports = sorted(glob.glob(r"C:\Users\off20\Downloads\pesmubeu.ghost.*.json"))
+assert _exports, "Ghost export JSON 이 Downloads 에 없습니다 (Ghost Admin → Export content)"
+JSON = _exports[-1]
 TPL  = r"C:\dev\petmove\docs\www-redesign\article-sample.html"
 OUTDIR = r"C:\dev\petmove\docs\www-redesign"
 
