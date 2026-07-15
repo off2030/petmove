@@ -113,26 +113,27 @@ FEATURED = [
      "docs", "australia-pet-travel-guide", "content/images/2026/03/Gemini_Generated_Image_3prrqm3prrqm3prr.png"),
 ]
 
-# ── 주제별 가이드 — 3그룹(검역·항공·운송·기타, 2026-07-15 사용자 확정). (그룹, [(라벨, docs|blog, 슬러그)]) ──
+# ── 주제별 가이드 — 3그룹(검역·항공·운송·기타, 2026-07-15 사용자 확정), 여행지별과 같은
+#    칩(개수 뱃지)→목록 패널 문법. 제목 = 라이브 og:title. (그룹, [(제목, docs|blog, 슬러그)]) ──
 OTHER_GROUPS = [
     ("검역", [
-        ("동물검역 기본", "blog", "pet-quarantine-guide"),
-        ("수출검역 신청", "docs", "pet-export-inspection"),
-        ("검역소 안내", "docs", "pet-quarantine-station"),
-        ("검역 예약", "docs", "pet-quarantine-reservation"),
+        ("강아지, 고양이 동물검역", "blog", "pet-quarantine-guide"),
+        ("수출동물검역", "docs", "pet-export-inspection"),
+        ("동물검역소 위치", "docs", "pet-quarantine-station"),
+        ("수출동물검역 예약", "docs", "pet-quarantine-reservation"),
     ]),
     ("항공·운송", [
-        ("기내 반입 준비", "docs", "dog-flight-preparation"),
-        ("기내 반입 규정", "docs", "airline-pet-cabin-policy"),
-        ("기내 반입 요금", "docs", "airline-pet-cabin-fees"),
-        ("기내 진정제", "blog", "dog-flight-medication"),
+        ("반려동물 비행기 탑승 준비", "docs", "dog-flight-preparation"),
+        ("반려동물 기내반입 기준", "docs", "airline-pet-cabin-policy"),
+        ("반려동물 운송요금", "docs", "airline-pet-cabin-fees"),
+        ("반려동물 비행기 스트레스의 원인과 예방", "blog", "dog-flight-medication"),
     ]),
     ("기타", [
-        ("광견병 항체검사", "blog", "rabies-titer-test-japan-korea"),
-        ("광견병 청정국 목록", "blog", "rabies-free-countries"),
-        ("마이크로칩 안전성", "blog", "pet-microchip-safety"),
-        ("해외여행 기본 안내", "blog", "dog-international-travel"),
-        ("한국으로 데려오기", "blog", "bring-dog-to-korea"),
+        ("해외 광견병 비발생국가/지역", "blog", "rabies-free-countries"),
+        ("반려동물과 함께하는 일본 여행, 더 쉽게!", "blog", "rabies-titer-test-japan-korea"),
+        ("반려동물 마이크로칩 삽입, 안전할까?", "blog", "pet-microchip-safety"),
+        ("강아지 동반 해외여행 방법", "blog", "dog-international-travel"),
+        ("반려동물을 한국으로 데리고 오는 방법", "blog", "bring-dog-to-korea"),
     ]),
 ]
 
@@ -452,15 +453,21 @@ def build_guide():
             for ko, slug, r in COUNTRIES if r == reg and slug in COUNTRY_POSTS
         )
         regions_html += f'<div class="region">{reg}</div><div class="cgrid">{chips}</div>{panels}'
-    other_html = "".join(
-        f'<div class="other-group"><div class="other-label">{label}</div><div class="other-links">'
+    other_chips = "".join(
+        f'<a class="chip chip-m" role="button" tabindex="0" data-panel="tp-{i}">{label}<span class="cnum">{len(items)}</span></a>'
+        for i, (label, items) in enumerate(OTHER_GROUPS)
+    )
+    other_panels = "".join(
+        f'<div class="cpanel" id="tp-{i}" hidden>'
         + "".join(
-            f'<a href="{LIVE}/{kind}/{slug}/" target="_blank" rel="noopener">{name}</a>'
+            f'<a class="cprow" href="{LIVE}/{kind}/{slug}/" target="_blank" rel="noopener">'
+            f'<span>{name}</span><i class="ti ti-chevron-right"></i></a>'
             for name, kind, slug in items
         )
-        + "</div></div>"
-        for label, items in OTHER_GROUPS
+        + "</div>"
+        for i, (label, items) in enumerate(OTHER_GROUPS)
     )
+    other_html = f'<div class="cgrid">{other_chips}</div>{other_panels}'
     return f"""{head('가이드 · 펫무브', '나라별 반려동물 출국 가이드 — 일본·태국·필리핀 등 34개국의 검역 준비 방법을 확인하세요.')}
 {header('guide')}
   <div class="phead">
