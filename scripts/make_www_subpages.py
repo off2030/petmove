@@ -6,6 +6,7 @@
 이미지 base64 불필요(텍스트·칩·카드 위주) → 가벼운 단독 생성기.
 나라·글 링크는 현재 라이브 고스트(www.petmove.co.kr/docs·/blog)로 연결해 눌러볼 수 있게.
 """
+import json
 import os
 
 OUT_DIR = r"C:\dev\petmove\docs\www-redesign"
@@ -204,6 +205,7 @@ CSS = """
   .cprow.main{font-weight:600}
   .cprow span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .cprow i{color:var(--ink3);font-size:15px;flex-shrink:0}
+  .cprow .rtag{font-size:11.5px;color:var(--ink3);flex-shrink:0;overflow:visible}
   .other-links a{font-size:13px;color:var(--ink);background:var(--surface);border:0.5px solid var(--border);
     border-radius:999px;padding:8px 14px}
 
@@ -416,6 +418,21 @@ def build_guide():
         return (f'<a class="chip" data-name="{ko}" href="{LIVE}/docs/{slug}-pet-travel-guide/" '
                 f'target="_blank" rel="noopener">{ko}</a>')
 
+    # 전체 글 검색 인덱스(69글) — 제목·여행지명·슬러그 매칭용. t=표시 제목, g=태그(여행지/주제별), u=URL.
+    idx, seen = [], set()
+    for ko, slug, r in COUNTRIES:
+        posts = COUNTRY_POSTS.get(slug) or [(f"{ko} 입국 준비 총정리", "docs", f"{slug}-pet-travel-guide")]
+        for t, kind, pslug in posts:
+            if pslug in seen:
+                continue
+            seen.add(pslug)
+            idx.append({"t": t, "g": ko, "u": f"{LIVE}/{kind}/{pslug}/"})
+    for name, kind, pslug in OTHER:
+        if pslug not in seen:
+            seen.add(pslug)
+            idx.append({"t": name, "g": "주제별", "u": f"{LIVE}/{kind}/{pslug}/"})
+    idx_json = json.dumps(idx, ensure_ascii=False)
+
     regions_html = ""
     for reg in REGIONS:
         chips = "".join(chip(ko, slug) for ko, slug, r in COUNTRIES if r == reg)
@@ -438,26 +455,32 @@ def build_guide():
     <div class="container">
       <h1>가이드</h1>
       <p class="lead">여행지별 검역 준비 방법을 확인하세요</p>
-      <div class="search"><i class="ti ti-search"></i><input id="q" type="text" placeholder="여행지 검색 (예: 일본)"></div>
+      <div class="search"><i class="ti ti-search"></i><input id="q" type="text" placeholder="가이드 검색 (예: 일본, 검역)"></div>
     </div>
   </div>
 
-  <section>
+  <section id="secSearch" hidden>
+    <div class="container">
+      <h2 class="sec-h">검색 결과</h2>
+      <div class="cpanel" id="srList" style="margin-top:0"></div>
+    </div>
+  </section>
+
+  <section id="secFeat">
     <div class="container">
       <h2 class="sec-h">인기 가이드</h2>
       <div class="feat">{feat}</div>
     </div>
   </section>
 
-  <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
+  <section id="secDest" style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
     <div class="container">
       <h2 class="sec-h">여행지별 가이드</h2>
       <div id="regions">{regions_html}</div>
-      <div class="no-hit" id="noHit" hidden>검색 결과가 없어요</div>
     </div>
   </section>
 
-  <section>
+  <section id="secOther">
     <div class="container">
       <h2 class="sec-h">주제별 가이드</h2>
       <div class="other-links">{other_html}</div>
@@ -481,19 +504,20 @@ def build_guide():
       ch.addEventListener('click',toggle);
       ch.addEventListener('keydown',function(e){{if(e.key==='Enter'||e.key===' '){{e.preventDefault();toggle();}}}});
     }});
+    // 전체 글 검색(69글) — 제목·여행지명·슬러그 매칭. 검색 중엔 본문 섹션을 숨기고 결과 목록만.
+    var IDX={idx_json};
     var q=document.getElementById('q');if(!q)return;
+    var rs=document.getElementById('secSearch'),rl=document.getElementById('srList');
+    var secs=['secFeat','secDest','secOther'].map(function(id){{return document.getElementById(id);}});
     q.addEventListener('input',function(){{
       closeAll();
-      var v=q.value.trim().toLowerCase(),hit=false;
-      document.querySelectorAll('#regions .region').forEach(function(rg){{
-        var grid=rg.nextElementSibling,any=false;
-        grid.querySelectorAll('.chip').forEach(function(c){{
-          var name=(c.getAttribute('data-name')||c.textContent).toLowerCase();
-          var m=!v||name.indexOf(v)>=0;c.style.display=m?'':'none';if(m)any=true;
-        }});
-        rg.style.display=any?'':'none';grid.style.display=any?'':'none';if(any)hit=true;
-      }});
-      var n=document.getElementById('noHit');if(n)n.hidden=hit;
+      var v=q.value.trim().toLowerCase();
+      if(!v){{rs.hidden=true;secs.forEach(function(s){{s.hidden=false;}});return;}}
+      var hits=IDX.filter(function(p){{return (p.t+' '+p.g+' '+p.u).toLowerCase().indexOf(v)>=0;}});
+      rl.innerHTML=hits.length?hits.map(function(p){{
+        return '<a class="cprow" href="'+p.u+'" target="_blank" rel="noopener"><span>'+p.t+'</span><span class="rtag">'+p.g+'</span></a>';
+      }}).join(''):'<div class="no-hit">검색 결과가 없어요</div>';
+      rs.hidden=false;secs.forEach(function(s){{s.hidden=true;}});
     }});
   }})();
   </script>"""
