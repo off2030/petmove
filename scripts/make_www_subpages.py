@@ -49,6 +49,7 @@ COUNTRY_POSTS = {
         ("강아지 동반 일본여행", "blog", "dog-travel-to-japan"),
         ("강아지·고양이 일본 입국 일정 계산기", "blog", "japan-pet-entry-scheduler"),
         ("강아지·고양이 일본 입국 준비 일정 확인", "blog", "japan-pet-entry-self-check"),
+        ("반려동물과 함께하는 일본 여행, 더 쉽게!", "blog", "rabies-titer-test-japan-korea"),
         ("강아지를 데리고 한국과 일본을 여러번 왕복해야 하는 경우", "blog", "repeated-dog-travel-korea-japan"),
         ("강아지 심장수술을 위한 일본 입국 준비 안내", "blog", "japan-entry-for-dog-heart-surgery"),
         ("일본 반려동물 수출동물검역", "blog", "japan-pet-export-inspection"),
@@ -130,7 +131,6 @@ OTHER_GROUPS = [
     ]),
     ("기타", [
         ("해외 광견병 비발생국가/지역", "blog", "rabies-free-countries"),
-        ("반려동물과 함께하는 일본 여행, 더 쉽게!", "blog", "rabies-titer-test-japan-korea"),
         ("반려동물 마이크로칩 삽입, 안전할까?", "blog", "pet-microchip-safety"),
         ("강아지 동반 해외여행 방법", "blog", "dog-international-travel"),
         ("반려동물을 한국으로 데리고 오는 방법", "blog", "bring-dog-to-korea"),
@@ -185,7 +185,7 @@ CSS = """
 
   /* 추천 가이드(featured) */
   .feat{display:grid;grid-template-columns:1fr;gap:10px}
-  .fcard{display:flex;align-items:center;gap:14px;background:var(--surface);border:0.5px solid var(--border);border-radius:16px;padding:14px 15px}
+  .fcard{display:flex;align-items:center;gap:14px;background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:14px 15px}
   .fcard .ftxt{flex:1;min-width:0}
   .fcard .ft{display:block;font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.42}
   .fcard .fx{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px;color:var(--ink2);margin-top:6px;line-height:1.55}
@@ -194,8 +194,8 @@ CSS = """
   /* 나라 그리드 */
   .region{font-size:12.5px;font-weight:600;color:var(--ink2);margin:20px 0 11px}
   .cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
-  .chip{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:13px 8px;
-    text-align:center;font-size:13px;color:var(--ink)}
+  .chip{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:13px 8px;
+    text-align:center;font-size:13.5px;color:var(--ink)}
 
   /* 그 외 준비 */
   .other-group{margin-top:18px}
@@ -218,7 +218,7 @@ CSS = """
 
   /* 문의 채널 */
   .csec{max-width:520px;margin:0 auto}
-  .cblock{background:var(--surface);border:0.5px solid var(--border);border-radius:16px;padding:18px;margin-top:14px}
+  .cblock{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:18px;margin-top:14px}
   .cblock .cl{font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:12px}
   .chan{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:0.5px solid var(--border)}
   .chan:first-of-type{border-top:0}
