@@ -14,7 +14,8 @@ LIVE = "https://www.petmove.co.kr"
 # 타일 플로팅 섀도 = 앱 LogoMark(pm-logo-float)와 동일 문법. overflow:visible 없으면 그림자 잘림.
 LOGO = ('<svg viewBox="0 0 200 200" width="26" height="26" aria-hidden="true" style="overflow:visible"><defs><clipPath id="pmlg-sq"><rect width="200" height="200" rx="46"/></clipPath><linearGradient id="pmlg-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63C9FF"/><stop offset="1" stop-color="#0BAEFF"/></linearGradient><filter id="pmlg-float" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#0868A8" flood-opacity="0.35"/></filter></defs><g filter="url(#pmlg-float)"><g clip-path="url(#pmlg-sq)"><rect width="200" height="200" fill="url(#pmlg-sky)"/><path d="M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106" fill="none" stroke="#FFC93C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><rect x="0" y="160" width="200" height="40" fill="#fff"/><circle cx="46" cy="168" r="52" fill="#fff"/><circle cx="72" cy="120" r="48" fill="#fff"/><circle cx="112" cy="148" r="34" fill="#fff"/><circle cx="146" cy="138" r="38" fill="#fff"/><circle cx="178" cy="154" r="24" fill="#fff"/><path d="M116 132 L116 118" fill="none" stroke="#FFC93C" stroke-width="18" stroke-linecap="round" opacity="0.34"/></g></g></svg>')
 
-# ── 나라별 가이드 34개국 (한글, docs 슬러그, 지역) ──
+# ── 나라별 가이드 34개국 (한글, docs 슬러그, 지역) — 2026-07-15 5그룹 재편:
+#    괌=오세아니아(미국령 태평양 섬, 하와이는 미국 주라 미주 유지), 모로코·중동 3국=중동·아프리카. ──
 COUNTRIES = [
     # 아시아
     ("일본", "japan", "아시아"), ("중국", "china", "아시아"), ("대만", "taiwan", "아시아"),
@@ -22,18 +23,19 @@ COUNTRIES = [
     ("싱가포르", "singapore", "아시아"), ("말레이시아", "malaysia", "아시아"), ("인도네시아", "indonesia", "아시아"),
     ("베트남", "vietnam", "아시아"), ("캄보디아", "cambodia", "아시아"), ("몽골", "mongolia", "아시아"),
     ("인도", "india", "아시아"), ("카자흐스탄", "kazakhstan", "아시아"), ("우즈베키스탄", "uzbekistan", "아시아"),
-    ("괌", "guam", "아시아"),
-    # 유럽·중동
-    ("유럽(EU)", "eu", "유럽·중동"), ("영국", "uk", "유럽·중동"), ("스위스", "switzerland", "유럽·중동"),
-    ("아일랜드", "ireland", "유럽·중동"), ("우크라이나", "ukraine", "유럽·중동"), ("러시아", "russia", "유럽·중동"),
-    ("이스라엘", "israel", "유럽·중동"), ("아랍에미리트", "uae", "유럽·중동"), ("튀르키예", "turkey", "유럽·중동"),
+    # 유럽
+    ("유럽(EU)", "eu", "유럽"), ("영국", "uk", "유럽"), ("스위스", "switzerland", "유럽"),
+    ("아일랜드", "ireland", "유럽"), ("우크라이나", "ukraine", "유럽"), ("러시아", "russia", "유럽"),
     # 미주
     ("미국", "usa", "미주"), ("하와이", "hawaii", "미주"), ("캐나다", "canada", "미주"),
     ("멕시코", "mexico", "미주"), ("브라질", "brazil", "미주"), ("아르헨티나", "argentina", "미주"),
-    # 오세아니아·기타
-    ("호주", "australia", "오세아니아·기타"), ("뉴질랜드", "newzealand", "오세아니아·기타"), ("모로코", "morocco", "오세아니아·기타"),
+    # 오세아니아
+    ("호주", "australia", "오세아니아"), ("뉴질랜드", "newzealand", "오세아니아"), ("괌", "guam", "오세아니아"),
+    # 중동·아프리카
+    ("이스라엘", "israel", "중동·아프리카"), ("아랍에미리트", "uae", "중동·아프리카"),
+    ("튀르키예", "turkey", "중동·아프리카"), ("모로코", "morocco", "중동·아프리카"),
 ]
-REGIONS = ["아시아", "유럽·중동", "미주", "오세아니아·기타"]
+REGIONS = ["아시아", "유럽", "미주", "오세아니아", "중동·아프리카"]
 
 # ── 인기 가이드(featured) — 인기 여행지 3(사용자 확정 2026-07-15). Ghost 카드 스타일
 #    (제목+요약 2줄+우측 썸네일). 썸네일 = 각 글의 feature_image(라이브 og:image 에서 확인,
