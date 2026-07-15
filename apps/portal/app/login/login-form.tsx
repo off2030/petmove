@@ -209,44 +209,50 @@ export function LoginForm({
           />
           <p className="text-sm text-white/90">로그인 중…</p>
         </div>
-        {/* 구름 밴드 — 세로 폰에선 스펙대로 67vw(=원본 비율 200:134 그대로), 데스크톱 등
-            가로 화면에선 34vh 로 제한해 워드마크(42%)·스피너(58%)를 덮지 않게 한다.
-            slice 는 가로 화면에서 폭 기준 확대 후 위가 잘려 구름·P 없이 민짜 흰 띠만 남고
-            워드마크까지 덮던 문제(PC 크롬) → none 으로 바꿔 구름이 옆으로 늘어난 낮은
-            언덕처럼 깔리게 한다(세로 폰은 67vw 가 비율과 일치해 기존과 동일). */}
-        <svg
-          className="pointer-events-none absolute bottom-0 left-0 w-full"
-          style={{ height: 'min(67vw, 34vh)' }}
-          viewBox="0 66 200 134"
-          preserveAspectRatio="none"
+        {/* 구름+P — www 시안 최종 CTA 와 같은 문법: 그림을 절대 늘이지 않는다.
+            원본 비율(208:134) 고정으로 하단 가운데 정렬 → P 가 어떤 화면에서도 안 찌그러짐.
+            화면이 그림보다 넓으면(데스크톱) 그림의 평평한 밑단(y160, 아래 40/134)과 같은
+            높이의 전폭 흰 지면 밴드가 좌우를 채운다.
+            --cw 104vw = 세로 폰에서 구 스펙(폭 200 viewBox·높이 67vw)과 동일 스케일,
+            상한 34vh*208/134 = 그림 높이 34vh 제한(워드마크 42%·스피너 58% 안 덮음). */}
+        <div
           aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0"
+          style={{ '--cw': 'min(104vw, 34vh * 208 / 134)' } as React.CSSProperties}
         >
-          {/* P 로고는 가로 화면에선 함께 늘어나 형태가 깨지므로 숨긴다(브랜드는 워드마크가 담당). */}
-          <path
-            d="M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106"
-            className="landscape:hidden"
-            fill="none"
-            stroke="#FFC93C"
-            strokeWidth="18"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <div
+            className="absolute inset-x-0 bottom-0 bg-white"
+            style={{ height: 'calc(var(--cw) * 40 / 208)' }}
           />
-          <rect x="0" y="160" width="200" height="40" fill="#ffffff" />
-          <circle cx="46" cy="168" r="52" fill="#ffffff" />
-          <circle cx="72" cy="120" r="48" fill="#ffffff" />
-          <circle cx="112" cy="148" r="34" fill="#ffffff" />
-          <circle cx="146" cy="138" r="38" fill="#ffffff" />
-          <circle cx="178" cy="154" r="24" fill="#ffffff" />
-          <path
-            d="M116 132 L116 118"
-            className="landscape:hidden"
-            fill="none"
-            stroke="#FFC93C"
-            strokeWidth="18"
-            strokeLinecap="round"
-            opacity="0.34"
-          />
-        </svg>
+          <svg
+            className="absolute bottom-0 left-1/2 -translate-x-1/2"
+            style={{ width: 'var(--cw)', height: 'calc(var(--cw) * 134 / 208)' }}
+            viewBox="-6 66 208 134"
+          >
+            <path
+              d="M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106"
+              fill="none"
+              stroke="#FFC93C"
+              strokeWidth="18"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <rect x="-6" y="160" width="208" height="40" fill="#ffffff" />
+            <circle cx="46" cy="168" r="52" fill="#ffffff" />
+            <circle cx="72" cy="120" r="48" fill="#ffffff" />
+            <circle cx="112" cy="148" r="34" fill="#ffffff" />
+            <circle cx="146" cy="138" r="38" fill="#ffffff" />
+            <circle cx="178" cy="154" r="24" fill="#ffffff" />
+            <path
+              d="M116 132 L116 118"
+              fill="none"
+              stroke="#FFC93C"
+              strokeWidth="18"
+              strokeLinecap="round"
+              opacity="0.34"
+            />
+          </svg>
+        </div>
       </div>
     )
   }
