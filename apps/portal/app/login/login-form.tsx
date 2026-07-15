@@ -209,15 +209,22 @@ export function LoginForm({
           />
           <p className="text-sm text-white/90">로그인 중…</p>
         </div>
+        {/* 구름 밴드 — 세로 폰에선 스펙대로 67vw(=원본 비율 200:134 그대로), 데스크톱 등
+            가로 화면에선 34vh 로 제한해 워드마크(42%)·스피너(58%)를 덮지 않게 한다.
+            slice 는 가로 화면에서 폭 기준 확대 후 위가 잘려 구름·P 없이 민짜 흰 띠만 남고
+            워드마크까지 덮던 문제(PC 크롬) → none 으로 바꿔 구름이 옆으로 늘어난 낮은
+            언덕처럼 깔리게 한다(세로 폰은 67vw 가 비율과 일치해 기존과 동일). */}
         <svg
           className="pointer-events-none absolute bottom-0 left-0 w-full"
-          style={{ height: 'min(67vw, 55vh)' }}
+          style={{ height: 'min(67vw, 34vh)' }}
           viewBox="0 66 200 134"
-          preserveAspectRatio="xMidYMax slice"
+          preserveAspectRatio="none"
           aria-hidden
         >
+          {/* P 로고는 가로 화면에선 함께 늘어나 형태가 깨지므로 숨긴다(브랜드는 워드마크가 담당). */}
           <path
             d="M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106"
+            className="landscape:hidden"
             fill="none"
             stroke="#FFC93C"
             strokeWidth="18"
@@ -232,6 +239,7 @@ export function LoginForm({
           <circle cx="178" cy="154" r="24" fill="#ffffff" />
           <path
             d="M116 132 L116 118"
+            className="landscape:hidden"
             fill="none"
             stroke="#FFC93C"
             strokeWidth="18"
