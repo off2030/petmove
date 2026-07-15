@@ -37,6 +37,65 @@ COUNTRIES = [
 ]
 REGIONS = ["아시아", "유럽", "미주", "오세아니아", "중동·아프리카"]
 
+# ── 글이 2개 이상인 여행지 = 칩 클릭 시 목록 패널(2026-07-15 사용자 확정 IA).
+#    총정리(docs) 첫 줄 고정 + 관련 블로그 글. 제목 = 라이브 og:title(파이프 뒤 꼬리 제거).
+#    글 1개뿐인 나라는 기존처럼 칩에서 바로 이동. 이 구조로 고아 블로그 글 0 달성
+#    (일반 글 2개는 OTHER 로). Next.js 이식 시 /guide/<slug>/ 나라 페이지로 승격 예정. ──
+COUNTRY_POSTS = {
+    "japan": [
+        ("일본 입국 준비 총정리", "docs", "japan-pet-travel-guide"),
+        ("강아지 일본 입국 준비절차, 기간, 비용", "blog", "japan-pet-import-process"),
+        ("강아지 동반 일본여행", "blog", "dog-travel-to-japan"),
+        ("강아지·고양이 일본 입국 일정 계산기", "blog", "japan-pet-entry-scheduler"),
+        ("강아지·고양이 일본 입국 준비 일정 확인", "blog", "japan-pet-entry-self-check"),
+        ("강아지를 데리고 한국과 일본을 여러번 왕복해야 하는 경우", "blog", "repeated-dog-travel-korea-japan"),
+        ("강아지 심장수술을 위한 일본 입국 준비 안내", "blog", "japan-entry-for-dog-heart-surgery"),
+        ("일본 반려동물 수출동물검역", "blog", "japan-pet-export-inspection"),
+        ("일본 수입동물검역 방법, 일본 주요 공항 동물검역소 위치", "blog", "japan-pet-import-inspection"),
+        ("일본 동물검역소 연락처", "blog", "japan-pet-quarantine-office"),
+    ],
+    "usa": [
+        ("미국 입국 준비 총정리", "docs", "usa-pet-travel-guide"),
+        ("2026 강아지 미국여행 완벽 가이드", "blog", "dog-travel-to-usa-august-2024-update"),
+        ("2024년 8월부터 적용되는 새로운 강아지 미국 입국 요건", "blog", "dog-travel-to-usa"),
+        ("고양이 미국 입국 준비 절차, 기간 비용", "blog", "cat-travel-to-usa"),
+        ("강아지 미국 입국 준비절차, 기간, 비용 (2024년 7월까지)", "blog", "dog-travel-to-usa-2024-rule"),
+    ],
+    "eu": [
+        ("유럽(EU) 입국 준비 총정리", "docs", "eu-pet-travel-guide"),
+        ("[2026] 반려동물 유럽 입국, 광견병항체검사 기관 변경 안내", "blog", "eu-pet-rabies-test"),
+        ("강아지 프랑스 입국 준비절차, 기간, 비용", "blog", "dog-travel-to-france"),
+    ],
+    "thailand": [
+        ("태국 입국 준비 총정리", "docs", "thailand-pet-travel-guide"),
+        ("강아지 태국 입국 준비절차, 기간, 비용", "blog", "dog-travel-to-thailand"),
+    ],
+    "philippines": [
+        ("필리핀 입국 준비 총정리", "docs", "philippines-pet-travel-guide"),
+        ("강아지 필리핀 입국 준비절차, 기간, 비용", "blog", "dog-travel-to-philippines"),
+    ],
+    "china": [
+        ("중국 입국 준비 총정리", "docs", "china-pet-travel-guide"),
+        ("강아지 중국 입국 준비절차, 기간, 비용", "blog", "dog-travel-to-china"),
+    ],
+    "hawaii": [
+        ("하와이 입국 준비 총정리", "docs", "hawaii-pet-travel-guide"),
+        ("강아지 하와이 입국 준비절차, 기간, 비용", "blog", "dog-travel-to-hawaii"),
+    ],
+    "australia": [
+        ("호주 입국 준비 총정리", "docs", "australia-pet-travel-guide"),
+        ("고양이 호주 입국 준비 총정리", "blog", "australia-cat-travel-guide"),
+    ],
+    "singapore": [
+        ("싱가포르 입국 준비 총정리", "docs", "singapore-pet-travel-guide"),
+        ("2024년 7월부터 달라진 싱가포르 반려동물 입국 규정", "blog", "singapore-pet-import-rule-change"),
+    ],
+    "uk": [
+        ("영국 입국 준비 총정리", "docs", "uk-pet-travel-guide"),
+        ("반려동물과 프랑스를 경유하여 영국으로 가는 방법", "blog", "travel-to-uk-with-pet-via-france"),
+    ],
+}
+
 # ── 인기 가이드(featured) — 인기 여행지 3(사용자 확정 2026-07-15). Ghost 카드 스타일
 #    (제목+요약 2줄+우측 썸네일). 썸네일 = 각 글의 feature_image(라이브 og:image 에서 확인,
 #    로컬 백업 ghost-images/content/... 참조 — 프리뷰는 content junction 필요).
@@ -66,6 +125,8 @@ OTHER = [
     ("광견병 항체검사", "blog", "rabies-titer-test-japan-korea"),
     ("광견병 청정국 목록", "blog", "rabies-free-countries"),
     ("해외여행 기본 안내", "blog", "dog-international-travel"),
+    ("동물검역 기본", "blog", "pet-quarantine-guide"),
+    ("한국으로 데려오기", "blog", "bring-dog-to-korea"),
 ]
 
 CSS = """
@@ -134,6 +195,15 @@ CSS = """
   .other-label{font-size:12.5px;font-weight:600;color:var(--accent-ink);margin-bottom:11px}
   .other-links{display:flex;flex-wrap:wrap;gap:8px}
   .no-hit{text-align:center;font-size:13.5px;color:var(--ink3);padding:16px 0 4px}
+  .chip.chip-m{cursor:pointer}
+  .chip .cnum{font-size:11px;font-weight:600;color:var(--ink3);margin-left:4px}
+  .chip.on{border-color:rgba(33,33,36,.45)}
+  .cpanel{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:2px 16px;margin-top:10px}
+  .cprow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 0;border-top:0.5px solid var(--border);font-size:13.5px;color:var(--ink)}
+  .cprow:first-child{border-top:0}
+  .cprow.main{font-weight:600}
+  .cprow span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cprow i{color:var(--ink3);font-size:15px;flex-shrink:0}
   .other-links a{font-size:13px;color:var(--ink);background:var(--surface);border:0.5px solid var(--border);
     border-radius:999px;padding:8px 14px}
 
@@ -338,13 +408,26 @@ def build_guide():
         f'<img class="fthumb" src="{img}" alt="" loading="lazy"></a>'
         for title, excerpt, kind, slug, img in FEATURED
     )
+    def chip(ko, slug):
+        posts = COUNTRY_POSTS.get(slug)
+        if posts:
+            return (f'<a class="chip chip-m" role="button" tabindex="0" data-name="{ko}" data-panel="cp-{slug}">'
+                    f'{ko}<span class="cnum">{len(posts)}</span></a>')
+        return (f'<a class="chip" data-name="{ko}" href="{LIVE}/docs/{slug}-pet-travel-guide/" '
+                f'target="_blank" rel="noopener">{ko}</a>')
+
     regions_html = ""
     for reg in REGIONS:
-        chips = "".join(
-            f'<a class="chip" href="{LIVE}/docs/{slug}-pet-travel-guide/" target="_blank" rel="noopener">{ko}</a>'
-            for ko, slug, r in COUNTRIES if r == reg
+        chips = "".join(chip(ko, slug) for ko, slug, r in COUNTRIES if r == reg)
+        panels = "".join(
+            f'<div class="cpanel" id="cp-{slug}" hidden>' + "".join(
+                f'<a class="cprow{" main" if i == 0 else ""}" href="{LIVE}/{kind}/{pslug}/" target="_blank" rel="noopener">'
+                f'<span>{t}</span><i class="ti ti-chevron-right"></i></a>'
+                for i, (t, kind, pslug) in enumerate(COUNTRY_POSTS[slug])
+            ) + "</div>"
+            for ko, slug, r in COUNTRIES if r == reg and slug in COUNTRY_POSTS
         )
-        regions_html += f'<div class="region">{reg}</div><div class="cgrid">{chips}</div>'
+        regions_html += f'<div class="region">{reg}</div><div class="cgrid">{chips}</div>{panels}'
     other_html = "".join(
         f'<a href="{LIVE}/{kind}/{slug}/" target="_blank" rel="noopener">{name}</a>'
         for name, kind, slug in OTHER
@@ -384,13 +467,29 @@ def build_guide():
 {FOOTER}
   <script>
   (function(){{
+    // 나라 칩 → 글 목록 패널 토글 (글 2개+ 나라만, 한 번에 하나만 열림)
+    function closeAll(){{
+      document.querySelectorAll('.cpanel').forEach(function(p){{p.hidden=true;}});
+      document.querySelectorAll('.chip.on').forEach(function(c){{c.classList.remove('on');}});
+    }}
+    document.querySelectorAll('.chip[data-panel]').forEach(function(ch){{
+      function toggle(){{
+        var p=document.getElementById(ch.getAttribute('data-panel'));if(!p)return;
+        var wasOpen=!p.hidden;closeAll();
+        if(!wasOpen){{p.hidden=false;ch.classList.add('on');}}
+      }}
+      ch.addEventListener('click',toggle);
+      ch.addEventListener('keydown',function(e){{if(e.key==='Enter'||e.key===' '){{e.preventDefault();toggle();}}}});
+    }});
     var q=document.getElementById('q');if(!q)return;
     q.addEventListener('input',function(){{
+      closeAll();
       var v=q.value.trim().toLowerCase(),hit=false;
       document.querySelectorAll('#regions .region').forEach(function(rg){{
         var grid=rg.nextElementSibling,any=false;
         grid.querySelectorAll('.chip').forEach(function(c){{
-          var m=!v||c.textContent.toLowerCase().indexOf(v)>=0;c.style.display=m?'':'none';if(m)any=true;
+          var name=(c.getAttribute('data-name')||c.textContent).toLowerCase();
+          var m=!v||name.indexOf(v)>=0;c.style.display=m?'':'none';if(m)any=true;
         }});
         rg.style.display=any?'':'none';grid.style.display=any?'':'none';if(any)hit=true;
       }});
