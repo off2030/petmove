@@ -446,7 +446,7 @@ html = f"""<!DOCTYPE html>
   <section style="border-top:0.5px solid var(--border)">
     <div class="container">
       <div class="kicker">앱 지원 여행지</div>
-      <h2 class="h2">27곳, 앞으로 더 추가돼요</h2>
+      <h2 class="h2">앞으로 계속 추가돼요</h2>
       <div class="grid" id="destGrid">
         <div class="dest">일본<span class="dot"></span></div>
         <div class="dest">태국<span class="dot"></span></div>
