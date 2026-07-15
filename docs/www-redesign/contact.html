@@ -87,10 +87,12 @@
   .cblock .cl{font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:12px}
   .chan{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:0.5px solid var(--border)}
   .chan:first-of-type{border-top:0}
-  .chan i{color:var(--accent-ink);font-size:20px;width:24px;text-align:center}
-  .chan .nlogo{font-weight:800;font-size:15px;color:var(--accent-ink);width:24px;text-align:center}
+  .chan i{color:var(--ink);font-size:20px;width:24px;text-align:center}
+  .chan .nlogo{font-weight:800;font-size:15px;color:var(--ink);width:24px;text-align:center}
   .chan .cv{font-size:14px;font-weight:600;color:var(--ink)}
   .chan .cs{font-size:12px;color:var(--ink3);margin-top:1px}
+  .copen{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink3);margin-top:6px;padding-top:13px;border-top:0.5px solid var(--border)}
+  .copen i{font-size:14px}
   .cnote{font-size:12px;color:var(--ink3);text-align:center;line-height:1.7;margin-top:20px}
 
   /* 글 본문 템플릿 — 읽기 페이지는 웜 화이트 배경(크림보다 밝게, 장문 가독성) */
@@ -221,6 +223,7 @@
   <div class="phead">
     <div class="container">
       <h1>문의</h1>
+      <p class="lead">궁금한 점이 있으면 편한 채널로 연락주세요</p>
     </div>
   </div>
 
@@ -229,11 +232,17 @@
       <div class="cblock">
         <h2 class="cl">상담 · 문의</h2>
         <a class="chan" href="https://pf.kakao.com/_zDDxhj/chat" target="_blank" rel="noopener">
-          <i class="ti ti-message-circle"></i><span><span class="cv">카카오톡 상담</span></span></a>
+          <i class="ti ti-message-circle"></i><span><span class="cv">카카오톡 상담</span><div class="cs">펫무브 공식 채널</div></span></a>
         <a class="chan" href="tel:02-872-7588">
           <i class="ti ti-phone"></i><span><span class="cv">전화 02-872-7588</span><div class="cs">로잔동물의료센터</div></span></a>
         <a class="chan" href="https://naver.me/GUwSYQ9h" target="_blank" rel="noopener">
           <span class="nlogo">N</span><span><span class="cv">네이버 예약</span><div class="cs">로잔동물의료센터</div></span></a>
+        <div class="copen"><i class="ti ti-clock"></i>응대 시간 평일 10:00–18:00 · 주말·공휴일 휴진</div>
+      </div>
+      <div class="cblock">
+        <h2 class="cl">앱 이용 문의</h2>
+        <a class="chan" href="https://app.petmove.co.kr/support" target="_blank" rel="noopener">
+          <i class="ti ti-device-mobile"></i><span><span class="cv">앱 고객지원</span><div class="cs">로그인 · 오류 등 앱 사용 관련</div></span></a>
       </div>
       <div class="cblock">
         <h2 class="cl">제휴 · 업무 문의</h2>
