@@ -14,6 +14,7 @@ export const metadata: Metadata = {
     title: '펫무브 · 반려동물 해외 이동',
     description: '우리 아이 해외여행, 펫무브가 챙겨줘요. 앱으로 쉽게 준비하고, 복잡한 검역 절차는 전문가에게 맡기세요.',
     locale: 'ko_KR',
+    images: [{ url: '/img/og.png', width: 1200, height: 630, alt: '펫무브 — 반려동물과 함께하는 해외여행' }],
   },
 }
 
