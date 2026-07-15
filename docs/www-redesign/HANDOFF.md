@@ -198,7 +198,9 @@
 - **검증**: 빌드 전 라우트 SSG ✓ / 라이브 sitemap 69 URL + 핵심 5 페이지 = 로컬 74/74 200 ✓ / 일본 가이드(TOC 13·커버·콜아웃·흰 배경), 가이드 허브(일본 패널 11행·검색 7건·복원), 스케줄러 안내 콜아웃 실측 ✓.
 - **로컬 dev**: `.claude/launch.json` `www-dev`(port 3004).
 - **구 프로토타입/생성기**(docs/www-redesign/*.html·make_www_*.py) = **이제 아카이브**. 디자인·데이터 수정은 apps/www 에서. 프리뷰 이미지 junction 은 apps/www/public/content 로 재타겟.
-- **남은 것 = 배포**: Vercel 새 프로젝트(root=apps/www) → preview 전수 검증 → www.petmove.co.kr(+apex) 도메인 전환 → 며칠 뒤 Ghost 해지. 후속 백로그: next/font Pretendard·next/image·og.png·관련 글 자동 3개·/blog/ 목록·인터랙티브 재구현·새 글 MDX 파이프라인.
+- **배포·도메인 전환 완료(2026-07-15 저녁)**: Vercel 프로젝트 `petmove-www`(root=apps/www, Git 연동 master 자동배포) → 실서버 76 URL 전수 검증 → 가비아 DNS 전환(www CNAME=dbd0ce0d8e0dc8be.vercel-dns-017.com, @ A=216.198.79.1) → **www.petmove.co.kr 라이브**(www 200·apex 308→www·실도메인 76/76·Ghost 시그니처 부재 확인). 같은 날 잡은 콘텐츠 버그: 모바일 표 오버플로(flex shrink-to-fit — article width:100% + .pg>* min-width:0 + 전 표 .table-wrap), 괌 글(무의미 excerpt 콜아웃·#docs 내부태그 카테고리), 밴드 스크림 경계선.
+- **Ghost 해지 대기**: 며칠 모니터링 후 사용자가 해지(구독 비용 절감). 해지 전 확인: 메일 뉴스레터 기능 미사용 여부.
+- 후속 백로그: next/font Pretendard·next/image·og.png·관련 글 자동 3개·/blog/ 목록·인터랙티브(계산기·자가진단) 재구현·새 글 MDX 파이프라인·제목 검색 확장.
 
 ## 남은 할 일 (다음 세션 진입점)
 
