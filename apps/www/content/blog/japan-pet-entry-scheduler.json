@@ -3,7 +3,7 @@
  "kind": "blog",
  "title": "강아지·고양이 일본 입국 일정 계산기",
  "description": "강아지·고양이 일본 입국을 위한 최단기 일정을 자동으로 계산해주는 도구입니다. 한 단계의 날짜를 입력하면, 다음 단계의 날짜가 자동으로 계산됩니다. 사용 방법 예시 (최단기 일정 기준) 1️⃣ 마이크로칩 이식일 또는 광견병 1차 접종일을 입력하세요 2️⃣ 나머지…",
- "category": "#blog",
+ "category": "가이드",
  "updated": "2026.01.27",
  "minutes": 3,
  "feature_image": "/content/images/2026/01/japan-pet-entry-scheduler-og.webp",

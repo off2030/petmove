@@ -55,7 +55,8 @@ def emit(kind, slug):
     p = posts[slug]
     body, leftover, tools = convert_body(p.get("html") or "")
 
-    cats = [c for c in tag_by_post.get(p["id"], []) if c]
+    # 카테고리 = 첫 공개 태그. '#docs' 같은 내부 태그(#-접두)는 노출용이 아니라 제외.
+    cats = [c for c in tag_by_post.get(p["id"], []) if c and not c.startswith("#")]
     cat = cats[0] if cats else "가이드"
     date = fmt_date(p.get("updated_at") or p.get("published_at"))
     mins = max(3, len(p.get("plaintext") or "") // 900)
@@ -63,9 +64,11 @@ def emit(kind, slug):
     cover = ""
     if p.get("feature_image"):
         cover = f'<img class="art-cover" src="{norm_image(p["feature_image"])}" alt="{p["title"]}">\n'
-    intro = ""
-    if p.get("custom_excerpt"):
-        intro = f'<div class="callout-note">{p["custom_excerpt"]}</div>\n'
+    # 인트로 콜아웃 = 의미 있는 excerpt 일 때만. 제목과 같거나 10자 미만(괌 사례: excerpt="괌")은
+    # 정보가 없어 콜아웃을 만들지 않는다.
+    excerpt = (p.get("custom_excerpt") or "").strip()
+    meaningful_excerpt = excerpt and excerpt != p["title"].strip() and len(excerpt) >= 10
+    intro = f'<div class="callout-note">{excerpt}</div>\n' if meaningful_excerpt else ""
     notice = INTERACTIVE_NOTE + "\n" if slug in INTERACTIVE else ""
 
     info = ""
@@ -79,11 +82,14 @@ def emit(kind, slug):
             )
         info = f'\n<h2>유용한 자료</h2>\n<div class="info-list">{rows}\n</div>\n'
 
-    desc = (p.get("custom_excerpt") or "").strip()
+    # 메타 설명도 같은 기준 — 무의미한 excerpt 면 본문 첫 150자로 대체.
+    desc = excerpt if meaningful_excerpt else ""
     if not desc:
         desc = re.sub(r"\s+", " ", (p.get("plaintext") or "")).strip()[:150]
         desc = re.sub(r"\s+\S*$", "", desc)
         desc = re.sub(r"\s*\d+\.?$", "", desc) + "…"
+    # BOM·zero-width 등 비가시 문자 제거 (괌 글 plaintext 가 U+FEFF 로 시작하던 사례)
+    desc = re.sub("[​‌‍⁠﻿]", "", desc).strip()
 
     data = {
         "slug": slug,
