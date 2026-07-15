@@ -21,9 +21,9 @@ export default function LandingPage() {
             <div className="hero-content">
               <span className="eyebrow">반려동물 해외여행 · 검역 준비</span>
               <h1>
-                반려동물 해외여행,
+                우리 아이 해외여행,
                 <br />
-                펫무브가 챙길게요
+                펫무브가 챙겨줘요
               </h1>
               <p>
                 앱으로 쉽게 준비하고, <br className="mbr" />
