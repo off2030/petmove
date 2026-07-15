@@ -236,7 +236,7 @@
         <a href="contact.html">문의</a>
       </span>
       <span class="nav-right">
-        <a class="nav-app">앱 다운로드</a>
+        <a class="nav-app" href="prototype-mobile.html#download">앱 다운로드</a>
         <i class="ti ti-menu-2 burger" id="burger" role="button" tabindex="0" aria-label="메뉴"></i>
       </span>
     </div>
@@ -250,7 +250,7 @@
       <a href="guide.html">가이드</a>
       <a href="contact.html">문의</a>
     </nav>
-    <a class="drawer-app">앱 다운로드</a>
+    <a class="drawer-app" href="prototype-mobile.html#download">앱 다운로드</a>
   </aside>
   <article class="article">
     <div class="crumb"><a href="guide.html">가이드</a><span class="sep">›</span><a href="guide.html">여행지별</a><span class="sep">›</span>일본</div>
@@ -559,5 +559,17 @@
   </footer>
   <script>(function(){var b=document.getElementById('burger'),d=document.getElementById('drawer'),o=document.getElementById('drawerOv'),c=document.getElementById('drawerClose');if(!b||!d||!o)return;function open(){d.classList.add('open');o.classList.add('open');}function close(){d.classList.remove('open');o.classList.remove('open');}b.addEventListener('click',open);b.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});o.addEventListener('click',close);if(c)c.addEventListener('click',close);d.addEventListener('click',function(e){if(e.target.tagName==='A')close();});})();</script>
   <script>(function(){var p=document.querySelector(".prose");if(!p)return;var hs=p.querySelectorAll("h2");if(hs.length<3)hs=p.querySelectorAll("h3");if(hs.length<3)return;var t=document.createElement("nav");t.className="toc";var h=document.createElement("div");h.className="toc-h";h.textContent="목차";t.appendChild(h);hs.forEach(function(el,i){if(!el.id)el.id="sec-"+(i+1);var a=document.createElement("a");a.href="#"+el.id;a.textContent=el.textContent;t.appendChild(a);});p.insertBefore(t,p.firstChild);})();</script>
+<script>
+(function(){
+  var IOS='https://apps.apple.com/kr/app/id6784567864';
+  var AND='https://play.google.com/store/apps/details?id=com.petmove.portal';
+  var ua = navigator.userAgent;
+  var url = /iPhone|iPad|iPod/i.test(ua) ? IOS : (/Android/i.test(ua) ? AND : null);
+  if (!url) return; // 데스크톱은 정적 href(#download)의 스토어 배지 섹션으로
+  document.querySelectorAll('.nav-app,.drawer-app,.appcta').forEach(function(a){
+    a.href = url; a.target = '_blank'; a.rel = 'noopener';
+  });
+})();
+</script>
 </body>
 </html>
