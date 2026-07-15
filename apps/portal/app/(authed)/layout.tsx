@@ -12,7 +12,7 @@ import { TabHost } from '@/components/portal-shell/tab-host'
 import { TopBar } from '@/components/portal-shell/top-bar'
 import { listMyCases } from '@/lib/actions/cases'
 import { ensureMyProfile } from '@/lib/actions/profile'
-import { getPartnerOrgsByIds, listAvailableOrgs } from '@/lib/actions/partners'
+import { getPartnerOrgsByIds, listAvailableOrgs, type PartnerOrg } from '@/lib/actions/partners'
 import { TabSkeleton } from '@/components/portal-shell/tab-skeleton'
 
 export const dynamic = 'force-dynamic'
@@ -63,11 +63,14 @@ async function AuthedBody({ children }: { children: React.ReactNode }) {
 
   if (previewPayload) {
     const caseRow = await loadPreviewCase(previewPayload.caseId)
+    const previewPartners = caseRow
+      ? await loadPreviewPartners(caseRow)
+      : { vet: null, transport: null }
     return (
       <CaseDataProvider
         initialCases={caseRow ? [caseRow] : []}
         initialProfile={null}
-        initialPartners={{ vet: null, transport: null }}
+        initialPartners={previewPartners}
         initialTransportAvailable={false}
         userEmail={null}
         previewMode
@@ -115,6 +118,35 @@ async function AuthedBody({ children }: { children: React.ReactNode }) {
       <Shell>{children}</Shell>
     </CaseDataProvider>
   )
+}
+
+/**
+ * 미리보기용 담당 병원·운송 카드 데이터 — 케이스의 org_id/transport_org_id 로
+ * organizations 를 읽는다. getPartnerOrgsByIds 는 보호자 인증을 요구해 미리보기(비로그인)
+ * 에선 못 쓰므로 service-role 로 같은 규칙(platform=담당 미정 → null)을 적용한다.
+ * 안 채우면 [내 정보] 담당 병원 카드가 실제 보호자 화면과 달리 항상 빈칸으로 떴다.
+ */
+async function loadPreviewPartners(
+  caseRow: CaseRow,
+): Promise<{ vet: PartnerOrg | null; transport: PartnerOrg | null }> {
+  const PLATFORM_ORG_ID = '00000000-0000-0000-0000-000000000002'
+  const rawVet = caseRow.org_id ?? null
+  const rawTsp = caseRow.transport_org_id ?? null
+  const vetId = rawVet && rawVet !== PLATFORM_ORG_ID ? rawVet : null
+  const tspId = rawTsp && rawTsp !== PLATFORM_ORG_ID ? rawTsp : null
+  const ids = [vetId, tspId].filter((v): v is string => !!v)
+  if (ids.length === 0) return { vet: null, transport: null }
+
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('organizations')
+    .select('id, name, name_en, org_type, avatar_url')
+    .in('id', ids)
+  const byId = new Map(((data ?? []) as PartnerOrg[]).map((o) => [o.id, o]))
+  return {
+    vet: vetId ? byId.get(vetId) ?? null : null,
+    transport: tspId ? byId.get(tspId) ?? null : null,
+  }
 }
 
 /** pm_preview 토큰의 caseId 로 케이스 한 건을 service-role 로 읽는다 (보호자 RLS 우회). */
