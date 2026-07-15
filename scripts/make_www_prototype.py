@@ -91,7 +91,7 @@ APP_SECTIONS = f"""
 
 # ── 서비스 소개 섹션(3번째): 두 핵심(수의사 직접 · 앱 연동) + 맡길 수 있는 것 + 상담 CTA ──
 SERVICE_SECTION = """
-  <section id="service" style="border-top:0.5px solid var(--border)">
+  <section id="service">
     <div class="container">
       <div class="kicker">펫무브 서비스 소개</div>
       <h2 class="h2">전문가에게 안심하고 맡기세요</h2>
@@ -443,7 +443,7 @@ html = f"""<!DOCTYPE html>
 
 {APP_SECTIONS}
 
-  <section style="border-top:0.5px solid var(--border)">
+  <section style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border)">
     <div class="container">
       <div class="kicker">앱 지원 여행지</div>
       <h2 class="h2">앞으로 계속 추가돼요</h2>
@@ -500,7 +500,7 @@ html = f"""<!DOCTYPE html>
     </div>
   </section>
 {SERVICE_SECTION}
-  <section style="border-top:0.5px solid var(--border)">
+  <section style="background:var(--surface);border-top:0.5px solid var(--border)">
     <div class="container">
       <div class="kicker">고객 후기</div>
       <h2 class="h2">펫무브와 함께한 이야기</h2>
