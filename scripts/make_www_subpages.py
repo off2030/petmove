@@ -35,11 +35,20 @@ COUNTRIES = [
 ]
 REGIONS = ["아시아", "유럽·중동", "미주", "오세아니아·기타"]
 
-# ── 추천 가이드(featured) — 인기 여행지 3(사용자 확정 2026-07-15). (제목, 부제, docs|blog, 슬러그) ──
+# ── 인기 가이드(featured) — 인기 여행지 3(사용자 확정 2026-07-15). Ghost 카드 스타일
+#    (제목+요약 2줄+우측 썸네일). 썸네일 = 각 글의 feature_image(라이브 og:image 에서 확인,
+#    로컬 백업 ghost-images/content/... 참조 — 프리뷰는 content junction 필요).
+#    (제목, 요약, docs|blog, 슬러그, 썸네일 경로) ──
 FEATURED = [
-    ("일본 입국 준비 총정리", "가장 많이 가는 여행지", "docs", "japan-pet-travel-guide"),
-    ("싱가포르 입국 준비 총정리", "수입허가부터 차근차근", "docs", "singapore-pet-travel-guide"),
-    ("호주 입국 준비 총정리", "준비 기간이 긴 여행지", "docs", "australia-pet-travel-guide"),
+    ("일본 입국 준비 총정리",
+     "마이크로칩부터 항체검사 180일 대기까지, 준비 순서와 기간을 한눈에 정리했어요",
+     "docs", "japan-pet-travel-guide", "content/images/2026/01/japan-pet-travel-cover.webp"),
+    ("싱가포르 입국 준비 총정리",
+     "수입허가 등 챙길 서류가 많은 여행지예요. 절차를 단계별로 정리했어요",
+     "docs", "singapore-pet-travel-guide", "content/images/2026/03/Gemini_Generated_Image_m9o5ipm9o5ipm9o5.png"),
+    ("호주 입국 준비 총정리",
+     "준비 기간이 가장 긴 여행지 중 하나예요. 무엇부터 시작할지 순서대로 정리했어요",
+     "docs", "australia-pet-travel-guide", "content/images/2026/03/Gemini_Generated_Image_3prrqm3prrqm3prr.png"),
 ]
 
 # ── 그 외 준비 — 검역·항공·기타 한 덩어리(플랫). (제목, docs|blog, 슬러그) ──
@@ -105,9 +114,11 @@ CSS = """
 
   /* 추천 가이드(featured) */
   .feat{display:grid;grid-template-columns:1fr;gap:10px}
-  .fcard{display:block;background:var(--surface);border:0.5px solid var(--border);border-radius:16px;padding:16px 17px}
-  .fcard .ft{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.42}
-  .fcard .fd{font-size:12px;color:var(--ink3);margin-top:6px}
+  .fcard{display:flex;align-items:center;gap:14px;background:var(--surface);border:0.5px solid var(--border);border-radius:16px;padding:14px 15px}
+  .fcard .ftxt{flex:1;min-width:0}
+  .fcard .ft{display:block;font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.42}
+  .fcard .fx{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px;color:var(--ink2);margin-top:6px;line-height:1.55}
+  .fcard .fthumb{width:96px;height:72px;border-radius:10px;object-fit:cover;flex-shrink:0;background:var(--bg)}
 
   /* 나라 그리드 */
   .region{font-size:12.5px;font-weight:600;color:var(--accent-ink);margin:20px 0 11px}
@@ -232,7 +243,8 @@ CSS = """
     .burger{display:none}
     .drawer,.drawer-ov{display:none}
     .phead h1{font-size:38px}
-    .feat{grid-template-columns:repeat(3,1fr)}
+    .feat{max-width:640px;margin:0 auto}
+    .fcard .fthumb{width:128px;height:88px}
     .cgrid{grid-template-columns:repeat(4,1fr)}
   }
 """
@@ -320,8 +332,9 @@ FOOTER = f"""  <footer>
 def build_guide():
     feat = "".join(
         f'<a class="fcard" href="{LIVE}/{kind}/{slug}/" target="_blank" rel="noopener">'
-        f'<div class="ft">{title}</div><div class="fd">{sub}</div></a>'
-        for title, sub, kind, slug in FEATURED
+        f'<span class="ftxt"><span class="ft">{title}</span><span class="fx">{excerpt}</span></span>'
+        f'<img class="fthumb" src="{img}" alt="" loading="lazy"></a>'
+        for title, excerpt, kind, slug, img in FEATURED
     )
     regions_html = ""
     for reg in REGIONS:
@@ -346,7 +359,7 @@ def build_guide():
 
   <section>
     <div class="container">
-      <h2 class="sec-h">추천 가이드</h2>
+      <h2 class="sec-h">인기 가이드</h2>
       <div class="feat">{feat}</div>
     </div>
   </section>
