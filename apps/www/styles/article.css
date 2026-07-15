@@ -82,7 +82,9 @@
   .prose .more-body h3:first-child{margin-top:12px}
   .prose .more-body p:last-child,.prose .more-body blockquote:last-child{margin-bottom:0}
   .prose h3{scroll-margin-top:70px}
-  .article{max-width:720px;margin:0 auto;padding:0 22px}
+  /* width:100% 필수 — margin:0 auto 만 있으면 flex(.pg) 안에서 shrink-to-fit 이 되어
+     내용물 최소 폭(넓은 표)이 article 을 화면보다 넓혀 버린다(모바일 가로 밀림). */
+  .article{width:100%;max-width:720px;margin:0 auto;padding:0 22px}
   .crumb{font-size:12.5px;color:var(--ink3);padding:22px 0 0}
   .crumb a{color:var(--ink3)}
   .crumb .sep{margin:0 6px}

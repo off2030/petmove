@@ -13,4 +13,7 @@ body{margin:0;background:var(--bg);font-family:"Pretendard Variable",Pretendard,
 a{text-decoration:none;color:inherit}
 /* 페이지 래퍼 — 프로토타입에선 body 가 flex column(짧은 페이지에서 footer 바닥 고정) 이었던 것을 이관 */
 .pg{min-height:100dvh;display:flex;flex-direction:column}
+/* flex 자식은 min-width:auto 라 내용물(넓은 표 등)의 최소 폭 이하로 안 줄어든다 —
+   모바일에서 article 이 표 폭만큼 벌어져 문서가 옆으로 밀리던 원인. 0 으로 풀어 준다. */
+.pg>*{min-width:0}
 .pg>footer{margin-top:auto}
