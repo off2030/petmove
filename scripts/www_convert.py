@@ -178,12 +178,12 @@ def convert_body(html, soup_feature=None):
         note.string = '[상품 카드 — 수동 처리 필요]'
         c.replace_with(note)
 
-    # 9. 넓은 표(4열+) -> .table-wrap
+    # 9. 표 전부 -> .table-wrap (가로 스크롤 컨테이너). 열 수와 무관하게 내용이 길면
+    #    모바일에서 문서 폭을 뚫는다(운송요금 3열 표 사례) — 항상 감싸고, 넓은 표(4열+)만
+    #    CSS 쪽에서 min-width 를 준다(.table-wrap table:has(...) — article.css).
     for table in soup.find_all('table'):
-        cols = max((len(tr.find_all(['td', 'th'])) for tr in table.find_all('tr')), default=0)
-        if cols >= 4:
-            wrap = soup.new_tag('div'); wrap['class'] = 'table-wrap'
-            table.replace_with(wrap); wrap.append(table)
+        wrap = soup.new_tag('div'); wrap['class'] = 'table-wrap'
+        table.replace_with(wrap); wrap.append(table)
 
     # 10. 남은 kg-card 래퍼 unwrap + kg-* 잔여 클래스 정리
     for div in soup.select('div.kg-card'):

@@ -174,7 +174,10 @@
   /* 넓은 표 — 모바일에서 가로 스크롤 (5열 등 폭 넓은 표) */
   .prose img{max-width:100%;height:auto}
   .prose .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 0 18px}
-  .prose .table-wrap table{margin:0;min-width:540px}
+  /* 이제 모든 표가 .table-wrap 안(변환기 규칙 9). min-width 는 넓은 표(4열+)만 —
+     좁은 표가 불필요하게 가로 스크롤되지 않게. */
+  .prose .table-wrap table{margin:0}
+  .prose .table-wrap table:has(tr>:nth-child(4)){min-width:540px}
   /* 본문 중간 이미지 (커버 외) + 캡션 */
   .prose figure{margin:20px 0}
   .prose figure img{width:100%;border-radius:12px;display:block}
