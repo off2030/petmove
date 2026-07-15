@@ -339,7 +339,7 @@ def build_guide():
   <div class="phead">
     <div class="container">
       <h1>가이드</h1>
-      <p class="lead">나라별 검역 준비 방법을 확인하세요</p>
+      <p class="lead">여행지별 검역 준비 방법을 확인하세요</p>
       <div class="search"><i class="ti ti-search"></i><input id="q" type="text" placeholder="여행지 검색 (예: 일본)"></div>
     </div>
   </div>
