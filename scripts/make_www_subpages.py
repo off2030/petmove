@@ -120,6 +120,7 @@ CSS = """
   .other-group:first-child{margin-top:2px}
   .other-label{font-size:12.5px;font-weight:600;color:var(--accent-ink);margin-bottom:11px}
   .other-links{display:flex;flex-wrap:wrap;gap:8px}
+  .no-hit{text-align:center;font-size:13.5px;color:var(--ink3);padding:16px 0 4px}
   .other-links a{font-size:13px;color:var(--ink);background:var(--surface);border:0.5px solid var(--border);
     border-radius:999px;padding:8px 14px}
 
@@ -338,6 +339,7 @@ def build_guide():
   <div class="phead">
     <div class="container">
       <h1>가이드</h1>
+      <p class="lead">나라별 검역 준비 방법을 확인하세요</p>
       <div class="search"><i class="ti ti-search"></i><input id="q" type="text" placeholder="여행지 검색 (예: 일본)"></div>
     </div>
   </div>
@@ -353,6 +355,7 @@ def build_guide():
     <div class="container">
       <h2 class="sec-h">여행지별 가이드</h2>
       <div id="regions">{regions_html}</div>
+      <div class="no-hit" id="noHit" hidden>검색 결과가 없어요</div>
     </div>
   </section>
 
@@ -368,14 +371,15 @@ def build_guide():
   (function(){{
     var q=document.getElementById('q');if(!q)return;
     q.addEventListener('input',function(){{
-      var v=q.value.trim().toLowerCase();
+      var v=q.value.trim().toLowerCase(),hit=false;
       document.querySelectorAll('#regions .region').forEach(function(rg){{
         var grid=rg.nextElementSibling,any=false;
         grid.querySelectorAll('.chip').forEach(function(c){{
           var m=!v||c.textContent.toLowerCase().indexOf(v)>=0;c.style.display=m?'':'none';if(m)any=true;
         }});
-        rg.style.display=any?'':'none';grid.style.display=any?'':'none';
+        rg.style.display=any?'':'none';grid.style.display=any?'':'none';if(any)hit=true;
       }});
+      var n=document.getElementById('noHit');if(n)n.hidden=hit;
     }});
   }})();
   </script>"""
