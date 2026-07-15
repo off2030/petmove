@@ -105,9 +105,9 @@ CSS = """
 
   /* 추천 가이드(featured) */
   .feat{display:grid;grid-template-columns:1fr;gap:10px}
-  .fcard{display:block;background:#E4F4FF;border:0.5px solid rgba(11,174,255,.35);border-radius:16px;padding:16px 17px}
+  .fcard{display:block;background:var(--surface);border:0.5px solid var(--border);border-radius:16px;padding:16px 17px}
   .fcard .ft{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.42}
-  .fcard .fd{font-size:12px;color:var(--accent-ink);margin-top:6px}
+  .fcard .fd{font-size:12px;color:var(--ink3);margin-top:6px}
 
   /* 나라 그리드 */
   .region{font-size:12.5px;font-weight:600;color:var(--accent-ink);margin:20px 0 11px}
