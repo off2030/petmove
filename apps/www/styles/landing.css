@@ -1,6 +1,6 @@
 /* 랜딩(/) 전용 — prototype-mobile.html 에서 추출, .pg-landing 스코프 */
 .pg-landing{
-#service,#download{scroll-margin-top:64px}
+#service,#download,#app{scroll-margin-top:64px}
 
   .container{max-width:1080px;margin:0 auto;padding:0 22px;width:100%}
   .wm{font-size:18px;letter-spacing:-.01em;font-weight:800}

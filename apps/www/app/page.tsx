@@ -66,7 +66,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <section>
+      <section id="app">
         <div className="container">
           <div className="kicker">펫무브 앱 소개</div>
           <h2 className="h2">복잡한 준비, 앱으로 관리해요</h2>
