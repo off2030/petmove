@@ -35,11 +35,11 @@ COUNTRIES = [
 ]
 REGIONS = ["아시아", "유럽·중동", "미주", "오세아니아·기타"]
 
-# ── 추천 가이드(featured) — 인기·시의성·도구. (제목, 부제, docs|blog, 슬러그) ──
+# ── 추천 가이드(featured) — 인기 여행지 3(사용자 확정 2026-07-15). (제목, 부제, docs|blog, 슬러그) ──
 FEATURED = [
     ("일본 입국 준비 총정리", "가장 많이 가는 여행지", "docs", "japan-pet-travel-guide"),
-    ("[2026] 유럽 입국 광견병 검사 변경", "최신 규정 업데이트", "blog", "eu-pet-rabies-test"),
-    ("일본 입국 일정 계산기", "언제 뭘 할지 자동 계산", "blog", "japan-pet-entry-scheduler"),
+    ("싱가포르 입국 준비 총정리", "수입허가부터 차근차근", "docs", "singapore-pet-travel-guide"),
+    ("호주 입국 준비 총정리", "준비 기간이 긴 여행지", "docs", "australia-pet-travel-guide"),
 ]
 
 # ── 그 외 준비 — 검역·항공·기타 한 덩어리(플랫). (제목, docs|blog, 슬러그) ──
