@@ -79,6 +79,8 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/cyprus-02.jpg',  // 보트 정박 만 (탑다운)
     '/destinations/cyprus-03.jpg',  // 아프로디테 바위 노을
     '/destinations/cyprus-04.jpg',  // 니시 섬 모래톱
+    '/destinations/cyprus-05.jpg',  // 니시 해변 탑다운
+    '/destinations/cyprus-06.jpg',  // 지중해풍 건물·파란 덧창
   ],
   헝가리: [
     '/destinations/hungary-01.jpg',  // 국회의사당 노을 + 유람선
