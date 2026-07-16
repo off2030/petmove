@@ -86,6 +86,10 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/hungary-03.jpg',  // 겨울 안개 자유의 다리
     '/destinations/hungary-04.jpg',  // 주황 트램 + 국회의사당
     '/destinations/hungary-05.jpg',  // 강 건너 국회의사당 전경
+    '/destinations/hungary-06.jpg',  // 세체니 온천 (흐림·벤치)
+    '/destinations/hungary-07.jpg',  // 마차시 성당 타일 지붕
+    '/destinations/hungary-08.jpg',  // 세체니 온천 (맑음)
+    '/destinations/hungary-09.jpg',  // 국회의사당 야경
   ],
   스페인: [
     '/destinations/spain-30.jpg',
