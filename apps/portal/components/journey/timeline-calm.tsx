@@ -164,7 +164,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/estonia-01.jpg',
     '/destinations/estonia-02.jpg',
     '/destinations/estonia-03.jpg',
-    '/destinations/estonia-04.jpg',
     '/destinations/estonia-05.jpg',
     '/destinations/estonia-06.jpg',
     '/destinations/estonia-07.jpg',
