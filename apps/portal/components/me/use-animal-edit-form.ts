@@ -135,9 +135,17 @@ export function useAnimalEditForm(caseRow: CaseRow, caseId: string): UseAnimalEd
     setFormBase(nextForm)
 
     const nextBase = readJourney(caseRow)
-    setLive((prevLive) =>
-      journeyDirty(base, prevLive) ? prevLive : freshLive(nextBase),
-    )
+    setLive((prevLive) => {
+      if (!journeyDirty(base, prevLive)) return freshLive(nextBase)
+      // 편집 중이면 staged 상태를 유지하되, 서버에 이미 반영된 추가분과 서버에서
+      // 사라진 삭제분은 걷어낸다 — 안 걷으면 base 와 added 에 같은 목적지가 남아
+      // 카드가 중복 렌더된다(React duplicate key).
+      return {
+        ...prevLive,
+        added: prevLive.added.filter((d) => !nextBase.destinations.includes(d)),
+        removals: prevLive.removals.filter((d) => nextBase.destinations.includes(d)),
+      }
+    })
     setBase(nextBase)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow])
