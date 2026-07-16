@@ -19,7 +19,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
     단, HERO_LEAD_THEN_RANDOM 목적지(태국·필리핀)는 첫 장을 고정으로 먼저 보여주고 나머지는 매 로드 무작위.
     후보가 2장 이상이면 사진을 탭해서도 다음 후보로 넘겨볼 수 있다.
     없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
-    EU 국가는 프랑스·독일·이탈리아·스페인·헝가리·키프로스만 사진을 갖고, 나머지는 사진 없이 메타 행. */
+    EU 국가는 프랑스·독일·이탈리아·스페인·헝가리·키프로스·오스트리아만 사진을 갖고, 나머지는 사진 없이 메타 행. */
 const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   일본: [
     '/destinations/japan-sakura-blossom-macro.jpg',
@@ -73,6 +73,33 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/italy-12.jpg',
     '/destinations/italy-25.jpg',
     '/destinations/italy-28.jpg',
+  ],
+  오스트리아: [
+    '/destinations/austria-01.jpg',
+    '/destinations/austria-02.jpg',
+    '/destinations/austria-03.jpg',
+    '/destinations/austria-04.jpg',
+    '/destinations/austria-05.jpg',
+    '/destinations/austria-06.jpg',
+    '/destinations/austria-07.jpg',
+    '/destinations/austria-08.jpg',
+    '/destinations/austria-09.jpg',
+    '/destinations/austria-10.jpg',
+    '/destinations/austria-11.jpg',
+    '/destinations/austria-12.jpg',
+    '/destinations/austria-13.jpg',
+    '/destinations/austria-14.jpg',
+    '/destinations/austria-15.jpg',
+    '/destinations/austria-16.jpg',
+    '/destinations/austria-17.jpg',
+    '/destinations/austria-18.jpg',
+    '/destinations/austria-19.jpg',
+    '/destinations/austria-20.jpg',
+    '/destinations/austria-21.jpg',
+    '/destinations/austria-22.jpg',
+    '/destinations/austria-23.jpg',
+    '/destinations/austria-24.jpg',
+    '/destinations/austria-25.jpg',
   ],
   키프로스: [
     '/destinations/cyprus-02.jpg',  // 보트 정박 만 (탑다운)
