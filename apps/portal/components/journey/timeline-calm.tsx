@@ -19,7 +19,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
     단, HERO_LEAD_THEN_RANDOM 목적지(태국·필리핀)는 첫 장을 고정으로 먼저 보여주고 나머지는 매 로드 무작위.
     후보가 2장 이상이면 사진을 탭해서도 다음 후보로 넘겨볼 수 있다.
     없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
-    EU 국가는 프랑스·독일·이탈리아·스페인만 사진을 갖고, 나머지는 사진 없이 메타 행. */
+    EU 국가는 프랑스·독일·이탈리아·스페인·헝가리만 사진을 갖고, 나머지는 사진 없이 메타 행. */
 const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   일본: [
     '/destinations/japan-sakura-blossom-macro.jpg',
@@ -74,6 +74,13 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/italy-25.jpg',
     '/destinations/italy-28.jpg',
   ],
+  헝가리: [
+    '/destinations/hungary-01.jpg',  // 국회의사당 노을 + 유람선
+    '/destinations/hungary-02.jpg',  // 클래식 노랑 트램 D
+    '/destinations/hungary-03.jpg',  // 겨울 안개 자유의 다리
+    '/destinations/hungary-04.jpg',  // 주황 트램 + 국회의사당
+    '/destinations/hungary-05.jpg',  // 강 건너 국회의사당 전경
+  ],
   스페인: [
     '/destinations/spain-30.jpg',
     '/destinations/spain-01.jpg',
@@ -101,7 +108,7 @@ function nextHeroPhotoIndex(destKey: string, length: number): number {
 
 /** 첫 장은 고정으로 먼저 보여주고, 나머지 후보는 매 로드마다 무작위 순서로.
     (순차 회전 대신) — 현재 태국·필리핀 적용. */
-const HERO_LEAD_THEN_RANDOM = new Set(['태국', '필리핀', '이탈리아', '스페인'])
+const HERO_LEAD_THEN_RANDOM = new Set(['태국', '필리핀', '이탈리아', '스페인', '헝가리'])
 
 /** Fisher–Yates 셔플 — 원본 불변, 새 배열 반환. */
 function shuffleArray<T>(arr: readonly T[]): T[] {
