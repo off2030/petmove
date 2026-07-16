@@ -310,11 +310,11 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/spain-37.jpg',
   ],
   영국: [
+    '/destinations/uk-05.jpg', // 트라팔가 광장 2층버스
     '/destinations/uk-00.jpg', // 타워브리지·템스강 항공(노을)
     '/destinations/uk-01.jpg', // 웨스트민스터 사원 쌍둥이 탑
     '/destinations/uk-03.jpg', // 자연사박물관 내부(고래 뼈대)
     '/destinations/uk-04.jpg', // 빨간 공중전화 부스
-    '/destinations/uk-05.jpg', // 트라팔가 광장 2층버스
     '/destinations/uk-06.jpg', // 절벽 협곡 도로 항공
   ],
 }
