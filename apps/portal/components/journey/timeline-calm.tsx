@@ -56,7 +56,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   ],
   네덜란드: [
     '/destinations/netherlands-01.jpg',
-    '/destinations/netherlands-02.jpg',
     '/destinations/netherlands-03.jpg',
     '/destinations/netherlands-04.jpg',
     '/destinations/netherlands-06.jpg',
@@ -66,7 +65,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/netherlands-10.jpg',
     '/destinations/netherlands-12.jpg',
     '/destinations/netherlands-13.jpg',
-    '/destinations/netherlands-15.jpg',
     '/destinations/netherlands-17.jpg',
   ],
   벨기에: [
