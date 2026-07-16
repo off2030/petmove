@@ -67,7 +67,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   ],
   벨기에: [
     '/destinations/belgium-01.jpg',
-    '/destinations/belgium-02.jpg',
     '/destinations/belgium-03.jpg',
     '/destinations/belgium-04.jpg',
     '/destinations/belgium-05.jpg',
@@ -383,6 +382,7 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/italy-12.jpg': 'top',
   '/destinations/italy-25.jpg': 'top',
   '/destinations/cyprus-06.jpg': 'bottom',
+  '/destinations/belgium-04.jpg': 'top',
   '/destinations/belgium-07.jpg': 'top',
   '/destinations/belgium-08.jpg': 'bottom',
   '/destinations/belgium-09.jpg': 'bottom',
