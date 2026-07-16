@@ -300,8 +300,8 @@ export function TimelineCalm({
   const heroPhoto = heroPhotoCandidates[heroPhotoIndex] ?? null
   // 사진 후보 여러 장을 고르는 동안의 임시 비교용 — 탭하면 바로 다음 후보로 넘긴다.
   // (앱은 keep-alive 라 자동 회전은 새로고침 때만 도는데, 비교엔 즉시 전환이 필요.)
-  // 스토어 스크린샷 작업 동안 잠시 끔(2026-07-14) — 복원하려면 true 로.
-  const HERO_TAP_SWITCHER = false
+  // 사진 후보 검수 중엔 true, 스토어 스크린샷 등 정적 캡처 작업 땐 false.
+  const HERO_TAP_SWITCHER = true
   const cycleHeroPhoto = () =>
     setHeroPhotoIndex((i) => (i + 1) % heroPhotoCandidates.length)
 
