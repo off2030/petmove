@@ -376,6 +376,7 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/italy-25.jpg': 'top',
   '/destinations/cyprus-06.jpg': 'bottom',
   '/destinations/belgium-08.jpg': 'bottom',
+  '/destinations/denmark-04.jpg': 'top',
   '/destinations/sweden-01.jpg': 'bottom',
   '/destinations/sweden-03.jpg': 'top',
   '/destinations/belgium-09.jpg': 'bottom',
