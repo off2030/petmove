@@ -117,7 +117,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   오스트리아: [
     '/destinations/austria-02.jpg',
     '/destinations/austria-04.jpg',
-    '/destinations/austria-05.jpg',
     '/destinations/austria-07.jpg',
     '/destinations/austria-09.jpg',
     '/destinations/austria-11.jpg',
