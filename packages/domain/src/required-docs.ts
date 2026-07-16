@@ -383,7 +383,7 @@ function euFamilyDocSpecs(
       // 그 명칭을 문구에도 노출, 그 외는 ${label} 기반 일반 문구 유지.
       description: opts?.euAhc
         ? '유럽연합(EU) 입국용 건강증명서예요.\n\n출국일 기준 10일 이내에 동물병원에서 발급받아요. 이 서류는 발급하지 않는 동물병원이 많으므로 미리 확인하세요.\n\n한국 수출 검역 때 검역관 확인·서명을 받아야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.'
-        : `${label} 입국용 건강증명서예요.${opts?.certName ? ` 공식 명칭은 ${opts.certName} 예요.` : ''}\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재되어야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
+        : `${label} 입국용 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재되어야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
     },
     {
       id: 'eu-kr-export-quarantine-cert',
@@ -431,7 +431,7 @@ function euFamilyDocSpecs(
  */
 const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
   eu: euFamilyDocSpecs('유럽연합(EU)', { euAhc: true }),
-  uk: euFamilyDocSpecs('영국', { certName: 'GB Pet Health Certificate' }),
+  uk: euFamilyDocSpecs('영국', { certName: '영국 동물건강증명서(GB Pet Health Certificate)' }),
   ireland: euFamilyDocSpecs('아일랜드', { euAhc: true }),
   malta: euFamilyDocSpecs('몰타', { euAhc: true }),
   norway: euFamilyDocSpecs('노르웨이'),
