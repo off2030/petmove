@@ -241,12 +241,9 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/romania-01.jpg',
     '/destinations/romania-02.jpg',
     '/destinations/romania-03.jpg',
-    '/destinations/romania-04.jpg',
     '/destinations/romania-05.jpg',
     '/destinations/romania-06.jpg',
     '/destinations/romania-07.jpg',
-    '/destinations/romania-08.jpg',
-    '/destinations/romania-09.jpg',
   ],
   리투아니아: [
     // 02~07 은 슬로베니아 사진이 폴더에 잘못 섞인 것 — 슬로베니아로 이관(2026-07-16).
