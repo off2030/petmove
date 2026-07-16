@@ -121,11 +121,9 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/austria-06.jpg',
     '/destinations/austria-07.jpg',
     '/destinations/austria-09.jpg',
-    '/destinations/austria-10.jpg',
     '/destinations/austria-11.jpg',
     '/destinations/austria-12.jpg',
     '/destinations/austria-15.jpg',
-    '/destinations/austria-17.jpg',
     '/destinations/austria-18.jpg',
     '/destinations/austria-19.jpg',
     '/destinations/austria-20.jpg',
@@ -398,7 +396,15 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/italy-25.jpg': 'top',
   '/destinations/cyprus-06.jpg': 'bottom',
   '/destinations/austria-02.jpg': 'bottom',
+  '/destinations/austria-04.jpg': 'bottom',
+  '/destinations/austria-07.jpg': 'bottom',
+  '/destinations/austria-09.jpg': 'top',
   '/destinations/austria-12.jpg': 'bottom',
+  '/destinations/austria-19.jpg': 'top',
+  '/destinations/austria-20.jpg': 'top',
+  '/destinations/austria-21.jpg': 'top',
+  '/destinations/austria-23.jpg': 'bottom',
+  '/destinations/austria-25.jpg': 'top',
 }
 
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
