@@ -131,7 +131,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   ],
   폴란드: [
     '/destinations/poland-01.jpg',
-    '/destinations/poland-04.jpg',
     '/destinations/poland-08.jpg',
     '/destinations/poland-09.jpg',
     '/destinations/poland-11.jpg',
@@ -142,13 +141,10 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/poland-26.jpg',
     '/destinations/poland-28.jpg',
     '/destinations/poland-29.jpg',
-    '/destinations/poland-30.jpg',
     '/destinations/poland-33.jpg',
     '/destinations/poland-34.jpg',
-    '/destinations/poland-35.jpg',
     '/destinations/poland-36.jpg',
     '/destinations/poland-37.jpg',
-    '/destinations/poland-38.jpg',
     '/destinations/poland-39.jpg',
   ],
   덴마크: [
