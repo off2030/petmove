@@ -302,9 +302,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/sweden-14.jpg',
     '/destinations/sweden-15.jpg',
     '/destinations/sweden-16.jpg',
-    '/destinations/sweden-17.jpg',
     '/destinations/sweden-18.jpg',
-    '/destinations/sweden-19.jpg',
     '/destinations/sweden-20.jpg',
   ],
   슬로바키아: [
