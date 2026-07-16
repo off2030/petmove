@@ -352,7 +352,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
  */
 function euFamilyDocSpecs(
   label: string,
-  opts?: { withImportPermit?: boolean; euAhc?: boolean },
+  opts?: { withImportPermit?: boolean; euAhc?: boolean; certName?: string },
 ): RequiredDocSpec[] {
   const specs: RequiredDocSpec[] = [
     {
@@ -372,17 +372,18 @@ function euFamilyDocSpecs(
     {
       id: 'eu-health-cert',
       // EU 회원국(eu 키) + 스위스는 EU 협정으로 같은 공식 양식 'EU 동물건강증명서(Annex III)'
-      // 사용(스위스 BLV 공식 페이지 확인, 2026-07-17). 영국·노르웨이는 자체 증명서라
+      // 사용(스위스 BLV 공식 페이지 확인, 2026-07-17). 영국은 자체 공식 명칭(GB Pet Health
+      // Certificate)이 있어 certName 으로 노출. 그 외(노르웨이 등)는 공식 명칭 미확인이라
       // 일반 명칭('건강증명서(입국용)') 유지.
-      name: opts?.euAhc ? 'EU 동물건강증명서(Annex III)' : '건강증명서(입국용)',
+      name: opts?.euAhc ? 'EU 동물건강증명서(Annex III)' : (opts?.certName ?? '건강증명서(입국용)'),
       source: '동물병원 · 농림축산검역본부',
       kind: 'manual',
       issuanceStepId: 'vet-visit',
-      // EU 회원국+스위스(Annex III)는 EU 공식 양식 안내, 비EU 패밀리(영국·노르웨이)는
-      // 자체 증명서라 ${label} 기반 일반 문구 유지.
+      // EU 회원국+스위스(Annex III)는 EU 공식 양식 안내, 공식 명칭이 확인된 나라(영국)는
+      // 그 명칭을 문구에도 노출, 그 외는 ${label} 기반 일반 문구 유지.
       description: opts?.euAhc
         ? '유럽연합(EU) 입국용 건강증명서예요.\n\n출국일 기준 10일 이내에 동물병원에서 발급받아요. 이 서류는 발급하지 않는 동물병원이 많으므로 미리 확인하세요.\n\n한국 수출 검역 때 검역관 확인·서명을 받아야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.'
-        : `${label} 입국용 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재되어야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
+        : `${label} 입국용 건강증명서예요.${opts?.certName ? ` 공식 명칭은 ${opts.certName} 예요.` : ''}\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재되어야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
     },
     {
       id: 'eu-kr-export-quarantine-cert',
@@ -430,7 +431,7 @@ function euFamilyDocSpecs(
  */
 const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
   eu: euFamilyDocSpecs('유럽연합(EU)', { euAhc: true }),
-  uk: euFamilyDocSpecs('영국'),
+  uk: euFamilyDocSpecs('영국', { certName: 'GB Pet Health Certificate' }),
   ireland: euFamilyDocSpecs('아일랜드', { euAhc: true }),
   malta: euFamilyDocSpecs('몰타', { euAhc: true }),
   norway: euFamilyDocSpecs('노르웨이'),
