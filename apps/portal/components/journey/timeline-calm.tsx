@@ -91,6 +91,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/hungary-08.jpg',  // 세체니 온천 (맑음)
     '/destinations/hungary-09.jpg',  // 국회의사당 야경
     '/destinations/hungary-10.jpg',  // 어부의 요새 일출
+    '/destinations/hungary-11.jpg',  // 성 이슈트반 대성당 새벽
   ],
   스페인: [
     '/destinations/spain-30.jpg',
