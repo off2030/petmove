@@ -19,9 +19,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
     단, HERO_LEAD_THEN_RANDOM 목적지(태국·필리핀)는 첫 장을 고정으로 먼저 보여주고 나머지는 매 로드 무작위.
     후보가 2장 이상이면 사진을 탭해서도 다음 후보로 넘겨볼 수 있다.
     없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
-    사진 있는 EU 국가 = 이 맵의 키(프랑스·독일·이탈리아·스페인·헝가리·키프로스·오스트리아·크로아티아·폴란드·
-    에스토니아·그리스·네덜란드·덴마크·라트비아·룩셈부르크·리투아니아·벨기에·불가리아·스웨덴·
-    슬로바키아·슬로베니아·체코·포르투갈), 나머지 EU 국가는 사진 없이 메타 행. */
+    2026-07-16 앱 화이트리스트 27개국(아시아 3 + EU 24) 전부 사진 보유 — 새 목적지 열 때만 추가하면 된다. */
 const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   일본: [
     '/destinations/japan-sakura-blossom-macro.jpg',
@@ -291,6 +289,17 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/luxembourg-08.jpg',
     '/destinations/luxembourg-09.jpg',
     '/destinations/luxembourg-10.jpg',
+  ],
+  루마니아: [
+    '/destinations/romania-01.jpg',
+    '/destinations/romania-02.jpg',
+    '/destinations/romania-03.jpg',
+    '/destinations/romania-04.jpg',
+    '/destinations/romania-05.jpg',
+    '/destinations/romania-06.jpg',
+    '/destinations/romania-07.jpg',
+    '/destinations/romania-08.jpg',
+    '/destinations/romania-09.jpg',
   ],
   리투아니아: [
     // 02~07 은 슬로베니아 사진이 폴더에 잘못 섞인 것 — 슬로베니아로 이관(2026-07-16).
