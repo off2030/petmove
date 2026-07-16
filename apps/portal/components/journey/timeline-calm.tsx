@@ -232,7 +232,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/luxembourg-05.jpg',
     '/destinations/luxembourg-06.jpg',
     '/destinations/luxembourg-07.jpg',
-    '/destinations/luxembourg-08.jpg',
     '/destinations/luxembourg-09.jpg',
     '/destinations/luxembourg-10.jpg',
   ],
