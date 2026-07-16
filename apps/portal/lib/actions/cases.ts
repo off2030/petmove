@@ -932,6 +932,16 @@ export async function updateFlightFields(
         return { ok: false, error: '귀국 항공편 날짜가 출국 항공편 날짜보다 빨라요. 날짜를 확인하세요.' }
       }
     }
+    // 출발일 ≤ 도착일 — 태국·필리핀·EU 패밀리처럼 출발일(departure_date)·도착일(entry_date)을
+    // 둘 다 따로 입력받는 목적지에서, 도착일이 출발일보다 빠른 논리적 불가능 조합을 차단.
+    // 둘 다 입력됐을 때만 비교(한쪽만 있으면 비교 불가라 통과). client(step-detail-view)와 동일 규칙.
+    {
+      const explicitDep = typeof fields.departure_date === 'string' ? fields.departure_date.trim() : ''
+      const entry = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
+      if (explicitDep && entry && entry < explicitDep && !(await isFreeInputMode())) {
+        return { ok: false, error: '도착일이 출발일보다 빨라요. 날짜를 확인하세요.' }
+      }
+    }
     // 활성 목적지 토큰을 읽기(flatten)와 동일하게 해석 — ?dest 미지정이어도 첫 토큰으로 fallback 해
     // 항공권 필드·출국일을 by_dest 에 저장한다. 읽기는 strict by_dest 라 top-level/컬럼에 쓰면
     // 출국일이 검증에 안 보여 '주의'가 누락됐다. 검역·검진과 동일 패턴(resolveWriteToken, 로컬 함수).

@@ -17,6 +17,7 @@ import {
 import { StepDetailView } from '@/components/journey/step-detail-view'
 import { activeDestinationView } from '@/lib/cases/active-destination'
 import { useCase } from '@/components/portal-shell/case-data-provider'
+import { PORTAL_SUPPRESSED_CHECKS } from '@/lib/journey/scenario'
 import { replaceTab } from '@/components/portal-shell/tab-nav'
 
 /**
@@ -142,6 +143,6 @@ function collectStepChecks(
   // 단일 목적지면 caseRow.destination 그대로, 다중이면 첫 토큰(검증 대상 destination).
   const all = runChecksForCase(destinationKey, { caseRow, destination: caseRow.destination })
   return all
-    .filter(({ check }) => targetIds.has(check.id))
+    .filter(({ check }) => targetIds.has(check.id) && !PORTAL_SUPPRESSED_CHECKS.has(check.id))
     .sort((a, b) => Number(a.result.ok) - Number(b.result.ok))
 }

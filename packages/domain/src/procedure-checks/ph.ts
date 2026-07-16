@@ -165,27 +165,40 @@ export const PH_CHECKS: ProcedureCheck[] = [
     id: 'ph.rabies-not-expired-on-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: '도착일에 광견병 면역 유효 (접종일 포함 1년 = 364일까지)',
+    title: '도착(예정)일에 광견병 면역 유효 (접종일 포함 1년 = 364일까지)',
     description:
-      '최근 광견병 접종 면역 유효기간이 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년 (`addOneYear` = +364).',
+      '최근 광견병 접종 면역 유효기간이 필리핀 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년 (`addOneYear` = +364). 2026-07-16: 도착일(entry_date) 입력 시 그 값, 미입력이면 출국일(departure_date)로 대체 — 대부분 보호자가 도착일까지는 입력하지 않고 두 날짜도 통상 당일·익일 차이라 출국일로도 충분히 근사됨.',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
       const dep = readDepartureDate(caseRow, destination)
+      const anchor = entry || dep
+      const usingEntry = !!entry
       const rabies = readRabiesEntries(caseRow)
-      if (!dep || rabies.length === 0) return SKIP
+      if (!anchor || rabies.length === 0) return SKIP
 
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return SKIP
-      if (validUntil < dep) {
+      if (validUntil < anchor) {
         return {
           ok: false,
-          message: '광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.',
-          offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
+          message: `광견병 백신 면역 유효기간이 ${usingEntry ? '도착' : '출국'} 전에 만료돼요. 만료 전에 추가 접종을 하세요.`,
+          offendingPaths: [
+            usingEntry ? 'entry_date' : 'departure_date',
+            `rabies_dates[${latest.originalIndex}].date`,
+          ],
         }
       }
-      return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
+      return {
+        ok: true,
+        message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ ${usingEntry ? '도착일' : '출국일'}(${anchor}).`,
+      }
     },
   },
 
@@ -228,27 +241,40 @@ export const PH_CHECKS: ProcedureCheck[] = [
     id: 'ph.general-vaccine-not-expired-on-arrival',
     country: COUNTRY,
     category: '종합백신',
-    title: '도착일에 종합백신 면역 유효 (접종일 포함 1년 = 364일까지)',
+    title: '도착(예정)일에 종합백신 면역 유효 (접종일 포함 1년 = 364일까지)',
     description:
-      '최근 종합백신 면역 유효기간이 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값, 미명시 시 디폴트 1년 (`addOneYear` = +364).',
+      '최근 종합백신 면역 유효기간이 필리핀 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값, 미명시 시 디폴트 1년 (`addOneYear` = +364). 2026-07-16: 도착일(entry_date) 입력 시 그 값, 미입력이면 출국일(departure_date)로 대체 — 대부분 보호자가 도착일까지는 입력하지 않고 두 날짜도 통상 당일·익일 차이라 출국일로도 충분히 근사됨.',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
       const dep = readDepartureDate(caseRow, destination)
+      const anchor = entry || dep
+      const usingEntry = !!entry
       const entries = readGeneralVaccineEntries(caseRow)
-      if (!dep || entries.length === 0) return SKIP
+      if (!anchor || entries.length === 0) return SKIP
 
       const latest = entries[entries.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return SKIP
-      if (validUntil < dep) {
+      if (validUntil < anchor) {
         return {
           ok: false,
-          message: '종합백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.',
-          offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
+          message: `종합백신 면역 유효기간이 ${usingEntry ? '도착' : '출국'} 전에 만료돼요. 만료 전에 추가 접종을 하세요.`,
+          offendingPaths: [
+            usingEntry ? 'entry_date' : 'departure_date',
+            `general_vaccine_dates[${latest.originalIndex}].date`,
+          ],
         }
       }
-      return { ok: true, message: `최근 종합백신(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
+      return {
+        ok: true,
+        message: `최근 종합백신(${latest.date}) 유효기간(${validUntil}) ≥ ${usingEntry ? '도착일' : '출국일'}(${anchor}).`,
+      }
     },
   },
 

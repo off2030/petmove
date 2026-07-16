@@ -93,6 +93,7 @@ export function FlightInputs({
   showReturn,
   showTransport = true,
   departureFirst = false,
+  departureDetailFieldKeys,
   collapsible = false,
   entryFieldKeys,
   returnFieldKeys,
@@ -107,10 +108,15 @@ export function FlightInputs({
    */
   showTransport?: boolean
   /**
-   * 출발일 우선 레이아웃(태국 등) — 출발일(departure_date)만 항상 노출하고, 도착일·도착시간·
-   * 공항·편명은 '세부 정보' 접기 안에 선택 입력. 검증 기준일도 출발일.
+   * 출발일 우선 레이아웃(태국·필리핀·EU 패밀리) — 출발일(departure_date)만 항상 노출하고,
+   * 도착일 등은 '세부 정보' 접기 안에 선택 입력. 검증 기준일도 출발일.
    */
   departureFirst?: boolean
+  /**
+   * departureFirst 일 때 '세부 정보'에 노출할 필드 한정(미지정=전체: 도착일·시간·공항·편명).
+   * 예: EU 패밀리는 도착일만(entry_date), 필리핀은 도착일+도착공항만.
+   */
+  departureDetailFieldKeys?: ReadonlyArray<keyof FlightForm>
   /**
    * 일반 접기 레이아웃(일본 등) — 첫 필드(날짜=entry_date)만 항상 노출, 나머지(공항·편명·운송
    * 방법)는 '세부 정보' 접기. 한국과 같은 시간대라 출발=도착이 같은 날이라 분리는 불필요.
@@ -154,7 +160,13 @@ export function FlightInputs({
     let outboundDetail: readonly FlightField[]
     if (departureFirst) {
       outboundPrimary = [DEPARTURE_PRIMARY_FIELD]
-      outboundDetail = DEPARTURE_DETAIL_FIELDS
+      outboundDetail = withPlaceholders(
+        drop(
+          departureDetailFieldKeys
+            ? DEPARTURE_DETAIL_FIELDS.filter((f) => departureDetailFieldKeys.includes(f.key))
+            : DEPARTURE_DETAIL_FIELDS,
+        ),
+      )
     } else {
       const entryFields = drop(selectedEntryFields)
       outboundPrimary = entryFields.slice(0, 1)

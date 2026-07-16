@@ -24,11 +24,14 @@ import {
   validateRabiesInterval,
   validateRabiesPrimeAge,
   validateChImportPermitDate,
+  validateCyAdvanceNoticeDate,
   validateEchinococcusWindow,
   validateEuEntryDate,
   validateEuTiterAfterVaccine,
   validateIeAdvanceNoticeDate,
   validateImportPermitNotAfterDeparture,
+  validateMtAdvanceNoticeDate,
+  validateNoAdvanceNoticeDate,
   validatePhEntryDate,
   validatePhImportPermitVaccineGap,
   validatePhImportPermitWithin60Days,
@@ -121,6 +124,7 @@ const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
   norway: '예: 오슬로 OSL',
   finland: '예: 헬싱키 HEL',
   switzerland: '예: 취리히 ZRH',
+  cyprus: '예: 라르나카 LCA',
 }
 
 /**
@@ -992,6 +996,16 @@ export function StepDetailView({
       ) {
         return '귀국 항공편 날짜가 출국 항공편 날짜보다 빨라요. 날짜를 확인하세요.'
       }
+      // 출발일 ≤ 도착일 (항공편 내재적 정합성) — 태국·필리핀·EU 패밀리처럼 출발일·도착일을
+      // 둘 다 따로 입력받는 목적지에서, 도착일이 출발일보다 빠른 논리적 불가능 조합을 차단.
+      // 둘 다 입력됐을 때만 비교(한쪽만 있으면 비교 불가라 통과).
+      if (
+        flightForm.departure_date &&
+        flightForm.entry_date &&
+        flightForm.entry_date < flightForm.departure_date
+      ) {
+        return '도착일이 출발일보다 빨라요. 날짜를 확인하세요.'
+      }
       // 일본 입국일 — 광견병 항체 검사 + 180일 이내면 server 가 거부할 입력. server roundtrip
       // 전 즉시 차단해 빨간 박스로 분명히 보이게 (server 결과는 form 변경 시 useEffect 가
       // 해제해 토스트가 짧게 사라질 수 있음).
@@ -1006,11 +1020,16 @@ export function StepDetailView({
       // 가 departure_date 를 보는 것과 동일 기준으로 client 차단도 출발일로 검증한다.
       const thEntryErr = validateThEntryDate(outboundDate, entryRuleCtx)
       if (thEntryErr) return thEntryErr
-      // 필리핀 입국일 — 생후 120일(4개월) 미만 입국 차단.
-      const phEntryErr = validatePhEntryDate(flightForm.entry_date.trim(), entryRuleCtx)
+      // 필리핀·EU 패밀리 — 입국일(entry_date) 입력 시 그 값, 미입력이면 출국일(departure_date)로
+      // 대체(2026-07-16). 대부분 보호자가 입국일까지는 안 적고, 적더라도 출국일과 통상
+      // 당일·익일 차이라 출국일로도 충분히 근사된다. (태국과 반대 우선순위 — 출국일 fallback
+      // 은 여기서만.)
+      const entryOrDeparture = (flightForm.entry_date || flightForm.departure_date).trim()
+      // 필리핀 — 생후 120일(4개월) 미만 입국 차단.
+      const phEntryErr = validatePhEntryDate(entryOrDeparture, entryRuleCtx)
       if (phEntryErr) return phEntryErr
-      // EU 패밀리 입국일 — 항체 검사 채혈 + 3개월 이내면 차단 (일본 180일과 동일 정책).
-      const euEntryErr = validateEuEntryDate(flightForm.entry_date.trim(), entryRuleCtx)
+      // EU 패밀리 — 항체 검사 채혈 + 3개월 이내면 차단 (일본 180일과 동일 정책).
+      const euEntryErr = validateEuEntryDate(entryOrDeparture, entryRuleCtx)
       if (euEntryErr) return euEntryErr
       return null
     }
@@ -1060,13 +1079,20 @@ export function StepDetailView({
           return '처치일이 출생일보다 빨라요. 날짜를 확인하세요.'
         }
       }
-      // 촌충(에키노코쿠스)은 출국 직전 1~5일(법적 24~120시간)에만 유효 — 그 밖은 의미 없어 차단.
+      // 촌충(에키노코쿠스)은 입국 직전 1~5일(법적 24~120시간)에만 유효 — 그 밖은 의미 없어 차단.
       // (펫무브앱=5일 상한 입력불가. admin 은 1~3일 주의 유지 — portal 에선 그 주의 숨김.)
+      // 기준은 입국일(entry_date) 입력 시 그 값, 미입력이면 출국일(departure_date)로 대체
+      // (2026-07-16) — 대부분 보호자가 입국일까지는 안 적고, 통상 당일·익일 차이라 출국일로도
+      // 충분히 근사된다.
       if (isEchinococcus) {
+        const data = (caseRow?.data ?? {}) as Record<string, unknown>
+        const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
         const dep = (caseRow?.departure_date ?? '').slice(0, 10)
+        const anchor = entry || dep
+        const anchorLabel = entry ? '입국' : '출국'
         for (const e of parasite) {
           if (!e.date) continue
-          const err = validateEchinococcusWindow(e.date, dep, 5)
+          const err = validateEchinococcusWindow(e.date, anchor, 5, anchorLabel)
           if (err) return err
         }
       }
@@ -1107,6 +1133,24 @@ export function StepDetailView({
       const data = (caseRow?.data ?? {}) as Record<string, unknown>
       const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
       return validateIeAdvanceNoticeDate(importQuarantineDate.trim(), entry)
+    }
+    // 노르웨이 사전 통지 — 통지일이 입국일 48시간(2일) 이내면 차단.
+    if (step.id === 'no-advance-notice') {
+      const data = (caseRow?.data ?? {}) as Record<string, unknown>
+      const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
+      return validateNoAdvanceNoticeDate(importQuarantineDate.trim(), entry)
+    }
+    // 키프로스 사전 통지 — 통지일이 입국일 48시간(2일) 이내면 차단.
+    if (step.id === 'cy-advance-notice') {
+      const data = (caseRow?.data ?? {}) as Record<string, unknown>
+      const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
+      return validateCyAdvanceNoticeDate(importQuarantineDate.trim(), entry)
+    }
+    // 몰타 사전 통지 — 통지일이 입국일 3영업일 이내면 차단.
+    if (step.id === 'mt-advance-notice') {
+      const data = (caseRow?.data ?? {}) as Record<string, unknown>
+      const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
+      return validateMtAdvanceNoticeDate(importQuarantineDate.trim(), entry)
     }
     if (isAdvanceNotification) {
       const entry = typeof caseRow?.data?.entry_date === 'string' ? (caseRow.data.entry_date as string) : ''
@@ -1355,12 +1399,17 @@ export function StepDetailView({
         const res = await updateFlightFields(
           caseId,
           {
-            // 출발일(departure_date)은 태국(departureFirst 레이아웃)만 별도 입력칸이 있다. 그 외(일본 등)는
-            // 입력칸이 없고 출발=입국 같은 날이라, 폼에 남은 stale departure_date 가 updateFlightFields 의
-            // `explicitDep || entryDate` 에서 우선권을 가져 출국일이 안 바뀌는 버그가 있었다. 태국이 아니면
-            // departure_date 를 보내지 않고(null) entry_date 에서 파생시킨다.
+            // 출발일(departure_date)은 departureFirst 레이아웃(태국·필리핀·EU 패밀리)만 별도
+            // 입력칸이 있다. 일본만 입력칸이 없고 출발=입국 같은 날이라, 폼에 남은 stale
+            // departure_date 가 updateFlightFields 의 `explicitDep || entryDate` 에서 우선권을
+            // 가져 출국일이 안 바뀌는 버그가 있었다. departureFirst 목적지가 아니면 departure_date
+            // 를 보내지 않고(null) entry_date 에서 파생시킨다.
             departure_date:
-              destinationKey === 'thailand' ? flightForm.departure_date || null : null,
+              destinationKey === 'thailand' ||
+              destinationKey === 'philippines' ||
+              (!!destinationKey && EU_ENTRY_FAMILY.includes(destinationKey))
+                ? flightForm.departure_date || null
+                : null,
             entry_date: flightForm.entry_date || null,
             entry_time: flightForm.entry_time || null,
             entry_departure_airport: flightForm.entry_departure_airport || null,
@@ -2346,13 +2395,21 @@ export function StepDetailView({
               showReturn={tripType === 'round'}
               // 운송 방법은 일본 수출서류(japan_extra)만 사용 — 일본 케이스에서만 노출.
               showTransport={destinationKey === 'japan'}
-              // 태국 — 출발일 주필드 + 도착일·도착시간·공항·편명 접기. 검증 기준일도 출발일.
-              departureFirst={destinationKey === 'thailand'}
+              // 출발일(한국 출국일)과 도착일(목적지 입국일)은 다른 날일 수 있어(시차·경유) 항상
+              // 별도 입력 — 태국·필리핀·EU 패밀리(EU·영국·아일랜드·몰타·노르웨이·핀란드·스위스·
+              // 키프로스) 모두 출발일 주필드 + 도착일 등은 '세부 정보' 접기.
+              // (과거엔 도착일 하나만 받아 그 값을 그대로 출국일 컬럼에 복사했음 — 장거리 노선에서
+              // 실제 출국일과 어긋나는 버그. 2026-07-16 분리.)
+              departureFirst={
+                destinationKey === 'thailand' ||
+                destinationKey === 'philippines' ||
+                (!!destinationKey && EU_ENTRY_FAMILY.includes(destinationKey))
+              }
               // 일본 — 날짜 주필드 + 공항·편명·운송방법 접기(출발=도착 동일 시간대라 분리 불필요).
               collapsible={destinationKey === 'japan'}
-              // 필리핀 — 수입 허가(SPSIC)엔 항공편 일정만 필요: 출국 [날짜·도착공항] / 귀국 [날짜](+미정).
-              // EU 패밀리 — 입국 가능 시기 계산에 날짜만 쓰므로 출·귀국 모두 날짜만 받는다(공항·편명 생략).
-              entryFieldKeys={
+              // departureFirst 의 '세부 정보'(도착일 등) 필드 한정 — 필리핀은 도착일+도착공항,
+              // EU 키(묶음 24개국)만 도착일 단독, 나머지 EU 패밀리(영국·아일랜드 등 1:1 키)는 전체.
+              departureDetailFieldKeys={
                 destinationKey === 'philippines'
                   ? ['entry_date', 'entry_airport']
                   : destinationKey === 'eu'
@@ -2413,8 +2470,8 @@ export function StepDetailView({
             <GeneralVaccineInputs
               entries={parasite}
               // 1번째 카드 = 라벨, 2번째부터 = '라벨 n차' (차수 표기). 여러 번 치료 시 'n차'로 구분.
-              vaccineLabel={isExternalParasite ? '외부구충' : isEchinococcus ? '촌충 구충' : '내부 기생충 치료'}
-              dateLabel={isExternalParasite ? '처치일' : isEchinococcus ? '구충일' : '치료일'}
+              vaccineLabel={isExternalParasite ? '외부구충' : isEchinococcus ? '촌충 치료' : '내부 기생충 치료'}
+              dateLabel={isExternalParasite ? '처치일' : '치료일'}
               showValidUntil={false}
               // 내부 기생충 치료는 펫무브워크와 동일한 약품 4필드를 '세부 정보(선택)'로 직접 입력.
               showProduct={isInternalParasite}
@@ -2422,13 +2479,7 @@ export function StepDetailView({
               hideExpiry
               // 구충제 예시는 백신(DHPPL)이 아니라 내부구충제 — 종별로 다르며 케이스 org 약품정보에서 가져온다.
               productPlaceholders={isInternalParasite ? internalParasitePlaceholders : undefined}
-              addLabel={
-                isExternalParasite
-                  ? '+ 처치 기록 추가'
-                  : isEchinococcus
-                    ? '+ 구충 기록 추가'
-                    : '+ 치료 기록 추가'
-              }
+              addLabel={isExternalParasite ? '+ 처치 기록 추가' : '+ 치료 기록 추가'}
               onChange={(idx, key, next) =>
                 setParasite((prev) => prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)))
               }

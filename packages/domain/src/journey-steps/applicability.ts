@@ -61,6 +61,7 @@ export const SINGLE_DOSE_RABIES_DESTINATIONS: string[] = [
   'norway',
   'finland',
   'switzerland',
+  'cyprus',
 ]
 
 /**

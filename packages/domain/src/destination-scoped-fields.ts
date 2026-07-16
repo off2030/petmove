@@ -104,6 +104,15 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 아일랜드 사전 통지 (Advance Notice Portal)
   'ie_advance_notice_date',
   'ie_advance_notice_confirmed',
+  // 노르웨이 사전 통지 (Mattilsynet 이메일, 48시간 전)
+  'no_advance_notice_date',
+  'no_advance_notice_confirmed',
+  // 키프로스 사전 통지 (지구 수의검역국 이메일, 48시간 전)
+  'cy_advance_notice_date',
+  'cy_advance_notice_confirmed',
+  // 몰타 사전 통지 (온라인 포털 + 수의사 이메일, 3영업일 전)
+  'mt_advance_notice_date',
+  'mt_advance_notice_confirmed',
   // 필수 서류 수기 상태(완료/해당없음) — docId→bool 맵(객체 값). 검역과 같은 이유로 목적지별
   // 분리: 한 목적지에서 표시한 서류 완료가 다른 목적지(또는 단일 시절 전역값)로 누수돼 자동
   // 완료로 오판되는 걸 막는다. 스칼라 폼 필드가 아니라 객체지만, flatten/by_dest 헬퍼는 값

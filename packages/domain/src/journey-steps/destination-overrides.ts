@@ -256,28 +256,71 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     },
   },
 
-  // ── EU 패밀리 — 규정 동일(EU Reg 576/2013), 카드 한 벌을 만들어 7개 키에 복사 ─────
+  // ── EU 패밀리 — 규정 동일(EU Reg 576/2013), 카드 한 벌을 만들어 8개 키에 복사 ─────
   // 예외만 나라별: 영국=촌충+화물 운송 / 아일랜드=촌충+사전 통지(ie-advance-notice 카드) /
-  // 몰타·노르웨이·핀란드=촌충 / 스위스=수입허가(FSVO). 촌충 카드(echinococcus-treatment)와
-  // 사전 통지 카드는 catalog 의 applicability 가 담당 — 여기는 문구·검증 매핑만.
-  // 출처: EU Reg 576/2013·2018/772 + petmove.co.kr EU/영국/스위스 가이드 + gov.ie.
+  // 몰타=촌충+사전 통지(mt-advance-notice) / 노르웨이=촌충+사전 통지(no-advance-notice) /
+  // 핀란드=촌충 / 키프로스=사전 통지(cy-advance-notice, 촌충 없음) / 스위스=수입허가(FSVO).
+  // 촌충 카드(echinococcus-treatment)와 사전 통지 카드는 catalog 의 applicability 가 담당 —
+  // 여기는 문구·검증 매핑만.
+  // 출처: EU Reg 576/2013·2018/772 + petmove.co.kr EU/영국/스위스 가이드 + gov.ie·mattilsynet.no·
+  // moa.gov.cy·servizz.gov.mt(사전 통지, 2026-07-16 확인).
   // 항체 검사 기관: 2026-04-22부터 농림축산검역본부 단일화 (petmove.co.kr 공지).
   eu: euFamilyOverrides({ label: '유럽연합(EU)', euAhc: true }),
-  uk: euFamilyOverrides({
-    label: '영국',
-    flightExtraLine:
-      '영국 입국 시 반려동물은 보호자와 같은 항공기 객실·수하물로 탈 수 없고 별도 화물로 운송돼요. 운송 일정을 항공사와 미리 협의하세요.',
-    departureDescription:
-      '영국 도착 후 공항 동물검역소(동물접수센터)에서 수입 검사를 받으세요.\n검역관이 마이크로칩과 서류(건강증명서·광견병 항체 검사 결과지·촌충 구충 기록)를 확인해요.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 인도돼요.',
-  }),
+  uk: (() => {
+    const base = euFamilyOverrides({
+      label: '영국',
+      // flightExtraLine 미지정 — description 을 아래에서 통째로 재작성하므로 여기 넣어도 안 쓰임.
+      departureDescription:
+        '영국 도착 후 반려동물은 동물접수센터(Animal Reception Centre)로 옮겨져 검역관의 확인을 받아요.\n마이크로칩과 서류를 확인하는 데 2~8시간 정도 걸릴 수 있어요.\n보호자가 직접 데리러 가야 하며, 동물의 건강과 서류에 이상이 없으면 격리 없이 인도돼요.',
+    })
+    return {
+      ...base,
+      // 반려동물 화물 운송(경유 포함) 참고 링크 추가 — base 의 다른 필드(cardLine·validationIds
+      // 등)를 잃지 않도록 flight-purchase 는 spread 후 필요한 필드만 덧붙인다.
+      // description 은 전체 재작성 — base 템플릿의 마지막 줄("항공사에 반려동물 동반 가능
+      // 여부를 꼭 확인하세요")이 영국은 애초에 기내 동반 자체가 불가(화물 전용)라 바로 위 줄과
+      // 모순돼 보여 제거. 다른 EU 패밀리 국가는 기내·수하물 동반이 가능한 경우가 있어 그대로 둔다.
+      'flight-purchase': {
+        ...base['flight-purchase'],
+        description:
+          '영국 입국 가능 시기에 맞춰 항공권을 구매하세요.\n\n광견병 항체 검사 채혈일로부터 3개월이 지난 후에 입국할 수 있어요.\n영국 입국 시 반려동물은 보호자와 같은 항공기로 갈 수 없어요. 화물로 보내야 하므로 동물 운송업체와 미리 협의하세요.',
+        links: [
+          {
+            url: 'https://www.petmove.co.kr/blog/travel-to-uk-with-pet-via-france/',
+            label: '반려동물과 함께 프랑스를 경유하여 영국으로 가는 방법',
+          },
+        ],
+      },
+      // 귀국 서류 — 영국은 base 템플릿(EU 반려동물 여권 대체 가능)과 달리 실제 발급 절차가
+      // 다르다. 2026-04-22부로 GB 거주자는 EU 반려동물 여권 발급 자체가 막혀 대체 서류로
+      // 의미 없어 제거. 대신 실제 발급 순서(① OV 섭외 ② 그 OV를 지정해 온라인 신청 ③ 그
+      // OV에게 방문 진료·서명)를 단계별로 명시 — "아무 병원이나 예약 후 신청"으로 오해 방지.
+      'eu-export-cert': {
+        description:
+          '영국 정부 발행 건강증명서(Export Health Certificate)를 준비하세요.\n\nAPHA 공인 수의사(Official Veterinarian, OV) 명단에서 진료해줄 수의사를 먼저 찾아 연락하세요. 일반 동물병원이 아니라 OV 자격이 있는 수의사만 발급·서명할 수 있어요.\nEHC Online 시스템에서 정부 계정(Government Gateway)에 등록하고, 연락한 수의사를 인증자로 지정해 신청하세요.\n지정한 수의사를 찾아가 진료를 받고 건강증명서를 발급받으세요.\n다음 서류가 있다면 새로 준비하지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+        // base attachmentHint 가 'EU 반려동물 여권'을 예시로 들지만 영국은 그 대체가 안 통해
+        // (위 description 참고) 별도로 교체.
+        attachmentHint: '건강증명서(EHC) 사본을 사진·PDF로 보관하세요.',
+        // 한국행 전용 인증서(3908) 공식 페이지 — 신청 시스템·수의사 명단·서식 안내로 다시
+        // 연결되는 허브라 링크 하나로 충분(아일랜드·노르웨이 등 사전통지 카드와 동일 패턴).
+        links: [
+          {
+            url: 'https://www.gov.uk/export-health-certificates/export-cats-and-dogs-to-south-korea-certificate-3908',
+            label: '영국 공식 안내 웹사이트',
+          },
+        ],
+      },
+    }
+  })(),
   ireland: euFamilyOverrides({
     label: '아일랜드',
     departureDescription:
-      '아일랜드 도착 후 공항에서 입국 검사(Compliance Check)를 받으세요.\n사전 통지 후 이메일로 안내받은 절차에 따라 진행돼요.\n검역관이 마이크로칩과 서류(건강증명서·광견병 항체 검사 결과지·촌충 구충 기록)를 확인해요.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도돼요.',
+      '아일랜드 도착 후 공항에서 입국 검사(Compliance Check)를 받으세요.\n사전 통지 후 이메일로 안내받은 절차에 따라 진행돼요.\n검역관이 마이크로칩과 서류(건강증명서·광견병 항체 검사 결과지·촌충 치료 기록)를 확인해요.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도돼요.',
   }),
   malta: euFamilyOverrides({ label: '몰타' }),
   norway: euFamilyOverrides({ label: '노르웨이' }),
   finland: euFamilyOverrides({ label: '핀란드' }),
+  cyprus: euFamilyOverrides({ label: '키프로스' }),
   switzerland: {
     ...euFamilyOverrides({
       label: '스위스',
@@ -340,8 +383,8 @@ function euFamilyOverrides(opts: {
       cardLine: `${label}에 입국할 수 있어요.`,
       // 3개월은 캘린더 기준(89~92일 가변)이라 고정 일수 earliest 미적용 — 입력 차단이 담당.
       earliest: undefined,
-      // eu.rabies-valid-until-on-departure 는 '추가 백신' 카드 situational 이 담당 (일본 모델).
-      validationIds: ['eu.departure-min-3months-after-titer'],
+      // eu.rabies-valid-until-on-entry 는 '추가 백신' 카드 situational 이 담당 (일본 모델).
+      validationIds: ['eu.entry-min-3months-after-titer'],
     },
     // 도착 — 여행자 입국 지점(TPE) 서류·마이크로칩 확인. 검역 confirm 모델 재사용.
     // 필드는 패밀리 공용(eu_import_quarantine_date) — by_dest 가 목적지별 분리 보장.
@@ -363,6 +406,10 @@ function euFamilyOverrides(opts: {
       ],
       allowAttachments: true,
       attachmentHint: '확인받은 서류 사본을 사진·PDF로 보관하세요.',
+      // base catalog 의 attachmentLabel('Import Quarantine Certificate')은 일본 수입검역증
+      // 전용 — EU 패밀리는 새로 발급되는 서류가 없고 기존 서류를 확인만 받으므로 잘못 새고
+      // 있었다(2026-07-16 발견·수정). 실제로 저장하는 건 확인받은 기존 서류의 사본.
+      attachmentLabel: '입국 확인 서류',
       validationIds: ['eu.import-quarantine-date-valid'],
     },
     // 귀국 서류 — EU 패밀리. 나라명(label) 동적 표기 + 대체 서류(EU 여권·한국 검역증) 안내.

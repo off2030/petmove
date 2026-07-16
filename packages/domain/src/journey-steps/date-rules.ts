@@ -231,7 +231,7 @@ export function validatePhEntryDate(v: string, ctx: DateRuleContext): string | n
  * (순환 방지) 여기 별도로 둔다. 목록 변경 시 양쪽 함께.
  * client(step-detail-view)도 destinationKey 분기에 사용 — export.
  */
-export const EU_ENTRY_FAMILY = ['eu', 'uk', 'ireland', 'malta', 'norway', 'finland', 'switzerland']
+export const EU_ENTRY_FAMILY = ['eu', 'uk', 'ireland', 'malta', 'norway', 'finland', 'switzerland', 'cyprus']
 
 /** data[key] 배열에서 유효 날짜(들)를 뽑는다 — [{date}] 객체·문자열 항목 모두 지원. */
 function readDateArray(data: Record<string, unknown>, key: string): string[] {
@@ -406,22 +406,66 @@ export function validateChImportPermitDate(filedDate: string, entryDate: string)
 }
 
 /**
- * 촌충(에키노코쿠스) 구충 — 출국(=목적지 입국) `1~maxDays`일 전에 받아야 함. EU echinococcus-free
+ * 노르웨이 사전 통지일 — 입국 48시간(2일) 전까지 Mattilsynet(노르웨이 식품안전청)에
+ * 이메일로 통지해야 함 (mattilsynet.no 공식 확인, 2026-07-16).
+ * client(통지 입력 시 입력 불가)·procedure-check(입국일 수정 후 주의) 공용. 한쪽 비면 통과.
+ */
+export function validateNoAdvanceNoticeDate(noticeDate: string, entryDate: string): string | null {
+  if (!noticeDate || !entryDate) return null
+  if (daysBetween(noticeDate, entryDate) < 2) {
+    return '입국 48시간(2일) 전까지 사전 통지를 해야 해요. 통지가 늦은 경우 입국일을 변경해야 해요.'
+  }
+  return null
+}
+
+/**
+ * 키프로스 사전 통지일 — 입국 48시간(2일) 전까지 관할 지구 수의검역국(District Veterinary
+ * Office)에 이메일로 통지해야 함 (moa.gov.cy 공식 확인, 2026-07-16).
+ * client(통지 입력 시 입력 불가)·procedure-check(입국일 수정 후 주의) 공용. 한쪽 비면 통과.
+ */
+export function validateCyAdvanceNoticeDate(noticeDate: string, entryDate: string): string | null {
+  if (!noticeDate || !entryDate) return null
+  if (daysBetween(noticeDate, entryDate) < 2) {
+    return '입국 48시간(2일) 전까지 사전 통지를 해야 해요. 통지가 늦은 경우 입국일을 변경해야 해요.'
+  }
+  return null
+}
+
+/**
+ * 몰타 사전 통지일 — 입국 3영업일 전까지 온라인 포털(nldmalta.gov.mt)에 등록해야 함
+ * (servizz.gov.mt 공식 확인, 2026-07-16). 영업일 단위를 달력일로 보수 근사(공휴일 미고려) —
+ * 실제로는 이 기한보다 여유 있게 제출을 권장.
+ * client(통지 입력 시 입력 불가)·procedure-check(입국일 수정 후 주의) 공용. 한쪽 비면 통과.
+ */
+export function validateMtAdvanceNoticeDate(noticeDate: string, entryDate: string): string | null {
+  if (!noticeDate || !entryDate) return null
+  if (daysBetween(noticeDate, entryDate) < 3) {
+    return '입국 3영업일 전까지 사전 통지를 해야 해요. 통지가 늦은 경우 입국일을 변경해야 해요.'
+  }
+  return null
+}
+
+/**
+ * 촌충(에키노코쿠스) 구충 — 입국 `1~maxDays`일 전 사이에 받아야 함. EU echinococcus-free
  * 국(영국·아일랜드·몰타·노르웨이·핀란드)은 입국 직전 24~120시간(1~5일)에만 유효한 절차라, 그
  * 밖(너무 이르거나 늦음)의 구충은 의미가 없어 입력불가로 막는다. maxDays 는 앱별로 다름 —
  * 펫무브앱(portal)=5(법적 상한), 펫무브워크(admin)는 별도 1~3일 주의(eu.tapeworm-1to3days)를
- * 그대로 유지(portal 에선 그 주의를 숨김). 처치·출국 한쪽 비면 통과.
+ * 그대로 유지(portal 에선 그 주의를 숨김). 처치·기준일 한쪽 비면 통과.
+ *
+ * anchorDate 는 호출 측이 입국일(entry_date) 있으면 그 값, 없으면 출국일(departure_date)로
+ * 대체해서 넘긴다(2026-07-16) — anchorLabel 도 그에 맞춰 '입국'/'출국'으로 같이 넘길 것.
  */
 export function validateEchinococcusWindow(
   treatmentDate: string,
-  departureDate: string,
+  anchorDate: string,
   maxDays: number,
+  anchorLabel: '입국' | '출국' = '입국',
 ): string | null {
-  if (!treatmentDate || !departureDate) return null
-  const days = daysBetween(treatmentDate, departureDate)
+  if (!treatmentDate || !anchorDate) return null
+  const days = daysBetween(treatmentDate, anchorDate)
   if (days === null) return null
   if (days < 1 || days > maxDays) {
-    return `촌충 구충은 출국 1~${maxDays}일 전에 받아야 해요.`
+    return `촌충 치료는 ${anchorLabel} 전 1~${maxDays}일 사이에 받아야 해요.`
   }
   return null
 }

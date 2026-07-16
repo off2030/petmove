@@ -391,6 +391,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'norway',
         'finland',
         'switzerland',
+        'cyprus',
         'australia',
         'new_zealand',
         'malaysia',
@@ -561,6 +562,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'norway',
         'finland',
         'switzerland',
+        'cyprus',
       ],
       species: 'all',
       tripType: 'all',
@@ -683,6 +685,109 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     validationIds: ['eu.ie-advance-notice-24h-before-entry'],
+  },
+
+  // ── 사전 통지 (노르웨이 전용) ────────────────────────────────────────
+  // 제3국(한국)에서 노르웨이 입국 시 도착 48시간 전까지 Mattilsynet(노르웨이 식품안전청)에
+  // 이메일로 통지 + 지정 입국지점(오슬로 공항 또는 Storskog 국경)으로만 입국 가능.
+  // 완료신호는 아일랜드와 동일한 confirm 메커니즘 재사용(통지일 입력 + 도래 + 저장 확인 = 완료).
+  {
+    id: 'no-advance-notice',
+    category: 'permit',
+    title: '사전 통지',
+    shortLabel: '통지',
+    description:
+      '노르웨이 입국 48시간 전까지 사전 통지를 하세요.\n\n노르웨이 식품안전청(Mattilsynet)에 이메일로 도착 일정(날짜·시간·항공편명)을 알려요.\n반려동물은 오슬로 공항 또는 스토르스코그(Storskog) 국경으로만 입국할 수 있어요.\n여유 있게 며칠 전에 미리 통지하는 것을 권장해요.',
+    doneSummary: '노르웨이에 사전 통지를 했어요.',
+    cardLine: '노르웨이에 사전 통지를 하세요.',
+    applicability: { destinations: ['norway'], species: 'all', tripType: 'all' },
+    order: 47,
+    deadline: { anchor: 'entry', daysBefore: 2 },
+    done: 'quarantine:no_advance_notice_date',
+    inputs: [
+      {
+        key: 'no_advance_notice_date',
+        label: '통지일',
+        type: 'date',
+        helpText: 'Mattilsynet에 이메일로 통지한 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '통지 이메일 발송·회신 내역을 사진·PDF로 보관하세요.',
+    links: [
+      {
+        url: 'https://www.mattilsynet.no/en/animals/travelling-with-dogs-cats-and-ferrets-from-third-countries-and-territories-to-norway',
+        label: '노르웨이 사전 통지 안내(공식)',
+      },
+    ],
+    validationIds: ['eu.no-advance-notice-48h-before-entry'],
+  },
+
+  // ── 사전 통지 (키프로스 전용) ────────────────────────────────────────
+  // 제3국에서 키프로스 입국 시 도착 48시간 전까지 관할 지구 수의검역국(라르나카/파포스)에
+  // 이메일로 통지 — 별도 승인서 없이 통지만 하면 되는 단순형(아일랜드·노르웨이와 동일 모델).
+  {
+    id: 'cy-advance-notice',
+    category: 'permit',
+    title: '사전 통지',
+    shortLabel: '통지',
+    description:
+      '키프로스 입국 48시간 전까지 사전 통지를 하세요.\n\n도착 공항의 관할 지구 수의검역국에 이메일로 도착 날짜·시간·항공편명을 알려요.\n라르나카(dvs.larnaca@vs.moa.gov.cy) 또는 파포스(dvs.paphos@vs.moa.gov.cy)로 보내세요.\n여유 있게 며칠 전에 미리 통지하는 것을 권장해요.',
+    doneSummary: '키프로스에 사전 통지를 했어요.',
+    cardLine: '키프로스에 사전 통지를 하세요.',
+    applicability: { destinations: ['cyprus'], species: 'all', tripType: 'all' },
+    order: 47,
+    deadline: { anchor: 'entry', daysBefore: 2 },
+    done: 'quarantine:cy_advance_notice_date',
+    inputs: [
+      {
+        key: 'cy_advance_notice_date',
+        label: '통지일',
+        type: 'date',
+        helpText: '지구 수의검역국에 이메일로 통지한 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '통지 이메일 발송·회신 내역을 사진·PDF로 보관하세요.',
+    links: [
+      {
+        url: 'https://www.moa.gov.cy/moa/vs/vs.nsf/vs07_en/vs07_en?OpenDocument=',
+        label: '키프로스 사전 통지 안내(공식)',
+      },
+    ],
+    validationIds: ['eu.cy-advance-notice-48h-before-entry'],
+  },
+
+  // ── 사전 통지 (몰타 전용) ──────────────────────────────────────────
+  // 제3국에서 몰타 입국 시 도착 3영업일 전까지 온라인 포털(nldmalta.gov.mt)에 도착 정보를
+  // 등록 + 별도로 담당 수의사에게 이메일로 항공편 정보를 알려 도착 시 검사관 대기.
+  {
+    id: 'mt-advance-notice',
+    category: 'permit',
+    title: '사전 통지',
+    shortLabel: '통지',
+    description:
+      '몰타 입국 3영업일 전까지 사전 통지를 하세요.\n\n온라인 포털(nldmalta.gov.mt)에서 반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 등록해요.\n등록 후 담당 수의사에게 이메일(petstravel.msdec@gov.mt)로 항공편명·도착 날짜·시간을 다시 알려 도착 시 검사관이 대기하도록 하세요.',
+    doneSummary: '몰타에 사전 통지를 했어요.',
+    cardLine: '몰타에 사전 통지를 하세요.',
+    applicability: { destinations: ['malta'], species: 'all', tripType: 'all' },
+    order: 47,
+    deadline: { anchor: 'entry', daysBefore: 3 },
+    done: 'quarantine:mt_advance_notice_date',
+    inputs: [
+      {
+        key: 'mt_advance_notice_date',
+        label: '통지일',
+        type: 'date',
+        helpText: '온라인 포털에 등록한 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '포털 등록·이메일 발송 내역을 사진·PDF로 보관하세요.',
+    links: [
+      { url: 'https://nldmalta.gov.mt/MaltaPetArrivals/', label: '몰타 사전 통지 포털(공식)' },
+    ],
+    validationIds: ['eu.mt-advance-notice-3days-before-entry'],
   },
 
   // ── 사전 신고 다음 — 일본 수출 검역 (왕복 케이스 한정) ──────────────
@@ -957,39 +1062,42 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentLabel: '기생충 치료',
   },
 
-  // ── 촌충 구충 (에키노코쿠스) — 영국·아일랜드·몰타·노르웨이·핀란드, 강아지 한정 ─────
+  // ── 촌충 치료 (에키노코쿠스) — 영국·아일랜드·몰타·노르웨이·핀란드, 강아지 한정 ─────
   // EU Reg 2018/772. 입국 24~120시간(1~5일) 전 프라지콴텔 투여 — 검증은 보수적으로 1~3일
-  // (eu.tapeworm-1to3days-before-departure). 데이터 키는 internal_parasite_dates 공유(admin 정합).
+  // (eu.tapeworm-1to3days-before-entry). 데이터 키는 internal_parasite_dates 공유(admin 정합).
+  // 출국 전 임상검사(vet-visit, order 110) 앞에 배치 — 치료 사실이 임상검사 때 확인·기록된다.
+  // 마감 기준일은 목적지 입국일(entry_date) — 규정 자체가 "입국 전" 기준이라 한국 출국일과는
+  // 다른 날일 수 있다(2026-07-16 출국일/입국일 분리 이후).
   {
     id: 'echinococcus-treatment',
     category: 'preparation',
-    title: '촌충 구충',
+    title: '촌충 치료',
     shortLabel: '촌충',
     description:
-      '촌충(에키노코쿠스) 구충을 받으세요.\n\n입국 24~120시간(1~5일) 전에 수의사에게 프라지콴텔 성분의 구충제를 투여받아야 해요.\n시간 계산이 어긋나지 않도록 입국 1~3일 전 사이를 권장해요.\n구충 내용과 일시가 건강증명서에 기록되어야 해요.',
-    doneSummary: '촌충 구충을 받았어요.',
-    cardLine: '촌충(에키노코쿠스) 구충을 받으세요.',
+      '촌충(에키노코쿠스) 치료를 받으세요.\n\n입국 전 24~120시간(1~5일) 사이에 수의사에게 프라지콴텔 성분의 구충제를 투여받으세요.\n항공 이동 시간을 고려해 출국 1~3일 전 사이를 권장해요.\n건강증명서에 치료 내용과 일시를 기록해야 해요.',
+    doneSummary: '촌충 치료를 받았어요.',
+    cardLine: '촌충(에키노코쿠스) 치료를 받으세요.',
     applicability: {
       destinations: ['uk', 'ireland', 'malta', 'norway', 'finland'],
       species: 'dog',
       tripType: 'all',
     },
-    order: 130,
-    deadline: { anchor: 'departure', daysBefore: 3, window: true },
+    order: 105,
+    deadline: { anchor: 'entry', daysBefore: 3, window: true },
     done: 'has-internal-parasite',
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       if (data.internal_parasite_confirmed === true) return undefined
-      return datedCardSituational(latestDateOfData(caseRow, readInternalParasiteEntries), '촌충 구충', '구충')
+      return datedCardSituational(latestDateOfData(caseRow, readInternalParasiteEntries), '촌충 치료', '치료')
     },
     inputs: [
-      { key: 'internal_parasite_dates', label: '구충일', type: 'date_array' },
+      { key: 'internal_parasite_dates', label: '치료일', type: 'date_array' },
     ],
     allowAttachments: true,
-    attachmentHint: '구충 기록(증명서·수첩)을 사진·PDF로 보관하세요.',
+    attachmentHint: '치료 기록(증명서·수첩)을 사진·PDF로 보관하세요.',
     // 내부·외부구충과 같은 라벨 — 보관함에서 '기생충 치료_N' 으로 번호가 이어진다.
     attachmentLabel: '기생충 치료',
-    validationIds: ['eu.tapeworm-1to3days-before-departure'],
+    validationIds: ['eu.tapeworm-1to3days-before-entry'],
   },
 
   // ── 10. 수입허가 ───────────────────────────────────────────────────────
@@ -1220,7 +1328,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     doneSummary: '귀국 서류를 준비했어요.',
     cardLine: '귀국 서류를 준비하세요.',
     applicability: {
-      destinations: ['eu', 'uk', 'ireland', 'malta', 'norway', 'finland', 'switzerland'],
+      destinations: ['eu', 'uk', 'ireland', 'malta', 'norway', 'finland', 'switzerland', 'cyprus'],
       species: 'all',
       tripType: 'round',
     },

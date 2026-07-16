@@ -264,7 +264,9 @@ function jpPrepHint(
 
 /**
  * deadline anchor 의 기준일 (YYYY-MM-DD, 없으면 null).
- * 'departure' 는 출국일 — 미입력 시 항공편 입국일(entry_date)로 폴백 (한일 노선은 출국=입국 당일).
+ * 'departure' 는 출국일 — 미입력 시 입국일(entry_date)로 폴백. 'entry' 는 입국일 — 미입력 시
+ * 출국일(departure_date)로 폴백(2026-07-16). 대부분 목적지는 둘이 같은 날(한일 노선)이거나
+ * 보호자가 입국일까지는 안 적어(EU 등) 반대쪽으로 근사하는 것이 안전.
  */
 function deadlineAnchorDate(step: StepDefinition, caseRow: CaseRow): string | null {
   const dl = step.deadline
@@ -273,7 +275,7 @@ function deadlineAnchorDate(step: StepDefinition, caseRow: CaseRow): string | nu
   const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
   let base = ''
   if (dl.anchor === 'departure') base = caseRow.departure_date || entry
-  else if (dl.anchor === 'entry') base = entry
+  else if (dl.anchor === 'entry') base = entry || caseRow.departure_date || ''
   else if (dl.anchor === 'created') base = caseRow.created_at ?? ''
   return base.length >= 10 ? base.slice(0, 10) : null
 }
@@ -345,17 +347,21 @@ const ADVISORY_DEFERRED_CHECKS = new Set<string>([
   'th.general-vaccine-not-expired-on-arrival',
   'ph.rabies-not-expired-on-arrival',
   'ph.general-vaccine-not-expired-on-arrival',
-  'eu.rabies-valid-until-on-departure',
+  'eu.rabies-valid-until-on-entry',
 ])
 
 /**
  * 펫무브앱(portal) 전용 표시 제외 — admin 과 검증 기준이 다른 룰만.
- *  - eu.tapeworm-1to3days-before-departure: admin 은 1~3일 주의 유지, portal 은 1~5일(법적
+ *  - eu.tapeworm-1to3days-before-entry: admin 은 1~3일 주의 유지, portal 은 1~5일(법적
  *    24~120시간) 입력불가(getSaveBlockError → validateEchinococcusWindow)로 대체. portal 에선
- *    이 1~3 주의를 숨겨 1~5 기준만 노출한다(촌충은 출국 직전에만 의미 있는 절차).
+ *    이 1~3 주의를 숨겨 1~5 기준만 노출한다(촌충은 입국 직전에만 의미 있는 절차).
+ *
+ * export — step-detail-screen.tsx 의 collectStepChecks(단계 상세 페이지 인라인 '주의' 박스)도
+ * 같은 목록을 참조한다. 여기서만 필터링하면 목록/배너에서만 숨고 단계 상세엔 그대로 새는
+ * 불일치가 있었다(2026-07-16 발견·수정).
  */
-const PORTAL_SUPPRESSED_CHECKS = new Set<string>([
-  'eu.tapeworm-1to3days-before-departure',
+export const PORTAL_SUPPRESSED_CHECKS = new Set<string>([
+  'eu.tapeworm-1to3days-before-entry',
 ])
 
 export function buildJourney(

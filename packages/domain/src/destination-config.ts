@@ -111,16 +111,22 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
+  // 키프로스 — 촌충 요건은 없지만(RABIES_FREE_EU_MEMBERS 아님, TAPEWORM 도 아님) 48시간
+  // 사전 통지(moa.gov.cy 공식) 카드가 별도라 eu 묶음에서 분리. eu 보다 먼저 매칭.
+  cyprus: {
+    keywords: ['키프로스', 'cyprus'],
+    extraFields: ['address_overseas'],
+  },
   eu: {
     keywords: [
       '유럽연합', '프랑스', '독일', '이탈리아', '스페인', '네덜란드', '벨기에', '오스트리아',
       '스웨덴', '덴마크', '폴란드', '체코', '포르투갈', '그리스',
       '헝가리', '루마니아', '불가리아', '크로아티아', '슬로바키아',
-      '슬로베니아', '리투아니아', '라트비아', '에스토니아', '룩셈부르크', '키프로스',
+      '슬로베니아', '리투아니아', '라트비아', '에스토니아', '룩셈부르크',
       'france', 'germany', 'italy', 'spain', 'netherlands', 'belgium', 'austria',
       'sweden', 'denmark', 'poland', 'czech', 'portugal', 'greece',
       'hungary', 'romania', 'bulgaria', 'croatia', 'slovakia',
-      'slovenia', 'lithuania', 'latvia', 'estonia', 'luxembourg', 'cyprus',
+      'slovenia', 'lithuania', 'latvia', 'estonia', 'luxembourg',
       'eu',
     ],
     extraFields: ['address_overseas'],
@@ -420,7 +426,7 @@ export function matchesDestinationKey(
  */
 // 비발생국에 해당하는 1:1 destinationKey (eu 묶음 제외).
 const RABIES_FREE_DESTINATION_KEYS: Array<keyof typeof DESTINATION_OVERRIDES> = [
-  'japan', 'australia', 'new_zealand', 'uk', 'ireland', 'malta', 'finland',
+  'japan', 'australia', 'new_zealand', 'uk', 'ireland', 'malta', 'finland', 'cyprus',
   'switzerland', 'singapore', 'hongkong', 'hawaii', 'guam', 'uae',
 ]
 // eu 묶음(24개국) 중 비발생 회원국 토큰(소문자). 발생국(프랑스·스페인·네덜란드·덴마크·폴란드·
@@ -429,7 +435,7 @@ const RABIES_FREE_EU_MEMBERS = new Set<string>([
   '독일', 'germany', '이탈리아', 'italy', '벨기에', 'belgium', '오스트리아', 'austria',
   '스웨덴', 'sweden', '체코', 'czech', '포르투갈', 'portugal', '불가리아', 'bulgaria',
   '슬로베니아', 'slovenia', '리투아니아', 'lithuania', '라트비아', 'latvia',
-  '에스토니아', 'estonia', '룩셈부르크', 'luxembourg', '키프로스', 'cyprus',
+  '에스토니아', 'estonia', '룩셈부르크', 'luxembourg',
 ])
 
 /**
