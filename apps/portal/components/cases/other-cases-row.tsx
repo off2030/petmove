@@ -1,9 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { avatarGlyph, avatarGlyphColor, avatarGradient, avatarPhoto } from '@/lib/avatar'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
+import { readLastDest } from '@/components/portal-shell/last-case'
 
 /**
  * 헤더 우측 끝에 들어가는 전체 케이스 아바타 행. (이전엔 상단바에 있던 스위처)
@@ -24,6 +26,17 @@ export function OtherCasesRow({
   const { cases } = useCases()
   // 여정(목적지) 있는 동물만 — 목적지 다 지운 동물은 전환 아바타에서도 빠진다.
   const journeyCases = cases.filter(hasJourney)
+
+  // 케이스별 마지막 활성 목적지 — 없으면 링크에 ?dest 를 안 붙여 각 케이스의 첫 목적지로
+  // 튕긴다(다중 목적지 케이스에서 "동물 전환 후 돌아오면 목적지가 초기화" 되는 버그의 원인).
+  const [lastDests, setLastDests] = useState<Record<string, string | null>>({})
+  useEffect(() => {
+    const next: Record<string, string | null> = {}
+    for (const c of journeyCases) next[c.id] = readLastDest(c.id)
+    setLastDests(next)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [journeyCases.map((c) => c.id).join(',')])
+
   if (journeyCases.length < 2) return null
 
   return (
@@ -49,10 +62,12 @@ export function OtherCasesRow({
         const i = cases.findIndex((x) => x.id === c.id)
         const isActive = c.id === currentCaseId
         const photo = avatarPhoto(c)
+        const dest = lastDests[c.id]
+        const href = `/cases/${c.id}/${tab}${dest ? `?dest=${encodeURIComponent(dest)}` : ''}`
         return (
           <Link
             key={c.id}
-            href={`/cases/${c.id}/${tab}`}
+            href={href}
             prefetch
             aria-label={c.pet_name ?? '케이스'}
             title={c.pet_name ?? '케이스'}
