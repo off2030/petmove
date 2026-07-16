@@ -19,7 +19,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
     단, HERO_LEAD_THEN_RANDOM 목적지(태국·필리핀)는 첫 장을 고정으로 먼저 보여주고 나머지는 매 로드 무작위.
     후보가 2장 이상이면 사진을 탭해서도 다음 후보로 넘겨볼 수 있다.
     없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
-    사진 있는 EU 국가 = 이 맵의 키(프랑스·독일·이탈리아·스페인·헝가리·키프로스·오스트리아·크로아티아),
+    사진 있는 EU 국가 = 이 맵의 키(프랑스·독일·이탈리아·스페인·헝가리·키프로스·오스트리아·크로아티아·폴란드),
     나머지 EU 국가는 사진 없이 메타 행. */
 const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   일본: [
@@ -112,6 +112,46 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/croatia-07.jpg',
     '/destinations/croatia-08.jpg',
     '/destinations/croatia-09.jpg',
+  ],
+  폴란드: [
+    '/destinations/poland-01.jpg',
+    '/destinations/poland-02.jpg',
+    '/destinations/poland-03.jpg',
+    '/destinations/poland-04.jpg',
+    '/destinations/poland-05.jpg',
+    '/destinations/poland-06.jpg',
+    '/destinations/poland-07.jpg',
+    '/destinations/poland-08.jpg',
+    '/destinations/poland-09.jpg',
+    '/destinations/poland-10.jpg',
+    '/destinations/poland-11.jpg',
+    '/destinations/poland-12.jpg',
+    '/destinations/poland-13.jpg',
+    '/destinations/poland-14.jpg',
+    '/destinations/poland-15.jpg',
+    '/destinations/poland-16.jpg',
+    '/destinations/poland-17.jpg',
+    '/destinations/poland-18.jpg',
+    '/destinations/poland-19.jpg',
+    '/destinations/poland-20.jpg',
+    '/destinations/poland-21.jpg',
+    '/destinations/poland-22.jpg',
+    '/destinations/poland-23.jpg',
+    '/destinations/poland-25.jpg',
+    '/destinations/poland-26.jpg',
+    '/destinations/poland-27.jpg',
+    '/destinations/poland-28.jpg',
+    '/destinations/poland-29.jpg',
+    '/destinations/poland-30.jpg',
+    '/destinations/poland-31.jpg',
+    '/destinations/poland-32.jpg',
+    '/destinations/poland-33.jpg',
+    '/destinations/poland-34.jpg',
+    '/destinations/poland-35.jpg',
+    '/destinations/poland-36.jpg',
+    '/destinations/poland-37.jpg',
+    '/destinations/poland-38.jpg',
+    '/destinations/poland-39.jpg',
   ],
   키프로스: [
     '/destinations/cyprus-02.jpg',  // 보트 정박 만 (탑다운)
