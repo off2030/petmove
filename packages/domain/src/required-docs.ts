@@ -371,13 +371,14 @@ function euFamilyDocSpecs(
     KR_FORM25_VACCINATION_HEALTH_CERT,
     {
       id: 'eu-health-cert',
-      // EU 회원국(eu 키)은 공식 명칭 'EU 동물건강증명서(Annex III)'. 영국·노르웨이·스위스 등
-      // 비EU 패밀리는 자체 증명서라 일반 명칭('건강증명서(입국용)') 유지.
+      // EU 회원국(eu 키) + 스위스는 EU 협정으로 같은 공식 양식 'EU 동물건강증명서(Annex III)'
+      // 사용(스위스 BLV 공식 페이지 확인, 2026-07-17). 영국·노르웨이는 자체 증명서라
+      // 일반 명칭('건강증명서(입국용)') 유지.
       name: opts?.euAhc ? 'EU 동물건강증명서(Annex III)' : '건강증명서(입국용)',
       source: '동물병원 · 농림축산검역본부',
       kind: 'manual',
       issuanceStepId: 'vet-visit',
-      // EU 회원국(Annex III)은 EU 공식 양식 안내, 비EU 패밀리(영국·노르웨이·스위스)는
+      // EU 회원국+스위스(Annex III)는 EU 공식 양식 안내, 비EU 패밀리(영국·노르웨이)는
       // 자체 증명서라 ${label} 기반 일반 문구 유지.
       description: opts?.euAhc
         ? '유럽연합(EU) 입국용 건강증명서예요.\n\n출국일 기준 10일 이내에 동물병원에서 발급받아요. 이 서류는 발급하지 않는 동물병원이 많으므로 미리 확인하세요.\n\n한국 수출 검역 때 검역관 확인·서명을 받아야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.'
@@ -430,11 +431,14 @@ function euFamilyDocSpecs(
 const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
   eu: euFamilyDocSpecs('유럽연합(EU)', { euAhc: true }),
   uk: euFamilyDocSpecs('영국'),
-  ireland: euFamilyDocSpecs('아일랜드'),
-  malta: euFamilyDocSpecs('몰타'),
+  ireland: euFamilyDocSpecs('아일랜드', { euAhc: true }),
+  malta: euFamilyDocSpecs('몰타', { euAhc: true }),
   norway: euFamilyDocSpecs('노르웨이'),
-  finland: euFamilyDocSpecs('핀란드'),
-  switzerland: euFamilyDocSpecs('스위스', { withImportPermit: true }),
+  finland: euFamilyDocSpecs('핀란드', { euAhc: true }),
+  // 스위스는 EU 회원국은 아니지만 EU-스위스 수의 협정으로 제3국발 비상업적 반려동물
+  // 수입에 같은 Annex III 서식을 쓴다(BLV 공식 안내 확인, 2026-07-17).
+  switzerland: euFamilyDocSpecs('스위스', { withImportPermit: true, euAhc: true }),
+  cyprus: euFamilyDocSpecs('키프로스', { euAhc: true }),
 }
 
 /** destination 토큰('프랑스'·'영국' 등) → destination-config 키('eu'·'uk'). 매칭 실패 시 null. */
