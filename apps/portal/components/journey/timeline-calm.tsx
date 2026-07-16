@@ -289,7 +289,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   ],
   스웨덴: [
     '/destinations/sweden-01.jpg',
-    '/destinations/sweden-02.jpg',
     '/destinations/sweden-03.jpg',
     '/destinations/sweden-04.jpg',
     '/destinations/sweden-05.jpg',
