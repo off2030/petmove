@@ -248,7 +248,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     // 02~07 은 슬로베니아 사진이 폴더에 잘못 섞인 것 — 슬로베니아로 이관(2026-07-16).
     '/destinations/lithuania-01.jpg',
     '/destinations/lithuania-08.jpg',
-    '/destinations/lithuania-09.jpg',
     '/destinations/lithuania-10.jpg',
     '/destinations/lithuania-11.jpg',
     '/destinations/lithuania-12.jpg',
