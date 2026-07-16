@@ -127,7 +127,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/austria-20.jpg',
     '/destinations/austria-21.jpg',
     '/destinations/austria-22.jpg',
-    '/destinations/austria-23.jpg',
     '/destinations/austria-24.jpg',
     '/destinations/austria-25.jpg',
   ],
@@ -401,7 +400,6 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/austria-19.jpg': 'top',
   '/destinations/austria-20.jpg': 'top',
   '/destinations/austria-21.jpg': 'top',
-  '/destinations/austria-23.jpg': 'bottom',
   '/destinations/austria-25.jpg': 'top',
 }
 
