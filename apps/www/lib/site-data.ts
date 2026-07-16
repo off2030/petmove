@@ -76,7 +76,6 @@ export const COUNTRIES: Country[] = [
   { ko: '러시아', slug: 'russia', region: '유럽' },
   // 미주
   { ko: '미국', slug: 'usa', region: '미주' },
-  { ko: '하와이', slug: 'hawaii', region: '미주' },
   { ko: '캐나다', slug: 'canada', region: '미주' },
   { ko: '멕시코', slug: 'mexico', region: '미주' },
   { ko: '브라질', slug: 'brazil', region: '미주' },
@@ -85,6 +84,7 @@ export const COUNTRIES: Country[] = [
   { ko: '호주', slug: 'australia', region: '오세아니아' },
   { ko: '뉴질랜드', slug: 'newzealand', region: '오세아니아' },
   { ko: '괌', slug: 'guam', region: '오세아니아' },
+  { ko: '하와이', slug: 'hawaii', region: '오세아니아' },
   // 중동·아프리카
   { ko: '이스라엘', slug: 'israel', region: '중동·아프리카' },
   { ko: '아랍에미리트', slug: 'uae', region: '중동·아프리카' },
