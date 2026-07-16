@@ -138,7 +138,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/poland-14.jpg',
     '/destinations/poland-16.jpg',
     '/destinations/poland-19.jpg',
-    '/destinations/poland-26.jpg',
     '/destinations/poland-28.jpg',
     '/destinations/poland-29.jpg',
     '/destinations/poland-33.jpg',
