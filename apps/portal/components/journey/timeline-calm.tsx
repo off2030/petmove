@@ -2,7 +2,7 @@
 
 import { C as PM } from '@/lib/palette'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { readJourneyFeedback } from '@petmove/domain'
 import { CaseHeader } from '@/components/cases/case-header'
@@ -14,9 +14,8 @@ import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
 import { PAGE_TOP, groupLabel, sectionTitle } from '@/lib/tokens'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
-/** 목적지별 히어로 사진 후보 — public/destinations 에 번들. 기본은 앱을 열 때마다 이 순서대로
-    한 장씩 넘어가며 반복된다(로컬 저장 회전 인덱스, HERO_PHOTO_ROTATION_KEY 참고).
-    단, HERO_LEAD_THEN_RANDOM 목적지(태국·필리핀)는 첫 장을 고정으로 먼저 보여주고 나머지는 매 로드 무작위.
+/** 목적지별 히어로 사진 후보 — public/destinations 에 번들. 각 목적지 배열의 첫 장은
+    리드 사진으로 고정하고, 나머지 후보는 매 로드마다 무작위 순서로 보여준다.
     후보가 2장 이상이면 사진을 탭해서도 다음 후보로 넘겨볼 수 있다.
     없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
     2026-07-16 앱 화이트리스트 27개국(아시아 3 + EU 24) 전부 사진 보유 — 새 목적지 열 때만 추가하면 된다. */
@@ -55,6 +54,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/france-36.jpg',
   ],
   네덜란드: [
+    '/destinations/netherlands-00.jpg',
     '/destinations/netherlands-01.jpg',
     '/destinations/netherlands-03.jpg',
     '/destinations/netherlands-04.jpg',
@@ -66,6 +66,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/netherlands-17.jpg',
   ],
   벨기에: [
+    '/destinations/belgium-00.jpg',
     '/destinations/belgium-01.jpg',
     '/destinations/belgium-03.jpg',
     '/destinations/belgium-06.jpg',
@@ -74,9 +75,9 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/belgium-09.jpg',
   ],
   불가리아: [
+    '/destinations/bulgaria-00.jpg',
     '/destinations/bulgaria-01.jpg',
     '/destinations/bulgaria-02.jpg',
-    '/destinations/bulgaria-03.jpg',
     '/destinations/bulgaria-04.jpg',
     '/destinations/bulgaria-05.jpg',
     '/destinations/bulgaria-06.jpg',
@@ -94,6 +95,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/germany-21.jpg',  // 브레멘 마르크트 광장 (맑음)
   ],
   이탈리아: [
+    '/destinations/italy-00.jpg',
     '/destinations/italy-27.jpg',
     '/destinations/italy-02.jpg',
     '/destinations/italy-04.jpg',
@@ -105,6 +107,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/italy-28.jpg',
   ],
   오스트리아: [
+    '/destinations/austria-00.jpg',
     '/destinations/austria-02.jpg',
     '/destinations/austria-07.jpg',
     '/destinations/austria-09.jpg',
@@ -119,6 +122,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/austria-25.jpg',
   ],
   크로아티아: [
+    '/destinations/croatia-00.jpg',
     '/destinations/croatia-01.jpg',
     '/destinations/croatia-02.jpg',
     '/destinations/croatia-03.jpg',
@@ -129,6 +133,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/croatia-09.jpg',
   ],
   폴란드: [
+    '/destinations/poland-00.jpg',
     '/destinations/poland-08.jpg',
     '/destinations/poland-11.jpg',
     '/destinations/poland-14.jpg',
@@ -142,6 +147,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/poland-39.jpg',
   ],
   덴마크: [
+    '/destinations/denmark-00.jpg',
     '/destinations/denmark-01.jpg',
     '/destinations/denmark-02.jpg',
     '/destinations/denmark-03.jpg',
@@ -155,12 +161,13 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/denmark-11.jpg',
   ],
   라트비아: [
-    '/destinations/latvia-01.jpg',
+    '/destinations/latvia-00.jpg',
     '/destinations/latvia-02.jpg',
     '/destinations/latvia-03.jpg',
     '/destinations/latvia-05.jpg',
   ],
   에스토니아: [
+    '/destinations/estonia-00.jpg',
     '/destinations/estonia-01.jpg',
     '/destinations/estonia-02.jpg',
     '/destinations/estonia-03.jpg',
@@ -171,6 +178,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/estonia-09.jpg',
   ],
   그리스: [
+    '/destinations/greece-00.jpg',
     '/destinations/greece-01.jpg',
     '/destinations/greece-02.jpg',
     '/destinations/greece-03.jpg',
@@ -180,12 +188,11 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/greece-07.jpg',
     '/destinations/greece-08.jpg',
     '/destinations/greece-09.jpg',
-    '/destinations/greece-10.jpg',
-    '/destinations/greece-11.jpg',
     '/destinations/greece-12.jpg',
     '/destinations/greece-13.jpg',
   ],
   체코: [
+    '/destinations/czechia-00.jpg',
     '/destinations/czechia-01.jpg',
     '/destinations/czechia-02.jpg',
     '/destinations/czechia-03.jpg',
@@ -195,6 +202,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/czechia-07.jpg',
   ],
   포르투갈: [
+    '/destinations/portugal-00.jpg',
     '/destinations/portugal-01.jpg',
     '/destinations/portugal-03.jpg',
     '/destinations/portugal-04.jpg',
@@ -209,11 +217,13 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/portugal-15.jpg',
   ],
   키프로스: [
+    '/destinations/cyprus-00.jpg',
     '/destinations/cyprus-02.jpg',  // 보트 정박 만 (탑다운)
     '/destinations/cyprus-05.jpg',  // 니시 해변 탑다운
     '/destinations/cyprus-06.jpg',  // 지중해풍 건물·파란 덧창
   ],
   헝가리: [
+    '/destinations/hungary-00.jpg',
     '/destinations/hungary-01.jpg',  // 국회의사당 노을 + 유람선
     '/destinations/hungary-02.jpg',  // 클래식 노랑 트램 D
     '/destinations/hungary-03.jpg',  // 겨울 안개 자유의 다리
@@ -224,6 +234,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/hungary-11.jpg',  // 성 이슈트반 대성당 새벽
   ],
   룩셈부르크: [
+    '/destinations/luxembourg-00.jpg',
     '/destinations/luxembourg-01.jpg',
     '/destinations/luxembourg-02.jpg',
     '/destinations/luxembourg-03.jpg',
@@ -235,6 +246,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/luxembourg-10.jpg',
   ],
   루마니아: [
+    '/destinations/romania-00.jpg',
     '/destinations/romania-01.jpg',
     '/destinations/romania-02.jpg',
     '/destinations/romania-03.jpg',
@@ -244,6 +256,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   ],
   리투아니아: [
     // 02~07 은 슬로베니아 사진이 폴더에 잘못 섞인 것 — 슬로베니아로 이관(2026-07-16).
+    '/destinations/lithuania-00.jpg',
     '/destinations/lithuania-01.jpg',
     '/destinations/lithuania-08.jpg',
     '/destinations/lithuania-10.jpg',
@@ -251,6 +264,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/lithuania-12.jpg',
   ],
   스웨덴: [
+    '/destinations/sweden-00.jpg',
     '/destinations/sweden-01.jpg',
     '/destinations/sweden-03.jpg',
     '/destinations/sweden-04.jpg',
@@ -268,12 +282,13 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/sweden-20.jpg',
   ],
   슬로바키아: [
-    // 02 는 불가리아 릴라 7호수 사진이 폴더에 잘못 섞인 것(bulgaria-03 기등록) — 제외.
+    '/destinations/slovakia-00.jpg',
     '/destinations/slovakia-01.jpg',
     '/destinations/slovakia-03.jpg',
     '/destinations/slovakia-04.jpg',
   ],
   슬로베니아: [
+    '/destinations/slovenia-00.jpg',
     '/destinations/slovenia-01.jpg',  // 블레드 호수 (가을 안개)
     '/destinations/slovenia-02.jpg',  // 프레드야마 동굴성
     '/destinations/slovenia-03.jpg',  // 겨울 호수 설경
@@ -282,6 +297,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/slovenia-06.jpg',  // 카닌 산장 전망대
   ],
   스페인: [
+    '/destinations/spain-00.jpg',
     '/destinations/spain-30.jpg',
     '/destinations/spain-01.jpg',
     '/destinations/spain-03.jpg',
@@ -293,22 +309,18 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/spain-35.jpg',
     '/destinations/spain-37.jpg',
   ],
+  영국: [
+    '/destinations/uk-00.jpg', // 타워브리지·템스강 항공(노을)
+    '/destinations/uk-01.jpg', // 웨스트민스터 사원 쌍둥이 탑
+    '/destinations/uk-02.jpg', // 스톤헨지 노을
+    '/destinations/uk-03.jpg', // 자연사박물관 내부(고래 뼈대)
+    '/destinations/uk-04.jpg', // 빨간 공중전화 부스
+    '/destinations/uk-05.jpg', // 트라팔가 광장 2층버스
+    '/destinations/uk-06.jpg', // 절벽 협곡 도로 항공
+    '/destinations/uk-07.jpg', // 잉글랜드 시골 구름
+    '/destinations/uk-08.jpg', // 잉글랜드 시골 들판
+  ],
 }
-
-/** 히어로 사진 회전 인덱스를 목적지별로 localStorage 에 저장 — 앱을 열 때마다
-    다음 인덱스를 읽어 보여주고, 그다음 것을 미리 저장해둔다(한 바퀴 돌면 처음으로). */
-function nextHeroPhotoIndex(destKey: string, length: number): number {
-  if (typeof window === 'undefined' || length <= 1) return 0
-  const storageKey = `pm-hero-photo-rotation:${destKey}`
-  const raw = window.localStorage.getItem(storageKey)
-  const current = raw ? ((parseInt(raw, 10) % length) + length) % length : 0
-  window.localStorage.setItem(storageKey, String((current + 1) % length))
-  return current
-}
-
-/** 첫 장은 고정으로 먼저 보여주고, 나머지 후보는 매 로드마다 무작위 순서로.
-    (순차 회전 대신) — 현재 태국·필리핀 적용. */
-const HERO_LEAD_THEN_RANDOM = new Set(['태국', '필리핀', '이탈리아', '스페인', '헝가리', '키프로스'])
 
 /** Fisher–Yates 셔플 — 원본 불변, 새 배열 반환. */
 function shuffleArray<T>(arr: readonly T[]): T[] {
@@ -318,6 +330,17 @@ function shuffleArray<T>(arr: readonly T[]): T[] {
     ;[a[i], a[j]] = [a[j], a[i]]
   }
   return a
+}
+
+type HeroPhotoState = { destination: string; candidates: string[]; index: number }
+
+function buildHeroPhotoState(destination: string): HeroPhotoState {
+  const base = DEST_PHOTO_CANDIDATES[destination] ?? []
+  return {
+    destination,
+    candidates: base.length > 1 ? [base[0], ...shuffleArray(base.slice(1))] : base,
+    index: 0,
+  }
 }
 
 /** 히어로 사진 크롭 위치 — 200px 고정 높이 박스라 세로 사진은 object-fit: cover 로
@@ -491,29 +514,29 @@ export function TimelineCalm({
   // 상태 창(히어로 카드) = 나-2 확정 — 진행 바까지 사진 안으로 들어간 풀 포토.
   // 티켓 노치 = 우측 정중앙 확정. (2026-07-11 실기기 비교 후 확정, dev 스위처 제거.)
 
-  const baseHeroCandidates = DEST_PHOTO_CANDIDATES[trip.toCity] ?? []
-  // 후보 표시 순서 — 기본은 배열 그대로(순차 회전). 태국 등 lead-then-random 목적지는
-  // 첫 장 고정 + 나머지 셔플을 마운트 후(useEffect)에만 적용해 SSR/hydration 은 안정.
-  const [heroPhotoCandidates, setHeroPhotoCandidates] = useState<string[]>(baseHeroCandidates)
-  const [heroPhotoIndex, setHeroPhotoIndex] = useState(0)
-  useEffect(() => {
-    const base = DEST_PHOTO_CANDIDATES[trip.toCity] ?? []
-    if (HERO_LEAD_THEN_RANDOM.has(trip.toCity) && base.length > 2) {
-      setHeroPhotoCandidates([base[0], ...shuffleArray(base.slice(1))])
-      setHeroPhotoIndex(0) // 첫 장(파도) 항상 먼저
-    } else {
-      setHeroPhotoCandidates(base)
-      setHeroPhotoIndex(nextHeroPhotoIndex(trip.toCity, base.length))
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trip.toCity])
+  // 후보 표시 순서 — 첫 장 고정 + 나머지는 목적지 진입마다 무작위.
+  const [heroPhotoState, setHeroPhotoState] = useState<HeroPhotoState>(() =>
+    buildHeroPhotoState(trip.toCity),
+  )
+  let activeHeroPhotoState = heroPhotoState
+  if (heroPhotoState.destination !== trip.toCity) {
+    activeHeroPhotoState = buildHeroPhotoState(trip.toCity)
+    setHeroPhotoState(activeHeroPhotoState)
+  }
+  const heroPhotoCandidates = activeHeroPhotoState.candidates
+  const heroPhotoIndex = activeHeroPhotoState.index
   const heroPhoto = heroPhotoCandidates[heroPhotoIndex] ?? null
   // 사진 후보 여러 장을 고르는 동안의 임시 비교용 — 탭하면 바로 다음 후보로 넘긴다.
   // (앱은 keep-alive 라 자동 회전은 새로고침 때만 도는데, 비교엔 즉시 전환이 필요.)
   // 사진 후보 검수 중엔 true, 스토어 스크린샷 등 정적 캡처 작업 땐 false.
   const HERO_TAP_SWITCHER = true
   const cycleHeroPhoto = () =>
-    setHeroPhotoIndex((i) => (i + 1) % heroPhotoCandidates.length)
+    setHeroPhotoState((state) => {
+      const current = state.destination === trip.toCity ? state : buildHeroPhotoState(trip.toCity)
+      const length = current.candidates.length
+      if (length <= 1) return current.index === 0 ? current : { ...current, index: 0 }
+      return { ...current, index: (current.index + 1) % length }
+    })
 
   // 다목적지 전환 — 헤더의 라우트(한국 ⇄ 일본) 버튼을 없애고 히어로의 목적지 칩이 담당.
   // 목적지 2개 이상이면 칩에 꺾쇠가 붙고, 탭하면 바텀시트로 활성 목적지를 바꾼다.
@@ -1825,4 +1848,3 @@ function withRo(word: string): string {
   const jong = (last - 0xac00) % 28
   return jong === 0 || jong === 8 ? `${word}로` : `${word}으로`
 }
-
