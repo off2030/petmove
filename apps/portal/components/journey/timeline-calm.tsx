@@ -87,7 +87,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/hungary-04.jpg',  // 주황 트램 + 국회의사당
     '/destinations/hungary-06.jpg',  // 세체니 온천 (흐림·벤치)
     '/destinations/hungary-07.jpg',  // 마차시 성당 타일 지붕
-    '/destinations/hungary-08.jpg',  // 세체니 온천 (맑음)
     '/destinations/hungary-09.jpg',  // 국회의사당 야경
     '/destinations/hungary-11.jpg',  // 성 이슈트반 대성당 새벽
   ],
