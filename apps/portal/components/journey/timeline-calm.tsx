@@ -21,7 +21,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
     없는 목적지는 null — 히어로 카드가 사진 밴드 없이 메타 행으로 대체한다.
     사진 있는 EU 국가 = 이 맵의 키(프랑스·독일·이탈리아·스페인·헝가리·키프로스·오스트리아·크로아티아·폴란드·
     에스토니아·그리스·네덜란드·덴마크·라트비아·룩셈부르크·리투아니아·벨기에·불가리아·스웨덴·
-    슬로바키아·슬로베니아), 나머지 EU 국가는 사진 없이 메타 행. */
+    슬로바키아·슬로베니아·체코·포르투갈), 나머지 EU 국가는 사진 없이 메타 행. */
 const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   일본: [
     '/destinations/japan-sakura-blossom-macro.jpg',
@@ -238,6 +238,32 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/greece-11.jpg',
     '/destinations/greece-12.jpg',
     '/destinations/greece-13.jpg',
+  ],
+  체코: [
+    '/destinations/czechia-01.jpg',
+    '/destinations/czechia-02.jpg',
+    '/destinations/czechia-03.jpg',
+    '/destinations/czechia-04.jpg',
+    '/destinations/czechia-05.jpg',
+    '/destinations/czechia-06.jpg',
+    '/destinations/czechia-07.jpg',
+  ],
+  포르투갈: [
+    '/destinations/portugal-01.jpg',
+    '/destinations/portugal-02.jpg',
+    '/destinations/portugal-03.jpg',
+    '/destinations/portugal-04.jpg',
+    '/destinations/portugal-05.jpg',
+    '/destinations/portugal-06.jpg',
+    '/destinations/portugal-07.jpg',
+    '/destinations/portugal-08.jpg',
+    '/destinations/portugal-09.jpg',
+    '/destinations/portugal-10.jpg',
+    '/destinations/portugal-11.jpg',
+    '/destinations/portugal-12.jpg',
+    '/destinations/portugal-13.jpg',
+    '/destinations/portugal-14.jpg',
+    '/destinations/portugal-15.jpg',
   ],
   키프로스: [
     '/destinations/cyprus-02.jpg',  // 보트 정박 만 (탑다운)
