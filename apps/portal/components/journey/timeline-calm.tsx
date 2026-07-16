@@ -90,6 +90,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/hungary-07.jpg',  // 마차시 성당 타일 지붕
     '/destinations/hungary-08.jpg',  // 세체니 온천 (맑음)
     '/destinations/hungary-09.jpg',  // 국회의사당 야경
+    '/destinations/hungary-10.jpg',  // 어부의 요새 일출
   ],
   스페인: [
     '/destinations/spain-30.jpg',
