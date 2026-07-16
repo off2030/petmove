@@ -116,7 +116,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   ],
   오스트리아: [
     '/destinations/austria-02.jpg',
-    '/destinations/austria-04.jpg',
     '/destinations/austria-07.jpg',
     '/destinations/austria-09.jpg',
     '/destinations/austria-11.jpg',
@@ -124,7 +123,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/austria-18.jpg',
     '/destinations/austria-19.jpg',
     '/destinations/austria-20.jpg',
-    '/destinations/austria-21.jpg',
     '/destinations/austria-22.jpg',
     '/destinations/austria-24.jpg',
     '/destinations/austria-25.jpg',
@@ -392,13 +390,11 @@ const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/italy-25.jpg': 'top',
   '/destinations/cyprus-06.jpg': 'bottom',
   '/destinations/austria-02.jpg': 'bottom',
-  '/destinations/austria-04.jpg': 'bottom',
   '/destinations/austria-07.jpg': 'bottom',
   '/destinations/austria-09.jpg': 'top',
   '/destinations/austria-12.jpg': 'bottom',
   '/destinations/austria-19.jpg': 'top',
   '/destinations/austria-20.jpg': 'top',
-  '/destinations/austria-21.jpg': 'top',
   '/destinations/austria-25.jpg': 'top',
 }
 
