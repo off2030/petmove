@@ -1,11 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useCases } from './case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
-import { readLastCaseId } from './last-case'
+import { readLastCaseId, readLastDest } from './last-case'
 import { LogoMark } from './logo-mark'
 import { isSurfacePage } from './surface-page'
 
@@ -49,7 +49,25 @@ export function TopBar() {
     candidate && journeyCases.some((c) => c.id === candidate)
       ? candidate
       : journeyCases[0]?.id ?? null
-  const homeHref = homeCaseId ? `/cases/${homeCaseId}/journey` : '/cases'
+
+  // 다중 목적지 케이스에서 마지막 활성 목적지(?dest=) 보존 — 안 붙이면 워드마크로
+  // 복귀할 때마다 그 케이스의 기본(첫) 목적지로 튕긴다(bottom-nav 와 동일 패턴).
+  const searchParams = useSearchParams()
+  const destInUrl = searchParams.get('dest')
+  const [homeDest, setHomeDest] = useState<string | null>(null)
+  useEffect(() => {
+    if (!homeCaseId) {
+      setHomeDest(null)
+    } else if (activeCaseId === homeCaseId && destInUrl) {
+      setHomeDest(destInUrl)
+    } else {
+      setHomeDest(readLastDest(homeCaseId))
+    }
+  }, [homeCaseId, activeCaseId, destInUrl])
+
+  const homeHref = homeCaseId
+    ? `/cases/${homeCaseId}/journey${homeDest ? `?dest=${encodeURIComponent(homeDest)}` : ''}`
+    : '/cases'
 
   const btn: React.CSSProperties = {
     // iOS HIG minimum tap target 44pt 근접 — 시각 균형 위해 40 으로.
