@@ -380,6 +380,7 @@ function buildHeroPhotoState(destination: string): HeroPhotoState {
     위/아래가 크게 잘린다. 기본은 정중앙, 위/아래 중 살려야 할 피사체가 있는 사진만
     개별 지정(사용자 확인 후 추가). */
 const HERO_PHOTO_POSITION: Record<string, string> = {
+  '/destinations/norway-17.webp': 'top', // 오슬로 오페라하우스(안개) — 지붕 위쪽이 잘리지 않게
   '/destinations/japan-fuji-umbrella-field.webp': 'bottom',
   '/destinations/japan-fuji-pagoda-snow.webp': 'top',
   '/destinations/japan-sakura-blossom-macro.webp': 'top',
