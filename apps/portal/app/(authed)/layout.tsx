@@ -62,13 +62,14 @@ async function AuthedBody({ children }: { children: React.ReactNode }) {
   const previewPayload = previewToken ? verifyPreviewToken(previewToken) : null
 
   if (previewPayload) {
-    const caseRow = await loadPreviewCase(previewPayload.caseId)
-    const previewPartners = caseRow
-      ? await loadPreviewPartners(caseRow)
+    const cases = await loadPreviewCases(previewPayload.caseId)
+    const primary = cases[0] ?? null
+    const previewPartners = primary
+      ? await loadPreviewPartners(primary)
       : { vet: null, transport: null }
     return (
       <CaseDataProvider
-        initialCases={caseRow ? [caseRow] : []}
+        initialCases={cases}
         initialProfile={null}
         initialPartners={previewPartners}
         initialTransportAvailable={false}
@@ -149,16 +150,39 @@ async function loadPreviewPartners(
   }
 }
 
-/** pm_preview 토큰의 caseId 로 케이스 한 건을 service-role 로 읽는다 (보호자 RLS 우회). */
-async function loadPreviewCase(caseId: string): Promise<CaseRow | null> {
+/**
+ * pm_preview 토큰의 caseId 로 케이스를 service-role 로 읽는다 (보호자 RLS 우회).
+ * 같은 보호자 계정(case_customer_links.user_id)에 연결된 케이스가 여럿이면 전부 반환 —
+ * 실제 보호자가 보는 동물 전환 스위처(OtherCasesRow, 2건 이상일 때만 노출)가 미리보기에서도
+ * 동일하게 나타나야 하므로. 연결된 계정이 없으면(관리자가 직접 만든 케이스 등) 그 한 건만.
+ */
+async function loadPreviewCases(caseId: string): Promise<CaseRow[]> {
   const admin = createAdminClient()
+  const { data: link } = await admin
+    .from('case_customer_links')
+    .select('user_id')
+    .eq('case_id', caseId)
+    .maybeSingle()
+
+  if (!link) {
+    const { data } = await admin
+      .from('cases')
+      .select('*')
+      .eq('id', caseId)
+      .is('deleted_at', null)
+      .maybeSingle()
+    return data ? [data as CaseRow] : []
+  }
+
   const { data } = await admin
     .from('cases')
-    .select('*')
-    .eq('id', caseId)
+    .select('*, case_customer_links!inner(user_id)')
+    .eq('case_customer_links.user_id', link.user_id)
     .is('deleted_at', null)
-    .maybeSingle()
-  return (data as CaseRow | null) ?? null
+    .order('updated_at', { ascending: false })
+  return ((data ?? []) as Array<Record<string, unknown>>).map(
+    ({ case_customer_links: _l, ...rest }) => rest as unknown as CaseRow,
+  )
 }
 
 function Shell({
