@@ -350,17 +350,18 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       description:
         '스위스 정부가 인증한 건강증명서 또는 대체 서류를 준비하세요.\n현지 임상 수의사에게 건강증명서를 받은 뒤, 관할 칸톤(주) 수의청의 공무 수의사에게 최종 인증을 받으세요.\n다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
     },
-    // 스위스 고유 — FSVO 수입허가 (EU 와 다른 유일한 추가 절차).
+    // 스위스 고유 — FSVO 수입허가 (EU 와 다른 유일한 추가 절차). 한국은 광견병 위험국이라 필요.
+    // 신청 방법(양식·제출처)은 BLV 개·고양이 페이지에 링크(2026-07-17 확인).
     'import-permit': {
       description:
-        '스위스 수입허가를 신청하세요.\n\n스위스 연방 식품안전수의청(FSVO)에 입국 최소 3주 전까지 신청해야 해요.\n발급받은 허가서는 스위스 입국 검사 때 제시해요.\n반려동물의 스위스 입국은 바젤·제네바·취리히 공항으로만 가능해요.',
+        '스위스 수입허가를 신청하세요. 한국은 광견병 위험국이라 필요한 절차예요.\n\n스위스 연방 식품안전수의청(FSVO)에 입국 최소 3주 전까지 신청해야 해요.\nFSVO 웹사이트에서 신청서(광견병 위험국에서 오는 반려동물용)를 내려받아 작성한 뒤 FSVO에 제출해요.\n발급받은 허가서는 스위스 입국 검사 때 제시해요.\n반려동물의 스위스 입국은 바젤·제네바·취리히 공항으로만 가능해요.',
       doneSummary: '스위스 수입 허가증을 받았어요.',
       cardLine: '스위스 수입허가를 신청하세요.',
       deadline: { anchor: 'departure', daysBefore: 21 },
       links: [
         {
-          url: 'https://www.blv.admin.ch/blv/en/home/tiere/reisen-mit-heimtieren.html',
-          label: 'FSVO 반려동물 입국 안내',
+          url: 'https://www.blv.admin.ch/blv/en/home/tiere/reisen-mit-heimtieren/hunde-katzen-und-frettchen.html',
+          label: 'FSVO 수입허가 안내·신청서',
         },
       ],
       attachmentLabel: '수입 허가증(FSVO)',
