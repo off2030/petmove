@@ -877,8 +877,15 @@ export function StepDetailView({
     // 자기책임 모드 — 모든 입력불가 차단을 통과시킨다(아무 날짜·정보 저장). 책임은 보호자.
     if (freeInput) return null
     // 광견병 면역 유효기간 1년만 인정(중국·태국·필리핀) — 2·3년 저장 거부. YearSelect 비활성의 backstop.
-    const ONE_YEAR_VALIDITY_BLOCK_MSG =
-      '이 여행지는 1년 유효기간 광견병 백신만 인정해요. 면역 유효기간을 1년으로 선택하세요.'
+    const oneYearKo =
+      destinationKey === 'china'
+        ? '중국'
+        : destinationKey === 'thailand'
+          ? '태국'
+          : destinationKey === 'philippines'
+            ? '필리핀'
+            : '이 여행지'
+    const ONE_YEAR_VALIDITY_BLOCK_MSG = `${oneYearKo} 입국 시 광견병 백신은 1년까지만 유효합니다. 면역 유효기간을 1년으로 선택하세요.`
     const isMultiYearValidity = (vu: string | null | undefined): boolean => {
       const m = (vu ?? '').match(/^(\d+)\s*년$/)
       return !!m && Number(m[1]) > 1
