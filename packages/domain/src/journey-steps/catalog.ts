@@ -661,7 +661,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '사전 통지',
     shortLabel: '통지',
     description:
-      '아일랜드 입국 24시간 전까지 사전 통지를 하세요.\n\n아일랜드 농식품해양부의 사전 통지 포털(Advance Notice Portal)에서 양식을 제출해요.\n제출하면 도착 시 받을 검사(Compliance Check) 안내가 이메일로 와요.\n여행 1주일 전쯤 여유 있게 제출하는 것을 권장해요.',
+      '아일랜드 입국 24시간 전까지 사전 통지를 하세요.\n\n아일랜드 농식품해양부의 사전 통지 포털(Advance Notice Portal)에서 양식을 제출해요.\n여행 1주일 전쯤 여유 있게 제출하는 것을 권장해요.',
     doneSummary: '아일랜드에 사전 통지를 했어요.',
     cardLine: '아일랜드에 사전 통지를 하세요.',
     applicability: { destinations: ['ireland'], species: 'all', tripType: 'all' },
