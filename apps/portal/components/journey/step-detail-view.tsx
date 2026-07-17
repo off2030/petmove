@@ -945,8 +945,16 @@ export function StepDetailView({
         }
         if (r1.date && rabies.date) {
           // 1·2차 순서·간격(30일) — procedure-check 와 같은 domain 함수(단일 출처).
-          const intervalErr = validateRabiesInterval(r1.date, rabies.date)
-          if (intervalErr) return intervalErr
+          // 중국은 30일 간격이 GACC 공식 근거 없는 보수 추정이라(cn.rabies-doses-30days-to-1year-apart
+          // 'info' 주의로만 표면화) 하드 차단하지 않는다. 순서(2차 ≥ 1차)만 지킨다.
+          if (destinationKey === 'china') {
+            if (rabies.date < r1.date) {
+              return '2차 접종일이 1차 접종일보다 빨라요. 날짜를 확인하세요.'
+            }
+          } else {
+            const intervalErr = validateRabiesInterval(r1.date, rabies.date)
+            if (intervalErr) return intervalErr
+          }
           // 2차가 1차 면역 유효기간 이내 — 부스터 chain 검증(findRabiesChainBreak, 3차+ 와 단일 출처).
           const chainBreak = findRabiesChainBreak([
             { date: r1.date, valid_until: r1.valid_until || null },
