@@ -360,6 +360,8 @@ function euFamilyDocSpecs(
     // 실제 필수 여부·명칭이 확인된 경우에만 채운다(그 외 EU 패밀리는 국가마다 서류
     // 종류·필수 여부가 달라 아직 미확인 — 2026-07-17 영국만 우선 확인해 채움).
     exportCertName?: string
+    // 위 서류를 관장하는 공식 기관명 — 미지정 시 일반 문구로 폴백.
+    exportCertSource?: string
   },
 ): RequiredDocSpec[] {
   const specs: RequiredDocSpec[] = [
@@ -424,7 +426,7 @@ function euFamilyDocSpecs(
     specs.splice(specs.length - 1, 0, {
       id: 'eu-export-cert-doc',
       name: opts.exportCertName,
-      source: '현지 정부기관 · 지정 수의사',
+      source: opts.exportCertSource ?? '현지 정부기관 · 지정 수의사',
       kind: 'step',
       stepRef: 'eu-export-cert',
       group: 'quarantine',
@@ -458,6 +460,9 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
   uk: euFamilyDocSpecs('영국', {
     certName: '영국 동물건강증명서(GB Pet Health Certificate)',
     exportCertName: '영국 수출 동물건강증명서(EHC 3908)',
+    // EHC 서식(3908EHC) 상단에 DEFRA 산하 기관으로 명시된 공인 수의사(Official
+    // Veterinarian) 인증 체계 — APHA(Animal and Plant Health Agency) 소관.
+    exportCertSource: '영국 동물식물보건청(APHA) · 공인 수의사(OV)',
   }),
   ireland: euFamilyDocSpecs('아일랜드', { euAhc: true }),
   malta: euFamilyDocSpecs('몰타', { euAhc: true }),
