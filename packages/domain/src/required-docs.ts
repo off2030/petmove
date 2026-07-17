@@ -431,7 +431,7 @@ function euFamilyDocSpecs(
       stepRef: 'eu-export-cert',
       group: 'quarantine',
       roundTripOnly: true,
-      description: `${label} 정부가 인증하는 반려동물 수출건강증명서예요.\n\n한국 입국을 위한 필수 서류로, 지정된 수의사(공인 수의사)에게 발급받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
+      description: `${label} 정부가 발행하는 반려동물 수출건강증명서예요.\n\n${label} 출국과 한국 입국을 위한 필수 서류로, 지정된 수의사(공인 수의사)에게 발급받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
       previewStepId: 'eu-export-cert',
     })
   }
