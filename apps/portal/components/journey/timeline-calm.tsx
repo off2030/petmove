@@ -410,6 +410,7 @@ function buildHeroPhotoState(destination: string): HeroPhotoState {
 const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/norway-17.webp': 'top', // 오슬로 오페라하우스(안개) — 지붕 위쪽이 잘리지 않게
   '/destinations/malta-00.webp': 'bottom', // 몰타 국기·건물 문장 — 하단 피사체가 잘리지 않게
+  '/destinations/switzerland-03.webp': 'bottom', // 푸르카 고개 호텔·도로 U턴 — 하단이 최대한 보이게
   '/destinations/japan-fuji-umbrella-field.webp': 'bottom',
   '/destinations/japan-fuji-pagoda-snow.webp': 'top',
   '/destinations/japan-sakura-blossom-macro.webp': 'top',
