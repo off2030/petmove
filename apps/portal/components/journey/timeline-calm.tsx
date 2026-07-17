@@ -320,6 +320,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/uk-06.webp', // 절벽 협곡 도로 항공
   ],
   핀란드: [
+    '/destinations/finland-11.webp', // 가을 건물(초록 지붕)
     '/destinations/finland-00.webp', // 헬싱키 대성당
     '/destinations/finland-01.webp', // 눈 내리는 거리·트램(야간)
     '/destinations/finland-04.webp', // 오로라·호수
@@ -328,7 +329,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/finland-08.webp', // 눈숲 오두막 항공(야간)
     '/destinations/finland-09.webp', // 눈밭 인물 실루엣·별
     '/destinations/finland-10.webp', // 다리·수변 야경
-    '/destinations/finland-11.webp', // 가을 건물(초록 지붕)
     '/destinations/finland-12.webp', // 오디 도서관 목재 곡면
     '/destinations/finland-14.webp', // 자작나무·오로라
     '/destinations/finland-15.webp', // 설경 숲 항공(일출)
