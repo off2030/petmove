@@ -462,7 +462,7 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
     exportCertName: '영국 수출 동물건강증명서(EHC 3908)',
     // EHC 서식(3908EHC) 상단에 DEFRA 산하 기관으로 명시된 공인 수의사(Official
     // Veterinarian) 인증 체계 — APHA(Animal and Plant Health Agency) 소관.
-    exportCertSource: '영국 동물식물보건청(APHA) · 공인 수의사(OV)',
+    exportCertSource: '영국 동식물보건청(APHA) · 공인 수의사',
   }),
   ireland: euFamilyDocSpecs('아일랜드', { euAhc: true }),
   malta: euFamilyDocSpecs('몰타', { euAhc: true }),
