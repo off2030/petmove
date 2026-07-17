@@ -11,7 +11,7 @@ import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { type FieldOption } from '@/components/fields/info-fields'
 import { C, serif } from '@/components/me/settings-shared'
 import { PAGE_TOP, pageTitle, sectionTitle } from '@/lib/tokens'
-import { APP_DESTINATIONS_KO } from '@/lib/app-destinations'
+import { APP_DESTINATIONS_KO, APP_EU_INDIVIDUAL_DESTINATIONS_KO } from '@/lib/app-destinations'
 import { buildProfileView } from '@/lib/profile/catalog'
 import { notifyServiceInquiry } from '@/lib/actions/service-inquiry'
 
@@ -516,8 +516,12 @@ const HIGHLIGHTS: Highlight[] = [
  * EU 회원국 24개국은 개별 국가명 대신 'eu' 묶음 키 한 벌로 정규화해 공유한다.
  */
 function resolveDetail(map: Record<string, DestDetail>, dest: string, trip: TripType): DestDetail {
-  // EU 회원국 24개국은 EU Reg 576/2013 공통 절차라 개별 국가 키 대신 'eu' 한 벌로 본다.
-  const key = matchesDestinationKey(dest, 'eu') ? 'eu' : dest
+  // EU 패밀리는 EU Reg 576/2013 공통 절차라 개별 국가 키 대신 'eu' 한 벌로 본다.
+  // eu 묶음(프랑스·독일 등)은 matchesDestinationKey 로, 개별 카드국(영국·핀란드·아일랜드·몰타·
+  // 노르웨이·스위스·키프로스)은 별도 목록으로 함께 'eu' 로 정규화한다. 개별국은 각자 destinationKey
+  // 라 matchesDestinationKey('eu') 로는 안 잡혀 default(일반 문구)로 새던 것 수정(2026-07-17).
+  const isEuFamily = matchesDestinationKey(dest, 'eu') || APP_EU_INDIVIDUAL_DESTINATIONS_KO.includes(dest)
+  const key = isEuFamily ? 'eu' : dest
   return map[`${key}:${trip}`] ?? map[key] ?? map.default
 }
 
