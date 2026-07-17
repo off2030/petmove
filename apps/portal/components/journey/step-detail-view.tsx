@@ -81,6 +81,7 @@ import {
   updateVetVisitDate,
 } from '@/lib/actions/cases'
 import { readCaseDocuments } from '@/lib/documents'
+import { openExternalUrl } from '@/lib/native/open-external'
 import { AdvanceNotificationInputs } from './advance-notification-inputs'
 import { FlightInputs, type FlightForm } from './flight-inputs'
 import {
@@ -2165,7 +2166,18 @@ export function StepDetailView({
                 href={l.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                {...(isFile ? { download: '' } : {})}
+                {...(isFile
+                  ? { download: '' }
+                  : {
+                      // 외부 웹 링크는 인앱 브라우저(openExternalUrl)로 연다. 네이티브 WebView 는
+                      // <a target="_blank"> 로 외부 URL 을 못 여는 경우가 많고(TabHost 인터셉터도
+                      // target=_blank 는 통과시킴), 일부 사이트(BLV 등)는 X-Frame-Options 로 임베드도
+                      // 막아 '연결 안 됨'이 된다. Browser.open 은 top-level 이라 정상 로드된다.
+                      onClick: (e: React.MouseEvent) => {
+                        e.preventDefault()
+                        void openExternalUrl(l.url)
+                      },
+                    })}
                 style={pillStyle}
               >
                 {l.label}
