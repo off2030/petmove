@@ -407,11 +407,23 @@ const ADVANCE_NOTICE_DEADLINES: Array<{
   countryLabel: string
   hardDeadlineDays: number // entry 기준 실제 마감(캘린더 일)
   deadlineLabel: string // 문구용 — 사람이 읽는 마감 표현
+  // 기본 문구("마감이 일주일 남았어요"/"오늘까지 필요해요")를 못 쓰는 경우만 지정.
+  // 몰타는 실제 5일이 "일주일"도 "오늘"도 아닌 근사값이라 전용 문구 사용.
+  leadMessage?: string
+  dayMessage?: string
 }> = [
   { key: 'ireland', dateField: 'ie_advance_notice_date', countryLabel: '아일랜드', hardDeadlineDays: 1, deadlineLabel: '입국 24시간 전' },
   { key: 'norway', dateField: 'no_advance_notice_date', countryLabel: '노르웨이', hardDeadlineDays: 2, deadlineLabel: '입국 48시간 전' },
   { key: 'cyprus', dateField: 'cy_advance_notice_date', countryLabel: '키프로스', hardDeadlineDays: 2, deadlineLabel: '입국 48시간 전' },
-  { key: 'malta', dateField: 'mt_advance_notice_date', countryLabel: '몰타', hardDeadlineDays: 5, deadlineLabel: '입국 3영업일 전' },
+  {
+    key: 'malta',
+    dateField: 'mt_advance_notice_date',
+    countryLabel: '몰타',
+    hardDeadlineDays: 5,
+    deadlineLabel: '입국 3영업일 전',
+    leadMessage: '몰타 사전 통지 마감이 얼마 남지 않았어요. 입국 3영업일 전까지 통지하세요.',
+    dayMessage: '몰타 사전 통지 마감이 임박했어요. 입국 3영업일 전까지 통지하세요.',
+  },
 ]
 
 function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
@@ -439,7 +451,8 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         `${token}|advnotice-lead`,
         entry,
         advanceNotice.hardDeadlineDays + 7,
-        `${advanceNotice.countryLabel} 사전 통지 마감이 일주일 남았어요. ${advanceNotice.deadlineLabel}까지 통지하세요.`,
+        advanceNotice.leadMessage ??
+          `${advanceNotice.countryLabel} 사전 통지 마감이 일주일 남았어요. ${advanceNotice.deadlineLabel}까지 통지하세요.`,
         now,
       )
       if (rLead) out.push(rLead)
@@ -448,7 +461,8 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         `${token}|advnotice-day`,
         entry,
         advanceNotice.hardDeadlineDays,
-        `오늘까지 ${advanceNotice.countryLabel} 사전 통지가 필요해요(${advanceNotice.deadlineLabel}).`,
+        advanceNotice.dayMessage ??
+          `오늘까지 ${advanceNotice.countryLabel} 사전 통지가 필요해요(${advanceNotice.deadlineLabel}).`,
         now,
       )
       if (rDay) out.push(rDay)
