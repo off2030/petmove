@@ -2,6 +2,7 @@
 
 import { C as PM } from '@/lib/palette'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { readJourneyFeedback } from '@petmove/domain'
@@ -12,6 +13,7 @@ import { useCases } from '@/components/portal-shell/case-data-provider'
 import { monoCap, num, serif } from '@/components/me/settings-shared'
 import { CloudIcon, StormCloudIcon } from '@/components/ui/weather-icons'
 import { PAGE_TOP, groupLabel, sectionTitle } from '@/lib/tokens'
+import { HERO_BLUR_PLACEHOLDERS } from '@/lib/hero-blur-placeholders'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
 /** 목적지별 히어로 사진 후보 — public/destinations 에 번들. 각 목적지 배열의 첫 장은
@@ -904,23 +906,26 @@ export function TimelineCalm({
           >
             {heroPhoto && (
               <div style={{ position: 'relative', height: 200 }}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- 정적 번들 사진, cover 크롭이라 img 로 충분 */}
-                <img
+                {/* next/image — 화면 크기에 맞는 responsive 사이즈 자동 서빙 + priority 로
+                    다른 리소스보다 먼저 받게 힌트 + blur placeholder 로 로딩 중 빈 카드 방지
+                    (2026-07-17, 실기기 첫 로드 체감 지연 개선). */}
+                <Image
+                  key={heroPhoto}
                   src={heroPhoto}
                   alt=""
+                  fill
+                  priority
+                  sizes="(min-width: 672px) 672px, 100vw"
+                  placeholder={HERO_BLUR_PLACEHOLDERS[heroPhoto] ? 'blur' : 'empty'}
+                  blurDataURL={HERO_BLUR_PLACEHOLDERS[heroPhoto]}
                   onClick={
                     HERO_TAP_SWITCHER && heroPhotoCandidates.length > 1
                       ? cycleHeroPhoto
                       : undefined
                   }
                   style={{
-                    position: 'absolute',
-                    inset: 0,
-                    width: '100%',
-                    height: '100%',
                     objectFit: 'cover',
                     objectPosition: HERO_PHOTO_POSITION[heroPhoto] ?? 'center',
-                    display: 'block',
                     cursor:
                       HERO_TAP_SWITCHER && heroPhotoCandidates.length > 1
                         ? 'pointer'

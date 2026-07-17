@@ -71,6 +71,19 @@ const nextConfig = {
     '/privacy': ['../../docs/legal/privacy.md'],
     '/support': ['../../docs/legal/support.md'],
   },
+  // 여정 히어로 사진(public/destinations) — 파일명 그대로 재압축해 교체되는 경우가
+  // 있어(2026-07 WebP 전환 때도 그랬음) immutable 은 위험. 7일 fresh + 30일
+  // stale-while-revalidate 로 재방문 시 즉시 로드하면서도 교체 반영은 일주일 내로.
+  async headers() {
+    return [
+      {
+        source: '/destinations/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=2592000' },
+        ],
+      },
+    ]
+  },
 }
 
 export default nextConfig
