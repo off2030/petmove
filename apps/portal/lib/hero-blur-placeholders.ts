@@ -245,10 +245,7 @@ export const HERO_BLUR_PLACEHOLDERS: Record<string, string> = {
   "/destinations/uk-06.webp": "data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAADQAQCdASoQAAsAA8BgJQBOgCFdOFoTAAD+zyosuXt7nFBX+EjSeVEfuYGcqAdJRHPMb4cpTRbp9i9echUmqAAA",
   "/destinations/finland-00.webp": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAAAQAgCdASoQAAsAA8BgJbACdADjRI2/w0MAAPz2Qbbk0A9TlLZxTygk2E7CTFlTAER+x2Q9TwOvs3BKoUPm2EgOruf4272vNu/VSyjKL1orv3DEzBcEqYnH3wAAAA==",
   "/destinations/finland-01.webp": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAACwAQCdASoQAAsAA8BgJZQC7AB8ZtpgAP7awvXAhhoUtXTO0363Ce1T6sjrHm/xyNSK8FjbwgvR+CPaYTx+koCJ+/PNfOiXmEPKugQA",
-  "/destinations/finland-02.webp": "data:image/webp;base64,UklGRkQAAABXRUJQVlA4IDgAAAAwAgCdASoQAAsAA8BgJYwCdAEQdUuv856IgAD+zLEzewXkaXjQVTmhGvCUp7/T5+DMqhzTdHgAAA==",
-  "/destinations/finland-03.webp": "data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAADwAQCdASoQAAkAA8BgJYwC7AEOgnpX2AAA/uAK/Zllh57TNaefMcTx7TBgD4IGvhagdLulIKoLuNeHhR7pGQAA",
   "/destinations/finland-04.webp": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAADwAQCdASoQAAwAA8BgJaACdAD0rw+xCMAA/vQy3Cstc0kLrr1d9hlNT4op1yadZi7YTzG9r726uKUJ7QNMvqi2NyriBY9+C+AAAA==",
-  "/destinations/finland-05.webp": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAACwAQCdASoQAAsAA8BgJQBWECYhQ2egAPJP8HOTmqKhhO6hk8qAapFf0MiPtDknCxwsElHjvlmH6os25obYdk3CGY1XXp5iaP8x1BkopQnjjk0dHJxYAA==",
   "/destinations/finland-06.webp": "data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAADwAQCdASoQAAsAA8BgJbACdAEf/Pf4IAAA/tFzi6wJrYsVKblp7BVFvIfvBNkH0d9ywYpUV9S4+e8BYfuHXLAA",
   "/destinations/finland-07.webp": "data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAADQAQCdASoQAAsAA8BgJZgCdAERGpKeAAD4sAB/LYj0Tsn4OIvvvP7XAl1fmdCdi+To4L3TNNjJ3N3vZQmhfAAA",
   "/destinations/finland-08.webp": "data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAADwAQCdASoQAAsAA8BgJYwCdAEWfM51lAAA/qwIXWuJ8LTXFkJlkuKcsK+t7flkNRje3mWE/xQcSxFgkh8V/gAA",
@@ -256,7 +253,6 @@ export const HERO_BLUR_PLACEHOLDERS: Record<string, string> = {
   "/destinations/finland-10.webp": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAAAQAgCdASoQAAwAA8BgJbACdAEO4fqoxboAAPKlc2ZcjyU/+4tRzdKnpwvslhuFFU4Wy1SwKPy3dmRdyvgQE5sxYarxnbd8wUSDo+AA",
   "/destinations/finland-11.webp": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAAAQAgCdASoQAAsAA8BgJbACdAEP97pH/jnAAP7qqvpMoBf8Mz0t30ujl2D32Zi/I5sT9hCDwx5DwFNrJDrP0I9AmdI/q0sNmCycTZBLuRR8o2zEYcAAAA==",
   "/destinations/finland-12.webp": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAAAQAgCdASoQAAsAA8BgJbACdAEWntKl1dkAAP6aP0cl9JO5emQ2TPOmxhe+Gd/qrxha+5jEAUNjEeB35enBZaz10R7CqCqX/ETEGKpV8i1isFAA",
-  "/destinations/finland-13.webp": "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADwAQCdASoQAAsAA8BgJZQCsAEO9Y4RwBgA/vLaFEbvfRpZq0RV44oeuo/+6I68QTHnwiLyv2IWAAAA",
   "/destinations/finland-14.webp": "data:image/webp;base64,UklGRkIAAABXRUJQVlA4IDYAAACwAQCdASoQAAsAA8BgJQAAUwM/flhAAP7pAOnj0ku23Qbie4gt8o9D3sw8qW3chKsycMJzQAA=",
   "/destinations/finland-15.webp": "data:image/webp;base64,UklGRkQAAABXRUJQVlA4IDgAAADwAQCdASoQAAsAA8BgJQBdgCHcbUCW+IAA/vTStXiEBZ5Y6RCuVg8tcKtobXBbryVJtzlCGCgAAA==",
 }
