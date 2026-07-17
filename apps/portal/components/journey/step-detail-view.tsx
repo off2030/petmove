@@ -39,6 +39,7 @@ import {
   validateThImportPermitVaccineGap,
   EU_ENTRY_FAMILY,
   SINGLE_DOSE_RABIES_DESTINATIONS,
+  RABIES_ONE_YEAR_VALIDITY_DESTINATIONS,
   validateTiterAfterBooster,
   validateTiterWithinChain,
   validateVetVisitDate,
@@ -175,6 +176,10 @@ export function StepDetailView({
   // (종합백신과 동일 모델). 일본·하와이(2회국)는 기존 1차 단일 + 별도 추가 백신 카드 유지.
   const isRabiesSingleCard =
     isRabies1 && !!destinationKey && SINGLE_DOSE_RABIES_DESTINATIONS.includes(destinationKey)
+  // 광견병 백신 면역 유효기간 1년만 인정(2·3년 입력불가) — 중국·태국·필리핀. YearSelect 비활성 +
+  // getSaveBlockError 저장 거부. 단일 출처 = domain RABIES_ONE_YEAR_VALIDITY_DESTINATIONS.
+  const rabiesOneYearOnly =
+    !!destinationKey && RABIES_ONE_YEAR_VALIDITY_DESTINATIONS.includes(destinationKey)
   // '제품 유효기간'(약품 expiry 행)은 호주·뉴질랜드 입국 요건에만 필요하다. 그 외 목적지
   // (일본·태국·필리핀·EU 등)에선 광견병·종합백신 약품 정보에서 이 행을 숨긴다.
   const showProductExpiry = destinationKey === 'australia' || destinationKey === 'new_zealand'
@@ -871,6 +876,13 @@ export function StepDetailView({
   function getSaveBlockError(): string | null {
     // 자기책임 모드 — 모든 입력불가 차단을 통과시킨다(아무 날짜·정보 저장). 책임은 보호자.
     if (freeInput) return null
+    // 광견병 면역 유효기간 1년만 인정(중국·태국·필리핀) — 2·3년 저장 거부. YearSelect 비활성의 backstop.
+    const ONE_YEAR_VALIDITY_BLOCK_MSG =
+      '이 여행지는 1년 유효기간 광견병 백신만 인정해요. 2년·3년 백신은 선택할 수 없어요.'
+    const isMultiYearValidity = (vu: string | null | undefined): boolean => {
+      const m = (vu ?? '').match(/^(\d+)\s*년$/)
+      return !!m && Number(m[1]) > 1
+    }
     if (isMicrochip) {
       if (chip !== '' && chip.length !== 15) return '15자리 숫자를 입력하세요.'
       const birth = readBirthDate(caseRow?.data)
@@ -896,9 +908,15 @@ export function StepDetailView({
       if (chainBreak) {
         return rabiesChainBreakMessage(chainBreak)
       }
+      if (rabiesOneYearOnly && rabiesList.some((e) => isMultiYearValidity(e.valid_until))) {
+        return ONE_YEAR_VALIDITY_BLOCK_MSG
+      }
       return null
     }
     if (isRabies) {
+      if (rabiesOneYearOnly && isMultiYearValidity(rabies.valid_until)) {
+        return ONE_YEAR_VALIDITY_BLOCK_MSG
+      }
       // 만료된 과거 이력은 사실 데이터로 입력 허용 — 갱신 여부는 추가 접종/검사 step 의 chain
       // 검증과 procedure-check 주의(jp.rabies-extra-within-previous-validity 등)가 표면화한다.
       if (isRabies1 && rabies.date) {
@@ -948,6 +966,9 @@ export function StepDetailView({
       return null
     }
     if (isRabiesExtra) {
+      if (rabiesOneYearOnly && rabiesExtra.some((e) => isMultiYearValidity(e.valid_until))) {
+        return ONE_YEAR_VALIDITY_BLOCK_MSG
+      }
       // 프라임 시리즈 = 일본 1·2차(index 0·1) / 1회 접종국 1차(index 0)만.
       const primes = Array.from({ length: rabiesExtraBase }, (_, i) =>
         readRabiesEntryForm(caseRow?.data, i),
@@ -2310,6 +2331,7 @@ export function StepDetailView({
               productHints={rabiesProductHints}
               otherHospital={rabiesOtherHospital}
               hideExpiry={hideRabiesExpiry}
+              oneYearValidityOnly={rabiesOneYearOnly}
             />
           </section>
         )}
@@ -2331,6 +2353,7 @@ export function StepDetailView({
               onAdd={() => setRabiesList((prev) => [...prev, makeEmptyExtra()])}
               productHintsFor={(idx) => rabiesListProductHints[idx] ?? null}
               hideExpiry={hideRabiesExpiry}
+              oneYearValidityOnly={rabiesOneYearOnly}
               // 접종일만 노출 + 나머지 접기 — 1·2차(RabiesEntryInputs)와 동일한 시각.
               collapsible
             />
@@ -2357,6 +2380,7 @@ export function StepDetailView({
               onAdd={() => setRabiesExtra((prev) => [...prev, makeEmptyExtra()])}
               productHintsFor={(idx) => rabiesExtraProductHints[idx] ?? null}
               hideExpiry={hideRabiesExpiry}
+              oneYearValidityOnly={rabiesOneYearOnly}
             />
           </section>
         )}

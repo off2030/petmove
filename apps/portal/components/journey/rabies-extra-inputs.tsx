@@ -59,6 +59,7 @@ export function RabiesExtraInputs({
   startDose = 3,
   hideExpiry = false,
   collapsible = false,
+  oneYearValidityOnly = false,
 }: {
   entries: RabiesExtraEntry[]
   onChange: (index: number, key: keyof RabiesEntryForm, next: string) => void
@@ -72,6 +73,8 @@ export function RabiesExtraInputs({
   hideExpiry?: boolean
   /** 접종일만 노출하고 나머지(면역 유효기간·약품 정보)는 '세부 정보' 접기 — 1·2차(RabiesEntryInputs)와 동일. */
   collapsible?: boolean
+  /** 면역 유효기간을 1년만 인정(2·3년 입력불가) — 중국·태국·필리핀. */
+  oneYearValidityOnly?: boolean
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -85,6 +88,7 @@ export function RabiesExtraInputs({
           productHints={productHintsFor(i)}
           hideExpiry={hideExpiry}
           collapsible={collapsible}
+          oneYearValidityOnly={oneYearValidityOnly}
         />
       ))}
       <button
@@ -117,6 +121,7 @@ function ExtraCard({
   productHints,
   hideExpiry = false,
   collapsible = false,
+  oneYearValidityOnly = false,
 }: {
   entry: RabiesExtraEntry
   doseNumber: number
@@ -125,6 +130,7 @@ function ExtraCard({
   productHints: RabiesProductHints | null
   hideExpiry?: boolean
   collapsible?: boolean
+  oneYearValidityOnly?: boolean
 }) {
   const otherHospital = entry.other_hospital !== false
   const fields = hideExpiry ? FIELDS.filter((f) => f.key !== 'expiry') : FIELDS
@@ -188,7 +194,18 @@ function ExtraCard({
           )}
         </div>
         {field.kind === 'years' ? (
-          <YearSelect value={entry[field.key]} onChange={(v) => onChange(field.key, v)} />
+          <>
+            <YearSelect
+              value={entry[field.key]}
+              onChange={(v) => onChange(field.key, v)}
+              oneYearOnly={oneYearValidityOnly}
+            />
+            {oneYearValidityOnly && (
+              <div style={{ marginTop: 8, fontSize: 12, color: C.ink3, lineHeight: 1.5 }}>
+                이 여행지는 1년 유효기간 광견병 백신만 인정해요.
+              </div>
+            )}
+          </>
         ) : designated ? (
           <div style={designatedStyle}>
             {hint || <span style={{ color: C.ink3 }}>—</span>}

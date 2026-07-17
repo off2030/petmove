@@ -43,36 +43,47 @@ export function ChipSelect({
   onChange,
   shape = 'block',
   allowDeselect = false,
+  disabledValues,
 }: {
   options: readonly SelectOption[]
   value: string
   onChange: (next: string) => void
   shape?: 'block' | 'pill'
   allowDeselect?: boolean
+  /** 선택 불가(입력불가)로 흐리게 처리할 옵션 value 목록. 클릭 무시. */
+  disabledValues?: readonly string[]
 }) {
   const pill = shape === 'pill'
   return (
     <div style={{ marginTop: 8, display: 'flex', flexWrap: pill ? 'wrap' : undefined, gap: 8 }}>
       {options.map((o) => {
-        const selected = value === o.value
+        const disabled = disabledValues?.includes(o.value) ?? false
+        const selected = value === o.value && !disabled
         const s = selected ? SELECTED : UNSELECTED
         return (
           <button
             key={o.value}
             type="button"
-            onClick={() => onChange(selected && allowDeselect ? '' : o.value)}
+            disabled={disabled}
+            onClick={() => {
+              if (disabled) return
+              onChange(selected && allowDeselect ? '' : o.value)
+            }}
             aria-pressed={selected}
+            aria-disabled={disabled}
             style={{
               flex: pill ? undefined : 1,
               padding: pill ? '8px 16px' : '9px 0',
               borderRadius: pill ? 999 : 10,
-              border: `1px solid ${s.border}`,
-              background: s.bg,
-              color: s.fg,
+              border: `1px solid ${disabled ? C.line : s.border}`,
+              background: disabled ? 'rgb(var(--pm-ink-rgb) / .04)' : s.bg,
+              color: disabled ? C.ink3 : s.fg,
               fontFamily: 'inherit',
               fontSize: 14,
               fontWeight: 500,
-              cursor: 'pointer',
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              textDecoration: disabled ? 'line-through' : undefined,
+              opacity: disabled ? 0.6 : 1,
               transition: 'background .12s, color .12s, border-color .12s',
             }}
           >
@@ -97,13 +108,23 @@ const YEAR_OPTIONS: readonly SelectOption[] = [
 export function YearSelect({
   value,
   onChange,
+  oneYearOnly = false,
 }: {
   value: string
   onChange: (next: string) => void
+  /** true 면 2년·3년 칩을 입력불가(비활성)로 — 1년 백신만 인정하는 목적지(중국·태국·필리핀). */
+  oneYearOnly?: boolean
 }) {
   const m = value.match(/^(\d+)\s*년$/)
   const selected = m ? m[1] : value.trim() === '' ? '1' : ''
-  return <ChipSelect options={YEAR_OPTIONS} value={selected} onChange={(n) => onChange(`${n}년`)} />
+  return (
+    <ChipSelect
+      options={YEAR_OPTIONS}
+      value={selected}
+      onChange={(n) => onChange(`${n}년`)}
+      disabledValues={oneYearOnly ? ['2', '3'] : undefined}
+    />
+  )
 }
 
 function CheckMark() {

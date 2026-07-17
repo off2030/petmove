@@ -65,6 +65,15 @@ export const SINGLE_DOSE_RABIES_DESTINATIONS: string[] = [
 ]
 
 /**
+ * 광견병 백신 면역 유효기간을 **1년(연 1회 접종)만** 인정하는 목적지 — destination-config 키.
+ * 2년·3년 라이선스 백신 선택을 입력 차단(펫무브앱 YearSelect 비활성 + getSaveBlockError 저장 거부).
+ *  - 중국: GACC 실무상 1년 백신만 인정(2·3년 거부) — cn.rabies-only-1year-vaccine 와 같은 기준.
+ *  - 태국·필리핀: "최근 접종 12개월 이내" 관례로 1년 유효기간만 취급(다년 백신은 실무상 미인정).
+ * ⚠️ 다년(3년) 백신을 '부스터'로 인정하는 예외는 이 정책상 다루지 않음(운영자 결정, 2026-07-17).
+ */
+export const RABIES_ONE_YEAR_VALIDITY_DESTINATIONS: string[] = ['china', 'thailand', 'philippines']
+
+/**
  * 항공권 날짜를 수입검역의 '예정 [날짜]' 배지로 띄워도 되는 목적지 — destination-config 키.
  * entry_date 는 한국 '출발일'(=departure_date 동기화)이라, 출발=도착이 같은 날인 단거리 노선에서만
  * 실제 도착·공항검역일과 일치한다. 시차로 익일 도착하는 장거리(EU 등)는 어긋나므로 제외.
