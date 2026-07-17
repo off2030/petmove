@@ -393,6 +393,27 @@ function leadReminder(
   )
 }
 
+/**
+ * 사전 통지(advance notice) 카드 4종 — 아일랜드·노르웨이·키프로스·몰타. 구조가 모두 동일
+ * (quarantine:<field>_date, 입국 기준 마감)인데 지금까지 앱 푸시가 하나도 안 나가고 있었다
+ * (2026-07-17 발견). 국가별로 다른 건 실제 마감(entry 기준 며칠 전)뿐이라 테이블로 일반화 —
+ * 새 나라가 추가되면 여기 한 줄만 더하면 된다. 일본형(마감 1주 전 + 당일) 2단계 패턴 재사용.
+ * 몰타는 "3영업일"이라 정확한 영업일 계산 대신 여유 있게 캘린더 5일로 근사(주말 낀 최악의
+ * 경우까지 커버) — 태국 수입허가 알림(영업일 → 넉넉한 캘린더일)과 같은 선례.
+ */
+const ADVANCE_NOTICE_DEADLINES: Array<{
+  key: string
+  dateField: string
+  countryLabel: string
+  hardDeadlineDays: number // entry 기준 실제 마감(캘린더 일)
+  deadlineLabel: string // 문구용 — 사람이 읽는 마감 표현
+}> = [
+  { key: 'ireland', dateField: 'ie_advance_notice_date', countryLabel: '아일랜드', hardDeadlineDays: 1, deadlineLabel: '입국 24시간 전' },
+  { key: 'norway', dateField: 'no_advance_notice_date', countryLabel: '노르웨이', hardDeadlineDays: 2, deadlineLabel: '입국 48시간 전' },
+  { key: 'cyprus', dateField: 'cy_advance_notice_date', countryLabel: '키프로스', hardDeadlineDays: 2, deadlineLabel: '입국 48시간 전' },
+  { key: 'malta', dateField: 'mt_advance_notice_date', countryLabel: '몰타', hardDeadlineDays: 5, deadlineLabel: '입국 3영업일 전' },
+]
+
 function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
   const out: AppReminder[] = []
   for (const token of destinationTokens(caseRow)) {
@@ -407,6 +428,31 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
     const departure = str(flat.departure_date) || str(data.departure_date) || str(data.departure_flight_date)
     const ret = str(data.return_date)
     const key = findDestinationKey(token) // 목적지 토큰이 한글('일본')이라 영어 키로 정규화
+
+    // 사전 통지 4종 — 테이블 기반 일반화(위 ADVANCE_NOTICE_DEADLINES 주석 참고).
+    // done 여부는 quarantine:<field>_date 모델이라 필드 저장 자체로 판단(완료 확인 플래그와
+    // 무관하게, 이미 통지했으면 '준비하세요' 알림은 더 이상 필요 없음).
+    const advanceNotice = ADVANCE_NOTICE_DEADLINES.find((a) => a.key === key)
+    if (advanceNotice && entry && !str(data[advanceNotice.dateField])) {
+      const rLead = leadReminder(
+        flat,
+        `${token}|advnotice-lead`,
+        entry,
+        advanceNotice.hardDeadlineDays + 7,
+        `${advanceNotice.countryLabel} 사전 통지 마감이 일주일 남았어요. ${advanceNotice.deadlineLabel}까지 통지하세요.`,
+        now,
+      )
+      if (rLead) out.push(rLead)
+      const rDay = leadReminder(
+        flat,
+        `${token}|advnotice-day`,
+        entry,
+        advanceNotice.hardDeadlineDays,
+        `오늘까지 ${advanceNotice.countryLabel} 사전 통지가 필요해요(${advanceNotice.deadlineLabel}).`,
+        now,
+      )
+      if (rDay) out.push(rDay)
+    }
 
     if (key === 'japan') {
       // 사전 신고 — 입국 40일 전 마감. 완료 전에만.
