@@ -94,6 +94,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 중국 도착 수입 검역 (GACC — 미충족 시 30일 격리)
   'cn_import_quarantine_date',
   'cn_import_quarantine_confirmed',
+  // 중국 수출 검역 (왕복 귀국 전 — 해관 발급 건강증명서)
+  'cn_export_quarantine_date',
+  'cn_export_quarantine_confirmed',
   // 필리핀 귀국 전 현지 동물병원 방문 — BAI 수출검역 신청용 건강증명서. dated-confirm.
   'ph_local_vet_visit_date',
   'ph_local_vet_visit_confirmed',

@@ -1305,6 +1305,34 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '수출 허가증·국제 수의건강증명서 사본을 사진·PDF로 보관하세요.',
   },
 
+  // ── 중국 수출 검역 (왕복 케이스 한정 — 귀국 전) ─────────────────
+  // 한국 재입국엔 중국 정부(competent authority)가 인증한 건강증명서가 필요(한국 QIA 요건).
+  // 일본·태국처럼 자체 수출 절차가 있는 모델 — EU식 '한국 수출검역증 대체'는 미적용.
+  // ⚠️ 지역별 해관(海关) 절차·소요 기간 차이가 커 문구는 일반화. cn.export 검증 룰은 미작성(추후).
+  {
+    id: 'cn-export-quarantine',
+    category: 'document',
+    title: '중국 수출 검역',
+    shortLabel: '수출',
+    description:
+      '한국에 다시 입국하려면 중국 정부가 인증한 건강증명서가 필요해요.\n출국 전 관할 해관(세관)에서 수출 검역을 받고 건강증명서를 발급받으세요.\n마이크로칩 번호와 광견병 항체 검사 결과(0.5 IU/mL 이상, 채혈 24개월 이내)가 기재돼야 해요.\n발급 기관·절차·소요 기간은 지역마다 다르니 미리 확인하세요.',
+    doneSummary: '중국 수출 검역을 받았어요.',
+    cardLine: '중국 해관에서 수출 검역을 받으세요.',
+    applicability: { destinations: ['china'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:cn_export_quarantine_date',
+    inputs: [
+      {
+        key: 'cn_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '중국 해관에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '수출 검역 건강증명서 사본을 사진·PDF로 보관하세요.',
+  },
+
   // ── 15. 한국 수입 검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
   {
     id: 'kr-import-quarantine',
