@@ -7,6 +7,7 @@ import { C as PM } from '@/lib/palette'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import destsData from '@petmove/domain/data/destinations.json'
+import { APP_DESTINATIONS_SORTED } from '@/lib/app-destinations'
 import breedsData from '@petmove/domain/data/breeds.json'
 import colorsData from '@petmove/domain/data/colors.json'
 import type { DaumPostcodeResult } from '@/types/daum'
@@ -795,13 +796,15 @@ export function DestinationField({
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
 
+  // 표시는 전체 목록(DESTS)에서 찾는다 — 이미 미지원 목적지로 저장된 값도 이름이 뜨게.
   const matched = useMemo(() => DESTS.find((d) => d.ko === value), [value])
   const display = matched ? matched.ko : value
 
+  // 선택지는 앱 지원 국가만, 가나다순 (펫무브앱 정책). 전체 국가·검색은 펫무브워크(admin)에서만.
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return DESTS
-    return DESTS.filter((d) => d.ko.includes(q) || d.en.toLowerCase().includes(q))
+    if (!q) return APP_DESTINATIONS_SORTED
+    return APP_DESTINATIONS_SORTED.filter((d) => d.ko.includes(q) || d.en.toLowerCase().includes(q))
   }, [query])
 
   return (

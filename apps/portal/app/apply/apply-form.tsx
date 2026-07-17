@@ -9,7 +9,7 @@ import { DateTextField } from '@petmove/ui'
 import { applyCase } from '@/lib/actions/apply-case'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import destsData from '@petmove/domain/data/destinations.json'
-import { APP_DESTINATIONS } from '@/lib/app-destinations'
+import { APP_DESTINATIONS_SORTED } from '@/lib/app-destinations'
 import breedsData from '@petmove/domain/data/breeds.json'
 import colorsData from '@petmove/domain/data/colors.json'
 
@@ -19,6 +19,8 @@ function capitalize(s: string) {
 
 interface Dest { ko: string; en: string }
 const DESTS = destsData as Dest[]
+// 전체 국가 가나다순 (펫무브워크 성격의 조직 공개폼용). 지원 국가만 쓰는 직영 앱은 APP_DESTINATIONS_SORTED.
+const DESTS_SORTED: Dest[] = [...DESTS].sort((a, b) => a.ko.localeCompare(b.ko, 'ko'))
 interface Breed { ko: string; en: string; type: string; alias?: string[] }
 const BREEDS = breedsData as Breed[]
 interface Color { ko: string; en: string; alias?: string[] }
@@ -748,7 +750,7 @@ export function ApplyForm({
 
   // 목적지 선택지: 직영 펫무브(B2C 앱)는 여정·가이드가 구성된 국가(APP_DESTINATIONS) 한정,
   // 펫무브워크 병원·업체 신청서는 전체 국가(DESTS). appDestinationsOnly 로 분기.
-  const destSource = appDestinationsOnly ? APP_DESTINATIONS : DESTS
+  const destSource = appDestinationsOnly ? APP_DESTINATIONS_SORTED : DESTS_SORTED
   const filteredDests = destSource.filter(d => {
     if (!destQuery.trim()) return true
     const q = destQuery.toLowerCase()

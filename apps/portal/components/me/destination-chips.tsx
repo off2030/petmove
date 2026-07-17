@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from 'react'
 import { MAX_DESTINATIONS_PER_CASE } from '@petmove/domain'
-import { APP_DESTINATIONS } from '@/lib/app-destinations'
+import { APP_DESTINATIONS_SORTED } from '@/lib/app-destinations'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { SegmentField, type FieldOption } from '@/components/fields/info-fields'
 import { C, SectionCard, monoCap } from './settings-shared'
@@ -63,10 +63,10 @@ export function DestinationChips({
   const activeCount = cards.filter((c) => !c.removing).length
   const atLimit = activeCount >= MAX_DESTINATIONS_PER_CASE
 
-  // 추가 가능한 목적지 — 앱 지원 국가(APP_DESTINATIONS) 중 이미 선택된 토큰 제외.
+  // 추가 가능한 목적지 — 앱 지원 국가(가나다순) 중 이미 선택된 토큰 제외.
   const available = useMemo(() => {
     const set = new Set(selected)
-    return APP_DESTINATIONS.filter((d) => !set.has(d.ko))
+    return APP_DESTINATIONS_SORTED.filter((d) => !set.has(d.ko))
   }, [selected])
 
   const filtered = useMemo(() => {

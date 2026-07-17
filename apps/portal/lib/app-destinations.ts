@@ -51,6 +51,14 @@ export const APP_DESTINATIONS: Dest[] = APP_DESTINATIONS_KO.map(
   (ko) => DESTS.find((d) => d.ko === ko) ?? { ko, en: '' },
 )
 
+/**
+ * 여행지 검색 드롭다운용 — 한글 이름 가나다순. 검색 UI 는 등록 순서(대륙 그룹)보다 가나다순이
+ * 직관적이라 별도 export (APP_DESTINATIONS 자체 순서는 히어로 사진 등 다른 소비자가 쓰므로 보존).
+ */
+export const APP_DESTINATIONS_SORTED: Dest[] = [...APP_DESTINATIONS].sort((a, b) =>
+  a.ko.localeCompare(b.ko, 'ko'),
+)
+
 export function isAppDestination(ko: string): boolean {
   return APP_DESTINATIONS_KO.includes(ko)
 }

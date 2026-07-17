@@ -21,7 +21,8 @@ interface Dest {
   alias?: string[]
 }
 
-const ALL_DESTS = destsData as Dest[]
+// 전체 국가, 한글 이름 가나다순 (펫무브워크는 모든 나라 검색 가능). 검색 드롭다운 정렬용.
+const ALL_DESTS = [...(destsData as Dest[])].sort((a, b) => a.ko.localeCompare(b.ko, 'ko'))
 
 /** Parse comma-separated destination string into array */
 function parseDests(raw: string | null): string[] {
