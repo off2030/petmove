@@ -348,6 +348,43 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/norway-15.webp', // 개썰매·오로라
     '/destinations/norway-17.webp', // 오슬로 오페라하우스(안개)
   ],
+  몰타: [
+    '/destinations/malta-00.webp', // 몰타 국기·드라마틱한 구름
+    '/destinations/malta-01.webp', // 코미노 블루라군 항공
+    '/destinations/malta-02.webp', // 고조 시타델 창문
+    '/destinations/malta-03.webp', // 임디나 대성당 항공(노을)
+    '/destinations/malta-04.webp', // 삼자매 도시 항구
+    '/destinations/malta-05.webp', // 블루 그로토 항공
+    '/destinations/malta-06.webp', // 암초 해안 항공
+  ],
+  아일랜드: [
+    '/destinations/ireland-00.webp', // 모허 절벽 파노라마
+    '/destinations/ireland-01.webp', // 골웨이 컬러풀 하우스
+    '/destinations/ireland-02.webp', // 스켈리그 마이클
+    '/destinations/ireland-03.webp', // 모허 절벽 골든아워(탑)
+    '/destinations/ireland-04.webp', // 절벽 해안 항공
+    '/destinations/ireland-05.webp', // 골웨이 컬러풀 하우스(흐림)
+    '/destinations/ireland-06.webp', // 파워스코트 폭포
+    '/destinations/ireland-07.webp', // 파란 집 노란 창문
+    '/destinations/ireland-08.webp', // 해안 절벽 야생화
+    '/destinations/ireland-09.webp', // 해안선 파노라마
+  ],
+  스위스: [
+    '/destinations/switzerland-00.webp', // 마터호른(황혼)
+    '/destinations/switzerland-01.webp', // 베르니나 특급 열차·빙하
+    '/destinations/switzerland-02.webp', // 취리히 그로스뮌스터 항공
+    '/destinations/switzerland-03.webp', // 푸르카 고개 호텔 벨베데레
+    '/destinations/switzerland-04.webp', // 외슈넨 호수(터콰이즈)
+    '/destinations/switzerland-05.webp', // 케이블카·설산
+    '/destinations/switzerland-06.webp', // 호숫가 샬레·설산
+    '/destinations/switzerland-07.webp', // 취리히 시계탑(황혼)
+    '/destinations/switzerland-08.webp', // 슈토스 예배당
+    '/destinations/switzerland-09.webp', // 마터호른(블루아워)
+    '/destinations/switzerland-10.webp', // 취리히 호수 항공(와이드)
+    '/destinations/switzerland-11.webp', // 구름 위 알프스(노을)
+    '/destinations/switzerland-12.webp', // 그린델발트풍 마을·빨간 트럭
+    '/destinations/switzerland-13.webp', // 알프스 석조 마을 파노라마
+  ],
 }
 
 /** Fisher–Yates 셔플 — 원본 불변, 새 배열 반환. */
