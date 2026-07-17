@@ -54,7 +54,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   china: {
     'rabies-vaccine-1': {
       description:
-        '1차 광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 91일이 지난 후에 접종해야 해요.\n중국은 유효기간 1년짜리 광견병 백신만 인정해요.\n중국 입국 때 면역 유효기간이 남아있어야 해요.',
+        '1차 광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 91일이 지난 후에 접종해야 해요.\n면역 유효기간은 백신의 종류에 상관없이 1년이에요.\n중국 입국 때 면역 유효기간이 남아있어야 해요.',
       validationIds: ['cn.rabies-prime-after-91days-old'],
     },
     'rabies-vaccine-2': {
