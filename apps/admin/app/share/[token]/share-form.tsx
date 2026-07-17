@@ -5,7 +5,8 @@ import { COAT_COLOR_HEX as COLOR_HEX } from '@/lib/coat-colors'
 import { Fragment, useEffect, useRef, useState, useTransition } from 'react'
 import { CheckCircle2, Plus, X } from 'lucide-react'
 import { DateTextField } from '@petmove/ui'
-import { submitShareLink, uploadShareSubmissionFiles } from '@/lib/actions/share-links-public'
+import { submitShareLink, createShareUploadTickets, recordShareUploadedFiles } from '@/lib/actions/share-links-public'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import { cardContainer } from '@petmove/ui'
 import { cn } from '@petmove/ui'
 import type {
@@ -85,7 +86,9 @@ async function compressImage(file: File): Promise<File> {
   if (!file.type.startsWith('image/')) return file
   try {
     const bitmap = await createImageBitmap(file)
-    const maxDim = 2000
+    // 업로드 속도 최적화(2026-07-17): 서류 사진은 1600px·품질 0.78 이면 글씨·세부까지
+    // 충분히 읽히면서 파일이 절반 이하로 줄어 모바일 업로드가 눈에 띄게 빨라진다.
+    const maxDim = 1600
     const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height))
     const width = Math.round(bitmap.width * scale)
     const height = Math.round(bitmap.height * scale)
@@ -95,7 +98,7 @@ async function compressImage(file: File): Promise<File> {
     const ctx = canvas.getContext('2d')
     if (!ctx) return file
     ctx.drawImage(bitmap, 0, 0, width, height)
-    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', 0.82))
+    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', 0.78))
     if (!blob || blob.size >= file.size) return file
     const name = file.name.replace(/\.\w+$/, '') + '.jpg'
     return new File([blob], name, { type: 'image/jpeg' })
@@ -240,23 +243,44 @@ export function ShareForm({ initial }: Props) {
     }
     setEmptyWarn(null)
     startTransition(async () => {
-      // 파일은 값 제출 전에 먼저 올린다. 요청 크기 상한(플랫폼)에 걸리지 않도록 한 번에 묶지 않고
-      // 파일 하나씩 순차 업로드하고, 이미지는 자동 축소한다. 이미 올린 건 건너뛴다(재제출 대비).
+      // 파일은 값 제출 전에 먼저 올린다. 폰→서버→저장소 이중 전송을 없애기 위해
+      // ① 서버에서 서명 업로드 URL 발급 → ② 저장소에 직접 업로드 → ③ 메타 기록.
+      // 이미지는 업로드 전 자동 축소하고, 이미 올린 건 건너뛴다(재제출 대비).
+      const pending: { origId: string; slotKey: string; file: File }[] = []
       for (const [key, arr] of Object.entries(filesBySlot)) {
         for (const original of arr) {
-          const id = `${key}:${original.name}:${original.size}`
-          if (uploadedIdsRef.current.has(id)) continue
-          const prepared = await compressImage(original)
-          const fd = new FormData()
-          fd.append('token', view.token)
-          fd.append('slotKeys', key)
-          fd.append(`slot:${key}`, prepared)
-          const up = await uploadShareSubmissionFiles(fd)
-          if (!up.ok) {
-            setError(up.error)
+          const origId = `${key}:${original.name}:${original.size}`
+          if (uploadedIdsRef.current.has(origId)) continue
+          pending.push({ origId, slotKey: key, file: await compressImage(original) })
+        }
+      }
+      if (pending.length > 0) {
+        const ticketRes = await createShareUploadTickets(
+          view.token,
+          pending.map((p) => ({ slotKey: p.slotKey, name: p.file.name, size: p.file.size, mime: p.file.type })),
+        )
+        if (!ticketRes.ok) {
+          setError(ticketRes.error)
+          return
+        }
+        const tickets = ticketRes.value.tickets
+        const uploaded: { path: string; name: string; size: number; mime: string }[] = []
+        for (let i = 0; i < pending.length; i++) {
+          const t = tickets[i]
+          const { error: upErr } = await supabaseBrowser.storage
+            .from('attachments')
+            .uploadToSignedUrl(t.path, t.token, pending[i].file, { contentType: pending[i].file.type })
+          if (upErr) {
+            setError(upErr.message)
             return
           }
-          uploadedIdsRef.current.add(id)
+          uploaded.push({ path: t.path, name: t.name, size: pending[i].file.size, mime: pending[i].file.type })
+          uploadedIdsRef.current.add(pending[i].origId)
+        }
+        const recRes = await recordShareUploadedFiles(view.token, uploaded)
+        if (!recRes.ok) {
+          setError(recRes.error)
+          return
         }
       }
       const result = await submitShareLink({

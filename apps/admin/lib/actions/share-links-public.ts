@@ -584,12 +584,16 @@ function normalizeValue(key: string, raw: unknown): unknown {
 }
 
 // ─────────────────────────────────────────────────
-// 수신자 파일 첨부 (anon) — 보호자가 서류 사진·PDF 를 올려 제출
+// 수신자 파일 첨부 (anon) — 저장소 직접 업로드(signed URL) 방식
+//   ① createShareUploadTickets: 토큰 검증 + 슬롯별 저장 경로·서명 업로드 URL 발급(바이트 X)
+//   ② 클라이언트가 서명 URL 로 저장소에 직접 업로드 (서버 경유 X)
+//   ③ recordShareUploadedFiles: 업로드된 파일 메타를 케이스 첨부(documents/notes)로 기록
+// 예전 uploadShareSubmissionFiles(파일을 서버 액션으로 보내 서버가 재업로드)는 폰→서버→
+// 저장소로 파일이 직렬 이중 전송돼 느렸음 — 위 3단계로 폰→저장소 1회 직접 전송으로 개선
+// (2026-07-17). 저장·표시(documents/notes)는 동일해 운영자 화면은 그대로.
 // ─────────────────────────────────────────────────
 
 const SHARE_UPLOAD_BUCKET = 'attachments'
-// 서버 액션 요청 본문 상한(next.config serverActions.bodySizeLimit=10mb)에 맞춘 per-file 한도.
-// 클라이언트가 파일을 하나씩 보내고 이미지는 자동 축소하므로, 실질적으로 PDF 등에만 걸린다.
 const SHARE_UPLOAD_MAX_BYTES = 8 * 1024 * 1024
 const SHARE_UPLOAD_MAX_FILES = 10
 
@@ -597,44 +601,40 @@ function shareFileAllowed(mime: string): boolean {
   return mime.startsWith('image/') || mime === 'application/pdf'
 }
 
+export interface ShareUploadTicket {
+  slotKey: string
+  /** 저장소 내 목표 경로 (case_id 로 스코프). uploadToSignedUrl 에 그대로 전달. */
+  path: string
+  /** uploadToSignedUrl 용 서명 토큰. */
+  token: string
+  /** 저장·표시용 파일명(슬롯 라벨 기반). */
+  name: string
+  size: number
+  mime: string
+}
+
 /**
- * 유효(active) 정보요청 링크의 수신자가 올린 파일을 케이스 첨부(attachments 버킷 +
- * case.data.documents/notes)로 저장. 운영자는 기존 케이스 첨부 화면에서 그대로 본다.
- * anon 경로라 토큰 유효성으로만 게이트한다(submitShareLink 와 동일). 값 제출 전에 호출.
- *
- * FormData 규약: 'slotKeys' = 파일이 담긴 슬롯 key 목록, 각 슬롯 파일은 `slot:<key>` 로 append.
- * 첨부 파일명은 슬롯 라벨을 앞에 붙여("이동 가방 사진 - xxx.jpg") 운영자가 뭐가 뭔지 알게 한다.
- * 필수 슬롯 검증은 값 제출 흐름(고객 폼)에서 하고, 여기선 저장에 집중한다.
+ * 슬롯별 서명 업로드 URL 발급 — 파일 바이트는 받지 않는다. 토큰(active)·개수·크기·MIME 만
+ * 검증하고 case_id 로 스코프된 경로에 대한 서명 토큰을 돌려준다. 클라이언트는 이 토큰으로
+ * 저장소에 직접 업로드한다(서버 경유 없음). 경로는 서버가 생성하므로 다른 케이스로 못 샌다.
  */
-export async function uploadShareSubmissionFiles(
-  formData: FormData,
-): Promise<Result<{ count: number }>> {
+export async function createShareUploadTickets(
+  token: string,
+  files: { slotKey: string; name: string; size: number; mime: string }[],
+): Promise<Result<{ tickets: ShareUploadTicket[] }>> {
   try {
-    const token = formData.get('token')
     if (typeof token !== 'string' || !UUID_RE.test(token)) {
       return { ok: false, error: '유효하지 않은 링크입니다' }
     }
-    // 슬롯 key → 파일 목록. 슬롯 없는 경우(구 방식) 'files' 도 라벨 없이 수용.
-    const slotKeys = formData.getAll('slotKeys').filter((k): k is string => typeof k === 'string')
-    const collected: { file: File; label: string | null }[] = []
-    for (const key of slotKeys) {
-      const def = shareFileRequestByKey(key)
-      for (const f of formData.getAll(`slot:${key}`)) {
-        if (f instanceof File && f.size > 0) collected.push({ file: f, label: def?.label ?? null })
-      }
-    }
-    for (const f of formData.getAll('files')) {
-      if (f instanceof File && f.size > 0) collected.push({ file: f, label: null })
-    }
-    if (collected.length === 0) return { ok: true, value: { count: 0 } }
-    if (collected.length > SHARE_UPLOAD_MAX_FILES) {
+    if (files.length === 0) return { ok: true, value: { tickets: [] } }
+    if (files.length > SHARE_UPLOAD_MAX_FILES) {
       return { ok: false, error: `파일은 최대 ${SHARE_UPLOAD_MAX_FILES}개까지 첨부할 수 있습니다.` }
     }
-    for (const { file } of collected) {
-      if (!shareFileAllowed(file.type)) {
+    for (const f of files) {
+      if (!shareFileAllowed(f.mime)) {
         return { ok: false, error: '이미지 또는 PDF 파일만 올릴 수 있습니다.' }
       }
-      if (file.size > SHARE_UPLOAD_MAX_BYTES) {
+      if (f.size > SHARE_UPLOAD_MAX_BYTES) {
         return { ok: false, error: '파일 크기는 각 8MB 이하여야 합니다.' }
       }
     }
@@ -651,6 +651,62 @@ export async function uploadShareSubmissionFiles(
       return { ok: false, error: '이 링크로는 더 이상 제출할 수 없습니다.' }
     }
 
+    const tickets: ShareUploadTicket[] = []
+    for (const f of files) {
+      const def = shareFileRequestByKey(f.slotKey)
+      const ext = f.name.match(/\.[a-zA-Z0-9]+$/)?.[0] ?? ''
+      const displayName = def?.label ? `${def.label}${ext}` : (f.name || 'file')
+      const safeName = displayName.replace(/[^a-zA-Z0-9._-]/g, '_')
+      const path = `${row.case_id}/${Date.now()}_${randomUUID().slice(0, 8)}_${safeName}`
+      const { data: signed, error: sErr } = await admin.storage
+        .from(SHARE_UPLOAD_BUCKET)
+        .createSignedUploadUrl(path)
+      if (sErr || !signed) return { ok: false, error: sErr?.message ?? '업로드 준비에 실패했습니다.' }
+      tickets.push({ slotKey: f.slotKey, path, token: signed.token, name: displayName, size: f.size, mime: f.mime })
+    }
+    return { ok: true, value: { tickets } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * 저장소에 직접 업로드된 파일들을 케이스 첨부(documents/notes)로 기록. 경로는 반드시
+ * 해당 케이스(case_id)로 스코프돼야 한다(다른 케이스 경로 주입 차단). 값 제출 전에 호출.
+ */
+export async function recordShareUploadedFiles(
+  token: string,
+  uploaded: { path: string; name: string; size: number; mime: string }[],
+): Promise<Result<{ count: number }>> {
+  try {
+    if (typeof token !== 'string' || !UUID_RE.test(token)) {
+      return { ok: false, error: '유효하지 않은 링크입니다' }
+    }
+    if (uploaded.length === 0) return { ok: true, value: { count: 0 } }
+    if (uploaded.length > SHARE_UPLOAD_MAX_FILES) {
+      return { ok: false, error: `파일은 최대 ${SHARE_UPLOAD_MAX_FILES}개까지 첨부할 수 있습니다.` }
+    }
+
+    const admin = createAdminClient()
+    const { data: link } = await admin
+      .from('case_share_links')
+      .select('*')
+      .eq('token', token)
+      .maybeSingle()
+    if (!link) return { ok: false, error: '유효하지 않은 링크입니다' }
+    const row = link as ShareLinkRow
+    if (shareLinkStatus(row) !== 'active') {
+      return { ok: false, error: '이 링크로는 더 이상 제출할 수 없습니다.' }
+    }
+
+    // 경로 스코프 검증 — 클라이언트가 임의 경로를 넣어 다른 케이스 파일을 참조하지 못하게.
+    const prefix = `${row.case_id}/`
+    for (const u of uploaded) {
+      if (typeof u.path !== 'string' || !u.path.startsWith(prefix)) {
+        return { ok: false, error: '잘못된 파일 경로입니다.' }
+      }
+    }
+
     const { data: caseInfo } = await admin
       .from('cases')
       .select('data')
@@ -662,35 +718,18 @@ export async function uploadShareSubmissionFiles(
 
     const newDocs: Record<string, unknown>[] = []
     const newNotes: Record<string, unknown>[] = []
-    const uploadedPaths: string[] = []
-    for (const { file, label } of collected) {
-      const rawName = file.name || 'file'
-      // 슬롯이 있으면 파일명을 그 지정명(라벨)으로 변환해 저장 — 메모에서 서류 종류가 바로 보임.
-      // 확장자는 원본 유지. 슬롯 없는 파일(구 방식)은 원본명 그대로.
-      const ext = rawName.match(/\.[a-zA-Z0-9]+$/)?.[0] ?? ''
-      const displayName = label ? `${label}${ext}` : rawName
-      const safeName = displayName.replace(/[^a-zA-Z0-9._-]/g, '_')
-      const path = `${row.case_id}/${Date.now()}_${randomUUID().slice(0, 8)}_${safeName}`
-      const buffer = Buffer.from(await file.arrayBuffer())
-      const { error: upErr } = await admin.storage
-        .from(SHARE_UPLOAD_BUCKET)
-        .upload(path, buffer, { contentType: file.type, upsert: false })
-      if (upErr) {
-        if (uploadedPaths.length) await admin.storage.from(SHARE_UPLOAD_BUCKET).remove(uploadedPaths)
-        return { ok: false, error: upErr.message }
-      }
-      uploadedPaths.push(path)
+    for (const u of uploaded) {
       const uploadedAt = new Date().toISOString()
       newDocs.push({
         id: randomUUID(),
-        name: displayName,
-        path,
-        size: file.size,
-        mime: file.type,
+        name: u.name,
+        path: u.path,
+        size: u.size,
+        mime: u.mime,
         stepId: 'share-submission',
         uploadedAt,
       })
-      newNotes.push({ type: 'file', name: displayName, path, size: file.size, createdAt: uploadedAt })
+      newNotes.push({ type: 'file', name: u.name, path: u.path, size: u.size, createdAt: uploadedAt })
     }
 
     const nextData: Record<string, unknown> = {
@@ -699,11 +738,8 @@ export async function uploadShareSubmissionFiles(
       notes: [...existingNotes, ...newNotes],
     }
     const { error } = await admin.from('cases').update({ data: nextData }).eq('id', row.case_id)
-    if (error) {
-      await admin.storage.from(SHARE_UPLOAD_BUCKET).remove(uploadedPaths)
-      return { ok: false, error: error.message }
-    }
-    return { ok: true, value: { count: collected.length } }
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: { count: uploaded.length } }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }
