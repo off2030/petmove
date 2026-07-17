@@ -71,7 +71,6 @@ export function RabiesEntryInputs({
   productHints,
   otherHospital,
   hideExpiry = false,
-  oneYearValidityOnly = false,
 }: {
   value: RabiesEntryForm
   onChange: (key: keyof RabiesEntryForm, next: string) => void
@@ -81,8 +80,6 @@ export function RabiesEntryInputs({
   otherHospital?: boolean
   /** 제품 유효기간 행 숨김 — EU 입국은 광견병 백신에 제품 유효기간 정보가 불필요. */
   hideExpiry?: boolean
-  /** 면역 유효기간을 1년만 인정(2·3년 입력불가) — 중국·태국·필리핀. */
-  oneYearValidityOnly?: boolean
 }) {
   const fields = hideExpiry ? FIELDS.filter((f) => f.key !== 'expiry') : FIELDS
 
@@ -151,18 +148,7 @@ export function RabiesEntryInputs({
             )}
           </div>
           {field.kind === 'years' ? (
-            <>
-              <YearSelect
-                value={value[field.key]}
-                onChange={(v) => onChange(field.key, v)}
-                oneYearOnly={oneYearValidityOnly}
-              />
-              {oneYearValidityOnly && (
-                <div style={{ marginTop: 8, fontSize: 12, color: C.ink3, lineHeight: 1.5 }}>
-                  이 여행지는 1년 유효기간 광견병 백신만 인정해요.
-                </div>
-              )}
-            </>
+            <YearSelect value={value[field.key]} onChange={(v) => onChange(field.key, v)} />
           ) : designated ? (
             <div style={designatedStyle}>{hint || <span style={{ color: C.ink3 }}>—</span>}</div>
           ) : field.kind === 'date' ? (

@@ -878,7 +878,7 @@ export function StepDetailView({
     if (freeInput) return null
     // 광견병 면역 유효기간 1년만 인정(중국·태국·필리핀) — 2·3년 저장 거부. YearSelect 비활성의 backstop.
     const ONE_YEAR_VALIDITY_BLOCK_MSG =
-      '이 여행지는 1년 유효기간 광견병 백신만 인정해요. 2년·3년 백신은 선택할 수 없어요.'
+      '이 여행지는 1년 유효기간 광견병 백신만 인정해요. 면역 유효기간을 1년으로 선택하세요.'
     const isMultiYearValidity = (vu: string | null | undefined): boolean => {
       const m = (vu ?? '').match(/^(\d+)\s*년$/)
       return !!m && Number(m[1]) > 1
@@ -2331,7 +2331,6 @@ export function StepDetailView({
               productHints={rabiesProductHints}
               otherHospital={rabiesOtherHospital}
               hideExpiry={hideRabiesExpiry}
-              oneYearValidityOnly={rabiesOneYearOnly}
             />
           </section>
         )}
@@ -2353,7 +2352,6 @@ export function StepDetailView({
               onAdd={() => setRabiesList((prev) => [...prev, makeEmptyExtra()])}
               productHintsFor={(idx) => rabiesListProductHints[idx] ?? null}
               hideExpiry={hideRabiesExpiry}
-              oneYearValidityOnly={rabiesOneYearOnly}
               // 접종일만 노출 + 나머지 접기 — 1·2차(RabiesEntryInputs)와 동일한 시각.
               collapsible
             />
@@ -2380,7 +2378,6 @@ export function StepDetailView({
               onAdd={() => setRabiesExtra((prev) => [...prev, makeEmptyExtra()])}
               productHintsFor={(idx) => rabiesExtraProductHints[idx] ?? null}
               hideExpiry={hideRabiesExpiry}
-              oneYearValidityOnly={rabiesOneYearOnly}
             />
           </section>
         )}
