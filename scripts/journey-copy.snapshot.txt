@@ -148,8 +148,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      온라인 포털(nldmalta.gov.mt)에서 반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 등록해요.
-      등록 후 담당 수의사에게 이메일(petstravel.msdec@gov.mt)로 항공편명·도착 날짜·시간을 다시 알려 도착 시 검사관이 대기하도록 하세요.
+      온라인 포털(nldmalta.gov.mt) 또는 이메일(petstravel.msdec@gov.mt)로 할 수 있습니다.
+      반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 준비해두세요.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -462,8 +462,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      온라인 포털(nldmalta.gov.mt)에서 반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 등록해요.
-      등록 후 담당 수의사에게 이메일(petstravel.msdec@gov.mt)로 항공편명·도착 날짜·시간을 다시 알려 도착 시 검사관이 대기하도록 하세요.
+      온라인 포털(nldmalta.gov.mt) 또는 이메일(petstravel.msdec@gov.mt)로 할 수 있습니다.
+      반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 준비해두세요.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -784,8 +784,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      온라인 포털(nldmalta.gov.mt)에서 반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 등록해요.
-      등록 후 담당 수의사에게 이메일(petstravel.msdec@gov.mt)로 항공편명·도착 날짜·시간을 다시 알려 도착 시 검사관이 대기하도록 하세요.
+      온라인 포털(nldmalta.gov.mt) 또는 이메일(petstravel.msdec@gov.mt)로 할 수 있습니다.
+      반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 준비해두세요.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -1133,8 +1133,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      온라인 포털(nldmalta.gov.mt)에서 반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 등록해요.
-      등록 후 담당 수의사에게 이메일(petstravel.msdec@gov.mt)로 항공편명·도착 날짜·시간을 다시 알려 도착 시 검사관이 대기하도록 하세요.
+      온라인 포털(nldmalta.gov.mt) 또는 이메일(petstravel.msdec@gov.mt)로 할 수 있습니다.
+      반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 준비해두세요.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -1473,8 +1473,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      온라인 포털(nldmalta.gov.mt)에서 반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 등록해요.
-      등록 후 담당 수의사에게 이메일(petstravel.msdec@gov.mt)로 항공편명·도착 날짜·시간을 다시 알려 도착 시 검사관이 대기하도록 하세요.
+      온라인 포털(nldmalta.gov.mt) 또는 이메일(petstravel.msdec@gov.mt)로 할 수 있습니다.
+      반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 준비해두세요.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -1786,8 +1786,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      온라인 포털(nldmalta.gov.mt)에서 반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 등록해요.
-      등록 후 담당 수의사에게 이메일(petstravel.msdec@gov.mt)로 항공편명·도착 날짜·시간을 다시 알려 도착 시 검사관이 대기하도록 하세요.
+      온라인 포털(nldmalta.gov.mt) 또는 이메일(petstravel.msdec@gov.mt)로 할 수 있습니다.
+      반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 준비해두세요.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -2100,8 +2100,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      온라인 포털(nldmalta.gov.mt)에서 반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 등록해요.
-      등록 후 담당 수의사에게 이메일(petstravel.msdec@gov.mt)로 항공편명·도착 날짜·시간을 다시 알려 도착 시 검사관이 대기하도록 하세요.
+      온라인 포털(nldmalta.gov.mt) 또는 이메일(petstravel.msdec@gov.mt)로 할 수 있습니다.
+      반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 준비해두세요.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -2415,8 +2415,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      온라인 포털(nldmalta.gov.mt)에서 반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 등록해요.
-      등록 후 담당 수의사에게 이메일(petstravel.msdec@gov.mt)로 항공편명·도착 날짜·시간을 다시 알려 도착 시 검사관이 대기하도록 하세요.
+      온라인 포털(nldmalta.gov.mt) 또는 이메일(petstravel.msdec@gov.mt)로 할 수 있습니다.
+      반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 준비해두세요.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -2728,8 +2728,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      온라인 포털(nldmalta.gov.mt)에서 반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 등록해요.
-      등록 후 담당 수의사에게 이메일(petstravel.msdec@gov.mt)로 항공편명·도착 날짜·시간을 다시 알려 도착 시 검사관이 대기하도록 하세요.
+      온라인 포털(nldmalta.gov.mt) 또는 이메일(petstravel.msdec@gov.mt)로 할 수 있습니다.
+      반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 준비해두세요.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -3041,8 +3041,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      온라인 포털(nldmalta.gov.mt)에서 반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 등록해요.
-      등록 후 담당 수의사에게 이메일(petstravel.msdec@gov.mt)로 항공편명·도착 날짜·시간을 다시 알려 도착 시 검사관이 대기하도록 하세요.
+      온라인 포털(nldmalta.gov.mt) 또는 이메일(petstravel.msdec@gov.mt)로 할 수 있습니다.
+      반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 준비해두세요.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -3354,8 +3354,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      온라인 포털(nldmalta.gov.mt)에서 반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 등록해요.
-      등록 후 담당 수의사에게 이메일(petstravel.msdec@gov.mt)로 항공편명·도착 날짜·시간을 다시 알려 도착 시 검사관이 대기하도록 하세요.
+      온라인 포털(nldmalta.gov.mt) 또는 이메일(petstravel.msdec@gov.mt)로 할 수 있습니다.
+      반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 준비해두세요.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -3668,8 +3668,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      온라인 포털(nldmalta.gov.mt)에서 반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 등록해요.
-      등록 후 담당 수의사에게 이메일(petstravel.msdec@gov.mt)로 항공편명·도착 날짜·시간을 다시 알려 도착 시 검사관이 대기하도록 하세요.
+      온라인 포털(nldmalta.gov.mt) 또는 이메일(petstravel.msdec@gov.mt)로 할 수 있습니다.
+      반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 준비해두세요.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
