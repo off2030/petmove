@@ -319,6 +319,24 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/uk-04.webp', // 빨간 공중전화 부스
     '/destinations/uk-06.webp', // 절벽 협곡 도로 항공
   ],
+  핀란드: [
+    '/destinations/finland-00.webp', // 헬싱키 대성당
+    '/destinations/finland-01.webp', // 눈 내리는 거리·트램(야간)
+    '/destinations/finland-02.webp', // 헬싱키 중앙역 설경 항공
+    '/destinations/finland-03.webp', // 군도(群島) 항공(노을)
+    '/destinations/finland-04.webp', // 오로라·호수
+    '/destinations/finland-05.webp', // 다리·도심 항공(황혼)
+    '/destinations/finland-06.webp', // 눈숲 오두막·모닥불
+    '/destinations/finland-07.webp', // 자작나무 숲(가을 안개)
+    '/destinations/finland-08.webp', // 눈숲 오두막 항공(야간)
+    '/destinations/finland-09.webp', // 눈밭 인물 실루엣·별
+    '/destinations/finland-10.webp', // 다리·수변 야경
+    '/destinations/finland-11.webp', // 가을 건물(초록 지붕)
+    '/destinations/finland-12.webp', // 오디 도서관 목재 곡면
+    '/destinations/finland-13.webp', // 서리 나무·오로라
+    '/destinations/finland-14.webp', // 자작나무·오로라
+    '/destinations/finland-15.webp', // 설경 숲 항공(일출)
+  ],
 }
 
 /** Fisher–Yates 셔플 — 원본 불변, 새 배열 반환. */
