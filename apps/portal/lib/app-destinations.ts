@@ -41,7 +41,7 @@ export const APP_EU_INDIVIDUAL_DESTINATIONS_KO: readonly string[] = [
 ]
 
 export const APP_DESTINATIONS_KO: readonly string[] = [
-  '일본', '태국', '필리핀',
+  '일본', '태국', '필리핀', '중국',
   ...APP_EU_DESTINATIONS_KO,
   ...APP_EU_INDIVIDUAL_DESTINATIONS_KO,
 ]
