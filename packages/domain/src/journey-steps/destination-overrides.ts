@@ -46,6 +46,53 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 FormAC를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
     },
   },
+  // ── 중국 (GACC 海关总署) ──────────────────────────────────────────────
+  // 일본 골격(광견병 2회 + 항체검사)에 중국 고유를 얹는다. EU 와 달리 EU 승인기관·채혈 후
+  // 3개월 대기·서류확인만 입국이 아니다: ①항체검사는 GACC 지정 채신 lab(한국 미포함) ②항공권
+  // 대기 없음(도착일에 백신·항체 유효면 됨) ③미충족 시 30일 격리. 광견병 1년 백신만 인정(2·3년
+  // 입력불가는 portal getSaveBlockError). 규정 상세·출처는 procedure-checks/cn.ts 헤더. (2026-07-18)
+  china: {
+    'rabies-vaccine-1': {
+      description:
+        '1차 광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 91일이 지난 후에 접종해야 해요.\n중국은 유효기간 1년짜리 광견병 백신만 인정해요.\n중국 입국 때 면역 유효기간이 남아있어야 해요.',
+      validationIds: ['cn.rabies-prime-after-91days-old'],
+    },
+    'rabies-vaccine-2': {
+      description:
+        '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 30일 이상 지나서 접종하는 것이 좋아요.\n1차 접종 면역 유효기간 이내에 접종하세요.\n중국 입국 때 면역 유효기간이 남아있어야 해요.\n\n항체 검사에서 0.5 IU/mL 이상이 나오려면 보통 2회 접종이 필요해요.',
+      validationIds: [
+        'cn.rabies-2-doses-required',
+        'cn.rabies-doses-30days-to-1year-apart',
+        'cn.rabies-only-1year-vaccine',
+      ],
+    },
+    'rabies-titer': {
+      description:
+        '중국 해관총서(GACC)가 지정한 검사기관에서 광견병 항체 검사를 받으세요.\n\n한국에는 지정 검사기관이 없어 일본·미국 등 해외 기관으로 검체를 보내요.\n동물병원을 통해 의뢰할 수 있어요.\n2차 접종 후에 검사하는 것이 좋아요.\n0.5 IU/mL 이상이면 합격이에요.\n검사 결과는 채혈일로부터 1년간 유효해요.',
+      validationIds: ['cn.rnatt-after-rabies-vaccine', 'cn.rnatt-valid-1year-on-arrival'],
+    },
+    // 도착 — 중국 수입 검역. 마이크로칩 + 항체 ≥0.5 IU/ml + 현장검역 합격 시 격리 면제,
+    // 미충족 시 GACC 지정 격리시설 30일. done 은 quarantine:<field> 일반 시그널.
+    departure: {
+      title: '중국 수입 검역',
+      shortLabel: '수입',
+      description:
+        '중국 도착 후 공항 세관(해관)에서 수입 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 광견병 항체 검사 결과가 0.5 IU/mL 이상이고 현장 검역에 합격하면 격리 없이 통과할 수 있어요.\n조건을 충족하지 못하면 지정 격리시설에서 30일간 격리해요.',
+      doneSummary: '중국 수입 검역을 받았어요.',
+      done: 'quarantine:cn_import_quarantine_date',
+      inputs: [
+        {
+          key: 'cn_import_quarantine_date',
+          label: '검역일',
+          type: 'date',
+          helpText: '중국 도착 후 수입 검역을 받은 날짜',
+        },
+      ],
+      allowAttachments: true,
+      attachmentHint: '수입 검역 확인 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '중국 수입 검역 서류',
+    },
+  },
   // 일본을 뼈대로 — 'departure' 공용 카드를 그 나라 '[국가] 수입 검역' 도착 카드로 교체.
   // 목적지마다 따로 작성(검역일 필드도 나라별: {국가}_import_quarantine_date). 제목·설명은
   // 그 나라 가이드 기준, 일본과 같은 부분은 같은 문구. 완료신호는 그 나라 검역일 필드를 실어 보낸다.
