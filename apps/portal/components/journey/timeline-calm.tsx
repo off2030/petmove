@@ -333,6 +333,26 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/finland-14.webp', // 자작나무·오로라
     '/destinations/finland-15.webp', // 설경 숲 항공(일출)
   ],
+  노르웨이: [
+    '/destinations/norway-00.webp', // 레이네 마을(여름, 대표컷)
+    '/destinations/norway-01.webp', // 오슬로 오페라하우스(노을)
+    '/destinations/norway-02.webp', // 레이네 마을(설경)
+    '/destinations/norway-03.webp', // 트롤퉁가 항공
+    '/destinations/norway-04.webp', // 베르겐 브뤼겐
+    '/destinations/norway-05.webp', // 오로라·서리나무
+    '/destinations/norway-06.webp', // 트론헤임 수상가옥
+    '/destinations/norway-07.webp', // 트롬쇠 야경 항공
+    '/destinations/norway-08.webp', // 피오르 마을 선착장
+    '/destinations/norway-09.webp', // 오슬로 오페라하우스 지붕(노을·인물)
+    '/destinations/norway-10.webp', // 오로라·산·호수(황혼)
+    '/destinations/norway-11.webp', // 트롬쇠 야경 항공(다리)
+    '/destinations/norway-12.webp', // 레이네 마을(여름·초록)
+    '/destinations/norway-13.webp', // 피오르 노을(보라·핑크)
+    '/destinations/norway-14.webp', // 노란 집·산봉우리
+    '/destinations/norway-15.webp', // 개썰매·오로라
+    '/destinations/norway-16.webp', // 폐가·노을구름
+    '/destinations/norway-17.webp', // 오슬로 오페라하우스(안개)
+  ],
 }
 
 /** Fisher–Yates 셔플 — 원본 불변, 새 배열 반환. */
