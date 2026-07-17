@@ -393,6 +393,33 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
   },
 }
 
+// 사전 통지 국가(아일랜드·몰타·노르웨이·키프로스) — EU 공통(eu) + 입국국 사전 통지 추가.
+// 그 절차로 오프라인 올케어 비용 상한 +5만원(46→51만). intro·included·비용만 다르고 나머지는 eu 와 동일.
+const OFFLINE_ADVANCE_NOTICE: DestDetail = {
+  intro:
+    '로잔동물의료센터에서 검역 준비를 해 드려요. 의료 절차와 사전 통지, 서류 준비까지 빈틈없이 진행해 드려요. 앱을 통해 쉽게 진행 상황, 정보를 확인할 수 있어요.',
+  included: [
+    { label: '마이크로칩 삽입 · 동물등록' },
+    { label: '광견병 백신 접종' },
+    { label: '광견병 항체 검사' },
+    { label: '출국 전 임상검사' },
+    { label: '사전 통지' },
+    { label: '서류 준비' },
+  ],
+  steps: ['예약', '내원', '상담', '시작'],
+  faq: [
+    {
+      q: '어디로 방문하나요?',
+      a: '로잔동물의료센터로 방문해 주세요.',
+      link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
+    },
+    { q: '비용은 얼마인가요?', a: '오프라인 올케어의 비용은 약 36~51만원이에요. 정확한 비용은 상담 후 결정돼요.' },
+    { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 3~4개월 정도 걸려요.' },
+  ],
+  reviews: [],
+}
+for (const k of ['아일랜드', '몰타', '노르웨이', '키프로스']) OFFLINE_DETAIL[k] = OFFLINE_ADVANCE_NOTICE
+
 const ONLINE_DETAIL: Record<string, DestDetail> = {
   일본: {
     intro:
@@ -525,6 +552,27 @@ const ONLINE_DETAIL: Record<string, DestDetail> = {
     reviews: [],
   },
 }
+
+// 사전 통지 국가(아일랜드·몰타·노르웨이·키프로스) 온라인 — EU 공통(eu) + 사전 통지 추가.
+// (온라인 비용은 고정값 없어 상향 없음 — 스위스 온라인과 동일.)
+const ONLINE_ADVANCE_NOTICE: DestDetail = {
+  intro:
+    '안심하고 준비할 수 있도록 곁에서 도와드려요. 단계별 가이드, EU 동물건강증명서(Annex III) 준비, 사전 통지, 서류 점검을 해 드려요. 준비 중 궁금한 것은 언제든 문의할 수 있어요.',
+  included: [
+    { label: '단계별 가이드' },
+    { label: 'EU 동물건강증명서(Annex III) 준비' },
+    { label: '사전 통지' },
+    { label: '서류 점검' },
+  ],
+  steps: ['상담', '신청', '결제', '시작'],
+  faq: [
+    { q: '어떻게 도움을 받나요?', a: '온라인 안심케어는 앱과 카카오톡을 이용한 비대면 서비스예요. 필요에 따라 전화 연결도 가능해요.' },
+    { q: '비용은 얼마인가요?', a: '온라인 안심케어는 서비스 내용에 따라 비용이 달라져요. 정확한 비용은 상담 후 결정돼요.' },
+    { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 3~4개월 정도 걸려요.' },
+  ],
+  reviews: [],
+}
+for (const k of ['아일랜드', '몰타', '노르웨이', '키프로스']) ONLINE_DETAIL[k] = ONLINE_ADVANCE_NOTICE
 
 /** 히어로 3장 — 로잔 공통 강점(전문성·경험·앱 편의). 올케어·안심케어 둘 다 사용. */
 const HIGHLIGHTS: Highlight[] = [
