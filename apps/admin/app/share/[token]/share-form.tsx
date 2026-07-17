@@ -224,11 +224,17 @@ export function ShareForm({ initial }: Props) {
     e.preventDefault()
     setError(null)
     // #3 비어있는 항목 확인 — address_en 은 주소검색으로 자동 채워지므로 제외.
-    const empties = view.fields.filter(
-      (f) => f.key !== 'address_en' && isEmptyValue(f, values[f.key]),
-    )
-    if (empties.length > 0 && !emptyConfirmedRef.current) {
-      setEmptyWarn(empties.map((f) => f.label))
+    const emptyFieldLabels = view.fields
+      .filter((f) => f.key !== 'address_en' && isEmptyValue(f, values[f.key]))
+      .map((f) => f.label)
+    // 필수 파일 슬롯이 비었으면 함께 경고 — 안 그러면 "올린 줄 알았는데 파일이 안 붙은 채로"
+    // 조용히 제출돼 첨부가 유실된다(2026-07-17 실사용 발견). 일반 빈 필드와 같은 방식으로 경고.
+    const missingFileLabels = view.file_requests
+      .filter((r) => r.required && (filesBySlot[r.key] ?? []).length === 0)
+      .map((r) => r.label)
+    const warnLabels = [...emptyFieldLabels, ...missingFileLabels]
+    if (warnLabels.length > 0 && !emptyConfirmedRef.current) {
+      setEmptyWarn(warnLabels)
       emptyConfirmedRef.current = true
       return
     }
