@@ -118,6 +118,9 @@ export function EditableField({
   const [saving] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [savedFlash, setSavedFlash] = useState(false)
+  // 종(species) 필드는 개/고양이 프리셋 외 값도 관리자가 직접 입력할 수 있어야 함(펫무브워크 한정).
+  const allowCustomEntry = spec.key === 'species'
+  const [customEntry, setCustomEntry] = useState(false)
 
   const inputRef = useRef<
     HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -132,13 +135,14 @@ export function EditableField({
   // Reset editing when case changes (caseId changes)
   useEffect(() => {
     setEditing(false)
+    setCustomEntry(false)
     setError(null)
   }, [caseId])
 
   // Select 드롭다운: 외부 클릭으로 닫기.
   // 팝업은 portal 로 띄우므로 selectWrapRef(트리거) 또는 selectPopupRef 안쪽 클릭이면 닫지 않는다.
   useEffect(() => {
-    if (!editing || spec.type !== 'select') return
+    if (!editing || spec.type !== 'select' || customEntry) return
     function onClick(e: MouseEvent) {
       const t = e.target as Node
       if (selectWrapRef.current?.contains(t)) return
@@ -147,12 +151,12 @@ export function EditableField({
     }
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
-  }, [editing, spec.type])
+  }, [editing, spec.type, customEntry])
 
   // Select 드롭다운 위치 측정 — fixed 로 띄워 부모 overflow:auto 클리핑 우회.
   // 아래 공간이 위보다 넓으면 아래로 (디폴트), 아니면 위로 펼침.
   useEffect(() => {
-    if (!editing || spec.type !== 'select') return
+    if (!editing || spec.type !== 'select' || customEntry) return
     function measure() {
       const trigger = selectWrapRef.current?.querySelector('button')
       const rect = trigger?.getBoundingClientRect()
@@ -174,7 +178,7 @@ export function EditableField({
       window.removeEventListener('resize', measure)
       window.removeEventListener('scroll', measure, true)
     }
-  }, [editing, spec.type])
+  }, [editing, spec.type, customEntry])
 
   useEffect(() => {
     if (!editing) setValue(stringifyRaw(rawValue, spec))
@@ -247,8 +251,16 @@ export function EditableField({
 
   function handleCancel() {
     setEditing(false)
+    setCustomEntry(false)
     setValue(stringifyRaw(rawValue, spec))
     setError(null)
+  }
+
+  function handleEnterCustomEntry() {
+    const isKnownOption = spec.options?.some((o) => o.value === rawValue)
+    setValue(isKnownOption || rawValue == null ? '' : String(rawValue))
+    setError(null)
+    setCustomEntry(true)
   }
 
   function handleSave() {
@@ -281,6 +293,7 @@ export function EditableField({
     updateLocalCaseField(caseId, spec.storage, spec.key, coerced, destArg)
     setError(null)
     setEditing(false)
+    setCustomEntry(false)
     setSavedFlash(true)
     setTimeout(() => setSavedFlash(false), 1500)
     void persistField(spec.label, () =>
@@ -316,7 +329,9 @@ export function EditableField({
   }
 
   // Select fields: always render as inline dropdown (no edit mode toggle)
-  const isSelect = spec.type === 'select' && spec.options
+  // customEntry 이면 드롭다운 대신 일반 텍스트 입력으로 전환(species 직접 입력).
+  const isSelect = spec.type === 'select' && spec.options && !customEntry
+  const inputSpec = customEntry ? { ...spec, type: 'text' as const, options: undefined } : spec
   const isDate = spec.type === 'date'
   const isPhone = spec.key === 'phone'
   const composingRef = useRef(false) // IME composition state
@@ -450,6 +465,17 @@ export function EditableField({
                   </button>
                 </li>
               ))}
+              {allowCustomEntry && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={handleEnterCustomEntry}
+                    className="w-full text-left px-sm py-1.5 font-serif text-[15px] tracking-[-0.1px] text-muted-foreground hover:bg-accent/60 transition-colors whitespace-nowrap border-t border-border/40"
+                  >
+                    직접 입력
+                  </button>
+                </li>
+              )}
             </ul>,
             document.body,
           )}
@@ -491,7 +517,7 @@ export function EditableField({
         // 박스폼 — 모든 편집은 동일한 박스 + 저장 버튼 패턴으로 통일.
         <div className="flex items-start gap-sm">
           {/* eslint-disable-next-line react-hooks/refs -- handler reads composition ref only during input events. */}
-          {renderInput(spec, value, handleFilteredInputChange, inputRef, handleKeyDown, handleBlur, effectiveLang, autoSave, composingRef)}
+          {renderInput(inputSpec, value, handleFilteredInputChange, inputRef, handleKeyDown, handleBlur, effectiveLang, autoSave, composingRef)}
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
@@ -796,6 +822,7 @@ function renderInput(
     : DIGITS_SPACE_KEYS.has(spec.key) ? '숫자'
     : NUMERIC_KEYS.has(spec.key) || spec.type === 'number' ? '숫자'
     : lang === 'en' ? '영문만 입력 가능'
+    : spec.key === 'species' ? '예: 토끼, 페럿, 뱀'
     : undefined
   const commonClass = inline
     ? cn(

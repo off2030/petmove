@@ -134,6 +134,14 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     })
   }
 
+  // 개/고양이 프리셋에 없는 품종(다른 종·품종 미상)은 직접 입력 — 영문명은 알 수 없으니 breed 만 저장.
+  function selectFreeTextBreed(text: string) {
+    setOpen(false)
+    setQuery('')
+    updateLocalCaseField(caseId, 'data', 'breed', text)
+    void persistField('품종', () => updateCaseField(caseId, 'data', 'breed', text))
+  }
+
   return (
     <div data-field="breed" className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
       <SectionLabel className="pt-1">
@@ -197,15 +205,16 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                   if (e.key === 'Enter') {
                     e.preventDefault()
                     if (filtered.length > 0) selectBreed(filtered[highlightIdx])
+                    else if (query.trim()) selectFreeTextBreed(query.trim())
                   }
                 }}
-                placeholder="품종 검색 (한글/영문)"
+                placeholder="품종 검색 (한글/영문) — 목록에 없으면 직접 입력"
                 className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none"
               />
             </div>
             {/* Options list */}
             <ul ref={listRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal py-1">
-              {filtered.length === 0 ? (
+              {filtered.length === 0 && !query.trim() ? (
                 <li className="px-sm py-2 text-sm text-muted-foreground">검색 결과 없음</li>
               ) : (
                 filtered.map((b, i) => (
@@ -223,6 +232,17 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                     </button>
                   </li>
                 ))
+              )}
+              {query.trim() && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => selectFreeTextBreed(query.trim())}
+                    className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors border-t border-border/40"
+                  >
+                    &ldquo;{query.trim()}&rdquo; 직접 입력
+                  </button>
+                </li>
               )}
             </ul>
           </div>,
