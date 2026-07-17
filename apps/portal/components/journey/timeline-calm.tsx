@@ -358,12 +358,12 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/malta-06.webp', // 암초 해안 항공
   ],
   아일랜드: [
+    '/destinations/ireland-00.webp', // 모허 절벽·풀 이삭 전경(흐림) — 시작 사진
     '/destinations/ireland-02.webp', // 스켈리그 마이클
-    '/destinations/ireland-03.webp', // 모허 절벽 골든아워(탑)
-    '/destinations/ireland-04.webp', // 절벽 해안 항공
+    '/destinations/ireland-04.webp', // 절벽 해안 항공(탑다운)
     '/destinations/ireland-05.webp', // 골웨이 컬러풀 하우스(흐림)
     '/destinations/ireland-06.webp', // 파워스코트 폭포
-    '/destinations/ireland-08.webp', // 해안 절벽 야생화
+    '/destinations/ireland-08.webp', // 해안 절벽 야생화(들꽃)
   ],
   스위스: [
     '/destinations/switzerland-00.webp', // 마터호른(황혼)

@@ -276,7 +276,6 @@ export const HERO_BLUR_PLACEHOLDERS: Record<string, string> = {
   "/destinations/malta-05.webp": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAABQAgCdASoQAAwAA8BgJbACdH8AGYHP/uiIpwAA+xgC3m7TaoDSJ+rPf3NE5xv0wUJO7ihId5TaKYjzdLtpSPhxxg3t8kDJf35sRQxg+4B709SSb/Xda7wpu+XSRscAAAA=",
   "/destinations/malta-06.webp": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAAAQAgCdASoQAAoAA8BgJbACdH8KsAAVtOwAAPwosDryrXCte6QQisBgBj1ucScIFlWqHagM6BE8AYhuNxTnnm206Ykz1jYLv8sZzSgA",
   "/destinations/ireland-02.webp": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAAAwAgCdASoQAAoAA8BgJYgCdAEDpYsoXnCtQAD9z2Fu391LTnzbckn6kx1l2UxPT/YqupHFhfdlNJAfiMs5zUSpoGu5v69C5VqYAA==",
-  "/destinations/ireland-03.webp": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAADwAQCdASoQAAoAA8BgJbACdAELg7sdZgAA3Pj/aO1Xb09AIjpW7nxqd7m0f2hipJHH8VOEjMxwRocoZRAk8dwPgAA=",
   "/destinations/ireland-04.webp": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAADwAQCdASoQAAsAA8BgJbAC7AEXVpmirGAA/svvb5quchs97B10JdomIVh6HIq4pUInrexZuNZwIl3bQNWB6u7vGJYvc4qQZVQ+lzxmun9/5y1AAAA=",
   "/destinations/ireland-05.webp": "data:image/webp;base64,UklGRlAAAABXRUJQVlA4IEQAAADwAQCdASoQAAsAA8BgJYwCsAEOmEox/iAA/lv8+ivFYkv86pMuvekVX7NVf16jyDJlUZ8K5KuBwDtzlnizilmCoX8AAA==",
   "/destinations/ireland-06.webp": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAADwAQCdASoQAAwAA8BgJbACdADp7yDlkAAA/nhyjUXGYCnUXw4yDZIeBtXvrPfa5Ve7rlwYXEa3o5T613+bVMbXi7ad+Em/nzp/A4T3V92ahjaT3ZY4AAAA",
@@ -295,4 +294,5 @@ export const HERO_BLUR_PLACEHOLDERS: Record<string, string> = {
   "/destinations/switzerland-11.webp": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAADQAQCdASoQAAsAA8BgJQBOgB6HL+U08AD6cOF37HZj3BVWvvQqAcIImR3KpUPrtMvOsYhpucivLrbi4wyd4oZ8AAA=",
   "/destinations/switzerland-12.webp": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADwAQCdASoQAAwAA8BgJYgCdAEOzWOzKoAA/uetBvnp3d3uy4xvEeX5m5TvTR+nup4ErqJBW0zr5eHbafZbWFjB/uQ7YgAA",
   "/destinations/switzerland-13.webp": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADwAQCdASoQAAgAA8BgJagCdAEMW/a+2YAA/ma5ugwJNNBTSjdE5rsT6eH0YvQimSpMXOHerrPgtnyj1gcSdapOZ7NnMAAA",
+  "/destinations/ireland-00.webp": "data:image/webp;base64,UklGRlAAAABXRUJQVlA4IEQAAADQAQCdASoQAAsAA8BgJZgCdADK5AFT9AD+s/rhuSGaD7aJjqz/Hb4pfCo9gOwngtsR9CM0ZikyeERz8Qd1Tz1/5gAAAA==",
 }
