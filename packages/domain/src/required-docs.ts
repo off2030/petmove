@@ -352,7 +352,15 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
  */
 function euFamilyDocSpecs(
   label: string,
-  opts?: { withImportPermit?: boolean; euAhc?: boolean; certName?: string },
+  opts?: {
+    withImportPermit?: boolean
+    euAhc?: boolean
+    certName?: string
+    // '귀국 서류 준비'(eu-export-cert) 단계를 서류탭 체크리스트에도 노출할지 — 국가별로
+    // 실제 필수 여부·명칭이 확인된 경우에만 채운다(그 외 EU 패밀리는 국가마다 서류
+    // 종류·필수 여부가 달라 아직 미확인 — 2026-07-17 영국만 우선 확인해 채움).
+    exportCertName?: string
+  },
 ): RequiredDocSpec[] {
   const specs: RequiredDocSpec[] = [
     {
@@ -409,6 +417,21 @@ function euFamilyDocSpecs(
       previewStepId: 'kr-import-quarantine',
     },
   ]
+  // '귀국 서류 준비' 단계 — 실제 필수 여부·서류명이 확인된 나라만(현재 영국) 체크리스트에
+  // 노출. eu-kr-export-quarantine-cert(한국 출국 검역) 다음, eu-kr-import-quarantine-cert
+  // (한국 입국 검역) 전 — 여정 순서(현지 발급 → 한국 입국) 그대로.
+  if (opts?.exportCertName) {
+    specs.splice(specs.length - 1, 0, {
+      id: 'eu-export-cert-doc',
+      name: opts.exportCertName,
+      source: '현지 정부기관 · 지정 수의사',
+      kind: 'step',
+      stepRef: 'eu-export-cert',
+      roundTripOnly: true,
+      description: `${label} 정부가 인증하는 반려동물 수출건강증명서예요.\n\n한국 입국을 위한 필수 서류로, 지정된 수의사(공인 수의사)에게 발급받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
+      previewStepId: 'eu-export-cert',
+    })
+  }
   if (opts?.withImportPermit) {
     specs.unshift({
       id: 'eu-import-permit-doc',
@@ -431,7 +454,10 @@ function euFamilyDocSpecs(
  */
 const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
   eu: euFamilyDocSpecs('유럽연합(EU)', { euAhc: true }),
-  uk: euFamilyDocSpecs('영국', { certName: '영국 동물건강증명서(GB Pet Health Certificate)' }),
+  uk: euFamilyDocSpecs('영국', {
+    certName: '영국 동물건강증명서(GB Pet Health Certificate)',
+    exportCertName: '영국 수출 동물건강증명서(EHC 3908)',
+  }),
   ireland: euFamilyDocSpecs('아일랜드', { euAhc: true }),
   malta: euFamilyDocSpecs('몰타', { euAhc: true }),
   norway: euFamilyDocSpecs('노르웨이'),
