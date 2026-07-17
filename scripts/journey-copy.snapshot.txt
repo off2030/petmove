@@ -148,7 +148,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      몰타 사전 통지 포털을 이용합니다. 웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
+      몰타 사전 통지 포털을 이용합니다.
+      웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -461,7 +462,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      몰타 사전 통지 포털을 이용합니다. 웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
+      몰타 사전 통지 포털을 이용합니다.
+      웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -782,7 +784,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      몰타 사전 통지 포털을 이용합니다. 웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
+      몰타 사전 통지 포털을 이용합니다.
+      웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -1130,7 +1133,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      몰타 사전 통지 포털을 이용합니다. 웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
+      몰타 사전 통지 포털을 이용합니다.
+      웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -1469,7 +1473,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      몰타 사전 통지 포털을 이용합니다. 웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
+      몰타 사전 통지 포털을 이용합니다.
+      웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -1781,7 +1786,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      몰타 사전 통지 포털을 이용합니다. 웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
+      몰타 사전 통지 포털을 이용합니다.
+      웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -2094,7 +2100,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      몰타 사전 통지 포털을 이용합니다. 웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
+      몰타 사전 통지 포털을 이용합니다.
+      웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -2408,7 +2415,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      몰타 사전 통지 포털을 이용합니다. 웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
+      몰타 사전 통지 포털을 이용합니다.
+      웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -2720,7 +2728,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      몰타 사전 통지 포털을 이용합니다. 웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
+      몰타 사전 통지 포털을 이용합니다.
+      웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -3032,7 +3041,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      몰타 사전 통지 포털을 이용합니다. 웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
+      몰타 사전 통지 포털을 이용합니다.
+      웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -3344,7 +3354,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      몰타 사전 통지 포털을 이용합니다. 웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
+      몰타 사전 통지 포털을 이용합니다.
+      웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청
@@ -3657,7 +3668,8 @@
   desc:
       몰타 입국 3영업일 전까지 사전 통지를 하세요.
       
-      몰타 사전 통지 포털을 이용합니다. 웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
+      몰타 사전 통지 포털을 이용합니다.
+      웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.
 
 ▸ jp-export-quarantine
   title: 일본 수출 검역 신청

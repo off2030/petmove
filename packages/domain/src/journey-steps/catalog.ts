@@ -761,7 +761,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '사전 통지',
     shortLabel: '통지',
     description:
-      '몰타 입국 3영업일 전까지 사전 통지를 하세요.\n\n몰타 사전 통지 포털을 이용합니다. 웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.',
+      '몰타 입국 3영업일 전까지 사전 통지를 하세요.\n\n몰타 사전 통지 포털을 이용합니다.\n웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.',
     doneSummary: '몰타에 사전 통지를 했어요.',
     cardLine: '몰타에 사전 통지를 하세요.',
     applicability: { destinations: ['malta'], species: 'all', tripType: 'all' },
