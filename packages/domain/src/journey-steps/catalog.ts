@@ -761,7 +761,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '사전 통지',
     shortLabel: '통지',
     description:
-      '몰타 입국 3영업일 전까지 사전 통지를 하세요.\n\n온라인 포털(nldmalta.gov.mt) 또는 이메일(petstravel.msdec@gov.mt)로 할 수 있습니다.\n반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 준비해두세요.',
+      '몰타 입국 3영업일 전까지 사전 통지를 하세요.\n\n온라인 통지 사이트를 이용하거나 이메일(petstravel.msdec@gov.mt)로 할 수 있습니다.\n반려동물 여권·마이크로칩 번호·광견병 접종일·항공편 정보를 준비해두세요.',
     doneSummary: '몰타에 사전 통지를 했어요.',
     cardLine: '몰타에 사전 통지를 하세요.',
     applicability: { destinations: ['malta'], species: 'all', tripType: 'all' },
