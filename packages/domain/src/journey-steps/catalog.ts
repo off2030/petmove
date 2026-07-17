@@ -676,8 +676,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         helpText: '사전 통지 포털에 양식을 제출한 날짜',
       },
     ],
-    allowAttachments: true,
-    attachmentHint: '제출 확인·안내 이메일을 사진·PDF로 보관하세요.',
     links: [
       {
         url: 'http://www.pettravel.gov.ie/pets/dogscatsferrets/outsideeu/',
@@ -712,8 +710,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         helpText: 'Mattilsynet에 이메일로 통지한 날짜',
       },
     ],
-    allowAttachments: true,
-    attachmentHint: '통지 이메일 발송·회신 내역을 사진·PDF로 보관하세요.',
     links: [
       {
         url: 'https://www.mattilsynet.no/en/animals/travelling-with-dogs-cats-and-ferrets-from-third-countries-and-territories-to-norway',
@@ -747,8 +743,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         helpText: '지구 수의검역국에 이메일로 통지한 날짜',
       },
     ],
-    allowAttachments: true,
-    attachmentHint: '통지 이메일 발송·회신 내역을 사진·PDF로 보관하세요.',
     links: [
       {
         url: 'https://www.moa.gov.cy/moa/vs/vs.nsf/vs07_en/vs07_en?OpenDocument=',
@@ -782,8 +776,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         helpText: '온라인 포털에 등록한 날짜',
       },
     ],
-    allowAttachments: true,
-    attachmentHint: '포털 등록·이메일 발송 내역을 사진·PDF로 보관하세요.',
     links: [
       { url: 'https://nldmalta.gov.mt/MaltaPetArrivals/', label: '몰타 사전 통지 포털(공식)' },
     ],
