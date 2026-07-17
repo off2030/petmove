@@ -43,6 +43,8 @@ const DESTS = destsData as Dest[]
 /** 서비스 제공 국가 = 앱 지원 목적지(여정·서류 구성 완료). 새 나라는 app-destinations 한 곳에서 추가. */
 const OFFERED_KO: readonly string[] = APP_DESTINATIONS_KO
 const OFFERED: Dest[] = OFFERED_KO.map((ko) => DESTS.find((d) => d.ko === ko) ?? { ko, en: '' })
+// 여행지 선택 시트 표시용 — 가나다순. (OFFERED_KO 자체 순서는 폴백 기본값[0] 등 로직에 쓰여 보존.)
+const OFFERED_SORTED: Dest[] = [...OFFERED].sort((a, b) => a.ko.localeCompare(b.ko, 'ko'))
 
 /** 펫무브 카카오톡 채널 채팅 링크 — '카카오톡으로 문의' 진입. */
 const KAKAO_CHAT_URL = 'https://pf.kakao.com/_zDDxhj/chat'
@@ -1077,8 +1079,8 @@ export function ServicesView() {
   const [query, setQuery] = useState('')
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return OFFERED
-    return OFFERED.filter((d) => d.ko.includes(q) || d.en.toLowerCase().includes(q))
+    if (!q) return OFFERED_SORTED
+    return OFFERED_SORTED.filter((d) => d.ko.includes(q) || d.en.toLowerCase().includes(q))
   }, [query])
 
   // 문의 — 로그인 상태라 이름·이메일을 이미 앎(폼 X). 카톡 열기 직전 운영자에게 봇 알림.
