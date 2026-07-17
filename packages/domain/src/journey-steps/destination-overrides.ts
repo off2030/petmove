@@ -324,7 +324,16 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       '아일랜드 도착 후 공항에서 입국 검사(Compliance Check)를 받으세요.\n사전 통지 후 이메일로 안내받은 절차에 따라 진행돼요.\n검역관이 마이크로칩과 서류(건강증명서·광견병 항체 검사 결과지·촌충 치료 기록)를 확인해요.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도돼요.',
   }),
   malta: euFamilyOverrides({ label: '몰타' }),
-  norway: euFamilyOverrides({ label: '노르웨이' }),
+  norway: {
+    ...euFamilyOverrides({ label: '노르웨이' }),
+    // 노르웨이는 EU 비회원국(EEA) → 한국 재입국 시 EU 반려동물 여권으로 검역증명서를 대체할 수
+    // 없다. 한국 QIA 규정은 "EU 회원국에서 발행하고 출발국이 EU 회원국인 경우"만 여권 대체를
+    // 허용(2026-07-17 확인). 공통 문구의 'EU 반려동물 여권' 대체 항목 제거.
+    'eu-export-cert': {
+      description:
+        '노르웨이 정부가 인증한 건강증명서 또는 대체 서류를 준비하세요.\n현지 동물병원에서 건강증명서를 받은 뒤, 관할 당국(공무 수의사)의 최종 인증을 받으세요.\n다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+    },
+  },
   finland: euFamilyOverrides({ label: '핀란드' }),
   cyprus: euFamilyOverrides({ label: '키프로스' }),
   switzerland: {
@@ -332,6 +341,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       label: '스위스',
       flightExtraLine: '반려동물의 스위스 입국은 바젤·제네바·취리히 공항으로만 가능해요.',
     }),
+    // 귀국 서류 — 스위스는 EU 비회원국이라 EU 반려동물 여권으로 대체 불가(한국 QIA:
+    // "출발국이 EU 회원국인 경우"만 허용, 2026-07-17 확인). 대신 스위스 실제 수출 절차
+    // (임상수의사 진료 → 칸톤 수의청 공무 수의사 인증)를 명시. 공통 문구의 EU 여권 항목 제거.
+    'eu-export-cert': {
+      description:
+        '스위스 정부가 인증한 한국 입국용 건강증명서를 준비하세요. 한국 입국을 위한 필수 서류예요.\n\n먼저 임상 수의사에게 진료를 받아 건강증명서를 작성하고, 관할 칸톤(주) 수의청의 공무 수의사에게 최종 인증을 받으세요.\n스위스는 EU 회원국이 아니라 EU 반려동물 여권으로는 대체할 수 없어요.\n증명서에는 마이크로칩 번호와 광견병 항체 검사 결과가 기재되어야 해요.\n\n다음 서류가 있다면 새로 발급받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+    },
     // 스위스 고유 — FSVO 수입허가 (EU 와 다른 유일한 추가 절차).
     'import-permit': {
       description:
