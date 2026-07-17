@@ -372,7 +372,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/switzerland-04.webp', // 외슈넨 호수(터콰이즈)
     '/destinations/switzerland-05.webp', // 케이블카·설산
     '/destinations/switzerland-06.webp', // 호숫가 샬레·설산
-    '/destinations/switzerland-07.webp', // 취리히 시계탑(황혼)
     '/destinations/switzerland-08.webp', // 슈토스 예배당
     '/destinations/switzerland-11.webp', // 구름 위 알프스(노을)
     '/destinations/switzerland-12.webp', // 그린델발트풍 마을·빨간 트럭

@@ -286,7 +286,6 @@ export const HERO_BLUR_PLACEHOLDERS: Record<string, string> = {
   "/destinations/switzerland-04.webp": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAAAQAgCdASoQAAwAA8BgJbACdAEPfyiDTs8AAN4kxRrTG538bkMd7ttbVv6NTiHuf1eCWH41VIrx8U9OtDLbN4d4xmZopxZmqrRCz3081gA=",
   "/destinations/switzerland-05.webp": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAADwAQCdASoQAAsAA8BgJbACdADcHbvevAAA/shwUUPvZCBSosLAaVn1oxWEKj7oKZRYGPg2piBZpsWvNJG9ut5YTemQlt4Tz2HXu4JllK3IjL73hp4hWSJeFfkgAA==",
   "/destinations/switzerland-06.webp": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAAAQAgCdASoQAAsAA8BgJYwCdAELW+ycCuoAAP7hqlOmyszZUTXgUIDeAs51nwZqCGcqD9alW73WvXI89+D831nXIvyUAvL2M/jxifYAYW8AAA==",
-  "/destinations/switzerland-07.webp": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADQAQCdASoQAAkAA8BgJQBdgCHee06PIAD+xgeiTbqseeVfMncGIY8JwjzMrrmwZCOuvibuhOmyv1pdiOaCbIBejs8pzjXYAAA=",
   "/destinations/switzerland-08.webp": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAQAgCdASoQAAsAA8BgJbACdAENrXkz5l4AAP7wGpWSqGtNe7OZU/ZC/pHKfORwVuk8Mkb5che1Lg2lA5z3fPiNUXsypT2dYfqDTyp6Gb6c3gUAAAA=",
   "/destinations/switzerland-11.webp": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAADQAQCdASoQAAsAA8BgJQBOgB6HL+U08AD6cOF37HZj3BVWvvQqAcIImR3KpUPrtMvOsYhpucivLrbi4wyd4oZ8AAA=",
   "/destinations/switzerland-12.webp": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADwAQCdASoQAAwAA8BgJYgCdAEOzWOzKoAA/uetBvnp3d3uy4xvEeX5m5TvTR+nup4ErqJBW0zr5eHbafZbWFjB/uQ7YgAA",
