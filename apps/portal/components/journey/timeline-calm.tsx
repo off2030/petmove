@@ -349,9 +349,9 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/norway-17.webp', // 오슬로 오페라하우스(안개)
   ],
   몰타: [
+    '/destinations/malta-02.webp', // 고조 시타델 창문(첫 화면)
     '/destinations/malta-00.webp', // 몰타 국기·드라마틱한 구름
     '/destinations/malta-01.webp', // 코미노 블루라군 항공
-    '/destinations/malta-02.webp', // 고조 시타델 창문
     '/destinations/malta-03.webp', // 임디나 대성당 항공(노을)
     '/destinations/malta-04.webp', // 삼자매 도시 항구
     '/destinations/malta-05.webp', // 블루 그로토 항공
@@ -413,6 +413,7 @@ function buildHeroPhotoState(destination: string): HeroPhotoState {
     개별 지정(사용자 확인 후 추가). */
 const HERO_PHOTO_POSITION: Record<string, string> = {
   '/destinations/norway-17.webp': 'top', // 오슬로 오페라하우스(안개) — 지붕 위쪽이 잘리지 않게
+  '/destinations/malta-00.webp': 'bottom', // 몰타 국기·건물 문장 — 하단 피사체가 잘리지 않게
   '/destinations/japan-fuji-umbrella-field.webp': 'bottom',
   '/destinations/japan-fuji-pagoda-snow.webp': 'top',
   '/destinations/japan-sakura-blossom-macro.webp': 'top',
