@@ -41,7 +41,56 @@ export const DEFAULT_CONFIG = {
 
 // ── 국가별 오버라이드 ──
 
-interface DestinationOverride {
+/**
+ * 아키타입 — 규정 '가족'. 새 목적지는 가족을 고르고 델타만 적는다.
+ * (설계: docs/destination-architecture-design.md §2)
+ *  - eu-family: EU 24국 + 영국·아일랜드·몰타·노르웨이·핀란드·스위스·키프로스 —
+ *    광견병 1회 + 항체(무기한) + 채혈 후 3개월 + 촌충(일부)
+ *  - jp-2dose: 일본·중국 — 광견병 2회 + 항체 필수 + 도착 수입검역 + 왕복 수출검역
+ *  - sea-permit: 태국·필리핀 — 광견병 1회 + 수입허가 2단계 + 종합백신 + 항체는 귀국용
+ *  - generic: 그 외(admin 전용 국가) — 최소 구성
+ */
+export type DestinationArchetype = 'eu-family' | 'jp-2dose' | 'sea-permit' | 'generic'
+
+/** 광견병 접종 프로파일 — 접종 모델·백신 제한을 선언. */
+export interface DestinationRabiesProfile {
+  /**
+   * 프라임 접종 횟수. 1 = 1회 접종 + 부스터 모델(태국·필리핀·EU 패밀리),
+   * 2 = 2회 프라임 모델(일본·중국). `SINGLE_DOSE_RABIES_DESTINATIONS` 의 파생원.
+   */
+  doses?: 1 | 2
+  /** 1차 접종 가능 최소 일령(일). 예: 일본 91, EU 84(12주). */
+  minAgeDays?: number
+  /**
+   * 면역 유효기간을 1년(연 1회 접종)만 인정 — 2·3년 라이선스 백신 입력 차단.
+   * `RABIES_ONE_YEAR_VALIDITY_DESTINATIONS` 의 파생원.
+   */
+  oneYearVaccineOnly?: boolean
+  /** 1·2차 최소 간격(일). 'soft' = 하드 차단 없이 순서·권고만(중국 30일). */
+  doseIntervalDays?: number | 'soft'
+}
+
+/** 광견병 항체검사(RNATT) 프로파일. 한국 귀국용 2년 룰은 공통이라 여기 없음(titer-validity.ts). */
+export interface DestinationTiterProfile {
+  /**
+   * 'entry' = 입국에 필수, 'return-only' = 입국엔 불요·한국 귀국용만
+   * (기존 `rabiesTiterForReturnOnly: true` 와 같은 의미), 'none' = 표시 안 함.
+   */
+  need?: 'entry' | 'return-only' | 'none'
+  /**
+   * 입국용 유효기간(개월). null = 무기한(EU — 부스터 chain 유지 시 영구).
+   * 미지정 = 입국용 만료 개념 없음. `TITER_ENTRY_VALIDITY_MONTHS` 의 파생원.
+   */
+  entryValidityMonths?: number | null
+  /** 고객 화면 검사기관 코드 목록(titer-labs.ts). `TITER_LAB_CODES_BY_DEST` 의 파생원. */
+  labCodes?: string[]
+  /** 백신(최종 접종) 후 채혈까지 최소 대기(일). 예: EU 30. */
+  minDaysAfterVaccine?: number
+  /** 채혈 후 입국까지 대기. 예: 일본 { days: 180 }, EU { months: 3 }. */
+  entryWaitAfterTiter?: { days?: number; months?: number }
+}
+
+export interface DestinationOverride {
   /** 목적지 매칭 키워드 (대소문자 무시) */
   keywords: string[]
   /**
@@ -65,6 +114,49 @@ interface DestinationOverride {
    * 입국국 자체는 RNATT 비요구지만 한국 귀국용으로 디폴트 표시 중인 국가들에 사용.
    */
   rabiesTiterForReturnOnly?: boolean
+
+  // ── 프로파일 필드 (Phase 1-b — docs/destination-architecture-design.md §3) ──
+  // 87개 opt-in 등록 지점을 이 선언에서 파생하기 위한 뿌리. 전부 optional — 아직 소비자 없음.
+  // Phase 1-c 에서 하드코딩 목록(SINGLE_DOSE_RABIES_DESTINATIONS 등)을 하나씩 파생으로
+  // 교체하며 채운다. 매 교체마다 `pnpm lint:dest` 스냅샷 무변경으로 무동작을 증명.
+
+  /** 규정 가족 — 카드 문구·서류·맡기기 템플릿의 기본값 한 벌을 상속(Phase 2~3). */
+  archetype?: DestinationArchetype
+  /** 광견병 접종 모델(횟수·일령·1년 백신 제한·간격). */
+  rabies?: DestinationRabiesProfile
+  /** 광견병 항체검사(입국용 필요성·유효기간·검사기관·대기). */
+  titer?: DestinationTiterProfile
+  /** 수입허가(사전 신청) — 존재 = 수입허가 카드 대상(태국·필리핀·호주 등). */
+  importPermit?: {
+    /** 출국 최소 N일 전 신청 마감. */
+    applyDeadlineDays?: number
+    /** 허가서 서류명(서류 탭 표기). */
+    docName?: string
+  }
+  /** 도착 사전 통지 — 존재 = 사전 통지 카드 대상(아일랜드 24h·키프로스 48h 등). */
+  advanceNotice?: {
+    /** 도착 최소 N시간 전 하드 마감. */
+    hardDeadlineHours?: number
+    /** 카드 표기 라벨. */
+    label?: string
+  }
+  /** 도착지 수입검역 — 카드 제목·계류 일수(중국 30일 등). */
+  importQuarantine?: {
+    title?: string
+    quarantineDays?: number
+  }
+  /** 왕복 시 현지 수출검역. 'own-process' = 별도 검역 절차(일본), 'health-cert' = 증명서 발급형. */
+  exportQuarantine?: {
+    model?: 'own-process' | 'health-cert'
+    docName?: string
+  }
+  /**
+   * 내원·임상검진 윈도우("출국일 포함 N일 이내"의 N — 기본 10).
+   * 종 제한이 필요하면 배열로(촌충국 개 전용 4일 등). `VET_VISIT_WINDOW_OVERRIDES` 의 파생원.
+   */
+  vetVisitWindowDays?: number | Array<{ window: number; species?: SpeciesFilter }>
+  /** 펫무브 앱(포털) 목적지 화이트리스트 노출 여부. `APP_DESTINATIONS_KO` 의 파생원. */
+  appSupported?: boolean
 }
 
 export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
