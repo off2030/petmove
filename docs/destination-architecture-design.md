@@ -142,6 +142,8 @@ interface DestinationProfile {
 > 이미 뿌리(keywords·vaccines·extraFields·rabiesTiterForReturnOnly)라, 새 파일을 만들면
 > 진실 출처가 둘로 갈라진다. **기존 타입을 확장**한다.
 
+> **진행 상태**: 1-a ✅(개인노트북) · 1-b ✅ · 1-c ✅ (2026-07-18, 직장PC). 다음 = Phase 2.
+
 **1-a. 무동작 증명 장치 먼저** (리팩터보다 선행)
 - `scripts/lint-destinations.ts` + `scripts/destinations.snapshot.txt` 신설 —
   기존 `lint:copy` 골든 스냅샷 패턴을 그대로 차용(이 repo 에 테스트 프레임워크가 없으므로
@@ -156,10 +158,23 @@ interface DestinationProfile {
   `exportQuarantine`, `vetVisitWindowDays`, `appSupported` 등 프로파일 필드 추가(전부 optional).
 - 기존 필드는 그대로 — 하위 호환.
 
-**1-c. 하드코딩 목록을 파생으로 교체** (한 번에 하나씩, 매번 스냅샷 통과 확인)
-- 우선순위: `SINGLE_DOSE_RABIES_DESTINATIONS` → `RABIES_ONE_YEAR_VALIDITY_DESTINATIONS`
-  → `TITER_ENTRY_VALIDITY_MONTHS` → `VET_VISIT_WINDOW_OVERRIDES` → 카드 applicability 배열
-  → `APP_DESTINATIONS_KO` → 스코핑 키.
+**1-c. 하드코딩 목록을 파생으로 교체** (한 번에 하나씩, 매번 스냅샷 통과 확인) — **완료 2026-07-18**
+- ✅ 파생 전환: `SINGLE_DOSE_RABIES_DESTINATIONS`(rabies.doses=1) ·
+  `RABIES_ONE_YEAR_VALIDITY_DESTINATIONS`(oneYearVaccineOnly) · `TWO_DOSE_RABIES_DESTINATIONS`(신설, doses=2) ·
+  `TITER_ENTRY_VALIDITY_MONTHS`(titer.entryValidityMonths) · `VET_VISIT_WINDOW_OVERRIDES`(vetVisitWindowDays) ·
+  `EU_ENTRY_FAMILY`+eu.ts `EU_REGIME`(archetype 'eu-family', 중복 명단 제거) ·
+  `TAPEWORM_DESTINATIONS`(개 전용 내부구충 vaccines 선언) · 카드 applicability 6곳
+  (rabies-extra · flight-purchase · civ · infectious · echinococcus · import-permit · kr-return-docs) ·
+  `APP_DESTINATIONS_KO`(appSupported — portal 파생, membership·선두순서 보존 검증).
+- ⚠️ **파생 불가로 남긴 것(사유 명시)**:
+  - `rabies-titer` 카드 destinations/roundOnly — 말레이시아(귀국용 국가인데 main 목록),
+    우즈베키스탄(입국 필수인데 미노출) 등 현행 명단이 신호와 불일치. 정리 전 파생 금지.
+  - `general-vaccine` 카드 — usa·taiwan 은 admin vaccines 에 없이 카드만 있음(의도적 불일치).
+  - 외부·내부구충 카드 — admin vaccines 와 불일치(싱가포르 등).
+  - `FLIGHT_DATE_*` 배지 — 노선 특성(출발=도착 동일일) 개별 판단 명단.
+  - **스코핑 키**(`DESTINATION_SCOPED_FIELD_KEYS`) — 국가별 키(`cn_import_quarantine_date` 등)가
+    카드 정의(STEP_DESTINATION_OVERRIDES 의 dated-confirm 키)에서 나오므로, 프로파일이 아니라
+    **카드 템플릿(Phase 2)에서 파생**해야 맞다. Phase 2 로 이월.
 - 참고: `TITER_LAB_CODES_BY_DEST` 는 **이미** `EU_ENTRY_FAMILY` 로 파생 + `eu` 덮어쓰기를
   하고 있다 — 이 패턴(가족 파생 + 델타 override)이 목표 형태의 선례다.
 
