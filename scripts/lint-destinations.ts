@@ -45,6 +45,7 @@ import {
 } from '../packages/domain/src/destination-config'
 import { resolveRequiredDocs } from '../packages/domain/src/required-docs'
 import { getChecksForCountry } from '../packages/domain/src/procedure-checks/registry'
+import { DESTINATION_SCOPED_FIELD_KEYS } from '../packages/domain/src/destination-scoped-fields'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const GOLDEN = path.join(__dirname, 'destinations.snapshot.txt')
@@ -128,6 +129,39 @@ function build(): string {
   return header + keys.map(renderDestination).join('\n\n') + '\n'
 }
 
+/**
+ * 스코핑 키 등록 가드 — `quarantine:<key>` 완료 신호를 쓰는 카드의 `_date`/`_confirmed` 쌍이
+ * DESTINATION_SCOPED_FIELD_KEYS 에 등록돼 있는지. 등록 누락 시 다중 목적지에서 한 나라의
+ * 검역 완료가 다른 나라로 누수된다(과거 opt-in 함정). 파생으로 만들면 catalog ↔
+ * destination-scoped-fields 순환 의존이 생겨, 대신 여기서 누락을 에러로 승격한다.
+ */
+function checkScopedQuarantineKeys(): string[] {
+  const missing = new Set<string>()
+  for (const key of Object.keys(DESTINATION_OVERRIDES)) {
+    const token = tokenFor(key)
+    for (const species of ['dog', 'cat'] as const) {
+      for (const trip of ['round', 'one_way'] as const) {
+        for (const s of getStepsForCase(JOURNEY_STEP_CATALOG, makeCase(token, species, trip))) {
+          const m = typeof s.done === 'string' ? /^quarantine:(.+)_date$/.exec(s.done) : null
+          if (!m) continue
+          for (const k of [`${m[1]}_date`, `${m[1]}_confirmed`]) {
+            if (!DESTINATION_SCOPED_FIELD_KEYS.has(k)) missing.add(`${key}: ${k}`)
+          }
+        }
+      }
+    }
+  }
+  return [...missing].sort()
+}
+
+const scopedMissing = checkScopedQuarantineKeys()
+if (scopedMissing.length > 0) {
+  console.error('✗ destinations lint: quarantine 완료 신호의 스코핑 키 미등록 —')
+  for (const m of scopedMissing) console.error(`    • ${m}`)
+  console.error('  packages/domain/src/destination-scoped-fields.ts 의 DESTINATION_SCOPED_FIELD_KEYS 에 추가하세요.')
+  process.exit(1)
+}
+
 const next = build()
 const write = process.argv.includes('--write')
 
@@ -140,7 +174,9 @@ if (write) {
 
 let golden = ''
 try {
-  golden = readFileSync(GOLDEN, 'utf8')
+  // CRLF 정규화 — .gitattributes(eol=lf)가 1차 방어지만, 이미 CRLF 로 체크아웃된
+  // 워킹트리(lint-journey-copy.ts 와 같은 이중 방어)를 위해 읽을 때도 정규화한다.
+  golden = readFileSync(GOLDEN, 'utf8').replace(/\r\n/g, '\n')
 } catch {
   console.error('✗ 골든 스냅샷이 없습니다. `pnpm lint:dest:write` 로 먼저 생성하세요.')
   process.exit(1)

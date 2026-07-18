@@ -142,6 +142,8 @@ interface DestinationProfile {
 > 이미 뿌리(keywords·vaccines·extraFields·rabiesTiterForReturnOnly)라, 새 파일을 만들면
 > 진실 출처가 둘로 갈라진다. **기존 타입을 확장**한다.
 
+> **진행 상태**: 1-a ✅(개인노트북) · 1-b ✅ · 1-c ✅ (2026-07-18, 직장PC). 다음 = Phase 2.
+
 **1-a. 무동작 증명 장치 먼저** (리팩터보다 선행)
 - `scripts/lint-destinations.ts` + `scripts/destinations.snapshot.txt` 신설 —
   기존 `lint:copy` 골든 스냅샷 패턴을 그대로 차용(이 repo 에 테스트 프레임워크가 없으므로
@@ -156,36 +158,66 @@ interface DestinationProfile {
   `exportQuarantine`, `vetVisitWindowDays`, `appSupported` 등 프로파일 필드 추가(전부 optional).
 - 기존 필드는 그대로 — 하위 호환.
 
-**1-c. 하드코딩 목록을 파생으로 교체** (한 번에 하나씩, 매번 스냅샷 통과 확인)
-- 우선순위: `SINGLE_DOSE_RABIES_DESTINATIONS` → `RABIES_ONE_YEAR_VALIDITY_DESTINATIONS`
-  → `TITER_ENTRY_VALIDITY_MONTHS` → `VET_VISIT_WINDOW_OVERRIDES` → 카드 applicability 배열
-  → `APP_DESTINATIONS_KO` → 스코핑 키.
+**1-c. 하드코딩 목록을 파생으로 교체** (한 번에 하나씩, 매번 스냅샷 통과 확인) — **완료 2026-07-18**
+- ✅ 파생 전환: `SINGLE_DOSE_RABIES_DESTINATIONS`(rabies.doses=1) ·
+  `RABIES_ONE_YEAR_VALIDITY_DESTINATIONS`(oneYearVaccineOnly) · `TWO_DOSE_RABIES_DESTINATIONS`(신설, doses=2) ·
+  `TITER_ENTRY_VALIDITY_MONTHS`(titer.entryValidityMonths) · `VET_VISIT_WINDOW_OVERRIDES`(vetVisitWindowDays) ·
+  `EU_ENTRY_FAMILY`+eu.ts `EU_REGIME`(archetype 'eu-family', 중복 명단 제거) ·
+  `TAPEWORM_DESTINATIONS`(개 전용 내부구충 vaccines 선언) · 카드 applicability 6곳
+  (rabies-extra · flight-purchase · civ · infectious · echinococcus · import-permit · kr-return-docs) ·
+  `APP_DESTINATIONS_KO`(appSupported — portal 파생, membership·선두순서 보존 검증).
+- ⚠️ **파생 불가로 남긴 것(사유 명시)**:
+  - `rabies-titer` 카드 destinations/roundOnly — 말레이시아(귀국용 국가인데 main 목록),
+    우즈베키스탄(입국 필수인데 미노출) 등 현행 명단이 신호와 불일치. 정리 전 파생 금지.
+  - `general-vaccine` 카드 — usa·taiwan 은 admin vaccines 에 없이 카드만 있음(의도적 불일치).
+  - 외부·내부구충 카드 — admin vaccines 와 불일치(싱가포르 등).
+  - `FLIGHT_DATE_*` 배지 — 노선 특성(출발=도착 동일일) 개별 판단 명단.
+  - **스코핑 키**(`DESTINATION_SCOPED_FIELD_KEYS`) — 국가별 키(`cn_import_quarantine_date` 등)가
+    카드 정의(STEP_DESTINATION_OVERRIDES 의 dated-confirm 키)에서 나오므로, 프로파일이 아니라
+    **카드 템플릿(Phase 2)에서 파생**해야 맞다. Phase 2 로 이월.
 - 참고: `TITER_LAB_CODES_BY_DEST` 는 **이미** `EU_ENTRY_FAMILY` 로 파생 + `eu` 덮어쓰기를
   하고 있다 — 이 패턴(가족 파생 + 델타 override)이 목표 형태의 선례다.
 
-### Phase 2 — 아키타입 문구 템플릿
-- `euFamilyOverrides` 를 일반화해 `archetypeOverrides(archetype, profile)` 로.
-- `jp-2dose`(일본·중국), `sea-permit`(태국·필리핀) 템플릿 작성 — 기존 문구를 그대로 승격.
-- 나라명은 `label` 치환, 수치는 프로파일에서 주입.
-- **검증**: `pnpm lint:copy` 골든 스냅샷이 "변경 없음"이어야 함(기존 문구 보존 확인).
+### Phase 2 — 아키타입 문구 템플릿 — **완료 2026-07-18**
+- ✅ `seaPermitOverrides`(태국·필리핀) — 구조(1회 백신 카드·항체 order 55·수입허가 2단계·도착
+  검역 카드 모양)는 템플릿이 강제, 규정 문구·검증 id 는 주입. 기존 문구 그대로 승격.
+- ✅ `importQuarantineCard` factory — '[국가] 수입 검역' 카드 공통 구조(sea-permit + 중국 공유).
+- ✅ **아키타입 fallback** — `resolveStepForDestination` 이 명시 오버라이드 없는 eu-family
+  목적지에 `euFamilyOverrides` 한 벌을 자동 적용. 새 유럽국은 프로파일 `archetype` 선언만으로
+  표준 카드를 받는다. (jp-2dose 는 base catalog 자체가 일본 골격이라 별도 템플릿 없음 —
+  규정 고유 문구는 수작업 원칙.)
+- ✅ **스코핑 키(1-c 이월)** — 파생하면 catalog ↔ destination-scoped-fields 순환 의존이 생겨
+  파생 대신 **lint:dest 가드**로 해결: `quarantine:<key>` 완료 신호의 `_date`/`_confirmed` 쌍이
+  미등록이면 에러(조용한 opt-in → 시끄러운 실패).
+- **검증**: lint:copy·lint:dest 무변경 + 구/신 `resolveStepForDestination` 결과를 전 목적지 ×
+  전 step deep-equal 대조(문구 골든이 안 덮는 links·첨부 라벨·inputs 포함) — 완전 동일.
 
-### Phase 3 — 맡기기(services) 아키타입화
-- `OFFLINE_DETAIL`/`ONLINE_DETAIL` 을 아키타입 기반으로 — `included` 는 프로파일의
-  `extraProcedures`·`importPermit`·`advanceNotice` 에서 파생, 비용은 `offlineCostBumpManwon`.
-- 새 목적지는 서비스 상세를 **따로 안 써도** 기본이 나오게.
+### Phase 3 — 맡기기(services) 아키타입화 — **완료 2026-07-18**
+- ✅ 사전 통지국 명단(`OFFLINE/ONLINE_DETAIL` 4개국 복사 루프) → `ADVANCE_NOTICE_DESTINATIONS`
+  (프로파일 `advanceNotice` 선언) 파생.
+- ✅ `offlineDetail`/`onlineDetail` factory — 진행 단계·FAQ 골격·intro 골격은 factory 가
+  강제하고 나라 사실(강조절·절차 항목·비용·기간·후기)만 주입. **included 는 프로파일 파생**:
+  종합백신(vaccines 'general')·내부구충(전 종 internal_parasite)·항체검사(귀국용 국가는
+  왕복만 — rabiesTiterForReturnOnly × trip) — 여정 카드와 어긋날 수 없다. EU 패밀리는
+  절차 항목이 임상검사 뒤, 일본·동남아는 앞(아키타입별 순서 규칙).
+- ✅ 폴백은 기존 `resolveDetail`(`목적지:트립 → 목적지 → eu → default`) 유지.
+- **검증**: 구(HEAD)·신 `OFFLINE/ONLINE_DETAIL` 전 키 JSON deep-equal — 완전 동일(무동작).
+  비용·기간 값 자체는 여전히 나라별 운영 입력(자동 산출 규칙은 만들지 않음 — 가격 정책은
+  운영 결정 영역).
 
-### Phase 4 — 신규 목적지 스캐폴드
-- `pnpm new:destination <key>` — 프로파일 스텁 + procedure-checks 파일 + registry 등록까지 생성.
-- 남은 수작업(규정 조사·전용 카드·사진)은 체크리스트로 안내.
+### Phase 4 — 신규 목적지 스캐폴드 — **완료 2026-07-18**
+- ✅ `pnpm new:destination <key> <한글명> --cc <iso2> [--archetype …]`
+  (scripts/new-destination.ts) — procedure-checks 스텁 생성 + registry 자동 등록(과거 5개국
+  누락 함정 방지) + 프로파일 스텁·수작업 체크리스트 출력. 가짜 국가로 왕복 검증 완료.
 
 ---
 
-## 4. 즉시 고칠 것 (조사 중 발견된 실제 버그)
+## 4. 즉시 고칠 것 (조사 중 발견된 실제 버그) — **둘 다 수정 완료 2026-07-18**
 
-1. **procedure-checks 5개 파일이 registry 미등록** — `ar.ts, kh.ts, mn.ts, uz.ts, vn.ts`
-   파일은 있는데 `ALL_PROCEDURE_CHECKS` 에 import 안 돼 있어 **룰이 하나도 안 돈다**(죽은 코드).
-2. **www `APP_DEST_SOON` 에 '중국'이 남아 있음** — 포털에선 이미 지원 중인데 랜딩은
-   "준비 중"으로 표시. 불일치.
+1. ✅ **procedure-checks 5개 파일이 registry 미등록** — `ar.ts, kh.ts, mn.ts, uz.ts, vn.ts`
+   `ALL_PROCEDURE_CHECKS` 에 등록 완료. 재발 방지: `pnpm new:destination` 이 registry 등록을
+   자동화하고, lint:dest 스냅샷의 `[checks:N]` 줄이 등록 누락을 드러낸다.
+2. ✅ **www `APP_DEST_SOON` 의 '중국'** — 제거 완료(현재 SOON 목록에 중국 없음).
 
 ---
 

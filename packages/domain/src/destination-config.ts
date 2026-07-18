@@ -41,7 +41,56 @@ export const DEFAULT_CONFIG = {
 
 // ── 국가별 오버라이드 ──
 
-interface DestinationOverride {
+/**
+ * 아키타입 — 규정 '가족'. 새 목적지는 가족을 고르고 델타만 적는다.
+ * (설계: docs/destination-architecture-design.md §2)
+ *  - eu-family: EU 24국 + 영국·아일랜드·몰타·노르웨이·핀란드·스위스·키프로스 —
+ *    광견병 1회 + 항체(무기한) + 채혈 후 3개월 + 촌충(일부)
+ *  - jp-2dose: 일본·중국 — 광견병 2회 + 항체 필수 + 도착 수입검역 + 왕복 수출검역
+ *  - sea-permit: 태국·필리핀 — 광견병 1회 + 수입허가 2단계 + 종합백신 + 항체는 귀국용
+ *  - generic: 그 외(admin 전용 국가) — 최소 구성
+ */
+export type DestinationArchetype = 'eu-family' | 'jp-2dose' | 'sea-permit' | 'generic'
+
+/** 광견병 접종 프로파일 — 접종 모델·백신 제한을 선언. */
+export interface DestinationRabiesProfile {
+  /**
+   * 프라임 접종 횟수. 1 = 1회 접종 + 부스터 모델(태국·필리핀·EU 패밀리),
+   * 2 = 2회 프라임 모델(일본·중국). `SINGLE_DOSE_RABIES_DESTINATIONS` 의 파생원.
+   */
+  doses?: 1 | 2
+  /** 1차 접종 가능 최소 일령(일). 예: 일본 91, EU 84(12주). */
+  minAgeDays?: number
+  /**
+   * 면역 유효기간을 1년(연 1회 접종)만 인정 — 2·3년 라이선스 백신 입력 차단.
+   * `RABIES_ONE_YEAR_VALIDITY_DESTINATIONS` 의 파생원.
+   */
+  oneYearVaccineOnly?: boolean
+  /** 1·2차 최소 간격(일). 'soft' = 하드 차단 없이 순서·권고만(중국 30일). */
+  doseIntervalDays?: number | 'soft'
+}
+
+/** 광견병 항체검사(RNATT) 프로파일. 한국 귀국용 2년 룰은 공통이라 여기 없음(titer-validity.ts). */
+export interface DestinationTiterProfile {
+  /**
+   * 'entry' = 입국에 필수, 'return-only' = 입국엔 불요·한국 귀국용만
+   * (기존 `rabiesTiterForReturnOnly: true` 와 같은 의미), 'none' = 표시 안 함.
+   */
+  need?: 'entry' | 'return-only' | 'none'
+  /**
+   * 입국용 유효기간(개월). null = 무기한(EU — 부스터 chain 유지 시 영구).
+   * 미지정 = 입국용 만료 개념 없음. `TITER_ENTRY_VALIDITY_MONTHS` 의 파생원.
+   */
+  entryValidityMonths?: number | null
+  /** 고객 화면 검사기관 코드 목록(titer-labs.ts). `TITER_LAB_CODES_BY_DEST` 의 파생원. */
+  labCodes?: string[]
+  /** 백신(최종 접종) 후 채혈까지 최소 대기(일). 예: EU 30. */
+  minDaysAfterVaccine?: number
+  /** 채혈 후 입국까지 대기. 예: 일본 { days: 180 }, EU { months: 3 }. */
+  entryWaitAfterTiter?: { days?: number; months?: number }
+}
+
+export interface DestinationOverride {
   /** 목적지 매칭 키워드 (대소문자 무시) */
   keywords: string[]
   /**
@@ -65,11 +114,58 @@ interface DestinationOverride {
    * 입국국 자체는 RNATT 비요구지만 한국 귀국용으로 디폴트 표시 중인 국가들에 사용.
    */
   rabiesTiterForReturnOnly?: boolean
+
+  // ── 프로파일 필드 (Phase 1-b — docs/destination-architecture-design.md §3) ──
+  // 87개 opt-in 등록 지점을 이 선언에서 파생하기 위한 뿌리. 전부 optional — 아직 소비자 없음.
+  // Phase 1-c 에서 하드코딩 목록(SINGLE_DOSE_RABIES_DESTINATIONS 등)을 하나씩 파생으로
+  // 교체하며 채운다. 매 교체마다 `pnpm lint:dest` 스냅샷 무변경으로 무동작을 증명.
+
+  /** 규정 가족 — 카드 문구·서류·맡기기 템플릿의 기본값 한 벌을 상속(Phase 2~3). */
+  archetype?: DestinationArchetype
+  /** 광견병 접종 모델(횟수·일령·1년 백신 제한·간격). */
+  rabies?: DestinationRabiesProfile
+  /** 광견병 항체검사(입국용 필요성·유효기간·검사기관·대기). */
+  titer?: DestinationTiterProfile
+  /** 수입허가(사전 신청) — 존재 = 수입허가 카드 대상(태국·필리핀·호주 등). */
+  importPermit?: {
+    /** 출국 최소 N일 전 신청 마감. */
+    applyDeadlineDays?: number
+    /** 허가서 서류명(서류 탭 표기). */
+    docName?: string
+  }
+  /** 도착 사전 통지 — 존재 = 사전 통지 카드 대상(아일랜드 24h·키프로스 48h 등). */
+  advanceNotice?: {
+    /** 도착 최소 N시간 전 하드 마감. */
+    hardDeadlineHours?: number
+    /** 카드 표기 라벨. */
+    label?: string
+  }
+  /** 도착지 수입검역 — 카드 제목·계류 일수(중국 30일 등). */
+  importQuarantine?: {
+    title?: string
+    quarantineDays?: number
+  }
+  /** 왕복 시 현지 수출검역. 'own-process' = 별도 검역 절차(일본), 'health-cert' = 증명서 발급형. */
+  exportQuarantine?: {
+    model?: 'own-process' | 'health-cert'
+    docName?: string
+  }
+  /**
+   * 내원·임상검진 윈도우("출국일 포함 N일 이내"의 N — 기본 10).
+   * 종 제한이 필요하면 배열로(촌충국 개 전용 4일 등). `VET_VISIT_WINDOW_OVERRIDES` 의 파생원.
+   */
+  vetVisitWindowDays?: number | Array<{ window: number; species?: SpeciesFilter }>
+  /** 펫무브 앱(포털) 목적지 화이트리스트 노출 여부. `APP_DESTINATIONS_KO` 의 파생원. */
+  appSupported?: boolean
 }
 
 export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   japan: {
     keywords: ['일본', 'japan'],
+    archetype: 'jp-2dose',
+    rabies: { doses: 2 },
+    titer: { entryValidityMonths: 24 },
+    appSupported: true,
     extraSection: 'japan',
     extraFields: [
       // 출국 항공편 (한국 → 일본) — 항공권 정보. 날짜는 한국 출발 기준.
@@ -92,29 +188,66 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   // → 상세페이지에 내부구충 기본 표시. eu 보다 먼저 매칭되어야 하므로 위에 둠.
   ireland: {
     keywords: ['아일랜드', 'ireland'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
+    // EU 패밀리 입국용 항체검사는 부스터 chain 유지 시 무기한(null) — 만료 알림 없음.
+    titer: { entryValidityMonths: null },
+    appSupported: true,
+    // 사전 통지 — gov.ie Advance Notice Portal, 입국 24시간(1영업일) 전까지.
+    advanceNotice: { hardDeadlineHours: 24 },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     // 촌충약(Echinococcus, praziquantel)은 규정상 개 전용 — 고양이는 면제(EU Reg 2018/772).
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    // EU 촌충국 강아지 — 촌충 구충이 출국 1~3일 전(admin 보수: eu.tapeworm-1to3days, 법정
+    // 24~120h)에만 유효하고, 구충을 겸하는 내원도 그 안에 들어와야 하므로 window=4
+    // (=출국일 -3일). 고양이는 촌충 면제 → 기본 10일. (몰타·노르웨이·핀란드·영국 동일)
+    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
   },
   malta: {
     keywords: ['몰타', 'malta'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
+    titer: { entryValidityMonths: null },
+    appSupported: true,
+    // 사전 통지 — servizz.gov.mt 포털, 입국 3영업일 전까지(영업일 기준이라 시간 필드 미지정).
+    advanceNotice: {},
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
   },
   norway: {
     keywords: ['노르웨이', 'norway'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
+    titer: { entryValidityMonths: null },
+    appSupported: true,
+    // 사전 통지 — Mattilsynet 이메일, 입국 48시간 전까지.
+    advanceNotice: { hardDeadlineHours: 48 },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
   },
   finland: {
     keywords: ['핀란드', 'finland'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
+    titer: { entryValidityMonths: null },
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
   },
   // 키프로스 — 촌충 요건은 없지만(RABIES_FREE_EU_MEMBERS 아님, TAPEWORM 도 아님) 48시간
   // 사전 통지(moa.gov.cy 공식) 카드가 별도라 eu 묶음에서 분리. eu 보다 먼저 매칭.
   cyprus: {
     keywords: ['키프로스', 'cyprus'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
+    // NOTE: titer.entryValidityMonths 미선언 — 종전 TITER_ENTRY_VALIDITY_MONTHS 에도 키프로스만
+    // 빠져 있었다(현행 유지). 다른 EU 패밀리처럼 null(무기한)로 선언할지는 별도 결정.
+    appSupported: true,
+    // 사전 통지 — 지구 수의검역국 이메일(moa.gov.cy), 입국 48시간 전까지.
+    advanceNotice: { hardDeadlineHours: 48 },
     extraFields: ['address_overseas'],
   },
   eu: {
@@ -129,20 +262,35 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       'slovenia', 'lithuania', 'latvia', 'estonia', 'luxembourg',
       'eu',
     ],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
+    titer: { entryValidityMonths: null },
+    appSupported: true,
     extraFields: ['address_overseas'],
   },
   switzerland: {
     // 스위스는 EU 솅겐 가입국이지만 통관은 별도. AnnexIII + 스위스 전용 BLV 신청서(CH) 동시 제출.
     keywords: ['스위스', 'switzerland'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
+    titer: { entryValidityMonths: null },
+    appSupported: true,
+    // 스위스 전용 BLV 수입허가 신청서(CH) — 수입허가 카드 대상.
+    importPermit: {},
     extraSection: 'switzerland',
     extraFields: ['email', 'entry_date', 'entry_airport', 'entry_purpose', 'cropped'],
   },
   uk: {
     keywords: ['영국', '북아일랜드', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
+    titer: { entryValidityMonths: null },
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraSection: 'uk',
     // 촌충약(Echinococcus)은 규정상 개 전용 — 고양이는 구충시간 미표시.
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
   },
   australia: {
     keywords: ['호주', 'australia'],
@@ -150,15 +298,26 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     extraSection: 'australia',
     // sample_received_date 는 rabies_titer_records[].received_date 로 이동 (광견병 항체 검사 편집화면에 표시).
     extraFields: ['permit_no', 'id_date'],
+    vetVisitWindowDays: 5,
+    importPermit: {}, // DAFF
   },
   new_zealand: {
     keywords: ['뉴질랜드', 'new zealand', 'nz'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'infectious_disease', 'external_parasite', 'internal_parasite', 'heartworm'],
     extraSection: 'new_zealand',
     extraFields: ['permit_no'],
+    // NOTE: 규정상 "2일 이내(MPI 2일)" 이지만 max-2-days-before 해석으로 window=3 적용 중
+    // (규정 문구와 표시 disconnect — 별도 정리 대상).
+    vetVisitWindowDays: 3,
+    importPermit: {}, // MPI
   },
   thailand: {
     keywords: ['태국', 'thailand'],
+    archetype: 'sea-permit',
+    // 1회 접종 + "최근 접종 12개월 이내" 관례 — 1년 유효기간만 취급(다년 백신 실무상 미인정).
+    rabies: { doses: 1, oneYearVaccineOnly: true },
+    appSupported: true,
+    importPermit: {},
     vaccines: ['rabies', 'rabies_titer', 'general'],
     extraSection: 'thailand',
     // 태국은 검역소·도착지 = 입국공항 (Bangkok=BKK, Phuket=HKT, Chiang Mai=CNX) 이라 entry_airport 로 통합.
@@ -172,6 +331,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   philippines: {
     keywords: ['필리핀', 'philippines'],
+    archetype: 'sea-permit',
+    // 1회 접종 + "최근 접종 12개월 이내" 관례 — 태국과 동일(다년 백신 실무상 미인정).
+    rabies: { doses: 1, oneYearVaccineOnly: true },
+    appSupported: true,
+    importPermit: {},
     vaccines: ['rabies', 'rabies_titer', 'general', 'internal_parasite'],
     extraSection: 'philippines',
     extraFields: [
@@ -194,6 +358,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   turkey: {
     keywords: ['튀르키예', '터키', 'turkey', 'türkiye', 'turkiye'],
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
+    // 임상검사(Clinical Examination)는 출국 24시간 이내 — TK.pdf 각주 6. window=2 →
+    // 출국일 기준 diff<2 = 전날(1)·당일(0)만 유효(=24시간 이내). 한국 수출검역도 동일 창.
+    vetVisitWindowDays: 2,
     // TK.pdf: 현지 수령인 주소(Consignee address) = 해외주소, 항공편명(Flight number) =
     // Registration no./flight number 칸. 둘 다 상세페이지에서 입력받아 자동 채움.
     // (Place of Loading 는 인천공항 고정 default — pdf-field-mappings.json text_4qrwb 참고.)
@@ -214,6 +381,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['러시아', 'russia'],
     vaccines: ['rabies', 'rabies_titer', 'general'],
     rabiesTiterForReturnOnly: true,
+    vetVisitWindowDays: 5,
   },
   uae: {
     keywords: ['아랍에미레이트', '아랍에미리트', 'uae', 'united arab emirates'],
@@ -223,6 +391,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   singapore: {
     keywords: ['싱가포르', 'singapore'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'external_parasite', 'internal_parasite'],
+    vetVisitWindowDays: 7,
   },
   hongkong: {
     keywords: ['홍콩', 'hong kong', 'hongkong'],
@@ -248,8 +417,14 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   china: {
     // 한국 = GACC 비지정 국가 → 광견병 항체 검사 필수.
-    // 중국은 1년 라이선스 백신만 인정 (2년/3년 거부).
     keywords: ['중국', 'china'],
+    archetype: 'jp-2dose',
+    // GACC 실무상 1년 라이선스 백신만 인정(2·3년 거부) — cn.rabies-only-1year-vaccine 와 같은 기준.
+    // 1·2차 간격 30일은 하드 차단 없이 권고만(2026-07-17 순서만 유지 결정).
+    rabies: { doses: 2, oneYearVaccineOnly: true, doseIntervalDays: 'soft' },
+    // GACC 실무상 RNATT 입국용 채혈일 기준 1년(cn.rnatt-valid-1year-on-arrival 와 동일).
+    titer: { entryValidityMonths: 12 },
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer'],
   },
   taiwan: {
@@ -259,6 +434,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['대만', 'taiwan'],
     vaccines: ['rabies', 'rabies_titer'],
     extraFields: ['address_overseas', 'permit_no'],
+    importPermit: {}, // APHIA
   },
   malaysia: {
     // DVS — 종합백신 필수, RNATT 면제(말레이시아 입국 한정 — 한국 귀국 시는 필요).
@@ -266,6 +442,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['말레이시아', 'malaysia'],
     vaccines: ['rabies', 'rabies_titer', 'general'],
     rabiesTiterForReturnOnly: true,
+    vetVisitWindowDays: 7,
+    importPermit: {}, // DVS
   },
   morocco: {
     // ONSSA — 광견병 출국 30일 전, 도착 시 수의사 검역. RNATT 는 한국 귀국용.
@@ -323,6 +501,67 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
 }
 
 // ── 헬퍼 함수 ──
+
+/**
+ * 프로파일 조건을 만족하는 목적지 키 목록 — 하드코딩 명단을 프로파일 파생으로 대체할 때
+ * 사용(Phase 1-c). 순서는 DESTINATION_OVERRIDES 선언 순서(소비자는 전부 membership 만 봄).
+ */
+export function destinationKeysWhere(
+  pred: (override: DestinationOverride) => boolean,
+): string[] {
+  return Object.entries(DESTINATION_OVERRIDES)
+    .filter(([, override]) => pred(override))
+    .map(([key]) => key)
+}
+
+/** vaccines 선언(문자열·{key,species} 혼용)에 특정 검사 키가 포함된 목적지 키 목록. */
+export function destinationsWithVaccine(vaccineKey: string): string[] {
+  return destinationKeysWhere((o) =>
+    (o.vaccines ?? DEFAULT_CONFIG.vaccines).some(
+      (v) => (typeof v === 'string' ? v : v.key) === vaccineKey,
+    ),
+  )
+}
+
+/**
+ * 촌충(에키노코쿠스) 의무국 — EU Reg 2018/772 (영국·아일랜드·몰타·노르웨이·핀란드).
+ * '개 전용 내부구충'(vaccines 의 { key:'internal_parasite', species:'dog' } 선언)이 이 규정의
+ * 코드상 표현이라 그 선언에서 파생. eu.ts 촌충 check 와 촌충 치료 카드가 공유.
+ */
+export const TAPEWORM_DESTINATIONS: string[] = destinationKeysWhere((o) =>
+  (o.vaccines ?? []).some(
+    (v) => typeof v !== 'string' && v.key === 'internal_parasite' && v.species === 'dog',
+  ),
+)
+
+/**
+ * 펫무브 앱(포털)에서 목적지로 선택 가능한 나라 — 전체 여정 카드 + 서류 탭 구성이 끝난
+ * 나라만(`appSupported` 파생). 포털 화이트리스트(app-destinations.ts)와 '전 여정 구성'
+ * 전제 카드(항공권 구매)가 이 목록을 공유한다.
+ */
+export const APP_SUPPORTED_DESTINATION_KEYS: string[] = destinationKeysWhere(
+  (o) => !!o.appSupported,
+)
+
+/** 수입허가 사전 신청국 — `importPermit` 선언 파생. 수입허가 카드 대상. */
+export const IMPORT_PERMIT_DESTINATIONS: string[] = destinationKeysWhere(
+  (o) => !!o.importPermit,
+)
+
+/**
+ * 도착 사전 통지국(아일랜드·몰타·노르웨이·키프로스) — `advanceNotice` 선언 파생.
+ * 전용 카드(ie/mt/no/cy-advance-notice)는 규정 고유라 1:1 수작업 유지 — 이 목록은
+ * 서비스(맡기기) 상세 등 '사전 통지 포함' 묶음 소비자용.
+ */
+export const ADVANCE_NOTICE_DESTINATIONS: string[] = destinationKeysWhere(
+  (o) => !!o.advanceNotice,
+)
+
+/** 목적지 키 → 대표 한글 라벨(첫 한글 keyword). 파생 목록을 한글 토큰 소비자가 쓸 때 사용. */
+export function destinationKoLabel(key: string): string {
+  const kw = DESTINATION_OVERRIDES[key]?.keywords ?? []
+  return kw.find((k) => /[가-힣]/.test(k)) ?? kw[0] ?? key
+}
 
 /**
  * 콤마 구분 다중 목적지를 개별 국가 토큰 배열로 분리.
@@ -452,49 +691,14 @@ export function isRabiesFreeOrigin(destination: string | null | undefined): bool
   return false
 }
 
-/**
- * 내원·임상검진일은 출국일 포함 N일 이내여야 함 — 목적지별 윈도우 N.
- * 한국 APQA 디폴트 10일. 비표준만 명시; 값은 규정 문구의 "N일 이내" N 그대로.
- * 다중 목적지 시 가장 엄격한 윈도우(최소값) 적용.
- *
- * Source of truth — 각 목적지의 규정 (출처 packages/domain/src/procedure-checks/*.ts).
- *
- * 비교 규칙: `days >= window` 면 거부. 예) window=10 → days 0~9 OK, 10+ 거부.
- *
- * NOTE: 뉴질랜드는 규정상 "2일 이내(MPI 2일)" 이지만 max-2-days-before 해석으로 window=3
- * 적용 중(규정 문구와 표시 disconnect — 별도 정리 대상). 튀르키예는 임상검사 24시간 이내
- * (TK.pdf 각주 6)라 window=2(전날/당일).
- */
-const VET_VISIT_WINDOW_OVERRIDES: Array<{
-  key: keyof typeof DESTINATION_OVERRIDES
-  window: number
-  /** 지정 시 해당 종에만 적용 (미지정=모든 종). 예: 촌충 구충은 개 전용. */
-  species?: 'dog' | 'cat'
-}> = [
-  { key: 'malaysia', window: 7 },
-  { key: 'singapore', window: 7 },
-  { key: 'australia', window: 5 },
-  { key: 'russia', window: 5 },
-  { key: 'new_zealand', window: 3 },
-  // 튀르키예: 임상검사(Clinical Examination)는 출국 24시간 이내 — TK.pdf 각주 6
-  // "The clinical examination must be done within 24 hours before movement".
-  // window=2 → 출국일 기준 diff<2 = 전날(1)·당일(0)만 유효(=24시간 이내). 한국 수출검역도 동일 창.
-  { key: 'turkey', window: 2 },
-  // EU 촌충-free 국(영국·아일랜드·몰타·노르웨이·핀란드) 강아지 — 촌충 구충이 출국 1~3일 전(admin
-  // 보수: eu.tapeworm-1to3days, 법정 24~120h)에만 유효하고, 구충을 겸하는 내원도 그 안에 들어와야
-  // 하므로 window=4 (=출국일 -3일). 고양이는 촌충 면제(EU Reg 2018/772) → 기본 10일.
-  { key: 'uk', window: 4, species: 'dog' },
-  { key: 'ireland', window: 4, species: 'dog' },
-  { key: 'malta', window: 4, species: 'dog' },
-  { key: 'norway', window: 4, species: 'dog' },
-  { key: 'finland', window: 4, species: 'dog' },
-]
-
 const VET_VISIT_DEFAULT_WINDOW_DAYS = 10
 
 /**
  * 입력된 목적지(콤마 구분 가능)에 대한 내원일↔출국일 윈도우 일수.
+ * "출국일 포함 N일 이내"의 N — 한국 APQA 디폴트 10일, 비표준은 각 목적지 프로파일의
+ * `vetVisitWindowDays` 선언이 진실 출처(근거 주석도 그쪽에).
  * 반환값은 규정의 "N일 이내" N. 다중 목적지 시 가장 엄격한 윈도우(최소값) 반환.
+ * 비교 규칙: `days >= window` 면 거부. 예) window=10 → days 0~9 OK, 10+ 거부.
  * species 를 주면 종별 override(촌충 구충 등)를 반영 — 미지정 시 종 제한 override 는 건너뛴다.
  */
 export function getVetVisitWindowDays(
@@ -503,10 +707,15 @@ export function getVetVisitWindowDays(
 ): number {
   if (!destination) return VET_VISIT_DEFAULT_WINDOW_DAYS
   let min = VET_VISIT_DEFAULT_WINDOW_DAYS
-  for (const ov of VET_VISIT_WINDOW_OVERRIDES) {
-    if (ov.species && ov.species !== species) continue
-    if (matchesDestinationKey(destination, ov.key) && ov.window < min) {
-      min = ov.window
+  for (const [key, override] of Object.entries(DESTINATION_OVERRIDES)) {
+    const declared = override.vetVisitWindowDays
+    if (declared === undefined) continue
+    const entries = typeof declared === 'number' ? [{ window: declared }] : declared
+    for (const ov of entries) {
+      if (ov.species && ov.species !== species) continue
+      if (matchesDestinationKey(destination, key) && ov.window < min) {
+        min = ov.window
+      }
     }
   }
   return min

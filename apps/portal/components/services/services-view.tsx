@@ -2,7 +2,13 @@
 
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { matchesDestinationKey, type CaseRow } from '@petmove/domain'
+import {
+  destinationKoLabel,
+  matchesDestinationKey,
+  ADVANCE_NOTICE_DESTINATIONS,
+  DESTINATION_OVERRIDES,
+  type CaseRow,
+} from '@petmove/domain'
 import destsData from '@petmove/domain/data/destinations.json'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { readLastCaseId, readLastDest } from '@/components/portal-shell/last-case'
@@ -207,19 +213,57 @@ const PHILIPPINE_REVIEWS: Review[] = [
   },
 ]
 
-const OFFLINE_DETAIL: Record<string, DestDetail> = {
-  일본: {
-    intro:
-      '로잔동물의료센터에서 검역 준비를 해 드려요. 의료 절차는 물론 일본 검역소와의 소통, 서류 준비까지 빈틈없이 진행해 드려요. 앱을 통해 쉽게 진행 상황, 정보를 확인할 수 있어요.',
-    included: [
-      { label: '마이크로칩 삽입 · 동물등록' },
-      { label: '광견병 백신 접종' },
-      { label: '광견병 항체 검사' },
-      { label: '사전 신고' },
-      { label: '일본 수출 검역 신청 · 예약' },
-      { label: '출국 전 임상검사' },
-      { label: '서류 준비' },
-    ],
+// ── 서비스 상세 factory (Phase 3 아키타입화) ─────────────────────────────────
+// 구조(진행 단계·FAQ 골격·intro 골격·included 파생)는 factory 가 강제하고, 나라 사실
+// (강조절·절차 항목·비용·기간·후기)만 주입한다. included 의 백신·검사 항목은 domain
+// 프로파일(vaccines·rabiesTiterForReturnOnly·archetype)에서 파생 — 카드와 어긋나지 않는다.
+
+/**
+ * 오프라인 올케어 상세 factory.
+ *  - included 파생: 칩·광견병(공통) + 종합백신(vaccines 'general') + 내부구충(vaccines 의
+ *    전 종 'internal_parasite' — EU 촌충국의 개 전용 선언은 제외) + 항체검사(귀국용 국가는
+ *    왕복만) + 나라 절차 항목 + 임상검사 + 서류 준비. EU 패밀리는 절차 항목이 임상검사 뒤
+ *    (사전 통지·수입허가가 출국 직전 절차라서), 일본·동남아는 앞.
+ *  - intro: 일본·동남아 '의료 절차는 물론 X, …' / EU 패밀리 '의료 절차와 (X, )…'.
+ */
+function offlineDetail(opts: {
+  /** destination-config 키 — included 파생의 프로파일 출처. */
+  destKey: string
+  /** 귀국용 항체검사 국가(태국·필리핀)의 트립 — 왕복만 항체검사 포함. */
+  trip?: TripType
+  /** intro 강조절 (예: '태국 수입허가증 신청'). EU 패밀리는 생략 가능. */
+  introHighlight?: string
+  /** 나라 절차 항목 라벨 (예: ['사전 신고', '일본 수출 검역 신청 · 예약']). */
+  procedureItems?: string[]
+  /** 비용 범위(만원) — '50~60' 형태. */
+  cost: string
+  /** 준비 기간 — '최소 6~7개월' / '2~4주' 형태('정도 걸려요' 앞부분 그대로). */
+  period: string
+  reviews?: Review[]
+}): DestDetail {
+  const o = DESTINATION_OVERRIDES[opts.destKey]
+  const euFam = o?.archetype === 'eu-family'
+  const vaccineKeys = (o?.vaccines ?? []).map((v) => (typeof v === 'string' ? v : v.key))
+  const titerIncluded = o?.rabiesTiterForReturnOnly ? opts.trip === 'round' : true
+  const procedure = (opts.procedureItems ?? []).map((label) => ({ label }))
+
+  const included: Prep[] = [{ label: '마이크로칩 삽입 · 동물등록' }, { label: '광견병 백신 접종' }]
+  if (vaccineKeys.includes('general')) included.push({ label: '종합백신 접종' })
+  // 전 종 내부구충(필리핀)만 — EU 촌충국의 { species: 'dog' } 선언은 서비스 목록엔 미표기.
+  if ((o?.vaccines ?? []).some((v) => v === 'internal_parasite')) included.push({ label: '내부 기생충 치료' })
+  if (titerIncluded) included.push({ label: '광견병 항체 검사' })
+  if (euFam) included.push({ label: '출국 전 임상검사' }, ...procedure)
+  else included.push(...procedure, { label: '출국 전 임상검사' })
+  included.push({ label: '서류 준비' })
+
+  const mid = euFam
+    ? opts.introHighlight
+      ? `의료 절차와 ${opts.introHighlight}, 서류 준비까지`
+      : '의료 절차와 서류 준비까지'
+    : `의료 절차는 물론 ${opts.introHighlight}, 서류 준비까지`
+  return {
+    intro: `로잔동물의료센터에서 검역 준비를 해 드려요. ${mid} 빈틈없이 진행해 드려요. 앱을 통해 쉽게 진행 상황, 정보를 확인할 수 있어요.`,
+    included,
     steps: ['예약', '내원', '상담', '시작'],
     faq: [
       {
@@ -227,159 +271,105 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
         a: '로잔동물의료센터로 방문해 주세요.',
         link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
       },
-      { q: '비용은 얼마인가요?', a: '오프라인 올케어의 비용은 약 50~60만원이에요. 정확한 비용은 상담 후 결정돼요.' },
-      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 6~7개월 정도 걸려요.' },
+      { q: '비용은 얼마인가요?', a: `오프라인 올케어의 비용은 약 ${opts.cost}만원이에요. 정확한 비용은 상담 후 결정돼요.` },
+      { q: '준비 기간이 궁금해요', a: `접종 상황에 따라 ${opts.period} 정도 걸려요.` },
     ],
+    reviews: opts.reviews ?? [],
+  }
+}
+
+/** 온라인 안심케어 상세 factory — 골격 공통, 나라 항목·비용·기간만 주입. */
+function onlineDetail(opts: {
+  /** intro 에 끼는 절 (예: '사전 신고, 일본 수출 검역 신청 및 예약'). */
+  introItems: string
+  /** included 가운데 항목들('단계별 가이드'와 '서류 점검' 사이). */
+  items: string[]
+  /** 고정 비용 표기 (예: '15만원 정도'). 생략 시 '서비스 내용에 따라 달라져요'. */
+  cost?: string
+  period: string
+  reviews?: Review[]
+}): DestDetail {
+  return {
+    intro: `안심하고 준비할 수 있도록 곁에서 도와드려요. 단계별 가이드, ${opts.introItems}, 서류 점검을 해 드려요. 준비 중 궁금한 것은 언제든 물어볼 수 있어요.`,
+    included: [
+      { label: '단계별 가이드' },
+      ...opts.items.map((label) => ({ label })),
+      { label: '서류 점검' },
+    ],
+    steps: ['상담', '신청', '결제', '시작'],
+    faq: [
+      { q: '어떻게 도움을 받나요?', a: '온라인 안심케어는 앱과 카카오톡을 이용한 비대면 서비스예요. 필요에 따라 전화 연결도 가능해요.' },
+      {
+        q: '비용은 얼마인가요?',
+        a: opts.cost
+          ? `온라인 안심케어 비용은 ${opts.cost}예요. 정확한 비용은 상담 후 결정돼요.`
+          : '온라인 안심케어는 서비스 내용에 따라 비용이 달라져요. 정확한 비용은 상담 후 결정돼요.',
+      },
+      { q: '준비 기간이 궁금해요', a: `접종 상황에 따라 ${opts.period} 정도 걸려요.` },
+    ],
+    reviews: opts.reviews ?? [],
+  }
+}
+
+export const OFFLINE_DETAIL: Record<string, DestDetail> = {
+  일본: offlineDetail({
+    destKey: 'japan',
+    introHighlight: '일본 검역소와의 소통',
+    procedureItems: ['사전 신고', '일본 수출 검역 신청 · 예약'],
+    cost: '50~60',
+    period: '최소 6~7개월',
     reviews: JAPAN_REVIEWS,
-  },
-  // 태국 편도(한국→태국). 왕복(태국→한국 재입국)은 광견병 항체검사 등 절차가 달라 별도 키로 분리.
-  '태국:one_way': {
-    intro:
-      '로잔동물의료센터에서 검역 준비를 해 드려요. 의료 절차는 물론 태국 수입허가증 신청, 서류 준비까지 빈틈없이 진행해 드려요. 앱을 통해 쉽게 진행 상황, 정보를 확인할 수 있어요.',
-    included: [
-      { label: '마이크로칩 삽입 · 동물등록' },
-      { label: '광견병 백신 접종' },
-      { label: '종합백신 접종' },
-      { label: '수입 허가 신청' },
-      { label: '출국 전 임상검사' },
-      { label: '서류 준비' },
-    ],
-    steps: ['예약', '내원', '상담', '시작'],
-    faq: [
-      {
-        q: '어디로 방문하나요?',
-        a: '로잔동물의료센터로 방문해 주세요.',
-        link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
-      },
-      { q: '비용은 얼마인가요?', a: '오프라인 올케어의 비용은 약 20~32만원이에요. 정확한 비용은 상담 후 결정돼요.' },
-      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 2~4주 정도 걸려요.' },
-    ],
+  }),
+  // 태국 편도(한국→태국) / 왕복(태국→한국 재입국) — 왕복은 귀국용 광견병 항체검사가
+  // included 에 파생 추가돼 비용·기간이 늘어난다.
+  '태국:one_way': offlineDetail({
+    destKey: 'thailand',
+    trip: 'one_way',
+    introHighlight: '태국 수입허가증 신청',
+    procedureItems: ['수입 허가 신청'],
+    cost: '20~32',
+    period: '2~4주',
     reviews: THAILAND_REVIEWS,
-  },
-  // 태국 왕복(태국→한국 재입국). 편도 대비 광견병 항체 검사가 추가돼 비용·기간이 늘어난다.
-  '태국:round': {
-    intro:
-      '로잔동물의료센터에서 검역 준비를 해 드려요. 의료 절차는 물론 태국 수입허가증 신청, 서류 준비까지 빈틈없이 진행해 드려요. 앱을 통해 쉽게 진행 상황, 정보를 확인할 수 있어요.',
-    included: [
-      { label: '마이크로칩 삽입 · 동물등록' },
-      { label: '광견병 백신 접종' },
-      { label: '종합백신 접종' },
-      { label: '광견병 항체 검사' },
-      { label: '수입 허가 신청' },
-      { label: '출국 전 임상검사' },
-      { label: '서류 준비' },
-    ],
-    steps: ['예약', '내원', '상담', '시작'],
-    faq: [
-      {
-        q: '어디로 방문하나요?',
-        a: '로잔동물의료센터로 방문해 주세요.',
-        link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
-      },
-      { q: '비용은 얼마인가요?', a: '오프라인 올케어의 비용은 약 20~60만원이에요. 정확한 비용은 상담 후 결정돼요.' },
-      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 2~6주 정도 걸려요.' },
-    ],
+  }),
+  '태국:round': offlineDetail({
+    destKey: 'thailand',
+    trip: 'round',
+    introHighlight: '태국 수입허가증 신청',
+    procedureItems: ['수입 허가 신청'],
+    cost: '20~60',
+    period: '최소 2~6주',
     reviews: THAILAND_REVIEWS,
-  },
-  // 필리핀 편도(한국→필리핀). 왕복 대비 광견병 항체 검사 없음(내부 기생충 치료는 유지).
-  '필리핀:one_way': {
-    intro:
-      '로잔동물의료센터에서 검역 준비를 해 드려요. 의료 절차는 물론 필리핀 수입 허가증(SPSIC) 신청, 서류 준비까지 빈틈없이 진행해 드려요. 앱을 통해 쉽게 진행 상황, 정보를 확인할 수 있어요.',
-    included: [
-      { label: '마이크로칩 삽입 · 동물등록' },
-      { label: '광견병 백신 접종' },
-      { label: '종합백신 접종' },
-      { label: '내부 기생충 치료' },
-      { label: '수입 허가증(SPSIC) 신청' },
-      { label: '출국 전 임상검사' },
-      { label: '서류 준비' },
-    ],
-    steps: ['예약', '내원', '상담', '시작'],
-    faq: [
-      {
-        q: '어디로 방문하나요?',
-        a: '로잔동물의료센터로 방문해 주세요.',
-        link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
-      },
-      { q: '비용은 얼마인가요?', a: '오프라인 올케어의 비용은 약 20~32만원이에요. 정확한 비용은 상담 후 결정돼요.' },
-      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 1~4주 정도 걸려요.' },
-    ],
+  }),
+  // 필리핀 — 내부 기생충 치료는 프로파일(전 종 internal_parasite)에서 파생 포함.
+  '필리핀:one_way': offlineDetail({
+    destKey: 'philippines',
+    trip: 'one_way',
+    introHighlight: '필리핀 수입 허가증(SPSIC) 신청',
+    procedureItems: ['수입 허가증(SPSIC) 신청'],
+    cost: '20~32',
+    period: '최소 1~4주',
     reviews: PHILIPPINE_REVIEWS,
-  },
-  // 필리핀 왕복(필리핀→한국 재입국). 광견병 항체 검사 + 내부 기생충 치료 포함.
-  '필리핀:round': {
-    intro:
-      '로잔동물의료센터에서 검역 준비를 해 드려요. 의료 절차는 물론 필리핀 수입 허가증(SPSIC) 신청, 서류 준비까지 빈틈없이 진행해 드려요. 앱을 통해 쉽게 진행 상황, 정보를 확인할 수 있어요.',
-    included: [
-      { label: '마이크로칩 삽입 · 동물등록' },
-      { label: '광견병 백신 접종' },
-      { label: '종합백신 접종' },
-      { label: '내부 기생충 치료' },
-      { label: '광견병 항체 검사' },
-      { label: '수입 허가증(SPSIC) 신청' },
-      { label: '출국 전 임상검사' },
-      { label: '서류 준비' },
-    ],
-    steps: ['예약', '내원', '상담', '시작'],
-    faq: [
-      {
-        q: '어디로 방문하나요?',
-        a: '로잔동물의료센터로 방문해 주세요.',
-        link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
-      },
-      { q: '비용은 얼마인가요?', a: '오프라인 올케어의 비용은 약 20~60만원이에요. 정확한 비용은 상담 후 결정돼요.' },
-      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 2~6주 정도 걸려요.' },
-    ],
+  }),
+  '필리핀:round': offlineDetail({
+    destKey: 'philippines',
+    trip: 'round',
+    introHighlight: '필리핀 수입 허가증(SPSIC) 신청',
+    procedureItems: ['수입 허가증(SPSIC) 신청'],
+    cost: '20~60',
+    period: '최소 2~6주',
     reviews: PHILIPPINE_REVIEWS,
-  },
+  }),
   // 유럽(EU 24개국) — EU Reg 576/2013 공통 절차라 한 벌로 공유(resolveDetail 가 'eu' 로 정규화).
   // 한국은 EU 비지정국이라 광견병 항체검사 필수. 일본과 달리 검역소 사전신고·수출검역 신청 절차는 없음.
-  eu: {
-    intro:
-      '로잔동물의료센터에서 검역 준비를 해 드려요. 의료 절차와 서류 준비까지 빈틈없이 진행해 드려요. 앱을 통해 쉽게 진행 상황, 정보를 확인할 수 있어요.',
-    included: [
-      { label: '마이크로칩 삽입 · 동물등록' },
-      { label: '광견병 백신 접종' },
-      { label: '광견병 항체 검사' },
-      { label: '출국 전 임상검사' },
-      { label: '서류 준비' },
-    ],
-    steps: ['예약', '내원', '상담', '시작'],
-    faq: [
-      {
-        q: '어디로 방문하나요?',
-        a: '로잔동물의료센터로 방문해 주세요.',
-        link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
-      },
-      { q: '비용은 얼마인가요?', a: '오프라인 올케어의 비용은 약 36~46만원이에요. 정확한 비용은 상담 후 결정돼요.' },
-      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 3~4개월 정도 걸려요.' },
-    ],
-    reviews: [],
-  },
-  // 스위스 — EU 공통(eu) + FSVO 수입허가 신청 추가. 그 절차로 비용 상한 +10만원(46→56만).
-  스위스: {
-    intro:
-      '로잔동물의료센터에서 검역 준비를 해 드려요. 의료 절차와 수입 허가 신청, 서류 준비까지 빈틈없이 진행해 드려요. 앱을 통해 쉽게 진행 상황, 정보를 확인할 수 있어요.',
-    included: [
-      { label: '마이크로칩 삽입 · 동물등록' },
-      { label: '광견병 백신 접종' },
-      { label: '광견병 항체 검사' },
-      { label: '출국 전 임상검사' },
-      { label: '수입 허가 신청' },
-      { label: '서류 준비' },
-    ],
-    steps: ['예약', '내원', '상담', '시작'],
-    faq: [
-      {
-        q: '어디로 방문하나요?',
-        a: '로잔동물의료센터로 방문해 주세요.',
-        link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
-      },
-      { q: '비용은 얼마인가요?', a: '오프라인 올케어의 비용은 약 36~56만원이에요. 정확한 비용은 상담 후 결정돼요.' },
-      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 3~4개월 정도 걸려요.' },
-    ],
-    reviews: [],
-  },
+  eu: offlineDetail({ destKey: 'eu', cost: '36~46', period: '최소 3~4개월' }),
+  // 스위스 — EU 공통 + FSVO 수입허가 신청 추가. 그 절차로 비용 상한 +10만원(46→56만).
+  스위스: offlineDetail({
+    destKey: 'switzerland',
+    introHighlight: '수입 허가 신청',
+    procedureItems: ['수입 허가 신청'],
+    cost: '36~56',
+    period: '최소 3~4개월',
+  }),
   default: {
     intro: '복잡한 검역 절차, 수의사가 처음부터 끝까지 직접 준비·관리해 드려요.',
     included: [
@@ -395,151 +385,65 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
 
 // 사전 통지 국가(아일랜드·몰타·노르웨이·키프로스) — EU 공통(eu) + 입국국 사전 통지 추가.
 // 그 절차로 오프라인 올케어 비용 상한 +5만원(46→51만). intro·included·비용만 다르고 나머지는 eu 와 동일.
-const OFFLINE_ADVANCE_NOTICE: DestDetail = {
-  intro:
-    '로잔동물의료센터에서 검역 준비를 해 드려요. 의료 절차와 사전 통지, 서류 준비까지 빈틈없이 진행해 드려요. 앱을 통해 쉽게 진행 상황, 정보를 확인할 수 있어요.',
-  included: [
-    { label: '마이크로칩 삽입 · 동물등록' },
-    { label: '광견병 백신 접종' },
-    { label: '광견병 항체 검사' },
-    { label: '출국 전 임상검사' },
-    { label: '사전 통지' },
-    { label: '서류 준비' },
-  ],
-  steps: ['예약', '내원', '상담', '시작'],
-  faq: [
-    {
-      q: '어디로 방문하나요?',
-      a: '로잔동물의료센터로 방문해 주세요.',
-      link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
-    },
-    { q: '비용은 얼마인가요?', a: '오프라인 올케어의 비용은 약 36~51만원이에요. 정확한 비용은 상담 후 결정돼요.' },
-    { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 3~4개월 정도 걸려요.' },
-  ],
-  reviews: [],
-}
-for (const k of ['아일랜드', '몰타', '노르웨이', '키프로스']) OFFLINE_DETAIL[k] = OFFLINE_ADVANCE_NOTICE
+const OFFLINE_ADVANCE_NOTICE: DestDetail = offlineDetail({
+  destKey: 'eu',
+  introHighlight: '사전 통지',
+  procedureItems: ['사전 통지'],
+  cost: '36~51',
+  period: '최소 3~4개월',
+})
+// 사전 통지국 — 프로파일 advanceNotice 선언 파생(아일랜드·몰타·노르웨이·키프로스).
+for (const k of ADVANCE_NOTICE_DESTINATIONS.map(destinationKoLabel)) OFFLINE_DETAIL[k] = OFFLINE_ADVANCE_NOTICE
 
-const ONLINE_DETAIL: Record<string, DestDetail> = {
-  일본: {
-    intro:
-      '안심하고 준비할 수 있도록 곁에서 도와드려요. 단계별 가이드, 사전 신고, 일본 수출 검역 신청 및 예약, 서류 점검을 해 드려요. 준비 중 궁금한 것은 언제든 물어볼 수 있어요.',
-    included: [
-      { label: '단계별 가이드' },
-      { label: '사전 신고' },
-      { label: '일본 수출 검역 신청 · 예약' },
-      { label: '일본 검역소와의 소통' },
-      { label: '서류 점검' },
-    ],
-    steps: ['상담', '신청', '결제', '시작'],
-    faq: [
-      { q: '어떻게 도움을 받나요?', a: '온라인 안심케어는 앱과 카카오톡을 이용한 비대면 서비스예요. 필요에 따라 전화 연결도 가능해요.' },
-      { q: '비용은 얼마인가요?', a: '온라인 안심케어는 서비스 내용에 따라 비용이 달라져요. 정확한 비용은 상담 후 결정돼요.' },
-      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 6~7개월 정도 걸려요.' },
-    ],
+export const ONLINE_DETAIL: Record<string, DestDetail> = {
+  일본: onlineDetail({
+    introItems: '사전 신고, 일본 수출 검역 신청 및 예약',
+    items: ['사전 신고', '일본 수출 검역 신청 · 예약', '일본 검역소와의 소통'],
+    period: '최소 6~7개월',
     reviews: JAPAN_REVIEWS,
-  },
-  // 태국 온라인 안심케어 — intro·단계·included 는 트립 무관 공통, 준비 기간만 트립별로 다름(왕복은 광견병 항체검사로 길어짐).
-  '태국:one_way': {
-    intro:
-      '안심하고 준비할 수 있도록 곁에서 도와드려요. 단계별 가이드, 수입 허가 신청, 서류 점검을 해 드려요. 준비 중 궁금한 것은 언제든 물어볼 수 있어요.',
-    included: [
-      { label: '단계별 가이드' },
-      { label: '수입 허가 신청' },
-      { label: '서류 점검' },
-    ],
-    steps: ['상담', '신청', '결제', '시작'],
-    faq: [
-      { q: '어떻게 도움을 받나요?', a: '온라인 안심케어는 앱과 카카오톡을 이용한 비대면 서비스예요. 필요에 따라 전화 연결도 가능해요.' },
-      { q: '비용은 얼마인가요?', a: '온라인 안심케어 비용은 15만원 정도예요. 정확한 비용은 상담 후 결정돼요.' },
-      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 2~4주 정도 걸려요.' },
-    ],
+  }),
+  // 태국·필리핀 온라인 안심케어 — intro·단계·included 는 트립 무관 공통, 준비 기간만
+  // 트립별로 다름(왕복은 귀국용 광견병 항체검사로 길어짐).
+  '태국:one_way': onlineDetail({
+    introItems: '수입 허가 신청',
+    items: ['수입 허가 신청'],
+    cost: '15만원 정도',
+    period: '최소 2~4주',
     reviews: THAILAND_REVIEWS,
-  },
-  '태국:round': {
-    intro:
-      '안심하고 준비할 수 있도록 곁에서 도와드려요. 단계별 가이드, 수입 허가 신청, 서류 점검을 해 드려요. 준비 중 궁금한 것은 언제든 물어볼 수 있어요.',
-    included: [
-      { label: '단계별 가이드' },
-      { label: '수입 허가 신청' },
-      { label: '서류 점검' },
-    ],
-    steps: ['상담', '신청', '결제', '시작'],
-    faq: [
-      { q: '어떻게 도움을 받나요?', a: '온라인 안심케어는 앱과 카카오톡을 이용한 비대면 서비스예요. 필요에 따라 전화 연결도 가능해요.' },
-      { q: '비용은 얼마인가요?', a: '온라인 안심케어 비용은 15만원 정도예요. 정확한 비용은 상담 후 결정돼요.' },
-      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 2~6주 정도 걸려요.' },
-    ],
+  }),
+  '태국:round': onlineDetail({
+    introItems: '수입 허가 신청',
+    items: ['수입 허가 신청'],
+    cost: '15만원 정도',
+    period: '최소 2~6주',
     reviews: THAILAND_REVIEWS,
-  },
-  // 필리핀 온라인 안심케어 — 준비 기간만 트립별로 다름(편도 1~4주 / 왕복 2~6주).
-  '필리핀:one_way': {
-    intro:
-      '안심하고 준비할 수 있도록 곁에서 도와드려요. 단계별 가이드, 수입 허가 신청, 서류 점검을 해 드려요. 준비 중 궁금한 것은 언제든 물어볼 수 있어요.',
-    included: [
-      { label: '단계별 가이드' },
-      { label: '수입 허가 신청' },
-      { label: '서류 점검' },
-    ],
-    steps: ['상담', '신청', '결제', '시작'],
-    faq: [
-      { q: '어떻게 도움을 받나요?', a: '온라인 안심케어는 앱과 카카오톡을 이용한 비대면 서비스예요. 필요에 따라 전화 연결도 가능해요.' },
-      { q: '비용은 얼마인가요?', a: '온라인 안심케어 비용은 15만원 정도예요. 정확한 비용은 상담 후 결정돼요.' },
-      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 1~4주 정도 걸려요.' },
-    ],
+  }),
+  '필리핀:one_way': onlineDetail({
+    introItems: '수입 허가 신청',
+    items: ['수입 허가 신청'],
+    cost: '15만원 정도',
+    period: '최소 1~4주',
     reviews: PHILIPPINE_REVIEWS,
-  },
-  '필리핀:round': {
-    intro:
-      '안심하고 준비할 수 있도록 곁에서 도와드려요. 단계별 가이드, 수입 허가 신청, 서류 점검을 해 드려요. 준비 중 궁금한 것은 언제든 물어볼 수 있어요.',
-    included: [
-      { label: '단계별 가이드' },
-      { label: '수입 허가 신청' },
-      { label: '서류 점검' },
-    ],
-    steps: ['상담', '신청', '결제', '시작'],
-    faq: [
-      { q: '어떻게 도움을 받나요?', a: '온라인 안심케어는 앱과 카카오톡을 이용한 비대면 서비스예요. 필요에 따라 전화 연결도 가능해요.' },
-      { q: '비용은 얼마인가요?', a: '온라인 안심케어 비용은 15만원 정도예요. 정확한 비용은 상담 후 결정돼요.' },
-      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 1~6주 정도 걸려요.' },
-    ],
+  }),
+  '필리핀:round': onlineDetail({
+    introItems: '수입 허가 신청',
+    items: ['수입 허가 신청'],
+    cost: '15만원 정도',
+    period: '최소 1~6주',
     reviews: PHILIPPINE_REVIEWS,
-  },
-  // 유럽(EU 24개국) 온라인 안심케어 — EU Reg 576/2013 공통, resolveDetail 가 'eu' 로 정규화.
-  eu: {
-    intro:
-      '안심하고 준비할 수 있도록 곁에서 도와드려요. 단계별 가이드, EU 동물건강증명서(Annex III) 준비, 서류 점검을 해 드려요. 준비 중 궁금한 것은 언제든 물어볼 수 있어요.',
-    included: [
-      { label: '단계별 가이드' },
-      { label: 'EU 동물건강증명서(Annex III) 준비' },
-      { label: '서류 점검' },
-    ],
-    steps: ['상담', '신청', '결제', '시작'],
-    faq: [
-      { q: '어떻게 도움을 받나요?', a: '온라인 안심케어는 앱과 카카오톡을 이용한 비대면 서비스예요. 필요에 따라 전화 연결도 가능해요.' },
-      { q: '비용은 얼마인가요?', a: '온라인 안심케어는 서비스 내용에 따라 비용이 달라져요. 정확한 비용은 상담 후 결정돼요.' },
-      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 3~4개월 정도 걸려요.' },
-    ],
-    reviews: [],
-  },
-  // 스위스 온라인 — EU 공통(eu) + FSVO 수입허가 신청 추가. (온라인 비용은 고정값 없어 상향 없음.)
-  스위스: {
-    intro:
-      '안심하고 준비할 수 있도록 곁에서 도와드려요. 단계별 가이드, EU 동물건강증명서(Annex III) 준비, 수입 허가 신청, 서류 점검을 해 드려요. 준비 중 궁금한 것은 언제든 물어볼 수 있어요.',
-    included: [
-      { label: '단계별 가이드' },
-      { label: 'EU 동물건강증명서(Annex III) 준비' },
-      { label: '수입 허가 신청' },
-      { label: '서류 점검' },
-    ],
-    steps: ['상담', '신청', '결제', '시작'],
-    faq: [
-      { q: '어떻게 도움을 받나요?', a: '온라인 안심케어는 앱과 카카오톡을 이용한 비대면 서비스예요. 필요에 따라 전화 연결도 가능해요.' },
-      { q: '비용은 얼마인가요?', a: '온라인 안심케어는 서비스 내용에 따라 비용이 달라져요. 정확한 비용은 상담 후 결정돼요.' },
-      { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 3~4개월 정도 걸려요.' },
-    ],
-    reviews: [],
-  },
+  }),
+  // 유럽(EU 24개국) — EU Reg 576/2013 공통, resolveDetail 가 'eu' 로 정규화.
+  eu: onlineDetail({
+    introItems: 'EU 동물건강증명서(Annex III) 준비',
+    items: ['EU 동물건강증명서(Annex III) 준비'],
+    period: '최소 3~4개월',
+  }),
+  // 스위스 — EU 공통 + FSVO 수입허가 신청 추가. (온라인 비용은 고정값 없어 상향 없음.)
+  스위스: onlineDetail({
+    introItems: 'EU 동물건강증명서(Annex III) 준비, 수입 허가 신청',
+    items: ['EU 동물건강증명서(Annex III) 준비', '수입 허가 신청'],
+    period: '최소 3~4개월',
+  }),
   default: {
     intro: '직접 준비하시되 혼자 헤매지 않게, 실패 없는 안전한 준비를 곁에서 도와드려요.',
     included: [
@@ -555,24 +459,12 @@ const ONLINE_DETAIL: Record<string, DestDetail> = {
 
 // 사전 통지 국가(아일랜드·몰타·노르웨이·키프로스) 온라인 — EU 공통(eu) + 사전 통지 추가.
 // (온라인 비용은 고정값 없어 상향 없음 — 스위스 온라인과 동일.)
-const ONLINE_ADVANCE_NOTICE: DestDetail = {
-  intro:
-    '안심하고 준비할 수 있도록 곁에서 도와드려요. 단계별 가이드, EU 동물건강증명서(Annex III) 준비, 사전 통지, 서류 점검을 해 드려요. 준비 중 궁금한 것은 언제든 물어볼 수 있어요.',
-  included: [
-    { label: '단계별 가이드' },
-    { label: 'EU 동물건강증명서(Annex III) 준비' },
-    { label: '사전 통지' },
-    { label: '서류 점검' },
-  ],
-  steps: ['상담', '신청', '결제', '시작'],
-  faq: [
-    { q: '어떻게 도움을 받나요?', a: '온라인 안심케어는 앱과 카카오톡을 이용한 비대면 서비스예요. 필요에 따라 전화 연결도 가능해요.' },
-    { q: '비용은 얼마인가요?', a: '온라인 안심케어는 서비스 내용에 따라 비용이 달라져요. 정확한 비용은 상담 후 결정돼요.' },
-    { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 3~4개월 정도 걸려요.' },
-  ],
-  reviews: [],
-}
-for (const k of ['아일랜드', '몰타', '노르웨이', '키프로스']) ONLINE_DETAIL[k] = ONLINE_ADVANCE_NOTICE
+const ONLINE_ADVANCE_NOTICE: DestDetail = onlineDetail({
+  introItems: 'EU 동물건강증명서(Annex III) 준비, 사전 통지',
+  items: ['EU 동물건강증명서(Annex III) 준비', '사전 통지'],
+  period: '최소 3~4개월',
+})
+for (const k of ADVANCE_NOTICE_DESTINATIONS.map(destinationKoLabel)) ONLINE_DETAIL[k] = ONLINE_ADVANCE_NOTICE
 
 /** 히어로 3장 — 로잔 공통 강점(전문성·경험·앱 편의). 올케어·안심케어 둘 다 사용. */
 const HIGHLIGHTS: Highlight[] = [

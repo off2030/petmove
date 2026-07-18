@@ -5,7 +5,9 @@ import {
   validateIeAdvanceNoticeDate,
   validateMtAdvanceNoticeDate,
   validateNoAdvanceNoticeDate,
+  EU_ENTRY_FAMILY,
 } from '../journey-steps/date-rules'
+import { TAPEWORM_DESTINATIONS } from '../destination-config'
 import type { ProcedureCheck } from './types'
 import {
   addMonths,
@@ -46,20 +48,11 @@ import {
  * 부스터 chain 만 유지되면 RNATT 결과는 무기한 유효 — 별도 만료 룰 없음.
  */
 
-/** EU 규제 패밀리 — 같은 규칙 적용. */
-const EU_REGIME: string[] = [
-  'eu',
-  'ireland',
-  'malta',
-  'norway',
-  'finland',
-  'uk',
-  'switzerland',
-  'cyprus',
-]
+/** EU 규제 패밀리 — 같은 규칙 적용. archetype 'eu-family' 파생(date-rules 와 단일 출처). */
+const EU_REGIME: string[] = EU_ENTRY_FAMILY
 
-/** 촌충 의무국가 — Reg 2018/772. */
-const TAPEWORM_DESTINATIONS: string[] = ['ireland', 'malta', 'norway', 'finland', 'uk']
+// 촌충 의무국가(Reg 2018/772)는 destination-config 의 TAPEWORM_DESTINATIONS(개 전용
+// 내부구충 vaccines 선언 파생)를 그대로 사용 — 촌충 치료 카드와 단일 출처.
 
 export const EU_CHECKS: ProcedureCheck[] = [
   // ── 마이크로칩 ──

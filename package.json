@@ -16,6 +16,7 @@
     "lint:copy:write": "tsx scripts/lint-journey-copy.ts --write",
     "lint:dest": "tsx scripts/lint-destinations.ts",
     "lint:dest:write": "tsx scripts/lint-destinations.ts --write",
+    "new:destination": "tsx scripts/new-destination.ts",
     "backfill:case-links": "node scripts/backfill-case-customer-links.mjs",
     "backfill:case-links:apply": "node scripts/backfill-case-customer-links.mjs --apply"
   },
