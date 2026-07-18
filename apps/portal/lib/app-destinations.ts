@@ -1,5 +1,9 @@
 import destsData from '@petmove/domain/data/destinations.json'
-import { APP_SUPPORTED_DESTINATION_KEYS, DESTINATION_OVERRIDES } from '@petmove/domain'
+import {
+  destinationKoLabel,
+  APP_SUPPORTED_DESTINATION_KEYS,
+  DESTINATION_OVERRIDES,
+} from '@petmove/domain'
 
 interface Dest {
   ko: string
@@ -23,12 +27,6 @@ const DESTS = destsData as Dest[]
  * 정책 메모: memory project_app_supported_destinations.
  */
 
-/** 목적지 키 → 대표 한글 토큰(첫 한글 keyword). */
-function koTokenFor(key: string): string {
-  const kw = DESTINATION_OVERRIDES[key]?.keywords ?? []
-  return kw.find((k) => /[가-힣]/.test(k)) ?? kw[0] ?? key
-}
-
 // EU 회원국 묶음('eu' 키 한 벌 공유국) — keywords 의 한글 토큰에서 묶음 라벨('유럽연합',
 // 첫번째)만 제외한 나머지. 여정 카드는 'eu' 오버라이드 + euFamilyOverrides 한 벌을 전부
 // 공유(EU Reg 576/2013 동일)하고, 카드 라벨은 'eu' 키 공통으로 '유럽연합(EU)' 표기.
@@ -45,13 +43,13 @@ export const APP_EU_DESTINATIONS_KO: readonly string[] = (
 export const APP_EU_INDIVIDUAL_DESTINATIONS_KO: readonly string[] =
   APP_SUPPORTED_DESTINATION_KEYS.filter(
     (k) => k !== 'eu' && DESTINATION_OVERRIDES[k]?.archetype === 'eu-family',
-  ).map(koTokenFor)
+  ).map(destinationKoLabel)
 
 export const APP_DESTINATIONS_KO: readonly string[] = [
   // 비유럽(일본·태국·필리핀·중국 — 프로파일 선언 순서) → EU 묶음 → 유럽 개별 카드국.
   ...APP_SUPPORTED_DESTINATION_KEYS.filter(
     (k) => DESTINATION_OVERRIDES[k]?.archetype !== 'eu-family',
-  ).map(koTokenFor),
+  ).map(destinationKoLabel),
   ...APP_EU_DESTINATIONS_KO,
   ...APP_EU_INDIVIDUAL_DESTINATIONS_KO,
 ]

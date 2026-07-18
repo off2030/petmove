@@ -193,6 +193,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // EU 패밀리 입국용 항체검사는 부스터 chain 유지 시 무기한(null) — 만료 알림 없음.
     titer: { entryValidityMonths: null },
     appSupported: true,
+    // 사전 통지 — gov.ie Advance Notice Portal, 입국 24시간(1영업일) 전까지.
+    advanceNotice: { hardDeadlineHours: 24 },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     // 촌충약(Echinococcus, praziquantel)은 규정상 개 전용 — 고양이는 면제(EU Reg 2018/772).
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
@@ -207,6 +209,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     rabies: { doses: 1 },
     titer: { entryValidityMonths: null },
     appSupported: true,
+    // 사전 통지 — servizz.gov.mt 포털, 입국 3영업일 전까지(영업일 기준이라 시간 필드 미지정).
+    advanceNotice: {},
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
     vetVisitWindowDays: [{ window: 4, species: 'dog' }],
@@ -217,6 +221,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     rabies: { doses: 1 },
     titer: { entryValidityMonths: null },
     appSupported: true,
+    // 사전 통지 — Mattilsynet 이메일, 입국 48시간 전까지.
+    advanceNotice: { hardDeadlineHours: 48 },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
     vetVisitWindowDays: [{ window: 4, species: 'dog' }],
@@ -240,6 +246,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // NOTE: titer.entryValidityMonths 미선언 — 종전 TITER_ENTRY_VALIDITY_MONTHS 에도 키프로스만
     // 빠져 있었다(현행 유지). 다른 EU 패밀리처럼 null(무기한)로 선언할지는 별도 결정.
     appSupported: true,
+    // 사전 통지 — 지구 수의검역국 이메일(moa.gov.cy), 입국 48시간 전까지.
+    advanceNotice: { hardDeadlineHours: 48 },
     extraFields: ['address_overseas'],
   },
   eu: {
@@ -539,6 +547,21 @@ export const APP_SUPPORTED_DESTINATION_KEYS: string[] = destinationKeysWhere(
 export const IMPORT_PERMIT_DESTINATIONS: string[] = destinationKeysWhere(
   (o) => !!o.importPermit,
 )
+
+/**
+ * 도착 사전 통지국(아일랜드·몰타·노르웨이·키프로스) — `advanceNotice` 선언 파생.
+ * 전용 카드(ie/mt/no/cy-advance-notice)는 규정 고유라 1:1 수작업 유지 — 이 목록은
+ * 서비스(맡기기) 상세 등 '사전 통지 포함' 묶음 소비자용.
+ */
+export const ADVANCE_NOTICE_DESTINATIONS: string[] = destinationKeysWhere(
+  (o) => !!o.advanceNotice,
+)
+
+/** 목적지 키 → 대표 한글 라벨(첫 한글 keyword). 파생 목록을 한글 토큰 소비자가 쓸 때 사용. */
+export function destinationKoLabel(key: string): string {
+  const kw = DESTINATION_OVERRIDES[key]?.keywords ?? []
+  return kw.find((k) => /[가-힣]/.test(k)) ?? kw[0] ?? key
+}
 
 /**
  * 콤마 구분 다중 목적지를 개별 국가 토큰 배열로 분리.

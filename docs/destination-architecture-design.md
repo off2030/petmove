@@ -192,14 +192,18 @@ interface DestinationProfile {
 - **검증**: lint:copy·lint:dest 무변경 + 구/신 `resolveStepForDestination` 결과를 전 목적지 ×
   전 step deep-equal 대조(문구 골든이 안 덮는 links·첨부 라벨·inputs 포함) — 완전 동일.
 
-### Phase 3 — 맡기기(services) 아키타입화
-- `OFFLINE_DETAIL`/`ONLINE_DETAIL` 을 아키타입 기반으로 — `included` 는 프로파일의
-  `extraProcedures`·`importPermit`·`advanceNotice` 에서 파생, 비용은 `offlineCostBumpManwon`.
-- 새 목적지는 서비스 상세를 **따로 안 써도** 기본이 나오게.
+### Phase 3 — 맡기기(services) 아키타입화 — **부분 완료 2026-07-18 (나머지는 운영 결정 필요)**
+- ✅ 사전 통지국 명단(`OFFLINE/ONLINE_DETAIL` 4개국 복사 루프) → `ADVANCE_NOTICE_DESTINATIONS`
+  (프로파일 `advanceNotice` 선언) 파생.
+- ✅ 폴백 자체는 이미 있음 — `resolveDetail` 이 `목적지:트립 → 목적지 → default` 순으로
+  떨어져 새 목적지도 기본 상세가 나온다.
+- ⏸ `included`·FAQ(비용·준비 기간)·intro 의 프로파일 파생은 **고객 노출 문구·가격**이라
+  자동화 전에 운영자 결정 필요(어떤 문구 골격·가격 규칙으로 일반화할지). 보류.
 
-### Phase 4 — 신규 목적지 스캐폴드
-- `pnpm new:destination <key>` — 프로파일 스텁 + procedure-checks 파일 + registry 등록까지 생성.
-- 남은 수작업(규정 조사·전용 카드·사진)은 체크리스트로 안내.
+### Phase 4 — 신규 목적지 스캐폴드 — **완료 2026-07-18**
+- ✅ `pnpm new:destination <key> <한글명> --cc <iso2> [--archetype …]`
+  (scripts/new-destination.ts) — procedure-checks 스텁 생성 + registry 자동 등록(과거 5개국
+  누락 함정 방지) + 프로파일 스텁·수작업 체크리스트 출력. 가짜 국가로 왕복 검증 완료.
 
 ---
 

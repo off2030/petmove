@@ -2,7 +2,12 @@
 
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { matchesDestinationKey, type CaseRow } from '@petmove/domain'
+import {
+  destinationKoLabel,
+  matchesDestinationKey,
+  ADVANCE_NOTICE_DESTINATIONS,
+  type CaseRow,
+} from '@petmove/domain'
 import destsData from '@petmove/domain/data/destinations.json'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { readLastCaseId, readLastDest } from '@/components/portal-shell/last-case'
@@ -418,7 +423,8 @@ const OFFLINE_ADVANCE_NOTICE: DestDetail = {
   ],
   reviews: [],
 }
-for (const k of ['아일랜드', '몰타', '노르웨이', '키프로스']) OFFLINE_DETAIL[k] = OFFLINE_ADVANCE_NOTICE
+// 사전 통지국 — 프로파일 advanceNotice 선언 파생(아일랜드·몰타·노르웨이·키프로스).
+for (const k of ADVANCE_NOTICE_DESTINATIONS.map(destinationKoLabel)) OFFLINE_DETAIL[k] = OFFLINE_ADVANCE_NOTICE
 
 const ONLINE_DETAIL: Record<string, DestDetail> = {
   일본: {
@@ -572,7 +578,7 @@ const ONLINE_ADVANCE_NOTICE: DestDetail = {
   ],
   reviews: [],
 }
-for (const k of ['아일랜드', '몰타', '노르웨이', '키프로스']) ONLINE_DETAIL[k] = ONLINE_ADVANCE_NOTICE
+for (const k of ADVANCE_NOTICE_DESTINATIONS.map(destinationKoLabel)) ONLINE_DETAIL[k] = ONLINE_ADVANCE_NOTICE
 
 /** 히어로 3장 — 로잔 공통 강점(전문성·경험·앱 편의). 올케어·안심케어 둘 다 사용. */
 const HIGHLIGHTS: Highlight[] = [
