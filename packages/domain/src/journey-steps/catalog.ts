@@ -1307,18 +1307,18 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
 
   // ── 중국 수출 검역 (왕복 케이스 한정 — 귀국 전) ─────────────────
   // 한국 재입국엔 중국 해관이 발급한 동물위생증명서(动物卫生证书)가 필요(한국 QIA 요건).
-  // 절차(공식): 출국 7일 이내 '互联网+海关'(online.customs.gov.cn) 또는 单一窗口에서 개인 사용자
-  // (여권 등록)로 '携带出境宠物检疫' 신청 → 해관 현장검역 → 3영업일 내 동물위생증명서 발급.
-  // 지정 병원 나열 안 함 — 현장검역 장소는 접수 해관이 도시별로 안내(12360). cn.export 검증 룰 미작성(추후).
+  // 발급 방법·장소는 도시별로 달라(해관 온라인 신청 互联网+海关 + 현장검역) 문구는 단순화 —
+  // 베이징·상하이는 지정 동물병원(베이징 观赏动物医院·상하이 申浦动物医院) 경유. 병원 링크는 확정 후.
+  // cn.export 검증 룰 미작성(추후).
   {
     id: 'cn-export-quarantine',
     category: 'document',
     title: '중국 수출 검역',
     shortLabel: '수출',
     description:
-      '한국에 다시 입국하려면 중국 해관이 발급한 동물위생증명서(动物卫生证书)가 필요해요.\n\n출국 7일 이내에 인터넷+해관 온라인 플랫폼에서 출국 반려동물 검역을 신청하세요. 개인 사용자로 여권을 등록해 신청할 수 있어요.\n해관이 서류를 확인한 뒤 현장검역 일정을 안내하고, 통과하면 3영업일 안에 동물위생증명서를 발급해요.\n광견병 접종증명서(유효기간 내)·마이크로칩·광견병 항체 검사 결과(0.5 IU/mL 이상, 채혈 24개월 이내)가 필요해요.\n짧은 여행이면 한국 출발 전에 온라인 신청과 현장검역 예약을 마치세요. 접수 해관은 도시마다 달라 해관 콜센터(12360)에 확인하세요.',
+      '중국 해관에서 동물위생증명서(动物卫生证书)를 발급받으세요.\n\n발급 방법 및 장소는 지역마다 달라요.\n베이징, 상하이는 지정 동물병원을 통해 발급받을 수 있어요.',
     doneSummary: '중국 수출 검역을 받았어요.',
-    cardLine: '중국 해관에 출국 반려동물 검역을 신청하세요.',
+    cardLine: '중국 해관에서 동물위생증명서를 발급받으세요.',
     applicability: { destinations: ['china'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'quarantine:cn_export_quarantine_date',
@@ -1327,11 +1327,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         key: 'cn_export_quarantine_date',
         label: '검역일',
         type: 'date',
-        helpText: '중국 해관에서 현장검역을 받은 날짜',
+        helpText: '중국 해관에서 동물위생증명서를 발급받은 날짜',
       },
-    ],
-    links: [
-      { url: 'https://online.customs.gov.cn/', label: '인터넷+해관 — 출국 반려동물 검역 신청' },
     ],
     allowAttachments: true,
     attachmentHint: '동물위생증명서 사본을 사진·PDF로 보관하세요.',
