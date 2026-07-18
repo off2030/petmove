@@ -1,5 +1,5 @@
 import type { ProcedureCheck } from './types'
-import { validateTiterAfterBooster } from '../journey-steps/date-rules'
+import { validateTiterAfterBooster, validateTiterWithinChain } from '../journey-steps/date-rules'
 import {
   addYears,
   daysBetween,
@@ -307,6 +307,38 @@ export const CN_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: '항체 검사일이 광견병 백신 이후.' }
+    },
+  },
+  {
+    // 일본(jp.rabies-titer-vs-booster)과 동일 — 1차(기준) 채혈이 부스터 chain 의 면역 유효기간을
+    // 벗어나면 주의. 정상 입력은 입력 차단(validateTiterWithinChain 공용, validateTiterDate 안)이
+    // 막고, 입력 후 부스터를 수정해 채혈이 유효기간 밖으로 밀려난 경우를 표면화하는 backstop.
+    id: 'cn.rabies-titer-vs-booster',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 항체 검사 타이밍',
+    description:
+      '1차(기준) 채혈일은 2차부터 끊김 없이 이어진 부스터 chain 의 면역 유효기간 이내여야 함.',
+    severity: 'warning',
+    addedAt: '2026-07-18',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      const titers = readTiterEntries(caseRow)
+      // 필수: 2차 접종 기록 + 1개 이상의 항체 검사
+      if (rabies.length < 2 || titers.length === 0) return SKIP
+
+      // 1차(기준) 항체 검사만 본다 — 이 규칙은 '광견병 항체 검사' step 에 매핑되므로.
+      const boosters = rabies.slice(1)
+      const primary = titers.find((t) => t.originalIndex === 0)
+      if (!primary) return SKIP
+      if (validateTiterWithinChain(boosters, primary.date)) {
+        return {
+          ok: false,
+          message: '채혈일이 광견병 백신 면역 유효기간을 벗어났어요. 날짜를 확인하세요.',
+          offendingPaths: ['rabies_titer_records[0].date'],
+        }
+      }
+      return { ok: true, message: '항체 검사 시기 적합.' }
     },
   },
 
