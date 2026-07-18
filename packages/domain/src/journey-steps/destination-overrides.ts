@@ -68,7 +68,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     },
     'rabies-titer': {
       description:
-        '중국 해관총서(GACC)가 지정한 검사기관에서 광견병 항체 검사를 받으세요.\n\n한국에는 지정 검사기관이 없어 일본·미국 등 해외 기관으로 검체를 보내요.\n동물병원을 통해 의뢰할 수 있어요.\n2차 접종 후에 검사하는 것이 좋아요.\n0.5 IU/mL 이상이면 합격이에요.\n검사 결과는 채혈일로부터 1년간 유효해요.',
+        '중국 해관총서(GACC)가 지정한 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n2차 접종 후에 검사해야 해요.\n0.5 IU/mL 이상이면 합격이에요.\n검사 결과는 채혈일로부터 1년간 유효해요.',
       validationIds: ['cn.rnatt-after-rabies-vaccine', 'cn.rnatt-valid-1year-on-arrival'],
     },
     // 도착 — 중국 수입 검역. 마이크로칩 + 항체 ≥0.5 IU/ml + 현장검역 합격 시 격리 면제,
