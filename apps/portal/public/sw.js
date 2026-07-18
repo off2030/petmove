@@ -12,7 +12,7 @@
  *
  * ⚠️ 캐시 내용을 바꾸는(사진 교체·삭제 등) 배포에서는 VERSION 을 올려 옛 캐시를 강제 폐기한다.
  */
-const VERSION = 'portal-v22'
+const VERSION = 'portal-v23'
 const STATIC_CACHE = `portal-static-${VERSION}`
 const PAGE_CACHE = `portal-page-${VERSION}`
 const OFFLINE_URL = '/offline'
