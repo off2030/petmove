@@ -47,19 +47,19 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/philippines-palm-resort-cove.webp',
   ],
   중국: [
-    '/destinations/china-00.webp', // landscape
-    '/destinations/china-01.webp', // landscape
-    '/destinations/china-05.webp', // landscape
-    '/destinations/china-06.webp', // landscape
-    '/destinations/china-08.webp', // portrait
-    '/destinations/china-09.webp', // landscape
-    '/destinations/china-10.webp', // landscape
-    '/destinations/china-11.webp', // landscape
-    '/destinations/china-12.webp', // landscape
-    '/destinations/china-14.webp', // landscape
-    '/destinations/china-16.webp', // landscape
-    '/destinations/china-17.webp', // landscape
-    '/destinations/china-19.webp', // landscape
+    '/destinations/china-00.webp',
+    '/destinations/china-01.webp',
+    '/destinations/china-02.webp',
+    '/destinations/china-03.webp',
+    '/destinations/china-04.webp',
+    '/destinations/china-05.webp',
+    '/destinations/china-06.webp',
+    '/destinations/china-07.webp',
+    '/destinations/china-08.webp',
+    '/destinations/china-09.webp',
+    '/destinations/china-10.webp',
+    '/destinations/china-11.webp',
+    '/destinations/china-12.webp',
   ],
   프랑스: [
     '/destinations/france-02.webp',
