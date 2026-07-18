@@ -46,6 +46,30 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/philippines-bangka-wake-reef.webp',
     '/destinations/philippines-palm-resort-cove.webp',
   ],
+  중국: [
+    '/destinations/china-00.webp', // landscape
+    '/destinations/china-01.webp', // landscape
+    '/destinations/china-02.webp', // landscape
+    '/destinations/china-03.webp', // landscape
+    '/destinations/china-04.webp', // portrait
+    '/destinations/china-05.webp', // landscape
+    '/destinations/china-06.webp', // landscape
+    '/destinations/china-07.webp', // landscape
+    '/destinations/china-08.webp', // portrait
+    '/destinations/china-09.webp', // landscape
+    '/destinations/china-10.webp', // landscape
+    '/destinations/china-11.webp', // landscape
+    '/destinations/china-12.webp', // landscape
+    '/destinations/china-13.webp', // landscape
+    '/destinations/china-14.webp', // landscape
+    '/destinations/china-15.webp', // portrait
+    '/destinations/china-16.webp', // landscape
+    '/destinations/china-17.webp', // landscape
+    '/destinations/china-18.webp', // landscape
+    '/destinations/china-19.webp', // landscape
+    '/destinations/china-20.webp', // portrait
+    '/destinations/china-21.webp', // landscape
+  ],
   프랑스: [
     '/destinations/france-02.webp',
     '/destinations/france-09.webp',
