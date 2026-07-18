@@ -1,4 +1,4 @@
-import { isRabiesFreeOrigin } from '../destination-config'
+import { isRabiesFreeOrigin, DESTINATION_OVERRIDES } from '../destination-config'
 import { addMonths } from '../procedure-checks/utils'
 import { findDestinationKey } from './applicability'
 
@@ -11,22 +11,15 @@ import { findDestinationKey } from './applicability'
  * 한국 **귀국용**(왕복) 유효기간은 별도 — 한국 농림축산검역본부 공통 24개월이며, 광견병
  * **발생국**에서 올 때만 적용(비발생국은 면제 — `isRabiesFreeOrigin`).
  *
- * admin 전용 국가(호주 12·싱가포르 12·중국 12·대만 12·뉴질랜드 24·하와이 36 등)는 24개국
- * 정리 때 숫자만 채운다. 그때까진 미지정 = 입국용 만료 알림 없음(귀국 2년만).
+ * 프로파일 파생 — 각 목적지의 `titer.entryValidityMonths` 선언(destination-config)이 진실
+ * 출처(근거 주석도 그쪽에). admin 전용 국가(호주 12·싱가포르 12·대만 12·뉴질랜드 24·하와이
+ * 36 등)는 24개국 정리 때 선언을 채운다. 그때까진 미선언 = 입국용 만료 알림 없음(귀국 2년만).
  */
-export const TITER_ENTRY_VALIDITY_MONTHS: Record<string, number | null> = {
-  japan: 24,
-  // 중국 — GACC 실무상 RNATT 입국용 채혈일 기준 1년(cn.rnatt-valid-1year-on-arrival 와 동일).
-  china: 12,
-  // EU 패밀리 — 입국용은 chain 유지 시 무기한(별도 만료 알림 없음).
-  eu: null,
-  uk: null,
-  ireland: null,
-  malta: null,
-  norway: null,
-  finland: null,
-  switzerland: null,
-}
+export const TITER_ENTRY_VALIDITY_MONTHS: Record<string, number | null> = Object.fromEntries(
+  Object.entries(DESTINATION_OVERRIDES).flatMap(([key, o]) =>
+    o.titer?.entryValidityMonths !== undefined ? [[key, o.titer.entryValidityMonths]] : [],
+  ),
+)
 
 /** 한국 귀국 시 광견병 항체검사 유효기간(개월) — 농림축산검역본부 공통. */
 export const KR_RETURN_TITER_VALIDITY_MONTHS = 24

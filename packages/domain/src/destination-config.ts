@@ -164,6 +164,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['일본', 'japan'],
     archetype: 'jp-2dose',
     rabies: { doses: 2 },
+    titer: { entryValidityMonths: 24 },
     extraSection: 'japan',
     extraFields: [
       // 출국 항공편 (한국 → 일본) — 항공권 정보. 날짜는 한국 출발 기준.
@@ -188,6 +189,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['아일랜드', 'ireland'],
     archetype: 'eu-family',
     rabies: { doses: 1 },
+    // EU 패밀리 입국용 항체검사는 부스터 chain 유지 시 무기한(null) — 만료 알림 없음.
+    titer: { entryValidityMonths: null },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     // 촌충약(Echinococcus, praziquantel)은 규정상 개 전용 — 고양이는 면제(EU Reg 2018/772).
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
@@ -196,6 +199,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['몰타', 'malta'],
     archetype: 'eu-family',
     rabies: { doses: 1 },
+    titer: { entryValidityMonths: null },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
@@ -203,6 +207,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['노르웨이', 'norway'],
     archetype: 'eu-family',
     rabies: { doses: 1 },
+    titer: { entryValidityMonths: null },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
@@ -210,6 +215,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['핀란드', 'finland'],
     archetype: 'eu-family',
     rabies: { doses: 1 },
+    titer: { entryValidityMonths: null },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
@@ -219,6 +225,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['키프로스', 'cyprus'],
     archetype: 'eu-family',
     rabies: { doses: 1 },
+    // NOTE: titer.entryValidityMonths 미선언 — 종전 TITER_ENTRY_VALIDITY_MONTHS 에도 키프로스만
+    // 빠져 있었다(현행 유지). 다른 EU 패밀리처럼 null(무기한)로 선언할지는 별도 결정.
     extraFields: ['address_overseas'],
   },
   eu: {
@@ -235,6 +243,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     ],
     archetype: 'eu-family',
     rabies: { doses: 1 },
+    titer: { entryValidityMonths: null },
     extraFields: ['address_overseas'],
   },
   switzerland: {
@@ -242,6 +251,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['스위스', 'switzerland'],
     archetype: 'eu-family',
     rabies: { doses: 1 },
+    titer: { entryValidityMonths: null },
     extraSection: 'switzerland',
     extraFields: ['email', 'entry_date', 'entry_airport', 'entry_purpose', 'cropped'],
   },
@@ -249,6 +259,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['영국', '북아일랜드', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'],
     archetype: 'eu-family',
     rabies: { doses: 1 },
+    titer: { entryValidityMonths: null },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraSection: 'uk',
     // 촌충약(Echinococcus)은 규정상 개 전용 — 고양이는 구충시간 미표시.
@@ -369,6 +380,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // GACC 실무상 1년 라이선스 백신만 인정(2·3년 거부) — cn.rabies-only-1year-vaccine 와 같은 기준.
     // 1·2차 간격 30일은 하드 차단 없이 권고만(2026-07-17 순서만 유지 결정).
     rabies: { doses: 2, oneYearVaccineOnly: true, doseIntervalDays: 'soft' },
+    // GACC 실무상 RNATT 입국용 채혈일 기준 1년(cn.rnatt-valid-1year-on-arrival 와 동일).
+    titer: { entryValidityMonths: 12 },
     vaccines: ['rabies', 'rabies_titer'],
   },
   taiwan: {
