@@ -904,6 +904,14 @@ export function StepDetailView({
       return null
     }
     if (isTiter) {
+      // 중국 — 항체검사는 2차 접종 후에 해야 한다(카드 문구와 짝). 2차 접종이 없는데 채혈일을
+      // 넣으면 차단해 2차를 먼저 입력하게 한다. (2차가 있으면 아래 validateTiterDate 가 '채혈 ≥ 2차'를 막음.)
+      if (destinationKey === 'china' && titerForm.date.trim()) {
+        const r2 = readRabiesEntryForm(caseRow?.data, 1)
+        if (!r2.date) {
+          return '항체 검사는 2차 광견병 접종 후에 해야 해요. 2차 접종일을 먼저 입력하세요.'
+        }
+      }
       // EU 패밀리 — 채혈은 직전 유효 접종 + 30일 이후 (chain 유지 시 시계 리셋 X).
       // procedure-check(eu.titer-min-30days-after-vaccine)와 같은 알고리즘의 입력 차단.
       if (destinationKey && EU_ENTRY_FAMILY.includes(destinationKey)) {
