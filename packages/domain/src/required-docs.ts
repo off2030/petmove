@@ -379,7 +379,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '중국 해관에서 발급하는 출국용 동물위생증명서예요.\n\n한국에 다시 입국할 때 반드시 필요해요.\n\n발급 방법·장소는 도시마다 달라요. 베이징·상하이는 지정 동물병원에서 검사를 받고, 해관 콜센터(12360)에 확인하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '중국 해관에서 발급하는 출국용 동물위생증명서예요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'cn-export-quarantine',
     },
     {
