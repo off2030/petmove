@@ -1,5 +1,6 @@
 import type { CaseRow } from '../types'
 import {
+  destinationKeysWhere,
   getDestinationOverride,
   getTripType,
   parseDestinations,
@@ -50,28 +51,21 @@ export function buildCaseJourneyContext(
  * 광견병 1회 접종(+ 필요 시 유효기간 유지용 부스터) 모델인 목적지 — destination-config 키.
  * 단일 출처: catalog 의 rabies-vaccine-2 excludeDestinations 와 추가 백신(rabies-vaccine-extra)
  * 노출·완료 판정(2개=부스터 vs 일본 3개=3차+)이 모두 이 목록을 본다.
+ * 프로파일 파생 — 목적지의 `rabies.doses` 선언(destination-config)이 진실 출처.
  */
-export const SINGLE_DOSE_RABIES_DESTINATIONS: string[] = [
-  'thailand',
-  'philippines',
-  'eu',
-  'uk',
-  'ireland',
-  'malta',
-  'norway',
-  'finland',
-  'switzerland',
-  'cyprus',
-]
+export const SINGLE_DOSE_RABIES_DESTINATIONS: string[] = destinationKeysWhere(
+  (o) => o.rabies?.doses === 1,
+)
 
 /**
  * 광견병 백신 면역 유효기간을 **1년(연 1회 접종)만** 인정하는 목적지 — destination-config 키.
  * 2년·3년 라이선스 백신 선택을 입력 차단(펫무브앱 YearSelect 비활성 + getSaveBlockError 저장 거부).
- *  - 중국: GACC 실무상 1년 백신만 인정(2·3년 거부) — cn.rabies-only-1year-vaccine 와 같은 기준.
- *  - 태국·필리핀: "최근 접종 12개월 이내" 관례로 1년 유효기간만 취급(다년 백신은 실무상 미인정).
+ * 프로파일 파생 — `rabies.oneYearVaccineOnly` (근거 주석은 각 목적지 선언부에).
  * ⚠️ 다년(3년) 백신을 '부스터'로 인정하는 예외는 이 정책상 다루지 않음(운영자 결정, 2026-07-17).
  */
-export const RABIES_ONE_YEAR_VALIDITY_DESTINATIONS: string[] = ['china', 'thailand', 'philippines']
+export const RABIES_ONE_YEAR_VALIDITY_DESTINATIONS: string[] = destinationKeysWhere(
+  (o) => !!o.rabies?.oneYearVaccineOnly,
+)
 
 /**
  * 항공권 날짜를 수입검역의 '예정 [날짜]' 배지로 띄워도 되는 목적지 — destination-config 키.

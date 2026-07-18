@@ -162,6 +162,8 @@ export interface DestinationOverride {
 export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   japan: {
     keywords: ['일본', 'japan'],
+    archetype: 'jp-2dose',
+    rabies: { doses: 2 },
     extraSection: 'japan',
     extraFields: [
       // 출국 항공편 (한국 → 일본) — 항공권 정보. 날짜는 한국 출발 기준.
@@ -184,22 +186,30 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   // → 상세페이지에 내부구충 기본 표시. eu 보다 먼저 매칭되어야 하므로 위에 둠.
   ireland: {
     keywords: ['아일랜드', 'ireland'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     // 촌충약(Echinococcus, praziquantel)은 규정상 개 전용 — 고양이는 면제(EU Reg 2018/772).
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
   malta: {
     keywords: ['몰타', 'malta'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
   norway: {
     keywords: ['노르웨이', 'norway'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
   finland: {
     keywords: ['핀란드', 'finland'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
@@ -207,6 +217,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   // 사전 통지(moa.gov.cy 공식) 카드가 별도라 eu 묶음에서 분리. eu 보다 먼저 매칭.
   cyprus: {
     keywords: ['키프로스', 'cyprus'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
     extraFields: ['address_overseas'],
   },
   eu: {
@@ -221,16 +233,22 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       'slovenia', 'lithuania', 'latvia', 'estonia', 'luxembourg',
       'eu',
     ],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
     extraFields: ['address_overseas'],
   },
   switzerland: {
     // 스위스는 EU 솅겐 가입국이지만 통관은 별도. AnnexIII + 스위스 전용 BLV 신청서(CH) 동시 제출.
     keywords: ['스위스', 'switzerland'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
     extraSection: 'switzerland',
     extraFields: ['email', 'entry_date', 'entry_airport', 'entry_purpose', 'cropped'],
   },
   uk: {
     keywords: ['영국', '북아일랜드', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraSection: 'uk',
     // 촌충약(Echinococcus)은 규정상 개 전용 — 고양이는 구충시간 미표시.
@@ -251,6 +269,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   thailand: {
     keywords: ['태국', 'thailand'],
+    archetype: 'sea-permit',
+    // 1회 접종 + "최근 접종 12개월 이내" 관례 — 1년 유효기간만 취급(다년 백신 실무상 미인정).
+    rabies: { doses: 1, oneYearVaccineOnly: true },
     vaccines: ['rabies', 'rabies_titer', 'general'],
     extraSection: 'thailand',
     // 태국은 검역소·도착지 = 입국공항 (Bangkok=BKK, Phuket=HKT, Chiang Mai=CNX) 이라 entry_airport 로 통합.
@@ -264,6 +285,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   philippines: {
     keywords: ['필리핀', 'philippines'],
+    archetype: 'sea-permit',
+    // 1회 접종 + "최근 접종 12개월 이내" 관례 — 태국과 동일(다년 백신 실무상 미인정).
+    rabies: { doses: 1, oneYearVaccineOnly: true },
     vaccines: ['rabies', 'rabies_titer', 'general', 'internal_parasite'],
     extraSection: 'philippines',
     extraFields: [
@@ -340,8 +364,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   china: {
     // 한국 = GACC 비지정 국가 → 광견병 항체 검사 필수.
-    // 중국은 1년 라이선스 백신만 인정 (2년/3년 거부).
     keywords: ['중국', 'china'],
+    archetype: 'jp-2dose',
+    // GACC 실무상 1년 라이선스 백신만 인정(2·3년 거부) — cn.rabies-only-1year-vaccine 와 같은 기준.
+    // 1·2차 간격 30일은 하드 차단 없이 권고만(2026-07-17 순서만 유지 결정).
+    rabies: { doses: 2, oneYearVaccineOnly: true, doseIntervalDays: 'soft' },
     vaccines: ['rabies', 'rabies_titer'],
   },
   taiwan: {
@@ -415,6 +442,18 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
 }
 
 // ── 헬퍼 함수 ──
+
+/**
+ * 프로파일 조건을 만족하는 목적지 키 목록 — 하드코딩 명단을 프로파일 파생으로 대체할 때
+ * 사용(Phase 1-c). 순서는 DESTINATION_OVERRIDES 선언 순서(소비자는 전부 membership 만 봄).
+ */
+export function destinationKeysWhere(
+  pred: (override: DestinationOverride) => boolean,
+): string[] {
+  return Object.entries(DESTINATION_OVERRIDES)
+    .filter(([, override]) => pred(override))
+    .map(([key]) => key)
+}
 
 /**
  * 콤마 구분 다중 목적지를 개별 국가 토큰 배열로 분리.
