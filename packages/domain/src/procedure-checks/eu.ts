@@ -131,7 +131,16 @@ export const EU_CHECKS: ProcedureCheck[] = [
     run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       const titers = readTiterEntries(caseRow)
-      if (rabies.length === 0 || titers.length === 0) return SKIP
+      if (titers.length === 0) return SKIP
+      // 항체가 입력됐는데 선행 접종이 아예 없으면 — 접종 먼저 입력. 일본·중국의 chain-consistent
+      // 와 문구 통일(EU 는 1회국이라 '2차' 대신 '광견병 백신').
+      if (rabies.length === 0) {
+        return {
+          ok: false,
+          message: '광견병 백신 정보가 없어요. 입력하세요.',
+          offendingPaths: ['rabies_titer_records'],
+        }
+      }
 
       const offendingPaths: string[] = []
       const problems: string[] = []
@@ -142,7 +151,8 @@ export const EU_CHECKS: ProcedureCheck[] = [
           .sort((a, b) => a.date.localeCompare(b.date))
         if (priorDoses.length === 0) {
           offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push('채혈일 이전의 광견병 접종 기록이 없어요. 날짜를 확인하세요.')
+          // 순서 위반 — 일본·중국(validateTiterAfterBooster)과 동일 문구.
+          problems.push('광견병 항체 검사일이 광견병 접종일보다 빨라요. 날짜를 확인하세요.')
           continue
         }
         // 30일 기산점 = 채혈 직전(가장 최근) 접종. 그 이전 접종은 무관 — chain 거슬러가기 X.

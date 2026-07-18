@@ -238,39 +238,8 @@ export const CN_CHECKS: ProcedureCheck[] = [
   },
 
   // ── RNATT (광견병 항체 검사) ──
-  {
-    id: 'cn.rnatt-after-rabies-vaccine',
-    country: COUNTRY,
-    category: '광견병',
-    title: '항체 검사는 광견병 접종 이후',
-    description:
-      'RNATT 채혈일은 직전 광견병 접종 이후여야 함 (2차 접종 후 시행 권장). (GACC 채신 lab 보고서 표준)',
-    severity: 'info',
-    addedAt: '2026-05-06',
-    run: ({ caseRow, destination }) => {
-      const rabies = readRabiesEntries(caseRow)
-      const titers = readTiterEntries(caseRow)
-      if (rabies.length === 0 || titers.length === 0) return SKIP
-
-      const offending: string[] = []
-      const problems: string[] = []
-      for (const t of titers) {
-        const priorDoses = rabies.filter((r) => r.date <= t.date)
-        if (priorDoses.length === 0) {
-          offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date}) 이전의 광견병 접종 기록이 없어요.`)
-        }
-      }
-      if (problems.length > 0) {
-        return {
-          ok: false,
-          message: problems.join(' / '),
-          offendingPaths: offending,
-        }
-      }
-      return { ok: true, message: '모든 RNATT 채혈이 광견병 접종 이후.' }
-    },
-  },
+  // '채혈은 접종 이후' backstop 은 cn.rabies-titer-chain-consistent(일본과 동일)가 흡수 —
+  // 구 cn.rnatt-after-rabies-vaccine(info, "접종 기록이 없어요")은 중복이라 제거(2026-07-18).
   // (≥0.5 IU/ml 결과치 룰은 의도적 제외 — 검사기관에서 이미 fail 결과 나옴, 시스템 검증 불필요)
   {
     id: 'cn.rnatt-valid-1year-on-arrival',
