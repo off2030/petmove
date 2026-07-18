@@ -1,4 +1,5 @@
 import type { ProcedureCheck } from './types'
+import { validateTiterAfterBooster } from '../journey-steps/date-rules'
 import {
   addYears,
   daysBetween,
@@ -299,6 +300,44 @@ export const CN_CHECKS: ProcedureCheck[] = [
         message: `최신 RNATT(${newest.date})의 유효기간(${expiry})이 출국일(${dep})보다 빨라 1년을 초과했어요.`,
         offendingPaths: offending,
       }
+    },
+  },
+  {
+    // 일본(jp.rabies-titer-chain-consistent)과 동일한 backstop — 중국도 2회 접종 후 항체검사라,
+    // 항체가 입력된 상태에서 선행 접종(1·2차)이 누락이거나 항체보다 늦으면 주의. 정상 입력은 입력
+    // 차단이 막지만, 나중에 접종일을 지워 chain 이 깨지는 경로(입력 차단 미포착)를 표면화한다.
+    id: 'cn.rabies-titer-chain-consistent',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 항체 검사 일정',
+    description:
+      '중국은 광견병 1차 + 2차 접종 후 항체 검사(RNATT)가 필수. 항체 검사가 입력된 상태에서 선행 광견병 접종(1차·2차)이 누락이거나 항체보다 늦으면 주의.',
+    severity: 'warning',
+    addedAt: '2026-07-18',
+    run: ({ caseRow }) => {
+      const titers = readTiterEntries(caseRow)
+      if (titers.length === 0) return SKIP
+      const rabies = readRabiesEntries(caseRow)
+      const titerDate = titers.map((t) => t.date).sort()[0]
+
+      // 시간 순서 위반(채혈 < 1·2차) — client 입력 차단과 같은 domain 함수(단일 출처).
+      const orderMsg = validateTiterAfterBooster(
+        rabies.slice(0, 2).map((r) => r.date),
+        titerDate,
+      )
+      if (orderMsg) {
+        return { ok: false, message: orderMsg, offendingPaths: ['rabies_titer_records'] }
+      }
+      // 선행 누락 — 가까운 선행(2차) 우선, 그 다음 1차.
+      if (rabies.length < 2) {
+        const missing = rabies.length === 0 ? '광견병 1차' : '광견병 2차'
+        return {
+          ok: false,
+          message: `${missing} 정보가 없어요. 입력하세요.`,
+          offendingPaths: ['rabies_titer_records'],
+        }
+      }
+      return { ok: true, message: '항체 검사일이 광견병 백신 이후.' }
     },
   },
 
