@@ -491,6 +491,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'japan',
         'thailand',
         'philippines',
+        'china',
         'eu',
         'uk',
         'ireland',

@@ -75,6 +75,15 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         'cn.rnatt-valid-1year-on-arrival',
       ],
     },
+    // 항공권 — 중국은 채혈 후 대기 요건이 없다(EU 3개월·일본 180일과 다름). 입국 시 백신·항체
+    // 유효만 필요. earliest/validationIds 로 대기 차단을 끈다(base 의 일본 180일 anchor 제거).
+    'flight-purchase': {
+      description:
+        '중국 입국 준비가 되면 항공권을 구매하세요.\n\n중국은 광견병 항체 검사 후 별도의 대기 기간이 없어요. 마이크로칩·광견병 접종·항체 검사가 유효한 상태로 입국하면 돼요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '중국에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: [],
+    },
     // 도착 — 중국 수입 검역. 마이크로칩 + 항체 ≥0.5 IU/ml + 현장검역 합격 시 격리 면제,
     // 미충족 시 GACC 지정 격리시설 30일. done 은 quarantine:<field> 일반 시그널.
     departure: {
