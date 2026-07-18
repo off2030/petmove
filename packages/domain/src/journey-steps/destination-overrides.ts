@@ -62,7 +62,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '2차 광견병 백신을 접종하세요.\n\n명확한 규정은 없지만 1차 접종 후 30일 이상 지나서 하는 것이 좋아요.\n1차 접종 면역 유효기간 이내에 접종하세요.\n면역 유효기간은 백신의 종류에 상관없이 1년이에요.\n중국 입국 때 면역 유효기간이 남아있어야 해요.',
       validationIds: [
         'cn.rabies-2-doses-required',
-        'cn.rabies-doses-30days-to-1year-apart',
+        'cn.rabies-booster-within-prime-validity',
         'cn.rabies-only-1year-vaccine',
       ],
     },

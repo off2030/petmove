@@ -133,12 +133,15 @@ export const CN_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'cn.rabies-doses-30days-to-1year-apart',
+    // 30일 최소 간격은 GACC 근거 없는 보수 추정이라 검증하지 않는다(문구도 '명확한 규정은 없지만
+    // …좋아요'로 권고 처리). 여기선 '직전 접종 유효기간 이내'(부스터 chain)만 본다 — portal 은
+    // 입력 차단이 담당하고, 이 주의는 1차를 나중에 수정해 chain 이 깨진 경우의 backstop.
+    id: 'cn.rabies-booster-within-prime-validity',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 도즈 간격 30일 이상 ~ 1년 이내',
+    title: '광견병 부스터는 직전 접종 유효기간 이내',
     description:
-      '연속된 광견병 접종 간 간격: 직전 접종 30일 이후 + 직전 접종 유효기간(1년) 이내. 1년 초과 시 부스터 chain 끊김 (1차로 간주).',
+      '연속된 광견병 접종은 직전 접종의 면역 유효기간(1년) 이내에 해야 함. 만료 후 접종은 부스터 chain 이 끊겨 1차로 간주.',
     severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
@@ -150,16 +153,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
       for (let i = 1; i < rabies.length; i++) {
         const prev = rabies[i - 1]
         const curr = rabies[i]
-        const gap = daysBetween(prev.date, curr.date)
         const prevValidUntil = resolveValidUntil(prev.date, prev.valid_until)
-        if (gap === null) continue
-        if (gap < 30) {
-          issues.push(`${prev.date}부터 ${curr.date}까지 ${gap}일이에요. 30일 이상이어야 해요.`)
-          offending.push(
-            `rabies_dates[${prev.originalIndex}].date`,
-            `rabies_dates[${curr.originalIndex}].date`,
-          )
-        }
         if (curr.date > prevValidUntil) {
           issues.push(`${curr.date} 접종이 직전 접종(${prev.date})의 유효기간(${prevValidUntil}) 만료 후라서 부스터 chain이 끊겨요.`)
           offending.push(
@@ -175,7 +169,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
           offendingPaths: Array.from(new Set(offending)),
         }
       }
-      return { ok: true, message: '모든 인접 광견병 도즈 간격 적합 (30일 이상 ~ 1년 이내).' }
+      return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
     },
   },
   {
