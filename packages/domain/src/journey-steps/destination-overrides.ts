@@ -81,7 +81,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       title: '중국 수입 검역',
       shortLabel: '수입',
       description:
-        '중국 도착 후 공항 세관(해관)에서 수입 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 광견병 항체 검사 결과가 0.5 IU/mL 이상이고 현장 검역에 합격하면 격리 없이 통과할 수 있어요.\n조건을 충족하지 못하면 지정 격리시설에서 30일간 격리해요.',
+        '중국 도착 후 공항 세관(해관)에서 수입 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에 격리되거나 한국으로 반송될 수 있어요.',
       doneSummary: '중국 수입 검역을 받았어요.',
       done: 'quarantine:cn_import_quarantine_date',
       inputs: [
