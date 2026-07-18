@@ -140,7 +140,9 @@ if (write) {
 
 let golden = ''
 try {
-  golden = readFileSync(GOLDEN, 'utf8')
+  // CRLF 정규화 — .gitattributes(eol=lf)가 1차 방어지만, 이미 CRLF 로 체크아웃된
+  // 워킹트리(lint-journey-copy.ts 와 같은 이중 방어)를 위해 읽을 때도 정규화한다.
+  golden = readFileSync(GOLDEN, 'utf8').replace(/\r\n/g, '\n')
 } catch {
   console.error('✗ 골든 스냅샷이 없습니다. `pnpm lint:dest:write` 로 먼저 생성하세요.')
   process.exit(1)
