@@ -1,4 +1,5 @@
 import { AE_CHECKS } from './ae'
+import { AR_CHECKS } from './ar'
 import { AU_CHECKS } from './au'
 import { BR_CHECKS } from './br'
 import { CA_CHECKS } from './ca'
@@ -11,7 +12,9 @@ import { HK_CHECKS } from './hk'
 import { ID_CHECKS } from './id'
 import { IL_CHECKS } from './il'
 import { JP_CHECKS } from './jp'
+import { KH_CHECKS } from './kh'
 import { MA_CHECKS } from './ma'
+import { MN_CHECKS } from './mn'
 import { MX_CHECKS } from './mx'
 import { MY_CHECKS } from './my'
 import { NZ_CHECKS } from './nz'
@@ -22,6 +25,8 @@ import { TH_CHECKS } from './th'
 import { TR_CHECKS } from './tr'
 import { TW_CHECKS } from './tw'
 import { UA_CHECKS } from './ua'
+import { UZ_CHECKS } from './uz'
+import { VN_CHECKS } from './vn'
 import { ZA_CHECKS } from './za'
 import type { CheckContext, CheckResult, CountryKey, ProcedureCheck } from './types'
 
@@ -58,6 +63,12 @@ export const ALL_PROCEDURE_CHECKS: ProcedureCheck[] = [
   ...ID_CHECKS,
   ...CA_CHECKS,
   ...ZA_CHECKS,
+  // 2026-07-18 등록 누락 수정 — 파일은 있었으나 import 안 돼 룰이 하나도 안 돌던 5개국.
+  ...AR_CHECKS,
+  ...KH_CHECKS,
+  ...MN_CHECKS,
+  ...UZ_CHECKS,
+  ...VN_CHECKS,
 ]
 
 /** check 의 country 가 target 키에 매칭되는지. 배열에 포함되면 true. */
