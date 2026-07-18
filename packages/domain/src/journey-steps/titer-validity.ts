@@ -16,6 +16,8 @@ import { findDestinationKey } from './applicability'
  */
 export const TITER_ENTRY_VALIDITY_MONTHS: Record<string, number | null> = {
   japan: 24,
+  // 중국 — GACC 실무상 RNATT 입국용 채혈일 기준 1년(cn.rnatt-valid-1year-on-arrival 와 동일).
+  china: 12,
   // EU 패밀리 — 입국용은 chain 유지 시 무기한(별도 만료 알림 없음).
   eu: null,
   uk: null,
