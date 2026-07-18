@@ -94,6 +94,35 @@ export function readTiterEntries(caseRow: CaseRow): TiterEntry[] {
     .filter((r) => typeof r.date === 'string' && r.date.length >= 10)
 }
 
+/**
+ * 추가 항체 검사(2회차+ = originalIndex ≥ 1) 중 가장 늦은 채혈. 없으면 null.
+ * 1회차(index 0)는 별도 step(rabies-titer)이 담당하므로 제외한다.
+ */
+export function latestExtraTiterEntry(caseRow: CaseRow): TiterEntry | null {
+  let latest: TiterEntry | null = null
+  for (const t of readTiterEntries(caseRow)) {
+    if (t.originalIndex < 1) continue
+    if (!latest || t.date > latest.date) latest = t
+  }
+  return latest
+}
+
+/**
+ * 추가 항체 검사의 '결과 확인' 여부 — 1회차(has-titer-entry)와 동일한 검사→결과 2단계.
+ * 최신 추가 회차의 결과값(value)이 입력됐거나, 보호자가 '완료' 버튼을 눌러
+ * `titer_extra_result_confirmed` 플래그가 서 있으면 true.
+ *
+ * 채혈일만 도래한 상태(둘 다 아님)는 '검사 진행 중' — 결과가 나오기까지 수 주 걸리므로
+ * 자동 완료시키지 않는다. done-resolver·catalog(안내문)·scenario(진행 중 칩) 공용 단일 출처.
+ */
+export function isExtraTiterResultConfirmed(caseRow: CaseRow): boolean {
+  const latest = latestExtraTiterEntry(caseRow)
+  if (!latest) return false
+  if (typeof latest.value === 'string' && latest.value.trim().length > 0) return true
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  return data.titer_extra_result_confirmed === true
+}
+
 export function readGeneralVaccineEntries(caseRow: CaseRow): VaccineEntry[] {
   return readVaccineDateArray(caseRow, 'general_vaccine_dates')
 }

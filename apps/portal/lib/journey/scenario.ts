@@ -7,6 +7,8 @@ import {
   buildCaseJourneyContext,
   findStepForCheck,
   getStepsForCase,
+  isExtraTiterResultConfirmed,
+  latestExtraTiterEntry,
   resolveCompletedDate,
   resolveDone,
   runChecksForCase,
@@ -621,6 +623,16 @@ export function buildJourney(
         const d = p && typeof p.date === 'string' ? p.date.slice(0, 10) : ''
         return d.length >= 10 && d <= today
       })()
+    // 추가 항체 검사도 1회차와 동일 2단계 — 최신 추가 채혈일이 도래했고 결과·완료 전이면 '진행 중'.
+    // 판정은 도메인 단일 출처(latestExtraTiterEntry/isExtraTiterResultConfirmed).
+    const titerExtraInProgress =
+      step.id === 'rabies-titer-extra' &&
+      !done &&
+      (() => {
+        const latest = latestExtraTiterEntry(caseRow)
+        if (!latest || latest.date.slice(0, 10) > today) return false
+        return !isExtraTiterResultConfirmed(caseRow)
+      })()
     // 사전 신고·일본 수출검역 신청 '진행 중' — 신청일이 도래(≤ 오늘)했고 미완료. titer 방식:
     // ack 버튼 없이 신청일 도래만으로 진행 중. 미래 신청일은 ≤오늘 가드에 안 걸려 예정으로 남음.
     const advanceInProgress =
@@ -932,7 +944,11 @@ export function buildJourney(
       infoMessage,
       warnMessage: failedMsg,
       inProgress:
-        titerInProgress || advanceInProgress || jpExportInProgress || importPermitInProgress
+        titerInProgress ||
+        titerExtraInProgress ||
+        advanceInProgress ||
+        jpExportInProgress ||
+        importPermitInProgress
           ? true
           : undefined,
       // 서류 체크리스트 행은 step 상세가 아니라 서류 페이지(/docs)로 이동.

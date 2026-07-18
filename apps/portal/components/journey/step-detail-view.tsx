@@ -61,6 +61,7 @@ import {
   markAdvanceNotificationApprovalSkipped,
   markImportPermitIssued,
   markJpExportQuarantineReservationSkipped,
+  markExtraTiterResultConfirmed,
   markTiterResultConfirmed,
   updateAdvanceNotificationDate,
   updateCaseTripType,
@@ -1725,13 +1726,26 @@ export function StepDetailView({
   //    로 '완료' 전환 → 결과 확인 플래그 set. (결과값을 직접 입력해 저장해도 done.)
   const isTiterInProgress =
     isTiter && savedTiterForm.date.length >= 10 && savedTiterForm.date <= todayStr && !done
-  const titerCompleteMode = isTiterInProgress && !dirty
+  // 추가 검사도 1회차와 동일 2단계 — 저장된 최신 추가 채혈일이 도래했는데 미완료면 '진행 중'.
+  const savedTiterExtraLatestDate = savedTiterExtra.reduce<string>(
+    (m, e) => (typeof e.date === 'string' && e.date.length >= 10 && e.date > m ? e.date : m),
+    '',
+  )
+  const isTiterExtraInProgress =
+    isTiterExtra &&
+    savedTiterExtraLatestDate.length >= 10 &&
+    savedTiterExtraLatestDate <= todayStr &&
+    !done
+  const titerCompleteMode = (isTiterInProgress || isTiterExtraInProgress) && !dirty
   const [completingTiter, setCompletingTiter] = useState(false)
   const handleCompleteTiter = () => {
     if (completingTiter) return
     setCompletingTiter(true)
     startTransition(async () => {
-      const res = await markTiterResultConfirmed(caseId)
+      // 1회차/추가 각각 자기 플래그를 set — done-resolver 도 둘을 따로 본다.
+      const res = isTiterExtra
+        ? await markExtraTiterResultConfirmed(caseId)
+        : await markTiterResultConfirmed(caseId)
       setCompletingTiter(false)
       if (res.ok) {
         updateCase(res.value)

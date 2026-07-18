@@ -730,6 +730,52 @@ export async function markTiterResultConfirmed(caseId: string): Promise<Result<C
   }
 }
 
+/**
+ * 추가 항체 검사(2회차+) 의 '결과 확인 완료' 플래그(titer_extra_result_confirmed=true) 를 set —
+ * 1회차 markTiterResultConfirmed 와 동일 모델(결과 수치를 직접 입력하는 대신 '완료' 클릭).
+ * 추가 채혈일(index 1+)이 입력돼 있어야 set (없으면 의미 없음 → 거부).
+ *
+ * done-resolver(has-extra-titer)가 이 플래그 또는 최신 추가 회차의 결과값(value) 둘 중
+ * 하나면 완료로 판정한다. 채혈일이 바뀌면 updateTiterExtraEntries 가 플래그를 해제.
+ */
+export async function markExtraTiterResultConfirmed(caseId: string): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const arr = Array.isArray(prev.rabies_titer_records)
+      ? (prev.rabies_titer_records as Array<Record<string, unknown>>)
+      : []
+    const hasExtraDate = arr
+      .slice(1)
+      .some((r) => !!r && typeof r.date === 'string' && (r.date as string).length >= 10)
+    if (!hasExtraDate) {
+      return { ok: false, error: '추가 검사 채혈일이 입력되어 있지 않습니다.' }
+    }
+    const nextData: Record<string, unknown> = { ...prev, titer_extra_result_confirmed: true }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 /** 검사 수치에서 IU/mL 단위 표기 제거 — 저장 값엔 단위를 남기지 않는다 (펫무브워크와 동일). */
 function stripTiterUnit(value: string): string {
   return value.replace(/\s*IU\s*\/\s*m[lL]\s*/gi, '').trim()
@@ -817,6 +863,23 @@ export async function updateTiterExtraEntries(
     // 미래는 위에서 예정 자리로 빠져 제외되므로 false 가 나오지 않는다(마스킹 자동 무력화).
     if (titerNext.slice(1).length === 0) delete nextData.titer_extra_confirmed
     else nextData.titer_extra_confirmed = true
+
+    // 최신 추가 채혈일이 바뀌거나 사라지면 '결과 확인 완료' 플래그 해제 — 이전 검사의 완료가
+    // 새 검사에 그대로 적용되지 않도록. 1회차(rabies_titer_result_confirmed)와 동일 안전장치.
+    const latestExtraDate = (rows: unknown[]): string => {
+      let max = ''
+      for (const r of rows.slice(1)) {
+        const d =
+          r && typeof r === 'object' && typeof (r as Record<string, unknown>).date === 'string'
+            ? ((r as Record<string, unknown>).date as string)
+            : ''
+        if (d.length >= 10 && d > max) max = d
+      }
+      return max
+    }
+    if (latestExtraDate(titerNext) !== latestExtraDate(arr)) {
+      delete nextData.titer_extra_result_confirmed
+    }
 
     const { data: updated, error } = await admin
       .from('cases')

@@ -1,6 +1,8 @@
 import {
   addDays,
   addYears,
+  isExtraTiterResultConfirmed,
+  latestExtraTiterEntry,
   readGeneralVaccineEntries,
   readRabiesEntries,
   readTiterEntries,
@@ -406,6 +408,17 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
         ''
       const today = todayKst()
+      // 검사 → 결과 2단계 (1회차 rabies-titer 와 동일 모델). 추가 채혈일이 도래했는데 아직
+      // 결과값·완료 플래그가 없으면 '검사 진행 중' — 우측 '진행 중' 칩(scenario inProgress)과 짝.
+      const latestExtra = latestExtraTiterEntry(caseRow)
+      if (
+        latestExtra &&
+        latestExtra.date <= today &&
+        !isExtraTiterResultConfirmed(caseRow)
+      ) {
+        const msg = '추가 광견병 항체 검사를 진행 중이에요. 결과가 나오면 완료 버튼을 누르세요.'
+        return { desc: msg, cardDesc: msg }
+      }
       // 현재 유효기간 = 입국일 이전에 한 채혈 중 가장 최근 것 + 2년. 입국 후 채혈은 그 입국을
       // 보증 못 하므로 제외. readTiterEntries 는 입력 순서라 명시 정렬.
       const prior = entry ? titers.filter((t) => t.date <= entry) : titers
@@ -422,6 +435,13 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (latest.date > today) return undefined
       // 유효기간이 입국일을 덮으면(아직 유효) — 안내 불필요.
       if (entry && validUntil >= entry) return undefined
+      // 입국일(항공권)이 아직 없으면 '입국 전 만료'를 단정할 수 없다 — 만료일만 알린다.
+      // (옛 코드는 이 가드가 없어 항공권 미입력 케이스에 "일본 입국 전에 만료돼요"라는
+      //  근거 없는 문구가 떴다.)
+      if (!entry) {
+        const msg = `직전 검사의 유효기간이 ${formatKoreanDate(validUntil)}에 만료돼요. 만료 전에 추가 검사를 받으세요.`
+        return { desc: msg, cardDesc: msg }
+      }
       // 입국일 전 만료 — 재검사 필요.
       const msg = '직전 검사의 유효기간이 일본 입국 전에 만료돼요. 일본 입국 전에 추가 검사를 진행하세요.'
       return { desc: msg, cardDesc: msg }

@@ -29,6 +29,8 @@ export {
   readGeneralVaccineEntries,
   readCivEntries,
   readTiterEntries,
+  latestExtraTiterEntry,
+  isExtraTiterResultConfirmed,
   resolveValidUntil,
   addYears,
 } from './procedure-checks/utils'

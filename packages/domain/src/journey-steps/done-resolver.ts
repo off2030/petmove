@@ -2,6 +2,7 @@ import type { CaseRow } from '../types'
 import {
   addDays,
   addYears,
+  isExtraTiterResultConfirmed,
   readGeneralVaccineEntries,
   readCivEntries,
   readExternalParasiteEntries,
@@ -143,14 +144,18 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     }
     case 'has-extra-titer': {
       // 추가 항체 검사(2회+) 는 (a) 2개 이상 입력되고, (b) 가장 최근 채혈일이 도래했고,
-      // (c) 입국일이 입력된 경우 어떤 titer 의 2년 유효기간이 입국일을 커버해야 완료.
-      // 못 만족하면 추가 검사가 더 필요한 상태.
+      // (c) 그 검사의 결과가 확인됐고, (d) 입국일이 입력된 경우 어떤 titer 의 2년 유효기간이
+      // 입국일을 커버해야 완료. 못 만족하면 추가 검사가 더 필요한 상태.
       const t = readTiterEntries(caseRow)
       if (t.length < 2) return false
       // 미래 채혈일은 '예정' — 도래해야 완료로 잡힘. (추가 백신 has-extra-rabies 와 동일 게이트.)
       // readTiterEntries 는 입력 순서라 위치로 최신을 못 잡음 — 최대 날짜로 판정.
       const latestTiterDate = t.reduce((max, e) => (e.date > max ? e.date : max), '')
       if (latestTiterDate > todayKst()) return false
+      // 검사 → 결과 2단계 — 1차(has-titer-entry)와 동일. 채혈일만 도래한 상태는 '검사 진행 중'
+      // 이고, 최신 추가 회차의 결과값(value) 입력 OR 보호자 '완료' 클릭(플래그)이어야 done.
+      // (결과가 나오기까지 수 주 걸리는 검사라 진행 중 상태를 유지한다.)
+      if (!isExtraTiterResultConfirmed(caseRow)) return false
       // 입국일 = entry_date 우선, 없으면 출국일 폴백 (일본 등).
       const entry =
         (typeof data.entry_date === 'string' && data.entry_date) ||
