@@ -29,6 +29,7 @@ import {
   validateJpEntryDate,
   validatePhEntryDate,
   validateThEntryDate,
+  validateTwEntryDate,
   writeByDestValue,
   writeJourneyFeedback,
   readByDestValue,
@@ -2624,7 +2625,8 @@ export async function updateCaseInfoFields(
         validateJpEntryDate(effective.departure_date.trim(), ruleCtx) ??
         validateThEntryDate(effective.departure_date.trim(), ruleCtx) ??
         validatePhEntryDate(effective.departure_date.trim(), ruleCtx) ??
-        validateEuEntryDate(effective.departure_date.trim(), ruleCtx)
+        validateEuEntryDate(effective.departure_date.trim(), ruleCtx) ??
+        validateTwEntryDate(effective.departure_date.trim(), ruleCtx)
       if (entryErr) return { ok: false, error: entryErr }
     }
     let nextData: Record<string, unknown> = { ...prev }

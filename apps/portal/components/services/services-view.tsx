@@ -600,12 +600,29 @@ function derivedDetail(kind: 'offline' | 'online', dest: string, trip: TripType)
   const destKey = profileKeyForDest(dest)
   if (!destKey) return null
   const { offlineCost, period } = DEST_PRICING[destKey] ?? {}
-  if (kind === 'offline') return offlineDetail({ destKey, trip, cost: offlineCost, period })
+  // 나라 고유 절차 — 프로파일에서만 파생한다(지어내지 않는다). 현재 파생 가능한 선언은
+  // importPermit(수입허가국: 대만 등) 하나 — 스위스 '수입 허가 신청'과 같은 기존 표현을 쓴다.
+  const hasPermit = !!DESTINATION_OVERRIDES[destKey]?.importPermit
+  const permitItems = hasPermit ? ['수입허가증 신청'] : []
+  if (kind === 'offline') {
+    return offlineDetail({
+      destKey,
+      trip,
+      cost: offlineCost,
+      period,
+      introHighlight: hasPermit ? '수입허가증 신청' : undefined,
+      procedureItems: permitItems,
+    })
+  }
   // 온라인 항목(items)은 **그 나라 고유 절차**만 적는다 — 일본 '사전 신고·수출 검역 신청',
   // EU '동물건강증명서(Annex III) 준비', 스위스 '수입 허가 신청'처럼. 고유 절차가 없는
   // 나라는 비운다(공장이 '단계별 가이드'·'서류 점검'을 앞뒤로 붙인다). 빈칸을 메우려고
   // '검역 일정 관리' 같은 일반 항목을 지어내지 않는다 — 기존 목적지에 없는 표현이다.
-  return onlineDetail({ items: [], period })
+  return onlineDetail({
+    introItems: permitItems.length ? permitItems.join(', ') : undefined,
+    items: permitItems,
+    period,
+  })
 }
 
 function resolveDetail(map: Record<string, DestDetail>, dest: string, trip: TripType): DestDetail {

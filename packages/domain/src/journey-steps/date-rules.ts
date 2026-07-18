@@ -107,6 +107,37 @@ export function validateJpEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
+ * 대만 — RNATT 채혈일 + 180일 경과 후 도착(APHIA 격리 면제 핵심 조건). 일본과 동일한 모델이라
+ * 같은 구조로 차단한다. 180일 미만은 회복 불가 위반(입국일을 미루는 수밖에 없음) → 입력 차단.
+ * 1년 초과 쪽은 재검사로 회복 가능하므로 차단하지 않고 procedure-check
+ * (tw.rnatt-180days-to-1year-before-arrival)가 주의로 안내한다.
+ */
+export function validateTwEntryDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!matchesDestinationKey(ctx.destination, 'taiwan')) return null
+
+  const titerDates: string[] = []
+  const rawTiters = ctx.data.rabies_titer_records
+  if (Array.isArray(rawTiters)) {
+    for (const r of rawTiters) {
+      if (r && typeof r === 'object') {
+        const d = (r as Record<string, unknown>).date
+        if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) titerDates.push(d)
+      }
+    }
+  }
+  if (titerDates.length === 0) return null
+
+  titerDates.sort()
+  const latestTiter = titerDates[titerDates.length - 1]
+  const earliest = addDays(latestTiter, 180)
+  if (earliest && v < earliest) {
+    return `검사일로부터 180일 후 ${fmt(earliest)}에 대만에 입국할 수 있어요.`
+  }
+  return null
+}
+
+/**
  * 백신 배열(key: 'rabies_dates' / 'general_vaccine_dates')의 최근 접종이 '유효 부스터'인지:
  * 직전 접종의 면역 유효기간 안에 재접종한 경우(chain 미단절). 유효 부스터는 21일 대기 면제.
  * (만료 후 재접종 = discontinuity = 새 1차 취급 → 면제 안 됨.)

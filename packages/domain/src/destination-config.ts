@@ -428,13 +428,19 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer'],
   },
   taiwan: {
-    // APHIA(2023 BAPHIQ에서 개칭) — 광견병 항체 검사 필수, 채혈일 + 180일 후 도착, 7일 격리 (수입허가 20일 전 신청 시 면제).
+    // APHIA(2023 BAPHIQ에서 개칭) — 광견병 1회(생후 90일·불활화만·유효 1년) + RNATT ≥0.5 IU/ml
+    // (채혈일 + 180일~1년 사이 도착 = 격리 면제 핵심 조건) + 수입허가증(도착 120일 전 온라인
+    // 신청 시 격리 면제, 20일 전까지도 가능하나 7일 격리). 개·고양이 동일 요건.
     // BAPHIQ Form 002 Import permit number 입력용으로 permit_no 추가정보 노출.
     // (Certificate number 는 후처리 수기 입력 — EQC No. 라벨이 일본 전용이라 공유하지 않음.)
+    // 규정 상세·출처는 procedure-checks/tw.ts 헤더 주석.
     keywords: ['대만', 'taiwan'],
+    rabies: { doses: 1, minAgeDays: 90, oneYearVaccineOnly: true },
+    titer: { entryValidityMonths: 12, entryWaitAfterTiter: { days: 180 } },
     vaccines: ['rabies', 'rabies_titer'],
     extraFields: ['address_overseas', 'permit_no'],
-    importPermit: {}, // APHIA
+    importPermit: { applyDeadlineDays: 120, docName: '대만 수입허가증(Import Permit)' }, // APHIA
+    appSupported: true,
   },
   malaysia: {
     // DVS — 종합백신 필수, RNATT 면제(말레이시아 입국 한정 — 한국 귀국 시는 필요).

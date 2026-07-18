@@ -72,6 +72,7 @@ const SCOPED_DATE_FIELDS: Array<{ key: string; label: string; timeKey?: string }
   { key: 'jp_import_quarantine_date', label: '일본 수입 검역' },
   { key: 'th_export_quarantine_date', label: '태국 수출 검역' },
   { key: 'th_import_quarantine_date', label: '태국 수입 검역' },
+  { key: 'tw_import_quarantine_date', label: '대만 수입 검역' },
   { key: 'ph_export_quarantine_date', label: '필리핀 수출 검역' },
   { key: 'ph_import_quarantine_date', label: '필리핀 수입 검역' },
   { key: 'ph_local_vet_visit_date', label: '필리핀 현지 동물병원 방문' },
@@ -510,6 +511,29 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
           now,
         )
         if (r10) out.push(r10)
+      }
+    } else if (key === 'taiwan') {
+      // 대만 수입허가증 — 도착 120일 전 신청이 격리 면제 조건이라 마감이 유난히 이르다.
+      // 놓치면 회복이 어려워(20일 전 신청 = 7일 격리) 일주일 전 + 당일 2회 안내.
+      if (entry && deriveImportPermitStatus(flat) !== 'done') {
+        const r127 = leadReminder(
+          flat,
+          `${token}|tw-permit-127`,
+          entry,
+          127,
+          '대만 수입허가증 신청 마감이 일주일 남았어요. 도착 120일 전까지 온라인으로 신청해야 격리 없이 입국할 수 있어요.',
+          now,
+        )
+        if (r127) out.push(r127)
+        const r120 = leadReminder(
+          flat,
+          `${token}|tw-permit-120`,
+          entry,
+          120,
+          '오늘까지 대만 수입허가증 신청이 필요해요(도착 120일 전). 늦으면 도착 후 7일 격리를 거쳐야 해요.',
+          now,
+        )
+        if (r120) out.push(r120)
       }
     } else if (key === 'thailand') {
       // 태국 수입 허가증 — 영업일 기준이라 여유 있게 출국 2주 전 안내.

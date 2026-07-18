@@ -395,6 +395,55 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'kr-import-quarantine',
     },
   ],
+  // 대만 (APHIA) — 수입허가증 + 항체 결과지 + 별지 25호 + 한국 수출검역증 (+왕복 한국 수입검역증).
+  // 대만 도착 검역 통과 시 수입 검역 증명서가 현장 발급되나 사전 준비 서류가 아니라 목록엔 미포함.
+  '대만': [
+    {
+      id: 'tw-import-permit',
+      name: '대만 수입허가증(Import Permit)',
+      source: 'APHIA 온라인 신청',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        '대만 검역청(APHIA) 온라인 시스템에서 신청 후 발급받아요.\n\n도착 120일 전까지 신청해야 격리 없이 입국할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'import-permit',
+    },
+    {
+      id: 'tw-rabies-titer-result',
+      name: '광견병 항체 검사 결과지',
+      source: '동물병원',
+      kind: 'step',
+      stepRef: 'rabies-titer',
+      description:
+        '검사를 의뢰한 동물병원에서 발급받아요.\n\n대만 입국 때 격리를 피하려면 반드시 원본이 필요해요. 결과는 채혈일로부터 1년간 유효해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'rabies-titer',
+    },
+    // 접종 및 건강증명서(별지 제25호) — 일본·태국·필리핀·중국과 동일한 한국 공식 양식.
+    KR_FORM25_VACCINATION_HEALTH_CERT,
+    {
+      id: 'tw-kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      group: 'quarantine',
+      description:
+        '한국 수출 검역 후 발급돼요.\n\n대만 수입 검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'certificate-issue',
+    },
+    {
+      id: 'tw-kr-import-quarantine-cert',
+      name: '한국 수입 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'kr-import-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '한국 수입 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'kr-import-quarantine',
+    },
+  ],
 }
 
 /**

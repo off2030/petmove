@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
-import { validateJpEntryDate, type CaseRow } from '@petmove/domain'
+import { validateJpEntryDate, validateTwEntryDate, type CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { updateCaseInfoFields, type CaseInfoInput } from '@/lib/actions/cases'
@@ -102,14 +102,19 @@ export function useCaseEditForm(caseRow: CaseRow, caseId: string): UseCaseEditFo
       form.destination !== base.destination ||
       form.birth_date !== base.birth_date
     if (entryInputsChanged) {
-      const jpEntryErr = validateJpEntryDate(form.departure_date.trim(), {
+      const entryRuleCtx = {
         data: (caseRow.data ?? {}) as Record<string, unknown>,
         destination: form.destination,
         departureDate: caseRow.departure_date ?? null,
-      })
-      if (jpEntryErr) {
+      }
+      // 일본·대만 — 항체 검사 채혈 + 180일 대기(회복 불가 위반) client 즉시 차단.
+      // server(updateCaseInfoFields)가 전 목적지 backstop.
+      const entryErr =
+        validateJpEntryDate(form.departure_date.trim(), entryRuleCtx) ??
+        validateTwEntryDate(form.departure_date.trim(), entryRuleCtx)
+      if (entryErr) {
         setStatus('error')
-        setError(jpEntryErr)
+        setError(entryErr)
         return
       }
     }

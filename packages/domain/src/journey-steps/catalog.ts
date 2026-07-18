@@ -788,7 +788,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '강아지는 DHPP(C), 고양이는 FVRCP를 접종하세요. 출국 시점에 유효기간이 남아있어야 해요.',
     doneSummary: '종합백신을 접종했어요.',
     // NOTE: vaccines('general') 파생 불가 — admin 상세페이지 vaccines 와 이 카드 명단이
-    // 의도적으로 다르다(usa·taiwan 은 카드만 있음). 개별 판단 명단으로 유지.
+    // 의도적으로 다르다(usa 는 카드만 있음). 개별 판단 명단으로 유지.
+    // 대만은 APHIA 공식 요건·펫무브 가이드에 종합백신이 없어 제외(2026-07-18 사용자 결정).
     applicability: {
       destinations: [
         'australia',
@@ -802,7 +803,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'hongkong',
         'guam',
         'philippines',
-        'taiwan',
         'usa',
       ],
       species: 'all',

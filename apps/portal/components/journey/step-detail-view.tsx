@@ -36,6 +36,7 @@ import {
   validatePhImportPermitVaccineGap,
   validatePhImportPermitWithin60Days,
   validateThEntryDate,
+  validateTwEntryDate,
   validateThImportPermitVaccineGap,
   EU_ENTRY_FAMILY,
   SINGLE_DOSE_RABIES_DESTINATIONS,
@@ -790,7 +791,9 @@ export function StepDetailView({
           ? '태국'
           : destinationKey === 'philippines'
             ? '필리핀'
-            : '이 여행지'
+            : destinationKey === 'taiwan'
+              ? '대만'
+              : '이 여행지'
     const ONE_YEAR_VALIDITY_BLOCK_MSG = `${oneYearKo} 입국 시 광견병 백신은 1년까지만 유효합니다. 면역 유효기간을 1년으로 선택하세요.`
     const isMultiYearValidity = (vu: string | null | undefined): boolean => {
       const m = (vu ?? '').match(/^(\d+)\s*년$/)
@@ -982,6 +985,9 @@ export function StepDetailView({
       // EU 패밀리 — 항체 검사 채혈 + 3개월 이내면 차단 (일본 180일과 동일 정책).
       const euEntryErr = validateEuEntryDate(entryOrDeparture, entryRuleCtx)
       if (euEntryErr) return euEntryErr
+      // 대만 — 항체 검사 채혈 + 180일 이내면 차단 (일본과 동일 모델, APHIA 격리 면제 조건).
+      const twEntryErr = validateTwEntryDate(entryOrDeparture, entryRuleCtx)
+      if (twEntryErr) return twEntryErr
       return null
     }
     if (isGeneralVaccine) {

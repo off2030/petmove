@@ -103,6 +103,60 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentLabel: '중국 수입 검역 서류',
     }),
   },
+  // ── 대만 (APHIA 動植物防疫檢疫署) ─────────────────────────────────────
+  // 1회 접종 + 항체검사 모델(EU 골격)이지만 대기·허가 구조가 다르다: ①채혈 후 180일 대기
+  // (일본과 같아 base 항공권 earliest anchor 를 그대로 상속) ②수입허가증을 도착 120일 전까지
+  // 온라인 신청(격리 면제 조건 — 20일 전까지도 가능하나 7일 격리) ③요건 충족 시 무격리.
+  // 불활화 백신만·유효 1년(2·3년 입력불가는 프로파일 oneYearVaccineOnly 파생). 종합백신 카드는
+  // 대만 공식 요건에 없어 미노출(2026-07-18 사용자 결정). 규정 상세·출처는 procedure-checks/tw.ts.
+  taiwan: {
+    'rabies-vaccine-1': {
+      title: '광견병 백신',
+      shortLabel: '백신',
+      description:
+        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 90일이 지난 후에 접종해야 해요.\n불활화(사독) 백신만 인정돼요.\n면역 유효기간은 1년이에요.\n대만 입국 때 면역 유효기간이 남아있어야 해요.',
+      doneSummary: '광견병 백신을 접종했어요.',
+      earliest: { anchor: 'birth', daysAfter: 90 },
+      done: 'has-rabies-valid',
+      validationIds: ['tw.rabies-prime-after-90days-old', 'tw.microchip-before-rabies'],
+    },
+    'rabies-titer': {
+      description:
+        '대만 검역청(APHIA)이 인정하는 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n수의사가 마이크로칩을 스캔해 신원을 확인한 후 채혈해야 해요.\n0.5 IU/mL 이상이면 합격이에요.\n검사 결과는 채혈일로부터 1년간 유효해요.',
+      validationIds: ['tw.rnatt-after-rabies-vaccine'],
+    },
+    // 항공권 — 채혈 후 180일 대기는 일본과 동일(base earliest anchor 상속). 검증만 tw 로 교체.
+    'flight-purchase': {
+      description:
+        '입국 가능 시기에 맞춰 항공권을 구매하세요.\n\n채혈일로부터 180일 후 ~ 1년 사이에 대만에 입국할 수 있어요.\n수입허가증 신청을 위해 도착 120일 전까지 항공편 일정을 정하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '대만에 입국할 수 있어요.',
+      validationIds: ['tw.rnatt-180days-to-1year-before-arrival'],
+    },
+    // 수입허가증 — APHIA pet e-permit 온라인 신청. 도착 120일 전 = 격리 면제 조건.
+    'import-permit': {
+      description:
+        '대만 수입허가증(Import Permit) 신청을 하세요.\n\n도착 120일 전까지 온라인으로 신청하세요.\n도착 20일 전까지 신청할 수도 있지만, 이 경우 7일간 격리를 거쳐야 해요.',
+      doneSummary: '대만 수입허가증을 받았어요.',
+      cardLine: '대만 수입허가증 신청을 하세요.',
+      deadline: { anchor: 'departure', daysBefore: 120 },
+      inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
+      attachmentHint: '수입허가증(Import Permit)을 사진·PDF로 보관하세요.',
+      attachmentLabel: '수입허가증(Import Permit)',
+      links: [
+        { url: 'https://pet-epermit.aphia.gov.tw/index-eng.html', label: '대만 수입허가증 온라인 신청(APHIA)' },
+      ],
+      validationIds: ['tw.import-permit-120days-before-entry'],
+    },
+    departure: importQuarantineCard({
+      label: '대만',
+      fieldKey: 'tw_import_quarantine_date',
+      description:
+        '대만 도착 후 공항 동물검역소에서 수입 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 7일간 격리되거나 한국으로 반송돼요.',
+      helpText: '대만 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '수입 검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '대만 수입 검역 서류',
+    }),
+  },
   // 일본을 뼈대로 — 'departure' 공용 카드를 그 나라 '[국가] 수입 검역' 도착 카드로 교체.
   // 목적지마다 따로 작성(검역일 필드도 나라별: {국가}_import_quarantine_date). 제목·설명은
   // 그 나라 가이드 기준, 일본과 같은 부분은 같은 문구. 완료신호는 그 나라 검역일 필드를 실어 보낸다.
