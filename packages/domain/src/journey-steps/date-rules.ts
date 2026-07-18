@@ -1,5 +1,10 @@
 import type { CaseRow } from '../types'
-import { getVetVisitWindowDays, matchesDestinationKey, parseDestinations } from '../destination-config'
+import {
+  destinationKeysWhere,
+  getVetVisitWindowDays,
+  matchesDestinationKey,
+  parseDestinations,
+} from '../destination-config'
 import { getDepartureDate, getVetVisitDate, readByDestValue } from '../destination-scoped-fields'
 import { addDays, addMonths, resolveValidUntil } from '../procedure-checks/utils'
 import type { StepDefinition } from './types'
@@ -226,12 +231,11 @@ export function validatePhEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
- * EU 패밀리(EU·영국·아일랜드·몰타·노르웨이·핀란드·스위스) — destination-config 키.
- * procedure-checks/eu.ts 의 EU_REGIME 과 같은 목록 — eu.ts 가 이 파일을 import 하므로
- * (순환 방지) 여기 별도로 둔다. 목록 변경 시 양쪽 함께.
- * client(step-detail-view)도 destinationKey 분기에 사용 — export.
+ * EU 패밀리(EU 24국 묶음 + 영국·아일랜드·몰타·노르웨이·핀란드·스위스·키프로스) —
+ * destination-config 키. `archetype: 'eu-family'` 선언 파생(진실 출처는 프로파일).
+ * procedure-checks/eu.ts 의 EU_REGIME 과 client(step-detail-view) 분기도 이 목록을 쓴다.
  */
-export const EU_ENTRY_FAMILY = ['eu', 'uk', 'ireland', 'malta', 'norway', 'finland', 'switzerland', 'cyprus']
+export const EU_ENTRY_FAMILY = destinationKeysWhere((o) => o.archetype === 'eu-family')
 
 /** data[key] 배열에서 유효 날짜(들)를 뽑는다 — [{date}] 객체·문자열 항목 모두 지원. */
 function readDateArray(data: Record<string, unknown>, key: string): string[] {

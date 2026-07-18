@@ -9,12 +9,20 @@ import {
   resolveValidUntil,
   todayKst,
 } from '../procedure-checks/utils'
-import { matchesDestinationKey } from '../destination-config'
+import {
+  destinationsWithVaccine,
+  matchesDestinationKey,
+  APP_SUPPORTED_DESTINATION_KEYS,
+  IMPORT_PERMIT_DESTINATIONS,
+  TAPEWORM_DESTINATIONS,
+} from '../destination-config'
 import {
   buildCaseJourneyContext,
   isSingleDoseRabiesCase,
   SINGLE_DOSE_RABIES_DESTINATIONS,
+  TWO_DOSE_RABIES_DESTINATIONS,
 } from './applicability'
+import { EU_ENTRY_FAMILY } from './date-rules'
 import {
   deriveAdvanceNotificationStatus,
   deriveImportPermitStatus,
@@ -283,10 +291,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       }
       return undefined
     },
-    // 일본·중국(2회 프라임 + 3차+) 전용 별도 카드. 1회 접종국은 광견병 백신 카드 하나에서
-    // 추가 접종을 목록으로 입력하므로 이 카드를 쓰지 않는다(rabies-vaccine-1 단일 카드로 통합).
+    // 2회 프라임국(일본·중국 — rabies.doses=2 파생) 전용 별도 카드. 1회 접종국은 광견병 백신
+    // 카드 하나에서 추가 접종을 목록으로 입력하므로 이 카드를 쓰지 않는다(rabies-vaccine-1 통합).
     applicability: {
-      destinations: ['japan', 'china'],
+      destinations: [...TWO_DOSE_RABIES_DESTINATIONS],
       species: 'all',
       tripType: 'all',
     },
@@ -486,21 +494,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       return { desc: msg, cardDesc: msg }
     },
     // 일본 외 나라는 destination override 로 설명·검증을 그 나라 규정에 맞춰 교체(태국·필리핀·EU 등).
+    // 전 여정 구성이 끝난 나라(appSupported 파생)에만 노출 — 포털 화이트리스트와 같은 목록.
     applicability: {
-      destinations: [
-        'japan',
-        'thailand',
-        'philippines',
-        'china',
-        'eu',
-        'uk',
-        'ireland',
-        'malta',
-        'norway',
-        'finland',
-        'switzerland',
-        'cyprus',
-      ],
+      destinations: [...APP_SUPPORTED_DESTINATION_KEYS],
       species: 'all',
       tripType: 'all',
     },
@@ -791,6 +787,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '강아지는 DHPP(C), 고양이는 FVRCP를 접종하세요. 출국 시점에 유효기간이 남아있어야 해요.',
     doneSummary: '종합백신을 접종했어요.',
+    // NOTE: vaccines('general') 파생 불가 — admin 상세페이지 vaccines 와 이 카드 명단이
+    // 의도적으로 다르다(usa·taiwan 은 카드만 있음). 개별 판단 명단으로 유지.
     applicability: {
       destinations: [
         'australia',
@@ -867,8 +865,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '독감',
     description: '강아지 인플루엔자(CIV) 백신을 접종하세요. 호주·뉴질랜드·인도 등 일부 국가에서 요구돼요.',
     doneSummary: '독감(CIV) 백신을 접종했어요.',
+    // vaccines 선언('civ' 포함국 — 호주·뉴질랜드·인도) 파생.
     applicability: {
-      destinations: ['australia', 'new_zealand', 'india'],
+      destinations: destinationsWithVaccine('civ'),
       species: 'dog',
       tripType: 'all',
     },
@@ -889,8 +888,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '인증 실험실에서 전염병 검사를 받아 음성을 확인하세요. 호주(Brucella/Leptospira/Leishmania 등)·뉴질랜드·남아프리카공화국에서 요구돼요.',
     doneSummary: '전염병 검사를 받았어요.',
+    // vaccines 선언('infectious_disease' 포함국 — 호주·뉴질랜드·남아공) 파생.
     applicability: {
-      destinations: ['australia', 'new_zealand', 'south_africa'],
+      destinations: destinationsWithVaccine('infectious_disease'),
       species: 'all',
       tripType: 'all',
     },
@@ -986,8 +986,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '촌충(에키노코쿠스) 치료를 받으세요.\n\n입국 전 24~120시간(1~5일) 사이에 수의사에게 프라지콴텔 성분의 구충제를 투여받으세요.\n항공 이동 시간을 고려해 출국 1~3일 전 사이를 권장해요.\n건강증명서에 치료 내용과 일시를 기록해야 해요.',
     doneSummary: '촌충 치료를 받았어요.',
     cardLine: '촌충(에키노코쿠스) 치료를 받으세요.',
+    // 촌충 의무국(EU Reg 2018/772) — 개 전용 내부구충 vaccines 선언에서 파생.
     applicability: {
-      destinations: ['uk', 'ireland', 'malta', 'norway', 'finland'],
+      destinations: [...TAPEWORM_DESTINATIONS],
       species: 'dog',
       tripType: 'all',
     },
@@ -1017,8 +1018,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '도착 전에 수입허가를 신청하세요. 호주(DAFF)·뉴질랜드(MPI)·대만(APHIA)·말레이시아(DVS) 등에서 필요하며, 허가번호가 검역증에 명시되어야 해요.',
     doneSummary: '수입 허가를 받았어요.',
     cardLine: '수입 허가를 신청하세요.',
+    // importPermit 프로파일 선언국(호주·뉴질랜드·대만·말레이시아·태국·필리핀·스위스) 파생.
     applicability: {
-      destinations: ['australia', 'new_zealand', 'taiwan', 'malaysia', 'thailand', 'philippines', 'switzerland'],
+      destinations: [...IMPORT_PERMIT_DESTINATIONS],
       species: 'all',
       tripType: 'all',
     },
@@ -1231,8 +1233,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '한국에 다시 입국하려면 출발하는 나라의 정부가 인증한 한국 입국용 건강증명서가 필요해요.\n현지 동물병원에서 작성한 뒤, 그 나라 관할 당국(공무 수의사)의 인증을 받으세요. 발급 기관·절차는 나라마다 다르니 미리 확인하세요.\n마이크로칩 번호와 광견병 항체 검사 결과(0.5 IU/㎖ 이상, 채혈 24개월 이내)가 기재돼야 해요.\n\n다음 경우엔 새로 발급받지 않아도 돼요.\nEU 반려동물 여권으로 대신할 수 있어요. (단, EU 여권은 EU 거주자만 발급 가능)\n한국 출국 때 받은 대한민국 수출 검역증명서로 대신할 수 있어요. (마이크로칩 번호가 있고, 광견병 항체 채혈일로부터 24개월 이내여야 해요.)',
     doneSummary: '귀국 서류를 준비했어요.',
     cardLine: '귀국 서류를 준비하세요.',
+    // EU 패밀리(archetype 'eu-family' 파생 — date-rules EU_ENTRY_FAMILY) 공통 귀국 서류.
     applicability: {
-      destinations: ['eu', 'uk', 'ireland', 'malta', 'norway', 'finland', 'switzerland', 'cyprus'],
+      destinations: [...EU_ENTRY_FAMILY],
       species: 'all',
       tripType: 'round',
     },

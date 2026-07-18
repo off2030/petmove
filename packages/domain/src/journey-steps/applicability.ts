@@ -68,6 +68,14 @@ export const RABIES_ONE_YEAR_VALIDITY_DESTINATIONS: string[] = destinationKeysWh
 )
 
 /**
+ * 광견병 2회 프라임 모델 목적지(일본·중국) — `rabies.doses` 파생.
+ * 추가 백신 카드(rabies-vaccine-extra, 3차+ 전용)가 이 목록을 본다.
+ */
+export const TWO_DOSE_RABIES_DESTINATIONS: string[] = destinationKeysWhere(
+  (o) => o.rabies?.doses === 2,
+)
+
+/**
  * 항공권 날짜를 수입검역의 '예정 [날짜]' 배지로 띄워도 되는 목적지 — destination-config 키.
  * entry_date 는 한국 '출발일'(=departure_date 동기화)이라, 출발=도착이 같은 날인 단거리 노선에서만
  * 실제 도착·공항검역일과 일치한다. 시차로 익일 도착하는 장거리(EU 등)는 어긋나므로 제외.
