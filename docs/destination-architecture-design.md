@@ -192,13 +192,18 @@ interface DestinationProfile {
 - **검증**: lint:copy·lint:dest 무변경 + 구/신 `resolveStepForDestination` 결과를 전 목적지 ×
   전 step deep-equal 대조(문구 골든이 안 덮는 links·첨부 라벨·inputs 포함) — 완전 동일.
 
-### Phase 3 — 맡기기(services) 아키타입화 — **부분 완료 2026-07-18 (나머지는 운영 결정 필요)**
+### Phase 3 — 맡기기(services) 아키타입화 — **완료 2026-07-18**
 - ✅ 사전 통지국 명단(`OFFLINE/ONLINE_DETAIL` 4개국 복사 루프) → `ADVANCE_NOTICE_DESTINATIONS`
   (프로파일 `advanceNotice` 선언) 파생.
-- ✅ 폴백 자체는 이미 있음 — `resolveDetail` 이 `목적지:트립 → 목적지 → default` 순으로
-  떨어져 새 목적지도 기본 상세가 나온다.
-- ⏸ `included`·FAQ(비용·준비 기간)·intro 의 프로파일 파생은 **고객 노출 문구·가격**이라
-  자동화 전에 운영자 결정 필요(어떤 문구 골격·가격 규칙으로 일반화할지). 보류.
+- ✅ `offlineDetail`/`onlineDetail` factory — 진행 단계·FAQ 골격·intro 골격은 factory 가
+  강제하고 나라 사실(강조절·절차 항목·비용·기간·후기)만 주입. **included 는 프로파일 파생**:
+  종합백신(vaccines 'general')·내부구충(전 종 internal_parasite)·항체검사(귀국용 국가는
+  왕복만 — rabiesTiterForReturnOnly × trip) — 여정 카드와 어긋날 수 없다. EU 패밀리는
+  절차 항목이 임상검사 뒤, 일본·동남아는 앞(아키타입별 순서 규칙).
+- ✅ 폴백은 기존 `resolveDetail`(`목적지:트립 → 목적지 → eu → default`) 유지.
+- **검증**: 구(HEAD)·신 `OFFLINE/ONLINE_DETAIL` 전 키 JSON deep-equal — 완전 동일(무동작).
+  비용·기간 값 자체는 여전히 나라별 운영 입력(자동 산출 규칙은 만들지 않음 — 가격 정책은
+  운영 결정 영역).
 
 ### Phase 4 — 신규 목적지 스캐폴드 — **완료 2026-07-18**
 - ✅ `pnpm new:destination <key> <한글명> --cc <iso2> [--archetype …]`
