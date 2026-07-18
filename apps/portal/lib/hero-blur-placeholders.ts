@@ -298,7 +298,6 @@ export const HERO_BLUR_PLACEHOLDERS: Record<string, string> = {
   "/destinations/china-04.webp": "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAAAQAgCdASoQAAsAA4BaJZQCdAD0ZD4LnNbAAP3bw0EASkBbOVm8B63ke1wZzsF+rWvO0TAluuZfsbgA",
   "/destinations/china-05.webp": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAADwAQCdASoQAAsAA4BaJQBYdhb15RYZJhAA+/fXJODf3S8mq7bz8JCPEAm8p/DrtUcXj4ifLd/wGZ0odkOnmuO+FnlyK3dW1E/lWfI+ddLly8AA",
   "/destinations/china-06.webp": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADwAQCdASoQAAkAA4BaJYwBTAA9FC6X+9AA/urzPFq9ClO4La8P0PdnKqywi+veTrf+Sj0lR/IHvm3XKCsAAA==",
-  "/destinations/china-07.webp": "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAADQAQCdASoQAAsAA4BaJQBdgBFHVb0+AAD+O0hvnibcvegd3K+MmfJ791WZBZX3PCeyKC4qdqCLwTqy/r9zwaJaaT9dX1u3ymtRlxLKonPK1C58Dlc1rTRrTYhYl1AA",
   "/destinations/china-08.webp": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAADQAQCdASoQAAsAA4BaJZQCdAEXVNcgwAD+98Yyrnc6lFxbWC/+2Nb0ixjUOXnwLDzQoxsFwbQG1r1KCht3kW8/xkqqOwojxmKcWDamR4AAAA==",
   "/destinations/china-09.webp": "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAACwAQCdASoQAAsAA4BaJZQAAucOJ8AAAPlw6A5v1C3mFSmvGVebYUx3hS+np5jFlCt2E7uOBrrNGjsXWAA=",
   "/destinations/china-10.webp": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAADQAQCdASoQAAsAA4BaJQBOgBZYW/OawAD+uBJZUtbbMxxmxGq+1mCWjluOpERIjpK7nW4tTfFhPT8/NOspS4LuAAA=",

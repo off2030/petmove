@@ -54,7 +54,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/china-04.webp',
     '/destinations/china-05.webp',
     '/destinations/china-06.webp',
-    '/destinations/china-07.webp',
     '/destinations/china-08.webp',
     '/destinations/china-09.webp',
     '/destinations/china-10.webp',
@@ -419,6 +418,7 @@ function buildHeroPhotoState(destination: string): HeroPhotoState {
     위/아래가 크게 잘린다. 기본은 정중앙, 위/아래 중 살려야 할 피사체가 있는 사진만
     개별 지정(사용자 확인 후 추가). */
 const HERO_PHOTO_POSITION: Record<string, string> = {
+  '/destinations/china-00.webp': 'bottom', // 베이징 후통 부감 — 하단 거리·인파가 잘리지 않게
   '/destinations/norway-17.webp': 'top', // 오슬로 오페라하우스(안개) — 지붕 위쪽이 잘리지 않게
   '/destinations/malta-00.webp': 'bottom', // 몰타 국기·건물 문장 — 하단 피사체가 잘리지 않게
   '/destinations/switzerland-03.webp': 'bottom', // 푸르카 고개 호텔·도로 U턴 — 하단이 최대한 보이게
