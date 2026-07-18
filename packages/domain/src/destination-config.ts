@@ -194,6 +194,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     // 촌충약(Echinococcus, praziquantel)은 규정상 개 전용 — 고양이는 면제(EU Reg 2018/772).
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    // EU 촌충국 강아지 — 촌충 구충이 출국 1~3일 전(admin 보수: eu.tapeworm-1to3days, 법정
+    // 24~120h)에만 유효하고, 구충을 겸하는 내원도 그 안에 들어와야 하므로 window=4
+    // (=출국일 -3일). 고양이는 촌충 면제 → 기본 10일. (몰타·노르웨이·핀란드·영국 동일)
+    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
   },
   malta: {
     keywords: ['몰타', 'malta'],
@@ -202,6 +206,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     titer: { entryValidityMonths: null },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
   },
   norway: {
     keywords: ['노르웨이', 'norway'],
@@ -210,6 +215,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     titer: { entryValidityMonths: null },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
   },
   finland: {
     keywords: ['핀란드', 'finland'],
@@ -218,6 +224,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     titer: { entryValidityMonths: null },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
   },
   // 키프로스 — 촌충 요건은 없지만(RABIES_FREE_EU_MEMBERS 아님, TAPEWORM 도 아님) 48시간
   // 사전 통지(moa.gov.cy 공식) 카드가 별도라 eu 묶음에서 분리. eu 보다 먼저 매칭.
@@ -264,6 +271,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     extraSection: 'uk',
     // 촌충약(Echinococcus)은 규정상 개 전용 — 고양이는 구충시간 미표시.
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
   },
   australia: {
     keywords: ['호주', 'australia'],
@@ -271,12 +279,16 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     extraSection: 'australia',
     // sample_received_date 는 rabies_titer_records[].received_date 로 이동 (광견병 항체 검사 편집화면에 표시).
     extraFields: ['permit_no', 'id_date'],
+    vetVisitWindowDays: 5,
   },
   new_zealand: {
     keywords: ['뉴질랜드', 'new zealand', 'nz'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'infectious_disease', 'external_parasite', 'internal_parasite', 'heartworm'],
     extraSection: 'new_zealand',
     extraFields: ['permit_no'],
+    // NOTE: 규정상 "2일 이내(MPI 2일)" 이지만 max-2-days-before 해석으로 window=3 적용 중
+    // (규정 문구와 표시 disconnect — 별도 정리 대상).
+    vetVisitWindowDays: 3,
   },
   thailand: {
     keywords: ['태국', 'thailand'],
@@ -321,6 +333,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   turkey: {
     keywords: ['튀르키예', '터키', 'turkey', 'türkiye', 'turkiye'],
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
+    // 임상검사(Clinical Examination)는 출국 24시간 이내 — TK.pdf 각주 6. window=2 →
+    // 출국일 기준 diff<2 = 전날(1)·당일(0)만 유효(=24시간 이내). 한국 수출검역도 동일 창.
+    vetVisitWindowDays: 2,
     // TK.pdf: 현지 수령인 주소(Consignee address) = 해외주소, 항공편명(Flight number) =
     // Registration no./flight number 칸. 둘 다 상세페이지에서 입력받아 자동 채움.
     // (Place of Loading 는 인천공항 고정 default — pdf-field-mappings.json text_4qrwb 참고.)
@@ -341,6 +356,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['러시아', 'russia'],
     vaccines: ['rabies', 'rabies_titer', 'general'],
     rabiesTiterForReturnOnly: true,
+    vetVisitWindowDays: 5,
   },
   uae: {
     keywords: ['아랍에미레이트', '아랍에미리트', 'uae', 'united arab emirates'],
@@ -350,6 +366,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   singapore: {
     keywords: ['싱가포르', 'singapore'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'external_parasite', 'internal_parasite'],
+    vetVisitWindowDays: 7,
   },
   hongkong: {
     keywords: ['홍콩', 'hong kong', 'hongkong'],
@@ -398,6 +415,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['말레이시아', 'malaysia'],
     vaccines: ['rabies', 'rabies_titer', 'general'],
     rabiesTiterForReturnOnly: true,
+    vetVisitWindowDays: 7,
   },
   morocco: {
     // ONSSA — 광견병 출국 30일 전, 도착 시 수의사 검역. RNATT 는 한국 귀국용.
@@ -596,49 +614,14 @@ export function isRabiesFreeOrigin(destination: string | null | undefined): bool
   return false
 }
 
-/**
- * 내원·임상검진일은 출국일 포함 N일 이내여야 함 — 목적지별 윈도우 N.
- * 한국 APQA 디폴트 10일. 비표준만 명시; 값은 규정 문구의 "N일 이내" N 그대로.
- * 다중 목적지 시 가장 엄격한 윈도우(최소값) 적용.
- *
- * Source of truth — 각 목적지의 규정 (출처 packages/domain/src/procedure-checks/*.ts).
- *
- * 비교 규칙: `days >= window` 면 거부. 예) window=10 → days 0~9 OK, 10+ 거부.
- *
- * NOTE: 뉴질랜드는 규정상 "2일 이내(MPI 2일)" 이지만 max-2-days-before 해석으로 window=3
- * 적용 중(규정 문구와 표시 disconnect — 별도 정리 대상). 튀르키예는 임상검사 24시간 이내
- * (TK.pdf 각주 6)라 window=2(전날/당일).
- */
-const VET_VISIT_WINDOW_OVERRIDES: Array<{
-  key: keyof typeof DESTINATION_OVERRIDES
-  window: number
-  /** 지정 시 해당 종에만 적용 (미지정=모든 종). 예: 촌충 구충은 개 전용. */
-  species?: 'dog' | 'cat'
-}> = [
-  { key: 'malaysia', window: 7 },
-  { key: 'singapore', window: 7 },
-  { key: 'australia', window: 5 },
-  { key: 'russia', window: 5 },
-  { key: 'new_zealand', window: 3 },
-  // 튀르키예: 임상검사(Clinical Examination)는 출국 24시간 이내 — TK.pdf 각주 6
-  // "The clinical examination must be done within 24 hours before movement".
-  // window=2 → 출국일 기준 diff<2 = 전날(1)·당일(0)만 유효(=24시간 이내). 한국 수출검역도 동일 창.
-  { key: 'turkey', window: 2 },
-  // EU 촌충-free 국(영국·아일랜드·몰타·노르웨이·핀란드) 강아지 — 촌충 구충이 출국 1~3일 전(admin
-  // 보수: eu.tapeworm-1to3days, 법정 24~120h)에만 유효하고, 구충을 겸하는 내원도 그 안에 들어와야
-  // 하므로 window=4 (=출국일 -3일). 고양이는 촌충 면제(EU Reg 2018/772) → 기본 10일.
-  { key: 'uk', window: 4, species: 'dog' },
-  { key: 'ireland', window: 4, species: 'dog' },
-  { key: 'malta', window: 4, species: 'dog' },
-  { key: 'norway', window: 4, species: 'dog' },
-  { key: 'finland', window: 4, species: 'dog' },
-]
-
 const VET_VISIT_DEFAULT_WINDOW_DAYS = 10
 
 /**
  * 입력된 목적지(콤마 구분 가능)에 대한 내원일↔출국일 윈도우 일수.
+ * "출국일 포함 N일 이내"의 N — 한국 APQA 디폴트 10일, 비표준은 각 목적지 프로파일의
+ * `vetVisitWindowDays` 선언이 진실 출처(근거 주석도 그쪽에).
  * 반환값은 규정의 "N일 이내" N. 다중 목적지 시 가장 엄격한 윈도우(최소값) 반환.
+ * 비교 규칙: `days >= window` 면 거부. 예) window=10 → days 0~9 OK, 10+ 거부.
  * species 를 주면 종별 override(촌충 구충 등)를 반영 — 미지정 시 종 제한 override 는 건너뛴다.
  */
 export function getVetVisitWindowDays(
@@ -647,10 +630,15 @@ export function getVetVisitWindowDays(
 ): number {
   if (!destination) return VET_VISIT_DEFAULT_WINDOW_DAYS
   let min = VET_VISIT_DEFAULT_WINDOW_DAYS
-  for (const ov of VET_VISIT_WINDOW_OVERRIDES) {
-    if (ov.species && ov.species !== species) continue
-    if (matchesDestinationKey(destination, ov.key) && ov.window < min) {
-      min = ov.window
+  for (const [key, override] of Object.entries(DESTINATION_OVERRIDES)) {
+    const declared = override.vetVisitWindowDays
+    if (declared === undefined) continue
+    const entries = typeof declared === 'number' ? [{ window: declared }] : declared
+    for (const ov of entries) {
+      if (ov.species && ov.species !== species) continue
+      if (matchesDestinationKey(destination, key) && ov.window < min) {
+        min = ov.window
+      }
     }
   }
   return min
