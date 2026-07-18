@@ -343,6 +343,58 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'kr-import-quarantine',
     },
   ],
+  // 중국 — 공통(별지25·항체결과·한국 수출/수입 검역증) + 중국 고유 동물위생증명서(귀국용).
+  // 중국은 항체검사가 입국 요건(비지정국)이라 roundTripOnly 아님. 입국 시 중국이 발급하는
+  // 별도 증서는 없음(해관 확인만) — 그래서 '중국 수입 검역증' 항목은 두지 않는다.
+  '중국': [
+    {
+      id: 'cn-rabies-titer-result',
+      name: '광견병 항체 검사 결과지',
+      source: '동물병원',
+      kind: 'step',
+      stepRef: 'rabies-titer',
+      description:
+        '검사를 의뢰한 동물병원에서 발급받아요. 중국 해관(GACC) 지정 검사기관 결과가 필요해요.\n\n중국 입국 때 격리를 피하려면 반드시 원본이 필요해요. 결과는 채혈일로부터 1년간 유효해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'rabies-titer',
+    },
+    // 접종 및 건강증명서(별지 제25호) — 일본·태국·필리핀과 동일한 한국 공식 양식.
+    KR_FORM25_VACCINATION_HEALTH_CERT,
+    {
+      id: 'cn-kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      group: 'quarantine',
+      description:
+        '한국 수출 검역 후 발급돼요.\n\n중국 수입 검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'certificate-issue',
+    },
+    {
+      id: 'cn-export-cert-doc',
+      name: '중국 동물위생증명서(动物卫生证书)',
+      source: '중국 해관',
+      kind: 'step',
+      stepRef: 'cn-export-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '중국 해관에서 발급하는 출국용 동물위생증명서예요.\n\n한국에 다시 입국할 때 반드시 필요해요.\n\n발급 방법·장소는 도시마다 달라요. 베이징·상하이는 지정 동물병원에서 검사를 받고, 해관 콜센터(12360)에 확인하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'cn-export-quarantine',
+    },
+    {
+      id: 'cn-kr-import-quarantine-cert',
+      name: '한국 수입 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'kr-import-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '한국 수입 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'kr-import-quarantine',
+    },
+  ],
 }
 
 /**
