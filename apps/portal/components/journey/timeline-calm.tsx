@@ -49,9 +49,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   중국: [
     '/destinations/china-00.webp', // landscape
     '/destinations/china-01.webp', // landscape
-    '/destinations/china-02.webp', // landscape
-    '/destinations/china-03.webp', // landscape
-    '/destinations/china-04.webp', // portrait
     '/destinations/china-05.webp', // landscape
     '/destinations/china-06.webp', // landscape
     '/destinations/china-08.webp', // portrait
@@ -62,9 +59,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/china-14.webp', // landscape
     '/destinations/china-16.webp', // landscape
     '/destinations/china-17.webp', // landscape
-    '/destinations/china-18.webp', // landscape
     '/destinations/china-19.webp', // landscape
-    '/destinations/china-21.webp', // landscape
   ],
   프랑스: [
     '/destinations/france-02.webp',

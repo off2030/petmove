@@ -293,9 +293,6 @@ export const HERO_BLUR_PLACEHOLDERS: Record<string, string> = {
   "/destinations/ireland-00.webp": "data:image/webp;base64,UklGRlAAAABXRUJQVlA4IEQAAADQAQCdASoQAAsAA8BgJZgCdADK5AFT9AD+s/rhuSGaD7aJjqz/Hb4pfCo9gOwngtsR9CM0ZikyeERz8Qd1Tz1/5gAAAA==",
   "/destinations/china-00.webp": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAAAwAgCdASoQAAwAA4BaJbACdGuAAkX+UmMmgAD94XjnCeN6Ys2ajZC3LNLplNEj0Ed2tWflQod4v57PdQST2tOwAAA=",
   "/destinations/china-01.webp": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAACwAQCdASoQAAoAA4BaJQBOgA7vS2sAAP6sLXTowGJDaIzim7oFjfsOeMxDjtPlq/g0EaSAjgHZN2OATA8k6fMq/MBnFo1Af4AAAA==",
-  "/destinations/china-02.webp": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAACwAQCdASoQAAkAA4BaJZwAAlX+S9AAAP2ckVXa+JrRVEAzv0ijQP2MT3AsyL2/QqSRXfg+4w43s+VVSCDo+565TgcQAAAA",
-  "/destinations/china-03.webp": "data:image/webp;base64,UklGRkIAAABXRUJQVlA4IDYAAACQAQCdASoQAAsAA4BaJZwAAWVj2QAA+M7XPWIh+81hTQKs23IhciFO80hb7FoqcVziMGQAAAA=",
-  "/destinations/china-04.webp": "data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAADQAwCdASoQABUAPu1iqU2ppaOiMAgBMB2JYgBUQoVQRD7NiUCqoQAA+8SgPQxLS9T3Cdf9MBs9ZsrUM+iWP/3SdjPQDILPGqj16It7N/HOi+5Sb2AhINykj0Rh0ogVddRKTxVOHCS2CLqr0LcdvnVJtvp50o/9cBgxPyXyrJ53X/XAAAA=",
   "/destinations/china-05.webp": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAQAgCdASoQAAwAA4BaJbACdAEPhEtBTn5AAP7q8etC7J5fJTIkmq77PJVKwIgC1tYq0YNKFMExKnlT7CobBqU7bxO/AAAA",
   "/destinations/china-06.webp": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAADwAQCdASoQAAsAA4BaJYgCdAEQzHF35IAA/vAIsdAUfFOsXjDMO6JWWLqbynSEjBJhS4thEGBNZ7bbX1/zACcNpRRHAkRczhj1x3g4lAA=",
   "/destinations/china-08.webp": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAACwAwCdASoQABQAPu1iqU2ppaQiMAgBMB2JZQC06CFp4f8CPipmAAD9zwI3oQ2BvncY4qBNmOlvOxeAE7pnl3W8AdGMibS6ojqZmd0jcAA=",
@@ -306,7 +303,5 @@ export const HERO_BLUR_PLACEHOLDERS: Record<string, string> = {
   "/destinations/china-14.webp": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADQAQCdASoQAAsAA4BaJZQAAucMStTwAAD5cOgOb73+xRaLx5KLrh19UOCpR0tIqBQQDynkR+wBJg/y5eAAAA==",
   "/destinations/china-16.webp": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAADQAQCdASoQAAsAA4BaJQBOgBZOghP1cAD+uBJZUtbbMxxmxGq+1mCWjljcdpqt34DWMbfVh5i5njv0UcUSRpMAAAA=",
   "/destinations/china-17.webp": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAADwAQCdASoQAAsAA4BaJaQAD5FIBSluTQAA/q3pONwprHBFGVwKBV8iZMVlHUoDyWLTVMxY4eivqolchIP7qXG4kcBOlgd69ciZerZhlacyDAYbE4AAAA==",
-  "/destinations/china-18.webp": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAABQAgCdASoQAAsAA4BaJbACdAEWPcRXYhydzAAA/XCKMea7T0i+1/MN+kbUBSPmhA7PG4PFXqBg1divyxAU8xQDMOVpuDqEo4Ns2H5FcLOA7GEPuRJFoP048wAAAA==",
   "/destinations/china-19.webp": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAADQAQCdASoQAAoAA4BaJZACdACyf4TcAADJUCKqg5+jqS+FMSd+KWT9O1MtnpA9o9i2efxpYlRePRC3nRpbfwoBhmVInueL0Hh1ADou0+NBCt6wAAA=",
-  "/destinations/china-21.webp": "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADwAQCdASoQAAkAA4BaJYwCdAEUo9ovLpQA/lv/INpkpYLfv8Y7TPtlQBuazo4nZRPuBNDpVH2OEWQA",
 }
