@@ -1316,7 +1316,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '중국 수출 검역',
     shortLabel: '수출',
     description:
-      '중국 해관에서 동물위생증명서(动物卫生证书)를 발급받으세요.\n\n발급 방법 및 장소는 지역마다 달라요.\n베이징, 상하이는 지정 동물병원을 통해 발급받을 수 있어요.',
+      '중국 해관에서 동물위생증명서(动物卫生证书)를 발급받으세요.\n\n발급 방법 및 장소는 도시마다 달라요. 해관 콜센터(12360)에 문의하세요.\n베이징, 상하이는 지정 동물병원을 통해 발급받을 수 있어요.',
     doneSummary: '중국 수출 검역을 받았어요.',
     cardLine: '중국 해관에서 동물위생증명서를 발급받으세요.',
     applicability: { destinations: ['china'], species: 'all', tripType: 'round' },
