@@ -1,15 +1,19 @@
 import type { ProcedureCheck } from './types'
 import { validateTiterAfterBooster, validateTiterWithinChain } from '../journey-steps/date-rules'
+import { findRabiesChainBreak } from '../journey-steps/rabies-chain'
 import {
+  addDays,
   addYears,
   daysBetween,
   evaluateRabiesAgeConservative,
   exceedsValidityYears,
   findSameGuardianCases,
+  formatKoreanDate,
   readRabiesEntries,
   readTiterEntries,
   resolveValidUntil,
   SKIP,
+  todayKst,
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
@@ -234,6 +238,63 @@ export const CN_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
+    },
+  },
+  {
+    // 일본(jp.rabies-validity-expires-soon)과 동일 — 만료 30일 전부터 추가 접종 사전 안내.
+    // 입국 전 만료는 cn.rabies-not-expired-on-arrival, chain 끊김은 아래가 담당.
+    id: 'cn.rabies-validity-expires-soon',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 백신 면역 유효기간 만료 임박',
+    description: '광견병 백신 면역 유효기간이 오늘로부터 30일 이내로 남았을 때 사전 안내.',
+    severity: 'info',
+    addedAt: '2026-07-18',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination) ?? ''
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length === 0) return SKIP
+      if (findRabiesChainBreak(rabies)) return SKIP
+      const latest = rabies[rabies.length - 1]
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      if (!validUntil) return SKIP
+      if (dep && validUntil < dep) return SKIP
+      if (validUntil < todayKst()) return SKIP
+      const threshold = addDays(todayKst(), 30)
+      if (!threshold || validUntil >= threshold) {
+        return { ok: true, message: `만료(${validUntil}) ≥ 오늘+30일.` }
+      }
+      return {
+        ok: false,
+        message: `광견병 백신 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료돼요. 만료 전에 추가 접종을 하세요.`,
+        offendingPaths: [`rabies_dates[${latest.originalIndex}].date`],
+      }
+    },
+  },
+  {
+    // 일본(jp.rabies-extra-within-previous-validity)과 동일 — 3차+ 접종이 직전 유효기간 밖이면 주의.
+    // 2차 끊김은 cn.rabies-booster-within-prime-validity 담당. 순서 위반(too-early)은 입력 차단.
+    id: 'cn.rabies-extra-within-previous-validity',
+    country: COUNTRY,
+    category: '광견병',
+    title: '백신 면역 유효기간 만료',
+    description:
+      '추가(3차+) 광견병 접종은 직전 광견병 백신의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 부스터가 아닌 새 기초접종으로 간주됨.',
+    severity: 'info',
+    addedAt: '2026-07-18',
+    run: ({ caseRow }) => {
+      const entries = readRabiesEntries(caseRow)
+      if (entries.length < 3) return SKIP
+      const brk = findRabiesChainBreak(entries)
+      if (brk && brk.brokenAt >= 3 && brk.reason === 'expired') {
+        const broken = entries[brk.brokenAt - 1]
+        return {
+          ok: false,
+          message: `${brk.brokenAt - 1}차 백신 면역 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했어요. 날짜를 확인하세요.`,
+          offendingPaths: [`rabies_dates[${broken.originalIndex}].date`],
+        }
+      }
+      return { ok: true, message: '추가 접종이 직전 유효기간 이내.' }
     },
   },
 

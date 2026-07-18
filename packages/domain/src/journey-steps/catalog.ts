@@ -283,10 +283,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       }
       return undefined
     },
-    // 일본(2회 프라임 + 3차+) 전용 별도 카드. 1회 접종국은 광견병 백신 카드 하나에서
+    // 일본·중국(2회 프라임 + 3차+) 전용 별도 카드. 1회 접종국은 광견병 백신 카드 하나에서
     // 추가 접종을 목록으로 입력하므로 이 카드를 쓰지 않는다(rabies-vaccine-1 단일 카드로 통합).
     applicability: {
-      destinations: ['japan'],
+      destinations: ['japan', 'china'],
       species: 'all',
       tripType: 'all',
     },
