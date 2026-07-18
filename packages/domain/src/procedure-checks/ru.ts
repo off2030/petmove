@@ -1,7 +1,9 @@
 import type { ProcedureCheck } from './types'
 import {
+  addYears,
   daysBetween,
   evaluateRabiesAgeConservative,
+  exceedsValidityYears,
   findSameGuardianCases,
   readGeneralVaccineEntries,
   readRabiesEntries,
@@ -31,7 +33,7 @@ import {
  *
  * 컨벤션 (CN/SG 와 동일):
  *  - 필수 입력 누락 시 SKIP
- *  - 유효기간 1년 = 접종일 + 364일까지 인정
+ *  - 유효기간 1년 = 접종일의 1주년 당일까지 인정
  */
 
 const COUNTRY = 'russia'
@@ -106,20 +108,17 @@ export const RU_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '1년 라이선스 광견병 백신만 인정 (3년 거부)',
     description:
-      'Rosselkhoznadzor: "재접종 주기 12개월 초과 백신은 최종 접종일로부터 12개월 이내일 때만 인정". 사실상 1년 룰. valid_until 이 접종일 + 364일(1년) 초과면 거부. (일부 지역지부는 항체 검사 첨부 시 3년 인정 사례 — 보수 적용)',
+      'Rosselkhoznadzor: "재접종 주기 12개월 초과 백신은 최종 접종일로부터 12개월 이내일 때만 인정". 사실상 1년 룰. valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부. (일부 지역지부는 항체 검사 첨부 시 3년 인정 사례 — 보수 적용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return SKIP
 
-      const violations: Array<{ entry: typeof rabies[number]; days: number }> = []
+      const violations: Array<{ entry: typeof rabies[number]; validUntil: string }> = []
       for (const r of rabies) {
-        if (!r.valid_until) continue
-        const days = daysBetween(r.date, r.valid_until)
-        if (days === null) continue
-        if (days > 364) {
-          violations.push({ entry: r, days })
+        if (exceedsValidityYears(r.date, r.valid_until)) {
+          violations.push({ entry: r, validUntil: resolveValidUntil(r.date, r.valid_until) })
         }
       }
       if (violations.length > 0) {
@@ -127,7 +126,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
         const msgs: string[] = []
         for (const v of violations) {
           offending.push(`rabies_dates[${v.entry.originalIndex}].valid_until`)
-          msgs.push(`${v.entry.date} 백신의 면역 유효기간이 ${v.days}일로 364일(1년)을 초과해요. 3년 백신은 인정되지 않아요.`)
+          msgs.push(`${v.entry.date} 백신의 면역 유효기간(${v.validUntil})이 1년(${addYears(v.entry.date, 1)})을 넘어요. 3년 백신은 인정되지 않아요.`)
         }
         return {
           ok: false,
@@ -220,20 +219,17 @@ export const RU_CHECKS: ProcedureCheck[] = [
     category: '종합백신',
     title: '1년 라이선스 종합백신만 인정 (3년 거부)',
     description:
-      '종합백신 면역 유효기간 1년만 인정 (광견병과 동일 조건). valid_until 이 접종일 + 364일 초과면 거부.',
+      '종합백신 면역 유효기간 1년만 인정 (광견병과 동일 조건). valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const entries = readGeneralVaccineEntries(caseRow)
       if (entries.length === 0) return SKIP
 
-      const violations: Array<{ entry: typeof entries[number]; days: number }> = []
+      const violations: Array<{ entry: typeof entries[number]; validUntil: string }> = []
       for (const e of entries) {
-        if (!e.valid_until) continue
-        const days = daysBetween(e.date, e.valid_until)
-        if (days === null) continue
-        if (days > 364) {
-          violations.push({ entry: e, days })
+        if (exceedsValidityYears(e.date, e.valid_until)) {
+          violations.push({ entry: e, validUntil: resolveValidUntil(e.date, e.valid_until) })
         }
       }
       if (violations.length > 0) {
@@ -241,7 +237,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
         const msgs: string[] = []
         for (const v of violations) {
           offending.push(`general_vaccine_dates[${v.entry.originalIndex}].valid_until`)
-          msgs.push(`${v.entry.date} 백신의 면역 유효기간이 ${v.days}일로 364일(1년)을 초과해요. 3년 백신은 인정되지 않아요.`)
+          msgs.push(`${v.entry.date} 백신의 면역 유효기간(${v.validUntil})이 1년(${addYears(v.entry.date, 1)})을 넘어요. 3년 백신은 인정되지 않아요.`)
         }
         return {
           ok: false,

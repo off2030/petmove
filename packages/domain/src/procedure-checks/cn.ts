@@ -3,6 +3,7 @@ import {
   addYears,
   daysBetween,
   evaluateRabiesAgeConservative,
+  exceedsValidityYears,
   findSameGuardianCases,
   readRabiesEntries,
   readTiterEntries,
@@ -40,7 +41,7 @@ import {
  * 컨벤션 (NZ/HI 와 동일):
  *  - 필수 입력 누락 시 SKIP
  *  - "X일 이내" → `dep - X ≤ N-1`
- *  - "이상" 경계 inclusive (`addYears(date, 1) ≥ dep`)
+ *  - "이상" 경계 inclusive (`addYears(date, 1) ≥ dep` — 1주년 당일까지 유효)
  */
 
 const COUNTRY = 'china'
@@ -183,20 +184,18 @@ export const CN_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '1년 라이선스 광견병 백신만 인정 (2년/3년 거부)',
     description:
-      '실무상 면역 유효기간 2년·3년짜리 광견병 백신을 인정하지 않음. valid_until 이 접종일 + 364일(접종일 포함 1년) 초과면 거부. (GACC 본문은 "유효기간 내"만 명시 — 일부 입국항 운용 거부 사례 존재, 보수 적용)',
+      '실무상 면역 유효기간 2년·3년짜리 광견병 백신을 인정하지 않음. valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부. (GACC 본문은 "유효기간 내"만 명시 — 일부 입국항 운용 거부 사례 존재, 보수 적용)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return SKIP
 
-      const violations: Array<{ entry: typeof rabies[number]; days: number }> = []
+      const violations: Array<{ entry: typeof rabies[number]; validUntil: string }> = []
       for (const r of rabies) {
-        if (!r.valid_until) continue // valid_until 미입력은 디폴트 1년(+364) → OK
-        const days = daysBetween(r.date, r.valid_until)
-        if (days === null) continue
-        if (days > 364) {
-          violations.push({ entry: r, days })
+        // valid_until 미입력은 디폴트 1년 → OK. 명시값만 1년 한도와 비교(exceedsValidityYears).
+        if (exceedsValidityYears(r.date, r.valid_until)) {
+          violations.push({ entry: r, validUntil: resolveValidUntil(r.date, r.valid_until) })
         }
       }
       if (violations.length > 0) {
@@ -204,7 +203,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
         const msgs: string[] = []
         for (const v of violations) {
           offending.push(`rabies_dates[${v.entry.originalIndex}].valid_until`)
-          msgs.push(`${v.entry.date} 백신의 면역 유효기간이 ${v.days}일로 364일(1년)을 초과해요. 2년·3년 백신은 인정되지 않아요.`)
+          msgs.push(`${v.entry.date} 백신의 면역 유효기간(${v.validUntil})이 1년(${addYears(v.entry.date, 1)})을 넘어요. 2년·3년 백신은 인정되지 않아요.`)
         }
         return {
           ok: false,

@@ -174,9 +174,9 @@ export const GU_CHECKS: ProcedureCheck[] = [
     id: 'gu.rabies-not-expired-on-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: '도착일에 광견병 면역 유효 (접종일 포함 1년 = 364일까지)',
+    title: '도착일에 광견병 면역 유효 (1년 = 1주년 당일까지)',
     description:
-      '최근 광견병 접종 면역 유효기간이 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값, 미명시 시 디폴트 1년 (`addOneYear`).',
+      '최근 광견병 접종 면역 유효기간이 도착일 이전 만료되지 않아야 함. **1년 = 1주년 당일까지** 허용. valid_until 명시 시 그 값, 미명시 시 디폴트 1년 (`addOneYear`).',
     severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
@@ -336,7 +336,7 @@ function buildAnnualVaccineRule(opts: {
     country: COUNTRY,
     category: '종합백신',
     title: `${opts.label} 출국 10일 이전 + 1년 유효${speciesNote}`,
-    description: `${speciesPrefix}최근 ${opts.label} 접종이 출국일 10일 이전 완료 + **접종일 포함 1년 = +364일** 유효기간 안. valid_until 명시 시 override.`,
+    description: `${speciesPrefix}최근 ${opts.label} 접종이 출국일 10일 이전 완료 + **1년 = 1주년 당일까지** 유효기간 안. valid_until 명시 시 override.`,
     severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {

@@ -202,24 +202,54 @@ export function resolveValidUntil(date: string, validUntil?: string | null): str
 }
 
 /**
- * 'YYYY-MM-DD' + N년 유효기간의 **마지막 유효일** 반환.
- * 달력 +N년 후 동일 MM-DD 에서 하루 뺌 (윤년 처리됨).
- * 예: 2026-01-01 +1년 → 2026-12-31, +2년 → 2027-12-31.
+ * 'YYYY-MM-DD' + N년 유효기간의 **마지막 유효일**(만료일) 반환 — 달력 +N년 후 동일 MM-DD,
+ * 그날 **포함**해서 유효. 예: 2026-01-01 +1년 → 2027-01-01, +2년 → 2028-01-01.
+ *
+ * 2026-07-18 컨벤션 변경: 이전엔 하루를 빼(1주년 -1일 = 364일째) 보수적으로 잡았으나,
+ * "1년 유효 = 1년 뒤 같은 날짜까지"가 규정·증명서 표기의 통상 해석이고, 매년 같은 날
+ * 갱신하는 가장 흔한 접종 패턴이 -1일 때문에 전부 'chain 끊김'으로 오판되었다.
+ * 실제 만료일이 증명서에 적혀 있으면 resolveValidUntil 이 그 ISO 값을 그대로 쓰므로
+ * 이 환산은 "N년" 선택값·디폴트에만 적용된다.
+ *
+ * 윤년: 2/29 는 비윤년으로 넘어갈 때 월말(2/28)로 보정 (addMonths 의 달 끝 보정과 동일 원칙).
  */
 export function addYears(dateStr: string, n: number): string {
   const parts = dateStr.split('-')
   if (parts.length < 3) return ''
-  const d = new Date(`${parseInt(parts[0], 10) + n}-${parts[1]}-${parts[2]}T00:00:00Z`)
-  if (isNaN(d.getTime())) return ''
-  d.setUTCDate(d.getUTCDate() - 1)
-  const y = d.getUTCFullYear()
-  const m = String(d.getUTCMonth() + 1).padStart(2, '0')
-  const day = String(d.getUTCDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+  const y = parseInt(parts[0], 10)
+  const m = parseInt(parts[1], 10)
+  const day = parseInt(parts[2], 10)
+  if (isNaN(y) || isNaN(m) || isNaN(day) || m < 1 || m > 12) return ''
+  const targetY = y + n
+  // 해당 연·월의 말일 (Date.UTC(y, m, 0) = m 월의 마지막 날 — m 은 1-based 라 다음 달 0일)
+  const lastDay = new Date(Date.UTC(targetY, m, 0)).getUTCDate()
+  const d = Math.min(day, lastDay)
+  return `${targetY}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 }
 
 export function addOneYear(dateStr: string): string {
   return addYears(dateStr, 1)
+}
+
+/**
+ * "1년 라이선스 백신만 인정"(중국·러시아·베트남·우즈베키스탄·몽골·캄보디아) 공용 판정 —
+ * 명시된 면역 유효기간이 접종일 + N년(달력, 그날 포함)을 넘으면 true(=위반).
+ *
+ * valid_until 은 "N년" 선택값·ISO 날짜 어느 형식이든 resolveValidUntil 로 환산해 비교한다.
+ * 옛 구현은 `daysBetween(date, valid_until) > 364` 였는데 (a) 윤년이 끼면 정상 1년도 366일이
+ * 되어 오탐이고 (b) "3년" 같은 선택값 문자열은 Date 파싱 실패로 조용히 skip 되어 블로커가
+ * 사실상 잠자고 있었다. 달력 비교로 둘 다 해소. 미입력(=디폴트 1년)은 통과.
+ */
+export function exceedsValidityYears(
+  date: string,
+  validUntil: string | null | undefined,
+  years = 1,
+): boolean {
+  if (!validUntil) return false
+  const resolved = resolveValidUntil(date, validUntil)
+  const limit = addYears(date, years)
+  if (!resolved || !limit) return false
+  return resolved > limit
 }
 
 /**
@@ -238,7 +268,7 @@ export function addDays(dateStr: string, n: number): string {
  * 'YYYY-MM-DD' + N개월 후의 동일 일자 반환 (달 끝 보정).
  * EU "three months" 같은 캘린더 기반 비교에 사용.
  *
- * - addYears 와 달리 -1일 처리 없음 (경계 inclusive).
+ * - addYears 와 동일하게 경계 inclusive.
  *   "at least 3 months" → `addMonths(d, 3) <= dep` 로 검사.
  * - 월 끝 보정: 1월 31일 + 1개월 = 2월 28일 (또는 윤년 29일).
  *

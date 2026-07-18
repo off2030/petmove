@@ -167,7 +167,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '도착일에 광견병 면역 유효',
     description:
-      '최근 광견병 접종의 면역 유효기간이 도착일 이전 만료되지 않아야 함. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년 (`addOneYear`).',
+      '최근 광견병 접종의 면역 유효기간이 도착일 이전 만료되지 않아야 함. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년 (`addOneYear` = 1주년 당일까지).',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {

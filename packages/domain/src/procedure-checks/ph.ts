@@ -165,9 +165,9 @@ export const PH_CHECKS: ProcedureCheck[] = [
     id: 'ph.rabies-not-expired-on-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: '도착(예정)일에 광견병 면역 유효 (접종일 포함 1년 = 364일까지)',
+    title: '도착(예정)일에 광견병 면역 유효 (1년 = 1주년 당일까지)',
     description:
-      '최근 광견병 접종 면역 유효기간이 필리핀 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년 (`addOneYear` = +364). 2026-07-16: 도착일(entry_date) 입력 시 그 값, 미입력이면 출국일(departure_date)로 대체 — 대부분 보호자가 도착일까지는 입력하지 않고 두 날짜도 통상 당일·익일 차이라 출국일로도 충분히 근사됨.',
+      '최근 광견병 접종 면역 유효기간이 필리핀 도착일 이전 만료되지 않아야 함. **1년 = 1주년 당일까지** 허용. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년 (`addOneYear`). 2026-07-16: 도착일(entry_date) 입력 시 그 값, 미입력이면 출국일(departure_date)로 대체 — 대부분 보호자가 도착일까지는 입력하지 않고 두 날짜도 통상 당일·익일 차이라 출국일로도 충분히 근사됨.',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
@@ -241,9 +241,9 @@ export const PH_CHECKS: ProcedureCheck[] = [
     id: 'ph.general-vaccine-not-expired-on-arrival',
     country: COUNTRY,
     category: '종합백신',
-    title: '도착(예정)일에 종합백신 면역 유효 (접종일 포함 1년 = 364일까지)',
+    title: '도착(예정)일에 종합백신 면역 유효 (1년 = 1주년 당일까지)',
     description:
-      '최근 종합백신 면역 유효기간이 필리핀 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값, 미명시 시 디폴트 1년 (`addOneYear` = +364). 2026-07-16: 도착일(entry_date) 입력 시 그 값, 미입력이면 출국일(departure_date)로 대체 — 대부분 보호자가 도착일까지는 입력하지 않고 두 날짜도 통상 당일·익일 차이라 출국일로도 충분히 근사됨.',
+      '최근 종합백신 면역 유효기간이 필리핀 도착일 이전 만료되지 않아야 함. **1년 = 1주년 당일까지** 허용. valid_until 명시 시 그 값, 미명시 시 디폴트 1년 (`addOneYear`). 2026-07-16: 도착일(entry_date) 입력 시 그 값, 미입력이면 출국일(departure_date)로 대체 — 대부분 보호자가 도착일까지는 입력하지 않고 두 날짜도 통상 당일·익일 차이라 출국일로도 충분히 근사됨.',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {

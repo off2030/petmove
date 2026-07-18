@@ -60,21 +60,22 @@ function readRecords(data: Record<string, unknown>, dataKey: string, legacyKey?:
 }
 
 /**
- * 접종일 + 1년 유효기간의 **마지막 유효일** 반환.
- * 달력 +1년 후 동일 MM-DD 에서 하루 뺌 (윤년 처리됨).
- * 예: 2026-01-01 → 2026-12-31 (=접종일 +364일).
+ * 접종일 + 1년 유효기간의 **마지막 유효일**(만료일) 반환 — 1년 뒤 같은 날짜, 그날 포함.
+ * 예: 2026-01-01 → 2027-01-01. 도메인 addYears(@petmove/domain)와 같은 컨벤션
+ * (2026-07-18 통일 — 이전의 '1주년 -1일'은 매년 같은 날 갱신을 만료로 오판했다).
+ * 윤년: 2/29 는 비윤년으로 넘어갈 때 2/28 로 보정.
  */
 function addOneYear(dateStr: string): string {
   if (!dateStr) return ''
   const parts = dateStr.split('-')
   if (parts.length < 3) return ''
-  const d = new Date(`${parseInt(parts[0], 10) + 1}-${parts[1]}-${parts[2]}T00:00:00Z`)
-  if (isNaN(d.getTime())) return ''
-  d.setUTCDate(d.getUTCDate() - 1)
-  const y = d.getUTCFullYear()
-  const m = String(d.getUTCMonth() + 1).padStart(2, '0')
-  const day = String(d.getUTCDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+  const y = parseInt(parts[0], 10)
+  const m = parseInt(parts[1], 10)
+  const day = parseInt(parts[2], 10)
+  if (isNaN(y) || isNaN(m) || isNaN(day) || m < 1 || m > 12) return ''
+  const lastDay = new Date(Date.UTC(y + 1, m, 0)).getUTCDate()
+  const d = Math.min(day, lastDay)
+  return `${y + 1}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 }
 
 /** 라벨과 접종일로 lookup 데이터를 VacRecord 형태로 반환 (expanded view 힌트용) */

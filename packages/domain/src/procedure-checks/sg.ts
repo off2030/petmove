@@ -25,7 +25,7 @@ import {
  *
  * 컨벤션: jp.ts 와 동일.
  *  - 필수 입력 누락 시 SKIP (ok: true, 색상·알림 없음)
- *  - 유효기간은 `addYears(d, 1)` (1주년 -1일, 즉 364일째까지) → "유효기간 1년" 보수 해석
+ *  - 유효기간은 `addYears(d, 1)` (1주년 당일까지 유효) → "유효기간 1년" 해석
  *  - offendingPaths 로 문제 필드 경로를 알려주면 상세페이지에서 색상·툴팁 표시
  */
 
@@ -149,7 +149,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일은 항체 검사일 12개월 이내',
     description:
-      'RNATT 유효기간 12개월 — 출국일이 채혈일 + 1년을 넘으면 재검사 필요. 1주년 당일은 만료일이라 364일째까지만 인정. (Schedule III IV(a)(iii) "not more than 12 months prior to export")',
+      'RNATT 유효기간 12개월 — 출국일이 채혈일 + 1년을 넘으면 재검사 필요. 1주년 당일까지 인정. (Schedule III IV(a)(iii) "not more than 12 months prior to export")',
     severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
@@ -241,7 +241,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
     category: '종합백신',
     title: '출국일 시점 종합백신 면역 유효',
     description:
-      '출국일에 가장 최근 종합백신의 면역 유효기간이 만료되지 않아야 함. valid_until 미입력 시 디폴트 1년(addOneYear, +364일) 적용. (Schedule III IV(a)(iv)(v) "according to the vaccine manufacturer\'s recommendations")',
+      '출국일에 가장 최근 종합백신의 면역 유효기간이 만료되지 않아야 함. valid_until 미입력 시 디폴트 1년(addOneYear = 1주년 당일까지) 적용. (Schedule III IV(a)(iv)(v) "according to the vaccine manufacturer\'s recommendations")',
     severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {

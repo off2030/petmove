@@ -36,7 +36,7 @@ import {
  *
  * 컨벤션 (TR/EU 와 동일):
  *  - 필수 입력 누락 시 SKIP
- *  - 유효기간 1년 = 접종일 + 364일까지 인정
+ *  - 유효기간 1년 = 접종일의 1주년 당일까지 인정
  *  - "3개월" = `addMonths(d, 3) <= dep` (캘린더 기준, EU 와 일관)
  */
 
@@ -211,7 +211,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일은 항체 검사 12개월 이내',
     description:
-      'RNATT 유효기간 1년 — 출국일이 채혈일 + 1년(364일) 초과 시 재검사 필요. (SSUFSCP 실무 운용 — 부스터 chain 끊김 없을 시 EU 패턴상 평생 유효 가능, 보수적으로 1년 적용)',
+      'RNATT 유효기간 1년 — 출국일이 채혈일의 1주년을 넘으면 재검사 필요(1주년 당일까지 유효). (SSUFSCP 실무 운용 — 부스터 chain 끊김 없을 시 EU 패턴상 평생 유효 가능, 보수적으로 1년 적용)',
     severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {

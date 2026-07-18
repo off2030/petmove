@@ -25,7 +25,7 @@ import {
  *
  * ⚠️ 검역 (post-entry quarantine) = 입국 후 최소 10일.
  *  → 면역 유효기간 룰은 출국 + 10일까지 cover 해야 함.
- *  → `vaccine + 364일 (1년 -1일) ≥ dep + 10` ⇒ `dep - vaccine ≤ 354`.
+ *  → `valid_until ≥ dep + 10일` (디폴트 1년 = 접종일의 1주년 당일까지 유효).
  *
  * 컨벤션: jp/sg/eu 와 동일.
  *  - 필수 입력 누락 시 SKIP
@@ -84,7 +84,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일 + 검역 10일까지 광견병 면역 유효',
     description:
-      '입국 후 10일 검역(최소) 종료까지 광견병 면역이 유지되어야 함. `valid_until ≥ dep + 10일`. 디폴트 1년 (`addYears -1일`) → `dep - rabies ≤ 354일`. valid_until 명시 시 override.',
+      '입국 후 10일 검역(최소) 종료까지 광견병 면역이 유지되어야 함. `valid_until ≥ dep + 10일`. 디폴트 1년(접종일의 1주년 당일까지). valid_until 명시 시 override.',
     severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
@@ -173,7 +173,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일은 RNATT 검사일 12개월 이내',
     description:
-      'RNATT 결과 유효기간 12개월 — 출국까지 유효해야 함. 1주년 당일은 만료라 364일까지만 인정 (`addYears(titer, 1)` 사용).',
+      'RNATT 결과 유효기간 12개월 — 출국까지 유효해야 함. 채혈일의 1주년 당일까지 인정 (`addYears(titer, 1)` 사용).',
     severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
@@ -236,7 +236,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     category: '종합백신',
     title: '출국 + 검역 10일까지 종합백신(DHPP+L) 면역 유효',
     description:
-      '강아지 전용. DHPP+L (Lepto 포함) 가 검역 종료까지 유효해야 함. `valid_until ≥ dep + 10일`. 디폴트 1년 → `dep - vacc ≤ 354일`. valid_until 명시 시 override.',
+      '강아지 전용. DHPP+L (Lepto 포함) 가 검역 종료까지 유효해야 함. `valid_until ≥ dep + 10일`. 디폴트 1년(1주년 당일까지). valid_until 명시 시 override.',
     severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
@@ -303,9 +303,9 @@ export const AU_CHECKS: ProcedureCheck[] = [
     id: 'au.civ-2doses-2weeks-apart-and-valid',
     country: COUNTRY,
     category: '종합백신',
-    title: 'CIV(독감) 2회 정확히 14일 간격 + 2차 14~354일 전',
+    title: 'CIV(독감) 2회 정확히 14일 간격 + 2차는 출국 14일 전 이상·검역까지 유효',
     description:
-      '강아지 전용. CIV 2회 접종, **정확히 14일 간격** (`dose2 - dose1 == 14`). 2차 완료 ≤ 출국 14일 전 (`dep - dose2 ≥ 14`), 검역 종료까지 유효 (`dep - dose2 ≤ 354`).',
+      '강아지 전용. CIV 2회 접종, **정확히 14일 간격** (`dose2 - dose1 == 14`). 2차 완료 ≤ 출국 14일 전 (`dep - dose2 ≥ 14`), 검역 종료까지 유효 (`valid_until ≥ dep + 10일`).',
     severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {

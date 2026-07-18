@@ -96,9 +96,9 @@ export const TW_CHECKS: ProcedureCheck[] = [
     id: 'tw.rabies-not-expired-on-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: '도착일에 광견병 면역 유효 (접종일 포함 1년 = 364일까지)',
+    title: '도착일에 광견병 면역 유효 (1년 = 1주년 당일까지)',
     description:
-      '최근 광견병 접종 면역 유효기간이 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년 (`addOneYear`).',
+      '최근 광견병 접종 면역 유효기간이 도착일 이전 만료되지 않아야 함. **1년 = 1주년 당일까지** 허용. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년 (`addOneYear`).',
     severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
@@ -168,7 +168,7 @@ export const TW_CHECKS: ProcedureCheck[] = [
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
-      // 180일 ≤ 출국 ≤ 1년 (addYears: -1일 보정 = 364일째까지) 윈도우 안에 들어가는 채혈 1개 이상이면 OK.
+      // 180일 ≤ 출국 ≤ 1년 (addYears: 1주년 당일까지) 윈도우 안에 들어가는 채혈 1개 이상이면 OK.
       const valid = titers.find((t) => {
         const days = daysBetween(t.date, dep)
         if (days === null) return false

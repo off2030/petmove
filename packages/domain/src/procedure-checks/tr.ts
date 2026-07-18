@@ -41,7 +41,7 @@ import {
  *
  * 컨벤션 (EU 와 동일):
  *  - 필수 입력 누락 시 SKIP
- *  - 유효기간 1년 = 접종일 + 364일까지 인정
+ *  - 유효기간 1년 = 접종일의 1주년 당일까지 인정
  */
 
 const COUNTRY = 'turkey'
@@ -250,7 +250,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일은 항체 검사 12개월 이내',
     description:
-      'RNATT 유효기간 1년 — 출국일이 채혈일 + 1년(364일) 초과 시 재검사 필요. (Tarım Bakanlığı 운용)',
+      'RNATT 유효기간 1년 — 출국일이 채혈일의 1주년을 넘으면 재검사 필요(1주년 당일까지 유효). (Tarım Bakanlığı 운용)',
     severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {

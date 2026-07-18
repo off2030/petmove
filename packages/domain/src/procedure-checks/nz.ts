@@ -27,7 +27,7 @@ import {
  *
  * ⚠️ 검역 (post-entry quarantine) = 입국 후 최소 10일 (MPI-approved facility).
  *  → 면역 유효기간 룰은 출국 + 10일까지 cover 해야 함.
- *  → `vaccine + 364일 (1년 -1일) ≥ dep + 10` ⇒ `dep - vaccine ≤ 354` (AU 와 동일).
+ *  → `valid_until ≥ dep + 10일` (디폴트 1년 = 접종일의 1주년 당일까지 유효, AU 와 동일).
  *
  * 컨벤션 (NZ 전용 — MPI 텍스트 그대로):
  *  - 필수 입력 누락 시 SKIP
@@ -111,7 +111,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일 + 검역 10일까지 광견병 면역 유효',
     description:
-      '입국 후 10일 검역(최소) 종료까지 광견병 면역이 유지되어야 함. `valid_until ≥ dep + 10일`. 디폴트 1년 (`addYears -1일`) → `dep - rabies ≤ 354일`. valid_until 명시 시 override. (MPI: "no more than 12 months prior to travel" + 10-day quarantine)',
+      '입국 후 10일 검역(최소) 종료까지 광견병 면역이 유지되어야 함. `valid_until ≥ dep + 10일`. 디폴트 1년(접종일의 1주년 당일까지). valid_until 명시 시 override. (MPI: "no more than 12 months prior to travel" + 10-day quarantine)',
     severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
@@ -518,7 +518,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
 /**
  * 종합·독감·켄넬코프 공통 룰 빌더.
  * - 최근 접종 ≥ 출국 14일 전 (`dep - latest ≥ 14`)
- * - 검역 종료까지 면역 유효 (`valid_until ≥ dep + 10일` cushion, 디폴트 1년 = `dep - latest ≤ 354`)
+ * - 검역 종료까지 면역 유효 (`valid_until ≥ dep + 10일` cushion, 디폴트 1년 = 1주년 당일까지)
  * - dogOnly = true 시 강아지에만 적용 (고양이는 SKIP)
  * - 1회 접종으로 충분 (다회 접종 시 가장 최근 도즈 기준)
  *
@@ -540,7 +540,7 @@ function buildAnnualVaccineRule(opts: {
     country: COUNTRY,
     category: '종합백신',
     title: `${opts.label} 출국 14일 이전 + 검역 10일 cover${speciesNote}`,
-    description: `${speciesPrefix}최근 ${opts.label} 접종이 출국일 14일 이전 + 검역(10일) 종료까지 면역 유효 (cushion ≥10일). 1회 접종으로 충분. 디폴트 1년 → \`dep - vacc ≤ 354\`. valid_until 명시 시 override.${sourceSuffix}`,
+    description: `${speciesPrefix}최근 ${opts.label} 접종이 출국일 14일 이전 + 검역(10일) 종료까지 면역 유효 (cushion ≥10일). 1회 접종으로 충분. 디폴트 1년(1주년 당일까지). valid_until 명시 시 override.${sourceSuffix}`,
     severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {

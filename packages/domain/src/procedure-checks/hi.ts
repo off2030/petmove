@@ -197,7 +197,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '도착일에 광견병 면역 유효 (1년/3년 라이선스 모두 cover)',
     description:
-      '최근 광견병 접종의 라이선스 booster interval 이 도착일 이전 만료되지 않아야 함. **접종일 포함**: 1년 라이선스 → +364일, 3년 라이선스 → +1094일 (3년-1일). valid_until 명시 시 그 값 사용 — 3년 백신은 valid_until 직접 입력 필수. 미명시 시 디폴트 1년 (`addOneYear`). (HDOA: "must not be expired when your pet arrives")',
+      '최근 광견병 접종의 라이선스 booster interval 이 도착일 이전 만료되지 않아야 함. 1년·3년 라이선스 모두 **N주년 당일까지** 유효. valid_until 명시 시 그 값 사용 — 3년 백신은 valid_until 직접 입력 필수. 미명시 시 디폴트 1년 (`addOneYear`). (HDOA: "must not be expired when your pet arrives")',
     severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {

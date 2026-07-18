@@ -1,5 +1,6 @@
 import type { ProcedureCheck } from './types'
 import {
+  addYears,
   daysBetween,
   readRabiesEntries,
   readInfectiousDiseaseEntries,
@@ -15,7 +16,7 @@ import {
  * (항체검사·마이크로칩·내원일 검증은 공통 룰 / 다른 파일에서 다룸.)
  *
  * 핵심 룰:
- *  - 광견병: 최근 접종이 출국 30일 전 ~ 364일 전 (대기 30일 + 1년 유효).
+ *  - 광견병: 최근 접종이 출국 30일 전 이상 + 유효기간(달력 1년, 1주년 당일 포함) 이내.
  *  - 전염병검사: 출국 30일 이내(≤29, 29일 전부터). ARC-OVI 발송 검사.
  *
  * 컨벤션 (IL/RU/MX 와 동일):
@@ -28,12 +29,14 @@ const COUNTRY = 'south_africa'
 export const ZA_CHECKS: ProcedureCheck[] = [
   // ── 광견병 ──
   {
+    // id 의 '364days' 는 옛 유효기간 컨벤션(1주년 -1일) 잔재 — 판정은 달력 1년으로 바뀌었지만
+    // id 는 org_disabled_checks·cases_notified_checks 에 저장되므로 그대로 유지한다.
     id: 'za.rabies-30to364days-before-departure',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 접종은 출국 30일 전 ~ 364일 전',
+    title: '광견병 접종은 출국 30일 전 이상 + 출국일에 유효',
     description:
-      '최근 광견병 접종일이 출국일 기준 30일 전(대기 기간) 이상, 364일 전(1년 유효) 이내여야 함. (DALRRD: 접종 후 30일 경과 + 유효한 광견병 백신)',
+      '최근 광견병 접종일이 출국일 기준 30일 전(대기 기간) 이상이고, 출국일이 그 접종의 유효기간(달력 1년, 1주년 당일 포함) 안이어야 함. (DALRRD: 접종 후 30일 경과 + 유효한 광견병 백신)',
     severity: 'info',
     addedAt: '2026-07-01',
     run: ({ caseRow, destination }) => {
@@ -51,14 +54,16 @@ export const ZA_CHECKS: ProcedureCheck[] = [
           offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
-      if (days > 364) {
+      // 유효기간 상한은 달력 1년(1주년 당일까지) — 윤년에도 정확하도록 일수 대신 날짜 비교.
+      const validUntil = addYears(latest.date, 1)
+      if (validUntil && dep > validUntil) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 유효기간(364일)을 넘겨 만료돼요.`,
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
           offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
-      return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): ${days}일 (30~364일).` }
+      return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): ${days}일 (30일 이상 + 유효기간 ${validUntil} 이내).` }
     },
   },
 
