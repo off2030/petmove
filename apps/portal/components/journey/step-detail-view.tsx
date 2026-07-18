@@ -259,59 +259,29 @@ export function StepDetailView({
   const freeInput = profile?.free_input_mode === true
 
   // 인터랙티브 step 폼 state — 다른 step 에서는 렌더 안 함. hooks 는 매번 호출.
+  // 미래(예정) 일정은 서버 저장 시 *_scheduled 별도 자리로 분리된다(예정→도래→재입력 모델).
+  // 실제 기록 키에는 ≤오늘만 남으므로 입력칸은 저장값을 그대로 보여주면 된다.
   const savedChip = caseRow?.microchip ?? ''
-  // 미래(예정)로 저장한 시술일은 입력칸에서 비운다 — 예정 배지로만 표시(완료 혼동 방지).
-  // microchip_confirmed===false = 아직 도래 전 '예정'. 보호자가 실제(오늘/과거) 날짜로
-  // 저장해야 칸에 채워지고 완료된다. 도래/지난 뒤에도 false 로 남아 빈 칸 유지(원래 상태).
-  const microchipScheduled =
-    (caseRow?.data as Record<string, unknown> | undefined)?.microchip_confirmed === false
-  const savedDate = microchipScheduled ? '' : readImplantDate(caseRow?.data)
+  const savedDate = readImplantDate(caseRow?.data)
   const [chip, setChip] = useState(savedChip)
   const [date, setDate] = useState(savedDate)
 
-  // 광견병 1·2차도 마이크로칩과 동일 — 미래(예정) 접종일은 입력칸에서 비운다(예정 배지로만).
-  // rabies_{n}_confirmed===false = 도래 전 예정. 실제 날짜로 저장해야 채워지고 완료된다.
-  // 배지는 scenario(datedUpcoming)가 raw rabies_dates 를 읽어 그대로 표시.
-  const rabiesScheduled =
-    (caseRow?.data as Record<string, unknown> | undefined)?.[`rabies_${rabiesIndex + 1}_confirmed`] ===
-    false
-  const rawSavedRabies = readRabiesEntryForm(caseRow?.data, rabiesIndex)
-  const savedRabies = rabiesScheduled ? { ...rawSavedRabies, date: '' } : rawSavedRabies
+  const savedRabies = readRabiesEntryForm(caseRow?.data, rabiesIndex)
   const [rabies, setRabies] = useState<RabiesEntryForm>(savedRabies)
   // 광견병 step 한정 — org 백신 카탈로그 ("지정 약품" 힌트 계산용).
   const [vaccineData, setVaccineData] = useState<VaccineProductsData | null>(null)
 
   // 1회 접종국 단일 카드 — rabies_dates 전체(index 0~)를 가변 목록으로 관리. 빈 상태 1장 유지.
-  // 일본 1·2차와 동일 — 예정(미확인) 최신 회차는 입력칸에서 숨기고(예정 배지로만) 도래 후
-  // 실제 날짜 재입력으로 완료한다. rabies_single_confirmed===false 가 예정 신호.
-  const rabiesSingleScheduled =
-    (caseRow?.data as Record<string, unknown> | undefined)?.rabies_single_confirmed === false
-  const savedRabiesList = maskScheduledLatestRabies(
-    readRabiesExtraEntries(caseRow?.data, 0),
-    rabiesSingleScheduled,
-  )
-  // 저장(전체 교체) 시 예정분 보존용 — 마스킹 전 실제 미래 회차(있으면).
-  const rabiesSingleScheduledRaw = rabiesSingleScheduled
-    ? latestRabiesEntry(readRabiesExtraEntries(caseRow?.data, 0))
-    : null
+  const savedRabiesList = readRabiesExtraEntries(caseRow?.data, 0)
   const [rabiesList, setRabiesList] = useState<RabiesExtraEntry[]>(
     savedRabiesList.length === 0 ? [makeEmptyExtra()] : savedRabiesList,
   )
 
   // 광견병 추가 백신 — 일본은 3차+(index 2~), 1회 접종국(태국·필리핀·EU)은 2차+(index 1~).
-  // 빈 상태에서도 입력칸 한 장이 보이도록 최소 1장 유지. 단일카드와 동일 — 예정(미확인) 최신
-  // 추가 회차는 입력칸에서 숨긴다(rabies_extra_confirmed===false).
+  // 빈 상태에서도 입력칸 한 장이 보이도록 최소 1장 유지.
   const rabiesExtraBase =
     destinationKey && SINGLE_DOSE_RABIES_DESTINATIONS.includes(destinationKey) ? 1 : 2
-  const rabiesExtraScheduled =
-    (caseRow?.data as Record<string, unknown> | undefined)?.rabies_extra_confirmed === false
-  const savedRabiesExtra = maskScheduledLatestRabies(
-    readRabiesExtraEntries(caseRow?.data, rabiesExtraBase),
-    rabiesExtraScheduled,
-  )
-  const rabiesExtraScheduledRaw = rabiesExtraScheduled
-    ? latestRabiesEntry(readRabiesExtraEntries(caseRow?.data, rabiesExtraBase))
-    : null
+  const savedRabiesExtra = readRabiesExtraEntries(caseRow?.data, rabiesExtraBase)
   const [rabiesExtra, setRabiesExtra] = useState<RabiesExtraEntry[]>(
     savedRabiesExtra.length === 0 ? [makeEmptyExtra()] : savedRabiesExtra,
   )
@@ -320,16 +290,7 @@ export function StepDetailView({
   const [titerForm, setTiterForm] = useState<TiterForm>(savedTiterForm)
 
   // 광견병 추가 항체 검사(2회차+) — 빈 상태에서도 카드 1장이 보이도록 최소 1장 유지.
-  // 추가 접종과 동일 — 예정(미확인) 최신 추가 채혈은 입력칸에서 숨긴다(titer_extra_confirmed===false).
-  const titerExtraScheduled =
-    (caseRow?.data as Record<string, unknown> | undefined)?.titer_extra_confirmed === false
-  const savedTiterExtra = maskScheduledLatestTiter(
-    readTiterExtraEntries(caseRow?.data),
-    titerExtraScheduled,
-  )
-  const titerExtraScheduledRaw = titerExtraScheduled
-    ? latestTiterEntry(readTiterExtraEntries(caseRow?.data))
-    : null
+  const savedTiterExtra = readTiterExtraEntries(caseRow?.data)
   const [titerExtra, setTiterExtra] = useState<TiterExtraEntry[]>(
     savedTiterExtra.length === 0 ? [makeEmptyTiterExtra()] : savedTiterExtra,
   )
@@ -547,54 +508,10 @@ export function StepDetailView({
   // 버튼 라벨을 '완료'로 한다. 입력·변경 중(dirty)이면 '저장'/'예정일로 저장' 유지 — 즉
   // '검역일을 넣을 때 = 저장', '예정 저장분이 당일 도래 = 완료'. (추가 백신·검사와 동일 톤.)
   const confirmArrivedComplete = isConfirmStep && formArrived && !dirty && !done
-  // 추가 접종·추가 검사 — 저장된 가장 최근 추가 항목 날짜가 도래(≤ 오늘)했는데 아직 완료 전이면
-  // '저장' 버튼을 활성화해 보호자가 실제 접종/검사를 확인(클릭) 후 완료하도록 한다. (검역 5단계와 동일.)
-  const savedRabiesExtraLatest = savedRabiesExtra.reduce<string>(
-    (m, e) => (typeof e.date === 'string' && e.date.length >= 10 && e.date > m ? e.date : m),
-    '',
-  )
-  const rabiesExtraArrivedUnconfirmed =
-    isRabiesExtra && !done && !rabiesExtraScheduled && savedRabiesExtraLatest !== '' && savedRabiesExtraLatest <= todayStr
-  const savedTiterExtraLatest = savedTiterExtra.reduce<string>(
-    (m, e) => (typeof e.date === 'string' && e.date.length >= 10 && e.date > m ? e.date : m),
-    '',
-  )
-  const titerExtraArrivedUnconfirmed =
-    isTiterExtra && !done && !titerExtraScheduled && savedTiterExtraLatest !== '' && savedTiterExtraLatest <= todayStr
-  // 백신·구충(예정→도래→완료) — 저장된 가장 늦은 입력일이 도래(≤오늘)했는데 아직 미완료면
-  // 변경 없이도 '완료' 버튼 활성. (추가 백신/검사 ArrivedUnconfirmed 와 동일 톤.)
-  const latestSavedDate = (list: Array<{ date?: string | null }>): string =>
-    list.reduce<string>(
-      (m, e) => (typeof e?.date === 'string' && e.date.length >= 10 && e.date > m ? e.date : m),
-      '',
-    )
-  const microchipArrivedUnconfirmed =
-    isMicrochip && !done && savedDate.length >= 10 && savedDate <= todayStr
-  const rabiesArrivedUnconfirmed =
-    isRabies && !isRabiesSingleCard && !done && savedRabies.date.length >= 10 && savedRabies.date <= todayStr
-  const rabiesSingleArrivedUnconfirmed =
-    isRabiesSingleCard && !done && !rabiesSingleScheduled && latestSavedDate(savedRabiesList) !== '' && latestSavedDate(savedRabiesList) <= todayStr
-  const generalVaccineArrivedUnconfirmed =
-    isGeneralVaccine && !done && latestSavedDate(savedGeneralVaccine) !== '' && latestSavedDate(savedGeneralVaccine) <= todayStr
-  const parasiteArrivedUnconfirmed =
-    isParasite && !done && latestSavedDate(savedParasite) !== '' && latestSavedDate(savedParasite) <= todayStr
-  // 출국 전 임상검사 — 다른 백신·검사와 동일 dated-confirm. 예정(미래)으로 저장한 검진일이
-  // 도래(≤오늘)했는데 아직 완료 전이면 '완료' 버튼을 활성화해 확인으로 완료한다. (서류 준비
-  // 현황은 별도 단계 '서류 체크리스트'(document-checklist)로 분리 — 여긴 검진일만 다룬다.)
-  const vetVisitArrivedUnconfirmed =
-    isVetVisit && !done && savedVetVisitDate.length >= 10 && savedVetVisitDate <= todayStr
-  // 저장 버튼 활성: 변경됨(dirty) OR 검진일 도래했는데 아직 확인 전(저장 클릭으로 완료).
-  const canSave =
-    dirty ||
-    (formArrived && !done) ||
-    rabiesExtraArrivedUnconfirmed ||
-    titerExtraArrivedUnconfirmed ||
-    microchipArrivedUnconfirmed ||
-    rabiesArrivedUnconfirmed ||
-    rabiesSingleArrivedUnconfirmed ||
-    generalVaccineArrivedUnconfirmed ||
-    parasiteArrivedUnconfirmed ||
-    vetVisitArrivedUnconfirmed
+  // 저장 버튼 활성: 변경됨(dirty) OR 검역 confirm 단계의 예정 저장분이 도래해 완료 확정 가능.
+  // 기록형(백신·검사·구충) 카드는 dirty 만 본다 — 예정→도래→재입력 모델이라 도래 시 별도
+  // '완료' 확인 없이, 실제 날짜 입력(=dirty)·저장으로 완료된다.
+  const canSave = dirty || (formArrived && !done)
   // 신청·신고 step(검역 5단계 외) — 신청일/신고일이 미래면 버튼 라벨을 '예정일로 저장'으로.
   // 완료 판정은 신청일이 오늘 이하로 도래한 뒤(+ 예약/허가증/skip). canSave 는 dirty 그대로.
   const jpExportApplicationUpcoming =
@@ -644,33 +561,23 @@ export function StepDetailView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.microchip])
   useEffect(() => {
-    if (!microchipDirty) setDate(microchipScheduled ? '' : readImplantDate(caseRow?.data))
+    if (!microchipDirty) setDate(readImplantDate(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
-    if (!rabiesDirty) {
-      const raw = readRabiesEntryForm(caseRow?.data, rabiesIndex)
-      setRabies(rabiesScheduled ? { ...raw, date: '' } : raw)
-    }
+    if (!rabiesDirty) setRabies(readRabiesEntryForm(caseRow?.data, rabiesIndex))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
     if (!rabiesListDirty) {
-      const sched =
-        (caseRow?.data as Record<string, unknown> | undefined)?.rabies_single_confirmed === false
-      const next = maskScheduledLatestRabies(readRabiesExtraEntries(caseRow?.data, 0), sched)
+      const next = readRabiesExtraEntries(caseRow?.data, 0)
       setRabiesList(next.length === 0 ? [makeEmptyExtra()] : next)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
     if (!rabiesExtraDirty) {
-      const sched =
-        (caseRow?.data as Record<string, unknown> | undefined)?.rabies_extra_confirmed === false
-      const next = maskScheduledLatestRabies(
-        readRabiesExtraEntries(caseRow?.data, rabiesExtraBase),
-        sched,
-      )
+      const next = readRabiesExtraEntries(caseRow?.data, rabiesExtraBase)
       setRabiesExtra(next.length === 0 ? [makeEmptyExtra()] : next)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -692,9 +599,7 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!titerExtraDirty) {
-      const sched =
-        (caseRow?.data as Record<string, unknown> | undefined)?.titer_extra_confirmed === false
-      const next = maskScheduledLatestTiter(readTiterExtraEntries(caseRow?.data), sched)
+      const next = readTiterExtraEntries(caseRow?.data)
       setTiterExtra(next.length === 0 ? [makeEmptyTiterExtra()] : next)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1259,10 +1164,9 @@ export function StepDetailView({
         const res = await updateMicrochipFields(caseId, chip || null, date || null)
         if (res.ok) {
           updateCase(res.value)
-          // 미래(예정) 저장이면 입력칸도 비워 baseline(savedDate 마스킹)과 일치시킨다 —
-          // 안 그러면 dirty 가 안 풀려 '저장 안 됨'처럼 보이고 이탈 경고 팝업이 뜬다.
-          const cf = (res.value.data as Record<string, unknown> | undefined)?.microchip_confirmed === false
-          setDate(cf ? '' : readImplantDate(res.value.data))
+          // 미래(예정) 저장은 서버가 별도 자리로 분리해 실제 키가 비므로, 저장값 재읽기로
+          // 입력칸이 baseline 과 일치한다(dirty 잔류·이탈 경고 방지).
+          setDate(readImplantDate(res.value.data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -1283,25 +1187,11 @@ export function StepDetailView({
           lot: e.lot || null,
           expiry: e.expiry || null,
         }))
-        // 예정(마스킹)된 미래 회차 보존 — 사용자가 새 회차를 입력하지 않았으면(확인 전) 그대로
-        // 유지한다. (전체 교체 저장이라 빈 슬롯이면 미래 회차가 사라지는 것을 방지.)
-        const pastCount = savedRabiesList.filter(vaccineEntryFilled).length
-        if (rabiesSingleScheduledRaw && sendEntries.length <= pastCount) {
-          sendEntries.push({
-            date: rabiesSingleScheduledRaw.date || null,
-            valid_until: rabiesSingleScheduledRaw.valid_until || null,
-            product: rabiesSingleScheduledRaw.product || null,
-            manufacturer: rabiesSingleScheduledRaw.manufacturer || null,
-            lot: rabiesSingleScheduledRaw.lot || null,
-            expiry: rabiesSingleScheduledRaw.expiry || null,
-          })
-        }
+        // 미래(예정) 회차는 서버(rabiesSaveWorking)가 rabies_dates_scheduled 로 분리·보존한다.
         const res = await updateRabiesExtraEntries(caseId, sendEntries, 0)
         if (res.ok) {
           updateCase(res.value)
-          const sched =
-            (res.value.data as Record<string, unknown> | undefined)?.rabies_single_confirmed === false
-          const next = maskScheduledLatestRabies(readRabiesExtraEntries(res.value.data, 0), sched)
+          const next = readRabiesExtraEntries(res.value.data, 0)
           setRabiesList(next.length === 0 ? [makeEmptyExtra()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
@@ -1324,12 +1214,9 @@ export function StepDetailView({
         })
         if (res.ok) {
           updateCase(res.value)
-          // 서버가 trim·정규화한 값으로 폼을 맞춰 dirty 해제. 미래(예정) 저장이면 날짜칸도
-          // 비워 savedRabies(마스킹) baseline 과 일치 — dirty 잔류·이탈 경고 팝업 방지.
-          const rawR = readRabiesEntryForm(res.value.data, rabiesIndex)
-          const rcf =
-            (res.value.data as Record<string, unknown> | undefined)?.[`rabies_${rabiesIndex + 1}_confirmed`] === false
-          setRabies(rcf ? { ...rawR, date: '' } : rawR)
+          // 서버가 trim·정규화한 값으로 폼을 맞춰 dirty 해제. 미래(예정) 저장은 서버가
+          // rabies_dates_scheduled 로 분리해 실제 슬롯이 비므로 재읽기로 baseline 과 일치한다.
+          setRabies(readRabiesEntryForm(res.value.data, rabiesIndex))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -1349,27 +1236,11 @@ export function StepDetailView({
           lot: e.lot || null,
           expiry: e.expiry || null,
         }))
-        // 예정(마스킹)된 미래 추가 회차 보존 — 새 회차 입력이 없으면(확인 전) 그대로 유지.
-        const pastCount = savedRabiesExtra.filter(vaccineEntryFilled).length
-        if (rabiesExtraScheduledRaw && sendEntries.length <= pastCount) {
-          sendEntries.push({
-            date: rabiesExtraScheduledRaw.date || null,
-            valid_until: rabiesExtraScheduledRaw.valid_until || null,
-            product: rabiesExtraScheduledRaw.product || null,
-            manufacturer: rabiesExtraScheduledRaw.manufacturer || null,
-            lot: rabiesExtraScheduledRaw.lot || null,
-            expiry: rabiesExtraScheduledRaw.expiry || null,
-          })
-        }
+        // 미래(예정) 추가 회차는 서버(rabiesSaveWorking)가 rabies_dates_scheduled 로 분리·보존한다.
         const res = await updateRabiesExtraEntries(caseId, sendEntries, rabiesExtraBase)
         if (res.ok) {
           updateCase(res.value)
-          const sched =
-            (res.value.data as Record<string, unknown> | undefined)?.rabies_extra_confirmed === false
-          const next = maskScheduledLatestRabies(
-            readRabiesExtraEntries(res.value.data, rabiesExtraBase),
-            sched,
-          )
+          const next = readRabiesExtraEntries(res.value.data, rabiesExtraBase)
           setRabiesExtra(next.length === 0 ? [makeEmptyExtra()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
@@ -1406,21 +1277,10 @@ export function StepDetailView({
           lab: e.lab || null,
           value: e.value || null,
         }))
-        // 예정(마스킹)된 미래 추가 채혈 보존 — 새 채혈 입력이 없으면(확인 전) 그대로 유지.
-        const pastCount = savedTiterExtra.filter(titerEntryFilled).length
-        if (titerExtraScheduledRaw && sendEntries.length <= pastCount) {
-          sendEntries.push({
-            date: titerExtraScheduledRaw.date || null,
-            lab: titerExtraScheduledRaw.lab || null,
-            value: titerExtraScheduledRaw.value || null,
-          })
-        }
         const res = await updateTiterExtraEntries(caseId, sendEntries)
         if (res.ok) {
           updateCase(res.value)
-          const sched =
-            (res.value.data as Record<string, unknown> | undefined)?.titer_extra_confirmed === false
-          const next = maskScheduledLatestTiter(readTiterExtraEntries(res.value.data), sched)
+          const next = readTiterExtraEntries(res.value.data)
           setTiterExtra(next.length === 0 ? [makeEmptyTiterExtra()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
@@ -2798,18 +2658,8 @@ export function StepDetailView({
                         rabiesSingleUpcoming ||
                         microchipUpcoming
                       ? '예정일로 저장'
-                      : // 추가 접종·추가 검사 — 도래(오늘 이하)한 입력의 저장 = 완료 확인.
-                        // 검역 confirm 단계도 예정 저장분이 도래하면(미변경) 완료 확정이라 '완료'.
-                        // 백신·구충도 예정 저장분이 도래하면 '완료'. 안내문도 "완료 버튼을 눌러주세요".
-                        rabiesExtraArrivedUnconfirmed ||
-                        titerExtraArrivedUnconfirmed ||
-                        confirmArrivedComplete ||
-                        microchipArrivedUnconfirmed ||
-                        rabiesArrivedUnconfirmed ||
-                        rabiesSingleArrivedUnconfirmed ||
-                        generalVaccineArrivedUnconfirmed ||
-                        parasiteArrivedUnconfirmed ||
-                        vetVisitArrivedUnconfirmed
+                      : // 검역 confirm 단계 — 예정 저장분이 도래하면(미변경) 저장 = 완료 확정이라 '완료'.
+                        confirmArrivedComplete
                         ? '완료'
                         : '저장'}
           </button>
@@ -3168,34 +3018,6 @@ function makeEmptyExtra(): RabiesExtraEntry {
   }
 }
 
-/** 가장 늦은 날짜의 회차를 반환 — 예정(미확인) 최신 회차 식별용. 없으면 null. */
-function latestRabiesEntry(entries: RabiesExtraEntry[]): RabiesExtraEntry | null {
-  let latest: RabiesExtraEntry | null = null
-  for (const e of entries) {
-    const d = typeof e.date === 'string' ? e.date.slice(0, 10) : ''
-    if (d.length >= 10 && (!latest || d > (latest.date || ''))) latest = e
-  }
-  return latest
-}
-
-/**
- * 예정(미확인) 최신 회차를 입력 목록에서 숨긴다 — 일본 1·2차와 동일하게 '예정 배지로만' 표시.
- * flag(rabies_single_confirmed / rabies_extra_confirmed)===false 인 동안(도래 후 포함) 가장 늦은
- * 날짜 회차를 빈 슬롯으로 치환 → 실제 날짜 재입력으로만 완료된다. 실제 날짜는 rabies_dates 에
- * 그대로 남아 배지(scenario)·저장 보존(handleSave 재주입)에 쓰인다.
- */
-function maskScheduledLatestRabies(
-  entries: RabiesExtraEntry[],
-  scheduled: boolean,
-): RabiesExtraEntry[] {
-  if (!scheduled || entries.length === 0) return entries
-  let maxIdx = 0
-  for (let i = 1; i < entries.length; i++) {
-    if ((entries[i].date || '') > (entries[maxIdx].date || '')) maxIdx = i
-  }
-  return entries.map((e, i) => (i === maxIdx ? makeEmptyExtra() : e))
-}
-
 /**
  * case.data.rabies_dates 의 baseIndex 이상(일본 2=3차+ / 1회 접종국 1=2차+)을
  * RabiesExtraEntry[] 로 읽는다.
@@ -3270,29 +3092,6 @@ function rabiesExtraEqual(a: RabiesExtraEntry[], b: RabiesExtraEntry[]): boolean
  */
 function makeEmptyTiterExtra(): TiterExtraEntry {
   return { date: '', lab: '', value: '' }
-}
-
-/** 가장 늦은 날짜의 추가 채혈을 반환 — 예정(미확인) 최신 회차 보존용. 없으면 null. */
-function latestTiterEntry(entries: TiterExtraEntry[]): TiterExtraEntry | null {
-  let latest: TiterExtraEntry | null = null
-  for (const e of entries) {
-    const d = typeof e.date === 'string' ? e.date.slice(0, 10) : ''
-    if (d.length >= 10 && (!latest || d > (latest.date || ''))) latest = e
-  }
-  return latest
-}
-
-/** 예정(미확인) 최신 추가 채혈을 입력 목록에서 숨긴다 — 추가 접종(maskScheduledLatestRabies)과 동일. */
-function maskScheduledLatestTiter(
-  entries: TiterExtraEntry[],
-  scheduled: boolean,
-): TiterExtraEntry[] {
-  if (!scheduled || entries.length === 0) return entries
-  let maxIdx = 0
-  for (let i = 1; i < entries.length; i++) {
-    if ((entries[i].date || '') > (entries[maxIdx].date || '')) maxIdx = i
-  }
-  return entries.map((e, i) => (i === maxIdx ? makeEmptyTiterExtra() : e))
 }
 
 /**

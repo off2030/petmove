@@ -58,14 +58,14 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       if (!caseRow.microchip || caseRow.microchip.length === 0) return false
       const implant = data.microchip_implant_date
       if (typeof implant !== 'string' || implant.length < 10) return false
-      // 다른 카드와 동일 — 미래(예정)면 미완료, 도래 후 '완료' 확인해야 done(microchip_confirmed).
-      // 날짜 값 자체는 후속 검증(after-microchip 등)에 그대로 쓰이므로 보존하고, 완료 판정만 미룬다.
-      return isDatedConfirmed(data, implant.slice(0, 10), 'microchip_confirmed')
+      // 미래(예정) 시술일은 별도 자리(microchip_implant_date_scheduled)로 분리 저장 — 실제
+      // 기록이 있으면 도래(≤오늘) 확인만 하면 된다(옛 데이터의 미래 일자 방어).
+      return hasArrivedDate(implant.slice(0, 10))
     }
     case 'has-rabies-entry': {
-      // 1차 = 입력순서 첫 항목(r[0]). 도래+확인(예정→완료) 게이트.
+      // 1차 = 입력순서 첫 항목(r[0]). 도래(≤오늘) 게이트.
       const r = readRabiesEntries(caseRow)
-      return isDatedConfirmed(data, r[0]?.date ?? null, 'rabies_1_confirmed')
+      return hasArrivedDate(r[0]?.date ?? null)
     }
     case 'has-rabies-valid': {
       // 1회 접종국 단일 카드 — 종합백신(has-general-vaccine)과 동일. "가장 최근에 '실제로 맞은'
@@ -91,18 +91,14 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 완료라 !entry 일 때만 — 출발 직전 멀쩡한 백신에 오경보가 뜨지 않게. 일본은 advisoryOnly
       // '추가 백신' 카드가 같은 역할(단일 접종국은 그 카드가 없어 여기서 처리).
       if (!entry && validUntil && validUntil < addDays(today, 30)) return false
-      // 미래 예약(부스터)이 따로 있으면 이미 맞은 유효 회차로 완료 인정(플래그는 가장 늦은=미래
-      // 회차를 반영해 false 라 무시). 없으면 평소대로 confirm 플래그 존중 — 단일 회차가 도래했어도
-      // '저장' 확인 전까진 미완료(재입력 요구 유지). 1회국 단일카드는 별도 키(rabies_single_confirmed)
-      // — 다중 목적지(일본+태국)에서 2회국 1차(rabies_1_confirmed)를 clobber 하지 않도록 분리.
-      if (r.some((e) => e.date > today)) return true
-      return isDatedConfirmed(data, latest.date, 'rabies_single_confirmed')
+      // 여기까지 오면 실제로 맞은(≤오늘) 유효 회차가 있는 상태 — 완료.
+      return true
     }
     case 'has-rabies-booster': {
-      // 2차 = 입력순서 둘째(r[1]). 도래+확인 게이트.
+      // 2차 = 입력순서 둘째(r[1]). 도래(≤오늘) 게이트.
       const r = readRabiesEntries(caseRow)
       if (r.length < 2) return false
-      return isDatedConfirmed(data, r[1].date, 'rabies_2_confirmed')
+      return hasArrivedDate(r[1].date)
     }
     case 'has-extra-rabies': {
       // 추가 접종(일본 3차+ / 1회 접종국 2차+)은 (a) 직전 백신의 면역 유효기간 이내에 받아
@@ -111,9 +107,6 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       const minExtraCount = isSingleDoseRabiesCase(caseRow) ? 2 : 3
       const r = readRabiesEntries(caseRow)
       if (r.length < minExtraCount) return false
-      // 예정(미래)으로 저장한 추가 접종은 도래 후 '저장' 클릭으로 확인해야 완료.
-      // false = 아직 확인 전. undefined = 옛 데이터 → 아래 날짜 게이트로 폴백(회귀 방지).
-      if (data.rabies_extra_confirmed === false) return false
       const latest = r[r.length - 1]
       // 미래 접종일은 '예정' — 도래해야 완료로 잡힘.
       if (latest.date > todayKst()) return false
@@ -154,9 +147,6 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 못 만족하면 추가 검사가 더 필요한 상태.
       const t = readTiterEntries(caseRow)
       if (t.length < 2) return false
-      // 예정(미래)으로 저장한 추가 검사는 도래 후 '저장' 클릭으로 확인해야 완료.
-      // false = 아직 확인 전. undefined = 옛 데이터 → 아래 날짜 게이트로 폴백(회귀 방지).
-      if (data.titer_extra_confirmed === false) return false
       // 미래 채혈일은 '예정' — 도래해야 완료로 잡힘. (추가 백신 has-extra-rabies 와 동일 게이트.)
       // readTiterEntries 는 입력 순서라 위치로 최신을 못 잡음 — 최대 날짜로 판정.
       const latestTiterDate = t.reduce((max, e) => (e.date > max ? e.date : max), '')
@@ -195,38 +185,24 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 둔다(종합백신 카드 situational 임박 안내와 짝, 광견병과 동일 모델). 예약된 여행이 유효기간
       // 내면 정상 완료 — 출발 직전 오경보 방지로 !entry 일 때만.
       if (!entry && validUntil && validUntil < addDays(todayKst(), 30)) return false
-      return isDatedConfirmed(data, latest.date, 'general_vaccine_confirmed')
+      return hasArrivedDate(latest.date)
     }
     case 'has-civ-vaccine':
-      return isLatestAdministeredConfirmed(data, readCivEntries(caseRow).map((e) => e.date), 'civ_confirmed')
+      return hasAdministeredDose(readCivEntries(caseRow).map((e) => e.date))
     case 'has-infectious-disease-test':
-      return isLatestAdministeredConfirmed(
-        data,
-        readInfectiousDiseaseEntries(caseRow).map((e) => e.date),
-        'infectious_disease_confirmed',
-      )
+      return hasAdministeredDose(readInfectiousDiseaseEntries(caseRow).map((e) => e.date))
     case 'has-internal-parasite':
-      return isDatedConfirmed(
-        data,
-        latestDateOf(readInternalParasiteEntries(caseRow).map((e) => e.date)),
-        'internal_parasite_confirmed',
-      )
+      return hasArrivedDate(latestDateOf(readInternalParasiteEntries(caseRow).map((e) => e.date)))
     case 'has-external-parasite':
-      return isDatedConfirmed(
-        data,
-        latestDateOf(readExternalParasiteEntries(caseRow).map((e) => e.date)),
-        'external_parasite_confirmed',
-      )
+      return hasArrivedDate(latestDateOf(readExternalParasiteEntries(caseRow).map((e) => e.date)))
     case 'has-deworming-time':
       return typeof data.deworming_time === 'string' && (data.deworming_time as string).length > 0
     case 'has-vet-visit': {
-      // 출국 전 임상검사 — 다른 백신·검사·구충과 동일한 dated-confirm 모델로 통일.
-      // 검진일이 도래(≤오늘)했고 vet_visit_confirmed 가 명시적 false 가 아니면 완료.
-      // 미래(예정)로 저장하면 confirmed=false → 미완료(예정 배지), 도래 후 '완료' 확인 또는
-      // 오늘/과거 날짜로 저장하면 confirmed=true → 완료. 서류 준비 현황은 별도
-      // 단계(document-checklist, done='all-required-docs')로 분리됐다.
+      // 출국 전 임상검사 — 다른 백신·검사·구충과 동일. 미래(예정) 검진일은 별도 자리
+      // (vet_visit_date_scheduled)로 분리 저장되므로, 실제 검진일이 도래(≤오늘)했으면 완료.
+      // 서류 준비 현황은 별도 단계(document-checklist, done='all-required-docs')로 분리됐다.
       const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date.slice(0, 10) : ''
-      return isDatedConfirmed(data, dt || null, 'vet_visit_confirmed')
+      return hasArrivedDate(dt || null)
     }
     case 'all-required-docs': {
       // 서류 체크리스트 — 큐레이션된 필수 서류가 모두 ✓(보유 또는 해당없음)이면 완료.
@@ -335,44 +311,23 @@ function latestDateOf(dates: string[]): string | null {
 }
 
 /**
- * 백신·검사·구충 카드 완료 — 가장 늦은 입력일이 도래(≤오늘) AND 확인 플래그가 명시적 false 가
- * 아님. 추가접종(has-extra-rabies)과 동일한 3-state:
- *   - confirmKey === false → 미완료 (미래로 저장됐거나 도래 후 아직 '완료' 미클릭).
- *   - confirmKey === true / undefined → 날짜 게이트(latest ≤ 오늘)로 판정.
- * 옛 데이터(플래그 없음=undefined): 과거 입력이면 그대로 완료 유지(회귀 0), 미래 입력이면
- * 자동으로 미완료(예정)로 교정. → prod 마이그레이션 불필요.
+ * 백신·검사·구충 카드 완료 — 가장 늦은 입력일이 도래(≤오늘)했으면 완료.
+ * 미래(예정) 일정은 저장 시 *_scheduled 별도 자리로 분리되어 실제 기록엔 ≤오늘만 남는다
+ * (예정→도래→재입력 모델). 실제 배열에 미래 일자가 남은 옛 데이터는 날짜 게이트가
+ * 도래 전까지 미완료(예정)로 잡고, 도래하면 자동 완료된다.
  */
-function isDatedConfirmed(
-  data: Record<string, unknown>,
-  latestDate: string | null,
-  confirmKey: string,
-): boolean {
+function hasArrivedDate(latestDate: string | null): boolean {
   if (!latestDate || latestDate.length < 10) return false
-  if (data[confirmKey] === false) return false
   return latestDate <= todayKst()
 }
 
 /**
- * "미래 예약 회차가 이미 맞은 유효 회차의 완료를 풀지 않는" dated-confirm.
- *   - 이미 맞은(≤오늘) 회차가 하나도 없으면 미완료(전부 미래 = 예정).
- *   - 미래(>오늘) 예약 회차가 따로 있으면 이미 맞은 회차로 완료 인정 — confirm 플래그는 가장
- *     늦은(=미래) 회차를 반영해 false 라 무시한다. 미리 잡아둔 부스터가 멀쩡한 접종의 완료를 풀지
- *     않게(종합백신·구충이 splitScheduledDoses 로 얻는 동작을, 미래를 배열에 그대로 두는 카드에서
- *     done 판정으로 달성).
- *   - 미래 예약이 없으면 평소 dated-confirm: 가장 늦은 회차 ≤오늘 AND 플래그 != false (도래해도
- *     '저장' 확인 전까진 미완료 — 재입력 요구 유지).
+ * 이미 맞은(≤오늘) 회차가 하나라도 있으면 완료 — 미래(예정) 회차만 있으면 미완료.
+ * 미리 잡아둔 미래 부스터(옛 데이터의 배열 내 미래 일자)가 멀쩡한 접종의 완료를 풀지 않는다.
  */
-function isLatestAdministeredConfirmed(
-  data: Record<string, unknown>,
-  dates: string[],
-  confirmKey: string,
-): boolean {
+function hasAdministeredDose(dates: string[]): boolean {
   const today = todayKst()
-  const valid = dates.filter((d) => typeof d === 'string' && d.length >= 10)
-  const administered = valid.filter((d) => d <= today)
-  if (administered.length === 0) return false
-  if (valid.some((d) => d > today)) return true
-  return isDatedConfirmed(data, administered.slice().sort().slice(-1)[0], confirmKey)
+  return dates.some((d) => typeof d === 'string' && d.length >= 10 && d <= today)
 }
 
 /**

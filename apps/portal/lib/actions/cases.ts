@@ -255,9 +255,10 @@ export async function updateMicrochipFields(
  *    data 의 다른 키는 fetch-merge 로 보존.
  */
 /**
- * 백신·검사·구충 카드의 '예정→도래→완료확인' 플래그를 저장 시 자동 set/clear.
- * 가장 늦은 입력일이 도래(≤오늘)면 confirmed=true(완료), 미래(예정)면 false, 입력 없으면 삭제.
- * done-resolver(isDatedConfirmed)와 짝 — 미래로 저장=미완료(예정), 도래 후 재저장(완료 버튼)=완료.
+ * 저장 시 확인 플래그 set/clear. 기록형(백신·검사·구충) 카드는 호출 측이 실제(≤오늘) 회차만
+ * 넘기므로 true/삭제만 발생한다 — 완료 판정(done-resolver)은 플래그가 아닌 날짜 게이트가 담당하고,
+ * true 는 옛 false sentinel 을 덮어 정리하는 역할. 검역 confirm 단계(applyQuarantine 계열)는
+ * 미래 날짜도 넘겨 false(예정)가 나올 수 있다 — 그쪽 '예정→도래→완료 버튼' 모델의 현행 신호.
  */
 function applyDatedConfirm(
   nextData: Record<string, unknown>,

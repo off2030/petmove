@@ -420,10 +420,9 @@ export async function updateCaseField(
       nextData[key] = value
     }
     dataMutated = true
-    // 백신·구충 날짜 배열을 admin 이 편집하면 portal 이 남긴 '예정→완료확인' 플래그(*_confirmed)를
-    // 정리한다. 안 하면 portal 이 미래로 저장하며 남긴 false sentinel 이 잔존해, admin 이 과거일로
-    // 정정해도 done-resolver(isDatedConfirmed)가 false 단락으로 영구 미완료가 된다. 삭제 시
-    // 날짜 게이트 폴백(과거=완료, 미래=예정)으로 정상 동작. (admin 은 확인 버튼 UI 가 없어 폴백이 맞음.)
+    // 백신·구충 날짜 배열을 admin 이 편집하면 옛 모델이 남긴 확인 플래그(*_confirmed)를 정리한다.
+    // done-resolver 는 이제 날짜 게이트만 보므로(과거=완료, 미래=예정) 판정엔 영향 없지만,
+    // 옛 false sentinel 이 데이터에 잔존하지 않게 위생 차원에서 삭제를 유지한다.
     const DATED_CONFIRM_FLAGS: Record<string, string[]> = {
       microchip_implant_date: ['microchip_confirmed'],
       rabies_dates: ['rabies_1_confirmed', 'rabies_2_confirmed', 'rabies_single_confirmed'],
