@@ -60,8 +60,12 @@
 목적지 하나 = **선언형 프로파일 하나**. 그 프로파일에서 위 87개 지점 중 **파생 가능한 것을 전부 파생**한다.
 프로파일은 **아키타입(가족)** 을 고르고 **델타만** 적는다.
 
+> **어디에 둘 것인가**: 새 파일이 아니라 **기존 `DESTINATION_OVERRIDES`(destination-config.ts)
+> 를 확장**한다. 이미 `keywords`(한글 토큰)·`vaccines`·`extraFields` 를 들고 있는 뿌리라,
+> 별도 레지스트리를 만들면 진실 출처가 둘로 갈라진다.
+
 ```
-목적지 프로파일 (1곳)
+목적지 프로파일 (DESTINATION_OVERRIDES 1곳)
    ├─ archetype: 'jp-2dose'        ← 기본값 한 벌 상속
    └─ 델타: { titer.entryValidityMonths: 12, rabies.oneYearVaccineOnly: true, ... }
         │
@@ -132,13 +136,32 @@ interface DestinationProfile {
 
 ## 3. 단계별 계획
 
-### Phase 1 — 목적지 레지스트리 (파생의 뿌리)
-- `packages/domain/src/destinations/registry.ts` 신설 — 프로파일 배열 단일 출처.
-- 기존 하드코딩 목록들을 **레지스트리에서 파생하도록 교체**(값은 동일하게 유지 = 무동작 리팩터).
-  우선순위: `SINGLE_DOSE_RABIES_DESTINATIONS`, `RABIES_ONE_YEAR_VALIDITY_DESTINATIONS`,
-  `TITER_ENTRY_VALIDITY_MONTHS`, 카드 applicability 배열, `APP_DESTINATIONS_KO`, 스코핑 키.
-- **검증**: 리팩터 전/후 `getStepsForCase`·`resolveRequiredDocs` 결과가 전 목적지에서 동일해야 함
-  (스냅샷 테스트 추가).
+### Phase 1 — 프로파일 확장 (파생의 뿌리)
+
+> **재검토 반영(2026-07-18)**: 레지스트리를 *신설*하지 않는다. `DESTINATION_OVERRIDES` 가
+> 이미 뿌리(keywords·vaccines·extraFields·rabiesTiterForReturnOnly)라, 새 파일을 만들면
+> 진실 출처가 둘로 갈라진다. **기존 타입을 확장**한다.
+
+**1-a. 무동작 증명 장치 먼저** (리팩터보다 선행)
+- `scripts/lint-destinations.ts` + `scripts/destinations.snapshot.txt` 신설 —
+  기존 `lint:copy` 골든 스냅샷 패턴을 그대로 차용(이 repo 에 테스트 프레임워크가 없으므로
+  vitest 도입 대신 검증된 기존 관용구를 쓴다).
+- 스냅샷 내용: **전 목적지 × (개/고양이) × (편도/왕복)** 의
+  ① 카드 목록(id·order·title·done) ② 필수 서류 목록 ③ 적용되는 check id 목록
+  ④ 주요 상수(single-dose 여부·항체 유효기간·내원 윈도우).
+- 리팩터 전에 골든 생성 → 이후 **스냅샷이 "변경 없음"이어야 통과**. 이게 무동작의 증명.
+
+**1-b. `DestinationOverride` 타입 확장**
+- `archetype`, `rabies`, `titer`, `importPermit`, `advanceNotice`, `importQuarantine`,
+  `exportQuarantine`, `vetVisitWindowDays`, `appSupported` 등 프로파일 필드 추가(전부 optional).
+- 기존 필드는 그대로 — 하위 호환.
+
+**1-c. 하드코딩 목록을 파생으로 교체** (한 번에 하나씩, 매번 스냅샷 통과 확인)
+- 우선순위: `SINGLE_DOSE_RABIES_DESTINATIONS` → `RABIES_ONE_YEAR_VALIDITY_DESTINATIONS`
+  → `TITER_ENTRY_VALIDITY_MONTHS` → `VET_VISIT_WINDOW_OVERRIDES` → 카드 applicability 배열
+  → `APP_DESTINATIONS_KO` → 스코핑 키.
+- 참고: `TITER_LAB_CODES_BY_DEST` 는 **이미** `EU_ENTRY_FAMILY` 로 파생 + `eu` 덮어쓰기를
+  하고 있다 — 이 패턴(가족 파생 + 델타 override)이 목표 형태의 선례다.
 
 ### Phase 2 — 아키타입 문구 템플릿
 - `euFamilyOverrides` 를 일반화해 `archetypeOverrides(archetype, profile)` 로.
@@ -165,6 +188,23 @@ interface DestinationProfile {
    "준비 중"으로 표시. 불일치.
 
 ---
+
+## 4-b. 설계 재검토 기록 (2026-07-18, 버그 수정 후)
+
+초안을 코드에 대조해 **3가지를 수정**했다.
+
+| 초안 | 문제 | 수정 |
+|---|---|---|
+| `destinations/registry.ts` **신설** | `DESTINATION_OVERRIDES` 가 이미 뿌리(keywords·vaccines·extraFields) — 신설하면 진실 출처가 둘 | 기존 타입 **확장**으로 변경 |
+| 무동작 증명 = **스냅샷 테스트** | 이 repo 에 vitest/jest **없음**. 근거 없는 계획이었음 | 기존 `lint:copy` **골든 스냅샷 패턴 차용**(`lint:destinations`) |
+| 파생 가능성 미검증 | — | `TITER_LAB_CODES_BY_DEST` 가 **이미** `EU_ENTRY_FAMILY` 파생 + `eu` 덮어쓰기 → 목표 형태의 선례 확인 |
+
+**검증된 설계 가정**
+- 프로파일 필드는 **직교**한다 — `SINGLE_DOSE`(1회 접종)와 `ONE_YEAR_VALIDITY`(1년 백신만)는
+  독립이다(태국·필리핀=둘 다, 중국=2회+1년, EU=1회만). 따라서 아키타입 하나로 뭉뚱그리지 말고
+  **필드별로 선언**해야 한다. → 스키마가 이미 그렇게 돼 있음(유지).
+- 파생에는 **override 층이 반드시 필요**하다(`eu: ['apqa_eu']` 처럼 가족 기본값을 덮어쓰는 사례
+  존재). "아키타입 + 델타" 구조가 옳다.
 
 ## 5. 원칙 (리팩터 중 지킬 것)
 
