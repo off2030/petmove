@@ -178,11 +178,19 @@ interface DestinationProfile {
 - 참고: `TITER_LAB_CODES_BY_DEST` 는 **이미** `EU_ENTRY_FAMILY` 로 파생 + `eu` 덮어쓰기를
   하고 있다 — 이 패턴(가족 파생 + 델타 override)이 목표 형태의 선례다.
 
-### Phase 2 — 아키타입 문구 템플릿
-- `euFamilyOverrides` 를 일반화해 `archetypeOverrides(archetype, profile)` 로.
-- `jp-2dose`(일본·중국), `sea-permit`(태국·필리핀) 템플릿 작성 — 기존 문구를 그대로 승격.
-- 나라명은 `label` 치환, 수치는 프로파일에서 주입.
-- **검증**: `pnpm lint:copy` 골든 스냅샷이 "변경 없음"이어야 함(기존 문구 보존 확인).
+### Phase 2 — 아키타입 문구 템플릿 — **완료 2026-07-18**
+- ✅ `seaPermitOverrides`(태국·필리핀) — 구조(1회 백신 카드·항체 order 55·수입허가 2단계·도착
+  검역 카드 모양)는 템플릿이 강제, 규정 문구·검증 id 는 주입. 기존 문구 그대로 승격.
+- ✅ `importQuarantineCard` factory — '[국가] 수입 검역' 카드 공통 구조(sea-permit + 중국 공유).
+- ✅ **아키타입 fallback** — `resolveStepForDestination` 이 명시 오버라이드 없는 eu-family
+  목적지에 `euFamilyOverrides` 한 벌을 자동 적용. 새 유럽국은 프로파일 `archetype` 선언만으로
+  표준 카드를 받는다. (jp-2dose 는 base catalog 자체가 일본 골격이라 별도 템플릿 없음 —
+  규정 고유 문구는 수작업 원칙.)
+- ✅ **스코핑 키(1-c 이월)** — 파생하면 catalog ↔ destination-scoped-fields 순환 의존이 생겨
+  파생 대신 **lint:dest 가드**로 해결: `quarantine:<key>` 완료 신호의 `_date`/`_confirmed` 쌍이
+  미등록이면 에러(조용한 opt-in → 시끄러운 실패).
+- **검증**: lint:copy·lint:dest 무변경 + 구/신 `resolveStepForDestination` 결과를 전 목적지 ×
+  전 step deep-equal 대조(문구 골든이 안 덮는 links·첨부 라벨·inputs 포함) — 완전 동일.
 
 ### Phase 3 — 맡기기(services) 아키타입화
 - `OFFLINE_DETAIL`/`ONLINE_DETAIL` 을 아키타입 기반으로 — `included` 는 프로파일의
