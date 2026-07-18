@@ -115,28 +115,8 @@ export const CN_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `1차 접종일(${first.date}) 생후 ${ev.ageInDays}일령 + 캘린더 3개월(${ev.calendar3mThreshold}) 충족.` }
     },
   },
-  {
-    id: 'cn.rabies-2-doses-required',
-    country: COUNTRY,
-    category: '광견병',
-    title: '광견병 2회 접종 (1차 + 부스터)',
-    description:
-      '광견병 백신은 최소 2회 (1차 + 부스터). 2차는 1차 30일 후 ~ 1년 이내. (GACC 2019 No.5 본문은 횟수 미명시 — RNATT ≥0.5 IU/ml 충족 위해 OIE 표준상 사실상 필요)',
-    severity: 'info',
-    addedAt: '2026-05-06',
-    run: ({ caseRow, destination }) => {
-      const rabies = readRabiesEntries(caseRow)
-      if (rabies.length === 0) return SKIP
-      if (rabies.length < 2) {
-        return {
-          ok: false,
-          message: `광견병 접종이 1회(${rabies[0].date})만 기록되어 있어요. 2회가 필요해요.`,
-          offendingPaths: [`rabies_dates[${rabies[0].originalIndex}].date`],
-        }
-      }
-      return { ok: true, message: `광견병 ${rabies.length}회 기록됨.` }
-    },
-  },
+  // cn.rabies-2-doses-required 제거(2026-07-18) — GACC 조문에 횟수 명시 없고, 2차 카드 +
+  // cn.rabies-titer-chain-consistent("2차 정보 없어요")로 이미 안내돼 중복(일본과 동일 방식).
   {
     // 30일 최소 간격은 GACC 근거 없는 보수 추정이라 검증하지 않는다(문구도 '명확한 규정은 없지만
     // …좋아요'로 권고 처리). 여기선 '직전 접종 유효기간 이내'(부스터 chain)만 본다 — portal 은
