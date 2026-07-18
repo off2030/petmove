@@ -11,7 +11,6 @@ import {
 } from '@petmove/domain'
 import destsData from '@petmove/domain/data/destinations.json'
 import { useCases } from '@/components/portal-shell/case-data-provider'
-import { readLastCaseId, readLastDest } from '@/components/portal-shell/last-case'
 import { StartHereEmpty } from '@/components/portal-shell/start-here-empty'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { type FieldOption } from '@/components/fields/info-fields'
@@ -27,10 +26,16 @@ import { notifyServiceInquiry } from '@/lib/actions/service-inquiry'
  * 서비스 내용·비용은 목적지와 왕복/편도에 따라 달라진다.
  *  - 목적지 선택지 = '서비스 제공 국가' 큐레이션 목록(OFFERED_KO). 처음부터 검색 시트로
  *    — 목록이 늘어나도 버튼으로 감당 안 되므로. 새 나라 준비되면 OFFERED_KO 에 push.
- *  - 기본 목적지 = **현재 선택된 동물의 여정** 목적지(일정/서류에서 보던 케이스 = LAST_CASE_KEY,
- *    그 케이스의 활성 목적지 = readLastDest). 그게 서비스 제공 목록에 있으면 그것. 없으면
+ *  - 기본 목적지 = **현재 선택된 동물의 여정** 목적지. TabHost 가 준비·서류 pane 과 똑같이
+ *    caseId·dest 를 prop 으로 내려준다. 그게 서비스 제공 목록에 있으면 그것. 없으면
  *    전체 케이스 union 의 첫 제공 목적지, 그것도 없으면 목록 첫 번째. (서비스는 보고 있는
  *    동물 기준으로 안내해야 — 여러 동물의 목적지가 섞이면 엉뚱한 나라가 잡힘.)
+ *
+ *    ⚠️ 이전엔 mount 시 sessionStorage(LAST_CASE_KEY·readLastDest)를 `useEffect(…, [])` 로
+ *    한 번만 읽었다. 이 pane 은 keep-alive(+예열 선mount)라 이후 동물·목적지를 바꿔도
+ *    영영 갱신되지 않아, 밀꾸(일본)를 보는데 맡기기 탭엔 중국이 뜨는 버그가 있었다.
+ *    그 값이 문의 봇 알림(notifyServiceInquiry)에도 실려 나가 운영자가 엉뚱한 목적지를
+ *    통보받았다. prop 으로 받으면 pane 재생성 없이 항상 현재 값을 따른다.
  *  - 왕복/편도 = 등록값을 기본 표시 + 여기서도 전환. 단, 이 선택은 **둘러보기용 로컬 상태**라
  *    실제 여정의 trip_type 을 바꾸지 않는다(목록엔 미등록 목적지도 있어 저장 대상이 아님).
  *
@@ -235,10 +240,10 @@ function offlineDetail(opts: {
   introHighlight?: string
   /** 나라 절차 항목 라벨 (예: ['사전 신고', '일본 수출 검역 신청 · 예약']). */
   procedureItems?: string[]
-  /** 비용 범위(만원) — '50~60' 형태. */
-  cost: string
-  /** 준비 기간 — '최소 6~7개월' / '2~4주' 형태('정도 걸려요' 앞부분 그대로). */
-  period: string
+  /** 비용 범위(만원) — '50~60' 형태. 미정이면 생략 → '상담 후 안내'. */
+  cost?: string
+  /** 준비 기간 — '최소 6~7개월' / '2~4주' 형태('정도 걸려요' 앞부분 그대로). 미정이면 생략. */
+  period?: string
   reviews?: Review[]
 }): DestDetail {
   const o = DESTINATION_OVERRIDES[opts.destKey]
@@ -256,11 +261,13 @@ function offlineDetail(opts: {
   else included.push(...procedure, { label: '출국 전 임상검사' })
   included.push({ label: '서류 준비' })
 
-  const mid = euFam
-    ? opts.introHighlight
+  // 특수 절차(introHighlight)가 없는 나라도 있다 — 없으면 그 절만 빼고 문장을 만든다.
+  // (없을 때 그대로 끼워 넣어 '의료 절차는 물론 undefined, 서류 준비까지'가 노출된 적 있음.)
+  const mid = !opts.introHighlight
+    ? '의료 절차와 서류 준비까지'
+    : euFam
       ? `의료 절차와 ${opts.introHighlight}, 서류 준비까지`
-      : '의료 절차와 서류 준비까지'
-    : `의료 절차는 물론 ${opts.introHighlight}, 서류 준비까지`
+      : `의료 절차는 물론 ${opts.introHighlight}, 서류 준비까지`
   return {
     intro: `로잔동물의료센터에서 검역 준비를 해 드려요. ${mid} 빈틈없이 진행해 드려요. 앱을 통해 쉽게 진행 상황, 정보를 확인할 수 있어요.`,
     included,
@@ -271,8 +278,18 @@ function offlineDetail(opts: {
         a: '로잔동물의료센터로 방문해 주세요.',
         link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
       },
-      { q: '비용은 얼마인가요?', a: `오프라인 올케어의 비용은 약 ${opts.cost}만원이에요. 정확한 비용은 상담 후 결정돼요.` },
-      { q: '준비 기간이 궁금해요', a: `접종 상황에 따라 ${opts.period} 정도 걸려요.` },
+      {
+        q: '비용은 얼마인가요?',
+        a: opts.cost
+          ? `오프라인 올케어의 비용은 약 ${opts.cost}만원이에요. 정확한 비용은 상담 후 결정돼요.`
+          : '오프라인 올케어의 비용은 여행지와 준비 상황에 따라 달라져요. 정확한 비용은 상담 후 안내해 드려요.',
+      },
+      {
+        q: '준비 기간이 궁금해요',
+        a: opts.period
+          ? `접종 상황에 따라 ${opts.period} 정도 걸려요.`
+          : '접종 상황에 따라 달라져요. 상담 시 여행지 기준으로 안내해 드려요.',
+      },
     ],
     reviews: opts.reviews ?? [],
   }
@@ -280,17 +297,21 @@ function offlineDetail(opts: {
 
 /** 온라인 안심케어 상세 factory — 골격 공통, 나라 항목·비용·기간만 주입. */
 function onlineDetail(opts: {
-  /** intro 에 끼는 절 (예: '사전 신고, 일본 수출 검역 신청 및 예약'). */
-  introItems: string
+  /** intro 에 끼는 절 (예: '사전 신고, 일본 수출 검역 신청 및 예약'). 고유 절차가 없으면 생략. */
+  introItems?: string
   /** included 가운데 항목들('단계별 가이드'와 '서류 점검' 사이). */
   items: string[]
   /** 고정 비용 표기 (예: '15만원 정도'). 생략 시 '서비스 내용에 따라 달라져요'. */
   cost?: string
-  period: string
+  /** 준비 기간. 미정이면 생략 → '상담 시 안내'. */
+  period?: string
   reviews?: Review[]
 }): DestDetail {
   return {
-    intro: `안심하고 준비할 수 있도록 곁에서 도와드려요. 단계별 가이드, ${opts.introItems}, 서류 점검을 해 드려요. 준비 중 궁금한 것은 언제든 물어볼 수 있어요.`,
+    // 고유 절차가 없는 나라는 그 절만 빼고 문장을 만든다 ('단계별 가이드, , 서류 점검' 방지).
+    intro: `안심하고 준비할 수 있도록 곁에서 도와드려요. ${
+      opts.introItems ? `단계별 가이드, ${opts.introItems}, 서류 점검을` : '단계별 가이드와 서류 점검을'
+    } 해 드려요. 준비 중 궁금한 것은 언제든 물어볼 수 있어요.`,
     included: [
       { label: '단계별 가이드' },
       ...opts.items.map((label) => ({ label })),
@@ -305,7 +326,12 @@ function onlineDetail(opts: {
           ? `온라인 안심케어 비용은 ${opts.cost}예요. 정확한 비용은 상담 후 결정돼요.`
           : '온라인 안심케어는 서비스 내용에 따라 비용이 달라져요. 정확한 비용은 상담 후 결정돼요.',
       },
-      { q: '준비 기간이 궁금해요', a: `접종 상황에 따라 ${opts.period} 정도 걸려요.` },
+      {
+        q: '준비 기간이 궁금해요',
+        a: opts.period
+          ? `접종 상황에 따라 ${opts.period} 정도 걸려요.`
+          : '접종 상황에 따라 달라져요. 상담 시 여행지 기준으로 안내해 드려요.',
+      },
     ],
     reviews: opts.reviews ?? [],
   }
@@ -499,6 +525,89 @@ const HIGHLIGHTS: Highlight[] = [
  * 트립 구분이 없는 목적지(일본 등)는 `목적지` 키 하나로 두 트립 모두 커버한다.
  * EU 회원국 24개국은 개별 국가명 대신 'eu' 묶음 키 한 벌로 정규화해 공유한다.
  */
+/**
+ * 목적지별 비용·기간 — **사업 판단 값이라 코드가 만들 수 없는 유일한 부분**.
+ *
+ * 나머지(포함 항목·소개문·절차)는 전부 프로파일에서 파생되므로, 새 여행지를 추가할 때
+ * 여기에 두 값만 채우면 맡기기 상세가 완성된다. 안 채우면 FAQ 가 '상담 후 안내'로 답한다
+ * — 가상의 숫자를 지어내지 않는다. (명시 항목이 있는 나라는 각 블록의 cost·period 가 우선.)
+ *
+ * period 는 '정도 걸려요' 앞에 그대로 들어간다. 출처 = 펫무브 웹사이트 여행지 가이드
+ * (`apps/www/content/docs/<나라>-pet-travel-guide.json`)의 "…입국 준비는 최소 N~M개월
+ * 걸립니다" 문장. 웹에 그 문장이 없는 나라는 비워 둔다 — 추정해서 채우지 않는다.
+ */
+const DEST_PRICING: Record<string, { offlineCost?: string; period?: string }> = {
+  // 중국 — 광견병 2회(30일 간격 권고) + 항체검사. 항체검사 후 대기 기간이 없어 EU(3개월 대기)보다 짧다.
+  china: { offlineCost: '36~52', period: '1~2개월' },
+
+  // ── 아시아 ────────────────────────────────────────────────
+  taiwan: { offlineCost: '40~51', period: '최소 4~5개월' },
+  hongkong: { offlineCost: '21~27' }, // 웹 가이드에 '최소 N개월' 문장 없음 (권장 시작 시점만 기술)
+  singapore: { offlineCost: '76~92' }, // 웹 가이드에 기간 문장 없음
+  malaysia: { offlineCost: '14~54', period: '최소 2~3개월' },
+  indonesia: { offlineCost: '40~51', period: '최소 2~3개월' },
+  vietnam: { offlineCost: '36~46' }, // 웹 가이드에 기간 문장 없음
+  cambodia: { offlineCost: '36~46' }, // 〃
+  mongolia: { offlineCost: '36~46' }, // 〃
+  india: { offlineCost: '24~58', period: '최소 1~2개월' },
+  uzbekistan: { offlineCost: '36~46', period: '최소 1~2개월' },
+
+  // ── 유럽·중동·아프리카 ────────────────────────────────────
+  ukraine: { offlineCost: '36~46', period: '최소 3~4개월' },
+  russia: { offlineCost: '15~49', period: '최소 1~2개월' },
+  israel: { offlineCost: '45~56', period: '최소 1~2개월' },
+  uae: { offlineCost: '40~58', period: '최소 1~2개월' },
+  turkey: { offlineCost: '36~49', period: '최소 1~2개월' },
+  morocco: { offlineCost: '36~46', period: '최소 1~2개월' },
+  south_africa: { offlineCost: '95~107' }, // 웹 가이드 문서 자체가 없음
+
+  // ── 아메리카 ──────────────────────────────────────────────
+  usa: { offlineCost: '10~51' }, // 웹 가이드에 기간 문장 없음
+  hawaii: { offlineCost: '36~63' }, // 〃 ('추가 1~2개월' 언급만 있어 기본 기간 도출 불가)
+  guam: { offlineCost: '45~64', period: '최소 5~6개월' },
+  canada: { offlineCost: '36~46' }, // 웹 가이드에 기간 문장 없음
+  mexico: { offlineCost: '36~46', period: '최소 1~2개월' },
+  brazil: { offlineCost: '36~46', period: '최소 1~2개월' },
+  argentina: { offlineCost: '36~46', period: '최소 1~2개월' },
+
+  // ── 오세아니아 ────────────────────────────────────────────
+  // 광견병 항체검사 후 180일 대기가 필수라 준비가 가장 길다.
+  australia: { offlineCost: '107~142', period: '최소 7~8개월' },
+  new_zealand: { offlineCost: '126~149', period: '최소 6개월' },
+}
+
+/**
+ * 목적지 한글명 → destination-config 프로파일 키. 프로파일이 곧 뼈대의 출처라, 서비스 상세도
+ * 이 키를 통해 백신 구성·항체검사 여부를 그대로 물려받는다.
+ */
+function profileKeyForDest(dest: string): string | null {
+  return Object.keys(DESTINATION_OVERRIDES).find((k) => matchesDestinationKey(dest, k)) ?? null
+}
+
+/**
+ * 명시적 항목이 없는 목적지의 기본 상세 — **프로파일에서 파생**한다.
+ *
+ * 예전엔 손으로 쓴 고정 문구(`default`)로 떨어졌다. 그 문구가 '수입허가증 신청'을 포함해,
+ * 수입허가증이 없는 나라(중국 등)에도 사실과 다른 안내가 조용히 표시됐다. 게다가 여정·서류·
+ * 검증은 프로파일에서 자동 파생되는데 맡기기만 빠져 있어, 새 목적지를 추가할 때마다 아무
+ * 경고 없이 같은 문제가 재발하는 구조였다.
+ *
+ * 이제 공장(offlineDetail·onlineDetail)을 그대로 태워 그 나라 프로파일대로 만든다. 비용·기간은
+ * 사업 판단이라 코드가 만들 수 없어 생략 → FAQ 가 '상담 후 안내'로 답한다(가상 숫자 금지).
+ * 나라 특수 절차(수입허가·사전 통지·수출 검역)는 종전대로 명시 항목으로 얹는다.
+ */
+function derivedDetail(kind: 'offline' | 'online', dest: string, trip: TripType): DestDetail | null {
+  const destKey = profileKeyForDest(dest)
+  if (!destKey) return null
+  const { offlineCost, period } = DEST_PRICING[destKey] ?? {}
+  if (kind === 'offline') return offlineDetail({ destKey, trip, cost: offlineCost, period })
+  // 온라인 항목(items)은 **그 나라 고유 절차**만 적는다 — 일본 '사전 신고·수출 검역 신청',
+  // EU '동물건강증명서(Annex III) 준비', 스위스 '수입 허가 신청'처럼. 고유 절차가 없는
+  // 나라는 비운다(공장이 '단계별 가이드'·'서류 점검'을 앞뒤로 붙인다). 빈칸을 메우려고
+  // '검역 일정 관리' 같은 일반 항목을 지어내지 않는다 — 기존 목적지에 없는 표현이다.
+  return onlineDetail({ items: [], period })
+}
+
 function resolveDetail(map: Record<string, DestDetail>, dest: string, trip: TripType): DestDetail {
   // 우선순위: 국가·트립 전용 → 국가 전용 → EU 패밀리 공통('eu') → default.
   // EU 패밀리(EU Reg 576/2013 공통 절차)는 'eu' 한 벌을 공유하되, 자체 블록이 있는 나라
@@ -510,6 +619,9 @@ function resolveDetail(map: Record<string, DestDetail>, dest: string, trip: Trip
     map[`${dest}:${trip}`] ??
     map[dest] ??
     (isEuFamily ? map[`eu:${trip}`] ?? map.eu : undefined) ??
+    // 명시 항목이 없으면 프로파일에서 파생 — 새 목적지가 '수입허가증 신청' 같은 틀린
+    // 일반 문구로 새는 것을 막는다. 프로파일조차 없을 때만 최후 default.
+    derivedDetail(map === ONLINE_DETAIL ? 'online' : 'offline', dest, trip) ??
     map.default
   )
 }
@@ -1031,26 +1143,30 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
   )
 }
 
-export function ServicesView() {
+export function ServicesView({
+  caseId = null,
+  dest = null,
+}: {
+  /** 지금 보고 있는 동물·목적지 — TabHost 가 준비·서류 pane 과 동일하게 내려준다. */
+  caseId?: string | null
+  dest?: string | null
+}) {
   const { cases, profile, userEmail } = useCases()
 
-  // 현재 선택된 동물 = 일정/서류에서 마지막으로 보던 케이스(LAST_CASE_KEY) + 그 활성 목적지
-  // (readLastDest). sessionStorage 라 mount 후에만 읽는다(SSR/hydration 불일치 방지) — 첫
-  // 렌더는 union 폴백, mount 직후 선택 동물 기준으로 정정된다.
-  const [journeyHint, setJourneyHint] = useState<{ caseId: string; dest: string | null } | null>(null)
-  useEffect(() => {
-    const id = readLastCaseId()
-    setJourneyHint(id ? { caseId: id, dest: readLastDest(id) } : null)
-  }, [])
-  const selectedCase = journeyHint ? cases.find((c) => c.id === journeyHint.caseId) ?? null : null
+  const selectedCase = caseId ? cases.find((c) => c.id === caseId) ?? null : null
 
   // 기본 목적지 = 선택된 동물의 여정 목적지(제공 목록에 있으면). 없으면 전체 union 첫 제공, 최후 일본.
   const registered = destinationsFromCases(cases)
   const defaultDestKo =
-    (selectedCase ? offeredDestForCase(selectedCase, journeyHint?.dest ?? null) : null) ??
+    (selectedCase ? offeredDestForCase(selectedCase, dest) : null) ??
     registered.find((d) => OFFERED_KO.includes(d)) ??
     OFFERED_KO[0]
+  // 사용자가 시트에서 직접 고른 목적지. 보고 있는 동물·목적지가 바뀌면 그 선택은 무효 —
+  // 안 지우면 새 동물 화면에 이전 동물 기준으로 고른 나라가 그대로 남는다.
   const [pickedKo, setPickedKo] = useState<string | null>(null)
+  useEffect(() => {
+    setPickedKo(null)
+  }, [caseId, dest])
   const selectedKo = pickedKo && OFFERED_KO.includes(pickedKo) ? pickedKo : defaultDestKo
   const selected = OFFERED.find((d) => d.ko === selectedKo) ?? { ko: selectedKo, en: '' }
 
@@ -1120,7 +1236,9 @@ export function ServicesView() {
         />
       ) : (
         <div style={{ padding: '0 24px' }}>
-          <h1 style={pageTitle}>서비스</h1>
+          {/* 제목은 하단 탭 라벨과 일치시킨다 — '맡기기'로 눌러 들어왔는데 '서비스'가 뜨면
+              같은 화면인지 헷갈린다. 탭 라벨(bottom-nav TABS)이 이름의 단일 출처. */}
+          <h1 style={pageTitle}>맡기기</h1>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
             <button

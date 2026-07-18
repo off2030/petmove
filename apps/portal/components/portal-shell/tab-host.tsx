@@ -324,7 +324,10 @@ export function TabHost({ children }: { children: React.ReactNode }) {
       )}
       {shouldRender('services') && (
         <Pane active={activePane === 'services'}>
-          <ServicesView />
+          {/* 준비·서류와 같은 값을 내려준다 — pane 이 keep-alive(+예열 선mount)라 스스로
+              sessionStorage 를 읽으면 첫 mount 시점 목적지에 굳는다. key 는 주지 않는다:
+              remount 없이 prop 만 따라가야 검색 시트·스크롤이 유지된다. */}
+          <ServicesView caseId={paneCaseId} dest={paneDest} />
         </Pane>
       )}
       {/* 설정 = 흰 배경(surface) 페이지 — pane 이 스스로 흰색을 칠한다. (구 EditPageShell
