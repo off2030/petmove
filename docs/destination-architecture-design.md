@@ -212,12 +212,12 @@ interface DestinationProfile {
 
 ---
 
-## 4. 즉시 고칠 것 (조사 중 발견된 실제 버그)
+## 4. 즉시 고칠 것 (조사 중 발견된 실제 버그) — **둘 다 수정 완료 2026-07-18**
 
-1. **procedure-checks 5개 파일이 registry 미등록** — `ar.ts, kh.ts, mn.ts, uz.ts, vn.ts`
-   파일은 있는데 `ALL_PROCEDURE_CHECKS` 에 import 안 돼 있어 **룰이 하나도 안 돈다**(죽은 코드).
-2. **www `APP_DEST_SOON` 에 '중국'이 남아 있음** — 포털에선 이미 지원 중인데 랜딩은
-   "준비 중"으로 표시. 불일치.
+1. ✅ **procedure-checks 5개 파일이 registry 미등록** — `ar.ts, kh.ts, mn.ts, uz.ts, vn.ts`
+   `ALL_PROCEDURE_CHECKS` 에 등록 완료. 재발 방지: `pnpm new:destination` 이 registry 등록을
+   자동화하고, lint:dest 스냅샷의 `[checks:N]` 줄이 등록 누락을 드러낸다.
+2. ✅ **www `APP_DEST_SOON` 의 '중국'** — 제거 완료(현재 SOON 목록에 중국 없음).
 
 ---
 
