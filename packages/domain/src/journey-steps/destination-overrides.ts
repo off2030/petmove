@@ -161,11 +161,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
       validationIds: ['tw.import-permit-120days-before-entry'],
     },
-    // 출국 전 임상검사 — 대만은 별지 제25호 외에 BAPHIQ Form 002(대만 건강증명서)도
+    // 출국 전 임상검사 — 대만은 별지 제25호 외에 APHIA Form 002(대만 건강증명서)도
     // 발급받아야 한다. 일본(FormAC)·EU(Annex III)와 같은 자리·같은 문형.
     'vet-visit': {
       description:
-        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 대만 건강증명서(BAPHIQ Form 002)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 대만 건강증명서(APHIA Form 002)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
     },
     departure: importQuarantineCard({
       label: '대만',

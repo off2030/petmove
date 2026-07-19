@@ -425,11 +425,13 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     KR_FORM25_VACCINATION_HEALTH_CERT,
     {
       // 대만 입국용 건강증명서 — 일본 Form AC·EU Annex III 와 같은 성격(한국에서 준비).
-      // BAPHIQ Form 002 = 광견병 발생국(한국 포함)에서 오는 개·고양이용. 비발생국은 Form 001.
+      // Form 002 = 광견병 발생국(한국 포함)에서 오는 개·고양이용. 비발생국은 Form 001.
+      // 서식 원본 헤더는 아직 구 기관명 'BAPHIQ Form 002'지만, 기관이 2023년 APHIA 로
+      // 개칭돼 고객 표기는 APHIA 로 통일한다(홈페이지에 옛 서식이 그대로 남아있을 뿐).
       // 운영자 앱(펫무브워크)엔 이미 'tw' 증명서로 등록돼 PDF 를 생성하는데 고객 서류 목록에만
       // 빠져 있었다(2026-07-19 사용자 지적).
       id: 'tw-health-cert',
-      name: '대만 건강증명서(BAPHIQ Form 002)',
+      name: '대만 건강증명서(APHIA Form 002)',
       source: '동물병원 · 농림축산검역본부',
       kind: 'manual',
       issuanceStepId: 'vet-visit',

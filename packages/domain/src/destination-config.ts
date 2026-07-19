@@ -439,7 +439,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // APHIA(2023 BAPHIQ에서 개칭) — 광견병 1회(생후 90일·불활화만·유효 1년) + RNATT ≥0.5 IU/ml
     // (채혈일 + 180일~1년 사이 도착 = 격리 면제 핵심 조건) + 수입허가증(도착 120일 전 온라인
     // 신청 시 격리 면제, 20일 전까지도 가능하나 7일 격리). 개·고양이 동일 요건.
-    // BAPHIQ Form 002 Import permit number 입력용으로 permit_no 추가정보 노출.
+    // APHIA Form 002 Import permit number 입력용으로 permit_no 추가정보 노출.
     // (Certificate number 는 후처리 수기 입력 — EQC No. 라벨이 일본 전용이라 공유하지 않음.)
     // 규정 상세·출처는 procedure-checks/tw.ts 헤더 주석.
     keywords: ['대만', 'taiwan'],
