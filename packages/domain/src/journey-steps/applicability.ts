@@ -9,6 +9,7 @@ import {
 } from '../destination-config'
 import { addDays, addYears, readRabiesEntries, readTiterEntries, resolveValidUntil, todayKst } from '../procedure-checks/utils'
 import { resolveStepForDestination } from './destination-overrides'
+import { titerEntryValidUntil } from './titer-validity'
 import type { CaseJourneyContext, StepApplicability, StepAppliesWhenSignal, StepDefinition } from './types'
 
 /**
@@ -229,9 +230,10 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
       if (titers.length >= 2) return true
       if (titers.length === 0) return false
 
-      // 가장 최근(=date 기준 최신) 항체 검사의 유효기간(채혈일 + 2년).
+      // 가장 최근(=date 기준 최신) 항체 검사의 유효기간 — 목적지별(일본 24개월·대만 12개월).
+      // 예전엔 2년을 하드코딩해 대만에서 만료를 1년 늦게 잡았다(카드가 안 뜸).
       const latest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
-      const validUntil = addYears(latest.date, 2)
+      const validUntil = titerEntryValidUntil(caseRow.destination ?? '', latest.date)
       if (!validUntil) return false
 
       // (2) 만료 30일 전 (오늘 기준).

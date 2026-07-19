@@ -182,6 +182,17 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '대만 검역청(APHIA)이 인정하는 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n명확한 규정은 없지만 접종 후 30일 이상 지나서 검사하는 것이 좋아요.\n0.5 IU/mL 이상이면 합격이에요.\n검사 결과는 채혈일로부터 1년간 유효해요.',
       validationIds: ['tw.rnatt-after-rabies-vaccine'],
     },
+    // 추가 검사 — 유효기간 1년이 지나기 전에 다시 받으면 체인이 유지돼 대기가 없다.
+    // base 는 일본 문구('일본 입국 전에…')라 목적지 override 로 갈아끼운다.
+    //
+    // 검증은 추가 채혈일 자체를 보는 룰을 지목한다(tw.rnatt-after-rabies-vaccine 은 모든
+    // 채혈 기록을 순회하므로 추가 검사분도 포함). 만료·대기 판정은 항공권 카드의
+    // tw.rnatt-180days-to-1year-before-arrival 담당 — 여기 또 붙이면 같은 경고가 두 번 뜬다.
+    'rabies-titer-extra': {
+      description:
+        '대만 입국 전에 추가 검사를 받으세요.\n\n직전 검사의 유효기간이 끝나기 전에 받으면 대기 없이 입국할 수 있어요.\n유효기간이 지난 뒤에 받으면 채혈일로부터 180일을 다시 기다려야 해요.\n\n검사 결과가 나올 때까지 수 주가 걸리는 점을 고려해 여유 있게 검사를 진행하세요.',
+      validationIds: ['tw.rnatt-after-rabies-vaccine'],
+    },
     // 항공권 — 채혈 후 180일 대기는 일본과 동일(base earliest anchor 상속). 검증만 tw 로 교체.
     'flight-purchase': {
       description:

@@ -64,6 +64,8 @@ function formatKoreanTime(hhmm: string): string {
  * 시안 단계 (Phase 11.0.7+): 13개 시드. 입력 폼은 단순 모양만 — 실제 렌더는 portal 측
  * 컴포넌트에서 type 별로 분기.
  */
+import { titerEntryValidUntil } from './titer-validity'
+
 export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // ── 1. 펫무브 등록 ──────────────────────────────────────────────────────
   {
@@ -436,11 +438,18 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const prior = entry ? titers.filter((t) => t.date <= entry) : titers
       if (prior.length === 0) {
         // 입국 전 유효 채혈이 없음(입국 후 채혈만 있는 경우 포함) — 재검사 안내.
-        const msg = '일본 입국 전에 추가 검사를 받으세요.'
+        const msg = `${buildCaseJourneyContext(caseRow).destinationToken || ''} 입국 전에 추가 검사를 받으세요.`.trim()
         return { desc: msg, cardDesc: msg }
       }
+      const token = buildCaseJourneyContext(caseRow).destinationToken || '목적지'
+      // 대만은 만료의 의미가 다르다 — 만료 **전** 재검사면 체인이 유지돼 대기 없이 가지만,
+      // 만료 후 재검사는 체인이 끊겨 채혈일로부터 180일을 다시 기다려야 한다
+      // (APHIA 문답집 情形 2: 該次抽血日為前次檢測合格報告之抽血日起 180 日至 1 년 內).
+      // 일본은 접종 체인만 유지되면 언제 검사하든 대기가 없어 만료가 마감이 아니다.
+      const isTw = matchesDestinationKey(caseRow.destination ?? '', 'taiwan')
       const latest = [...prior].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
-      const validUntil = addYears(latest.date, 2)
+      // 유효기간은 목적지별 선언에서 파생(일본 24개월·대만 12개월). 2년 하드코딩이었다.
+      const validUntil = titerEntryValidUntil(caseRow.destination ?? '', latest.date)
       if (!validUntil) return undefined
       // 미래(예정) 채혈은 저장 시 rabies_titer_extra_scheduled 별도 자리로 분리 — 실제 기록에
       // 미래가 남은 옛 데이터만 이 가드에 걸린다(예정 배지는 scenario 가 표시).
@@ -453,7 +462,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 않는다 — 일본은 접종 체인이 유지되면 만료 후 재검사로도 대기 없이 입국할 수 있다.
       // (대만은 만료 후 재검사면 채혈일로부터 180일 재대기 — 확장 시 이 문구를 그대로 쓰면 안 된다.)
       if (validUntil < today) {
-        const msg = `직전 검사의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 검사 기록을 입력하세요.`
+        const msg = isTw
+          ? `직전 검사의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 검사를 받은 날로부터 180일이 지나야 격리 없이 입국할 수 있어요.`
+          : `직전 검사의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 검사 기록을 입력하세요.`
         return { desc: msg, cardDesc: msg }
       }
       // 유효기간이 입국일을 덮으면(아직 유효) — 안내 불필요.
@@ -465,15 +476,24 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 재검사해도 대기 없이 입국할 수 있어서, 만료일은 마감이 아니다. '만료 전에'로 쓰면
       // 없는 마감을 만든다. (만료가 곧 반년 재대기인 대만과 다른 지점 — 대만 확장 시 주의.)
       if (!entry) {
-        const msg = `직전 검사의 유효기간이 ${formatKoreanDate(validUntil)}에 만료돼요. 일본 입국 전에 추가 검사를 받으세요.`
+        const msg = isTw
+          ? `직전 검사의 유효기간이 ${formatKoreanDate(validUntil)}에 만료돼요. 만료 전에 추가 검사를 받으면 대기 없이 입국할 수 있어요.`
+          : `직전 검사의 유효기간이 ${formatKoreanDate(validUntil)}에 만료돼요. ${token} 입국 전에 추가 검사를 받으세요.`
         return { desc: msg, cardDesc: msg }
       }
       // 입국일 전 만료 — 재검사 필요.
-      const msg = '직전 검사의 유효기간이 일본 입국 전에 만료돼요. 일본 입국 전에 추가 검사를 진행하세요.'
+      const msg = isTw
+        ? `직전 검사의 유효기간이 ${token} 입국 전에 만료돼요. 만료 전에 추가 검사를 받으면 대기 없이 입국할 수 있어요.`
+        : `직전 검사의 유효기간이 ${token} 입국 전에 만료돼요. ${token} 입국 전에 추가 검사를 진행하세요.`
       return { desc: msg, cardDesc: msg }
     },
-    applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
-    // 2회+ 입력됐거나 입국일+30일 안에 항체 검사 2년 만료(재검사 필요) 일 때 노출.
+    // 대만 추가(2026-07-19) — 입국용 항체 유효기간이 있는 목적지(TITER_ENTRY_VALIDITY_MONTHS
+    // 에 개월수가 선언된 곳)에 필요한 카드다. 대만은 만료돼도 재검사를 입력할 카드가 없어
+    // "다시 검사해야 해요"라는 주의만 뜨고 갈 곳이 없었다.
+    // ⚠️ 중국도 같은 조건(12개월)인데 아직 안 넣었다 — 중국 여정 카드 자체가 제작 중이라
+    // 그 작업에서 함께 올린다(project_china_card).
+    applicability: { destinations: ['japan', 'taiwan'], species: 'all', tripType: 'all' },
+    // 2회+ 입력됐거나 입국일+30일 안에 항체 유효기간 만료(재검사 필요) 일 때 노출.
     appliesWhen: 'titer-extra-applicable',
     order: 41,
     done: 'has-extra-titer',

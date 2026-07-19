@@ -24,6 +24,29 @@ export const TITER_ENTRY_VALIDITY_MONTHS: Record<string, number | null> = Object
 /** 한국 귀국 시 광견병 항체검사 유효기간(개월) — 농림축산검역본부 공통. */
 export const KR_RETURN_TITER_VALIDITY_MONTHS = 24
 
+/**
+ * 목적지 입국용 항체검사 만료일 — 카드(추가 검사 노출·문구)가 쓰는 단일 출처.
+ *
+ * 예전엔 카드가 `addYears(채혈일, 2)`로 **2년을 하드코딩**했다. 일본(24개월)에만 맞고
+ * 대만·중국(12개월)에선 만료를 1년 늦게 잡아, 이미 만료된 검사를 "아직 유효"로 판정했다.
+ * 알림(titerReminderTargets)은 진작 목적지별 선언을 쓰고 있어서 **카드와 알림이 서로 다른
+ * 만료일을 보던** 상태였다(2026-07-19 수정).
+ *
+ * null = 만료 개념 없음 — 무기한(EU 패밀리: 부스터 chain 유지 시 영구 유효)이거나
+ * 입국에 항체검사가 불필요한 목적지(태국·필리핀·베트남 — 한국 귀국용으로만 필요).
+ */
+export function titerEntryValidUntil(
+  destinationToken: string,
+  latestTiterDate: string,
+): string | null {
+  if (!latestTiterDate) return null
+  const key = findDestinationKey(destinationToken)
+  if (!key) return null
+  const months = TITER_ENTRY_VALIDITY_MONTHS[key]
+  if (typeof months !== 'number') return null
+  return addMonths(latestTiterDate, months)
+}
+
 export interface TiterReminderTarget {
   /** 'entry' = 목적지 입국용, 'return' = 한국 귀국용. (만료 알림 ID 구분에도 사용) */
   kind: 'entry' | 'return'
