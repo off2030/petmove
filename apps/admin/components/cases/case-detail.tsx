@@ -570,13 +570,50 @@ function mapExtractResultToUnified(country: Country, result: Record<string, unkn
   } else if (country === 'australia') {
     set('permit_no', result.permit_no)
     set('id_date', result.id_date)
-    set('sample_received_date', result.sample_received_date)
+    // sample_received_date 는 flat 키가 아니라 rabies_titer_records[].received_date 로 들어간다.
+    // → tryExtract 의 mergeTiterReceivedDate 가 처리. 여기서 set() 하면 안 됨(구 australia_extra 부활).
   } else if (country === 'new-zealand') {
     set('permit_no', result.permit_no)
   } else if (country === 'uk') {
     set('address_overseas', result.address_overseas)
   }
   return out
+}
+
+interface TiterRecordLite {
+  date?: string | null
+  value?: string | null
+  lab?: string | null
+  received_date?: string | null
+}
+
+/**
+ * 호주 추가정보 AI 추출로 나온 '검사소 샘플 수령일' 을 rabies_titer_records 에 병합한다.
+ *
+ * 저장 위치 단일화(2026-07-19): 예전엔 australia_extra.sample_received_date 라는 별도 칸에
+ * 넣었는데, 그 칸은 화면에서 제거돼(destination-config australia extraFields) 어디에도 안 보이면서
+ * 증명서 PDF 만 그 값을 읽는 상태였다. 이제 접수일의 단일 출처는 record-level received_date 다.
+ *
+ * 대상 record = 가장 이른 채혈 회차. AU 증명서의 "RNATT 1. Collection date" 가
+ * titer_date_asc[0](= 가장 이른 회차)이므로 접수일도 같은 회차에 붙어야 짝이 맞는다.
+ * record 가 하나도 없으면 접수일만 담은 빈 회차를 만든다 — 추출값을 버리지 않고,
+ * 사용자가 팝업에서 채혈일·수치를 채워 넣을 수 있게.
+ *
+ * 채혈일보다 이른 접수일 등 앞뒤가 안 맞는 값도 그대로 넣는다 — 화면에 보이고 수정 가능하며,
+ * 절차 검증(au.titer-min-180days-after-sample-received)이 잡아주는 편이 조용히 버리는 것보다 낫다.
+ */
+function mergeTiterReceivedDate(records: unknown, received: string): TiterRecordLite[] {
+  const list: TiterRecordLite[] = Array.isArray(records) ? [...(records as TiterRecordLite[])] : []
+  if (list.length === 0) return [{ date: null, value: null, lab: null, received_date: received }]
+  let oldestIdx = 0
+  for (let i = 1; i < list.length; i++) {
+    const cur = list[i]?.date
+    const best = list[oldestIdx]?.date
+    // 채혈일 없는 회차는 비교 대상에서 제외 — 날짜 있는 회차 중 가장 이른 것을 고른다.
+    if (typeof cur === 'string' && cur && (typeof best !== 'string' || !best || cur < best)) oldestIdx = i
+  }
+  list[oldestIdx] = { ...list[oldestIdx], received_date: received }
+  return list
 }
 
 function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destination, isCollapsed, onToggleCollapsed, trailing }: {
@@ -652,7 +689,18 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
       if (!result.ok) { setExtractMsg('추출 실패: ' + result.error); return }
       const unified = mapExtractResultToUnified(country, result.data as unknown as Record<string, unknown>)
       const keys = Object.keys(unified)
-      if (keys.length === 0) { setExtractMsg('관련 정보를 찾지 못했습니다'); return }
+      // 호주 '검사소 샘플 수령일' — flat 키가 아니라 항체검사 회차(rabies_titer_records)에 병합.
+      // rabies_titer_records 는 목적지 공통(non-scoped) 키라 destArgFor 불필요.
+      const rawReceived = (result.data as unknown as Record<string, unknown>).sample_received_date
+      const received = country === 'australia' && typeof rawReceived === 'string' && rawReceived ? rawReceived : null
+      if (keys.length === 0 && !received) { setExtractMsg('관련 정보를 찾지 못했습니다'); return }
+      if (received) {
+        const nextRecords = mergeTiterReceivedDate(data.rabies_titer_records, received)
+        updateLocalCaseField(caseId, 'data', 'rabies_titer_records', nextRecords)
+        void persistField('검사소 샘플 수령일', () =>
+          updateCaseField(caseId, 'data', 'rabies_titer_records', nextRecords),
+        )
+      }
       // Optimistic — 모든 키 일괄 로컬 반영 후 백그라운드 저장.
       for (const k of keys) updateLocalCaseField(caseId, 'data', k, unified[k], destArgFor(k))
       // entry_date 가 추출되면 케이스의 출국일(departure_date) 컬럼도 동기화.
@@ -661,10 +709,14 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
         void updateCaseField(caseId, 'column', 'departure_date', unified.entry_date, destArgFor('departure_date'))
       }
       // 배치 1회 저장(순차 N 왕복 → 1 왕복). 실패 시 '다시 시도' 토스트.
-      void persistField('추가정보', () =>
-        updateCaseDataBulk(caseId, keys.map((k) => ({ key: k, value: unified[k], destination: destArgFor(k) }))),
-      )
+      // keys 가 비어도(수령일만 추출된 경우) 위에서 별도 저장했으므로 빈 배치는 건너뛴다.
+      if (keys.length > 0) {
+        void persistField('추가정보', () =>
+          updateCaseDataBulk(caseId, keys.map((k) => ({ key: k, value: unified[k], destination: destArgFor(k) }))),
+        )
+      }
       const labels = keys.map(k => EXTRA_FIELD_KEY_LABELS[k] ?? k)
+      if (received) labels.push('검사소 샘플 수령일')
       const shown = labels.slice(0, 4).join(', ')
       setExtractMsg(`입력됨: ${shown}${labels.length > 4 ? ` 외 ${labels.length - 4}` : ''}`)
     } catch (err) {

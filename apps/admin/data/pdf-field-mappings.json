@@ -2054,8 +2054,8 @@
         "note": "p1 RNATT 1. Collection date — oldest titer (= most recent titer when 1 record)"
       },
       "text_16zsj": {
-        "source": "australia_extra",
-        "transform": "json:sample_received_date",
+        "source": "rabies_titer_records",
+        "transform": "titer_received_asc[0]",
         "note": "p1 RNATT 2. Date arrived at laboratory (dmy)"
       },
       "text_17mhge": {
@@ -2528,8 +2528,8 @@
         "note": "p1 RNATT 1. Collection date — oldest titer (= most recent titer when 1 record)"
       },
       "text_16zsj": {
-        "source": "australia_extra",
-        "transform": "json:sample_received_date",
+        "source": "rabies_titer_records",
+        "transform": "titer_received_asc[0]",
         "note": "p1 RNATT 2. Date arrived at laboratory (dmy)"
       },
       "text_17mhge": {
@@ -2997,8 +2997,8 @@
         "note": "p1 RNATT 1. Collection date (최신 titer)"
       },
       "text_16oxvq": {
-        "source": "australia_extra",
-        "transform": "json:sample_received_date",
+        "source": "rabies_titer_records",
+        "transform": "titer_received_asc[0]",
         "note": "p1 RNATT 2. Date arrived at laboratory"
       },
       "text_17igkd": {
@@ -3235,8 +3235,8 @@
         "note": "p1 RNATT 1. Collection date (최신 titer)"
       },
       "text_16oxvq": {
-        "source": "australia_extra",
-        "transform": "json:sample_received_date",
+        "source": "rabies_titer_records",
+        "transform": "titer_received_asc[0]",
         "note": "p1 RNATT 2. Date arrived at laboratory"
       },
       "text_17igkd": {

@@ -1802,6 +1802,33 @@ function resolveField(
     return rec ? fmtDate(rec.date) : ''
   }
 
+  // AU RNATT — lab 샘플 수령일. titer_date_asc[n] 과 같은 회차(오래된 순 n번째)를 골라
+  // "Collection date"/"Date arrived at laboratory" 한 쌍이 항상 같은 검사에서 나오게 한다.
+  //
+  // 2026-07-19 이전 케이스는 이 값이 australia_extra.sample_received_date 라는 별도 칸에만
+  // 있었다(회차와 무관한 케이스 단위 단일 필드). 마이그레이션 후에도 옮기지 못한 잔여
+  // 데이터가 있어 legacy 폴백을 남긴다 — 새 입력은 전부 record-level 로만 들어간다.
+  //
+  // 출력 포맷은 구 `json:sample_received_date` 와 동일하게 원문(YYYY-MM-DD) 그대로 둔다.
+  // 옆 칸 Collection date(titer_date_asc)는 fmtDate 로 YYYY/MM/DD 를 찍고 있어 서식이 서로
+  // 다르지만, 이번 변경은 저장 위치 이전이 목적이라 출력은 건드리지 않는다(별도 판단 필요).
+  const titerRecvMatch = transform?.match(/^titer_received_asc\[(\d+)\]$/)
+  if (titerRecvMatch && source === 'rabies_titer_records') {
+    const idx = Number(titerRecvMatch[1])
+    const asc = sortedTiters(raw).slice().reverse()
+    const rec = asc[idx] as { received_date?: string | null } | undefined
+    if (rec?.received_date) return rec.received_date
+    // sortedTiters 는 채혈일 없는 회차를 걸러낸다. 수령일만 먼저 입력되고 채혈일은 아직인
+    // 회차가 그렇게 사라지므로, 첫 행(idx 0)에 한해 원본 배열에서 직접 찾는다.
+    if (idx === 0 && Array.isArray(raw)) {
+      const orphan = (raw as { date?: string | null; received_date?: string | null }[])
+        .find(r => r && !r.date && r.received_date)
+      if (orphan?.received_date) return orphan.received_date
+    }
+    const legacy = ((data.australia_extra as Record<string, unknown>) ?? {}).sample_received_date
+    return typeof legacy === 'string' && legacy ? legacy : ''
+  }
+
   // Annex III parasite row — echo microchip/product/date/vet from Nth internal parasite entry.
   // Pattern: `annex_parasite:(transponder|product|date|vet)[n]` — oldest-first.
   // Only filled when the destination requires echinococcus treatment (UK/IE/MT/NI/NO/FI).
