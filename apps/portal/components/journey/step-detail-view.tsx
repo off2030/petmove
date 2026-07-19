@@ -193,6 +193,20 @@ export function StepDetailView({
   const isTiterSingleCard =
     isTiter && !!destinationKey && !TITER_EXTRA_CARD_DESTINATIONS.includes(destinationKey)
   const isFlight = step.id === 'flight-purchase'
+  /**
+   * 출발일(departure_date)을 **별도 입력칸으로 노출**하는 목적지인지.
+   *
+   * 태국·필리핀·EU 패밀리만 출발일·도착일을 따로 받는다. 그 외(일본·대만·중국 등)는 날짜가
+   * 하나뿐이고 출발일은 저장 시 entry_date 에서 파생된다.
+   *
+   * 같은 조건이 레이아웃(departureFirst)·저장 payload·입력불가 가드 세 곳에 필요한데
+   * 따로 적혀 있어 가드만 빠졌다 — 화면에 없는 stale 출발일이 '도착일이 출발일보다 빨라요'로
+   * 저장을 막았고, 출발일 입력칸이 없어 고칠 방법도 없었다(2026-07-19). 단일 출처로 모은다.
+   */
+  const showsSeparateDepartureDate =
+    destinationKey === 'thailand' ||
+    destinationKey === 'philippines' ||
+    (!!destinationKey && EU_ENTRY_FAMILY.includes(destinationKey))
   const isAdvanceNotification = step.id === 'advance-notification'
   const isVetVisit = step.id === 'vet-visit'
   const isJpExportQuarantine = step.id === 'jp-export-quarantine'
@@ -1008,7 +1022,10 @@ export function StepDetailView({
       // 출발일 ≤ 도착일 (항공편 내재적 정합성) — 태국·필리핀·EU 패밀리처럼 출발일·도착일을
       // 둘 다 따로 입력받는 목적지에서, 도착일이 출발일보다 빠른 논리적 불가능 조합을 차단.
       // 둘 다 입력됐을 때만 비교(한쪽만 있으면 비교 불가라 통과).
+      // 별도 입력칸이 없는 목적지는 비교하지 않는다 — 사용자가 만들 수 없는 조합인데
+      // 폼에 남은 stale 값으로 막히고, 고칠 입력칸도 없다.
       if (
+        showsSeparateDepartureDate &&
         flightForm.departure_date &&
         flightForm.entry_date &&
         flightForm.entry_date < flightForm.departure_date
@@ -1347,12 +1364,7 @@ export function StepDetailView({
             // departure_date 가 updateFlightFields 의 `explicitDep || entryDate` 에서 우선권을
             // 가져 출국일이 안 바뀌는 버그가 있었다. departureFirst 목적지가 아니면 departure_date
             // 를 보내지 않고(null) entry_date 에서 파생시킨다.
-            departure_date:
-              destinationKey === 'thailand' ||
-              destinationKey === 'philippines' ||
-              (!!destinationKey && EU_ENTRY_FAMILY.includes(destinationKey))
-                ? flightForm.departure_date || null
-                : null,
+            departure_date: showsSeparateDepartureDate ? flightForm.departure_date || null : null,
             entry_date: flightForm.entry_date || null,
             entry_time: flightForm.entry_time || null,
             entry_departure_airport: flightForm.entry_departure_airport || null,
@@ -2368,11 +2380,7 @@ export function StepDetailView({
               // 키프로스) 모두 출발일 주필드 + 도착일 등은 '세부 정보' 접기.
               // (과거엔 도착일 하나만 받아 그 값을 그대로 출국일 컬럼에 복사했음 — 장거리 노선에서
               // 실제 출국일과 어긋나는 버그. 2026-07-16 분리.)
-              departureFirst={
-                destinationKey === 'thailand' ||
-                destinationKey === 'philippines' ||
-                (!!destinationKey && EU_ENTRY_FAMILY.includes(destinationKey))
-              }
+              departureFirst={showsSeparateDepartureDate}
               // 일본 — 날짜 주필드 + 공항·편명·운송방법 접기(출발=도착 동일 시간대라 분리 불필요).
               collapsible={destinationKey === 'japan'}
               // departureFirst 의 '세부 정보'(도착일 등) 필드 한정 — 필리핀은 도착일+도착공항,
