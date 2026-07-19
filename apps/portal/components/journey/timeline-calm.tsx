@@ -47,13 +47,17 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/philippines-palm-resort-cove.webp',
   ],
   베트남: [
+    // 첫 장 = 논 패치워크 항공뷰(사용자 지정 2026-07-19). 나머지는 파일 순서 유지.
+    '/destinations/vietnam-10.jpg',
     '/destinations/vietnam-01.jpg',
     '/destinations/vietnam-03.jpg',
     '/destinations/vietnam-05.jpg',
     '/destinations/vietnam-07.jpg',
     '/destinations/vietnam-08.jpg',
     '/destinations/vietnam-09.jpg',
-    '/destinations/vietnam-10.jpg',
+    '/destinations/vietnam-16.jpg',
+    '/destinations/vietnam-17.jpg',
+    '/destinations/vietnam-18.jpg',
   ],
   대만: [
     // 첫 장 = 타이베이 101 노을(사용자 지정 2026-07-19). 나머지는 파일 순서 유지.
