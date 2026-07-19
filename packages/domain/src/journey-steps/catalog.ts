@@ -1255,7 +1255,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '건강증명서·EU 반려동물 여권 등 서류 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '건강증명서',
+    // attachmentLabel 은 여기 두지 않는다 — 나라명이 들어가야 해서(예: '프랑스 정부 인증
+    // 건강증명서') euFamilyOverrides(label) 가 런타임에 만든다. 영국은 고유 명칭(EHC 3908)
+    // 이라 uk 오버라이드에서 따로 지정.
+
   },
 
   // ── 필리핀 현지 동물병원 방문 (왕복 — 귀국 출국 전, BAI 수출검역 신청용 건강증명서 발급) ──

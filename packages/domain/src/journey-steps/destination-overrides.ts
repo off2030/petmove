@@ -366,6 +366,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         // base attachmentHint 가 'EU 반려동물 여권'을 예시로 들지만 영국은 그 대체가 안 통해
         // (위 description 참고) 별도로 교체.
         attachmentHint: '건강증명서(EHC) 사본을 사진·PDF로 보관하세요.',
+        // 영국은 한국행 전용 공식 명칭(EHC 3908)이 있어 '{나라} 정부 인증 건강증명서' 대신
+        // 실제 서류명을 쓴다(euFamilyOverrides 의 동적 라벨을 덮어씀).
+        attachmentLabel: '건강증명서(EHC 3908)',
         // 한국행 전용 인증서(3908) 공식 페이지 — 신청 시스템·수의사 명단·서식 안내로 다시
         // 연결되는 허브라 링크 하나로 충분(아일랜드·노르웨이 등 사전통지 카드와 동일 패턴).
         links: [
@@ -391,6 +394,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'eu-export-cert': {
       description:
         '노르웨이 정부가 인증한 건강증명서 또는 대체 서류를 준비하세요.\n현지 동물병원에서 건강증명서를 받은 뒤, 관할 당국(공무 수의사)의 최종 인증을 받으세요.\n다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+      // 이 블록이 euFamilyOverrides 의 'eu-export-cert' 를 통째로 대체하므로
+      // attachmentLabel 도 여기서 다시 지정해야 한다(안 하면 원본 파일명으로 저장).
+      attachmentLabel: '노르웨이 정부 인증 건강증명서',
     },
   },
   finland: euFamilyOverrides({ label: '핀란드' }),
@@ -408,6 +414,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'eu-export-cert': {
       description:
         '스위스 정부가 인증한 건강증명서 또는 대체 서류를 준비하세요.\n현지 임상 수의사에게 건강증명서를 받은 뒤, 관할 칸톤(주) 수의청의 공무 수의사에게 최종 인증을 받으세요.\n다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+      // 이 블록이 euFamilyOverrides 의 'eu-export-cert' 를 통째로 대체하므로
+      // attachmentLabel 도 여기서 다시 지정해야 한다(안 하면 원본 파일명으로 저장).
+      attachmentLabel: '스위스 정부 인증 건강증명서',
     },
     // 스위스 고유 — FSVO 수입허가 (EU 와 다른 유일한 추가 절차). 한국은 광견병 위험국이라 필요.
     // 신청 방법(양식·제출처)은 BLV 개·고양이 페이지에 링크(2026-07-17 확인).
@@ -603,6 +612,9 @@ function euFamilyOverrides(opts: {
     // base(catalog) 는 비EU 유럽(영국·노르웨이 등)이 공유하므로 EU 키만 여기서 갈아끼운다.
     'eu-export-cert': {
       description: `${label} 정부가 인증한 건강증명서 또는 대체 서류를 준비하세요.\n현지 동물병원에서 건강증명서를 받은 뒤, 관할 당국(공무 수의사)의 최종 인증을 받으세요.\n다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요\n- EU 반려동물 여권\n- 한국 출국 시 받은 동물검역증`,
+      // 첨부 파일명 — 나라마다 고정 명칭이 없는 서류라 '{나라} 정부 인증 건강증명서'로 만든다
+      // (EU 24국은 선택 국가 토큰이 label 로 들어와 '프랑스 정부 인증 건강증명서'가 된다).
+      attachmentLabel: `${label} 정부 인증 건강증명서`,
     },
   }
   if (euAhc) {
