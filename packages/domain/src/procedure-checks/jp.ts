@@ -87,6 +87,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const orderMsg = validateTiterAfterBooster(
         rabies.slice(0, 2).map((r) => r.date),
         titerDate,
+        true, // 2회 접종국 — 메시지를 '2차 접종 후에 받아야 해요'로
       )
       if (orderMsg) {
         return { ok: false, message: orderMsg, offendingPaths: ['rabies_titer_records'] }

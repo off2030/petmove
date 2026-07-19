@@ -922,7 +922,9 @@ export function StepDetailView({
       if (destinationKey === 'china' && titerForm.date.trim()) {
         const r2 = readRabiesEntryForm(caseRow?.data, 1)
         if (!r2.date) {
-          return '항체 검사는 2차 광견병 접종 후에 해야 해요. 2차 접종일을 먼저 입력하세요.'
+          // 어투는 카드 문구·주의 메시지와 통일 — '광견병 항체 검사는 2차 접종 후에'
+          // (2026-07-19 사용자 지시). 뒤에 조치 안내를 덧붙이는 것만 이 층의 차이.
+          return '광견병 항체 검사는 2차 접종 후에 받아야 해요. 2차 접종일을 먼저 입력하세요.'
         }
       }
       // 접종 → 채혈 순서 — 채혈 전 접종이 하나도 없으면 잴 항체가 없어 논리적으로 불가능.
@@ -3211,7 +3213,8 @@ function validateTiterDate(
   const r1 = readRabiesEntryForm(data, 0)
   // 규칙 A — 채혈 ≥ 1·2차 접종일. procedure-check(common.rabies-titer-chain-consistent)와 같은
   // domain 함수(단일 출처).
-  const afterErr = validateTiterAfterBooster([r1.date, r2.date], date)
+  // 이 함수는 2차(r2)가 있을 때만 진행하므로 2회 접종 모델 — 메시지를 '2차 접종 후'로.
+  const afterErr = validateTiterAfterBooster([r1.date, r2.date], date, true)
   if (afterErr) return afterErr
   // 규칙 B — 부스터 chain 유효기간 이내. procedure-check 와 같은 domain 함수(단일 출처).
   const rabiesArr = Array.isArray(data?.['rabies_dates']) ? (data!['rabies_dates'] as unknown[]) : []

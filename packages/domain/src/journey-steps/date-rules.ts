@@ -800,13 +800,23 @@ export function validateTiterWithinChain(
  * client(채혈 입력 시 입력 불가)·common.rabies-titer-chain-consistent(2차 수정 후 주의) 공용.
  * 1·2차 모두 미입력이면 통과(누락은 별도 체크).
  */
-export function validateTiterAfterBooster(primaryDates: string[], titerDate: string): string | null {
+export function validateTiterAfterBooster(
+  primaryDates: string[],
+  titerDate: string,
+  /**
+   * 2회 접종국(일본·중국)인지 — 메시지를 '2차 접종 후에 받아야 해요'로 구체화한다.
+   * 1회국은 접종이 하나뿐이라 기존 문구가 정확하다.
+   */
+  twoDose = false,
+): string | null {
   if (!titerDate) return null
   const valid = primaryDates.filter((d) => d && d.length >= 10)
   if (valid.length === 0) return null
   const latest = valid.reduce((m, d) => (d > m ? d : m))
   if (titerDate < latest) {
-    return msgTiterBeforeVaccine()
+    // 접종이 2개 이상 있을 때만 '2차' 표현을 쓴다 — 1차만 입력된 상태면 어차피 1차 기준이라
+    // '2차 접종 후'라고 하면 없는 접종을 가리키게 된다.
+    return msgTiterBeforeVaccine({ twoDose: twoDose && valid.length >= 2 })
   }
   return null
 }

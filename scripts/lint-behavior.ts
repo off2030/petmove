@@ -111,6 +111,19 @@ const SCENARIOS: Scenario[] = [
     },
   },
   {
+    name: '항체 검사가 2차 접종보다 빠름',
+    why: '2회 접종국(일본·중국)만 걸려야 하고, 메시지가 "2차 접종 후"라고 명시해야 한다',
+    departure: '2026-12-01',
+    data: {
+      birth_date: '2025-01-01',
+      microchip_implant_date: '2026-01-01',
+      rabies_dates: [{ date: '2026-02-01' }, { date: '2026-03-10' }],
+      rabies_titer_records: [{ date: '2026-02-15', result: '1.2' }],
+      entry_date: '2026-12-01',
+      return_date: '2026-12-20',
+    },
+  },
+  {
     name: '검역일이 도착보다 빠름',
     why: '물리적으로 불가능한 날짜 — 각 나라 수입검역 룰이 잡아야 한다',
     departure: '2026-09-01',
@@ -163,9 +176,15 @@ function build(): string {
         data: sc.data,
       } as never
 
+      // 메시지까지 기록한다 — 룰 id 만 담으면 "같은 룰이 다른 문구를 낸다"를 못 잡는다.
+      // 실제로 msgTiterBeforeVaccine 을 2회 접종국용으로 바꿨을 때 id 는 그대로라 스냅샷이
+      // 조용히 통과했다(2026-07-19). 고객이 읽는 건 id 가 아니라 이 문장이다.
       const failed = runChecksForCase(destKey, { caseRow, destination: token } as never)
         .filter((r) => (r.result as { ok?: boolean })?.ok === false)
-        .map((r) => `${r.check.id} [${r.check.severity}]`)
+        .map((r) => {
+          const msg = (r.result as { message?: string })?.message ?? ''
+          return `${r.check.id} [${r.check.severity}]\n         ${msg.replace(/\s+/g, ' ')}`
+        })
         .sort()
 
       let reminders: string[] = []

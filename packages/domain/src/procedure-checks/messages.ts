@@ -84,6 +84,12 @@ export function msgTiterMinDaysAfterVaccine(days: number): string {
  * 일본·중국·EU 가 `validateTiterAfterBooster` 로 쓰던 문구가 사실상의 표준이라 그대로 채택
  * (2026-07-19 사용자 확정). 새 목적지는 자기 표현을 만들지 말고 이 함수를 쓸 것.
  */
-export function msgTiterBeforeVaccine(): string {
+export function msgTiterBeforeVaccine(opts?: { twoDose?: boolean }): string {
+  // 2회 접종국(일본·중국)은 '접종일'이 둘이라 어느 쪽인지 밝혀야 한다. 1차 뒤·2차 앞에
+  // 채혈한 보호자가 "1차 뒤에 했는데 왜?"로 읽던 문구였다(2026-07-19 사용자 지적).
+  // 카드 문구가 '검사'로 통일돼 있어 여기도 '검사'로 맞춘다('채혈'은 날짜를 가리킬 때만).
+  if (opts?.twoDose) {
+    return '광견병 항체 검사는 2차 접종 후에 받아야 해요. 날짜를 확인하세요.'
+  }
   return '광견병 항체 검사일이 광견병 접종일보다 빨라요. 날짜를 확인하세요.'
 }
