@@ -205,6 +205,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: [
         'tw.rnatt-180days-to-1year-before-arrival',
         'tw.import-permit-120days-before-entry',
+        // 접종 후 선적 대기(1차 90일/부스터 30일)도 여기 — 접종일은 과거 사실이라
+        // 어긋나면 바꿀 수 있는 건 출국일뿐이다.
+        'tw.rabies-shipment-window',
       ],
     },
     // 수입허가증 — APHIA pet e-permit 온라인 신청. 도착 120일 전 = 격리 면제 조건.

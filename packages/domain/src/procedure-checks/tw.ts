@@ -127,6 +127,50 @@ export const TW_CHECKS: ProcedureCheck[] = [
     },
   },
 
+  {
+    id: 'tw.rabies-shipment-window',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 접종 후 선적 대기 (1차 90일 / 부스터 30일)',
+    description:
+      '접종일과 선적일 사이가 1차는 90일 이상, 부스터는 30일 이상이어야 함(양쪽 다 1년 이내). APHIA 문답집: 「首次疫苗注射…注射日與輸入日間隔須滿 90 日且未逾 1 年；追加注射…間隔須滿 30 日且未逾 1 년」. 평소엔 항체 90일 대기가 이 요건을 덮지만, 재검사 체인으로 대기가 면제되는 경로에서는 이 룰만 남는다.',
+    severity: 'warning',
+    addedAt: '2026-07-19',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
+      const rabies = readRabiesEntries(caseRow)
+      if (!dep || rabies.length === 0) return SKIP
+
+      const latest = rabies[rabies.length - 1]
+      // 부스터 = 직전 접종의 면역 유효기간 안에 맞은 재접종(chain 유지). 만료 후 재접종은
+      // 단절이라 새 1차로 본다 — 태국·필리핀의 isValidBooster 와 같은 판정 기준.
+      const isBooster =
+        rabies.length >= 2 &&
+        (() => {
+          const prev = rabies[rabies.length - 2]
+          const prevValid = resolveValidUntil(prev.date, prev.valid_until)
+          return !!prevValid && latest.date <= prevValid
+        })()
+      const minDays = isBooster ? 30 : 90
+      const gap = daysBetween(latest.date, dep)
+      if (gap === null) return SKIP
+      if (gap < minDays) {
+        // 접종일은 과거 사실이라 조치는 '출국일을 미루는 것'뿐 — 그렇게 안내한다.
+        return {
+          ok: false,
+          message: isBooster
+            ? '광견병 추가 접종 후 30일이 지나야 대만에 입국할 수 있어요. 입국일을 미뤄야 해요.'
+            : '광견병 1차 접종 후 90일이 지나야 대만에 입국할 수 있어요. 입국일을 미뤄야 해요.',
+          offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
+        }
+      }
+      return {
+        ok: true,
+        message: `최근 접종(${latest.date}) → 출국(${dep}): ${gap}일 (${isBooster ? '부스터 30' : '1차 90'}일 이상).`,
+      }
+    },
+  },
+
   // ── RNATT (광견병 항체 검사) ──
   {
     id: 'tw.rnatt-after-rabies-vaccine',
