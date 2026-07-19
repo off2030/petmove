@@ -1,4 +1,7 @@
 import {
+  APP_SUPPORTED_DESTINATION_KEYS,
+  JOURNEY_STEP_CATALOG,
+  resolveStepForDestination,
   buildCaseJourneyContext,
   deriveAdvanceNotificationStatus,
   deriveImportPermitStatus,
@@ -66,26 +69,60 @@ const GLOBAL_DATE_FIELDS: Array<{ keys: string[]; label: string }> = [
 /**
  * 목적지별(by_dest) + top-level 단일 date 필드 → 항목 라벨.
  * timeKey 가 있으면 같은 스코프의 예약 시간을 문구에 포함(일본 수출 검역).
+ *
+ * ── 두 갈래로 나뉜다 ──────────────────────────────────────────────────
+ * 1) FIXED — `quarantine:` 완료 모델을 쓰지 않는 예약 일정. 카드에서 파생할 수 없어 여기 적는다.
+ *    (임상검사·한국 수출/수입 검역·일본 검역 — 각자 다른 완료 시그널을 쓰는 옛 구조)
+ * 2) 파생 — 카드가 `done: 'quarantine:<필드>'` 로 **스스로 '예정일→도래→완료확인' 모델임을
+ *    선언**한 것들. 목적지 카탈로그에서 자동으로 뽑는다.
+ *
+ * 왜 파생인가: 예전엔 전부 손 명단이라 새 목적지 카드를 만들고 여기 한 줄 안 넣으면 알림이
+ * 조용히 빠졌다. 실제로 중국은 수입·수출 둘 다, 대만은 수출이 누락돼 있었다(2026-07-19 전수조사).
+ * 이제 카드만 만들면 알림이 따라온다 — 명단 관리가 필요 없다.
  */
-const SCOPED_DATE_FIELDS: Array<{ key: string; label: string; timeKey?: string }> = [
+const FIXED_SCOPED_DATE_FIELDS: Array<{ key: string; label: string; timeKey?: string }> = [
   { key: 'vet_visit_date', label: '출국 전 임상검사' },
   { key: 'vet_visit_date_scheduled', label: '출국 전 임상검사' },
   { key: 'kr_export_quarantine_date', label: '한국 수출 검역' },
   { key: 'kr_import_quarantine_date', label: '한국 수입 검역' },
   { key: 'jp_export_quarantine_date', label: '일본 수출 검역', timeKey: 'jp_export_quarantine_time' },
   { key: 'jp_import_quarantine_date', label: '일본 수입 검역' },
-  { key: 'th_export_quarantine_date', label: '태국 수출 검역' },
-  { key: 'th_import_quarantine_date', label: '태국 수입 검역' },
-  { key: 'tw_import_quarantine_date', label: '대만 수입 검역' },
-  { key: 'tw_export_quarantine_date', label: '대만 수출 검역' },
-  { key: 'cn_import_quarantine_date', label: '중국 수입 검역' },
-  { key: 'cn_export_quarantine_date', label: '중국 수출 검역' },
-  { key: 'vn_import_quarantine_date', label: '베트남 수입 검역' },
-  { key: 'ph_export_quarantine_date', label: '필리핀 수출 검역' },
-  { key: 'ph_import_quarantine_date', label: '필리핀 수입 검역' },
-  { key: 'ph_local_vet_visit_date', label: '필리핀 현지 동물병원 방문' },
-  { key: 'eu_export_quarantine_date', label: '귀국 서류 준비' },
 ]
+
+/**
+ * 알림에서 제외하는 파생 필드 — 카드는 `quarantine:` 모델이지만 전날 알림이 부적절한 것.
+ * 여기 넣을 땐 **이유를 함께** 적는다(그냥 이름만 추가해 넘어가면 이 구조가 무의미해진다).
+ */
+const DERIVED_REMINDER_EXCLUDE: Record<string, string> = {
+  // EU 패밀리 8개국 공용 '입국 검사' — 도착하면 국경에서 자동으로 이뤄지는 서류 확인이라
+  // 보호자가 전날 준비할 것이 없다(일본·대만 수입검역은 공항 검역소를 찾아가는 행동이라 다름).
+  // 2026-07-19 사용자 판단으로 제외.
+  eu_import_quarantine_date: 'EU 입국 검사는 도착 시 자동 — 전날 알림 불필요',
+}
+
+/** 카드가 `done: 'quarantine:<필드>'` 로 선언한 예약 일정 → 필드·라벨 자동 수집. */
+function derivedScopedDateFields(): Array<{ key: string; label: string }> {
+  const out = new Map<string, string>()
+  for (const destKey of APP_SUPPORTED_DESTINATION_KEYS) {
+    for (const step of JOURNEY_STEP_CATALOG) {
+      const resolved = resolveStepForDestination(step, destKey, null)
+      const done = typeof resolved.done === 'string' ? resolved.done : ''
+      if (!done.startsWith('quarantine:')) continue
+      const field = done.slice('quarantine:'.length)
+      if (field in DERIVED_REMINDER_EXCLUDE) continue
+      if (!out.has(field)) out.set(field, resolved.title)
+    }
+  }
+  return [...out].map(([key, label]) => ({ key, label }))
+}
+
+const SCOPED_DATE_FIELDS: Array<{ key: string; label: string; timeKey?: string }> = [
+  ...FIXED_SCOPED_DATE_FIELDS,
+  ...derivedScopedDateFields().filter(
+    (d) => !FIXED_SCOPED_DATE_FIELDS.some((f) => f.key === d.key),
+  ),
+]
+
 
 interface RawEvent {
   date: string // YYYY-MM-DD
