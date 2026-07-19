@@ -58,7 +58,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'rabies-vaccine-1': buildRabiesCard({
       destKey: 'china',
       label: '중국',
-      validationIds: ['cn.rabies-prime-after-91days-old'],
+      // microchip-before-rabies 가 빠져 있어 중국만 이 경고가 카드 배지 대신 상단
+      // caseAlert 로 샜다(대만·태국·베트남은 광견병 카드에 붙음 — 2026-07-19 전수조사).
+      validationIds: ['cn.rabies-prime-after-91days-old', 'cn.microchip-before-rabies'],
     }),
     'rabies-vaccine-2': {
       description:
@@ -116,7 +118,14 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'rabies-vaccine-1': buildRabiesCard({
       destKey: 'vietnam',
       label: '베트남',
-      validationIds: ['vn.rabies-prime-after-3months-old', 'vn.microchip-before-rabies'],
+      // rabies-only-1year-vaccine 은 blocker(저장 거부)인데 어느 카드에도 안 붙어 있어
+      // 경고가 상단으로 샜다(중국은 2차 카드에 붙어 있음 — 2026-07-19 전수조사).
+      // 베트남은 1회 접종국이라 2차 카드가 없으므로 1차 카드가 받는다.
+      validationIds: [
+        'vn.rabies-prime-after-3months-old',
+        'vn.microchip-before-rabies',
+        'vn.rabies-only-1year-vaccine',
+      ],
     }),
     // 항체검사 — 베트남 입국 요건이 아니다(DAH 의무 아님). 한국 귀국용이라 왕복에만 뜬다
     // (TITER_RETURN_ONLY_DESTINATIONS 파생). 베트남에 검사기관이 없어 한국에서 미리 받아야 한다.

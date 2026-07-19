@@ -32,8 +32,55 @@ type Problem = {
   dest: string
   stepId: string
   ruleId: string
-  kind: 'missing' | 'cross-country' | 'unvalidated'
+  kind: 'missing' | 'cross-country' | 'unvalidated' | 'orphan-rule'
 }
+
+/**
+ * 어느 카드도 지목하지 않아도 되는 룰 — **케이스 전체 조건**이라 특정 단계에 못 붙인다.
+ * 이런 룰은 상단 caseAlert 로 뜨는 게 맞다.
+ *
+ * 3단계 검사를 넣은 이유: 중국 `cn.microchip-before-rabies` 가 어느 카드에도 안 붙어 있어
+ * 대만·태국·베트남과 달리 **광견병 카드 배지 대신 상단 경고로 새고 있었다**(2026-07-19).
+ * 룰은 정상 동작했기 때문에 기존 검사(1·2단계)도, behavior 스냅샷도 잡지 못했다 —
+ * "경고가 뜨느냐"가 아니라 "어디에 뜨느냐"의 문제라서.
+ */
+const ORPHAN_RULE_OK: Record<string, string> = {
+  // 마리 수 한도 — 케이스(보호자) 단위 조건이라 단계가 없다. 세 나라 모두 동일 처리.
+  'cn.one-pet-per-guardian': '보호자 단위 조건 — 특정 단계 없음',
+  'vn.max-2pets-per-guardian': '보호자 단위 조건 — 특정 단계 없음',
+  'ph.max-3pets-per-shipment': '보호자 단위 조건 — 특정 단계 없음',
+  // 견종 제한 — 동물 자체의 속성이라 단계가 없다.
+  'cn.banned-breeds': '동물 속성 — 특정 단계 없음',
+  'vn.banned-breeds': '동물 속성 — 특정 단계 없음',
+  'th.banned-breeds': '동물 속성 — 특정 단계 없음',
+}
+
+/**
+ * '입국 전 만료' 계열 — 백신 카드의 situational 안내가 같은 조건을 이미 말한다.
+ * 배지로도 띄우면 중복이라 의도적으로 안 붙인다(scenario.ts ADVISORY_DEFERRED_CHECKS 참고).
+ */
+const ADVISORY_SUFFIXES = [
+  '-not-expired-on-arrival',
+  '-valid-on-departure',
+  '-valid-until-on-entry',
+  '-valid-until-on-departure',
+]
+
+/**
+ * portal 표시에서 의도적으로 제외된 룰 — scenario.ts ADVISORY_DEFERRED_CHECKS 와 같은 목록.
+ * 카드에 안 붙는 게 정상이라 3단계 대상이 아니다.
+ * (같은 조건을 다른 카드의 situational 안내가 이미 말하고 있어 배지는 중복.)
+ */
+const PORTAL_DEFERRED: Record<string, string> = {
+  'jp.entry-within-2years-of-titer': "'추가 검사' 카드 안내가 재검사를 가리킴",
+  'jp.rabies-valid-until-on-departure': "'추가 백신' 카드가 담당",
+}
+
+/**
+ * 신청일·출국일 '순서' 룰 — 두 날짜가 서로 다른 카드에 있어 한쪽에 붙이면 다른 쪽에서
+ * 안 보인다. 케이스 전체 조건으로 보고 상단에 띄우는 게 맞다(태국·필리핀 동일 처리).
+ */
+const CROSS_CARD_ORDER_RULES = ['-not-after-departure']
 
 /**
  * 날짜 입력칸이 있는데 validationIds 가 비어도 **정상인** 카드.
@@ -98,10 +145,42 @@ function collect(dest: string): Problem[] {
   return out
 }
 
+/**
+ * 3단계 — 그 나라 룰인데 **어느 카드도 지목하지 않는** 것.
+ *
+ * 이러면 룰은 정상 동작하지만 경고가 카드 배지가 아니라 상단 caseAlert 로 뜬다. 같은 룰이
+ * 다른 나라에선 카드에 붙어 있으면 나라마다 경고 위치가 달라진다(중국 사고).
+ */
+function orphanRules(appDests: string[]): Problem[] {
+  const appSet = new Set(appDests)
+  const referenced = new Set<string>()
+  for (const dest of appDests) {
+    for (const step of JOURNEY_STEP_CATALOG) {
+      if (!appliesToDest(step, dest)) continue
+      const r = resolveStepForDestination(step, dest, null) as { validationIds?: string[] }
+      for (const id of r.validationIds ?? []) referenced.add(id)
+    }
+  }
+  const out: Problem[] = []
+  for (const rule of ALL_PROCEDURE_CHECKS as Array<{ id: string; country: unknown }>) {
+    if (referenced.has(rule.id)) continue
+    if (rule.id in ORPHAN_RULE_OK) continue
+    if (ADVISORY_SUFFIXES.some((x) => rule.id.endsWith(x))) continue
+    if (CROSS_CARD_ORDER_RULES.some((x) => rule.id.endsWith(x))) continue
+    if (rule.id in PORTAL_DEFERRED) continue
+    const countries = checkCountryKeys(rule.country as never).filter((c) => appSet.has(c))
+    if (countries.length === 0) continue // 앱 미노출 목적지 전용 룰은 대상 아님
+    out.push({ dest: countries.join(','), stepId: '(카드 없음)', ruleId: rule.id, kind: 'orphan-rule' })
+  }
+  return out
+}
+
 function describe(p: Problem): string {
   if (p.kind === 'missing') return '존재하지 않는 룰'
   if (p.kind === 'unvalidated')
     return `날짜칸(${p.ruleId})을 받는데 검증이 하나도 없음 — 말이 안 되는 날짜가 그냥 저장됨`
+  if (p.kind === 'orphan-rule')
+    return `${p.ruleId} — 어느 카드도 지목하지 않음. 경고가 카드 배지 대신 상단으로 샌다`
   return `이 목적지에 적용되지 않는 룰 → ${p.dest} 케이스에선 검증이 실행되지 않음`
 }
 
@@ -110,7 +189,7 @@ function main(): void {
   const appDests = dests.filter((d) => DESTINATION_OVERRIDES[d]?.appSupported)
   const adminDests = dests.filter((d) => !DESTINATION_OVERRIDES[d]?.appSupported)
 
-  const blocking = appDests.flatMap(collect)
+  const blocking = [...appDests.flatMap(collect), ...orphanRules(appDests)]
   const backlog = adminDests.flatMap(collect)
 
   if (backlog.length > 0) {
