@@ -12,7 +12,6 @@ import {
   readEffectiveExtraValue,
   todayKst,
   validateAdvanceNotification,
-  validateJpEntryDate,
   validateExportQuarantineDate,
   validateImportQuarantineDate,
   validateJpExportReservationDate,
@@ -25,15 +24,12 @@ import {
   validateRabiesPrimeAge,
   validateCyAdvanceNoticeDate,
   validateImportPermitFiledDate,
+  validateEntryDateForDestination,
   validateEchinococcusWindow,
-  validateEuEntryDate,
   validateEuTiterAfterVaccine,
   validateIeAdvanceNoticeDate,
   validateMtAdvanceNoticeDate,
   validateNoAdvanceNoticeDate,
-  validatePhEntryDate,
-  validateThEntryDate,
-  validateTwEntryDate,
   EU_ENTRY_FAMILY,
   SINGLE_DOSE_RABIES_DESTINATIONS,
   RABIES_ONE_YEAR_VALIDITY_DESTINATIONS,
@@ -994,27 +990,14 @@ export function StepDetailView({
         destination: caseRow?.destination ?? null,
         departureDate: caseRow?.departure_date ?? null,
       }
-      const jpEntryErr = validateJpEntryDate(flightForm.entry_date.trim(), entryRuleCtx)
-      if (jpEntryErr) return jpEntryErr
-      // 태국 — 21일 대기 기준일은 출발일(departure_date). procedure-check(th.*-21days-before-arrival)
-      // 가 departure_date 를 보는 것과 동일 기준으로 client 차단도 출발일로 검증한다.
-      const thEntryErr = validateThEntryDate(outboundDate, entryRuleCtx)
-      if (thEntryErr) return thEntryErr
-      // 필리핀·EU 패밀리 — 입국일(entry_date) 입력 시 그 값, 미입력이면 출국일(departure_date)로
-      // 대체(2026-07-16). 대부분 보호자가 입국일까지는 안 적고, 적더라도 출국일과 통상
-      // 당일·익일 차이라 출국일로도 충분히 근사된다. (태국과 반대 우선순위 — 출국일 fallback
-      // 은 여기서만.)
-      const entryOrDeparture = (flightForm.entry_date || flightForm.departure_date).trim()
-      // 필리핀 — 생후 120일(4개월) 미만 입국 차단.
-      const phEntryErr = validatePhEntryDate(entryOrDeparture, entryRuleCtx)
-      if (phEntryErr) return phEntryErr
-      // EU 패밀리 — 항체 검사 채혈 + 3개월 이내면 차단 (일본 180일과 동일 정책).
-      const euEntryErr = validateEuEntryDate(entryOrDeparture, entryRuleCtx)
-      if (euEntryErr) return euEntryErr
-      // 대만 — 항체 검사 채혈 + 180일 이내면 차단 (일본과 동일 모델, APHIA 격리 면제 조건).
-      const twEntryErr = validateTwEntryDate(entryOrDeparture, entryRuleCtx)
-      if (twEntryErr) return twEntryErr
-      return null
+      // 목적지별 분기·기준일(일본=입국일 / 태국=출발일 / 그 외=입국일→출발일 폴백)은 도메인
+      // 단일 출처(validateEntryDateForDestination)에 있다 — lint:behavior 가 같은 함수를
+      // 태워 이 층을 스냅샷으로 기록한다.
+      return validateEntryDateForDestination(
+        flightForm.entry_date,
+        flightForm.departure_date,
+        entryRuleCtx,
+      )
     }
     if (isGeneralVaccine) {
       const birth = readBirthDate(caseRow?.data)

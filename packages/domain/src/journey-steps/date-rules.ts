@@ -135,10 +135,17 @@ export function isTwTiterChainMaintained(titerDates: string[]): boolean {
 }
 
 /**
- * 대만 — RNATT 채혈일 + 180일 경과 후 도착(APHIA 격리 면제 핵심 조건). 일본과 동일한 모델이라
- * 같은 구조로 차단한다. 180일 미만은 회복 불가 위반(입국일을 미루는 수밖에 없음) → 입력 차단.
- * 1년 초과 쪽은 재검사로 회복 가능하므로 차단하지 않고 procedure-check
- * (tw.rnatt-180days-to-1year-before-arrival)가 주의로 안내한다.
+ * 대만 — RNATT 채혈일 + **90일** 경과 후 도착. 90일 미만만 차단한다.
+ *
+ * ⚠️ 예전엔 180일 미만을 차단했다(2026-07-19 수정). 180일은 **격리 면제** 조건이지 입국
+ * 조건이 아니다. APHIA 문답집 원문:
+ *   「抽血檢測時間距離輸入較近(已滿 90 日但未滿 180 日)，輸入後仍然是需要隔離檢疫 7 日的」
+ * 즉 90~180일은 **입국 가능 + 도착 후 7일 격리**다. 그걸 막고 있었으니 규정상 갈 수 있는
+ * 사람의 항공권 저장을 거부한 오차단이었다. 90~180일 구간은 procedure-check
+ * (tw.rnatt-180days-to-1year-before-arrival)가 '격리된다'는 주의로 안내한다.
+ *
+ * 90일 미만만 차단하는 이유는 일본 180일과 같다 — 채혈일은 과거 사실이라 위반 해소 경로가
+ * "입국일을 미루는 것"뿐이다. 1년 초과(검사 만료)는 재검사로 회복 가능하므로 차단하지 않는다.
  *
  * 단 **체인 유지 시(isTwTiterChainMaintained) 대기 없음** — 규정상 갈 수 있는 사람을 막지 않는다.
  */
@@ -162,9 +169,9 @@ export function validateTwEntryDate(v: string, ctx: DateRuleContext): string | n
 
   titerDates.sort()
   const latestTiter = titerDates[titerDates.length - 1]
-  const earliest = addDays(latestTiter, 180)
+  const earliest = addDays(latestTiter, 90)
   if (earliest && v < earliest) {
-    return `검사일로부터 180일 후 ${fmt(earliest)}에 대만에 입국할 수 있어요.`
+    return `검사일로부터 90일 후 ${fmt(earliest)}에 대만에 입국할 수 있어요.`
   }
   return null
 }
@@ -470,6 +477,36 @@ export function validateChImportPermitDate(filedDate: string, entryDate: string)
     return '입국 3주(21일) 전까지 수입허가를 신청해야 해요. 신청이 늦은 경우 입국일을 변경해야 해요.'
   }
   return null
+}
+
+/**
+ * 출국·입국일 입력불가(저장 거부) — **목적지별 분기의 단일 출처**.
+ *
+ * 수입허가와 같은 이유로 도메인에 올린다: 분기가 portal 컴포넌트 안에만 있으면 어느
+ * 목적지가 빠졌는지·기준이 맞는지 아무도 못 본다. 실제로 대만 180일 오차단이 이 층에
+ * 있었고, 이 층을 태우는 스냅샷이 없어 사람이 우연히 발견했다(2026-07-19).
+ *
+ * 기준일이 목적지마다 다르다 — 클라이언트가 쓰던 그대로 보존한다:
+ *  - 일본: 입국일(entry_date)
+ *  - 태국: 출발일(departure_date) — procedure-check 가 departure 를 보는 것과 같은 기준
+ *  - 필리핀·EU 패밀리·대만: 입국일, 없으면 출발일 폴백(대부분 당일·익일 차이)
+ */
+export function validateEntryDateForDestination(
+  entryDate: string,
+  departureDate: string,
+  ctx: DateRuleContext,
+): string | null {
+  const entry = (entryDate ?? '').trim()
+  const departure = (departureDate ?? '').trim()
+  const outbound = departure || entry
+  const entryOrDeparture = entry || departure
+  return (
+    validateJpEntryDate(entry, ctx) ??
+    validateThEntryDate(outbound, ctx) ??
+    validatePhEntryDate(entryOrDeparture, ctx) ??
+    validateEuEntryDate(entryOrDeparture, ctx) ??
+    validateTwEntryDate(entryOrDeparture, ctx)
+  )
 }
 
 /**

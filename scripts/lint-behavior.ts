@@ -27,6 +27,7 @@ import { getStepsForCase } from '../packages/domain/src/journey-steps/applicabil
 import {
   validateMicrochipBeforeBooster,
   validateImportPermitFiledDate,
+  validateEntryDateForDestination,
   validateRabiesPrimeAge,
 } from '../packages/domain/src/journey-steps/date-rules'
 
@@ -88,6 +89,27 @@ function importPermitBlocks(
     data,
   })
   return msg ? [`수입허가 신청일: ${msg}`] : []
+}
+
+/**
+ * 입력불가 — 출국·입국일 층(항공권 카드).
+ *
+ * 대만 180일 오차단이 바로 이 층에 있었는데 스냅샷이 없어 못 봤다(2026-07-19).
+ * client 와 같은 도메인 함수를 태운다.
+ */
+function entryDateBlocks(
+  destKey: string,
+  data: Record<string, unknown>,
+  departure: string,
+): string[] {
+  const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
+  if (!entry && !departure) return []
+  const msg = validateEntryDateForDestination(entry, departure, {
+    data,
+    destination: koLabel(destKey),
+    departureDate: departure || null,
+  } as never)
+  return msg ? [`출국·입국일: ${msg}`] : []
 }
 
 /**
@@ -279,6 +301,37 @@ const SCENARIOS: Scenario[] = [
       import_permit_application_date: '2026-11-25',
     },
   },
+  // ── 대만 항체 대기 2단계 (90일 = 입국 / 180일 = 격리 면제) ──────────────
+  // 180일은 격리 면제 조건이지 입국 조건이 아니다. 예전엔 90~180일을 입력불가로 막아
+  // 규정상 갈 수 있는 사람의 항공권 저장을 거부했다(2026-07-19 수정).
+  {
+    name: '대만 — 채혈 후 150일 입국 (90일↑ 180일↓)',
+    why: '입국은 되고 도착 후 7일 격리 — 차단이 아니라 격리 안내여야 한다',
+    departure: '2026-06-01',
+    data: {
+      birth_date: '2024-01-01',
+      microchip_implant_date: '2024-06-01',
+      rabies_dates: [{ date: '2024-07-01' }],
+      // 2026-01-02 채혈 → 출발(2026-06-01)까지 150일.
+      rabies_titer_records: [{ date: '2026-01-02', result: '1.2' }],
+      entry_date: '2026-06-01',
+      return_date: '2026-06-20',
+    },
+  },
+  {
+    name: '대만 — 채혈 후 60일 입국 (90일 미만)',
+    why: '규정상 갈 수 없는 일정 — 여기서만 입력불가여야 한다',
+    departure: '2026-06-01',
+    data: {
+      birth_date: '2024-01-01',
+      microchip_implant_date: '2024-06-01',
+      rabies_dates: [{ date: '2024-07-01' }],
+      // 2026-04-02 채혈 → 출발까지 60일.
+      rabies_titer_records: [{ date: '2026-04-02', result: '1.2' }],
+      entry_date: '2026-06-01',
+      return_date: '2026-06-20',
+    },
+  },
   // ── 항체 유효기간 만료 (상황별 설명문 층) ────────────────────────────────
   // 고객이 실제로 읽는 만료 안내는 step.situational 이 만든다. 이 층이 스냅샷에 없어서
   // 일본 추가 검사 문구를 고쳐도 5개 lint 가 전부 조용히 통과했다(2026-07-19).
@@ -391,6 +444,7 @@ function build(): string {
       const blocks = [
         ...inputBlocks(destKey, sc.data),
         ...importPermitBlocks(destKey, sc.data, sc.departure ?? ''),
+        ...entryDateBlocks(destKey, sc.data, sc.departure ?? ''),
       ]
 
       out.push('')

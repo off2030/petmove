@@ -163,9 +163,9 @@ export const TW_CHECKS: ProcedureCheck[] = [
     id: 'tw.rnatt-180days-to-1year-before-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: 'RNATT 채혈일부터 180일 ~ 1년 사이 도착',
+    title: 'RNATT 채혈일부터 180일 ~ 1년 사이 도착 (격리 면제 조건)',
     description:
-      'RNATT 채혈일로부터 180일 경과 ~ 1년 이내에 대만 도착 (격리 면제 핵심 조건). 미충족 시 추가 격리 또는 재검사. (APHIA: "the blood sampling date should be no less than 180 days and no more than one year prior to shipment")',
+      'RNATT 채혈일로부터 180일 경과 ~ 1년 이내 도착이면 격리 면제. 90~180일은 입국은 되고 도착 후 7일 격리, 90일 미만은 입국 불가(입력불가가 차단), 1년 초과는 검사 만료로 재검사 필요. (APHIA 문답집: 已滿 90 日但未滿 180 日 … 仍然是需要隔離檢疫 7 日)',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
@@ -199,14 +199,20 @@ export const TW_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       // 고객 문구엔 날짜를 넣지 않는다 — 어느 칸이 문제인지는 offendingPaths 가 짚는다.
       // 180일 미달(더 기다리면 해결)과 1년 초과(재검사 필요)는 조치가 달라 문구를 나눈다.
+      // 180일은 **격리 면제** 조건이지 입국 조건이 아니다. 90~180일도 입국은 되고 도착 후
+      // 7일 격리다(APHIA: 已滿 90 日但未滿 180 日 … 仍然是需要隔離檢疫 7 日). 예전엔 이
+      // 구간에 "180일이 지나야 입국할 수 있어요"라고 사실과 다르게 안내했다(2026-07-19).
+      // 90일 미만은 입력불가(validateTwEntryDate)가 막으므로 여기까지 오면 '나중에 어긋난' 경우다.
       const reason =
         days === null
           ? '날짜 형식이 올바르지 않아요.'
           : days < 0
             ? '채혈일이 출국일보다 늦어요. 날짜를 확인하세요.'
-            : days < 180
-              ? '대만 입국은 광견병 항체 검사 채혈일로부터 180일이 지나야 해요.'
-              : '광견병 항체 검사 결과가 채혈일로부터 1년이 지나 만료됐어요. 다시 검사해야 해요.'
+            : days < 90
+              ? '대만 입국은 광견병 항체 검사 채혈일로부터 90일이 지나야 해요. 입국일을 미뤄야 해요.'
+              : days < 180
+                ? '채혈일로부터 180일이 지나야 격리 없이 입국할 수 있어요. 지금 일정으로는 도착 후 7일간 격리돼요.'
+                : '광견병 항체 검사 결과가 채혈일로부터 1년이 지나 만료됐어요. 다시 검사해야 해요.'
       return {
         ok: false,
         message: reason,
