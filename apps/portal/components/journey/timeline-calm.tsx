@@ -47,6 +47,8 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/philippines-palm-resort-cove.webp',
   ],
   대만: [
+    // 첫 장 = 타이베이 101 노을(사용자 지정 2026-07-19). 나머지는 파일 순서 유지.
+    '/destinations/taiwan-11.webp',
     '/destinations/taiwan-00.webp',
     '/destinations/taiwan-01.webp',
     '/destinations/taiwan-02.webp',
@@ -58,7 +60,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/taiwan-08.webp',
     '/destinations/taiwan-09.webp',
     '/destinations/taiwan-10.webp',
-    '/destinations/taiwan-11.webp',
     '/destinations/taiwan-12.webp',
     '/destinations/taiwan-13.webp',
     '/destinations/taiwan-14.webp',
