@@ -25,6 +25,7 @@ import { JOURNEY_STEP_CATALOG } from '../packages/domain/src/journey-steps/catal
 import { resolveStepForDestination } from '../packages/domain/src/journey-steps/destination-overrides'
 import {
   validateMicrochipBeforeBooster,
+  validateImportPermitFiledDate,
   validateRabiesPrimeAge,
 } from '../packages/domain/src/journey-steps/date-rules'
 
@@ -60,6 +61,32 @@ function inputBlocks(destKey: string, data: Record<string, unknown>): string[] {
   const chipMsg = validateMicrochipBeforeBooster(chip, first)
   if (chipMsg) out.push(`마이크로칩 선행: ${chipMsg}`)
   return out
+}
+
+/**
+ * 입력불가 — 수입허가 신청일 층.
+ *
+ * 광견병 카드만 보던 시절엔 이 층이 스냅샷에 아예 없었다. 그래서 대만에 분기가 통째로
+ * 빠져 출국일 이후 신청도 저장되던 걸 아무도 못 봤다(2026-07-19). client 와 **같은**
+ * 도메인 함수를 태운다 — 여기서 복제하면 진짜 동작과 어긋난다.
+ */
+function importPermitBlocks(
+  destKey: string,
+  data: Record<string, unknown>,
+  departure: string,
+): string[] {
+  const filed =
+    typeof data.import_permit_application_date === 'string'
+      ? data.import_permit_application_date
+      : ''
+  if (!filed) return []
+  const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
+  const msg = validateImportPermitFiledDate(destKey, filed, {
+    departureDate: departure,
+    entryDate: entry,
+    data,
+  })
+  return msg ? [`수입허가 신청일: ${msg}`] : []
 }
 
 const GOLDEN = 'scripts/behavior.snapshot.txt'
@@ -178,6 +205,38 @@ const SCENARIOS: Scenario[] = [
       ph_import_quarantine_date: '2026-08-20',
     },
   },
+  // ── 수입허가 신청일 ────────────────────────────────────────────────────
+  // 이 층은 스냅샷에 없었다(광견병 카드만 봤다). 그래서 대만에 분기가 통째로 빠진 걸
+  // 못 봤다 — 출국일 이후 신청도 저장됐다(2026-07-19 발견·수정).
+  {
+    name: '수입허가를 출국일 이후에 신청',
+    why: '허가 없이 이미 출국한 셈 — 논리적 불가능이라 수입허가 카드가 있는 나라는 전부 입력불가여야 한다',
+    departure: '2026-12-01',
+    data: {
+      birth_date: '2025-01-01',
+      microchip_implant_date: '2026-01-01',
+      rabies_dates: [{ date: '2026-02-01' }, { date: '2026-03-05' }],
+      rabies_titer_records: [{ date: '2026-03-20', result: '1.2' }],
+      entry_date: '2026-12-01',
+      return_date: '2026-12-20',
+      import_permit_application_date: '2026-12-20',
+    },
+  },
+  {
+    name: '수입허가 마감만 지남 (출국일 이전)',
+    why: '마감은 지났지만 신청 자체는 가능한 날짜 — 차단이 아니라 주의여야 한다(과잉 차단 방지)',
+    departure: '2026-12-01',
+    data: {
+      birth_date: '2025-01-01',
+      microchip_implant_date: '2026-01-01',
+      rabies_dates: [{ date: '2026-02-01' }, { date: '2026-03-05' }],
+      rabies_titer_records: [{ date: '2026-03-20', result: '1.2' }],
+      entry_date: '2026-12-01',
+      return_date: '2026-12-20',
+      // 대만 120일·20일 마감 모두 지남. 태국 9일 마감도 지남.
+      import_permit_application_date: '2026-11-25',
+    },
+  },
 ]
 
 function koLabel(destKey: string): string {
@@ -237,7 +296,10 @@ function build(): string {
         reminders = ['(수집 실패)']
       }
 
-      const blocks = inputBlocks(destKey, sc.data)
+      const blocks = [
+        ...inputBlocks(destKey, sc.data),
+        ...importPermitBlocks(destKey, sc.data, sc.departure ?? ''),
+      ]
 
       out.push('')
       out.push(`▸ ${destKey} (${token})`)

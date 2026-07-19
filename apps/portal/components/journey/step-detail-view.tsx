@@ -23,21 +23,17 @@ import {
   validateMicrochipBeforeBooster,
   validateRabiesInterval,
   validateRabiesPrimeAge,
-  validateChImportPermitDate,
   validateCyAdvanceNoticeDate,
+  validateImportPermitFiledDate,
   validateEchinococcusWindow,
   validateEuEntryDate,
   validateEuTiterAfterVaccine,
   validateIeAdvanceNoticeDate,
-  validateImportPermitNotAfterDeparture,
   validateMtAdvanceNoticeDate,
   validateNoAdvanceNoticeDate,
   validatePhEntryDate,
-  validatePhImportPermitVaccineGap,
-  validatePhImportPermitWithin60Days,
   validateThEntryDate,
   validateTwEntryDate,
-  validateThImportPermitVaccineGap,
   EU_ENTRY_FAMILY,
   SINGLE_DOSE_RABIES_DESTINATIONS,
   RABIES_ONE_YEAR_VALIDITY_DESTINATIONS,
@@ -1089,31 +1085,13 @@ export function StepDetailView({
       const data = (caseRow?.data ?? {}) as Record<string, unknown>
       const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
       const filed = importPermit.applicationDate.trim()
-      // 태국 — ①신청일이 출국일 이후면 차단(논리적 불가능) ②백신 접종 14일(2주) 이내면 차단.
-      // 9일(7영업일) 마감은 차단이 아닌 '안내'(th.import-permit-9days-before-entry).
-      if (destinationKey === 'thailand') {
-        const dep = (caseRow?.departure_date ?? '').slice(0, 10)
-        return (
-          validateImportPermitNotAfterDeparture(filed, dep) ??
-          validateThImportPermitVaccineGap(filed, data)
-        )
-      }
-      // 필리핀 — ①신청일이 출국일 이후면 차단(논리적 불가능) ②출국 60일보다 일찍이면 차단
-      // (SPSIC 60일 유효, 출국 전 만료) ③백신 1차(단일 접종) 14일 이내면 차단(부스터 면제).
-      // 출국일은 항공권 저장 시 entry_date 와 동기화된 departure_date.
-      if (destinationKey === 'philippines') {
-        const dep = (caseRow?.departure_date ?? '').slice(0, 10)
-        return (
-          validateImportPermitNotAfterDeparture(filed, dep) ??
-          validatePhImportPermitWithin60Days(filed, dep) ??
-          validatePhImportPermitVaccineGap(filed, data)
-        )
-      }
-      // 스위스 — 신청일이 입국일 3주(21일) 이내면 차단.
-      if (destinationKey === 'switzerland') {
-        return validateChImportPermitDate(filed, entry)
-      }
-      return null
+      // 목적지별 분기는 도메인 단일 출처(validateImportPermitFiledDate)에 있다 —
+      // lint:behavior 가 같은 함수를 태워 이 층을 스냅샷으로 기록한다.
+      return validateImportPermitFiledDate(destinationKey ?? '', filed, {
+        departureDate: (caseRow?.departure_date ?? '').slice(0, 10),
+        entryDate: entry,
+        data,
+      })
     }
     // 아일랜드 사전 통지 — 통지일이 입국일 24시간(1일) 이내면 차단.
     if (step.id === 'ie-advance-notice') {

@@ -473,6 +473,52 @@ export function validateChImportPermitDate(filedDate: string, entryDate: string)
 }
 
 /**
+ * 수입허가 신청일 입력불가(저장 거부) — **목적지별 분기의 단일 출처**.
+ *
+ * 예전엔 이 분기가 portal 의 step-detail-view 안에만 있었다. 그 결과 ①대만이 빠진 걸
+ * 아무도 못 봤고(출국일 이후 신청도 저장됨, 2026-07-19 발견) ②lint:behavior 가 이 층을
+ * 검사하려면 판정 로직을 복제해야 했다(복제하면 진짜 동작과 어긋난다).
+ *
+ * 여기로 올려서 client 와 가드가 **같은 함수**를 부르게 한다. 새 목적지의 수입허가 카드는
+ * 이 switch 에 한 줄 추가하면 입력불가와 스냅샷이 동시에 붙는다.
+ *
+ * 마감일(태국 9일·대만 120/20일 등)은 여기 넣지 않는다 — 지나가면 회복이 불가해
+ * 차단은 과하고, procedure-check '주의'가 담당한다. 여기 있는 건 전부
+ * '그 날짜로는 절차 자체가 성립하지 않는' 논리적 불가능뿐.
+ */
+export function validateImportPermitFiledDate(
+  destinationKey: string,
+  filedDate: string,
+  ctx: { departureDate: string; entryDate: string; data: Record<string, unknown> },
+): string | null {
+  const { departureDate, entryDate, data } = ctx
+  switch (destinationKey) {
+    // 태국 — ①출국일 이후 신청 불가 ②백신 접종 14일(2주) 이내 신청 불가.
+    case 'thailand':
+      return (
+        validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
+        validateThImportPermitVaccineGap(filedDate, data)
+      )
+    // 필리핀 — 위 + SPSIC 60일 유효(출국 60일보다 이르면 출국 전 만료) + 백신 14일.
+    case 'philippines':
+      return (
+        validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
+        validatePhImportPermitWithin60Days(filedDate, departureDate) ??
+        validatePhImportPermitVaccineGap(filedDate, data)
+      )
+    // 대만 — 출국일 이후 신청 불가. 카드 order 가 43(항공권 45 앞)이라 항공권 미입력 시
+    // departureDate 가 비어 통과한다. 120일·20일 마감은 주의 담당.
+    case 'taiwan':
+      return validateImportPermitNotAfterDeparture(filedDate, departureDate)
+    // 스위스 — 입국 3주(21일) 이내 신청 불가.
+    case 'switzerland':
+      return validateChImportPermitDate(filedDate, entryDate)
+    default:
+      return null
+  }
+}
+
+/**
  * 노르웨이 사전 통지일 — 입국 48시간(2일) 전까지 Mattilsynet(노르웨이 식품안전청)에
  * 이메일로 통지해야 함 (mattilsynet.no 공식 확인, 2026-07-16).
  * client(통지 입력 시 입력 불가)·procedure-check(입국일 수정 후 주의) 공용. 한쪽 비면 통과.
