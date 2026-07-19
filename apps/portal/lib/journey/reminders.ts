@@ -26,7 +26,11 @@ import {
  *   B. 유효기간 만료 — 광견병 백신·종합백신·CIV·광견병 항체검사(=titer)만. 만료 30일 전,
  *      그리고 출국 전 만료 시 경고. (도메인 계산 재활용)
  *   C. 목적지별 신청 마감 — 일본 사전신고(입국 40·47일 전)·일본 수출검역 신청(귀국 10·17일 전)
- *      ·태국 수입허가(출국 14일 전)·필리핀 수입허가(출국 7일 전). 이미 완료면 제외.
+ *      ·태국 수입허가(출국 14일 전)·필리핀 수입허가(출국 7일 전)·대만 수입허가(도착 127·120일 전).
+ *      **신청을 마쳤으면(신청일 입력 = in_progress) 더 보내지 않는다** — 문구가 전부
+ *      '신청하세요/준비하세요'라 신청 후엔 목적이 끝났고, 허가증이 늦게 나오는 건 관청
+ *      사정이라 보호자가 할 게 없다. 마감 배지도 같은 시점에 사라진다(scenario.ts 의
+ *      '액션-완료 두 단계 step' 처리) — 화면과 알림 기준을 맞춘 것(2026-07-19).
  */
 
 export interface AppReminder {
@@ -515,7 +519,7 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
     } else if (key === 'taiwan') {
       // 대만 수입허가증 — 도착 120일 전 신청이 격리 면제 조건이라 마감이 유난히 이르다.
       // 놓치면 회복이 어려워(20일 전 신청 = 7일 격리) 일주일 전 + 당일 2회 안내.
-      if (entry && deriveImportPermitStatus(flat) !== 'done') {
+      if (entry && deriveImportPermitStatus(flat) === 'not_started') {
         const r127 = leadReminder(
           flat,
           `${token}|tw-permit-127`,
@@ -534,10 +538,31 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
           now,
         )
         if (r120) out.push(r120)
+        // 2단계 — 120일(격리 면제)을 놓쳐도 도착 20일 전까지는 신청할 수 있다(대신 7일 격리).
+        // 그게 진짜 마지막 기한이라, 여기서 멈추면 119일째부터 아무 안내 없이 방치된다.
+        // 배지도 같은 시점에 20일 마감으로 넘어간다(catalog twImportPermitDeadline).
+        const r27 = leadReminder(
+          flat,
+          `${token}|tw-permit-27`,
+          entry,
+          27,
+          '대만 수입허가증 신청 최종 마감이 일주일 남았어요. 도착 20일 전까지 신청해야 하고, 이 경우 도착 후 7일간 격리돼요.',
+          now,
+        )
+        if (r27) out.push(r27)
+        const r20 = leadReminder(
+          flat,
+          `${token}|tw-permit-20`,
+          entry,
+          20,
+          '오늘이 대만 수입허가증 신청 마지막 기한이에요(도착 20일 전). 도착 후 7일간 격리를 거쳐야 해요.',
+          now,
+        )
+        if (r20) out.push(r20)
       }
     } else if (key === 'thailand') {
       // 태국 수입 허가증 — 영업일 기준이라 여유 있게 출국 2주 전 안내.
-      if (departure && deriveImportPermitStatus(flat) !== 'done') {
+      if (departure && deriveImportPermitStatus(flat) === 'not_started') {
         const r = leadReminder(
           flat,
           `${token}|th-permit`,
@@ -550,7 +575,7 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
       }
     } else if (key === 'philippines') {
       // 필리핀 수입 허가증 — 정해진 기한 없어 출국 1주 전 안내.
-      if (departure && deriveImportPermitStatus(flat) !== 'done') {
+      if (departure && deriveImportPermitStatus(flat) === 'not_started') {
         const r = leadReminder(
           flat,
           `${token}|ph-permit`,

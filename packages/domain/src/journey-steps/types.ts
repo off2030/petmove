@@ -135,6 +135,17 @@ export interface StepDeadline {
   daysBefore: number
   /** true 면 마감이 [anchor−daysBefore, anchor] 구간 — 카드에 'A ~ B' 로 표시. 기본은 '~까지' 단일 마감. */
   window?: boolean
+  /**
+   * **1차 마감을 놓쳤을 때 넘어갈 2차 마감**(anchor 기준 며칠 전). 1차가 지나면 배지가
+   * 사라지는 대신 이 값으로 다시 계산된다.
+   *
+   * 대만 수입허가: 도착 120일 전 = **격리 면제** 조건, 도착 20일 전 = **진짜 마지막 기한**
+   * (신청은 되지만 도착 후 7일 격리). 120일만 두면 119일째부터 '마감 지남'으로 보여서,
+   * 아직 신청할 수 있는 사람에게 이미 늦었다고 잘못 알린다(2026-07-19 사용자 지적).
+   *
+   * 알림도 같은 2단계로 동작한다(reminders.ts tw-permit-27·20).
+   */
+  fallbackDaysBefore?: number
 }
 
 /**

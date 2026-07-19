@@ -283,15 +283,28 @@ function deadlineAnchorDate(step: StepDefinition, caseRow: CaseRow): string | nu
   return base.length >= 10 ? base.slice(0, 10) : null
 }
 
-/** step 의 deadline 표시일 — 기준일에서 daysBefore 만큼 당김. window 면 구간 시작일. */
+/**
+ * step 의 deadline 표시일 — 기준일에서 daysBefore 만큼 당김. window 면 구간 시작일.
+ *
+ * fallbackDaysBefore 가 있으면 **1차 마감이 지난 뒤 2차 마감으로 넘어간다**(대만 수입허가
+ * 120일 → 20일). 1차만 두면 119일째부터 '마감 지남'이 되어, 아직 신청할 수 있는 사람에게
+ * 이미 늦었다고 잘못 알린다. 알림도 같은 2단계(reminders.ts).
+ */
 function deadlineDate(step: StepDefinition, caseRow: CaseRow): string | null {
   if (!step.deadline) return null
   const base = deadlineAnchorDate(step, caseRow)
   if (!base) return null
-  const d = new Date(base + 'T00:00:00Z')
-  if (isNaN(d.getTime())) return null
-  d.setUTCDate(d.getUTCDate() - step.deadline.daysBefore)
-  return d.toISOString().slice(0, 10)
+  const at = (daysBefore: number): string | null => {
+    const d = new Date(base + 'T00:00:00Z')
+    if (isNaN(d.getTime())) return null
+    d.setUTCDate(d.getUTCDate() - daysBefore)
+    return d.toISOString().slice(0, 10)
+  }
+  const primary = at(step.deadline.daysBefore)
+  const fb = step.deadline.fallbackDaysBefore
+  if (fb == null || !primary) return primary
+  // 1차가 아직 안 지났으면 1차, 지났으면 2차.
+  return primary >= todayKst() ? primary : at(fb)
 }
 
 /** 날짜 구간의 끝 날짜 표시 — 시작과 같은 해면 'YYYY년' 생략. */
