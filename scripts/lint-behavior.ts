@@ -463,13 +463,17 @@ function build(): string {
       // 메시지까지 기록한다 — 룰 id 만 담으면 "같은 룰이 다른 문구를 낸다"를 못 잡는다.
       // 실제로 msgTiterBeforeVaccine 을 2회 접종국용으로 바꿨을 때 id 는 그대로라 스냅샷이
       // 조용히 통과했다(2026-07-19). 고객이 읽는 건 id 가 아니라 이 문장이다.
-      const failed = runChecksForCase(destKey, { caseRow, destination: token } as never)
+      // 주의 층도 시각 고정 — 여러 룰이 todayKst()를 본다(cn·jp·th + 대만 항체 만료).
+      // 고정 없이 두면 스냅샷이 날마다 달라져 가드로 못 쓴다(상황별 설명문 층과 같은 이유).
+      const failed = withFrozenNow(() =>
+        runChecksForCase(destKey, { caseRow, destination: token } as never)
         .filter((r) => (r.result as { ok?: boolean })?.ok === false)
         .map((r) => {
           const msg = (r.result as { message?: string })?.message ?? ''
           return `${r.check.id} [${r.check.severity}]\n         ${msg.replace(/\s+/g, ' ')}`
         })
-        .sort()
+        .sort(),
+      )
 
       let reminders: string[] = []
       let pushes: string[] = []
