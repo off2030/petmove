@@ -21,7 +21,7 @@ import { destinationTokens, petLabel } from './reminders'
  * 마일스톤:
  *   - 광견병 항체검사 완료 — **모든 목적지 공통**(글로벌 검사). 케이스당 1회.
  *   - 일본: 사전 신고 / 일본 수출 검역 신청·예약
- *   - 태국·필리핀: 수입 허가증
+ *   - 태국·필리핀·대만: 수입 허가증
  * 완료 판정은 모두 기존 도메인 함수 재사용(resolveDone·derive*) — 새 판정 로직 없음.
  *
  * ⚠️ 목적지 토큰은 **한글 국가명**('일본'·'태국'·'필리핀')이라, derive 분기는 반드시
@@ -42,7 +42,7 @@ const APP_TITLE = '펫무브'
  * 한 케이스에서 "지금 완료 상태인" 마일스톤 푸시들을 수집. 목적지(by_dest) 토큰별로 본다.
  * - 항체검사: 글로벌 검사라 케이스당 1회(여러 목적지여도 중복 X). 모든 목적지 공통.
  * - 사전 신고·일본 수출검역: 일본(key='japan') 목적지만.
- * - 수입 허가증: 태국·필리핀(key='thailand'|'philippines') 목적지만(목적지별 허가라 key별 dedup).
+ * - 수입 허가증: 태국·필리핀·대만 목적지만(목적지별 허가라 key별 dedup).
  */
 export function collectMilestonePushes(caseRow: CaseRow): MilestonePush[] {
   const pet = petLabel(caseRow.pet_name)
@@ -85,7 +85,10 @@ export function collectMilestonePushes(caseRow: CaseRow): MilestonePush[] {
           body: `${pet} 일본 수출 검역 신청과 예약이 완료됐어요. 예약 일시를 앱에서 확인하세요. ✨`,
         })
       }
-    } else if (key === 'thailand' || key === 'philippines') {
+    } else if (key === 'thailand' || key === 'philippines' || key === 'taiwan') {
+      // 대만도 같은 import-permit 카드·같은 판정 함수를 쓴다(APHIA e-permit). 보호자가 직접
+      // 신청하는 허가지만(selfApply), 발급됐다는 사실은 앱에 기록되는 순간 알릴 가치가 있다 —
+      // 도착 120일 전 마감이라 발급 확인이 늦으면 일정 전체가 흔들린다.
       if (deriveImportPermitStatus(flat) === 'done') {
         out.push({
           key: `${caseRow.id}|${key}|import-permit`,
