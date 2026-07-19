@@ -52,6 +52,19 @@ const COPY_FIELDS = [
   'links',
 ] as const
 
+/**
+ * 그 목적지에 이 카드가 뜨는가 — destinations + excludeDestinations 만 본다.
+ * (종·트립 조합은 lint:dest 스냅샷 담당. 여기선 문구가 목적지별로 어떻게 해석되는지만 본다.)
+ * '기본'(override 없는 목적지 대표) 블록은 destinations:'all' 카드만 싣는다.
+ */
+function appliesToDest(step: { applicability: { destinations: 'all' | string[]; excludeDestinations?: string[] } }, destKey: string | null): boolean {
+  const { destinations, excludeDestinations } = step.applicability
+  if (destKey && excludeDestinations?.includes(destKey)) return false
+  if (destinations === 'all') return true
+  if (destKey === null) return false // 기본 블록 = 전 목적지 공용 카드만
+  return destinations.includes(destKey)
+}
+
 function destLabel(key: string): string {
   if (key === BASE) return '기본 — override 없는 모든 목적지(싱가포르·호주·말레이시아 등) 공용'
   return key
@@ -106,6 +119,14 @@ function buildSnapshot(): string {
     lines.push('═'.repeat(72))
     const destKey = key === BASE ? null : key
     for (const step of JOURNEY_STEP_CATALOG) {
+      // 그 목적지에 실제로 뜨는 카드만 — applicability.destinations 를 존중한다.
+      //
+      // 예전엔 전 카드를 모든 목적지 블록에 실었다. 그래서 한 나라 전용 카드
+      // (tw-export-quarantine 등)를 고치면 "바뀐 목적지 블록 14개"가 떠서, 정작 이 가드가
+      // 잡아야 할 '의도 밖 목적지 누수'와 구분이 안 됐다(2026-07-19 발견).
+      // 종·트립 조합은 여기서 구분하지 않으므로 어느 조합에든 해당하면 포함한다
+      // (조합별 노출은 lint:dest 스냅샷이 담당).
+      if (!appliesToDest(step, destKey)) continue
       const resolved = resolveStepForDestination(step, destKey) as Record<string, unknown>
       lines.push('')
       lines.push(`▸ ${step.id}`)
