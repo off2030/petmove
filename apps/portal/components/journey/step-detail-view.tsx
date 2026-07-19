@@ -121,6 +121,8 @@ interface CollectedCheck {
  */
 const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
   japan: '예: 나리타 NRT',
+  china: '예: 베이징 PEK',
+  taiwan: '예: 타오위안 TPE',
   philippines: '예: 마닐라 MNL',
   eu: '예: 파리 CDG',
   uk: '예: 런던 히드로 LHR',

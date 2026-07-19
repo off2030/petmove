@@ -135,7 +135,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // 항공권 — 채혈 후 180일 대기는 일본과 동일(base earliest anchor 상속). 검증만 tw 로 교체.
     'flight-purchase': {
       description:
-        '대만 입국 일정에 맞춰 항공권을 구매하세요.\n\n채혈일로부터 180일~1년 사이에 대만에 입국할 수 있어요.\n수입허가증 신청을 위해 도착 120일 전까지 항공편 일정을 정하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+        // 120일 안내는 수입허가증 카드(order 43, 이 카드보다 앞)가 담당 — 중복이라 뺀다.
+        '대만 입국 일정에 맞춰 항공권을 구매하세요.\n\n채혈일로부터 180일~1년 사이에 대만에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       cardLine: '대만에 입국할 수 있어요.',
       validationIds: ['tw.rnatt-180days-to-1year-before-arrival'],
     },
