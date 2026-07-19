@@ -49,7 +49,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
   베트남: [
     '/destinations/vietnam-01.jpg',
     '/destinations/vietnam-03.jpg',
-    '/destinations/vietnam-04.jpg',
     '/destinations/vietnam-05.jpg',
     '/destinations/vietnam-06.jpg',
     '/destinations/vietnam-07.jpg',
