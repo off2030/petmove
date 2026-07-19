@@ -57,9 +57,21 @@ const COPY_FIELDS = [
  * (종·트립 조합은 lint:dest 스냅샷 담당. 여기선 문구가 목적지별로 어떻게 해석되는지만 본다.)
  * '기본'(override 없는 목적지 대표) 블록은 destinations:'all' 카드만 싣는다.
  */
-function appliesToDest(step: { applicability: { destinations: 'all' | string[]; excludeDestinations?: string[] } }, destKey: string | null): boolean {
-  const { destinations, excludeDestinations } = step.applicability
+function appliesToDest(
+  step: {
+    applicability: {
+      destinations: 'all' | string[]
+      excludeDestinations?: string[]
+      roundOnlyDestinations?: string[]
+    }
+  },
+  destKey: string | null,
+): boolean {
+  const { destinations, excludeDestinations, roundOnlyDestinations } = step.applicability
   if (destKey && excludeDestinations?.includes(destKey)) return false
+  // 왕복에만 뜨는 카드(태국·필리핀·베트남 등의 귀국용 항체검사)도 그 목적지 문구다.
+  // 이 줄이 없어서 베트남 rabies-titer 문구를 바꿔도 린트가 조용히 통과했다(2026-07-19).
+  if (destKey && roundOnlyDestinations?.includes(destKey)) return true
   if (destinations === 'all') return true
   if (destKey === null) return false // 기본 블록 = 전 목적지 공용 카드만
   return destinations.includes(destKey)
