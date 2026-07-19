@@ -1,6 +1,6 @@
 'use client'
 
-// 랜딩 · 앱 지원 여행지 — 접힘(5+더보기) ↔ 펼침(아시아 5 + 유럽 30 = 35개국) 토글.
+// 랜딩 · 앱 지원 여행지 — 접힘(5+더보기) ↔ 펼침(아시아 6 + 유럽 30 = 36개국) 토글.
 import { useState } from 'react'
 import { APP_DEST_PREVIEW, APP_DEST_ASIA, APP_DEST_EU } from '@/lib/site-data'
 
