@@ -602,7 +602,10 @@ function derivedDetail(kind: 'offline' | 'online', dest: string, trip: TripType)
   const { offlineCost, period } = DEST_PRICING[destKey] ?? {}
   // 나라 고유 절차 — 프로파일에서만 파생한다(지어내지 않는다). 현재 파생 가능한 선언은
   // importPermit(수입허가국: 대만 등) 하나 — 스위스 '수입 허가 신청'과 같은 기존 표현을 쓴다.
-  const hasPermit = !!DESTINATION_OVERRIDES[destKey]?.importPermit
+  // selfApply(보호자가 직접 온라인 신청 — 대만 APHIA e-permit)는 대행 대상이 아니라 제외한다.
+  // 여정 카드·서류 탭에는 그대로 뜬다. 여기서 빼는 건 **맡기기 상품에 포함되는 항목**뿐.
+  const permit = DESTINATION_OVERRIDES[destKey]?.importPermit
+  const hasPermit = !!permit && !permit.selfApply
   const permitItems = hasPermit ? ['수입허가증 신청'] : []
   if (kind === 'offline') {
     return offlineDetail({

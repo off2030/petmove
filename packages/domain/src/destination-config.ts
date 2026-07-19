@@ -132,6 +132,14 @@ export interface DestinationOverride {
     applyDeadlineDays?: number
     /** 허가서 서류명(서류 탭 표기). */
     docName?: string
+    /**
+     * 보호자가 직접 온라인으로 신청하는 허가 — 대행 대상이 아니다(대만 APHIA e-permit).
+     *
+     * 태국(R.6)·필리핀(SPSIC)은 병원이 대행하므로 맡기기 상품 항목에 '수입허가증 신청'이
+     * 들어가지만, 대만은 보호자가 웹사이트에서 직접 하므로 넣으면 안 된다(2026-07-19).
+     * 여정 카드·서류 탭에는 그대로 노출된다 — 여기서 끄는 건 **맡기기 상품 항목**뿐.
+     */
+    selfApply?: boolean
   }
   /** 도착 사전 통지 — 존재 = 사전 통지 카드 대상(아일랜드 24h·키프로스 48h 등). */
   advanceNotice?: {
@@ -439,7 +447,12 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     titer: { entryValidityMonths: 12, entryWaitAfterTiter: { days: 180 } },
     vaccines: ['rabies', 'rabies_titer'],
     extraFields: ['address_overseas', 'permit_no'],
-    importPermit: { applyDeadlineDays: 120, docName: '대만 수입허가증(Import Permit)' }, // APHIA
+    // APHIA pet e-permit — 보호자가 온라인으로 직접 신청(selfApply) → 맡기기 항목 제외.
+    importPermit: {
+      applyDeadlineDays: 120,
+      docName: '수입 허가증(Import Permit)',
+      selfApply: true,
+    },
     appSupported: true,
   },
   malaysia: {
