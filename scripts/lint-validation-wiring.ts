@@ -28,7 +28,32 @@ import { resolveStepForDestination } from '../packages/domain/src/journey-steps/
 import { ALL_PROCEDURE_CHECKS, checkCountryKeys } from '../packages/domain/src/procedure-checks/registry'
 import { DESTINATION_OVERRIDES } from '../packages/domain/src/destination-config'
 
-type Problem = { dest: string; stepId: string; ruleId: string; kind: 'missing' | 'cross-country' }
+type Problem = {
+  dest: string
+  stepId: string
+  ruleId: string
+  kind: 'missing' | 'cross-country' | 'unvalidated'
+}
+
+/**
+ * 날짜 입력칸이 있는데 validationIds 가 비어도 **정상인** 카드.
+ *
+ * 이 검사(2단계)를 넣은 이유 — 1단계는 "지목한 룰이 그 나라 것이냐"만 본다. 아무것도
+ * 지목하지 않으면 조용히 통과했다. 실제로 대만·중국 수출검역 카드가 검증 0개로 방치돼
+ * 있었고 린트가 못 잡았다(2026-07-19).
+ *
+ * 여기 적는 건 **"검증이 다른 카드에 있어서 이 카드엔 없는 게 맞다"**는 경우만.
+ * 새 카드를 만들며 검증을 빠뜨린 걸 여기 추가해 넘어가지 말 것 — 그러면 이 가드가 무의미해진다.
+ */
+const UNVALIDATED_OK: Record<string, string> = {
+  // 마이크로칩 삽입일의 순서 검증은 광견병 카드 쪽에 있다
+  // (`{국가}.microchip-before-rabies` — 칩이 1차 접종보다 앞이어야 한다는 룰).
+  // 칩 자체에는 단독으로 검증할 날짜 제약이 없다.
+  microchip: '순서 검증은 광견병 카드(microchip-before-rabies)가 담당',
+  // 중국은 항공권 날짜에 제한이 없다 — 채혈 후 대기 요건이 없어(EU 3개월·일본 180일과 다름)
+  // 입국 시점에 백신·항체가 유효하기만 하면 된다. 그 유효성은 rabies/titer 카드가 본다.
+  'flight-purchase': '중국은 항공권 날짜 제한 없음(대기 요건 부재) — 유효성은 백신·항체 카드가 담당',
+}
 
 const RULES = new Map(
   (ALL_PROCEDURE_CHECKS as Array<{ id: string; country: unknown }>).map((r) => [r.id, r]),
@@ -45,21 +70,39 @@ function collect(dest: string): Problem[] {
   const out: Problem[] = []
   for (const step of JOURNEY_STEP_CATALOG) {
     if (!appliesToDest(step, dest)) continue
-    const resolved = resolveStepForDestination(step, dest, null) as { validationIds?: string[] }
-    for (const ruleId of resolved.validationIds ?? []) {
+    const resolved = resolveStepForDestination(step, dest, null) as {
+      validationIds?: string[]
+      inputs?: Array<{ key: string; type?: string }>
+    }
+    const ids = resolved.validationIds ?? []
+
+    // 1단계 — 지목한 룰이 존재하고, 이 목적지에 적용되는가.
+    for (const ruleId of ids) {
       const rule = RULES.get(ruleId)
       if (!rule) out.push({ dest, stepId: step.id, ruleId, kind: 'missing' })
       else if (!checkCountryKeys(rule.country as never).includes(dest))
         out.push({ dest, stepId: step.id, ruleId, kind: 'cross-country' })
+    }
+
+    // 2단계 — 날짜를 받는데 검증이 하나도 없는가(위 UNVALIDATED_OK 예외 제외).
+    const dateInputs = (resolved.inputs ?? []).filter((i) => i.type === 'date')
+    if (dateInputs.length > 0 && ids.length === 0 && !(step.id in UNVALIDATED_OK)) {
+      out.push({
+        dest,
+        stepId: step.id,
+        ruleId: dateInputs.map((i) => i.key).join(', '),
+        kind: 'unvalidated',
+      })
     }
   }
   return out
 }
 
 function describe(p: Problem): string {
-  return p.kind === 'missing'
-    ? '존재하지 않는 룰'
-    : `이 목적지에 적용되지 않는 룰 → ${p.dest} 케이스에선 검증이 실행되지 않음`
+  if (p.kind === 'missing') return '존재하지 않는 룰'
+  if (p.kind === 'unvalidated')
+    return `날짜칸(${p.ruleId})을 받는데 검증이 하나도 없음 — 말이 안 되는 날짜가 그냥 저장됨`
+  return `이 목적지에 적용되지 않는 룰 → ${p.dest} 케이스에선 검증이 실행되지 않음`
 }
 
 function main(): void {
@@ -89,11 +132,12 @@ function main(): void {
   console.error('✗ validation-wiring lint: 앱 노출 목적지에 배선이 끊긴 카드가 있습니다.\n')
   for (const p of blocking) {
     console.error(`  [${p.dest}] ${p.stepId}`)
-    console.error(`      ${p.ruleId} — ${describe(p)}`)
+    console.error(`      ${p.kind === 'unvalidated' ? '' : p.ruleId + ' — '}${describe(p)}`)
   }
   console.error(
     '\n  고치는 법: procedure-checks/<국가>.ts 에 그 나라 룰을 만들고,' +
-      '\n  destination-overrides 의 해당 카드 validationIds 를 그 룰로 교체하세요.',
+      '\n  카드의 validationIds 로 그 룰을 지목하세요.' +
+      '\n  검증이 다른 카드에 있어 이 카드엔 없는 게 맞다면 UNVALIDATED_OK 에 이유와 함께 등록하세요.',
   )
   process.exit(1)
 }

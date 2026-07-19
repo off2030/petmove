@@ -1286,6 +1286,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         helpText: '현지 동물병원에서 검진받은 날짜',
       },
     ],
+    validationIds: ['ph.local-vet-visit-date-valid'],
     allowAttachments: true,
     attachmentHint: '건강증명서 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '필리핀 국제 건강증명서',

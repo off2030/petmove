@@ -61,6 +61,9 @@
 [ph.export-quarantine-date-valid]
   필리핀 수출 검역일은 필리핀 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
   필리핀 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
+[ph.local-vet-visit-date-valid]
+  현지 동물병원 방문일은 필리핀 수입 검역일보다 빠를 수 없어요. 날짜를 확인하세요.
+  현지 동물병원 방문일은 필리핀 수출 검역일보다 늦을 수 없어요. 날짜를 확인하세요.
 [sg.banned-breeds]
   견종 "${breed.ko || breed.en}"은 NParks 수입 금지 대상이에요 (매치: ${match}).
 [th.rabies-21days-before-arrival]
