@@ -23,6 +23,7 @@ import { collectMilestonePushes } from '../apps/portal/lib/journey/milestone-pus
 import { APP_SUPPORTED_DESTINATION_KEYS, DESTINATION_OVERRIDES } from '../packages/domain/src/destination-config'
 import { JOURNEY_STEP_CATALOG } from '../packages/domain/src/journey-steps/catalog'
 import { resolveStepForDestination } from '../packages/domain/src/journey-steps/destination-overrides'
+import { getStepsForCase } from '../packages/domain/src/journey-steps/applicability'
 import {
   validateMicrochipBeforeBooster,
   validateImportPermitFiledDate,
@@ -87,6 +88,47 @@ function importPermitBlocks(
     data,
   })
   return msg ? [`수입허가 신청일: ${msg}`] : []
+}
+
+/**
+ * 상황별 설명문(step.situational) 층.
+ *
+ * 카드의 고정 description 은 lint:copy 가 지킨다. 그런데 만료 안내·진행 중 안내·재검사
+ * 안내처럼 **고객이 실제로 읽는 문장 대부분**은 situational 이 조건에 따라 만들어내고,
+ * 이건 어떤 스냅샷에도 없었다. 일본 추가 검사 문구를 고쳤을 때 5개 lint 가 바꾸기 전과
+ * 후에 똑같이 통과했다(2026-07-19) — 사람이 임시 스크립트를 짜서야 확인됐다.
+ *
+ * situational 이 값을 돌려준 카드만 기록한다(undefined = 고정 description → lint:copy 담당).
+ */
+function situationalCopy(caseRow: unknown): string[] {
+  const out: string[] = []
+  for (const step of getStepsForCase(JOURNEY_STEP_CATALOG, caseRow as never)) {
+    if (!step.situational) continue
+    let r: { desc?: string; cardDesc?: string } | undefined
+    try {
+      r = step.situational(caseRow as never)
+    } catch {
+      out.push(`${step.id}: (예외)`)
+      continue
+    }
+    if (!r?.desc) continue
+    out.push(`${step.id}: ${r.desc.replace(/\s+/g, ' ')}`)
+  }
+  return out.sort()
+}
+
+/**
+ * situational 은 todayKst() = Date.now() 를 본다. 그대로 두면 스냅샷이 **날마다** 달라져
+ * 가드가 못 쓰게 된다. 호출 시점에 읽으므로 수집 구간만 기준 시각으로 고정한다.
+ */
+function withFrozenNow<T>(fn: () => T): T {
+  const real = Date.now
+  Date.now = () => NOW.getTime()
+  try {
+    return fn()
+  } finally {
+    Date.now = real
+  }
 }
 
 const GOLDEN = 'scripts/behavior.snapshot.txt'
@@ -237,6 +279,39 @@ const SCENARIOS: Scenario[] = [
       import_permit_application_date: '2026-11-25',
     },
   },
+  // ── 항체 유효기간 만료 (상황별 설명문 층) ────────────────────────────────
+  // 고객이 실제로 읽는 만료 안내는 step.situational 이 만든다. 이 층이 스냅샷에 없어서
+  // 일본 추가 검사 문구를 고쳐도 5개 lint 가 전부 조용히 통과했다(2026-07-19).
+  //
+  // 채혈 2024-01-10 기준: 일본(2년)은 2026-01-10 만료 — NOW(2026-01-01)에서 9일 뒤라
+  // '만료 30일 전' 노출 조건에 걸린다. 대만·중국·태국·필리핀(1년)은 2025-01-10 에
+  // 이미 만료됐어야 하는데, 카드가 2년을 하드코딩하고 있어 그렇게 안 나온다.
+  // 그 어긋남이 스냅샷에 드러나는 게 이 시나리오의 목적이다.
+  {
+    name: '항체 유효기간이 입국 전 만료',
+    why: '만료 안내 문구가 나라별로 맞는지 — 유효기간 1년 국가에서 2년으로 계산되는지 드러난다',
+    departure: '2026-06-01',
+    data: {
+      birth_date: '2023-01-01',
+      microchip_implant_date: '2023-06-01',
+      microchip_number: '900000000000001',
+      rabies_dates: [{ date: '2023-07-01' }, { date: '2023-08-05' }],
+      rabies_titer_records: [{ date: '2024-01-10', result: '1.2' }],
+      entry_date: '2026-06-01',
+      return_date: '2026-06-20',
+    },
+  },
+  {
+    name: '항체 만료 예정인데 항공권 미입력',
+    why: '입국일을 모를 때 만료를 어떻게 안내하는지 — 없는 마감을 만들면 안 된다',
+    data: {
+      birth_date: '2023-01-01',
+      microchip_implant_date: '2023-06-01',
+      microchip_number: '900000000000001',
+      rabies_dates: [{ date: '2023-07-01' }, { date: '2023-08-05' }],
+      rabies_titer_records: [{ date: '2024-01-10', result: '1.2' }],
+    },
+  },
 ]
 
 function koLabel(destKey: string): string {
@@ -307,6 +382,9 @@ function build(): string {
       for (const b of blocks) out.push(`     ✕ ${b}`)
       out.push(`   주의·차단 ${failed.length}건`)
       for (const f of failed) out.push(`     - ${f}`)
+      const situ = withFrozenNow(() => situationalCopy(caseRow))
+      out.push(`   상황별 설명문 ${situ.length}건`)
+      for (const s of situ) out.push(`     ▸ ${s}`)
       out.push(`   알림 ${reminders.length}건`)
       for (const r of [...new Set(reminders)]) out.push(`     · ${r}`)
       if (pushes.length) out.push(`   푸시: ${pushes.join(', ')}`)
