@@ -317,7 +317,7 @@ export const TW_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message:
-            '수입허가증은 도착 120일 전까지 신청해야 격리 없이 입국할 수 있어요. 지금 신청하면 도착 후 7일간 격리돼요.',
+            '도착 120일 전까지 수입 허가 신청을 해야 격리 없이 입국할 수 있어요. 지금은 도착 후 7일간 격리되는 점 참고하세요.',
           offendingPaths: ['import_permit_application_date', 'departure_date'],
         }
       }

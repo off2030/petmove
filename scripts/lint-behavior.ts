@@ -303,6 +303,23 @@ const SCENARIOS: Scenario[] = [
       import_permit_application_date: '2026-11-25',
     },
   },
+  {
+    // 20~120일 구간 — 신청은 되고 대가는 7일 격리. 이 구간을 태우는 시나리오가 없어
+    // 문구를 고쳐도 behavior 스냅샷이 조용히 통과했다(2026-07-19).
+    name: '수입허가를 도착 60일 전에 신청 (20~120일)',
+    why: '신청은 가능하고 도착 후 7일 격리 — 차단이 아니라 격리 안내여야 한다',
+    departure: '2026-12-01',
+    data: {
+      birth_date: '2024-01-01',
+      microchip_implant_date: '2024-06-01',
+      rabies_dates: [{ date: '2024-07-01' }],
+      rabies_titer_records: [{ date: '2026-01-05', result: '1.2' }],
+      entry_date: '2026-12-01',
+      return_date: '2026-12-20',
+      // 10-02 신청 → 12-01 도착 = 60일 간격.
+      import_permit_application_date: '2026-10-02',
+    },
+  },
   // 반대 방향 — 허가를 먼저 내고 출발일을 나중에 당기는 경로. 대만은 카드 순서가
   // 허가(43) → 항공권(45)이라 이 조합이 실제로 나온다. 신청일 쪽만 막으면 새는 구멍.
   {
