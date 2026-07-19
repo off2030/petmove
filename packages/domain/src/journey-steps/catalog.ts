@@ -877,6 +877,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'civ_dates', label: '접종일', type: 'date_array', hasValidUntil: true },
     ],
     allowAttachments: true,
+    attachmentLabel: 'CIV백신',
   },
 
   // ── 7. 전염병 검사 ─────────────────────────────────────────────────────
@@ -900,6 +901,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'infectious_disease_records', label: '검사일', type: 'date_array' },
     ],
     allowAttachments: true,
+    attachmentLabel: '전염병 검사 결과지',
   },
 
   // ── 8. 외부구충 ────────────────────────────────────────────────────────
@@ -1216,6 +1218,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '수출허가서(R.9)·건강증명서 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '수출 허가서(R.9)',
   },
 
   // ── 귀국 서류 준비 (왕복 — 귀국 전, EU 패밀리 전용) ─────────────
@@ -1252,6 +1255,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '건강증명서·EU 반려동물 여권 등 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '건강증명서',
   },
 
   // ── 필리핀 현지 동물병원 방문 (왕복 — 귀국 출국 전, BAI 수출검역 신청용 건강증명서 발급) ──
@@ -1279,6 +1283,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '건강증명서 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '건강증명서',
   },
 
   // ── 필리핀 수출 검역 (왕복 — 귀국 출국 시, 필리핀 전용) ───────────────
@@ -1307,6 +1312,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '수출 허가증·국제 수의건강증명서 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '수출 허가증',
   },
 
   // ── 중국 수출 검역 (왕복 케이스 한정 — 귀국 전) ─────────────────
@@ -1391,6 +1397,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '동물위생증명서 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '동물위생증명서',
   },
 
   // ── 15. 한국 수입 검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
@@ -1413,6 +1420,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['common.kr-import-quarantine-date-valid'],
     allowAttachments: true,
     attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '한국 수입 동물검역증',
   },
 
   // ── 16. 도착 완료 — 여정 마무리 마일스톤 ───────────────────────────────
