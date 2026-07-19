@@ -100,6 +100,19 @@ const UNVALIDATED_OK: Record<string, string> = {
   // 중국은 항공권 날짜에 제한이 없다 — 채혈 후 대기 요건이 없어(EU 3개월·일본 180일과 다름)
   // 입국 시점에 백신·항체가 유효하기만 하면 된다. 그 유효성은 rabies/titer 카드가 본다.
   'flight-purchase': '중국은 항공권 날짜 제한 없음(대기 요건 부재) — 유효성은 백신·항체 카드가 담당',
+  // 대만 수입허가 — 마감(120/20일) 주의는 항공권 카드가 표시한다. 신청일은 이미 지나간
+  // 사실이라 어긋나도 못 고치고, 바꿀 수 있는 건 출국일뿐이라 조치 가능한 카드에 붙였다.
+  // 신청일 칸 자체의 입력불가(출국 이후·20일 미만)는 validateImportPermitFiledDate 가 막는다.
+  'taiwan:import-permit': '마감 주의는 항공권 카드가 표시(조치 가능한 칸이 거기) + 입력불가는 date-rules 담당',
+}
+
+/**
+ * 예외 키는 `<목적지>:<카드>` 를 먼저 보고, 없으면 카드 id 로 떨어진다.
+ * 카드 id 만 쓰면 한 나라 사정으로 **모든 목적지**의 같은 카드가 함께 풀린다 —
+ * 새 목적지가 조용히 무검증으로 들어오는 걸 막으려고 좁은 키를 우선한다.
+ */
+function unvalidatedReason(dest: string, stepId: string): string | undefined {
+  return UNVALIDATED_OK[`${dest}:${stepId}`] ?? UNVALIDATED_OK[stepId]
 }
 
 const RULES = new Map(
@@ -133,7 +146,7 @@ function collect(dest: string): Problem[] {
 
     // 2단계 — 날짜를 받는데 검증이 하나도 없는가(위 UNVALIDATED_OK 예외 제외).
     const dateInputs = (resolved.inputs ?? []).filter((i) => i.type === 'date')
-    if (dateInputs.length > 0 && ids.length === 0 && !(step.id in UNVALIDATED_OK)) {
+    if (dateInputs.length > 0 && ids.length === 0 && !unvalidatedReason(dest, step.id)) {
       out.push({
         dest,
         stepId: step.id,

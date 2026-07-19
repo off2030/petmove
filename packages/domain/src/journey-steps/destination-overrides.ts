@@ -188,7 +188,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         // 120일 안내는 수입허가증 카드(order 43, 이 카드보다 앞)가 담당 — 중복이라 뺀다.
         '대만 입국 일정에 맞춰 항공권을 구매하세요.\n\n채혈일로부터 180일~1년 사이에 대만에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       cardLine: '대만에 입국할 수 있어요.',
-      validationIds: ['tw.rnatt-180days-to-1year-before-arrival'],
+      // 수입허가 마감(120/20일) 주의도 여기에 둔다 — 수입허가 카드가 아니라.
+      // 신청일은 이미 지나간 사실이라 못 바꾸고, 어긋났을 때 **바꿀 수 있는 건 출국일뿐**이다.
+      // 조치할 수 있는 칸이 있는 카드에 안내를 붙인다(2026-07-19 사용자 결정).
+      validationIds: [
+        'tw.rnatt-180days-to-1year-before-arrival',
+        'tw.import-permit-120days-before-entry',
+      ],
     },
     // 수입허가증 — APHIA pet e-permit 온라인 신청. 도착 120일 전 = 격리 면제 조건.
     //
@@ -210,7 +216,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       links: [
         { url: 'https://pet-epermit.aphia.gov.tw/index-eng.html', label: '수입 허가 신청(APHIA)' },
       ],
-      validationIds: ['tw.import-permit-120days-before-entry'],
+      // 마감 주의는 항공권 카드가 표시한다(위 flight-purchase 주석 참고) — 여기서 지목하면
+      // 신청일 칸 옆에 뜨는데, 그 칸은 이미 지나간 사실이라 고칠 수가 없다.
+      // 신청일 자체의 입력불가(출국 이후·20일 미만)는 validateImportPermitFiledDate 담당.
+      validationIds: [],
     },
     // 출국 전 임상검사 — 대만은 별지 제25호 외에 APHIA Form 002(대만 건강증명서)도
     // 발급받아야 한다. 일본(FormAC)·EU(Annex III)와 같은 자리·같은 문형.

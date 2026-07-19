@@ -480,6 +480,38 @@ export function validateChImportPermitDate(filedDate: string, entryDate: string)
 }
 
 /**
+ * 대만 수입허가 최소 리드타임 — 신청은 **출국 20일 전까지**만 가능(APHIA: 應於輸入 20 日前
+ * 提出申請). 20일 미만은 신청 자체가 접수되지 않으므로 저장을 거부한다.
+ *
+ * 120일(격리 면제)과 달리 이건 '가능/불가능'의 선이다. 120일을 놓친 사람은 7일 격리를
+ * 감수하고 갈 수 있지만, 20일을 놓친 사람은 허가 자체가 없어 못 간다.
+ *
+ * 두 칸 어느 쪽을 나중에 입력해도 막아야 한다 — 신청일 입력 시
+ * (validateImportPermitFiledDate)와 출국일 입력 시(validateEntryDateForDestination)
+ * 양쪽에서 부른다. 한쪽 비면 통과.
+ */
+export function validateTwImportPermitLeadTime(
+  filedDate: string,
+  departureDate: string,
+  opts?: { subject: 'filed' | 'departure' },
+): string | null {
+  if (!filedDate || !departureDate) return null
+  const filed = filedDate.slice(0, 10)
+  const dep = departureDate.slice(0, 10)
+  const gap = daysBetween(filed, dep)
+  if (gap === null || gap >= 20) return null
+  // 지금 사용자가 고치고 있는 칸을 기준으로 안내한다 — 반대쪽 칸을 바꾸라고 하면
+  // '지금 여기서 할 수 있는 일'이 아니게 된다.
+  if (opts?.subject === 'departure') {
+    const earliest = addDays(filed, 20)
+    return earliest
+      ? `수입 허가 신청일로부터 20일 후 ${fmt(earliest)}에 대만에 입국할 수 있어요.`
+      : '수입 허가 신청일로부터 20일이 지나야 대만에 입국할 수 있어요.'
+  }
+  return '수입 허가는 출국 20일 전까지 신청할 수 있어요. 날짜를 확인하세요.'
+}
+
+/**
  * 출국·입국일 입력불가(저장 거부) — **목적지별 분기의 단일 출처**.
  *
  * 수입허가와 같은 이유로 도메인에 올린다: 분기가 portal 컴포넌트 안에만 있으면 어느
@@ -505,7 +537,19 @@ export function validateEntryDateForDestination(
     validateThEntryDate(outbound, ctx) ??
     validatePhEntryDate(entryOrDeparture, ctx) ??
     validateEuEntryDate(entryOrDeparture, ctx) ??
-    validateTwEntryDate(entryOrDeparture, ctx)
+    validateTwEntryDate(entryOrDeparture, ctx) ??
+    // 대만 — 이미 낸 수입허가 신청일로부터 20일 안쪽으로 출국일을 당기면 거부.
+    // 허가를 먼저 내고 항공권을 나중에 넣는 경로(대만은 카드 순서가 허가 → 항공권)에서
+    // 이 조합이 실제로 나온다. 신청일 쪽 입력에도 같은 함수가 걸려 있다.
+    (matchesDestinationKey(ctx.destination, 'taiwan')
+      ? validateTwImportPermitLeadTime(
+          typeof ctx.data.import_permit_application_date === 'string'
+            ? ctx.data.import_permit_application_date
+            : '',
+          entryOrDeparture,
+          { subject: 'departure' },
+        )
+      : null)
   )
 }
 
@@ -546,7 +590,10 @@ export function validateImportPermitFiledDate(
     // 대만 — 출국일 이후 신청 불가. 카드 order 가 43(항공권 45 앞)이라 항공권 미입력 시
     // departureDate 가 비어 통과한다. 120일·20일 마감은 주의 담당.
     case 'taiwan':
-      return validateImportPermitNotAfterDeparture(filedDate, departureDate)
+      return (
+        validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
+        validateTwImportPermitLeadTime(filedDate, departureDate, { subject: 'filed' })
+      )
     // 스위스 — 입국 3주(21일) 이내 신청 불가.
     case 'switzerland':
       return validateChImportPermitDate(filedDate, entryDate)
