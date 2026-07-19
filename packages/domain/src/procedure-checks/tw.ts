@@ -9,6 +9,13 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
+import {
+  msgMicrochipBeforeRabies,
+  msgRabiesExpiredBefore,
+  msgRabiesPrimeMinAge,
+  msgTiterBeforeVaccine,
+} from './messages'
+import { isTwTiterChainMaintained } from '../journey-steps/date-rules'
 
 /**
  * 대만 (APHIA — Animal and Plant Health Inspection Agency, 2023년 BAPHIQ에서 개칭) 절차 검증.
@@ -57,7 +64,7 @@ export const TW_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요. 날짜를 확인하세요.`,
+        message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -85,7 +92,7 @@ export const TW_CHECKS: ProcedureCheck[] = [
       if (age < 90) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령이에요. 최소 90일령 이상이어야 해요.`,
+          message: msgRabiesPrimeMinAge('90일'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -112,7 +119,7 @@ export const TW_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          message: msgRabiesExpiredBefore('출국'),
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -136,18 +143,16 @@ export const TW_CHECKS: ProcedureCheck[] = [
       if (rabies.length === 0 || titers.length === 0) return SKIP
 
       const offending: string[] = []
-      const problems: string[] = []
       for (const t of titers) {
         const priorDoses = rabies.filter((r) => r.date <= t.date)
-        if (priorDoses.length === 0) {
-          offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date}) 이전에 광견병 접종 기록이 없어요.`)
-        }
+        if (priorDoses.length === 0) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       }
-      if (problems.length > 0) {
+      if (offending.length > 0) {
+        // 문구는 한 번만 — 채혈 건마다 날짜를 나열하면 고객 문구에 날짜가 새고 길어진다.
+        // 어느 채혈 기록이 문제인지는 offendingPaths 가 그 입력칸을 짚는다.
         return {
           ok: false,
-          message: problems.join(' / '),
+          message: msgTiterBeforeVaccine(),
           offendingPaths: offending,
         }
       }
@@ -168,6 +173,12 @@ export const TW_CHECKS: ProcedureCheck[] = [
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
+      // 체인 유지(직전 합격 검사 + 180일~1년 내 재검사) — 새 검사가 입국 180일 이내여도 인정.
+      // 입력불가(validateTwEntryDate)와 같은 도메인 함수를 써서 두 층의 기준을 하나로 둔다.
+      if (isTwTiterChainMaintained(titers.map((t) => t.date))) {
+        return { ok: true, message: '재검사 체인 유지 — 180일 대기 면제.' }
+      }
+
       // 180일 ≤ 출국 ≤ 1년 (addYears: 1주년 당일까지) 윈도우 안에 들어가는 채혈 1개 이상이면 OK.
       const valid = titers.find((t) => {
         const days = daysBetween(t.date, dep)
@@ -186,14 +197,16 @@ export const TW_CHECKS: ProcedureCheck[] = [
       const upper = addYears(newest.date, 1)
       const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
+      // 고객 문구엔 날짜를 넣지 않는다 — 어느 칸이 문제인지는 offendingPaths 가 짚는다.
+      // 180일 미달(더 기다리면 해결)과 1년 초과(재검사 필요)는 조치가 달라 문구를 나눈다.
       const reason =
         days === null
           ? '날짜 형식이 올바르지 않아요.'
           : days < 0
-            ? `채혈일(${newest.date})이 출국일(${dep})보다 이후예요.`
+            ? '채혈일이 출국일보다 늦어요. 날짜를 확인하세요.'
             : days < 180
-              ? `RNATT 채혈일(${newest.date})부터 출국일(${dep})까지 ${days}일이에요. 180일 이상이어야 해요.`
-              : `RNATT 채혈일(${newest.date})에 1년을 더한 날(${upper})이 출국일(${dep})보다 빨라요. 1년을 초과하여 추가 검사가 필요해요.`
+              ? '대만 입국은 광견병 항체 검사 채혈일로부터 180일이 지나야 해요.'
+              : '광견병 항체 검사 결과가 채혈일로부터 1년이 지나 만료됐어요. 다시 검사해야 해요.'
       return {
         ok: false,
         message: reason,
@@ -226,14 +239,14 @@ export const TW_CHECKS: ProcedureCheck[] = [
       if (gap < 0) {
         return {
           ok: false,
-          message: `수입허가증 신청일(${filed})이 도착일(${dep})보다 늦어요. 날짜를 확인하세요.`,
+          message: '수입허가증 신청일이 도착일보다 늦어요. 날짜를 확인하세요.',
           offendingPaths: ['import_permit_application_date', 'departure_date'],
         }
       }
       if (gap < 120) {
         return {
           ok: false,
-          message: `수입허가증 신청일(${filed})부터 도착일(${dep})까지 ${gap}일이에요. 120일 미만 신청은 도착 후 7일 격리 대상이 될 수 있어요.`,
+          message: '수입허가증은 도착 120일 전까지 신청해야 격리 없이 입국할 수 있어요.',
           offendingPaths: ['import_permit_application_date', 'departure_date'],
         }
       }

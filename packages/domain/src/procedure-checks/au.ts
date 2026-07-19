@@ -16,6 +16,7 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
+import { msgMicrochipBeforeRabies } from './messages'
 
 /**
  * 호주 (DAFF — Department of Agriculture, Fisheries & Forestry) 절차 검증.
@@ -70,7 +71,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요. 날짜를 확인하세요.`,
+        message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date'],
       }
     },

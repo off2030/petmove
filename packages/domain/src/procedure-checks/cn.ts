@@ -17,6 +17,7 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
+import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore } from './messages'
 
 /**
  * 중국 (GACC — General Administration of Customs of China, 海关总署) 절차 검증.
@@ -72,9 +73,11 @@ export const CN_CHECKS: ProcedureCheck[] = [
       if (microchip <= first.date) {
         return { ok: true, message: `마이크로칩(${microchip}) ≤ 1차 접종(${first.date}).` }
       }
+      // 고객 노출 문구엔 날짜를 넣지 않는다(일본·태국·필리핀과 동일 방식) — 어느 기록이
+      // 문제인지는 offendingPaths 가 해당 입력칸을 짚어준다. 날짜는 ok:true 내부 기록에만.
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요. 날짜를 확인하세요.`,
+        message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -100,15 +103,12 @@ export const CN_CHECKS: ProcedureCheck[] = [
       const ev = evaluateRabiesAgeConservative(birth, first.date)
       if (ev.ageInDays === null) return SKIP
       if (!ev.ok) {
-        const reason =
-          ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령으로 91일에 미달해요`
-            : ev.failedRule === 'calendar3m'
-              ? `1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
-              : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
+        // 고객 노출 문구엔 날짜·내부용어('보수적 기준')를 넣지 않는다(태국 '생후 84일(12주)'와
+        // 동일 형식). 91일과 캘린더 3개월은 출생일에 따라 어느 쪽이 늦은지 달라져 AND 로 보므로
+        // 둘 다 적는다 — 한쪽만 적으면 통과한 기준을 보고 왜 주의가 뜨는지 알 수 없다.
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못해요. ${reason}.`,
+          message: '광견병 접종은 생후 91일과 3개월이 모두 지난 후에 할 수 있어요.',
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -133,24 +133,24 @@ export const CN_CHECKS: ProcedureCheck[] = [
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length < 2) return SKIP
 
-      const issues: string[] = []
       const offending: string[] = []
       for (let i = 1; i < rabies.length; i++) {
         const prev = rabies[i - 1]
         const curr = rabies[i]
         const prevValidUntil = resolveValidUntil(prev.date, prev.valid_until)
         if (curr.date > prevValidUntil) {
-          issues.push(`${curr.date} 접종이 직전 접종(${prev.date})의 유효기간(${prevValidUntil}) 만료 후라서 부스터 chain이 끊겨요.`)
           offending.push(
             `rabies_dates[${prev.originalIndex}].date`,
             `rabies_dates[${curr.originalIndex}].date`,
           )
         }
       }
-      if (issues.length > 0) {
+      if (offending.length > 0) {
+        // 문구는 한 번만 — 끊긴 구간마다 날짜를 나열하면 고객 문구에 날짜가 샌다.
+        // 어느 접종 기록이 문제인지는 offendingPaths 가 그 입력칸을 짚는다.
         return {
           ok: false,
-          message: issues.join(' / '),
+          message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
           offendingPaths: Array.from(new Set(offending)),
         }
       }
@@ -182,7 +182,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
         const msgs: string[] = []
         for (const v of violations) {
           offending.push(`rabies_dates[${v.entry.originalIndex}].valid_until`)
-          msgs.push(`${v.entry.date} 백신의 면역 유효기간(${v.validUntil})이 1년(${addYears(v.entry.date, 1)})을 넘어요. 2년·3년 백신은 인정되지 않아요.`)
+          msgs.push('광견병 백신은 면역 유효기간 1년짜리만 인정돼요. 2년·3년 백신은 사용할 수 없어요.')
         }
         return {
           ok: false,
@@ -213,7 +213,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          message: msgRabiesExpiredBefore('출국'),
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -392,6 +392,8 @@ export const CN_CHECKS: ProcedureCheck[] = [
     description:
       'GACC 公告 2019 No.5 제1조: "携带或者托运入境的活动物仅限犬或者猫，每人每次限带1只" — 1인 1회 1마리 한정. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 중국 목적 케이스를 2건 이상 등록하면 경고.',
     severity: 'warning',
+    // relatedCases 는 펫무브워크만 전달 — 보호자 이름·건수가 필요한 운영자용 룰.
+    audience: 'staff',
     addedAt: '2026-05-07',
     run: ({ caseRow, relatedCases, destination }) => {
       if (relatedCases === undefined) return SKIP

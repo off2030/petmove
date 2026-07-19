@@ -15,6 +15,7 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
+import { msgMicrochipBeforeGeneralVaccine, msgMicrochipBeforeRabies, msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 필리핀 (BAI — Bureau of Animal Industry) 절차 검증.
@@ -66,7 +67,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: '접종일은 마이크로칩 삽입일 이후여야 해요.',
+        message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
@@ -92,7 +93,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: '접종일은 마이크로칩 삽입일 이후여야 해요.',
+        message: msgMicrochipBeforeGeneralVaccine(),
         offendingPaths: ['microchip_implant_date', `general_vaccine_dates[${first.originalIndex}].date`],
       }
     },
@@ -120,7 +121,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (age < 84) {
         return {
           ok: false,
-          message: '광견병 접종은 생후 84일(12주)이 지나서 할 수 있어요',
+          message: msgRabiesPrimeMinAge('84일(12주)'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -315,6 +316,8 @@ export const PH_CHECKS: ProcedureCheck[] = [
     description:
       'BAI MC 49: 개인(일회성) 수입은 한 보호자당 최대 3마리. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 필리핀 목적 케이스 4건 이상 등록 시 경고.',
     severity: 'warning',
+    // relatedCases 는 펫무브워크만 전달 — 운영자용.
+    audience: 'staff',
     addedAt: '2026-05-07',
     run: ({ caseRow, relatedCases, destination }) => {
       if (relatedCases === undefined) return SKIP

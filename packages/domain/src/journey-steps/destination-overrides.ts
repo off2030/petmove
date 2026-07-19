@@ -86,7 +86,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // 유효만 필요. earliest/validationIds 로 대기 차단을 끈다(base 의 일본 180일 anchor 제거).
     'flight-purchase': {
       description:
-        '중국 입국 준비가 되면 항공권을 구매하세요.\n\n중국은 광견병 항체 검사 후 별도의 대기 기간이 없어요. 마이크로칩·광견병 접종·항체 검사가 유효한 상태로 입국하면 돼요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+        '중국 입국 일정에 맞춰 항공권을 구매하세요.\n\n중국은 광견병 항체 검사 후 별도의 대기 기간이 없어요. 마이크로칩·광견병 접종·항체 검사가 유효한 상태로 입국하면 돼요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       cardLine: '중국에 입국할 수 있어요.',
       earliest: undefined,
       validationIds: [],
@@ -97,7 +97,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       label: '중국',
       fieldKey: 'cn_import_quarantine_date',
       description:
-        '중국 도착 후 공항 세관(해관)에서 수입 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에 격리되거나 한국으로 반송돼요.',
+        '중국 도착 후 공항 세관(해관)에서 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 30일간 격리되거나 한국으로 반송돼요.',
       helpText: '중국 도착 후 수입 검역을 받은 날짜',
       attachmentHint: '수입 검역 확인 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '중국 수입 검역 서류',
@@ -122,18 +122,31 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     },
     'rabies-titer': {
       description:
-        '대만 검역청(APHIA)이 인정하는 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n수의사가 마이크로칩을 스캔해 신원을 확인한 후 채혈해야 해요.\n0.5 IU/mL 이상이면 합격이에요.\n검사 결과는 채혈일로부터 1년간 유효해요.',
+        // 마이크로칩 스캔 후 채혈은 전 목적지 공통 절차이고 수의사가 하는 일이라 카드에 두지
+        // 않는다(다른 12개 목적지 어디에도 없던 줄 — 2026-07-18 제거).
+        //
+        // 접종~채혈 간격: APHIA 공식 문답집(2024-02)에 규정 없음 — 채혈 시점은 입국일 기준
+        // ('輸入 90 日前至輸入 1 年前')으로만 정해져 있다. USDA 대만 안내 페이지엔 'not sooner
+        // than 30 days after the primary vaccination'이 있으나 대만 공식 근거가 없어 단정하지
+        // 않고 권고로만 적는다(중국 2차 접종 간격과 같은 방식).
+        '대만 검역청(APHIA)이 인정하는 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n명확한 규정은 없지만 접종 후 30일 이상 지나서 검사하는 것이 좋아요.\n0.5 IU/mL 이상이면 합격이에요.\n검사 결과는 채혈일로부터 1년간 유효해요.',
       validationIds: ['tw.rnatt-after-rabies-vaccine'],
     },
     // 항공권 — 채혈 후 180일 대기는 일본과 동일(base earliest anchor 상속). 검증만 tw 로 교체.
     'flight-purchase': {
       description:
-        '입국 가능 시기에 맞춰 항공권을 구매하세요.\n\n채혈일로부터 180일 후 ~ 1년 사이에 대만에 입국할 수 있어요.\n수입허가증 신청을 위해 도착 120일 전까지 항공편 일정을 정하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+        '대만 입국 일정에 맞춰 항공권을 구매하세요.\n\n채혈일로부터 180일~1년 사이에 대만에 입국할 수 있어요.\n수입허가증 신청을 위해 도착 120일 전까지 항공편 일정을 정하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       cardLine: '대만에 입국할 수 있어요.',
       validationIds: ['tw.rnatt-180days-to-1year-before-arrival'],
     },
     // 수입허가증 — APHIA pet e-permit 온라인 신청. 도착 120일 전 = 격리 면제 조건.
+    //
+    // 항공권(45) 앞에 둔다(base 100 → 43). 대만은 신청에 항공권이 필요 없고(예정 입국일·도착
+    // 공항만, 이후 1회 변경 가능) 마감이 도착 120일 전으로 훨씬 이르다 — 실무에서도 허가 신청을
+    // 먼저 한다. 태국·필리핀(90·95 → 100)은 반대로 신청에 항공편 일정이 필수라 항공권이 앞이다.
+    // 두 절차 사이에 의존이 없을 뿐 '동시에 하는 일'은 아니므로 concurrent 는 쓰지 않는다.
     'import-permit': {
+      order: 43,
       description:
         '대만 수입허가증(Import Permit) 신청을 하세요.\n\n도착 120일 전까지 온라인으로 신청하세요.\n도착 20일 전까지 신청할 수도 있지만, 이 경우 7일간 격리를 거쳐야 해요.',
       doneSummary: '대만 수입허가증을 받았어요.',
@@ -151,7 +164,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       label: '대만',
       fieldKey: 'tw_import_quarantine_date',
       description:
-        '대만 도착 후 공항 동물검역소에서 수입 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 7일간 격리되거나 한국으로 반송돼요.',
+        '대만 도착 후 공항 동물검역소에서 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 7일간 격리되거나 한국으로 반송돼요.',
       helpText: '대만 도착 후 수입 검역을 받은 날짜',
       attachmentHint: '수입 검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '대만 수입 검역 서류',
@@ -190,7 +203,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // (*.not-expired-on-arrival)는 각 백신 카드 situational 담당(ADVISORY_DEFERRED_CHECKS).
     flight: {
       description:
-        '입국 가능 시기에 맞춰 항공권을 구매하세요.\n\n접종일로부터 3주가 지난 후에 입국할 수 있어요.\n항공권 구매 후 수입 허가 신청을 해요. 2주 이상 충분한 시간을 확보하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+        '태국 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 3주가 지난 후에 입국할 수 있어요.\n항공권 구매 후 수입 허가 신청을 해요. 2주 이상 충분한 시간을 확보하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       order: 90,
       validationIds: [
         'th.rabies-21days-before-arrival',
@@ -220,7 +233,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     importQuarantine: {
       fieldKey: 'th_import_quarantine_date',
       description:
-        '태국 도착 후 공항 동물검역소(AQS)에서 수입 검역을 받으세요.\n검사를 통과하면 수입 허가서(R.7)를 받아요.',
+        '태국 도착 후 공항 동물검역소(AQS)에서 검역을 받으세요.\n검사를 통과하면 수입 허가서(R.7)를 받아요.',
       helpText: '태국 동물검역소(AQS)에서 수입 검역을 받은 날짜',
       attachmentHint: '수입 허가서(R.7) 사본을 사진·PDF로 보관하세요.',
       validationIds: ['th.import-quarantine-date-valid'],
@@ -277,7 +290,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     importQuarantine: {
       fieldKey: 'ph_import_quarantine_date',
       description:
-        '필리핀 도착 후 공항 동물검역소에서 BAI 동물검역관(VQO)에게 수입 검역을 받으세요.',
+        '필리핀 도착 후 공항 동물검역소에서 BAI 동물검역관(VQO)에게 검역을 받으세요.',
       helpText: 'BAI 동물검역관(VQO)에게 수입 검역을 받은 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       validationIds: ['ph.import-quarantine-date-valid'],
@@ -288,7 +301,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     extra: {
       'internal-parasite': {
         description:
-          '내부 기생충 치료를 하세요.\n\n수입 허가증(SPSIC) 신청 전 7일 ~ 3개월 사이에 치료하세요.',
+          '내부 기생충 치료를 하세요.\n\n수입 허가증(SPSIC) 신청 전 7일~3개월 사이에 치료하세요.',
         doneSummary: '내부 기생충 치료를 했어요.',
         order: 52,
       },
@@ -322,7 +335,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       'flight-purchase': {
         ...base['flight-purchase'],
         description:
-          '영국 입국 가능 시기에 맞춰 항공권을 구매하세요.\n\n광견병 항체 검사 채혈일로부터 3개월이 지난 후에 입국할 수 있어요.\n영국 입국 시 반려동물은 보호자와 같은 항공기로 갈 수 없어요. 화물로 보내야 하므로 동물 운송업체와 미리 협의하세요.',
+          '영국 입국 일정에 맞춰 항공권을 구매하세요.\n\n광견병 항체 검사 채혈일로부터 3개월이 지난 후에 입국할 수 있어요.\n영국 입국 시 반려동물은 보호자와 같은 항공기로 갈 수 없어요. 화물로 보내야 하므로 동물 운송업체와 미리 협의하세요.',
         links: [
           {
             url: 'https://www.petmove.co.kr/blog/travel-to-uk-with-pet-via-france/',
@@ -546,7 +559,7 @@ function euFamilyOverrides(opts: {
     },
     // 항공권 — 채혈 + 3개월(캘린더) 대기. 입력 차단(validateEuEntryDate)과 짝.
     'flight-purchase': {
-      description: `${label} 입국 가능 시기에 맞춰 항공권을 구매하세요.\n\n광견병 항체 검사 채혈일로부터 3개월이 지난 후에 입국할 수 있어요.${flightExtraLine ? `\n${flightExtraLine}` : ''}\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.`,
+      description: `${label} 입국 일정에 맞춰 항공권을 구매하세요.\n\n광견병 항체 검사 채혈일로부터 3개월이 지난 후에 입국할 수 있어요.${flightExtraLine ? `\n${flightExtraLine}` : ''}\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.`,
       cardLine: `${label}에 입국할 수 있어요.`,
       // 3개월은 캘린더 기준(89~92일 가변)이라 고정 일수 earliest 미적용 — 입력 차단이 담당.
       earliest: undefined,

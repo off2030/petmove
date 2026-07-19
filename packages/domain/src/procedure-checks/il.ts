@@ -13,6 +13,7 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
+import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 이스라엘 (Veterinary Services & Animal Health, Ministry of Agriculture) 절차 검증.
@@ -70,7 +71,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요. 날짜를 확인하세요.`,
+        message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -104,7 +105,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
               : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 않아요. ${reason}.`,
+          message: msgRabiesPrimeMinAge('91일'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -168,7 +169,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          message: msgRabiesExpiredBefore('출국'),
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -295,6 +296,8 @@ export const IL_CHECKS: ProcedureCheck[] = [
     description:
       'gov.il 수의국 / 1974 동물질병규칙: 동반 입국 3마리 미만은 License 면제. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 이스라엘 목적 케이스 3건 이상 등록 시 사전 Import License 필요.',
     severity: 'warning',
+    // relatedCases 는 펫무브워크(운영자)만 전달 — 보호자 이름·건수가 필요한 운영자용 룰.
+    audience: 'staff',
     addedAt: '2026-05-07',
     run: ({ caseRow, relatedCases, destination }) => {
       if (relatedCases === undefined) return SKIP

@@ -6,7 +6,8 @@ import {
   parseDestinations,
 } from '../destination-config'
 import { getDepartureDate, getVetVisitDate, readByDestValue } from '../destination-scoped-fields'
-import { addDays, addMonths, resolveValidUntil } from '../procedure-checks/utils'
+import { addDays, addMonths, addYears, resolveValidUntil } from '../procedure-checks/utils'
+import { msgTiterBeforeVaccine } from '../procedure-checks/messages'
 import type { StepDefinition } from './types'
 
 /**
@@ -107,10 +108,39 @@ export function validateJpEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
+ * 대만 — 채혈일이 **직전 합격 검사의 180일~1년 사이**면 180일 대기가 면제된다(체인 유지).
+ *
+ * APHIA 문답집(2024-02) 免隔離 情形 2:
+ *   「輸入前180日至1年內之期間內抽血檢測合格；**或 輸入前180日內抽血檢測合格, 且該次抽血日為
+ *     前次檢測合格報告之抽血日起180日至1年內**」
+ *
+ * 즉 이미 합격 검사가 있고 그로부터 180일~1년 사이에 재검사하면, 새 검사가 입국 180일 이내여도
+ * 인정된다. 광견병 부스터 chain 과 같은 구조로, 대만 고유 조항(일본·EU 엔 없음).
+ *
+ * 이 함수가 true 면 `validateTwEntryDate` 의 180일 대기와
+ * `tw.rnatt-180days-to-1year-before-arrival` 주의를 모두 건너뛴다 — 두 층이 같은 기준을 쓰도록
+ * 도메인에 단일 출처로 둔다.
+ */
+export function isTwTiterChainMaintained(titerDates: string[]): boolean {
+  const sorted = titerDates.filter((d) => d && d.length >= 10).sort()
+  if (sorted.length < 2) return false
+  const latest = sorted[sorted.length - 1]
+  // 직전 합격 검사 하나라도 '최신 채혈일 - 180일 ~ -1년' 구간에 있으면 체인 유지.
+  return sorted.slice(0, -1).some((prev) => {
+    const gap = daysBetween(prev, latest)
+    if (gap === null) return false
+    const upper = addYears(prev, 1)
+    return gap >= 180 && upper >= latest
+  })
+}
+
+/**
  * 대만 — RNATT 채혈일 + 180일 경과 후 도착(APHIA 격리 면제 핵심 조건). 일본과 동일한 모델이라
  * 같은 구조로 차단한다. 180일 미만은 회복 불가 위반(입국일을 미루는 수밖에 없음) → 입력 차단.
  * 1년 초과 쪽은 재검사로 회복 가능하므로 차단하지 않고 procedure-check
  * (tw.rnatt-180days-to-1year-before-arrival)가 주의로 안내한다.
+ *
+ * 단 **체인 유지 시(isTwTiterChainMaintained) 대기 없음** — 규정상 갈 수 있는 사람을 막지 않는다.
  */
 export function validateTwEntryDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
@@ -127,6 +157,8 @@ export function validateTwEntryDate(v: string, ctx: DateRuleContext): string | n
     }
   }
   if (titerDates.length === 0) return null
+  // 체인 유지(직전 합격 검사 + 180일~1년 내 재검사) — 180일 대기 면제.
+  if (isTwTiterChainMaintained(titerDates)) return null
 
   titerDates.sort()
   const latestTiter = titerDates[titerDates.length - 1]
@@ -746,7 +778,7 @@ export function validateTiterAfterBooster(primaryDates: string[], titerDate: str
   if (valid.length === 0) return null
   const latest = valid.reduce((m, d) => (d > m ? d : m))
   if (titerDate < latest) {
-    return '광견병 항체 검사일이 광견병 접종일보다 빨라요. 날짜를 확인하세요.'
+    return msgTiterBeforeVaccine()
   }
   return null
 }

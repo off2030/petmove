@@ -24,6 +24,23 @@ export interface ProcedureCheck {
   severity: CheckSeverity
   /** 도입 시점 'YYYY-MM-DD'. */
   addedAt: string
+  /**
+   * 이 룰의 결과를 **누가 보는가**. 생략 = 'customer'(펫무브 앱 보호자에게 노출).
+   *
+   * 'staff' = 펫무브워크(운영자)에만 표시. 포털은 이 값으로 표시를 거른다 —
+   * 예전엔 `PORTAL_SUPPRESSED_CHECKS` 하드코딩 목록 + `relatedCases` 의존 여부를
+   * 사람이 조합해 판단해야 해서, "이 문구를 고객이 보는가"를 반복해서 잘못 짚었다.
+   *
+   * 'customer' 문구는 날짜·이름을 넣지 않는다(`messages.ts` 참고). `pnpm lint:checks` 가
+   * 이 값을 기준으로 검사하므로, staff 로 선언하면 날짜를 그대로 쓸 수 있다.
+   */
+  audience?: 'customer' | 'staff'
+  /**
+   * 고객 문구에 날짜 보간을 허용 — **날짜가 정보 자체**인 경우만.
+   * (일본 '검사일로부터 180일 후 O월 O일에 입국할 수 있어요' / 유효기간 만료일 안내 등)
+   * 없으면 lint:checks 가 날짜 보간을 실패로 잡는다.
+   */
+  allowDate?: boolean
   /** 실제 검증 함수. 생략하면 카탈로그에만 표시되고 케이스 검증은 건너뜀. */
   run?: (ctx: CheckContext) => CheckResult
 }

@@ -13,6 +13,7 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
+import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 베트남 (DAH — Department of Animal Health, Cục Thú y) 절차 검증.
@@ -63,7 +64,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요. 날짜를 확인하세요.`,
+        message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -95,7 +96,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
               : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 않아요. ${reason}.`,
+          message: msgRabiesPrimeMinAge('91일'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -153,7 +154,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
         const msgs: string[] = []
         for (const v of violations) {
           offending.push(`rabies_dates[${v.entry.originalIndex}].valid_until`)
-          msgs.push(`${v.entry.date} 백신의 면역 유효기간(${v.validUntil})이 1년(${addYears(v.entry.date, 1)})을 넘어요. 3년 백신은 인정되지 않아요.`)
+          msgs.push('광견병 백신은 면역 유효기간 1년짜리만 인정돼요. 3년 백신은 사용할 수 없어요.')
         }
         return {
           ok: false,
@@ -184,7 +185,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          message: msgRabiesExpiredBefore('출국'),
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -232,6 +233,8 @@ export const VN_CHECKS: ProcedureCheck[] = [
     description:
       'Circular 25/2016/TT-BNNPTNT 제10조: 외국인은 반려 목적으로 최대 2마리까지 동반 가능. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 베트남 목적 케이스 3건 이상 등록 시 경고.',
     severity: 'warning',
+    // relatedCases 는 펫무브워크(운영자)만 전달 — 보호자 이름·건수가 필요한 운영자용 룰.
+    audience: 'staff',
     addedAt: '2026-05-07',
     run: ({ caseRow, relatedCases, destination }) => {
       if (relatedCases === undefined) return SKIP

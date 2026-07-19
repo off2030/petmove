@@ -9,6 +9,7 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
+import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 모로코 (ONSSA — Office National de Sécurité Sanitaire des Produits Alimentaires) 절차 검증.
@@ -58,7 +59,7 @@ export const MA_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요. 날짜를 확인하세요.`,
+        message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -92,7 +93,7 @@ export const MA_CHECKS: ProcedureCheck[] = [
               : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못해요. ${reason}.`,
+          message: msgRabiesPrimeMinAge('91일'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -146,7 +147,7 @@ export const MA_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          message: msgRabiesExpiredBefore('출국'),
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -163,6 +164,8 @@ export const MA_CHECKS: ProcedureCheck[] = [
     description:
       'ONSSA: 비상업 목적 1인당 5두 이하 통상 인정. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 모로코 목적 케이스 6건 이상 등록 시 경고.',
     severity: 'warning',
+    // relatedCases 는 펫무브워크(운영자)만 전달 — 보호자 이름·건수가 필요한 운영자용 룰.
+    audience: 'staff',
     addedAt: '2026-05-07',
     run: ({ caseRow, relatedCases, destination }) => {
       if (relatedCases === undefined) return SKIP

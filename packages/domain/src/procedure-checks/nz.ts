@@ -1,6 +1,7 @@
 import type { CaseRow } from '../types'
 import type { ProcedureCheck } from './types'
 import type { VaccineEntry } from './utils'
+import { msgMicrochipBeforeRabies } from './messages'
 import {
   addMonths,
   daysBetween,
@@ -69,7 +70,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요. 날짜를 확인하세요.`,
+        message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date'],
       }
     },

@@ -14,6 +14,7 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
+import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 튀르키예 (Türkiye / Tarım ve Orman Bakanlığı — Ministry of Agriculture & Forestry) 절차 검증.
@@ -69,7 +70,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요. 날짜를 확인하세요.`,
+        message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -97,7 +98,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
       if (age < 84) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령이에요. 최소 84일령(12주) 이상이어야 해요.`,
+          message: msgRabiesPrimeMinAge('84일(12주)'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -151,7 +152,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          message: msgRabiesExpiredBefore('출국'),
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }

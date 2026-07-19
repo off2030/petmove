@@ -41,6 +41,7 @@ import {
   EU_ENTRY_FAMILY,
   SINGLE_DOSE_RABIES_DESTINATIONS,
   RABIES_ONE_YEAR_VALIDITY_DESTINATIONS,
+  TITER_REQUIRED_FOR_ENTRY_DESTINATIONS,
   validateTiterAfterBooster,
   validateTiterWithinChain,
   validateVetVisitDate,
@@ -914,6 +915,24 @@ export function StepDetailView({
         if (!r2.date) {
           return '항체 검사는 2차 광견병 접종 후에 해야 해요. 2차 접종일을 먼저 입력하세요.'
         }
+      }
+      // 접종 → 채혈 순서 — 채혈 전 접종이 하나도 없으면 잴 항체가 없어 논리적으로 불가능.
+      // **입국 요건인 목적지에서만** 차단한다: 태국·필리핀은 입국에 항체 검사가 불필요하고
+      // 카드가 뜨는 건 한국 귀국용인데, 그 검사는 광견병 접종 여부·순서와 무관하게 결과만
+      // 있으면 되므로 이 제약을 붙이면 안 된다(2026-07-18 사용자 확인).
+      //
+      // 일본·중국은 2차 접종 기준의 더 강한 룰을 아래 validateTiterDate 가 이미 담당하고,
+      // EU 는 30일 룰이 순서까지 잡는다. 실질 신규 대상은 1회 접종 + 입국 요건인 대만.
+      if (
+        destinationKey &&
+        TITER_REQUIRED_FOR_ENTRY_DESTINATIONS.includes(destinationKey) &&
+        titerForm.date.trim()
+      ) {
+        const orderErr = validateTiterAfterBooster(
+          readRabiesDoseList(caseRow?.data).map((d) => d.date),
+          titerForm.date.trim(),
+        )
+        if (orderErr) return orderErr
       }
       // EU 패밀리 — 채혈은 직전 유효 접종 + 30일 이후 (chain 유지 시 시계 리셋 X).
       // procedure-check(eu.titer-min-30days-after-vaccine)와 같은 알고리즘의 입력 차단.

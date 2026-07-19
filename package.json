@@ -18,7 +18,11 @@
     "lint:dest:write": "tsx scripts/lint-destinations.ts --write",
     "new:destination": "tsx scripts/new-destination.ts",
     "backfill:case-links": "node scripts/backfill-case-customer-links.mjs",
-    "backfill:case-links:apply": "node scripts/backfill-case-customer-links.mjs --apply"
+    "backfill:case-links:apply": "node scripts/backfill-case-customer-links.mjs --apply",
+    "lint:checks": "tsx scripts/lint-checks.ts",
+    "lint:checks:write": "tsx scripts/lint-checks.ts --write",
+    "copy:outliers": "tsx scripts/copy-outliers.ts",
+    "copy:variants": "tsx scripts/copy-variants.ts"
   },
   "devDependencies": {
     "@types/pg": "^8.20.0",

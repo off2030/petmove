@@ -22,6 +22,7 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
+import { msgMicrochipBeforeRabies, msgRabiesPrimeMinAge , msgTiterBeforeVaccine } from './messages'
 
 /**
  * 유럽연합·영국·스위스·EFTA(노르웨이)·키프로스 절차 검증.
@@ -77,7 +78,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: '접종일은 마이크로칩 삽입일 이후여야 해요.',
+        message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
@@ -105,7 +106,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
       if (age < 84) {
         return {
           ok: false,
-          message: '광견병 접종은 생후 84일(12주)이 지나서 할 수 있어요',
+          message: msgRabiesPrimeMinAge('84일(12주)'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -145,7 +146,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
         if (priorDoses.length === 0) {
           offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
           // 순서 위반 — 일본·중국(validateTiterAfterBooster)과 동일 문구.
-          problems.push('광견병 항체 검사일이 광견병 접종일보다 빨라요. 날짜를 확인하세요.')
+          problems.push(msgTiterBeforeVaccine())
           continue
         }
         // 30일 기산점 = 채혈 직전(가장 최근) 접종. 그 이전 접종은 무관 — chain 거슬러가기 X.
@@ -278,6 +279,8 @@ export const EU_CHECKS: ProcedureCheck[] = [
     description:
       'Praziquantel(촌충 치료)은 입국 24시간 ~ 120시간(1~5일) 사이 투여 (EU Reg 2018/772 — 영국·아일랜드·몰타·노르웨이·핀란드). 사용자 보수 적용: 일 단위 검증 시 24h/120h 경계의 시간 정밀도 손실 위험으로 1~3일까지로 강화. 2026-07-16: 입국일(entry_date) 입력 시 그 값, 미입력이면 출국일(departure_date)로 대체 — 두 날짜가 통상 당일·익일 차이라 출국일로도 충분히 근사됨.',
     severity: 'warning',
+    // 포털은 1~5일 입력불가(validateEchinococcusWindow)로 대체 — 운영자만 1~3일 보수 주의를 본다.
+    audience: 'staff',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const ctx = buildDateRuleContext(caseRow, destination)

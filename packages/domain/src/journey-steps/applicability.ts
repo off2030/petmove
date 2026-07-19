@@ -68,6 +68,19 @@ export const RABIES_ONE_YEAR_VALIDITY_DESTINATIONS: string[] = destinationKeysWh
 )
 
 /**
+ * 광견병 항체 검사가 **입국 요건**인 목적지 — `rabiesTiterForReturnOnly` 가 아닌 곳.
+ *
+ * 태국·필리핀 등은 입국에 항체 검사가 필요 없고 카드가 뜨는 건 **한국 귀국용**이다.
+ * 한국 귀국용 검사는 광견병 접종 여부·순서와 무관하게 **결과만 있으면 되므로**
+ * '접종 후 채혈' 순서 검증을 붙이면 안 된다(2026-07-18 사용자 확인).
+ *
+ * 입국 요건인 곳(일본·중국·대만·EU 패밀리)만 순서를 입력 차단한다.
+ */
+export const TITER_REQUIRED_FOR_ENTRY_DESTINATIONS: string[] = destinationKeysWhere(
+  (o) => !o.rabiesTiterForReturnOnly,
+)
+
+/**
  * 광견병 2회 프라임 모델 목적지(일본·중국) — `rabies.doses` 파생.
  * 추가 백신 카드(rabies-vaccine-extra, 3차+ 전용)가 이 목록을 본다.
  */

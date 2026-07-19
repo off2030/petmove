@@ -11,6 +11,7 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
+import { msgGeneralVaccineExpiredBefore, msgMicrochipBeforeRabies, msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 말레이시아 (DVS / JPV — Department of Veterinary Services) 절차 검증.
@@ -65,7 +66,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요. 날짜를 확인하세요.`,
+        message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -99,7 +100,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
               : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못해요. ${reason}.`,
+          message: msgRabiesPrimeMinAge('91일'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -206,7 +207,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
       if (cushion < 7) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep})로부터 ${cushion}일밖에 남지 않아 MAQIS 검역 7일을 충족할 수 없어요.`,
+          message: msgGeneralVaccineExpiredBefore('출국'),
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }

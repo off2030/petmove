@@ -62,13 +62,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/taiwan-12.webp',
     '/destinations/taiwan-13.webp',
     '/destinations/taiwan-14.webp',
-    '/destinations/taiwan-15.webp',
-    '/destinations/taiwan-16.webp',
-    '/destinations/taiwan-17.webp',
-    '/destinations/taiwan-18.webp',
-    '/destinations/taiwan-19.webp',
-    '/destinations/taiwan-20.webp',
-    '/destinations/taiwan-21.webp',
   ],
   중국: [
     '/destinations/china-00.webp',

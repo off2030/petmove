@@ -1,5 +1,6 @@
 import type { CaseRow } from '@petmove/domain'
 import {
+  ALL_PROCEDURE_CHECKS,
   FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS,
   FLIGHT_DATE_RETURN_QUARANTINE_DESTINATIONS,
   JOURNEY_STEP_CATALOG,
@@ -353,18 +354,22 @@ const ADVISORY_DEFERRED_CHECKS = new Set<string>([
 ])
 
 /**
- * 펫무브앱(portal) 전용 표시 제외 — admin 과 검증 기준이 다른 룰만.
- *  - eu.tapeworm-1to3days-before-entry: admin 은 1~3일 주의 유지, portal 은 1~5일(법적
- *    24~120시간) 입력불가(getSaveBlockError → validateEchinococcusWindow)로 대체. portal 에선
- *    이 1~3 주의를 숨겨 1~5 기준만 노출한다(촌충은 입국 직전에만 의미 있는 절차).
+ * 펫무브앱(portal) 표시 제외 — **룰 선언의 `audience: 'staff'` 에서 파생**한다(2026-07-18).
  *
- * export — step-detail-screen.tsx 의 collectStepChecks(단계 상세 페이지 인라인 '주의' 박스)도
- * 같은 목록을 참조한다. 여기서만 필터링하면 목록/배너에서만 숨고 단계 상세엔 그대로 새는
- * 불일치가 있었다(2026-07-16 발견·수정).
+ * 예전엔 이 목록에 id 를 손으로 적었다. 그러면 "이 문구를 고객이 보는가"를 알려면
+ * severity + 이 목록 + relatedCases 의존 여부를 사람이 조합해야 해서 반복해서 잘못 짚었다.
+ * 이제 룰 파일 한 줄(`audience: 'staff'`)이 단일 출처고, 여기·lint:checks 가 모두 그걸 본다.
+ *
+ * 현재 staff 전용:
+ *  - eu.tapeworm-1to3days-before-entry — portal 은 1~5일(법정 24~120h) 입력불가로 대체
+ *  - cn.one-pet-per-guardian / ph.max-3pets-per-shipment — relatedCases 는 admin 만 전달
+ *
+ * export — step-detail-screen.tsx 의 collectStepChecks(단계 상세 인라인 '주의' 박스)도 같은
+ * 집합을 참조한다. 한쪽만 거르면 목록에선 숨고 상세엔 새는 불일치가 생긴다(2026-07-16 수정).
  */
-export const PORTAL_SUPPRESSED_CHECKS = new Set<string>([
-  'eu.tapeworm-1to3days-before-entry',
-])
+export const PORTAL_SUPPRESSED_CHECKS: ReadonlySet<string> = new Set(
+  ALL_PROCEDURE_CHECKS.filter((c) => c.audience === 'staff').map((c) => c.id),
+)
 
 export function buildJourney(
   caseRowInput: CaseRow,
@@ -988,13 +993,20 @@ export function buildJourney(
     }
   }
   // return lane step 별 노출 조건 — 충족돼야 다음 할 일에 올림.
-  // 수출검역 신청은 귀국 항공편이 정해진 뒤에야 예약 가능 — 기준은 '항공권 구매 완료'(has-flight-date).
-  // 왕복의 has-flight-date 는 출국편(entry/departure) + 귀국일(return_date)을 모두 요구한다.
-  // return_date 단독으로 판정하면, 출국편 없이 귀국일만 남은 잔재(과거 여정에서 안 지워진
-  // return_date 등 — 논리적으로 불가능한 상태)에도 수출검역이 '예정'으로 떠버린다(누수 버그).
-  // 출국편까지 갖춰진 정상 예약일 때만 노출하도록 has-flight-date 로 게이트한다.
+  //
+  // 일본 수출검역 신청은 **사전 신고와 함께, 한국에서, 출국 전에** 하는 절차다(사전 신고 카드
+  // 문구 "왕복 일정이면 일본 수출 검역 신청도 함께 하세요"와 짝). 실제 선행 조건이 둘:
+  //   ① 출국+귀국 항공권 — has-flight-date. 왕복의 이 시그널은 출국편(entry/departure)과
+  //      귀국일(return_date)을 모두 요구한다. return_date 단독으로 판정하면 출국편 없이
+  //      귀국일만 남은 잔재(과거 여정 미삭제 값)에도 떠버린다(누수 버그).
+  //   ② 광견병 항체 검사 완료 — has-titer-entry. 채혈만 한 '진행 중' 상태는 done 이 아니다.
+  //
+  // ②가 빠져 있어, 보호자가 여행 날짜를 미리 넣어두면 **항체 검사 중인데 수출검역 신청이
+  // 사전 신고보다 먼저** 다음 할 일로 떴다(2026-07-19 사용자 지적·재현 확인). 아직 신청할 수
+  // 없는 일을 띄우고 순서도 뒤집혀 보였다.
   const RETURN_LANE_READY: Record<string, (c: typeof caseRow) => boolean> = {
-    'jp-export-quarantine': (c) => resolveDone('has-flight-date', c),
+    'jp-export-quarantine': (c) =>
+      resolveDone('has-flight-date', c) && resolveDone('has-titer-entry', c),
   }
   const returnIdx = stages.findIndex(
     (s) => s.state === 'upcoming' && nonBlockingIds.has(s.id),

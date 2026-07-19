@@ -1,0 +1,78 @@
+# 고객 노출 주의 문구 스냅샷 — scripts/lint-checks.ts 로 자동 생성.
+# audience:customer + severity(warning|blocker) 룰의 ok:false 문구만. staff 전용은 제외.
+# 변경 의도가 맞는지 확인 후 `pnpm lint:checks:write` 로 갱신할 것.
+
+[ae.banned-breeds]
+  견종 "${breed.ko || breed.en}"은 UAE 수입 금지 견종이에요 (매치: ${match}).
+[cn.rabies-prime-after-91days-old]
+  광견병 접종은 생후 91일과 3개월이 모두 지난 후에 할 수 있어요.
+[cn.rabies-booster-within-prime-validity]
+  광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
+[cn.rabies-titer-chain-consistent]
+  ${missing} 정보가 없어요. 입력하세요.
+[cn.rabies-titer-vs-booster]
+  채혈일이 광견병 백신 면역 유효기간을 벗어났어요. 날짜를 확인하세요.
+[eu.titer-min-30days-after-vaccine]
+  광견병 백신 정보가 없어요. 입력하세요.
+[eu.rabies-valid-until-on-entry]
+  광견병 백신 면역 유효기간이 ${usingEntry ? '입국' : '출국'} 전에 만료돼요. 만료 전에 추가 접종을 하세요.
+[eu.import-quarantine-date-valid]
+  입국 검사일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
+[eu.export-cert-date-valid]
+  귀국 서류 준비 완료일은 도착(입국)일보다 빠를 수 없어요.
+  귀국 서류 준비 완료일은 한국 귀국일보다 늦을 수 없어요.
+[il.banned-breeds]
+  견종 "${breed.ko || breed.en}"은(는) 이스라엘 수입 금지 견종이에요 (매치: ${match}).
+[jp.rabies-titer-chain-consistent]
+  ${missing} 정보가 없어요. 입력하세요.
+[jp.rabies-booster-within-prime-validity]
+  2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 해요.
+[jp.microchip-rabies-sequence]
+  마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 해요.
+[jp.rabies-titer-vs-booster]
+  채혈일이 광견병 백신 면역 유효기간을 벗어났어요. 날짜를 확인하세요.
+[jp.titer-extra-within-rabies-validity]
+  추가 검사일이 직전 광견병 백신 면역 유효기간을 벗어났어요. 날짜를 확인하세요.
+[jp.entry-180days-after-titer]  (allowDate)
+  검사일로부터 180일 후 ${earliestKr}에 일본에 입국할 수 있어요.
+[jp.entry-within-2years-of-titer]  (allowDate)
+  광견병 항체 검사 유효기간이 ${validUntilKr}에 만료돼요. 일본 입국 전 재검사가 필요해요.
+[my.banned-breeds]
+  견종 "${breed.ko || breed.en}"은(는) 말레이시아 수입 금지 견종이에요 (매치: ${match}).
+[my.restricted-breeds]
+  견종 "${breed.ko || breed.en}"은(는) 말레이시아 제한 견종으로 MAQIS 특별 승인이 필요해요 (매치: ${match}).
+[ph.rabies-prime-21days-before-arrival]
+  광견병 접종은 출국 21일 전까지 해야 해요.
+[ph.rabies-not-expired-on-arrival]
+  광견병 백신 면역 유효기간이 ${usingEntry ? '도착' : '출국'} 전에 만료돼요. 만료 전에 추가 접종을 하세요.
+[ph.general-vaccine-prime-21days-before-arrival]
+  종합백신 접종은 출국 21일 전까지 해야 해요.
+[ph.general-vaccine-not-expired-on-arrival]
+  종합백신 면역 유효기간이 ${usingEntry ? '도착' : '출국'} 전에 만료돼요. 만료 전에 추가 접종을 하세요.
+[ph.min-120days-on-arrival]
+  120일령(4개월) 이상의 강아지(혹은 고양이)만 데려갈 수 있어요.
+[ph.import-quarantine-date-valid]
+  필리핀 수입 검역일은 필리핀 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
+[ph.export-quarantine-date-valid]
+  필리핀 수출 검역일은 필리핀 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
+  필리핀 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
+[sg.banned-breeds]
+  견종 "${breed.ko || breed.en}"은 NParks 수입 금지 대상이에요 (매치: ${match}).
+[th.rabies-21days-before-arrival]
+  광견병 접종은 출국 21일 전까지 해야 해요.
+[th.general-vaccine-21days-before-arrival]
+  종합백신 접종은 출국 21일 전까지 해야 해요.
+[th.banned-breeds]
+  "${breed.ko || breed.en}"은 태국 수입이 금지되어 있어요 (매치: ${match}).
+[th.import-quarantine-date-valid]
+  태국 수입 검역일은 태국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
+[th.export-quarantine-date-valid]
+  태국 수출 검역일은 태국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
+  태국 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
+[tr.banned-breeds]
+  견종 "${breed.ko || breed.en}"은 튀르키예 수입 금지 견종이에요 (매치: ${match}).
+[tw.import-permit-120days-before-entry]
+  수입허가증 신청일이 도착일보다 늦어요. 날짜를 확인하세요.
+  수입허가증은 도착 120일 전까지 신청해야 격리 없이 입국할 수 있어요.
+[vn.banned-breeds]
+  견종 "${breed.ko || breed.en}"은(는) 베트남 수입 제한 견종이에요 (매치: ${match}).

@@ -9,6 +9,7 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
+import { msgGeneralVaccineExpiredBefore, msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 홍콩 (AFCD — Agriculture, Fisheries & Conservation Department) 절차 검증.
@@ -66,7 +67,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
       const last = rabies[rabies.length - 1]
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 모든 광견병 접종(최근 ${last.date})보다 늦어요. 날짜를 확인하세요.`,
+        message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -100,7 +101,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
               : `생후 ${ev.ageInDays}일령이며 ${first.date}이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못해요. ${reason}.`,
+          message: msgRabiesPrimeMinAge('91일'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -154,7 +155,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          message: msgRabiesExpiredBefore('출국'),
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -230,7 +231,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          message: msgGeneralVaccineExpiredBefore('출국'),
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }

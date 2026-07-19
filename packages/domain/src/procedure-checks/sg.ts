@@ -15,6 +15,7 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
+import { msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 싱가포르 (NParks/AVS Schedule III) 절차 검증.
@@ -58,7 +59,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
               : `생후 ${ev.ageInDays}일령이며 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못해요. ${reason}.`,
+          message: msgRabiesPrimeMinAge('91일'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }

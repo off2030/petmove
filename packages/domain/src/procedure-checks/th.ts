@@ -18,6 +18,7 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
+import { msgGeneralVaccineExpiredBefore, msgMicrochipBeforeGeneralVaccine, msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 태국 (DLD — Department of Livestock Development, กรมปศุสัตว์) 절차 검증.
@@ -67,7 +68,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: '접종일은 마이크로칩 삽입일 이후여야 해요.',
+        message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
@@ -93,7 +94,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: '접종일은 마이크로칩 삽입일 이후여야 해요.',
+        message: msgMicrochipBeforeGeneralVaccine(),
         offendingPaths: ['microchip_implant_date', `general_vaccine_dates[${first.originalIndex}].date`],
       }
     },
@@ -121,7 +122,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (age < 84) {
         return {
           ok: false,
-          message: '광견병 접종은 생후 84일(12주)이 지나서 할 수 있어요',
+          message: msgRabiesPrimeMinAge('84일(12주)'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -181,7 +182,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: '광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.',
+          message: msgRabiesExpiredBefore('출국'),
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -240,7 +241,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: '종합백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.',
+          message: msgGeneralVaccineExpiredBefore('출국'),
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
