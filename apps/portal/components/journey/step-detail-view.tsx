@@ -124,6 +124,7 @@ const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
   china: '예: 베이징 PEK',
   taiwan: '예: 타오위안 TPE',
   philippines: '예: 마닐라 MNL',
+  vietnam: '예: 호치민 SGN',
   eu: '예: 파리 CDG',
   uk: '예: 런던 히드로 LHR',
   ireland: '예: 더블린 DUB',

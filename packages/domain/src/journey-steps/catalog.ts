@@ -10,6 +10,7 @@ import {
   todayKst,
 } from '../procedure-checks/utils'
 import {
+  TITER_RETURN_ONLY_DESTINATIONS,
   destinationsWithVaccine,
   matchesDestinationKey,
   APP_SUPPORTED_DESTINATION_KEYS,
@@ -345,8 +346,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'ukraine',
         'israel',
       ],
-      // 입국엔 항체검사 불필요하나 한국 귀국 시 필수인 나라 — 왕복에만 노출(태국·필리핀 등).
-      roundOnlyDestinations: ['thailand', 'philippines'],
+      // 입국엔 항체검사 불필요하나 한국 귀국 시 필수인 나라 — 왕복에만 노출.
+      // 프로파일(rabiesTiterForReturnOnly / titer.need==='return-only')에서 파생한다.
+      // 손으로 적던 시절 태국·필리핀만 있어서, 프로파일에 선언한 나라를 앱에 올려도
+      // 왕복 항체 카드가 안 떴다(베트남 — 2026-07-19).
+      roundOnlyDestinations: [...TITER_RETURN_ONLY_DESTINATIONS],
       species: 'all',
       tripType: 'all',
     },
@@ -1326,6 +1330,37 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // 발급 방법·장소는 도시별로 달라(해관 온라인 신청 互联网+海关 + 현장검역) 문구는 단순화 —
   // 베이징·상하이는 지정 동물병원(베이징 观赏动物医院·상하이 申浦动物医院) 경유. 병원 링크는 확정 후.
   // cn.export 검증 룰 미작성(추후).
+  // ── 베트남 DAH 검역 신청 (Form 19) ──────────────────────────────────
+  // 수입허가가 아니다 — Circular 25 제10조상 외국인 동반 2마리 이하는 import permit 불요.
+  // 대신 출국 전 DAH(Cục Thú y)에 '검역 안내 신청서'(Form 19, Appendix V)를 내고 처리에
+  // 5근무일이 걸린다. 성격이 도착 통지라 아일랜드·키프로스와 같은 'permit' 카테고리 사전통지 카드.
+  {
+    id: 'vn-advance-notice',
+    category: 'permit',
+    title: '검역 신청',
+    shortLabel: '신청',
+    description:
+      '베트남 동물검역국(DAH)에 검역 신청서를 제출하세요.\n\n출국 7~10일 전까지 제출하세요. 처리에 5영업일이 걸려요.\n외국인이 반려 목적으로 2마리까지 데려가는 경우 수입 허가는 필요 없어요.',
+    doneSummary: '베트남 동물검역국(DAH)에 검역 신청을 했어요.',
+    cardLine: '베트남 동물검역국(DAH)에 검역 신청을 하세요.',
+    applicability: { destinations: ['vietnam'], species: 'all', tripType: 'all' },
+    order: 47,
+    deadline: { anchor: 'departure', daysBefore: 7 },
+    done: 'quarantine:vn_advance_notice_date',
+    inputs: [
+      {
+        key: 'vn_advance_notice_date',
+        label: '신청일',
+        type: 'date',
+        helpText: 'DAH 에 검역 신청서를 제출한 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 신청서 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '베트남 검역 신청서(Form 19)',
+    validationIds: ['vn.advance-notice-7days-before-departure'],
+  },
+
   // ── 대만 수출 검역 (왕복 — 귀국 전) ────────────────────────────────────
   // 카드 제목(절차)은 대만 용어를 따른다 — 輸出檢疫 = 수출 검역. EU 처럼 '귀국 서류 준비'로
   // 부르지 않는 이유: EU 는 검역 자체가 없고 서류에 고정 명칭도 없어 그렇게 부른 것이고,

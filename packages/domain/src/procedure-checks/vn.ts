@@ -1,3 +1,4 @@
+import { buildDateRuleContext } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   addYears,
@@ -247,6 +248,70 @@ export const VN_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: '보호자 케이스 ≤ 2건.' }
+    },
+  },
+  // ── 도착 수입 검역 ──
+  {
+    id: 'vn.import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '베트남 수입 검역일',
+    description: '베트남 수입 검역일은 베트남 입국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-07-19',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.vn_import_quarantine_date === 'string'
+          ? data.vn_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '베트남 수입 검역일은 베트남 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['vn_import_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `베트남 수입검역일(${raw}) 입국 이후.` }
+    },
+  },
+  // ── DAH 검역 신청(Form 19) ──
+  // Circular 25: 처리 5근무일. 출국 7~10일 전 제출 권장 — 7일보다 늦으면 처리 전에 출국할 수 있다.
+  // 출국일 자체가 마감이 아니라 '늦으면 위험'이라 blocker 가 아니라 warning.
+  {
+    id: 'vn.advance-notice-7days-before-departure',
+    country: COUNTRY,
+    category: '검역',
+    title: 'DAH 검역 신청은 출국 7일 전까지',
+    description:
+      'DAH 검역 신청서(Form 19) 제출일이 출국 7일 전보다 늦으면 경고. 처리에 5근무일이 걸린다. (Circular 25/2016)',
+    severity: 'warning',
+    addedAt: '2026-07-19',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed =
+        typeof data.vn_advance_notice_date === 'string'
+          ? data.vn_advance_notice_date.slice(0, 10)
+          : ''
+      const dep = readDepartureDate(caseRow)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed) || !dep) return SKIP
+      const gap = daysBetween(filed, dep)
+      if (gap === null) return SKIP
+      if (gap < 7) {
+        return {
+          ok: false,
+          message:
+            '검역 신청은 출국 7일 전까지 하는 것이 좋아요. 처리에 영업일 기준 5일이 걸려요.',
+          offendingPaths: ['vn_advance_notice_date'],
+        }
+      }
+      return { ok: true, message: `검역 신청(${filed}) → 출국(${dep}): ${gap}일 (7일 이상).` }
     },
   },
 ]

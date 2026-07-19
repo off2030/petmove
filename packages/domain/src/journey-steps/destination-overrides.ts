@@ -104,6 +104,48 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['cn.import-quarantine-date-valid'],
     }),
   },
+  // ── 베트남 (DAH Cục Thú y) ────────────────────────────────────────────
+  // 태국·필리핀 골격이지만 수입허가가 없다(Circular 25 제10조 — 2마리 이하 동반 면제).
+  // 대신 출국 전 DAH 검역 신청(vn-advance-notice, order 47). 항체는 한국 귀국용만.
+  // 규정 상세·출처는 procedure-checks/vn.ts 헤더.
+  vietnam: {
+    // 1회 접종국 — base 의 '광견병 백신 1차' 대신 '광견병 백신'(대만·태국과 같은 처리).
+    'rabies-vaccine-1': {
+      title: '광견병 백신',
+      shortLabel: '백신',
+      description:
+        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 3개월이 지난 후에 접종해야 해요.\n출국 30일 전까지 접종해야 해요.\n면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.\n베트남 입국 때 면역 유효기간이 남아있어야 해요.',
+      doneSummary: '광견병 백신을 접종했어요.',
+      done: 'has-rabies-valid',
+      validationIds: ['vn.rabies-prime-after-91days-old', 'vn.microchip-before-rabies'],
+    },
+    // 항체검사 — 베트남 입국 요건이 아니다(DAH 의무 아님). 한국 귀국용이라 왕복에만 뜬다
+    // (TITER_RETURN_ONLY_DESTINATIONS 파생). 베트남에 검사기관이 없어 한국에서 미리 받아야 한다.
+    'rabies-titer': {
+      description:
+        '한국에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n베트남 입국에는 필요 없지만, 한국으로 돌아올 때 반드시 필요해요.\n베트남에는 검사 기관이 없으니 출국 전에 미리 받으세요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+    },
+    // 항공권 — 일본의 항체 180일 대기 미적용(베트남은 항체 자체가 입국 요건 아님).
+    // 제약은 광견병 접종 후 30일 대기 하나.
+    'flight-purchase': {
+      description:
+        '베트남 입국 일정에 맞춰 항공권을 구매하세요.\n\n광견병 접종일로부터 30일이 지난 후에 입국할 수 있어요.\n지정된 공항으로만 입국할 수 있어요. 호치민(SGN)·하노이(HAN)·다낭(DAD)·나트랑(CXR)이에요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '베트남에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: ['vn.rabies-min-30days-before-departure'],
+    },
+    // 도착 — 요건 충족 시 무격리, 미충족 시 14일.
+    departure: importQuarantineCard({
+      label: '베트남',
+      fieldKey: 'vn_import_quarantine_date',
+      description:
+        '베트남 도착 후 공항 동물검역소에서 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 14일간 격리되거나 한국으로 반송돼요.',
+      helpText: '베트남 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '수입 검역 확인 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '베트남 수입 검역 서류',
+      validationIds: ['vn.import-quarantine-date-valid'],
+    }),
+  },
   // ── 대만 (APHIA 動植物防疫檢疫署) ─────────────────────────────────────
   // 1회 접종 + 항체검사 모델(EU 골격)이지만 대기·허가 구조가 다르다: ①채혈 후 180일 대기
   // (일본과 같아 base 항공권 earliest anchor 를 그대로 상속) ②수입허가증을 도착 120일 전까지
@@ -127,8 +169,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         // 않는다(다른 12개 목적지 어디에도 없던 줄 — 2026-07-18 제거).
         //
         // 접종~채혈 간격: APHIA 공식 문답집(2024-02)에 규정 없음 — 채혈 시점은 입국일 기준
-        // ('輸入 90 日前至輸入 1 年前')으로만 정해져 있다. USDA 대만 안내 페이지엔 'not sooner
-        // than 30 days after the primary vaccination'이 있으나 대만 공식 근거가 없어 단정하지
+        // ('輸入 90 日前至輸入 1 年前')으로만 정해져 있다. USDA 대만 안내 페이지엔 'not sooner        // than 30 days after the primary vaccination'이 있으나 대만 공식 근거가 없어 단정하지
         // 않고 권고로만 적는다(중국 2차 접종 간격과 같은 방식).
         '대만 검역청(APHIA)이 인정하는 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n명확한 규정은 없지만 접종 후 30일 이상 지나서 검사하는 것이 좋아요.\n0.5 IU/mL 이상이면 합격이에요.\n검사 결과는 채혈일로부터 1년간 유효해요.',
       validationIds: ['tw.rnatt-after-rabies-vaccine'],

@@ -476,9 +476,30 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer'],
     rabiesTiterForReturnOnly: true,
   },
+  // ── 베트남 (DAH Cục Thú y) ──────────────────────────────────────────
+  // 태국·필리핀 골격(1회 접종 + 항체는 귀국용)이지만 **수입허가가 없다**:
+  //  ①Circular 25 제10조 — 외국인 동반 2마리 이하는 import permit 불요(대신 출국 전
+  //    DAH 에 검역 신청서(Form 19, Appendix V) 제출 → 처리 5근무일)
+  //  ②광견병 1회, 출국 30일 이상~12개월 이내, 3년 백신 불인정
+  //  ③항체검사는 DAH 의무 아님 — 한국 귀국용만(rabiesTiterForReturnOnly)
+  //  ④요건 충족 시 무격리, 미충족 시 도착 후 14일
+  //  ⑤지정 입국공항 4곳(SGN·HAN·CXR·DAD), 견종 제한(Pit Bull·Tosa·Dogo Argentino)
+  // 규정 상세·출처는 procedure-checks/vn.ts 헤더.
   vietnam: {
     keywords: ['베트남', 'vietnam'],
+    archetype: 'sea-permit',
+    // 1회 접종 + 3년 백신 불인정(USDA APHIS·미 대사관 일치). vn.rabies-only-1year-vaccine 이
+    // blocker 로 이미 강제 중 — 프로파일에도 선언해 파생 경로를 맞춘다.
+    rabies: { doses: 1, minAgeDays: 90, oneYearVaccineOnly: true },
+    // 입국 요건 아님 — 한국 귀국용(need:'return-only' = rabiesTiterForReturnOnly 와 같은 의미).
+    titer: { need: 'return-only' },
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer'],
+    // 사전 검역 신청(Form 19) — 출국 7~10일 전 DAH 제출, 처리 5근무일.
+    // 수입허가(importPermit)가 아니라 도착 통지 성격이라 advanceNotice 로 선언한다.
+    advanceNotice: { label: 'DAH 검역 신청' },
+    // 도착 검역 — 요건 충족 시 무격리, 미충족 시 14일.
+    importQuarantine: { quarantineDays: 14 },
     rabiesTiterForReturnOnly: true,
   },
   argentina: {
@@ -541,6 +562,18 @@ export function destinationsWithVaccine(vaccineKey: string): string[] {
     ),
   )
 }
+
+/**
+ * 항체검사가 **입국 요건이 아니라 한국 귀국용**인 목적지 — 왕복에만 항체 카드를 노출한다.
+ *
+ * `rabiesTiterForReturnOnly`(구 선언) 또는 `titer.need === 'return-only'`(프로파일) 에서 파생.
+ * 예전엔 catalog 의 `roundOnlyDestinations` 에 태국·필리핀만 손으로 적혀 있었다. 그래서
+ * 프로파일에 선언한 나라를 앱에 올려도 왕복 항체 카드가 안 떴다(베트남 — 2026-07-19 발견).
+ * 한국 귀국엔 항체검사가 필수라 카드가 없으면 보호자가 준비 자체를 모른다.
+ */
+export const TITER_RETURN_ONLY_DESTINATIONS: string[] = destinationKeysWhere(
+  (o) => !!o.rabiesTiterForReturnOnly || o.titer?.need === 'return-only',
+)
 
 /**
  * 촌충(에키노코쿠스) 의무국 — EU Reg 2018/772 (영국·아일랜드·몰타·노르웨이·핀란드).
