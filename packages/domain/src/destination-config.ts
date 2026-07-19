@@ -62,12 +62,41 @@ export interface DestinationRabiesProfile {
   /** 1차 접종 가능 최소 일령(일). 예: 일본 91, EU 84(12주). */
   minAgeDays?: number
   /**
+   * 최소 일령이 **달력 개월**로 규정된 경우(베트남 "at least 3 months of age").
+   * 지정하면 판정이 일수가 아니라 달력 기준이 된다(StepEarliest.monthsAfter → meetsCalendarAge).
+   * 일수로 환산하면 생월에 따라 89~92일로 흔들려 규정을 지킨 사람을 막는다.
+   */
+  minAgeMonths?: number
+  /**
    * 면역 유효기간을 1년(연 1회 접종)만 인정 — 2·3년 라이선스 백신 입력 차단.
    * `RABIES_ONE_YEAR_VALIDITY_DESTINATIONS` 의 파생원.
    */
   oneYearVaccineOnly?: boolean
   /** 1·2차 최소 간격(일). 'soft' = 하드 차단 없이 순서·권고만(중국 30일). */
   doseIntervalDays?: number | 'soft'
+
+  // ── 카드 문구 파생용 (buildRabiesCard) ────────────────────────────────
+  // 광견병 카드는 목적지마다 '문장 조각의 조합'일 뿐이라 골격 하나에서 파생한다.
+  // 여기 없는 나라 고유 문장은 extraLines 로 넣는다.
+
+  /**
+   * 최소 일령을 고객에게 어떻게 쓸지 — 규정 문구 그대로.
+   * 예: '생후 91일'(일본·중국) / '생후 12주(84일)'(EU·태국·필리핀) / '생후 90일'(대만) /
+   *     '생후 3개월'(베트남 — 달력 개월이라 일수로 환산하지 않는다).
+   * 미지정이면 minAgeDays 에서 '생후 N일'로 자동 생성.
+   */
+  minAgeLabel?: string
+  /** 인정 백신 제한 문장(대만 '불활화(사독) 백신만 인정돼요.'). */
+  vaccineTypeLine?: string
+  /**
+   * 유효기간 문장. oneYearVaccineOnly 만으론 나라별 뉘앙스가 안 나온다 —
+   * 중국 '백신의 종류에 상관없이 1년', 대만 '1년', 베트남 '1년 / 3년 백신 불인정'.
+   */
+  validityLine?: string
+  /** 접종 시점 제약(태국 '입국 3주 전까지', 베트남 '출국 30일 전까지') — 여러 줄 가능. */
+  timingLines?: string[]
+  /** 그 나라에만 있는 추가 안내(태국 백신 수첩 요건 등). 카드 맨 끝에 붙는다. */
+  extraLines?: string[]
 }
 
 /** 광견병 항체검사(RNATT) 프로파일. 한국 귀국용 2년 룰은 공통이라 여기 없음(titer-validity.ts). */
@@ -323,7 +352,15 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['태국', 'thailand'],
     archetype: 'sea-permit',
     // 1회 접종 + "최근 접종 12개월 이내" 관례 — 1년 유효기간만 취급(다년 백신 실무상 미인정).
-    rabies: { doses: 1, oneYearVaccineOnly: true },
+    rabies: {
+      doses: 1,
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      oneYearVaccineOnly: true,
+      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
+      timingLines: ['출국 30일 전까지 접종해야 해요.'],
+    },
     appSupported: true,
     importPermit: {},
     vaccines: ['rabies', 'rabies_titer', 'general'],
@@ -429,7 +466,14 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     archetype: 'jp-2dose',
     // GACC 실무상 1년 라이선스 백신만 인정(2·3년 거부) — cn.rabies-only-1year-vaccine 와 같은 기준.
     // 1·2차 간격 30일은 하드 차단 없이 권고만(2026-07-17 순서만 유지 결정).
-    rabies: { doses: 2, oneYearVaccineOnly: true, doseIntervalDays: 'soft' },
+    rabies: {
+      doses: 2,
+      minAgeDays: 91,
+      minAgeLabel: '생후 91일',
+      oneYearVaccineOnly: true,
+      doseIntervalDays: 'soft',
+      validityLine: '면역 유효기간은 백신의 종류에 상관없이 1년이에요.',
+    },
     // GACC 실무상 RNATT 입국용 채혈일 기준 1년(cn.rnatt-valid-1year-on-arrival 와 동일).
     titer: { entryValidityMonths: 12 },
     appSupported: true,
@@ -445,7 +489,14 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['대만', 'taiwan'],
     // minAgeDays 를 두지 않는다 — 베트남 규정은 일수가 아니라 '생후 3개월(달력)'이고,
     // 판정은 카드의 earliest.monthsAfter + date-rules meetsCalendarAge 가 담당한다.
-    rabies: { doses: 1, oneYearVaccineOnly: true },
+    rabies: {
+      doses: 1,
+      minAgeDays: 90,
+      minAgeLabel: '생후 90일',
+      oneYearVaccineOnly: true,
+      vaccineTypeLine: '불활화(사독) 백신만 인정돼요.',
+      validityLine: '면역 유효기간은 1년이에요.',
+    },
     titer: { entryValidityMonths: 12, entryWaitAfterTiter: { days: 180 } },
     vaccines: ['rabies', 'rabies_titer'],
     extraFields: ['address_overseas', 'permit_no'],
@@ -493,7 +544,15 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     archetype: 'sea-permit',
     // 1회 접종 + 3년 백신 불인정(USDA APHIS·미 대사관 일치). vn.rabies-only-1year-vaccine 이
     // blocker 로 이미 강제 중 — 프로파일에도 선언해 파생 경로를 맞춘다.
-    rabies: { doses: 1, minAgeDays: 90, oneYearVaccineOnly: true },
+    rabies: {
+      doses: 1,
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      oneYearVaccineOnly: true,
+      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
+      timingLines: ['출국 30일 전까지 접종해야 해요.'],
+    },
     // 입국 요건 아님 — 한국 귀국용(need:'return-only' = rabiesTiterForReturnOnly 와 같은 의미).
     titer: { need: 'return-only' },
     appSupported: true,

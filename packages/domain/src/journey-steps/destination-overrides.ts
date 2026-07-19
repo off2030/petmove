@@ -53,11 +53,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   // 대기 없음(도착일에 백신·항체 유효면 됨) ③미충족 시 30일 격리. 광견병 1년 백신만 인정(2·3년
   // 입력불가는 portal getSaveBlockError). 규정 상세·출처는 procedure-checks/cn.ts 헤더. (2026-07-18)
   china: {
-    'rabies-vaccine-1': {
-      description:
-        '1차 광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 91일이 지난 후에 접종해야 해요.\n면역 유효기간은 백신의 종류에 상관없이 1년이에요.\n중국 입국 때 면역 유효기간이 남아있어야 해요.',
+    // 문구·완료·earliest 는 프로파일 파생(buildRabiesCard). 2회 접종국이라 title 이
+    // '광견병 백신 1차', done 은 base(has-rabies-entry) 를 그대로 쓴다.
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'china',
+      label: '중국',
       validationIds: ['cn.rabies-prime-after-91days-old'],
-    },
+    }),
     'rabies-vaccine-2': {
       description:
         '2차 광견병 백신을 접종하세요.\n\n명확한 규정은 없지만 1차 접종 후 30일 이상 지나서 하는 것이 좋아요.\n1차 접종 면역 유효기간 이내에 접종하세요.\n면역 유효기간은 백신의 종류에 상관없이 1년이에요.\n중국 입국 때 면역 유효기간이 남아있어야 해요.',
@@ -109,20 +111,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   // 사전 신고도 없다 — 도착 공항 검역소에서 현장 등록(Circular 25 제10조). 항체는 한국 귀국용만.
   // 규정 상세·출처는 procedure-checks/vn.ts 헤더.
   vietnam: {
-    // 1회 접종국 — base 의 '광견병 백신 1차' 대신 '광견병 백신'(대만·태국과 같은 처리).
-    'rabies-vaccine-1': {
-      title: '광견병 백신',
-      shortLabel: '백신',
-      description:
-        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 3개월이 지난 후에 접종해야 해요.\n출국 30일 전까지 접종해야 해요.\n면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.\n베트남 입국 때 면역 유효기간이 남아있어야 해요.',
-      doneSummary: '광견병 백신을 접종했어요.',
-      // 규정 문구가 "at least 3 months of age" — 달력 개월 기준(monthsAfter)으로 판정한다.
-      // daysAfter 91 은 표시·정렬용 근사치. 일수 고정으로 하면 11·12·1·2월생이 규정대로
-      // 3개월에 접종해도 저장이 막힌다(2월 1일생 → 5월 1일 = 89일).
-      earliest: { anchor: 'birth', daysAfter: 91, monthsAfter: 3 },
-      done: 'has-rabies-valid',
+    // 문구·완료·earliest 는 프로파일 파생(buildRabiesCard) — 규정값은 destination-config.
+    // 최소 일령이 달력 3개월이라 minAgeMonths 가 earliest.monthsAfter 로 넘어간다.
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'vietnam',
+      label: '베트남',
       validationIds: ['vn.rabies-prime-after-3months-old', 'vn.microchip-before-rabies'],
-    },
+    }),
     // 항체검사 — 베트남 입국 요건이 아니다(DAH 의무 아님). 한국 귀국용이라 왕복에만 뜬다
     // (TITER_RETURN_ONLY_DESTINATIONS 파생). 베트남에 검사기관이 없어 한국에서 미리 받아야 한다.
     'rabies-titer': {
@@ -160,16 +155,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   // 불활화 백신만·유효 1년(2·3년 입력불가는 프로파일 oneYearVaccineOnly 파생). 종합백신 카드는
   // 대만 공식 요건에 없어 미노출(2026-07-18 사용자 결정). 규정 상세·출처는 procedure-checks/tw.ts.
   taiwan: {
-    'rabies-vaccine-1': {
-      title: '광견병 백신',
-      shortLabel: '백신',
-      description:
-        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 90일이 지난 후에 접종해야 해요.\n불활화(사독) 백신만 인정돼요.\n면역 유효기간은 1년이에요.\n대만 입국 때 면역 유효기간이 남아있어야 해요.',
-      doneSummary: '광견병 백신을 접종했어요.',
-      earliest: { anchor: 'birth', daysAfter: 90 },
-      done: 'has-rabies-valid',
+    // 문구·완료·earliest 전부 프로파일에서 파생(buildRabiesCard). 규정값은 destination-config
+    // 의 rabies 블록에 있고, 여기선 그 나라 검증 룰만 지목한다.
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'taiwan',
+      label: '대만',
       validationIds: ['tw.rabies-prime-after-90days-old', 'tw.microchip-before-rabies'],
-    },
+    }),
     'rabies-titer': {
       description:
         // 마이크로칩 스캔 후 채혈은 전 목적지 공통 절차이고 수의사가 하는 일이라 카드에 두지
@@ -505,6 +497,76 @@ export const STEP_DESTINATION_OVERRIDES: Record<
  * '[국가] 수입 검역' 도착 카드 factory — 나라별 검역일 필드(quarantine:<field> 완료 신호,
  * by_dest 분리 저장)를 실은 공통 구조. sea-permit 템플릿과 중국(jp-2dose)이 공유.
  */
+/**
+ * 광견병 1차 접종 카드 — **프로파일에서 문구를 조립**한다.
+ *
+ * 왜: 목적지마다 카드를 통째로 복사해 쓰던 탓에 같은 문장이 14벌 존재했고, 국가별로 다른 건
+ * 사실상 아래 파라미터 몇 개뿐이었다. 복사본이 늘수록 한 곳만 고치고 나머지를 빠뜨리기 쉽다
+ * (실제로 일본 카드는 '마이크로칩 삽입 후에 접종' 줄이 빠져 있는데 jp.rabies-prime-before-microchip
+ * 룰은 존재한다 — 문구와 검증이 어긋난 상태). 2026-07-19 사용자 지적으로 파생화.
+ *
+ * 문장 순서(고정):
+ *   1) 첫 줄 — 2회 접종국은 '1차 광견병 백신을', 1회국은 '광견병 백신을'
+ *   2) 마이크로칩 선행
+ *   3) 최소 일령 (minAgeLabel — 규정 문구 그대로)
+ *   4) 접종 시점 제약 (timingLines)
+ *   5) 백신 종류 제한 (vaccineTypeLine)
+ *   6) 유효기간 (validityLine)
+ *   7) 입국 시 유효 — '{나라} 입국 때 면역 유효기간이 남아있어야 해요.'
+ *   8) 나라 고유 추가 안내 (extraLines)
+ *
+ * 규정값(일령·간격)은 프로파일에 있고, 검증 룰 id 만 나라별로 넘긴다.
+ */
+function buildRabiesCard(opts: {
+  /** destination-config 키 — 프로파일(rabies.*) 출처. */
+  destKey: string
+  /** 고객 표기 나라명('대만'·'유럽연합(EU)'). 입국 유효 문장에 쓴다. */
+  label: string
+  /** 그 나라 procedure-check 룰 id 들. */
+  validationIds: string[]
+  /** 입국 유효 문장을 생략할 목적지(일본 — 별도 카드에서 다룸). */
+  omitEntryValidity?: boolean
+}): Partial<StepDefinition> {
+  const p = DESTINATION_OVERRIDES[opts.destKey]?.rabies ?? {}
+  const twoDose = p.doses === 2
+  const minAge =
+    p.minAgeLabel ?? (p.minAgeDays ? `생후 ${p.minAgeDays}일` : '')
+
+  const lines: string[] = [
+    twoDose ? '1차 광견병 백신을 접종하세요.' : '광견병 백신을 접종하세요.',
+    '마이크로칩 삽입 후에 접종해야 해요.',
+  ]
+  if (minAge) lines.push(`${minAge}이 지난 후에 접종해야 해요.`)
+  for (const l of p.timingLines ?? []) lines.push(l)
+  if (p.vaccineTypeLine) lines.push(p.vaccineTypeLine)
+  if (p.validityLine) lines.push(p.validityLine)
+  if (!opts.omitEntryValidity) {
+    lines.push(`${opts.label} 입국 때 면역 유효기간이 남아있어야 해요.`)
+  }
+  for (const l of p.extraLines ?? []) lines.push(l)
+
+  const card: Partial<StepDefinition> = {
+    // 1회 접종국은 카드가 하나뿐이라 '1차'를 떼고 '광견병 백신'으로 부른다.
+    // 2회국은 2차 카드(shortLabel '백신2')와 구분해야 해서 '백신1'을 유지한다 —
+    // factory 초안이 일괄 '백신'으로 덮어써 중국이 바뀌는 걸 lint:copy 가 잡았다(2026-07-19).
+    title: twoDose ? '광견병 백신 1차' : '광견병 백신',
+    shortLabel: twoDose ? '백신1' : '백신',
+    description: lines[0] + '\n\n' + lines.slice(1).join('\n'),
+    doneSummary: twoDose ? '1차 광견병 백신을 접종했어요.' : '광견병 백신을 접종했어요.',
+    validationIds: opts.validationIds,
+  }
+  // 1회국은 '유효한 백신이 있는가'로 완료 판정(2회국은 1차 입력만으로 완료).
+  if (!twoDose) card.done = 'has-rabies-valid'
+  if (p.minAgeDays) {
+    card.earliest = {
+      anchor: 'birth',
+      daysAfter: p.minAgeDays,
+      ...(p.minAgeMonths ? { monthsAfter: p.minAgeMonths } : {}),
+    }
+  }
+  return card
+}
+
 function importQuarantineCard(opts: {
   label: string
   /** 검역일 필드 키 — `{국가코드}_import_quarantine_date` (destination-scoped-fields 등록 필요). */
