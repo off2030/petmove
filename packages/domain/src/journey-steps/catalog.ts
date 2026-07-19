@@ -1286,7 +1286,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '건강증명서 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '건강증명서',
+    attachmentLabel: '필리핀 국제 건강증명서',
   },
 
   // ── 필리핀 수출 검역 (왕복 — 귀국 출국 시, 필리핀 전용) ───────────────
@@ -1315,7 +1315,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '수출 허가증·국제 수의건강증명서 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '수출 허가증',
+    attachmentLabel: '필리핀 수출 허가증',
   },
 
   // ── 중국 수출 검역 (왕복 케이스 한정 — 귀국 전) ─────────────────
