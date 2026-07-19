@@ -1314,6 +1314,40 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // 발급 방법·장소는 도시별로 달라(해관 온라인 신청 互联网+海关 + 현장검역) 문구는 단순화 —
   // 베이징·상하이는 지정 동물병원(베이징 观赏动物医院·상하이 申浦动物医院) 경유. 병원 링크는 확정 후.
   // cn.export 검증 룰 미작성(추후).
+  // ── 대만 수출 검역 (왕복 — 귀국 전) ────────────────────────────────────
+  // 이름은 대만 용어를 따른다: 절차 = 輸出檢疫, 서류 = 輸出檢疫證明書(Exported Animal
+  // Quarantine Certificate). EU 처럼 '귀국 서류 준비'로 부르지 않는 이유 — EU 는 검역 자체가
+  // 없고 서류에 고정 명칭도 없어 그렇게 부른 것이고, 대만은 둘 다 있다.
+  //
+  // 단 **필수는 아니다**. 한국은 입국 시 수출국 정부 검역증명서를 요구하지만 한국 출국 때 받은
+  // 대한민국 수출 검역증명서로 갈음되고, 대만은 자국 출국에 검역을 강제하지 않는다
+  // (APHIA: 「輸入國要求檢附我國動物檢疫證明書」— 수입국이 요구할 때만).
+  // 그래서 설명문은 EU(eu-export-cert)와 같은 **대체서류 안내** 형식으로 쓴다.
+  // 판단 규칙 상세는 메모리 project_return_export_quarantine_rule.
+  {
+    id: 'tw-export-quarantine',
+    category: 'document',
+    title: '대만 수출 검역',
+    shortLabel: '수출',
+    description:
+      '한국에 다시 입국하려면 출발하는 나라의 정부가 인증한 한국 입국용 검역증명서가 필요해요.\n대만 검역청(APHIA) 분서·검역참에 반려동물을 데리고 방문해 수출 검역을 받으면 수출검역증명서(輸出檢疫證明書)가 발급돼요. 출국 1주일 이내에 처리하고, 미리 예약하는 것이 좋아요.\n\n다음 경우엔 새로 받지 않아도 돼요.\n한국 출국 때 받은 대한민국 수출 검역증명서로 대신할 수 있어요. (마이크로칩 번호가 있고, 광견병 항체 채혈일로부터 24개월 이내여야 해요.)',
+    doneSummary: '귀국 서류를 준비했어요.',
+    cardLine: '귀국 서류를 준비하세요.',
+    applicability: { destinations: ['taiwan'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:tw_export_quarantine_date',
+    inputs: [
+      {
+        key: 'tw_export_quarantine_date',
+        label: '준비 완료일',
+        type: 'date',
+        helpText: '한국 입국용 서류를 모두 준비한 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '수출검역증명서 등 서류 사본을 사진·PDF로 보관하세요.',
+  },
+
   {
     id: 'cn-export-quarantine',
     category: 'document',
