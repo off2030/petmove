@@ -148,7 +148,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'import-permit': {
       order: 43,
       description:
-        '대만 수입허가증(Import Permit) 신청을 하세요.\n\n도착 120일 전까지 온라인으로 신청하세요.\n도착 20일 전까지 신청할 수도 있지만, 이 경우 7일간 격리를 거쳐야 해요.',
+        '대만 수입 허가증을 신청하세요.\n\n도착 120일 전까지 온라인으로 신청하세요.\n도착 20일 전까지 신청할 수 있지만, 이 경우 대만 도착 후 7일간 지정 시설에서 격리돼요.',
       doneSummary: '대만 수입허가증을 받았어요.',
       cardLine: '대만 수입허가증 신청을 하세요.',
       deadline: { anchor: 'departure', daysBefore: 120 },
