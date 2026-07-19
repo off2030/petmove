@@ -102,7 +102,7 @@ export function validateJpEntryDate(v: string, ctx: DateRuleContext): string | n
   const latestTiter = titerDates[titerDates.length - 1]
   const earliest = addDays(latestTiter, 180)
   if (earliest && v < earliest) {
-    return `검사일로부터 180일 후 ${fmt(earliest)}에 일본에 입국할 수 있어요.`
+    return `검사일로부터 180일 후인 ${fmt(earliest)}에 일본에 입국할 수 있어요.`
   }
   return null
 }
@@ -171,7 +171,7 @@ export function validateTwEntryDate(v: string, ctx: DateRuleContext): string | n
   const latestTiter = titerDates[titerDates.length - 1]
   const earliest = addDays(latestTiter, 90)
   if (earliest && v < earliest) {
-    return `검사일로부터 90일 후 ${fmt(earliest)}에 대만에 입국할 수 있어요.`
+    return `검사일로부터 90일 후인 ${fmt(earliest)}에 대만에 입국할 수 있어요.`
   }
   return null
 }
@@ -346,7 +346,7 @@ export function validateEuTiterAfterVaccine(
   if (daysBetween(latest.date, titerDate) < 30) {
     const earliest = addDays(latest.date, 30)
     return earliest
-      ? `접종일로부터 30일 후 ${fmt(earliest)}에 광견병 항체 검사를 받을 수 있어요.`
+      ? `접종일로부터 30일 후인 ${fmt(earliest)}에 광견병 항체 검사를 받을 수 있어요.`
       : '광견병 항체 검사는 백신 접종일로부터 30일이 지난 후에 받아야 해요.'
   }
   return null
@@ -451,7 +451,7 @@ export function validateEuEntryDate(v: string, ctx: DateRuleContext): string | n
   const earliestTiter = titerDates[0]
   const earliestEntry = addMonths(earliestTiter, 3)
   return earliestEntry
-    ? `검사일로부터 3개월 후 ${fmt(earliestEntry)}에 입국할 수 있어요.`
+    ? `검사일로부터 3개월 후인 ${fmt(earliestEntry)}에 입국할 수 있어요.`
     : '광견병 항체 검사일로부터 3개월이 지나면 입국할 수 있어요.'
 }
 
@@ -505,7 +505,7 @@ export function validateTwImportPermitLeadTime(
   if (opts?.subject === 'departure') {
     const earliest = addDays(filed, 20)
     return earliest
-      ? `수입 허가 신청일로부터 20일 후 ${fmt(earliest)}에 대만에 입국할 수 있어요.`
+      ? `수입 허가 신청일로부터 20일 후인 ${fmt(earliest)}에 대만에 입국할 수 있어요.`
       : '수입 허가 신청일로부터 20일이 지나야 대만에 입국할 수 있어요.'
   }
   return '수입 허가는 출국 20일 전까지 신청할 수 있어요. 날짜를 확인하세요.'
