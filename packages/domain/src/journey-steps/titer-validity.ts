@@ -25,6 +25,20 @@ export const TITER_ENTRY_VALIDITY_MONTHS: Record<string, number | null> = Object
 export const KR_RETURN_TITER_VALIDITY_MONTHS = 24
 
 /**
+ * '추가 검사'를 **별도 카드**로 두는 목적지 — 그 외에는 본 검사 카드 한 장에 목록으로 넣는다.
+ *
+ * 광견병 백신과 같은 모델이다: 회차마다 규칙·마감이 다른 곳(일본·대만)만 카드를 나누고,
+ * 같은 규칙의 단순 누적이면 카드 한 장에 목록(1회 접종국 백신과 동일).
+ *
+ * 이 명단 밖 목적지는 예전에 **본 카드가 1건(index 0)만 편집**해서 재검사를 넣으면 이전
+ * 기록을 조용히 덮어썼다 — 데이터는 배열인데 입력 경로만 1건이었다(2026-07-19 수정).
+ *
+ * catalog 의 rabies-titer-extra applicability 와 어긋나면 안 되므로 하드코딩하지 말고
+ * 이 상수를 쓴다.
+ */
+export const TITER_EXTRA_CARD_DESTINATIONS: readonly string[] = ['japan', 'taiwan']
+
+/**
  * 목적지 입국용 항체검사 만료일 — 카드(추가 검사 노출·문구)가 쓰는 단일 출처.
  *
  * 예전엔 카드가 `addYears(채혈일, 2)`로 **2년을 하드코딩**했다. 일본(24개월)에만 맞고

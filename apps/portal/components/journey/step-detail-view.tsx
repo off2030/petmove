@@ -32,6 +32,7 @@ import {
   validateNoAdvanceNoticeDate,
   EU_ENTRY_FAMILY,
   SINGLE_DOSE_RABIES_DESTINATIONS,
+  TITER_EXTRA_CARD_DESTINATIONS,
   RABIES_ONE_YEAR_VALIDITY_DESTINATIONS,
   TITER_REQUIRED_FOR_ENTRY_DESTINATIONS,
   validateTiterAfterBooster,
@@ -186,6 +187,11 @@ export function StepDetailView({
   const rabiesIndex = isRabies2 ? 1 : 0
   const isTiter = step.id === 'rabies-titer'
   const isTiterExtra = step.id === 'rabies-titer-extra'
+  // 추가 검사를 별도 카드로 두지 않는 목적지(일본·대만 외)는 본 검사 카드가 목록을 통째로
+  // 다룬다 — 1회 접종국 광견병 카드(isRabiesSingleCard)와 같은 모델. 예전엔 본 카드가
+  // rabies_titer_records[0] 한 칸만 편집해서 재검사를 넣으면 이전 기록이 사라졌다.
+  const isTiterSingleCard =
+    isTiter && !!destinationKey && !TITER_EXTRA_CARD_DESTINATIONS.includes(destinationKey)
   const isFlight = step.id === 'flight-purchase'
   const isAdvanceNotification = step.id === 'advance-notification'
   const isVetVisit = step.id === 'vet-visit'
@@ -288,7 +294,9 @@ export function StepDetailView({
   const [titerForm, setTiterForm] = useState<TiterForm>(savedTiterForm)
 
   // 광견병 추가 항체 검사(2회차+) — 빈 상태에서도 카드 1장이 보이도록 최소 1장 유지.
-  const savedTiterExtra = readTiterExtraEntries(caseRow?.data)
+  const savedTiterExtra = isTiterSingleCard
+    ? readTiterAllEntries(caseRow?.data)
+    : readTiterExtraEntries(caseRow?.data)
   const [titerExtra, setTiterExtra] = useState<TiterExtraEntry[]>(
     savedTiterExtra.length === 0 ? [makeEmptyTiterExtra()] : savedTiterExtra,
   )
@@ -408,11 +416,12 @@ export function StepDetailView({
     !rabiesExtraEqual(rabiesExtra.filter(vaccineEntryFilled), savedRabiesExtra.filter(vaccineEntryFilled))
   const titerDirty =
     isTiter &&
+    !isTiterSingleCard &&
     (titerForm.date !== savedTiterForm.date ||
       titerForm.lab !== savedTiterForm.lab ||
       titerForm.value !== savedTiterForm.value)
   const titerExtraDirty =
-    isTiterExtra &&
+    (isTiterExtra || isTiterSingleCard) &&
     !titerExtraEqual(titerExtra.filter(titerEntryFilled), savedTiterExtra.filter(titerEntryFilled))
   const flightDirty = isFlight && !flightFormEqual(flightForm, savedFlightForm)
   const advanceDirty = isAdvanceNotification && advanceDate !== savedAdvanceDate
@@ -595,13 +604,23 @@ export function StepDetailView({
     if (!titerDirty) setTiterForm(readTiterForm(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
+  // 의존성을 caseRow.data 객체 정체성이 아니라 **항체 기록의 값**으로 잡는다.
+  // 정체성으로 두면 매 렌더마다 effect 가 돌아, 방금 '+ 검사 기록 추가'로 만든 빈 칸이
+  // (아직 dirty 가 아니라서) 즉시 지워진다 — 화면상 버튼이 안 먹는 것처럼 보였다.
+  const titerRecordsKey = JSON.stringify(
+    (caseRow?.data as Record<string, unknown> | undefined)?.rabies_titer_records ?? null,
+  )
   useEffect(() => {
     if (!titerExtraDirty) {
-      const next = readTiterExtraEntries(caseRow?.data)
+      // 단일 카드 목적지는 1회차(index 0)도 이 목록 소관 — 초기값과 같은 리더를 써야 한다.
+      // (예전엔 여기서만 readTiterExtraEntries 를 써서 저장된 1회차가 화면에서 지워졌다.)
+      const next = isTiterSingleCard
+        ? readTiterAllEntries(caseRow?.data)
+        : readTiterExtraEntries(caseRow?.data)
       setTiterExtra(next.length === 0 ? [makeEmptyTiterExtra()] : next)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseRow?.data])
+  }, [titerRecordsKey])
   useEffect(() => {
     // 출발일은 departure_date 컬럼 — data 만 넘기면 ''로 초기화돼 저장 직후 출발일이 사라진다.
     if (!flightDirty) setFlightForm(readFlightForm(caseRow?.data, caseRow?.departure_date))
@@ -908,7 +927,9 @@ export function StepDetailView({
       }
       return null
     }
-    if (isTiter) {
+    // 단일 카드 목적지는 아래 목록 분기가 검증한다 — 여기서 옛 단일 폼(titerForm)을 보면
+    // 화면에 없는 값으로 저장이 막힌다(2026-07-19: 목록 저장이 통째로 거부되던 원인).
+    if (isTiter && !isTiterSingleCard) {
       // 중국 — 항체검사는 2차 접종 후에 해야 한다(카드 문구와 짝). 2차 접종이 없는데 채혈일을
       // 넣으면 차단해 2차를 먼저 입력하게 한다. (2차가 있으면 아래 validateTiterDate 가 '채혈 ≥ 2차'를 막음.)
       if (destinationKey === 'china' && titerForm.date.trim()) {
@@ -949,12 +970,24 @@ export function StepDetailView({
       // 만료된 과거 검사는 사실 데이터로 입력 허용 — 갱신 여부는 추가 검사/접종 step 의 검증과
       // procedure-check 주의(만료 후 추가 접종/검사 안내)가 표면화한다.
       // 4번째 인자 = 일본(1·2차 모델)에서만 '1차<칩 → 채혈=2차' 룰 적용.
-      return validateTiterDate(caseRow?.data, titerForm.date, true, destinationKey === 'japan')
+      return validateTiterDate(
+        caseRow?.data,
+        titerForm.date,
+        true,
+        destinationKey === 'japan',
+        !destinationKey || !TITER_REQUIRED_FOR_ENTRY_DESTINATIONS.includes(destinationKey),
+      )
     }
-    if (isTiterExtra) {
+    if (isTiterExtra || isTiterSingleCard) {
       for (const entry of titerExtra) {
         if (!entry.date) continue
-        const err = validateTiterDate(caseRow?.data, entry.date, false)
+        const err = validateTiterDate(
+          caseRow?.data,
+          entry.date,
+          false,
+          destinationKey === 'japan',
+          !destinationKey || !TITER_REQUIRED_FOR_ENTRY_DESTINATIONS.includes(destinationKey),
+        )
         if (err) return `채혈일 ${entry.date}: ${err}`
       }
       return null
@@ -1255,7 +1288,7 @@ export function StepDetailView({
           setError(res.error)
         }
       })
-    } else if (isTiter) {
+    } else if (isTiter && !isTiterSingleCard) {
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -1274,7 +1307,7 @@ export function StepDetailView({
           setError(res.error)
         }
       })
-    } else if (isTiterExtra) {
+    } else if (isTiterExtra || isTiterSingleCard) {
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -1283,10 +1316,17 @@ export function StepDetailView({
           lab: e.lab || null,
           value: e.value || null,
         }))
-        const res = await updateTiterExtraEntries(caseId, sendEntries)
+        // 단일 카드 목적지는 index 0 부터가 이 카드 소관.
+        const res = await updateTiterExtraEntries(
+          caseId,
+          sendEntries,
+          isTiterSingleCard ? 0 : 1,
+        )
         if (res.ok) {
           updateCase(res.value)
-          const next = readTiterExtraEntries(res.value.data)
+          const next = isTiterSingleCard
+            ? readTiterAllEntries(res.value.data)
+            : readTiterExtraEntries(res.value.data)
           setTiterExtra(next.length === 0 ? [makeEmptyTiterExtra()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
@@ -1730,14 +1770,14 @@ export function StepDetailView({
   //  - 채혈일 입력(오늘 이하) + 미완료 = '검사 진행 중'. 하단 저장 버튼이 titerCompleteMode
   //    로 '완료' 전환 → 결과 확인 플래그 set. (결과값을 직접 입력해 저장해도 done.)
   const isTiterInProgress =
-    isTiter && savedTiterForm.date.length >= 10 && savedTiterForm.date <= todayStr && !done
+    isTiter && !isTiterSingleCard && savedTiterForm.date.length >= 10 && savedTiterForm.date <= todayStr && !done
   // 추가 검사도 1회차와 동일 2단계 — 저장된 최신 추가 채혈일이 도래했는데 미완료면 '진행 중'.
   const savedTiterExtraLatestDate = savedTiterExtra.reduce<string>(
     (m, e) => (typeof e.date === 'string' && e.date.length >= 10 && e.date > m ? e.date : m),
     '',
   )
   const isTiterExtraInProgress =
-    isTiterExtra &&
+    (isTiterExtra || isTiterSingleCard) &&
     savedTiterExtraLatestDate.length >= 10 &&
     savedTiterExtraLatestDate <= todayStr &&
     !done
@@ -2275,12 +2315,13 @@ export function StepDetailView({
             />
           </section>
         )}
-        {isTiterExtra && (
+        {(isTiterExtra || isTiterSingleCard) && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <TiterExtraInputs
               entries={titerExtra}
               destinationKey={destinationKey}
+              startRound={isTiterSingleCard ? 1 : 2}
               onChange={(idx, key, next) =>
                 setTiterExtra((prev) =>
                   prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)),
@@ -2296,7 +2337,7 @@ export function StepDetailView({
             />
           </section>
         )}
-        {isTiter && (
+        {isTiter && !isTiterSingleCard && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <TiterInputs
@@ -3117,6 +3158,27 @@ function makeEmptyTiterExtra(): TiterExtraEntry {
  * case.data.rabies_titer_records 의 index 1 이상(2회차+)을 TiterExtraEntry[] 로 읽는다.
  * 비관리 키(received_date 등) 는 무시 — 서버 액션이 머지로 보존.
  */
+/**
+ * rabies_titer_records 를 **index 0 부터 전부** 읽는다 — 추가 검사 카드가 없는 목적지에서
+ * 본 검사 카드가 목록을 통째로 다룰 때 쓴다(readTiterExtraEntries 는 1회차를 건너뛴다).
+ */
+function readTiterAllEntries(
+  data: Record<string, unknown> | null | undefined,
+): TiterExtraEntry[] {
+  if (!data) return []
+  const arr = data['rabies_titer_records']
+  if (!Array.isArray(arr)) return []
+  const str = (v: unknown) => (typeof v === 'string' ? v : '')
+  const out: TiterExtraEntry[] = []
+  for (const rec of arr) {
+    if (rec && typeof rec === 'object') {
+      const r = rec as Record<string, unknown>
+      out.push({ date: str(r.date), lab: str(r.lab), value: str(r.value) })
+    }
+  }
+  return out
+}
+
 function readTiterExtraEntries(
   data: Record<string, unknown> | null | undefined,
 ): TiterExtraEntry[] {
@@ -3167,8 +3229,17 @@ function validateTiterDate(
   isFirstTiter: boolean,
   /** 1·2차 모델(일본)인지 — '1차<칩 → 채혈=2차' 룰은 일본 전용. 1회 접종국은 1차<칩이 입력 단계에서 차단됨. */
   isTwoShotModel = false,
+  /**
+   * 접종과의 연계 규칙(채혈 ≥ 접종일 · 부스터 chain)을 건너뛴다.
+   *
+   * 태국·필리핀·베트남은 입국에 항체 검사가 불필요하고 카드가 뜨는 건 **한국 귀국용**이다.
+   * 그 검사는 광견병 접종 여부·순서와 무관하게 결과만 있으면 된다(2026-07-18 사용자 확인).
+   * 호출부에 가드가 있어도 이 함수가 같은 규칙을 다시 적용해 가드가 무력화되던 것을 막는다.
+   */
+  skipVaccineLinkage = false,
 ): string | null {
   if (!date) return null
+  if (skipVaccineLinkage) return null
   const r2 = readRabiesEntryForm(data, 1)
   if (!r2.date) return null
   const r1 = readRabiesEntryForm(data, 0)

@@ -64,7 +64,7 @@ function formatKoreanTime(hhmm: string): string {
  * 시안 단계 (Phase 11.0.7+): 13개 시드. 입력 폼은 단순 모양만 — 실제 렌더는 portal 측
  * 컴포넌트에서 type 별로 분기.
  */
-import { titerEntryValidUntil } from './titer-validity'
+import { titerEntryValidUntil, TITER_EXTRA_CARD_DESTINATIONS } from './titer-validity'
 
 export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // ── 1. 펫무브 등록 ──────────────────────────────────────────────────────
@@ -498,7 +498,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 받아서 그 검사로 나가면 되고 연장이라는 개념 자체가 없다 — 관리할 타이밍이 없으니
     // 이 카드도 필요 없다(2026-07-19 사용자 확인). 유효기간 숫자만 보고 넣지 말 것.
     // 태국·필리핀·베트남은 입국에 항체가 불필요(귀국용만), EU 패밀리는 체인 유지 시 무기한.
-    applicability: { destinations: ['japan', 'taiwan'], species: 'all', tripType: 'all' },
+    applicability: {
+      destinations: [...TITER_EXTRA_CARD_DESTINATIONS],
+      species: 'all',
+      tripType: 'all',
+    },
     // 2회+ 입력됐거나 입국일+30일 안에 항체 유효기간 만료(재검사 필요) 일 때 노출.
     appliesWhen: 'titer-extra-applicable',
     order: 41,

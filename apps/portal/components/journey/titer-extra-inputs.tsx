@@ -32,6 +32,7 @@ export function TiterExtraInputs({
   onRemove,
   onAdd,
   destinationKey,
+  startRound = 2,
 }: {
   entries: TiterExtraEntry[]
   onChange: (index: number, key: keyof TiterExtraEntry, next: string) => void
@@ -39,6 +40,11 @@ export function TiterExtraInputs({
   onAdd: () => void
   /** 목적지(정규화 키) — 검사기관 선택지를 목적지별로 분기. */
   destinationKey?: string | null
+  /**
+   * 첫 카드의 회차 번호. 기본 2 — '추가 검사' 별도 카드는 2회차부터 담기 때문.
+   * 본 검사 카드가 목록을 통째로 다루는 목적지(일본·대만 외)는 1을 넘긴다.
+   */
+  startRound?: number
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -46,7 +52,7 @@ export function TiterExtraInputs({
         <ExtraCard
           key={i}
           entry={entry}
-          roundNumber={i + 2}
+          roundNumber={i + startRound}
           destinationKey={destinationKey}
           onChange={(key, next) => onChange(i, key, next)}
           onRemove={() => onRemove(i)}
@@ -140,7 +146,8 @@ function ExtraCard({
         }}
       >
         <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>
-          광견병 항체 검사({roundNumber}차)
+          {/* 1차는 차수를 붙이지 않는다 — 광견병 백신 목록과 같은 규칙(rabies-extra-inputs). */}
+          {roundNumber === 1 ? '광견병 항체 검사' : `광견병 항체 검사 ${roundNumber}차`}
         </div>
         <button
           type="button"

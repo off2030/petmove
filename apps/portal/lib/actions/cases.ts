@@ -795,6 +795,13 @@ function stripTiterUnit(value: string): string {
 export async function updateTiterExtraEntries(
   caseId: string,
   entries: Array<{ date: string | null; lab: string | null; value: string | null }>,
+  /**
+   * entries 가 배열의 몇 번째부터인가.
+   *  - 1 (기본): '추가 검사' 별도 카드 — index 0(1회차)은 본 카드 소관이라 보존한다.
+   *  - 0: 본 검사 카드가 목록을 통째로 다루는 목적지(일본·대만 외). 예전엔 이 경로가 없어
+   *       본 카드가 index 0 한 칸만 편집했고, 재검사를 넣으면 이전 기록을 덮어썼다.
+   */
+  startIndex: 0 | 1 = 1,
 ): Promise<Result<CaseRow>> {
   try {
     for (const e of entries) {
@@ -818,8 +825,8 @@ export async function updateTiterExtraEntries(
     const arr = Array.isArray(prev.rabies_titer_records)
       ? [...(prev.rabies_titer_records as unknown[])]
       : []
-    const preserved = arr.slice(0, 1)
-    const prevExtras = arr.slice(1)
+    const preserved = arr.slice(0, startIndex)
+    const prevExtras = arr.slice(startIndex)
 
     const newExtras: Record<string, unknown>[] = []
     for (let i = 0; i < entries.length; i++) {
@@ -880,6 +887,20 @@ export async function updateTiterExtraEntries(
     }
     if (latestExtraDate(titerNext) !== latestExtraDate(arr)) {
       delete nextData.titer_extra_result_confirmed
+    }
+    // 본 카드가 목록을 통째로 다루는 경우(startIndex 0) 1회차도 여기서 바뀔 수 있다 —
+    // 채혈일이 달라지면 이전 검사의 '결과 확인 완료'가 새 검사에 그대로 남지 않도록 해제.
+    // (별도 카드 경로에서는 index 0 을 건드리지 않으므로 해당 없음.)
+    if (startIndex === 0) {
+      const firstDate = (rows: unknown[]): string => {
+        const r = rows[0]
+        return r && typeof r === 'object' && typeof (r as Record<string, unknown>).date === 'string'
+          ? ((r as Record<string, unknown>).date as string)
+          : ''
+      }
+      if (firstDate(titerNext) !== firstDate(arr)) {
+        delete nextData.rabies_titer_result_confirmed
+      }
     }
 
     const { data: updated, error } = await admin
