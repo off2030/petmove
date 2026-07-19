@@ -285,4 +285,50 @@ export const TW_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `대만 수입검역일(${raw}) 입국 이후.` }
     },
   },
+  // ── 귀국 전 현지 수출 검역 ──
+  // 태국(th)·필리핀(ph) 룰과 같은 모양 — 나라 이름과 필드명만 다르다. 검증 내용은
+  // "대만에 있는 동안 받았는가"라는 물리적 제약이라 나라별 규정 조사가 필요 없다.
+  //
+  // 대만 수출 검역은 **필수가 아니다**(한국 수출검역증으로 갈음 — 카드 설명 참고).
+  // 그래도 이 룰은 필요하다: '받아야 한다'가 아니라 '받았다고 입력했다면 날짜가 말이
+  // 되는가'를 보기 때문. 안 받은 사람은 날짜를 안 넣으므로 SKIP 된다.
+  {
+    id: 'tw.export-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '대만 수출 검역일',
+    description: '대만 수출 검역일은 대만 입국일 이후·한국 귀국일 이전이어야 함.',
+    severity: 'warning',
+    addedAt: '2026-07-19',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.tw_export_quarantine_date === 'string' ? data.tw_export_quarantine_date.slice(0, 10) : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      const ret =
+        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
+          ? ctx.data.return_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '대만 수출 검역일은 대만 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['tw_export_quarantine_date'],
+        }
+      }
+      if (ret && raw > ret) {
+        return {
+          ok: false,
+          message: '대만 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['tw_export_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `대만 수출검역일(${raw}) 대만 체류 구간 내.` }
+    },
+  },
 ]
