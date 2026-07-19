@@ -21,6 +21,7 @@
     "backfill:case-links:apply": "node scripts/backfill-case-customer-links.mjs --apply",
     "lint:checks": "tsx scripts/lint-checks.ts",
     "lint:checks:write": "tsx scripts/lint-checks.ts --write",
+    "lint:validation-wiring": "tsx scripts/lint-validation-wiring.ts",
     "copy:outliers": "tsx scripts/copy-outliers.ts",
     "copy:variants": "tsx scripts/copy-variants.ts"
   },

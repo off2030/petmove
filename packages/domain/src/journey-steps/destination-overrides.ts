@@ -101,6 +101,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       helpText: '중국 도착 후 수입 검역을 받은 날짜',
       attachmentHint: '수입 검역 확인 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '중국 수입 검역 서류',
+      validationIds: ['cn.import-quarantine-date-valid'],
     }),
   },
   // ── 대만 (APHIA 動植物防疫檢疫署) ─────────────────────────────────────
@@ -175,6 +176,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       helpText: '대만 도착 후 수입 검역을 받은 날짜',
       attachmentHint: '수입 검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '대만 수입 검역 서류',
+      validationIds: ['tw.import-quarantine-date-valid'],
     }),
   },
   // 일본을 뼈대로 — 'departure' 공용 카드를 그 나라 '[국가] 수입 검역' 도착 카드로 교체.
@@ -462,7 +464,15 @@ function importQuarantineCard(opts: {
   helpText: string
   attachmentHint: string
   attachmentLabel?: string
-  validationIds?: string[]
+  /**
+   * **필수** — 그 나라 수입검역일 룰(`{국가}.import-quarantine-date-valid`).
+   *
+   * 선택으로 두었더니 대만·중국이 안 넘겨서 base 카드의 `jp.import-quarantine-date-valid`
+   * 를 그대로 물려받았고, 룰의 country 가 japan 이라 두 나라에선 검증이 아예 돌지 않았다
+   * (2026-07-19 발견). 화면에 안 보이는 배선이라 눈으로는 못 잡는다 — 타입으로 강제한다.
+   * 교차 국가 지목은 `pnpm lint:validation-wiring` 이 전수 검사한다.
+   */
+  validationIds: string[]
 }): Partial<StepDefinition> {
   const card: Partial<StepDefinition> = {
     title: `${opts.label} 수입 검역`,
@@ -507,7 +517,8 @@ function seaPermitOverrides(opts: {
     description: string
     helpText: string
     attachmentHint: string
-    validationIds?: string[]
+    /** 필수 — importQuarantineCard 와 같은 이유(그 나라 룰을 반드시 지목). */
+    validationIds: string[]
   }
   /** 나라 고유 추가 카드 오버라이드(필리핀 internal-parasite 등). */
   extra?: Partial<Record<string, Partial<StepDefinition>>>

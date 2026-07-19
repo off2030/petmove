@@ -1,5 +1,5 @@
 import type { ProcedureCheck } from './types'
-import { validateTiterAfterBooster, validateTiterWithinChain } from '../journey-steps/date-rules'
+import { buildDateRuleContext, validateTiterAfterBooster, validateTiterWithinChain } from '../journey-steps/date-rules'
 import { findRabiesChainBreak } from '../journey-steps/rabies-chain'
 import {
   addDays,
@@ -408,6 +408,38 @@ export const CN_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: '동일 보호자 다중 등록 없음.' }
+    },
+  },
+  // ── 도착 수입 검역 ──
+  // 카드(journey-steps 'departure')가 이 룰을 validationIds 로 지목한다. 예전엔 base 카드의
+  // jp.import-quarantine-date-valid 를 그대로 물려받아, 중국 케이스에선 검증이 아예 돌지
+  // 않았다(룰의 country 가 japan 이라 실행 대상에서 빠짐). 태국·필리핀·EU 와 같은 모양으로 추가.
+  {
+    id: 'cn.import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '중국 수입 검역일',
+    description: '중국 수입 검역일은 중국 입국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-07-19',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.cn_import_quarantine_date === 'string' ? data.cn_import_quarantine_date.slice(0, 10) : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '중국 수입 검역일은 중국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['cn_import_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `중국 수입검역일(${raw}) 입국 이후.` }
     },
   },
 ]
