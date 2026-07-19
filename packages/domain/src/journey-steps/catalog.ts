@@ -1119,7 +1119,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['common.kr-export-quarantine-date-valid'],
     allowAttachments: true,
     attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '동물검역증',
+    // '동물검역증'만으로는 한국 수입검역증·현지 수출검역증과 구분되지 않는다(보관함에서
+    // 이름으로 못 찾음). 서류탭 표기와 같은 '한국 수출 동물검역증'으로 통일.
+    attachmentLabel: '한국 수출 동물검역증',
     links: [
       { url: '/guide/quarantine-stations', label: '동물검역소 위치' },
       { url: 'https://eminwon.qia.go.kr/eminwon/reservation/login/login.do?ref=petmove.co.kr', label: '동물검역 예약' },
