@@ -50,13 +50,10 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/vietnam-01.jpg',
     '/destinations/vietnam-03.jpg',
     '/destinations/vietnam-05.jpg',
-    '/destinations/vietnam-06.jpg',
     '/destinations/vietnam-07.jpg',
     '/destinations/vietnam-08.jpg',
     '/destinations/vietnam-09.jpg',
     '/destinations/vietnam-10.jpg',
-    '/destinations/vietnam-11.jpg',
-    '/destinations/vietnam-13.jpg',
   ],
   대만: [
     // 첫 장 = 타이베이 101 노을(사용자 지정 2026-07-19). 나머지는 파일 순서 유지.
