@@ -243,10 +243,24 @@ export const TW_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['import_permit_application_date', 'departure_date'],
         }
       }
+      // 마감이 2단계라 문구도 2단계 — 조치가 다르기 때문.
+      //  120일 미달: 아직 신청은 되고, 대가는 도착 후 7일 격리(감수 가능).
+      //  20일 미달 : 신청 자체가 안 된다. 입국일을 미루는 것 말고 방법이 없다.
+      // 하나로 두면 20일도 지난 사람에게 "격리는 감수하면 되는" 것처럼 읽힌다.
+      // (카드 배지는 이미 deadline.fallbackDaysBefore 20 으로 전환된다.)
+      if (gap < 20) {
+        return {
+          ok: false,
+          message:
+            '수입허가증 신청 마감(도착 20일 전)이 지났어요. 대만에 입국하려면 입국일을 미뤄야 해요.',
+          offendingPaths: ['import_permit_application_date', 'departure_date'],
+        }
+      }
       if (gap < 120) {
         return {
           ok: false,
-          message: '수입허가증은 도착 120일 전까지 신청해야 격리 없이 입국할 수 있어요.',
+          message:
+            '수입허가증은 도착 120일 전까지 신청해야 격리 없이 입국할 수 있어요. 지금 신청하면 도착 후 7일간 격리돼요.',
           offendingPaths: ['import_permit_application_date', 'departure_date'],
         }
       }
