@@ -445,6 +445,17 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 미래(예정) 채혈은 저장 시 rabies_titer_extra_scheduled 별도 자리로 분리 — 실제 기록에
       // 미래가 남은 옛 데이터만 이 가드에 걸린다(예정 배지는 scenario 가 표시).
       if (latest.date > today) return undefined
+      // 이미 만료 — 과거형으로 알리고 기록 입력을 요청한다(추가 접종 카드와 같은 분기).
+      // 이 줄이 없어서 1년 전에 만료된 건도 "만료돼요"라는 미래형으로 떴다 — 아직 시간이
+      // 남은 것처럼 읽혔다(2026-07-19). 같은 패턴이라고 주석에 적어두고 한 분기를 빠뜨렸다.
+      //
+      // 접종 카드의 '추가 접종을 하지 못한 경우 1차부터 다시'에 해당하는 경고는 붙이지
+      // 않는다 — 일본은 접종 체인이 유지되면 만료 후 재검사로도 대기 없이 입국할 수 있다.
+      // (대만은 만료 후 재검사면 채혈일로부터 180일 재대기 — 확장 시 이 문구를 그대로 쓰면 안 된다.)
+      if (validUntil < today) {
+        const msg = `직전 검사의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 검사 기록을 입력하세요.`
+        return { desc: msg, cardDesc: msg }
+      }
       // 유효기간이 입국일을 덮으면(아직 유효) — 안내 불필요.
       if (entry && validUntil >= entry) return undefined
       // 입국일(항공권)이 아직 없으면 '입국 전 만료'를 단정할 수 없다 — 만료일만 알린다.
