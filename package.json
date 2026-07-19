@@ -22,6 +22,8 @@
     "lint:checks": "tsx scripts/lint-checks.ts",
     "lint:checks:write": "tsx scripts/lint-checks.ts --write",
     "lint:validation-wiring": "tsx scripts/lint-validation-wiring.ts",
+    "lint:behavior": "tsx scripts/lint-behavior.ts",
+    "lint:behavior:write": "tsx scripts/lint-behavior.ts --write",
     "copy:outliers": "tsx scripts/copy-outliers.ts",
     "copy:variants": "tsx scripts/copy-variants.ts"
   },
