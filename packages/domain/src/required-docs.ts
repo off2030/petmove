@@ -410,16 +410,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
         '검사를 의뢰한 동물병원에서 발급받아요.\n\n베트남 입국에는 필요 없지만 한국 귀국 때 반드시 원본이 필요해요. 유효기간은 2년이에요.\n\n베트남에는 검사 기관이 없으니 출국 전에 미리 받으세요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'rabies-titer',
     },
-    {
-      id: 'vn-advance-notice-doc',
-      name: '베트남 검역 신청서(Form 19)',
-      source: '베트남 동물검역국(DAH)',
-      kind: 'step',
-      stepRef: 'vn-advance-notice',
-      description:
-        '베트남 동물검역국(DAH)에 제출하는 검역 신청서예요.\n\n출국 7~10일 전까지 제출하고, 처리에 5영업일이 걸려요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
-      previewStepId: 'vn-advance-notice',
-    },
+
     // 접종 및 건강증명서(별지 제25호) — 한국 공식 양식(전 목적지 공통).
     KR_FORM25_VACCINATION_HEALTH_CERT,
     {

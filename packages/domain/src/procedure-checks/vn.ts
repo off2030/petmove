@@ -36,8 +36,18 @@ import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge 
  *      접종해도 입력이 막힌다(2026-07-19 수정). 판정은 date-rules 의 meetsCalendarAge 단일 함수.
  *  - **3년 라이선스 백신 불인정** (DAH 운용 + USDA APHIS + 미 대사관 일치 — Circular 25 본문 1차 명문 미확인)
  *  - 건강증명서 ≤ 출국 10일 이내 (보수 ≤9). 한국 APQA 정부수의관 발급
- *  - DAH Form 19 (Appendix V) Import Permit: 처리 5근무일, 출국 7-10일 전 신청
  *  - 외국인 최대 2마리 (Circular 25 제10조)
+ *
+ * ⚠️ **사전 신고·수입허가 없음** (2026-07-19 원문 확인으로 정정)
+ *   예전 헤더는 "DAH Form 19 Import Permit: 출국 7-10일 전 신청"이라 적혀 있었고 그에 따라
+ *   '검역 신청' 카드까지 만들었으나, Circular 25 제10조 원문은 그 반대다:
+ *     "The commodity owners shall register the quarantine personally **at the animal quarantine
+ *      body at border gate** when carrying along the animals … No more than 02 units … or
+ *      **carried along upon traveling**"
+ *   → 동반 2마리 이하는 **출국 전 제출이 아니라 도착 공항 검역소에서 현장 등록**한다.
+ *   Form 19 는 정식(상업·임시수입) 절차용 서식이라 여행 동반에는 해당 없음.
+ *   사용자 실무 관찰("검역 신청하고 가는 사람을 본 적 없다")과도 일치.
+ *   → vn-advance-notice 카드·룰·서류·필드 전부 제거. 도착 검역(departure)이 이 절차를 담당.
  *  - Pit Bull, Tosa, Dogo Argentino 등 견종 제한
  *
  * 별도 (시스템 검증 제외):
@@ -284,37 +294,5 @@ export const VN_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `베트남 수입검역일(${raw}) 입국 이후.` }
     },
   },
-  // ── DAH 검역 신청(Form 19) ──
-  // Circular 25: 처리 5근무일. 출국 7~10일 전 제출 권장 — 7일보다 늦으면 처리 전에 출국할 수 있다.
-  // 출국일 자체가 마감이 아니라 '늦으면 위험'이라 blocker 가 아니라 warning.
-  {
-    id: 'vn.advance-notice-7days-before-departure',
-    country: COUNTRY,
-    category: '검역',
-    title: 'DAH 검역 신청은 출국 7일 전까지',
-    description:
-      'DAH 검역 신청서(Form 19) 제출일이 출국 7일 전보다 늦으면 경고. 처리에 5근무일이 걸린다. (Circular 25/2016)',
-    severity: 'warning',
-    addedAt: '2026-07-19',
-    run: ({ caseRow }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const filed =
-        typeof data.vn_advance_notice_date === 'string'
-          ? data.vn_advance_notice_date.slice(0, 10)
-          : ''
-      const dep = readDepartureDate(caseRow)
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed) || !dep) return SKIP
-      const gap = daysBetween(filed, dep)
-      if (gap === null) return SKIP
-      if (gap < 7) {
-        return {
-          ok: false,
-          message:
-            '검역 신청은 출국 7일 전까지 하는 것이 좋아요. 처리에 영업일 기준 5일이 걸려요.',
-          offendingPaths: ['vn_advance_notice_date'],
-        }
-      }
-      return { ok: true, message: `검역 신청(${filed}) → 출국(${dep}): ${gap}일 (7일 이상).` }
-    },
-  },
+
 ]

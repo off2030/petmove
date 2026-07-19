@@ -480,8 +480,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   // ── 베트남 (DAH Cục Thú y) ──────────────────────────────────────────
   // 태국·필리핀 골격(1회 접종 + 항체는 귀국용)이지만 **수입허가가 없다**:
-  //  ①Circular 25 제10조 — 외국인 동반 2마리 이하는 import permit 불요(대신 출국 전
-  //    DAH 에 검역 신청서(Form 19, Appendix V) 제출 → 처리 5근무일)
+  //  ①Circular 25 제10조 — 외국인 동반 2마리 이하는 **사전 절차가 없다**. 수입허가도,
+  //    출국 전 신고도 불요. 원문: "register the quarantine personally at the animal quarantine
+  //    body **at border gate** … carried along upon traveling" → 도착 공항 검역소 현장 등록.
   //  ②광견병 1회, 출국 30일 이상~12개월 이내, 3년 백신 불인정
   //  ③항체검사는 DAH 의무 아님 — 한국 귀국용만(rabiesTiterForReturnOnly)
   //  ④요건 충족 시 무격리, 미충족 시 도착 후 14일
@@ -497,9 +498,6 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     titer: { need: 'return-only' },
     appSupported: true,
     vaccines: ['rabies', 'rabies_titer'],
-    // 사전 검역 신청(Form 19) — 출국 7~10일 전 DAH 제출, 처리 5근무일.
-    // 수입허가(importPermit)가 아니라 도착 통지 성격이라 advanceNotice 로 선언한다.
-    advanceNotice: { label: 'DAH 검역 신청' },
     // 도착 검역 — 요건 충족 시 무격리, 미충족 시 14일.
     importQuarantine: { quarantineDays: 14 },
     rabiesTiterForReturnOnly: true,

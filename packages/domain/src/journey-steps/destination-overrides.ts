@@ -106,7 +106,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   },
   // ── 베트남 (DAH Cục Thú y) ────────────────────────────────────────────
   // 태국·필리핀 골격이지만 수입허가가 없다(Circular 25 제10조 — 2마리 이하 동반 면제).
-  // 대신 출국 전 DAH 검역 신청(vn-advance-notice, order 47). 항체는 한국 귀국용만.
+  // 사전 신고도 없다 — 도착 공항 검역소에서 현장 등록(Circular 25 제10조). 항체는 한국 귀국용만.
   // 규정 상세·출처는 procedure-checks/vn.ts 헤더.
   vietnam: {
     // 1회 접종국 — base 의 '광견병 백신 1차' 대신 '광견병 백신'(대만·태국과 같은 처리).
