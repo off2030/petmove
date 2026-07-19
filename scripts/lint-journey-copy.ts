@@ -40,7 +40,17 @@ const BASE = '__base__'
 const DEST_KEYS = [BASE, ...Object.keys(STEP_DESTINATION_OVERRIDES)]
 
 // 사람이 읽고 git diff 로 추적할 카피 필드만 스냅샷한다.
-const COPY_FIELDS = ['title', 'shortLabel', 'cardLine', 'doneSummary', 'descriptionBySpecies', 'description'] as const
+// links 포함 — 링크 버튼 라벨도 고객이 읽는 문구다. 빠져 있어서 15개 라벨을 한 번에
+// 바꿨는데도 린트가 조용히 통과했다(2026-07-19 발견). URL 도 함께 떠서 링크가 바뀌면 diff 에 남는다.
+const COPY_FIELDS = [
+  'title',
+  'shortLabel',
+  'cardLine',
+  'doneSummary',
+  'descriptionBySpecies',
+  'description',
+  'links',
+] as const
 
 function destLabel(key: string): string {
   if (key === BASE) return '기본 — override 없는 모든 목적지(싱가포르·호주·말레이시아 등) 공용'
@@ -60,6 +70,13 @@ function renderField(name: string, value: unknown): string[] {
   if (name === 'description') {
     const out: string[] = ['  desc:']
     for (const line of String(value).split('\n')) out.push(`      ${line}`)
+    return out
+  }
+  if (name === 'links' && Array.isArray(value)) {
+    const out: string[] = ['  links:']
+    for (const l of value as Array<{ url?: string; label?: string }>) {
+      out.push(`      ${l.label ?? ''}  →  ${l.url ?? ''}`)
+    }
     return out
   }
   const short: Record<string, string> = {

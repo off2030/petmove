@@ -36,7 +36,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       allowAttachments: true,
       attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
       links: [
-        { url: '/guide/japan-airport-quarantine', label: '일본 주요 공항 동물검역소 위치' },
+        { url: '/guide/japan-airport-quarantine', label: '공항 동물검역소 위치' },
       ],
     },
     // 출국 전 임상검사 — 일본은 별지 제25호 외에 FormAC(혹은 RE)도 발급받아야 한다.
@@ -156,7 +156,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentHint: '수입허가증(Import Permit)을 사진·PDF로 보관하세요.',
       attachmentLabel: '수입허가증(Import Permit)',
       links: [
-        { url: 'https://pet-epermit.aphia.gov.tw/index-eng.html', label: '대만 수입허가증 온라인 신청(APHIA)' },
+        { url: 'https://pet-epermit.aphia.gov.tw/index-eng.html', label: '수입 허가 신청(APHIA)' },
       ],
       validationIds: ['tw.import-permit-120days-before-entry'],
     },
@@ -222,8 +222,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentHint: '수입 허가 통지서(R.6)를 사진·PDF로 보관하세요.',
       attachmentLabel: '수입 허가 통지서(R.6)',
       links: [
-        { url: '/forms/R1.1.pdf', label: '수입 허가 신청서(R.1/1) 서식 다운로드' },
-        { url: '/guide/th-aqs-contacts', label: '태국 동물검역소(AQS) 연락처' },
+        { url: '/forms/R1.1.pdf', label: '신청서 내려받기(R.1/1)' },
+        { url: '/guide/th-aqs-contacts', label: '동물검역소 연락처(AQS)' },
       ],
       validationIds: [
         'th.import-permit-9days-before-entry',
@@ -282,7 +282,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       cardLine: '필리핀 수입 허가증(SPSIC)을 신청하세요.',
       deadline: undefined,
       links: [
-        { url: 'https://www.intercommerce.com.ph/login.asp?home=HOME', label: 'Intercommerce 웹사이트' },
+        { url: 'https://www.intercommerce.com.ph/login.asp?home=HOME', label: '수입 허가 신청(Intercommerce)' },
       ],
       attachmentLabel: '수입 허가증(SPSIC)',
       validationIds: ['ph.import-permit-14days-after-vaccines'],
@@ -364,7 +364,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         links: [
           {
             url: 'https://www.gov.uk/export-health-certificates/export-cats-and-dogs-to-south-korea-certificate-3908',
-            label: '영국 공식 안내 웹사이트',
+            label: '건강증명서(EHC 3908) 안내',
           },
         ],
       },
@@ -413,7 +413,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       links: [
         {
           url: 'https://www.blv.admin.ch/blv/en/home/tiere/reisen-mit-heimtieren/hunde-katzen-und-frettchen.html',
-          label: 'FSVO 수입허가 안내·신청서',
+          label: '수입 허가 안내·신청(FSVO)',
         },
       ],
       attachmentLabel: '수입 허가증(FSVO)',

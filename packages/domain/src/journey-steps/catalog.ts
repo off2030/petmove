@@ -578,8 +578,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '허가서를 사진·PDF로 보관하세요.',
     attachmentLabel: '허가서(Approval)',
     links: [
-      { url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O', label: 'NACCS 신청 페이지' },
-      { url: '/guide/jp-quarantine-contacts', label: '일본 동물검역소 연락처' },
+      { url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O', label: '사전 신고 신청(NACCS)' },
+      { url: '/guide/jp-quarantine-contacts', label: '동물검역소 연락처' },
     ],
     validationIds: ['jp.advance-notification-40days-before-entry'],
   },
@@ -612,7 +612,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     links: [
       {
         url: 'http://www.pettravel.gov.ie/pets/dogscatsferrets/outsideeu/',
-        label: '아일랜드 사전 통지 안내(공식)',
+        label: '사전 통지 안내',
       },
     ],
     validationIds: ['eu.ie-advance-notice-24h-before-entry'],
@@ -646,7 +646,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     links: [
       {
         url: 'https://www.mattilsynet.no/en/animals/travelling-with-dogs-cats-and-ferrets-from-third-countries-and-territories-to-norway',
-        label: '노르웨이 사전 통지 안내(공식)',
+        label: '사전 통지 안내(Mattilsynet)',
       },
     ],
     validationIds: ['eu.no-advance-notice-48h-before-entry'],
@@ -679,7 +679,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     links: [
       {
         url: 'https://www.moa.gov.cy/moa/vs/vs.nsf/vs07_en/vs07_en?OpenDocument=',
-        label: '키프로스 사전 통지 안내(공식)',
+        label: '사전 통지 안내',
       },
     ],
     validationIds: ['eu.cy-advance-notice-48h-before-entry'],
@@ -710,7 +710,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     links: [
-      { url: 'https://nldmalta.gov.mt/MaltaPetArrivals/', label: '몰타 사전 통지 포털(공식)' },
+      { url: 'https://nldmalta.gov.mt/MaltaPetArrivals/', label: '사전 통지 신청' },
     ],
     validationIds: ['eu.mt-advance-notice-3days-before-entry'],
   },
@@ -769,8 +769,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'jp_export_quarantine_time', label: '예약시간', type: 'text', helpText: 'HH:mm 형식 (예: 14:30)' },
     ],
     links: [
-      { url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O', label: 'NACCS 신청 페이지' },
-      { url: '/guide/jp-quarantine-contacts', label: '일본 동물검역소 연락처' },
+      { url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O', label: '사전 신고 신청(NACCS)' },
+      { url: '/guide/jp-quarantine-contacts', label: '동물검역소 연락처' },
     ],
     // 입력 시 server action(updateJpExportQuarantineFields)이 차단하고,
     // 같은 함수를 매 렌더 재실행하는 jp.export-quarantine-reservation-date-valid 가
