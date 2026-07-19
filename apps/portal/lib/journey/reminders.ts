@@ -100,6 +100,30 @@ const DERIVED_REMINDER_EXCLUDE: Record<string, string> = {
   eu_import_quarantine_date: 'EU 입국 검사는 도착 시 자동 — 전날 알림 불필요',
 }
 
+/**
+ * **신청·신고 계열은 D-1·당일 알림 대상이 아니다** (설계 — 누락 아님).
+ *
+ * 이 파일 최초 커밋(51d6a474)의 대상이 "마이크로칩·백신·검사·구충·출국 전 임상검사·검역"
+ * 이었고 신청·신고는 처음부터 선 밖이었다. 근거가 코드에 없어서 "왜 수입 허가 신청일엔
+ * 알림이 없지? 빠뜨린 건가?"를 두 번 조사하게 됐다(2026-07-19). 판단을 여기 남긴다:
+ *
+ *   검역·검진 — 그날 **어딘가에 가야** 하는 일 → 전날 알림이 실질적으로 유용
+ *   신청·신고 — 그날 **온라인으로 넣겠다**는 계획 → 하루 밀려도 무방
+ *
+ * 대신 **마감 알림(scope C)**이 이 계열을 담당한다 — 정말 놓치면 안 되는 건 신청 예정일이
+ * 아니라 마감이기 때문(대만 수입허가 127·120·27·20일 전, 일본 사전신고 47·40일 전 등).
+ *
+ * 해당 필드: import_permit_application_date, advance_notification_date,
+ *           jp_export_quarantine_application_date
+ * (EU 사전 통지 4곳은 `quarantine:` 모델이라 알림이 붙는데, 그건 '통지 시각'이 곧 마감에
+ *  붙어 있어 성격이 다르다 — 도착 24·48시간 전이라 예정일 자체가 마감이다.)
+ */
+const APPLICATION_DATE_FIELDS_NO_REMINDER = [
+  'import_permit_application_date',
+  'advance_notification_date',
+  'jp_export_quarantine_application_date',
+] as const
+
 /** 카드가 `done: 'quarantine:<필드>'` 로 선언한 예약 일정 → 필드·라벨 자동 수집. */
 function derivedScopedDateFields(): Array<{ key: string; label: string }> {
   const out = new Map<string, string>()
@@ -110,6 +134,8 @@ function derivedScopedDateFields(): Array<{ key: string; label: string }> {
       if (!done.startsWith('quarantine:')) continue
       const field = done.slice('quarantine:'.length)
       if (field in DERIVED_REMINDER_EXCLUDE) continue
+      // 신청·신고 날짜는 모델이 바뀌어도 계속 제외 — 위 상수 주석에 근거.
+      if ((APPLICATION_DATE_FIELDS_NO_REMINDER as readonly string[]).includes(field)) continue
       if (!out.has(field)) out.set(field, resolved.title)
     }
   }
