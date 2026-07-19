@@ -817,7 +817,10 @@ export function StepDetailView({
       if (first?.date) {
         const minAgeDays =
           step.earliest?.anchor === 'birth' ? step.earliest.daysAfter : undefined
-        const ageErr = validateRabiesPrimeAge(readBirthDate(caseRow?.data), first.date, minAgeDays)
+        // 달력 개월 기준 목적지(베트남 3개월)는 일수 대신 이 값으로 판정 — date-rules 가 처리.
+        const minAgeMonths =
+          step.earliest?.anchor === 'birth' ? step.earliest.monthsAfter : undefined
+        const ageErr = validateRabiesPrimeAge(readBirthDate(caseRow?.data), first.date, minAgeDays, minAgeMonths)
         if (ageErr) return ageErr
         const chipErr = validateMicrochipBeforeBooster(readImplantDate(caseRow?.data), first.date)
         if (chipErr) return chipErr
@@ -845,7 +848,10 @@ export function StepDetailView({
         // 일본 91일, 태국 84일(12주). override 없는 나라는 기본 91일.
         const minAgeDays =
           step.earliest?.anchor === 'birth' ? step.earliest.daysAfter : undefined
-        const ageErr = validateRabiesPrimeAge(readBirthDate(caseRow?.data), rabies.date, minAgeDays)
+        // 달력 개월 기준 목적지(베트남 3개월)는 일수 대신 이 값으로 판정 — date-rules 가 처리.
+        const minAgeMonths =
+          step.earliest?.anchor === 'birth' ? step.earliest.monthsAfter : undefined
+        const ageErr = validateRabiesPrimeAge(readBirthDate(caseRow?.data), rabies.date, minAgeDays, minAgeMonths)
         if (ageErr) return ageErr
         // 칩 시술 이후 접종 — 1회 접종 국가(태국·필리핀·EU 패밀리)는 1차(유일한 접종)가
         // 칩 이전이면 무효라 입력 차단. 단일 출처는 목적지 override 의

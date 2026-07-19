@@ -1,9 +1,12 @@
-import { buildDateRuleContext } from '../journey-steps/date-rules'
+import {
+  buildDateRuleContext,
+  calendarAgeThreshold,
+  meetsCalendarAge,
+} from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   addYears,
   daysBetween,
-  evaluateRabiesAgeConservative,
   exceedsValidityYears,
   findSameGuardianCases,
   matchBannedBreed,
@@ -27,7 +30,10 @@ import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge 
  *
  * 핵심 룰:
  *  - 마이크로칩: ISO 11784/11785 15자리 (DAH/APHIS), 광견병 백신 이전 이식
- *  - 광견병: 생후 90일 이상, 출국 30일 이상~12개월 이내 접종, 출국일 면역 유효
+ *  - 광견병: **생후 3개월 이상(달력)**, 출국 30일 이상~12개월 이내 접종, 출국일 면역 유효
+ *    ※ 규정 문구가 "at least 3 months of age" — 일수(90/91일)로 환산하지 않는다.
+ *      달력 3개월은 생월에 따라 89~92일이라, 고정 일수 기준이면 11·12·1·2월생이 규정대로
+ *      접종해도 입력이 막힌다(2026-07-19 수정). 판정은 date-rules 의 meetsCalendarAge 단일 함수.
  *  - **3년 라이선스 백신 불인정** (DAH 운용 + USDA APHIS + 미 대사관 일치 — Circular 25 본문 1차 명문 미확인)
  *  - 건강증명서 ≤ 출국 10일 이내 (보수 ≤9). 한국 APQA 정부수의관 발급
  *  - DAH Form 19 (Appendix V) Import Permit: 처리 5근무일, 출국 7-10일 전 신청
@@ -71,37 +77,34 @@ export const VN_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'vn.rabies-prime-after-91days-old',
+    id: 'vn.rabies-prime-after-3months-old',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
+    title: '광견병 1차 접종은 생후 3개월 이후',
     description:
-      'DAH/APHIS: "at least 3 months of age" — 보수적으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      'DAH/APHIS: "at least 3 months of age" — 달력 3개월 기준. 입력 차단(step.earliest.monthsAfter)과 같은 판정 함수(meetsCalendarAge)를 쓴다.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
+    run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      const ev = evaluateRabiesAgeConservative(birth, first.date)
-      if (ev.ageInDays === null) return SKIP
-      if (!ev.ok) {
-        const reason =
-          ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령으로 91일에 미달해요`
-            : ev.failedRule === 'calendar3m'
-              ? `1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
-              : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
+      // 일수(91일)로 환산하지 않는다 — 달력 3개월은 생월에 따라 89~92일이라, 고정 일수로
+      // 보면 11·12·1·2월생이 규정대로 접종해도 위반으로 뜬다(2026-07-19 수정).
+      if (!meetsCalendarAge(birth, first.date, 3)) {
         return {
           ok: false,
-          message: msgRabiesPrimeMinAge('91일'),
+          message: msgRabiesPrimeMinAge('3개월'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${ev.ageInDays}일령 + 캘린더 3개월(${ev.calendar3mThreshold}) 충족.` }
+      return {
+        ok: true,
+        message: `1차 접종일(${first.date}) 생후 3개월(${calendarAgeThreshold(birth, 3)}) 이후.`,
+      }
     },
   },
   {

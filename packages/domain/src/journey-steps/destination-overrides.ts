@@ -116,8 +116,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       description:
         '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 3개월이 지난 후에 접종해야 해요.\n출국 30일 전까지 접종해야 해요.\n면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.\n베트남 입국 때 면역 유효기간이 남아있어야 해요.',
       doneSummary: '광견병 백신을 접종했어요.',
+      // 규정 문구가 "at least 3 months of age" — 달력 개월 기준(monthsAfter)으로 판정한다.
+      // daysAfter 91 은 표시·정렬용 근사치. 일수 고정으로 하면 11·12·1·2월생이 규정대로
+      // 3개월에 접종해도 저장이 막힌다(2월 1일생 → 5월 1일 = 89일).
+      earliest: { anchor: 'birth', daysAfter: 91, monthsAfter: 3 },
       done: 'has-rabies-valid',
-      validationIds: ['vn.rabies-prime-after-91days-old', 'vn.microchip-before-rabies'],
+      validationIds: ['vn.rabies-prime-after-3months-old', 'vn.microchip-before-rabies'],
     },
     // 항체검사 — 베트남 입국 요건이 아니다(DAH 의무 아님). 한국 귀국용이라 왕복에만 뜬다
     // (TITER_RETURN_ONLY_DESTINATIONS 파생). 베트남에 검사기관이 없어 한국에서 미리 받아야 한다.

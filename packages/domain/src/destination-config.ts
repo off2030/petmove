@@ -443,7 +443,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // (Certificate number 는 후처리 수기 입력 — EQC No. 라벨이 일본 전용이라 공유하지 않음.)
     // 규정 상세·출처는 procedure-checks/tw.ts 헤더 주석.
     keywords: ['대만', 'taiwan'],
-    rabies: { doses: 1, minAgeDays: 90, oneYearVaccineOnly: true },
+    // minAgeDays 를 두지 않는다 — 베트남 규정은 일수가 아니라 '생후 3개월(달력)'이고,
+    // 판정은 카드의 earliest.monthsAfter + date-rules meetsCalendarAge 가 담당한다.
+    rabies: { doses: 1, oneYearVaccineOnly: true },
     titer: { entryValidityMonths: 12, entryWaitAfterTiter: { days: 180 } },
     vaccines: ['rabies', 'rabies_titer'],
     extraFields: ['address_overseas', 'permit_no'],

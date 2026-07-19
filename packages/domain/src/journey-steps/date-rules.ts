@@ -690,13 +690,41 @@ export function validateRabiesPrimeAge(
   birthDate: string,
   primeDate: string,
   minDays = 91,
+  minMonths?: number,
 ): string | null {
   if (!birthDate || !primeDate) return null
+  // 달력 개월 기준(베트남 "at least 3 months of age") — 지정되면 일수 대신 이걸 쓴다.
+  // 일수로 환산하면 생월에 따라 89~92일로 흔들려 규정을 지킨 사람을 막는다(meetsCalendarAge 주석).
+  if (minMonths != null) {
+    return meetsCalendarAge(birthDate, primeDate, minMonths)
+      ? null
+      : `광견병 접종은 생후 ${minMonths}개월이 지나서 할 수 있어요`
+  }
   const age = daysBetween(birthDate, primeDate)
   if (age < minDays) {
     return `광견병 접종은 생후 ${minDays}일(${Math.round(minDays / 7)}주)이 지나서 할 수 있어요`
   }
   return null
+}
+
+/**
+ * 생년월일 + N개월(달력) 이 되었는가 — 입력 차단·주의·안내 **세 층이 공유하는 단일 판정**.
+ *
+ * 달력 기준이라 생월에 따라 실제 일수가 89~92일로 달라진다. 일수 고정 기준(91일)으로 바꾸면
+ * 11·12·1·2월생이 규정대로 3개월에 접종해도 막힌다(예: 2월 1일생 → 5월 1일 접종 = 89일).
+ * 규정 문구가 "3 months of age"인 목적지는 반드시 이 함수를 쓴다.
+ *
+ * 층마다 따로 계산하면 기준이 어긋나므로(대만 titer 사고와 같은 부류) 여기 하나만 둔다.
+ */
+export function meetsCalendarAge(birthDate: string, targetDate: string, months: number): boolean {
+  if (!birthDate || !targetDate) return true
+  const threshold = addMonths(birthDate, months)
+  return !!threshold && targetDate >= threshold
+}
+
+/** 생년월일 + N개월(달력) 임계일 — 메시지·안내에 노출할 날짜. */
+export function calendarAgeThreshold(birthDate: string, months: number): string {
+  return birthDate ? addMonths(birthDate, months) : ''
 }
 
 /**

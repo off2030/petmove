@@ -146,6 +146,16 @@ export interface StepEarliest {
   anchor: 'birth' | `step:${string}`
   /** anchor 기준 며칠 이후. */
   daysAfter: number
+  /**
+   * **달력 개월** 기준 최소 경과(예: 3 = 생후 3개월). 지정하면 일수(daysAfter)가 아니라
+   * 이 값이 판정 기준이 된다 — daysAfter 는 표시·정렬용 근사치로만 남는다.
+   *
+   * 왜 필요한가: 규정이 "at least 3 months of age"처럼 **달력 개월**로 쓰인 목적지(베트남)에서
+   * 일수로 환산하면 오차단이 난다. 달력 3개월은 생월에 따라 89~92일이라, 91일 고정 기준이면
+   * 11·12·1·2월생이 규정대로 3개월에 접종해도 저장이 거부됐다(2026-07-19 발견·수정).
+   * 규정이 일수로 명시된 목적지(대만 90일·일본 91일)는 daysAfter 를 그대로 쓴다.
+   */
+  monthsAfter?: number
 }
 
 export interface StepDefinition {
