@@ -150,16 +150,22 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       order: 43,
       description:
         '대만 수입 허가증을 신청하세요.\n\n도착 120일 전까지 온라인으로 신청하세요.\n도착 20일 전까지 신청할 수 있지만, 이 경우 대만 도착 후 7일간 지정 시설에서 격리돼요.',
-      doneSummary: '대만 수입허가증을 받았어요.',
-      cardLine: '대만 수입허가증 신청을 하세요.',
+      doneSummary: '대만 수입 허가증을 받았어요.',
+      cardLine: '대만 수입 허가증을 신청하세요.',
       deadline: { anchor: 'departure', daysBefore: 120 },
       inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
-      attachmentHint: '수입허가증(Import Permit)을 사진·PDF로 보관하세요.',
-      attachmentLabel: '수입허가증(Import Permit)',
+      attachmentHint: '수입 허가증(Import Permit)을 사진·PDF로 보관하세요.',
+      attachmentLabel: '수입 허가증(Import Permit)',
       links: [
         { url: 'https://pet-epermit.aphia.gov.tw/index-eng.html', label: '수입 허가 신청(APHIA)' },
       ],
       validationIds: ['tw.import-permit-120days-before-entry'],
+    },
+    // 출국 전 임상검사 — 대만은 별지 제25호 외에 BAPHIQ Form 002(대만 건강증명서)도
+    // 발급받아야 한다. 일본(FormAC)·EU(Annex III)와 같은 자리·같은 문형.
+    'vet-visit': {
+      description:
+        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 대만 건강증명서(BAPHIQ Form 002)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
     },
     departure: importQuarantineCard({
       label: '대만',

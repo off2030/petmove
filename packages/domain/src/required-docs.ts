@@ -397,17 +397,10 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   ],
   // 대만 (APHIA) — 수입허가증 + 항체 결과지 + 별지 25호 + 한국 수출검역증 (+왕복 한국 수입검역증).
   // 대만 도착 검역 통과 시 수입 검역 증명서가 현장 발급되나 사전 준비 서류가 아니라 목록엔 미포함.
+  // 순서·표기는 태국·필리핀(수입허가국)과 동일한 기준: 항체 결과지 → 수입허가증 → 별지25호
+  // → 검역증. source 는 **발급 기관**만 적는다('APHIA 온라인 신청' 같은 신청 방법 X).
+  // 이름에 나라를 붙이지 않는다 — 목적지 탭이 이미 대만이고, 태국(R.6)·필리핀(SPSIC)도 안 붙인다.
   '대만': [
-    {
-      id: 'tw-import-permit',
-      name: '대만 수입허가증(Import Permit)',
-      source: 'APHIA 온라인 신청',
-      kind: 'step',
-      stepRef: 'import-permit',
-      description:
-        '대만 검역청(APHIA) 온라인 시스템에서 신청 후 발급받아요.\n\n도착 120일 전까지 신청해야 격리 없이 입국할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
-      previewStepId: 'import-permit',
-    },
     {
       id: 'tw-rabies-titer-result',
       name: '광견병 항체 검사 결과지',
@@ -418,8 +411,31 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
         '검사를 의뢰한 동물병원에서 발급받아요.\n\n대만 입국 때 격리를 피하려면 반드시 원본이 필요해요. 결과는 채혈일로부터 1년간 유효해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'rabies-titer',
     },
+    {
+      id: 'tw-import-permit',
+      name: '수입 허가증(Import Permit)',
+      source: '대만 검역청(APHIA)',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        '대만 검역청(APHIA) 온라인 시스템에서 신청 후 발급받아요.\n\n도착 120일 전까지 신청해야 격리 없이 입국할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'import-permit',
+    },
     // 접종 및 건강증명서(별지 제25호) — 일본·태국·필리핀·중국과 동일한 한국 공식 양식.
     KR_FORM25_VACCINATION_HEALTH_CERT,
+    {
+      // 대만 입국용 건강증명서 — 일본 Form AC·EU Annex III 와 같은 성격(한국에서 준비).
+      // BAPHIQ Form 002 = 광견병 발생국(한국 포함)에서 오는 개·고양이용. 비발생국은 Form 001.
+      // 운영자 앱(펫무브워크)엔 이미 'tw' 증명서로 등록돼 PDF 를 생성하는데 고객 서류 목록에만
+      // 빠져 있었다(2026-07-19 사용자 지적).
+      id: 'tw-health-cert',
+      name: '대만 건강증명서(BAPHIQ Form 002)',
+      source: '동물병원 · 농림축산검역본부',
+      kind: 'manual',
+      issuanceStepId: 'vet-visit',
+      description:
+        '대만 입국용 건강증명서예요.\n\n출국일 기준 10일 이내에 동물병원에서 발급받아요. 이 서류는 발급하지 않는 동물병원이 많으므로 미리 확인하세요.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과, 수입 허가증 번호가 기재돼요.\n\n한국 수출 검역 때 검역관 확인·서명을 받아야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
     {
       id: 'tw-kr-export-quarantine-cert',
       name: '한국 수출 동물검역증',
