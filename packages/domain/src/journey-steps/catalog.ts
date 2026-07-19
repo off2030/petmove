@@ -1360,6 +1360,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 서류명은 앱 공통 표기 '{국가} 수출 동물검역증'을 따른다(한국·일본과 같은 성격·같은
     // 영문명 Export(ed) Animal Quarantine Certificate). 대만만 '수출검역증명서'로 달랐다.
     attachmentHint: '대만 수출 동물검역증 사본을 사진·PDF로 보관하세요.',
+    // 업로드 파일명을 서류명으로 통일(원본 파일명 무시, 2장부터 '_2'). 일본 수출검역
+    // (Export Quarantine Certificate)과 같은 처리.
+    attachmentLabel: '대만 수출 동물검역증',
     // 지역별 관할 분서(지룽·타오위안·타이중·가오슝) 전화번호가 있는 공식 페이지.
     // 자체 안내 페이지(/guide/…)는 만들지 않았다 — 일본과 달리 분서 4곳뿐이고 대부분
     // 타오위안 공항에서 처리하며, 필수 절차도 아니라 유지 비용이 값어치를 넘는다.
