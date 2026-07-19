@@ -360,6 +360,22 @@ function validityRemindersForItem(
       if (r) out.push(r)
     }
   }
+
+  // 2) 만료 다음날 — "지났다"는 사실을 한 번 알린다.
+  //
+  // 예전엔 30일 전 하나뿐이었다. 그 알림을 놓치면 만료가 지나도 아무 신호가 없어,
+  // 보호자는 준비가 끝난 줄 알고 있다가 나중에 카드에서야 알게 됐다(2026-07-19 사용자 지시).
+  // 만료일 당일이 아니라 **다음날**인 이유는 만료일 당일까지는 아직 유효하기 때문 —
+  // 당일에 "만료됐다"고 하면 사실과 다르다.
+  const fireAfter = localDateTime(end, FIRE_HOUR, 1)
+  const rAfter = reminderAt(
+    `${caseRow.id}|validity|${idBase}|${end}|expired`,
+    fireAfter,
+    `${pet} ${label} 유효기간이 ${koreanDate(end)}에 만료됐어요. ${action.act}.`,
+    now,
+  )
+  if (rAfter) out.push(rAfter)
+
   return out
 }
 
