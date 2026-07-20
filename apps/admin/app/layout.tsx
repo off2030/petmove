@@ -61,7 +61,14 @@ export default function RootLayout({
         />
         {/* FOUC 방지 부트 스크립트 — head 에서 블로킹 로드돼 hydration 전 동기 실행.
             외부 파일(public/skin-boot.js) src 참조라 React 19/Next 16 의 인라인
-            "script tag while rendering" 경고가 뜨지 않음. */}
+            "script tag while rendering" 경고가 뜨지 않음.
+
+            no-sync-scripts 를 끄는 이유: 이 규칙은 '블로킹 스크립트가 페이지를 느리게 한다'는
+            일반론인데, 여기서는 **블로킹이 목적**이다. 첫 페인트 전에 스킨을 확정하지 못하면
+            화면이 번쩍인다(FOUC). next/script 의 beforeInteractive 로 바꾸면 실행 시점이
+            달라져 FOUC 가 되살아날 수 있어 채택하지 않았다. (2026-07-20 — 이 error 하나 때문에
+            CI 가 하루 넘게 빨간불이었고, 그 탓에 새 실패와 기존 실패를 구분할 수 없었다.) */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/skin-boot.js" />
       </head>
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
