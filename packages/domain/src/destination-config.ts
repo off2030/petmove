@@ -531,9 +531,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   // ── 베트남 (DAH Cục Thú y) ──────────────────────────────────────────
   // 태국·필리핀 골격(1회 접종 + 항체는 귀국용)이지만 **수입허가가 없다**:
-  //  ①Circular 25 제10조 — 외국인 동반 2마리 이하는 **사전 절차가 없다**. 수입허가도,
-  //    출국 전 신고도 불요. 원문: "register the quarantine personally at the animal quarantine
-  //    body **at border gate** … carried along upon traveling" → 도착 공항 검역소 현장 등록.
+  //  ①Thông tư 01/2026 제14조 — 동반 2마리 이하는 **사전 절차가 없다**. 수입허가도,
+  //    출국 전 신고도 불요. 원문: "khai báo kiểm dịch nhập khẩu **trực tiếp tại Cơ quan kiểm
+  //    dịch động vật cửa khẩu**" → 도착 공항 검역소 현장 신고.
   //  ②광견병 1회, 출국 30일 이상~12개월 이내, 3년 백신 불인정
   //  ③항체검사는 DAH 의무 아님 — 한국 귀국용만(rabiesTiterForReturnOnly)
   //  ④요건 충족 시 무격리, 미충족 시 도착 후 14일

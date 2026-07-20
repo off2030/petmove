@@ -22,7 +22,12 @@ import { msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
  * 베트남 (DAH — Department of Animal Health, Cục Thú y) 절차 검증.
  *
  * 출처:
- *  - Circular 25/2016/TT-BNNPTNT 제10조 (2016-06-30 시행, 2025-06-24 Circular 28/2025로 일부 개정)
+ *  - **Thông tư 01/2026/TT-BNNMT 제14조** (2026-01-01 시행). 정부 원문 PDF 확인:
+ *    https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/01/01-bnnmt.pdf
+ *    ⚠️ 이 규칙이 **Circular 25/2016/TT-BNNPTNT 를 대체**했다(제30조 제2항 a호). 함께 대체된 것:
+ *    35/2018, 09/2022, **28/2025/TT-BNNMT**. 구서식 사용 유예는 2026-06-30 로 종료.
+ *    2026-07-20 이전 주석은 전부 폐지된 25/2016 을 인용하고 있었다 — 실질 내용은 그대로라
+ *    코드 동작은 바뀌지 않았고 근거 표기만 갱신했다.
  *  - 미 대사관 베트남 안내 — https://vn.usembassy.gov/wp-content/uploads/sites/124/2024/08/Bring-Pets-to-or-from-Vietnam.pdf
  *  - USDA APHIS Vietnam — https://www.aphis.usda.gov/pet-travel/us-to-another-country-export/pet-travel-us-vietnam
  *  - MOIT 무역포털 — https://vntr.moit.gov.vn/procedures/detail/25
@@ -33,20 +38,27 @@ import { msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
  *    ※ 규정 문구가 "at least 3 months of age" — 일수(90/91일)로 환산하지 않는다.
  *      달력 3개월은 생월에 따라 89~92일이라, 고정 일수 기준이면 11·12·1·2월생이 규정대로
  *      접종해도 입력이 막힌다(2026-07-19 수정). 판정은 date-rules 의 meetsCalendarAge 단일 함수.
- *  - **3년 라이선스 백신 불인정** (DAH 운용 + USDA APHIS + 미 대사관 일치 — Circular 25 본문 1차 명문 미확인)
+ *  - **3년 라이선스 백신 불인정** (DAH 운용 + USDA APHIS + 미 대사관 일치 — 시행규칙 본문엔 없음.
+ *    01/2026 은 절차규정이라 백신 종류를 다루지 않는다)
  *  - 건강증명서 ≤ 출국 10일 이내 (보수 ≤9). 한국 APQA 정부수의관 발급
- *  - 외국인 최대 2마리 (Circular 25 제10조)
+ *  - 동반 최대 2마리 (제14조 제1항)
  *
- * ⚠️ **사전 신고·수입허가 없음** (2026-07-19 원문 확인으로 정정)
+ * ⚠️ **사전 신고·수입허가 없음** (2026-07-19 확인 → 2026-07-20 신 규칙 원문으로 재확인)
  *   예전 헤더는 "DAH Form 19 Import Permit: 출국 7-10일 전 신청"이라 적혀 있었고 그에 따라
- *   '검역 신청' 카드까지 만들었으나, Circular 25 제10조 원문은 그 반대다:
- *     "The commodity owners shall register the quarantine personally **at the animal quarantine
- *      body at border gate** when carrying along the animals … No more than 02 units … or
- *      **carried along upon traveling**"
- *   → 동반 2마리 이하는 **출국 전 제출이 아니라 도착 공항 검역소에서 현장 등록**한다.
+ *   '검역 신청' 카드까지 만들었으나, 원문은 그 반대다. Thông tư 01/2026 제14조 제1항:
+ *     "mang theo người **không quá 02 con** động vật … a) Chủ hàng khai báo kiểm dịch nhập khẩu
+ *      **trực tiếp tại Cơ quan kiểm dịch động vật cửa khẩu**"
+ *     (동반 2마리 이하 — 화주는 **국경 검역기관에 직접** 수입 검역을 신고한다)
+ *   → 출국 전 제출이 아니라 **도착 공항 검역소에서 현장 신고**. 구 25/2016 제10조와 같은 취지다.
  *   Form 19 는 정식(상업·임시수입) 절차용 서식이라 여행 동반에는 해당 없음.
  *   사용자 실무 관찰("검역 신청하고 가는 사람을 본 적 없다")과도 일치.
  *   → vn-advance-notice 카드·룰·서류·필드 전부 제거. 도착 검역(departure)이 이 절차를 담당.
+ *
+ * 서식 번호 (부록 V) — 2026-07-20 원문 확인:
+ *   Mẫu 2a  수출 동물검역 신청서 / Mẫu 13a 수출 동물검역증명서
+ *   Mẫu 15a 수입 동물검역증명서 (15b 는 축산물용 — 혼동 주의)
+ *   제14조 제1항 c호: 검체검사가 없으면 검역일로부터 **1영업일** 이내 Mẫu 15a 발급,
+ *   d호: 검체검사가 필요하면 **5영업일** 이내 발급.
  *  - Pit Bull, Tosa, Dogo Argentino 등 견종 제한
  *
  * 별도 (시스템 검증 제외):
@@ -59,7 +71,7 @@ import { msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 const COUNTRY = 'vietnam'
 
 // ⚠️ 마이크로칩 — **룰을 두지 않는다** (2026-07-20 사용자 지정. 다시 "빠졌다"고 올리지 말 것)
-//   Circular 25/2016 제10조에 칩 조항이 없고, 펫무브 베트남 가이드도 "베트남은 마이크로칩
+//   Thông tư 01/2026 제14조(및 구 25/2016 제10조)에 칩 조항이 없고, 펫무브 베트남 가이드도 "베트남은 마이크로칩
 //   삽입이 필수가 아니지만, 한국 동물검역소에서 수출동물검역을 받기 위해서는 강아지는
 //   마이크로칩 번호가 있고 동물등록이 되어 있어야 합니다"라고 쓴다. 베트남 국영지(Việt Nam
 //   News)도 "microchipping is not mandatory under Việt Nam's law".
@@ -163,7 +175,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '1년 라이선스 광견병 백신만 인정 (3년 거부)',
     description:
-      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부. (DAH 운용 지침: "Vietnam does not recognize the 3-year rabies vaccine" — USDA APHIS, 미 대사관 일치. Circular 25/2016 본문 1차 명문 미확인)',
+      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부. (DAH 운용 지침: "Vietnam does not recognize the 3-year rabies vaccine" — USDA APHIS, 미 대사관 일치. 검역 시행규칙 Thông tư 01/2026 은 절차규정이라 백신 종류를 다루지 않는다)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
@@ -226,7 +238,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
     category: '서류',
     title: '수입 금지 견종 (Pit Bull, Tosa, Dogo Argentino 등)',
     description:
-      '베트남은 Pit Bull Terrier, Japanese Tosa, Dogo Argentino 등 견종 수입 제한. (Circular 25/2016 + USDA APHIS Vietnam)',
+      '베트남은 Pit Bull Terrier, Japanese Tosa, Dogo Argentino 등 견종 수입 제한. (수출입 금지 동물 목록 — Thông tư 01/2026 제14조가 참조하는 Danh mục 동물 + USDA APHIS Vietnam)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
@@ -256,9 +268,9 @@ export const VN_CHECKS: ProcedureCheck[] = [
     id: 'vn.max-2pets-per-guardian',
     country: COUNTRY,
     category: '서류',
-    title: '외국인 최대 2마리 한도 (Circular 25/2016 제10조)',
+    title: '동반 최대 2마리 한도 (Thông tư 01/2026 제14조)',
     description:
-      'Circular 25/2016/TT-BNNPTNT 제10조: 외국인은 반려 목적으로 최대 2마리까지 동반 가능. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 베트남 목적 케이스 3건 이상 등록 시 경고.',
+      'Thông tư 01/2026/TT-BNNMT 제14조 제1항(구 25/2016 제10조): 반려 목적으로 최대 2마리까지 동반 가능. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 베트남 목적 케이스 3건 이상 등록 시 경고.',
     severity: 'warning',
     // relatedCases 는 펫무브워크(운영자)만 전달 — 보호자 이름·건수가 필요한 운영자용 룰.
     audience: 'staff',

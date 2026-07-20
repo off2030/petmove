@@ -115,8 +115,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     }),
   },
   // ── 베트남 (DAH Cục Thú y) ────────────────────────────────────────────
-  // 태국·필리핀 골격이지만 수입허가가 없다(Circular 25 제10조 — 2마리 이하 동반 면제).
-  // 사전 신고도 없다 — 도착 공항 검역소에서 현장 등록(Circular 25 제10조). 항체는 한국 귀국용만.
+  // 태국·필리핀 골격이지만 수입허가가 없다(Thông tư 01/2026 제14조 — 2마리 이하 동반 면제).
+  // 사전 신고도 없다 — 도착 공항 검역소에서 현장 신고(같은 조). 항체는 한국 귀국용만.
   // 규정 상세·출처는 procedure-checks/vn.ts 헤더.
   vietnam: {
     // 문구·완료·earliest 는 프로파일 파생(buildRabiesCard) — 규정값은 destination-config.
@@ -607,7 +607,7 @@ function buildRabiesCard(opts: {
     p.minAgeLabel ?? (p.minAgeDays ? `생후 ${p.minAgeDays}일` : '')
 
   // 칩 선행 문구는 그 나라가 실제로 *.microchip-before-rabies 룰을 선언할 때만 넣는다.
-  // 마이크로칩이 입국 요건이 아닌 나라(베트남 — Circular 25 에 칩 조항 없음, 펫무브 가이드도
+  // 마이크로칩이 입국 요건이 아닌 나라(베트남 — 검역 시행규칙에 칩 조항 없음, 펫무브 가이드도
   // "필수가 아니다")까지 하드코딩으로 이 문장이 나가고 있었다(2026-07-20 사용자 지적).
   // 룰 선언을 단일 출처로 삼으면 문구·주의·저장 거부 세 층이 자동으로 같이 움직인다.
   const requiresChipFirst = opts.validationIds.some((id) => id.endsWith('.microchip-before-rabies'))

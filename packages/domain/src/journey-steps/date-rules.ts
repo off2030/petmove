@@ -292,7 +292,7 @@ export function validateThEntryDate(v: string, ctx: DateRuleContext): string | n
  * 재접종은 단절이라 새 1차로 보고 30일을 다시 센다.
  *
  * 반환: 대기가 부족하면 true(위반). 날짜가 없거나 비교 불가면 false(판정 안 함).
- * 출처: Circular 25/2016 제10조 + 미 대사관 안내 — "at least 30 days ... before the intended
+ * 출처: 미 대사관 안내 — "at least 30 days ... before the intended
  * date of entry".
  */
 export const VN_RABIES_WAIT_DAYS = 30
