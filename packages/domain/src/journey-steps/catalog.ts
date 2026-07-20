@@ -857,6 +857,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'guam',
         'philippines',
         'usa',
+        // 카자흐스탄 — EAEU 제15장이 광견병과 같은 문장에서 종합백신을 규율한다(출국 20일 전·12개월 면제).
+        'kazakhstan',
       ],
       species: 'all',
       tripType: 'all',
@@ -1011,6 +1013,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'new_zealand',
         'turkey',
         'philippines',
+        // 멕시코·브라질 — 위 외부구충과 같은 근거.
+        'mexico',
+        'brazil',
       ],
       species: 'all',
       tripType: 'all',
@@ -1797,6 +1802,141 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
 
+  {
+    id: 'ma-export-quarantine',
+    category: 'document',
+    title: '모로코 수출 검역',
+    shortLabel: '수출',
+    // ONSSA 관용 수의사 발급. 근거는 procedure-checks/ma.ts 헤더와 destination-config 프로파일 주석 참고.
+    description:
+      '모로코 출국 전 수출 증명서를 발급받으세요.\n\n거주지 관할 검역기관(ONSSA) 수의서비스에 문의해 관용 수의사에게 발급받으세요.\n한국행 전용 서식이 있어요. 마이크로칩 번호가 반드시 기재돼야 해요.\n항체 검사 결과지 원본을 첨부해요. 채혈일이 출발일로부터 24개월 이내여야 해요.\n출발 24시간 이내에 임상검사를 받아야 해요.',
+    doneSummary: '모로코 수출 검역을 받았어요.',
+    cardLine: '모로코 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['morocco'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:ma_export_quarantine_date',
+    validationIds: ['ma.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'ma_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '모로코에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '모로코 수출 증명서',
+    links: [{ url: 'https://www.onssa.gov.ma/import-and-export-controls/export-certification/export-of-live-animals/dogs-and-cats/?lang=en', label: '개·고양이 수출 안내 (ONSSA)' }],
+  },
+  {
+    id: 'ua-export-quarantine',
+    category: 'document',
+    title: '우크라이나 수출 검역',
+    shortLabel: '수출',
+    // DPSS 국경검사부서 발급. 근거는 procedure-checks/ua.ts 헤더와 destination-config 프로파일 주석 참고.
+    description:
+      '우크라이나 출국 전 수출 검역을 받으세요.\n\n먼저 국립 수의병원에서 수의증서를 받으세요. 출발 5일~72시간 전에 임상검사와 구충을 함께 받아요.\n그 서류로 출발 5일 전에 검역기관(DPSS) 국경검사부서에서 국제수의증명서를 발급받으세요.\n증명서 유효기간이 5일뿐이에요. 너무 일찍 받으면 만료돼요.\n모든 국경 통과지점에 검사관이 있는 건 아니니 어디서 받을지 미리 확인하세요.',
+    doneSummary: '우크라이나 수출 검역을 받았어요.',
+    cardLine: '우크라이나 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['ukraine'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:ua_export_quarantine_date',
+    validationIds: ['ua.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'ua_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '우크라이나에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '우크라이나 국제수의증명서',
+    links: [{ url: 'https://dpss.gov.ua/mizhnarodne-spivrobitnictv/veterinariya-ta-bezpechnist/vimogi-do-nekomercijnogo-peremishchennya-tvarin', label: '비상업 이동 요건 (DPSS)' }],
+  },
+  {
+    id: 'mx-export-quarantine',
+    category: 'document',
+    title: '멕시코 수출 검역',
+    shortLabel: '수출',
+    // SENASICA 발급 · 무료. 근거는 procedure-checks/mx.ts 헤더와 destination-config 프로파일 주석 참고.
+    description:
+      '멕시코 출국 전 수출 증명서(CZE)를 발급받으세요.\n\n먼저 민간 수의사에게 건강증명서를 받으세요. 발급 후 5일 이내여야 해요.\n그 서류로 검역기관(SENASICA) 사무소에 신청하면 3영업일 안에 1차 서명본을 받아요.\n출국 당일 공항에서 반려동물 실물 검사를 받고 최종 서명을 받아요.\n발급 비용은 없어요. 유효기간은 발급일로부터 8일이에요.\n이 증명서가 없으면 한국 입국이 거부돼요.',
+    doneSummary: '멕시코 수출 검역을 받았어요.',
+    cardLine: '멕시코 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['mexico'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:mx_export_quarantine_date',
+    validationIds: ['mx.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'mx_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '멕시코에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '멕시코 수출 동물위생증명서(CZE)',
+    links: [{ url: 'https://www.gob.mx/senasica/documentos/solicita-el-certificado-zoosanitario-para-exportacion-para-mascotas', label: '반려동물 수출 증명서 신청 (SENASICA)' }],
+  },
+  {
+    id: 'br-export-quarantine',
+    category: 'document',
+    title: '브라질 수출 검역',
+    shortLabel: '수출',
+    // VIGIAGRO 발급 · 무료. 근거는 procedure-checks/br.ts 헤더와 destination-config 프로파일 주석 참고.
+    description:
+      '브라질 출국 전 국제수의증명서(CVI)를 발급받으세요.\n\n먼저 현지 동물병원에서 건강증명서를 받고, 검역기관(VIGIAGRO)에 신청서를 내세요.\n연방 농업감사관이 발급해요. 발급 비용은 없어요.\n한국은 전자 발급 대상이 아니라 직접 방문해야 해요. 사전 예약이 필요해요.\n발급 당일 현장에서 마이크로칩을 판독해 확인하니 칩이 반드시 있어야 해요.\n유효기간이 서명일로부터 10일뿐이니 일정을 맞추세요.',
+    doneSummary: '브라질 수출 검역을 받았어요.',
+    cardLine: '브라질 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['brazil'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:br_export_quarantine_date',
+    validationIds: ['br.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'br_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '브라질에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '브라질 국제수의증명서(CVI)',
+    links: [{ url: 'https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil', label: '브라질 출국 안내 (MAPA)' }],
+  },
+  {
+    id: 'kz-export-quarantine',
+    category: 'document',
+    title: '카자흐스탄 수출 검역',
+    shortLabel: '수출',
+    // 수의통제감독위원회 발급. 근거는 procedure-checks/kz.ts 헤더와 destination-config 프로파일 주석 참고.
+    description:
+      '카자흐스탄 출국 전 수출 검역을 받으세요.\n\n먼저 거주 지역 국가수의기관에서 수의증명서(형식 1호)를 받으세요.\n그 서류로 수의통제감독위원회 지역사무소에 신청하면 수출용 수의증명서로 발급해줘요.\n처리에 영업일 2일이 걸려요. 반려동물 수의여권 사본이 필요해요.\n온라인(elicense.kz)으로 접수하거나 사무소를 방문하면 돼요.',
+    doneSummary: '카자흐스탄 수출 검역을 받았어요.',
+    cardLine: '카자흐스탄 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['kazakhstan'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:kz_export_quarantine_date',
+    validationIds: ['kz.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'kz_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '카자흐스탄에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '카자흐스탄 수출 수의증명서',
+    links: [{ url: 'https://egov.kz/cms/ru/services/pass279_msh', label: '수출 수의증명서 발급 (egov.kz)' }],
+  },
   // ── 15. 한국 수입 검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
   {
     id: 'kr-import-quarantine',

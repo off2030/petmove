@@ -1,6 +1,8 @@
+import { buildDateRuleContext, violatesRabiesEntryWait } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   addMonths,
+  classifyExportQuarantineDate,
   daysBetween,
   evaluateRabiesAgeConservative,
   readRabiesEntries,
@@ -134,6 +136,33 @@ export const UA_CHECKS: ProcedureCheck[] = [
     },
   },
 
+  {
+    id: 'ua.rabies-min-21days-before-departure',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 접종은 출국일 21일 이상 전',
+    description:
+      'APHIS 우크라이나 안내 — "the pet will be required to wait at least 21 days after vaccination before travel to the Ukraine"(초회 접종 또는 유효기간 경과 후 재접종인 경우). 저장 거부(validateRabiesEntryWait)와 같은 판정 함수(violatesRabiesEntryWait)를 쓴다.',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
+      const rabies = readRabiesEntries(caseRow)
+      if (!dep || rabies.length === 0) return SKIP
+
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (!violatesRabiesEntryWait(data, dep, destination)) {
+        const latest = rabies[rabies.length - 1]
+        return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): 21일 충족(또는 유효 부스터).` }
+      }
+      const latest = rabies[rabies.length - 1]
+      return {
+        ok: false,
+        message: '광견병 접종 후 21일이 지나야 우크라이나에 입국할 수 있어요. 입국일을 미뤄야 해요.',
+        offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
+      }
+    },
+  },
   // ── RNATT (우크라이나 입국 필수) ──
   {
     id: 'ua.rnatt-min-30days-after-vaccine',
@@ -252,6 +281,76 @@ export const UA_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: '모든 RNATT 항체가 ≥ 0.5 IU/ml.' }
+    },
+  },
+  // ── 도착 수입 검역 / 현지 수출 검역 (베트남 골격 복제 2026-07-20) ──
+  {
+    id: 'ua.import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '우크라이나 수입 검역일',
+    description: '우크라이나 수입 검역일은 우크라이나 입국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.ua_import_quarantine_date === 'string'
+          ? data.ua_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '우크라이나 수입 검역일은 우크라이나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['ua_import_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `우크라이나 수입검역일(${raw}) 입국 이후.` }
+    },
+  },
+  {
+    id: 'ua.export-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '우크라이나 수출 검역일',
+    description:
+      '우크라이나 수출 검역일은 우크라이나 입국일 이후·한국 귀국일 이전이어야 함. "그 나라에 있는 동안 받았는가"라는 물리적 제약이라 나라별 규정 조사가 필요 없다(판정은 classifyExportQuarantineDate 공용).',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      const ret =
+        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
+          ? ctx.data.return_date.slice(0, 10)
+          : ''
+      const verdict = classifyExportQuarantineDate(data.ua_export_quarantine_date, entry, ret)
+      if (verdict === 'skip') return SKIP
+      if (verdict === 'before-entry') {
+        return {
+          ok: false,
+          message: '우크라이나 수출 검역일은 우크라이나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['ua_export_quarantine_date'],
+        }
+      }
+      if (verdict === 'after-return') {
+        return {
+          ok: false,
+          message: '우크라이나 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['ua_export_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `우크라이나 수출검역일 체류 기간 내.` }
     },
   },
 ]

@@ -27,15 +27,15 @@
 
 === brazil  (token: 브라질) ===
   [consts] singleDose=true oneYearVaccine=false titerEntryMonths=- vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
-  [checks:10] br.external-parasite-within-15days, br.internal-parasite-within-15days, br.microchip-before-rabies, br.rabies-min-21days-before-departure, br.rabies-prime-after-91days-old, br.rabies-valid-on-departure, common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid
-  [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  40:rabies-titer:has-titer-entry  80:external-parasite:has-external-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past  160:kr-import-quarantine:has-kr-import-quarantine
-  [docs  dog/round] form25, kr-export-quarantine-cert, kr-import-quarantine-cert
-  [cards dog/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  80:external-parasite:has-external-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past
-  [docs  dog/one_way] form25, kr-export-quarantine-cert
-  [cards cat/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  40:rabies-titer:has-titer-entry  80:external-parasite:has-external-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past  160:kr-import-quarantine:has-kr-import-quarantine
-  [docs  cat/round] form25, kr-export-quarantine-cert, kr-import-quarantine-cert
-  [cards cat/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  80:external-parasite:has-external-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past
-  [docs  cat/one_way] form25, kr-export-quarantine-cert
+  [checks:11] br.export-quarantine-date-valid, br.external-parasite-within-15days, br.import-quarantine-date-valid, br.internal-parasite-within-15days, br.rabies-min-21days-before-departure, br.rabies-prime-after-91days-old, br.rabies-valid-on-departure, common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid
+  [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  80:external-parasite:has-external-parasite  90:internal-parasite:has-internal-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:br_import_quarantine_date  155:br-export-quarantine:quarantine:br_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
+  [docs  dog/round] br-rabies-titer-result, form25, kr-export-quarantine-cert, br-import-quarantine-cert, br-export-quarantine-cert, kr-import-quarantine-cert
+  [cards dog/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  45:flight-purchase:has-flight-date  80:external-parasite:has-external-parasite  90:internal-parasite:has-internal-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:br_import_quarantine_date
+  [docs  dog/one_way] form25, kr-export-quarantine-cert, br-import-quarantine-cert
+  [cards cat/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  80:external-parasite:has-external-parasite  90:internal-parasite:has-internal-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:br_import_quarantine_date  155:br-export-quarantine:quarantine:br_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
+  [docs  cat/round] br-rabies-titer-result, form25, kr-export-quarantine-cert, br-import-quarantine-cert, br-export-quarantine-cert, kr-import-quarantine-cert
+  [cards cat/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  45:flight-purchase:has-flight-date  80:external-parasite:has-external-parasite  90:internal-parasite:has-internal-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:br_import_quarantine_date
+  [docs  cat/one_way] form25, kr-export-quarantine-cert, br-import-quarantine-cert
 
 === cambodia  (token: 캄보디아) ===
   [consts] singleDose=true oneYearVaccine=false titerEntryMonths=- vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
@@ -207,15 +207,15 @@
 
 === kazakhstan  (token: 카자흐스탄) ===
   [consts] singleDose=true oneYearVaccine=false titerEntryMonths=- vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
-  [checks:4] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid
-  [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  40:rabies-titer:has-titer-entry  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past  160:kr-import-quarantine:has-kr-import-quarantine
-  [docs  dog/round] form25, kr-export-quarantine-cert, kr-import-quarantine-cert
-  [cards dog/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past
-  [docs  dog/one_way] form25, kr-export-quarantine-cert
-  [cards cat/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  40:rabies-titer:has-titer-entry  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past  160:kr-import-quarantine:has-kr-import-quarantine
-  [docs  cat/round] form25, kr-export-quarantine-cert, kr-import-quarantine-cert
-  [cards cat/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past
-  [docs  cat/one_way] form25, kr-export-quarantine-cert
+  [checks:11] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid, kz.export-quarantine-date-valid, kz.import-quarantine-date-valid, kz.microchip-before-rabies, kz.rabies-booster-within-prime-validity, kz.rabies-min-20days-before-departure, kz.rabies-prime-after-3months-old, kz.rabies-valid-on-departure
+  [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  50:general-vaccine:has-general-vaccine  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:kz_import_quarantine_date  155:kz-export-quarantine:quarantine:kz_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
+  [docs  dog/round] kz-rabies-titer-result, form25, kr-export-quarantine-cert, kz-import-quarantine-cert, kz-export-quarantine-cert, kr-import-quarantine-cert
+  [cards dog/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  45:flight-purchase:has-flight-date  50:general-vaccine:has-general-vaccine  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:kz_import_quarantine_date
+  [docs  dog/one_way] form25, kr-export-quarantine-cert, kz-import-quarantine-cert
+  [cards cat/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  50:general-vaccine:has-general-vaccine  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:kz_import_quarantine_date  155:kz-export-quarantine:quarantine:kz_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
+  [docs  cat/round] kz-rabies-titer-result, form25, kr-export-quarantine-cert, kz-import-quarantine-cert, kz-export-quarantine-cert, kr-import-quarantine-cert
+  [cards cat/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  45:flight-purchase:has-flight-date  50:general-vaccine:has-general-vaccine  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:kz_import_quarantine_date
+  [docs  cat/one_way] form25, kr-export-quarantine-cert, kz-import-quarantine-cert
 
 === malaysia  (token: 말레이시아) ===
   [consts] singleDose=false oneYearVaccine=false titerEntryMonths=- vetWindowDog=7 vetWindowCat=7 flightImportBadge=false flightReturnBadge=false
@@ -243,15 +243,15 @@
 
 === mexico  (token: 멕시코) ===
   [consts] singleDose=true oneYearVaccine=false titerEntryMonths=- vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
-  [checks:10] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid, mx.external-parasite-within-6months, mx.internal-parasite-within-6months, mx.microchip-before-rabies, mx.rabies-min-30days-before-departure, mx.rabies-prime-after-91days-old, mx.rabies-valid-on-departure
-  [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  40:rabies-titer:has-titer-entry  80:external-parasite:has-external-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past  160:kr-import-quarantine:has-kr-import-quarantine
-  [docs  dog/round] form25, kr-export-quarantine-cert, kr-import-quarantine-cert
-  [cards dog/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  80:external-parasite:has-external-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past
-  [docs  dog/one_way] form25, kr-export-quarantine-cert
-  [cards cat/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  40:rabies-titer:has-titer-entry  80:external-parasite:has-external-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past  160:kr-import-quarantine:has-kr-import-quarantine
-  [docs  cat/round] form25, kr-export-quarantine-cert, kr-import-quarantine-cert
-  [cards cat/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  80:external-parasite:has-external-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past
-  [docs  cat/one_way] form25, kr-export-quarantine-cert
+  [checks:11] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid, mx.export-quarantine-date-valid, mx.external-parasite-within-6months, mx.import-quarantine-date-valid, mx.internal-parasite-within-6months, mx.rabies-min-30days-before-departure, mx.rabies-prime-after-91days-old, mx.rabies-valid-on-departure
+  [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  80:external-parasite:has-external-parasite  90:internal-parasite:has-internal-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:mx_import_quarantine_date  155:mx-export-quarantine:quarantine:mx_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
+  [docs  dog/round] mx-rabies-titer-result, form25, kr-export-quarantine-cert, mx-import-quarantine-cert, mx-export-quarantine-cert, kr-import-quarantine-cert
+  [cards dog/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  45:flight-purchase:has-flight-date  80:external-parasite:has-external-parasite  90:internal-parasite:has-internal-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:mx_import_quarantine_date
+  [docs  dog/one_way] form25, kr-export-quarantine-cert, mx-import-quarantine-cert
+  [cards cat/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  80:external-parasite:has-external-parasite  90:internal-parasite:has-internal-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:mx_import_quarantine_date  155:mx-export-quarantine:quarantine:mx_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
+  [docs  cat/round] mx-rabies-titer-result, form25, kr-export-quarantine-cert, mx-import-quarantine-cert, mx-export-quarantine-cert, kr-import-quarantine-cert
+  [cards cat/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  45:flight-purchase:has-flight-date  80:external-parasite:has-external-parasite  90:internal-parasite:has-internal-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:mx_import_quarantine_date
+  [docs  cat/one_way] form25, kr-export-quarantine-cert, mx-import-quarantine-cert
 
 === mongolia  (token: 몽골) ===
   [consts] singleDose=true oneYearVaccine=false titerEntryMonths=- vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
@@ -267,15 +267,15 @@
 
 === morocco  (token: 모로코) ===
   [consts] singleDose=true oneYearVaccine=false titerEntryMonths=- vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
-  [checks:9] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid, ma.max-5pets-non-commercial, ma.microchip-before-rabies, ma.rabies-min-21days-before-departure, ma.rabies-prime-after-91days-old, ma.rabies-valid-on-departure
-  [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  40:rabies-titer:has-titer-entry  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past  160:kr-import-quarantine:has-kr-import-quarantine
-  [docs  dog/round] form25, kr-export-quarantine-cert, kr-import-quarantine-cert
-  [cards dog/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  40:rabies-titer:has-titer-entry  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past
-  [docs  dog/one_way] form25, kr-export-quarantine-cert
-  [cards cat/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  40:rabies-titer:has-titer-entry  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past  160:kr-import-quarantine:has-kr-import-quarantine
-  [docs  cat/round] form25, kr-export-quarantine-cert, kr-import-quarantine-cert
-  [cards cat/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  40:rabies-titer:has-titer-entry  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past
-  [docs  cat/one_way] form25, kr-export-quarantine-cert
+  [checks:12] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid, ma.export-quarantine-date-valid, ma.import-quarantine-date-valid, ma.max-5pets-non-commercial, ma.microchip-before-rabies, ma.rabies-min-21days-before-departure, ma.rabies-prime-after-91days-old, ma.rabies-valid-on-departure, ma.rnatt-min-30days-after-vaccine
+  [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:ma_import_quarantine_date  155:ma-export-quarantine:quarantine:ma_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
+  [docs  dog/round] ma-rabies-titer-result, form25, kr-export-quarantine-cert, ma-import-quarantine-cert, ma-export-quarantine-cert, kr-import-quarantine-cert
+  [cards dog/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:ma_import_quarantine_date
+  [docs  dog/one_way] ma-rabies-titer-result, form25, kr-export-quarantine-cert, ma-import-quarantine-cert
+  [cards cat/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:ma_import_quarantine_date  155:ma-export-quarantine:quarantine:ma_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
+  [docs  cat/round] ma-rabies-titer-result, form25, kr-export-quarantine-cert, ma-import-quarantine-cert, ma-export-quarantine-cert, kr-import-quarantine-cert
+  [cards cat/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:ma_import_quarantine_date
+  [docs  cat/one_way] ma-rabies-titer-result, form25, kr-export-quarantine-cert, ma-import-quarantine-cert
 
 === new_zealand  (token: 뉴질랜드) ===
   [consts] singleDose=false oneYearVaccine=false titerEntryMonths=- vetWindowDog=3 vetWindowCat=3 flightImportBadge=false flightReturnBadge=false
@@ -423,15 +423,15 @@
 
 === ukraine  (token: 우크라이나) ===
   [consts] singleDose=true oneYearVaccine=false titerEntryMonths=null vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
-  [checks:10] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid, ua.departure-min-3months-after-titer, ua.microchip-before-rabies, ua.rabies-prime-after-12weeks, ua.rabies-valid-on-departure, ua.rnatt-min-30days-after-vaccine, ua.titer-value-min-0.5iu
-  [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  40:rabies-titer:has-titer-entry  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past  160:kr-import-quarantine:has-kr-import-quarantine
-  [docs  dog/round] form25, kr-export-quarantine-cert, kr-import-quarantine-cert
-  [cards dog/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  40:rabies-titer:has-titer-entry  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past
-  [docs  dog/one_way] form25, kr-export-quarantine-cert
-  [cards cat/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  40:rabies-titer:has-titer-entry  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past  160:kr-import-quarantine:has-kr-import-quarantine
-  [docs  cat/round] form25, kr-export-quarantine-cert, kr-import-quarantine-cert
-  [cards cat/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-entry  40:rabies-titer:has-titer-entry  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:departure-past
-  [docs  cat/one_way] form25, kr-export-quarantine-cert
+  [checks:13] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid, ua.departure-min-3months-after-titer, ua.export-quarantine-date-valid, ua.import-quarantine-date-valid, ua.microchip-before-rabies, ua.rabies-min-21days-before-departure, ua.rabies-prime-after-12weeks, ua.rabies-valid-on-departure, ua.rnatt-min-30days-after-vaccine, ua.titer-value-min-0.5iu
+  [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:ua_import_quarantine_date  155:ua-export-quarantine:quarantine:ua_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
+  [docs  dog/round] ua-rabies-titer-result, form25, kr-export-quarantine-cert, ua-import-quarantine-cert, ua-export-quarantine-cert, kr-import-quarantine-cert
+  [cards dog/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:ua_import_quarantine_date
+  [docs  dog/one_way] ua-rabies-titer-result, form25, kr-export-quarantine-cert, ua-import-quarantine-cert
+  [cards cat/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:ua_import_quarantine_date  155:ua-export-quarantine:quarantine:ua_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
+  [docs  cat/round] ua-rabies-titer-result, form25, kr-export-quarantine-cert, ua-import-quarantine-cert, ua-export-quarantine-cert, kr-import-quarantine-cert
+  [cards cat/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:ua_import_quarantine_date
+  [docs  cat/one_way] ua-rabies-titer-result, form25, kr-export-quarantine-cert, ua-import-quarantine-cert
 
 === usa  (token: 미국) ===
   [consts] singleDose=false oneYearVaccine=false titerEntryMonths=- vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false

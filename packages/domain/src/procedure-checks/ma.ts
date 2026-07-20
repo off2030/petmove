@@ -1,10 +1,12 @@
-import { violatesRabiesEntryWait } from '../journey-steps/date-rules'
+import { buildDateRuleContext, violatesRabiesEntryWait } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
+  classifyExportQuarantineDate,
   daysBetween,
   evaluateRabiesAgeConservative,
   findSameGuardianCases,
   readRabiesEntries,
+  readTiterEntries,
   resolveValidUntil,
   SKIP,
   readDepartureDate,
@@ -197,6 +199,114 @@ export const MA_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: '보호자 케이스 ≤ 5건.' }
+    },
+  },
+  // ── RNATT (모로코 입국 요건) ──
+  {
+    id: 'ma.rnatt-min-30days-after-vaccine',
+    country: COUNTRY,
+    category: '광견병',
+    title: '항체 검사는 광견병 접종 30일 이후',
+    description:
+      'ONSSA 수입 양식 I.CT.CN.JUIL.2025 5항 — 채혈은 "at least 30 days after the previous rabies vaccination". 채혈 후 대기는 없다(우크라이나 3개월과 다른 지점).',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      const titers = readTiterEntries(caseRow)
+      if (rabies.length === 0 || titers.length === 0) return SKIP
+
+      const offending: string[] = []
+      for (const t of titers) {
+        const prior = rabies.filter((r) => r.date <= t.date)
+        if (prior.length === 0) {
+          offending.push(`rabies_titer_records[${t.originalIndex}].date`)
+          continue
+        }
+        const latest = prior[prior.length - 1]
+        const gap = daysBetween(latest.date, t.date)
+        if (gap === null || gap < 30) {
+          offending.push(`rabies_titer_records[${t.originalIndex}].date`)
+        }
+      }
+      if (offending.length > 0) {
+        return {
+          ok: false,
+          message: '광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요.',
+          offendingPaths: offending,
+        }
+      }
+      return { ok: true, message: '항체 검사 시기 적합 (접종 후 30일 경과).' }
+    },
+  },
+  // ── 도착 수입 검역 / 현지 수출 검역 (베트남 골격 복제 2026-07-20) ──
+  {
+    id: 'ma.import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '모로코 수입 검역일',
+    description: '모로코 수입 검역일은 모로코 입국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.ma_import_quarantine_date === 'string'
+          ? data.ma_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '모로코 수입 검역일은 모로코 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['ma_import_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `모로코 수입검역일(${raw}) 입국 이후.` }
+    },
+  },
+  {
+    id: 'ma.export-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '모로코 수출 검역일',
+    description:
+      '모로코 수출 검역일은 모로코 입국일 이후·한국 귀국일 이전이어야 함. "그 나라에 있는 동안 받았는가"라는 물리적 제약이라 나라별 규정 조사가 필요 없다(판정은 classifyExportQuarantineDate 공용).',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      const ret =
+        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
+          ? ctx.data.return_date.slice(0, 10)
+          : ''
+      const verdict = classifyExportQuarantineDate(data.ma_export_quarantine_date, entry, ret)
+      if (verdict === 'skip') return SKIP
+      if (verdict === 'before-entry') {
+        return {
+          ok: false,
+          message: '모로코 수출 검역일은 모로코 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['ma_export_quarantine_date'],
+        }
+      }
+      if (verdict === 'after-return') {
+        return {
+          ok: false,
+          message: '모로코 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['ma_export_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `모로코 수출검역일 체류 기간 내.` }
     },
   },
 ]

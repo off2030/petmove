@@ -1,6 +1,7 @@
-import { violatesRabiesEntryWait } from '../journey-steps/date-rules'
+import { buildDateRuleContext, violatesRabiesEntryWait } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
+  classifyExportQuarantineDate,
   daysBetween,
   evaluateRabiesAgeConservative,
   readExternalParasiteEntries,
@@ -44,32 +45,10 @@ const COUNTRY = 'brazil'
 
 export const BR_CHECKS: ProcedureCheck[] = [
   // ── 마이크로칩 ──
-  {
-    id: 'br.microchip-before-rabies',
-    country: COUNTRY,
-    category: '마이크로칩',
-    title: '마이크로칩은 광견병 1차 접종 이전 시술',
-    description:
-      'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (브라질 입국 면제, 한국 수출검역 사실상 필수)',
-    severity: 'info',
-    addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
-      const rabies = readRabiesEntries(caseRow)
-      if (!microchip || rabies.length === 0) return SKIP
-
-      const first = rabies[0]
-      if (microchip <= first.date) {
-        return { ok: true, message: `마이크로칩(${microchip}) ≤ 1차 접종(${first.date}).` }
-      }
-      return {
-        ok: false,
-        message: msgMicrochipBeforeRabies(),
-        offendingPaths: ['microchip_implant_date'],
-      }
-    },
-  },
+  // ⚠️ `br.microchip-before-rabies` 를 **삭제했다**(2026-07-20 조사).
+  //   MAPA 영문 안내 "A pet microchip is not required to enter Brazil." — 마이크로칩은 브라질 **입국 요건이 아니다**.
+  //   다만 브라질→**한국 귀국** 때는 ISO 칩이 필수라 방향이 정반대다. 입국 요건인 것처럼
+  //   룰을 두면 고객이 순서를 잘못 이해한다(귀국 요건은 공통 룰이 담당).
 
   // ── 광견병 ──
   {
@@ -233,6 +212,76 @@ export const BR_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내부구충(${latest.date}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+  // ── 도착 수입 검역 / 현지 수출 검역 (베트남 골격 복제 2026-07-20) ──
+  {
+    id: 'br.import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '브라질 수입 검역일',
+    description: '브라질 수입 검역일은 브라질 입국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.br_import_quarantine_date === 'string'
+          ? data.br_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '브라질 수입 검역일은 브라질 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['br_import_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `브라질 수입검역일(${raw}) 입국 이후.` }
+    },
+  },
+  {
+    id: 'br.export-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '브라질 수출 검역일',
+    description:
+      '브라질 수출 검역일은 브라질 입국일 이후·한국 귀국일 이전이어야 함. "그 나라에 있는 동안 받았는가"라는 물리적 제약이라 나라별 규정 조사가 필요 없다(판정은 classifyExportQuarantineDate 공용).',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      const ret =
+        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
+          ? ctx.data.return_date.slice(0, 10)
+          : ''
+      const verdict = classifyExportQuarantineDate(data.br_export_quarantine_date, entry, ret)
+      if (verdict === 'skip') return SKIP
+      if (verdict === 'before-entry') {
+        return {
+          ok: false,
+          message: '브라질 수출 검역일은 브라질 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['br_export_quarantine_date'],
+        }
+      }
+      if (verdict === 'after-return') {
+        return {
+          ok: false,
+          message: '브라질 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['br_export_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `브라질 수출검역일 체류 기간 내.` }
     },
   },
 ]

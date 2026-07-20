@@ -470,9 +470,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 멕시코 입국엔 불요(SENASICA 요건 목록에 없음). 한국 귀국용으로만 뜬다 —
     // 멕시코는 한국 기준 광견병 비발생 지정지역이 아니라 귀국 시 항체검사가 필요하다.
     titer: { need: 'return-only' },
-    // ⚠️ appSupported 는 **아직 켜지 않는다** — 여정 카드·서류·스코핑이 비어 있어서 켜면
-    //   일본 골격 문구가 그대로 노출된다(lint:validation-wiring 이 '카드 없음'으로 잡는다).
-    //   카드 한 벌을 만든 뒤 켤 것.
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
     // 격리 없음 — OISA 서류심사 + 임상 육안검사뿐이고 통상 즉시 통관, 검사 수수료도 무료.
     importQuarantine: {},
@@ -526,7 +524,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       entryWaitDaysAfterVaccine: 20,
     },
     titer: { need: 'return-only' },
-    // ⚠️ appSupported 는 아직 켜지 않는다 — 카드·서류·스코핑 미구축.
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer', 'general'],
     importQuarantine: {},
     rabiesTiterForReturnOnly: true,
@@ -606,7 +604,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     },
     // 브라질 입국엔 불요. 한국 귀국용으로만(귀국 시 0.5 IU/mL 이상, 채혈 후 24개월 이내).
     titer: { need: 'return-only' },
-    // ⚠️ appSupported 는 **아직 켜지 않는다** — 멕시코와 같은 이유(카드·서류 미구축).
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
     importQuarantine: {},
     rabiesTiterForReturnOnly: true,
@@ -725,7 +723,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       // 채혈은 접종 후 30일 경과 후(양식 5항). 채혈 후 대기는 **없다** — 우크라이나와 갈리는 점.
       minDaysAfterVaccine: 30,
     },
-    // ⚠️ appSupported 는 아직 켜지 않는다 — 카드·서류·스코핑 미구축.
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer'],
     importQuarantine: {},
   },
@@ -1018,7 +1016,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       //   그건 귀국 방향 공통 룰(titer-validity.ts)이 담당한다.
       entryValidityMonths: null,
     },
-    // ⚠️ appSupported 는 켜지 않는다 — 카드 미구축 + 위 영공 폐쇄 이슈 미결.
+    // ⚠️ 영공 폐쇄 상태다(위 주석). 카드에 'EU 경유 육로' 안내를 명시해 두고 노출한다.
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer'],
     importQuarantine: {},
   },
