@@ -68,3 +68,10 @@ scripts/backup-*.json
 # Sentry Config File
 .env.sentry-build-plugin
 
+
+# 파이썬 바이트코드 캐시 (scripts/ 실행 시 생김)
+__pycache__/
+*.pyc
+
+# fontconfig 캐시 (이미지 생성 스크립트가 만듦)
+fccache/
