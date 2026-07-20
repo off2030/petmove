@@ -263,6 +263,59 @@ export function validateThEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
+ * 베트남 — 광견병 접종 후 30일 대기의 **단일 판정**. 저장 거부와 주의가 이 함수를 공유한다.
+ *
+ * 기준은 **최근 접종**이다. 예전엔 procedure-check 가 가장 이른 접종(1차)을 봐서, 만료 후
+ * 재접종한 케이스를 통째로 놓쳤다 — 1차 2025-01-10(2026-01-10 만료) → 재접종 2026-06-01 →
+ * 출국 2026-06-10 이면 실제로는 9일인데 1차부터 516일로 세어 '통과'가 나왔다(2026-07-20 발견).
+ * 저장 거부를 붙이면서 이 기준을 태국·필리핀과 같은 모델로 맞춘다.
+ *
+ * **유효 부스터는 30일 면제** — 직전 접종의 면역 유효기간 안에 재접종해 면역이 끊기지 않았으면
+ * 새로 기다릴 이유가 없다(태국 DLD·필리핀 BAI 와 같은 논리, isValidBooster 공용). 만료 후
+ * 재접종은 단절이라 새 1차로 보고 30일을 다시 센다.
+ *
+ * 반환: 대기가 부족하면 true(위반). 날짜가 없거나 비교 불가면 false(판정 안 함).
+ * 출처: Circular 25/2016 제10조 + 미 대사관 안내 — "at least 30 days ... before the intended
+ * date of entry".
+ */
+export const VN_RABIES_WAIT_DAYS = 30
+
+export function violatesVnRabiesWait(
+  data: Record<string, unknown>,
+  entryOrDeparture: string,
+): boolean {
+  const target = (entryOrDeparture ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(target)) return false
+  // 유효 부스터 = 면역 연속 → 대기 면제.
+  if (isValidBooster(data, 'rabies_dates')) return false
+  const dates = readDateArray(data, 'rabies_dates')
+  if (dates.length === 0) return false
+  const latest = dates.reduce((a, b) => (a > b ? a : b))
+  const earliest = addDays(latest, VN_RABIES_WAIT_DAYS)
+  return !!earliest && target < earliest
+}
+
+/**
+ * 베트남 입국일(= 출국 항공편 날짜) — 광견병 접종 후 30일 미만 입국만 hard 차단.
+ *
+ * 일본 180일·태국 21일과 같은 기준(사용자 지정 2026-07-20): **출국일을 입력하는 시점**은
+ * 날짜를 고칠 수 있는 시점이라 저장을 거부한다. 반대로 출국일이 이미 있는데 접종일을 넣는
+ * 경로는 막지 않는다 — 고칠 수 있는 건 출국일뿐이라 procedure-check
+ * (vn.rabies-min-30days-before-departure)가 '입국일을 미뤄야 해요'로 안내한다.
+ * 그래서 이 함수는 항공권 카드 경로(validateEntryDateForDestination)에만 걸린다.
+ *
+ * 베트남 외 목적지·접종 미입력 시 SKIP.
+ */
+export function validateVnEntryDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!matchesDestinationKey(ctx.destination, 'vietnam')) return null
+  if (violatesVnRabiesWait(ctx.data, v)) {
+    return '광견병 접종 후 30일이 지나야 베트남에 입국할 수 있어요. 날짜를 확인하세요.'
+  }
+  return null
+}
+
+/**
  * 수입 허가 신청일은 출국일 이전이어야 함 — 출국 당일·그 이후 신청은 불가능(논리적 불가능).
  * (당일도 차단: 출국 당일 신청은 허가 발급 자체가 불가능.)
  * client(입력 불가)·procedure-check(출국일을 나중에 당겨 어긋난 경우를 주의로) 공용. 한쪽 비면 통과.
@@ -538,6 +591,9 @@ export function validateEntryDateForDestination(
     validatePhEntryDate(entryOrDeparture, ctx) ??
     validateEuEntryDate(entryOrDeparture, ctx) ??
     validateTwEntryDate(entryOrDeparture, ctx) ??
+    // 베트남 30일 — 출국일 입력 시에만 거부(접종일 입력 경로는 주의로 안내). 베트남은
+    // 출발일 입력칸이 따로 없어 입국일·출국일이 사실상 같은 값이라 entryOrDeparture 를 쓴다.
+    validateVnEntryDate(entryOrDeparture, ctx) ??
     // 대만 — 이미 낸 수입허가 신청일로부터 20일 안쪽으로 출국일을 당기면 거부.
     // 허가를 먼저 내고 항공권을 나중에 넣는 경로(대만은 카드 순서가 허가 → 항공권)에서
     // 이 조합이 실제로 나온다. 신청일 쪽 입력에도 같은 함수가 걸려 있다.

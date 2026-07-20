@@ -2,11 +2,10 @@ import {
   buildDateRuleContext,
   calendarAgeThreshold,
   meetsCalendarAge,
+  violatesVnRabiesWait,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
-  addYears,
-  daysBetween,
   exceedsValidityYears,
   findSameGuardianCases,
   matchBannedBreed,
@@ -15,7 +14,6 @@ import {
   resolveValidUntil,
   SKIP,
   readDepartureDate,
-  readVetVisitDate,
 } from './utils'
 import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
@@ -123,7 +121,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (DAH/APHIS: "at least 30 days ... before the intended date of entry")',
+      '최근 광견병 접종일로부터 출국일까지 최소 30일 경과 필요(유효 부스터는 면제). 저장 거부(validateVnEntryDate)와 같은 판정 함수(violatesVnRabiesWait)를 쓴다. (DAH: "at least 30 days ... before the intended date of entry")',
     severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
@@ -131,20 +129,23 @@ export const VN_CHECKS: ProcedureCheck[] = [
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
-      const earliest = rabies[0]
-      const days = daysBetween(earliest.date, dep)
-      if (days === null) return SKIP
-      if (days < 30) {
-        // 접종일은 과거 사실이라 조치는 '입국일을 미루는 것'뿐 — 대만(tw.rabies-shipment-window)과
-        // 같은 문형으로 안내한다. 항공권 카드 문구("접종일로부터 30일이 지난 후에 입국할 수
-        // 있어요")와 앵커(입국)를 맞춘다. 날짜는 넣지 않는다(고객 노출 문구 규칙 — lint:checks).
-        return {
-          ok: false,
-          message: '광견병 접종 후 30일이 지나야 베트남에 입국할 수 있어요. 입국일을 미뤄야 해요.',
-          offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
-        }
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      // 판정은 도메인 함수 하나 — 저장 거부(항공권 카드)와 이 주의가 어긋나면 안 된다.
+      // 기준은 **최근** 접종이고 유효 부스터는 면제. 예전엔 여기서 가장 이른 접종(rabies[0])을
+      // 봐서 만료 후 재접종 케이스를 통째로 놓쳤다(2026-07-20 수정).
+      if (!violatesVnRabiesWait(data, dep)) {
+        const latest = rabies[rabies.length - 1]
+        return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): 30일 충족(또는 유효 부스터).` }
       }
-      return { ok: true, message: `광견병 접종(${earliest.date}) → 출국일(${dep}): ${days}일.` }
+      const latest = rabies[rabies.length - 1]
+      // 접종일은 과거 사실이라 조치는 '입국일을 미루는 것'뿐 — 출국일을 입력하는 시점은
+      // 저장 거부가 막고(날짜를 고칠 수 있는 시점), 접종일을 넣는 이 경로는 안내만 한다
+      // (사용자 지정 2026-07-20). 날짜는 넣지 않는다(고객 노출 문구 규칙 — lint:checks).
+      return {
+        ok: false,
+        message: '광견병 접종 후 30일이 지나야 베트남에 입국할 수 있어요. 입국일을 미뤄야 해요.',
+        offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
+      }
     },
   },
   {
