@@ -559,6 +559,8 @@ const DEST_PRICING: Record<string, { offlineCost?: string; period?: string }> = 
 
   // ── 유럽·중동·아프리카 ────────────────────────────────────
   ukraine: { offlineCost: '36~46', period: '최소 3~4개월' },
+  // 종합백신까지 필요해 다른 4국(36~46)보다 높다(사용자 지정 2026-07-20).
+  kazakhstan: { offlineCost: '40~49', period: '최소 1~2개월' },
   russia: { offlineCost: '15~49', period: '최소 1~2개월' },
   israel: { offlineCost: '45~56', period: '최소 1~2개월' },
   uae: { offlineCost: '40~58', period: '최소 1~2개월' },

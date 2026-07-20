@@ -123,6 +123,12 @@ const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
   mongolia: '예: 울란바토르 UBN',
   uzbekistan: '예: 타슈켄트 TAS',
   canada: '예: 밴쿠버 YVR',
+  morocco: '예: 카사블랑카 CMN',
+  mexico: '예: 멕시코시티 MEX',
+  brazil: '예: 상파울루 GRU',
+  kazakhstan: '예: 알마티 ALA',
+  // 우크라이나는 예시 공항을 넣지 않는다 — 전시로 민항 운항이 정상화되지 않은 상태라
+  // 특정 공항을 예시로 들면 잘못된 안내가 된다(2026-07-20 조사 반영).
   eu: '예: 파리 CDG',
   uk: '예: 런던 히드로 LHR',
   ireland: '예: 더블린 DUB',

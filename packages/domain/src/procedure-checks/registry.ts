@@ -13,6 +13,7 @@ import { ID_CHECKS } from './id'
 import { IL_CHECKS } from './il'
 import { JP_CHECKS } from './jp'
 import { KH_CHECKS } from './kh'
+import { KZ_CHECKS } from './kz'
 import { MA_CHECKS } from './ma'
 import { MN_CHECKS } from './mn'
 import { MX_CHECKS } from './mx'
@@ -69,6 +70,7 @@ export const ALL_PROCEDURE_CHECKS: ProcedureCheck[] = [
   ...MN_CHECKS,
   ...UZ_CHECKS,
   ...VN_CHECKS,
+  ...KZ_CHECKS,
 ]
 
 /** check 의 country 가 target 키에 매칭되는지. 배열에 포함되면 true. */

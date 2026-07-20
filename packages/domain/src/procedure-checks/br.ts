@@ -1,3 +1,4 @@
+import { violatesRabiesEntryWait } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   daysBetween,
@@ -106,30 +107,35 @@ export const BR_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'br.rabies-min-30days-before-departure',
+    id: 'br.rabies-min-21days-before-departure',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 접종은 출국일 30일 이상 전',
+    title: '광견병 접종은 출국일 21일 이상 전',
     description:
-      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (MAPA: 1차 후 21일 대기 의무 — 보수적으로 30일 적용)',
-    severity: 'info',
-    addedAt: '2026-05-07',
+      'Portaria MAPA 741/2024 Art. 10 — 1차 접종("primovacinados")은 21일 경과 후 출발 허용. 유효기간 만료 전 재접종하지 않은 경우도 1차로 간주한다. 저장 거부(validateRabiesEntryWait)와 같은 판정 함수(violatesRabiesEntryWait)를 쓴다.',
+    // ⚠️ 예전엔 30일이었다 — 그건 브라질 입국이 아니라 **한국 귀국** 요건("não inferior a
+    //   30 dias", MAPA 한국 전용 시트)이 흘러든 값이었다(2026-07-20 조사에서 발견).
+    //   방향이 다른 두 규정을 뒤섞으면 브라질 규정을 지킨 사람의 입력을 우리가 막는다.
+    severity: 'warning',
+    addedAt: '2026-07-20',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
-      const earliest = rabies[0]
-      const days = daysBetween(earliest.date, dep)
-      if (days === null) return SKIP
-      if (days < 30) {
-        return {
-          ok: false,
-          message: `광견병 접종(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 30일 이상이어야 해요.`,
-          offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
-        }
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      // 기준은 **최근** 접종이고 유효 부스터는 면제 — 구버전은 가장 이른 접종(rabies[0])을
+      // 봐서 만료 후 재접종한 케이스를 놓쳤다(구세대 파일 공통 결함).
+      if (!violatesRabiesEntryWait(data, dep, destination)) {
+        const latest = rabies[rabies.length - 1]
+        return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): 21일 충족(또는 유효 부스터).` }
       }
-      return { ok: true, message: `광견병 접종(${earliest.date}) → 출국일(${dep}): ${days}일.` }
+      const latest = rabies[rabies.length - 1]
+      return {
+        ok: false,
+        message: '광견병 접종 후 21일이 지나야 브라질에 입국할 수 있어요. 입국일을 미뤄야 해요.',
+        offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
+      }
     },
   },
   {
