@@ -24,11 +24,13 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { DESTINATION_OVERRIDES } from '../packages/domain/src/destination-config'
 import { JOURNEY_STEP_CATALOG } from '../packages/domain/src/journey-steps/catalog'
 import {
   STEP_DESTINATION_OVERRIDES,
   resolveStepForDestination,
 } from '../packages/domain/src/journey-steps/destination-overrides'
+import { resolveRequiredDocs } from '../packages/domain/src/required-docs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const GOLDEN = path.join(__dirname, 'journey-copy.snapshot.txt')
@@ -37,11 +39,16 @@ const GOLDEN = path.join(__dirname, 'journey-copy.snapshot.txt')
 // override 없는 목적지(싱가포르·호주·말레이시아 등)는 전부 base 와 동일하므로 '기본' 블록이
 // 대표한다. 새 override 목적지를 추가하면 여기 자동 포함된다(별도 명단 관리 불필요).
 const BASE = '__base__'
+/** 필수 서류 섹션 블록 키 — 변경 요약에서 목적지 블록과 함께 비교한다. */
+const DOCS_SECTION = '필수 서류'
 const DEST_KEYS = [BASE, ...Object.keys(STEP_DESTINATION_OVERRIDES)]
 
 // 사람이 읽고 git diff 로 추적할 카피 필드만 스냅샷한다.
 // links 포함 — 링크 버튼 라벨도 고객이 읽는 문구다. 빠져 있어서 15개 라벨을 한 번에
 // 바꿨는데도 린트가 조용히 통과했다(2026-07-19 발견). URL 도 함께 떠서 링크가 바뀌면 diff 에 남는다.
+// attachmentHint(첨부 안내)·attachmentLabel(저장 파일명) 포함 — 둘 다 고객이 읽거나
+// 파일명으로 보게 되는 문구인데 어떤 스냅샷에도 없었다. 실제로 세 나라 첨부 안내를 바꾸고
+// base 의 영문 저장 이름을 갈아끼웠는데 린트 5종이 모두 조용히 통과했다(2026-07-20 발견).
 const COPY_FIELDS = [
   'title',
   'shortLabel',
@@ -49,6 +56,8 @@ const COPY_FIELDS = [
   'doneSummary',
   'descriptionBySpecies',
   'description',
+  'attachmentHint',
+  'attachmentLabel',
   'links',
 ] as const
 
@@ -79,6 +88,7 @@ function appliesToDest(
 
 function destLabel(key: string): string {
   if (key === BASE) return '기본 — override 없는 모든 목적지(싱가포르·호주·말레이시아 등) 공용'
+  if (key === DOCS_SECTION) return '필수 서류 — 서류탭 이름·발급처·설명문'
   return key
 }
 
@@ -109,6 +119,8 @@ function renderField(name: string, value: unknown): string[] {
     shortLabel: 'short',
     cardLine: 'card',
     doneSummary: 'done',
+    attachmentHint: '첨부안내',
+    attachmentLabel: '저장이름',
   }
   return [`  ${short[name]}: ${String(value)}`]
 }
@@ -149,6 +161,36 @@ function buildSnapshot(): string {
     lines.push('')
   }
 
+  // ── 필수 서류 이름·설명문 ───────────────────────────────────────────────
+  // 서류탭에서 고객이 읽는 문구인데 어떤 스냅샷에도 없었다. lint:dest 는 서류 **id** 만
+  // 기록해서, 이름을 바꿔도(예: '중국 동물위생증명서(动物卫生证书)' → '동물위생증명서')
+  // 린트 4종이 모두 조용히 통과했다(2026-07-20 발견).
+  lines.push('═'.repeat(72))
+  lines.push(`[${DOCS_SECTION}]  목적지별 서류 이름·발급처·설명문`)
+  lines.push('═'.repeat(72))
+  const docCase = (token: string) =>
+    ({
+      id: 'lint',
+      customer_name: 'lint',
+      destination: token,
+      // 왕복 기준 — roundTripOnly 서류(귀국용 항체·한국 수입검역증 등)까지 담는다.
+      data: { species: 'dog', birth_date: '2000-01-01', trip_type: { [token]: 'round' } },
+    }) as never
+  for (const [key, override] of Object.entries(DESTINATION_OVERRIDES)) {
+    const token = override.keywords?.[0]
+    if (!token) continue
+    const docs = resolveRequiredDocs(token, docCase(token)) ?? []
+    lines.push('')
+    lines.push(`▸ ${key} (${token})`)
+    for (const d of docs) {
+      lines.push(`   · ${d.name}   ← ${d.source ?? ''}`)
+      for (const line of String(d.description ?? '').split('\n')) {
+        if (line.trim()) lines.push(`       ${line}`)
+      }
+    }
+  }
+  lines.push('')
+
   return lines.join('\n').replace(/\s+$/, '') + '\n'
 }
 
@@ -181,7 +223,9 @@ if (golden === snapshot) {
 const goldenBlocks = splitBlocks(golden)
 const liveBlocks = splitBlocks(snapshot)
 const changed: string[] = []
-for (const key of DEST_KEYS) {
+// DEST_KEYS + 서류 섹션. 서류 섹션을 빼먹으면 서류 이름을 바꿔도 "바뀐 블록 0개"로 떠서
+// 실패는 하는데 어디가 바뀌었는지 안 보인다(2026-07-20 실제로 겪음).
+for (const key of [...DEST_KEYS, DOCS_SECTION]) {
   if ((goldenBlocks[key] ?? '') !== (liveBlocks[key] ?? '')) changed.push(key)
 }
 
