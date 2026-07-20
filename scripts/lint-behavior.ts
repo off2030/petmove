@@ -60,8 +60,21 @@ function inputBlocks(destKey: string, data: Record<string, unknown>): string[] {
     const msg = validateRabiesPrimeAge(birth, first, e.daysAfter, e.monthsAfter)
     if (msg) out.push(`광견병 1차 최소 일령: ${msg}`)
   }
-  const chipMsg = validateMicrochipBeforeBooster(chip, first)
-  if (chipMsg) out.push(`마이크로칩 선행: ${chipMsg}`)
+  // 칩 선행은 그 나라가 *.microchip-before-rabies 를 선언할 때만 막는다 — portal
+  // getSaveBlockError 와 **같은 게이트**여야 한다(step-detail-view). 이 게이트가 빠져 있어서
+  // 칩이 입국 요건이 아닌 나라(베트남·캄보디아·캐나다)에 없는 저장 거부가 있는 것처럼
+  // 골든에 박혀 있었다(2026-07-20 발견). 이 파일 머리말대로 판정 함수는 공유하되,
+  // **어느 목적지에 거는지도 함께 복제**해야 진짜 동작과 어긋나지 않는다.
+  //
+  // ⚠️ 커버리지 한계 — 일본이 '0건'으로 나오는 건 정상이다. 되돌리지 말 것.
+  //   일본은 1차가 아니라 **2차 카드 입력 시** 차단하는 모델인데(step-detail-view 주석),
+  //   이 함수는 rabies-vaccine-1 층만 시뮬레이션한다. 그래서 일본의 진짜 차단 지점은
+  //   이 골든에 안 잡힌다. 게이트를 빼서 일본을 억지로 '1건'으로 만들면 다른 나라 3곳에
+  //   없는 차단이 생긴다(그래서 실제로 그랬다).
+  if ((step.validationIds ?? []).some((id) => id.endsWith('.microchip-before-rabies'))) {
+    const chipMsg = validateMicrochipBeforeBooster(chip, first)
+    if (chipMsg) out.push(`마이크로칩 선행: ${chipMsg}`)
+  }
   return out
 }
 
