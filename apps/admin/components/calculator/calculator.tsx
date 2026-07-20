@@ -9,12 +9,13 @@ import {
   type FormEvent,
   type SetStateAction,
 } from 'react'
-import { Check, Plus, Trash2, X } from 'lucide-react'
+import { Check, GripVertical, Plus, Trash2, X } from 'lucide-react'
 import type { CalculatorItem } from '@petmove/domain'
 import {
   updateCalculatorItem,
   createCalculatorItem,
   deleteCalculatorItem,
+  reorderCalculatorItems,
 } from '@/lib/actions/calculator'
 import { ListRow } from '@petmove/ui'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -53,6 +54,11 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
   const [highlightIdx, setHighlightIdx] = useState(0)
   const [freeMode, setFreeMode] = useState(false)
   const [freeName, setFreeName] = useState('')
+  // 편집 모드 드래그 재정렬 — 손잡이(grip)를 누른 동안에만 draggable 을 켠다.
+  // 행 전체를 항상 draggable 로 두면 이름·비용 input 의 텍스트 선택이 막힌다.
+  const [dragId, setDragId] = useState<number | null>(null)
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+  const [dropIdx, setDropIdx] = useState<number | null>(null)
   const addMenuRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const freeInputRef = useRef<HTMLInputElement>(null)
@@ -149,6 +155,37 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
     }
   }
 
+  function clearDrag() {
+    setDragId(null)
+    setDragIdx(null)
+    setDropIdx(null)
+  }
+
+  async function handleDrop(targetIdx: number) {
+    const from = dragIdx
+    clearDrag()
+    if (from === null || from === targetIdx) return
+    const next = [...visibleItems]
+    const [moved] = next.splice(from, 1)
+    next.splice(targetIdx, 0, moved)
+    const orderById = new Map(next.map((it, i) => [it.id, i]))
+    const prev = items
+    setItems((arr) =>
+      arr.map((i) => {
+        const o = orderById.get(i.id)
+        return o === undefined || i.country !== effectiveCountry ? i : { ...i, item_order: o }
+      }),
+    )
+    const res = await reorderCalculatorItems({
+      country: effectiveCountry,
+      orderedIds: next.map((it) => it.id),
+    })
+    if (!res.ok) {
+      alert(`순서 변경 실패: ${res.error}`)
+      setItems(prev)
+    }
+  }
+
   function resetAddForm() {
     setAddOpen(false)
     setAddName('')
@@ -231,16 +268,15 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
     <div>
     <div>
       <div>
-        {visibleItems.map((it) => {
+        {visibleItems.map((it, idx) => {
           const on = !!checked[it.id]
           // Split "마이크로칩 (미니)" → main + meta
           const m = it.item_name.match(/^(.+?)\s*(\([^)]+\))\s*$/)
           const mainName = m ? m[1] : it.item_name
           const meta = m ? m[2] : null
 
-          return (
+          const row = (
             <ListRow
-              key={it.id}
               interactive={!editMode}
               onClick={
                 editMode
@@ -250,6 +286,16 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
               className="flex items-center justify-between gap-3"
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
+                {editMode && (
+                  <span
+                    onMouseDown={() => setDragId(it.id)}
+                    onMouseUp={() => setDragId(null)}
+                    className="-ml-1 shrink-0 cursor-grab text-muted-foreground/50 transition-colors hover:text-foreground active:cursor-grabbing"
+                    title="드래그로 순서 변경"
+                  >
+                    <GripVertical size={14} />
+                  </span>
+                )}
                 {!editMode && (
                   <Checkbox
                     checked={on}
@@ -322,6 +368,38 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                 )}
               </div>
             </ListRow>
+          )
+
+          if (!editMode) return <div key={it.id}>{row}</div>
+
+          return (
+            <div
+              key={it.id}
+              draggable={dragId === it.id}
+              onDragStart={(e) => {
+                setDragIdx(idx)
+                e.dataTransfer.effectAllowed = 'move'
+              }}
+              onDragOver={(e) => {
+                if (dragIdx === null) return
+                e.preventDefault()
+                e.dataTransfer.dropEffect = 'move'
+                setDropIdx(idx)
+              }}
+              onDragLeave={() => setDropIdx((cur) => (cur === idx ? null : cur))}
+              onDrop={(e) => {
+                e.preventDefault()
+                handleDrop(idx)
+              }}
+              onDragEnd={clearDrag}
+              className={cn(
+                'transition-opacity',
+                dragIdx === idx && 'opacity-40',
+                dropIdx === idx && dragIdx !== idx && 'ring-1 ring-inset ring-foreground/30',
+              )}
+            >
+              {row}
+            </div>
           )
         })}
         {editMode && (

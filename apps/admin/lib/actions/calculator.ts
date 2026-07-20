@@ -28,6 +28,36 @@ export async function updateCalculatorItem(id: number, patch: { item_name?: stri
   return { ok: true }
 }
 
+/**
+ * 한 목적지 안에서 항목 순서 재정렬 — orderedIds 배열 순서대로 item_order 0..n-1 재부여.
+ * 클라이언트는 낙관적으로 먼저 반영하고 실패 시 롤백한다.
+ */
+export async function reorderCalculatorItems(input: {
+  country: string
+  orderedIds: number[]
+}): Promise<CalcResult> {
+  const auth = await requireAuth()
+  if (!auth.ok) return auth
+  const country = input.country.trim()
+  if (!country) return { ok: false, error: '목적지가 비어있습니다' }
+  if (input.orderedIds.length === 0) return { ok: true }
+
+  const now = new Date().toISOString()
+  const results = await Promise.all(
+    input.orderedIds.map((id, i) =>
+      auth.supabase
+        .from('calculator_items')
+        .update({ item_order: i, updated_at: now })
+        .eq('id', id)
+        .eq('country', country),
+    ),
+  )
+  const failed = results.find((r) => r.error)
+  if (failed?.error) return { ok: false, error: failed.error.message }
+  revalidatePath('/calculator')
+  return { ok: true }
+}
+
 export async function createCalculatorItem(input: {
   country: string
   item_name: string
