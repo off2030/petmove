@@ -25,9 +25,22 @@ import { msgGeneralVaccineExpiredBefore, msgMicrochipBeforeGeneralVaccine, msgMi
  *
  * 출처:
  *  - DLD AQS-Suvarnabhumi 공식 안내 — http://aqs-suvarn-dld.go.th/wp/en/import-en/importation-of-pet-dog-and-cat/
+ *    ⚠️ HTTPS 는 인증서 불일치(sv164.hostsevenplus.com) + 404 다. **평문 HTTP 로 접근**할 것.
+ *    시나리오별 PDF 3종(2026-07-20 확인) — 최소 일령 각주가 셋 다 토씨까지 같다:
+ *      .../wp-content/uploads/2016/09/1A.cargo_.pdf          (화물)
+ *      .../wp-content/uploads/2016/09/B.Checked-baggage.pdf  (기내·수하물, 사전신청)
+ *      .../wp-content/uploads/2016/09/1C.on-arrival.pdf      (도착 시 신청)
  *  - 태국 외교부(MFA) 공식 PDF (Revised 30 Jan 2025) —
  *    https://image.mfa.go.th/mfa/0/91fPdh6NtO/About-Thailand/Bringing_Pets_to_Thailand/All_Airports_-_Instructions_for_Bringing_Dog-Cat-Rabbit_into_Thailand_from_the_USA_(Revised_30Jan2025).pdf
  *  - DLD AQI 영문 PDF — https://aqi.dld.go.th/webnew/images/stories/document/data-import-export/importation_eng.pdf
+ *    ⚠️ **2026-07-20 기준 403 Forbidden**(aqi.dld.go.th 도메인 전체가 봇 차단으로 보인다).
+ *    User-Agent·Referer 를 바꿔도 실패했다. 이 URL 의 내용은 **미검증 상태**다.
+ *
+ * ⚠️ 최소 일령 12주는 2026-07-20 위 1차 출처로 재검증했다. 그전 주석에 DLD 인용으로 적혀
+ *   있던 "at least 3 months old or 12 weeks or 84 days at time of administered" 는
+ *   **어느 공식 문서에도 없는 문장**이었다(1차 출처엔 '3 months'·'84 days' 표현 자체가 없다).
+ *   출처 없는 인용을 코드에 남기면 다른 나라 판단의 근거로 재사용된다 — 실제로 몽골 최소
+ *   일령을 정할 때 이 문장이 논거로 쓰였다. 인용은 반드시 원문 대조 후 적을 것.
  *
  * ⚠️ 핵심:
  *  - **광견병 접종 출발 21일 전 완료** (1차 또는 단절 시; 유효 부스터 면제) + 생후 12주(84일) 이상
@@ -107,7 +120,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 생후 12주(84일) 이상',
     description:
-      '광견병 1차 접종은 생후 최소 12주(84일) 이후. 불활화(사독) 또는 재조합 백신만 인정. (DLD 공식: "at least 3 months old or 12 weeks or 84 days at time of administered")',
+      '광견병 1차 접종은 생후 최소 12주(84일) 이후. 불활화(사독) 또는 재조합 백신만 인정. (DLD AQS-수완나품 안내 PDF 각주: "In case of primary Rabies vaccine: animal was at least 12 weeks old at the time of administration" — 개·고양이 동일. 태국 MFA PDF(Rev. 30 Jan 2025)도 "at least 12 weeks old at the time of vaccination")',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {

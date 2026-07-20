@@ -243,7 +243,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // mn.rabies-only-1year-vaccine 은 없다 — APQA 표에 최대 유효기간 행이 없고 별지 25호
       // 서식이 1Y/2Y/3Y 를 지원한다. 근거 부재로 제거했다(mn.ts 주석 참고).
       validationIds: [
-        'mn.rabies-prime-after-12weeks',
+        'mn.rabies-prime-after-3months-old',
         'mn.microchip-before-rabies',
         'mn.rabies-booster-within-prime-validity',
       ],
@@ -921,6 +921,17 @@ function seaPermitOverrides(opts: {
       shortLabel: '백신',
       description: opts.rabiesDescription,
       doneSummary: '광견병 백신을 접종했어요.',
+      // ⚠️ **최소 일령이 여기 하드코딩돼 있다 — 프로파일을 읽지 않는다.**
+      //   sea-permit 두 나라(태국·필리핀) 다 12주=84일이라 값 자체는 맞다:
+      //     태국 DLD AQS 안내 PDF 각주 "animal was at least 12 weeks old at the time of
+      //       administration" (+ 태국 MFA PDF Rev. 30 Jan 2025 동일) — 2026-07-20 재검증
+      //     필리핀 ph.rabies-prime-after-12weeks
+      //   다만 **buildRabiesCard 를 쓰는 나라와 단일 출처가 다르다**(그쪽은 프로파일의
+      //   rabies.minAgeDays/minAgeMonths 에서 earliest 를 파생한다). 그래서 태국 프로파일에
+      //   실제와 다른 값(91일·달력 3개월)이 오래 남아 있어도 아무 증상이 없었고, 2026-07-20
+      //   에 그걸 '저장 거부 버그'로 오독하는 일이 실제로 벌어졌다.
+      //   sea-permit 에 12주가 아닌 나라를 추가하게 되면 이 하드코딩을 프로파일 파생으로
+      //   바꿀 것(그전까지는 두 나라가 같은 값이라 굳이 바꾸지 않는다).
       earliest: { anchor: 'birth', daysAfter: 84 },
       done: 'has-rabies-valid',
       validationIds: opts.rabiesValidationIds,

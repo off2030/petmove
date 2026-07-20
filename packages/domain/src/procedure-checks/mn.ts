@@ -1,10 +1,11 @@
 import {
   buildDateRuleContext,
+  calendarAgeThreshold,
+  meetsCalendarAge,
   violatesRabiesEntryWait,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
-  addDays,
   classifyExportQuarantineDate,
   findRabiesValidityBreaks,
   readRabiesEntries,
@@ -43,11 +44,10 @@ import {
  *  - **에키노코쿠스 구충은 입국 요건이 아니다.** APQA '기생충 처치: 불필요'. WHO 자료의
  *    분기별 프라지콴텔 사업은 몽골 **국내** 개 대상 공중보건 프로그램이지 수입 요건이 아니다.
  *    → 카드를 만들지 않는다. (별지 25호에 기재란은 있어 기재 자체는 권장)
- *  - **최소 일령 = 고정 84일**(APQA "최소 12주령 이상"). 태국과 같은 모양이고 달력 개월이
- *    아니다. 처음엔 www 가이드 표현('생후 3개월령')을 따라 달력 3개월로 뒀는데, 그 값이
- *    **저장 거부까지 파생해서**(step.earliest → portal validateRabiesPrimeAge) APQA 기준으로
- *    적법하게 12주에 접종한 케이스가 접종일 입력을 거부당하고 있었다. 3년 백신 blocker 와
- *    같은 종류의 사고다 — 자세한 근거는 destination-config 몽골 프로파일 주석 참고.
+ *  - **최소 일령 = 달력 3개월**(사용자 결정 2026-07-20). APQA 안내문은 '최소 12주령'(84일)
+ *    이지만 www 가이드('생후 3개월령')와 사례를 따라 3개월을 유지한다. 이 값은 저장 거부까지
+ *    파생하므로, APQA 값이 맞다면 84~90일 접종 케이스가 입력을 거부당한다 — 알고 택한
+ *    트레이드오프다. 근거 충돌 상태는 destination-config 몽골 프로파일 주석 참고.
  *
  * 확인 실패(추측으로 채우지 않은 것):
  *  - GASI(ssia.gov.mn) 원문 규정 접근 실패. APQA 안내문 자체가 "해당 국가의 검증을 받은
@@ -61,9 +61,6 @@ import {
  */
 
 const COUNTRY = 'mongolia'
-
-/** 최소 일령 — APQA 안내문 "최소 12주령 이상" = 고정 84일. 태국과 같다(달력 개월 아님). */
-const MIN_AGE_DAYS = 84
 
 export const MN_CHECKS: ProcedureCheck[] = [
   {
@@ -94,12 +91,12 @@ export const MN_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'mn.rabies-prime-after-12weeks',
+    id: 'mn.rabies-prime-after-3months-old',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종은 생후 12주(84일) 이후',
+    title: '광견병 1차 접종은 생후 3개월 이후',
     description:
-      'APQA 안내문 §1.2: "최소 12주령 이상" — 고정 84일 기준(달력 개월이 아니다). 입력 차단(step.earliest.daysAfter)과 같은 기준을 쓴다. 태국 th.rabies-prime-after-12weeks 와 같은 모양.',
+      '달력 3개월 기준(사용자 결정 2026-07-20 — APQA 안내문은 "최소 12주령"이나 www 가이드·사례를 따라 3개월 유지). 입력 차단(step.earliest.monthsAfter)과 같은 판정 함수(meetsCalendarAge)를 쓴다. 일수(91일)로 환산하면 생월에 따라 89~92일로 흔들려 규정을 지킨 사람을 막는다.',
     severity: 'warning',
     addedAt: '2026-07-20',
     run: ({ caseRow }) => {
@@ -109,16 +106,17 @@ export const MN_CHECKS: ProcedureCheck[] = [
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      const threshold = addDays(birth, MIN_AGE_DAYS)
-      if (!threshold) return SKIP
-      if (first.date < threshold) {
+      if (!meetsCalendarAge(birth, first.date, 3)) {
         return {
           ok: false,
-          message: msgRabiesPrimeMinAge('84일(12주)'),
+          message: msgRabiesPrimeMinAge('3개월'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 84일(${threshold}) 이후.` }
+      return {
+        ok: true,
+        message: `1차 접종일(${first.date}) 생후 3개월(${calendarAgeThreshold(birth, 3)}) 이후.`,
+      }
     },
   },
   {

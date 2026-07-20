@@ -367,9 +367,19 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 1회 접종 + "최근 접종 12개월 이내" 관례 — 1년 유효기간만 취급(다년 백신 실무상 미인정).
     rabies: {
       doses: 1,
-      minAgeDays: 91,
-      minAgeMonths: 3,
-      minAgeLabel: '생후 3개월',
+      // **고정 84일(12주)** — 1차 출처 재검증 완료(2026-07-20). DLD AQS 안내 PDF 각주
+      // "animal was at least 12 weeks old at the time of administration" + 태국 MFA PDF
+      // (Rev. 30 Jan 2025) "at least 12 weeks old at the time of vaccination".
+      // 1차 출처 어디에도 '3 months'·'84 days' 표현은 없다 — 전부 "12 weeks" 다.
+      //
+      // ⚠️ 이 값들은 **태국에선 읽히지 않는다.** 태국 카드는 seaPermitOverrides 가 만들고
+      //   거기서 earliest 를 84일로 하드코딩한다(buildRabiesCard 를 안 탄다). 그래서 예전
+      //   값(91일·달력 3개월)이 실제와 달라도 증상이 없었고, 2026-07-20 에 그걸 '저장 거부
+      //   버그'로 오독하는 일이 벌어졌다. 실제 동작은 계속 84일이었다.
+      //   읽히지 않아도 **프로파일은 규정의 기록**이라 실제 값으로 맞춰 둔다. minAgeMonths 는
+      //   선언하지 않는다 — 12주는 달력 개월 규칙이 아니다.
+      minAgeDays: 84,
+      minAgeLabel: '생후 12주(84일)',
       oneYearVaccineOnly: true,
       validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
       timingLines: ['출국 30일 전까지 접종해야 해요.'],
@@ -564,20 +574,21 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     archetype: 'sea-permit',
     rabies: {
       doses: 1,
-      // APQA 안내문 원문이 **최소 12주령** = 84일이다. 태국(th.rabies-prime-after-12weeks)과
-      // 같은 모양으로 **고정 84일**을 쓴다 — 달력 개월이 아니다.
+      // **달력 3개월을 쓴다 — 사용자 결정(2026-07-20).** APQA 안내문은 '최소 12주령'(84일)
+      // 이지만 3개월을 유지한다. 펫무브 www 가이드가 '생후 3개월령 이후'이고, 실제 사례
+      // 기준으로 그쪽이 맞다는 판단이다.
       //
-      // ⚠️ 처음엔 www 가이드 표현("생후 3개월령 이후")을 따라 달력 3개월(minAgeMonths: 3)로
-      //   뒀는데, 이건 **저장 거부까지 파생하는 값**이었다(step.earliest → portal
-      //   validateRabiesPrimeAge → getSaveBlockError). 즉 APQA 기준으로 적법하게 12주에
-      //   접종한 케이스가 **접종일 입력 자체를 거부당하고 있었다.** 3년 백신 blocker 와 같은
-      //   종류의 사고다 — '우리가 더 엄격하니 안전하다'가 성립하지 않는 자리다.
-      //   규제기관들은 '3개월'과 '12주'를 같은 규칙으로 쓴다. 태국 DLD 원문이 그 증거다:
-      //   "at least 3 months old **or** 12 weeks or 84 days at time of administered".
-      //   가이드의 '3개월'은 12주를 반올림한 표현으로 보고, 판정 숫자는 APQA 의 84일을 쓴다.
-      //   minAgeMonths 를 **선언하지 않는다** — 선언하면 달력 개월 판정이 다시 살아난다.
-      minAgeDays: 84,
-      minAgeLabel: '생후 12주(84일)',
+      // ⚠️ 이 값은 **저장 거부까지 파생한다**(step.earliest → portal validateRabiesPrimeAge
+      //   → getSaveBlockError). 알고 택한 트레이드오프다:
+      //     - APQA 값(12주=84일)이 맞다면, 84~90일에 접종한 케이스는 적법한데도 접종일
+      //       **입력이 거부된다.** 그 케이스를 만나면 이 값을 84일로 낮출 것.
+      //     - 반대로 3개월이 맞는데 84일로 낮추면 미달 케이스를 조용히 통과시킨다.
+      //   근거 상태: APQA 안내문(2024-04-30, 직접 확인) '12주령' vs www 가이드·구버전이
+      //   인용한 USDA APHIS('3 months of age', 이번 조사에서 접근 실패로 미검증) 충돌.
+      //   GASI(ssia.gov.mn) 1차 원문은 확보하지 못했다. 2차 출처 둘이 엇갈리는 상태다.
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
       // ⚠️ oneYearVaccineOnly 를 **선언하지 않는다** (2026-07-20, 캄보디아·우즈벡과 같은 조치).
       //   APQA 표의 광견병 조건은 '최소 12주령'과 '입국 30일 이전' 두 줄뿐이고 **최대 유효기간
       //   행 자체가 없다**(상한을 두는 나라는 안내문에 명시된다). 12개월 상한을 말하는 유일한
