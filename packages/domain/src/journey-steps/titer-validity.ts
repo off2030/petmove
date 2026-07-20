@@ -21,6 +21,24 @@ export const TITER_ENTRY_VALIDITY_MONTHS: Record<string, number | null> = Object
   ),
 )
 
+
+/**
+ * 최종 접종 후 채혈까지 최소 대기(일) — 프로파일 `titer.minDaysAfterVaccine` 파생.
+ *
+ * 포털 저장 차단(validateEuTiterAfterVaccine)의 **대상 목적지**를 넓히는 데 쓴다.
+ * 그 차단은 원래 EU_ENTRY_FAMILY 하드코딩 목록에만 걸려 있어서, 같은 30일 요건을 가진
+ * 모로코·우크라이나를 앱에 올렸을 때 채혈일 차단이 조용히 빠졌다(2026-07-20 발견).
+ *
+ * ⚠️ EU 패밀리 프로파일은 아직 이 값을 **선언하지 않는다.** 그래서 소비처는 이 맵과
+ *   EU_ENTRY_FAMILY 의 **합집합**을 봐야 한다 — 파생만 보면 EU 차단이 사라진다.
+ *   EU 프로파일에 선언을 채우는 건 별도 작업(선언 후 합집합을 걷어낼 것).
+ */
+export const TITER_MIN_DAYS_AFTER_VACCINE: Record<string, number> = Object.fromEntries(
+  Object.entries(DESTINATION_OVERRIDES).flatMap(([key, o]) =>
+    typeof o.titer?.minDaysAfterVaccine === 'number' ? [[key, o.titer.minDaysAfterVaccine]] : [],
+  ),
+)
+
 /** 한국 귀국 시 광견병 항체검사 유효기간(개월) — 농림축산검역본부 공통. */
 export const KR_RETURN_TITER_VALIDITY_MONTHS = 24
 

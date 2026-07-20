@@ -26,6 +26,7 @@ import {
   validateImportPermitFiledDate,
   validateEntryDateForDestination,
   validateEchinococcusWindow,
+  TITER_MIN_DAYS_AFTER_VACCINE,
   validateEuTiterAfterVaccine,
   validateIeAdvanceNoticeDate,
   validateMtAdvanceNoticeDate,
@@ -985,7 +986,14 @@ export function StepDetailView({
       }
       // EU 패밀리 — 채혈은 직전 유효 접종 + 30일 이후 (chain 유지 시 시계 리셋 X).
       // procedure-check(eu.titer-min-30days-after-vaccine)와 같은 알고리즘의 입력 차단.
-      if (destinationKey && EU_ENTRY_FAMILY.includes(destinationKey)) {
+      // EU 하드코딩 목록 ∪ 프로파일 선언(titer.minDaysAfterVaccine) — 같은 30일 요건인
+      // 모로코·우크라이나가 목록에 없어 차단이 빠져 있었다(2026-07-20). EU 프로파일에 선언을
+      // 채우면 합집합을 걷어내고 파생만 볼 것(titer-validity.ts 주석 참고).
+      if (
+        destinationKey &&
+        (EU_ENTRY_FAMILY.includes(destinationKey) ||
+          TITER_MIN_DAYS_AFTER_VACCINE[destinationKey] !== undefined)
+      ) {
         const err30 = validateEuTiterAfterVaccine(
           readRabiesDoseList(caseRow?.data),
           titerForm.date.trim(),

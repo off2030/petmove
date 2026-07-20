@@ -695,7 +695,7 @@
 ▸ morocco (모로코)
    입력불가 0건
    주의·차단 1건
-     - ma.rabies-prime-after-91days-old [info]
+     - ma.rabies-prime-after-91days-old [warning]
          광견병 접종은 생후 91일이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -1087,7 +1087,7 @@
    입력불가 1건
      ✕ 마이크로칩 선행: 마이크로칩 삽입 후 광견병을 접종하세요
    주의·차단 1건
-     - ma.microchip-before-rabies [info]
+     - ma.microchip-before-rabies [warning]
          접종일은 마이크로칩 삽입일 이후여야 해요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -3556,7 +3556,7 @@
    입력불가 1건
      ✕ 광견병 1차 최소 일령: 광견병 접종은 생후 3개월이 지나서 할 수 있어요
    주의·차단 1건
-     - ma.rabies-prime-after-91days-old [info]
+     - ma.rabies-prime-after-91days-old [warning]
          광견병 접종은 생후 91일이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.

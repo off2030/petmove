@@ -61,8 +61,8 @@ export const MA_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
-      'ISO 11784/11785 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (ONSSA: 2011-07-03 이전 판독 가능 문신만 예외)',
-    severity: 'info',
+      'ISO 11784/11785 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. ONSSA 수입 양식 3항 "identified with permanent mark, prior to their vaccination against rabies" — 다만 양식은 "tattoo or microchip"이라 칩이 유일 수단은 아니다. 저장 차단(validateMicrochipBeforeBooster)의 짝.',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -89,8 +89,8 @@ export const MA_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      'ONSSA: "12주(3개월) 이상 접종" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
-    severity: 'info',
+      '펫무브 www 가이드 "광견병 예방접종은 생후 3개월령 이후에 해야 합니다" — ONSSA 수입 양식엔 연령 규정이 없어 가이드가 근거다. 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
