@@ -60,15 +60,14 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/vietnam-18.jpg',
   ],
   캄보디아: [
-    // 리드 미확정 — 순차 회전(HERO_LEAD_THEN_RANDOM 미등록). 검수 후 첫 장 지정.
+    // 첫 장 = 앙코르 사원 회랑 기둥(사용자 지정 2026-07-21). 나머지는 파일 순서 유지.
+    '/destinations/cambodia-06.jpg',
     '/destinations/cambodia-01.jpg',
     '/destinations/cambodia-02.jpg',
     '/destinations/cambodia-03.jpg',
     '/destinations/cambodia-04.jpg',
     '/destinations/cambodia-05.jpg',
-    '/destinations/cambodia-06.jpg',
     '/destinations/cambodia-07.jpg',
-    '/destinations/cambodia-08.jpg',
     '/destinations/cambodia-09.jpg',
     '/destinations/cambodia-10.jpg',
     '/destinations/cambodia-11.jpg',
@@ -77,11 +76,9 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/cambodia-14.jpg',
     '/destinations/cambodia-15.jpg',
     '/destinations/cambodia-16.jpg',
-    '/destinations/cambodia-17.jpg',
-    '/destinations/cambodia-18.jpg',
   ],
   몽골: [
-    // 리드 미확정 — 순차 회전(HERO_LEAD_THEN_RANDOM 미등록). 검수 후 첫 장 지정.
+    // 첫 장 = 초원 사원(01, 사용자 지정 2026-07-21). 09(밤하늘 게르) 삭제 — 결번 유지(재번호 X).
     '/destinations/mongolia-01.jpg',
     '/destinations/mongolia-02.jpg',
     '/destinations/mongolia-03.jpg',
@@ -90,7 +87,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/mongolia-06.jpg',
     '/destinations/mongolia-07.jpg',
     '/destinations/mongolia-08.jpg',
-    '/destinations/mongolia-09.jpg',
     '/destinations/mongolia-10.jpg',
     '/destinations/mongolia-11.jpg',
     '/destinations/mongolia-12.jpg',
@@ -100,37 +96,35 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/mongolia-16.jpg',
   ],
   우즈베키스탄: [
-    // 리드 미확정 — 순차 회전(HERO_LEAD_THEN_RANDOM 미등록). 검수 후 첫 장 지정.
-    '/destinations/uzbekistan-01.jpg',
+    // 첫 장 = 타일 아치 클로즈업(사용자 지정 2026-07-21). 나머지는 파일 순서 유지.
+    // 05(부하라 골목)·11(사막 흙언덕) 삭제 — 결번 유지(재번호 X).
     '/destinations/uzbekistan-02.jpg',
+    '/destinations/uzbekistan-01.jpg',
     '/destinations/uzbekistan-03.jpg',
     '/destinations/uzbekistan-04.jpg',
-    '/destinations/uzbekistan-05.jpg',
     '/destinations/uzbekistan-06.jpg',
     '/destinations/uzbekistan-07.jpg',
     '/destinations/uzbekistan-08.jpg',
     '/destinations/uzbekistan-09.jpg',
     '/destinations/uzbekistan-10.jpg',
-    '/destinations/uzbekistan-11.jpg',
     '/destinations/uzbekistan-12.jpg',
     '/destinations/uzbekistan-13.jpg',
     '/destinations/uzbekistan-14.jpg',
   ],
   캐나다: [
-    // 리드 미확정 — 순차 회전(HERO_LEAD_THEN_RANDOM 미등록). 검수 후 첫 장 지정.
+    // 첫 장 = 모레인 호수(05, 사용자 지정 2026-07-21). 나머지는 파일 순서 유지.
+    // 07(카누)·13(퀘벡 시가지) 삭제 — 결번 유지(재번호 X).
+    '/destinations/canada-05.jpg',
     '/destinations/canada-01.jpg',
     '/destinations/canada-02.jpg',
     '/destinations/canada-03.jpg',
     '/destinations/canada-04.jpg',
-    '/destinations/canada-05.jpg',
     '/destinations/canada-06.jpg',
-    '/destinations/canada-07.jpg',
     '/destinations/canada-08.jpg',
     '/destinations/canada-09.jpg',
     '/destinations/canada-10.jpg',
     '/destinations/canada-11.jpg',
     '/destinations/canada-12.jpg',
-    '/destinations/canada-13.jpg',
     '/destinations/canada-14.jpg',
     '/destinations/canada-15.jpg',
   ],
