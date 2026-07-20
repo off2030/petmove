@@ -103,7 +103,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       description:
         '중국 도착 후 공항 세관(해관)에서 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 30일간 격리되거나 한국으로 반송돼요.',
       helpText: '중국 도착 후 수입 검역을 받은 날짜',
-      attachmentHint: '수입 검역 확인 서류 사본을 사진·PDF로 보관하세요.',
+      // 중국은 도착 검역 후 발급되는 증서가 없다(해관 확인만) — '검역 서류'로 통일.
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '중국 수입 검역 서류',
       validationIds: ['cn.import-quarantine-date-valid'],
     }),
@@ -161,7 +162,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       description:
         '베트남 도착 후 공항 동물검역소에서 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 14일간 격리되거나 한국으로 반송돼요.',
       helpText: '베트남 도착 후 수입 검역을 받은 날짜',
-      attachmentHint: '수입 검역 확인 서류 사본을 사진·PDF로 보관하세요.',
+      // 발급되는 검역증이 확정된 나라는 '검역증'(일본과 동일). 발급물이 없거나 미확인인
+      // 나라(중국·대만·필리핀)만 '검역 서류'로 뭉뚱그린다 — 2026-07-20 사용자 지정 통일.
+      attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
       // 서류 목록의 'vn-import-quarantine-cert' 와 이름을 맞춘다 — 일본(Import Quarantine
       // Certificate)·태국(R.7)처럼 발급되는 서류 이름으로 저장되게(2026-07-20).
       attachmentLabel: '베트남 수입 동물검역증',
@@ -265,7 +268,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       description:
         '대만 도착 후 공항 동물검역소에서 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 7일간 격리되거나 한국으로 반송돼요.',
       helpText: '대만 도착 후 수입 검역을 받은 날짜',
-      attachmentHint: '수입 검역 서류 사본을 사진·PDF로 보관하세요.',
+      // 대만은 도착 검역 후 발급되는 증서가 확인되지 않는다(required-docs.ts 대만 블록
+      // 주석 참고) — '검역 서류'로 통일.
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '대만 수입 검역 서류',
       validationIds: ['tw.import-quarantine-date-valid'],
     }),
