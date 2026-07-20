@@ -264,9 +264,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '대만 도착 후 공항 동물검역소에서 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 7일간 격리되거나 한국으로 반송돼요.',
       helpText: '대만 도착 후 수입 검역을 받은 날짜',
       attachmentHint: '수입 검역 서류 사본을 사진·PDF로 보관하세요.',
-      // 서류 목록의 'tw-import-quarantine-cert' 와 이름을 맞춘다 — 일본(Import Quarantine
-      // Certificate)·태국(R.7)처럼 발급되는 서류의 이름으로 저장되게(2026-07-20).
-      attachmentLabel: '대만 수입 동물검역증',
+      attachmentLabel: '대만 수입 검역 서류',
       validationIds: ['tw.import-quarantine-date-valid'],
     }),
   },
