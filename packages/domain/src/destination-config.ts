@@ -967,10 +967,60 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     importQuarantine: {},
     rabiesTiterForReturnOnly: true,
   },
+  // ── 우크라이나 (Держпродспоживслужба — DPSS) ──────────────────────────
+  // ✅ 1차 출처 확보(2026-07-20). 구 주석의 "공식 자료 부재 — 사례 기반"은 사실이 아니었다.
+  //   근거 법령: 「수의학 및 동물복지법」 1206-IX(2026-03-01 시행), 농업정책부령 553/2018
+  //   (z0346-19), 부령 **1366/2025**(z0510-25, 수의문서 발급 절차, 2026-03-01 시행 —
+  //   구 288/2014 폐지). DPSS 안내: dpss.gov.ua
+  //   ⚠️ dpss.gov.ua 는 한국·미국 IP 에서 직접 접속이 차단된다(리더 프록시 경유 필요).
+  //
+  // ⚠️⚠️ **영공이 민항기에 완전 폐쇄돼 있어 직항 입국이 불가능하다.**
+  //   EASA CZIB-2022-01R13(Active, 2026-07-31까지) 전 FIR 대상. DPSS 자체 문서(2026-06-09)도
+  //   "повітряний простір України закритий" 로 인정한다.
+  //   → 실제 경로는 **한국 → EU 공항 → 육로 국경**(폴란드·슬로바키아·헝가리·루마니아·몰도바)
+  //     이고, 그러면 **EU 입국 요건이 먼저 걸린다**(실질 병목이 EU 규정이다).
+  //   앱 목적지로 여는 문제는 사용자 판단이 필요하다 — 단독 목적지 카드로 만들면 실제 절차와
+  //   어긋난다. appSupported 를 켜기 전 반드시 결론을 낼 것.
+  //
+  // 확인된 요건(APHIS 미국 출발 안내 + DPSS 안내 교차):
+  //   칩 ISO 필수(문신은 2011-07-03 이전 시술분만) → 칩 후 접종
+  //   광견병 최소 **12주**("Pets under 12 weeks of age must not be vaccinated")
+  //   접종 후 **21일** 대기(초회 또는 유효기간 경과 후 재접종인 경우)
+  //   **3년 백신 인정 O**("Ukraine will accept a 3-year rabies vaccine")
+  //   항체검사 **필수**, 0.5 IU/ml 이상, 채혈은 접종 후 **30일** 경과 후,
+  //     채혈 후 **3개월(90일) 대기**("more than three (3) months prior to export")
+  //   항체 유효기간 = **조건부 무기한** — "remains valid indefinitely as long as there has
+  //     been no lapse in rabies vaccination coverage". EU 와 같은 모델이다.
+  //   수입허가·사전신고 **불요**(2015년 법 191-VIII 로 수입허가 개념 자체가 삭제됨).
+  //   도착 격리 **없음** — 553/2018 제1장 6항이 비상업 반려동물을 격리 요건에서 제외한다.
+  //   마리수 5두 이하(DPSS 안내에만 있고 법령 본문엔 없어 근거가 약하다).
+  //   수입 금지 견종 **없음** — 내각령 1164/2021 의 '위험 견종' 목록은 보험·입마개 규제이지
+  //     수입 규제가 아니다(조문에 ввезення/імпорт 언급이 전무).
+  //
+  // ⚠️ 널리 퍼진 "도착 후 30일 격리", "항체 3~24개월 유효"는 **폐지된 2004년 명령 71호
+  //   (z0768-04)** 잔재다. 553/2018 이 폐지했다. 쓰지 말 것.
   ukraine: {
-    // 공식 자료 부재 — 사례 기반. 광견병 21일 + RNATT 3개월/1년 + 건강증명서 48시간.
     keywords: ['우크라이나', 'ukraine'],
+    rabies: {
+      doses: 1,
+      minAgeDays: 84,
+      minAgeLabel: '생후 12주(84일)',
+      timingLines: ['출국 21일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 21,
+    },
+    titer: {
+      need: 'entry',
+      minDaysAfterVaccine: 30,
+      // 채혈 후 3개월 대기 — 모로코와 갈리는 지점(모로코는 대기 없음).
+      entryWaitAfterTiter: { months: 3 },
+      // 조건부 무기한(접종 이력 단절 없을 것) — EU 와 같은 모델이라 null.
+      // ⚠️ 다만 **왕복이면 한국 APQA 의 '채혈일 도착 전 24개월 이내'가 실효적으로 걸린다.**
+      //   그건 귀국 방향 공통 룰(titer-validity.ts)이 담당한다.
+      entryValidityMonths: null,
+    },
+    // ⚠️ appSupported 는 켜지 않는다 — 카드 미구축 + 위 영공 폐쇄 이슈 미결.
     vaccines: ['rabies', 'rabies_titer'],
+    importQuarantine: {},
   },
   israel: {
     // 광견병 후 30일 + RNATT 필수 + 도착 5일 이내 등록.

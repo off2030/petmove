@@ -1,7 +1,6 @@
 import type { ProcedureCheck } from './types'
 import {
   addMonths,
-  addYears,
   daysBetween,
   evaluateRabiesAgeConservative,
   readRabiesEntries,
@@ -206,35 +205,16 @@ export const UA_CHECKS: ProcedureCheck[] = [
       }
     },
   },
-  {
-    id: 'ua.departure-within-12months-of-titer',
-    country: COUNTRY,
-    category: '광견병',
-    title: '출국일은 항체 검사 12개월 이내',
-    description:
-      'RNATT 유효기간 1년 — 출국일이 채혈일의 1주년을 넘으면 재검사 필요(1주년 당일까지 유효). (SSUFSCP 실무 운용 — 부스터 chain 끊김 없을 시 EU 패턴상 평생 유효 가능, 보수적으로 1년 적용)',
-    severity: 'info',
-    addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
-      const dep = readDepartureDate(caseRow, destination)
-      const titers = readTiterEntries(caseRow)
-      if (!dep || titers.length === 0) return SKIP
-
-      const valid = titers.find((t) => addYears(t.date, 1) >= dep)
-      if (valid) {
-        return { ok: true, message: `항체 검사(${valid.date}) 유효(${addYears(valid.date, 1)}) ≥ 출국일(${dep}).` }
-      }
-      const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
-      const expiry = addYears(newest.date, 1)
-      const offending: string[] = ['departure_date']
-      for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-      return {
-        ok: false,
-        message: `최신 항체 검사(${newest.date})의 유효기간(${expiry})이 출국일(${dep})보다 빨라요. 1년을 초과했어요.`,
-        offendingPaths: offending,
-      }
-    },
-  },
+  // ⚠️ `ua.departure-within-12months-of-titer`(항체 12개월 유효)를 **삭제했다**(2026-07-20 조사).
+  //   우크라이나 항체검사는 **조건부 무기한**이다 — "The test result remains valid indefinitely
+  //   as long as there has been **no lapse in rabies vaccination coverage** since the date of
+  //   the rabies titer test"(APHIS 우크라이나 안내). EU 와 같은 모델이고 프로파일에도
+  //   titer.entryValidityMonths: null 로 선언했다.
+  //   '12개월'·'3~24개월' 설의 출처는 **폐지된 2004년 명령 71호(z0768-04)** 잔재이고,
+  //   553/2018 이 이미 폐지했다. 근거 없이 유효한 항체검사를 만료로 판정하면 재검사를
+  //   강요하게 된다(채혈 후 3개월 대기까지 다시 걸려 출국이 분기 단위로 밀린다).
+  //   ※ 왕복이면 한국 APQA 의 '채혈일 도착 전 24개월 이내'가 실효적으로 걸리는데,
+  //     그건 귀국 방향 공통 룰(common.kr-return-titer-within-2years)이 이미 담당한다.
 
   // ── 항체가 결과치 ──
   {
