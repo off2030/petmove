@@ -32,7 +32,9 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const breedKo = (data.breed as string) ?? ''
   const breedEn = (data.breed_en as string) ?? ''
-  const species = (data.species as string) ?? '' // 'dog' or 'cat'
+  const species = (data.species as string) ?? '' // 'dog'·'cat' 또는 직접 입력한 종
+  // 프리셋 품종 목록은 개/고양이만 있다. 그 외 종은 검색 대신 직접 입력만 가능.
+  const isPresetSpecies = species === 'dog' || species === 'cat'
 
   const bilingual = detailViewSettings.breed_bilingual && breedKo && breedEn
   // 한영 병기 OFF 의 디폴트는 "영문만" — 영문 우선, 영문 없을 때만 한글 폴백.
@@ -134,12 +136,19 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     })
   }
 
-  // 개/고양이 프리셋에 없는 품종(다른 종·품종 미상)은 직접 입력 — 영문명은 알 수 없으니 breed 만 저장.
+  // 개/고양이 프리셋에 없는 품종(다른 종·품종 미상)은 직접 입력 — 영문명은 알 수 없다.
+  // breed_en 은 반드시 함께 비운다: 표시·PDF 가 영문 우선이라 남겨두면 이전 품종의
+  // 영문명(예: Maltese)이 계속 보여 "저장이 안 된다"로 보인다.
   function selectFreeTextBreed(text: string) {
     setOpen(false)
     setQuery('')
     updateLocalCaseField(caseId, 'data', 'breed', text)
-    void persistField('품종', () => updateCaseField(caseId, 'data', 'breed', text))
+    updateLocalCaseField(caseId, 'data', 'breed_en', '')
+    void persistField('품종', async () => {
+      const r1 = await updateCaseField(caseId, 'data', 'breed', text)
+      if (!r1.ok) return r1
+      return updateCaseField(caseId, 'data', 'breed_en', '')
+    })
   }
 
   return (
@@ -208,14 +217,18 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                     else if (query.trim()) selectFreeTextBreed(query.trim())
                   }
                 }}
-                placeholder="품종 검색 (한글/영문) — 목록에 없으면 직접 입력"
+                placeholder={isPresetSpecies ? '품종 검색 (한글/영문) — 목록에 없으면 직접 입력' : '품종 직접 입력'}
                 className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none"
               />
             </div>
             {/* Options list */}
             <ul ref={listRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal py-1">
               {filtered.length === 0 && !query.trim() ? (
-                <li className="px-sm py-2 text-sm text-muted-foreground">검색 결과 없음</li>
+                // 개/고양이 외 종은 프리셋이 없어 항상 여기로 온다 — 필드가 죽은 것처럼
+                // 보이지 않도록 직접 입력을 안내.
+                <li className="px-sm py-2 text-sm text-muted-foreground">
+                  {isPresetSpecies ? '검색 결과 없음' : '위에 품종을 입력하세요'}
+                </li>
               ) : (
                 filtered.map((b, i) => (
                   <li key={`${b.type}:${b.en}:${b.ko}`}>
