@@ -36,7 +36,8 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   // 프리셋 품종 목록은 개/고양이만 있다. 그 외 종은 검색 대신 직접 입력만 가능.
   const isPresetSpecies = species === 'dog' || species === 'cat'
 
-  const bilingual = detailViewSettings.breed_bilingual && breedKo && breedEn
+  // 직접 입력은 한·영에 같은 값이 들어가므로 병기(A | A)는 무의미 — 한 번만 표시.
+  const bilingual = detailViewSettings.breed_bilingual && breedKo && breedEn && breedKo !== breedEn
   // 한영 병기 OFF 의 디폴트는 "영문만" — 영문 우선, 영문 없을 때만 한글 폴백.
   const fallback = breedEn || breedKo || ''
   const isEmpty = !bilingual && !fallback
@@ -136,18 +137,21 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     })
   }
 
-  // 개/고양이 프리셋에 없는 품종(다른 종·품종 미상)은 직접 입력 — 영문명은 알 수 없다.
-  // breed_en 은 반드시 함께 비운다: 표시·PDF 가 영문 우선이라 남겨두면 이전 품종의
-  // 영문명(예: Maltese)이 계속 보여 "저장이 안 된다"로 보인다.
+  // 개/고양이 프리셋에 없는 품종(다른 종·품종 미상)은 직접 입력.
+  // 입력값을 breed·breed_en 양쪽에 같이 쓴다:
+  //  - 이전 품종의 영문명(예: Maltese)이 남아 표시·PDF 에 계속 나오는 것 방지
+  //  - PDF 는 품종을 breed_en 에서 뽑으므로, 비워두면 증명서 칸이 빈 채로 나가고
+  //    발급 전 "비어 있는 정보" 경고에도 걸린다
+  // 영문 증명서용이라 영문 입력이 맞지만, 한글을 넣어도 빈칸보다는 낫다.
   function selectFreeTextBreed(text: string) {
     setOpen(false)
     setQuery('')
     updateLocalCaseField(caseId, 'data', 'breed', text)
-    updateLocalCaseField(caseId, 'data', 'breed_en', '')
+    updateLocalCaseField(caseId, 'data', 'breed_en', text)
     void persistField('품종', async () => {
       const r1 = await updateCaseField(caseId, 'data', 'breed', text)
       if (!r1.ok) return r1
-      return updateCaseField(caseId, 'data', 'breed_en', '')
+      return updateCaseField(caseId, 'data', 'breed_en', text)
     })
   }
 
