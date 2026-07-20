@@ -1195,15 +1195,27 @@ function BreedSearchInput({
                 onChange(pick.ko)
                 setQuery('')
                 setHighlight(-1)
+              } else if (query.trim()) {
+                // 프리셋에 없는 품종(기타 종·믹스 등) — 입력한 그대로 저장.
+                e.preventDefault()
+                onChange(query.trim())
+                setQuery('')
+                setHighlight(-1)
               }
             }
           }}
           onBlur={() => setTimeout(() => setQuery(''), 300)}
-          placeholder={speciesValue ? '품종 검색 · 말티즈 / Maltese' : '종을 먼저 선택하세요'}
+          placeholder={
+            !speciesValue
+              ? '종을 먼저 선택하세요'
+              : speciesValue === 'dog' || speciesValue === 'cat'
+                ? '품종 검색 · 말티즈 / Maltese'
+                : '품종 직접 입력'
+          }
           disabled={!speciesValue}
           className={cn(inputClass, !speciesValue && 'opacity-50')}
         />
-        {query && filtered.length > 0 && (
+        {query.trim() && (
           <ul className={cn(dropdownClass, 'absolute left-0 right-0 top-full z-20 max-h-48 overflow-y-auto')}>
             {filtered.slice(0, 10).map((b, i) => (
               <li key={`${b.type}:${b.en}`}>
@@ -1221,10 +1233,23 @@ function BreedSearchInput({
                 </button>
               </li>
             ))}
+            {/* 프리셋에 없어도 막다른 길이 되지 않도록 직접 입력 경로를 항상 연다.
+                특히 종이 '기타'면 프리셋(개·고양이)이 0건이라 이게 유일한 입력 수단. */}
+            <li>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  onChange(query.trim())
+                  setQuery('')
+                  setHighlight(-1)
+                }}
+                className={cn(dropdownRowClass, 'text-muted-foreground', filtered.length > 0 && 'border-t border-border/40')}
+              >
+                &ldquo;{query.trim()}&rdquo; 직접 입력
+              </button>
+            </li>
           </ul>
-        )}
-        {query && filtered.length === 0 && (
-          <p className="mt-1 font-serif italic text-[12px] text-muted-foreground">검색 결과 없음</p>
         )}
       </div>
     </FieldRow>
