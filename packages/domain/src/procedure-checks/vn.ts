@@ -67,7 +67,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (베트남 입국 면제, 한국 수출검역 사실상 필수)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -93,7 +93,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종은 생후 3개월 이후',
     description:
       'DAH/APHIS: "at least 3 months of age" — 달력 3개월 기준. 입력 차단(step.earliest.monthsAfter)과 같은 판정 함수(meetsCalendarAge)를 쓴다.',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -124,7 +124,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
       '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (DAH/APHIS: "at least 30 days ... before the intended date of entry")',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -135,9 +135,12 @@ export const VN_CHECKS: ProcedureCheck[] = [
       const days = daysBetween(earliest.date, dep)
       if (days === null) return SKIP
       if (days < 30) {
+        // 접종일은 과거 사실이라 조치는 '입국일을 미루는 것'뿐 — 대만(tw.rabies-shipment-window)과
+        // 같은 문형으로 안내한다. 항공권 카드 문구("접종일로부터 30일이 지난 후에 입국할 수
+        // 있어요")와 앵커(입국)를 맞춘다. 날짜는 넣지 않는다(고객 노출 문구 규칙 — lint:checks).
         return {
           ok: false,
-          message: `광견병 접종(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 30일 이상이어야 해요.`,
+          message: '광견병 접종 후 30일이 지나야 베트남에 입국할 수 있어요. 입국일을 미뤄야 해요.',
           offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
         }
       }

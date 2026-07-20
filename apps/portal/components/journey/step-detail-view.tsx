@@ -812,7 +812,10 @@ export function StepDetailView({
   function getSaveBlockError(): string | null {
     // 자기책임 모드 — 모든 입력불가 차단을 통과시킨다(아무 날짜·정보 저장). 책임은 보호자.
     if (freeInput) return null
-    // 광견병 면역 유효기간 1년만 인정(중국·태국·필리핀) — 2·3년 저장 거부. YearSelect 비활성의 backstop.
+    // 광견병 면역 유효기간 1년만 인정(RABIES_ONE_YEAR_VALIDITY_DESTINATIONS = 프로파일
+    // oneYearVaccineOnly 파생) — 2·3년 저장 거부. YearSelect 비활성의 backstop.
+    // 나라 이름은 여기 매핑이 유일한 출처라, 새 1년-백신국을 올릴 때 빠뜨리면 "이 여행지"로
+    // 나간다(베트남이 실제로 그랬음 — 2026-07-20 추가).
     const oneYearKo =
       destinationKey === 'china'
         ? '중국'
@@ -822,7 +825,9 @@ export function StepDetailView({
             ? '필리핀'
             : destinationKey === 'taiwan'
               ? '대만'
-              : '이 여행지'
+              : destinationKey === 'vietnam'
+                ? '베트남'
+                : '이 여행지'
     const ONE_YEAR_VALIDITY_BLOCK_MSG = `${oneYearKo} 입국 시 광견병 백신은 1년까지만 유효합니다. 면역 유효기간을 1년으로 선택하세요.`
     const isMultiYearValidity = (vu: string | null | undefined): boolean => {
       const m = (vu ?? '').match(/^(\d+)\s*년$/)

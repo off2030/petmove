@@ -748,7 +748,7 @@
    입력불가 1건
      ✕ 마이크로칩 선행: 마이크로칩 삽입 후 광견병을 접종하세요
    주의·차단 1건
-     - vn.microchip-before-rabies [info]
+     - vn.microchip-before-rabies [warning]
          접종일은 마이크로칩 삽입일 이후여야 해요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
