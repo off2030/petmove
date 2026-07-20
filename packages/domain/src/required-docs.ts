@@ -118,11 +118,51 @@ const KR_FORM25_VACCINATION_HEALTH_CERT: RequiredDocSpec = {
 }
 
 /**
- * 큐레이션 spec 이 없는 목적지의 기본 필수 서류 — 별지 제25호(접종 및 건강증명서) 하나.
- * 한국에서 출국하는 모든 케이스는 최소한 이 서류가 필요하므로 '서류 목록 없음' 케이스는
- * 없다. (서류 체크리스트 단계 done='all-required-docs' 가 모든 목적지에서 동작하도록.)
+ * 한국 수출 동물검역증 — **모든 목적지 공통**. 어느 나라로 가든 한국에서 수출 검역을 받고
+ * 이 증명서를 발급받는다(사용자 지정 2026-07-20: "한국 수출·수입 동물검역증은 모든 국가 기본").
+ *
+ * 큐레이션 spec 이 있는 나라(일본·태국 등)는 "OO 수입 검역 때 원본을 제시해야 해요" 같은
+ * 나라별 한 줄을 더 붙이려고 각자 정의를 갖는다. 여기 기본형은 그 줄만 일반화한 것.
  */
-const DEFAULT_SPECS: RequiredDocSpec[] = [KR_FORM25_VACCINATION_HEALTH_CERT]
+const KR_EXPORT_QUARANTINE_CERT: RequiredDocSpec = {
+  id: 'kr-export-quarantine-cert',
+  name: '한국 수출 동물검역증',
+  source: '농림축산검역본부',
+  kind: 'step',
+  stepRef: 'certificate-issue',
+  group: 'quarantine',
+  description:
+    '한국 수출 검역 후 발급돼요.\n\n도착 국가에서 원본을 제시해야 할 수 있으니 잘 보관하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+  previewStepId: 'certificate-issue',
+}
+
+/** 한국 수입 동물검역증 — 모든 목적지 공통. 귀국 후 받는 것이라 왕복 전용. */
+const KR_IMPORT_QUARANTINE_CERT: RequiredDocSpec = {
+  id: 'kr-import-quarantine-cert',
+  name: '한국 수입 동물검역증',
+  source: '농림축산검역본부',
+  kind: 'step',
+  stepRef: 'kr-import-quarantine',
+  group: 'quarantine',
+  roundTripOnly: true,
+  description:
+    '한국 수입 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+  previewStepId: 'kr-import-quarantine',
+}
+
+/**
+ * 큐레이션 spec 이 없는 목적지의 기본 필수 서류.
+ *
+ * 별지 제25호 + **한국 수출·수입 동물검역증**. 예전엔 별지25 하나뿐이라, 큐레이션이 없는
+ * 24개국(호주·미국·캐나다 등)에서 한국 검역증이 서류 목록에 아예 안 떴다(2026-07-20 발견).
+ * 한국 출국·귀국 절차는 목적지와 무관하게 모든 케이스가 거치므로 기본에 포함한다.
+ * (도착국 현지 검역증은 나라마다 유무가 갈리므로 여기 넣지 않는다 — 큐레이션 spec 담당.)
+ */
+const DEFAULT_SPECS: RequiredDocSpec[] = [
+  KR_FORM25_VACCINATION_HEALTH_CERT,
+  KR_EXPORT_QUARANTINE_CERT,
+  KR_IMPORT_QUARANTINE_CERT,
+]
 
 const SPECS: Record<string, RequiredDocSpec[]> = {
   '일본': [
