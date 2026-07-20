@@ -570,7 +570,9 @@ const DEST_PRICING: Record<string, { offlineCost?: string; period?: string }> = 
   usa: { offlineCost: '10~51' }, // 웹 가이드에 기간 문장 없음
   hawaii: { offlineCost: '36~63' }, // 〃 ('추가 1~2개월' 언급만 있어 기본 기간 도출 불가)
   guam: { offlineCost: '45~64', period: '최소 5~6개월' },
-  canada: { offlineCost: '36~46' }, // 웹 가이드에 기간 문장 없음
+  // 가이드가 2026-07-20 갱신되며 기간 문장이 생겼다 — '편도 이동인 경우 최소 한달,
+  // 왕복인 경우 1달 반~2달'.
+  canada: { offlineCost: '36~46', period: '최소 1~2개월' },
   mexico: { offlineCost: '36~46', period: '최소 1~2개월' },
   brazil: { offlineCost: '36~46', period: '최소 1~2개월' },
   argentina: { offlineCost: '36~46', period: '최소 1~2개월' },

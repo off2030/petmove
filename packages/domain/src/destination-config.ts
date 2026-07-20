@@ -714,9 +714,33 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     importQuarantine: { quarantineDays: 14 },
     rabiesTiterForReturnOnly: true,
   },
+  // ── 캐나다 (CFIA 제정 / CBSA 국경 집행) ──────────────────────────────
+  // ✅ **1차 출처가 가장 충실한 나라다** (2026-07-20 조사). CFIA 결정트리의 콘텐츠 원본
+  //   노드를 직접 열어 앵커별 원문을 추출했다(Date modified 2026-07-02).
+  //   https://inspection.canada.ca/en/node/7059  (진입점 /en/importing-food-plants-animals/pets)
+  //
+  // 한국의 지위 — 분기 결정에 필수:
+  //  - CFIA **광견병 청정국 목록에 없다**(호주·피지·핀란드·아이슬란드·아일랜드·일본·뉴질랜드·
+  //    스웨덴·영국 9개국뿐).
+  //  - CFIA **개 광견병 고위험국 목록에도 없다**(중국·북한·베트남은 등재, 한국 부재).
+  //  → 한국 = '비청정국이지만 고위험국은 아님'. 개 dog-per-a8-rabies / 고양이 cat-dom-a3-rabies.
+  //
+  // 확정된 사실:
+  //  - **필요 서류는 광견병 접종증명서 하나뿐이다.** 별도 건강증명서·정부 배서·수입허가 없음.
+  //    원문: "When you arrive in Canada you'll need the following: a valid rabies vaccination
+  //    certificate; and the dog appears healthy and meets humane transportation requirements"
+  //  - **항체검사 불요**(접종 불가 동물의 면제 신청 경로에만 등장) → titer.need='return-only'.
+  //  - **마이크로칩 불요**(개인 반려견·반려묘 모두). 상업 카테고리 8개월 미만 개만 필수.
+  //    원문: "Canada does not require a microchip or tattoo identification for domestic dogs
+  //    imported as personal pets or domestic cats"
+  //  - **접종 후 대기 0일.** CFIA 원문 어디에도 최소 경과일 요건이 없다(21일·30일설은 오류).
+  //  - **격리 없음.** Import Reference Document 원문: "Pet dogs imported from any country are
+  //    not subject to post-import quarantine in Canada."
+  //  - 8개월 미만 강아지 금지는 **상업 카테고리 + 고위험국**에만 걸린다. 한국은 고위험국이
+  //    아니고 개인 동반은 상업이 아니라서 이중으로 해당 없음 — 3~8개월 요건이 8개월 이상과
+  //    완전히 동일하다. 구버전 주석의 '동적 확인 필요'는 해소됐다.
+  //  - 지정 입국공항 **없음**. 마리수 상한 **없음**(개인/상업 구분은 마리수가 아니라 목적).
   canada: {
-    // USDA 호환 — 입국 시 광견병 백신만 요구. RNATT 는 한국 귀국용.
-    // 칩 필수 X + **입국 대기 0일**(사용자 지정) → 항공권 카드에 대기 문구·저장 거부가 없다.
     keywords: ['캐나다', 'canada'],
     archetype: 'sea-permit',
     rabies: {
@@ -724,14 +748,23 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       minAgeDays: 91,
       minAgeMonths: 3,
       minAgeLabel: '생후 3개월',
-      oneYearVaccineOnly: true,
-      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
+      // ⚠️ oneYearVaccineOnly 를 **선언하지 않는다** (2026-07-20, 4국 중 근거가 가장 명확한 건).
+      //   CFIA 는 증명서에 적힌 백신 유효기간을 **그대로 인정**하고, 미기재일 때만 1년으로
+      //   강등한다. 원문(개): "specify the period of validity of the rabies vaccination
+      //   (otherwise, it will be considered valid for 1 year from the date of vaccination)"
+      //   원문(고양이): "specify the duration of immunity (otherwise, …)"
+      //   → 3년 백신은 증명서에 3년이 적혀 있으면 3년간 유효하다. 재접종을 강요할 근거가 없다.
+      //   ⚠️ 대신 진짜 위험은 **유효기간 미기재**다 — 한국 동물병원 증명서에 유효기간이 안
+      //     적히는 경우가 흔한데, 그러면 3년 백신이라도 자동으로 1년으로 강등된다.
+      //     그래서 validityLine 을 '거부' 문구가 아니라 **기재 안내**로 바꿔 남겼다.
+      validityLine: '증명서에 백신 유효기간이 적혀 있어야 그대로 인정돼요. 적혀 있지 않으면 접종일부터 1년으로만 인정돼요.',
       // 대기 0일 — timingLines 없음(baseRabiesCard 가 '출국 N일 전' 줄을 만들지 않는다).
     },
     titer: { need: 'return-only' },
     appSupported: true,
     vaccines: ['rabies', 'rabies_titer'],
-    importQuarantine: { quarantineDays: 14 },
+    // 계류 일수를 **선언하지 않는다** — CFIA 명문 "not subject to post-import quarantine".
+    importQuarantine: {},
     rabiesTiterForReturnOnly: true,
   },
   ukraine: {

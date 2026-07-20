@@ -325,15 +325,19 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       destKey: 'canada',
       label: '캐나다',
       // 칩 선행 룰 없음(칩 필수 X) + 대기 룰 없음(0일) — 다른 3국과 다른 두 지점.
+      // ca.rabies-only-1year-vaccine 도 없다 — CFIA 가 증명서 기재 유효기간을 그대로 인정해
+      // 근거가 정반대였다(ca.ts 주석 참고).
       validationIds: [
         'ca.rabies-prime-after-3months-old',
         'ca.rabies-booster-within-prime-validity',
-        'ca.rabies-only-1year-vaccine',
       ],
     }),
     'rabies-titer': {
       description:
-        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n캐나다 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+        // '캐나다에는 검사 기관이 없으니…' 는 펫무브 www 가이드 문장이다("캐나다에는 광견병
+        // 항체검사 기관이 없기 때문에 … 한국에서 미리 해두시는 것을 권장"). 복제 때 빠져
+        // 있었다 — 캄보디아·몽골과 같은 누락이라 같이 되살렸다(2026-07-20).
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n캐나다 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n캐나다에는 검사 기관이 없으니 출국 전에 미리 받으세요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
     },
     // 항공권 — 접종 후 대기가 없다(캐나다 0일). 대기 문구·저장 거부·주의 룰이 모두 빠진다.
     'flight-purchase': {
@@ -343,12 +347,26 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       earliest: undefined,
       validationIds: [],
     },
+    // ⚠️ 캐나다는 **'동물검역소 검역' 모델이 아니다** — 카드를 전면 다시 썼다(2026-07-20 조사).
+    //   복제 문구("공항에서 검역", "지정 시설에서 격리")는 두 군데 다 사실과 달랐다:
+    //    ①격리 — CFIA Import Reference Document 명문 "Pet dogs imported from any country are
+    //      **not subject to post-import quarantine** in Canada." 격리 자체가 없다.
+    //    ②검역 주체 — 실제로는 **CBSA 국경관리관의 서류 검사 + 육안 검사**다. 원문:
+    //      "…will have a **documentary inspection by the Canada Border Services Agency (CBSA)**
+    //       to ensure the animal's rabies vaccination is valid and the animal description
+    //       matches. … The CBSA will also **visually inspect** the animal … The CBSA may
+    //       contact the CFIA when veterinary guidance or expertise is needed."
+    //   미충족 시 결과도 격리가 아니라 **접종 명령 또는 반송**이다.
+    //   수수료는 CBSA 공표 요율(첫 마리 CAD $36.95, 추가 $6.16, 미국발만 면제 = 한국발 적용).
+    //   금액을 카드에 박지 않는다 — 환율·요율이 바뀌면 거짓말이 된다. '수수료를 내야 해요'까지만.
     departure: importQuarantineCard({
       label: '캐나다',
       fieldKey: 'ca_import_quarantine_date',
       description:
-        '캐나다 도착 후 공항에서 검역을 받으세요.\n서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 격리되거나 한국으로 반송돼요.',
-      helpText: '캐나다 도착 후 수입 검역을 받은 날짜',
+        '캐나다 도착 후 국경에서 입국 심사를 받으세요.\n국경관리기관(CBSA)이 광견병 접종증명서가 유효한지, 반려동물 정보가 증명서와 맞는지 확인해요.\n건강해 보이는지 눈으로도 확인하고, 수의학적 판단이 필요하면 검역기관(CFIA)에 검사를 요청해요.\n검사 수수료를 현장에서 내야 해요.\n캐나다는 입국 후 격리가 없어요. 요건을 충족하지 못하면 접종 명령을 받거나 한국으로 반송될 수 있어요.',
+      helpText: '캐나다 도착 후 입국 심사를 받은 날짜',
+      // 발급물이 확인되지 않았다 — CFIA·CBSA 가 입국자에게 증서를 준다는 언급이 없다.
+      // 수수료 영수증 외엔 없는 것으로 보이나 명문 근거가 없어 '서류'로 뭉뚱그린다.
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '캐나다 수입 검역 서류',
       validationIds: ['ca.import-quarantine-date-valid'],

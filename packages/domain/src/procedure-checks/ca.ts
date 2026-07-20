@@ -5,7 +5,6 @@ import {
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
-  exceedsValidityYears,
   findRabiesValidityBreaks,
   readRabiesEntries,
   resolveValidUntil,
@@ -15,27 +14,51 @@ import {
 import { msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
 /**
- * 캐나다 (CFIA — Canadian Food Inspection Agency / CBSA) 절차 검증.
+ * 캐나다 (CFIA 제정 — Canadian Food Inspection Agency / CBSA 국경 집행) 절차 검증.
  *
- * ⚠️ **베트남 룰 한 벌을 복제한 것이다** (2026-07-20 사용자 지정). 카드 구성·검증 구조가
- *   베트남과 동일해야 한다는 전제로 옮겼고, 사용자가 확인해 준 델타만 다르다:
- *     - 마이크로칩 **필수 아님** → 베트남처럼 `ca.microchip-before-rabies` 를 두지 않는다
- *     - 광견병 최소 일령 **달력 3개월**
- *     - 접종 후 입국 대기 **0일** → `ca.rabies-min-Ndays-before-departure` 룰이 **없다**
- *       (프로파일에도 rabies.entryWaitDaysAfterVaccine 를 선언하지 않아 항공권 카드의
- *        저장 거부·대기 문구가 함께 빠진다 — 다른 3국과 유일하게 다른 지점)
- *   3년 백신 불인정 같은 나머지 값은 베트남에서 복제된 상태다. CFIA 는 실제로 다년 백신을
- *   인정할 가능성이 높아 **개별 검토 1순위**다.
+ * ✅ **4국 중 1차 출처가 가장 충실하다** (2026-07-20 개별 조사 완료). 베트남 복제 상태에서
+ *   벗어났다. CFIA pets 페이지는 JS 결정트리(wb-fieldflow)라 정적 fetch 로는 안 나와서,
+ *   콘텐츠 원본 노드를 직접 열어 앵커별 원문을 추출했다(Date modified 2026-07-02).
+ *     https://inspection.canada.ca/en/node/7059
+ *     진입점 https://inspection.canada.ca/en/importing-food-plants-animals/pets
  *
- * 출처(구버전에서 이어받음 — 개별 검토 때 재확인 대상):
- *  - CFIA "Bringing animals to Canada" — https://inspection.canada.ca/en/importing-food-plants-animals/pets
- *  - CFIA Import Reference Document —
- *    https://inspection.canada.ca/en/animal-health/terrestrial-animals/imports/import-policies/general/reference-document
- *  - CBSA Travelling with animals — https://www.cbsa-asfc.gc.ca/services/fpa-apa/animals-animaux-eng.html
+ * 한국의 지위 — 어느 분기를 타는지 결정한다:
+ *  - CFIA **광견병 청정국 목록에 없음**(호주·피지·핀란드·아이슬란드·아일랜드·일본·뉴질랜드·
+ *    스웨덴·영국 9개국뿐) — /en/importing-food-plants-animals/pets/rabies-free
+ *  - CFIA **개 광견병 고위험국 목록에도 없음**(중국·북한·베트남 등재, 한국 부재)
+ *    — /en/animal-health/terrestrial-animals/diseases/reportable/rabies/countries-high-risk-dog
+ *  → '비청정국이지만 고위험국은 아님' 분기. 개 dog-per-a8-rabies / 고양이 cat-dom-a3-rabies.
  *
- * 별도 (시스템 검증 제외):
- *  - RNATT: CFIA 입국 의무 아님 — 한국 귀국용만(titer.need = 'return-only')
- *  - 상업용 8개월 미만 강아지(고위험국) 금지: 동적 확인 필요
+ * 조사로 확정된 것:
+ *  - **다년(3년) 백신을 인정한다.** CFIA 는 증명서에 적힌 유효기간을 그대로 인정하고,
+ *    미기재일 때만 1년으로 강등한다. 원문: "specify the period of validity of the rabies
+ *    vaccination (otherwise, it will be considered valid for 1 year from the date of
+ *    vaccination)". → `ca.rabies-only-1year-vaccine` blocker 를 삭제했다(아래 주석).
+ *  - **격리가 없다.** Import Reference Document 명문: "Pet dogs imported from any country
+ *    are not subject to post-import quarantine in Canada."
+ *    실제로는 CBSA 의 서류 검사 + 육안 검사뿐이고, 필요할 때만 CFIA 로 이관된다.
+ *    미충족 시 결과도 격리가 아니라 **접종 명령 또는 반송**이다.
+ *  - **검사 수수료가 있다**(미국발 제외 = 한국발엔 적용). CBSA 공표 요율:
+ *    첫 마리 CAD $36.95, 추가 마리당 $6.16 (+GST/HST). 접종 명령 발부 시 $67.75 / $36.95.
+ *    "All fees must be paid at the time of inspection."
+ *    https://www.cbsa-asfc.gc.ca/services/fpa-apa/fees-droits-eng.html
+ *  - **필요 서류는 광견병 접종증명서 하나**. 별도 건강증명서·정부 배서·수입허가 모두 불요.
+ *  - **증명서는 영어 또는 불어**(아니면 공식 번역 첨부). 번역은 인증번역사 또는 선서진술서를
+ *    붙인 비인증 번역사가 해야 하고, **수입자 본인·가족은 번역할 수 없다.**
+ *  - 3개월 미만은 접종증명서 대신 **연령 증빙**(수의사 발급)으로 입국한다.
+ *  - 8개월 미만 강아지 금지는 **상업 카테고리 + 고위험국**에만 걸린다. 한국은 고위험국이
+ *    아니고 개인 동반은 상업이 아니라 이중으로 해당 없음 — 구버전 주석의 '동적 확인 필요'는
+ *    해소됐다. 3~8개월 개인 펫 요건은 8개월 이상과 완전히 동일하다.
+ *  - **하이브리드는 금지**(사바나캣·벵갈캣·울프독). F5+ 는 가축으로 보아 일반 요건,
+ *    F1~F4 는 야생으로 보아 수입허가+CITES+6개월 소유+본인 동반이 필요하다.
+ *    → 현재 카드·룰로 만들지 않았다(해당 케이스가 드물고 분기가 크다). 필요 시 별도 작업.
+ *  - **소유자 = 수입자**여야 하고 소유 증빙이 요구될 수 있다("upon request").
+ *
+ * 확인 실패(추측으로 채우지 않은 것):
+ *  - AIRS 실조회 미수행(세션 기반). CFIA 안내 코드 HS 01/06/19, OGD 2083(개)·2084(고양이).
+ *  - 입국 시 발급되는 서류 유무 — 언급 부재로 '없음'을 추정했을 뿐 명문 근거는 없다.
+ *  - 지정 입국공항 5곳(YYZ/YUL/YVR/YYC/YHZ)·고위험국 칩 필수설은 **상업 사이트 단독**이고
+ *    CFIA 원문과 배치돼 채택하지 않았다.
  *
  * 컨벤션: 필수 입력 누락 시 SKIP. 유효기간 1년 = 접종일의 1주년 당일까지.
  */
@@ -97,35 +120,15 @@ export const CA_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
     },
   },
-  {
-    id: 'ca.rabies-only-1year-vaccine',
-    country: COUNTRY,
-    category: '광견병',
-    title: '1년 라이선스 광견병 백신만 인정 (3년 거부)',
-    description:
-      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부. (⚠️ CFIA 근거 없음 — 베트남에서 복제한 값. 캐나다는 다년 백신을 인정할 가능성이 높아 개별 검토 1순위)',
-    severity: 'blocker',
-    addedAt: '2026-07-20',
-    run: ({ caseRow }) => {
-      const rabies = readRabiesEntries(caseRow)
-      if (rabies.length === 0) return SKIP
-
-      const offending: string[] = []
-      for (const r of rabies) {
-        if (exceedsValidityYears(r.date, r.valid_until)) {
-          offending.push(`rabies_dates[${r.originalIndex}].valid_until`)
-        }
-      }
-      if (offending.length > 0) {
-        return {
-          ok: false,
-          message: '광견병 백신은 면역 유효기간 1년짜리만 인정돼요. 3년 백신은 사용할 수 없어요.',
-          offendingPaths: offending,
-        }
-      }
-      return { ok: true, message: '모든 광견병 백신이 1년 라이선스 (또는 미입력 = 디폴트 1년).' }
-    },
-  },
+  // ⚠️ `ca.rabies-only-1year-vaccine`(3년 백신 거부 blocker)을 **삭제했다** (2026-07-20 조사).
+  //   CFIA 원문이 정반대를 말한다 — 증명서에 적힌 유효기간을 그대로 인정하고 미기재일 때만
+  //   1년으로 강등한다: "specify the period of validity of the rabies vaccination (otherwise,
+  //   it will be considered valid for 1 year from the date of vaccination)". 즉 3년 백신은
+  //   증명서에 3년이 적혀 있으면 3년간 유효하다. blocker 는 저장을 거부해 우회가 불가능하므로
+  //   **CFIA 규정에 맞는 케이스를 우리가 막고 있었다** — 4국 중 가장 명백한 오류였다.
+  //   프로파일의 oneYearVaccineOnly 도 함께 제거했다(포털 YearSelect 비활성 해제).
+  //   대신 진짜 위험(유효기간 미기재 → 1년 강등)은 광견병 카드 validityLine 의 안내 문구로
+  //   옮겼다 — 한국 동물병원 증명서에 유효기간이 안 적히는 경우가 흔하다.
   {
     id: 'ca.rabies-valid-on-departure',
     country: COUNTRY,

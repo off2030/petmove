@@ -6,8 +6,6 @@
   견종 "${breed.ko || breed.en}"은 UAE 수입 금지 견종이에요 (매치: ${match}).
 [ca.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
-[ca.rabies-only-1year-vaccine]
-  광견병 백신은 면역 유효기간 1년짜리만 인정돼요. 3년 백신은 사용할 수 없어요.
 [ca.import-quarantine-date-valid]
   캐나다 수입 검역일은 캐나다 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [cn.rabies-prime-after-91days-old]
