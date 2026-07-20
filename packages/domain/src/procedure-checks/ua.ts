@@ -113,9 +113,13 @@ export const UA_CHECKS: ProcedureCheck[] = [
     country: COUNTRY,
     category: '광견병',
     title: '출국일에 광견병 면역 유효',
+    // ⚠️ EU 와 같은 구조로 맞췄다(2026-07-21 사용자 지정) — severity 는 warning 이되
+    //   포털 표시는 ADVISORY_DEFERRED_CHECKS 로 제외한다(추가 백신 카드 situational 이 안내).
+    //   우크라이나 항체검사는 EU 처럼 **조건부 무기한**이라, '접종 이력이 끊기지 않았는가'가
+    //   곧 항체 유효성 판정이다. 그래서 이 룰이 EU 의 eu.rabies-valid-until-on-entry 역할을 한다.
     description:
       '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (SSUFSCP: 1차 접종은 출국 30일~12개월 이내)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)

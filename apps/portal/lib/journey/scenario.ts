@@ -364,6 +364,8 @@ const ADVISORY_DEFERRED_CHECKS = new Set<string>([
   'ph.rabies-not-expired-on-arrival',
   'ph.general-vaccine-not-expired-on-arrival',
   'eu.rabies-valid-until-on-entry',
+  // 우크라이나 — EU 와 같은 '조건부 무기한 항체' 모델이라 같은 처리(2026-07-21).
+  'ua.rabies-valid-on-departure',
 ])
 
 /**

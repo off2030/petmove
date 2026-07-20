@@ -1942,7 +1942,7 @@
 ▸ ukraine (우크라이나)
    입력불가 0건
    주의·차단 2건
-     - ua.rabies-valid-on-departure [info]
+     - ua.rabies-valid-on-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
      - ua.rnatt-min-30days-after-vaccine [info]
          채혈일(2025-08-01)과 직전 접종일(2025-07-05)의 간격이 27일로 30일 미만이에요.
@@ -4771,7 +4771,7 @@
 ▸ ukraine (우크라이나)
    입력불가 0건
    주의·차단 1건
-     - ua.rabies-valid-on-departure [info]
+     - ua.rabies-valid-on-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -5115,7 +5115,7 @@
 ▸ ukraine (우크라이나)
    입력불가 0건
    주의·차단 1건
-     - ua.rabies-valid-on-departure [info]
+     - ua.rabies-valid-on-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
    상황별 설명문 3건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -5455,7 +5455,7 @@
 ▸ ukraine (우크라이나)
    입력불가 0건
    주의·차단 1건
-     - ua.rabies-valid-on-departure [info]
+     - ua.rabies-valid-on-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -5844,7 +5844,7 @@
    주의·차단 2건
      - ua.departure-min-3months-after-titer [info]
          최신 항체 검사(2026-04-02) 기준 출국 가능일(2026-07-02)이 출국일(2026-06-01)보다 늦어요.
-     - ua.rabies-valid-on-departure [info]
+     - ua.rabies-valid-on-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -6627,7 +6627,7 @@
    주의·차단 2건
      - common.kr-return-titer-within-2years [info]
          광견병 항체 검사 유효기간(2년)이 2026년 1월 10일에 만료돼요. 한국 귀국 전 재검사가 필요할 수 있어요. (광견병 비발생 지역은 면제)
-     - ua.rabies-valid-on-departure [info]
+     - ua.rabies-valid-on-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
    상황별 설명문 3건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -6986,7 +6986,7 @@
    주의·차단 2건
      - common.kr-return-titer-within-2years [info]
          광견병 항체 검사 유효기간(2년)이 2025년 1월 10일에 만료돼요. 한국 귀국 전 재검사가 필요할 수 있어요. (광견병 비발생 지역은 면제)
-     - ua.rabies-valid-on-departure [info]
+     - ua.rabies-valid-on-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
    상황별 설명문 3건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
