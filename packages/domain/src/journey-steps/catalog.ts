@@ -1189,9 +1189,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 140,
     deadline: { anchor: 'departure', daysBefore: 0 },
     done: 'departure-past',
-    // base departure 는 첨부 불가 — 일본 override(일본 수입 검역)만 allowAttachments.
-    // 첨부 명명은 base catalog 의 attachmentLabel 을 읽으므로 여기 둔다 (일본에서만 효과).
-    attachmentLabel: 'Import Quarantine Certificate',
+    // 첨부는 **전 목적지에서 가능**하다. 예전 주석은 "base 는 첨부 불가 — 일본에서만
+    // 효과"라고 적혀 있었지만 사실이 아니었고, 그래서 일본용 영문 이름이 태국·필리핀과
+    // 큐레이션 없는 24개국까지 그대로 샜다(2026-07-20 발견).
+    // 여기 기본값은 **어느 나라에도 맞는 중립 이름**이어야 한다 — 발급 서류가 확인된
+    // 나라는 각자 override 에서 정식 이름을 준다(일본·베트남·태국·중국 등).
+    attachmentLabel: '수입 검역 서류',
     // 일본 override 가 jp_import_quarantine_date 입력으로 사용 — 이 룰은 non-JP 케이스에선
     // country: 'japan' 필터로 자동 비활성.
     validationIds: ['jp.import-quarantine-date-valid'],
@@ -1238,7 +1241,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['jp.export-quarantine-visit-date-valid'],
     allowAttachments: true,
     attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: 'Export Quarantine Certificate',
+    // 저장 이름 = 서류탭 이름. 일반명 검역증은 '{국가} 수출/수입 동물검역증'으로 통일
+    // (2026-07-20 사용자 지정). 정식 영문명(Export Quarantine Certificate)은 설명문과
+    // required-docs 쪽에 남아 있다.
+    attachmentLabel: '일본 수출 동물검역증',
   },
 
   // ── 태국 수출 검역 (왕복 — 귀국 출국 시, 태국 전용) ───────────────────

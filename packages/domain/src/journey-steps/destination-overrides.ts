@@ -35,6 +35,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
       allowAttachments: true,
       attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
+      // 저장 이름 = 서류탭 이름(일본 수입 동물검역증). 예전엔 이 override 에 label 이 없어
+      // base 의 'Import Quarantine Certificate'(영문)가 그대로 쓰였다 — 서류탭은 한글인데
+      // 저장만 영문이라 갈렸다. 일반명 검역증은 '{국가} 수입/수출 동물검역증'으로 통일
+      // (2026-07-20 사용자 지정).
+      attachmentLabel: '일본 수입 동물검역증',
       links: [
         { url: '/guide/japan-airport-quarantine', label: '공항 동물검역소 위치' },
       ],
@@ -343,6 +348,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '태국 도착 후 공항 동물검역소(AQS)에서 검역을 받으세요.\n검사를 통과하면 수입 허가서(R.7)를 받아요.',
       helpText: '태국 동물검역소(AQS)에서 수입 검역을 받은 날짜',
       attachmentHint: '수입 허가서(R.7) 사본을 사진·PDF로 보관하세요.',
+      // 특수명이 있으면 그 이름으로 저장한다. label 을 안 주면 base 의
+      // 'Import Quarantine Certificate' 가 쓰여, 실제로 받는 건 허가서인데 검역증 이름으로
+      // 저장되고 있었다(2026-07-20 수정).
+      attachmentLabel: '수입 허가서(R.7)',
       validationIds: ['th.import-quarantine-date-valid'],
     },
   }),
@@ -403,6 +412,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '필리핀 도착 후 공항 동물검역소에서 BAI 동물검역관(VQO)에게 검역을 받으세요.',
       helpText: 'BAI 동물검역관(VQO)에게 수입 검역을 받은 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      // 도착 검역 후 발급되는 서류가 확인되지 않았다 — 중국·대만과 같은 '{국가} 수입 검역
+      // 서류'로 둔다. label 을 안 줘서 base 의 'Import Quarantine Certificate' 가 쓰였는데,
+      // 있는지도 모르는 서류 이름으로 저장되고 있었다(2026-07-20 수정).
+      // 서류가 확인되면 정식 이름으로 올릴 것.
+      attachmentLabel: '필리핀 수입 검역 서류',
       validationIds: ['ph.import-quarantine-date-valid'],
     },
     // 필리핀 고유 — 내부구충만 필수(SPSIC 신청 7일~3개월 전). 외부구충은 SPSIC import terms
@@ -693,6 +707,12 @@ function seaPermitOverrides(opts: {
     description: string
     helpText: string
     attachmentHint: string
+    /**
+     * 첨부 저장 이름. 안 주면 base catalog 의 기본값('수입 검역 서류')이 쓰인다.
+     * 예전엔 이 필드가 없어서 태국·필리핀이 base 의 영문 'Import Quarantine Certificate'
+     * 를 그대로 썼고, 태국은 실제로 받는 허가서(R.7)와 이름이 어긋났다(2026-07-20).
+     */
+    attachmentLabel?: string
     /** 필수 — importQuarantineCard 와 같은 이유(그 나라 룰을 반드시 지목). */
     validationIds: string[]
   }
