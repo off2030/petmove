@@ -6,7 +6,6 @@ import {
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
-  exceedsValidityYears,
   findRabiesValidityBreaks,
   readRabiesEntries,
   resolveValidUntil,
@@ -20,25 +19,40 @@ import {
 } from './messages'
 
 /**
- * 몽골 (GAVS — General Authority for Veterinary Services, MOFALI) 절차 검증.
+ * 몽골 (GASI — General Agency for Specialized Inspection) 절차 검증.
  *
- * ⚠️ **베트남 룰 한 벌을 복제한 것이다** (2026-07-20 사용자 지정). 카드 구성·검증 구조가
- *   베트남과 동일해야 한다는 전제로 옮겼고, 사용자가 확인해 준 델타만 다르다:
- *     - 마이크로칩 **필수** → 베트남과 달리 `mn.microchip-before-rabies` 를 둔다
- *       (칩이 입국 요건이므로 접종과의 선후를 따진다. 광견병 카드의 칩 선행 문구도 이 룰
- *        선언에서 파생된다 — buildRabiesCard 의 requiresChipFirst)
- *     - 광견병 최소 일령 **달력 3개월** (캄보디아의 고정 91일과 다름)
- *     - 접종 후 입국 대기 30일
- *   3년 백신 불인정 같은 나머지 값은 베트남에서 복제된 상태다. 나라별 개별 검토에서 정정한다.
+ * ✅ **한국 APQA 공식 안내문을 1차 근거로 확보했다** (2026-07-20 개별 조사 완료).
+ *   「개·고양이 국가별 검역조건 — 몽골」 2024-04-30 개정판. 파일명에 개정일이 박혀 있어
+ *   최신본임이 확인된다. 베트남 복제 상태에서 벗어났다.
+ *     목록   https://www.qia.go.kr/livestock/qua/list93webQiaCom.do (몽골 = id 60618)
+ *     안내문 https://www.qia.go.kr/livestock/qua/downloadwebQiaCom.do?id=47407
+ *     서식   https://www.qia.go.kr/livestock/qua/downloadwebQiaCom.do?id=45138
  *
- * 출처(구버전에서 이어받음 — 개별 검토 때 재확인 대상):
- *  - 검역법 2018-11-15 개정 — https://legalinfo.mn/en/edtl/16959948545251
- *  - WOAH Asia GAVS 소개 — https://rr-asia.woah.org/app/uploads/2023/11/poster_mongolia.pdf
- *  - USDA APHIS Mongolia — https://www.aphis.usda.gov/live-animal-export/export-live-animals-mongolia
- *  - FAO 몽골 수의서비스 — https://faolex.fao.org/docs/pdf/mon185795Eoriginal.pdf
+ * §1.2 검역조건 표 원문값 (우리 코드에 반영된 것):
+ *   검역증명서 필수(출국 10일 이내) / 마이크로칩 **필수**(ISO 호환) /
+ *   광견병 **필수** — 최소 12주령 이상, 입국 30일 이전 / 기타 백신 불필요 /
+ *   **광견병 항체가 검사 불필요** → titer.need='return-only' 가 옳다 /
+ *   사전수입허가 불필요 / **입국 후 계류 불필요** → 도착 카드에 '격리'를 쓰지 않는다 /
+ *   기생충 처치 불필요 / **기타: 반드시 Chinggis Khaan 국제공항으로 입국**
  *
- * 별도 (시스템 검증 제외):
- *  - RNATT: GAVS 입국 의무 아님 — 한국 귀국용만(titer.need = 'return-only')
+ * §3.1 상대국 담당기관: GASI 국경검사국 — http://www.ssia.gov.mn / +976 51 263-975
+ *
+ * 조사로 정리된 것:
+ *  - **3년 백신 불인정 blocker 는 근거가 없어 삭제했다**(아래 주석). APQA 표에 최대 유효기간
+ *    행 자체가 없고, 별지 제25호서식의 면역유효기간 란이 ☐1Y ☐2Y ☐3Y 체크박스다.
+ *  - **에키노코쿠스 구충은 입국 요건이 아니다.** APQA '기생충 처치: 불필요'. WHO 자료의
+ *    분기별 프라지콴텔 사업은 몽골 **국내** 개 대상 공중보건 프로그램이지 수입 요건이 아니다.
+ *    → 카드를 만들지 않는다. (별지 25호에 기재란은 있어 기재 자체는 권장)
+ *  - 최소 일령은 APQA 12주령 vs 우리 달력 3개월 — 우리가 더 엄격해서 유지했다(destination-
+ *    config 주석 참고). 12주~3개월 구간은 몽골 기준 적법한데 주의가 뜬다(저장은 됨).
+ *
+ * 확인 실패(추측으로 채우지 않은 것):
+ *  - GASI(ssia.gov.mn) 원문 규정 접근 실패. APQA 안내문 자체가 "해당 국가의 검증을 받은
+ *    공식 정보가 아니며 정확하지 않을 수 있음"이라 밝힌다 — 최상위 근거는 아니다.
+ *  - USDA APHIS Mongolia 3회 시도 모두 타임아웃(존재는 확인, 내용 미확인).
+ *  - 동반 마리수 제한 — 어느 출처에도 없다. 금지 견종도 APQA 는 빈칸이다.
+ *  - 12개월 백신 상한·ISO 11784/11785 규격번호·늑대 하이브리드 금지는 **상업 사이트 단독**
+ *    근거라 룰·카드에 넣지 않았다.
  *
  * 컨벤션: 필수 입력 누락 시 SKIP. 유효기간 1년 = 접종일의 1주년 당일까지.
  */
@@ -154,35 +168,13 @@ export const MN_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
     },
   },
-  {
-    id: 'mn.rabies-only-1year-vaccine',
-    country: COUNTRY,
-    category: '광견병',
-    title: '1년 라이선스 광견병 백신만 인정 (3년 거부)',
-    description:
-      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부. (GAVS 1차 명문 미확인 — 베트남에서 복제한 보수 적용값. 개별 검토 대상)',
-    severity: 'blocker',
-    addedAt: '2026-07-20',
-    run: ({ caseRow }) => {
-      const rabies = readRabiesEntries(caseRow)
-      if (rabies.length === 0) return SKIP
-
-      const offending: string[] = []
-      for (const r of rabies) {
-        if (exceedsValidityYears(r.date, r.valid_until)) {
-          offending.push(`rabies_dates[${r.originalIndex}].valid_until`)
-        }
-      }
-      if (offending.length > 0) {
-        return {
-          ok: false,
-          message: '광견병 백신은 면역 유효기간 1년짜리만 인정돼요. 3년 백신은 사용할 수 없어요.',
-          offendingPaths: offending,
-        }
-      }
-      return { ok: true, message: '모든 광견병 백신이 1년 라이선스 (또는 미입력 = 디폴트 1년).' }
-    },
-  },
+  // ⚠️ `mn.rabies-only-1year-vaccine`(3년 백신 거부 blocker)을 **삭제했다** (2026-07-20 조사).
+  //   APQA 안내문 §1.2 표의 광견병 조건은 '최소 12주령'·'입국 30일 이전' 두 줄뿐이고 **최대
+  //   유효기간 행 자체가 없다**. 12개월 상한의 유일한 출처는 PetTravel.com(상업)이다.
+  //   결정적으로 **몽골 제출용 별지 제25호서식의 '면역유효기간(Validity)' 란이 ☐1Y ☐2Y ☐3Y
+  //   체크박스**라 3년 백신 기재가 서식 차원에서 정상 지원된다. blocker 는 저장을 거부해
+  //   우회가 불가능하므로 근거 없이 재접종을 강요하는 상태였다. 프로파일의 oneYearVaccineOnly
+  //   선언도 함께 제거했다(포털 YearSelect 비활성 해제). 캄보디아·우즈베키스탄과 같은 조치.
   {
     id: 'mn.rabies-valid-on-departure',
     country: COUNTRY,

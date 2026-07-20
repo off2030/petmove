@@ -240,20 +240,29 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       label: '몽골',
       // 칩 필수국 — microchip-before-rabies 가 있어야 카드에 '마이크로칩 삽입 후에 접종해야
       // 해요' 줄이 파생된다(buildRabiesCard 의 requiresChipFirst).
+      // mn.rabies-only-1year-vaccine 은 없다 — APQA 표에 최대 유효기간 행이 없고 별지 25호
+      // 서식이 1Y/2Y/3Y 를 지원한다. 근거 부재로 제거했다(mn.ts 주석 참고).
       validationIds: [
         'mn.rabies-prime-after-3months-old',
         'mn.microchip-before-rabies',
         'mn.rabies-booster-within-prime-validity',
-        'mn.rabies-only-1year-vaccine',
       ],
     }),
     'rabies-titer': {
       description:
-        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n몽골 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+        // '몽골에는 검사 기관이 없으니…' 는 펫무브 www 가이드 문장이다("몽골에는 광견병항체
+        // 검사 기관이 없기 때문에 … 한국에서 미리 해두시는 것을 권장"). 복제할 때 베트남 고유
+        // 사정으로 오해해 빠져 있었다 — 캄보디아와 같은 누락이라 같이 되살렸다(2026-07-20).
+        // 이 줄이 없으면 왕복 여행자가 현지에서 받으면 된다고 생각하고 출국해 **귀국할 방법이
+        // 없어진다.**
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n몽골 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n몽골에는 검사 기관이 없으니 출국 전에 미리 받으세요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
     },
     'flight-purchase': {
+      // 지정 입국공항은 APQA 안내문 §1.2 표 '기타' 행 원문이다 — "반드시 Chinggis Khaan
+      // 국제 공항을 통해 몽골로 입국". 베트남(4곳)과 같은 문형으로 쓴다. 복제 시엔 이 사실을
+      // 몰라 줄 자체가 없었다(2026-07-20 조사에서 확보).
       description:
-        '몽골 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 30일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+        '몽골 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 30일이 지난 후에 입국할 수 있어요.\n지정된 공항으로만 입국할 수 있어요. 울란바토르 칭기즈칸(UBN)이에요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       cardLine: '몽골에 입국할 수 있어요.',
       earliest: undefined,
       validationIds: ['mn.rabies-min-30days-before-departure'],
@@ -261,8 +270,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     departure: importQuarantineCard({
       label: '몽골',
       fieldKey: 'mn_import_quarantine_date',
+      // ⚠️ '지정 시설에서 격리' 문구를 **쓰지 않는다** — APQA 표 '입국 후 계류: 불필요'.
+      //   베트남(미충족 시 14일 격리)에서 복제되며 딸려온 문장이라 근거가 없었다. 미충족 시
+      //   결과는 APQA 주의사항 문형대로 '입국 거부·반송'이다.
       description:
-        '몽골 도착 후 공항 동물검역소에서 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 격리되거나 한국으로 반송돼요.',
+        '몽골 도착 후 공항 동물검역소에서 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 입국이 거부되거나 한국으로 반송될 수 있어요.',
       helpText: '몽골 도착 후 수입 검역을 받은 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '몽골 수입 검역 서류',

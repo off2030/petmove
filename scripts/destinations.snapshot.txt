@@ -242,8 +242,8 @@
   [docs  cat/one_way] form25, kr-export-quarantine-cert
 
 === mongolia  (token: 몽골) ===
-  [consts] singleDose=true oneYearVaccine=true titerEntryMonths=- vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
-  [checks:11] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid, mn.import-quarantine-date-valid, mn.microchip-before-rabies, mn.rabies-booster-within-prime-validity, mn.rabies-min-30days-before-departure, mn.rabies-only-1year-vaccine, mn.rabies-prime-after-3months-old, mn.rabies-valid-on-departure
+  [consts] singleDose=true oneYearVaccine=false titerEntryMonths=- vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
+  [checks:10] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid, mn.import-quarantine-date-valid, mn.microchip-before-rabies, mn.rabies-booster-within-prime-validity, mn.rabies-min-30days-before-departure, mn.rabies-prime-after-3months-old, mn.rabies-valid-on-departure
   [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:mn_import_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
   [docs  dog/round] mn-rabies-titer-result, form25, kr-export-quarantine-cert, mn-import-quarantine-cert, kr-import-quarantine-cert
   [cards dog/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  45:flight-purchase:has-flight-date  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:mn_import_quarantine_date

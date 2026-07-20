@@ -543,24 +543,50 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   //   사용자가 확인해 준 4개 델타(마이크로칩 필수 여부 / 광견병 최소 일령 / 입국 대기일)만
   //   나라별로 다르다. 3년 백신 불인정·도착 격리 14일 같은 **베트남 고유 규정값은 복제된
   //   상태**이며 나라별 개별 검토에서 정정할 예정이다 — 지금 "규정과 다르다"고 올리지 말 것.
+  // ── 몽골 (GASI — General Agency for Specialized Inspection) ───────────
+  // ✅ **한국 APQA 공식 안내문을 1차 근거로 확보했다** (2026-07-20 조사).
+  //   「개·고양이 국가별 검역조건 — 몽골」 2024-04-30 개정판 PDF.
+  //   목록 https://www.qia.go.kr/livestock/qua/list93webQiaCom.do (몽골 = id 60618)
+  //   안내문 https://www.qia.go.kr/livestock/qua/downloadwebQiaCom.do?id=47407
+  //   §1.2 검역조건 표 원문값:
+  //     검역증명서 필수(출국 10일 이내) / 마이크로칩 **필수**(ISO 호환) / 광견병 **필수**
+  //     (최소 12주령 이상, 입국 30일 이전) / 기타 백신 불필요 / **광견병 항체가 검사 불필요**
+  //     / 사전수입허가 **불필요** / **입국 후 계류 불필요** / 기생충 처치 불필요
+  //     / 기타: **반드시 Chinggis Khaan 국제공항을 통해 입국**
+  //   → 도착 카드에 '격리'를 쓰면 안 되고(계류 불필요), 항공권 카드에 지정공항을 써야 한다.
+  //
+  // ⚠️ APQA 안내문 자체가 "해당 국가의 검증을 받은 공식 정보가 아니며 정확하지 않을 수
+  //   있음"이라고 밝히고 있다. GASI(ssia.gov.mn) 원문은 접근 실패라 최상위 근거는 아니지만,
+  //   상업 사이트보다 훨씬 상위이고 우리가 확보한 최선의 근거다.
   mongolia: {
     // 칩 필수 O → *.microchip-before-rabies 룰 보유(광견병 카드에 칩 선행 문구가 파생된다).
     keywords: ['몽골', 'mongolia'],
     archetype: 'sea-permit',
     rabies: {
       doses: 1,
+      // ⚠️ APQA 안내문은 **최소 12주령**(84일)인데 우리는 달력 3개월을 쓴다 —
+      //   펫무브 www 가이드("생후 3개월령 이후")와 사용자 확인 델타가 3개월이고, 3개월이
+      //   12주보다 **엄격**해서 3개월을 지키면 12주 요건은 자동 충족되기 때문이다.
+      //   다만 12주~3개월 사이에 접종한 케이스는 몽골 기준으론 적법한데 우리 화면엔 주의가
+      //   뜬다(blocker 가 아니라 저장은 된다). 사용자 확인이 필요한 지점으로 남긴다.
       minAgeDays: 91,
       minAgeMonths: 3,
       minAgeLabel: '생후 3개월',
-      oneYearVaccineOnly: true,
-      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
+      // ⚠️ oneYearVaccineOnly 를 **선언하지 않는다** (2026-07-20, 캄보디아·우즈벡과 같은 조치).
+      //   APQA 표의 광견병 조건은 '최소 12주령'과 '입국 30일 이전' 두 줄뿐이고 **최대 유효기간
+      //   행 자체가 없다**(상한을 두는 나라는 안내문에 명시된다). 12개월 상한을 말하는 유일한
+      //   출처는 PetTravel.com(상업)이다. 결정적으로 **몽골 제출용 별지 제25호서식의
+      //   '면역유효기간(Validity)' 란이 ☐1Y ☐2Y ☐3Y 체크박스**라, 3년 백신 기재가 서식
+      //   차원에서 정상 지원된다. 3년 백신을 거부할 근거가 없다.
+      //   validityLine 도 뺐다 — 유효기간 상한을 따지지 않으므로 할 말이 없다.
       timingLines: ['출국 30일 전까지 접종해야 해요.'],
       entryWaitDaysAfterVaccine: 30,
     },
     titer: { need: 'return-only' },
     appSupported: true,
     vaccines: ['rabies', 'rabies_titer'],
-    importQuarantine: { quarantineDays: 14 },
+    // 계류 일수를 **선언하지 않는다** — APQA 표 '입국 후 계류: 불필요'.
+    importQuarantine: {},
     rabiesTiterForReturnOnly: true,
   },
   // ── 우즈베키스탄 (수의·축산개발국가위원회 — vetgov.uz) ────────────────
