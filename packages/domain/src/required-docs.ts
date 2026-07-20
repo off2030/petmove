@@ -195,6 +195,7 @@ function vietnamFamilyDocSpecs(
   opts: {
     noLocalTiterLab?: boolean
     importQuarantineDoc?: { source?: string; description?: string }
+    exportQuarantineDoc?: { name: string; source: string; description: string }
   } = {},
 ): RequiredDocSpec[] {
   const titerLabLine = opts.noLocalTiterLab
@@ -225,6 +226,24 @@ function vietnamFamilyDocSpecs(
         `${label} 수입 검역 때 받는 서류예요.\n\n${label}에서 출국할 때 필요할 수 있으므로 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
       previewStepId: 'departure',
     },
+    // 현지 수출 검역 서류 — 왕복 전용. 한국 APQA 가 '수출국 정부기관 증명 검역증명서'를
+    // 요구하므로(EU 만 예외) 카드가 있는 나라엔 반드시 서류도 따라온다. 카드가 아직 없는
+    // 나라(캄보디아)는 이 항목이 빠진다 — catalog 의 수출 검역 step 주석 참고.
+    ...(opts.exportQuarantineDoc
+      ? [
+          {
+            id: `${cc}-export-quarantine-cert`,
+            name: opts.exportQuarantineDoc.name,
+            source: opts.exportQuarantineDoc.source,
+            kind: 'step' as const,
+            stepRef: `${cc}-export-quarantine`,
+            group: 'quarantine' as const,
+            roundTripOnly: true,
+            description: opts.exportQuarantineDoc.description,
+            previewStepId: `${cc}-export-quarantine`,
+          },
+        ]
+      : []),
     KR_IMPORT_QUARANTINE_CERT,
   ]
 }
@@ -609,9 +628,27 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   // 이름에 나라를 붙이지 않는다 — 목적지 탭이 이미 대만이고, 태국(R.6)·필리핀(SPSIC)도 안 붙인다.
   // 베트남 골격 복제 4국 — 구성은 vietnamFamilyDocSpecs 주석 참고.
   '캄보디아': vietnamFamilyDocSpecs('캄보디아', 'kh', { noLocalTiterLab: true }),
-  '몽골': vietnamFamilyDocSpecs('몽골', 'mn', { noLocalTiterLab: true }),
+  '몽골': vietnamFamilyDocSpecs('몽골', 'mn', {
+    noLocalTiterLab: true,
+    exportQuarantineDoc: {
+      // 정식 명칭·양식 번호 미확인(sbb.inspection.gov.mn TLS 만료로 원문 열람 실패).
+      name: '몽골 수출 검역 서류',
+      source: '몽골 검역 기관',
+      description:
+        '몽골 수출 검역 후 발급받아요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.\n\n발급일로부터 30일간 유효해요. 출국 일정에 맞춰 받으세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
+  }),
   // 우즈베키스탄만 noLocalTiterLab 이 없다 — www 가이드에 '검사 기관이 없다'는 문장이 없다.
-  '우즈베키스탄': vietnamFamilyDocSpecs('우즈베키스탄', 'uz'),
+  '우즈베키스탄': vietnamFamilyDocSpecs('우즈베키스탄', 'uz', {
+    exportQuarantineDoc: {
+      // 비CIS(한국) 대상은 국제수의증명서 форма №5 계열 — 하위 문자(5а~5е)는 확인 실패라
+      // 이름에 넣지 않았다.
+      name: '우즈베키스탄 국제수의증명서',
+      source: '우즈베키스탄 국경 수의검문소',
+      description:
+        '거주 지역 국가수의검사관에게 수의증명서를 받은 뒤, 출국할 때 국경 수의검문소에서 국제수의증명서로 바꿔 받아요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
+  }),
   '캐나다': vietnamFamilyDocSpecs('캐나다', 'ca', {
     noLocalTiterLab: true,
     // 캐나다는 동물검역소 검역이 아니라 CBSA 국경 심사라 '검역 후 받는 서류' 문형이 안 맞는다.
@@ -621,6 +658,13 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       source: '캐나다 국경관리기관(CBSA)',
       description:
         '캐나다 입국 심사 때 서류를 받으면 보관해두세요.\n\n캐나다는 별도 검역증을 발급하지 않을 수 있어요. 검사 수수료 영수증은 받아두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
+    exportQuarantineDoc: {
+      // 한-캐 협상 완료된 전용 서식이라 4국 중 유일하게 정식 이름을 쓸 수 있다.
+      name: '캐나다 수출 증명서(Veterinary Health Certificate for Dogs and Cats to Korea)',
+      source: '현지 동물병원 · 캐나다 검역기관(CFIA) 배서',
+      description:
+        '한국행 전용 서식이에요. 현지 동물병원에서 작성받은 뒤 검역기관(CFIA) 공식 수의사의 배서를 받아야 해요.\n\n배서는 예약제이고, 온라인 결제를 예약일 3일 전까지 마쳐야 해요.\n\n캐나다를 떠난 뒤에는 배서를 받을 수 없어요. 반드시 출국 전에 마치세요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.',
     },
   }),
   '대만': [

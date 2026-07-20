@@ -1526,6 +1526,152 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
 
+  // ── 몽골·우즈베키스탄·캐나다 수출 검역 (2026-07-20 조사 후 신설) ───────
+  //
+  // 세 나라 모두 **한국 APQA 가 사실상 강제**한다. APQA 「개·고양이 검역절차 — 입·출국시」:
+  //   "외국에서 반려동물(개·고양이)을 데리고 우리나라로 들어올 경우 **수출국 정부기관이
+  //    증명한 검역증명서**를 준비하여야 합니다(EU 회원국에서 발행한 경우 EU PET PASSPORT
+  //    로 대체 가능)." / "**검역증명서를 구비하지 않을 시에는 반송조치 대상**이 됩니다."
+  //   https://www.qia.go.kr/livestock/qua/livestock_outforeign_hygiene_inf.jsp
+  // 이 요구는 국가 화이트리스트가 아니라 **전 세계 공통**이고 EU 만 예외다. 세 나라 다
+  // EU 가 아니므로, 그 나라가 자국법으로 강제하는지와 무관하게 받아야 한다.
+  //
+  // ⚠️ **캄보디아는 아직 카드가 없다** — 1차 출처가 거의 없는 나라라 별도 조사 중이다.
+  //   APQA 요구는 캄보디아에도 똑같이 걸리므로, 조사가 끝나면 같은 모양으로 추가할 것.
+  //
+  // ⚠️ 세 나라 모두 **신청 기한(출국 D-N)의 정부 원문 근거를 찾지 못했다.** 상업 사이트의
+  //   "출발 10일 이내"류만 있어 카드에 쓰지 않았다. '미리 신청하세요' 수준으로만 안내한다.
+  {
+    id: 'mn-export-quarantine',
+    category: 'document',
+    title: '몽골 수출 검역',
+    shortLabel: '수출',
+    // 몽골은 '정부 기관이 검사하고 증명서를 발급'하는 모델이다(캐나다의 배서 모델과 다름).
+    // 근거: 국경 검역 감독·검사법(2018-11-15 개정, legalinfo.mn/en/edtl/16959948545251)이
+    //   수출 시 권한 기관 발급 수출증명서를 요구하고, 증명서·동반서류 불일치 시 통과 불허.
+    // 개인 반려동물 전용 절차 문서가 실재한다 — 전문검사청 「개인 목적 개·고양이 반출 시
+    //   구비서류」: 신청서(국경통과지점·시기·운송수단·경로 명시), 반려동물 여권·건강기록부
+    //   사본, 소유자 해외여권 사본. **수수료 10,000 투그릭, 증명서 유효기간 발급일로부터 30일.**
+    //   (sbb.inspection.gov.mn — TLS 인증서 만료로 원문 열람 실패, 검색 인덱스로 확인)
+    // ⚠️ 소관이 2원화돼 있다 — 법률 텍스트는 GAVS(수의 주무)를 지목하나 실제 개인 반려동물
+    //   발급 창구는 GASI 계열 전문검사청 국경검역과로 보인다. 카드엔 '검역 기관'으로만 쓰고
+    //   특정 기관명을 단정하지 않는다(둘 중 어디로 가라고 잘못 안내하면 헛걸음이 된다).
+    description:
+      '몽골 출국 전 수출 검역을 받으세요.\n\n출국하는 공항을 관할하는 검역 기관에 신청하고 검사 일시와 장소, 필요 서류를 안내받으세요.\n신청서와 반려동물 여권·건강기록부 사본, 보호자 여권 사본이 필요해요.\n수수료가 있어요. 발급받은 검역증은 30일간 유효하니 출국 일정에 맞춰 받으세요.',
+    doneSummary: '몽골 수출 검역을 받았어요.',
+    cardLine: '몽골 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['mongolia'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:mn_export_quarantine_date',
+    validationIds: ['mn.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'mn_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '몽골에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    // 발급 서류의 정식 명칭·양식 번호를 확인하지 못했다(베트남 Mẫu 13a 에 해당하는 것).
+    // 확인되면 정식 이름으로 올릴 것 — 그때까지 '검역 서류'로 뭉뚱그린다.
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '몽골 수출 검역 서류',
+    links: [
+      {
+        url: 'http://inspection.gov.mn/new/ulaanbaatar/?page_id=46860',
+        label: '울란바토르 전문검사청 수출입·국경검역감독과',
+      },
+    ],
+  },
+  {
+    id: 'uz-export-quarantine',
+    category: 'document',
+    title: '우즈베키스탄 수출 검역',
+    shortLabel: '수출',
+    // 우즈베키스탄도 정부 발급 모델이고, **2단계**라는 점이 특징이다.
+    // 근거 = 「반출·반입·통과 시 수의문서 발급 규칙」 https://lex.uz/acts/686904
+    //   발급 주체: 구(시) 국가수의검사관이 수출 시 수의증명서를 발급하고,
+    //             국경수의검문소(пограничный ветеринарный контрольный пункт)가 국경에서
+    //             국제수의증명서로 **교환·발급**한다.
+    //   양식: CIS 대상은 форма №1·2·3, **비CIS(= 한국) 대상은 국제수의증명서 форма №5 계열**.
+    //   개인 반려동물 2두 이하는 "оформляется **без разрешения**" = **사전허가만 면제**이고
+    //   증명서 자체는 반드시 받아야 한다. 이 구분을 놓치면 '2두 이하는 아무것도 안 해도 된다'는
+    //   반대 결론이 나온다 — 입국 쪽 면제(허가·격리)와 혼동하지 말 것.
+    // ⚠️ форма №5а~5е 중 개·고양이 해당 서식이 무엇인지는 확인 실패라 카드에 쓰지 않았다.
+    description:
+      '우즈베키스탄 출국 전 수출 검역을 받으세요.\n\n거주 지역의 국가수의검사관에게 수의증명서를 발급받으세요.\n출국할 때 국경 수의검문소에서 국제수의증명서로 바꿔 받아요.\n반려동물 2마리 이하는 별도 허가가 필요 없지만, 증명서는 반드시 받아야 해요.',
+    doneSummary: '우즈베키스탄 수출 검역을 받았어요.',
+    cardLine: '우즈베키스탄 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['uzbekistan'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:uz_export_quarantine_date',
+    validationIds: ['uz.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'uz_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '우즈베키스탄에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '우즈베키스탄 수출 검역 서류',
+  },
+  {
+    id: 'ca-export-quarantine',
+    category: 'document',
+    title: '캐나다 수출 검역',
+    shortLabel: '수출',
+    // ⚠️ 캐나다는 **모델이 다르다** — 정부가 검사·발급하는 게 아니라, 개인 수의사가 작성한
+    //   증명서를 CFIA 공식 수의사가 **배서(endorse)** 한다. 그래서 핵심 액션이 '기관 방문
+    //   신청'이 아니라 **'예약 + 사전 결제'** 다. 몽골·우즈베키스탄 카드와 문형을 달리한다.
+    // 근거 = CFIA 「Pets: Export certificates」
+    //   https://inspection.canada.ca/en/animal-health/terrestrial-animals/exports/pets
+    //   "Most pets travelling from Canada to another country will need an export certificate
+    //    **issued by a licensed veterinarian and endorsed by an official CFIA veterinarian**."
+    //   "**It is mandatory to obtain CFIA endorsement of an export certificate before the
+    //    animal(s) leave Canada**, as the CFIA cannot endorse or issue a certificate if the
+    //    animal(s) is/are no longer in Canada." ← 출국 후엔 방법이 없다. 카드에 반드시 남길 것.
+    // 한국 전용 페이지·서식이 실재한다 — 「Export of Dogs and Cats to the Republic of Korea」
+    //   https://inspection.canada.ca/en/animal-health/terrestrial-animals/exports/pets/korea
+    //   지정 서식 "Veterinary Health Certificate for Dogs and Cats to Korea"(한-캐 협상 완료).
+    // 예약 = https://inspection.canada.ca/en/animal-health/terrestrial-animals/exports/pets/appointments
+    //   "An appointment is required…" / "the online payment must be completed **at least 3 days
+    //    before your appointment**" / "Please provide as much advance notice as possible."
+    // ⚠️ CFIA 한국 페이지가 "December 1, 2012" 기준이라 오래돼 보인다 — 실무 적용 전 재확인 권장.
+    description:
+      '캐나다 출국 전 수출 증명서에 검역기관(CFIA) 배서를 받으세요.\n\n현지 동물병원에서 한국행 수출 증명서를 작성받은 뒤, 검역기관 공식 수의사의 배서를 받아야 해요.\n배서는 예약제예요. 온라인 결제를 예약일 3일 전까지 마쳐야 하니 미리 예약하세요.\n캐나다를 떠난 뒤에는 배서를 받을 수 없어요. 반드시 출국 전에 마치세요.',
+    doneSummary: '캐나다 수출 검역을 받았어요.',
+    cardLine: '캐나다 출국 전 수출 증명서 배서를 받으세요.',
+    applicability: { destinations: ['canada'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:ca_export_quarantine_date',
+    validationIds: ['ca.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'ca_export_quarantine_date',
+        label: '배서일',
+        type: 'date',
+        helpText: '캐나다 검역기관(CFIA)에서 배서를 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '배서받은 증명서 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '캐나다 수출 증명서',
+    links: [
+      {
+        url: 'https://inspection.canada.ca/en/animal-health/terrestrial-animals/exports/pets/korea',
+        label: '한국행 수출 안내·서식 (CFIA)',
+      },
+      {
+        url: 'https://inspection.canada.ca/en/animal-health/terrestrial-animals/exports/pets/appointments',
+        label: 'CFIA 배서 예약',
+      },
+    ],
+  },
+
   // ── 15. 한국 수입 검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
   {
     id: 'kr-import-quarantine',

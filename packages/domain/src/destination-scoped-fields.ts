@@ -118,6 +118,15 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 베트남 수출 검역 (왕복 귀국 전 — 지역 수의지국 Chi cục Thú y 발급. 강제 절차)
   'vn_export_quarantine_date',
   'vn_export_quarantine_confirmed',
+  // 몽골·우즈베키스탄·캐나다 수출 검역 (왕복 귀국 전 — 2026-07-20 조사 후 신설).
+  // 세 나라 모두 한국 APQA 가 '수출국 정부기관 증명 검역증명서'를 요구해 사실상 강제다
+  // (EU 펫패스포트만 예외). 나라별 근거는 각 catalog step 주석 참고.
+  'mn_export_quarantine_date',
+  'mn_export_quarantine_confirmed',
+  'uz_export_quarantine_date',
+  'uz_export_quarantine_confirmed',
+  'ca_export_quarantine_date',
+  'ca_export_quarantine_confirmed',
   // 필리핀 귀국 전 현지 동물병원 방문 — BAI 수출검역 신청용 건강증명서. dated-confirm.
   'ph_local_vet_visit_date',
   'ph_local_vet_visit_confirmed',
