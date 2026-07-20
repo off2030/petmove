@@ -269,7 +269,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
       if (others.length + 1 > 2) {
         return {
           ok: false,
-          message: `같은 보호자(${caseRow.customer_name})가 베트남 목적 케이스를 ${others.length + 1}건 등록하여 2마리 한도를 초과해요.`,
+          message: `같은 보호자(${caseRow.customer_name})가 베트남 목적 케이스를 ${others.length + 1}건 등록하여 2마리 한도를 초과했어요.`,
           offendingPaths: ['customer_name'],
         }
       }
