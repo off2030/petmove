@@ -74,6 +74,19 @@ export interface DestinationRabiesProfile {
   oneYearVaccineOnly?: boolean
   /** 1·2차 최소 간격(일). 'soft' = 하드 차단 없이 순서·권고만(중국 30일). */
   doseIntervalDays?: number | 'soft'
+  /**
+   * 최근 접종일로부터 입국까지 최소 대기(일) — 유효 부스터는 면제(violatesVaccineWaitDays).
+   * `RABIES_ENTRY_WAIT_DAYS` 의 파생원. 항공권 카드 저장 거부(validateRabiesEntryWait)와
+   * 그 나라 주의 룰(`<cc>.rabies-min-Ndays-before-departure`)이 이 값을 공유한다.
+   *
+   * 0 또는 미지정 = 대기 요건 없음(캐나다). 예전엔 베트남 30일이 date-rules 안에
+   * 상수(VN_RABIES_WAIT_DAYS)로 박혀 있어, 같은 모델의 나라를 올릴 때마다 함수를
+   * 하나씩 복제해야 했다(2026-07-20 프로파일 파생으로 교체).
+   *
+   * ※ 태국·필리핀 21일은 아직 각자 validator 안에 있다 — 그쪽은 종합백신 대기까지 얽혀
+   *   있어 이 필드로 합치지 않았다.
+   */
+  entryWaitDaysAfterVaccine?: number
 
   // ── 카드 문구 파생용 (buildRabiesCard) ────────────────────────────────
   // 광견병 카드는 목적지마다 '문장 조각의 조합'일 뿐이라 골격 하나에서 파생한다.
@@ -524,9 +537,51 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     rabiesTiterForReturnOnly: true,
   },
   // 1차 정부 영문 자료 부분 공개 패밀리 — USDA APHIS / 한국 QIA 정부 2차 안내·운용 룰 의존
+  //
+  // ⚠️ 아래 4국(몽골·우즈베키스탄·캄보디아·캐나다)은 **베트남 골격을 그대로 복제**한 것이다
+  //   (2026-07-20 사용자 지정). 여정 카드·검증 룰·서류 구성이 베트남과 동일해야 한다는 전제로,
+  //   사용자가 확인해 준 4개 델타(마이크로칩 필수 여부 / 광견병 최소 일령 / 입국 대기일)만
+  //   나라별로 다르다. 3년 백신 불인정·도착 격리 14일 같은 **베트남 고유 규정값은 복제된
+  //   상태**이며 나라별 개별 검토에서 정정할 예정이다 — 지금 "규정과 다르다"고 올리지 말 것.
   mongolia: {
+    // 칩 필수 O → *.microchip-before-rabies 룰 보유(광견병 카드에 칩 선행 문구가 파생된다).
     keywords: ['몽골', 'mongolia'],
+    archetype: 'sea-permit',
+    rabies: {
+      doses: 1,
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      oneYearVaccineOnly: true,
+      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
+      timingLines: ['출국 30일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 30,
+    },
+    titer: { need: 'return-only' },
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer'],
+    importQuarantine: { quarantineDays: 14 },
+    rabiesTiterForReturnOnly: true,
+  },
+  uzbekistan: {
+    // 칩 필수 O. 항체검사는 베트남 골격을 따라 **귀국용**으로 둔다 — 예전 주석은 '입국 필수
+    // (유효 1년)'였으나 근거 미확인이라, 개별 검토 때 입국 필수로 되돌릴지 판단한다.
+    keywords: ['우즈베키스탄', 'uzbekistan'],
+    archetype: 'sea-permit',
+    rabies: {
+      doses: 1,
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      oneYearVaccineOnly: true,
+      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
+      timingLines: ['출국 30일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 30,
+    },
+    titer: { need: 'return-only' },
+    appSupported: true,
+    vaccines: ['rabies', 'rabies_titer'],
+    importQuarantine: { quarantineDays: 14 },
     rabiesTiterForReturnOnly: true,
   },
   // ── 베트남 (DAH Cục Thú y) ──────────────────────────────────────────
@@ -552,6 +607,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       oneYearVaccineOnly: true,
       validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
       timingLines: ['출국 30일 전까지 접종해야 해요.'],
+      // 구 VN_RABIES_WAIT_DAYS 상수 — 프로파일로 올려 저장 거부·주의 룰이 함께 파생된다.
+      entryWaitDaysAfterVaccine: 30,
     },
     // 입국 요건 아님 — 한국 귀국용(need:'return-only' = rabiesTiterForReturnOnly 와 같은 의미).
     titer: { need: 'return-only' },
@@ -567,19 +624,44 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer'],
     rabiesTiterForReturnOnly: true,
   },
-  uzbekistan: {
-    // 광견병 출국 30일 전 + 입국용 항체검사(유효기간 1년) 필수 → 편도에서도 항체검사 표시.
-    keywords: ['우즈베키스탄', 'uzbekistan'],
-    vaccines: ['rabies', 'rabies_titer'],
-  },
   cambodia: {
+    // 칩 필수 X → 베트남처럼 *.microchip-before-rabies 룰을 두지 않는다(칩 카드 자체는 공통).
+    // 최소 일령은 **고정 91일**(사용자 지정) — 몽골·우즈벡·캐나다의 달력 3개월과 다르다.
     keywords: ['캄보디아', 'cambodia'],
+    archetype: 'sea-permit',
+    rabies: {
+      doses: 1,
+      minAgeDays: 91,
+      minAgeLabel: '생후 91일',
+      oneYearVaccineOnly: true,
+      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
+      timingLines: ['출국 30일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 30,
+    },
+    titer: { need: 'return-only' },
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer'],
+    importQuarantine: { quarantineDays: 14 },
     rabiesTiterForReturnOnly: true,
   },
   canada: {
     // USDA 호환 — 입국 시 광견병 백신만 요구. RNATT 는 한국 귀국용.
+    // 칩 필수 X + **입국 대기 0일**(사용자 지정) → 항공권 카드에 대기 문구·저장 거부가 없다.
     keywords: ['캐나다', 'canada'],
+    archetype: 'sea-permit',
+    rabies: {
+      doses: 1,
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      oneYearVaccineOnly: true,
+      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
+      // 대기 0일 — timingLines 없음(baseRabiesCard 가 '출국 N일 전' 줄을 만들지 않는다).
+    },
+    titer: { need: 'return-only' },
+    appSupported: true,
+    vaccines: ['rabies', 'rabies_titer'],
+    importQuarantine: { quarantineDays: 14 },
     rabiesTiterForReturnOnly: true,
   },
   ukraine: {

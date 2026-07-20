@@ -176,6 +176,156 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['vn.import-quarantine-date-valid'],
     }),
   },
+  // ── 베트남 골격 복제 4국 (캄보디아·몽골·우즈베키스탄·캐나다) ──────────────
+  // 2026-07-20 사용자 지정: "카드와 그에 걸린 검증 룰을 포함한 모든 것이 베트남과 같다".
+  // 베트남과 같은 골격 — 광견병 1회 + 항체는 귀국용 + 수입허가/사전신고 없음 + 도착 검역.
+  // 나라별로 다른 것은 사용자가 확인해 준 3가지뿐:
+  //   마이크로칩 필수(몽골·우즈벡 O / 캄보디아·캐나다 X) — 칩 선행 문구는 광견병 카드의
+  //     validationIds 에 `<cc>.microchip-before-rabies` 가 있는지에서 파생된다(buildRabiesCard)
+  //   최소 일령(캄보디아 고정 91일 / 나머지 달력 3개월) — 프로파일 rabies 블록에서 파생
+  //   접종 후 입국 대기(30일 / 캐나다 0일) — 프로파일 entryWaitDaysAfterVaccine 에서 파생
+  //
+  // ⚠️ 베트남 고유 규정(3년 백신 불인정·미충족 시 14일 격리)이 복제된 상태다. 각 나라
+  //   개별 검토에서 정정할 예정 — 지금 "규정과 다르다"고 올리지 말 것.
+  // ⚠️ 왕복 귀국 전 **현지 수출 검역 카드는 아직 없다**(사용자 지정: 나라별 조사가 필요해
+  //   나중에 따로 만든다). 베트남의 vn-export-quarantine 에 해당하는 카드가 4국엔 빠져 있다.
+  cambodia: {
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'cambodia',
+      label: '캄보디아',
+      // 칩 선행 룰 없음 — 베트남과 같이 칩이 입국 요건이 아니다(사용자 지정).
+      validationIds: [
+        'kh.rabies-prime-after-91days-old',
+        'kh.rabies-booster-within-prime-validity',
+        'kh.rabies-only-1year-vaccine',
+      ],
+    }),
+    'rabies-titer': {
+      description:
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n캄보디아 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+    },
+    'flight-purchase': {
+      description:
+        '캄보디아 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 30일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '캄보디아에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: ['kh.rabies-min-30days-before-departure'],
+    },
+    departure: importQuarantineCard({
+      label: '캄보디아',
+      fieldKey: 'kh_import_quarantine_date',
+      description:
+        '캄보디아 도착 후 공항 동물검역소에서 검역을 받으세요.\n서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 격리되거나 한국으로 반송돼요.',
+      helpText: '캄보디아 도착 후 수입 검역을 받은 날짜',
+      // 발급되는 검역증이 확인되지 않았다(베트남 Mẫu 15a 처럼 확정된 서식이 없음) —
+      // 중국·대만·필리핀과 같은 '검역 서류' 표기. 확인되면 정식 이름으로 올릴 것.
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '캄보디아 수입 검역 서류',
+      validationIds: ['kh.import-quarantine-date-valid'],
+    }),
+  },
+  mongolia: {
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'mongolia',
+      label: '몽골',
+      // 칩 필수국 — microchip-before-rabies 가 있어야 카드에 '마이크로칩 삽입 후에 접종해야
+      // 해요' 줄이 파생된다(buildRabiesCard 의 requiresChipFirst).
+      validationIds: [
+        'mn.rabies-prime-after-3months-old',
+        'mn.microchip-before-rabies',
+        'mn.rabies-booster-within-prime-validity',
+        'mn.rabies-only-1year-vaccine',
+      ],
+    }),
+    'rabies-titer': {
+      description:
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n몽골 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+    },
+    'flight-purchase': {
+      description:
+        '몽골 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 30일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '몽골에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: ['mn.rabies-min-30days-before-departure'],
+    },
+    departure: importQuarantineCard({
+      label: '몽골',
+      fieldKey: 'mn_import_quarantine_date',
+      description:
+        '몽골 도착 후 공항 동물검역소에서 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 격리되거나 한국으로 반송돼요.',
+      helpText: '몽골 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '몽골 수입 검역 서류',
+      validationIds: ['mn.import-quarantine-date-valid'],
+    }),
+  },
+  uzbekistan: {
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'uzbekistan',
+      label: '우즈베키스탄',
+      validationIds: [
+        'uz.rabies-prime-after-3months-old',
+        'uz.microchip-before-rabies',
+        'uz.rabies-booster-within-prime-validity',
+        'uz.rabies-only-1year-vaccine',
+      ],
+    }),
+    'rabies-titer': {
+      description:
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n우즈베키스탄 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+    },
+    'flight-purchase': {
+      description:
+        '우즈베키스탄 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 30일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '우즈베키스탄에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: ['uz.rabies-min-30days-before-departure'],
+    },
+    departure: importQuarantineCard({
+      label: '우즈베키스탄',
+      fieldKey: 'uz_import_quarantine_date',
+      description:
+        '우즈베키스탄 도착 후 공항 동물검역소에서 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 격리되거나 한국으로 반송돼요.',
+      helpText: '우즈베키스탄 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '우즈베키스탄 수입 검역 서류',
+      validationIds: ['uz.import-quarantine-date-valid'],
+    }),
+  },
+  canada: {
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'canada',
+      label: '캐나다',
+      // 칩 선행 룰 없음(칩 필수 X) + 대기 룰 없음(0일) — 다른 3국과 다른 두 지점.
+      validationIds: [
+        'ca.rabies-prime-after-3months-old',
+        'ca.rabies-booster-within-prime-validity',
+        'ca.rabies-only-1year-vaccine',
+      ],
+    }),
+    'rabies-titer': {
+      description:
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n캐나다 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+    },
+    // 항공권 — 접종 후 대기가 없다(캐나다 0일). 대기 문구·저장 거부·주의 룰이 모두 빠진다.
+    'flight-purchase': {
+      description:
+        '캐나다 입국 일정에 맞춰 항공권을 구매하세요.\n\n캐나다는 광견병 접종 후 별도의 대기 기간이 없어요. 광견병 접종이 유효한 상태로 입국하면 돼요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '캐나다에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: [],
+    },
+    departure: importQuarantineCard({
+      label: '캐나다',
+      fieldKey: 'ca_import_quarantine_date',
+      description:
+        '캐나다 도착 후 공항에서 검역을 받으세요.\n서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 격리되거나 한국으로 반송돼요.',
+      helpText: '캐나다 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '캐나다 수입 검역 서류',
+      validationIds: ['ca.import-quarantine-date-valid'],
+    }),
+  },
   // ── 대만 (APHIA 動植物防疫檢疫署) ─────────────────────────────────────
   // 1회 접종 + 항체검사 모델(EU 골격)이지만 대기·허가 구조가 다르다: ①채혈 후 180일 대기
   // (일본과 같아 base 항공권 earliest anchor 를 그대로 상속) ②수입허가증을 도착 120일 전까지

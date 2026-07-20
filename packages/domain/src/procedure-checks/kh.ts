@@ -1,103 +1,75 @@
+import {
+  buildDateRuleContext,
+  violatesRabiesEntryWait,
+} from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
-  addYears,
-  daysBetween,
-  evaluateRabiesAgeConservative,
+  addDays,
   exceedsValidityYears,
+  findRabiesValidityBreaks,
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
   readDepartureDate,
-  readVetVisitDate,
 } from './utils'
-import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
+import { msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 캄보디아 (GDAHP — General Directorate of Animal Health and Production, MAFF) 절차 검증.
  *
- * 출처:
+ * ⚠️ **베트남 룰 한 벌을 복제한 것이다** (2026-07-20 사용자 지정). 카드 구성·검증 구조가
+ *   베트남과 동일해야 한다는 전제로 옮겼고, 사용자가 확인해 준 델타만 다르다:
+ *     - 마이크로칩 **필수 아님** → 베트남처럼 `kh.microchip-before-rabies` 를 두지 않는다
+ *       (구버전엔 있었으나 칩이 입국 요건이 아니면 접종과의 순서를 따질 이유가 없다)
+ *     - 광견병 최소 일령 **고정 91일** (몽골·우즈벡·캐나다의 달력 3개월과 다름)
+ *     - 접종 후 입국 대기 30일
+ *   3년 백신 불인정 같은 나머지 값은 베트남에서 복제된 상태다. 나라별 개별 검토에서 정정한다.
+ *
+ * 출처(구버전에서 이어받음 — 개별 검토 때 재확인 대상):
  *  - Law on Animal Health and Production (NS/RKM/0116/003, 2016-01-28) — FAOLEX/Ecolex
  *    https://www.ecolex.org/details/legislation/law-on-animal-health-and-production-no-nsrkm0116003-lex-faoc173984/
- *  - WTO Import Licensing — Cambodia live animals — https://importlicensing.wto.org/content/live-animals-animal-products-meat-products
+ *  - WTO Import Licensing — Cambodia live animals
+ *    https://importlicensing.wto.org/content/live-animals-animal-products-meat-products
  *  - WOAH Asia Rabies — Cambodia — https://rr-asia.woah.org/en/projects/rabies/
  *
- * ⚠️ 캄보디아는 영문 시행령·서식·수치를 별도 공개하지 않음 — 수치는 GDAHP가 사례별로 발급하는 Import Permit 조건과 한국 QIA 안내에 의존하는 운용 룰. 출국 5-7영업일 전 GDAHP 재확인 권장.
- *
- * 핵심 룰:
- *  - 마이크로칩 ≤ 광견병 1차 (GDAHP 운용 표준 — ISO 11784/11785 15자리)
- *  - 광견병: 생후 90일 이상 + 출국 30일 이상~12개월 이내 (GDAHP 운용)
- *  - 1년 라이선스 백신만 인정 (GDAHP 수입허가 발급 시 운용 조건 — 영문 법령 명문 부재)
- *  - 건강증명서 ≤ 출국 10일 이내 (한국 QIA + 보수 ≤9)
- *
  * 별도 (시스템 검증 제외):
- *  - RNATT: GDAHP 의무 아님 (한국 귀국용 별도)
- *  - 화물 운송 시 GDAHP Import Permit 필수, 동반 입국은 통상 면제
- *  - 종합백신/구충: 권장 (GDAHP 명문 의무 아님)
+ *  - RNATT: GDAHP 의무 아님 — 한국 귀국용만(titer.need = 'return-only')
  *
  * 컨벤션: 필수 입력 누락 시 SKIP. 유효기간 1년 = 접종일의 1주년 당일까지.
  */
 
 const COUNTRY = 'cambodia'
 
-export const KH_CHECKS: ProcedureCheck[] = [
-  {
-    id: 'kh.microchip-before-rabies',
-    country: COUNTRY,
-    category: '마이크로칩',
-    title: '마이크로칩은 광견병 1차 접종 이전 시술',
-    description:
-      'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (캄보디아 입국 면제, 한국 수출검역 사실상 필수)',
-    severity: 'info',
-    addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
-      const rabies = readRabiesEntries(caseRow)
-      if (!microchip || rabies.length === 0) return SKIP
+/** 최소 일령 — 고정 91일(사용자 지정). 달력 3개월인 몽골·우즈벡·캐나다와 다르다. */
+const MIN_AGE_DAYS = 91
 
-      const first = rabies[0]
-      if (microchip <= first.date) {
-        return { ok: true, message: `마이크로칩(${microchip}) ≤ 1차 접종(${first.date}).` }
-      }
-      return {
-        ok: false,
-        message: msgMicrochipBeforeRabies(),
-        offendingPaths: ['microchip_implant_date'],
-      }
-    },
-  },
+export const KH_CHECKS: ProcedureCheck[] = [
   {
     id: 'kh.rabies-prime-after-91days-old',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
+    title: '광견병 1차 접종은 생후 91일 이후',
     description:
-      'GDAHP 운용: "3개월(90일) 이상 접종 의무" — 보수적으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
-    severity: 'info',
-    addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
+      '광견병 1차 접종은 생후 91일 이후. 입력 차단(step.earliest.daysAfter)과 같은 기준을 쓴다.',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      const ev = evaluateRabiesAgeConservative(birth, first.date)
-      if (ev.ageInDays === null) return SKIP
-      if (!ev.ok) {
-        const reason =
-          ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령으로 91일에 미달해요`
-            : ev.failedRule === 'calendar3m'
-              ? `1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
-              : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
+      const threshold = addDays(birth, MIN_AGE_DAYS)
+      if (!threshold) return SKIP
+      if (first.date < threshold) {
         return {
           ok: false,
           message: msgRabiesPrimeMinAge('91일'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${ev.ageInDays}일령 + 캘린더 3개월(${ev.calendar3mThreshold}) 충족.` }
+      return { ok: true, message: `1차 접종일(${first.date}) 생후 91일(${threshold}) 이후.` }
     },
   },
   {
@@ -106,25 +78,52 @@ export const KH_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (GDAHP 수입허가 발급 시 운용 조건 — 영문 법령 명문 부재)',
-    severity: 'info',
-    addedAt: '2026-05-07',
+      '최근 광견병 접종일로부터 출국일까지 최소 30일 경과 필요(유효 부스터는 면제). 저장 거부(validateRabiesEntryWait)와 같은 판정 함수(violatesRabiesEntryWait)를 쓴다.',
+    severity: 'warning',
+    addedAt: '2026-07-20',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
-      const earliest = rabies[0]
-      const days = daysBetween(earliest.date, dep)
-      if (days === null) return SKIP
-      if (days < 30) {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      // 기준은 **최근** 접종이고 유효 부스터는 면제. 구버전은 가장 이른 접종(rabies[0])을 봐서
+      // 만료 후 재접종한 케이스를 통째로 놓쳤다(베트남에서 2026-07-20 수정한 것과 같은 버그).
+      if (!violatesRabiesEntryWait(data, dep, destination)) {
+        const latest = rabies[rabies.length - 1]
+        return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): 30일 충족(또는 유효 부스터).` }
+      }
+      const latest = rabies[rabies.length - 1]
+      // 접종일은 과거 사실이라 조치는 '입국일을 미루는 것'뿐 — 출국일을 입력하는 시점은
+      // 저장 거부가 막고, 접종일을 넣는 이 경로는 안내만 한다.
+      return {
+        ok: false,
+        message: '광견병 접종 후 30일이 지나야 캄보디아에 입국할 수 있어요. 입국일을 미뤄야 해요.',
+        offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
+      }
+    },
+  },
+  {
+    id: 'kh.rabies-booster-within-prime-validity',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 추가 접종은 직전 접종 유효기간 이내',
+    description:
+      '연속된 광견병 접종은 직전 접종의 면역 유효기간(1년) 이내에 해야 함. 만료 후 접종은 chain 이 끊겨 새 1차로 간주된다. 저장 거부(findRabiesChainBreak)의 짝이 되는 주의 — 펫무브워크는 저장을 막지 않고 절차검증만 보므로 이 룰이 없으면 운영자 화면에서 끊긴 chain 이 안 보인다.',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length < 2) return SKIP
+      const offending = findRabiesValidityBreaks(rabies)
+      if (offending.length > 0) {
         return {
           ok: false,
-          message: `광견병 접종(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 30일 이상이어야 해요.`,
-          offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
+          message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
+          offendingPaths: offending,
         }
       }
-      return { ok: true, message: `광견병 접종(${earliest.date}) → 출국일(${dep}): ${days}일.` }
+      return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
     },
   },
   {
@@ -133,29 +132,23 @@ export const KH_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '1년 라이선스 광견병 백신만 인정 (3년 거부)',
     description:
-      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부. (GDAHP 수입허가 발급 시 운용 조건 — 영문 법령 명문 부재, 보수 적용)',
+      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부. (GDAHP 1차 명문 미확인 — 베트남에서 복제한 보수 적용값. 개별 검토 대상)',
     severity: 'blocker',
-    addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
+    addedAt: '2026-07-20',
+    run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return SKIP
 
-      const violations: Array<{ entry: typeof rabies[number]; validUntil: string }> = []
+      const offending: string[] = []
       for (const r of rabies) {
         if (exceedsValidityYears(r.date, r.valid_until)) {
-          violations.push({ entry: r, validUntil: resolveValidUntil(r.date, r.valid_until) })
+          offending.push(`rabies_dates[${r.originalIndex}].valid_until`)
         }
       }
-      if (violations.length > 0) {
-        const offending: string[] = []
-        const msgs: string[] = []
-        for (const v of violations) {
-          offending.push(`rabies_dates[${v.entry.originalIndex}].valid_until`)
-          msgs.push('광견병 백신은 면역 유효기간 1년짜리만 인정돼요. 3년 백신은 사용할 수 없어요.')
-        }
+      if (offending.length > 0) {
         return {
           ok: false,
-          message: msgs.join(' / '),
+          message: '광견병 백신은 면역 유효기간 1년짜리만 인정돼요. 3년 백신은 사용할 수 없어요.',
           offendingPaths: offending,
         }
       }
@@ -167,10 +160,13 @@ export const KH_CHECKS: ProcedureCheck[] = [
     country: COUNTRY,
     category: '광견병',
     title: '출국일에 광견병 면역 유효',
-    description:
-      '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
+    description: '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
+    // ⚠️ 'info' 는 **표시 억제를 겸한다** — 베트남 vn.rabies-valid-on-departure 와 같은 구조.
+    // 어느 카드에도 매핑되지 않아서 warning 이면 case-level 배너로 올라가 광견병 카드 문구
+    // ("캄보디아 입국 때 면역 유효기간이 남아있어야 해요")와 중복된다.
+    // severity 를 올리려면 ADVISORY_DEFERRED_CHECKS(scenario.ts)에도 함께 등록할 것.
     severity: 'info',
-    addedAt: '2026-05-07',
+    addedAt: '2026-07-20',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
@@ -187,6 +183,37 @@ export const KH_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
+    },
+  },
+  // ── 도착 수입 검역 ──
+  {
+    id: 'kh.import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '캄보디아 수입 검역일',
+    description: '캄보디아 수입 검역일은 캄보디아 입국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.kh_import_quarantine_date === 'string'
+          ? data.kh_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '캄보디아 수입 검역일은 캄보디아 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['kh_import_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `캄보디아 수입검역일(${raw}) 입국 이후.` }
     },
   },
 ]

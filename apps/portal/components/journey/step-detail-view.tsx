@@ -34,6 +34,7 @@ import {
   SINGLE_DOSE_RABIES_DESTINATIONS,
   TITER_EXTRA_CARD_DESTINATIONS,
   RABIES_ONE_YEAR_VALIDITY_DESTINATIONS,
+  destinationKoLabel,
   TITER_REQUIRED_FOR_ENTRY_DESTINATIONS,
   validateTiterAfterBooster,
   validateTiterWithinChain,
@@ -118,6 +119,10 @@ const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
   taiwan: '예: 타오위안 TPE',
   philippines: '예: 마닐라 MNL',
   vietnam: '예: 호치민 SGN',
+  cambodia: '예: 프놈펜 PNH',
+  mongolia: '예: 울란바토르 UBN',
+  uzbekistan: '예: 타슈켄트 TAS',
+  canada: '예: 밴쿠버 YVR',
   eu: '예: 파리 CDG',
   uk: '예: 런던 히드로 LHR',
   ireland: '예: 더블린 DUB',
@@ -814,20 +819,10 @@ export function StepDetailView({
     if (freeInput) return null
     // 광견병 면역 유효기간 1년만 인정(RABIES_ONE_YEAR_VALIDITY_DESTINATIONS = 프로파일
     // oneYearVaccineOnly 파생) — 2·3년 저장 거부. YearSelect 비활성의 backstop.
-    // 나라 이름은 여기 매핑이 유일한 출처라, 새 1년-백신국을 올릴 때 빠뜨리면 "이 여행지"로
-    // 나간다(베트남이 실제로 그랬음 — 2026-07-20 추가).
-    const oneYearKo =
-      destinationKey === 'china'
-        ? '중국'
-        : destinationKey === 'thailand'
-          ? '태국'
-          : destinationKey === 'philippines'
-            ? '필리핀'
-            : destinationKey === 'taiwan'
-              ? '대만'
-              : destinationKey === 'vietnam'
-                ? '베트남'
-                : '이 여행지'
+    // 나라 이름은 예전엔 여기 손으로 적은 매핑이 유일한 출처라, 새 1년-백신국을 올릴 때
+    // 빠뜨리면 "이 여행지"로 나갔다(베트남이 실제로 그랬음). 이제 domain 의 라벨에서 파생해
+    // 나라를 추가해도 이 파일을 고칠 일이 없다(2026-07-20 — 4개국 추가하며 일반화).
+    const oneYearKo = (destinationKey && destinationKoLabel(destinationKey)) || '이 여행지'
     const ONE_YEAR_VALIDITY_BLOCK_MSG = `${oneYearKo} 입국 시 광견병 백신은 1년까지만 유효합니다. 면역 유효기간을 1년으로 선택하세요.`
     const isMultiYearValidity = (vu: string | null | undefined): boolean => {
       const m = (vu ?? '').match(/^(\d+)\s*년$/)

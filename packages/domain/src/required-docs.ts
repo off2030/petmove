@@ -164,6 +164,51 @@ const DEFAULT_SPECS: RequiredDocSpec[] = [
   KR_IMPORT_QUARANTINE_CERT,
 ]
 
+/**
+ * 베트남 골격 복제 4국(캄보디아·몽골·우즈베키스탄·캐나다)의 서류 한 벌 — 2026-07-20.
+ *
+ * 베트남과 같은 구성이다: 귀국용 항체 결과지 + 별지25호 + 한국 수출/수입 검역증 +
+ * 도착국 수입 검역 서류. 수입허가증이 없고(사전 허가 절차 없음), 건강증명서도 한국 APQA
+ * 수출검역증이 그 역할을 하므로 따로 두지 않는다.
+ *
+ * 베트남과 다른 두 가지:
+ *  - 항체 결과지 설명에서 '현지에 검사 기관이 없다'는 줄을 뺀다 — 베트남 고유 사정이라
+ *    확인 없이 4국에 복제하면 사실이 아닌 안내가 나간다.
+ *  - 도착 검역 서류는 **'검역 서류'** 로 둔다 — 베트남은 발급 서식(Mẫu 15a)이 정부 원문으로
+ *    확정돼 '수입 동물검역증'이지만, 4국은 발급물이 확인되지 않았다(중국·대만·필리핀과 같은
+ *    처리). 나라별 개별 검토에서 확정되면 정식 이름으로 올릴 것.
+ *
+ * ⚠️ 왕복 귀국 전 **현지 수출 검역증이 없다** — 해당 카드 자체를 아직 만들지 않았다
+ *   (사용자 지정: 나라별 조사 후 별도 작업). 베트남의 vn-export-quarantine-cert 에 해당.
+ */
+function vietnamFamilyDocSpecs(label: string, cc: string): RequiredDocSpec[] {
+  return [
+    {
+      id: `${cc}-rabies-titer-result`,
+      name: '광견병 항체 검사 결과지',
+      source: '동물병원',
+      kind: 'step',
+      stepRef: 'rabies-titer',
+      roundTripOnly: true,
+      description: `검사를 의뢰한 동물병원에서 발급받아요.\n\n${label} 입국에는 필요 없지만 한국 귀국 때 반드시 원본이 필요해요. 유효기간은 2년이에요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.`,
+      previewStepId: 'rabies-titer',
+    },
+    KR_FORM25_VACCINATION_HEALTH_CERT,
+    KR_EXPORT_QUARANTINE_CERT,
+    {
+      id: `${cc}-import-quarantine-cert`,
+      name: `${label} 수입 검역 서류`,
+      source: `${label} 동물검역소`,
+      kind: 'step',
+      stepRef: 'departure',
+      group: 'quarantine',
+      description: `${label} 수입 검역 때 받는 서류예요.\n\n${label}에서 출국할 때 필요할 수 있으므로 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
+      previewStepId: 'departure',
+    },
+    KR_IMPORT_QUARANTINE_CERT,
+  ]
+}
+
 const SPECS: Record<string, RequiredDocSpec[]> = {
   '일본': [
     {
@@ -542,6 +587,11 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   // 순서·표기는 태국·필리핀(수입허가국)과 동일한 기준: 항체 결과지 → 수입허가증 → 별지25호
   // → 검역증. source 는 **발급 기관**만 적는다('APHIA 온라인 신청' 같은 신청 방법 X).
   // 이름에 나라를 붙이지 않는다 — 목적지 탭이 이미 대만이고, 태국(R.6)·필리핀(SPSIC)도 안 붙인다.
+  // 베트남 골격 복제 4국 — 구성은 vietnamFamilyDocSpecs 주석 참고.
+  '캄보디아': vietnamFamilyDocSpecs('캄보디아', 'kh'),
+  '몽골': vietnamFamilyDocSpecs('몽골', 'mn'),
+  '우즈베키스탄': vietnamFamilyDocSpecs('우즈베키스탄', 'uz'),
+  '캐나다': vietnamFamilyDocSpecs('캐나다', 'ca'),
   '대만': [
     {
       id: 'tw-rabies-titer-result',

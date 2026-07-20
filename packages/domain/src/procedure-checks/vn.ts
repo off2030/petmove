@@ -2,7 +2,7 @@ import {
   buildDateRuleContext,
   calendarAgeThreshold,
   meetsCalendarAge,
-  violatesVnRabiesWait,
+  violatesRabiesEntryWait,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
@@ -129,7 +129,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
       // 판정은 도메인 함수 하나 — 저장 거부(항공권 카드)와 이 주의가 어긋나면 안 된다.
       // 기준은 **최근** 접종이고 유효 부스터는 면제. 예전엔 여기서 가장 이른 접종(rabies[0])을
       // 봐서 만료 후 재접종 케이스를 통째로 놓쳤다(2026-07-20 수정).
-      if (!violatesVnRabiesWait(data, dep)) {
+      if (!violatesRabiesEntryWait(data, dep, destination)) {
         const latest = rabies[rabies.length - 1]
         return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): 30일 충족(또는 유효 부스터).` }
       }

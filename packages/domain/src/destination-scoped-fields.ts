@@ -100,6 +100,15 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 베트남 도착 수입 검역 (Thông tư 01/2026 제14조 — 동반 2마리 이하는 공항 검역소 현장 신고)
   'vn_import_quarantine_date',
   'vn_import_quarantine_confirmed',
+  // 베트남 골격 복제 4국의 도착 수입 검역 (2026-07-20 — 카드 구성이 베트남과 동일).
+  'kh_import_quarantine_date',
+  'kh_import_quarantine_confirmed',
+  'mn_import_quarantine_date',
+  'mn_import_quarantine_confirmed',
+  'uz_import_quarantine_date',
+  'uz_import_quarantine_confirmed',
+  'ca_import_quarantine_date',
+  'ca_import_quarantine_confirmed',
   // 대만 수출 검역 (왕복 귀국 전 — 한국 수출검역증으로 갈음 가능한 선택 절차)
   'tw_export_quarantine_date',
   'tw_export_quarantine_confirmed',
