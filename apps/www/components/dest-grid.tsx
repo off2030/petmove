@@ -1,8 +1,8 @@
 'use client'
 
-// 랜딩 · 앱 지원 여행지 — 접힘(5+더보기) ↔ 펼침(아시아 6 + 유럽 30 = 36개국) 토글.
+// 랜딩 · 앱 지원 여행지 — 접힘(5+더보기) ↔ 펼침(아시아 9 + 유럽 30 + 아메리카 1 = 40개국) 토글.
 import { useState } from 'react'
-import { APP_DEST_PREVIEW, APP_DEST_ASIA, APP_DEST_EU } from '@/lib/site-data'
+import { APP_DEST_PREVIEW, APP_DEST_ASIA, APP_DEST_EU, APP_DEST_AMERICA } from '@/lib/site-data'
 
 function Dest({ name }: { name: string }) {
   return (
@@ -51,6 +51,12 @@ export function DestGrid() {
       <div className="dest-region">유럽 30개국</div>
       <div className="grid" style={{ marginTop: 0 }}>
         {APP_DEST_EU.map((d) => (
+          <Dest key={d} name={d} />
+        ))}
+      </div>
+      <div className="dest-region">아메리카</div>
+      <div className="grid" style={{ marginTop: 0 }}>
+        {APP_DEST_AMERICA.map((d) => (
           <Dest key={d} name={d} />
         ))}
       </div>
