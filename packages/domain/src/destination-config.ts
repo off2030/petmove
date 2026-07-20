@@ -564,14 +564,20 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     archetype: 'sea-permit',
     rabies: {
       doses: 1,
-      // ⚠️ APQA 안내문은 **최소 12주령**(84일)인데 우리는 달력 3개월을 쓴다 —
-      //   펫무브 www 가이드("생후 3개월령 이후")와 사용자 확인 델타가 3개월이고, 3개월이
-      //   12주보다 **엄격**해서 3개월을 지키면 12주 요건은 자동 충족되기 때문이다.
-      //   다만 12주~3개월 사이에 접종한 케이스는 몽골 기준으론 적법한데 우리 화면엔 주의가
-      //   뜬다(blocker 가 아니라 저장은 된다). 사용자 확인이 필요한 지점으로 남긴다.
-      minAgeDays: 91,
-      minAgeMonths: 3,
-      minAgeLabel: '생후 3개월',
+      // APQA 안내문 원문이 **최소 12주령** = 84일이다. 태국(th.rabies-prime-after-12weeks)과
+      // 같은 모양으로 **고정 84일**을 쓴다 — 달력 개월이 아니다.
+      //
+      // ⚠️ 처음엔 www 가이드 표현("생후 3개월령 이후")을 따라 달력 3개월(minAgeMonths: 3)로
+      //   뒀는데, 이건 **저장 거부까지 파생하는 값**이었다(step.earliest → portal
+      //   validateRabiesPrimeAge → getSaveBlockError). 즉 APQA 기준으로 적법하게 12주에
+      //   접종한 케이스가 **접종일 입력 자체를 거부당하고 있었다.** 3년 백신 blocker 와 같은
+      //   종류의 사고다 — '우리가 더 엄격하니 안전하다'가 성립하지 않는 자리다.
+      //   규제기관들은 '3개월'과 '12주'를 같은 규칙으로 쓴다. 태국 DLD 원문이 그 증거다:
+      //   "at least 3 months old **or** 12 weeks or 84 days at time of administered".
+      //   가이드의 '3개월'은 12주를 반올림한 표현으로 보고, 판정 숫자는 APQA 의 84일을 쓴다.
+      //   minAgeMonths 를 **선언하지 않는다** — 선언하면 달력 개월 판정이 다시 살아난다.
+      minAgeDays: 84,
+      minAgeLabel: '생후 12주(84일)',
       // ⚠️ oneYearVaccineOnly 를 **선언하지 않는다** (2026-07-20, 캄보디아·우즈벡과 같은 조치).
       //   APQA 표의 광견병 조건은 '최소 12주령'과 '입국 30일 이전' 두 줄뿐이고 **최대 유효기간
       //   행 자체가 없다**(상한을 두는 나라는 안내문에 명시된다). 12개월 상한을 말하는 유일한

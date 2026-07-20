@@ -243,7 +243,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // mn.rabies-only-1year-vaccine 은 없다 — APQA 표에 최대 유효기간 행이 없고 별지 25호
       // 서식이 1Y/2Y/3Y 를 지원한다. 근거 부재로 제거했다(mn.ts 주석 참고).
       validationIds: [
-        'mn.rabies-prime-after-3months-old',
+        'mn.rabies-prime-after-12weeks',
         'mn.microchip-before-rabies',
         'mn.rabies-booster-within-prime-validity',
       ],
