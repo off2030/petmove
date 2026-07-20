@@ -627,7 +627,17 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   // → 검역증. source 는 **발급 기관**만 적는다('APHIA 온라인 신청' 같은 신청 방법 X).
   // 이름에 나라를 붙이지 않는다 — 목적지 탭이 이미 대만이고, 태국(R.6)·필리핀(SPSIC)도 안 붙인다.
   // 베트남 골격 복제 4국 — 구성은 vietnamFamilyDocSpecs 주석 참고.
-  '캄보디아': vietnamFamilyDocSpecs('캄보디아', 'kh', { noLocalTiterLab: true }),
+  '캄보디아': vietnamFamilyDocSpecs('캄보디아', 'kh', {
+    noLocalTiterLab: true,
+    exportQuarantineDoc: {
+      // 정식 명칭·양식 번호 확인 실패 — NTR 에 수출용 양식이 게시돼 있지 않고 크메르어
+      // 명칭도 확인되지 않았다. 포털이 쓰는 영문 표현(Veterinary Certificate)까지만 쓴다.
+      name: '캄보디아 수출 검역 서류',
+      source: '캄보디아 농림수산부 축산수의국(DAHP)',
+      description:
+        '캄보디아 수출 검역 후 발급받아요.\n\n프놈펜의 DAHP에서 발급하고, 출국 공항에서 수의검사관의 검사를 거쳐요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요. 없으면 입국이 거부될 수 있어요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
+  }),
   '몽골': vietnamFamilyDocSpecs('몽골', 'mn', {
     noLocalTiterLab: true,
     exportQuarantineDoc: {

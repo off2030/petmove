@@ -1536,11 +1536,63 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // 이 요구는 국가 화이트리스트가 아니라 **전 세계 공통**이고 EU 만 예외다. 세 나라 다
   // EU 가 아니므로, 그 나라가 자국법으로 강제하는지와 무관하게 받아야 한다.
   //
-  // ⚠️ **캄보디아는 아직 카드가 없다** — 1차 출처가 거의 없는 나라라 별도 조사 중이다.
-  //   APQA 요구는 캄보디아에도 똑같이 걸리므로, 조사가 끝나면 같은 모양으로 추가할 것.
-  //
-  // ⚠️ 세 나라 모두 **신청 기한(출국 D-N)의 정부 원문 근거를 찾지 못했다.** 상업 사이트의
+  // ⚠️ 네 나라 모두 **신청 기한(출국 D-N)의 정부 원문 근거를 찾지 못했다.** 상업 사이트의
   //   "출발 10일 이내"류만 있어 카드에 쓰지 않았다. '미리 신청하세요' 수준으로만 안내한다.
+  //
+  // 캄보디아 — **1차 출처를 뒤늦게 찾았다**(2026-07-20 재조사). GDAHP 사이트는 여전히 죽어
+  //   있지만, 캄보디아 정부 공식 무역정보 포털 National Trade Repository 에 절차와 근거
+  //   조치가 등재돼 있다. "캄보디아는 1차 출처가 없는 나라"라는 기존 판단의 예외다.
+  //   절차 「Application for Veterinary Certificate」 — cambodiantr.gov.kh
+  //     소관 MAFF / DAHP. "All certificates are issued by the DAHP office in **Phnom Penh**
+  //     but inspection must be carried out by a Veterinary Inspector at the actual border
+  //     and the results relayed back to DAHP Headquarters."
+  //     흐름 4단계: 신청 → DAHP 허가·검사수수료 **선납** → 국경(공항)에서 수의검사관 검사
+  //     → 증명서 수령. 수수료는 마리수·종류에 따라 다르다.
+  //     상업서류는 불요 — "Commercial documents (e.g. Bill of Lading, Commercial Invoice)
+  //     are not necessary." (개인 이동에도 길이 열려 있다는 근거)
+  //   근거 조치: "Animals and animal products exported from and transported inside Cambodia
+  //     must have **sanitary certificate from MAFF**…" (Technical Code A83 제2조 B,
+  //     시행 2009-05-18 = Prakas 178 Pr.K/MAFF)
+  //   WOAH 발표자료(2023-12) p.12 수출 요건에도 "Sanitary certificate of animals or animal
+  //     products"가 들어 있다.
+  // ⚠️ 다만 **개인 동반 반려동물을 상업 화물과 구분하는 조항을 찾지 못했다.** NTR 절차
+  //   페이지에도 pet/companion animal 언급이 없고, WOAH 수출 요건은 business certificate·
+  //   patent 등 명백히 상업 무역 전제다. 발급 서류 정식 명칭·양식 번호·신청 기한도 확인 실패.
+  //   → 카드는 '프놈펜 DAHP 에서 정부 수의증명서를 받아야 한다'와 '없으면 한국 입국이
+  //     거부된다'까지만 쓰고, 서류 목록·소요 기간은 **현지 문의**로 넘긴다. 근거 없는 수치를
+  //     넣지 말 것. 의무 강도도 출처끼리 갈린다(조치는 "must", 절차는 "if requested by the
+  //     importing country") — 어느 쪽이든 **한국이 요구하는 나라**라 실무 결론은 같다.
+  {
+    id: 'kh-export-quarantine',
+    category: 'document',
+    title: '캄보디아 수출 검역',
+    shortLabel: '수출',
+    description:
+      '캄보디아 출국 전 정부 수의증명서를 발급받으세요.\n\n프놈펜의 농림수산부 축산수의국(DAHP)에서 발급해요. 신청 후 검사 수수료를 먼저 내고, 출국하는 공항에서 수의검사관의 검사를 받은 뒤 증명서를 받아요.\n필요한 서류와 소요 기간은 현지 DAHP에 미리 문의하세요.\n이 증명서가 없으면 한국 입국이 거부될 수 있어요.',
+    doneSummary: '캄보디아 수출 검역을 받았어요.',
+    cardLine: '캄보디아 출국 전 정부 수의증명서를 발급받으세요.',
+    applicability: { destinations: ['cambodia'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:kh_export_quarantine_date',
+    validationIds: ['kh.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'kh_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '캄보디아에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '캄보디아 수출 검역 서류',
+    links: [
+      {
+        url: 'https://cambodiantr.gov.kh/en/procedure/?title=application-for-veterinary-certificate',
+        label: '수의증명서 신청 절차 (캄보디아 정부 무역포털)',
+      },
+    ],
+  },
   {
     id: 'mn-export-quarantine',
     category: 'document',
