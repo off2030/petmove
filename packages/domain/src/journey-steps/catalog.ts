@@ -1462,6 +1462,45 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['cn.export-quarantine-date-valid'],
   },
 
+  // 베트남 수출 검역 — **강제형**(사용자 지정 2026-07-20).
+  //
+  // 대만·EU 처럼 '한국 수출검역증으로 갈음'되는 선택 절차가 아니다. 베트남은 거주 지역
+  // 지역수의지국(Chi cục Thú y vùng)에 **반려동물을 데리고 가서** 검사·마이크로칩 스캔을
+  // 받고 Giấy chứng nhận kiểm dịch động vật xuất khẩu 를 발급받는 절차로 서술된다
+  // (유효기간 15일, 출국 약 10일 전 방문). 대만이 근거로 삼은 "수입국이 요구할 때만"
+  // 같은 단서가 베트남 자료엔 없다.
+  //
+  // ⚠️ 근거 한계 — Thông tư 25 / Luật Thú y 의 수출검역 조문 원문은 베트남 법령 사이트
+  // 차단(403·연결거부)으로 직접 확인하지 못했다. 근거는 베트남 현지 서비스·법무 사이트가
+  // 일치하는 수준이다. 그래서 문구를 단정적으로 쓰지 않는다(방문 시점·유효기간은 '권장'·
+  // '일반적으로'로 표현). 원문 확인되면 조정할 것.
+  {
+    id: 'vn-export-quarantine',
+    category: 'document',
+    title: '베트남 수출 검역',
+    shortLabel: '수출',
+    description:
+      '베트남 출국 전 지역 수의지국(Chi cục Thú y)에서 수출 검역을 받으세요.\n\n반려동물을 데리고 방문하세요. 마이크로칩을 확인하고 검사를 진행해요.\n출국 10일 전쯤 방문하는 것이 일반적이에요. 검역증은 발급일로부터 15일간 유효해요.\n여권 사본과 접종 수첩을 챙기세요.\n검사를 통과하면 수출 동물검역증이 발급돼요. 한국 입국 때 이 서류가 필요해요.',
+    doneSummary: '베트남 수출 검역을 받았어요.',
+    cardLine: '베트남 수의지국에서 수출 검역을 받으세요.',
+    applicability: { destinations: ['vietnam'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:vn_export_quarantine_date',
+    // 입력 후 항공편 수정으로 어긋난 검역일(베트남 입국일 이전·귀국일 이후)을 '주의'로 표면화.
+    validationIds: ['vn.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'vn_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '베트남 수의지국에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '베트남 수출 동물검역증',
+  },
+
   // ── 15. 한국 수입 검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
   {
     id: 'kr-import-quarantine',

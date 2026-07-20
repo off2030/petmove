@@ -106,6 +106,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 중국 수출 검역 (왕복 귀국 전 — 해관 발급 건강증명서)
   'cn_export_quarantine_date',
   'cn_export_quarantine_confirmed',
+  // 베트남 수출 검역 (왕복 귀국 전 — 지역 수의지국 Chi cục Thú y 발급. 강제 절차)
+  'vn_export_quarantine_date',
+  'vn_export_quarantine_confirmed',
   // 필리핀 귀국 전 현지 동물병원 방문 — BAI 수출검역 신청용 건강증명서. dated-confirm.
   'ph_local_vet_visit_date',
   'ph_local_vet_visit_confirmed',
