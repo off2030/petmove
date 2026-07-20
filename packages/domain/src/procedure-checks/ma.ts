@@ -1,3 +1,4 @@
+import { violatesRabiesEntryWait } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   daysBetween,
@@ -14,20 +15,34 @@ import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge 
 /**
  * 모로코 (ONSSA — Office National de Sécurité Sanitaire des Produits Alimentaires) 절차 검증.
  *
- * 출처:
- *  - ONSSA "Importation des chiens et chats" — https://www.onssa.gov.ma/controle-a-limportation-et-a-lexportation/controle-a-limportation/importation-des-animaux-vivants/chiens-et-chats/?lang=en
- *  - ONSSA EU 수입 PDF — https://www.onssa.gov.ma/wp-content/uploads/2023/07/Importation-au-Maroc-de-chiens-et-chats-a-partir-de-lUE.pdf
- *  - ONSSA "Models of health certificates" — https://www.onssa.gov.ma/models-of-health-certificates/?lang=en
+ * ✅ **양식 원본을 직접 판독했다**(2026-07-20). 한국 전용 수입 양식은 없고 "Other Countries"
+ *   양식이 적용된다 — **I.CT.CN.JUIL.2025**(2025년 7월판).
+ *   https://www.onssa.gov.ma/wp-content/uploads/2025/07/Certificat-sanitaire-valide.pdf
+ *   한국행 **수출** 양식은 따로 있다 — E.CARNI.CoréeSud.Juin.2015
+ *   https://www.onssa.gov.ma/wp-content/uploads/2021/11/Exportation-chats-et-chiens-vers-la-Coree-du-Sud.PDF
+ *   금지 견종 통지 N°590(2021-02-09) — https://www.onssa.gov.ma/wp-content/uploads/2022/08/avis-au-public-chiens-dangereux-.pdf
  *
- * 핵심 룰:
- *  - 마이크로칩: ISO 11784/11785 (15자리), 광견병 백신 이전 또는 동일일 식재
- *  - 광견병: 1차 ≥ 생후 12주(91일 보수) + **출국 ≥ 접종 + 30일** (1차 시 21일+ 운용) + 출국일 면역 유효, 불활화 백신
- *  - 건강증명서: 출국일(항공기 탑승) 10일 이내 (보수 ≤9). ONSSA EU 양식은 24시간이나 일반 운용 10일.
+ * 수입 양식 조항(원문):
+ *  - 3항 식별표는 **광견병 접종 이전**에 — 단 "tattoo **or** microchip"이라 칩이 유일 수단은 아니다
+ *  - 4항 **불활화 백신** + "at least **21 days** have elapsed after the primary rabies vaccination"
+ *  - 5항 항체검사는 **12개월 미만 임시 체류에만** 요구(영구 이주면 조항 삭제).
+ *        채혈은 "at least **30 days** after the previous rabies vaccination", **0.5 IU/ml** 이상
+ *  - 관용 수의사 서명 + 공인(Cachet officiel) → 정부 배서 필수
+ *
+ * ⚠️ 대기일이 **21일**이다(30일 아님). 구 룰의 30일은 근거가 "EU 양식 운용 표준"이라고만
+ *   적혀 있었고 양식엔 21일뿐이다. 30일은 **항체 채혈 시점**(5항) 조건이 흘러든 것으로 보인다.
+ * ⚠️ 항체검사는 문서상 조건부지만 우리는 **무조건 필수**로 둔다 — 왕복이면 모로코 출국 양식이
+ *   무조건 요구하고 한국 귀국에도 필요해서 안 받는 선택지가 없다(destination-config 주석 참고).
  *
  * 별도 (시스템 검증 제외):
- *  - RNATT: 모로코 영구 체류 시 면제. 비영구 체류·재출국 시 채혈 후 30일+ 필요 (한국 귀국용 별도)
  *  - 종합백신: ONSSA 명시 의무 부재
  *  - 비상업 1인 5두 이하
+ *  - 금지 견종: pitbull(Staffordshire·American Staffordshire Bull Terrier)·boerbull(Mastiff)·Tosa
+ *    → 아직 룰로 만들지 않았다(말레이시아 my.banned-breeds 와 같은 모양으로 추가 가능)
+ *  - 도착 검사 수수료 10 디르함/두. 격리는 **규정 미발견**('없음'을 명시한 문구도 없다)
+ *
+ * 확인 실패: 입국 방향 최소 접종 연령(수입 양식에 연령 규정 자체가 없다 — 3개월은 수출 양식
+ *   제목 근거), 접종 후 상한, 다년 백신 인정 여부, 입국용 항체 유효기간, 수입허가 필요 여부.
  *
  * 컨벤션 (MX/RU/MY 와 동일):
  *  - 필수 입력 누락 시 SKIP
@@ -101,30 +116,34 @@ export const MA_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'ma.rabies-min-30days-before-departure',
+    id: 'ma.rabies-min-21days-before-departure',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 접종은 출국일 30일 이상 전',
+    title: '광견병 접종은 출국일 21일 이상 전',
     description:
-      '광견병 접종일로부터 출국일까지 최소 30일(한 달) 경과 필요. (ONSSA EU 양식 운용 표준 — 1차는 21일+, 일반은 30일)',
-    severity: 'info',
-    addedAt: '2026-05-07',
+      'ONSSA 수입 양식 I.CT.CN.JUIL.2025 4항 — "at least 21 days have elapsed after the primary rabies vaccination". 저장 거부(validateRabiesEntryWait)와 같은 판정 함수(violatesRabiesEntryWait)를 쓴다.',
+    // ⚠️ 예전엔 30일이었다. 근거가 "ONSSA EU 양식 운용 표준"이라고만 적혀 있었는데 양식
+    //   원문에는 **21일뿐**이다(2026-07-20 원본 판독). 30일은 **항체검사 채혈 시점**(접종 후
+    //   30일, 5항) 조건이 대기일로 흘러든 것으로 보인다 — 서로 다른 조항이다.
+    //   구버전은 **가장 이른 접종**(rabies[0]) 기준이라 만료 후 재접종 케이스도 놓쳤다.
+    severity: 'warning',
+    addedAt: '2026-07-20',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
-      const earliest = rabies[0]
-      const days = daysBetween(earliest.date, dep)
-      if (days === null) return SKIP
-      if (days < 30) {
-        return {
-          ok: false,
-          message: `광견병 접종일(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 30일 이상이어야 해요.`,
-          offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
-        }
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (!violatesRabiesEntryWait(data, dep, destination)) {
+        const latest = rabies[rabies.length - 1]
+        return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): 21일 충족(또는 유효 부스터).` }
       }
-      return { ok: true, message: `광견병 접종(${earliest.date}) → 출국일(${dep}): ${days}일.` }
+      const latest = rabies[rabies.length - 1]
+      return {
+        ok: false,
+        message: '광견병 접종 후 21일이 지나야 모로코에 입국할 수 있어요. 입국일을 미뤄야 해요.',
+        offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
+      }
     },
   },
   {

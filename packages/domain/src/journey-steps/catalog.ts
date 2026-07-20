@@ -347,6 +347,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'turkey',
         'ukraine',
         'israel',
+        // 모로코 — ONSSA 수입 양식 5항의 항체검사를 **입국 요건**(titer.need='entry')으로
+        // 다루기로 해서 2026-07-20 추가. 그전엔 rabiesTiterForReturnOnly 로만 걸려 있어
+        // roundOnlyDestinations 경유로 왕복에만 떴고, 이 목록엔 없었다 — 플래그를 떼자
+        // 카드가 통째로 사라지는 걸 lint:dest 스냅샷이 잡았다.
+        'morocco',
       ],
       // 입국엔 항체검사 불필요하나 한국 귀국 시 필수인 나라 — 왕복에만 노출.
       // 프로파일(rabiesTiterForReturnOnly / titer.need==='return-only')에서 파생한다.

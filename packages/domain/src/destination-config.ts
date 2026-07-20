@@ -668,11 +668,66 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vetVisitWindowDays: 7,
     importPermit: {}, // DVS
   },
+  // ── 모로코 (ONSSA — 국경검역소 PIF 16개소) ────────────────────────────
+  // ✅ 1차 출처 확보(2026-07-20). ONSSA 공식 증명서 **양식 원본**을 직접 판독했다.
+  //   한국 전용 수입 양식은 없고 **"Other Countries" 양식**이 적용된다:
+  //   **I.CT.CN.JUIL.2025**(2025년 7월판) — onssa.gov.ma/wp-content/uploads/2025/07/Certificat-sanitaire-valide.pdf
+  //
+  // 양식 조항 원문:
+  //   3항 "identified with permanent mark, **prior to** their vaccination against rabies"
+  //   4항 "vaccinated against rabies **with inactivated vaccine**, and **at least 21 days
+  //        have elapsed after the primary rabies vaccination**"
+  //   5항 "Will be exported for a period **more than 12 months**; **Or** … **temporarily for
+  //        a period less than 12 months**, and have been submitted to a blood sample … **at
+  //        least 30 days after the previous rabies vaccination** … **of at least 0.5 IU/ml**"
+  //   서명란 "Le vétérinaire officiel / Official veterinarian" + "Cachet officiel" → 정부 배서 필수.
+  //
+  // ⚠️ **입국 대기는 21일이다(30일 아님).** 구 주석·구 룰의 30일은 "ONSSA EU 양식 운용 표준"
+  //   이라고만 적혀 있었고 양식 원문에는 21일뿐이다. 30일은 **항체검사 채혈 시점**(접종 후
+  //   30일) 조건이 대기일로 흘러든 것으로 보인다. 두 숫자는 서로 다른 조항이다.
+  //
+  // ⚠️ **항체검사가 조건부다** — 5항은 양자택일이고 **12개월 초과 체류(영구 이주)를 고르면
+  //   항체검사 조항이 삭제된다.** EU 양식(2023)·구 제3국 양식(2021)에서도 같은 구조가
+  //   독립 확인됐다. 그럼에도 우리는 **need:'entry'(무조건 필수)로 둔다** — 왕복이면 모로코
+  //   **출국** 양식(E.CARNI.CoréeSud.Juin.2015)이 항체검사를 무조건 요구하고, 한국 귀국에도
+  //   필요해서 실무상 안 받는 선택지가 없다. 체류기간 분기를 넣을 만한 실익이 없다.
+  //
+  // 참고 — '항체검사 후 3개월 대기'는 **폐기된 구 규정**이다. 2021년판 아랍어 양식에는
+  //   "수출 전 3개월 초과 12개월 미만 시점 채혈"이 있었으나 2025년 7월판에서 "접종 후 최소
+  //   30일"로 대체됐다. 상업 사이트가 아직 3개월을 인용하는 건 stale 이다(사용자 확정값 일치).
+  //
+  // 금지 견종(확정) — ONSSA Avis au Public N°590(2021-02-09), 공동령 n°1677.18(2018-07-18):
+  //   pitbull(Staffordshire Bull Terrier·American Staffordshire Bull Terrier), boerbull(Mastiff),
+  //   Tosa → "l'importation de ce type de chiens au Maroc est **interdite**".
+  // 도착 — 서류·동일성·임상 검사 후 통관, 검사 수수료 **10 디르함/두**. 격리 규정은 미발견
+  //   (없다고 명시한 문구도 없다 — '규정 미발견'이 정확한 표현).
+  //
+  // 확인 실패(추측으로 채우지 않은 것):
+  //  - **입국 방향 최소 접종 연령** — ONSSA 수입 양식에 연령 규정이 **없다**. 사용자 확정값
+  //    3개월은 모로코→한국 **수출** 양식 제목("THREE MONTHS OLD AND MORE")이 근거다.
+  //  - 접종 후 **상한**(12개월설)·다년 백신 인정 여부·입국용 항체 유효기간 — 전부 근거 없음.
+  //  - 수입허가 필요 여부 — 영사 안내는 CITES 종만 언급, APHIS 2차 인용은 필요하다고 함(미대조).
+  //  - 1항 "광견병 비발생국에서 출생 또는 최근 6개월 체류" 서약 — 한국은 청정국이 아니라
+  //    APQA 수의사가 서명 가능한지 사전 확인이 필요하다(문서상 실재하는 리스크).
   morocco: {
-    // ONSSA — 광견병 출국 30일 전, 도착 시 수의사 검역. RNATT 는 한국 귀국용.
     keywords: ['모로코', 'morocco'],
+    rabies: {
+      doses: 1,
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      vaccineTypeLine: '불활화(사독) 백신만 인정돼요.',
+      timingLines: ['출국 21일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 21,
+    },
+    titer: {
+      need: 'entry',
+      // 채혈은 접종 후 30일 경과 후(양식 5항). 채혈 후 대기는 **없다** — 우크라이나와 갈리는 점.
+      minDaysAfterVaccine: 30,
+    },
+    // ⚠️ appSupported 는 아직 켜지 않는다 — 카드·서류·스코핑 미구축.
     vaccines: ['rabies', 'rabies_titer'],
-    rabiesTiterForReturnOnly: true,
+    importQuarantine: {},
   },
   // 1차 정부 영문 자료 부분 공개 패밀리 — USDA APHIS / 한국 QIA 정부 2차 안내·운용 룰 의존
   //
