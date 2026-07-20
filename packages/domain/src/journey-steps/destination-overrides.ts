@@ -273,11 +273,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'rabies-vaccine-1': buildRabiesCard({
       destKey: 'uzbekistan',
       label: '우즈베키스탄',
+      // uz.rabies-only-1year-vaccine 은 없다 — 공식 제15장에 백신 유효기간 조항 자체가 없어
+      // 근거 부재로 제거했다(uz.ts 주석 참고).
       validationIds: [
         'uz.rabies-prime-after-3months-old',
         'uz.microchip-before-rabies',
         'uz.rabies-booster-within-prime-validity',
-        'uz.rabies-only-1year-vaccine',
       ],
     }),
     'rabies-titer': {
@@ -294,8 +295,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     departure: importQuarantineCard({
       label: '우즈베키스탄',
       fieldKey: 'uz_import_quarantine_date',
+      // ⚠️ '지정 시설에서 격리' 문구를 **쓰지 않는다** — 공식 규정과 정면충돌한다(2026-07-20).
+      //   수의요건 제15장: "…в количестве не более 2-х голов, **без разрешения на ввоз и
+      //   карантинирования**…" = 개인동반 2두 이하는 허가도 격리도 면제. 베트남(미충족 시 14일
+      //   격리)에서 복제되며 딸려온 문장이라 근거가 없었다.
+      // 미충족 시 실제 결과는 www 가이드 문장 그대로 '입국 불가'다.
       description:
-        '우즈베키스탄 도착 후 공항 동물검역소에서 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 격리되거나 한국으로 반송돼요.',
+        '우즈베키스탄 도착 후 공항 동물검역소에서 심사를 받으세요.\n서류를 확인해요. 반려동물 2마리 이하를 동반하면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 입국할 수 없어요.',
       helpText: '우즈베키스탄 도착 후 수입 검역을 받은 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '우즈베키스탄 수입 검역 서류',

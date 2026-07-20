@@ -6,7 +6,6 @@ import {
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
-  exceedsValidityYears,
   findRabiesValidityBreaks,
   readRabiesEntries,
   resolveValidUntil,
@@ -20,26 +19,35 @@ import {
 } from './messages'
 
 /**
- * 우즈베키스탄 (State Veterinary Committee — Davlat veterinariya qo'mitasi) 절차 검증.
+ * 우즈베키스탄 (수의·축산개발국가위원회 — Ветеринария ва чорвачиликни ривожлантириш
+ * давлат қўмитаси, vetgov.uz) 절차 검증.
  *
- * ⚠️ **베트남 룰 한 벌을 복제한 것이다** (2026-07-20 사용자 지정). 카드 구성·검증 구조가
- *   베트남과 동일해야 한다는 전제로 옮겼고, 사용자가 확인해 준 델타만 다르다:
- *     - 마이크로칩 **필수** → 베트남과 달리 `uz.microchip-before-rabies` 를 둔다
- *       (칩이 입국 요건이므로 접종과의 선후를 따진다. 광견병 카드의 칩 선행 문구도 이 룰
- *        선언에서 파생된다 — buildRabiesCard 의 requiresChipFirst)
- *     - 광견병 최소 일령 **달력 3개월** (캄보디아의 고정 91일과 다름)
- *     - 접종 후 입국 대기 30일
- *   3년 백신 불인정 같은 나머지 값은 베트남에서 복제된 상태다. 나라별 개별 검토에서 정정한다.
+ * ✅ **1차 출처를 확보했다** (2026-07-20 개별 조사 완료). 베트남 복제 상태에서 벗어났다.
+ *   국가수석수의검사관 결정 제04호(2014-02-28) 「수의(위생) 요건」 55p 원문의 **제15장**
+ *   (모피수·토끼·개·고양이 반입 요건)이 근거다.
+ *   https://vetgov.uz/upload/docs/vet-trebovanie.pdf
  *
- * 출처(구버전에서 이어받음 — 개별 검토 때 재확인 대상):
- *  - State Vet Service — https://gov.uz/en/vetgov
- *  - USDA APHIS Uzbekistan —
- *    https://www.aphis.usda.gov/live-animal-export/export-live-animals-uzbekistan
+ * 조사로 확정된 것:
+ *  - **항체검사를 요구하지 않는다.** 55p 전문 기계 검색에서 титр·нейтрализ·МЕ/мл·FAVN·
+ *    RNATT 히트 **0**. антител 유일 1건은 제17장 영장류 조항이라 개·고양이 무관.
+ *    → titer.need='return-only' 가 옳다. 구버전의 '입국 필수(유효 1년)'는 근거 없는
+ *      오설정이었다. **되돌리지 말 것.**
+ *  - **개인동반 2두 이하는 허가·격리 모두 면제.** 원문: "…в количестве не более 2-х голов,
+ *    без разрешения на ввоз и карантинирования…" (lex.uz 제148호 2023-04-10 제13조가 재확인
+ *    — https://lex.uz/ru/docs/6427764). → 도착 카드에 '격리'를 쓰지 않는다.
+ *  - 광견병 접종은 **출발 14일 전**(최근 6개월 내 접종력 있으면 면제). 원문: "Не позднее,
+ *    чем за 14 дней до отправки". 우리는 가이드·사용자 델타인 **30일**을 유지한다 —
+ *    공식보다 보수적이라 30일을 지키면 14일은 자동 충족된다.
+ *  - **백신 유효기간·최소 접종 연령 조항이 공식 문서에 없다.** 3년 백신 불인정 blocker 는
+ *    그래서 삭제했다(아래 주석 참고). 최소 일령 달력 3개월은 www 가이드 근거로 유지.
+ *  - **마이크로칩 언급이 공식 규정에 0회다.** www 가이드가 '필수'라 해 룰은 유지하되,
+ *    '우즈베키스탄 입국 요건'으로 단정하는 문구는 쓰지 않는다.
  *
- * 별도 (시스템 검증 제외):
- *  - RNATT: 베트남 골격을 따라 **한국 귀국용만**(titer.need = 'return-only') 으로 둔다.
- *    구버전 프로파일 주석은 '입국 필수(유효 1년)'였으나 근거가 확인되지 않았다 —
- *    개별 검토에서 입국 필수로 되돌릴지 판단한다.
+ * 확인 실패(추측으로 채우지 않은 것):
+ *  - USDA APHIS 우즈베키스탄 반려동물 페이지 **없음**(소 정액·양·가금만 다룸 = Unknown
+ *    Requirements 분류). 한국 APQA '수출국가별 검역조건' 목록에도 **없다**.
+ *  - 지정 입국공항(타슈켄트 단독?)·건강증명서 기한 10일설 — 둘 다 상업 사이트 단독 근거라
+ *    카드·룰에 넣지 않았다. 공식은 "출발 전 5일 이내 임상검진 기재"만 요구한다.
  *
  * 컨벤션: 필수 입력 누락 시 SKIP. 유효기간 1년 = 접종일의 1주년 당일까지.
  */
@@ -155,35 +163,12 @@ export const UZ_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
     },
   },
-  {
-    id: 'uz.rabies-only-1year-vaccine',
-    country: COUNTRY,
-    category: '광견병',
-    title: '1년 라이선스 광견병 백신만 인정 (3년 거부)',
-    description:
-      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부. (우즈베키스탄 1차 명문 미확인 — 베트남에서 복제한 보수 적용값. 개별 검토 대상)',
-    severity: 'blocker',
-    addedAt: '2026-07-20',
-    run: ({ caseRow }) => {
-      const rabies = readRabiesEntries(caseRow)
-      if (rabies.length === 0) return SKIP
-
-      const offending: string[] = []
-      for (const r of rabies) {
-        if (exceedsValidityYears(r.date, r.valid_until)) {
-          offending.push(`rabies_dates[${r.originalIndex}].valid_until`)
-        }
-      }
-      if (offending.length > 0) {
-        return {
-          ok: false,
-          message: '광견병 백신은 면역 유효기간 1년짜리만 인정돼요. 3년 백신은 사용할 수 없어요.',
-          offendingPaths: offending,
-        }
-      }
-      return { ok: true, message: '모든 광견병 백신이 1년 라이선스 (또는 미입력 = 디폴트 1년).' }
-    },
-  },
+  // ⚠️ `uz.rabies-only-1year-vaccine`(3년 백신 거부 blocker)을 **삭제했다** (2026-07-20 조사).
+  //   공식 제15장에 백신 '유효기간' 개념 자체가 없다 — титр·нейтрализ·유효기간 조항 모두 부재.
+  //   blocker 의 실제 출처는 상업 사이트의 "30 days ~ 12 months prior" 한 줄뿐이었고, 그건
+  //   검증 룰 근거로 쓰지 않는다는 원칙이 있다. blocker 는 저장을 거부해 우회가 불가능하므로
+  //   근거 없이 재접종을 강요하는 상태였다. 프로파일의 oneYearVaccineOnly 선언도 함께 제거했다
+  //   (포털 YearSelect 비활성 해제). 캄보디아와 같은 조치.
   {
     id: 'uz.rabies-valid-on-departure',
     country: COUNTRY,
