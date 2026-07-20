@@ -126,6 +126,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // 귀국 항체검사 때문에 실무상 넣지만, 그건 베트남 입국 요건이 아니다.
       validationIds: [
         'vn.rabies-prime-after-3months-old',
+        'vn.rabies-booster-within-prime-validity',
         'vn.rabies-only-1year-vaccine',
       ],
     }),
@@ -171,7 +172,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'rabies-vaccine-1': buildRabiesCard({
       destKey: 'taiwan',
       label: '대만',
-      validationIds: ['tw.rabies-prime-after-90days-old', 'tw.microchip-before-rabies'],
+      validationIds: [
+        'tw.rabies-prime-after-90days-old',
+        'tw.microchip-before-rabies',
+        'tw.rabies-booster-within-prime-validity',
+      ],
     }),
     'rabies-titer': {
       description:

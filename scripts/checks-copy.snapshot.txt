@@ -79,6 +79,8 @@
   태국 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [tr.banned-breeds]
   견종 "${breed.ko || breed.en}"은 튀르키예 수입 금지 견종이에요 (매치: ${match}).
+[tw.rabies-booster-within-prime-validity]
+  광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [tw.import-permit-120days-before-entry]
   수입허가증 신청일이 도착일보다 늦어요. 날짜를 확인하세요.
   수입허가증 신청 마감(도착 20일 전)이 지났어요. 대만에 입국하려면 입국일을 미뤄야 해요.
@@ -90,6 +92,8 @@
   대만 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [vn.rabies-min-30days-before-departure]
   광견병 접종 후 30일이 지나야 베트남에 입국할 수 있어요. 입국일을 미뤄야 해요.
+[vn.rabies-booster-within-prime-validity]
+  광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [vn.banned-breeds]
   견종 "${breed.ko || breed.en}"은(는) 베트남 수입 제한 견종이에요 (매치: ${match}).
 [vn.import-quarantine-date-valid]

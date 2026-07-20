@@ -500,3 +500,38 @@ export function evaluateRabiesAgeConservative(
     !meets91 && !meets3m ? 'both' : !meets91 ? '91days' : 'calendar3m'
   return { ok: false, ageInDays, calendar3mThreshold: calendar3m, failedRule }
 }
+
+/**
+ * 광견병 접종 chain 에서 **직전 접종의 면역 유효기간을 넘겨 맞은** 인접 쌍을 모두 찾는다.
+ *
+ * 만료 후 접종은 chain 단절이라 새 1차로 간주된다 — 그러면 이미 채운 대기기간·항체가
+ * 무효가 되므로 고객에게 알려야 한다.
+ *
+ * **저장 거부(findRabiesChainBreak)의 짝이 되는 '주의' 판정.** 펫무브(앱)는 저장을 막지만
+ * 펫무브워크는 막지 않고 절차검증만 보므로, 이 룰이 없으면 운영자 화면에서 끊긴 chain 이
+ * 색상·봇 어디에도 안 뜬다(2026-07-20 베트남·대만에서 발견 — 2회국 일본·중국에만 있었다).
+ *
+ * 중국(cn.rabies-booster-within-prime-validity)에 있던 로직을 그대로 뽑아 공용화했다.
+ * 반환은 offendingPaths 용 경로 배열 — 비어 있으면 통과.
+ */
+export function findRabiesValidityBreaks(entries: RabiesEntry[]): string[] {
+  if (entries.length < 2) return []
+  const offending: string[] = []
+  for (let i = 1; i < entries.length; i++) {
+    const prev = entries[i - 1]
+    const curr = entries[i]
+    const prevValidUntil = resolveValidUntil(prev.date, prev.valid_until)
+    if (curr.date > prevValidUntil) {
+      offending.push(
+        `rabies_dates[${prev.originalIndex}].date`,
+        `rabies_dates[${curr.originalIndex}].date`,
+      )
+    }
+  }
+  return Array.from(new Set(offending))
+}
+
+// 문구는 공용 상수로 빼지 않는다 — lint:checks 가 소스에서 문자열 리터럴을 정적으로
+// 수집하는데, 상수로 빼면 그 문구가 스냅샷에서 통째로 사라져 고객 노출 문구 가드가
+// 눈을 감는다(2026-07-20 실제로 겪음). 판정(위 함수)만 공유하고 문구는 각 나라 파일에
+// 리터럴로 둔다 — 나라별로 문구를 달리 쓸 여지도 남는다.

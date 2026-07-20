@@ -7,6 +7,7 @@ import {
   daysBetween,
   evaluateRabiesAgeConservative,
   exceedsValidityYears,
+  findRabiesValidityBreaks,
   findSameGuardianCases,
   formatKoreanDate,
   readRabiesEntries,
@@ -135,25 +136,15 @@ export const CN_CHECKS: ProcedureCheck[] = [
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length < 2) return SKIP
 
-      const offending: string[] = []
-      for (let i = 1; i < rabies.length; i++) {
-        const prev = rabies[i - 1]
-        const curr = rabies[i]
-        const prevValidUntil = resolveValidUntil(prev.date, prev.valid_until)
-        if (curr.date > prevValidUntil) {
-          offending.push(
-            `rabies_dates[${prev.originalIndex}].date`,
-            `rabies_dates[${curr.originalIndex}].date`,
-          )
-        }
-      }
+      // 판정은 공용 헬퍼 — 베트남·대만도 같은 함수를 쓴다(2026-07-20 공용화, 무동작 리팩터).
+      const offending = findRabiesValidityBreaks(rabies)
       if (offending.length > 0) {
         // 문구는 한 번만 — 끊긴 구간마다 날짜를 나열하면 고객 문구에 날짜가 샌다.
         // 어느 접종 기록이 문제인지는 offendingPaths 가 그 입력칸을 짚는다.
         return {
           ok: false,
           message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
-          offendingPaths: Array.from(new Set(offending)),
+          offendingPaths: offending,
         }
       }
       return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }

@@ -7,6 +7,7 @@ import {
 import type { ProcedureCheck } from './types'
 import {
   exceedsValidityYears,
+  findRabiesValidityBreaks,
   findSameGuardianCases,
   matchBannedBreed,
   readBreed,
@@ -129,6 +130,31 @@ export const VN_CHECKS: ProcedureCheck[] = [
         message: '광견병 접종 후 30일이 지나야 베트남에 입국할 수 있어요. 입국일을 미뤄야 해요.',
         offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
       }
+    },
+  },
+  {
+    id: 'vn.rabies-booster-within-prime-validity',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 추가 접종은 직전 접종 유효기간 이내',
+    description:
+      '연속된 광견병 접종은 직전 접종의 면역 유효기간(1년) 이내에 해야 함. 만료 후 접종은 chain 이 끊겨 새 1차로 간주된다. 저장 거부(findRabiesChainBreak)의 짝이 되는 주의 — 펫무브워크는 저장을 막지 않고 절차검증만 보므로 이 룰이 없으면 운영자 화면에서 끊긴 chain 이 안 보인다(2026-07-20 추가).',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length < 2) return SKIP
+      const offending = findRabiesValidityBreaks(rabies)
+      if (offending.length > 0) {
+        // 문구는 한 번만 — 끊긴 구간마다 날짜를 나열하면 고객 문구에 날짜가 샌다.
+        // 어느 기록이 문제인지는 offendingPaths 가 그 입력칸을 짚는다(중국과 같은 문형).
+        return {
+          ok: false,
+          message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
+          offendingPaths: offending,
+        }
+      }
+      return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
     },
   },
   {
