@@ -1,7 +1,8 @@
+import { buildDateRuleContext, violatesRabiesEntryWait } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   addMonths,
-  addYears,
+  classifyExportQuarantineDate,
   daysBetween,
   evaluateRabiesAgeConservative,
   readRabiesEntries,
@@ -112,9 +113,13 @@ export const UA_CHECKS: ProcedureCheck[] = [
     country: COUNTRY,
     category: '광견병',
     title: '출국일에 광견병 면역 유효',
+    // ⚠️ EU 와 같은 구조로 맞췄다(2026-07-21 사용자 지정) — severity 는 warning 이되
+    //   포털 표시는 ADVISORY_DEFERRED_CHECKS 로 제외한다(추가 백신 카드 situational 이 안내).
+    //   우크라이나 항체검사는 EU 처럼 **조건부 무기한**이라, '접종 이력이 끊기지 않았는가'가
+    //   곧 항체 유효성 판정이다. 그래서 이 룰이 EU 의 eu.rabies-valid-until-on-entry 역할을 한다.
     description:
       '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (SSUFSCP: 1차 접종은 출국 30일~12개월 이내)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -135,6 +140,33 @@ export const UA_CHECKS: ProcedureCheck[] = [
     },
   },
 
+  {
+    id: 'ua.rabies-min-21days-before-departure',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 접종은 출국일 21일 이상 전',
+    description:
+      'APHIS 우크라이나 안내 — "the pet will be required to wait at least 21 days after vaccination before travel to the Ukraine"(초회 접종 또는 유효기간 경과 후 재접종인 경우). 저장 거부(validateRabiesEntryWait)와 같은 판정 함수(violatesRabiesEntryWait)를 쓴다.',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
+      const rabies = readRabiesEntries(caseRow)
+      if (!dep || rabies.length === 0) return SKIP
+
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (!violatesRabiesEntryWait(data, dep, destination)) {
+        const latest = rabies[rabies.length - 1]
+        return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): 21일 충족(또는 유효 부스터).` }
+      }
+      const latest = rabies[rabies.length - 1]
+      return {
+        ok: false,
+        message: '광견병 접종 후 21일이 지나야 우크라이나에 입국할 수 있어요. 입국일을 미뤄야 해요.',
+        offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
+      }
+    },
+  },
   // ── RNATT (우크라이나 입국 필수) ──
   {
     id: 'ua.rnatt-min-30days-after-vaccine',
@@ -206,35 +238,16 @@ export const UA_CHECKS: ProcedureCheck[] = [
       }
     },
   },
-  {
-    id: 'ua.departure-within-12months-of-titer',
-    country: COUNTRY,
-    category: '광견병',
-    title: '출국일은 항체 검사 12개월 이내',
-    description:
-      'RNATT 유효기간 1년 — 출국일이 채혈일의 1주년을 넘으면 재검사 필요(1주년 당일까지 유효). (SSUFSCP 실무 운용 — 부스터 chain 끊김 없을 시 EU 패턴상 평생 유효 가능, 보수적으로 1년 적용)',
-    severity: 'info',
-    addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
-      const dep = readDepartureDate(caseRow, destination)
-      const titers = readTiterEntries(caseRow)
-      if (!dep || titers.length === 0) return SKIP
-
-      const valid = titers.find((t) => addYears(t.date, 1) >= dep)
-      if (valid) {
-        return { ok: true, message: `항체 검사(${valid.date}) 유효(${addYears(valid.date, 1)}) ≥ 출국일(${dep}).` }
-      }
-      const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
-      const expiry = addYears(newest.date, 1)
-      const offending: string[] = ['departure_date']
-      for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-      return {
-        ok: false,
-        message: `최신 항체 검사(${newest.date})의 유효기간(${expiry})이 출국일(${dep})보다 빨라요. 1년을 초과했어요.`,
-        offendingPaths: offending,
-      }
-    },
-  },
+  // ⚠️ `ua.departure-within-12months-of-titer`(항체 12개월 유효)를 **삭제했다**(2026-07-20 조사).
+  //   우크라이나 항체검사는 **조건부 무기한**이다 — "The test result remains valid indefinitely
+  //   as long as there has been **no lapse in rabies vaccination coverage** since the date of
+  //   the rabies titer test"(APHIS 우크라이나 안내). EU 와 같은 모델이고 프로파일에도
+  //   titer.entryValidityMonths: null 로 선언했다.
+  //   '12개월'·'3~24개월' 설의 출처는 **폐지된 2004년 명령 71호(z0768-04)** 잔재이고,
+  //   553/2018 이 이미 폐지했다. 근거 없이 유효한 항체검사를 만료로 판정하면 재검사를
+  //   강요하게 된다(채혈 후 3개월 대기까지 다시 걸려 출국이 분기 단위로 밀린다).
+  //   ※ 왕복이면 한국 APQA 의 '채혈일 도착 전 24개월 이내'가 실효적으로 걸리는데,
+  //     그건 귀국 방향 공통 룰(common.kr-return-titer-within-2years)이 이미 담당한다.
 
   // ── 항체가 결과치 ──
   {
@@ -272,6 +285,76 @@ export const UA_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: '모든 RNATT 항체가 ≥ 0.5 IU/ml.' }
+    },
+  },
+  // ── 도착 수입 검역 / 현지 수출 검역 (베트남 골격 복제 2026-07-20) ──
+  {
+    id: 'ua.import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '우크라이나 수입 검역일',
+    description: '우크라이나 수입 검역일은 우크라이나 입국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.ua_import_quarantine_date === 'string'
+          ? data.ua_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '우크라이나 수입 검역일은 우크라이나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['ua_import_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `우크라이나 수입검역일(${raw}) 입국 이후.` }
+    },
+  },
+  {
+    id: 'ua.export-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '우크라이나 수출 검역일',
+    description:
+      '우크라이나 수출 검역일은 우크라이나 입국일 이후·한국 귀국일 이전이어야 함. "그 나라에 있는 동안 받았는가"라는 물리적 제약이라 나라별 규정 조사가 필요 없다(판정은 classifyExportQuarantineDate 공용).',
+    severity: 'warning',
+    addedAt: '2026-07-20',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      const ret =
+        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
+          ? ctx.data.return_date.slice(0, 10)
+          : ''
+      const verdict = classifyExportQuarantineDate(data.ua_export_quarantine_date, entry, ret)
+      if (verdict === 'skip') return SKIP
+      if (verdict === 'before-entry') {
+        return {
+          ok: false,
+          message: '우크라이나 수출 검역일은 우크라이나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['ua_export_quarantine_date'],
+        }
+      }
+      if (verdict === 'after-return') {
+        return {
+          ok: false,
+          message: '우크라이나 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['ua_export_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `우크라이나 수출검역일 체류 기간 내.` }
     },
   },
 ]

@@ -26,6 +26,7 @@ import {
   validateImportPermitFiledDate,
   validateEntryDateForDestination,
   validateEchinococcusWindow,
+  TITER_MIN_DAYS_AFTER_VACCINE,
   validateEuTiterAfterVaccine,
   validateIeAdvanceNoticeDate,
   validateMtAdvanceNoticeDate,
@@ -123,6 +124,12 @@ const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
   mongolia: '예: 울란바토르 UBN',
   uzbekistan: '예: 타슈켄트 TAS',
   canada: '예: 밴쿠버 YVR',
+  morocco: '예: 카사블랑카 CMN',
+  mexico: '예: 멕시코시티 MEX',
+  brazil: '예: 상파울루 GRU',
+  kazakhstan: '예: 알마티 ALA',
+  // 우크라이나는 예시 공항을 넣지 않는다 — 전시로 민항 운항이 정상화되지 않은 상태라
+  // 특정 공항을 예시로 들면 잘못된 안내가 된다(2026-07-20 조사 반영).
   eu: '예: 파리 CDG',
   uk: '예: 런던 히드로 LHR',
   ireland: '예: 더블린 DUB',
@@ -979,7 +986,14 @@ export function StepDetailView({
       }
       // EU 패밀리 — 채혈은 직전 유효 접종 + 30일 이후 (chain 유지 시 시계 리셋 X).
       // procedure-check(eu.titer-min-30days-after-vaccine)와 같은 알고리즘의 입력 차단.
-      if (destinationKey && EU_ENTRY_FAMILY.includes(destinationKey)) {
+      // EU 하드코딩 목록 ∪ 프로파일 선언(titer.minDaysAfterVaccine) — 같은 30일 요건인
+      // 모로코·우크라이나가 목록에 없어 차단이 빠져 있었다(2026-07-20). EU 프로파일에 선언을
+      // 채우면 합집합을 걷어내고 파생만 볼 것(titer-validity.ts 주석 참고).
+      if (
+        destinationKey &&
+        (EU_ENTRY_FAMILY.includes(destinationKey) ||
+          TITER_MIN_DAYS_AFTER_VACCINE[destinationKey] !== undefined)
+      ) {
         const err30 = validateEuTiterAfterVaccine(
           readRabiesDoseList(caseRow?.data),
           titerForm.date.trim(),

@@ -347,6 +347,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'turkey',
         'ukraine',
         'israel',
+        // 모로코 — ONSSA 수입 양식 5항의 항체검사를 **입국 요건**(titer.need='entry')으로
+        // 다루기로 해서 2026-07-20 추가. 그전엔 rabiesTiterForReturnOnly 로만 걸려 있어
+        // roundOnlyDestinations 경유로 왕복에만 떴고, 이 목록엔 없었다 — 플래그를 떼자
+        // 카드가 통째로 사라지는 걸 lint:dest 스냅샷이 잡았다.
+        'morocco',
       ],
       // 입국엔 항체검사 불필요하나 한국 귀국 시 필수인 나라 — 왕복에만 노출.
       // 프로파일(rabiesTiterForReturnOnly / titer.need==='return-only')에서 파생한다.
@@ -852,6 +857,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'guam',
         'philippines',
         'usa',
+        // 카자흐스탄 — EAEU 제15장이 광견병과 같은 문장에서 종합백신을 규율한다(출국 20일 전·12개월 면제).
+        'kazakhstan',
       ],
       species: 'all',
       tripType: 'all',
@@ -1006,6 +1013,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'new_zealand',
         'turkey',
         'philippines',
+        // 멕시코·브라질 — 위 외부구충과 같은 근거.
+        'mexico',
+        'brazil',
       ],
       species: 'all',
       tripType: 'all',
@@ -1567,8 +1577,21 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     category: 'document',
     title: '캄보디아 수출 검역',
     shortLabel: '수출',
+    // 근거 보강(2026-07-20) — 수출 자체가 MAFF 허가·위생증명 대상이다.
+    //   NTR 조치 「동물·동물성 제품의 수출·수입·통과·운송 허가 취득 요건」
+    //   https://cambodiantr.gov.kh/en/measure/page/13/?title=requirement-to-obtain-permission-to-export-import-transit-and-transport-of-animals-and-animal-products
+    //   → 수입국이 요구해서가 아니라 **캄보디아가 감염병 확산 방지로 자체 적용**하는 수출관리다.
+    //   WOAH GDAHP 발표자료 p.12 수출 요건에도 "Sanitary certificate of animals or animal
+    //   products"가 들어 있고, 프놈펜·시엠립·시아누크빌 국제공항에 동물검역 체크포인트가 있다.
+    //   같은 자료의 "동물검역 계류시설은 없고 체크포인트가 있다"는 **검역절차가 없다는 뜻이
+    //   아니라** 장기 계류 대신 출국장 검사 중심이라는 뜻이다(도착 카드 주석과 짝).
+    //
+    // ⚠️ **개인 반려견용 공개 SOP 가 없다** — 공식 자료는 상업용 가축 수출 절차 위주다.
+    //   신청 경로·소요 기간·민간 동물병원 선행 여부가 지역·공항마다 다를 수 있어, 카드는
+    //   '미리 연락해 확인하라'로 열어 둔다. 출국 당일 처리로 전제하게 만들면 안 된다.
+    //   '출국 7~10일 전' 같은 수치는 정부 출처가 없어 넣지 않는다.
     description:
-      '캄보디아 출국 전 정부 수의증명서를 발급받으세요.\n\n프놈펜의 농림수산부 축산수의국(DAHP)에서 발급해요. 신청 후 검사 수수료를 먼저 내고, 출국하는 공항에서 수의검사관의 검사를 받은 뒤 증명서를 받아요.\n필요한 서류와 소요 기간은 현지 DAHP에 미리 문의하세요.\n이 증명서가 없으면 한국 입국이 거부될 수 있어요.',
+      '캄보디아 출국 전 정부 수의증명서를 발급받으세요.\n\n프놈펜의 농림수산부 축산수의국(GDAHP)에서 발급해요. 신청 후 검사 수수료를 내고, 개체 확인과 임상검사를 거쳐 증명서를 받아요.\n출국 당일에는 공항 동물검역 체크포인트에서 서류와 반려동물을 다시 확인해요. 프놈펜·시엠립·시아누크빌 국제공항에 있어요.\n개인 반려동물 절차가 공개돼 있지 않아요. 현지 동물병원 진료가 먼저 필요할 수 있으니 GDAHP나 출국 공항에 미리 연락해 확인하세요.\n처리에 시간이 걸리니 출국 당일에 하려고 하지 마세요.',
     doneSummary: '캄보디아 수출 검역을 받았어요.',
     cardLine: '캄보디아 출국 전 정부 수의증명서를 발급받으세요.',
     applicability: { destinations: ['cambodia'], species: 'all', tripType: 'round' },
@@ -1608,8 +1631,19 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // ⚠️ 소관이 2원화돼 있다 — 법률 텍스트는 GAVS(수의 주무)를 지목하나 실제 개인 반려동물
     //   발급 창구는 GASI 계열 전문검사청 국경검역과로 보인다. 카드엔 '검역 기관'으로만 쓰고
     //   특정 기관명을 단정하지 않는다(둘 중 어디로 가라고 잘못 안내하면 헛걸음이 된다).
+    // 절차 2단계 구조 — 공인 수의서비스기관 확인 → 정부 국제수의증명서 발급(2026-07-20 보강).
+    //   근거: 수의증명서 지침(МАЛ ЭМНЭЛГИЙН ГЭРЧИЛГЭЭНИЙ ЗАГВАР, ХЭРЭГЛЭХ ЗААВАР)
+    //   https://legalinfo.mn/mn/detail?lawId=16207130862051
+    //   - 동물의 국제이동에는 **International Veterinary Certificate**(국제수의증명서)를 쓴다.
+    //   - 국제수의증명서는 공인 수의서비스기관이 작성한 기초 수의증명서를 바탕으로 발급된다
+    //     → **공항에서 바로 국제증명서만 받는 구조가 아니다.** 선행 방문이 필요하다.
+    //   - 별도 협정이 없으면 **몽골어와 영어**로 작성되고 여행객에게 2부가 출력된다.
+    //   - 살아 있는 동물의 국제수의증명서는 발급일부터 **최대 1개월** 유효.
+    //     (전문검사청 개인 반려동물 안내의 '30일'과 일치한다 — 서로 다른 두 출처가 같은 값)
+    //   신청 시 제출: 기초 수의증명서·검사결과, 신분증 사본, 동물 종류·수·식별정보,
+    //     운송수단, 이동경로, 출국 국경검문소·공항, 출국일.
     description:
-      '몽골 출국 전 수출 검역을 받으세요.\n\n출국하는 공항을 관할하는 검역 기관에 신청하고 검사 일시와 장소, 필요 서류를 안내받으세요.\n신청서와 반려동물 여권·건강기록부 사본, 보호자 여권 사본이 필요해요.\n수수료가 있어요. 발급받은 검역증은 30일간 유효하니 출국 일정에 맞춰 받으세요.',
+      '몽골 출국 전 수출 검역을 받으세요.\n\n먼저 공인 수의서비스기관에서 반려동물의 건강 상태와 접종 기록을 확인받고 기초 수의증명서를 받으세요.\n그 서류로 정부 수의기관에 국제수의증명서를 신청하세요. 신분증, 반려동물 식별정보, 항공편과 출국일, 이동경로가 필요해요.\n증명서는 몽골어와 영어로 발급되고 2부를 받아요.\n발급일부터 1개월간 유효하니 출국 일정에 맞춰 받으세요.',
     doneSummary: '몽골 수출 검역을 받았어요.',
     cardLine: '몽골 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['mongolia'], species: 'all', tripType: 'round' },
@@ -1651,8 +1685,21 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   증명서 자체는 반드시 받아야 한다. 이 구분을 놓치면 '2두 이하는 아무것도 안 해도 된다'는
     //   반대 결론이 나온다 — 입국 쪽 면제(허가·격리)와 혼동하지 말 것.
     // ⚠️ форма №5а~5е 중 개·고양이 해당 서식이 무엇인지는 확인 실패라 카드에 쓰지 않았다.
+    // 절차 보강(2026-07-20) — CIS 전형의 **2단계 서류 교환** 구조다.
+    //   근거 추가: 「국가수의서비스 허가절차 규정」 139-сон, 2017-03-15
+    //   https://lex.uz/uz/docs/3138116
+    //   - 국경을 통과하는 검역대상 동물에 **의무적 국가수의검사**를 시행한다.
+    //   - 동반 개·고양이 **2마리 이하**는 중앙 최고국가수의검사관의 **수출허가만 면제**되고,
+    //     지역 국가수의기관의 증명서 발급과 출국장 국가수의검사는 **면제되지 않는다.**
+    //     ⚠️ 입국 쪽 면제(허가·격리)와 혼동하지 말 것 — 방향도 대상도 다른 조항이다.
+    //   - 출국장 통제: 서류검사 + 개체·신체검사 + 서류·실물 일치 확인 + 운송조건 확인,
+    //     임상 이상 시에만 검사실 검사. 결과에 따라 'Export allowed / prohibited' 확인도장.
+    //   - 국경검역소는 지역 수의증명서를 근거로 국경 도착 후 **최대 4시간 이내**에 정해진
+    //     형태의 최종 수의증명서를 작성한다.
+    //   → **민간 동물병원 서류만 들고 공항으로 바로 가면 안 된다.** 지역 국가수의기관이
+    //     선행이다. 카드 첫 줄이 그걸 명시하는 이유다.
     description:
-      '우즈베키스탄 출국 전 수출 검역을 받으세요.\n\n거주 지역의 국가수의검사관에게 수의증명서를 발급받으세요.\n출국할 때 국경 수의검문소에서 국제수의증명서로 바꿔 받아요.\n반려동물 2마리 이하는 별도 허가가 필요 없지만, 증명서는 반드시 받아야 해요.',
+      '우즈베키스탄 출국 전 수출 검역을 받으세요.\n\n민간 동물병원 서류만으로는 출국할 수 없어요. 거주 지역의 국가수의기관을 먼저 방문해 국가수의검사관이 서명·날인한 수의증명서를 받으세요.\n출국 당일 공항 수의검역소에서 이 증명서를 국제수의증명서로 바꿔 받아요. 서류와 반려동물이 일치하는지 확인하고 출국 허용 도장을 찍어줘요.\n반려동물 2마리 이하는 중앙정부 수출허가만 면제돼요. 증명서와 출국장 검사는 그대로 받아야 해요.\n항공사 체크인 전에 마쳐야 하니 공항에 일찍 도착하세요.',
     doneSummary: '우즈베키스탄 수출 검역을 받았어요.',
     cardLine: '우즈베키스탄 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['uzbekistan'], species: 'all', tripType: 'round' },
@@ -1674,8 +1721,33 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'ca-export-quarantine',
     category: 'document',
-    title: '캐나다 수출 검역',
-    shortLabel: '수출',
+    // ⚠️ **캐나다는 다른 3국과 성격이 다르다 — 자체 출국검역이 없다**(2026-07-20 별도 조사).
+    //   그래서 제목을 '수출 검역'이 아니라 '수출 증명서 배서'로 둔다. 없는 절차를 만들어
+    //   부르면 고객이 캐나다 정부의 검역 관문을 찾아 헤매게 된다.
+    //   (step id·필드명은 4국 공통 구조를 유지하려고 그대로 둔다 — 저장된 데이터가 걸려 있다.)
+    //
+    // 근거:
+    //  - Health of Animals Regulations s.69 는 대상을 "animal germplasm, **livestock** or
+    //    poultry"로 한정하고, s.2 의 livestock 정의는 "bovine, caprine, equine, ovine and
+    //    porcine species" — **개·고양이가 없다.**
+    //    https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._296/section-69.html
+    //  - 그 s.69 조차 판단 기준이 "meets the **sanitary requirements of the importing
+    //    country**" 이고, 미국행엔 "if certification is not requested by the United States"
+    //    면제 조항이 있다 → 수입국이 요구하지 않으면 증명 자체가 면제되는 구조.
+    //  - CFIA Canadian International Health Certificate 페이지도 "**may be** used" /
+    //    "you **do not need** … if you are travelling to countries providing their own
+    //    health certificates" — 임의 서식 문언이다.
+    //  - CBSA 「Travelling with animals」는 전면이 **반입** 내용이고 출국 시 반려동물 서류
+    //    검사 언급이 없다 → 몽골·우즈베키스탄 같은 **출국장 수의검역 관문이 없다.**
+    //  - CFIA 안내문의 "It is mandatory to obtain CFIA endorsement … before the animal(s)
+    //    leave Canada"는 **시점 규범**이다(이유절이 "출국 후엔 배서할 수 없기 때문"). 배서가
+    //    필요한 경우 그 시점이 출국 전이라는 뜻이지, 캐나다가 반출을 통제한다는 뜻이 아니다.
+    //
+    // 그럼에도 카드를 두는 이유: **한국이 수출국 정부 증명을 요구**하므로(APQA, EU 만 예외)
+    //   한국행 보호자에겐 배서가 실질적으로 필수다. 그리고 예약제·결제 3일 전 마감·비환불·
+    //   출국 후 불가라는 일정 제약이 있어 일정 관리상 반드시 노출해야 한다.
+    title: '캐나다 수출 증명서 배서',
+    shortLabel: '배서',
     // ⚠️ 캐나다는 **모델이 다르다** — 정부가 검사·발급하는 게 아니라, 개인 수의사가 작성한
     //   증명서를 CFIA 공식 수의사가 **배서(endorse)** 한다. 그래서 핵심 액션이 '기관 방문
     //   신청'이 아니라 **'예약 + 사전 결제'** 다. 몽골·우즈베키스탄 카드와 문형을 달리한다.
@@ -1694,8 +1766,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //    before your appointment**" / "Please provide as much advance notice as possible."
     // ⚠️ CFIA 한국 페이지가 "December 1, 2012" 기준이라 오래돼 보인다 — 실무 적용 전 재확인 권장.
     description:
-      '캐나다 출국 전 수출 증명서에 검역기관(CFIA) 배서를 받으세요.\n\n현지 동물병원에서 한국행 수출 증명서를 작성받은 뒤, 검역기관 공식 수의사의 배서를 받아야 해요.\n배서는 예약제예요. 온라인 결제를 예약일 3일 전까지 마쳐야 하니 미리 예약하세요.\n캐나다를 떠난 뒤에는 배서를 받을 수 없어요. 반드시 출국 전에 마치세요.',
-    doneSummary: '캐나다 수출 검역을 받았어요.',
+      '캐나다 출국 전 수출 증명서에 검역기관(CFIA) 배서를 받으세요.\n\n캐나다는 반려동물이 나갈 때 자체 검역을 하지 않아요. 대신 한국이 수출국 정부가 증명한 서류를 요구하기 때문에 배서가 필요해요.\n현지 동물병원에서 한국행 수출 증명서를 작성받은 뒤, 검역기관 공식 수의사의 배서를 받으세요.\n배서는 예약제예요. 방문 접수는 안 되고, 온라인 결제를 예약일 3일 전까지 마쳐야 해요. 수수료는 예약 후 안내되고 환불되지 않아요.\n캐나다를 떠난 뒤에는 배서를 받을 수 없어요. 반드시 출국 전에 마치세요.',
+    doneSummary: '캐나다 수출 증명서 배서를 받았어요.',
     cardLine: '캐나다 출국 전 수출 증명서 배서를 받으세요.',
     applicability: { destinations: ['canada'], species: 'all', tripType: 'round' },
     order: 155,
@@ -1714,6 +1786,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentLabel: '캐나다 수출 증명서',
     links: [
       {
+        // ⚠️ 이 페이지는 **date modified 2015-11-17** 로 10년 넘게 갱신되지 않았다(다른 CFIA
+        //   반려동물 수출 페이지는 2025년에 갱신됨). 게시된 서식의 발효일도 2012-12-01 이고,
+        //   본문이 참조하는 "National Veterinary Research and Quarantine Service"는 이미
+        //   APQA(농림축산검역본부)로 개편된 옛 기관명이다.
+        //   → 서식이 CFIA 공식 게시본인 건 맞지만 **최신성은 신뢰할 수 없다.** 실제 발급 전
+        //     APQA 현행 요구와 대조할 것. (인계 문서 §6 에도 남겨 둠)
         url: 'https://inspection.canada.ca/en/animal-health/terrestrial-animals/exports/pets/korea',
         label: '한국행 수출 안내·서식 (CFIA)',
       },
@@ -1724,6 +1802,141 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
 
+  {
+    id: 'ma-export-quarantine',
+    category: 'document',
+    title: '모로코 수출 검역',
+    shortLabel: '수출',
+    // ONSSA 관용 수의사 발급. 근거는 procedure-checks/ma.ts 헤더와 destination-config 프로파일 주석 참고.
+    description:
+      '모로코 출국 전 수출 증명서를 발급받으세요.\n\n거주지 관할 검역기관(ONSSA) 수의서비스에 문의해 관용 수의사에게 발급받으세요.\n한국행 전용 서식이 있어요. 마이크로칩 번호가 반드시 기재돼야 해요.\n항체 검사 결과지 원본을 첨부해요. 채혈일이 출발일로부터 24개월 이내여야 해요.\n출발 24시간 이내에 임상검사를 받아야 해요.',
+    doneSummary: '모로코 수출 검역을 받았어요.',
+    cardLine: '모로코 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['morocco'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:ma_export_quarantine_date',
+    validationIds: ['ma.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'ma_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '모로코에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '모로코 수출 증명서',
+    links: [{ url: 'https://www.onssa.gov.ma/import-and-export-controls/export-certification/export-of-live-animals/dogs-and-cats/?lang=en', label: '개·고양이 수출 안내 (ONSSA)' }],
+  },
+  {
+    id: 'ua-export-quarantine',
+    category: 'document',
+    title: '우크라이나 수출 검역',
+    shortLabel: '수출',
+    // DPSS 국경검사부서 발급. 근거는 procedure-checks/ua.ts 헤더와 destination-config 프로파일 주석 참고.
+    description:
+      '우크라이나 출국 전 수출 검역을 받으세요.\n\n먼저 국립 수의병원에서 수의증서를 받으세요. 출발 5일~72시간 전에 임상검사와 구충을 함께 받아요.\n그 서류로 출발 5일 전에 검역기관(DPSS) 국경검사부서에서 국제수의증명서를 발급받으세요.\n증명서 유효기간이 5일뿐이에요. 너무 일찍 받으면 만료돼요.\n모든 국경 통과지점에 검사관이 있는 건 아니니 어디서 받을지 미리 확인하세요.',
+    doneSummary: '우크라이나 수출 검역을 받았어요.',
+    cardLine: '우크라이나 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['ukraine'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:ua_export_quarantine_date',
+    validationIds: ['ua.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'ua_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '우크라이나에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '우크라이나 국제수의증명서',
+    links: [{ url: 'https://dpss.gov.ua/mizhnarodne-spivrobitnictv/veterinariya-ta-bezpechnist/vimogi-do-nekomercijnogo-peremishchennya-tvarin', label: '비상업 이동 요건 (DPSS)' }],
+  },
+  {
+    id: 'mx-export-quarantine',
+    category: 'document',
+    title: '멕시코 수출 검역',
+    shortLabel: '수출',
+    // SENASICA 발급 · 무료. 근거는 procedure-checks/mx.ts 헤더와 destination-config 프로파일 주석 참고.
+    description:
+      '멕시코 출국 전 수출 증명서(CZE)를 발급받으세요.\n\n먼저 민간 수의사에게 건강증명서를 받으세요. 발급 후 5일 이내여야 해요.\n그 서류로 검역기관(SENASICA) 사무소에 신청하면 3영업일 안에 1차 서명본을 받아요.\n출국 당일 공항에서 반려동물 실물 검사를 받고 최종 서명을 받아요.\n발급 비용은 없어요. 유효기간은 발급일로부터 8일이에요.\n이 증명서가 없으면 한국 입국이 거부돼요.',
+    doneSummary: '멕시코 수출 검역을 받았어요.',
+    cardLine: '멕시코 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['mexico'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:mx_export_quarantine_date',
+    validationIds: ['mx.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'mx_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '멕시코에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '멕시코 수출 동물위생증명서(CZE)',
+    links: [{ url: 'https://www.gob.mx/senasica/documentos/solicita-el-certificado-zoosanitario-para-exportacion-para-mascotas', label: '반려동물 수출 증명서 신청 (SENASICA)' }],
+  },
+  {
+    id: 'br-export-quarantine',
+    category: 'document',
+    title: '브라질 수출 검역',
+    shortLabel: '수출',
+    // VIGIAGRO 발급 · 무료. 근거는 procedure-checks/br.ts 헤더와 destination-config 프로파일 주석 참고.
+    description:
+      '브라질 출국 전 국제수의증명서(CVI)를 발급받으세요.\n\n먼저 현지 동물병원에서 건강증명서를 받고, 검역기관(VIGIAGRO)에 신청서를 내세요.\n연방 농업감사관이 발급해요. 발급 비용은 없어요.\n한국은 전자 발급 대상이 아니라 직접 방문해야 해요. 사전 예약이 필요해요.\n발급 당일 현장에서 마이크로칩을 판독해 확인하니 칩이 반드시 있어야 해요.\n유효기간이 서명일로부터 10일뿐이니 일정을 맞추세요.',
+    doneSummary: '브라질 수출 검역을 받았어요.',
+    cardLine: '브라질 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['brazil'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:br_export_quarantine_date',
+    validationIds: ['br.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'br_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '브라질에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '브라질 국제수의증명서(CVI)',
+    links: [{ url: 'https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil', label: '브라질 출국 안내 (MAPA)' }],
+  },
+  {
+    id: 'kz-export-quarantine',
+    category: 'document',
+    title: '카자흐스탄 수출 검역',
+    shortLabel: '수출',
+    // 수의통제감독위원회 발급. 근거는 procedure-checks/kz.ts 헤더와 destination-config 프로파일 주석 참고.
+    description:
+      '카자흐스탄 출국 전 수출 검역을 받으세요.\n\n먼저 거주 지역 국가수의기관에서 수의증명서(형식 1호)를 받으세요.\n그 서류로 수의통제감독위원회 지역사무소에 신청하면 수출용 수의증명서로 발급해줘요.\n처리에 영업일 2일이 걸려요. 반려동물 수의여권 사본이 필요해요.\n온라인(elicense.kz)으로 접수하거나 사무소를 방문하면 돼요.',
+    doneSummary: '카자흐스탄 수출 검역을 받았어요.',
+    cardLine: '카자흐스탄 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['kazakhstan'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:kz_export_quarantine_date',
+    validationIds: ['kz.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'kz_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '카자흐스탄에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '카자흐스탄 수출 수의증명서',
+    links: [{ url: 'https://egov.kz/cms/ru/services/pass279_msh', label: '수출 수의증명서 발급 (egov.kz)' }],
+  },
   // ── 15. 한국 수입 검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
   {
     id: 'kr-import-quarantine',

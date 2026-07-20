@@ -194,6 +194,12 @@ function vietnamFamilyDocSpecs(
   cc: string,
   opts: {
     noLocalTiterLab?: boolean
+    /**
+     * 항체 결과지가 **입국용**인 나라(모로코·우크라이나) — 왕복 전용을 풀고 문구를 바꾼다.
+     * 기본값(false)은 베트남 골격의 '한국 귀국용'이라 roundTripOnly 다. 입국 요건인데
+     * 왕복 전용으로 두면 편도 고객의 서류탭에서 필수 서류가 통째로 빠진다.
+     */
+    titerEntryDoc?: boolean
     importQuarantineDoc?: { source?: string; description?: string }
     exportQuarantineDoc?: { name: string; source: string; description: string }
   } = {},
@@ -208,8 +214,10 @@ function vietnamFamilyDocSpecs(
       source: '동물병원',
       kind: 'step',
       stepRef: 'rabies-titer',
-      roundTripOnly: true,
-      description: `검사를 의뢰한 동물병원에서 발급받아요.\n\n${label} 입국에는 필요 없지만 한국 귀국 때 반드시 원본이 필요해요. 유효기간은 2년이에요.${titerLabLine}\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.`,
+      ...(opts.titerEntryDoc ? {} : { roundTripOnly: true as const }),
+      description: opts.titerEntryDoc
+        ? `검사를 의뢰한 동물병원에서 발급받아요.\n\n${label} 입국에 반드시 원본이 필요해요. 왕복이면 한국 귀국 때도 필요해요.${titerLabLine}\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.`
+        : `검사를 의뢰한 동물병원에서 발급받아요.\n\n${label} 입국에는 필요 없지만 한국 귀국 때 반드시 원본이 필요해요. 유효기간은 2년이에요.${titerLabLine}\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.`,
       previewStepId: 'rabies-titer',
     },
     KR_FORM25_VACCINATION_HEALTH_CERT,
@@ -635,28 +643,29 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       name: '캄보디아 수출 검역 서류',
       source: '캄보디아 농림수산부 축산수의국(DAHP)',
       description:
-        '캄보디아 수출 검역 후 발급받아요.\n\n프놈펜의 DAHP에서 발급하고, 출국 공항에서 수의검사관의 검사를 거쳐요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요. 없으면 입국이 거부될 수 있어요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '캄보디아 수출 검역 후 발급받아요.\n\n프놈펜의 GDAHP에서 발급하고, 출국 공항 동물검역 체크포인트에서 서류와 반려동물을 다시 확인해요.\n\n개인 반려동물 절차가 공개돼 있지 않아 신청 방법과 소요 기간이 지역·공항마다 다를 수 있어요. GDAHP에 미리 연락해 확인하세요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요. 없으면 입국이 거부될 수 있어요.',
     },
   }),
   '몽골': vietnamFamilyDocSpecs('몽골', 'mn', {
     noLocalTiterLab: true,
     exportQuarantineDoc: {
-      // 정식 명칭·양식 번호 미확인(sbb.inspection.gov.mn TLS 만료로 원문 열람 실패).
-      name: '몽골 수출 검역 서류',
-      source: '몽골 검역 기관',
+      // 서식 번호는 미확인이지만 서류 종류는 확인됐다 — 수의증명서 지침이 동물 국제이동에
+      // International Veterinary Certificate 를 쓰도록 규정한다(catalog mn-export-quarantine 주석).
+      name: '몽골 국제수의증명서',
+      source: '몽골 정부 수의기관',
       description:
-        '몽골 수출 검역 후 발급받아요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.\n\n발급일로부터 30일간 유효해요. 출국 일정에 맞춰 받으세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '공인 수의서비스기관의 기초 수의증명서를 받은 뒤, 정부 수의기관에서 발급받아요.\n\n몽골어와 영어로 작성되고 2부를 받아요. 한 부는 보관하고 한 부는 출국 수속에 써요.\n\n발급일부터 1개월간 유효해요. 출국 일정에 맞춰 받으세요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.',
     },
   }),
   // 우즈베키스탄만 noLocalTiterLab 이 없다 — www 가이드에 '검사 기관이 없다'는 문장이 없다.
   '우즈베키스탄': vietnamFamilyDocSpecs('우즈베키스탄', 'uz', {
     exportQuarantineDoc: {
       // 비CIS(한국) 대상은 국제수의증명서 форма №5 계열 — 하위 문자(5а~5е)는 확인 실패라
-      // 이름에 넣지 않았다.
+      // 이름에 넣지 않았다. 지역 발급분(Form No.1 계열)은 국내·CIS 역내용이라 최종 서류가 아니다.
       name: '우즈베키스탄 국제수의증명서',
       source: '우즈베키스탄 국경 수의검문소',
       description:
-        '거주 지역 국가수의검사관에게 수의증명서를 받은 뒤, 출국할 때 국경 수의검문소에서 국제수의증명서로 바꿔 받아요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '두 단계로 받아요.\n\n먼저 거주 지역 국가수의기관에서 국가수의검사관이 서명·날인한 수의증명서를 받으세요. 이건 국내용이라 이것만으로는 출국할 수 없어요.\n\n출국 당일 공항 수의검역소에 제출하면 국제수의증명서로 바꿔 발급해줘요. 국경 도착 후 4시간 이내에 작성돼요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.',
     },
   }),
   '캐나다': vietnamFamilyDocSpecs('캐나다', 'ca', {
@@ -674,7 +683,73 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       name: '캐나다 수출 증명서(Veterinary Health Certificate for Dogs and Cats to Korea)',
       source: '현지 동물병원 · 캐나다 검역기관(CFIA) 배서',
       description:
-        '한국행 전용 서식이에요. 현지 동물병원에서 작성받은 뒤 검역기관(CFIA) 공식 수의사의 배서를 받아야 해요.\n\n배서는 예약제이고, 온라인 결제를 예약일 3일 전까지 마쳐야 해요.\n\n캐나다를 떠난 뒤에는 배서를 받을 수 없어요. 반드시 출국 전에 마치세요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.',
+        '한국행 전용 서식이에요. 현지 동물병원에서 작성받은 뒤 검역기관(CFIA) 공식 수의사의 배서를 받아야 해요.\n\n캐나다는 반려동물 출국 시 자체 검역을 하지 않아요. 한국이 수출국 정부 증명을 요구해서 배서가 필요한 거예요.\n\n배서는 예약제예요. 온라인 결제를 예약일 3일 전까지 마쳐야 하고 수수료는 환불되지 않아요.\n\n캐나다를 떠난 뒤에는 배서를 받을 수 없어요. 반드시 출국 전에 마치세요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.',
+    },
+  }),
+  // 베트남 골격 복제 2차 5국 — 2026-07-20. 구성은 vietnamFamilyDocSpecs 주석 참고.
+  // 모로코·우크라이나만 항체 결과지가 **입국용**이라 roundTripOnly 가 아니어야 하지만,
+  // factory 가 왕복 전용으로 고정하고 있어 titerEntryDoc 로 갈아끼운다.
+  '모로코': vietnamFamilyDocSpecs('모로코', 'ma', {
+    titerEntryDoc: true,
+    importQuarantineDoc: {
+      source: '모로코 검역기관(ONSSA)',
+      description:
+        '모로코 국경 검역소에서 검역을 받은 뒤 받는 서류예요.\n\n세관 통관에 필요해요. 검사 수수료는 마리당 10디르함이에요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
+    exportQuarantineDoc: {
+      // 한국 전용 서식이 실재해 정식 명칭을 쓸 수 있다.
+      name: '모로코 수출 증명서(E.CARNI.CoréeSud)',
+      source: '모로코 검역기관(ONSSA) 관용 수의사',
+      description:
+        '한국행 전용 서식이에요. 거주지 관할 ONSSA 수의서비스에서 관용 수의사가 발급해요.\n\n마이크로칩 번호가 반드시 기재돼야 하고, 항체 검사 결과지 원본을 첨부해요.\n\n채혈일이 출발일로부터 24개월 이내여야 하고 0.5 IU/mL 이상이어야 해요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.',
+    },
+  }),
+  '우크라이나': vietnamFamilyDocSpecs('우크라이나', 'ua', {
+    titerEntryDoc: true,
+    exportQuarantineDoc: {
+      name: '우크라이나 국제수의증명서',
+      source: '우크라이나 검역기관(DPSS) 국경검사부서',
+      description:
+        '두 단계로 받아요.\n\n먼저 국립 수의병원에서 수의증서를 받으세요. 출발 5일~72시간 전에 임상검사와 구충을 함께 받아요.\n\n그 서류로 출발 5일 전에 국경검사부서에서 국제수의증명서를 발급받으세요.\n\n유효기간이 5일뿐이라 미리 받아두면 만료돼요. 모든 국경 통과지점에 검사관이 있는 건 아니니 위치를 미리 확인하세요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.',
+    },
+  }),
+  '멕시코': vietnamFamilyDocSpecs('멕시코', 'mx', {
+    importQuarantineDoc: {
+      source: '멕시코 검역사무소(OISA)',
+      description:
+        '멕시코 공항 검역사무소에서 검역을 받은 뒤 받는 서류예요.\n\n검사 수수료는 없어요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
+    exportQuarantineDoc: {
+      name: '멕시코 수출 동물위생증명서(CZE)',
+      source: '멕시코 검역기관(SENASICA)',
+      description:
+        '한국으로 돌아올 때 필요한 정부 증명서예요. 발급 비용은 없어요.\n\n민간 수의사 건강증명서(5일 이내 발급)를 받아 SENASICA에 신청하면 3영업일 안에 1차 서명본이 나와요.\n\n출국 당일 공항에서 반려동물 실물 검사를 받고 최종 서명을 받아요.\n\n유효기간이 발급일로부터 8일뿐이니 일정을 맞추세요. 이 서류가 없으면 반송돼요.',
+    },
+  }),
+  '브라질': vietnamFamilyDocSpecs('브라질', 'br', {
+    importQuarantineDoc: {
+      source: '브라질 농축산 검역기관(VIGIAGRO)',
+      description:
+        '브라질 공항에서 검역을 받은 뒤 받는 서류예요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
+    exportQuarantineDoc: {
+      name: '브라질 국제수의증명서(CVI)',
+      source: '브라질 농축산 검역기관(VIGIAGRO)',
+      description:
+        '한국으로 돌아올 때 필요한 정부 증명서예요. 발급 비용은 없어요.\n\n현지 동물병원 건강증명서를 받아 VIGIAGRO에 신청하면 연방 농업감사관이 발급해요.\n\n한국은 전자 발급 대상이 아니라 직접 방문해야 하고 사전 예약이 필요해요.\n\n마이크로칩을 발급 당일 현장에서 판독해 확인하므로 칩이 반드시 있어야 해요.\n\n유효기간이 서명일로부터 10일뿐이니 일정을 맞추세요.',
+    },
+  }),
+  '카자흐스탄': vietnamFamilyDocSpecs('카자흐스탄', 'kz', {
+    importQuarantineDoc: {
+      source: '카자흐스탄 국경 수의검역소',
+      description:
+        '카자흐스탄 국경에서 검역을 받은 뒤 받는 서류예요.\n\n반려동물 2마리 이하는 국제 반려동물 여권이 수의증명서를 갈음해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
+    exportQuarantineDoc: {
+      name: '카자흐스탄 수출 수의증명서',
+      source: '카자흐스탄 수의통제감독위원회',
+      description:
+        '두 단계로 받아요.\n\n먼저 거주 지역 국가수의기관에서 수의증명서(형식 1호)를 받으세요.\n\n그 서류로 수의통제감독위원회 지역사무소에 신청하면 수출용 수의증명서로 발급해줘요. 처리에 영업일 2일이 걸려요.\n\n반려동물 수의여권 사본이 필요하고, elicense.kz 로 접수하거나 사무소를 방문하면 돼요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.',
     },
   }),
   '대만': [

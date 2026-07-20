@@ -372,6 +372,201 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['ca.import-quarantine-date-valid'],
     }),
   },
+  // ── 베트남 골격 복제 2차 5국 (모로코·우크라이나·멕시코·브라질·카자흐스탄) ──────
+  // 2026-07-20. 앞선 4국(캄보디아·몽골·우즈베키스탄·캐나다)과 같은 골격이지만 델타가 더 크다:
+  //   모로코·우크라이나 — 항체검사가 **입국 요건**(titer.need='entry') → 카드 문구가 '한국
+  //     귀국용'이 아니다. 우크라이나는 채혈 후 3개월 대기까지 있다(모로코는 없음).
+  //   멕시코·브라질 — 내·외부 구충이 필수(base catalog 의 구충 카드를 쓴다).
+  //   카자흐스탄 — 종합백신이 필수이고 **광견병과 같은 20일/12개월 규칙**이 걸린다.
+  // 규정 근거는 전부 각 procedure-checks 헤더와 destination-config 프로파일 주석에 있다.
+  morocco: {
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'morocco',
+      label: '모로코',
+      validationIds: [
+        'ma.rabies-prime-after-91days-old',
+        'ma.microchip-before-rabies',
+        'ma.rabies-min-21days-before-departure',
+      ],
+    }),
+    // 항체검사가 **입국 요건**이라 '한국으로 돌아올 때 필요해요' 문형을 쓰지 않는다.
+    // 채혈 시점(접종 후 30일)이 핵심이고, 채혈 후 대기는 없다.
+    'rabies-titer': {
+      description:
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n모로코 입국에 필요해요.\n광견병 접종일로부터 30일이 지난 후에 채혈해야 해요.\n0.5 IU/mL 이상이면 합격이에요.\n모로코 입국에는 검사 후 따로 기다리는 기간이 없어요.\n다만 모로코에서 주변 유럽 국가로 여행하려면 채혈 후 3개월이 지나야 해요.',
+      // ⚠️ base 항체 카드는 일본 전용 룰(jp.*)을 달고 있다 — 덮어쓰지 않으면 모로코 케이스에서
+      //   검증이 아예 실행되지 않는다(lint:validation-wiring 이 '적용되지 않는 룰'로 잡는다).
+      //   모로코는 채혈 시점 제약(접종 후 30일)만 있고 채혈 후 대기가 없다.
+      validationIds: ['ma.rnatt-min-30days-after-vaccine'],
+    },
+    'flight-purchase': {
+      description:
+        '모로코 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 21일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '모로코에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: ['ma.rabies-min-21days-before-departure'],
+    },
+    departure: importQuarantineCard({
+      label: '모로코',
+      fieldKey: 'ma_import_quarantine_date',
+      // 격리는 '규정 미발견'이다 — 없다고 명시한 문구도 없어서 단정하지 않는다.
+      description:
+        '모로코 도착 후 국경 검역소에서 검역을 받으세요.\n검역기관(ONSSA) 수의사가 서류와 반려동물을 확인해요.\n검사 수수료가 있어요. 마리당 10디르함이에요.\n통과하면 세관에서 검역 증명을 받아 입국해요.',
+      helpText: '모로코 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '모로코 수입 검역 서류',
+      validationIds: ['ma.import-quarantine-date-valid'],
+    }),
+  },
+  ukraine: {
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'ukraine',
+      label: '우크라이나',
+      validationIds: [
+        'ua.rabies-prime-after-12weeks',
+        'ua.microchip-before-rabies',
+        'ua.rabies-min-21days-before-departure',
+      ],
+    }),
+    'rabies-titer': {
+      description:
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n우크라이나 입국에 필요해요.\n광견병 접종일로부터 30일이 지난 후에 채혈해야 해요.\n0.5 IU/mL 이상이면 합격이에요.\n채혈일로부터 3개월이 지나야 입국할 수 있어요. 일정을 넉넉히 잡으세요.\n접종을 거르지 않으면 결과는 계속 유효해요.',
+      validationIds: [
+        'ua.rnatt-min-30days-after-vaccine',
+        'ua.titer-value-min-0.5iu',
+      ],
+    },
+    'flight-purchase': {
+      // ⚠️ 영공 폐쇄를 카드에 명시한다 — 직항이 없다는 걸 모르면 항공권부터 잘못 산다.
+      description:
+        '우크라이나 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 21일이 지난 후에 입국할 수 있어요.\n항체 검사 채혈일로부터 3개월이 지나야 입국할 수 있어요.\n우크라이나 영공이 닫혀 있어 직항편이 없어요. 유럽 공항까지 비행기로 간 뒤 육로로 국경을 넘어야 해요.\n유럽을 거치므로 유럽 입국 요건도 함께 확인하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '우크라이나에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: [
+        'ua.rabies-min-21days-before-departure',
+        'ua.departure-min-3months-after-titer',
+      ],
+    },
+    departure: importQuarantineCard({
+      label: '우크라이나',
+      fieldKey: 'ua_import_quarantine_date',
+      description:
+        '우크라이나 도착 후 국경 검역소에서 검역을 받으세요.\n서류와 반려동물을 확인해요. 요건을 갖추면 격리 없이 통과할 수 있어요.\n육로로 국경을 넘으므로 국경 검문소에서 받게 돼요.',
+      helpText: '우크라이나 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '우크라이나 수입 검역 서류',
+      validationIds: ['ua.import-quarantine-date-valid'],
+    }),
+  },
+  mexico: {
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'mexico',
+      label: '멕시코',
+      // 칩 선행 룰 없음 — SENASICA 문서에 칩 조항 자체가 없다(칩은 귀국 때 필요).
+      validationIds: [
+        'mx.rabies-prime-after-91days-old',
+        'mx.rabies-min-30days-before-departure',
+      ],
+    }),
+    'rabies-titer': {
+      description:
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n멕시코 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+    },
+    'flight-purchase': {
+      description:
+        '멕시코 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 30일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '멕시코에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: ['mx.rabies-min-30days-before-departure'],
+    },
+    'external-parasite': { validationIds: ['mx.external-parasite-within-6months'] },
+    'internal-parasite': { validationIds: ['mx.internal-parasite-within-6months'] },
+    departure: importQuarantineCard({
+      label: '멕시코',
+      fieldKey: 'mx_import_quarantine_date',
+      // 격리 없음·수수료 무료가 SENASICA 명문이라 그대로 쓴다. 진드기 발견 시 유치는
+      // 실제로 일어나는 일이라 함께 안내한다.
+      description:
+        '멕시코 도착 후 공항 검역사무소(OISA)에서 검역을 받으세요.\n서류를 확인하고 반려동물을 눈으로 살펴봐요. 격리는 없고 검사 수수료도 없어요.\n이동장은 깨끗해야 하고, 현장에서 예방 처치를 해요.\n진드기가 발견되면 검사 결과가 나올 때까지 반려동물을 붙잡아 둘 수 있어요.\n반추동물 성분이 든 사료·간식·침구는 반입할 수 없어요.',
+      helpText: '멕시코 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '멕시코 수입 검역 서류',
+      validationIds: ['mx.import-quarantine-date-valid'],
+    }),
+  },
+  brazil: {
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'brazil',
+      label: '브라질',
+      // 칩 선행 룰 없음 — MAPA "A pet microchip is not required to enter Brazil."
+      validationIds: [
+        'br.rabies-prime-after-91days-old',
+        'br.rabies-min-21days-before-departure',
+      ],
+    }),
+    'rabies-titer': {
+      description:
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n브라질 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+    },
+    'flight-purchase': {
+      description:
+        '브라질 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 21일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '브라질에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: ['br.rabies-min-21days-before-departure'],
+    },
+    'external-parasite': { validationIds: ['br.external-parasite-within-15days'] },
+    'internal-parasite': { validationIds: ['br.internal-parasite-within-15days'] },
+    departure: importQuarantineCard({
+      label: '브라질',
+      fieldKey: 'br_import_quarantine_date',
+      description:
+        '브라질 도착 후 공항 농축산 검역기관(VIGIAGRO)에서 검역을 받으세요.\n국제수의증명서(CVI)와 반려동물을 확인해요. 요건을 갖추면 격리 없이 통과할 수 있어요.\n요건을 충족하지 못하면 입국이 거부되거나 반송될 수 있어요.',
+      helpText: '브라질 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '브라질 수입 검역 서류',
+      validationIds: ['br.import-quarantine-date-valid'],
+    }),
+  },
+  kazakhstan: {
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'kazakhstan',
+      label: '카자흐스탄',
+      validationIds: [
+        'kz.rabies-prime-after-3months-old',
+        'kz.microchip-before-rabies',
+        'kz.rabies-booster-within-prime-validity',
+        'kz.rabies-min-20days-before-departure',
+      ],
+    }),
+    // ⚠️ 종합백신에도 광견병과 같은 20일/12개월 규칙이 걸린다 — EAEU 제15장이 두 백신을
+    //   같은 문장에서 규율한다. 다른 목적지(태국·필리핀)와 다른 지점이라 문구로 명시한다.
+    'general-vaccine': {
+      description:
+        '종합백신을 접종하세요.\n\n강아지는 디스템퍼·간염·장염·파보·아데노·렙토스피라를 포함해야 해요.\n고양이는 범백혈구감소증을 포함해야 해요.\n광견병과 마찬가지로 출국 20일 전까지 접종해야 해요.\n최근 12개월 안에 접종했다면 다시 맞지 않아도 돼요.',
+    },
+    'rabies-titer': {
+      description:
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n카자흐스탄 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+    },
+    'flight-purchase': {
+      description:
+        '카자흐스탄 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 20일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '카자흐스탄에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: ['kz.rabies-min-20days-before-departure'],
+    },
+    departure: importQuarantineCard({
+      label: '카자흐스탄',
+      fieldKey: 'kz_import_quarantine_date',
+      description:
+        '카자흐스탄 도착 후 국경 검역소에서 검역을 받으세요.\n국제 반려동물 여권과 서류를 확인해요.\n반려동물 2마리 이하는 수입 허가와 격리가 모두 면제돼요.',
+      helpText: '카자흐스탄 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '카자흐스탄 수입 검역 서류',
+      validationIds: ['kz.import-quarantine-date-valid'],
+    }),
+  },
   // ── 대만 (APHIA 動植物防疫檢疫署) ─────────────────────────────────────
   // 1회 접종 + 항체검사 모델(EU 골격)이지만 대기·허가 구조가 다르다: ①채혈 후 180일 대기
   // (일본과 같아 base 항공권 earliest anchor 를 그대로 상속) ②수입허가증을 도착 120일 전까지

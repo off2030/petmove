@@ -440,9 +440,93 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     extraFields: ['overseas_phone', 'passport_number', 'holder_birth_date', 'entry_date'],
     rabiesTiterForReturnOnly: true,
   },
+  // ── 멕시코 (SENASICA / 현장 OISA) ──────────────────────────────────────
+  // ✅ 1차 출처 확보(2026-07-20). SENASICA 공식 영문 PDF 전문 대조.
+  //   https://www.gob.mx/cms/uploads/attachment/file/938779/ENG.Viajas_con_tu_mascota_a_M_xico-Requisitos_y_procedimientos_para_viajar_a_M_xico_con_tu_mascota.pdf
+  //   입국 요건은 **건강증명서 하나**로 수렴하고, 그 안에 5개 항목이 들어간다:
+  //   공무수의사(또는 면허 민간수의사) 발급 / 수출자·수입자 성명·주소 / 광견병 접종일과
+  //   유효기간(**3개월 미만은 면제**) / 임상 건강 / **6개월 이내 내·외부 구충**.
+  //   증명서는 **발급일로부터 15일** 유효. 수입허가 불요. 격리 없음. 검사 무료.
+  //
+  // ⚠️ **마이크로칩은 입국 요건이 아니다** — SENASICA 문서에 조항 자체가 없다(사용자 확정값과 일치).
+  //   SENASICA 수출증명서 안내에서만 "en caso de que el país destino lo requiera"(목적지국이
+  //   요구하는 경우) 조건부로 등장한다. 그런데 **멕시코→한국 귀국 때는 ISO 칩이 필수**다
+  //   (한국 요건). 방향이 정반대라 룰·문구에서 반드시 구분할 것.
   mexico: {
     keywords: ['멕시코', 'mexico'],
+    rabies: {
+      doses: 1,
+      // 원문은 "animals under 3 months of age are exempted" / "menores de 3 meses" —
+      // **달력 3개월**이고 '91 days'라는 표현은 공식 문서에 없다.
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      // ⚠️ **SENASICA 에는 접종 후 대기 규정이 없다.** 구 주석의 "SENASICA: 도착 전 ≥15일
+      //   명시"는 1차 출처를 찾지 못했다(상업 사이트 단독). 30일은 한국 출국검역 쪽 근거이고
+      //   사용자 확정값이라 유지한다 — 멕시코보다 엄격해서 지키면 문제되지 않는다.
+      timingLines: ['출국 30일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 30,
+    },
+    // 멕시코 입국엔 불요(SENASICA 요건 목록에 없음). 한국 귀국용으로만 뜬다 —
+    // 멕시코는 한국 기준 광견병 비발생 지정지역이 아니라 귀국 시 항체검사가 필요하다.
+    titer: { need: 'return-only' },
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
+    // 격리 없음 — OISA 서류심사 + 임상 육안검사뿐이고 통상 즉시 통관, 검사 수수료도 무료.
+    importQuarantine: {},
+    rabiesTiterForReturnOnly: true,
+  },
+  // ── 카자흐스탄 (농업부 수의통제감독위원회) ────────────────────────────
+  // ✅ 1차 출처 확보(2026-07-20). **카자흐스탄 독자 규정이 아니라 EAEU 통일 수의요건**이
+  //   직접 적용된다 — 카자흐스탄은 EAEU **정회원**이다(우즈베키스탄은 옵서버라 자국 규정을
+  //   쓰는 것과 대비된다). 러시아·벨라루스·키르기스·아르메니아와 조문이 동일하다.
+  //   관세동맹위원회 결정 제317호(2010-06-18) 부속서 4 「Единые ветеринарные требования」
+  //   **제15장**(모피수·토끼·개·고양이). 카자흐 법령DB 등재: adilet.zan.kz/rus/docs/H10T0000317
+  //
+  // 제15장 원문 핵심:
+  //   "Не позднее чем за **20 дней** до отправки животных вакцинируют, если они не были
+  //    привиты в течение последних **12 месяцев**:
+  //    — всех плотоядных — против **бешенства** …
+  //    — **собак** — против чумы плотоядных, гепатита, вирусного энтерита, парво- и
+  //      аденовирусных инфекций, **лептоспироза**;
+  //    — **кошек** — против **панлейкопении**"
+  //   → ⚠️ **종합백신에도 광견병과 똑같은 20일/12개월 규칙이 걸린다.** 다른 목적지엔 없는
+  //     구조다(태국·필리핀은 종합백신 기한이 광견병과 별도). 카드·검증을 만들 때 주의.
+  //     개 = 사실상 DHPPL, 고양이 = 범백 단독(허피스·칼리시는 조문에 없다).
+  //   다년 백신 **인정** — "срок поддержания иммунитета вакциной против бешенства,
+  //     составляющий **более одного года**, не истек" (또는 0.5 МЕ/мл 실험실 입증).
+  //   재접종은 직전 접종 유효기간 내여야 한다("в период действия предшествующей вакцинации").
+  //   개인동반 **2두 이하는 수입허가·격리 모두 면제**, 국제 반려동물 여권이 수의증명서를 갈음.
+  //   제3국(한국)발은 도착지에서 여권 재발급·전환 불요.
+  //   항체검사는 입국 요건이 **아니다** — 0.5 IU/ml 는 다년 백신의 면역 지속 입증 대체수단.
+  //
+  // ⚠️ 마이크로칩 — **EAEU 제15장에 의무 조항이 없다.** 요구되는 건 '국제 여권'이지 칩이
+  //   아니다. 다만 카자흐 국내법(「Об ответственном обращении с животными」 2021-12-30)이
+  //   2023-09-01부터 개·고양이 등록·칩을 의무화했고(국가DB TANBA), **한국 귀국엔 ISO 칩이
+  //   필수**다. 사용자 확정값 '칩 필수 O'는 유지하되 근거는 '입국요건'이 아니라
+  //   **'카자흐 동물등록법 + 한국 귀국요건'** 이다. 문구를 쓸 때 입국 요건으로 단정하지 말 것.
+  //
+  // 확인 실패(추측으로 채우지 않은 것):
+  //  - **광견병 최소 접종 연령 3개월** — 제15장에서 상반된 판독이 나왔다(3개월 미만 반입
+  //    금지인지 허용인지). 사용자 확정값이라 유지하되 카자흐 1차 근거로는 인용 불가.
+  //  - 출국 전 임상검사 기한 5일(구판) vs 14일(현행 추정) — adilet 원문 SSL 오류로 미확인.
+  //    보수적으로 5일 운용이 안전하다(5일을 지키면 14일도 충족).
+  //  - 금지 견종·마리수 2두의 개/고양이 합산 여부 — 근거 없음(합산 보수 운용 권장).
+  kazakhstan: {
+    keywords: ['카자흐스탄', 'kazakhstan'],
+    rabies: {
+      doses: 1,
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      // 20일 = 제15장 원문값(사용자 확정값과 일치). 상업 사이트의 '21일'은 근거 불명이다.
+      timingLines: ['출국 20일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 20,
+    },
+    titer: { need: 'return-only' },
+    appSupported: true,
+    vaccines: ['rabies', 'rabies_titer', 'general'],
+    importQuarantine: {},
     rabiesTiterForReturnOnly: true,
   },
   russia: {
@@ -478,9 +562,51 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['괌', 'guam'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'kennel', 'external_parasite', 'internal_parasite', 'heartworm'],
   },
+  // ── 브라질 (MAPA 규정 / VIGIAGRO 현장) ────────────────────────────────
+  // ✅ 1차 출처 확보(2026-07-20). **Portaria MAPA nº 741, de 10/12/2024**(DOU 2024-12-12)가
+  //   현행이고 구 Instrução Normativa 5/2013 은 **폐지**됐다(Art. 2º). MERCOSUL GMC RES.
+  //   20/24 를 편입한 것이라 조문이 "Estados Partes" 표현을 쓰지만, MAPA 가 이걸 전체 입국
+  //   근거·CVI 서식으로 게시하고 있어 제3국(한국)에도 적용된다.
+  //   https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/portaria-mapa-no-741_2024-caninos-e-felinos-domesticos-1.pdf
+  //
+  // ⚠️ **코드가 브라질 입국 요건과 한국 귀국 요건을 뒤섞고 있었다**(2026-07-20 조사에서 발견).
+  //   ①마이크로칩 — MAPA 영문 안내 원문 "A pet microchip is **not required** to enter Brazil."
+  //     Art. 17 은 "쓸 거면 ISO 11784/11785 여야 한다"는 조건부일 뿐이다. 반면 **브라질→한국
+  //     귀국 때는 ISO 칩이 필수**다. 방향이 반대다.
+  //   ②접종 후 경과일 — 브라질 입국은 **21일**(Art. 10, 1차 접종에 한함). 코드의 30일은
+  //     한국 귀국 요건("não inferior a 30 dias")이 흘러든 값이다.
+  //
+  // 규정값(Portaria 741/2024):
+  //   Art. 9º  입국 시점 **90일 이상**이면 광견병 접종 필수, 백신은 유효기간 내
+  //            ("dentro do seu período de vigência" — 다년 백신도 라벨 유효기간대로 인정)
+  //   Art. 10  1차 접종은 **21일** 경과 후 출발 허용. 유효기간 만료 후 미재접종도 1차로 간주
+  //   Art. 11  90일 미만은 미접종 입국 가능(수의당국이 CVI 에 증명)
+  //   Art. 13  CVI **발급일 전 15일 이내** 내·외부 광범위 구충
+  //   Art. 14  CVI **발급일 전 10일 이내** 임상검사
+  //   Art. 6º  CVI 유효 **60일**(광견병 접종이 유효한 동안)
+  //   → 구충·임상검사 기준일이 **출국일이 아니라 CVI 발급일**이다. CVI 가 최대 60일 유효라
+  //     둘이 크게 벌어질 수 있다(procedure-checks/br.ts 의 기준일 주석 참고).
+  //   항체검사 조항은 전문에 **없다**(sorologia/titulação 부재) → 입국 불요.
+  //   수입허가 불요. 격리 조항 없음. 유럽 펫패스포트는 브라질에 무효.
+  //   CVI 는 **정부 배서 필수** — "Certificates signed only by a private veterinarian are
+  //   not accepted" → 한국은 APQA 배서.
   brazil: {
     keywords: ['브라질', 'brazil'],
+    rabies: {
+      doses: 1,
+      // ⚠️ 원문은 "*접종* 최소 연령"이 아니라 "**입국 시점** 90일 이상이면 접종 필수"다.
+      //   우리 모델엔 입국 시점 기준 면제 분기가 없어, 접종 최소 연령 90일로 근사한다.
+      //   90일 미만 무접종 입국(Art. 11)은 지원하지 않는 셈 — 케이스가 생기면 분기 추가할 것.
+      minAgeDays: 90,
+      minAgeLabel: '생후 90일',
+      timingLines: ['출국 21일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 21,
+    },
+    // 브라질 입국엔 불요. 한국 귀국용으로만(귀국 시 0.5 IU/mL 이상, 채혈 후 24개월 이내).
+    titer: { need: 'return-only' },
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
+    importQuarantine: {},
     rabiesTiterForReturnOnly: true,
   },
   china: {
@@ -540,11 +666,66 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vetVisitWindowDays: 7,
     importPermit: {}, // DVS
   },
+  // ── 모로코 (ONSSA — 국경검역소 PIF 16개소) ────────────────────────────
+  // ✅ 1차 출처 확보(2026-07-20). ONSSA 공식 증명서 **양식 원본**을 직접 판독했다.
+  //   한국 전용 수입 양식은 없고 **"Other Countries" 양식**이 적용된다:
+  //   **I.CT.CN.JUIL.2025**(2025년 7월판) — onssa.gov.ma/wp-content/uploads/2025/07/Certificat-sanitaire-valide.pdf
+  //
+  // 양식 조항 원문:
+  //   3항 "identified with permanent mark, **prior to** their vaccination against rabies"
+  //   4항 "vaccinated against rabies **with inactivated vaccine**, and **at least 21 days
+  //        have elapsed after the primary rabies vaccination**"
+  //   5항 "Will be exported for a period **more than 12 months**; **Or** … **temporarily for
+  //        a period less than 12 months**, and have been submitted to a blood sample … **at
+  //        least 30 days after the previous rabies vaccination** … **of at least 0.5 IU/ml**"
+  //   서명란 "Le vétérinaire officiel / Official veterinarian" + "Cachet officiel" → 정부 배서 필수.
+  //
+  // ⚠️ **입국 대기는 21일이다(30일 아님).** 구 주석·구 룰의 30일은 "ONSSA EU 양식 운용 표준"
+  //   이라고만 적혀 있었고 양식 원문에는 21일뿐이다. 30일은 **항체검사 채혈 시점**(접종 후
+  //   30일) 조건이 대기일로 흘러든 것으로 보인다. 두 숫자는 서로 다른 조항이다.
+  //
+  // ⚠️ **항체검사가 조건부다** — 5항은 양자택일이고 **12개월 초과 체류(영구 이주)를 고르면
+  //   항체검사 조항이 삭제된다.** EU 양식(2023)·구 제3국 양식(2021)에서도 같은 구조가
+  //   독립 확인됐다. 그럼에도 우리는 **need:'entry'(무조건 필수)로 둔다** — 왕복이면 모로코
+  //   **출국** 양식(E.CARNI.CoréeSud.Juin.2015)이 항체검사를 무조건 요구하고, 한국 귀국에도
+  //   필요해서 실무상 안 받는 선택지가 없다. 체류기간 분기를 넣을 만한 실익이 없다.
+  //
+  // 참고 — '항체검사 후 3개월 대기'는 **폐기된 구 규정**이다. 2021년판 아랍어 양식에는
+  //   "수출 전 3개월 초과 12개월 미만 시점 채혈"이 있었으나 2025년 7월판에서 "접종 후 최소
+  //   30일"로 대체됐다. 상업 사이트가 아직 3개월을 인용하는 건 stale 이다(사용자 확정값 일치).
+  //
+  // 금지 견종(확정) — ONSSA Avis au Public N°590(2021-02-09), 공동령 n°1677.18(2018-07-18):
+  //   pitbull(Staffordshire Bull Terrier·American Staffordshire Bull Terrier), boerbull(Mastiff),
+  //   Tosa → "l'importation de ce type de chiens au Maroc est **interdite**".
+  // 도착 — 서류·동일성·임상 검사 후 통관, 검사 수수료 **10 디르함/두**. 격리 규정은 미발견
+  //   (없다고 명시한 문구도 없다 — '규정 미발견'이 정확한 표현).
+  //
+  // 확인 실패(추측으로 채우지 않은 것):
+  //  - **입국 방향 최소 접종 연령** — ONSSA 수입 양식에 연령 규정이 **없다**. 사용자 확정값
+  //    3개월은 모로코→한국 **수출** 양식 제목("THREE MONTHS OLD AND MORE")이 근거다.
+  //  - 접종 후 **상한**(12개월설)·다년 백신 인정 여부·입국용 항체 유효기간 — 전부 근거 없음.
+  //  - 수입허가 필요 여부 — 영사 안내는 CITES 종만 언급, APHIS 2차 인용은 필요하다고 함(미대조).
+  //  - 1항 "광견병 비발생국에서 출생 또는 최근 6개월 체류" 서약 — 한국은 청정국이 아니라
+  //    APQA 수의사가 서명 가능한지 사전 확인이 필요하다(문서상 실재하는 리스크).
   morocco: {
-    // ONSSA — 광견병 출국 30일 전, 도착 시 수의사 검역. RNATT 는 한국 귀국용.
     keywords: ['모로코', 'morocco'],
+    rabies: {
+      doses: 1,
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      vaccineTypeLine: '불활화(사독) 백신만 인정돼요.',
+      timingLines: ['출국 21일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 21,
+    },
+    titer: {
+      need: 'entry',
+      // 채혈은 접종 후 30일 경과 후(양식 5항). 채혈 후 대기는 **없다** — 우크라이나와 갈리는 점.
+      minDaysAfterVaccine: 30,
+    },
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer'],
-    rabiesTiterForReturnOnly: true,
+    importQuarantine: {},
   },
   // 1차 정부 영문 자료 부분 공개 패밀리 — USDA APHIS / 한국 QIA 정부 2차 안내·운용 룰 의존
   //
@@ -784,10 +965,61 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     importQuarantine: {},
     rabiesTiterForReturnOnly: true,
   },
+  // ── 우크라이나 (Держпродспоживслужба — DPSS) ──────────────────────────
+  // ✅ 1차 출처 확보(2026-07-20). 구 주석의 "공식 자료 부재 — 사례 기반"은 사실이 아니었다.
+  //   근거 법령: 「수의학 및 동물복지법」 1206-IX(2026-03-01 시행), 농업정책부령 553/2018
+  //   (z0346-19), 부령 **1366/2025**(z0510-25, 수의문서 발급 절차, 2026-03-01 시행 —
+  //   구 288/2014 폐지). DPSS 안내: dpss.gov.ua
+  //   ⚠️ dpss.gov.ua 는 한국·미국 IP 에서 직접 접속이 차단된다(리더 프록시 경유 필요).
+  //
+  // ⚠️⚠️ **영공이 민항기에 완전 폐쇄돼 있어 직항 입국이 불가능하다.**
+  //   EASA CZIB-2022-01R13(Active, 2026-07-31까지) 전 FIR 대상. DPSS 자체 문서(2026-06-09)도
+  //   "повітряний простір України закритий" 로 인정한다.
+  //   → 실제 경로는 **한국 → EU 공항 → 육로 국경**(폴란드·슬로바키아·헝가리·루마니아·몰도바)
+  //     이고, 그러면 **EU 입국 요건이 먼저 걸린다**(실질 병목이 EU 규정이다).
+  //   앱 목적지로 여는 문제는 사용자 판단이 필요하다 — 단독 목적지 카드로 만들면 실제 절차와
+  //   어긋난다. appSupported 를 켜기 전 반드시 결론을 낼 것.
+  //
+  // 확인된 요건(APHIS 미국 출발 안내 + DPSS 안내 교차):
+  //   칩 ISO 필수(문신은 2011-07-03 이전 시술분만) → 칩 후 접종
+  //   광견병 최소 **12주**("Pets under 12 weeks of age must not be vaccinated")
+  //   접종 후 **21일** 대기(초회 또는 유효기간 경과 후 재접종인 경우)
+  //   **3년 백신 인정 O**("Ukraine will accept a 3-year rabies vaccine")
+  //   항체검사 **필수**, 0.5 IU/ml 이상, 채혈은 접종 후 **30일** 경과 후,
+  //     채혈 후 **3개월(90일) 대기**("more than three (3) months prior to export")
+  //   항체 유효기간 = **조건부 무기한** — "remains valid indefinitely as long as there has
+  //     been no lapse in rabies vaccination coverage". EU 와 같은 모델이다.
+  //   수입허가·사전신고 **불요**(2015년 법 191-VIII 로 수입허가 개념 자체가 삭제됨).
+  //   도착 격리 **없음** — 553/2018 제1장 6항이 비상업 반려동물을 격리 요건에서 제외한다.
+  //   마리수 5두 이하(DPSS 안내에만 있고 법령 본문엔 없어 근거가 약하다).
+  //   수입 금지 견종 **없음** — 내각령 1164/2021 의 '위험 견종' 목록은 보험·입마개 규제이지
+  //     수입 규제가 아니다(조문에 ввезення/імпорт 언급이 전무).
+  //
+  // ⚠️ 널리 퍼진 "도착 후 30일 격리", "항체 3~24개월 유효"는 **폐지된 2004년 명령 71호
+  //   (z0768-04)** 잔재다. 553/2018 이 폐지했다. 쓰지 말 것.
   ukraine: {
-    // 공식 자료 부재 — 사례 기반. 광견병 21일 + RNATT 3개월/1년 + 건강증명서 48시간.
     keywords: ['우크라이나', 'ukraine'],
+    rabies: {
+      doses: 1,
+      minAgeDays: 84,
+      minAgeLabel: '생후 12주(84일)',
+      timingLines: ['출국 21일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 21,
+    },
+    titer: {
+      need: 'entry',
+      minDaysAfterVaccine: 30,
+      // 채혈 후 3개월 대기 — 모로코와 갈리는 지점(모로코는 대기 없음).
+      entryWaitAfterTiter: { months: 3 },
+      // 조건부 무기한(접종 이력 단절 없을 것) — EU 와 같은 모델이라 null.
+      // ⚠️ 다만 **왕복이면 한국 APQA 의 '채혈일 도착 전 24개월 이내'가 실효적으로 걸린다.**
+      //   그건 귀국 방향 공통 룰(titer-validity.ts)이 담당한다.
+      entryValidityMonths: null,
+    },
+    // ⚠️ 영공 폐쇄 상태다(위 주석). 카드에 'EU 경유 육로' 안내를 명시해 두고 노출한다.
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer'],
+    importQuarantine: {},
   },
   israel: {
     // 광견병 후 30일 + RNATT 필수 + 도착 5일 이내 등록.

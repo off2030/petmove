@@ -120,6 +120,28 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'vn_export_quarantine_confirmed',
   'kh_export_quarantine_date',
   'kh_export_quarantine_confirmed',
+  // 모로코·우크라이나·멕시코·브라질·카자흐스탄 — 베트남 골격 복제(2026-07-20).
+  // 도착 수입 검역 + 현지 수출 검역 한 쌍씩. 근거는 각 procedure-checks 헤더 주석 참고.
+  'ma_import_quarantine_date',
+  'ma_import_quarantine_confirmed',
+  'ma_export_quarantine_date',
+  'ma_export_quarantine_confirmed',
+  'ua_import_quarantine_date',
+  'ua_import_quarantine_confirmed',
+  'ua_export_quarantine_date',
+  'ua_export_quarantine_confirmed',
+  'mx_import_quarantine_date',
+  'mx_import_quarantine_confirmed',
+  'mx_export_quarantine_date',
+  'mx_export_quarantine_confirmed',
+  'br_import_quarantine_date',
+  'br_import_quarantine_confirmed',
+  'br_export_quarantine_date',
+  'br_export_quarantine_confirmed',
+  'kz_import_quarantine_date',
+  'kz_import_quarantine_confirmed',
+  'kz_export_quarantine_date',
+  'kz_export_quarantine_confirmed',
   // 몽골·우즈베키스탄·캐나다 수출 검역 (왕복 귀국 전 — 2026-07-20 조사 후 신설).
   // 세 나라 모두 한국 APQA 가 '수출국 정부기관 증명 검역증명서'를 요구해 사실상 강제다
   // (EU 펫패스포트만 예외). 나라별 근거는 각 catalog step 주석 참고.

@@ -49,6 +49,7 @@ const ORPHAN_RULE_OK: Record<string, string> = {
   'cn.one-pet-per-guardian': '보호자 단위 조건 — 특정 단계 없음',
   'vn.max-2pets-per-guardian': '보호자 단위 조건 — 특정 단계 없음',
   'ph.max-3pets-per-shipment': '보호자 단위 조건 — 특정 단계 없음',
+  'ma.max-5pets-non-commercial': '보호자 단위 조건 — 특정 단계 없음',
   // 견종 제한 — 동물 자체의 속성이라 단계가 없다.
   'cn.banned-breeds': '동물 속성 — 특정 단계 없음',
   'vn.banned-breeds': '동물 속성 — 특정 단계 없음',
