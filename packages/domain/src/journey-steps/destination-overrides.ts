@@ -121,9 +121,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // rabies-only-1year-vaccine 은 blocker(저장 거부)인데 어느 카드에도 안 붙어 있어
       // 경고가 상단으로 샜다(중국은 2차 카드에 붙어 있음 — 2026-07-19 전수조사).
       // 베트남은 1회 접종국이라 2차 카드가 없으므로 1차 카드가 받는다.
+      // 마이크로칩 선행 룰은 없다 — 베트남은 칩 자체가 입국 요건이 아니라 접종과의 순서를
+      // 따질 이유가 없다(사용자 지정 2026-07-20). 칩은 한국 수출검역(강아지 동물등록)과
+      // 귀국 항체검사 때문에 실무상 넣지만, 그건 베트남 입국 요건이 아니다.
       validationIds: [
         'vn.rabies-prime-after-3months-old',
-        'vn.microchip-before-rabies',
         'vn.rabies-only-1year-vaccine',
       ],
     }),
@@ -567,10 +569,15 @@ function buildRabiesCard(opts: {
   const minAge =
     p.minAgeLabel ?? (p.minAgeDays ? `생후 ${p.minAgeDays}일` : '')
 
+  // 칩 선행 문구는 그 나라가 실제로 *.microchip-before-rabies 룰을 선언할 때만 넣는다.
+  // 마이크로칩이 입국 요건이 아닌 나라(베트남 — Circular 25 에 칩 조항 없음, 펫무브 가이드도
+  // "필수가 아니다")까지 하드코딩으로 이 문장이 나가고 있었다(2026-07-20 사용자 지적).
+  // 룰 선언을 단일 출처로 삼으면 문구·주의·저장 거부 세 층이 자동으로 같이 움직인다.
+  const requiresChipFirst = opts.validationIds.some((id) => id.endsWith('.microchip-before-rabies'))
   const lines: string[] = [
     twoDose ? '1차 광견병 백신을 접종하세요.' : '광견병 백신을 접종하세요.',
-    '마이크로칩 삽입 후에 접종해야 해요.',
   ]
+  if (requiresChipFirst) lines.push('마이크로칩 삽입 후에 접종해야 해요.')
   if (minAge) lines.push(`${minAge}이 지난 후에 접종해야 해요.`)
   for (const l of p.timingLines ?? []) lines.push(l)
   if (p.vaccineTypeLine) lines.push(p.vaccineTypeLine)

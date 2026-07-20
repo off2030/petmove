@@ -16,7 +16,11 @@ import {
   msgRabiesPrimeMinAge,
   msgTiterBeforeVaccine,
 } from './messages'
-import { buildDateRuleContext, isTwTiterChainMaintained } from '../journey-steps/date-rules'
+import {
+  buildDateRuleContext,
+  isTwTiterChainMaintained,
+  violatesTwRabiesShipmentWait,
+} from '../journey-steps/date-rules'
 
 /**
  * 대만 (APHIA — Animal and Plant Health Inspection Agency, 2023년 BAPHIQ에서 개칭) 절차 검증.
@@ -143,19 +147,14 @@ export const TW_CHECKS: ProcedureCheck[] = [
       if (!dep || rabies.length === 0) return SKIP
 
       const latest = rabies[rabies.length - 1]
-      // 부스터 = 직전 접종의 면역 유효기간 안에 맞은 재접종(chain 유지). 만료 후 재접종은
-      // 단절이라 새 1차로 본다 — 태국·필리핀의 isValidBooster 와 같은 판정 기준.
-      const isBooster =
-        rabies.length >= 2 &&
-        (() => {
-          const prev = rabies[rabies.length - 2]
-          const prevValid = resolveValidUntil(prev.date, prev.valid_until)
-          return !!prevValid && latest.date <= prevValid
-        })()
-      const minDays = isBooster ? 30 : 90
+      // 판정은 도메인 함수 하나 — 저장 거부(validateTwRabiesShipmentDate)와 이 주의가
+      // 어긋나면 안 된다. 부스터 = 직전 접종의 면역 유효기간 안에 맞은 재접종(chain 유지).
+      // 만료 후 재접종은 단절이라 새 1차로 본다(isValidBooster 공용, 2026-07-20 통일).
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const { violated, isBooster } = violatesTwRabiesShipmentWait(data, dep)
       const gap = daysBetween(latest.date, dep)
       if (gap === null) return SKIP
-      if (gap < minDays) {
+      if (violated) {
         // 접종일은 과거 사실이라 조치는 '출국일을 미루는 것'뿐 — 그렇게 안내한다.
         return {
           ok: false,

@@ -852,8 +852,13 @@ export function StepDetailView({
           step.earliest?.anchor === 'birth' ? step.earliest.monthsAfter : undefined
         const ageErr = validateRabiesPrimeAge(readBirthDate(caseRow?.data), first.date, minAgeDays, minAgeMonths)
         if (ageErr) return ageErr
-        const chipErr = validateMicrochipBeforeBooster(readImplantDate(caseRow?.data), first.date)
-        if (chipErr) return chipErr
+        // 칩 선행은 그 나라가 *.microchip-before-rabies 를 선언할 때만 막는다 — 아래 isRabies1
+        // 분기와 같은 게이트. 예전엔 1회 접종국이면 무조건 막아서, 칩이 입국 요건도 아닌
+        // 베트남에서 칩을 접종보다 늦게 넣으면 저장이 거부됐다(2026-07-20 사용자 지적).
+        if ((step.validationIds ?? []).some((id) => id.endsWith('.microchip-before-rabies'))) {
+          const chipErr = validateMicrochipBeforeBooster(readImplantDate(caseRow?.data), first.date)
+          if (chipErr) return chipErr
+        }
       }
       const chainBreak = findRabiesChainBreak(
         rabiesList.map((e) => ({ date: e.date, valid_until: e.valid_until || null })),

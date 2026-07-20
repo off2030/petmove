@@ -177,6 +177,23 @@ export function validateTwEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
+ * 대만 입국일 — **광견병 접종 후 선적 대기**(1차 90일 / 유효 부스터 30일) 미달 시 저장 거부.
+ *
+ * 항체 90일 대기(validateTwEntryDate)와 별개 요건이다. 평소엔 항체 대기가 이걸 덮지만,
+ * 재검사 체인으로 항체 대기가 면제되는 경로에서는 이 요건만 남는다(tw.rabies-shipment-window
+ * 주석과 같은 이유). 그 경로에 저장 거부가 없어 주의만 뜨고 있었다(2026-07-20 사용자 지정으로 추가).
+ */
+export function validateTwRabiesShipmentDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!matchesDestinationKey(ctx.destination, 'taiwan')) return null
+  const { violated, isBooster } = violatesTwRabiesShipmentWait(ctx.data, v)
+  if (!violated) return null
+  return isBooster
+    ? '광견병 추가 접종 후 30일이 지나야 대만에 입국할 수 있어요. 날짜를 확인하세요.'
+    : '광견병 1차 접종 후 90일이 지나야 대만에 입국할 수 있어요. 날짜를 확인하세요.'
+}
+
+/**
  * 백신 배열(key: 'rabies_dates' / 'general_vaccine_dates')의 최근 접종이 '유효 부스터'인지:
  * 직전 접종의 면역 유효기간 안에 재접종한 경우(chain 미단절). 유효 부스터는 21일 대기 면제.
  * (만료 후 재접종 = discontinuity = 새 1차 취급 → 면제 안 됨.)
@@ -280,19 +297,54 @@ export function validateThEntryDate(v: string, ctx: DateRuleContext): string | n
  */
 export const VN_RABIES_WAIT_DAYS = 30
 
-export function violatesVnRabiesWait(
+/**
+ * 접종 후 대기 판정 **공용** — 최근 접종 기준, 유효 부스터는 면제.
+ * 태국 21일·필리핀 21일·베트남 30일이 같은 모델이라 한 함수로 묶는다(대만만 부스터도
+ * 대기가 있어 별도 — violatesTwRabiesShipmentWait).
+ */
+export function violatesVaccineWaitDays(
   data: Record<string, unknown>,
   entryOrDeparture: string,
+  key: 'rabies_dates' | 'general_vaccine_dates',
+  waitDays: number,
 ): boolean {
   const target = (entryOrDeparture ?? '').slice(0, 10)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(target)) return false
   // 유효 부스터 = 면역 연속 → 대기 면제.
-  if (isValidBooster(data, 'rabies_dates')) return false
-  const dates = readDateArray(data, 'rabies_dates')
+  if (isValidBooster(data, key)) return false
+  const dates = readDateArray(data, key)
   if (dates.length === 0) return false
   const latest = dates.reduce((a, b) => (a > b ? a : b))
-  const earliest = addDays(latest, VN_RABIES_WAIT_DAYS)
+  const earliest = addDays(latest, waitDays)
   return !!earliest && target < earliest
+}
+
+export function violatesVnRabiesWait(
+  data: Record<string, unknown>,
+  entryOrDeparture: string,
+): boolean {
+  return violatesVaccineWaitDays(data, entryOrDeparture, 'rabies_dates', VN_RABIES_WAIT_DAYS)
+}
+
+/**
+ * 대만 선적 대기 — 1차·단절 90일 / **유효 부스터 30일**.
+ *
+ * 태국·필리핀·베트남과 달리 부스터가 '면제'가 아니라 '30일로 단축'이다.
+ * APHIA: 「首次疫苗注射…間隔須滿 90 日；追加注射…間隔須滿 30 日」.
+ * tw.rabies-shipment-window(주의)와 이 함수를 공유한다.
+ */
+export function violatesTwRabiesShipmentWait(
+  data: Record<string, unknown>,
+  entryOrDeparture: string,
+): { violated: boolean; isBooster: boolean } {
+  const target = (entryOrDeparture ?? '').slice(0, 10)
+  const isBooster = isValidBooster(data, 'rabies_dates')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(target)) return { violated: false, isBooster }
+  const dates = readDateArray(data, 'rabies_dates')
+  if (dates.length === 0) return { violated: false, isBooster }
+  const latest = dates.reduce((a, b) => (a > b ? a : b))
+  const earliest = addDays(latest, isBooster ? 30 : 90)
+  return { violated: !!earliest && target < earliest, isBooster }
 }
 
 /**
@@ -349,6 +401,14 @@ export function validatePhEntryDate(v: string, ctx: DateRuleContext): string | n
   const earliest = addDays(birth, 120)
   if (earliest && v < earliest) {
     return '생후 120일(4개월)이 지나야 필리핀에 입국할 수 있어요'
+  }
+  // 접종 후 21일 대기(광견병·종합백신) — 태국과 같은 모델(최근 접종 기준, 유효 부스터 면제).
+  // 태국엔 있고 필리핀엔 저장 거부가 빠져 있어 주의만 뜨고 있었다(2026-07-20 사용자 지정으로 추가).
+  if (violatesVaccineWaitDays(ctx.data, v, 'rabies_dates', 21)) {
+    return '광견병 접종 후 21일이 지나야 필리핀에 입국할 수 있어요. 날짜를 확인하세요.'
+  }
+  if (violatesVaccineWaitDays(ctx.data, v, 'general_vaccine_dates', 21)) {
+    return '종합백신 접종 후 21일이 지나야 필리핀에 입국할 수 있어요. 날짜를 확인하세요.'
   }
   return null
 }
@@ -591,6 +651,9 @@ export function validateEntryDateForDestination(
     validatePhEntryDate(entryOrDeparture, ctx) ??
     validateEuEntryDate(entryOrDeparture, ctx) ??
     validateTwEntryDate(entryOrDeparture, ctx) ??
+    // 대만 광견병 선적 대기(90/30일) — 항체 90일과 별개 요건. 재검사 체인으로 항체 대기가
+    // 면제되는 경로에서는 이것만 남는다.
+    validateTwRabiesShipmentDate(entryOrDeparture, ctx) ??
     // 베트남 30일 — 출국일 입력 시에만 거부(접종일 입력 경로는 주의로 안내). 베트남은
     // 출발일 입력칸이 따로 없어 입국일·출국일이 사실상 같은 값이라 entryOrDeparture 를 쓴다.
     validateVnEntryDate(entryOrDeparture, ctx) ??

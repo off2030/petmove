@@ -15,7 +15,7 @@ import {
   SKIP,
   readDepartureDate,
 } from './utils'
-import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
+import { msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 베트남 (DAH — Department of Animal Health, Cục Thú y) 절차 검증.
@@ -57,33 +57,16 @@ import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge 
 
 const COUNTRY = 'vietnam'
 
+// ⚠️ 마이크로칩 — **룰을 두지 않는다** (2026-07-20 사용자 지정. 다시 "빠졌다"고 올리지 말 것)
+//   Circular 25/2016 제10조에 칩 조항이 없고, 펫무브 베트남 가이드도 "베트남은 마이크로칩
+//   삽입이 필수가 아니지만, 한국 동물검역소에서 수출동물검역을 받기 위해서는 강아지는
+//   마이크로칩 번호가 있고 동물등록이 되어 있어야 합니다"라고 쓴다. 베트남 국영지(Việt Nam
+//   News)도 "microchipping is not mandatory under Việt Nam's law".
+//   → 칩이 입국 요건이 아니므로 **광견병 접종과의 순서를 따질 이유가 없다.**
+//   예전엔 vn.microchip-before-rabies(주의) + 카드 문구 + 저장 거부 세 층이 다 걸려 있어,
+//   칩을 접종보다 늦게 넣으면 저장 자체가 막혔다. 세 층 모두 제거했다.
+//   칩은 한국 수출검역(강아지 동물등록)·귀국 항체검사 때문에 실무상 넣지만 그건 한국 절차다.
 export const VN_CHECKS: ProcedureCheck[] = [
-  {
-    id: 'vn.microchip-before-rabies',
-    country: COUNTRY,
-    category: '마이크로칩',
-    title: '마이크로칩은 광견병 1차 접종 이전 시술',
-    description:
-      'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (베트남 입국 면제, 한국 수출검역 사실상 필수)',
-    severity: 'warning',
-    addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
-      const rabies = readRabiesEntries(caseRow)
-      if (!microchip || rabies.length === 0) return SKIP
-
-      const first = rabies[0]
-      if (microchip <= first.date) {
-        return { ok: true, message: `마이크로칩(${microchip}) ≤ 1차 접종(${first.date}).` }
-      }
-      return {
-        ok: false,
-        message: msgMicrochipBeforeRabies(),
-        offendingPaths: ['microchip_implant_date'],
-      }
-    },
-  },
   {
     id: 'vn.rabies-prime-after-3months-old',
     country: COUNTRY,
