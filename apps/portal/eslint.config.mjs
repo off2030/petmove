@@ -31,6 +31,10 @@ const eslintConfig = defineConfig([
   },
   globalIgnores([
     '.next/**',
+    // PM_DIST_DIR 로 만드는 별도 빌드 디렉터리(.claude/launch.json 의 portal-verify 서버가
+    // dev 서버와 .next 를 두고 부딪히지 않게 쓴다). ignore 에 없어서 빌드 산출물이 lint 대상이
+    // 됐고, 소스에는 error 가 0건인데 portal eslint 가 실패하고 있었다(2026-07-20).
+    '.next-verify/**',
     'out/**',
     'build/**',
     'next-env.d.ts',

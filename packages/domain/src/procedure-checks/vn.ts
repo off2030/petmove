@@ -178,7 +178,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
       '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부. (DAH 운용 지침: "Vietnam does not recognize the 3-year rabies vaccine" — USDA APHIS, 미 대사관 일치. 검역 시행규칙 Thông tư 01/2026 은 절차규정이라 백신 종류를 다루지 않는다)',
     severity: 'blocker',
     addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
+    run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return SKIP
 
@@ -211,6 +211,12 @@ export const VN_CHECKS: ProcedureCheck[] = [
     title: '출국일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
+    // ⚠️ 이 'info' 는 **표시 억제를 겸한다.** 이 룰은 어느 카드에도 매핑되지 않아서, warning 이면
+    // scenario.ts 의 case-level 배너로 올라가 광견병 카드 문구("베트남 입국 때 면역 유효기간이
+    // 남아있어야 해요")와 중복된다. 같은 성격의 태국·필리핀·EU 룰은 warning 이라 대신
+    // ADVISORY_DEFERRED_CHECKS(scenario.ts)에 명시 등록해 억제한다.
+    // → severity 를 올리려면 그 목록에도 함께 등록할 것. (중국 cn.rabies-not-expired-on-arrival
+    //   도 같은 구조.) 2026-07-20 전수 감사에서 확인.
     severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
@@ -241,7 +247,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
       '베트남은 Pit Bull Terrier, Japanese Tosa, Dogo Argentino 등 견종 수입 제한. (수출입 금지 동물 목록 — Thông tư 01/2026 제14조가 참조하는 Danh mục 동물 + USDA APHIS Vietnam)',
     severity: 'blocker',
     addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
+    run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const species = typeof data.species === 'string' ? data.species : ''
       if (species && species !== 'dog') return SKIP
@@ -275,7 +281,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
     // relatedCases 는 펫무브워크(운영자)만 전달 — 보호자 이름·건수가 필요한 운영자용 룰.
     audience: 'staff',
     addedAt: '2026-05-07',
-    run: ({ caseRow, relatedCases, destination }) => {
+    run: ({ caseRow, relatedCases }) => {
       if (relatedCases === undefined) return SKIP
       const others = findSameGuardianCases(caseRow, relatedCases, { sameDestination: true })
       if (others.length + 1 > 2) {
