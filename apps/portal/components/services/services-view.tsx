@@ -548,7 +548,9 @@ const DEST_PRICING: Record<string, { offlineCost?: string; period?: string }> = 
   indonesia: { offlineCost: '40~51', period: '최소 2~3개월' },
   // 기간은 www 가이드 문장 그대로 — '편도 이동의 경우 최소 한달, 왕복인 경우 최소 1달 반~2달'.
   vietnam: { offlineCost: '36~46', period: '최소 1~2개월' },
-  cambodia: { offlineCost: '36~46' }, // 〃
+  // 가이드가 2026-07-20 갱신되며 기간 문장이 생겼다 — '편도 이동의 경우 최소 한달,
+  // 왕복인 경우 최소 1달 반~2달'. 베트남과 같은 표기로 맞춘다.
+  cambodia: { offlineCost: '36~46', period: '최소 1~2개월' },
   mongolia: { offlineCost: '36~46' }, // 〃
   india: { offlineCost: '24~58', period: '최소 1~2개월' },
   uzbekistan: { offlineCost: '36~46', period: '최소 1~2개월' },

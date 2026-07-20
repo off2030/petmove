@@ -126,35 +126,13 @@ export const KH_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
     },
   },
-  {
-    id: 'kh.rabies-only-1year-vaccine',
-    country: COUNTRY,
-    category: '광견병',
-    title: '1년 라이선스 광견병 백신만 인정 (3년 거부)',
-    description:
-      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부. (GDAHP 1차 명문 미확인 — 베트남에서 복제한 보수 적용값. 개별 검토 대상)',
-    severity: 'blocker',
-    addedAt: '2026-07-20',
-    run: ({ caseRow }) => {
-      const rabies = readRabiesEntries(caseRow)
-      if (rabies.length === 0) return SKIP
-
-      const offending: string[] = []
-      for (const r of rabies) {
-        if (exceedsValidityYears(r.date, r.valid_until)) {
-          offending.push(`rabies_dates[${r.originalIndex}].valid_until`)
-        }
-      }
-      if (offending.length > 0) {
-        return {
-          ok: false,
-          message: '광견병 백신은 면역 유효기간 1년짜리만 인정돼요. 3년 백신은 사용할 수 없어요.',
-          offendingPaths: offending,
-        }
-      }
-      return { ok: true, message: '모든 광견병 백신이 1년 라이선스 (또는 미입력 = 디폴트 1년).' }
-    },
-  },
+  // ⚠️ **'1년 백신만 인정'(3년 거부) 룰을 두지 않는다** — 2026-07-20 사용자 결정. 되살리지 말 것.
+  //   베트남 복제 때 딸려온 blocker 였는데 근거가 어디에도 없다:
+  //     · 캄보디아 정부 자료 자체가 없다(GDAHP 사이트 DNS 실패, APHIS·APQA 목록에도 부재)
+  //     · 펫무브 www 가이드에 백신 유효기간 언급 없음
+  //     · 상업 사이트는 오히려 "다년 백신도 접종 후 12개월 이내면 유효"라는 **다른** 주장
+  //   blocker 는 저장 자체를 거부해 사용자가 우회할 수 없다 — 근거 없이 재접종을 강요하고
+  //   있었다. 프로파일의 oneYearVaccineOnly 선언도 함께 제거했다(포털 YearSelect 비활성 해제).
   {
     id: 'kh.rabies-valid-on-departure',
     country: COUNTRY,

@@ -624,6 +624,17 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer'],
     rabiesTiterForReturnOnly: true,
   },
+  // ── 캄보디아 (GDAHP — MAFF) ────────────────────────────────────────────
+  // ⚠️ **1차 출처가 사실상 없는 나라다** (2026-07-20 전수 조사).
+  //   GDAHP 공식 사이트(gdahp.maff.gov.kh)는 DNS 조회부터 실패하고, USDA APHIS 국가 페이지도
+  //   한국 APQA 수출국가별 검역조건 목록도 캄보디아를 담고 있지 않다. 시중 숫자(3개월·30일·
+  //   12개월)는 전부 상업 펫이동업체 사이트에서만 나오고 서로 베낀 문장이다.
+  //   → 요건의 출처는 **펫무브 www 가이드(실제 이동 사례 기반)** 다. 공식 자료가 없는 상황에서
+  //     이게 최선의 근거다(사용자 지정 2026-07-20).
+  //   확보한 유일한 1차 출처 = WOAH 아시아 워크숍(2023-12) GDAHP 공무원 발표자료:
+  //     "There are no animal quarantine stations in Cambodia but we have animal checkpoints"
+  //     https://rr-asia.woah.org/app/uploads/2023/12/4-3-cambodia_practices-of-internation-trade.pdf
+  //     → 격리시설이 없다. 도착 카드에 '지정 시설 격리'를 쓰면 안 된다.
   cambodia: {
     // 칩 필수 X → 베트남처럼 *.microchip-before-rabies 룰을 두지 않는다(칩 카드 자체는 공통).
     // 최소 일령은 **고정 91일**(사용자 지정) — 몽골·우즈벡·캐나다의 달력 3개월과 다르다.
@@ -633,8 +644,12 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       doses: 1,
       minAgeDays: 91,
       minAgeLabel: '생후 91일',
-      oneYearVaccineOnly: true,
-      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
+      // ⚠️ oneYearVaccineOnly 를 **선언하지 않는다** (2026-07-20 사용자 결정 '(가) 완전 제거').
+      //   베트남에서 복제될 때 딸려온 값인데 근거가 어디에도 없다 — 캄보디아 정부 자료 없음,
+      //   펫무브 가이드 언급 없음, 상업 사이트는 오히려 "다년 백신도 접종 후 12개월 이내면
+      //   유효"라는 다른 주장. blocker(저장 거부)라 근거 없이 재접종을 강요하고 있었다.
+      //   validityLine 도 함께 뺐다 — 유효기간을 따지지 않으므로 할 말이 없다.
+      //   (카드의 '캄보디아 입국 때 면역 유효기간이 남아있어야 해요'는 buildRabiesCard 기본선.)
       timingLines: ['출국 30일 전까지 접종해야 해요.'],
       entryWaitDaysAfterVaccine: 30,
     },

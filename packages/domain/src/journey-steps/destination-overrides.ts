@@ -194,15 +194,19 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       destKey: 'cambodia',
       label: '캄보디아',
       // 칩 선행 룰 없음 — 베트남과 같이 칩이 입국 요건이 아니다(사용자 지정).
+      // kh.rabies-only-1year-vaccine 도 없다 — 근거 부재로 제거(kh.ts 주석 참고).
       validationIds: [
         'kh.rabies-prime-after-91days-old',
         'kh.rabies-booster-within-prime-validity',
-        'kh.rabies-only-1year-vaccine',
       ],
     }),
     'rabies-titer': {
       description:
-        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n캄보디아 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+        // '캄보디아에는 검사 기관이 없으니…' 는 펫무브 www 가이드 문장이다("캄보디아에는
+        // 광견병항체검사 기관이 없기 때문에 … 한국에서 미리 해두시는 것을 권장"). 복제할 때
+        // 베트남 고유 사정으로 오해해 뺐다가 되살렸다(2026-07-20). 이 줄이 없으면 왕복
+        // 여행자가 현지에서 받으면 된다고 생각하고 출국해 **귀국할 방법이 없어진다.**
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n캄보디아 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n캄보디아에는 검사 기관이 없으니 출국 전에 미리 받으세요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
     },
     'flight-purchase': {
       description:
@@ -214,8 +218,14 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     departure: importQuarantineCard({
       label: '캄보디아',
       fieldKey: 'kh_import_quarantine_date',
+      // ⚠️ '지정 시설에서 격리' 문구를 **쓰지 않는다** — 1차 출처와 정면충돌한다(2026-07-20).
+      //   GDAHP 공무원 발표자료(WOAH 아시아 워크숍 2023-12): "There are no animal quarantine
+      //   stations in Cambodia but we have animal checkpoints" — 격리시설 자체가 없다.
+      //   베트남(미충족 시 14일 격리)에서 복제되며 딸려온 문장이라 근거가 없었다.
+      //   공항 검사팀 3곳은 확인된 사실 — 정부결정 71·72·73호(2009-07-21)가 프놈펜·시엠립·
+      //   프레아시하누크 국제공항에 동물·축산물 검사팀을 설치했다.
       description:
-        '캄보디아 도착 후 공항 동물검역소에서 검역을 받으세요.\n서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 격리되거나 한국으로 반송돼요.',
+        '캄보디아 도착 후 공항에서 동물 검역을 받으세요.\n서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n프놈펜·시엠립·시아누크빌 국제공항에 동물 검사팀이 있어요.',
       helpText: '캄보디아 도착 후 수입 검역을 받은 날짜',
       // 발급되는 검역증이 확인되지 않았다(베트남 Mẫu 15a 처럼 확정된 서식이 없음) —
       // 중국·대만·필리핀과 같은 '검역 서류' 표기. 확인되면 정식 이름으로 올릴 것.
