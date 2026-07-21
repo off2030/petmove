@@ -1600,12 +1600,14 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   무역포털은 아직 'DAHP office'로 부르지만 같은 MAFF 산하 기관 — 서류탭도 GDAHP 로 맞춤).
     //   연락처는 카드에 직접 안 쓴다 — 공식 전화(2022 ASEAN 통보문 (855)12 901 106)가 현재
     //   반려동물 담당 직통인지 미확인이라, 틀리면 헛걸음이다. GDAHP 는 MAFF 산하 총국이라
-    //   MAFF 대표 사이트가 정식 입구다(사용자 지정 2026-07-21). link 는 **메인 페이지 하나만** —
-    //   /contactus 같은 세부 경로는 자주 바뀌므로 담당 부처 홈(maff.gov.kh)만 건다.
+    //   MAFF 대표 사이트가 정식 입구다. link 는 **수의증명서 절차(무역포털) + MAFF 홈 2개**
+    //   (사용자 지정 2026-07-21). /contactus 같은 세부 경로는 자주 바뀌므로 MAFF 는 홈만 건다.
     //   (MAFF 연락처 현행값 참고: (855)23 726128/129, 핫라인 1289, info@maff.gov.kh, 08:30–16:30.
     //    GDAHP 자체 사무소 주소는 MAFF 본부(노로돔대로)와 다를 수 있어 방문 전 전화로 확인.)
+    // ⚠️ 아래 본문은 **사용자가 직접 불러준 문구 그대로**다(2026-07-21). 안전문장 추가·동사
+    //   변경('받아요'→'검사받아요')·문단 병합 금지 — 임의로 손대다 되돌린 적 있다.
     description:
-      '캄보디아 출국 전에 수출 검역을 받고 수의증명서(Veterinary Certificate)를 발급받으세요.\n\n프놈펜의 농림수산부 동물보건생산국(GDAHP)에 미리 신청하고, 출국하는 공항 검역소에서 검사받아요. 검역소는 프놈펜·시엠립·시아누크빌 국제공항에 있어요.\n\n처리에 며칠 걸릴 수 있으니 출국 당일에 시작하지 마세요.',
+      '수출 검역을 받고 수의증명서(Veterinary Certificate)를 발급받으세요.\n\n프놈펜의 농림수산부 동물보건생산국(GDAHP)에 미리 신청하고 출국 공항 검역소에서 받아요.\n\n검역소는 프놈펜·시엠립·시아누크빌 국제공항에 있어요.',
     doneSummary: '캄보디아 수출 검역을 받았어요.',
     cardLine: '캄보디아 출국 전 정부 수출 검역을 받으세요.',
     applicability: { destinations: ['cambodia'], species: 'all', tripType: 'round' },
@@ -1624,8 +1626,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '캄보디아 수출 검역 서류',
     links: [
-      // 담당 부처(MAFF) 홈 하나만 — 세부 경로는 자주 바뀌므로 메인만 건다(사용자 지정 2026-07-21).
-      // GDAHP 는 MAFF 산하 총국이라 여기서 General Directorates·연락처로 들어간다.
+      // 원래 두려던 절차 링크 1개 + 담당 부처 MAFF 홈(사용자 지정 2026-07-21).
+      // MAFF 는 세부 경로가 자주 바뀌므로 홈만 건다. GDAHP 는 MAFF 산하 총국.
+      {
+        url: 'https://cambodiantr.gov.kh/en/procedure/?title=application-for-veterinary-certificate',
+        label: '수의증명서 신청 절차 (정부 무역포털)',
+      },
       {
         url: 'https://maff.gov.kh/',
         label: '캄보디아 농림수산부(MAFF) — GDAHP 상위 부처',
