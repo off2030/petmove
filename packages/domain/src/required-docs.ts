@@ -694,7 +694,10 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
     exportQuarantineDoc: {
       // 한-캐 협상 완료된 전용 서식이라 4국 중 유일하게 정식 이름을 쓸 수 있다.
-      name: '캐나다 수출 증명서(Veterinary Health Certificate for Dogs and Cats to Korea)',
+      // 서식 전체 이름은 'Veterinary Health Certificate for Dogs and Cats to Korea' 지만
+      // 뒤 한정어는 뺐다(사용자 지정 2026-07-21) — 목적지 탭이 이미 캐나다이고 한국행 여정이라
+      // 중복이고, 서류탭에서 두 줄로 넘어간다. 원문 전체 이름은 catalog 주석에 보존.
+      name: '캐나다 수출 증명서(Veterinary Health Certificate)',
       source: '현지 동물병원 · 캐나다 검역기관(CFIA) 배서',
       description:
         '캐나다 출국 전 검역기관(CFIA) 배서를 받아 준비해요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
