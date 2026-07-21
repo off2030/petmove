@@ -1854,7 +1854,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //    before your appointment**" / "Please provide as much advance notice as possible."
     // ⚠️ CFIA 한국 페이지가 "December 1, 2012" 기준이라 오래돼 보인다 — 실무 적용 전 재확인 권장.
     description:
-      '캐나다 출국 전 수출 증명서에 검역기관(CFIA) 배서를 받으세요.\n\n캐나다는 반려동물이 나갈 때 자체 검역을 하지 않아요. 대신 한국이 수출국 정부가 증명한 서류를 요구하기 때문에 배서가 필요해요.\n현지 동물병원에서 한국행 수출 증명서를 작성받은 뒤, 검역기관 공식 수의사의 배서를 받으세요.\n배서는 예약제예요. 방문 접수는 안 되고, 온라인 결제를 예약일 3일 전까지 마쳐야 해요. 수수료는 예약 후 안내되고 환불되지 않아요.\n캐나다를 떠난 뒤에는 배서를 받을 수 없어요. 반드시 출국 전에 마치세요.',
+      // 베트남·캄보디아 3문단 틀로 축약(2026-07-21). 5줄 열거식이었다.
+      '캐나다 출국 전 수출 증명서에 검역기관(CFIA) 배서를 받으세요.\n\n현지 동물병원에서 한국행 수출 증명서를 작성받은 뒤, CFIA 공식 수의사의 배서를 받아요.\n캐나다는 반려동물이 나갈 때 자체 검역을 하지 않아요. 한국이 수출국 정부 증명을 요구해서 배서가 필요해요.\n\n배서는 예약제예요. 온라인 결제를 예약일 3일 전까지 마쳐야 하고, 캐나다를 떠난 뒤에는 받을 수 없어요.',
     doneSummary: '캐나다 수출 증명서 배서를 받았어요.',
     cardLine: '캐나다 출국 전 수출 증명서 배서를 받으세요.',
     applicability: { destinations: ['canada'], species: 'all', tripType: 'round' },
@@ -1884,8 +1885,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         label: '한국행 수출 안내·서식 (CFIA)',
       },
       {
-        url: 'https://inspection.canada.ca/en/animal-health/terrestrial-animals/exports/pets/appointments',
-        label: 'CFIA 배서 예약',
+        // 예약 페이지(.../exports/pets/appointments)는 **연락처 없이 다시 다음 페이지로 넘긴다**
+        // (실측 2026-07-21). 이 연락처 페이지엔 주별 사무소 전화·이메일·운영시간과 일반 문의
+        // 1-800-442-2342 가 실제로 있다 — 한 단계 줄여 여기로 바로 보낸다.
+        url: 'https://inspection.canada.ca/en/about-cfia/contact-cfia/contact-cfia-office-telephone',
+        label: 'CFIA 사무소 연락처 — 배서 예약 문의',
       },
     ],
   },
