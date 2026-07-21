@@ -1,4 +1,4 @@
-import { buildDateRuleContext } from '../journey-steps/date-rules'
+import { buildDateRuleContext, violatesRabiesEntryWait } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   classifyExportQuarantineDate,
@@ -11,6 +11,7 @@ import {
   SKIP,
   readDepartureDate,
   readVetVisitDate,
+  findRabiesValidityBreaks,
 } from './utils'
 import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
@@ -90,26 +91,54 @@ export const MX_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (SENASICA: 도착 전 ≥15일 명시 — 보수적으로 30일 적용)',
-    severity: 'info',
+      '최근 광견병 접종일로부터 출국일까지 최소 30일 경과 필요(유효 부스터는 면제). 저장 거부(validateRabiesEntryWait)와 같은 판정 함수(violatesRabiesEntryWait)를 쓴다.',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
-      // 가장 이른(=출국까지 가장 오래 경과한) 접종으로 충족 여부 판단.
-      const earliest = rabies[0]
-      const days = daysBetween(earliest.date, dep)
-      if (days === null) return SKIP
-      if (days < 30) {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      // ⚠️ 2026-07-21 수정 — 구 코드는 **가장 이른 접종(rabies[0])** 을 기준으로 삼고
+      //   자체 계산(daysBetween)을 했다. 그래서 ①만료 후 재접종 케이스를 통째로 놓쳤고
+      //   (1차 2025-01-10 만료 → 재접종 2026-06-01 → 출국 2026-06-10 이면 실제 9일인데
+      //    1차부터 516일로 세어 '통과') ②프로파일 파생 저장 거부와 계산이 어긋났다.
+      //   베트남·캄보디아·몽골·우즈베키스탄과 같은 헬퍼로 통일한다.
+      if (!violatesRabiesEntryWait(data, dep, destination)) {
+        const latest = rabies[rabies.length - 1]
+        return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): 30일 충족(또는 유효 부스터).` }
+      }
+      const latest = rabies[rabies.length - 1]
+      // 접종일은 과거 사실이라 조치는 '입국일을 미루는 것'뿐 — 날짜는 넣지 않는다(lint:checks).
+      return {
+        ok: false,
+        message: '광견병 접종 후 30일이 지나야 멕시코에 입국할 수 있어요. 입국일을 미뤄야 해요.',
+        offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
+      }
+    },
+  },
+  {
+    id: 'mx.rabies-booster-within-prime-validity',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 추가 접종은 직전 접종 유효기간 이내',
+    description:
+      '연속된 광견병 접종은 직전 접종의 면역 유효기간(1년) 이내에 해야 함. 만료 후 접종은 chain 이 끊겨 새 1차로 간주된다. 저장 거부(findRabiesChainBreak)의 짝이 되는 주의 — 펫무브워크는 저장을 막지 않고 절차검증만 보므로 이 룰이 없으면 운영자 화면에서 끊긴 chain 이 안 보인다.',
+    severity: 'warning',
+    addedAt: '2026-07-21',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length < 2) return SKIP
+      const offending = findRabiesValidityBreaks(rabies)
+      if (offending.length > 0) {
         return {
           ok: false,
-          message: `광견병 접종일(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 30일 이상이어야 해요.`,
-          offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
+          message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
+          offendingPaths: offending,
         }
       }
-      return { ok: true, message: `광견병 접종(${earliest.date}) → 출국일(${dep}): ${days}일.` }
+      return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
     },
   },
   {

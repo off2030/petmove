@@ -400,6 +400,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         'ma.rabies-prime-after-91days-old',
         'ma.microchip-before-rabies',
         'ma.rabies-min-21days-before-departure',
+        'ma.rabies-booster-within-prime-validity',
       ],
     }),
     // 항체검사가 **입국 요건**이라 '한국으로 돌아올 때 필요해요' 문형을 쓰지 않는다.
@@ -455,6 +456,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         'ua.rabies-prime-after-12weeks',
         'ua.microchip-before-rabies',
         'ua.rabies-min-21days-before-departure',
+        'ua.rabies-booster-within-prime-validity',
       ],
     }),
     'rabies-titer': {
@@ -495,6 +497,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: [
         'mx.rabies-prime-after-91days-old',
         'mx.rabies-min-30days-before-departure',
+        'mx.rabies-booster-within-prime-validity',
       ],
     }),
     'rabies-titer': {
@@ -531,6 +534,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: [
         'br.rabies-prime-after-91days-old',
         'br.rabies-min-21days-before-departure',
+        'br.rabies-booster-within-prime-validity',
       ],
     }),
     'rabies-titer': {

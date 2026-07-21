@@ -11,6 +11,7 @@ import {
   SKIP,
   readDepartureDate,
   readVetVisitDate,
+  findRabiesValidityBreaks,
 } from './utils'
 import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
@@ -106,6 +107,29 @@ export const UA_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `1차 접종일(${first.date}) 생후 ${ev.ageInDays}일령 + 캘린더 3개월(${ev.calendar3mThreshold}) 충족.` }
+    },
+  },
+  {
+    id: 'ua.rabies-booster-within-prime-validity',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 추가 접종은 직전 접종 유효기간 이내',
+    description:
+      '연속된 광견병 접종은 직전 접종의 면역 유효기간(1년) 이내에 해야 함. 만료 후 접종은 chain 이 끊겨 새 1차로 간주된다. 저장 거부(findRabiesChainBreak)의 짝이 되는 주의 — 펫무브워크는 저장을 막지 않고 절차검증만 보므로 이 룰이 없으면 운영자 화면에서 끊긴 chain 이 안 보인다.',
+    severity: 'warning',
+    addedAt: '2026-07-21',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length < 2) return SKIP
+      const offending = findRabiesValidityBreaks(rabies)
+      if (offending.length > 0) {
+        return {
+          ok: false,
+          message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
+          offendingPaths: offending,
+        }
+      }
+      return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
     },
   },
   {
