@@ -160,36 +160,38 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/china-10.webp',
   ],
   모로코: [
-    // 리드 미확정 — 순차 회전. 검수 후 첫 장 지정·불필요 컷 삭제(2026-07-21).
+    // 첫 장 = 14(알람브라식 아치 너머 전경, 사용자 지정 2026-07-21). 나머지는 파일 순서 유지.
+    // 07(셰프샤우엔 파란 안뜰) 삭제 — 결번 유지(재번호 X).
+    '/destinations/morocco-14.jpg',
     '/destinations/morocco-01.jpg',
     '/destinations/morocco-02.jpg',
     '/destinations/morocco-03.jpg',
     '/destinations/morocco-04.jpg',
     '/destinations/morocco-05.jpg',
     '/destinations/morocco-06.jpg',
-    '/destinations/morocco-07.jpg',
     '/destinations/morocco-08.jpg',
     '/destinations/morocco-09.jpg',
     '/destinations/morocco-10.jpg',
     '/destinations/morocco-11.jpg',
     '/destinations/morocco-12.jpg',
     '/destinations/morocco-13.jpg',
-    '/destinations/morocco-14.jpg',
   ],
   우크라이나: [
-    // 리드 미확정 — 순차 회전. 검수 후 첫 장 지정·불필요 컷 삭제(2026-07-21).
+    // 첫 장 = 05(건물, 사용자 지정 2026-07-21). 삭제 없음. 나머지는 파일 순서 유지.
+    '/destinations/ukraine-05.jpg',
     '/destinations/ukraine-01.jpg',
     '/destinations/ukraine-02.jpg',
     '/destinations/ukraine-03.jpg',
     '/destinations/ukraine-04.jpg',
-    '/destinations/ukraine-05.jpg',
     '/destinations/ukraine-06.jpg',
     '/destinations/ukraine-07.jpg',
     '/destinations/ukraine-08.jpg',
     '/destinations/ukraine-09.jpg',
   ],
   멕시코: [
-    // 리드 미확정 — 순차 회전. 검수 후 첫 장 지정·불필요 컷 삭제(2026-07-21).
+    // 첫 장 = 10(칸쿤 해변 항공뷰, 사용자 지정 2026-07-21). 나머지는 파일 순서 유지.
+    // 09(시장 노점) 삭제 — 결번 유지(재번호 X).
+    '/destinations/mexico-10.jpg',
     '/destinations/mexico-01.jpg',
     '/destinations/mexico-02.jpg',
     '/destinations/mexico-03.jpg',
@@ -198,21 +200,18 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/mexico-06.jpg',
     '/destinations/mexico-07.jpg',
     '/destinations/mexico-08.jpg',
-    '/destinations/mexico-09.jpg',
-    '/destinations/mexico-10.jpg',
     '/destinations/mexico-11.jpg',
   ],
   브라질: [
-    // 리드 미확정 — 순차 회전. 검수 후 첫 장 지정·불필요 컷 삭제(2026-07-21).
+    // 첫 장 = 21(해변 항공뷰, 사용자 지정 2026-07-21). 나머지는 파일 순서 유지.
+    // 02·04·09·19·23 삭제 — 결번 유지(재번호 X).
+    '/destinations/brazil-21.jpg',
     '/destinations/brazil-01.jpg',
-    '/destinations/brazil-02.jpg',
     '/destinations/brazil-03.jpg',
-    '/destinations/brazil-04.jpg',
     '/destinations/brazil-05.jpg',
     '/destinations/brazil-06.jpg',
     '/destinations/brazil-07.jpg',
     '/destinations/brazil-08.jpg',
-    '/destinations/brazil-09.jpg',
     '/destinations/brazil-10.jpg',
     '/destinations/brazil-11.jpg',
     '/destinations/brazil-12.jpg',
@@ -222,25 +221,21 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/brazil-16.jpg',
     '/destinations/brazil-17.jpg',
     '/destinations/brazil-18.jpg',
-    '/destinations/brazil-19.jpg',
     '/destinations/brazil-20.jpg',
-    '/destinations/brazil-21.jpg',
     '/destinations/brazil-22.jpg',
-    '/destinations/brazil-23.jpg',
     '/destinations/brazil-24.jpg',
     '/destinations/brazil-25.jpg',
     '/destinations/brazil-26.jpg',
     '/destinations/brazil-27.jpg',
   ],
   카자흐스탄: [
-    // 리드 미확정 — 순차 회전. 검수 후 첫 장 지정·불필요 컷 삭제(2026-07-21).
-    '/destinations/kazakhstan-01.jpg',
+    // 첫 장 = 07(하즈렛 술탄 모스크, 사용자 지정 2026-07-21). 나머지는 파일 순서 유지.
+    // 01·03 삭제 — 결번 유지(재번호 X).
+    '/destinations/kazakhstan-07.jpg',
     '/destinations/kazakhstan-02.jpg',
-    '/destinations/kazakhstan-03.jpg',
     '/destinations/kazakhstan-04.jpg',
     '/destinations/kazakhstan-05.jpg',
     '/destinations/kazakhstan-06.jpg',
-    '/destinations/kazakhstan-07.jpg',
     '/destinations/kazakhstan-08.jpg',
     '/destinations/kazakhstan-09.jpg',
     '/destinations/kazakhstan-10.jpg',
