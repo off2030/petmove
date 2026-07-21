@@ -1590,10 +1590,21 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   신청 경로·소요 기간·민간 동물병원 선행 여부가 지역·공항마다 다를 수 있어, 카드는
     //   '미리 연락해 확인하라'로 열어 둔다. 출국 당일 처리로 전제하게 만들면 안 된다.
     //   '출국 7~10일 전' 같은 수치는 정부 출처가 없어 넣지 않는다.
+    //
+    // 팩트체크(2026-07-21) — NTR 수의증명서 절차 페이지 원문 대조 완료:
+    //   "All certificates are issued by the DAHP office in Phnom Penh" / "pay a fee for the
+    //   inspection in advance" / "inspection ... by a Veterinary Inspector at the border" /
+    //   소요 기간 미기재 / 상업·반려동물 구분 없음 → 아래 문구는 전부 이 원문 범위 안이다.
+    //   2단계 구조(본부 신청 → 공항 검역관 검사 → 본부 증명서 발급)도 같은 페이지 근거.
+    //   기관명은 **GDAHP 로 통일**(2016 Sub-Decree 224 로 부서 DAHP→총국 승격. 구 페이지·
+    //   무역포털은 아직 'DAHP office'로 부르지만 같은 MAFF 산하 기관 — 서류탭도 GDAHP 로 맞춤).
+    //   연락처는 카드에 직접 안 쓴다 — 공식 전화(2022 ASEAN 통보문 (855)12 901 106)가 현재
+    //   반려동물 담당 직통인지 미확인이라, 틀리면 헛걸음이다. 대신 links 의 공식 페이지로 보낸다
+    //   (사용자 지정 2026-07-21). GDAHP 사무소: Trea Village, St.371, Steung Mean Chey, Phnom Penh.
     description:
-      '캄보디아 출국 전 정부 수의증명서를 발급받으세요.\n\n프놈펜의 농림수산부 축산수의국(GDAHP)에서 발급해요. 신청 후 검사 수수료를 내고, 개체 확인과 임상검사를 거쳐 증명서를 받아요.\n출국 당일에는 공항 동물검역 체크포인트에서 서류와 반려동물을 다시 확인해요. 프놈펜·시엠립·시아누크빌 국제공항에 있어요.\n개인 반려동물 절차가 공개돼 있지 않아요. 현지 동물병원 진료가 먼저 필요할 수 있으니 GDAHP나 출국 공항에 미리 연락해 확인하세요.\n처리에 시간이 걸리니 출국 당일에 하려고 하지 마세요.',
+      '캄보디아 출국 전에 캄보디아 정부의 수출 검역을 받고 수의증명서(Veterinary Certificate)를 발급받으세요.\n한국이 요구해서가 아니라, 살아 있는 동물을 내보낼 때 캄보디아가 자체적으로 요구하는 절차예요.\n\n프놈펜의 농림수산부 동물보건생산국(GDAHP)에 신청해요. 보호자 여권·항공권·마이크로칩·예방접종·항체 검사 자료와, 한국에서 올 때 받은 검역 서류를 함께 준비하면 승인이 빨라요.\n\n실제 검사는 출국하는 공항에서 정부 검역관이 하고, 증명서는 본부에서 나와요. 그래서 예약 없이 공항에 가면 안 되고, 신청할 때 검사 일정을 함께 잡아야 해요. 검역소는 프놈펜·시엠립·시아누크빌 국제공항에 있어요.\n\n개인 반려동물 절차가 자세히 공개돼 있지 않아요. 신청할 때 ①별도 수출허가서가 필요한지 ②현지 동물병원 건강증명서가 필요한지 ③검사 장소 ④증명서 받는 곳을 꼭 확인하세요.\n\n처리에 며칠 걸릴 수 있으니 출국 당일에 시작하지 마세요.',
     doneSummary: '캄보디아 수출 검역을 받았어요.',
-    cardLine: '캄보디아 출국 전 정부 수의증명서를 발급받으세요.',
+    cardLine: '캄보디아 출국 전 정부 수출 검역을 받으세요.',
     applicability: { destinations: ['cambodia'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'quarantine:kh_export_quarantine_date',
@@ -1610,9 +1621,18 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '캄보디아 수출 검역 서류',
     links: [
+      // 연락처는 번호 대신 공식 페이지로 — 방문 전 현재 담당·절차를 여기서 재확인(2026-07-21).
+      {
+        url: 'https://maff.gov.kh/gdahp/page/about_us?lang=en',
+        label: 'GDAHP(동물보건생산국) 소개·프놈펜 사무소',
+      },
+      {
+        url: 'https://services.maff.gov.kh',
+        label: 'MAFF 전자민원(E-License) — 담당·절차 확인',
+      },
       {
         url: 'https://cambodiantr.gov.kh/en/procedure/?title=application-for-veterinary-certificate',
-        label: '수의증명서 신청 절차 (캄보디아 정부 무역포털)',
+        label: '수의증명서 신청 절차 (정부 무역포털)',
       },
     ],
   },
