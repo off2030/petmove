@@ -420,7 +420,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     },
     'flight-purchase': {
       description:
-        '모로코 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 21일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+        // '접종일로부터 21일이 지난 후에 입국할 수 있어요.' 를 뺐다(사용자 지정 2026-07-21).
+        // 광견병 카드가 '출국 21일 전까지 접종해야 해요'로 같은 규칙을 이미 말한다.
+        // 21일 규칙 자체는 살아 있다 — 입력 시 저장 거부(validateRabiesEntryWait)와
+        // ma.rabies-min-21days-before-departure 주의가 그대로 동작한다.
+        '모로코 입국 일정에 맞춰 항공권을 구매하세요.\n\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       cardLine: '모로코에 입국할 수 있어요.',
       earliest: undefined,
       validationIds: ['ma.rabies-min-21days-before-departure'],
