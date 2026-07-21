@@ -417,8 +417,8 @@
 ▸ ukraine (우크라이나)
    입력불가 0건
    주의·차단 1건
-     - ua.rnatt-min-30days-after-vaccine [info]
-         채혈일(2026-03-20)과 직전 접종일(2026-03-05)의 간격이 15일로 30일 미만이에요.
+     - ua.rnatt-min-30days-after-vaccine [warning]
+         광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
    알림 12건
@@ -610,7 +610,7 @@
 ▸ mexico (멕시코)
    입력불가 0건
    주의·차단 1건
-     - mx.rabies-prime-after-91days-old [info]
+     - mx.rabies-prime-after-91days-old [warning]
          광견병 접종은 생후 91일이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -641,7 +641,7 @@
    입력불가 1건
      ✕ 광견병 1차 최소 일령: 광견병 접종은 생후 90일(13주)이 지나서 할 수 있어요
    주의·차단 1건
-     - br.rabies-prime-after-91days-old [info]
+     - br.rabies-prime-after-91days-old [warning]
          광견병 접종은 생후 91일이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -784,7 +784,7 @@
 ▸ ukraine (우크라이나)
    입력불가 0건
    주의·차단 1건
-     - ua.rabies-prime-after-12weeks [info]
+     - ua.rabies-prime-after-12weeks [warning]
          광견병 접종은 생후 84일(12주)이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -1180,7 +1180,7 @@
    입력불가 1건
      ✕ 마이크로칩 선행: 마이크로칩 삽입 후 광견병을 접종하세요
    주의·차단 1건
-     - ua.microchip-before-rabies [info]
+     - ua.microchip-before-rabies [warning]
          접종일은 마이크로칩 삽입일 이후여야 해요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -1559,8 +1559,8 @@
 ▸ ukraine (우크라이나)
    입력불가 0건
    주의·차단 1건
-     - ua.rnatt-min-30days-after-vaccine [info]
-         채혈일(2026-02-15)과 직전 접종일(2026-02-01)의 간격이 14일로 30일 미만이에요.
+     - ua.rnatt-min-30days-after-vaccine [warning]
+         광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
    알림 10건
@@ -1944,8 +1944,8 @@
    주의·차단 2건
      - ua.rabies-valid-on-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
-     - ua.rnatt-min-30days-after-vaccine [info]
-         채혈일(2025-08-01)과 직전 접종일(2025-07-05)의 간격이 27일로 30일 미만이에요.
+     - ua.rnatt-min-30days-after-vaccine [warning]
+         광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요.
    상황별 설명문 3건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
      ▸ rabies-titer: 광견병 항체 검사를 진행 중이에요. 결과가 나오면 완료 버튼을 누르세요.
@@ -3467,7 +3467,7 @@
    입력불가 1건
      ✕ 광견병 1차 최소 일령: 광견병 접종은 생후 3개월이 지나서 할 수 있어요
    주의·차단 1건
-     - mx.rabies-prime-after-91days-old [info]
+     - mx.rabies-prime-after-91days-old [warning]
          광견병 접종은 생후 91일이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -3501,7 +3501,7 @@
    입력불가 1건
      ✕ 광견병 1차 최소 일령: 광견병 접종은 생후 90일(13주)이 지나서 할 수 있어요
    주의·차단 1건
-     - br.rabies-prime-after-91days-old [info]
+     - br.rabies-prime-after-91days-old [warning]
          광견병 접종은 생후 91일이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -3658,7 +3658,7 @@
    입력불가 1건
      ✕ 광견병 1차 최소 일령: 광견병 접종은 생후 84일(12주)이 지나서 할 수 있어요
    주의·차단 1건
-     - ua.rabies-prime-after-12weeks [info]
+     - ua.rabies-prime-after-12weeks [warning]
          광견병 접종은 생후 84일(12주)이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -4038,8 +4038,8 @@
 ▸ ukraine (우크라이나)
    입력불가 0건
    주의·차단 1건
-     - ua.rnatt-min-30days-after-vaccine [info]
-         채혈일(2026-03-20)과 직전 접종일(2026-03-05)의 간격이 15일로 30일 미만이에요.
+     - ua.rnatt-min-30days-after-vaccine [warning]
+         광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
    알림 10건
@@ -4415,8 +4415,8 @@
 ▸ ukraine (우크라이나)
    입력불가 0건
    주의·차단 1건
-     - ua.rnatt-min-30days-after-vaccine [info]
-         채혈일(2026-03-20)과 직전 접종일(2026-03-05)의 간격이 15일로 30일 미만이에요.
+     - ua.rnatt-min-30days-after-vaccine [warning]
+         광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
    알림 10건
@@ -5842,8 +5842,8 @@
 ▸ ukraine (우크라이나)
    입력불가 0건
    주의·차단 2건
-     - ua.departure-min-3months-after-titer [info]
-         최신 항체 검사(2026-04-02) 기준 출국 가능일(2026-07-02)이 출국일(2026-06-01)보다 늦어요.
+     - ua.departure-min-3months-after-titer [warning]
+         항체 검사 채혈일로부터 3개월이 지나야 우크라이나에 입국할 수 있어요. 입국일을 미뤄야 해요.
      - ua.rabies-valid-on-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
    상황별 설명문 2건
@@ -6248,8 +6248,8 @@
 ▸ ukraine (우크라이나)
    입력불가 0건
    주의·차단 1건
-     - ua.rnatt-min-30days-after-vaccine [info]
-         채혈일(2025-06-10)과 직전 접종일(2025-06-01)의 간격이 9일로 30일 미만이에요.
+     - ua.rnatt-min-30days-after-vaccine [warning]
+         광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
      ▸ rabies-titer: 광견병 항체 검사를 진행 중이에요. 결과가 나오면 완료 버튼을 누르세요.

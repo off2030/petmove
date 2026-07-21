@@ -54,7 +54,9 @@ export const UA_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       'ISO 11784 및 11785 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (SSUFSCP: "Тварини повинні бути ідентифіковані за допомогою мікрочіпа ... ISO 11784 та 11785")',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-21) — 구세대 파일의 잔재였다. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일). 이 룰은 카드에 매핑돼 있어 배지가 카드에 붙는다.
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -82,7 +84,9 @@ export const UA_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
       'SSUFSCP: "Вакцинація проти сказу здійснюється починаючи з 12-тижневого віку" (12주부터). 보수 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-21) — 구세대 파일의 잔재였다. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일). 이 룰은 카드에 매핑돼 있어 배지가 카드에 붙는다.
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -199,7 +203,9 @@ export const UA_CHECKS: ProcedureCheck[] = [
     title: '항체 검사는 광견병 접종 30일 이후',
     description:
       'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (공식 가이드: "blood sample should be taken at least 30 days after the rabies vaccine" — EU 동일 패턴)',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-21) — 구세대 파일의 잔재였다. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일). 이 룰은 카드에 매핑돼 있어 배지가 카드에 붙는다.
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -212,14 +218,14 @@ export const UA_CHECKS: ProcedureCheck[] = [
         const priorDoses = rabies.filter((r) => r.date <= t.date)
         if (priorDoses.length === 0) {
           offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date}) 이전의 광견병 접종 기록이 없어요.`)
+          problems.push('채혈일 이전의 광견병 접종 기록이 없어요.')
           continue
         }
         const latest = priorDoses[priorDoses.length - 1]
         const gap = daysBetween(latest.date, t.date)
         if (gap === null || gap < 30) {
           offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date})과 직전 접종일(${latest.date})의 간격이 ${gap ?? '?'}일로 30일 미만이에요.`)
+          problems.push('광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요.')
         }
       }
       if (offending.length > 0) {
@@ -239,7 +245,9 @@ export const UA_CHECKS: ProcedureCheck[] = [
     title: '출국일은 항체 검사 3개월 이후',
     description:
       'RNATT 채혈일로부터 출국일까지 최소 3개월 경과 필요. (SSUFSCP: "принаймні за три місяці до дати видачі сертифіката") — 캘린더 기준(`addMonths`).',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-21) — 구세대 파일의 잔재였다. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일). 이 룰은 카드에 매핑돼 있어 배지가 카드에 붙는다.
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -257,7 +265,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `최신 항체 검사(${newest.date}) 기준 출국 가능일(${requiredDate})이 출국일(${dep})보다 늦어요.`,
+        message: '항체 검사 채혈일로부터 3개월이 지나야 우크라이나에 입국할 수 있어요. 입국일을 미뤄야 해요.',
         offendingPaths: offending,
       }
     },
@@ -298,7 +306,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
         if (Number.isNaN(num)) continue
         if (num < 0.5) {
           offending.push(`rabies_titer_records[${t.originalIndex}].value`)
-          problems.push(`RNATT(${t.date}) 항체가가 ${t.value}로 0.5 IU/ml 미만이에요.`)
+          problems.push('광견병 항체가가 0.5 IU/mL 미만이에요.')
         }
       }
       if (offending.length > 0) {

@@ -58,7 +58,9 @@ export const MX_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
       'SENASICA: "Pets under three months of age are exempt" → 3개월 이상 광견병 의무. 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-21) — 구세대 파일의 잔재였다. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일). 이 룰은 카드에 매핑돼 있어 배지가 카드에 붙는다.
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -177,7 +179,9 @@ export const MX_CHECKS: ProcedureCheck[] = [
     title: '외부구충은 도착 6개월 이내',
     description:
       '외부구충(벼룩·진드기) 처치는 멕시코 도착 6개월(180일) 이내 실시. (SENASICA: "preventive treatment for internal and external parasites within the previous six months")',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-21) — 구세대 파일의 잔재였다. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일). 이 룰은 카드에 매핑돼 있어 배지가 카드에 붙는다.
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -190,14 +194,14 @@ export const MX_CHECKS: ProcedureCheck[] = [
       if (diff < 0) {
         return {
           ok: false,
-          message: `외부구충(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.`,
+          message: '외부구충 처치일이 출국일보다 늦어요. 날짜를 확인하세요.',
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
       if (diff > 180) {
         return {
           ok: false,
-          message: `외부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 6개월(180일) 이내여야 해요.`,
+          message: '외부구충은 멕시코 도착 6개월 이내에 처치해야 해요.',
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
@@ -211,7 +215,9 @@ export const MX_CHECKS: ProcedureCheck[] = [
     title: '내부구충은 도착 6개월 이내',
     description:
       '내부구충(선충·조충) 처치는 멕시코 도착 6개월(180일) 이내 실시. (SENASICA: "preventive treatment for internal and external parasites within the previous six months")',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-21) — 구세대 파일의 잔재였다. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일). 이 룰은 카드에 매핑돼 있어 배지가 카드에 붙는다.
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -224,14 +230,14 @@ export const MX_CHECKS: ProcedureCheck[] = [
       if (diff < 0) {
         return {
           ok: false,
-          message: `내부구충(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.`,
+          message: '내부구충 처치일이 출국일보다 늦어요. 날짜를 확인하세요.',
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
       if (diff > 180) {
         return {
           ok: false,
-          message: `내부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 6개월(180일) 이내여야 해요.`,
+          message: '내부구충은 멕시코 도착 6개월 이내에 처치해야 해요.',
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }

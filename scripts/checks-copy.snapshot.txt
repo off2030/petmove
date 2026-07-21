@@ -8,6 +8,12 @@
   광견병 접종 후 21일이 지나야 브라질에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [br.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
+[br.external-parasite-within-15days]
+  외부구충 처치일이 출국일보다 늦어요. 날짜를 확인하세요.
+  외부구충은 출국 15일 이내에 처치해야 해요.
+[br.internal-parasite-within-15days]
+  내부구충 처치일이 출국일보다 늦어요. 날짜를 확인하세요.
+  내부구충은 출국 15일 이내에 처치해야 해요.
 [br.import-quarantine-date-valid]
   브라질 수입 검역일은 브라질 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [br.export-quarantine-date-valid]
@@ -100,6 +106,12 @@
   광견병 접종 후 30일이 지나야 멕시코에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [mx.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
+[mx.external-parasite-within-6months]
+  외부구충 처치일이 출국일보다 늦어요. 날짜를 확인하세요.
+  외부구충은 멕시코 도착 6개월 이내에 처치해야 해요.
+[mx.internal-parasite-within-6months]
+  내부구충 처치일이 출국일보다 늦어요. 날짜를 확인하세요.
+  내부구충은 멕시코 도착 6개월 이내에 처치해야 해요.
 [mx.import-quarantine-date-valid]
   멕시코 수입 검역일은 멕시코 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [mx.export-quarantine-date-valid]
@@ -157,6 +169,8 @@
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [ua.rabies-min-21days-before-departure]
   광견병 접종 후 21일이 지나야 우크라이나에 입국할 수 있어요. 입국일을 미뤄야 해요.
+[ua.departure-min-3months-after-titer]
+  항체 검사 채혈일로부터 3개월이 지나야 우크라이나에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [ua.import-quarantine-date-valid]
   우크라이나 수입 검역일은 우크라이나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [ua.export-quarantine-date-valid]
