@@ -21,6 +21,7 @@ import {
   SKIP,
   readDepartureDate,
   readVetVisitDate,
+  findRabiesValidityBreaks,
 } from './utils'
 import { msgMicrochipBeforeRabies, msgRabiesPrimeMinAge , msgTiterBeforeVaccine } from './messages'
 
@@ -56,6 +57,29 @@ const EU_REGIME: string[] = EU_ENTRY_FAMILY
 // 내부구충 vaccines 선언 파생)를 그대로 사용 — 촌충 치료 카드와 단일 출처.
 
 export const EU_CHECKS: ProcedureCheck[] = [
+  {
+    id: 'eu.rabies-booster-within-prime-validity',
+    country: EU_REGIME,
+    category: '광견병',
+    title: '광견병 추가 접종은 직전 접종 유효기간 이내',
+    description:
+      '연속된 광견병 접종은 직전 접종의 면역 유효기간 이내에 해야 함. 만료 후 접종은 chain 이 끊겨 새 1차로 간주된다. 저장 거부(findRabiesChainBreak)의 짝이 되는 주의 — 펫무브워크는 저장을 막지 않고 절차검증만 보므로 이 룰이 없으면 운영자 화면에서 끊긴 chain 이 안 보인다.',
+    severity: 'warning',
+    addedAt: '2026-07-21',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length < 2) return SKIP
+      const offending = findRabiesValidityBreaks(rabies)
+      if (offending.length > 0) {
+        return {
+          ok: false,
+          message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
+          offendingPaths: offending,
+        }
+      }
+      return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
+    },
+  },
   // ── 마이크로칩 ──
   {
     id: 'eu.microchip-before-rabies',

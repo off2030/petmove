@@ -716,7 +716,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // 항공권 구매 step 에 매핑. 여기는 접종일 자체의 요건만.
     rabiesDescription:
       '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
-    rabiesValidationIds: ['th.rabies-prime-after-12weeks', 'th.microchip-before-rabies'],
+    rabiesValidationIds: [
+      'th.rabies-prime-after-12weeks',
+      'th.microchip-before-rabies',
+      // 저장 거부(findRabiesChainBreak)의 짝. 1회 접종국이면 앱이 이미 저장을 막는데,
+      // 짝 룰이 없어 펫무브워크에선 끊긴 chain 이 안 보였다(2026-07-21 lint 로 발견).
+      'th.rabies-booster-within-prime-validity',
+    ],
     // 귀국용 항체 — 태국 입국 요건이 아니라는 설명이 아예 빠져 있었다. 고객이 이 검사를 왜
     // 받는지 알 수 없는 상태였다. 베트남·필리핀과 같은 문형으로 통일(사용자 지정 2026-07-20).
     titerDescription:
@@ -788,7 +794,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     label: '필리핀',
     rabiesDescription:
       '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n수입 허가증(SPSIC) 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
-    rabiesValidationIds: ['ph.rabies-prime-after-12weeks', 'ph.microchip-before-rabies'],
+    rabiesValidationIds: [
+      'ph.rabies-prime-after-12weeks',
+      'ph.microchip-before-rabies',
+      // 저장 거부(findRabiesChainBreak)의 짝. 1회 접종국이면 앱이 이미 저장을 막는데,
+      // 짝 룰이 없어 펫무브워크에선 끊긴 chain 이 안 보였다(2026-07-21 lint 로 발견).
+      'ph.rabies-booster-within-prime-validity',
+    ],
     titerDescription:
       // 귀국용 항체 — '한국 입국에 사용 시 유효기간은 2년' 대신 베트남·태국과 같은 문형으로
       // 통일. 왜 받는지를 먼저 말하고 유효기간은 따로 둔다(사용자 지정 2026-07-20).
@@ -1208,7 +1220,13 @@ function euFamilyOverrides(opts: {
       doneSummary: '광견병 백신을 접종했어요.',
       earliest: { anchor: 'birth', daysAfter: 84 },
       done: 'has-rabies-valid',
-      validationIds: ['eu.rabies-prime-after-12weeks', 'eu.microchip-before-rabies'],
+      validationIds: [
+        'eu.rabies-prime-after-12weeks',
+        'eu.microchip-before-rabies',
+        // 저장 거부(findRabiesChainBreak)의 짝. 1회 접종국이면 앱이 이미 저장을 막는데,
+        // 짝 룰이 없어 펫무브워크에선 끊긴 chain 이 안 보였다(2026-07-21 lint 로 발견).
+        'eu.rabies-booster-within-prime-validity',
+      ],
     },
     // 항체 검사 — 접종 30일 후 채혈. EU 승인 검사기관(2000/258/EC 등재) 안내.
     'rabies-titer': {

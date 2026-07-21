@@ -22,6 +22,9 @@ import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { APP_SUPPORTED_DESTINATION_KEYS } from '../packages/domain/src/destination-config'
+import { ALL_PROCEDURE_CHECKS, checkCountryKeys } from '../packages/domain/src/procedure-checks/registry'
+
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const CHECKS_DIR = path.join(ROOT, 'packages', 'domain', 'src', 'procedure-checks')
 const SNAPSHOT = path.join(ROOT, 'scripts', 'checks-copy.snapshot.txt')
@@ -88,13 +91,32 @@ function parseRules(): Rule[] {
 const rules = parseRules()
 
 // ── A. 날짜 보간 가드 ────────────────────────────────────────────────
+// 앱(펫무브)에 노출된 목적지의 룰 id 집합. 펫무브워크 전용 목적지는 고객이 볼 일이 없어
+// 실패가 아니라 경고로 뺀다 — validation-wiring lint 와 같은 분리 방식이다.
+const APP_KEYS = new Set<string>(APP_SUPPORTED_DESTINATION_KEYS as readonly string[])
+const APP_RULE_IDS = new Set<string>(
+  (ALL_PROCEDURE_CHECKS as Array<{ id: string; country: unknown }>)
+    .filter((r) => checkCountryKeys(r.country as never).some((k) => APP_KEYS.has(k)))
+    .map((r) => r.id),
+)
+
 const violations: string[] = []
+const workOnly: string[] = []
 for (const r of rules) {
   if (r.audience !== 'customer' || r.allowDate) continue
-  if (r.severity === 'info') continue // '안내'는 카드 설명문 쪽 — 여기선 주의·차단만
+  // 예전엔 info 를 통째로 건너뛰었다("'안내'는 카드 설명문 쪽"). 틀린 전제였다 — info 도
+  // audience:customer 면 고객에게 그대로 보인다. 그 탓에 구세대 파일(ma/ua/mx/br)의 날짜
+  // 보간 문구 12건이 severity 를 warning 으로 올릴 때까지 숨어 있었다(2026-07-21).
   for (const m of r.messages) {
-    if (DATE_LIKE.test(m)) violations.push(`  ${r.id}\n      ${m.slice(0, 140)}`)
+    if (!DATE_LIKE.test(m)) continue
+    ;(APP_RULE_IDS.has(r.id) ? violations : workOnly).push(`  ${r.id}\n      ${m.slice(0, 140)}`)
   }
+}
+if (workOnly.length > 0) {
+  console.log(
+    `· 펫무브워크 전용 목적지 룰에 날짜 보간 문구 ${workOnly.length}건 (앱 미노출 — 경고만).`,
+  )
+  console.log('  해당 국가를 앱에 올릴 때(appSupported: true) 반드시 먼저 고쳐야 합니다.\n')
 }
 
 // ── B. 골든 스냅샷 ───────────────────────────────────────────────────

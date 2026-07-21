@@ -221,6 +221,9 @@ export const CN_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 백신 면역 유효기간 만료 임박',
     description: '광견병 백신 면역 유효기간이 오늘로부터 30일 이내로 남았을 때 사전 안내.',
+    // 만료 안내는 **날짜가 정보 자체**다(언제까지인지 모르면 안내가 성립 안 함).
+    // lint:checks 가 info 도 검사하게 되면서 드러났고, 의도된 예외로 선언한다(2026-07-21).
+    allowDate: true,
     severity: 'info',
     addedAt: '2026-07-18',
     run: ({ caseRow, destination }) => {
@@ -300,7 +303,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `최신 RNATT(${newest.date})의 유효기간(${expiry})이 출국일(${dep})보다 빨라 1년을 초과했어요.`,
+        message: '광견병 항체 검사는 중국 입국일 기준 1년 이내여야 해요. 유효기간이 지나 다시 검사해야 해요.',
         offendingPaths: offending,
       }
     },

@@ -506,6 +506,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 백신 면역 유효기간 만료 임박',
     description: '광견병 백신 면역 유효기간이 오늘로부터 30일 이내로 남았을 때 사전 안내.',
+    // 만료 안내는 **날짜가 정보 자체**다(언제까지인지 모르면 안내가 성립 안 함).
+    // lint:checks 가 info 도 검사하게 되면서 드러났고, 의도된 예외로 선언한다(2026-07-21).
+    allowDate: true,
     severity: 'info',
     addedAt: '2026-05-21',
     run: ({ caseRow, destination }) => {
@@ -542,6 +545,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 항체 검사 유효기간 만료 임박',
     description: '광견병 항체 검사 유효기간(2년)이 오늘로부터 30일 이내로 남았을 때 사전 안내.',
+    // 만료 안내는 **날짜가 정보 자체**다(언제까지인지 모르면 안내가 성립 안 함).
+    // lint:checks 가 info 도 검사하게 되면서 드러났고, 의도된 예외로 선언한다(2026-07-21).
+    allowDate: true,
     severity: 'info',
     addedAt: '2026-05-21',
     run: ({ caseRow, destination }) => {

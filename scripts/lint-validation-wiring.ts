@@ -23,16 +23,29 @@
  * 대신 `appSupported: true` 로 바꾸는 순간 자동으로 실패 대상이 되므로, **배선이 끊긴 채로
  * 앱에 출시되는 일은 막힌다.** 새 목적지를 앱에 올릴 때 이 린트가 문지기가 된다.
  */
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import { JOURNEY_STEP_CATALOG } from '../packages/domain/src/journey-steps/catalog'
 import { resolveStepForDestination } from '../packages/domain/src/journey-steps/destination-overrides'
 import { ALL_PROCEDURE_CHECKS, checkCountryKeys } from '../packages/domain/src/procedure-checks/registry'
 import { DESTINATION_OVERRIDES } from '../packages/domain/src/destination-config'
 
+const CHECKS_DIR = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..',
+  'packages',
+  'domain',
+  'src',
+  'procedure-checks',
+)
+
 type Problem = {
   dest: string
   stepId: string
   ruleId: string
-  kind: 'missing' | 'cross-country' | 'unvalidated' | 'orphan-rule'
+  kind: 'missing' | 'cross-country' | 'unvalidated' | 'orphan-rule' | 'missing-pair' | 'own-calc'
 }
 
 /**
@@ -189,8 +202,106 @@ function orphanRules(appDests: string[]): Problem[] {
   return out
 }
 
+/**
+ * 4단계 — **저장 거부가 걸리는데 짝이 되는 주의 룰이 없는** 목적지.
+ *
+ * 왜 필요한가: 입력불가(저장 거부)는 프로파일 선언에서 자동 파생되지만, 그 짝이 되는
+ * procedure-check 주의 룰은 **사람이 손으로 만든다.** 그래서 한쪽만 생기는 일이 실제로
+ * 벌어졌다 — 펫무브워크(운영자)는 저장을 막지 않고 절차검증만 보므로, 주의 룰이 없으면
+ * **운영자 화면에서 그 위반이 아예 안 보이는 반쪽 상태**가 된다.
+ *
+ * 실제 사고(2026-07-21 발견): 모로코·우크라이나·멕시코·브라질 4개국에 광견병 체인 검증
+ * 주의 룰이 없었다. 저장 거부(findRabiesChainBreak)는 1회 접종국이라 이미 걸려 있었는데도.
+ * '베트남 골격 복제'가 프로파일·카드·서류까지만 가고 procedure-checks 파일은 구세대를
+ * 그대로 둔 채 값만 패치했기 때문이다. 기존 1~3단계는 "있는 룰의 연결"만 보므로 못 잡았다.
+ *
+ * 프로파일 선언 → 필요한 룰 접미사 매핑(둘 다 파생이라 정적으로 검사 가능):
+ *   rabies.doses === 1                    → findRabiesChainBreak 저장거부 → 체인 주의 룰
+ *   rabies.entryWaitDaysAfterVaccine 선언 → validateRabiesEntryWait 저장거부 → 대기 주의 룰
+ */
+function missingPairRules(appDests: string[]): Problem[] {
+  const ruleIds = new Set((ALL_PROCEDURE_CHECKS as Array<{ id: string }>).map((r) => r.id))
+  const out: Problem[] = []
+  for (const dest of appDests) {
+    const rabies = DESTINATION_OVERRIDES[dest]?.rabies
+    if (!rabies) continue
+    const has = (suffix: string) => [...ruleIds].some((id) => id.endsWith(suffix))
+    // 룰 id 는 나라 접두사가 제각각(kh/mn/ma…)이라 접미사로 본다. 단 그 나라 룰이어야 하므로
+    // country 로 한 번 더 거른다.
+    const ownRules = (ALL_PROCEDURE_CHECKS as Array<{ id: string; country: unknown }>).filter((r) =>
+      checkCountryKeys(r.country as never).includes(dest),
+    )
+    const ownHas = (suffix: string) => ownRules.some((r) => r.id.endsWith(suffix))
+    void has
+
+    if (rabies.doses === 1 && !ownHas('.rabies-booster-within-prime-validity')) {
+      out.push({
+        dest,
+        stepId: '(프로파일 rabies.doses === 1)',
+        ruleId: `${dest}: *.rabies-booster-within-prime-validity`,
+        kind: 'missing-pair',
+      })
+    }
+    if (rabies.entryWaitDaysAfterVaccine && !ownRules.some((r) => /\.rabies-min-\d+days-before-departure$/.test(r.id))) {
+      out.push({
+        dest,
+        stepId: `(프로파일 entryWaitDaysAfterVaccine: ${rabies.entryWaitDaysAfterVaccine})`,
+        ruleId: `${dest}: *.rabies-min-<N>days-before-departure`,
+        kind: 'missing-pair',
+      })
+    }
+  }
+  return out
+}
+
+/**
+ * 5단계 — **저장 거부와 주의가 서로 다른 계산을 하는** 목적지.
+ *
+ * 대기일 판정은 도메인 함수 하나(violatesRabiesEntryWait)로 통일돼 있다. 그런데 주의 룰이
+ * 그 헬퍼를 안 쓰고 자체 계산(daysBetween + rabies[0])을 하면 **두 층의 기준이 갈린다.**
+ *
+ * 실제 사고(2026-07-21 발견): mx.rabies-min-30days-before-departure 가 가장 이른 접종을
+ * 기준으로 삼아 ①만료 후 재접종 케이스를 통째로 놓치고(1차부터 세어 '통과') ②프로파일
+ * 파생 저장 거부와 계산이 어긋났다.
+ *
+ * 검사 방법: entryWaitDaysAfterVaccine 를 선언한 목적지의 procedure-checks 파일이
+ * violatesRabiesEntryWait 를 import 하는지 (정적 텍스트 검사).
+ */
+function ownCalcRules(appDests: string[]): Problem[] {
+  const out: Problem[] = []
+  const seen = new Set<string>()
+  for (const dest of appDests) {
+    if (!DESTINATION_OVERRIDES[dest]?.rabies?.entryWaitDaysAfterVaccine) continue
+    const rule = (ALL_PROCEDURE_CHECKS as Array<{ id: string; country: unknown }>).find(
+      (r) =>
+        /\.rabies-min-\d+days-before-departure$/.test(r.id) &&
+        checkCountryKeys(r.country as never).includes(dest),
+    )
+    if (!rule) continue // 4단계가 잡는다
+    const cc = rule.id.split('.')[0]
+    if (seen.has(cc)) continue
+    seen.add(cc)
+    const file = path.join(CHECKS_DIR, `${cc}.ts`)
+    if (!fs.existsSync(file)) continue
+    const src = fs.readFileSync(file, 'utf8')
+    if (!src.includes('violatesRabiesEntryWait')) {
+      out.push({
+        dest,
+        stepId: `(procedure-checks/${cc}.ts)`,
+        ruleId: rule.id,
+        kind: 'own-calc',
+      })
+    }
+  }
+  return out
+}
+
 function describe(p: Problem): string {
   if (p.kind === 'missing') return '존재하지 않는 룰'
+  if (p.kind === 'missing-pair')
+    return '저장 거부는 프로파일에서 파생돼 이미 걸리는데 **짝이 되는 주의 룰이 없다** — 운영자(펫무브워크) 화면에서 이 위반이 안 보인다'
+  if (p.kind === 'own-calc')
+    return '대기일 주의 룰이 violatesRabiesEntryWait 를 쓰지 않는다 — 저장 거부와 계산이 갈린다(만료 후 재접종을 놓침)'
   if (p.kind === 'unvalidated')
     return `날짜칸(${p.ruleId})을 받는데 검증이 하나도 없음 — 말이 안 되는 날짜가 그냥 저장됨`
   if (p.kind === 'orphan-rule')
@@ -203,7 +314,12 @@ function main(): void {
   const appDests = dests.filter((d) => DESTINATION_OVERRIDES[d]?.appSupported)
   const adminDests = dests.filter((d) => !DESTINATION_OVERRIDES[d]?.appSupported)
 
-  const blocking = [...appDests.flatMap(collect), ...orphanRules(appDests)]
+  const blocking = [
+    ...appDests.flatMap(collect),
+    ...orphanRules(appDests),
+    ...missingPairRules(appDests),
+    ...ownCalcRules(appDests),
+  ]
   const backlog = adminDests.flatMap(collect)
 
   if (backlog.length > 0) {
