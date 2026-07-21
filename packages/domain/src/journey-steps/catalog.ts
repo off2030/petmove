@@ -1908,9 +1908,41 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     category: 'document',
     title: '모로코 수출 검역',
     shortLabel: '수출',
-    // ONSSA 관용 수의사 발급. 근거는 procedure-checks/ma.ts 헤더와 destination-config 프로파일 주석 참고.
+    // ✅ **ONSSA 공식 서식 원본을 직접 판독해 확정**(2026-07-21 조사). 4국 중 근거가 가장 구체적.
+    //   서식: 「CERTIFICAT SANITAIRE POUR L'EXPORTATION DE CHIENS ET DE CHATS … VERS LA COREE
+    //   DU SUD」 각주 `(E.CARNI.CoréeSud.Juin.2015)` — 불어·영어 병기 2쪽, ONSSA 직인 모델본.
+    //   ONSSA 수출 페이지(links)에서 PDF 다운로드 가능. **2015년 6월판이고 업로드 경로가
+    //   /2021/11/ 이라 최소 2021-11 이후 교체된 적이 없다** — '최신 정보'라고 쓰지 말 것.
+    //
+    //   서식 V항 원문에서 확인된 것(구 주석의 값들이 전부 이 서식 조항이었다):
+    //     1) "Were examined in the last 24 hours … the day of loading" → **출발 24시간 이내
+    //        임상검사 + 탑재 당일**. 다른 나라 10일·5일과 달리 이례적으로 짧은 게 맞다.
+    //     2) "identified with a permanent mark, prior to their vaccination" → 칩 선행
+    //     3) "at least 21 days before loading using inactivated vaccine" → **21일 + 불활화**
+    //        ⚠️ 이 21일·칩 규칙은 모로코 **입국**만이 아니라 **출국(귀국편)에도 적용**된다 —
+    //           같은 서식 조항이다. 프로파일의 entryWaitDaysAfterVaccine 21 은 입국 방향만
+    //           커버하므로, 귀국 방향 검증이 필요해지면 여기 근거를 쓸 것.
+    //     5) "within 24 months prior to shipment … titer ≥ 0.5 IU/ml" → 채혈 24개월·0.5
+    //        (한국 APQA 요건과 같은 값이지만 **모로코 서식 자체의 조항**이다 — 못 맞추면
+    //         애초에 모로코 증명서 발급이 안 된다. '한국 요건을 옮긴 것'이 아니다.)
+    //     6) "laboratory analysis reports … are attached" → 결과지 원본 첨부 필수
+    //   ※ 조항 번호가 3 다음 5 로 건너뛴다(4번 없음) — 서식 자체의 오타다.
+    //
+    //   수수료: 농업부 DECISION 부속 「Liste des prestations payantes」(2019-07-19 개정) 7/26쪽
+    //     **SA-E-1 "Certificat sanitaire vétérinaire à l'exportation des animaux vivants"
+    //     — Certificat — 150 Dh TTC**. 마리당이 아니라 **증명서 1건당**이고, Article 3 에 따라
+    //     **신청 접수 시 납부**한다.
+    //
+    // ⚠️ 확인 실패 — 카드에 쓰지 말 것: 증명서 유효기간(서식에 조항 자체가 없다) / 소요 기간
+    //   ('2~3영업일'은 상업 출처 단독) / 온라인 신청 시스템 유무(ONSSA 전자서비스는 조사 시점
+    //   접속 불가) / 출국 공항의 별도 확인 절차 / 민간 동물병원 선행 필요 여부(서식이 요구하는
+    //   첨부는 항체 결과지 하나뿐이고 서명자는 관용 수의사 단독이다 — 그렇다고 '불필요'로
+    //   단정할 근거도 없다).
     description:
-      '모로코 출국 전 수출 증명서를 발급받으세요.\n\n거주지 관할 검역기관(ONSSA) 수의서비스에 문의해 관용 수의사에게 발급받으세요.\n한국행 전용 서식이 있어요. 마이크로칩 번호가 반드시 기재돼야 해요.\n항체 검사 결과지 원본을 첨부해요. 채혈일이 출발일로부터 24개월 이내여야 해요.\n출발 24시간 이내에 임상검사를 받아야 해요.',
+      // 베트남·캄보디아 3문단 틀로 축약(2026-07-21). 마이크로칩 기재는 칩 카드가, 채혈
+      // 24개월은 항체 카드가 이미 다룬다 — 여기선 수출 절차 고유만 남긴다.
+      // 3문단의 '24시간 임상검사'는 모로코의 결정적 제약이라 반드시 남긴다(아래 근거).
+      '모로코 출국 전 수출 증명서를 발급받으세요.\n\n거주지 관할 검역기관(ONSSA) 수의서비스에서 관용 수의사가 발급해요. 한국행 전용 서식이 있고, 항체 검사 결과지 원본을 첨부해요.\n\n출발 24시간 이내에 임상검사를 받아야 해요. 수수료는 증명서 한 건당 150디르함이에요.',
     doneSummary: '모로코 수출 검역을 받았어요.',
     cardLine: '모로코 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['morocco'], species: 'all', tripType: 'round' },

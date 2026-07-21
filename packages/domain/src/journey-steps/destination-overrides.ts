@@ -424,7 +424,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       fieldKey: 'ma_import_quarantine_date',
       // 격리는 '규정 미발견'이다 — 없다고 명시한 문구도 없어서 단정하지 않는다.
       description:
-        '모로코 도착 후 국경 검역소에서 검역을 받으세요.\n검역기관(ONSSA) 수의사가 서류와 반려동물을 확인해요.\n검사 수수료가 있어요. 마리당 10디르함이에요.\n통과하면 세관에서 검역 증명을 받아 입국해요.',
+        // ⚠️ '검사 수수료 마리당 10디르함'을 뺐다(2026-07-21 조사). ONSSA 공식 요금표
+        //   「Liste des prestations payantes」(2019-07-19 개정) 30쪽 전체에 **10디르함 항목이
+        //   없다.** 수입 측에 개·고양이 전용 라인도 없고, 가장 가까운 건 SA-I-11
+        //   "Oiseaux de plaisance et autres animaux de compagnie" — Tête — **100 Dh** 이다.
+        //   10 인지 100 인지 확정할 수 없으므로 금액을 쓰지 않는다. 되살리려면 요금표 원문
+        //   근거부터 확보할 것.
+        '모로코 도착 후 국경 검역소에서 검역을 받으세요.\n검역기관(ONSSA) 수의사가 서류와 반려동물을 확인해요.\n통과하면 세관에서 검역 증명을 받아 입국해요.',
       helpText: '모로코 도착 후 수입 검역을 받은 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '모로코 수입 검역 서류',
