@@ -682,7 +682,8 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
   }),
   '캐나다': vietnamFamilyDocSpecs('캐나다', 'ca', {
-    noLocalTiterLab: true,
+    // noLocalTiterLab 을 **켜지 않는다** — '캐나다에는 검사 기관이 없으니…' 문장을 카드·
+    // 서류탭 양쪽에서 빼기로 했다(사용자 지정 2026-07-21). 캄보디아·몽골은 그대로 유지.
     // 캐나다는 동물검역소 검역이 아니라 CBSA 국경 심사라 '검역 후 받는 서류' 문형이 안 맞는다.
     // 발급물 자체가 확인되지 않았다(CFIA·CBSA 어느 쪽도 증서 발급을 언급하지 않음) — 없다고
     // 단정할 근거도 없어서, 받았다면 보관하라는 형태로만 남긴다.
