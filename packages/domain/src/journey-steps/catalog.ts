@@ -1686,9 +1686,14 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '몽골 수출 검역 서류',
     links: [
+      // ⚠️ 구 링크(http://inspection.gov.mn/new/ulaanbaatar/?page_id=46860)는 **죽었다** —
+      //   본문 길이 0의 빈 페이지고, 메인 도메인 inspection.gov.mn 조차 'Index of /'
+      //   디렉터리 목록이 노출되는 깨진 상태다(2026-07-21 브라우저 실측). 되살리지 말 것.
+      //   대체 = 몽골 정부 포털의 전문검사청(Мэргэжлийн хяналтын ерөнхий газар) 페이지.
+      //   실측 확인: 정상 로드. 게시물이 2020년이라 갱신은 느리지만 공식 페이지다.
       {
-        url: 'http://inspection.gov.mn/new/ulaanbaatar/?page_id=46860',
-        label: '울란바토르 전문검사청 수출입·국경검역감독과',
+        url: 'https://mongolia.gov.mn/m/inspection',
+        label: '몽골 전문검사청 (정부 포털)',
       },
     ],
   },

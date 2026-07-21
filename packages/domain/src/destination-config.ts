@@ -767,6 +767,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       //   근거 상태: APQA 안내문(2024-04-30, 직접 확인) '12주령' vs www 가이드·구버전이
       //   인용한 USDA APHIS('3 months of age', 이번 조사에서 접근 실패로 미검증) 충돌.
       //   GASI(ssia.gov.mn) 1차 원문은 확보하지 못했다. 2차 출처 둘이 엇갈리는 상태다.
+      //
+      // ✅ **2026-07-21 재확인 — 3개월 유지로 결정(사용자).** 충돌을 알고 택한 값이다.
+      //   다시 "APQA 는 12주인데 왜 3개월이냐"로 올리지 말 것. 84~90일 접종 실제 케이스가
+      //   나타나면 그때 84일로 낮춘다.
       minAgeDays: 91,
       minAgeMonths: 3,
       minAgeLabel: '생후 3개월',
