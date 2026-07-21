@@ -1599,10 +1599,13 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   기관명은 **GDAHP 로 통일**(2016 Sub-Decree 224 로 부서 DAHP→총국 승격. 구 페이지·
     //   무역포털은 아직 'DAHP office'로 부르지만 같은 MAFF 산하 기관 — 서류탭도 GDAHP 로 맞춤).
     //   연락처는 카드에 직접 안 쓴다 — 공식 전화(2022 ASEAN 통보문 (855)12 901 106)가 현재
-    //   반려동물 담당 직통인지 미확인이라, 틀리면 헛걸음이다. 대신 links 의 공식 페이지로 보낸다
-    //   (사용자 지정 2026-07-21). GDAHP 사무소: Trea Village, St.371, Steung Mean Chey, Phnom Penh.
+    //   반려동물 담당 직통인지 미확인이라, 틀리면 헛걸음이다. GDAHP 는 MAFF 산하 총국이라
+    //   MAFF 대표 사이트가 정식 입구다(사용자 지정 2026-07-21). link 는 **메인 페이지 하나만** —
+    //   /contactus 같은 세부 경로는 자주 바뀌므로 담당 부처 홈(maff.gov.kh)만 건다.
+    //   (MAFF 연락처 현행값 참고: (855)23 726128/129, 핫라인 1289, info@maff.gov.kh, 08:30–16:30.
+    //    GDAHP 자체 사무소 주소는 MAFF 본부(노로돔대로)와 다를 수 있어 방문 전 전화로 확인.)
     description:
-      '캄보디아 출국 전에 캄보디아 정부의 수출 검역을 받고 수의증명서(Veterinary Certificate)를 발급받으세요.\n한국이 요구해서가 아니라, 살아 있는 동물을 내보낼 때 캄보디아가 자체적으로 요구하는 절차예요.\n\n프놈펜의 농림수산부 동물보건생산국(GDAHP)에 신청해요. 보호자 여권·항공권·마이크로칩·예방접종·항체 검사 자료와, 한국에서 올 때 받은 검역 서류를 함께 준비하면 승인이 빨라요.\n\n실제 검사는 출국하는 공항에서 정부 검역관이 하고, 증명서는 본부에서 나와요. 그래서 예약 없이 공항에 가면 안 되고, 신청할 때 검사 일정을 함께 잡아야 해요. 검역소는 프놈펜·시엠립·시아누크빌 국제공항에 있어요.\n\n개인 반려동물 절차가 자세히 공개돼 있지 않아요. 신청할 때 ①별도 수출허가서가 필요한지 ②현지 동물병원 건강증명서가 필요한지 ③검사 장소 ④증명서 받는 곳을 꼭 확인하세요.\n\n처리에 며칠 걸릴 수 있으니 출국 당일에 시작하지 마세요.',
+      '캄보디아 출국 전에 수출 검역을 받고 수의증명서(Veterinary Certificate)를 발급받으세요.\n\n프놈펜의 농림수산부 동물보건생산국(GDAHP)에 미리 신청하고, 출국하는 공항 검역소에서 검사받아요. 검역소는 프놈펜·시엠립·시아누크빌 국제공항에 있어요.\n\n처리에 며칠 걸릴 수 있으니 출국 당일에 시작하지 마세요.',
     doneSummary: '캄보디아 수출 검역을 받았어요.',
     cardLine: '캄보디아 출국 전 정부 수출 검역을 받으세요.',
     applicability: { destinations: ['cambodia'], species: 'all', tripType: 'round' },
@@ -1621,18 +1624,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '캄보디아 수출 검역 서류',
     links: [
-      // 연락처는 번호 대신 공식 페이지로 — 방문 전 현재 담당·절차를 여기서 재확인(2026-07-21).
+      // 담당 부처(MAFF) 홈 하나만 — 세부 경로는 자주 바뀌므로 메인만 건다(사용자 지정 2026-07-21).
+      // GDAHP 는 MAFF 산하 총국이라 여기서 General Directorates·연락처로 들어간다.
       {
-        url: 'https://maff.gov.kh/gdahp/page/about_us?lang=en',
-        label: 'GDAHP(동물보건생산국) 소개·프놈펜 사무소',
-      },
-      {
-        url: 'https://services.maff.gov.kh',
-        label: 'MAFF 전자민원(E-License) — 담당·절차 확인',
-      },
-      {
-        url: 'https://cambodiantr.gov.kh/en/procedure/?title=application-for-veterinary-certificate',
-        label: '수의증명서 신청 절차 (정부 무역포털)',
+        url: 'https://maff.gov.kh/',
+        label: '캄보디아 농림수산부(MAFF) — GDAHP 상위 부처',
       },
     ],
   },
