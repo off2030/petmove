@@ -2078,7 +2078,20 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '수출',
     // SENASICA 발급 · 무료. 근거는 procedure-checks/mx.ts 헤더와 destination-config 프로파일 주석 참고.
     description:
-      '멕시코 출국 전 수출 증명서(CZE)를 발급받으세요.\n\n먼저 민간 수의사에게 건강증명서를 받으세요. 발급 후 5일 이내여야 해요.\n그 서류로 검역기관(SENASICA) 사무소에 신청하면 3영업일 안에 1차 서명본을 받아요.\n출국 당일 공항에서 반려동물 실물 검사를 받고 최종 서명을 받아요.\n발급 비용은 없어요. 유효기간은 발급일로부터 8일이에요.\n이 증명서가 없으면 한국 입국이 거부돼요.',
+      // ✅ 2026-07-22 SENASICA 원문 재확인 — 카드의 숫자·사실이 전부 원문과 일치한다
+      //   (「Solicita el Certificado Zoosanitario para Exportación para mascotas」):
+      //   · 민간 수의사 건강증명서 "de no más de cinco días de expedido" → 5일 이내
+      //   · "en un plazo de tres días hábiles" → 3영업일
+      //   · 비용 "Gratuito" → 무료
+      //   · 유효기간 "8 días naturales (puede variar en caso de que el país destino
+      //     establezca una vigencia diferente)" → 8일. 괄호(목적지국이 달리 정하면 변동)는
+      //     한국이 따로 정한 바가 확인되지 않아 카드에 쓰지 않는다.
+      //   · 출국일 출국지점에서 실물 검사 → '출국 당일 공항에서 실물 검사'
+      //   · 신청처 = 전국 SENASICA 인가 사무소
+      // ⚠️ 확인 실패 — 쓰지 말 것: 사전 예약 필요 여부(원문에 언급 없음. 브라질처럼 예약제라고
+      //   쓰면 근거 없는 안내가 된다).
+      // 첫 줄은 형제 카드 문형에 맞춤(캄보디아·몽골·우즈베키스탄·우크라이나·브라질).
+      '멕시코 출국 전 수출 검역을 받고 수출 증명서(CZE)를 발급받으세요.\n\n먼저 민간 수의사에게 건강증명서를 받으세요. 발급 후 5일 이내여야 해요.\n그 서류로 검역기관(SENASICA) 사무소에 신청하면 3영업일 안에 1차 서명본을 받아요.\n출국 당일 공항에서 반려동물 실물 검사를 받고 최종 서명을 받아요.\n발급 비용은 없어요. 유효기간은 발급일로부터 8일이에요.\n이 증명서가 없으면 한국 입국이 거부돼요.',
     doneSummary: '멕시코 수출 검역을 받았어요.',
     cardLine: '멕시코 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['mexico'], species: 'all', tripType: 'round' },

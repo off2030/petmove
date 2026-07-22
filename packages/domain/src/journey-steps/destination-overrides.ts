@@ -516,8 +516,21 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       earliest: undefined,
       validationIds: ['mx.rabies-min-30days-before-departure'],
     },
-    'external-parasite': { validationIds: ['mx.external-parasite-within-6months'] },
-    'internal-parasite': { validationIds: ['mx.internal-parasite-within-6months'] },
+    // 기본 카드 문구('진드기·벼룩 … 호주·뉴질랜드 등에서 요구돼요')를 덮어쓴다(2026-07-22).
+    // SENASICA 원문은 **"desparasitados interna y externamente dentro de los seis meses
+    // previos"** — 내·외부를 묶어 '도착 전 6개월 이내'만 말하고 특정 기생충을 지목하지 않는다.
+    // ⚠️ **6개월이 맞다 — 브라질(출국 15일)과 혼동해 15일로 바꾸지 말 것**(2026-07-22 확인).
+    //   두 나라는 근거도 방향도 다르다: 멕시코는 **입국국의 수입 요건**(도착 전 6개월),
+    //   브라질은 증명서 발급 기준 15일. 참고로 멕시코 요건 중 '15일'은 기생충이 아니라
+    //   **건강증명서 유효기간**(Certificado de Buena Salud, 발급 후 최대 15일)이다.
+    'external-parasite': {
+      description: '외부 기생충 치료를 하세요.\n\n멕시코 도착일 기준 6개월 이내에 해야 합니다.',
+      validationIds: ['mx.external-parasite-within-6months'],
+    },
+    'internal-parasite': {
+      description: '내부 기생충 치료를 하세요.\n\n멕시코 도착일 기준 6개월 이내에 해야 합니다.',
+      validationIds: ['mx.internal-parasite-within-6months'],
+    },
     departure: importQuarantineCard({
       label: '멕시코',
       fieldKey: 'mx_import_quarantine_date',
