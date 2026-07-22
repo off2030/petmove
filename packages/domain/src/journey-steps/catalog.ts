@@ -2106,7 +2106,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // VIGIAGRO 발급 · 무료. 근거는 procedure-checks/br.ts 헤더와 destination-config 프로파일 주석 참고.
     // ── 2026-07-22 재조사(MAPA 한국행 전용 안내 PDF + 「Sair do Brasil」 본문) ──────────
     // ✅ **CVI 10일 유효**(서명일 기준)·**발급 당일 검역 수의사 현장 칩 판독** — 둘 다 MAPA
-    //   한국행 문서에 명시. 구 카드가 맞았다. `coreia-do-sul-out-22.pdf`
+    //   한국행 문서에 명시. 구 카드가 맞았다. (근거 문서 — 카드 링크로는 걸지 않는다)
+    //   https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil/coreia-do-sul-out-22.pdf
     //   ⚠️ 이 PDF 는 WebFetch 로 본문 추출이 안 된다(스캔형 — 첫 조사 때 '근거 없음'으로
     //     잘못 판정했다가 사용자가 원문을 열어 정정). **못 읽었다고 근거가 없는 게 아니다.**
     // ✅ **임상검사는 출국 10일 이내**(AS-1 Geral 서식). 같은 PDF.
@@ -2140,15 +2141,14 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '브라질 국제수의증명서(CVI)',
-    // 링크 3종 — 셋 다 응답 확인(2026-07-22, HTTP 200):
-    //  ①출국 절차 개요 ②**한국행 전용 요건표**(카드 문구의 직접 근거 — 임상검사 10일·CVI
-    //  10일 유효·현장 칩 판독이 여기 있다) ③지점 찾기(카드가 '미리 연락'하라고 하므로 갈 곳이
-    //  필요하다 — 지역(DIGRV)→주(州)→사무소로 들어가는 포털).
-    // ⚠️ ② PDF 는 스캔형이라 자동 본문 추출이 안 된다(제목 메타는 스위스 문서 서식이 남아
-    //   있으나 내용은 한국행이 맞다). 다음 조사자는 사람이 열어 확인할 것.
+    // 링크 2종 — 둘 다 응답 확인(2026-07-22, HTTP 200):
+    //  ①출국 절차 개요 ②지점 찾기(카드가 '미리 연락'하라고 하므로 갈 곳이 필요하다 —
+    //  지역(DIGRV)→주(州)→사무소로 들어가는 포털).
+    // ⛔ **한국행 요건표 PDF 를 링크로 걸지 말 것**(사용자 지정 2026-07-22). 카드 문구의
+    //   근거이지 고객이 읽을 문서가 아니다(포르투갈어 스캔 PDF). 근거로 참조할 주소는
+    //   위 description 주석에 남겨 뒀다.
     links: [
       { url: 'https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil', label: '브라질 출국 안내 (MAPA)' },
-      { url: 'https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil/coreia-do-sul-out-22.pdf', label: '한국행 요건 안내 (MAPA)' },
       { url: 'https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/unidades-de-vigilancia-agropecuaria-1', label: '검역 사무소(VIGIAGRO) 지점 찾기' },
     ],
   },
