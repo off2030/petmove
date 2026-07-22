@@ -1441,16 +1441,16 @@
   card: 우크라이나 출국 전 수출 검역을 받으세요.
   done: 우크라이나 수출 검역을 받았어요.
   desc:
-      우크라이나 출국 전 수출 검역을 받으세요.
+      우크라이나 출국 전 수출 검역을 받고 국제수의증명서를 발급받으세요.
       
-      먼저 거주지 국가 동물병원에서 임상검사를 받고 수의증서(Ф-1)를 발급받으세요.
-      그 서류를 검역기관(DPSS) 국경검사부서에 가져가면 국제수의증명서로 바꿔 줘요.
+      거주 지역 국가수의기관에서 임상검사를 받고 수의증서(Ф-1)를 받은 뒤, 검역기관(DPSS) 국경검사부서에서 국제수의증명서로 바꿔 받아요.
       증명서는 5일간만 유효해요. 출국일에 맞춰 발급 날짜를 정하세요.
-      모든 국경 통과지점에 검사관이 있는 건 아니에요. 출발 당일 국경에서 받으려 하지 말고, 어디서 받을지 미리 확인해 두세요.
+      모든 국경 통과지점에 검사관이 있는 건 아니에요. 키이우 등 도시 사무소에서 출국 전에 미리 받아 두세요.
   첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
   저장이름: 우크라이나 국제수의증명서
   links:
       비상업 이동 요건 (DPSS)  →  https://dpss.gov.ua/mizhnarodne-spivrobitnictv/veterinariya-ta-bezpechnist/vimogi-do-nekomercijnogo-peremishchennya-tvarin
+      국경검사부서 지점·연락처  →  https://nir.gov.ua/kontakty/kontakty-strukturnyh-pidrozdiliv/
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
