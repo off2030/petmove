@@ -564,11 +564,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     //   기준을 바꾸지 말 것 — 2026-07-22 그렇게 고칠 뻔했다. 한국 수출 검역은 출국 10일 이내라
     //   출국일 기준이 실무상 타당한 근사다.
     'external-parasite': {
-      description: '출국 15일 이내에 외부 기생충 치료를 하세요.',
+      description: '외부 기생충 치료를 하세요.\n\n출국일 기준 15일 이내에 해야 합니다.',
       validationIds: ['br.external-parasite-within-15days'],
     },
     'internal-parasite': {
-      description: '출국 15일 이내에 내부 기생충 치료를 하세요.',
+      description: '내부 기생충 치료를 하세요.\n\n출국일 기준 15일 이내에 해야 합니다.',
       validationIds: ['br.internal-parasite-within-15days'],
     },
     departure: importQuarantineCard({
