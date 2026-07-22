@@ -1770,6 +1770,8 @@
   저장이름: 브라질 국제수의증명서(CVI)
   links:
       브라질 출국 안내 (MAPA)  →  https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil
+      한국행 요건 안내 (MAPA)  →  https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil/coreia-do-sul-out-22.pdf
+      검역 사무소(VIGIAGRO) 지점 찾기  →  https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/unidades-de-vigilancia-agropecuaria-1
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역

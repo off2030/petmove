@@ -2140,7 +2140,17 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '브라질 국제수의증명서(CVI)',
-    links: [{ url: 'https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil', label: '브라질 출국 안내 (MAPA)' }],
+    // 링크 3종 — 셋 다 응답 확인(2026-07-22, HTTP 200):
+    //  ①출국 절차 개요 ②**한국행 전용 요건표**(카드 문구의 직접 근거 — 임상검사 10일·CVI
+    //  10일 유효·현장 칩 판독이 여기 있다) ③지점 찾기(카드가 '미리 연락'하라고 하므로 갈 곳이
+    //  필요하다 — 지역(DIGRV)→주(州)→사무소로 들어가는 포털).
+    // ⚠️ ② PDF 는 스캔형이라 자동 본문 추출이 안 된다(제목 메타는 스위스 문서 서식이 남아
+    //   있으나 내용은 한국행이 맞다). 다음 조사자는 사람이 열어 확인할 것.
+    links: [
+      { url: 'https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil', label: '브라질 출국 안내 (MAPA)' },
+      { url: 'https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil/coreia-do-sul-out-22.pdf', label: '한국행 요건 안내 (MAPA)' },
+      { url: 'https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/unidades-de-vigilancia-agropecuaria-1', label: '검역 사무소(VIGIAGRO) 지점 찾기' },
+    ],
   },
   {
     id: 'kz-export-quarantine',
