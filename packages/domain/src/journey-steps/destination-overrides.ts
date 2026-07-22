@@ -1255,16 +1255,19 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       description:
         '강아지는 DHPPL(디스템퍼·전염성간염·파보바이러스·파라인플루엔자·렙토스피라), 고양이는 FVRCP(범백혈구감소증·허피스·칼리시)가 포함된 종합백신을 접종하세요.\n\n수입 허가증(SPSIC) 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
       descriptionBySpecies: {
-        // ✅ BAI 원문 그대로 — "DOGS: rabies + distemper, leptospirosis, parvovirus,
-        //   adenovirus type 2 / CATS: rabies + herpes, calicivirus, panleukopenia and
-        //   feline leukemia"(주독 필리핀대사관 게시 요건서).
-        //   ⛔ **파라인플루엔자 삭제**(2026-07-22) — 원문에 없다(DHPPL 제품명에서 온 표기).
-        //   ⚠️ 개는 '전염성간염'이 아니라 **아데노바이러스 2형**으로 지목한다 — 태국(간염)과
-        //     표기가 다르지만 원문을 따른다(사용자 지정: 나라별 원문 그대로).
-        //   ⚠️ **고양이백혈병(FeLV)은 FVRCP 에 없다** — 따로 접종해야 하는 진짜 추가 요건이라
-        //     그 사실을 한 줄로 밝힌다. 빼면 보호자가 종합백신 하나로 끝난 줄 안다.
-        dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·렙토스피라·파보바이러스·아데노바이러스 2형 예방을 포함해야 해요.\n한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n마이크로칩 삽입 후 접종해요.\n수입 허가증(SPSIC) 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
-        cat: '종합백신(FVRCP)을 접종하세요.\n\n허피스바이러스·칼리시바이러스·범백혈구감소증·고양이백혈병 예방을 포함해야 해요.\n고양이백혈병은 종합백신(FVRCP)에 없어 따로 접종해야 해요.\n마이크로칩 삽입 후 접종해요.\n수입 허가증(SPSIC) 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+        // ✅ **BAI 공식 페이지(bai.gov.ph/Stakeholders/PetImport) 기준** — 2026-07-22 확정:
+        //   개 = canine distemper, infectious hepatitis, canine parvovirus,
+        //        **canine parainfluenza**, leptospirosis
+        //   고양이 = feline panleukopenia, feline viral rhino-tracheitis, feline calicivirus
+        //
+        // ⛔ **아데노바이러스 2형·고양이백혈병(FeLV)을 넣지 말 것. 파라인플루엔자를 빼지 말 것.**
+        //   2026-07-22 그렇게 고쳤다가 되돌렸다. 원인은 **출처를 잘못 골랐기 때문**이다 —
+        //   주독 필리핀대사관이 게시한 요건서 PDF(philippine-embassy.de)가 "adenovirus type 2"
+        //   와 "feline leukemia"를 적고 파라인플루엔자를 빼는데, **BAI 본청 안내와 다르다**
+        //   (옛 판이거나 옮겨 적으며 어긋난 것으로 보인다). 대사관·영사관 게시 자료는 1차
+        //   출처가 아니다. 이 파일 헤더의 BAI 페이지·MC 49 를 먼저 볼 것.
+        dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스·파라인플루엔자·렙토스피라 예방을 포함해야 해요.\n한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n마이크로칩 삽입 후 접종해요.\n수입 허가증(SPSIC) 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증·허피스바이러스·칼리시바이러스 예방을 포함해야 해요.\n마이크로칩 삽입 후 접종해요.\n수입 허가증(SPSIC) 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
       },
       validationIds: ['ph.microchip-before-general-vaccine'],
     },
