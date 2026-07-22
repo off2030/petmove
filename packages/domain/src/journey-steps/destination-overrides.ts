@@ -543,10 +543,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         //     현장 절차 서술이라 행동을 바꾸지 않는다.
         //   · '반추동물 성분이 든 사료·간식·침구는 반입할 수 없어요.' — 사실이지만 검역 카드가
         //     아니라 짐 싸기 정보다. 다른 나라 도착 카드도 반입 금지 품목을 싣지 않는다.
-        // 진드기 줄은 남기되 **보호자 부담**을 명시한다 — SENASICA 원문이 "contacta a un
-        //   médico veterinario de tu elección … los gastos generados correrán por tu cuenta"
-        //   로 못 박고, 6개월이라는 여유 있는 기한 때문에 오히려 방심하기 쉬운 지점이다.
-        '멕시코 도착 후 공항 검역사무소(OISA)에서 검역을 받으세요.\n서류와 반려동물을 확인해요. 격리도 검사 수수료도 없어요.\n진드기가 발견되면 보호자가 수의사를 불러 직접 처치하고 비용을 부담한 뒤에야 반출돼요.',
+        //   · '진드기가 발견되면 보호자가 수의사를 불러 …' — 사용자 지정 삭제(2026-07-22).
+        //     근거는 SENASICA 원문("contacta a un médico veterinario de tu elección …
+        //     los gastos generados correrán por tu cuenta")에 있으나 카드엔 쓰지 않는다.
+        '멕시코 도착 후 공항 검역사무소(OISA)에서 검역을 받으세요.\n서류와 반려동물을 확인해요. 격리도 검사 수수료도 없어요.',
       helpText: '멕시코 도착 후 수입 검역을 받은 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '멕시코 수입 검역 서류',
