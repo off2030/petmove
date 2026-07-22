@@ -132,6 +132,10 @@ export const COUNTRY_POSTS: Record<string, PostRef[]> = {
   indonesia: [
     { title: '인도네시아 입국 준비 총정리', kind: 'docs', slug: 'indonesia-pet-travel-guide' },
   ],
+  // 아르헨티나 — 앱 지원 시작(베트남 복제, 2026-07-22). 블로그 글은 아직 없어 docs 만.
+  argentina: [
+    { title: '아르헨티나 입국 준비 총정리', kind: 'docs', slug: 'argentina-pet-travel-guide' },
+  ],
   philippines: [
     { title: '필리핀 입국 준비 총정리', kind: 'docs', slug: 'philippines-pet-travel-guide' },
     { title: '강아지 필리핀 입국 준비절차, 기간, 비용', kind: 'blog', slug: 'dog-travel-to-philippines' },
@@ -234,8 +238,8 @@ export const SERVICE_CARDS = [
   { icon: 'ti-adjustments-horizontal', title: '전체 대행 · 부분 의뢰', desc: '전 과정을 맡기거나, 필요한 단계만 도움받을 수 있어요' },
 ]
 
-// 앱 지원 여행지(랜딩) — 접힘 5 + 더보기, 펼침 = 아시아 12 + 유럽 30 + 아메리카 3 + 기타 2 (총 47개국,
-// 앱 화이트리스트와 동일). 2026-07-22: 말레이시아·인도네시아 추가(태국 복제).
+// 앱 지원 여행지(랜딩) — 접힘 5 + 더보기, 펼침 = 아시아 12 + 유럽 30 + 아메리카 4 + 기타 2 (총 48개국,
+// 앱 화이트리스트와 동일). 2026-07-22: 말레이시아·인도네시아(태국 복제)·아르헨티나(베트남 복제) 추가.
 // 유럽 30 = EU 회원국 + 영국·노르웨이·스위스(비EU). 웹 방문자에겐 'EU 묶음/개별 카드국' 구분이
 // 무의미해 유럽 한 그룹으로 묶고 가나다순 정렬(2026-07-17: 영국·핀란드·아일랜드·몰타·노르웨이·스위스 추가,
 // 2026-07-18: 대만 추가, 2026-07-19: 베트남 추가,
@@ -263,7 +267,8 @@ export const APP_DEST_EU = [
   '키프로스', '포르투갈', '폴란드', '프랑스', '핀란드', '헝가리',
 ]
 // 아메리카 — 2026-07-20 캐나다 지원 시작(APP_DEST_SOON 에서 승격) + 멕시코·브라질 추가.
-export const APP_DEST_AMERICA = ['멕시코', '브라질', '캐나다']
+// 2026-07-22 아르헨티나 추가(베트남 복제). 가나다순.
+export const APP_DEST_AMERICA = ['멕시코', '브라질', '아르헨티나', '캐나다']
 // '곧 지원' — 위 목록에 든 나라를 여기 남기면 같은 나라가 두 번 나온다. 캐나다는 뺐다.
 export const APP_DEST_SOON = ['하와이', '싱가포르', '미국', '호주', '뉴질랜드']
 

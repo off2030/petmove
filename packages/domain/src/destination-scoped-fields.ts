@@ -98,6 +98,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'id_import_quarantine_confirmed',
   'id_export_quarantine_date',
   'id_export_quarantine_confirmed',
+  // 아르헨티나 — 베트남 복제(2026-07-22). 수출 검역 카드는 아직 없어 import 쌍만.
+  'ar_import_quarantine_date',
+  'ar_import_quarantine_confirmed',
   'ph_import_quarantine_date',
   'ph_import_quarantine_confirmed',
   // 중국 도착 수입 검역 (GACC — 미충족 시 30일 격리)

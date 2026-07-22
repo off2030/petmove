@@ -176,6 +176,47 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['vn.import-quarantine-date-valid'],
     }),
   },
+  // ── 아르헨티나 — ⚠️ 베트남 한 벌 복제(2026-07-22). 문구·수치는 아직 베트남 것 그대로다
+  //   (30일 대기·미충족 시 14일 격리 — 구세대 SENASA 조사는 '격리 없음'이라 세부 수정 1순위).
+  //   베트남 고유 사실만 뺐다: 지정 입국공항 줄(SGN·HAN 등), '검사 기관이 없으니' 줄(아르헨티나
+  //   미확인 — 우즈베키스탄과 같은 처리), 금지 견종·2마리 한도 룰(베트남 법령 — 4국 복제 전례).
+  //   수출 검역 카드는 나라별 조사 후 별도 추가(4국 복제 전례) — 아직 없다.
+  argentina: {
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'argentina',
+      label: '아르헨티나',
+      // 칩 선행 룰 없음 — 베트남과 같이 칩이 입국 요건이 아닌 전제(SENASA 구세대 조사도 의무
+      // 부재). ar.rabies-only-1year-vaccine 은 베트남 복제값 — SENASA 근거 미확인, 확정 후 재검토.
+      validationIds: [
+        'ar.rabies-prime-after-3months-old',
+        'ar.rabies-booster-within-prime-validity',
+        'ar.rabies-only-1year-vaccine',
+      ],
+    }),
+    'rabies-titer': {
+      description:
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n아르헨티나 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+    },
+    'flight-purchase': {
+      description:
+        '아르헨티나 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 30일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '아르헨티나에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: ['ar.rabies-min-30days-before-departure'],
+    },
+    departure: importQuarantineCard({
+      label: '아르헨티나',
+      fieldKey: 'ar_import_quarantine_date',
+      description:
+        '아르헨티나 도착 후 공항 동물검역소에서 검역을 받으세요.\n마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.\n입국 요건을 충족하지 못하면 지정 시설에서 14일간 격리되거나 한국으로 반송돼요.',
+      helpText: '아르헨티나 도착 후 수입 검역을 받은 날짜',
+      // 발급되는 검역증 미확인 — 4국 복제 전례대로 '검역 서류'로 뭉뚱그린다(베트남 Mẫu 15a 는
+      // 베트남 고유 서식이라 복제하지 않는다). 확인되면 정식 이름으로 올릴 것.
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '아르헨티나 수입 검역 서류',
+      validationIds: ['ar.import-quarantine-date-valid'],
+    }),
+  },
   // ── 베트남 골격 복제 4국 (캄보디아·몽골·우즈베키스탄·캐나다) ──────────────
   // 2026-07-20 사용자 지정: "카드와 그에 걸린 검증 룰을 포함한 모든 것이 베트남과 같다".
   // 베트남과 같은 골격 — 광견병 1회 + 항체는 귀국용 + 수입허가/사전신고 없음 + 도착 검역.

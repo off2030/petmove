@@ -130,6 +130,7 @@ const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
   mongolia: '예: 울란바토르 UBN',
   uzbekistan: '예: 타슈켄트 TAS',
   canada: '예: 밴쿠버 YVR',
+  argentina: '예: 부에노스아이레스 EZE',
   morocco: '예: 카사블랑카 CMN',
   mexico: '예: 멕시코시티 MEX',
   brazil: '예: 상파울루 GRU',

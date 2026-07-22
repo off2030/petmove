@@ -918,10 +918,30 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     importQuarantine: { quarantineDays: 14 },
     rabiesTiterForReturnOnly: true,
   },
+  // ── 아르헨티나 — ⚠️ 베트남 한 벌 복제(2026-07-22). 세부 값은 아직 베트남 것 그대로다
+  //   (달력 3개월·30일 대기·1년 백신만·미충족 시 14일 격리). 나라별 규정 확정 후 수정 예정
+  //   (사용자 지정 — "베트남 복사 후 세부 수정").
+  //   복제 전 구세대 조사값(SENASA, git 이력 procedure-checks/ar.ts 구버전 참고):
+  //   광견병 3개월(90일)·1차 후 21일 권장(보수 30일)·유효기간 제조사 라벨(1년 제한 근거 없음)·
+  //   건강증명서 CVI 10일 이내·CVI 60일 유효·내외부 구충 15일 이내·**수입허가 불요·격리 없음**·
+  //   RNATT 귀국용·종합백신 의무 아님·칩 SENASA 의무 부재.
   argentina: {
-    // 광견병 출국 30일 전 추가 룰.
     keywords: ['아르헨티나', 'argentina'],
+    archetype: 'sea-permit',
+    rabies: {
+      doses: 1,
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      oneYearVaccineOnly: true,
+      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
+      timingLines: ['출국 30일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 30,
+    },
+    titer: { need: 'return-only' },
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer'],
+    importQuarantine: { quarantineDays: 14 },
     rabiesTiterForReturnOnly: true,
   },
   // ── 캄보디아 (GDAHP — MAFF) ────────────────────────────────────────────
