@@ -579,7 +579,7 @@ export function validatePhInternalParasiteWindow(
   // 낀 달에 따라 89~92일로 흔들려 규정을 지킨 사람을 막는다(몽골 최소 연령과 같은 처리).
   const limit = addMonths(treatmentDate, 3)
   if (limit && filedDate > limit) {
-    return '내부 기생충 치료는 수입 허가증(SPSIC) 신청 3개월 이내에 한 것이어야 해요. 다시 치료해야 해요.'
+    return '내부 기생충 치료는 수입 허가증(SPSIC) 신청 3개월 이내에 해야 해요.'
   }
   return null
 }
