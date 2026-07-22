@@ -2014,36 +2014,33 @@ export function StepDetailView({
         >
           {/* description 의 모든 비어있지 않은 줄을 항목으로 표시.
               경량 마크업(opt-in): '## ' 줄 = 소제목(불릿 X, 볼드), '- ' 줄 = 하위 ✓ 항목(amber),
-              그 외 = 일반 • 불릿. \n\n 으로 구분된 단락 경계는 marginTop 으로 간격을 살짝 줌. */}
+              그 외 = 일반 • 불릿.
+              ⚠️ **모든 항의 간격은 동일하다**(사용자 지정 2026-07-22). 예전엔 \n\n 단락 경계만
+              간격을 넓혔는데, 화면에선 첫 항도 같은 불릿이라 위계는 안 보이고 "왜 저기만
+              벌어졌지"로만 읽혔다. 단락별 간격 차이를 다시 넣지 말 것. */}
           {(() => {
             const lines = step.description.split('\n')
             type DescItem = {
               text: string
               key: number
               kind: 'heading' | 'sub' | 'bullet'
-              paraBreakBefore: boolean
             }
             const items = lines.reduce<Array<DescItem>>((acc, line, i) => {
               if (line.trim() === '') return acc
-              const paraBreakBefore = i > 0 ? lines[i - 1].trim() === '' : false
-              if (line.startsWith('## ')) acc.push({ text: line.slice(3), key: i, kind: 'heading', paraBreakBefore })
-              else if (line.startsWith('- ')) acc.push({ text: line.slice(2), key: i, kind: 'sub', paraBreakBefore })
-              else acc.push({ text: line, key: i, kind: 'bullet', paraBreakBefore })
+              if (line.startsWith('## ')) acc.push({ text: line.slice(3), key: i, kind: 'heading' })
+              else if (line.startsWith('- ')) acc.push({ text: line.slice(2), key: i, kind: 'sub' })
+              else acc.push({ text: line, key: i, kind: 'bullet' })
               return acc
             }, [])
             return (
               <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                {items.map(({ text, key, kind, paraBreakBefore }, itemIndex) => {
+                {items.map(({ text, key, kind }, itemIndex) => {
                   const marginTop =
                     itemIndex === 0
                       ? 0
                       : kind === 'heading'
                         ? 16
-                        : kind === 'sub'
-                          ? 8
-                          : paraBreakBefore
-                            ? 14
-                            : 8
+                        : 8
                   if (kind === 'heading') {
                     return (
                       <li key={key} style={{ marginTop, fontWeight: 600, color: C.ink }}>

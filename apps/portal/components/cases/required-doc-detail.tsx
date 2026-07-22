@@ -184,7 +184,7 @@ export function RequiredDocDetail({
         </div>
 
         {/* Description — 일정 step 과 동일한 불릿 형식. 비어있지 않은 줄마다 bullet,
-            \n\n 단락 경계는 marginTop 으로 간격. */}
+            간격은 모든 항이 동일. */}
         <section
           style={{
             marginTop: 20,
@@ -198,15 +198,13 @@ export function RequiredDocDetail({
           }}
         >
           {(() => {
+            // 모든 항의 간격은 동일하다(사용자 지정 2026-07-22 — 여정 카드와 같은 처리).
+            // 단락(\n\n) 경계만 넓히던 것을 없앴다. 되돌리지 말 것.
             const lines = doc.description.split('\n')
-            let paraBreakBefore = false
             return (
               <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
                 {lines.flatMap((line, i) => {
-                  if (line.trim() === '') {
-                    paraBreakBefore = true
-                    return []
-                  }
+                  if (line.trim() === '') return []
                   const item = (
                     <li
                       key={i}
@@ -214,7 +212,7 @@ export function RequiredDocDetail({
                         display: 'flex',
                         gap: 8,
                         alignItems: 'flex-start',
-                        marginTop: i === 0 ? 0 : paraBreakBefore ? 14 : 8,
+                        marginTop: i === 0 ? 0 : 8,
                       }}
                     >
                       <span style={{ flexShrink: 0, color: C.ink3 }} aria-hidden>
@@ -223,7 +221,6 @@ export function RequiredDocDetail({
                       <span>{line}</span>
                     </li>
                   )
-                  paraBreakBefore = false
                   return [item]
                 })}
               </ul>
