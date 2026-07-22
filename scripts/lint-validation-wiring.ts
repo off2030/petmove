@@ -76,6 +76,10 @@ const ORPHAN_RULE_OK: Record<string, string> = {
   'cn.banned-breeds': '동물 속성 — 특정 단계 없음',
   'vn.banned-breeds': '동물 속성 — 특정 단계 없음',
   'th.banned-breeds': '동물 속성 — 특정 단계 없음',
+  'ae.banned-breeds': '동물 속성 — 특정 단계 없음',
+  // 아랍에미리트 개인당 연간 2마리 한도 — 보호자 단위 조건이라 단계가 없다.
+  // (운영자 전용 audience: 'staff' 라 고객 화면엔 애초에 안 뜬다.)
+  'ae.max-2pets-per-year': '보호자 단위 조건 — 특정 단계 없음',
 }
 
 /**

@@ -135,6 +135,7 @@ const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
   mexico: '예: 멕시코시티 MEX',
   brazil: '예: 상파울루 GRU',
   kazakhstan: '예: 알마티 ALA',
+  uae: '예: 두바이 DXB',
   // 러시아·튀르키예 — 카자흐스탄 복제(2026-07-22).
   russia: '예: 모스크바 SVO',
   turkey: '예: 이스탄불 IST',

@@ -702,6 +702,25 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       },
       validationIds: ['ae.general-vaccine-required', 'ae.general-vaccine-21days-before-departure'],
     },
+    // 수입 허가 — 기본 카드 문구가 '호주(DAFF)·뉴질랜드(MPI)·대만(APHIA)·말레이시아(DVS)'를
+    // 나열해 아랍에미리트 화면에서 엉뚱했다. MOCCAE 값으로 교체(90일 유효는 ae.ts 헤더).
+    // ⚠️ 신청 수수료·처리 일수는 확인 실패 — MOCCAE 공식 사이트가 열리지 않는다. 쓰지 말 것.
+    'import-permit': {
+      description:
+        '아랍에미리트 도착 전에 검역기관(MOCCAE)에 수입 허가를 신청하세요.\n\n허가증은 발급일로부터 90일간 유효해요. 너무 일찍 신청하면 입국 전에 만료돼요.',
+      cardLine: '아랍에미리트 수입 허가를 신청하세요.',
+      doneSummary: '아랍에미리트 수입 허가를 받았어요.',
+      validationIds: ['ae.import-permit-within-90days'],
+    },
+    // 항공권 — base 는 일본 항체 180일 룰을 달고 있다(아랍에미리트엔 항체 자체가 없다).
+    // 광견병 21일 대기만 남긴다.
+    'flight-purchase': {
+      description:
+        '아랍에미리트 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 21일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '아랍에미리트에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: ['ae.rabies-min-21days-before-departure'],
+    },
     'external-parasite': {
       description: '외부 기생충 치료를 하세요.\n\n출국일 기준 14일 이내에 해야 해요.',
       validationIds: ['ae.external-parasite-within-14days'],

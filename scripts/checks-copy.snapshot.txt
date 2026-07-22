@@ -2,18 +2,14 @@
 # audience:customer + severity(warning|blocker) 룰의 ok:false 문구만. staff 전용은 제외.
 # 변경 의도가 맞는지 확인 후 `pnpm lint:checks:write` 로 갱신할 것.
 
-[ae.rabies-min-21days-before-departure]
-  광견병 접종(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 21일 이상이어야 해요.
 [ae.general-vaccine-required]
   종합백신 기록이 없어요.
-[ae.general-vaccine-21days-before-departure]
-  최근 종합백신(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 21일 이상이어야 해요.
 [ae.external-parasite-within-14days]
-  외부구충(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.
-  외부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 출국 포함 14일 이내(13일 전 이후)여야 해요.
+  외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.
+  외부 기생충 치료는 출국 14일 이내에 해야 해요.
 [ae.internal-parasite-within-14days]
-  내부구충(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.
-  내부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 출국 포함 14일 이내(13일 전 이후)여야 해요.
+  내부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.
+  내부 기생충 치료는 출국 14일 이내에 해야 해요.
 [ae.banned-breeds]
   견종 "${breed.ko || breed.en}"은 UAE 수입 금지 견종이에요 (매치: ${match}).
 [ae.rabies-booster-within-prime-validity]

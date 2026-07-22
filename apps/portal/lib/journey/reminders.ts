@@ -696,6 +696,11 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         if (r) out.push(r)
       }
     }
+    // ⛔ **아랍에미리트는 여기 넣지 말 것**(사용자 확정 2026-07-22). MOCCAE 수입 허가는
+    //   **신청 마감일이 정해져 있지 않다** — 없는 기한으로 "출국 N일 전까지" 알림을 보내면
+    //   근거 없는 안내가 된다. 필리핀처럼 '기한 없음 → 관행 일수'로 임의 안내하지도 않는다.
+    //   (허가 90일 유효라는 상한만 있고, 그건 카드 문구와 ae.import-permit-within-90days 가
+    //    담당한다. 발급 완료 푸시도 만들지 않기로 함 — milestone-pushes.ts 참고.)
   }
   return out
 }

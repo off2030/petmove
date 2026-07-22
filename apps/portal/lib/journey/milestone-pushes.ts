@@ -110,6 +110,10 @@ export function collectMilestonePushes(caseRow: CaseRow): MilestonePush[] {
         })
       }
     }
+    // ⛔ **아랍에미리트(uae)는 이 목록에 넣지 말 것**(사용자 확정 2026-07-22).
+    //   수입 허가 카드는 있지만 발급 완료 푸시는 만들지 않는다. 신청 마감일이 없어
+    //   '언제까지 해야 하는' 일정이 아니라, 발급 시점을 알려도 보호자가 당길 일이 없다.
+    //   (같은 이유로 reminders.ts 의 신청 마감 알림도 만들지 않았다.)
   }
 
   return out

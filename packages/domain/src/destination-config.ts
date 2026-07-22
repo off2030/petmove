@@ -673,11 +673,12 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     importPermit: {},
     vaccines: ['rabies', 'rabies_titer', 'general', 'external_parasite', 'internal_parasite'],
     extraFields: ['address_overseas', 'entry_airport'],
-    // 아직 앱에 올리지 않는다(appSupported 미선언) — 아래가 남아 있다:
-    //   · ae.ts 룰 10개 중 8개가 구세대 'info' 등급(앱 기준은 warning)
-    //   · 수입 허가 신청 시점·도착 검역일·광견병 체인 검증 룰 부재
-    //   · 내부 기생충 카드가 아랍에미리트에 안 뜬다(룰만 있고 카드 목록에 없음)
-    //   · 귀국 시 현지 수출 절차 강제 여부 미확인(강제일 때만 수출 카드를 만든다)
+    // ✅ 앱 노출(2026-07-22) — 9단계 점검을 마치고 켰다. 위에 적어 뒀던 미완 항목은 전부 해소:
+    //   룰 등급 승격 / 수입허가·도착검역·수출검역·광견병 체인 룰 신설 / 내부 기생충 카드 추가 /
+    //   수출 절차 강제 확인(MOCCAE 건강증명서 필수) / 서류·사진·공항 예시 등록.
+    // ⚠️ 알림은 **의도적으로 비워 뒀다** — 수입 허가에 신청 마감일이 없어 마감 알림·발급 완료
+    //   푸시를 만들지 않기로 확정(사용자 2026-07-22). reminders.ts·milestone-pushes.ts 주석 참고.
+    appSupported: true,
   },
   singapore: {
     keywords: ['싱가포르', 'singapore'],

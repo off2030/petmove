@@ -324,6 +324,24 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/kazakhstan-14.jpg',
     '/destinations/kazakhstan-15.jpg',
   ],
+  // 아랍에미리트 — 2026-07-22 등록(원본 12장 전부, 파일 순서 유지).
+  // ⚠️ 키는 **표준 표기 '아랍에미리트'**. 원본 폴더명은 '아랍에미레이트'지만 이 맵은 목적지
+  //   토큰(한글 국가명)으로 조회하므로 표기가 어긋나면 사진이 통째로 안 뜬다.
+  // 첫 장(리드) 미지정 — 사용자가 컨택트시트를 보고 고르면 그 파일을 맨 앞으로 옮길 것.
+  아랍에미리트: [
+    '/destinations/uae-01.jpg',
+    '/destinations/uae-02.jpg',
+    '/destinations/uae-03.jpg',
+    '/destinations/uae-04.jpg',
+    '/destinations/uae-05.jpg',
+    '/destinations/uae-06.jpg',
+    '/destinations/uae-07.jpg',
+    '/destinations/uae-08.jpg',
+    '/destinations/uae-09.jpg',
+    '/destinations/uae-10.jpg',
+    '/destinations/uae-11.jpg',
+    '/destinations/uae-12.jpg',
+  ],
   프랑스: [
     '/destinations/france-02.webp',
     '/destinations/france-09.webp',

@@ -1,8 +1,14 @@
-import { buildDateRuleContext } from '../journey-steps/date-rules'
+import {
+  buildDateRuleContext,
+  violatesRabiesEntryWait,
+  validateAeImportPermitWithin90Days,
+  validateImportPermitNotAfterDeparture,
+} from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   classifyExportQuarantineDate,
   daysBetween,
+  readScopedImportPermitFiled,
   findRabiesValidityBreaks,
   evaluateRabiesAgeConservative,
   findSameGuardianCases,
@@ -21,7 +27,9 @@ import {
   msgExportQuarantineAfterReturn,
   msgExportQuarantineBeforeEntry,
   msgImportQuarantineBeforeEntry,
+  msgGeneralVaccineMinDaysBeforeDeparture,
   msgMicrochipBeforeRabies,
+  msgRabiesMinDaysBeforeDeparture,
   msgRabiesExpiredBefore,
   msgRabiesPrimeMinAge,
 } from './messages'
@@ -136,22 +144,25 @@ export const AE_CHECKS: ProcedureCheck[] = [
     // warning 이 앱 기준이다(다른 목적지와 동일).
     severity: 'warning',
     addedAt: '2026-05-07',
+    // ⚠️ **자체 계산 금지**(2026-07-22 수정). 예전엔 `rabies[0]`(가장 이른 접종) 기준으로
+    //   직접 일수를 셌다 — ①만료 후 재접종 케이스를 통째로 놓치고(1차부터 세어 '통과')
+    //   ②프로파일 파생 저장 거부(validateRabiesEntryWait)와 계산이 어긋났다.
+    //   멕시코에서 같은 결함을 고친 것과 동일 처리 — 공용 헬퍼 violatesRabiesEntryWait 를 쓴다.
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
-      const earliest = rabies[0]
-      const days = daysBetween(earliest.date, dep)
-      if (days === null) return SKIP
-      if (days < 21) {
-        return {
-          ok: false,
-          message: `광견병 접종(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 21일 이상이어야 해요.`,
-          offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
-        }
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const latest = rabies[rabies.length - 1]
+      if (!violatesRabiesEntryWait(data, dep, destination)) {
+        return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): 21일 충족(또는 유효 부스터).` }
       }
-      return { ok: true, message: `광견병 접종(${earliest.date}) → 출국일(${dep}): ${days}일.` }
+      return {
+        ok: false,
+        message: msgRabiesMinDaysBeforeDeparture(21),
+        offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
+      }
     },
   },
   {
@@ -229,7 +240,7 @@ export const AE_CHECKS: ProcedureCheck[] = [
       if (days < 21) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 21일 이상이어야 해요.`,
+          message: msgGeneralVaccineMinDaysBeforeDeparture(21),
           offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
@@ -260,18 +271,18 @@ export const AE_CHECKS: ProcedureCheck[] = [
       if (diff < 0) {
         return {
           ok: false,
-          message: `외부구충(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.`,
+          message: '외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.',
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
       if (diff > 13) {
         return {
           ok: false,
-          message: `외부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 출국 포함 14일 이내(13일 전 이후)여야 해요.`,
+          message: '외부 기생충 치료는 출국 14일 이내에 해야 해요.',
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `외부구충(${latest.date}) → 출국일(${dep}): ${diff}일.` }
+      return { ok: true, message: `외부 기생충 치료(${latest.date}) → 출국일(${dep}): ${diff}일.` }
     },
   },
   {
@@ -296,18 +307,18 @@ export const AE_CHECKS: ProcedureCheck[] = [
       if (diff < 0) {
         return {
           ok: false,
-          message: `내부구충(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.`,
+          message: '내부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.',
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
       if (diff > 13) {
         return {
           ok: false,
-          message: `내부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 출국 포함 14일 이내(13일 전 이후)여야 해요.`,
+          message: '내부 기생충 치료는 출국 14일 이내에 해야 해요.',
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `내부구충(${latest.date}) → 출국일(${dep}): ${diff}일.` }
+      return { ok: true, message: `내부 기생충 치료(${latest.date}) → 출국일(${dep}): ${diff}일.` }
     },
   },
 
@@ -374,6 +385,33 @@ export const AE_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: '보호자 케이스 ≤ 2건.' }
     },
   },
+  // ── 수입 허가(MOCCAE) — 90일 유효 (2026-07-22 신설) ──
+  // 입력 차단(validateImportPermitFiledDate case 'uae')과 같은 함수를 본다.
+  {
+    id: 'ae.import-permit-within-90days',
+    country: COUNTRY,
+    category: '수입허가',
+    title: '수입 허가는 출국 90일 이내 신청',
+    description:
+      'MOCCAE 수입 허가는 발급일로부터 90일 유효(ae.ts 헤더). 너무 일찍 신청하면 입국 전에 만료된다. 출국일 이후 신청도 불가. 입력 차단과 같은 함수(validateAeImportPermitWithin90Days).',
+    severity: 'warning',
+    addedAt: '2026-07-22',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const dep = readDepartureDate(caseRow, destination)
+      if (!dep) return SKIP
+      const msg =
+        validateImportPermitNotAfterDeparture(filed, dep) ??
+        validateAeImportPermitWithin90Days(filed, dep)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: ['import_permit_application_date'] }
+      }
+      return { ok: true, message: `신청일(${filed}) 출국일(${dep}) 기준 90일 이내.` }
+    },
+  },
+
   // ── 검역 일정 (2026-07-22 신설) — 필리핀 골격 복제 시 비어 있던 자리 ──
   {
     id: 'ae.rabies-booster-within-prime-validity',
