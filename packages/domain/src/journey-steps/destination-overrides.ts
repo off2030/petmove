@@ -198,12 +198,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'rabies-vaccine-1': buildRabiesCard({
       destKey: 'argentina',
       label: '아르헨티나',
-      // 칩 선행 룰 없음 — 베트남과 같이 칩이 입국 요건이 아닌 전제(SENASA 구세대 조사도 의무
-      // 부재). ar.rabies-only-1year-vaccine 은 베트남 복제값 — SENASA 근거 미확인, 확정 후 재검토.
+      // 칩 선행 룰 없음 — SENASA 는 칩을 입국 요건으로 두지 않는다(한국 수출검역 때문에 실무상
+      // 넣을 뿐). 1년 백신 blocker 는 SENASA 가 제조사 유효기간을 인정해 2026-07-22 제거했다.
       validationIds: [
         'ar.rabies-prime-after-3months-old',
         'ar.rabies-booster-within-prime-validity',
-        'ar.rabies-only-1year-vaccine',
       ],
     }),
     'rabies-titer': {
@@ -217,7 +216,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '아르헨티나 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 30일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       cardLine: '아르헨티나에 입국할 수 있어요.',
       earliest: undefined,
-      validationIds: ['ar.rabies-min-30days-before-departure'],
+      validationIds: ['ar.rabies-min-21days-before-departure'],
     },
     departure: importQuarantineCard({
       label: '아르헨티나',
@@ -854,45 +853,46 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       destKey: 'turkey',
       label: '튀르키예',
       validationIds: [
-        'tr.rabies-prime-after-3months-old',
+        'tr.rabies-prime-after-12weeks',
         'tr.microchip-before-rabies',
         'tr.rabies-booster-within-prime-validity',
-        'tr.rabies-min-20days-before-departure',
+        'tr.rabies-min-30days-before-departure',
+        'tr.rabies-within-12months-of-departure',
       ],
     }),
-    'general-vaccine': {
-      order: 34,
-      description:
-        '종합백신을 접종하세요.\n\n출국 20일 전까지 접종해야 해요.\n최근 12개월 안에 접종했다면 다시 맞지 않아도 돼요.',
-      descriptionBySpecies: {
-        dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스·아데노바이러스·렙토스피라 예방을 포함해야 해요.\n한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n출국 20일 전까지 접종해야 해요.\n최근 12개월 안에 접종했다면 다시 맞지 않아도 돼요.',
-        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증 예방을 포함해야 해요.\n출국 20일 전까지 접종해야 해요.\n최근 12개월 안에 접종했다면 다시 맞지 않아도 돼요.',
-      },
-      validationIds: [
-        'tr.general-vaccine-min-20days-before-departure',
-        'tr.general-vaccine-not-expired-on-arrival',
-      ],
-    },
-    // ⚠️ 이 문구는 **사실과 반대일 가능성이 높다** — 튀르키예는 RNATT 가 입국 요건이다
-    //   (destination-config 프로파일 주석 ①). 카자흐스탄 복제본을 그대로 둔 상태이고,
-    //   세부 수정 때 '입국 요건' 문형(모로코·우크라이나 카드 참고)으로 바꿔야 한다.
+    // 항체검사 = **튀르키예 입국 요건**(사용자 승인 2026-07-22). 카자흐스탄 복제본의
+    // '한국으로 돌아올 때 필요해요'는 사실과 반대였다. 접종~채혈 30일과 결과지 1년은
+    // 가이드가 "명확한 규정 없음 / 일반적으로 …"라 밝힌 관행이라 대만 카드와 같은 문형
+    // ('명확한 규정은 없지만 …')으로 쓴다.
     'rabies-titer': {
       description:
-        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n튀르키예 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
-      validationIds: RETURN_ONLY_TITER_CHECKS,
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n0.5 IU/mL 이상이면 합격이에요.\n명확한 규정은 없지만 접종 후 30일 이상 지나서 검사하는 것이 좋아요.\n결과지 유효기간에 대한 명확한 규정은 없지만 보통 1년으로 봐요.',
+      validationIds: ['tr.departure-within-12months-of-titer'],
+    },
+    // 내·외부 기생충 — 가이드 "여행 30일 이내". base 카드 문구가 호주·뉴질랜드 기준이라 교체.
+    'external-parasite': {
+      description: '진드기에 효과적인 외부 기생충 치료를 하세요.\n\n출국 30일 이내에 해야 해요.',
+      validationIds: ['tr.external-parasite-within-30days'],
+    },
+    'internal-parasite': {
+      description: '촌충(에키노코쿠스)에 효과적인 내부 기생충 치료를 하세요.\n\n출국 30일 이내에 해야 해요.',
+      validationIds: ['tr.internal-parasite-within-30days'],
     },
     'flight-purchase': {
       description:
-        '튀르키예 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 20일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+        '튀르키예 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 30일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       cardLine: '튀르키예에 입국할 수 있어요.',
       earliest: undefined,
-      validationIds: ['tr.rabies-min-20days-before-departure'],
+      validationIds: ['tr.rabies-min-30days-before-departure'],
     },
     departure: importQuarantineCard({
       label: '튀르키예',
       fieldKey: 'tr_import_quarantine_date',
+      // 카자흐스탄 복제본의 '국제 반려동물 여권'·'2마리 이하 격리 면제'는 EAEU 조항이라
+      // 튀르키예엔 근거가 없다(EAEU 비회원). 가이드 문장으로 교체하고 격리는 언급하지 않는다 —
+      // 가이드에 격리 규정이 없다.
       description:
-        '튀르키예 도착 후 국경 검역소에서 검역을 받으세요.\n국제 반려동물 여권과 서류를 확인해요.\n반려동물 2마리 이하는 수입 허가와 격리가 모두 면제돼요.',
+        '튀르키예 도착 후 공항 동물검역소에서 수입 검역을 받으세요.\n서류와 마이크로칩을 확인해요.\n수입 조건을 충족하지 못하면 입국할 수 없어요.',
       helpText: '튀르키예 도착 후 수입 검역을 받은 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '튀르키예 수입 검역 서류',
@@ -1091,52 +1091,59 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   malaysia: seaPermitOverrides({
     label: '말레이시아',
     rabiesDescription:
-      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
+      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n출국 30일 전까지 접종해야 해요.\n입국할 때 면역 유효기간이 남아있어야 해요.'
+    ,
     rabiesValidationIds: [
       'my.rabies-prime-after-12weeks',
       'my.microchip-before-rabies',
       'my.rabies-booster-within-prime-validity',
+      'my.rabies-min-30days-before-departure',
     ],
+    // 가이드: "말레이시아에는 광견병항체검사 기관이 없기 때문에, 당장 한국으로 돌아올 예정이
+    // 없는 경우라도 한국에서 미리 해두시는 것을 권장합니다."
     titerDescription:
-      '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n말레이시아 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+      '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n말레이시아 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n말레이시아에는 검사 기관이 없으니 출국 전에 미리 받으세요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+    // 가이드: 강아지 = 광견병·디스템퍼·전염성간염·렙토스피라·파보·파라인플루엔자 /
+    //         고양이 = 광견병·범백혈구감소증
     generalVaccine: {
       description:
-        '강아지는 DHPPL(디스템퍼·전염성간염·파보·파라인플루엔자·렙토스피라), 고양이는 범백혈구감소증(FPV)이 포함된 종합백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
+        '강아지는 DHPPL, 고양이는 범백혈구감소증(FPV)이 포함된 종합백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
       descriptionBySpecies: {
-        dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스·파라인플루엔자·렙토스피라 예방을 포함해야 해요.\n한국 백신은 렙토스피라 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n마이크로칩 삽입 후 접종해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
-        cat: '종합백신(FVRCP)을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
+        dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·전염성간염·렙토스피라·파보바이러스·파라인플루엔자 예방을 포함해야 해요.\n한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n마이크로칩 삽입 후 접종해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증 예방을 포함해야 해요.\n마이크로칩 삽입 후 접종해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
       },
       validationIds: ['my.microchip-before-general-vaccine'],
     },
     flight: {
       description:
-        '말레이시아 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 3주가 지난 후에 입국할 수 있어요.\n항공권 구매 후 수입 허가 신청을 해요. 2주 이상 충분한 시간을 확보하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+        '말레이시아 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 30일이 지난 후에 입국할 수 있어요.\n계류장 예약을 먼저 해야 수입 허가를 신청할 수 있어요. 예약은 최소 14일 전에 하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       order: 90,
-      validationIds: [
-        'my.rabies-21days-before-arrival',
-        'my.general-vaccine-21days-before-arrival',
-      ],
+      validationIds: ['my.rabies-min-30days-before-departure'],
     },
+    // ✅ 가이드 기준으로 전면 교체(2026-07-22) — 태국식(한국에서 이메일 신청·R.6·60일 유효)은
+    //   말레이시아에 맞지 않는다. 가이드: "말레이시아 수입허가증은 필리핀, 태국 등과 달리
+    //   한국에서 신청할 수 없으며, 말레이시아 현지 에이전시에 의뢰하여 진행해야 합니다.
+    //   수입허가증은 계류장 공간 예약 후에 신청할 수 있습니다. 계류장 예약은 최소 14일 전에
+    //   해야 하며 … MAQIS 담당자가 신청 정보를 검토해서 수입허가증을 발급합니다."
     importPermit: {
       description:
-        '입국 공항 동물검역소에 수입 허가 신청을 하세요.\n\n입국 7영업일 전까지 이메일로 신청해요.\n접종일로부터 2주가 지난 후에 신청할 수 있어요.\n수입 허가 통지서(R.6)가 발급되며 60일간 유효해요.',
-      doneSummary: '말레이시아 수입 허가 통지서(R.6)를 받았어요.',
-      cardLine: '말레이시아 수입 허가 신청을 하세요.',
-      deadline: { anchor: 'departure', daysBefore: 9 },
-      attachmentHint: '수입 허가 통지서(R.6)를 사진·PDF로 보관하세요.',
-      attachmentLabel: '수입 허가 통지서(R.6)',
-      validationIds: [
-        'my.import-permit-9days-before-entry',
-        'my.import-permit-14days-after-vaccines',
-      ],
+        '말레이시아 현지 에이전시를 통해 수입 허가증을 신청하세요.\n\n한국에서는 신청할 수 없어요. 현지 에이전시에 의뢰해야 해요.\n계류장 공간을 먼저 예약해야 신청할 수 있어요. 예약은 최소 14일 전에 하세요.\n검역당국(MAQIS)이 검토한 뒤 허가증을 발급해요.',
+      doneSummary: '말레이시아 수입 허가증을 받았어요.',
+      cardLine: '말레이시아 수입 허가증을 신청하세요.',
+      attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
+      attachmentLabel: '수입 허가증',
+      validationIds: ['my.import-permit-not-after-departure'],
     },
+    // 가이드: "증명 서류 확인 후 문제가 없으면 반려동물은 계류시설로 이동합니다. 일반적인
+    // 격리기간은 7일입니다." — 태국(격리 없음)과 갈리는 지점이라 도착 카드에 명시한다
+    // (사용자 지정 2026-07-22: 격리 안내는 "해당국 수입검역 카드"에).
     importQuarantine: {
       fieldKey: 'my_import_quarantine_date',
       description:
-        '말레이시아 도착 후 공항 동물검역소에서 검역을 받으세요.\n검사를 통과하면 수입 허가서(R.7)를 받아요.',
-      helpText: '말레이시아 동물검역소에서 수입 검역을 받은 날짜',
-      attachmentHint: '수입 허가서(R.7) 사본을 사진·PDF로 보관하세요.',
-      attachmentLabel: '수입 허가서(R.7)',
+        '말레이시아 도착 후 공항 검역소에서 검역을 받으세요.\n서류를 확인한 뒤 계류시설로 이동해요.\n일반적인 격리 기간은 7일이에요.',
+      helpText: '말레이시아 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '말레이시아 수입 검역 서류',
       validationIds: ['my.import-quarantine-date-valid'],
     },
   }),
@@ -1147,52 +1154,49 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   indonesia: seaPermitOverrides({
     label: '인도네시아',
     rabiesDescription:
-      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
+      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 3개월이 지난 후에 접종해야 해요.\n불활화 백신으로 접종해야 해요.\n광견병 예방접종 유효기간은 1년이에요.',
     rabiesValidationIds: [
-      'id.rabies-prime-after-12weeks',
+      'id.rabies-prime-after-3months-old',
       'id.microchip-before-rabies',
       'id.rabies-booster-within-prime-validity',
     ],
+    // ✅ 항체검사가 **입국 요건**(2026-07-22 조사 확정) — '한국 귀국용' 문형을 쓰지 않는다.
     titerDescription:
-      '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n인도네시아 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+      '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n인도네시아 입국에 필요해요. 왕복이면 한국으로 돌아올 때도 필요해요.\n0.5 IU/mL 이상이면 합격이에요.',
     generalVaccine: {
       description:
-        '강아지는 DHPPL(디스템퍼·전염성간염·파보·파라인플루엔자·렙토스피라), 고양이는 범백혈구감소증(FPV)이 포함된 종합백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
-      descriptionBySpecies: {
-        dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스·파라인플루엔자·렙토스피라 예방을 포함해야 해요.\n한국 백신은 렙토스피라 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n마이크로칩 삽입 후 접종해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
-        cat: '종합백신(FVRCP)을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
-      },
+        '종합백신을 접종하세요.\n\n인도네시아 입국에 필수는 아니지만, 격리시설에서 1~2주를 지내야 해서 전염병 예방을 위해 권장해요.',
       validationIds: ['id.microchip-before-general-vaccine'],
     },
     flight: {
+      // 가이드: "본 가이드는 자카르타 입국을 전제로 작성되었습니다" + "발리 등은 공식적으로는
+      // 반려동물 수입이 금지되어 있습니다." 조사도 같은 결론(발리·NTB·NTT·중부/동부자바·
+      // 족자·마두라 반입 불가). 고객 일정에 결정적이라 항공권 카드에 명시한다.
       description:
-        '인도네시아 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 3주가 지난 후에 입국할 수 있어요.\n항공권 구매 후 수입 허가 신청을 해요. 2주 이상 충분한 시간을 확보하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+        '인도네시아 입국 일정에 맞춰 항공권을 구매하세요.\n\n자카르타로 입국해야 해요.\n발리·롬복·플로레스와 중부·동부 자바는 반려동물 반입이 금지돼 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       order: 90,
-      validationIds: [
-        'id.rabies-21days-before-arrival',
-        'id.general-vaccine-21days-before-arrival',
-      ],
+      validationIds: [],
     },
+    // ✅ 가이드 기준으로 교체 — "인도네시아 수입허가증은 필리핀, 태국 등과 달리 한국에서
+    //   신청할 수 없으며, 현지 신청만 가능합니다. 따라서 인도네시아 현지 에이전시 의뢰가
+    //   필요합니다."
     importPermit: {
       description:
-        '입국 공항 동물검역소에 수입 허가 신청을 하세요.\n\n입국 7영업일 전까지 이메일로 신청해요.\n접종일로부터 2주가 지난 후에 신청할 수 있어요.\n수입 허가 통지서(R.6)가 발급되며 60일간 유효해요.',
-      doneSummary: '인도네시아 수입 허가 통지서(R.6)를 받았어요.',
-      cardLine: '인도네시아 수입 허가 신청을 하세요.',
-      deadline: { anchor: 'departure', daysBefore: 9 },
-      attachmentHint: '수입 허가 통지서(R.6)를 사진·PDF로 보관하세요.',
-      attachmentLabel: '수입 허가 통지서(R.6)',
-      validationIds: [
-        'id.import-permit-9days-before-entry',
-        'id.import-permit-14days-after-vaccines',
-      ],
+        '인도네시아 현지 에이전시를 통해 수입 허가증을 신청하세요.\n\n한국에서는 신청할 수 없어요. 현지 신청만 가능해요.\n준비 절차를 마친 뒤에 신청할 수 있어요.',
+      doneSummary: '인도네시아 수입 허가증을 받았어요.',
+      cardLine: '인도네시아 수입 허가증을 신청하세요.',
+      attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
+      attachmentLabel: '수입 허가증',
+      validationIds: ['id.import-permit-not-after-departure'],
     },
+    // 가이드: "일반적인 격리기간은 약 일주일이지만 최대 2주가 될 수 있습니다."
     importQuarantine: {
       fieldKey: 'id_import_quarantine_date',
       description:
-        '인도네시아 도착 후 공항 동물검역소에서 검역을 받으세요.\n검사를 통과하면 수입 허가서(R.7)를 받아요.',
-      helpText: '인도네시아 동물검역소에서 수입 검역을 받은 날짜',
-      attachmentHint: '수입 허가서(R.7) 사본을 사진·PDF로 보관하세요.',
-      attachmentLabel: '수입 허가서(R.7)',
+        '인도네시아 도착 후 공항 검역소에서 검역을 받으세요.\n서류를 확인한 뒤 계류시설로 이동해요.\n격리 기간은 보통 일주일이고 최대 2주까지 걸릴 수 있어요.',
+      helpText: '인도네시아 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '인도네시아 수입 검역 서류',
       validationIds: ['id.import-quarantine-date-valid'],
     },
   }),

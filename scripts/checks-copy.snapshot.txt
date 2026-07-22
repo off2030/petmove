@@ -18,8 +18,8 @@
   견종 "${breed.ko || breed.en}"은 UAE 수입 금지 견종이에요 (매치: ${match}).
 [ae.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
-[ar.rabies-min-30days-before-departure]
-  광견병 접종 후 30일이 지나야 아르헨티나에 입국할 수 있어요. 입국일을 미뤄야 해요.
+[ar.rabies-min-21days-before-departure]
+  광견병 접종 후 21일이 지나야 아르헨티나에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [ar.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [ar.import-quarantine-date-valid]
@@ -72,12 +72,6 @@
   귀국 서류 준비 완료일은 한국 귀국일보다 늦을 수 없어요.
 [id.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
-[id.rabies-21days-before-arrival]
-  광견병 접종은 출국 21일 전까지 해야 해요.
-[id.general-vaccine-21days-before-arrival]
-  종합백신 접종은 출국 21일 전까지 해야 해요.
-[id.banned-breeds]
-  "${breed.ko || breed.en}"은 인도네시아 수입이 금지되어 있어요 (매치: ${match}).
 [id.import-quarantine-date-valid]
   인도네시아 수입 검역일은 인도네시아 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [id.export-quarantine-date-valid]
@@ -154,12 +148,8 @@
   멕시코 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [my.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
-[my.rabies-21days-before-arrival]
-  광견병 접종은 출국 21일 전까지 해야 해요.
-[my.general-vaccine-21days-before-arrival]
-  종합백신 접종은 출국 21일 전까지 해야 해요.
-[my.banned-breeds]
-  "${breed.ko || breed.en}"은 말레이시아 수입이 금지되어 있어요 (매치: ${match}).
+[my.rabies-min-30days-before-departure]
+  광견병 접종은 출국 30일 전까지 해야 해요.
 [my.import-quarantine-date-valid]
   말레이시아 수입 검역일은 말레이시아 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [my.export-quarantine-date-valid]
@@ -209,10 +199,18 @@
 [th.export-quarantine-date-valid]
   태국 수출 검역일은 태국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
   태국 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
-[tr.rabies-min-20days-before-departure]
-  광견병 접종 후 20일이 지나야 튀르키예에 입국할 수 있어요. 입국일을 미뤄야 해요.
+[tr.rabies-min-30days-before-departure]
+  광견병 접종 후 30일이 지나야 튀르키예에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [tr.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
+[tr.rabies-within-12months-of-departure]
+  광견병 접종 후 1년이 지나기 전에 출국해야 해요. 출국 전에 다시 접종하세요.
+[tr.departure-within-12months-of-titer]
+  광견병 항체 검사 결과의 유효기간이 출국 전에 끝나요. 다시 검사해야 해요.
+[tr.external-parasite-within-30days]
+  외부 기생충 치료는 출국 30일 이내에 해야 해요.
+[tr.internal-parasite-within-30days]
+  내부 기생충 치료는 출국 30일 이내에 해야 해요.
 [tr.import-quarantine-date-valid]
   튀르키예 수입 검역일은 튀르키예 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [tr.export-quarantine-date-valid]

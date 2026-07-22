@@ -421,21 +421,36 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     archetype: 'sea-permit',
     rabies: {
       doses: 1,
-      minAgeDays: 84,
-      minAgeLabel: '생후 12주(84일)',
-      oneYearVaccineOnly: true,
-      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
-      timingLines: ['출국 30일 전까지 접종해야 해요.'],
+      // ✅ **생후 3개월**(2026-07-22 조사 확정). 인도네시아 외교부 공관 안내가 인용한
+      //   Keputusan Kepala Barantan No. 87/Kpts/KR.120/L.1/1/2016 원문:
+      //   "HPR telah divaksin dengan vaksin rabies **inaktif** di negara asal pada saat
+      //   berumur **paling kurang 3 (tiga) bulan**" — 불활화 백신 지정이라는 점도 함께 확인.
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      // ⚠️ **접종 후 대기 일수를 선언하지 않는다**(2026-07-22 조사 결론). 1차 출처에 일수
+      //   규정이 없다. 태국 복제값 21일은 근거가 없어 제거했다. 시중의 '30일'·'3개월'은
+      //   2차 자료이거나 '출발국 3개월 격리' 조항과 혼동된 것으로 보인다.
+      validityLine: '광견병 예방접종 유효기간은 1년이에요.',
     },
+    // ✅ **항체검사가 입국 요건**(2026-07-22 조사 확정 + 가이드 절차에 포함).
+    //   87/2016 원문: "HPR telah memiliki titer antibodi protektif" + "Hasil uji titer
+    //   antibodi protektif dilampirkan pada sertifikat kesehatan hewan"
+    //   — 광견병 발생국·청정국 분기 **양쪽 모두**에 항체검사 요구가 들어 있다.
+    //   태국 복제본의 'return-only'("인도네시아 입국에는 필요 없지만")는 사실과 반대였다.
+    //   ⚠️ 수치 0.5 IU/ml 는 1차 출처에 숫자가 없다("protektif"로만) — 국제 관행값을 쓴다.
+    //   ⚠️ 채혈 시점·결과 유효기간은 1차 출처에서 확인 실패 → 선언하지 않는다.
+    titer: { need: 'entry' },
     appSupported: true,
     importPermit: {},
     vaccines: ['rabies', 'rabies_titer', 'general'],
+    // 가이드: "출국 직전(항공기 탑승 전 10일 이내)에 수의사에게 임상 검사" — 기본값과 같아
+    // 선언하지 않는다(getVetVisitWindowDays 기본 10).
     extraFields: [
       'passport_number', 'passport_expiry_date', 'passport_issuer',
       'address_overseas',
       'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
     ],
-    rabiesTiterForReturnOnly: true,
   },
   india: {
     // 'india' / '인도' 는 'indonesia' / '인도네시아' 의 부분문자열이므로
@@ -461,17 +476,30 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['튀르키예', '터키', 'turkey', 'türkiye', 'turkiye'],
     rabies: {
       doses: 1,
-      minAgeDays: 91,
-      minAgeMonths: 3,
-      minAgeLabel: '생후 3개월',
-      timingLines: ['출국 20일 전까지 접종해야 해요.'],
-      entryWaitDaysAfterVaccine: 20,
+      // 가이드: "생후 12주 이후에 접종" — EU Reg 576/2013 과 같은 값이라 달력 개월이 아니라
+      // 고정 84일이다(카자흐스탄 복제본의 '달력 3개월'을 정정).
+      minAgeDays: 84,
+      minAgeLabel: '생후 12주(84일)',
+      timingLines: ['출국 30일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 30,
+      // 가이드 "1년을 넘지 않아야 합니다" = **접종 후 경과 1년** 제한이지 3년 백신 자체를
+      // 거부하는 규정이 아니다. 그래서 oneYearVaccineOnly(입력 차단)를 켜지 않고,
+      // tr.rabies-within-12months-of-departure 주의로만 다룬다.
+      validityLine: '접종 후 1년이 지나기 전에 입국해야 해요.',
     },
-    titer: { need: 'return-only' },
+    // ✅ 항체검사가 **입국 요건**(사용자 승인 2026-07-22) — 카자흐스탄 복제본의 'return-only'는
+    //   "튀르키예 입국에는 필요 없다"고 사실과 반대로 안내하고 있었다.
+    //   유효기간 12개월 = 가이드 "명확한 규정 없음 / 일반적으로 1년".
+    //   접종~채혈 30일은 가이드가 '권고'라 minDaysAfterVaccine 을 선언하지 않는다(입력 차단 X).
+    //   채혈 후 대기(entryWaitAfterTiter)도 두지 않는다 — 구세대 파일의 '3개월'은 EU 차용
+    //   추론이었고 가이드에 근거가 없다(tr.ts 헤더 참고).
+    titer: { need: 'entry', entryValidityMonths: 12 },
     appSupported: true,
-    vaccines: ['rabies', 'rabies_titer', 'general'],
+    // 종합백신 제거(가이드에 항목 자체가 없음) + 내·외부 기생충 복원(가이드 "여행 30일 이내").
+    // 기생충 카드는 catalog 명단에 turkey 가 원래 있었는데, 카자흐스탄 복제로 vaccines 에서
+    // 빠져 **카드는 뜨는데 입력 필드가 없는** 상태였다(2026-07-22 정정).
+    vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
     importQuarantine: {},
-    rabiesTiterForReturnOnly: true,
     // 임상검사(Clinical Examination)는 출국 24시간 이내 — TK.pdf 각주 6. window=2 →
     // 출국일 기준 diff<2 = 전날(1)·당일(0)만 유효(=24시간 이내). 한국 수출검역도 동일 창.
     vetVisitWindowDays: 2,
@@ -589,8 +617,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   //     두 나라 다 EAEU 회원이지만 러시아는 자국 안내로 30일을 별도 공표한다 — 세부 수정 1순위.
   //   구세대 조사값은 procedure-checks/ru.ts 헤더(교체 전 git 이력)에 있다: 광견병 12주·
   //   출국 30일~12개월, 다년 백신도 최종 접종 12개월 이내, 개인 1인 2마리 한도, RNATT 입국 면제.
-  //   `vetVisitWindowDays: 5` 는 **유지한다** — EAEU 결정 317 제15장 "선적 5일 이내 임상검진"
-  //   근거이고 여정 카드 골격과 무관한 검증값이라, 복제로 10일(기본값)까지 느슨해지면 안 된다.
+  //   ✅ `vetVisitWindowDays: 14` — 2026-07-22 조사 확정. Rosselkhoznadzor 안내문 원문:
+  //   "отметка … о проведении клинического осмотра животного **в течение 14 дней** перед
+  //   отправкой". 5일설은 EAEU 317호 **구버전/역내이동** 조항이고 제3국(한국)발엔 적용되지
+  //   않는다. 10일설은 어느 1차 출처에서도 확인되지 않았다(펫무브 가이드의 10일 = 갱신 필요).
   russia: {
     keywords: ['러시아', 'russia'],
     rabies: {
@@ -606,7 +636,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer', 'general'],
     importQuarantine: {},
     rabiesTiterForReturnOnly: true,
-    vetVisitWindowDays: 5,
+    vetVisitWindowDays: 14,
   },
   uae: {
     // 표준 표기는 **아랍에미리트**(외교부 국가명·외래어 표기법). 화면에 나가는 문구는 전부
@@ -780,15 +810,29 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     archetype: 'sea-permit',
     rabies: {
       doses: 1,
+      // ⚠️ DVS 규정·절차문서 어디에도 **광견병 접종 최소 연령이 없다**(2026-07-22 조사).
+      //   있는 건 "반입 시 동물이 3개월령 이상"("Ensure the age of your pet is above 3 months
+      //   old", DVS Procedure PDF)이라는 **동물 나이** 요건이다. 84일은 태국 복제 보수값으로
+      //   남겨 둔다 — 규정보다 엄격해 지키면 문제되지 않는다(사용자 확인 대상).
       minAgeDays: 84,
       minAgeLabel: '생후 12주(84일)',
-      oneYearVaccineOnly: true,
-      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
+      // ⚠️ **30일 — 근거가 갈린다**(2026-07-22 조사). DVS 소속 포털(animalpassport.dvs.gov.my)은
+      //   "vaccinated for rabies at least 30 days prior to entry"라고 쓰지만, 구속력 있는
+      //   수입규정 PDF(R2 Non-Scheduled)에는 그 조항이 **없다**. 태국 복제값 21일은 아무
+      //   근거도 없어서, 둘 중 근거가 있는 쪽(30일)으로 올렸다. 규정 확정은 MAQIS 서면 조회 필요.
       timingLines: ['출국 30일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 30,
+      validityLine: '입국할 때 면역 유효기간이 남아있어야 해요.',
     },
+    // 가이드: "말레이시아 입국 시 광견병항체검사는 필수가 아니지만, 한국으로 돌아오는 경우는 필수"
+    // + "말레이시아에는 광견병항체검사 기관이 없기 때문에 … 한국에서 미리 해두시는 것을 권장".
+    titer: { need: 'return-only' },
     appSupported: true,
     importPermit: {},
     vaccines: ['rabies', 'rabies_titer', 'general'],
+    // 가이드: "출국 직전(항공기 탑승 전 7일 이내)에 수의사에게 임상 검사" + "수출동물검역은
+    // 대부분 10일 이내지만 말레이시아는 7일 이내". 태국 복제 때 지웠던 값을 되살렸다.
+    vetVisitWindowDays: 7,
     extraFields: [
       'passport_number', 'passport_expiry_date', 'passport_issuer',
       'address_overseas',
@@ -1017,13 +1061,29 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     archetype: 'sea-permit',
     rabies: {
       doses: 1,
+      // ⚠️ SENASA 원문에는 **최소 접종 연령 규정이 없다**(2026-07-22 조사). 있는 것은
+      //   "3개월 **미만**이면 접종 없이 입국 가능(연령 증명 + 90일 광견병 무발생 증명)"이라는
+      //   **면제 조항**이다 — "3개월 전 접종은 무효"가 아니다. 지금 값은 카자흐스탄/베트남
+      //   골격에서 온 보수값으로, 규정보다 엄격하다. 완화 여부는 사용자 확인 대상.
+      //   원문: "Si el perro o gato es menor de 3 (tres) meses, la autoridad veterinaria
+      //   deberá certificar la edad del animal y que el mismo no ha estado en ninguna
+      //   propiedad donde ha ocurrido algún caso de rabia urbana en los últimos 90 días…"
       minAgeDays: 91,
       minAgeMonths: 3,
       minAgeLabel: '생후 3개월',
-      oneYearVaccineOnly: true,
-      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
-      timingLines: ['출국 30일 전까지 접종해야 해요.'],
-      entryWaitDaysAfterVaccine: 30,
+      // ✅ **21일**(2026-07-22 SENASA 원문 확인, 사용자 지정 "조사결과 반영"). 30일이 아니다.
+      //   원문: "Cuando se trate de animales vacunados por primera vez, la vacuna debe haber
+      //   sido aplicada al menos 21 (veintiún) días previos al ingreso a la República Argentina."
+      //   ⚠️ 두 가지 주의: ①기준점이 출국일이 아니라 **아르헨티나 입국일** ②**1차 접종에만**
+      //   적용되고 유효기간이 이어지는 재접종은 대기 없음(violatesRabiesEntryWait 의 유효
+      //   부스터 면제가 이 구조와 맞는다).
+      //   ⚠️ 펫무브 www 가이드는 아직 '30일'이라 적혀 있다 — 웹사이트 갱신 필요(사용자 보고).
+      timingLines: ['출국 21일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 21,
+      // ⚠️ `oneYearVaccineOnly` 를 **켜지 않는다**(2026-07-22 조사로 제거). SENASA 는 제조사가
+      //   부여한 유효기간을 그대로 인정한다 → **3년 백신 인정**. 베트남 복제로 켜져 있던
+      //   blocker 는 근거가 없었다. 원문: "…con inmunidad vigente según el plazo de validez
+      //   otorgado por el laboratorio fabricante de la vacuna."
     },
     titer: { need: 'return-only' },
     appSupported: true,

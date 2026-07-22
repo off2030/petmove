@@ -76,9 +76,6 @@ const ORPHAN_RULE_OK: Record<string, string> = {
   'cn.banned-breeds': '동물 속성 — 특정 단계 없음',
   'vn.banned-breeds': '동물 속성 — 특정 단계 없음',
   'th.banned-breeds': '동물 속성 — 특정 단계 없음',
-  // 말레이시아·인도네시아 — 태국 복제(2026-07-22).
-  'my.banned-breeds': '동물 속성 — 특정 단계 없음',
-  'id.banned-breeds': '동물 속성 — 특정 단계 없음',
 }
 
 /**

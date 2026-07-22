@@ -1,24 +1,22 @@
 import {
   buildDateRuleContext,
-  calendarAgeThreshold,
-  meetsCalendarAge,
   violatesRabiesEntryWait,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
-  addMonths,
+  addYears,
   classifyExportQuarantineDate,
   daysBetween,
   findRabiesValidityBreaks,
-  readGeneralVaccineEntries,
+  readExternalParasiteEntries,
+  readInternalParasiteEntries,
   readRabiesEntries,
+  readTiterEntries,
   resolveValidUntil,
   SKIP,
   readDepartureDate,
 } from './utils'
 import {
-  msgGeneralVaccineExpiredBefore,
-  msgGeneralVaccineMinDaysBeforeDeparture,
   msgMicrochipBeforeRabies,
   msgRabiesExpiredBefore,
   msgRabiesPrimeMinAge,
@@ -27,64 +25,76 @@ import {
 /**
  * 튀르키예 (Tarım ve Orman Bakanlığı — 농림부) 절차 검증.
  *
- * ⚠️ **카자흐스탄(kz.ts) 한 벌 복제 (2026-07-22)** — 룰 구조·수치(달력 3개월·20일·12개월)가
- *   전부 카자흐스탄 것이다. 나라별 규정 확정 후 수정 예정(사용자 지정 — "카자흐스탄 복사").
- *   ⚠️ 튀르키예는 EAEU 회원이 **아니다** — 카자흐스탄 룰의 근거(EAEU 결정 317 제15장)가
- *   튀르키예엔 적용되지 않는다. 러시아와 달리 근거가 겹치는 부분이 없으므로 전면 재조사 대상.
+ * **출처 = 펫무브 튀르키예 가이드**(apps/www/content/docs/turkey-pet-travel-guide.json,
+ * 최종 갱신 2025-11-16). 사용자 지정(2026-07-22): "펫무브 웹사이트 참고".
+ * 가이드 스스로 "공식 자료나 관련 기관 웹사이트가 없어 실제 입국 사례를 바탕으로 최소한의
+ * 요건을 추린 것"이라 밝힌다 — 정부 1차 출처가 아니라 **실무 사례 기반**임을 전제로 읽을 것.
  *
- * ⚠️ **알려진 충돌 3건 — 세부 수정 1순위** (구세대 조사값, 교체 전 tr.ts / git 이력)
- *   ①**항체검사(RNATT)가 입국 요건이다.** 튀르키예는 한국을 EU 분류상 unlisted third
- *     country 로 보아 RNATT 를 요구한다(채혈 ≥ 접종+30일, 0.5 IU/ml, 출국 ≤ 채혈+1년).
- *     복제본은 '한국 귀국용'(titer.need:'return-only')이라 **사실과 반대**로 안내한다.
- *   ②최소 접종 연령 **생후 12주(84일)** — EU Reg 576/2013 일치. 복제값은 달력 3개월.
- *   ③접종 후 대기 **30일** — 복제값은 20일.
- *   그 외: 구충(외부 진드기·내부 촌충) 출국 전날, 임상검사 출국 24시간 이내(TK.pdf 각주 6 —
- *   프로파일 vetVisitWindowDays: 2 로 유지 중), 핏불·도사·도고 아르헨티노·필라 수입 금지,
- *   종합백신은 권고(의무 명문 부재)라 복제된 20일/12개월 룰의 근거가 없다.
- *   1차 출처: tarimorman.gov.tr, 튀르키예 공관 안내(LA·NY), CFIA 튀르키예 수출 페이지.
+ * 가이드가 정한 값(이 파일의 근거):
+ *  - 마이크로칩 ISO 표준, "모든 절차 중 가장 먼저" + "마이크로칩 삽입 후 접종"
+ *  - 광견병: **생후 12주 이후 접종**, **출국일 기준 30일 이전**, **1년을 넘지 않아야**
+ *  - 광견병 항체검사(RNATT): **튀르키예 입국 요건**. 0.5 IU/ml 이상.
+ *    · 접종~채혈 간격 "명확한 규정 없음 / 일반적으로 유럽 기준처럼 최소 30일 이후 권장"
+ *      → 규정이 아니라 권고라 **룰을 만들지 않고 카드 문구로만** 안내한다(대만과 같은 처리).
+ *    · 결과지 유효기간도 "명확한 규정 없음 / 일반적으로 1년" → 1년 룰만 둔다.
+ *  - 내·외부 기생충: **여행 30일 이내**(진드기용 외부 + 촌충 Echinococcus 용 내부)
+ *  - 출국 전 임상검사: 출국 직전, **48시간 이내 권장** → 프로파일 vetVisitWindowDays: 2
+ *  - 1인 2마리 한도(룰 미구현 — 보호자 단위 조건이라 별도 판단)
+ *
+ * ⚠️ **2026-07-22 재작성.** 직전엔 카자흐스탄 복제본(EAEU 20일·종합백신)이었고 그 전엔 EU
+ *   규정을 차용한 구세대 파일이었다. 구세대에서 **의도적으로 되살리지 않은 것**:
+ *   ① `tr.departure-min-3months-after-titer`(채혈 후 3개월 대기) — 근거가 "EU Reg 576/2013
+ *      차용 / unlisted 제3국"이라는 **추론**이었고 가이드엔 그런 대기가 없다. 되살리려면
+ *      튀르키예 원문 근거부터 확보할 것(사용자 보고 대상).
+ *   ② `tr.banned-breeds`(핏불·도사·도고·필라 blocker) — 사용자 지정 2026-07-22 "없어도 돼".
+ *   ③ 기생충 시점을 '출국 전날'로 보던 룰 — 가이드는 **30일 이내**다. 가이드를 따랐다.
+ *   ④ 종합백신 20일/12개월(카자흐스탄 복제 잔재) — 가이드에 종합백신 항목 자체가 없다.
  *
  * 컨벤션: 필수 입력 누락 시 SKIP. 유효기간 1년 = 접종일의 1주년 당일까지.
+ * 고객 노출 문구엔 날짜를 넣지 않는다(lint:checks) — 문제 입력은 offendingPaths 가 짚는다.
  */
 
 const COUNTRY = 'turkey'
 
 export const TR_CHECKS: ProcedureCheck[] = [
+  // ── 마이크로칩 ──
   {
     id: 'tr.microchip-before-rabies',
     country: COUNTRY,
     category: '마이크로칩',
     title: '마이크로칩은 광견병 접종 이전 시술',
     description:
-      '마이크로칩이 광견병 첫 접종일과 같거나 이전이어야 함. ⚠️ 카자흐스탄 복제값(2026-07-22). 튀르키예는 EAEU 비회원이라 제15장 근거가 적용되지 않는다 — 구세대 조사는 ISO 칩을 입국 요건으로 봤다. 재확인 필요.',
+      'ISO 표준 마이크로칩이 광견병 첫 접종일과 같거나 이전이어야 함. 가이드: "마이크로칩 삽입 — 모든 절차 중 가장 먼저 실시" + "마이크로칩 삽입 후 접종". 백신 입력 시 client 차단(validateMicrochipBeforeBooster)과 짝 — 칩 시술일을 나중에 수정해 깨진 경우를 주의로 표면화.',
     severity: 'warning',
-    addedAt: '2026-07-20',
+    addedAt: '2026-07-22',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const microchip =
-        typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
+      const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
       if (!microchip || rabies.length === 0) return SKIP
 
       const first = rabies[0]
       if (microchip <= first.date) {
-        return { ok: true, message: `마이크로칩(${microchip}) ≤ 첫 접종(${first.date}).` }
+        return { ok: true, message: `마이크로칩(${microchip}) ≤ 접종(${first.date}).` }
       }
       return {
         ok: false,
         message: msgMicrochipBeforeRabies(),
-        offendingPaths: ['microchip_implant_date'],
+        offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
   },
+
+  // ── 광견병 ──
   {
-    id: 'tr.rabies-prime-after-3months-old',
+    id: 'tr.rabies-prime-after-12weeks',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종은 생후 3개월 이후',
+    title: '광견병 1차 접종 생후 12주(84일) 이상',
     description:
-      '달력 3개월 기준(사용자 확정값). ⚠️ 카자흐스탄 복제값(2026-07-22) — **튀르키예 실제 기준은 생후 12주(84일, EU Reg 576/2013)**. 세부 수정 대상. 입력 차단(step.earliest.monthsAfter)과 같은 판정 함수(meetsCalendarAge)를 쓴다.',
+      '가이드: "광견병 예방접종 — 생후 12주 이후에 접종". EU Reg 576/2013 과 같은 값이다. 입력 차단(step.earliest.daysAfter)과 같은 기준.',
     severity: 'warning',
-    addedAt: '2026-07-20',
+    addedAt: '2026-07-22',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
@@ -92,28 +102,27 @@ export const TR_CHECKS: ProcedureCheck[] = [
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      if (!meetsCalendarAge(birth, first.date, 3)) {
+      const age = daysBetween(birth, first.date)
+      if (age === null) return SKIP
+      if (age < 84) {
         return {
           ok: false,
-          message: msgRabiesPrimeMinAge('3개월'),
+          message: msgRabiesPrimeMinAge('84일(12주)'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return {
-        ok: true,
-        message: `1차 접종일(${first.date}) 생후 3개월(${calendarAgeThreshold(birth, 3)}) 이후.`,
-      }
+      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${age}일령.` }
     },
   },
   {
-    id: 'tr.rabies-min-20days-before-departure',
+    id: 'tr.rabies-min-30days-before-departure',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 접종은 출국일 20일 이상 전',
+    title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      'EAEU 제15장 "Не позднее чем за 20 дней до отправки" — 최근 12개월 내 접종 이력이 있으면 재접종 면제. 저장 거부(validateRabiesEntryWait)와 같은 판정 함수(violatesRabiesEntryWait)를 쓴다. ⚠️ 카자흐스탄 복제값(2026-07-22) — **튀르키예 실제 기준은 30일**. 세부 수정 1순위.',
+      '가이드: "출국일 기준 30일 이전". 최근 접종 기준이고 유효 부스터는 면제. 저장 거부(validateRabiesEntryWait)와 같은 판정 함수(violatesRabiesEntryWait — 프로파일 entryWaitDaysAfterVaccine 파생)를 쓴다.',
     severity: 'warning',
-    addedAt: '2026-07-20',
+    addedAt: '2026-07-22',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
@@ -122,12 +131,12 @@ export const TR_CHECKS: ProcedureCheck[] = [
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       if (!violatesRabiesEntryWait(data, dep, destination)) {
         const latest = rabies[rabies.length - 1]
-        return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): 20일 충족(또는 유효 부스터).` }
+        return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): 30일 충족(또는 유효 부스터).` }
       }
       const latest = rabies[rabies.length - 1]
       return {
         ok: false,
-        message: '광견병 접종 후 20일이 지나야 튀르키예에 입국할 수 있어요. 입국일을 미뤄야 해요.',
+        message: '광견병 접종 후 30일이 지나야 튀르키예에 입국할 수 있어요. 입국일을 미뤄야 해요.',
         offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
       }
     },
@@ -138,9 +147,9 @@ export const TR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 추가 접종은 직전 접종 유효기간 이내',
     description:
-      'EAEU 제15장 "любая последующая вакцинация против бешенства проводилась в период действия предшествующей вакцинации" — 만료 후 접종은 chain 이 끊겨 새 1차로 간주된다. ⚠️ 카자흐스탄에서 복제된 EAEU 근거다 — **튀르키예는 EAEU 비회원이라 이 조문이 적용되지 않는다.** 종합백신은 구세대 조사에서 권고(의무 명문 부재)였다. 전면 재조사 대상.',
+      '연속된 광견병 접종은 직전 접종의 면역 유효기간 이내에 해야 함. 만료 후 접종은 chain 이 끊겨 새 1차로 간주된다. 저장 거부(findRabiesChainBreak)의 짝이 되는 주의.',
     severity: 'warning',
-    addedAt: '2026-07-20',
+    addedAt: '2026-07-22',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length < 2) return SKIP
@@ -156,14 +165,39 @@ export const TR_CHECKS: ProcedureCheck[] = [
     },
   },
   {
+    id: 'tr.rabies-within-12months-of-departure',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 접종 후 1년 이내 출국',
+    description:
+      '가이드: 광견병 접종이 "출국일 기준 30일 이전 그리고 **1년을 넘지 않아야** 합니다" — 최근 접종일로부터 1년이 지나기 전에 출국해야 한다. ⚠️ 이건 **경과 시간** 제한이지 3년 백신 자체를 거부하는 규정이 아니다. 그래서 baseline 이 다르다: 중국·태국·필리핀처럼 입력을 차단(oneYearVaccineOnly)하지 않고, 접종일과 출국일의 간격만 본다. 3년 백신을 맞았어도 1년 안에 출국하면 요건을 충족한다.',
+    severity: 'warning',
+    addedAt: '2026-07-22',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
+      const rabies = readRabiesEntries(caseRow)
+      if (!dep || rabies.length === 0) return SKIP
+
+      const latest = rabies[rabies.length - 1]
+      if (addYears(latest.date, 1) >= dep) {
+        return { ok: true, message: `최근 접종(${latest.date}) + 1년(${addYears(latest.date, 1)}) ≥ 출국일(${dep}).` }
+      }
+      return {
+        ok: false,
+        message: '광견병 접종 후 1년이 지나기 전에 출국해야 해요. 출국 전에 다시 접종하세요.',
+        offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
+      }
+    },
+  },
+  {
     id: 'tr.rabies-valid-on-departure',
     country: COUNTRY,
     category: '광견병',
     title: '출국일에 광견병 면역 유효',
     description: '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
-    // ⚠️ 'info' 는 표시 억제를 겸한다 — 베트남 vn.rabies-valid-on-departure 와 같은 구조.
+    // info — 광견병 카드 문구가 같은 말을 하므로 배지 중복을 피한다(다른 목적지와 동일 처리).
     severity: 'info',
-    addedAt: '2026-07-20',
+    addedAt: '2026-07-22',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
@@ -182,84 +216,95 @@ export const TR_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
     },
   },
-  // ── 종합백신 — 광견병과 **같은** 20일/12개월 창 (제15장) ──
-  // ⚠️ 룰이 없어서 카드가 '출국 20일 전까지'·'최근 12개월'이라고 안내하면서 그 창을 벗어난
-  //   입력을 아무도 잡지 않았다(2026-07-22 사용자 지적). 튀르키예은 종합백신에도 광견병과
-  //   똑같은 기한이 걸리는 구조라(태국·필리핀은 별도 기한) 특히 놓치기 쉽다.
-  //
-  // **두 룰로 나눈 이유**(2026-07-22): 만료(12개월) 쪽은 종합백신 카드의 situational 안내가
-  //   이미 "직전 종합백신의 면역 유효기간이 …에 만료되었어요. 추가 접종 기록을 입력하세요."
-  //   로 같은 말을 한다. 한 룰로 묶으면 그 중복을 포털에서 숨길 수 없어(20일 주의까지 함께
-  //   사라진다) 태국·필리핀과 같은 구조로 분리했다 —
-  //   `*-not-expired-on-arrival` 접미사는 scenario.ts ADVISORY_DEFERRED_CHECKS 와
-  //   lint 의 ADVISORY_SUFFIXES 가 알아보는 이름이라, 포털에선 자동으로 숨고 펫무브워크
-  //   (운영자)에는 그대로 남는다. 이름을 바꾸면 그 처리가 깨진다.
-  //
-  // 두 룰 공통 — 창을 만족하는 접종이 하나라도 있으면 통과. 여러 번 접종한 경우를 벌하지
-  //   않는다(부스터를 출국 직전에 한 번 더 맞아도, 그 전 접종이 창 안이면 요건은 충족).
-  // 문구는 **공통 헬퍼**를 쓴다 — 태국·필리핀과 같은 문장이 된다. 직접 문자열 금지.
-  //   12개월 초과에도 '면역 유효기간 만료' 문구가 맞는 이유: 종합백신은 1년 제품뿐이라
-  //   입국 요건 12개월과 백신 유효기간이 사실상 같다(광견병의 3년 백신 같은 어긋남이 없다).
+
+  // ── 광견병 항체 검사 (RNATT) — **튀르키예 입국 요건** ──
+  // 접종~채혈 30일은 가이드가 "명확한 규정 없음 / 일반적으로 권장"이라 룰을 두지 않는다
+  // (카드 문구로만 안내 — 대만과 같은 처리). 유효기간 1년만 룰로 둔다.
   {
-    id: 'tr.general-vaccine-min-20days-before-departure',
+    id: 'tr.departure-within-12months-of-titer',
     country: COUNTRY,
-    category: '종합백신',
-    title: '종합백신은 출국 20일 이상 전',
+    category: '광견병',
+    title: '출국일은 항체 검사 12개월 이내',
     description:
-      'EAEU 제15장 "Не позднее чем за 20 дней до отправки" — 광견병과 같은 문장에서 종합백신도 함께 규정한다. 12개월 이내 접종 이력이 있으면 재접종 면제(그 판정은 만료 룰이 담당). ⚠️ 카자흐스탄에서 복제된 EAEU 근거다 — **튀르키예는 EAEU 비회원이라 이 조문이 적용되지 않는다.** 종합백신은 구세대 조사에서 권고(의무 명문 부재)였다. 전면 재조사 대상.',
+      '가이드: "검사 결과지의 유효기간에 대한 명확한 규정이 없습니다. 일반적으로 1년으로 생각합니다." — 출국일이 채혈일의 1주년을 넘으면 재검사가 필요하다(1주년 당일까지 유효).',
     severity: 'warning',
     addedAt: '2026-07-22',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
-      const entries = readGeneralVaccineEntries(caseRow)
-      if (!dep || entries.length === 0) return SKIP
+      const titers = readTiterEntries(caseRow)
+      if (!dep || titers.length === 0) return SKIP
 
-      // 20일을 만족하는 접종이 하나라도 있으면 통과(만료 여부는 별도 룰).
-      const ok = entries.find((e) => {
-        const gap = daysBetween(e.date, dep)
-        return gap !== null && gap >= 20
-      })
-      if (ok) return { ok: true, message: `종합백신(${ok.date}) → 출국(${dep}): 20일 충족.` }
-
-      const latest = entries[entries.length - 1]
+      const valid = titers.find((t) => addYears(t.date, 1) >= dep)
+      if (valid) {
+        return { ok: true, message: `항체 검사(${valid.date}) 유효(${addYears(valid.date, 1)}) ≥ 출국일(${dep}).` }
+      }
       return {
         ok: false,
-        message: msgGeneralVaccineMinDaysBeforeDeparture(20),
-        offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
+        message: '광견병 항체 검사 결과의 유효기간이 출국 전에 끝나요. 다시 검사해야 해요.',
+        offendingPaths: titers.map((t) => `rabies_titer_records[${t.originalIndex}].date`),
       }
     },
   },
+
+  // ── 내·외부 기생충 (여행 30일 이내) ──
+  // 가이드: "내외부기생충 치료 — 여행 30일 이내에 실시해야 합니다. 진드기에 효과적인 외부
+  // 기생충 치료제와 촌충(Echinococcus)에 효과적인 내부 구충제 치료를 해야 합니다."
   {
-    // ⚠️ 이름 끝의 `-not-expired-on-arrival` 은 포털 표시 억제 마커다(위 주석 참고).
-    id: 'tr.general-vaccine-not-expired-on-arrival',
+    id: 'tr.external-parasite-within-30days',
     country: COUNTRY,
-    category: '종합백신',
-    title: '출국일에 종합백신 12개월 이내',
+    category: '기생충',
+    title: '외부 기생충 치료는 출국 30일 이내',
     description:
-      'EAEU 제15장 "если они не были привиты в течение последних 12 месяцев" — 출국 시점에 접종 후 12개월이 지나지 않아야 함. 포털에선 종합백신 카드의 만료 안내가 같은 말을 하므로 배지를 숨기고, 펫무브워크에는 표시된다. ⚠️ 카자흐스탄에서 복제된 EAEU 근거다 — **튀르키예는 EAEU 비회원이라 이 조문이 적용되지 않는다.** 종합백신은 구세대 조사에서 권고(의무 명문 부재)였다. 전면 재조사 대상.',
+      '가이드: 내외부 기생충 치료를 "여행 30일 이내에 실시". 진드기에 효과적인 제제. 가장 최근 처치일이 출국일로부터 30일 이내여야 한다.',
     severity: 'warning',
     addedAt: '2026-07-22',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
-      const entries = readGeneralVaccineEntries(caseRow)
+      const entries = readExternalParasiteEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
-      const ok = entries.find((e) => {
-        const limit = addMonths(e.date, 12)
-        return !!limit && dep <= limit
-      })
-      if (ok) return { ok: true, message: `종합백신(${ok.date}) 출국일(${dep}) 기준 12개월 이내.` }
+      const latest = entries[entries.length - 1]
+      const days = daysBetween(latest.date, dep)
+      if (days === null) return SKIP
+      if (days > 30) {
+        return {
+          ok: false,
+          message: '외부 기생충 치료는 출국 30일 이내에 해야 해요.',
+          offendingPaths: ['departure_date', `external_parasite_dates[${latest.originalIndex}].date`],
+        }
+      }
+      return { ok: true, message: `최근 외부구충(${latest.date}) → 출국(${dep}): ${days}일.` }
+    },
+  },
+  {
+    id: 'tr.internal-parasite-within-30days',
+    country: COUNTRY,
+    category: '기생충',
+    title: '내부 기생충 치료는 출국 30일 이내',
+    description:
+      '가이드: 내외부 기생충 치료를 "여행 30일 이내에 실시". 촌충(Echinococcus)에 효과적인 구충제. 가장 최근 처치일이 출국일로부터 30일 이내여야 한다.',
+    severity: 'warning',
+    addedAt: '2026-07-22',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
+      const entries = readInternalParasiteEntries(caseRow)
+      if (!dep || entries.length === 0) return SKIP
 
       const latest = entries[entries.length - 1]
-      return {
-        ok: false,
-        message: msgGeneralVaccineExpiredBefore('출국'),
-        offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`],
+      const days = daysBetween(latest.date, dep)
+      if (days === null) return SKIP
+      if (days > 30) {
+        return {
+          ok: false,
+          message: '내부 기생충 치료는 출국 30일 이내에 해야 해요.',
+          offendingPaths: ['departure_date', `internal_parasite_dates[${latest.originalIndex}].date`],
+        }
       }
+      return { ok: true, message: `최근 내부구충(${latest.date}) → 출국(${dep}): ${days}일.` }
     },
   },
 
-  // ── 도착 수입 검역 / 현지 수출 검역 (베트남 골격 복제 2026-07-20) ──
+  // ── 검역 일정 재검증 ──
   {
     id: 'tr.import-quarantine-date-valid',
     country: COUNTRY,
@@ -267,7 +312,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
     title: '튀르키예 수입 검역일',
     description: '튀르키예 수입 검역일은 튀르키예 입국일 이후여야 함.',
     severity: 'warning',
-    addedAt: '2026-07-20',
+    addedAt: '2026-07-22',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const raw =
@@ -298,7 +343,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
     description:
       '튀르키예 수출 검역일은 튀르키예 입국일 이후·한국 귀국일 이전이어야 함. "그 나라에 있는 동안 받았는가"라는 물리적 제약이라 나라별 규정 조사가 필요 없다(판정은 classifyExportQuarantineDate 공용).',
     severity: 'warning',
-    addedAt: '2026-07-20',
+    addedAt: '2026-07-22',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const ctx = buildDateRuleContext(caseRow, destination)
@@ -326,7 +371,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['tr_export_quarantine_date'],
         }
       }
-      return { ok: true, message: `튀르키예 수출검역일 체류 기간 내.` }
+      return { ok: true, message: '튀르키예 수출검역일 체류 기간 내.' }
     },
   },
 ]

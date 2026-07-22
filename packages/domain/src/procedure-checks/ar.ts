@@ -6,7 +6,6 @@ import {
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
-  exceedsValidityYears,
   findRabiesValidityBreaks,
   readRabiesEntries,
   resolveValidUntil,
@@ -18,19 +17,27 @@ import { msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 /**
  * 아르헨티나 절차 검증.
  *
- * ⚠️ **베트남(vn.ts) 한 벌 복제 (2026-07-22)** — 룰 구조·수치(달력 3개월·30일 대기·1년 백신만)는
- *   아직 전부 베트남 것이다. 나라별 규정 확정 후 수정 예정(사용자 지정 — "베트남 복사 후 세부 수정").
- *   베트남 고유 법령 룰(금지 견종·동반 2마리 한도)은 복제하지 않았다(4국 복제 전례).
- *   수출 검역 카드·룰도 나라별 조사 후 별도(4국 복제 전례) — vn.export-quarantine-date-valid 미복제.
+ * 구조는 베트남(vn.ts) 골격에서 복제했고(2026-07-22), **수치는 SENASA 원문 조사로 교체했다**
+ *   (같은 날 사용자 지정 "조사결과 반영").
  *
- * 복제 전 구세대 파일(SENASA 조사값)은 git 이력 참고 — 되살릴 후보:
- *  - 출처: SENASA "Ingresos con perros y/o gatos" + "Requisitos por destino: Corea"
- *  - 광견병: 3개월(90일) 이상, 1차 후 21일 권장(보수 30일 적용), 유효기간 제조사 라벨(통상 1년 —
- *    **1년 제한 근거 없음**, 복제된 blocker 와 어긋날 수 있다)
- *  - 건강증명서(CVI): 발급일 전 10일 이내 검진, CVI 자체는 발급·합법화일로부터 60일 유효
- *  - 내·외부 구충: CVI 발급일 전 15일 이내 (SENASA 명시)
- *  - **수입허가 불요·격리 없음** (복제된 '미충족 시 14일 격리' 문구와 충돌 — 세부 수정 1순위)
- *  - RNATT: 입국 의무 아님(한국 귀국용 별도). 종합백신: 의무 아님. 칩: SENASA 명시 의무 부재
+ * 1차 출처: SENASA 「Ingresos con perros y/o gatos」 (확인 2026-07-22)
+ *   https://www.argentina.gob.ar/senasa/informacion-al-viajero/ingresar-o-regresar-al-pais/ingresos-con-perros-yo-gatos
+ *   근거 법령: Resolución GMC 17/15 외.
+ *
+ * 원문에서 확정한 것:
+ *  - **접종 후 21일**(30일 아님): "Cuando se trate de animales vacunados por primera vez, la
+ *    vacuna debe haber sido aplicada al menos 21 (veintiún) días previos al ingreso a la
+ *    República Argentina." → 기준점은 **입국일**, **1차 접종에만** 적용(유효 부스터 면제).
+ *  - **3년 백신 인정**: "…con inmunidad vigente según el plazo de validez otorgado por el
+ *    laboratorio fabricante de la vacuna." → 1년 제한 blocker 는 근거가 없어 제거했다.
+ *  - **격리·수입허가 없음** → 도착 카드에서 '미충족 시 14일 격리'(베트남 복제 잔재) 삭제.
+ *  - 최소 접종 연령 규정 **없음** — 있는 것은 "3개월 미만이면 접종 면제" 조항뿐이다.
+ *    지금의 달력 3개월 룰은 골격에서 온 **보수값**이라 규정보다 엄격하다(사용자 확인 대상).
+ *
+ * 함께 확인됐으나 아직 룰로 만들지 않은 것: 건강검진 = CVI 발급일 전 10일 이내 /
+ *   내·외부 구충 = CVI 발급일 전 15일 이내 / CVI·여권 유효 60일 / 동반수하물은 사전신청 불요.
+ *
+ * ⚠️ 펫무브 www 가이드는 아직 '출국 30일 전'이라 적혀 있다 — 웹사이트 갱신 필요.
  */
 
 const COUNTRY = 'argentina'
@@ -42,7 +49,7 @@ export const AR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종은 생후 3개월 이후',
     description:
-      '달력 3개월 기준 — 입력 차단(step.earliest.monthsAfter)과 같은 판정 함수(meetsCalendarAge)를 쓴다. ⚠️ 베트남 복제값(SENASA 구세대 조사도 "edad mínima 3 meses"로 일치).',
+      '달력 3개월 기준 — 입력 차단(step.earliest.monthsAfter)과 같은 판정 함수(meetsCalendarAge)를 쓴다. ⚠️ SENASA 원문에는 최소 접종 연령 규정이 **없다**(3개월 미만 면제 조항만 있다). 골격에서 온 보수값이라 규정보다 엄격하다 — 완화 여부는 사용자 확인 대상.',
     severity: 'warning',
     addedAt: '2026-07-22',
     run: ({ caseRow }) => {
@@ -68,12 +75,12 @@ export const AR_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'ar.rabies-min-30days-before-departure',
+    id: 'ar.rabies-min-21days-before-departure',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 접종은 출국일 30일 이상 전',
+    title: '광견병 1차 접종은 입국일 21일 이상 전',
     description:
-      '최근 광견병 접종일로부터 출국일까지 최소 30일 경과 필요(유효 부스터는 면제). 저장 거부(validateRabiesEntryWait)와 같은 판정 함수(violatesRabiesEntryWait — 프로파일 entryWaitDaysAfterVaccine 파생)를 쓴다. ⚠️ 베트남 복제값 — 아르헨티나 규정 확정 후 수정(구세대 조사: 21일 권장·보수 30일).',
+      '최근 광견병 접종일로부터 출국일까지 최소 21일 경과 필요(유효 부스터는 면제). 저장 거부(validateRabiesEntryWait)와 같은 판정 함수(violatesRabiesEntryWait — 프로파일 entryWaitDaysAfterVaccine 파생)를 쓴다. ✅ SENASA 원문 확인값(2026-07-22). 기준점은 입국일이고 1차 접종에만 적용된다.',
     severity: 'warning',
     addedAt: '2026-07-22',
     run: ({ caseRow, destination }) => {
@@ -86,14 +93,14 @@ export const AR_CHECKS: ProcedureCheck[] = [
       // 기준은 **최근** 접종이고 유효 부스터는 면제.
       if (!violatesRabiesEntryWait(data, dep, destination)) {
         const latest = rabies[rabies.length - 1]
-        return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): 30일 충족(또는 유효 부스터).` }
+        return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): 21일 충족(또는 유효 부스터).` }
       }
       const latest = rabies[rabies.length - 1]
       // 접종일은 과거 사실이라 조치는 '입국일을 미루는 것'뿐 — 출국일을 입력하는 시점은
       // 저장 거부가 막고, 접종일을 넣는 이 경로는 안내만 한다. 날짜는 넣지 않는다(lint:checks).
       return {
         ok: false,
-        message: '광견병 접종 후 30일이 지나야 아르헨티나에 입국할 수 있어요. 입국일을 미뤄야 해요.',
+        message: '광견병 접종 후 21일이 지나야 아르헨티나에 입국할 수 있어요. 입국일을 미뤄야 해요.',
         offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
       }
     },
@@ -121,41 +128,6 @@ export const AR_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
-    },
-  },
-  {
-    id: 'ar.rabies-only-1year-vaccine',
-    country: COUNTRY,
-    category: '광견병',
-    title: '1년 라이선스 광견병 백신만 인정 (3년 거부)',
-    description:
-      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부. ⚠️ 베트남 복제 blocker — 아르헨티나(SENASA) 근거 미확인. 구세대 조사는 "제조사 라벨(통상 1년)"로 제한 없음. 규정 확정 후 재검토.',
-    severity: 'blocker',
-    addedAt: '2026-07-22',
-    run: ({ caseRow }) => {
-      const rabies = readRabiesEntries(caseRow)
-      if (rabies.length === 0) return SKIP
-
-      const violations: Array<{ entry: typeof rabies[number]; validUntil: string }> = []
-      for (const r of rabies) {
-        if (exceedsValidityYears(r.date, r.valid_until)) {
-          violations.push({ entry: r, validUntil: resolveValidUntil(r.date, r.valid_until) })
-        }
-      }
-      if (violations.length > 0) {
-        const offending: string[] = []
-        const msgs: string[] = []
-        for (const v of violations) {
-          offending.push(`rabies_dates[${v.entry.originalIndex}].valid_until`)
-          msgs.push('광견병 백신은 면역 유효기간 1년짜리만 인정돼요. 3년 백신은 사용할 수 없어요.')
-        }
-        return {
-          ok: false,
-          message: msgs.join(' / '),
-          offendingPaths: offending,
-        }
-      }
-      return { ok: true, message: '모든 광견병 백신이 1년 라이선스 (또는 미입력 = 디폴트 1년).' }
     },
   },
   {
