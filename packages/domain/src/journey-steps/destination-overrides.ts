@@ -524,11 +524,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     //   브라질은 증명서 발급 기준 15일. 참고로 멕시코 요건 중 '15일'은 기생충이 아니라
     //   **건강증명서 유효기간**(Certificado de Buena Salud, 발급 후 최대 15일)이다.
     'external-parasite': {
-      description: '외부 기생충 치료를 하세요.\n\n멕시코 도착일 기준 6개월 이내에 해야 합니다.',
+      description: '외부 기생충 치료를 하세요.\n\n멕시코 도착일 기준 6개월 이내에 해야 해요.',
       validationIds: ['mx.external-parasite-within-6months'],
     },
     'internal-parasite': {
-      description: '내부 기생충 치료를 하세요.\n\n멕시코 도착일 기준 6개월 이내에 해야 합니다.',
+      description: '내부 기생충 치료를 하세요.\n\n멕시코 도착일 기준 6개월 이내에 해야 해요.',
       validationIds: ['mx.internal-parasite-within-6months'],
     },
     departure: importQuarantineCard({
@@ -577,11 +577,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     //   기준을 바꾸지 말 것 — 2026-07-22 그렇게 고칠 뻔했다. 한국 수출 검역은 출국 10일 이내라
     //   출국일 기준이 실무상 타당한 근사다.
     'external-parasite': {
-      description: '외부 기생충 치료를 하세요.\n\n출국일 기준 15일 이내에 해야 합니다.',
+      description: '외부 기생충 치료를 하세요.\n\n출국일 기준 15일 이내에 해야 해요.',
       validationIds: ['br.external-parasite-within-15days'],
     },
     'internal-parasite': {
-      description: '내부 기생충 치료를 하세요.\n\n출국일 기준 15일 이내에 해야 합니다.',
+      description: '내부 기생충 치료를 하세요.\n\n출국일 기준 15일 이내에 해야 해요.',
       validationIds: ['br.internal-parasite-within-15days'],
     },
     departure: importQuarantineCard({
