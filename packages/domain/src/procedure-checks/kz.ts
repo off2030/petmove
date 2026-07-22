@@ -6,14 +6,19 @@ import {
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
+  addMonths,
   classifyExportQuarantineDate,
+  daysBetween,
   findRabiesValidityBreaks,
+  readGeneralVaccineEntries,
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
   readDepartureDate,
 } from './utils'
 import {
+  msgGeneralVaccineExpiredBefore,
+  msgGeneralVaccineMinDaysBeforeDeparture,
   msgMicrochipBeforeRabies,
   msgRabiesExpiredBefore,
   msgRabiesPrimeMinAge,
@@ -191,6 +196,83 @@ export const KZ_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
     },
   },
+  // ── 종합백신 — 광견병과 **같은** 20일/12개월 창 (제15장) ──
+  // ⚠️ 룰이 없어서 카드가 '출국 20일 전까지'·'최근 12개월'이라고 안내하면서 그 창을 벗어난
+  //   입력을 아무도 잡지 않았다(2026-07-22 사용자 지적). 카자흐스탄은 종합백신에도 광견병과
+  //   똑같은 기한이 걸리는 구조라(태국·필리핀은 별도 기한) 특히 놓치기 쉽다.
+  //
+  // **두 룰로 나눈 이유**(2026-07-22): 만료(12개월) 쪽은 종합백신 카드의 situational 안내가
+  //   이미 "직전 종합백신의 면역 유효기간이 …에 만료되었어요. 추가 접종 기록을 입력하세요."
+  //   로 같은 말을 한다. 한 룰로 묶으면 그 중복을 포털에서 숨길 수 없어(20일 주의까지 함께
+  //   사라진다) 태국·필리핀과 같은 구조로 분리했다 —
+  //   `*-not-expired-on-arrival` 접미사는 scenario.ts ADVISORY_DEFERRED_CHECKS 와
+  //   lint 의 ADVISORY_SUFFIXES 가 알아보는 이름이라, 포털에선 자동으로 숨고 펫무브워크
+  //   (운영자)에는 그대로 남는다. 이름을 바꾸면 그 처리가 깨진다.
+  //
+  // 두 룰 공통 — 창을 만족하는 접종이 하나라도 있으면 통과. 여러 번 접종한 경우를 벌하지
+  //   않는다(부스터를 출국 직전에 한 번 더 맞아도, 그 전 접종이 창 안이면 요건은 충족).
+  // 문구는 **공통 헬퍼**를 쓴다 — 태국·필리핀과 같은 문장이 된다. 직접 문자열 금지.
+  //   12개월 초과에도 '면역 유효기간 만료' 문구가 맞는 이유: 종합백신은 1년 제품뿐이라
+  //   입국 요건 12개월과 백신 유효기간이 사실상 같다(광견병의 3년 백신 같은 어긋남이 없다).
+  {
+    id: 'kz.general-vaccine-min-20days-before-departure',
+    country: COUNTRY,
+    category: '종합백신',
+    title: '종합백신은 출국 20일 이상 전',
+    description:
+      'EAEU 제15장 "Не позднее чем за 20 дней до отправки" — 광견병과 같은 문장에서 종합백신도 함께 규정한다. 12개월 이내 접종 이력이 있으면 재접종 면제(그 판정은 만료 룰이 담당).',
+    severity: 'warning',
+    addedAt: '2026-07-22',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
+      const entries = readGeneralVaccineEntries(caseRow)
+      if (!dep || entries.length === 0) return SKIP
+
+      // 20일을 만족하는 접종이 하나라도 있으면 통과(만료 여부는 별도 룰).
+      const ok = entries.find((e) => {
+        const gap = daysBetween(e.date, dep)
+        return gap !== null && gap >= 20
+      })
+      if (ok) return { ok: true, message: `종합백신(${ok.date}) → 출국(${dep}): 20일 충족.` }
+
+      const latest = entries[entries.length - 1]
+      return {
+        ok: false,
+        message: msgGeneralVaccineMinDaysBeforeDeparture(20),
+        offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
+      }
+    },
+  },
+  {
+    // ⚠️ 이름 끝의 `-not-expired-on-arrival` 은 포털 표시 억제 마커다(위 주석 참고).
+    id: 'kz.general-vaccine-not-expired-on-arrival',
+    country: COUNTRY,
+    category: '종합백신',
+    title: '출국일에 종합백신 12개월 이내',
+    description:
+      'EAEU 제15장 "если они не были привиты в течение последних 12 месяцев" — 출국 시점에 접종 후 12개월이 지나지 않아야 함. 포털에선 종합백신 카드의 만료 안내가 같은 말을 하므로 배지를 숨기고, 펫무브워크에는 표시된다.',
+    severity: 'warning',
+    addedAt: '2026-07-22',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
+      const entries = readGeneralVaccineEntries(caseRow)
+      if (!dep || entries.length === 0) return SKIP
+
+      const ok = entries.find((e) => {
+        const limit = addMonths(e.date, 12)
+        return !!limit && dep <= limit
+      })
+      if (ok) return { ok: true, message: `종합백신(${ok.date}) 출국일(${dep}) 기준 12개월 이내.` }
+
+      const latest = entries[entries.length - 1]
+      return {
+        ok: false,
+        message: msgGeneralVaccineExpiredBefore('출국'),
+        offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`],
+      }
+    },
+  },
+
   // ── 도착 수입 검역 / 현지 수출 검역 (베트남 골격 복제 2026-07-20) ──
   {
     id: 'kz.import-quarantine-date-valid',

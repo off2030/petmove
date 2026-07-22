@@ -363,6 +363,9 @@ const ADVISORY_DEFERRED_CHECKS = new Set<string>([
   'th.general-vaccine-not-expired-on-arrival',
   'ph.rabies-not-expired-on-arrival',
   'ph.general-vaccine-not-expired-on-arrival',
+  // 카자흐스탄 — 종합백신 12개월(입국 요건)도 같은 처리. 카드 situational 이 "직전 종합백신의
+  // 면역 유효기간이 …에 만료되었어요"로 같은 말을 하므로 배지는 중복(2026-07-22).
+  'kz.general-vaccine-not-expired-on-arrival',
   'eu.rabies-valid-until-on-entry',
   // 우크라이나 — EU 와 같은 '조건부 무기한 항체' 모델이라 같은 처리(2026-07-21).
   'ua.rabies-valid-on-departure',
