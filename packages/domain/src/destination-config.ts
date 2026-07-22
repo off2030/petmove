@@ -412,10 +412,30 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     ],
     rabiesTiterForReturnOnly: true,
   },
+  // ── 인도네시아 — ⚠️ 태국 한 벌 복제(2026-07-22). 세부 값은 아직 태국 것 그대로다.
+  //   나라별 규정 확정 후 수정 예정(사용자 지정 — "태국 복사 후 나라별로 세부 수정").
+  //   복제 전 메모: 인도네시아는 별도 양식 없이 병원 발급 일반 영문 건강증명서(VHC) 제출
+  //   (cert-config-defaults 의 vhc 증명서는 그대로 유지).
   indonesia: {
-    // 인도네시아는 별도 양식 없이 병원 발급 일반 영문 건강증명서(VHC) 제출.
     keywords: ['인도네시아', 'indonesia'],
-    vaccines: ['rabies', 'rabies_titer'],
+    archetype: 'sea-permit',
+    rabies: {
+      doses: 1,
+      minAgeDays: 84,
+      minAgeLabel: '생후 12주(84일)',
+      oneYearVaccineOnly: true,
+      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
+      timingLines: ['출국 30일 전까지 접종해야 해요.'],
+    },
+    appSupported: true,
+    importPermit: {},
+    vaccines: ['rabies', 'rabies_titer', 'general'],
+    extraFields: [
+      'passport_number', 'passport_expiry_date', 'passport_issuer',
+      'address_overseas',
+      'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
+    ],
+    rabiesTiterForReturnOnly: true,
   },
   india: {
     // 'india' / '인도' 는 'indonesia' / '인도네시아' 의 부분문자열이므로
@@ -664,14 +684,30 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     },
     appSupported: true,
   },
+  // ── 말레이시아 — ⚠️ 태국 한 벌 복제(2026-07-22). 세부 값은 아직 태국 것 그대로다.
+  //   나라별 규정 확정 후 수정 예정(사용자 지정 — "태국 복사 후 나라별로 세부 수정").
+  //   복제 전 구세대 조사값(DVS: 종합백신 필수·RNATT 면제·수입허가·계류장 14일 전 예약·
+  //   도착 후 7일 격리·건강증명서 7일 창)은 git 이력(이 항목 + procedure-checks/my.ts 구버전) 참고.
   malaysia: {
-    // DVS — 종합백신 필수, RNATT 면제(말레이시아 입국 한정 — 한국 귀국 시는 필요).
-    // 수입허가 + 계류장 14일 전 예약 + 도착 후 7일 격리.
     keywords: ['말레이시아', 'malaysia'],
+    archetype: 'sea-permit',
+    rabies: {
+      doses: 1,
+      minAgeDays: 84,
+      minAgeLabel: '생후 12주(84일)',
+      oneYearVaccineOnly: true,
+      validityLine: '면역 유효기간은 1년이에요. 3년 백신은 인정되지 않아요.',
+      timingLines: ['출국 30일 전까지 접종해야 해요.'],
+    },
+    appSupported: true,
+    importPermit: {},
     vaccines: ['rabies', 'rabies_titer', 'general'],
+    extraFields: [
+      'passport_number', 'passport_expiry_date', 'passport_issuer',
+      'address_overseas',
+      'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
+    ],
     rabiesTiterForReturnOnly: true,
-    vetVisitWindowDays: 7,
-    importPermit: {}, // DVS
   },
   // ── 모로코 (ONSSA — 국경검역소 PIF 16개소) ────────────────────────────
   // ✅ 1차 출처 확보(2026-07-20). ONSSA 공식 증명서 **양식 원본**을 직접 판독했다.

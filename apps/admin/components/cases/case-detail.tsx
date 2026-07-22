@@ -399,7 +399,12 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
           // 출발일+도착일을 함께 보여주는데 펫무브워크 그룹엔 도착일만 있었음. departure_date 는 절차정보
           // '출국일'과 같은 필드라 별도 동기화 없이 자동 일치(편집·완료 동작도 동일). 태국만 — 일본은 이미
           // departure_flight_date 로 출발일이 그룹에 있고, 필리핀은 출발=도착(같은 날)이라 도착일이 곧 출발일.
-          if (matchesDestinationKey(viewDestination, 'thailand')) {
+          // 말레이시아·인도네시아 — 태국 복제(2026-07-22): 같은 출발일·도착일 분리 모델.
+          if (
+            matchesDestinationKey(viewDestination, 'thailand') ||
+            matchesDestinationKey(viewDestination, 'malaysia') ||
+            matchesDestinationKey(viewDestination, 'indonesia')
+          ) {
             const flightGroup = segments.find(
               (s): s is Extract<ExtraSegment, { type: 'group' }> =>
                 s.type === 'group' && s.name === '출국 항공편',
@@ -418,6 +423,9 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
           const showReturnFlightRow =
             tripType === 'round' &&
             (matchesDestinationKey(viewDestination, 'thailand') ||
+              // 말레이시아·인도네시아 — 태국 복제(2026-07-22).
+              matchesDestinationKey(viewDestination, 'malaysia') ||
+              matchesDestinationKey(viewDestination, 'indonesia') ||
               matchesDestinationKey(viewDestination, 'philippines'))
           return (
             <SimpleExtraSection

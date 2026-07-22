@@ -26,9 +26,10 @@ export interface ShareFileRequestDef {
 export const SHARE_FILE_REQUESTS: ShareFileRequestDef[] = [
   // 필수 — 목적지별
   { key: 'jp_carrier_photo', label: '이동 가방 사진', required: true, destinations: ['일본'] },
-  { key: 'pet_photo', label: '반려동물 사진', required: true, destinations: ['태국', '필리핀'] },
-  { key: 'passport_photo', label: '여권 사진', required: true, destinations: ['태국'] },
-  { key: 'flight_itinerary', label: '항공 일정표', required: true, destinations: ['태국'] },
+  // 말레이시아·인도네시아 — 태국 복제(2026-07-22).
+  { key: 'pet_photo', label: '반려동물 사진', required: true, destinations: ['태국', '필리핀', '말레이시아', '인도네시아'] },
+  { key: 'passport_photo', label: '여권 사진', required: true, destinations: ['태국', '말레이시아', '인도네시아'] },
+  { key: 'flight_itinerary', label: '항공 일정표', required: true, destinations: ['태국', '말레이시아', '인도네시아'] },
   // 선택 — 상황에 따라
   { key: 'jp_export_cert', label: '일본 수출 동물검역증', required: false, destinations: ['일본'] },
   // 구충은 필리핀만 해당 — 필리핀은 '타병원 접종 및 구충증명서'로 통일, 그 외는 '타병원 접종증명서'.

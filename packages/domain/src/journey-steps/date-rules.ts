@@ -282,6 +282,52 @@ export function validateThEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
+ * 말레이시아 입국일(= 출국 항공편 날짜) — ⚠️ 태국 복제(2026-07-22, validateThEntryDate 와 동일
+ * 모델·수치). 21일 대기가 말레이시아 실제 규정인지 확정 후 수정 예정.
+ */
+export function validateMyEntryDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!matchesDestinationKey(ctx.destination, 'malaysia')) return null
+  for (const [key, label] of [
+    ['rabies_dates', '광견병 백신'],
+    ['general_vaccine_dates', '종합백신'],
+  ] as const) {
+    if (key === 'rabies_dates' && isValidBooster(ctx.data, 'rabies_dates')) continue
+    const dates = readDateArray(ctx.data, key)
+    if (dates.length === 0) continue
+    const latest = dates.reduce((a, b) => (a > b ? a : b))
+    const earliest = addDays(latest, 21)
+    if (earliest && v < earliest) {
+      return `${label} 접종 후 21일이 지나야 말레이시아에 입국할 수 있어요`
+    }
+  }
+  return null
+}
+
+/**
+ * 인도네시아 입국일(= 출국 항공편 날짜) — ⚠️ 태국 복제(2026-07-22, validateThEntryDate 와 동일
+ * 모델·수치). 21일 대기가 인도네시아 실제 규정인지 확정 후 수정 예정.
+ */
+export function validateIdEntryDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!matchesDestinationKey(ctx.destination, 'indonesia')) return null
+  for (const [key, label] of [
+    ['rabies_dates', '광견병 백신'],
+    ['general_vaccine_dates', '종합백신'],
+  ] as const) {
+    if (key === 'rabies_dates' && isValidBooster(ctx.data, 'rabies_dates')) continue
+    const dates = readDateArray(ctx.data, key)
+    if (dates.length === 0) continue
+    const latest = dates.reduce((a, b) => (a > b ? a : b))
+    const earliest = addDays(latest, 21)
+    if (earliest && v < earliest) {
+      return `${label} 접종 후 21일이 지나야 인도네시아에 입국할 수 있어요`
+    }
+  }
+  return null
+}
+
+/**
  * 광견병 접종 후 입국까지의 대기일 — **프로파일 파생 단일 출처**.
  *
  * 값은 destination-config 의 `rabies.entryWaitDaysAfterVaccine`. 예전엔 베트남 30일이
@@ -508,6 +554,54 @@ export function validateEuTiterAfterVaccine(
  * client(신청 입력 시 입력 불가)·procedure-check(백신 수정 후 주의) 공용. 한쪽 비면 통과.
  */
 export function validateThImportPermitVaccineGap(
+  filedDate: string,
+  data: Record<string, unknown>,
+): string | null {
+  if (!filedDate) return null
+  for (const [key, label] of [
+    ['rabies_dates', '광견병 백신'],
+    ['general_vaccine_dates', '종합백신'],
+  ] as const) {
+    const dates = readDateArray(data, key)
+    if (dates.length === 0) continue
+    const latest = dates.reduce((m, d) => (d > m ? d : m))
+    const earliest = addDays(latest, 14)
+    if (earliest && filedDate < earliest) {
+      return `${label} 접종일로부터 14일이 지나고 수입 허가를 신청할 수 있어요.`
+    }
+  }
+  return null
+}
+
+/**
+ * 말레이시아 — ⚠️ 태국 복제(2026-07-22, validateThImportPermitVaccineGap 과 동일 모델·수치).
+ * 수입 허가 신청일은 광견병·종합백신의 가장 최근 접종일 + 14일(2주) 이후. 규정 확정 후 수정 예정.
+ */
+export function validateMyImportPermitVaccineGap(
+  filedDate: string,
+  data: Record<string, unknown>,
+): string | null {
+  if (!filedDate) return null
+  for (const [key, label] of [
+    ['rabies_dates', '광견병 백신'],
+    ['general_vaccine_dates', '종합백신'],
+  ] as const) {
+    const dates = readDateArray(data, key)
+    if (dates.length === 0) continue
+    const latest = dates.reduce((m, d) => (d > m ? d : m))
+    const earliest = addDays(latest, 14)
+    if (earliest && filedDate < earliest) {
+      return `${label} 접종일로부터 14일이 지나고 수입 허가를 신청할 수 있어요.`
+    }
+  }
+  return null
+}
+
+/**
+ * 인도네시아 — ⚠️ 태국 복제(2026-07-22, validateThImportPermitVaccineGap 과 동일 모델·수치).
+ * 수입 허가 신청일은 광견병·종합백신의 가장 최근 접종일 + 14일(2주) 이후. 규정 확정 후 수정 예정.
+ */
+export function validateIdImportPermitVaccineGap(
   filedDate: string,
   data: Record<string, unknown>,
 ): string | null {
@@ -768,6 +862,9 @@ export function validateEntryDateForDestination(
   return (
     validateJpEntryDate(entry, ctx) ??
     validateThEntryDate(outbound, ctx) ??
+    // 말레이시아·인도네시아 — 태국 복제(2026-07-22): 출발일 기준, 같은 21일 모델.
+    validateMyEntryDate(outbound, ctx) ??
+    validateIdEntryDate(outbound, ctx) ??
     validatePhEntryDate(entryOrDeparture, ctx) ??
     validateEuEntryDate(entryOrDeparture, ctx) ??
     validateTwEntryDate(entryOrDeparture, ctx) ??
@@ -819,6 +916,17 @@ export function validateImportPermitFiledDate(
       return (
         validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
         validateThImportPermitVaccineGap(filedDate, data)
+      )
+    // 말레이시아·인도네시아 — ⚠️ 태국 복제(2026-07-22): 같은 두 규칙. 규정 확정 후 수정 예정.
+    case 'malaysia':
+      return (
+        validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
+        validateMyImportPermitVaccineGap(filedDate, data)
+      )
+    case 'indonesia':
+      return (
+        validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
+        validateIdImportPermitVaccineGap(filedDate, data)
       )
     // 필리핀 — 위 + SPSIC 60일 유효(출국 60일보다 이르면 출국 전 만료) + 백신 14일.
     case 'philippines':

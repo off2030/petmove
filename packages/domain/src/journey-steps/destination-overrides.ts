@@ -853,6 +853,118 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     },
   }),
 
+  // ── 말레이시아 — ⚠️ 태국 한 벌 복제(2026-07-22). 문구·수치는 아직 태국 것 그대로다
+  //   (21일 대기·수입허가 7영업일·R.6/R.7 서식명 등). 나라별 규정 확정 후 수정 예정.
+  //   태국 전용 링크 2개(R.1/1 신청서 PDF·태국 AQS 연락처 페이지)만 뺐다 — 타국 자료 오안내 방지.
+  malaysia: seaPermitOverrides({
+    label: '말레이시아',
+    rabiesDescription:
+      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
+    rabiesValidationIds: [
+      'my.rabies-prime-after-12weeks',
+      'my.microchip-before-rabies',
+      'my.rabies-booster-within-prime-validity',
+    ],
+    titerDescription:
+      '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n말레이시아 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+    generalVaccine: {
+      description:
+        '강아지는 DHPPL(디스템퍼·전염성간염·파보·파라인플루엔자·렙토스피라), 고양이는 범백혈구감소증(FPV)이 포함된 종합백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
+      descriptionBySpecies: {
+        dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스·파라인플루엔자·렙토스피라 예방을 포함해야 해요.\n한국 백신은 렙토스피라 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n마이크로칩 삽입 후 접종해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
+      },
+      validationIds: ['my.microchip-before-general-vaccine'],
+    },
+    flight: {
+      description:
+        '말레이시아 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 3주가 지난 후에 입국할 수 있어요.\n항공권 구매 후 수입 허가 신청을 해요. 2주 이상 충분한 시간을 확보하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      order: 90,
+      validationIds: [
+        'my.rabies-21days-before-arrival',
+        'my.general-vaccine-21days-before-arrival',
+      ],
+    },
+    importPermit: {
+      description:
+        '입국 공항 동물검역소에 수입 허가 신청을 하세요.\n\n입국 7영업일 전까지 이메일로 신청해요.\n접종일로부터 2주가 지난 후에 신청할 수 있어요.\n수입 허가 통지서(R.6)가 발급되며 60일간 유효해요.',
+      doneSummary: '말레이시아 수입 허가 통지서(R.6)를 받았어요.',
+      cardLine: '말레이시아 수입 허가 신청을 하세요.',
+      deadline: { anchor: 'departure', daysBefore: 9 },
+      attachmentHint: '수입 허가 통지서(R.6)를 사진·PDF로 보관하세요.',
+      attachmentLabel: '수입 허가 통지서(R.6)',
+      validationIds: [
+        'my.import-permit-9days-before-entry',
+        'my.import-permit-14days-after-vaccines',
+      ],
+    },
+    importQuarantine: {
+      fieldKey: 'my_import_quarantine_date',
+      description:
+        '말레이시아 도착 후 공항 동물검역소에서 검역을 받으세요.\n검사를 통과하면 수입 허가서(R.7)를 받아요.',
+      helpText: '말레이시아 동물검역소에서 수입 검역을 받은 날짜',
+      attachmentHint: '수입 허가서(R.7) 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '수입 허가서(R.7)',
+      validationIds: ['my.import-quarantine-date-valid'],
+    },
+  }),
+
+  // ── 인도네시아 — ⚠️ 태국 한 벌 복제(2026-07-22). 문구·수치는 아직 태국 것 그대로다
+  //   (21일 대기·수입허가 7영업일·R.6/R.7 서식명 등). 나라별 규정 확정 후 수정 예정.
+  //   태국 전용 링크 2개(R.1/1 신청서 PDF·태국 AQS 연락처 페이지)만 뺐다 — 타국 자료 오안내 방지.
+  indonesia: seaPermitOverrides({
+    label: '인도네시아',
+    rabiesDescription:
+      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
+    rabiesValidationIds: [
+      'id.rabies-prime-after-12weeks',
+      'id.microchip-before-rabies',
+      'id.rabies-booster-within-prime-validity',
+    ],
+    titerDescription:
+      '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n인도네시아 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+    generalVaccine: {
+      description:
+        '강아지는 DHPPL(디스템퍼·전염성간염·파보·파라인플루엔자·렙토스피라), 고양이는 범백혈구감소증(FPV)이 포함된 종합백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
+      descriptionBySpecies: {
+        dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스·파라인플루엔자·렙토스피라 예방을 포함해야 해요.\n한국 백신은 렙토스피라 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n마이크로칩 삽입 후 접종해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n입국 3주 전까지 접종해야 해요.\n수입 허가 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.\n\n수입 허가 신청에 접종 증명서와 백신 수첩이 필요해요. 백신 수첩에는 모든 페이지에 마이크로칩 번호와 수의사의 서명 혹은 스탬프가 있어야 해요.',
+      },
+      validationIds: ['id.microchip-before-general-vaccine'],
+    },
+    flight: {
+      description:
+        '인도네시아 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 3주가 지난 후에 입국할 수 있어요.\n항공권 구매 후 수입 허가 신청을 해요. 2주 이상 충분한 시간을 확보하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      order: 90,
+      validationIds: [
+        'id.rabies-21days-before-arrival',
+        'id.general-vaccine-21days-before-arrival',
+      ],
+    },
+    importPermit: {
+      description:
+        '입국 공항 동물검역소에 수입 허가 신청을 하세요.\n\n입국 7영업일 전까지 이메일로 신청해요.\n접종일로부터 2주가 지난 후에 신청할 수 있어요.\n수입 허가 통지서(R.6)가 발급되며 60일간 유효해요.',
+      doneSummary: '인도네시아 수입 허가 통지서(R.6)를 받았어요.',
+      cardLine: '인도네시아 수입 허가 신청을 하세요.',
+      deadline: { anchor: 'departure', daysBefore: 9 },
+      attachmentHint: '수입 허가 통지서(R.6)를 사진·PDF로 보관하세요.',
+      attachmentLabel: '수입 허가 통지서(R.6)',
+      validationIds: [
+        'id.import-permit-9days-before-entry',
+        'id.import-permit-14days-after-vaccines',
+      ],
+    },
+    importQuarantine: {
+      fieldKey: 'id_import_quarantine_date',
+      description:
+        '인도네시아 도착 후 공항 동물검역소에서 검역을 받으세요.\n검사를 통과하면 수입 허가서(R.7)를 받아요.',
+      helpText: '인도네시아 동물검역소에서 수입 검역을 받은 날짜',
+      attachmentHint: '수입 허가서(R.7) 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '수입 허가서(R.7)',
+      validationIds: ['id.import-quarantine-date-valid'],
+    },
+  }),
+
   // 필리핀 출처: BAI(동물산업국) MC No.49(2022)·BAI Pet Import 공식 안내 + petmove.co.kr
   // 필리핀 가이드 — 상세 수치는 procedure-checks/ph.ts 헤더 주석 참고. 태국과 같은 골격
   // (광견병 1회·종별 종합백신·수입허가 2단계·도착검역) + 필리핀 고유: 구충 7~91일,

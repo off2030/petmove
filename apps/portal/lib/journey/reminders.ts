@@ -656,6 +656,32 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r) out.push(r)
       }
+    } else if (key === 'malaysia') {
+      // 말레이시아 — ⚠️ 태국 복제(2026-07-22): 같은 2주 전 안내. 규정 확정 후 수정 예정.
+      if (departure && deriveImportPermitStatus(flat) === 'not_started') {
+        const r = leadReminder(
+          flat,
+          `${token}|my-permit`,
+          departure,
+          14,
+          '말레이시아 수입 허가증 신청을 준비하세요. 출국 7영업일 전까지 신청해야 해요(영업일 기준이라 여유 있게 하세요).',
+          now,
+        )
+        if (r) out.push(r)
+      }
+    } else if (key === 'indonesia') {
+      // 인도네시아 — ⚠️ 태국 복제(2026-07-22): 같은 2주 전 안내. 규정 확정 후 수정 예정.
+      if (departure && deriveImportPermitStatus(flat) === 'not_started') {
+        const r = leadReminder(
+          flat,
+          `${token}|id-permit`,
+          departure,
+          14,
+          '인도네시아 수입 허가증 신청을 준비하세요. 출국 7영업일 전까지 신청해야 해요(영업일 기준이라 여유 있게 하세요).',
+          now,
+        )
+        if (r) out.push(r)
+      }
     } else if (key === 'philippines') {
       // 필리핀 수입 허가증 — 정해진 기한 없어 출국 1주 전 안내.
       if (departure && deriveImportPermitStatus(flat) === 'not_started') {

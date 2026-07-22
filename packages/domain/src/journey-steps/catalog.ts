@@ -338,11 +338,13 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'cyprus',
         'australia',
         'new_zealand',
-        'malaysia',
+        // 말레이시아·인도네시아 — 태국 복제(2026-07-22)로 return-only 국가가 되면서 main 목록에서
+        // 제거. 카드는 roundOnlyDestinations(프로파일 rabiesTiterForReturnOnly 파생)로 왕복에만 뜬다.
+        // (말레이시아가 귀국용 국가인데 main 목록에 있던 기존 불일치도 이걸로 해소 —
+        //  docs/destination-architecture-design.md §발견 버그.)
         'china',
         'taiwan',
         'singapore',
-        'indonesia',
         'india',
         'turkey',
         'ukraine',
@@ -849,6 +851,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'new_zealand',
         'thailand',
         'malaysia',
+        'indonesia',
         'singapore',
         'russia',
         'india',
@@ -1281,6 +1284,62 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         label: '검역일',
         type: 'date',
         helpText: '태국 동물검역소에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '수출허가서(R.9)·건강증명서 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '수출 허가서(R.9)',
+  },
+
+  // ── 말레이시아 수출 검역 (왕복 — 귀국 출국 시, 말레이시아 전용) ───────
+  // ⚠️ 태국 수출 검역 카드 복제(2026-07-22) — 문구·서식명(R.9)은 아직 태국 것. 규정 확정 후 수정.
+  {
+    id: 'my-export-quarantine',
+    category: 'document',
+    title: '말레이시아 수출 검역',
+    shortLabel: '수출',
+    description:
+      '말레이시아 출국 전 공항 동물검역소에서 수출 검역을 받으세요.\n출국 직전(1~3일 전 권장)에 방문하세요. 주말·공휴일·야간에는 검역을 받을 수 없어요.\n접종 증명서를 꼭 챙기세요.\n검사를 통과하면 수출허가서(R.9)와 건강증명서가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
+    doneSummary: '말레이시아 수출 검역을 받았어요.',
+    cardLine: '말레이시아 동물검역소에서 수출 검역을 받으세요.',
+    applicability: { destinations: ['malaysia'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:my_export_quarantine_date',
+    validationIds: ['my.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'my_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '말레이시아 동물검역소에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '수출허가서(R.9)·건강증명서 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '수출 허가서(R.9)',
+  },
+
+  // ── 인도네시아 수출 검역 (왕복 — 귀국 출국 시, 인도네시아 전용) ───────
+  // ⚠️ 태국 수출 검역 카드 복제(2026-07-22) — 문구·서식명(R.9)은 아직 태국 것. 규정 확정 후 수정.
+  {
+    id: 'id-export-quarantine',
+    category: 'document',
+    title: '인도네시아 수출 검역',
+    shortLabel: '수출',
+    description:
+      '인도네시아 출국 전 공항 동물검역소에서 수출 검역을 받으세요.\n출국 직전(1~3일 전 권장)에 방문하세요. 주말·공휴일·야간에는 검역을 받을 수 없어요.\n접종 증명서를 꼭 챙기세요.\n검사를 통과하면 수출허가서(R.9)와 건강증명서가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
+    doneSummary: '인도네시아 수출 검역을 받았어요.',
+    cardLine: '인도네시아 동물검역소에서 수출 검역을 받으세요.',
+    applicability: { destinations: ['indonesia'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:id_export_quarantine_date',
+    validationIds: ['id.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'id_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '인도네시아 동물검역소에서 수출 검역을 받은 날짜',
       },
     ],
     allowAttachments: true,

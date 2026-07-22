@@ -89,6 +89,15 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'th_import_quarantine_confirmed',
   'th_export_quarantine_date',
   'th_export_quarantine_confirmed',
+  // 말레이시아·인도네시아 — 태국 복제(2026-07-22).
+  'my_import_quarantine_date',
+  'my_import_quarantine_confirmed',
+  'my_export_quarantine_date',
+  'my_export_quarantine_confirmed',
+  'id_import_quarantine_date',
+  'id_import_quarantine_confirmed',
+  'id_export_quarantine_date',
+  'id_export_quarantine_confirmed',
   'ph_import_quarantine_date',
   'ph_import_quarantine_confirmed',
   // 중국 도착 수입 검역 (GACC — 미충족 시 30일 격리)

@@ -33,6 +33,7 @@ const COUNTRY_LABELS: Record<string, string> = {
   hongkong: '홍콩',
   russia: '러시아',
   malaysia: '말레이시아',
+  indonesia: '인도네시아',
   mexico: '멕시코',
   morocco: '모로코',
   brazil: '브라질',

@@ -125,6 +125,13 @@ export const COUNTRY_POSTS: Record<string, PostRef[]> = {
     { title: '태국 입국 준비 총정리', kind: 'docs', slug: 'thailand-pet-travel-guide' },
     { title: '강아지 태국 입국 준비절차, 기간, 비용', kind: 'blog', slug: 'dog-travel-to-thailand' },
   ],
+  // 말레이시아·인도네시아 — 앱 지원 시작(태국 복제, 2026-07-22). 블로그 글은 아직 없어 docs 만.
+  malaysia: [
+    { title: '말레이시아 입국 준비 총정리', kind: 'docs', slug: 'malaysia-pet-travel-guide' },
+  ],
+  indonesia: [
+    { title: '인도네시아 입국 준비 총정리', kind: 'docs', slug: 'indonesia-pet-travel-guide' },
+  ],
   philippines: [
     { title: '필리핀 입국 준비 총정리', kind: 'docs', slug: 'philippines-pet-travel-guide' },
     { title: '강아지 필리핀 입국 준비절차, 기간, 비용', kind: 'blog', slug: 'dog-travel-to-philippines' },
@@ -227,8 +234,8 @@ export const SERVICE_CARDS = [
   { icon: 'ti-adjustments-horizontal', title: '전체 대행 · 부분 의뢰', desc: '전 과정을 맡기거나, 필요한 단계만 도움받을 수 있어요' },
 ]
 
-// 앱 지원 여행지(랜딩) — 접힘 5 + 더보기, 펼침 = 아시아 10 + 유럽 30 + 아메리카 3 + 기타 2 (총 45개국,
-// 앱 화이트리스트와 동일).
+// 앱 지원 여행지(랜딩) — 접힘 5 + 더보기, 펼침 = 아시아 12 + 유럽 30 + 아메리카 3 + 기타 2 (총 47개국,
+// 앱 화이트리스트와 동일). 2026-07-22: 말레이시아·인도네시아 추가(태국 복제).
 // 유럽 30 = EU 회원국 + 영국·노르웨이·스위스(비EU). 웹 방문자에겐 'EU 묶음/개별 카드국' 구분이
 // 무의미해 유럽 한 그룹으로 묶고 가나다순 정렬(2026-07-17: 영국·핀란드·아일랜드·몰타·노르웨이·스위스 추가,
 // 2026-07-18: 대만 추가, 2026-07-19: 베트남 추가,
@@ -241,8 +248,10 @@ export const SERVICE_CARDS = [
 //   (유럽, 개별 펼침 30) + canada (아메리카 1).
 export const APP_DEST_PREVIEW = ['일본', '태국', '필리핀', '프랑스', '독일']
 // 가나다순. 우즈베키스탄·몽골은 중앙아시아·동아시아라 아시아 그룹에 둔다.
+// 2026-07-22 말레이시아·인도네시아 추가(태국 복제 — APP_DEST_SOON 에서 승격).
 export const APP_DEST_ASIA = [
-  '대만', '몽골', '베트남', '우즈베키스탄', '일본', '중국', '카자흐스탄', '캄보디아', '태국', '필리핀',
+  '대만', '말레이시아', '몽골', '베트남', '우즈베키스탄', '인도네시아', '일본', '중국',
+  '카자흐스탄', '캄보디아', '태국', '필리핀',
 ]
 // 유럽·중동·아프리카 중 EU 밖 — 2026-07-20 모로코·우크라이나 추가.
 // ⚠️ 우크라이나는 영공 폐쇄로 직항이 없다(EU 경유 육로). 여정 카드가 그 사실을 안내한다.
@@ -256,7 +265,7 @@ export const APP_DEST_EU = [
 // 아메리카 — 2026-07-20 캐나다 지원 시작(APP_DEST_SOON 에서 승격) + 멕시코·브라질 추가.
 export const APP_DEST_AMERICA = ['멕시코', '브라질', '캐나다']
 // '곧 지원' — 위 목록에 든 나라를 여기 남기면 같은 나라가 두 번 나온다. 캐나다는 뺐다.
-export const APP_DEST_SOON = ['하와이', '싱가포르', '미국', '인도네시아', '말레이시아', '호주', '뉴질랜드']
+export const APP_DEST_SOON = ['하와이', '싱가포르', '미국', '호주', '뉴질랜드']
 
 export const REVIEWS = [
   {

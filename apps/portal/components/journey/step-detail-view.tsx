@@ -121,6 +121,10 @@ const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
   china: '예: 베이징 PEK',
   taiwan: '예: 타오위안 TPE',
   philippines: '예: 마닐라 MNL',
+  // 말레이시아·인도네시아 — 태국 복제(2026-07-22). departureFirst 세부 필드의 기본
+  // placeholder(방콕 BKK)가 태국 기준이라 현지 공항으로 교체.
+  malaysia: '예: 쿠알라룸푸르 KUL',
+  indonesia: '예: 자카르타 CGK',
   vietnam: '예: 호치민 SGN',
   cambodia: '예: 프놈펜 PNH',
   mongolia: '예: 울란바토르 UBN',
@@ -219,6 +223,9 @@ export function StepDetailView({
    */
   const showsSeparateDepartureDate =
     destinationKey === 'thailand' ||
+    // 말레이시아·인도네시아 — 태국 복제(2026-07-22): 출발일·도착일 분리 입력.
+    destinationKey === 'malaysia' ||
+    destinationKey === 'indonesia' ||
     destinationKey === 'philippines' ||
     (!!destinationKey && EU_ENTRY_FAMILY.includes(destinationKey))
   const isAdvanceNotification = step.id === 'advance-notification'

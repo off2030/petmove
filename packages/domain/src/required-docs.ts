@@ -412,6 +412,153 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'kr-import-quarantine',
     },
   ],
+  // ── 말레이시아 — ⚠️ 태국 한 벌 복제(2026-07-22). 서식명(R.6/R.7/R.9)·수치는 아직 태국 것.
+  //   나라별 규정 확정 후 수정 예정. 발급처는 '말레이시아 동물검역소'로만 적었다(기관명 미확정).
+  '말레이시아': [
+    {
+      id: 'my-rabies-titer-result',
+      name: '광견병 항체 검사 결과지',
+      source: '동물병원',
+      kind: 'step',
+      stepRef: 'rabies-titer',
+      roundTripOnly: true,
+      description:
+        '검사를 의뢰한 동물병원에서 발급받아요.\n\n한국 귀국 때 반드시 원본이 필요해요. 유효기간은 2년이에요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'rabies-titer',
+    },
+    {
+      id: 'my-import-permit-doc',
+      name: '수입 허가 통지서(R.6)',
+      source: '말레이시아 동물검역소',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        '수입 허가 신청이 승인되면 발급돼요.\n\n발급일로부터 60일간 유효해요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
+      previewStepId: 'import-permit',
+    },
+    // 접종 및 건강증명서(별지 제25호) — 일본·태국과 완전히 동일한 한국 공식 양식.
+    KR_FORM25_VACCINATION_HEALTH_CERT,
+    {
+      id: 'my-kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      group: 'quarantine',
+      description:
+        '한국 수출 검역 후 발급돼요.\n\n말레이시아 수입 검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'certificate-issue',
+    },
+    {
+      id: 'my-import-quarantine-cert',
+      name: '수입 허가서(R.7)',
+      source: '말레이시아 동물검역소',
+      kind: 'step',
+      stepRef: 'departure',
+      group: 'quarantine',
+      description:
+        '말레이시아 수입 검역 후 발급받아요.\n\n정확한 서류 이름은 Import License(R.7) 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'departure',
+    },
+    {
+      id: 'my-export-quarantine-cert',
+      name: '수출 허가서(R.9)·건강증명서',
+      source: '말레이시아 동물검역소',
+      kind: 'step',
+      stepRef: 'my-export-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '말레이시아 수출 검역 후 발급돼요.\n\n정확한 서류 이름은 Export License(R.9), Official Animal Health Certificate 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'my-export-quarantine',
+    },
+    {
+      id: 'my-kr-import-quarantine-cert',
+      name: '한국 수입 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'kr-import-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '한국 수입 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'kr-import-quarantine',
+    },
+  ],
+  // ── 인도네시아 — ⚠️ 태국 한 벌 복제(2026-07-22). 서식명(R.6/R.7/R.9)·수치는 아직 태국 것.
+  //   나라별 규정 확정 후 수정 예정. 발급처는 '인도네시아 동물검역소'로만 적었다(기관명 미확정 —
+  //   구세대 조사 기준 BARANTIN/Karantina Indonesia).
+  '인도네시아': [
+    {
+      id: 'id-rabies-titer-result',
+      name: '광견병 항체 검사 결과지',
+      source: '동물병원',
+      kind: 'step',
+      stepRef: 'rabies-titer',
+      roundTripOnly: true,
+      description:
+        '검사를 의뢰한 동물병원에서 발급받아요.\n\n한국 귀국 때 반드시 원본이 필요해요. 유효기간은 2년이에요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'rabies-titer',
+    },
+    {
+      id: 'id-import-permit-doc',
+      name: '수입 허가 통지서(R.6)',
+      source: '인도네시아 동물검역소',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        '수입 허가 신청이 승인되면 발급돼요.\n\n발급일로부터 60일간 유효해요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
+      previewStepId: 'import-permit',
+    },
+    // 접종 및 건강증명서(별지 제25호) — 일본·태국과 완전히 동일한 한국 공식 양식.
+    KR_FORM25_VACCINATION_HEALTH_CERT,
+    {
+      id: 'id-kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      group: 'quarantine',
+      description:
+        '한국 수출 검역 후 발급돼요.\n\n인도네시아 수입 검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'certificate-issue',
+    },
+    {
+      id: 'id-import-quarantine-cert',
+      name: '수입 허가서(R.7)',
+      source: '인도네시아 동물검역소',
+      kind: 'step',
+      stepRef: 'departure',
+      group: 'quarantine',
+      description:
+        '인도네시아 수입 검역 후 발급받아요.\n\n정확한 서류 이름은 Import License(R.7) 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'departure',
+    },
+    {
+      id: 'id-export-quarantine-cert',
+      name: '수출 허가서(R.9)·건강증명서',
+      source: '인도네시아 동물검역소',
+      kind: 'step',
+      stepRef: 'id-export-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '인도네시아 수출 검역 후 발급돼요.\n\n정확한 서류 이름은 Export License(R.9), Official Animal Health Certificate 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'id-export-quarantine',
+    },
+    {
+      id: 'id-kr-import-quarantine-cert',
+      name: '한국 수입 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'kr-import-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '한국 수입 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'kr-import-quarantine',
+    },
+  ],
   '필리핀': [
     // 태국과 동일 구조 — 항체검사(왕복, 55) → 수입허가 SPSIC(100) → 별지25(공통,
     // vet-visit 110). 순서는 일정 타임라인(step order)과 일치. 접종·건강증명서는 모든

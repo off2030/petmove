@@ -42,6 +42,9 @@ const TITER_LAB_CODES_BY_DEST: Record<string, string[]> = {
   japan: ['apqa_seoul', 'ksvdl_r'],
   thailand: ['apqa_seoul', 'krsl'],
   philippines: ['apqa_seoul', 'krsl'],
+  // 말레이시아·인도네시아 — 태국 복제(2026-07-22). 검사기관은 한국 기관이라 그대로 적용 가능.
+  malaysia: ['apqa_seoul', 'krsl'],
+  indonesia: ['apqa_seoul', 'krsl'],
   // 유럽 패밀리(EEA·영국·스위스 등 EU_ENTRY_FAMILY): EU 인정 양식(apqa_eu) + 코미팜.
   ...Object.fromEntries(EU_ENTRY_FAMILY.map((k) => [k, ['apqa_eu', 'krsl']])),
   // EU 24개국('eu')은 농림축산검역본부(apqa_eu)만 — 코미팜 제외('기타'는 UI 가 덧붙임).

@@ -8,6 +8,10 @@ export const DEFAULT_IMPORT_REPORT_COUNTRIES: string[] = [
   '스위스',
   '태국',
   '필리핀',
+  // 말레이시아·인도네시아 — 태국 복제(2026-07-22). ⚠️ 기존 조직은 organization_settings
+  // 스냅샷이 defaults 를 가리므로 설정 화면에서 체크해야 반영된다.
+  '말레이시아',
+  '인도네시아',
 ]
 
 /**
