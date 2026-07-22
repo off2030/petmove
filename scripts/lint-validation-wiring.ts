@@ -147,9 +147,20 @@ const RULES = new Map(
 
 /** 그 목적지에 이 카드가 뜨는가 — destinations + excludeDestinations 만 본다(종·트립 무관). */
 function appliesToDest(step: (typeof JOURNEY_STEP_CATALOG)[number], dest: string): boolean {
-  const { destinations, excludeDestinations } = step.applicability
+  const { destinations, excludeDestinations, roundOnlyDestinations } = step.applicability
   if (excludeDestinations?.includes(dest)) return false
-  return destinations === 'all' || destinations.includes(dest)
+  // ⚠️ `roundOnlyDestinations` 를 빠뜨리면 **파생으로 카드를 받는 목적지가 통째로 검사에서
+  //   빠진다**(2026-07-22 발견). 광견병 항체 카드가 그 경로다 — 귀국용으로만 필요한 13개국은
+  //   destinations 목록에 없고 roundOnlyDestinations(프로파일 rabiesTiterForReturnOnly 파생)로
+  //   왕복 케이스에만 뜬다. 그래서 그 카드들이 **일본 룰(jp.*)을 그대로 물려받은 채**
+  //   — 카자흐스탄·태국·멕시코·브라질 등 전부 — 린트를 통과하고 있었다.
+  //   앱 판정(applicability.ts isStepApplicable)과 같은 조건을 봐야 한다. 새 파생 경로가
+  //   생기면 여기도 함께 넓힐 것.
+  return (
+    destinations === 'all' ||
+    destinations.includes(dest) ||
+    (roundOnlyDestinations?.includes(dest) ?? false)
+  )
 }
 
 function collect(dest: string): Problem[] {

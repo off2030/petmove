@@ -14,6 +14,17 @@ import { DESTINATION_OVERRIDES } from '../destination-config'
  *
  * 채워나가는 방식: 목적지별 차이가 확인되는 step 만 점진적으로 추가.
  */
+/**
+ * 귀국용(한국 입국) 항체검사만 필요한 목적지의 항체 카드 검증.
+ *
+ * ⚠️ 이 목적지들은 항체 카드를 `roundOnlyDestinations` 파생으로 받는다. 그래서 카드가
+ *   base 의 **일본 룰(jp.*)을 그대로 물려받은 채** 13개국에서 조용히 죽어 있었다
+ *   (2026-07-22 발견 — 룰의 country 가 japan 이라 실행 자체가 안 됐다).
+ *   배선 린트가 roundOnlyDestinations 를 안 보고 있어 못 잡던 사각지대였다(함께 수정).
+ * 이 나라들엔 입국용 항체 요건이 없으므로 한국 귀국 2년 룰 하나만 남긴다.
+ */
+const RETURN_ONLY_TITER_CHECKS = ['common.kr-return-titer-within-2years']
+
 export const STEP_DESTINATION_OVERRIDES: Record<
   string,
   Partial<Record<string, Partial<StepDefinition>>>
@@ -139,6 +150,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // 항체검사 — 베트남 입국 요건이 아니다(DAH 의무 아님). 한국 귀국용이라 왕복에만 뜬다
     // (TITER_RETURN_ONLY_DESTINATIONS 파생). 베트남에 검사기관이 없어 한국에서 미리 받아야 한다.
     'rabies-titer': {
+      // 귀국용 항체검사만 필요한 목적지 — 일본 룰(jp.*)이 물려 내려오던 것을 끊는다.
+      validationIds: RETURN_ONLY_TITER_CHECKS,
       description:
         // 첫 줄은 태국·필리핀(같은 '한국 귀국용' 항체 카드)과 같은 문형을 쓴다. 베트남 사정
         // (현지 검사기관 없음 → 출국 전 한국에서)은 아래 줄에 둔다 — 첫 줄을 나라별로 바꾸면
@@ -194,6 +207,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
     }),
     'rabies-titer': {
+      // 귀국용 항체검사만 필요한 목적지 — 일본 룰(jp.*)이 물려 내려오던 것을 끊는다.
+      validationIds: RETURN_ONLY_TITER_CHECKS,
       description:
         '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n아르헨티나 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
     },
@@ -242,6 +257,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
     }),
     'rabies-titer': {
+      // 귀국용 항체검사만 필요한 목적지 — 일본 룰(jp.*)이 물려 내려오던 것을 끊는다.
+      validationIds: RETURN_ONLY_TITER_CHECKS,
       description:
         // '캄보디아에는 검사 기관이 없으니…' 는 펫무브 www 가이드 문장이다("캄보디아에는
         // 광견병항체검사 기관이 없기 때문에 … 한국에서 미리 해두시는 것을 권장"). 복제할 때
@@ -290,6 +307,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
     }),
     'rabies-titer': {
+      // 귀국용 항체검사만 필요한 목적지 — 일본 룰(jp.*)이 물려 내려오던 것을 끊는다.
+      validationIds: RETURN_ONLY_TITER_CHECKS,
       description:
         // '몽골에는 검사 기관이 없으니…' 는 펫무브 www 가이드 문장이다("몽골에는 광견병항체
         // 검사 기관이 없기 때문에 … 한국에서 미리 해두시는 것을 권장"). 복제할 때 베트남 고유
@@ -335,6 +354,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
     }),
     'rabies-titer': {
+      // 귀국용 항체검사만 필요한 목적지 — 일본 룰(jp.*)이 물려 내려오던 것을 끊는다.
+      validationIds: RETURN_ONLY_TITER_CHECKS,
       description:
         '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n우즈베키스탄 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
     },
@@ -377,6 +398,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
     }),
     'rabies-titer': {
+      // 귀국용 항체검사만 필요한 목적지 — 일본 룰(jp.*)이 물려 내려오던 것을 끊는다.
+      validationIds: RETURN_ONLY_TITER_CHECKS,
       description:
         // ⚠️ '캐나다에는 검사 기관이 없으니 출국 전에 미리 받으세요' 를 **쓰지 않는다**
         //   (사용자 지정 2026-07-21). www 가이드에는 그 문장이 있지만 카드에서는 뺐다.
@@ -547,6 +570,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
     }),
     'rabies-titer': {
+      // 귀국용 항체검사만 필요한 목적지 — 일본 룰(jp.*)이 물려 내려오던 것을 끊는다.
+      validationIds: RETURN_ONLY_TITER_CHECKS,
       description:
         '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n멕시코 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
     },
@@ -606,6 +631,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
     }),
     'rabies-titer': {
+      // 귀국용 항체검사만 필요한 목적지 — 일본 룰(jp.*)이 물려 내려오던 것을 끊는다.
+      validationIds: RETURN_ONLY_TITER_CHECKS,
       description:
         '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n브라질 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
     },
@@ -698,6 +725,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
     },
     'rabies-titer': {
+      // 귀국용 항체검사만 필요한 목적지 — 일본 룰(jp.*)이 물려 내려오던 것을 끊는다.
+      validationIds: RETURN_ONLY_TITER_CHECKS,
       description:
         '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n카자흐스탄 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
     },
@@ -717,6 +746,115 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '카자흐스탄 수입 검역 서류',
       validationIds: ['kz.import-quarantine-date-valid'],
+    }),
+  },
+  // ── 러시아·튀르키예 — ⚠️ 카자흐스탄 한 벌 복제(2026-07-22) ──────────────
+  // 사용자 지정: 카자흐스탄 구성을 그대로 복사하고 세부는 다음 단계에서 나라별로 수정한다.
+  // 문구·수치(생후 3개월·20일 대기·종합백신 12개월 면제)는 전부 카자흐스탄 것이다.
+  // 나라별 알려진 충돌은 destination-config 의 각 프로파일 주석 참고 —
+  //   러시아: 실제 대기 30일 / 튀르키예: 항체가 **입국 요건**·84일·30일.
+  //
+  // 카자흐스탄과 **다르게 한 곳이 하나 있다**: 'rabies-titer' 카드에 validationIds 를 명시했다.
+  //   base 항체 카드는 일본 전용 룰(jp.*)을 달고 있어서, override 에서 안 덮으면 그 룰이
+  //   이 나라 케이스에 그대로 실려 **아무 검증도 돌지 않는다**(lint:validation-wiring 이
+  //   2026-07-22 강화되며 13개국에서 드러난 기존 문제 — 카자흐스탄 포함). 귀국용 항체의
+  //   실제 검증은 전 목적지 공통 룰이라 그걸 지목한다. 기존 13개국 정리는 별도 작업.
+  russia: {
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'russia',
+      label: '러시아',
+      validationIds: [
+        'ru.rabies-prime-after-3months-old',
+        'ru.microchip-before-rabies',
+        'ru.rabies-booster-within-prime-validity',
+        'ru.rabies-min-20days-before-departure',
+      ],
+    }),
+    'general-vaccine': {
+      // 34 = 광견병 1차(30) 바로 뒤 — 카자흐스탄과 동일(입국 요건이라 귀국용 항체보다 앞).
+      order: 34,
+      description:
+        '종합백신을 접종하세요.\n\n출국 20일 전까지 접종해야 해요.\n최근 12개월 안에 접종했다면 다시 맞지 않아도 돼요.',
+      descriptionBySpecies: {
+        dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스·아데노바이러스·렙토스피라 예방을 포함해야 해요.\n한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n출국 20일 전까지 접종해야 해요.\n최근 12개월 안에 접종했다면 다시 맞지 않아도 돼요.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증 예방을 포함해야 해요.\n출국 20일 전까지 접종해야 해요.\n최근 12개월 안에 접종했다면 다시 맞지 않아도 돼요.',
+      },
+      validationIds: [
+        'ru.general-vaccine-min-20days-before-departure',
+        'ru.general-vaccine-not-expired-on-arrival',
+      ],
+    },
+    'rabies-titer': {
+      description:
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n러시아 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+      validationIds: ['common.kr-return-titer-within-2years'],
+    },
+    'flight-purchase': {
+      description:
+        '러시아 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 20일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '러시아에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: ['ru.rabies-min-20days-before-departure'],
+    },
+    departure: importQuarantineCard({
+      label: '러시아',
+      fieldKey: 'ru_import_quarantine_date',
+      description:
+        '러시아 도착 후 국경 검역소에서 검역을 받으세요.\n국제 반려동물 여권과 서류를 확인해요.\n반려동물 2마리 이하는 수입 허가와 격리가 모두 면제돼요.',
+      helpText: '러시아 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '러시아 수입 검역 서류',
+      validationIds: ['ru.import-quarantine-date-valid'],
+    }),
+  },
+  turkey: {
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'turkey',
+      label: '튀르키예',
+      validationIds: [
+        'tr.rabies-prime-after-3months-old',
+        'tr.microchip-before-rabies',
+        'tr.rabies-booster-within-prime-validity',
+        'tr.rabies-min-20days-before-departure',
+      ],
+    }),
+    'general-vaccine': {
+      order: 34,
+      description:
+        '종합백신을 접종하세요.\n\n출국 20일 전까지 접종해야 해요.\n최근 12개월 안에 접종했다면 다시 맞지 않아도 돼요.',
+      descriptionBySpecies: {
+        dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스·아데노바이러스·렙토스피라 예방을 포함해야 해요.\n한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n출국 20일 전까지 접종해야 해요.\n최근 12개월 안에 접종했다면 다시 맞지 않아도 돼요.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증 예방을 포함해야 해요.\n출국 20일 전까지 접종해야 해요.\n최근 12개월 안에 접종했다면 다시 맞지 않아도 돼요.',
+      },
+      validationIds: [
+        'tr.general-vaccine-min-20days-before-departure',
+        'tr.general-vaccine-not-expired-on-arrival',
+      ],
+    },
+    // ⚠️ 이 문구는 **사실과 반대일 가능성이 높다** — 튀르키예는 RNATT 가 입국 요건이다
+    //   (destination-config 프로파일 주석 ①). 카자흐스탄 복제본을 그대로 둔 상태이고,
+    //   세부 수정 때 '입국 요건' 문형(모로코·우크라이나 카드 참고)으로 바꿔야 한다.
+    'rabies-titer': {
+      description:
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n튀르키예 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
+      validationIds: ['common.kr-return-titer-within-2years'],
+    },
+    'flight-purchase': {
+      description:
+        '튀르키예 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 20일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '튀르키예에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: ['tr.rabies-min-20days-before-departure'],
+    },
+    departure: importQuarantineCard({
+      label: '튀르키예',
+      fieldKey: 'tr_import_quarantine_date',
+      description:
+        '튀르키예 도착 후 국경 검역소에서 검역을 받으세요.\n국제 반려동물 여권과 서류를 확인해요.\n반려동물 2마리 이하는 수입 허가와 격리가 모두 면제돼요.',
+      helpText: '튀르키예 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '튀르키예 수입 검역 서류',
+      validationIds: ['tr.import-quarantine-date-valid'],
     }),
   },
   // ── 대만 (APHIA 動植物防疫檢疫署) ─────────────────────────────────────
@@ -1410,7 +1548,11 @@ function seaPermitOverrides(opts: {
       done: 'has-rabies-valid',
       validationIds: opts.rabiesValidationIds,
     },
-    'rabies-titer': { description: opts.titerDescription, order: 55 },
+    'rabies-titer': {
+      description: opts.titerDescription,
+      order: 55,
+      validationIds: RETURN_ONLY_TITER_CHECKS,
+    },
     'general-vaccine': opts.generalVaccine,
     'flight-purchase': {
       description: opts.flight.description,
