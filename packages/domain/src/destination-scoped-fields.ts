@@ -154,6 +154,11 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'kz_import_quarantine_confirmed',
   'kz_export_quarantine_date',
   'kz_export_quarantine_confirmed',
+  // 아랍에미리트 — 필리핀 골격 복제(2026-07-22).
+  'ae_import_quarantine_date',
+  'ae_import_quarantine_confirmed',
+  'ae_export_quarantine_date',
+  'ae_export_quarantine_confirmed',
   // 러시아·튀르키예 — 카자흐스탄 복제(2026-07-22).
   'ru_import_quarantine_date',
   'ru_import_quarantine_confirmed',

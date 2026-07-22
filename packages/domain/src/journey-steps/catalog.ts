@@ -1022,6 +1022,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         // 멕시코·브라질 — 위 외부구충과 같은 근거.
         'mexico',
         'brazil',
+        // 아랍에미리트 — 외부 카드에는 있는데 내부만 빠져 있었다(2026-07-22 발견).
+        // MOCCAE 는 내·외부를 함께 요구한다("preventive doses for internal and external
+        // parasites during the 14 days prior to shipment") — 룰(ae.internal-parasite-
+        // within-14days)도 이미 있었는데 카드가 안 떠서 죽어 있었다.
+        'uae',
       ],
       species: 'all',
       tripType: 'all',
@@ -2232,6 +2237,41 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { url: 'https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil', label: '브라질 출국 안내 (MAPA)' },
       { url: 'https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/unidades-de-vigilancia-agropecuaria-1', label: '검역 사무소(VIGIAGRO) 지점 찾기' },
     ],
+  },
+  {
+    id: 'ae-export-quarantine',
+    category: 'document',
+    title: '아랍에미리트 수출 검역',
+    shortLabel: '수출',
+    // ✅ **강제 O — 카드를 만드는 근거**(2026-07-22 조사). MOCCAE 수출 건강증명서는 반려동물이
+    //   아랍에미리트를 떠날 때 **예외 없이 필수**다(기내·수하물·화물·전세기 무관).
+    //   귀국 수출검역 카드는 '상대국이 출국 절차를 강제할 때만' 만든다는 규칙에 부합한다.
+    // ✅ 유효기간 **30일**(발급일 기준). ✅ MOCCAE 지점(두바이·아부다비) 또는 온라인 신청 후
+    //   **반려동물을 데려가 실물 검사**(칩 스캔 + 예방접종 수첩 확인)를 받는다.
+    // ⚠️ 확인 실패 — 카드에 쓰지 말 것: 수수료 / 신청부터 발급까지 처리 일수 /
+    //   지점 운영시간(민간 안내는 24시간이라 하나 공식 확인 불가).
+    // ⚠️ MOCCAE 공식 사이트는 인증서 만료·요청 차단으로 직접 열람이 안 된다(2026-07-22 실측).
+    //   위 값은 복수의 현지 이주 대행·수의 안내가 일치하는 선에서만 채택했다. 원문 대조가
+    //   가능해지면 처리 일수·수수료를 보강할 것.
+    description:
+      '아랍에미리트 출국 전 수출 검역을 받고 수출 건강증명서를 발급받으세요.\n\n검역기관(MOCCAE) 사무소에 반려동물과 함께 방문해 검사를 받아요. 마이크로칩을 확인하고 예방접종 수첩을 함께 봐요.\n\n증명서는 발급일로부터 30일간 유효해요.',
+    doneSummary: '아랍에미리트 수출 검역을 받았어요.',
+    cardLine: '아랍에미리트 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['uae'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:ae_export_quarantine_date',
+    validationIds: ['ae.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'ae_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '아랍에미리트에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '아랍에미리트 수출 건강증명서',
   },
   {
     id: 'kz-export-quarantine',

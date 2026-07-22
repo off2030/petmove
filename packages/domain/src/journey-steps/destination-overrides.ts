@@ -678,6 +678,50 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['br.import-quarantine-date-valid'],
     }),
   },
+  // ── 아랍에미리트 — 필리핀 골격 복제(2026-07-22) ─────────────────────────
+  // ⚠️ 항체 카드는 없다(프로파일 titer.need='none'). 입국 요건도 귀국 요건도 아니다 —
+  //   근거는 destination-config 의 uae 주석. 항체 문구를 다시 넣지 말 것.
+  // 값은 전부 ae.ts 헤더(MOCCAE)에서 왔다 — 광견병 출국 21일 전, 종합백신 21일 전,
+  //   내·외부 기생충 출국 14일 이내.
+  uae: {
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'uae',
+      label: '아랍에미리트',
+      validationIds: [
+        'ae.rabies-prime-after-91days-old',
+        'ae.microchip-before-rabies',
+        'ae.rabies-min-21days-before-departure',
+        'ae.rabies-booster-within-prime-validity',
+      ],
+    }),
+    'general-vaccine': {
+      description:
+        '종합백신을 접종하세요.\n\n출국 21일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+      descriptionBySpecies: {
+        dog: '종합백신(DHPPL)을 접종하세요.\n\n출국 21일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n출국 21일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+      },
+      validationIds: ['ae.general-vaccine-required', 'ae.general-vaccine-21days-before-departure'],
+    },
+    'external-parasite': {
+      description: '외부 기생충 치료를 하세요.\n\n출국일 기준 14일 이내에 해야 해요.',
+      validationIds: ['ae.external-parasite-within-14days'],
+    },
+    'internal-parasite': {
+      description: '내부 기생충 치료를 하세요.\n\n출국일 기준 14일 이내에 해야 해요.',
+      validationIds: ['ae.internal-parasite-within-14days'],
+    },
+    departure: importQuarantineCard({
+      label: '아랍에미리트',
+      fieldKey: 'ae_import_quarantine_date',
+      description:
+        '아랍에미리트 도착 후 공항 검역소에서 검역을 받으세요.\n한국에서 받은 수출 검역증과 반려동물을 확인해요.\n요건을 갖추면 격리 없이 통과할 수 있어요.',
+      helpText: '아랍에미리트 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '아랍에미리트 수입 검역 서류',
+      validationIds: ['ae.import-quarantine-date-valid'],
+    }),
+  },
   kazakhstan: {
     'rabies-vaccine-1': buildRabiesCard({
       destKey: 'kazakhstan',

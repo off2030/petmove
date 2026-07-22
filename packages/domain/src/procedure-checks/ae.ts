@@ -1,6 +1,9 @@
+import { buildDateRuleContext } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
+  classifyExportQuarantineDate,
   daysBetween,
+  findRabiesValidityBreaks,
   evaluateRabiesAgeConservative,
   findSameGuardianCases,
   matchBannedBreed,
@@ -14,7 +17,14 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
-import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
+import {
+  msgExportQuarantineAfterReturn,
+  msgExportQuarantineBeforeEntry,
+  msgImportQuarantineBeforeEntry,
+  msgMicrochipBeforeRabies,
+  msgRabiesExpiredBefore,
+  msgRabiesPrimeMinAge,
+} from './messages'
 
 /**
  * 아랍에미리트 (MOCCAE — Ministry of Climate Change & Environment) 절차 검증.
@@ -56,7 +66,9 @@ export const AE_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (UAE 시점 미명시, 한국 수출검역 사실상 필수)',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-22) — 구세대 파일의 잔재. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일).
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -84,7 +96,9 @@ export const AE_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
       'MOCCAE 저위험국 출발: 생후 12주 이상 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-22) — 구세대 파일의 잔재. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일).
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -118,7 +132,9 @@ export const AE_CHECKS: ProcedureCheck[] = [
     title: '광견병 접종은 출국일 21일 이상 전',
     description:
       '광견병 1차 접종 또는 면역기간 만료 후 재접종 시 출국까지 최소 21일 경과 필요. (MOCCAE 공식: "a period not less than 21 days must pass from vaccination against Rabies"). 부스터 chain 유지 시 면제이나 시스템은 가장 이른 접종 기준 보수적 검증.',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-22) — 구세대 파일의 잔재. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일).
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -145,7 +161,9 @@ export const AE_CHECKS: ProcedureCheck[] = [
     title: '출국일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-22) — 구세대 파일의 잔재. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일).
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -174,7 +192,9 @@ export const AE_CHECKS: ProcedureCheck[] = [
     title: '종합백신 접종 필수',
     description:
       '종합백신 접종 기록 필요. 강아지: DHPP+L(distemper/hepatitis/parvo/parainflu/lepto) / 고양이: FVRCP(rhinotracheitis/calici/panleuk). (MOCCAE 운용 표준 — 명시 의무 부재)',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-22) — 구세대 파일의 잔재. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일).
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const entries = readGeneralVaccineEntries(caseRow)
@@ -194,7 +214,9 @@ export const AE_CHECKS: ProcedureCheck[] = [
     title: '종합백신은 출국일 21일 이상 전 접종',
     description:
       '종합백신 접종일로부터 출국일까지 최소 21일 경과 필요. (MOCCAE 운용 표준)',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-22) — 구세대 파일의 잔재. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일).
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -223,7 +245,9 @@ export const AE_CHECKS: ProcedureCheck[] = [
     title: '외부구충은 출국 포함 14일 이내 (13일 전 이후)',
     description:
       '외부구충(벼룩·진드기) 처치는 출국 포함 14일 이내 = 출국일 기준 13일 전 이후. (MOCCAE: "preventive doses for internal and external parasites during the 14 days prior to shipment")',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-22) — 구세대 파일의 잔재. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일).
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -257,7 +281,9 @@ export const AE_CHECKS: ProcedureCheck[] = [
     title: '내부구충은 출국 포함 14일 이내 (13일 전 이후)',
     description:
       '내부구충(선충·조충) 처치는 출국 포함 14일 이내 = 출국일 기준 13일 전 이후. (MOCCAE: "preventive doses for internal and external parasites during the 14 days prior to shipment")',
-    severity: 'info',
+    // severity 승격 info→warning(2026-07-22) — 구세대 파일의 잔재. 의료·일정 룰은
+    // warning 이 앱 기준이다(다른 목적지와 동일).
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -346,6 +372,97 @@ export const AE_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: '보호자 케이스 ≤ 2건.' }
+    },
+  },
+  // ── 검역 일정 (2026-07-22 신설) — 필리핀 골격 복제 시 비어 있던 자리 ──
+  {
+    id: 'ae.rabies-booster-within-prime-validity',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 추가 접종은 직전 접종 유효기간 이내',
+    description:
+      '연속된 광견병 접종은 직전 접종의 면역 유효기간 이내여야 함. 만료 후 접종은 chain 이 끊겨 새 1차로 간주된다. 저장 거부(findRabiesChainBreak)의 짝 — 펫무브워크는 저장을 막지 않으므로 이 룰이 없으면 운영자 화면에서 끊긴 chain 이 안 보인다.',
+    severity: 'warning',
+    addedAt: '2026-07-22',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length < 2) return SKIP
+      const offending = findRabiesValidityBreaks(rabies)
+      if (offending.length > 0) {
+        return {
+          ok: false,
+          message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
+          offendingPaths: offending,
+        }
+      }
+      return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
+    },
+  },
+  {
+    id: 'ae.import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '아랍에미리트 수입 검역일',
+    description:
+      '아랍에미리트 수입 검역일은 아랍에미리트 입국일 이후여야 함. "그 나라에 도착한 뒤 받았는가"라는 물리적 제약이라 나라별 규정 조사가 필요 없다.',
+    severity: 'warning',
+    addedAt: '2026-07-22',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const raw = typeof data.ae_import_quarantine_date === 'string' ? data.ae_import_quarantine_date.slice(0, 10) : ''
+      if (!raw) return SKIP
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: msgImportQuarantineBeforeEntry('아랍에미리트'),
+          offendingPaths: ['ae_import_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `아랍에미리트 수입검역일(${raw}) 입국 이후.` }
+    },
+  },
+  {
+    id: 'ae.export-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '아랍에미리트 수출 검역일',
+    description:
+      '아랍에미리트 수출 검역일은 입국일 이후·한국 귀국일 이전이어야 함(체류 기간 내). 판정은 classifyExportQuarantineDate 공용.',
+    severity: 'warning',
+    addedAt: '2026-07-22',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      const ret =
+        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
+          ? ctx.data.return_date.slice(0, 10)
+          : ''
+      const verdict = classifyExportQuarantineDate(data.ae_export_quarantine_date, entry, ret)
+      if (verdict === 'skip') return SKIP
+      if (verdict === 'before-entry') {
+        return {
+          ok: false,
+          message: msgExportQuarantineBeforeEntry('아랍에미리트'),
+          offendingPaths: ['ae_export_quarantine_date'],
+        }
+      }
+      if (verdict === 'after-return') {
+        return {
+          ok: false,
+          message: msgExportQuarantineAfterReturn('아랍에미리트'),
+          offendingPaths: ['ae_export_quarantine_date'],
+        }
+      }
+      return { ok: true, message: '아랍에미리트 수출검역일 체류 기간 내.' }
     },
   },
 ]

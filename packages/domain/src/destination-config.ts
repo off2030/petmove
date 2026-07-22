@@ -623,7 +623,31 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     //   `vaccines` 의 rabies_titer 는 유지한다 — 이미 검사를 받아 기록해 둔 케이스의 값이
     //   펫무브워크에서 사라지면 안 된다(입력은 가능, 안내만 하지 않음).
     titer: { need: 'none' },
+    // ── 필리핀 골격 복제(2026-07-22, 사용자 지정) ──────────────────────────────
+    // 구조만 빌렸고 값은 아랍에미리트 것이다 — 근거는 procedure-checks/ae.ts 헤더(MOCCAE).
+    // ⚠️ 필리핀에서 **가져오지 않은 것**:
+    //   · rabiesTiterForReturnOnly — 위 주석대로 항체는 양방향 모두 불필요하다(비발생국).
+    //   · oneYearVaccineOnly — MOCCAE 에 1년 백신 한정 명문이 없다(ae.ts '별도' 항목).
+    //   · extraSection 'philippines' — 필리핀 전용 추가정보 화면이라 무관.
+    archetype: 'sea-permit',
+    rabies: {
+      // ae.ts: 저위험국(한국)발은 12주 이상. 보수적으로 91일 AND 캘린더 3개월을 함께 본다.
+      doses: 1,
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      timingLines: ['출국 21일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 21,
+    },
+    // MOCCAE 사전 발급 수입 허가(90일 유효) — 필리핀 SPSIC 자리에 대응한다.
+    importPermit: {},
     vaccines: ['rabies', 'rabies_titer', 'general', 'external_parasite', 'internal_parasite'],
+    extraFields: ['address_overseas', 'entry_airport'],
+    // 아직 앱에 올리지 않는다(appSupported 미선언) — 아래가 남아 있다:
+    //   · ae.ts 룰 10개 중 8개가 구세대 'info' 등급(앱 기준은 warning)
+    //   · 수입 허가 신청 시점·도착 검역일·광견병 체인 검증 룰 부재
+    //   · 내부 기생충 카드가 아랍에미리트에 안 뜬다(룰만 있고 카드 목록에 없음)
+    //   · 귀국 시 현지 수출 절차 강제 여부 미확인(강제일 때만 수출 카드를 만든다)
   },
   singapore: {
     keywords: ['싱가포르', 'singapore'],
@@ -1151,10 +1175,36 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer'],
     importQuarantine: {},
   },
+  // ── 이스라엘 ─────────────────────────────────────────────────────────────
+  // 아일랜드 골격 복제(2026-07-22, 사용자 지정). **구조만 빌렸고 값은 이스라엘 것이다** —
+  //   근거는 procedure-checks/il.ts 헤더(gov.il 「Importing Dogs」·MOAG Pro 126).
+  // ⚠️ archetype 'eu-family' 는 **카드 골격을 재사용하기 위한 것**이지 이스라엘이 EU 라는
+  //   뜻이 아니다. EU 고유 문구(EU 승인 검사기관·EU 동물건강증명서·EU 반려동물 여권 대체)는
+  //   destination-overrides 에서 이스라엘 전용으로 덮어야 한다. euAhc 는 켜지 않는다.
+  // ⚠️ 아일랜드에서 **가져오지 않은 것**: 촌충 구충(internal_parasite)·구충 시간
+  //   (deworming_time)·개 4일 내원 창 — EU 촌충국 전용 요건이라 이스라엘엔 근거가 없다.
+  // 아직 앱에 올리지 않는다(appSupported 미선언) — 아래 미확인 항목이 남아 있다:
+  //   · 항체 유효기간(입국용) 규정 미확인 → titer.entryValidityMonths 미선언
+  //   · 도착 후 5일 이내 등록 의무의 현행 여부(구 주석 값)
+  //   · 사전 통보 48시간의 대상 공항(Ben Gurion 외 경로)
   israel: {
-    // 광견병 후 30일 + RNATT 필수 + 도착 5일 이내 등록.
     keywords: ['이스라엘', 'israel'],
+    archetype: 'eu-family',
+    rabies: {
+      doses: 1,
+      // il.ts: 1차 12주 이상(보수적으로 91일 AND 캘린더 3개월 동시 충족).
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      timingLines: ['출국 30일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 30,
+    },
+    // 입국 요건으로 항체검사 필수(한국이 이스라엘 분류상 광견병 위험국). 채혈은 접종 30일 후.
+    titer: { need: 'entry', minDaysAfterVaccine: 30 },
+    // 출국 48시간 전 벤구리온 검역소 사전 통보.
+    advanceNotice: { hardDeadlineHours: 48, label: '사전 통보' },
     vaccines: ['rabies', 'rabies_titer'],
+    extraFields: ['address_overseas'],
   },
   south_africa: {
     // 광견병 + RNATT + 전염병검사(ARC-OVI, Brucella/Babesia/Ehrlichia/Trypanosoma 등) + 심장사상충.
