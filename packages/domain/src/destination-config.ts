@@ -1297,8 +1297,8 @@ export const TOGGLEABLE_FIELDS: { key: string; label: string; group: string }[] 
   { key: 'vaccine:kennel', label: '켄넬코프', group: '절차정보' },
   { key: 'vaccine:covid', label: '코로나', group: '절차정보' },
   { key: 'vaccine:infectious_disease', label: '전염병검사', group: '절차정보' },
-  { key: 'vaccine:external_parasite', label: '외부구충', group: '절차정보' },
-  { key: 'vaccine:internal_parasite', label: '내부구충', group: '절차정보' },
+  { key: 'vaccine:external_parasite', label: '외부 기생충 치료', group: '절차정보' },
+  { key: 'vaccine:internal_parasite', label: '내부 기생충 치료', group: '절차정보' },
   { key: 'vaccine:heartworm', label: '심장사상충', group: '절차정보' },
 ]
 
@@ -1424,8 +1424,8 @@ export const VACCINE_KEY_LABELS: Record<string, string> = {
   kennel: '켄넬코프',
   covid: '코로나',
   infectious_disease: '전염병검사',
-  external_parasite: '외부구충',
-  internal_parasite: '내부구충',
+  external_parasite: '외부 기생충 치료',
+  internal_parasite: '내부 기생충 치료',
   heartworm: '심장사상충',
 }
 

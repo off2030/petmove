@@ -194,18 +194,18 @@ export const BR_CHECKS: ProcedureCheck[] = [
       if (diff < 0) {
         return {
           ok: false,
-          message: '외부구충 처치일이 출국일보다 늦어요. 날짜를 확인하세요.',
+          message: '외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.',
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
       if (diff > 14) {
         return {
           ok: false,
-          message: '외부구충은 출국 15일 이내에 처치해야 해요.',
+          message: '외부 기생충 치료는 출국 15일 이내에 해야 해요.',
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `외부구충(${latest.date}) → 출국일(${dep}): ${diff}일.` }
+      return { ok: true, message: `외부 기생충 치료(${latest.date}) → 출국일(${dep}): ${diff}일.` }
     },
   },
   {
@@ -230,18 +230,18 @@ export const BR_CHECKS: ProcedureCheck[] = [
       if (diff < 0) {
         return {
           ok: false,
-          message: '내부구충 처치일이 출국일보다 늦어요. 날짜를 확인하세요.',
+          message: '내부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.',
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
       if (diff > 14) {
         return {
           ok: false,
-          message: '내부구충은 출국 15일 이내에 처치해야 해요.',
+          message: '내부 기생충 치료는 출국 15일 이내에 해야 해요.',
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `내부구충(${latest.date}) → 출국일(${dep}): ${diff}일.` }
+      return { ok: true, message: `내부 기생충 치료(${latest.date}) → 출국일(${dep}): ${diff}일.` }
     },
   },
   // ── 도착 수입 검역 / 현지 수출 검역 (베트남 골격 복제 2026-07-20) ──

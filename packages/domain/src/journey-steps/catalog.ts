@@ -963,11 +963,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'external-parasite',
     category: 'preparation',
-    title: '외부구충',
+    title: '외부 기생충 치료',
     shortLabel: '외부',
     description:
-      '출국 직전에 진드기·벼룩 처치를 받으세요. 호주·뉴질랜드 등에서 요구돼요.',
-    doneSummary: '외부구충 처치를 받았어요.',
+      '출국 직전에 진드기·벼룩 치료를 하세요. 호주·뉴질랜드 등에서 요구돼요.',
+    doneSummary: '외부 기생충 치료를 했어요.',
     // EU 패밀리(영국·아일랜드·몰타·노르웨이·핀란드)는 외부구충 요건이 없어 제외 —
     // EU 요건은 촌충(에키노코쿠스, echinococcus-treatment 카드)뿐.
     // 필리핀도 제외 — 발급 SPSIC import terms 7항상 외부구충은 "recommended but optional"
@@ -989,7 +989,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 80,
     done: 'has-external-parasite',
     inputs: [
-      { key: 'external_parasite_dates', label: '처치일', type: 'date_array' },
+      { key: 'external_parasite_dates', label: '치료일', type: 'date_array' },
     ],
     allowAttachments: true,
     attachmentHint: '증명서, 수첩 등을 사진·PDF로 보관하세요.',
@@ -1023,7 +1023,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 90,
     done: 'has-internal-parasite',
     inputs: [
-      { key: 'internal_parasite_dates', label: '투약일', type: 'date_array' },
+      { key: 'internal_parasite_dates', label: '치료일', type: 'date_array' },
     ],
     allowAttachments: true,
     attachmentHint: '증명서, 수첩 등을 사진·PDF로 보관하세요.',
