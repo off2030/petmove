@@ -694,6 +694,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
     }),
     'general-vaccine': {
+      // 항공권(45)보다 앞으로 — 종합백신이 입국 요건이라 준비 순서상 먼저다(사용자 지정
+      // 2026-07-22). 34 = 광견병 1차(30) 바로 뒤. 35 는 rabies-vaccine-2 가 써서 피한다
+      // (아랍에미리트는 1회 접종국이라 2차 카드가 안 뜨지만, 동점 순서는 불안정하다).
+      // 카자흐스탄과 같은 처리.
+      order: 34,
       description:
         '종합백신을 접종하세요.\n\n출국 21일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
       descriptionBySpecies: {
