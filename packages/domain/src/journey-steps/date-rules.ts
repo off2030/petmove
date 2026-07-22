@@ -552,7 +552,7 @@ export function validatePhImportPermitVaccineGap(
 }
 
 /**
- * 필리핀 — 내부 기생충 치료는 수입 허가증(SPSIC) **신청일 기준 7~91일 전**에 해야 한다
+ * 필리핀 — 내부 기생충 치료는 수입 허가증(SPSIC) **신청일 기준 7일 전 ~ 달력 3개월 이내**여야 한다
  * (BAI MC 49 명시 의무 — 파일 헤더 근거 참조. 카드 문구의 '7일~3개월'이 이 창이다).
  *
  * client(치료일 입력 시 입력 불가)·procedure-check(신청일을 나중에 고쳤을 때 주의) 공용 —
@@ -573,13 +573,13 @@ export function validatePhInternalParasiteWindow(
     return '내부 기생충 치료는 수입 허가증(SPSIC) 신청 전에 해야 해요. 날짜를 확인하세요.'
   }
   if (gap < 7) {
-    return '내부 기생충 치료는 수입 허가증(SPSIC) 신청 7일 전까지 마쳐야 해요.'
+    return '내부 기생충 치료는 수입 허가증(SPSIC) 신청 7일 전까지 마쳐야 해요. 날짜를 확인하세요.'
   }
   // 상한은 **달력 3개월** — 일수(91) 환산이 아니다(2026-07-22 사용자 지정). 일수로 잡으면
   // 낀 달에 따라 89~92일로 흔들려 규정을 지킨 사람을 막는다(몽골 최소 연령과 같은 처리).
   const limit = addMonths(treatmentDate, 3)
   if (limit && filedDate > limit) {
-    return '내부 기생충 치료는 수입 허가증(SPSIC) 신청 3개월 이내에 해야 해요.'
+    return '내부 기생충 치료는 수입 허가증(SPSIC) 신청 3개월 이내에 해야 해요. 날짜를 확인하세요.'
   }
   return null
 }
