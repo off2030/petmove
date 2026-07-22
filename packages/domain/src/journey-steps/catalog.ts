@@ -2038,7 +2038,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // ⚠️ dpss.gov.ua 는 한국·미국 IP 에서 접속이 차단된다(2026-07-22 재확인, connect refused).
     //   위 근거는 사용자가 원문을 열어 전달해 준 것이다. 다음 조사자도 직접 열지 못할 수 있다.
     description:
-      '우크라이나 출국 전 수출 검역을 받고 국제수의증명서를 발급받으세요.\n\n거주 지역 국가수의기관에서 임상검사를 받고 수의증서(Ф-1)를 받은 뒤, 검역기관(DPSS) 국경검사부서에서 국제수의증명서로 바꿔 받아요.\n증명서는 5일간만 유효해요. 출국일에 맞춰 발급 날짜를 정하세요.\n모든 국경 통과지점에 검사관이 있는 건 아니에요. 키이우 등 도시 사무소에서 출국 전에 미리 받아 두세요.',
+      // ⛔ 사용자가 불러준 최종 원문(2026-07-22). 세 문단 그대로 — 문장 추가·병합 금지.
+      //   뺀 두 줄의 근거는 아래 주석에 남긴다(되살리려면 사용자 확인부터):
+      //   · '출국일에 맞춰 발급 날짜를 정하세요.' — 유효기간 5일이 이미 그 행동을 지시한다.
+      //   · '모든 국경 통과지점에 검사관이 있는 건 아니에요…' — DPSS 명시 사실이지만, 지점
+      //     안내는 links 의 발급처 페이지(국가수의기관 주소 + ВПІК 목록 + 사전 예약)가 담당한다.
+      '우크라이나 출국 전 수출 검역을 받고 국제수의증명서를 발급받으세요.\n\n거주 지역 국가수의기관에서 임상검사를 받고 수의증서(Ф-1)를 받은 뒤, 검역기관(DPSS) 국경검사부서에서 국제수의증명서로 바꿔 받아요.\n\n증명서는 5일간만 유효해요.',
     doneSummary: '우크라이나 수출 검역을 받았어요.',
     cardLine: '우크라이나 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['ukraine'], species: 'all', tripType: 'round' },
@@ -2056,11 +2061,14 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '우크라이나 국제수의증명서',
-    // ⚠️ DPSS 본사이트(dpss.gov.ua)는 한국·미국 IP 에서 접속이 막힌다 — 고객이 열지 못할 수
-    //   있어 **접속되는 지역본부 사이트를 함께** 건다(2026-07-22 실측: nir.gov.ua 는 열림).
+    // ⛔ **dpss.gov.ua 링크를 걸지 말 것** — 한국 IP 에서 접속이 막힌다(2026-07-22 실측 2회
+    //   connect refused, 사용자도 안 열린다고 확인). 고객이 눌러도 안 열리는 링크다.
+    //   근거 인용은 주석에 남기되, 카드 링크는 **한국에서 열리는 것만** 건다.
+    // 이 페이지가 카드의 2단계와 정확히 대응한다: ①국가수의기관 주소 ②국제수의증명서를
+    //   발급하는 국경검사부서(ВПІК) 목록 ③사전 예약. 지점은 전시 상황에 바뀌므로 주소를
+    //   카드에 박지 않고 이 링크로 넘긴다.
     links: [
-      { url: 'https://dpss.gov.ua/mizhnarodne-spivrobitnictv/veterinariya-ta-bezpechnist/vimogi-do-nekomercijnogo-peremishchennya-tvarin', label: '비상업 이동 요건 (DPSS)' },
-      { url: 'https://nir.gov.ua/kontakty/kontakty-strukturnyh-pidrozdiliv/', label: '국경검사부서 지점·연락처' },
+      { url: 'https://nir.gov.ua/misczya-oformlennya-domashnih-tvaryn/', label: '반려동물 서류 발급처·예약 (우크라이나 검역당국)' },
     ],
   },
   {
