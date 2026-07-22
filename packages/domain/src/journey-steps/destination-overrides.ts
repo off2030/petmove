@@ -553,8 +553,24 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       earliest: undefined,
       validationIds: ['br.rabies-min-21days-before-departure'],
     },
-    'external-parasite': { validationIds: ['br.external-parasite-within-15days'] },
-    'internal-parasite': { validationIds: ['br.internal-parasite-within-15days'] },
+    // 기본 카드 문구를 덮어쓴다(2026-07-22). 두 가지가 어긋나 있었다:
+    //  ① 15일 창이 카드에 없어 배지가 뜨고 나서야 알게 됐다.
+    //  ② 기본 문구의 '진드기·벼룩'과 '호주·뉴질랜드 등에서 요구돼요'는 **브라질 원문에 없다** —
+    //     MAPA 는 "broad-spectrum treatment against internal and external parasites"로
+    //     내·외부를 묶어 말할 뿐 특정 기생충을 지목하지 않는다. 브라질 화면에서 다른 나라
+    //     이름을 나열하는 것도 맞지 않는다.
+    // ⚠️ 15일의 기준점 — 원문은 "국제수의증명서 발급일 기준 15일"이고 그 증명서는 **한국이
+    //   발급하는 수출 검역증**이다(가는 방향 요건이므로). 브라질 CVI(귀국 편 서류)로 착각해
+    //   기준을 바꾸지 말 것 — 2026-07-22 그렇게 고칠 뻔했다. 한국 수출 검역은 출국 10일 이내라
+    //   출국일 기준이 실무상 타당한 근사다.
+    'external-parasite': {
+      description: '출국 15일 이내에 외부 기생충 치료를 하세요.',
+      validationIds: ['br.external-parasite-within-15days'],
+    },
+    'internal-parasite': {
+      description: '출국 15일 이내에 내부 기생충 치료를 하세요.',
+      validationIds: ['br.internal-parasite-within-15days'],
+    },
     departure: importQuarantineCard({
       label: '브라질',
       fieldKey: 'br_import_quarantine_date',
