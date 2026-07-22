@@ -710,15 +710,28 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       },
       validationIds: ['ae.general-vaccine-required', 'ae.general-vaccine-21days-before-departure'],
     },
-    // 수입 허가 — 기본 카드 문구가 '호주(DAFF)·뉴질랜드(MPI)·대만(APHIA)·말레이시아(DVS)'를
-    // 나열해 아랍에미리트 화면에서 엉뚱했다. MOCCAE 값으로 교체(90일 유효는 ae.ts 헤더).
-    // ⚠️ 신청 수수료·처리 일수는 확인 실패 — MOCCAE 공식 사이트가 열리지 않는다. 쓰지 말 것.
+    // 수입 허가증 — 기본 카드 문구가 '호주(DAFF)·뉴질랜드(MPI)·대만(APHIA)·말레이시아(DVS)'를
+    // 나열해 아랍에미리트 화면에서 엉뚱했다. MOCCAE 값으로 교체.
+    // ✅ MOCCAE 공식 서비스 페이지 확인(2026-07-23, 사용자 조사): 온라인 전용(디지털 서비스
+    //   계정 필요 — 방문자도 등록 가능) / 수수료 **마리당 200디르함** 카드 결제 /
+    //   처리 **약 1영업일**(서비스견·정서지원견·의료 목적견은 최대 5영업일) /
+    //   허가 **90일 유효** / 일반 반려견·고양이는 **신청 단계 첨부서류 없음**.
+    // ⚠️ 개인은 **연간 2마리**까지(개2·고양이2·개1+고양이1). UAE 거주 반려동물의 재입국은
+    //   예외가 있을 수 있다 — 룰(ae.max-2pets-per-year)은 운영자 전용이라 카드엔 안 쓴다.
+    // 표기는 '수입 허가증' — 대만·말레이시아·인도네시아·필리핀·스위스와 같은 문형
+    //   (2026-07-23 정정. 아랍에미리트만 '수입 허가'로 적혀 있었다).
     'import-permit': {
       description:
-        '아랍에미리트 도착 전에 검역기관(MOCCAE)에 수입 허가를 신청하세요.\n\n허가증은 발급일로부터 90일간 유효해요. 너무 일찍 신청하면 입국 전에 만료돼요.',
-      cardLine: '아랍에미리트 수입 허가를 신청하세요.',
-      doneSummary: '아랍에미리트 수입 허가를 받았어요.',
+        '아랍에미리트 도착 전에 검역기관(MOCCAE)에 수입 허가증을 신청하세요.\n\n온라인으로만 신청해요. 마리당 200디르함을 카드로 결제하면 보통 1영업일 안에 발급돼요.\n\n허가증은 발급일로부터 90일간 유효해요. 너무 일찍 신청하면 입국 전에 만료돼요.',
+      cardLine: '아랍에미리트 수입 허가증을 신청하세요.',
+      doneSummary: '아랍에미리트 수입 허가증을 받았어요.',
       validationIds: ['ae.import-permit-within-90days'],
+      links: [
+        {
+          url: 'https://moccae.gov.ae/en/services/import-permit-pets',
+          label: '반려동물 수입 허가증 신청 (MOCCAE)',
+        },
+      ],
     },
     // 항공권 — base 는 일본 항체 180일 룰을 달고 있다(아랍에미리트엔 항체 자체가 없다).
     // 광견병 21일 대기만 남긴다.
@@ -737,16 +750,28 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       description: '내부 기생충 치료를 하세요.\n\n출국일 기준 14일 이내에 해야 해요.',
       validationIds: ['ae.internal-parasite-within-14days'],
     },
-    departure: importQuarantineCard({
+    departure: {
+      ...importQuarantineCard({
       label: '아랍에미리트',
       fieldKey: 'ae_import_quarantine_date',
+      // ✅ 도착 후 **검역 반출(release) 신청이 따로 있다**(2026-07-23 사용자 조사 반영).
+      //   수입 허가증만 받아두면 끝이 아니라, MOCCAE 시스템에서 반출을 신청하고 수수료를
+      //   결제한 뒤 외관 검사를 받아야 전자 반출승인이 나온다.
+      //   수수료 = 개 500디르함 / 고양이 250디르함(수입 허가 200디르함과 별개).
+      // ⚠️ 종별 금액이 달라 descriptionBySpecies 로 나눈다 — 한 줄에 둘 다 쓰면 보호자가
+      //   자기 동물 금액을 골라 읽어야 한다.
       description:
-        '아랍에미리트 도착 후 공항 검역소에서 검역을 받으세요.\n한국에서 받은 수출 검역증과 반려동물을 확인해요.\n요건을 갖추면 격리 없이 통과할 수 있어요.',
+        '아랍에미리트 도착 후 공항 검역소에서 검역을 받으세요.\n한국에서 받은 수출 검역증과 반려동물을 확인해요.\n요건을 갖추면 격리 없이 통과할 수 있어요.\n\n검역 반출은 따로 신청해요. 수수료를 결제하고 검사를 받으면 전자 반출승인이 나와요.',
       helpText: '아랍에미리트 도착 후 수입 검역을 받은 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '아랍에미리트 수입 검역 서류',
       validationIds: ['ae.import-quarantine-date-valid'],
-    }),
+      }),
+      descriptionBySpecies: {
+        dog: '아랍에미리트 도착 후 공항 검역소에서 검역을 받으세요.\n한국에서 받은 수출 검역증과 반려동물을 확인해요.\n요건을 갖추면 격리 없이 통과할 수 있어요.\n\n검역 반출은 따로 신청해요. 반출 수수료 500디르함을 결제하고 검사를 받으면 전자 반출승인이 나와요.',
+        cat: '아랍에미리트 도착 후 공항 검역소에서 검역을 받으세요.\n한국에서 받은 수출 검역증과 반려동물을 확인해요.\n요건을 갖추면 격리 없이 통과할 수 있어요.\n\n검역 반출은 따로 신청해요. 반출 수수료 250디르함을 결제하고 검사를 받으면 전자 반출승인이 나와요.',
+      },
+    },
   },
   kazakhstan: {
     'rabies-vaccine-1': buildRabiesCard({
