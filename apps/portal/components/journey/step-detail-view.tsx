@@ -135,6 +135,9 @@ const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
   mexico: '예: 멕시코시티 MEX',
   brazil: '예: 상파울루 GRU',
   kazakhstan: '예: 알마티 ALA',
+  // 러시아·튀르키예 — 카자흐스탄 복제(2026-07-22).
+  russia: '예: 모스크바 SVO',
+  turkey: '예: 이스탄불 IST',
   // 우크라이나는 예시 공항을 넣지 않는다 — 전시로 민항 운항이 정상화되지 않은 상태라
   // 특정 공항을 예시로 들면 잘못된 안내가 된다(2026-07-20 조사 반영).
   eu: '예: 파리 CDG',

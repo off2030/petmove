@@ -154,6 +154,15 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'kz_import_quarantine_confirmed',
   'kz_export_quarantine_date',
   'kz_export_quarantine_confirmed',
+  // 러시아·튀르키예 — 카자흐스탄 복제(2026-07-22).
+  'ru_import_quarantine_date',
+  'ru_import_quarantine_confirmed',
+  'ru_export_quarantine_date',
+  'ru_export_quarantine_confirmed',
+  'tr_import_quarantine_date',
+  'tr_import_quarantine_confirmed',
+  'tr_export_quarantine_date',
+  'tr_export_quarantine_confirmed',
   // 몽골·우즈베키스탄·캐나다 수출 검역 (왕복 귀국 전 — 2026-07-20 조사 후 신설).
   // 세 나라 모두 한국 APQA 가 '수출국 정부기관 증명 검역증명서'를 요구해 사실상 강제다
   // (EU 펫패스포트만 예외). 나라별 근거는 각 catalog step 주석 참고.

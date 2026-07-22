@@ -443,9 +443,35 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['인도', 'india'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'covid'],
   },
+  // ── 튀르키예 — ⚠️ 카자흐스탄 한 벌 복제(2026-07-22). 수치는 아직 카자흐스탄 것 그대로다.
+  //   나라별 규정 확정 후 수정 예정(사용자 지정 — "카자흐스탄 복사").
+  //
+  // ⚠️ **알려진 충돌 3건 — 세부 수정 때 가장 먼저 볼 것** (구세대 조사는 교체 전 tr.ts 헤더/git):
+  //   ①**항체검사(RNATT)가 입국 요건이다.** 튀르키예는 한국을 EU 분류상 unlisted third
+  //     country 로 보아 RNATT 를 요구한다(채혈 ≥ 접종+30일, 0.5 IU/ml, 출국 ≤ 채혈+1년).
+  //     복제값 `titer.need:'return-only'` 는 "튀르키예 입국에는 필요 없지만 한국으로 돌아올
+  //     때 필요해요"라고 안내한다 — **사실과 반대**다. 카드 문구까지 함께 고쳐야 한다.
+  //   ②최소 접종 연령이 **생후 12주(84일, EU Reg 576/2013 일치)** 인데 복제값은 달력 3개월.
+  //   ③접종 후 대기가 **30일**인데 복제값은 20일(카자흐스탄 EAEU 값).
+  //   그 외 구세대 조사: 구충(외부·내부) 출국 전날, 핏불·도사·도고 아르헨티노·필라 수입 금지.
+  //
+  // `vetVisitWindowDays: 2` 와 `extraFields` 는 **유지한다** — 둘 다 TK 증명서(PDF 자동 채움)
+  //   시스템에 묶여 있고 여정 카드 골격과 무관하다. 복제로 지우면 발급되는 증명서가 깨진다.
   turkey: {
     keywords: ['튀르키예', '터키', 'turkey', 'türkiye', 'turkiye'],
-    vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
+    rabies: {
+      doses: 1,
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      timingLines: ['출국 20일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 20,
+    },
+    titer: { need: 'return-only' },
+    appSupported: true,
+    vaccines: ['rabies', 'rabies_titer', 'general'],
+    importQuarantine: {},
+    rabiesTiterForReturnOnly: true,
     // 임상검사(Clinical Examination)는 출국 24시간 이내 — TK.pdf 각주 6. window=2 →
     // 출국일 기준 diff<2 = 전날(1)·당일(0)만 유효(=24시간 이내). 한국 수출검역도 동일 창.
     vetVisitWindowDays: 2,
@@ -556,9 +582,29 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     importQuarantine: {},
     rabiesTiterForReturnOnly: true,
   },
+  // ── 러시아 — ⚠️ 카자흐스탄 한 벌 복제(2026-07-22). 수치는 아직 카자흐스탄 것 그대로다
+  //   (생후 3개월·출국 20일 전). 나라별 규정 확정 후 수정 예정(사용자 지정 — "카자흐스탄 복사").
+  //   ⚠️ **알려진 충돌**: 러시아 1차 출처는 **30일**이다(Rosselkhoznadzor "출국 30일 이상 ~
+  //     12개월 이내"). 복제값 20일은 카자흐스탄(EAEU 제15장) 것이라 러시아 기준보다 느슨하다.
+  //     두 나라 다 EAEU 회원이지만 러시아는 자국 안내로 30일을 별도 공표한다 — 세부 수정 1순위.
+  //   구세대 조사값은 procedure-checks/ru.ts 헤더(교체 전 git 이력)에 있다: 광견병 12주·
+  //   출국 30일~12개월, 다년 백신도 최종 접종 12개월 이내, 개인 1인 2마리 한도, RNATT 입국 면제.
+  //   `vetVisitWindowDays: 5` 는 **유지한다** — EAEU 결정 317 제15장 "선적 5일 이내 임상검진"
+  //   근거이고 여정 카드 골격과 무관한 검증값이라, 복제로 10일(기본값)까지 느슨해지면 안 된다.
   russia: {
     keywords: ['러시아', 'russia'],
+    rabies: {
+      doses: 1,
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      timingLines: ['출국 20일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 20,
+    },
+    titer: { need: 'return-only' },
+    appSupported: true,
     vaccines: ['rabies', 'rabies_titer', 'general'],
+    importQuarantine: {},
     rabiesTiterForReturnOnly: true,
     vetVisitWindowDays: 5,
   },

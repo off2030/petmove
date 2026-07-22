@@ -862,6 +862,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'usa',
         // 카자흐스탄 — EAEU 제15장이 광견병과 같은 문장에서 종합백신을 규율한다(출국 20일 전·12개월 면제).
         'kazakhstan',
+        // 튀르키예 — 카자흐스탄 복제(2026-07-22). 러시아는 이미 위에 있다.
+        // ⚠️ 구세대 조사에선 튀르키예 종합백신이 '권고(의무 명문 부재)'였다 — 세부 수정 대상.
+        'turkey',
       ],
       species: 'all',
       tripType: 'all',
@@ -2293,6 +2296,66 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { url: 'https://www.gov.kz/services/3369?lang=en', label: '수출 수의증명서 발급 안내 (gov.kz)' },
       { url: 'https://www.gov.kz/memleket/entities/vetcontrol?lang=ru', label: '수의통제감독위원회 지역검사기관 연락처' },
     ],
+  },
+  // ── 러시아 수출 검역 (왕복 — 귀국 출국 시) ────────────────────────────
+  // ⚠️ 카자흐스탄 카드 복제(2026-07-22). 문구는 카자흐스탄 절차 그대로다.
+  //   카자흐스탄 전용 사실 두 가지는 **뺐다** — 발급 기관명(수의통제감독위원회)과 gov.kz 링크
+  //   2종. 다른 나라 기관·주소를 그대로 물려주면 명백한 오안내가 된다(4국 복제 전례).
+  //   러시아 실제 발급 기관은 Rosselkhoznadzor(연방수의식물위생감독청) 계열이나, 반려동물
+  //   수출 창구·서식 번호를 확인하지 못해 기관명을 특정하지 않았다 — 세부 수정 대상.
+  {
+    id: 'ru-export-quarantine',
+    category: 'document',
+    title: '러시아 수출 검역',
+    shortLabel: '수출',
+    description:
+      '러시아 출국 전 수출 검역을 받고 수출 수의증명서를 발급받으세요.\n\n현지 동물병원에서 임상검사를 받고, 그 서류로 관할 수의당국에 신청해요.',
+    doneSummary: '러시아 수출 검역을 받았어요.',
+    cardLine: '러시아 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['russia'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:ru_export_quarantine_date',
+    validationIds: ['ru.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'ru_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '러시아에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '러시아 수출 수의증명서',
+  },
+  // ── 튀르키예 수출 검역 (왕복 — 귀국 출국 시) ──────────────────────────
+  // ⚠️ 카자흐스탄 카드 복제(2026-07-22). 기관명·링크는 위 러시아와 같은 이유로 뺐다.
+  //   튀르키예 실제 발급 기관은 농림부(Tarım ve Orman Bakanlığı) 지방조직이나 창구·서식
+  //   미확인 — 세부 수정 대상.
+  {
+    id: 'tr-export-quarantine',
+    category: 'document',
+    title: '튀르키예 수출 검역',
+    shortLabel: '수출',
+    description:
+      '튀르키예 출국 전 수출 검역을 받고 수출 수의증명서를 발급받으세요.\n\n현지 동물병원에서 임상검사를 받고, 그 서류로 관할 수의당국에 신청해요.',
+    doneSummary: '튀르키예 수출 검역을 받았어요.',
+    cardLine: '튀르키예 출국 전 수출 검역을 받으세요.',
+    applicability: { destinations: ['turkey'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:tr_export_quarantine_date',
+    validationIds: ['tr.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'tr_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '튀르키예에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '튀르키예 수출 수의증명서',
   },
   // ── 15. 한국 수입 검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
   {

@@ -754,11 +754,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   // 나라별 알려진 충돌은 destination-config 의 각 프로파일 주석 참고 —
   //   러시아: 실제 대기 30일 / 튀르키예: 항체가 **입국 요건**·84일·30일.
   //
-  // 카자흐스탄과 **다르게 한 곳이 하나 있다**: 'rabies-titer' 카드에 validationIds 를 명시했다.
-  //   base 항체 카드는 일본 전용 룰(jp.*)을 달고 있어서, override 에서 안 덮으면 그 룰이
-  //   이 나라 케이스에 그대로 실려 **아무 검증도 돌지 않는다**(lint:validation-wiring 이
-  //   2026-07-22 강화되며 13개국에서 드러난 기존 문제 — 카자흐스탄 포함). 귀국용 항체의
-  //   실제 검증은 전 목적지 공통 룰이라 그걸 지목한다. 기존 13개국 정리는 별도 작업.
+  // 'rabies-titer' 카드는 RETURN_ONLY_TITER_CHECKS 를 지목한다 — base 카드의 일본 전용
+  //   룰(jp.*)을 덮지 않으면 이 나라 케이스에서 아무 검증도 돌지 않는다(13개국에서 같은 문제가
+  //   있었고 530668cb 에서 정리됐다). 귀국용 항체 카드는 전부 이 상수를 쓴다.
   russia: {
     'rabies-vaccine-1': buildRabiesCard({
       destKey: 'russia',
@@ -787,7 +785,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'rabies-titer': {
       description:
         '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n러시아 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
-      validationIds: ['common.kr-return-titer-within-2years'],
+      validationIds: RETURN_ONLY_TITER_CHECKS,
     },
     'flight-purchase': {
       description:
@@ -837,7 +835,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'rabies-titer': {
       description:
         '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n튀르키예 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
-      validationIds: ['common.kr-return-titer-within-2years'],
+      validationIds: RETURN_ONLY_TITER_CHECKS,
     },
     'flight-purchase': {
       description:
