@@ -753,28 +753,20 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       description: '내부 기생충 치료를 하세요.\n\n출국일 기준 14일 이내에 해야 해요.',
       validationIds: ['ae.internal-parasite-within-14days'],
     },
-    departure: {
-      ...importQuarantineCard({
+    // ⛔ 검역 반출(release) 안내를 뺐다(사용자 지정 2026-07-23). 되살리지 말 것.
+    //   근거는 남긴다 — 도착 후 MOCCAE 시스템에서 반출을 따로 신청·결제하고 외관 검사를
+    //   받아야 전자 반출승인이 나오며, 수수료는 개 500 / 고양이 250디르함(수입 허가와 별개).
+    //   종별 금액이 달라 descriptionBySpecies 로 나눠 뒀던 것도 함께 제거했다.
+    departure: importQuarantineCard({
       label: '아랍에미리트',
       fieldKey: 'ae_import_quarantine_date',
-      // ✅ 도착 후 **검역 반출(release) 신청이 따로 있다**(2026-07-23 사용자 조사 반영).
-      //   수입 허가증만 받아두면 끝이 아니라, MOCCAE 시스템에서 반출을 신청하고 수수료를
-      //   결제한 뒤 외관 검사를 받아야 전자 반출승인이 나온다.
-      //   수수료 = 개 500디르함 / 고양이 250디르함(수입 허가 200디르함과 별개).
-      // ⚠️ 종별 금액이 달라 descriptionBySpecies 로 나눈다 — 한 줄에 둘 다 쓰면 보호자가
-      //   자기 동물 금액을 골라 읽어야 한다.
       description:
-        '아랍에미리트 도착 후 공항 검역소에서 검역을 받으세요.\n한국에서 받은 수출 검역증과 반려동물을 확인해요.\n요건을 갖추면 격리 없이 통과할 수 있어요.\n\n검역 반출은 따로 신청해요. 수수료를 결제하고 검사를 받으면 전자 반출승인이 나와요.',
+        '아랍에미리트 도착 후 공항 검역소에서 검역을 받으세요.\n한국에서 받은 수출 검역증과 반려동물을 확인해요.\n요건을 갖추면 격리 없이 통과할 수 있어요.',
       helpText: '아랍에미리트 도착 후 수입 검역을 받은 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '아랍에미리트 수입 검역 서류',
       validationIds: ['ae.import-quarantine-date-valid'],
-      }),
-      descriptionBySpecies: {
-        dog: '아랍에미리트 도착 후 공항 검역소에서 검역을 받으세요.\n한국에서 받은 수출 검역증과 반려동물을 확인해요.\n요건을 갖추면 격리 없이 통과할 수 있어요.\n\n검역 반출은 따로 신청해요. 반출 수수료 500디르함을 결제하고 검사를 받으면 전자 반출승인이 나와요.',
-        cat: '아랍에미리트 도착 후 공항 검역소에서 검역을 받으세요.\n한국에서 받은 수출 검역증과 반려동물을 확인해요.\n요건을 갖추면 격리 없이 통과할 수 있어요.\n\n검역 반출은 따로 신청해요. 반출 수수료 250디르함을 결제하고 검사를 받으면 전자 반출승인이 나와요.',
-      },
-    },
+    }),
   },
   kazakhstan: {
     'rabies-vaccine-1': buildRabiesCard({
