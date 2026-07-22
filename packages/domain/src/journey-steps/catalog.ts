@@ -2272,6 +2272,17 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '아랍에미리트 수출 건강증명서',
+    // 링크 — MOCCAE 반려동물 수출 서비스 페이지(응답 200 확인 2026-07-23). 사무소 위치·
+    //   운영시간·문의처(800 3050 / info@moccae.gov.ae)가 이 페이지에 있다.
+    // ⚠️ 우리 도구로는 본문을 못 읽는다("Request Rejected") — 사람이 브라우저로 열면 정상.
+    //   그래서 페이지 안의 값(수수료·처리 일수·지점 주소)을 카드 문구로 옮기지 않았다.
+    //   민간 안내는 '두바이·아부다비 2곳, 24시간'이라 하지만 1차 확인이 안 돼 쓰지 않는다.
+    links: [
+      {
+        url: 'https://moccae.gov.ae/en/services/export-permit-pets',
+        label: '반려동물 수출 검역 안내·문의처 (MOCCAE)',
+      },
+    ],
   },
   {
     id: 'kz-export-quarantine',
