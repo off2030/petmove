@@ -552,6 +552,36 @@ export function validatePhImportPermitVaccineGap(
 }
 
 /**
+ * 필리핀 — 내부 기생충 치료는 수입 허가증(SPSIC) **신청일 기준 7~91일 전**에 해야 한다
+ * (BAI MC 49 명시 의무 — 파일 헤더 근거 참조. 카드 문구의 '7일~3개월'이 이 창이다).
+ *
+ * client(치료일 입력 시 입력 불가)·procedure-check(신청일을 나중에 고쳤을 때 주의) 공용 —
+ * 두 층이 같은 함수를 봐야 기준이 갈리지 않는다(멕시코 대기 계산 사고와 같은 부류).
+ *
+ * ⚠️ 신청일이 아직 없으면 판정하지 않는다(SKIP) — 보호자가 치료를 먼저 하고 나중에 신청하는
+ *   순서가 정상이라, 신청일 미입력 상태에서 치료일을 막으면 정상 흐름을 차단하게 된다.
+ *   신청일을 넣는 순간 procedure-check 주의가 어긋난 치료일을 잡아 준다.
+ */
+export function validatePhInternalParasiteWindow(
+  treatmentDate: string,
+  filedDate: string,
+): string | null {
+  if (!treatmentDate || !filedDate) return null
+  const gap = daysBetween(treatmentDate, filedDate)
+  if (!Number.isFinite(gap)) return null
+  if (gap < 0) {
+    return '내부 기생충 치료는 수입 허가증(SPSIC) 신청 전에 해야 해요. 날짜를 확인하세요.'
+  }
+  if (gap < 7) {
+    return '내부 기생충 치료는 수입 허가증(SPSIC) 신청 7일 전까지 마쳐야 해요.'
+  }
+  if (gap > 91) {
+    return '내부 기생충 치료는 수입 허가증(SPSIC) 신청 3개월 이내에 한 것이어야 해요. 다시 치료해야 해요.'
+  }
+  return null
+}
+
+/**
  * 필리핀 — 수입 허가증(SPSIC)은 발급일로부터 60일간 유효(연장 불가)하므로, 출국일 60일보다
  * 일찍 신청하면 출국 전에 만료돼 무효. 신청일이 (출국일 − 60일)보다 빠르면 차단.
  * (발급은 신청 며칠 뒤라 신청일 기준 60일은 약간 보수적이지만 안전 측 — 출국 시 유효 보장.)

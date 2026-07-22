@@ -2,12 +2,14 @@ import {
   buildDateRuleContext,
   isValidBooster,
   validatePhImportPermitVaccineGap,
+  validatePhInternalParasiteWindow,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   findSameGuardianCases,
   readGeneralVaccineEntries,
+  readInternalParasiteEntries,
   readRabiesEntries,
   readScopedImportPermitFiled,
   resolveValidUntil,
@@ -380,6 +382,43 @@ export const PH_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `신청일(${filed}) 백신 접종 14일 이후 (또는 부스터 면제).` }
+    },
+  },
+
+  // ── 내부 기생충 치료 — SPSIC 신청 기준 7~91일 전 (BAI MC 49) ──
+  // ⚠️ 이 룰이 없어서 **카드가 '7일~3개월'이라고 말해 놓고 그 창을 벗어난 입력을 아무도
+  //   잡지 않는 상태**였다(2026-07-22 사용자 지적). 브라질·멕시코는 같은 종류의 요건에
+  //   룰이 있었는데 필리핀만 비어 있었다. 배선 린트도 못 잡았다 — 빈 카드 검사가 `date`
+  //   입력만 보고 `date_array`(회차 목록)를 빼고 있었기 때문(그 구멍은 별도 수정).
+  // 외부 기생충 치료는 필리핀 카드 자체가 없다(SPSIC import terms 7항 "recommended but
+  //   optional") — 룰도 만들지 않는다.
+  {
+    id: 'ph.internal-parasite-7to91days-before-permit',
+    country: COUNTRY,
+    category: '구충',
+    title: '내부 기생충 치료는 SPSIC 신청 7~91일 전',
+    description:
+      '내부 기생충 치료는 수입 허가증(SPSIC) 신청일 기준 7일 전 ~ 91일(3개월) 이내. 입력 차단(validatePhInternalParasiteWindow)과 같은 함수 — 신청일 미입력이면 판정하지 않는다.',
+    severity: 'warning',
+    addedAt: '2026-07-22',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const entries = readInternalParasiteEntries(caseRow)
+      if (entries.length === 0) return SKIP
+
+      // 창을 만족하는 치료가 하나라도 있으면 통과 — 여러 번 치료한 경우를 벌하지 않는다.
+      const okEntry = entries.find((e) => validatePhInternalParasiteWindow(e.date, filed) === null)
+      if (okEntry) {
+        return { ok: true, message: `내부 기생충 치료(${okEntry.date}) → SPSIC 신청(${filed}) 창 내.` }
+      }
+      const latest = entries[entries.length - 1]
+      return {
+        ok: false,
+        message: validatePhInternalParasiteWindow(latest.date, filed) ?? '',
+        offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
+      }
     },
   },
 

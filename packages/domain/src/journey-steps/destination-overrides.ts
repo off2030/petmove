@@ -869,6 +869,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
           '내부 기생충 치료를 하세요.\n\n수입 허가증(SPSIC) 신청 전 7일~3개월 사이에 치료하세요.',
         doneSummary: '내부 기생충 치료를 했어요.',
         order: 52,
+        // 카드가 '7일~3개월'이라 말하면서 정작 그 창을 아무도 검증하지 않던 상태를 메움
+        // (2026-07-22). 입력 차단(validatePhInternalParasiteWindow)과 같은 함수를 본다.
+        validationIds: ['ph.internal-parasite-7to91days-before-permit'],
       },
     },
   }),

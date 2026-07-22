@@ -26,6 +26,8 @@ import {
   validateImportPermitFiledDate,
   validateEntryDateForDestination,
   validateEchinococcusWindow,
+  validatePhInternalParasiteWindow,
+  readScopedImportPermitFiled,
   TITER_MIN_DAYS_AFTER_VACCINE,
   validateEuTiterAfterVaccine,
   validateIeAdvanceNoticeDate,
@@ -1111,7 +1113,21 @@ export function StepDetailView({
       const birth = readBirthDate(caseRow?.data)
       for (const e of parasite) {
         if (e.date && birth && e.date < birth) {
-          return '처치일이 출생일보다 빨라요. 날짜를 확인하세요.'
+          return '치료일이 출생일보다 빨라요. 날짜를 확인하세요.'
+        }
+      }
+      // 필리핀 내부 기생충 치료 — SPSIC 신청일 기준 7~91일 전 창(BAI MC 49).
+      // 주의 룰(ph.internal-parasite-7to91days-before-permit)과 **같은 함수**를 본다.
+      // 신청일이 아직 없으면 함수가 통과시킨다 — 치료를 먼저 하는 정상 순서를 막지 않기 위해.
+      if (isInternalParasite && destinationKey === 'philippines') {
+        const filed = readScopedImportPermitFiled(
+          (caseRow?.data ?? {}) as Record<string, unknown>,
+          activeDest,
+        )
+        for (const e of parasite) {
+          if (!e.date) continue
+          const err = validatePhInternalParasiteWindow(e.date, filed)
+          if (err) return err
         }
       }
       // 촌충(에키노코쿠스)은 입국 직전 1~5일(법적 24~120시간)에만 유효 — 그 밖은 의미 없어 차단.

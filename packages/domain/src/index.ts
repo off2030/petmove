@@ -33,4 +33,6 @@ export {
   isExtraTiterResultConfirmed,
   resolveValidUntil,
   addYears,
+  // 필리핀 내부 기생충 치료 창 검사(step-detail-view 의 입력 차단)가 SPSIC 신청일을 읽는다.
+  readScopedImportPermitFiled,
 } from './procedure-checks/utils'

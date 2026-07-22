@@ -57,8 +57,8 @@ const GLOBAL_ARRAY_FIELDS: Array<{ keys: string[]; label: string }> = [
   { keys: ['civ_dates'], label: '독감(CIV) 접종' },
   { keys: ['rabies_titer_records', 'rabies_titer_scheduled'], label: '광견병 항체 검사' },
   { keys: ['infectious_disease_records'], label: '전염병 검사' },
-  { keys: ['external_parasite_dates'], label: '외부구충' },
-  { keys: ['internal_parasite_dates'], label: '내부구충' },
+  { keys: ['external_parasite_dates'], label: '외부 기생충 치료' },
+  { keys: ['internal_parasite_dates'], label: '내부 기생충 치료' },
 ]
 
 /** GLOBAL 단일 date 필드 → 항목 라벨. */
