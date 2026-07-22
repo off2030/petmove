@@ -393,12 +393,12 @@ export const PH_CHECKS: ProcedureCheck[] = [
   // 외부 기생충 치료는 필리핀 카드 자체가 없다(SPSIC import terms 7항 "recommended but
   //   optional") — 룰도 만들지 않는다.
   {
-    id: 'ph.internal-parasite-7to91days-before-permit',
+    id: 'ph.internal-parasite-7days-to-3months-before-permit',
     country: COUNTRY,
     category: '구충',
-    title: '내부 기생충 치료는 SPSIC 신청 7~91일 전',
+    title: '내부 기생충 치료는 SPSIC 신청 7일~3개월 전',
     description:
-      '내부 기생충 치료는 수입 허가증(SPSIC) 신청일 기준 7일 전 ~ 91일(3개월) 이내. 입력 차단(validatePhInternalParasiteWindow)과 같은 함수 — 신청일 미입력이면 판정하지 않는다.',
+      '내부 기생충 치료는 수입 허가증(SPSIC) 신청일 기준 7일 전 ~ 달력 3개월 이내. 상한은 일수 환산이 아니라 달력 개월(낀 달에 따라 89~92일로 흔들리지 않게). 입력 차단(치료일 칸 + 신청일 칸 양쪽)과 같은 함수 — 신청일 미입력이면 판정하지 않는다.',
     severity: 'warning',
     addedAt: '2026-07-22',
     run: ({ caseRow, destination }) => {

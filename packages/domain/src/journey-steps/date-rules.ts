@@ -575,10 +575,36 @@ export function validatePhInternalParasiteWindow(
   if (gap < 7) {
     return '내부 기생충 치료는 수입 허가증(SPSIC) 신청 7일 전까지 마쳐야 해요.'
   }
-  if (gap > 91) {
+  // 상한은 **달력 3개월** — 일수(91) 환산이 아니다(2026-07-22 사용자 지정). 일수로 잡으면
+  // 낀 달에 따라 89~92일로 흔들려 규정을 지킨 사람을 막는다(몽골 최소 연령과 같은 처리).
+  const limit = addMonths(treatmentDate, 3)
+  if (limit && filedDate > limit) {
     return '내부 기생충 치료는 수입 허가증(SPSIC) 신청 3개월 이내에 한 것이어야 해요. 다시 치료해야 해요.'
   }
   return null
+}
+
+/**
+ * 필리핀 SPSIC 신청일 관점의 같은 검사 — **신청일 칸에서** 내부 기생충 치료 창을 본다.
+ *
+ * ⚠️ 왜 양쪽에 거는가(2026-07-22 사용자 지적): 실무 순서는 **치료 먼저 → 신청 나중**이라,
+ *   치료일 칸에만 걸어 두면 그 시점엔 신청일이 비어 있어 **차단이 사실상 발동하지 않는다.**
+ *   규칙이 실제로 판정되는 순간은 신청일을 넣을 때다. 두 칸 모두 같은 함수를 본다.
+ *
+ * 창을 만족하는 치료가 하나라도 있으면 통과 — 여러 번 치료한 경우를 벌하지 않는다
+ * (주의 룰 ph.internal-parasite-7to91days-before-permit 과 같은 판정).
+ */
+export function validatePhImportPermitParasiteGap(
+  filedDate: string,
+  data: Record<string, unknown>,
+): string | null {
+  if (!filedDate) return null
+  const dates = readDateArray(data, 'internal_parasite_dates')
+  if (dates.length === 0) return null
+  if (dates.some((d) => validatePhInternalParasiteWindow(d, filedDate) === null)) return null
+  // 전부 창 밖 — 가장 최근 치료 기준으로 이유를 알려준다.
+  const latest = [...dates].sort()[dates.length - 1]
+  return validatePhInternalParasiteWindow(latest, filedDate)
 }
 
 /**
@@ -799,7 +825,10 @@ export function validateImportPermitFiledDate(
       return (
         validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
         validatePhImportPermitWithin60Days(filedDate, departureDate) ??
-        validatePhImportPermitVaccineGap(filedDate, data)
+        validatePhImportPermitVaccineGap(filedDate, data) ??
+        // 내부 기생충 치료 창(7일~달력 3개월) — 치료일 칸이 아니라 **여기서** 실제로 발동한다
+        // (실무 순서가 치료 먼저 → 신청 나중이라 치료 시점엔 신청일이 비어 있다).
+        validatePhImportPermitParasiteGap(filedDate, data)
       )
     // 대만 — 출국일 이후 신청 불가. 카드 order 가 43(항공권 45 앞)이라 항공권 미입력 시
     // departureDate 가 비어 통과한다. 120일·20일 마감은 주의 담당.

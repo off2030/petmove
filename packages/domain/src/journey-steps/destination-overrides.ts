@@ -871,7 +871,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         order: 52,
         // 카드가 '7일~3개월'이라 말하면서 정작 그 창을 아무도 검증하지 않던 상태를 메움
         // (2026-07-22). 입력 차단(validatePhInternalParasiteWindow)과 같은 함수를 본다.
-        validationIds: ['ph.internal-parasite-7to91days-before-permit'],
+        validationIds: ['ph.internal-parasite-7days-to-3months-before-permit'],
       },
     },
   }),
