@@ -27,7 +27,7 @@ export const IMPORT_REPORT_CANDIDATE_COUNTRIES: string[] = [
   '미국',
   '스위스',
   '싱가포르',
-  '아랍에미레이트',
+  '아랍에미리트',
   '아일랜드',
   '이스라엘',
   '인도네시아',

@@ -563,7 +563,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vetVisitWindowDays: 5,
   },
   uae: {
-    keywords: ['아랍에미레이트', '아랍에미리트', 'uae', 'united arab emirates'],
+    // 표준 표기는 **아랍에미리트**(외교부 국가명·외래어 표기법). 화면에 나가는 문구는 전부
+    // 이쪽으로 통일했다(2026-07-22). '아랍에미레이트'는 **검색 별칭으로만** 남긴다 —
+    // 관용 표기라 그렇게 치는 고객이 많고, keywords 는 화면에 안 보인다. 표시 문구로 쓰지 말 것.
+    keywords: ['아랍에미리트', '아랍에미레이트', 'uae', 'united arab emirates'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'external_parasite', 'internal_parasite'],
     rabiesTiterForReturnOnly: true,
   },
