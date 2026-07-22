@@ -567,8 +567,17 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 이쪽으로 통일했다(2026-07-22). '아랍에미레이트'는 **검색 별칭으로만** 남긴다 —
     // 관용 표기라 그렇게 치는 고객이 많고, keywords 는 화면에 안 보인다. 표시 문구로 쓰지 말 것.
     keywords: ['아랍에미리트', '아랍에미레이트', 'uae', 'united arab emirates'],
+    // ⚠️ 항체검사 카드를 **띄우지 않는다**(2026-07-22 수정. 되돌리지 말 것):
+    //   ①입국 요건 아님 — MOCCAE 는 한국을 저위험국(Low-risk)으로 분류해 RNATT 를 요구하지
+    //     않는다(procedure-checks/ae.ts 헤더의 1차 출처).
+    //   ②귀국 요건도 아님 — 아랍에미리트는 검역본부 **광견병 비발생국**이라 한국 재입국 시
+    //     항체검사가 면제된다(isRabiesFreeOrigin).
+    //   양방향 모두 불필요한데 `rabiesTiterForReturnOnly: true` 가 남아 있어, 왕복 케이스에서
+    //   "한국으로 돌아올 때 필요해요"라는 **틀린 안내 카드**가 떴다.
+    //   `vaccines` 의 rabies_titer 는 유지한다 — 이미 검사를 받아 기록해 둔 케이스의 값이
+    //   펫무브워크에서 사라지면 안 된다(입력은 가능, 안내만 하지 않음).
+    titer: { need: 'none' },
     vaccines: ['rabies', 'rabies_titer', 'general', 'external_parasite', 'internal_parasite'],
-    rabiesTiterForReturnOnly: true,
   },
   singapore: {
     keywords: ['싱가포르', 'singapore'],
@@ -577,8 +586,13 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   hongkong: {
     keywords: ['홍콩', 'hong kong', 'hongkong'],
+    // ⚠️ 항체검사 카드를 **띄우지 않는다**(2026-07-22 수정. 아랍에미리트와 같은 사유·되돌리지 말 것):
+    //   ①입국 요건 아님 — AFCD 는 한국을 Group II 로 분류하고 이 그룹은 RNATT 가 면제된다
+    //     (procedure-checks/hk.ts 헤더의 1차 출처 DC-02v05).
+    //   ②귀국 요건도 아님 — 홍콩은 검역본부 **광견병 비발생국**이라 한국 재입국 시 면제.
+    //   `vaccines` 의 rabies_titer 는 기록 보존을 위해 유지(입력 가능, 안내만 하지 않음).
+    titer: { need: 'none' },
     vaccines: ['rabies', 'rabies_titer', 'general'],
-    rabiesTiterForReturnOnly: true,
   },
   hawaii: {
     keywords: ['하와이', 'hawaii'],
@@ -1268,42 +1282,94 @@ export function matchesDestinationKey(
 /**
  * 한국 농림축산검역본부 지정 '광견병 비발생 지역'. 이 지역(국가)에서 한국으로 (재)입국하는
  * 개·고양이는 광견병 중화항체가(RNATT) 검사를 면제받는다 → 귀국 항체검사 2년 룰
- * (common.kr-return-titer-within-2years)도 비발생국이면 적용하지 않는다.
+ * (common.kr-return-titer-within-2years)·귀국 항체 만료 알림(titerReminderTargets)도
+ * 비발생국이면 적용하지 않는다.
  *
- * ⚠️ APQA 는 이 목록을 정적으로 공표하지 않으며 발생 상황에 따라 **실시간 변동**한다. 당국도
- * "입국 전 검역기관(동물검역과 054-912-0427) 확인"을 요구한다(qia.go.kr). 아래는 petmove
- * 블로그(/blog/rabies-free-countries/) **2024-01-04 스냅샷** 기준 초기값으로, 확정 데이터가
- * 아니라 '안내(info)'용이다. 갱신은 이 두 상수만 고친다.
+ * **1차 출처(2026-07-22 교체)** — 검역본부 공고 「광견병 비발생 국가(지역)」
+ *   https://www.qia.go.kr/viewwebQiaCom.do?id=52639&type=1_5hwwsdxetc
+ *   첨부 「(23.1분기) 해외 광견병 비발생국(지역) 현황 조정」(downloadwebQiaCom.do?id=43954),
+ *   **2023-04-04 기준** 목록 전문을 그대로 옮긴 것이다. 근거 고시는 가축 외 포유류동물
+ *   수입위생조건(농식품부고시 제2021-42호)·지정검역물의 검역방법 및 기준.
+ *   (구 출처였던 petmove 블로그 2024-01-04 스냅샷은 이 공식 목록과 전부 일치했다 — 값 변경 없음.)
  *
- * 매칭은 목적지 토큰(원본 국가명) 기준 — eu 묶음 24개국이 비발생/발생으로 섞여 있어
- * (독일=비발생, 프랑스=발생) destinationKey 가 아닌 실제 국가명 기준이 필수다.
+ * ⚠️ APQA 는 이 목록을 정적으로 공표하지 않으며 발생 상황에 따라 **실시간 변동**한다
+ * (WOAH 발생 통보 시 자동 삭제 / 청정 선언 시 분기별 추가). 당국도 "입국 전 검역기관
+ * (동물검역과 054-912-0427) 확인"을 요구한다. 그래서 이 값은 확정 데이터가 아니라
+ * **'안내(info)'용**이고, 입력 차단·강한 주의로 쓰지 않는다. 갱신은 이 상수 하나만 고친다.
+ *
+ * 매칭이 **destinationKey 가 아니라 목적지 토큰(실제 국가명)** 기준인 이유:
+ *  ① eu 묶음 24개국이 비발생/발생으로 섞여 있다(독일=비발생, 프랑스=발생).
+ *  ② 공고 목록 50개국이 destinations.json 에 선택 가능한데 그중 23개국은
+ *     DESTINATION_OVERRIDES 에 키가 없다(몰디브·피지·아이슬란드 등). 예전엔 판정이
+ *     override 키 기반이라 이 나라들이 통째로 '발생국'으로 떨어져, 면제 대상인데도
+ *     귀국 항체 2년 안내·만료 알림이 나갔다(2026-07-22 발견·수정).
  */
-// 비발생국에 해당하는 1:1 destinationKey (eu 묶음 제외).
-const RABIES_FREE_DESTINATION_KEYS: Array<keyof typeof DESTINATION_OVERRIDES> = [
-  'japan', 'australia', 'new_zealand', 'uk', 'ireland', 'malta', 'finland', 'cyprus',
-  'switzerland', 'singapore', 'hongkong', 'hawaii', 'guam', 'uae',
-]
-// eu 묶음(24개국) 중 비발생 회원국 토큰(소문자). 발생국(프랑스·스페인·네덜란드·덴마크·폴란드·
-// 그리스·헝가리·루마니아·크로아티아·슬로바키아)은 제외 — 그쪽은 귀국 2년 룰 적용.
-const RABIES_FREE_EU_MEMBERS = new Set<string>([
-  '독일', 'germany', '이탈리아', 'italy', '벨기에', 'belgium', '오스트리아', 'austria',
-  '스웨덴', 'sweden', '체코', 'czech', '포르투갈', 'portugal', '불가리아', 'bulgaria',
-  '슬로베니아', 'slovenia', '리투아니아', 'lithuania', '라트비아', 'latvia',
-  '에스토니아', 'estonia', '룩셈부르크', 'luxembourg',
-])
+/**
+ * 공고 목록 국가명 — 한글은 공고 표기와 destinations.json 표기를 **둘 다** 넣고(공고 '세이셜'
+ * vs 우리 '세이셸' 처럼 다른 경우가 있다), 영문은 destinations.json 의 en 과 각 목적지
+ * override 의 keywords 별칭(북아일랜드·아랍에미레이트 구표기 등)을 함께 넣는다.
+ * 비교는 normalizeRabiesFreeToken(소문자 + 공백 제거) 후 exact match.
+ */
+const RABIES_FREE_TOKENS: ReadonlySet<string> = new Set(
+  [
+    // ── 아메리카 ──
+    '괌', 'guam', '과들루프섬', '과들루프', 'guadeloupe', '마르티니크', 'martinique',
+    '바베이도스', 'barbados', '세인트빈센트그레나딘', 'saint vincent and the grenadines',
+    '아루바', 'aruba', '자메이카', 'jamaica', '케이맨 제도', '케이맨제도', 'cayman islands',
+    '하와이', 'hawaii',
+    // ── 아시아 ──
+    '몰디브', 'maldives', '바레인', 'bahrain', '브루나이', 'brunei',
+    // 공고는 '사이프러스', 우리 목적지 표기는 '키프로스'.
+    '사이프러스', '키프로스', 'cyprus',
+    '싱가포르', 'singapore',
+    // uae override 는 구표기 '아랍에미레이트'를 검색 별칭으로 유지한다.
+    '아랍에미리트', '아랍에미레이트', 'uae', 'united arab emirates',
+    '일본', 'japan', '쿠웨이트', 'kuwait', '홍콩', 'hong kong', 'hongkong',
+    // ── 아프리카 ──
+    '레위니옹섬', '레위니옹', 'reunion', '모리셔스', 'mauritius',
+    '상투메프린시페', 'sao tome and principe',
+    // 공고는 '세이셜', destinations.json 은 '세이셸'.
+    '세이셜', '세이셸', 'seychelles',
+    '지부티', 'djibouti', '카보베르데', 'cape verde', '코모로', 'comoros',
+    // ── 오세아니아 ──
+    '뉴칼레도니아', 'new caledonia', '뉴질랜드', 'new zealand', 'nz',
+    '미크로네시아', 'micronesia', '바누아투', 'vanuatu', '사모아', 'samoa',
+    '월리스프투나', '월리스푸투나', 'wallis and futuna', '키리바시', 'kiribati',
+    '파푸아뉴기니', 'papua new guinea', '프랑스령 폴리네시아', '프랑스령폴리네시아',
+    'french polynesia', '피지', 'fiji', '호주', 'australia',
+    // ── 유럽 ──
+    // ⚠️ 노르웨이는 공고 목록에 **없다**(비발생국 아님). 유럽이라고 넣지 말 것.
+    '독일', 'germany', '라트비아', 'latvia', '룩셈부르크', 'luxembourg',
+    '리투아니아', 'lithuania', '리히텐슈타인', 'liechtenstein', '몬테네그로', 'montenegro',
+    '몰타', 'malta', '벨기에', 'belgium', '불가리아', 'bulgaria', '산마리노', 'san marino',
+    '스웨덴', 'sweden', '스위스', 'switzerland', '슬로베니아', 'slovenia',
+    '아이슬란드', 'iceland', '아일랜드', 'ireland', '안도라', 'andorra',
+    '에스토니아', 'estonia',
+    // uk override 의 별칭 전부 — 영국 본토·구성국 표기 어느 것으로 저장돼도 잡히게.
+    '영국', '북아일랜드', 'uk', 'united kingdom', 'england', 'scotland', 'wales',
+    'northern ireland',
+    '오스트리아', 'austria', '이탈리아', 'italy', '체코', 'czech', '포르투갈', 'portugal',
+    '핀란드', 'finland',
+  ].map((t) => t.toLowerCase().replace(/\s+/g, '')),
+)
+
+function normalizeRabiesFreeToken(token: string): string {
+  return token.trim().toLowerCase().replace(/\s+/g, '')
+}
 
 /**
  * 활성 목적지가 한국 지정 광견병 비발생 지역인지 — 귀국 항체검사 면제 판정용.
- * (위 RABIES_FREE_* 주석의 변동성·면책 참고. 코드 단정이 아니라 안내 기준값.)
+ * (위 주석의 변동성·면책 참고. 코드 단정이 아니라 안내 기준값.)
+ *
+ * 다중 목적지(콤마 구분)는 **하나라도 비발생이면 true** — 기존 동작 유지. 활성 목적지 하나만
+ * 넘기는 호출부(procedure-check ctx·titerReminderTargets)가 정상 경로다.
+ * 'eu'·'유럽연합' 같은 묶음 라벨은 회원국이 섞여 있어 목록에 넣지 않는다(= 면제 아님).
  */
 export function isRabiesFreeOrigin(destination: string | null | undefined): boolean {
   if (!destination) return false
-  if (RABIES_FREE_DESTINATION_KEYS.some((k) => matchesDestinationKey(destination, k))) return true
-  // eu 묶음은 실제 국가 토큰으로 비발생/발생이 갈린다.
-  if (matchesDestinationKey(destination, 'eu')) {
-    return parseDestinations(destination).some((t) => RABIES_FREE_EU_MEMBERS.has(t.toLowerCase()))
-  }
-  return false
+  return parseDestinations(destination).some((t) =>
+    RABIES_FREE_TOKENS.has(normalizeRabiesFreeToken(t)),
+  )
 }
 
 const VET_VISIT_DEFAULT_WINDOW_DAYS = 10
