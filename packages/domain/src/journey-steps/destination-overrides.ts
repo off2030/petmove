@@ -722,8 +722,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     //   (2026-07-23 정정. 아랍에미리트만 '수입 허가'로 적혀 있었다).
     'import-permit': {
       description:
-        '아랍에미리트 도착 전에 검역기관(MOCCAE)에 수입 허가증을 신청하세요.\n\n온라인으로만 신청해요. 마리당 200디르함을 카드로 결제하면 보통 1영업일 안에 발급돼요.\n\n허가증은 발급일로부터 90일간 유효해요. 너무 일찍 신청하면 입국 전에 만료돼요.',
-      cardLine: '아랍에미리트 수입 허가증을 신청하세요.',
+        '아랍에미리트 도착 전에 검역기관(MOCCAE)에 수입 허가를 신청하세요.\n\n온라인으로만 신청해요. 마리당 200디르함을 카드로 결제하면 보통 1영업일 안에 발급돼요.\n\n허가증은 발급일로부터 90일간 유효해요. 너무 일찍 신청하면 입국 전에 만료돼요.',
+      cardLine: '아랍에미리트 수입 허가를 신청하세요.',
       doneSummary: '아랍에미리트 수입 허가증을 받았어요.',
       validationIds: ['ae.import-permit-within-90days'],
       links: [
@@ -1020,9 +1020,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'import-permit': {
       order: 43,
       description:
-        '대만 수입 허가증을 신청하세요.\n\n도착 120일 전까지 온라인으로 신청하세요.\n도착 20일 전까지 신청할 수 있지만, 이 경우 대만 도착 후 7일간 지정 시설에서 격리돼요.',
+        '대만 수입 허가를 신청하세요.\n\n도착 120일 전까지 온라인으로 신청하세요.\n도착 20일 전까지 신청할 수 있지만, 이 경우 대만 도착 후 7일간 지정 시설에서 격리돼요.',
       doneSummary: '대만 수입 허가증을 받았어요.',
-      cardLine: '대만 수입 허가증을 신청하세요.',
+      cardLine: '대만 수입 허가를 신청하세요.',
       // 2단계 마감 — 120일(격리 면제) 놓치면 20일(진짜 마지막, 도착 후 7일 격리)로 넘어간다.
       deadline: { anchor: 'departure', daysBefore: 120, fallbackDaysBefore: 20 },
       inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
@@ -1183,9 +1183,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     //   해야 하며 … MAQIS 담당자가 신청 정보를 검토해서 수입허가증을 발급합니다."
     importPermit: {
       description:
-        '말레이시아 현지 에이전시를 통해 수입 허가증을 신청하세요.\n\n한국에서는 신청할 수 없어요. 현지 에이전시에 의뢰해야 해요.\n계류장 공간을 먼저 예약해야 신청할 수 있어요. 예약은 최소 14일 전에 하세요.\n검역당국(MAQIS)이 검토한 뒤 허가증을 발급해요.',
+        '말레이시아 현지 에이전시를 통해 수입 허가를 신청하세요.\n\n한국에서는 신청할 수 없어요. 현지 에이전시에 의뢰해야 해요.\n계류장 공간을 먼저 예약해야 신청할 수 있어요. 예약은 최소 14일 전에 하세요.\n검역당국(MAQIS)이 검토한 뒤 허가증을 발급해요.',
       doneSummary: '말레이시아 수입 허가증을 받았어요.',
-      cardLine: '말레이시아 수입 허가증을 신청하세요.',
+      cardLine: '말레이시아 수입 허가를 신청하세요.',
       attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
       attachmentLabel: '수입 허가증',
       validationIds: ['my.import-permit-not-after-departure'],
@@ -1238,9 +1238,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     //   필요합니다."
     importPermit: {
       description:
-        '인도네시아 현지 에이전시를 통해 수입 허가증을 신청하세요.\n\n한국에서는 신청할 수 없어요. 현지 신청만 가능해요.\n준비 절차를 마친 뒤에 신청할 수 있어요.',
+        '인도네시아 현지 에이전시를 통해 수입 허가를 신청하세요.\n\n한국에서는 신청할 수 없어요. 현지 신청만 가능해요.\n준비 절차를 마친 뒤에 신청할 수 있어요.',
       doneSummary: '인도네시아 수입 허가증을 받았어요.',
-      cardLine: '인도네시아 수입 허가증을 신청하세요.',
+      cardLine: '인도네시아 수입 허가를 신청하세요.',
       attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
       attachmentLabel: '수입 허가증',
       validationIds: ['id.import-permit-not-after-departure'],
@@ -1312,11 +1312,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // 수입 허가증(SPSIC) — Intercommerce 온라인 신청. 마감 배지 없음(고정 X일 전 규칙이 없어
     // base deadline 을 undefined 로 무효화). 권장 시점은 description 으로만 안내.
     importPermit: {
-      title: '수입 허가증(SPSIC) 신청',
+      // 제목은 전 목적지 공통('수입 허가 신청') — 신청 대상은 '허가'이고 결과물이 '허가증'
+      // 이라는 구분(2026-07-23 통일). SPSIC 서류명은 카드줄·완료 문구·저장 이름에 남는다.
+      title: '수입 허가 신청',
       description:
-        '필리핀 수입 허가증(SPSIC)을 신청하세요.\n\nIntercommerce 사이트에서 온라인으로 신청해요.\n접종일로부터 2주가 지난 후에 신청할 수 있어요.\n신청일 기준 4개월령 이상이어야 해요. 3마리까지 신청할 수 있어요.\n승인까지 수 일이 걸려요. 최소 1~2주 전까지 신청하세요.\n수입 허가증은 발급일로부터 60일간 유효해요.',
+        '필리핀 수입 허가(SPSIC)를 신청하세요.\n\nIntercommerce 사이트에서 온라인으로 신청해요.\n접종일로부터 2주가 지난 후에 신청할 수 있어요.\n신청일 기준 4개월령 이상이어야 해요. 3마리까지 신청할 수 있어요.\n승인까지 수 일이 걸려요. 최소 1~2주 전까지 신청하세요.\n수입 허가증은 발급일로부터 60일간 유효해요.',
       doneSummary: '필리핀 수입 허가증(SPSIC)을 받았어요.',
-      cardLine: '필리핀 수입 허가증(SPSIC)을 신청하세요.',
+      cardLine: '필리핀 수입 허가를 신청하세요.',
       deadline: undefined,
       links: [
         { url: 'https://www.intercommerce.com.ph/login.asp?home=HOME', label: '수입 허가 신청(Intercommerce)' },
