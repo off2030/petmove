@@ -94,10 +94,10 @@ export function collectMilestonePushes(caseRow: CaseRow): MilestonePush[] {
     } else if (
       key === 'thailand' ||
       key === 'philippines' ||
-      key === 'taiwan' ||
-      // 말레이시아·인도네시아 — 태국 복제(2026-07-22): 같은 import-permit 카드·판정 함수.
-      key === 'malaysia' ||
-      key === 'indonesia'
+      key === 'taiwan'
+      // ⛔ 말레이시아·인도네시아 제외(2026-07-23) — 수입 허가를 현지에서 처리하고 신청 마감이
+      //   없거나 미확인이라 '허가 나왔어요' 발급 푸시를 만들지 않는다(아랍에미리트와 같은 판단).
+      //   reminders.ts 의 마감 알림 제거와 짝.
     ) {
       // 대만도 같은 import-permit 카드·같은 판정 함수를 쓴다(APHIA e-permit). 보호자가 직접
       // 신청하는 허가지만(selfApply), 발급됐다는 사실은 앱에 기록되는 순간 알릴 가치가 있다 —

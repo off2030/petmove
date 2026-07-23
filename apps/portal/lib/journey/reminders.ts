@@ -656,32 +656,12 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r) out.push(r)
       }
-    } else if (key === 'malaysia') {
-      // 말레이시아 — ⚠️ 태국 복제(2026-07-22): 같은 2주 전 안내. 규정 확정 후 수정 예정.
-      if (departure && deriveImportPermitStatus(flat) === 'not_started') {
-        const r = leadReminder(
-          flat,
-          `${token}|my-permit`,
-          departure,
-          14,
-          '말레이시아 수입 허가증 신청을 준비하세요. 출국 7영업일 전까지 신청해야 해요(영업일 기준이라 여유 있게 하세요).',
-          now,
-        )
-        if (r) out.push(r)
-      }
-    } else if (key === 'indonesia') {
-      // 인도네시아 — ⚠️ 태국 복제(2026-07-22): 같은 2주 전 안내. 규정 확정 후 수정 예정.
-      if (departure && deriveImportPermitStatus(flat) === 'not_started') {
-        const r = leadReminder(
-          flat,
-          `${token}|id-permit`,
-          departure,
-          14,
-          '인도네시아 수입 허가증 신청을 준비하세요. 출국 7영업일 전까지 신청해야 해요(영업일 기준이라 여유 있게 하세요).',
-          now,
-        )
-        if (r) out.push(r)
-      }
+    // ⛔ **말레이시아는 신청 마감 알림 없음**(사용자 확정 2026-07-23). MAQIS 수입 허가는
+    //   정해진 신청 마감일이 없다 — 태국 복제로 딸려온 '출국 7영업일 전' 알림을 제거했다
+    //   (아랍에미리트와 같은 판단). 마감이 없는 나라에 '출국 N일 전까지' 알림을 넣지 말 것.
+    // ⛔ **인도네시아도 신청 마감 알림 없음**(2026-07-23). '출국 7영업일 전'은 태국 복제
+    //   미확인값이었다(구 주석 "규정 확정 후 수정 예정"). 미확인 마감을 알리는 건 없느니만
+    //   못해 제거했다 — 말레이시아와 같은 처리. 규정을 확정하면 그때 근거와 함께 되살릴 것.
     } else if (key === 'philippines') {
       // 필리핀 수입 허가증 — 정해진 기한 없어 출국 1주 전 안내.
       if (departure && deriveImportPermitStatus(flat) === 'not_started') {

@@ -55,6 +55,7 @@ type Problem = {
     | 'own-calc'
     | 'no-blocker'
     | 'dead-declaration'
+    | 'notify-unregistered'
 }
 
 /**
@@ -455,6 +456,8 @@ function describe(p: Problem): string {
   if (p.kind === 'missing') return '존재하지 않는 룰'
   if (p.kind === 'no-blocker')
     return '주의 룰은 있는데 **저장 거부가 이 목적지를 보지 않는다** — 규정 위반 날짜가 그냥 저장된다(우크라이나 2026-07-22 사고와 동일)'
+  if (p.kind === 'notify-unregistered')
+    return '수입 허가 마감 알림·발급 푸시가 걸려 있는데 IMPORT_PERMIT_NOTIFY_OK 에 등록되지 않았다 — 이 나라에 실제 신청 마감이 있는지 확인하고 사유와 함께 등록하거나, 마감이 없으면 알림/푸시를 제거할 것(말레이시아 사고)'
   if (p.kind === 'dead-declaration')
     return `프로파일에 선언했는데 **읽는 코드가 없다** — 규정을 적어 뒀지만 아무 동작도 하지 않는다`
   if (p.kind === 'missing-pair')
@@ -466,6 +469,60 @@ function describe(p: Problem): string {
   if (p.kind === 'orphan-rule')
     return `${p.ruleId} — 어느 카드도 지목하지 않음. 경고가 카드 배지 대신 상단으로 샌다`
   return `이 목적지에 적용되지 않는 룰 → ${p.dest} 케이스에선 검증이 실행되지 않음`
+}
+
+/**
+ * 8단계 — **신청 마감 알림·발급 푸시가 걸린 목적지가 명시 등록됐는가.**
+ *
+ * 왜 필요한가(2026-07-23 사용자 요청 "여행지 추가 시 사전에 확인"): 수입 허가 마감 알림
+ * (reminders.ts)과 발급 완료 푸시(milestone-pushes.ts)는 목적지 키가 **손으로 하드코딩**돼
+ * 있다. 새 나라를 태국 복제로 만들면 그 알림/푸시가 딸려오는데, **그 나라에 실제로 신청
+ * 마감이 있는지는 확인되지 않은 채** 알림이 나간다.
+ *
+ * 실제 사고: 말레이시아·인도네시아가 태국 복제로 '출국 7영업일 전까지 신청' 알림을 물려받아,
+ * MAQIS 는 신청 마감이 없는데도 없는 기한을 안내하고 있었다(2026-07-23 발견·제거).
+ *
+ * 검사 방법: 두 파일을 텍스트로 읽어 import-permit 관련 목적지 키를 뽑고, **아래 명시
+ * 등록(IMPORT_PERMIT_NOTIFY_OK)에 없는 앱 목적지**를 실패시킨다. 새로 넣으려면 그 나라의
+ * 마감 근거를 확인하고 사유와 함께 등록해야 한다 — 복제로 조용히 새는 걸 막는 문지기.
+ */
+const IMPORT_PERMIT_NOTIFY_OK: Record<string, string> = {
+  thailand: 'DLD — 출국 7영업일 전 신청 마감(확인됨)',
+  philippines: 'BAI SPSIC — 신청 마감 관행 있음',
+  taiwan: 'APHIA — 도착 120일 전 마감',
+  // ⛔ 여기 없는 앱 목적지가 알림/푸시 코드에 있으면 실패한다. 마감 근거를 확인한 뒤
+  //   사유와 함께 추가할 것. 마감이 없는 나라(말레이시아·아랍에미리트)는 애초에 알림/푸시를
+  //   만들지 않는다 — 여기 넣어서 통과시키지 말 것.
+}
+
+function importPermitNotifyLeaks(appDests: string[]): Problem[] {
+  const files = [
+    path.join(CHECKS_DIR, '..', '..', '..', '..', 'apps', 'portal', 'lib', 'journey', 'reminders.ts'),
+    path.join(CHECKS_DIR, '..', '..', '..', '..', 'apps', 'portal', 'lib', 'journey', 'milestone-pushes.ts'),
+  ]
+  const appSet = new Set(appDests)
+  const found = new Set<string>()
+  for (const f of files) {
+    if (!fs.existsSync(f)) continue
+    const src = fs.readFileSync(f, 'utf8')
+    // 주석 줄은 제외하고 실제 코드의 `key === '<dest>'` 만 본다(주석에 남긴 제외 사유가
+    // 오탐되지 않게). import-permit 문맥 밖의 key 비교(사전신고 등)도 있으나, 그것들은
+    // 목적지가 명시 등록 대상이 아니라 아래 appSet 교집합에서 자연히 걸러진다.
+    for (const line of src.split('\n')) {
+      if (line.trim().startsWith('//') || line.trim().startsWith('*')) continue
+      for (const m of line.matchAll(/key === '([a-z_]+)'/g)) found.add(m[1])
+    }
+  }
+  const out: Problem[] = []
+  for (const dest of found) {
+    if (!appSet.has(dest)) continue
+    if (dest in IMPORT_PERMIT_NOTIFY_OK) continue
+    // 알림/푸시 코드에 있는데 등록 안 된 앱 목적지 — 단, import-permit 카드가 있는 나라만
+    // (사전신고 등 다른 문맥의 key 비교는 importPermit 프로파일이 없어 제외).
+    if (!DESTINATION_OVERRIDES[dest]?.importPermit) continue
+    out.push({ dest, stepId: '(reminders/milestone-pushes)', ruleId: `${dest}`, kind: 'notify-unregistered' })
+  }
+  return out
 }
 
 function main(): void {
@@ -480,6 +537,7 @@ function main(): void {
     ...ownCalcRules(appDests),
     ...titerWaitWithoutBlocker(appDests),
     ...deadDeclarations(appDests),
+    ...importPermitNotifyLeaks(appDests),
   ]
   const backlog = adminDests.flatMap(collect)
 
