@@ -368,7 +368,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'departure',
       group: 'quarantine',
       description:
-        '일본 수입 검역 후 발급받아요.\n\n정확한 서류 이름은 Import Quarantine Certificate 입니다.\n\n일본에서 출국할 때 필요할 수 있으므로 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '일본 수입 검역 후 발급받아요.\n\n정확한 서류 이름은 Import Quarantine Certificate 예요.\n\n일본에서 출국할 때 필요할 수 있으므로 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'departure',
     },
     {
@@ -380,7 +380,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '일본 수출 검역 후 발급받아요.\n\n정확한 서류 이름은 Export Quarantine Certificate 입니다.\n\n향후 일본 재입국 시 필요할 수 있으니 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '일본 수출 검역 후 발급받아요.\n\n정확한 서류 이름은 Export Quarantine Certificate 예요.\n\n향후 일본 재입국 시 필요할 수 있으니 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'jp-export-quarantine-visit',
     },
     {
@@ -439,7 +439,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'departure',
       group: 'quarantine',
       description:
-        '태국 수입 검역 후 발급받아요.\n\n정확한 서류 이름은 Import License(R.7) 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '태국 수입 검역 후 발급받아요.\n\n정확한 서류 이름은 Import License(R.7) 예요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'departure',
     },
     {
@@ -451,7 +451,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '태국 수출 검역 후 발급돼요.\n\n정확한 서류 이름은 Export License(R.9), Official Animal Health Certificate 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '태국 수출 검역 후 발급돼요.\n\n정확한 서류 이름은 Export License(R.9), Official Animal Health Certificate 예요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'th-export-quarantine',
     },
     {
@@ -614,7 +614,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'departure',
       group: 'quarantine',
       description:
-        '인도네시아 수입 검역을 마치면 발급받아요.\n\n정확한 서류 이름은 Sertifikat Pelepasan Karantina(KH-14) 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '인도네시아 수입 검역을 마치면 발급받아요.\n\n정확한 서류 이름은 Sertifikat Pelepasan Karantina(KH-14) 예요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'departure',
     },
     {
@@ -693,7 +693,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '필리핀 수출 검역 후 발급돼요.\n\n정확한 서류 이름은 Export Permit, International Veterinary Health Certificate 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '필리핀 수출 검역 후 발급돼요.\n\n정확한 서류 이름은 Export Permit, International Veterinary Health Certificate 예요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'ph-export-quarantine',
     },
     {
@@ -750,7 +750,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '중국 해관에서 발급하는 출국용 동물위생증명서예요.\n\n정확한 서류 이름은 动物卫生证书 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '중국 해관에서 발급하는 출국용 동물위생증명서예요.\n\n정확한 서류 이름은 动物卫生证书 예요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'cn-export-quarantine',
     },
     {
@@ -821,7 +821,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'departure',
       group: 'quarantine',
       description:
-        '베트남 수입 검역 후 발급받아요.\n\n정확한 서류 이름은 Giấy chứng nhận kiểm dịch động vật nhập khẩu (Mẫu 15a) 입니다.\n\n베트남에서 출국할 때 필요할 수 있으므로 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '베트남 수입 검역 후 발급받아요.\n\n정확한 서류 이름은 Giấy chứng nhận kiểm dịch động vật nhập khẩu (Mẫu 15a) 예요.\n\n베트남에서 출국할 때 필요할 수 있으므로 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'departure',
     },
     {
@@ -833,7 +833,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '베트남 수출 검역 후 발급받아요.\n\n정확한 서류 이름은 Giấy chứng nhận kiểm dịch động vật xuất khẩu (Mẫu 13a) 입니다.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '베트남 수출 검역 후 발급받아요.\n\n정확한 서류 이름은 Giấy chứng nhận kiểm dịch động vật xuất khẩu (Mẫu 13a) 예요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'vn-export-quarantine',
     },
     {
