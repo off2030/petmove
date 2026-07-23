@@ -977,7 +977,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     //   СЕРТИФІКАТ). 수출국(한국)에서 작성 → 관용 수의사 서명 = 한국 수출 검역 검역관. 귀국용
     //   exportQuarantineDoc(우크라이나 DPSS 현지 발급)과는 방향·발급주체가 다르다.
     entryHealthCert: {
-      name: '우크라이나 입국용 국제수의증명서',
+      name: '우크라이나 국제 수의증명서',
       description:
         '우크라이나 입국용 국제수의증명서예요. 정확한 서류 이름은 International Certificate for Introduction into the Customs Territory of Ukraine 입니다.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종·항체 검사 결과가 기재돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     },
@@ -1042,7 +1042,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     //   exportQuarantineDoc(MOCCAE 현지 발급)과 방향·발급주체가 다르다. 4개국 중 유일하게
     //   APQA 국가별 서식 목록 포함국(터키·이스라엘·우크라이나는 미포함).
     entryHealthCert: {
-      name: '아랍에미리트 입국용 수의건강증명서(EY604)',
+      name: '아랍에미리트 건강증명서(EY604)',
       description:
         '아랍에미리트 입국용 수의건강증명서예요. 정확한 서류 이름은 Veterinary Health Certificate for Exporting Cats and Dogs to the UAE(EY604) 입니다.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n마이크로칩·예방접종·기생충 구제 등이 기재돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     },
@@ -1087,7 +1087,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     //   한국에서 작성 → 서명란 'signature of the official veterinarian'(정부 수의사) = 한국 수출
     //   검역 검역관. 귀국용 exportQuarantineDoc(튀르키예 현지 발급)과는 방향·발급주체가 다르다.
     entryHealthCert: {
-      name: '튀르키예 입국용 오리진·수의 건강증명서',
+      name: '튀르키예 건강증명서',
       description:
         '튀르키예 입국용 건강증명서예요. 정확한 서류 이름은 Veterinary Health and Origin Certificate 입니다.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     },
@@ -1308,7 +1308,7 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
     // 입국용 서식 = 사용자 제공 이스라엘 정부 서식 "Veterinary Certificate for Domestic Dogs
     //   and Cats Entering Israel"(Annex A, State of Israel MoAG Veterinary Services). 수출국(한국)
     //   에서 작성 → official veterinarian 서명 + competent authority 배서, 발급 후 10일 유효.
-    certName: '이스라엘 입국용 수의증명서(Annex A)',
+    certName: '이스라엘 건강증명서(Annex A)',
     certDescription:
       '이스라엘 입국용 수의증명서예요. 정확한 서류 이름은 Veterinary Certificate for Domestic Dogs and Cats Entering Israel(Annex A) 입니다.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종·항체 검사 결과가 기재돼요. 발급일로부터 10일간 유효해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     exportCertName: '이스라엘 국제건강증명서',
