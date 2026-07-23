@@ -229,16 +229,15 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/brazil-27.jpg',
   ],
   말레이시아: [
-    // 2026-07-22 등록 (11장). 리드(첫 장) 미지정 — 사용자 검수 후 순서 조정.
+    // 리드(첫 장) = malaysia-07(해변 항공샷) — 2026-07-23 사용자 지정. malaysia-09(야시장)는 삭제됨.
+    '/destinations/malaysia-07.jpg',
     '/destinations/malaysia-01.jpg',
     '/destinations/malaysia-02.jpg',
     '/destinations/malaysia-03.jpg',
     '/destinations/malaysia-04.jpg',
     '/destinations/malaysia-05.jpg',
     '/destinations/malaysia-06.jpg',
-    '/destinations/malaysia-07.jpg',
     '/destinations/malaysia-08.jpg',
-    '/destinations/malaysia-09.jpg',
     '/destinations/malaysia-10.jpg',
     '/destinations/malaysia-11.jpg',
   ],
