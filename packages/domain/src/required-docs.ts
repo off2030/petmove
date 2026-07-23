@@ -200,6 +200,13 @@ function vietnamFamilyDocSpecs(
      * 왕복 전용으로 두면 편도 고객의 서류탭에서 필수 서류가 통째로 빠진다.
      */
     titerEntryDoc?: boolean
+    /**
+     * 사전 수입 허가증 — 도착국이 출국 전 발급하는 허가증. 여정에 `import-permit` 단계가 있는
+     * 나라만 채운다(destination-config 의 importPermit 선언). 항체 결과지 다음·별지25호 앞에
+     * 온다(태국 R.6·필리핀 SPSIC 순서와 동일). ⚠️ 도착 후 받는 importQuarantineDoc(수입 검역
+     * 서류)과 혼동 금지 — 이건 출국 전에 미리 받는 허가다.
+     */
+    importPermitDoc?: { name: string; source: string; description: string }
     importQuarantineDoc?: { source?: string; description?: string }
     /**
      * 도착 검역이 **심사만** 하고 보호자에게 발급물이 없는 나라 — 도착 서류 항목을 뺀다
@@ -233,6 +240,21 @@ function vietnamFamilyDocSpecs(
         : `검사를 의뢰한 동물병원에서 발급받아요.\n\n${label} 입국에는 필요 없지만 한국 귀국 때 반드시 원본이 필요해요. 유효기간은 2년이에요.${titerLabLine}\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.`,
       previewStepId: 'rabies-titer',
     },
+    // 사전 수입 허가증 — 여정에 import-permit 단계가 있는 나라만. 항체 결과지 다음·별지25호 앞
+    // (태국 R.6·필리핀 SPSIC 순서와 동일). 도착 후 받는 수입 검역 서류와는 다른 서류다.
+    ...(opts.importPermitDoc
+      ? [
+          {
+            id: `${cc}-import-permit-doc`,
+            name: opts.importPermitDoc.name,
+            source: opts.importPermitDoc.source,
+            kind: 'step' as const,
+            stepRef: 'import-permit',
+            description: opts.importPermitDoc.description,
+            previewStepId: 'import-permit',
+          },
+        ]
+      : []),
     KR_FORM25_VACCINATION_HEALTH_CERT,
     // 목적지 입국용 수의 건강증명서 — 목적지 지정 전용 서식을 한국에서 작성하고 한국 수출
     // 검역 때 검역관(정부 수의사)이 확인·서명한다(일본 Form AC 패턴). 서식이 확인된 나라만.
@@ -1023,6 +1045,13 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       name: '아랍에미리트 입국용 수의건강증명서(EY604)',
       description:
         '아랍에미리트 입국용 수의건강증명서예요. 정확한 서류 이름은 Veterinary Health Certificate for Exporting Cats and Dogs to the UAE(EY604) 입니다.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n마이크로칩·예방접종·기생충 구제 등이 기재돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
+    // MOCCAE 사전 발급 수입 허가(90일 유효) — destination-config 의 importPermit 선언과 대응.
+    importPermitDoc: {
+      name: '아랍에미리트 수입 허가증(MOCCAE)',
+      source: '아랍에미리트 기후변화환경부(MOCCAE)',
+      description:
+        '수입 허가 신청이 승인되면 발급돼요.\n\n발급일로부터 90일간 유효해요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
     },
     importQuarantineDoc: {
       source: '아랍에미리트 공항 검역소',
