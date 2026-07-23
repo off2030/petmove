@@ -1239,11 +1239,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // ✅ 항체검사가 **입국 요건**(2026-07-22 조사 확정) — '한국 귀국용' 문형을 쓰지 않는다.
     titerDescription:
       '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n인도네시아 입국에 필요해요. 왕복이면 한국으로 돌아올 때도 필요해요.\n0.5 IU/mL 이상이면 합격이에요.',
-    generalVaccine: {
-      description:
-        '종합백신을 접종하세요.\n\n인도네시아 입국에 필수는 아니지만, 격리시설에서 1~2주를 지내야 해서 전염병 예방을 위해 권장해요.',
-      validationIds: ['id.microchip-before-general-vaccine'],
-    },
+    // 종합백신 — 인도네시아 입국 요건이 아니라 카드를 두지 않는다(2026-07-23 사용자 결정).
+    //   가이드가 '필수 아님·격리 대비 권장'으로만 다뤄, catalog 종합백신 명단에서도 뺐다.
+    //   generalVaccine override 를 넘기지 않으면 seaPermitOverrides 가 카드 override 를 만들지 않는다.
     flight: {
       // 가이드: "본 가이드는 자카르타 입국을 전제로 작성되었습니다" + "발리 등은 공식적으로는
       // 반려동물 수입이 금지되어 있습니다." 조사도 같은 결론(발리·NTB·NTT·중부/동부자바·
@@ -1642,7 +1640,12 @@ function seaPermitOverrides(opts: {
   rabiesDescription: string
   rabiesValidationIds: string[]
   titerDescription: string
-  generalVaccine: Pick<
+  /**
+   * 종합백신 카드 override. **선택** — 종합백신이 입국 요건이 아닌 나라(인도네시아)는
+   * 넘기지 않는다. 넘기지 않으면 general-vaccine override 자체를 만들지 않는다(카드는
+   * catalog 의 하드코딩 명단이 노출을 결정하므로, 그 명단에서도 빼야 실제로 사라진다).
+   */
+  generalVaccine?: Pick<
     Partial<StepDefinition>,
     'description' | 'descriptionBySpecies' | 'validationIds'
   >
@@ -1696,7 +1699,8 @@ function seaPermitOverrides(opts: {
       order: 55,
       validationIds: RETURN_ONLY_TITER_CHECKS,
     },
-    'general-vaccine': opts.generalVaccine,
+    // 종합백신 override 는 넘어온 나라만(인도네시아처럼 미요건이면 opts.generalVaccine 없음).
+    ...(opts.generalVaccine ? { 'general-vaccine': opts.generalVaccine } : {}),
     'flight-purchase': {
       description: opts.flight.description,
       cardLine: `${opts.label}에 입국할 수 있어요.`,

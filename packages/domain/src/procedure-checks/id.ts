@@ -6,8 +6,6 @@ import {
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
-  daysBetween,
-  readGeneralVaccineEntries,
   readRabiesEntries,
   readScopedImportPermitFiled,
   resolveValidUntil,
@@ -15,7 +13,7 @@ import {
   readDepartureDate,
   findRabiesValidityBreaks,
 } from './utils'
-import { msgGeneralVaccineExpiredBefore, msgMicrochipBeforeGeneralVaccine, msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
+import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 인도네시아 절차 검증.
@@ -99,32 +97,9 @@ export const ID_CHECKS: ProcedureCheck[] = [
       }
     },
   },
-  {
-    id: 'id.microchip-before-general-vaccine',
-    country: COUNTRY,
-    category: '마이크로칩',
-    title: '마이크로칩, 종합백신 타이밍',
-    description:
-      '마이크로칩(ISO 11784/11785)이 종합백신 접종일과 같거나 이전이어야 함. 칩으로 식별된 동물의 접종만 인정 — 백신 입력 시 client 차단(validateMicrochipBeforeBooster)과 짝, 칩 시술일 수정 후 깨진 경우를 주의로 표면화.',
-    severity: 'warning',
-    addedAt: '2026-07-22',
-    run: ({ caseRow }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
-      const entries = readGeneralVaccineEntries(caseRow)
-      if (!microchip || entries.length === 0) return SKIP
-
-      const first = entries[0] // readGeneralVaccineEntries 는 날짜순 정렬 — [0] = 가장 이른 접종.
-      if (microchip <= first.date) {
-        return { ok: true, message: `마이크로칩(${microchip}) ≤ 종합백신(${first.date}).` }
-      }
-      return {
-        ok: false,
-        message: msgMicrochipBeforeGeneralVaccine(),
-        offendingPaths: ['microchip_implant_date', `general_vaccine_dates[${first.originalIndex}].date`],
-      }
-    },
-  },
+  // ── 종합백신 룰 없음 — 인도네시아는 종합백신이 입국 요건이 아니라 카드 자체를 두지 않는다
+  //   (2026-07-23 사용자 결정, catalog 명단·프로파일 vaccines 에서 제외). 종합백신 관련 룰
+  //   (마이크로칩 선행·도착일 유효)도 함께 제거했다 — 입력 경로가 없어 죽은 룰이 된다.
 
   // ── 광견병 ──
   {
@@ -181,35 +156,6 @@ export const ID_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
-    },
-  },
-
-  // ── 종합백신 ──
-  {
-    id: 'id.general-vaccine-not-expired-on-arrival',
-    country: COUNTRY,
-    category: '종합백신',
-    title: '도착일에 종합백신 면역 유효',
-    description:
-      '최근 종합백신 면역 유효기간이 도착일 이전 만료되지 않아야 함. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년.',
-    severity: 'warning',
-    addedAt: '2026-07-22',
-    run: ({ caseRow, destination }) => {
-      const dep = readDepartureDate(caseRow, destination)
-      const entries = readGeneralVaccineEntries(caseRow)
-      if (!dep || entries.length === 0) return SKIP
-
-      const latest = entries[entries.length - 1]
-      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
-      if (!validUntil) return SKIP
-      if (validUntil < dep) {
-        return {
-          ok: false,
-          message: msgGeneralVaccineExpiredBefore('출국'),
-          offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
-        }
-      }
-      return { ok: true, message: `최근 종합백신(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
     },
   },
 

@@ -854,7 +854,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'new_zealand',
         'thailand',
         'malaysia',
-        'indonesia',
+        // ⚠️ 인도네시아는 **넣지 않는다**(2026-07-23 사용자 결정). 펫무브 가이드가 종합백신을
+        //   '입국 필수 아님 — 격리 대비 권장'으로만 다뤄, 태국·말레이시아(필수)와 갈린다.
+        //   되살리려면 근거부터 확보할 것(튀르키예와 같은 처리).
         'singapore',
         'russia',
         'india',

@@ -444,7 +444,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     titer: { need: 'entry' },
     appSupported: true,
     importPermit: {},
-    vaccines: ['rabies', 'rabies_titer', 'general'],
+    // 종합백신 제외(2026-07-23 사용자 결정) — 가이드상 입국 필수가 아니라 카드·프로파일 모두에서
+    // 뺐다(태국·말레이시아는 필수라 포함). 광견병·항체만 남긴다.
+    vaccines: ['rabies', 'rabies_titer'],
     // 가이드: "출국 직전(항공기 탑승 전 10일 이내)에 수의사에게 임상 검사" — 기본값과 같아
     // 선언하지 않는다(getVetVisitWindowDays 기본 10).
     extraFields: [
