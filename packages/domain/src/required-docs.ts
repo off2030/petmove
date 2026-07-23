@@ -1102,6 +1102,9 @@ function euFamilyDocSpecs(
     exportCertName?: string
     // 위 서류를 관장하는 공식 기관명 — 미지정 시 일반 문구로 폴백.
     exportCertSource?: string
+    // 수출 증명서 설명문 — 미지정 시 일반 EU 문구('지정된 수의사(공인 수의사)에게 발급')로
+    // 폴백. 이스라엘처럼 발급 주체가 다른(정부 수의사) 나라는 여기서 정확한 문구를 넣는다.
+    exportCertDescription?: string
   },
 ): RequiredDocSpec[] {
   const specs: RequiredDocSpec[] = [
@@ -1171,7 +1174,7 @@ function euFamilyDocSpecs(
       stepRef: 'eu-export-cert',
       group: 'quarantine',
       roundTripOnly: true,
-      description: `${label} 정부가 발행하는 반려동물 수출건강증명서예요.\n\n${label} 출국과 한국 입국을 위한 필수 서류로, 지정된 수의사(공인 수의사)에게 발급받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
+      description: opts.exportCertDescription ?? `${label} 정부가 발행하는 반려동물 수출건강증명서예요.\n\n${label} 출국과 한국 입국을 위한 필수 서류로, 지정된 수의사(공인 수의사)에게 발급받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
       previewStepId: 'eu-export-cert',
     })
   }
@@ -1212,6 +1215,16 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
   // 수입에 같은 Annex III 서식을 쓴다(BLV 공식 안내 확인, 2026-07-17).
   switzerland: euFamilyDocSpecs('스위스', { withImportPermit: true, euAhc: true }),
   cyprus: euFamilyDocSpecs('키프로스', { euAhc: true }),
+  // 이스라엘 — eu-family인데 맵 누락으로 DEFAULT_SPECS(별지25+한국검역증)로 폴백해 항체 결과지·
+  // 이스라엘 국제건강증명서가 빠져 있었다(2026-07-23 수정). euAhc 아님(EU 아님) — 입국 건강증명서는
+  // 이스라엘 모델(Annex A). 수출 국제건강증명서 = 이스라엘 수의당국(Veterinary Services) 정부 수의사 인증.
+  israel: euFamilyDocSpecs('이스라엘', {
+    certName: '이스라엘 입국용 건강증명서',
+    exportCertName: '이스라엘 국제건강증명서',
+    exportCertSource: '이스라엘 수의당국(Veterinary Services)',
+    exportCertDescription:
+      '이스라엘 수의당국(Veterinary Services)이 인증하는 국제 건강증명서예요.\n\n이스라엘 출국과 한국 입국을 위한 필수 서류로, 수의당국 소속 정부 수의사에게 발급받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+  }),
 }
 
 /** destination 토큰('프랑스'·'영국' 등) → destination-config 키('eu'·'uk'). 매칭 실패 시 null. */

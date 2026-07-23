@@ -1590,7 +1590,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '이스라엘 수의당국(Veterinary Services)이 인증한 국제 건강증명서를 준비하세요.\n수의당국(Veterinary Services) 소속 정부 수의사에게 받아요.',
       cardLine: '이스라엘 수의당국에서 수출 검역을 받으세요.',
       doneSummary: '이스라엘 수출 검역을 받았어요.',
-      attachmentLabel: '이스라엘 정부 인증 국제건강증명서',
+      attachmentLabel: '이스라엘 국제건강증명서',
       attachmentHint: '이스라엘 정부 인증 국제건강증명서 사본을 사진·PDF로 보관하세요.',
       links: [
         {
