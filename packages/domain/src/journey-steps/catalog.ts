@@ -1358,7 +1358,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '인도네시아 수출 검역',
     shortLabel: '수출',
     description:
-      '인도네시아 출국 전 검역청(Barantin)에서 수출 검역을 받으세요.\n\n거주 지역 수의당국(Dinas)에서 수의증명서(Veterinary Certificate)를 발급받아요. 동물병원에서 준비한 접종·항체 검사·마이크로칩 기록이 필요해요.\n\n검역청에는 PTK 온라인으로 신청하고, 검역관에게 반려동물과 서류를 직접 보여줘요. 공항에서 당일 처음 신청하는 방식은 안 돼요.\n\n검사를 통과하면 동물 건강증명서(Animal Health Certificate)가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
+      '인도네시아 출국 전 검역청(Barantin)에서 수출 검역을 받으세요.\n\nPTK 온라인으로 신청 후 지정된 장소를 찾아가야 해요.\n수출 검역을 받기 위해서는 거주 지역 수의당국(Dinas)으로부터 수의증명서(Veterinary Certificate)를 발급받아야 해요. 동물병원에서 준비한 접종·항체 검사·마이크로칩 기록이 필요해요.\n검역을 통과하면 동물 건강증명서(Animal Health Certificate)가 발급돼요.',
     doneSummary: '인도네시아 수출 검역을 받았어요.',
     cardLine: '인도네시아 검역청에서 수출 검역을 받으세요.',
     applicability: { destinations: ['indonesia'], species: 'all', tripType: 'round' },
