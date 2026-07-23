@@ -1306,10 +1306,17 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     category: 'document',
     title: '말레이시아 수출 검역',
     shortLabel: '수출',
+    // ✅ 2026-07-23 DVS·MAQIS 원문 조사로 전면 교체(사용자 제공). 태국 복제 잔재를 걷어냈다:
+    //   ⛔ '공항 동물검역소에서 검역' — 틀렸다. 검사·VHC 발급은 **주(州) DVS 지청**이다.
+    //      공항 MAQIS 는 출국 당일 최종 확인만 한다(별개 단계).
+    //   ⛔ 'R.9' — 근거 없음. DVS 원문은 Export Permit(MAQIS)·VHC(DVS)만 쓰고 서식 번호가 없다.
+    //   ⛔ '1~3일 전·주말 불가' — 근거 없음. 발급 기한은 **목적국 규정 우선**이라 숫자를 안 쓴다.
+    //   구조: 신청=E-permit(수출허가+VHC) → 주 DVS 지청에서 동물 검사·VHC 발급 → 출국일
+    //         공항 MAQIS 최종 검사. 두 기관(MAQIS 허가 / DVS 증명서)으로 나뉜다.
     description:
-      '말레이시아 출국 전 공항 동물검역소에서 수출 검역을 받으세요.\n출국 직전(1~3일 전 권장)에 방문하세요. 주말·공휴일·야간에는 검역을 받을 수 없어요.\n접종 증명서를 꼭 챙기세요.\n검사를 통과하면 수출허가서(R.9)와 건강증명서가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
+      '말레이시아 출국 전 수출 검역을 받고 수출 허가와 수의 건강증명서(VHC)를 받으세요.\n\n반려동물을 데리고 거주 지역의 주(州) DVS 지청에 방문해 검사를 받고 VHC를 발급받아요. 수출 허가는 MAQIS에서 받아요.\n\n두 서류 모두 E-permit 시스템으로 신청해요. 현지 계정 등록이 필요해서 보통 현지 에이전시에 의뢰해요.\n\n출국일에는 공항 MAQIS 검역소에서 서류와 반려동물을 최종 확인해요.',
     doneSummary: '말레이시아 수출 검역을 받았어요.',
-    cardLine: '말레이시아 동물검역소에서 수출 검역을 받으세요.',
+    cardLine: '말레이시아 수출 검역을 받으세요.',
     applicability: { destinations: ['malaysia'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'quarantine:my_export_quarantine_date',
@@ -1319,12 +1326,17 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         key: 'my_export_quarantine_date',
         label: '검역일',
         type: 'date',
-        helpText: '말레이시아 동물검역소에서 수출 검역을 받은 날짜',
+        helpText: '주 DVS 지청에서 수출 검역을 받은 날짜',
       },
     ],
     allowAttachments: true,
-    attachmentHint: '수출허가서(R.9)·건강증명서 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '수출 허가서(R.9)',
+    attachmentHint: '수출 허가와 건강증명서(VHC) 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '수출 허가·건강증명서(VHC)',
+    // ① 반려동물 수출 안내(DVS) ② 신청 절차(MAQIS). 둘 다 200 확인.
+    links: [
+      { url: 'https://www.dvs.gov.my/index.php/pages/view/1941', label: '반려동물 수출 안내·문의처 (DVS)' },
+      { url: 'https://www.maqis.gov.my/index.php/permohonan-permit/', label: '수출 허가 신청 절차 (MAQIS)' },
+    ],
   },
 
   // ── 인도네시아 수출 검역 (왕복 — 귀국 출국 시, 인도네시아 전용) ───────

@@ -465,15 +465,18 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'departure',
     },
     {
+      // ⚠️ 태국 서식 잔재 정정(2026-07-23, DVS 원문). 구: 'R.9' 서식 번호·발급처 '동물검역소'
+      //   는 근거 없다. 말레이시아 수출은 **MAQIS 수출 허가 + 주 DVS VHC** 두 서류이고, DVS
+      //   원문에 R.9 라는 번호가 없다. ⛔ R.9·'동물검역소'를 되살리지 말 것.
       id: 'my-export-quarantine-cert',
-      name: '수출 허가서(R.9)·건강증명서',
-      source: '말레이시아 동물검역소',
+      name: '수출 허가·건강증명서(VHC)',
+      source: '검역기관(MAQIS)·주 DVS 지청',
       kind: 'step',
       stepRef: 'my-export-quarantine',
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '말레이시아 수출 검역 후 발급돼요.\n\n정확한 서류 이름은 Export License(R.9), Official Animal Health Certificate 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '말레이시아 수출 검역 후 발급돼요.\n\n수출 허가는 MAQIS, 수의 건강증명서(VHC)는 주 DVS 지청에서 발급해요.\n\n한국 입국 때 원본이 필요하니 잘 보관하세요. 앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'my-export-quarantine',
     },
     {
