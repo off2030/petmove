@@ -1570,6 +1570,33 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       earliest: undefined,
       validationIds: ['il.min-4months-on-departure'],
     },
+    // 수출 검역 = 이스라엘의 **공식 수출 절차(강제 O)**. 정부 수의당국(Veterinary Services)이
+    // 발급·인증한 국제건강증명서가 필수 — 민간 수의사 증명서 불인정, **대체서류 없음**(EU·스위스와
+    // 달리 'EU 여권/한국 검역증 갈음' 안내를 뺀다). 유효 광견병 접종 + 목적국 요건 충족이 공통
+    // 필수사항이고, 마이크로칩·항체가(0.5+) 기재는 **한국 수입조건**이 정하는 내용(사용자 정정
+    // 2026-07-23). eu-export-cert 슬롯(eu_export_quarantine_date·eu.export-cert-date-valid)을
+    // 스위스처럼 재사용하되 문구·링크를 이스라엘 수출 절차로 교체.
+    // 출처: gov.il Pet Export(pet-export 랜딩·general-info·moag-pro-126) + 수입안내 PDF 섹션 J.
+    'eu-export-cert': {
+      title: '이스라엘 수출 검역',
+      shortLabel: '수출',
+      description:
+        '이스라엘 밖으로 반려동물을 데리고 나가려면 이스라엘 관할 수의당국(Veterinary Services)이 발급·인증한 국제건강증명서가 필요해요. 이건 이스라엘의 공식 수출 절차로, 민간 수의사만 서명한 증명서는 인정되지 않아요.\n증명서에 유효한 광견병 접종이 확인돼야 해요.\n한국 귀국을 위해 마이크로칩 번호와 광견병 항체검사 결과(0.5 IU/mL 이상, 채혈일·검사기관·결과)가 증명서에 함께 기재돼야 해요.\n개는 보유 허가증도 함께 준비하세요.',
+      cardLine: '이스라엘 정부 인증 국제건강증명서를 준비하세요.',
+      doneSummary: '이스라엘 수출 검역(국제건강증명서)을 준비했어요.',
+      attachmentLabel: '이스라엘 정부 인증 국제건강증명서',
+      attachmentHint: '이스라엘 정부 인증 국제건강증명서 사본을 사진·PDF로 보관하세요.',
+      links: [
+        {
+          url: 'https://www.gov.il/en/departments/topics/pet-export/govil-landing-page',
+          label: '반려동물 수출 안내(이스라엘 농업부)',
+        },
+        {
+          url: 'https://www.gov.il/en/pages/pet-exports-general-information-and-recommendations',
+          label: '수출 일반 정보·권고사항',
+        },
+      ],
+    },
   },
 }
 
