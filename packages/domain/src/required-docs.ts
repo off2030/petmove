@@ -454,14 +454,21 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'certificate-issue',
     },
     {
+      // ⚠️ 태국 서식 잔재 + 정체 오인 정정(2026-07-23, MAQIS 조사). 구: '수입 허가서(R.7)' /
+      //   '정확한 이름은 Import License(R.7)' — 두 가지가 틀렸다:
+      //   ⛔ 'Import License(수입 허가)'는 **출국 전에 미리 받는 허가**(위 my-import-permit-doc,
+      //      MAQIS)다. 도착 서류 자리(stepRef: departure = 말레이시아 도착 검역)에 잘못 놓였다.
+      //   ⛔ R.7 서식 번호는 근거 없음(R.9 와 같은 태국식 잔재).
+      //   → 도착 후 7일 격리를 마치면 받는 건 **검역 증명서**다(MAQIS 요금표 "Quarantine
+      //      Certificate, 마리당 RM2"). 발급처는 공항 MAQIS.
       id: 'my-import-quarantine-cert',
-      name: '수입 허가서(R.7)',
-      source: '말레이시아 동물검역소',
+      name: '말레이시아 수입 검역 증명서',
+      source: '검역기관(MAQIS)',
       kind: 'step',
       stepRef: 'departure',
       group: 'quarantine',
       description:
-        '말레이시아 수입 검역 후 발급받아요.\n\n정확한 서류 이름은 Import License(R.7) 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '말레이시아 도착 후 수입 검역을 마치면 받는 서류예요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'departure',
     },
     {
