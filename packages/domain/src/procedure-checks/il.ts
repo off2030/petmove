@@ -215,20 +215,22 @@ export const IL_CHECKS: ProcedureCheck[] = [
         const priorDoses = rabies.filter((r) => r.date <= t.date)
         if (priorDoses.length === 0) {
           offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date}) 이전의 광견병 접종 기록이 없어요.`)
+          // 고객 노출 문구 — 날짜 미보간(lint:checks). 날짜는 offendingPaths 가 칸을 지목한다.
+          problems.push('채혈일 이전의 광견병 접종 기록이 없어요.')
           continue
         }
         const latest = priorDoses[priorDoses.length - 1]
         const gap = daysBetween(latest.date, t.date)
         if (gap === null || gap < 30) {
           offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date})과 직전 접종일(${latest.date}) 간격이 ${gap ?? '?'}일로 30일 미만이에요.`)
+          problems.push('광견병 항체 검사는 직전 접종일로부터 30일이 지난 후에 받아야 해요.')
         }
       }
       if (offending.length > 0) {
         return {
           ok: false,
-          message: problems.join(' / '),
+          // titer 여러 건이 같은 문장이 될 수 있어 중복 제거 후 결합(EU 룰과 동일).
+          message: [...new Set(problems)].join(' / '),
           offendingPaths: offending,
         }
       }
@@ -295,10 +297,10 @@ export const IL_CHECKS: ProcedureCheck[] = [
         const ageDays = daysBetween(birth, dep)
         return { ok: true, message: `생년월일(${birth}) + 4개월(${earliestDep}) ≤ 출국일(${dep}). 생후 ${ageDays}일.` }
       }
-      const ageDays = daysBetween(birth, dep)
       return {
         ok: false,
-        message: `생년월일(${birth}) + 4개월(${earliestDep})이 출국일(${dep})보다 늦어 4개월령에 미달해요 (생후 ${ageDays ?? '?'}일).`,
+        // 고객 노출 문구 — 날짜 미보간(lint:checks). 날짜는 offendingPaths 가 칸을 지목한다.
+        message: '출국일에 반려동물이 만 4개월(약 17주) 이상이어야 해요.',
         offendingPaths: ['departure_date', 'birth_date'],
       }
     },
