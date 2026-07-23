@@ -563,7 +563,7 @@ const DEST_PRICING: Record<string, { offlineCost?: string; period?: string }> = 
   kazakhstan: { offlineCost: '36~49', period: '최소 1~2개월' },
   russia: { offlineCost: '15~49', period: '최소 1~2개월' },
   israel: { offlineCost: '45~56', period: '최소 1~2개월' },
-  uae: { offlineCost: '40~58', period: '최소 1~2개월' },
+  uae: { offlineCost: '10~27', period: '최소 1~2개월' },
   turkey: { offlineCost: '36~49', period: '최소 1~2개월' },
   morocco: { offlineCost: '36~46', period: '최소 1~2개월' },
   south_africa: { offlineCost: '95~107' }, // 웹 가이드 문서 자체가 없음
