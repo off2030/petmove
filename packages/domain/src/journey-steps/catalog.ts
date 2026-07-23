@@ -2429,7 +2429,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '러시아 수출 검역',
     shortLabel: '수출',
     description:
-      '러시아 출국 전 수출 검역을 받고 국제수의증명서(Form 5a)를 발급받으세요.\n\n먼저 거주 지역 국립 수의서비스에서 수의증명서(Form 1)를 출국 5일 이내에 발급받아요.\n\n출국 공항의 연방수의식물위생감독청(Rosselkhoznadzor)에서 Form 1을 국제수의증명서(Form 5a)로 무료 교환해요.',
+      '러시아 출국 전 수출 검역을 받고 국제수의증명서(Form 5a)를 발급받으세요.\n\n먼저 거주 지역 국립 수의서비스에서 수의증명서(Form 1)를 출국 5일 이내에 발급받아요.\n\n출국 공항의 연방수의식물위생감독청(Rosselkhoznadzor)에서 Form 1을 국제수의증명서(Form 5a)로 무료 교환해요. 공항에서 당일 처음 문의하는 방식은 피하세요.',
     doneSummary: '러시아 수출 검역을 받았어요.',
     cardLine: '러시아 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['russia'], species: 'all', tripType: 'round' },
@@ -2447,6 +2447,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '국제수의증명서(Form 5a) 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '국제수의증명서(Form 5a)',
+    // ① 반려동물 국외 출국 절차 안내 ② 자주 묻는 질문(Form 1→5a 무료 교환 명시). 둘 다 Rosselkhoznadzor
+    //   공식(fsvps.gov.ru)·브라우저 200 확인. 러시아어 사이트지만 유일한 공식 출처라 넣는다.
+    links: [
+      { url: 'https://fsvps.gov.ru/puteshestvujushhim-s-pitomcami-vvoz-vyvo/instrukcija-kak-puteshestvovat-s-zhivotnym-za-rubezh/', label: '반려동물 출국 절차 안내 (Rosselkhoznadzor)' },
+      { url: 'https://fsvps.gov.ru/chasto-zadavaemye-voprosy/', label: '자주 묻는 질문 (Rosselkhoznadzor)' },
+    ],
   },
   // ── 튀르키예 수출 검역 (왕복 — 귀국 출국 시) ──────────────────────────
   // ⚠️ 카자흐스탄 카드 복제(2026-07-22). 기관명·링크는 위 러시아와 같은 이유로 뺐다.
