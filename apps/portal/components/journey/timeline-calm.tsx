@@ -289,16 +289,14 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/russia-14.jpg',
   ],
   튀르키예: [
-    // 2026-07-22 등록 (11장). 리드(첫 장) 미지정 — 사용자 검수 후 순서 조정.
-    '/destinations/turkey-01.jpg',
+    // 리드(첫 장) = turkey-02(파묵칼레 석회붕 테라스) — 2026-07-23 사용자 지정.
+    // turkey-03(갈라타 수변)·07(에페소스 도서관)·09(파묵칼레 항공 수영)는 삭제됨.
     '/destinations/turkey-02.jpg',
-    '/destinations/turkey-03.jpg',
+    '/destinations/turkey-01.jpg',
     '/destinations/turkey-04.jpg',
     '/destinations/turkey-05.jpg',
     '/destinations/turkey-06.jpg',
-    '/destinations/turkey-07.jpg',
     '/destinations/turkey-08.jpg',
-    '/destinations/turkey-09.jpg',
     '/destinations/turkey-10.jpg',
     '/destinations/turkey-11.jpg',
   ],
