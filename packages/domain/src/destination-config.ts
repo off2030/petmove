@@ -182,6 +182,14 @@ export interface DestinationOverride {
      * 여정 카드·서류 탭에는 그대로 노출된다 — 여기서 끄는 건 **맡기기 상품 항목**뿐.
      */
     selfApply?: boolean
+    /**
+     * 현지(목적국)에서만 신청 가능한 허가 — 한국 병원(로잔)이 대행할 수 없어 맡기기 상품
+     * 항목에서 뺀다(selfApply 와 같은 효과, 다른 이유). 현지 등록 수입자·에이전시만 신청
+     * 가능한 인도네시아(Barantin·농업부)·말레이시아(MAQIS)가 해당(2026-07-23).
+     * selfApply(보호자 직접)와 구분 — 이쪽은 **현지 제3자/목적국 시스템**이 신청 주체다.
+     * 여정 카드·서류 탭에는 그대로 노출된다 — 여기서 끄는 건 **맡기기 상품 항목**뿐.
+     */
+    localApplyOnly?: boolean
   }
   /** 도착 사전 통지 — 존재 = 사전 통지 카드 대상(아일랜드 24h·키프로스 48h 등). */
   advanceNotice?: {
@@ -349,7 +357,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // sample_received_date 는 rabies_titer_records[].received_date 로 이동 (광견병 항체 검사 편집화면에 표시).
     extraFields: ['permit_no', 'id_date'],
     vetVisitWindowDays: 5,
-    importPermit: {}, // DAFF
+    importPermit: { selfApply: true }, // DAFF BICON — 수입자 직접 신청 → 로잔 맡기기 '수입 허가 신청' 제외
   },
   new_zealand: {
     keywords: ['뉴질랜드', 'new zealand', 'nz'],
@@ -359,7 +367,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // NOTE: 규정상 "2일 이내(MPI 2일)" 이지만 max-2-days-before 해석으로 window=3 적용 중
     // (규정 문구와 표시 disconnect — 별도 정리 대상).
     vetVisitWindowDays: 3,
-    importPermit: {}, // MPI
+    importPermit: { selfApply: true }, // MPI — 수입자 직접 신청 → 로잔 맡기기 '수입 허가 신청' 제외
   },
   thailand: {
     keywords: ['태국', 'thailand'],
@@ -443,7 +451,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     //   ⚠️ 채혈 시점·결과 유효기간은 1차 출처에서 확인 실패 → 선언하지 않는다.
     titer: { need: 'entry' },
     appSupported: true,
-    importPermit: {},
+    // 현지 등록 수입자·에이전시만 현지 신청 가능 → 로잔 맡기기 상품 '수입 허가 신청' 제외(2026-07-23).
+    importPermit: { localApplyOnly: true },
     // 종합백신 제외(2026-07-23 사용자 결정) — 가이드상 입국 필수가 아니라 카드·프로파일 모두에서
     // 뺐다(태국·말레이시아는 필수라 포함). 광견병·항체만 남긴다.
     vaccines: ['rabies', 'rabies_titer'],
@@ -834,7 +843,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // + "말레이시아에는 광견병항체검사 기관이 없기 때문에 … 한국에서 미리 해두시는 것을 권장".
     titer: { need: 'return-only' },
     appSupported: true,
-    importPermit: {},
+    // 현지 등록 에이전시만 현지 신청 가능(한국 신청 불가) → 로잔 맡기기 '수입 허가 신청' 제외(2026-07-23).
+    importPermit: { localApplyOnly: true },
     vaccines: ['rabies', 'rabies_titer', 'general'],
     // 가이드: "출국 직전(항공기 탑승 전 7일 이내)에 수의사에게 임상 검사" + "수출동물검역은
     // 대부분 10일 이내지만 말레이시아는 7일 이내". 태국 복제 때 지웠던 값을 되살렸다.

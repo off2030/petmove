@@ -236,7 +236,7 @@ function offlineDetail(opts: {
   destKey: string
   /** 귀국용 항체검사 국가(태국·필리핀)의 트립 — 왕복만 항체검사 포함. */
   trip?: TripType
-  /** intro 강조절 (예: '태국 수입허가증 신청'). EU 패밀리는 생략 가능. */
+  /** intro 강조절 (예: '태국 수입 허가 신청'). EU 패밀리는 생략 가능. */
   introHighlight?: string
   /** 나라 절차 항목 라벨 (예: ['사전 신고', '일본 수출 검역 신청 · 예약']). */
   procedureItems?: string[]
@@ -351,7 +351,7 @@ export const OFFLINE_DETAIL: Record<string, DestDetail> = {
   '태국:one_way': offlineDetail({
     destKey: 'thailand',
     trip: 'one_way',
-    introHighlight: '태국 수입허가증 신청',
+    introHighlight: '태국 수입 허가 신청',
     procedureItems: ['수입 허가 신청'],
     cost: '20~32',
     period: '2~4주',
@@ -360,7 +360,7 @@ export const OFFLINE_DETAIL: Record<string, DestDetail> = {
   '태국:round': offlineDetail({
     destKey: 'thailand',
     trip: 'round',
-    introHighlight: '태국 수입허가증 신청',
+    introHighlight: '태국 수입 허가 신청',
     procedureItems: ['수입 허가 신청'],
     cost: '20~60',
     period: '최소 2~6주',
@@ -401,7 +401,7 @@ export const OFFLINE_DETAIL: Record<string, DestDetail> = {
     included: [
       { label: '검역·백신 일정 관리', sub: '놓치면 안 되는 날짜를 대신 챙겨요' },
       { label: '서류 발급 대행', sub: '건강증명서·검사 서류까지 발급해요' },
-      { label: '수입허가증 신청', sub: '여행지 정부 허가 신청을 대신해요' },
+      { label: '수입 허가 신청', sub: '여행지 정부 허가 신청을 대신해요' },
     ],
     steps: ['상담', '준비·관리', '출국'],
     faq: DEFAULT_FAQ,
@@ -475,7 +475,7 @@ export const ONLINE_DETAIL: Record<string, DestDetail> = {
     included: [
       { label: '단계별 준비 가이드', sub: '지금 뭘 해야 하는지 순서대로 알려드려요' },
       { label: '서류 검토·점검', sub: '빠진 서류·오류를 미리 잡아드려요' },
-      { label: '수입허가증 신청 대행', sub: '까다로운 허가 신청은 대신해 드려요' },
+      { label: '수입 허가 신청 대행', sub: '까다로운 허가 신청은 대신해 드려요' },
     ],
     steps: ['상담', '직접 준비 + 점검', '출국'],
     faq: DEFAULT_FAQ,
@@ -611,18 +611,21 @@ function derivedDetail(kind: 'offline' | 'online', dest: string, trip: TripType)
   const { offlineCost, period } = DEST_PRICING[destKey] ?? {}
   // 나라 고유 절차 — 프로파일에서만 파생한다(지어내지 않는다). 현재 파생 가능한 선언은
   // importPermit(수입허가국: 대만 등) 하나 — 스위스 '수입 허가 신청'과 같은 기존 표현을 쓴다.
-  // selfApply(보호자가 직접 온라인 신청 — 대만 APHIA e-permit)는 대행 대상이 아니라 제외한다.
+  // 표기 통일: 신청 대상은 '허가'라 **'수입 허가 신청'**(신청 결과물이 '허가증'). 2026-07-23.
+  // 로잔이 대행하지 못하는 허가는 맡기기 상품에서 뺀다 — 두 경우:
+  //   · selfApply — 보호자·수입자가 목적국 시스템에 직접 온라인 신청(대만 APHIA e-permit / 호주·뉴질랜드)
+  //   · localApplyOnly — 현지 등록 수입자·에이전시만 현지 신청(인도네시아 Barantin·농업부 / 말레이시아 MAQIS)
   // 여정 카드·서류 탭에는 그대로 뜬다. 여기서 빼는 건 **맡기기 상품에 포함되는 항목**뿐.
   const permit = DESTINATION_OVERRIDES[destKey]?.importPermit
-  const hasPermit = !!permit && !permit.selfApply
-  const permitItems = hasPermit ? ['수입허가증 신청'] : []
+  const hasPermit = !!permit && !permit.selfApply && !permit.localApplyOnly
+  const permitItems = hasPermit ? ['수입 허가 신청'] : []
   if (kind === 'offline') {
     return offlineDetail({
       destKey,
       trip,
       cost: offlineCost,
       period,
-      introHighlight: hasPermit ? '수입허가증 신청' : undefined,
+      introHighlight: hasPermit ? '수입 허가 신청' : undefined,
       procedureItems: permitItems,
     })
   }
