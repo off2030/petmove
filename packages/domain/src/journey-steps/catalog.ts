@@ -2477,8 +2477,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '국제수의증명서(Form 5a) 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '국제수의증명서(Form 5a)',
-    // 링크 없음(2026-07-23 사용자 지정) — Rosselkhoznadzor 공식 페이지는 러시아어라 보호자가
-    //   직접 쓰기 어려워 뺐다(카드 문구로 절차는 충분히 안내).
+    // Rosselkhoznadzor 공식 '반려동물 국외 출국 절차 안내'(러시아어) — 관할 국가 수의기관·공항
+    //   검역소가 지역마다 달라 여기서 찾는다. 러시아어지만 유일한 공식 출처라 넣는다(2026-07-23
+    //   사용자 지정 A). 브라우저 200 확인.
+    links: [
+      { url: 'https://fsvps.gov.ru/puteshestvujushhim-s-pitomcami-vvoz-vyvo/instrukcija-kak-puteshestvovat-s-zhivotnym-za-rubezh/', label: '반려동물 출국 절차 안내 (Rosselkhoznadzor)' },
+    ],
   },
   // ── 튀르키예 수출 검역 (왕복 — 귀국 출국 시) ──────────────────────────
   // ⚠️ 카자흐스탄 카드 복제(2026-07-22). 기관명·링크는 위 러시아와 같은 이유로 뺐다.

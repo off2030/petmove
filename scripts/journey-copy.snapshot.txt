@@ -2434,6 +2434,8 @@
       출국 공항의 연방수의식물위생감독청(Rosselkhoznadzor)에서 Form 1을 국제수의증명서(Form 5a)로 교환해요.
   첨부안내: 국제수의증명서(Form 5a) 사본을 사진·PDF로 보관하세요.
   저장이름: 국제수의증명서(Form 5a)
+  links:
+      반려동물 출국 절차 안내 (Rosselkhoznadzor)  →  https://fsvps.gov.ru/puteshestvujushhim-s-pitomcami-vvoz-vyvo/instrukcija-kak-puteshestvovat-s-zhivotnym-za-rubezh/
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
