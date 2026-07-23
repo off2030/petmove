@@ -1539,7 +1539,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       title: '광견병 백신',
       shortLabel: '백신',
       description:
-        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 3개월이 지난 후에 접종해야 해요.\n출국 30일 전까지 접종해야 해요.\n이스라엘 입국 때 면역 유효기간이 남아있어야 해요.',
+        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 3개월이 지난 후에 접종해야 해요.\n이스라엘 입국 때 면역 유효기간이 남아있어야 해요.',
       doneSummary: '광견병 백신을 접종했어요.',
       // 91일 AND 캘린더 3개월(il.ts evaluateRabiesAgeConservative). client 입력차단은
       // monthsAfter(캘린더 3개월)로 판정 — 91일과의 ≤1일 차이는 il.ts 주의가 잡는다(오차단 없음).
