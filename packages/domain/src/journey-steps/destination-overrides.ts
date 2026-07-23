@@ -920,18 +920,18 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         'tr.rabies-prime-after-12weeks',
         'tr.microchip-before-rabies',
         'tr.rabies-booster-within-prime-validity',
-        'tr.rabies-min-30days-before-departure',
+        'tr.rabies-min-21days-before-departure',
         'tr.rabies-within-12months-of-departure',
       ],
     }),
-    // 항체검사 = **튀르키예 입국 요건**(사용자 승인 2026-07-22). 카자흐스탄 복제본의
-    // '한국으로 돌아올 때 필요해요'는 사실과 반대였다. 접종~채혈 30일과 결과지 1년은
-    // 가이드가 "명확한 규정 없음 / 일반적으로 …"라 밝힌 관행이라 대만 카드와 같은 문형
-    // ('명확한 규정은 없지만 …')으로 쓴다.
+    // 항체검사 = **튀르키예 입국 요건**. ⚠️ 2026-07-23 EU 모델(우크라이나)로 재정비 —
+    // 채혈은 접종 후 30일 이후, 출국은 채혈 후 3개월 이후. 유효기간은 조건부 무기한이라
+    // '몇 개월 유효' 문구를 쓰지 않는다(백신 연속성이 곧 유효성 — 근거는 destination-config
+    // turkey 주석). 우크라이나 titer 카드와 같은 문형.
     'rabies-titer': {
       description:
-        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n0.5 IU/mL 이상이면 합격이에요.\n명확한 규정은 없지만 접종 후 30일 이상 지나서 검사하는 것이 좋아요.\n결과지 유효기간에 대한 명확한 규정은 없지만 보통 1년으로 봐요.',
-      validationIds: ['tr.departure-within-12months-of-titer'],
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n광견병 접종일로부터 30일이 지난 후에 채혈해야 해요.\n0.5 IU/mL 이상이면 합격이에요.\n채혈일로부터 3개월이 지나야 입국할 수 있어요. 일정을 넉넉히 잡으세요.',
+      validationIds: ['tr.rnatt-min-30days-after-vaccine', 'tr.titer-value-min-0.5iu'],
     },
     // 내·외부 기생충 — 가이드 "여행 30일 이내". base 카드 문구가 호주·뉴질랜드 기준이라 교체.
     'external-parasite': {
@@ -944,10 +944,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     },
     'flight-purchase': {
       description:
-        '튀르키예 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 30일이 지난 후에 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+        '튀르키예 입국 일정에 맞춰 항공권을 구매하세요.\n\n접종일로부터 21일이 지난 후에 입국할 수 있어요.\n항체 검사 채혈일로부터 3개월이 지나야 입국할 수 있어요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       cardLine: '튀르키예에 입국할 수 있어요.',
       earliest: undefined,
-      validationIds: ['tr.rabies-min-30days-before-departure'],
+      validationIds: ['tr.rabies-min-21days-before-departure', 'tr.departure-min-3months-after-titer'],
     },
     departure: importQuarantineCard({
       label: '튀르키예',

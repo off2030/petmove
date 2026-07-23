@@ -20,6 +20,9 @@
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [ar.import-quarantine-date-valid]
   아르헨티나 수입 검역일은 아르헨티나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
+[ar.export-quarantine-date-valid]
+  아르헨티나 수출 검역일은 아르헨티나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
+  아르헨티나 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [br.rabies-min-21days-before-departure]
   광견병 접종 후 21일이 지나야 브라질에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [br.rabies-booster-within-prime-validity]
@@ -195,14 +198,15 @@
 [th.export-quarantine-date-valid]
   태국 수출 검역일은 태국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
   태국 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
-[tr.rabies-min-30days-before-departure]
-  광견병 접종 후 30일이 지나야 튀르키예에 입국할 수 있어요. 입국일을 미뤄야 해요.
+[tr.rabies-min-21days-before-departure]
+  광견병 접종 후 21일이 지나야 튀르키예에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [tr.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [tr.rabies-within-12months-of-departure]
   광견병 접종 후 1년이 지나기 전에 출국해야 해요. 출국 전에 다시 접종하세요.
-[tr.departure-within-12months-of-titer]
-  광견병 항체 검사 결과의 유효기간이 출국 전에 끝나요. 다시 검사해야 해요.
+[tr.departure-min-3months-after-titer]
+  항체 검사 채혈일로부터 3개월이 지나야 튀르키예에 입국할 수 있어요. 입국일을 미뤄야 해요.
+  광견병 항체가가 0.5 IU/mL 미만이에요.
 [tr.external-parasite-within-30days]
   외부 기생충 치료는 출국 30일 이내에 해야 해요.
 [tr.internal-parasite-within-30days]
