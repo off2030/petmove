@@ -2416,18 +2416,20 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
   // ── 러시아 수출 검역 (왕복 — 귀국 출국 시) ────────────────────────────
-  // ⚠️ 카자흐스탄 카드 복제(2026-07-22). 문구는 카자흐스탄 절차 그대로다.
-  //   카자흐스탄 전용 사실 두 가지는 **뺐다** — 발급 기관명(수의통제감독위원회)과 gov.kz 링크
-  //   2종. 다른 나라 기관·주소를 그대로 물려주면 명백한 오안내가 된다(4국 복제 전례).
-  //   러시아 실제 발급 기관은 Rosselkhoznadzor(연방수의식물위생감독청) 계열이나, 반려동물
-  //   수출 창구·서식 번호를 확인하지 못해 기관명을 특정하지 않았다 — 세부 수정 대상.
+  // ✅ 2026-07-23 조사로 구체화(사용자 지정). 러시아 수출은 **2단계**다:
+  //   ① 거주 지역 **국립 수의서비스(государственная ветслужба)** 가 **수의증명서 Form 1** 발급
+  //      (출국 5일 이내). 광견병 등 접종·지역 무발생 확인.
+  //   ② 출국 공항 **연방수의식물위생감독청(Rosselkhoznadzor)** 이 Form 1 을 **국제수의증명서
+  //      Form 5a** 로 **무료 교환**. 이게 한국행 최종 정부 수출증명서다.
+  //   개·고양이 2마리 초과 시 Rosselkhoznadzor 수출 허가 별도(카드엔 안 담음 — 일반 케이스 1~2).
+  //   공식 창구가 대면(지역 수의서비스+공항)이라 깔끔한 신청 링크가 없어 링크는 두지 않는다.
   {
     id: 'ru-export-quarantine',
     category: 'document',
     title: '러시아 수출 검역',
     shortLabel: '수출',
     description:
-      '러시아 출국 전 수출 검역을 받고 수출 수의증명서를 발급받으세요.\n\n현지 동물병원에서 임상검사를 받고, 그 서류로 관할 수의당국에 신청해요.',
+      '러시아 출국 전 수출 검역을 받고 국제수의증명서(Form 5a)를 발급받으세요.\n\n먼저 거주 지역 국립 수의서비스에서 수의증명서(Form 1)를 출국 5일 이내에 발급받아요.\n\n출국 공항의 연방수의식물위생감독청(Rosselkhoznadzor)에서 Form 1을 국제수의증명서(Form 5a)로 무료 교환해요.',
     doneSummary: '러시아 수출 검역을 받았어요.',
     cardLine: '러시아 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['russia'], species: 'all', tripType: 'round' },
@@ -2439,12 +2441,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         key: 'ru_export_quarantine_date',
         label: '검역일',
         type: 'date',
-        helpText: '러시아에서 수출 검역을 받은 날짜',
+        helpText: '러시아에서 수출 검역(국제수의증명서 발급)을 받은 날짜',
       },
     ],
     allowAttachments: true,
-    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '러시아 수출 수의증명서',
+    attachmentHint: '국제수의증명서(Form 5a) 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '국제수의증명서(Form 5a)',
   },
   // ── 튀르키예 수출 검역 (왕복 — 귀국 출국 시) ──────────────────────────
   // ⚠️ 카자흐스탄 카드 복제(2026-07-22). 기관명·링크는 위 러시아와 같은 이유로 뺐다.
