@@ -201,6 +201,12 @@ function vietnamFamilyDocSpecs(
      */
     titerEntryDoc?: boolean
     importQuarantineDoc?: { source?: string; description?: string }
+    /**
+     * 도착 검역이 **심사만** 하고 보호자에게 발급물이 없는 나라 — 도착 서류 항목을 뺀다
+     * (아르헨티나: 가이드가 '심사'만 언급, 발급 검역증 미확인 2026-07-23). 도착 검역 카드
+     * (departure step)는 그대로 두고 첨부만 열어둔다 — 여기서 빼는 건 서류 체크리스트 항목뿐.
+     */
+    omitImportQuarantineDoc?: boolean
     exportQuarantineDoc?: { name: string; source: string; description: string }
   } = {},
 ): RequiredDocSpec[] {
@@ -222,18 +228,23 @@ function vietnamFamilyDocSpecs(
     },
     KR_FORM25_VACCINATION_HEALTH_CERT,
     KR_EXPORT_QUARANTINE_CERT,
-    {
-      id: `${cc}-import-quarantine-cert`,
-      name: `${label} 수입 검역 서류`,
-      source: opts.importQuarantineDoc?.source ?? `${label} 동물검역소`,
-      kind: 'step',
-      stepRef: 'departure',
-      group: 'quarantine',
-      description:
-        opts.importQuarantineDoc?.description ??
-        `${label} 수입 검역 때 받는 서류예요.\n\n${label}에서 출국할 때 필요할 수 있으므로 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
-      previewStepId: 'departure',
-    },
+    // 도착 검역 서류 — 발급물이 있는 나라만. 심사만 하고 발급물이 없는 나라(아르헨티나)는 뺀다.
+    ...(opts.omitImportQuarantineDoc
+      ? []
+      : [
+          {
+            id: `${cc}-import-quarantine-cert`,
+            name: `${label} 수입 검역 서류`,
+            source: opts.importQuarantineDoc?.source ?? `${label} 동물검역소`,
+            kind: 'step' as const,
+            stepRef: 'departure',
+            group: 'quarantine' as const,
+            description:
+              opts.importQuarantineDoc?.description ??
+              `${label} 수입 검역 때 받는 서류예요.\n\n${label}에서 출국할 때 필요할 수 있으므로 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
+            previewStepId: 'departure',
+          },
+        ]),
     // 현지 수출 검역 서류 — 왕복 전용. 한국 APQA 가 '수출국 정부기관 증명 검역증명서'를
     // 요구하므로(EU 만 예외) 카드가 있는 나라엔 반드시 서류도 따라온다. 카드가 아직 없는
     // 나라(캄보디아)는 이 항목이 빠진다 — catalog 의 수출 검역 step 주석 참고.
@@ -864,6 +875,9 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   //   (2026-07-23, SENASA 조사). 수출 검역이 발급하는 건 **국제수의증명서(CVI)**다 — 검역청·수의당국
   //   (SENASA) 발급 정부 수출증명서. 지역 등록 수의사 건강증명서는 CVI 를 받기 위한 선행 서류(카드 안내).
   '아르헨티나': vietnamFamilyDocSpecs('아르헨티나', 'ar', {
+    // 도착 검역은 심사만(가이드) — 발급 검역증 미확인이라 도착 서류 항목 제거(2026-07-23 사용자 A).
+    //   도착 검역 카드는 유지(첨부 열림). 귀국 SENASA CVI 는 exportQuarantineDoc 로 유지.
+    omitImportQuarantineDoc: true,
     exportQuarantineDoc: {
       name: '국제수의증명서(CVI)',
       source: '아르헨티나 검역·수의당국(SENASA)',
