@@ -1268,7 +1268,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     //   ⚠️ 유효기간은 발급 서류의 berlaku sejak/sampai 로만 — 일률 90/60/30일 단정 금지(서류탭 참고).
     importPermit: {
       description:
-        '인도네시아 수입 허가 신청을 하세요.\n\n한국에서는 신청할 수 없어요.\n수입자가 직접, 또는 현지 에이전시를 통해 신청해야 해요.',
+        '인도네시아 수입 허가 신청을 하세요.\n\n한국에서는 신청할 수 없어요.\n수입자가 현지에서 직접, 또는 현지 에이전시를 통해 신청해야 해요.',
       doneSummary: '인도네시아 반입 추천서를 받았어요.',
       cardLine: '인도네시아 수입 허가를 신청하세요.',
       attachmentHint: '반입 추천서(Rekomendasi Pemasukan)를 사진·PDF로 보관하세요.',
