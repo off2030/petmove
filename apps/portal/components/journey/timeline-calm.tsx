@@ -242,9 +242,9 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/malaysia-11.jpg',
   ],
   인도네시아: [
-    // 2026-07-22 등록 (11장). 리드(첫 장) 미지정 — 사용자 검수 후 순서 조정.
-    '/destinations/indonesia-01.jpg',
+    // 리드(첫 장) = indonesia-02(브로모 화산) — 2026-07-23 사용자 지정. indonesia-10(발리 마을)은 삭제됨.
     '/destinations/indonesia-02.jpg',
+    '/destinations/indonesia-01.jpg',
     '/destinations/indonesia-03.jpg',
     '/destinations/indonesia-04.jpg',
     '/destinations/indonesia-05.jpg',
@@ -252,7 +252,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/indonesia-07.jpg',
     '/destinations/indonesia-08.jpg',
     '/destinations/indonesia-09.jpg',
-    '/destinations/indonesia-10.jpg',
     '/destinations/indonesia-11.jpg',
   ],
   아르헨티나: [
