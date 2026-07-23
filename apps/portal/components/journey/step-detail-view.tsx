@@ -2994,28 +2994,40 @@ function readParasiteForm(
   fieldKey: string,
 ): GeneralVaccineEntry[] {
   if (!data) return []
-  const arr = data[fieldKey]
-  if (!Array.isArray(arr)) return []
   const str = (v: unknown) => (typeof v === 'string' ? v : '')
   const out: GeneralVaccineEntry[] = []
-  for (const item of arr) {
-    if (typeof item === 'string') {
-      if (item.length >= 10) out.push({ ...makeEmptyGeneralVaccine(), date: item.slice(0, 10) })
-      continue
-    }
-    if (item && typeof item === 'object') {
-      const rec = item as Record<string, unknown>
-      const date = str(rec.date)
-      // 약품 4필드(약품명·제조사·제조번호·제품유효기간) — '세부 정보(선택)' 직접 입력값.
-      const product = str(rec.product)
-      const manufacturer = str(rec.manufacturer)
-      const lot = str(rec.lot)
-      const expiry = str(rec.expiry)
-      // 포털 구충은 약품 자동채움 카탈로그가 없어 항상 직접 입력(other_hospital:true)으로 표시 —
-      // 펫무브워크가 본병원으로 지정한 값도 편집 가능한 텍스트로 그대로 보여준다.
-      if (date || product || manufacturer || lot || expiry) {
-        out.push({ ...makeEmptyGeneralVaccine(), date, product, manufacturer, lot, expiry })
+  const arr = data[fieldKey]
+  if (Array.isArray(arr)) {
+    for (const item of arr) {
+      if (typeof item === 'string') {
+        if (item.length >= 10) out.push({ ...makeEmptyGeneralVaccine(), date: item.slice(0, 10) })
+        continue
       }
+      if (item && typeof item === 'object') {
+        const rec = item as Record<string, unknown>
+        const date = str(rec.date)
+        // 약품 4필드(약품명·제조사·제조번호·제품유효기간) — '세부 정보(선택)' 직접 입력값.
+        const product = str(rec.product)
+        const manufacturer = str(rec.manufacturer)
+        const lot = str(rec.lot)
+        const expiry = str(rec.expiry)
+        // 포털 구충은 약품 자동채움 카탈로그가 없어 항상 직접 입력(other_hospital:true)으로 표시 —
+        // 펫무브워크가 본병원으로 지정한 값도 편집 가능한 텍스트로 그대로 보여준다.
+        if (date || product || manufacturer || lot || expiry) {
+          out.push({ ...makeEmptyGeneralVaccine(), date, product, manufacturer, lot, expiry })
+        }
+      }
+    }
+  }
+  // 예정(미래) 처치일을 폼에 도로 surface. 저장 시 splitScheduledDoses 가 실제 기록에서 빼
+  // `${fieldKey}_scheduled`(단일 문자열)로 옮기므로, 읽을 때 도로 합치지 않으면 입력칸에서
+  // 사라져 배지만 남고 수정·삭제가 안 된다(2026-07-23 버그 수정). 아직 미래일 때만 합친다 —
+  // 도래(≤오늘)하면 배지처럼 내려 빈칸으로 두고 실제 처치일을 재입력받는다(예정→도래→재입력).
+  const sched = data[`${fieldKey}_scheduled`]
+  if (typeof sched === 'string' && sched.length >= 10) {
+    const d = sched.slice(0, 10)
+    if (d > todayKst() && !out.some((e) => e.date === d)) {
+      out.push({ ...makeEmptyGeneralVaccine(), date: d })
     }
   }
   return out
