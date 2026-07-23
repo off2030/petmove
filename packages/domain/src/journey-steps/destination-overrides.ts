@@ -1145,7 +1145,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n출국 30일 전까지 접종해야 해요.\n입국할 때 면역 유효기간이 남아있어야 해요.'
     ,
     rabiesValidationIds: [
-      'my.rabies-prime-after-12weeks',
+      'my.rabies-prime-after-3months',
       'my.microchip-before-rabies',
       'my.rabies-booster-within-prime-validity',
       'my.rabies-min-30days-before-departure',

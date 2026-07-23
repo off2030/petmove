@@ -811,16 +811,18 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     archetype: 'sea-permit',
     rabies: {
       doses: 1,
-      // ⚠️ DVS 규정·절차문서 어디에도 **광견병 접종 최소 연령이 없다**(2026-07-22 조사).
-      //   있는 건 "반입 시 동물이 3개월령 이상"("Ensure the age of your pet is above 3 months
-      //   old", DVS Procedure PDF)이라는 **동물 나이** 요건이다. 84일은 태국 복제 보수값으로
-      //   남겨 둔다 — 규정보다 엄격해 지키면 문제되지 않는다(사용자 확인 대상).
-      minAgeDays: 84,
-      minAgeLabel: '생후 12주(84일)',
-      // ⚠️ **30일 — 근거가 갈린다**(2026-07-22 조사). DVS 소속 포털(animalpassport.dvs.gov.my)은
-      //   "vaccinated for rabies at least 30 days prior to entry"라고 쓰지만, 구속력 있는
-      //   수입규정 PDF(R2 Non-Scheduled)에는 그 조항이 **없다**. 태국 복제값 21일은 아무
-      //   근거도 없어서, 둘 중 근거가 있는 쪽(30일)으로 올렸다. 규정 확정은 MAQIS 서면 조회 필요.
+      // ✅ 최소 연령 = **달력 3개월**("Ensure the age of your pet is above 3 months old",
+      //   DVS Procedure PDF). 이건 접종 최소 연령이 아니라 **반입 시 동물 나이** 요건이지만,
+      //   1회 접종국이라 이 카드가 그 게이트를 겸한다. 구 84일(태국 복제 보수값)은 일수라
+      //   낀 달에 89~92일로 흔들려 3개월을 지킨 케이스를 막았다 → 달력 개월로 교체
+      //   (2026-07-23, 카자흐스탄·멕시코와 같은 처리).
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      // ✅ **광견병 = 불활화 백신, 출국 30일 전** — 2026-07-23 재조사로 확정. DVS R2 Non-Scheduled
+      //   규정을 여러 독립 자료가 일치 인용("inactivated … at least 30 days before departure").
+      //   구 주석의 '규정 PDF엔 없다'는 걱정 해소. (공식 PDF 는 스캔형이라 직독은 못 했다 —
+      //   1차 원문 대조가 가능해지면 최종 확인할 것.)
       timingLines: ['출국 30일 전까지 접종해야 해요.'],
       entryWaitDaysAfterVaccine: 30,
       validityLine: '입국할 때 면역 유효기간이 남아있어야 해요.',

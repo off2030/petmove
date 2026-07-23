@@ -1,5 +1,7 @@
 import {
   buildDateRuleContext,
+  calendarAgeThreshold,
+  meetsCalendarAge,
   validateImportPermitNotAfterDeparture,
   violatesRabiesEntryWait,
 } from '../journey-steps/date-rules'
@@ -33,8 +35,10 @@ import { msgGeneralVaccineExpiredBefore, msgMicrochipBeforeGeneralVaccine, msgMi
  *  - 항체검사는 입국 요건이 **아니다**(가이드: "필수가 아니지만 한국으로 돌아오는 경우는 필수").
  *
  * 확인 실패(값을 지어내지 않은 것):
- *  - **광견병 접종 최소 연령** — DVS 규정·절차문서에 조항이 없다. 84일은 태국 복제 보수값.
- *  - **접종 후 대기 30일** — DVS 포털엔 있고 구속력 있는 규정 PDF엔 없다. MAQIS 서면 조회 필요.
+ *  - **최소 연령 = 달력 3개월** — DVS Procedure PDF "above 3 months old"(2026-07-23 확정).
+ *    반입 시 동물 나이 요건이나 1회 접종국이라 광견병 1차 카드가 게이트를 겸한다. 구 84일 교체.
+ *  - **접종 후 대기 30일 = 확정**(2026-07-23) — DVS R2 Non-Scheduled 규정을 여러 독립 자료가
+ *    일치 인용("inactivated … at least 30 days before departure"). 공식 PDF 스캔형이라 직독은 못 함.
  *  - 금지·제한 견종 — 구세대 조사엔 있었으나 사용자 지정("없어도 돼")으로 룰을 두지 않는다.
  */
 
@@ -120,12 +124,12 @@ export const MY_CHECKS: ProcedureCheck[] = [
 
   // ── 광견병 ──
   {
-    id: 'my.rabies-prime-after-12weeks',
+    id: 'my.rabies-prime-after-3months',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종 생후 12주(84일) 이상',
+    title: '광견병 1차 접종 생후 3개월 이상',
     description:
-      '광견병 1차 접종은 생후 최소 12주(84일) 이후. ⚠️ 태국 복제값 — 말레이시아 규정 확정 후 수정.',
+      '광견병 1차 접종은 생후 최소 3개월(달력) 이후. DVS Procedure PDF "above 3 months old"(2026-07-23 확정). 달력 개월이라 일수 환산 대신 meetsCalendarAge 를 쓴다 — 낀 달에 89~92일로 흔들리지 않게.',
     severity: 'warning',
     addedAt: '2026-07-22',
     run: ({ caseRow }) => {
@@ -135,16 +139,14 @@ export const MY_CHECKS: ProcedureCheck[] = [
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      const age = daysBetween(birth, first.date)
-      if (age === null) return SKIP
-      if (age < 84) {
+      if (!meetsCalendarAge(birth, first.date, 3)) {
         return {
           ok: false,
-          message: msgRabiesPrimeMinAge('84일(12주)'),
+          message: msgRabiesPrimeMinAge('3개월'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${age}일령.` }
+      return { ok: true, message: `1차 접종일(${first.date}) 생후 3개월(${calendarAgeThreshold(birth, 3)}) 이후.` }
     },
   },
   {
@@ -153,7 +155,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국(=도착) 30일 이전 완료',
     description:
-      '가장 최근 광견병 접종이 도착일 기준 30일 이전 완료(유효 부스터는 면제). ⚠️ 근거가 갈린다 — DVS 소속 포털은 "at least 30 days prior to entry"라 쓰지만 구속력 있는 수입규정 PDF(R2)엔 조항이 없다(2026-07-22 조사). 태국 복제값 21일은 근거가 아예 없어 근거가 있는 30일로 올렸다. 저장 거부(validateRabiesEntryWait)와 같은 판정 함수를 쓴다.',
+      '가장 최근 광견병 접종이 도착일 기준 30일 이전 완료(유효 부스터는 면제). 불활화 백신, 출국 30일 전 — DVS R2 Non-Scheduled 규정을 여러 독립 자료가 일치 인용해 확정(2026-07-23). 저장 거부(validateRabiesEntryWait)와 같은 판정 함수를 쓴다.',
     severity: 'warning',
     addedAt: '2026-07-22',
     run: ({ caseRow, destination }) => {
