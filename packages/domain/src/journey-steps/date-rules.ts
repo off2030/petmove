@@ -911,6 +911,19 @@ export function validateCyAdvanceNoticeDate(noticeDate: string, entryDate: strin
 }
 
 /**
+ * 이스라엘 사전 통보일 — 입국일 48시간(2일) 전까지 벤구리온 공항 검역소에 통보해야 함.
+ * client(통보 입력 시 입력 불가)·procedure-check(입국일 수정 후 주의) 공용. 한쪽 비면 통과.
+ * (키프로스·노르웨이와 같은 48시간 모델 — 이스라엘 프로파일 advanceNotice.hardDeadlineHours=48.)
+ */
+export function validateIlAdvanceNoticeDate(noticeDate: string, entryDate: string): string | null {
+  if (!noticeDate || !entryDate) return null
+  if (daysBetween(noticeDate, entryDate) < 2) {
+    return '입국 48시간(2일) 전까지 사전 통보를 해야 해요. 통보가 늦은 경우 입국일을 변경해야 해요.'
+  }
+  return null
+}
+
+/**
  * 몰타 사전 통지일 — 입국 3영업일 전까지 온라인 포털(nldmalta.gov.mt)에 등록해야 함
  * (servizz.gov.mt 공식 확인, 2026-07-16). 영업일 단위를 달력일로 보수 근사(공휴일 미고려) —
  * 실제로는 이 기한보다 여유 있게 제출을 권장.

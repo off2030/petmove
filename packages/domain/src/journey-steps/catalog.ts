@@ -773,6 +773,36 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['eu.mt-advance-notice-3days-before-entry'],
   },
 
+  // ── 사전 통보 (이스라엘 전용) ──────────────────────────────────────
+  // 제3국(한국)에서 이스라엘 입국 시 도착 48시간 전까지 벤구리온 공항 검역소에 통보.
+  // 완료신호는 EU 사전통지와 동일한 confirm 메커니즘 재사용(통보일 입력 + 도래 + 저장 확인 = 완료).
+  // ⚠️ il.ts 헤더는 "출국 48시간 전"으로 적었으나 EU 형제 카드처럼 '입국(도착) 48시간 전'으로
+  //   맞췄다 — 통보 목적이 도착 검역소 대기라 도착 기준이 자연스럽다. gov.il 원문에서 출국 기준이
+  //   맞다면 anchor 를 조정할 것(대상 창구 email/portal 미확인과 함께 검증 대상).
+  {
+    id: 'il-advance-notice',
+    category: 'permit',
+    title: '사전 통보',
+    shortLabel: '통보',
+    description:
+      '이스라엘 입국 48시간 전까지 사전 통보를 하세요.\n\n벤구리온 공항 검역소에 반려동물의 도착 일정(날짜·시간·항공편명)을 알려요.\n여유 있게 며칠 전에 미리 통보하는 것을 권장해요.',
+    doneSummary: '이스라엘에 사전 통보를 했어요.',
+    cardLine: '이스라엘에 사전 통보를 하세요.',
+    applicability: { destinations: ['israel'], species: 'all', tripType: 'all' },
+    order: 47,
+    deadline: { anchor: 'entry', daysBefore: 2 },
+    done: 'quarantine:il_advance_notice_date',
+    inputs: [
+      {
+        key: 'il_advance_notice_date',
+        label: '통보일',
+        type: 'date',
+        helpText: '벤구리온 공항 검역소에 통보한 날짜',
+      },
+    ],
+    validationIds: ['il.advance-notice-48h-before-entry'],
+  },
+
   // ── 사전 신고 다음 — 일본 수출 검역 (왕복 케이스 한정) ──────────────
   {
     id: 'jp-export-quarantine',

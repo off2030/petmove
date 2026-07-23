@@ -31,6 +31,7 @@ import {
   TITER_MIN_DAYS_AFTER_VACCINE,
   validateEuTiterAfterVaccine,
   validateIeAdvanceNoticeDate,
+  validateIlAdvanceNoticeDate,
   validateMtAdvanceNoticeDate,
   validateNoAdvanceNoticeDate,
   EU_ENTRY_FAMILY,
@@ -1196,6 +1197,12 @@ export function StepDetailView({
       const data = (caseRow?.data ?? {}) as Record<string, unknown>
       const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
       return validateMtAdvanceNoticeDate(importQuarantineDate.trim(), entry)
+    }
+    // 이스라엘 사전 통보 — 통보일이 입국일 48시간(2일) 이내면 차단.
+    if (step.id === 'il-advance-notice') {
+      const data = (caseRow?.data ?? {}) as Record<string, unknown>
+      const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
+      return validateIlAdvanceNoticeDate(importQuarantineDate.trim(), entry)
     }
     if (isAdvanceNotification) {
       const entry = typeof caseRow?.data?.entry_date === 'string' ? (caseRow.data.entry_date as string) : ''
