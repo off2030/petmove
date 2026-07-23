@@ -2429,7 +2429,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '러시아 수출 검역',
     shortLabel: '수출',
     description:
-      '러시아 출국 전 수출 검역을 받고 국제수의증명서(Form 5a)를 발급받으세요.\n\n먼저 거주 지역 국립 수의서비스에서 수의증명서(Form 1)를 출국 5일 이내에 발급받아요.\n\n출국 공항의 연방수의식물위생감독청(Rosselkhoznadzor)에서 Form 1을 국제수의증명서(Form 5a)로 교환해요.',
+      '러시아 출국 전 수출 검역을 받고 국제수의증명서(Form 5a)를 발급받으세요.\n\n거주 지역 국립 수의서비스에서 수의증명서(Form 1)를 출국 5일 이내에 발급받아요.\n\n출국 공항의 연방수의식물위생감독청(Rosselkhoznadzor)에서 Form 1을 국제수의증명서(Form 5a)로 교환해요.',
     doneSummary: '러시아 수출 검역을 받았어요.',
     cardLine: '러시아 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['russia'], species: 'all', tripType: 'round' },
