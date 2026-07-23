@@ -1310,7 +1310,7 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
     //   에서 작성 → official veterinarian 서명 + competent authority 배서, 발급 후 10일 유효.
     certName: '이스라엘 건강증명서(Annex A)',
     certDescription:
-      '이스라엘 입국용 수의증명서예요. 정확한 서류 이름은 Veterinary Certificate for Domestic Dogs and Cats Entering Israel(Annex A) 입니다.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종·항체 검사 결과가 기재돼요. 발급일로부터 10일간 유효해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      '이스라엘 입국용 수의증명서예요.\n\n정확한 서류 이름은 Veterinary Certificate for Domestic Dogs and Cats Entering Israel(Annex A) 예요.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     exportCertName: '이스라엘 국제건강증명서',
     exportCertSource: '이스라엘 수의당국(Veterinary Services)',
     exportCertDescription:
