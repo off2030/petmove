@@ -248,14 +248,24 @@ function offlineDetail(opts: {
 }): DestDetail {
   const o = DESTINATION_OVERRIDES[opts.destKey]
   const euFam = o?.archetype === 'eu-family'
-  const vaccineKeys = (o?.vaccines ?? []).map((v) => (typeof v === 'string' ? v : v.key))
   const titerIncluded = o?.rabiesTiterForReturnOnly ? opts.trip === 'round' : true
   const procedure = (opts.procedureItems ?? []).map((label) => ({ label }))
 
   const included: Prep[] = [{ label: '마이크로칩 삽입 · 동물등록' }, { label: '광견병 백신 접종' }]
-  if (vaccineKeys.includes('general')) included.push({ label: '종합백신 접종' })
-  // 전 종 내부구충(필리핀)만 — EU 촌충국의 { species: 'dog' } 선언은 서비스 목록엔 미표기.
-  if ((o?.vaccines ?? []).some((v) => v === 'internal_parasite')) included.push({ label: '내부 기생충 치료' })
+  // 백신·검사 항목은 destination 프로파일에서 파생 — 여정과 단일 출처(빠지면 서비스 목록이
+  // 여정과 어긋난다. 예: 튀르키예 external_parasite 누락 — 2026-07-23 수정). **전 종 선언
+  // (string)만** 표기: EU 촌충국의 { key:'internal_parasite', species:'dog' } 같은 종 제한
+  // 선언은 개 전용이라 '대신해 드려요'에 일반화하면 오해 → 제외. 순서는 여정 카드 순서.
+  const hasVaccine = (k: string) => (o?.vaccines ?? []).some((v) => v === k)
+  if (hasVaccine('general')) included.push({ label: '종합백신 접종' })
+  if (hasVaccine('civ')) included.push({ label: '독감 접종' })
+  if (hasVaccine('kennel')) included.push({ label: '켄넬코프 접종' })
+  if (hasVaccine('covid')) included.push({ label: '코로나 접종' })
+  if (hasVaccine('infectious_disease')) included.push({ label: '전염병 검사' })
+  // 여정 카드 순서와 동일: 외부 기생충(order 80) → 내부 기생충(order 90).
+  if (hasVaccine('external_parasite')) included.push({ label: '외부 기생충 치료' })
+  if (hasVaccine('internal_parasite')) included.push({ label: '내부 기생충 치료' })
+  if (hasVaccine('heartworm')) included.push({ label: '심장사상충 검사' })
   if (titerIncluded) included.push({ label: '광견병 항체 검사' })
   if (euFam) included.push({ label: '출국 전 임상검사' }, ...procedure)
   else included.push(...procedure, { label: '출국 전 임상검사' })
