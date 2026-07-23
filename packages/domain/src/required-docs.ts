@@ -1007,7 +1007,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       name: '국제수의증명서(Form 5a)',
       source: '연방수의식물위생감독청(Rosselkhoznadzor)',
       description:
-        '출국 공항에서 수의증명서(Form 1)를 국제수의증명서(Form 5a)로 교환해 받는 정부 수출증명서예요.\n\n한국 입국 때 원본이 필요하니 잘 보관하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '출국 공항에서 수의증명서(Form 1)를 국제수의증명서(Form 5a)로 교환해 받아요.\n\n한국 입국 때 원본이 필요하니 잘 보관하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     },
   }),
   '튀르키예': vietnamFamilyDocSpecs('튀르키예', 'tr', {

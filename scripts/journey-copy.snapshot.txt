@@ -2431,12 +2431,9 @@
       
       먼저 거주 지역 국립 수의서비스에서 수의증명서(Form 1)를 출국 5일 이내에 발급받아요.
       
-      출국 공항의 연방수의식물위생감독청(Rosselkhoznadzor)에서 Form 1을 국제수의증명서(Form 5a)로 무료 교환해요. 공항에서 당일 처음 문의하는 방식은 피하세요.
+      출국 공항의 연방수의식물위생감독청(Rosselkhoznadzor)에서 Form 1을 국제수의증명서(Form 5a)로 교환해요.
   첨부안내: 국제수의증명서(Form 5a) 사본을 사진·PDF로 보관하세요.
   저장이름: 국제수의증명서(Form 5a)
-  links:
-      반려동물 출국 절차 안내 (Rosselkhoznadzor)  →  https://fsvps.gov.ru/puteshestvujushhim-s-pitomcami-vvoz-vyvo/instrukcija-kak-puteshestvovat-s-zhivotnym-za-rubezh/
-      자주 묻는 질문 (Rosselkhoznadzor)  →  https://fsvps.gov.ru/chasto-zadavaemye-voprosy/
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
