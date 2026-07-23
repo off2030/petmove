@@ -519,16 +519,17 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'rabies-titer',
     },
     {
-      // ⚠️ 태국 서식 잔재 정정(2026-07-23). 구: '수입 허가 통지서(R.6)' / '60일 유효'는 태국(DLD)
-      //   것이다. 인도네시아 수입허가는 현지 에이전시 신청이라 서식 번호·유효기간을 앱이 단정하지
-      //   않는다(카드가 안내). ⛔ R.6·60일을 되살리지 말 것.
+      // ✅ 2026-07-23 사용자 상세 조사 반영. 인도네시아 반입 허가 = 농업부 축산수의총국(Ditjen PKH)
+      //   발급 **반입 추천서(Rekomendasi Pemasukan)**다. 발급처는 검역청(Barantin)이 아니라 농업부다
+      //   (검역청은 도착검역 KH-14 담당 — 별개). ⛔ '수입 허가증'·발급처 Barantin 은 부정확했다.
+      //   ⚠️ 유효기간은 서류의 berlaku sejak/sampai 로만 정해진다 — 일률 90/60/30일 단정 금지.
       id: 'id-import-permit-doc',
-      name: '수입 허가증',
-      source: '인도네시아 검역본부(Barantin)',
+      name: '반입 추천서(Rekomendasi Pemasukan)',
+      source: '인도네시아 농업부 축산수의총국(Ditjen PKH)',
       kind: 'step',
       stepRef: 'import-permit',
       description:
-        '수입 허가 신청이 승인되면 발급돼요.\n\n현지 에이전시를 통해 신청하고 받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '수입 허가 신청이 승인되면 발급되는 전자 서류예요.\n\n유효기간·지정 입국지점·검역 조건이 서류에 기재되니 반드시 확인하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'import-permit',
     },
     // 접종 및 건강증명서(별지 제25호) — 일본·태국과 완전히 동일한 한국 공식 양식.
