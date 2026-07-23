@@ -1057,6 +1057,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   // 태국 출처: DLD(축산국) AQS-Suvarnabhumi 공식 안내 + 태국 외교부 PDF(Rev. 30 Jan 2025)
   // + 주미 태국대사관 — 상세 수치는 procedure-checks/th.ts 헤더 주석 참고.
   thailand: seaPermitOverrides({
+    key: 'thailand',
     label: '태국',
     // 광견병 백신 — 21일 대기·유효기간(입국일 기준)은 보호자가 백신 step 에서 조치 못 함 —
     // 항공권 구매 step 에 매핑. 여기는 접종일 자체의 요건만.
@@ -1140,6 +1141,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   //   (21일 대기·수입허가 7영업일·R.6/R.7 서식명 등). 나라별 규정 확정 후 수정 예정.
   //   태국 전용 링크 2개(R.1/1 신청서 PDF·태국 AQS 연락처 페이지)만 뺐다 — 타국 자료 오안내 방지.
   malaysia: seaPermitOverrides({
+    key: 'malaysia',
     label: '말레이시아',
     rabiesDescription:
       '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n출국 30일 전까지 접종해야 해요.\n입국할 때 면역 유효기간이 남아있어야 해요.'
@@ -1224,6 +1226,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   //   (21일 대기·수입허가 7영업일·R.6/R.7 서식명 등). 나라별 규정 확정 후 수정 예정.
   //   태국 전용 링크 2개(R.1/1 신청서 PDF·태국 AQS 연락처 페이지)만 뺐다 — 타국 자료 오안내 방지.
   indonesia: seaPermitOverrides({
+    key: 'indonesia',
     label: '인도네시아',
     rabiesDescription:
       '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 3개월이 지난 후에 접종해야 해요.\n불활화 백신으로 접종해야 해요.\n광견병 예방접종 유효기간은 1년이에요.',
@@ -1278,6 +1281,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   // (광견병 1회·종별 종합백신·수입허가 2단계·도착검역) + 필리핀 고유: 구충 7~91일,
   // 생후 120일 입국 자격, 부스터는 대기 기간 면제.
   philippines: seaPermitOverrides({
+    key: 'philippines',
     label: '필리핀',
     rabiesDescription:
       '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n수입 허가증(SPSIC) 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
@@ -1631,6 +1635,8 @@ function importQuarantineCard(opts: {
  *  - 도착 = importQuarantineCard 공통 구조
  */
 function seaPermitOverrides(opts: {
+  /** destination-config 키 — 광견병 최소 연령(earliest)을 프로파일(rabies.*)에서 파생. */
+  key: string
   label: string
   rabiesDescription: string
   rabiesValidationIds: string[]
@@ -1658,24 +1664,29 @@ function seaPermitOverrides(opts: {
   /** 나라 고유 추가 카드 오버라이드(필리핀 internal-parasite 등). */
   extra?: Partial<Record<string, Partial<StepDefinition>>>
 }): Partial<Record<string, Partial<StepDefinition>>> {
+  // ✅ 최소 연령을 프로파일에서 파생(2026-07-23) — buildRabiesCard 와 같은 규칙.
+  //   말레이시아·인도네시아가 달력 3개월(minAgeMonths)이라 84일 하드코딩을 걷어냈다.
+  //   태국(84일)은 값 동일, 필리핀은 프로파일 미선언(12주 룰 = ph.rabies-prime-after-12weeks)
+  //   이라 fallback 84 로 종전과 같다. 프로파일에 minAge 를 새로 선언하면 여기가 자동 반영.
+  const rabiesProfile = DESTINATION_OVERRIDES[opts.key]?.rabies ?? {}
   return {
     'rabies-vaccine-1': {
       title: '광견병 백신',
       shortLabel: '백신',
       description: opts.rabiesDescription,
       doneSummary: '광견병 백신을 접종했어요.',
-      // ⚠️ **최소 일령이 여기 하드코딩돼 있다 — 프로파일을 읽지 않는다.**
-      //   sea-permit 두 나라(태국·필리핀) 다 12주=84일이라 값 자체는 맞다:
-      //     태국 DLD AQS 안내 PDF 각주 "animal was at least 12 weeks old at the time of
-      //       administration" (+ 태국 MFA PDF Rev. 30 Jan 2025 동일) — 2026-07-20 재검증
-      //     필리핀 ph.rabies-prime-after-12weeks
-      //   다만 **buildRabiesCard 를 쓰는 나라와 단일 출처가 다르다**(그쪽은 프로파일의
-      //   rabies.minAgeDays/minAgeMonths 에서 earliest 를 파생한다). 그래서 태국 프로파일에
-      //   실제와 다른 값(91일·달력 3개월)이 오래 남아 있어도 아무 증상이 없었고, 2026-07-20
-      //   에 그걸 '저장 거부 버그'로 오독하는 일이 실제로 벌어졌다.
-      //   sea-permit 에 12주가 아닌 나라를 추가하게 되면 이 하드코딩을 프로파일 파생으로
-      //   바꿀 것(그전까지는 두 나라가 같은 값이라 굳이 바꾸지 않는다).
-      earliest: { anchor: 'birth', daysAfter: 84 },
+      // ✅ 최소 연령 = 프로파일 파생(2026-07-23) — buildRabiesCard 와 같은 단일 출처.
+      //   sea-permit 이 태국·필리핀(12주=84일)뿐이던 시절엔 84일이 하드코딩이었지만,
+      //   말레이시아·인도네시아(달력 3개월, minAgeMonths)가 들어오며 프로파일과 어긋났다
+      //   (입력불가는 프로파일 3개월, 카드 안내는 84일). 이제 rabies.minAgeDays/minAgeMonths 를
+      //   읽어 earliest 를 만든다. 프로파일 미선언(필리핀)이면 fallback 84 로 종전과 동일.
+      //     태국 84일: DLD AQS PDF "at least 12 weeks old" / 필리핀: ph.rabies-prime-after-12weeks
+      //     말레이시아·인도네시아: 달력 3개월(DVS "above 3 months" / Barantan 87/2016 "3 bulan")
+      earliest: {
+        anchor: 'birth',
+        daysAfter: rabiesProfile.minAgeDays ?? 84,
+        ...(rabiesProfile.minAgeMonths ? { monthsAfter: rabiesProfile.minAgeMonths } : {}),
+      },
       done: 'has-rabies-valid',
       validationIds: opts.rabiesValidationIds,
     },
