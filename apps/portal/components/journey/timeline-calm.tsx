@@ -273,12 +273,11 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/argentina-17.jpg',
   ],
   러시아: [
-    // 2026-07-22 등록 (14장). 리드(첫 장) 미지정 — 사용자 검수 후 순서 조정.
-    '/destinations/russia-01.jpg',
+    // 리드(첫 장) = russia-05(바이칼 얼음) — 2026-07-23 사용자 지정. russia-01(눈 오는 밤거리)은 삭제됨.
+    '/destinations/russia-05.jpg',
     '/destinations/russia-02.jpg',
     '/destinations/russia-03.jpg',
     '/destinations/russia-04.jpg',
-    '/destinations/russia-05.jpg',
     '/destinations/russia-06.jpg',
     '/destinations/russia-07.jpg',
     '/destinations/russia-08.jpg',
