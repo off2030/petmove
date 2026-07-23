@@ -3209,18 +3209,11 @@
   card: 인도네시아 수입 허가를 신청하세요.
   done: 인도네시아 반입 추천서를 받았어요.
   desc:
-      인도네시아 수입 허가는 현지에서 신청해요.
+      인도네시아 수입 허가는 현지 신청만 가능해요.
       
-      한국에서는 신청할 수 없어요. 인도네시아 수입자나 현지 반려동물 운송 대행업체가 신청인이 돼요.
-      
-      먼저 농업부에서 반입 추천서(Rekomendasi Pemasukan)를 받고, 검역청에 도착 전 검역을 신청하는 2단계예요.
-      
-      신청에 예정 입국일·입국 공항과 도착 후 검역시설 예약 정보가 필요해요.
+      인도네시아 수입자나 현지 에이전시를 통해 신청해요.
   첨부안내: 반입 추천서(Rekomendasi Pemasukan)를 사진·PDF로 보관하세요.
   저장이름: 반입 추천서
-  links:
-      검역 안내 (Badan Karantina Indonesia)  →  https://karantinaindonesia.go.id/
-      도착 전 검역 신청 (PTK 온라인)  →  https://ptk.karantinaindonesia.go.id/
 
 ▸ vet-visit
   title: 출국 전 임상검사

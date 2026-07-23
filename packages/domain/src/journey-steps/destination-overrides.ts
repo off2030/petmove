@@ -1259,28 +1259,21 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       order: 105,
       validationIds: [],
     },
-    // ✅ 실제 2단계 구조 반영(2026-07-23 사용자 상세 조사). 인도네시아 반입은 '수입허가증 1장'이
-    //   아니라 ① 농업부 축산수의총국(Ditjen PKH) **반입 추천서(Rekomendasi Pemasukan)** →
-    //   ② 검역청(Badan Karantina) **도착 전 검역 신청(PTK 온라인·사전 통보)** 의 2단계다.
-    //   신청인은 한국 보호자가 아니라 **인도네시아 수입자/현지 대행업체**(현지 계정·인니어 서류·
-    //   검역시설 예약·공항 통관 필요). 신청에 예정 입국일·입국 공항·검역시설 정보가 들어간다.
-    //   ⚠️ 유효기간은 발급 서류의 berlaku sejak/sampai 로만 정해진다 — 일률 90/60/30일 단정 금지.
-    //   말레이시아 카드(현지 에이전시 + 공식 링크)와 같은 형식.
+    // 인도네시아 반입은 실제로 ① 농업부 반입 추천서(Rekomendasi Pemasukan) → ② 검역청 도착 전
+    //   검역 신청(PTK·사전 통보)의 2단계이고 **모두 인도네시아 수입자/현지 대행업체가 신청**한다
+    //   (현지 계정·인니어 서류 필요 — 한국 보호자가 직접 못 함). 자세한 구조는 서류탭(id-import-
+    //   permit-doc)에 두고, 카드 문구는 사용자 지정으로 2줄만 남긴다(2026-07-23).
+    //   ⛔ 링크 제거(2026-07-23 사용자 지정): PTK·검역청 홈 모두 **보호자가 직접 쓰는 곳이 아니라**
+    //     현지 신청자용 시스템·인니어 기관 포털이라, 직접 조치 못 하는 링크는 넣지 않는다.
+    //   ⚠️ 유효기간은 발급 서류의 berlaku sejak/sampai 로만 — 일률 90/60/30일 단정 금지(서류탭 참고).
     importPermit: {
       description:
-        '인도네시아 수입 허가는 현지에서 신청해요.\n\n한국에서는 신청할 수 없어요. 인도네시아 수입자나 현지 반려동물 운송 대행업체가 신청인이 돼요.\n\n먼저 농업부에서 반입 추천서(Rekomendasi Pemasukan)를 받고, 검역청에 도착 전 검역을 신청하는 2단계예요.\n\n신청에 예정 입국일·입국 공항과 도착 후 검역시설 예약 정보가 필요해요.',
+        '인도네시아 수입 허가는 현지 신청만 가능해요.\n\n인도네시아 수입자나 현지 에이전시를 통해 신청해요.',
       doneSummary: '인도네시아 반입 추천서를 받았어요.',
       cardLine: '인도네시아 수입 허가를 신청하세요.',
       attachmentHint: '반입 추천서(Rekomendasi Pemasukan)를 사진·PDF로 보관하세요.',
       attachmentLabel: '반입 추천서',
       validationIds: ['id.import-permit-not-after-departure'],
-      // ① 검역청 공식 안내(Badan Karantina Indonesia) ② 도착 전 검역 신청 포털(PTK 온라인).
-      //   농업부 반입 추천서 시스템(SIMREK/OSS)은 개편이 잦고 등록 수입자 계정에서만 열려 링크 X.
-      //   둘 다 브라우저에서 200 확인(karantinaindonesia.go.id 는 curl 403·브라우저 200).
-      links: [
-        { url: 'https://karantinaindonesia.go.id/', label: '검역 안내 (Badan Karantina Indonesia)' },
-        { url: 'https://ptk.karantinaindonesia.go.id/', label: '도착 전 검역 신청 (PTK 온라인)' },
-      ],
     },
     // 가이드: "일반적인 격리기간은 약 일주일이지만 최대 2주가 될 수 있습니다."
     importQuarantine: {
