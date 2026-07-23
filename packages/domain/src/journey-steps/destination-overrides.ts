@@ -1263,11 +1263,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     //   검역 신청(PTK·사전 통보)의 2단계이고 **모두 인도네시아 수입자/현지 대행업체가 신청**한다
     //   (현지 계정·인니어 서류 필요 — 한국 보호자가 직접 못 함). 자세한 구조는 서류탭(id-import-
     //   permit-doc)에 두고, 카드 문구는 사용자 지정으로 2줄만 남긴다(2026-07-23).
-    //   ⛔ PTK·검역청 홈 링크는 뺀다(2026-07-23 사용자 지정) — 보호자가 직접 쓰는 곳이 아니라
-    //     현지 신청자용 시스템·인니어 기관 포털이라.
-    //   ✅ 대신 **현지 대행업체를 찾는** 링크만 남긴다(사용자 요청 2026-07-23): IPATA(국제펫운송
-    //     협회) 공인 업체 디렉터리 — 나라별 검색 가능한 보호자용 사이트(자카르타 Groovy 등 회원).
-    //     기관 포털과 달리 보호자가 직접 쓸 수 있어 원칙에 맞는다. 브라우저 200 확인.
+    //   ⛔ 링크 없음(2026-07-23 사용자 지정) — PTK·검역청 홈은 보호자가 직접 쓰는 곳이 아니고
+    //     (현지 신청자용 시스템·인니어 기관 포털), IPATA 대행업체 디렉터리도 사용자 지정으로 뺐다.
     //   ⚠️ 유효기간은 발급 서류의 berlaku sejak/sampai 로만 — 일률 90/60/30일 단정 금지(서류탭 참고).
     importPermit: {
       description:
@@ -1277,9 +1274,6 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentHint: '반입 추천서(Rekomendasi Pemasukan)를 사진·PDF로 보관하세요.',
       attachmentLabel: '반입 추천서',
       validationIds: ['id.import-permit-not-after-departure'],
-      links: [
-        { url: 'https://www.ipata.org/find-ipata-pet-shippers', label: '현지 운송 대행업체 찾기 (IPATA)' },
-      ],
     },
     // 가이드: "일반적인 격리기간은 약 일주일이지만 최대 2주가 될 수 있습니다."
     importQuarantine: {
