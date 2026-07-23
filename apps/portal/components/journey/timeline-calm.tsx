@@ -665,7 +665,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/switzerland-12.webp', // 그린델발트풍 마을·빨간 트럭
     '/destinations/switzerland-13.webp', // 알프스 석조 마을 파노라마
   ],
-  // 리드(첫 장) 미지정 — 사용자가 컨택트시트를 보고 고르기 전까지 파일 순서 그대로 노출.
+  // israel-01(마사다 절벽) 리드 고정 — 사용자 지정(2026-07-23). 07·08·13·18 삭제(컨택트시트 검수).
   이스라엘: [
     '/destinations/israel-01.jpg',
     '/destinations/israel-02.jpg',
@@ -673,18 +673,14 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/israel-04.jpg',
     '/destinations/israel-05.jpg',
     '/destinations/israel-06.jpg',
-    '/destinations/israel-07.jpg',
-    '/destinations/israel-08.jpg',
     '/destinations/israel-09.jpg',
     '/destinations/israel-10.jpg',
     '/destinations/israel-11.jpg',
     '/destinations/israel-12.jpg',
-    '/destinations/israel-13.jpg',
     '/destinations/israel-14.jpg',
     '/destinations/israel-15.jpg',
     '/destinations/israel-16.jpg',
     '/destinations/israel-17.jpg',
-    '/destinations/israel-18.jpg',
   ],
 }
 
