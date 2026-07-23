@@ -2525,7 +2525,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '정부 수의건강증명서 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '튀르키예 정부 수의건강증명서',
+    attachmentLabel: '튀르키예 수의건강증명서(Veteriner Sağlık Sertifikası)',
     // ⚠️ 링크 미설정 — 걸 만한 게 없다. 농림부 tarimorman.gov.tr 는 전 페이지 WAF("Request
     //   Rejected") 차단이고, e-Devlet(turkiye.gov.tr) 신청 서비스는 접속은 되나 **터키 신분증
     //   또는 외국인 등록번호(Yabancı Kimlik No) + e-Devlet 로그인 필수**라 터키 거주 외국인만
