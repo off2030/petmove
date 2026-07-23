@@ -1524,6 +1524,48 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['eu.ch-import-permit-21days-before-entry'],
     },
   },
+  // ── 이스라엘 ──────────────────────────────────────────────────────────────
+  // archetype 'eu-family' 로 EU 카드 골격(입국 검사·귀국 서류)은 재사용하되, 광견병·항체·
+  // 항공권 카드는 이스라엘 규정(procedure-checks/il.ts, gov.il)으로 갈아끼운다. EU 와 다른 핵심:
+  //  · 광견병 1차 = 생후 3개월(EU 84일보다 엄격) + 출국 30일 전
+  //  · 항체 검사 후 **3개월 대기 없음**(EU 와 결정적 차이) — flight-purchase 에서 3개월 문구 제거
+  //  · 검사기관 = EU/WOAH 인증(EU 승인 목록보다 넓음)
+  // validationIds 도 eu.* → il.* 로 교체(eu.ts 에서 이스라엘은 EU 광견병 룰 제외 = 중복 방지).
+  // 입국 검사(departure)·귀국 서류(eu-export-cert)는 euFamilyOverrides 그대로 — eu.*-date-valid
+  // 날짜검증은 eu.ts EU_REGIME 에 이스라엘을 남겨 뒀다.
+  israel: {
+    ...euFamilyOverrides({ label: '이스라엘' }),
+    'rabies-vaccine-1': {
+      title: '광견병 백신',
+      shortLabel: '백신',
+      description:
+        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 3개월이 지난 후에 접종해야 해요.\n출국 30일 전까지 접종해야 해요.\n이스라엘 입국 때 면역 유효기간이 남아있어야 해요.',
+      doneSummary: '광견병 백신을 접종했어요.',
+      // 91일 AND 캘린더 3개월(il.ts evaluateRabiesAgeConservative). client 입력차단은
+      // monthsAfter(캘린더 3개월)로 판정 — 91일과의 ≤1일 차이는 il.ts 주의가 잡는다(오차단 없음).
+      earliest: { anchor: 'birth', daysAfter: 91, monthsAfter: 3 },
+      done: 'has-rabies-valid',
+      validationIds: [
+        'il.rabies-prime-after-91days-old',
+        'il.microchip-before-rabies',
+        'il.rabies-min-30days-before-departure',
+        'il.rabies-booster-within-prime-validity',
+      ],
+    },
+    'rabies-titer': {
+      description:
+        'EU 또는 WOAH 인증 검사기관에서 광견병 항체 검사를 받으세요.\n\n광견병 접종 후 30일 이상 지나서 검사하세요.\n동물병원을 통해 의뢰할 수 있어요.\n0.5 IU/mL 이상이면 합격이에요.',
+      validationIds: ['il.rnatt-min-30days-after-vaccine'],
+    },
+    // 항공권 — 이스라엘은 채혈 후 대기가 없다(EU 3개월 제거). 출국일 만 4개월령만 확인.
+    'flight-purchase': {
+      description:
+        '이스라엘 입국 일정에 맞춰 항공권을 구매하세요.\n\n출국일에 반려동물이 만 4개월(약 17주) 이상이어야 해요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '이스라엘에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: ['il.min-4months-on-departure'],
+    },
+  },
 }
 
 // ── 아키타입 템플릿 (Phase 2 — docs/destination-architecture-design.md) ────────

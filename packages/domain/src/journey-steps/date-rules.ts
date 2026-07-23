@@ -675,9 +675,14 @@ const TITER_ENTRY_WAIT_MONTHS: Record<string, number> = Object.fromEntries(
  */
 export function validateEuEntryDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
-  const waitKey = [...EU_ENTRY_FAMILY, ...Object.keys(TITER_ENTRY_WAIT_MONTHS)].find((key) =>
-    matchesDestinationKey(ctx.destination, key),
-  )
+  // ⚠️ 이스라엘 제외 — archetype 'eu-family'(카드 골격 재사용)로 EU_ENTRY_FAMILY 에 들어오지만
+  //   이스라엘 규정엔 '항체 검사 후 3개월 대기'가 없다(procedure-checks/il.ts 헤더: "RNATT 입국
+  //   후 추가 대기 없음"). 여기서 안 빼면 정상 입국일 입력을 3개월 대기로 잘못 막는다.
+  //   같은 이유로 eu.ts(주의)·destination-overrides.ts(카드 문구)에서도 이스라엘을 제외한다.
+  const waitKey = [
+    ...EU_ENTRY_FAMILY.filter((k) => k !== 'israel'),
+    ...Object.keys(TITER_ENTRY_WAIT_MONTHS),
+  ].find((key) => matchesDestinationKey(ctx.destination, key))
   if (!waitKey) return null
   const months = TITER_ENTRY_WAIT_MONTHS[waitKey] ?? 3
 

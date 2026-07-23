@@ -3,6 +3,7 @@ import {
   addMonths,
   daysBetween,
   evaluateRabiesAgeConservative,
+  findRabiesValidityBreaks,
   findSameGuardianCases,
   matchBannedBreed,
   readBreed,
@@ -14,6 +15,7 @@ import {
   readVetVisitDate,
 } from './utils'
 import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
+import { violatesRabiesEntryWait } from '../journey-steps/date-rules'
 
 /**
  * 이스라엘 (Veterinary Services & Animal Health, Ministry of Agriculture) 절차 검증.
@@ -116,9 +118,9 @@ export const IL_CHECKS: ProcedureCheck[] = [
     id: 'il.rabies-min-30days-before-departure',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 접종 후 대기 (1차/chain끊김 30일, chain 유효 부스터 15일)',
+    title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      '최근 광견병 접종 후 출국까지 대기 — chain 유효한 부스터 = 15일, 1차 또는 chain 끊김 후 재접종 = 30일. (gov.il: 1차 후 30일, 연속 부스터 14일 단축 가능). chain 유효성 = 직전 접종 valid_until 이내 후속 접종.',
+      'gov.il: 1차 접종 후 30일 경과해야 함(gov.il 은 연속 부스터 14일 단축 여지를 두지만, 유효 부스터는 대기 면제로 통일 처리한다). 최근 접종 기준. 저장 거부(validateRabiesEntryWait)와 **같은 판정 함수**(violatesRabiesEntryWait — 프로파일 entryWaitDaysAfterVaccine=30 파생)를 쓴다 — 예전엔 자체 30/15 계산이라 저장 거부와 갈려 만료 후 재접종을 놓쳤다(2026-07-23 통일).',
     severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
@@ -126,27 +128,16 @@ export const IL_CHECKS: ProcedureCheck[] = [
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
       const latest = rabies[rabies.length - 1]
-      // chain 유효 = 직전 접종이 있고 그 valid_until 이내에 latest 접종됨
-      let isBoosterWithChain = false
-      if (rabies.length >= 2) {
-        const prev = rabies[rabies.length - 2]
-        const prevValidUntil = resolveValidUntil(prev.date, prev.valid_until)
-        isBoosterWithChain = !!prevValidUntil && latest.date <= prevValidUntil
+      if (!violatesRabiesEntryWait(data, dep, destination)) {
+        return { ok: true, message: `최근 접종(${latest.date}) → 출국일(${dep}): 30일 충족(또는 유효 부스터).` }
       }
-      const requiredDays = isBoosterWithChain ? 15 : 30
-      const label = isBoosterWithChain ? 'chain 유효 부스터' : '1차 또는 chain 끊김'
-
-      const days = daysBetween(latest.date, dep)
-      if (days === null) return SKIP
-      if (days < requiredDays) {
-        return {
-          ok: false,
-          message: `최근 접종(${latest.date}, ${label})부터 출국일(${dep})까지 ${days}일이에요. ${requiredDays}일 이상이어야 해요.`,
-          offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
-        }
+      return {
+        ok: false,
+        message: '광견병 접종 후 30일이 지나야 이스라엘에 입국할 수 있어요. 입국일을 미뤄야 해요.',
+        offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
       }
-      return { ok: true, message: `최근 접종(${latest.date}, ${label}) → 출국일(${dep}): ${days}일 (≥${requiredDays}일).` }
     },
   },
   {
@@ -174,6 +165,29 @@ export const IL_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
+    },
+  },
+  {
+    id: 'il.rabies-booster-within-prime-validity',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 추가 접종은 직전 접종 유효기간 이내',
+    description:
+      '연속된 광견병 접종은 직전 접종의 면역 유효기간 이내에 해야 함. 만료 후 접종은 chain 이 끊겨 새 1차로 간주된다. 저장 거부(findRabiesChainBreak)의 짝이 되는 주의 — 펫무브워크는 저장을 막지 않고 절차검증만 보므로 이 룰이 없으면 운영자 화면에서 끊긴 chain 이 안 보인다. (EU 패밀리 eu.rabies-booster-within-prime-validity 를 이스라엘 전용으로 복제 — 이스라엘은 EU 광견병 룰에서 제외되므로 짝 룰을 여기 둔다.)',
+    severity: 'info',
+    addedAt: '2026-07-23',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length < 2) return SKIP
+      const offending = findRabiesValidityBreaks(rabies)
+      if (offending.length > 0) {
+        return {
+          ok: false,
+          message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
+          offendingPaths: offending,
+        }
+      }
+      return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
     },
   },
 

@@ -53,13 +53,30 @@ import { msgMicrochipBeforeRabies, msgRabiesPrimeMinAge , msgTiterBeforeVaccine 
 /** EU 규제 패밀리 — 같은 규칙 적용. archetype 'eu-family' 파생(date-rules 와 단일 출처). */
 const EU_REGIME: string[] = EU_ENTRY_FAMILY
 
+/**
+ * 광견병·마이크로칩·항체 검증에서 **이스라엘을 제외한** EU 패밀리.
+ *
+ * 이스라엘은 카드 골격 재사용을 위해 archetype 'eu-family' 로 묶여 있지만(EU 라는 뜻이 아님),
+ * 광견병·마이크로칩·항체 절차검증은 전용 procedure-checks/il.ts(gov.il 출처)가 담당한다.
+ * EU 규칙까지 적용하면 두 가지 문제가 생긴다:
+ *  ① 마이크로칩 순서·1차 접종 연령·항체 30일 등이 il.ts 와 **이중으로 표시**된다(주의+안내).
+ *  ② EU 의 '항체 검사 후 3개월 대기'(entry-min-3months-after-titer)는 **이스라엘 규정에 없다**
+ *     — il.ts 헤더: "RNATT 입국 후 추가 대기 없음(EU/일본과 다름)". 적용하면 틀린 안내가 된다.
+ *  ③ 연령 기준도 EU=84일(12주) vs il.ts=91일+캘린더 3개월로 서로 다르다.
+ * 반면 입국 검사일·귀국 서류 준비일 **날짜 정합성 검증**(import/export-quarantine-date-valid)은
+ * 이스라엘도 EU 패밀리 카드(eu_import/export_quarantine_date)를 그대로 쓰므로 EU_REGIME 유지.
+ * (client 입력차단·flight-purchase 3개월 카드도 date-rules.ts 와 destination-overrides.ts 에서
+ *  같은 이유로 이스라엘을 제외한다 — 세 층을 함께 봐야 함.)
+ */
+const EU_RABIES_REGIME: string[] = EU_REGIME.filter((k) => k !== 'israel')
+
 // 촌충 의무국가(Reg 2018/772)는 destination-config 의 TAPEWORM_DESTINATIONS(개 전용
 // 내부구충 vaccines 선언 파생)를 그대로 사용 — 촌충 치료 카드와 단일 출처.
 
 export const EU_CHECKS: ProcedureCheck[] = [
   {
     id: 'eu.rabies-booster-within-prime-validity',
-    country: EU_REGIME,
+    country: EU_RABIES_REGIME,
     category: '광견병',
     title: '광견병 추가 접종은 직전 접종 유효기간 이내',
     description:
@@ -83,7 +100,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
   // ── 마이크로칩 ──
   {
     id: 'eu.microchip-before-rabies',
-    country: EU_REGIME,
+    country: EU_RABIES_REGIME,
     category: '마이크로칩',
     title: '마이크로칩, 백신 타이밍',
     description:
@@ -111,7 +128,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
   // ── 광견병 ──
   {
     id: 'eu.rabies-prime-after-12weeks',
-    country: EU_REGIME,
+    country: EU_RABIES_REGIME,
     category: '광견병',
     title: '광견병 1차 접종 생후 12주(84일) 이상',
     description:
@@ -139,7 +156,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
   },
   {
     id: 'eu.titer-min-30days-after-vaccine',
-    country: EU_REGIME,
+    country: EU_RABIES_REGIME,
     category: '광견병',
     title: '항체 검사는 광견병 접종 30일 후',
     description:
@@ -195,7 +212,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
   },
   {
     id: 'eu.entry-min-3months-after-titer',
-    country: EU_REGIME,
+    country: EU_RABIES_REGIME,
     category: '광견병',
     title: '입국(예정)일은 항체 검사일 3개월(캘린더) 이후',
     description:
@@ -254,7 +271,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
   },
   {
     id: 'eu.rabies-valid-until-on-entry',
-    country: EU_REGIME,
+    country: EU_RABIES_REGIME,
     category: '광견병',
     title: '입국(예정)일 시점 광견병 면역 유효',
     description:
