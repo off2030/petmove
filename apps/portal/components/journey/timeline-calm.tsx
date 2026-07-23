@@ -255,14 +255,14 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/indonesia-11.jpg',
   ],
   아르헨티나: [
-    // 2026-07-22 등록 (17장). 리드(첫 장) 미지정 — 사용자 검수 후 순서 조정.
+    // 리드(첫 장) = argentina-16(빙하 벽 클로즈업) — 2026-07-23 사용자 지정.
+    // argentina-04(전망대 빙하)·07(피츠로이 도로)·15(빙하 파노라마)는 삭제됨.
+    '/destinations/argentina-16.jpg',
     '/destinations/argentina-01.jpg',
     '/destinations/argentina-02.jpg',
     '/destinations/argentina-03.jpg',
-    '/destinations/argentina-04.jpg',
     '/destinations/argentina-05.jpg',
     '/destinations/argentina-06.jpg',
-    '/destinations/argentina-07.jpg',
     '/destinations/argentina-08.jpg',
     '/destinations/argentina-09.jpg',
     '/destinations/argentina-10.jpg',
@@ -270,8 +270,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/argentina-12.jpg',
     '/destinations/argentina-13.jpg',
     '/destinations/argentina-14.jpg',
-    '/destinations/argentina-15.jpg',
-    '/destinations/argentina-16.jpg',
     '/destinations/argentina-17.jpg',
   ],
   러시아: [
