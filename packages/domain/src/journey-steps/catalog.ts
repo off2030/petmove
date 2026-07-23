@@ -2495,18 +2495,20 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
   // ── 튀르키예 수출 검역 (왕복 — 귀국 출국 시) ──────────────────────────
-  // ⚠️ 카자흐스탄 카드 복제(2026-07-22). 기관명·링크는 위 러시아와 같은 이유로 뺐다.
-  //   튀르키예 실제 발급 기관은 농림부(Tarım ve Orman Bakanlığı) 지방조직이나 창구·서식
-  //   미확인 — 세부 수정 대상.
+  // ✅ 1차 출처 확정(2026-07-23, 농림부 tarimorman.gov.tr). 카자흐스탄 복제본을 실제 규정으로 교체.
+  //   발급 = 관할 시·구 농림청(İl/İlçe Tarım ve Orman Müdürlüğü) 공무 수의사, 보호자 직접 신청.
+  //   "공식 수의사가 발급한 수의건강증명서 없는 개·고양이는 출국 불가" — 민간 진단서 불충분, 대체서류 없음.
+  //   증명서는 **출국 48시간 이내** 발급(동물 실물+원본서류 지참). 격리 없음. 마이크로칩·항체(FAVN) 기재.
   {
     id: 'tr-export-quarantine',
     category: 'document',
     title: '튀르키예 수출 검역',
     shortLabel: '수출',
     description:
-      '튀르키예 출국 전 수출 검역을 받고 수출 수의증명서를 발급받으세요.\n\n현지 동물병원에서 임상검사를 받고, 그 서류로 관할 수의당국에 신청해요.',
+      // 첫 문장은 나라 이름으로 시작 — 수출검역 카드 전체 통일(사용자 지정 2026-07-21).
+      '튀르키예 출국 전 관할 시·구 농림청(İl/İlçe Tarım ve Orman Müdürlüğü)에서 수출 검역을 받으세요.\n현지 민간 수의사에게 마이크로칩·임상·광견병 항체를 점검받은 뒤, 반려동물과 원본 서류(여권·접종기록·항체 성적서)를 지참해 거주지 관할 농림청에 직접 신청해요. 민간 수의사 진단서만으로는 출국할 수 없어요.\n증명서는 보통 출국 48시간 이내에 발급돼요. 주말·공휴일·야간 항공편은 미리 예약하세요.\n한국 귀국을 위해 마이크로칩 번호와 광견병 항체(0.5 IU/mL 이상)가 증명서에 기재돼야 해요.\n검사를 통과하면 정부 수의건강증명서(Veteriner Sağlık Sertifikası)가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
     doneSummary: '튀르키예 수출 검역을 받았어요.',
-    cardLine: '튀르키예 출국 전 수출 검역을 받으세요.',
+    cardLine: '튀르키예 관할 농림청에서 수출 검역을 받으세요.',
     applicability: { destinations: ['turkey'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'quarantine:tr_export_quarantine_date',
@@ -2516,12 +2518,18 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         key: 'tr_export_quarantine_date',
         label: '검역일',
         type: 'date',
-        helpText: '튀르키예에서 수출 검역을 받은 날짜',
+        helpText: '관할 농림청에서 수의건강증명서를 발급받은 날짜',
       },
     ],
     allowAttachments: true,
-    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '튀르키예 수출 수의증명서',
+    attachmentHint: '정부 수의건강증명서 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '튀르키예 정부 수의건강증명서',
+    links: [
+      {
+        url: 'https://ankara.tarimorman.gov.tr/Link/15/Yurtdisi-Cikis-_evcil-Hayvan_',
+        label: '반려동물 출국 안내(튀르키예 농림부)',
+      },
+    ],
   },
   // ── 15. 한국 수입 검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
   {
