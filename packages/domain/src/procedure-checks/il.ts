@@ -16,7 +16,6 @@ import {
 } from './utils'
 import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 import {
-  buildDateRuleContext,
   validateIlAdvanceNoticeDate,
   violatesRabiesEntryWait,
 } from '../journey-steps/date-rules'
@@ -331,14 +330,16 @@ export const IL_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 사전 통보 (벤구리온 공항 검역소, 입국 48시간 전) ──
+  // ── 사전 통보 (적재/출국 2영업일 전) ──
+  // 공식 안내 섹션 P·Q: 적재(출국) 최소 2영업일 전 통보. 앵커는 출국(departure).
+  // 입력차단(validateIlAdvanceNoticeDate)은 2캘린더일로 근사, 주말 버퍼는 마감 알림 D-11·D-4.
   {
-    id: 'il.advance-notice-48h-before-entry',
+    id: 'il.advance-notice-2days-before-departure',
     country: COUNTRY,
     category: '사전통지',
-    title: '사전 통보 마감 (입국 48시간 전)',
+    title: '사전 통보 마감 (출국 2영업일 전)',
     description:
-      '이스라엘 입국 48시간(2일) 전까지 벤구리온 공항 검역소에 도착 일정을 통보. 입력 차단(validateIlAdvanceNoticeDate)과 같은 함수 — 항공편 수정 후 어긋난 케이스를 주의로 표면화. (gov.il 수의국)',
+      '이스라엘은 출국(적재) 2영업일 전까지 사전 통보를 해야 함. 입력 차단(validateIlAdvanceNoticeDate)과 같은 함수 — 항공편 수정 후 어긋난 케이스를 주의로 표면화. (이스라엘 수의국 공식 안내 섹션 P·Q)',
     severity: 'warning',
     addedAt: '2026-07-23',
     run: ({ caseRow, destination }) => {
@@ -348,18 +349,14 @@ export const IL_CHECKS: ProcedureCheck[] = [
           ? data.il_advance_notice_date.slice(0, 10)
           : ''
       if (!/^\d{4}-\d{2}-\d{2}$/.test(notice)) return SKIP
-      const ctx = buildDateRuleContext(caseRow, destination)
-      const entry =
-        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
-          ? ctx.data.entry_date.slice(0, 10)
-          : ''
-      const msg = validateIlAdvanceNoticeDate(notice, entry)
+      const dep = readDepartureDate(caseRow, destination)
+      const msg = validateIlAdvanceNoticeDate(notice, dep ?? '')
       if (msg) {
-        return { ok: false, message: msg, offendingPaths: ['il_advance_notice_date', 'entry_date'] }
+        return { ok: false, message: msg, offendingPaths: ['il_advance_notice_date', 'departure_date'] }
       }
       return {
         ok: true,
-        message: entry ? `통보일(${notice}) 입국(${entry}) 48시간 이전.` : `통보일(${notice}) 입력됨 (입국일 미입력).`,
+        message: dep ? `통보일(${notice}) 출국(${dep}) 2일 이전.` : `통보일(${notice}) 입력됨 (출국일 미입력).`,
       }
     },
   },

@@ -774,33 +774,39 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   },
 
   // ── 사전 통보 (이스라엘 전용) ──────────────────────────────────────
-  // 제3국(한국)에서 이스라엘 입국 시 도착 48시간 전까지 벤구리온 공항 검역소에 통보.
-  // 완료신호는 EU 사전통지와 동일한 confirm 메커니즘 재사용(통보일 입력 + 도래 + 저장 확인 = 완료).
-  // ⚠️ il.ts 헤더는 "출국 48시간 전"으로 적었으나 EU 형제 카드처럼 '입국(도착) 48시간 전'으로
-  //   맞췄다 — 통보 목적이 도착 검역소 대기라 도착 기준이 자연스럽다. gov.il 원문에서 출국 기준이
-  //   맞다면 anchor 를 조정할 것(대상 창구 email/portal 미확인과 함께 검증 대상).
+  // 1차 출처(이스라엘 수의국 공식 안내 「Importing Dogs and Cats」 26/11/2023) 섹션 P·Q:
+  //   **적재(출국) 최소 2영업일 전** 통보. 벤구리온 도착은 govforms 온라인 폼, 그 외 항/포는 이메일.
+  //   → 앵커를 출국(departure)으로 잡는다(EU 형제 카드의 entry 기준과 다름 — 이스라엘은 '적재 전').
+  //   2영업일은 캘린더 계산이 복잡해 근사: 마감 알림 D-11·D-4(reminders.ts), 입력불가 D-2(date-rules).
+  //   3마리 이상은 면제(≤2마리)가 안 돼 사전 통보 대신 수입 허가(Import License) 신청 대상(섹션 E).
   {
     id: 'il-advance-notice',
     category: 'permit',
     title: '사전 통보',
     shortLabel: '통보',
     description:
-      '이스라엘 입국 48시간 전까지 사전 통보를 하세요.\n\n벤구리온 공항 검역소에 반려동물의 도착 일정(날짜·시간·항공편명)을 알려요.\n여유 있게 며칠 전에 미리 통보하는 것을 권장해요.',
+      '이스라엘은 출국(적재) 2영업일 전까지 사전 통보를 해야 해요.\n\n벤구리온 공항으로 도착하는 경우 아래 온라인 폼에서 도착 정보와 건강증명서·광견병 항체검사 결과지를 제출해요.\n반려동물이 3마리 이상이면 사전 통보 대신 수입 허가(Import License)를 미리 신청해야 해요.',
     doneSummary: '이스라엘에 사전 통보를 했어요.',
     cardLine: '이스라엘에 사전 통보를 하세요.',
     applicability: { destinations: ['israel'], species: 'all', tripType: 'all' },
     order: 47,
-    deadline: { anchor: 'entry', daysBefore: 2 },
+    deadline: { anchor: 'departure', daysBefore: 2 },
     done: 'quarantine:il_advance_notice_date',
     inputs: [
       {
         key: 'il_advance_notice_date',
         label: '통보일',
         type: 'date',
-        helpText: '벤구리온 공항 검역소에 통보한 날짜',
+        helpText: '온라인 폼(또는 이메일)으로 사전 통보한 날짜',
       },
     ],
-    validationIds: ['il.advance-notice-48h-before-entry'],
+    links: [
+      {
+        url: 'https://govforms.gov.il/mw/forms/PetPersonalImportation@moag.gov.il',
+        label: '사전 통보 온라인 폼(벤구리온)',
+      },
+    ],
+    validationIds: ['il.advance-notice-2days-before-departure'],
   },
 
   // ── 사전 신고 다음 — 일본 수출 검역 (왕복 케이스 한정) ──────────────

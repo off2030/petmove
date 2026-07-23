@@ -675,6 +675,31 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r) out.push(r)
       }
+    } else if (key === 'israel') {
+      // 이스라엘 사전 통보 — 적재(출국) 2영업일 전 마감(공식 안내 섹션 P·Q). 입력불가는 캘린더
+      // D-2 근사라, 주말·공휴일 버퍼로 D-11·D-4 두 번 안내(사용자 지정 2026-07-23). 사전 통보
+      // (il_advance_notice_date 저장) 전에만 — 통보를 마쳤으면 '통보하세요' 알림은 불필요.
+      // EU 사전통지 4종(entry 기준 테이블)과 달리 출국(departure) 기준이라 국가 분기로 처리한다.
+      if (departure && !str(data.il_advance_notice_date)) {
+        const r11 = leadReminder(
+          flat,
+          `${token}|il-advnotice-11`,
+          departure,
+          11,
+          '이스라엘 사전 통보 마감이 다가와요. 출국 2영업일 전까지 온라인 폼(또는 이메일)으로 통보하세요.',
+          now,
+        )
+        if (r11) out.push(r11)
+        const r4 = leadReminder(
+          flat,
+          `${token}|il-advnotice-4`,
+          departure,
+          4,
+          '이스라엘 사전 통보 마감이 임박했어요. 출국 2영업일 전까지 통보하세요.',
+          now,
+        )
+        if (r4) out.push(r4)
+      }
     }
     // ⛔ **아랍에미리트는 여기 넣지 말 것**(사용자 확정 2026-07-22). MOCCAE 수입 허가는
     //   **신청 마감일이 정해져 있지 않다** — 없는 기한으로 "출국 N일 전까지" 알림을 보내면
