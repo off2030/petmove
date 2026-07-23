@@ -2272,17 +2272,18 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '아랍에미리트 수출 건강증명서',
-    // 링크 2종(둘 다 응답 200 확인 2026-07-23):
-    //  ① 수출 서비스(신청) 페이지 — 구 라벨이 '…안내·문의처'였는데 이 페이지엔 연락처가
-    //     없어 라벨을 정정했다(사용자 지적). 신청은 여기서 한다.
+    // 링크 2종(2026-07-23):
+    //  ① 수출 건강증명서 발급 서비스 페이지(사용자 지정 URL) — "Animal health certificate
+    //     for export/re-export of live animals". 구 export-permit-pets 보다 정확한 서비스다.
+    //     구 라벨 '…안내·문의처'가 연락처를 약속했는데 없어서 '발급 신청'으로 정정했다.
     //  ② 전용 연락처 페이지 — 카드가 '사무소에 방문'하라고 하므로 갈 곳이 필요하다.
     // ⚠️ 두 페이지 다 우리 도구로는 본문을 못 읽는다("Request Rejected" — 사람이 브라우저로
     //   열면 정상). 그래서 지점 주소·운영시간·수수료를 카드 문구로 옮기지 않았다.
     //   MOCCAE 대표 문의처(800 3050 / info@moccae.gov.ae)는 사용자 조사값 — 근거로만 보존.
     links: [
       {
-        url: 'https://moccae.gov.ae/en/services/export-permit-pets',
-        label: '반려동물 수출 검역 신청 (MOCCAE)',
+        url: 'https://moccae.gov.ae/en/services/animal-health-certificate-for-export-re-export-of-live-animals',
+        label: '수출 건강증명서 발급 신청 (MOCCAE)',
       },
       {
         url: 'https://moccae.gov.ae/en/contact-us',
