@@ -1396,7 +1396,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '아르헨티나 수출 검역',
     shortLabel: '수출',
     description:
-      '아르헨티나 출국 전 SENASA에서 수출 검역을 받으세요.\n\n먼저 등록 수의사(veterinario matriculado)에게 마이크로칩·접종·광견병 항체 검사·건강 상태를 확인받아요.\n\nSENASA 자가신청 시스템으로 온라인 신청·예약한 뒤, 사무소에 원본 서류를 제출해요. 한국행은 완전 온라인 발급 대상이 아니라 사무소 방문이 필요해요.\n\n심사를 통과하면 국제수의증명서(CVI)가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
+      '아르헨티나 출국 전 SENASA에서 수출 검역을 받으세요.\n\n등록 수의사(veterinario matriculado)에게 마이크로칩·접종·광견병 항체 검사·건강 상태를 확인받아요.\n\nSENASA 자가신청 시스템으로 온라인 신청·예약한 뒤, 사무소에 원본 서류를 제출해요. 한국행은 완전 온라인 발급 대상이 아니라 사무소 방문이 필요해요.\n\n심사를 통과하면 국제수의증명서(CVI)가 발급돼요.',
     doneSummary: '아르헨티나 수출 검역을 받았어요.',
     cardLine: '아르헨티나 SENASA에서 수출 검역을 받으세요.',
     applicability: { destinations: ['argentina'], species: 'all', tripType: 'round' },
