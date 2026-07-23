@@ -3211,9 +3211,11 @@
   desc:
       인도네시아 수입 허가는 현지 신청만 가능해요.
       
-      인도네시아 수입자나 현지 에이전시를 통해 신청해요.
+      인도네시아 수입자가 직접 신청하거나, 현지 에이전시를 통해 신청해요.
   첨부안내: 반입 추천서(Rekomendasi Pemasukan)를 사진·PDF로 보관하세요.
   저장이름: 반입 추천서
+  links:
+      현지 운송 대행업체 찾기 (IPATA)  →  https://www.ipata.org/find-ipata-pet-shippers
 
 ▸ vet-visit
   title: 출국 전 임상검사
