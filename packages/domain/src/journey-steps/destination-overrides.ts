@@ -1247,6 +1247,86 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     },
   }),
 
+  // ── 싱가포르 (NParks/AVS — Schedule III) ─────────────────────────────
+  //   한국 = Schedule III(광견병 위험국). 입국 항체(RNATT) + 도착 후 AQC **30일 의무 격리** +
+  //   도착 시 광견병 재접종. sea-permit 골격 + 인니식 입국 항체(need:entry). 채혈 후 대기
+  //   (3개월)는 프로파일 titer.entryWaitAfterTiter.months=3 이 validateEuEntryDate 하드 차단으로
+  //   배선. 광견병 비발생국이라 귀국 항체 면제(항체=입국용). ⏳ 귀국 수출검역 카드는 후속.
+  singapore: seaPermitOverrides({
+    key: 'singapore',
+    label: '싱가포르',
+    rabiesDescription:
+      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 3개월이 지난 후에 접종해야 해요.\n불활화 또는 재조합 백신만 인정돼요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
+    rabiesValidationIds: [
+      'sg.rabies-prime-after-91days-old',
+      'sg.microchip-before-rabies',
+      'sg.rabies-booster-within-prime-validity',
+      'sg.rabies-valid-until-on-departure',
+    ],
+    // 항체(RNATT) = 싱가포르 **입국 요건**(귀국용 아님). 접종 28일 후 채혈, 채혈 후 3개월 대기.
+    titerDescription:
+      'NParks 승인 검사기관에서 광견병 항체 검사(RNATT)를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n광견병 접종 28일 후에 채혈해야 해요.\n싱가포르 입국에 반드시 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n채혈일로부터 3개월이 지나야 입국할 수 있고, 결과는 12개월간 유효해요.',
+    generalVaccine: {
+      description:
+        '강아지는 DHPPL, 고양이는 FVRCP 종합백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n출국 14일 전까지 접종해야 해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
+      descriptionBySpecies: {
+        dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스·파라인플루엔자·렙토스피라 예방을 포함해야 해요.\n마이크로칩 삽입 후 접종해요.\n출국 14일 전까지 접종해야 해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증·허피스바이러스·칼리시바이러스 예방을 포함해야 해요.\n마이크로칩 삽입 후 접종해요.\n출국 14일 전까지 접종해야 해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
+      },
+      validationIds: [
+        'sg.microchip-before-general-vaccine',
+        'sg.comprehensive-vaccine-14days-before-departure',
+        'sg.comprehensive-vaccine-valid-on-departure',
+      ],
+    },
+    flight: {
+      description:
+        '싱가포르 입국 일정에 맞춰 항공권을 구매하세요.\n\n광견병 항체 검사 채혈일로부터 3개월이 지난 후에 입국할 수 있어요.\n도착 후 검역소(AQC)에서 30일간 격리되니 일정을 여유 있게 잡으세요.\n검역소 자리를 먼저 예약해야 해요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      order: 90,
+      validationIds: ['sg.departure-min-3months-after-titer'],
+    },
+    // 수입 허가(Licence to Import Non-Food Animals) — 보호자가 GoBusiness 온라인 직접 신청.
+    importPermit: {
+      description:
+        '싱가포르 수입 허가(Licence to Import)를 신청하세요.\n\nGoBusiness 포털에서 보호자가 직접 온라인으로 신청할 수 있어요.\n먼저 검역소(AQC) 격리 자리를 예약해야 신청할 수 있어요.\n허가는 발급일로부터 90일간 유효해요.',
+      doneSummary: '싱가포르 수입 허가를 받았어요.',
+      cardLine: '싱가포르 수입 허가를 신청하세요.',
+      attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
+      attachmentLabel: '싱가포르 수입 허가증',
+      validationIds: ['sg.import-permit-not-after-departure'],
+      links: [{ url: 'https://www.gobusiness.gov.sg/', label: '수입 허가 신청 (GoBusiness)' }],
+    },
+    // ⭐ 도착 후 AQC 30일 의무 격리 + 도착 시 광견병 재접종 (NParks Schedule III).
+    importQuarantine: {
+      fieldKey: 'sg_import_quarantine_date',
+      description:
+        '싱가포르 도착 후 검역소(AQC)에서 수입 검역을 받으세요.\n서류를 확인한 뒤 검역소로 이동해요.\n격리 기간은 30일이에요.\n도착 시 광견병 예방접종을 다시 받아요.',
+      helpText: '싱가포르 도착 후 수입 검역을 시작한 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '싱가포르 수입 검역 서류',
+      validationIds: ['sg.import-quarantine-date-valid'],
+    },
+    extra: {
+      // 입국 항체 배선 override — 팩토리 기본 RETURN_ONLY(귀국용)를 싱가포르 입국 항체 룰로 교체.
+      //   싱가포르는 광견병 비발생국이라 귀국 항체 면제 → 귀국용 룰 불필요.
+      'rabies-titer': {
+        description:
+          'NParks 승인 검사기관에서 광견병 항체 검사(RNATT)를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n광견병 접종 28일 후에 채혈해야 해요.\n싱가포르 입국에 반드시 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n채혈일로부터 3개월이 지나야 입국할 수 있고, 결과는 12개월간 유효해요.',
+        order: 55,
+        validationIds: [
+          'sg.titer-min-28days-after-vaccine',
+          'sg.departure-within-12months-of-titer',
+        ],
+      },
+      'external-parasite': {
+        validationIds: ['sg.external-parasite-2to7days-before-departure'],
+      },
+      'internal-parasite': {
+        validationIds: ['sg.internal-parasite-2to7days-before-departure'],
+      },
+    },
+  }),
+
   // ── 인도네시아 — 태국 골격 복제(2026-07-22) 후 규정 문구 교체 완료:
   //   광견병 불활화·생후 3개월, 항체 입국 요건, 자카르타 한정 입국, 수입허가 현지 신청,
   //   도착 격리 1~2주. 수출 검역 카드·서류 서식명은 KH-11/KH-14 로 정정(2026-07-23, catalog.ts·

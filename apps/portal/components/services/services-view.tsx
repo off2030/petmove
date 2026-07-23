@@ -356,6 +356,14 @@ export const OFFLINE_DETAIL: Record<string, DestDetail> = {
     period: '최소 6~7개월',
     reviews: JAPAN_REVIEWS,
   }),
+  // 싱가포르 — 수입 허가(GoBusiness) + 검역소(AQC) 30일 격리 예약. 후기 없음(빈 배열).
+  싱가포르: offlineDetail({
+    destKey: 'singapore',
+    introHighlight: '싱가포르 수입 허가 신청·검역소(AQC) 예약',
+    procedureItems: ['수입 허가 신청', '검역소(AQC) 예약'],
+    cost: '76~92',
+    period: '최소 4~6개월',
+  }),
   // 태국 편도(한국→태국) / 왕복(태국→한국 재입국) — 왕복은 귀국용 광견병 항체검사가
   // included 에 파생 추가돼 비용·기간이 늘어난다.
   '태국:one_way': offlineDetail({
@@ -437,6 +445,13 @@ export const ONLINE_DETAIL: Record<string, DestDetail> = {
     items: ['사전 신고', '일본 수출 검역 신청 · 예약', '일본 검역소와의 소통'],
     period: '최소 6~7개월',
     reviews: JAPAN_REVIEWS,
+  }),
+  // 싱가포르 온라인 안심케어 — 수입 허가·검역소 예약 대행.
+  싱가포르: onlineDetail({
+    introItems: '수입 허가 신청, 검역소(AQC) 예약',
+    items: ['수입 허가 신청', '검역소(AQC) 예약'],
+    cost: '15만원 정도',
+    period: '최소 4~6개월',
   }),
   // 태국·필리핀 온라인 안심케어 — intro·단계·included 는 트립 무관 공통, 준비 기간만
   // 트립별로 다름(왕복은 귀국용 광견병 항체검사로 길어짐).

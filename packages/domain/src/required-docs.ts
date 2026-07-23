@@ -709,6 +709,76 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'kr-import-quarantine',
     },
   ],
+  // 싱가포르 (NParks/AVS — Schedule III) — 입국 항체(RNATT)·수입허가·별지25·Schedule III
+  //   건강증명서(한국 작성·검역관 인증)·한국 수출검역증·도착 검역(AQC 30일)·한국 수입검역증.
+  //   ⏳ 귀국(싱가포르→한국) 수출 증명서(AVS 인증)는 귀국 수출검역 카드와 함께 후속.
+  '싱가포르': [
+    {
+      id: 'sg-rabies-titer-result',
+      name: '광견병 항체 검사 결과지',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'rabies-titer',
+      description:
+        '검사를 의뢰한 동물병원을 통해 발급받아요. 검사는 농림축산검역본부에서 해요.\n\n싱가포르 입국에 반드시 원본이 필요해요. 채혈일로부터 12개월간 유효해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'rabies-titer',
+    },
+    {
+      id: 'sg-import-permit-doc',
+      name: '싱가포르 수입 허가증',
+      source: '싱가포르 수의당국(NParks/AVS)',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        '수입 허가 신청이 승인되면 발급돼요.\n\n발급일로부터 90일간 유효해요. 검역소(AQC) 격리 자리를 먼저 예약해야 신청할 수 있어요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
+      previewStepId: 'import-permit',
+    },
+    // 접종 및 건강증명서(별지 제25호) — 한국 공식 양식(전 목적지 공통).
+    KR_FORM25_VACCINATION_HEALTH_CERT,
+    {
+      id: 'sg-entry-health-cert',
+      name: '싱가포르 건강증명서(Schedule III)',
+      source: '동물병원 · 농림축산검역본부',
+      kind: 'manual',
+      issuanceStepId: 'vet-visit',
+      description:
+        '싱가포르 입국용 수의 건강증명서예요. NParks 지정 Schedule III 서식이에요.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n마이크로칩·광견병 백신·항체 검사·구충 내용이 기재돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
+    {
+      id: 'sg-kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      group: 'quarantine',
+      description:
+        '한국 수출 검역 후 발급돼요.\n\n싱가포르 수입 검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'certificate-issue',
+    },
+    {
+      id: 'sg-import-quarantine-cert',
+      name: '싱가포르 수입 검역 서류',
+      source: '싱가포르 수의당국(NParks/AVS)',
+      kind: 'step',
+      stepRef: 'departure',
+      group: 'quarantine',
+      description:
+        '싱가포르 도착 후 검역소(AQC)에서 30일 격리 검역을 받으며 받는 서류예요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'departure',
+    },
+    {
+      id: 'sg-kr-import-quarantine-cert',
+      name: '한국 수입 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'kr-import-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '한국 수입 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'kr-import-quarantine',
+    },
+  ],
   // 중국 — 공통(별지25·항체결과·한국 수출/수입 검역증) + 중국 고유 동물위생증명서(귀국용).
   // 중국은 항체검사가 입국 요건(비지정국)이라 roundTripOnly 아님. 입국 시 중국이 발급하는
   // 별도 증서는 없음(해관 확인만) — 그래서 '중국 수입 검역증' 항목은 두지 않는다.

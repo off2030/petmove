@@ -1,21 +1,28 @@
+import {
+  buildDateRuleContext,
+  validateImportPermitNotAfterDeparture,
+} from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
+  addMonths,
   addYears,
   daysBetween,
   evaluateRabiesAgeConservative,
+  findRabiesValidityBreaks,
   matchBannedBreed,
   readBreed,
   readExternalParasiteEntries,
   readGeneralVaccineEntries,
   readInternalParasiteEntries,
   readRabiesEntries,
+  readScopedImportPermitFiled,
   readTiterEntries,
   resolveValidUntil,
   SKIP,
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
-import { msgRabiesPrimeMinAge } from './messages'
+import { msgMicrochipBeforeGeneralVaccine, msgMicrochipBeforeRabies, msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 싱가포르 (NParks/AVS Schedule III) 절차 검증.
@@ -87,14 +94,14 @@ export const SG_CHECKS: ProcedureCheck[] = [
         const priorDoses = rabies.filter((r) => r.date <= t.date)
         if (priorDoses.length === 0) {
           offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date}) 이전의 광견병 접종 기록이 없어요.`)
+          problems.push('채혈일 이전의 광견병 접종 기록이 없어요.')
           continue
         }
         const latest = priorDoses[priorDoses.length - 1]
         const gap = daysBetween(latest.date, t.date)
         if (gap === null || gap < 28) {
           offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date})과 직전 접종일(${latest.date})의 간격이 ${gap ?? '?'}일로 28일 미만이에요.`)
+          problems.push('광견병 항체 검사는 직전 접종 28일 후에 채혈해야 해요.')
         }
       }
       if (offendingPaths.length > 0) {
@@ -108,12 +115,12 @@ export const SG_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'sg.departure-min-90days-after-titer',
+    id: 'sg.departure-min-3months-after-titer',
     country: 'singapore',
     category: '광견병',
-    title: '출국일은 항체 검사일 90일 이후',
+    title: '출국일은 항체 검사일 3개월 이후',
     description:
-      'RNATT 채혈일로부터 출국일까지 최소 90일 경과 필요. (Schedule III IV(a)(iii) "not less than 90 days ... prior to export")',
+      'RNATT 채혈일로부터 출국까지 최소 3개월(캘린더) 경과 필요. NParks 원문은 "90일"이나, 저장 거부(validateEuEntryDate, titer.entryWaitAfterTiter.months=3)와 기준을 맞추려 캘린더 3개월(≈89~92일)로 판정한다. (Schedule III IV(a)(iii) "not less than 90 days ... prior to export")',
     severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
@@ -121,25 +128,19 @@ export const SG_CHECKS: ProcedureCheck[] = [
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
-      let best: { entry: (typeof titers)[number]; days: number } | null = null
-      for (const t of titers) {
-        const days = daysBetween(t.date, dep)
-        if (days === null) continue
-        if (!best || days > best.days) best = { entry: t, days }
+      const valid = titers.find((t) => {
+        const earliest = addMonths(t.date, 3)
+        return !!earliest && earliest <= dep
+      })
+      if (valid) {
+        return { ok: true, message: `항체 검사(${valid.date}) + 3개월(${addMonths(valid.date, 3)}) ≤ 출국일(${dep}).` }
       }
-      if (best && best.days >= 90) {
-        return { ok: true, message: `항체 검사(${best.entry.date}) → 출국일(${dep}): ${best.days}일.` }
-      }
+      const earliestTiter = [...titers].sort((a, b) => a.date.localeCompare(b.date))[0]
       const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-      const message = !best
-        ? '항체 검사일과 출국일을 확인할 수 없어요.'
-        : best.days < 0
-          ? `항체 검사일(${best.entry.date})이 출국일(${dep})보다 이후예요. 채혈은 출국 전에 완료되어야 해요.`
-          : `항체 검사일로부터 출국일까지 ${best.days}일이에요. 90일 이상이어야 해요.`
       return {
         ok: false,
-        message,
+        message: '광견병 항체 검사 채혈일로부터 3개월이 지난 후에 출국할 수 있어요.',
         offendingPaths: offending,
       }
     },
@@ -171,7 +172,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `최신 항체 검사(${newest.date})의 유효기간(${newestValidUntil})이 출국일(${dep})보다 빨라요.`,
+        message: '광견병 항체 검사 결과는 12개월간 유효해요. 유효기간이 지나기 전에 출국해야 해요.',
         offendingPaths: offending,
       }
     },
@@ -197,7 +198,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 이전에 만료돼요.`,
+          message: '출국일에 광견병 백신 면역 유효기간이 남아있어야 해요.',
           offendingPaths: [
             'departure_date',
             `rabies_dates[${latest.originalIndex}].date`,
@@ -229,7 +230,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (diff < 14) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 14일 이상이어야 해요.`,
+          message: '종합백신은 출국 14일 전까지 접종해야 해요.',
           offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
@@ -256,7 +257,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 이전에 만료돼요.`,
+          message: '출국일에 종합백신 면역 유효기간이 남아있어야 해요.',
           offendingPaths: [
             'departure_date',
             `general_vaccine_dates[${latest.originalIndex}].date`,
@@ -288,7 +289,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (diff < 2 || diff > 7) {
         return {
           ok: false,
-          message: `외부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 2~7일 범위여야 해요.`,
+          message: '외부 기생충 치료는 출국 2~7일 전에 해야 해요.',
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
@@ -315,7 +316,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (diff < 2 || diff > 7) {
         return {
           ok: false,
-          message: `내부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 2~7일 범위여야 해요.`,
+          message: '내부 기생충 치료는 출국 2~7일 전에 해야 해요.',
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
@@ -362,4 +363,141 @@ export const SG_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
     },
   },
+
+  // ── 광견병 chain (말레이시아 my.ts 복제) ──
+  {
+    id: 'sg.rabies-booster-within-prime-validity',
+    country: 'singapore',
+    category: '광견병',
+    title: '광견병 추가 접종은 직전 접종 유효기간 이내',
+    description:
+      '연속된 광견병 접종은 직전 접종의 면역 유효기간 이내에 해야 함. 만료 후 접종은 chain 이 끊겨 새 1차로 간주된다. 저장 거부(findRabiesChainBreak)의 짝이 되는 주의 — 펫무브워크는 저장을 막지 않고 절차검증만 보므로 이 룰이 없으면 운영자 화면에서 끊긴 chain 이 안 보인다.',
+    severity: 'warning',
+    addedAt: '2026-07-24',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length < 2) return SKIP
+      const offending = findRabiesValidityBreaks(rabies)
+      if (offending.length > 0) {
+        return {
+          ok: false,
+          message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
+          offendingPaths: offending,
+        }
+      }
+      return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
+    },
+  },
+
+  // ── 마이크로칩 (my.ts 복제) ──
+  {
+    id: 'sg.microchip-before-rabies',
+    country: 'singapore',
+    category: '마이크로칩',
+    title: '마이크로칩, 백신 타이밍',
+    description:
+      '마이크로칩(ISO 11784/11785)이 광견병 접종일과 같거나 이전이어야 함. 입국 시 칩 번호와 서류 일치 검증. 백신 입력 시 client 차단(validateMicrochipBeforeBooster)과 짝.',
+    severity: 'warning',
+    addedAt: '2026-07-24',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
+      const rabies = readRabiesEntries(caseRow)
+      if (!microchip || rabies.length === 0) return SKIP
+      const first = rabies[0]
+      if (microchip <= first.date) {
+        return { ok: true, message: `마이크로칩(${microchip}) ≤ 접종(${first.date}).` }
+      }
+      return {
+        ok: false,
+        message: msgMicrochipBeforeRabies(),
+        offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
+      }
+    },
+  },
+  {
+    id: 'sg.microchip-before-general-vaccine',
+    country: 'singapore',
+    category: '마이크로칩',
+    title: '마이크로칩, 종합백신 타이밍',
+    description:
+      '마이크로칩(ISO 11784/11785)이 종합백신 접종일과 같거나 이전이어야 함. 칩으로 식별된 동물의 접종만 인정.',
+    severity: 'warning',
+    addedAt: '2026-07-24',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
+      const entries = readGeneralVaccineEntries(caseRow)
+      if (!microchip || entries.length === 0) return SKIP
+      const first = entries[0]
+      if (microchip <= first.date) {
+        return { ok: true, message: `마이크로칩(${microchip}) ≤ 종합백신(${first.date}).` }
+      }
+      return {
+        ok: false,
+        message: msgMicrochipBeforeGeneralVaccine(),
+        offendingPaths: ['microchip_implant_date', `general_vaccine_dates[${first.originalIndex}].date`],
+      }
+    },
+  },
+
+  // ── 수입 허가 / 검역 (my.ts 복제) ──
+  {
+    id: 'sg.import-permit-not-after-departure',
+    country: 'singapore',
+    category: '수입허가',
+    title: '수입 허가 신청일, 출국일 순서',
+    description:
+      '수입 허가 신청일은 출국일 이전이어야 함(출국 당일·이후엔 신청 불가). 입력 차단(validateImportPermitNotAfterDeparture)과 같은 함수.',
+    severity: 'warning',
+    addedAt: '2026-07-24',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
+      const msg = validateImportPermitNotAfterDeparture(filed, dep)
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['import_permit_application_date', 'departure_date'],
+        }
+      }
+      return { ok: true, message: `신청일(${filed}) < 출국일(${dep || '미입력'}).` }
+    },
+  },
+  {
+    id: 'sg.import-quarantine-date-valid',
+    country: 'singapore',
+    category: '검역',
+    title: '싱가포르 수입 검역일',
+    description: '싱가포르 수입 검역일은 싱가포르 입국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-07-24',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.sg_import_quarantine_date === 'string'
+          ? data.sg_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '싱가포르 수입 검역일은 싱가포르 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['sg_import_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `싱가포르 수입검역일(${raw}) 입국 이후.` }
+    },
+  },
+  // ⏳ 귀국(싱가포르→한국) 수출 검역 룰(sg.export-quarantine-date-valid)은 귀국 수출검역
+  //   카드(sg-export-quarantine step)와 함께 후속 작업에서 추가한다. 카드 없이 룰만 두면
+  //   orphan 으로 lint 가 실패한다.
 ]

@@ -703,10 +703,46 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     //   푸시를 만들지 않기로 확정(사용자 2026-07-22). reminders.ts·milestone-pushes.ts 주석 참고.
     appSupported: true,
   },
+  // ── 싱가포르 (NParks/AVS — Schedule III) ────────────────────────────
+  //   한국 = Schedule III(광견병 위험국). 확정 출처: NParks/AVS "Importing dogs and cats"
+  //   (2026-06-18 갱신). Schedule I(호주·뉴질랜드·아일랜드·영국)·II(일본·미국·EU 다수·홍콩·
+  //   스위스 등)에 없는 모든 나라가 Schedule III. 핵심: 입국 항체(RNATT) + 도착 후 AQC
+  //   **30일 의무 격리** + 도착 시 광견병 재접종. sea-permit 골격(수입 허가 + 도착 검역 카드)에
+  //   인니식 입국 항체를 얹었다. 광견병 비발생국이라 귀국 시 한국 항체검사는 면제(항체=입국용).
   singapore: {
     keywords: ['싱가포르', 'singapore'],
+    archetype: 'sea-permit',
+    rabies: {
+      doses: 1,
+      // NParks 정량 미명시("제조사 권장") → 보수적 생후 91일 AND 캘린더 3개월(sg.ts 룰과 동일).
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      vaccineTypeLine: '불활화 또는 재조합 백신만 인정돼요.',
+      validityLine: '입국할 때 면역 유효기간이 남아있어야 해요.',
+    },
+    // ✅ 항체검사(RNATT) = 싱가포르 **입국 요건**. 접종 28일 후 채혈, 출국 90일 전·12개월 이내,
+    //   0.5 IU/ml 이상. (NParks Schedule III IV(a)(iii)) 채혈 후 90일 대기 → 입력 차단 blocker.
+    // 채혈 후 대기 = **캘린더 3개월**로 선언(NParks "90일"≈3개월). months 선언 시 EU·튀르키예와
+    //   같은 자동 배선(validateEuEntryDate 하드 차단 + lint blocker 세트)에 편승한다. 90일 정확
+    //   일수가 필요하면 별도 days 블로커가 필요(대만식) — 현재는 3개월 근사(사용자 확인 대기).
+    titer: {
+      need: 'entry',
+      minDaysAfterVaccine: 28,
+      entryWaitAfterTiter: { months: 3 },
+      entryValidityMonths: 12,
+    },
+    appSupported: true,
+    // 수입 허가(Licence to Import Non-Food Animals) — 보호자가 GoBusiness 온라인 직접 신청.
+    //   확정 '출국 N일 전' 마감 없음(90일 유효) → 마감 리마인더·발급 푸시 미등록(사용자 지정).
+    importPermit: { selfApply: true },
     vaccines: ['rabies', 'rabies_titer', 'general', 'external_parasite', 'internal_parasite'],
     vetVisitWindowDays: 7,
+    extraFields: [
+      'passport_number', 'passport_expiry_date', 'passport_issuer',
+      'address_overseas',
+      'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
+    ],
   },
   hongkong: {
     keywords: ['홍콩', 'hong kong', 'hongkong'],

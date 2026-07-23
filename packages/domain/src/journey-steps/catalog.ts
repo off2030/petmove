@@ -1033,6 +1033,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'uae',
         'hawaii',
         'guam',
+        'singapore',
       ],
       species: 'all',
       tripType: 'all',
@@ -1072,6 +1073,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         // parasites during the 14 days prior to shipment") — 룰(ae.internal-parasite-
         // within-14days)도 이미 있었는데 카드가 안 떠서 죽어 있었다.
         'uae',
+        // 싱가포르 — NParks Schedule III IV(a)(vi): 출국 2~7일 내 내·외부 구충.
+        'singapore',
       ],
       species: 'all',
       tripType: 'all',
