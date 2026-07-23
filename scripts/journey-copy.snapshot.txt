@@ -2087,8 +2087,7 @@
   첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
   저장이름: 아랍에미리트 수출 건강증명서
   links:
-      수출 건강증명서 발급 신청 (MOCCAE)  →  https://moccae.gov.ae/en/services/animal-health-certificate-for-export-re-export-of-live-animals
-      MOCCAE 연락처  →  https://moccae.gov.ae/en/contact-us
+      수출 건강증명서 발급·문의 (MOCCAE)  →  https://moccae.gov.ae/en/services/animal-health-certificate-for-export-re-export-of-live-animals
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
