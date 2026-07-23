@@ -427,13 +427,17 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'rabies-titer',
     },
     {
+      // ⚠️ 태국 서식 잔재 정정(2026-07-23). 구: '수입 허가 통지서(R.6)' / 발급처 '동물검역소' /
+      //   '60일 유효' — 전부 태국(DLD) 것이다. 말레이시아는 MAQIS 가 ePermit 으로 발급하고
+      //   R.6·60일 유효 근거가 없다. 카드(수입 허가증·MAQIS)와 같은 표기로 맞췄다.
+      //   ⛔ R.6·60일·'동물검역소'를 되살리지 말 것. MAQIS 유효기간은 미확인이라 안 쓴다.
       id: 'my-import-permit-doc',
-      name: '수입 허가 통지서(R.6)',
-      source: '말레이시아 동물검역소',
+      name: '수입 허가증',
+      source: '검역기관(MAQIS)',
       kind: 'step',
       stepRef: 'import-permit',
       description:
-        '수입 허가 신청이 승인되면 발급돼요.\n\n발급일로부터 60일간 유효해요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
+        '수입 허가 신청이 승인되면 발급돼요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
       previewStepId: 'import-permit',
     },
     // 접종 및 건강증명서(별지 제25호) — 일본·태국과 완전히 동일한 한국 공식 양식.
