@@ -2524,16 +2524,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '정부 수의건강증명서 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '튀르키예 정부 수의건강증명서',
-    // 링크 = e-Devlet(전자정부) '반려동물 비상업 수출용 국제건강증명서' 신청 서비스.
-    //   ⚠️ 농림부 본사이트 tarimorman.gov.tr 는 전 페이지 WAF("Request Rejected")로 막혀 못 쓴다
-    //   (실제 브라우저 확인). turkiye.gov.tr(e-Devlet)는 접속 가능(WebFetch 로드 확인 2026-07-23).
-    //   실제 신청은 e-Devlet 로그인 필요.
-    links: [
-      {
-        url: 'https://www.turkiye.gov.tr/tarbil-ev-ve-ss-hayvanlarnn-ticari-olmayan-ihracat-iin-uluslararas-salk-sertifikas-2920',
-        label: '수출 국제건강증명서 신청(e-Devlet)',
-      },
-    ],
+    // ⚠️ 링크 미설정 — 걸 만한 게 없다. 농림부 tarimorman.gov.tr 는 전 페이지 WAF("Request
+    //   Rejected") 차단이고, e-Devlet(turkiye.gov.tr) 신청 서비스는 접속은 되나 **터키 신분증
+    //   또는 외국인 등록번호(Yabancı Kimlik No) + e-Devlet 로그인 필수**라 터키 거주 외국인만
+    //   쓸 수 있다 — 단기 방문 고객(대부분)은 불가하므로 오해를 줘 뺐다(사용자 확인 2026-07-23).
+    //   실제 발급은 관할 İl/İlçe Tarım ve Orman Müdürlüğü 현장 신청이라 설명문 안내로 충분.
   },
   // ── 15. 한국 수입 검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
   {
