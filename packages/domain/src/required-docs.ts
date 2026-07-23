@@ -1012,8 +1012,11 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   }),
   '튀르키예': vietnamFamilyDocSpecs('튀르키예', 'tr', {
     exportQuarantineDoc: {
-      name: '튀르키예 수출 수의증명서',
-      source: '튀르키예 수의당국',
+      // ✅ 발급 = 관할 시·구 농림청(İl/İlçe Tarım ve Orman Müdürlüğü), 증명서 = Veteriner
+      //   Sağlık Sertifikası. 카자흐스탄 복제 잔재('수출 수의증명서'·'튀르키예 수의당국')를
+      //   조사 확정값으로 교체(2026-07-23, 카드와 통일).
+      name: '튀르키예 수출 증명서(Veteriner Sağlık Sertifikası)',
+      source: '튀르키예 관할 시·구 농림청(İl/İlçe Tarım ve Orman Müdürlüğü)',
       description:
         '튀르키예 수출 검역 후 발급받아요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     },
