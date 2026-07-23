@@ -1281,8 +1281,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   //   · 도착 후 5일 내 지자체 등록 의무 = 현행(섹션 X, 개 전용·5633/2002법). 별도 카드는 미제작.
   //   · 사전 통보 = 공식은 **적재(출국) 2영업일 전**(섹션 P/Q), 벤구리온은 govforms 링크·그 외엔
   //     이메일(vs-airport@moag.gov.il 등). 입국 항/포 = 벤구리온 공항 + 하이파·아쉬도드·에일랏 항(섹션 L).
-  //   ⚠️ 현재 il-advance-notice 카드는 '입국 48시간 전'인데 공식은 '적재 2영업일 전' — 기준(입국↔출국)·
-  //     시점(48h↔2영업일) 조정 대상. 사용자 확인 후 정정할 것.
+  //     ✅ il-advance-notice 카드·검증·알림 모두 '출국(적재) 2영업일 전' 기준으로 정정 완료
+  //     (2026-07-23: 입력차단 D-2, 마감 알림 출국 D-11·D-4). 링크=govforms(벤구리온) + 수입허가 안내.
   israel: {
     keywords: ['이스라엘', 'israel'],
     archetype: 'eu-family',
@@ -1304,8 +1304,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     //   ⚠️ 상업 사이트의 '채혈 후 90일(3개월) 대기'는 오류 — 공식 문서엔 없다. 그 90일은
     //   섹션 E.3의 '소유 90일'(수입허가 면제 조건)을 오독한 것. 3개월 대기를 다시 넣지 말 것.
     titer: { need: 'entry', minDaysAfterVaccine: 30, entryValidityMonths: null },
-    // 출국 48시간 전 벤구리온 검역소 사전 통보.
-    advanceNotice: { hardDeadlineHours: 48, label: '사전 통보' },
+    // 사전 통보 — 실제 마감/입력차단/알림은 '출국(적재) 2영업일 전' 기준으로 catalog
+    // il-advance-notice·date-rules·reminders 가 처리한다. hardDeadlineHours(entry 기준)는
+    // 이스라엘엔 소비되지 않아(EU 4국 entry 테이블 전용) 값을 빼고 선언만 유지 —
+    // ADVANCE_NOTICE_DESTINATIONS(presence 파생)에 들어가야 하므로.
+    advanceNotice: { label: '사전 통보' },
     vaccines: ['rabies', 'rabies_titer'],
     extraFields: ['address_overseas'],
   },
