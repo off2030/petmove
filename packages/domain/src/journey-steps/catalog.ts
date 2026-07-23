@@ -785,7 +785,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '사전 통보',
     shortLabel: '통보',
     description:
-      '이스라엘은 출국(적재) 2영업일 전까지 사전 통보를 해야 해요.\n\n벤구리온 공항으로 도착하는 경우 아래 온라인 폼에서 도착 정보와 건강증명서·광견병 항체검사 결과지를 제출해요.\n반려동물이 3마리 이상이면 사전 통보 대신 수입 허가(Import License)를 미리 신청해야 해요.',
+      '이스라엘은 출국 2영업일 전까지 사전 통보를 해야 해요.\n\n벤구리온 공항으로 도착하는 경우 아래 온라인 폼에서 도착 정보와 건강증명서·광견병 항체검사 결과지를 제출해요.\n반려동물이 3마리 이상이면 사전 통보 대신 수입 허가(Import License)를 미리 신청해야 해요.',
     doneSummary: '이스라엘에 사전 통보를 했어요.',
     cardLine: '이스라엘에 사전 통보를 하세요.',
     applicability: { destinations: ['israel'], species: 'all', tripType: 'all' },
@@ -804,6 +804,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       {
         url: 'https://govforms.gov.il/mw/forms/PetPersonalImportation@moag.gov.il',
         label: '사전 통보 온라인 폼(벤구리온)',
+      },
+      {
+        url: 'https://www.gov.il/en/service/import_pets_cats_dogs',
+        label: '수입 허가 신청 안내(이스라엘 농업부)',
       },
     ],
     validationIds: ['il.advance-notice-2days-before-departure'],
