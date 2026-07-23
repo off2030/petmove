@@ -1345,21 +1345,22 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   },
 
   // ── 인도네시아 수출 검역 (왕복 — 귀국 출국 시, 인도네시아 전용) ───────
-  // ✅ 2026-07-23 인도네시아 검역본부(Barantin) 원문 조사로 전면 교체 — 태국 복제 잔재를 걷어냈다:
-  //   ⛔ 'R.9' — 근거 없는 태국(DLD) 서식 번호다. 인도네시아 수출 검역이 발급하는 건
-  //      **Sertifikat Kesehatan Hewan Karantina(검역 건강증명서, 서식 KH-11)**이다.
-  //   ⛔ '1~3일 전·주말·공휴일 불가' — 태국 AQS 안내로 인도네시아 근거가 없어 제거.
-  //   구조: 신청 = **PTK 온라인**(ptk.karantinaindonesia.go.id) → 출발 공항 검역소에서 검역관에게
-  //         신고·검사 → 합격 시 KH-11 발급. 접종 기록·광견병 항체 결과를 지참한다.
+  // ✅ 2026-07-23 검역청(Barantin) 공식 안내 상세 조사로 재정리(사용자 제공). 수출 증명은 **2단계**다:
+  //   ① 거주 지역 수의당국(Dinas Peternakan / Otoritas Veteriner) **수의증명서(Veterinary
+  //      Certificate)** — 사설 동물병원의 접종·검사·칩 기록을 근거로 지역 수의당국이 발급.
+  //   ② 검역청(Barantin) **동물 건강증명서(Animal Health Certificate)** — 최종 정부 수출검역증명서.
+  //   신청 = PTK 온라인(ptk.karantinaindonesia.go.id) → 검역관에게 동물·서류 실물 제출 → 발급.
+  //   ⚠️ 공항 당일 첫 신청 불가(관할 검역소 사전 예약·검사). 말레이시아(주 DVS VHC+MAQIS) 2기관
+  //     구조와 같은 형식으로 문구를 맞췄다. ⛔ 태국식 'KH-11 만 언급/공항 동물검역소' 단순화 금지.
   {
     id: 'id-export-quarantine',
     category: 'document',
     title: '인도네시아 수출 검역',
     shortLabel: '수출',
     description:
-      '인도네시아 출국 전 공항 동물검역소에서 수출 검역을 받으세요.\n검역 신청은 PTK 온라인 시스템으로 하고, 미리 검역관에게 방문 신고를 해요.\n접종 기록과 광견병 항체 검사 결과를 꼭 챙기세요.\n검사를 통과하면 검역 건강증명서(KH-11)가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
+      '인도네시아 출국 전 검역청(Barantin)에서 수출 검역을 받으세요.\n\n먼저 거주 지역 수의당국(Dinas)에서 수의증명서(Veterinary Certificate)를 발급받아요. 동물병원에서 준비한 접종·항체 검사·마이크로칩 기록이 필요해요.\n\n검역청에는 PTK 온라인으로 신청하고, 검역관에게 반려동물과 서류를 직접 보여줘요. 공항에서 당일 처음 신청하는 방식은 안 돼요.\n\n검사를 통과하면 동물 건강증명서(Animal Health Certificate)가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
     doneSummary: '인도네시아 수출 검역을 받았어요.',
-    cardLine: '인도네시아 동물검역소에서 수출 검역을 받으세요.',
+    cardLine: '인도네시아 검역청에서 수출 검역을 받으세요.',
     applicability: { destinations: ['indonesia'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'quarantine:id_export_quarantine_date',
@@ -1369,13 +1370,13 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         key: 'id_export_quarantine_date',
         label: '검역일',
         type: 'date',
-        helpText: '인도네시아 동물검역소에서 수출 검역을 받은 날짜',
+        helpText: '인도네시아 검역청에서 수출 검역을 받은 날짜',
       },
     ],
     allowAttachments: true,
-    attachmentHint: '검역 건강증명서(KH-11) 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '검역 건강증명서(KH-11)',
-    // PTK 온라인 — 검역 신청(반려동물 수출 포함). 200 확인.
+    attachmentHint: '동물 건강증명서(Animal Health Certificate) 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '동물 건강증명서(Animal Health Certificate)',
+    // PTK 온라인 — 수출 검역 신청(수출은 보호자/송하인이 직접 신고, 수입과 달리 현지 수하인 불요). 200 확인.
     links: [
       { url: 'https://ptk.karantinaindonesia.go.id/', label: '검역 신청 (PTK 온라인)' },
     ],

@@ -563,18 +563,19 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'departure',
     },
     {
-      // ⚠️ 태국 서식 잔재 정정(2026-07-23, Barantin 조사). 구: '수출 허가서(R.9)' /
-      //   'Export License(R.9)' 는 태국(DLD) 서식이다. 인도네시아 수출 검역이 발급하는 건
-      //   **검역 건강증명서(KH-11, Sertifikat Kesehatan Hewan Karantina)**다. ⛔ R.9 를 되살리지 말 것.
+      // ✅ 2026-07-23 검역청(Barantin) 공식 안내 기준. 인도네시아 수출의 **최종 정부 수출검역
+      //   증명서 = 검역청 발급 동물 건강증명서(Animal Health Certificate)**다. 지역 수의당국의
+      //   수의증명서(Veterinary Certificate)는 이 최종 증명서를 받기 위한 선행 서류(카드에서 안내).
+      //   ⛔ 태국 서식 'R.9'·'Export License' 를 되살리지 말 것.
       id: 'id-export-quarantine-cert',
-      name: '검역 건강증명서(KH-11)',
-      source: '인도네시아 검역본부(Barantin)',
+      name: '동물 건강증명서(Animal Health Certificate)',
+      source: '인도네시아 검역청(Barantin)',
       kind: 'step',
       stepRef: 'id-export-quarantine',
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '인도네시아 수출 검역 후 발급돼요.\n\n정확한 서류 이름은 Sertifikat Kesehatan Hewan Karantina(KH-11) 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '인도네시아 수출 검역 후 검역청(Barantin)이 발급하는 정부 수출검역증명서예요.\n\n한국 입국 때 반드시 필요하니 원본을 잘 보관하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'id-export-quarantine',
     },
     {
