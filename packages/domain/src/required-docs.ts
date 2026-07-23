@@ -1044,7 +1044,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     entryHealthCert: {
       name: '아랍에미리트 건강증명서(EY604)',
       description:
-        '아랍에미리트 입국용 수의건강증명서예요. 정확한 서류 이름은 Veterinary Health Certificate for Exporting Cats and Dogs to the UAE(EY604) 입니다.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n마이크로칩·예방접종·기생충 구제 등이 기재돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '아랍에미리트 입국용 수의건강증명서예요.\n\n정확한 서류 이름은 Veterinary Health Certificate for Exporting Cats and Dogs to the UAE(EY604) 입니다.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     },
     // MOCCAE 사전 발급 수입 허가(90일 유효) — destination-config 의 importPermit 선언과 대응.
     importPermitDoc: {
