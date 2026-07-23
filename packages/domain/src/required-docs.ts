@@ -207,6 +207,13 @@ function vietnamFamilyDocSpecs(
      * (departure step)는 그대로 두고 첨부만 열어둔다 — 여기서 빼는 건 서류 체크리스트 항목뿐.
      */
     omitImportQuarantineDoc?: boolean
+    /**
+     * 목적지가 지정한 **입국용 전용 서식**을 한국에서 작성하고, 한국 수출 검역 때 검역관(정부
+     * 수의사)이 확인·서명하는 나라(일본 Form AC 패턴) — 서식이 확인된 경우에만 채운다.
+     * 튀르키예 = 펫무브워크 TK 서식(Veterinary Health and Origin Certificate). 별지25호 다음,
+     * 한국 수출 검역증 앞에 온다. 입국 요건이라 편도·왕복 모두 필요(roundTripOnly 아님).
+     */
+    entryHealthCert?: { name: string; source?: string; description: string }
     exportQuarantineDoc?: { name: string; source: string; description: string }
   } = {},
 ): RequiredDocSpec[] {
@@ -227,6 +234,21 @@ function vietnamFamilyDocSpecs(
       previewStepId: 'rabies-titer',
     },
     KR_FORM25_VACCINATION_HEALTH_CERT,
+    // 목적지 입국용 수의 건강증명서 — 목적지 지정 전용 서식을 한국에서 작성하고 한국 수출
+    // 검역 때 검역관(정부 수의사)이 확인·서명한다(일본 Form AC 패턴). 서식이 확인된 나라만.
+    // 별지25호 다음·한국 수출 검역증 앞(출국 전 준비물). 입국 요건이라 roundTripOnly 아님.
+    ...(opts.entryHealthCert
+      ? [
+          {
+            id: `${cc}-entry-health-cert`,
+            name: opts.entryHealthCert.name,
+            source: opts.entryHealthCert.source ?? '동물병원 · 농림축산검역본부',
+            kind: 'manual' as const,
+            issuanceStepId: 'vet-visit',
+            description: opts.entryHealthCert.description,
+          },
+        ]
+      : []),
     KR_EXPORT_QUARANTINE_CERT,
     // 도착 검역 서류 — 발급물이 있는 나라만. 심사만 하고 발급물이 없는 나라(아르헨티나)는 뺀다.
     ...(opts.omitImportQuarantineDoc
@@ -1011,6 +1033,16 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
   }),
   '튀르키예': vietnamFamilyDocSpecs('튀르키예', 'tr', {
+    // 입국용 서식 = 펫무브워크 TK 서식(cert-config-defaults.ts 의 'tk', data/pdf-templates/TK.pdf).
+    //   원문 제목: "Veterinary Health and Origin Certificate for Domestic Dogs, Cats and Ferrets
+    //   Entering Republic of Turkey"(KÖPEK, KEDİ… ORİJİN VE VETERİNER SAĞLIK SERTİFİKASI).
+    //   한국에서 작성 → 서명란 'signature of the official veterinarian'(정부 수의사) = 한국 수출
+    //   검역 검역관. 귀국용 exportQuarantineDoc(튀르키예 현지 발급)과는 방향·발급주체가 다르다.
+    entryHealthCert: {
+      name: '튀르키예 입국용 오리진·수의 건강증명서',
+      description:
+        '튀르키예 입국용 건강증명서예요. 정확한 서류 이름은 Veterinary Health and Origin Certificate 입니다.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
     exportQuarantineDoc: {
       // ✅ 발급 = 관할 시·구 농림청(İl/İlçe Tarım ve Orman Müdürlüğü), 증명서 = Veteriner
       //   Sağlık Sertifikası. 카자흐스탄 복제 잔재('수출 수의증명서'·'튀르키예 수의당국')를
