@@ -338,10 +338,13 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'cyprus',
         'australia',
         'new_zealand',
-        // 말레이시아·인도네시아 — 태국 복제(2026-07-22)로 return-only 국가가 되면서 main 목록에서
-        // 제거. 카드는 roundOnlyDestinations(프로파일 rabiesTiterForReturnOnly 파생)로 왕복에만 뜬다.
-        // (말레이시아가 귀국용 국가인데 main 목록에 있던 기존 불일치도 이걸로 해소 —
-        //  docs/destination-architecture-design.md §발견 버그.)
+        // 말레이시아 — **한국 귀국용**(rabiesTiterForReturnOnly) 국가라 main 목록에서 빼고
+        // roundOnlyDestinations 로만 왕복에 노출. (말레이시아가 귀국용인데 main 에 있던 기존
+        // 불일치도 이걸로 해소 — docs/destination-architecture-design.md §발견 버그.)
+        // ⚠️ **인도네시아는 여기 남긴다** — 항체검사가 **입국 요건**(titer.need='entry')이라
+        //   말레이시아와 함께 빼면 안 된다(모로코와 같은 부류). 2026-07-22 복제 정리 때 둘을
+        //   싸잡아 뺐다가 인도네시아 항체 카드가 통째로 사라져 있었다(2026-07-23 lint:dest 로 발견).
+        'indonesia',
         'china',
         'taiwan',
         'singapore',

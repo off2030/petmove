@@ -506,14 +506,16 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   //   ⛔ R.6·R.7·R.9 를 되살리지 말 것(태국 DLD 서식). 발급처 = 인도네시아 검역본부(Barantin).
   '인도네시아': [
     {
+      // ⚠️ 태국 복제 잔재 정정(2026-07-23). 인도네시아 항체검사는 **입국 요건**
+      //   (titer.need='entry', 카드도 "인도네시아 입국에 필요해요")인데 서류 설명은 태국식
+      //   '한국 귀국용'이라 카드와 어긋났다. roundTripOnly 도 제거 — 편도 입국에도 필요하다.
       id: 'id-rabies-titer-result',
       name: '광견병 항체 검사 결과지',
       source: '동물병원',
       kind: 'step',
       stepRef: 'rabies-titer',
-      roundTripOnly: true,
       description:
-        '검사를 의뢰한 동물병원에서 발급받아요.\n\n한국 귀국 때 반드시 원본이 필요해요. 유효기간은 2년이에요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+        '검사를 의뢰한 동물병원에서 발급받아요.\n\n인도네시아 입국에 반드시 원본이 필요해요. 왕복이면 한국 귀국 때도 필요해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'rabies-titer',
     },
     {
