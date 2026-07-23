@@ -1089,7 +1089,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     entryHealthCert: {
       name: '튀르키예 건강증명서',
       description:
-        '튀르키예 입국용 건강증명서예요. 정확한 서류 이름은 Veterinary Health and Origin Certificate 입니다.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '튀르키예 입국용 건강증명서예요.\n\n정확한 서류 이름은 Veterinary Health and Origin Certificate 예요.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     },
     exportQuarantineDoc: {
       // ✅ 발급 = 관할 시·구 농림청(İl/İlçe Tarım ve Orman Müdürlüğü), 증명서 = Veteriner
