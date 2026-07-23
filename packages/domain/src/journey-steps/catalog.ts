@@ -1382,6 +1382,45 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
 
+  // ── 아르헨티나 수출 검역 (왕복 — 귀국 출국 시, 아르헨티나 전용) ───────
+  // ✅ 2026-07-23 SENASA 공식 안내 상세 조사(사용자 제공). 아르헨티나 출국엔 **SENASA가 발급한
+  //   국제수의증명서(CVI)**가 필수다(사설 병원 진단서·백신수첩만으론 불가). 대만식(강제 X·대체서류)이
+  //   아니라 인도네시아·일본식 **필수 수출 검역** — 대체서류('한국 검역증으로 갈음') 문구를 넣지 않는다.
+  //   흐름: 등록 수의사(veterinario matriculado) 확인 → SENASA 자가신청(Autogestión) 온라인 입력·예약
+  //         → **사무소에 원본 제출**(한국행은 완전 디지털 CVI 대상국 아님) → CVI 발급.
+  //   ⚠️ CVI 유효기간은 발급 문서 기재값이 최종(국가별 상이) — '10일' 자동적용 금지. 공항 당일 첫
+  //     신청은 피할 것. 처리 일반 72영업시간.
+  {
+    id: 'ar-export-quarantine',
+    category: 'document',
+    title: '아르헨티나 수출 검역',
+    shortLabel: '수출',
+    description:
+      '아르헨티나 출국 전 SENASA에서 수출 검역을 받으세요.\n\n먼저 등록 수의사(veterinario matriculado)에게 마이크로칩·접종·광견병 항체 검사·건강 상태를 확인받아요.\n\nSENASA 자가신청 시스템으로 온라인 신청·예약한 뒤, 사무소에 원본 서류를 제출해요. 한국행은 완전 온라인 발급 대상이 아니라 사무소 방문이 필요해요.\n\n심사를 통과하면 국제수의증명서(CVI)가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
+    doneSummary: '아르헨티나 수출 검역을 받았어요.',
+    cardLine: '아르헨티나 SENASA에서 수출 검역을 받으세요.',
+    applicability: { destinations: ['argentina'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:ar_export_quarantine_date',
+    validationIds: ['ar.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'ar_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: 'SENASA에서 수출 검역(CVI 발급)을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '국제수의증명서(CVI) 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '국제수의증명서(CVI)',
+    // ① 출국 절차 안내(SENASA) ② 자가신청 시스템(Autogestión). 둘 다 브라우저 200 확인.
+    links: [
+      { url: 'https://www.argentina.gob.ar/senasa/procedimiento-para-viajar-al-exterior-con-perros-y-gatos', label: '출국 절차 안내 (SENASA)' },
+      { url: 'https://mascotas.senasa.gob.ar/', label: '자가신청 시스템 (SENASA Autogestión)' },
+    ],
+  },
+
   // ── 귀국 서류 준비 (왕복 — 귀국 전, EU 패밀리 전용) ─────────────
   // EU 는 일본·태국 같은 '수출검역소 방문(검역)' 제도가 없다 — 한국 재입국엔 출발국 정부가
   // 인증한 한국 입국용 '건강증명서'가 필요(기본). 예외로 ① EU 반려동물 여권(EU 거주자 한정)
