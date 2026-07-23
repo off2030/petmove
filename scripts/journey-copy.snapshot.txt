@@ -2081,13 +2081,14 @@
   desc:
       아랍에미리트 출국 전 수출 검역을 받고 수출 건강증명서를 발급받으세요.
       
-      검역기관(MOCCAE) 사무소에 반려동물과 함께 방문해 검사를 받아요. 마이크로칩을 확인하고 예방접종 수첩을 함께 봐요.
+      기후변화환경부(MOCCAE) 사무소에 방문해 검사를 받아요. 마이크로칩을 확인하고 예방접종 수첩을 함께 봐요.
       
       증명서는 발급일로부터 30일간 유효해요.
   첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
   저장이름: 아랍에미리트 수출 건강증명서
   links:
-      반려동물 수출 검역 안내·문의처 (MOCCAE)  →  https://moccae.gov.ae/en/services/export-permit-pets
+      반려동물 수출 검역 신청 (MOCCAE)  →  https://moccae.gov.ae/en/services/export-permit-pets
+      MOCCAE 연락처  →  https://moccae.gov.ae/en/contact-us
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역

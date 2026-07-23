@@ -2254,7 +2254,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   위 값은 복수의 현지 이주 대행·수의 안내가 일치하는 선에서만 채택했다. 원문 대조가
     //   가능해지면 처리 일수·수수료를 보강할 것.
     description:
-      '아랍에미리트 출국 전 수출 검역을 받고 수출 건강증명서를 발급받으세요.\n\n검역기관(MOCCAE) 사무소에 반려동물과 함께 방문해 검사를 받아요. 마이크로칩을 확인하고 예방접종 수첩을 함께 봐요.\n\n증명서는 발급일로부터 30일간 유효해요.',
+      '아랍에미리트 출국 전 수출 검역을 받고 수출 건강증명서를 발급받으세요.\n\n기후변화환경부(MOCCAE) 사무소에 방문해 검사를 받아요. 마이크로칩을 확인하고 예방접종 수첩을 함께 봐요.\n\n증명서는 발급일로부터 30일간 유효해요.',
     doneSummary: '아랍에미리트 수출 검역을 받았어요.',
     cardLine: '아랍에미리트 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['uae'], species: 'all', tripType: 'round' },
@@ -2272,15 +2272,21 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '아랍에미리트 수출 건강증명서',
-    // 링크 — MOCCAE 반려동물 수출 서비스 페이지(응답 200 확인 2026-07-23). 사무소 위치·
-    //   운영시간·문의처(800 3050 / info@moccae.gov.ae)가 이 페이지에 있다.
-    // ⚠️ 우리 도구로는 본문을 못 읽는다("Request Rejected") — 사람이 브라우저로 열면 정상.
-    //   그래서 페이지 안의 값(수수료·처리 일수·지점 주소)을 카드 문구로 옮기지 않았다.
-    //   민간 안내는 '두바이·아부다비 2곳, 24시간'이라 하지만 1차 확인이 안 돼 쓰지 않는다.
+    // 링크 2종(둘 다 응답 200 확인 2026-07-23):
+    //  ① 수출 서비스(신청) 페이지 — 구 라벨이 '…안내·문의처'였는데 이 페이지엔 연락처가
+    //     없어 라벨을 정정했다(사용자 지적). 신청은 여기서 한다.
+    //  ② 전용 연락처 페이지 — 카드가 '사무소에 방문'하라고 하므로 갈 곳이 필요하다.
+    // ⚠️ 두 페이지 다 우리 도구로는 본문을 못 읽는다("Request Rejected" — 사람이 브라우저로
+    //   열면 정상). 그래서 지점 주소·운영시간·수수료를 카드 문구로 옮기지 않았다.
+    //   MOCCAE 대표 문의처(800 3050 / info@moccae.gov.ae)는 사용자 조사값 — 근거로만 보존.
     links: [
       {
         url: 'https://moccae.gov.ae/en/services/export-permit-pets',
-        label: '반려동물 수출 검역 안내·문의처 (MOCCAE)',
+        label: '반려동물 수출 검역 신청 (MOCCAE)',
+      },
+      {
+        url: 'https://moccae.gov.ae/en/contact-us',
+        label: 'MOCCAE 연락처',
       },
     ],
   },
