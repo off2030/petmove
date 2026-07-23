@@ -1262,13 +1262,15 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   //   destination-overrides 에서 이스라엘 전용으로 덮어야 한다. euAhc 는 켜지 않는다.
   // ⚠️ 아일랜드에서 **가져오지 않은 것**: 촌충 구충(internal_parasite)·구충 시간
   //   (deworming_time)·개 4일 내원 창 — EU 촌충국 전용 요건이라 이스라엘엔 근거가 없다.
-  // 아직 앱에 올리지 않는다(appSupported 미선언) — 아래 미확인 항목이 남아 있다:
+  // 앱 노출 ON(2026-07-23 사용자 지정 "켜줘"). ⚠️ 아래 미확인 항목이 남은 채로 켰다 —
+  //   확정되는 대로 반영할 것:
   //   · 항체 유효기간(입국용) 규정 미확인 → titer.entryValidityMonths 미선언
   //   · 도착 후 5일 이내 등록 의무의 현행 여부(구 주석 값)
   //   · 사전 통보 48시간의 대상 공항(Ben Gurion 외 경로)
   israel: {
     keywords: ['이스라엘', 'israel'],
     archetype: 'eu-family',
+    appSupported: true,
     rabies: {
       doses: 1,
       // il.ts: 1차 12주 이상(보수적으로 91일 AND 캘린더 3개월 동시 충족).
