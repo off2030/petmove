@@ -1263,7 +1263,9 @@ function euFamilyDocSpecs(
     })
   }
   if (opts?.withImportPermit) {
-    specs.unshift({
+    // 항체 결과지(index 0) 다음에 삽입 — 태국 R.6·필리핀 SPSIC·대만·UAE 와 같은 순서
+    // (항체 → 수입 허가증 → 별지25호). unshift 로 맨 앞에 넣으면 순서가 뒤집힌다.
+    specs.splice(1, 0, {
       id: 'eu-import-permit-doc',
       name: '수입 허가증(FSVO)',
       source: '스위스 연방 식품안전수의청(FSVO)',
