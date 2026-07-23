@@ -936,13 +936,15 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n광견병 접종일로부터 30일이 지난 후에 채혈해야 해요.\n0.5 IU/mL 이상이면 합격이에요.',
       validationIds: ['tr.rnatt-min-30days-after-vaccine', 'tr.titer-value-min-0.5iu'],
     },
-    // 내·외부 기생충 — 가이드 "여행 30일 이내". base 카드 문구가 호주·뉴질랜드 기준이라 교체.
+    // 내·외부 기생충 — 가이드 "여행 30일 이내". 멕시코·브라질 카드와 같은 문형으로 통일
+    // (사용자 지정 2026-07-23): 카드엔 특정 기생충(진드기·촌충 Echinococcus)을 지목하지 않고
+    // '외부/내부 기생충 치료 + 출국일 기준 N일 이내'만 쓴다. 기생충 종류는 검증 룰 설명(staff)에 보존.
     'external-parasite': {
-      description: '진드기에 효과적인 외부 기생충 치료를 하세요.\n\n출국 30일 이내에 해야 해요.',
+      description: '외부 기생충 치료를 하세요.\n\n출국일 기준 30일 이내에 해야 해요.',
       validationIds: ['tr.external-parasite-within-30days'],
     },
     'internal-parasite': {
-      description: '촌충(에키노코쿠스)에 효과적인 내부 기생충 치료를 하세요.\n\n출국 30일 이내에 해야 해요.',
+      description: '내부 기생충 치료를 하세요.\n\n출국일 기준 30일 이내에 해야 해요.',
       validationIds: ['tr.internal-parasite-within-30days'],
     },
     'flight-purchase': {
