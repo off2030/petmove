@@ -49,7 +49,7 @@ export const AR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종은 생후 3개월 이후',
     description:
-      '달력 3개월 기준 — 입력 차단(step.earliest.monthsAfter)과 같은 판정 함수(meetsCalendarAge)를 쓴다. ⚠️ SENASA 원문에는 최소 접종 연령 규정이 **없다**(3개월 미만 면제 조항만 있다). 골격에서 온 보수값이라 규정보다 엄격하다 — 완화 여부는 사용자 확인 대상.',
+      '달력 3개월 기준 — 입력 차단(step.earliest.monthsAfter)과 같은 판정 함수(meetsCalendarAge)를 쓴다. ⚠️ SENASA 원문에는 최소 접종 연령 규정이 **없다**(3개월 미만 면제 조항만 있다). 골격에서 온 보수값이라 규정보다 엄격하지만 **3개월 유지 확정**(2026-07-23 사용자) — 다시 묻지 말 것.',
     severity: 'warning',
     addedAt: '2026-07-22',
     run: ({ caseRow }) => {

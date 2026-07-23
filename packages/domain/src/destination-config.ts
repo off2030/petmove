@@ -1084,6 +1084,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       //   원문: "Si el perro o gato es menor de 3 (tres) meses, la autoridad veterinaria
       //   deberá certificar la edad del animal y que el mismo no ha estado en ninguna
       //   propiedad donde ha ocurrido algún caso de rabia urbana en los últimos 90 días…"
+      //   → **3개월 유지 확정**(2026-07-23 사용자, 보수값이지만 그대로). 다시 묻지 말 것.
       minAgeDays: 91,
       minAgeMonths: 3,
       minAgeLabel: '생후 3개월',
