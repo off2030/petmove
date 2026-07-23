@@ -492,20 +492,31 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       // 고정 84일이다(카자흐스탄 복제본의 '달력 3개월'을 정정).
       minAgeDays: 84,
       minAgeLabel: '생후 12주(84일)',
-      timingLines: ['출국 30일 전까지 접종해야 해요.'],
-      entryWaitDaysAfterVaccine: 30,
+      // ⚠️ 21일로 정정(2026-07-23). 구 값 30일은 **항체검사 채혈 시점**(접종 후 30일)이
+      //   '출국 30일 전 접종'으로 흘러든 것이었다(사용자 지적). 튀르키예는 EU unlisted 제3국
+      //   모델이라(아래 titer 주석) 우크라이나와 같은 EU 표준 21일을 쓴다. 어차피 신규 채혈
+      //   경로에선 30(채혈)+90(대기)가 지배해 이 값이 실효적으로 걸리는 일은 없다.
+      timingLines: ['출국 21일 전까지 접종해야 해요.'],
+      entryWaitDaysAfterVaccine: 21,
       // 가이드 "1년을 넘지 않아야 합니다" = **접종 후 경과 1년** 제한이지 3년 백신 자체를
       // 거부하는 규정이 아니다. 그래서 oneYearVaccineOnly(입력 차단)를 켜지 않고,
       // tr.rabies-within-12months-of-departure 주의로만 다룬다.
       validityLine: '접종 후 1년이 지나기 전에 입국해야 해요.',
     },
-    // ✅ 항체검사가 **입국 요건**(사용자 승인 2026-07-22) — 카자흐스탄 복제본의 'return-only'는
-    //   "튀르키예 입국에는 필요 없다"고 사실과 반대로 안내하고 있었다.
-    //   유효기간 12개월 = 가이드 "명확한 규정 없음 / 일반적으로 1년".
-    //   접종~채혈 30일은 가이드가 '권고'라 minDaysAfterVaccine 을 선언하지 않는다(입력 차단 X).
-    //   채혈 후 대기(entryWaitAfterTiter)도 두지 않는다 — 구세대 파일의 '3개월'은 EU 차용
-    //   추론이었고 가이드에 근거가 없다(tr.ts 헤더 참고).
-    titer: { need: 'entry', entryValidityMonths: 12 },
+    // ✅ 항체검사 = **튀르키예 입국 요건** (EU unlisted 제3국 모델, 우크라이나와 동일).
+    //   ⚠️ 2026-07-23 재정비. 사용자가 튀르키예 농림부 공식 안내(vskn.tarimorman.gov.tr)를
+    //   근거로 정정: 채혈은 **마지막 접종 후 30일 이후**, 출국은 **채혈일로부터 3개월 이후**.
+    //   항체가는 **고정 만료 없음** — 백신 유효기간이 끊기지 않고 이어지는 한 계속 유효하다
+    //   (EU 모델과 동일 → entryValidityMonths: null). 백신 연속성이 끊기면 재검사+3개월 대기.
+    //   구 값(entryValidityMonths: 12·접종~채혈 30일 '권고'·채혈 후 대기 없음)은 2026-07-22
+    //   재작성 때 "근거 부족"으로 EU 규칙을 뺀 것이었는데, 위 공식 출처가 그 규칙들을 되살린다.
+    //   왕복이면 한국 APQA '채혈일 도착 전 24개월'이 별도로 걸린다(귀국 공통 룰이 담당).
+    titer: {
+      need: 'entry',
+      minDaysAfterVaccine: 30,
+      entryWaitAfterTiter: { months: 3 },
+      entryValidityMonths: null,
+    },
     appSupported: true,
     // 종합백신 제거(가이드에 항목 자체가 없음) + 내·외부 기생충 복원(가이드 "여행 30일 이내").
     // 기생충 카드는 catalog 명단에 turkey 가 원래 있었는데, 카자흐스탄 복제로 vaccines 에서
@@ -1262,11 +1273,16 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   //   destination-overrides 에서 이스라엘 전용으로 덮어야 한다. euAhc 는 켜지 않는다.
   // ⚠️ 아일랜드에서 **가져오지 않은 것**: 촌충 구충(internal_parasite)·구충 시간
   //   (deworming_time)·개 4일 내원 창 — EU 촌충국 전용 요건이라 이스라엘엔 근거가 없다.
-  // 앱 노출 ON(2026-07-23 사용자 지정 "켜줘"). ⚠️ 아래 미확인 항목이 남은 채로 켰다 —
-  //   확정되는 대로 반영할 것:
-  //   · 항체 유효기간(입국용) 규정 미확인 → titer.entryValidityMonths 미선언
-  //   · 도착 후 5일 이내 등록 의무의 현행 여부(구 주석 값)
-  //   · 사전 통보 48시간의 대상 공항(Ben Gurion 외 경로)
+  // 앱 노출 ON(2026-07-23). ✅ 1차 출처 확보(2026-07-23) — 이스라엘 수의국 공식 안내
+  //   「Importing Dogs and Cats」(valid from 26/11/2023). 아래 미확인 3항목 해소:
+  //   · 항체 유효기간(입국용) = **무기한**(EU 모델, 섹션 K "valid for all lifelong … if
+  //     vaccinated annually or according the vaccine manufacture instruction")
+  //     → titer.entryValidityMonths: null 선언(아래).
+  //   · 도착 후 5일 내 지자체 등록 의무 = 현행(섹션 X, 개 전용·5633/2002법). 별도 카드는 미제작.
+  //   · 사전 통보 = 공식은 **적재(출국) 2영업일 전**(섹션 P/Q), 벤구리온은 govforms 링크·그 외엔
+  //     이메일(vs-airport@moag.gov.il 등). 입국 항/포 = 벤구리온 공항 + 하이파·아쉬도드·에일랏 항(섹션 L).
+  //   ⚠️ 현재 il-advance-notice 카드는 '입국 48시간 전'인데 공식은 '적재 2영업일 전' — 기준(입국↔출국)·
+  //     시점(48h↔2영업일) 조정 대상. 사용자 확인 후 정정할 것.
   israel: {
     keywords: ['이스라엘', 'israel'],
     archetype: 'eu-family',
@@ -1281,7 +1297,13 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       entryWaitDaysAfterVaccine: 30,
     },
     // 입국 요건으로 항체검사 필수(한국이 이스라엘 분류상 광견병 위험국). 채혈은 접종 30일 후.
-    titer: { need: 'entry', minDaysAfterVaccine: 30 },
+    // ✅ 유효기간 = **무기한**(EU 모델). 1차 출처 확정(2026-07-23): 이스라엘 수의국 공식 안내
+    //   「Importing Dogs and Cats」(valid from 26/11/2023) 섹션 K — "The rabies titer test is
+    //   valid for all lifelong of the animal if he was vaccinated against rabies annually or
+    //   according the vaccine manufacture instruction." → 백신 chain 유지 시 영구(null).
+    //   ⚠️ 상업 사이트의 '채혈 후 90일(3개월) 대기'는 오류 — 공식 문서엔 없다. 그 90일은
+    //   섹션 E.3의 '소유 90일'(수입허가 면제 조건)을 오독한 것. 3개월 대기를 다시 넣지 말 것.
+    titer: { need: 'entry', minDaysAfterVaccine: 30, entryValidityMonths: null },
     // 출국 48시간 전 벤구리온 검역소 사전 통보.
     advanceNotice: { hardDeadlineHours: 48, label: '사전 통보' },
     vaccines: ['rabies', 'rabies_titer'],
