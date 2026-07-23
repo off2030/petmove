@@ -33,6 +33,9 @@ export {
   isExtraTiterResultConfirmed,
   resolveValidUntil,
   addYears,
+  // 일본 항체검사 날짜 hover 툴팁(admin rabies-titer-field)의 입국 가능일(+180일) 계산.
+  addDays,
+  formatKoreanDate,
   // 필리핀 내부 기생충 치료 창 검사(step-detail-view 의 입력 차단)가 SPSIC 신청일을 읽는다.
   readScopedImportPermitFiled,
 } from './procedure-checks/utils'

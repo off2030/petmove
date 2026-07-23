@@ -15,7 +15,7 @@ import { labColor } from '@/lib/lab-color'
 import { extractTiterInfo } from '@/lib/actions/extract-titer'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
-import { resolveTiterLab, type InspectionLabRule } from '@petmove/domain'
+import { addDays, formatKoreanDate, resolveTiterLab, type InspectionLabRule } from '@petmove/domain'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 import { DateTextField } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
@@ -74,6 +74,19 @@ function destinationNeedsReceivedDate(destination: string | null | undefined): b
     d.includes('하와이') || d.includes('hawaii') ||
     d.includes('괌') || d.includes('guam')
   )
+}
+
+/**
+ * 일본 입국 가능일 hover 툴팁 — 채혈일 + 180일 (jp.entry-180days-after-titer 룰과 동일 기준).
+ * 목적지에 일본이 포함될 때만 노출. multi-destination 이어도 일본이 있으면 표시.
+ */
+function japanEntryTooltip(date: string | null, destination: string | null | undefined): string | undefined {
+  if (!date || !destination) return undefined
+  const dests = destination.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+  if (!dests.some(d => d.includes('일본') || d.includes('japan'))) return undefined
+  const entry = addDays(date, 180)
+  if (!entry) return undefined
+  return `일본 입국 가능일: ${formatKoreanDate(entry)} (검사일로부터 180일)`
 }
 
 export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
@@ -358,6 +371,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
               date={rec.date}
               separator={si > 0}
               onClick={openEditModal}
+              extraTitle={japanEntryTooltip(rec.date, destination)}
             />
           ))
         )}
@@ -452,6 +466,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
                       saving={saving}
                       extracting={extracting}
                       showReceivedDate={showReceivedDate}
+                      entryTooltip={japanEntryTooltip(rec.date, destination)}
                     />
                   </div>
                 )
@@ -514,11 +529,11 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 
 /* ── 인라인 날짜 chip (verification color 적용) ── */
 
-function InlineDateChip({ path, date, separator, onClick }: { path: string; date: string | null; separator: boolean; onClick?: () => void }) {
+function InlineDateChip({ path, date, separator, onClick, extraTitle }: { path: string; date: string | null; separator: boolean; onClick?: () => void; extraTitle?: string }) {
   const editMode = useSectionEditMode()
   const info = useFieldVerification(path)
   const colorCls = info ? severityTextClass(info.severity) : ''
-  const title = info ? tooltipText(info) : undefined
+  const title = [info ? tooltipText(info) : undefined, extraTitle].filter(Boolean).join('\n') || undefined
   const display = date || '—'
   const baseCls = cn('font-mono text-[15px] tracking-[0.3px] text-foreground', !date && 'font-sans text-base text-muted-foreground/40', colorCls)
   return (
@@ -540,7 +555,7 @@ function InlineDateChip({ path, date, separator, onClick }: { path: string; date
 /* ── 모달 안의 단일 record row: date | lab | value | attach | delete ── */
 
 function TiterRecordRow({
-  record, recordIdx, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, onAttachFile, saving, extracting, showReceivedDate,
+  record, recordIdx, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, onAttachFile, saving, extracting, showReceivedDate, entryTooltip,
 }: {
   record: TiterRecord
   recordIdx: number
@@ -553,6 +568,7 @@ function TiterRecordRow({
   saving: boolean
   extracting: boolean
   showReceivedDate: boolean
+  entryTooltip?: string
 }) {
   const cleanValue = stripTiterUnit(record.value)
   const valueDisplay = cleanValue ? `${cleanValue} IU/ml` : 'IU/ml'
@@ -568,7 +584,7 @@ function TiterRecordRow({
     : [{ value: '', label: '—' }, ...LABS]
   const dateInfo = useFieldVerification(`${DATA_KEY}[${recordIdx}].date`)
   const dateColorCls = dateInfo ? severityTextClass(dateInfo.severity) : ''
-  const dateTitle = dateInfo ? tooltipText(dateInfo) : undefined
+  const dateTitle = [dateInfo ? tooltipText(dateInfo) : undefined, entryTooltip].filter(Boolean).join('\n') || undefined
   const receivedInfo = useFieldVerification(`${DATA_KEY}[${recordIdx}].received_date`)
   const receivedColorCls = receivedInfo ? severityTextClass(receivedInfo.severity) : ''
   const receivedTitle = receivedInfo ? tooltipText(receivedInfo) : undefined
