@@ -1340,14 +1340,19 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   },
 
   // ── 인도네시아 수출 검역 (왕복 — 귀국 출국 시, 인도네시아 전용) ───────
-  // ⚠️ 태국 수출 검역 카드 복제(2026-07-22) — 문구·서식명(R.9)은 아직 태국 것. 규정 확정 후 수정.
+  // ✅ 2026-07-23 인도네시아 검역본부(Barantin) 원문 조사로 전면 교체 — 태국 복제 잔재를 걷어냈다:
+  //   ⛔ 'R.9' — 근거 없는 태국(DLD) 서식 번호다. 인도네시아 수출 검역이 발급하는 건
+  //      **Sertifikat Kesehatan Hewan Karantina(검역 건강증명서, 서식 KH-11)**이다.
+  //   ⛔ '1~3일 전·주말·공휴일 불가' — 태국 AQS 안내로 인도네시아 근거가 없어 제거.
+  //   구조: 신청 = **PTK 온라인**(ptk.karantinaindonesia.go.id) → 출발 공항 검역소에서 검역관에게
+  //         신고·검사 → 합격 시 KH-11 발급. 접종 기록·광견병 항체 결과를 지참한다.
   {
     id: 'id-export-quarantine',
     category: 'document',
     title: '인도네시아 수출 검역',
     shortLabel: '수출',
     description:
-      '인도네시아 출국 전 공항 동물검역소에서 수출 검역을 받으세요.\n출국 직전(1~3일 전 권장)에 방문하세요. 주말·공휴일·야간에는 검역을 받을 수 없어요.\n접종 증명서를 꼭 챙기세요.\n검사를 통과하면 수출허가서(R.9)와 건강증명서가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
+      '인도네시아 출국 전 공항 동물검역소에서 수출 검역을 받으세요.\n검역 신청은 PTK 온라인 시스템으로 하고, 미리 검역관에게 방문 신고를 해요.\n접종 기록과 광견병 항체 검사 결과를 꼭 챙기세요.\n검사를 통과하면 검역 건강증명서(KH-11)가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
     doneSummary: '인도네시아 수출 검역을 받았어요.',
     cardLine: '인도네시아 동물검역소에서 수출 검역을 받으세요.',
     applicability: { destinations: ['indonesia'], species: 'all', tripType: 'round' },
@@ -1363,8 +1368,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '수출허가서(R.9)·건강증명서 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '수출 허가서(R.9)',
+    attachmentHint: '검역 건강증명서(KH-11) 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '검역 건강증명서(KH-11)',
+    // PTK 온라인 — 검역 신청(반려동물 수출 포함). 200 확인.
+    links: [
+      { url: 'https://ptk.karantinaindonesia.go.id/', label: '검역 신청 (PTK 온라인)' },
+    ],
   },
 
   // ── 귀국 서류 준비 (왕복 — 귀국 전, EU 패밀리 전용) ─────────────

@@ -499,9 +499,11 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'kr-import-quarantine',
     },
   ],
-  // ── 인도네시아 — ⚠️ 태국 한 벌 복제(2026-07-22). 서식명(R.6/R.7/R.9)·수치는 아직 태국 것.
-  //   나라별 규정 확정 후 수정 예정. 발급처는 '인도네시아 동물검역소'로만 적었다(기관명 미확정 —
-  //   구세대 조사 기준 BARANTIN/Karantina Indonesia).
+  // ── 인도네시아 — ✅ 2026-07-23 Barantin(인도네시아 검역본부) 원문 조사로 서식명 전면 교체.
+  //   태국 복제 잔재(R.6/R.7/R.9)는 모두 근거가 없어 인도네시아 공식 KH 서식으로 바꿨다:
+  //     · 수입 검역(도착) 반출 = KH-14 Sertifikat Pelepasan Karantina
+  //     · 수출 검역(출국) 발급 = KH-11 Sertifikat Kesehatan Hewan Karantina
+  //   ⛔ R.6·R.7·R.9 를 되살리지 말 것(태국 DLD 서식). 발급처 = 인도네시아 검역본부(Barantin).
   '인도네시아': [
     {
       id: 'id-rabies-titer-result',
@@ -515,13 +517,16 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'rabies-titer',
     },
     {
+      // ⚠️ 태국 서식 잔재 정정(2026-07-23). 구: '수입 허가 통지서(R.6)' / '60일 유효'는 태국(DLD)
+      //   것이다. 인도네시아 수입허가는 현지 에이전시 신청이라 서식 번호·유효기간을 앱이 단정하지
+      //   않는다(카드가 안내). ⛔ R.6·60일을 되살리지 말 것.
       id: 'id-import-permit-doc',
-      name: '수입 허가 통지서(R.6)',
-      source: '인도네시아 동물검역소',
+      name: '수입 허가증',
+      source: '인도네시아 검역본부(Barantin)',
       kind: 'step',
       stepRef: 'import-permit',
       description:
-        '수입 허가 신청이 승인되면 발급돼요.\n\n발급일로부터 60일간 유효해요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
+        '수입 허가 신청이 승인되면 발급돼요.\n\n현지 에이전시를 통해 신청하고 받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'import-permit',
     },
     // 접종 및 건강증명서(별지 제25호) — 일본·태국과 완전히 동일한 한국 공식 양식.
@@ -538,26 +543,35 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'certificate-issue',
     },
     {
+      // ⚠️ 태국 서식 잔재 + 정체 오인 정정(2026-07-23, Barantin 조사). 구: '수입 허가서(R.7)' /
+      //   'Import License(R.7)' — 두 가지가 틀렸다:
+      //   ⛔ 'Import License(수입 허가)'는 출국 전에 미리 받는 허가(위 id-import-permit-doc)다.
+      //      도착 검역 자리(stepRef: departure)에 잘못 놓였다 — 말레이시아와 똑같은 복제 오류.
+      //   ⛔ R.7 서식 번호는 근거 없음. 도착 검역을 마치면 받는 건 **반출 증명서(KH-14,
+      //      Sertifikat Pelepasan Karantina)**다.
       id: 'id-import-quarantine-cert',
-      name: '수입 허가서(R.7)',
-      source: '인도네시아 동물검역소',
+      name: '수입 검역 증명서(KH-14)',
+      source: '인도네시아 검역본부(Barantin)',
       kind: 'step',
       stepRef: 'departure',
       group: 'quarantine',
       description:
-        '인도네시아 수입 검역 후 발급받아요.\n\n정확한 서류 이름은 Import License(R.7) 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '인도네시아 수입 검역을 마치면 발급받아요.\n\n정확한 서류 이름은 Sertifikat Pelepasan Karantina(KH-14) 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'departure',
     },
     {
+      // ⚠️ 태국 서식 잔재 정정(2026-07-23, Barantin 조사). 구: '수출 허가서(R.9)' /
+      //   'Export License(R.9)' 는 태국(DLD) 서식이다. 인도네시아 수출 검역이 발급하는 건
+      //   **검역 건강증명서(KH-11, Sertifikat Kesehatan Hewan Karantina)**다. ⛔ R.9 를 되살리지 말 것.
       id: 'id-export-quarantine-cert',
-      name: '수출 허가서(R.9)·건강증명서',
-      source: '인도네시아 동물검역소',
+      name: '검역 건강증명서(KH-11)',
+      source: '인도네시아 검역본부(Barantin)',
       kind: 'step',
       stepRef: 'id-export-quarantine',
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '인도네시아 수출 검역 후 발급돼요.\n\n정확한 서류 이름은 Export License(R.9), Official Animal Health Certificate 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '인도네시아 수출 검역 후 발급돼요.\n\n정확한 서류 이름은 Sertifikat Kesehatan Hewan Karantina(KH-11) 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'id-export-quarantine',
     },
     {

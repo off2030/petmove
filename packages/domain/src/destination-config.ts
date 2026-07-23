@@ -412,10 +412,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     ],
     rabiesTiterForReturnOnly: true,
   },
-  // ── 인도네시아 — ⚠️ 태국 한 벌 복제(2026-07-22). 세부 값은 아직 태국 것 그대로다.
-  //   나라별 규정 확정 후 수정 예정(사용자 지정 — "태국 복사 후 나라별로 세부 수정").
-  //   복제 전 메모: 인도네시아는 별도 양식 없이 병원 발급 일반 영문 건강증명서(VHC) 제출
-  //   (cert-config-defaults 의 vhc 증명서는 그대로 유지).
+  // ── 인도네시아 — 태국 골격 복제(2026-07-22) 후 규정값 교체 완료:
+  //   광견병 불활화·생후 3개월(Barantan 87/2016), 항체 = 입국 요건, 자카르타 한정 입국,
+  //   접종 후 대기 미선언(1차 출처에 일수 규정 없음). 서류 서식명은 2026-07-23 Barantin 원문으로
+  //   KH-11(수출)·KH-14(도착 반출) 교체(required-docs.ts). 병원 발급 일반 영문 건강증명서(VHC)
+  //   는 cert-config-defaults 의 vhc 증명서 그대로 유지.
   indonesia: {
     keywords: ['인도네시아', 'indonesia'],
     archetype: 'sea-permit',
