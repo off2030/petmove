@@ -1223,7 +1223,7 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
     exportCertName: '이스라엘 국제건강증명서',
     exportCertSource: '이스라엘 수의당국(Veterinary Services)',
     exportCertDescription:
-      '이스라엘 수의당국(Veterinary Services)이 인증하는 국제 건강증명서예요.\n\n이스라엘 출국과 한국 입국을 위한 필수 서류로, 수의당국 소속 정부 수의사에게 발급받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      '이스라엘 수의당국(Veterinary Services)이 인증하는 국제 건강증명서예요.\n\n이스라엘 출국과 한국 입국을 위한 필수 서류로, 동물병원 수의사가 작성하고 수의당국 정부수의사가 인증해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
   }),
 }
 
