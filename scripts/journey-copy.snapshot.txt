@@ -2593,8 +2593,6 @@
       검사를 통과하면 정부 수의건강증명서(Veteriner Sağlık Sertifikası)가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.
   첨부안내: 정부 수의건강증명서 사본을 사진·PDF로 보관하세요.
   저장이름: 튀르키예 정부 수의건강증명서
-  links:
-      반려동물 출국 안내(튀르키예 농림부)  →  https://ankara.tarimorman.gov.tr/Link/15/Yurtdisi-Cikis-_evcil-Hayvan_
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역

@@ -2524,12 +2524,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '정부 수의건강증명서 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '튀르키예 정부 수의건강증명서',
-    links: [
-      {
-        url: 'https://ankara.tarimorman.gov.tr/Link/15/Yurtdisi-Cikis-_evcil-Hayvan_',
-        label: '반려동물 출국 안내(튀르키예 농림부)',
-      },
-    ],
+    // ⚠️ 링크 미설정 — 튀르키예 농림부(tarimorman.gov.tr)는 전 페이지가 WAF("Request Rejected")로
+    //   직접 접속이 막혀(실제 브라우저에서도 확인, 2026-07-23) 걸 수 있는 안정된 공식 URL이 없다.
+    //   설명문이 관할 İl/İlçe Tarım ve Orman Müdürlüğü 를 안내하므로 링크 없이 둔다.
   },
   // ── 15. 한국 수입 검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
   {
