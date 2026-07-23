@@ -1000,6 +1000,9 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   //   factory 기본값('<나라> 동물검역소')을 쓰고, 실제 기관(러시아=Rosselkhoznadzor 계열,
   //   튀르키예=농림부 지방조직)은 창구·서식 확인 후 채운다. 카드 쪽도 같은 처리.
   '러시아': vietnamFamilyDocSpecs('러시아', 'ru', {
+    // 도착 검역은 심사만(가이드: 공항 동물검역소 심사, 미충족 시 입국 불가) — 발급물 없어 도착
+    //   서류 항목 제거(아르헨티나와 같은 처리, 2026-07-23). 도착 카드는 유지(첨부 열림).
+    omitImportQuarantineDoc: true,
     exportQuarantineDoc: {
       name: '러시아 수출 수의증명서',
       source: '러시아 수의당국',
