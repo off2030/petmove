@@ -950,6 +950,15 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   }),
   '우크라이나': vietnamFamilyDocSpecs('우크라이나', 'ua', {
     titerEntryDoc: true,
+    // 입국용 서식 = 사용자 제공 우크라이나 정부 서식 "International Certificate for Introduction
+    //   (Sending) into the Customs Territory of Ukraine of Dogs, Cats and Ferrets"(МІЖНАРОДНИЙ
+    //   СЕРТИФІКАТ). 수출국(한국)에서 작성 → 관용 수의사 서명 = 한국 수출 검역 검역관. 귀국용
+    //   exportQuarantineDoc(우크라이나 DPSS 현지 발급)과는 방향·발급주체가 다르다.
+    entryHealthCert: {
+      name: '우크라이나 입국용 국제수의증명서',
+      description:
+        '우크라이나 입국용 국제수의증명서예요. 정확한 서류 이름은 International Certificate for Introduction into the Customs Territory of Ukraine 입니다.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종·항체 검사 결과가 기재돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
     exportQuarantineDoc: {
       name: '우크라이나 국제수의증명서',
       source: '우크라이나 검역기관(DPSS) 국경검사부서',
@@ -1005,6 +1014,16 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   // 아랍에미리트 — 2026-07-22 등록. 수출 서류명·발급처는 조사로 확인된 값
   // (MOCCAE 수출 건강증명서, 발급일로부터 30일 유효 — 카드와 같은 근거).
   '아랍에미리트': vietnamFamilyDocSpecs('아랍에미리트', 'ae', {
+    // 입국용 서식 = 사용자 제공 UAE 정부 서식 "Veterinary Health Certificate for Exporting
+    //   Cats and Dogs to the United Arab Emirates"(EY604/GRH/Rev.2). 수출국(한국)이 작성 →
+    //   "government-accredited health official" 서명 = 한국 수출 검역 검역관. 귀국용
+    //   exportQuarantineDoc(MOCCAE 현지 발급)과 방향·발급주체가 다르다. 4개국 중 유일하게
+    //   APQA 국가별 서식 목록 포함국(터키·이스라엘·우크라이나는 미포함).
+    entryHealthCert: {
+      name: '아랍에미리트 입국용 수의건강증명서(EY604)',
+      description:
+        '아랍에미리트 입국용 수의건강증명서예요. 정확한 서류 이름은 Veterinary Health Certificate for Exporting Cats and Dogs to the UAE(EY604) 입니다.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n마이크로칩·예방접종·기생충 구제 등이 기재돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
     importQuarantineDoc: {
       source: '아랍에미리트 공항 검역소',
       description:
@@ -1128,6 +1147,9 @@ function euFamilyDocSpecs(
     withImportPermit?: boolean
     euAhc?: boolean
     certName?: string
+    // 입국용 건강증명서 설명문 override — 미지정 시 일반 ${label} 문구로 폴백. 이스라엘처럼
+    // 실제 서식(Annex A)이 확정된 나라는 여기서 정확한 문구를 넣는다.
+    certDescription?: string
     // '귀국 서류 준비'(eu-export-cert) 단계를 서류탭 체크리스트에도 노출할지 — 국가별로
     // 실제 필수 여부·명칭이 확인된 경우에만 채운다(그 외 EU 패밀리는 국가마다 서류
     // 종류·필수 여부가 달라 아직 미확인 — 2026-07-17 영국만 우선 확인해 채움).
@@ -1168,7 +1190,8 @@ function euFamilyDocSpecs(
       // 그 명칭을 문구에도 노출, 그 외는 ${label} 기반 일반 문구 유지.
       description: opts?.euAhc
         ? '유럽연합(EU) 입국용 건강증명서예요.\n\n출국일 기준 10일 이내에 동물병원에서 발급받아요. 이 서류는 발급하지 않는 동물병원이 많으므로 미리 확인하세요.\n\n한국 수출 검역 때 검역관 확인·서명을 받아야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.'
-        : `${label} 입국용 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재되어야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
+        : (opts?.certDescription ??
+          `${label} 입국용 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재되어야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`),
     },
     {
       id: 'eu-kr-export-quarantine-cert',
@@ -1251,7 +1274,12 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
   // 이스라엘 국제건강증명서가 빠져 있었다(2026-07-23 수정). euAhc 아님(EU 아님) — 입국 건강증명서는
   // 이스라엘 모델(Annex A). 수출 국제건강증명서 = 이스라엘 수의당국(Veterinary Services) 정부 수의사 인증.
   israel: euFamilyDocSpecs('이스라엘', {
-    certName: '이스라엘 입국용 건강증명서',
+    // 입국용 서식 = 사용자 제공 이스라엘 정부 서식 "Veterinary Certificate for Domestic Dogs
+    //   and Cats Entering Israel"(Annex A, State of Israel MoAG Veterinary Services). 수출국(한국)
+    //   에서 작성 → official veterinarian 서명 + competent authority 배서, 발급 후 10일 유효.
+    certName: '이스라엘 입국용 수의증명서(Annex A)',
+    certDescription:
+      '이스라엘 입국용 수의증명서예요. 정확한 서류 이름은 Veterinary Certificate for Domestic Dogs and Cats Entering Israel(Annex A) 입니다.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종·항체 검사 결과가 기재돼요. 발급일로부터 10일간 유효해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     exportCertName: '이스라엘 국제건강증명서',
     exportCertSource: '이스라엘 수의당국(Veterinary Services)',
     exportCertDescription:
