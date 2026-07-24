@@ -1417,8 +1417,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '싱가포르 반려동물 라이센스 시스템(PALS)에서 강아지 면허를 발급받으세요. 수입 허가를 신청하기 전에 먼저 받아야 해요.\n\n품종이 싱가포르 반입 금지 품종인지, 예정 거주지에서 허용되는 품종·마릿수인지도 확인하세요.\n\n외국인은 PALS·GoBusiness 이용이 어려워 현지 펫 에이전트를 이용하는 경우가 많아요. 고양이는 필요 없어요.',
     doneSummary: '강아지 라이센스를 받았어요.',
     cardLine: '강아지 라이센스를 받으세요.',
+    // species: 'dog' — 강아지 전용(고양이는 면허 불요). order 92 = 항공권(90) 바로 뒤(사용자 지정
+    //   2026-07-24: 항공권과 순서 교체). 계류장 예약(62) → 항공권(90) → 강아지 면허(92) → 수입허가.
     applicability: { destinations: ['singapore'], species: 'dog', tripType: 'all' },
-    order: 64,
+    order: 92,
     done: 'quarantine:sg_dog_licence_date',
     inputs: [{ key: 'sg_dog_licence_date', label: '발급일', type: 'date', helpText: '강아지 라이센스를 발급받은 날짜' }],
     allowAttachments: true,
