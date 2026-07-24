@@ -1,6 +1,8 @@
 import {
   buildDateRuleContext,
   validateImportPermitNotAfterDeparture,
+  validateSgQuarantineReservationDate,
+  validateSgQuarantineReservationFiled,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
@@ -553,10 +555,16 @@ export const SG_CHECKS: ProcedureCheck[] = [
       const titers = readTiterEntries(caseRow)
       if (titers.length === 0) return SKIP
       const earliest = [...titers].sort((a, b) => a.date.localeCompare(b.date))[0]
-      if (reservation < earliest.date) {
+      // 판정·문구 = 저장 거부(validateSgQuarantineReservationFiled)와 단일 출처 —
+      // 정상 입력은 client 가 막고, 채혈일을 나중에 수정해 어긋난 경우만 여기 주의가 뜬다.
+      const err = validateSgQuarantineReservationFiled(
+        reservation,
+        titers.map((t) => t.date),
+      )
+      if (err) {
         return {
           ok: false,
-          message: '계류장 예약은 광견병 항체 검사 채혈 이후에 해야 해요. 날짜를 확인하세요.',
+          message: err,
           offendingPaths: [
             'sg_quarantine_reservation_application_date',
             `rabies_titer_records[${earliest.originalIndex}].date`,
@@ -587,25 +595,18 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (!/^\d{4}-\d{2}-\d{2}$/.test(reservation)) return SKIP
       const titers = readTiterEntries(caseRow)
       if (titers.length === 0) return SKIP
-      // 어떤 채혈이든 [채혈 + 90일, 채혈 + 1년] 창에 예약일이 들면 통과.
-      const within = titers.some((t) => {
-        const days = daysBetween(t.date, reservation)
-        return days !== null && days >= 90 && addYears(t.date, 1) >= reservation
-      })
-      if (within) {
+      // 판정·문구 = 저장 거부(validateSgQuarantineReservationDate)와 단일 출처 —
+      // 정상 입력은 client 가 막고, 채혈일을 나중에 수정해 어긋난 경우만 여기 주의가 뜬다.
+      const err = validateSgQuarantineReservationDate(
+        reservation,
+        titers.map((t) => t.date),
+      )
+      if (!err) {
         return { ok: true, message: `계류장 예약 날짜(${reservation}) 항체 검사 창(90일~12개월) 내.` }
       }
       const offending: string[] = ['sg_quarantine_reservation_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-      // 90일 하한을 넘긴 채혈이 하나도 없으면 '너무 이르다', 아니면 유효기간(12개월) 초과다.
-      const passes90 = titers.some((t) => {
-        const days = daysBetween(t.date, reservation)
-        return days !== null && days >= 90
-      })
-      const message = !passes90
-        ? '계류장 예약 날짜는 광견병 항체 검사 채혈일로부터 90일이 지난 후여야 해요.'
-        : '계류장 예약 날짜는 광견병 항체 검사 결과 유효기간(12개월) 이내여야 해요.'
-      return { ok: false, message, offendingPaths: offending }
+      return { ok: false, message: err, offendingPaths: offending }
     },
   },
 ]

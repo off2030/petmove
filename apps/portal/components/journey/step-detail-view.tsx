@@ -24,6 +24,8 @@ import {
   validateRabiesPrimeAge,
   validateCyAdvanceNoticeDate,
   validateImportPermitFiledDate,
+  validateSgQuarantineReservationDate,
+  validateSgQuarantineReservationFiled,
   validateEntryDateForDestination,
   validateEchinococcusWindow,
   validatePhInternalParasiteWindow,
@@ -1300,6 +1302,20 @@ export function StepDetailView({
         entryDate: entry,
         data,
       })
+    }
+    if (isSgQuarantineReservation) {
+      // 계류장 예약 — 신청일(채혈 이후)·예약일(채혈 +90일~12개월 창) 저장 거부. 도메인 단일
+      // 출처(validateSgQuarantineReservation*) — sg.ts 주의 룰과 같은 함수(2026-07-25 격상).
+      // 채혈 목록은 예정 surface 포함(readTiterAllEntries) — 검증 합본과 동일 기준.
+      const titerDates = readTiterAllEntries(caseRow?.data)
+        .map((e) => e.date)
+        .filter((d) => d.length >= 10)
+      const filedErr = validateSgQuarantineReservationFiled(
+        importPermit.applicationDate.trim(),
+        titerDates,
+      )
+      if (filedErr) return filedErr
+      return validateSgQuarantineReservationDate(importPermit.reservationDate.trim(), titerDates)
     }
     // 아일랜드 사전 통지 — 통지일이 입국일 24시간(1일) 이내면 차단.
     if (step.id === 'ie-advance-notice') {

@@ -508,6 +508,55 @@ export function validateEuTiterAfterVaccine(
 }
 
 /**
+ * 싱가포르 — 계류장(AQC) 예약 신청일은 광견병 항체 검사 채혈 이후여야 함.
+ * (NParks "Reserve quarantine space when the serology test result is ready" — 검사 후 예약.)
+ *
+ * client(신청일 입력 시 저장 거부)·procedure-check(sg.quarantine-reservation-after-titer,
+ * 채혈일을 나중에 수정해 어긋난 경우 '주의') 공용 단일 출처. 채혈 기록이 없으면 순서 비교가
+ * 성립하지 않아 통과(주의 룰의 SKIP 과 대칭).
+ */
+export function validateSgQuarantineReservationFiled(
+  filedDate: string,
+  titerDates: string[],
+): string | null {
+  if (!filedDate) return null
+  const valid = titerDates.filter((d) => typeof d === 'string' && d.length >= 10).sort()
+  if (valid.length === 0) return null
+  if (filedDate < valid[0]) {
+    return '계류장 예약은 광견병 항체 검사 채혈 이후에 해야 해요. 날짜를 확인하세요.'
+  }
+  return null
+}
+
+/**
+ * 싱가포르 — 계류장(AQC) 예약 날짜(계류 시작일)는 채혈 + 90일 이후 ~ + 12개월 이내여야 함.
+ *
+ * 규정 창의 정식 앵커는 출발(export) — NParks Schedule III IV(a)(iii) "not less than 90 days /
+ * not more than 12 months prior to export". 한국→싱가포르는 당일 도착이라 계류 시작(입국) ≈
+ * 출발이므로 예약일에도 같은 창을 적용한다(출발일 직접 검증은 항공권 카드 룰이 담당).
+ *
+ * client(예약일 입력 시 저장 거부)·procedure-check(sg.quarantine-reservation-date-within-
+ * titer-window, 채혈 수정으로 어긋난 경우 '주의') 공용 단일 출처. 어떤 채혈이든 창에 들면
+ * 통과, 채혈 기록 없으면 비교 불가라 통과.
+ */
+export function validateSgQuarantineReservationDate(
+  reservationDate: string,
+  titerDates: string[],
+): string | null {
+  if (!reservationDate) return null
+  const valid = titerDates.filter((d) => typeof d === 'string' && d.length >= 10)
+  if (valid.length === 0) return null
+  const within = valid.some(
+    (d) => daysBetween(d, reservationDate) >= 90 && addYears(d, 1) >= reservationDate,
+  )
+  if (within) return null
+  const passes90 = valid.some((d) => daysBetween(d, reservationDate) >= 90)
+  return passes90
+    ? '계류장 예약 날짜는 광견병 항체 검사 결과 유효기간(12개월) 이내여야 해요.'
+    : '계류장 예약 날짜는 광견병 항체 검사 채혈일로부터 90일이 지난 후여야 해요.'
+}
+
+/**
  * 태국 — 수입 허가 신청일은 광견병·종합백신의 가장 최근 접종일 + 14일(2주) 이후여야 함.
  * (DLD/petmove 가이드 — 백신은 신청 14일 전 완료. 보수적으로 모든 접종에 적용.)
  * client(신청 입력 시 입력 불가)·procedure-check(백신 수정 후 주의) 공용. 한쪽 비면 통과.
