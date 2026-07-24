@@ -716,11 +716,11 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     {
       id: 'sg-rabies-titer-result',
       name: '광견병 항체 검사 결과지',
-      source: '농림축산검역본부',
+      source: 'WOAH 표준검사실 · Schedule I·II 국가 검사기관',
       kind: 'step',
       stepRef: 'rabies-titer',
       description:
-        '검사를 의뢰한 동물병원을 통해 발급받아요. 검사는 농림축산검역본부에서 해요.\n\n싱가포르 입국에 반드시 원본이 필요해요. 채혈일로부터 12개월간 유효해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+        '검사를 의뢰한 동물병원을 통해 발급받아요. 검사는 WOAH 표준검사실 또는 Schedule I·II 국가의 승인 검사기관에서 이뤄져야 해요(한국은 Schedule III).\n\n싱가포르 입국에 반드시 원본이 필요해요. 채혈일로부터 1년간 유효해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'rabies-titer',
     },
     {
