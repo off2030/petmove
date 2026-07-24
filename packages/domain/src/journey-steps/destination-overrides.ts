@@ -1348,6 +1348,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '계류장(AQC) 예약 날짜에 맞춰 항공권을 구매하세요.\n\n광견병 항체 검사 채혈일로부터 90일이 지난 후에 입국할 수 있어요.\n창이 공항 검역소(CAPQ) 운영시간에 맞춰 도착해야 합니다.',
       order: 90,
       validationIds: ['sg.departure-min-90days-after-titer'],
+      // 도착 시각을 CAPQ 운영시간(주말·공휴일 휴무)에 맞춰 항공권을 정해야 해서 이 카드에 링크.
+      links: [
+        {
+          url: 'https://avs.nparks.gov.sg/about-us/our-centres/changi-animal-plant-quarantine-station/',
+          label: '창이 검역소(CAPQ) 운영시간',
+        },
+      ],
     },
     // 수입 허가(Licence to Import Non-Food Animals) — 보호자가 GoBusiness 온라인 직접 신청.
     importPermit: {
@@ -1906,7 +1913,13 @@ function seaPermitOverrides(opts: {
     Partial<StepDefinition>,
     'description' | 'descriptionBySpecies' | 'validationIds'
   >
-  flight: { description: string; order: number; validationIds: string[] }
+  flight: {
+    description: string
+    order: number
+    validationIds: string[]
+    /** (선택) 항공권 카드 하단 링크 — 도착지 검역소 운영시간 등(싱가포르 CAPQ). */
+    links?: StepDefinition['links']
+  }
   importPermit: Partial<StepDefinition>
   importQuarantine: {
     fieldKey: string
@@ -1965,6 +1978,7 @@ function seaPermitOverrides(opts: {
       // 일본의 180일 anchor(항체 검사) 미적용 — 입국 대기 룰은 입력 차단·procedure-check 담당.
       earliest: undefined,
       validationIds: opts.flight.validationIds,
+      ...(opts.flight.links ? { links: opts.flight.links } : {}),
     },
     'import-permit': {
       inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],

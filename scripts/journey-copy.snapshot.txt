@@ -3388,6 +3388,8 @@
       창이 공항 검역소(CAPQ) 운영시간에 맞춰 도착해야 합니다.
   첨부안내: 구매한 항공권(e-티켓)을 사진·PDF로 보관하세요.
   저장이름: 항공권
+  links:
+      창이 검역소(CAPQ) 운영시간  →  https://avs.nparks.gov.sg/about-us/our-centres/changi-animal-plant-quarantine-station/
 
 ▸ general-vaccine
   title: 종합백신
