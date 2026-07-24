@@ -654,10 +654,15 @@ export function StepDetailView({
     isVetVisit && vetVisitDate.length >= 10 && vetVisitDate > todayStr
   // 광견병 항체 검사 — 채혈일이 미래면 '예정일로 저장'. 완료 판정은 2단계 모델
   // (결과값 OR 완료 플래그 = has-titer-entry)이라 canSave 는 dirty 그대로.
-  const titerUpcoming = isTiter && titerForm.date.length >= 10 && titerForm.date > todayStr
-  // 추가 검사 — 입력 entry 중 하나라도 미래면 '예정일로 저장'. (추가 백신 rabiesExtraUpcoming 과 동일.)
+  // ⚠️ 다중카드(일본 등) 전용 — 단일카드에서 titerForm 은 화면에 안 쓰는 state 인데
+  //   readTiterForm 이 예정(scheduled)을 surface 하면서, 목록에서 날짜를 지워도 이게 미래를
+  //   물고 있어 '예정일로 저장' 라벨이 안 내려가던 버그(2026-07-25). 실제 폼(titerExtra)
+  //   기준은 아래 titerExtraUpcoming 이 담당.
+  const titerUpcoming =
+    isTiter && !isTiterSingleCard && titerForm.date.length >= 10 && titerForm.date > todayStr
+  // 추가 검사·단일카드(목록형 폼) — 입력 entry 중 하나라도 미래면 '예정일로 저장'.
   const titerExtraUpcoming =
-    isTiterExtra &&
+    (isTiterExtra || isTiterSingleCard) &&
     titerExtra.some((e) => typeof e.date === 'string' && e.date.length >= 10 && e.date > todayStr)
   // 종합백신 — 입력 entry 중 하나라도 미래면 '예정일로 저장'. (추가 백신과 동일.)
   const generalVaccineUpcoming =
