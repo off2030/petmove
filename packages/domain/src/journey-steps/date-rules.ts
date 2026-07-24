@@ -486,6 +486,12 @@ function readDateArray(data: Record<string, unknown>, key: string): string[] {
 export function validateEuTiterAfterVaccine(
   doses: Array<{ date: string; valid_until?: string | null }>,
   titerDate: string,
+  /**
+   * 접종 후 최소 대기(일). EU 는 30일이 기본이고, 목적지별로 다르면(싱가포르 28일 등) 프로파일
+   * `titer.minDaysAfterVaccine` 파생값(TITER_MIN_DAYS_AFTER_VACCINE)을 넘긴다. 하드코딩 30일은
+   * 싱가포르(28)에 안 맞아 저장 거부가 어긋났다(2026-07-24).
+   */
+  minDays = 30,
 ): string | null {
   if (!titerDate) return null
   const prior = doses
@@ -493,11 +499,11 @@ export function validateEuTiterAfterVaccine(
     .sort((a, b) => a.date.localeCompare(b.date))
   if (prior.length === 0) return null // 접종-채혈 순서 자체는 validateTiterAfterBooster 담당
   const latest = prior[prior.length - 1] // 채혈 직전(가장 최근) 접종 — 그 이전 접종은 무관
-  if (daysBetween(latest.date, titerDate) < 30) {
-    const earliest = addDays(latest.date, 30)
+  if (daysBetween(latest.date, titerDate) < minDays) {
+    const earliest = addDays(latest.date, minDays)
     return earliest
-      ? `접종일로부터 30일 후인 ${fmt(earliest)}에 광견병 항체 검사를 받을 수 있어요.`
-      : '광견병 항체 검사는 백신 접종일로부터 30일이 지난 후에 받아야 해요.'
+      ? `접종일로부터 ${minDays}일 후인 ${fmt(earliest)}에 광견병 항체 검사를 받을 수 있어요.`
+      : `광견병 항체 검사는 백신 접종일로부터 ${minDays}일이 지난 후에 받아야 해요.`
   }
   return null
 }

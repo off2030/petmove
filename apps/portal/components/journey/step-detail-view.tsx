@@ -1063,11 +1063,13 @@ export function StepDetailView({
         (EU_ENTRY_FAMILY.includes(destinationKey) ||
           TITER_MIN_DAYS_AFTER_VACCINE[destinationKey] !== undefined)
       ) {
-        const err30 = validateEuTiterAfterVaccine(
+        const errMin = validateEuTiterAfterVaccine(
           readRabiesDoseList(caseRow?.data),
           titerForm.date.trim(),
+          // 목적지별 최소 대기(싱가포르 28일 등) — 없으면 EU 기본 30일.
+          TITER_MIN_DAYS_AFTER_VACCINE[destinationKey] ?? 30,
         )
-        if (err30) return err30
+        if (errMin) return errMin
       }
       // 만료된 과거 검사는 사실 데이터로 입력 허용 — 갱신 여부는 추가 검사/접종 step 의 검증과
       // procedure-check 주의(만료 후 추가 접종/검사 안내)가 표면화한다.
@@ -1083,6 +1085,22 @@ export function StepDetailView({
     if (isTiterExtra || isTiterSingleCard) {
       for (const entry of titerExtra) {
         if (!entry.date) continue
+        // 접종 N일 후 저장 거부 — 1회 접종 입국요건국(싱가포르·EU 등)은 단일카드 경로라
+        //   validateTiterDate(2차 없으면 통과)만으론 이 차단이 빠져 경고만 떴다(2026-07-24 발견).
+        //   조건은 다중카드 경로와 동일(EU 패밀리 ∪ 프로파일 minDaysAfterVaccine 선언국).
+        //   일본·대만·하와이는 이 집합에 없어 extra 카드 동작 무영향.
+        if (
+          destinationKey &&
+          (EU_ENTRY_FAMILY.includes(destinationKey) ||
+            TITER_MIN_DAYS_AFTER_VACCINE[destinationKey] !== undefined)
+        ) {
+          const minErr = validateEuTiterAfterVaccine(
+            readRabiesDoseList(caseRow?.data),
+            entry.date.trim(),
+            TITER_MIN_DAYS_AFTER_VACCINE[destinationKey] ?? 30,
+          )
+          if (minErr) return `채혈일 ${entry.date}: ${minErr}`
+        }
         const err = validateTiterDate(
           caseRow?.data,
           entry.date,
