@@ -1403,6 +1403,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },
     order: 62,
     done: 'quarantine:sg_quarantine_reservation_date',
+    validationIds: ['sg.quarantine-reservation-after-titer'],
     inputs: [{ key: 'sg_quarantine_reservation_date', label: '예약일', type: 'date', helpText: '계류장(AQC)을 예약한 날짜' }],
     allowAttachments: true,
     attachmentHint: '예약 확인서를 사진·PDF로 보관하세요.',

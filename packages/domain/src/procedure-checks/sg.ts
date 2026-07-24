@@ -531,4 +531,38 @@ export const SG_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `싱가포르 수출검역일(${raw}) 싱가포르 체류 구간 내.` }
     },
   },
+
+  // ── 계류장 예약 ──
+  {
+    id: 'sg.quarantine-reservation-after-titer',
+    country: 'singapore',
+    category: '검역',
+    title: '계류장 예약은 항체 검사 채혈 이후',
+    description:
+      'AQC 계류장 예약(QMS)은 광견병 항체 검사 결과가 나온 뒤에 하므로, 예약일은 채혈일 이후여야 함. (NParks "Reserve quarantine space when the serology test result is ready")',
+    severity: 'warning',
+    addedAt: '2026-07-24',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const reservation =
+        typeof data.sg_quarantine_reservation_date === 'string'
+          ? data.sg_quarantine_reservation_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(reservation)) return SKIP
+      const titers = readTiterEntries(caseRow)
+      if (titers.length === 0) return SKIP
+      const earliest = [...titers].sort((a, b) => a.date.localeCompare(b.date))[0]
+      if (reservation < earliest.date) {
+        return {
+          ok: false,
+          message: '계류장 예약은 광견병 항체 검사 채혈 이후에 해야 해요. 날짜를 확인하세요.',
+          offendingPaths: [
+            'sg_quarantine_reservation_date',
+            `rabies_titer_records[${earliest.originalIndex}].date`,
+          ],
+        }
+      }
+      return { ok: true, message: `계류장 예약일(${reservation}) 채혈(${earliest.date}) 이후.` }
+    },
+  },
 ]
