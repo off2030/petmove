@@ -986,7 +986,11 @@ export function buildJourney(
       step.id === 'import-permit' &&
       !done &&
       !!sit
-    const infoChecks = (infoByStep.get(step.id) ?? 0) + (isAwaitingStep ? 1 : 0)
+    // '지난 예정'(검역 5단계 passedUnconfirmed / 기록형 recordScheduledPassed)도 '안내' 채널 —
+    // 칩('안내')은 설명문 숨김 설정과 무관하게 항상 보인다(2026-07-24 사용자 확정: 채널 통일).
+    const scheduledPassed = passedUnconfirmed || recordScheduledPassed
+    const infoChecks =
+      (infoByStep.get(step.id) ?? 0) + (isAwaitingStep ? 1 : 0) + (scheduledPassed ? 1 : 0)
     // 만료 상태의 백신(광견병 단일카드·종합백신)은 일본 추가백신처럼 '안내'로 배치한다 —
     // situational 안내가 있고 미완료면 advisory 취급(다음 할 일 대신 별도 안내 카드, 일정 row
     // 안내 톤). 미접종이면 situational 이 undefined 라 일반 '다음 할 일'(접종하세요)로 노출.
@@ -1000,7 +1004,9 @@ export function buildJourney(
     const infoMessage =
       infoMessageByStep.get(step.id) ??
       (isAdvisory && !done ? desc : undefined) ??
-      (isAwaitingStep ? sit?.desc : undefined)
+      (isAwaitingStep ? sit?.desc : undefined) ??
+      // '지난 예정' 안내 카드 본문 — 검역 5단계·기록형 각자의 문구(desc 교체와 동일 문구).
+      (passedUnconfirmed ? PASSED_UNCONFIRMED_MSG : recordScheduledPassed ? RECORD_PASSED_MSG : undefined)
     // procedure-check 주의가 있으면 첫 메시지를 보조줄로 노출 — done 이어도 ⚠ 로 바뀐다
     // (timeline 우선순위 주의 > done). 데이터·완료 상태 자체는 보존.
     const failedMsg = failedMessageByStep.get(step.id)
