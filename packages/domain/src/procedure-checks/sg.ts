@@ -566,4 +566,46 @@ export const SG_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `계류장 예약 신청일(${reservation}) 채혈(${earliest.date}) 이후.` }
     },
   },
+
+  // ── 계류장 예약 날짜(정보성, 선택 입력) — 항체 창 ──
+  {
+    id: 'sg.quarantine-reservation-date-within-titer-window',
+    country: 'singapore',
+    category: '검역',
+    title: '계류장 예약 날짜는 항체 검사 90일 후·12개월 이내',
+    description:
+      '계류장(AQC) 예약 날짜(정보성·선택 입력)는 격리 시작 = 입국 시점이므로, RNATT 채혈일 + 90일 이후 ~ + 12개월 이내여야 함. 출국일 창(sg.departure-min-90days-after-titer / -within-12months-of-titer)과 같은 기준. 미입력이면 검사 안 함. (Schedule III IV(a)(iii))',
+    severity: 'warning',
+    addedAt: '2026-07-24',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const reservation =
+        typeof data.sg_quarantine_reservation_date === 'string'
+          ? data.sg_quarantine_reservation_date.slice(0, 10)
+          : ''
+      // 선택 입력 — 비어 있으면 검사하지 않는다.
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(reservation)) return SKIP
+      const titers = readTiterEntries(caseRow)
+      if (titers.length === 0) return SKIP
+      // 어떤 채혈이든 [채혈 + 90일, 채혈 + 1년] 창에 예약일이 들면 통과.
+      const within = titers.some((t) => {
+        const days = daysBetween(t.date, reservation)
+        return days !== null && days >= 90 && addYears(t.date, 1) >= reservation
+      })
+      if (within) {
+        return { ok: true, message: `계류장 예약 날짜(${reservation}) 항체 검사 창(90일~12개월) 내.` }
+      }
+      const offending: string[] = ['sg_quarantine_reservation_date']
+      for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
+      // 90일 하한을 넘긴 채혈이 하나도 없으면 '너무 이르다', 아니면 유효기간(12개월) 초과다.
+      const passes90 = titers.some((t) => {
+        const days = daysBetween(t.date, reservation)
+        return days !== null && days >= 90
+      })
+      const message = !passes90
+        ? '계류장 예약 날짜는 광견병 항체 검사 채혈일로부터 90일이 지난 후여야 해요.'
+        : '계류장 예약 날짜는 광견병 항체 검사 결과 유효기간(12개월) 이내여야 해요.'
+      return { ok: false, message, offendingPaths: offending }
+    },
+  },
 ]

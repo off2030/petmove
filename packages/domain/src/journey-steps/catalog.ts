@@ -1409,7 +1409,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 62,
     // 수입 허가와 동일 신청 → 발급 2단계 모델. 신청일 입력 = 진행 중, 확인서 첨부·완료 버튼 = 완료.
     done: 'has-sg-quarantine-reservation',
-    validationIds: ['sg.quarantine-reservation-after-titer'],
+    // 신청일(채혈 이후) + 예약 날짜(항체 창 90일~12개월, 선택 입력) 두 룰이 이 카드에 붙는다.
+    validationIds: [
+      'sg.quarantine-reservation-after-titer',
+      'sg.quarantine-reservation-date-within-titer-window',
+    ],
     hasInputData: (caseRow) =>
       deriveApplicationStatus(caseRow, SG_QUARANTINE_RESERVATION_APP_SPEC) !== 'not_started',
     situational: (caseRow) => {
@@ -1421,8 +1425,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (filed.length >= 10 && filed > todayKst()) return undefined
       if (deriveApplicationStatus(caseRow, SG_QUARANTINE_RESERVATION_APP_SPEC) !== 'in_progress')
         return undefined
-      const msg =
-        '계류장(AQC) 예약을 진행 중이에요. 예약 확인서가 나오면 파일을 첨부하거나 완료 버튼을 누르세요.'
+      const msg = '계류장(AQC) 예약을 진행 중이에요. 예약이 확정되면 완료 버튼을 누르세요.'
       return { desc: msg, cardDesc: msg }
     },
     inputs: [
