@@ -26,8 +26,11 @@ import {
 import { EU_ENTRY_FAMILY } from './date-rules'
 import {
   deriveAdvanceNotificationStatus,
+  deriveApplicationStatus,
   deriveImportPermitStatus,
   deriveJpExportQuarantineStatus,
+  SG_DOG_LICENCE_APP_SPEC,
+  SG_QUARANTINE_RESERVATION_APP_SPEC,
 } from './report-status'
 import type { StepDefinition } from './types'
 import type { CaseRow } from '../types'
@@ -1404,9 +1407,27 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '계류장(AQC)을 예약하세요.',
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },
     order: 62,
-    done: 'quarantine:sg_quarantine_reservation_date',
+    // 수입 허가와 동일 신청 → 발급 2단계 모델. 신청일 입력 = 진행 중, 확인서 첨부·완료 버튼 = 완료.
+    done: 'has-sg-quarantine-reservation',
     validationIds: ['sg.quarantine-reservation-after-titer'],
-    inputs: [{ key: 'sg_quarantine_reservation_date', label: '예약일', type: 'date', helpText: '계류장(AQC)을 예약한 날짜' }],
+    hasInputData: (caseRow) =>
+      deriveApplicationStatus(caseRow, SG_QUARANTINE_RESERVATION_APP_SPEC) !== 'not_started',
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed =
+        typeof data.sg_quarantine_reservation_application_date === 'string'
+          ? data.sg_quarantine_reservation_application_date
+          : ''
+      if (filed.length >= 10 && filed > todayKst()) return undefined
+      if (deriveApplicationStatus(caseRow, SG_QUARANTINE_RESERVATION_APP_SPEC) !== 'in_progress')
+        return undefined
+      const msg =
+        '계류장(AQC) 예약을 진행 중이에요. 예약 확인서가 나오면 파일을 첨부하거나 완료 버튼을 누르세요.'
+      return { desc: msg, cardDesc: msg }
+    },
+    inputs: [
+      { key: 'sg_quarantine_reservation_application_date', label: '신청일', type: 'date', helpText: '계류장(AQC)을 예약 신청한 날짜' },
+    ],
     allowAttachments: true,
     attachmentHint: '예약 확인서를 사진·PDF로 보관하세요.',
     attachmentLabel: '계류장 예약 확인서',
@@ -1427,8 +1448,26 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   지정 2026-07-24: 항공권과 순서 교체). 계류장 예약(62) → 항공권(90) → 강아지 라이센스(92) → 수입허가.
     applicability: { destinations: ['singapore'], species: 'dog', tripType: 'all' },
     order: 92,
-    done: 'quarantine:sg_dog_licence_date',
-    inputs: [{ key: 'sg_dog_licence_date', label: '발급일', type: 'date', helpText: '강아지 라이센스를 발급받은 날짜' }],
+    // 수입 허가와 동일 신청 → 발급 2단계 모델. 신청일 입력 = 진행 중, 라이센스 첨부·완료 버튼 = 완료.
+    done: 'has-sg-dog-licence',
+    hasInputData: (caseRow) =>
+      deriveApplicationStatus(caseRow, SG_DOG_LICENCE_APP_SPEC) !== 'not_started',
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed =
+        typeof data.sg_dog_licence_application_date === 'string'
+          ? data.sg_dog_licence_application_date
+          : ''
+      if (filed.length >= 10 && filed > todayKst()) return undefined
+      if (deriveApplicationStatus(caseRow, SG_DOG_LICENCE_APP_SPEC) !== 'in_progress')
+        return undefined
+      const msg =
+        '강아지 라이센스를 신청 중이에요. 라이센스가 나오면 파일을 첨부하거나 완료 버튼을 누르세요.'
+      return { desc: msg, cardDesc: msg }
+    },
+    inputs: [
+      { key: 'sg_dog_licence_application_date', label: '신청일', type: 'date', helpText: '강아지 라이센스를 신청한 날짜' },
+    ],
     allowAttachments: true,
     attachmentHint: '라이센스를 사진·PDF로 보관하세요.',
     attachmentLabel: '강아지 라이센스',

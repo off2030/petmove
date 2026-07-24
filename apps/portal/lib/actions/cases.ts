@@ -33,6 +33,9 @@ import {
   writeByDestValue,
   writeJourneyFeedback,
   readByDestValue,
+  SG_DOG_LICENCE_APP_SPEC,
+  SG_QUARANTINE_RESERVATION_APP_SPEC,
+  type ApplicationStepSpec,
   type CaseRow,
   type VaccineProductsData,
 } from '@petmove/domain'
@@ -1838,6 +1841,140 @@ export async function updateImportPermitFields(
         delete nextData.import_permit_issued_skipped
         delete nextData.import_permit_in_progress
       }
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+// ── 신청형 절차 카드(신청일 + 완료/첨부) — 범용 ──────────────────────────
+// 수입 허가와 동일 모델이지만 permit_no 가 없는 카드(싱가포르 계류장 예약·강아지 라이센스).
+// 클라이언트는 stepId 만 넘기고, 서버가 신뢰 목록에서 필드 이름을 결정한다(임의 키 쓰기 차단).
+const APPLICATION_STEP_SPECS: Record<string, ApplicationStepSpec> = {
+  [SG_QUARANTINE_RESERVATION_APP_SPEC.attachStepId]: SG_QUARANTINE_RESERVATION_APP_SPEC,
+  [SG_DOG_LICENCE_APP_SPEC.attachStepId]: SG_DOG_LICENCE_APP_SPEC,
+}
+
+/**
+ * 신청형 절차 신청일 저장 — 범용(updateImportPermitFields 의 permit_no 없는 버전).
+ * 신청일 변경·삭제 시 완료(skip)·'진행 중' 플래그를 해제한다(수입 허가와 동일 정책).
+ * 필드는 by_dest 분리 — 활성 목적지 token 으로 기록.
+ */
+export async function updateApplicationDate(
+  caseId: string,
+  stepId: string,
+  date: string | null,
+  destination?: string | null,
+): Promise<Result<CaseRow>> {
+  try {
+    const spec = APPLICATION_STEP_SPECS[stepId]
+    if (!spec) return { ok: false, error: '알 수 없는 절차 단계입니다.' }
+    const v = typeof date === 'string' ? date.trim() : ''
+    if (v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+      return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+    }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data, destination')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const caseDestStr = (existing as { destination: string | null }).destination
+    const token = resolveWriteToken(caseDestStr, prev, destination)
+
+    let nextData: Record<string, unknown> = { ...prev }
+    if (token) {
+      const prevFiledRaw = readByDestValue(prev, token, spec.dateField)
+      const prevFiled = typeof prevFiledRaw === 'string' ? prevFiledRaw : ''
+      nextData = writeByDestValue(nextData, token, spec.dateField, v || null)
+      // 신청일 변경·삭제 시 완료 처리(skip)·'진행 중' 확인 해제 — 새 신청은 '예정'부터 다시.
+      if (v !== prevFiled) {
+        nextData = writeByDestValue(nextData, token, spec.skipFlag, null)
+        nextData = writeByDestValue(nextData, token, spec.inProgressFlag, null)
+      }
+      // top-level 잔존 제거 — 다른 목적지로의 flatten fallback 누수 차단.
+      delete nextData[spec.dateField]
+    } else {
+      const prevFiledRaw = prev[spec.dateField]
+      const prevFiled = typeof prevFiledRaw === 'string' ? prevFiledRaw : ''
+      if (v) nextData[spec.dateField] = v // scoping-fallback-ok: token 없음(목적지 없음) 폴백
+      else delete nextData[spec.dateField]
+      if (v !== prevFiled) {
+        delete nextData[spec.skipFlag]
+        delete nextData[spec.inProgressFlag]
+      }
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * 신청형 절차 '완료' — 확인서 첨부 없이 발급 완료 처리(skip). 신청일이 있어야 의미가 있음
+ * (markImportPermitIssued 와 동일 정책). 플래그는 by_dest 분리.
+ */
+export async function markApplicationIssued(
+  caseId: string,
+  stepId: string,
+  destination?: string | null,
+): Promise<Result<CaseRow>> {
+  try {
+    const spec = APPLICATION_STEP_SPECS[stepId]
+    if (!spec) return { ok: false, error: '알 수 없는 절차 단계입니다.' }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data, destination')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const caseDestStr = (existing as { destination: string | null }).destination
+    const token = resolveWriteToken(caseDestStr, prev, destination)
+    const filedRaw = token
+      ? readByDestValue(prev, token, spec.dateField)
+      : prev[spec.dateField]
+    const filed = typeof filedRaw === 'string' ? filedRaw : ''
+    if (filed.length < 10) {
+      return { ok: false, error: '신청일이 입력되어 있지 않습니다.' }
+    }
+
+    let nextData: Record<string, unknown> = { ...prev }
+    if (token) {
+      nextData = writeByDestValue(nextData, token, spec.skipFlag, true)
+      delete nextData[spec.skipFlag]
+    } else {
+      nextData[spec.skipFlag] = true // scoping-fallback-ok: token 없음(목적지 없음) 폴백
     }
 
     const { data: updated, error } = await admin

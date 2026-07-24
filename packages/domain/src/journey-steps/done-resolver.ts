@@ -18,8 +18,11 @@ import { buildCaseJourneyContext, isSingleDoseRabiesCase } from './applicability
 import { findRabiesChainBreak } from './rabies-chain'
 import {
   deriveAdvanceNotificationStatus,
+  deriveApplicationStatus,
   deriveImportPermitStatus,
   deriveJpExportQuarantineStatus,
+  SG_DOG_LICENCE_APP_SPEC,
+  SG_QUARANTINE_RESERVATION_APP_SPEC,
 } from './report-status'
 import { areAllRequiredDocsVerified, resolveRequiredDocs } from '../required-docs'
 
@@ -245,6 +248,12 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 수입 허가도 동일 — [[deriveImportPermitStatus]] 가 단일 출처.
       // 'done' = 첨부·허가번호·완료 처리(skip)·legacy manual-flag.
       return deriveImportPermitStatus(caseRow) === 'done'
+    case 'has-sg-quarantine-reservation':
+      // 싱가포르 계류장(AQC) 예약 — 수입 허가와 동일 신청 → 발급 모델(첨부·완료 처리).
+      return deriveApplicationStatus(caseRow, SG_QUARANTINE_RESERVATION_APP_SPEC) === 'done'
+    case 'has-sg-dog-licence':
+      // 싱가포르 강아지 라이센스 — 동일 신청 → 발급 모델.
+      return deriveApplicationStatus(caseRow, SG_DOG_LICENCE_APP_SPEC) === 'done'
     case 'has-jp-export-quarantine':
       // 일본 수출검역 신청도 동일 — [[deriveJpExportQuarantineStatus]] 가 단일 출처.
       // 'done' = skipped·confirmed+예약확정·legacy stored 'done'.
@@ -456,6 +465,20 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       const dt =
         typeof data.import_permit_application_date === 'string'
           ? data.import_permit_application_date
+          : null
+      return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+    }
+    case 'has-sg-quarantine-reservation': {
+      const dt =
+        typeof data.sg_quarantine_reservation_application_date === 'string'
+          ? data.sg_quarantine_reservation_application_date
+          : null
+      return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+    }
+    case 'has-sg-dog-licence': {
+      const dt =
+        typeof data.sg_dog_licence_application_date === 'string'
+          ? data.sg_dog_licence_application_date
           : null
       return dt && dt.length >= 10 ? dt.slice(0, 10) : null
     }

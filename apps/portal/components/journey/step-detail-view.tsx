@@ -59,11 +59,13 @@ import { replaceTab } from '@/components/portal-shell/tab-nav'
 import {
   getCaseVaccineData,
   markAdvanceNotificationApprovalSkipped,
+  markApplicationIssued,
   markImportPermitIssued,
   markJpExportQuarantineReservationSkipped,
   markExtraTiterResultConfirmed,
   markTiterResultConfirmed,
   updateAdvanceNotificationDate,
+  updateApplicationDate,
   updateCaseTripType,
   updateFlightFields,
   updateGeneralVaccineEntries,
@@ -257,6 +259,18 @@ export function StepDetailView({
   const isKrImportQuarantine = step.id === 'kr-import-quarantine'
   const isGeneralVaccine = step.id === 'general-vaccine'
   const isImportPermit = step.id === 'import-permit'
+  // 신청 → 발급 2단계 모델(신청일 입력=진행 중, 확인서 첨부·완료 버튼=완료). 수입 허가가 원형이고
+  // 싱가포르 계류장 예약·강아지 라이센스가 같은 모델을 공유한다. 필드 키만 다르다.
+  const isSgQuarantineReservation = step.id === 'sg-quarantine-reservation'
+  const isSgDogLicence = step.id === 'sg-dog-licence'
+  const isApplicationStep = isImportPermit || isSgQuarantineReservation || isSgDogLicence
+  const applicationDateField = isImportPermit
+    ? 'import_permit_application_date'
+    : isSgQuarantineReservation
+      ? 'sg_quarantine_reservation_application_date'
+      : isSgDogLicence
+        ? 'sg_dog_licence_application_date'
+        : ''
   // 구충(내·외부·촌충) — 종합백신과 같은 date_array 입력 모델. 필드 키는 base catalog input 과
   // 동일. 촌충(에키노코쿠스, EU 5국)은 내부구충과 데이터 키(internal_parasite_dates)를 공유.
   const isExternalParasite = step.id === 'external-parasite'
@@ -282,7 +296,7 @@ export function StepDetailView({
     isKrImportQuarantine ||
     isImportQuarantine ||
     isGeneralVaccine ||
-    isImportPermit ||
+    isApplicationStep ||
     isParasite
   // 일정 화면 복귀 경로 — 다중 목적지에서 활성 목적지(?dest=)를 보존해야 저장·완료 후
   // 다른 목적지(기본=첫 토큰)로 튕기지 않는다. 뒤로 링크·완료 후 replace 모두 이걸 사용.
@@ -388,8 +402,10 @@ export function StepDetailView({
     savedGeneralVaccine.length === 0 ? [makeEmptyGeneralVaccine()] : savedGeneralVaccine,
   )
 
-  // 수입 허가 — 신청일 + 허가 번호 (둘 다 스코핑 필드 — 활성 목적지로 flatten 된 caseRow 기준).
-  const savedImportPermit = readImportPermitForm(caseRow?.data)
+  // 신청형 절차(수입 허가·싱가포르 계류장 예약·강아지 라이센스) — 신청일 + (수입 허가만)허가 번호.
+  // 스코핑 필드 — 활성 목적지로 flatten 된 caseRow 기준. permit_no 는 수입 허가 전용이라 SG
+  // 카드에선 읽지 않는다(같은 싱가포르 케이스에 import-permit permit_no 가 있어도 누수 방지).
+  const savedImportPermit = readImportPermitForm(caseRow?.data, applicationDateField, isImportPermit)
   const [importPermit, setImportPermit] = useState<ImportPermitForm>(savedImportPermit)
 
   // 구충(내·외부) — 가변 길이 entries (종합백신과 동일 모델, 유효기간 없음).
@@ -482,7 +498,7 @@ export function StepDetailView({
     isGeneralVaccine &&
     !generalVaccineEqual(generalVaccine.filter(vaccineEntryFilled), savedGeneralVaccine.filter(vaccineEntryFilled))
   const importPermitDirty =
-    isImportPermit &&
+    isApplicationStep &&
     (importPermit.applicationDate !== savedImportPermit.applicationDate ||
       importPermit.permitNo !== savedImportPermit.permitNo)
   const parasiteDirty =
@@ -585,9 +601,9 @@ export function StepDetailView({
   const generalVaccineUpcoming =
     isGeneralVaccine &&
     generalVaccine.some((e) => typeof e.date === 'string' && e.date.length >= 10 && e.date > todayStr)
-  // 수입 허가 — 신청일이 미래면 '예정일로 저장'. (사전 신고 advanceUpcoming 과 동일.)
+  // 신청형 절차(수입 허가·계류장 예약·강아지 라이센스) — 신청일이 미래면 '예정일로 저장'.
   const importPermitUpcoming =
-    isImportPermit &&
+    isApplicationStep &&
     importPermit.applicationDate.length >= 10 &&
     importPermit.applicationDate > todayStr
   // 구충 — 입력 entry 중 하나라도 미래면 '예정일로 저장'.
@@ -706,7 +722,8 @@ export function StepDetailView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
-    if (!importPermitDirty) setImportPermit(readImportPermitForm(caseRow?.data))
+    if (!importPermitDirty)
+      setImportPermit(readImportPermitForm(caseRow?.data, applicationDateField, isImportPermit))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
@@ -1509,22 +1526,36 @@ export function StepDetailView({
           setError(res.error)
         }
       })
-    } else if (isImportPermit) {
+    } else if (isApplicationStep) {
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateImportPermitFields(
-          caseId,
-          {
-            application_date: importPermit.applicationDate || null,
-            permit_no: importPermit.permitNo || null,
-          },
-          activeDest,
-        )
+        // 수입 허가는 전용 액션(permit_no 포함), 싱가포르 신청형 카드는 범용 액션(신청일만).
+        const res = isImportPermit
+          ? await updateImportPermitFields(
+              caseId,
+              {
+                application_date: importPermit.applicationDate || null,
+                permit_no: importPermit.permitNo || null,
+              },
+              activeDest,
+            )
+          : await updateApplicationDate(
+              caseId,
+              step.id,
+              importPermit.applicationDate || null,
+              activeDest,
+            )
         if (res.ok) {
           updateCase(res.value)
           // by_dest 저장 — 활성 목적지 뷰로 평탄화해서 폼 동기화 (항공권 step 과 동일).
-          setImportPermit(readImportPermitForm(activeDestinationView(res.value, activeDest).data))
+          setImportPermit(
+            readImportPermitForm(
+              activeDestinationView(res.value, activeDest).data,
+              applicationDateField,
+              isImportPermit,
+            ),
+          )
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -1805,22 +1836,26 @@ export function StepDetailView({
       }
     })
   }
-  // 수입 허가 — 사전 신고와 동일 2단계. 신청일 입력(오늘 이하) + 미완료(허가번호·첨부 없음)
-  // 상태에서 변경이 없으면 하단 저장 버튼이 '완료' 로 전환 → 발급 완료(skip) 플래그 set.
+  // 신청형 절차(수입 허가·계류장 예약·강아지 라이센스) — 사전 신고와 동일 2단계. 신청일 입력
+  // (오늘 이하) + 미완료(첨부·완료 없음) 상태에서 변경이 없으면 하단 저장 버튼이 '완료'로 전환
+  // → 발급 완료(skip) 플래그 set.
   const isImportPermitInProgress =
-    isImportPermit &&
+    isApplicationStep &&
     savedImportPermit.applicationDate.length >= 10 &&
     savedImportPermit.applicationDate <= todayStr &&
     !done
   // titer 방식(사전 신고와 동일) — '진행 중' ack 버튼 게이트 제거. 신청일 도래(미완료·미변경)면
-  // 바로 '완료' 버튼. 진행 중 안내는 situational('수입 허가 신청을 진행 중이에요…')이 맡는다.
+  // 바로 '완료' 버튼. 진행 중 안내는 situational('… 진행 중이에요…')이 맡는다.
   const importPermitCompleteMode = isImportPermitInProgress && !dirty
   const [completingImportPermit, setCompletingImportPermit] = useState(false)
   const handleCompleteImportPermit = () => {
     if (completingImportPermit) return
     setCompletingImportPermit(true)
     startTransition(async () => {
-      const res = await markImportPermitIssued(caseId, activeDest)
+      // 수입 허가는 전용 액션, 싱가포르 신청형 카드는 범용 액션(step.id 로 서버가 필드 결정).
+      const res = isImportPermit
+        ? await markImportPermitIssued(caseId, activeDest)
+        : await markApplicationIssued(caseId, step.id, activeDest)
       setCompletingImportPermit(false)
       if (res.ok) {
         updateCase(res.value)
@@ -2483,12 +2518,13 @@ export function StepDetailView({
             />
           </section>
         )}
-        {isImportPermit && (
+        {isApplicationStep && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <ImportPermitInputs
               form={importPermit}
               onChange={(key, next) => setImportPermit((prev) => ({ ...prev, [key]: next }))}
+              // 허가 번호 칸은 수입 허가 전용 — 싱가포르 신청형 카드는 신청일만.
               showPermitNo={(step.inputs ?? []).some((i) => i.key === 'permit_no')}
             />
           </section>
@@ -3033,13 +3069,19 @@ function readParasiteForm(
   return out
 }
 
-/** 수입 허가 폼 값 — import_permit_application_date / permit_no (flatten 된 data 기준). */
+/**
+ * 신청형 절차 폼 값 — 신청일(dateField) + (includePermitNo 면)permit_no. flatten 된 data 기준.
+ * 수입 허가는 dateField='import_permit_application_date'·includePermitNo=true, 싱가포르 신청형
+ * 카드는 각자 필드·permit_no 없음(false).
+ */
 function readImportPermitForm(
   data: Record<string, unknown> | null | undefined,
+  dateField: string,
+  includePermitNo: boolean,
 ): ImportPermitForm {
-  if (!data) return { applicationDate: '', permitNo: '' }
-  const filed = data['import_permit_application_date']
-  const no = data['permit_no']
+  if (!data || !dateField) return { applicationDate: '', permitNo: '' }
+  const filed = data[dateField]
+  const no = includePermitNo ? data['permit_no'] : ''
   return {
     applicationDate: typeof filed === 'string' ? filed : '',
     permitNo: typeof no === 'string' ? no : '',

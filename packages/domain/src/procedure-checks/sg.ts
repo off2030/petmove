@@ -544,9 +544,10 @@ export const SG_CHECKS: ProcedureCheck[] = [
     addedAt: '2026-07-24',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
+      // 신청 → 발급 모델로 전환(2026-07-24) — 예약 신청일 필드를 본다.
       const reservation =
-        typeof data.sg_quarantine_reservation_date === 'string'
-          ? data.sg_quarantine_reservation_date.slice(0, 10)
+        typeof data.sg_quarantine_reservation_application_date === 'string'
+          ? data.sg_quarantine_reservation_application_date.slice(0, 10)
           : ''
       if (!/^\d{4}-\d{2}-\d{2}$/.test(reservation)) return SKIP
       const titers = readTiterEntries(caseRow)
@@ -557,12 +558,12 @@ export const SG_CHECKS: ProcedureCheck[] = [
           ok: false,
           message: '계류장 예약은 광견병 항체 검사 채혈 이후에 해야 해요. 날짜를 확인하세요.',
           offendingPaths: [
-            'sg_quarantine_reservation_date',
+            'sg_quarantine_reservation_application_date',
             `rabies_titer_records[${earliest.originalIndex}].date`,
           ],
         }
       }
-      return { ok: true, message: `계류장 예약일(${reservation}) 채혈(${earliest.date}) 이후.` }
+      return { ok: true, message: `계류장 예약 신청일(${reservation}) 채혈(${earliest.date}) 이후.` }
     },
   },
 ]

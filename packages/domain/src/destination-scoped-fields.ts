@@ -106,11 +106,16 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'sg_import_quarantine_confirmed',
   'sg_export_quarantine_date',
   'sg_export_quarantine_confirmed',
-  // 싱가포르 전용 절차 카드(계류장 예약·강아지 라이센스·관부가세·국경검사 예약).
-  'sg_quarantine_reservation_date',
-  'sg_quarantine_reservation_confirmed',
-  'sg_dog_licence_date',
-  'sg_dog_licence_confirmed',
+  // 싱가포르 전용 절차 카드.
+  // 계류장 예약·강아지 라이센스 = 수입 허가와 동일 신청 → 발급 모델(신청일 + 완료/첨부).
+  //   목적지마다 따로 신청하므로 신청일·완료(skip)·진행중 플래그도 by_dest 분리.
+  'sg_quarantine_reservation_application_date',
+  'sg_quarantine_reservation_issued_skipped',
+  'sg_quarantine_reservation_in_progress',
+  'sg_dog_licence_application_date',
+  'sg_dog_licence_issued_skipped',
+  'sg_dog_licence_in_progress',
+  // 관부가세·국경검사 예약 = 검역 confirm 모델(예약일 + 완료 확인).
   'sg_gst_permit_date',
   'sg_gst_permit_confirmed',
   'sg_border_inspection_date',

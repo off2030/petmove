@@ -80,57 +80,118 @@ export function isAdvanceNotificationInProgressAck(caseRow: CaseRow): boolean {
  * 로 보이며, 보호자가 '완료' 버튼을 한 번 더 누르면 done 으로 정리된다.
  */
 /**
- * 수입 허가(import-permit step) 진행 상태 — 허가가 필요한 모든 목적지(태국·호주·뉴질랜드·
- * 대만·말레이시아 등) 공용. 사전 신고와 동일한 신청 → 허가증 2단계 모델.
+ * 신청 → 발급 2단계(신청일 입력=진행 중, 첨부·완료 액션=완료) 모델의 범용 spec.
+ * 수입 허가(import-permit)가 원형이고, 싱가포르 계류장 예약·강아지 라이센스처럼 "신청하고
+ * 확인서를 받는" 절차가 같은 모델을 공유한다. 필드 이름만 spec 으로 갈아끼운다.
  *
- *  - 첨부(stepId 'import-permit') = 'done'
- *  - 허가 번호(permit_no) 입력 = 'done' — 번호가 있다는 건 허가증이 나왔다는 뜻.
- *  - 신청일 입력 + `import_permit_issued_skipped`(첨부 없이 완료 처리) = 'done'
- *  - 옛 manual-flag `journey_flags['import-permit-issued']` = 'done' (하위 호환)
- *  - 신청일(import_permit_application_date) 입력 = 'in_progress'
+ *  - dateField     : 신청일 필드 키 (예: import_permit_application_date)
+ *  - skipFlag      : 첨부 없이 '완료' 처리한 플래그 키 (예: import_permit_issued_skipped)
+ *  - inProgressFlag: 보호자 '진행 중' 확인 플래그 키 (예: import_permit_in_progress)
+ *  - attachStepId  : 첨부가 이 step 에 달렸는지 판정할 stepId
+ *  - permitNoField : (선택) 번호 입력 = 완료로 보는 필드 (수입 허가 permit_no 전용)
+ *  - legacyFlag    : (선택) 옛 manual-flag(journey_flags[legacyFlag]) 하위 호환
+ */
+export type ApplicationStepSpec = {
+  dateField: string
+  skipFlag: string
+  inProgressFlag: string
+  attachStepId: string
+  permitNoField?: string
+  legacyFlag?: string
+}
+
+export const IMPORT_PERMIT_APP_SPEC: ApplicationStepSpec = {
+  dateField: 'import_permit_application_date',
+  skipFlag: 'import_permit_issued_skipped',
+  inProgressFlag: 'import_permit_in_progress',
+  attachStepId: 'import-permit',
+  permitNoField: 'permit_no',
+  legacyFlag: 'import-permit-issued',
+}
+
+// 싱가포르 전용 신청형 절차 카드 — 수입 허가와 같은 신청 → 발급 모델(2026-07-24).
+export const SG_QUARANTINE_RESERVATION_APP_SPEC: ApplicationStepSpec = {
+  dateField: 'sg_quarantine_reservation_application_date',
+  skipFlag: 'sg_quarantine_reservation_issued_skipped',
+  inProgressFlag: 'sg_quarantine_reservation_in_progress',
+  attachStepId: 'sg-quarantine-reservation',
+}
+export const SG_DOG_LICENCE_APP_SPEC: ApplicationStepSpec = {
+  dateField: 'sg_dog_licence_application_date',
+  skipFlag: 'sg_dog_licence_issued_skipped',
+  inProgressFlag: 'sg_dog_licence_in_progress',
+  attachStepId: 'sg-dog-licence',
+}
+
+/**
+ * 신청형 절차의 진행 상태 — 범용. 사전 신고와 동일한 신청 → 발급 2단계 모델.
+ *
+ *  - 첨부(stepId spec.attachStepId) = 'done'
+ *  - (spec.permitNoField 있으면) 번호 입력 = 'done' — 번호가 있다는 건 발급됐다는 뜻.
+ *  - 신청일 입력 + spec.skipFlag(첨부 없이 완료 처리) = 'done'
+ *  - (spec.legacyFlag 있으면) 옛 manual-flag = 'done' (하위 호환)
+ *  - 신청일(spec.dateField) 입력 = 'in_progress'
  *  - 그 외 = 'not_started'
  *
- * 신청일·permit_no·skip 플래그는 destination-scoped(by_dest) — 다중 목적지 케이스는
- * 활성 목적지로 flatten 된 view(caseRow)를 넘겨야 한다 (검역 필드들과 동일 컨벤션).
+ * 관련 필드는 destination-scoped(by_dest) — 다중 목적지 케이스는 활성 목적지로 flatten 된
+ * view(caseRow)를 넘겨야 한다 (검역 필드들과 동일 컨벤션).
  */
-export function deriveImportPermitStatus(caseRow: CaseRow): JpReportStatus {
+export function deriveApplicationStatus(
+  caseRow: CaseRow,
+  spec: ApplicationStepSpec,
+): JpReportStatus {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const docs = Array.isArray(data.documents) ? data.documents : []
   const hasAttachment = docs.some(
     (d) =>
       !!d &&
       typeof d === 'object' &&
-      (d as Record<string, unknown>).stepId === 'import-permit',
+      (d as Record<string, unknown>).stepId === spec.attachStepId,
   )
   if (hasAttachment) return 'done'
-  const permitNo = typeof data.permit_no === 'string' ? data.permit_no.trim() : ''
-  if (permitNo.length > 0) return 'done'
-  const filed =
-    typeof data.import_permit_application_date === 'string'
-      ? data.import_permit_application_date
-      : ''
+  if (spec.permitNoField) {
+    const no = data[spec.permitNoField]
+    if (typeof no === 'string' && no.trim().length > 0) return 'done'
+  }
+  const filedRaw = data[spec.dateField]
+  const filed = typeof filedRaw === 'string' ? filedRaw : ''
   // 완료(skip)는 신청일이 있을 때만 유효 — 신청일을 지우면 완료도 해제된다(사전 신고와 동일).
-  if (data.import_permit_issued_skipped === true && filed.length >= 10) return 'done'
-  const flags = data.journey_flags
-  if (
-    flags &&
-    typeof flags === 'object' &&
-    (flags as Record<string, unknown>)['import-permit-issued'] === true
-  ) {
-    return 'done'
+  if (data[spec.skipFlag] === true && filed.length >= 10) return 'done'
+  if (spec.legacyFlag) {
+    const flags = data.journey_flags
+    if (
+      flags &&
+      typeof flags === 'object' &&
+      (flags as Record<string, unknown>)[spec.legacyFlag] === true
+    ) {
+      return 'done'
+    }
   }
   if (filed.length >= 10) return 'in_progress'
   return 'not_started'
 }
 
+/** 수입 허가(import-permit step) 진행 상태 — 허가가 필요한 모든 목적지 공용. 범용 derive 의 wrapper. */
+export function deriveImportPermitStatus(caseRow: CaseRow): JpReportStatus {
+  return deriveApplicationStatus(caseRow, IMPORT_PERMIT_APP_SPEC)
+}
+
 /**
- * 수입 허가가 '진행 중'으로 확인됐는지 — 사전 신고와 동일 게이트. 수입 허가는 admin demote/
- * stored 가 없어 보호자의 '진행 중' 버튼(import_permit_in_progress)만으로 판정. 플래그는
- * by_dest(scoped) — caseRow 는 활성 목적지로 flatten 된 view 여야 한다(derive 와 동일 컨벤션).
+ * 신청형 절차가 '진행 중'으로 확인됐는지 — 사전 신고와 동일 게이트. 보호자의 '진행 중'
+ * 버튼(spec.inProgressFlag)만으로 판정. 플래그는 by_dest(scoped) — caseRow 는 활성 목적지로
+ * flatten 된 view 여야 한다(derive 와 동일 컨벤션).
  */
-export function isImportPermitInProgressAck(caseRow: CaseRow): boolean {
+export function isApplicationInProgressAck(
+  caseRow: CaseRow,
+  spec: ApplicationStepSpec,
+): boolean {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
-  return data.import_permit_in_progress === true
+  return data[spec.inProgressFlag] === true
+}
+
+/** 수입 허가 '진행 중' 확인 — 범용 ack 의 wrapper. */
+export function isImportPermitInProgressAck(caseRow: CaseRow): boolean {
+  return isApplicationInProgressAck(caseRow, IMPORT_PERMIT_APP_SPEC)
 }
 
 export function deriveJpExportQuarantineStatus(caseRow: CaseRow): JpReportStatus {
