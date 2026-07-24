@@ -497,13 +497,13 @@ export async function updateRabiesExtraEntries(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    // 작업 세트 = 실제(rabies_dates) + 아직 미래인 예정(rabies_dates_scheduled). 폼은 실제 회차만
-    // 보여주므로 entries 는 실제 extras 와 대응시키고, 미래(예정) extras 는 따로 보존해 다시 합친다.
+    // 작업 세트 = 실제(rabies_dates) + 아직 미래인 예정(rabies_dates_scheduled).
+    // 폼(read 함수)도 같은 합본을 보여준다(2026-07-24 read-surface 전수 반영) — entries 가
+    // 예정 회차까지 포함한 전체 목록이므로 슬롯 대응도 합본 기준, 별도 재합침은 하지 않는다
+    // (예전 "폼=실제만 + 예정 따로 보존해 재합침" 모델이면 예정이 중복 주입된다).
     const rabiesArr = rabiesSaveWorking(prev)
     const preserved = rabiesArr.slice(0, baseIndex)
-    const { real: prevExtras, scheduled: futureExtrasPrev } = splitRabiesByDate(
-      rabiesArr.slice(baseIndex),
-    )
+    const prevExtras = rabiesArr.slice(baseIndex)
 
     const newExtras: Record<string, unknown>[] = []
     for (let i = 0; i < entries.length; i++) {
@@ -530,10 +530,10 @@ export async function updateRabiesExtraEntries(
       newExtras.push(entry)
     }
 
-    // 보존(1·2차 등) + 폼의 실제/신규 + 보존된 미래 예정 → 날짜순 정규화(체인 검증·분리가
+    // 보존(1·2차 등) + 폼의 전체 목록(실제+예정) → 날짜순 정규화(체인 검증·분리가
     // 날짜 순서를 전제). 미래 계획도 체인 검증에 포함되어 '2차가 너무 늦다' 등 경고를 받는다.
     const rabiesNext = normalizeRabiesOrder(
-      [...preserved, ...newExtras, ...futureExtrasPrev].filter(hasValidDate) as Array<
+      [...preserved, ...newExtras].filter(hasValidDate) as Array<
         Record<string, unknown> & { date?: string | null }
       >,
     ) as unknown[]

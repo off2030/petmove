@@ -85,6 +85,7 @@ import {
   updateTiterFields,
   updateVetVisitDate,
 } from '@/lib/actions/cases'
+import { rabiesSaveWorking } from '@/lib/journey/rabies-scheduled'
 import { readCaseDocuments } from '@/lib/documents'
 import { openExternalUrl } from '@/lib/native/open-external'
 import { AdvanceNotificationInputs } from './advance-notification-inputs'
@@ -2994,7 +2995,14 @@ function resolveInputValue(
 function readImplantDate(data: Record<string, unknown> | null | undefined): string {
   if (!data) return ''
   const v = data['microchip_implant_date']
-  return typeof v === 'string' ? v : ''
+  if (typeof v === 'string' && v) return v
+  // 예정(미래) 시술일 surface — 구충 readParasiteForm 과 동일 패턴(2026-07-24 전수 반영).
+  // 도래(≤오늘)하면 내려 재입력받고, 지우면 dirty 로 잡혀 저장 시 예정이 삭제된다.
+  const sched = data['microchip_implant_date_scheduled']
+  if (typeof sched === 'string' && sched.length >= 10 && sched.slice(0, 10) > todayKst()) {
+    return sched.slice(0, 10)
+  }
+  return ''
 }
 
 /**
@@ -3006,34 +3014,44 @@ function readGeneralVaccineForm(
 ): GeneralVaccineEntry[] {
   if (!data) return []
   const arr = data['general_vaccine_dates']
-  if (!Array.isArray(arr)) return []
   const str = (v: unknown) => (typeof v === 'string' ? v : '')
   const out: GeneralVaccineEntry[] = []
-  for (const item of arr) {
-    if (typeof item === 'string') {
-      // legacy: 날짜 문자열만 — 신규 카드 정책상 타병원(other_hospital:true).
-      if (item.length >= 10) out.push({ ...makeEmptyGeneralVaccine(), date: item.slice(0, 10) })
-      continue
-    }
-    if (item && typeof item === 'object') {
-      const rec = item as Record<string, unknown>
-      const date = str(rec.date)
-      const validUntil = str(rec.valid_until)
-      const product = str(rec.product)
-      const manufacturer = str(rec.manufacturer)
-      const lot = str(rec.lot)
-      const expiry = str(rec.expiry)
-      if (date || validUntil || product || manufacturer || lot || expiry) {
-        out.push({
-          date,
-          valid_until: validUntil,
-          product,
-          manufacturer,
-          lot,
-          expiry,
-          other_hospital: rec.other_hospital !== false,
-        })
+  if (Array.isArray(arr)) {
+    for (const item of arr) {
+      if (typeof item === 'string') {
+        // legacy: 날짜 문자열만 — 신규 카드 정책상 타병원(other_hospital:true).
+        if (item.length >= 10) out.push({ ...makeEmptyGeneralVaccine(), date: item.slice(0, 10) })
+        continue
       }
+      if (item && typeof item === 'object') {
+        const rec = item as Record<string, unknown>
+        const date = str(rec.date)
+        const validUntil = str(rec.valid_until)
+        const product = str(rec.product)
+        const manufacturer = str(rec.manufacturer)
+        const lot = str(rec.lot)
+        const expiry = str(rec.expiry)
+        if (date || validUntil || product || manufacturer || lot || expiry) {
+          out.push({
+            date,
+            valid_until: validUntil,
+            product,
+            manufacturer,
+            lot,
+            expiry,
+            other_hospital: rec.other_hospital !== false,
+          })
+        }
+      }
+    }
+  }
+  // 예정(미래) 접종일 surface — 구충 readParasiteForm 과 동일 패턴(2026-07-24 전수 반영).
+  // 도래(≤오늘)하면 내려 재입력받고, 지우면 dirty 로 잡혀 저장 시 예정이 삭제된다.
+  const sched = data['general_vaccine_dates_scheduled']
+  if (typeof sched === 'string' && sched.length >= 10) {
+    const d = sched.slice(0, 10)
+    if (d > todayKst() && !out.some((e) => e.date === d)) {
+      out.push({ ...makeEmptyGeneralVaccine(), date: d })
     }
   }
   return out
@@ -3184,9 +3202,11 @@ function readBirthDate(data: Record<string, unknown> | null | undefined): string
 function readRabiesDoseList(
   data: Record<string, unknown> | null | undefined,
 ): Array<{ date: string; valid_until?: string | null }> {
-  if (!data || !Array.isArray(data['rabies_dates'])) return []
+  if (!data) return []
   const out: Array<{ date: string; valid_until?: string | null }> = []
-  for (const r of data['rabies_dates'] as unknown[]) {
+  // 작업 세트(실제+예정) — 폼이 예정 회차를 보여주므로 채혈 차단(30일·순서)도 같은 세트로
+  // 검증해야 폼과 일치한다(예: 예정 접종 + 예정 채혈 조합의 순서·간격도 잡음).
+  for (const r of rabiesSaveWorking(data)) {
     if (!r || typeof r !== 'object') continue
     const rec = r as Record<string, unknown>
     const date = typeof rec.date === 'string' ? rec.date : ''
@@ -3214,7 +3234,10 @@ function readRabiesEntryForm(
     date: '', valid_until: '', product: '', manufacturer: '', lot: '', expiry: '',
   }
   if (!data) return empty
-  const arr = data['rabies_dates']
+  // 작업 세트(실제 + 아직 미래인 예정) — 저장 액션(updateRabiesEntryFields)이 같은 합본
+  // 인덱스 위에서 편집하므로 폼도 합본을 읽어야 회차가 일치한다. 예정 회차도 입력칸에
+  // 보여 수정·삭제 가능(구충·항체와 같은 read-surface, 2026-07-24 전수 반영).
+  const arr = rabiesSaveWorking(data)
   if (!Array.isArray(arr) || index >= arr.length) return empty
   const entry = arr[index]
   if (!entry || typeof entry !== 'object') return empty
@@ -3245,7 +3268,8 @@ function readRabiesOtherHospital(
   index: number,
 ): boolean {
   if (!data) return true
-  const arr = data['rabies_dates']
+  // 작업 세트(실제+예정) — readRabiesEntryForm 과 같은 배열을 봐야 index 가 같은 회차를 가리킨다.
+  const arr = rabiesSaveWorking(data)
   if (!Array.isArray(arr) || index >= arr.length) return true
   const entry = arr[index]
   if (!entry || typeof entry !== 'object') return true
@@ -3289,7 +3313,9 @@ function readRabiesExtraEntries(
   baseIndex = 2,
 ): RabiesExtraEntry[] {
   if (!data) return []
-  const arr = data['rabies_dates']
+  // 작업 세트(실제+예정) — readRabiesEntryForm 과 동일 사유(저장 액션과 인덱스 정합 +
+  // 예정 회차 입력칸 surface). 서버(updateRabiesExtraEntries)도 폼=합본 가정으로 맞췄다.
+  const arr = rabiesSaveWorking(data)
   if (!Array.isArray(arr)) return []
   const str = (v: unknown) => (typeof v === 'string' ? v : '')
   const out: RabiesExtraEntry[] = []
@@ -3582,11 +3608,16 @@ function readAdvanceDate(data: Record<string, unknown> | null | undefined): stri
   return typeof v === 'string' ? v : ''
 }
 
-/** 내원·임상검진 검진일 — caseRow.data.vet_visit_date. */
+/** 내원·임상검진 검진일 — caseRow.data.vet_visit_date. 예정(미래)은 _scheduled surface. */
 function readVetVisitDate(data: Record<string, unknown> | null | undefined): string {
   if (!data) return ''
   const v = data['vet_visit_date']
-  return typeof v === 'string' ? v : ''
+  if (typeof v === 'string' && v) return v
+  const sched = data['vet_visit_date_scheduled']
+  if (typeof sched === 'string' && sched.length >= 10 && sched.slice(0, 10) > todayKst()) {
+    return sched.slice(0, 10)
+  }
+  return ''
 }
 
 /** 한국 수출 검역 검역일 — caseRow.data.kr_export_quarantine_date. */
