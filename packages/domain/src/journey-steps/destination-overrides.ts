@@ -1284,7 +1284,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     },
     flight: {
       description:
-        '계류장(AQC) 예약 날짜에 맞춰 항공권을 구매하세요.\n\n광견병 항체 검사 채혈일로부터 90일이 지난 후에 입국할 수 있어요.\n창이 공항 검역소(CAPQ) 운영시간에 맞춰 도착해야 합니다.\nCAPQ는 주말·공휴일에 쉬어요. 운영시간(월·화 09~17시, 수·목·금 09~20시) 밖에 도착하면 지상조업사 보관시설에서 다음 영업일까지 기다려요.',
+        '계류장(AQC) 예약 날짜에 맞춰 항공권을 구매하세요.\n\n광견병 항체 검사 채혈일로부터 90일이 지난 후에 입국할 수 있어요.\n창이 공항 검역소(CAPQ) 운영시간에 맞춰 도착해야 합니다.',
       order: 90,
       validationIds: ['sg.departure-min-90days-after-titer'],
     },
