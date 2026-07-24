@@ -147,9 +147,9 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/taiwan-14.webp',
   ],
   싱가포르: [
-    // 첫 장 = 멀라이언·마리나베이 스카이라인. 나머지는 파일 순서.
-    // (02·06·11·13 삭제 — 사용자 지정 2026-07-24)
-    '/destinations/singapore-00.webp',
+    // 첫 장 = 마리나베이샌즈(아래에서 올려본 뷰) — 사용자 지정. 나머지는 파일 순서.
+    // (00·02·06·11·13·14 삭제 — 사용자 지정 2026-07-24)
+    '/destinations/singapore-10.webp',
     '/destinations/singapore-01.webp',
     '/destinations/singapore-03.webp',
     '/destinations/singapore-04.webp',
@@ -157,9 +157,7 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/singapore-07.webp',
     '/destinations/singapore-08.webp',
     '/destinations/singapore-09.webp',
-    '/destinations/singapore-10.webp',
     '/destinations/singapore-12.webp',
-    '/destinations/singapore-14.webp',
     '/destinations/singapore-15.webp',
   ],
   중국: [

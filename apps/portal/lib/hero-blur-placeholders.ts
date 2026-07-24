@@ -331,7 +331,6 @@ export const HERO_BLUR_PLACEHOLDERS: Record<string, string> = {
   "/destinations/israel-15.jpg": "data:image/webp;base64,UklGRjwAAABXRUJQVlA4IDAAAACwAQCdASoQAAkAA4BaJZwAAq3syXciAP61m0U+vTEmarmoPG/TgPmhyB15ZtMhAAA=",
   "/destinations/israel-16.jpg": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAAAQAgCdASoQAAkAA4BaJaACdH8AGBb0l0KAAP7wcyTiicf/PmxO0Ul+YM4M/ODGQDMAnfdP26UXZ43JgiAAAA==",
   "/destinations/israel-17.jpg": "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAADwAQCdASoQAAkAA4BaJYgCdAD5WU6lUAAA9gHLRRP8YLELyX686j29y1SBLXim1AAAAA==",
-  "/destinations/singapore-00.webp": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAAAwAgCdASoQAAsAAwBSJZgCdAEN8Xcq0AZgAAD808X2D3GlCh5GdQzfiXoMEupzKLwe9yHzajpQC4laWoTlEvu0wwv3aS+7EBhhrqOsBQ6oFa1+DrU61siAAAA=",
   "/destinations/singapore-01.webp": "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAAAQAgCdASoQAAkAAwBSJagCdADiZmKmC8lAAP7qVDMHQy8jwtgv1U322obTGXTlZF0KXnEV/Ceagg5VBjKea2465eizdbctg4ZoOPOcPIre0HKt301W/pbC9mycQAAA",
   "/destinations/singapore-03.webp": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAADwAQCdASoQAAwAAwBSJQBOgCLC/YUYFAAA/m0SDWDL75wWoJ4cnMaS71F0OxKF5UytxRi+Igj/Cat9rxpJZ8waAqKIhXRLMZm9sJd8E5YCJHCbuAA=",
   "/destinations/singapore-04.webp": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAADwAQCdASoQAAsAAwBSJaACdACzrgquWYAA/vRUDwmngn3K9v71NrvfucZNWvwpxC0pJno9kGK9j+LWgZqMVNnu9Gcefu9h975S8BiVQk2NAWYddrJ/XH59l+wVmUxlwAA=",
@@ -341,6 +340,5 @@ export const HERO_BLUR_PLACEHOLDERS: Record<string, string> = {
   "/destinations/singapore-09.webp": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAADQAQCdASoQAAwAAwBSJagCdAEM2T6F2AD+5s71/XwSpLUuGX0Lr3SgGqDFs1btxvEyo0dH/O7uZLK5UQ/6Bt1Uss87MyCke93g2TcleB2HOS3rAakQAA==",
   "/destinations/singapore-10.webp": "data:image/webp;base64,UklGRm4AAABXRUJQVlA4IGIAAADQAQCdASoQAAsAAwBSJbACdACeKH8UHAD8+r1WPTRgo0SkEY8/Idq1HGqLL8fVlso0/xbRLGrPg2jT7A6ZWFKC4dRdQBwY/66ElvbJkYSjI5//8W29NeZ9UFdTb8kxOwAAAA==",
   "/destinations/singapore-12.webp": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAQAgCdASoQAAsAAwBSJbACdAEVL/W8FrKwAP7q8++MHVrZGHqHdhvwqGBuWN97n7PGIjpsAtpBhLAPdj6wHclW0FGBxv84A6PZ3VPuVwxhWbUAAAA=",
-  "/destinations/singapore-14.webp": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADQAQCdASoQAAkAAwBSJQBOgCII7lPWAAD+8j0LTdYWTxyjvmFohhXfINfYg3m9T49zZuVzsjoHE0RIwgAAAA==",
   "/destinations/singapore-15.webp": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAADQAQCdASoQAAkAAwBSJZACdAD1Zls7wAD+0Oca04N/JQT/JovinIo58kHaTYljpnYp8au4n3kNWGEu8C+rzFFGGlsziRfZcmjjAAAA",
 }
