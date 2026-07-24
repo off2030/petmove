@@ -98,9 +98,11 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'id_import_quarantine_confirmed',
   'id_export_quarantine_date',
   'id_export_quarantine_confirmed',
-  // 싱가포르 — 도착 검역(AQC 30일). ⏳ 귀국 수출검역(sg_export_quarantine_*)은 후속.
+  // 싱가포르 — 도착 검역(AQC 30일) + 귀국 수출검역(AVS 인증).
   'sg_import_quarantine_date',
   'sg_import_quarantine_confirmed',
+  'sg_export_quarantine_date',
+  'sg_export_quarantine_confirmed',
   // 아르헨티나 — 도착 검역 + 귀국 수출 검역(SENASA CVI, 2026-07-23 추가).
   'ar_import_quarantine_date',
   'ar_import_quarantine_confirmed',

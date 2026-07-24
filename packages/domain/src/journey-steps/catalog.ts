@@ -1387,6 +1387,39 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
 
+  // ── 싱가포르 수출 검역 (왕복 — 귀국 출국 시, 싱가포르 전용) ───────
+  // NParks/AVS 수출 절차(2026-07-24 조사): ① 수출 라이선스(GoBusiness, 출국 90일 이내·유효
+  //   90일) ② 한국 요구 건강증명서를 지정 민간 수의사가 작성 → **AVS 관용 수의사(정부 수의사)
+  //   최종 인증(endorse)**. EU식 자가 갈음이 아니라 정부 인증이라 한국 귀국에 강제(강제 O).
+  {
+    id: 'sg-export-quarantine',
+    category: 'document',
+    title: '싱가포르 수출 검역',
+    shortLabel: '수출',
+    description:
+      '싱가포르 출국 전 수출 라이선스를 받고, AVS 정부 수의사가 인증한 수의 건강증명서를 준비하세요.\n\n지정 민간 수의사에게 검진을 받고 한국이 요구하는 건강증명서 서식을 작성·서명받아요.\n\nGoBusiness 포털로 수출 라이선스와 건강증명서 인증을 신청해요. AVS 관용 수의사가 최종 인증해요.\n\n수출 라이선스는 출국 90일 이내에 신청하고, 발급일로부터 90일간 유효해요.',
+    doneSummary: '싱가포르 수출 검역을 받았어요.',
+    cardLine: '싱가포르 수출 검역을 받으세요.',
+    applicability: { destinations: ['singapore'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:sg_export_quarantine_date',
+    validationIds: ['sg.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'sg_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: 'AVS 인증 건강증명서를 발급받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '수출 라이선스와 AVS 인증 건강증명서 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '싱가포르 수출 건강증명서(AVS 인증)',
+    links: [
+      { url: 'https://www.gobusiness.gov.sg/', label: '수출 라이선스·건강증명서 인증 신청 (GoBusiness)' },
+    ],
+  },
+
   // ── 인도네시아 수출 검역 (왕복 — 귀국 출국 시, 인도네시아 전용) ───────
   // ✅ 2026-07-23 검역청(Barantin) 공식 안내 상세 조사로 재정리(사용자 제공). 수출 증명은 **2단계**다:
   //   ① 거주 지역 수의당국(Dinas Peternakan / Otoritas Veteriner) **수의증명서(Veterinary
