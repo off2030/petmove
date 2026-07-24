@@ -61,9 +61,11 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     await persistField('여정 유형', () => updateCaseField(caseId, 'data', 'trip_type', next))
   }
 
-  // 동시 진행 — 같은 보호자의 다른 동물 케이스에 절차·추가 정보를 함께 반영. 디폴트 on.
+  // 동시 진행 — 같은 보호자의 다른 동물 케이스에 절차·추가 정보를 함께 반영.
+  // 디폴트 OFF(2026-07-25 변경) — 명시적으로 켠 케이스만 동기화. 트리거
+  // (cases_sync_co_progress, migration 20260725000001)와 같은 판정.
   const coProgress =
-    ((currentCase?.data as Record<string, unknown> | undefined)?.co_progress) !== false
+    ((currentCase?.data as Record<string, unknown> | undefined)?.co_progress) === true
   // 토글은 같은 보호자가 동물 ≥2 마리를 준비할 때만 노출 — 형제가 없으면 동기화할
   // 대상이 없어 무의미하다. 형제 판정 기준은 DB 트리거 cases_sync_co_progress 와 동일
   // (이메일 우선 + 이름·전화 폴백): 이메일이 양쪽에 있고 일치하거나, 이름+전화가 양쪽에

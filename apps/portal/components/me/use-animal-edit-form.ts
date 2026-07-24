@@ -61,7 +61,8 @@ function readJourney(caseRow: CaseRow): JourneyBase {
       tripType[k] = v === 'one_way' ? 'one_way' : 'round'
     }
   }
-  const coProgress = (caseRow.data as Record<string, unknown> | null)?.co_progress !== false
+  // 디폴트 OFF(2026-07-25 변경) — 트리거(cases_sync_co_progress)와 같은 판정. 명시적 true 만 묶임.
+  const coProgress = (caseRow.data as Record<string, unknown> | null)?.co_progress === true
   return { destinations, tripType, coProgress }
 }
 
