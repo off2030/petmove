@@ -172,7 +172,8 @@ const SIMPLE_FLIGHT_DESTINATIONS: readonly string[] = [
   'uzbekistan', 'vietnam',
   // 절차는 있으나 펫무브가 대행하지 않는 목적지(2026-07-25 사용자 결정) — 신청은 보호자/
   // 현지 에이전트 몫이라 앱이 항공편 상세를 들고 있을 이유가 없다. 필요하면 첨부로 보관.
-  'taiwan', 'malaysia', 'indonesia', 'uae', 'ireland', 'malta', 'israel',
+  // (싱가포르도 수입허가 selfApply·국경검사 예약 보호자 직접 = 비대행 — 단순형.)
+  'taiwan', 'malaysia', 'indonesia', 'uae', 'ireland', 'malta', 'israel', 'singapore',
 ]
 
 /**
@@ -2653,10 +2654,10 @@ export function StepDetailView({
               // (과거엔 도착일 하나만 받아 그 값을 그대로 출국일 컬럼에 복사했음 — 장거리 노선에서
               // 실제 출국일과 어긋나는 버그. 2026-07-16 분리.)
               departureFirst={showsSeparateDepartureDate}
-              // 일본·싱가포르 — 날짜 주필드 + 상세(시간·공항·편명) 접기, 기본 접힘.
-              // 당일 도착 + 펫무브 대행 절차(일본 사전 신고 / 싱가포르 수입허가·국경검사 예약)에
-              // 항공편 정보가 실제로 쓰이는 나라만(2026-07-25 — 비대행 절차국은 단순형).
-              collapsible={destinationKey === 'japan' || destinationKey === 'singapore'}
+              // 일본 — 날짜 주필드 + 상세(시간·공항·편명·운송방법) 접기, 기본 접힘.
+              // 펫무브가 대행하는 절차(사전 신고 NACCS·수출서류)에 항공편 정보가 실제로
+              // 쓰이는 나라만 상세를 받는다(2026-07-25 — 비대행 절차국은 단순형·첨부로).
+              collapsible={destinationKey === 'japan'}
               // departureFirst 의 '세부 정보'(도착일 등) 필드 한정 — 단순 목적지는 세부 자체가
               // 없고(접기 미표시), 필리핀은 도착일+도착공항만, 나머지 절차국(태국·말레이·인니·
               // UAE·이스라엘·아일랜드 등)은 전체(도착일·시간·공항·편명).
