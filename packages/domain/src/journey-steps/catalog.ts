@@ -1433,9 +1433,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 신청일과 함께 입력하는 계류장 격리 예약 날짜(정보성 — 일본 수출검역 예약일 패턴).
       { key: 'sg_quarantine_reservation_date', label: '예약일', type: 'date', helpText: '계류를 시작하는 날짜' },
     ],
-    allowAttachments: true,
-    attachmentHint: '예약 확인서를 사진·PDF로 보관하세요.',
-    attachmentLabel: '계류장 예약 확인서',
+    // 첨부 없음(사용자 결정 2026-07-24) — 다운로드할 확정 확인서가 없어 완료는 '완료' 버튼으로만.
     links: [
       { url: 'https://avs.nparks.gov.sg/pets/importing-exporting-a-pet/import/quarantine-management-system/', label: '계류장 예약 (QMS)' },
     ],

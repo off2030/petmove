@@ -3515,8 +3515,6 @@
       싱가포르 검역관리시스템(QMS)에서 예약해요.
       팬룸 또는 에어컨룸을 선택할 수 있어요.
       격리 기간은 30일이에요.
-  첨부안내: 예약 확인서를 사진·PDF로 보관하세요.
-  저장이름: 계류장 예약 확인서
   links:
       계류장 예약 (QMS)  →  https://avs.nparks.gov.sg/pets/importing-exporting-a-pet/import/quarantine-management-system/
 
