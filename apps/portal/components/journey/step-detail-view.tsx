@@ -80,6 +80,7 @@ import {
   updateParasiteEntries,
   updateRabiesEntryFields,
   updateRabiesExtraEntries,
+  updateSimpleDateField,
   updateTiterExtraEntries,
   updateTiterFields,
   updateVetVisitDate,
@@ -248,10 +249,17 @@ export function StepDetailView({
   // 싣는다. 검역일 필드 key·부제 문구를 override 에서 동적으로 읽어 한 벌의 배선으로 모든 나라 처리.
   // 나라별 도착(수입)·출국(수출) 검역 — done 시그널 'quarantine:<검역일필드>' 가 그 나라 필드를
   // 실어 한 벌의 배선으로 모든 나라·도착/출국을 처리. 검역일 필드 key·부제(input.helpText)를 동적으로 읽음.
+  // 순수 날짜 완료 카드(dated:<field> — 발급일·예약일 자체가 완료 증거. 싱가포르 GST 허가·
+  // 국경검사 예약). quarantine 과 같은 날짜 입력 UI 를 재사용하되 '완료' 확인 게이트는 없다
+  // (isConfirmStep 제외 + 저장은 updateSimpleDateField 로 분기). 완료 판정은 done-resolver
+  // dated:<field> 가 날짜(≤오늘)만으로 한다.
+  const isSimpleDatedStep = typeof step.done === 'string' && step.done.startsWith('dated:')
   const importQuarantineField =
     typeof step.done === 'string' && step.done.startsWith('quarantine:')
       ? step.done.slice('quarantine:'.length)
-      : null
+      : isSimpleDatedStep
+        ? (step.done as string).slice('dated:'.length)
+        : null
   const isImportQuarantine = importQuarantineField !== null
   const importQuarantineSubtitle =
     (step.inputs ?? []).find((i) => i.key === importQuarantineField)?.helpText ?? ''
@@ -534,7 +542,8 @@ export function StepDetailView({
     isJpImportQuarantine ||
     isJpExportQuarantineVisit ||
     isKrImportQuarantine ||
-    isImportQuarantine
+    // 순수 날짜 완료 카드(dated)는 quarantine 입력 UI 를 공유하지만 '완료' 확인 게이트가 없다.
+    (isImportQuarantine && !isSimpleDatedStep)
   const confirmFormDate = isCertificateIssue
     ? krExportQuarantineDate
     : isJpImportQuarantine
@@ -606,6 +615,9 @@ export function StepDetailView({
     isApplicationStep &&
     importPermit.applicationDate.length >= 10 &&
     importPermit.applicationDate > todayStr
+  // 순수 날짜 완료 카드 — 발급일·예약일이 미래면 '예정일로 저장'(완료는 도래 후 dated resolver).
+  const simpleDatedUpcoming =
+    isSimpleDatedStep && importQuarantineDate.length >= 10 && importQuarantineDate > todayStr
   // 구충 — 입력 entry 중 하나라도 미래면 '예정일로 저장'.
   const parasiteUpcoming =
     isParasite &&
@@ -1645,13 +1657,21 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateImportQuarantineDate(
-          caseId,
-          importQuarantineField,
-          importQuarantineDate || null,
-          formArrived,
-          activeDest,
-        )
+        // 순수 날짜 완료 카드(dated)는 확인 플래그 없는 전용 액션, 그 외 검역 카드는 confirm 액션.
+        const res = isSimpleDatedStep
+          ? await updateSimpleDateField(
+              caseId,
+              step.id,
+              importQuarantineDate || null,
+              activeDest,
+            )
+          : await updateImportQuarantineDate(
+              caseId,
+              importQuarantineField,
+              importQuarantineDate || null,
+              formArrived,
+              activeDest,
+            )
         if (res.ok) {
           updateCase(res.value)
           const d = (activeDestinationView(res.value, activeDest).data ?? {}) as Record<string, unknown>
@@ -2810,6 +2830,7 @@ export function StepDetailView({
                         titerExtraUpcoming ||
                         generalVaccineUpcoming ||
                         importPermitUpcoming ||
+                        simpleDatedUpcoming ||
                         parasiteUpcoming ||
                         rabiesUpcoming ||
                         rabiesSingleUpcoming ||

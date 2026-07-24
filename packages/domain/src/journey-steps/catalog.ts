@@ -1486,7 +1486,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '관세·GST 납부 허가를 받으세요.',
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },
     order: 102,
-    done: 'quarantine:sg_gst_permit_date',
+    // 발급일 자체가 완료 증거 — 확인 게이트 없이 날짜(≤오늘) 입력만으로 완료(dated 모델).
+    done: 'dated:sg_gst_permit_date',
     inputs: [{ key: 'sg_gst_permit_date', label: '발급일', type: 'date', helpText: 'GST 납부 허가를 받은 날짜' }],
     allowAttachments: true,
     attachmentHint: 'GST 허가서를 사진·PDF로 보관하세요.',
@@ -1503,7 +1504,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '국경 검사를 예약하세요.',
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },
     order: 104,
-    done: 'quarantine:sg_border_inspection_date',
+    // 예약일 자체가 완료 증거 — 확인 게이트 없이 날짜(≤오늘) 입력만으로 완료(dated 모델).
+    done: 'dated:sg_border_inspection_date',
     inputs: [{ key: 'sg_border_inspection_date', label: '예약일', type: 'date', helpText: '국경 검사를 예약한 날짜' }],
     allowAttachments: true,
     attachmentHint: '예약 확인서를 사진·PDF로 보관하세요.',

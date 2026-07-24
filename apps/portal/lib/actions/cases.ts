@@ -1990,6 +1990,69 @@ export async function markApplicationIssued(
   }
 }
 
+// ── 순수 날짜 완료 카드(발급일·예약일 = 완료 증거) — 범용 ─────────────────
+// 확인 게이트 없이 날짜만 저장(done-resolver dated:<field> 가 ≤오늘=완료 판정). 클라이언트는
+// stepId 만 넘기고 서버가 신뢰 목록에서 필드를 결정한다(임의 키 쓰기 차단).
+const SIMPLE_DATE_STEP_FIELDS: Record<string, string> = {
+  'sg-gst-permit': 'sg_gst_permit_date',
+  'sg-border-inspection': 'sg_border_inspection_date',
+}
+
+/**
+ * 순수 날짜 완료 카드의 날짜 저장 — 범용. 확인 플래그 없음(dated 모델). 필드는 by_dest 분리.
+ */
+export async function updateSimpleDateField(
+  caseId: string,
+  stepId: string,
+  date: string | null,
+  destination?: string | null,
+): Promise<Result<CaseRow>> {
+  try {
+    const field = SIMPLE_DATE_STEP_FIELDS[stepId]
+    if (!field) return { ok: false, error: '알 수 없는 절차 단계입니다.' }
+    const v = typeof date === 'string' ? date.trim() : ''
+    if (v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+      return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+    }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data, destination')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const caseDestStr = (existing as { destination: string | null }).destination
+    const token = resolveWriteToken(caseDestStr, prev, destination)
+
+    let nextData: Record<string, unknown> = { ...prev }
+    if (token) {
+      nextData = writeByDestValue(nextData, token, field, v || null)
+      // top-level 잔존 제거 — 다른 목적지로의 flatten fallback 누수 차단.
+      delete nextData[field]
+    } else {
+      if (v) nextData[field] = v // scoping-fallback-ok: token 없음(목적지 없음) 폴백
+      else delete nextData[field]
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 /**
  * 수입 허가 '완료' — 허가증 첨부 없이 발급 완료 처리(skip). 신청일이 있어야 의미가 있음
  * (사전 신고 markAdvanceNotificationApprovalSkipped 와 동일 정책). 플래그는 by_dest 분리.

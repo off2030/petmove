@@ -104,6 +104,9 @@ export type StepDoneSignal =
   // resolver 가 모든 나라를 처리(예: 'quarantine:th_import_quarantine_date',
   // 'quarantine:th_export_quarantine_date'). confirmed 키는 _date→_confirmed.
   | `quarantine:${string}`
+  // dated:<field> — 발급일·예약일 자체가 완료 증거인 절차(싱가포르 GST 허가·국경검사 예약).
+  // 확인 게이트 없이 날짜(≤오늘) 입력만으로 완료. confirm 이 필요한 검역·검사엔 쓰지 말 것.
+  | `dated:${string}`
   | `manual-flag:${string}`
 
 /**

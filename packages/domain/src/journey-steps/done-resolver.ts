@@ -53,6 +53,14 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     return isQuarantineConfirmed(data, field, field.replace(/_date$/, '_confirmed'))
   }
 
+  // dated:<field> — 발급일·예약일 자체가 완료 증거인 절차(싱가포르 GST 허가·국경검사 예약).
+  // 검역·검사와 달리 '완료' 확인 게이트 없이 날짜(≤오늘) 입력만으로 완료(미래=미완=예정).
+  if (typeof signal === 'string' && signal.startsWith('dated:')) {
+    const field = signal.slice('dated:'.length)
+    const v = data[field]
+    return typeof v === 'string' && v.length >= 10 && v.slice(0, 10) <= todayKst()
+  }
+
   switch (signal) {
     case 'always-done':
       return true
@@ -359,6 +367,13 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
   // quarantine:<field> — 나라별 도착·출국 검역. 표시일 = 그 나라 검역일 필드 값.
   if (typeof signal === 'string' && signal.startsWith('quarantine:')) {
     const field = signal.slice('quarantine:'.length)
+    const dt = typeof data[field] === 'string' ? (data[field] as string) : null
+    return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+  }
+
+  // dated:<field> — 표시일 = 그 필드의 날짜 값(발급일·예약일).
+  if (typeof signal === 'string' && signal.startsWith('dated:')) {
+    const field = signal.slice('dated:'.length)
     const dt = typeof data[field] === 'string' ? (data[field] as string) : null
     return dt && dt.length >= 10 ? dt.slice(0, 10) : null
   }
