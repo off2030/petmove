@@ -103,6 +103,15 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'sg_import_quarantine_confirmed',
   'sg_export_quarantine_date',
   'sg_export_quarantine_confirmed',
+  // 싱가포르 전용 절차 카드(계류장 예약·강아지 라이센스·관부가세·국경검사 예약).
+  'sg_quarantine_reservation_date',
+  'sg_quarantine_reservation_confirmed',
+  'sg_dog_licence_date',
+  'sg_dog_licence_confirmed',
+  'sg_gst_permit_date',
+  'sg_gst_permit_confirmed',
+  'sg_border_inspection_date',
+  'sg_border_inspection_confirmed',
   // 아르헨티나 — 도착 검역 + 귀국 수출 검역(SENASA CVI, 2026-07-23 추가).
   'ar_import_quarantine_date',
   'ar_import_quarantine_confirmed',

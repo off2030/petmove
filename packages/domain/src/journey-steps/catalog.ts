@@ -1387,6 +1387,79 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
 
+  // ── 싱가포르 전용 절차 카드 (NParks 11단계 조사, 2026-07-24) ────────────
+  //   계류장 예약(QMS)·강아지 라이센스(PALS)·관부가세(GST)·국경검사 예약. 모두 싱가포르 한정.
+  //   각 카드는 완료일(≤오늘) 입력 + 첨부. 날짜 순서 검증은 불필요(절차 완료 추적용) →
+  //   lint UNVALIDATED_OK 등록, 스코핑 키는 destination-scoped-fields 등록.
+  {
+    id: 'sg-quarantine-reservation',
+    category: 'permit',
+    title: '계류장(AQC) 예약',
+    shortLabel: '계류장',
+    description:
+      '광견병 항체 검사 결과가 나오면 가장 먼저 검역소(AQC) 계류장 자리를 예약하세요. 수요가 많으니 항공권보다 먼저 확보해야 해요.\n\n싱가포르 검역관리시스템(QMS)에서 예약해요. 마이크로칩 번호·광견병 접종 기록·종합백신 기록·항체 검사 성적서·예정 도착일·보호자 정보가 필요해요.\n\n팬룸 또는 에어컨룸을 선택하고 자료를 업로드해요. 승인되면 10일분 계류비와 운송비에 해당하는 보증금(환불 불가)을 3일 안에 결제해야 자리가 확정돼요.\n\n한국(Schedule III)은 도착 후 AQC에서 30일 이상 격리돼요.',
+    doneSummary: '계류장(AQC)을 예약했어요.',
+    cardLine: '계류장(AQC)을 예약하세요.',
+    applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },
+    order: 62,
+    done: 'quarantine:sg_quarantine_reservation_date',
+    inputs: [{ key: 'sg_quarantine_reservation_date', label: '예약일', type: 'date', helpText: '계류장(AQC)을 예약한 날짜' }],
+    allowAttachments: true,
+    attachmentHint: '예약 확인서를 사진·PDF로 보관하세요.',
+    attachmentLabel: '계류장 예약 확인서',
+  },
+  {
+    id: 'sg-dog-licence',
+    category: 'permit',
+    title: '강아지 라이센스',
+    shortLabel: '라이센스',
+    description:
+      '싱가포르 반려동물 라이센스 시스템(PALS)에서 강아지 면허를 발급받으세요. 수입 허가를 신청하기 전에 먼저 받아야 해요.\n\n품종이 싱가포르 반입 금지 품종인지, 예정 거주지에서 허용되는 품종·마릿수인지도 확인하세요.\n\n외국인은 PALS·GoBusiness 이용이 어려워 현지 펫 에이전트를 이용하는 경우가 많아요. 고양이는 필요 없어요.',
+    doneSummary: '강아지 라이센스를 받았어요.',
+    cardLine: '강아지 라이센스를 받으세요.',
+    applicability: { destinations: ['singapore'], species: 'dog', tripType: 'all' },
+    order: 64,
+    done: 'quarantine:sg_dog_licence_date',
+    inputs: [{ key: 'sg_dog_licence_date', label: '발급일', type: 'date', helpText: '강아지 라이센스를 발급받은 날짜' }],
+    allowAttachments: true,
+    attachmentHint: '라이센스를 사진·PDF로 보관하세요.',
+    attachmentLabel: '강아지 라이센스',
+  },
+  {
+    id: 'sg-gst-permit',
+    category: 'permit',
+    title: '관세·GST 납부 허가',
+    shortLabel: '관부가세',
+    description:
+      '싱가포르 도착 전에 관세청 GST 납부 허가(Customs In-Payment permit)를 받으세요. 도착일 기준 14일 이내에 지정 통관대행사(forwarding agent)를 통해 준비해요.\n\n이 허가는 AVS 수입 허가와 별개예요. 두 가지가 모두 필요해요(수입 허가=동물 수입 / GST permit=세관·GST).',
+    doneSummary: '관세·GST 납부 허가를 받았어요.',
+    cardLine: '관세·GST 납부 허가를 받으세요.',
+    applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },
+    order: 102,
+    done: 'quarantine:sg_gst_permit_date',
+    inputs: [{ key: 'sg_gst_permit_date', label: '발급일', type: 'date', helpText: 'GST 납부 허가를 받은 날짜' }],
+    allowAttachments: true,
+    attachmentHint: 'GST 허가서를 사진·PDF로 보관하세요.',
+    attachmentLabel: 'GST 납부 허가',
+  },
+  {
+    id: 'sg-border-inspection',
+    category: 'permit',
+    title: '국경 검사 예약',
+    shortLabel: '검사예약',
+    description:
+      '도착 최소 5일 전에 AVS 온라인 시스템에서 창이 공항 검역소(CAPQ) 도착 검사를 예약하세요.\n\n예약할 때 수입 허가 번호·항공편 번호·도착일시·연락처·동물 및 운송 형태를 입력해요.\n예약 없이 도착하면 시간당 S$133의 검사비가 붙어요.\n\n계류장(QMS) 예약과 CAPQ 검사 예약은 서로 다른 절차예요. 항공 입국은 창이(CAPQ), 육로는 투아스(Tuas)에서 검사해요.',
+    doneSummary: '국경 검사를 예약했어요.',
+    cardLine: '국경 검사를 예약하세요.',
+    applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },
+    order: 104,
+    done: 'quarantine:sg_border_inspection_date',
+    inputs: [{ key: 'sg_border_inspection_date', label: '예약일', type: 'date', helpText: '국경 검사를 예약한 날짜' }],
+    allowAttachments: true,
+    attachmentHint: '예약 확인서를 사진·PDF로 보관하세요.',
+    attachmentLabel: '국경 검사 예약 확인서',
+  },
+
   // ── 싱가포르 수출 검역 (왕복 — 귀국 출국 시, 싱가포르 전용) ───────
   // NParks/AVS 수출 절차(2026-07-24 조사): ① 수출 라이선스(GoBusiness, 출국 90일 이내·유효
   //   90일) ② 한국 요구 건강증명서를 지정 민간 수의사가 작성 → **AVS 관용 수의사(정부 수의사)

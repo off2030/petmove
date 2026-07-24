@@ -136,6 +136,12 @@ const UNVALIDATED_OK: Record<string, string> = {
   // 사실이라 어긋나도 못 고치고, 바꿀 수 있는 건 출국일뿐이라 조치 가능한 카드에 붙였다.
   // 신청일 칸 자체의 입력불가(출국 이후·20일 미만)는 validateImportPermitFiledDate 가 막는다.
   'taiwan:import-permit': '마감 주의는 항공권 카드가 표시(조치 가능한 칸이 거기) + 입력불가는 date-rules 담당',
+  // 싱가포르 전용 절차 카드 — 완료일(≤오늘) 입력·첨부만. 날짜 순서 검증이 필요 없는 절차
+  //   완료 추적용(계류장 예약·강아지 라이센스·관부가세·국경검사 예약).
+  'sg-quarantine-reservation': '절차 완료일 추적용 — 날짜 순서 제약 없음',
+  'sg-dog-licence': '절차 완료일 추적용 — 날짜 순서 제약 없음',
+  'sg-gst-permit': '절차 완료일 추적용 — 날짜 순서 제약 없음',
+  'sg-border-inspection': '절차 완료일 추적용 — 날짜 순서 제약 없음',
 }
 
 /**

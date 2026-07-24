@@ -1284,14 +1284,14 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     },
     flight: {
       description:
-        '싱가포르 입국 일정에 맞춰 항공권을 구매하세요.\n\n광견병 항체 검사 채혈일로부터 90일이 지난 후에 입국할 수 있어요.\n도착 후 검역소(AQC)에서 30일간 격리되니 일정을 여유 있게 잡으세요.\n검역소 자리를 먼저 예약해야 해요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+        '계류장(AQC) 예약이 확정된 계류 시작일에 맞춰 항공권을 구매하세요.\n\n계류공간 수요가 많으니 항공권을 먼저 확정하지 말고, 예약 가능한 계류 시작일을 확인한 뒤 항공편을 맞추세요.\n광견병 항체 검사 채혈일로부터 90일이 지난 후에 입국할 수 있어요.\n창이 공항 검역소(CAPQ) 운영시간에 맞는 도착 시간인지, 환승국의 동물 환승 요건, IATA 하드 켄넬 규격을 확인하세요.\n항공사에 반려동물 동반 방식(동반수하물·초과수하물·화물)을 꼭 확인하세요.',
       order: 90,
       validationIds: ['sg.departure-min-90days-after-titer'],
     },
     // 수입 허가(Licence to Import Non-Food Animals) — 보호자가 GoBusiness 온라인 직접 신청.
     importPermit: {
       description:
-        '싱가포르 수입 허가(Licence to Import)를 신청하세요.\n\nGoBusiness 포털에서 보호자가 직접 온라인으로 신청할 수 있어요.\n먼저 검역소(AQC) 격리 자리를 예약해야 신청할 수 있어요.\n허가는 발급일로부터 90일간 유효해요.',
+        '도착일 기준 90일 이내에 GoBusiness 포털에서 개인용 수입 허가(Licence to Import)를 신청하세요.\n\n강아지 면허를 먼저 받아야 신청할 수 있어요. 완비 서류 제출 후 약 2영업일이 걸리고, 허가는 발급일로부터 90일간 유효해요.\n계류장 예약번호·항공편·동물 정보가 신청 내용과 일치해야 해요. 혼종견은 얼굴과 전신 컬러 사진이 필요해요.',
       doneSummary: '싱가포르 수입 허가를 받았어요.',
       cardLine: '싱가포르 수입 허가를 신청하세요.',
       attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
@@ -1303,7 +1303,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     importQuarantine: {
       fieldKey: 'sg_import_quarantine_date',
       description:
-        '싱가포르 도착 후 검역소(AQC)에서 수입 검역을 받으세요.\n서류를 확인한 뒤 검역소로 이동해요.\n격리 기간은 30일이에요.\n도착 시 광견병 예방접종을 다시 받아요.',
+        '싱가포르 도착 후 창이 공항 검역소(CAPQ)에서 도착 검사를 받아요.\n검사 후 검역소(AQC)로 이동해 최소 30일간 격리돼요.\n도착 후 광견병 예방접종을 다시 받아요.\nCAPQ→AQC 운송료는 마리당 S$75, 도착 광견병 접종료는 S$68이에요. 일일 계류비는 팬룸 S$26·에어컨룸 S$35예요(2026년 12월부터 각각 S$36·S$44).',
       helpText: '싱가포르 도착 후 수입 검역을 시작한 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '싱가포르 수입 검역 서류',
