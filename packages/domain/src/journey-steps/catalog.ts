@@ -1397,7 +1397,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '계류장(AQC) 예약',
     shortLabel: '계류장',
     description:
-      '광견병 항체 검사 결과가 나오면 가장 먼저 검역소(AQC) 계류장 자리를 예약하세요. 수요가 많으니 항공권보다 먼저 확보해야 해요.\n\n싱가포르 검역관리시스템(QMS)에서 예약해요. 마이크로칩 번호·광견병 접종 기록·종합백신 기록·항체 검사 성적서·예정 도착일·보호자 정보가 필요해요.\n\n팬룸 또는 에어컨룸을 선택하고 자료를 업로드해요. 승인되면 10일분 계류비와 운송비에 해당하는 보증금(환불 불가)을 3일 안에 결제해야 자리가 확정돼요.\n\n한국(Schedule III)은 도착 후 AQC에서 30일 이상 격리돼요.',
+      '광견병 항체 검사 완료 후 계류장(AQC)을 예약하세요.\n\n자리가 없는 경우가 많아서 일찍 해두시는 것이 좋습니다.\n싱가포르 검역관리시스템(QMS)에서 예약해요.\n팬룸 또는 에어컨룸을 선택할 수 있어요.\n격리 기간은 30일이에요.',
     doneSummary: '계류장(AQC)을 예약했어요.',
     cardLine: '계류장(AQC)을 예약하세요.',
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },
@@ -1407,6 +1407,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '예약 확인서를 사진·PDF로 보관하세요.',
     attachmentLabel: '계류장 예약 확인서',
+    links: [
+      { url: 'https://avs.nparks.gov.sg/pets/importing-exporting-a-pet/import/quarantine-management-system/', label: '계류장 예약 (QMS)' },
+    ],
   },
   {
     id: 'sg-dog-licence',
