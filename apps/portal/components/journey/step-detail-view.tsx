@@ -1085,6 +1085,20 @@ export function StepDetailView({
     if (isTiterExtra || isTiterSingleCard) {
       for (const entry of titerExtra) {
         if (!entry.date) continue
+        // 채혈 < 접종(순서) 저장 거부 — 단일카드(1회 접종 입국요건국)는 validateTiterAfterBooster
+        //   가 안 걸리고 validateTiterDate 도 2차 없으면 통과라, 접종보다 빠른 채혈이 저장되던
+        //   갭(2026-07-24 발견). extra 카드(일본·대만·하와이)는 validateTiterDate 담당이라 제외.
+        if (
+          isTiterSingleCard &&
+          destinationKey &&
+          TITER_REQUIRED_FOR_ENTRY_DESTINATIONS.includes(destinationKey)
+        ) {
+          const orderErr = validateTiterAfterBooster(
+            readRabiesDoseList(caseRow?.data).map((x) => x.date),
+            entry.date.trim(),
+          )
+          if (orderErr) return orderErr
+        }
         // 접종 N일 후 저장 거부 — 1회 접종 입국요건국(싱가포르·EU 등)은 단일카드 경로라
         //   validateTiterDate(2차 없으면 통과)만으론 이 차단이 빠져 경고만 떴다(2026-07-24 발견).
         //   조건은 다중카드 경로와 동일(EU 패밀리 ∪ 프로파일 minDaysAfterVaccine 선언국).
