@@ -1291,7 +1291,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // 수입 허가(Licence to Import Non-Food Animals) — 보호자가 GoBusiness 온라인 직접 신청.
     importPermit: {
       description:
-        '도착일 기준 90일 이내에 GoBusiness 포털에서 개인용 수입 허가(Licence to Import)를 신청하세요.\n\n강아지 면허를 먼저 받아야 신청할 수 있어요. 완비 서류 제출 후 약 2영업일이 걸리고, 허가는 발급일로부터 90일간 유효해요.\n계류장 예약번호·항공편·동물 정보가 신청 내용과 일치해야 해요. 혼종견은 얼굴과 전신 컬러 사진이 필요해요.',
+        '도착일 기준 90일 이내에 GoBusiness 포털에서 개인용 수입 허가(Licence to Import)를 신청하세요.\n\n강아지 라이센스를 먼저 받아야 신청할 수 있어요. 완비 서류 제출 후 약 2영업일이 걸리고, 허가는 발급일로부터 90일간 유효해요.\n계류장 예약번호·항공편·동물 정보가 신청 내용과 일치해야 해요. 혼종견은 얼굴과 전신 컬러 사진이 필요해요.',
       doneSummary: '싱가포르 수입 허가를 받았어요.',
       cardLine: '싱가포르 수입 허가를 신청하세요.',
       attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
