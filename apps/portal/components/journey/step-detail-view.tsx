@@ -1099,7 +1099,8 @@ export function StepDetailView({
             entry.date.trim(),
             TITER_MIN_DAYS_AFTER_VACCINE[destinationKey] ?? 30,
           )
-          if (minErr) return `채혈일 ${entry.date}: ${minErr}`
+          // 접두사('채혈일 날짜:') 없이 문구만 — 일본 차단 톤과 통일(2026-07-24 사용자안).
+          if (minErr) return minErr
         }
         const err = validateTiterDate(
           caseRow?.data,

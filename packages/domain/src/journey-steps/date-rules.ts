@@ -500,10 +500,9 @@ export function validateEuTiterAfterVaccine(
   if (prior.length === 0) return null // 접종-채혈 순서 자체는 validateTiterAfterBooster 담당
   const latest = prior[prior.length - 1] // 채혈 직전(가장 최근) 접종 — 그 이전 접종은 무관
   if (daysBetween(latest.date, titerDate) < minDays) {
-    const earliest = addDays(latest.date, minDays)
-    return earliest
-      ? `접종일로부터 ${minDays}일 후인 ${fmt(earliest)}에 광견병 항체 검사를 받을 수 있어요.`
-      : `광견병 항체 검사는 백신 접종일로부터 ${minDays}일이 지난 후에 받아야 해요.`
+    // 문구는 일본식 차단 톤과 통일(2026-07-24 사용자안 1번) — 날짜를 찍지 않고 마무리를
+    // '날짜를 확인하세요'로. 일수만 목적지별(싱가포르 28·EU 30 등)로 바뀐다.
+    return `광견병 항체 검사는 접종 ${minDays}일 후에 받을 수 있어요. 날짜를 확인하세요.`
   }
   return null
 }
