@@ -3368,13 +3368,35 @@ function readTiterAllEntries(
 ): TiterExtraEntry[] {
   if (!data) return []
   const arr = data['rabies_titer_records']
-  if (!Array.isArray(arr)) return []
   const str = (v: unknown) => (typeof v === 'string' ? v : '')
   const out: TiterExtraEntry[] = []
-  for (const rec of arr) {
-    if (rec && typeof rec === 'object') {
-      const r = rec as Record<string, unknown>
-      out.push({ date: str(r.date), lab: str(r.lab), value: str(r.value) })
+  if (Array.isArray(arr)) {
+    for (const rec of arr) {
+      if (rec && typeof rec === 'object') {
+        const r = rec as Record<string, unknown>
+        out.push({ date: str(r.date), lab: str(r.lab), value: str(r.value) })
+      }
+    }
+  }
+  // 예정(미래) 채혈일을 폼에 도로 surface — 구충(readParasiteForm)과 동일 패턴(2026-07-24).
+  // 저장 시 서버가 실제 기록에서 빼 예정 자리로 옮기므로, 읽을 때 도로 합치지 않으면 입력칸에서
+  // 사라져 수정·삭제가 안 된다. 아직 미래일 때만 — 도래(≤오늘)하면 내려 재입력받는다.
+  // 1회차 예정(rabies_titer_scheduled)은 shell(검사기관만 남은 첫 slot)에 날짜를 도로 채운다.
+  const today = todayKst()
+  const sched = data['rabies_titer_scheduled']
+  if (typeof sched === 'string' && sched.length >= 10) {
+    const d = sched.slice(0, 10)
+    if (d > today && !out.some((e) => e.date === d)) {
+      if (out.length > 0 && !out[0].date) out[0] = { ...out[0], date: d }
+      else out.unshift({ date: d, lab: '', value: '' })
+    }
+  }
+  // 추가 검사 예정(rabies_titer_extra_scheduled) — 별도 entry 로 뒤에 붙인다.
+  const extraSched = data['rabies_titer_extra_scheduled']
+  if (typeof extraSched === 'string' && extraSched.length >= 10) {
+    const d = extraSched.slice(0, 10)
+    if (d > today && !out.some((e) => e.date === d)) {
+      out.push({ date: d, lab: '', value: '' })
     }
   }
   return out
@@ -3385,14 +3407,23 @@ function readTiterExtraEntries(
 ): TiterExtraEntry[] {
   if (!data) return []
   const arr = data['rabies_titer_records']
-  if (!Array.isArray(arr)) return []
   const str = (v: unknown) => (typeof v === 'string' ? v : '')
   const out: TiterExtraEntry[] = []
-  for (let i = 1; i < arr.length; i++) {
-    const rec = arr[i]
-    if (rec && typeof rec === 'object') {
-      const r = rec as Record<string, unknown>
-      out.push({ date: str(r.date), lab: str(r.lab), value: str(r.value) })
+  if (Array.isArray(arr)) {
+    for (let i = 1; i < arr.length; i++) {
+      const rec = arr[i]
+      if (rec && typeof rec === 'object') {
+        const r = rec as Record<string, unknown>
+        out.push({ date: str(r.date), lab: str(r.lab), value: str(r.value) })
+      }
+    }
+  }
+  // 예정(미래) 추가 채혈일 surface — readTiterAllEntries·readParasiteForm 과 동일 패턴.
+  const extraSched = data['rabies_titer_extra_scheduled']
+  if (typeof extraSched === 'string' && extraSched.length >= 10) {
+    const d = extraSched.slice(0, 10)
+    if (d > todayKst() && !out.some((e) => e.date === d)) {
+      out.push({ date: d, lab: '', value: '' })
     }
   }
   return out
@@ -3473,12 +3504,23 @@ function readTiterForm(data: Record<string, unknown> | null | undefined): TiterF
   const empty: TiterForm = { date: '', lab: '', value: '' }
   if (!data) return empty
   const arr = data['rabies_titer_records']
-  if (!Array.isArray(arr) || arr.length === 0) return empty
-  const entry = arr[0]
-  if (!entry || typeof entry !== 'object') return empty
-  const r = entry as Record<string, unknown>
   const str = (v: unknown) => (typeof v === 'string' ? v : '')
-  return { date: str(r.date), lab: str(r.lab), value: str(r.value) }
+  let form = empty
+  if (Array.isArray(arr) && arr.length > 0 && arr[0] && typeof arr[0] === 'object') {
+    const r = arr[0] as Record<string, unknown>
+    form = { date: str(r.date), lab: str(r.lab), value: str(r.value) }
+  }
+  // 예정(미래) 채혈일 surface — 저장 시 서버(updateTiterFields)가 기록 대신
+  // rabies_titer_scheduled 로 옮기고 첫 slot 은 shell(검사기관만)로 남는다. 읽을 때 도로
+  // 합쳐야 입력칸에서 보이고 수정·삭제된다(구충 readParasiteForm 과 동일 패턴, 2026-07-24).
+  if (!form.date) {
+    const sched = data['rabies_titer_scheduled']
+    if (typeof sched === 'string' && sched.length >= 10) {
+      const d = sched.slice(0, 10)
+      if (d > todayKst()) form = { ...form, date: d }
+    }
+  }
+  return form
 }
 
 /**
