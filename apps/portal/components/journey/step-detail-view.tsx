@@ -600,10 +600,44 @@ export function StepDetailView({
   // 버튼 라벨을 '완료'로 한다. 입력·변경 중(dirty)이면 '저장'/'예정일로 저장' 유지 — 즉
   // '검역일을 넣을 때 = 저장', '예정 저장분이 당일 도래 = 완료'. (추가 백신·검사와 동일 톤.)
   const confirmArrivedComplete = isConfirmStep && formArrived && !dirty && !done
-  // 저장 버튼 활성: 변경됨(dirty) OR 검역 confirm 단계의 예정 저장분이 도래해 완료 확정 가능.
-  // 기록형(백신·검사·구충) 카드는 dirty 만 본다 — 예정→도래→재입력 모델이라 도래 시 별도
-  // '완료' 확인 없이, 실제 날짜 입력(=dirty)·저장으로 완료된다.
-  const canSave = dirty || (formArrived && !done)
+  // 기록형(A부류 — 마이크로칩·광견병·백신·항체·구충·임상검사) 예정 모델 재정립(2026-07-24
+  // 사용자안): 미래 입력=예정 배지 → 당일 도래=하단 버튼 '완료'(=그 예정 날짜 그대로 저장 —
+  // 저장 경로의 splitScheduledDoses/splitRabiesByDate 가 ≤오늘을 실제 기록으로 편입해 승격)
+  // → 하루 지나도록 안 누르면 안내("예정일이 지났습니다…"). 구 '도래=빈칸+재입력' 모델 폐기.
+  const readSchedStr = (key: string): string => {
+    const v = (caseRow?.data as Record<string, unknown> | undefined)?.[key]
+    return typeof v === 'string' && v.length >= 10 ? v.slice(0, 10) : ''
+  }
+  const recordScheduledDates: string[] = isMicrochip
+    ? [readSchedStr('microchip_implant_date_scheduled')]
+    : isVetVisit
+      ? [readSchedStr('vet_visit_date_scheduled')]
+      : isGeneralVaccine
+        ? [readSchedStr('general_vaccine_dates_scheduled')]
+        : isParasite
+          ? [readSchedStr(`${parasiteFieldKey}_scheduled`)]
+          : isTiterSingleCard
+            ? [readSchedStr('rabies_titer_scheduled'), readSchedStr('rabies_titer_extra_scheduled')]
+            : isTiter
+              ? [readSchedStr('rabies_titer_scheduled')]
+              : isTiterExtra
+                ? [readSchedStr('rabies_titer_extra_scheduled')]
+                : isRabies || isRabiesSingleCard || isRabiesExtra
+                  ? (Array.isArray(caseRow?.data?.['rabies_dates_scheduled'])
+                      ? (caseRow!.data!['rabies_dates_scheduled'] as unknown[]).map((e) =>
+                          e && typeof e === 'object' && typeof (e as Record<string, unknown>).date === 'string'
+                            ? ((e as Record<string, unknown>).date as string).slice(0, 10)
+                            : '',
+                        )
+                      : [])
+                  : []
+  const recordScheduledArrived =
+    !done && recordScheduledDates.some((d) => d.length >= 10 && d <= todayStr)
+  const recordScheduledOverdue =
+    !done && recordScheduledDates.some((d) => d.length >= 10 && d < todayStr)
+  const recordScheduledComplete = recordScheduledArrived && !dirty
+  // 저장 버튼 활성: 변경됨(dirty) OR 검역 confirm 예정 도래 OR 기록형 예정 도래(완료=승격 저장).
+  const canSave = dirty || (formArrived && !done) || recordScheduledComplete
   // 신청·신고 step(검역 5단계 외) — 신청일/신고일이 미래면 버튼 라벨을 '예정일로 저장'으로.
   // 완료 판정은 신청일이 오늘 이하로 도래한 뒤(+ 예약/허가증/skip). canSave 는 dirty 그대로.
   const jpExportApplicationUpcoming =
@@ -2768,8 +2802,9 @@ export function StepDetailView({
         )}
 
         {/* 예정일 당일(savedDueToday) / 지난 후(savedArrivedUnconfirmed) — 아직 완료 전.
-            검역 후 완료(지난 경우엔 예정일 변경도) 안내. */}
-        {(savedDueToday || savedArrivedUnconfirmed) && (
+            검역 후 완료(지난 경우엔 예정일 변경도) 안내. 기록형(recordScheduledOverdue)은
+            하루 지났을 때만 안내(당일은 버튼 '완료' 전환만 — 2026-07-24 사용자안). */}
+        {(savedDueToday || savedArrivedUnconfirmed || recordScheduledOverdue) && (
           <section
             style={{
               marginTop: 18,
@@ -2782,7 +2817,9 @@ export function StepDetailView({
             <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
               {savedDueToday
                 ? `오늘은 ${step.title} 예정일이에요. 검역 후 완료 버튼을 눌러주세요.`
-                : `${step.title} 예정일이 지났어요. 완료 버튼을 누르시거나 예정일을 변경해주세요.`}
+                : savedArrivedUnconfirmed
+                  ? `${step.title} 예정일이 지났어요. 완료 버튼을 누르시거나 예정일을 변경해주세요.`
+                  : '예정일이 지났습니다. 완료 버튼을 누르거나 날짜를 변경하세요.'}
             </div>
           </section>
         )}
@@ -2883,6 +2920,10 @@ export function StepDetailView({
                 : justSaved
                   ? '✓ 저장됨'
                   : completeMode
+                      ? '완료'
+                    : // 기록형 예정 도래(미변경) — '완료'(=예정 날짜 그대로 저장해 승격).
+                      // 미래 예정이 함께 있어도(단일카드 목록) 도래분 승격이 우선이라 '완료'.
+                      recordScheduledComplete
                       ? '완료'
                     : formUpcoming ||
                         jpExportApplicationUpcoming ||
@@ -2996,12 +3037,10 @@ function readImplantDate(data: Record<string, unknown> | null | undefined): stri
   if (!data) return ''
   const v = data['microchip_implant_date']
   if (typeof v === 'string' && v) return v
-  // 예정(미래) 시술일 surface — 구충 readParasiteForm 과 동일 패턴(2026-07-24 전수 반영).
-  // 도래(≤오늘)하면 내려 재입력받고, 지우면 dirty 로 잡혀 저장 시 예정이 삭제된다.
+  // 예정 시술일 surface — 구충 readParasiteForm 과 동일 패턴(2026-07-24 전수 반영).
+  // 도래(≤오늘)분도 유지 — '완료' 버튼(=그대로 저장)으로 승격. 지우면 dirty → 저장 시 삭제.
   const sched = data['microchip_implant_date_scheduled']
-  if (typeof sched === 'string' && sched.length >= 10 && sched.slice(0, 10) > todayKst()) {
-    return sched.slice(0, 10)
-  }
+  if (typeof sched === 'string' && sched.length >= 10) return sched.slice(0, 10)
   return ''
 }
 
@@ -3045,12 +3084,12 @@ function readGeneralVaccineForm(
       }
     }
   }
-  // 예정(미래) 접종일 surface — 구충 readParasiteForm 과 동일 패턴(2026-07-24 전수 반영).
-  // 도래(≤오늘)하면 내려 재입력받고, 지우면 dirty 로 잡혀 저장 시 예정이 삭제된다.
+  // 예정 접종일 surface — 구충 readParasiteForm 과 동일 패턴. 도래(≤오늘)분도 유지 —
+  // '완료' 버튼(=그대로 저장)으로 승격(2026-07-24 모델 재정립). 지우면 dirty → 저장 시 삭제.
   const sched = data['general_vaccine_dates_scheduled']
   if (typeof sched === 'string' && sched.length >= 10) {
     const d = sched.slice(0, 10)
-    if (d > todayKst() && !out.some((e) => e.date === d)) {
+    if (!out.some((e) => e.date === d)) {
       out.push({ ...makeEmptyGeneralVaccine(), date: d })
     }
   }
@@ -3156,14 +3195,14 @@ function readParasiteForm(
       }
     }
   }
-  // 예정(미래) 처치일을 폼에 도로 surface. 저장 시 splitScheduledDoses 가 실제 기록에서 빼
+  // 예정 처치일을 폼에 도로 surface. 저장 시 splitScheduledDoses 가 실제 기록에서 빼
   // `${fieldKey}_scheduled`(단일 문자열)로 옮기므로, 읽을 때 도로 합치지 않으면 입력칸에서
-  // 사라져 배지만 남고 수정·삭제가 안 된다(2026-07-23 버그 수정). 아직 미래일 때만 합친다 —
-  // 도래(≤오늘)하면 배지처럼 내려 빈칸으로 두고 실제 처치일을 재입력받는다(예정→도래→재입력).
+  // 사라져 배지만 남고 수정·삭제가 안 된다(2026-07-23 버그 수정). 도래(≤오늘)분도 유지한다 —
+  // 하단 '완료' 버튼(=그 날짜 그대로 저장)으로 실제 기록으로 승격(2026-07-24 모델 재정립).
   const sched = data[`${fieldKey}_scheduled`]
   if (typeof sched === 'string' && sched.length >= 10) {
     const d = sched.slice(0, 10)
-    if (d > todayKst() && !out.some((e) => e.date === d)) {
+    if (!out.some((e) => e.date === d)) {
       out.push({ ...makeEmptyGeneralVaccine(), date: d })
     }
   }
@@ -3404,15 +3443,14 @@ function readTiterAllEntries(
       }
     }
   }
-  // 예정(미래) 채혈일을 폼에 도로 surface — 구충(readParasiteForm)과 동일 패턴(2026-07-24).
+  // 예정 채혈일을 폼에 도로 surface — 구충(readParasiteForm)과 동일 패턴(2026-07-24).
   // 저장 시 서버가 실제 기록에서 빼 예정 자리로 옮기므로, 읽을 때 도로 합치지 않으면 입력칸에서
-  // 사라져 수정·삭제가 안 된다. 아직 미래일 때만 — 도래(≤오늘)하면 내려 재입력받는다.
+  // 사라져 수정·삭제가 안 된다. 도래(≤오늘)분도 유지 — '완료' 버튼(=그대로 저장)으로 승격.
   // 1회차 예정(rabies_titer_scheduled)은 shell(검사기관만 남은 첫 slot)에 날짜를 도로 채운다.
-  const today = todayKst()
   const sched = data['rabies_titer_scheduled']
   if (typeof sched === 'string' && sched.length >= 10) {
     const d = sched.slice(0, 10)
-    if (d > today && !out.some((e) => e.date === d)) {
+    if (!out.some((e) => e.date === d)) {
       if (out.length > 0 && !out[0].date) out[0] = { ...out[0], date: d }
       else out.unshift({ date: d, lab: '', value: '' })
     }
@@ -3421,7 +3459,7 @@ function readTiterAllEntries(
   const extraSched = data['rabies_titer_extra_scheduled']
   if (typeof extraSched === 'string' && extraSched.length >= 10) {
     const d = extraSched.slice(0, 10)
-    if (d > today && !out.some((e) => e.date === d)) {
+    if (!out.some((e) => e.date === d)) {
       out.push({ date: d, lab: '', value: '' })
     }
   }
@@ -3444,11 +3482,11 @@ function readTiterExtraEntries(
       }
     }
   }
-  // 예정(미래) 추가 채혈일 surface — readTiterAllEntries·readParasiteForm 과 동일 패턴.
+  // 예정 추가 채혈일 surface — readTiterAllEntries·readParasiteForm 과 동일 패턴(도래분 포함).
   const extraSched = data['rabies_titer_extra_scheduled']
   if (typeof extraSched === 'string' && extraSched.length >= 10) {
     const d = extraSched.slice(0, 10)
-    if (d > todayKst() && !out.some((e) => e.date === d)) {
+    if (!out.some((e) => e.date === d)) {
       out.push({ date: d, lab: '', value: '' })
     }
   }
@@ -3536,14 +3574,14 @@ function readTiterForm(data: Record<string, unknown> | null | undefined): TiterF
     const r = arr[0] as Record<string, unknown>
     form = { date: str(r.date), lab: str(r.lab), value: str(r.value) }
   }
-  // 예정(미래) 채혈일 surface — 저장 시 서버(updateTiterFields)가 기록 대신
+  // 예정 채혈일 surface — 저장 시 서버(updateTiterFields)가 기록 대신
   // rabies_titer_scheduled 로 옮기고 첫 slot 은 shell(검사기관만)로 남는다. 읽을 때 도로
   // 합쳐야 입력칸에서 보이고 수정·삭제된다(구충 readParasiteForm 과 동일 패턴, 2026-07-24).
+  // 도래(≤오늘)분도 유지 — '완료' 버튼(=그대로 저장)으로 승격.
   if (!form.date) {
     const sched = data['rabies_titer_scheduled']
     if (typeof sched === 'string' && sched.length >= 10) {
-      const d = sched.slice(0, 10)
-      if (d > todayKst()) form = { ...form, date: d }
+      form = { ...form, date: sched.slice(0, 10) }
     }
   }
   return form
@@ -3613,10 +3651,9 @@ function readVetVisitDate(data: Record<string, unknown> | null | undefined): str
   if (!data) return ''
   const v = data['vet_visit_date']
   if (typeof v === 'string' && v) return v
+  // 도래(≤오늘)분도 유지 — '완료' 버튼(=그대로 저장)으로 승격(2026-07-24 모델 재정립).
   const sched = data['vet_visit_date_scheduled']
-  if (typeof sched === 'string' && sched.length >= 10 && sched.slice(0, 10) > todayKst()) {
-    return sched.slice(0, 10)
-  }
+  if (typeof sched === 'string' && sched.length >= 10) return sched.slice(0, 10)
   return ''
 }
 

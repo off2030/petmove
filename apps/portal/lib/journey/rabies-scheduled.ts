@@ -35,21 +35,15 @@ export function mergeRabiesDatesRaw(data: Record<string, unknown> | null | undef
 }
 
 /**
- * 저장 '작업 세트' — 실제(rabies_dates) + '아직 미래(>오늘)인' 예정만 병합(정렬).
- * 도래(≤오늘)한 예정은 제외한다 — 도래분은 보호자의 재입력으로만 실제가 된다(자동 승격 X,
- * 다른 카드의 '예정→도래→재입력'과 동일). 저장 함수가 이 위에서 회차를 편집한 뒤 날짜로 재분리.
+ * 저장 '작업 세트' — 실제(rabies_dates) + 예정(도래분 포함) 병합(정렬) = mergeRabiesDatesRaw.
+ *
+ * 예전엔 도래(≤오늘)한 예정을 제외했다("도래분은 재입력으로만 실제" — 구 모델). 2026-07-24
+ * 사용자 재정립: 도래한 예정은 폼에 그대로 보이고 하단 '완료' 버튼(=그 날짜 그대로 저장)으로
+ * 실제 기록으로 승격한다. 저장은 명시적 행위이므로 '자동 승격 금지' 원칙은 유지 — 읽기 전용
+ * 소비자(admin·PDF·완료판정)는 여전히 실제(rabies_dates)만 본다.
  */
 export function rabiesSaveWorking(data: Record<string, unknown> | null | undefined): unknown[] {
-  const real = Array.isArray(data?.rabies_dates) ? (data!.rabies_dates as unknown[]) : []
-  const today = todayKst()
-  const sched = (
-    Array.isArray(data?.rabies_dates_scheduled) ? (data!.rabies_dates_scheduled as unknown[]) : []
-  ).filter((e) => {
-    const d = dateOf(e)
-    return d.length >= 10 && d > today
-  })
-  if (sched.length === 0) return real
-  return [...real, ...sched].sort((a, b) => dateOf(a).localeCompare(dateOf(b)))
+  return mergeRabiesDatesRaw(data)
 }
 
 /** 회차 목록을 날짜로 실제(≤오늘) / 예정(>오늘)으로 분리. 날짜 순서는 보존. */
