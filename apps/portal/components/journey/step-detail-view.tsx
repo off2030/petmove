@@ -283,13 +283,13 @@ export function StepDetailView({
   const applicationHelp = isImportPermit
     ? '동물검역소에 수입 허가를 신청한 날짜'
     : isSgQuarantineReservation
-      ? '계류장(AQC)을 예약 신청한 날짜'
+      ? '계류장 예약을 신청한 날짜'
       : isSgDogLicence
         ? '강아지 라이센스를 신청한 날짜'
         : ''
   const applicationReservationField = isSgQuarantineReservation ? 'sg_quarantine_reservation_date' : ''
   const applicationReservation = isSgQuarantineReservation
-    ? { label: '계류장 예약 날짜', help: '계류장(AQC) 격리가 시작되는 예약 날짜' }
+    ? { label: '예약일', help: '계류를 시작하는 날짜' }
     : undefined
   // 구충(내·외부·촌충) — 종합백신과 같은 date_array 입력 모델. 필드 키는 base catalog input 과
   // 동일. 촌충(에키노코쿠스, EU 5국)은 내부구충과 데이터 키(internal_parasite_dates)를 공유.

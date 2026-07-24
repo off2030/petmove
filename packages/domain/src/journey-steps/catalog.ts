@@ -1429,9 +1429,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       return { desc: msg, cardDesc: msg }
     },
     inputs: [
-      { key: 'sg_quarantine_reservation_application_date', label: '신청일', type: 'date', helpText: '계류장(AQC)을 예약 신청한 날짜' },
+      { key: 'sg_quarantine_reservation_application_date', label: '신청일', type: 'date', helpText: '계류장 예약을 신청한 날짜' },
       // 신청일과 함께 입력하는 계류장 격리 예약 날짜(정보성 — 일본 수출검역 예약일 패턴).
-      { key: 'sg_quarantine_reservation_date', label: '계류장 예약 날짜', type: 'date', helpText: '계류장(AQC) 격리가 시작되는 예약 날짜' },
+      { key: 'sg_quarantine_reservation_date', label: '예약일', type: 'date', helpText: '계류를 시작하는 날짜' },
     ],
     allowAttachments: true,
     attachmentHint: '예약 확인서를 사진·PDF로 보관하세요.',
