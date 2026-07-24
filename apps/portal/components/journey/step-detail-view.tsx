@@ -170,6 +170,9 @@ const SIMPLE_FLIGHT_DESTINATIONS: readonly string[] = [
   'argentina', 'brazil', 'cambodia', 'canada', 'china', 'eu', 'finland', 'hawaii',
   'kazakhstan', 'mexico', 'mongolia', 'morocco', 'russia', 'turkey', 'uk', 'ukraine',
   'uzbekistan', 'vietnam',
+  // 절차는 있으나 펫무브가 대행하지 않는 목적지(2026-07-25 사용자 결정) — 신청은 보호자/
+  // 현지 에이전트 몫이라 앱이 항공편 상세를 들고 있을 이유가 없다. 필요하면 첨부로 보관.
+  'taiwan', 'malaysia', 'indonesia', 'uae', 'ireland', 'malta', 'israel',
 ]
 
 /**
@@ -253,17 +256,12 @@ export function StepDetailView({
   const isSimpleFlightDest =
     !!destinationKey && SIMPLE_FLIGHT_DESTINATIONS.includes(destinationKey)
   const showsSeparateDepartureDate =
+    // 대행 절차국(태국·필리핀·스위스 등 EU 패밀리) — 출발일 주필드 + 신청에 필요한 상세 접기.
     destinationKey === 'thailand' ||
-    // 말레이시아·인도네시아 — 태국 복제(2026-07-22): 출발일·도착일 분리 입력.
-    destinationKey === 'malaysia' ||
-    destinationKey === 'indonesia' ||
     destinationKey === 'philippines' ||
-    // UAE·이스라엘 — 장거리(시차로 출발≠도착) + 절차(허가·통지) 있음: 태국식 접기형
-    // (2026-07-25 사용자 결정 — 절차국은 날짜 주필드 + 상세 접기, 기본 접힘).
-    destinationKey === 'uae' ||
-    destinationKey === 'israel' ||
     (!!destinationKey && EU_ENTRY_FAMILY.includes(destinationKey)) ||
     // 단순 항공권 목적지 — 주필드 '출발일'(departure_date 저장 경로 공유), 세부 없음.
+    // (말레이·인니·UAE·이스라엘·대만 등 비대행 절차국 포함 — SIMPLE_FLIGHT_DESTINATIONS.)
     isSimpleFlightDest
   const isAdvanceNotification = step.id === 'advance-notification'
   const isVetVisit = step.id === 'vet-visit'
@@ -2655,13 +2653,10 @@ export function StepDetailView({
               // (과거엔 도착일 하나만 받아 그 값을 그대로 출국일 컬럼에 복사했음 — 장거리 노선에서
               // 실제 출국일과 어긋나는 버그. 2026-07-16 분리.)
               departureFirst={showsSeparateDepartureDate}
-              // 일본·싱가포르·대만 — 날짜 주필드 + 상세(시간·공항·편명) 접기, 기본 접힘.
-              // 당일 도착 노선이라 출발·도착 분리 불필요(절차국 접기형 — 2026-07-25 통일).
-              collapsible={
-                destinationKey === 'japan' ||
-                destinationKey === 'singapore' ||
-                destinationKey === 'taiwan'
-              }
+              // 일본·싱가포르 — 날짜 주필드 + 상세(시간·공항·편명) 접기, 기본 접힘.
+              // 당일 도착 + 펫무브 대행 절차(일본 사전 신고 / 싱가포르 수입허가·국경검사 예약)에
+              // 항공편 정보가 실제로 쓰이는 나라만(2026-07-25 — 비대행 절차국은 단순형).
+              collapsible={destinationKey === 'japan' || destinationKey === 'singapore'}
               // departureFirst 의 '세부 정보'(도착일 등) 필드 한정 — 단순 목적지는 세부 자체가
               // 없고(접기 미표시), 필리핀은 도착일+도착공항만, 나머지 절차국(태국·말레이·인니·
               // UAE·이스라엘·아일랜드 등)은 전체(도착일·시간·공항·편명).
