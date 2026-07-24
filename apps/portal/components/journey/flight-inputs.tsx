@@ -59,6 +59,9 @@ interface FlightField {
 
 const ENTRY_FIELDS: readonly FlightField[] = [
   { key: 'entry_date', label: '날짜', kind: 'date' },
+  // 도착 시간 — 접기(세부 정보) 안에서만 노출된다(주필드는 날짜 하나). 싱가포르는 검역소
+  // (CAPQ) 운영시간·국경검사 예약(도착일시)에, 일본은 사전 신고 항공편 정보에 쓰인다.
+  { key: 'entry_time', label: '도착 시간', kind: 'time', placeholder: '예: 14:30' },
   { key: 'entry_departure_airport', label: '출발 공항', kind: 'text', placeholder: '예: 인천 ICN' },
   { key: 'entry_airport', label: '도착 공항', kind: 'text', placeholder: '예: 나리타 NRT' },
   { key: 'entry_flight_number', label: '편명', kind: 'text', placeholder: '예: KE703' },

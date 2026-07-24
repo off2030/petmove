@@ -156,7 +156,21 @@ const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
   finland: '예: 헬싱키 HEL',
   switzerland: '예: 취리히 ZRH',
   cyprus: '예: 라르나카 LCA',
+  singapore: '예: 창이 SIN',
+  israel: '예: 텔아비브 TLV',
 }
+
+/**
+ * 신고·허가·통지 절차가 없어 항공편 상세(도착일·공항·편명)가 어느 절차에도 쓰이지 않는
+ * 목적지 — 항공권 카드는 출국일·귀국일(+미정) + 첨부만(2026-07-25 사용자 결정).
+ * 기존 저장값은 보존되고 표시만 축소된다. 새 목적지 추가 시 절차 카드(신고·허가·통지·검사
+ * 예약) 유무로 판단해 여기 또는 접기형(절차국)에 넣는다.
+ */
+const SIMPLE_FLIGHT_DESTINATIONS: readonly string[] = [
+  'argentina', 'brazil', 'cambodia', 'canada', 'china', 'eu', 'finland', 'hawaii',
+  'kazakhstan', 'mexico', 'mongolia', 'morocco', 'russia', 'turkey', 'uk', 'ukraine',
+  'uzbekistan', 'vietnam',
+]
 
 /**
  * 케이스 step 상세 화면. Stone 팔레트 / Fraunces serif — TimelineCalm 과 동일 톤.
@@ -233,13 +247,24 @@ export function StepDetailView({
    * 따로 적혀 있어 가드만 빠졌다 — 화면에 없는 stale 출발일이 '도착일이 출발일보다 빨라요'로
    * 저장을 막았고, 출발일 입력칸이 없어 고칠 방법도 없었다(2026-07-19). 단일 출처로 모은다.
    */
+  // 신고·허가·통지 절차가 없어 항공편 상세(도착일·공항·편명)가 어느 절차에도 쓰이지 않는
+  // 목적지 — 항공권 카드는 출국일·귀국일 + 첨부만 받는다(2026-07-25 사용자 결정).
+  // 기존에 저장된 상세 값은 보존되고 표시만 축소된다. 날짜는 여정 앵커·검증·D-day 용.
+  const isSimpleFlightDest =
+    !!destinationKey && SIMPLE_FLIGHT_DESTINATIONS.includes(destinationKey)
   const showsSeparateDepartureDate =
     destinationKey === 'thailand' ||
     // 말레이시아·인도네시아 — 태국 복제(2026-07-22): 출발일·도착일 분리 입력.
     destinationKey === 'malaysia' ||
     destinationKey === 'indonesia' ||
     destinationKey === 'philippines' ||
-    (!!destinationKey && EU_ENTRY_FAMILY.includes(destinationKey))
+    // UAE·이스라엘 — 장거리(시차로 출발≠도착) + 절차(허가·통지) 있음: 태국식 접기형
+    // (2026-07-25 사용자 결정 — 절차국은 날짜 주필드 + 상세 접기, 기본 접힘).
+    destinationKey === 'uae' ||
+    destinationKey === 'israel' ||
+    (!!destinationKey && EU_ENTRY_FAMILY.includes(destinationKey)) ||
+    // 단순 항공권 목적지 — 주필드 '출발일'(departure_date 저장 경로 공유), 세부 없음.
+    isSimpleFlightDest
   const isAdvanceNotification = step.id === 'advance-notification'
   const isVetVisit = step.id === 'vet-visit'
   const isJpExportQuarantine = step.id === 'jp-export-quarantine'
@@ -1189,6 +1214,8 @@ export function StepDetailView({
       // 폼에 남은 stale 값으로 막히고, 고칠 입력칸도 없다.
       if (
         showsSeparateDepartureDate &&
+        // 단순 항공권 목적지는 도착일 입력칸이 없다 — stale 도착일로 막히면 고칠 칸도 없다.
+        !isSimpleFlightDest &&
         flightForm.departure_date &&
         flightForm.entry_date &&
         flightForm.entry_date < flightForm.departure_date
@@ -2628,19 +2655,26 @@ export function StepDetailView({
               // (과거엔 도착일 하나만 받아 그 값을 그대로 출국일 컬럼에 복사했음 — 장거리 노선에서
               // 실제 출국일과 어긋나는 버그. 2026-07-16 분리.)
               departureFirst={showsSeparateDepartureDate}
-              // 일본 — 날짜 주필드 + 공항·편명·운송방법 접기(출발=도착 동일 시간대라 분리 불필요).
-              collapsible={destinationKey === 'japan'}
-              // departureFirst 의 '세부 정보'(도착일 등) 필드 한정 — 필리핀은 도착일+도착공항,
-              // EU 키(묶음 24개국)만 도착일 단독, 나머지 EU 패밀리(영국·아일랜드 등 1:1 키)는 전체.
+              // 일본·싱가포르·대만 — 날짜 주필드 + 상세(시간·공항·편명) 접기, 기본 접힘.
+              // 당일 도착 노선이라 출발·도착 분리 불필요(절차국 접기형 — 2026-07-25 통일).
+              collapsible={
+                destinationKey === 'japan' ||
+                destinationKey === 'singapore' ||
+                destinationKey === 'taiwan'
+              }
+              // departureFirst 의 '세부 정보'(도착일 등) 필드 한정 — 단순 목적지는 세부 자체가
+              // 없고(접기 미표시), 필리핀은 도착일+도착공항만, 나머지 절차국(태국·말레이·인니·
+              // UAE·이스라엘·아일랜드 등)은 전체(도착일·시간·공항·편명).
               departureDetailFieldKeys={
-                destinationKey === 'philippines'
-                  ? ['entry_date', 'entry_airport']
-                  : destinationKey === 'eu'
-                    ? ['entry_date']
+                // 단순 항공권 목적지 — 세부 없음(출국일·귀국일 + 첨부만).
+                isSimpleFlightDest
+                  ? []
+                  : destinationKey === 'philippines'
+                    ? ['entry_date', 'entry_airport']
                     : undefined
               }
               returnFieldKeys={
-                destinationKey === 'philippines' || destinationKey === 'eu' ? ['return_date'] : undefined
+                isSimpleFlightDest || destinationKey === 'philippines' ? ['return_date'] : undefined
               }
               // 도착 공항 예시 — 기본값(나리타 NRT)이 일본 기준이라 목적지별 현지 공항으로 교체.
               fieldPlaceholders={
