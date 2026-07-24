@@ -860,11 +860,40 @@ export async function updateTiterExtraEntries(
     }
 
     const nextData: Record<string, unknown> = { ...prev }
+    // 본 카드 통째 관리(startIndex 0)에서 **1회차(첫 슬롯)의 미래 채혈은 1회차 예정 키**
+    // (rabies_titer_scheduled)로 — updateTiterFields(1회차 전용 액션)와 동일 모델. 예전엔 전부
+    // 아래 extra 예정 키로 가서, 예정 배지(scenario 는 rabies_titer_scheduled 만 읽음)도 안 뜨고
+    // 입력칸도 비어 "저장하면 날짜가 사라지는" 증상이 됐다(2026-07-24 그리스·싱가포르 발견).
+    // 검사기관(lab)·결과(value)는 도래 전까지 shell 로 보존(1회차 액션과 동일).
+    let firstShell: Record<string, unknown> | null = null
+    let extrasForSplit = newExtras
+    if (startIndex === 0) {
+      const first = newExtras[0]
+      const fd =
+        first && typeof first.date === 'string' ? (first.date as string).slice(0, 10) : ''
+      if (fd && fd > todayKst()) {
+        nextData.rabies_titer_scheduled = fd
+        const shell = { ...first }
+        delete shell.date
+        firstShell = Object.keys(shell).length > 0 ? shell : null
+        extrasForSplit = newExtras.slice(1)
+      } else {
+        delete nextData.rabies_titer_scheduled
+      }
+    }
     // 미래(예정) 추가 채혈은 실제 기록(rabies_titer_records)에서 빼 별도 예정 자리로 — 펫무브워크엔
     // 실제로 한 검사만 남고, 미래 예약은 예정 배지로만(종합백신·항체검사 1차와 동일).
-    const pastExtras = splitScheduledDoses(newExtras, 'rabies_titer_extra_scheduled', nextData)
-    const titerNext: unknown[] = [...preserved, ...pastExtras]
-    while (titerNext.length > 0 && !hasValidDate(titerNext[titerNext.length - 1])) {
+    const pastExtras = splitScheduledDoses(extrasForSplit, 'rabies_titer_extra_scheduled', nextData)
+    const titerNext: unknown[] = [
+      ...preserved,
+      ...(firstShell ? [firstShell] : []),
+      ...pastExtras,
+    ]
+    // 뒤쪽 phantom(날짜 없는 잔여물) 압축 — 단 1회차 예정 shell(맨 앞)은 보존.
+    while (
+      titerNext.length > (firstShell ? 1 : 0) &&
+      !hasValidDate(titerNext[titerNext.length - 1])
+    ) {
       titerNext.pop()
     }
     if (titerNext.length === 0) delete nextData.rabies_titer_records
