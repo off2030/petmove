@@ -5,6 +5,7 @@ import {
   FLIGHT_DATE_RETURN_QUARANTINE_DESTINATIONS,
   JOURNEY_STEP_CATALOG,
   SINGLE_DOSE_RABIES_DESTINATIONS,
+  TITER_EXTRA_CARD_DESTINATIONS,
   buildCaseJourneyContext,
   findStepForCheck,
   getStepsForCase,
@@ -343,6 +344,13 @@ function earliestDate(step: StepDefinition, caseRow: CaseRow): string | null {
  */
 const PASSED_UNCONFIRMED_MSG =
   '예정일이 지났습니다. 완료 버튼을 눌러 완료하시거나, 새로운 예정일을 등록하실 수 있습니다.'
+
+/**
+ * 기록형(A부류 — 마이크로칩·광견병·백신·항체·구충·임상검사) 카드에서 예정일(*_scheduled)이
+ * 지났는데 아직 완료 전 상태의 목록 카드 안내 — 상세 화면의 안내·'완료' 버튼과 짝
+ * (2026-07-24 모델 재정립, 문구는 사용자안 글자 그대로).
+ */
+const RECORD_PASSED_MSG = '예정일이 지났습니다. 완료 버튼을 누르거나 날짜를 변경하세요.'
 
 /**
  * 어느 step 에도 매핑하지 않았지만, '추가 백신·추가 검사' advisory step 의 situational 안내가
@@ -752,6 +760,58 @@ export function buildJourney(
     // 예정일이 지났는데(예정일 다음날부터 — 당일은 제외) 아직 확인(done) 전 — '예정 [지난 날짜]'
     // 대신 안내 문구로 표시. 당일(예정일 == 오늘)엔 아직 '지났다'가 아니라 정상 안내로 둔다.
     const passedUnconfirmed = !done && !!ownConfirmDate && ownConfirmDate < today
+    // 기록형(A부류) 카드 — 예정(*_scheduled)일이 지났는데(당일 제외) 아직 완료 전이면 목록
+    // 카드에도 안내(RECORD_PASSED_MSG). 상세 화면의 안내 박스·'완료' 버튼과 짝(2026-07-24).
+    // civ·감염병(호주 전용, 앱 미노출)은 _scheduled 분리 전이라 제외.
+    const recordScheduledPassed =
+      !done &&
+      (() => {
+        const passedStr = (key: string): boolean => {
+          const v = caseData[key]
+          return typeof v === 'string' && v.length >= 10 && v.slice(0, 10) < today
+        }
+        switch (step.id) {
+          case 'microchip':
+            return passedStr('microchip_implant_date_scheduled')
+          case 'vet-visit':
+            return passedStr('vet_visit_date_scheduled')
+          case 'general-vaccine':
+            return passedStr('general_vaccine_dates_scheduled')
+          case 'external-parasite':
+            return passedStr('external_parasite_dates_scheduled')
+          case 'internal-parasite':
+          case 'echinococcus-treatment':
+            return passedStr('internal_parasite_dates_scheduled')
+          case 'rabies-titer':
+            // 단일카드국(추가 검사 카드가 없는 곳)은 추가 예정 키도 이 카드가 담당.
+            return (
+              passedStr('rabies_titer_scheduled') ||
+              (!TITER_EXTRA_CARD_DESTINATIONS.includes(ctx.destinationKey ?? '') &&
+                passedStr('rabies_titer_extra_scheduled'))
+            )
+          case 'rabies-titer-extra':
+            return passedStr('rabies_titer_extra_scheduled')
+          case 'rabies-vaccine-1':
+          case 'rabies-vaccine-2':
+          case 'rabies-vaccine-extra': {
+            const sched = caseData.rabies_dates_scheduled
+            return (
+              Array.isArray(sched) &&
+              sched.some((e) => {
+                const d =
+                  typeof e === 'string'
+                    ? e.slice(0, 10)
+                    : e && typeof e === 'object' && typeof (e as Record<string, unknown>).date === 'string'
+                      ? ((e as Record<string, unknown>).date as string).slice(0, 10)
+                      : ''
+                return d.length >= 10 && d < today
+              })
+            )
+          }
+          default:
+            return false
+        }
+      })()
     // 미완 step 의 타임라인 표시일 — step 의 직접 입력 필드(advance_notification_date 등)는
     // 비어있는데 earliest(다른 step 완료일 기준 계산값)만으로 '예정 [날짜]' 칩을 띄우면
     // 일정이 정해진 것처럼 오해됨. 따라서:
@@ -802,7 +862,7 @@ export function buildJourney(
       const max = latestEntryDate(caseData[key], 0)
       return schedDate ?? (max && max > today ? max : null)
     })()
-    const date = passedUnconfirmed
+    const date = passedUnconfirmed || recordScheduledPassed
       ? null
       : isDeparture && !isJpImportQuarantine
       ? dep
@@ -884,9 +944,11 @@ export function buildJourney(
     const listSit = step.id === 'jp-export-quarantine-visit' ? undefined : sit?.desc
     const desc = passedUnconfirmed
       ? PASSED_UNCONFIRMED_MSG
-      : done && !isFutureDate
-        ? (step.doneSummary ?? listSit ?? summary)
-        : (listSit ?? summary)
+      : recordScheduledPassed
+        ? RECORD_PASSED_MSG
+        : done && !isFutureDate
+          ? (step.doneSummary ?? listSit ?? summary)
+          : (listSit ?? summary)
     // 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있으면 step.cardLine
     // (미지정 시 설명 첫 문장)에 날짜 구문을 붙이고, 날짜가 없으면 설명 첫 문장만.
     // earliest("이후")가 deadline("까지"/window 구간)보다 우선: 보호자가 먼저 알아야 할 제약.
@@ -901,6 +963,8 @@ export function buildJourney(
     const upcomingDeadline = deadline && deadline >= today ? deadline : null
     const cardDesc = passedUnconfirmed
       ? PASSED_UNCONFIRMED_MSG
+      : recordScheduledPassed
+      ? RECORD_PASSED_MSG
       : done
       ? undefined
       : (sit?.cardDesc
