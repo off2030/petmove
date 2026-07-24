@@ -98,6 +98,9 @@ export type ApplicationStepSpec = {
   attachStepId: string
   permitNoField?: string
   legacyFlag?: string
+  // (선택) 신청일과 함께 입력받는 부가 예약일(계류장 예약 날짜 등) — 정보성. 완료 판정엔
+  // 영향 없다(일본 수출검역의 예약일과 동일). deriveApplicationStatus 는 이 필드를 보지 않는다.
+  reservationField?: string
 }
 
 export const IMPORT_PERMIT_APP_SPEC: ApplicationStepSpec = {
@@ -115,6 +118,8 @@ export const SG_QUARANTINE_RESERVATION_APP_SPEC: ApplicationStepSpec = {
   skipFlag: 'sg_quarantine_reservation_issued_skipped',
   inProgressFlag: 'sg_quarantine_reservation_in_progress',
   attachStepId: 'sg-quarantine-reservation',
+  // 신청일과 함께 계류장 격리 예약 날짜(정보성)를 입력받는다 — 일본 수출검역 예약일과 동일.
+  reservationField: 'sg_quarantine_reservation_date',
 }
 export const SG_DOG_LICENCE_APP_SPEC: ApplicationStepSpec = {
   dateField: 'sg_dog_licence_application_date',

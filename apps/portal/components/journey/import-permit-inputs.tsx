@@ -13,17 +13,25 @@ import { DateTextField } from '@petmove/ui'
 export interface ImportPermitForm {
   applicationDate: string
   permitNo: string
+  /** 부가 예약일(계류장 예약 날짜 등) — 정보성. 예약일 필드가 없는 카드는 빈 문자열. */
+  reservationDate: string
 }
 
 export function ImportPermitInputs({
   form,
   onChange,
   showPermitNo = true,
+  applicationHelp = '동물검역소에 수입 허가를 신청한 날짜',
+  reservation,
 }: {
   form: ImportPermitForm
   onChange: (key: keyof ImportPermitForm, next: string) => void
   /** 허가 번호 입력 노출 — step.inputs 에 permit_no 가 있을 때만(태국은 신청일만). */
   showPermitNo?: boolean
+  /** 신청일 아래 설명 — 카드별로 다르다(수입 허가 / 계류장 예약 / 강아지 라이센스). */
+  applicationHelp?: string
+  /** 신청일 아래에 부가 예약일 입력을 노출(계류장 예약 날짜 등, 정보성). 일본 수출검역 예약일 패턴. */
+  reservation?: { label: string; help: string }
 }) {
 
   const fieldBox: React.CSSProperties = {
@@ -49,9 +57,7 @@ export function ImportPermitInputs({
     >
       <div style={{ padding: '14px 0' }}>
         <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>신청일</div>
-        <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-          동물검역소에 수입 허가를 신청한 날짜
-        </div>
+        <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>{applicationHelp}</div>
         <div style={{ marginTop: 8 }}>
           <DateTextField
             value={form.applicationDate}
@@ -61,6 +67,20 @@ export function ImportPermitInputs({
           />
         </div>
       </div>
+      {reservation && (
+        <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
+          <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>{reservation.label}</div>
+          <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>{reservation.help}</div>
+          <div style={{ marginTop: 8 }}>
+            <DateTextField
+              value={form.reservationDate}
+              onChange={(v) => onChange('reservationDate', v)}
+              placeholder="YYYY-MM-DD"
+              block
+            />
+          </div>
+        </div>
+      )}
       {showPermitNo && (
         <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
           <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>허가 번호</div>

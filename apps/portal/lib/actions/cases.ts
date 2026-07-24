@@ -1874,12 +1874,19 @@ export async function updateApplicationDate(
   stepId: string,
   date: string | null,
   destination?: string | null,
+  // (선택) 부가 예약일(계류장 예약 날짜 등) — spec.reservationField 가 있는 카드만. 정보성이라
+  // 신청일과 달리 완료(skip)·진행 중 플래그를 건드리지 않는다.
+  reservationDate?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
     const spec = APPLICATION_STEP_SPECS[stepId]
     if (!spec) return { ok: false, error: '알 수 없는 절차 단계입니다.' }
     const v = typeof date === 'string' ? date.trim() : ''
     if (v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+      return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+    }
+    const rv = typeof reservationDate === 'string' ? reservationDate.trim() : ''
+    if (rv !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(rv)) {
       return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
     }
 
@@ -1908,6 +1915,10 @@ export async function updateApplicationDate(
         nextData = writeByDestValue(nextData, token, spec.skipFlag, null)
         nextData = writeByDestValue(nextData, token, spec.inProgressFlag, null)
       }
+      if (spec.reservationField) {
+        nextData = writeByDestValue(nextData, token, spec.reservationField, rv || null)
+        delete nextData[spec.reservationField]
+      }
       // top-level 잔존 제거 — 다른 목적지로의 flatten fallback 누수 차단.
       delete nextData[spec.dateField]
     } else {
@@ -1918,6 +1929,10 @@ export async function updateApplicationDate(
       if (v !== prevFiled) {
         delete nextData[spec.skipFlag]
         delete nextData[spec.inProgressFlag]
+      }
+      if (spec.reservationField) {
+        if (rv) nextData[spec.reservationField] = rv // scoping-fallback-ok: token 없음 폴백
+        else delete nextData[spec.reservationField]
       }
     }
 

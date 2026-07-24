@@ -279,6 +279,18 @@ export function StepDetailView({
       : isSgDogLicence
         ? 'sg_dog_licence_application_date'
         : ''
+  // 신청일 아래 설명(카드별) + 부가 예약일(계류장 예약 날짜, 정보성 — 일본 수출검역 예약일 패턴).
+  const applicationHelp = isImportPermit
+    ? '동물검역소에 수입 허가를 신청한 날짜'
+    : isSgQuarantineReservation
+      ? '계류장(AQC)을 예약 신청한 날짜'
+      : isSgDogLicence
+        ? '강아지 라이센스를 신청한 날짜'
+        : ''
+  const applicationReservationField = isSgQuarantineReservation ? 'sg_quarantine_reservation_date' : ''
+  const applicationReservation = isSgQuarantineReservation
+    ? { label: '계류장 예약 날짜', help: '계류장(AQC) 격리가 시작되는 예약 날짜' }
+    : undefined
   // 구충(내·외부·촌충) — 종합백신과 같은 date_array 입력 모델. 필드 키는 base catalog input 과
   // 동일. 촌충(에키노코쿠스, EU 5국)은 내부구충과 데이터 키(internal_parasite_dates)를 공유.
   const isExternalParasite = step.id === 'external-parasite'
@@ -413,7 +425,12 @@ export function StepDetailView({
   // 신청형 절차(수입 허가·싱가포르 계류장 예약·강아지 라이센스) — 신청일 + (수입 허가만)허가 번호.
   // 스코핑 필드 — 활성 목적지로 flatten 된 caseRow 기준. permit_no 는 수입 허가 전용이라 SG
   // 카드에선 읽지 않는다(같은 싱가포르 케이스에 import-permit permit_no 가 있어도 누수 방지).
-  const savedImportPermit = readImportPermitForm(caseRow?.data, applicationDateField, isImportPermit)
+  const savedImportPermit = readImportPermitForm(
+    caseRow?.data,
+    applicationDateField,
+    isImportPermit,
+    applicationReservationField,
+  )
   const [importPermit, setImportPermit] = useState<ImportPermitForm>(savedImportPermit)
 
   // 구충(내·외부) — 가변 길이 entries (종합백신과 동일 모델, 유효기간 없음).
@@ -508,7 +525,8 @@ export function StepDetailView({
   const importPermitDirty =
     isApplicationStep &&
     (importPermit.applicationDate !== savedImportPermit.applicationDate ||
-      importPermit.permitNo !== savedImportPermit.permitNo)
+      importPermit.permitNo !== savedImportPermit.permitNo ||
+      importPermit.reservationDate !== savedImportPermit.reservationDate)
   const parasiteDirty =
     isParasite &&
     !generalVaccineEqual(parasite.filter(vaccineEntryFilled), savedParasite.filter(vaccineEntryFilled))
@@ -735,7 +753,14 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!importPermitDirty)
-      setImportPermit(readImportPermitForm(caseRow?.data, applicationDateField, isImportPermit))
+      setImportPermit(
+        readImportPermitForm(
+          caseRow?.data,
+          applicationDateField,
+          isImportPermit,
+          applicationReservationField,
+        ),
+      )
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
@@ -1557,6 +1582,7 @@ export function StepDetailView({
               step.id,
               importPermit.applicationDate || null,
               activeDest,
+              applicationReservationField ? importPermit.reservationDate || null : undefined,
             )
         if (res.ok) {
           updateCase(res.value)
@@ -1566,6 +1592,7 @@ export function StepDetailView({
               activeDestinationView(res.value, activeDest).data,
               applicationDateField,
               isImportPermit,
+              applicationReservationField,
             ),
           )
           setStatus('saved')
@@ -2546,6 +2573,8 @@ export function StepDetailView({
               onChange={(key, next) => setImportPermit((prev) => ({ ...prev, [key]: next }))}
               // 허가 번호 칸은 수입 허가 전용 — 싱가포르 신청형 카드는 신청일만.
               showPermitNo={(step.inputs ?? []).some((i) => i.key === 'permit_no')}
+              applicationHelp={applicationHelp}
+              reservation={applicationReservation}
             />
           </section>
         )}
@@ -3099,13 +3128,16 @@ function readImportPermitForm(
   data: Record<string, unknown> | null | undefined,
   dateField: string,
   includePermitNo: boolean,
+  reservationField?: string,
 ): ImportPermitForm {
-  if (!data || !dateField) return { applicationDate: '', permitNo: '' }
+  if (!data || !dateField) return { applicationDate: '', permitNo: '', reservationDate: '' }
   const filed = data[dateField]
   const no = includePermitNo ? data['permit_no'] : ''
+  const res = reservationField ? data[reservationField] : ''
   return {
     applicationDate: typeof filed === 'string' ? filed : '',
     permitNo: typeof no === 'string' ? no : '',
+    reservationDate: typeof res === 'string' ? res : '',
   }
 }
 
