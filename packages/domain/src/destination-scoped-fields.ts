@@ -112,6 +112,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'sg_quarantine_reservation_application_date',
   'sg_quarantine_reservation_issued_skipped',
   'sg_quarantine_reservation_in_progress',
+  // 계류장 예약 날짜(정보성) — 신청일과 함께 입력. by_dest 저장이라 반드시 등록해야
+  //   activeDestinationView 가 top-level 로 펼쳐 읽힌다(미등록 시 저장 후 날짜가 사라짐).
+  'sg_quarantine_reservation_date',
   'sg_dog_licence_application_date',
   'sg_dog_licence_issued_skipped',
   'sg_dog_licence_in_progress',
