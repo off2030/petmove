@@ -1873,7 +1873,17 @@ export function StepDetailView({
     }
     situationalDesc = step.situational?.(liveRow)?.desc
   }
-  const noticeCount = notices.length + (situationalDesc ? 1 : 0)
+  // '지난 예정/당일' 안내 — 별도 밋밋한 박스가 아니라 상세의 정식 '안내' 카드(구름 라벨)에
+  // 합류(2026-07-25 사용자 지적: 앱의 안내 방식은 ☁ 안내 카드). 검역 confirm 은 기존 문구,
+  // 기록형은 재정립 문구 그대로.
+  const scheduledNotice = savedDueToday
+    ? `오늘은 ${step.title} 예정일이에요. 검역 후 완료 버튼을 눌러주세요.`
+    : savedArrivedUnconfirmed
+      ? `${step.title} 예정일이 지났어요. 완료 버튼을 누르시거나 예정일을 변경해주세요.`
+      : recordScheduledOverdue
+        ? '예정일이 지났습니다. 완료 버튼을 누르거나 날짜를 변경하세요.'
+        : undefined
+  const noticeCount = notices.length + (situationalDesc ? 1 : 0) + (scheduledNotice ? 1 : 0)
   const stepDocuments = readCaseDocuments(caseRow?.data).filter((d) => d.stepId === step.id)
 
   // 항공권 step + 왕복 + 출국만 입력 + 미정 아님 — '편도 전환' affordance 노출. 일본 전용 —
@@ -2384,6 +2394,19 @@ export function StepDetailView({
                 {isFlightRoundEntryOnly && ' 귀국 일정이 미정인 경우는 편도 일정으로 전환할 수 있어요.'}
               </div>
             )}
+            {scheduledNotice && (
+              <div
+                style={{
+                  fontSize: 13,
+                  color: C.ink2,
+                  lineHeight: 1.5,
+                  whiteSpace: 'pre-line',
+                  marginTop: situationalDesc ? 10 : 0,
+                }}
+              >
+                {scheduledNotice}
+              </div>
+            )}
             {situationalDesc && isFlightRoundEntryOnly && (
               <button
                 type="button"
@@ -2410,9 +2433,9 @@ export function StepDetailView({
             {notices.length > 0 && (
               <ul
                 style={{
-                  margin: situationalDesc ? '12px 0 0' : 0,
-                  padding: situationalDesc ? '12px 0 0' : 0,
-                  borderTop: situationalDesc ? `.5px solid ${C.line}` : 'none',
+                  margin: situationalDesc || scheduledNotice ? '12px 0 0' : 0,
+                  padding: situationalDesc || scheduledNotice ? '12px 0 0' : 0,
+                  borderTop: situationalDesc || scheduledNotice ? `.5px solid ${C.line}` : 'none',
                   listStyle: 'none',
                   display: 'flex',
                   flexDirection: 'column',
@@ -2801,28 +2824,8 @@ export function StepDetailView({
           </section>
         )}
 
-        {/* 예정일 당일(savedDueToday) / 지난 후(savedArrivedUnconfirmed) — 아직 완료 전.
-            검역 후 완료(지난 경우엔 예정일 변경도) 안내. 기록형(recordScheduledOverdue)은
-            하루 지났을 때만 안내(당일은 버튼 '완료' 전환만 — 2026-07-24 사용자안). */}
-        {(savedDueToday || savedArrivedUnconfirmed || recordScheduledOverdue) && (
-          <section
-            style={{
-              marginTop: 18,
-              padding: '14px 16px',
-              borderRadius: 16,
-              background: C.infoBg,
-              border: `.5px solid color-mix(in srgb, ${C.info} 35%, transparent)`,
-            }}
-          >
-            <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
-              {savedDueToday
-                ? `오늘은 ${step.title} 예정일이에요. 검역 후 완료 버튼을 눌러주세요.`
-                : savedArrivedUnconfirmed
-                  ? `${step.title} 예정일이 지났어요. 완료 버튼을 누르시거나 예정일을 변경해주세요.`
-                  : '예정일이 지났습니다. 완료 버튼을 누르거나 날짜를 변경하세요.'}
-            </div>
-          </section>
-        )}
+        {/* '지난 예정/당일' 안내는 위의 정식 '안내' 카드(scheduledNotice)로 합류 —
+            라벨 없는 별도 박스는 제거(2026-07-25 채널 통일). */}
 
       </div>
 
