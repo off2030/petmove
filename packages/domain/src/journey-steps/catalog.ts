@@ -348,6 +348,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'china',
         'taiwan',
         'singapore',
+        // 하와이 — FAVN 항체가 입국 요건(titer.need='entry'). 일본 복제(2026-07-24).
+        'hawaii',
         'india',
         'turkey',
         'ukraine',

@@ -87,6 +87,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 저장(by_dest)되도록 등록. 나라 추가 시 그 나라 키 2개를 여기에 추가.
   'th_import_quarantine_date',
   'th_import_quarantine_confirmed',
+  // 하와이 — 도착 검역(공항 동물검역소 5-Day-Or-Less/DAR). 일본 복제(범용 quarantine 방식).
+  'hi_import_quarantine_date',
+  'hi_import_quarantine_confirmed',
   'th_export_quarantine_date',
   'th_export_quarantine_confirmed',
   // 말레이시아·인도네시아 — 태국 복제(2026-07-22).

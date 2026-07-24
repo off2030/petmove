@@ -54,7 +54,8 @@ export const KR_RETURN_TITER_VALIDITY_MONTHS = 24
  * catalog 의 rabies-titer-extra applicability 와 어긋나면 안 되므로 하드코딩하지 말고
  * 이 상수를 쓴다.
  */
-export const TITER_EXTRA_CARD_DESTINATIONS: readonly string[] = ['japan', 'taiwan']
+// 하와이 — FAVN 은 36개월 유효 + 재검사로 갱신되므로 회차별 카드 분리(일본·대만과 동일).
+export const TITER_EXTRA_CARD_DESTINATIONS: readonly string[] = ['japan', 'taiwan', 'hawaii']
 
 /**
  * 목적지 입국용 항체검사 만료일 — 카드(추가 검사 노출·문구)가 쓰는 단일 출처.

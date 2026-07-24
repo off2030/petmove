@@ -125,6 +125,66 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['cn.import-quarantine-date-valid'],
     }),
   },
+  // ── 하와이 (HDOA 동물검역소 — 5-Day-Or-Less / Direct Airport Release) ────
+  // ⚠️ **일본(jp-2dose) 복제**(2026-07-24). 중국과 같은 골격(광견병 2회 + FAVN 항체 입국 요건 +
+  //   도착 검역)에 하와이 고유(FAVN 30일~36개월·진드기 14일·섬 검역)를 얹었다. 문구·수치는
+  //   복제 후 하와이 규정으로 조정 예정(사용자). 규정값 출처 = procedure-checks/hi.ts.
+  //   ⚠️ 수출검역·NACCS 사전신고는 하와이에 없어 복제하지 않음(destination-config 주석 참고).
+  hawaii: {
+    // 광견병 1차 — 프로파일 파생(buildRabiesCard). 2회 접종국이라 title '광견병 백신 1차'.
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'hawaii',
+      label: '하와이',
+      validationIds: ['hi.rabies-prime-after-12weeks', 'hi.microchip-before-rabies'],
+    }),
+    // 광견병 2차 — 평생 2회 + 도즈 간 31일(HDOA "more than 30 days apart").
+    'rabies-vaccine-2': {
+      description:
+        '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 31일 이상 지나서 접종해야 해요.\n하와이는 평생 최소 2회 접종이 필요해요.\n하와이 입국 때 면역 유효기간이 남아있어야 해요.',
+      validationIds: ['hi.rabies-2-doses-required', 'hi.rabies-doses-31days-apart'],
+    },
+    // 추가 백신(3차+) — base 는 일본 전용 jp.* 주의라, 하와이는 도즈 간격 룰로 매핑(일본 parity).
+    'rabies-vaccine-extra': {
+      validationIds: ['hi.rabies-doses-31days-apart'],
+    },
+    // FAVN(OIE-FAVN) 항체 = 하와이 **입국 요건**. 검체 검사기관 수령일 기준 출국 30일~36개월.
+    'rabies-titer': {
+      description:
+        '미국 농무부(USDA) 승인 검사기관(예: Kansas State KSVDL, DOD)에서 FAVN 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n검체가 검사기관에 도착한 날부터 출국까지 30일 이상 지나야 하고, 36개월 이내여야 해요.\n0.5 IU/mL 이상이면 합격이에요.',
+      validationIds: ['hi.favn-sample-30days-to-36months-before-arrival'],
+    },
+    // 추가 항체검사(재검사) — base 는 일본 전용 jp.titer.* 주의라 하와이 FAVN 룰로 교체.
+    //   hi.favn 은 모든 titer 기록을 순회 검증하므로 재검사 카드도 이 룰을 지목한다.
+    'rabies-titer-extra': {
+      validationIds: ['hi.favn-sample-30days-to-36months-before-arrival'],
+    },
+    // 항공권 — 하와이는 최근 광견병 접종이 출국 31일 이전이어야 하고 도착일에 면역 유효해야 한다.
+    //   ⚠️ FAVN 채혈 후 대기(5-Day-Or-Less 의 120일 규칙 등)는 하와이 규정 확정 후 earliest 로
+    //     반영 예정(사용자 조정). 지금은 잠금 없이(earliest 제거) hi.ts 주의로만 다룬다.
+    'flight-purchase': {
+      description:
+        '하와이 입국 일정에 맞춰 항공권을 구매하세요.\n\n최근 광견병 접종일로부터 31일이 지난 후에 입국할 수 있어요.\n호놀룰루(HNL) 공항 동물검역소 운영시간에 맞는 도착 시간인지 확인하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '하와이에 입국할 수 있어요.',
+      earliest: undefined,
+      validationIds: ['hi.rabies-latest-31days-before-arrival', 'hi.rabies-not-expired-on-arrival'],
+    },
+    // 도착 — 하와이 공항 동물검역소(5-Day-Or-Less / Direct Airport Release). 요건 충족 시
+    //   공항에서 바로 인계(DAR), 미충족 시 최대 120일 검역.
+    departure: importQuarantineCard({
+      label: '하와이',
+      fieldKey: 'hi_import_quarantine_date',
+      description:
+        '하와이 도착 후 공항 동물검역소에서 검역을 받으세요.\n서류와 마이크로칩을 확인해요. 준비에 문제가 없으면 공항에서 바로 인계받을 수 있어요(Direct Airport Release).\n입국 요건을 충족하지 못하면 검역소에서 최대 120일간 격리돼요.',
+      helpText: '하와이 도착 후 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '하와이 수입 검역 서류',
+      validationIds: ['hi.import-quarantine-date-valid'],
+    }),
+    // 진드기 처치 — 출국 14일 이내(long-acting tick product). base 는 일반 문구라 하와이 룰 지목.
+    'external-parasite': {
+      validationIds: ['hi.tick-treatment-within-14days'],
+    },
+  },
   // ── 베트남 (DAH Cục Thú y) ────────────────────────────────────────────
   // 태국·필리핀 골격이지만 수입허가가 없다(Thông tư 01/2026 제14조 — 2마리 이하 동반 면제).
   // 사전 신고도 없다 — 도착 공항 검역소에서 현장 신고(같은 조). 항체는 한국 귀국용만.

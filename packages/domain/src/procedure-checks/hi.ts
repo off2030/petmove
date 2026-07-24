@@ -315,4 +315,33 @@ export const HI_CHECKS: ProcedureCheck[] = [
     },
   },
 
+  // ── 도착 검역 일정 재검증 (jp.*-date-valid / th.import-quarantine-date-valid 와 동일 모델) ──
+  {
+    id: 'hi.import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '하와이 수입 검역일',
+    description: '하와이 수입 검역일은 하와이 도착일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-07-24',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.hi_import_quarantine_date === 'string'
+          ? data.hi_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      // departure_date = 하와이 도착일 proxy (hi.ts 컨벤션).
+      const dep = readDepartureDate(caseRow, destination)
+      if (dep && raw < dep) {
+        return {
+          ok: false,
+          message: '하와이 수입 검역일은 도착일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['hi_import_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `하와이 수입검역일(${raw}) 도착 이후.` }
+    },
+  },
+
 ]

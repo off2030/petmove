@@ -40,6 +40,8 @@ export const DEFAULT_TITER_LAB_CODES = ['apqa_seoul', 'krsl']
  */
 const TITER_LAB_CODES_BY_DEST: Record<string, string[]> = {
   japan: ['apqa_seoul', 'ksvdl_r'],
+  // 하와이 — FAVN 은 USDA 승인 검사기관(Kansas State KSVDL 등). 일본과 동일 선택지(복제).
+  hawaii: ['apqa_seoul', 'ksvdl_r'],
   thailand: ['apqa_seoul', 'krsl'],
   philippines: ['apqa_seoul', 'krsl'],
   // 말레이시아·인도네시아 — 태국 복제(2026-07-22). 검사기관은 한국 기관이라 그대로 적용 가능.

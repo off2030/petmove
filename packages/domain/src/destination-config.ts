@@ -755,13 +755,41 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     titer: { need: 'none' },
     vaccines: ['rabies', 'rabies_titer', 'general'],
   },
+  // ── 하와이 (HDOA 동물검역소 — 5-Day-Or-Less / Direct Airport Release) ────
+  // ⚠️ **일본(jp-2dose) 복제**(2026-07-24). 하와이는 섬 검역 + 광견병 2회 평생 + FAVN 항체
+  //   필수라 일본과 같은 규정 '가족'이다. 복제 후 하와이 규정으로 세부값 조정 예정(사용자).
+  //   규정값 출처 = procedure-checks/hi.ts(HDOA Checklist 1) + www 하와이 가이드.
+  //   ⚠️ 일본에 있으나 하와이엔 **없어 복제하지 않은 것**:
+  //     ①수출검역(미국은 반려동물 수출검역 절차가 없음) ②NACCS 사전신고(일본 전용 시스템).
+  //     왕복 귀국은 공용 '한국 입국검역' 카드가 처리한다.
+  //   ⚠️ extraSection 은 'hawaii' 유지 — AQS-279 서식 PDF 자동채움·섬(island) 매핑이
+  //     hawaii_extra 에 묶여 있어 'japan' 으로 바꾸면 발급 서식이 깨진다.
   hawaii: {
     keywords: ['하와이', 'hawaii'],
+    archetype: 'jp-2dose',
+    // 광견병 = 평생 2회(1차 + 부스터). 31일 간격·출국 31일 전·미만료는 hi.ts 가 검증.
+    // 최소 연령 = hi.ts 보수 기준(생후 91일 AND 캘린더 3개월). buildRabiesCard 가 카드 문구·
+    //   earliest 잠금을 이 값에서 파생. ⚠️ hi.ts 메시지는 '84일(12주)'로 떠 실제 검사(91/3개월)와
+    //   어긋나 있다 — 하와이 규정 확정 시 통일 필요(사용자 조정 예정).
+    rabies: { doses: 2, minAgeDays: 91, minAgeMonths: 3, minAgeLabel: '생후 3개월' },
+    // 진드기(external_parasite) 처치 = 출국 14일 이내 필수(hi.ts). 내부구충은 기존 유지.
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
+    // FAVN 항체 = 하와이 **입국 요건**. 검체 lab 수령일 기준 출국 30일~36개월(hi.ts) → 유효 36개월.
+    titer: { need: 'entry', entryValidityMonths: 36 },
+    appSupported: true,
     extraSection: 'hawaii',
-    // 하와이는 기본적으로 미국 — USA 의 추가정보 필드 모두 포함 (overseas_phone, entry_date 추가).
-    // 출국 항공편 그룹: 출국일(departure_flight_date)·도착일(entry_date)·항공편명·도착시간.
-    extraFields: ['address_overseas', 'postal_code', 'email', 'overseas_phone', 'passport_number', 'passport_expiry_date', 'passport_issuing_country', 'holder_birth_date', 'departure_flight_date', 'entry_date', 'entry_flight_number', 'entry_time'],
+    extraFields: [
+      // 도착 검역(공항 동물검역소) 예약·완료 — 일본 jp_import_quarantine_date 대응.
+      'hi_import_quarantine_date',
+      // 출국 항공편 (한국 → 하와이)
+      'departure_flight_date', 'entry_date', 'entry_departure_airport',
+      'entry_airport', 'entry_flight_number', 'entry_time', 'entry_transport',
+      // 귀국 항공편 (하와이 → 한국)
+      'return_date', 'return_flight_number', 'return_departure_airport', 'return_arrival_airport', 'return_transport',
+      // 하와이 AQS-279 서식·연락 (PDF 자동채움 — 유지 필수)
+      'address_overseas', 'postal_code', 'email', 'overseas_phone',
+      'passport_number', 'passport_expiry_date', 'passport_issuing_country', 'holder_birth_date',
+    ],
   },
   guam: {
     keywords: ['괌', 'guam'],
