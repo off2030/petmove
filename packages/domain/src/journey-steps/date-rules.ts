@@ -551,9 +551,10 @@ export function validateSgQuarantineReservationDate(
   )
   if (within) return null
   const passes90 = valid.some((d) => daysBetween(d, reservationDate) >= 90)
+  // 문구 통일(2026-07-25 사용자안): 라벨('예약일')로 시작 + '날짜를 확인하세요' 마무리.
   return passes90
-    ? '계류장 예약 날짜는 광견병 항체 검사 결과 유효기간(12개월) 이내여야 해요.'
-    : '계류장 예약 날짜는 광견병 항체 검사 채혈일로부터 90일이 지난 후여야 해요.'
+    ? '예약일은 항체 검사 유효기간(12개월) 이내여야 해요. 날짜를 확인하세요.'
+    : '예약일은 채혈일로부터 90일이 지난 후여야 해요. 날짜를 확인하세요.'
 }
 
 /**
