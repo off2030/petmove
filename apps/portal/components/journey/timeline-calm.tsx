@@ -147,21 +147,18 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/taiwan-14.webp',
   ],
   싱가포르: [
-    // 첫 장 = 슈퍼트리 그로브(daniel-welsh). 나머지는 파일 순서.
-    '/destinations/singapore-02.webp',
+    // 첫 장 = 멀라이언·마리나베이 스카이라인. 나머지는 파일 순서.
+    // (02·06·11·13 삭제 — 사용자 지정 2026-07-24)
     '/destinations/singapore-00.webp',
     '/destinations/singapore-01.webp',
     '/destinations/singapore-03.webp',
     '/destinations/singapore-04.webp',
     '/destinations/singapore-05.webp',
-    '/destinations/singapore-06.webp',
     '/destinations/singapore-07.webp',
     '/destinations/singapore-08.webp',
     '/destinations/singapore-09.webp',
     '/destinations/singapore-10.webp',
-    '/destinations/singapore-11.webp',
     '/destinations/singapore-12.webp',
-    '/destinations/singapore-13.webp',
     '/destinations/singapore-14.webp',
     '/destinations/singapore-15.webp',
   ],
