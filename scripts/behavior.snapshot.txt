@@ -7633,10 +7633,10 @@
 
 ▸ singapore (싱가포르)
    입력불가 1건
-     ✕ 출국·입국일: 검사일로부터 3개월 후인 2026년 7월 2일에 입국할 수 있어요.
+     ✕ 출국·입국일: 검사일로부터 90일 후인 2026년 7월 1일에 입국할 수 있어요.
    주의·차단 2건
-     - sg.departure-min-3months-after-titer [info]
-         광견병 항체 검사 채혈일로부터 3개월이 지난 후에 출국할 수 있어요.
+     - sg.departure-min-90days-after-titer [info]
+         광견병 항체 검사 채혈일로부터 90일이 지난 후에 출국할 수 있어요.
      - sg.rabies-valid-until-on-departure [info]
          출국일에 광견병 백신 면역 유효기간이 남아있어야 해요.
    상황별 설명문 2건

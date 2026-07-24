@@ -347,6 +347,9 @@ function titerWaitWithoutBlocker(appDests: string[]): Problem[] {
   const blocked = new Set<string>([
     ...EU_ENTRY_FAMILY,
     ...destinationKeysWhere((o) => typeof o.titer?.entryWaitAfterTiter?.months === 'number'),
+    // 일수 기반(싱가포르 90일) — validateEuEntryDate 의 TITER_ENTRY_WAIT_DAYS 로 하드 차단됨.
+    //   대만(days:180)은 OWN_ENTRY_BLOCKER_DESTS(전용 함수)로 별도 커버.
+    ...destinationKeysWhere((o) => typeof o.titer?.entryWaitAfterTiter?.days === 'number'),
     ...OWN_ENTRY_BLOCKER_DESTS,
   ])
   for (const dest of appDests) {

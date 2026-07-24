@@ -4,7 +4,6 @@ import {
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
-  addMonths,
   addYears,
   daysBetween,
   evaluateRabiesAgeConservative,
@@ -115,12 +114,12 @@ export const SG_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'sg.departure-min-3months-after-titer',
+    id: 'sg.departure-min-90days-after-titer',
     country: 'singapore',
     category: '광견병',
-    title: '출국일은 항체 검사일 3개월 이후',
+    title: '출국일은 항체 검사일 90일 이후',
     description:
-      'RNATT 채혈일로부터 출국까지 최소 3개월(캘린더) 경과 필요. NParks 원문은 "90일"이나, 저장 거부(validateEuEntryDate, titer.entryWaitAfterTiter.months=3)와 기준을 맞추려 캘린더 3개월(≈89~92일)로 판정한다. (Schedule III IV(a)(iii) "not less than 90 days ... prior to export")',
+      'RNATT 채혈일로부터 출국일까지 최소 90일 경과 필요. 저장 거부(validateEuEntryDate, titer.entryWaitAfterTiter.days=90)와 같은 정확한 일수 기준. (Schedule III IV(a)(iii) "not less than 90 days ... prior to export")',
     severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
@@ -128,19 +127,20 @@ export const SG_CHECKS: ProcedureCheck[] = [
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
-      const valid = titers.find((t) => {
-        const earliest = addMonths(t.date, 3)
-        return !!earliest && earliest <= dep
-      })
-      if (valid) {
-        return { ok: true, message: `항체 검사(${valid.date}) + 3개월(${addMonths(valid.date, 3)}) ≤ 출국일(${dep}).` }
+      let best: { entry: (typeof titers)[number]; days: number } | null = null
+      for (const t of titers) {
+        const days = daysBetween(t.date, dep)
+        if (days === null) continue
+        if (!best || days > best.days) best = { entry: t, days }
       }
-      const earliestTiter = [...titers].sort((a, b) => a.date.localeCompare(b.date))[0]
+      if (best && best.days >= 90) {
+        return { ok: true, message: `항체 검사(${best.entry.date}) → 출국일(${dep}): ${best.days}일.` }
+      }
       const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: '광견병 항체 검사 채혈일로부터 3개월이 지난 후에 출국할 수 있어요.',
+        message: '광견병 항체 검사 채혈일로부터 90일이 지난 후에 출국할 수 있어요.',
         offendingPaths: offending,
       }
     },

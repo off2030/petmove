@@ -658,6 +658,19 @@ const TITER_ENTRY_WAIT_MONTHS: Record<string, number> = Object.fromEntries(
 )
 
 /**
+ * 채혈 후 대기(**일수**)를 선언한 목적지 — 프로파일 `titer.entryWaitAfterTiter.days` 파생.
+ *
+ * ⚠️ 대만(180일)은 제외 — 위 주석대로 '180일~2년 창 + 격리 분기'를 전용 함수
+ *   (validateTwEntryDate)가 함께 판정하므로 이중 계산 금지. 싱가포르(90일)처럼 **단순 하한**만
+ *   있는 나라가 대상(NParks "not less than 90 days"). 월 근사 대신 정확한 일수로 차단한다.
+ */
+const TITER_ENTRY_WAIT_DAYS: Record<string, number> = Object.fromEntries(
+  destinationKeysWhere((o) => typeof o.titer?.entryWaitAfterTiter?.days === 'number')
+    .filter((k) => k !== 'taiwan')
+    .map((k) => [k, DESTINATION_OVERRIDES[k]!.titer!.entryWaitAfterTiter!.days!]),
+)
+
+/**
  * 채혈 후 대기 목적지의 입국일(= 출국 항공편 날짜) — 광견병 항체 검사 채혈일 + N개월(캘린더)
  * 미만 입국만 hard 차단. 일본 180일 룰과 같은 기준: 재검사해도 새 채혈일 + N개월을 다시
  * 기다려야 하므로 회복 경로가 입국일 변경뿐. (EU Reg 576/2013 Art.12 — "at least three months")
@@ -679,12 +692,15 @@ export function validateEuEntryDate(v: string, ctx: DateRuleContext): string | n
   //   이스라엘 규정엔 '항체 검사 후 3개월 대기'가 없다(procedure-checks/il.ts 헤더: "RNATT 입국
   //   후 추가 대기 없음"). 여기서 안 빼면 정상 입국일 입력을 3개월 대기로 잘못 막는다.
   //   같은 이유로 eu.ts(주의)·destination-overrides.ts(카드 문구)에서도 이스라엘을 제외한다.
-  const waitKey = [
+  const monthsKey = [
     ...EU_ENTRY_FAMILY.filter((k) => k !== 'israel'),
     ...Object.keys(TITER_ENTRY_WAIT_MONTHS),
   ].find((key) => matchesDestinationKey(ctx.destination, key))
-  if (!waitKey) return null
-  const months = TITER_ENTRY_WAIT_MONTHS[waitKey] ?? 3
+  // 일수 기반(싱가포르 90일) — 월 기반에 안 걸린 경우만. 대만은 TITER_ENTRY_WAIT_DAYS 에서 제외됨.
+  const daysKey = monthsKey
+    ? undefined
+    : Object.keys(TITER_ENTRY_WAIT_DAYS).find((key) => matchesDestinationKey(ctx.destination, key))
+  if (!monthsKey && !daysKey) return null
 
   const titerDates: string[] = []
   const rawTiters = ctx.data.rabies_titer_records
@@ -697,9 +713,24 @@ export function validateEuEntryDate(v: string, ctx: DateRuleContext): string | n
     }
   }
   if (titerDates.length === 0) return null
-
-  // 채혈 + N개월 ≤ 입국일을 만족하는 채혈이 하나라도 있으면 통과 (eu.departure-min-3months 와 동일).
   titerDates.sort()
+
+  // 일수 기반(정확한 N일) — 채혈 + N일 ≤ 입국일 만족 채혈이 하나라도 있으면 통과.
+  if (daysKey) {
+    const days = TITER_ENTRY_WAIT_DAYS[daysKey]
+    const ok = titerDates.some((t) => {
+      const earliest = addDays(t, days)
+      return !!earliest && earliest <= v
+    })
+    if (ok) return null
+    const earliestEntry = addDays(titerDates[0], days)
+    return earliestEntry
+      ? `검사일로부터 ${days}일 후인 ${fmt(earliestEntry)}에 입국할 수 있어요.`
+      : `광견병 항체 검사일로부터 ${days}일이 지나면 입국할 수 있어요.`
+  }
+
+  // 월(캘린더) 기반 — 채혈 + N개월 ≤ 입국일 (eu.departure-min-3months 와 동일).
+  const months = TITER_ENTRY_WAIT_MONTHS[monthsKey!] ?? 3
   const ok = titerDates.some((t) => {
     const earliest = addMonths(t, months)
     return !!earliest && earliest <= v

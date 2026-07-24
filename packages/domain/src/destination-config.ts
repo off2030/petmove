@@ -723,13 +723,13 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     },
     // ✅ 항체검사(RNATT) = 싱가포르 **입국 요건**. 접종 28일 후 채혈, 출국 90일 전·12개월 이내,
     //   0.5 IU/ml 이상. (NParks Schedule III IV(a)(iii)) 채혈 후 90일 대기 → 입력 차단 blocker.
-    // 채혈 후 대기 = **캘린더 3개월**로 선언(NParks "90일"≈3개월). months 선언 시 EU·튀르키예와
-    //   같은 자동 배선(validateEuEntryDate 하드 차단 + lint blocker 세트)에 편승한다. 90일 정확
-    //   일수가 필요하면 별도 days 블로커가 필요(대만식) — 현재는 3개월 근사(사용자 확인 대기).
+    // 채혈 후 대기 = **정확히 90일**(NParks "not less than 90 days prior to export"). days 선언은
+    //   validateEuEntryDate 의 TITER_ENTRY_WAIT_DAYS 로 자동 하드 차단된다(대만 180일과 달리
+    //   '단순 하한'이라 전용 함수 불필요). sg.ts 주의 룰(departure-min-90days)도 90일로 일치.
     titer: {
       need: 'entry',
       minDaysAfterVaccine: 28,
-      entryWaitAfterTiter: { months: 3 },
+      entryWaitAfterTiter: { days: 90 },
       entryValidityMonths: 12,
     },
     appSupported: true,

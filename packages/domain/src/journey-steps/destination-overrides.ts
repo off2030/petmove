@@ -1250,8 +1250,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   // ── 싱가포르 (NParks/AVS — Schedule III) ─────────────────────────────
   //   한국 = Schedule III(광견병 위험국). 입국 항체(RNATT) + 도착 후 AQC **30일 의무 격리** +
   //   도착 시 광견병 재접종. sea-permit 골격 + 인니식 입국 항체(need:entry). 채혈 후 대기
-  //   (3개월)는 프로파일 titer.entryWaitAfterTiter.months=3 이 validateEuEntryDate 하드 차단으로
-  //   배선. 광견병 비발생국이라 귀국 항체 면제(항체=입국용). ⏳ 귀국 수출검역 카드는 후속.
+  //   (90일)는 프로파일 titer.entryWaitAfterTiter.days=90 이 validateEuEntryDate 하드 차단으로
+  //   배선. 광견병 비발생국이라 귀국 항체 면제(항체=입국용). 귀국 수출검역=sg-export-quarantine.
   singapore: seaPermitOverrides({
     key: 'singapore',
     label: '싱가포르',
@@ -1265,7 +1265,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     ],
     // 항체(RNATT) = 싱가포르 **입국 요건**(귀국용 아님). 접종 28일 후 채혈, 채혈 후 3개월 대기.
     titerDescription:
-      'NParks 승인 검사기관에서 광견병 항체 검사(RNATT)를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n광견병 접종 28일 후에 채혈해야 해요.\n싱가포르 입국에 반드시 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n채혈일로부터 3개월이 지나야 입국할 수 있고, 결과는 12개월간 유효해요.',
+      'NParks 승인 검사기관에서 광견병 항체 검사(RNATT)를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n광견병 접종 28일 후에 채혈해야 해요.\n싱가포르 입국에 반드시 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n채혈일로부터 90일이 지나야 입국할 수 있고, 결과는 12개월간 유효해요.',
     generalVaccine: {
       description:
         '강아지는 DHPPL, 고양이는 FVRCP 종합백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n출국 14일 전까지 접종해야 해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
@@ -1281,9 +1281,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     },
     flight: {
       description:
-        '싱가포르 입국 일정에 맞춰 항공권을 구매하세요.\n\n광견병 항체 검사 채혈일로부터 3개월이 지난 후에 입국할 수 있어요.\n도착 후 검역소(AQC)에서 30일간 격리되니 일정을 여유 있게 잡으세요.\n검역소 자리를 먼저 예약해야 해요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+        '싱가포르 입국 일정에 맞춰 항공권을 구매하세요.\n\n광견병 항체 검사 채혈일로부터 90일이 지난 후에 입국할 수 있어요.\n도착 후 검역소(AQC)에서 30일간 격리되니 일정을 여유 있게 잡으세요.\n검역소 자리를 먼저 예약해야 해요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       order: 90,
-      validationIds: ['sg.departure-min-3months-after-titer'],
+      validationIds: ['sg.departure-min-90days-after-titer'],
     },
     // 수입 허가(Licence to Import Non-Food Animals) — 보호자가 GoBusiness 온라인 직접 신청.
     importPermit: {
@@ -1311,7 +1311,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   싱가포르는 광견병 비발생국이라 귀국 항체 면제 → 귀국용 룰 불필요.
       'rabies-titer': {
         description:
-          'NParks 승인 검사기관에서 광견병 항체 검사(RNATT)를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n광견병 접종 28일 후에 채혈해야 해요.\n싱가포르 입국에 반드시 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n채혈일로부터 3개월이 지나야 입국할 수 있고, 결과는 12개월간 유효해요.',
+          'NParks 승인 검사기관에서 광견병 항체 검사(RNATT)를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n광견병 접종 28일 후에 채혈해야 해요.\n싱가포르 입국에 반드시 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n채혈일로부터 90일이 지나야 입국할 수 있고, 결과는 12개월간 유효해요.',
         order: 55,
         validationIds: [
           'sg.titer-min-28days-after-vaccine',
