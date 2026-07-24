@@ -1362,7 +1362,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   구조: 신청=E-permit(수출허가+VHC) → 주 DVS 지청에서 동물 검사·VHC 발급 → 출국일
     //         공항 MAQIS 최종 검사. 두 기관(MAQIS 허가 / DVS 증명서)으로 나뉜다.
     description:
-      '말레이시아 출국 전 수출 검역을 받고 수출 허가와 수의 건강증명서(VHC)를 받으세요.\n\n반려동물을 데리고 거주 지역의 주(州) DVS 지청에 방문해 검사를 받고 VHC를 발급받아요. 수출 허가는 MAQIS에서 받아요.\n\n두 서류 모두 E-permit 시스템으로 신청해요. 현지 계정 등록이 필요해서 보통 현지 에이전시에 의뢰해요.\n\n출국일에는 공항 MAQIS 검역소에서 서류와 반려동물을 최종 확인해요.',
+      '말레이시아 출국 전 수출 검역을 받고 수출 허가와 수의 건강증명서(VHC)를 받으세요.\n\n반려동물을 데리고 거주 지역의 주(州) DVS 지청에 방문해 검사를 받고 VHC를 발급받아요. 수출 허가는 MAQIS에서 받아요.\n\n두 서류 모두 E-permit 시스템으로 신청해요. 현지 계정 등록이 필요해서 보통 현지 에이전트에 의뢰해요.\n\n출국일에는 공항 MAQIS 검역소에서 서류와 반려동물을 최종 확인해요.',
     doneSummary: '말레이시아 수출 검역을 받았어요.',
     cardLine: '말레이시아 수출 검역을 받으세요.',
     applicability: { destinations: ['malaysia'], species: 'all', tripType: 'round' },
