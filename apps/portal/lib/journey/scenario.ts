@@ -353,6 +353,78 @@ const PASSED_UNCONFIRMED_MSG =
 const RECORD_PASSED_MSG = '예정일이 지났습니다. 완료 버튼을 누르거나 날짜를 변경하세요.'
 
 /**
+ * 절차검증(주의·안내 룰)용 데이터 뷰 — 실제 기록 + 예정(*_scheduled)을 합친다.
+ *
+ * 예정은 보호자가 실제로 잡아둔 예약이라, 앞 단계(접종일 등)를 나중에 수정해 계획이
+ * 어긋나면 주의로 표면화해야 한다(2026-07-25 사용자 결정 — 광견병만 합치던 것을 전체로).
+ * 입력 차단(저장 거부)과 같은 룰이 같은 데이터를 보게 되는 효과. 이 합본은 portal 검증
+ * 계산에만 쓰인다 — 완료판정(resolveDone)·펫무브워크·PDF 는 계속 실제 기록만 본다.
+ *
+ * 변경이 없으면 원본 객체를 그대로 반환(식별자 보존 — 호출부가 caseRow 재구성 생략).
+ */
+function mergeScheduledForChecks(data: Record<string, unknown>): Record<string, unknown> {
+  let out = data
+  const ensure = (): Record<string, unknown> => {
+    if (out === data) out = { ...data }
+    return out
+  }
+  // 광견병 — 회차 순서가 얽혀 전용 병합(날짜순 정렬) 사용.
+  if (Array.isArray(data.rabies_dates_scheduled) && (data.rabies_dates_scheduled as unknown[]).length > 0) {
+    ensure().rabies_dates = mergeRabiesDatesRaw(data)
+  }
+  const dateOfEntry = (e: unknown): string =>
+    typeof e === 'string'
+      ? e.slice(0, 10)
+      : e && typeof e === 'object' && typeof (e as Record<string, unknown>).date === 'string'
+        ? ((e as Record<string, unknown>).date as string).slice(0, 10)
+        : ''
+  // 단일 문자열 예정 → 대응 배열에 entry 로 병합(같은 날짜 있으면 skip).
+  const mergeDateInto = (arrKey: string, schedKey: string) => {
+    const s = data[schedKey]
+    if (typeof s !== 'string' || s.length < 10) return
+    const d = s.slice(0, 10)
+    const src = out[arrKey] ?? data[arrKey]
+    const arr = Array.isArray(src) ? (src as unknown[]) : []
+    if (arr.some((e) => dateOfEntry(e) === d)) return
+    ensure()[arrKey] = [...arr, { date: d }]
+  }
+  mergeDateInto('general_vaccine_dates', 'general_vaccine_dates_scheduled')
+  mergeDateInto('external_parasite_dates', 'external_parasite_dates_scheduled')
+  mergeDateInto('internal_parasite_dates', 'internal_parasite_dates_scheduled')
+  // 항체 1회차 예정 — 첫 slot 이 shell(검사기관만, date 없음)이면 거기에 채우고, 아니면 앞에 추가.
+  {
+    const s = data.rabies_titer_scheduled
+    if (typeof s === 'string' && s.length >= 10) {
+      const d = s.slice(0, 10)
+      const src = out.rabies_titer_records ?? data.rabies_titer_records
+      const arr = Array.isArray(src) ? [...(src as unknown[])] : []
+      if (!arr.some((e) => dateOfEntry(e) === d)) {
+        const first = arr[0]
+        if (first && typeof first === 'object' && !(first as Record<string, unknown>).date) {
+          arr[0] = { ...(first as Record<string, unknown>), date: d }
+        } else {
+          arr.unshift({ date: d })
+        }
+        ensure().rabies_titer_records = arr
+      }
+    }
+  }
+  // 추가 채혈 예정 — 뒤에 추가.
+  mergeDateInto('rabies_titer_records', 'rabies_titer_extra_scheduled')
+  // 스칼라 예정(칩 시술·검진) — 실제 값이 비어 있을 때만 채움.
+  const mergeScalar = (key: string, schedKey: string) => {
+    const s = data[schedKey]
+    if (typeof s !== 'string' || s.length < 10) return
+    const cur = data[key]
+    if (typeof cur === 'string' && cur) return
+    ensure()[key] = s.slice(0, 10)
+  }
+  mergeScalar('microchip_implant_date', 'microchip_implant_date_scheduled')
+  mergeScalar('vet_visit_date', 'vet_visit_date_scheduled')
+  return out
+}
+
+/**
  * 어느 step 에도 매핑하지 않았지만, '추가 백신·추가 검사' advisory step 의 situational 안내가
  * 같은 조건을 더 정확한 맥락에서 전달하므로 상단 case-level '주의' 배너로는 띄우지 않는 체크.
  *
@@ -456,13 +528,13 @@ export function buildJourney(
   if (ctx.destinationKey) {
     // 다중 목적지 케이스에서 by_dest 조회를 위해 destination 토큰 전달 (caseRow.destination
     // 그대로 — 단일 목적지면 그 값, 다중이면 read 시 헬퍼가 토큰을 파싱).
-    // 고객 절차검증은 실제 + 예정(미래 계획)을 합친 뷰로 — 고객이 잡아둔 계획(2차/추가)도 체인·
-    // 간격 검증을 받게. 완료판정(resolveDone)은 실제 rabies_dates 만 봐서 미래로 안 완료된다.
+    // 고객 절차검증은 실제 + 예정(*_scheduled 전체)을 합친 뷰로 — 고객이 잡아둔 계획(접종·
+    // 채혈·구충·검진 예정)도 체인·간격·순서 검증을 받게(2026-07-25 광견병만 → 전체 확장).
+    // 완료판정(resolveDone)은 실제 기록만 봐서 미래로 안 완료된다.
     const checksData = (caseRow.data ?? {}) as Record<string, unknown>
+    const mergedChecksData = mergeScheduledForChecks(checksData)
     const checksCaseRow =
-      Array.isArray(checksData.rabies_dates_scheduled) && checksData.rabies_dates_scheduled.length > 0
-        ? { ...caseRow, data: { ...checksData, rabies_dates: mergeRabiesDatesRaw(checksData) } }
-        : caseRow
+      mergedChecksData === checksData ? caseRow : { ...caseRow, data: mergedChecksData }
     const all = runChecksForCase(ctx.destinationKey, {
       caseRow: checksCaseRow,
       destination: caseRow.destination,
