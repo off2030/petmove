@@ -1321,10 +1321,14 @@ export const STEP_DESTINATION_OVERRIDES: Record<
           'sg.departure-within-12months-of-titer',
         ],
       },
+      // 구충은 출국 2~7일 전(출국 직전)이라 임상검사(vet-visit, order 110) 바로 위로 옮긴다
+      //   (기본 order 80/90 → 106/108). 싱가포르 전용 order override.
       'external-parasite': {
+        order: 106,
         validationIds: ['sg.external-parasite-2to7days-before-departure'],
       },
       'internal-parasite': {
+        order: 108,
         validationIds: ['sg.internal-parasite-2to7days-before-departure'],
       },
     },
