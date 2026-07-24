@@ -6,7 +6,6 @@ import type { ProcedureCheck } from './types'
 import {
   addYears,
   daysBetween,
-  evaluateRabiesAgeConservative,
   findRabiesValidityBreaks,
   matchBannedBreed,
   readBreed,
@@ -39,12 +38,12 @@ import { msgMicrochipBeforeGeneralVaccine, msgMicrochipBeforeRabies, msgRabiesPr
 export const SG_CHECKS: ProcedureCheck[] = [
   // ── 광견병 ──
   {
-    id: 'sg.rabies-prime-after-91days-old',
+    id: 'sg.rabies-prime-after-12weeks',
     country: 'singapore',
     category: '광견병',
-    title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
+    title: '광견병 1차 접종 생후 12주(84일) 이상',
     description:
-      'NParks/AVS 는 "제조사 권장"으로만 표기되어 정량 기준 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월(`addMonths(birth, 3)`) 둘 다 충족 필요. 출생일에 따라 어느 쪽이 더 엄격한지 달라지므로 AND 결합.',
+      '광견병 1차 접종은 생후 최소 12주(84일) 이후. NParks Schedule III 조건 PDF — 광견병은 "제조사 권장"(라벨 통상 12주) + 유일한 연령 요건 "animal must be at least 12 weeks of age at the time of export". 태국·필리핀과 동일 기준(구 91일 AND 3개월 과보수값 정정, 2026-07-24).',
     severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
@@ -54,22 +53,16 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      const ev = evaluateRabiesAgeConservative(birth, first.date)
-      if (ev.ageInDays === null) return SKIP
-      if (!ev.ok) {
-        const reason =
-          ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령으로 91일에 미달해요`
-            : ev.failedRule === 'calendar3m'
-              ? `접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
-              : `생후 ${ev.ageInDays}일령이며 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
+      const age = daysBetween(birth, first.date)
+      if (age === null) return SKIP
+      if (age < 84) {
         return {
           ok: false,
-          message: msgRabiesPrimeMinAge('91일'),
+          message: msgRabiesPrimeMinAge('84일(12주)'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${ev.ageInDays}일령 + 캘린더 3개월(${ev.calendar3mThreshold}) 충족.` }
+      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${age}일령.` }
     },
   },
   {

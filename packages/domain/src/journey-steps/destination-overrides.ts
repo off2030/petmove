@@ -1256,9 +1256,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     key: 'singapore',
     label: '싱가포르',
     rabiesDescription:
-      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 3개월이 지난 후에 접종해야 해요.\n불활화 또는 재조합 백신만 인정돼요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
+      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
     rabiesValidationIds: [
-      'sg.rabies-prime-after-91days-old',
+      'sg.rabies-prime-after-12weeks',
       'sg.microchip-before-rabies',
       'sg.rabies-booster-within-prime-validity',
       'sg.rabies-valid-until-on-departure',

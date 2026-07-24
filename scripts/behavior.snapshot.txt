@@ -843,9 +843,7 @@
 
 ▸ singapore (싱가포르)
    입력불가 0건
-   주의·차단 1건
-     - sg.rabies-prime-after-91days-old [info]
-         광견병 접종은 생후 91일이 지나서 할 수 있어요.
+   주의·차단 0건
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -4675,10 +4673,10 @@
 
 ▸ singapore (싱가포르)
    입력불가 1건
-     ✕ 광견병 1차 최소 일령: 광견병 접종은 생후 3개월이 지나서 할 수 있어요
+     ✕ 광견병 1차 최소 일령: 광견병 접종은 생후 84일(12주)이 지나서 할 수 있어요
    주의·차단 1건
-     - sg.rabies-prime-after-91days-old [info]
-         광견병 접종은 생후 91일이 지나서 할 수 있어요.
+     - sg.rabies-prime-after-12weeks [info]
+         광견병 접종은 생후 84일(12주)이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
      ▸ microchip: 마이크로칩 번호를 입력하세요.

@@ -714,11 +714,12 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     archetype: 'sea-permit',
     rabies: {
       doses: 1,
-      // NParks 정량 미명시("제조사 권장") → 보수적 생후 91일 AND 캘린더 3개월(sg.ts 룰과 동일).
-      minAgeDays: 91,
-      minAgeMonths: 3,
-      minAgeLabel: '생후 3개월',
-      vaccineTypeLine: '불활화 또는 재조합 백신만 인정돼요.',
+      // ✅ 규정 기준 = 생후 12주(84일). NParks Schedule III 조건 PDF: 광견병은 "제조사 권장"
+      //   (라벨 통상 12주) + 유일한 연령 요건 "animal must be at least 12 weeks of age at the
+      //   time of export". 태국·필리핀과 동일 기준으로 통일(구 91일 AND 3개월은 규정보다
+      //   엄격한 과보수값이었다, 2026-07-24 원문 재확인).
+      minAgeDays: 84,
+      minAgeLabel: '생후 12주(84일)',
       validityLine: '입국할 때 면역 유효기간이 남아있어야 해요.',
     },
     // ✅ 항체검사(RNATT) = 싱가포르 **입국 요건**. 접종 28일 후 채혈, 출국 90일 전·12개월 이내,
