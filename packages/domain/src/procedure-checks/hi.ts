@@ -299,9 +299,11 @@ export const HI_CHECKS: ProcedureCheck[] = [
     id: 'hi.tick-treatment-within-14days',
     country: COUNTRY,
     category: '구충',
-    title: '진드기 처치는 출국 14일 이내 (long-acting product)',
+    title: '외부구충은 출국 14일 이내 (13일 전 이후)',
+    // 고객 메시지는 멕시코·브라질·UAE 문형 통일(특정 기생충·제품 미지목). 상세(장시간 작용
+    // 진드기 제품·Revolution 불가·건강증명서 기재)는 staff 설명에 보존(사용자 지정 2026-07-23).
     description:
-      '도착일 기준 14일 이내(`≤13`) 장시간 작용 진드기 구제 (Revolution 불가, Frontline/Bravecto 등 tick label 제품). 제품명·날짜는 건강증명서에 기재. (HDOA Step 6: "within 14 days of arrival")',
+      '외부구충(벼룩·진드기) 처치는 도착일 기준 14일 이내(`≤13`). 장시간 작용 진드기 제품(Revolution 불가, Frontline/Bravecto 등 tick label) + 제품명·날짜를 건강증명서에 기재. (HDOA Checklist 1 Step 6 #4: "within 14 days of arrival")',
     severity: 'info',
     addedAt: '2026-05-06',
     // 처치일→출국 경과 일수가 정보 자체라 날짜 표기 허용(jp.ts 4개 룰과 같은 판단).
@@ -317,18 +319,18 @@ export const HI_CHECKS: ProcedureCheck[] = [
       if (days < 0) {
         return {
           ok: false,
-          message: `진드기 처치일(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.`,
+          message: '외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.',
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
       if (days > 13) {
         return {
           ok: false,
-          message: `최근 진드기 처치(${latest.date})부터 출국(${dep})까지 ${days}일이에요. 출국일 포함 14일 이내(13일 전부터)여야 해요.`,
+          message: '외부 기생충 치료는 출국 14일 이내에 해야 해요.',
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `최근 진드기 처치(${latest.date}) → 출국(${dep}): ${days}일.` }
+      return { ok: true, message: `외부 기생충 치료(${latest.date}) → 출국일(${dep}): ${days}일.` }
     },
   },
 
