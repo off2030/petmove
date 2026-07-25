@@ -60,6 +60,9 @@ export interface JapanResult {
   korea_to_japan: FlightEntry
   /** 일본 → 한국 귀국편. (구 'outbound') */
   japan_to_korea: FlightEntry
+  /** 일본 출국(수출)검역 예약 — 일본 동물검역소에서 귀국 전 받는 검역. */
+  export_quarantine_date: string | null
+  export_quarantine_time: string | null
   email: string | null
   address_overseas: string | null
   certificate_no: string | null
@@ -201,10 +204,12 @@ const SCHEMAS: { [C in Country]: Record<string, unknown> } = {
   japan: {
     type: 'object',
     additionalProperties: false,
-    required: ['korea_to_japan', 'japan_to_korea', 'email', 'address_overseas', 'certificate_no'],
+    required: ['korea_to_japan', 'japan_to_korea', 'export_quarantine_date', 'export_quarantine_time', 'email', 'address_overseas', 'certificate_no'],
     properties: {
       korea_to_japan: FLIGHT_ENTRY_SCHEMA,
       japan_to_korea: FLIGHT_ENTRY_SCHEMA,
+      export_quarantine_date: nullable(),
+      export_quarantine_time: nullable(),
       email: nullable(),
       address_overseas: nullable(),
       certificate_no: nullable(),
@@ -320,6 +325,8 @@ Worked example — input:
   In Q&A format, ONLY use the ANSWER (after colon), not the question choices.
   If transport given for one flight but not the other, apply the same to both.
 - If only one flight is found, put it in "korea_to_japan" if it departs Korea, or "japan_to_korea" if it departs Japan; leave the other all nulls.
+- export_quarantine_date / export_quarantine_time: appointment for the JAPAN-side export quarantine inspection — done at a Japanese Animal Quarantine Service (動物検疫所) counter before the pet returns to Korea. Korean labels: "일본 출국 검역", "일본 수출검역", "출국검역 예약", "검역 예약". Date YYYY-MM-DD (infer year as the next upcoming if missing), time 24h "HH:mm" (e.g. "오후 1시 30분" → "13:30"; if only a vague time like "오후" is given, return null time).
+  ONLY extract when the quarantine clearly happens in JAPAN (mentions 일본, a Japanese airport, or the return trip). If it refers to the KOREAN departure quarantine at ICN before flying to Japan, return null for both.
 - email: any email address in the input.
 - address_overseas: destination address in Japan, in English. Romanize Japanese if needed.
 - certificate_no: Export Quarantine Certificate number (수출검역증명서/輸出検疫証明書 / 検疫証明書番号) if present.
