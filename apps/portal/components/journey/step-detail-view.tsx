@@ -29,6 +29,7 @@ import {
   validateSgDepartureVsQuarantineReservation,
   validateSgGstPermitDate,
   validateSgParasiteWindow,
+  validateHiTickWindow,
   validateSgQuarantineReservationFiled,
   validateSgReservationVsDeparture,
   validateEntryDateForDestination,
@@ -1350,6 +1351,16 @@ export function StepDetailView({
         for (const e of parasite) {
           if (!e.date) continue
           const err = validateSgParasiteWindow(e.date, dep, label)
+          if (err) return err
+        }
+      }
+      // 하와이 — 진드기(외부구충)는 도착 14일 이내(HDOA). 싱가포르와 같은 저장 거부 모델.
+      // 도메인 단일 출처(validateHiTickWindow) — hi.tick 안내 룰과 같은 함수.
+      if (destinationKey === 'hawaii' && isExternalParasite) {
+        const dep = (caseRow?.departure_date ?? '').slice(0, 10)
+        for (const e of parasite) {
+          if (!e.date) continue
+          const err = validateHiTickWindow(e.date, dep)
           if (err) return err
         }
       }

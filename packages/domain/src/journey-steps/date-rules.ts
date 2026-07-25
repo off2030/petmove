@@ -576,6 +576,20 @@ export function validateSgParasiteWindow(
 }
 
 /**
+ * 하와이 — 진드기(외부구충) 처치는 도착 14일 이내(gap 0~13)에 해야 함. HDOA Checklist 1 Step 6 #4.
+ * client(처치일 입력 시 저장 거부 — 싱가포르 2~7일 창과 같은 모델)·procedure-check
+ * (hi.tick-treatment-within-14days 안내) 공용 단일 출처. 출국일(도착 proxy) 미입력이면 통과.
+ */
+export function validateHiTickWindow(treatDate: string, departureDate: string): string | null {
+  if (!treatDate || !departureDate) return null
+  const gap = daysBetween(treatDate.slice(0, 10), departureDate.slice(0, 10))
+  if (gap === null) return null
+  if (gap < 0) return '외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.'
+  if (gap > 13) return '외부 기생충 치료는 출국 14일 이내에 해야 해요.'
+  return null
+}
+
+/**
  * 싱가포르 — 국경 검사(CAPQ 도착 검사)는 도착 최소 5일 전에 예약해야 함.
  * (NParks "Book an inspection ... five days before the animal's arrival, or earlier."
  * 당일 도착 노선이라 출발일 앵커 = 도착일 근사.) 도착 이후 예약(간격 음수)도 같은 위반.
