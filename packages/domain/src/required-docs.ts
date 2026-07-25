@@ -757,14 +757,16 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
     {
       id: 'sg-export-quarantine-cert',
-      name: '싱가포르 수출 건강증명서(AVS 인증)',
+      // 2026-07-25 사용자 결정: 실제 받는 서류 두 개(수출 라이선스 + AVS 인증 건강증명서)가
+      //   이름에 드러나게. 문구도 확정 카드 문구와 정합('지정 민간 수의사' 표현 폐기).
+      name: '싱가포르 수출 라이선스·건강증명서(AVS 인증)',
       source: '싱가포르 수의당국(NParks/AVS)',
       kind: 'step',
       stepRef: 'sg-export-quarantine',
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '싱가포르 수출 검역 후 받는 서류예요.\n\n지정 민간 수의사가 작성한 건강증명서를 AVS 관용 수의사가 인증해요. 수출 라이선스와 함께 준비해요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요. 앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '싱가포르 수출 검역 후 받는 서류예요.\n\n동물병원에서 발급받은 건강증명서를 AVS 정부 수의사가 인증해요. 수출 라이선스와 함께 발급돼요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요. 앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'sg-export-quarantine',
     },
     {

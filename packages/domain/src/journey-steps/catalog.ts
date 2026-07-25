@@ -1560,7 +1560,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '수출 라이선스와 AVS 인증 건강증명서 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '싱가포르 수출 건강증명서(AVS 인증)',
+    attachmentLabel: '싱가포르 수출 라이선스·건강증명서(AVS 인증)',
     links: [
       { url: 'https://www.gobusiness.gov.sg/', label: '수출 라이선스·건강증명서 인증 신청 (GoBusiness)' },
       {
@@ -2204,8 +2204,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 그럼에도 카드를 두는 이유: **한국이 수출국 정부 증명을 요구**하므로(APQA, EU 만 예외)
     //   한국행 보호자에겐 배서가 실질적으로 필수다. 그리고 예약제·결제 3일 전 마감·비환불·
     //   출국 후 불가라는 일정 제약이 있어 일정 관리상 반드시 노출해야 한다.
-    title: '캐나다 수출 증명서 배서',
-    shortLabel: '배서',
+    // 2026-07-25 사용자 결정: 카드명을 EU·대만처럼 '귀국 서류 준비' 가족으로 — '수출 증명서
+    //   배서'는 절차명으로는 정확했지만 25개 귀국 카드 중 혼자 낯선 이름이었다. 내용(배서
+    //   절차 + 대체서류 안내)은 그대로다.
+    title: '귀국 서류 준비',
+    shortLabel: '귀국서류',
     // ⚠️ 캐나다는 **모델이 다르다** — 정부가 검사·발급하는 게 아니라, 개인 수의사가 작성한
     //   증명서를 CFIA 공식 수의사가 **배서(endorse)** 한다. 그래서 핵심 액션이 '기관 방문
     //   신청'이 아니라 **'예약 + 사전 결제'** 다. 몽골·우즈베키스탄 카드와 문형을 달리한다.
@@ -2234,7 +2237,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '캐나다 정부가 배서한 수출 증명서 또는 대체 서류를 준비하세요.\n\n현지 동물병원에서 한국행 수출 증명서를 작성받은 뒤, 검역기관(CFIA) 공식 수의사의 배서를 받아요.\n배서는 예약제예요. 온라인 결제를 예약일 3일 전까지 마쳐야 하고, 캐나다를 떠난 뒤에는 받을 수 없어요.\n\n다음 서류가 있다면 캐나다 배서를 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
     // 완료·일정 문구는 EU(eu-export-cert)·대만과 같은 '귀국 서류'로 — 배서가 무조건
     // 필수인 게 아니라 대체서류로 갈음될 수 있는 부류라 '배서를 받으세요'로 단정하지 않는다.
-    // (title 은 '캐나다 수출 증명서 배서' 유지 — 실제로 하는 절차의 이름이라 정확하다.)
     doneSummary: '귀국 서류를 준비했어요.',
     cardLine: '귀국 서류를 준비하세요.',
     applicability: { destinations: ['canada'], species: 'all', tripType: 'round' },
