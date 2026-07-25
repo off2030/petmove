@@ -3573,15 +3573,18 @@
   desc:
       싱가포르 출국 전 수출 라이선스를 받고, AVS 정부 수의사가 인증한 수의 건강증명서를 준비하세요.
       
-      지정 민간 수의사에게 검진을 받고 한국이 요구하는 건강증명서 서식을 작성·서명받아요.
+      동물병원에서 검진을 받고 건강증명서를 발급받아요.
       
       GoBusiness 포털로 수출 라이선스와 건강증명서 인증을 신청해요. AVS 관용 수의사가 최종 인증해요.
+      
+      건강증명서 원본과 접종기록은 AVS 서류 제출함(싱가포르 보타닉 가든 Raffles Building 1층, 24시간 이용)에 실물로 제출해요. 인증까지 2영업일 걸려요.
       
       수출 라이선스는 출국 90일 이내에 신청하고, 발급일로부터 90일간 유효해요.
   첨부안내: 수출 라이선스와 AVS 인증 건강증명서 사본을 사진·PDF로 보관하세요.
   저장이름: 싱가포르 수출 건강증명서(AVS 인증)
   links:
       수출 라이선스·건강증명서 인증 신청 (GoBusiness)  →  https://www.gobusiness.gov.sg/
+      수출 절차·서류 제출처 안내 (AVS)  →  https://avs.nparks.gov.sg/pets/importing-exporting-a-pet/export/dogs-and-cats/
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역

@@ -1533,16 +1533,17 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   },
 
   // ── 싱가포르 수출 검역 (왕복 — 귀국 출국 시, 싱가포르 전용) ───────
-  // NParks/AVS 수출 절차(2026-07-24 조사): ① 수출 라이선스(GoBusiness, 출국 90일 이내·유효
-  //   90일) ② 한국 요구 건강증명서를 지정 민간 수의사가 작성 → **AVS 관용 수의사(정부 수의사)
-  //   최종 인증(endorse)**. EU식 자가 갈음이 아니라 정부 인증이라 한국 귀국에 강제(강제 O).
+  // NParks/AVS 수출 절차(2026-07-24 조사, 2026-07-25 재확인): ① 수출 라이선스(GoBusiness, 출국
+  //   90일 이내·유효 90일) ② 건강증명서를 면허 민간 수의사(일반 동물병원)가 작성 → 원본을 AVS
+  //   서류함(보타닉 가든 Raffles Building 1층, 24h)에 실물 제출 → **AVS 관용 수의사(정부 수의사)
+  //   최종 인증(endorse), 2영업일**. EU식 자가 갈음이 아니라 정부 인증이라 한국 귀국에 강제(강제 O).
   {
     id: 'sg-export-quarantine',
     category: 'document',
     title: '싱가포르 수출 검역',
     shortLabel: '수출',
     description:
-      '싱가포르 출국 전 수출 라이선스를 받고, AVS 정부 수의사가 인증한 수의 건강증명서를 준비하세요.\n\n지정 민간 수의사에게 검진을 받고 한국이 요구하는 건강증명서 서식을 작성·서명받아요.\n\nGoBusiness 포털로 수출 라이선스와 건강증명서 인증을 신청해요. AVS 관용 수의사가 최종 인증해요.\n\n수출 라이선스는 출국 90일 이내에 신청하고, 발급일로부터 90일간 유효해요.',
+      '싱가포르 출국 전 수출 라이선스를 받고, AVS 정부 수의사가 인증한 수의 건강증명서를 준비하세요.\n\n동물병원에서 검진을 받고 건강증명서를 발급받아요.\n\nGoBusiness 포털로 수출 라이선스와 건강증명서 인증을 신청해요. AVS 관용 수의사가 최종 인증해요.\n\n건강증명서 원본과 접종기록은 AVS 서류 제출함(싱가포르 보타닉 가든 Raffles Building 1층, 24시간 이용)에 실물로 제출해요. 인증까지 2영업일 걸려요.\n\n수출 라이선스는 출국 90일 이내에 신청하고, 발급일로부터 90일간 유효해요.',
     doneSummary: '싱가포르 수출 검역을 받았어요.',
     cardLine: '싱가포르 수출 검역을 받으세요.',
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'round' },
@@ -1562,6 +1563,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentLabel: '싱가포르 수출 건강증명서(AVS 인증)',
     links: [
       { url: 'https://www.gobusiness.gov.sg/', label: '수출 라이선스·건강증명서 인증 신청 (GoBusiness)' },
+      {
+        url: 'https://avs.nparks.gov.sg/pets/importing-exporting-a-pet/export/dogs-and-cats/',
+        label: '수출 절차·서류 제출처 안내 (AVS)',
+      },
     ],
   },
 
