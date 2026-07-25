@@ -188,6 +188,10 @@ export const HI_CHECKS: ProcedureCheck[] = [
       const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
+      // 항체(FAVN) 검사가 입력돼 있으면 이 룰은 안내하지 않는다 — 채혈은 접종 이후이고 검체
+      // 수령 후 30일을 더 기다리므로, 접종+31일은 FAVN 30일 대기에 완전히 포함된다(중복 안내).
+      // 항체 미입력 케이스에서만 단독 안전망으로 남는다.
+      if (readTiterEntries(caseRow).length > 0) return SKIP
 
       const latest = rabies[rabies.length - 1]
       const days = daysBetween(latest.date, dep)
@@ -195,7 +199,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
       if (days < 31) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})부터 출국(${dep})까지 ${days}일이에요. 31일 이상이어야 해요.`,
+          message: '최근 광견병 접종일로부터 31일이 지나야 입국할 수 있어요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -266,21 +270,22 @@ export const HI_CHECKS: ProcedureCheck[] = [
       const newest = [...titers].sort((a, b) => basisOf(b).localeCompare(basisOf(a)))[0]
       const newestBasis = basisOf(newest)
       const days = daysBetween(newestBasis, dep)
-      const upper = addMonths(newestBasis, 36)
       const offending: string[] = ['departure_date']
       for (const t of titers) {
         if (t.received_date) offending.push(`rabies_titer_records[${t.originalIndex}].received_date`)
         else offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       }
-      const label = newest.received_date ? '검체 수령일' : 'FAVN 채혈일'
+      // 하와이 기준일은 '검체가 검사기관에 도착한 날'이고, 앱은 그 날짜를 입력받지 않아
+      // 채혈일을 proxy 로만 쓴다 — 계산된 특정 날짜를 단정하지 않고 요건만 forward-looking 으로
+      // 안내한다(검사일 기준 아님·2026-07-25 사용자 지정). 상한(36개월)은 재검사 안내.
       const reason =
         days === null
-          ? '날짜 형식이 올바르지 않아요.'
+          ? '광견병 항체 검사 날짜를 확인하세요.'
           : days < 0
-            ? `${label}(${newestBasis})이 출국일(${dep})보다 이후예요.`
+            ? '광견병 항체 검사일이 입국일보다 늦어요. 날짜를 확인하세요.'
             : days < 30
-              ? `${label}(${newestBasis})부터 출국(${dep})까지 ${days}일로 30일에 미달하여 대기 기간이 부족해요.`
-              : `${label}(${newestBasis})에 36개월을 더한 날(${upper})이 출국일(${dep})보다 빨라 36개월을 초과하므로 추가 검사가 필요해요.`
+              ? '광견병 항체 검사 검체가 검사기관에 도착한 날로부터 30일이 지나야 입국할 수 있어요.'
+              : '광견병 항체 검사 후 36개월이 지나 재검사가 필요해요.'
       return {
         ok: false,
         message: reason,

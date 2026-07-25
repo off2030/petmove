@@ -888,6 +888,11 @@ export function validateEuEntryDate(v: string, ctx: DateRuleContext): string | n
       return !!earliest && earliest <= v
     })
     if (ok) return null
+    // 기준일이 검체 수령일(하와이 — 앱 미입력, 채혈일 proxy)인 경우엔 계산된 특정 날짜를
+    // 단정하지 않고 요건만 안내한다(hi.favn '안내'와 같은 문구 — 검사일 기준 아님).
+    if (DESTINATION_OVERRIDES[daysKey]?.titer?.entryWaitAfterTiter?.basisReceivedDate) {
+      return `광견병 항체 검사 검체가 검사기관에 도착한 날로부터 ${days}일이 지나야 입국할 수 있어요.`
+    }
     const earliestEntry = addDays(titerDates[0], days)
     return earliestEntry
       ? `검사일로부터 ${days}일 후인 ${fmt(earliestEntry)}에 입국할 수 있어요.`

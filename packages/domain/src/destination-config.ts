@@ -128,8 +128,13 @@ export interface DestinationTiterProfile {
   labCodes?: string[]
   /** 백신(최종 접종) 후 채혈까지 최소 대기(일). 예: EU 30. */
   minDaysAfterVaccine?: number
-  /** 채혈 후 입국까지 대기. 예: 일본 { days: 180 }, EU { months: 3 }. */
-  entryWaitAfterTiter?: { days?: number; months?: number }
+  /**
+   * 채혈 후 입국까지 대기. 예: 일본 { days: 180 }, EU { months: 3 }.
+   * `basisReceivedDate` = 규정 기준일이 **검체 수령일**(하와이 FAVN)인데 앱이 그 날짜를 입력받지
+   * 않아 채혈일을 proxy 로만 쓰는 경우 true. 저장거부·안내 메시지가 계산된 특정 날짜를 단정하지
+   * 않고 요건만 forward-looking 으로 표시한다(검사일 기준 아님).
+   */
+  entryWaitAfterTiter?: { days?: number; months?: number; basisReceivedDate?: boolean }
 }
 
 export interface DestinationOverride {
@@ -774,7 +779,12 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     //   entryWaitAfterTiter.days:30 = 채혈 후 30일 대기 → 입국일 저장 거부(validateEuEntryDate
     //   제네릭이 TITER_ENTRY_WAIT_DAYS 로 자동 파생 + client·server 양쪽 커버). 싱가포르 90일과
     //   같은 자리 — 전용 함수 손수 배선 대신 프로파일 한 줄로 선언한다(2026-07-25).
-    titer: { need: 'entry', entryValidityMonths: 36, entryWaitAfterTiter: { days: 30 } },
+    titer: {
+      need: 'entry',
+      entryValidityMonths: 36,
+      // 기준일은 검체 수령일(앱 미입력) — 계산 날짜 미표시. days:30 은 채혈일 proxy 하한.
+      entryWaitAfterTiter: { days: 30, basisReceivedDate: true },
+    },
     appSupported: true,
     extraSection: 'hawaii',
     extraFields: [
