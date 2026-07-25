@@ -27,6 +27,7 @@ import {
   validateSgQuarantineReservationDate,
   validateSgDepartureVsQuarantineReservation,
   validateSgQuarantineReservationFiled,
+  validateSgReservationVsDeparture,
   validateEntryDateForDestination,
   validateEchinococcusWindow,
   validatePhInternalParasiteWindow,
@@ -1355,7 +1356,17 @@ export function StepDetailView({
         titerDates,
       )
       if (filedErr) return filedErr
-      return validateSgQuarantineReservationDate(importPermit.reservationDate.trim(), titerDates)
+      const windowErr = validateSgQuarantineReservationDate(
+        importPermit.reservationDate.trim(),
+        titerDates,
+      )
+      if (windowErr) return windowErr
+      // 출국일이 먼저 입력된 경우의 역방향 정합 — 예약일은 출국일 당일/다음 날이어야 한다.
+      // (반대 순서는 항공권 카드의 validateSgDepartureVsQuarantineReservation 이 차단.)
+      return validateSgReservationVsDeparture(
+        importPermit.reservationDate.trim(),
+        (caseRow?.departure_date ?? '').slice(0, 10),
+      )
     }
     // 아일랜드 사전 통지 — 통지일이 입국일 24시간(1일) 이내면 차단.
     if (step.id === 'ie-advance-notice') {

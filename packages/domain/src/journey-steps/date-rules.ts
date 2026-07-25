@@ -545,7 +545,28 @@ export function validateSgDepartureVsQuarantineReservation(
   const dep = departureDate.slice(0, 10)
   const res = reservationDate.slice(0, 10)
   if (dep === res || addDays(dep, 1) === res) return null
-  return '출국일은 계류장 예약일과 같은 날이거나 하루 전날이어야 해요. 날짜를 확인하세요.'
+  // 방향별 문구(2026-07-25 사용자안) — 항공권(출국일) 칸 관점.
+  if (dep > res) return '출국일이 격리 시작일보다 늦어요. 날짜를 확인하세요.'
+  const gap = daysBetween(dep, res)
+  return `출국일이 격리 시작일 ${gap}일 전이에요. 날짜를 확인하세요.`
+}
+
+/**
+ * 싱가포르 — 계류장(AQC) 예약일 입력 시의 역방향 정합(출국일이 먼저 입력된 경우).
+ * 같은 규칙(예약일 − 출국일 ∈ {0, 1})을 예약일 칸 관점 문구로 — 조치 대상이 눈앞의 칸이 되게.
+ * client(계류장 카드 예약일 입력 시 저장 거부) 전용 — 주의 룰은 출국일 관점(항공권 카드) 하나만.
+ */
+export function validateSgReservationVsDeparture(
+  reservationDate: string,
+  departureDate: string,
+): string | null {
+  if (!departureDate || !reservationDate) return null
+  const dep = departureDate.slice(0, 10)
+  const res = reservationDate.slice(0, 10)
+  if (dep === res || addDays(dep, 1) === res) return null
+  if (res < dep) return '예약일이 출국일보다 빨라요. 날짜를 확인하세요.'
+  const gap = daysBetween(dep, res)
+  return `예약일이 출국일 ${gap}일 이후에요. 날짜를 확인하세요.`
 }
 
 /**
