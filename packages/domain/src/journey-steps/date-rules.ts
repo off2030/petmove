@@ -110,6 +110,46 @@ export function validateJpEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
+ * 하와이 — FAVN 광견병 항체 검사 검체가 검사기관에 도착한 날(received_date, 없으면 채혈일 date)
+ * 로부터 30일이 지나야 입국 가능(HDOA Checklist 1 Step 5 대기). 일본 180일과 같은 성격의
+ * '입국일을 늦춰야만 풀리는' 대기라 저장 거부(입력 불가) 대상.
+ *
+ * 검체가 하나라도 도착 30일 이전(v ≥ basis+30)이면 통과 — 상한(36개월 초과)은 재검사로 풀리므로
+ * 여기서 막지 않고 hi.favn '주의'가 담당한다(회복 불가 아님). portal 은 received_date 입력이
+ * 없어 실제로는 채혈일 basis — hi.favn '주의'와 같은 기준이라 두 층이 어긋나지 않는다.
+ */
+export function validateHiEntryDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!matchesDestinationKey(ctx.destination, 'hawaii')) return null
+
+  const bases: string[] = []
+  const rawTiters = ctx.data.rabies_titer_records
+  if (Array.isArray(rawTiters)) {
+    for (const r of rawTiters) {
+      if (r && typeof r === 'object') {
+        const rec = r as Record<string, unknown>
+        const received = typeof rec.received_date === 'string' ? rec.received_date : ''
+        const drawn = typeof rec.date === 'string' ? rec.date : ''
+        const basis = /^\d{4}-\d{2}-\d{2}$/.test(received)
+          ? received
+          : /^\d{4}-\d{2}-\d{2}$/.test(drawn)
+            ? drawn
+            : ''
+        if (basis) bases.push(basis)
+      }
+    }
+  }
+  if (bases.length === 0) return null
+
+  // 검체 하나라도 도착 30일 이전이면 하한 충족 — 차단 안 함.
+  if (bases.some((b) => { const e = addDays(b, 30); return e !== '' && v >= e })) return null
+  // 전부 너무 최근 — 가장 이른 검체가 가장 빨리 유효해진다.
+  bases.sort()
+  const earliest = addDays(bases[0], 30)
+  return `광견병 항체 검사 검체가 검사기관에 도착한 날로부터 30일 후인 ${fmt(earliest)}에 하와이에 입국할 수 있어요.`
+}
+
+/**
  * 대만 — 채혈일이 **직전 합격 검사의 180일~1년 사이**면 180일 대기가 면제된다(체인 유지).
  *
  * APHIA 문답집(2024-02) 免隔離 情形 2:
@@ -987,6 +1027,9 @@ export function validateEntryDateForDestination(
   const entryOrDeparture = entry || departure
   return (
     validateJpEntryDate(entry, ctx) ??
+    // 하와이 — FAVN 30일 대기(일본 180일과 같은 자리). SIMPLE 항공권이라 도착=출발 한 값이
+    // entryOrDeparture 로 온다.
+    validateHiEntryDate(entryOrDeparture, ctx) ??
     validateThEntryDate(outbound, ctx) ??
     // 말레이시아·인도네시아는 전용 함수를 두지 않는다(2026-07-22 정리) — 말레이시아 30일은
     // 프로파일 entryWaitDaysAfterVaccine 파생(validateRabiesEntryWait)이 처리하고,

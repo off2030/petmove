@@ -26,6 +26,7 @@ import {
   parseDestinations,
   todayKst,
   validateEuEntryDate,
+  validateHiEntryDate,
   validateJpEntryDate,
   validatePhEntryDate,
   validateThEntryDate,
@@ -2888,6 +2889,7 @@ export async function updateCaseInfoFields(
       }
       const entryErr =
         validateJpEntryDate(effective.departure_date.trim(), ruleCtx) ??
+        validateHiEntryDate(effective.departure_date.trim(), ruleCtx) ??
         validateThEntryDate(effective.departure_date.trim(), ruleCtx) ??
         validatePhEntryDate(effective.departure_date.trim(), ruleCtx) ??
         validateEuEntryDate(effective.departure_date.trim(), ruleCtx) ??
