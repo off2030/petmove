@@ -172,8 +172,9 @@ const SIMPLE_FLIGHT_DESTINATIONS: readonly string[] = [
   'uzbekistan', 'vietnam',
   // 절차는 있으나 펫무브가 대행하지 않는 목적지(2026-07-25 사용자 결정) — 신청은 보호자/
   // 현지 에이전트 몫이라 앱이 항공편 상세를 들고 있을 이유가 없다. 필요하면 첨부로 보관.
-  // (싱가포르도 수입허가 selfApply·국경검사 예약 보호자 직접 = 비대행 — 단순형.)
+  // 세부(상세 접기)를 받는 곳은 **일본·태국·필리핀·스위스 넷뿐**(대행 절차에 항공편 사용).
   'taiwan', 'malaysia', 'indonesia', 'uae', 'ireland', 'malta', 'israel', 'singapore',
+  'norway', 'cyprus',
 ]
 
 /**
