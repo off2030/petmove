@@ -136,6 +136,6 @@ client component 가 `@petmove/auth` 만 import 해도 Next 가 server.ts (next/
 
 **예방**: `pnpm lint:rls` 가 양방향 사이클 자동 검출. CI 가 push 마다 실행.
 
-## 라이센스
+## 라이선스
 
 비공개 / 상업용.

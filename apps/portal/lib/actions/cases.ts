@@ -1886,7 +1886,7 @@ export async function updateImportPermitFields(
 }
 
 // ── 신청형 절차 카드(신청일 + 완료/첨부) — 범용 ──────────────────────────
-// 수입 허가와 동일 모델이지만 permit_no 가 없는 카드(싱가포르 계류장 예약·강아지 라이센스).
+// 수입 허가와 동일 모델이지만 permit_no 가 없는 카드(싱가포르 계류장 예약·강아지 라이선스).
 // 클라이언트는 stepId 만 넘기고, 서버가 신뢰 목록에서 필드 이름을 결정한다(임의 키 쓰기 차단).
 const APPLICATION_STEP_SPECS: Record<string, ApplicationStepSpec> = {
   [SG_QUARANTINE_RESERVATION_APP_SPEC.attachStepId]: SG_QUARANTINE_RESERVATION_APP_SPEC,

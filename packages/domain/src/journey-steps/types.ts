@@ -92,7 +92,7 @@ export type StepDoneSignal =
   | 'has-advance-notification'     // 사전 신고 — advance_notification_date 입력 시 완료
   | 'has-import-permit'            // 수입 허가 — deriveImportPermitStatus 'done' (허가번호·첨부·완료 액션)
   | 'has-sg-quarantine-reservation' // 싱가포르 계류장(AQC) 예약 — 신청 → 발급 모델 (deriveApplicationStatus)
-  | 'has-sg-dog-licence'           // 싱가포르 강아지 라이센스 — 신청 → 발급 모델 (deriveApplicationStatus)
+  | 'has-sg-dog-licence'           // 싱가포르 강아지 라이선스 — 신청 → 발급 모델 (deriveApplicationStatus)
   | 'has-jp-export-quarantine'     // 일본 수출검역 — jp_export_quarantine_date 입력 시 완료
   | 'has-kr-export-quarantine'     // 한국 수출검역 — kr_export_quarantine_date 입력 시 완료
   | 'has-jp-import-quarantine'     // 일본 수입검역 — jp_import_quarantine_date 입력 시 완료

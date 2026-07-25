@@ -260,7 +260,7 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 싱가포르 계류장(AQC) 예약 — 수입 허가와 동일 신청 → 발급 모델(첨부·완료 처리).
       return deriveApplicationStatus(caseRow, SG_QUARANTINE_RESERVATION_APP_SPEC) === 'done'
     case 'has-sg-dog-licence':
-      // 싱가포르 강아지 라이센스 — 동일 신청 → 발급 모델.
+      // 싱가포르 강아지 라이선스 — 동일 신청 → 발급 모델.
       return deriveApplicationStatus(caseRow, SG_DOG_LICENCE_APP_SPEC) === 'done'
     case 'has-jp-export-quarantine':
       // 일본 수출검역 신청도 동일 — [[deriveJpExportQuarantineStatus]] 가 단일 출처.

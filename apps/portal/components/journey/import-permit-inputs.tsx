@@ -28,7 +28,7 @@ export function ImportPermitInputs({
   onChange: (key: keyof ImportPermitForm, next: string) => void
   /** 허가 번호 입력 노출 — step.inputs 에 permit_no 가 있을 때만(태국은 신청일만). */
   showPermitNo?: boolean
-  /** 신청일 아래 설명 — 카드별로 다르다(수입 허가 / 계류장 예약 / 강아지 라이센스). */
+  /** 신청일 아래 설명 — 카드별로 다르다(수입 허가 / 계류장 예약 / 강아지 라이선스). */
   applicationHelp?: string
   /** 신청일 아래에 부가 예약일 입력을 노출(계류장 예약 날짜 등, 정보성). 일본 수출검역 예약일 패턴. */
   reservation?: { label: string; help: string }

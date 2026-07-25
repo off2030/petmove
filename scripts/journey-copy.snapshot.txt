@@ -3447,7 +3447,7 @@
   desc:
       도착일 기준 90일 이내에 GoBusiness 포털에서 개인용 수입 허가(Licence to Import)를 신청하세요.
       
-      강아지 라이센스를 먼저 받아야 신청할 수 있어요.
+      강아지 라이선스를 먼저 받아야 신청할 수 있어요.
       외국인은 GoBusiness 이용이 어려워 현지 에이전트를 이용하는 경우가 많아요.
   첨부안내: 수입 허가증을 사진·PDF로 보관하세요.
   저장이름: 싱가포르 수입 허가증
@@ -3520,19 +3520,19 @@
       계류장 예약 (QMS)  →  https://avs.nparks.gov.sg/pets/importing-exporting-a-pet/import/quarantine-management-system/
 
 ▸ sg-dog-licence
-  title: 강아지 라이센스
-  short: 라이센스
-  card: 강아지 라이센스를 받으세요.
-  done: 강아지 라이센스를 받았어요.
+  title: 강아지 라이선스
+  short: 라이선스
+  card: 강아지 라이선스를 받으세요.
+  done: 강아지 라이선스를 받았어요.
   desc:
-      싱가포르 반려동물 라이센스 시스템(PALS)에서 강아지 라이센스를 발급받으세요.
+      싱가포르 반려동물 라이선스 시스템(PALS)에서 강아지 라이선스를 발급받으세요.
       
       수입 허가 신청 전에 먼저 받아야 해요.
       외국인은 PALS 이용이 어려워 현지 에이전트를 이용하는 경우가 많아요.
-  첨부안내: 라이센스를 사진·PDF로 보관하세요.
-  저장이름: 강아지 라이센스
+  첨부안내: 라이선스를 사진·PDF로 보관하세요.
+  저장이름: 강아지 라이선스
   links:
-      강아지 라이센스 신청 (PALS)  →  https://avs.nparks.gov.sg/pets/licensing-a-pet/applying-for-dog-and-cat-licences/applying/
+      강아지 라이선스 신청 (PALS)  →  https://avs.nparks.gov.sg/pets/licensing-a-pet/applying-for-dog-and-cat-licences/applying/
 
 ▸ sg-gst-permit
   title: 관세·GST 납부 허가

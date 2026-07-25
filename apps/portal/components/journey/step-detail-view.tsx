@@ -301,7 +301,7 @@ export function StepDetailView({
   const isGeneralVaccine = step.id === 'general-vaccine'
   const isImportPermit = step.id === 'import-permit'
   // 신청 → 발급 2단계 모델(신청일 입력=진행 중, 확인서 첨부·완료 버튼=완료). 수입 허가가 원형이고
-  // 싱가포르 계류장 예약·강아지 라이센스가 같은 모델을 공유한다. 필드 키만 다르다.
+  // 싱가포르 계류장 예약·강아지 라이선스가 같은 모델을 공유한다. 필드 키만 다르다.
   const isSgQuarantineReservation = step.id === 'sg-quarantine-reservation'
   const isSgDogLicence = step.id === 'sg-dog-licence'
   const isApplicationStep = isImportPermit || isSgQuarantineReservation || isSgDogLicence
@@ -318,7 +318,7 @@ export function StepDetailView({
     : isSgQuarantineReservation
       ? '계류장 예약을 신청한 날짜'
       : isSgDogLicence
-        ? '강아지 라이센스를 신청한 날짜'
+        ? '강아지 라이선스를 신청한 날짜'
         : ''
   const applicationReservationField = isSgQuarantineReservation ? 'sg_quarantine_reservation_date' : ''
   const applicationReservation = isSgQuarantineReservation
@@ -455,7 +455,7 @@ export function StepDetailView({
     savedGeneralVaccine.length === 0 ? [makeEmptyGeneralVaccine()] : savedGeneralVaccine,
   )
 
-  // 신청형 절차(수입 허가·싱가포르 계류장 예약·강아지 라이센스) — 신청일 + (수입 허가만)허가 번호.
+  // 신청형 절차(수입 허가·싱가포르 계류장 예약·강아지 라이선스) — 신청일 + (수입 허가만)허가 번호.
   // 스코핑 필드 — 활성 목적지로 flatten 된 caseRow 기준. permit_no 는 수입 허가 전용이라 SG
   // 카드에선 읽지 않는다(같은 싱가포르 케이스에 import-permit permit_no 가 있어도 누수 방지).
   const savedImportPermit = readImportPermitForm(
@@ -700,7 +700,7 @@ export function StepDetailView({
   const generalVaccineUpcoming =
     isGeneralVaccine &&
     generalVaccine.some((e) => typeof e.date === 'string' && e.date.length >= 10 && e.date > todayStr)
-  // 신청형 절차(수입 허가·계류장 예약·강아지 라이센스) — 신청일이 미래면 '예정일로 저장'.
+  // 신청형 절차(수입 허가·계류장 예약·강아지 라이선스) — 신청일이 미래면 '예정일로 저장'.
   const importPermitUpcoming =
     isApplicationStep &&
     importPermit.applicationDate.length >= 10 &&
@@ -2089,7 +2089,7 @@ export function StepDetailView({
       }
     })
   }
-  // 신청형 절차(수입 허가·계류장 예약·강아지 라이센스) — 사전 신고와 동일 2단계. 신청일 입력
+  // 신청형 절차(수입 허가·계류장 예약·강아지 라이선스) — 사전 신고와 동일 2단계. 신청일 입력
   // (오늘 이하) + 미완료(첨부·완료 없음) 상태에서 변경이 없으면 하단 저장 버튼이 '완료'로 전환
   // → 발급 완료(skip) 플래그 set.
   const isImportPermitInProgress =

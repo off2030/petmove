@@ -81,7 +81,7 @@ export function isAdvanceNotificationInProgressAck(caseRow: CaseRow): boolean {
  */
 /**
  * 신청 → 발급 2단계(신청일 입력=진행 중, 첨부·완료 액션=완료) 모델의 범용 spec.
- * 수입 허가(import-permit)가 원형이고, 싱가포르 계류장 예약·강아지 라이센스처럼 "신청하고
+ * 수입 허가(import-permit)가 원형이고, 싱가포르 계류장 예약·강아지 라이선스처럼 "신청하고
  * 확인서를 받는" 절차가 같은 모델을 공유한다. 필드 이름만 spec 으로 갈아끼운다.
  *
  *  - dateField     : 신청일 필드 키 (예: import_permit_application_date)
