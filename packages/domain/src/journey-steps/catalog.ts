@@ -1543,7 +1543,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '싱가포르 수출 검역',
     shortLabel: '수출',
     description:
-      '싱가포르 출국 전 수출 라이선스와 AVS 정부 수의사가 인증한 수의 건강증명서를 준비하세요.\n\n동물병원에서 검진을 받고 건강증명서를 발급받은 후 GoBusiness 포털로 수출 라이선스와 건강증명서 인증을 신청해요.\n\n건강증명서 원본은 AVS 서류 제출함(싱가포르 보타닉 가든 Raffles Building 1층, 24시간 이용)에 실물로 제출해요.\n\n2영업일 이내에 수입 라이선스와 AVS 정부 수의사가 인증한 수의 건강증명서가 발급돼요\n\n수출 라이선스는 출국 90일 이내에 신청하고, 발급일로부터 90일간 유효해요.',
+      '싱가포르 출국 전 수출 라이선스와 AVS 정부 수의사가 인증한 수의 건강증명서를 준비하세요.\n\n동물병원에서 검진을 받고 건강증명서를 발급받은 후 GoBusiness 포털로 수출 라이선스와 건강증명서 인증을 신청해요.\n\n건강증명서 원본은 AVS 서류 제출함(싱가포르 보타닉 가든 Raffles Building 1층, 24시간 이용)에 실물로 제출해요.\n\n2영업일 이내에 수출 라이선스와 AVS 정부 수의사가 인증한 수의 건강증명서가 발급돼요.\n\n수출 라이선스는 출국 90일 이내에 신청하고, 발급일로부터 90일간 유효해요.',
     doneSummary: '싱가포르 수출 검역을 받았어요.',
     cardLine: '싱가포르 수출 검역을 받으세요.',
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'round' },
