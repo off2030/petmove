@@ -600,6 +600,23 @@
   links:
       하와이 반려동물 포털(HIPOP)  →  https://hipop.ais.hawaii.gov/
 
+▸ hi-export-health-cert
+  title: 한국 입국용 건강증명서·USDA 승인
+  short: 귀국서류
+  card: 한국 입국용 건강증명서를 준비하세요.
+  done: 한국 입국용 건강증명서의 USDA 승인을 받았어요.
+  desc:
+      한국행 출발 30일 이내에 USDA 공인 수의사의 진료를 받으세요.
+      
+      수의사가 한국 전용 국제동물건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.
+      승인된 건강증명서 원본을 한국 입국 시까지 반려동물과 함께 보관하세요.
+      하와이 동물검역소(AQS)나 HIPOP에서 처리하는 절차가 아니에요.
+  첨부안내: USDA 승인 건강증명서 원본과 사본을 보관하세요.
+  저장이름: USDA 승인 국제 건강증명서
+  links:
+      미국에서 한국으로 반려동물 데려오기(USDA)  →  https://direct.aphis.usda.gov/pet-travel/us-to-another-country-export/pet-travel-us-korea
+      한국 전용 건강증명서 서식(USDA)  →  https://www.aphis.usda.gov/sites/default/files/korea-dog-cat.pdf
+
 ▸ external-parasite
   title: 외부 기생충 치료
   short: 외부

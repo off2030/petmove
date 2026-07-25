@@ -65,6 +65,8 @@
   최근 광견병 접종일로부터 31일이 지나야 입국할 수 있어요.
 [hi.import-quarantine-date-valid]
   하와이 수입 검역일은 도착일보다 빠를 수 없어요. 날짜를 확인하세요.
+[hi.return-titer-within-24months]
+  광견병 항체 검사 결과가 없거나 채혈 후 24개월이 지났어요. 한국 입국용 건강증명서에 항체가 기재가 필요할 수 있어요 — 검사 결과를 확인하세요.
 [id.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [id.import-quarantine-date-valid]

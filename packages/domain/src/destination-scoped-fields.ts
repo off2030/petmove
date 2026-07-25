@@ -103,6 +103,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 하와이 — 입국 신청(도착 10일 전 AQS 서류 제출, HIPOP 온라인/우편). confirm 완료 모델.
   'hi_import_declaration_date',
   'hi_import_declaration_confirmed',
+  // 하와이 — 한국 입국용 건강증명서·USDA 승인(왕복 귀국, 미국 본토 us_export 와 동형).
+  'hi_export_quarantine_date',
+  'hi_export_quarantine_confirmed',
   'th_export_quarantine_date',
   'th_export_quarantine_confirmed',
   // 말레이시아·인도네시아 — 태국 복제(2026-07-22).

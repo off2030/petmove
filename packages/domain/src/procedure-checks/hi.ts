@@ -14,10 +14,13 @@ import {
 } from './utils'
 import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore } from './messages'
 import {
+  buildDateRuleContext,
   validateHiImportDeclarationDate,
   validateParasiteDateForDestination,
   validateRabiesPrimeAgeForDestination,
+  validateUsExportHealthCertDate,
 } from '../journey-steps/date-rules'
+import { buildCaseJourneyContext } from '../journey-steps/applicability'
 
 /**
  * 하와이 (HDOA — Hawaii Department of Agriculture, Animal Quarantine Station) 절차 검증.
@@ -391,6 +394,98 @@ export const HI_CHECKS: ProcedureCheck[] = [
       }
       const days = daysBetween(raw, dep)
       return { ok: true, message: `신청일(${raw}) → 도착(${dep}): ${days ?? '?'}일.` }
+    },
+  },
+
+  // ── 한국 입국용 건강증명서·USDA 승인 (왕복 귀국) ──
+  // 하와이→한국은 수출검역 제도가 없다(AQS 는 수출 업무 안 함) — USDA 공인 수의사 발급 +
+  // VEHCS 승인(출국 30일 이내)이 실제 절차. 저장 거부(validateUsExportHealthCertDate —
+  // 미국 본토와 공유)와 같은 함수. 카드·근거는 catalog hi-export-health-cert 주석 참고.
+  {
+    id: 'hi.export-health-cert-date-valid',
+    country: COUNTRY,
+    category: '귀국 서류',
+    title: '한국 입국용 건강증명서 발급·승인일',
+    description:
+      '한국 입국용 건강증명서(USDA 승인)는 하와이 체류 중, 한국행 출발 전 30일 이내에 발급·승인되어야 함. 입력 차단과 같은 함수(validateUsExportHealthCertDate — 미국 본토와 공유).',
+    severity: 'warning',
+    addedAt: '2026-07-26',
+    allowDate: true,
+    run: ({ caseRow, destination }) => {
+      if (buildCaseJourneyContext(caseRow, destination).tripType !== 'round') return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const date =
+        typeof ctx.data.hi_export_quarantine_date === 'string'
+          ? ctx.data.hi_export_quarantine_date.slice(0, 10)
+          : ''
+      if (!date) return SKIP
+      const error = validateUsExportHealthCertDate(date, ctx)
+      if (!error) return { ok: true, message: '건강증명서 발급·승인일이 유효한 범위.' }
+      return {
+        ok: false,
+        message: error,
+        offendingPaths: ['hi_export_quarantine_date', 'entry_date', 'return_date'],
+      }
+    },
+  },
+  // 광견병 항체가 — 한국 검역본부는 하와이를 비발생 지역으로 분류(항체 면제·당일 개방)하지만,
+  // USDA 한국 전용 서식(korea-dog-cat.pdf)에는 항체가 기재란이 필수라 서로 충돌한다. 면제를
+  // 확정 안내하지 않고 보수 기준으로 '주의'만 둔다(2026-07-26 사용자 결정): 결과가 없거나
+  // 귀국일 기준 채혈 24개월 초과면 안내. 입국용 FAVN(36개월 유효)을 재사용할 수 있는 경우가
+  // 대부분이라 실제로는 드물게 뜬다.
+  {
+    id: 'hi.return-titer-within-24months',
+    country: COUNTRY,
+    category: '귀국 서류',
+    title: '귀국 건강증명서의 항체가 기재 (채혈 24개월 이내)',
+    description:
+      'USDA 한국 전용 건강증명서에 광견병 항체가(0.5 IU/㎖ 이상, 채혈 24개월 이내) 기재란이 있음. 한국 검역본부의 하와이 비발생 면제와 충돌하므로 보수적으로 결과 보유를 권고(주의만, 차단 없음).',
+    severity: 'warning',
+    addedAt: '2026-07-26',
+    run: ({ caseRow, destination }) => {
+      if (buildCaseJourneyContext(caseRow, destination).tripType !== 'round') return SKIP
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const ret = typeof data.return_date === 'string' ? data.return_date.slice(0, 10) : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(ret)) return SKIP
+      const titers = readTiterEntries(caseRow)
+      const valid = titers.find((t) => t.date <= ret && addMonths(t.date, 24) >= ret)
+      if (valid) {
+        return { ok: true, message: `항체 채혈(${valid.date}) + 24개월 ≥ 귀국일(${ret}).` }
+      }
+      return {
+        ok: false,
+        message:
+          '광견병 항체 검사 결과가 없거나 채혈 후 24개월이 지났어요. 한국 입국용 건강증명서에 항체가 기재가 필요할 수 있어요 — 검사 결과를 확인하세요.',
+        offendingPaths: titers.length
+          ? titers.map((t) => `rabies_titer_records[${t.originalIndex}].date`)
+          : ['hi_export_quarantine_date'],
+      }
+    },
+  },
+  // 항공사 자체 요구사항 — 규정 검증이 아니라 준비 환기용 '안내'. 증명서 발급·승인일이
+  // 저장되면 내린다(준비를 마친 보호자에게 반복 노출하지 않기 위해).
+  {
+    id: 'hi.airline-health-cert-note',
+    country: COUNTRY,
+    category: '귀국 서류',
+    title: '항공사 자체 건강증명서 요구사항',
+    description:
+      '항공사에 따라 자체 건강증명서(발급 시한 등) 요구가 있을 수 있어 별도 확인 안내. 규정 검증이 아닌 환기용 안내(info).',
+    severity: 'info',
+    addedAt: '2026-07-26',
+    run: ({ caseRow, destination }) => {
+      if (buildCaseJourneyContext(caseRow, destination).tripType !== 'round') return SKIP
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const ret = typeof data.return_date === 'string' ? data.return_date.slice(0, 10) : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(ret)) return SKIP
+      const cert =
+        typeof data.hi_export_quarantine_date === 'string' ? data.hi_export_quarantine_date : ''
+      if (cert) return { ok: true, message: '건강증명서 준비 완료 — 안내 내림.' }
+      return {
+        ok: false,
+        message: '항공사 자체 건강증명서 요구사항은 별도로 확인하세요.',
+        offendingPaths: ['hi_export_quarantine_date'],
+      }
     },
   },
 

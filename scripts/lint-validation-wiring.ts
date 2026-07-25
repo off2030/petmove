@@ -657,6 +657,8 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   'mt-advance-notice': '차단: validateMtAdvanceNoticeDate(입국 3영업일 전)',
   'il-advance-notice': '차단: validateIlAdvanceNoticeDate(출국 2일 전)',
   'hi-import-declaration': '차단: validateHiImportDeclarationDate(도착 이후·도착 10일 미만 모두)',
+  'hi-export-health-cert':
+    '차단: validateUsExportHealthCertDate(체류 구간 + 귀국 30일 창 — 미국 본토와 공유)',
   'ph-local-vet-visit': '차단: validatePhLocalVetVisitDate(필리핀 수입검역 ≤ 방문 ≤ 수출검역)',
   'sg-quarantine-reservation':
     '차단: validateSgQuarantineReservationFiled(채혈 이후)·validateSgQuarantineReservationDate(채혈+90일~12개월)·validateSgReservationVsDeparture',

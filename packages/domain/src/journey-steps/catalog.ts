@@ -811,6 +811,55 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['hi.import-declaration-10days-before-arrival'],
   },
 
+  // ── 한국 입국용 건강증명서·USDA 승인 (왕복 — 하와이 전용) ────────────────
+  // 하와이→한국 귀국은 '수출검역소 방문' 제도가 없다(AQS 는 수출 업무를 하지 않고 국제 이동은
+  // USDA APHIS 관할 — dab.hawaii.gov FAQ). 미국 본토(us-export-health-cert)와 같은 구조:
+  // USDA 공인 수의사가 한국 전용 건강증명서를 작성하고 VEHCS 로 APHIS 승인(출국 30일 이내).
+  // EU·캐나다 '귀국 서류 준비'와 같은 dated-confirm 모델. 카드명·설명문 = 사용자 확정
+  // (2026-07-26 조사 지시문 그대로). 검증은 본토와 같은 함수(validateUsExportHealthCertDate).
+  // ⚠️ 광견병 항체가 — 한국 검역본부는 하와이를 비발생 지역으로 분류(항체 면제·당일 개방)하나
+  //   USDA 한국 전용 서식은 항체가 기재란이 필수라 충돌한다. 면제를 확정 안내하지 않고
+  //   hi.return-titer-within-24months '주의'로 보수 안내(사용자 결정 2026-07-26).
+  {
+    id: 'hi-export-health-cert',
+    category: 'document',
+    title: '한국 입국용 건강증명서·USDA 승인',
+    shortLabel: '귀국서류',
+    description:
+      '한국행 출발 30일 이내에 USDA 공인 수의사의 진료를 받으세요.\n\n수의사가 한국 전용 국제동물건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n승인된 건강증명서 원본을 한국 입국 시까지 반려동물과 함께 보관하세요.\n하와이 동물검역소(AQS)나 HIPOP에서 처리하는 절차가 아니에요.',
+    doneSummary: '한국 입국용 건강증명서의 USDA 승인을 받았어요.',
+    cardLine: '한국 입국용 건강증명서를 준비하세요.',
+    applicability: { destinations: ['hawaii'], species: 'all', tripType: 'round' },
+    order: 150,
+    done: 'quarantine:hi_export_quarantine_date',
+    inputs: [
+      {
+        key: 'hi_export_quarantine_date',
+        label: '발급·승인일',
+        type: 'date',
+        helpText: '수의사 발급과 USDA 승인을 완료한 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: 'USDA 승인 건강증명서 원본과 사본을 보관하세요.',
+    attachmentLabel: 'USDA 승인 국제 건강증명서',
+    links: [
+      {
+        url: 'https://direct.aphis.usda.gov/pet-travel/us-to-another-country-export/pet-travel-us-korea',
+        label: '미국에서 한국으로 반려동물 데려오기(USDA)',
+      },
+      {
+        url: 'https://www.aphis.usda.gov/sites/default/files/korea-dog-cat.pdf',
+        label: '한국 전용 건강증명서 서식(USDA)',
+      },
+    ],
+    validationIds: [
+      'hi.export-health-cert-date-valid',
+      'hi.return-titer-within-24months',
+      'hi.airline-health-cert-note',
+    ],
+  },
+
   // ── 사전 통지 (아일랜드 전용) ──────────────────────────────────────────
   // 비EU 국가에서 아일랜드 입국 시 도착 24시간 전까지 Advance Notice Portal 로 통지 +
   // 도착 시 검사(Compliance Check) 예약. 완료신호 'quarantine:<필드>' confirm 메커니즘 재사용

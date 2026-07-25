@@ -1450,7 +1450,8 @@ export function StepDetailView({
         departureDate: caseRow?.departure_date ?? null,
       })
     }
-    if (step.id === 'us-export-health-cert') {
+    // 하와이 귀국 서류(hi-export-health-cert)도 같은 USDA 절차라 본토와 같은 함수(2026-07-26).
+    if (step.id === 'us-export-health-cert' || step.id === 'hi-export-health-cert') {
       return validateUsExportHealthCertDate(importQuarantineDate.trim(), {
         data: (caseRow?.data ?? {}) as Record<string, unknown>,
         destination: caseRow?.destination ?? null,

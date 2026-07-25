@@ -1522,7 +1522,14 @@ export function validateExportQuarantineDate(v: string, ctx: DateRuleContext): s
  * https://direct.aphis.usda.gov/pet-travel/us-to-another-country-export/pet-travel-us-korea
  */
 export function validateUsExportHealthCertDate(v: string, ctx: DateRuleContext): string | null {
-  if (!v || !matchesDestinationKey(ctx.destination, 'usa')) return null
+  if (!v) return null
+  // 하와이 — 같은 USDA 절차(공인 수의사 발급 + VEHCS 승인)라 본토와 함수 공유(2026-07-26).
+  if (
+    !matchesDestinationKey(ctx.destination, 'usa') &&
+    !matchesDestinationKey(ctx.destination, 'hawaii')
+  ) {
+    return null
+  }
   const rangeError = validateExportQuarantineDate(v, ctx)
   if (rangeError) return rangeError
   const ret = readDate(ctx.data, 'return_date')

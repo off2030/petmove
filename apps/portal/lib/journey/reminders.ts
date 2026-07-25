@@ -625,6 +625,47 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r10) out.push(r10)
       }
+      // 귀국 — 한국 입국용 건강증명서(USDA 승인, 출국 30일 이내 발급). 승인이 수일 걸리고
+      // 출발 직전 완료되는 경우도 있어 4단계로 안내(예약 → 신청 → 승인 → 원본, 2026-07-26
+      // 사용자 지정). 왕복 + 발급·승인일 저장 전에만.
+      if (ret && !str(data.hi_export_quarantine_date)) {
+        const r30 = leadReminder(
+          flat,
+          `${token}|hi-usda-30`,
+          ret,
+          30,
+          '한국 귀국 30일 전이에요. 한국 입국용 건강증명서를 위해 USDA 공인 수의사 진료를 예약하세요.',
+          now,
+        )
+        if (r30) out.push(r30)
+        const r14 = leadReminder(
+          flat,
+          `${token}|hi-usda-14`,
+          ret,
+          14,
+          '한국 입국용 건강증명서를 준비 중인지 확인하세요. USDA 공인 수의사 진료와 VEHCS 승인 신청이 필요해요.',
+          now,
+        )
+        if (r14) out.push(r14)
+        const r7 = leadReminder(
+          flat,
+          `${token}|hi-usda-7`,
+          ret,
+          7,
+          '한국 귀국이 일주일 남았어요. 건강증명서의 USDA 승인 완료 여부를 확인하세요.',
+          now,
+        )
+        if (r7) out.push(r7)
+        const r3 = leadReminder(
+          flat,
+          `${token}|hi-usda-3`,
+          ret,
+          3,
+          '한국 귀국 3일 전이에요. USDA 승인 건강증명서 원본을 확보했는지 확인하세요.',
+          now,
+        )
+        if (r3) out.push(r3)
+      }
     } else if (key === 'taiwan') {
       // 대만 수입허가증 — 도착 120일 전 신청이 격리 면제 조건이라 마감이 유난히 이르다.
       // 놓치면 회복이 어려워(20일 전 신청 = 7일 격리) 일주일 전 + 당일 2회 안내.
