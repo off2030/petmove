@@ -218,6 +218,12 @@ export interface DestinationOverride {
    * 종 제한이 필요하면 배열로(촌충국 개 전용 4일 등). `VET_VISIT_WINDOW_OVERRIDES` 의 파생원.
    */
   vetVisitWindowDays?: number | Array<{ window: number; species?: SpeciesFilter }>
+  /**
+   * 종합백신 접종 후 출국까지 최소 대기(일). 저장 거부(validateGeneralVaccineEntryWait)와 그 나라
+   * 주의 룰이 이 값을 공유. 광견병 rabies.entryWaitDaysAfterVaccine 의 종합백신판.
+   * 예: 싱가포르 14·UAE 21·카자흐/러시아 20. (태국·필리핀 21은 아직 각 entry validator 내부.)
+   */
+  generalVaccineWaitDays?: number
   /** 펫무브 앱(포털) 목적지 화이트리스트 노출 여부. `APP_DESTINATIONS_KO` 의 파생원. */
   appSupported?: boolean
 }
@@ -641,6 +647,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   //     30일이 진짜면 우리 쪽이 느슨한 셈이라, 다음 조사 때 우선 확인 대상이다.
   kazakhstan: {
     keywords: ['카자흐스탄', 'kazakhstan'],
+    // 종합백신 출국 20일 전(EAEU 제15장) — 저장 거부·주의 공용.
+    generalVaccineWaitDays: 20,
     rabies: {
       doses: 1,
       minAgeDays: 91,
@@ -670,6 +678,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   //   사용자 확정: "러시아는 14일이지만 한국 검역소 규정이 10일이라 10일이 맞다").
   russia: {
     keywords: ['러시아', 'russia'],
+    // 종합백신 출국 20일 전(EAEU 제15장) — 저장 거부·주의 공용.
+    generalVaccineWaitDays: 20,
     rabies: {
       doses: 1,
       minAgeDays: 91,
@@ -689,6 +699,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 이쪽으로 통일했다(2026-07-22). '아랍에미레이트'는 **검색 별칭으로만** 남긴다 —
     // 관용 표기라 그렇게 치는 고객이 많고, keywords 는 화면에 안 보인다. 표시 문구로 쓰지 말 것.
     keywords: ['아랍에미리트', '아랍에미레이트', 'uae', 'united arab emirates'],
+    // 종합백신 출국 21일 전(MOCCAE) — 저장 거부·주의 공용.
+    generalVaccineWaitDays: 21,
     // ⚠️ 항체검사 카드를 **띄우지 않는다**(2026-07-22 수정. 되돌리지 말 것):
     //   ①입국 요건 아님 — MOCCAE 는 한국을 저위험국(Low-risk)으로 분류해 RNATT 를 요구하지
     //     않는다(procedure-checks/ae.ts 헤더의 1차 출처).
@@ -735,6 +747,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   singapore: {
     keywords: ['싱가포르', 'singapore'],
     archetype: 'sea-permit',
+    // 종합백신 출국 14일 전(Schedule III IV(a)(iv)(v)) — 저장 거부·주의 공용.
+    generalVaccineWaitDays: 14,
     rabies: {
       doses: 1,
       // ✅ 규정 기준 = 생후 12주(84일). NParks Schedule III 조건 PDF: 광견병은 "제조사 권장"

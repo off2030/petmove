@@ -380,6 +380,45 @@ export function violatesVaccineWaitDays(
   return !!earliest && target < earliest
 }
 
+/**
+ * 종합백신 접종 후 출국까지 대기일 — **프로파일 파생 단일 출처**(generalVaccineWaitDays).
+ * 광견병 RABIES_ENTRY_WAIT_DAYS 의 종합백신판. 저장 거부·주의가 같은 값을 공유한다.
+ * 종합백신은 광견병과 달리 유효 부스터 면제가 없다(기존 주의 룰과 동일 — 최근 접종 기준).
+ */
+export const GENERAL_VACCINE_WAIT_DAYS: Record<string, number> = Object.fromEntries(
+  destinationKeysWhere((o) => !!o.generalVaccineWaitDays).map((k) => [
+    k,
+    DESTINATION_OVERRIDES[k]!.generalVaccineWaitDays!,
+  ]),
+)
+
+export function generalVaccineEntryWaitDays(destination: string | null | undefined): number {
+  for (const [key, days] of Object.entries(GENERAL_VACCINE_WAIT_DAYS)) {
+    if (matchesDestinationKey(destination, key)) return days
+  }
+  return 0
+}
+
+/**
+ * 종합백신 접종 후 대기 저장 거부·주의 **단일 판정**. 최근 접종 + N일 미만 입국이면 위반.
+ * client(입력 불가)·procedure-check(해당국 general-vaccine 주의) 공용. 미선언국·기록 없으면 통과.
+ */
+export function validateGeneralVaccineEntryWait(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  const days = generalVaccineEntryWaitDays(ctx.destination)
+  if (days <= 0) return null
+  const target = v.slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(target)) return null
+  const dates = readDateArray(ctx.data, 'general_vaccine_dates')
+  if (dates.length === 0) return null
+  const latest = dates.reduce((a, b) => (a > b ? a : b))
+  const earliest = addDays(latest, days)
+  if (earliest && target < earliest) {
+    return `종합백신 접종 후 ${days}일이 지나야 입국할 수 있어요. 날짜를 확인하세요.`
+  }
+  return null
+}
+
 
 /**
  * 대만 선적 대기 — 1차·단절 90일 / **유효 부스터 30일**.
@@ -1125,6 +1164,8 @@ export function validateEntryDateForDestination(
     // 이스라엘 — 출국일 만 4개월(생일 불변이라 저장 거부). EU 골격이나 항체 3개월 대기는 없어
     // validateEuEntryDate 에서 제외되므로 여기서 별도로 나이만 막는다.
     validateIlEntryDate(entryOrDeparture, ctx) ??
+    // 종합백신 접종 후 대기(싱가포르 14·UAE 21·카자흐/러시아 20) — 프로파일 파생 저장 거부.
+    validateGeneralVaccineEntryWait(entryOrDeparture, ctx) ??
     validateEuEntryDate(entryOrDeparture, ctx) ??
     validateTwEntryDate(entryOrDeparture, ctx) ??
     // 대만 광견병 선적 대기(90/30일) — 항체 90일과 별개 요건. 재검사 체인으로 항체 대기가
