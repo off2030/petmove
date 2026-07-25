@@ -1,6 +1,7 @@
 import {
   buildDateRuleContext,
   violatesRabiesEntryWait,
+  validateParasiteDateForDestination,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
@@ -350,15 +351,20 @@ export const TR_CHECKS: ProcedureCheck[] = [
       if (!dep || entries.length === 0) return SKIP
 
       const latest = entries[entries.length - 1]
-      const days = daysBetween(latest.date, dep)
-      if (days === null) return SKIP
-      if (days > 30) {
+      // 저장 거부(client)와 같은 dispatch — 검증 단일 출처.
+      const err = validateParasiteDateForDestination(latest.date, {
+        destinationKey: destination,
+        kind: 'external',
+        departureDate: dep,
+      })
+      if (err) {
         return {
           ok: false,
-          message: '외부 기생충 치료는 출국 30일 이내에 해야 해요.',
+          message: err,
           offendingPaths: ['departure_date', `external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
+      const days = daysBetween(latest.date, dep)
       return { ok: true, message: `최근 외부구충(${latest.date}) → 출국(${dep}): ${days}일.` }
     },
   },
@@ -377,15 +383,19 @@ export const TR_CHECKS: ProcedureCheck[] = [
       if (!dep || entries.length === 0) return SKIP
 
       const latest = entries[entries.length - 1]
-      const days = daysBetween(latest.date, dep)
-      if (days === null) return SKIP
-      if (days > 30) {
+      const err = validateParasiteDateForDestination(latest.date, {
+        destinationKey: destination,
+        kind: 'internal',
+        departureDate: dep,
+      })
+      if (err) {
         return {
           ok: false,
-          message: '내부 기생충 치료는 출국 30일 이내에 해야 해요.',
+          message: err,
           offendingPaths: ['departure_date', `internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
+      const days = daysBetween(latest.date, dep)
       return { ok: true, message: `최근 내부구충(${latest.date}) → 출국(${dep}): ${days}일.` }
     },
   },

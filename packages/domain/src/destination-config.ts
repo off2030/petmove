@@ -533,8 +533,31 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   usa: {
     keywords: ['미국', 'usa', 'united states', 'america'],
+    archetype: 'generic',
+    // 한국은 CDC의 광견병 고위험국 목록에 없으므로 미국 입국 자체에는 개의 광견병
+    // 접종증명·항체검사가 기본 요건이 아니다. 단, 개는 생후 6개월·보편형 스캐너로
+    // 판독 가능한 마이크로칩·CDC Dog Import Form이 필요하고, 주·항공사 조건은 별도다.
+    // https://www.cdc.gov/importation/dogs/rabies-free-low-risk-countries.html
+    // https://www.cdc.gov/importation/dogs/dog-import-form-instructions.html
+    rabies: { doses: 1 },
+    titer: { need: 'return-only' },
+    appSupported: true,
+    vaccines: ['rabies', 'rabies_titer'],
+    importQuarantine: { title: '미국 도착 검사' },
+    exportQuarantine: {
+      model: 'health-cert',
+      docName: 'USDA endorsed International Health Certificate',
+    },
     extraSection: 'usa',
-    extraFields: ['overseas_phone', 'passport_number', 'holder_birth_date', 'entry_date'],
+    extraFields: [
+      'overseas_phone',
+      'passport_number',
+      'holder_birth_date',
+      'entry_date',
+      { key: 'us_dog_rabies_risk_history', species: 'dog' },
+      'us_destination_state',
+      'us_state_requirements_confirmed',
+    ],
     rabiesTiterForReturnOnly: true,
   },
   // ── 멕시코 (SENASICA / 현장 OISA) ──────────────────────────────────────
@@ -772,7 +795,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     //   earliest 잠금을 이 값에서 파생. 하와이는 최소 연령을 고정하지 않고 백신 라벨을 따르는데
     //   (HAR §4-29-8.1), 라벨이 제품별로 12주(래비신)/3개월(디펜서)로 갈려 더 보수적인 3개월을
     //   택했다 — 카드·경고 문구 모두 '3개월'로 통일(2026-07-25 사용자 확정).
-    rabies: { doses: 2, minAgeDays: 91, minAgeMonths: 3, minAgeLabel: '생후 3개월' },
+    // doseIntervalDays 31 = HDOA "more than 30 days apart"(≥31). 저장 거부(validateRabiesInterval)가
+    // 이 값을 파생해 hi.rabies-doses-31days-apart 주의와 일치(예전엔 블록 30·주의 31로 하루 어긋남).
+    rabies: { doses: 2, minAgeDays: 91, minAgeMonths: 3, minAgeLabel: '생후 3개월', doseIntervalDays: 31 },
     // 진드기(external_parasite) 처치 = 도착 14일 이내 필수(HDOA Checklist 1 Step 6 #4, hi.ts).
     //   ⚠️ 내부구충(internal_parasite)은 HDOA 요건이 아니라 제거했다 — 일본 복제 때 '기존 유지'로
     //   딸려온 잔재였고, 내부구충 카드 applicability 에도 하와이는 없어 필드만 떠 있는 어긋난

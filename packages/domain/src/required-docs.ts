@@ -5,6 +5,7 @@ import { JOURNEY_STEP_CATALOG } from './journey-steps/catalog'
 import { buildCaseJourneyContext } from './journey-steps/applicability'
 import { resolveStepForDestination } from './journey-steps/destination-overrides'
 import { resolveCompletedDate, resolveDone } from './journey-steps/done-resolver'
+import { addDays } from './procedure-checks/utils'
 
 /**
  * 국가별 '필수 서류' 큐레이션. 서류함의 자동 체크리스트(step.allowAttachments 전부)
@@ -82,6 +83,10 @@ interface RequiredDocSpec {
    * 편도 케이스의 resolveRequiredDocs 결과에서 제외 — vet-visit 완료 게이트에도 안 들어간다.
    */
   roundTripOnly?: boolean
+  /** 종별로만 필요한 서류. 예: 미국 CDC Dog Import Form 접수증은 개 전용. */
+  species?: 'dog' | 'cat'
+  /** 귀국일에 이 일령 이상일 때만 필요한 서류. 날짜 미입력 시에는 보수적으로 노출한다. */
+  minReturnAgeDays?: number
   /**
    * 이 서류가 실제로 발급되는 step. kind='step' 이면 stepRef 와 같은 게 보통이라 생략 가능
    * (자동 폴백). kind='manual' 인데 특정 step 의 결과로 발급되는 서류(예: 별지25·FormAC/RE 는
@@ -1360,6 +1365,56 @@ function euFamilyDocSpecs(
  * 시 여기로 폴백.
  */
 const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
+  usa: [
+    {
+      id: 'us-cdc-dog-import-form-receipt',
+      name: 'CDC Dog Import Form 접수증',
+      source: '미국 질병통제예방센터(CDC)',
+      kind: 'step',
+      stepRef: 'us-cdc-dog-import-form',
+      species: 'dog',
+      description:
+        'CDC Dog Import Form을 온라인으로 제출하면 발급되는 접수증이에요.\n\n강아지 한 마리당 한 장씩 준비하고, 미국 입국 때 휴대전화 화면이나 인쇄본으로 제시할 수 있게 보관하세요.\n\n접수증의 반려견 정보와 출발 국가가 실제 여행과 맞아야 해요. 저위험국 경로의 접수증은 제출일로부터 6개월 동안 유효하지만, 출발 국가가 바뀌면 다시 제출해야 해요.',
+      previewStepId: 'us-cdc-dog-import-form',
+    },
+    {
+      id: 'us-rabies-titer-result',
+      name: '광견병 항체 검사 결과지',
+      source: '동물병원',
+      kind: 'step',
+      stepRef: 'rabies-titer',
+      roundTripOnly: true,
+      minReturnAgeDays: 90,
+      description:
+        '검사를 의뢰한 동물병원을 통해 발급받아요.\n\n미국 입국용이 아니라 한국 귀국용 서류예요. 한국 도착일 기준 채혈일 2년 이내의 결과지를 준비하세요.\n\n원본과 사본을 함께 보관하세요.',
+      previewStepId: 'rabies-titer',
+    },
+    KR_FORM25_VACCINATION_HEALTH_CERT,
+    {
+      id: 'us-kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      group: 'quarantine',
+      description:
+        '한국 수출 검역 후 발급돼요.\n\n미국 도착 주나 항공사가 요구할 수 있으니 원본을 잘 보관하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'certificate-issue',
+    },
+    {
+      id: 'us-usda-health-cert',
+      name: 'USDA 승인 국제 건강증명서',
+      source: '미국 공인 수의사 · USDA APHIS',
+      kind: 'step',
+      stepRef: 'us-export-health-cert',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '미국에서 한국으로 귀국할 때 사용하는 국제 건강증명서예요.\n\n미국 공인 수의사가 작성하고 USDA APHIS의 승인을 받아야 해요. 미국 출국 전 30일 이내에 발급·승인을 완료하고, USDA의 원본 잉크 서명과 압인(emboss)이 있는 승인본을 한국 입국 검역 때 제출하세요.',
+      previewStepId: 'us-export-health-cert',
+    },
+    KR_IMPORT_QUARANTINE_CERT,
+  ],
   eu: euFamilyDocSpecs('유럽연합(EU)', { euAhc: true }),
   uk: euFamilyDocSpecs('영국', {
     certName: '영국 동물건강증명서(GB Pet Health Certificate)',
@@ -1417,7 +1472,27 @@ export function resolveRequiredDocs(
   // 왕복 전용 서류(예: 한국 귀국용 항체 검사 결과지)는 편도 케이스에서 제외 —
   // 목록·vet-visit 완료 게이트 양쪽에서 빠진다.
   const tripType = getTripType((caseRow.data ?? {}) as Record<string, unknown>, destination)
-  const specs = allSpecs.filter((s) => !s.roundTripOnly || tripType === 'round')
+  const species = buildCaseJourneyContext(caseRow).species
+  const caseData = (caseRow.data ?? {}) as Record<string, unknown>
+  const birth =
+    typeof caseData.birth_date === 'string' && caseData.birth_date.length >= 10
+      ? caseData.birth_date.slice(0, 10)
+      : ''
+  const ret =
+    typeof caseData.return_date === 'string' && caseData.return_date.length >= 10
+      ? caseData.return_date.slice(0, 10)
+      : ''
+  const meetsReturnAge = (spec: RequiredDocSpec): boolean => {
+    if (!spec.minReturnAgeDays || !birth || !ret) return true
+    const minimumDate = addDays(birth, spec.minReturnAgeDays)
+    return !minimumDate || ret >= minimumDate
+  }
+  const specs = allSpecs.filter(
+    (s) =>
+      (!s.roundTripOnly || tripType === 'round') &&
+      (!s.species || !species || s.species === species) &&
+      meetsReturnAge(s),
+  )
   if (specs.length === 0) return null
   const flags = readBoolFlags(caseRow, 'required_doc_flags')
   const naFlags = readBoolFlags(caseRow, 'required_doc_na')

@@ -539,6 +539,64 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['ca.import-quarantine-date-valid'],
     }),
   },
+  // ── 미국 (CDC 저위험국 경로 + 주별 조건 + 한국 귀국) ─────────────────
+  // 한국 출발 기본 경로를 다룬다. 개가 최근 6개월 고위험국에 있었다면 별도 CDC 경로가
+  // 필요하므로 eligibility 카드와 blocker 가 이 기본 여정의 사용을 멈추고 상담을 안내한다.
+  usa: {
+    microchip: {
+      description:
+        '미국 입국 전에 보편형 스캐너로 읽을 수 있는 내장형 마이크로칩을 삽입하세요.\n\n이 앱에서는 한국 출국·귀국 절차에도 함께 쓸 수 있는 국제 표준 15자리 번호를 입력해요. 강아지는 미국 입국 때 칩을 판독할 수 있어야 하고, 고양이는 미국 연방 입국 요건은 아니지만 한국 귀국이 있는 왕복 일정에는 필요해요.',
+      // 개는 미국 입국 요건, 고양이는 한국 귀국 요건이라 왕복에만 표시.
+      appliesWhen: 'us-dog-or-round',
+    },
+    'rabies-vaccine-1': {
+      title: '광견병 백신',
+      shortLabel: '백신',
+      description:
+        '한국으로 돌아오기 전에 필요한 광견병 백신을 접종하세요.\n\n미국 저위험국 경로의 입국 요건이 아니라 한국 귀국 요건이에요. 귀국일에 면역 유효기간이 남아있어야 해요.',
+      doneSummary: '한국 귀국용 광견병 백신을 접종했어요.',
+      applicability: { destinations: ['usa'], species: 'all', tripType: 'round' },
+      done: 'has-rabies-valid',
+      earliest: undefined,
+      validationIds: [
+        'us.rabies-booster-within-prime-validity',
+        'us.rabies-valid-on-return',
+      ],
+    },
+    'rabies-titer': {
+      description:
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n미국 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n채혈일 기준 2년 이내에 한국에 도착해야 해요.',
+      validationIds: RETURN_ONLY_TITER_CHECKS,
+    },
+    'flight-purchase': {
+      description:
+        '미국 입국 일정에 맞춰 항공권을 구매하세요.\n\n강아지는 미국 도착일에 생후 6개월 이상이어야 해요. 항공사에 반려동물 동반 가능 여부와 이동장 규격을 확인하고, 장거리 노선의 출발일과 도착일을 각각 정확히 입력하세요.',
+      cardLine: '미국 입국 일정을 확인하세요.',
+      earliest: undefined,
+      validationIds: ['us.dog-entry-age-six-months'],
+    },
+    'vet-visit': {
+      description:
+        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n한국 수출검역에 필요한 접종 및 건강증명서(별지 제25호 서식)를 발급받아요. 미국 도착 주나 항공사가 별도 건강증명서를 요구했다면 함께 준비하세요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+    },
+    departure: {
+      ...importQuarantineCard({
+        label: '미국',
+        fieldKey: 'us_import_quarantine_date',
+        description:
+          '미국 도착 후 국경관리기관(CBP)과 필요한 경우 CDC의 입국 검사를 받으세요.\n강아지는 마이크로칩과 CDC Dog Import Form 접수증을 확인해요. 고양이는 도착 시 건강 상태를 확인할 수 있어요.\n준비 서류와 반려동물이 신고 내용과 일치하도록 원본과 전자 사본을 바로 꺼낼 수 있게 준비하세요.',
+        helpText: '미국 도착 후 입국 검사를 받은 날짜',
+        attachmentHint: '입국 검사 관련 서류나 영수증이 있다면 사진·PDF로 보관하세요.',
+        attachmentLabel: '미국 입국 검사 서류',
+        validationIds: [
+          'us.import-inspection-date-valid',
+          'us.dog-arrival-hygiene',
+        ],
+      }),
+      title: '미국 입국 검사',
+      doneSummary: '미국 입국 검사를 마쳤어요.',
+    },
+  },
   // ── 베트남 골격 복제 2차 5국 (모로코·우크라이나·멕시코·브라질·카자흐스탄) ──────
   // 2026-07-20. 앞선 4국(캄보디아·몽골·우즈베키스탄·캐나다)과 같은 골격이지만 델타가 더 크다:
   //   모로코·우크라이나 — 항체검사가 **입국 요건**(titer.need='entry') → 카드 문구가 '한국
@@ -1620,6 +1678,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         'ph.import-permit-14days-after-vaccines',
         // SPSIC 60일 유효 — 너무 이른 신청(출국 전 만료). 입력 차단과 같은 함수(2026-07-25).
         'ph.import-permit-within-60days',
+        // 출국일 이후 신청 불가 — 저장 거부(validateImportPermitNotAfterDeparture)의 짝 주의.
+        //   within-60days 는 too-early 만 봐서 출국 후 신청을 놓쳤다(태국·말레이·인니·싱가포르는
+        //   짝이 있는데 필리핀만 빠져 있었음, 2026-07-25 조사).
+        'ph.import-permit-not-after-departure',
       ],
     },
     importQuarantine: {

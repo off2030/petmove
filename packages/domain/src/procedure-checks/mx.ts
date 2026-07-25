@@ -1,4 +1,8 @@
-import { buildDateRuleContext, violatesRabiesEntryWait } from '../journey-steps/date-rules'
+import {
+  buildDateRuleContext,
+  violatesRabiesEntryWait,
+  validateParasiteDateForDestination,
+} from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   classifyExportQuarantineDate,
@@ -189,22 +193,17 @@ export const MX_CHECKS: ProcedureCheck[] = [
       if (!dep || entries.length === 0) return SKIP
 
       const latest = entries[entries.length - 1]
+      // 저장 거부(client)와 같은 dispatch 로 판정 — 검증 단일 출처(창 값은 date-rules
+      // PARASITE_DEPARTURE_WINDOWS 한 곳에만).
+      const err = validateParasiteDateForDestination(latest.date, {
+        destinationKey: destination,
+        kind: 'external',
+        departureDate: dep,
+      })
+      if (err) {
+        return { ok: false, message: err, offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`] }
+      }
       const diff = daysBetween(latest.date, dep)
-      if (diff === null) return SKIP
-      if (diff < 0) {
-        return {
-          ok: false,
-          message: '외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.',
-          offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
-        }
-      }
-      if (diff > 180) {
-        return {
-          ok: false,
-          message: '외부 기생충 치료는 멕시코 도착 6개월 이내에 해야 해요.',
-          offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
-        }
-      }
       return { ok: true, message: `외부 기생충 치료(${latest.date}) → 출국일(${dep}): ${diff}일.` }
     },
   },
@@ -225,22 +224,15 @@ export const MX_CHECKS: ProcedureCheck[] = [
       if (!dep || entries.length === 0) return SKIP
 
       const latest = entries[entries.length - 1]
+      const err = validateParasiteDateForDestination(latest.date, {
+        destinationKey: destination,
+        kind: 'internal',
+        departureDate: dep,
+      })
+      if (err) {
+        return { ok: false, message: err, offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`] }
+      }
       const diff = daysBetween(latest.date, dep)
-      if (diff === null) return SKIP
-      if (diff < 0) {
-        return {
-          ok: false,
-          message: '내부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.',
-          offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
-        }
-      }
-      if (diff > 180) {
-        return {
-          ok: false,
-          message: '내부 기생충 치료는 멕시코 도착 6개월 이내에 해야 해요.',
-          offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
-        }
-      }
       return { ok: true, message: `내부 기생충 치료(${latest.date}) → 출국일(${dep}): ${diff}일.` }
     },
   },

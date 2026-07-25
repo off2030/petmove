@@ -14,6 +14,8 @@ import {
   validateAdvanceNotification,
   validateExportQuarantineDate,
   validateImportQuarantineDate,
+  validateUsCdcFormDate,
+  validateUsExportHealthCertDate,
   validateJpExportReservationDate,
   validateJpExportVisitDate,
   validateJpImportDate,
@@ -21,6 +23,7 @@ import {
   validateKrImportDate,
   validateMicrochipBeforeBooster,
   validateRabiesInterval,
+  rabiesIntervalMinDays,
   validateRabiesPrimeAge,
   validateCyAdvanceNoticeDate,
   validateImportPermitFiledDate,
@@ -28,8 +31,7 @@ import {
   validateSgBorderInspectionDate,
   validateSgDepartureVsQuarantineReservation,
   validateSgGstPermitDate,
-  validateSgParasiteWindow,
-  validateHiTickWindow,
+  validateParasiteDateForDestination,
   validateSgQuarantineReservationFiled,
   validateSgReservationVsDeparture,
   validateEntryDateForDestination,
@@ -89,6 +91,7 @@ import {
   updateRabiesEntryFields,
   updateRabiesExtraEntries,
   updateSimpleDateField,
+  updateSimpleStepFields,
   updateTiterExtraEntries,
   updateTiterFields,
   updateVetVisitDate,
@@ -178,7 +181,7 @@ const SIMPLE_FLIGHT_DESTINATIONS: readonly string[] = [
   'uzbekistan', 'vietnam',
   // 절차는 있으나 펫무브가 대행하지 않는 목적지(2026-07-25 사용자 결정) — 신청은 보호자/
   // 현지 에이전트 몫이라 앱이 항공편 상세를 들고 있을 이유가 없다. 필요하면 첨부로 보관.
-  // 세부(상세 접기)를 받는 곳은 **일본·태국·필리핀·스위스 넷뿐**(대행 절차에 항공편 사용).
+  // 미국은 CDC 양식과 생후 6개월 검증에 도착일이 필요해, 출발일과 도착일만 분리한다.
   'taiwan', 'malaysia', 'indonesia', 'uae', 'ireland', 'malta', 'israel', 'singapore',
   'norway', 'cyprus',
 ]
@@ -267,6 +270,7 @@ export function StepDetailView({
     // 대행 절차국(태국·필리핀·스위스 등 EU 패밀리) — 출발일 주필드 + 신청에 필요한 상세 접기.
     destinationKey === 'thailand' ||
     destinationKey === 'philippines' ||
+    destinationKey === 'usa' ||
     (!!destinationKey && EU_ENTRY_FAMILY.includes(destinationKey)) ||
     // 단순 항공권 목적지 — 주필드 '출발일'(departure_date 저장 경로 공유), 세부 없음.
     // (말레이·인니·UAE·이스라엘·대만 등 비대행 절차국 포함 — SIMPLE_FLIGHT_DESTINATIONS.)
@@ -306,6 +310,8 @@ export function StepDetailView({
   const isSgQuarantineReservation = step.id === 'sg-quarantine-reservation'
   const isSgDogLicence = step.id === 'sg-dog-licence'
   const isApplicationStep = isImportPermit || isSgQuarantineReservation || isSgDogLicence
+  const isSimpleFieldsStep =
+    step.id === 'us-entry-eligibility' || step.id === 'us-state-requirements'
   const applicationDateField = isImportPermit
     ? 'import_permit_application_date'
     : isSgQuarantineReservation
@@ -351,6 +357,7 @@ export function StepDetailView({
     isImportQuarantine ||
     isGeneralVaccine ||
     isApplicationStep ||
+    isSimpleFieldsStep ||
     isParasite
   // 일정 화면 복귀 경로 — 다중 목적지에서 활성 목적지(?dest=)를 보존해야 저장·완료 후
   // 다른 목적지(기본=첫 토큰)로 튕기지 않는다. 뒤로 링크·완료 후 replace 모두 이걸 사용.
@@ -467,6 +474,11 @@ export function StepDetailView({
   )
   const [importPermit, setImportPermit] = useState<ImportPermitForm>(savedImportPermit)
 
+  // 미국 입국 경로·도착 주 확인처럼 입력 수가 적은 단일값 카드. step.inputs 가 스키마이고
+  // 서버 액션이 stepId 별 화이트리스트를 강제한다.
+  const savedSimpleFields = readSimpleStepFields(step, caseRow?.data)
+  const [simpleFields, setSimpleFields] = useState<Record<string, string>>(savedSimpleFields)
+
   // 구충(내·외부) — 가변 길이 entries (종합백신과 동일 모델, 유효기간 없음).
   const savedParasite = readParasiteForm(caseRow?.data, parasiteFieldKey)
   const [parasite, setParasite] = useState<GeneralVaccineEntry[]>(
@@ -525,6 +537,7 @@ export function StepDetailView({
     krImportQuarantineDate,
     generalVaccine,
     importPermit,
+    simpleFields,
     parasite,
   ])
   const rabiesExtraDirty =
@@ -561,6 +574,8 @@ export function StepDetailView({
     (importPermit.applicationDate !== savedImportPermit.applicationDate ||
       importPermit.permitNo !== savedImportPermit.permitNo ||
       importPermit.reservationDate !== savedImportPermit.reservationDate)
+  const simpleFieldsDirty =
+    isSimpleFieldsStep && !simpleStepFieldsEqual(simpleFields, savedSimpleFields)
   const parasiteDirty =
     isParasite &&
     !generalVaccineEqual(parasite.filter(vaccineEntryFilled), savedParasite.filter(vaccineEntryFilled))
@@ -582,6 +597,7 @@ export function StepDetailView({
     importQuarantineDirty ||
     generalVaccineDirty ||
     importPermitDirty ||
+    simpleFieldsDirty ||
     parasiteDirty
   useUnsavedGuard(dirty)
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
@@ -837,6 +853,10 @@ export function StepDetailView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
+    if (!simpleFieldsDirty) setSimpleFields(readSimpleStepFields(step, caseRow?.data))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data, step.id])
+  useEffect(() => {
     if (!parasiteDirty) {
       const next = readParasiteForm(caseRow?.data, parasiteFieldKey)
       setParasite(next.length === 0 ? [makeEmptyGeneralVaccine()] : next)
@@ -1002,7 +1022,24 @@ export function StepDetailView({
       const m = (vu ?? '').match(/^(\d+)\s*년$/)
       return !!m && Number(m[1]) > 1
     }
-    if (isMicrochip) {
+    if (isSimpleFieldsStep) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateSimpleStepFields(caseId, step.id, simpleFields, activeDest)
+        if (res.ok) {
+          updateCase(res.value)
+          setSimpleFields(
+            readSimpleStepFields(step, activeDestinationView(res.value, activeDest).data),
+          )
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isMicrochip) {
       if (chip !== '' && chip.length !== 15) return '15자리 숫자를 입력하세요.'
       const birth = readBirthDate(caseRow?.data)
       if (date && birth && date < birth) {
@@ -1074,15 +1111,20 @@ export function StepDetailView({
           return '1차 접종일을 먼저 입력하세요.'
         }
         if (r1.date && rabies.date) {
-          // 1·2차 순서·간격(30일) — procedure-check 와 같은 domain 함수(단일 출처).
-          // 중국은 30일 간격이 GACC 공식 근거 없는 보수 추정이라(cn.rabies-doses-30days-to-1year-apart
-          // 'info' 주의로만 표면화) 하드 차단하지 않는다. 순서(2차 ≥ 1차)만 지킨다.
+          // 1·2차 순서·간격 — procedure-check 와 같은 domain 함수(단일 출처). 최소일은
+          // 프로파일 doseIntervalDays 파생(하와이 31·기본 30).
+          // 중국은 30일 간격이 GACC 공식 근거 없는 보수 추정이라 하드 차단·주의 둘 다 두지
+          // 않는다(doseIntervalDays: 'soft', 의도적). 순서(2차 ≥ 1차)만 지킨다.
           if (destinationKey === 'china') {
             if (rabies.date < r1.date) {
               return '2차 접종일이 1차 접종일보다 빨라요. 날짜를 확인하세요.'
             }
           } else {
-            const intervalErr = validateRabiesInterval(r1.date, rabies.date)
+            const intervalErr = validateRabiesInterval(
+              r1.date,
+              rabies.date,
+              rabiesIntervalMinDays(destinationKey),
+            )
             if (intervalErr) return intervalErr
           }
           // 2차가 1차 면역 유효기간 이내 — 부스터 chain 검증(findRabiesChainBreak, 3차+ 와 단일 출처).
@@ -1342,25 +1384,17 @@ export function StepDetailView({
           if (err) return err
         }
       }
-      // 싱가포르 — 내·외부 구충은 출국 2~7일 창(Schedule III). 필리핀·EU 촌충과 같은 차단
-      // 모델(2026-07-25 사용자 확정). 도메인 단일 출처(validateSgParasiteWindow) — sg.ts
-      // 안내 룰과 같은 함수. 출국일 미입력이면 통과(치료 먼저 하는 순서를 막지 않기 위해).
-      if (destinationKey === 'singapore' && (isExternalParasite || isInternalParasite)) {
+      // 출국일 앵커 기생충 창(싱가포르 2~7일·하와이/UAE 14일·브라질 15일·터키 30일·멕시코
+      // 6개월) — 목적지별 손수 배선 대신 도메인 단일 dispatch(validateParasiteDateForDestination)
+      // 하나로. 각국 procedure-check(*.parasite 주의)와 같은 함수라 저장 거부·주의가 항상 일치.
+      // 새 목적지는 date-rules 의 PARASITE_DEPARTURE_WINDOWS 한 줄이면 여기 자동 커버.
+      // 출국일 미입력이면 dispatch 가 통과(치료 먼저 하는 순서를 막지 않기 위해).
+      if (isExternalParasite || isInternalParasite) {
         const dep = (caseRow?.departure_date ?? '').slice(0, 10)
-        const label = isExternalParasite ? '외부 기생충 치료' : '내부 기생충 치료'
+        const kind = isExternalParasite ? 'external' : 'internal'
         for (const e of parasite) {
           if (!e.date) continue
-          const err = validateSgParasiteWindow(e.date, dep, label)
-          if (err) return err
-        }
-      }
-      // 하와이 — 진드기(외부구충)는 도착 14일 이내(HDOA). 싱가포르와 같은 저장 거부 모델.
-      // 도메인 단일 출처(validateHiTickWindow) — hi.tick 안내 룰과 같은 함수.
-      if (destinationKey === 'hawaii' && isExternalParasite) {
-        const dep = (caseRow?.departure_date ?? '').slice(0, 10)
-        for (const e of parasite) {
-          if (!e.date) continue
-          const err = validateHiTickWindow(e.date, dep)
+          const err = validateParasiteDateForDestination(e.date, { destinationKey, kind, departureDate: dep })
           if (err) return err
         }
       }
@@ -1393,6 +1427,32 @@ export function StepDetailView({
         departureDate: (caseRow?.departure_date ?? '').slice(0, 10),
         entryDate: entry,
         data,
+      })
+    }
+    if (isSimpleFieldsStep) {
+      if (
+        step.id === 'us-state-requirements' &&
+        simpleFields.us_state_requirements_confirmed === 'yes' &&
+        !simpleFields.us_destination_state?.trim()
+      ) {
+        return '도착 주를 입력하세요.'
+      }
+      // 고위험국 체류·미확정 같은 사실값은 저장을 막지 않는다. 저장 후 blocker/warning 이
+      // 정확한 후속 경로를 안내해야 하므로 이 폼에서는 구조적 모순만 차단한다.
+      return null
+    }
+    if (step.id === 'us-cdc-dog-import-form') {
+      return validateUsCdcFormDate(importQuarantineDate.trim(), {
+        data: (caseRow?.data ?? {}) as Record<string, unknown>,
+        destination: caseRow?.destination ?? null,
+        departureDate: caseRow?.departure_date ?? null,
+      })
+    }
+    if (step.id === 'us-export-health-cert') {
+      return validateUsExportHealthCertDate(importQuarantineDate.trim(), {
+        data: (caseRow?.data ?? {}) as Record<string, unknown>,
+        destination: caseRow?.destination ?? null,
+        departureDate: caseRow?.departure_date ?? null,
       })
     }
     if (step.id === 'sg-gst-permit') {
@@ -2751,18 +2811,25 @@ export function StepDetailView({
               // 쓰이는 나라만 상세를 받는다(2026-07-25 — 비대행 절차국은 단순형·첨부로).
               collapsible={destinationKey === 'japan'}
               // departureFirst 의 '세부 정보'(도착일 등) 필드 한정 — 단순 목적지는 세부 자체가
-              // 없고(접기 미표시), 필리핀은 도착일+도착공항만, 나머지 절차국(태국·말레이·인니·
-              // UAE·이스라엘·아일랜드 등)은 전체(도착일·시간·공항·편명).
+              // 없고(접기 미표시), 미국은 도착일만, 필리핀은 도착일+도착공항만,
+              // 나머지 절차국(태국·말레이·인니·UAE·이스라엘·아일랜드 등)은
+              // 전체(도착일·시간·공항·편명).
               departureDetailFieldKeys={
                 // 단순 항공권 목적지 — 세부 없음(출국일·귀국일 + 첨부만).
                 isSimpleFlightDest
                   ? []
+                  : destinationKey === 'usa'
+                    ? ['entry_date']
                   : destinationKey === 'philippines'
                     ? ['entry_date', 'entry_airport']
                     : undefined
               }
               returnFieldKeys={
-                isSimpleFlightDest || destinationKey === 'philippines' ? ['return_date'] : undefined
+                isSimpleFlightDest ||
+                destinationKey === 'philippines' ||
+                destinationKey === 'usa'
+                  ? ['return_date']
+                  : undefined
               }
               // 도착 공항 예시 — 기본값(나리타 NRT)이 일본 기준이라 목적지별 현지 공항으로 교체.
               fieldPlaceholders={
@@ -2887,6 +2954,86 @@ export function StepDetailView({
               date={jpImportQuarantineDate}
               onChange={setJpImportQuarantineDate}
             />
+          </section>
+        )}
+        {isSimpleFieldsStep && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
+            <div
+              style={{
+                background: C.surface,
+                border: `.5px solid ${C.line}`,
+                borderRadius: 16,
+                padding: '4px 14px',
+              }}
+            >
+              {(step.inputs ?? []).map((field, index) => {
+                const value = simpleFields[field.key] ?? ''
+                const commonStyle = {
+                  width: '100%',
+                  marginTop: 7,
+                  padding: '11px 12px',
+                  border: `.5px solid ${C.line}`,
+                  borderRadius: 10,
+                  background: C.bg,
+                  color: C.ink,
+                  fontSize: 14,
+                  outline: 'none',
+                } as const
+                return (
+                  <label
+                    key={field.key}
+                    style={{
+                      display: 'block',
+                      padding: '12px 0',
+                      borderBottom:
+                        index === (step.inputs?.length ?? 0) - 1
+                          ? 'none'
+                          : `.5px solid ${C.line}`,
+                    }}
+                  >
+                    <span style={{ fontSize: 13, color: C.ink, fontWeight: 600 }}>
+                      {field.label}
+                      {field.required ? ' *' : ''}
+                    </span>
+                    {field.type === 'select' ? (
+                      <select
+                        value={value}
+                        onChange={(e) =>
+                          setSimpleFields((prev) => ({ ...prev, [field.key]: e.target.value }))
+                        }
+                        style={commonStyle}
+                      >
+                        <option value="">선택하세요</option>
+                        {(field.options ?? []).map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={value}
+                        placeholder={field.helpText}
+                        maxLength={100}
+                        onChange={(e) =>
+                          setSimpleFields((prev) => ({ ...prev, [field.key]: e.target.value }))
+                        }
+                        style={commonStyle}
+                      />
+                    )}
+                    {field.helpText && field.type === 'select' && (
+                      <span
+                        style={{ display: 'block', marginTop: 6, fontSize: 12, color: C.ink3 }}
+                      >
+                        {field.helpText}
+                      </span>
+                    )}
+                  </label>
+                )
+              })}
+            </div>
           </section>
         )}
         {isImportQuarantine && (
@@ -3106,6 +3253,30 @@ export function StepDetailView({
       )}
     </div>
   )
+}
+
+function readSimpleStepFields(
+  step: StepDefinition,
+  data: Record<string, unknown> | null | undefined,
+): Record<string, string> {
+  const source = (data ?? {}) as Record<string, unknown>
+  return Object.fromEntries(
+    (step.inputs ?? []).map((field) => {
+      const value = source[field.key]
+      return [field.key, typeof value === 'string' ? value : '']
+    }),
+  )
+}
+
+function simpleStepFieldsEqual(
+  a: Record<string, string>,
+  b: Record<string, string>,
+): boolean {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)])
+  for (const key of keys) {
+    if ((a[key] ?? '') !== (b[key] ?? '')) return false
+  }
+  return true
 }
 
 function fieldTypeLabel(t: string): string {

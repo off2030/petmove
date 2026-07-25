@@ -678,6 +678,74 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r) out.push(r)
       }
+    } else if (key === 'usa') {
+      // 미국은 전국 공통의 단일 신청 마감이 없다. 그래서 '법정 마감'을 만들지 않고
+      // 도착 주 확인·CDC 신고 준비 시점을 여유 알림으로 보낸다.
+      const stateConfirmed =
+        str(data.us_destination_state).trim().length > 0 &&
+        data.us_state_requirements_confirmed === 'yes'
+      if (entry && !stateConfirmed) {
+        const rState = leadReminder(
+          flat,
+          `${token}|us-state-check`,
+          entry,
+          14,
+          '미국 도착 주의 반려동물 반입 규정과 항공사 운송 조건을 확인하세요.',
+          now,
+        )
+        if (rState) out.push(rState)
+      }
+
+      const species = str(data.species).trim().toLowerCase()
+      const dog = species === 'dog' || species === '개' || species === '강아지'
+      if (dog && entry && !str(data.us_cdc_form_date)) {
+        const r7 = leadReminder(
+          flat,
+          `${token}|us-cdc-form-7`,
+          entry,
+          7,
+          '미국 입국 전 CDC Dog Import Form을 제출하고 접수증을 보관하세요.',
+          now,
+        )
+        if (r7) out.push(r7)
+        const r1 = leadReminder(
+          flat,
+          `${token}|us-cdc-form-1`,
+          entry,
+          1,
+          '미국 출발 전 CDC Dog Import Form 접수증과 마이크로칩 정보를 다시 확인하세요.',
+          now,
+        )
+        if (r1) out.push(r1)
+      }
+
+      // 미국 → 한국 건강증명서의 준비 창은 미국 출국 30일 전부터. return_date 를 미국
+      // 출국 일정의 앵커로 쓰며, 고정 '마감'이 아니라
+      // 창이 열리는 날과 일주일 전의 준비 리마인더로 표현한다.
+      if (
+        buildCaseJourneyContext(flat, token).tripType === 'round' &&
+        ret &&
+        !str(data.us_export_quarantine_date)
+      ) {
+        const r30 = leadReminder(
+          flat,
+          `${token}|us-usda-health-cert-30`,
+          ret,
+          30,
+          '한국 귀국용 국제 건강증명서를 미국 공인 수의사에게 받고 USDA 승인을 준비하세요.',
+          now,
+        )
+        if (r30) out.push(r30)
+        const r7 = leadReminder(
+          flat,
+          `${token}|us-usda-health-cert-7`,
+          ret,
+          7,
+          '미국 출국이 일주일 남았어요. USDA 원본 잉크 서명과 압인이 있는 국제 건강증명서 승인본을 확인하세요.',
+          now,
+        )
+        if (r7) out.push(r7)
+      }
     } else if (key === 'israel') {
       // 이스라엘 사전 통보 — 적재(출국) 2영업일 전 마감(공식 안내 섹션 P·Q). 입력불가는 캘린더
       // D-2 근사라, 주말·공휴일 버퍼로 D-11·D-4 두 번 안내(사용자 지정 2026-07-23). 사전 통보

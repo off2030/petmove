@@ -24,6 +24,7 @@ import { APP_SUPPORTED_DESTINATION_KEYS, DESTINATION_OVERRIDES } from '../packag
 import { JOURNEY_STEP_CATALOG } from '../packages/domain/src/journey-steps/catalog'
 import { resolveStepForDestination } from '../packages/domain/src/journey-steps/destination-overrides'
 import { getStepsForCase } from '../packages/domain/src/journey-steps/applicability'
+import { resolveRequiredDocs } from '../packages/domain/src/required-docs'
 import {
   validateMicrochipBeforeBooster,
   validateImportPermitFiledDate,
@@ -176,6 +177,11 @@ interface Scenario {
   why: string
   data: Record<string, unknown>
   departure?: string
+  /** 일부 목적지의 전용 분기만 작게 고정할 때 사용. 미지정이면 앱 지원 목적지 전체. */
+  destinations?: string[]
+  tripType?: 'one_way' | 'round'
+  /** 조건부 카드 노출 자체가 규칙인 시나리오에서만 카드 id 목록을 기록한다. */
+  showSteps?: boolean
 }
 
 const SCENARIOS: Scenario[] = [
@@ -483,6 +489,70 @@ const SCENARIOS: Scenario[] = [
       rabies_titer_records: [{ date: '2024-01-10', result: '1.2' }],
     },
   },
+  // ── 미국 전용 분기 ────────────────────────────────────────────────────
+  {
+    name: '미국 — 생후 6개월 미만·고위험국 이력 강아지 편도',
+    why: '강아지 최소 연령은 저장 거부, 고위험국 이력은 별도 차단으로 반응하고 편도에는 한국 귀국 카드가 없어야 한다',
+    destinations: ['usa'],
+    tripType: 'one_way',
+    showSteps: true,
+    departure: '2026-06-01',
+    data: {
+      species: 'dog',
+      birth_date: '2026-01-01',
+      entry_date: '2026-06-01',
+      us_dog_rabies_risk_history: 'high_risk',
+      us_destination_state: 'California',
+      us_state_requirements_confirmed: 'yes',
+    },
+  },
+  {
+    name: '미국 — 고양이 편도',
+    why: '연방 CDC 강아지 카드와 한국 귀국용 마이크로칩·백신·항체·USDA 카드는 모두 없어야 한다',
+    destinations: ['usa'],
+    tripType: 'one_way',
+    showSteps: true,
+    departure: '2026-06-01',
+    data: {
+      species: 'cat',
+      birth_date: '2025-01-01',
+      entry_date: '2026-06-01',
+      us_destination_state: 'New York',
+      us_state_requirements_confirmed: 'yes',
+    },
+  },
+  {
+    name: '미국 — 귀국일에 생후 90일 미만인 고양이 왕복',
+    why: '마이크로칩·USDA 건강증명서는 필요하지만 한국행 광견병 백신·항체검사는 90일 미만 면제로 숨겨야 한다',
+    destinations: ['usa'],
+    tripType: 'round',
+    showSteps: true,
+    departure: '2026-03-01',
+    data: {
+      species: 'cat',
+      birth_date: '2026-01-01',
+      entry_date: '2026-03-01',
+      return_date: '2026-03-30',
+      us_destination_state: 'Washington',
+      us_state_requirements_confirmed: 'yes',
+    },
+  },
+  {
+    name: '미국 — 귀국일에 생후 90일인 고양이 왕복',
+    why: '90일 미만 면제 경계인 생후 90일째부터 광견병 백신·항체검사 카드가 다시 나타나야 한다',
+    destinations: ['usa'],
+    tripType: 'round',
+    showSteps: true,
+    departure: '2026-03-01',
+    data: {
+      species: 'cat',
+      birth_date: '2026-01-01',
+      entry_date: '2026-03-01',
+      return_date: '2026-04-01',
+      us_destination_state: 'Washington',
+      us_state_requirements_confirmed: 'yes',
+    },
+  },
 ]
 
 function koLabel(destKey: string): string {
@@ -507,15 +577,18 @@ function build(): string {
     out.push(`  ${sc.why}`)
     out.push('═'.repeat(76))
 
-    for (const destKey of APP_SUPPORTED_DESTINATION_KEYS) {
+    for (const destKey of sc.destinations ?? APP_SUPPORTED_DESTINATION_KEYS) {
       const token = koLabel(destKey)
       const caseRow = {
         id: 'snapshot',
         pet_name: '테스트',
         destination: token,
-        trip_type: 'round',
+        trip_type: sc.tripType ?? 'round',
         departure_date: sc.departure ?? null,
-        data: sc.data,
+        data: {
+          ...sc.data,
+          trip_type: { [token]: sc.tripType ?? 'round' },
+        },
       } as never
 
       // 메시지까지 기록한다 — 룰 id 만 담으면 "같은 룰이 다른 문구를 낸다"를 못 잡는다.
@@ -561,6 +634,12 @@ function build(): string {
       const situ = withFrozenNow(() => situationalCopy(caseRow))
       out.push(`   상황별 설명문 ${situ.length}건`)
       for (const s of situ) out.push(`     ▸ ${s}`)
+      if (sc.showSteps) {
+        const visibleStepIds = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow).map((step) => step.id)
+        out.push(`   노출 카드: ${visibleStepIds.join(', ')}`)
+        const requiredDocIds = resolveRequiredDocs(token, caseRow)?.map((doc) => doc.id) ?? []
+        out.push(`   필수 서류: ${requiredDocIds.join(', ')}`)
+      }
       out.push(`   알림 ${reminders.length}건`)
       for (const r of [...new Set(reminders)]) out.push(`     · ${r}`)
       if (pushes.length) out.push(`   푸시: ${pushes.join(', ')}`)

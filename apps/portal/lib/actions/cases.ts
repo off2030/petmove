@@ -26,10 +26,17 @@ import {
   parseDestinations,
   todayKst,
   validateEuEntryDate,
+  validateEntryDateForDestination,
+  validateIlEntryDate,
   validateJpEntryDate,
   validatePhEntryDate,
   validateThEntryDate,
   validateTwEntryDate,
+  buildDateRuleContext,
+  validateImportQuarantineDate,
+  validateUsCdcFormDate,
+  validateUsDogEntryDate,
+  validateUsExportHealthCertDate,
   writeByDestValue,
   writeJourneyFeedback,
   readByDestValue,
@@ -1041,6 +1048,29 @@ export async function updateFlightFields(
       destination ?? null,
     )
     const isJapanFlight = flightCtx.destinationKey === 'japan'
+    // 미국 강아지 생후 6개월 규칙은 항공권 저장의 서버 backstop 에도 적용한다. 클라이언트
+    // 가드를 우회해도 같은 도메인 함수가 거부한다. 다른 목적지는 기존 서버 정책을 유지한다.
+    if (flightCtx.destinationKey === 'usa' && !(await isFreeInputMode())) {
+      const entry = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
+      const explicitDep =
+        typeof fields.departure_date === 'string' ? fields.departure_date.trim() : ''
+      const currentCtx = buildDateRuleContext(
+        { destination: caseDestStr ?? null, data: prev } as CaseRow,
+        destination ?? null,
+      )
+      const proposedData: Record<string, unknown> = {
+        ...currentCtx.data,
+        ...fields,
+        entry_date: entry || null,
+        departure_flight_date: explicitDep || entry || null,
+      }
+      const validationError = validateEntryDateForDestination(entry, explicitDep, {
+        ...currentCtx,
+        data: proposedData,
+        departureDate: explicitDep || entry || null,
+      })
+      if (validationError) return { ok: false, error: validationError }
+    }
     // 출국 ≤ 귀국 — 왕복에서만 검사. 편도는 귀국 leg 가 없어, 왕복에서 전환되며 남은 잔존
     // 귀국일을 무시한다. updateCaseInfoFields 의 trip_type==='round' 가드와 동일 패턴.
     if (flightCtx.tripType === 'round') {
@@ -1779,13 +1809,26 @@ export async function updateImportQuarantineDate(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data, destination')
+      .select('*')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const v = typeof date === 'string' ? date.trim() : ''
+    if (fieldKey.startsWith('us_')) {
+      if (buildCaseJourneyContext(existing as CaseRow, destination).destinationKey !== 'usa') {
+        return { ok: false, error: '미국 여정에서만 저장할 수 있는 필드입니다.' }
+      }
+      if (v) {
+        const ctx = buildDateRuleContext(existing as CaseRow, destination)
+        const validationError =
+          fieldKey === 'us_export_quarantine_date'
+            ? validateUsExportHealthCertDate(v, ctx)
+            : validateImportQuarantineDate(v, ctx)
+        if (validationError) return { ok: false, error: validationError }
+      }
+    }
     const nextData = applyQuarantine(
       prev,
       existing?.destination,
@@ -2040,6 +2083,7 @@ export async function markApplicationIssued(
 const SIMPLE_DATE_STEP_FIELDS: Record<string, string> = {
   'sg-gst-permit': 'sg_gst_permit_date',
   'sg-border-inspection': 'sg_border_inspection_date',
+  'us-cdc-dog-import-form': 'us_cdc_form_date',
 }
 
 /**
@@ -2065,12 +2109,24 @@ export async function updateSimpleDateField(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data, destination')
+      .select('*')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
+    if (stepId === 'us-cdc-dog-import-form') {
+      if (buildCaseJourneyContext(existing as CaseRow, destination).destinationKey !== 'usa') {
+        return { ok: false, error: '미국 여정에서만 저장할 수 있는 단계입니다.' }
+      }
+      if (v) {
+        const validationError = validateUsCdcFormDate(
+          v,
+          buildDateRuleContext(existing as CaseRow, destination),
+        )
+        if (validationError) return { ok: false, error: validationError }
+      }
+    }
     const caseDestStr = (existing as { destination: string | null }).destination
     const token = resolveWriteToken(caseDestStr, prev, destination)
 
@@ -2082,6 +2138,100 @@ export async function updateSimpleDateField(
     } else {
       if (v) nextData[field] = v // scoping-fallback-ok: token 없음(목적지 없음) 폴백
       else delete nextData[field]
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+// ── 소형 단일값 카드 — 미국 입국 경로·도착 주 확인 ──────────────────────
+// stepId 별 허용 필드·값을 서버가 결정한다. 클라이언트가 임의의 case.data 키를 쓸 수 없다.
+const SIMPLE_STEP_FIELD_SPECS: Record<
+  string,
+  Record<string, { values?: readonly string[]; maxLength?: number }>
+> = {
+  'us-entry-eligibility': {
+    us_dog_rabies_risk_history: {
+      values: ['low_risk', 'high_risk', 'unknown'],
+    },
+  },
+  'us-state-requirements': {
+    us_destination_state: { maxLength: 100 },
+    us_state_requirements_confirmed: { values: ['yes', 'no'] },
+  },
+}
+
+export async function updateSimpleStepFields(
+  caseId: string,
+  stepId: string,
+  fields: Record<string, string | null>,
+  destination?: string | null,
+): Promise<Result<CaseRow>> {
+  try {
+    const spec = SIMPLE_STEP_FIELD_SPECS[stepId]
+    if (!spec) return { ok: false, error: '알 수 없는 절차 단계입니다.' }
+    const submittedKeys = Object.keys(fields)
+    if (submittedKeys.some((key) => !spec[key])) {
+      return { ok: false, error: '허용되지 않은 입력 필드가 있습니다.' }
+    }
+
+    const normalized: Record<string, string> = {}
+    for (const [key, rule] of Object.entries(spec)) {
+      const value = typeof fields[key] === 'string' ? fields[key]!.trim() : ''
+      if (rule.values && value && !rule.values.includes(value)) {
+        return { ok: false, error: '허용되지 않은 선택값입니다.' }
+      }
+      if (value.length > (rule.maxLength ?? 100)) {
+        return { ok: false, error: '입력값이 너무 깁니다.' }
+      }
+      normalized[key] = value
+    }
+    if (
+      stepId === 'us-state-requirements' &&
+      normalized.us_state_requirements_confirmed === 'yes' &&
+      !normalized.us_destination_state
+    ) {
+      return { ok: false, error: '도착 주를 입력하세요.' }
+    }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data, destination')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const caseDestStr = (existing as { destination: string | null }).destination
+    if (
+      buildCaseJourneyContext(existing as CaseRow, destination).destinationKey !== 'usa'
+    ) {
+      return { ok: false, error: '미국 여정에서만 저장할 수 있는 단계입니다.' }
+    }
+    const token = resolveWriteToken(caseDestStr, prev, destination)
+    let nextData: Record<string, unknown> = { ...prev }
+    for (const [key, value] of Object.entries(normalized)) {
+      if (token) {
+        nextData = writeByDestValue(nextData, token, key, value || null)
+        delete nextData[key]
+      } else if (value) {
+        nextData[key] = value // scoping-fallback-ok: token 없음(목적지 없음) 폴백
+      } else {
+        delete nextData[key]
+      }
     }
 
     const { data: updated, error } = await admin
@@ -2882,7 +3032,11 @@ export async function updateCaseInfoFields(
       const ruleCtx = {
         // birth_date 는 이 폼에서 함께 수정될 수 있어 폼 값을 우선 (prev 는 stale).
         // 저장이 아니라 검증용 로컬 view — data 쓰기 아님.
-        data: { ...prev, birth_date: effective.birth_date?.trim() || undefined }, // scoping-lint-ignore
+        data: {
+          ...prev,
+          birth_date: effective.birth_date?.trim() || undefined, // scoping-lint-ignore — 검증용 view
+          species: effective.species || undefined, // scoping-lint-ignore — 검증용 view
+        },
         destination: effective.destination,
         departureDate: null,
       }
@@ -2890,8 +3044,10 @@ export async function updateCaseInfoFields(
         validateJpEntryDate(effective.departure_date.trim(), ruleCtx) ??
         validateThEntryDate(effective.departure_date.trim(), ruleCtx) ??
         validatePhEntryDate(effective.departure_date.trim(), ruleCtx) ??
+        validateIlEntryDate(effective.departure_date.trim(), ruleCtx) ??
         validateEuEntryDate(effective.departure_date.trim(), ruleCtx) ??
-        validateTwEntryDate(effective.departure_date.trim(), ruleCtx)
+        validateTwEntryDate(effective.departure_date.trim(), ruleCtx) ??
+        validateUsDogEntryDate(effective.departure_date.trim(), ruleCtx)
       if (entryErr) return { ok: false, error: entryErr }
     }
     let nextData: Record<string, unknown> = { ...prev }

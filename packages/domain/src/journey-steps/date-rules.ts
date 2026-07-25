@@ -69,6 +69,35 @@ function departFromData(data: Record<string, unknown>): string {
 // ── 날짜별 순방향 검증 — 위반 시 메시지, 정상이면 null ──────────────────
 
 /**
+ * 미국 저위험국 경로의 개는 미국 도착일에 생후 6개월 이상이어야 한다.
+ * 고양이는 CDC 개 수입 규칙의 적용 대상이 아니므로 검사하지 않는다.
+ *
+ * https://www.cdc.gov/importation/dogs/rabies-free-low-risk-countries.html
+ */
+export function validateUsDogEntryDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v || !matchesDestinationKey(ctx.destination, 'usa')) return null
+  if (readSpecies(ctx.data) !== 'dog') return null
+  const birth = readDate(ctx.data, 'birth_date')
+  if (!birth) return null
+  const earliest = addMonths(birth, 6)
+  if (earliest && v < earliest) {
+    return `개는 생후 6개월이 되는 ${fmt(earliest)}부터 미국에 입국할 수 있어요.`
+  }
+  return null
+}
+
+/**
+ * CDC Dog Import Form은 미국 입국 전에 제출하는 신고서다. 과거 하한은 두지 않고,
+ * 입국일 뒤 날짜라는 논리적 모순만 저장 거부한다.
+ */
+export function validateUsCdcFormDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v || !matchesDestinationKey(ctx.destination, 'usa')) return null
+  const entry = departFromData(ctx.data)
+  if (entry && v > entry) return 'CDC Dog Import Form 제출일은 미국 도착일보다 늦을 수 없어요.'
+  return null
+}
+
+/**
  * 일본 입국일(= 출국 항공편 날짜) — 광견병 항체 검사일 + 180일 미만 입국만 hard 차단.
  *
  * 회복 경로가 **없는** 위반만 저장 거부 = "검역 통과를 위해 출국일 자체를 바꾸는 것 외에
@@ -451,6 +480,24 @@ export function validatePhEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
+ * 이스라엘 — 출국(=입국 근사)일에 반려동물이 **만 4개월(약 17주) 이상**이어야 함(gov.il 수의국,
+ * trafficking 방지). 생년월일은 못 바꾸니 위반 해소가 '날짜를 늦추는 것'뿐이라 저장 거부 대상
+ * (필리핀 120일과 같은 모델). client(입력 불가)·procedure-check(il.min-4months-on-departure,
+ * 출국일을 나중에 당겨 어긋난 경우 '주의') 공용. 이스라엘 외·생년월일 미입력 시 SKIP.
+ */
+export function validateIlEntryDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!matchesDestinationKey(ctx.destination, 'israel')) return null
+  const birth = readDate(ctx.data, 'birth_date')
+  if (!birth) return null
+  const earliest = addMonths(birth, 4)
+  if (earliest && v < earliest) {
+    return '출국일에 반려동물이 만 4개월(약 17주) 이상이어야 해요.'
+  }
+  return null
+}
+
+/**
  * EU 패밀리(EU 24국 묶음 + 영국·아일랜드·몰타·노르웨이·핀란드·스위스·키프로스) —
  * destination-config 키. `archetype: 'eu-family'` 선언 파생(진실 출처는 프로파일).
  * procedure-checks/eu.ts 의 EU_REGIME 과 client(step-detail-view) 분기도 이 목록을 쓴다.
@@ -576,17 +623,80 @@ export function validateSgParasiteWindow(
 }
 
 /**
- * 하와이 — 진드기(외부구충) 처치는 도착 14일 이내(gap 0~13)에 해야 함. HDOA Checklist 1 Step 6 #4.
- * client(처치일 입력 시 저장 거부 — 싱가포르 2~7일 창과 같은 모델)·procedure-check
- * (hi.tick-treatment-within-14days 안내) 공용 단일 출처. 출국일(도착 proxy) 미입력이면 통과.
+ * 출국일 앵커 '채취일 ~ 출국 N일 이내' 기생충 창 — 목적지별 상한(일)과 문구. **저장 거부·주의
+ * 공용 단일 출처**(validateParasiteDateForDestination 이 읽는다). 새 목적지는 여기 한 줄 추가하면
+ * client 저장 거부·procedure-check 주의·커버리지 lint 가 함께 붙는다(2026-07-25 통합).
+ *
+ * ⚠️ 싱가포르(2~7일, 하한도 있음)·필리핀(수입허가 신청일 앵커)·EU 촌충(입국일 앵커, 1~5일)은
+ *   앵커·창 모양이 달라 여기 넣지 않고 dispatch 에서 전용 함수로 분기한다.
  */
-export function validateHiTickWindow(treatDate: string, departureDate: string): string | null {
+export const PARASITE_DEPARTURE_WINDOWS: Record<
+  string,
+  { maxGap: number; windowLabel: string; kinds: Array<'external' | 'internal'> }
+> = {
+  turkey: { maxGap: 30, windowLabel: '출국 30일 이내', kinds: ['external', 'internal'] },
+  mexico: { maxGap: 180, windowLabel: '멕시코 도착 6개월 이내', kinds: ['external', 'internal'] },
+  brazil: { maxGap: 14, windowLabel: '출국 15일 이내', kinds: ['external', 'internal'] },
+  uae: { maxGap: 13, windowLabel: '출국 14일 이내', kinds: ['external', 'internal'] },
+  hawaii: { maxGap: 13, windowLabel: '출국 14일 이내', kinds: ['external'] },
+}
+
+function validateParasiteWithinDays(
+  treatDate: string,
+  departureDate: string,
+  maxGap: number,
+  windowLabel: string,
+  treatLabel: string,
+): string | null {
   if (!treatDate || !departureDate) return null
   const gap = daysBetween(treatDate.slice(0, 10), departureDate.slice(0, 10))
   if (gap === null) return null
-  if (gap < 0) return '외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.'
-  if (gap > 13) return '외부 기생충 치료는 출국 14일 이내에 해야 해요.'
+  if (gap < 0) return `${treatLabel}일이 출국일보다 늦어요. 날짜를 확인하세요.`
+  if (gap > maxGap) return `${treatLabel}는 ${windowLabel}에 해야 해요.`
   return null
+}
+
+/**
+ * 기생충(외부·내부) 처치일 저장 거부·주의 **단일 dispatch**. 목적지별 창을 한 곳에서 판정한다.
+ * client(getSaveBlockError)·procedure-check(각국 *.parasite 룰)이 같은 함수를 부른다 —
+ * 저장 거부가 목적지마다 손수 배선돼 새 목적지에서 누락되던 문제(2026-07-25)를 근본 해결.
+ *
+ * 출국일(도착 proxy) 미입력이면 통과(치료 먼저 하는 순서를 막지 않기 위해).
+ */
+export function validateParasiteDateForDestination(
+  treatDate: string,
+  ctx: {
+    destinationKey: string | null | undefined
+    kind: 'external' | 'internal'
+    departureDate: string
+  },
+): string | null {
+  if (!treatDate || !ctx.departureDate) return null
+  const label = ctx.kind === 'internal' ? '내부 기생충 치료' : '외부 기생충 치료'
+  // 싱가포르 — 2~7일 창(내·외부 동일).
+  if (matchesDestinationKey(ctx.destinationKey, 'singapore')) {
+    return validateSgParasiteWindow(treatDate, ctx.departureDate, label)
+  }
+  // 출국일 앵커 '~N일 이내' 창 (터키·멕시코·브라질·UAE·하와이).
+  for (const key of Object.keys(PARASITE_DEPARTURE_WINDOWS)) {
+    if (!matchesDestinationKey(ctx.destinationKey, key)) continue
+    const w = PARASITE_DEPARTURE_WINDOWS[key]
+    if (!w.kinds.includes(ctx.kind)) return null
+    return validateParasiteWithinDays(treatDate, ctx.departureDate, w.maxGap, w.windowLabel, label)
+  }
+  return null
+}
+
+/**
+ * @deprecated 하위호환 래퍼 — 새 코드는 validateParasiteDateForDestination 을 직접 쓴다.
+ *   (통합 dispatch 이관 과도기, step-detail-view 의 옛 하와이 브랜치 호환용.)
+ */
+export function validateHiTickWindow(treatDate: string, departureDate: string): string | null {
+  return validateParasiteDateForDestination(treatDate, {
+    destinationKey: 'hawaii',
+    kind: 'external',
+    departureDate,
+  })
 }
 
 /**
@@ -1005,12 +1115,16 @@ export function validateEntryDateForDestination(
   const outbound = departure || entry
   const entryOrDeparture = entry || departure
   return (
+    validateUsDogEntryDate(entryOrDeparture, ctx) ??
     validateJpEntryDate(entry, ctx) ??
     validateThEntryDate(outbound, ctx) ??
     // 말레이시아·인도네시아는 전용 함수를 두지 않는다(2026-07-22 정리) — 말레이시아 30일은
     // 프로파일 entryWaitDaysAfterVaccine 파생(validateRabiesEntryWait)이 처리하고,
     // 인도네시아는 1차 출처에 대기 규정이 없어 대기 차단 자체가 없다.
     validatePhEntryDate(entryOrDeparture, ctx) ??
+    // 이스라엘 — 출국일 만 4개월(생일 불변이라 저장 거부). EU 골격이나 항체 3개월 대기는 없어
+    // validateEuEntryDate 에서 제외되므로 여기서 별도로 나이만 막는다.
+    validateIlEntryDate(entryOrDeparture, ctx) ??
     validateEuEntryDate(entryOrDeparture, ctx) ??
     validateTwEntryDate(entryOrDeparture, ctx) ??
     // 대만 광견병 선적 대기(90/30일) — 항체 90일과 별개 요건. 재검사 체인으로 항체 대기가
@@ -1273,6 +1387,26 @@ export function validateExportQuarantineDate(v: string, ctx: DateRuleContext): s
 }
 
 /**
+ * 미국에서 한국으로 귀국할 때 쓰는 USDA 승인 건강증명서는 미국 출국 전 30일 이내
+ * 발급·승인을 기준으로 안내한다. return_date 를 미국 출국 일정의 앵커로 쓰며,
+ * 현지 체류 중이어야 하므로 공통 수출검역 범위도 함께 본다.
+ *
+ * https://direct.aphis.usda.gov/pet-travel/us-to-another-country-export/pet-travel-us-korea
+ */
+export function validateUsExportHealthCertDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v || !matchesDestinationKey(ctx.destination, 'usa')) return null
+  const rangeError = validateExportQuarantineDate(v, ctx)
+  if (rangeError) return rangeError
+  const ret = readDate(ctx.data, 'return_date')
+  if (!ret) return null
+  const windowOpens = addDays(ret, -30)
+  if (windowOpens && v < windowOpens) {
+    return `미국 수출 건강증명서는 미국 출국 30일 전인 ${fmt(windowOpens)}부터 준비해야 해요.`
+  }
+  return null
+}
+
+/**
  * 출국 전 임상검사일: 출국일(앞 단계) 이전·목적지별 윈도우 이내. **자기 기준(출국일)으로만** 검증.
  *
  * 한국 수출검역일과의 관계(임상검사 ≤ 수출검역)는 여기서 보지 않는다 — 그 제약은 의존하는 쪽인
@@ -1303,11 +1437,29 @@ export function validateVetVisitDate(v: string, ctx: DateRuleContext): string | 
  * (2차 ≥ 1차 + 30일) 위반이므로 같은 문구 하나로 안내한다(주의 문구는 날짜 없이 담백한
  * 설명문 — 통일 정책). 어느 한쪽 날짜가 비면 비교 불가라 null(통과).
  */
-export function validateRabiesInterval(primeDate: string, boosterDate: string): string | null {
+export function validateRabiesInterval(
+  primeDate: string,
+  boosterDate: string,
+  minDays = 30,
+): string | null {
   if (!primeDate || !boosterDate) return null
   const gap = daysBetween(primeDate, boosterDate)
-  if (gap >= 30) return null
-  return '2차 광견병 접종은 1차 접종일로부터 30일이 지난 후에 해야 해요.'
+  if (gap >= minDays) return null
+  return `2차 광견병 접종은 1차 접종일로부터 ${minDays}일이 지난 후에 해야 해요.`
+}
+
+/**
+ * 목적지의 1→2차 광견병 간격 최소일 — 프로파일 doseIntervalDays 파생(미선언·'soft'=30 디폴트).
+ * validateRabiesInterval 저장 거부와 그 나라 간격 주의 룰이 같은 값을 공유하게 하는 출처.
+ * (하와이 31 = HDOA "more than 30 days apart" ≥31. 일본 등 미선언 = 30.)
+ */
+export function rabiesIntervalMinDays(destinationKey: string | null | undefined): number {
+  for (const key of Object.keys(DESTINATION_OVERRIDES)) {
+    if (!matchesDestinationKey(destinationKey, key)) continue
+    const v = DESTINATION_OVERRIDES[key]?.rabies?.doseIntervalDays
+    return typeof v === 'number' ? v : 30
+  }
+  return 30
 }
 
 /**

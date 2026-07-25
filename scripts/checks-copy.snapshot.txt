@@ -4,12 +4,6 @@
 
 [ae.general-vaccine-required]
   종합백신 기록이 없어요.
-[ae.external-parasite-within-14days]
-  외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.
-  외부 기생충 치료는 출국 14일 이내에 해야 해요.
-[ae.internal-parasite-within-14days]
-  내부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.
-  내부 기생충 치료는 출국 14일 이내에 해야 해요.
 [ae.banned-breeds]
   견종 "${breed.ko || breed.en}"은 UAE 수입 금지 견종이에요 (매치: ${match}).
 [ae.rabies-booster-within-prime-validity]
@@ -27,12 +21,6 @@
   광견병 접종 후 21일이 지나야 브라질에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [br.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
-[br.external-parasite-within-15days]
-  외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.
-  외부 기생충 치료는 출국 15일 이내에 해야 해요.
-[br.internal-parasite-within-15days]
-  내부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.
-  내부 기생충 치료는 출국 15일 이내에 해야 해요.
 [br.import-quarantine-date-valid]
   브라질 수입 검역일은 브라질 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [br.export-quarantine-date-valid]
@@ -139,12 +127,6 @@
   광견병 접종 후 30일이 지나야 멕시코에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [mx.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
-[mx.external-parasite-within-6months]
-  외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.
-  외부 기생충 치료는 멕시코 도착 6개월 이내에 해야 해요.
-[mx.internal-parasite-within-6months]
-  내부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.
-  내부 기생충 치료는 멕시코 도착 6개월 이내에 해야 해요.
 [mx.import-quarantine-date-valid]
   멕시코 수입 검역일은 멕시코 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [mx.export-quarantine-date-valid]
@@ -221,10 +203,6 @@
 [tr.departure-min-3months-after-titer]
   항체 검사 채혈일로부터 3개월이 지나야 튀르키예에 입국할 수 있어요. 입국일을 미뤄야 해요.
   광견병 항체가가 0.5 IU/mL 미만이에요.
-[tr.external-parasite-within-30days]
-  외부 기생충 치료는 출국 30일 이내에 해야 해요.
-[tr.internal-parasite-within-30days]
-  내부 기생충 치료는 출국 30일 이내에 해야 해요.
 [tr.import-quarantine-date-valid]
   튀르키예 수입 검역일은 튀르키예 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [tr.export-quarantine-date-valid]
@@ -252,6 +230,20 @@
 [ua.export-quarantine-date-valid]
   우크라이나 수출 검역일은 우크라이나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
   우크라이나 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
+[us.rabies-booster-within-prime-validity]
+  광견병 추가 접종은 직전 접종의 면역 유효기간 안에 해야 해요.
+[us.rabies-valid-on-return]
+  한국 귀국일에 광견병 백신의 면역 유효기간이 남아 있어야 해요.
+[us.high-risk-history-unsupported]
+  최근 6개월 동안 광견병 고위험국 체류 이력이 있어요. 미국 입국 절차가 달라지므로 담당자에게 별도로 확인하세요.
+[us.rabies-risk-history-unknown]
+  최근 6개월 동안 머문 국가를 확인한 뒤 미국 입국 경로를 선택하세요.
+[us.state-requirements-confirmed]
+  미국 도착 주를 입력하고 주별 반려동물 반입 규정을 확인하세요.
+[us.cdc-form-required]
+  미국 입국 전에 CDC Dog Import Form을 제출하고 접수증을 보관하세요.
+[us.cdc-form-date-valid]
+  CDC Dog Import Form 접수증은 발급 후 6개월 동안 유효해요. 미국 입국 전에 다시 제출하세요.
 [uz.rabies-min-30days-before-departure]
   광견병 접종 후 30일이 지나야 우즈베키스탄에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [uz.rabies-booster-within-prime-validity]

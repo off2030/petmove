@@ -28,6 +28,7 @@ import { TW_CHECKS } from './tw'
 import { UA_CHECKS } from './ua'
 import { UZ_CHECKS } from './uz'
 import { VN_CHECKS } from './vn'
+import { US_CHECKS } from './us'
 import { ZA_CHECKS } from './za'
 import type { CheckContext, CheckResult, CountryKey, ProcedureCheck } from './types'
 
@@ -63,6 +64,7 @@ export const ALL_PROCEDURE_CHECKS: ProcedureCheck[] = [
   ...IL_CHECKS,
   ...ID_CHECKS,
   ...CA_CHECKS,
+  ...US_CHECKS,
   ...ZA_CHECKS,
   // 2026-07-18 등록 누락 수정 — 파일은 있었으나 import 안 돼 룰이 하나도 안 돌던 5개국.
   ...AR_CHECKS,

@@ -31,7 +31,7 @@ import { JOURNEY_STEP_CATALOG } from '../packages/domain/src/journey-steps/catal
 import { resolveStepForDestination } from '../packages/domain/src/journey-steps/destination-overrides'
 import { ALL_PROCEDURE_CHECKS, checkCountryKeys } from '../packages/domain/src/procedure-checks/registry'
 import { DESTINATION_OVERRIDES, destinationKeysWhere } from '../packages/domain/src/destination-config'
-import { EU_ENTRY_FAMILY } from '../packages/domain/src/journey-steps/date-rules'
+import { EU_ENTRY_FAMILY, PARASITE_DEPARTURE_WINDOWS } from '../packages/domain/src/journey-steps/date-rules'
 
 const CHECKS_DIR = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -54,6 +54,7 @@ type Problem = {
     | 'missing-pair'
     | 'own-calc'
     | 'no-blocker'
+    | 'no-parasite-blocker'
     | 'no-titer-wait-decision'
     | 'dead-declaration'
     | 'notify-unregistered'
@@ -363,6 +364,48 @@ const TITER_NO_ENTRY_WAIT_KNOWN: Record<string, string> = {
   // china·israel 은 blocked(EU_ENTRY_FAMILY)/전용 처리로 이미 6단계 대상 밖이라 여기 불필요.
 }
 
+/**
+ * 6-b단계 — **기생충 창 주의는 있는데 저장 거부가 없는** 목적지.
+ *
+ * 왜 필요한가: 기생충(외부·내부) 처치 창은 date-rules 의 validateParasiteDateForDestination
+ * dispatch 로 저장 거부한다. 그런데 저장 거부가 목적지별로 손수 배선되던 시절, 새 목적지는
+ * 주의 룰·카드만 자동으로 붙고 저장 거부는 누락됐다 — 하와이(2026-07-25)·터키·멕시코·UAE·
+ * 브라질이 그 상태였다(주의만·저장은 됨). 이름 규칙이 아니라 '기생충 창 룰 존재' 자체를
+ * 기준으로, dispatch 커버리지(PARASITE_DEPARTURE_WINDOWS ∪ 싱가포르 ∪ 특수 앵커 나라)에
+ * 들어 있는지 검사한다. 새 목적지는 PARASITE_DEPARTURE_WINDOWS 한 줄이면 자동 커버·통과.
+ */
+const PARASITE_BLOCK_COVERED = new Set<string>([
+  ...Object.keys(PARASITE_DEPARTURE_WINDOWS), // turkey·mexico·brazil·uae·hawaii (출국일 앵커)
+  'singapore', // 2~7일 창(validateSgParasiteWindow, dispatch 내 분기)
+  'philippines', // 수입허가 신청일 앵커(validatePhInternalParasiteWindow, client 전용 분기)
+  // EU 촌충 5국 — 입국일 앵커(validateEchinococcusWindow, client 전용 분기).
+  'uk',
+  'ireland',
+  'malta',
+  'norway',
+  'finland',
+])
+
+function parasiteWindowWithoutBlocker(appDests: string[]): Problem[] {
+  const out: Problem[] = []
+  for (const dest of appDests) {
+    if (PARASITE_BLOCK_COVERED.has(dest)) continue
+    const rule = (ALL_PROCEDURE_CHECKS as Array<{ id: string; country: unknown }>).find(
+      (r) =>
+        /(external|internal)-parasite|tick-treatment|tapeworm|echino/i.test(r.id) &&
+        checkCountryKeys(r.country as never).includes(dest),
+    )
+    if (!rule) continue
+    out.push({
+      dest,
+      stepId: '(기생충 처치 창)',
+      ruleId: rule.id,
+      kind: 'no-parasite-blocker',
+    })
+  }
+  return out
+}
+
 function titerWaitWithoutBlocker(appDests: string[]): Problem[] {
   const out: Problem[] = []
   const blocked = new Set<string>([
@@ -498,6 +541,8 @@ function describe(p: Problem): string {
   if (p.kind === 'missing') return '존재하지 않는 룰'
   if (p.kind === 'no-blocker')
     return '주의 룰은 있는데 **저장 거부가 이 목적지를 보지 않는다** — 규정 위반 날짜가 그냥 저장된다(우크라이나 2026-07-22 사고와 동일)'
+  if (p.kind === 'no-parasite-blocker')
+    return "기생충 처치 창 주의는 있는데 **저장 거부가 없다** — 창 밖 처치일이 그냥 저장된다(하와이·터키·멕시코·UAE·브라질 2026-07-25 사고). date-rules 의 PARASITE_DEPARTURE_WINDOWS 에 창을 선언하거나(출국일 앵커) dispatch·PARASITE_BLOCK_COVERED 에 특수 앵커 분기를 추가할 것"
   if (p.kind === 'no-titer-wait-decision')
     return "입국 티터 요건인데 **채혈 후 대기 차단도, '대기 없음' 명시도 없다** — 30일 안쪽 입국일이 그냥 저장된다(하와이 2026-07-25 사고). 대기가 있으면 프로파일 titer.entryWaitAfterTiter 를 선언하고, 없으면 TITER_NO_ENTRY_WAIT_KNOWN 에 근거와 함께 등록할 것"
   if (p.kind === 'notify-unregistered')
@@ -580,6 +625,7 @@ function main(): void {
     ...missingPairRules(appDests),
     ...ownCalcRules(appDests),
     ...titerWaitWithoutBlocker(appDests),
+    ...parasiteWindowWithoutBlocker(appDests),
     ...deadDeclarations(appDests),
     ...importPermitNotifyLeaks(appDests),
   ]

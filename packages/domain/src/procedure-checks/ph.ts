@@ -1,6 +1,7 @@
 import {
   buildDateRuleContext,
   isValidBooster,
+  validateImportPermitNotAfterDeparture,
   validatePhImportPermitVaccineGap,
   validatePhImportPermitWithin60Days,
   validatePhInternalParasiteWindow,
@@ -388,6 +389,31 @@ export const PH_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `신청일(${filed}) 출국일(${dep}) 기준 60일 이내.` }
+    },
+  },
+  {
+    id: 'ph.import-permit-not-after-departure',
+    country: COUNTRY,
+    category: '수입허가',
+    title: '수입 허가 신청일, 출국일 순서',
+    description:
+      '수입 허가 신청일은 출국일 이전이어야 함(출국 당일·이후엔 신청 불가). 입력 차단(validateImportPermitNotAfterDeparture)과 같은 함수 — 출국일을 나중에 당겨 어긋난 경우를 주의로 표면화(태국·말레이·인니·싱가포르와 동일).',
+    severity: 'warning',
+    addedAt: '2026-07-25',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
+      const msg = validateImportPermitNotAfterDeparture(filed, dep)
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['import_permit_application_date', 'departure_date'],
+        }
+      }
+      return { ok: true, message: `신청일(${filed}) < 출국일(${dep || '미입력'}).` }
     },
   },
   {

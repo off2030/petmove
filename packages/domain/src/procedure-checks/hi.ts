@@ -13,7 +13,7 @@ import {
   readVetVisitDate,
 } from './utils'
 import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
-import { validateHiTickWindow } from '../journey-steps/date-rules'
+import { validateParasiteDateForDestination } from '../journey-steps/date-rules'
 
 /**
  * 하와이 (HDOA — Hawaii Department of Agriculture, Animal Quarantine Station) 절차 검증.
@@ -315,9 +315,13 @@ export const HI_CHECKS: ProcedureCheck[] = [
       if (!dep || entries.length === 0) return SKIP
 
       const latest = entries[entries.length - 1]
-      // 저장 거부(client)와 같은 함수로 판정 — 검증 단일 출처(싱가포르 validateSgParasiteWindow
-      // 선례). 처치일을 나중에 어긋나게 만든 경우를 여기서 '주의'로 재노출.
-      const err = validateHiTickWindow(latest.date, dep)
+      // 저장 거부(client)와 같은 dispatch 로 판정 — 검증 단일 출처. 처치일을 나중에 어긋나게
+      // 만든 경우를 여기서 '주의'로 재노출.
+      const err = validateParasiteDateForDestination(latest.date, {
+        destinationKey: destination,
+        kind: 'external',
+        departureDate: dep,
+      })
       if (err) {
         return {
           ok: false,

@@ -84,6 +84,47 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     done: 'always-done',
   },
 
+  // ── 미국 입국 경로 확인 ───────────────────────────────────────────────
+  // CDC 개 수입 규칙은 출발국의 최근 6개월 고위험국 체류 이력에 따라 절차가 크게 갈린다.
+  // 펫무브의 기본 미국 여정은 한국 등 저위험국에만 체류한 경로를 지원한다. 고위험국 이력이
+  // 있으면 사실을 저장하되 blocker 로 전문 상담을 안내한다(사실 입력 자체는 거부하지 않음).
+  {
+    id: 'us-entry-eligibility',
+    category: 'preparation',
+    title: '미국 입국 경로 확인',
+    shortLabel: '경로',
+    description:
+      '강아지가 미국 도착 전 6개월 동안 광견병 고위험국에 있었는지 확인하세요.\n\n한국은 CDC의 광견병 저위험국 경로에 해당해요. 최근 6개월 동안 저위험국에만 있었다면 이 앱의 미국 준비 절차를 이용할 수 있어요.\n고위험국 체류 이력이 있으면 필요한 서류·예약 절차가 크게 달라져 담당자와 별도로 확인해야 해요.',
+    doneSummary: '미국 입국 경로를 확인했어요.',
+    cardLine: '최근 6개월의 체류 국가를 확인하세요.',
+    applicability: { destinations: ['usa'], species: 'dog', tripType: 'all' },
+    order: 15,
+    done: 'has-us-low-risk-eligibility',
+    inputs: [
+      {
+        key: 'us_dog_rabies_risk_history',
+        label: '최근 6개월 고위험국 체류',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'low_risk', label: '없음 (한국 등 저위험국에만 체류)' },
+          { value: 'high_risk', label: '있음 (고위험국 체류)' },
+          { value: 'unknown', label: '잘 모르겠음' },
+        ],
+      },
+    ],
+    links: [
+      {
+        url: 'https://www.cdc.gov/importation/dogs/high-risk-countries.html',
+        label: 'CDC 광견병 고위험국 목록',
+      },
+    ],
+    validationIds: [
+      'us.high-risk-history-unsupported',
+      'us.rabies-risk-history-unknown',
+    ],
+  },
+
   // ── 2. 마이크로칩 ─────────────────────────────────────────────────────
   {
     id: 'microchip',
@@ -110,6 +151,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // (microchip_implant_date_scheduled)로 분리되므로 여기엔 실제(≤오늘) 기록만 온다.
       return undefined
     },
+    appliesWhen: 'us-dog-or-round',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 20,
     done: 'microchip-set',
@@ -181,6 +223,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 여기엔 실제(≤오늘) 기록만 오고, 도래한 실제 기록은 done 으로 완료 처리된다.
       return undefined
     },
+    appliesWhen: 'us-return-rabies-or-other',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 30,
     earliest: { anchor: 'birth', daysAfter: 91 },
@@ -328,6 +371,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '일본 지정 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n0.5 IU/mL 이상이면 합격이에요.\n2차 접종 면역 유효기간 이내에 검사하세요.\n유효기간은 2년이에요.',
     doneSummary: '광견병 항체 검사를 받았어요.',
+    appliesWhen: 'us-return-rabies-or-other',
     applicability: {
       destinations: [
         'japan',
@@ -588,6 +632,84 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 잘못된 게 아니라 추가 접종·검사가 필요한 신호 — 추가 백신·추가 검사 step 의 situational
       // 안내가 더 정확한 맥락에서 전달. 항공권 step 에서는 중복 노출 안 함.
     ],
+  },
+
+  // ── 미국 도착 주 규정 확인 ────────────────────────────────────────────
+  {
+    id: 'us-state-requirements',
+    category: 'logistics',
+    title: '도착 주 규정 확인',
+    shortLabel: '주 규정',
+    description:
+      '미국은 연방 규정 외에 도착 주(State)와 항공사 조건을 함께 확인해야 해요.\n\n도착 주를 입력하고 해당 주의 반려동물 반입 요건을 확인하세요. 건강증명서, 광견병 접종증명, 등록 또는 추가 검사가 요구될 수 있어요.\n항공사에는 기내·위탁·화물 운송 가능 여부와 이동장 규격을 별도로 확인하세요.',
+    doneSummary: '미국 도착 주와 항공사 조건을 확인했어요.',
+    cardLine: '도착 주와 항공사 조건을 확인하세요.',
+    applicability: { destinations: ['usa'], species: 'all', tripType: 'all' },
+    order: 46,
+    done: 'has-us-state-requirements',
+    inputs: [
+      {
+        key: 'us_destination_state',
+        label: '도착 주(State)',
+        type: 'text',
+        required: true,
+        helpText: '예: California',
+      },
+      {
+        key: 'us_state_requirements_confirmed',
+        label: '주 규정 확인',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'yes', label: '확인했어요' },
+          { value: 'no', label: '아직 확인 전이에요' },
+        ],
+      },
+    ],
+    links: [
+      {
+        url: 'https://direct.aphis.usda.gov/live-animal-import/state-regulations',
+        label: '미국 주별 반입 규정',
+      },
+    ],
+    validationIds: ['us.state-requirements-confirmed'],
+  },
+
+  // ── CDC Dog Import Form (개 전용) ────────────────────────────────────
+  {
+    id: 'us-cdc-dog-import-form',
+    category: 'permit',
+    title: 'CDC Dog Import Form',
+    shortLabel: 'CDC',
+    description:
+      '미국 입국 전에 CDC Dog Import Form을 온라인으로 제출하세요.\n\n한 마리당 한 장씩 제출하고, 발급되는 접수증을 휴대전화에 저장하거나 인쇄해 가져가세요. 접수증의 반려견 정보와 출발 국가가 실제 여행과 맞는지 확인하세요.\n저위험국 경로의 접수증은 제출일로부터 6개월 동안 유효하지만, 출발 국가가 바뀌면 다시 제출해야 해요.',
+    doneSummary: 'CDC Dog Import Form을 제출했어요.',
+    cardLine: 'CDC Dog Import Form을 제출하세요.',
+    applicability: { destinations: ['usa'], species: 'dog', tripType: 'all' },
+    order: 47,
+    done: 'dated:us_cdc_form_date',
+    inputs: [
+      {
+        key: 'us_cdc_form_date',
+        label: '제출일',
+        type: 'date',
+        helpText: '온라인 양식을 제출하고 접수증을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: 'CDC Dog Import Form 접수증을 사진·PDF로 보관하세요.',
+    attachmentLabel: 'CDC Dog Import Form 접수증',
+    links: [
+      {
+        url: 'https://survey.1cdp.cdc.gov/?form=556bcb90-1bca-4b01-8094-ad22a7169c32',
+        label: 'CDC Dog Import Form 제출',
+      },
+      {
+        url: 'https://www.cdc.gov/importation/dogs/dog-import-form-instructions.html',
+        label: 'CDC Dog Import Form 안내',
+      },
+    ],
+    validationIds: ['us.cdc-form-required', 'us.cdc-form-date-valid'],
   },
 
   // ── 사전 신고 (일본 전용) ───────────────────────────────────────────
@@ -927,7 +1049,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '강아지는 DHPP(C), 고양이는 FVRCP를 접종하세요. 출국 시점에 유효기간이 남아있어야 해요.',
     doneSummary: '종합백신을 접종했어요.',
     // NOTE: vaccines('general') 파생 불가 — admin 상세페이지 vaccines 와 이 카드 명단이
-    // 의도적으로 다르다(usa 는 카드만 있음). 개별 판단 명단으로 유지.
+    // 의도적으로 다를 수 있어 개별 판단 명단으로 유지.
     // 대만은 APHIA 공식 요건·펫무브 가이드에 종합백신이 없어 제외(2026-07-18 사용자 결정).
     applicability: {
       destinations: [
@@ -945,7 +1067,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'hongkong',
         'guam',
         'philippines',
-        'usa',
         // 카자흐스탄 — EAEU 제15장이 광견병과 같은 문장에서 종합백신을 규율한다(출국 20일 전·12개월 면제).
         'kazakhstan',
         // ⚠️ 튀르키예는 **넣지 않는다**(2026-07-22 확정). 카자흐스탄 복제로 잠깐 들어갔다가
@@ -1311,6 +1432,39 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   },
 
   // ── 14. 일본 수출 검역 (왕복 케이스 한정 — 귀국편) ──────────────────
+  // 미국 → 한국 귀국: 한국 입국용 건강증명서를 미국 공인 수의사에게 받고 USDA 승인을 받는다.
+  {
+    id: 'us-export-health-cert',
+    category: 'document',
+    title: '미국 수출 건강증명서',
+    shortLabel: 'USDA',
+    description:
+      '한국 귀국 전에 미국 공인 수의사에게 국제 건강증명서를 받고 USDA 승인을 받으세요.\n\n미국 출국 전 30일 이내에 발급·승인된 증명서를 준비해요. 광견병 항체검사 결과지와 마이크로칩 정보를 함께 확인하고, USDA의 원본 잉크 서명과 압인(emboss)이 있는 승인본을 한국 입국 때 제출하세요.',
+    doneSummary: '미국 수출 건강증명서의 USDA 승인을 받았어요.',
+    cardLine: '미국 수출 건강증명서를 준비하세요.',
+    applicability: { destinations: ['usa'], species: 'all', tripType: 'round' },
+    order: 150,
+    done: 'quarantine:us_export_quarantine_date',
+    inputs: [
+      {
+        key: 'us_export_quarantine_date',
+        label: '발급·승인일',
+        type: 'date',
+        helpText: '미국 수의사 발급과 USDA 승인을 완료한 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: 'USDA의 원본 잉크 서명과 압인이 있는 승인본 원본과 사본을 보관하세요.',
+    attachmentLabel: 'USDA 승인 국제 건강증명서',
+    links: [
+      {
+        url: 'https://direct.aphis.usda.gov/pet-travel/us-to-another-country-export/pet-travel-us-korea',
+        label: '미국에서 한국으로 반려동물 데려오기(USDA)',
+      },
+    ],
+    validationIds: ['us.export-health-cert-date-valid'],
+  },
+
   {
     id: 'jp-export-quarantine-visit',
     category: 'document',
