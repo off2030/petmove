@@ -48,6 +48,32 @@ const CHECK_TO_STEP: Record<string, string> = (() => {
   return out
 })()
 
+/**
+ * done 시그널 `quarantine:<field>` 로 선언된 모든 완료 필드 — base catalog + destination
+ * override(importQuarantineCard factory 포함) 합산.
+ *
+ * **서버 저장 액션(updateImportQuarantineDate)의 허용 명단 단일 출처.** 예전엔 서버가 손으로
+ * 쓴 정규식(`*_import/export_quarantine_date`) + 아일랜드 예외 1개로 필드를 걸렀는데, 이후
+ * 같은 confirm 모델로 만든 카드(하와이 입국 신청·필리핀 현지 병원 방문·노르웨이/키프로스/몰타
+ * 사전 통지·이스라엘 사전 통보 — 6개)가 명단 누락으로 **저장이 전부 거부**되고 있었다
+ * (2026-07-25 발견). 카탈로그에 카드를 선언하면 자동으로 허용돼 재발이 원천 차단된다.
+ */
+export const QUARANTINE_DONE_FIELD_KEYS: ReadonlySet<string> = (() => {
+  const out = new Set<string>()
+  const add = (done: unknown) => {
+    if (typeof done === 'string' && done.startsWith('quarantine:')) {
+      out.add(done.slice('quarantine:'.length))
+    }
+  }
+  for (const step of JOURNEY_STEP_CATALOG) add(step.done)
+  for (const overrides of Object.values(STEP_DESTINATION_OVERRIDES)) {
+    for (const override of Object.values(overrides)) {
+      add((override as { done?: unknown } | undefined)?.done)
+    }
+  }
+  return out
+})()
+
 export function getChecksForStep(stepId: string): readonly string[] {
   return STEP_TO_CHECKS[stepId] ?? []
 }

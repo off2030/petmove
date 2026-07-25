@@ -24,6 +24,7 @@ import {
   isDestinationScopedKey,
   normalizeRabiesOrder,
   parseDestinations,
+  QUARANTINE_DONE_FIELD_KEYS,
   todayKst,
   validateEuEntryDate,
   validateEntryDateForDestination,
@@ -1792,11 +1793,12 @@ export async function updateImportQuarantineDate(
   destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
-    // 검역일 패턴 + 같은 confirm 메커니즘을 쓰는 확장 필드(아일랜드 사전 통지).
-    if (
-      !/^[a-z]+_(import|export)_quarantine_date$/.test(fieldKey) &&
-      fieldKey !== 'ie_advance_notice_date'
-    ) {
+    // 허용 필드 = 카탈로그 done 선언(quarantine:<field>) 단일 출처 — base + 목적지 override.
+    // 예전엔 손으로 쓴 정규식(검역일 패턴 + 아일랜드 예외 1개)이라, 이후 같은 confirm 모델로
+    // 만든 카드(하와이 입국 신청·필리핀 현지 병원·노르웨이/키프로스/몰타 사전 통지·이스라엘
+    // 사전 통보)가 명단 누락으로 저장이 전부 거부됐다(2026-07-25 발견). 이제 카탈로그에
+    // 카드를 선언하면 자동 허용된다(임의 키 쓰기 차단은 그대로).
+    if (!QUARANTINE_DONE_FIELD_KEYS.has(fieldKey)) {
       return { ok: false, error: '잘못된 검역일 필드입니다.' }
     }
     if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
