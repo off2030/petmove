@@ -1325,6 +1325,25 @@ export function validatePhLocalVetVisitDate(
 }
 
 /**
+ * 하와이 입국 신청(AQS 서류 사전 제출)일 — **도착일보다 늦을 수 없다**(도착 전에 접수돼야
+ * 하는 절차라 논리적으로 불가능 → 저장 거부). client(신청일 입력 불가)·procedure-check
+ * (hi.import-declaration-10days-before-arrival — 도착일을 나중에 고쳐 어긋난 경우 주의) 공용.
+ * ⚠️ '도착 10일 전' 마감 미달은 여기서 막지 않는다 — 늦은 신청도 실제로 가능하고(수수료
+ * 인상·공항 인계(DAR) 자격 상실) 이미 신청한 사실은 기록할 수 있어야 한다(주의 담당).
+ * 하와이는 당일 도착 노선이라 출발일 = 도착일 proxy(hi.ts 컨벤션). 한쪽 비면 통과.
+ */
+export function validateHiImportDeclarationDate(
+  filedDate: string,
+  departureDate: string,
+): string | null {
+  if (!filedDate || !departureDate) return null
+  if (filedDate.slice(0, 10) > departureDate.slice(0, 10)) {
+    return '입국 신청일이 하와이 도착일보다 늦어요. 도착 전에 신청해야 해요.'
+  }
+  return null
+}
+
+/**
  * 노르웨이 사전 통지일 — 입국 48시간(2일) 전까지 Mattilsynet(노르웨이 식품안전청)에
  * 이메일로 통지해야 함 (mattilsynet.no 공식 확인, 2026-07-16).
  * client(통지 입력 시 입력 불가)·procedure-check(입국일 수정 후 주의) 공용. 한쪽 비면 통과.

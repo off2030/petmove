@@ -14,6 +14,7 @@ import {
 } from './utils'
 import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore } from './messages'
 import {
+  validateHiImportDeclarationDate,
   validateParasiteDateForDestination,
   validateRabiesPrimeAgeForDestination,
 } from '../journey-steps/date-rules'
@@ -365,10 +366,10 @@ export const HI_CHECKS: ProcedureCheck[] = [
     category: '입국 신청',
     title: '입국 신청과 서류 접수는 도착 10일 이상 전 완료',
     description:
-      '입국 신청과 서류(AQS-279·접종증명서·수수료)가 하와이 도착 10일 이상 전에 동물검역소에 접수돼야 공항 인계(DAR) 자격이 돼요. 늦으면 수수료가 오르거나 자격을 잃을 수 있어요. (HDOA Checklist 1 Step 1·7)',
+      '입국 신청과 서류(AQS-279·접종증명서·수수료)가 하와이 도착 10일 이상 전에 동물검역소에 접수돼야 공항 인계(DAR) 자격이 돼요. 늦으면 수수료가 오르거나 자격을 잃을 수 있어요. (HDOA Checklist 1 Step 1·7) 도착일 이후 신청일은 논리 불가능이라 저장 거부(validateHiImportDeclarationDate — 도착일을 나중에 고쳐 어긋난 경우만 여기 주의로 표면화).',
     severity: 'warning',
     addedAt: '2026-07-25',
-    // 신고일→도착 경과 일수가 정보 자체라 날짜 표기 허용.
+    // 신청일→도착 경과 일수가 정보 자체라 날짜 표기 허용.
     allowDate: true,
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -380,23 +381,28 @@ export const HI_CHECKS: ProcedureCheck[] = [
       // departure_date = 하와이 도착일 proxy (hi.ts 컨벤션).
       const dep = readDepartureDate(caseRow, destination)
       if (!dep) return SKIP
+      // 도착일보다 늦은 신청일 — 저장 거부와 같은 함수(단일 출처). 신청일 입력은 저장이
+      // 막히고, 도착일(항공권) 쪽을 나중에 고쳐 어긋난 경우를 이 주의가 잡는다.
+      const orderMsg = validateHiImportDeclarationDate(raw, dep)
+      if (orderMsg) {
+        return {
+          ok: false,
+          message: orderMsg,
+          offendingPaths: ['hi_import_declaration_date'],
+        }
+      }
       const days = daysBetween(raw, dep)
       if (days === null) return SKIP
-      if (days < 0) {
-        return {
-          ok: false,
-          message: `신고일(${raw})이 도착일(${dep})보다 늦어요. 도착 전에 제출해야 해요.`,
-          offendingPaths: ['hi_import_declaration_date'],
-        }
-      }
       if (days < 10) {
+        // '0일 전'은 어색해서 당일만 문구를 나눈다 — 카드 개명('입국 신청')과 라벨('신청일') 통일.
+        const when = days === 0 ? `도착(${dep}) 당일이에요` : `도착(${dep}) ${days}일 전이에요`
         return {
           ok: false,
-          message: `신고일(${raw})이 도착(${dep}) ${days}일 전이에요. 도착 10일 이상 전에 접수돼야 공항 인계(DAR) 자격이 돼요.`,
+          message: `신청일(${raw})이 ${when}. 도착 10일 이상 전에 접수돼야 공항 인계(DAR) 자격이 돼요.`,
           offendingPaths: ['hi_import_declaration_date'],
         }
       }
-      return { ok: true, message: `신고일(${raw}) → 도착(${dep}): ${days}일.` }
+      return { ok: true, message: `신청일(${raw}) → 도착(${dep}): ${days}일.` }
     },
   },
 

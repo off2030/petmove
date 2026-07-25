@@ -30,6 +30,7 @@ import {
   validateSgQuarantineReservationDate,
   validateSgBorderInspectionDate,
   validateSgDepartureVsQuarantineReservation,
+  validateHiImportDeclarationDate,
   validatePhLocalVetVisitDate,
   validateSgGstPermitDate,
   validateParasiteDateForDestination,
@@ -1478,6 +1479,15 @@ export function StepDetailView({
       return validatePhLocalVetVisitDate(
         importQuarantineDate.trim(),
         (caseRow?.data ?? {}) as Record<string, unknown>,
+      )
+    }
+    if (step.id === 'hi-import-declaration') {
+      // 하와이 입국 신청일 — 도착일(당일 도착 노선이라 출발일 proxy) 이후는 논리 불가능이라
+      // 저장 거부. 도메인 단일 출처(validateHiImportDeclarationDate) — hi.ts 주의 룰과 같은
+      // 함수(2026-07-25 격상). '도착 10일 전' 마감 미달은 막지 않는다(사실 기록 허용 + 주의).
+      return validateHiImportDeclarationDate(
+        importQuarantineDate.trim(),
+        (caseRow?.departure_date ?? '').slice(0, 10),
       )
     }
     if (isSgQuarantineReservation) {
