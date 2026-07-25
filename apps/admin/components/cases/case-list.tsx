@@ -215,7 +215,14 @@ export function CaseList({
   const [visible, setVisible] = useState(INITIAL_VISIBLE)
   const [highlight, setHighlight] = useState(-1)
   const [showTrash, setShowTrash] = useState(false)
-  const [mode, setModeState] = useState<ListMode>(() => readStoredListMode())
+  // ⚠️ 초기값은 'cases' 고정(SSR 과 동일하게). 초기 렌더에서 URL/sessionStorage 를
+  // 읽으면 hydration mismatch 로 속성 갱신이 조용히 멈춘다 — cases-context selectedId
+  // 와 동일 패턴(130796df 참고). 복원은 아래 마운트 effect 에서 setState 로.
+  const [mode, setModeState] = useState<ListMode>('cases')
+  useEffect(() => {
+    const stored = readStoredListMode()
+    if (stored !== 'cases') setModeState(stored)
+  }, [])
   const isTodosMode = mode !== 'cases'
   const setMode = useCallback((next: ListMode) => {
     setModeState(next)
