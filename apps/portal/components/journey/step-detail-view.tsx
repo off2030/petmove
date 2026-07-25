@@ -25,6 +25,7 @@ import {
   validateCyAdvanceNoticeDate,
   validateImportPermitFiledDate,
   validateSgQuarantineReservationDate,
+  validateSgDepartureVsQuarantineReservation,
   validateSgQuarantineReservationFiled,
   validateEntryDateForDestination,
   validateEchinococcusWindow,
@@ -1229,6 +1230,18 @@ export function StepDetailView({
         data: (caseRow?.data ?? {}) as Record<string, unknown>,
         destination: caseRow?.destination ?? null,
         departureDate: caseRow?.departure_date ?? null,
+      }
+      // 싱가포르 — 출국일은 계류장 예약일 당일/하루 전(예약일을 먼저 잡는 흐름). 도메인 단일
+      // 출처(validateSgDepartureVsQuarantineReservation) — sg.ts 주의 룰과 같은 함수(2026-07-25).
+      if (destinationKey === 'singapore') {
+        const resRaw = (caseRow?.data as Record<string, unknown> | undefined)?.[
+          'sg_quarantine_reservation_date'
+        ]
+        const sgErr = validateSgDepartureVsQuarantineReservation(
+          flightForm.departure_date.trim(),
+          typeof resRaw === 'string' ? resRaw : '',
+        )
+        if (sgErr) return sgErr
       }
       // 목적지별 분기·기준일(일본=입국일 / 태국=출발일 / 그 외=입국일→출발일 폴백)은 도메인
       // 단일 출처(validateEntryDateForDestination)에 있다 — lint:behavior 가 같은 함수를

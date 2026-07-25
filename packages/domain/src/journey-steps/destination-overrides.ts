@@ -1347,7 +1347,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       description:
         '계류장(AQC) 예약 날짜에 맞춰 항공권을 구매하세요.\n\n광견병 항체 검사 채혈일로부터 90일이 지난 후에 입국할 수 있어요.\n창이 공항 검역소(CAPQ) 운영시간에 맞춰 도착해야 합니다.',
       order: 90,
-      validationIds: ['sg.departure-min-90days-after-titer'],
+      validationIds: [
+        'sg.departure-min-90days-after-titer',
+        // 출국일 ↔ 계류장 예약일 정합(당일/하루 전) — 예약일을 나중에 바꿔 어긋나면 주의.
+        'sg.departure-matches-quarantine-reservation',
+      ],
       // 도착 시각을 CAPQ 운영시간(주말·공휴일 휴무)에 맞춰 항공권을 정해야 해서 이 카드에 링크.
       links: [
         {

@@ -529,6 +529,26 @@ export function validateSgQuarantineReservationFiled(
 }
 
 /**
+ * 싱가포르 — 출국일은 계류장(AQC) 예약일과 같은 날 또는 하루 전날이어야 함.
+ *
+ * 계류 시작(예약일) = 싱가포르 도착일이고 한국→싱가포르는 당일(또는 자정 넘김 +1일) 도착
+ * 이므로, 예약일을 먼저 잡은 뒤 항공권을 그 날짜에 맞춰 산다(예약일 − 출국일 ∈ {0, 1}).
+ *
+ * client(항공권 출국일 입력 시 저장 거부)·procedure-check(예약일을 나중에 수정해 어긋난
+ * 경우 '주의') 공용 단일 출처. 예약일이 없으면 비교 불가라 통과.
+ */
+export function validateSgDepartureVsQuarantineReservation(
+  departureDate: string,
+  reservationDate: string,
+): string | null {
+  if (!departureDate || !reservationDate) return null
+  const dep = departureDate.slice(0, 10)
+  const res = reservationDate.slice(0, 10)
+  if (dep === res || addDays(dep, 1) === res) return null
+  return '출국일은 계류장 예약일과 같은 날이거나 하루 전날이어야 해요. 날짜를 확인하세요.'
+}
+
+/**
  * 싱가포르 — 계류장(AQC) 예약 날짜(계류 시작일)는 채혈 + 90일 이후 ~ + 12개월 이내여야 함.
  *
  * 규정 창의 정식 앵커는 출발(export) — NParks Schedule III IV(a)(iii) "not less than 90 days /

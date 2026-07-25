@@ -1,6 +1,7 @@
 import {
   buildDateRuleContext,
   validateImportPermitNotAfterDeparture,
+  validateSgDepartureVsQuarantineReservation,
   validateSgQuarantineReservationDate,
   validateSgQuarantineReservationFiled,
 } from '../journey-steps/date-rules'
@@ -106,6 +107,38 @@ export const SG_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: '항체 검사 시기 적합 (28일 경과).' }
+    },
+  },
+  {
+    // 출국일 ↔ 계류장 예약일 정합 — 예약일을 먼저 잡고 항공권을 맞추는 흐름(2026-07-25).
+    // 저장 거부(validateSgDepartureVsQuarantineReservation)의 짝 — 정상 입력은 client 가 막고,
+    // 예약일을 나중에 수정해 어긋난 경우만 여기 주의가 뜬다.
+    id: 'sg.departure-matches-quarantine-reservation',
+    country: 'singapore',
+    category: '검역',
+    title: '출국일은 계류장 예약일 당일 또는 하루 전',
+    description:
+      '계류 시작(예약일) = 싱가포르 도착일 — 한국발은 당일(자정 넘김 +1일) 도착이므로 출국일은 예약일 당일 또는 하루 전이어야 함. 예약일 미입력이면 검사 안 함.',
+    severity: 'warning',
+    addedAt: '2026-07-25',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const reservation =
+        typeof data.sg_quarantine_reservation_date === 'string'
+          ? data.sg_quarantine_reservation_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(reservation)) return SKIP
+      const dep = readDepartureDate(caseRow, destination)
+      if (!dep) return SKIP
+      const err = validateSgDepartureVsQuarantineReservation(dep, reservation)
+      if (err) {
+        return {
+          ok: false,
+          message: err,
+          offendingPaths: ['departure_date', 'sg_quarantine_reservation_date'],
+        }
+      }
+      return { ok: true, message: `출국일(${dep}) = 계류장 예약일(${reservation}) 당일/하루 전.` }
     },
   },
   {
