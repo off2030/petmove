@@ -769,8 +769,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['jp.advance-notification-40days-before-entry'],
   },
 
-  // ── 수입신고 (하와이 전용) ──────────────────────────────────────────────
-  // 하와이는 반려동물 도착 10일 이상 전에 동물검역소(AQS)에 수입신고 서류(AQS-279 수입신고서 +
+  // ── 하와이 입국 신청 (하와이 전용) ──────────────────────────────────────
+  // 하와이는 반려동물 도착 10일 이상 전에 동물검역소(AQS)에 입국 신청 서류(AQS-279 +
   // 광견병 접종증명서 + 건강증명서 + 수수료)를 제출해야 5-Day-Or-Less/공항 인계(DAR) 자격이 된다.
   // 온라인 포털(HIPOP)·우편 둘 다 가능하며 온라인을 우선 안내한다. 일본 NACCS 사전신고와 같은
   // 자리의 절차지만, 하와이는 전자시스템이 HIPOP 이고 우편 제출도 병행된다(일본 복제 시 'NACCS
@@ -780,27 +780,27 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'hi-import-declaration',
     category: 'permit',
-    title: '수입신고',
-    shortLabel: '신고',
+    title: '하와이 입국 신청',
+    shortLabel: '입국 신청',
     description:
-      '하와이 도착 10일 이상 전에 동물검역소에 수입신고 서류를 제출하세요.\n\n하와이 반려동물 포털(HIPOP)에서 온라인으로 신청하는 것이 편해요. 계정을 만들고 반려동물 정보를 입력한 뒤, 광견병 접종증명서·항체 검사 결과지·건강증명서를 업로드하고 수수료를 카드로 결제해요.\n우편으로도 제출할 수 있어요. AQS-279 신고서와 서류·수수료를 동물검역소로 보내면 돼요.\n어느 방식이든 서류가 도착 10일 전까지 접수되지 않으면 공항 인계(DAR) 자격과 수수료에 영향이 있어요.',
-    doneSummary: '하와이에 수입신고를 했어요.',
-    cardLine: '하와이에 수입신고를 하세요.',
+      '하와이 도착 10일 이상 전에 동물검역 입국 신청을 하세요.\n\n하와이 반려동물 포털(HIPOP)에서 온라인으로 신청하는 것이 편해요. 계정을 만들고 반려동물 정보를 입력한 뒤, 광견병 접종증명서·항체 검사 결과지·건강증명서를 업로드하고 수수료를 카드로 결제해요.\n우편으로도 신청할 수 있어요. Dog & Cat Import Form(AQS-279)과 필요 서류·수수료를 동물검역소로 보내면 돼요.\n어느 방식이든 신청과 서류 접수가 도착 10일 전까지 완료되지 않으면 공항 인계(DAR) 자격과 수수료에 영향이 있어요.',
+    doneSummary: '하와이 입국 신청을 했어요.',
+    cardLine: '하와이 입국 신청을 하세요.',
     applicability: { destinations: ['hawaii'], species: 'all', tripType: 'all' },
-    order: 120,
+    order: 46,
     deadline: { anchor: 'entry', daysBefore: 10 },
     done: 'quarantine:hi_import_declaration_date',
     inputs: [
       {
         key: 'hi_import_declaration_date',
-        label: '신고일',
+        label: '신청일',
         type: 'date',
-        helpText: '동물검역소에 수입신고 서류를 제출한 날짜',
+        helpText: 'HIPOP에서 신청하거나 동물검역소에 입국 신청 서류를 제출한 날짜',
       },
     ],
     allowAttachments: true,
-    attachmentHint: '수입신고 접수 확인·서류 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '하와이 수입신고 서류',
+    attachmentHint: '입국 신청 접수 확인·서류 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '하와이 입국 신청 서류',
     links: [{ url: 'https://hipop.ais.hawaii.gov/', label: '하와이 반려동물 포털(HIPOP)' }],
     validationIds: ['hi.import-declaration-10days-before-arrival'],
   },

@@ -100,7 +100,7 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 하와이 — 도착 검역(공항 동물검역소 5-Day-Or-Less/DAR). 일본 복제(범용 quarantine 방식).
   'hi_import_quarantine_date',
   'hi_import_quarantine_confirmed',
-  // 하와이 — 수입신고(도착 10일 전 AQS 서류 제출, HIPOP 온라인/우편). confirm 완료 모델.
+  // 하와이 — 입국 신청(도착 10일 전 AQS 서류 제출, HIPOP 온라인/우편). confirm 완료 모델.
   'hi_import_declaration_date',
   'hi_import_declaration_confirmed',
   'th_export_quarantine_date',

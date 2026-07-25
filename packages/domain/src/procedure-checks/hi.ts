@@ -363,14 +363,14 @@ export const HI_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 수입신고(AQS 서류 사전 제출) ──
+  // ── 하와이 입국 신청(AQS 서류 사전 제출) ──
   {
     id: 'hi.import-declaration-10days-before-arrival',
     country: COUNTRY,
-    category: '수입신고',
-    title: '수입신고 서류는 도착 10일 이상 전 제출',
+    category: '입국 신청',
+    title: '입국 신청과 서류 접수는 도착 10일 이상 전 완료',
     description:
-      '수입신고 서류(AQS-279·접종증명서·수수료)가 하와이 도착 10일 이상 전에 동물검역소에 접수돼야 공항 인계(DAR) 자격이 돼요. 늦으면 수수료가 오르거나 자격을 잃을 수 있어요. (HDOA Checklist 1 Step 1·7)',
+      '입국 신청과 서류(AQS-279·접종증명서·수수료)가 하와이 도착 10일 이상 전에 동물검역소에 접수돼야 공항 인계(DAR) 자격이 돼요. 늦으면 수수료가 오르거나 자격을 잃을 수 있어요. (HDOA Checklist 1 Step 1·7)',
     severity: 'warning',
     addedAt: '2026-07-25',
     // 신고일→도착 경과 일수가 정보 자체라 날짜 표기 허용.
