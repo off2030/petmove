@@ -3539,11 +3539,16 @@
   card: 관세·GST 납부 허가를 받으세요.
   done: 관세·GST 납부 허가를 받았어요.
   desc:
-      싱가포르 도착 전에 관세청 GST 납부 허가(Customs In-Payment permit)를 받으세요. 도착일 기준 14일 이내에 지정 통관대행사(forwarding agent)를 통해 준비해요.
+      싱가포르 도착 전에 관세청 GST 납부 허가(Customs In-Payment permit)를 받으세요.
       
+      도착일 기준 14일 이내에 지정 통관대행사(forwarding agent)를 통해 준비해요.
       이 허가는 AVS 수입 허가와 별개예요. 두 가지가 모두 필요해요(수입 허가=동물 수입 / GST permit=세관·GST).
+      이주 등 조건에 따라 GST 면제(GST Relief)를 신청할 수 있어요.
   첨부안내: GST 허가서를 사진·PDF로 보관하세요.
   저장이름: GST 납부 허가
+  links:
+      반려동물 수입 통관·GST 안내 (Singapore Customs)  →  https://www.customs.gov.sg/personal-shipment/moving-to-singapore/importing-personal-pets-as-part-of-a-change-of-residence/
+      AVS 공인 에이전트 목록  →  https://avs.nparks.gov.sg/outreach/resources/avs-recognised-pet-agents/
 
 ▸ sg-border-inspection
   title: 국경 검사 예약

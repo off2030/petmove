@@ -1484,7 +1484,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '관세·GST 납부 허가',
     shortLabel: '관부가세',
     description:
-      '싱가포르 도착 전에 관세청 GST 납부 허가(Customs In-Payment permit)를 받으세요. 도착일 기준 14일 이내에 지정 통관대행사(forwarding agent)를 통해 준비해요.\n\n이 허가는 AVS 수입 허가와 별개예요. 두 가지가 모두 필요해요(수입 허가=동물 수입 / GST permit=세관·GST).',
+      // 주 경로 = GST 납부 허가(사용자 확정 2026-07-25 — 30일 계류 특성상 고객 대부분이
+      // 이주·장기 체류). GST 면제(Relief)는 심사제 참고 정보로만 한 줄.
+      '싱가포르 도착 전에 관세청 GST 납부 허가(Customs In-Payment permit)를 받으세요.\n\n도착일 기준 14일 이내에 지정 통관대행사(forwarding agent)를 통해 준비해요.\n이 허가는 AVS 수입 허가와 별개예요. 두 가지가 모두 필요해요(수입 허가=동물 수입 / GST permit=세관·GST).\n이주 등 조건에 따라 GST 면제(GST Relief)를 신청할 수 있어요.',
     doneSummary: '관세·GST 납부 허가를 받았어요.',
     cardLine: '관세·GST 납부 허가를 받으세요.',
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },
@@ -1495,6 +1497,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: 'GST 허가서를 사진·PDF로 보관하세요.',
     attachmentLabel: 'GST 납부 허가',
+    // 관세청 이주 반려동물 통관 페이지(2026-07-23 개편판) + AVS 공인 에이전트 목록 —
+    // 둘 다 2026-07-25 브라우저로 유효 확인(구 forwarding agents 링크는 개편으로 404).
+    links: [
+      { url: 'https://www.customs.gov.sg/personal-shipment/moving-to-singapore/importing-personal-pets-as-part-of-a-change-of-residence/', label: '반려동물 수입 통관·GST 안내 (Singapore Customs)' },
+      { url: 'https://avs.nparks.gov.sg/outreach/resources/avs-recognised-pet-agents/', label: 'AVS 공인 에이전트 목록' },
+    ],
   },
   {
     id: 'sg-border-inspection',
