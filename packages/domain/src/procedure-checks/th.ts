@@ -2,6 +2,7 @@ import {
   buildDateRuleContext,
   isValidBooster,
   validateImportPermitNotAfterDeparture,
+  validatePhImportPermitWithin60Days,
   validateThImportPermitVaccineGap,
 } from '../journey-steps/date-rules'
 import { todayKst } from '../dates'
@@ -348,6 +349,34 @@ export const TH_CHECKS: ProcedureCheck[] = [
         message: `${when} 수입 허가 신청에 필요한 시간이 부족해요. 출국 전에 허가증을 받지 못하면 출발일을 변경하세요.`,
         offendingPaths: ['departure_date'],
       }
+    },
+  },
+  {
+    // R7 허가 60일 유효 — 너무 이른 신청(출국 전 만료) 주의 (2026-07-25 신설, 필리핀 패턴).
+    // 입력 차단(validateImportPermitFiledDate case 'thailand')과 같은 함수를 본다.
+    id: 'th.import-permit-within-60days',
+    country: COUNTRY,
+    category: '수입허가',
+    title: '수입 허가는 출국 60일 이내 신청',
+    description:
+      'R7 수입 허가는 발급일로부터 60일 유효(th.ts 헤더) — 너무 일찍 신청하면 출국 전에 만료된다. 입력 차단과 같은 함수(validatePhImportPermitWithin60Days — 목적지 중립 60일 로직).',
+    severity: 'warning',
+    addedAt: '2026-07-25',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
+      if (!dep) return SKIP
+      const msg = validatePhImportPermitWithin60Days(filed, dep)
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['import_permit_application_date', 'departure_date'],
+        }
+      }
+      return { ok: true, message: `신청일(${filed}) 출국일(${dep}) 기준 60일 이내.` }
     },
   },
   {

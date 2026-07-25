@@ -2,6 +2,7 @@ import {
   buildDateRuleContext,
   isValidBooster,
   validatePhImportPermitVaccineGap,
+  validatePhImportPermitWithin60Days,
   validatePhInternalParasiteWindow,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
@@ -360,6 +361,35 @@ export const PH_CHECKS: ProcedureCheck[] = [
   },
 
   // ── 수입허가(SPSIC) — 백신 14일 후 신청 (부스터 면제) ──
+  {
+    // SPSIC 60일 유효 — 너무 이른 신청(출국 전 만료) 주의 (2026-07-25 신설 — 차단만 있고
+    // 주의가 빠져 있던 갭). 입력 차단(validateImportPermitFiledDate case 'philippines')과
+    // 같은 함수를 본다.
+    id: 'ph.import-permit-within-60days',
+    country: COUNTRY,
+    category: '수입허가',
+    title: '수입 허가는 출국 60일 이내 신청',
+    description:
+      'SPSIC 은 발급일로부터 60일 유효 — 너무 일찍 신청하면 출국 전에 만료된다. 입력 차단과 같은 함수(validatePhImportPermitWithin60Days).',
+    severity: 'warning',
+    addedAt: '2026-07-25',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
+      if (!dep) return SKIP
+      const msg = validatePhImportPermitWithin60Days(filed, dep)
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['import_permit_application_date', 'departure_date'],
+        }
+      }
+      return { ok: true, message: `신청일(${filed}) 출국일(${dep}) 기준 60일 이내.` }
+    },
+  },
   {
     id: 'ph.import-permit-14days-after-vaccines',
     country: COUNTRY,

@@ -715,7 +715,8 @@ export function validatePhImportPermitWithin60Days(
   if (!filedDate || !departureDate) return null
   const earliest = addDays(departureDate.slice(0, 10), -60)
   if (earliest && filedDate.slice(0, 10) < earliest) {
-    return `수입 허가증(SPSIC)은 발급일로부터 60일간 유효해요. 출국 60일 전 ${fmt(earliest)}부터 신청할 수 있어요.`
+    // 고객 문구에 구체 날짜 보간 금지(앱 카피 규칙) + 목적지 중립(필리핀 SPSIC·태국 R7 공용).
+    return '수입 허가증은 발급일로부터 60일간 유효해요. 출국 60일 전부터 신청할 수 있어요. 날짜를 확인하세요.'
   }
   return null
 }
@@ -969,11 +970,14 @@ export function validateImportPermitFiledDate(
 ): string | null {
   const { departureDate, entryDate, data } = ctx
   switch (destinationKey) {
-    // 태국 — ①출국일 이후 신청 불가 ②백신 접종 14일(2주) 이내 신청 불가.
+    // 태국 — ①출국일 이후 신청 불가 ②백신 접종 14일(2주) 이내 신청 불가
+    //   ③R7 허가 60일 유효(출국 60일 전부터 — 더 이르면 출국 전 만료. th.ts 헤더 근거,
+    //     2026-07-25 필리핀과 동일 함수로 구현).
     case 'thailand':
       return (
         validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
-        validateThImportPermitVaccineGap(filedDate, data)
+        validateThImportPermitVaccineGap(filedDate, data) ??
+        validatePhImportPermitWithin60Days(filedDate, departureDate)
       )
     // 말레이시아·인도네시아 — 수입허가를 **현지 에이전시가 신청**하는 모델이라(가이드)
     // 태국식 '백신 접종 14일 후 신청' 제약은 근거가 없어 2026-07-22 제거했다.

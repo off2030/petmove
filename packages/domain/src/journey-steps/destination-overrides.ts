@@ -1206,6 +1206,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: [
         'th.import-permit-9days-before-entry',
         'th.import-permit-14days-after-vaccines',
+        // R7 60일 유효 — 너무 이른 신청(출국 전 만료). 입력 차단과 같은 함수(2026-07-25).
+        'th.import-permit-within-60days',
       ],
     },
     importQuarantine: {
@@ -1543,7 +1545,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         { url: 'https://www.intercommerce.com.ph/login.asp?home=HOME', label: '수입 허가 신청(Intercommerce)' },
       ],
       attachmentLabel: '수입 허가증(SPSIC)',
-      validationIds: ['ph.import-permit-14days-after-vaccines'],
+      validationIds: [
+        'ph.import-permit-14days-after-vaccines',
+        // SPSIC 60일 유효 — 너무 이른 신청(출국 전 만료). 입력 차단과 같은 함수(2026-07-25).
+        'ph.import-permit-within-60days',
+      ],
     },
     importQuarantine: {
       fieldKey: 'ph_import_quarantine_date',
