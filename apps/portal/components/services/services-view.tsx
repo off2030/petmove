@@ -356,11 +356,10 @@ export const OFFLINE_DETAIL: Record<string, DestDetail> = {
     period: '최소 6~7개월',
     reviews: JAPAN_REVIEWS,
   }),
-  // 싱가포르 — 수입 허가(GoBusiness) + 검역소(AQC) 30일 격리 예약. 후기 없음(빈 배열).
+  // 싱가포르 — 수입 허가(GoBusiness)·검역소(AQC) 예약은 보호자 직접 신청(selfApply)이라
+  //   대행 목록에서 제외(사용자 확정 2026-07-25). 의료 절차 + 서류 준비만. 후기 없음(빈 배열).
   싱가포르: offlineDetail({
     destKey: 'singapore',
-    introHighlight: '싱가포르 수입 허가 신청·검역소(AQC) 예약',
-    procedureItems: ['수입 허가 신청', '검역소(AQC) 예약'],
     cost: '76~92',
     period: '최소 4~6개월',
   }),
@@ -446,10 +445,11 @@ export const ONLINE_DETAIL: Record<string, DestDetail> = {
     period: '최소 6~7개월',
     reviews: JAPAN_REVIEWS,
   }),
-  // 싱가포르 온라인 안심케어 — 수입 허가·검역소 예약 대행.
+  // 싱가포르 — 수입 허가(GoBusiness)·검역소(AQC) 예약은 보호자 직접 신청(selfApply)이라
+  //   대행 항목에서 제외(사용자 확정 2026-07-25, derivedDetail 의 selfApply 제외 방침과 동일).
+  //   고유 항목이 비면 공장이 '단계별 가이드'·'서류 점검'을 앞뒤로 붙인다.
   싱가포르: onlineDetail({
-    introItems: '수입 허가 신청, 검역소(AQC) 예약',
-    items: ['수입 허가 신청', '검역소(AQC) 예약'],
+    items: [],
     cost: '15만원 정도',
     period: '최소 4~6개월',
   }),

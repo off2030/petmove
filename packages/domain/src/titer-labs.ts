@@ -47,6 +47,10 @@ const TITER_LAB_CODES_BY_DEST: Record<string, string[]> = {
   // 말레이시아·인도네시아 — 태국 복제(2026-07-22). 검사기관은 한국 기관이라 그대로 적용 가능.
   malaysia: ['apqa_seoul', 'krsl'],
   indonesia: ['apqa_seoul', 'krsl'],
+  // 싱가포르 — 한국은 Schedule III 라 국내 기관(APQA·코미팜) 불인정. WOAH 표준검사실 또는
+  //   Schedule I·II 국가 승인 기관만 인정 → Kansas State 만 제시(사용자 지정 2026-07-25).
+  //   카드 문구("국내에 검사기관이 없어서…")와 짝. '기타'(직접 입력)는 UI 가 덧붙인다.
+  singapore: ['ksvdl_r'],
   // 유럽 패밀리(EEA·영국·스위스 등 EU_ENTRY_FAMILY): EU 인정 양식(apqa_eu) + 코미팜.
   ...Object.fromEntries(EU_ENTRY_FAMILY.map((k) => [k, ['apqa_eu', 'krsl']])),
   // EU 24개국('eu')은 농림축산검역본부(apqa_eu)만 — 코미팜 제외('기타'는 UI 가 덧붙임).

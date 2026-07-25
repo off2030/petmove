@@ -103,7 +103,15 @@ export const TWO_DOSE_RABIES_DESTINATIONS: string[] = destinationKeysWhere(
  */
 // 하와이 — 한국→호놀룰루는 날짜변경선을 건너 같은 날(또는 이른 시각) 도착이라 항공권 날짜를
 //   도착검역 '예정' 배지로 쓸 수 있다(일본과 동일). 귀국(HNL→ICN)은 +1일이라 RETURN 배열엔 제외.
-export const FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS: string[] = ['japan', 'philippines', 'hawaii']
+// 싱가포르 — 주간 ICN→SIN 은 당일 도착(사용자 확정 2026-07-25). 심야 출발편은 익일 새벽
+//   도착이라 하루 어긋날 수 있으나 배지는 '예정' 안내용(날짜가 지나면 내려감)이라 허용.
+//   귀국(SIN→ICN)은 심야 출발 익일 도착이 잦아 RETURN 배열엔 넣지 않는다.
+export const FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS: string[] = [
+  'japan',
+  'philippines',
+  'hawaii',
+  'singapore',
+]
 export const FLIGHT_DATE_RETURN_QUARANTINE_DESTINATIONS: string[] = [
   'japan',
   'philippines',

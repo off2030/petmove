@@ -111,6 +111,8 @@ export const HI_CHECKS: ProcedureCheck[] = [
       '광견병 백신은 평생 최소 2회. 1차 + 부스터 모두 필수. (HDOA: "vaccinated at least twice for rabies in its lifetime")',
     severity: 'info',
     addedAt: '2026-05-06',
+    // 접종일이 정보 자체라 날짜 표기 허용(jp.ts 선례).
+    allowDate: true,
     run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return SKIP
@@ -133,6 +135,8 @@ export const HI_CHECKS: ProcedureCheck[] = [
       '연속된 광견병 접종 간 간격 ≥31일. (HDOA: "must have been administered more than 30 days apart" → strict >30 = ≥31)',
     severity: 'info',
     addedAt: '2026-05-06',
+    // 접종일·간격 일수가 정보 자체라 날짜 표기 허용(jp.ts 선례).
+    allowDate: true,
     run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length < 2) return SKIP
@@ -174,6 +178,8 @@ export const HI_CHECKS: ProcedureCheck[] = [
       '가장 최근 광견병 접종일이 도착일 기준 31일 이전(more than 30 days). 31일 미만 시 도착 후 추가 검역 강제. (HDOA Step 3)',
     severity: 'info',
     addedAt: '2026-05-06',
+    // 접종일→출국 경과 일수가 정보 자체라 날짜 표기 허용(jp.ts 선례).
+    allowDate: true,
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
@@ -289,6 +295,8 @@ export const HI_CHECKS: ProcedureCheck[] = [
       '도착일 기준 14일 이내(`≤13`) 장시간 작용 진드기 구제 (Revolution 불가, Frontline/Bravecto 등 tick label 제품). 제품명·날짜는 건강증명서에 기재. (HDOA Step 6: "within 14 days of arrival")',
     severity: 'info',
     addedAt: '2026-05-06',
+    // 처치일→출국 경과 일수가 정보 자체라 날짜 표기 허용(jp.ts 4개 룰과 같은 판단).
+    allowDate: true,
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
       const entries = readExternalParasiteEntries(caseRow)

@@ -1400,6 +1400,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         'sg.import-permit-not-after-departure',
         // 허가 90일 유효 — 너무 이른 신청(도착 전 만료) 주의. 입력 차단과 같은 함수.
         'sg.import-permit-within-90days',
+        // 강아지 라이선스 선행 — 두 신청일이 모두 입력된 경우에만 순서 비교.
+        'sg.dog-licence-before-import-permit',
       ],
       links: [{ url: 'https://www.gobusiness.gov.sg/', label: '수입 허가 신청 (GoBusiness)' }],
     },

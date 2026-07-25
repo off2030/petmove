@@ -10,6 +10,7 @@ import {
   validateSgQuarantineReservationFiled,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
+import { readByDestValue } from '../destination-scoped-fields'
 import {
   addYears,
   daysBetween,
@@ -41,6 +42,19 @@ import { msgMicrochipBeforeGeneralVaccine, msgMicrochipBeforeRabies, msgRabiesPr
  *  - 유효기간은 `addYears(d, 1)` (1주년 당일까지 유효) → "유효기간 1년" 해석
  *  - offendingPaths 로 문제 필드 경로를 알려주면 상세페이지에서 색상·툴팁 표시
  */
+
+/** 강아지 라이선스 신청일 — by_dest 우선, 명시적 비움은 fallback 금지(readScopedImportPermitFiled 와 동형). */
+function readScopedSgDogLicenceApplied(
+  data: Record<string, unknown>,
+  destination?: string | null,
+): string {
+  const scoped = readByDestValue(data, destination ?? null, 'sg_dog_licence_application_date')
+  if (typeof scoped === 'string') return scoped.slice(0, 10)
+  if (scoped === null) return ''
+  return typeof data.sg_dog_licence_application_date === 'string'
+    ? data.sg_dog_licence_application_date.slice(0, 10)
+    : ''
+}
 
 export const SG_CHECKS: ProcedureCheck[] = [
   // ── 광견병 ──
@@ -524,6 +538,38 @@ export const SG_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `신청일(${filed}) < 출국일(${dep || '미입력'}).` }
+    },
+  },
+  // ── 강아지 라이선스 → 수입 허가 선행 순서 (2026-07-25 신설) ──
+  // AVS/GoBusiness: 강아지 라이선스(PALS)가 있어야 수입 허가를 신청할 수 있다.
+  // 두 신청일이 모두 입력된 경우에만 순서를 비교한다 — 라이선스 날짜 미입력을 미보유로
+  // 단정하지 않는다(추측 단정 금지). 고양이는 라이선스 불요라 SKIP.
+  {
+    id: 'sg.dog-licence-before-import-permit',
+    country: 'singapore',
+    category: '수입허가',
+    title: '강아지 라이선스 → 수입 허가 순서',
+    description:
+      '수입 허가(Licence to Import)는 강아지 라이선스를 먼저 받아야 신청 가능. 라이선스 신청일과 수입 허가 신청일이 둘 다 입력된 경우에만 순서 비교(미입력은 SKIP).',
+    severity: 'warning',
+    addedAt: '2026-07-25',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const species = typeof data.species === 'string' ? data.species : ''
+      if (species && species !== 'dog') return SKIP
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const licence = readScopedSgDogLicenceApplied(data, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(licence)) return SKIP
+      if (filed < licence) {
+        return {
+          ok: false,
+          message:
+            '수입 허가 신청일이 강아지 라이선스 신청일보다 앞서 있어요. 강아지 라이선스를 먼저 받아야 수입 허가를 신청할 수 있어요 — 두 날짜를 확인해 주세요.',
+          offendingPaths: ['import_permit_application_date', 'sg_dog_licence_application_date'],
+        }
+      }
+      return { ok: true, message: `라이선스 신청(${licence}) → 수입 허가 신청(${filed}) 순서 정상.` }
     },
   },
   {
