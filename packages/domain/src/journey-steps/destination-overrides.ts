@@ -91,6 +91,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: [
         'cn.rabies-validity-expires-soon',
         'cn.rabies-extra-within-previous-validity',
+        // 이미 만료(오늘 기준) '주의' — 2회국 공통(만료 재구성 B, 2026-07-25).
+        'common.rabies-extra-validity-expired',
       ],
     },
     'rabies-titer': {
@@ -100,6 +102,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         'cn.rabies-titer-chain-consistent',
         'cn.rabies-titer-vs-booster',
         'cn.rnatt-valid-1year-on-arrival',
+        // 이미 만료(오늘 기준) '주의' — 중국은 추가 검사 카드가 없어 본 항체 카드에(만료 재구성 B).
+        'cn.rnatt-validity-expired',
       ],
     },
     // 항공권 — 중국은 채혈 후 대기 요건이 없다(EU 3개월·일본 180일과 다름). 입국 시 백신·항체
@@ -153,7 +157,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     },
     // 추가 백신(3차+) — base 는 일본 전용 jp.* 주의라, 하와이는 도즈 간격 룰로 매핑(일본 parity).
     'rabies-vaccine-extra': {
-      validationIds: ['hi.rabies-doses-31days-apart'],
+      validationIds: [
+        'hi.rabies-doses-31days-apart',
+        // 이미 만료(오늘 기준) '주의' — 2회국 공통(만료 재구성 B, 2026-07-25).
+        'common.rabies-extra-validity-expired',
+      ],
     },
     // FAVN(OIE-FAVN) 항체 = 하와이 **입국 요건**. 검체 검사기관 수령일 기준 출국 30일~36개월.
     'rabies-titer': {
@@ -859,7 +867,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스·렙토스피라 예방을 포함해야 해요.\n한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n출국 21일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
         cat: '종합백신(FVRCP)을 접종하세요.\n\n허피스바이러스·칼리시바이러스·범백혈구감소증 예방을 포함해야 해요.\n출국 21일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
       },
-      validationIds: ['ae.general-vaccine-required', 'ae.general-vaccine-21days-before-departure'],
+      validationIds: [
+        'ae.general-vaccine-required',
+        'ae.general-vaccine-21days-before-departure',
+        // 이미 만료(오늘 기준) '주의' — 종합백신 카드국 공통(만료 재구성 B, 2026-07-25).
+        'common.general-vaccine-validity-expired',
+      ],
     },
     // 수입 허가증 — 기본 카드 문구가 '호주(DAFF)·뉴질랜드(MPI)·대만(APHIA)·말레이시아(DVS)'를
     // 나열해 아랍에미리트 화면에서 엉뚱했다. MOCCAE 값으로 교체.
@@ -963,6 +976,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: [
         'kz.general-vaccine-min-20days-before-departure',
         'kz.general-vaccine-not-expired-on-arrival',
+        // 이미 만료(오늘 기준) '주의' — 종합백신 카드국 공통(만료 재구성 B, 2026-07-25).
+        'common.general-vaccine-validity-expired',
       ],
     },
     'rabies-titer': {
@@ -1025,6 +1040,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: [
         'ru.general-vaccine-min-20days-before-departure',
         'ru.general-vaccine-not-expired-on-arrival',
+        // 이미 만료(오늘 기준) '주의' — 종합백신 카드국 공통(만료 재구성 B, 2026-07-25).
+        'common.general-vaccine-validity-expired',
       ],
     },
     'rabies-titer': {
@@ -1449,6 +1466,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         'sg.microchip-before-general-vaccine',
         'sg.comprehensive-vaccine-14days-before-departure',
         'sg.comprehensive-vaccine-valid-on-departure',
+        // common.general-vaccine-validity-expired 는 seaPermitOverrides factory 가 자동으로 붙인다.
       ],
     },
     flight: {
@@ -1985,7 +2003,12 @@ function buildRabiesCard(opts: {
     shortLabel: twoDose ? '백신1' : '백신',
     description: lines[0] + '\n\n' + lines.slice(1).join('\n'),
     doneSummary: twoDose ? '1차 광견병 백신을 접종했어요.' : '광견병 백신을 접종했어요.',
-    validationIds: opts.validationIds,
+    // 1회국은 추가 접종을 이 카드 목록으로 입력하므로 '이미 만료(오늘 기준)' 주의 배지도
+    // 여기 붙는다(만료 재구성 B, 2026-07-25). 2회국(일본·중국·하와이)은 추가 백신 카드의
+    // common.rabies-extra-validity-expired 가 담당.
+    validationIds: twoDose
+      ? opts.validationIds
+      : [...opts.validationIds, 'common.rabies-validity-expired'],
   }
   // 1회국은 '유효한 백신이 있는가'로 완료 판정(2회국은 1차 입력만으로 완료).
   if (!twoDose) card.done = 'has-rabies-valid'
@@ -2109,7 +2132,9 @@ function seaPermitOverrides(opts: {
         ...(rabiesProfile.minAgeMonths ? { monthsAfter: rabiesProfile.minAgeMonths } : {}),
       },
       done: 'has-rabies-valid',
-      validationIds: opts.rabiesValidationIds,
+      // 1회국 공통 '이미 만료(오늘 기준)' 주의 배지 — buildRabiesCard 와 같은 처리
+      // (만료 재구성 B, 2026-07-25).
+      validationIds: [...opts.rabiesValidationIds, 'common.rabies-validity-expired'],
     },
     'rabies-titer': {
       description: opts.titerDescription,
@@ -2117,7 +2142,19 @@ function seaPermitOverrides(opts: {
       validationIds: RETURN_ONLY_TITER_CHECKS,
     },
     // 종합백신 override 는 넘어온 나라만(인도네시아처럼 미요건이면 opts.generalVaccine 없음).
-    ...(opts.generalVaccine ? { 'general-vaccine': opts.generalVaccine } : {}),
+    // '이미 만료(오늘 기준)' 주의 배지(common.general-vaccine-validity-expired)를 함께 붙인다
+    // — 카드가 뜨는 나라 공통(만료 재구성 B, 2026-07-25).
+    ...(opts.generalVaccine
+      ? {
+          'general-vaccine': {
+            ...opts.generalVaccine,
+            validationIds: [
+              ...(opts.generalVaccine.validationIds ?? []),
+              'common.general-vaccine-validity-expired',
+            ],
+          },
+        }
+      : {}),
     'flight-purchase': {
       description: opts.flight.description,
       cardLine: `${opts.label}에 입국할 수 있어요.`,

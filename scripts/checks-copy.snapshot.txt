@@ -39,6 +39,8 @@
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [cn.rabies-extra-within-previous-validity]
   ${brk.brokenAt - 1}차 백신 면역 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했어요. 날짜를 확인하세요.
+[cn.rnatt-validity-expired]  (allowDate)
+  광견병 항체 검사 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 다시 검사해야 해요.
 [cn.rabies-titer-chain-consistent]
   ${missing} 정보가 없어요. 입력하세요.
 [cn.rabies-titer-vs-booster]

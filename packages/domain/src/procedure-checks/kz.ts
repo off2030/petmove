@@ -14,6 +14,7 @@ import {
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
+  todayKst,
   readDepartureDate,
 } from './utils'
 import {
@@ -186,6 +187,9 @@ export const KZ_CHECKS: ProcedureCheck[] = [
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return SKIP
+      // 이미 만료(오늘 기준)는 common.rabies-validity-expired '주의'가 담당 — 여기선 아직
+      // 유효한데 출국 시점에 만료 예정인 경우만 남긴다(만료 재구성 B, 2026-07-25).
+      if (validUntil < todayKst()) return SKIP
       if (validUntil < dep) {
         return {
           ok: false,
@@ -265,6 +269,11 @@ export const KZ_CHECKS: ProcedureCheck[] = [
       if (ok) return { ok: true, message: `종합백신(${ok.date}) 출국일(${dep}) 기준 12개월 이내.` }
 
       const latest = entries[entries.length - 1]
+      // 이미 만료(오늘 기준)는 common.general-vaccine-validity-expired '주의'가 담당 —
+      // 여기선 아직 유효한데 출국 시점에 12개월 창을 벗어나는 경우만 남긴다(만료 재구성 B,
+      // 2026-07-25). 종합백신은 1년 제품뿐이라 12개월 창과 면역 유효기간이 사실상 같다.
+      const latestLimit = addMonths(latest.date, 12)
+      if (latestLimit && latestLimit < todayKst()) return SKIP
       return {
         ok: false,
         message: msgGeneralVaccineExpiredBefore('출국'),

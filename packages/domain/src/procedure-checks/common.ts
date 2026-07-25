@@ -1,12 +1,27 @@
-import { DESTINATION_OVERRIDES, isRabiesFreeOrigin } from '../destination-config'
+import { DESTINATION_OVERRIDES, isRabiesFreeOrigin, matchesDestinationKey } from '../destination-config'
+import {
+  GENERAL_VACCINE_CARD_DESTINATIONS,
+  TWO_DOSE_RABIES_DESTINATIONS,
+} from '../journey-steps/applicability'
 import {
   buildDateRuleContext,
   validateKrExportDate,
   validateKrImportDate,
   validateVetVisitDate,
 } from '../journey-steps/date-rules'
+import { titerEntryValidUntil, TITER_EXTRA_CARD_DESTINATIONS } from '../journey-steps/titer-validity'
 import type { ProcedureCheck } from './types'
-import { addYears, formatKoreanDate, readTiterEntries, readVetVisitDate, SKIP } from './utils'
+import {
+  addYears,
+  formatKoreanDate,
+  readGeneralVaccineEntries,
+  readRabiesEntries,
+  readTiterEntries,
+  readVetVisitDate,
+  resolveValidUntil,
+  todayKst,
+  SKIP,
+} from './utils'
 
 /**
  * 목적지 무관 — 한국 출입국 측 공통 절차 검증.
@@ -19,6 +34,17 @@ import { addYears, formatKoreanDate, readTiterEntries, readVetVisitDate, SKIP } 
  * 자체가 안 돈다), 새 국가가 추가돼도 누락 없이 자동 포함된다.
  */
 const ALL_DESTINATION_KEYS: string[] = Object.keys(DESTINATION_OVERRIDES)
+
+/**
+ * 2회 프라임국(일본·중국·하와이 — rabies.doses=2 파생)을 뺀 나머지 전 목적지.
+ * '이미 만료' 주의 배지를 어느 광견병 카드에 붙일지 가르는 목록 — 2회국은 별도
+ * '추가 백신' 카드(rabies-vaccine-extra)가 있어 그 카드에, 나머지는 광견병 백신
+ * 카드(rabies-vaccine-1)에 붙는다. check-mapping 이 check id → step 을 전역 1:1 로
+ * 매핑하므로 같은 조건이라도 카드가 다르면 룰을 나눠야 한다.
+ */
+const NON_TWO_DOSE_DESTINATION_KEYS: string[] = ALL_DESTINATION_KEYS.filter(
+  (k) => !TWO_DOSE_RABIES_DESTINATIONS.includes(k),
+)
 
 export const COMMON_CHECKS: ProcedureCheck[] = [
   // ── 검역·검사 일정 자기 검증 (전 목적지 공통) ──────────────────────────
@@ -136,6 +162,135 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
         ok: false,
         message: `광견병 항체 검사 유효기간(2년)이 ${expireKr}에 만료돼요. 한국 귀국 전 재검사가 필요할 수 있어요. (광견병 비발생 지역은 면제)`,
         offendingPaths: titers.map((t) => `rabies_titer_records[${t.originalIndex}].date`),
+      }
+    },
+  },
+
+  // ── '이미 만료' 주의 배지 (만료 재구성 B, 2026-07-25) ─────────────────────
+  // 유효기간 상태 3분류의 단일 설계:
+  //  ① 이미 만료(validUntil < 오늘)        → 여기 common '주의(warning)' 룰이 담당.
+  //  ② 만료 임박(오늘+30일 내)             → *-expires-soon '안내(info)' + 카드 situational.
+  //  ③ 도착 시 만료 예정(오늘 ≤ 만료 < 출국) → 각 나라 유효기간 룰 '안내(info)'가 담당.
+  // 각 나라 유효기간 룰은 ①이면 SKIP 해 여기와 중복되지 않고, 카드 situational 의
+  // '만료되었어요' 문구도 걷어내 정적 기본 문구로 돌아간다(주의 배지와 3중 중복 방지).
+  // 문구는 걷어낸 situational 의 사용자 검수 문구를 글자 그대로 가져왔다.
+  {
+    id: 'common.rabies-validity-expired',
+    country: NON_TWO_DOSE_DESTINATION_KEYS,
+    category: '광견병',
+    title: '광견병 백신 면역 유효기간 만료',
+    description:
+      '가장 최근 광견병 접종의 면역 유효기간이 오늘 기준 이미 만료됨 — 추가 접종 기록 입력 요청. (2회 프라임국은 common.rabies-extra-validity-expired 가 추가 백신 카드에서 담당)',
+    // 만료 안내는 **날짜가 정보 자체**다(언제 만료됐는지 모르면 안내가 성립 안 함).
+    allowDate: true,
+    severity: 'warning',
+    addedAt: '2026-07-25',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length === 0) return SKIP
+      const latest = [...rabies].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
+      // 미래(예정) 접종이 이미 잡혀 있으면 만료 경고 대상 아님 — 도래하면 그 접종이 최신이 된다.
+      // (고객 절차검증은 *_scheduled 병합 뷰라 예정 부스터도 여기에 온다.)
+      if (latest.date > todayKst()) return SKIP
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      if (!validUntil) return SKIP
+      if (validUntil >= todayKst()) {
+        return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 오늘.` }
+      }
+      return {
+        ok: false,
+        message: `직전 광견병 백신의 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 접종 기록을 입력하세요.`,
+        offendingPaths: [`rabies_dates[${latest.originalIndex}].date`],
+      }
+    },
+  },
+  {
+    id: 'common.rabies-extra-validity-expired',
+    country: TWO_DOSE_RABIES_DESTINATIONS,
+    category: '광견병',
+    title: '광견병 백신 면역 유효기간 만료',
+    description:
+      '가장 최근 광견병 접종의 면역 유효기간이 오늘 기준 이미 만료됨 — 2회 프라임국(일본·중국·하와이)은 추가 백신 카드에서 안내. 만료 후 접종은 chain 단절이라 1차부터 재시작.',
+    allowDate: true,
+    severity: 'warning',
+    addedAt: '2026-07-25',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length === 0) return SKIP
+      const latest = [...rabies].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
+      if (latest.date > todayKst()) return SKIP
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      if (!validUntil) return SKIP
+      if (validUntil >= todayKst()) {
+        return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 오늘.` }
+      }
+      return {
+        ok: false,
+        message: `직전 광견병 백신의 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 접종 기록을 입력하세요. 추가 접종을 하지 못한 경우, 1차 접종부터 다시 준비하세요.`,
+        offendingPaths: [`rabies_dates[${latest.originalIndex}].date`],
+      }
+    },
+  },
+  {
+    id: 'common.titer-extra-validity-expired',
+    country: [...TITER_EXTRA_CARD_DESTINATIONS],
+    category: '광견병',
+    title: '광견병 항체 검사 유효기간 만료',
+    description:
+      '목적지 입국용 항체 검사(일본 24·대만 12·하와이 36개월)의 유효기간이 오늘 기준 이미 만료됨 — 추가 검사 카드에서 안내. 대만은 만료 후 재검사면 채혈일로부터 180일 재대기.',
+    allowDate: true,
+    severity: 'warning',
+    addedAt: '2026-07-25',
+    run: ({ caseRow, destination }) => {
+      const titers = readTiterEntries(caseRow)
+      if (titers.length === 0) return SKIP
+      const latest = [...titers].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
+      // 미래(예정) 채혈이 잡혀 있으면 만료 경고 대상 아님(scheduled 병합 뷰).
+      if (latest.date > todayKst()) return SKIP
+      const token = destination ?? caseRow.destination ?? ''
+      // 유효기간은 목적지별 선언 파생(titerEntryValidUntil) — 카드·알림과 같은 단일 출처.
+      const validUntil = titerEntryValidUntil(token, latest.date)
+      if (!validUntil) return SKIP
+      if (validUntil >= todayKst()) {
+        return { ok: true, message: `최근 채혈(${latest.date}) 유효기간(${validUntil}) ≥ 오늘.` }
+      }
+      // 대만은 만료의 의미가 다르다 — 만료 후 재검사는 체인이 끊겨 180일 재대기(APHIA 情形 2).
+      // 일본·하와이는 재검사 기록 입력만 안내(접종 체인 유지 시 추가 대기 없음).
+      const message = matchesDestinationKey(token, 'taiwan')
+        ? `직전 검사의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 검사를 받은 날로부터 180일이 지나야 격리 없이 입국할 수 있어요.`
+        : `직전 검사의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 검사 기록을 입력하세요.`
+      return {
+        ok: false,
+        message,
+        offendingPaths: [`rabies_titer_records[${latest.originalIndex}].date`],
+      }
+    },
+  },
+  {
+    id: 'common.general-vaccine-validity-expired',
+    country: GENERAL_VACCINE_CARD_DESTINATIONS,
+    category: '종합백신',
+    title: '종합백신 면역 유효기간 만료',
+    description:
+      '가장 최근 종합백신(DHPP·FVRCP)의 면역 유효기간이 오늘 기준 이미 만료됨 — 추가 접종 기록 입력 요청. 종합백신 카드가 뜨는 목적지 전체에 적용.',
+    allowDate: true,
+    severity: 'warning',
+    addedAt: '2026-07-25',
+    run: ({ caseRow }) => {
+      const entries = readGeneralVaccineEntries(caseRow)
+      if (entries.length === 0) return SKIP
+      // readGeneralVaccineEntries 는 날짜순 정렬을 보장.
+      const latest = entries[entries.length - 1]
+      if (latest.date > todayKst()) return SKIP
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      if (!validUntil) return SKIP
+      if (validUntil >= todayKst()) {
+        return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 오늘.` }
+      }
+      return {
+        ok: false,
+        message: `직전 종합백신의 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 접종 기록을 입력하세요.`,
+        offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`],
       }
     },
   },

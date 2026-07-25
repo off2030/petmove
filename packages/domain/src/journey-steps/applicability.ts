@@ -69,6 +69,36 @@ export const RABIES_ONE_YEAR_VALIDITY_DESTINATIONS: string[] = destinationKeysWh
 )
 
 /**
+ * 종합백신(DHPP·FVRCP) 카드가 뜨는 목적지 — catalog `general-vaccine` step 과
+ * common.general-vaccine-validity-expired(이미 만료 '주의') 룰이 공유하는 단일 출처.
+ *
+ * NOTE: vaccines('general') 파생 불가 — admin 상세페이지 vaccines 와 이 카드 명단이
+ * 의도적으로 다를 수 있어 개별 판단 명단으로 유지.
+ * 대만은 APHIA 공식 요건·펫무브 가이드에 종합백신이 없어 제외(2026-07-18 사용자 결정).
+ */
+export const GENERAL_VACCINE_CARD_DESTINATIONS: string[] = [
+  'australia',
+  'new_zealand',
+  'thailand',
+  'malaysia',
+  // ⚠️ 인도네시아는 **넣지 않는다**(2026-07-23 사용자 결정). 펫무브 가이드가 종합백신을
+  //   '입국 필수 아님 — 격리 대비 권장'으로만 다뤄, 태국·말레이시아(필수)와 갈린다.
+  //   되살리려면 근거부터 확보할 것(튀르키예와 같은 처리).
+  'singapore',
+  'russia',
+  'india',
+  'uae',
+  'hongkong',
+  'guam',
+  'philippines',
+  // 카자흐스탄 — EAEU 제15장이 광견병과 같은 문장에서 종합백신을 규율한다(출국 20일 전·12개월 면제).
+  'kazakhstan',
+  // ⚠️ 튀르키예는 **넣지 않는다**(2026-07-22 확정). 카자흐스탄 복제로 잠깐 들어갔다가
+  // 뺐다 — 펫무브 튀르키예 가이드에 종합백신 항목 자체가 없고, 구세대 조사도 '권고
+  // (의무 명문 부재)'였다. 되살리려면 근거부터 확보할 것.
+]
+
+/**
  * 광견병 항체 검사가 **입국 요건**인 목적지 — `rabiesTiterForReturnOnly` 가 아닌 곳.
  *
  * 태국·필리핀 등은 입국에 항체 검사가 필요 없고 카드가 뜨는 건 **한국 귀국용**이다.

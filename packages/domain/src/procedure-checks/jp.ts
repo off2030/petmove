@@ -470,6 +470,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 백신 면역 유효기간 만료',
     description: '입국일에 가장 최근 광견병 접종의 면역 유효기간이 만료되지 않아야 함.',
+    // 만료 안내는 **날짜가 정보 자체**다(언제 만료되는지 모르면 안내가 성립 안 함).
+    // 구 코드는 메시지를 변수에 담아 lint:checks 정적 수집을 피해갔던 것 — 명시 선언으로 정리.
+    allowDate: true,
     severity: 'info',
     addedAt: '2026-04-21',
     run: ({ caseRow, destination }) => {
@@ -484,16 +487,14 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return SKIP
+      // 이미 만료(오늘 기준)는 common.rabies-extra-validity-expired(2회국) '주의'가 담당 —
+      // 여기선 아직 유효한데 입국 시점에 만료 예정인 경우만 남긴다(만료 재구성 B, 2026-07-25).
+      if (validUntil < todayKst()) return SKIP
 
       if (validUntil < dep) {
-        // 이미 만료(과거)와 입국 전 만료 예정(미래) 분기 — '추가 백신' 카드·situational 과 동일 문구.
-        const message =
-          validUntil < todayKst()
-            ? `광견병 백신 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 접종 기록을 입력하세요.`
-            : `광견병 백신 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료돼요. 만료 전에 추가 접종을 하세요.`
         return {
           ok: false,
-          message,
+          message: `광견병 백신 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료돼요. 만료 전에 추가 접종을 하세요.`,
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }

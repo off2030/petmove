@@ -20,6 +20,7 @@ import {
 import {
   buildCaseJourneyContext,
   isSingleDoseRabiesCase,
+  GENERAL_VACCINE_CARD_DESTINATIONS,
   SINGLE_DOSE_RABIES_DESTINATIONS,
   TWO_DOSE_RABIES_DESTINATIONS,
 } from './applicability'
@@ -202,9 +203,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const today = todayKst()
       if (latest.date > today) return undefined // 미래(예정) — 기본 안내
       // 만료/입국전 만료는 advisory(별도 안내 카드) — 도래 완료확인은 '다음 할 일' 유지.
+      // 이미 만료 — 카드 문구는 정적 기본으로 두고(advisory 배치만 유지), 만료일·조치는
+      // common.rabies-validity-expired '주의' 배지가 알린다(만료 재구성 B, 2026-07-25 —
+      // 카드 설명문까지 "만료되었어요"로 바꾸면 주의 배지와 중복).
       if (validUntil && validUntil < today) {
-        const msg = `직전 광견병 백신의 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 접종 기록을 입력하세요.`
-        return { desc: msg, cardDesc: msg, advisory: true }
+        return { advisory: true }
       }
       if (entry && validUntil && validUntil < entry) {
         const token = buildCaseJourneyContext(caseRow).destinationToken
@@ -240,6 +243,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.',
     attachmentLabel: '광견병백신',
     // 1차 입력 시 client 입력 불가, 출생일·1차 수정 후 주의(jp.rabies-prime-after-91days-old).
+    // ⚠️ base 목록은 사실상 일본용(다른 목적지는 override 가 대체) — 1회국 공통
+    // common.rabies-validity-expired(이미 만료 '주의')는 buildRabiesCard 가 자동으로 붙인다.
     validationIds: ['jp.rabies-prime-after-91days-old'],
   },
 
@@ -325,11 +330,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
         ''
       const today = todayKst()
-      // 이미 만료 — 추가 접종 기록 입력 요청. (만료 전 임박은 jp.rabies-validity-expires-soon 담당.)
-      if (validUntil < today) {
-        const msg = `직전 광견병 백신의 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 접종 기록을 입력하세요. 추가 접종을 하지 못한 경우, 1차 접종부터 다시 준비하세요.`
-        return { desc: msg, cardDesc: msg }
-      }
+      // 이미 만료 — 카드 문구는 정적 기본으로. 만료일·조치(1차부터 재시작 포함)는
+      // common.rabies-extra-validity-expired '주의' 배지가 담당(만료 재구성 B, 2026-07-25).
+      // undefined 로 흘려보내면 아래 '입국 전 만료' 분기가 미래형 문구를 띄우므로 명시적으로 끊는다.
+      if (validUntil < today) return undefined
       // 오늘은 아직 유효하지만 입국일 전에 만료 — 이 step 이 미완료로 남는 실제 사유.
       // (has-extra-rabies done 룰이 "최신 유효기간 < 입국일" 이면 미완료로 잡는 것과 짝.)
       if (entry && validUntil < entry) {
@@ -359,6 +363,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: [
       'jp.rabies-validity-expires-soon',
       'jp.rabies-extra-within-previous-validity',
+      // 이미 만료(오늘 기준) '주의' — 2회국(일본·중국·하와이) 공통(만료 재구성 B).
+      'common.rabies-extra-validity-expired',
     ],
   },
 
@@ -513,19 +519,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 미래(예정) 채혈은 저장 시 rabies_titer_extra_scheduled 별도 자리로 분리 — 실제 기록에
       // 미래가 남은 옛 데이터만 이 가드에 걸린다(예정 배지는 scenario 가 표시).
       if (latest.date > today) return undefined
-      // 이미 만료 — 과거형으로 알리고 기록 입력을 요청한다(추가 접종 카드와 같은 분기).
-      // 이 줄이 없어서 1년 전에 만료된 건도 "만료돼요"라는 미래형으로 떴다 — 아직 시간이
-      // 남은 것처럼 읽혔다(2026-07-19). 같은 패턴이라고 주석에 적어두고 한 분기를 빠뜨렸다.
-      //
-      // 접종 카드의 '추가 접종을 하지 못한 경우 1차부터 다시'에 해당하는 경고는 붙이지
-      // 않는다 — 일본은 접종 체인이 유지되면 만료 후 재검사로도 대기 없이 입국할 수 있다.
-      // (대만은 만료 후 재검사면 채혈일로부터 180일 재대기 — 확장 시 이 문구를 그대로 쓰면 안 된다.)
-      if (validUntil < today) {
-        const msg = isTw
-          ? `직전 검사의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 검사를 받은 날로부터 180일이 지나야 격리 없이 입국할 수 있어요.`
-          : `직전 검사의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 검사 기록을 입력하세요.`
-        return { desc: msg, cardDesc: msg }
-      }
+      // 이미 만료 — 카드 문구는 정적 기본으로. 만료일·조치(대만 '만료 후 재검사 = 180일
+      // 재대기' 포함)는 common.titer-extra-validity-expired '주의' 배지가 담당
+      // (만료 재구성 B, 2026-07-25). undefined 로 흘려보내면 아래 분기들이 "만료돼요"
+      // 미래형 문구를 띄우므로 명시적으로 끊는다.
+      if (validUntil < today) return undefined
       // 유효기간이 입국일을 덮으면(아직 유효) — 안내 불필요.
       if (entry && validUntil >= entry) return undefined
       // 입국일(항공권)이 아직 없으면 '입국 전 만료'를 단정할 수 없다 — 만료일만 알린다.
@@ -570,7 +568,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '검사결과지 사본을 사진·PDF로 보관하세요.',
     // 본 항체검사와 같은 라벨 — 보관함에서 '광견병 항체 검사 결과지_2, _3 …' 으로 번호가 이어진다.
     attachmentLabel: '광견병 항체 검사 결과지',
-    validationIds: ['jp.titer-validity-expires-soon', 'jp.titer-extra-within-rabies-validity'],
+    validationIds: [
+      'jp.titer-validity-expires-soon',
+      'jp.titer-extra-within-rabies-validity',
+      // 이미 만료(오늘 기준) '주의' — 추가 검사 카드국(일본·대만·하와이) 공통(만료 재구성 B).
+      'common.titer-extra-validity-expired',
+    ],
   },
 
   // ── 항공권 구매 (일본 전용) ──────────────────────────────────────────────
@@ -1048,31 +1051,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '강아지는 DHPP(C), 고양이는 FVRCP를 접종하세요. 출국 시점에 유효기간이 남아있어야 해요.',
     doneSummary: '종합백신을 접종했어요.',
-    // NOTE: vaccines('general') 파생 불가 — admin 상세페이지 vaccines 와 이 카드 명단이
-    // 의도적으로 다를 수 있어 개별 판단 명단으로 유지.
-    // 대만은 APHIA 공식 요건·펫무브 가이드에 종합백신이 없어 제외(2026-07-18 사용자 결정).
+    // 명단 단일 출처: GENERAL_VACCINE_CARD_DESTINATIONS (applicability.ts — 포함/제외 판단
+    // 근거 주석도 그쪽에). common.general-vaccine-validity-expired '주의' 룰과 공유.
     applicability: {
-      destinations: [
-        'australia',
-        'new_zealand',
-        'thailand',
-        'malaysia',
-        // ⚠️ 인도네시아는 **넣지 않는다**(2026-07-23 사용자 결정). 펫무브 가이드가 종합백신을
-        //   '입국 필수 아님 — 격리 대비 권장'으로만 다뤄, 태국·말레이시아(필수)와 갈린다.
-        //   되살리려면 근거부터 확보할 것(튀르키예와 같은 처리).
-        'singapore',
-        'russia',
-        'india',
-        'uae',
-        'hongkong',
-        'guam',
-        'philippines',
-        // 카자흐스탄 — EAEU 제15장이 광견병과 같은 문장에서 종합백신을 규율한다(출국 20일 전·12개월 면제).
-        'kazakhstan',
-        // ⚠️ 튀르키예는 **넣지 않는다**(2026-07-22 확정). 카자흐스탄 복제로 잠깐 들어갔다가
-        // 뺐다 — 펫무브 튀르키예 가이드에 종합백신 항목 자체가 없고, 구세대 조사도 '권고
-        // (의무 명문 부재)'였다. 되살리려면 근거부터 확보할 것.
-      ],
+      destinations: [...GENERAL_VACCINE_CARD_DESTINATIONS],
       species: 'all',
       tripType: 'all',
     },
@@ -1097,9 +1079,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 미래(예정) 접종만 있으면 기본 안내로 둔다(날짜는 일정 칩에만).
       if (latest.date > today) return undefined
       // 만료/입국전 만료는 advisory(별도 안내 카드) — 도래 완료확인은 '다음 할 일' 유지.
+      // 이미 만료 — 카드 문구는 정적 기본으로 두고(advisory 배치만 유지), 만료일·조치는
+      // common.general-vaccine-validity-expired '주의' 배지가 알린다(만료 재구성 B, 2026-07-25).
       if (validUntil && validUntil < today) {
-        const msg = `직전 종합백신의 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 접종 기록을 입력하세요.`
-        return { desc: msg, cardDesc: msg, advisory: true }
+        return { advisory: true }
       }
       if (entry && validUntil && validUntil < entry) {
         const token = buildCaseJourneyContext(caseRow).destinationToken
@@ -1123,6 +1106,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.',
     attachmentLabel: '종합백신',
+    // 이미 만료(오늘 기준) '주의' — 종합백신 카드국 전체 공통(만료 재구성 B).
+    validationIds: ['common.general-vaccine-validity-expired'],
   },
 
   // ── 6. 독감(CIV) — 강아지만 ─────────────────────────────────────────────

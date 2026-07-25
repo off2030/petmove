@@ -25,6 +25,7 @@ import {
   readTiterEntries,
   resolveValidUntil,
   SKIP,
+  todayKst,
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
@@ -240,6 +241,9 @@ export const SG_CHECKS: ProcedureCheck[] = [
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return SKIP
+      // 이미 만료(오늘 기준)는 common.rabies-validity-expired '주의'가 담당 — 여기선 아직
+      // 유효한데 출국 시점에 만료 예정인 경우만 남긴다(만료 재구성 B, 2026-07-25).
+      if (validUntil < todayKst()) return SKIP
 
       if (validUntil < dep) {
         return {
@@ -300,6 +304,9 @@ export const SG_CHECKS: ProcedureCheck[] = [
       const latest = entries[entries.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return SKIP
+      // 이미 만료(오늘 기준)는 common.general-vaccine-validity-expired '주의'가 담당 —
+      // 여기선 아직 유효한데 출국 시점에 만료 예정인 경우만 남긴다(만료 재구성 B, 2026-07-25).
+      if (validUntil < todayKst()) return SKIP
       if (validUntil < dep) {
         return {
           ok: false,

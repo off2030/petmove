@@ -203,6 +203,9 @@ export const CN_CHECKS: ProcedureCheck[] = [
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return SKIP
+      // 이미 만료(오늘 기준)는 common.rabies-extra-validity-expired '주의'가 담당 — 여기선
+      // 아직 유효한데 도착 시점에 만료 예정인 경우만 남긴다(만료 재구성 B, 2026-07-25).
+      if (validUntil < todayKst()) return SKIP
       if (validUntil < dep) {
         return {
           ok: false,
@@ -299,12 +302,48 @@ export const CN_CHECKS: ProcedureCheck[] = [
       }
       const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
       const expiry = addYears(newest.date, 1)
+      // 이미 만료(오늘 기준)는 cn.rnatt-validity-expired '주의'가 담당 — 여기선 아직 유효한데
+      // 도착 시점에 만료 예정인 경우만 남긴다(만료 재구성 B, 2026-07-25).
+      if (expiry < todayKst()) return SKIP
       const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
         message: '광견병 항체 검사는 중국 입국일 기준 1년 이내여야 해요. 유효기간이 지나 다시 검사해야 해요.',
         offendingPaths: offending,
+      }
+    },
+  },
+  {
+    // '이미 만료(오늘 기준)' 주의 — common.titer-extra-validity-expired 의 중국판. 중국은
+    // 추가 검사 카드가 없어(대기·연장 개념 없음 — 만료돼도 아무 때나 재검사해 그 결과로 입국)
+    // 본 항체 카드(rabies-titer)에 붙는다. 배선은 destination-overrides 중국 rabies-titer
+    // validationIds. (만료 재구성 B, 2026-07-25)
+    id: 'cn.rnatt-validity-expired',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 항체 검사 유효기간 만료',
+    description:
+      'RNATT 결과는 채혈일 기준 1년간 유효 — 오늘 기준 이미 만료면 재검사 필요. 중국은 재검사 후 대기 없이 새 결과로 입국 가능.',
+    // 만료 안내는 **날짜가 정보 자체**다(언제 만료됐는지 모르면 안내가 성립 안 함).
+    allowDate: true,
+    severity: 'warning',
+    addedAt: '2026-07-25',
+    run: ({ caseRow }) => {
+      const titers = readTiterEntries(caseRow)
+      if (titers.length === 0) return SKIP
+      const latest = [...titers].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
+      // 미래(예정) 채혈이 잡혀 있으면 만료 경고 대상 아님(scheduled 병합 뷰).
+      if (latest.date > todayKst()) return SKIP
+      const validUntil = addYears(latest.date, 1)
+      if (!validUntil) return SKIP
+      if (validUntil >= todayKst()) {
+        return { ok: true, message: `최근 채혈(${latest.date}) 유효기간(${validUntil}) ≥ 오늘.` }
+      }
+      return {
+        ok: false,
+        message: `광견병 항체 검사 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 다시 검사해야 해요.`,
+        offendingPaths: [`rabies_titer_records[${latest.originalIndex}].date`],
       }
     },
   },
