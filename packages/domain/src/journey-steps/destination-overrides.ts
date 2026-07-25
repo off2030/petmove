@@ -1414,6 +1414,15 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         order: 108,
         validationIds: ['sg.internal-parasite-2to7days-before-departure'],
       },
+      // 임상검사 — 싱가포르 창은 7일(프로파일 vetVisitWindowDays: 7, Schedule III). base 문구
+      //   (10일)가 그대로 노출돼 차단(7일)과 어긋났다(2026-07-25 사용자 발견). 일본(FormAC)·
+      //   대만(Form 002)과 같은 자리·문형으로 Schedule III 서식 병기. deadline(권장 표시일)도
+      //   base 9(10일 창)에서 6(7일 창)으로.
+      'vet-visit': {
+        description:
+          '출국일 기준 7일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 싱가포르 건강증명서(Schedule III)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+        deadline: { anchor: 'departure', daysBefore: 6, window: true },
+      },
     },
   }),
 
