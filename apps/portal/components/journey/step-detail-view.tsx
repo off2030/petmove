@@ -957,6 +957,31 @@ export function StepDetailView({
     }
   }, [generalSpecies, vaccineData])
 
+  // 외부구충 약품 placeholder — 내부구충과 동일 패턴(org 카탈로그 우선 + 외부구충제 fallback).
+  // 세부 정보(약품명·제조사·제조번호)는 내·외부 모두 전 국가 공통 노출(2026-07-25 사용자 확정,
+  // 호주·뉴질랜드 포함) — 기본 placeholder 가 백신(DHPPL)이라 외부용을 따로 둔다.
+  const externalParasitePlaceholders = useMemo<ProductPlaceholders | undefined>(() => {
+    const fallback: ProductPlaceholders = {
+      product: '예: Frontline Plus',
+      manufacturer: '예: Boehringer Ingelheim',
+      lot: '예: BF23K01',
+    }
+    const list =
+      generalSpecies === 'cat'
+        ? vaccineData?.parasite_external_cat
+        : vaccineData?.parasite_external_dog
+    const pick = (list ?? [])
+      .slice()
+      .sort((a, b) => ((a.expiry ?? '') < (b.expiry ?? '') ? 1 : -1))[0]
+    const name = pick?.product || pick?.vaccine
+    if (!name) return fallback
+    return {
+      product: `예: ${name}`,
+      manufacturer: pick?.manufacturer ? `예: ${pick.manufacturer}` : fallback.manufacturer,
+      lot: pick?.batch ? `예: ${pick.batch}` : fallback.lot,
+    }
+  }, [generalSpecies, vaccineData])
+
   // 저장을 막아야 하는 '입력 불가' 차단 검증을 한 곳에 모은다 — 통과(null)면 저장 가능, 위반이면
   // 사람이 읽는 에러 메시지. 단계 자체의 내재적 정합성 + 앞(선행) 단계 대비 검증만 차단한다
   // (이후 일정과의 관계는 차단 X — 확인 후 저장 + 주의). 검역·증명서·내원 step 은 서버 액션과
@@ -1714,7 +1739,7 @@ export function StepDetailView({
         const res = await updateParasiteEntries(
           caseId,
           parasiteFieldKey,
-          // 약품 4필드는 '세부 정보(선택)'(내부 기생충 치료) 입력값 — 외부/촌충은 폼에 없어 빈값 전달.
+          // 약품 필드는 '세부 정보(선택)' 입력값 — 내·외부 모두(2026-07-25). 촌충은 폼에 없어 빈값 전달.
           parasite.map((e) => ({
             date: e.date || null,
             product: e.product || null,
@@ -2785,12 +2810,21 @@ export function StepDetailView({
               vaccineLabel={isExternalParasite ? '외부구충' : isEchinococcus ? '촌충 치료' : '내부 기생충 치료'}
               dateLabel={isExternalParasite ? '처치일' : '치료일'}
               showValidUntil={false}
-              // 내부 기생충 치료는 펫무브워크와 동일한 약품 4필드를 '세부 정보(선택)'로 직접 입력.
-              showProduct={isInternalParasite}
+              // 내·외부 기생충 치료 모두 '세부 정보(선택)' = 약품명·제조사·제조번호 —
+              // 이 카드가 들어가는 **모든 국가 공통**(호주·뉴질랜드 포함, 2026-07-25 사용자 확정).
+              // 촌충(에키노코쿠스) 카드는 제외(현행 유지).
+              showProduct={isInternalParasite || isExternalParasite}
               // 구충 약품은 '제품 유효기간'이 어느 목적지에서도 불필요 — 항상 숨김(호주·뉴질랜드 포함).
               hideExpiry
-              // 구충제 예시는 백신(DHPPL)이 아니라 내부구충제 — 종별로 다르며 케이스 org 약품정보에서 가져온다.
-              productPlaceholders={isInternalParasite ? internalParasitePlaceholders : undefined}
+              // 구충제 예시는 백신(DHPPL)이 아니라 내부/외부 구충제 — 종별로 다르며 케이스 org
+              // 약품정보에서 가져온다(없으면 표준 브랜드 fallback).
+              productPlaceholders={
+                isInternalParasite
+                  ? internalParasitePlaceholders
+                  : isExternalParasite
+                    ? externalParasitePlaceholders
+                    : undefined
+              }
               addLabel={isExternalParasite ? '+ 처치 기록 추가' : '+ 치료 기록 추가'}
               onChange={(idx, key, next) =>
                 setParasite((prev) => prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)))
