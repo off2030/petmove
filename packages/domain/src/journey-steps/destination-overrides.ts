@@ -137,10 +137,14 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       label: '하와이',
       validationIds: ['hi.rabies-prime-after-12weeks', 'hi.microchip-before-rabies'],
     }),
-    // 광견병 2차 — 평생 2회 + 도즈 간 31일(HDOA "more than 30 days apart").
+    // 광견병 2차 — 평생 2회 + 도즈 간 31일(HDOA "more than 30 days apart" = strict >30 = ≥31).
+    // 날짜 잠금도 31일로 덮는다 — base(catalog) 는 일본식 daysAfter:30 이라 1차+30일이 선택
+    // 가능했고, 고르는 순간 hi.rabies-doses-31days-apart 주의가 떴다(입력칸과 검증 룰 불일치).
+    // earliest 를 31로 맞추면 애초에 30일째를 못 고른다(2026-07-25 사용자 확정).
     'rabies-vaccine-2': {
       description:
         '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 31일 이상 지나서 접종해야 해요.\n하와이는 평생 최소 2회 접종이 필요해요.\n하와이 입국 때 면역 유효기간이 남아있어야 해요.',
+      earliest: { anchor: 'step:rabies-vaccine-1', daysAfter: 31 },
       validationIds: ['hi.rabies-2-doses-required', 'hi.rabies-doses-31days-apart'],
     },
     // 추가 백신(3차+) — base 는 일본 전용 jp.* 주의라, 하와이는 도즈 간격 룰로 매핑(일본 parity).

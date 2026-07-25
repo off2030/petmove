@@ -95,7 +95,11 @@ export const HI_CHECKS: ProcedureCheck[] = [
               : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
         return {
           ok: false,
-          message: msgRabiesPrimeMinAge('84일(12주)'),
+          // 하와이는 최소 접종 연령을 고정하지 않고 백신 라벨을 따른다(HAR §4-29-8.1). 라벨은
+          // 제품마다 12주(래비신) / 3개월(디펜서)로 갈리므로, 더 보수적인 3개월(=디펜서 라벨,
+          // 91일 AND 캘린더 3개월)을 기준으로 안내한다 — 카드 문구('생후 3개월')와 통일
+          // (2026-07-25 사용자 확정). 이러면 어느 백신을 써도 조기접종을 놓치지 않는다.
+          message: msgRabiesPrimeMinAge('3개월'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }

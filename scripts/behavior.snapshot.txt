@@ -878,7 +878,7 @@
      - hi.rabies-2-doses-required [info]
          광견병 접종이 1회(2026-05-01)만 기록되어 있어요. 2회가 필요해요.
      - hi.rabies-prime-after-12weeks [info]
-         광견병 접종은 생후 84일(12주)이 지나서 할 수 있어요.
+         광견병 접종은 생후 3개월이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -4837,7 +4837,7 @@
      - hi.rabies-2-doses-required [info]
          광견병 접종이 1회(2026-04-15)만 기록되어 있어요. 2회가 필요해요.
      - hi.rabies-prime-after-12weeks [info]
-         광견병 접종은 생후 84일(12주)이 지나서 할 수 있어요.
+         광견병 접종은 생후 3개월이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
      ▸ microchip: 마이크로칩 번호를 입력하세요.

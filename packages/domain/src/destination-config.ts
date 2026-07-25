@@ -764,8 +764,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     archetype: 'jp-2dose',
     // 광견병 = 평생 2회(1차 + 부스터). 31일 간격·출국 31일 전·미만료는 hi.ts 가 검증.
     // 최소 연령 = hi.ts 보수 기준(생후 91일 AND 캘린더 3개월). buildRabiesCard 가 카드 문구·
-    //   earliest 잠금을 이 값에서 파생. ⚠️ hi.ts 메시지는 '84일(12주)'로 떠 실제 검사(91/3개월)와
-    //   어긋나 있다 — 하와이 규정 확정 시 통일 필요(사용자 조정 예정).
+    //   earliest 잠금을 이 값에서 파생. 하와이는 최소 연령을 고정하지 않고 백신 라벨을 따르는데
+    //   (HAR §4-29-8.1), 라벨이 제품별로 12주(래비신)/3개월(디펜서)로 갈려 더 보수적인 3개월을
+    //   택했다 — 카드·경고 문구 모두 '3개월'로 통일(2026-07-25 사용자 확정).
     rabies: { doses: 2, minAgeDays: 91, minAgeMonths: 3, minAgeLabel: '생후 3개월' },
     // 진드기(external_parasite) 처치 = 출국 14일 이내 필수(hi.ts). 내부구충은 기존 유지.
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
