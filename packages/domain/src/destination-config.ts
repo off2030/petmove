@@ -773,8 +773,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     //   (HAR §4-29-8.1), 라벨이 제품별로 12주(래비신)/3개월(디펜서)로 갈려 더 보수적인 3개월을
     //   택했다 — 카드·경고 문구 모두 '3개월'로 통일(2026-07-25 사용자 확정).
     rabies: { doses: 2, minAgeDays: 91, minAgeMonths: 3, minAgeLabel: '생후 3개월' },
-    // 진드기(external_parasite) 처치 = 출국 14일 이내 필수(hi.ts). 내부구충은 기존 유지.
-    vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
+    // 진드기(external_parasite) 처치 = 도착 14일 이내 필수(HDOA Checklist 1 Step 6 #4, hi.ts).
+    //   ⚠️ 내부구충(internal_parasite)은 HDOA 요건이 아니라 제거했다 — 일본 복제 때 '기존 유지'로
+    //   딸려온 잔재였고, 내부구충 카드 applicability 에도 하와이는 없어 필드만 떠 있는 어긋난
+    //   상태였다(2026-07-25 사용자 확정 — HDOA는 진드기만 요구).
+    vaccines: ['rabies', 'rabies_titer', 'external_parasite'],
     // FAVN 항체 = 하와이 **입국 요건**. 검체 lab 수령일 기준 출국 30일~36개월(hi.ts) → 유효 36개월.
     //   entryWaitAfterTiter.days:30 = 채혈 후 30일 대기 → 입국일 저장 거부(validateEuEntryDate
     //   제네릭이 TITER_ENTRY_WAIT_DAYS 로 자동 파생 + client·server 양쪽 커버). 싱가포르 90일과
