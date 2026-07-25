@@ -90,7 +90,7 @@ const CaseRowItem = memo(function CaseRowItem({
           isSelected && 'bg-accent',
           isHighlighted && 'bg-accent/70',
           isNew && !isSelected && 'bg-primary/5',
-          moveLabel && 'md:pr-32',
+          moveLabel && 'md:pr-14',
         )}
       >
         {isNew && (
@@ -146,10 +146,10 @@ const CaseRowItem = memo(function CaseRowItem({
           disabled={moving}
           onClick={() => onMove(c.id)}
           title={`이 신청을 ${moveLabel}(으)로 가져오기`}
-          className="hidden md:inline-flex absolute right-4 top-1/2 -translate-y-1/2 items-center gap-1.5 h-7 px-3 rounded-full border border-border/80 bg-popover text-[12px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors disabled:opacity-50"
+          aria-label={`${moveLabel}(으)로 가져오기`}
+          className="hidden md:inline-flex absolute right-4 top-1/2 -translate-y-1/2 h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
         >
-          {moving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Inbox className="h-3 w-3" />}
-          가져오기
+          {moving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Inbox className="h-3.5 w-3.5" />}
         </button>
       )}
     </li>
