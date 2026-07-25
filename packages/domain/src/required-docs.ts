@@ -756,17 +756,6 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'certificate-issue',
     },
     {
-      id: 'sg-import-quarantine-cert',
-      name: '싱가포르 수입 검역 서류',
-      source: '싱가포르 수의당국(NParks/AVS)',
-      kind: 'step',
-      stepRef: 'departure',
-      group: 'quarantine',
-      description:
-        '싱가포르 도착 후 검역소(AQC)에서 30일 격리 검역을 받으며 받는 서류예요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
-      previewStepId: 'departure',
-    },
-    {
       id: 'sg-export-quarantine-cert',
       name: '싱가포르 수출 건강증명서(AVS 인증)',
       source: '싱가포르 수의당국(NParks/AVS)',
