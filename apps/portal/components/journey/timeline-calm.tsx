@@ -364,7 +364,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/hawaii-12.webp',
     '/destinations/hawaii-13.webp',
     '/destinations/hawaii-14.webp',
-    '/destinations/hawaii-15.webp',
   ],
   프랑스: [
     '/destinations/france-02.webp',
