@@ -1512,7 +1512,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '국경 검사 예약',
     shortLabel: '검사예약',
     description:
-      '도착 최소 5일 전에 AVS 온라인 시스템에서 창이 공항 검역소(CAPQ) 도착 검사를 예약하세요.\n\n예약할 때 수입 허가 번호·항공편 번호·도착일시·연락처·동물 및 운송 형태를 입력해요.\n예약 없이 도착하면 시간당 S$133의 검사비가 붙어요.\n\n계류장(QMS) 예약과 CAPQ 검사 예약은 서로 다른 절차예요. 항공 입국은 창이(CAPQ), 육로는 투아스(Tuas)에서 검사해요.',
+      // 사용자 최종안 2줄(2026-07-25) — 신청 항목 나열·QMS/투아스 설명 삭제.
+      '도착 최소 5일 전에 AVS 온라인 시스템에서 창이 공항 검역소(CAPQ) 도착 검사를 예약하세요.\n\n예약 없이 도착하면 시간당 S$133의 검사비가 붙어요.',
     doneSummary: '국경 검사를 예약했어요.',
     cardLine: '국경 검사를 예약하세요.',
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },
@@ -1523,6 +1524,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '예약 확인서를 사진·PDF로 보관하세요.',
     attachmentLabel: '국경 검사 예약 확인서',
+    // NParks 수입 절차가 안내하는 예약 시스템(2026-07-25 브라우저 유효 확인).
+    links: [
+      { url: 'https://avs-eservices.nparks.gov.sg/eservices', label: '도착 검사 예약 (AVS eServices)' },
+    ],
   },
 
   // ── 싱가포르 수출 검역 (왕복 — 귀국 출국 시, 싱가포르 전용) ───────

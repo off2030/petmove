@@ -3558,12 +3558,11 @@
   desc:
       도착 최소 5일 전에 AVS 온라인 시스템에서 창이 공항 검역소(CAPQ) 도착 검사를 예약하세요.
       
-      예약할 때 수입 허가 번호·항공편 번호·도착일시·연락처·동물 및 운송 형태를 입력해요.
       예약 없이 도착하면 시간당 S$133의 검사비가 붙어요.
-      
-      계류장(QMS) 예약과 CAPQ 검사 예약은 서로 다른 절차예요. 항공 입국은 창이(CAPQ), 육로는 투아스(Tuas)에서 검사해요.
   첨부안내: 예약 확인서를 사진·PDF로 보관하세요.
   저장이름: 국경 검사 예약 확인서
+  links:
+      도착 검사 예약 (AVS eServices)  →  https://avs-eservices.nparks.gov.sg/eservices
 
 ▸ sg-export-quarantine
   title: 싱가포르 수출 검역
