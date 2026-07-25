@@ -555,6 +555,27 @@ export function validateSgGstPermitDate(
 }
 
 /**
+ * 싱가포르 — 내·외부 구충 처치는 출국일 기준 2~7일 창에서 해야 함.
+ * (Schedule III IV(a)(vi) "between 2 and 7 days of export".)
+ *
+ * client(처치일 입력 시 저장 거부 — 필리핀 SPSIC 창·EU 촌충과 같은 모델, 2026-07-25 사용자
+ * 확정)·procedure-check(sg.*-2to7days 안내 — 출국일을 나중에 수정해 어긋난 경우) 공용 단일
+ * 출처. 출국일이 없으면 비교 불가라 통과.
+ */
+export function validateSgParasiteWindow(
+  treatDate: string,
+  departureDate: string,
+  label: string,
+): string | null {
+  if (!treatDate || !departureDate) return null
+  const gap = daysBetween(treatDate.slice(0, 10), departureDate.slice(0, 10))
+  if (gap < 2 || gap > 7) {
+    return `${label}는 출국 2~7일 전에 해야 해요. 날짜를 확인하세요.`
+  }
+  return null
+}
+
+/**
  * 싱가포르 — 국경 검사(CAPQ 도착 검사)는 도착 최소 5일 전에 예약해야 함.
  * (NParks "Book an inspection ... five days before the animal's arrival, or earlier."
  * 당일 도착 노선이라 출발일 앵커 = 도착일 근사.) 도착 이후 예약(간격 음수)도 같은 위반.

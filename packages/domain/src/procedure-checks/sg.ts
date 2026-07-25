@@ -5,6 +5,7 @@ import {
   validateSgBorderInspectionDate,
   validateSgDepartureVsQuarantineReservation,
   validateSgGstPermitDate,
+  validateSgParasiteWindow,
   validateSgQuarantineReservationDate,
   validateSgQuarantineReservationFiled,
 } from '../journey-steps/date-rules'
@@ -315,15 +316,17 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (!dep || entries.length === 0) return SKIP
 
       const latest = entries[entries.length - 1]
-      const diff = daysBetween(latest.date, dep)
-      if (diff === null) return SKIP
-      if (diff < 2 || diff > 7) {
+      // 판정·문구 = 저장 거부(validateSgParasiteWindow)와 단일 출처 — 정상 입력은 client 가
+      // 막고, 출국일을 나중에 수정해 어긋난 경우만 여기 안내가 뜬다(2026-07-25 차단 격상).
+      const err = validateSgParasiteWindow(latest.date, dep, '외부 기생충 치료')
+      if (err) {
         return {
           ok: false,
-          message: '외부 기생충 치료는 출국 2~7일 전에 해야 해요.',
+          message: err,
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
+      const diff = daysBetween(latest.date, dep)
       return { ok: true, message: `외부구충(${latest.date}) → 출국일(${dep}): ${diff}일.` }
     },
   },
@@ -342,15 +345,16 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (!dep || entries.length === 0) return SKIP
 
       const latest = entries[entries.length - 1]
-      const diff = daysBetween(latest.date, dep)
-      if (diff === null) return SKIP
-      if (diff < 2 || diff > 7) {
+      // 판정·문구 = 저장 거부(validateSgParasiteWindow)와 단일 출처(외부구충과 동일).
+      const err = validateSgParasiteWindow(latest.date, dep, '내부 기생충 치료')
+      if (err) {
         return {
           ok: false,
-          message: '내부 기생충 치료는 출국 2~7일 전에 해야 해요.',
+          message: err,
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
+      const diff = daysBetween(latest.date, dep)
       return { ok: true, message: `내부구충(${latest.date}) → 출국일(${dep}): ${diff}일.` }
     },
   },

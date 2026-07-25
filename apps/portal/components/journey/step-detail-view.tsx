@@ -28,6 +28,7 @@ import {
   validateSgBorderInspectionDate,
   validateSgDepartureVsQuarantineReservation,
   validateSgGstPermitDate,
+  validateSgParasiteWindow,
   validateSgQuarantineReservationFiled,
   validateSgReservationVsDeparture,
   validateEntryDateForDestination,
@@ -1312,6 +1313,18 @@ export function StepDetailView({
         for (const e of parasite) {
           if (!e.date) continue
           const err = validatePhInternalParasiteWindow(e.date, filed)
+          if (err) return err
+        }
+      }
+      // 싱가포르 — 내·외부 구충은 출국 2~7일 창(Schedule III). 필리핀·EU 촌충과 같은 차단
+      // 모델(2026-07-25 사용자 확정). 도메인 단일 출처(validateSgParasiteWindow) — sg.ts
+      // 안내 룰과 같은 함수. 출국일 미입력이면 통과(치료 먼저 하는 순서를 막지 않기 위해).
+      if (destinationKey === 'singapore' && (isExternalParasite || isInternalParasite)) {
+        const dep = (caseRow?.departure_date ?? '').slice(0, 10)
+        const label = isExternalParasite ? '외부 기생충 치료' : '내부 기생충 치료'
+        for (const e of parasite) {
+          if (!e.date) continue
+          const err = validateSgParasiteWindow(e.date, dep, label)
           if (err) return err
         }
       }
