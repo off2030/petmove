@@ -132,9 +132,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   //   ⚠️ 수출검역·NACCS 사전신고는 하와이에 없어 복제하지 않음(destination-config 주석 참고).
   hawaii: {
     // 광견병 1차 — 프로파일 파생(buildRabiesCard). 2회 접종국이라 title '광견병 백신 1차'.
+    // omitEntryValidity: 입국 때 면역 유효 문장은 1차가 아니라 '가장 최근(2차)' 접종에 걸리는
+    // 조건이라 1차 카드에서 뺀다(일본과 같은 처리). 1차는 칩 선행·최소연령만 안내하고, 입국
+    // 유효는 2차 카드가 다룬다(2026-07-25 사용자 지적).
     'rabies-vaccine-1': buildRabiesCard({
       destKey: 'hawaii',
       label: '하와이',
+      omitEntryValidity: true,
       validationIds: ['hi.rabies-prime-after-12weeks', 'hi.microchip-before-rabies'],
     }),
     // 광견병 2차 — 평생 2회 + 도즈 간 31일(HDOA "more than 30 days apart" = strict >30 = ≥31).
@@ -143,7 +147,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // earliest 를 31로 맞추면 애초에 30일째를 못 고른다(2026-07-25 사용자 확정).
     'rabies-vaccine-2': {
       description:
-        '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 31일 이상 지나서 접종해야 해요.\n하와이는 평생 최소 2회 접종이 필요해요.\n하와이 입국 때 면역 유효기간이 남아있어야 해요.',
+        '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 31일 이상 지나서 접종해야 해요.\n하와이 입국 때 면역 유효기간이 남아있어야 해요.',
       earliest: { anchor: 'step:rabies-vaccine-1', daysAfter: 31 },
       validationIds: ['hi.rabies-2-doses-required', 'hi.rabies-doses-31days-apart'],
     },
