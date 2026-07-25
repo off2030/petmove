@@ -734,7 +734,8 @@ export function validateAeImportPermitWithin90Days(
   if (!filedDate || !departureDate) return null
   const earliest = addDays(departureDate.slice(0, 10), -90)
   if (earliest && filedDate.slice(0, 10) < earliest) {
-    return `수입 허가증은 발급일로부터 90일간 유효해요. 출국 90일 전 ${fmt(earliest)}부터 신청할 수 있어요.`
+    // 고객 문구에 구체 날짜 보간 금지(앱 카피 규칙, 2026-07-25 사용자 지적) — 날짜 없이.
+    return '수입 허가증은 발급일로부터 90일간 유효해요. 출국 90일 전부터 신청할 수 있어요. 날짜를 확인하세요.'
   }
   return null
 }
