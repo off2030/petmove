@@ -56,8 +56,13 @@ export interface UsaResult {
 }
 
 export interface JapanResult {
-  inbound: FlightEntry
-  outbound: FlightEntry
+  /** 한국 → 일본 출국편. (구 'inbound' — 한국어 출국/입국 라벨과 반대라 모델이 뒤바꿔 개명) */
+  korea_to_japan: FlightEntry
+  /** 일본 → 한국 귀국편. (구 'outbound') */
+  japan_to_korea: FlightEntry
+  /** 일본 출국(수출)검역 예약 — 일본 동물검역소에서 귀국 전 받는 검역. */
+  export_quarantine_date: string | null
+  export_quarantine_time: string | null
   email: string | null
   address_overseas: string | null
   certificate_no: string | null
@@ -199,10 +204,12 @@ const SCHEMAS: { [C in Country]: Record<string, unknown> } = {
   japan: {
     type: 'object',
     additionalProperties: false,
-    required: ['inbound', 'outbound', 'email', 'address_overseas', 'certificate_no'],
+    required: ['korea_to_japan', 'japan_to_korea', 'export_quarantine_date', 'export_quarantine_time', 'email', 'address_overseas', 'certificate_no'],
     properties: {
-      inbound: FLIGHT_ENTRY_SCHEMA,
-      outbound: FLIGHT_ENTRY_SCHEMA,
+      korea_to_japan: FLIGHT_ENTRY_SCHEMA,
+      japan_to_korea: FLIGHT_ENTRY_SCHEMA,
+      export_quarantine_date: nullable(),
+      export_quarantine_time: nullable(),
       email: nullable(),
       address_overseas: nullable(),
       certificate_no: nullable(),
@@ -301,16 +308,25 @@ const PROMPTS: { [C in Country]: string } = {
 
   japan: `You extract Japan round-trip flight info plus address/email/EQC from images or text.
 The customer transports a pet between Korea and Japan — typically TWO flights:
-1. "inbound" = Korea → Japan (departing Korean airport ICN/GMP/PUS/CJU; arriving Japanese airport NRT/HND/KIX/CTS/FUK/OKA).
-2. "outbound" = Japan → Korea (reverse).
-Determine direction BY AIRPORTS, not by date order.${COMMON_RULES}
+1. "korea_to_japan" = the flight that DEPARTS a Korean airport (ICN/GMP/PUS/CJU) and ARRIVES at a Japanese airport (NRT/HND/KIX/CTS/FUK/OKA).
+2. "japan_to_korea" = the reverse (departs Japan, arrives Korea).
+Assign each flight to its slot by its ROUTE (airports) — never by date order or the order flights appear.
+Korean labels (the input is written from the Korean traveler's perspective):
+  출국 / 출발 / 가는 편 → korea_to_japan; 입국 / 귀국 / 오는 편 → japan_to_korea.
+Route notation "A-B", "A→B", "A발 B행" means departure_airport=A, arrival_airport=B. Keep each airport with its own flight and slot — NEVER copy the same airport into both departure and arrival.
+Worked example — input:
+  "(출국) 2026/09/22 KE791 / 인천(ICN)-후쿠오카(FUK)  (입국) 2026/09/28 KE792 / 후쿠오카(FUK)-인천(ICN)"
+→ korea_to_japan: { date: "2026-09-22", flight_number: "KE791", departure_airport: "ICN", arrival_airport: "FUK" }
+→ japan_to_korea: { date: "2026-09-28", flight_number: "KE792", departure_airport: "FUK", arrival_airport: "ICN" }${COMMON_RULES}
 - For each flight: date (YYYY-MM-DD), time (24h "HH:mm"), departure_airport (IATA), arrival_airport (IATA), transport, flight_number.
 - time: scheduled DEPARTURE time of that flight in 24h "HH:mm". Convert AM/PM if needed (e.g. "9:30 AM" → "09:30", "5:45 PM" → "17:45"). If only an arrival time is shown, return null.
 - transport: exactly one of "Checked-baggage" | "Carry-on" | "Cargo" | "Cargo(Sea)". NEVER null — default "Carry-on" when unclear.
   Korean mappings: 기내탑승/기내동반/cabin → "Carry-on"; 수하물/수화물/화물칸/baggage/checked → "Checked-baggage"; 화물/cargo → "Cargo"; 선박/sea → "Cargo(Sea)".
   In Q&A format, ONLY use the ANSWER (after colon), not the question choices.
   If transport given for one flight but not the other, apply the same to both.
-- If only one flight is found, put it in "inbound" and leave "outbound" all nulls.
+- If only one flight is found, put it in "korea_to_japan" if it departs Korea, or "japan_to_korea" if it departs Japan; leave the other all nulls.
+- export_quarantine_date / export_quarantine_time: appointment for the JAPAN-side export quarantine inspection — done at a Japanese Animal Quarantine Service (動物検疫所) counter before the pet returns to Korea. Korean labels: "일본 출국 검역", "일본 수출검역", "출국검역 예약", "검역 예약". Date YYYY-MM-DD (infer year as the next upcoming if missing), time 24h "HH:mm" (e.g. "오후 1시 30분" → "13:30"; if only a vague time like "오후" is given, return null time).
+  ONLY extract when the quarantine clearly happens in JAPAN (mentions 일본, a Japanese airport, or the return trip). If it refers to the KOREAN departure quarantine at ICN before flying to Japan, return null for both.
 - email: any email address in the input.
 - address_overseas: destination address in Japan, in English. Romanize Japanese if needed.
 - certificate_no: Export Quarantine Certificate number (수출검역증명서/輸出検疫証明書 / 検疫証明書番号) if present.

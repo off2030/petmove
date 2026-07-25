@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { persistField } from '@/lib/toast-bus'
 import { markJourneyCompleteAdmin } from '@/lib/actions/journey-complete'
+import { removeCaseDestinationAdmin } from '@/lib/actions/remove-destination'
 import { useCases } from './cases-context'
 import destsData from '@petmove/domain/data/destinations.json'
 import { destCode } from '@/lib/country-code'
@@ -166,13 +167,12 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   }, [open])
 
   async function toggleDest(dest: Dest) {
-    let next: string[]
     if (selected.includes(dest.ko)) {
-      next = selected.filter(s => s !== dest.ko)
-    } else {
-      next = [...selected, dest.ko]
+      // 체크 해제 = 삭제 — X 버튼과 동일 경로(확인 + scoped 잔존 정리)로 통일.
+      await removeDest(dest.ko)
+      return
     }
-    const val = joinDests(next)
+    const val = joinDests([...selected, dest.ko])
     // Optimistic update first
     updateLocalCaseField(caseId, 'column', 'destination', val)
     await persistField('목적지', () => updateCaseField(caseId, 'column', 'destination', val))
@@ -180,15 +180,16 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
 
   async function removeDest(ko: string) {
     const ok = await confirm({
-      message: `목적지 "${ko}"를 삭제하시겠습니까?`,
+      message: `목적지 "${ko}"를 삭제하시겠습니까? 이 목적지의 일정·항공편·추가정보 입력값도 함께 삭제됩니다.`,
       okLabel: '삭제',
       variant: 'destructive',
     })
     if (!ok) return
-    const next = selected.filter(s => s !== ko)
-    const val = joinDests(next)
+    const val = joinDests(selected.filter(s => s !== ko))
+    // 완료 처리와 동일한 정리(by_dest·top-level scoped 잔존·출국일 컬럼)까지 서버 액션이 수행 —
+    // 다음에 넣는 목적지가 이전 목적지의 추가정보를 물려받지 않게 한다. past_journeys 는 안 남김.
     updateLocalCaseField(caseId, 'column', 'destination', val)
-    await persistField('목적지', () => updateCaseField(caseId, 'column', 'destination', val))
+    await persistField('목적지', () => removeCaseDestinationAdmin(caseId, ko))
   }
 
   // 스태프 수동 전환 — 완료된(혹은 다녀온) 여정을 '지난 여정'으로 보관. 삭제와 달리

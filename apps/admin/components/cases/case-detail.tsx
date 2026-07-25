@@ -517,10 +517,10 @@ function mapExtractResultToUnified(country: Country, result: Record<string, unkn
     if (typeof v === 'string' && v) out[k] = v
   }
   if (country === 'japan') {
-    const inb = (result.inbound ?? {}) as Record<string, unknown>
-    const outb = (result.outbound ?? {}) as Record<string, unknown>
-    // 일본 한일 노선: 출국일=도착일(같은 날) → inbound.date 는 departure_flight_date 로.
-    // entry_date 는 일본에서 미사용. inbound.time(출발시간)은 일본에서 불필요 → 미사용.
+    const inb = (result.korea_to_japan ?? {}) as Record<string, unknown>
+    const outb = (result.japan_to_korea ?? {}) as Record<string, unknown>
+    // 일본 한일 노선: 출국일=도착일(같은 날) → korea_to_japan.date 는 departure_flight_date 로.
+    // entry_date 는 일본에서 미사용. 출발시간(time)은 일본에서 불필요 → 미사용.
     set('departure_flight_date', inb.date)
     set('entry_departure_airport', inb.departure_airport)
     set('entry_airport', inb.arrival_airport)
@@ -531,6 +531,9 @@ function mapExtractResultToUnified(country: Country, result: Record<string, unkn
     set('return_arrival_airport', outb.arrival_airport)
     set('return_transport', outb.transport)
     set('return_flight_number', outb.flight_number)
+    // 일본 출국(수출)검역 예약 — 추가정보 '수출검역 예약' 그룹.
+    set('jp_export_quarantine_date', result.export_quarantine_date)
+    set('jp_export_quarantine_time', result.export_quarantine_time)
     set('email', result.email)
     set('address_overseas', result.address_overseas)
     set('certificate_no', result.certificate_no)
