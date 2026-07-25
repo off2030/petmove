@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 /**
  * 펫무브 직영(platform)을 보고 있을 때만 상단바에 뜨는 작은 아이콘 버튼 + 이동 모달.
  * 병원 링크(/apply/<slug>) 를 안 거치고 앱에서 직접 신청해 "미배정(펫무브 직영)"으로
- * 들어온 케이스를 home org(예: 로잔)로 옮긴다. 데모/테스트 건은 목록에서 선택 해제해 제외.
+ * 들어온 케이스를 home org(예: 로잔)로 옮긴다. 기본은 전체 해제 — 옮길 건만 체크(opt-in).
  *
  * active=false(펫무브가 아닌 조직 보기)면 아무것도 렌더 안 함(조회도 안 함).
  */
@@ -39,7 +39,7 @@ export function PlatformCasesMover({
   }, [active])
 
   function openModal() {
-    setSelected(new Set(cases?.map((c) => c.id) ?? []))
+    setSelected(new Set())
     setError(null)
     setOpen(true)
   }

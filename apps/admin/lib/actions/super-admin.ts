@@ -630,8 +630,8 @@ export async function listPlatformCases(): Promise<Result<PlatformCase[]>> {
 
 /**
  * 펫무브 직영으로 잘못 들어온 신청을 본인 home org(예: 로잔)로 이동.
- * caseIds 중 "실제로 펫무브 소속인" 케이스만 옮긴다(안전 가드). 데모/테스트 건은
- * 호출측에서 선택 해제하여 제외한다.
+ * caseIds 중 "실제로 펫무브 소속인" 케이스만 옮긴다(안전 가드). 호출측 모달은
+ * 기본 전체 해제 — 사용자가 체크한 건만 넘어온다.
  */
 export async function moveCasesToHome(
   caseIds: string[],
