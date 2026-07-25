@@ -1003,6 +1003,14 @@ export function validateImportPermitFiledDate(
         validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
         validateAeImportPermitWithin90Days(filedDate, departureDate)
       )
+    // 싱가포르 — 출국일 이후 신청 불가 + 허가 90일 유효(도착일 기준 90일 이내 신청 — 더
+    // 이르면 도착 전 만료. 당일 도착 노선이라 출발일 앵커 = 도착일 근사). UAE 와 동일
+    // 구조(90일 유효)라 같은 함수 재사용 — 문구도 목적지 중립.
+    case 'singapore':
+      return (
+        validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
+        validateAeImportPermitWithin90Days(filedDate, departureDate)
+      )
     // 스위스 — 입국 3주(21일) 이내 신청 불가.
     case 'switzerland':
       return validateChImportPermitDate(filedDate, entryDate)

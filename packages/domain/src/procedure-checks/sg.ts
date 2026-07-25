@@ -1,5 +1,6 @@
 import {
   buildDateRuleContext,
+  validateAeImportPermitWithin90Days,
   validateImportPermitNotAfterDeparture,
   validateSgDepartureVsQuarantineReservation,
   validateSgQuarantineReservationDate,
@@ -470,6 +471,30 @@ export const SG_CHECKS: ProcedureCheck[] = [
   },
 
   // ── 수입 허가 / 검역 (my.ts 복제) ──
+  // ── 수입 허가(GoBusiness) — 90일 유효 (2026-07-25 신설, UAE 패턴) ──
+  // 입력 차단(validateImportPermitFiledDate case 'singapore')과 같은 함수를 본다.
+  {
+    id: 'sg.import-permit-within-90days',
+    country: 'singapore',
+    category: '수입허가',
+    title: '수입 허가는 도착 90일 이내 신청',
+    description:
+      '싱가포르 수입 허가(Licence to Import)는 발급일로부터 90일 유효 — 너무 일찍 신청하면 도착 전에 만료된다. 입력 차단과 같은 함수(validateAeImportPermitWithin90Days — 목적지 중립 90일 로직 재사용).',
+    severity: 'warning',
+    addedAt: '2026-07-25',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const dep = readDepartureDate(caseRow, destination)
+      if (!dep) return SKIP
+      const msg = validateAeImportPermitWithin90Days(filed, dep)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: ['import_permit_application_date'] }
+      }
+      return { ok: true, message: `신청일(${filed}) 출국일(${dep}) 기준 90일 이내.` }
+    },
+  },
   {
     id: 'sg.import-permit-not-after-departure',
     country: 'singapore',

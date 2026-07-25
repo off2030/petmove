@@ -1368,7 +1368,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       cardLine: '싱가포르 수입 허가를 신청하세요.',
       attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
       attachmentLabel: '싱가포르 수입 허가증',
-      validationIds: ['sg.import-permit-not-after-departure'],
+      validationIds: [
+        'sg.import-permit-not-after-departure',
+        // 허가 90일 유효 — 너무 이른 신청(도착 전 만료) 주의. 입력 차단과 같은 함수.
+        'sg.import-permit-within-90days',
+      ],
       links: [{ url: 'https://www.gobusiness.gov.sg/', label: '수입 허가 신청 (GoBusiness)' }],
     },
     // ⭐ 도착 후 AQC 30일 의무 격리 + 도착 시 광견병 재접종 (NParks Schedule III).
