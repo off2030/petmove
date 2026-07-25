@@ -1405,10 +1405,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     appSupported: true,
     rabies: {
       doses: 1,
-      // il.ts: 1차 12주 이상(보수적으로 91일 AND 캘린더 3개월 동시 충족).
-      minAgeDays: 91,
-      minAgeMonths: 3,
-      minAgeLabel: '생후 3개월',
+      // gov.il 수의국 "12주 이상 접종" = 84일 — 우크라이나와 동일(사용자 확정 2026-07-25).
+      // 구 '보수 91일 AND 캘린더 3개월'은 규정보다 최대 일주일 과잉이라 걷어냈다(③ 정확화).
+      minAgeDays: 84,
+      minAgeLabel: '생후 12주(84일)',
       timingLines: ['출국 30일 전까지 접종해야 해요.'],
       entryWaitDaysAfterVaccine: 30,
     },

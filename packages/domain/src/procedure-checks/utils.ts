@@ -476,8 +476,13 @@ export const SKIP: CheckResult = { ok: true, message: '입력 대기 — 검증 
  *  - 캘린더 기준: 생년월일 + 3개월(`addMonths(birth, 3)`) 이후
  *
  * 출생일에 따라 어느 쪽이 더 엄격한지 달라지므로 AND 결합 시 어떤 케이스든
- * 가장 늦은 시점이 임계값. 규정 명시 국가 (JP=91일·EU=12주·TH=12주·NZ=3개월·
- * PH=12주) 외 모든 국가에 사용.
+ * 가장 늦은 시점이 임계값.
+ *
+ * ⚠️ 2026-07-25 ③ 정확화 이후 **홍콩(앱 미노출)만 남았다** — 앱 노출 8개국(중국·브라질·
+ * 우크라이나·이스라엘·하와이·멕시코·모로코·UAE)은 나라별 확정값(프로파일 minAgeDays/
+ * minAgeMonths)을 쓰는 validateRabiesPrimeAgeForDestination(date-rules)으로 이관했다.
+ * 새 목적지에 이 함수를 blanket 으로 쓰지 말 것 — 규정 확정값을 프로파일에 선언하고
+ * 그쪽을 쓸 것(달력 3개월 국가에서 규정을 지킨 케이스를 막는 과잉이 있었다).
  *
  * @param birth 'YYYY-MM-DD' 생년월일
  * @param vaccineDate 'YYYY-MM-DD' 광견병 1차 접종일

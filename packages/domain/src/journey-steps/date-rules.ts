@@ -1614,6 +1614,26 @@ export function validateRabiesPrimeAge(
 }
 
 /**
+ * 광견병 1차 최소 연령 — **목적지 프로파일 파생판**. rabies.minAgeDays/minAgeMonths
+ * (destination-config, 근거 주석도 그쪽)를 읽어 validateRabiesPrimeAge 에 넘긴다.
+ *
+ * client 입력 차단은 카탈로그 earliest(birth anchor — buildRabiesCard 가 같은 선언에서
+ * 파생)를 거쳐 이미 이 값을 쓰므로, 주의 룰이 이 함수를 쓰면 두 층의 기준이 항상 일치한다.
+ * 구 evaluateRabiesAgeConservative(91일 AND 캘린더 3개월)를 8개국에 무차별 적용하던 것을
+ * 나라별 확정값으로 정확화(2026-07-25 ③) — 달력 3개월 국가에서 규정대로 3개월에 접종한
+ * 2월생(89일)을 막는 과잉, 84일국(우크라이나·이스라엘)에서 91일을 요구하는 과잉이 있었다.
+ * 미선언 목적지는 기본 91일(OIE 표준).
+ */
+export function validateRabiesPrimeAgeForDestination(
+  birthDate: string,
+  primeDate: string,
+  destinationKey: string,
+): string | null {
+  const p = DESTINATION_OVERRIDES[destinationKey]?.rabies
+  return validateRabiesPrimeAge(birthDate, primeDate, p?.minAgeDays ?? 91, p?.minAgeMonths)
+}
+
+/**
  * 생년월일 + N개월(달력) 이 되었는가 — 입력 차단·주의·안내 **세 층이 공유하는 단일 판정**.
  *
  * 달력 기준이라 생월에 따라 실제 일수가 89~92일로 달라진다. 일수 고정 기준(91일)으로 바꾸면

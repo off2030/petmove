@@ -1,11 +1,15 @@
 import type { ProcedureCheck } from './types'
-import { buildDateRuleContext, validateTiterAfterBooster, validateTiterWithinChain } from '../journey-steps/date-rules'
+import {
+  buildDateRuleContext,
+  validateRabiesPrimeAgeForDestination,
+  validateTiterAfterBooster,
+  validateTiterWithinChain,
+} from '../journey-steps/date-rules'
 import { findRabiesChainBreak } from '../journey-steps/rabies-chain'
 import {
   addDays,
   addYears,
   daysBetween,
-  evaluateRabiesAgeConservative,
   exceedsValidityYears,
   findRabiesValidityBreaks,
   findSameGuardianCases,
@@ -91,31 +95,27 @@ export const CN_CHECKS: ProcedureCheck[] = [
     id: 'cn.rabies-prime-after-91days-old',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
+    title: '광견병 1차 접종 최소 연령 (생후 91일)',
     description:
-      'GACC 2019 No.5 본문 정량 미명시 (OIE 표준 차용) — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요. 출생일에 따라 어느 쪽이 더 엄격한지 달라지므로 AND 결합.',
+      'GACC 2019 No.5 본문 정량 미명시 (OIE 표준 차용) — 생후 91일 이후 접종. 저장 거부(카탈로그 earliest — 프로파일 rabies.minAgeDays 파생)와 같은 함수(validateRabiesPrimeAgeForDestination). 구 blanket 보수 기준(91일 AND 캘린더 3개월)은 나라별 확정값으로 정확화(2026-07-25 ③).',
     severity: 'warning',
     addedAt: '2026-05-06',
-    run: ({ caseRow, destination }) => {
+    run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      const ev = evaluateRabiesAgeConservative(birth, first.date)
-      if (ev.ageInDays === null) return SKIP
-      if (!ev.ok) {
-        // 고객 노출 문구엔 날짜·내부용어('보수적 기준')를 넣지 않는다(태국 '생후 84일(12주)'와
-        // 동일 형식). 91일과 캘린더 3개월은 출생일에 따라 어느 쪽이 늦은지 달라져 AND 로 보므로
-        // 둘 다 적는다 — 한쪽만 적으면 통과한 기준을 보고 왜 주의가 뜨는지 알 수 없다.
+      const msg = validateRabiesPrimeAgeForDestination(birth, first.date, 'china')
+      if (msg) {
         return {
           ok: false,
-          message: '광견병 접종은 생후 91일과 3개월이 모두 지난 후에 할 수 있어요.',
+          message: msg,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${ev.ageInDays}일령 + 캘린더 3개월(${ev.calendar3mThreshold}) 충족.` }
+      return { ok: true, message: `1차 접종일(${first.date}) 최소 연령(프로파일 파생) 충족.` }
     },
   },
   // cn.rabies-2-doses-required 제거(2026-07-18) — GACC 조문에 횟수 명시 없고, 2차 카드 +

@@ -2,7 +2,6 @@ import type { ProcedureCheck } from './types'
 import {
   addMonths,
   daysBetween,
-  evaluateRabiesAgeConservative,
   findRabiesValidityBreaks,
   findSameGuardianCases,
   matchBannedBreed,
@@ -15,9 +14,10 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
-import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
+import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore } from './messages'
 import {
   validateIlAdvanceNoticeDate,
+  validateRabiesPrimeAgeForDestination,
   violatesRabiesEntryWait,
 } from '../journey-steps/date-rules'
 
@@ -88,34 +88,27 @@ export const IL_CHECKS: ProcedureCheck[] = [
     id: 'il.rabies-prime-after-91days-old',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
+    title: '광견병 1차 접종 최소 연령 (생후 12주=84일)',
     description:
-      'gov.il 수의국: "12주 이상 접종" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      'gov.il 수의국: "12주 이상 접종" = 생후 84일(프로파일 minAgeDays — 우크라이나와 동일). 저장 거부(카탈로그 earliest 파생)와 같은 함수(validateRabiesPrimeAgeForDestination). 구 blanket 보수 기준(91일 AND 캘린더 3개월)은 규정보다 과잉이라 정확화(2026-07-25 ③).',
     severity: 'warning',
     addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
+    run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      const ev = evaluateRabiesAgeConservative(birth, first.date)
-      if (ev.ageInDays === null) return SKIP
-      if (!ev.ok) {
-        const reason =
-          ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령으로 91일에 미달해요`
-            : ev.failedRule === 'calendar3m'
-              ? `1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
-              : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
+      const msg = validateRabiesPrimeAgeForDestination(birth, first.date, 'israel')
+      if (msg) {
         return {
           ok: false,
-          message: msgRabiesPrimeMinAge('91일'),
+          message: msg,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${ev.ageInDays}일령 + 캘린더 3개월(${ev.calendar3mThreshold}) 충족.` }
+      return { ok: true, message: `1차 접종일(${first.date}) 최소 연령(프로파일 파생) 충족.` }
     },
   },
   {

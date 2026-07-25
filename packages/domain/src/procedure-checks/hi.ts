@@ -2,7 +2,6 @@ import type { ProcedureCheck } from './types'
 import {
   addMonths,
   daysBetween,
-  evaluateRabiesAgeConservative,
   readExternalParasiteEntries,
   readRabiesEntries,
   readTiterEntries,
@@ -13,8 +12,11 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
-import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
-import { validateParasiteDateForDestination } from '../journey-steps/date-rules'
+import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore } from './messages'
+import {
+  validateParasiteDateForDestination,
+  validateRabiesPrimeAgeForDestination,
+} from '../journey-steps/date-rules'
 
 /**
  * 하와이 (HDOA — Hawaii Department of Agriculture, Animal Quarantine Station) 절차 검증.
@@ -74,38 +76,27 @@ export const HI_CHECKS: ProcedureCheck[] = [
     id: 'hi.rabies-prime-after-12weeks',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
+    title: '광견병 1차 접종 최소 연령 (생후 3개월)',
     description:
-      'HDOA 본문 정량 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요. (id 는 호환성을 위해 12weeks 유지)',
+      'HDOA 는 최소 연령을 고정하지 않고 백신 라벨을 따른다(HAR §4-29-8.1) — 라벨이 제품마다 12주(래비신)/3개월(디펜서)로 갈려 더 보수적인 달력 3개월을 택했다(프로파일 minAgeMonths, 2026-07-25 사용자 확정 — 카드 문구와 통일). 저장 거부(카탈로그 earliest 파생)와 같은 함수(validateRabiesPrimeAgeForDestination). (id 는 호환성을 위해 12weeks 유지)',
     severity: 'warning',
     addedAt: '2026-05-06',
-    run: ({ caseRow, destination }) => {
+    run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      const ev = evaluateRabiesAgeConservative(birth, first.date)
-      if (ev.ageInDays === null) return SKIP
-      if (!ev.ok) {
-        const reason =
-          ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령으로 91일에 미달해요`
-            : ev.failedRule === 'calendar3m'
-              ? `1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
-              : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
+      const msg = validateRabiesPrimeAgeForDestination(birth, first.date, 'hawaii')
+      if (msg) {
         return {
           ok: false,
-          // 하와이는 최소 접종 연령을 고정하지 않고 백신 라벨을 따른다(HAR §4-29-8.1). 라벨은
-          // 제품마다 12주(래비신) / 3개월(디펜서)로 갈리므로, 더 보수적인 3개월(=디펜서 라벨,
-          // 91일 AND 캘린더 3개월)을 기준으로 안내한다 — 카드 문구('생후 3개월')와 통일
-          // (2026-07-25 사용자 확정). 이러면 어느 백신을 써도 조기접종을 놓치지 않는다.
-          message: msgRabiesPrimeMinAge('3개월'),
+          message: msg,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${ev.ageInDays}일령 + 캘린더 3개월(${ev.calendar3mThreshold}) 충족.` }
+      return { ok: true, message: `1차 접종일(${first.date}) 최소 연령(프로파일 파생) 충족.` }
     },
   },
   {

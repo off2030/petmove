@@ -1867,17 +1867,19 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       title: '광견병 백신',
       shortLabel: '백신',
       description:
-        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 3개월이 지난 후에 접종해야 해요.\n이스라엘 입국 때 면역 유효기간이 남아있어야 해요.',
+        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 12주(84일)이 지난 후에 접종해야 해요.\n이스라엘 입국 때 면역 유효기간이 남아있어야 해요.',
       doneSummary: '광견병 백신을 접종했어요.',
-      // 91일 AND 캘린더 3개월(il.ts evaluateRabiesAgeConservative). client 입력차단은
-      // monthsAfter(캘린더 3개월)로 판정 — 91일과의 ≤1일 차이는 il.ts 주의가 잡는다(오차단 없음).
-      earliest: { anchor: 'birth', daysAfter: 91, monthsAfter: 3 },
+      // gov.il "12주 이상 접종" = 84일 (프로파일 rabies.minAgeDays 와 동일 값 — 우크라이나와
+      // 같은 기준). 구 '보수 91일 AND 캘린더 3개월'은 규정보다 과잉이라 걷어냈다(2026-07-25 ③).
+      earliest: { anchor: 'birth', daysAfter: 84 },
       done: 'has-rabies-valid',
       validationIds: [
         'il.rabies-prime-after-91days-old',
         'il.microchip-before-rabies',
         'il.rabies-min-30days-before-departure',
         'il.rabies-booster-within-prime-validity',
+        // 이미 만료(오늘 기준) '주의' — 1회국 공통(만료 재구성 B). 수동 카드라 직접 지목.
+        'common.rabies-validity-expired',
       ],
     },
     'rabies-titer': {

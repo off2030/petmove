@@ -1,9 +1,12 @@
-import { buildDateRuleContext, violatesRabiesEntryWait } from '../journey-steps/date-rules'
+import {
+  buildDateRuleContext,
+  validateRabiesPrimeAgeForDestination,
+  violatesRabiesEntryWait,
+} from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   classifyExportQuarantineDate,
   daysBetween,
-  evaluateRabiesAgeConservative,
   findSameGuardianCases,
   readRabiesEntries,
   readTiterEntries,
@@ -14,7 +17,7 @@ import {
   readVetVisitDate,
   findRabiesValidityBreaks,
 } from './utils'
-import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
+import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore } from './messages'
 
 /**
  * 모로코 (ONSSA — Office National de Sécurité Sanitaire des Produits Alimentaires) 절차 검증.
@@ -89,34 +92,27 @@ export const MA_CHECKS: ProcedureCheck[] = [
     id: 'ma.rabies-prime-after-91days-old',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
+    title: '광견병 1차 접종 최소 연령 (생후 3개월)',
     description:
-      '펫무브 www 가이드 "광견병 예방접종은 생후 3개월령 이후에 해야 합니다" — ONSSA 수입 양식엔 연령 규정이 없어 가이드가 근거다. 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      '펫무브 www 가이드 "광견병 예방접종은 생후 3개월령 이후에 해야 합니다" — ONSSA 수입 양식엔 연령 규정이 없어 가이드가 근거다. 달력 3개월 기준(프로파일 minAgeMonths). 저장 거부(카탈로그 earliest 파생)와 같은 함수(validateRabiesPrimeAgeForDestination). 구 blanket 보수 기준(91일 AND)은 정확화(2026-07-25 ③).',
     severity: 'warning',
     addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
+    run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      const ev = evaluateRabiesAgeConservative(birth, first.date)
-      if (ev.ageInDays === null) return SKIP
-      if (!ev.ok) {
-        const reason =
-          ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령으로 91일에 미달해요`
-            : ev.failedRule === 'calendar3m'
-              ? `1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
-              : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
+      const msg = validateRabiesPrimeAgeForDestination(birth, first.date, 'morocco')
+      if (msg) {
         return {
           ok: false,
-          message: msgRabiesPrimeMinAge('91일'),
+          message: msg,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${ev.ageInDays}일령 + 캘린더 3개월(${ev.calendar3mThreshold}) 충족.` }
+      return { ok: true, message: `1차 접종일(${first.date}) 최소 연령(프로파일 파생) 충족.` }
     },
   },
   {
