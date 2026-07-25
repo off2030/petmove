@@ -158,7 +158,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // FAVN(OIE-FAVN) 항체 = 하와이 **입국 요건**. 검체 검사기관 수령일 기준 출국 30일~36개월.
     'rabies-titer': {
       description:
-        '미국 농무부(USDA) 승인 검사기관(예: Kansas State KSVDL, DOD)에서 FAVN 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n검체가 검사기관에 도착한 날부터 출국까지 30일 이상 지나야 하고, 36개월 이내여야 해요.\n0.5 IU/mL 이상이면 합격이에요.',
+        '미국 농무부(USDA) 승인 검사기관에서 FAVN 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n유효기간은 3년이에요.\n0.5 IU/mL 이상이면 합격이에요.',
       validationIds: ['hi.favn-sample-30days-to-36months-before-arrival'],
     },
     // 추가 항체검사(재검사) — base 는 일본 전용 jp.titer.* 주의라 하와이 FAVN 룰로 교체.
