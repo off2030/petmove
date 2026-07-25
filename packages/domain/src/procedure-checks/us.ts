@@ -202,7 +202,8 @@ export const US_CHECKS: ProcedureCheck[] = [
   },
   {
     id: 'us.cdc-form-required',
-    country: COUNTRY,
+    // 하와이 — 미국의 주(州)라 CDC 연방 규칙이 그대로 적용(카드도 base 공유, 2026-07-26).
+    country: ['usa', 'hawaii'],
     category: '신고',
     title: 'CDC Dog Import Form 접수증',
     description: '개는 미국 입국 전에 CDC Dog Import Form을 제출하고 접수증을 지참해야 함.',
@@ -229,7 +230,8 @@ export const US_CHECKS: ProcedureCheck[] = [
   },
   {
     id: 'us.cdc-form-date-valid',
-    country: COUNTRY,
+    // 하와이 — 미국의 주(州)라 CDC 연방 규칙이 그대로 적용(카드도 base 공유, 2026-07-26).
+    country: ['usa', 'hawaii'],
     category: '신고',
     title: 'CDC Dog Import Form 제출일',
     description: 'CDC Dog Import Form 제출일은 미국 도착일보다 늦을 수 없음.',

@@ -205,6 +205,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentLabel: '하와이 수입 검역 서류',
       validationIds: ['hi.import-quarantine-date-valid'],
     }),
+    // CDC Dog Import Form — 연방 요건이라 base 카드(usa 와 공유)를 그대로 쓰되, 순서만
+    // '출국 전 임상검사(110) 직전'으로(2026-07-26 사용자 지정. 본토는 47 — 도착 주 확인 뒤).
+    'us-cdc-dog-import-form': {
+      order: 105,
+    },
     // 진드기 처치 — 출국 14일 이내(long-acting tick product). base 는 일반 문구라 하와이 룰 지목.
     'external-parasite': {
       // 멕시코·브라질·UAE 카드와 같은 문형(사용자 지정 2026-07-23) — 카드엔 특정 기생충(진드기)·

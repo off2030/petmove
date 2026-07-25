@@ -688,7 +688,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '미국 입국 전에 CDC Dog Import Form을 온라인으로 제출하세요.\n\n한 마리당 한 장씩 제출하고, 발급되는 접수증을 휴대전화에 저장하거나 인쇄해 가져가세요. 접수증의 반려견 정보와 출발 국가가 실제 여행과 맞는지 확인하세요.\n저위험국 경로의 접수증은 제출일로부터 6개월 동안 유효하지만, 출발 국가가 바뀌면 다시 제출해야 해요.',
     doneSummary: 'CDC Dog Import Form을 제출했어요.',
     cardLine: 'CDC Dog Import Form을 제출하세요.',
-    applicability: { destinations: ['usa'], species: 'dog', tripType: 'all' },
+    // 하와이 — 미국의 주(州)라 CDC 개 수입 규칙(연방)이 그대로 적용된다. 카드·문구·검증을
+    // 본토와 공유(단일 출처)하고, 순서만 하와이 override 로 조정(출국 전 임상검사 직전 —
+    // 2026-07-26 사용자 지정). 룰 country·저장 게이트도 hawaii 포함으로 확장했다.
+    applicability: { destinations: ['usa', 'hawaii'], species: 'dog', tripType: 'all' },
     order: 47,
     done: 'dated:us_cdc_form_date',
     inputs: [

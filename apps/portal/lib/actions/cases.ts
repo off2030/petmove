@@ -2118,8 +2118,10 @@ export async function updateSimpleDateField(
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     if (stepId === 'us-cdc-dog-import-form') {
-      if (buildCaseJourneyContext(existing as CaseRow, destination).destinationKey !== 'usa') {
-        return { ok: false, error: '미국 여정에서만 저장할 수 있는 단계입니다.' }
+      // 하와이 — 미국의 주(州)라 CDC 연방 규칙이 그대로 적용(카드도 base 공유, 2026-07-26).
+      const cdcDestKey = buildCaseJourneyContext(existing as CaseRow, destination).destinationKey
+      if (cdcDestKey !== 'usa' && cdcDestKey !== 'hawaii') {
+        return { ok: false, error: '미국·하와이 여정에서만 저장할 수 있는 단계입니다.' }
       }
       if (v) {
         const validationError = validateUsCdcFormDate(

@@ -91,7 +91,14 @@ export function validateUsDogEntryDate(v: string, ctx: DateRuleContext): string 
  * 입국일 뒤 날짜라는 논리적 모순만 저장 거부한다.
  */
 export function validateUsCdcFormDate(v: string, ctx: DateRuleContext): string | null {
-  if (!v || !matchesDestinationKey(ctx.destination, 'usa')) return null
+  if (!v) return null
+  // 하와이 — 미국의 주(州)라 CDC 연방 규칙이 그대로 적용(카드도 base 공유, 2026-07-26).
+  if (
+    !matchesDestinationKey(ctx.destination, 'usa') &&
+    !matchesDestinationKey(ctx.destination, 'hawaii')
+  ) {
+    return null
+  }
   const entry = departFromData(ctx.data)
   if (entry && v > entry) return 'CDC Dog Import Form 제출일은 미국 도착일보다 늦을 수 없어요.'
   return null
