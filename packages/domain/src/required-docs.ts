@@ -766,7 +766,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '싱가포르 수출 검역 후 받는 서류예요.\n\n동물병원에서 발급받은 건강증명서를 AVS 정부 수의사가 인증해요. 수출 라이선스와 함께 발급돼요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요. 앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '싱가포르 출국 전 GoBusiness 포털로 신청해서 받는 서류예요.\n\n동물병원에서 발급받은 건강증명서를 AVS 정부 수의사가 인증해요. 수출 라이선스와 함께 발급돼요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요. 앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'sg-export-quarantine',
     },
     {
