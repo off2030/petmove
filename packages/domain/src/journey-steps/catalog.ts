@@ -1493,6 +1493,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 102,
     // 발급일 자체가 완료 증거 — 확인 게이트 없이 날짜(≤오늘) 입력만으로 완료(dated 모델).
     done: 'dated:sg_gst_permit_date',
+    // 도착 전 + 도착 14일 이내 창 — 입력 차단(validateSgGstPermitDate)과 같은 함수(2026-07-25).
+    validationIds: ['sg.gst-permit-within-14days'],
     inputs: [{ key: 'sg_gst_permit_date', label: '발급일', type: 'date', helpText: 'GST 납부 허가를 받은 날짜' }],
     allowAttachments: true,
     attachmentHint: 'GST 허가서를 사진·PDF로 보관하세요.',

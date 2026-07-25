@@ -529,6 +529,32 @@ export function validateSgQuarantineReservationFiled(
 }
 
 /**
+ * 싱가포르 — 관세청 GST 납부 허가(Customs In-Payment permit)는 도착 전 + 도착일 기준
+ * 14일 이내 창에서 받아야 함. (NParks 수입 절차 "Within 14 days of arrival, obtain a
+ * Customs In-Payment (GST) permit" — 수입허가 90일과 같은 before-arrival 창 해석,
+ * 2026-07-25 사용자 확정. 당일 도착 노선이라 출발일 앵커 = 도착일 근사.)
+ *
+ * client(발급일 입력 시 저장 거부)·procedure-check(출국일을 나중에 수정해 어긋난 경우
+ * '주의') 공용 단일 출처. 출국일이 없으면 비교 불가라 통과.
+ */
+export function validateSgGstPermitDate(
+  issuedDate: string,
+  departureDate: string,
+): string | null {
+  if (!issuedDate || !departureDate) return null
+  const issued = issuedDate.slice(0, 10)
+  const dep = departureDate.slice(0, 10)
+  if (issued > dep) {
+    return 'GST 납부 허가는 싱가포르 도착 전에 받아야 해요. 날짜를 확인하세요.'
+  }
+  const earliest = addDays(dep, -14)
+  if (earliest && issued < earliest) {
+    return 'GST 납부 허가는 도착일 기준 14일 이내에 받을 수 있어요. 날짜를 확인하세요.'
+  }
+  return null
+}
+
+/**
  * 싱가포르 — 출국일은 계류장(AQC) 예약일과 같은 날 또는 하루 전날이어야 함.
  *
  * 계류 시작(예약일) = 싱가포르 도착일이고 한국→싱가포르는 당일(또는 자정 넘김 +1일) 도착

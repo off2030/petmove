@@ -26,6 +26,7 @@ import {
   validateImportPermitFiledDate,
   validateSgQuarantineReservationDate,
   validateSgDepartureVsQuarantineReservation,
+  validateSgGstPermitDate,
   validateSgQuarantineReservationFiled,
   validateSgReservationVsDeparture,
   validateEntryDateForDestination,
@@ -1343,6 +1344,14 @@ export function StepDetailView({
         entryDate: entry,
         data,
       })
+    }
+    if (step.id === 'sg-gst-permit') {
+      // GST 납부 허가 — 도착 전 + 도착 14일 이내 창. 도메인 단일 출처(validateSgGstPermitDate)
+      // — sg.ts 주의 룰과 같은 함수(2026-07-25). dated 카드라 폼 날짜는 importQuarantineDate.
+      return validateSgGstPermitDate(
+        importQuarantineDate.trim(),
+        (caseRow?.departure_date ?? '').slice(0, 10),
+      )
     }
     if (isSgQuarantineReservation) {
       // 계류장 예약 — 신청일(채혈 이후)·예약일(채혈 +90일~12개월 창) 저장 거부. 도메인 단일

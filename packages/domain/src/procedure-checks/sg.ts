@@ -3,6 +3,7 @@ import {
   validateAeImportPermitWithin90Days,
   validateImportPermitNotAfterDeparture,
   validateSgDepartureVsQuarantineReservation,
+  validateSgGstPermitDate,
   validateSgQuarantineReservationDate,
   validateSgQuarantineReservationFiled,
 } from '../journey-steps/date-rules'
@@ -589,6 +590,36 @@ export const SG_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `싱가포르 수출검역일(${raw}) 싱가포르 체류 구간 내.` }
+    },
+  },
+
+  // ── 관세·GST 납부 허가 — 도착 전 + 14일 창 (2026-07-25 신설) ──
+  // 입력 차단(validateSgGstPermitDate)과 같은 함수 — 출국일을 나중에 수정해 어긋난 경우 주의.
+  {
+    id: 'sg.gst-permit-within-14days',
+    country: 'singapore',
+    category: '수입허가',
+    title: 'GST 납부 허가는 도착 전 14일 이내',
+    description:
+      '관세청 GST 납부 허가(Customs In-Payment permit)는 도착 전 + 도착일 기준 14일 이내 창. (NParks "Within 14 days of arrival, obtain a Customs In-Payment permit" — before-arrival 창 해석.)',
+    severity: 'warning',
+    addedAt: '2026-07-25',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const issued =
+        typeof data.sg_gst_permit_date === 'string' ? data.sg_gst_permit_date.slice(0, 10) : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(issued)) return SKIP
+      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
+      if (!dep) return SKIP
+      const msg = validateSgGstPermitDate(issued, dep)
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['sg_gst_permit_date', 'departure_date'],
+        }
+      }
+      return { ok: true, message: `발급일(${issued}) 출국일(${dep}) 기준 도착 전 14일 이내.` }
     },
   },
 
