@@ -599,6 +599,32 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r10) out.push(r10)
       }
+    } else if (key === 'hawaii') {
+      // 하와이 입국 신청(AQS 서류 사전 제출) — 도착 10일 전 마감. 일본 사전 신고(D-47·D-40)와
+      // 같은 2단계 패턴(마감 일주일 전 + 마감일). 마감 미달 신청일은 저장 자체가 거부되므로
+      // (validateHiImportDeclarationDate, 2026-07-26 격상) 사전 안내가 특히 중요하다.
+      // 하와이는 당일 도착 노선이라 entry(=출발일 proxy)가 도착일. 신청일 저장 전에만
+      // (사전 통지 4종과 동일 — 이미 신청했으면 '신청하세요' 알림은 불필요).
+      if (entry && !str(data.hi_import_declaration_date)) {
+        const r17 = leadReminder(
+          flat,
+          `${token}|hi-declaration-17`,
+          entry,
+          17,
+          '하와이 입국 신청 마감이 일주일 남았어요. 도착 10일 전까지 HIPOP에서 입국 신청을 하세요.',
+          now,
+        )
+        if (r17) out.push(r17)
+        const r10 = leadReminder(
+          flat,
+          `${token}|hi-declaration-10`,
+          entry,
+          10,
+          '오늘까지 하와이 입국 신청이 필요해요(도착 10일 전). HIPOP에서 신청하세요.',
+          now,
+        )
+        if (r10) out.push(r10)
+      }
     } else if (key === 'taiwan') {
       // 대만 수입허가증 — 도착 120일 전 신청이 격리 면제 조건이라 마감이 유난히 이르다.
       // 놓치면 회복이 어려워(20일 전 신청 = 7일 격리) 일주일 전 + 당일 2회 안내.
