@@ -1407,7 +1407,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     importQuarantine: {
       fieldKey: 'sg_import_quarantine_date',
       description:
-        '싱가포르 도착 후 창이 공항 검역소(CAPQ)에서 도착 검사를 받아요.\n검사 후 검역소(AQC)로 이동해 최소 30일간 격리돼요.\n도착 후 광견병 예방접종을 다시 받아요.\nCAPQ→AQC 운송료는 마리당 S$75, 도착 광견병 접종료는 S$68이에요. 일일 계류비는 팬룸 S$26·에어컨룸 S$35예요(2026년 12월부터 각각 S$36·S$44).',
+        '싱가포르 도착 후 창이 공항 검역소(CAPQ)에서 도착 검사를 받아요.\n검사 후 검역소(AQC)로 이동해 최소 30일간 격리돼요.\n도착 후 광견병 예방접종을 다시 받아요.',
       helpText: '싱가포르 도착 후 수입 검역을 시작한 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '싱가포르 수입 검역 서류',
