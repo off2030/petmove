@@ -6,12 +6,27 @@ import { listPlatformCases, moveCasesToHome, type PlatformCase } from '@/lib/act
 import { cn } from '@/lib/utils'
 
 /**
- * 펫무브 직영(platform)을 보고 있을 때만 상단바에 뜨는 작은 아이콘 버튼 + 이동 모달.
+ * 펫무브 직영(platform)을 보고 있을 때만 상단바에 뜨는 새 신청 인박스.
  * 병원 링크(/apply/<slug>) 를 안 거치고 앱에서 직접 신청해 "미배정(펫무브 직영)"으로
- * 들어온 케이스를 home org(예: 로잔)로 옮긴다. 기본은 전체 해제 — 옮길 건만 체크(opt-in).
+ * 들어온 케이스 중 **아직 확인 안 한 것만** 배지 숫자·모달 목록에 보여준다.
+ * 모달을 한 번 열면 그 시점까지의 신청은 확인된 것으로 기록(localStorage, 브라우저별)
+ * — 이후 새로 들어온 신청이 있을 때만 아이콘이 다시 나타난다.
+ * 개별/과거 건 이동은 고객 목록의 행별 가져오기 버튼으로 한다.
  *
+ * 기본은 전체 해제 — 옮길 건만 체크(opt-in).
  * active=false(펫무브가 아닌 조직 보기)면 아무것도 렌더 안 함(조회도 안 함).
  */
+const LAST_SEEN_KEY = 'petmove:platform-inbox:last-seen'
+
+function readLastSeen(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return window.localStorage.getItem(LAST_SEEN_KEY)
+  } catch {
+    return null
+  }
+}
+
 export function PlatformCasesMover({
   active,
   homeOrgName,
@@ -20,7 +35,10 @@ export function PlatformCasesMover({
   homeOrgName: string
 }) {
   const [cases, setCases] = useState<PlatformCase[] | null>(null)
+  const [lastSeen, setLastSeen] = useState<string | null>(() => readLastSeen())
   const [open, setOpen] = useState(false)
+  // 모달이 열릴 때의 미확인 목록 스냅샷 — 열자마자 확인 처리해도 목록이 비지 않게.
+  const [modalCases, setModalCases] = useState<PlatformCase[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -45,6 +63,7 @@ export function PlatformCasesMover({
       const id = (e as CustomEvent<{ id: string }>).detail?.id
       if (!id) return
       setCases((prev) => (prev ? prev.filter((c) => c.id !== id) : prev))
+      setModalCases((prev) => prev.filter((c) => c.id !== id))
       setSelected((prev) => {
         if (!prev.has(id)) return prev
         const next = new Set(prev)
@@ -56,7 +75,16 @@ export function PlatformCasesMover({
     return () => window.removeEventListener('platform-case-moved', onMoved)
   }, [active])
 
+  const unseen = (cases ?? []).filter((c) => !lastSeen || c.created_at > lastSeen)
+
   function openModal() {
+    // 지금 보여주는 것까지 확인된 것으로 기록 — 다음에 새로 들어온 신청만 다시 배지에 뜬다.
+    const now = new Date().toISOString()
+    try {
+      window.localStorage.setItem(LAST_SEEN_KEY, now)
+    } catch {}
+    setModalCases(unseen)
+    setLastSeen(now)
     setSelected(new Set())
     setError(null)
     setOpen(true)
@@ -72,8 +100,9 @@ export function PlatformCasesMover({
   }
 
   function toggleAll() {
-    if (!cases) return
-    setSelected((prev) => (prev.size === cases.length ? new Set() : new Set(cases.map((c) => c.id))))
+    setSelected((prev) =>
+      prev.size === modalCases.length ? new Set() : new Set(modalCases.map((c) => c.id)),
+    )
   }
 
   function move() {
@@ -90,30 +119,33 @@ export function PlatformCasesMover({
     })
   }
 
-  if (!active || !cases || cases.length === 0) return null
+  // 미확인 0건이면 아이콘 숨김 — 단, 모달을 열어둔 동안(열면서 확인 처리됨)은 유지.
+  if (!active || !cases || (unseen.length === 0 && !open)) return null
 
   return (
     <>
-      <button
-        type="button"
-        onClick={openModal}
-        title={`펫무브 미배정 신청 ${cases.length}건 — ${homeOrgName}(으)로 정리`}
-        aria-label={`미배정 신청 ${cases.length}건 정리`}
-        className="relative h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-      >
-        <Inbox size={18} />
-        <span className="absolute top-0.5 right-0.5 min-w-[15px] h-[15px] px-1 rounded-full bg-primary text-primary-foreground font-mono text-[9px] font-semibold leading-none flex items-center justify-center ring-2 ring-background">
-          {cases.length > 99 ? '99+' : cases.length}
-        </span>
-      </button>
+      {unseen.length > 0 && (
+        <button
+          type="button"
+          onClick={openModal}
+          title={`펫무브 새 신청 ${unseen.length}건 — 확인하고 ${homeOrgName}(으)로 이동`}
+          aria-label={`새 신청 ${unseen.length}건 확인`}
+          className="relative h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        >
+          <Inbox size={18} />
+          <span className="absolute top-0.5 right-0.5 min-w-[15px] h-[15px] px-1 rounded-full bg-primary text-primary-foreground font-mono text-[9px] font-semibold leading-none flex items-center justify-center ring-2 ring-background">
+            {unseen.length > 99 ? '99+' : unseen.length}
+          </span>
+        </button>
+      )}
 
       {open && (
-        <div role="dialog" aria-modal="true" aria-label="미배정 신청 이동" className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div role="dialog" aria-modal="true" aria-label="새 신청 확인·이동" className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => !pending && setOpen(false)} />
           <div className="relative z-10 w-full max-w-lg max-h-[80vh] flex flex-col rounded-xl border border-border bg-popover shadow-2xl">
             <div className="shrink-0 flex items-center justify-between px-lg h-14 border-b border-border/80">
               <h2 className="font-serif text-[17px] text-foreground">
-                미배정 신청을 {homeOrgName}(으)로 이동
+                새 신청 — 체크한 건만 {homeOrgName}(으)로 이동
               </h2>
               <button
                 type="button"
@@ -132,14 +164,14 @@ export function PlatformCasesMover({
                   onClick={toggleAll}
                   className="text-[12px] text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {selected.size === cases.length ? '전체 해제' : '전체 선택'}
+                  {selected.size === modalCases.length ? '전체 해제' : '전체 선택'}
                 </button>
                 <span className="text-[12px] text-muted-foreground font-mono tabular-nums">
-                  {selected.size}/{cases.length}
+                  {selected.size}/{modalCases.length}
                 </span>
               </div>
               <ul className="py-sm">
-                {cases.map((c) => (
+                {modalCases.map((c) => (
                   <li
                     key={c.id}
                     className="flex items-center gap-3 py-2.5 border-b border-dotted border-border/60 last:border-b-0"
@@ -168,7 +200,8 @@ export function PlatformCasesMover({
                 <span className="text-[12px] text-destructive truncate">{error}</span>
               ) : (
                 <span className="text-[12px] text-muted-foreground">
-                  선택한 신청의 담당이 {homeOrgName}(으)로 바뀝니다.
+                  선택한 신청의 담당이 {homeOrgName}(으)로 바뀝니다. 안 옮긴 건은 고객
+                  목록에서 가져올 수 있어요.
                 </span>
               )}
               <button
