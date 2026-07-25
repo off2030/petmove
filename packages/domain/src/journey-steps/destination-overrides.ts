@@ -1401,11 +1401,16 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       },
       // 구충은 출국 2~7일 전(출국 직전)이라 임상검사(vet-visit, order 110) 바로 위로 옮긴다
       //   (기본 order 80/90 → 106/108). 싱가포르 전용 order override.
+      // 문구는 펫무브앱 확립 형태(멕시코·브라질·필리핀 — 행동 한 줄 + 그 나라 기한 한 줄)로.
+      //   base 문구('호주·뉴질랜드 등에서 요구돼요')는 펫무브워크용 일반 안내라 그대로 노출되면
+      //   싱가포르 카드에 다른 나라 이야기가 샌다(2026-07-25 사용자 지적).
       'external-parasite': {
+        description: '외부 기생충 치료를 하세요.\n출국일 기준 2~7일 전에 해야 해요.',
         order: 106,
         validationIds: ['sg.external-parasite-2to7days-before-departure'],
       },
       'internal-parasite': {
+        description: '내부 기생충 치료를 하세요.\n출국일 기준 2~7일 전에 해야 해요.',
         order: 108,
         validationIds: ['sg.internal-parasite-2to7days-before-departure'],
       },
