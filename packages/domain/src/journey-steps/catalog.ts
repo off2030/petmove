@@ -1520,6 +1520,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 104,
     // 예약일 자체가 완료 증거 — 확인 게이트 없이 날짜(≤오늘) 입력만으로 완료(dated 모델).
     done: 'dated:sg_border_inspection_date',
+    // 도착 최소 5일 전 예약 — 입력 차단(validateSgBorderInspectionDate)과 같은 함수(2026-07-25).
+    validationIds: ['sg.border-inspection-5days-before'],
     inputs: [{ key: 'sg_border_inspection_date', label: '예약일', type: 'date', helpText: '국경 검사를 예약한 날짜' }],
     allowAttachments: true,
     attachmentHint: '예약 확인서를 사진·PDF로 보관하세요.',

@@ -555,6 +555,26 @@ export function validateSgGstPermitDate(
 }
 
 /**
+ * 싱가포르 — 국경 검사(CAPQ 도착 검사)는 도착 최소 5일 전에 예약해야 함.
+ * (NParks "Book an inspection ... five days before the animal's arrival, or earlier."
+ * 당일 도착 노선이라 출발일 앵커 = 도착일 근사.) 도착 이후 예약(간격 음수)도 같은 위반.
+ *
+ * client(예약일 입력 시 저장 거부)·procedure-check(출국일을 나중에 수정해 어긋난 경우
+ * '주의') 공용 단일 출처. 출국일이 없으면 비교 불가라 통과.
+ */
+export function validateSgBorderInspectionDate(
+  bookedDate: string,
+  departureDate: string,
+): string | null {
+  if (!bookedDate || !departureDate) return null
+  const gap = daysBetween(bookedDate.slice(0, 10), departureDate.slice(0, 10))
+  if (gap < 5) {
+    return '국경 검사는 도착 최소 5일 전에 예약해야 해요. 날짜를 확인하세요.'
+  }
+  return null
+}
+
+/**
  * 싱가포르 — 출국일은 계류장(AQC) 예약일과 같은 날 또는 하루 전날이어야 함.
  *
  * 계류 시작(예약일) = 싱가포르 도착일이고 한국→싱가포르는 당일(또는 자정 넘김 +1일) 도착

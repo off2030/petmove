@@ -2,6 +2,7 @@ import {
   buildDateRuleContext,
   validateAeImportPermitWithin90Days,
   validateImportPermitNotAfterDeparture,
+  validateSgBorderInspectionDate,
   validateSgDepartureVsQuarantineReservation,
   validateSgGstPermitDate,
   validateSgQuarantineReservationDate,
@@ -620,6 +621,38 @@ export const SG_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `발급일(${issued}) 출국일(${dep}) 기준 도착 전 14일 이내.` }
+    },
+  },
+
+  // ── 국경 검사(CAPQ) 예약 — 도착 최소 5일 전 (2026-07-25 신설) ──
+  // 입력 차단(validateSgBorderInspectionDate)과 같은 함수 — 출국일 수정으로 어긋난 경우 주의.
+  {
+    id: 'sg.border-inspection-5days-before',
+    country: 'singapore',
+    category: '검역',
+    title: '국경 검사는 도착 최소 5일 전 예약',
+    description:
+      'CAPQ 도착 검사 예약은 도착 최소 5일 전. (NParks "Book an inspection ... five days before the animal\'s arrival, or earlier." 예약 없이 도착하면 시간당 S$133.)',
+    severity: 'warning',
+    addedAt: '2026-07-25',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const booked =
+        typeof data.sg_border_inspection_date === 'string'
+          ? data.sg_border_inspection_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(booked)) return SKIP
+      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
+      if (!dep) return SKIP
+      const msg = validateSgBorderInspectionDate(booked, dep)
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['sg_border_inspection_date', 'departure_date'],
+        }
+      }
+      return { ok: true, message: `예약일(${booked}) 도착(${dep}) 5일 이상 전.` }
     },
   },
 

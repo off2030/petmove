@@ -25,6 +25,7 @@ import {
   validateCyAdvanceNoticeDate,
   validateImportPermitFiledDate,
   validateSgQuarantineReservationDate,
+  validateSgBorderInspectionDate,
   validateSgDepartureVsQuarantineReservation,
   validateSgGstPermitDate,
   validateSgQuarantineReservationFiled,
@@ -1349,6 +1350,14 @@ export function StepDetailView({
       // GST 납부 허가 — 도착 전 + 도착 14일 이내 창. 도메인 단일 출처(validateSgGstPermitDate)
       // — sg.ts 주의 룰과 같은 함수(2026-07-25). dated 카드라 폼 날짜는 importQuarantineDate.
       return validateSgGstPermitDate(
+        importQuarantineDate.trim(),
+        (caseRow?.departure_date ?? '').slice(0, 10),
+      )
+    }
+    if (step.id === 'sg-border-inspection') {
+      // 국경 검사(CAPQ) 예약 — 도착 최소 5일 전. 도메인 단일 출처
+      // (validateSgBorderInspectionDate) — sg.ts 주의 룰과 같은 함수(2026-07-25).
+      return validateSgBorderInspectionDate(
         importQuarantineDate.trim(),
         (caseRow?.departure_date ?? '').slice(0, 10),
       )

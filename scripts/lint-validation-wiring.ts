@@ -140,8 +140,7 @@ const UNVALIDATED_OK: Record<string, string> = {
   //   완료 추적용(강아지 라이센스·관부가세·국경검사 예약). 계류장 예약은 sg.quarantine-
   //   reservation-after-titer(채혈 이후) 룰이 있어 제외.
   'sg-dog-licence': '절차 완료일 추적용 — 날짜 순서 제약 없음',
-  // sg-gst-permit 은 2026-07-25 검증 추가(sg.gst-permit-within-14days)로 예외 목록에서 제거.
-  'sg-border-inspection': '절차 완료일 추적용 — 날짜 순서 제약 없음',
+  // sg-gst-permit·sg-border-inspection 은 2026-07-25 검증 추가로 예외 목록에서 제거.
 }
 
 /**
