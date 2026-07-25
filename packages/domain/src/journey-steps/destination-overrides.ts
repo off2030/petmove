@@ -167,14 +167,19 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['hi.favn-sample-30days-to-36months-before-arrival'],
     },
     // 항공권 — 하와이는 최근 광견병 접종이 출국 31일 이전이어야 하고 도착일에 면역 유효해야 한다.
-    //   ⚠️ FAVN 채혈 후 대기(5-Day-Or-Less 의 120일 규칙 등)는 하와이 규정 확정 후 earliest 로
-    //     반영 예정(사용자 조정). 지금은 잠금 없이(earliest 제거) hi.ts 주의로만 다룬다.
+    //   또 FAVN 검체가 검사기관에 도착한 날로부터 30일이 지나야 입국 가능(일본 항체 180일 대기와
+    //   같은 자리 = 항공권 카드에서 안내·검증). earliest 잠금은 anchor 가 titer 검체 수령일이라
+    //   현재 anchor 체계로 못 걸어, 문구 안내 + hi.favn 주의로 다룬다(2026-07-25 사용자 지정).
     'flight-purchase': {
       description:
-        '하와이 입국 일정에 맞춰 항공권을 구매하세요.\n\n최근 광견병 접종일로부터 31일이 지난 후에 입국할 수 있어요.\n호놀룰루(HNL) 공항 동물검역소 운영시간에 맞는 도착 시간인지 확인하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+        '하와이 입국 일정에 맞춰 항공권을 구매하세요.\n\n최근 광견병 접종일로부터 31일이 지난 후에 입국할 수 있어요.\n광견병 항체 검사 검체가 검사기관에 도착한 날로부터 30일이 지난 후에 입국할 수 있어요.\n호놀룰루(HNL) 공항 동물검역소 운영시간에 맞는 도착 시간인지 확인하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       cardLine: '하와이에 입국할 수 있어요.',
       earliest: undefined,
-      validationIds: ['hi.rabies-latest-31days-before-arrival', 'hi.rabies-not-expired-on-arrival'],
+      validationIds: [
+        'hi.rabies-latest-31days-before-arrival',
+        'hi.rabies-not-expired-on-arrival',
+        'hi.favn-sample-30days-to-36months-before-arrival',
+      ],
     },
     // 도착 — 하와이 공항 동물검역소(5-Day-Or-Less / Direct Airport Release). 요건 충족 시
     //   공항에서 바로 인계(DAR), 미충족 시 최대 120일 검역.
