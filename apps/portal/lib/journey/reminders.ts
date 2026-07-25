@@ -662,6 +662,9 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
     // ⛔ **인도네시아도 신청 마감 알림 없음**(2026-07-23). '출국 7영업일 전'은 태국 복제
     //   미확인값이었다(구 주석 "규정 확정 후 수정 예정"). 미확인 마감을 알리는 건 없느니만
     //   못해 제거했다 — 말레이시아와 같은 처리. 규정을 확정하면 그때 근거와 함께 되살릴 것.
+    // ⛔ **싱가포르도 신청 마감 알림 없음**(사용자 지정, destination-config 싱가포르 주석 참조).
+    //   GoBusiness 수입 허가는 '도착 90일 이내 신청·발급 90일 유효'로 확정 마감일이 없다 —
+    //   아랍에미리트·말레이시아와 같은 판단. 계류장(QMS) 예약도 고정 마감이 없어 미등록.
     } else if (key === 'philippines') {
       // 필리핀 수입 허가증 — 정해진 기한 없어 출국 1주 전 안내.
       if (departure && deriveImportPermitStatus(flat) === 'not_started') {
