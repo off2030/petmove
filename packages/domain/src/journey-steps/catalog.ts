@@ -1444,7 +1444,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '강아지 라이센스',
     shortLabel: '라이센스',
     description:
-      '싱가포르 반려동물 라이센스 시스템(PALS)에서 강아지 라이센스를 발급받으세요.\n\n수입 허가 신청 전에 먼저 받아야 해요.\n외국인은 PALS·GoBusiness 이용이 어려워 현지 에이전트를 이용하는 경우가 많아요.',
+      '싱가포르 반려동물 라이센스 시스템(PALS)에서 강아지 라이센스를 발급받으세요.\n\n수입 허가 신청 전에 먼저 받아야 해요.\n외국인은 PALS 이용이 어려워 현지 에이전트를 이용하는 경우가 많아요.',
     doneSummary: '강아지 라이센스를 받았어요.',
     cardLine: '강아지 라이센스를 받으세요.',
     // species: 'dog' — 강아지 전용(고양이는 라이센스 불요). order 92 = 항공권(90) 바로 뒤(사용자
