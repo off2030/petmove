@@ -771,7 +771,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 진드기(external_parasite) 처치 = 출국 14일 이내 필수(hi.ts). 내부구충은 기존 유지.
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
     // FAVN 항체 = 하와이 **입국 요건**. 검체 lab 수령일 기준 출국 30일~36개월(hi.ts) → 유효 36개월.
-    titer: { need: 'entry', entryValidityMonths: 36 },
+    //   entryWaitAfterTiter.days:30 = 채혈 후 30일 대기 → 입국일 저장 거부(validateEuEntryDate
+    //   제네릭이 TITER_ENTRY_WAIT_DAYS 로 자동 파생 + client·server 양쪽 커버). 싱가포르 90일과
+    //   같은 자리 — 전용 함수 손수 배선 대신 프로파일 한 줄로 선언한다(2026-07-25).
+    titer: { need: 'entry', entryValidityMonths: 36, entryWaitAfterTiter: { days: 30 } },
     appSupported: true,
     extraSection: 'hawaii',
     extraFields: [

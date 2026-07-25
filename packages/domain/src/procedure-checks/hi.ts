@@ -356,4 +356,46 @@ export const HI_CHECKS: ProcedureCheck[] = [
     },
   },
 
+  // ── 수입신고(AQS 서류 사전 제출) ──
+  {
+    id: 'hi.import-declaration-10days-before-arrival',
+    country: COUNTRY,
+    category: '수입신고',
+    title: '수입신고 서류는 도착 10일 이상 전 제출',
+    description:
+      '수입신고 서류(AQS-279·접종증명서·수수료)가 하와이 도착 10일 이상 전에 동물검역소에 접수돼야 공항 인계(DAR) 자격이 돼요. 늦으면 수수료가 오르거나 자격을 잃을 수 있어요. (HDOA Checklist 1 Step 1·7)',
+    severity: 'warning',
+    addedAt: '2026-07-25',
+    // 신고일→도착 경과 일수가 정보 자체라 날짜 표기 허용.
+    allowDate: true,
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.hi_import_declaration_date === 'string'
+          ? data.hi_import_declaration_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      // departure_date = 하와이 도착일 proxy (hi.ts 컨벤션).
+      const dep = readDepartureDate(caseRow, destination)
+      if (!dep) return SKIP
+      const days = daysBetween(raw, dep)
+      if (days === null) return SKIP
+      if (days < 0) {
+        return {
+          ok: false,
+          message: `신고일(${raw})이 도착일(${dep})보다 늦어요. 도착 전에 제출해야 해요.`,
+          offendingPaths: ['hi_import_declaration_date'],
+        }
+      }
+      if (days < 10) {
+        return {
+          ok: false,
+          message: `신고일(${raw})이 도착(${dep}) ${days}일 전이에요. 도착 10일 이상 전에 접수돼야 공항 인계(DAR) 자격이 돼요.`,
+          offendingPaths: ['hi_import_declaration_date'],
+        }
+      }
+      return { ok: true, message: `신고일(${raw}) → 도착(${dep}): ${days}일.` }
+    },
+  },
+
 ]

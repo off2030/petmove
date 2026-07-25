@@ -680,6 +680,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '수입신고 접수 확인·서류 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '하와이 수입신고 서류',
     links: [{ url: 'https://hipop.ais.hawaii.gov/', label: '하와이 반려동물 포털(HIPOP)' }],
+    validationIds: ['hi.import-declaration-10days-before-arrival'],
   },
 
   // ── 사전 통지 (아일랜드 전용) ──────────────────────────────────────────
