@@ -98,7 +98,7 @@
   [docs  cat/one_way] eu-rabies-titer-result, form25, eu-health-cert, eu-kr-export-quarantine-cert
 
 === finland  (token: 핀란드) ===
-  [consts] singleDose=true oneYearVaccine=false titerEntryMonths=null vetWindowDog=4 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
+  [consts] singleDose=true oneYearVaccine=false titerEntryMonths=null vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
   [checks:13] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid, eu.entry-min-3months-after-titer, eu.export-cert-date-valid, eu.import-quarantine-date-valid, eu.microchip-before-rabies, eu.rabies-booster-within-prime-validity, eu.rabies-prime-after-12weeks, eu.rabies-valid-until-on-entry, eu.tapeworm-1to3days-before-entry, eu.titer-min-30days-after-vaccine
   [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  105:echinococcus-treatment:has-internal-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:eu_import_quarantine_date  155:eu-export-cert:quarantine:eu_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
   [docs  dog/round] eu-rabies-titer-result, form25, eu-health-cert, eu-kr-export-quarantine-cert, eu-kr-import-quarantine-cert
@@ -170,7 +170,7 @@
   [docs  cat/one_way] id-rabies-titer-result, id-import-permit-doc, form25, id-kr-export-quarantine-cert, id-import-quarantine-cert
 
 === ireland  (token: 아일랜드) ===
-  [consts] singleDose=true oneYearVaccine=false titerEntryMonths=null vetWindowDog=4 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
+  [consts] singleDose=true oneYearVaccine=false titerEntryMonths=null vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
   [checks:14] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid, eu.entry-min-3months-after-titer, eu.export-cert-date-valid, eu.ie-advance-notice-24h-before-entry, eu.import-quarantine-date-valid, eu.microchip-before-rabies, eu.rabies-booster-within-prime-validity, eu.rabies-prime-after-12weeks, eu.rabies-valid-until-on-entry, eu.tapeworm-1to3days-before-entry, eu.titer-min-30days-after-vaccine
   [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  47:ie-advance-notice:quarantine:ie_advance_notice_date  105:echinococcus-treatment:has-internal-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:eu_import_quarantine_date  155:eu-export-cert:quarantine:eu_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
   [docs  dog/round] eu-rabies-titer-result, form25, eu-health-cert, eu-kr-export-quarantine-cert, eu-kr-import-quarantine-cert
@@ -230,7 +230,7 @@
   [docs  cat/one_way] my-import-permit-doc, form25, my-kr-export-quarantine-cert, my-import-quarantine-cert
 
 === malta  (token: 몰타) ===
-  [consts] singleDose=true oneYearVaccine=false titerEntryMonths=null vetWindowDog=4 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
+  [consts] singleDose=true oneYearVaccine=false titerEntryMonths=null vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
   [checks:14] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid, eu.entry-min-3months-after-titer, eu.export-cert-date-valid, eu.import-quarantine-date-valid, eu.microchip-before-rabies, eu.mt-advance-notice-3days-before-entry, eu.rabies-booster-within-prime-validity, eu.rabies-prime-after-12weeks, eu.rabies-valid-until-on-entry, eu.tapeworm-1to3days-before-entry, eu.titer-min-30days-after-vaccine
   [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  47:mt-advance-notice:quarantine:mt_advance_notice_date  105:echinococcus-treatment:has-internal-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:eu_import_quarantine_date  155:eu-export-cert:quarantine:eu_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
   [docs  dog/round] eu-rabies-titer-result, form25, eu-health-cert, eu-kr-export-quarantine-cert, eu-kr-import-quarantine-cert
@@ -290,7 +290,7 @@
   [docs  cat/one_way] form25, kr-export-quarantine-cert
 
 === norway  (token: 노르웨이) ===
-  [consts] singleDose=true oneYearVaccine=false titerEntryMonths=null vetWindowDog=4 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
+  [consts] singleDose=true oneYearVaccine=false titerEntryMonths=null vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
   [checks:14] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid, eu.entry-min-3months-after-titer, eu.export-cert-date-valid, eu.import-quarantine-date-valid, eu.microchip-before-rabies, eu.no-advance-notice-48h-before-entry, eu.rabies-booster-within-prime-validity, eu.rabies-prime-after-12weeks, eu.rabies-valid-until-on-entry, eu.tapeworm-1to3days-before-entry, eu.titer-min-30days-after-vaccine
   [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  47:no-advance-notice:quarantine:no_advance_notice_date  105:echinococcus-treatment:has-internal-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:eu_import_quarantine_date  155:eu-export-cert:quarantine:eu_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
   [docs  dog/round] eu-rabies-titer-result, form25, eu-health-cert, eu-kr-export-quarantine-cert, eu-kr-import-quarantine-cert
@@ -410,7 +410,7 @@
   [docs  cat/one_way] ae-import-permit-doc, form25, ae-entry-health-cert, kr-export-quarantine-cert, ae-import-quarantine-cert
 
 === uk  (token: 영국) ===
-  [consts] singleDose=true oneYearVaccine=false titerEntryMonths=null vetWindowDog=4 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
+  [consts] singleDose=true oneYearVaccine=false titerEntryMonths=null vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
   [checks:13] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.vet-visit-date-valid, eu.entry-min-3months-after-titer, eu.export-cert-date-valid, eu.import-quarantine-date-valid, eu.microchip-before-rabies, eu.rabies-booster-within-prime-validity, eu.rabies-prime-after-12weeks, eu.rabies-valid-until-on-entry, eu.tapeworm-1to3days-before-entry, eu.titer-min-30days-after-vaccine
   [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  105:echinococcus-treatment:has-internal-parasite  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:eu_import_quarantine_date  155:eu-export-cert:quarantine:eu_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
   [docs  dog/round] eu-rabies-titer-result, form25, eu-health-cert, eu-kr-export-quarantine-cert, eu-export-cert-doc, eu-kr-import-quarantine-cert

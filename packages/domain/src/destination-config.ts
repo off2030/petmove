@@ -256,10 +256,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     // 촌충약(Echinococcus, praziquantel)은 규정상 개 전용 — 고양이는 면제(EU Reg 2018/772).
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
-    // EU 촌충국 강아지 — 촌충 구충이 출국 1~3일 전(admin 보수: eu.tapeworm-1to3days, 법정
-    // 24~120h)에만 유효하고, 구충을 겸하는 내원도 그 안에 들어와야 하므로 window=4
-    // (=출국일 -3일). 고양이는 촌충 면제 → 기본 10일. (몰타·노르웨이·핀란드·영국 동일)
-    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
+    // 임상검사 창 = 기본 10일. 예전엔 촌충 동시 내원 가정으로 개 window=4 였으나, 촌충
+    // 타이밍(법정 24~120h)은 촌충 카드의 저장 차단이 담당하므로 임상검사까지 좁힐 근거가
+    // 없다 — 2026-07-25 사용자 확정, 몰타·노르웨이·핀란드·영국의 같은 선언도 함께 제거.
   },
   malta: {
     keywords: ['몰타', 'malta'],
@@ -271,7 +270,6 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     advanceNotice: {},
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
-    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
   },
   norway: {
     keywords: ['노르웨이', 'norway'],
@@ -283,7 +281,6 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     advanceNotice: { hardDeadlineHours: 48 },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
-    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
   },
   finland: {
     keywords: ['핀란드', 'finland'],
@@ -293,7 +290,6 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     appSupported: true,
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
-    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
   },
   // 키프로스 — 촌충 요건은 없지만(RABIES_FREE_EU_MEMBERS 아님, TAPEWORM 도 아님) 48시간
   // 사전 통지(moa.gov.cy 공식) 카드가 별도라 eu 묶음에서 분리. eu 보다 먼저 매칭.
@@ -348,7 +344,6 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     extraSection: 'uk',
     // 촌충약(Echinococcus)은 규정상 개 전용 — 고양이는 구충시간 미표시.
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
-    vetVisitWindowDays: [{ window: 4, species: 'dog' }],
   },
   australia: {
     keywords: ['호주', 'australia'],
@@ -640,10 +635,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   //     두 나라 다 EAEU 회원이지만 러시아는 자국 안내로 30일을 별도 공표한다 — 세부 수정 1순위.
   //   구세대 조사값은 procedure-checks/ru.ts 헤더(교체 전 git 이력)에 있다: 광견병 12주·
   //   출국 30일~12개월, 다년 백신도 최종 접종 12개월 이내, 개인 1인 2마리 한도, RNATT 입국 면제.
-  //   ✅ `vetVisitWindowDays: 14` — 2026-07-22 조사 확정. Rosselkhoznadzor 안내문 원문:
-  //   "отметка … о проведении клинического осмотра животного **в течение 14 дней** перед
-  //   отправкой". 5일설은 EAEU 317호 **구버전/역내이동** 조항이고 제3국(한국)발엔 적용되지
-  //   않는다. 10일설은 어느 1차 출처에서도 확인되지 않았다(펫무브 가이드의 10일 = 갱신 필요).
+  //   러시아 규정 창은 14일(2026-07-22 조사 — Rosselkhoznadzor "в течение 14 дней" 원문.
+  //   5일설=EAEU 구버전/역내이동, 러시아 10일설=1차 출처 없음). 그러나 **한국 검역소(APQA)
+  //   별지25 증명 규정이 10일**이라 실무 바인딩은 10일 — getVetVisitWindowDays 가 min(기본
+  //   10, 선언) 이라 14 선언은 무효였고, 혼란 방지를 위해 선언 자체를 제거했다(2026-07-25
+  //   사용자 확정: "러시아는 14일이지만 한국 검역소 규정이 10일이라 10일이 맞다").
   russia: {
     keywords: ['러시아', 'russia'],
     rabies: {
@@ -659,7 +655,6 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer', 'general'],
     importQuarantine: {},
     rabiesTiterForReturnOnly: true,
-    vetVisitWindowDays: 14,
   },
   uae: {
     // 표준 표기는 **아랍에미리트**(외교부 국가명·외래어 표기법). 화면에 나가는 문구는 전부

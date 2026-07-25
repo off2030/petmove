@@ -975,6 +975,18 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     }),
   },
   turkey: {
+    // 임상검사·한국 수출 검역 — 튀르키예 창은 2일(프로파일 vetVisitWindowDays: 2, TK 증명서).
+    // base 문구(10일)가 차단(2일)과 어긋나던 것 정정(2026-07-25 — 싱가포르와 같은 부류).
+    'vet-visit': {
+      description:
+        '출국일 기준 2일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+      deadline: { anchor: 'departure', daysBefore: 1, window: true },
+    },
+    'certificate-issue': {
+      description:
+        '출국일 기준 2일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
+      deadline: { anchor: 'departure', daysBefore: 1, window: true },
+    },
     'rabies-vaccine-1': buildRabiesCard({
       destKey: 'turkey',
       label: '튀르키예',
@@ -1308,6 +1320,20 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentLabel: '말레이시아 수입 검역 서류',
       validationIds: ['my.import-quarantine-date-valid'],
     },
+    extra: {
+      // 임상검사·한국 수출 검역 — 말레이시아 창은 7일(프로파일 vetVisitWindowDays: 7).
+      // base 문구(10일)가 차단(7일)과 어긋나던 것 정정(2026-07-25 — 싱가포르와 같은 부류).
+      'vet-visit': {
+        description:
+          '출국일 기준 7일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+        deadline: { anchor: 'departure', daysBefore: 6, window: true },
+      },
+      'certificate-issue': {
+        description:
+          '출국일 기준 7일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
+        deadline: { anchor: 'departure', daysBefore: 6, window: true },
+      },
+    },
   }),
 
   // ── 싱가포르 (NParks/AVS — Schedule III) ─────────────────────────────
@@ -1421,6 +1447,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       'vet-visit': {
         description:
           '출국일 기준 7일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 싱가포르 건강증명서(Schedule III)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+        deadline: { anchor: 'departure', daysBefore: 6, window: true },
+      },
+      // 한국 수출 검역도 같은 7일 창(차단 validateKrExportDate 가 getVetVisitWindowDays 공유)
+      // — base 문구(10일)와 어긋나던 것 정정(2026-07-25, 임상검사와 동일 사유).
+      'certificate-issue': {
+        description:
+          '출국일 기준 7일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
         deadline: { anchor: 'departure', daysBefore: 6, window: true },
       },
     },
