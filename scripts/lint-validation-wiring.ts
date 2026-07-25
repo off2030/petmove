@@ -54,6 +54,7 @@ type Problem = {
     | 'missing-pair'
     | 'own-calc'
     | 'no-blocker'
+    | 'no-titer-wait-decision'
     | 'dead-declaration'
     | 'notify-unregistered'
 }
@@ -347,13 +348,28 @@ function ownCalcRules(appDests: string[]): Problem[] {
  */
 const OWN_ENTRY_BLOCKER_DESTS = new Set(['japan', 'taiwan'])
 
+/**
+ * 입국 티터 요건인데 **규정상 채혈 후 대기가 없는** 목적지 — 사유와 함께 명시 등록.
+ *
+ * 왜 필요한가: 6단계 두 번째 검사(아래)는 "입국 티터면 대기 차단이든 '대기 없음' 선언이든
+ * 둘 중 하나는 반드시 있어야"를 강제한다. 하와이가 이 구멍으로 샜다 — 대기 주의가
+ * `hi.favn-sample-...` 이름이라 `*-after-titer` 패턴에 안 걸렸고, 프로파일 entryWaitAfterTiter 도
+ * 선언 안 해 blocked 에도 없어서 **조용히 통과**했다(2026-07-25). 이름 규칙에 의존하지 않고
+ * 티터 요건 자체를 기준으로 삼아, 대기가 없는 나라는 여기에 근거를 남기게 한다(silent default 금지).
+ */
+const TITER_NO_ENTRY_WAIT_KNOWN: Record<string, string> = {
+  indonesia: '1차 출처에 채혈 후 대기 일수 규정 없음(id.ts 헤더)',
+  morocco: '채혈 후 대기 없음 — 접종 후 21일만(ma.ts rnatt 룰)',
+  // china·israel 은 blocked(EU_ENTRY_FAMILY)/전용 처리로 이미 6단계 대상 밖이라 여기 불필요.
+}
+
 function titerWaitWithoutBlocker(appDests: string[]): Problem[] {
   const out: Problem[] = []
   const blocked = new Set<string>([
     ...EU_ENTRY_FAMILY,
     ...destinationKeysWhere((o) => typeof o.titer?.entryWaitAfterTiter?.months === 'number'),
-    // 일수 기반(싱가포르 90일) — validateEuEntryDate 의 TITER_ENTRY_WAIT_DAYS 로 하드 차단됨.
-    //   대만(days:180)은 OWN_ENTRY_BLOCKER_DESTS(전용 함수)로 별도 커버.
+    // 일수 기반(싱가포르 90일·하와이 30일) — validateEuEntryDate 의 TITER_ENTRY_WAIT_DAYS 로 하드
+    //   차단됨. 대만(days:180)은 OWN_ENTRY_BLOCKER_DESTS(전용 함수)로 별도 커버.
     ...destinationKeysWhere((o) => typeof o.titer?.entryWaitAfterTiter?.days === 'number'),
     ...OWN_ENTRY_BLOCKER_DESTS,
   ])
@@ -370,6 +386,20 @@ function titerWaitWithoutBlocker(appDests: string[]): Problem[] {
       stepId: '(채혈 후 대기)',
       ruleId: rule.id,
       kind: 'no-blocker',
+    })
+  }
+  // 두 번째 검사 — 이름 규칙(*-after-titer)에 의존하지 않고 **티터 요건 자체**를 기준으로.
+  //   입국 티터(titer.need==='entry')인데 대기 차단(blocked)도 없고 '대기 없음' 명시
+  //   (TITER_NO_ENTRY_WAIT_KNOWN)도 없으면 실패 — 하와이형 누락을 원천 차단한다.
+  for (const dest of appDests) {
+    if (DESTINATION_OVERRIDES[dest]?.titer?.need !== 'entry') continue
+    if (blocked.has(dest)) continue
+    if (dest in TITER_NO_ENTRY_WAIT_KNOWN) continue
+    out.push({
+      dest,
+      stepId: '(입국 티터 — 채혈 후 대기 결정)',
+      ruleId: '—',
+      kind: 'no-titer-wait-decision',
     })
   }
   return out
@@ -468,6 +498,8 @@ function describe(p: Problem): string {
   if (p.kind === 'missing') return '존재하지 않는 룰'
   if (p.kind === 'no-blocker')
     return '주의 룰은 있는데 **저장 거부가 이 목적지를 보지 않는다** — 규정 위반 날짜가 그냥 저장된다(우크라이나 2026-07-22 사고와 동일)'
+  if (p.kind === 'no-titer-wait-decision')
+    return "입국 티터 요건인데 **채혈 후 대기 차단도, '대기 없음' 명시도 없다** — 30일 안쪽 입국일이 그냥 저장된다(하와이 2026-07-25 사고). 대기가 있으면 프로파일 titer.entryWaitAfterTiter 를 선언하고, 없으면 TITER_NO_ENTRY_WAIT_KNOWN 에 근거와 함께 등록할 것"
   if (p.kind === 'notify-unregistered')
     return '수입 허가 마감 알림·발급 푸시가 걸려 있는데 IMPORT_PERMIT_NOTIFY_OK 에 등록되지 않았다 — 이 나라에 실제 신청 마감이 있는지 확인하고 사유와 함께 등록하거나, 마감이 없으면 알림/푸시를 제거할 것(말레이시아 사고)'
   if (p.kind === 'dead-declaration')
