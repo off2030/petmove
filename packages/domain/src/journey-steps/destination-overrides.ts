@@ -199,10 +199,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     }),
     // 진드기 처치 — 출국 14일 이내(long-acting tick product). base 는 일반 문구라 하와이 룰 지목.
     'external-parasite': {
-      // base 문구('출국 직전…호주·뉴질랜드')는 하와이 규정과 안 맞아 덮는다 — HDOA는 도착 14일
-      // 이내 장시간 작용 진드기 제품(Revolution 불가) + 건강증명서 기재를 요구(Checklist 1 Step 6 #4).
-      description:
-        '하와이 도착 14일 이내에 진드기 치료를 하세요.\n\n진드기를 죽이는 장시간 작용 제품을 사용해요(레볼루션은 인정되지 않아요).\n제품명과 처치일을 건강증명서에 반드시 기재해야 해요.',
+      // 멕시코·브라질·UAE 카드와 같은 문형(사용자 지정 2026-07-23) — 카드엔 특정 기생충(진드기)·
+      // 제품 상세를 지목하지 않고 '외부 기생충 치료 + N일 이내'만. 상세(장시간 작용 진드기 제품·
+      // Revolution 불가·건강증명서 기재)는 hi.tick-treatment-within-14days 룰 설명(staff)에 보존.
+      // HDOA는 '도착 14일 이내'라 도착일 기준(멕시코와 같은 arrival 기준 문형).
+      description: '외부 기생충 치료를 하세요.\n\n하와이 도착일 기준 14일 이내에 해야 해요.',
       validationIds: ['hi.tick-treatment-within-14days'],
     },
   },
