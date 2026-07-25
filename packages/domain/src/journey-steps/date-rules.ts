@@ -1252,17 +1252,76 @@ export function validateImportPermitFiledDate(
     // 싱가포르 — 출국일 이후 신청 불가 + 허가 90일 유효(도착일 기준 90일 이내 신청 — 더
     // 이르면 도착 전 만료. 당일 도착 노선이라 출발일 앵커 = 도착일 근사). UAE 와 동일
     // 구조(90일 유효)라 같은 함수 재사용 — 문구도 목적지 중립.
-    case 'singapore':
+    case 'singapore': {
+      // 강아지 라이선스 → 수입 허가 선행 순서 — sg.dog-licence-before-import-permit 주의와
+      // 같은 함수(단일 출처). 라이선스 쪽을 나중에 고쳐 어긋난 경우는 그 주의가 잡는다.
+      const sgLicence =
+        typeof data.sg_dog_licence_application_date === 'string'
+          ? data.sg_dog_licence_application_date.slice(0, 10)
+          : ''
+      const sgSpecies = typeof data.species === 'string' ? data.species : ''
       return (
         validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
-        validateAeImportPermitWithin90Days(filedDate, departureDate)
+        validateAeImportPermitWithin90Days(filedDate, departureDate) ??
+        validateSgImportPermitAfterDogLicence(filedDate, sgLicence, sgSpecies)
       )
+    }
     // 스위스 — 입국 3주(21일) 이내 신청 불가.
     case 'switzerland':
       return validateChImportPermitDate(filedDate, entryDate)
     default:
       return null
   }
+}
+
+/**
+ * 싱가포르 — 수입 허가(Licence to Import)는 강아지 라이선스(PALS)를 먼저 받아야 신청할 수
+ * 있다(AVS/GoBusiness). 수입 허가 신청일이 라이선스 신청일보다 앞서면 순서 위반이라 저장을
+ * 거부한다. client(수입 허가 신청일 입력 불가 — validateImportPermitFiledDate 싱가포르 분기)·
+ * procedure-check(sg.dog-licence-before-import-permit — 라이선스 날짜를 나중에 고쳐 어긋난
+ * 경우 주의) 공용 단일 출처.
+ * 고양이는 라이선스 불요라 통과. 라이선스 날짜 미입력은 미보유로 단정하지 않고 통과
+ * (둘 다 입력된 경우에만 순서 비교 — 추측 단정 금지).
+ */
+export function validateSgImportPermitAfterDogLicence(
+  filedDate: string,
+  licenceAppliedDate: string,
+  species?: string | null,
+): string | null {
+  if (!filedDate || !licenceAppliedDate) return null
+  if (species && species !== 'dog') return null
+  if (filedDate.slice(0, 10) < licenceAppliedDate.slice(0, 10)) {
+    return '수입 허가 신청일이 강아지 라이선스 신청일보다 앞서 있어요. 강아지 라이선스를 먼저 받아야 수입 허가를 신청할 수 있어요 — 두 날짜를 확인해 주세요.'
+  }
+  return null
+}
+
+/**
+ * 필리핀 — 현지 동물병원 방문일(귀국 준비 건강증명서 발급)은 **필리핀 체류 구간 안**이어야
+ * 한다: 필리핀 수입 검역일 이후 · BAI 수출 검역일 이전(카드 순서 140→150→155 — 이 증명서가
+ * 있어야 수출 검역을 받는다). 물리적으로 불가능한 조합이라 저장을 거부한다.
+ * client(방문일 입력 불가)·procedure-check(ph.local-vet-visit-date-valid — 검역일 쪽을 나중에
+ * 고쳐 어긋난 경우 주의) 공용 단일 출처. 양끝 값이 없으면 그 비교는 건너뛴다(아직 입력 전).
+ */
+export function validatePhLocalVetVisitDate(
+  visitDate: string,
+  data: Record<string, unknown>,
+): string | null {
+  if (!visitDate) return null
+  const visit = visitDate.slice(0, 10)
+  const read = (k: string) =>
+    typeof data[k] === 'string' && (data[k] as string).length >= 10
+      ? (data[k] as string).slice(0, 10)
+      : ''
+  const imp = read('ph_import_quarantine_date')
+  const exp = read('ph_export_quarantine_date')
+  if (imp && visit < imp) {
+    return '현지 동물병원 방문일은 필리핀 수입 검역일보다 빠를 수 없어요. 날짜를 확인하세요.'
+  }
+  if (exp && visit > exp) {
+    return '현지 동물병원 방문일은 필리핀 수출 검역일보다 늦을 수 없어요. 날짜를 확인하세요.'
+  }
+  return null
 }
 
 /**

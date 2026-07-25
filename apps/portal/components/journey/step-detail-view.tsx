@@ -30,6 +30,7 @@ import {
   validateSgQuarantineReservationDate,
   validateSgBorderInspectionDate,
   validateSgDepartureVsQuarantineReservation,
+  validatePhLocalVetVisitDate,
   validateSgGstPermitDate,
   validateParasiteDateForDestination,
   validateSgQuarantineReservationFiled,
@@ -1469,6 +1470,14 @@ export function StepDetailView({
       return validateSgBorderInspectionDate(
         importQuarantineDate.trim(),
         (caseRow?.departure_date ?? '').slice(0, 10),
+      )
+    }
+    if (step.id === 'ph-local-vet-visit') {
+      // 현지 병원 방문일 — 필리핀 수입 검역 이후·수출 검역 이전(체류 구간 내). 도메인 단일
+      // 출처(validatePhLocalVetVisitDate) — ph.ts 주의 룰과 같은 함수(2026-07-25 격상).
+      return validatePhLocalVetVisitDate(
+        importQuarantineDate.trim(),
+        (caseRow?.data ?? {}) as Record<string, unknown>,
       )
     }
     if (isSgQuarantineReservation) {
