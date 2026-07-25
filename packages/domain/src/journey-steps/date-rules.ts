@@ -1325,11 +1325,12 @@ export function validatePhLocalVetVisitDate(
 }
 
 /**
- * 하와이 입국 신청(AQS 서류 사전 제출)일 — **도착일보다 늦을 수 없다**(도착 전에 접수돼야
- * 하는 절차라 논리적으로 불가능 → 저장 거부). client(신청일 입력 불가)·procedure-check
- * (hi.import-declaration-10days-before-arrival — 도착일을 나중에 고쳐 어긋난 경우 주의) 공용.
- * ⚠️ '도착 10일 전' 마감 미달은 여기서 막지 않는다 — 늦은 신청도 실제로 가능하고(수수료
- * 인상·공항 인계(DAR) 자격 상실) 이미 신청한 사실은 기록할 수 있어야 한다(주의 담당).
+ * 하와이 입국 신청(AQS 서류 사전 제출)일 — **도착 10일 전까지**만 저장 허용.
+ *  - 도착일보다 늦은 신청일: 도착 전에 접수돼야 하는 절차라 논리적으로 불가능.
+ *  - 도착 10일 미만: 마감 미달도 저장 거부(2026-07-26 사용자 확정 — 일본 사전신고 40일
+ *    validateAdvanceNotification 과 동일 모델. 구 '주의만' 처리 폐기).
+ * client(신청일 입력 불가)·procedure-check(hi.import-declaration-10days-before-arrival —
+ * 도착일(항공권)을 나중에 고쳐 어긋난 경우 주의) 공용 단일 출처.
  * 하와이는 당일 도착 노선이라 출발일 = 도착일 proxy(hi.ts 컨벤션). 한쪽 비면 통과.
  */
 export function validateHiImportDeclarationDate(
@@ -1337,8 +1338,13 @@ export function validateHiImportDeclarationDate(
   departureDate: string,
 ): string | null {
   if (!filedDate || !departureDate) return null
-  if (filedDate.slice(0, 10) > departureDate.slice(0, 10)) {
+  const filed = filedDate.slice(0, 10)
+  const dep = departureDate.slice(0, 10)
+  if (filed > dep) {
     return '입국 신청일이 하와이 도착일보다 늦어요. 도착 전에 신청해야 해요.'
+  }
+  if (daysBetween(filed, dep) < 10) {
+    return '하와이 도착 10일 전까지 입국 신청을 해야 해요. 신청이 늦은 경우 도착일을 변경해야 해요.'
   }
   return null
 }

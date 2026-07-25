@@ -56,6 +56,7 @@ type Problem = {
     | 'no-blocker'
     | 'no-parasite-blocker'
     | 'no-titer-wait-decision'
+    | 'no-save-block-decision'
     | 'dead-declaration'
     | 'notify-unregistered'
 }
@@ -543,6 +544,8 @@ function describe(p: Problem): string {
     return '주의 룰은 있는데 **저장 거부가 이 목적지를 보지 않는다** — 규정 위반 날짜가 그냥 저장된다(우크라이나 2026-07-22 사고와 동일)'
   if (p.kind === 'no-parasite-blocker')
     return "기생충 처치 창 주의는 있는데 **저장 거부가 없다** — 창 밖 처치일이 그냥 저장된다(하와이·터키·멕시코·UAE·브라질 2026-07-25 사고). date-rules 의 PARASITE_DEPARTURE_WINDOWS 에 창을 선언하거나(출국일 앵커) dispatch·PARASITE_BLOCK_COVERED 에 특수 앵커 분기를 추가할 것"
+  if (p.kind === 'no-save-block-decision')
+    return "날짜 입력칸이 있는데 **저장 차단 결정이 등록되지 않았다** — DATE_SAVE_BLOCK_DECISIONS 에 '차단: <어느 함수가>' 또는 '주의만: <근거>' 로 등록할 것(하와이 입국 신청 2026-07-26 사고 재발 방지). 불가능한 날짜 조합이면 차단을 먼저 만들 것"
   if (p.kind === 'no-titer-wait-decision')
     return "입국 티터 요건인데 **채혈 후 대기 차단도, '대기 없음' 명시도 없다** — 30일 안쪽 입국일이 그냥 저장된다(하와이 2026-07-25 사고). 대기가 있으면 프로파일 titer.entryWaitAfterTiter 를 선언하고, 없으면 TITER_NO_ENTRY_WAIT_KNOWN 에 근거와 함께 등록할 것"
   if (p.kind === 'notify-unregistered')
@@ -614,6 +617,117 @@ function importPermitNotifyLeaks(appDests: string[]): Problem[] {
   return out
 }
 
+/**
+ * 9단계 — 날짜 입력칸이 있는 모든 카드는 **저장 차단 결정이 명시돼 있어야** 한다.
+ *
+ * 왜 필요한가(2026-07-26): 기존 단계들은 사고가 났던 특정 유형(광견병 대기 짝·티터 대기·
+ * 기생충 창·검증 0개 카드)만 지킨다. "주의 룰은 있는데 그 조건 중 논리 불가능/마감 부분이
+ * 저장 거부로 안 걸린" 일반 사례는 어디에도 안 걸렸다 — 하와이 입국 신청이 그랬다(도착일
+ * 이후 신청일도 그냥 저장). 차단이냐 주의만이냐는 규정 성격 판단이라 기계가 자동으로 정할
+ * 수 없으므로, **판단을 안 내리고 조용히 넘어가는 것**을 막는다: 날짜(단일·목록) 입력칸이
+ * 있는 카드는 아래 명단에 '차단: <어느 함수/경로가>' 또는 '주의만: <근거>' 중 하나로
+ * 등록돼야 통과한다. 새 카드를 만들면 lint 가 실패해 결정을 강제한다.
+ *
+ * ⚠️ '주의만:' 으로 등록해 통과시키기 전에 반드시 물을 것 — "이 날짜 조합은 현실에서
+ *   실제로 벌어질 수 있는 사실인가?" 불가능(순서 역전 등)이면 차단을 만들고 '차단:'으로.
+ */
+const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
+  // ── 기본 정보·의료 기록 (step-detail-view getSaveBlockError 분기) ──────────
+  microchip: '차단: 출생일 이전 시술일·15자리 형식 거부(isMicrochip 인라인)',
+  'rabies-vaccine-1':
+    '차단: validateRabiesPrimeAge(최소 연령)·validateMicrochipBeforeBooster(칩 선행)·findRabiesChainBreak(단일카드 목록)·1년 백신 한정',
+  'rabies-vaccine-2':
+    '차단: validateRabiesInterval(간격)·findRabiesChainBreak(유효기간 내)·validateMicrochipBeforeBooster',
+  'rabies-titer':
+    '차단: validateTiterDate·validateTiterAfterBooster(입국 요건국 순서)·validateEuTiterAfterVaccine(접종 후 대기)',
+  'general-vaccine':
+    '차단: 출생일 이전 거부·validateMicrochipBeforeBooster(칩 선행국)·findRabiesChainBreak(추가 접종 chain)',
+  'external-parasite': '차단: validateParasiteDateForDestination(출국일 앵커 창 dispatch)·출생일 이전 거부',
+  'internal-parasite':
+    '차단: validateParasiteDateForDestination + validatePhInternalParasiteWindow(필리핀 SPSIC 창)·출생일 이전 거부',
+  'echinococcus-treatment': '차단: validateEchinococcusWindow(입국 1~5일 창)',
+  // ── 일정·신청 ────────────────────────────────────────────────────────────
+  'flight-purchase':
+    '차단: validateEntryDateForDestination(목적지별 대기·마감 dispatch)·왕복 순서·싱가포르 예약일 연동',
+  'advance-notification': '차단: validateAdvanceNotification(일본 입국 40일 전)',
+  'import-permit': '차단: validateImportPermitFiledDate(목적지별 dispatch — 출국 후·유효기간·백신 간격 등)',
+  'ie-advance-notice': '차단: validateIeAdvanceNoticeDate(입국 24시간 전)',
+  'no-advance-notice': '차단: validateNoAdvanceNoticeDate(입국 48시간 전)',
+  'cy-advance-notice': '차단: validateCyAdvanceNoticeDate(입국 48시간 전)',
+  'mt-advance-notice': '차단: validateMtAdvanceNoticeDate(입국 3영업일 전)',
+  'il-advance-notice': '차단: validateIlAdvanceNoticeDate(출국 2일 전)',
+  'hi-import-declaration': '차단: validateHiImportDeclarationDate(도착 이후·도착 10일 미만 모두)',
+  'ph-local-vet-visit': '차단: validatePhLocalVetVisitDate(필리핀 수입검역 ≤ 방문 ≤ 수출검역)',
+  'sg-quarantine-reservation':
+    '차단: validateSgQuarantineReservationFiled(채혈 이후)·validateSgQuarantineReservationDate(채혈+90일~12개월)·validateSgReservationVsDeparture',
+  'sg-dog-licence':
+    '주의만: 절차 완료일 추적용 — 날짜 자체 제약 없음. 라이선스↔수입허가 순서는 수입허가 쪽 차단(validateSgImportPermitAfterDogLicence)·주의(sg.dog-licence-before-import-permit)가 담당',
+  'sg-gst-permit': '차단: validateSgGstPermitDate(도착 전 + 도착 14일 이내)',
+  'sg-border-inspection': '차단: validateSgBorderInspectionDate(도착 최소 5일 전)',
+  'us-cdc-dog-import-form': '차단: validateUsCdcFormDate',
+  'us-export-health-cert': '차단: validateUsExportHealthCertDate',
+  // ── 검사·검역·증명서 (한국 측 공통) ──────────────────────────────────────
+  'vet-visit': '차단: validateVetVisitDate(출국 전 윈도우)',
+  'certificate-issue': '차단: validateKrExportDate',
+  'kr-import-quarantine': '차단: validateKrImportDate(귀국일 이후)',
+  // ── 도착 수입검역·현지 수출검역·귀국 서류 ────────────────────────────────
+  departure: '차단: validateImportQuarantineDate(입국일 이후) — 일본은 validateJpImportDate',
+  'jp-export-quarantine': '차단: validateJpExportReservationDate + 신청 10일 마감(인라인)',
+  'jp-export-quarantine-visit': '차단: validateJpExportVisitDate',
+  'eu-export-cert': '차단: validateExportQuarantineDate(_export_quarantine_date 공통 분기)',
+  'th-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'ph-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'id-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'tr-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'mx-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'kz-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'ru-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'ae-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'sg-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'br-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'cn-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'tw-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'my-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'ma-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'mn-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'uz-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'vn-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'ar-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'kh-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'ca-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+  'ua-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
+}
+
+function dateSaveBlockDecision(dest: string, stepId: string): string | undefined {
+  return DATE_SAVE_BLOCK_DECISIONS[`${dest}:${stepId}`] ?? DATE_SAVE_BLOCK_DECISIONS[stepId]
+}
+
+function saveBlockDecisions(appDests: string[]): Problem[] {
+  const missing = new Map<string, Set<string>>() // stepId → 걸린 목적지들
+  for (const dest of appDests) {
+    for (const step of JOURNEY_STEP_CATALOG) {
+      if (!appliesToDest(step, dest)) continue
+      const resolved = resolveStepForDestination(step, dest, null) as {
+        inputs?: Array<{ key: string; type?: string }>
+      }
+      const hasDateInput = (resolved.inputs ?? []).some(
+        (i) => i.type === 'date' || i.type === 'date_array',
+      )
+      if (!hasDateInput) continue
+      const decision = dateSaveBlockDecision(dest, step.id)
+      if (decision && /^(차단|주의만): /.test(decision)) continue
+      if (!missing.has(step.id)) missing.set(step.id, new Set())
+      missing.get(step.id)!.add(dest)
+    }
+  }
+  return [...missing.entries()].map(([stepId, dests]) => ({
+    dest: [...dests].join(','),
+    stepId,
+    ruleId: '—',
+    kind: 'no-save-block-decision' as const,
+  }))
+}
+
 function main(): void {
   const dests = Object.keys(DESTINATION_OVERRIDES)
   const appDests = dests.filter((d) => DESTINATION_OVERRIDES[d]?.appSupported)
@@ -626,6 +740,7 @@ function main(): void {
     ...ownCalcRules(appDests),
     ...titerWaitWithoutBlocker(appDests),
     ...parasiteWindowWithoutBlocker(appDests),
+    ...saveBlockDecisions(appDests),
     ...deadDeclarations(appDests),
     ...importPermitNotifyLeaks(appDests),
   ]
