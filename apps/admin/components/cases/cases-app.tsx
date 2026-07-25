@@ -108,7 +108,7 @@ function firstDestination(row: CaseRow): string | null {
   return dests[0] ?? null
 }
 
-function Inner() {
+function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
   const { cases, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, certConfig, caseAssigneeEnabled, orgMembers, searchQuery, navCaseIds } = useCases()
   const confirm = useConfirm()
   const selectedCase = useMemo(
@@ -385,7 +385,7 @@ function Inner() {
         <div className="w-1/2 h-full">
           <div className="h-full overflow-hidden px-md md:px-lg py-md md:py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
             <div className="h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl">
-              <CaseList onAdd={handleAdd} />
+              <CaseList onAdd={handleAdd} moveTargetName={moveTargetName} />
             </div>
           </div>
         </div>
@@ -698,6 +698,6 @@ function Inner() {
   )
 }
 
-export function CasesApp() {
-  return <Inner />
+export function CasesApp({ moveTargetName = null }: { moveTargetName?: string | null }) {
+  return <Inner moveTargetName={moveTargetName} />
 }

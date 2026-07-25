@@ -37,6 +37,8 @@ interface CasesContextValue {
   openCase: (id: string) => void
   addLocalCase: (newCase: CaseRow) => void
   removeLocalCase: (id: string) => void
+  /** 목록에서 조용히 제거 — 선택 이동 없음(다른 조직으로 케이스를 넘긴 뒤 등). */
+  removeLocalCaseQuiet: (id: string) => void
   updateLocalCaseField: (
     caseId: string,
     storage: 'column' | 'data',
@@ -459,6 +461,17 @@ export function CasesProvider({
     })
   }, [])
 
+  // removeLocalCase 와 달리 선택을 건드리지 않는다 — 목록 화면에서 행을 다른
+  // 조직으로 넘겼을 때 상세로 튀지 않고 그 자리에 머문다.
+  const removeLocalCaseQuiet = useCallback((id: string) => {
+    setCases((prev) => prev.filter((c) => c.id !== id))
+    setSelectedId((prev) => {
+      if (prev !== id) return prev
+      syncCaseIdToUrl(null)
+      return null
+    })
+  }, [])
+
   const replaceLocalCaseData = useCallback(
     (caseId: string, data: Record<string, unknown>) => {
       setCases((prev) =>
@@ -524,6 +537,7 @@ export function CasesProvider({
       openCase,
       addLocalCase,
       removeLocalCase,
+      removeLocalCaseQuiet,
       updateLocalCaseField,
       replaceLocalCaseData,
       activeDestination,
@@ -546,7 +560,7 @@ export function CasesProvider({
       navCaseIds,
       setNavCaseIds,
     }),
-    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, inspectionConfig, certConfig, newCaseIds, caseAssigneeEnabled, orgMembers, sharePresets, setSharePresets, todoColumnsConfig, searchQuery, navCaseIds],
+    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, removeLocalCaseQuiet, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, inspectionConfig, certConfig, newCaseIds, caseAssigneeEnabled, orgMembers, sharePresets, setSharePresets, todoColumnsConfig, searchQuery, navCaseIds],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

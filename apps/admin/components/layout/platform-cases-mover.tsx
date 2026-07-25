@@ -38,6 +38,24 @@ export function PlatformCasesMover({
     }
   }, [active])
 
+  // 목록 화면의 행별 "가져오기"로 옮겨진 케이스를 배지·목록에서 즉시 제거(재조회 없이 동기화).
+  useEffect(() => {
+    if (!active) return
+    function onMoved(e: Event) {
+      const id = (e as CustomEvent<{ id: string }>).detail?.id
+      if (!id) return
+      setCases((prev) => (prev ? prev.filter((c) => c.id !== id) : prev))
+      setSelected((prev) => {
+        if (!prev.has(id)) return prev
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
+    window.addEventListener('platform-case-moved', onMoved)
+    return () => window.removeEventListener('platform-case-moved', onMoved)
+  }, [active])
+
   function openModal() {
     setSelected(new Set())
     setError(null)

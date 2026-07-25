@@ -1,11 +1,13 @@
 'use client'
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Search, Plus, X, Paperclip, Loader2, History } from 'lucide-react'
+import { Search, Plus, X, Paperclip, Loader2, History, Inbox } from 'lucide-react'
+import { useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
 import type { CaseRow } from '@petmove/domain'
 import { Input } from '@/components/ui/input'
 import { useCases } from './cases-context'
+import { moveCasesToHome } from '@/lib/actions/super-admin'
 import { isExtractableFile } from '@/lib/file-to-base64'
 import { formatMicrochip } from '@petmove/domain'
 import { destCode } from '@/lib/country-code'
@@ -54,6 +56,10 @@ interface CaseRowItemProps {
   isNew: boolean
   isHighlighted: boolean
   onSelect: (id: string) => void
+  /** 펫무브 직영 보기(super_admin)에서만 — 행에서 바로 home org 로 가져가는 버튼 라벨(=org 이름). */
+  moveLabel?: string | null
+  moving?: boolean
+  onMove?: (id: string) => void
 }
 
 /**
@@ -67,11 +73,14 @@ const CaseRowItem = memo(function CaseRowItem({
   isNew,
   isHighlighted,
   onSelect,
+  moveLabel = null,
+  moving = false,
+  onMove,
 }: CaseRowItemProps) {
   const dest = c.destination
   const dests = dest ? dest.split(',').map((s) => s.trim()).filter(Boolean) : []
   return (
-    <li data-case-idx={index} className="border-b border-border/80 last:border-b-0">
+    <li data-case-idx={index} className="relative border-b border-border/80 last:border-b-0">
       <button
         type="button"
         onClick={() => onSelect(c.id)}
@@ -81,6 +90,7 @@ const CaseRowItem = memo(function CaseRowItem({
           isSelected && 'bg-accent',
           isHighlighted && 'bg-accent/70',
           isNew && !isSelected && 'bg-primary/5',
+          moveLabel && 'md:pr-32',
         )}
       >
         {isNew && (
@@ -130,6 +140,18 @@ const CaseRowItem = memo(function CaseRowItem({
           </span>
         </div>
       </button>
+      {moveLabel && onMove && (
+        <button
+          type="button"
+          disabled={moving}
+          onClick={() => onMove(c.id)}
+          title={`이 신청을 ${moveLabel}(으)로 가져오기`}
+          className="hidden md:inline-flex absolute right-4 top-1/2 -translate-y-1/2 items-center gap-1.5 h-7 px-3 rounded-full border border-border/80 bg-popover text-[12px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors disabled:opacity-50"
+        >
+          {moving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Inbox className="h-3 w-3" />}
+          가져오기
+        </button>
+      )}
     </li>
   )
 })
@@ -151,12 +173,44 @@ export function CaseList({
   onAdd,
   onAddFromFiles,
   busy,
+  moveTargetName = null,
 }: {
   onAdd?: () => void
   onAddFromFiles?: (files: File[]) => void
   busy?: boolean
+  /** 펫무브 직영 보기(super_admin)일 때만 — 행별 "가져오기" 대상 org 이름. null 이면 버튼 미표시. */
+  moveTargetName?: string | null
 }) {
-  const { cases, selectedId, selectCase, newCaseIds, searchQuery: query, setSearchQuery: setQuery, setNavCaseIds } = useCases()
+  const { cases, selectedId, selectCase, newCaseIds, searchQuery: query, setSearchQuery: setQuery, setNavCaseIds, removeLocalCaseQuiet } = useCases()
+  const confirmDialog = useConfirm()
+  const [movingId, setMovingId] = useState<string | null>(null)
+  const [moveError, setMoveError] = useState<string | null>(null)
+
+  // 목록에서 검색해 찾은 미배정 신청을 그 자리에서 home org(로잔)로 가져오기.
+  // 성공하면 목록에서 조용히 사라지고(선택 이동 없음), 상단바 미배정 배지도 이벤트로 동기화.
+  const handleMove = useCallback(async (id: string) => {
+    if (!moveTargetName) return
+    const target = cases.find((c) => c.id === id)
+    const label = target
+      ? `${target.customer_name}${target.pet_name ? ' · ' + target.pet_name : ''}`
+      : '이 신청'
+    const ok = await confirmDialog({
+      message: `${label} 신청을 ${moveTargetName}(으)로 가져올까요?`,
+      description: '신청의 담당 조직이 바뀝니다.',
+      okLabel: '가져오기',
+    })
+    if (!ok) return
+    setMoveError(null)
+    setMovingId(id)
+    const r = await moveCasesToHome([id])
+    setMovingId(null)
+    if (!r.ok) {
+      setMoveError(r.error)
+      return
+    }
+    removeLocalCaseQuiet(id)
+    window.dispatchEvent(new CustomEvent('platform-case-moved', { detail: { id } }))
+  }, [moveTargetName, cases, confirmDialog, removeLocalCaseQuiet])
 
   const [visible, setVisible] = useState(INITIAL_VISIBLE)
   const [highlight, setHighlight] = useState(-1)
@@ -451,6 +505,9 @@ export function CaseList({
         </div>
       ) : (
         <div className="flex-1 min-h-0 flex flex-col">
+          {moveError && (
+            <div className="shrink-0 px-lg pb-2 text-[12px] text-destructive">{moveError}</div>
+          )}
           {/* Column header — editorial caption. 케이스 0건(온보딩)일 땐 숨김. */}
           {cases.length > 0 && (
             <div className="shrink-0 px-lg pb-3 border-b border-border/80">
@@ -495,6 +552,9 @@ export function CaseList({
                     isNew={newCaseIds.has(c.id)}
                     isHighlighted={!!(c.id !== selectedId && i === highlight)}
                     onSelect={handleRowSelect}
+                    moveLabel={moveTargetName}
+                    moving={movingId === c.id}
+                    onMove={moveTargetName ? handleMove : undefined}
                   />
                 ))}
                 {visible < filtered.length && (

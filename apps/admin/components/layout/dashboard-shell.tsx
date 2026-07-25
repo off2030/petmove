@@ -171,6 +171,12 @@ export function DashboardShell({
 
   const { selectCase } = useCases()
 
+  // 펫무브 직영 보기(super_admin) 여부 — 상단바 미배정 아이콘 + 목록 행별 "가져오기" 버튼 공통 조건.
+  const platformMoveTargetName =
+    isSuperAdmin && activeOrgId === PLATFORM_ORG_ID && homeOrg && homeOrg.id !== PLATFORM_ORG_ID
+      ? homeOrg.name
+      : null
+
   const handleTabChange = useCallback((tab: TabId) => {
     if (tab === 'cases') selectCase(null)
     setActiveTab(tab)
@@ -230,18 +236,13 @@ export function DashboardShell({
         messagesUnread={messagesUnread}
         orgs={isSuperAdmin ? initialOrgs.map((o) => ({ id: o.id, name: o.name })) : []}
         activeOrgId={activeOrgId}
-        platformMoverActive={
-          isSuperAdmin &&
-          activeOrgId === PLATFORM_ORG_ID &&
-          !!homeOrg &&
-          homeOrg.id !== PLATFORM_ORG_ID
-        }
+        platformMoverActive={platformMoveTargetName !== null}
         platformHomeName={homeOrg?.name ?? ''}
       />
       <main className="peer flex-1 min-w-0 overflow-hidden">
         {mounted.has('cases') && (
           <div className="h-full" style={{ display: activeTab === 'cases' ? 'block' : 'none' }}>
-            <MemoizedCases />
+            <MemoizedCases moveTargetName={platformMoveTargetName} />
           </div>
         )}
         {mounted.has('calculator') && (
