@@ -176,11 +176,13 @@ export function CasesProvider({
   children: React.ReactNode
 }) {
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
-  // 마운트 시 URL 에서 복원. 목록 조회가 일시적으로 비어도 case id 는 보존한 뒤
-  // 아래 effect 에서 단일 조회로 확인한다.
-  const [selectedId, setSelectedId] = useState<string | null>(() => {
-    return readCaseIdFromUrl() ?? readStoredCaseId()
-  })
+  // ⚠️ 초기값은 반드시 null (SSR 과 동일하게). 초기 렌더에서 URL/sessionStorage 를
+  // 읽으면 서버 HTML(목록, translateX(0))과 클라이언트 첫 렌더(상세, -50%)가 어긋나는
+  // hydration mismatch 가 생기고, React 는 style 속성 불일치를 조용히 무시한 채
+  // "이미 -50% 로 썼다"고 믿어버려 이후 어떤 selectCase 에도 transform 을 다시 쓰지
+  // 않는다 → "행을 클릭해도 상세로 안 넘어감"(조직 전환 직후·상세에서 F5 재현).
+  // 복원은 아래 마운트 effect 에서 검증 후 setState 로 수행한다.
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [activeDestination, setActiveDestination] = useState<string | null>(null)
   const [importReportCountries, setImportReportCountries] = useState<string[]>(initialImportReportCountries)
   const [inspectionConfig, setInspectionConfig] = useState<InspectionConfig>(initialInspectionConfig)
@@ -237,6 +239,37 @@ export function CasesProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // 마운트 후 URL(?case=) → sessionStorage 순으로 지난 선택을 복원한다.
+  // 목록에 있으면 즉시 선택, 없으면 단일 조회로 확인 후에만 선택 — 다른 조직에서
+  // 넘어온 stale id 로 빈 상세가 뜨는 것을 막고, 확인된 stale 은 URL·storage 를 정리한다.
+  useEffect(() => {
+    const id = readCaseIdFromUrl() ?? readStoredCaseId()
+    if (!id) return
+    if (casesRef.current.some((c) => c.id === id)) {
+      setSelectedId(id)
+      return
+    }
+    let alive = true
+    void getActiveOrgCaseById(id).then((result) => {
+      if (!alive || !result.ok) return
+      const restoredCase = result.case
+      if (restoredCase) {
+        setCases((prev) =>
+          prev.some((c) => c.id === restoredCase.id) ? prev : [restoredCase, ...prev],
+        )
+        setSelectedId(id)
+      } else {
+        // 정상 조회로 "없음" 확인 — 이 조직의 케이스가 아니므로 흔적을 지운다.
+        syncCaseIdToUrl(null)
+      }
+    })
+    return () => {
+      alive = false
+    }
+    // mount-only — 이후 선택 변화는 selectCase/popstate 가 담당
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // URL 의 case 파라미터가 현재 목록에 없으면 단일 조회로 복원한다.
   // 조회 자체가 실패하면 인증 refresh/RLS/네트워크 타이밍일 수 있으므로 URL 을 지우지 않는다.
   // "정상 조회 결과 없음" 이 확인될 때만 stale id 로 보고 정리한다.
@@ -256,6 +289,10 @@ export function CasesProvider({
           if (prev.some((c) => c.id === restoredCase.id)) return prev
           return [restoredCase, ...prev]
         })
+      } else {
+        // 정상 조회 결과 "없음" 확인 — stale id 를 정리해 빈 상세에 갇히지 않게 한다.
+        setSelectedId(null)
+        syncCaseIdToUrl(null)
       }
     })()
 
