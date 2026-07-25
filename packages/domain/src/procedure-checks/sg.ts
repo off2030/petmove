@@ -65,7 +65,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 생후 12주(84일) 이상',
     description:
       '광견병 1차 접종은 생후 최소 12주(84일) 이후. NParks Schedule III 조건 PDF — 광견병은 "제조사 권장"(라벨 통상 12주) + 유일한 연령 요건 "animal must be at least 12 weeks of age at the time of export". 태국·필리핀과 동일 기준(구 91일 AND 3개월 과보수값 정정, 2026-07-24).',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -93,7 +93,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
     title: '항체 검사는 광견병 접종 28일 후',
     description:
       'RNATT 채혈일은 직전 광견병 접종(1차 또는 부스터)으로부터 28일 이후여야 함. (Schedule III IV(a)(iii) "At least 28 days after the primary rabies vaccination or rabies booster")',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -166,7 +166,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
     title: '출국일은 항체 검사일 90일 이후',
     description:
       'RNATT 채혈일로부터 출국일까지 최소 90일 경과 필요. 저장 거부(validateEuEntryDate, titer.entryWaitAfterTiter.days=90)와 같은 정확한 일수 기준. (Schedule III IV(a)(iii) "not less than 90 days ... prior to export")',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -263,7 +263,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
     title: '종합백신은 출국일 14일 이전 접종',
     description:
       '종합백신(개: distemper/adeno1/parvo2, 고양이: calici/herpes-1/panleuk)은 출국 최소 14일 전 접종 필요. (Schedule III IV(a)(iv)(v) "not less than two (2) weeks prior to export")',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -322,7 +322,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
     title: '외부구충은 출국일 2~7일 전',
     description:
       '외부구충(벼룩·진드기) 처치는 출국일 기준 2~7일 사이에 실시. (Schedule III IV(a)(vi) "between 2 and 7 days of export")',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -351,7 +351,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
     title: '내부구충은 출국일 2~7일 전',
     description:
       '내부구충(선충·조충) 처치는 출국일 기준 2~7일 사이에 실시. (Schedule III IV(a)(vi) "between 2 and 7 days of export")',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)

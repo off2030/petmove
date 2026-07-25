@@ -348,7 +348,7 @@
 ▸ singapore (싱가포르)
    입력불가 0건
    주의·차단 1건
-     - sg.titer-min-28days-after-vaccine [info]
+     - sg.titer-min-28days-after-vaccine [warning]
          광견병 항체 검사는 직전 접종 28일 후에 채혈해야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -598,7 +598,7 @@
 ▸ israel (이스라엘)
    입력불가 0건
    주의·차단 1건
-     - il.rnatt-min-30days-after-vaccine [info]
+     - il.rnatt-min-30days-after-vaccine [warning]
          광견병 항체 검사는 직전 접종일로부터 30일이 지난 후에 받아야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -916,7 +916,7 @@
    주의·차단 2건
      - hi.rabies-2-doses-required [info]
          광견병 접종이 1회(2026-05-01)만 기록되어 있어요. 2회가 필요해요.
-     - hi.rabies-prime-after-12weeks [info]
+     - hi.rabies-prime-after-12weeks [warning]
          광견병 접종은 생후 3개월이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -1120,7 +1120,7 @@
 ▸ israel (이스라엘)
    입력불가 0건
    주의·차단 1건
-     - il.rabies-prime-after-91days-old [info]
+     - il.rabies-prime-after-91days-old [warning]
          광견병 접종은 생후 91일이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -1477,7 +1477,7 @@
    입력불가 1건
      ✕ 마이크로칩 선행: 마이크로칩 삽입 후 광견병을 접종하세요
    주의·차단 2건
-     - hi.microchip-before-rabies [info]
+     - hi.microchip-before-rabies [warning]
          접종일은 마이크로칩 삽입일 이후여야 해요.
      - hi.rabies-2-doses-required [info]
          광견병 접종이 1회(2026-05-01)만 기록되어 있어요. 2회가 필요해요.
@@ -1689,7 +1689,7 @@
    입력불가 1건
      ✕ 마이크로칩 선행: 마이크로칩 삽입 후 광견병을 접종하세요
    주의·차단 1건
-     - il.microchip-before-rabies [info]
+     - il.microchip-before-rabies [warning]
          접종일은 마이크로칩 삽입일 이후여야 해요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -2009,7 +2009,7 @@
 ▸ singapore (싱가포르)
    입력불가 0건
    주의·차단 1건
-     - sg.titer-min-28days-after-vaccine [info]
+     - sg.titer-min-28days-after-vaccine [warning]
          광견병 항체 검사는 직전 접종 28일 후에 채혈해야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -2231,7 +2231,7 @@
 ▸ israel (이스라엘)
    입력불가 0건
    주의·차단 1건
-     - il.rnatt-min-30days-after-vaccine [info]
+     - il.rnatt-min-30days-after-vaccine [warning]
          광견병 항체 검사는 직전 접종일로부터 30일이 지난 후에 받아야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -2555,7 +2555,7 @@
          광견병 항체 검사 결과는 12개월간 유효해요. 유효기간이 지나기 전에 출국해야 해요.
      - sg.rabies-valid-until-on-departure [info]
          출국일에 광견병 백신 면역 유효기간이 남아있어야 해요.
-     - sg.titer-min-28days-after-vaccine [info]
+     - sg.titer-min-28days-after-vaccine [warning]
          광견병 항체 검사는 직전 접종 28일 후에 채혈해야 해요.
    상황별 설명문 3건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -2782,7 +2782,7 @@
    주의·차단 2건
      - il.rabies-valid-on-departure [info]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
-     - il.rnatt-min-30days-after-vaccine [info]
+     - il.rnatt-min-30days-after-vaccine [warning]
          광견병 항체 검사는 직전 접종일로부터 30일이 지난 후에 받아야 해요.
    상황별 설명문 3건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -4460,7 +4460,7 @@
    주의·차단 2건
      - hi.rabies-2-doses-required [info]
          광견병 접종이 1회(2026-08-20)만 기록되어 있어요. 2회가 필요해요.
-     - hi.rabies-latest-31days-before-arrival [info]
+     - hi.rabies-latest-31days-before-arrival [warning]
          최근 광견병 접종일로부터 31일이 지나야 입국할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -4653,7 +4653,7 @@
    입력불가 1건
      ✕ 출국·입국일: 광견병 접종 후 30일이 지나야 이스라엘에 입국할 수 있어요. 날짜를 확인하세요.
    주의·차단 1건
-     - il.rabies-min-30days-before-departure [info]
+     - il.rabies-min-30days-before-departure [warning]
          광견병 접종 후 30일이 지나야 이스라엘에 입국할 수 있어요. 입국일을 미뤄야 해요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -4995,7 +4995,7 @@
    입력불가 1건
      ✕ 광견병 1차 최소 일령: 광견병 접종은 생후 84일(12주)이 지나서 할 수 있어요
    주의·차단 1건
-     - sg.rabies-prime-after-12weeks [info]
+     - sg.rabies-prime-after-12weeks [warning]
          광견병 접종은 생후 84일(12주)이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -5014,7 +5014,7 @@
    주의·차단 2건
      - hi.rabies-2-doses-required [info]
          광견병 접종이 1회(2026-04-15)만 기록되어 있어요. 2회가 필요해요.
-     - hi.rabies-prime-after-12weeks [info]
+     - hi.rabies-prime-after-12weeks [warning]
          광견병 접종은 생후 3개월이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -5239,7 +5239,7 @@
    입력불가 1건
      ✕ 광견병 1차 최소 일령: 광견병 접종은 생후 3개월이 지나서 할 수 있어요
    주의·차단 1건
-     - il.rabies-prime-after-91days-old [info]
+     - il.rabies-prime-after-91days-old [warning]
          광견병 접종은 생후 91일이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -5573,7 +5573,7 @@
    주의·차단 2건
      - sg.import-permit-not-after-departure [warning]
          수입 허가 신청일은 출국일보다 빨라야 해요. 날짜를 확인하세요.
-     - sg.titer-min-28days-after-vaccine [info]
+     - sg.titer-min-28days-after-vaccine [warning]
          광견병 항체 검사는 직전 접종 28일 후에 채혈해야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -5796,7 +5796,7 @@
 ▸ israel (이스라엘)
    입력불가 0건
    주의·차단 1건
-     - il.rnatt-min-30days-after-vaccine [info]
+     - il.rnatt-min-30days-after-vaccine [warning]
          광견병 항체 검사는 직전 접종일로부터 30일이 지난 후에 받아야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -6116,7 +6116,7 @@
 ▸ singapore (싱가포르)
    입력불가 0건
    주의·차단 1건
-     - sg.titer-min-28days-after-vaccine [info]
+     - sg.titer-min-28days-after-vaccine [warning]
          광견병 항체 검사는 직전 접종 28일 후에 채혈해야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -6336,7 +6336,7 @@
 ▸ israel (이스라엘)
    입력불가 0건
    주의·차단 1건
-     - il.rnatt-min-30days-after-vaccine [info]
+     - il.rnatt-min-30days-after-vaccine [warning]
          광견병 항체 검사는 직전 접종일로부터 30일이 지난 후에 받아야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -8169,7 +8169,7 @@
    입력불가 1건
      ✕ 출국·입국일: 검사일로부터 90일 후인 2026년 7월 1일에 입국할 수 있어요.
    주의·차단 2건
-     - sg.departure-min-90days-after-titer [info]
+     - sg.departure-min-90days-after-titer [warning]
          광견병 항체 검사 채혈일로부터 90일이 지난 후에 출국할 수 있어요.
      - sg.rabies-valid-until-on-departure [info]
          출국일에 광견병 백신 면역 유효기간이 남아있어야 해요.
@@ -8730,7 +8730,7 @@
 ▸ singapore (싱가포르)
    입력불가 0건
    주의·차단 1건
-     - sg.titer-min-28days-after-vaccine [info]
+     - sg.titer-min-28days-after-vaccine [warning]
          광견병 항체 검사는 직전 접종 28일 후에 채혈해야 해요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -8969,7 +8969,7 @@
 ▸ israel (이스라엘)
    입력불가 0건
    주의·차단 1건
-     - il.rnatt-min-30days-after-vaccine [info]
+     - il.rnatt-min-30days-after-vaccine [warning]
          광견병 항체 검사는 직전 접종일로부터 30일이 지난 후에 받아야 해요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -9819,7 +9819,7 @@
 ▸ hawaii (하와이)
    입력불가 0건
    주의·차단 2건
-     - hi.favn-sample-30days-to-36months-before-arrival [info]
+     - hi.favn-sample-30days-to-36months-before-arrival [warning]
          광견병 항체 검사 후 36개월이 지나 재검사가 필요해요.
      - hi.rabies-not-expired-on-arrival [info]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.

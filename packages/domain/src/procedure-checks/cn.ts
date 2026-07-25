@@ -256,7 +256,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     title: '백신 면역 유효기간 만료',
     description:
       '추가(3차+) 광견병 접종은 직전 광견병 백신의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 부스터가 아닌 새 기초접종으로 간주됨.',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-07-18',
     run: ({ caseRow }) => {
       const entries = readRabiesEntries(caseRow)

@@ -62,7 +62,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       'ISO 11784/11785 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (gov.il 수의국 — 비ISO 칩 시 자체 리더기 동반)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -90,7 +90,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
       'gov.il 수의국: "12주 이상 접종" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -124,7 +124,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
       'gov.il: 1차 접종 후 30일 경과해야 함(gov.il 은 연속 부스터 14일 단축 여지를 두지만, 유효 부스터는 대기 면제로 통일 처리한다). 최근 접종 기준. 저장 거부(validateRabiesEntryWait)와 **같은 판정 함수**(violatesRabiesEntryWait — 프로파일 entryWaitDaysAfterVaccine=30 파생)를 쓴다 — 예전엔 자체 30/15 계산이라 저장 거부와 갈려 만료 후 재접종을 놓쳤다(2026-07-23 통일).',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -177,7 +177,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
     title: '광견병 추가 접종은 직전 접종 유효기간 이내',
     description:
       '연속된 광견병 접종은 직전 접종의 면역 유효기간 이내에 해야 함. 만료 후 접종은 chain 이 끊겨 새 1차로 간주된다. 저장 거부(findRabiesChainBreak)의 짝이 되는 주의 — 펫무브워크는 저장을 막지 않고 절차검증만 보므로 이 룰이 없으면 운영자 화면에서 끊긴 chain 이 안 보인다. (EU 패밀리 eu.rabies-booster-within-prime-validity 를 이스라엘 전용으로 복제 — 이스라엘은 EU 광견병 룰에서 제외되므로 짝 룰을 여기 둔다.)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-07-23',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -202,7 +202,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
     title: '항체 검사는 광견병 접종 30일 이후',
     description:
       'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (gov.il: "rabies neutralizing antibody titer ... taken at least 30 days after vaccination")',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -283,7 +283,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
     title: '출국일 시점 만 4개월령(약 17주) 이상',
     description:
       'gov.il 수의국: 이스라엘 입국 시 만 4개월(약 17주) 이상이어야 함. 출국일 기준 생후 ≥ 4개월(`addMonths(birth, 4) ≤ dep`).',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)

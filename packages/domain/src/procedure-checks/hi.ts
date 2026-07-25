@@ -48,7 +48,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       '마이크로칩(ISO 11784/11785)이 광견병 1차 접종일과 같거나 이전이어야 함. 칩 없거나 스캔 불가 시 120일 검역 강제. (HDOA Step 2 + JP/SG/AU/EU/NZ 와 일관)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -76,7 +76,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
       'HDOA 본문 정량 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요. (id 는 호환성을 위해 12weeks 유지)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -138,7 +138,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
     title: '광견병 도즈 간 31일 이상 간격 (more than 30 days)',
     description:
       '연속된 광견병 접종 간 간격 ≥31일. (HDOA: "must have been administered more than 30 days apart" → strict >30 = ≥31)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     // 접종일·간격 일수가 정보 자체라 날짜 표기 허용(jp.ts 선례).
     allowDate: true,
@@ -181,7 +181,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
     title: '최근 광견병 접종은 출국(=도착) 31일 이전',
     description:
       '가장 최근 광견병 접종일이 도착일 기준 31일 이전(more than 30 days). 31일 미만 시 도착 후 추가 검역 강제. (HDOA Step 3)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     // 접종일→출국 경과 일수가 정보 자체라 날짜 표기 허용(jp.ts 선례).
     allowDate: true,
@@ -244,7 +244,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
     title: 'FAVN 검체 lab 수령일은 출국 30일 ~ 36개월 전',
     description:
       'HDOA: lab 수령일 다음날부터 30일 이상, 36개월 이내. `rabies_titer_records[].received_date` 우선, 미입력 시 채혈일 fallback (실제 lab 수령일은 며칠 늦으므로 채혈일 proxy 는 less strict — 보수 마진 검토 권고).',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -305,7 +305,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
     // 진드기 제품·Revolution 불가·건강증명서 기재)는 staff 설명에 보존(사용자 지정 2026-07-23).
     description:
       '외부구충(벼룩·진드기) 처치는 도착일 기준 14일 이내(`≤13`). 장시간 작용 진드기 제품(Revolution 불가, Frontline/Bravecto 등 tick label) + 제품명·날짜를 건강증명서에 기재. (HDOA Checklist 1 Step 6 #4: "within 14 days of arrival")',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     // 처치일→출국 경과 일수가 정보 자체라 날짜 표기 허용(jp.ts 4개 룰과 같은 판단).
     allowDate: true,
