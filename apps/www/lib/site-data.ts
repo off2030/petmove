@@ -41,7 +41,8 @@ export const FEATURED: FeaturedGuide[] = [
   },
 ]
 
-// ── 나라별 가이드 34개국 — 5그룹(2026-07-15 재편: 괌=오세아니아, 중동·아프리카 신설) ──
+// ── 나라별 가이드 35개국 — 5그룹(2026-07-15 재편: 괌=오세아니아, 중동·아프리카 신설.
+//    2026-07-26 남아프리카공화국 가이드 추가 — 앱 지원 목록(APP_DEST_*)엔 아직 없다) ──
 export interface Country {
   ko: string
   slug: string
@@ -90,6 +91,7 @@ export const COUNTRIES: Country[] = [
   { ko: '아랍에미리트', slug: 'uae', region: '중동·아프리카' },
   { ko: '튀르키예', slug: 'turkey', region: '중동·아프리카' },
   { ko: '모로코', slug: 'morocco', region: '중동·아프리카' },
+  { ko: '남아프리카공화국', slug: 'southafrica', region: '중동·아프리카' },
 ]
 
 export const countryGuideSlug = (c: Country) => `${c.slug}-pet-travel-guide`
