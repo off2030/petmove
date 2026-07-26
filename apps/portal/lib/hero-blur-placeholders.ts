@@ -117,7 +117,6 @@ export const HERO_BLUR_PLACEHOLDERS: Record<string, string> = {
   "/destinations/hongkong-02.jpg": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAAAQAgCdASoQAAsAA4BaJZwAD46w1Uhr/+pgAM4rjLRA++XDY7wOeeaTLLW9mV5+I74tuVUer6HgAdrhcBh4c6Q7VGwTiDlN3N6E2K0ICK3hOopel8LroKhEt3oQAA==",
   "/destinations/hongkong-04.jpg": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAAAQAgCdASoQAAsAA4BaJZACdADbrVIKJO3AAP7l9Q9bh5KC/PThrhv1likrHgjdl0oaMdOVBVAfcKIUu+VHR8sBf70uST44GXW2zDdmnxtt9qYa1BItCb01uKC1qS/MbVBwH8AA",
   "/destinations/hongkong-06.jpg": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAACwAQCdASoQAAkAA4BaJQBOgBJvrSGwAM42YK3x4oSXLWHRlBkbUzJ4uQHtastA9PHDAbuiw3PIB7XP6/hlpMn38vWi605fAAA=",
-  "/destinations/hongkong-07.jpg": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAAAwAgCdASoQAAkAA4BaJYwCdAYtpzhKVtGEgADd2oxrGE8DEDXqfymE7QiWYzCNeEXlw8GqRwTlu2xorhyW9VYVN87yEeb2Z31G0tgD1Sy3pgAA",
   "/destinations/hongkong-10.jpg": "data:image/webp;base64,UklGRnIAAABXRUJQVlA4IGYAAAAwAgCdASoQAAsAA4BaJYgCdADiRb3p0KaAAAD+gqxUwjFUeoU0TXDdnFCFI7p4kWt05OPya6ivjr6T+XucSbYkesHkruezPLomcp9bP7UNbZFTaGuAY+av6O6pPX1vp2bDm0yAAAA=",
   "/destinations/hongkong-12.jpg": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAADwAQCdASoQAAsAA4BaJaACdAD5yujUcAAA/tnXPx4ap/Kl3aJNCasqDtnmrJJ6BztdnUp8SdAxq6Q+NsWvxexQuvCjAIKn8m3jxrr/n4E8uurLBb3xcJl4AAA=",
   "/destinations/hongkong-13.jpg": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAAAQAgCdASoQAAwAA4BaJYgCdAEUoSgKbLwAAP7yFSKtfyIZOwpet3eZsWQGnua5lAFjxVUTmszQL3yvpsRKJvHrAbFhRkHJk0eKNjMVwAA=",
