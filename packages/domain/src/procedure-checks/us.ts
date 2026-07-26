@@ -200,34 +200,9 @@ export const US_CHECKS: ProcedureCheck[] = [
       }
     },
   },
-  {
-    id: 'us.cdc-form-required',
-    // 하와이 — 미국의 주(州)라 CDC 연방 규칙이 그대로 적용(카드도 base 공유, 2026-07-26).
-    country: ['usa', 'hawaii'],
-    category: '신고',
-    title: 'CDC Dog Import Form 접수증',
-    description: '개는 미국 입국 전에 CDC Dog Import Form을 제출하고 접수증을 지참해야 함.',
-    severity: 'warning',
-    addedAt: '2026-07-25',
-    run: ({ caseRow, destination }) => {
-      const data = readData(caseRow, destination)
-      if (!isDog(data)) return SKIP
-      const entry =
-        typeof data.entry_date === 'string'
-          ? data.entry_date.slice(0, 10)
-          : typeof data.departure_flight_date === 'string'
-            ? data.departure_flight_date.slice(0, 10)
-            : ''
-      if (!entry) return SKIP
-      const filed = typeof data.us_cdc_form_date === 'string' ? data.us_cdc_form_date.slice(0, 10) : ''
-      if (filed) return { ok: true, message: 'CDC Dog Import Form 제출일 입력 완료.' }
-      return {
-        ok: false,
-        message: '미국 입국 전에 CDC Dog Import Form을 제출하고 접수증을 보관하세요.',
-        offendingPaths: ['us_cdc_form_date'],
-      }
-    },
-  },
+  // us.cdc-form-required(제출일 미입력 주의)는 2026-07-26 사용자 결정으로 삭제 —
+  // 카드 미완료 상태와 중복이고, 항공권만 넣으면 여행 한참 전부터 노란 경고가 떠 있었다.
+  // 제출 독려는 알림(D-7·D-1)이 담당하고, 여기는 날짜 정합성(us.cdc-form-date-valid)만 남긴다.
   {
     id: 'us.cdc-form-date-valid',
     // 하와이 — 미국의 주(州)라 CDC 연방 규칙이 그대로 적용(카드도 base 공유, 2026-07-26).

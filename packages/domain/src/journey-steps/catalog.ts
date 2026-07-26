@@ -717,7 +717,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         label: 'CDC Dog Import Form 안내',
       },
     ],
-    validationIds: ['us.cdc-form-required', 'us.cdc-form-date-valid'],
+    validationIds: ['us.cdc-form-date-valid'],
   },
 
   // ── 사전 신고 (일본 전용) ───────────────────────────────────────────
