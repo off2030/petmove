@@ -710,6 +710,31 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
       }
       // (미국 분기 없음 — CDC 신고 D-7·D-1, 도착 주 확인 D-14, 귀국 USDA D-30·7 알림 모두
       //  2026-07-26 사용자 결정으로 삭제. '입국 경로'·'도착 주 규정' 카드 자체도 같은 날 삭제됨.)
+    } else if (key === 'switzerland') {
+      // 스위스 수입허가(FSVO) — 입국 3주(21일) 전 마감. **확정 마감이 있는데 알림만 없던**
+      // 유일한 목적지였다(2026-07-26 전수 대조로 발견). 카드 마감 배지·입력 차단
+      // (validateChImportPermitDate)·주의(eu.ch-import-permit-21days-before-entry)가 모두
+      // 21일을 보고 있어 알림만 붙이면 된다. 대만·태국과 같은 '일주일 전 + 마감일' 2회.
+      if (entry && deriveImportPermitStatus(flat) === 'not_started') {
+        const r28 = leadReminder(
+          flat,
+          `${token}|ch-permit-28`,
+          entry,
+          28,
+          '스위스 수입허가 신청 마감이 일주일 남았어요. 입국 21일 전까지 FSVO에 신청하세요.',
+          now,
+        )
+        if (r28) out.push(r28)
+        const r21 = leadReminder(
+          flat,
+          `${token}|ch-permit-21`,
+          entry,
+          21,
+          '오늘까지 스위스 수입허가 신청이 필요해요(입국 21일 전).',
+          now,
+        )
+        if (r21) out.push(r21)
+      }
     } else if (key === 'israel') {
       // 이스라엘 사전 통보 — 적재(출국) 2영업일 전 마감(공식 안내 섹션 P·Q). 입력불가는 캘린더
       // D-2 근사라, 주말·공휴일 버퍼로 D-11·D-4 두 번 안내(사용자 지정 2026-07-23). 사전 통보
