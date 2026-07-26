@@ -955,6 +955,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       // 채혈이 아니라 **검사실 검체 도착일**이 120일의 1일차다(CQA 원문). 앱은 채혈일을 proxy 로
       // 쓰되 basisReceivedDate 로 그 사실을 표시한다 — 하와이 FAVN 과 같은 처리.
       entryWaitAfterTiter: { days: 120, basisReceivedDate: true },
+      // 직전 광견병 접종 후 10일 — **저장 거부의 진실 출처**(TITER_MIN_DAYS_AFTER_VACCINE 파생).
+      //   이 선언이 없으면 주의(gu.rnatt-after-rabies-10days)만 뜨고 입력은 그대로 저장된다
+      //   — 실제로 접종 다음날 채혈이 저장됐다(2026-07-27 사용자 발견). 모로코·우크라이나가
+      //   같은 이유로 차단이 빠져 있던 전례(2026-07-20)와 같은 함정이다.
+      minDaysAfterVaccine: 10,
       // 12개월 = 사용자 확정(2026-07-26). www 괌 가이드의 "검사 유효기간은 1년" 과 같은 값이고,
       //   gu.ts 헤더에 있던 36개월(하와이 값 혼입)은 폐기했다.
       //   ⚠️ 대기 120일 + 유효 12개월이라 **쓸 수 있는 창이 120일~12개월**로 좁다. 채혈이 너무
