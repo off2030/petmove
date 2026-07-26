@@ -974,7 +974,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '사전 통지',
     shortLabel: '통지',
     description:
-      '홍콩 도착 24시간 전까지 사전 통지를 하세요.\n\n홍콩 공항 검역사무소(AFCD)에 예상 도착일·도착 시간과 서류 사본을 보내요.\n화물로 운송하므로 보통 현지 운송 에이전트가 대신 통지해요.',
+      '홍콩 도착 24시간 전까지 사전 통지를 하세요.\n\n홍콩 공항 검역사무소(AFCD)에 예상 도착일·도착 시간과 서류 사본을 보내요.\n화물로 운송하므로 보통 동물 운송업체가 대신 통지해요.',
     doneSummary: '홍콩에 사전 통지를 했어요.',
     cardLine: '홍콩에 사전 통지를 하세요.',
     applicability: { destinations: ['hongkong'], species: 'all', tripType: 'all' },
