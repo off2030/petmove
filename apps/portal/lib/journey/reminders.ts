@@ -706,27 +706,8 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r) out.push(r)
       }
-    } else if (key === 'usa') {
-      // 미국은 전국 공통의 단일 신청 마감이 없다. 그래서 '법정 마감'을 만들지 않고
-      // 도착 주 확인 시점을 여유 알림으로 보낸다.
-      // CDC 신고 알림(D-7·D-1)은 2026-07-26 사용자 결정으로 삭제 — CDC 카드는 안내·기록만.
-      const stateConfirmed =
-        str(data.us_destination_state).trim().length > 0 &&
-        data.us_state_requirements_confirmed === 'yes'
-      if (entry && !stateConfirmed) {
-        const rState = leadReminder(
-          flat,
-          `${token}|us-state-check`,
-          entry,
-          14,
-          '미국 도착 주의 반려동물 반입 규정과 항공사 운송 조건을 확인하세요.',
-          now,
-        )
-        if (rState) out.push(rState)
-      }
-
-      // 귀국(USDA 건강증명서) 알림 2종(D-30·7)은 2026-07-26 사용자 결정으로 삭제 —
-      // 법정 마감이 아닌 준비 리마인더였다. 하와이 4종과 함께 제거(귀국 카드 자체는 유지).
+      // (미국 분기 없음 — CDC 신고 D-7·D-1, 도착 주 확인 D-14, 귀국 USDA D-30·7 알림 모두
+      //  2026-07-26 사용자 결정으로 삭제. '입국 경로'·'도착 주 규정' 카드 자체도 같은 날 삭제됨.)
     } else if (key === 'israel') {
       // 이스라엘 사전 통보 — 적재(출국) 2영업일 전 마감(공식 안내 섹션 P·Q). 입력불가는 캘린더
       // D-2 근사라, 주말·공휴일 버퍼로 D-11·D-4 두 번 안내(사용자 지정 2026-07-23). 사전 통보

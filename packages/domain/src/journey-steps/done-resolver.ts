@@ -248,14 +248,6 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       }
       return true
     }
-    case 'has-us-low-risk-eligibility':
-      return data.us_dog_rabies_risk_history === 'low_risk'
-    case 'has-us-state-requirements':
-      return (
-        typeof data.us_destination_state === 'string' &&
-        data.us_destination_state.trim().length > 0 &&
-        data.us_state_requirements_confirmed === 'yes'
-      )
     case 'has-advance-notification':
       // 신고 진행 상태는 [[deriveAdvanceNotificationStatus]] 가 단일 출처 — admin 신고 탭과
       // portal 사전 신고 step 이 같이 사용. 'done' = 첨부·skipped·legacy stored 'done'.

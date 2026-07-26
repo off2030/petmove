@@ -89,8 +89,6 @@ export type StepDoneSignal =
   | 'has-vet-visit'                // 출국 전 임상검사 — 검진일 입력(≤오늘) + 도래 확인 (다른 백신·검사와 동일 dated-confirm)
   | 'all-required-docs'            // 서류 체크리스트 — 큐레이션 필수 서류가 모두 ✓ (서류 페이지에서 완료)
   | 'has-flight-date'              // 항공권 구매 — entry_date(항공편 날짜) 입력 시 완료
-  | 'has-us-low-risk-eligibility'  // 미국 개 입국 경로 — 최근 6개월 고위험국 체류 없음 확인
-  | 'has-us-state-requirements'    // 미국 도착 주 입력 + 주 규정 확인
   | 'has-advance-notification'     // 사전 신고 — advance_notification_date 입력 시 완료
   | 'has-import-permit'            // 수입 허가 — deriveImportPermitStatus 'done' (허가번호·첨부·완료 액션)
   | 'has-sg-quarantine-reservation' // 싱가포르 계류장(AQC) 예약 — 신청 → 발급 모델 (deriveApplicationStatus)

@@ -491,8 +491,8 @@ const SCENARIOS: Scenario[] = [
   },
   // ── 미국 전용 분기 ────────────────────────────────────────────────────
   {
-    name: '미국 — 생후 6개월 미만·고위험국 이력 강아지 편도',
-    why: '강아지 최소 연령은 저장 거부, 고위험국 이력은 별도 차단으로 반응하고 편도에는 한국 귀국 카드가 없어야 한다',
+    name: '미국 — 생후 6개월 미만 강아지 편도',
+    why: '강아지 최소 연령은 저장 거부로 반응하고 편도에는 한국 귀국 카드가 없어야 한다',
     destinations: ['usa'],
     tripType: 'one_way',
     showSteps: true,
@@ -501,9 +501,6 @@ const SCENARIOS: Scenario[] = [
       species: 'dog',
       birth_date: '2026-01-01',
       entry_date: '2026-06-01',
-      us_dog_rabies_risk_history: 'high_risk',
-      us_destination_state: 'California',
-      us_state_requirements_confirmed: 'yes',
     },
   },
   {
@@ -517,8 +514,6 @@ const SCENARIOS: Scenario[] = [
       species: 'cat',
       birth_date: '2025-01-01',
       entry_date: '2026-06-01',
-      us_destination_state: 'New York',
-      us_state_requirements_confirmed: 'yes',
     },
   },
   {
@@ -533,8 +528,6 @@ const SCENARIOS: Scenario[] = [
       birth_date: '2026-01-01',
       entry_date: '2026-03-01',
       return_date: '2026-03-30',
-      us_destination_state: 'Washington',
-      us_state_requirements_confirmed: 'yes',
     },
   },
   {
@@ -549,8 +542,6 @@ const SCENARIOS: Scenario[] = [
       birth_date: '2026-01-01',
       entry_date: '2026-03-01',
       return_date: '2026-04-01',
-      us_destination_state: 'Washington',
-      us_state_requirements_confirmed: 'yes',
     },
   },
 ]

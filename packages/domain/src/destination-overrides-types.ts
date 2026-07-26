@@ -77,31 +77,8 @@ export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
   postal_code: { key: 'postal_code', label: '우편번호', type: 'text' },
   email: { key: 'email', label: '이메일', type: 'email' },
   overseas_phone: { key: 'overseas_phone', label: '해외 전화번호', type: 'text', placeholder: '+1-...' },
-  us_dog_rabies_risk_history: {
-    key: 'us_dog_rabies_risk_history',
-    label: '최근 6개월 광견병 고위험국 체류',
-    type: 'select',
-    options: [
-      { value: 'low_risk', label: '없음 (한국 등 저위험국에만 체류)' },
-      { value: 'high_risk', label: '있음 (고위험국 체류)' },
-      { value: 'unknown', label: '잘 모르겠음' },
-    ],
-  },
-  us_destination_state: {
-    key: 'us_destination_state',
-    label: '미국 도착 주(State)',
-    type: 'text',
-    placeholder: '예: California',
-  },
-  us_state_requirements_confirmed: {
-    key: 'us_state_requirements_confirmed',
-    label: '도착 주 규정 확인',
-    type: 'select',
-    options: [
-      { value: 'yes', label: '확인했어요' },
-      { value: 'no', label: '아직 확인 전이에요' },
-    ],
-  },
+  // (us_dog_rabies_risk_history·us_destination_state·us_state_requirements_confirmed 는
+  //  2026-07-26 카드 삭제와 함께 제거 — 미국 '입국 경로'·'도착 주 규정' 카드 전용 필드였다.)
   // ── ID / 여권 ──
   passport_number: { key: 'passport_number', label: '여권번호', type: 'text', placeholder: 'M12345678' },
   passport_expiry_date: { key: 'passport_expiry_date', label: '여권 만료일', type: 'date' },

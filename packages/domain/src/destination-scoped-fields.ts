@@ -72,9 +72,6 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'address_overseas',
   // 미국 — CDC 입국 경로·도착 주 확인과 미국 현지 절차 날짜. 같은 동물이 미국과 다른
   // 목적지를 동시에 준비해도 한 여정의 확인 상태가 다른 여정으로 새지 않게 분리한다.
-  'us_dog_rabies_risk_history',
-  'us_destination_state',
-  'us_state_requirements_confirmed',
   'us_cdc_form_date',
   'us_import_quarantine_date',
   'us_import_quarantine_confirmed',

@@ -109,44 +109,8 @@ export const US_CHECKS: ProcedureCheck[] = [
       }
     },
   },
-  {
-    id: 'us.high-risk-history-unsupported',
-    country: COUNTRY,
-    category: '입국 경로',
-    title: '최근 6개월 광견병 고위험국 체류 없음',
-    description:
-      'CDC 고위험국 체류 이력이 있으면 저위험국 기본 경로와 다른 서류·예약·입국공항 요건을 적용해야 함.',
-    severity: 'blocker',
-    addedAt: '2026-07-25',
-    run: ({ caseRow, destination }) => {
-      const data = readData(caseRow, destination)
-      if (!isDog(data) || data.us_dog_rabies_risk_history !== 'high_risk') return SKIP
-      return {
-        ok: false,
-        message:
-          '최근 6개월 동안 광견병 고위험국 체류 이력이 있어요. 미국 입국 절차가 달라지므로 담당자에게 별도로 확인하세요.',
-        offendingPaths: ['us_dog_rabies_risk_history'],
-      }
-    },
-  },
-  {
-    id: 'us.rabies-risk-history-unknown',
-    country: COUNTRY,
-    category: '입국 경로',
-    title: '최근 6개월 체류 국가 확인',
-    description: 'CDC 저위험국 경로 적용 전에 최근 6개월 체류 국가를 확정해야 함.',
-    severity: 'warning',
-    addedAt: '2026-07-25',
-    run: ({ caseRow, destination }) => {
-      const data = readData(caseRow, destination)
-      if (!isDog(data) || data.us_dog_rabies_risk_history !== 'unknown') return SKIP
-      return {
-        ok: false,
-        message: '최근 6개월 동안 머문 국가를 확인한 뒤 미국 입국 경로를 선택하세요.',
-        offendingPaths: ['us_dog_rabies_risk_history'],
-      }
-    },
-  },
+  // '입국 경로 확인'(us.high-risk-history-unsupported blocker·us.rabies-risk-history-unknown)
+  // 검증은 카드와 함께 삭제(2026-07-26 사용자 결정) — 기본 여정은 한국 출발 저위험국 경로 전제.
   {
     id: 'us.dog-entry-age-six-months',
     country: COUNTRY,
@@ -175,28 +139,7 @@ export const US_CHECKS: ProcedureCheck[] = [
       }
     },
   },
-  {
-    id: 'us.state-requirements-confirmed',
-    country: COUNTRY,
-    category: '입국 준비',
-    title: '미국 도착 주 규정 확인',
-    description: '미국 연방 규정과 별도로 도착 주와 항공사의 반입 조건을 확인해야 함.',
-    severity: 'warning',
-    addedAt: '2026-07-25',
-    run: ({ caseRow, destination }) => {
-      const data = readData(caseRow, destination)
-      const state =
-        typeof data.us_destination_state === 'string' ? data.us_destination_state.trim() : ''
-      if (state && data.us_state_requirements_confirmed === 'yes') {
-        return { ok: true, message: '도착 주와 주별 규정 확인 완료.' }
-      }
-      return {
-        ok: false,
-        message: '미국 도착 주를 입력하고 주별 반려동물 반입 규정을 확인하세요.',
-        offendingPaths: ['us_destination_state', 'us_state_requirements_confirmed'],
-      }
-    },
-  },
+  // '도착 주 규정 확인'(us.state-requirements-confirmed) 검증도 카드와 함께 삭제(2026-07-26).
   // CDC 신고(us-cdc-dog-import-form) 관련 검증은 전부 삭제(2026-07-26 사용자 결정) —
   // us.cdc-form-required(미입력 주의)·us.cdc-form-date-valid(날짜 정합·6개월 유효)·
   // validateUsCdcFormDate(입력 차단)·알림 D-7·D-1 모두. 카드(안내·제출일 기록)만 남긴다.

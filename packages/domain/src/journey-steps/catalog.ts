@@ -85,46 +85,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     done: 'always-done',
   },
 
-  // ── 미국 입국 경로 확인 ───────────────────────────────────────────────
-  // CDC 개 수입 규칙은 출발국의 최근 6개월 고위험국 체류 이력에 따라 절차가 크게 갈린다.
-  // 펫무브의 기본 미국 여정은 한국 등 저위험국에만 체류한 경로를 지원한다. 고위험국 이력이
-  // 있으면 사실을 저장하되 blocker 로 전문 상담을 안내한다(사실 입력 자체는 거부하지 않음).
-  {
-    id: 'us-entry-eligibility',
-    category: 'preparation',
-    title: '미국 입국 경로 확인',
-    shortLabel: '경로',
-    description:
-      '강아지가 미국 도착 전 6개월 동안 광견병 고위험국에 있었는지 확인하세요.\n\n한국은 CDC의 광견병 저위험국 경로에 해당해요. 최근 6개월 동안 저위험국에만 있었다면 이 앱의 미국 준비 절차를 이용할 수 있어요.\n고위험국 체류 이력이 있으면 필요한 서류·예약 절차가 크게 달라져 담당자와 별도로 확인해야 해요.',
-    doneSummary: '미국 입국 경로를 확인했어요.',
-    cardLine: '최근 6개월의 체류 국가를 확인하세요.',
-    applicability: { destinations: ['usa'], species: 'dog', tripType: 'all' },
-    order: 15,
-    done: 'has-us-low-risk-eligibility',
-    inputs: [
-      {
-        key: 'us_dog_rabies_risk_history',
-        label: '최근 6개월 고위험국 체류',
-        type: 'select',
-        required: true,
-        options: [
-          { value: 'low_risk', label: '없음 (한국 등 저위험국에만 체류)' },
-          { value: 'high_risk', label: '있음 (고위험국 체류)' },
-          { value: 'unknown', label: '잘 모르겠음' },
-        ],
-      },
-    ],
-    links: [
-      {
-        url: 'https://www.cdc.gov/importation/dogs/high-risk-countries.html',
-        label: 'CDC 광견병 고위험국 목록',
-      },
-    ],
-    validationIds: [
-      'us.high-risk-history-unsupported',
-      'us.rabies-risk-history-unknown',
-    ],
-  },
+  // (미국 '입국 경로 확인'·'도착 주 규정 확인' 카드는 2026-07-26 사용자 결정으로 삭제 —
+  //  단일값 카드 기반·검증·알림·필드 등록까지 함께 제거. 한국 출발 저위험국 경로만 다룬다.)
 
   // ── 2. 마이크로칩 ─────────────────────────────────────────────────────
   {
@@ -634,47 +596,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 잘못된 게 아니라 추가 접종·검사가 필요한 신호 — 추가 백신·추가 검사 step 의 situational
       // 안내가 더 정확한 맥락에서 전달. 항공권 step 에서는 중복 노출 안 함.
     ],
-  },
-
-  // ── 미국 도착 주 규정 확인 ────────────────────────────────────────────
-  {
-    id: 'us-state-requirements',
-    category: 'logistics',
-    title: '도착 주 규정 확인',
-    shortLabel: '주 규정',
-    description:
-      '미국은 연방 규정 외에 도착 주(State)와 항공사 조건을 함께 확인해야 해요.\n\n도착 주를 입력하고 해당 주의 반려동물 반입 요건을 확인하세요. 건강증명서, 광견병 접종증명, 등록 또는 추가 검사가 요구될 수 있어요.\n항공사에는 기내·위탁·화물 운송 가능 여부와 이동장 규격을 별도로 확인하세요.',
-    doneSummary: '미국 도착 주와 항공사 조건을 확인했어요.',
-    cardLine: '도착 주와 항공사 조건을 확인하세요.',
-    applicability: { destinations: ['usa'], species: 'all', tripType: 'all' },
-    order: 46,
-    done: 'has-us-state-requirements',
-    inputs: [
-      {
-        key: 'us_destination_state',
-        label: '도착 주(State)',
-        type: 'text',
-        required: true,
-        helpText: '예: California',
-      },
-      {
-        key: 'us_state_requirements_confirmed',
-        label: '주 규정 확인',
-        type: 'select',
-        required: true,
-        options: [
-          { value: 'yes', label: '확인했어요' },
-          { value: 'no', label: '아직 확인 전이에요' },
-        ],
-      },
-    ],
-    links: [
-      {
-        url: 'https://direct.aphis.usda.gov/live-animal-import/state-regulations',
-        label: '미국 주별 반입 규정',
-      },
-    ],
-    validationIds: ['us.state-requirements-confirmed'],
   },
 
   // ── CDC Dog Import Form (개 전용) ────────────────────────────────────

@@ -88,7 +88,6 @@ import {
   updateRabiesEntryFields,
   updateRabiesExtraEntries,
   updateSimpleDateField,
-  updateSimpleStepFields,
   updateTiterExtraEntries,
   updateTiterFields,
   updateVetVisitDate,
@@ -311,8 +310,6 @@ export function StepDetailView({
   const isSgQuarantineReservation = step.id === 'sg-quarantine-reservation'
   const isSgDogLicence = step.id === 'sg-dog-licence'
   const isApplicationStep = isImportPermit || isSgQuarantineReservation || isSgDogLicence
-  const isSimpleFieldsStep =
-    step.id === 'us-entry-eligibility' || step.id === 'us-state-requirements'
   const applicationDateField = isImportPermit
     ? 'import_permit_application_date'
     : isSgQuarantineReservation
@@ -358,7 +355,6 @@ export function StepDetailView({
     isImportQuarantine ||
     isGeneralVaccine ||
     isApplicationStep ||
-    isSimpleFieldsStep ||
     isParasite
   // 일정 화면 복귀 경로 — 다중 목적지에서 활성 목적지(?dest=)를 보존해야 저장·완료 후
   // 다른 목적지(기본=첫 토큰)로 튕기지 않는다. 뒤로 링크·완료 후 replace 모두 이걸 사용.
@@ -475,11 +471,6 @@ export function StepDetailView({
   )
   const [importPermit, setImportPermit] = useState<ImportPermitForm>(savedImportPermit)
 
-  // 미국 입국 경로·도착 주 확인처럼 입력 수가 적은 단일값 카드. step.inputs 가 스키마이고
-  // 서버 액션이 stepId 별 화이트리스트를 강제한다.
-  const savedSimpleFields = readSimpleStepFields(step, caseRow?.data)
-  const [simpleFields, setSimpleFields] = useState<Record<string, string>>(savedSimpleFields)
-
   // 구충(내·외부) — 가변 길이 entries (종합백신과 동일 모델, 유효기간 없음).
   const savedParasite = readParasiteForm(caseRow?.data, parasiteFieldKey)
   const [parasite, setParasite] = useState<GeneralVaccineEntry[]>(
@@ -538,7 +529,6 @@ export function StepDetailView({
     krImportQuarantineDate,
     generalVaccine,
     importPermit,
-    simpleFields,
     parasite,
   ])
   const rabiesExtraDirty =
@@ -575,8 +565,6 @@ export function StepDetailView({
     (importPermit.applicationDate !== savedImportPermit.applicationDate ||
       importPermit.permitNo !== savedImportPermit.permitNo ||
       importPermit.reservationDate !== savedImportPermit.reservationDate)
-  const simpleFieldsDirty =
-    isSimpleFieldsStep && !simpleStepFieldsEqual(simpleFields, savedSimpleFields)
   const parasiteDirty =
     isParasite &&
     !generalVaccineEqual(parasite.filter(vaccineEntryFilled), savedParasite.filter(vaccineEntryFilled))
@@ -598,7 +586,6 @@ export function StepDetailView({
     importQuarantineDirty ||
     generalVaccineDirty ||
     importPermitDirty ||
-    simpleFieldsDirty ||
     parasiteDirty
   useUnsavedGuard(dirty)
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
@@ -854,10 +841,6 @@ export function StepDetailView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
-    if (!simpleFieldsDirty) setSimpleFields(readSimpleStepFields(step, caseRow?.data))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseRow?.data, step.id])
-  useEffect(() => {
     if (!parasiteDirty) {
       const next = readParasiteForm(caseRow?.data, parasiteFieldKey)
       setParasite(next.length === 0 ? [makeEmptyGeneralVaccine()] : next)
@@ -1023,24 +1006,7 @@ export function StepDetailView({
       const m = (vu ?? '').match(/^(\d+)\s*년$/)
       return !!m && Number(m[1]) > 1
     }
-    if (isSimpleFieldsStep) {
-      setStatus('saving')
-      setError(null)
-      startTransition(async () => {
-        const res = await updateSimpleStepFields(caseId, step.id, simpleFields, activeDest)
-        if (res.ok) {
-          updateCase(res.value)
-          setSimpleFields(
-            readSimpleStepFields(step, activeDestinationView(res.value, activeDest).data),
-          )
-          setStatus('saved')
-          window.setTimeout(() => setStatus('idle'), 1500)
-        } else {
-          setStatus('error')
-          setError(res.error)
-        }
-      })
-    } else if (isMicrochip) {
+    if (isMicrochip) {
       if (chip !== '' && chip.length !== 15) return '15자리 숫자를 입력하세요.'
       const birth = readBirthDate(caseRow?.data)
       if (date && birth && date < birth) {
@@ -1429,18 +1395,6 @@ export function StepDetailView({
         entryDate: entry,
         data,
       })
-    }
-    if (isSimpleFieldsStep) {
-      if (
-        step.id === 'us-state-requirements' &&
-        simpleFields.us_state_requirements_confirmed === 'yes' &&
-        !simpleFields.us_destination_state?.trim()
-      ) {
-        return '도착 주를 입력하세요.'
-      }
-      // 고위험국 체류·미확정 같은 사실값은 저장을 막지 않는다. 저장 후 blocker/warning 이
-      // 정확한 후속 경로를 안내해야 하므로 이 폼에서는 구조적 모순만 차단한다.
-      return null
     }
     // 버튼 완료 카드(CDC 신고·귀국 절차 전체)는 날짜 검증 없음 — 전부 삭제(2026-07-26 사용자
     // 결정). 저장은 handleButtonDone 이 담당하므로 여기 분기 자체가 없다.
@@ -2973,86 +2927,6 @@ export function StepDetailView({
             />
           </section>
         )}
-        {isSimpleFieldsStep && (
-          <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
-            <div
-              style={{
-                background: C.surface,
-                border: `.5px solid ${C.line}`,
-                borderRadius: 16,
-                padding: '4px 14px',
-              }}
-            >
-              {(step.inputs ?? []).map((field, index) => {
-                const value = simpleFields[field.key] ?? ''
-                const commonStyle = {
-                  width: '100%',
-                  marginTop: 7,
-                  padding: '11px 12px',
-                  border: `.5px solid ${C.line}`,
-                  borderRadius: 10,
-                  background: C.bg,
-                  color: C.ink,
-                  fontSize: 14,
-                  outline: 'none',
-                } as const
-                return (
-                  <label
-                    key={field.key}
-                    style={{
-                      display: 'block',
-                      padding: '12px 0',
-                      borderBottom:
-                        index === (step.inputs?.length ?? 0) - 1
-                          ? 'none'
-                          : `.5px solid ${C.line}`,
-                    }}
-                  >
-                    <span style={{ fontSize: 13, color: C.ink, fontWeight: 600 }}>
-                      {field.label}
-                      {field.required ? ' *' : ''}
-                    </span>
-                    {field.type === 'select' ? (
-                      <select
-                        value={value}
-                        onChange={(e) =>
-                          setSimpleFields((prev) => ({ ...prev, [field.key]: e.target.value }))
-                        }
-                        style={commonStyle}
-                      >
-                        <option value="">선택하세요</option>
-                        {(field.options ?? []).map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        value={value}
-                        placeholder={field.helpText}
-                        maxLength={100}
-                        onChange={(e) =>
-                          setSimpleFields((prev) => ({ ...prev, [field.key]: e.target.value }))
-                        }
-                        style={commonStyle}
-                      />
-                    )}
-                    {field.helpText && field.type === 'select' && (
-                      <span
-                        style={{ display: 'block', marginTop: 6, fontSize: 12, color: C.ink3 }}
-                      >
-                        {field.helpText}
-                      </span>
-                    )}
-                  </label>
-                )
-              })}
-            </div>
-          </section>
-        )}
         {isImportQuarantine && !isButtonDoneStep && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
@@ -3326,30 +3200,6 @@ export function StepDetailView({
       )}
     </div>
   )
-}
-
-function readSimpleStepFields(
-  step: StepDefinition,
-  data: Record<string, unknown> | null | undefined,
-): Record<string, string> {
-  const source = (data ?? {}) as Record<string, unknown>
-  return Object.fromEntries(
-    (step.inputs ?? []).map((field) => {
-      const value = source[field.key]
-      return [field.key, typeof value === 'string' ? value : '']
-    }),
-  )
-}
-
-function simpleStepFieldsEqual(
-  a: Record<string, string>,
-  b: Record<string, string>,
-): boolean {
-  const keys = new Set([...Object.keys(a), ...Object.keys(b)])
-  for (const key of keys) {
-    if ((a[key] ?? '') !== (b[key] ?? '')) return false
-  }
-  return true
 }
 
 function fieldTypeLabel(t: string): string {
