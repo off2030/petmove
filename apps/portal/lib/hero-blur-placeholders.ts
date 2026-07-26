@@ -113,7 +113,6 @@ export const HERO_BLUR_PLACEHOLDERS: Record<string, string> = {
   "/destinations/hawaii-12.webp": "data:image/webp;base64,UklGRsIAAABXRUJQVlA4ILYAAAAwBACdASoQABgAPslQoUsnpKMhsAgA8BkJQBYdsYnZTOQbLGSdvbq7tuAA/uOAHdz4Y5/b090WqTk0lqseRU397L0ZAQOyfYAfXHaK0NybVgpVYie5T/PRZ+6qyMNTSK3yj1x79yYQ2QjVYlz3XIaeBk5LTj4EDIG6V8Lwl/bK7LTohjjzdJaD6vvT1A0ikp+KbvL865yWLD06xNORtQELOORe5hYrQ2AEcSlYTajNAgAEycAAAA==",
   "/destinations/hawaii-13.webp": "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADwAQCdASoQAAsAAsBKJZACdAEOwV9WL4AA/vB8T9dXuCKNtn18unzhaP35/kPEcbpj9bqatt8otAAA",
   "/destinations/hawaii-14.webp": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAADQAQCdASoQAAsAAsBKJbACdAB8YjjjgAD2pofoARgvA1M4Z176H4qz0cwjDelc0au1rJL+2l710/0BDOvKRKrNeWORE0GbGGHH3M6MOiT/y+MNyXnWQUXx5EAAAA==",
-  "/destinations/hongkong-01.jpg": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAADQAQCdASoQAAsAA4BaJZACdACu6a0YAAD8x+GNw6GohQq5fwn28007u9JyIdVz4tyBZUwyMJXgItPWb+tekk3ojCNpcSk96AVHSsdz37jcAA==",
   "/destinations/hongkong-06.jpg": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAACwAQCdASoQAAkAA4BaJQBOgBJvrSGwAM42YK3x4oSXLWHRlBkbUzJ4uQHtastA9PHDAbuiw3PIB7XP6/hlpMn38vWi605fAAA=",
   "/destinations/hongkong-12.jpg": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAADwAQCdASoQAAsAA4BaJaACdAD5yujUcAAA/tnXPx4ap/Kl3aJNCasqDtnmrJJ6BztdnUp8SdAxq6Q+NsWvxexQuvCjAIKn8m3jxrr/n4E8uurLBb3xcJl4AAA=",
   "/destinations/hongkong-13.jpg": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAAAQAgCdASoQAAwAA4BaJYgCdAEUoSgKbLwAAP7yFSKtfyIZOwpet3eZsWQGnua5lAFjxVUTmszQL3yvpsRKJvHrAbFhRkHJk0eKNjMVwAA=",
