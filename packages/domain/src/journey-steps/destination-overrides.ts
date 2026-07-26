@@ -1902,8 +1902,15 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     //   전에는 4개월 격리였다). 격리 유무는 사용자 지정대로 수입검역 카드에 적는다.
     importQuarantine: {
       fieldKey: 'hk_import_quarantine_date',
+      // 화물 운송이라 수령·통관은 동물 운송업체가 진행한다 — 보호자가 밟을 절차가 아니라
+      //   간략히만 안내한다(2026-07-26 사용자 지정). AFCD 원문의 수령 4단계(허가증 원본·AWB
+      //   지참 → 항공사 카운터에서 Shipment Release Form 수령 → 화물 supervisor 제출 →
+      //   Livestock Room 에서 AFCD cargo office 인계)는 넣지 않는다.
+      //   출처: AFCD 'Collection of Animals at HKIA' — "AFCD duty officer will conduct
+      //   livestock clearance procedures i.e. **documentary check and health check**."
+      //   ⛔ '서류와 마이크로칩을 확인해요'로 되돌리지 말 것 — 실제는 서류 + **건강** 검사다.
       description:
-        '홍콩 도착 후 공항 화물터미널에서 AFCD 검역관에게 검역을 받으세요.\n서류와 마이크로칩을 확인해요. 이상이 없으면 격리 없이 인도돼요.',
+        '홍콩 도착 후 공항 화물터미널에서 AFCD 검역관에게 검역을 받으세요.\n\n화물로 운송하므로 보통 동물 운송업체가 대신 진행해요.\n서류와 건강 상태를 확인해요. 이상이 없으면 격리 없이 인도돼요.',
       helpText: 'AFCD 검역관에게 수입 검역을 받은 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       // 도착 시 발급되는 서류가 확인되지 않았다 — 필리핀·중국·대만과 같은 중립 이름.
