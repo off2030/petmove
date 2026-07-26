@@ -1364,19 +1364,26 @@ function euFamilyDocSpecs(
  * 달라(프랑스·독일…) 토큰 키(SPECS)로 못 담는 목적지용. resolveRequiredDocs 가 토큰 매칭 실패
  * 시 여기로 폴백.
  */
+/**
+ * CDC Dog Import Form 접수증 — 미국 연방 요건(개 전용)이라 본토·하와이 공유.
+ * '6개월 유효' 문구는 카드·검증 삭제와 함께 여기서도 제거(2026-07-26 사용자 결정 —
+ * 카드에서 지운 그대로).
+ */
+const US_CDC_FORM_RECEIPT: RequiredDocSpec = {
+  id: 'us-cdc-dog-import-form-receipt',
+  name: 'CDC Dog Import Form 접수증',
+  source: '미국 질병통제예방센터(CDC)',
+  kind: 'step',
+  stepRef: 'us-cdc-dog-import-form',
+  species: 'dog',
+  description:
+    'CDC Dog Import Form을 온라인으로 제출하면 발급되는 접수증이에요.\n\n강아지 한 마리당 한 장씩 준비하고, 미국 입국 때 휴대전화 화면이나 인쇄본으로 제시할 수 있게 보관하세요.\n\n접수증의 반려견 정보와 출발 국가가 실제 여행과 맞아야 해요.',
+  previewStepId: 'us-cdc-dog-import-form',
+}
+
 const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
   usa: [
-    {
-      id: 'us-cdc-dog-import-form-receipt',
-      name: 'CDC Dog Import Form 접수증',
-      source: '미국 질병통제예방센터(CDC)',
-      kind: 'step',
-      stepRef: 'us-cdc-dog-import-form',
-      species: 'dog',
-      description:
-        'CDC Dog Import Form을 온라인으로 제출하면 발급되는 접수증이에요.\n\n강아지 한 마리당 한 장씩 준비하고, 미국 입국 때 휴대전화 화면이나 인쇄본으로 제시할 수 있게 보관하세요.\n\n접수증의 반려견 정보와 출발 국가가 실제 여행과 맞아야 해요. 저위험국 경로의 접수증은 제출일로부터 6개월 동안 유효하지만, 출발 국가가 바뀌면 다시 제출해야 해요.',
-      previewStepId: 'us-cdc-dog-import-form',
-    },
+    US_CDC_FORM_RECEIPT,
     {
       id: 'us-rabies-titer-result',
       name: '광견병 항체 검사 결과지',
@@ -1425,9 +1432,24 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
     KR_IMPORT_QUARANTINE_CERT,
   ],
   // 하와이 — 미국 본토와 같은 연방 절차(CDC·USDA)지만 여정 카드 구성이 달라 별도 키.
-  // 현재는 기본 3종 + 귀국 USDA 건강증명서(서식 받기 포함, 2026-07-26)만 큐레이션.
-  // ⚠️ 후속: CDC 접수증·FAVN 항체 결과지 등 하와이 전용 서류 큐레이션은 아직 없다.
+  // 2026-07-26 사용자 검토로 확정: FAVN 결과지(입국 요건)·CDC 접수증 추가. **입국 신청·공항
+  // 수입검역은 발행 서류 없음이 조사 결론**(HIPOP 신청은 접수번호뿐 — 이웃섬 NIIP 이메일만
+  // 예외, DAR 는 현장 인계 서명만) — 서류 항목을 만들지 않는다(카드 첨부는 임의 보관용 유지).
   hawaii: [
+    {
+      // FAVN 항체 = 하와이 **입국 요건**(귀국용이 아님 — usa 결과지와 달리 roundTripOnly 없음).
+      // 사실관계는 하와이 rabies-titer 카드 override 와 동일(USDA 승인 검사기관·0.5 IU/mL·
+      // 검체 수령일 기준 30일~36개월).
+      id: 'hi-rabies-titer-result',
+      name: '광견병 항체(FAVN) 검사 결과지',
+      source: '동물병원 · USDA 승인 검사기관',
+      kind: 'step',
+      stepRef: 'rabies-titer',
+      description:
+        '검사를 의뢰한 동물병원을 통해 발급받아요.\n\n하와이 입국 요건이에요. 검체가 검사기관에 도착한 날로부터 30일이 지난 후 36개월 이내에 입국해야 해요.\n\n0.5 IU/mL 이상이면 합격이에요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'rabies-titer',
+    },
+    US_CDC_FORM_RECEIPT,
     KR_FORM25_VACCINATION_HEALTH_CERT,
     KR_EXPORT_QUARANTINE_CERT,
     {
