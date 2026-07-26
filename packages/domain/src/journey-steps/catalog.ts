@@ -1981,13 +1981,23 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // 필요한 경우(대체서류가 없을 때) 받을 수 있는 서류는 AFCD 의 공식 동물건강증명서다 —
   //   방문 신청·발급 2영업일·발급일로부터 10일 유효(AFCD 「Issue of Official Animal Health
   //   Certificate」). 홍콩은 광견병 비발생국이라 귀국 시 항체 검사는 면제된다.
+  // 방문 신청 상세(2026-07-26 원문 재확인 — 온라인 제출 경로 없음, "Present the form
+  //   'Application for Animal Health Certificate' **in person**"):
+  //   · 창구 = Certification Desk (Counter No. 9), 5/F Cheung Sha Wan Government Offices,
+  //     303 Cheung Sha Wan Road, Kowloon / 월~금 08:30–12:30 · 13:30–17:15
+  //   · 지참 = 개인 수의사 건강증명서(출국 10일 이내 발급) + 백신 기록 + (개)홍콩 견 등록증
+  //     + 수입 허가 등 원본 서류, 수수료
+  //   · 오전 접수 → 다음날 오전 / 오후 접수 → 다음날 오후 수령
+  // ⚠️ 미확인 — **공식 수의검사가 필요한 증명서는 검사일 최소 10영업일 전 예약**(2150 7062).
+  //   한국행에 그 검사가 붙는지는 AFCD 확인이 필요해 카드에 넣지 않았다. 붙는다면 2영업일만
+  //   보고 일정을 잡는 보호자가 놓칠 수 있어(증명서 유효기간은 10일) 우선순위 높은 확인 항목.
   {
     id: 'hk-export-quarantine',
     category: 'document',
     title: '귀국 서류 준비',
     shortLabel: '귀국서류',
     description:
-      '홍콩 정부가 발급한 건강증명서 또는 대체 서류를 준비하세요.\n\n현지 동물병원에서 건강증명서를 받은 뒤, 홍콩 검역당국(AFCD)에 방문 신청해 정부 발급 건강증명서를 받아요.\n발급까지 2영업일이 걸리고, 발급일로부터 10일간 유효해요.\n\n다음 서류가 있다면 홍콩 건강증명서를 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+      '홍콩 정부가 발급한 건강증명서 또는 대체 서류를 준비하세요.\n\n동물병원에서 건강증명서를 받은 뒤, 홍콩 검역당국(AFCD)에 방문 신청해요.\n발급까지 2영업일이 걸리고, 발급일로부터 10일간 유효해요.\n\n다음 서류가 있다면 홍콩 건강증명서를 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
     doneSummary: '귀국 서류를 준비했어요.',
     cardLine: '귀국 서류를 준비하세요.',
     applicability: { destinations: ['hongkong'], species: 'all', tripType: 'round' },
