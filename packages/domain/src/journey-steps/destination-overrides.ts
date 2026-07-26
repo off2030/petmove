@@ -206,9 +206,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['hi.import-quarantine-date-valid'],
     }),
     // CDC Dog Import Form — 연방 요건이라 base 카드(usa 와 공유)를 그대로 쓰되, 순서만
-    // '출국 전 임상검사(110) 직전'으로(2026-07-26 사용자 지정. 본토는 47 — 도착 주 확인 뒤).
+    // 조정: 입국 신청(46) 뒤·진드기 처치(80) 앞(2026-07-26 사용자 지정 — 처음 '임상검사
+    // 직전(105)'에서 진드기와 순서 교체. 진드기는 출국 14일 이내 창이라 임상검사 쪽이 자연스럽다).
     'us-cdc-dog-import-form': {
-      order: 105,
+      order: 75,
     },
     // 진드기 처치 — 출국 14일 이내(long-acting tick product). base 는 일반 문구라 하와이 룰 지목.
     'external-parasite': {

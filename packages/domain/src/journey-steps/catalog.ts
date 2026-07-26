@@ -682,7 +682,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'us-cdc-dog-import-form',
     category: 'permit',
-    title: 'CDC Dog Import Form',
+    // 제목은 'CDC 신고'(2026-07-26 사용자 지정 — 절차 성격이 드러나는 한글 제목). 공식 서식명
+    // (CDC Dog Import Form)은 설명문·링크·첨부 라벨에 그대로 남긴다. usa·hawaii 공유 카드.
+    title: 'CDC 신고',
     shortLabel: 'CDC',
     description:
       '미국 입국 전에 CDC Dog Import Form을 온라인으로 제출하세요.\n\n한 마리당 한 장씩 제출하고, 발급되는 접수증을 휴대전화에 저장하거나 인쇄해 가져가세요. 접수증의 반려견 정보와 출발 국가가 실제 여행과 맞는지 확인하세요.\n저위험국 경로의 접수증은 제출일로부터 6개월 동안 유효하지만, 출발 국가가 바뀌면 다시 제출해야 해요.',

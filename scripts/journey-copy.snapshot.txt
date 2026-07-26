@@ -571,7 +571,7 @@
   저장이름: 항공권
 
 ▸ us-cdc-dog-import-form
-  title: CDC Dog Import Form
+  title: CDC 신고
   short: CDC
   card: CDC Dog Import Form을 제출하세요.
   done: CDC Dog Import Form을 제출했어요.
@@ -1621,7 +1621,7 @@
       미국 주별 반입 규정  →  https://direct.aphis.usda.gov/live-animal-import/state-regulations
 
 ▸ us-cdc-dog-import-form
-  title: CDC Dog Import Form
+  title: CDC 신고
   short: CDC
   card: CDC Dog Import Form을 제출하세요.
   done: CDC Dog Import Form을 제출했어요.
