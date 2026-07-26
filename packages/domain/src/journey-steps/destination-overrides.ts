@@ -589,8 +589,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: RETURN_ONLY_TITER_CHECKS,
     },
     'flight-purchase': {
+      // 사용자 확정 3줄(2026-07-26). 이동장 규격·출발일/도착일 입력 안내 문장은 뺐다 — 되살리지 말 것.
       description:
-        '미국 입국 일정에 맞춰 항공권을 구매하세요.\n\n강아지는 미국 도착일에 생후 6개월 이상이어야 해요. 항공사에 반려동물 동반 가능 여부와 이동장 규격을 확인하고, 장거리 노선의 출발일과 도착일을 각각 정확히 입력하세요.',
+        '미국 입국 일정에 맞춰 항공권을 구매하세요.\n\n강아지는 미국 도착일에 생후 6개월 이상이어야 해요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       cardLine: '미국 입국 일정을 확인하세요.',
       earliest: undefined,
       validationIds: ['us.dog-entry-age-six-months'],
