@@ -907,9 +907,56 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       'passport_number', 'passport_expiry_date', 'passport_issuing_country', 'holder_birth_date',
     ],
   },
+  // ── 괌 (Guam DOAG Animal Health — 미국령 광견병 청정지역) ────────────────
+  // ✅ 1차 출처 확보(2026-07-26):
+  //   - DOAG Animal Health 안내 — https://doag.guam.gov/animal-health-animal-control/
+  //   - DOAG Pet Import Brochure(REV 08/09/2024) — 서류 체크리스트 표·면제지역 원문
+  //     https://doag.guam.gov/wp-doag-content/uploads/2025/08/AH-PET-IMPORT-BROCHURE-FINAL-REV08092024.pdf
+  //   - Guam Customs(CQA) 수입 요건 — 계류 4종·FAVN 기준·120일 기산점
+  //     https://cqa.guam.gov/pet-import-requirements-3/
+  //
+  // **한국 = Non-Exempt(International)**. 면제지역은 호주·영국제도·하와이·일본·뉴질랜드뿐이고
+  //   (브로슈어 EXEMPT AREAS 표), 그 지역도 120일 이상 거주해야 면제다. 한국은 해당 없음.
+  //
+  // 계류 4종(CQA) 중 한국 출발이 노릴 수 있는 건 **Calculated Quarantine** 하나다:
+  //   · Full 120-day    — FAVN 없이 상업시설 120일. 평생 2회 접종 증명만.
+  //   · Calculated      — FAVN 0.5 IU/mL 이상. "The day that the laboratory receives the
+  //                       OIE-FAVN sample counts as the first day for the 120-day countdown."
+  //                       입국 시점에 120일 중 남은 일수만 상업검역.
+  //   · 5 Days or Less  — **미국 본토·군 시설 출발 전용**(FAVN 1.0 IU). 한국 해당 없음.
+  //   · Exempt          — 위 5개 지역 120일 이상 거주. 한국 해당 없음.
+  //   → 그래서 앱은 '채혈 후 120일'을 하와이(30일)와 같은 구조로 잡되, **도착해도 계류가
+  //     0일이 되는 게 아니라 남은 일수만큼 계류**라는 점이 다르다. 카드 문구가 이걸 말해야 한다.
+  //
+  // 광견병(CQA): "at least two rabies vaccinations in its life prior to release from commercial
+  //   quarantine, and the most recent rabies vaccination must still be current" — 평생 2회 이상.
+  //   최근 접종은 release 기준 365일 이내(승인된 3년 백신은 36개월).
+  //   ⛔ 최소 연령·접종 간격은 **선언하지 않는다** — 2020년 구 지침에는 '생후 3개월 + 1개월 후
+  //      2차'가 있었으나 현행 브로슈어·CQA 어디에도 없다. 근거 없는 엄한 기준은 갈 수 있는
+  //      사람을 막는다(몽골 3년백신·이스라엘 91일 정리와 같은 판단). 확인되면 그때 넣을 것.
+  //
+  // 종합백신(브로슈어 REQUIRED DOCUMENTS 4항): 개 = DHLPP + Bordetella / 고양이 = FVRCP.
+  // 수입허가: Animal Entry Permit, $65/마리($60 permit + $5 license), **도착 30일 전 제출**
+  //   ("must be submitted at least 30 days prior to the intended arrival date", 14일 미만은
+  //   처리 보장 불가 → 장기 계류·입국 거부 위험). 브로슈어 FAQ 는 2~3개월 전 제출 권장.
+  //   제출은 quarantine@doag.guam.gov 이메일. 검역시설 예약확인서가 신청 서류에 포함된다.
+  // 개는 CDC Dog Import Form + 생후 6개월 이상(2024-08-01 시행) — 미국·하와이와 같은 카드 공유.
+  //   한국은 CDC 고위험국이 아니라 Foreign Rabies & Microchip Form 은 불필요(브로슈어 표).
   guam: {
     keywords: ['괌', 'guam'],
+    // 하와이와 같은 골격 — 광견병 2회 + 입국 항체 + 도착 계류(미국령 청정지역 공통).
+    archetype: 'jp-2dose',
+    rabies: { doses: 2 },
     vaccines: ['rabies', 'rabies_titer', 'general', 'kennel', 'external_parasite', 'internal_parasite', 'heartworm'],
+    titer: {
+      need: 'entry',
+      // 채혈이 아니라 **검사실 검체 도착일**이 120일의 1일차다(CQA 원문). 앱은 채혈일을 proxy 로
+      // 쓰되 basisReceivedDate 로 그 사실을 표시한다 — 하와이 FAVN 과 같은 처리.
+      entryWaitAfterTiter: { days: 120, basisReceivedDate: true },
+      // ⛔ entryValidityMonths 미선언 — 괌은 FAVN 결과의 유효기간 상한을 공개 자료에 명시하지
+      //    않는다. 하와이(36개월) 값을 복제하지 말 것.
+    },
+    importPermit: { applyDeadlineDays: 30, docName: 'Animal Entry Permit' },
   },
   // ── 브라질 (MAPA 규정 / VIGIAGRO 현장) ────────────────────────────────
   // ✅ 1차 출처 확보(2026-07-20). **Portaria MAPA nº 741, de 10/12/2024**(DOU 2024-12-12)가

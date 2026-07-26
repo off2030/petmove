@@ -81,13 +81,22 @@ function departFromData(data: Record<string, unknown>): string {
  * https://www.cdc.gov/importation/dogs/rabies-free-low-risk-countries.html
  */
 export function validateUsDogEntryDate(v: string, ctx: DateRuleContext): string | null {
-  if (!v || !matchesDestinationKey(ctx.destination, 'usa')) return null
+  // CDC 규칙이라 **미국령 전체**에 걸린다 — 괌도 같은 연방 규정을 받는다(DOAG 브로슈어
+  //   INTERNATIONAL ARRIVALS: "Dogs must be at least 6 months of age", 2024-08-01 시행).
+  //   ⚠️ 하와이는 아직 이 목록에 없다 — 미국의 주라 같은 규칙인데 저장 거부가 안 걸려 있다
+  //   (기존 상태 유지, 별도 판단 필요).
+  const key = matchesDestinationKey(ctx.destination, 'usa')
+    ? '미국'
+    : matchesDestinationKey(ctx.destination, 'guam')
+      ? '괌'
+      : ''
+  if (!v || !key) return null
   if (readSpecies(ctx.data) !== 'dog') return null
   const birth = readDate(ctx.data, 'birth_date')
   if (!birth) return null
   const earliest = addMonths(birth, 6)
   if (earliest && v < earliest) {
-    return `개는 생후 6개월이 되는 ${fmt(earliest)}부터 미국에 입국할 수 있어요.`
+    return `개는 생후 6개월이 되는 ${fmt(earliest)}부터 ${key}에 입국할 수 있어요.`
   }
   return null
 }
