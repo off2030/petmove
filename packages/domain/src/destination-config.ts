@@ -548,25 +548,23 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 광견병 백신·항체·임상검사·한국 수출/수입검역 카드는 **캐나다와 동일**하게 운용한다
     // (2026-07-26 사용자 지정).
     //
-    // ⚠️ 다만 '미국 입국 때 면역 유효기간이 남아있어야 해요'(buildRabiesCard 자동 문장)는
+    // ⚠️ '미국 입국 때 면역 유효기간이 남아있어야 해요'(buildRabiesCard 자동 문장)는
     //   **연방 기준으로는 사실이 아니다** — 접종 자체를 요구하지 않기 때문이다(2026-07-26 조사).
-    //   접종이 실제로 필요한 근거는 **주(州) 법**이다: 39개 주가 광견병 접종을 의무화하고,
-    //   그 주법들은 NASPHV 지침의 최소 연령 12주를 따른다(예: 텍사스 "생후 12주 이상 개·고양이는
-    //   접종 + 접종증명서 지참"). 그래서 자동 문장을 끄고(omitEntryValidity) extraLines 로
-    //   연방/주 구분을 명시한 문구를 쓴다.
-    // ⚠️ 최소 연령 — 주법·백신 라벨은 **12주(84일)**, 한국 귀국 요건(USDA)은 **90일**이다.
-    //   캐나다와 통일한 '달력 3개월'(≈91일)을 그대로 두면 85일 접종 케이스를 앱이 막는다.
-    //   숫자를 바꾸려면 사용자 결정이 필요해 현행 유지(3개월).
+    //   접종이 실제로 필요한 근거는 **주(州) 법**이다: 39개 주가 광견병 접종을 의무화한다.
+    //   그래서 자동 문장을 끄고(omitEntryValidity) 카드 문구를 직접 지정한다
+    //   (destination-overrides 의 usa['rabies-vaccine-1'] description — 사용자 확정 3줄).
+    //
+    // ⚠️ 최소 연령 '생후 3개월' 은 조사로 확정된 값이다(2026-07-26). 미국 백신 라벨은 제조사마다
+    //   갈린다 — RABVAC 3(Elanco)·Defensor 3(Zoetis)는 "3 months of age or older",
+    //   IMRAB 3(Boehringer)·Nobivac Rabies(Merck)는 "12 weeks of age or older".
+    //   전국 지침인 NASPHV Compendium 은 "All dogs and cats should be vaccinated against rabies
+    //   at 3 months of age", 한국 귀국 요건(USDA)은 90일이다. 3개월은 12주보다 엄격해서
+    //   **모든 라벨·주법·한국 귀국 요건을 동시에 만족**한다 → 12주로 완화하지 말 것.
     rabies: {
       doses: 1,
       minAgeDays: 91,
       minAgeMonths: 3,
       minAgeLabel: '생후 3개월',
-      validityLine: '증명서에 백신 유효기간이 적혀 있어야 그대로 인정돼요. 적혀 있지 않으면 접종일부터 1년으로만 인정돼요.',
-      extraLines: [
-        '미국 연방 입국 요건은 아니지만, 접종을 요구하는 주가 많아요.',
-        '미국 도착일에 면역 유효기간이 남아있어야 해요.',
-      ],
     },
     titer: { need: 'return-only' },
     appSupported: true,

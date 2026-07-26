@@ -562,18 +562,27 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // 광견병 백신·항체 — **캐나다와 동일**(2026-07-26 사용자 지정). '한국 귀국용' 전용
     // 문구·왕복 한정·90일 미만 면제(us-return-rabies-or-other)를 모두 걷어내고 캐나다처럼
     // 프로파일 파생 표준 카드 + 귀국용 항체 문형을 쓴다.
-    'rabies-vaccine-1': buildRabiesCard({
-      destKey: 'usa',
-      label: '미국',
-      // '미국 입국 때 면역 유효기간이…' 자동 문장을 끈다 — 연방은 접종 자체를 요구하지
-      // 않아 입국 요건으로 단정하면 거짓이 된다(2026-07-26 조사). 대체 문구는 프로파일
-      // extraLines 에 있다(연방 아님 + 주 다수 요구 + 도착일 유효).
-      omitEntryValidity: true,
-      validationIds: [
-        'us.rabies-prime-after-3months-old',
-        'us.rabies-booster-within-prime-validity',
-      ],
-    }),
+    'rabies-vaccine-1': {
+      ...buildRabiesCard({
+        destKey: 'usa',
+        label: '미국',
+        // '미국 입국 때 면역 유효기간이…' 자동 문장을 끈다 — 연방은 접종 자체를 요구하지
+        // 않아 입국 요건으로 단정하면 거짓이 된다(2026-07-26 조사).
+        omitEntryValidity: true,
+        validationIds: [
+          'us.rabies-prime-after-3months-old',
+          'us.rabies-booster-within-prime-validity',
+        ],
+      }),
+      // 문구는 **사용자가 불러준 3줄 그대로**(2026-07-26). 다듬거나 줄을 더하지 말 것.
+      // buildRabiesCard 의 고정 문장 순서(최소연령 → extraLines)로는 '연방/주' 줄을 최소연령
+      // **앞**에 둘 수 없어 description 만 명시 지정한다. 나머지(제목·완료문구·입력 잠금
+      // earliest·검증 id)는 그대로 파생값을 쓴다.
+      // ⚠️ 캐나다에서 함께 넘어왔던 두 줄은 사용자가 뺐다 — 되살리지 말 것:
+      //   '증명서에 백신 유효기간이 적혀 있어야…'(CFIA 고유 규정) / '미국 도착일에 면역 유효기간이…'
+      description:
+        '광견병 백신을 접종하세요.\n\n미국 연방 입국 요건은 아니지만, 접종을 요구하는 주가 많아요.\n생후 3개월이 지난 후에 접종해야 해요.',
+    },
     'rabies-titer': {
       description:
         '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n미국 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
