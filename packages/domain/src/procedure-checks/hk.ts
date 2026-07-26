@@ -5,7 +5,7 @@ import {
   validateHkImportPermitWithin6Months,
   validateIeAdvanceNoticeDate,
   validateImportPermitNotAfterDeparture,
-  violatesRabiesEntryWait,
+  violatesHkRabiesDoseWindow,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
@@ -145,9 +145,9 @@ export const HK_CHECKS: ProcedureCheck[] = [
     id: 'hk.rabies-min-30days-before-departure',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 접종은 출국일 30일 이상 전',
+    title: '증명서에 적을 수 있는 접종일 (출국 30일~1년 전)',
     description:
-      'AFCD DC-02v05 11(c): "vaccinated against rabies not less than 30 days … prior to export." 최근 접종 기준이고 유효 부스터는 면제. 저장 거부(validateRabiesEntryWait)와 **같은 판정 함수**(violatesRabiesEntryWait — 프로파일 entryWaitDaysAfterVaccine=30 파생)를 쓴다.',
+      'AFCD DC-02v05 11(c) / VC-DC2 (c): "vaccinated against rabies not less than 30 days and not more than 1 year prior to export." 증명서는 접종일을 **한 칸**에 적는 구조라, 30일~1년 창을 만족하는 dose 가 하나라도 있어야 한다. 저장 거부(validateRabiesEntryWait 의 홍콩 분기)와 **같은 판정 함수**(violatesHkRabiesDoseWindow). ⛔ 공용 violatesRabiesEntryWait 로 되돌리지 말 것 — 유효 부스터 면제 때문에 "부스터는 30일 미달 + 직전 접종은 1년 초과"인 케이스가 통과했다(2026-07-26).',
     severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
@@ -157,14 +157,15 @@ export const HK_CHECKS: ProcedureCheck[] = [
 
       const latest = rabies[rabies.length - 1]
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      if (violatesRabiesEntryWait(data, dep, destination)) {
+      if (violatesHkRabiesDoseWindow(data, dep)) {
         return {
           ok: false,
-          message: '광견병 접종 후 30일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.',
+          message:
+            '광견병 접종 후 30일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.',
           offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
-      return { ok: true, message: `최근 접종(${latest.date}) → 입국(${dep}) 30일 이상.` }
+      return { ok: true, message: `입국(${dep}) 기준 30일~1년 창을 만족하는 접종이 있음.` }
     },
   },
   {

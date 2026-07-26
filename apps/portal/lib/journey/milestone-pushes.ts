@@ -5,6 +5,7 @@ import {
   findDestinationKey,
   flattenCaseForDestination,
   resolveDone,
+  usesRabiesTiter,
   type CaseRow,
 } from '@petmove/domain'
 import { destinationTokens, petLabel } from './reminders'
@@ -55,9 +56,15 @@ export function collectMilestonePushes(caseRow: CaseRow): MilestonePush[] {
   const tokens = destinationTokens(caseRow) // 한글 국가명 토큰들(예: ['일본'])
   const out: MilestonePush[] = []
 
-  // 광견병 항체검사 — 글로벌(rabies_titer_records) 검사라 케이스당 1회. 모든 목적지 공통
-  // (EU 등 입국에 항체검사가 필수인 목적지도 포함 — 목적지 제한 없음).
-  if (resolveDone('has-titer-entry', caseRow)) {
+  // 광견병 항체검사 — 글로벌(rabies_titer_records) 검사라 케이스당 1회.
+  // 단 **항체검사를 쓰는 목적지가 하나라도 있을 때만** 보낸다(2026-07-26). 홍콩·아랍에미리트는
+  // 입국 요건도 아니고(titer.need 'none') 귀국 때도 면제(광견병 비발생국)라 여정에 항체 카드가
+  // 아예 없는데, 기록용으로 입력한 값 때문에 "검사가 완료됐어요" 푸시가 나가고 있었다.
+  // 목적지 미입력 케이스는 여정이 정해지기 전이라 기존대로 보낸다.
+  if (
+    resolveDone('has-titer-entry', caseRow) &&
+    (tokens.length === 0 || tokens.some((t) => usesRabiesTiter(t)))
+  ) {
     out.push({
       key: `${caseRow.id}|titer`,
       title: APP_TITLE,

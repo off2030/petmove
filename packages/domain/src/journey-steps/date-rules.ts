@@ -8,7 +8,7 @@ import {
   parseDestinations,
 } from '../destination-config'
 import { getDepartureDate, getVetVisitDate, readByDestValue } from '../destination-scoped-fields'
-import { addDays, addMonths, addYears, resolveValidUntil } from '../procedure-checks/utils'
+import { addDays, addMonths, addYears, resolveValidUntil, todayKst } from '../procedure-checks/utils'
 import { msgTiterBeforeVaccine } from '../procedure-checks/messages'
 import type { StepDefinition } from './types'
 
@@ -450,6 +450,12 @@ export function violatesTwRabiesShipmentWait(
  */
 export function validateRabiesEntryWait(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
+  // 홍콩은 판정 모양이 달라 전용 함수로 빠진다(violatesHkRabiesDoseWindow 주석 참고).
+  if (matchesDestinationKey(ctx.destination, 'hongkong')) {
+    return violatesHkRabiesDoseWindow(ctx.data, v)
+      ? '광견병 접종 후 30일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.'
+      : null
+  }
   const days = rabiesEntryWaitDays(ctx.destination)
   if (days <= 0) return null
   if (violatesRabiesEntryWait(ctx.data, v, ctx.destination)) {
@@ -457,6 +463,53 @@ export function validateRabiesEntryWait(v: string, ctx: DateRuleContext): string
     return `광견병 접종 후 ${days}일이 지나야 ${ko}에 입국할 수 있어요. 날짜를 확인하세요.`
   }
   return null
+}
+
+/**
+ * 홍콩 — 증명서에 **적을 수 있는** 광견병 접종일이 하나도 없으면 위반.
+ *
+ * 다른 나라와 판정 모양이 다르다. AFCD VC-DC2 (c)항은 접종일을 **한 칸**에 적고 그 날짜가
+ * "출국 30일 초과 ~ 1년 미만"임을 수의사가 서명하는 구조다(DC-02v05 11(c) "not less than
+ * 30 days and not more than 1 year prior to export"). 그래서 '최근 접종 기준 + 유효 부스터
+ * 면제'(violatesRabiesEntryWait)로는 홍콩을 판정할 수 없다 — 유효기간 끝자락에 부스터를
+ * 맞으면 부스터는 30일 미달, 직전 접종은 1년 초과가 되어 **적을 수 있는 날짜가 하나도
+ * 없는데** 부스터 면제로 통과해 버린다(1차 2026-01-01 → 부스터 2026-12-31 → 출국
+ * 2027-01-25, 2026-07-26 발견·사용자 지정으로 예외 처리).
+ *
+ * 그래서 홍콩만 "조건을 만족하는 dose 가 존재하는가"로 본다. 흔한 경로(연 1회 부스터 뒤
+ * 한참 있다 출국)는 직전 접종이나 부스터 중 하나가 조건을 만족해 그대로 통과하므로 기존
+ * 동작과 달라지지 않는다.
+ *
+ * 1년은 valid_until(사용자가 고른 면역 유효기간)이 아니라 **접종일 + 12개월**로 센다 —
+ * 규정의 1년은 면역 유효기간이 아니라 접종일 기준 절대 상한이기 때문이다(홍콩은
+ * oneYearVaccineOnly 라 실무상 같은 값이지만 근거가 다르다).
+ * 30일은 프로파일(rabies.entryWaitDaysAfterVaccine)에서 파생해 단일 출처를 유지한다.
+ *
+ * **모든 접종의 1년 창이 이미 지났으면 판정하지 않는다**(false). 그 상태는 날짜를 어떻게
+ * 옮겨도 해결되지 않고 재접종만이 답이라, 저장을 막으면 항공권 날짜조차 못 넣는다.
+ * 이미 만료 주의(common.rabies-validity-expired)가 재접종을 안내하고 있다 —
+ * 조치 불가능한 차단·중복 주의를 만들지 않는다는 기존 원칙과 같다.
+ */
+export function violatesHkRabiesDoseWindow(
+  data: Record<string, unknown>,
+  entryOrDeparture: string,
+): boolean {
+  const target = (entryOrDeparture ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(target)) return false
+  const dates = readDateArray(data, 'rabies_dates')
+  if (dates.length === 0) return false
+  const today = todayKst()
+  const stillUsable = dates.some((d) => {
+    const until = addMonths(d, 12)
+    return !!until && until >= today
+  })
+  if (!stillUsable) return false
+  const waitDays = rabiesEntryWaitDays('hongkong')
+  return !dates.some((d) => {
+    const usableFrom = addDays(d, waitDays)
+    const usableUntil = addMonths(d, 12)
+    return !!usableFrom && !!usableUntil && target >= usableFrom && target <= usableUntil
+  })
 }
 
 /** 대기 선언국 중 이 케이스가 매칭되는 키 — 메시지의 나라 이름 출처. */

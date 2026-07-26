@@ -1621,6 +1621,23 @@ export function isRabiesTiterHiddenForOneWay(
   return isRabiesTiterReturnOnly(destination)
 }
 
+/**
+ * 이 목적지 여정에 광견병 항체검사(RNATT)가 등장하는가 — 입국용이든 한국 귀국용이든.
+ *
+ * false 인 목적지는 **여정에 항체 카드 자체가 없다**: 입국 요건도 아니고(titer.need 'none')
+ * 한국 귀국 때도 면제되는(광견병 비발생국) 조합 — 홍콩·아랍에미리트가 여기 해당한다.
+ * 이 나라들도 `vaccines` 에 rabies_titer 를 남겨 기록 입력은 받으므로, 입력 사실만 보고
+ * 안내·푸시를 내보내면 **여정에 없는 단계의 알림**이 나간다(2026-07-26 항체 완료 푸시 수정).
+ *
+ * 'return-only'(미국·캐나다 등)는 true — 편도에선 카드가 숨지만 목적지 자체는 항체를 쓴다.
+ */
+export function usesRabiesTiter(destination: string | null | undefined): boolean {
+  const need = getDestinationOverride(destination)?.titer?.need
+  if (need && need !== 'none') return true
+  // 귀국용 — 광견병 발생국이면 한국 재입국에 항체검사가 필요하다(비발생국은 면제).
+  return !isRabiesFreeOrigin(destination)
+}
+
 /** 단일 목적지 토큰에 매칭되는 오버라이드 반환. 없으면 null. */
 export function getDestinationOverride(destination: string | null | undefined): DestinationOverride | null {
   if (!destination) return null
