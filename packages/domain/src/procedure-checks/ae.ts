@@ -1,15 +1,12 @@
 import {
   buildDateRuleContext,
   violatesRabiesEntryWait,
-  validateAeImportPermitWithin90Days,
-  validateImportPermitNotAfterDeparture,
   validateParasiteDateForDestination,
   validateRabiesPrimeAgeForDestination,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   daysBetween,
-  readScopedImportPermitFiled,
   findRabiesValidityBreaks,
   findSameGuardianCases,
   matchBannedBreed,
@@ -370,30 +367,12 @@ export const AE_CHECKS: ProcedureCheck[] = [
   },
   // ── 수입 허가(MOCCAE) — 90일 유효 (2026-07-22 신설) ──
   // 입력 차단(validateImportPermitFiledDate case 'uae')과 같은 함수를 본다.
-  {
-    id: 'ae.import-permit-within-90days',
-    country: COUNTRY,
-    category: '수입허가',
-    title: '수입 허가는 출국 90일 이내 신청',
-    description:
-      'MOCCAE 수입 허가는 발급일로부터 90일 유효(ae.ts 헤더). 너무 일찍 신청하면 입국 전에 만료된다. 출국일 이후 신청도 불가. 입력 차단과 같은 함수(validateAeImportPermitWithin90Days).',
-    severity: 'warning',
-    addedAt: '2026-07-22',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const filed = readScopedImportPermitFiled(data, destination)
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
-      const dep = readDepartureDate(caseRow, destination)
-      if (!dep) return SKIP
-      const msg =
-        validateImportPermitNotAfterDeparture(filed, dep) ??
-        validateAeImportPermitWithin90Days(filed, dep)
-      if (msg) {
-        return { ok: false, message: msg, offendingPaths: ['import_permit_application_date'] }
-      }
-      return { ok: true, message: `신청일(${filed}) 출국일(${dep}) 기준 90일 이내.` }
-    },
-  },
+  // ── 수입허가 ──
+  // 2026-07-26 제거: 카드가 버튼 완료 모델로 바뀌어 신청일을 입력받지 않는다
+  //   (destination-overrides uae import-permit). 홍콩·말레이시아·인도네시아와 같은 정리로,
+  //   신청일 기준이던 ae.import-permit-within-90days(출국일 순서 + 90일 유효)를 삭제했다.
+  //   90일 유효는 카드 문구가 안내한다.
+
 
   // ── 검역 일정 (2026-07-22 신설) — 필리핀 골격 복제 시 비어 있던 자리 ──
   {

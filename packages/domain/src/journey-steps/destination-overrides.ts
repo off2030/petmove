@@ -916,10 +916,22 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // 마감 배지 제거(2026-07-26) — base 의 '출국 30일 전'을 물려받고 있었는데, MOCCAE 는
       //   신청 마감일을 정하지 않는다. 같은 근거로 마감 알림·발급 푸시는 이미 만들지 않았고
       //   (reminders.ts·milestone-pushes.ts 주석), 배지만 남아 없는 기한을 말하고 있었다.
-      //   90일 유효 상한은 카드 문구와 ae.import-permit-within-90days 가 담당한다.
-      // ⚠️ 카드 모델은 그대로(신청→발급 2단계) — 보호자가 온라인으로 직접 신청해 신청일을 안다.
+      //   90일 유효 상한은 카드 문구가 담당한다.
+      // 버튼 완료 카드 — 홍콩·말레이시아·인도네시아와 같은 모델로 통일(2026-07-26 사용자 결정).
+      //   보호자가 MOCCAE 에 온라인으로 직접 신청하지만, 카드가 요구하던 신청일 검증(구
+      //   ae.import-permit-within-90days = 출국일 순서 + 90일 유효)을 걷고 '확인'만 받는다.
       deadline: undefined,
-      validationIds: ['ae.import-permit-within-90days'],
+      buttonComplete: true,
+      done: 'dated:import_permit_application_date',
+      inputs: [
+        {
+          key: 'import_permit_application_date',
+          label: '허가 취득일',
+          type: 'date',
+          helpText: '수입 허가증을 받은 날짜',
+        },
+      ],
+      validationIds: [],
       links: [
         {
           url: 'https://moccae.gov.ae/en/services/import-permit-pets',

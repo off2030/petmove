@@ -1372,12 +1372,9 @@ export function validateImportPermitFiledDate(
         validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
         validateTwImportPermitLeadTime(filedDate, departureDate, { subject: 'filed' })
       )
-    // 아랍에미리트 — 출국일 이후 신청 불가 + MOCCAE 허가 90일 유효.
-    case 'uae':
-      return (
-        validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
-        validateAeImportPermitWithin90Days(filedDate, departureDate)
-      )
+    // 아랍에미리트 — 검증 없음(2026-07-26, 홍콩·말레이시아·인도네시아와 같은 정리).
+    //   카드가 버튼 완료 모델로 바뀌어 신청일 입력 자체가 없다. 90일 유효는 카드 문구가 안내.
+    //   (validateAeImportPermitWithin90Days 는 싱가포르가 계속 쓰므로 함수는 남는다.)
     // 싱가포르 — 출국일 이후 신청 불가 + 허가 90일 유효(도착일 기준 90일 이내 신청 — 더
     // 이르면 도착 전 만료. 당일 도착 노선이라 출발일 앵커 = 도착일 근사). UAE 와 동일
     // 구조(90일 유효)라 같은 함수 재사용 — 문구도 목적지 중립.
