@@ -1382,9 +1382,16 @@ const US_CDC_FORM_RECEIPT: RequiredDocSpec = {
 }
 
 const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
+  // 순서·문구는 **하와이·캐나다와 같은 표준**을 따른다(2026-07-26 사용자 지적으로 정렬).
+  //  - 순서: 항체 결과지 → CDC 접수증 → 별지25호 → 한국 수출 검역증 → 귀국 건강증명서 →
+  //    한국 수입 검역증. (CDC 접수증이 항체보다 앞에 있던 것을 하와이와 같은 자리로 내렸다.)
+  //  - 한국 수출 동물검역증은 **공용 사양(KR_EXPORT_QUARANTINE_CERT)** 을 쓴다. 미국만
+  //    전용 사본을 두고 '미국 도착 주나 항공사가 요구할 수 있으니'로 바꿔 놨었는데, 그
+  //    '도착 주'는 같은 날 삭제된 카드 개념이라 문구가 유령이 됐다. 전용 사본 제거.
   usa: [
-    US_CDC_FORM_RECEIPT,
     {
+      // 문구 = 베트남 가족(캐나다 등) 귀국용 항체 표준문 — 나라 이름만 다르다.
+      // 구 문구('동물병원을 통해'·'원본과 사본을 함께 보관하세요')는 미국에만 있던 변종.
       id: 'us-rabies-titer-result',
       name: '광견병 항체 검사 결과지',
       source: '동물병원',
@@ -1393,21 +1400,12 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
       roundTripOnly: true,
       minReturnAgeDays: 90,
       description:
-        '검사를 의뢰한 동물병원을 통해 발급받아요.\n\n미국 입국용이 아니라 한국 귀국용 서류예요. 한국 도착일 기준 채혈일 2년 이내의 결과지를 준비하세요.\n\n원본과 사본을 함께 보관하세요.',
+        '검사를 의뢰한 동물병원에서 발급받아요.\n\n미국 입국에는 필요 없지만 한국 귀국 때 반드시 원본이 필요해요. 유효기간은 2년이에요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'rabies-titer',
     },
+    US_CDC_FORM_RECEIPT,
     KR_FORM25_VACCINATION_HEALTH_CERT,
-    {
-      id: 'us-kr-export-quarantine-cert',
-      name: '한국 수출 동물검역증',
-      source: '농림축산검역본부',
-      kind: 'step',
-      stepRef: 'certificate-issue',
-      group: 'quarantine',
-      description:
-        '한국 수출 검역 후 발급돼요.\n\n미국 도착 주나 항공사가 요구할 수 있으니 원본을 잘 보관하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
-      previewStepId: 'certificate-issue',
-    },
+    KR_EXPORT_QUARANTINE_CERT,
     {
       id: 'us-usda-health-cert',
       name: 'USDA 승인 국제 건강증명서',

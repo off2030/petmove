@@ -10193,7 +10193,7 @@
          개는 생후 6개월이 되는 2026년 7월 1일부터 미국에 입국할 수 있어요.
    상황별 설명문 0건
    노출 카드: intake, microchip, rabies-vaccine-1, flight-purchase, us-cdc-dog-import-form, vet-visit, document-checklist, certificate-issue, departure
-   필수 서류: us-cdc-dog-import-form-receipt, form25, us-kr-export-quarantine-cert
+   필수 서류: us-cdc-dog-import-form-receipt, form25, kr-export-quarantine-cert
    알림 0건
 
 ════════════════════════════════════════════════════════════════════════════
@@ -10206,7 +10206,7 @@
    주의·차단 0건
    상황별 설명문 0건
    노출 카드: intake, microchip, rabies-vaccine-1, flight-purchase, vet-visit, document-checklist, certificate-issue, departure
-   필수 서류: form25, us-kr-export-quarantine-cert
+   필수 서류: form25, kr-export-quarantine-cert
    알림 0건
 
 ════════════════════════════════════════════════════════════════════════════
@@ -10219,5 +10219,5 @@
    주의·차단 0건
    상황별 설명문 0건
    노출 카드: intake, microchip, rabies-vaccine-1, rabies-titer, flight-purchase, vet-visit, document-checklist, certificate-issue, departure, us-export-health-cert, kr-import-quarantine
-   필수 서류: form25, us-kr-export-quarantine-cert, us-usda-health-cert, kr-import-quarantine-cert
+   필수 서류: form25, kr-export-quarantine-cert, us-usda-health-cert, kr-import-quarantine-cert
    알림 0건
