@@ -2327,10 +2327,15 @@ function buildRabiesCard(opts: {
   }
   // 1회국은 '유효한 백신이 있는가'로 완료 판정(2회국은 1차 입력만으로 완료).
   if (!twoDose) card.done = 'has-rabies-valid'
-  if (p.minAgeDays) {
+  // ⚠️ 게이트가 `p.minAgeDays` **하나만** 보면, 달력 개월만 선언한 목적지(괌 minAgeMonths: 3)
+  //   에서 earliest 를 아예 안 만들고 **base 카드의 91일(일본 값)이 그대로 샌다** — 카드 잠금
+  //   (91일 고정)과 룰(달력 3개월)이 어긋나, 2월생처럼 달력 3개월이 89일인 아이가 규정을
+  //   지켰는데 저장이 거부된다(2026-07-26 괌에서 발견. 같은 부류의 사고가 2026-07-19 베트남).
+  //   daysAfter 는 타입 주석대로 **표시·정렬용 근사치**라, 개월만 있으면 환산해 채운다.
+  if (p.minAgeDays || p.minAgeMonths) {
     card.earliest = {
       anchor: 'birth',
-      daysAfter: p.minAgeDays,
+      daysAfter: p.minAgeDays ?? Math.round((p.minAgeMonths ?? 0) * 30.4),
       ...(p.minAgeMonths ? { monthsAfter: p.minAgeMonths } : {}),
     }
   }
