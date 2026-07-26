@@ -14,7 +14,6 @@ import {
   validateAdvanceNotification,
   validateExportQuarantineDate,
   validateImportQuarantineDate,
-  validateUsCdcFormDate,
   validateUsExportHealthCertDate,
   validateJpExportReservationDate,
   validateJpExportVisitDate,
@@ -1443,13 +1442,7 @@ export function StepDetailView({
       // 정확한 후속 경로를 안내해야 하므로 이 폼에서는 구조적 모순만 차단한다.
       return null
     }
-    if (step.id === 'us-cdc-dog-import-form') {
-      return validateUsCdcFormDate(importQuarantineDate.trim(), {
-        data: (caseRow?.data ?? {}) as Record<string, unknown>,
-        destination: caseRow?.destination ?? null,
-        departureDate: caseRow?.departure_date ?? null,
-      })
-    }
+    // CDC 신고(us-cdc-dog-import-form)는 날짜 검증 없음 — 전부 삭제(2026-07-26 사용자 결정).
     // 하와이 귀국 서류(hi-export-health-cert)도 같은 USDA 절차라 본토와 같은 함수(2026-07-26).
     if (step.id === 'us-export-health-cert' || step.id === 'hi-export-health-cert') {
       return validateUsExportHealthCertDate(importQuarantineDate.trim(), {

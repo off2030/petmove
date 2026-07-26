@@ -1,7 +1,6 @@
 import {
   buildDateRuleContext,
   validateImportQuarantineDate,
-  validateUsCdcFormDate,
   validateUsDogEntryDate,
   validateUsExportHealthCertDate,
 } from '../journey-steps/date-rules'
@@ -10,7 +9,6 @@ import type { ProcedureCheck } from './types'
 import {
   findRabiesValidityBreaks,
   addDays,
-  addMonths,
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
@@ -200,50 +198,9 @@ export const US_CHECKS: ProcedureCheck[] = [
       }
     },
   },
-  // us.cdc-form-required(제출일 미입력 주의)는 2026-07-26 사용자 결정으로 삭제 —
-  // 카드 미완료 상태와 중복이고, 항공권만 넣으면 여행 한참 전부터 노란 경고가 떠 있었다.
-  // 제출 독려는 알림(D-7·D-1)이 담당하고, 여기는 날짜 정합성(us.cdc-form-date-valid)만 남긴다.
-  {
-    id: 'us.cdc-form-date-valid',
-    // 하와이 — 미국의 주(州)라 CDC 연방 규칙이 그대로 적용(카드도 base 공유, 2026-07-26).
-    country: ['usa', 'hawaii'],
-    category: '신고',
-    title: 'CDC Dog Import Form 제출일',
-    description: 'CDC Dog Import Form 제출일은 미국 도착일보다 늦을 수 없음.',
-    severity: 'warning',
-    addedAt: '2026-07-25',
-    run: ({ caseRow, destination }) => {
-      const ctx = buildDateRuleContext(caseRow, destination)
-      const filed =
-        typeof ctx.data.us_cdc_form_date === 'string'
-          ? ctx.data.us_cdc_form_date.slice(0, 10)
-          : ''
-      if (!filed) return SKIP
-      const error = validateUsCdcFormDate(filed, ctx)
-      if (error) {
-        return {
-          ok: false,
-          message: error,
-          offendingPaths: ['us_cdc_form_date', 'entry_date'],
-        }
-      }
-      const entry =
-        typeof ctx.data.entry_date === 'string'
-          ? ctx.data.entry_date.slice(0, 10)
-          : typeof ctx.data.departure_flight_date === 'string'
-            ? ctx.data.departure_flight_date.slice(0, 10)
-            : ''
-      if (entry && addMonths(filed, 6) < entry) {
-        return {
-          ok: false,
-          message:
-            'CDC Dog Import Form 접수증은 발급 후 6개월 동안 유효해요. 미국 입국 전에 다시 제출하세요.',
-          offendingPaths: ['us_cdc_form_date', 'entry_date'],
-        }
-      }
-      return { ok: true, message: 'CDC Dog Import Form 제출일과 6개월 유효기간이 유효.' }
-    },
-  },
+  // CDC 신고(us-cdc-dog-import-form) 관련 검증은 전부 삭제(2026-07-26 사용자 결정) —
+  // us.cdc-form-required(미입력 주의)·us.cdc-form-date-valid(날짜 정합·6개월 유효)·
+  // validateUsCdcFormDate(입력 차단)·알림 D-7·D-1 모두. 카드(안내·제출일 기록)만 남긴다.
   {
     id: 'us.import-inspection-date-valid',
     country: COUNTRY,

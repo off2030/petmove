@@ -35,7 +35,6 @@ import {
   validateTwEntryDate,
   buildDateRuleContext,
   validateImportQuarantineDate,
-  validateUsCdcFormDate,
   validateUsDogEntryDate,
   validateUsExportHealthCertDate,
   writeByDestValue,
@@ -2123,13 +2122,7 @@ export async function updateSimpleDateField(
       if (cdcDestKey !== 'usa' && cdcDestKey !== 'hawaii') {
         return { ok: false, error: '미국·하와이 여정에서만 저장할 수 있는 단계입니다.' }
       }
-      if (v) {
-        const validationError = validateUsCdcFormDate(
-          v,
-          buildDateRuleContext(existing as CaseRow, destination),
-        )
-        if (validationError) return { ok: false, error: validationError }
-      }
+      // 날짜 검증 없음 — CDC 신고 검증은 전부 삭제(2026-07-26 사용자 결정, 기록용 날짜만 저장).
     }
     const caseDestStr = (existing as { destination: string | null }).destination
     const token = resolveWriteToken(caseDestStr, prev, destination)

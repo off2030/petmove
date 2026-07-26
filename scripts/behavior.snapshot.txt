@@ -10347,9 +10347,7 @@
    상황별 설명문 0건
    노출 카드: intake, us-entry-eligibility, microchip, flight-purchase, us-state-requirements, us-cdc-dog-import-form, vet-visit, document-checklist, certificate-issue, departure
    필수 서류: us-cdc-dog-import-form-receipt, form25, us-kr-export-quarantine-cert
-   알림 2건
-     · 미국 입국 전 CDC Dog Import Form을 제출하고 접수증을 보관하세요
-     · 미국 출발 전 CDC Dog Import Form 접수증과 마이크로칩 정보를 다
+   알림 0건
 
 ════════════════════════════════════════════════════════════════════════════
 [시나리오] 미국 — 고양이 편도

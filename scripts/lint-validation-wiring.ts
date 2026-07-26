@@ -143,6 +143,8 @@ const UNVALIDATED_OK: Record<string, string> = {
   //   완료 추적용(강아지 라이선스·관부가세·국경검사 예약). 계류장 예약은 sg.quarantine-
   //   reservation-after-titer(채혈 이후) 룰이 있어 제외.
   'sg-dog-licence': '절차 완료일 추적용 — 날짜 순서 제약 없음',
+  // CDC 신고 — 검증·주의·알림 전부 삭제(2026-07-26 사용자 결정). 제출일은 기록용.
+  'us-cdc-dog-import-form': '검증 전부 삭제(2026-07-26 사용자 결정) — 제출일은 기록용',
   // sg-gst-permit·sg-border-inspection 은 2026-07-25 검증 추가로 예외 목록에서 제거.
 }
 
@@ -666,7 +668,8 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
     '주의만: 절차 완료일 추적용 — 날짜 자체 제약 없음. 라이선스↔수입허가 순서는 수입허가 쪽 차단(validateSgImportPermitAfterDogLicence)·주의(sg.dog-licence-before-import-permit)가 담당',
   'sg-gst-permit': '차단: validateSgGstPermitDate(도착 전 + 도착 14일 이내)',
   'sg-border-inspection': '차단: validateSgBorderInspectionDate(도착 최소 5일 전)',
-  'us-cdc-dog-import-form': '차단: validateUsCdcFormDate',
+  'us-cdc-dog-import-form':
+    '주의만: 검증 전부 삭제(2026-07-26 사용자 결정) — 제출일은 기록용, 날짜 제약·주의·알림 없음',
   'us-export-health-cert': '차단: validateUsExportHealthCertDate',
   // ── 검사·검역·증명서 (한국 측 공통) ──────────────────────────────────────
   'vet-visit': '차단: validateVetVisitDate(출국 전 윈도우)',

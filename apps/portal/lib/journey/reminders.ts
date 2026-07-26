@@ -747,7 +747,8 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
       }
     } else if (key === 'usa') {
       // 미국은 전국 공통의 단일 신청 마감이 없다. 그래서 '법정 마감'을 만들지 않고
-      // 도착 주 확인·CDC 신고 준비 시점을 여유 알림으로 보낸다.
+      // 도착 주 확인 시점을 여유 알림으로 보낸다.
+      // CDC 신고 알림(D-7·D-1)은 2026-07-26 사용자 결정으로 삭제 — CDC 카드는 안내·기록만.
       const stateConfirmed =
         str(data.us_destination_state).trim().length > 0 &&
         data.us_state_requirements_confirmed === 'yes'
@@ -761,29 +762,6 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
           now,
         )
         if (rState) out.push(rState)
-      }
-
-      const species = str(data.species).trim().toLowerCase()
-      const dog = species === 'dog' || species === '개' || species === '강아지'
-      if (dog && entry && !str(data.us_cdc_form_date)) {
-        const r7 = leadReminder(
-          flat,
-          `${token}|us-cdc-form-7`,
-          entry,
-          7,
-          '미국 입국 전 CDC Dog Import Form을 제출하고 접수증을 보관하세요.',
-          now,
-        )
-        if (r7) out.push(r7)
-        const r1 = leadReminder(
-          flat,
-          `${token}|us-cdc-form-1`,
-          entry,
-          1,
-          '미국 출발 전 CDC Dog Import Form 접수증과 마이크로칩 정보를 다시 확인하세요.',
-          now,
-        )
-        if (r1) out.push(r1)
       }
 
       // 미국 → 한국 건강증명서의 준비 창은 미국 출국 30일 전부터. return_date 를 미국

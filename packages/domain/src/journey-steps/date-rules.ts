@@ -87,24 +87,6 @@ export function validateUsDogEntryDate(v: string, ctx: DateRuleContext): string 
 }
 
 /**
- * CDC Dog Import Form은 미국 입국 전에 제출하는 신고서다. 과거 하한은 두지 않고,
- * 입국일 뒤 날짜라는 논리적 모순만 저장 거부한다.
- */
-export function validateUsCdcFormDate(v: string, ctx: DateRuleContext): string | null {
-  if (!v) return null
-  // 하와이 — 미국의 주(州)라 CDC 연방 규칙이 그대로 적용(카드도 base 공유, 2026-07-26).
-  if (
-    !matchesDestinationKey(ctx.destination, 'usa') &&
-    !matchesDestinationKey(ctx.destination, 'hawaii')
-  ) {
-    return null
-  }
-  const entry = departFromData(ctx.data)
-  if (entry && v > entry) return 'CDC Dog Import Form 제출일은 미국 도착일보다 늦을 수 없어요.'
-  return null
-}
-
-/**
  * 일본 입국일(= 출국 항공편 날짜) — 광견병 항체 검사일 + 180일 미만 입국만 hard 차단.
  *
  * 회복 경로가 **없는** 위반만 저장 거부 = "검역 통과를 위해 출국일 자체를 바꾸는 것 외에
