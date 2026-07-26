@@ -751,7 +751,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       entryWaitDaysAfterVaccine: 21,
     },
     // MOCCAE 사전 발급 수입 허가(90일 유효) — 필리핀 SPSIC 자리에 대응한다.
-    importPermit: {},
+    // MOCCAE 수입 허가는 **보호자가 온라인으로 직접 신청**한다 — 로잔이 대행하지 않으므로
+    //   맡기기 상품 항목에서 뺀다(2026-07-26 사용자 확정). 카드 문구도 '온라인으로 신청해요'.
+    //   여정 카드·서류 탭에는 그대로 뜬다 — 여기서 빼는 건 맡기기 항목뿐(대만·호주와 같은 처리).
+    importPermit: { selfApply: true },
     vaccines: ['rabies', 'rabies_titer', 'general', 'external_parasite', 'internal_parasite'],
     extraFields: ['address_overseas', 'entry_airport'],
     // ✅ 앱 노출(2026-07-22) — 9단계 점검을 마치고 켰다. 위에 적어 뒀던 미완 항목은 전부 해소:
@@ -1642,9 +1645,26 @@ export function isRabiesTiterHiddenForOneWay(
  * 'return-only'(미국·캐나다 등)는 true — 편도에선 카드가 숨지만 목적지 자체는 항체를 쓴다.
  */
 export function usesRabiesTiter(destination: string | null | undefined): boolean {
-  const need = getDestinationOverride(destination)?.titer?.need
-  if (need && need !== 'none') return true
-  // 귀국용 — 광견병 발생국이면 한국 재입국에 항체검사가 필요하다(비발생국은 면제).
+  const o = getDestinationOverride(destination)
+  // ① 명시적 제외 — titer.need 'none'. `vaccines` 에 rabies_titer 가 남아 있어도(기록 입력을
+  //    허용하려고 남긴다) 여정에 카드가 없으므로 여기서 끝낸다. 홍콩·아랍에미리트가 이 경우.
+  if (o?.titer?.need === 'none') return false
+  // ② titer 선언이 있으면 쓴다 — need('entry'/'return-only')든 유효기간만(일본 24개월·EU null)이든.
+  //    ⛔ need 만 보던 예전 판정으로 되돌리지 말 것 — 일본·영국·아일랜드·몰타·핀란드·키프로스·
+  //    스위스는 need 를 선언하지 않고 유효기간만 쓰는데, 이들이 전부 광견병 비발생국이라
+  //    ③④를 지나 false 로 떨어졌다(2026-07-26 맡기기 감사에서 발견).
+  if (o?.titer) return true
+  // ③ 귀국용 전용 선언(태국·필리핀 등 구 플래그).
+  if (o?.rabiesTiterForReturnOnly) return true
+  // ④ 백신 목록 선언.
+  const usesTiterVaccine = (o?.vaccines ?? []).some(
+    (v) => (typeof v === 'string' ? v : v.key) === 'rabies_titer',
+  )
+  if (usesTiterVaccine) return true
+  // ⑤ EU 패밀리 — 한국은 EU unlisted 제3국이라 **입국에 항체검사가 필수**다. 프로파일이
+  //    archetype 만 선언하고 titer·vaccines 를 비워 두는 나라(키프로스)가 있어 여기서 받는다.
+  if (o?.archetype === 'eu-family') return true
+  // ⑥ 귀국용 — 광견병 발생국이면 한국 재입국에 항체검사가 필요하다(비발생국은 면제).
   return !isRabiesFreeOrigin(destination)
 }
 

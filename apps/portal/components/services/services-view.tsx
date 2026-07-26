@@ -9,6 +9,7 @@ import {
   DESTINATION_OVERRIDES,
   JOURNEY_STEP_CATALOG,
   getStepsForCase,
+  usesRabiesTiter,
   type CaseRow,
 } from '@petmove/domain'
 import destsData from '@petmove/domain/data/destinations.json'
@@ -278,7 +279,17 @@ function offlineDetail(opts: {
 }): DestDetail {
   const o = DESTINATION_OVERRIDES[opts.destKey]
   const euFam = o?.archetype === 'eu-family'
-  const titerIncluded = o?.rabiesTiterForReturnOnly ? opts.trip === 'round' : true
+  // 항체검사 포함 판정 — **여정에 항체 카드가 있는 목적지인지부터** 본다(2026-07-26).
+  //   예전엔 rabiesTiterForReturnOnly 만 보고 나머지는 전부 true 로 떨어져서, 입국에도 귀국
+  //   에도 항체가 필요 없는 나라(홍콩·아랍에미리트 = titer.need 'none' + 광견병 비발생국)에
+  //   **여정에 없는 '광견병 항체 검사'가 맡기기 상품 목록에 들어가 있었다.** 여정 카드가 유일한
+  //   출처라는 이 파일의 원칙(sortByCardOrder 주석)과도 어긋나던 지점.
+  //   usesRabiesTiter 는 여정 카드 노출·완료 푸시와 같은 판정을 쓴다(단일 출처).
+  const titerIncluded = !usesRabiesTiter(opts.destKey)
+    ? false
+    : o?.rabiesTiterForReturnOnly
+      ? opts.trip === 'round'
+      : true
 
   const items: Array<Prep & { card: string }> = [
     { label: '마이크로칩 삽입 · 동물등록', card: 'microchip' },
@@ -481,7 +492,15 @@ export const OFFLINE_DETAIL: Record<string, DestDetail> = {
 // 그 절차로 오프라인 올케어 비용 상한 +5만원(46→51만). intro·included·비용만 다르고 나머지는 eu 와 동일.
 // ⚠️ 예전엔 destKey:'eu' 한 벌을 네 나라가 공유했다. 사전 통지 카드 id 가 나라마다 달라
 //   (ie/mt/no/cy-advance-notice) 순서 정렬을 못 하므로, 나라별 키로 각각 만든다.
-for (const k of ADVANCE_NOTICE_DESTINATIONS) {
+// ⚠️ **로잔이 사전 통지를 대행하는 나라만** 이 루프를 탄다(2026-07-26 사용자 지정).
+//   ADVANCE_NOTICE_DESTINATIONS 를 그대로 돌리면 홍콩까지 들어와서, 대행하지 않는 '사전 통지'가
+//   맡기기 항목에 뜨는 건 물론 **EU 비용(36~51만)·기간(3~4개월)·EU 동물건강증명서(Annex III)
+//   안내가 홍콩 프로파일 값(21~27만·1.5~2개월)을 통째로 덮어쓰고** 있었다. 홍콩 사전 통지는
+//   화물 운송이라 동물 운송업체가 대신한다 — derivedDetail 로 떨어뜨린다.
+const SERVICE_ADVANCE_NOTICE_DESTINATIONS = ADVANCE_NOTICE_DESTINATIONS.filter(
+  (k) => k !== 'hongkong',
+)
+for (const k of SERVICE_ADVANCE_NOTICE_DESTINATIONS) {
   OFFLINE_DETAIL[destinationKoLabel(k)] = offlineDetail({
     destKey: k,
     introHighlight: '사전 통지',
@@ -568,7 +587,9 @@ const ONLINE_ADVANCE_NOTICE: DestDetail = onlineDetail({
   items: ['EU 동물건강증명서(Annex III) 준비', '사전 통지'],
   period: '최소 3~4개월',
 })
-for (const k of ADVANCE_NOTICE_DESTINATIONS.map(destinationKoLabel)) ONLINE_DETAIL[k] = ONLINE_ADVANCE_NOTICE
+// 오프라인과 같은 명단 — 홍콩 제외(EU Annex III 안내가 홍콩에 나가던 것 차단, 2026-07-26).
+for (const k of SERVICE_ADVANCE_NOTICE_DESTINATIONS.map(destinationKoLabel))
+  ONLINE_DETAIL[k] = ONLINE_ADVANCE_NOTICE
 
 /** 히어로 3장 — 로잔 공통 강점(전문성·경험·앱 편의). 올케어·안심케어 둘 다 사용. */
 const HIGHLIGHTS: Highlight[] = [
