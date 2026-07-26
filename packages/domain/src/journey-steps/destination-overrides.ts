@@ -248,7 +248,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     }),
     'rabies-vaccine-2': {
       description:
-        '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 30일 이상 지나서 접종해야 해요.\n괌은 평생 2회 이상 접종해야 계류에서 나올 수 있어요.\n괌 입국 때 최근 접종의 면역 유효기간이 남아있어야 해요.',
+        '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 30일 이상 지나서 접종해야 해요.\n괌 입국 때 최근 접종의 면역 유효기간이 남아있어야 해요.',
       earliest: { anchor: 'step:rabies-vaccine-1', daysAfter: 30 },
       validationIds: ['gu.rabies-2-doses-required', 'gu.rabies-doses-30days-apart'],
     },
