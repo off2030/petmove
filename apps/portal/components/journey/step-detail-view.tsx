@@ -293,6 +293,10 @@ export function StepDetailView({
   // (isConfirmStep 제외 + 저장은 updateSimpleDateField 로 분기). 완료 판정은 done-resolver
   // dated:<field> 가 날짜(≤오늘)만으로 한다.
   const isSimpleDatedStep = typeof step.done === 'string' && step.done.startsWith('dated:')
+  // 버튼 완료 카드 — 날짜가 의미 없는 신고류(2026-07-26 사용자 결정, CDC 신고가 원형).
+  // 날짜 입력칸을 없애고 '제출 완료' 버튼이 오늘 날짜를 기존 필드에 자동 기록한다
+  // (dated done-resolver·저장 액션·펫무브워크 표시는 그대로 — 바뀌는 건 입력 UI 뿐).
+  const isButtonDoneStep = step.id === 'us-cdc-dog-import-form'
   const importQuarantineField =
     typeof step.done === 'string' && step.done.startsWith('quarantine:')
       ? step.done.slice('quarantine:'.length)
@@ -2247,6 +2251,28 @@ export function StepDetailView({
   // 앞(선행) 단계를 수정·삭제하는데 뒤(후행) 단계에 이미 입력된 데이터가 있으면, 저장 전에
   // '이후 일정이 입력돼 있다'는 주의 확인창을 띄운다. 진행을 선택하면 그대로 저장(하드 차단 X).
   // 저장 후엔 정합성 재검증(scenario)으로 어긋난 이후 일정이 '주의'로 표면화된다.
+  // 버튼 완료 카드 — '제출 완료'(오늘 날짜 기록) / '완료 취소'(비움). 검증 없음(기록용).
+  const handleButtonDone = (value: string | null) => {
+    setStatus('saving')
+    setError(null)
+    startTransition(async () => {
+      const res = await updateSimpleDateField(caseId, step.id, value, activeDest)
+      if (res.ok) {
+        updateCase(res.value)
+        const d = (activeDestinationView(res.value, activeDest).data ?? {}) as Record<string, unknown>
+        if (importQuarantineField) {
+          setImportQuarantineDate(
+            typeof d[importQuarantineField] === 'string' ? (d[importQuarantineField] as string) : '',
+          )
+        }
+        setStatus('saved')
+        window.setTimeout(() => setStatus('idle'), 1500)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
   const handleSaveClick = async () => {
     if (!canSave) return
     // 먼저 '입력 불가' 차단 검증 — 어차피 저장이 막힐 거면 확인 팝업 없이 바로 에러만 보여준다.
@@ -3049,7 +3075,7 @@ export function StepDetailView({
             </div>
           </section>
         )}
-        {isImportQuarantine && (
+        {isImportQuarantine && !isButtonDoneStep && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <ImportQuarantineInputs
@@ -3060,6 +3086,24 @@ export function StepDetailView({
                 (step.inputs ?? []).find((i) => i.key === importQuarantineField)?.label ?? '검역일'
               }
             />
+          </section>
+        )}
+        {/* 버튼 완료 카드 — 입력칸 대신 완료 시 기록된 날짜만 보여준다. */}
+        {isButtonDoneStep && done && savedImportQuarantineDate.length >= 10 && (
+          <section style={{ marginTop: 22 }}>
+            <div
+              style={{
+                background: C.surface,
+                border: `.5px solid ${C.line}`,
+                borderRadius: 16,
+                padding: '14px 16px',
+                fontSize: 13,
+                color: C.ink,
+              }}
+            >
+              {Number(savedImportQuarantineDate.slice(5, 7))}월{' '}
+              {Number(savedImportQuarantineDate.slice(8, 10))}일에 제출 완료했어요.
+            </div>
           </section>
         )}
         {isJpExportQuarantineVisit && (
@@ -3191,6 +3235,42 @@ export function StepDetailView({
               진행(importPermitCompleteMode)이면 같은 버튼이 '완료'로 전환 — 저장할 변경이
               없는 상태에서 명시적 완료 액션을 직접 노출. */}
           {(() => {
+            // 버튼 완료 카드 — dirty 개념이 없어 일반 저장 버튼과 활성 조건이 다르다.
+            // 미완료='제출 완료'(accent), 완료='완료 취소'(muted). 둘 다 항상 누를 수 있다.
+            if (isButtonDoneStep) {
+              const saving = status === 'saving'
+              return (
+                <button
+                  type="button"
+                  onClick={() => handleButtonDone(done ? null : todayStr)}
+                  disabled={saving}
+                  aria-live="polite"
+                  style={{
+                    pointerEvents: 'auto',
+                    width: '100%',
+                    padding: '14px 0',
+                    borderRadius: 14,
+                    border: 0,
+                    background: justSaved ? C.sage : done ? 'var(--pm-line)' : C.accent,
+                    color: justSaved || !done ? '#fff' : C.ink,
+                    fontFamily: 'inherit',
+                    fontSize: 15,
+                    fontWeight: 600,
+                    letterSpacing: '-0.005em',
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                    transition: 'background .15s, color .15s',
+                  }}
+                >
+                  {saving
+                    ? '저장 중…'
+                    : justSaved
+                      ? '✓ 저장됨'
+                      : done
+                        ? '완료 취소'
+                        : '제출 완료'}
+                </button>
+              )
+            }
             const completeMode =
               advanceSkipMode || jpExportSkipMode || titerCompleteMode || importPermitCompleteMode
             const processing =
