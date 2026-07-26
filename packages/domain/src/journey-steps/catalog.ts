@@ -96,6 +96,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '칩',
     description:
       '국제 표준 규격(15자리 번호)의 내장형 마이크로칩을 삽입하세요.\n강아지는 동물등록도 함께 진행하세요.',
+    // 동물등록 줄은 강아지에게만 해당 — 고양이 케이스는 첫 줄만(2026-07-26 사용자 지정, 전 목적지 공통).
+    descriptionBySpecies: {
+      cat: '국제 표준 규격(15자리 번호)의 내장형 마이크로칩을 삽입하세요.',
+    },
     doneSummary: '마이크로칩을 삽입했어요.',
     // 마이크로칩 번호와 시술일은 한 쌍 — 한쪽만 채워졌으면 빠진 쪽을 desc/카드에서 직접 요청.
     situational: (caseRow) => {
