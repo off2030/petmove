@@ -221,6 +221,94 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['hi.tick-treatment-within-14days'],
     },
   },
+  // ── 괌 (Guam DOAG Animal Health) ─────────────────────────────────────
+  // 하와이와 같은 뼈대(미국령 광견병 청정지역 — 광견병 2회 + FAVN + 도착 계류 + CDC 신고).
+  // **결정적 차이**: 하와이는 30일을 못 채우면 격리인데, 괌은 120일 중 **남은 일수만큼 계류**다
+  //   (CQA Calculated Quarantine — "only as many days in commercial quarantine as required to
+  //   reach 120 total days since the FAVN blood sample reached the laboratory").
+  //   즉 요건 미달이 '못 감'이 아니라 '오래 갇힘'이라, 카드 문구가 그 트레이드오프를 말하고
+  //   검증도 저장 거부가 아니라 주의로 둔다(gu.ts 헤더 참고).
+  // 순서: 항체(40) → 종합백신(50) → **검역시설 예약(95) → 수입 허가(100) → 항공권(102)**.
+  //   허가 신청 서류에 예약확인서가 들어가고, 허가·예약이 확정되기 전에 항공권을 잡으면 안 된다.
+  // ⚠️ 카드에 지목하지 않은 룰 2건 — gu.rabies-prime-after-3months-old(생후 3개월),
+  //   gu.rabies-doses-30days-apart(접종 간격 30일). 둘 다 2020년 구 지침 값이고 현행 브로슈어·
+  //   CQA 어디에도 없다. 근거 없는 엄한 기준을 고객 화면에 띄우지 않는다(2026-07-26).
+  //   확인되면 그때 카드에 올릴 것. 펫무브워크(전 룰 노출)에서는 계속 보인다.
+  guam: {
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'guam',
+      label: '괌',
+      validationIds: ['gu.microchip-before-rabies'],
+    }),
+    'rabies-vaccine-2': {
+      description:
+        '2차 광견병 백신을 접종하세요.\n\n괌은 평생 2회 이상 접종해야 계류에서 나올 수 있어요.\n괌 입국 때 최근 접종의 면역 유효기간이 남아있어야 해요.',
+      validationIds: ['gu.rabies-2-doses-required'],
+    },
+    'rabies-vaccine-extra': {
+      validationIds: ['common.rabies-extra-validity-expired'],
+    },
+    'rabies-titer': {
+      // 120일은 **채혈일이 아니라 검사기관이 검체를 받은 날**부터 센다(CQA 원문). 앱은 검체
+      //   수령일을 입력받지만 비어 있으면 채혈일을 proxy 로 쓰므로, 문구도 '검체가 도착한 날'로 쓴다.
+      description:
+        '미국 질병통제센터(CDC) 승인 검사기관에서 FAVN 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n0.5 IU/mL 이상이면 합격이에요.\n검체가 검사기관에 도착한 날부터 120일을 세요.\n120일을 채우고 입국하면 계류가 짧아지고, 못 채우면 남은 기간만큼 괌에서 계류해요.',
+      validationIds: ['gu.rnatt-120days-before-arrival'],
+    },
+    'rabies-titer-extra': {
+      validationIds: ['gu.rnatt-120days-before-arrival'],
+    },
+    'general-vaccine': {
+      // 브로슈어 REQUIRED DOCUMENTS 4항 — 개와 고양이가 요구 백신이 다르다.
+      description:
+        '종합백신을 접종하세요.\n\n괌 도착 때 유효기간이 남아있어야 해요.\n접종증명서에 동물 정보와 접종일·유효기간이 적혀 있어야 해요.',
+      descriptionBySpecies: {
+        dog: '종합백신을 접종하세요.\n\n괌은 DHLPP 종합백신과 켄넬코프(Bordetella) 기록을 요구해요.\n괌 도착 때 유효기간이 남아있어야 해요.\n접종증명서에 동물 정보와 접종일·유효기간이 적혀 있어야 해요.',
+        cat: '종합백신을 접종하세요.\n\n괌은 FVRCP 종합백신 기록을 요구해요.\n괌 도착 때 유효기간이 남아있어야 해요.\n접종증명서에 동물 정보와 접종일·유효기간이 적혀 있어야 해요.',
+      },
+      validationIds: ['gu.general-vaccine-10days-before-arrival'],
+    },
+    'import-permit': {
+      title: '수입 허가 신청',
+      description:
+        '괌 농무부(DOAG)에 수입 허가(Animal Entry Permit)를 신청하세요.\n\n검역시설 예약확인서와 접종·검사 서류를 함께 이메일로 제출해요.\n도착 30일 전까지 제출해야 하고, 늦으면 계류가 길어지거나 입국이 거부될 수 있어요.\n수수료는 반려동물 1마리당 65달러예요.',
+      doneSummary: '괌 수입 허가증을 받았어요.',
+      cardLine: '괌 수입 허가를 신청하세요.',
+      inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
+      attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
+      attachmentLabel: '괌 수입 허가증(Animal Entry Permit)',
+      links: [
+        { url: 'https://doag.guam.gov/animal-health-animal-control/', label: '수입 허가 안내(DOAG)' },
+      ],
+      validationIds: ['gu.import-permit-30days-before-arrival'],
+    },
+    'flight-purchase': {
+      description:
+        '괌 입국 일정에 맞춰 항공권을 구매하세요.\n\n수입 허가와 검역시설 예약을 확정한 뒤에 구매하세요.\n광견병 항체 검사 검체가 검사기관에 도착한 날부터 120일이 지나서 입국하면 계류가 짧아져요.\n검역시설이 공항에서 동물을 받을 수 있는 시간인지 확인하세요.\n항공사에 반려동물 운송 방법을 꼭 확인하세요.',
+      cardLine: '괌에 입국할 수 있어요.',
+      order: 102,
+      earliest: undefined,
+      validationIds: [
+        'gu.dog-entry-age-six-months',
+        'gu.rabies-not-expired-on-arrival',
+        'gu.rnatt-120days-before-arrival',
+      ],
+    },
+    'us-cdc-dog-import-form': {
+      // 항공권(102) 뒤 — CDC 서식에 도착 정보를 적는다. 하와이(75)와 순서 근거가 다르다.
+      order: 105,
+    },
+    departure: importQuarantineCard({
+      label: '괌',
+      fieldKey: 'gu_import_quarantine_date',
+      description:
+        '괌 도착 후 지정 검역시설에서 계류해요.\n\n공항에서 서류와 마이크로칩을 확인한 뒤 검역시설 직원이 동물을 인수해요.\n계류 기간은 수입 허가서에 적힌 조건에 따라 정해져요.\n계류가 끝나면 시설 수의사의 최종 검사를 받고 인도돼요.',
+      helpText: '괌 지정 검역시설에 입소한 날짜',
+      attachmentHint: '검역·계류 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '괌 수입 검역 서류',
+      validationIds: ['gu.import-quarantine-date-valid'],
+    }),
+  },
   // ── 베트남 (DAH Cục Thú y) ────────────────────────────────────────────
   // 태국·필리핀 골격이지만 수입허가가 없다(Thông tư 01/2026 제14조 — 2마리 이하 동반 면제).
   // 사전 신고도 없다 — 도착 공항 검역소에서 현장 신고(같은 조). 항체는 한국 귀국용만.

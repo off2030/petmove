@@ -230,6 +230,12 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'hk_advance_notice_confirmed',
   'hk_export_quarantine_date',
   'hk_export_quarantine_confirmed',
+  // 괌 — 검역시설 예약(수입 허가 신청 서류에 예약확인서가 들어간다) + 도착 계류.
+  //   ⚠️ 목적지별로 분리 저장하지 않으면 다른 여정으로 새어 나간다(명단이 opt-in 화이트리스트).
+  'gu_quarantine_reservation_date',
+  'gu_quarantine_reservation_confirmed',
+  'gu_import_quarantine_date',
+  'gu_import_quarantine_confirmed',
   // EU 패밀리 공용 — 입국 검사·현지 검역증명서. 키는 공용이지만 by_dest 가 목적지별 분리.
   'eu_import_quarantine_date',
   'eu_import_quarantine_confirmed',

@@ -9,6 +9,7 @@ import {
   readInternalParasiteEntries,
   readKennelCoughEntries,
   readRabiesEntries,
+  readScopedImportPermitFiled,
   readTiterEntries,
   resolveValidUntil,
   SKIP,
@@ -16,7 +17,12 @@ import {
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
-import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore } from './messages'
+import {
+  msgImportQuarantineBeforeEntry,
+  msgMicrochipBeforeRabies,
+  msgRabiesExpiredBefore,
+} from './messages'
+import { buildDateRuleContext, validateUsDogEntryDate } from '../journey-steps/date-rules'
 
 /**
  * 괌 (Guam DOAG — Department of Agriculture, Animal Health Division / USDA APHIS) 절차 검증.
@@ -322,6 +328,83 @@ export const GU_CHECKS: ProcedureCheck[] = [
     dataKey: 'heartworm_dates',
     reader: readHeartwormEntries,
   }),
+
+  // ── 앱 여정(2026-07-26 승격) 에서 카드가 지목하는 룰 ──────────────────
+  // 위 룰들은 펫무브워크 전용 시절에 만든 것이고, 아래 3건은 고객 카드가 쓰는 요건이다.
+  {
+    id: 'gu.dog-entry-age-six-months',
+    country: COUNTRY,
+    category: '일정',
+    title: '강아지는 괌 도착일에 생후 6개월 이상',
+    description:
+      'DOAG 브로슈어 INTERNATIONAL ARRIVALS(2024-08-01 CDC 시행): "Dogs must be at least 6 months of age." 괌은 미국령이라 CDC 연방 규칙을 그대로 받는다. 저장 거부(validateUsDogEntryDate — 미국과 같은 함수)와 같은 판정. 출생일은 못 바꾸니 해소가 날짜 변경뿐이라 blocker.',
+    severity: 'blocker',
+    addedAt: '2026-07-26',
+    allowDate: true,
+    run: ({ caseRow, destination }) => {
+      const ctx = buildDateRuleContext(caseRow, destination)
+      if (ctx.data.species !== 'dog') return SKIP
+      const dep = readDepartureDate(caseRow, destination)
+      if (!dep) return SKIP
+      const error = validateUsDogEntryDate(dep, ctx)
+      if (!error) return { ok: true, message: `출국일(${dep}) 기준 생후 6개월 이상.` }
+      return { ok: false, message: error, offendingPaths: ['birth_date', 'departure_date'] }
+    },
+  },
+  {
+    id: 'gu.import-permit-30days-before-arrival',
+    country: COUNTRY,
+    category: '수입허가',
+    title: '수입 허가 서류는 도착 30일 전까지 제출',
+    description:
+      'DOAG: "All required import documents must be submitted at least 30 days prior to the intended arrival date." 14일 미만이면 처리를 보장하지 않고 장기 계류·입국 거부 위험이 있다(브로슈어 FAQ 는 2~3개월 전 권장). 마감을 놓쳐도 신청 자체는 가능하므로 주의만 — 저장 거부로 올리지 말 것.',
+    severity: 'warning',
+    addedAt: '2026-07-26',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const dep = readDepartureDate(caseRow, destination)
+      if (!dep) return SKIP
+      const days = daysBetween(filed, dep)
+      if (days === null) return SKIP
+      if (days < 30) {
+        return {
+          ok: false,
+          message:
+            '괌 도착 30일 전까지 수입 허가 서류를 제출해야 해요. 늦으면 계류가 길어지거나 입국이 거부될 수 있어요.',
+          offendingPaths: ['import_permit_application_date', 'departure_date'],
+        }
+      }
+      return { ok: true, message: `제출일(${filed}) → 도착(${dep}): ${days}일 (30일 이상).` }
+    },
+  },
+  {
+    id: 'gu.import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '괌 수입 검역일은 도착일 이후',
+    description:
+      '도착 후 지정 검역시설에 입소하는 절차라 입국일보다 빠를 수 없다. 다른 목적지 수입검역일 룰과 같은 구조.',
+    severity: 'warning',
+    addedAt: '2026-07-26',
+    run: ({ caseRow, destination }) => {
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const raw = ctx.data.gu_import_quarantine_date
+      const q = typeof raw === 'string' ? raw.slice(0, 10) : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(q)) return SKIP
+      const dep = readDepartureDate(caseRow, destination)
+      if (!dep) return SKIP
+      if (q < dep) {
+        return {
+          ok: false,
+          message: msgImportQuarantineBeforeEntry('괌'),
+          offendingPaths: ['gu_import_quarantine_date', 'departure_date'],
+        }
+      }
+      return { ok: true, message: `검역일(${q}) ≥ 도착일(${dep}).` }
+    },
+  },
 ]
 
 /**

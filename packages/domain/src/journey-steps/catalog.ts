@@ -366,6 +366,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'singapore',
         // 하와이 — FAVN 항체가 입국 요건(titer.need='entry'). 일본 복제(2026-07-24).
         'hawaii',
+        // 괌 — 하와이와 같은 FAVN 요건(titer.need='entry'). 다만 대기 성격이 다르다:
+        //   하와이는 30일을 못 채우면 격리인데, 괌은 120일 중 **남은 일수만큼 계류**다
+        //   (CQA Calculated Quarantine). 카드 문구가 그 트레이드오프를 설명한다(2026-07-26).
+        'guam',
         'india',
         'turkey',
         'ukraine',
@@ -615,7 +619,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 하와이 — 미국의 주(州)라 CDC 개 수입 규칙(연방)이 그대로 적용된다. 카드·문구·검증을
     // 본토와 공유(단일 출처)하고, 순서만 하와이 override 로 조정(출국 전 임상검사 직전 —
     // 2026-07-26 사용자 지정). 룰 country·저장 게이트도 hawaii 포함으로 확장했다.
-    applicability: { destinations: ['usa', 'hawaii'], species: 'dog', tripType: 'all' },
+    // 괌 — 미국령이라 CDC 연방 규칙(2024-08-01 시행)이 그대로 적용된다. DOAG 브로슈어
+    //   INTERNATIONAL ARRIVALS 항목에 CDC Dog Import Form 이 개 전용으로 명시돼 있다.
+    //   고양이는 CDC 서류 요건 자체가 없어 species: 'dog' 그대로(2026-07-26).
+    applicability: { destinations: ['usa', 'hawaii', 'guam'], species: 'dog', tripType: 'all' },
     order: 47,
     done: 'dated:us_cdc_form_date',
     buttonComplete: true,
@@ -1018,6 +1025,47 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         url: 'https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/qua_ie_ipab_idc_Group_II.html',
         label: '수입 절차·연락처 안내(AFCD)',
       },
+    ],
+    validationIds: [],
+  },
+
+  // ── 검역시설 예약 (괌 전용) ─────────────────────────────────────────
+  // DOAG 브로슈어 REQUIRED DOCUMENTS 6항 "Quarantine Facility Reservation" — 수입 허가
+  //   신청 서류에 **예약확인서가 포함**되므로 허가 신청보다 먼저 해야 한다(order 95 < 100).
+  // 승인 시설(브로슈어 FAQ "How do I make a quarantine reservation?"):
+  //   · Harper Valley Kennels — (671) 797-0393 / petshippersguam@gmail.com
+  //   · Animal Medical Clinic — (671) 637-8387 / amcpetlodge@outlook.com
+  //   · Andersen AFB Pet Lodge — **군 관계자 전용**이라 카드에 쓰지 않는다.
+  // 계류비·공항 인수비는 $65 허가 수수료와 **별도**이고 시설마다 다르다(브로슈어).
+  // 버튼 완료 카드 — 예약을 잡으면 끝나는 절차고, 보호자가 아는 건 '됐다/안 됐다'다
+  //   (홍콩 수입 허가·하와이 입국 신청과 같은 모델, 2026-07-26).
+  {
+    id: 'gu-quarantine-reservation',
+    category: 'permit',
+    title: '검역시설 예약',
+    shortLabel: '예약',
+    description:
+      '괌 지정 검역시설에 계류 예약을 하세요.\n\n수입 허가를 신청할 때 예약확인서를 함께 내야 해요.\nHarper Valley Kennels 또는 Animal Medical Clinic에 연락해 예약해요.\n계류 비용은 시설마다 다르고, 수입 허가 수수료와 별도예요.',
+    doneSummary: '괌 검역시설을 예약했어요.',
+    cardLine: '괌 검역시설을 예약하세요.',
+    applicability: { destinations: ['guam'], species: 'all', tripType: 'all' },
+    order: 95,
+    done: 'dated:gu_quarantine_reservation_date',
+    buttonComplete: true,
+    inputs: [
+      {
+        key: 'gu_quarantine_reservation_date',
+        label: '예약일',
+        type: 'date',
+        helpText: '검역시설 예약을 확정한 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역시설 예약확인서를 사진·PDF로 보관하세요.',
+    attachmentLabel: '괌 검역시설 예약확인서',
+    links: [
+      { url: 'https://www.petshippersguam.com/', label: 'Harper Valley Kennels' },
+      { url: 'https://amcguam.com/moving-to-guam-with-pets/', label: 'Animal Medical Clinic' },
     ],
     validationIds: [],
   },
