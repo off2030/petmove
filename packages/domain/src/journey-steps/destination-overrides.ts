@@ -1909,8 +1909,15 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   출처: AFCD 'Collection of Animals at HKIA' — "AFCD duty officer will conduct
       //   livestock clearance procedures i.e. **documentary check and health check**."
       //   ⛔ '서류와 마이크로칩을 확인해요'로 되돌리지 말 것 — 실제는 서류 + **건강** 검사다.
+      // 견 등록증(Dog Licence) — DC-02v05 10항 "all dogs 5 months old or above must obtain a
+      //   Hong Kong Dog Licence ON ARRIVAL at the expense of the permittee or agent"(수수료
+      //   HK$80, 3년 유효). 홍콩은 5개월 미만 입국 자체가 불가라 **입국하는 모든 개가 대상**이고,
+      //   시내에서 따로 받는 게 아니라 도착 당일 검역에 이어 처리된다. 비용이 발생해 보호자가
+      //   알아야 하는 항목이라 한 줄 넣는다(2026-07-26 사용자 지정).
+      //   ⚠️ 10항 조건 (b)'광견병 예방접종'이 **한국 접종으로 갈음되는지 홍콩에서 재접종인지는
+      //   원문 미확인**(AFCD 도 1823 문의 안내). 확인 전까지 접종 관련 문장은 넣지 말 것.
       description:
-        '홍콩 도착 후 공항 화물터미널에서 AFCD 검역관에게 검역을 받으세요.\n\n화물로 운송하므로 보통 동물 운송업체가 대신 진행해요.\n서류와 건강 상태를 확인해요. 이상이 없으면 격리 없이 인도돼요.',
+        '홍콩 도착 후 공항 화물터미널에서 AFCD 검역관에게 검역을 받으세요.\n\n화물로 운송하므로 보통 동물 운송업체가 대신 진행해요.\n서류와 건강 상태를 확인해요. 이상이 없으면 격리 없이 인도돼요.\n개는 검역을 마친 뒤 홍콩 견 등록증(Dog Licence)을 받아야 해요. 수수료는 80홍콩달러예요.',
       helpText: 'AFCD 검역관에게 수입 검역을 받은 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       // 도착 시 발급되는 서류가 확인되지 않았다 — 필리핀·중국·대만과 같은 중립 이름.
