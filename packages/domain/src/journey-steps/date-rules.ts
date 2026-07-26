@@ -1338,12 +1338,9 @@ export function validateImportPermitFiledDate(
         validateThImportPermitVaccineGap(filedDate, data) ??
         validatePhImportPermitWithin60Days(filedDate, departureDate)
       )
-    // 말레이시아·인도네시아 — 수입허가를 **현지 에이전시가 신청**하는 모델이라(가이드)
-    // 태국식 '백신 접종 14일 후 신청' 제약은 근거가 없어 2026-07-22 제거했다.
-    // 남는 건 '출국일 이후엔 신청 불가'라는 논리적 제약뿐.
-    case 'malaysia':
-    case 'indonesia':
-      return validateImportPermitNotAfterDeparture(filedDate, departureDate)
+    // 말레이시아·인도네시아 — 검증 없음(2026-07-26, 홍콩과 같은 정리). 수입허가를 **현지
+    // 에이전시가 신청**하는 모델이라 보호자가 신청일을 모른다. 카드가 버튼 완료로 바뀌면서
+    // 신청일 입력 자체가 사라져, 남아 있던 '출국일 이후 신청 불가'도 판정할 값이 없어졌다.
     // 필리핀 — 위 + SPSIC 60일 유효(출국 60일보다 이르면 출국 전 만료) + 백신 14일.
     case 'philippines':
       return (

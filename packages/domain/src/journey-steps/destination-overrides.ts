@@ -913,6 +913,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '검역기관(MOCCAE)에 수입 허가를 신청하세요.\n\n온라인으로 신청해요.\n\n허가증은 발급일로부터 90일간 유효해요.',
       cardLine: '아랍에미리트 수입 허가를 신청하세요.',
       doneSummary: '아랍에미리트 수입 허가증을 받았어요.',
+      // 마감 배지 제거(2026-07-26) — base 의 '출국 30일 전'을 물려받고 있었는데, MOCCAE 는
+      //   신청 마감일을 정하지 않는다. 같은 근거로 마감 알림·발급 푸시는 이미 만들지 않았고
+      //   (reminders.ts·milestone-pushes.ts 주석), 배지만 남아 없는 기한을 말하고 있었다.
+      //   90일 유효 상한은 카드 문구와 ae.import-permit-within-90days 가 담당한다.
+      // ⚠️ 카드 모델은 그대로(신청→발급 2단계) — 보호자가 온라인으로 직접 신청해 신청일을 안다.
+      deadline: undefined,
       validationIds: ['ae.import-permit-within-90days'],
       links: [
         {
@@ -1419,7 +1425,23 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       cardLine: '말레이시아 수입 허가를 신청하세요.',
       attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
       attachmentLabel: '수입 허가증',
-      validationIds: ['my.import-permit-not-after-departure'],
+      // 버튼 완료 카드 — 홍콩과 같은 이유(2026-07-26 사용자 결정). 현지 등록 에이전트만 신청할
+      //   수 있어(localApplyOnly) 보호자는 신청일을 모르고, 아는 것은 '허가가 나왔다'는 사실뿐.
+      //   신청일 기반 검증(구 my.import-permit-not-after-departure)도 함께 삭제했다.
+      // 마감 배지 제거 — base 의 '출국 30일 전'은 물려받은 값이고 근거가 없다. 같은 이유로
+      //   마감 알림·발급 푸시도 이미 만들지 않았다(reminders.ts·milestone-pushes.ts 주석).
+      buttonComplete: true,
+      done: 'dated:import_permit_application_date',
+      deadline: undefined,
+      inputs: [
+        {
+          key: 'import_permit_application_date',
+          label: '허가 취득일',
+          type: 'date',
+          helpText: '수입 허가증을 받은 날짜',
+        },
+      ],
+      validationIds: [],
       // ① 신청·등록 절차(MAQIS) ② 반려동물 수입 안내·에이전트 문의(DVS). 둘 다 200 확인.
       links: [
         { url: 'https://www.maqis.gov.my/index.php/permohonan-permit/', label: '수입 허가 신청 절차 (MAQIS)' },
@@ -1631,7 +1653,21 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       cardLine: '인도네시아 수입 허가를 신청하세요.',
       attachmentHint: '반입 추천서(Rekomendasi Pemasukan)를 사진·PDF로 보관하세요.',
       attachmentLabel: '반입 추천서',
-      validationIds: ['id.import-permit-not-after-departure'],
+      // 버튼 완료 카드 — 말레이시아·홍콩과 같은 이유(2026-07-26 사용자 결정). 수입자·현지
+      //   에이전트만 신청할 수 있어(localApplyOnly) 보호자가 신청일을 모른다. 신청일 기반 검증
+      //   (구 id.import-permit-not-after-departure)과 근거 없는 마감 배지(base 30일)도 함께 제거.
+      buttonComplete: true,
+      done: 'dated:import_permit_application_date',
+      deadline: undefined,
+      inputs: [
+        {
+          key: 'import_permit_application_date',
+          label: '허가 취득일',
+          type: 'date',
+          helpText: '반입 추천서를 받은 날짜',
+        },
+      ],
+      validationIds: [],
     },
     // 가이드: "일반적인 격리기간은 약 일주일이지만 최대 2주가 될 수 있습니다."
     importQuarantine: {
