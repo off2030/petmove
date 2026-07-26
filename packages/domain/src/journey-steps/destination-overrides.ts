@@ -238,6 +238,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'rabies-vaccine-1': buildRabiesCard({
       destKey: 'guam',
       label: '괌',
+      // 1차 카드에서 '입국 때 면역 유효기간이 남아있어야 해요' 줄 제거(2026-07-26 사용자 지정).
+      //   괌은 평생 2회 접종국이라 입국 시점에 유효해야 하는 건 **최근 접종(2차 이상)**이다.
+      //   1차 카드에 그 줄이 있으면 1차 유효기간을 맞춰야 하는 것처럼 읽힌다 — 하와이도 같은
+      //   이유로 omitEntryValidity 를 쓴다. 요건 자체는 2차 카드 문구와 항공권 카드 검증
+      //   (gu.rabies-not-expired-on-arrival)이 담당한다.
+      omitEntryValidity: true,
       validationIds: ['gu.microchip-before-rabies', 'gu.rabies-prime-after-3months-old'],
     }),
     'rabies-vaccine-2': {

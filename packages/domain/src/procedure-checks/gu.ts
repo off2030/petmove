@@ -184,9 +184,9 @@ export const GU_CHECKS: ProcedureCheck[] = [
     id: 'gu.rabies-not-expired-on-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: '도착일에 광견병 면역 유효 (1년 = 1주년 당일까지)',
+    title: '도착일에 광견병 면역 유효 (라벨 유효기간 기준)',
     description:
-      '최근 광견병 접종 면역 유효기간이 도착일 이전 만료되지 않아야 함. **1년 = 1주년 당일까지** 허용. valid_until 명시 시 그 값, 미명시 시 디폴트 1년 (`addOneYear`).',
+      '최근 광견병 접종 면역 유효기간이 도착일 이전 만료되지 않아야 함. **괌은 1년 고정이 아니라 백신 라벨(승인 유효기간)을 따른다** — CQA: "administered not more than 365 days prior to the animal\'s release (36 months for approved 3-year vaccines)". 그래서 사용자가 고른 valid_until 을 그대로 쓴다(1·2·3년 모두 선택 가능 — 괌은 RABIES_ONE_YEAR_VALIDITY_DESTINATIONS 에 없다). 미명시 시에만 디폴트 1년. ⛔ 제목·설명을 1년으로 되돌리지 말 것(2026-07-26 — 3년 백신을 1년으로 오해하게 만든다).',
     severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
