@@ -381,10 +381,12 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/hawaii-14.webp',
   ],
   괌: [
-    // 사용자 선별 Unsplash 5장(목적지별 사진/괌 폴더 원본) — 파일명 abc순.
+    // 사용자 선별 Unsplash 5장(목적지별 사진/괌 폴더 원본).
+    // 리드(첫 장) = guam-03(에메랄드 바다·백사장 항공샷) — 2026-07-26 사용자 지정.
+    // 나머지는 파일명 abc순 유지(미국 usa-14 리드 지정과 같은 방식).
+    '/destinations/guam-03.webp',
     '/destinations/guam-01.webp',
     '/destinations/guam-02.webp',
-    '/destinations/guam-03.webp',
     '/destinations/guam-04.webp',
     '/destinations/guam-05.webp',
   ],
