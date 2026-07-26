@@ -161,13 +161,13 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/singapore-15.webp',
   ],
   // 홍콩 — 2026-07-26 등록(22장 중 10장). 01~05·07~11·15·21 삭제(사용자 지정) — 결번 유지(재번호 X).
-  // 리드(첫 장) 미지정이라 파일 순서대로 회전한다.
-  // 사용자가 대표 사진을 고르면 그 파일을 맨 앞으로 올리고 HERO_LEAD_THEN_RANDOM 에 등록.
+  // 리드(첫 장) = hongkong-14(빅토리아 피크 야경) — 2026-07-26 사용자 지정.
+  // 나머지는 파일 순서 유지(buildHeroPhotoState 가 첫 장 고정 + 나머지 셔플).
   홍콩: [
+    '/destinations/hongkong-14.jpg',
     '/destinations/hongkong-06.jpg',
     '/destinations/hongkong-12.jpg',
     '/destinations/hongkong-13.jpg',
-    '/destinations/hongkong-14.jpg',
     '/destinations/hongkong-16.jpg',
     '/destinations/hongkong-17.jpg',
     '/destinations/hongkong-18.jpg',
