@@ -72,6 +72,12 @@ function departFromData(data: Record<string, unknown>): string {
  * 미국 저위험국 경로의 개는 미국 도착일에 생후 6개월 이상이어야 한다.
  * 고양이는 CDC 개 수입 규칙의 적용 대상이 아니므로 검사하지 않는다.
  *
+ * ⚠️ 규정은 '도착일' 기준이지만 **판정은 출국일로 한다**(2026-07-26 사용자 결정) — 항공권
+ *   카드에서 도착일 입력칸을 없애 다른 목적지와 같은 단순형(출발일·귀국일)이 됐기 때문이다.
+ *   한국→미국은 날짜변경선을 동쪽으로 넘어 출발일 = 도착일(같은 날)이 대부분이고, 경유로
+ *   도착이 하루 밀리는 경우엔 출국일 기준이 더 엄격해 안전한 쪽으로 틀린다.
+ *   호출부(validateEntryDateForDestination)가 출발일을 우선해 넘긴다.
+ *
  * https://www.cdc.gov/importation/dogs/rabies-free-low-risk-countries.html
  */
 export function validateUsDogEntryDate(v: string, ctx: DateRuleContext): string | null {
@@ -1130,7 +1136,7 @@ export function validateTwImportPermitLeadTime(
  *
  * 기준일이 목적지마다 다르다 — 클라이언트가 쓰던 그대로 보존한다:
  *  - 일본: 입국일(entry_date)
- *  - 태국: 출발일(departure_date) — procedure-check 가 departure 를 보는 것과 같은 기준
+ *  - 태국·미국: 출발일(departure_date) — procedure-check 가 departure 를 보는 것과 같은 기준
  *  - 필리핀·EU 패밀리·대만: 입국일, 없으면 출발일 폴백(대부분 당일·익일 차이)
  */
 export function validateEntryDateForDestination(
@@ -1143,7 +1149,10 @@ export function validateEntryDateForDestination(
   const outbound = departure || entry
   const entryOrDeparture = entry || departure
   return (
-    validateUsDogEntryDate(entryOrDeparture, ctx) ??
+    // 미국 — 항공권 카드에서 도착일 입력을 없애(2026-07-26 사용자 결정) 출발일 기준으로 통일.
+    // `outbound`(출발일 우선)를 쓴다 — 예전 케이스에 남아 있는 stale entry_date 가 판정을
+    // 가로채지 않게 하려면 entry 우선이면 안 된다. 태국과 같은 기준이다.
+    validateUsDogEntryDate(outbound, ctx) ??
     validateJpEntryDate(entry, ctx) ??
     validateThEntryDate(outbound, ctx) ??
     // 말레이시아·인도네시아는 전용 함수를 두지 않는다(2026-07-22 정리) — 말레이시아 30일은

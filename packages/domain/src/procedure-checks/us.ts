@@ -148,19 +148,16 @@ export const US_CHECKS: ProcedureCheck[] = [
     run: ({ caseRow, destination }) => {
       const ctx = buildDateRuleContext(caseRow, destination)
       if (!isDog(ctx.data)) return SKIP
-      const entry =
-        typeof ctx.data.entry_date === 'string'
-          ? ctx.data.entry_date.slice(0, 10)
-          : typeof ctx.data.departure_flight_date === 'string'
-            ? ctx.data.departure_flight_date.slice(0, 10)
-            : ''
-      if (!entry) return SKIP
-      const error = validateUsDogEntryDate(entry, ctx)
-      if (!error) return { ok: true, message: '미국 도착일에 생후 6개월 이상.' }
+      // 출국일 기준(2026-07-26) — 항공권 카드에서 도착일 입력을 없애 단순형이 됐다.
+      // 저장 거부(validateEntryDateForDestination)와 같은 판정 함수·같은 기준일을 쓴다.
+      const dep = readDepartureDate(caseRow, destination)
+      if (!dep) return SKIP
+      const error = validateUsDogEntryDate(dep, ctx)
+      if (!error) return { ok: true, message: `출국일(${dep}) 기준 생후 6개월 이상.` }
       return {
         ok: false,
         message: error,
-        offendingPaths: ['birth_date', 'entry_date'],
+        offendingPaths: ['birth_date', 'departure_date'],
       }
     },
   },

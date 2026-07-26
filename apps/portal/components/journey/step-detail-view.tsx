@@ -177,9 +177,12 @@ const SIMPLE_FLIGHT_DESTINATIONS: readonly string[] = [
   'uzbekistan', 'vietnam',
   // 절차는 있으나 펫무브가 대행하지 않는 목적지(2026-07-25 사용자 결정) — 신청은 보호자/
   // 현지 에이전트 몫이라 앱이 항공편 상세를 들고 있을 이유가 없다. 필요하면 첨부로 보관.
-  // 미국은 CDC 양식과 생후 6개월 검증에 도착일이 필요해, 출발일과 도착일만 분리한다.
   'taiwan', 'malaysia', 'indonesia', 'uae', 'ireland', 'malta', 'israel', 'singapore',
   'norway', 'cyprus',
+  // 미국 — 도착일 칸도 삭제하고 단순형으로 통일(2026-07-26 사용자 결정). 생후 6개월 판정은
+  // 출국일 기준으로 바꿨다(us.dog-entry-age-six-months·validateEntryDateForDestination).
+  // CDC 양식은 앱이 대신 채우지 않아 도착일이 필요 없었다(구 주석의 근거는 이미 소멸).
+  'usa',
 ]
 
 /**
@@ -266,7 +269,6 @@ export function StepDetailView({
     // 대행 절차국(태국·필리핀·스위스 등 EU 패밀리) — 출발일 주필드 + 신청에 필요한 상세 접기.
     destinationKey === 'thailand' ||
     destinationKey === 'philippines' ||
-    destinationKey === 'usa' ||
     (!!destinationKey && EU_ENTRY_FAMILY.includes(destinationKey)) ||
     // 단순 항공권 목적지 — 주필드 '출발일'(departure_date 저장 경로 공유), 세부 없음.
     // (말레이·인니·UAE·이스라엘·대만 등 비대행 절차국 포함 — SIMPLE_FLIGHT_DESTINATIONS.)
@@ -2781,24 +2783,19 @@ export function StepDetailView({
               // 펫무브가 대행하는 절차(사전 신고 NACCS·수출서류)에 항공편 정보가 실제로
               // 쓰이는 나라만 상세를 받는다(2026-07-25 — 비대행 절차국은 단순형·첨부로).
               collapsible={destinationKey === 'japan'}
-              // departureFirst 의 '세부 정보'(도착일 등) 필드 한정 — 단순 목적지는 세부 자체가
-              // 없고(접기 미표시), 미국은 도착일만, 필리핀은 도착일+도착공항만,
-              // 나머지 절차국(태국·말레이·인니·UAE·이스라엘·아일랜드 등)은
-              // 전체(도착일·시간·공항·편명).
+              // departureFirst 의 '세부 정보'(도착일 등) 필드 한정 — 단순 목적지(미국 포함)는
+              // 세부 자체가 없고(접기 미표시), 필리핀은 도착일+도착공항만,
+              // 나머지 절차국(태국·스위스)은 전체(도착일·시간·공항·편명).
               departureDetailFieldKeys={
                 // 단순 항공권 목적지 — 세부 없음(출국일·귀국일 + 첨부만).
                 isSimpleFlightDest
                   ? []
-                  : destinationKey === 'usa'
-                    ? ['entry_date']
                   : destinationKey === 'philippines'
                     ? ['entry_date', 'entry_airport']
                     : undefined
               }
               returnFieldKeys={
-                isSimpleFlightDest ||
-                destinationKey === 'philippines' ||
-                destinationKey === 'usa'
+                isSimpleFlightDest || destinationKey === 'philippines'
                   ? ['return_date']
                   : undefined
               }
