@@ -44,6 +44,7 @@ import {
   EU_ENTRY_FAMILY,
   SINGLE_DOSE_RABIES_DESTINATIONS,
   TITER_EXTRA_CARD_DESTINATIONS,
+  GENERAL_VACCINE_ONE_YEAR_VALIDITY_DESTINATIONS,
   RABIES_ONE_YEAR_VALIDITY_DESTINATIONS,
   destinationKoLabel,
   TITER_REQUIRED_FOR_ENTRY_DESTINATIONS,
@@ -236,10 +237,13 @@ export function StepDetailView({
   // (종합백신과 동일 모델). 일본·하와이(2회국)는 기존 1차 단일 + 별도 추가 백신 카드 유지.
   const isRabiesSingleCard =
     isRabies1 && !!destinationKey && SINGLE_DOSE_RABIES_DESTINATIONS.includes(destinationKey)
-  // 광견병 백신 면역 유효기간 1년만 인정(2·3년 입력불가) — 중국·태국·필리핀. YearSelect 비활성 +
-  // getSaveBlockError 저장 거부. 단일 출처 = domain RABIES_ONE_YEAR_VALIDITY_DESTINATIONS.
+  // 광견병 백신 면역 유효기간 1년만 인정(2·3년 저장 거부) — 태국·필리핀·홍콩·중국·대만·베트남.
+  // 단일 출처 = domain RABIES_ONE_YEAR_VALIDITY_DESTINATIONS.
   const rabiesOneYearOnly =
     !!destinationKey && RABIES_ONE_YEAR_VALIDITY_DESTINATIONS.includes(destinationKey)
+  // 종합백신판(홍콩) — VC-DC2 (f) 도 "not more than 1 year" 라 광견병과 같이 1년만 인정한다.
+  const generalVaccineOneYearOnly =
+    !!destinationKey && GENERAL_VACCINE_ONE_YEAR_VALIDITY_DESTINATIONS.includes(destinationKey)
   // '제품 유효기간'(약품 expiry 행)은 호주·뉴질랜드 입국 요건에만 필요하다. 그 외 목적지
   // (일본·태국·필리핀·EU 등)에선 광견병·종합백신 약품 정보에서 이 행을 숨긴다.
   const showProductExpiry = destinationKey === 'australia' || destinationKey === 'new_zealand'
@@ -1299,6 +1303,13 @@ export function StepDetailView({
     }
     if (isGeneralVaccine) {
       const birth = readBirthDate(caseRow?.data)
+      // 종합백신 면역 유효기간 1년만 인정(홍콩) — 광견병 rabiesOneYearOnly 와 같은 모델.
+      // 단일 출처 = domain GENERAL_VACCINE_ONE_YEAR_VALIDITY_DESTINATIONS(프로파일
+      // generalVaccineOneYearOnly 파생).
+      if (generalVaccineOneYearOnly && generalVaccine.some((e) => isMultiYearValidity(e.valid_until))) {
+        const ko = (destinationKey && destinationKoLabel(destinationKey)) || '이 여행지'
+        return `${ko} 입국 시 종합백신은 1년까지만 유효합니다. 면역 유효기간을 1년으로 선택하세요.`
+      }
       for (const e of generalVaccine) {
         // 출생일 이전 접종 — 논리적 불가능 조건이라 저장 거부.
         if (e.date && birth && e.date < birth) {

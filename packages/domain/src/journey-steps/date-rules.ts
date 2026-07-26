@@ -400,6 +400,12 @@ export function generalVaccineEntryWaitDays(destination: string | null | undefin
  */
 export function validateGeneralVaccineEntryWait(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
+  // 홍콩은 상한(1년)까지 있어 전용 판정으로 빠진다(violatesHkGeneralVaccineDoseWindow 주석).
+  if (matchesDestinationKey(ctx.destination, 'hongkong')) {
+    return violatesHkGeneralVaccineDoseWindow(ctx.data, v)
+      ? '종합백신 접종 후 14일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.'
+      : null
+  }
   const days = generalVaccineEntryWaitDays(ctx.destination)
   if (days <= 0) return null
   const target = v.slice(0, 10)
@@ -494,9 +500,45 @@ export function violatesHkRabiesDoseWindow(
   data: Record<string, unknown>,
   entryOrDeparture: string,
 ): boolean {
+  return violatesHkDoseWindow(
+    data,
+    entryOrDeparture,
+    'rabies_dates',
+    rabiesEntryWaitDays('hongkong'),
+  )
+}
+
+/**
+ * 홍콩 종합백신 — 광견병과 **같은 구조**의 요건이라 같은 판정을 쓴다.
+ * VC-DC2 (f): "vaccinated against the following canine/feline diseases on ___ (date) that is
+ * not less than 14 days and not more than 1 year before coming into Hong Kong."
+ * 광견병(30일~1년)과 하한만 다르다(14일~1년).
+ *
+ * 공용 validateGeneralVaccineEntryWait 는 하한(14일)만 보고 상한을 안 봐서, 사용자가 3년
+ * 종합백신을 골라 저장하면 접종 2년 뒤 출국도 통과했다(2026-07-26 사용자 지적).
+ */
+export function violatesHkGeneralVaccineDoseWindow(
+  data: Record<string, unknown>,
+  entryOrDeparture: string,
+): boolean {
+  return violatesHkDoseWindow(
+    data,
+    entryOrDeparture,
+    'general_vaccine_dates',
+    generalVaccineEntryWaitDays('hongkong'),
+  )
+}
+
+/** 홍콩 '적을 수 있는 접종일' 판정 본체 — 광견병·종합백신 공용(위 두 wrapper 주석 참고). */
+function violatesHkDoseWindow(
+  data: Record<string, unknown>,
+  entryOrDeparture: string,
+  key: 'rabies_dates' | 'general_vaccine_dates',
+  waitDays: number,
+): boolean {
   const target = (entryOrDeparture ?? '').slice(0, 10)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(target)) return false
-  const dates = readDateArray(data, 'rabies_dates')
+  const dates = readDateArray(data, key)
   if (dates.length === 0) return false
   const today = todayKst()
   const stillUsable = dates.some((d) => {
@@ -504,7 +546,6 @@ export function violatesHkRabiesDoseWindow(
     return !!until && until >= today
   })
   if (!stillUsable) return false
-  const waitDays = rabiesEntryWaitDays('hongkong')
   return !dates.some((d) => {
     const usableFrom = addDays(d, waitDays)
     const usableUntil = addMonths(d, 12)

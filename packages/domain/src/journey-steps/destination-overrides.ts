@@ -1774,7 +1774,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // titerDescription 없음 — 위 ① 참고. 넘기면 없는 절차 카드가 생긴다.
     generalVaccine: {
       description:
-        '강아지는 디스템퍼·전염성간염·파보바이러스, 고양이는 범백혈구감소증·호흡기질환이 포함된 종합백신을 접종하세요.\n\n출국 14일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+        '강아지는 디스템퍼·전염성간염·파보바이러스, 고양이는 범백혈구감소증·호흡기질환이 포함된 종합백신을 접종하세요.\n\n출국 14일 전까지 접종해야 해요.\n접종 후 1년 이내에 입국해야 합니다.',
       descriptionBySpecies: {
         // DC-02v05 11(d) 원문 그대로 — 개는 D·H·P 셋뿐이다(파라인플루엔자·렙토스피라 없음).
         //   "Dogs – canine distemper, infectious canine hepatitis and canine parvovirus."
@@ -1782,8 +1782,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         //    disease complex (cat flu)."
         // ⛔ 필리핀·말레이시아 문구를 베껴 파라인플루엔자·렙토스피라를 넣지 말 것 — 홍콩은
         //   요구하지 않는다(한국 DHPPL 로 접종해도 요건은 충족된다).
-        dog: '종합백신(DHP)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스 예방을 포함해야 해요.\n출국 14일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
-        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증·호흡기질환 예방을 포함해야 해요.\n출국 14일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+        dog: '종합백신(DHP)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스 예방을 포함해야 해요.\n출국 14일 전까지 접종해야 해요.\n접종 후 1년 이내에 입국해야 합니다.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증·호흡기질환 예방을 포함해야 해요.\n출국 14일 전까지 접종해야 해요.\n접종 후 1년 이내에 입국해야 합니다.',
       },
       validationIds: ['hk.general-vaccine-14days-before-departure'],
     },

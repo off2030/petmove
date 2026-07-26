@@ -224,6 +224,12 @@ export interface DestinationOverride {
    * 예: 싱가포르 14·UAE 21·카자흐/러시아 20. (태국·필리핀 21은 아직 각 entry validator 내부.)
    */
   generalVaccineWaitDays?: number
+  /**
+   * 종합백신 면역 유효기간을 **1년만** 인정 — 2·3년 선택 저장 거부.
+   * 광견병 `rabies.oneYearVaccineOnly` 의 종합백신판이고,
+   * `GENERAL_VACCINE_ONE_YEAR_VALIDITY_DESTINATIONS` 의 파생원이다.
+   */
+  generalVaccineOneYearOnly?: boolean
   /** 펫무브 앱(포털) 목적지 화이트리스트 노출 여부. `APP_DESTINATIONS_KO` 의 파생원. */
   appSupported?: boolean
 }
@@ -829,6 +835,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // DC-02v05 11(d) "not less than 14 days and not more than 1 year before export" —
     //   저장 거부(validateGeneralVaccineEntryWait)와 hk.ts 주의가 이 값을 공유.
     generalVaccineWaitDays: 14,
+    // "not more than 1 year" 는 광견병 11(c)와 같은 절대 상한이라 종합백신도 1년만 인정한다
+    //   (VC-DC2 (f) "not less than 14 days and not more than 1 year before coming into Hong
+    //   Kong"). 광견병 rabies.oneYearVaccineOnly 의 종합백신판 — 3년 백신 저장 거부.
+    generalVaccineOneYearOnly: true,
     appSupported: true,
     // Special Permit(AF240) — **해외에서 신청할 수 없다.** 홍콩 현지에서 신청비 납부와 동시에
     //   접수해야 해서 보호자는 현지 대리인(운송 에이전시)을 지정한다(펫무브 가이드 + AFCD

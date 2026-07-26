@@ -1,10 +1,10 @@
 import {
   buildDateRuleContext,
-  validateGeneralVaccineEntryWait,
   validateHkEntryDate,
   validateHkImportPermitWithin6Months,
   validateIeAdvanceNoticeDate,
   validateImportPermitNotAfterDeparture,
+  violatesHkGeneralVaccineDoseWindow,
   violatesHkRabiesDoseWindow,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
@@ -204,9 +204,9 @@ export const HK_CHECKS: ProcedureCheck[] = [
     id: 'hk.general-vaccine-14days-before-departure',
     country: COUNTRY,
     category: '종합백신',
-    title: '종합백신은 출국일 14일 이상 전 접종',
+    title: '증명서에 적을 수 있는 종합백신 접종일 (출국 14일~1년 전)',
     description:
-      'AFCD DC-02v05 11(d): "vaccinated … not less than 14 days and not more than 1 year before export." 저장 거부(validateGeneralVaccineEntryWait)와 같은 함수 — 프로파일 generalVaccineWaitDays(14) 파생.',
+      'AFCD DC-02v05 11(d) / VC-DC2 (f): "not less than 14 days and not more than 1 year before coming into Hong Kong." 광견병 11(c)와 같은 구조라 같은 판정(violatesHkGeneralVaccineDoseWindow)을 쓴다 — 14일~1년 창을 만족하는 접종이 하나라도 있어야 한다. 저장 거부(validateGeneralVaccineEntryWait 의 홍콩 분기)와 공용. ⛔ 하한(14일)만 보던 공용 경로로 되돌리지 말 것 — 3년 종합백신을 고르면 접종 2년 뒤 출국이 통과했다(2026-07-26).',
     severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
@@ -214,17 +214,17 @@ export const HK_CHECKS: ProcedureCheck[] = [
       const entries = readGeneralVaccineEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
-      const ctx = buildDateRuleContext(caseRow, destination)
-      const msg = validateGeneralVaccineEntryWait(dep, ctx)
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
       const latest = entries[entries.length - 1]
-      if (msg) {
+      if (violatesHkGeneralVaccineDoseWindow(data, dep)) {
         return {
           ok: false,
-          message: msg,
+          message:
+            '종합백신 접종 후 14일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.',
           offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
-      return { ok: true, message: `최근 종합백신(${latest.date}) → 입국(${dep}) 14일 이상.` }
+      return { ok: true, message: `입국(${dep}) 기준 14일~1년 창을 만족하는 종합백신이 있음.` }
     },
   },
   {

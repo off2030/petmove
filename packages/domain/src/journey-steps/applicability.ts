@@ -69,6 +69,15 @@ export const RABIES_ONE_YEAR_VALIDITY_DESTINATIONS: string[] = destinationKeysWh
 )
 
 /**
+ * 종합백신 면역 유효기간을 **1년만** 인정하는 목적지 — 위 광견병판의 종합백신 버전.
+ * 프로파일 파생 — `generalVaccineOneYearOnly` (근거 주석은 각 목적지 선언부에).
+ * 홍콩: VC-DC2 (f) "not less than 14 days and not more than 1 year before coming into Hong Kong".
+ */
+export const GENERAL_VACCINE_ONE_YEAR_VALIDITY_DESTINATIONS: string[] = destinationKeysWhere(
+  (o) => !!o.generalVaccineOneYearOnly,
+)
+
+/**
  * 종합백신(DHPP·FVRCP) 카드가 뜨는 목적지 — catalog `general-vaccine` step 과
  * common.general-vaccine-validity-expired(이미 만료 '주의') 룰이 공유하는 단일 출처.
  *
