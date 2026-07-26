@@ -834,7 +834,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '귀국 서류 준비',
     shortLabel: '귀국서류',
     description:
-      'USDA 승인을 받은 건강증명서 또는 대체 서류를 준비하세요.\n\n출국 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 한국 전용 국제동물건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n\n다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+      'USDA 승인 국제 건강증명서 또는 대체 서류를 준비하세요.\n\n출국 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 국제 건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n\n다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
     doneSummary: '귀국 서류를 준비했어요.',
     cardLine: '귀국 서류를 준비하세요.',
     applicability: { destinations: ['hawaii'], species: 'all', tripType: 'round' },
@@ -850,9 +850,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    // '원본과 사본을 보관' 혼합문(실물 지참 안내 + 첨부 안내가 한 문장에 섞임)을 앱 표준
-    // 문형('사본을 사진·PDF로')으로 교정 — 미국 본토와 함께(2026-07-26 사용자 결정).
-    attachmentHint: '승인된 건강증명서 사본을 사진·PDF로 보관하세요.',
+    // 명칭은 'USDA 승인 국제 건강증명서'로 통일(2026-07-26 사용자 결정) — 서류탭 이름·
+    // 첨부 라벨과 동일. 문형은 앱 표준('사본을 사진·PDF로').
+    attachmentHint: 'USDA 승인 국제 건강증명서 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: 'USDA 승인 국제 건강증명서',
     // 서식 PDF 링크는 카드에서 빼고 서류탭 '서식 받기'로 이동(2026-07-26 사용자 결정) —
     // 외부 직링크 대신 앱 호스팅(/forms/usda-korea-dog-cat.pdf, required-docs templates).
@@ -1502,7 +1502,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     // '원본과 사본을 보관' 혼합문 교정 — 하와이와 함께 앱 표준 문형으로(2026-07-26).
     // 원본 실물 안내는 설명문("승인본을 한국 입국 때 제출")이 담당.
-    attachmentHint: '승인된 건강증명서 사본을 사진·PDF로 보관하세요.',
+    attachmentHint: 'USDA 승인 국제 건강증명서 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: 'USDA 승인 국제 건강증명서',
     links: [
       {
