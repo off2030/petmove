@@ -152,7 +152,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // (microchip_implant_date_scheduled)로 분리되므로 여기엔 실제(≤오늘) 기록만 온다.
       return undefined
     },
-    appliesWhen: 'us-dog-or-round',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 20,
     done: 'microchip-set',

@@ -194,11 +194,6 @@ export function isStepApplicable(applicability: StepApplicability, ctx: CaseJour
 function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: CaseRow): boolean {
   if (!signal) return true
   switch (signal) {
-    case 'us-dog-or-round': {
-      const ctx = buildCaseJourneyContext(caseRow)
-      if (ctx.destinationKey !== 'usa') return true
-      return ctx.species === 'dog' || ctx.species == null || ctx.tripType === 'round'
-    }
     case 'us-return-rabies-or-other': {
       const ctx = buildCaseJourneyContext(caseRow)
       if (ctx.destinationKey !== 'usa') return true

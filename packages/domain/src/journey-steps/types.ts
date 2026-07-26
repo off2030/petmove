@@ -122,7 +122,6 @@ export type StepAppliesWhenSignal =
   | 'has-extra-titer'              // 항체 검사 2회 이상 있을 때만
   | 'rabies-extra-applicable'      // 3차+ 입력됨 OR 최근 접종 유효기간이 입국일 전 만료 (= 추가 접종 필요)
   | 'titer-extra-applicable'       // 2회+ 입력됨 OR 최근 항체 검사가 입국일 기준 2년 만료 (= 추가 검사 필요)
-  | 'us-dog-or-round'              // 미국: 개는 전 여정, 고양이는 한국 귀국이 있는 왕복만
   | 'us-return-rabies-or-other'    // 미국은 왕복·귀국일 생후 90일 이상만, 미국 외 목적지는 기존대로
 
 // ── 메인 타입 ────────────────────────────────────────────────────────────
