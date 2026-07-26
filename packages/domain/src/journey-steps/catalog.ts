@@ -833,7 +833,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '귀국 서류 준비',
     shortLabel: '귀국서류',
     description:
-      'USDA 승인을 받은 한국 입국용 건강증명서 또는 대체 서류를 준비하세요.\n\n한국행 출발 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 한국 전용 국제동물건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n승인된 건강증명서 원본을 한국 입국 시까지 반려동물과 함께 보관하세요.\n하와이 동물검역소(AQS)나 HIPOP에서 처리하는 절차가 아니에요.\n\n다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+      'USDA 승인을 받은 건강증명서 또는 대체 서류를 준비하세요.\n\n출국 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 한국 전용 국제동물건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n\n다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
     doneSummary: '귀국 서류를 준비했어요.',
     cardLine: '귀국 서류를 준비하세요.',
     applicability: { destinations: ['hawaii'], species: 'all', tripType: 'round' },
