@@ -1765,10 +1765,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     key: 'hongkong',
     label: '홍콩',
     rabiesDescription:
-      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 90일이 지난 후에 접종해야 해요.\n출국 30일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+      '광견병 백신을 접종하세요.\n\n생후 90일이 지난 후에 접종해야 해요.\n출국 30일 전까지 접종해야 해요.\n접종 후 1년 이내에 입국해야 합니다.',
     rabiesValidationIds: [
       'hk.rabies-prime-after-90days',
-      'hk.microchip-before-rabies',
       'hk.rabies-booster-within-prime-validity',
       'hk.rabies-min-30days-before-departure',
     ],

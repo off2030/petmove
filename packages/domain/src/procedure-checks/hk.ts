@@ -110,32 +110,8 @@ export const HK_CHECKS: ProcedureCheck[] = [
   },
 
   // ── 마이크로칩 ──
-  {
-    id: 'hk.microchip-before-rabies',
-    country: COUNTRY,
-    category: '마이크로칩',
-    title: '마이크로칩, 백신 타이밍',
-    description:
-      '마이크로칩(ISO 11784/11785 또는 AVID 호환)이 광견병 1차 접종일과 같거나 이전이어야 함. (AFCD DC-02v05 9항: "implanted with a microchip … compliant with ISO or AVID standards") 백신 입력 시 client 차단(validateMicrochipBeforeBooster)과 짝.',
-    severity: 'warning',
-    addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
-      const rabies = readRabiesEntries(caseRow)
-      if (!microchip || rabies.length === 0) return SKIP
-
-      const first = rabies[0]
-      if (microchip <= first.date) {
-        return { ok: true, message: `마이크로칩(${microchip}) ≤ 접종(${first.date}).` }
-      }
-      return {
-        ok: false,
-        message: msgMicrochipBeforeRabies(),
-        offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
-      }
-    },
-  },
+  // 2026-07-26 제거: 홍콩 AFCD DC-02v05 규정에는 마이크로칩 삽입을 광견병 접종 이전에 해야 한다는
+  // 조항이 없다. 9항은 칩의 규격만, 11(a)는 건강증명서의 칩 번호 일치만 요구한다.
 
   {
     id: 'hk.rabies-prime-after-90days',
