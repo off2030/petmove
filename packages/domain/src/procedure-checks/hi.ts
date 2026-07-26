@@ -18,7 +18,6 @@ import {
   validateHiImportDeclarationDate,
   validateParasiteDateForDestination,
   validateRabiesPrimeAgeForDestination,
-  validateUsExportHealthCertDate,
 } from '../journey-steps/date-rules'
 import { buildCaseJourneyContext } from '../journey-steps/applicability'
 
@@ -397,37 +396,6 @@ export const HI_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 한국 입국용 건강증명서·USDA 승인 (왕복 귀국) ──
-  // 하와이→한국은 수출검역 제도가 없다(AQS 는 수출 업무 안 함) — USDA 공인 수의사 발급 +
-  // VEHCS 승인(출국 30일 이내)이 실제 절차. 저장 거부(validateUsExportHealthCertDate —
-  // 미국 본토와 공유)와 같은 함수. 카드·근거는 catalog hi-export-health-cert 주석 참고.
-  {
-    id: 'hi.export-health-cert-date-valid',
-    country: COUNTRY,
-    category: '귀국 서류',
-    title: '한국 입국용 건강증명서 발급·승인일',
-    description:
-      '한국 입국용 건강증명서(USDA 승인)는 하와이 체류 중, 한국행 출발 전 30일 이내에 발급·승인되어야 함. 입력 차단과 같은 함수(validateUsExportHealthCertDate — 미국 본토와 공유).',
-    severity: 'warning',
-    addedAt: '2026-07-26',
-    allowDate: true,
-    run: ({ caseRow, destination }) => {
-      if (buildCaseJourneyContext(caseRow, destination).tripType !== 'round') return SKIP
-      const ctx = buildDateRuleContext(caseRow, destination)
-      const date =
-        typeof ctx.data.hi_export_quarantine_date === 'string'
-          ? ctx.data.hi_export_quarantine_date.slice(0, 10)
-          : ''
-      if (!date) return SKIP
-      const error = validateUsExportHealthCertDate(date, ctx)
-      if (!error) return { ok: true, message: '건강증명서 발급·승인일이 유효한 범위.' }
-      return {
-        ok: false,
-        message: error,
-        offendingPaths: ['hi_export_quarantine_date', 'entry_date', 'return_date'],
-      }
-    },
-  },
   // 광견병 항체가 — 한국 검역본부는 하와이를 비발생 지역으로 분류(항체 면제·당일 개방)하지만,
   // USDA 한국 전용 서식(korea-dog-cat.pdf)에는 항체가 기재란이 필수라 서로 충돌한다. 면제를
   // 확정 안내하지 않고 보수 기준으로 '주의'만 둔다(2026-07-26 사용자 결정): 결과가 없거나

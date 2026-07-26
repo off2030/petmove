@@ -1286,34 +1286,6 @@ export function validateSgImportPermitAfterDogLicence(
 }
 
 /**
- * 필리핀 — 현지 동물병원 방문일(귀국 준비 건강증명서 발급)은 **필리핀 체류 구간 안**이어야
- * 한다: 필리핀 수입 검역일 이후 · BAI 수출 검역일 이전(카드 순서 140→150→155 — 이 증명서가
- * 있어야 수출 검역을 받는다). 물리적으로 불가능한 조합이라 저장을 거부한다.
- * client(방문일 입력 불가)·procedure-check(ph.local-vet-visit-date-valid — 검역일 쪽을 나중에
- * 고쳐 어긋난 경우 주의) 공용 단일 출처. 양끝 값이 없으면 그 비교는 건너뛴다(아직 입력 전).
- */
-export function validatePhLocalVetVisitDate(
-  visitDate: string,
-  data: Record<string, unknown>,
-): string | null {
-  if (!visitDate) return null
-  const visit = visitDate.slice(0, 10)
-  const read = (k: string) =>
-    typeof data[k] === 'string' && (data[k] as string).length >= 10
-      ? (data[k] as string).slice(0, 10)
-      : ''
-  const imp = read('ph_import_quarantine_date')
-  const exp = read('ph_export_quarantine_date')
-  if (imp && visit < imp) {
-    return '현지 동물병원 방문일은 필리핀 수입 검역일보다 빠를 수 없어요. 날짜를 확인하세요.'
-  }
-  if (exp && visit > exp) {
-    return '현지 동물병원 방문일은 필리핀 수출 검역일보다 늦을 수 없어요. 날짜를 확인하세요.'
-  }
-  return null
-}
-
-/**
  * 하와이 입국 신청(AQS 서류 사전 제출)일 — **도착 10일 전까지**만 저장 허용
  * (2026-07-26 사용자 확정 — 일본 사전신고 40일 validateAdvanceNotification 과 동일 모델).
  * 도착일보다 늦은 신청일도 gap 이 음수라 같은 판정에 포함된다(별도 분기 불요).
@@ -1425,16 +1397,6 @@ export function validateJpExportReservationDate(v: string, ctx: DateRuleContext)
   return null
 }
 
-/** 일본 수출검역 검역일(방문): 일본 입국일 ≤ 검역일 ≤ 귀국일. */
-export function validateJpExportVisitDate(v: string, ctx: DateRuleContext): string | null {
-  if (!v) return null
-  const entry = readDate(ctx.data, 'entry_date')
-  if (entry && v < entry) return '일본 수출 검역일은 일본 입국일보다 빠를 수 없어요. 날짜를 확인하세요.'
-  const ret = readDate(ctx.data, 'return_date')
-  if (ret && v > ret) return '일본 수출 검역일은 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.'
-  return null
-}
-
 /** 한국 수출검역일: 임상검사일 ≤ 검역일 ≤ 출국일, 출국일 기준 윈도우 이내. */
 export function validateKrExportDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
@@ -1480,46 +1442,6 @@ export function validateImportQuarantineDate(v: string, ctx: DateRuleContext): s
   if (!v) return null
   const entry = readDate(ctx.data, 'entry_date')
   if (entry && v < entry) return '수입 검역일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.'
-  return null
-}
-
-/**
- * 나라별 현지 수출 검역일: 그 나라 입국일(entry_date) ≤ 검역일 ≤ 귀국일(return_date).
- * 'quarantine:<나라>_export_quarantine_date' step(태국·필리핀 등)의 입력 차단용.
- */
-export function validateExportQuarantineDate(v: string, ctx: DateRuleContext): string | null {
-  if (!v) return null
-  const entry = readDate(ctx.data, 'entry_date')
-  if (entry && v < entry) return '수출 검역일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.'
-  const ret = readDate(ctx.data, 'return_date')
-  if (ret && v > ret) return '수출 검역일은 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.'
-  return null
-}
-
-/**
- * 미국에서 한국으로 귀국할 때 쓰는 USDA 승인 건강증명서는 미국 출국 전 30일 이내
- * 발급·승인을 기준으로 안내한다. return_date 를 미국 출국 일정의 앵커로 쓰며,
- * 현지 체류 중이어야 하므로 공통 수출검역 범위도 함께 본다.
- *
- * https://direct.aphis.usda.gov/pet-travel/us-to-another-country-export/pet-travel-us-korea
- */
-export function validateUsExportHealthCertDate(v: string, ctx: DateRuleContext): string | null {
-  if (!v) return null
-  // 하와이 — 같은 USDA 절차(공인 수의사 발급 + VEHCS 승인)라 본토와 함수 공유(2026-07-26).
-  if (
-    !matchesDestinationKey(ctx.destination, 'usa') &&
-    !matchesDestinationKey(ctx.destination, 'hawaii')
-  ) {
-    return null
-  }
-  const rangeError = validateExportQuarantineDate(v, ctx)
-  if (rangeError) return rangeError
-  const ret = readDate(ctx.data, 'return_date')
-  if (!ret) return null
-  const windowOpens = addDays(ret, -30)
-  if (windowOpens && v < windowOpens) {
-    return `미국 수출 건강증명서는 미국 출국 30일 전인 ${fmt(windowOpens)}부터 준비해야 해요.`
-  }
   return null
 }
 

@@ -143,8 +143,6 @@ const UNVALIDATED_OK: Record<string, string> = {
   //   완료 추적용(강아지 라이선스·관부가세·국경검사 예약). 계류장 예약은 sg.quarantine-
   //   reservation-after-titer(채혈 이후) 룰이 있어 제외.
   'sg-dog-licence': '절차 완료일 추적용 — 날짜 순서 제약 없음',
-  // CDC 신고 — 검증·주의·알림 전부 삭제(2026-07-26 사용자 결정). 제출일은 기록용.
-  'us-cdc-dog-import-form': '검증 전부 삭제(2026-07-26 사용자 결정) — 제출일은 기록용',
   // sg-gst-permit·sg-border-inspection 은 2026-07-25 검증 추가로 예외 목록에서 제거.
 }
 
@@ -198,8 +196,15 @@ function collect(dest: string): Problem[] {
     }
 
     // 2단계 — 날짜를 받는데 검증이 하나도 없는가(위 UNVALIDATED_OK 예외 제외).
+    // 버튼 완료 카드(step.buttonComplete)는 날짜 입력칸 자체가 없고(완료 버튼이 오늘을 기록)
+    // 검증 없음이 의도라 자동 통과(2026-07-26 귀국 절차 전환).
     const dateInputs = (resolved.inputs ?? []).filter((i) => i.type === 'date')
-    if (dateInputs.length > 0 && ids.length === 0 && !unvalidatedReason(dest, step.id)) {
+    if (
+      dateInputs.length > 0 &&
+      !step.buttonComplete &&
+      ids.length === 0 &&
+      !unvalidatedReason(dest, step.id)
+    ) {
       out.push({
         dest,
         stepId: step.id,
@@ -659,18 +664,12 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   'mt-advance-notice': '차단: validateMtAdvanceNoticeDate(입국 3영업일 전)',
   'il-advance-notice': '차단: validateIlAdvanceNoticeDate(출국 2일 전)',
   'hi-import-declaration': '차단: validateHiImportDeclarationDate(도착 이후·도착 10일 미만 모두)',
-  'hi-export-health-cert':
-    '차단: validateUsExportHealthCertDate(체류 구간 + 귀국 30일 창 — 미국 본토와 공유)',
-  'ph-local-vet-visit': '차단: validatePhLocalVetVisitDate(필리핀 수입검역 ≤ 방문 ≤ 수출검역)',
   'sg-quarantine-reservation':
     '차단: validateSgQuarantineReservationFiled(채혈 이후)·validateSgQuarantineReservationDate(채혈+90일~12개월)·validateSgReservationVsDeparture',
   'sg-dog-licence':
     '주의만: 절차 완료일 추적용 — 날짜 자체 제약 없음. 라이선스↔수입허가 순서는 수입허가 쪽 차단(validateSgImportPermitAfterDogLicence)·주의(sg.dog-licence-before-import-permit)가 담당',
   'sg-gst-permit': '차단: validateSgGstPermitDate(도착 전 + 도착 14일 이내)',
   'sg-border-inspection': '차단: validateSgBorderInspectionDate(도착 최소 5일 전)',
-  'us-cdc-dog-import-form':
-    '주의만: 검증 전부 삭제(2026-07-26 사용자 결정) — 제출일은 기록용, 날짜 제약·주의·알림 없음',
-  'us-export-health-cert': '차단: validateUsExportHealthCertDate',
   // ── 검사·검역·증명서 (한국 측 공통) ──────────────────────────────────────
   'vet-visit': '차단: validateVetVisitDate(출국 전 윈도우)',
   'certificate-issue': '차단: validateKrExportDate',
@@ -678,29 +677,6 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   // ── 도착 수입검역·현지 수출검역·귀국 서류 ────────────────────────────────
   departure: '차단: validateImportQuarantineDate(입국일 이후) — 일본은 validateJpImportDate',
   'jp-export-quarantine': '차단: validateJpExportReservationDate + 신청 10일 마감(인라인)',
-  'jp-export-quarantine-visit': '차단: validateJpExportVisitDate',
-  'eu-export-cert': '차단: validateExportQuarantineDate(_export_quarantine_date 공통 분기)',
-  'th-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'ph-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'id-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'tr-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'mx-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'kz-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'ru-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'ae-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'sg-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'br-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'cn-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'tw-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'my-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'ma-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'mn-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'uz-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'vn-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'ar-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'kh-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'ca-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
-  'ua-export-quarantine': '차단: validateExportQuarantineDate(체류 구간 내)',
 }
 
 function dateSaveBlockDecision(dest: string, stepId: string): string | undefined {
@@ -719,6 +695,8 @@ function saveBlockDecisions(appDests: string[]): Problem[] {
         (i) => i.type === 'date' || i.type === 'date_array',
       )
       if (!hasDateInput) continue
+      // 버튼 완료 카드 — 날짜 입력칸이 없어 저장 차단 결정이 성립하지 않는다(2026-07-26).
+      if (step.buttonComplete) continue
       const decision = dateSaveBlockDecision(dest, step.id)
       if (decision && /^(차단|주의만): /.test(decision)) continue
       if (!missing.has(step.id)) missing.set(step.id, new Set())

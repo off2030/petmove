@@ -8,7 +8,6 @@ import {
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
-  classifyExportQuarantineDate,
   daysBetween,
   readScopedImportPermitFiled,
   findRabiesValidityBreaks,
@@ -446,45 +445,6 @@ export const AE_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `아랍에미리트 수입검역일(${raw}) 입국 이후.` }
-    },
-  },
-  {
-    id: 'ae.export-quarantine-date-valid',
-    country: COUNTRY,
-    category: '검역',
-    title: '아랍에미리트 수출 검역일',
-    description:
-      '아랍에미리트 수출 검역일은 입국일 이후·한국 귀국일 이전이어야 함(체류 기간 내). 판정은 classifyExportQuarantineDate 공용.',
-    severity: 'warning',
-    addedAt: '2026-07-22',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const ctx = buildDateRuleContext(caseRow, destination)
-      const entry =
-        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
-          ? ctx.data.entry_date.slice(0, 10)
-          : ''
-      const ret =
-        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
-          ? ctx.data.return_date.slice(0, 10)
-          : ''
-      const verdict = classifyExportQuarantineDate(data.ae_export_quarantine_date, entry, ret)
-      if (verdict === 'skip') return SKIP
-      if (verdict === 'before-entry') {
-        return {
-          ok: false,
-          message: msgExportQuarantineBeforeEntry('아랍에미리트'),
-          offendingPaths: ['ae_export_quarantine_date'],
-        }
-      }
-      if (verdict === 'after-return') {
-        return {
-          ok: false,
-          message: msgExportQuarantineAfterReturn('아랍에미리트'),
-          offendingPaths: ['ae_export_quarantine_date'],
-        }
-      }
-      return { ok: true, message: '아랍에미리트 수출검역일 체류 기간 내.' }
     },
   },
 ]

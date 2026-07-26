@@ -7,7 +7,6 @@ import type { ProcedureCheck } from './types'
 import {
   addMonths,
   addYears,
-  classifyExportQuarantineDate,
   daysBetween,
   findRabiesValidityBreaks,
   readExternalParasiteEntries,
@@ -433,45 +432,6 @@ export const TR_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `튀르키예 수입검역일(${raw}) 입국 이후.` }
-    },
-  },
-  {
-    id: 'tr.export-quarantine-date-valid',
-    country: COUNTRY,
-    category: '검역',
-    title: '튀르키예 수출 검역일',
-    description:
-      '튀르키예 수출 검역일은 튀르키예 입국일 이후·한국 귀국일 이전이어야 함. "그 나라에 있는 동안 받았는가"라는 물리적 제약이라 나라별 규정 조사가 필요 없다(판정은 classifyExportQuarantineDate 공용).',
-    severity: 'warning',
-    addedAt: '2026-07-22',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const ctx = buildDateRuleContext(caseRow, destination)
-      const entry =
-        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
-          ? ctx.data.entry_date.slice(0, 10)
-          : ''
-      const ret =
-        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
-          ? ctx.data.return_date.slice(0, 10)
-          : ''
-      const verdict = classifyExportQuarantineDate(data.tr_export_quarantine_date, entry, ret)
-      if (verdict === 'skip') return SKIP
-      if (verdict === 'before-entry') {
-        return {
-          ok: false,
-          message: '튀르키예 수출 검역일은 튀르키예 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
-          offendingPaths: ['tr_export_quarantine_date'],
-        }
-      }
-      if (verdict === 'after-return') {
-        return {
-          ok: false,
-          message: '튀르키예 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.',
-          offendingPaths: ['tr_export_quarantine_date'],
-        }
-      }
-      return { ok: true, message: '튀르키예 수출검역일 체류 기간 내.' }
     },
   },
 ]

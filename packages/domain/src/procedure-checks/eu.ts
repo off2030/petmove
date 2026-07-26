@@ -535,45 +535,4 @@ export const EU_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `입국 검사일(${raw}) 도착 이후.` }
     },
   },
-  {
-    id: 'eu.export-cert-date-valid',
-    country: EU_REGIME,
-    category: '검역',
-    title: '귀국 서류 준비 완료일',
-    description: '귀국 서류 준비 완료일은 도착(입국)일 이후·한국 귀국일 이전이어야 함.',
-    severity: 'warning',
-    addedAt: '2026-06-12',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const raw =
-        typeof data.eu_export_quarantine_date === 'string'
-          ? data.eu_export_quarantine_date.slice(0, 10)
-          : ''
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-      const ctx = buildDateRuleContext(caseRow, destination)
-      const entry =
-        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
-          ? ctx.data.entry_date.slice(0, 10)
-          : ''
-      const ret =
-        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
-          ? ctx.data.return_date.slice(0, 10)
-          : ''
-      if (entry && raw < entry) {
-        return {
-          ok: false,
-          message: '귀국 서류 준비 완료일은 도착(입국)일보다 빠를 수 없어요.',
-          offendingPaths: ['eu_export_quarantine_date'],
-        }
-      }
-      if (ret && raw > ret) {
-        return {
-          ok: false,
-          message: '귀국 서류 준비 완료일은 한국 귀국일보다 늦을 수 없어요.',
-          offendingPaths: ['eu_export_quarantine_date'],
-        }
-      }
-      return { ok: true, message: `준비 완료일(${raw}) 체류 구간 내.` }
-    },
-  },
 ]

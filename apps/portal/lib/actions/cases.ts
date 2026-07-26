@@ -34,9 +34,9 @@ import {
   validateThEntryDate,
   validateTwEntryDate,
   buildDateRuleContext,
+  JOURNEY_STEP_CATALOG,
   validateImportQuarantineDate,
   validateUsDogEntryDate,
-  validateUsExportHealthCertDate,
   writeByDestValue,
   writeJourneyFeedback,
   readByDestValue,
@@ -1821,12 +1821,11 @@ export async function updateImportQuarantineDate(
       if (buildCaseJourneyContext(existing as CaseRow, destination).destinationKey !== 'usa') {
         return { ok: false, error: '미국 여정에서만 저장할 수 있는 필드입니다.' }
       }
+      // us_export_quarantine_date 는 버튼 완료 카드로 전환돼(2026-07-26) 이 confirm 액션의
+      // 허용 명단(quarantine: done)에서 자동으로 빠졌다 — 남은 건 수입검역일뿐.
       if (v) {
         const ctx = buildDateRuleContext(existing as CaseRow, destination)
-        const validationError =
-          fieldKey === 'us_export_quarantine_date'
-            ? validateUsExportHealthCertDate(v, ctx)
-            : validateImportQuarantineDate(v, ctx)
+        const validationError = validateImportQuarantineDate(v, ctx)
         if (validationError) return { ok: false, error: validationError }
       }
     }
@@ -2082,9 +2081,16 @@ export async function markApplicationIssued(
 // 확인 게이트 없이 날짜만 저장(done-resolver dated:<field> 가 ≤오늘=완료 판정). 클라이언트는
 // stepId 만 넘기고 서버가 신뢰 목록에서 필드를 결정한다(임의 키 쓰기 차단).
 const SIMPLE_DATE_STEP_FIELDS: Record<string, string> = {
+  // 싱가포르 2종 — 날짜가 실제 데이터(검증 있음)라 버튼 카드는 아니지만 같은 dated 저장 경로.
   'sg-gst-permit': 'sg_gst_permit_date',
   'sg-border-inspection': 'sg_border_inspection_date',
-  'us-cdc-dog-import-form': 'us_cdc_form_date',
+  // 버튼 완료 카드(CDC·귀국 절차 26종) — 카탈로그 buttonComplete 선언에서 자동 파생
+  // (2026-07-26). 카드를 선언하면 저장이 자동 허용된다(임의 키 쓰기 차단은 그대로).
+  ...Object.fromEntries(
+    JOURNEY_STEP_CATALOG.filter(
+      (s) => s.buttonComplete && typeof s.done === 'string' && s.done.startsWith('dated:'),
+    ).map((s) => [s.id, (s.done as string).slice('dated:'.length)]),
+  ),
 }
 
 /**

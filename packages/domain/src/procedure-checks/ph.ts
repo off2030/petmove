@@ -5,7 +5,6 @@ import {
   validatePhImportPermitVaccineGap,
   validatePhImportPermitWithin60Days,
   validatePhInternalParasiteWindow,
-  validatePhLocalVetVisitDate,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
@@ -515,77 +514,6 @@ export const PH_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `필리핀 수입검역일(${raw}) 입국 이후.` }
-    },
-  },
-  {
-    id: 'ph.export-quarantine-date-valid',
-    country: COUNTRY,
-    category: '검역',
-    title: '필리핀 수출 검역일',
-    description: '필리핀 수출 검역일은 필리핀 입국일 이후·한국 귀국일 이전이어야 함.',
-    severity: 'warning',
-    addedAt: '2026-06-12',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const raw =
-        typeof data.ph_export_quarantine_date === 'string'
-          ? data.ph_export_quarantine_date.slice(0, 10)
-          : ''
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-      const ctx = buildDateRuleContext(caseRow, destination)
-      const entry =
-        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
-          ? ctx.data.entry_date.slice(0, 10)
-          : ''
-      const ret =
-        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
-          ? ctx.data.return_date.slice(0, 10)
-          : ''
-      if (entry && raw < entry) {
-        return {
-          ok: false,
-          message: '필리핀 수출 검역일은 필리핀 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
-          offendingPaths: ['ph_export_quarantine_date'],
-        }
-      }
-      if (ret && raw > ret) {
-        return {
-          ok: false,
-          message: '필리핀 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.',
-          offendingPaths: ['ph_export_quarantine_date'],
-        }
-      }
-      return { ok: true, message: `필리핀 수출검역일(${raw}) 필리핀 체류 구간 내.` }
-    },
-  },
-  // ── 현지 동물병원 방문(건강증명서 발급) ──
-  // 카드 순서: 필리핀 수입검역(140) → 현지 병원(150) → BAI 수출검역(155).
-  // 현지 병원 건강증명서가 있어야 BAI 수출검역을 받을 수 있으므로(카드 설명), 방문일은
-  // **필리핀 수입검역일 이후 · 수출검역일 이전**이어야 한다. 두 끝값이 없으면 그 비교는 건너뛴다
-  // (아직 입력 전일 수 있음) — 있는 것만 검사.
-  // 저장 거부(step-detail-view ph-local-vet-visit 분기)와 같은 함수 — 방문일 입력은 저장이
-  // 막히고, 검역일 쪽을 나중에 고쳐 어긋난 경우를 이 주의가 잡는다.
-  {
-    id: 'ph.local-vet-visit-date-valid',
-    country: COUNTRY,
-    category: '검역',
-    title: '필리핀 현지 동물병원 방문일',
-    description:
-      '현지 동물병원 방문일은 필리핀 수입 검역일 이후·수출 검역일 이전이어야 함. 입력 차단과 같은 함수(validatePhLocalVetVisitDate).',
-    severity: 'warning',
-    addedAt: '2026-07-19',
-    run: ({ caseRow }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const raw =
-        typeof data.ph_local_vet_visit_date === 'string'
-          ? data.ph_local_vet_visit_date.slice(0, 10)
-          : ''
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-      const msg = validatePhLocalVetVisitDate(raw, data)
-      if (msg) {
-        return { ok: false, message: msg, offendingPaths: ['ph_local_vet_visit_date'] }
-      }
-      return { ok: true, message: `현지 병원 방문일(${raw}) 필리핀 체류 구간 내.` }
     },
   },
 ]

@@ -541,32 +541,3 @@ export function findRabiesValidityBreaks(entries: RabiesEntry[]): string[] {
 // 눈을 감는다(2026-07-20 실제로 겪음). 판정(위 함수)만 공유하고 문구는 각 나라 파일에
 // 리터럴로 둔다 — 나라별로 문구를 달리 쓸 여지도 남는다.
 
-/**
- * 현지 수출 검역일이 **그 나라에 머무는 동안**이었는지 판정한다.
- *
- * 입국일 ≤ 검역일 ≤ 귀국일. "그 나라에 있을 때 받았는가"라는 물리적 제약이라 나라별 규정
- * 조사가 필요 없다 — 베트남·태국·필리핀·중국이 각자 같은 로직을 복사해 갖고 있었고,
- * 몽골·우즈베키스탄·캐나다를 추가하며 판정만 공용화했다(2026-07-20).
- *
- * ⚠️ **문구는 여기서 만들지 않는다.** lint:checks 가 소스의 문자열 리터럴을 정적으로 수집해
- *   고객 노출 문구를 가드하는데, 메시지를 공용 함수로 빼면 그 문구가 스냅샷에서 통째로
- *   사라져 가드가 눈을 감는다(이 파일 하단 주석 참고). 그래서 **판정 결과만** 돌려주고
- *   각 나라 파일이 자기 문구를 리터럴로 쓴다.
- *
- * 반환:
- *  - 'skip'         — 날짜 미입력·형식 불일치 (SKIP 처리할 것)
- *  - 'before-entry' — 그 나라 입국일보다 빠름
- *  - 'after-return' — 한국 귀국일보다 늦음
- *  - 'ok'           — 체류 기간 내
- */
-export function classifyExportQuarantineDate(
-  raw: unknown,
-  entryDate: string,
-  returnDate: string,
-): 'skip' | 'before-entry' | 'after-return' | 'ok' {
-  const date = typeof raw === 'string' ? raw.slice(0, 10) : ''
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return 'skip'
-  if (entryDate && date < entryDate) return 'before-entry'
-  if (returnDate && date > returnDate) return 'after-return'
-  return 'ok'
-}

@@ -2,7 +2,6 @@ import {
   buildDateRuleContext,
   validateAdvanceNotification,
   validateJpExportReservationDate,
-  validateJpExportVisitDate,
   validateJpImportDate,
   validateMicrochipBeforeBooster,
   validateRabiesInterval,
@@ -600,29 +599,6 @@ export const JP_CHECKS: ProcedureCheck[] = [
         return { ok: false, message: msg, offendingPaths: ['jp_export_quarantine_date'] }
       }
       return { ok: true, message: `예약일(${raw}) 일본 체류 구간 내.` }
-    },
-  },
-  {
-    id: 'jp.export-quarantine-visit-date-valid',
-    country: 'japan',
-    category: '검역',
-    title: '일본 수출 검역일',
-    description: '일본 수출 검역일은 일본 입국일 이후·한국 귀국일 이전이어야 함.',
-    severity: 'warning',
-    addedAt: '2026-06-04',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const raw =
-        typeof data.jp_export_quarantine_visit_date === 'string'
-          ? data.jp_export_quarantine_visit_date.slice(0, 10)
-          : ''
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-      const ctx = buildDateRuleContext(caseRow, destination)
-      const msg = validateJpExportVisitDate(raw, ctx)
-      if (msg) {
-        return { ok: false, message: msg, offendingPaths: ['jp_export_quarantine_visit_date'] }
-      }
-      return { ok: true, message: `검역일(${raw}) 일본 체류 구간 내.` }
     },
   },
   {

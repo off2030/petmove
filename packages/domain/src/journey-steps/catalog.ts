@@ -696,6 +696,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: { destinations: ['usa', 'hawaii'], species: 'dog', tripType: 'all' },
     order: 47,
     done: 'dated:us_cdc_form_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'us_cdc_form_date',
@@ -838,7 +839,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '귀국 서류를 준비하세요.',
     applicability: { destinations: ['hawaii'], species: 'all', tripType: 'round' },
     order: 150,
-    done: 'quarantine:hi_export_quarantine_date',
+    done: 'dated:hi_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'hi_export_quarantine_date',
@@ -861,7 +863,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     validationIds: [
-      'hi.export-health-cert-date-valid',
       'hi.return-titer-within-24months',
       'hi.airline-health-cert-note',
     ],
@@ -1488,7 +1489,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '미국 수출 건강증명서를 준비하세요.',
     applicability: { destinations: ['usa'], species: 'all', tripType: 'round' },
     order: 150,
-    done: 'quarantine:us_export_quarantine_date',
+    done: 'dated:us_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'us_export_quarantine_date',
@@ -1508,7 +1510,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         label: '미국에서 한국으로 반려동물 데려오기(USDA)',
       },
     ],
-    validationIds: ['us.export-health-cert-date-valid'],
   },
 
   {
@@ -1522,7 +1523,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '일본 동물검역소를 방문해 수출 검역을 받으세요.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
     order: 150,
-    done: 'has-jp-export-quarantine-visit',
+    done: 'dated:jp_export_quarantine_visit_date',
+    buttonComplete: true,
     // 신청 step([[jp-export-quarantine]])에서 입력한 예약 날짜·시간을 방문 step 의 '안내'로
     // 노출한다 — step 상세 화면의 안내 박스(situational.desc) + '다음 할 일' 카드 인라인 안내
     // (scenario 가 방문이 current 일 때만 infoMessage 로 승격). 예약일이 비어 있으면 기본 설명.
@@ -1548,7 +1550,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     inputs: [
       { key: 'jp_export_quarantine_visit_date', label: '검역일', type: 'date' },
     ],
-    validationIds: ['jp.export-quarantine-visit-date-valid'],
     allowAttachments: true,
     attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
     // 저장 이름 = 서류탭 이름. 일반명 검역증은 '{국가} 수출/수입 동물검역증'으로 통일
@@ -1572,9 +1573,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '태국 동물검역소에서 수출 검역을 받으세요.',
     applicability: { destinations: ['thailand'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:th_export_quarantine_date',
+    done: 'dated:th_export_quarantine_date',
+    buttonComplete: true,
     // 입력 후 항공편 수정으로 어긋난 검역일(태국 입국일 이전·귀국일 이후)을 '주의'로 표면화.
-    validationIds: ['th.export-quarantine-date-valid'],
     inputs: [
       {
         key: 'th_export_quarantine_date',
@@ -1608,8 +1609,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '말레이시아 수출 검역을 받으세요.',
     applicability: { destinations: ['malaysia'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:my_export_quarantine_date',
-    validationIds: ['my.export-quarantine-date-valid'],
+    done: 'dated:my_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'my_export_quarantine_date',
@@ -1784,8 +1785,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '싱가포르 수출 검역을 받으세요.',
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:sg_export_quarantine_date',
-    validationIds: ['sg.export-quarantine-date-valid'],
+    done: 'dated:sg_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'sg_export_quarantine_date',
@@ -1825,8 +1826,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '인도네시아 검역청에서 수출 검역을 받으세요.',
     applicability: { destinations: ['indonesia'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:id_export_quarantine_date',
-    validationIds: ['id.export-quarantine-date-valid'],
+    done: 'dated:id_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'id_export_quarantine_date',
@@ -1863,8 +1864,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '아르헨티나 SENASA에서 수출 검역을 받으세요.',
     applicability: { destinations: ['argentina'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:ar_export_quarantine_date',
-    validationIds: ['ar.export-quarantine-date-valid'],
+    done: 'dated:ar_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'ar_export_quarantine_date',
@@ -1905,8 +1906,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       tripType: 'round',
     },
     order: 155,
-    done: 'quarantine:eu_export_quarantine_date',
-    validationIds: ['eu.export-cert-date-valid'],
+    done: 'dated:eu_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'eu_export_quarantine_date',
@@ -1937,7 +1938,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '필리핀 현지 동물병원에서 검진·건강증명서를 받으세요.',
     applicability: { destinations: ['philippines'], species: 'all', tripType: 'round' },
     order: 150,
-    done: 'quarantine:ph_local_vet_visit_date',
+    done: 'dated:ph_local_vet_visit_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'ph_local_vet_visit_date',
@@ -1946,7 +1948,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         helpText: '현지 동물병원에서 검진받은 날짜',
       },
     ],
-    validationIds: ['ph.local-vet-visit-date-valid'],
     allowAttachments: true,
     attachmentHint: '건강증명서 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '필리핀 국제 건강증명서',
@@ -1966,8 +1967,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '필리핀 BAI 동물검역소에서 수출 검역을 받으세요.',
     applicability: { destinations: ['philippines'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:ph_export_quarantine_date',
-    validationIds: ['ph.export-quarantine-date-valid'],
+    done: 'dated:ph_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'ph_export_quarantine_date',
@@ -2019,7 +2020,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '귀국 서류를 준비하세요.',
     applicability: { destinations: ['taiwan'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:tw_export_quarantine_date',
+    done: 'dated:tw_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'tw_export_quarantine_date',
@@ -2035,7 +2037,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 업로드 파일명을 서류명으로 통일(원본 파일명 무시, 2장부터 '_2'). 일본 수출검역
     // (Export Quarantine Certificate)과 같은 처리.
     attachmentLabel: '대만 수출 동물검역증',
-    validationIds: ['tw.export-quarantine-date-valid'],
     // 지역별 관할 분서(지룽·타오위안·타이중·가오슝) 전화번호가 있는 공식 페이지.
     // 자체 안내 페이지(/guide/…)는 만들지 않았다 — 일본과 달리 분서 4곳뿐이고 대부분
     // 타오위안 공항에서 처리하며, 필수 절차도 아니라 유지 비용이 값어치를 넘는다.
@@ -2053,7 +2054,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '중국 해관에서 동물위생증명서를 발급받으세요.',
     applicability: { destinations: ['china'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:cn_export_quarantine_date',
+    done: 'dated:cn_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'cn_export_quarantine_date',
@@ -2065,7 +2067,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '동물위생증명서 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '동물위생증명서',
-    validationIds: ['cn.export-quarantine-date-valid'],
   },
 
   // 베트남 수출 검역 — **강제형**(사용자 지정 2026-07-20).
@@ -2104,9 +2105,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '베트남 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['vietnam'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:vn_export_quarantine_date',
+    done: 'dated:vn_export_quarantine_date',
+    buttonComplete: true,
     // 입력 후 항공편 수정으로 어긋난 검역일(베트남 입국일 이전·귀국일 이후)을 '주의'로 표면화.
-    validationIds: ['vn.export-quarantine-date-valid'],
     inputs: [
       {
         key: 'vn_export_quarantine_date',
@@ -2210,8 +2211,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '캄보디아 출국 전 정부 수출 검역을 받으세요.',
     applicability: { destinations: ['cambodia'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:kh_export_quarantine_date',
-    validationIds: ['kh.export-quarantine-date-valid'],
+    done: 'dated:kh_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'kh_export_quarantine_date',
@@ -2299,8 +2300,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '몽골 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['mongolia'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:mn_export_quarantine_date',
-    validationIds: ['mn.export-quarantine-date-valid'],
+    done: 'dated:mn_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'mn_export_quarantine_date',
@@ -2382,8 +2383,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '우즈베키스탄 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['uzbekistan'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:uz_export_quarantine_date',
-    validationIds: ['uz.export-quarantine-date-valid'],
+    done: 'dated:uz_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'uz_export_quarantine_date',
@@ -2477,8 +2478,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '귀국 서류를 준비하세요.',
     applicability: { destinations: ['canada'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:ca_export_quarantine_date',
-    validationIds: ['ca.export-quarantine-date-valid'],
+    done: 'dated:ca_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'ca_export_quarantine_date',
@@ -2569,8 +2570,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '모로코 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['morocco'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:ma_export_quarantine_date',
-    validationIds: ['ma.export-quarantine-date-valid'],
+    done: 'dated:ma_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'ma_export_quarantine_date',
@@ -2645,8 +2646,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '우크라이나 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['ukraine'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:ua_export_quarantine_date',
-    validationIds: ['ua.export-quarantine-date-valid'],
+    done: 'dated:ua_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'ua_export_quarantine_date',
@@ -2697,8 +2698,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '멕시코 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['mexico'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:mx_export_quarantine_date',
-    validationIds: ['mx.export-quarantine-date-valid'],
+    done: 'dated:mx_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'mx_export_quarantine_date',
@@ -2744,8 +2745,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '브라질 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['brazil'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:br_export_quarantine_date',
-    validationIds: ['br.export-quarantine-date-valid'],
+    done: 'dated:br_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'br_export_quarantine_date',
@@ -2789,8 +2790,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '아랍에미리트 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['uae'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:ae_export_quarantine_date',
-    validationIds: ['ae.export-quarantine-date-valid'],
+    done: 'dated:ae_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'ae_export_quarantine_date',
@@ -2856,8 +2857,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '카자흐스탄 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['kazakhstan'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:kz_export_quarantine_date',
-    validationIds: ['kz.export-quarantine-date-valid'],
+    done: 'dated:kz_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'kz_export_quarantine_date',
@@ -2898,8 +2899,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '러시아 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['russia'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:ru_export_quarantine_date',
-    validationIds: ['ru.export-quarantine-date-valid'],
+    done: 'dated:ru_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'ru_export_quarantine_date',
@@ -2937,8 +2938,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '튀르키예 관할 농림청에서 수출 검역을 받으세요.',
     applicability: { destinations: ['turkey'], species: 'all', tripType: 'round' },
     order: 155,
-    done: 'quarantine:tr_export_quarantine_date',
-    validationIds: ['tr.export-quarantine-date-valid'],
+    done: 'dated:tr_export_quarantine_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'tr_export_quarantine_date',

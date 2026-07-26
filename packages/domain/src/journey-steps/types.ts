@@ -230,6 +230,13 @@ export interface StepDefinition {
   /** 완료 시그널. */
   done: StepDoneSignal
   /**
+   * 버튼 완료 카드 — 날짜에 규정·검증상 의미가 없는 절차(신고·귀국 서류 준비·수출 검역 완료
+   * 자기 보고 등). 앱은 날짜 입력칸 대신 '완료' 버튼을 보여주고, 누르면 오늘 날짜를 done 의
+   * dated:<field> 필드에 자동 기록한다('완료 취소'=비움). 2026-07-26 CDC 신고가 원형,
+   * 같은 날 귀국 절차 카드 전체로 확장(사용자 결정). done 은 'dated:<field>' 여야 한다.
+   */
+  buttonComplete?: boolean
+  /**
    * done 과 별개로, 보호자가 입력한 데이터가 있는지. '이후 일정이 입력돼 있어요' 확인창의
    * 단일 출처. done 이 in_progress 상태를 표현 못하는 step (derive*Status 패턴 — 신청일만
    * 입력하고 명시적 '완료' 미클릭) 에서 정의한다. 미정의 시 done 으로 폴백.

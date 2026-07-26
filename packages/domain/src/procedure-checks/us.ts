@@ -2,7 +2,6 @@ import {
   buildDateRuleContext,
   validateImportQuarantineDate,
   validateUsDogEntryDate,
-  validateUsExportHealthCertDate,
 } from '../journey-steps/date-rules'
 import { buildCaseJourneyContext } from '../journey-steps/applicability'
 import type { ProcedureCheck } from './types'
@@ -222,33 +221,6 @@ export const US_CHECKS: ProcedureCheck[] = [
         ok: false,
         message: error.replace('수입 검역일', '미국 입국 검사일'),
         offendingPaths: ['us_import_quarantine_date', 'entry_date'],
-      }
-    },
-  },
-  {
-    id: 'us.export-health-cert-date-valid',
-    country: COUNTRY,
-    category: '귀국 서류',
-    title: '미국 수출 건강증명서 발급·승인일',
-    description:
-      '미국 수출 건강증명서는 미국 체류 중, 미국 출국 전 30일 이내에 발급·승인되어야 함.',
-    severity: 'warning',
-    addedAt: '2026-07-25',
-    allowDate: true,
-    run: ({ caseRow, destination }) => {
-      if (buildCaseJourneyContext(caseRow, destination).tripType !== 'round') return SKIP
-      const ctx = buildDateRuleContext(caseRow, destination)
-      const date =
-        typeof ctx.data.us_export_quarantine_date === 'string'
-          ? ctx.data.us_export_quarantine_date.slice(0, 10)
-          : ''
-      if (!date) return SKIP
-      const error = validateUsExportHealthCertDate(date, ctx)
-      if (!error) return { ok: true, message: '미국 수출 건강증명서 발급·승인일이 유효한 범위.' }
-      return {
-        ok: false,
-        message: error,
-        offendingPaths: ['us_export_quarantine_date', 'entry_date', 'return_date'],
       }
     },
   },

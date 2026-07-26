@@ -12,11 +12,8 @@ import {
   readEffectiveExtraValue,
   todayKst,
   validateAdvanceNotification,
-  validateExportQuarantineDate,
   validateImportQuarantineDate,
-  validateUsExportHealthCertDate,
   validateJpExportReservationDate,
-  validateJpExportVisitDate,
   validateJpImportDate,
   validateKrExportDate,
   validateKrImportDate,
@@ -30,7 +27,6 @@ import {
   validateSgBorderInspectionDate,
   validateSgDepartureVsQuarantineReservation,
   validateHiImportDeclarationDate,
-  validatePhLocalVetVisitDate,
   validateSgGstPermitDate,
   validateParasiteDateForDestination,
   validateSgQuarantineReservationFiled,
@@ -293,10 +289,10 @@ export function StepDetailView({
   // (isConfirmStep 제외 + 저장은 updateSimpleDateField 로 분기). 완료 판정은 done-resolver
   // dated:<field> 가 날짜(≤오늘)만으로 한다.
   const isSimpleDatedStep = typeof step.done === 'string' && step.done.startsWith('dated:')
-  // 버튼 완료 카드 — 날짜가 의미 없는 신고류(2026-07-26 사용자 결정, CDC 신고가 원형).
-  // 날짜 입력칸을 없애고 '제출 완료' 버튼이 오늘 날짜를 기존 필드에 자동 기록한다
-  // (dated done-resolver·저장 액션·펫무브워크 표시는 그대로 — 바뀌는 건 입력 UI 뿐).
-  const isButtonDoneStep = step.id === 'us-cdc-dog-import-form'
+  // 버튼 완료 카드 — 날짜가 의미 없는 절차(2026-07-26 사용자 결정, CDC 신고가 원형·같은 날
+  // 귀국 절차 카드 전체로 확장). 날짜 입력칸 없이 '완료' 버튼이 오늘 날짜를 기존 필드에 자동
+  // 기록한다(dated done-resolver·저장 액션·펫무브워크 표시는 그대로 — 바뀌는 건 입력 UI 뿐).
+  const isButtonDoneStep = Boolean(step.buttonComplete)
   const importQuarantineField =
     typeof step.done === 'string' && step.done.startsWith('quarantine:')
       ? step.done.slice('quarantine:'.length)
@@ -1446,15 +1442,8 @@ export function StepDetailView({
       // 정확한 후속 경로를 안내해야 하므로 이 폼에서는 구조적 모순만 차단한다.
       return null
     }
-    // CDC 신고(us-cdc-dog-import-form)는 날짜 검증 없음 — 전부 삭제(2026-07-26 사용자 결정).
-    // 하와이 귀국 서류(hi-export-health-cert)도 같은 USDA 절차라 본토와 같은 함수(2026-07-26).
-    if (step.id === 'us-export-health-cert' || step.id === 'hi-export-health-cert') {
-      return validateUsExportHealthCertDate(importQuarantineDate.trim(), {
-        data: (caseRow?.data ?? {}) as Record<string, unknown>,
-        destination: caseRow?.destination ?? null,
-        departureDate: caseRow?.departure_date ?? null,
-      })
-    }
+    // 버튼 완료 카드(CDC 신고·귀국 절차 전체)는 날짜 검증 없음 — 전부 삭제(2026-07-26 사용자
+    // 결정). 저장은 handleButtonDone 이 담당하므로 여기 분기 자체가 없다.
     if (step.id === 'sg-gst-permit') {
       // GST 납부 허가 — 도착 전 + 도착 14일 이내 창. 도메인 단일 출처(validateSgGstPermitDate)
       // — sg.ts 주의 룰과 같은 함수(2026-07-25). dated 카드라 폼 날짜는 importQuarantineDate.
@@ -1469,14 +1458,6 @@ export function StepDetailView({
       return validateSgBorderInspectionDate(
         importQuarantineDate.trim(),
         (caseRow?.departure_date ?? '').slice(0, 10),
-      )
-    }
-    if (step.id === 'ph-local-vet-visit') {
-      // 현지 병원 방문일 — 필리핀 수입 검역 이후·수출 검역 이전(체류 구간 내). 도메인 단일
-      // 출처(validatePhLocalVetVisitDate) — ph.ts 주의 룰과 같은 함수(2026-07-25 격상).
-      return validatePhLocalVetVisitDate(
-        importQuarantineDate.trim(),
-        (caseRow?.data ?? {}) as Record<string, unknown>,
       )
     }
     if (step.id === 'hi-import-declaration') {
@@ -1564,13 +1545,13 @@ export function StepDetailView({
         departureDate: null,
       })
     }
-    // 나라별 도착(수입)·현지 수출 검역(태국·필리핀·EU 등) — 검역일이 입국일 이전(수입·수출)이거나
-    // 귀국일 이후(수출)면 입력 차단. 일본 검역(jp_*)은 위 전용 분기가 따로 담당.
+    // 나라별 도착 수입검역 — 검역일이 입국일 이전이면 입력 차단. 일본 검역(jp_*)은 위 전용
+    // 분기가 따로 담당. 현지 수출검역(_export_quarantine_date)은 버튼 완료 카드로 전환돼
+    // 날짜 검증 없음(2026-07-26) — 버튼 카드는 이 함수 자체를 타지 않는다.
     if (isImportQuarantine && importQuarantineField && /_quarantine_date$/.test(importQuarantineField)) {
+      if (importQuarantineField.endsWith('_export_quarantine_date')) return null
       const ctx = { data, destination: caseRow?.destination ?? null, departureDate: null }
-      return importQuarantineField.endsWith('_export_quarantine_date')
-        ? validateExportQuarantineDate(importQuarantineDate.trim(), ctx)
-        : validateImportQuarantineDate(importQuarantineDate.trim(), ctx)
+      return validateImportQuarantineDate(importQuarantineDate.trim(), ctx)
     }
     if (isJpExportQuarantine) {
       const reserved = (jpExport.date ?? '').trim()
@@ -1589,9 +1570,6 @@ export function StepDetailView({
     }
     if (isJpImportQuarantine) {
       return validateJpImportDate(jpImportQuarantineDate.trim(), { data, destination: null, departureDate: null })
-    }
-    if (isJpExportQuarantineVisit) {
-      return validateJpExportVisitDate(jpExportQuarantineVisitDate.trim(), { data, destination: null, departureDate: null })
     }
     if (isKrImportQuarantine) {
       return validateKrImportDate(krImportQuarantineDate.trim(), { data, destination: null, departureDate: null })
@@ -3102,11 +3080,11 @@ export function StepDetailView({
               }}
             >
               {Number(savedImportQuarantineDate.slice(5, 7))}월{' '}
-              {Number(savedImportQuarantineDate.slice(8, 10))}일에 제출 완료했어요.
+              {Number(savedImportQuarantineDate.slice(8, 10))}일에 완료했어요.
             </div>
           </section>
         )}
-        {isJpExportQuarantineVisit && (
+        {isJpExportQuarantineVisit && !isButtonDoneStep && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <JpExportQuarantineVisitInputs

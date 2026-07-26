@@ -611,47 +611,6 @@ export const SG_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `싱가포르 수입검역일(${raw}) 입국 이후.` }
     },
   },
-  {
-    id: 'sg.export-quarantine-date-valid',
-    country: 'singapore',
-    category: '검역',
-    title: '싱가포르 수출 검역일',
-    description: '싱가포르 수출 검역일은 싱가포르 입국일 이후·한국 귀국일 이전이어야 함.',
-    severity: 'warning',
-    addedAt: '2026-07-24',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const raw =
-        typeof data.sg_export_quarantine_date === 'string'
-          ? data.sg_export_quarantine_date.slice(0, 10)
-          : ''
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-      const ctx = buildDateRuleContext(caseRow, destination)
-      const entry =
-        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
-          ? ctx.data.entry_date.slice(0, 10)
-          : ''
-      const ret =
-        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
-          ? ctx.data.return_date.slice(0, 10)
-          : ''
-      if (entry && raw < entry) {
-        return {
-          ok: false,
-          message: '싱가포르 수출 검역일은 싱가포르 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
-          offendingPaths: ['sg_export_quarantine_date'],
-        }
-      }
-      if (ret && raw > ret) {
-        return {
-          ok: false,
-          message: '싱가포르 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.',
-          offendingPaths: ['sg_export_quarantine_date'],
-        }
-      }
-      return { ok: true, message: `싱가포르 수출검역일(${raw}) 싱가포르 체류 구간 내.` }
-    },
-  },
 
   // ── 관세·GST 납부 허가 — 도착 전 + 14일 창 (2026-07-25 신설) ──
   // 입력 차단(validateSgGstPermitDate)과 같은 함수 — 출국일을 나중에 수정해 어긋난 경우 주의.

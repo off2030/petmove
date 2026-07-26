@@ -14,25 +14,16 @@
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [ar.import-quarantine-date-valid]
   아르헨티나 수입 검역일은 아르헨티나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[ar.export-quarantine-date-valid]
-  아르헨티나 수출 검역일은 아르헨티나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  아르헨티나 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [br.rabies-min-21days-before-departure]
   광견병 접종 후 21일이 지나야 브라질에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [br.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [br.import-quarantine-date-valid]
   브라질 수입 검역일은 브라질 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[br.export-quarantine-date-valid]
-  브라질 수출 검역일은 브라질 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  브라질 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [ca.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [ca.import-quarantine-date-valid]
   캐나다 수입 검역일은 캐나다 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[ca.export-quarantine-date-valid]
-  캐나다 수출 검역일은 캐나다 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  캐나다 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [cn.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [cn.rabies-extra-within-previous-validity]
@@ -45,9 +36,6 @@
   채혈일이 광견병 백신 면역 유효기간을 벗어났어요. 날짜를 확인하세요.
 [cn.import-quarantine-date-valid]
   중국 수입 검역일은 중국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[cn.export-quarantine-date-valid]
-  중국 수출 검역일은 중국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  중국 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [eu.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [eu.titer-min-30days-after-vaccine]
@@ -56,9 +44,6 @@
   광견병 백신 면역 유효기간이 ${usingEntry ? '입국' : '출국'} 전에 만료돼요. 만료 전에 추가 접종을 하세요.
 [eu.import-quarantine-date-valid]
   입국 검사일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[eu.export-cert-date-valid]
-  귀국 서류 준비 완료일은 도착(입국)일보다 빠를 수 없어요.
-  귀국 서류 준비 완료일은 한국 귀국일보다 늦을 수 없어요.
 [hi.rabies-doses-31days-apart]  (allowDate)
   ${v.prev.date}부터 ${v.curr.date}까지 ${v.gap}일이에요. 31일 이상이어야 해요.
 [hi.rabies-latest-31days-before-arrival]  (allowDate)
@@ -71,9 +56,6 @@
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [id.import-quarantine-date-valid]
   인도네시아 수입 검역일은 인도네시아 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[id.export-quarantine-date-valid]
-  인도네시아 수출 검역일은 인도네시아 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  인도네시아 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [il.rabies-min-30days-before-departure]
   광견병 접종 후 30일이 지나야 이스라엘에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [il.rabies-booster-within-prime-validity]
@@ -100,18 +82,12 @@
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [kh.import-quarantine-date-valid]
   캄보디아 수입 검역일은 캄보디아 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[kh.export-quarantine-date-valid]
-  캄보디아 수출 검역일은 캄보디아 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  캄보디아 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [kz.rabies-min-20days-before-departure]
   광견병 접종 후 20일이 지나야 카자흐스탄에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [kz.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [kz.import-quarantine-date-valid]
   카자흐스탄 수입 검역일은 카자흐스탄 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[kz.export-quarantine-date-valid]
-  카자흐스탄 수출 검역일은 카자흐스탄 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  카자흐스탄 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [ma.rabies-min-21days-before-departure]
   광견병 접종 후 21일이 지나야 모로코에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [ma.rabies-booster-within-prime-validity]
@@ -120,36 +96,24 @@
   광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요.
 [ma.import-quarantine-date-valid]
   모로코 수입 검역일은 모로코 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[ma.export-quarantine-date-valid]
-  모로코 수출 검역일은 모로코 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  모로코 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [mn.rabies-min-30days-before-departure]
   광견병 접종 후 30일이 지나야 몽골에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [mn.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [mn.import-quarantine-date-valid]
   몽골 수입 검역일은 몽골 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[mn.export-quarantine-date-valid]
-  몽골 수출 검역일은 몽골 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  몽골 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [mx.rabies-min-30days-before-departure]
   광견병 접종 후 30일이 지나야 멕시코에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [mx.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [mx.import-quarantine-date-valid]
   멕시코 수입 검역일은 멕시코 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[mx.export-quarantine-date-valid]
-  멕시코 수출 검역일은 멕시코 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  멕시코 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [my.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [my.rabies-min-30days-before-departure]
   광견병 접종은 출국 30일 전까지 해야 해요.
 [my.import-quarantine-date-valid]
   말레이시아 수입 검역일은 말레이시아 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[my.export-quarantine-date-valid]
-  말레이시아 수출 검역일은 말레이시아 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  말레이시아 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [ph.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [ph.rabies-prime-21days-before-arrival]
@@ -164,18 +128,12 @@
   120일령(4개월) 이상의 강아지(혹은 고양이)만 데려갈 수 있어요.
 [ph.import-quarantine-date-valid]
   필리핀 수입 검역일은 필리핀 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[ph.export-quarantine-date-valid]
-  필리핀 수출 검역일은 필리핀 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  필리핀 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [ru.rabies-min-20days-before-departure]
   광견병 접종 후 20일이 지나야 러시아에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [ru.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [ru.import-quarantine-date-valid]
   러시아 수입 검역일은 러시아 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[ru.export-quarantine-date-valid]
-  러시아 수출 검역일은 러시아 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  러시아 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [sg.departure-min-90days-after-titer]
   광견병 항체 검사 채혈일로부터 90일이 지난 후에 출국할 수 있어요.
 [sg.comprehensive-vaccine-14days-before-departure]
@@ -186,9 +144,6 @@
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [sg.import-quarantine-date-valid]
   싱가포르 수입 검역일은 싱가포르 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[sg.export-quarantine-date-valid]
-  싱가포르 수출 검역일은 싱가포르 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  싱가포르 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [th.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [th.rabies-21days-before-arrival]
@@ -199,9 +154,6 @@
   "${breed.ko || breed.en}"은 태국 수입이 금지되어 있어요 (매치: ${match}).
 [th.import-quarantine-date-valid]
   태국 수입 검역일은 태국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[th.export-quarantine-date-valid]
-  태국 수출 검역일은 태국 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  태국 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [tr.rabies-min-21days-before-departure]
   광견병 접종 후 21일이 지나야 튀르키예에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [tr.rabies-booster-within-prime-validity]
@@ -213,9 +165,6 @@
   광견병 항체가가 0.5 IU/mL 미만이에요.
 [tr.import-quarantine-date-valid]
   튀르키예 수입 검역일은 튀르키예 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[tr.export-quarantine-date-valid]
-  튀르키예 수출 검역일은 튀르키예 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  튀르키예 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [tw.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [tw.import-permit-120days-before-entry]
@@ -224,9 +173,6 @@
   도착 120일 전까지 수입 허가 신청을 해야 격리 없이 입국할 수 있어요. 지금은 도착 후 7일간 격리되는 점 참고하세요.
 [tw.import-quarantine-date-valid]
   대만 수입 검역일은 대만 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[tw.export-quarantine-date-valid]
-  대만 수출 검역일은 대만 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  대만 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [ua.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [ua.rabies-min-21days-before-departure]
@@ -235,9 +181,6 @@
   항체 검사 채혈일로부터 3개월이 지나야 우크라이나에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [ua.import-quarantine-date-valid]
   우크라이나 수입 검역일은 우크라이나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[ua.export-quarantine-date-valid]
-  우크라이나 수출 검역일은 우크라이나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  우크라이나 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [us.rabies-booster-within-prime-validity]
   광견병 추가 접종은 직전 접종의 면역 유효기간 안에 해야 해요.
 [us.rabies-valid-on-return]
@@ -254,9 +197,6 @@
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [uz.import-quarantine-date-valid]
   우즈베키스탄 수입 검역일은 우즈베키스탄 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[uz.export-quarantine-date-valid]
-  우즈베키스탄 수출 검역일은 우즈베키스탄 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  우즈베키스탄 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.
 [vn.rabies-min-30days-before-departure]
   광견병 접종 후 30일이 지나야 베트남에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [vn.rabies-booster-within-prime-validity]
@@ -265,6 +205,3 @@
   견종 "${breed.ko || breed.en}"은(는) 베트남 수입 제한 견종이에요 (매치: ${match}).
 [vn.import-quarantine-date-valid]
   베트남 수입 검역일은 베트남 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-[vn.export-quarantine-date-valid]
-  베트남 수출 검역일은 베트남 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
-  베트남 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.

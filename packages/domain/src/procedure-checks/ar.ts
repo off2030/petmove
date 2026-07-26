@@ -195,46 +195,4 @@ export const AR_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `아르헨티나 수입검역일(${raw}) 입국 이후.` }
     },
   },
-  // ── 귀국 수출 검역 (SENASA CVI) ──
-  {
-    id: 'ar.export-quarantine-date-valid',
-    country: COUNTRY,
-    category: '검역',
-    title: '아르헨티나 수출 검역일',
-    description: '아르헨티나 수출 검역(SENASA CVI 발급)일은 아르헨티나 입국일 이후·한국 귀국일 이전이어야 함.',
-    severity: 'warning',
-    addedAt: '2026-07-23',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const raw =
-        typeof data.ar_export_quarantine_date === 'string'
-          ? data.ar_export_quarantine_date.slice(0, 10)
-          : ''
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-      const ctx = buildDateRuleContext(caseRow, destination)
-      const entry =
-        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
-          ? ctx.data.entry_date.slice(0, 10)
-          : ''
-      const ret =
-        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
-          ? ctx.data.return_date.slice(0, 10)
-          : ''
-      if (entry && raw < entry) {
-        return {
-          ok: false,
-          message: '아르헨티나 수출 검역일은 아르헨티나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
-          offendingPaths: ['ar_export_quarantine_date'],
-        }
-      }
-      if (ret && raw > ret) {
-        return {
-          ok: false,
-          message: '아르헨티나 수출 검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.',
-          offendingPaths: ['ar_export_quarantine_date'],
-        }
-      }
-      return { ok: true, message: `아르헨티나 수출검역일(${raw}) 아르헨티나 체류 구간 내.` }
-    },
-  },
 ]
