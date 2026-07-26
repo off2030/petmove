@@ -971,6 +971,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // AFCD DC-02v05 1항: "The permittee must notify the Duty Officer of the Import & Export
   //   Section during office hours … at least 24 hours in advance of the anticipated time of
   //   arrival." 펫무브 홍콩 가이드도 같은 내용(서류 사본 사전 제출 + 도착일·시간 통지).
+  // **업무시간 조건**(2026-07-26 추가) — 24시간만 지키면 되는 게 아니라 그 통지가 업무시간
+  //   안에 들어가야 한다. AFCD 확인값: 월~금 08:30–12:30 · 13:30–17:15, 토·일·공휴일 휴무.
+  //   항공 화물은 Airport Office (852) 2182 1001 / foii_airport@afcd.gov.hk.
+  //   그래서 도착 24시간 전이 주말·공휴일이면 그 전 평일에 미리 통지해야 한다 — 카드 문구도
+  //   시각을 나열하는 대신 이 실무 결론만 적는다(몰타 3영업일·이스라엘 2영업일과 같은 성격).
+  //   ⚠️ 수령(공항 화물터미널 AFCD 사무소)은 24시간 운영이라 별개다 — 헷갈리지 말 것.
   // 화물 운송이라 실무에서는 현지 운송 에이전트가 대신 통지하는 경우가 많다 — 그래도 카드는
   //   둔다(마감이 있는 절차이고, 안 하면 도착 시 반송·계류 위험).
   // 완료신호 'quarantine:<필드>' confirm 재사용 — 아일랜드·이스라엘 사전 통지와 같은 모델.
@@ -980,7 +986,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '사전 통지',
     shortLabel: '통지',
     description:
-      '홍콩 도착 24시간 전까지 사전 통지를 하세요.\n\n홍콩 공항 검역사무소(AFCD)에 예상 도착일·도착 시간과 서류 사본을 보내요.\n화물로 운송하므로 보통 동물 운송업체가 대신 통지해요.',
+      '홍콩 도착 24시간 전까지 사전 통지를 하세요.\n\n홍콩 공항 검역사무소(AFCD)에 예상 도착일·도착 시간과 서류 사본을 보내요.\n검역사무소는 평일에만 열어요. 도착 24시간 전이 주말·공휴일이면 그 전 평일에 통지하세요.\n화물로 운송하므로 보통 동물 운송업체가 대신 통지해요.',
     doneSummary: '홍콩에 사전 통지를 했어요.',
     cardLine: '홍콩에 사전 통지를 하세요.',
     applicability: { destinations: ['hongkong'], species: 'all', tripType: 'all' },
