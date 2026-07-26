@@ -1442,7 +1442,8 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
       // 검체 수령일 기준 30일~36개월).
       id: 'hi-rabies-titer-result',
       name: '광견병 항체(FAVN) 검사 결과지',
-      source: '동물병원 · USDA 승인 검사기관',
+      // 발급처도 일본과 통일(2026-07-26) — 검사기관(USDA 승인) 안내는 항체검사 카드가 담당.
+      source: '동물병원',
       kind: 'step',
       stepRef: 'rabies-titer',
       // 문구 = 일본(rabies-titer-result)과 동일, 유효기간만 2년→3년(2026-07-26 사용자 지정
