@@ -141,9 +141,9 @@ export const HK_CHECKS: ProcedureCheck[] = [
     id: 'hk.rabies-min-30days-before-departure',
     country: COUNTRY,
     category: '광견병',
-    title: '증명서에 적을 수 있는 접종일 (출국 30일~1년 전)',
+    title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      'AFCD DC-02v05 11(c) / VC-DC2 (c): "vaccinated against rabies not less than 30 days and not more than 1 year prior to export." 증명서는 접종일을 **한 칸**에 적는 구조라, 30일~1년 창을 만족하는 dose 가 하나라도 있어야 한다. 저장 거부(validateRabiesEntryWait 의 홍콩 분기)와 **같은 판정 함수**(violatesHkRabiesDoseWindow). ⛔ 공용 violatesRabiesEntryWait 로 되돌리지 말 것 — 유효 부스터 면제 때문에 "부스터는 30일 미달 + 직전 접종은 1년 초과"인 케이스가 통과했다(2026-07-26).',
+      'AFCD DC-02v05 11(c) / VC-DC2 (c): "vaccinated against rabies not less than 30 days … prior to export." 증명서는 접종일을 **한 칸**에 적는 구조라, 30일 대기를 채운 dose 가 하나라도 있으면 통과다(violatesHkRabiesDoseWindow — 저장 거부와 공용). 상한(1년)은 hk.rabies-valid-on-departure 담당. ⛔ 공용 violatesRabiesEntryWait 로 되돌리지 말 것 — 유효 부스터 면제 때문에 "부스터는 30일 미달 + 직전 접종은 1년 초과"인 케이스가 통과했다(2026-07-26).',
     severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
@@ -157,11 +157,11 @@ export const HK_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message:
-            '광견병 접종 후 30일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.',
+            '광견병 접종 후 30일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.',
           offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
-      return { ok: true, message: `입국(${dep}) 기준 30일~1년 창을 만족하는 접종이 있음.` }
+      return { ok: true, message: `입국(${dep}) 기준 30일 대기를 채운 접종이 있음.` }
     },
   },
   {
@@ -200,9 +200,9 @@ export const HK_CHECKS: ProcedureCheck[] = [
     id: 'hk.general-vaccine-14days-before-departure',
     country: COUNTRY,
     category: '종합백신',
-    title: '증명서에 적을 수 있는 종합백신 접종일 (출국 14일~1년 전)',
+    title: '종합백신은 출국일 14일 이상 전 접종',
     description:
-      'AFCD DC-02v05 11(d) / VC-DC2 (f): "not less than 14 days and not more than 1 year before coming into Hong Kong." 광견병 11(c)와 같은 구조라 같은 판정(violatesHkGeneralVaccineDoseWindow)을 쓴다 — 14일~1년 창을 만족하는 접종이 하나라도 있어야 한다. 저장 거부(validateGeneralVaccineEntryWait 의 홍콩 분기)와 공용. ⛔ 하한(14일)만 보던 공용 경로로 되돌리지 말 것 — 3년 종합백신을 고르면 접종 2년 뒤 출국이 통과했다(2026-07-26).',
+      'AFCD DC-02v05 11(d) / VC-DC2 (f): "not less than 14 days … before coming into Hong Kong." 광견병 11(c)와 같은 구조라 같은 판정(violatesHkGeneralVaccineDoseWindow)을 쓴다 — 14일 대기를 채운 접종이 하나라도 있으면 통과. 저장 거부(validateGeneralVaccineEntryWait 의 홍콩 분기)와 공용. 상한(1년)은 hk.general-vaccine-valid-on-departure 담당(프로파일 generalVaccineOneYearOnly 로 유효기간이 1년으로 고정돼 그 룰이 곧 규정의 상한이다).',
     severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
@@ -216,11 +216,11 @@ export const HK_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message:
-            '종합백신 접종 후 14일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.',
+            '종합백신 접종 후 14일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.',
           offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
-      return { ok: true, message: `입국(${dep}) 기준 14일~1년 창을 만족하는 종합백신이 있음.` }
+      return { ok: true, message: `입국(${dep}) 기준 14일 대기를 채운 종합백신이 있음.` }
     },
   },
   {

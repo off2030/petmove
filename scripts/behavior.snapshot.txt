@@ -2615,9 +2615,7 @@
 
 ▸ hongkong (홍콩)
    입력불가 0건
-   주의·차단 2건
-     - hk.rabies-min-30days-before-departure [warning]
-         광견병 접종 후 30일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.
+   주의·차단 1건
      - hk.rabies-valid-on-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
    상황별 설명문 2건
@@ -4562,10 +4560,10 @@
 
 ▸ hongkong (홍콩)
    입력불가 1건
-     ✕ 출국·입국일: 광견병 접종 후 30일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.
+     ✕ 출국·입국일: 광견병 접종 후 30일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.
    주의·차단 1건
      - hk.rabies-min-30days-before-departure [warning]
-         광견병 접종 후 30일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.
+         광견병 접종 후 30일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -10518,11 +10516,11 @@
      ✕ 출국·입국일: 생후 5개월이 지나야 홍콩에 입국할 수 있어요
    주의·차단 3건
      - hk.general-vaccine-14days-before-departure [warning]
-         종합백신 접종 후 14일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.
+         종합백신 접종 후 14일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.
      - hk.min-5months-on-arrival [warning]
          생후 5개월 이상의 강아지(혹은 고양이)만 데려갈 수 있어요.
      - hk.rabies-min-30days-before-departure [warning]
-         광견병 접종 후 30일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.
+         광견병 접종 후 30일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
    노출 카드: intake, microchip, rabies-vaccine-1, general-vaccine, import-permit, flight-purchase, hk-advance-notice, vet-visit, document-checklist, certificate-issue, departure
@@ -10548,12 +10546,12 @@
 
 ▸ hongkong (홍콩)
    입력불가 1건
-     ✕ 출국·입국일: 종합백신 접종 후 14일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.
+     ✕ 출국·입국일: 종합백신 접종 후 14일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.
    주의·차단 2건
      - hk.general-vaccine-14days-before-departure [warning]
-         종합백신 접종 후 14일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.
+         종합백신 접종 후 14일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.
      - hk.rabies-min-30days-before-departure [warning]
-         광견병 접종 후 30일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.
+         광견병 접종 후 30일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
    노출 카드: intake, microchip, rabies-vaccine-1, general-vaccine, import-permit, flight-purchase, hk-advance-notice, vet-visit, document-checklist, certificate-issue, departure, hk-export-quarantine, kr-import-quarantine

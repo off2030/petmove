@@ -403,7 +403,7 @@ export function validateGeneralVaccineEntryWait(v: string, ctx: DateRuleContext)
   // 홍콩은 상한(1년)까지 있어 전용 판정으로 빠진다(violatesHkGeneralVaccineDoseWindow 주석).
   if (matchesDestinationKey(ctx.destination, 'hongkong')) {
     return violatesHkGeneralVaccineDoseWindow(ctx.data, v)
-      ? '종합백신 접종 후 14일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.'
+      ? '종합백신 접종 후 14일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.'
       : null
   }
   const days = generalVaccineEntryWaitDays(ctx.destination)
@@ -459,7 +459,7 @@ export function validateRabiesEntryWait(v: string, ctx: DateRuleContext): string
   // 홍콩은 판정 모양이 달라 전용 함수로 빠진다(violatesHkRabiesDoseWindow 주석 참고).
   if (matchesDestinationKey(ctx.destination, 'hongkong')) {
     return violatesHkRabiesDoseWindow(ctx.data, v)
-      ? '광견병 접종 후 30일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.'
+      ? '광견병 접종 후 30일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.'
       : null
   }
   const days = rabiesEntryWaitDays(ctx.destination)
@@ -529,7 +529,23 @@ export function violatesHkGeneralVaccineDoseWindow(
   )
 }
 
-/** 홍콩 '적을 수 있는 접종일' 판정 본체 — 광견병·종합백신 공용(위 두 wrapper 주석 참고). */
+/**
+ * 홍콩 '적을 수 있는 접종일' 판정 본체 — 광견병·종합백신 공용(위 두 wrapper 주석 참고).
+ *
+ * **하한(N일 대기) 위반만 보고한다.** 상한(1년 초과)은 다른 목적지와 마찬가지로 유효기간
+ * 룰(hk.rabies-valid-on-departure / hk.general-vaccine-valid-on-departure + common.*-expired)이
+ * 담당한다 — 홍콩은 1년만 인정(oneYearVaccineOnly·generalVaccineOneYearOnly)이라 그 룰의
+ * 유효기간이 곧 규정의 1년 상한이다. 두 조건을 한 문장에 합치면 "30일이 지나고 1년이 되기
+ * 전에"처럼 상황과 안 맞는 안내가 나가고, 상한 쪽은 주의가 중복된다(2026-07-26 사용자 지적).
+ *
+ * 공용 판정(violatesVaccineWaitDays)과 다른 점은 **최근 접종 하나가 아니라 전체를 본다**는 것.
+ * 증명서(VC-DC2)는 접종일을 한 칸에 적으므로, 조건을 만족하는 dose 가 하나라도 있으면 통과다.
+ * 그래서 "부스터는 30일 미달이지만 직전 접종이 1년 이내"면 통과하고(직전 접종을 적으면 된다),
+ * "부스터는 30일 미달 + 직전 접종은 1년 초과"면 적을 날짜가 없어 위반이 된다.
+ *
+ * 어느 접종도 조건을 못 채우는데 **기다려서 해결되지도 않는**(전부 1년 초과) 상태는 false —
+ * 재접종만이 답이라 위 유효기간 룰이 안내한다.
+ */
 function violatesHkDoseWindow(
   data: Record<string, unknown>,
   entryOrDeparture: string,
@@ -540,17 +556,12 @@ function violatesHkDoseWindow(
   if (!/^\d{4}-\d{2}-\d{2}$/.test(target)) return false
   const dates = readDateArray(data, key)
   if (dates.length === 0) return false
-  const today = todayKst()
-  const stillUsable = dates.some((d) => {
-    const until = addMonths(d, 12)
-    return !!until && until >= today
-  })
-  if (!stillUsable) return false
-  return !dates.some((d) => {
-    const usableFrom = addDays(d, waitDays)
-    const usableUntil = addMonths(d, 12)
-    return !!usableFrom && !!usableUntil && target >= usableFrom && target <= usableUntil
-  })
+  const windows = dates
+    .map((d) => ({ from: addDays(d, waitDays), until: addMonths(d, 12) }))
+    .filter((w) => !!w.from && !!w.until)
+  if (windows.some((w) => target >= w.from && target <= w.until)) return false
+  // 적을 수 있는 접종이 없다 — 그중 '기다리면 쓸 수 있게 되는' 접종이 있을 때만 하한 위반.
+  return windows.some((w) => target < w.from)
 }
 
 /** 대기 선언국 중 이 케이스가 매칭되는 키 — 메시지의 나라 이름 출처. */

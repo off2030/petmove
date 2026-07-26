@@ -55,9 +55,9 @@
 [hk.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [hk.rabies-min-30days-before-departure]
-  광견병 접종 후 30일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.
+  광견병 접종 후 30일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.
 [hk.general-vaccine-14days-before-departure]
-  종합백신 접종 후 14일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.
+  종합백신 접종 후 14일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.
 [hk.min-5months-on-arrival]
   생후 5개월 이상의 강아지(혹은 고양이)만 데려갈 수 있어요.
 [id.rabies-booster-within-prime-validity]
