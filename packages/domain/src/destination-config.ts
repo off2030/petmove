@@ -540,19 +540,33 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   usa: {
     keywords: ['미국', 'usa', 'united states', 'america'],
     archetype: 'generic',
-    // 한국은 CDC의 광견병 고위험국 목록에 없으므로 미국 연방 입국 자체에는 개의 광견병
-    // 접종증명·항체검사가 기본 요건이 아니다. 단, 개는 생후 6개월·보편형 스캐너로
-    // 판독 가능한 마이크로칩·CDC Dog Import Form이 필요하다.
+    // 한국은 CDC의 광견병 고위험국 목록에 없으므로 미국 **연방** 입국 자체에는 개의 광견병
+    // 접종증명·항체검사가 기본 요건이 아니다. 연방 요건은 생후 6개월·보편형 스캐너로 판독
+    // 가능한 마이크로칩·CDC Dog Import Form 뿐이고, 고양이는 서류 자체가 없다.
     // https://www.cdc.gov/importation/dogs/rabies-free-low-risk-countries.html
     // https://www.cdc.gov/importation/dogs/dog-import-form-instructions.html
     // 광견병 백신·항체·임상검사·한국 수출/수입검역 카드는 **캐나다와 동일**하게 운용한다
-    // (2026-07-26 사용자 지정) — 주(州) 다수가 광견병 접종을 요구해 표준 요건으로 안내.
+    // (2026-07-26 사용자 지정).
+    //
+    // ⚠️ 다만 '미국 입국 때 면역 유효기간이 남아있어야 해요'(buildRabiesCard 자동 문장)는
+    //   **연방 기준으로는 사실이 아니다** — 접종 자체를 요구하지 않기 때문이다(2026-07-26 조사).
+    //   접종이 실제로 필요한 근거는 **주(州) 법**이다: 39개 주가 광견병 접종을 의무화하고,
+    //   그 주법들은 NASPHV 지침의 최소 연령 12주를 따른다(예: 텍사스 "생후 12주 이상 개·고양이는
+    //   접종 + 접종증명서 지참"). 그래서 자동 문장을 끄고(omitEntryValidity) extraLines 로
+    //   연방/주 구분을 명시한 문구를 쓴다.
+    // ⚠️ 최소 연령 — 주법·백신 라벨은 **12주(84일)**, 한국 귀국 요건(USDA)은 **90일**이다.
+    //   캐나다와 통일한 '달력 3개월'(≈91일)을 그대로 두면 85일 접종 케이스를 앱이 막는다.
+    //   숫자를 바꾸려면 사용자 결정이 필요해 현행 유지(3개월).
     rabies: {
       doses: 1,
       minAgeDays: 91,
       minAgeMonths: 3,
       minAgeLabel: '생후 3개월',
       validityLine: '증명서에 백신 유효기간이 적혀 있어야 그대로 인정돼요. 적혀 있지 않으면 접종일부터 1년으로만 인정돼요.',
+      extraLines: [
+        '미국 연방 입국 요건은 아니지만, 접종을 요구하는 주가 많아요.',
+        '미국 도착일에 면역 유효기간이 남아있어야 해요.',
+      ],
     },
     titer: { need: 'return-only' },
     appSupported: true,

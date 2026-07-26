@@ -565,6 +565,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'rabies-vaccine-1': buildRabiesCard({
       destKey: 'usa',
       label: '미국',
+      // '미국 입국 때 면역 유효기간이…' 자동 문장을 끈다 — 연방은 접종 자체를 요구하지
+      // 않아 입국 요건으로 단정하면 거짓이 된다(2026-07-26 조사). 대체 문구는 프로파일
+      // extraLines 에 있다(연방 아님 + 주 다수 요구 + 도착일 유효).
+      omitEntryValidity: true,
       validationIds: [
         'us.rabies-prime-after-3months-old',
         'us.rabies-booster-within-prime-validity',
