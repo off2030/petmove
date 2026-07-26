@@ -946,15 +946,20 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['괌', 'guam'],
     // 하와이와 같은 골격 — 광견병 2회 + 입국 항체 + 도착 계류(미국령 청정지역 공통).
     archetype: 'jp-2dose',
-    rabies: { doses: 2 },
+    // 최소 연령·접종 간격은 사용자 확정값(2026-07-26) — 현행 DOAG 공개자료에는 없고 2020년
+    //   세부지침과 펫무브 www 가이드에만 있던 값이라 한 번 보류했다가, 사용자가 확정해 선언한다.
+    rabies: { doses: 2, minAgeMonths: 3, minAgeLabel: '생후 3개월', doseIntervalDays: 30 },
     vaccines: ['rabies', 'rabies_titer', 'general', 'kennel', 'external_parasite', 'internal_parasite', 'heartworm'],
     titer: {
       need: 'entry',
       // 채혈이 아니라 **검사실 검체 도착일**이 120일의 1일차다(CQA 원문). 앱은 채혈일을 proxy 로
       // 쓰되 basisReceivedDate 로 그 사실을 표시한다 — 하와이 FAVN 과 같은 처리.
       entryWaitAfterTiter: { days: 120, basisReceivedDate: true },
-      // ⛔ entryValidityMonths 미선언 — 괌은 FAVN 결과의 유효기간 상한을 공개 자료에 명시하지
-      //    않는다. 하와이(36개월) 값을 복제하지 말 것.
+      // 12개월 = 사용자 확정(2026-07-26). www 괌 가이드의 "검사 유효기간은 1년" 과 같은 값이고,
+      //   gu.ts 헤더에 있던 36개월(하와이 값 혼입)은 폐기했다.
+      //   ⚠️ 대기 120일 + 유효 12개월이라 **쓸 수 있는 창이 120일~12개월**로 좁다. 채혈이 너무
+      //   일러도 만료된다 — 카드 문구가 둘 다 말해야 한다.
+      entryValidityMonths: 12,
     },
     importPermit: { applyDeadlineDays: 30, docName: 'Animal Entry Permit' },
     // 레시피상 **마지막에 켠다** — 카드·검증·서류·사진이 모두 끝난 뒤(2026-07-26).

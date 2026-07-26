@@ -230,20 +230,21 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   //   검증도 저장 거부가 아니라 주의로 둔다(gu.ts 헤더 참고).
   // 순서: 항체(40) → 종합백신(50) → **검역시설 예약(95) → 수입 허가(100) → 항공권(102)**.
   //   허가 신청 서류에 예약확인서가 들어가고, 허가·예약이 확정되기 전에 항공권을 잡으면 안 된다.
-  // ⚠️ 카드에 지목하지 않은 룰 2건 — gu.rabies-prime-after-3months-old(생후 3개월),
-  //   gu.rabies-doses-30days-apart(접종 간격 30일). 둘 다 2020년 구 지침 값이고 현행 브로슈어·
-  //   CQA 어디에도 없다. 근거 없는 엄한 기준을 고객 화면에 띄우지 않는다(2026-07-26).
-  //   확인되면 그때 카드에 올릴 것. 펫무브워크(전 룰 노출)에서는 계속 보인다.
+  // 생후 3개월·접종 간격 30일은 **사용자 확정값**(2026-07-26). 현행 DOAG 공개자료에는 없고
+  //   2020년 세부지침·www 괌 가이드에만 있어 한 번 보류했다가, 확정을 받아 카드에 올렸다.
+  //   프로파일(rabies.minAgeMonths 3 / doseIntervalDays 30)이 진실 출처 — 카드 문구와
+  //   earliest 잠금이 거기서 파생된다.
   guam: {
     'rabies-vaccine-1': buildRabiesCard({
       destKey: 'guam',
       label: '괌',
-      validationIds: ['gu.microchip-before-rabies'],
+      validationIds: ['gu.microchip-before-rabies', 'gu.rabies-prime-after-3months-old'],
     }),
     'rabies-vaccine-2': {
       description:
-        '2차 광견병 백신을 접종하세요.\n\n괌은 평생 2회 이상 접종해야 계류에서 나올 수 있어요.\n괌 입국 때 최근 접종의 면역 유효기간이 남아있어야 해요.',
-      validationIds: ['gu.rabies-2-doses-required'],
+        '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 30일 이상 지나서 접종해야 해요.\n괌은 평생 2회 이상 접종해야 계류에서 나올 수 있어요.\n괌 입국 때 최근 접종의 면역 유효기간이 남아있어야 해요.',
+      earliest: { anchor: 'step:rabies-vaccine-1', daysAfter: 30 },
+      validationIds: ['gu.rabies-2-doses-required', 'gu.rabies-doses-30days-apart'],
     },
     'rabies-vaccine-extra': {
       validationIds: ['common.rabies-extra-validity-expired'],
@@ -252,11 +253,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // 120일은 **채혈일이 아니라 검사기관이 검체를 받은 날**부터 센다(CQA 원문). 앱은 검체
       //   수령일을 입력받지만 비어 있으면 채혈일을 proxy 로 쓰므로, 문구도 '검체가 도착한 날'로 쓴다.
       description:
-        '미국 질병통제센터(CDC) 승인 검사기관에서 FAVN 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n0.5 IU/mL 이상이면 합격이에요.\n검체가 검사기관에 도착한 날부터 120일을 세요.\n120일을 채우고 입국하면 계류가 짧아지고, 못 채우면 남은 기간만큼 괌에서 계류해요.',
-      validationIds: ['gu.rnatt-120days-before-arrival'],
+        '미국 질병통제센터(CDC) 승인 검사기관에서 FAVN 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n2차 광견병 접종 후 10일이 지나서 검사해야 해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 1년이에요.\n검체가 검사기관에 도착한 날부터 120일을 세요.\n120일을 채우고 입국하면 계류가 짧아지고, 못 채우면 남은 기간만큼 괌에서 계류해요.\n유효기간이 1년이라 너무 일찍 검사하면 입국 전에 만료돼요.',
+      validationIds: ['gu.rnatt-120days-before-arrival', 'gu.rnatt-after-rabies-10days'],
     },
     'rabies-titer-extra': {
-      validationIds: ['gu.rnatt-120days-before-arrival'],
+      validationIds: ['gu.rnatt-120days-before-arrival', 'gu.rnatt-after-rabies-10days'],
     },
     'general-vaccine': {
       // 브로슈어 REQUIRED DOCUMENTS 4항 — 개와 고양이가 요구 백신이 다르다.
@@ -266,7 +267,24 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         dog: '종합백신을 접종하세요.\n\n괌은 DHLPP 종합백신과 켄넬코프(Bordetella) 기록을 요구해요.\n괌 도착 때 유효기간이 남아있어야 해요.\n접종증명서에 동물 정보와 접종일·유효기간이 적혀 있어야 해요.',
         cat: '종합백신을 접종하세요.\n\n괌은 FVRCP 종합백신 기록을 요구해요.\n괌 도착 때 유효기간이 남아있어야 해요.\n접종증명서에 동물 정보와 접종일·유효기간이 적혀 있어야 해요.',
       },
-      validationIds: ['gu.general-vaccine-10days-before-arrival'],
+      // 켄넬코프(Bordetella)는 **이 카드가 함께 다룬다** — 앱에 켄넬코프 전용 카드가 없고,
+      //   DOAG 도 개의 백신 기록을 'DHLPP and Bordetella' 한 묶음으로 요구한다. 그래서 켄넬코프
+      //   룰도 여기서 지목한다(룰이 어느 카드에도 안 붙으면 경고가 상단으로 샌다).
+      validationIds: [
+        'gu.general-vaccine-10days-before-arrival',
+        'gu.kennel-cough-10days-before-arrival',
+      ],
+    },
+    'external-parasite': {
+      description: '외부 기생충 치료를 하세요.\n\n괌 도착일 기준 14일 이내에 해야 해요.',
+      validationIds: ['gu.external-parasite-within-14days'],
+    },
+    'internal-parasite': {
+      // 심장사상충 예방도 **이 카드가 함께 다룬다** — 전용 카드가 없고, www 괌 가이드가
+      //   "내외부기생충 치료 및 심장사상충 예방"을 한 단계로 묶어 안내한다.
+      description:
+        '내부 기생충 치료와 심장사상충 예방을 하세요.\n\n괌 도착일 기준 14일 이내에 해야 해요.',
+      validationIds: ['gu.internal-parasite-within-14days', 'gu.heartworm-within-14days'],
     },
     'import-permit': {
       title: '수입 허가 신청',

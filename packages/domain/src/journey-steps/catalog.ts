@@ -1299,6 +1299,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 별도 카드(echinococcus-treatment)로 분리 — 같은 데이터 키(internal_parasite_dates) 공유.
     applicability: {
       destinations: [
+        // 괌 — 내·외부 기생충과 심장사상충을 '도착 14일 이내'에 함께 처치한다
+        //   (www 괌 가이드 9항). 외부(external-parasite)에는 이미 있었는데 내부만 빠져 있었다.
+        'guam',
         'australia',
         'new_zealand',
         'turkey',

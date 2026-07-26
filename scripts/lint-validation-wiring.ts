@@ -184,6 +184,7 @@ function collect(dest: string): Problem[] {
     const resolved = resolveStepForDestination(step, dest, null) as {
       validationIds?: string[]
       inputs?: Array<{ key: string; type?: string }>
+      buttonComplete?: boolean
     }
     const ids = resolved.validationIds ?? []
 
@@ -196,12 +197,15 @@ function collect(dest: string): Problem[] {
     }
 
     // 2단계 — 날짜를 받는데 검증이 하나도 없는가(위 UNVALIDATED_OK 예외 제외).
-    // 버튼 완료 카드(step.buttonComplete)는 날짜 입력칸 자체가 없고(완료 버튼이 오늘을 기록)
-    // 검증 없음이 의도라 자동 통과(2026-07-26 귀국 절차 전환).
+    // 버튼 완료 카드는 날짜 입력칸 자체가 없고(완료 버튼이 오늘을 기록) 검증 없음이 의도라
+    // 자동 통과(2026-07-26 귀국 절차 전환).
+    // ⚠️ **resolved** 를 본다 — base 카탈로그의 step.buttonComplete 만 보면, 목적지 override 로
+    //   버튼 완료가 된 카드(홍콩·말레이시아·인도네시아·아랍에미리트 수입 허가)를 놓쳐서
+    //   '날짜칸을 받는데 검증이 없다'고 잘못 실패시킨다(2026-07-26 발견).
     const dateInputs = (resolved.inputs ?? []).filter((i) => i.type === 'date')
     if (
       dateInputs.length > 0 &&
-      !step.buttonComplete &&
+      !resolved.buttonComplete &&
       ids.length === 0 &&
       !unvalidatedReason(dest, step.id)
     ) {
@@ -589,6 +593,8 @@ const IMPORT_PERMIT_NOTIFY_OK: Record<string, string> = {
   thailand: 'DLD — 출국 7영업일 전 신청 마감(확인됨)',
   philippines: 'BAI SPSIC — 신청 마감 관행 있음',
   taiwan: 'APHIA — 도착 120일 전 마감',
+  guam: 'DOAG — 도착 30일 전 서류 제출 마감(확인됨. 14일 미만은 처리 보장 불가)',
+  switzerland: 'FSVO — 입국 21일 전 신청 마감(확인됨. 카드 배지·입력 차단·주의가 모두 21일)',
   // ⛔ 여기 없는 앱 목적지가 알림/푸시 코드에 있으면 실패한다. 마감 근거를 확인한 뒤
   //   사유와 함께 추가할 것. 마감이 없는 나라(말레이시아·아랍에미리트)는 애초에 알림/푸시를
   //   만들지 않는다 — 여기 넣어서 통과시키지 말 것.

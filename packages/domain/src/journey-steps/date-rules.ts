@@ -810,6 +810,9 @@ export const PARASITE_DEPARTURE_WINDOWS: Record<
   brazil: { maxGap: 14, windowLabel: '출국 15일 이내', kinds: ['external', 'internal'] },
   uae: { maxGap: 13, windowLabel: '출국 14일 이내', kinds: ['external', 'internal'] },
   hawaii: { maxGap: 13, windowLabel: '출국 14일 이내', kinds: ['external'] },
+  // 괌 — 내·외부 기생충 + 심장사상충을 '도착 14일 이내'에 함께 처치한다(www 괌 가이드·gu.ts).
+  //   주의만 있고 저장 거부가 없으면 창 밖 날짜가 그대로 저장된다(2026-07-25 5개국 사고와 같은 구멍).
+  guam: { maxGap: 13, windowLabel: '괌 도착 14일 이내', kinds: ['external', 'internal'] },
 }
 
 function validateParasiteWithinDays(
