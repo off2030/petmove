@@ -245,7 +245,7 @@ export const SERVICE_CARDS = [
   { icon: 'ti-adjustments-horizontal', title: '전체 대행 · 부분 의뢰', desc: '전 과정을 맡기거나, 필요한 단계만 도움받을 수 있어요' },
 ]
 
-// 앱 지원 여행지(랜딩) — 접힘 5 + 더보기, 펼침 = 아시아 13 + 유럽 30 + 아메리카 5 + 기타 6 (총 54개국,
+// 앱 지원 여행지(랜딩) — 접힘 5 + 더보기, 펼침 = 아시아 13 + 유럽 30 + 아메리카 6 + 기타 6 (총 55개국,
 // 앱 화이트리스트와 동일). 2026-07-22: 말레이시아·인도네시아(태국 복제)·아르헨티나(베트남 복제)
 // ·러시아·튀르키예(카자흐스탄 복제) 추가.
 // 유럽 30 = EU 회원국 + 영국·노르웨이·스위스(비EU). 웹 방문자에겐 'EU 묶음/개별 카드국' 구분이
@@ -256,10 +256,10 @@ export const SERVICE_CARDS = [
 //
 // 동기화 확인법: domain DESTINATION_OVERRIDES 의 appSupported 목록과 대조한다. 단 EU 24개국은
 // domain 에서 '유럽연합' 한 묶음이고 여기선 개별 국가로 펼치므로, 아시아·아메리카만 1:1 대응한다.
-// 2026-07-25 기준 domain appSupported 32건 = 아시아 13(japan·china·taiwan·vietnam·thailand·
+// 2026-07-26 기준 domain appSupported 33건 = 아시아 13(japan·china·taiwan·vietnam·thailand·
 //   philippines·cambodia·mongolia·uzbekistan·kazakhstan·malaysia·indonesia·singapore)
 //   + 유럽 8키(eu·uk·ireland·malta·norway·finland·cyprus·switzerland → 개별 펼침 30)
-//   + 아메리카 5(canada·mexico·brazil·argentina·hawaii) + 기타 6(morocco·ukraine·russia·turkey·uae·israel).
+//   + 아메리카 6(canada·mexico·brazil·argentina·hawaii·usa) + 기타 6(morocco·ukraine·russia·turkey·uae·israel).
 export const APP_DEST_PREVIEW = ['일본', '태국', '필리핀', '프랑스', '독일']
 // 가나다순. 우즈베키스탄·몽골은 중앙아시아·동아시아라 아시아 그룹에 둔다.
 // 2026-07-22 말레이시아·인도네시아 추가(태국 복제 — APP_DEST_SOON 에서 승격).
@@ -282,10 +282,12 @@ export const APP_DEST_EU = [
 // 아메리카 — 2026-07-20 캐나다 지원 시작(APP_DEST_SOON 에서 승격) + 멕시코·브라질 추가.
 // 2026-07-22 아르헨티나 추가(베트남 복제). 2026-07-25 하와이 승격(SOON→지원, 미국 본토와 별개
 // 카드 — 하와이는 자체 검역 체계 HDOA). 가나다순.
-export const APP_DEST_AMERICA = ['멕시코', '브라질', '아르헨티나', '캐나다', '하와이']
+// 2026-07-26 **미국 본토 승격**(SOON→지원) — domain 은 2026-07-25 부터 appSupported: true 인데
+//   랜딩만 '곧 지원'에 남아 있어 앱에서 고를 수 있는 나라를 미지원으로 안내하고 있었다.
+export const APP_DEST_AMERICA = ['멕시코', '미국', '브라질', '아르헨티나', '캐나다', '하와이']
 // '곧 지원' — 위 목록에 든 나라를 여기 남기면 같은 나라가 두 번 나온다. 캐나다는 뺐다.
-// 2026-07-25 싱가포르·하와이 승격으로 제거.
-export const APP_DEST_SOON = ['미국', '호주', '뉴질랜드']
+// 2026-07-25 싱가포르·하와이 승격으로 제거. 2026-07-26 미국 승격으로 제거.
+export const APP_DEST_SOON = ['호주', '뉴질랜드']
 
 export const REVIEWS = [
   {
