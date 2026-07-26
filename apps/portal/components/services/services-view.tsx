@@ -7,6 +7,8 @@ import {
   matchesDestinationKey,
   ADVANCE_NOTICE_DESTINATIONS,
   DESTINATION_OVERRIDES,
+  JOURNEY_STEP_CATALOG,
+  getStepsForCase,
   type CaseRow,
 } from '@petmove/domain'
 import destsData from '@petmove/domain/data/destinations.json'
@@ -231,6 +233,31 @@ const PHILIPPINE_REVIEWS: Review[] = [
  *    (사전 통지·수입허가가 출국 직전 절차라서), 일본·동남아는 앞.
  *  - intro: 일본·동남아 '의료 절차는 물론 X, …' / EU 패밀리 '의료 절차와 (X, )…'.
  */
+/**
+ * 맡기기 항목을 **그 목적지의 여정 카드 순서**대로 정렬한다.
+ *
+ * 카드에 없는 항목(그 나라에서 안 뜨는 카드)은 원래 자리를 지키게 두고, 카드가 있는 항목끼리만
+ * 자리를 맞바꾼다 — 목록에서 항목이 사라지거나 엉뚱한 곳으로 튀는 것을 막기 위해서다.
+ */
+function sortByCardOrder<T extends { card: string }>(
+  destKey: string,
+  trip: TripType | undefined,
+  items: T[],
+): T[] {
+  const row = {
+    id: '',
+    destination: destinationKoLabel(destKey),
+    departure_date: null,
+    // 종 제한 카드(개 전용 CDC 신고 등)까지 순서를 알아야 하므로 개 기준으로 펼친다.
+    data: { species: 'dog', trip_type: trip ?? 'round' },
+  } as unknown as CaseRow
+  const order = new Map<string, number>()
+  for (const s of getStepsForCase(JOURNEY_STEP_CATALOG, row)) order.set(s.id, s.order)
+  const known = items.filter((i) => order.has(i.card)).sort((a, b) => order.get(a.card)! - order.get(b.card)!)
+  let k = 0
+  return items.map((i) => (order.has(i.card) ? known[k++] : i))
+}
+
 function offlineDetail(opts: {
   /** destination-config 키 — included 파생의 프로파일 출처. */
   destKey: string
@@ -238,8 +265,11 @@ function offlineDetail(opts: {
   trip?: TripType
   /** intro 강조절 (예: '태국 수입 허가 신청'). EU 패밀리는 생략 가능. */
   introHighlight?: string
-  /** 나라 절차 항목 라벨 (예: ['사전 신고', '일본 수출 검역 신청 · 예약']). */
-  procedureItems?: string[]
+  /**
+   * 나라 절차 항목 — 라벨 + 대응 여정 카드 id. 카드 id 는 **순서 정렬용**이다(아래 sortByCard).
+   * 예: [{ label: '사전 신고', card: 'advance-notification' }].
+   */
+  procedureItems?: Array<{ label: string; card: string }>
   /** 비용 범위(만원) — '50~60' 형태. 미정이면 생략 → '상담 후 안내'. */
   cost?: string
   /** 준비 기간 — '최소 6~7개월' / '2~4주' 형태('정도 걸려요' 앞부분 그대로). 미정이면 생략. */
@@ -249,26 +279,34 @@ function offlineDetail(opts: {
   const o = DESTINATION_OVERRIDES[opts.destKey]
   const euFam = o?.archetype === 'eu-family'
   const titerIncluded = o?.rabiesTiterForReturnOnly ? opts.trip === 'round' : true
-  const procedure = (opts.procedureItems ?? []).map((label) => ({ label }))
 
-  const included: Prep[] = [{ label: '마이크로칩 삽입 · 동물등록' }, { label: '광견병 백신 접종' }]
+  const items: Array<Prep & { card: string }> = [
+    { label: '마이크로칩 삽입 · 동물등록', card: 'microchip' },
+    { label: '광견병 백신 접종', card: 'rabies-vaccine-1' },
+  ]
   // 백신·검사 항목은 destination 프로파일에서 파생 — 여정과 단일 출처(빠지면 서비스 목록이
   // 여정과 어긋난다. 예: 튀르키예 external_parasite 누락 — 2026-07-23 수정). **전 종 선언
   // (string)만** 표기: EU 촌충국의 { key:'internal_parasite', species:'dog' } 같은 종 제한
   // 선언은 개 전용이라 '대신해 드려요'에 일반화하면 오해 → 제외. 순서는 여정 카드 순서.
   const hasVaccine = (k: string) => (o?.vaccines ?? []).some((v) => v === k)
-  if (hasVaccine('general')) included.push({ label: '종합백신 접종' })
-  if (hasVaccine('civ')) included.push({ label: '독감 접종' })
-  if (hasVaccine('kennel')) included.push({ label: '켄넬코프 접종' })
-  if (hasVaccine('covid')) included.push({ label: '코로나 접종' })
-  if (hasVaccine('infectious_disease')) included.push({ label: '전염병 검사' })
-  // 여정 카드 순서와 동일: 외부 기생충(order 80) → 내부 기생충(order 90).
-  if (hasVaccine('external_parasite')) included.push({ label: '외부 기생충 치료' })
-  if (hasVaccine('internal_parasite')) included.push({ label: '내부 기생충 치료' })
-  if (hasVaccine('heartworm')) included.push({ label: '심장사상충 검사' })
-  if (titerIncluded) included.push({ label: '광견병 항체 검사' })
-  if (euFam) included.push({ label: '출국 전 임상검사' }, ...procedure)
-  else included.push(...procedure, { label: '출국 전 임상검사' })
+  if (hasVaccine('general')) items.push({ label: '종합백신 접종', card: 'general-vaccine' })
+  if (hasVaccine('civ')) items.push({ label: '독감 접종', card: 'civ-vaccine' })
+  if (hasVaccine('kennel')) items.push({ label: '켄넬코프 접종', card: 'kennel-cough-vaccine' })
+  if (hasVaccine('covid')) items.push({ label: '코로나 접종', card: 'corona-vaccine' })
+  if (hasVaccine('infectious_disease')) items.push({ label: '전염병 검사', card: 'infectious-disease-test' })
+  if (hasVaccine('external_parasite')) items.push({ label: '외부 기생충 치료', card: 'external-parasite' })
+  if (hasVaccine('internal_parasite')) items.push({ label: '내부 기생충 치료', card: 'internal-parasite' })
+  if (hasVaccine('heartworm')) items.push({ label: '심장사상충 검사', card: 'heartworm-test' })
+  if (titerIncluded) items.push({ label: '광견병 항체 검사', card: 'rabies-titer' })
+  items.push(...(opts.procedureItems ?? []))
+  items.push({ label: '출국 전 임상검사', card: 'vet-visit' })
+  // ⚠️ 순서는 **그 목적지의 실제 여정 카드 순서**에서 파생한다(2026-07-26 전수조사).
+  //   예전엔 '기생충 → 항체', 'EU 패밀리는 절차를 임상검사 뒤' 처럼 손으로 고정해 뒀는데,
+  //   카드 순서가 나라마다 달라 12개 목적지에서 맡기기 목록이 여정과 어긋나 있었다
+  //   (튀르키예·멕시코·브라질·싱가포르·하와이 = 항체/기생충 뒤바뀜, 아일랜드·몰타·노르웨이·
+  //   키프로스·이스라엘·홍콩·스위스 = 사전 통지/수입 허가가 임상검사 뒤). 필리핀처럼 기생충이
+  //   항체보다 **앞**인 나라도 있어 한 가지 고정 순서로는 맞출 수 없다 — 카드가 유일한 출처다.
+  const included: Prep[] = sortByCardOrder(opts.destKey, opts.trip, items)
   included.push({ label: '서류 준비' })
 
   // 특수 절차(introHighlight)가 없는 나라도 있다 — 없으면 그 절만 빼고 문장을 만든다.
@@ -347,11 +385,24 @@ function onlineDetail(opts: {
   }
 }
 
+/** 사전 통지 카드 id — 나라마다 다르다(순서 정렬용). */
+const ADVANCE_NOTICE_CARD_ID: Record<string, string> = {
+  ireland: 'ie-advance-notice',
+  malta: 'mt-advance-notice',
+  norway: 'no-advance-notice',
+  cyprus: 'cy-advance-notice',
+  israel: 'il-advance-notice',
+  hongkong: 'hk-advance-notice',
+}
+
 export const OFFLINE_DETAIL: Record<string, DestDetail> = {
   일본: offlineDetail({
     destKey: 'japan',
     introHighlight: '일본 검역소와의 소통',
-    procedureItems: ['사전 신고', '일본 수출 검역 신청 · 예약'],
+    procedureItems: [
+      { label: '사전 신고', card: 'advance-notification' },
+      { label: '일본 수출 검역 신청 · 예약', card: 'jp-export-quarantine' },
+    ],
     cost: '50~60',
     period: '최소 6~7개월',
     reviews: JAPAN_REVIEWS,
@@ -369,7 +420,7 @@ export const OFFLINE_DETAIL: Record<string, DestDetail> = {
     destKey: 'thailand',
     trip: 'one_way',
     introHighlight: '태국 수입 허가 신청',
-    procedureItems: ['수입 허가 신청'],
+    procedureItems: [{ label: '수입 허가 신청', card: 'import-permit' }],
     cost: '20~32',
     period: '2~4주',
     reviews: THAILAND_REVIEWS,
@@ -378,7 +429,7 @@ export const OFFLINE_DETAIL: Record<string, DestDetail> = {
     destKey: 'thailand',
     trip: 'round',
     introHighlight: '태국 수입 허가 신청',
-    procedureItems: ['수입 허가 신청'],
+    procedureItems: [{ label: '수입 허가 신청', card: 'import-permit' }],
     cost: '20~60',
     period: '최소 2~6주',
     reviews: THAILAND_REVIEWS,
@@ -388,7 +439,7 @@ export const OFFLINE_DETAIL: Record<string, DestDetail> = {
     destKey: 'philippines',
     trip: 'one_way',
     introHighlight: '필리핀 수입 허가증(SPSIC) 신청',
-    procedureItems: ['수입 허가증(SPSIC) 신청'],
+    procedureItems: [{ label: '수입 허가증(SPSIC) 신청', card: 'import-permit' }],
     cost: '20~32',
     period: '최소 1~4주',
     reviews: PHILIPPINE_REVIEWS,
@@ -397,7 +448,7 @@ export const OFFLINE_DETAIL: Record<string, DestDetail> = {
     destKey: 'philippines',
     trip: 'round',
     introHighlight: '필리핀 수입 허가증(SPSIC) 신청',
-    procedureItems: ['수입 허가증(SPSIC) 신청'],
+    procedureItems: [{ label: '수입 허가증(SPSIC) 신청', card: 'import-permit' }],
     cost: '20~60',
     period: '최소 2~6주',
     reviews: PHILIPPINE_REVIEWS,
@@ -409,7 +460,7 @@ export const OFFLINE_DETAIL: Record<string, DestDetail> = {
   스위스: offlineDetail({
     destKey: 'switzerland',
     introHighlight: '수입 허가 신청',
-    procedureItems: ['수입 허가 신청'],
+    procedureItems: [{ label: '수입 허가 신청', card: 'import-permit' }],
     cost: '36~56',
     period: '최소 3~4개월',
   }),
@@ -426,17 +477,19 @@ export const OFFLINE_DETAIL: Record<string, DestDetail> = {
   },
 }
 
-// 사전 통지 국가(아일랜드·몰타·노르웨이·키프로스) — EU 공통(eu) + 입국국 사전 통지 추가.
+// 사전 통지 국가(아일랜드·몰타·노르웨이·키프로스) — EU 공통 + 입국국 사전 통지 추가.
 // 그 절차로 오프라인 올케어 비용 상한 +5만원(46→51만). intro·included·비용만 다르고 나머지는 eu 와 동일.
-const OFFLINE_ADVANCE_NOTICE: DestDetail = offlineDetail({
-  destKey: 'eu',
-  introHighlight: '사전 통지',
-  procedureItems: ['사전 통지'],
-  cost: '36~51',
-  period: '최소 3~4개월',
-})
-// 사전 통지국 — 프로파일 advanceNotice 선언 파생(아일랜드·몰타·노르웨이·키프로스).
-for (const k of ADVANCE_NOTICE_DESTINATIONS.map(destinationKoLabel)) OFFLINE_DETAIL[k] = OFFLINE_ADVANCE_NOTICE
+// ⚠️ 예전엔 destKey:'eu' 한 벌을 네 나라가 공유했다. 사전 통지 카드 id 가 나라마다 달라
+//   (ie/mt/no/cy-advance-notice) 순서 정렬을 못 하므로, 나라별 키로 각각 만든다.
+for (const k of ADVANCE_NOTICE_DESTINATIONS) {
+  OFFLINE_DETAIL[destinationKoLabel(k)] = offlineDetail({
+    destKey: k,
+    introHighlight: '사전 통지',
+    procedureItems: [{ label: '사전 통지', card: `${ADVANCE_NOTICE_CARD_ID[k] ?? ''}` }],
+    cost: '36~51',
+    period: '최소 3~4개월',
+  })
+}
 
 export const ONLINE_DETAIL: Record<string, DestDetail> = {
   일본: onlineDetail({
@@ -567,7 +620,9 @@ const DEST_PRICING: Record<string, { offlineCost?: string; period?: string }> = 
 
   // ── 아시아 ────────────────────────────────────────────────
   taiwan: { offlineCost: '40~51', period: '최소 4~5개월' },
-  hongkong: { offlineCost: '21~27' }, // 웹 가이드에 '최소 N개월' 문장 없음 (권장 시작 시점만 기술)
+  // 기간은 www 홍콩 가이드 문장 그대로 — '홍콩 입국 준비는 최소 1.5~2개월 걸립니다'
+  // (2026-07-26 확인. 구 주석 '문장 없음'은 사실이 아니었다).
+  hongkong: { offlineCost: '21~27', period: '최소 1.5~2개월' },
   singapore: { offlineCost: '76~92' }, // 웹 가이드에 기간 문장 없음
   malaysia: { offlineCost: '14~54', period: '최소 2~3개월' },
   indonesia: { offlineCost: '40~51', period: '최소 2~3개월' },
@@ -630,6 +685,25 @@ function profileKeyForDest(dest: string): string | null {
  * 사업 판단이라 코드가 만들 수 없어 생략 → FAQ 가 '상담 후 안내'로 답한다(가상 숫자 금지).
  * 나라 특수 절차(수입허가·사전 통지·수출 검역)는 종전대로 명시 항목으로 얹는다.
  */
+/**
+ * 프로파일 선언으로는 파생할 수 없는 **나라 고유 절차** — 카드로만 존재하는 것들.
+ *
+ * derivedDetail 이 자동으로 뽑을 수 있는 건 importPermit 하나뿐이라, 신고·신청류 절차를 가진
+ * 목적지는 여기 명시해야 맡기기 상품 목록에 뜬다(없으면 의료 절차 + 서류 준비만 나온다).
+ * 적는 대상은 **로잔이 대행하는 항목**만 — 보호자가 직접 하는 절차는 여정 카드에만 둔다.
+ *
+ * 순서는 여정 카드 순서를 따른다(하와이: 입국 신청 46 → CDC 신고 75).
+ * ⚠️ CDC 신고는 **강아지 전용** 절차다(고양이는 CDC 서류 요건 자체가 없음). 맡기기 목록은
+ *   종 구분 없이 한 벌로 보여주므로, 고양이 보호자에게도 이 줄이 보인다(2026-07-26 사용자 지정).
+ */
+const EXTRA_PROCEDURE_ITEMS: Record<string, Array<{ label: string; card: string }>> = {
+  usa: [{ label: 'CDC 신고', card: 'us-cdc-dog-import-form' }],
+  hawaii: [
+    { label: '하와이 입국 신청', card: 'hi-import-declaration' },
+    { label: 'CDC 신고', card: 'us-cdc-dog-import-form' },
+  ],
+}
+
 function derivedDetail(kind: 'offline' | 'online', dest: string, trip: TripType): DestDetail | null {
   const destKey = profileKeyForDest(dest)
   if (!destKey) return null
@@ -643,14 +717,20 @@ function derivedDetail(kind: 'offline' | 'online', dest: string, trip: TripType)
   // 여정 카드·서류 탭에는 그대로 뜬다. 여기서 빼는 건 **맡기기 상품에 포함되는 항목**뿐.
   const permit = DESTINATION_OVERRIDES[destKey]?.importPermit
   const hasPermit = !!permit && !permit.selfApply && !permit.localApplyOnly
-  const permitItems = hasPermit ? ['수입 허가 신청'] : []
+  // 수입 허가(프로파일 파생) + 카드로만 있는 고유 절차(EXTRA_PROCEDURE_ITEMS).
+  const permitItems = [
+    ...(hasPermit ? [{ label: '수입 허가 신청', card: 'import-permit' }] : []),
+    ...(EXTRA_PROCEDURE_ITEMS[destKey] ?? []),
+  ]
   if (kind === 'offline') {
     return offlineDetail({
       destKey,
       trip,
       cost: offlineCost,
       period,
-      introHighlight: hasPermit ? '수입 허가 신청' : undefined,
+      // 항목이 하나뿐이던 시절엔 '수입 허가 신청' 고정이었다 — 이제 항목 전부를 이어 붙인다
+      // (허가국은 결과가 종전과 같고, 미국·하와이만 새 절차가 문장에 들어간다).
+      introHighlight: permitItems.length ? permitItems.map((p) => p.label).join(', ') : undefined,
       procedureItems: permitItems,
     })
   }
@@ -659,13 +739,16 @@ function derivedDetail(kind: 'offline' | 'online', dest: string, trip: TripType)
   // 나라는 비운다(공장이 '단계별 가이드'·'서류 점검'을 앞뒤로 붙인다). 빈칸을 메우려고
   // '검역 일정 관리' 같은 일반 항목을 지어내지 않는다 — 기존 목적지에 없는 표현이다.
   return onlineDetail({
-    introItems: permitItems.length ? permitItems.join(', ') : undefined,
-    items: permitItems,
+    introItems: permitItems.length ? permitItems.map((p) => p.label).join(', ') : undefined,
+    items: permitItems.map((p) => p.label),
     period,
   })
 }
 
-function resolveDetail(map: Record<string, DestDetail>, dest: string, trip: TripType): DestDetail {
+// export 이유: 맡기기 항목이 여정 카드 순서와 어긋나지 않는지 전수 대조하는 감사 스크립트
+// (scripts/lint-services.ts)가 화면과 **같은 해석 경로**를 태워야 하기 때문. 화면 코드가
+// 유일한 진실이라, 스크립트가 폴백 규칙을 따로 구현하면 그 복제본이 먼저 낡는다.
+export function resolveDetail(map: Record<string, DestDetail>, dest: string, trip: TripType): DestDetail {
   // 우선순위: 국가·트립 전용 → 국가 전용 → EU 패밀리 공통('eu') → default.
   // EU 패밀리(EU Reg 576/2013 공통 절차)는 'eu' 한 벌을 공유하되, 자체 블록이 있는 나라
   // (예: 스위스=수입허가 추가·비용 상향)는 그 블록을 우선한다. eu 묶음(프랑스·독일 등)은
