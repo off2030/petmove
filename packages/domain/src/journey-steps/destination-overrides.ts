@@ -559,23 +559,20 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   usa: {
     // 마이크로칩 — 전용 override 제거(2026-07-26 사용자 지시): 설명문·노출 조건 모두 base 와
     // 통일(전 목적지 공통 카드·상시 표시). CDC 요건(보편형 스캐너 판독)은 ISO 15자리 칩이 충족.
-    'rabies-vaccine-1': {
-      title: '광견병 백신',
-      shortLabel: '백신',
-      description:
-        '한국으로 돌아오기 전에 필요한 광견병 백신을 접종하세요.\n\n미국 저위험국 경로의 입국 요건이 아니라 한국 귀국 요건이에요. 귀국일에 면역 유효기간이 남아있어야 해요.',
-      doneSummary: '한국 귀국용 광견병 백신을 접종했어요.',
-      applicability: { destinations: ['usa'], species: 'all', tripType: 'round' },
-      done: 'has-rabies-valid',
-      earliest: undefined,
+    // 광견병 백신·항체 — **캐나다와 동일**(2026-07-26 사용자 지정). '한국 귀국용' 전용
+    // 문구·왕복 한정·90일 미만 면제(us-return-rabies-or-other)를 모두 걷어내고 캐나다처럼
+    // 프로파일 파생 표준 카드 + 귀국용 항체 문형을 쓴다.
+    'rabies-vaccine-1': buildRabiesCard({
+      destKey: 'usa',
+      label: '미국',
       validationIds: [
+        'us.rabies-prime-after-3months-old',
         'us.rabies-booster-within-prime-validity',
-        'us.rabies-valid-on-return',
       ],
-    },
+    }),
     'rabies-titer': {
       description:
-        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n미국 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n채혈일 기준 2년 이내에 한국에 도착해야 해요.',
+        '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n미국 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.\n0.5 IU/mL 이상이면 합격이에요.\n유효기간은 2년이에요.',
       validationIds: RETURN_ONLY_TITER_CHECKS,
     },
     'flight-purchase': {
@@ -585,10 +582,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       earliest: undefined,
       validationIds: ['us.dog-entry-age-six-months'],
     },
-    'vet-visit': {
-      description:
-        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n한국 수출검역에 필요한 접종 및 건강증명서(별지 제25호 서식)를 발급받아요. 미국 도착 주나 항공사가 별도 건강증명서를 요구했다면 함께 준비하세요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
-    },
+    // 출국 전 임상검사·한국 수출검역·한국 수입검역 — override 없음 = base 그대로(캐나다와
+    // 동일, 2026-07-26 사용자 지정). '미국 도착 주 별도 건강증명서' 문장도 함께 제거됨.
     departure: {
       ...importQuarantineCard({
         label: '미국',

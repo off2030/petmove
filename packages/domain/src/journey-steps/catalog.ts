@@ -191,7 +191,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 여기엔 실제(≤오늘) 기록만 오고, 도래한 실제 기록은 done 으로 완료 처리된다.
       return undefined
     },
-    appliesWhen: 'us-return-rabies-or-other',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 30,
     earliest: { anchor: 'birth', daysAfter: 91 },
@@ -342,7 +341,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '일본 지정 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n0.5 IU/mL 이상이면 합격이에요.\n2차 접종 면역 유효기간 이내에 검사하세요.\n유효기간은 2년이에요.',
     doneSummary: '광견병 항체 검사를 받았어요.',
-    appliesWhen: 'us-return-rabies-or-other',
     applicability: {
       destinations: [
         'japan',

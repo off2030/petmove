@@ -540,12 +540,20 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   usa: {
     keywords: ['미국', 'usa', 'united states', 'america'],
     archetype: 'generic',
-    // 한국은 CDC의 광견병 고위험국 목록에 없으므로 미국 입국 자체에는 개의 광견병
+    // 한국은 CDC의 광견병 고위험국 목록에 없으므로 미국 연방 입국 자체에는 개의 광견병
     // 접종증명·항체검사가 기본 요건이 아니다. 단, 개는 생후 6개월·보편형 스캐너로
-    // 판독 가능한 마이크로칩·CDC Dog Import Form이 필요하고, 주·항공사 조건은 별도다.
+    // 판독 가능한 마이크로칩·CDC Dog Import Form이 필요하다.
     // https://www.cdc.gov/importation/dogs/rabies-free-low-risk-countries.html
     // https://www.cdc.gov/importation/dogs/dog-import-form-instructions.html
-    rabies: { doses: 1 },
+    // 광견병 백신·항체·임상검사·한국 수출/수입검역 카드는 **캐나다와 동일**하게 운용한다
+    // (2026-07-26 사용자 지정) — 주(州) 다수가 광견병 접종을 요구해 표준 요건으로 안내.
+    rabies: {
+      doses: 1,
+      minAgeDays: 91,
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      validityLine: '증명서에 백신 유효기간이 적혀 있어야 그대로 인정돼요. 적혀 있지 않으면 접종일부터 1년으로만 인정돼요.',
+    },
     titer: { need: 'return-only' },
     appSupported: true,
     vaccines: ['rabies', 'rabies_titer'],

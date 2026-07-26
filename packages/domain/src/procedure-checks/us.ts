@@ -1,17 +1,20 @@
 import {
   buildDateRuleContext,
+  calendarAgeThreshold,
+  meetsCalendarAge,
   validateImportQuarantineDate,
   validateUsDogEntryDate,
 } from '../journey-steps/date-rules'
-import { buildCaseJourneyContext } from '../journey-steps/applicability'
 import type { ProcedureCheck } from './types'
 import {
   findRabiesValidityBreaks,
-  addDays,
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
+  todayKst,
+  readDepartureDate,
 } from './utils'
+import { msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 미국 (CDC·USDA APHIS) 절차 검증.
@@ -43,74 +46,96 @@ function isDog(data: Record<string, unknown>): boolean {
   return data.species === 'dog'
 }
 
-function requiresRabiesForReturn(data: Record<string, unknown>): boolean {
-  const birth = typeof data.birth_date === 'string' ? data.birth_date.slice(0, 10) : ''
-  const ret = typeof data.return_date === 'string' ? data.return_date.slice(0, 10) : ''
-  if (!birth || !ret) return true
-  const day90 = addDays(birth, 90)
-  return !day90 || ret >= day90
-}
-
+// 광견병 룰 3종(3개월 최소연령·체인 유효·출국일 유효)은 **캐나다(ca.ts)와 동일**하게
+// 운용한다(2026-07-26 사용자 지정) — 문구·판정·severity 전부 ca.* 와 같다.
 export const US_CHECKS: ProcedureCheck[] = [
+  {
+    id: 'us.rabies-prime-after-3months-old',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 1차 접종은 생후 3개월 이후',
+    description:
+      '광견병 백신은 생후 3개월(달력 기준) 이후 접종 — 입력 차단(step.earliest.monthsAfter)과 같은 판정 함수(meetsCalendarAge)를 쓴다. ca.rabies-prime-after-3months-old 와 동일.',
+    severity: 'warning',
+    addedAt: '2026-07-26',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
+      const rabies = readRabiesEntries(caseRow)
+      if (!birth || rabies.length === 0) return SKIP
+
+      const first = rabies[0]
+      if (!meetsCalendarAge(birth, first.date, 3)) {
+        return {
+          ok: false,
+          message: msgRabiesPrimeMinAge('3개월'),
+          offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
+        }
+      }
+      return {
+        ok: true,
+        message: `1차 접종일(${first.date}) 생후 3개월(${calendarAgeThreshold(birth, 3)}) 이후.`,
+      }
+    },
+  },
   {
     id: 'us.rabies-booster-within-prime-validity',
     country: COUNTRY,
     category: '광견병',
     title: '광견병 추가 접종은 직전 접종 유효기간 이내',
     description:
-      '한국 귀국용 광견병 접종 체인은 직전 접종의 면역 유효기간 안에 이어져야 함.',
+      '연속된 광견병 접종은 직전 접종의 면역 유효기간 이내에 해야 함. 만료 후 접종은 chain 이 끊겨 새 1차로 간주된다. ca.rabies-booster-within-prime-validity 와 동일.',
     severity: 'warning',
     addedAt: '2026-07-25',
-    run: ({ caseRow, destination }) => {
-      const ctx = buildCaseJourneyContext(caseRow, destination)
-      const data = readData(caseRow, destination)
-      if (ctx.tripType !== 'round' || !requiresRabiesForReturn(data)) return SKIP
+    run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length < 2) return SKIP
       const offending = findRabiesValidityBreaks(rabies)
-      if (offending.length === 0) {
-        return { ok: true, message: '광견병 추가 접종이 직전 접종 유효기간 이내.' }
+      if (offending.length > 0) {
+        return {
+          ok: false,
+          message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
+          offendingPaths: offending,
+        }
       }
-      return {
-        ok: false,
-        message: '광견병 추가 접종은 직전 접종의 면역 유효기간 안에 해야 해요.',
-        offendingPaths: offending,
-      }
+      return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
     },
   },
   {
-    id: 'us.rabies-valid-on-return',
+    id: 'us.rabies-valid-on-departure',
     country: COUNTRY,
     category: '광견병',
-    title: '한국 귀국일에 광견병 면역 유효',
-    description: '미국에서 한국으로 귀국할 때 최근 광견병 접종의 면역 유효기간이 남아 있어야 함.',
-    severity: 'warning',
-    addedAt: '2026-07-25',
+    title: '출국일에 광견병 면역 유효',
+    description:
+      '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함. ca.rabies-valid-on-departure 와 동일.',
+    // ⚠️ 'info' 는 **표시 억제를 겸한다** — 캐나다·베트남과 같은 구조.
+    // severity 를 올리려면 ADVISORY_DEFERRED_CHECKS(scenario.ts)에도 함께 등록할 것.
+    severity: 'info',
+    addedAt: '2026-07-26',
     run: ({ caseRow, destination }) => {
-      const data = readData(caseRow, destination)
-      if (
-        buildCaseJourneyContext(caseRow, destination).tripType !== 'round' ||
-        !requiresRabiesForReturn(data)
-      ) {
-        return SKIP
-      }
-      const ret = typeof data.return_date === 'string' ? data.return_date.slice(0, 10) : ''
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
-      if (!ret || rabies.length === 0) return SKIP
+      if (!dep || rabies.length === 0) return SKIP
+
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
-      if (!validUntil || validUntil >= ret) {
-        return { ok: true, message: '최근 광견병 접종의 면역 유효기간이 한국 귀국일까지 유지.' }
+      if (!validUntil) return SKIP
+      // 이미 만료(오늘 기준)는 common.rabies-validity-expired '주의'가 담당 — 여기선 아직
+      // 유효한데 출국 시점에 만료 예정인 경우만 남긴다(만료 재구성 B).
+      if (validUntil < todayKst()) return SKIP
+      if (validUntil < dep) {
+        return {
+          ok: false,
+          message: msgRabiesExpiredBefore('출국'),
+          offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
+        }
       }
-      return {
-        ok: false,
-        message: '한국 귀국일에 광견병 백신의 면역 유효기간이 남아 있어야 해요.',
-        offendingPaths: ['return_date', `rabies_dates[${latest.originalIndex}].date`],
-      }
+      return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
     },
   },
   // '입국 경로 확인'(us.high-risk-history-unsupported blocker·us.rabies-risk-history-unknown)
   // 검증은 카드와 함께 삭제(2026-07-26 사용자 결정) — 기본 여정은 한국 출발 저위험국 경로 전제.
+  // 구 us.rabies-valid-on-return(귀국일 유효·90일 미만 면제 게이트)도 캐나다 통일로 삭제.
   {
     id: 'us.dog-entry-age-six-months',
     country: COUNTRY,

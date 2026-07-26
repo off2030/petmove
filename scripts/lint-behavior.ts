@@ -517,8 +517,10 @@ const SCENARIOS: Scenario[] = [
     },
   },
   {
-    name: '미국 — 귀국일에 생후 90일 미만인 고양이 왕복',
-    why: '마이크로칩·USDA 건강증명서는 필요하지만 한국행 광견병 백신·항체검사는 90일 미만 면제로 숨겨야 한다',
+    // 광견병 백신·항체 카드가 캐나다와 동일해진 뒤(2026-07-26)의 기준선 — 편도·어린 동물에도
+    // 카드가 그대로 뜨고(귀국 전용 게이트 없음), 3개월 미만 접종은 주의로 반응해야 한다.
+    name: '미국 — 어린 고양이 왕복(캐나다 통일 확인)',
+    why: '광견병 백신·항체 카드가 왕복 여부·생후 90일과 무관하게 캐나다처럼 표시돼야 한다',
     destinations: ['usa'],
     tripType: 'round',
     showSteps: true,
@@ -528,20 +530,6 @@ const SCENARIOS: Scenario[] = [
       birth_date: '2026-01-01',
       entry_date: '2026-03-01',
       return_date: '2026-03-30',
-    },
-  },
-  {
-    name: '미국 — 귀국일에 생후 90일인 고양이 왕복',
-    why: '90일 미만 면제 경계인 생후 90일째부터 광견병 백신·항체검사 카드가 다시 나타나야 한다',
-    destinations: ['usa'],
-    tripType: 'round',
-    showSteps: true,
-    departure: '2026-03-01',
-    data: {
-      species: 'cat',
-      birth_date: '2026-01-01',
-      entry_date: '2026-03-01',
-      return_date: '2026-04-01',
     },
   },
 ]

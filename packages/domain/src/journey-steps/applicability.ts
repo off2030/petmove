@@ -194,26 +194,6 @@ export function isStepApplicable(applicability: StepApplicability, ctx: CaseJour
 function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: CaseRow): boolean {
   if (!signal) return true
   switch (signal) {
-    case 'us-return-rabies-or-other': {
-      const ctx = buildCaseJourneyContext(caseRow)
-      if (ctx.destinationKey !== 'usa') return true
-      if (ctx.tripType !== 'round') return false
-
-      // USDA의 한국행 요건은 미국 출국 시 생후 90일 미만이면 광견병 백신·항체검사를
-      // 면제한다. 날짜가 아직 없으면 준비 항목을 먼저 보여주는 보수적 폴백을 쓴다.
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const birth =
-        typeof data.birth_date === 'string' && data.birth_date.length >= 10
-          ? data.birth_date.slice(0, 10)
-          : ''
-      const ret =
-        typeof data.return_date === 'string' && data.return_date.length >= 10
-          ? data.return_date.slice(0, 10)
-          : ''
-      if (!birth || !ret) return true
-      const day90 = addDays(birth, 90)
-      return !day90 || ret >= day90
-    }
     case 'has-extra-rabies': {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const arr = data.rabies_dates

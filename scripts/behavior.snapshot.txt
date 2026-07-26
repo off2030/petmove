@@ -2456,8 +2456,8 @@
 ▸ usa (미국)
    입력불가 0건
    주의·차단 1건
-     - us.rabies-valid-on-return [warning]
-         한국 귀국일에 광견병 백신의 면역 유효기간이 남아 있어야 해요.
+     - us.rabies-valid-on-departure [info]
+         광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
    상황별 설명문 3건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
      ▸ rabies-titer: 광견병 항체 검사를 진행 중이에요. 결과가 나오면 완료 버튼을 누르세요.
@@ -4887,8 +4887,11 @@
      · 테스트 광견병 백신 유효기간이 한 달 뒤(4월 15일) 만료돼요. 추가 접종을 
 
 ▸ usa (미국)
-   입력불가 0건
-   주의·차단 0건
+   입력불가 1건
+     ✕ 광견병 1차 최소 일령: 광견병 접종은 생후 3개월이 지나서 할 수 있어요
+   주의·차단 1건
+     - us.rabies-prime-after-3months-old [warning]
+         광견병 접종은 생후 3개월이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -6524,11 +6527,9 @@
 
 ▸ usa (미국)
    입력불가 0건
-   주의·차단 2건
+   주의·차단 1건
      - common.rabies-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2025년 7월 1일에 만료되었어요. 추가 접종 기록을 입력하세요.
-     - us.rabies-valid-on-return [warning]
-         한국 귀국일에 광견병 백신의 면역 유효기간이 남아 있어야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
    알림 5건
@@ -6999,11 +7000,9 @@
 
 ▸ usa (미국)
    입력불가 0건
-   주의·차단 2건
+   주의·차단 1건
      - common.rabies-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2025년 7월 1일에 만료되었어요. 추가 접종 기록을 입력하세요.
-     - us.rabies-valid-on-return [warning]
-         한국 귀국일에 광견병 백신의 면역 유효기간이 남아 있어야 해요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
      ▸ rabies-titer: 광견병 항체 검사를 진행 중이에요. 결과가 나오면 완료 버튼을 누르세요.
@@ -7466,11 +7465,9 @@
 
 ▸ usa (미국)
    입력불가 0건
-   주의·차단 2건
+   주의·차단 1건
      - common.rabies-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2025년 7월 1일에 만료되었어요. 추가 접종 기록을 입력하세요.
-     - us.rabies-valid-on-return [warning]
-         한국 귀국일에 광견병 백신의 면역 유효기간이 남아 있어야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
    알림 4건
@@ -7967,11 +7964,9 @@
 
 ▸ usa (미국)
    입력불가 0건
-   주의·차단 2건
+   주의·차단 1건
      - common.rabies-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2025년 7월 1일에 만료되었어요. 추가 접종 기록을 입력하세요.
-     - us.rabies-valid-on-return [warning]
-         한국 귀국일에 광견병 백신의 면역 유효기간이 남아 있어야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
    알림 5건
@@ -9043,13 +9038,11 @@
 
 ▸ usa (미국)
    입력불가 0건
-   주의·차단 3건
+   주의·차단 2건
      - common.kr-return-titer-within-2years [info]
          광견병 항체 검사 유효기간(2년)이 2026년 1월 10일에 만료돼요. 한국 귀국 전 재검사가 필요할 수 있어요. (광견병 비발생 지역은 면제)
      - common.rabies-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2024년 8월 5일에 만료되었어요. 추가 접종 기록을 입력하세요.
-     - us.rabies-valid-on-return [warning]
-         한국 귀국일에 광견병 백신의 면역 유효기간이 남아 있어야 해요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
      ▸ rabies-titer: 광견병 항체 검사를 진행 중이에요. 결과가 나오면 완료 버튼을 누르세요.
@@ -9546,13 +9539,11 @@
 
 ▸ usa (미국)
    입력불가 0건
-   주의·차단 3건
+   주의·차단 2건
      - common.kr-return-titer-within-2years [info]
          광견병 항체 검사 유효기간(2년)이 2025년 1월 10일에 만료돼요. 한국 귀국 전 재검사가 필요할 수 있어요. (광견병 비발생 지역은 면제)
      - common.rabies-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2023년 8월 5일에 만료되었어요. 추가 접종 기록을 입력하세요.
-     - us.rabies-valid-on-return [warning]
-         한국 귀국일에 광견병 백신의 면역 유효기간이 남아 있어야 해요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
      ▸ rabies-titer: 광견병 항체 검사를 진행 중이에요. 결과가 나오면 완료 버튼을 누르세요.
@@ -10203,7 +10194,7 @@
      - us.dog-entry-age-six-months [blocker]
          개는 생후 6개월이 되는 2026년 7월 1일부터 미국에 입국할 수 있어요.
    상황별 설명문 0건
-   노출 카드: intake, microchip, flight-purchase, us-cdc-dog-import-form, vet-visit, document-checklist, certificate-issue, departure
+   노출 카드: intake, microchip, rabies-vaccine-1, flight-purchase, us-cdc-dog-import-form, vet-visit, document-checklist, certificate-issue, departure
    필수 서류: us-cdc-dog-import-form-receipt, form25, us-kr-export-quarantine-cert
    알림 0건
 
@@ -10216,26 +10207,13 @@
    입력불가 0건
    주의·차단 0건
    상황별 설명문 0건
-   노출 카드: intake, microchip, flight-purchase, vet-visit, document-checklist, certificate-issue, departure
+   노출 카드: intake, microchip, rabies-vaccine-1, flight-purchase, vet-visit, document-checklist, certificate-issue, departure
    필수 서류: form25, us-kr-export-quarantine-cert
    알림 0건
 
 ════════════════════════════════════════════════════════════════════════════
-[시나리오] 미국 — 귀국일에 생후 90일 미만인 고양이 왕복
-  마이크로칩·USDA 건강증명서는 필요하지만 한국행 광견병 백신·항체검사는 90일 미만 면제로 숨겨야 한다
-════════════════════════════════════════════════════════════════════════════
-
-▸ usa (미국)
-   입력불가 0건
-   주의·차단 0건
-   상황별 설명문 0건
-   노출 카드: intake, microchip, flight-purchase, vet-visit, document-checklist, certificate-issue, departure, us-export-health-cert, kr-import-quarantine
-   필수 서류: form25, us-kr-export-quarantine-cert, us-usda-health-cert, kr-import-quarantine-cert
-   알림 0건
-
-════════════════════════════════════════════════════════════════════════════
-[시나리오] 미국 — 귀국일에 생후 90일인 고양이 왕복
-  90일 미만 면제 경계인 생후 90일째부터 광견병 백신·항체검사 카드가 다시 나타나야 한다
+[시나리오] 미국 — 어린 고양이 왕복(캐나다 통일 확인)
+  광견병 백신·항체 카드가 왕복 여부·생후 90일과 무관하게 캐나다처럼 표시돼야 한다
 ════════════════════════════════════════════════════════════════════════════
 
 ▸ usa (미국)
@@ -10243,5 +10221,5 @@
    주의·차단 0건
    상황별 설명문 0건
    노출 카드: intake, microchip, rabies-vaccine-1, rabies-titer, flight-purchase, vet-visit, document-checklist, certificate-issue, departure, us-export-health-cert, kr-import-quarantine
-   필수 서류: us-rabies-titer-result, form25, us-kr-export-quarantine-cert, us-usda-health-cert, kr-import-quarantine-cert
+   필수 서류: form25, us-kr-export-quarantine-cert, us-usda-health-cert, kr-import-quarantine-cert
    알림 0건
