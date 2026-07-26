@@ -601,10 +601,10 @@
       하와이 반려동물 포털(HIPOP)  →  https://hipop.ais.hawaii.gov/
 
 ▸ hi-export-health-cert
-  title: 한국 입국용 건강증명서·USDA 승인
+  title: 귀국 서류 준비
   short: 귀국서류
-  card: 한국 입국용 건강증명서를 준비하세요.
-  done: 한국 입국용 건강증명서의 USDA 승인을 받았어요.
+  card: 귀국 서류를 준비하세요.
+  done: 귀국 서류를 준비했어요.
   desc:
       한국행 출발 30일 이내에 USDA 공인 수의사의 진료를 받으세요.
       
