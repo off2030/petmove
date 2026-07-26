@@ -366,18 +366,22 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/hawaii-14.webp',
   ],
   미국: [
-    // 사용자 선별 Unsplash(목적지별 사진/미국 폴더 원본).
+    // 사용자 선별 Unsplash 15장(목적지별 사진/미국 폴더 원본).
     // 리드(첫 장) = usa-14(금문교 노을) — 2026-07-26 사용자 지정. 나머지는 파일명 abc순 유지.
-    // 01(전차)·07(성당 호수)·11(습지)·12(호박 집)·13(루트66 다이너) 삭제 — 결번 유지(재번호 X).
     '/destinations/usa-14.webp',
+    '/destinations/usa-01.webp',
     '/destinations/usa-02.webp',
     '/destinations/usa-03.webp',
     '/destinations/usa-04.webp',
     '/destinations/usa-05.webp',
     '/destinations/usa-06.webp',
+    '/destinations/usa-07.webp',
     '/destinations/usa-08.webp',
     '/destinations/usa-09.webp',
     '/destinations/usa-10.webp',
+    '/destinations/usa-11.webp',
+    '/destinations/usa-12.webp',
+    '/destinations/usa-13.webp',
     '/destinations/usa-15.webp',
   ],
   프랑스: [
