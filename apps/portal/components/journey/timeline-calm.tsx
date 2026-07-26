@@ -160,20 +160,16 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/singapore-12.webp',
     '/destinations/singapore-15.webp',
   ],
-  // 홍콩 — 2026-07-26 등록(22장). 리드(첫 장) 미지정이라 파일 순서대로 회전한다.
+  // 홍콩 — 2026-07-26 등록(22장 중 16장). 03·05·08·09·11·21 삭제(사용자 지정) — 결번 유지(재번호 X).
+  // 리드(첫 장) 미지정이라 파일 순서대로 회전한다.
   // 사용자가 대표 사진을 고르면 그 파일을 맨 앞으로 올리고 HERO_LEAD_THEN_RANDOM 에 등록.
   홍콩: [
     '/destinations/hongkong-01.jpg',
     '/destinations/hongkong-02.jpg',
-    '/destinations/hongkong-03.jpg',
     '/destinations/hongkong-04.jpg',
-    '/destinations/hongkong-05.jpg',
     '/destinations/hongkong-06.jpg',
     '/destinations/hongkong-07.jpg',
-    '/destinations/hongkong-08.jpg',
-    '/destinations/hongkong-09.jpg',
     '/destinations/hongkong-10.jpg',
-    '/destinations/hongkong-11.jpg',
     '/destinations/hongkong-12.jpg',
     '/destinations/hongkong-13.jpg',
     '/destinations/hongkong-14.jpg',
@@ -183,7 +179,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/hongkong-18.jpg',
     '/destinations/hongkong-19.jpg',
     '/destinations/hongkong-20.jpg',
-    '/destinations/hongkong-21.jpg',
     '/destinations/hongkong-22.jpg',
   ],
   중국: [
