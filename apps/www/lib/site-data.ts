@@ -256,16 +256,17 @@ export const SERVICE_CARDS = [
 //
 // 동기화 확인법: domain DESTINATION_OVERRIDES 의 appSupported 목록과 대조한다. 단 EU 24개국은
 // domain 에서 '유럽연합' 한 묶음이고 여기선 개별 국가로 펼치므로, 아시아·아메리카만 1:1 대응한다.
-// 2026-07-26 기준 domain appSupported 33건 = 아시아 13(japan·china·taiwan·vietnam·thailand·
-//   philippines·cambodia·mongolia·uzbekistan·kazakhstan·malaysia·indonesia·singapore)
+// 2026-07-26 기준 domain appSupported 34건 = 아시아 14(japan·china·taiwan·vietnam·thailand·
+//   philippines·cambodia·mongolia·uzbekistan·kazakhstan·malaysia·indonesia·singapore·hongkong)
 //   + 유럽 8키(eu·uk·ireland·malta·norway·finland·cyprus·switzerland → 개별 펼침 30)
 //   + 아메리카 6(canada·mexico·brazil·argentina·hawaii·usa) + 기타 6(morocco·ukraine·russia·turkey·uae·israel).
 export const APP_DEST_PREVIEW = ['일본', '태국', '필리핀', '프랑스', '독일']
 // 가나다순. 우즈베키스탄·몽골은 중앙아시아·동아시아라 아시아 그룹에 둔다.
 // 2026-07-22 말레이시아·인도네시아 추가(태국 복제 — APP_DEST_SOON 에서 승격).
+// 2026-07-26 홍콩 추가(필리핀 골격 — AFCD Group II).
 export const APP_DEST_ASIA = [
   '대만', '말레이시아', '몽골', '베트남', '싱가포르', '우즈베키스탄', '인도네시아', '일본',
-  '중국', '카자흐스탄', '캄보디아', '태국', '필리핀',
+  '중국', '카자흐스탄', '캄보디아', '태국', '필리핀', '홍콩',
 ]
 // 유럽·중동·아프리카 중 EU 밖 — 2026-07-20 모로코·우크라이나 추가.
 // ⚠️ 우크라이나는 영공 폐쇄로 직항이 없다(EU 경유 육로). 여정 카드가 그 사실을 안내한다.

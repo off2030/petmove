@@ -28,6 +28,7 @@ import {
   todayKst,
   validateEuEntryDate,
   validateEntryDateForDestination,
+  validateHkEntryDate,
   validateIlEntryDate,
   validateJpEntryDate,
   validatePhEntryDate,
@@ -2956,6 +2957,8 @@ export async function updateCaseInfoFields(
         validateJpEntryDate(effective.departure_date.trim(), ruleCtx) ??
         validateThEntryDate(effective.departure_date.trim(), ruleCtx) ??
         validatePhEntryDate(effective.departure_date.trim(), ruleCtx) ??
+        // 홍콩 — 출국일이 생후 5개월 이전이면 저장 거부(AFCD DC-02v05 5항).
+        validateHkEntryDate(effective.departure_date.trim(), ruleCtx) ??
         validateIlEntryDate(effective.departure_date.trim(), ruleCtx) ??
         validateEuEntryDate(effective.departure_date.trim(), ruleCtx) ??
         validateTwEntryDate(effective.departure_date.trim(), ruleCtx) ??

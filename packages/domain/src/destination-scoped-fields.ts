@@ -143,6 +143,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'ar_export_quarantine_confirmed',
   'ph_import_quarantine_date',
   'ph_import_quarantine_confirmed',
+  // 홍콩 도착 수입 검역 (AFCD 화물터미널 — Group II 라 격리 없음)
+  'hk_import_quarantine_date',
+  'hk_import_quarantine_confirmed',
   // 중국 도착 수입 검역 (GACC — 미충족 시 30일 격리)
   'cn_import_quarantine_date',
   'cn_import_quarantine_confirmed',
@@ -222,6 +225,11 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'ph_local_vet_visit_confirmed',
   'ph_export_quarantine_date',
   'ph_export_quarantine_confirmed',
+  // 홍콩 — 도착 24시간 전 사전 통지 + 귀국 서류 준비(AFCD 건강증명서 또는 한국 검역증 갈음).
+  'hk_advance_notice_date',
+  'hk_advance_notice_confirmed',
+  'hk_export_quarantine_date',
+  'hk_export_quarantine_confirmed',
   // EU 패밀리 공용 — 입국 검사·현지 검역증명서. 키는 공용이지만 by_dest 가 목적지별 분리.
   'eu_import_quarantine_date',
   'eu_import_quarantine_confirmed',

@@ -663,6 +663,8 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   'cy-advance-notice': '차단: validateCyAdvanceNoticeDate(입국 48시간 전)',
   'mt-advance-notice': '차단: validateMtAdvanceNoticeDate(입국 3영업일 전)',
   'il-advance-notice': '차단: validateIlAdvanceNoticeDate(출국 2일 전)',
+  // 홍콩은 24시간 판정이 아일랜드와 같아 같은 함수를 쓴다(목적지 중립 메시지).
+  'hk-advance-notice': '차단: validateIeAdvanceNoticeDate(도착 24시간 전 — 입국일 없으면 출국일 폴백)',
   'hi-import-declaration': '차단: validateHiImportDeclarationDate(도착 이후·도착 10일 미만 모두)',
   'sg-quarantine-reservation':
     '차단: validateSgQuarantineReservationFiled(채혈 이후)·validateSgQuarantineReservationDate(채혈+90일~12개월)·validateSgReservationVsDeparture',

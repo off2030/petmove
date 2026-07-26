@@ -114,6 +114,9 @@ export function collectMilestonePushes(caseRow: CaseRow): MilestonePush[] {
     //   수입 허가 카드는 있지만 발급 완료 푸시는 만들지 않는다. 신청 마감일이 없어
     //   '언제까지 해야 하는' 일정이 아니라, 발급 시점을 알려도 보호자가 당길 일이 없다.
     //   (같은 이유로 reminders.ts 의 신청 마감 알림도 만들지 않았다.)
+    // ⛔ **홍콩(hongkong)도 같은 판단**(2026-07-26). Special Permit 은 현지 대리인이 신청하고
+    //   (localApplyOnly) 확정 신청 마감이 없어, 발급 시점을 알려도 보호자가 당길 일이 없다.
+    //   대신 도착 24시간 전 사전 통지는 마감이 있어 reminders.ts 알림 테이블에 등록했다.
     // ⛔ **싱가포르(singapore)도 같은 판단**(사용자 지정, destination-config 싱가포르 주석 참조).
     //   GoBusiness 수입 허가·강아지 라이선스·계류장 예약 모두 selfApply + 확정 마감 없음이라
     //   발급 푸시를 만들지 않는다. 글로벌 항체검사 완료 푸시(위)는 싱가포르에도 나간다.

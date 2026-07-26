@@ -799,15 +799,50 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
     ],
   },
+  // ── 홍콩 (AFCD — 어농자연호리서) ──────────────────────────────────────────
+  // 아키타입 = sea-permit(태국·필리핀). 광견병 1회 + 종합백신 + 수입허가(Special Permit) 2단계
+  //   + 도착 검역. 다른 점은 **항체검사가 왕복 어느 쪽에도 없다**(아래 titer 주석)는 것과
+  //   **반려동물이 보호자와 같이 못 가고 화물(manifested cargo)로만 간다**는 것.
+  // 1차 출처 = AFCD DC-02v05 Permit Terms(Group II, Jun-2025) — 전문은 procedure-checks/hk.ts 헤더.
   hongkong: {
     keywords: ['홍콩', 'hong kong', 'hongkong'],
+    archetype: 'sea-permit',
+    rabies: {
+      doses: 1,
+      // DC-02v05 11(c) "In the case of primary vaccination the animal was at least 90 days
+      //   old when it was vaccinated" — 규정값 그대로 90일(보수 91일+캘린더 3개월은 규정보다
+      //   과잉이라 쓰지 않는다. 이스라엘 2026-07-25 정리와 같은 판단).
+      minAgeDays: 90,
+      minAgeLabel: '생후 90일',
+      // "not less than 30 days and not more than 1 year prior to export" —
+      //   30일 = 접종 후 입국 대기(저장 거부 validateRabiesEntryWait 가 이 값을 파생),
+      //   1년 = 유효기간 1년만 인정(2·3년 백신 선택 차단).
+      entryWaitDaysAfterVaccine: 30,
+      oneYearVaccineOnly: true,
+    },
     // ⚠️ 항체검사 카드를 **띄우지 않는다**(2026-07-22 수정. 아랍에미리트와 같은 사유·되돌리지 말 것):
     //   ①입국 요건 아님 — AFCD 는 한국을 Group II 로 분류하고 이 그룹은 RNATT 가 면제된다
     //     (procedure-checks/hk.ts 헤더의 1차 출처 DC-02v05).
     //   ②귀국 요건도 아님 — 홍콩은 검역본부 **광견병 비발생국**이라 한국 재입국 시 면제.
     //   `vaccines` 의 rabies_titer 는 기록 보존을 위해 유지(입력 가능, 안내만 하지 않음).
     titer: { need: 'none' },
+    // DC-02v05 11(d) "not less than 14 days and not more than 1 year before export" —
+    //   저장 거부(validateGeneralVaccineEntryWait)와 hk.ts 주의가 이 값을 공유.
+    generalVaccineWaitDays: 14,
+    appSupported: true,
+    // Special Permit(AF240) — **해외에서 신청할 수 없다.** 홍콩 현지에서 신청비 납부와 동시에
+    //   접수해야 해서 보호자는 현지 대리인(운송 에이전시)을 지정한다(펫무브 가이드 + AFCD
+    //   "permit will not be sent by email or fax"). 인도네시아·말레이시아와 같은 이유로
+    //   맡기기 상품 항목에서는 제외 — 여정 카드·서류 탭에는 그대로 노출된다.
+    importPermit: { localApplyOnly: true },
+    // 도착 24시간 전 통보 — DC-02v05 1항(Import & Export Section 당직자에게 업무시간 내 통보).
+    advanceNotice: { hardDeadlineHours: 24 },
     vaccines: ['rabies', 'rabies_titer', 'general'],
+    extraFields: [
+      'passport_number', 'passport_expiry_date', 'passport_issuer',
+      'address_overseas',
+      'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
+    ],
   },
   // ── 하와이 (HDOA 동물검역소 — 5-Day-Or-Less / Direct Airport Release) ────
   // ⚠️ **일본(jp-2dose) 복제**(2026-07-24). 하와이는 섬 검역 + 광견병 2회 평생 + FAVN 항체

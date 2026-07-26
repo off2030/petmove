@@ -163,6 +163,7 @@ const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
   cyprus: '예: 라르나카 LCA',
   singapore: '예: 창이 SIN',
   israel: '예: 텔아비브 TLV',
+  hongkong: '예: 홍콩 HKG',
 }
 
 /**
@@ -179,6 +180,9 @@ const SIMPLE_FLIGHT_DESTINATIONS: readonly string[] = [
   // 현지 에이전트 몫이라 앱이 항공편 상세를 들고 있을 이유가 없다. 필요하면 첨부로 보관.
   'taiwan', 'malaysia', 'indonesia', 'uae', 'ireland', 'malta', 'israel', 'singapore',
   'norway', 'cyprus',
+  // 홍콩 — 수입 허가(Special Permit)·사전 통지 둘 다 **현지 대리인**이 하는 절차라 펫무브가
+  // 대행하지 않는다(가이드: 해외 신청 불가). 항공편 상세는 운송 에이전트가 들고 있다.
+  'hongkong',
   // 미국 — 도착일 칸도 삭제하고 단순형으로 통일(2026-07-26 사용자 결정). 생후 6개월 판정은
   // 출국일 기준으로 바꿨다(us.dog-entry-age-six-months·validateEntryDateForDestination).
   // CDC 양식은 앱이 대신 채우지 않아 도착일이 필요 없었다(구 주석의 근거는 이미 소멸).
@@ -1472,6 +1476,16 @@ export function StepDetailView({
       const data = (caseRow?.data ?? {}) as Record<string, unknown>
       const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
       return validateMtAdvanceNoticeDate(importQuarantineDate.trim(), entry)
+    }
+    // 홍콩 사전 통지 — 통지일이 도착 24시간(1일) 이내면 차단. 홍콩은 항공권 카드가 단순형
+    // (출발일만)이라 입국일이 비는 게 정상 → 출국일로 폴백한다(ICN→HKG 는 당일 도착).
+    // 판정 함수는 아일랜드와 공용(목적지 중립 24시간 룰).
+    if (step.id === 'hk-advance-notice') {
+      const data = (caseRow?.data ?? {}) as Record<string, unknown>
+      const entry =
+        (typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : '') ||
+        (typeof caseRow?.departure_date === 'string' ? caseRow.departure_date.slice(0, 10) : '')
+      return validateIeAdvanceNoticeDate(importQuarantineDate.trim(), entry)
     }
     // 이스라엘 사전 통보 — 통보일이 출국일 2일(2영업일 근사) 이내면 차단.
     if (step.id === 'il-advance-notice') {

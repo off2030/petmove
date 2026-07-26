@@ -503,6 +503,8 @@ const ADVANCE_NOTICE_DEADLINES: Array<{
   { key: 'ireland', dateField: 'ie_advance_notice_date', countryLabel: '아일랜드', hardDeadlineDays: 1, deadlineLabel: '입국 24시간 전' },
   { key: 'norway', dateField: 'no_advance_notice_date', countryLabel: '노르웨이', hardDeadlineDays: 2, deadlineLabel: '입국 48시간 전' },
   { key: 'cyprus', dateField: 'cy_advance_notice_date', countryLabel: '키프로스', hardDeadlineDays: 2, deadlineLabel: '입국 48시간 전' },
+  // 홍콩 — AFCD DC-02v05 1항(도착 24시간 전 통보). 유럽 4종과 구조가 같아 같은 테이블로.
+  { key: 'hongkong', dateField: 'hk_advance_notice_date', countryLabel: '홍콩', hardDeadlineDays: 1, deadlineLabel: '도착 24시간 전' },
   {
     key: 'malta',
     dateField: 'mt_advance_notice_date',

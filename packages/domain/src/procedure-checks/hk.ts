@@ -1,112 +1,168 @@
+import {
+  buildDateRuleContext,
+  validateGeneralVaccineEntryWait,
+  validateHkEntryDate,
+  validateHkImportPermitWithin6Months,
+  validateIeAdvanceNoticeDate,
+  validateImportPermitNotAfterDeparture,
+  violatesRabiesEntryWait,
+} from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   daysBetween,
-  evaluateRabiesAgeConservative,
+  findRabiesValidityBreaks,
   readGeneralVaccineEntries,
   readRabiesEntries,
+  readScopedImportPermitFiled,
   resolveValidUntil,
   SKIP,
   todayKst,
   readDepartureDate,
-  readVetVisitDate,
 } from './utils'
-import { msgGeneralVaccineExpiredBefore, msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
+import {
+  msgGeneralVaccineExpiredBefore,
+  msgImportQuarantineBeforeEntry,
+  msgMicrochipBeforeRabies,
+  msgRabiesExpiredBefore,
+  msgRabiesPrimeMinAge,
+} from './messages'
 
 /**
  * 홍콩 (AFCD — Agriculture, Fisheries & Conservation Department) 절차 검증.
  *
  * 출처:
  *  - AFCD Group II 페이지 — https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/qua_ie_ipab_idc_Group_II.html
- *  - DC-02v05 Group II Terms (Jun-2025) — https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/files/DC_02v05_Terms_for_import_G2_Jun25B.pdf
+ *  - DC-02v05 Group II Permit Terms (Jun-2025) — https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/files/DC_02v05_Terms_for_import_G2_Jun25B.pdf
  *  - VC-DC2 Health Certificate (Oct-2025) — https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/files/VC_DC2_Oct_25E.pdf
+ *  - 펫무브 홍콩 가이드 — apps/www/content/docs/hongkong-pet-travel-guide.json
  *
- * 한국 = Group II (38개국 명단 명시 포함). 격리 면제, RNATT 면제 가능.
+ * 한국 = Group II. 격리 면제, RNATT(항체검사) 면제.
  *
- * 핵심 룰:
- *  - 마이크로칩: ISO 11784/11785 또는 AVID 호환 (DC-02v05 명시)
- *  - 광견병: "at least 90 days old" (보수 91일 AND 캘린더 3개월) + 출국 30일 전 + 1년 유효
- *  - 종합백신: **필수**, 출국 14일 전 + 1년 유효
- *      · 강아지: DHP (Distemper, Infectious Canine Hepatitis, Parvovirus)
- *      · 고양이: Feline Panleukopenia + Feline Respiratory Disease (FVRCP)
- *  - 건강증명서(VC-DC2): 출국일 14일 이내. 한국 APQA 10일 + 사용자 보수 N-1 → ≤9 적용
- *  - 거주 요건: 한국에서 출국 전 180일 이상 연속 거주 (또는 출생 이후)
+ * DC-02v05 원문 확인값(2026-07-26 PDF 직접 확인):
+ *  - 1항  도착 24시간 전 Import & Export Section 당직자에게 통보(업무시간 내)
+ *  - 2항  MANIFESTED CARGO 만 허용 — 초과수하물·기내 동반 불가
+ *  - 5항  "Dogs and cats **less than 5 months old** or more than 4 weeks pregnant must NOT be imported."
+ *  - 6항  금지 견종(핏불·재패니즈 토사·도고 아르헨티노·필라 브라질레이로 및 교잡)
+ *  - 9항  마이크로칩 = ISO 또는 AVID 호환
+ *  - 10항 5개월 이상 개는 **도착 시 홍콩 Dog Licence** 취득 필요
+ *  - 11(a) 건강증명서 = 수출 14일 이내 발급 / 11(b) 거주증명 = 180일 연속 거주 + 반경 10km 광견병 미발생
+ *  - 11(c) 광견병 = 출국 30일 이상 전 · 1년 이내, 1차 접종 시 **생후 90일 이상**
+ *  - 11(d) 종합백신 = 출국 14일 이상 전 · 1년 이내
+ *          · 개  = canine distemper, infectious canine hepatitis, canine parvovirus (D·H·P 뿐)
+ *          · 고양이 = feline panleucopaenia + feline respiratory disease complex
+ *  - 11(e) Airline Certificate (Captain's Affidavit, PC101)
  *
- * 별도 (시스템 검증 제외 또는 추가 권고):
- *  - RNATT: Group II 면제 (한국 귀국용은 별도 워크플로)
- *  - 내·외부 기생충: 출국 14일 이내 처치 (VC-DC2 명시 의무) — 신규 룰 추가 권고
- *  - Special Permit (Form AF240, 6개월 유효): 사무 절차
+ * ⚠️ 세대 교체(2026-07-26): 이 파일은 펫무브워크 전용 시절(2026-05-07) 문법이라 severity 가
+ *   전부 'info' 였고, 저장 거부와 판정을 공유하지 않아 계산이 갈릴 수 있었다. 필리핀·말레이시아
+ *   세대에 맞춰 재작성 — **모든 룰이 date-rules 의 저장 거부 함수를 그대로 호출**한다.
+ *   함께 메운 갭: 광견병 chain 단절, 5개월령, 수입허가 2종, 수입검역일, 사전 통지.
+ *   ⛔ 광견병 1차 최소 연령을 '보수 91일 + 캘린더 3개월'로 되돌리지 말 것 — 규정은 90일이고,
+ *      규정보다 엄한 기준은 갈 수 있는 사람을 막는다(이스라엘 2026-07-25 정리와 같은 판단).
  *
- * 컨벤션 (BR/MX/RU 와 동일):
+ * 시스템 검증 제외(데이터 없음 — 카드·서류 안내로만 다룸):
+ *  - 180일 거주 요건·반경 10km 광견병 미발생 → 한국 거주 반려동물은 자동 충족, 앱에 입력칸 없음
+ *  - 금지 견종·벵갈/사바나 고양이, Dog Licence, Airline Certificate(PC101)
+ *
+ * 컨벤션 (PH/MY/SG 와 동일):
  *  - 필수 입력 누락 시 SKIP
  *  - 유효기간 1년 = 접종일의 1주년 당일까지 인정
  */
 
 const COUNTRY = 'hongkong'
 
+/** 입국일 근사 — 홍콩은 항공권 카드가 단순형(출발일만)이라 입국일이 없으면 출국일을 쓴다. */
+function readEntryOrDeparture(
+  caseRow: Parameters<typeof readDepartureDate>[0],
+  destination: string | null | undefined,
+): string {
+  const ctx = buildDateRuleContext(caseRow, destination)
+  const entry =
+    typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+      ? ctx.data.entry_date.slice(0, 10)
+      : ''
+  return entry || (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
+}
+
 export const HK_CHECKS: ProcedureCheck[] = [
+  // ── 광견병 ──
+  {
+    id: 'hk.rabies-booster-within-prime-validity',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 추가 접종은 직전 접종 유효기간 이내',
+    description:
+      '연속된 광견병 접종은 직전 접종의 면역 유효기간 이내에 해야 함. 만료 후 접종은 chain 이 끊겨 새 1차로 간주된다. 저장 거부(findRabiesChainBreak)의 짝이 되는 주의 — 펫무브워크는 저장을 막지 않고 절차검증만 보므로 이 룰이 없으면 운영자 화면에서 끊긴 chain 이 안 보인다.',
+    severity: 'warning',
+    addedAt: '2026-07-26',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length < 2) return SKIP
+      const offending = findRabiesValidityBreaks(rabies)
+      if (offending.length > 0) {
+        return {
+          ok: false,
+          message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
+          offendingPaths: offending,
+        }
+      }
+      return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
+    },
+  },
+
   // ── 마이크로칩 ──
   {
     id: 'hk.microchip-before-rabies',
     country: COUNTRY,
     category: '마이크로칩',
-    title: '마이크로칩은 광견병 접종 이전 시술',
+    title: '마이크로칩, 백신 타이밍',
     description:
-      'ISO 11784/11785 또는 AVID 호환 마이크로칩이 광견병 접종일과 같거나 이전이어야 함. 칩 이전 접종은 추적 불가로 무효 — 칩 이후 접종이 1건이라도 있으면 그 접종부터 유효 기록으로 인정. (AFCD DC-02v05: "implanted with a microchip ... compliant with ISO or AVID standards")',
-    severity: 'info',
+      '마이크로칩(ISO 11784/11785 또는 AVID 호환)이 광견병 1차 접종일과 같거나 이전이어야 함. (AFCD DC-02v05 9항: "implanted with a microchip … compliant with ISO or AVID standards") 백신 입력 시 client 차단(validateMicrochipBeforeBooster)과 짝.',
+    severity: 'warning',
     addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
+    run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
       if (!microchip || rabies.length === 0) return SKIP
 
-      // 칩 이후(같은 날 포함) 접종이 1건이라도 있으면 충족 — 그 접종부터 유효 면역 기록.
-      const valid = rabies.find((r) => microchip <= r.date)
-      if (valid) {
-        return { ok: true, message: `마이크로칩(${microchip}) ≤ 광견병 접종(${valid.date}).` }
+      const first = rabies[0]
+      if (microchip <= first.date) {
+        return { ok: true, message: `마이크로칩(${microchip}) ≤ 접종(${first.date}).` }
       }
-      const last = rabies[rabies.length - 1]
       return {
         ok: false,
         message: msgMicrochipBeforeRabies(),
-        offendingPaths: ['microchip_implant_date'],
+        offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
   },
 
-  // ── 광견병 ──
   {
-    id: 'hk.rabies-prime-after-91days-old',
+    id: 'hk.rabies-prime-after-90days',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
+    title: '광견병 1차 접종은 생후 90일 이후',
     description:
-      'AFCD DC-02v05: "the animal was at least 90 days old when it was vaccinated" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
-    severity: 'info',
+      'AFCD DC-02v05 11(c): "In the case of primary vaccination the animal was at least 90 days old when it was vaccinated." 프로파일 rabies.minAgeDays(90)와 같은 값 — 카드 문구·earliest 잠금도 같은 곳에서 파생한다.',
+    severity: 'warning',
     addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
+    run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      const ev = evaluateRabiesAgeConservative(birth, first.date)
-      if (ev.ageInDays === null) return SKIP
-      if (!ev.ok) {
-        const reason =
-          ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령으로 91일에 미달해요`
-            : ev.failedRule === 'calendar3m'
-              ? `${first.date}이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
-              : `생후 ${ev.ageInDays}일령이며 ${first.date}이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
+      const age = daysBetween(birth, first.date)
+      if (age === null) return SKIP
+      if (age < 90) {
         return {
           ok: false,
-          message: msgRabiesPrimeMinAge('91일'),
+          message: msgRabiesPrimeMinAge('90일'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${ev.ageInDays}일령 + 캘린더 3개월(${ev.calendar3mThreshold}) 충족.` }
+      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${age}일령 (≥90).` }
     },
   },
   {
@@ -115,25 +171,24 @@ export const HK_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (AFCD DC-02v05: "vaccinated against rabies not less than 30 days ... prior to export")',
-    severity: 'info',
+      'AFCD DC-02v05 11(c): "vaccinated against rabies not less than 30 days … prior to export." 최근 접종 기준이고 유효 부스터는 면제. 저장 거부(validateRabiesEntryWait)와 **같은 판정 함수**(violatesRabiesEntryWait — 프로파일 entryWaitDaysAfterVaccine=30 파생)를 쓴다.',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
-      const dep = readDepartureDate(caseRow, destination)
+      const dep = readEntryOrDeparture(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
-      const earliest = rabies[0]
-      const days = daysBetween(earliest.date, dep)
-      if (days === null) return SKIP
-      if (days < 30) {
+      const latest = rabies[rabies.length - 1]
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (violatesRabiesEntryWait(data, dep, destination)) {
         return {
           ok: false,
-          message: `광견병 접종(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 30일 이상이어야 해요.`,
-          offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
+          message: '광견병 접종 후 30일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.',
+          offendingPaths: [`rabies_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
-      return { ok: true, message: `광견병 접종(${earliest.date}) → 출국일(${dep}): ${days}일.` }
+      return { ok: true, message: `최근 접종(${latest.date}) → 입국(${dep}) 30일 이상.` }
     },
   },
   {
@@ -142,8 +197,8 @@ export const HK_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일에 광견병 면역 유효',
     description:
-      '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함.',
-    severity: 'info',
+      'AFCD DC-02v05 11(c): "not more than 1 year prior to export." 최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함.',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -169,50 +224,30 @@ export const HK_CHECKS: ProcedureCheck[] = [
 
   // ── 종합백신 ──
   {
-    id: 'hk.general-vaccine-required',
-    country: COUNTRY,
-    category: '종합백신',
-    title: '종합백신 접종 필수',
-    description:
-      '종합백신 접종 기록 필요. 강아지: DHP (Distemper, Infectious Canine Hepatitis, Parvovirus), 고양이: Feline Panleukopenia + Feline Respiratory Disease (FVRCP). (AFCD DC-02v05 / VC-DC2 명시)',
-    severity: 'info',
-    addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
-      const entries = readGeneralVaccineEntries(caseRow)
-      if (entries.length === 0) {
-        return {
-          ok: false,
-          message: '종합백신 기록이 없어요.',
-        }
-      }
-      return { ok: true, message: `종합백신 ${entries.length}회 기록됨.` }
-    },
-  },
-  {
     id: 'hk.general-vaccine-14days-before-departure',
     country: COUNTRY,
     category: '종합백신',
     title: '종합백신은 출국일 14일 이상 전 접종',
     description:
-      '종합백신 접종일로부터 출국일까지 최소 14일 경과 필요. (AFCD: "vaccinated ... not less than 14 days and not more than 1 year before importation")',
-    severity: 'info',
+      'AFCD DC-02v05 11(d): "vaccinated … not less than 14 days and not more than 1 year before export." 저장 거부(validateGeneralVaccineEntryWait)와 같은 함수 — 프로파일 generalVaccineWaitDays(14) 파생.',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
-      const dep = readDepartureDate(caseRow, destination)
+      const dep = readEntryOrDeparture(caseRow, destination)
       const entries = readGeneralVaccineEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const msg = validateGeneralVaccineEntryWait(dep, ctx)
       const latest = entries[entries.length - 1]
-      const days = daysBetween(latest.date, dep)
-      if (days === null) return SKIP
-      if (days < 14) {
+      if (msg) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 14일 이상이어야 해요.`,
-          offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`],
+          message: msg,
+          offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
-      return { ok: true, message: `최근 종합백신(${latest.date}) → 출국일(${dep}): ${days}일.` }
+      return { ok: true, message: `최근 종합백신(${latest.date}) → 입국(${dep}) 14일 이상.` }
     },
   },
   {
@@ -221,8 +256,8 @@ export const HK_CHECKS: ProcedureCheck[] = [
     category: '종합백신',
     title: '출국일에 종합백신 면역 유효',
     description:
-      '최근 종합백신의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함.',
-    severity: 'info',
+      'AFCD DC-02v05 11(d) "not more than 1 year" — 최근 종합백신의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함.',
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -243,6 +278,144 @@ export const HK_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `최근 종합백신(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
+    },
+  },
+
+  // ── 일정 ──
+  {
+    id: 'hk.min-5months-on-arrival',
+    country: COUNTRY,
+    category: '일정',
+    title: '입국일 시점 생후 5개월 이상',
+    description:
+      'AFCD DC-02v05 5항: "Dogs and cats less than 5 months old … must NOT be imported." 저장 거부(validateHkEntryDate)와 같은 함수 — 출국일을 나중에 당겨 어긋난 경우를 주의로 표면화한다.',
+    severity: 'warning',
+    addedAt: '2026-07-26',
+    run: ({ caseRow, destination }) => {
+      const dep = readEntryOrDeparture(caseRow, destination)
+      if (!dep) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const msg = validateHkEntryDate(dep, ctx)
+      if (msg) {
+        return {
+          ok: false,
+          message: '생후 5개월 이상의 강아지(혹은 고양이)만 데려갈 수 있어요.',
+          offendingPaths: ['departure_date', 'birth_date'],
+        }
+      }
+      return { ok: true, message: `입국일(${dep}) 시점 생후 5개월 이상.` }
+    },
+  },
+
+  // ── 수입허가 (Special Permit) ──
+  {
+    id: 'hk.import-permit-not-after-departure',
+    country: COUNTRY,
+    category: '수입허가',
+    title: '수입 허가 신청일, 출국일 순서',
+    description:
+      '수입 허가 신청일은 출국일 이전이어야 함(출국 당일·이후엔 신청 불가). 입력 차단(validateImportPermitNotAfterDeparture)과 같은 함수 — 출국일을 나중에 당겨 어긋난 경우를 주의로 표면화.',
+    severity: 'warning',
+    addedAt: '2026-07-26',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
+      const msg = validateImportPermitNotAfterDeparture(filed, dep)
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['import_permit_application_date', 'departure_date'],
+        }
+      }
+      return { ok: true, message: `신청일(${filed}) < 출국일(${dep || '미입력'}).` }
+    },
+  },
+  {
+    id: 'hk.import-permit-within-6months',
+    country: COUNTRY,
+    category: '수입허가',
+    title: '수입 허가는 출국 6개월 이내 신청',
+    description:
+      'Special Permit 은 발급일로부터 6개월 유효·1회 운송 한정(AFCD Group II: "valid for 6 months and for one consignment only") — 너무 일찍 신청하면 출국 전에 만료된다. 입력 차단과 같은 함수(validateHkImportPermitWithin6Months).',
+    severity: 'warning',
+    addedAt: '2026-07-26',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
+      if (!dep) return SKIP
+      const msg = validateHkImportPermitWithin6Months(filed, dep)
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['import_permit_application_date', 'departure_date'],
+        }
+      }
+      return { ok: true, message: `신청일(${filed}) 출국일(${dep}) 기준 6개월 이내.` }
+    },
+  },
+
+  // ── 사전 통지 (도착 24시간 전) ──
+  {
+    id: 'hk.advance-notice-24h-before-entry',
+    country: COUNTRY,
+    category: '사전통지',
+    title: '사전 통지 마감 (도착 24시간 전)',
+    description:
+      'AFCD DC-02v05 1항: "must notify the Duty Officer of the Import & Export Section during office hours … at least 24 hours in advance of the anticipated time of arrival." 입력 차단과 같은 함수(validateIeAdvanceNoticeDate — 목적지 중립 24시간 판정) — 항공편 수정 후 어긋난 케이스를 주의로 표면화.',
+    severity: 'warning',
+    addedAt: '2026-07-26',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const notice =
+        typeof data.hk_advance_notice_date === 'string'
+          ? data.hk_advance_notice_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(notice)) return SKIP
+      const entry = readEntryOrDeparture(caseRow, destination)
+      const msg = validateIeAdvanceNoticeDate(notice, entry)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: ['hk_advance_notice_date', 'departure_date'] }
+      }
+      return {
+        ok: true,
+        message: entry ? `통지일(${notice}) 도착(${entry}) 1일 이전.` : `통지일(${notice}) 입력됨 (도착일 미입력).`,
+      }
+    },
+  },
+
+  // ── 검역 일정 재검증 — 입력 차단과 같은 규칙을 매 렌더 재실행 ──
+  {
+    id: 'hk.import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '홍콩 수입 검역일',
+    description: '홍콩 수입 검역일은 홍콩 입국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-07-26',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.hk_import_quarantine_date === 'string'
+          ? data.hk_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      // 홍콩은 항공권 카드가 단순형(출발일만)이라 입국일이 비는 게 정상 — 출국일로 폴백한다
+      // (ICN→HKG 는 당일 도착). 둘 다 없으면 판정하지 않는다.
+      const entry = readEntryOrDeparture(caseRow, destination)
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: msgImportQuarantineBeforeEntry('홍콩'),
+          offendingPaths: ['hk_import_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `홍콩 수입검역일(${raw}) 입국 이후.` }
     },
   },
 ]

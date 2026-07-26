@@ -961,6 +961,43 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['il.advance-notice-2days-before-departure'],
   },
 
+  // ── 사전 통지 (홍콩 전용) ────────────────────────────────────────────
+  // AFCD DC-02v05 1항: "The permittee must notify the Duty Officer of the Import & Export
+  //   Section during office hours … at least 24 hours in advance of the anticipated time of
+  //   arrival." 펫무브 홍콩 가이드도 같은 내용(서류 사본 사전 제출 + 도착일·시간 통지).
+  // 화물 운송이라 실무에서는 현지 운송 에이전트가 대신 통지하는 경우가 많다 — 그래도 카드는
+  //   둔다(마감이 있는 절차이고, 안 하면 도착 시 반송·계류 위험).
+  // 완료신호 'quarantine:<필드>' confirm 재사용 — 아일랜드·이스라엘 사전 통지와 같은 모델.
+  {
+    id: 'hk-advance-notice',
+    category: 'permit',
+    title: '사전 통지',
+    shortLabel: '통지',
+    description:
+      '홍콩 도착 24시간 전까지 사전 통지를 하세요.\n\n홍콩 공항 검역사무소(AFCD)에 예상 도착일·도착 시간과 서류 사본을 보내요.\n화물로 운송하므로 보통 현지 운송 에이전트가 대신 통지해요.',
+    doneSummary: '홍콩에 사전 통지를 했어요.',
+    cardLine: '홍콩에 사전 통지를 하세요.',
+    applicability: { destinations: ['hongkong'], species: 'all', tripType: 'all' },
+    order: 47,
+    deadline: { anchor: 'entry', daysBefore: 1 },
+    done: 'quarantine:hk_advance_notice_date',
+    inputs: [
+      {
+        key: 'hk_advance_notice_date',
+        label: '통지일',
+        type: 'date',
+        helpText: '홍콩 공항 검역사무소에 도착 정보를 통지한 날짜',
+      },
+    ],
+    links: [
+      {
+        url: 'https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/qua_ie_ipab_idc_Group_II.html',
+        label: '수입 절차·연락처 안내(AFCD)',
+      },
+    ],
+    validationIds: ['hk.advance-notice-24h-before-entry'],
+  },
+
   // ── 사전 신고 다음 — 일본 수출 검역 (왕복 케이스 한정) ──────────────
   {
     id: 'jp-export-quarantine',
@@ -1908,6 +1945,48 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '수출 허가증·국제 수의건강증명서 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '필리핀 수출 허가증',
+  },
+
+  // ── 귀국 서류 준비 (왕복 — 홍콩에서 한국으로 돌아오기 전) ───────────────
+  // ⚠️ **홍콩은 자국 출국을 강제하지 않는다 → '수출 검역' 카드가 아니다**(2026-07-26 조사).
+  //   AFCD FAQ 원문: "Hong Kong has no restriction on the exportation of dogs and cats and
+  //   you do not need to apply for an export permit from this Department."
+  //   한국이 요구하는 '수출국 정부 검역증명서'는 한국 출국 때 받은 대한민국 수출 동물검역증
+  //   으로 갈음되므로, 대만·캐나다와 같은 **대체서류 안내 형식**으로 쓴다.
+  //   판단 규칙 상세는 메모리 project_return_export_quarantine_rule.
+  // 필요한 경우(대체서류가 없을 때) 받을 수 있는 서류는 AFCD 의 공식 동물건강증명서다 —
+  //   방문 신청·발급 2영업일·발급일로부터 10일 유효(AFCD 「Issue of Official Animal Health
+  //   Certificate」). 홍콩은 광견병 비발생국이라 귀국 시 항체 검사는 면제된다.
+  {
+    id: 'hk-export-quarantine',
+    category: 'document',
+    title: '귀국 서류 준비',
+    shortLabel: '귀국서류',
+    description:
+      '홍콩 정부가 발급한 건강증명서 또는 대체 서류를 준비하세요.\n\n현지 동물병원에서 건강증명서를 받은 뒤, 홍콩 검역당국(AFCD)에 방문 신청해 정부 발급 건강증명서를 받아요.\n발급까지 2영업일이 걸리고, 발급일로부터 10일간 유효해요.\n\n다음 서류가 있다면 홍콩 건강증명서를 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+    doneSummary: '귀국 서류를 준비했어요.',
+    cardLine: '귀국 서류를 준비하세요.',
+    applicability: { destinations: ['hongkong'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'dated:hk_export_quarantine_date',
+    buttonComplete: true,
+    inputs: [
+      {
+        key: 'hk_export_quarantine_date',
+        label: '준비 완료일',
+        type: 'date',
+        helpText: '한국 입국용 서류를 모두 준비한 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '건강증명서 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '홍콩 정부 발급 건강증명서',
+    links: [
+      {
+        url: 'https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_eapao/qua_ie_eapao_ioahc/qua_ie_eapao_ioahc.html',
+        label: '건강증명서 발급 안내(AFCD)',
+      },
+    ],
   },
 
   // ── 중국 수출 검역 (왕복 케이스 한정 — 귀국 전) ─────────────────

@@ -714,6 +714,57 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'kr-import-quarantine',
     },
   ],
+  // 홍콩 (AFCD Group II) — 수입허가(Special Permit)·별지25·VC-DC2(한국 작성·검역관 배서)·
+  //   한국 수출검역증·항공사 증명서(PC101)·홍콩 정부 건강증명서(귀국)·한국 수입검역증.
+  //   ⚠️ **항체 결과지 항목 없음** — 홍콩은 입국(Group II 면제)·귀국(광견병 비발생국) 모두
+  //      항체검사가 없다. 다른 아시아 나라 spec 을 베끼며 되살리지 말 것.
+  //   도착 검역 후 발급되는 서류가 확인되지 않아 '홍콩 수입 검역 서류' 항목은 두지 않는다
+  //   (필리핀·중국과 같은 처리 — 확인되면 그때 올릴 것).
+  '홍콩': [
+    {
+      id: 'hk-import-permit-doc',
+      name: '수입 허가증(Special Permit)',
+      source: '홍콩 검역당국(AFCD)',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        '수입 허가 신청이 승인되면 발급돼요.\n\n발급일로부터 6개월간 유효하고, 한 번의 운송에만 쓸 수 있어요.\n\n이메일·팩스로는 보내주지 않아 현지 대리인이 우편으로 받거나 직접 수령해요. 도착한 반려동물을 찾을 때 원본이 필요해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'import-permit',
+    },
+    // 접종 및 건강증명서(별지 제25호) — 한국 공식 양식(전 목적지 공통).
+    KR_FORM25_VACCINATION_HEALTH_CERT,
+    {
+      id: 'hk-entry-health-cert',
+      name: '홍콩 건강증명서(VC-DC2)',
+      source: '동물병원 · 농림축산검역본부',
+      kind: 'manual',
+      issuanceStepId: 'vet-visit',
+      description:
+        '홍콩 입국용 수의 건강증명서예요. AFCD 지정 VC-DC2 서식으로, 수입 허가증과 함께 받아요.\n\n출국 전 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관(정부 수의사)의 확인·서명을 받아요.\n\n마이크로칩·거주 요건·광견병 백신·종합백신 내용이 기재돼요. 발급일로부터 14일 이내에 출국해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
+    KR_EXPORT_QUARANTINE_CERT,
+    {
+      id: 'hk-airline-cert',
+      name: '항공사 증명서(PC101)',
+      source: '항공사',
+      kind: 'manual',
+      description:
+        '운송 중 반려동물이 켄넬 밖으로 나오지 않았고 다른 동물과 접촉하지 않았다는 것을 기장·항공사가 확인하는 서류예요.\n\n홍콩 도착 때 반드시 제출해야 하니, 항공사나 운송 에이전트에 미리 요청하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
+    {
+      id: 'hk-export-cert-doc',
+      name: '홍콩 정부 발급 건강증명서',
+      source: '홍콩 검역당국(AFCD)',
+      kind: 'step',
+      stepRef: 'hk-export-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '홍콩에서 한국으로 돌아올 때 쓰는 건강증명서예요.\n\n현지 동물병원 건강증명서를 받아 AFCD에 방문 신청하면 발급돼요. 발급까지 2영업일이 걸리고, 발급일로부터 10일간 유효해요.\n\n한국 출국 때 받은 동물검역증이 있으면 새로 발급받지 않아도 돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'hk-export-quarantine',
+    },
+    KR_IMPORT_QUARANTINE_CERT,
+  ],
   // 싱가포르 (NParks/AVS — Schedule III) — 입국 항체(RNATT)·수입허가·별지25·Schedule III
   //   건강증명서(한국 작성·검역관 인증)·한국 수출검역증·수출 라이선스+AVS 인증 건강증명서(귀국)·
   //   한국 수입검역증.

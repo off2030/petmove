@@ -514,6 +514,29 @@ export function validatePhEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
+ * 홍콩 입국일(= 출국 항공편 날짜) — 생후 **5개월 미만** 입국만 hard 차단.
+ *
+ * AFCD DC-02v05 5항: "Dogs and cats less than 5 months old or more than 4 weeks pregnant
+ * must NOT be imported." 규정이 달력 개월이라 일수로 환산하지 않는다(생월에 따라 150~153일로
+ * 흔들려 규정을 지킨 사람을 막는다 — 이스라엘 4개월과 같은 처리).
+ *
+ * 출생일은 바꿀 수 없는 사실이라 위반 해소가 '입국일을 늦추는 것'뿐 → 저장 거부 대상
+ * (필리핀 120일과 같은 모델). 광견병 30일·종합백신 14일 대기는 프로파일 파생 차단
+ * (validateRabiesEntryWait / validateGeneralVaccineEntryWait)이 따로 담당한다.
+ */
+export function validateHkEntryDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!matchesDestinationKey(ctx.destination, 'hongkong')) return null
+  const birth = readDate(ctx.data, 'birth_date')
+  if (!birth) return null
+  const earliest = addMonths(birth, 5)
+  if (earliest && v < earliest) {
+    return '생후 5개월이 지나야 홍콩에 입국할 수 있어요'
+  }
+  return null
+}
+
+/**
  * 이스라엘 — 출국(=입국 근사)일에 반려동물이 **만 4개월(약 17주) 이상**이어야 함(gov.il 수의국,
  * trafficking 방지). 생년월일은 못 바꾸니 위반 해소가 '날짜를 늦추는 것'뿐이라 저장 거부 대상
  * (필리핀 120일과 같은 모델). client(입력 불가)·procedure-check(il.min-4months-on-departure,
@@ -967,6 +990,26 @@ export function validateAeImportPermitWithin90Days(
 }
 
 /**
+ * 홍콩 — Special Permit 은 **6개월 유효·1회 운송 한정**(AFCD Group II: "valid for 6 months and
+ * for one consignment only"). 필리핀 60일·UAE 90일과 같은 모델이라 너무 일찍 신청하면 출국 전에
+ * 만료된다. client(신청일 차단)·procedure-check(hk.import-permit-within-6months) 공용.
+ *
+ * ⚠️ 6개월은 달력 개월이라 addMonths 로 잰다(일수 환산 시 월별로 181~184일로 흔들린다).
+ */
+export function validateHkImportPermitWithin6Months(
+  filedDate: string,
+  departureDate: string,
+): string | null {
+  if (!filedDate || !departureDate) return null
+  const earliest = addMonths(departureDate.slice(0, 10), -6)
+  if (earliest && filedDate.slice(0, 10) < earliest) {
+    // 고객 문구에 구체 날짜 보간 금지(앱 카피 규칙) — 날짜 없이.
+    return '수입 허가증은 발급일로부터 6개월간 유효해요. 출국 6개월 전부터 신청할 수 있어요. 날짜를 확인하세요.'
+  }
+  return null
+}
+
+/**
  * 채혈 후 대기(개월)를 선언한 목적지 — 프로파일 `titer.entryWaitAfterTiter.months` 파생.
  *
  * ⚠️ `days` 선언(대만 180일)은 **여기서 제외**한다 — 대만은 하한만이 아니라 '180일~2년 창'과
@@ -1159,6 +1202,9 @@ export function validateEntryDateForDestination(
     // 프로파일 entryWaitDaysAfterVaccine 파생(validateRabiesEntryWait)이 처리하고,
     // 인도네시아는 1차 출처에 대기 규정이 없어 대기 차단 자체가 없다.
     validatePhEntryDate(entryOrDeparture, ctx) ??
+    // 홍콩 — 생후 5개월(달력) 미만 입국 차단. 광견병 30일·종합백신 14일 대기는 아래 프로파일
+    // 파생 차단(validateRabiesEntryWait / validateGeneralVaccineEntryWait)이 담당한다.
+    validateHkEntryDate(entryOrDeparture, ctx) ??
     // 이스라엘 — 출국일 만 4개월(생일 불변이라 저장 거부). EU 골격이나 항체 3개월 대기는 없어
     // validateEuEntryDate 에서 제외되므로 여기서 별도로 나이만 막는다.
     validateIlEntryDate(entryOrDeparture, ctx) ??
@@ -1233,6 +1279,13 @@ export function validateImportPermitFiledDate(
         // 내부 기생충 치료 창(7일~달력 3개월) — 치료일 칸이 아니라 **여기서** 실제로 발동한다
         // (실무 순서가 치료 먼저 → 신청 나중이라 치료 시점엔 신청일이 비어 있다).
         validatePhImportPermitParasiteGap(filedDate, data)
+      )
+    // 홍콩 — 출국일 이후 신청 불가 + Special Permit 6개월 유효(더 이르면 출국 전 만료).
+    //   백신 접종 후 N일 뒤 신청 같은 제약은 없다(AFCD 는 허가와 접종 시점을 연결하지 않는다).
+    case 'hongkong':
+      return (
+        validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
+        validateHkImportPermitWithin6Months(filedDate, departureDate)
       )
     // 대만 — 출국일 이후 신청 불가. 카드 order 가 43(항공권 45 앞)이라 항공권 미입력 시
     // departureDate 가 비어 통과한다. 120일·20일 마감은 주의 담당.

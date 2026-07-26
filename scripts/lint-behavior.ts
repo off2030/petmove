@@ -534,6 +534,38 @@ const SCENARIOS: Scenario[] = [
       return_date: '2026-03-30',
     },
   },
+  // ── 홍콩 전용 분기 ────────────────────────────────────────────────────
+  {
+    name: '홍콩 — 생후 4개월 강아지 편도(5개월 미만 차단)',
+    why: 'AFCD DC-02v05 5항(5개월 미만 수입 불가) — 출국일 저장 거부 + 주의가 함께 떠야 한다. 항체 카드는 어느 쪽에도 없어야 한다',
+    destinations: ['hongkong'],
+    tripType: 'one_way',
+    showSteps: true,
+    departure: '2026-05-01', // 생후 4개월 — 차단 대상
+    data: {
+      species: 'dog',
+      birth_date: '2026-01-01',
+      microchip_implant_date: '2026-02-01',
+      rabies_dates: [{ date: '2026-04-05' }],
+      general_vaccine_dates: [{ date: '2026-04-25' }],
+    },
+  },
+  {
+    name: '홍콩 — 접종 직후 출국 왕복',
+    why: '광견병 30일·종합백신 14일 대기가 둘 다 걸려야 하고, 귀국 카드는 수출검역이 아니라 "귀국 서류 준비"여야 한다',
+    destinations: ['hongkong'],
+    tripType: 'round',
+    showSteps: true,
+    departure: '2026-05-01',
+    data: {
+      species: 'cat',
+      birth_date: '2025-01-01',
+      microchip_implant_date: '2026-01-05',
+      rabies_dates: [{ date: '2026-04-20' }],
+      general_vaccine_dates: [{ date: '2026-04-25' }],
+      return_date: '2026-05-20',
+    },
+  },
 ]
 
 function koLabel(destKey: string): string {

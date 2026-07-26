@@ -1752,6 +1752,93 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     },
   }),
 
+  // ── 홍콩 (AFCD — Group II) ────────────────────────────────────────────
+  //   sea-permit 골격(광견병 1회 + 종합백신 + 수입허가 2단계 + 도착검역). 필리핀과 다른 점:
+  //   ① **항체검사가 왕복 어느 쪽에도 없다** — titerDescription 을 넘기지 않아 카드 자체가 없다
+  //      (입국 = Group II 면제 / 귀국 = 홍콩이 광견병 비발생국이라 면제).
+  //   ② **반려동물이 보호자와 같은 비행기로 못 간다** — 화물(manifested cargo) 전용이라
+  //      항공권 카드에 영국과 같은 운송 안내를 넣는다.
+  //   ③ 수입 허가(Special Permit)는 **해외 신청 불가** — 현지 대리인이 신청비 납부와 함께 접수.
+  //   ④ 도착 24시간 전 사전 통지가 별도 카드(hk-advance-notice, catalog).
+  //   1차 출처 = AFCD DC-02v05 Permit Terms(Group II, Jun-2025) + 펫무브 홍콩 가이드.
+  hongkong: seaPermitOverrides({
+    key: 'hongkong',
+    label: '홍콩',
+    rabiesDescription:
+      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 90일이 지난 후에 접종해야 해요.\n출국 30일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+    rabiesValidationIds: [
+      'hk.rabies-prime-after-90days',
+      'hk.microchip-before-rabies',
+      'hk.rabies-booster-within-prime-validity',
+      'hk.rabies-min-30days-before-departure',
+    ],
+    // titerDescription 없음 — 위 ① 참고. 넘기면 없는 절차 카드가 생긴다.
+    generalVaccine: {
+      description:
+        '강아지는 디스템퍼·전염성간염·파보바이러스, 고양이는 범백혈구감소증·호흡기질환이 포함된 종합백신을 접종하세요.\n\n출국 14일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+      descriptionBySpecies: {
+        // DC-02v05 11(d) 원문 그대로 — 개는 D·H·P 셋뿐이다(파라인플루엔자·렙토스피라 없음).
+        //   "Dogs – canine distemper, infectious canine hepatitis and canine parvovirus."
+        //   "Cats – feline panleucopaenia (infectious enteritis) and feline respiratory
+        //    disease complex (cat flu)."
+        // ⛔ 필리핀·말레이시아 문구를 베껴 파라인플루엔자·렙토스피라를 넣지 말 것 — 홍콩은
+        //   요구하지 않는다(한국 DHPPL 로 접종해도 요건은 충족된다).
+        dog: '종합백신(DHP)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스 예방을 포함해야 해요.\n출국 14일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증·호흡기질환 예방을 포함해야 해요.\n출국 14일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+      },
+      validationIds: ['hk.general-vaccine-14days-before-departure'],
+    },
+    flight: {
+      // 화물 운송 문구는 영국(uk) 카드와 같은 문형 — 기내·수하물 동반이 아예 불가한 나라끼리
+      // 통일한다. 마지막 줄('항공사에 동반 가능 여부 확인')은 동반 자체가 불가라 넣지 않는다.
+      description:
+        '홍콩 입국 일정에 맞춰 항공권을 구매하세요.\n\n5개월령 이상만 입국할 수 있어요.\n광견병 접종일로부터 30일, 종합백신 접종일로부터 14일이 지난 후에 입국할 수 있어요.\n홍콩 입국 시 반려동물은 보호자와 같은 항공기로 갈 수 없어요. 화물로 보내야 하므로 동물 운송업체와 미리 협의하세요.',
+      order: 95,
+      validationIds: [
+        'hk.min-5months-on-arrival',
+        'hk.rabies-min-30days-before-departure',
+        'hk.general-vaccine-14days-before-departure',
+      ],
+    },
+    // 수입 허가(Special Permit, AF240) — 마감 배지 없음(고정 'N일 전' 규정이 없어 base
+    //   deadline 을 무효화). 6개월 유효·1회 운송 한정은 description 으로 안내.
+    importPermit: {
+      title: '수입 허가 신청',
+      description:
+        '홍콩 현지 대리인을 통해 수입 허가(Special Permit)를 신청하세요.\n\n신청비를 홍콩 현지에서 납부해야 해서 한국에서는 신청할 수 없어요.\n승인까지 3영업일 정도 걸려요. 허가증을 받기 전에는 항공편을 확정하지 마세요.\n수입 허가증은 발급일로부터 6개월간 유효하고, 한 번의 운송에만 쓸 수 있어요.',
+      doneSummary: '홍콩 수입 허가증(Special Permit)을 받았어요.',
+      cardLine: '홍콩 수입 허가를 신청하세요.',
+      deadline: undefined,
+      links: [
+        {
+          url: 'https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/qua_ie_ipab_idc_Group_II.html',
+          label: '수입 허가 안내(AFCD)',
+        },
+        {
+          url: 'https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/files/AF240_Mar21E.pdf',
+          label: '수입 허가 신청서(AF240)',
+        },
+      ],
+      attachmentLabel: '수입 허가증(Special Permit)',
+      validationIds: [
+        'hk.import-permit-not-after-departure',
+        'hk.import-permit-within-6months',
+      ],
+    },
+    // 도착 검역 — 한국은 Group II 라 조건을 갖추면 **격리 없이** 반출된다(가이드: 그룹 II 변경
+    //   전에는 4개월 격리였다). 격리 유무는 사용자 지정대로 수입검역 카드에 적는다.
+    importQuarantine: {
+      fieldKey: 'hk_import_quarantine_date',
+      description:
+        '홍콩 도착 후 공항 화물터미널에서 AFCD 검역관에게 검역을 받으세요.\n서류와 마이크로칩을 확인해요. 이상이 없으면 격리 없이 인도돼요.',
+      helpText: 'AFCD 검역관에게 수입 검역을 받은 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      // 도착 시 발급되는 서류가 확인되지 않았다 — 필리핀·중국·대만과 같은 중립 이름.
+      attachmentLabel: '홍콩 수입 검역 서류',
+      validationIds: ['hk.import-quarantine-date-valid'],
+    },
+  }),
+
   // ── EU 패밀리 — 규정 동일(EU Reg 576/2013), 카드 한 벌을 만들어 8개 키에 복사 ─────
   // 예외만 나라별: 영국=촌충+화물 운송 / 아일랜드=촌충+사전 통지(ie-advance-notice 카드) /
   // 몰타=촌충+사전 통지(mt-advance-notice) / 노르웨이=촌충+사전 통지(no-advance-notice) /
@@ -2096,7 +2183,12 @@ function seaPermitOverrides(opts: {
   label: string
   rabiesDescription: string
   rabiesValidationIds: string[]
-  titerDescription: string
+  /**
+   * 항체 검사 카드 override. **선택** — 항체 검사가 입국에도 귀국에도 필요 없는 나라(홍콩)는
+   * 넘기지 않는다. 넘기지 않으면 rabies-titer override 자체를 만들지 않는다(카드 노출은
+   * catalog applicability 가 결정하므로, 프로파일 titer.need='none' 과 짝이 맞아야 한다).
+   */
+  titerDescription?: string
   /**
    * 종합백신 카드 override. **선택** — 종합백신이 입국 요건이 아닌 나라(인도네시아)는
    * 넘기지 않는다. 넘기지 않으면 general-vaccine override 자체를 만들지 않는다(카드는
@@ -2159,11 +2251,16 @@ function seaPermitOverrides(opts: {
       // (만료 재구성 B, 2026-07-25).
       validationIds: [...opts.rabiesValidationIds, 'common.rabies-validity-expired'],
     },
-    'rabies-titer': {
-      description: opts.titerDescription,
-      order: 55,
-      validationIds: RETURN_ONLY_TITER_CHECKS,
-    },
+    // 항체 카드 override 도 넘어온 나라만(홍콩처럼 항체 요건 자체가 없으면 opts.titerDescription 없음).
+    ...(opts.titerDescription
+      ? {
+          'rabies-titer': {
+            description: opts.titerDescription,
+            order: 55,
+            validationIds: RETURN_ONLY_TITER_CHECKS,
+          },
+        }
+      : {}),
     // 종합백신 override 는 넘어온 나라만(인도네시아처럼 미요건이면 opts.generalVaccine 없음).
     // '이미 만료(오늘 기준)' 주의 배지(common.general-vaccine-validity-expired)를 함께 붙인다
     // — 카드가 뜨는 나라 공통(만료 재구성 B, 2026-07-25).

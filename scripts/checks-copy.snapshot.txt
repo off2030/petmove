@@ -52,6 +52,12 @@
   하와이 수입 검역일은 도착일보다 빠를 수 없어요. 날짜를 확인하세요.
 [hi.return-titer-within-24months]
   광견병 항체 검사 결과가 없거나 채혈 후 24개월이 지났어요. 한국 입국용 건강증명서에 항체가 기재가 필요할 수 있어요 — 검사 결과를 확인하세요.
+[hk.rabies-booster-within-prime-validity]
+  광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
+[hk.rabies-min-30days-before-departure]
+  광견병 접종 후 30일이 지나야 홍콩에 입국할 수 있어요. 날짜를 확인하세요.
+[hk.min-5months-on-arrival]
+  생후 5개월 이상의 강아지(혹은 고양이)만 데려갈 수 있어요.
 [id.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [id.import-quarantine-date-valid]
