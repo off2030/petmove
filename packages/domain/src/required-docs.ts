@@ -1376,8 +1376,8 @@ const US_CDC_FORM_RECEIPT: RequiredDocSpec = {
   kind: 'step',
   stepRef: 'us-cdc-dog-import-form',
   species: 'dog',
-  description:
-    'CDC Dog Import Form을 온라인으로 제출하면 발급되는 접수증이에요.\n\n강아지 한 마리당 한 장씩 준비하고, 미국 입국 때 휴대전화 화면이나 인쇄본으로 제시할 수 있게 보관하세요.\n\n접수증의 반려견 정보와 출발 국가가 실제 여행과 맞아야 해요.',
+  // 설명문 = 사용자 확정 2문장(2026-07-26 불러준 그대로).
+  description: 'CDC 신고 후 발급되는 접수증이에요.\n\n강아지 한 마리당 한 장씩 준비하세요.',
   previewStepId: 'us-cdc-dog-import-form',
 }
 
