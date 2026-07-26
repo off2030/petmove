@@ -9,6 +9,7 @@ import { useCases } from '@/components/portal-shell/case-data-provider'
 import { monoCap, serif } from '@/components/me/settings-shared'
 import { subTitle } from '@/lib/tokens'
 import { deleteStepDocument, getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
+import { isNativePlatform } from '@/lib/native/open-external'
 import { downloadFile } from '@/lib/native/download'
 import { useConfirm } from '@petmove/ui'
 import { useMediaViewer } from '@/components/portal-shell/media-viewer'
@@ -228,8 +229,75 @@ export function RequiredDocDetail({
           })()}
         </section>
 
-        {/* 서식 다운로드(빈 지정 양식, 별지25 등) — 출시 범위에서 제외(2026-06-28). 데이터(doc.templates)와
-            downloadFile 경로는 남겨 두고 이 섹션 UI 만 내림. 재도입 시 이 블록을 복원. */}
+        {/* 서식 받기 — 빈 지정 양식 다운로드(별지25·USDA 한국 전용 서식 등). 2026-06-28 출시
+            범위에서 내렸다가 2026-07-26 재도입(사용자 결정 — 서식 링크를 여정 카드에서 서류탭
+            으로 이동하면서). 보호자가 받아 동물병원에 제출. */}
+        {doc.templates && doc.templates.length > 0 && (
+          <>
+            <SectionLabel>서식 다운로드</SectionLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 18 }}>
+              {doc.templates.map((t) => {
+                const ext = t.href.split('.').pop()?.toLowerCase() ?? ''
+                const badge = ext === 'pdf' ? 'PDF' : ext === 'hwp' ? 'HWP' : 'XLS'
+                return (
+                <a
+                  key={t.href}
+                  href={t.href}
+                  download={t.filename}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    // 네이티브 앱: target=_blank 는 인앱 WebView 를 덮거나 무반응 → 다운로드(저장·
+                    // 공유 시트)로 처리. 웹은 기본 <a download> 동작 유지.
+                    if (isNativePlatform()) {
+                      e.preventDefault()
+                      void downloadFile(t.href, t.filename)
+                    }
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '14px 16px',
+                    borderRadius: 14,
+                    border: `1px solid ${C.line}`,
+                    background: C.surface,
+                    color: C.ink,
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 30,
+                      height: 38,
+                      flexShrink: 0,
+                      borderRadius: 4,
+                      background: C.soft,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 9,
+                      fontWeight: 600,
+                      letterSpacing: '0.04em',
+                      color: C.accent,
+                    }}
+                  >
+                    {badge}
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 500 }}>
+                    {t.label} 서식 다운로드
+                  </span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.ink3} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </a>
+                )
+              })}
+            </div>
+          </>
+        )}
 
         {/* 첨부 — 모든 필수 서류. ① 미리보기(이미지/PDF, 삭제 ×) → ② 파일 추가 버튼.
             attachStepId 태그로 업로드·삭제 (별지25 등은 doc.id, step 연동은 공유 step).

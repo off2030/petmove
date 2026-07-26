@@ -848,16 +848,16 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: 'USDA 승인 건강증명서 원본과 사본을 보관하세요.',
+    // '원본과 사본을 보관' 혼합문(실물 지참 안내 + 첨부 안내가 한 문장에 섞임)을 앱 표준
+    // 문형('사본을 사진·PDF로')으로 교정 — 미국 본토와 함께(2026-07-26 사용자 결정).
+    attachmentHint: '승인된 건강증명서 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: 'USDA 승인 국제 건강증명서',
+    // 서식 PDF 링크는 카드에서 빼고 서류탭 '서식 받기'로 이동(2026-07-26 사용자 결정) —
+    // 외부 직링크 대신 앱 호스팅(/forms/usda-korea-dog-cat.pdf, required-docs templates).
     links: [
       {
         url: 'https://direct.aphis.usda.gov/pet-travel/us-to-another-country-export/pet-travel-us-korea',
         label: '미국에서 한국으로 반려동물 데려오기(USDA)',
-      },
-      {
-        url: 'https://www.aphis.usda.gov/sites/default/files/korea-dog-cat.pdf',
-        label: '한국 전용 건강증명서 서식(USDA)',
       },
     ],
     validationIds: [
@@ -1498,7 +1498,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: 'USDA의 원본 잉크 서명과 압인이 있는 승인본 원본과 사본을 보관하세요.',
+    // '원본과 사본을 보관' 혼합문 교정 — 하와이와 함께 앱 표준 문형으로(2026-07-26).
+    // 원본 실물 안내는 설명문("승인본을 한국 입국 때 제출")이 담당.
+    attachmentHint: '승인된 건강증명서 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: 'USDA 승인 국제 건강증명서',
     links: [
       {

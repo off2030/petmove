@@ -1412,6 +1412,42 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
       description:
         '미국에서 한국으로 귀국할 때 사용하는 국제 건강증명서예요.\n\n미국 공인 수의사가 작성하고 USDA APHIS의 승인을 받아야 해요. 미국 출국 전 30일 이내에 발급·승인을 완료하고, USDA의 원본 잉크 서명과 압인(emboss)이 있는 승인본을 한국 입국 검역 때 제출하세요.',
       previewStepId: 'us-export-health-cert',
+      // 한국 전용 서식(USDA 게시본)을 앱이 직접 호스팅 — 외부 직링크는 주소 변경 시 깨져서
+      // (2026-07-26 사용자 결정, 태국 R.1/1 과 같은 방식). 하와이와 같은 파일.
+      templates: [
+        {
+          label: 'PDF',
+          href: '/forms/usda-korea-dog-cat.pdf',
+          filename: 'USDA 한국 전용 건강증명서 서식.pdf',
+        },
+      ],
+    },
+    KR_IMPORT_QUARANTINE_CERT,
+  ],
+  // 하와이 — 미국 본토와 같은 연방 절차(CDC·USDA)지만 여정 카드 구성이 달라 별도 키.
+  // 현재는 기본 3종 + 귀국 USDA 건강증명서(서식 받기 포함, 2026-07-26)만 큐레이션.
+  // ⚠️ 후속: CDC 접수증·FAVN 항체 결과지 등 하와이 전용 서류 큐레이션은 아직 없다.
+  hawaii: [
+    KR_FORM25_VACCINATION_HEALTH_CERT,
+    KR_EXPORT_QUARANTINE_CERT,
+    {
+      id: 'hi-usda-health-cert',
+      name: 'USDA 승인 국제 건강증명서',
+      source: '미국 공인 수의사 · USDA APHIS',
+      kind: 'step',
+      stepRef: 'hi-export-health-cert',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '하와이에서 한국으로 귀국할 때 사용하는 국제 건강증명서예요.\n\nUSDA 공인 수의사가 작성하고 USDA APHIS의 승인을 받아야 해요. 출국 30일 이내에 발급·승인을 완료하세요.\n\n빈 서식을 미리 받아 동물병원에 가져가면 준비가 수월해요.',
+      previewStepId: 'hi-export-health-cert',
+      templates: [
+        {
+          label: 'PDF',
+          href: '/forms/usda-korea-dog-cat.pdf',
+          filename: 'USDA 한국 전용 건강증명서 서식.pdf',
+        },
+      ],
     },
     KR_IMPORT_QUARANTINE_CERT,
   ],
