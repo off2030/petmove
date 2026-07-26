@@ -603,8 +603,8 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
       }
     } else if (key === 'hawaii') {
       // 하와이 입국 신청(AQS 서류 사전 제출) — 도착 10일 전 마감. 일본 사전 신고(D-47·D-40)와
-      // 같은 2단계 패턴(마감 일주일 전 + 마감일). 마감 미달 신청일은 저장 자체가 거부되므로
-      // (validateHiImportDeclarationDate, 2026-07-26 격상) 사전 안내가 특히 중요하다.
+      // 같은 2단계 패턴(마감 일주일 전 + 마감일). 카드가 버튼 완료로 바뀌어 신청일 검증이
+      // 사라졌으므로(2026-07-26) 마감 안내는 **이 알림이 유일한 장치**다.
       // 하와이는 당일 도착 노선이라 entry(=출발일 proxy)가 도착일. 신청일 저장 전에만
       // (사전 통지 4종과 동일 — 이미 신청했으면 '신청하세요' 알림은 불필요).
       if (entry && !str(data.hi_import_declaration_date)) {

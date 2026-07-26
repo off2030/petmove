@@ -15,7 +15,6 @@ import {
 import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore } from './messages'
 import {
   buildDateRuleContext,
-  validateHiImportDeclarationDate,
   validateParasiteDateForDestination,
   validateRabiesPrimeAgeForDestination,
 } from '../journey-steps/date-rules'
@@ -362,39 +361,11 @@ export const HI_CHECKS: ProcedureCheck[] = [
   },
 
   // ── 하와이 입국 신청(AQS 서류 사전 제출) ──
-  {
-    id: 'hi.import-declaration-10days-before-arrival',
-    country: COUNTRY,
-    category: '입국 신청',
-    title: '입국 신청과 서류 접수는 도착 10일 이상 전 완료',
-    description:
-      '입국 신청과 서류(AQS-279·접종증명서·수수료)가 하와이 도착 10일 이상 전에 동물검역소에 접수돼야 공항 인계(DAR) 자격이 돼요. (HDOA Checklist 1 Step 1·7) 신청일 입력은 저장 거부(validateHiImportDeclarationDate — 도착 이후·10일 미만 모두, 2026-07-26 사용자 확정)와 같은 함수. 이 주의는 도착일(항공권)을 나중에 고쳐 어긋난 경우를 표면화한다.',
-    severity: 'warning',
-    addedAt: '2026-07-25',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const raw =
-        typeof data.hi_import_declaration_date === 'string'
-          ? data.hi_import_declaration_date.slice(0, 10)
-          : ''
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-      // departure_date = 하와이 도착일 proxy (hi.ts 컨벤션).
-      const dep = readDepartureDate(caseRow, destination)
-      if (!dep) return SKIP
-      // 저장 거부와 같은 함수(단일 출처) — 신청일 입력은 저장이 막히므로, 이 주의가 뜨는 건
-      // 도착일(항공권) 쪽을 나중에 고쳐 어긋난 경우다. 조치도 문구대로 도착일 변경.
-      const msg = validateHiImportDeclarationDate(raw, dep)
-      if (msg) {
-        return {
-          ok: false,
-          message: msg,
-          offendingPaths: ['hi_import_declaration_date', 'departure_date'],
-        }
-      }
-      const days = daysBetween(raw, dep)
-      return { ok: true, message: `신청일(${raw}) → 도착(${dep}): ${days ?? '?'}일.` }
-    },
-  },
+  // 2026-07-26 제거: 하와이 입국 신청은 접수하면 끝나는 절차라 카드가 버튼 완료 모델로
+  //   바뀌었다(catalog hi-import-declaration). 기록되는 날짜가 '버튼 누른 날'이라 실제
+  //   신청일과 달라, 10일 판정을 돌리면 거짓 주의가 난다. 마감 안내는 reminders.ts 의
+  //   하와이 알림 2회(마감 일주일 전 D-17 · 마감일 D-10)가 계속 담당한다.
+
 
   // 광견병 항체가 — 한국 검역본부는 하와이를 비발생 지역으로 분류(항체 면제·당일 개방)하지만,
   // USDA 한국 전용 서식(korea-dog-cat.pdf)에는 항체가 기재란이 필수라 서로 충돌한다. 면제를

@@ -26,7 +26,6 @@ import {
   validateSgQuarantineReservationDate,
   validateSgBorderInspectionDate,
   validateSgDepartureVsQuarantineReservation,
-  validateHiImportDeclarationDate,
   validateSgGstPermitDate,
   validateParasiteDateForDestination,
   validateSgQuarantineReservationFiled,
@@ -1435,15 +1434,8 @@ export function StepDetailView({
         (caseRow?.departure_date ?? '').slice(0, 10),
       )
     }
-    if (step.id === 'hi-import-declaration') {
-      // 하와이 입국 신청일 — 도착일(당일 도착 노선이라 출발일 proxy) 이후는 논리 불가능이라
-      // 저장 거부. 도메인 단일 출처(validateHiImportDeclarationDate) — hi.ts 주의 룰과 같은
-      // 함수(2026-07-25 격상). '도착 10일 전' 마감 미달은 막지 않는다(사실 기록 허용 + 주의).
-      return validateHiImportDeclarationDate(
-        importQuarantineDate.trim(),
-        (caseRow?.departure_date ?? '').slice(0, 10),
-      )
-    }
+    // 하와이 입국 신청 — 차단 없음(2026-07-26). 버튼 완료 카드로 바뀌어 신청일을 입력받지
+    // 않는다(기록되는 날짜는 '버튼 누른 날'). 마감은 reminders.ts 의 하와이 알림 2회가 담당.
     if (isSgQuarantineReservation) {
       // 계류장 예약 — 신청일(채혈 이후)·예약일(채혈 +90일~12개월 창) 저장 거부. 도메인 단일
       // 출처(validateSgQuarantineReservation*) — sg.ts 주의 룰과 같은 함수(2026-07-25 격상).

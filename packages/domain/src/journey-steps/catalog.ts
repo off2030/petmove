@@ -719,7 +719,13 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: { destinations: ['hawaii'], species: 'all', tripType: 'all' },
     order: 46,
     deadline: { anchor: 'entry', daysBefore: 10 },
-    done: 'quarantine:hi_import_declaration_date',
+    // 버튼 완료 카드(2026-07-26 사용자 결정) — 신청하고 결과를 기다리는 절차가 아니라
+    //   HIPOP 에 접수하면 그걸로 끝이다. 날짜를 받아 검증하는 대신 '확인'만 받고, 마감은
+    //   알림 2회(reminders.ts 하와이 — 마감 일주일 전 D-17 · 마감일 D-10)가 담당한다.
+    //   ⛔ 신청일 기반 검증(구 hi.import-declaration-10days-before-arrival)을 되살리지 말 것 —
+    //      기록되는 날짜가 '버튼 누른 날'이라 실제 신청일과 달라 거짓 주의가 난다.
+    buttonComplete: true,
+    done: 'dated:hi_import_declaration_date',
     inputs: [
       {
         key: 'hi_import_declaration_date',
@@ -732,7 +738,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '입국 신청 접수 확인·서류 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '하와이 입국 신청 서류',
     links: [{ url: 'https://hipop.ais.hawaii.gov/', label: '하와이 반려동물 포털(HIPOP)' }],
-    validationIds: ['hi.import-declaration-10days-before-arrival'],
+    validationIds: [],
   },
 
   // ── 귀국 서류 준비 (왕복 — 하와이 전용, USDA 승인 건강증명서) ────────────────
