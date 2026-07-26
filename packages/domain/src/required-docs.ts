@@ -1416,8 +1416,10 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
       stepRef: 'us-export-health-cert',
       group: 'quarantine',
       roundTripOnly: true,
+      // 설명문 = 하와이(hi-usda-health-cert)와 같은 2문장 — 같은 연방 절차라 지명만 다르다
+      // (2026-07-26 사용자 지적으로 통일). 하와이 쪽이 사용자 확정문이라 그 문형을 따른다.
       description:
-        '미국에서 한국으로 귀국할 때 사용하는 국제 건강증명서예요.\n\n미국 공인 수의사가 작성하고 USDA APHIS의 승인을 받아야 해요. 미국 출국 전 30일 이내에 발급·승인을 완료하고, USDA의 원본 잉크 서명과 압인(emboss)이 있는 승인본을 한국 입국 검역 때 제출하세요.',
+        '미국에서 한국으로 귀국할 때 사용하는 국제 건강증명서예요.\n\n출국 30일 이내에 USDA 공인 수의사를 찾아가서 신청할 수 있어요.',
       previewStepId: 'us-export-health-cert',
       // 서식 다운로드는 두지 않는다(2026-07-26 사용자 결정) — USDA 서식은 별지25 모델(보호자가
       // 받아 병원 제출)이 아니라 공인 수의사가 VEHCS 에서 직접 작성·제출하는 문서다

@@ -1398,17 +1398,23 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['jp.import-quarantine-date-valid'],
   },
 
-  // ── 14. 일본 수출 검역 (왕복 케이스 한정 — 귀국편) ──────────────────
+  // ── 귀국 서류 준비 (왕복 — 미국 본토, USDA 승인 건강증명서) ────────────────
   // 미국 → 한국 귀국: 한국 입국용 건강증명서를 미국 공인 수의사에게 받고 USDA 승인을 받는다.
+  // ⚠️ **하와이(hi-export-health-cert)와 같은 카드여야 한다** — 같은 연방 절차(USDA APHIS
+  //   VEHCS 배서·출국 30일 이내)라 지명 말고는 다를 이유가 없다. 2026-07-26 하와이만 '귀국
+  //   서류 준비' 가족(EU·대만·캐나다)으로 개명·재정렬되면서 본토가 혼자 옛 이름('미국 수출
+  //   건강증명서')·옛 문형으로 남아 있던 것을 사용자 지적으로 맞췄다.
+  //   설명문은 하와이 것을 **그대로** 쓴다(지명이 들어 있지 않아 본토에도 그대로 맞는다).
+  //   문구를 고칠 땐 두 카드를 함께 고칠 것.
   {
     id: 'us-export-health-cert',
     category: 'document',
-    title: '미국 수출 건강증명서',
-    shortLabel: 'USDA',
+    title: '귀국 서류 준비',
+    shortLabel: '귀국서류',
     description:
-      '한국 귀국 전에 미국 공인 수의사에게 국제 건강증명서를 받고 USDA 승인을 받으세요.\n\n미국 출국 전 30일 이내에 발급·승인된 증명서를 준비해요. 광견병 항체검사 결과지와 마이크로칩 정보를 함께 확인하고, USDA의 원본 잉크 서명과 압인(emboss)이 있는 승인본을 한국 입국 때 제출하세요.',
-    doneSummary: '미국 수출 건강증명서의 USDA 승인을 받았어요.',
-    cardLine: '미국 수출 건강증명서를 준비하세요.',
+      'USDA 승인 국제 건강증명서 또는 대체 서류를 준비하세요.\n\n출국 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 국제 건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n\n다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+    doneSummary: '귀국 서류를 준비했어요.',
+    cardLine: '귀국 서류를 준비하세요.',
     applicability: { destinations: ['usa'], species: 'all', tripType: 'round' },
     order: 150,
     done: 'dated:us_export_quarantine_date',
@@ -1418,7 +1424,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         key: 'us_export_quarantine_date',
         label: '발급·승인일',
         type: 'date',
-        helpText: '미국 수의사 발급과 USDA 승인을 완료한 날짜',
+        helpText: '수의사 발급과 USDA 승인을 완료한 날짜',
       },
     ],
     allowAttachments: true,
