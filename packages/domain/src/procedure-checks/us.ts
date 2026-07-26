@@ -170,7 +170,7 @@ export const US_CHECKS: ProcedureCheck[] = [
     country: COUNTRY,
     category: '입국 검사',
     title: '미국 입국 검사일',
-    description: '미국 입국 검사일은 미국 도착일 이후여야 함.',
+    description: '미국 입국 검사일은 미국 도착일 이후여야 함. 도착일 대신 출국일을 기준으로 본다.',
     severity: 'warning',
     addedAt: '2026-07-25',
     run: ({ caseRow, destination }) => {
@@ -180,13 +180,20 @@ export const US_CHECKS: ProcedureCheck[] = [
           ? ctx.data.us_import_quarantine_date.slice(0, 10)
           : ''
       if (!date) return SKIP
-      const error = validateImportQuarantineDate(date, ctx)
-      if (!error) return { ok: true, message: '미국 입국 검사일이 미국 도착일 이후.' }
-      return {
-        ok: false,
-        message: error.replace('수입 검역일', '미국 입국 검사일'),
-        offendingPaths: ['us_import_quarantine_date', 'entry_date'],
+      // ⚠️ 공용 validateImportQuarantineDate 를 쓰지 않는다 — 그 함수는 entry_date 만 보는데
+      //   미국은 2026-07-26부터 항공권 카드에서 **도착일을 입력받지 않는다**(단순형 통일).
+      //   그대로 두면 도착일이 비어 룰이 항상 SKIP 되어 검증이 죽는다(같은 날 발견한 회귀).
+      //   하와이(hi.import-quarantine-date-valid)와 같은 컨벤션으로 출국일을 도착일 proxy 로
+      //   쓴다 — 한국→미국은 날짜변경선 동쪽이라 출국일 = 도착일(같은 날)이 대부분이다.
+      const dep = readDepartureDate(caseRow, destination)
+      if (dep && date < dep) {
+        return {
+          ok: false,
+          message: '미국 입국 검사일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['us_import_quarantine_date', 'departure_date'],
+        }
       }
+      return { ok: true, message: `미국 입국 검사일(${date})이 입국 이후.` }
     },
   },
   // us.dog-arrival-hygiene(구제역 위생 안내) 삭제 — 2026-07-26 사용자 결정.

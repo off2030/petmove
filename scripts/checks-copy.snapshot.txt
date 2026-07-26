@@ -183,6 +183,8 @@
   우크라이나 수입 검역일은 우크라이나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [us.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
+[us.import-inspection-date-valid]
+  미국 입국 검사일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [uz.rabies-min-30days-before-departure]
   광견병 접종 후 30일이 지나야 우즈베키스탄에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [uz.rabies-booster-within-prime-validity]
