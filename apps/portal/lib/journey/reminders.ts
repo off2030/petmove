@@ -625,47 +625,8 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r10) out.push(r10)
       }
-      // 귀국 — 한국 입국용 건강증명서(USDA 승인, 출국 30일 이내 발급). 승인이 수일 걸리고
-      // 출발 직전 완료되는 경우도 있어 4단계로 안내(예약 → 신청 → 승인 → 원본, 2026-07-26
-      // 사용자 지정). 왕복 + 발급·승인일 저장 전에만.
-      if (ret && !str(data.hi_export_quarantine_date)) {
-        const r30 = leadReminder(
-          flat,
-          `${token}|hi-usda-30`,
-          ret,
-          30,
-          '한국 귀국 30일 전이에요. 한국 입국용 건강증명서를 위해 USDA 공인 수의사 진료를 예약하세요.',
-          now,
-        )
-        if (r30) out.push(r30)
-        const r14 = leadReminder(
-          flat,
-          `${token}|hi-usda-14`,
-          ret,
-          14,
-          '한국 입국용 건강증명서를 준비 중인지 확인하세요. USDA 공인 수의사 진료와 VEHCS 승인 신청이 필요해요.',
-          now,
-        )
-        if (r14) out.push(r14)
-        const r7 = leadReminder(
-          flat,
-          `${token}|hi-usda-7`,
-          ret,
-          7,
-          '한국 귀국이 일주일 남았어요. 건강증명서의 USDA 승인 완료 여부를 확인하세요.',
-          now,
-        )
-        if (r7) out.push(r7)
-        const r3 = leadReminder(
-          flat,
-          `${token}|hi-usda-3`,
-          ret,
-          3,
-          '한국 귀국 3일 전이에요. USDA 승인 건강증명서 원본을 확보했는지 확인하세요.',
-          now,
-        )
-        if (r3) out.push(r3)
-      }
+      // 귀국(USDA 건강증명서) 알림 4종(D-30·14·7·3)은 2026-07-26 사용자 결정으로 삭제 —
+      // 법정 마감이 아닌 준비 리마인더였다. 미국 본토 2종과 함께 제거(귀국 카드 자체는 유지).
     } else if (key === 'taiwan') {
       // 대만 수입허가증 — 도착 120일 전 신청이 격리 면제 조건이라 마감이 유난히 이르다.
       // 놓치면 회복이 어려워(20일 전 신청 = 7일 격리) 일주일 전 + 당일 2회 안내.
@@ -764,33 +725,8 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         if (rState) out.push(rState)
       }
 
-      // 미국 → 한국 건강증명서의 준비 창은 미국 출국 30일 전부터. return_date 를 미국
-      // 출국 일정의 앵커로 쓰며, 고정 '마감'이 아니라
-      // 창이 열리는 날과 일주일 전의 준비 리마인더로 표현한다.
-      if (
-        buildCaseJourneyContext(flat, token).tripType === 'round' &&
-        ret &&
-        !str(data.us_export_quarantine_date)
-      ) {
-        const r30 = leadReminder(
-          flat,
-          `${token}|us-usda-health-cert-30`,
-          ret,
-          30,
-          '한국 귀국용 국제 건강증명서를 미국 공인 수의사에게 받고 USDA 승인을 준비하세요.',
-          now,
-        )
-        if (r30) out.push(r30)
-        const r7 = leadReminder(
-          flat,
-          `${token}|us-usda-health-cert-7`,
-          ret,
-          7,
-          '미국 출국이 일주일 남았어요. USDA 원본 잉크 서명과 압인이 있는 국제 건강증명서 승인본을 확인하세요.',
-          now,
-        )
-        if (r7) out.push(r7)
-      }
+      // 귀국(USDA 건강증명서) 알림 2종(D-30·7)은 2026-07-26 사용자 결정으로 삭제 —
+      // 법정 마감이 아닌 준비 리마인더였다. 하와이 4종과 함께 제거(귀국 카드 자체는 유지).
     } else if (key === 'israel') {
       // 이스라엘 사전 통보 — 적재(출국) 2영업일 전 마감(공식 안내 섹션 P·Q). 입력불가는 캘린더
       // D-2 근사라, 주말·공휴일 버퍼로 D-11·D-4 두 번 안내(사용자 지정 2026-07-23). 사전 통보
