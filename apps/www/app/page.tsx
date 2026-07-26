@@ -4,7 +4,14 @@ import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { AppLink } from '@/components/app-link'
 import { DestGrid } from '@/components/dest-grid'
-import { APP_FEATURES, SERVICE_CARDS, APP_DEST_SOON, REVIEWS, CONTACT } from '@/lib/site-data'
+import {
+  APP_FEATURES,
+  SERVICE_CARDS,
+  APP_DEST_SOON,
+  APP_DEST_TOTAL,
+  REVIEWS,
+  CONTACT,
+} from '@/lib/site-data'
 import { STORE_IOS, STORE_ANDROID } from '@/lib/store-links'
 
 // 경험 연차 — 2006년 개원 기준(프로토타입 #yrs JS 이식, 빌드 시점 계산).
@@ -53,9 +60,8 @@ export default function LandingPage() {
           <div className="l">누적 출국</div>
         </div>
         <div>
-          <div className="n">
-            50<span>+</span>
-          </div>
+          {/* 손으로 적은 '50+' 였다 — 목적지를 올려도 안 따라와서 site-data 목록에서 파생. */}
+          <div className="n">{APP_DEST_TOTAL}</div>
           <div className="l">지원 여행지</div>
         </div>
         <div>

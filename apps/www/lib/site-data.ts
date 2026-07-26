@@ -289,6 +289,16 @@ export const APP_DEST_AMERICA = ['멕시코', '미국', '브라질', '아르헨�
 // 2026-07-25 싱가포르·하와이 승격으로 제거. 2026-07-26 미국 승격으로 제거.
 export const APP_DEST_SOON = ['호주', '뉴질랜드']
 
+/**
+ * 상단 지표 '지원 여행지' 숫자 — 위 네 그룹에서 **자동 계산**한다(2026-07-26).
+ *
+ * 예전엔 '50+' 로 손으로 적어 둬서, 목적지를 올려도 지표가 안 따라왔다(싱가포르·하와이·
+ * 미국 승격 때 매번 어긋남). 목록이 곧 진실이므로 길이를 그대로 쓴다 — 나라를 추가하면
+ * 지표가 저절로 오른다. 반올림('50+')이 아니라 실제 값이라 '+' 를 붙이지 않는다.
+ */
+export const APP_DEST_TOTAL =
+  APP_DEST_ASIA.length + APP_DEST_EU.length + APP_DEST_AMERICA.length + APP_DEST_OTHER.length
+
 export const REVIEWS = [
   {
     initial: '모',
