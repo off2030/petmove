@@ -1916,8 +1916,14 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   알아야 하는 항목이라 한 줄 넣는다(2026-07-26 사용자 지정).
       //   ⚠️ 10항 조건 (b)'광견병 예방접종'이 **한국 접종으로 갈음되는지 홍콩에서 재접종인지는
       //   원문 미확인**(AFCD 도 1823 문의 안내). 확인 전까지 접종 관련 문장은 넣지 말 것.
+      // ⛔ 사용자가 불러준 최종 원문(2026-07-26). 문장 추가·병합·어미 변경 금지.
+      //   등록증 줄은 **고양이에서 삭제**(descriptionBySpecies) — 개 전용 절차라서.
       description:
-        '홍콩 도착 후 공항 화물터미널에서 AFCD 검역관에게 검역을 받으세요.\n\n화물로 운송하므로 보통 동물 운송업체가 대신 진행해요.\n서류와 건강 상태를 확인해요. 이상이 없으면 격리 없이 인도돼요.\n개는 검역을 마친 뒤 홍콩 견 등록증(Dog Licence)을 받아야 해요. 수수료는 80홍콩달러예요.',
+        '홍콩 도착 후 공항 화물터미널에서 AFCD 검역관에게 검역을 받아요.\n\n서류와 건강 상태를 확인해요. 이상이 없으면 격리 없이 인도돼요.\n강아지는 검역을 마친 뒤 등록증(Dog Licence)을 받아야 해요. 수수료는 80홍콩달러예요.',
+      descriptionBySpecies: {
+        dog: '홍콩 도착 후 공항 화물터미널에서 AFCD 검역관에게 검역을 받아요.\n\n서류와 건강 상태를 확인해요. 이상이 없으면 격리 없이 인도돼요.\n강아지는 검역을 마친 뒤 등록증(Dog Licence)을 받아야 해요. 수수료는 80홍콩달러예요.',
+        cat: '홍콩 도착 후 공항 화물터미널에서 AFCD 검역관에게 검역을 받아요.\n\n서류와 건강 상태를 확인해요. 이상이 없으면 격리 없이 인도돼요.',
+      },
       helpText: 'AFCD 검역관에게 수입 검역을 받은 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       // 도착 시 발급되는 서류가 확인되지 않았다 — 필리핀·중국·대만과 같은 중립 이름.
@@ -2224,6 +2230,11 @@ function importQuarantineCard(opts: {
   /** 검역일 필드 키 — `{국가코드}_import_quarantine_date` (destination-scoped-fields 등록 필요). */
   fieldKey: string
   description: string
+  /**
+   * (선택) 종별 본문 교체 — 도착 절차가 개·고양이에서 갈리는 목적지(홍콩 견 등록증).
+   * 마이크로칩 카드와 같은 모델. 종 미상이면 통합문(description)이 그대로 쓰인다.
+   */
+  descriptionBySpecies?: StepDefinition['descriptionBySpecies']
   helpText: string
   attachmentHint: string
   attachmentLabel?: string
@@ -2247,6 +2258,7 @@ function importQuarantineCard(opts: {
     allowAttachments: true,
     attachmentHint: opts.attachmentHint,
   }
+  if (opts.descriptionBySpecies) card.descriptionBySpecies = opts.descriptionBySpecies
   if (opts.attachmentLabel) card.attachmentLabel = opts.attachmentLabel
   if (opts.validationIds) card.validationIds = opts.validationIds
   return card
@@ -2306,6 +2318,8 @@ function seaPermitOverrides(opts: {
   importQuarantine: {
     fieldKey: string
     description: string
+    /** (선택) 종별 본문 — 도착 절차가 개·고양이에서 갈릴 때(홍콩 견 등록증). */
+    descriptionBySpecies?: StepDefinition['descriptionBySpecies']
     helpText: string
     attachmentHint: string
     /**
