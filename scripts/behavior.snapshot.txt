@@ -10534,7 +10534,7 @@
          광견병 접종 후 30일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
-   노출 카드: intake, microchip, rabies-vaccine-1, hk-advance-notice, general-vaccine, flight-purchase, import-permit, vet-visit, document-checklist, certificate-issue, departure
+   노출 카드: intake, microchip, rabies-vaccine-1, general-vaccine, import-permit, flight-purchase, hk-advance-notice, vet-visit, document-checklist, certificate-issue, departure
    필수 서류: hk-import-permit-doc, form25, hk-entry-health-cert, kr-export-quarantine-cert, hk-airline-cert
    알림 12건
      · 내일은 테스트 광견병 접종 예정일이에요 🐾
@@ -10565,7 +10565,7 @@
          광견병 접종 후 30일이 지나고 1년이 되기 전에 홍콩에 입국해야 해요. 날짜를 확인하세요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
-   노출 카드: intake, microchip, rabies-vaccine-1, hk-advance-notice, general-vaccine, flight-purchase, import-permit, vet-visit, document-checklist, certificate-issue, departure, hk-export-quarantine, kr-import-quarantine
+   노출 카드: intake, microchip, rabies-vaccine-1, general-vaccine, import-permit, flight-purchase, hk-advance-notice, vet-visit, document-checklist, certificate-issue, departure, hk-export-quarantine, kr-import-quarantine
    필수 서류: hk-import-permit-doc, form25, hk-entry-health-cert, kr-export-quarantine-cert, hk-airline-cert, hk-export-cert-doc, kr-import-quarantine-cert
    알림 12건
      · 내일은 테스트 광견병 접종 예정일이에요 🐾

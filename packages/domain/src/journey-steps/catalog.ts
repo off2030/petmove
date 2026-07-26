@@ -978,7 +978,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     doneSummary: '홍콩에 사전 통지를 했어요.',
     cardLine: '홍콩에 사전 통지를 하세요.',
     applicability: { destinations: ['hongkong'], species: 'all', tripType: 'all' },
-    order: 47,
+    // 수입 허가(100) → 운송 예약(102) → 사전 통지(105) 순. 통지에 도착 예정일·시간을 적어야
+    //   하므로 운송 예약 뒤여야 한다. ⛔ 47(유럽 사전 통지 관례)로 되돌리지 말 것 — 유럽은
+    //   항공권이 45라 47이 '항공권 직후'지만, 홍콩은 sea-permit 골격이라 운송 예약이 102다.
+    //   47로 두면 사전 통지가 광견병 백신 바로 뒤·운송 예약보다 앞에 떠서, 아직 존재하지도
+    //   않는 도착 시간을 통지하라고 안내하게 된다(2026-07-26 사용자 지적).
+    order: 105,
     deadline: { anchor: 'entry', daysBefore: 1 },
     done: 'quarantine:hk_advance_notice_date',
     inputs: [

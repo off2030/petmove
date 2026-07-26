@@ -1788,11 +1788,20 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['hk.general-vaccine-14days-before-departure'],
     },
     flight: {
+      // 카드 이름이 '항공권 구매'가 아니라 '운송 예약'인 이유 — 홍콩은 반려동물이 보호자와
+      //   같은 항공기로 갈 수 없고 화물(manifested cargo)로만 간다. 보호자가 직접 항공권을
+      //   사는 절차가 아니라 운송업체를 통해 화물 운송을 예약하는 절차다(2026-07-26 사용자 지정).
       // 화물 운송 문구는 영국(uk) 카드와 같은 문형 — 기내·수하물 동반이 아예 불가한 나라끼리
       // 통일한다. 마지막 줄('항공사에 동반 가능 여부 확인')은 동반 자체가 불가라 넣지 않는다.
+      title: '운송 예약',
+      shortLabel: '운송',
+      doneSummary: '운송 예약을 했어요.',
+      attachmentHint: '운송 예약 확인서·항공권(e-티켓)을 사진·PDF로 보관하세요.',
       description:
-        '홍콩 입국 일정에 맞춰 항공권을 구매하세요.\n\n5개월령 이상만 입국할 수 있어요.\n광견병 접종일로부터 30일, 종합백신 접종일로부터 14일이 지난 후에 입국할 수 있어요.\n홍콩 입국 시 반려동물은 보호자와 같은 항공기로 갈 수 없어요. 화물로 보내야 하므로 동물 운송업체와 미리 협의하세요.',
-      order: 95,
+        '홍콩 입국 일정에 맞춰 운송을 예약하세요.\n\n5개월령 이상만 입국할 수 있어요.\n광견병 접종일로부터 30일, 종합백신 접종일로부터 14일이 지난 후에 입국할 수 있어요.\n홍콩 입국 시 반려동물은 보호자와 같은 항공기로 갈 수 없어요. 화물로 보내야 하므로 동물 운송업체와 미리 협의하세요.',
+      // 수입 허가(100) 다음 — AFCD: "Final travel arrangement should NOT be made until a permit
+      //   has been granted." 허가 전에 운송을 확정하지 말라는 뜻이라 카드도 허가 뒤에 둔다.
+      order: 102,
       validationIds: [
         'hk.min-5months-on-arrival',
         'hk.rabies-min-30days-before-departure',
@@ -2203,6 +2212,16 @@ function seaPermitOverrides(opts: {
     validationIds: string[]
     /** (선택) 항공권 카드 하단 링크 — 도착지 검역소 운영시간 등(싱가포르 CAPQ). */
     links?: StepDefinition['links']
+    /**
+     * (선택) 카드 이름 교체 — 보호자가 **항공권을 직접 살 수 없는** 목적지용(홍콩).
+     * 홍콩은 반려동물이 보호자와 같은 항공기로 못 가고 화물(manifested cargo)로만 가서,
+     * 실제로 하는 일이 '항공권 구매'가 아니라 운송업체를 통한 '운송 예약'이다.
+     * 입력칸(출국일 등)과 검증은 그대로 — 이름·안내만 바꾼다.
+     */
+    title?: string
+    shortLabel?: string
+    doneSummary?: string
+    attachmentHint?: string
   }
   importPermit: Partial<StepDefinition>
   importQuarantine: {
@@ -2278,6 +2297,10 @@ function seaPermitOverrides(opts: {
       description: opts.flight.description,
       cardLine: `${opts.label}에 입국할 수 있어요.`,
       order: opts.flight.order,
+      ...(opts.flight.title ? { title: opts.flight.title } : {}),
+      ...(opts.flight.shortLabel ? { shortLabel: opts.flight.shortLabel } : {}),
+      ...(opts.flight.doneSummary ? { doneSummary: opts.flight.doneSummary } : {}),
+      ...(opts.flight.attachmentHint ? { attachmentHint: opts.flight.attachmentHint } : {}),
       // 일본의 180일 anchor(항체 검사) 미적용 — 입국 대기 룰은 입력 차단·procedure-check 담당.
       earliest: undefined,
       validationIds: opts.flight.validationIds,
