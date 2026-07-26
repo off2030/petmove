@@ -250,10 +250,19 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       description:
         '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 30일 이상 지나서 접종해야 해요.\n괌 입국 때 최근 접종의 면역 유효기간이 남아있어야 해요.',
       earliest: { anchor: 'step:rabies-vaccine-1', daysAfter: 30 },
-      validationIds: ['gu.rabies-2-doses-required', 'gu.rabies-doses-30days-apart'],
+      validationIds: [
+        'gu.rabies-2-doses-required',
+        'gu.rabies-doses-30days-apart',
+        // chain 단절 주의 — 저장 거부(findRabiesChainBreak)의 짝. 없으면 저장은 막히는데
+        //   펫무브워크에는 끊긴 chain 이 안 보인다(사용자 확정 "체인 유지되어야 해", 2026-07-27).
+        'gu.rabies-booster-within-prime-validity',
+      ],
     },
     'rabies-vaccine-extra': {
-      validationIds: ['common.rabies-extra-validity-expired'],
+      validationIds: [
+        'gu.rabies-booster-within-prime-validity',
+        'common.rabies-extra-validity-expired',
+      ],
     },
     'rabies-titer': {
       // 120일은 **채혈일이 아니라 검사기관이 검체를 받은 날**부터 센다(CQA 원문). 앱은 검체

@@ -3,6 +3,7 @@ import type { ProcedureCheck } from './types'
 import {
   addMonths,
   daysBetween,
+  findRabiesValidityBreaks,
   readExternalParasiteEntries,
   readGeneralVaccineEntries,
   readHeartwormEntries,
@@ -330,6 +331,30 @@ export const GU_CHECKS: ProcedureCheck[] = [
     dataKey: 'heartworm_dates',
     reader: readHeartwormEntries,
   }),
+
+  {
+    id: 'gu.rabies-booster-within-prime-validity',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 추가 접종은 직전 접종 유효기간 이내',
+    description:
+      '연속된 광견병 접종은 직전 접종의 면역 유효기간 이내에 해야 함. 만료 후 접종은 chain 이 끊겨 새 1차로 간주되고, 괌이 요구하는 "평생 2회"를 다시 쌓아야 한다. 저장 거부(findRabiesChainBreak)와 **같은 판정**이라 짝이 맞는다 — 이 룰이 없으면 저장은 막히는데 펫무브워크에는 끊긴 chain 이 안 보인다(홍콩과 같은 이유로 2026-07-27 추가, 사용자 확정 "체인 유지되어야 해").',
+    severity: 'warning',
+    addedAt: '2026-07-27',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length < 2) return SKIP
+      const offending = findRabiesValidityBreaks(rabies)
+      if (offending.length > 0) {
+        return {
+          ok: false,
+          message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
+          offendingPaths: offending,
+        }
+      }
+      return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
+    },
+  },
 
   // ── 앱 여정(2026-07-26 승격) 에서 카드가 지목하는 룰 ──────────────────
   // 위 룰들은 펫무브워크 전용 시절에 만든 것이고, 아래 3건은 고객 카드가 쓰는 요건이다.

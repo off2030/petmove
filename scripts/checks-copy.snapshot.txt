@@ -44,6 +44,8 @@
   광견병 백신 면역 유효기간이 ${usingEntry ? '입국' : '출국'} 전에 만료돼요. 만료 전에 추가 접종을 하세요.
 [eu.import-quarantine-date-valid]
   입국 검사일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
+[gu.rabies-booster-within-prime-validity]
+  광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [gu.import-permit-30days-before-arrival]
   괌 도착 30일 전까지 수입 허가 서류를 제출해야 해요. 늦으면 계류가 길어지거나 입국이 거부될 수 있어요.
 [hi.rabies-doses-31days-apart]  (allowDate)
