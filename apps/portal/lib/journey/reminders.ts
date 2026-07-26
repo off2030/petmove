@@ -710,6 +710,31 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
       }
       // (미국 분기 없음 — CDC 신고 D-7·D-1, 도착 주 확인 D-14, 귀국 USDA D-30·7 알림 모두
       //  2026-07-26 사용자 결정으로 삭제. '입국 경로'·'도착 주 규정' 카드 자체도 같은 날 삭제됨.)
+    } else if (key === 'guam') {
+      // 괌 수입 허가(Animal Entry Permit) — DOAG: "must be submitted at least 30 days prior to
+      // the intended arrival date". 14일 미만이면 처리를 보장하지 않아 장기 계류·입국 거부
+      // 위험이 있고, 브로슈어 FAQ 는 2~3개월 전 제출을 권한다. 그래서 마감 일주일 전(D-37)에
+      // 한 번, 마감일(D-30)에 한 번. 대만·태국·스위스와 같은 패턴.
+      if (entry && deriveImportPermitStatus(flat) === 'not_started') {
+        const r37 = leadReminder(
+          flat,
+          `${token}|gu-permit-37`,
+          entry,
+          37,
+          '괌 수입 허가 신청 마감이 일주일 남았어요. 도착 30일 전까지 서류를 제출하세요.',
+          now,
+        )
+        if (r37) out.push(r37)
+        const r30 = leadReminder(
+          flat,
+          `${token}|gu-permit-30`,
+          entry,
+          30,
+          '오늘까지 괌 수입 허가 서류 제출이 필요해요(도착 30일 전). 늦으면 계류가 길어질 수 있어요.',
+          now,
+        )
+        if (r30) out.push(r30)
+      }
     } else if (key === 'switzerland') {
       // 스위스 수입허가(FSVO) — 입국 3주(21일) 전 마감. **확정 마감이 있는데 알림만 없던**
       // 유일한 목적지였다(2026-07-26 전수 대조로 발견). 카드 마감 배지·입력 차단

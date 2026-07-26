@@ -957,6 +957,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       //    않는다. 하와이(36개월) 값을 복제하지 말 것.
     },
     importPermit: { applyDeadlineDays: 30, docName: 'Animal Entry Permit' },
+    // 레시피상 **마지막에 켠다** — 카드·검증·서류·사진이 모두 끝난 뒤(2026-07-26).
+    //   이 플래그가 켜져야 항공권 카드(APP_SUPPORTED_DESTINATION_KEYS 파생)가 붙는다.
+    appSupported: true,
   },
   // ── 브라질 (MAPA 규정 / VIGIAGRO 현장) ────────────────────────────────
   // ✅ 1차 출처 확보(2026-07-20). **Portaria MAPA nº 741, de 10/12/2024**(DOU 2024-12-12)가

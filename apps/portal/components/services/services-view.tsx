@@ -723,6 +723,12 @@ const EXTRA_PROCEDURE_ITEMS: Record<string, Array<{ label: string; card: string 
     { label: '하와이 입국 신청', card: 'hi-import-declaration' },
     { label: 'CDC 신고', card: 'us-cdc-dog-import-form' },
   ],
+  // 괌 — 수입 허가(Animal Entry Permit)는 프로파일 파생으로 자동 포함되고, 여기엔 카드로만
+  //   있는 두 절차를 얹는다. 순서는 여정 카드가 정한다(예약 95 → 허가 100 → CDC 105).
+  guam: [
+    { label: '검역시설 예약', card: 'gu-quarantine-reservation' },
+    { label: 'CDC 신고', card: 'us-cdc-dog-import-form' },
+  ],
 }
 
 function derivedDetail(kind: 'offline' | 'online', dest: string, trip: TripType): DestDetail | null {

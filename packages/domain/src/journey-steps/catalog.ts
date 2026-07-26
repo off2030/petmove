@@ -1524,7 +1524,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       'USDA 승인 국제 건강증명서 또는 대체 서류를 준비하세요.\n\n출국 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 국제 건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n\n다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
     doneSummary: '귀국 서류를 준비했어요.',
     cardLine: '귀국 서류를 준비하세요.',
-    applicability: { destinations: ['usa'], species: 'all', tripType: 'round' },
+    // 괌 — 미국령이라 **같은 연방 절차**(USDA 공인 수의사 → VEHCS → APHIS 승인)를 탄다.
+    //   하와이는 카드 구성이 달라 전용 카드(hi-export-health-cert)를 뒀지만, 괌은 본토와
+    //   차이가 없어 이 카드를 그대로 공유한다(2026-07-26). 저장 필드는 by_dest 분리라 안전.
+    applicability: { destinations: ['usa', 'guam'], species: 'all', tripType: 'round' },
     order: 150,
     done: 'dated:us_export_quarantine_date',
     buttonComplete: true,

@@ -1558,6 +1558,21 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
     US_CDC_FORM_RECEIPT,
     KR_FORM25_VACCINATION_HEALTH_CERT,
     KR_EXPORT_QUARANTINE_CERT,
+    {
+      // 귀국 — 괌은 미국령이라 본토·하와이와 **같은 연방 절차**(USDA 공인 수의사 → VEHCS →
+      //   APHIS 승인). 카드도 us-export-health-cert 를 공유한다. 문구는 사용자 확정문(하와이)
+      //   문형에 지명만 바꿨다.
+      id: 'gu-usda-health-cert',
+      name: 'USDA 승인 국제 건강증명서',
+      source: '미국 공인 수의사 · USDA APHIS',
+      kind: 'step',
+      stepRef: 'us-export-health-cert',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '괌에서 한국으로 귀국할 때 사용하는 국제 건강증명서예요.\n\n출국 30일 이내에 USDA 공인 수의사를 찾아가서 신청할 수 있어요.',
+      previewStepId: 'us-export-health-cert',
+    },
     KR_IMPORT_QUARANTINE_CERT,
   ],
   eu: euFamilyDocSpecs('유럽연합(EU)', { euAhc: true }),
