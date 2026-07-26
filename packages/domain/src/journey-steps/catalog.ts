@@ -985,7 +985,14 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   않는 도착 시간을 통지하라고 안내하게 된다(2026-07-26 사용자 지적).
     order: 105,
     deadline: { anchor: 'entry', daysBefore: 1 },
-    done: 'quarantine:hk_advance_notice_date',
+    // 버튼 완료 카드(2026-07-26 사용자 결정) — 화물 운송이라 실제 통지는 동물 운송업체가 대신
+    //   한다. 보호자가 통지 시각을 특정하기 어려워 날짜 입력 대신 '확인'만 받는다. 버튼이 오늘
+    //   날짜를 아래 필드에 기록하고, **마감 알림은 그대로 유지**된다(reminders.ts 의 사전 통지
+    //   테이블은 완료 플래그가 아니라 이 필드가 채워졌는지로 판단한다).
+    //   ⛔ 통지일 기반 24시간 검증(구 hk.advance-notice-24h-before-entry)은 되살리지 말 것 —
+    //      기록되는 날짜가 '버튼 누른 날'이라 실제 통지일과 달라 거짓 주의가 난다.
+    buttonComplete: true,
+    done: 'dated:hk_advance_notice_date',
     inputs: [
       {
         key: 'hk_advance_notice_date',
@@ -1000,7 +1007,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         label: '수입 절차·연락처 안내(AFCD)',
       },
     ],
-    validationIds: ['hk.advance-notice-24h-before-entry'],
+    validationIds: [],
   },
 
   // ── 사전 신고 다음 — 일본 수출 검역 (왕복 케이스 한정) ──────────────

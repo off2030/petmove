@@ -1,7 +1,6 @@
 import {
   buildDateRuleContext,
   validateHkEntryDate,
-  validateIeAdvanceNoticeDate,
   violatesHkGeneralVaccineDoseWindow,
   violatesHkRabiesDoseWindow,
 } from '../journey-steps/date-rules'
@@ -287,33 +286,9 @@ export const HK_CHECKS: ProcedureCheck[] = [
   //   departure / hk.import-permit-within-6months)을 함께 삭제했다.
 
   // ── 사전 통지 (도착 24시간 전) ──
-  {
-    id: 'hk.advance-notice-24h-before-entry',
-    country: COUNTRY,
-    category: '사전통지',
-    title: '사전 통지 마감 (도착 24시간 전)',
-    description:
-      'AFCD DC-02v05 1항: "must notify the Duty Officer of the Import & Export Section during office hours … at least 24 hours in advance of the anticipated time of arrival." 입력 차단과 같은 함수(validateIeAdvanceNoticeDate — 목적지 중립 24시간 판정) — 항공편 수정 후 어긋난 케이스를 주의로 표면화.',
-    severity: 'warning',
-    addedAt: '2026-07-26',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const notice =
-        typeof data.hk_advance_notice_date === 'string'
-          ? data.hk_advance_notice_date.slice(0, 10)
-          : ''
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(notice)) return SKIP
-      const entry = readEntryOrDeparture(caseRow, destination)
-      const msg = validateIeAdvanceNoticeDate(notice, entry)
-      if (msg) {
-        return { ok: false, message: msg, offendingPaths: ['hk_advance_notice_date', 'departure_date'] }
-      }
-      return {
-        ok: true,
-        message: entry ? `통지일(${notice}) 도착(${entry}) 1일 이전.` : `통지일(${notice}) 입력됨 (도착일 미입력).`,
-      }
-    },
-  },
+  // 2026-07-26 제거: 카드가 버튼 완료 모델로 바뀌어 통지일을 입력받지 않는다. 기록되는
+  //   날짜는 '버튼 누른 날'이라 실제 통지일과 달라, 24시간 판정을 돌리면 거짓 주의가 난다.
+  //   마감 안내는 reminders.ts 의 사전 통지 알림(마감 일주일 전·당일)이 계속 담당한다.
 
   // ── 검역 일정 재검증 — 입력 차단과 같은 규칙을 매 렌더 재실행 ──
   {

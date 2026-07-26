@@ -1492,16 +1492,8 @@ export function StepDetailView({
       const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
       return validateMtAdvanceNoticeDate(importQuarantineDate.trim(), entry)
     }
-    // 홍콩 사전 통지 — 통지일이 도착 24시간(1일) 이내면 차단. 홍콩은 항공권 카드가 단순형
-    // (출발일만)이라 입국일이 비는 게 정상 → 출국일로 폴백한다(ICN→HKG 는 당일 도착).
-    // 판정 함수는 아일랜드와 공용(목적지 중립 24시간 룰).
-    if (step.id === 'hk-advance-notice') {
-      const data = (caseRow?.data ?? {}) as Record<string, unknown>
-      const entry =
-        (typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : '') ||
-        (typeof caseRow?.departure_date === 'string' ? caseRow.departure_date.slice(0, 10) : '')
-      return validateIeAdvanceNoticeDate(importQuarantineDate.trim(), entry)
-    }
+    // 홍콩 사전 통지 — 차단 없음(2026-07-26). 버튼 완료 카드로 바뀌어 통지일을 입력받지 않는다
+    // (기록되는 날짜는 '버튼 누른 날'). 마감은 reminders.ts 의 사전 통지 알림이 담당한다.
     // 이스라엘 사전 통보 — 통보일이 출국일 2일(2영업일 근사) 이내면 차단.
     if (step.id === 'il-advance-notice') {
       const data = (caseRow?.data ?? {}) as Record<string, unknown>
