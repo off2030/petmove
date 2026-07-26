@@ -2085,6 +2085,10 @@ const SIMPLE_DATE_STEP_FIELDS: Record<string, string> = {
   // 싱가포르 2종 — 날짜가 실제 데이터(검증 있음)라 버튼 카드는 아니지만 같은 dated 저장 경로.
   'sg-gst-permit': 'sg_gst_permit_date',
   'sg-border-inspection': 'sg_border_inspection_date',
+  // 수입 허가 — **목적지 override 로만** 버튼 완료가 되는 카드(홍콩). 아래 자동 파생은 base
+  // 카탈로그만 훑어서 override 선언을 못 보므로 여기 명시한다. 2단계(신청→발급) 모델을 쓰는
+  // 목적지(태국·필리핀 등)에서는 UI 가 이 경로를 부르지 않는다.
+  'import-permit': 'import_permit_application_date',
   // 버튼 완료 카드(CDC·귀국 절차 26종) — 카탈로그 buttonComplete 선언에서 자동 파생
   // (2026-07-26). 카드를 선언하면 저장이 자동 허용된다(임의 키 쓰기 차단은 그대로).
   ...Object.fromEntries(

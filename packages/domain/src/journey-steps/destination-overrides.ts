@@ -1817,6 +1817,22 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       doneSummary: '홍콩 수입 허가증(Special Permit)을 받았어요.',
       cardLine: '홍콩 수입 허가를 신청하세요.',
       deadline: undefined,
+      // 버튼 완료 카드(귀국 서류 준비·CDC 신고와 같은 모델, 2026-07-26 사용자 결정).
+      //   홍콩 수입 허가는 **펫무브가 대행하지 않는다** — 현지 에이전트가 신청하므로 보호자는
+      //   신청일을 모르고, 아는 것은 '허가가 나왔다'는 사실뿐이다. 그래서 신청→발급 2단계 UI
+      //   대신 완료 버튼만 두고, 버튼이 오늘 날짜를 아래 필드에 기록한다.
+      //   ⛔ 신청일 기반 검증(구 hk.import-permit-*)을 되살리지 말 것 — 판정할 날짜 자체가 없다.
+      buttonComplete: true,
+      done: 'dated:import_permit_application_date',
+      inputs: [
+        {
+          key: 'import_permit_application_date',
+          label: '허가 취득일',
+          type: 'date',
+          helpText: '수입 허가증을 받은 날짜',
+        },
+      ],
+      validationIds: [],
       links: [
         {
           url: 'https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/qua_ie_ipab_idc_Group_II.html',
@@ -1826,10 +1842,6 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         //   서류가 아니라 현지 에이전트가 처리한다. 내려받을 이유가 없다.
       ],
       attachmentLabel: '수입 허가증(Special Permit)',
-      validationIds: [
-        'hk.import-permit-not-after-departure',
-        'hk.import-permit-within-6months',
-      ],
     },
     // 도착 검역 — 한국은 Group II 라 조건을 갖추면 **격리 없이** 반출된다(가이드: 그룹 II 변경
     //   전에는 4개월 격리였다). 격리 유무는 사용자 지정대로 수입검역 카드에 적는다.

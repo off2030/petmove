@@ -1,9 +1,7 @@
 import {
   buildDateRuleContext,
   validateHkEntryDate,
-  validateHkImportPermitWithin6Months,
   validateIeAdvanceNoticeDate,
-  validateImportPermitNotAfterDeparture,
   violatesHkGeneralVaccineDoseWindow,
   violatesHkRabiesDoseWindow,
 } from '../journey-steps/date-rules'
@@ -13,7 +11,6 @@ import {
   findRabiesValidityBreaks,
   readGeneralVaccineEntries,
   readRabiesEntries,
-  readScopedImportPermitFiled,
   resolveValidUntil,
   SKIP,
   todayKst,
@@ -22,7 +19,6 @@ import {
 import {
   msgGeneralVaccineExpiredBefore,
   msgImportQuarantineBeforeEntry,
-  msgMicrochipBeforeRabies,
   msgRabiesExpiredBefore,
   msgRabiesPrimeMinAge,
 } from './messages'
@@ -285,57 +281,10 @@ export const HK_CHECKS: ProcedureCheck[] = [
   },
 
   // ── 수입허가 (Special Permit) ──
-  {
-    id: 'hk.import-permit-not-after-departure',
-    country: COUNTRY,
-    category: '수입허가',
-    title: '수입 허가 신청일, 출국일 순서',
-    description:
-      '수입 허가 신청일은 출국일 이전이어야 함(출국 당일·이후엔 신청 불가). 입력 차단(validateImportPermitNotAfterDeparture)과 같은 함수 — 출국일을 나중에 당겨 어긋난 경우를 주의로 표면화.',
-    severity: 'warning',
-    addedAt: '2026-07-26',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const filed = readScopedImportPermitFiled(data, destination)
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
-      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
-      const msg = validateImportPermitNotAfterDeparture(filed, dep)
-      if (msg) {
-        return {
-          ok: false,
-          message: msg,
-          offendingPaths: ['import_permit_application_date', 'departure_date'],
-        }
-      }
-      return { ok: true, message: `신청일(${filed}) < 출국일(${dep || '미입력'}).` }
-    },
-  },
-  {
-    id: 'hk.import-permit-within-6months',
-    country: COUNTRY,
-    category: '수입허가',
-    title: '수입 허가는 출국 6개월 이내 신청',
-    description:
-      'Special Permit 은 발급일로부터 6개월 유효·1회 운송 한정(AFCD Group II: "valid for 6 months and for one consignment only") — 너무 일찍 신청하면 출국 전에 만료된다. 입력 차단과 같은 함수(validateHkImportPermitWithin6Months).',
-    severity: 'warning',
-    addedAt: '2026-07-26',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const filed = readScopedImportPermitFiled(data, destination)
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
-      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
-      if (!dep) return SKIP
-      const msg = validateHkImportPermitWithin6Months(filed, dep)
-      if (msg) {
-        return {
-          ok: false,
-          message: msg,
-          offendingPaths: ['import_permit_application_date', 'departure_date'],
-        }
-      }
-      return { ok: true, message: `신청일(${filed}) 출국일(${dep}) 기준 6개월 이내.` }
-    },
-  },
+  // 2026-07-26 제거: 홍콩 수입 허가는 펫무브가 대행하지 않아 현지 에이전트가 신청한다.
+  //   보호자는 신청일을 모르므로 카드가 버튼 완료 모델로 바뀌었고(destination-overrides
+  //   hongkong importPermit), 판정할 신청일 자체가 없어 두 룰(hk.import-permit-not-after-
+  //   departure / hk.import-permit-within-6months)을 함께 삭제했다.
 
   // ── 사전 통지 (도착 24시간 전) ──
   {

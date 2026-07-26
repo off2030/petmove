@@ -1084,26 +1084,6 @@ export function validateAeImportPermitWithin90Days(
 }
 
 /**
- * 홍콩 — Special Permit 은 **6개월 유효·1회 운송 한정**(AFCD Group II: "valid for 6 months and
- * for one consignment only"). 필리핀 60일·UAE 90일과 같은 모델이라 너무 일찍 신청하면 출국 전에
- * 만료된다. client(신청일 차단)·procedure-check(hk.import-permit-within-6months) 공용.
- *
- * ⚠️ 6개월은 달력 개월이라 addMonths 로 잰다(일수 환산 시 월별로 181~184일로 흔들린다).
- */
-export function validateHkImportPermitWithin6Months(
-  filedDate: string,
-  departureDate: string,
-): string | null {
-  if (!filedDate || !departureDate) return null
-  const earliest = addMonths(departureDate.slice(0, 10), -6)
-  if (earliest && filedDate.slice(0, 10) < earliest) {
-    // 고객 문구에 구체 날짜 보간 금지(앱 카피 규칙) — 날짜 없이.
-    return '수입 허가증은 발급일로부터 6개월간 유효해요. 출국 6개월 전부터 신청할 수 있어요. 날짜를 확인하세요.'
-  }
-  return null
-}
-
-/**
  * 채혈 후 대기(개월)를 선언한 목적지 — 프로파일 `titer.entryWaitAfterTiter.months` 파생.
  *
  * ⚠️ `days` 선언(대만 180일)은 **여기서 제외**한다 — 대만은 하한만이 아니라 '180일~2년 창'과
@@ -1374,13 +1354,9 @@ export function validateImportPermitFiledDate(
         // (실무 순서가 치료 먼저 → 신청 나중이라 치료 시점엔 신청일이 비어 있다).
         validatePhImportPermitParasiteGap(filedDate, data)
       )
-    // 홍콩 — 출국일 이후 신청 불가 + Special Permit 6개월 유효(더 이르면 출국 전 만료).
-    //   백신 접종 후 N일 뒤 신청 같은 제약은 없다(AFCD 는 허가와 접종 시점을 연결하지 않는다).
-    case 'hongkong':
-      return (
-        validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
-        validateHkImportPermitWithin6Months(filedDate, departureDate)
-      )
+    // 홍콩 — 검증 없음(2026-07-26). 수입 허가를 펫무브가 대행하지 않아 현지 에이전트가
+    //   신청하므로 보호자는 신청일을 모른다. 카드가 버튼 완료 모델로 바뀌면서 신청일 입력
+    //   자체가 사라져, 신청일 기반 판정(구 6개월·출국일 순서)을 함께 삭제했다.
     // 대만 — 출국일 이후 신청 불가. 카드 order 가 43(항공권 45 앞)이라 항공권 미입력 시
     // departureDate 가 비어 통과한다. 120일·20일 마감은 주의 담당.
     case 'taiwan':

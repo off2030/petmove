@@ -319,7 +319,11 @@ export function StepDetailView({
   // 싱가포르 계류장 예약·강아지 라이선스가 같은 모델을 공유한다. 필드 키만 다르다.
   const isSgQuarantineReservation = step.id === 'sg-quarantine-reservation'
   const isSgDogLicence = step.id === 'sg-dog-licence'
-  const isApplicationStep = isImportPermit || isSgQuarantineReservation || isSgDogLicence
+  // buttonComplete 목적지(홍콩 수입 허가)는 2단계 UI 를 타지 않는다 — 대행이라 보호자가
+  // 신청일을 모르고, 아는 건 '됐다/안 됐다'뿐이라 완료 버튼만 남긴다(2026-07-26 사용자 결정).
+  // 같은 형태의 가드가 isImportQuarantine·isJpExportQuarantineVisit 렌더에도 이미 있다.
+  const isApplicationStep =
+    (isImportPermit || isSgQuarantineReservation || isSgDogLicence) && !isButtonDoneStep
   const applicationDateField = isImportPermit
     ? 'import_permit_application_date'
     : isSgQuarantineReservation
