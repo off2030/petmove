@@ -189,23 +189,11 @@ export const US_CHECKS: ProcedureCheck[] = [
       }
     },
   },
-  {
-    id: 'us.dog-arrival-hygiene',
-    country: COUNTRY,
-    category: '도착 안내',
-    title: '강아지 도착 후 위생 관리',
-    description:
-      'USDA APHIS는 구제역 비청정지역에서 온 개의 털·발·침구를 깨끗이 하고 도착 후 목욕과 가축 접촉 제한을 안내함.',
-    severity: 'info',
-    addedAt: '2026-07-25',
-    run: ({ caseRow, destination }) => {
-      const data = readData(caseRow, destination)
-      if (!isDog(data)) return SKIP
-      return {
-        ok: false,
-        message:
-          '미국 도착 전 강아지의 털·발과 침구를 깨끗이 하고, 도착 후 가능한 한 빨리 목욕시킨 뒤 5일간 가축과 접촉하지 않게 하세요.',
-      }
-    },
-  },
+  // us.dog-arrival-hygiene(구제역 위생 안내) 삭제 — 2026-07-26 사용자 결정.
+  //   근거 자체는 있었다: USDA APHIS 는 구제역 발생국에서 오는 개의 털·발·침구를 깨끗이 하고
+  //   도착 후 목욕·5일간 가축 접촉 제한을 안내하며, 한국은 APHIS 구제역 발생국 목록에 있다
+  //   (2023 청주·증평, 2025-03 전남 발생으로 청정국 지위 정지).
+  //   그런데 ①공항 입국 심사 카드에 '집에 가서 할 일'이 붙어 주제가 어긋났고 ②'구제역 때문'
+  //   이라는 이유가 빠져 뜬금없이 읽혔으며 ③대부분의 보호자는 가축을 접할 일이 없어 노이즈였다.
+  //   되살리려면 카드 위치(도착 카드가 아닌 곳)와 이유를 밝힌 문구부터 정할 것.
 ]

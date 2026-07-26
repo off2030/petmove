@@ -612,10 +612,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         helpText: '미국 도착 후 입국 검사를 받은 날짜',
         attachmentHint: '입국 검사 관련 서류나 영수증이 있다면 사진·PDF로 보관하세요.',
         attachmentLabel: '미국 입국 검사 서류',
-        validationIds: [
-          'us.import-inspection-date-valid',
-          'us.dog-arrival-hygiene',
-        ],
+        // us.dog-arrival-hygiene(구제역 위생 안내)는 2026-07-26 사용자 결정으로 삭제 — 사유는
+        // procedure-checks/us.ts 의 삭제 자리 주석 참고. 되살리지 말 것.
+        validationIds: ['us.import-inspection-date-valid'],
       }),
       // 고양이 — CDC 개 수입 규칙 대상이 아니라 연방 서류 요건이 없다(광견병 접종증명서도
       // 불요). 남는 건 '건강해 보일 것' 하나라 확인 대상 줄을 빼고 2줄로 간다
