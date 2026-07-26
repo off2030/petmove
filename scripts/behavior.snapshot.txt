@@ -2733,7 +2733,9 @@
 
 ▸ guam (괌)
    입력불가 0건
-   주의·차단 1건
+   주의·차단 2건
+     - gu.departure-within-12months-of-titer [warning]
+         광견병 항체 검사 결과는 12개월간 유효해요. 유효기간이 지나기 전에 출국해야 해요.
      - gu.rabies-not-expired-on-arrival [info]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
    상황별 설명문 3건
@@ -7547,9 +7549,11 @@
 
 ▸ guam (괌)
    입력불가 0건
-   주의·차단 3건
+   주의·차단 4건
      - common.rabies-extra-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2025년 7월 1일에 만료되었어요. 추가 접종 기록을 입력하세요. 추가 접종을 하지 못한 경우, 1차 접종부터 다시 준비하세요.
+     - gu.departure-within-12months-of-titer [warning]
+         광견병 항체 검사 결과는 12개월간 유효해요. 유효기간이 지나기 전에 출국해야 해요.
      - gu.import-permit-30days-before-arrival [warning]
          괌 도착 30일 전까지 수입 허가 서류를 제출해야 해요. 늦으면 계류가 길어지거나 입국이 거부될 수 있어요.
      - gu.rabies-2-doses-required [info]
@@ -9729,9 +9733,11 @@
 
 ▸ guam (괌)
    입력불가 0건
-   주의·차단 1건
+   주의·차단 2건
      - common.rabies-extra-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2024년 8월 5일에 만료되었어요. 추가 접종 기록을 입력하세요. 추가 접종을 하지 못한 경우, 1차 접종부터 다시 준비하세요.
+     - gu.departure-within-12months-of-titer [warning]
+         광견병 항체 검사 결과는 12개월간 유효해요. 유효기간이 지나기 전에 출국해야 해요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
      ▸ rabies-titer: 광견병 항체 검사를 진행 중이에요. 결과가 나오면 완료 버튼을 누르세요.
@@ -10257,9 +10263,11 @@
 
 ▸ guam (괌)
    입력불가 0건
-   주의·차단 1건
+   주의·차단 2건
      - common.rabies-extra-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2023년 8월 5일에 만료되었어요. 추가 접종 기록을 입력하세요. 추가 접종을 하지 못한 경우, 1차 접종부터 다시 준비하세요.
+     - gu.departure-within-12months-of-titer [warning]
+         광견병 항체 검사 결과는 12개월간 유효해요. 유효기간이 지나기 전에 출국해야 해요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
      ▸ rabies-titer: 광견병 항체 검사를 진행 중이에요. 결과가 나오면 완료 버튼을 누르세요.

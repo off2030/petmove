@@ -275,11 +275,21 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   담당**하는 게 하우스 규칙이다(하와이 30일도 항공권 카드에 있다). 예전엔 이 카드에
       //   3줄이 더 붙어 있어 다른 목적지보다 길고 설명체라 결이 달랐다.
       description:
-        '미국 질병통제센터(CDC) 승인 검사기관에서 FAVN 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n2차 광견병 접종 후 10일이 지나서 검사해야 해요.\n0.5 IU/mL 이상이면 합격이에요.\n검사 결과는 채혈일로부터 1년간 유효해요.',
-      validationIds: ['gu.rnatt-120days-before-arrival', 'gu.rnatt-after-rabies-10days'],
+        '미국 질병통제센터(CDC) 승인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n2차 광견병 접종 후 10일 이상 지나서 검사해야 해요.\n0.5 IU/mL 이상이면 합격이에요.\n검사 결과는 채혈일로부터 1년간 유효해요.',
+      validationIds: [
+        'gu.rnatt-120days-before-arrival',
+        'gu.rnatt-after-rabies-10days',
+        // 상한(12개월) — 대기 120일만 보고 상한을 안 보면 너무 일찍 검사한 케이스가
+        //   만료된 채 통과한다. 카드 문구('1년간 유효')와 짝을 맞춘다(2026-07-27).
+        'gu.departure-within-12months-of-titer',
+      ],
     },
     'rabies-titer-extra': {
-      validationIds: ['gu.rnatt-120days-before-arrival', 'gu.rnatt-after-rabies-10days'],
+      validationIds: [
+        'gu.rnatt-120days-before-arrival',
+        'gu.rnatt-after-rabies-10days',
+        'gu.departure-within-12months-of-titer',
+      ],
     },
     'general-vaccine': {
       // 브로슈어 REQUIRED DOCUMENTS 4항 — 개와 고양이가 요구 백신이 다르다.

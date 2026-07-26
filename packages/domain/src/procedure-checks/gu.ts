@@ -2,6 +2,7 @@ import type { CaseRow } from '../types'
 import type { ProcedureCheck } from './types'
 import {
   addMonths,
+  addYears,
   daysBetween,
   findRabiesValidityBreaks,
   readExternalParasiteEntries,
@@ -353,6 +354,37 @@ export const GU_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
+    },
+  },
+
+  {
+    id: 'gu.departure-within-12months-of-titer',
+    country: COUNTRY,
+    category: '광견병',
+    title: '출국일은 항체 검사일 12개월 이내',
+    description:
+      '항체 검사 유효기간 12개월(프로파일 titer.entryValidityMonths — 사용자 확정 2026-07-26) — 출국일이 채혈일 + 1년을 넘으면 재검사가 필요하다. 1주년 당일까지 인정. 싱가포르 sg.departure-within-12months-of-titer 와 같은 구조. ⚠️ 괌은 채혈 후 120일을 기다려야 해서 **쓸 수 있는 창이 120일~12개월로 좁다** — 대기(gu.rnatt-120days-before-arrival)만 검사하고 상한을 안 보면, 너무 일찍 검사한 케이스가 만료된 채로 통과한다(2026-07-27 카드 문구와 대조하다 발견 — 문구는 "1년간 유효"라고 안내하는데 판정이 없었다).',
+    severity: 'warning',
+    addedAt: '2026-07-27',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
+      const titers = readTiterEntries(caseRow)
+      if (!dep || titers.length === 0) return SKIP
+
+      const valid = titers.find((t) => addYears(t.date, 1) >= dep)
+      if (valid) {
+        return {
+          ok: true,
+          message: `항체 검사(${valid.date}) 유효(${addYears(valid.date, 1)}) ≥ 출국일(${dep}).`,
+        }
+      }
+      const offending: string[] = ['departure_date']
+      for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
+      return {
+        ok: false,
+        message: '광견병 항체 검사 결과는 12개월간 유효해요. 유효기간이 지나기 전에 출국해야 해요.',
+        offendingPaths: offending,
+      }
     },
   },
 
