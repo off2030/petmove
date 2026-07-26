@@ -3261,13 +3261,15 @@ export function StepDetailView({
                     transition: 'background .15s, color .15s',
                   }}
                 >
+                  {/* '제출 완료'는 버튼이 실제 제출을 수행하는 걸로 오독될 수 있어 '완료'로
+                      (2026-07-26 사용자 결정 — 다른 카드 완료 버튼 어휘와도 일관). */}
                   {saving
                     ? '저장 중…'
                     : justSaved
                       ? '✓ 저장됨'
                       : done
                         ? '완료 취소'
-                        : '제출 완료'}
+                        : '완료'}
                 </button>
               )
             }
