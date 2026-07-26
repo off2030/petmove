@@ -1822,10 +1822,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
           url: 'https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/qua_ie_ipab_idc_Group_II.html',
           label: '수입 허가 안내(AFCD)',
         },
-        {
-          url: 'https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/files/AF240_Mar21E.pdf',
-          label: '수입 허가 신청서(AF240)',
-        },
+        // 신청서(AF240) 다운로드 링크 삭제(2026-07-26 사용자 지정) — 보호자가 직접 작성·제출하는
+        //   서류가 아니라 현지 에이전트가 처리한다. 내려받을 이유가 없다.
       ],
       attachmentLabel: '수입 허가증(Special Permit)',
       validationIds: [

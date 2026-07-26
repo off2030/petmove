@@ -4309,7 +4309,6 @@
   저장이름: 수입 허가증(Special Permit)
   links:
       수입 허가 안내(AFCD)  →  https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/qua_ie_ipab_idc_Group_II.html
-      수입 허가 신청서(AF240)  →  https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/files/AF240_Mar21E.pdf
 
 ▸ vet-visit
   title: 출국 전 임상검사
