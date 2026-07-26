@@ -1516,6 +1516,50 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
     },
     KR_IMPORT_QUARANTINE_CERT,
   ],
+  // 괌 — 하와이와 같은 미국령이지만 **괌 자체 수입 허가·검역시설 예약**이 있어 별도 키.
+  //   출처: DOAG 브로슈어 REQUIRED DOCUMENTS(2024-08-09) 1~8항 + ENTRY DOCUMENTS CHECKLIST
+  //   'International' 열. 한국은 non-exempt 라 그 열이 전부 필요하다.
+  //   ⚠️ Foreign Rabies & Microchip Form 은 **고위험국 출발 개 전용**이라 한국엔 불필요(표 각주).
+  //   ⚠️ 귀국(괌→한국) 서류는 아직 등록하지 않았다 — 미국령이라 하와이와 같은 USDA VEHCS
+  //      경로로 보이지만 괌 현지 확인이 안 됐다. 근거 확보 후 hi-usda-health-cert 형태로 추가할 것.
+  guam: [
+    {
+      // FAVN = 괌 **입국 요건**. 사실관계는 rabies-titer 카드 override 와 같다
+      //   (CDC 승인 검사기관·0.5 IU/mL·검체 수령일부터 120일).
+      id: 'gu-rabies-titer-result',
+      name: '광견병 항체(FAVN) 검사 결과지',
+      source: '동물병원',
+      kind: 'step',
+      stepRef: 'rabies-titer',
+      description:
+        '검사를 의뢰한 동물병원에서 발급받아요.\n\n수입 허가를 신청할 때 함께 제출해요.\n결과지에 마이크로칩 번호가 적혀 있어야 해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'rabies-titer',
+    },
+    {
+      id: 'gu-quarantine-reservation-doc',
+      name: '검역시설 예약확인서',
+      source: '괌 지정 검역시설',
+      kind: 'step',
+      stepRef: 'gu-quarantine-reservation',
+      description:
+        '예약한 검역시설에서 받아요.\n\n수입 허가 신청 서류에 함께 내야 해요.\n\n앱에 사본 이미지를 저장해두면 편리해요.',
+      previewStepId: 'gu-quarantine-reservation',
+    },
+    {
+      id: 'gu-import-permit-doc',
+      name: '괌 수입 허가증(Animal Entry Permit)',
+      source: '괌 농무부(DOAG)',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        '괌 농무부에 신청해서 받아요.\n\n도착 30일 전까지 서류를 제출해야 해요.\n허가서에 적힌 조건이 계류 기간을 정해요.\n\n앱에 사본 이미지를 저장해두면 편리해요.',
+      previewStepId: 'import-permit',
+    },
+    US_CDC_FORM_RECEIPT,
+    KR_FORM25_VACCINATION_HEALTH_CERT,
+    KR_EXPORT_QUARANTINE_CERT,
+    KR_IMPORT_QUARANTINE_CERT,
+  ],
   eu: euFamilyDocSpecs('유럽연합(EU)', { euAhc: true }),
   uk: euFamilyDocSpecs('영국', {
     certName: '영국 동물건강증명서(GB Pet Health Certificate)',
