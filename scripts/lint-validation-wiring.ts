@@ -90,6 +90,7 @@ const ORPHAN_RULE_OK: Record<string, string> = {
   'ae.banned-breeds': '동물 속성 — 특정 단계 없음',
   'il.banned-breeds': '동물 속성 — 특정 단계 없음',
   'sg.banned-breeds': '동물 속성 — 특정 단계 없음',
+  'au.banned-breeds': '동물 속성 — 특정 단계 없음(개 5종·늑대 교잡 4종 / 고양이 교잡 4종)',
   // 이스라엘 3마리+ 사전 Import License — 보호자 단위 조건이라 단계가 없다(운영자 전용 staff).
   'il.import-license-3plus-pets': '보호자 단위 조건 — 특정 단계 없음',
   // 아랍에미리트 개인당 연간 2마리 한도 — 보호자 단위 조건이라 단계가 없다.
@@ -704,12 +705,23 @@ function importPermitNotifyLeaks(appDests: string[]): Problem[] {
   for (const f of files) {
     if (!fs.existsSync(f)) continue
     const src = fs.readFileSync(f, 'utf8')
-    // 주석 줄은 제외하고 실제 코드의 `key === '<dest>'` 만 본다(주석에 남긴 제외 사유가
-    // 오탐되지 않게). import-permit 문맥 밖의 key 비교(사전신고 등)도 있으나, 그것들은
-    // 목적지가 명시 등록 대상이 아니라 아래 appSet 교집합에서 자연히 걸러진다.
-    for (const line of src.split('\n')) {
-      if (line.trim().startsWith('//') || line.trim().startsWith('*')) continue
-      for (const m of line.matchAll(/key === '([a-z_]+)'/g)) found.add(m[1])
+    // 주석 줄은 제외하고 실제 코드의 `key === '<dest>'` 분기만 본다(주석에 남긴 제외 사유가
+    // 오탐되지 않게). **그 분기 본문이 실제로 수입 허가를 다룰 때만** 집계한다 —
+    // 예전엔 분기 존재만으로 잡아서, 수입 허가와 무관한 알림(호주 전염병 검사 채혈 창)을
+    // 넣었을 뿐인데 '등록되지 않은 수입 허가 알림'으로 실패했다(2026-07-27).
+    // 목적지 키가 importPermit 프로파일을 가지면 무조건 걸리던 구조라, 허가국은 그 나라
+    // 알림을 하나라도 만드는 순간 오탐이 났다.
+    const code = src
+      .split('\n')
+      .filter((l) => !l.trim().startsWith('//') && !l.trim().startsWith('*'))
+      .join('\n')
+    const marks: Array<{ key: string; idx: number }> = []
+    for (const m of code.matchAll(/key === '([a-z_]+)'/g)) {
+      marks.push({ key: m[1], idx: m.index ?? 0 })
+    }
+    for (let i = 0; i < marks.length; i++) {
+      const body = code.slice(marks[i].idx, i + 1 < marks.length ? marks[i + 1].idx : code.length)
+      if (/permit/i.test(body)) found.add(marks[i].key)
     }
   }
   const out: Problem[] = []
@@ -778,6 +790,14 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
     '주의만: 절차 완료일 추적용 — 날짜 자체 제약 없음. 라이선스↔수입허가 순서는 수입허가 쪽 차단(validateSgImportPermitAfterDogLicence)·주의(sg.dog-licence-before-import-permit)가 담당',
   'sg-gst-permit': '차단: validateSgGstPermitDate(도착 전 + 도착 14일 이내)',
   'sg-border-inspection': '차단: validateSgBorderInspectionDate(도착 최소 5일 전)',
+  // 독감(CIV)·전염병 검사 — 호주 전용 카드(둘 다 강아지 요건).
+  //   둘 다 '출국까지 N일' 요건이라 **날짜를 고쳐 회복할 수 있는** 위반이고, 실제로 그렇게
+  //   받아 온 기록을 그대로 적어야 하는 자리다(늦게 맞았으면 늦게 맞았다고 적고 재접종·재검사로
+  //   푼다). 저장을 막으면 사실을 못 적는다 — 그래서 주의만 둔다(입력 조건 원칙의 예외가 아니라,
+  //   '논리적으로 불가능한 조합'이 아니기 때문).
+  'civ-vaccine': '주의만: au.civ-14days-before-departure·au.civ-within-12months — 날짜 수정으로 회복 가능한 위반이라 기록을 막지 않는다',
+  'infectious-disease-test':
+    '주의만: au.infectious-disease-test-within-45days — 45일 창 밖 검사도 사실로 기록해야 하고, 재검사로 회복된다',
   // ── 검사·검역·증명서 (한국 측 공통) ──────────────────────────────────────
   'vet-visit': '차단: validateVetVisitDate(출국 전 윈도우)',
   'certificate-issue': '차단: validateKrExportDate',

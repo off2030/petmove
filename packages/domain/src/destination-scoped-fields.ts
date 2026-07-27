@@ -119,6 +119,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'au_import_quarantine_date',
   'au_import_quarantine_confirmed',
   'au_quarantine_reservation_date',
+  // 호주 수출 검역(왕복 귀국) — NOI → DAFF 수출허가·건강증명서 발급일.
+  'au_export_quarantine_date',
+  'au_export_quarantine_confirmed',
   // 싱가포르 — 도착 검역(AQC 30일) + 귀국 수출검역(AVS 인증).
   'sg_import_quarantine_date',
   'sg_import_quarantine_confirmed',

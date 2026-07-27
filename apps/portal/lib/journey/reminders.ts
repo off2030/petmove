@@ -763,6 +763,34 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r30) out.push(r30)
       }
+    } else if (key === 'australia') {
+      // 호주 전염병 검사(리슈만편모충 + 중성화 안 했으면 브루셀라) — **출국 45일 이내** 채혈.
+      //   창이 열리는 날(D-45)을 알린다. 그 전에 받으면 무효라 '지금부터 가능'이 곧 안내이고,
+      //   결과지에 정부 수의사 배서까지 받아야 해서 일찍 움직여야 한다. 아직 검사 기록이
+      //   없을 때만 — 이미 받았으면 알릴 이유가 없다.
+      //   ⛔ **광견병 항체(RNATT) 채혈 알림은 만들지 않는다**(2026-07-27 사용자 지정).
+      //     180일 대기는 카드 문구·저장 거부가 담당한다. 채혈 알림은 전염병 검사에만 붙인다.
+      //   강아지 전용 절차라 고양이 케이스에는 보내지 않는다(고양이 가이드에 이 검사가 없다).
+      const species = str(data.species)
+      const hasInfectious = Array.isArray(data.infectious_disease_records)
+        ? data.infectious_disease_records.some(
+            (r) =>
+              !!r &&
+              typeof r === 'object' &&
+              isIsoDate(str((r as Record<string, unknown>).date)),
+          )
+        : false
+      if (departure && species === 'dog' && !hasInfectious) {
+        const r45 = leadReminder(
+          flat,
+          `${token}|au-infectious-45`,
+          departure,
+          45,
+          '오늘부터 호주 전염병 검사를 받을 수 있어요. 출국 45일 이내에 채혈해야 하고, 더 일찍 받으면 인정되지 않아요.',
+          now,
+        )
+        if (r45) out.push(r45)
+      }
     } else if (key === 'switzerland') {
       // 스위스 수입허가(FSVO) — 입국 3주(21일) 전 마감. **확정 마감이 있는데 알림만 없던**
       // 유일한 목적지였다(2026-07-26 전수 대조로 발견). 카드 마감 배지·입력 차단

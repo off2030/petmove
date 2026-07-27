@@ -1491,9 +1491,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   // sea-permit 골격(광견병 1회 + 수입허가 + 종합백신 + 도착 계류)에 호주 고유 절차를 얹는다:
   //   신원확인(au-identity-check, order 25) · 계류시설 예약(au-quarantine-reservation, 44) ·
   //   독감(CIV) · 전염병 검사 · 내외부 구충.
-  // ⚠️ 지금 문구는 **강아지 기준**이다. 고양이는 CIV·렙토·브루셀라·리슈만편모충이 다르고
-  //   외부구충 시작일도 21일이라, 고양이 규정을 올릴 때 descriptionBySpecies 로 갈라야 한다.
-  //   appSupported 는 그때까지 켜지 않는다(destination-config 주석 참고).
+  // 종별 처리(Group 3 cat guide 전문 확인, 2026-07-27) — 고양이는 CIV·렙토 Canicola·
+  //   리슈만편모충·브루셀라가 **전부 없고** 종합백신도 권장일 뿐이다. 그래서 종합백신·전염병
+  //   검사 카드는 catalog 의 `speciesByDestination: { australia: 'dog' }` 로 고양이에게 아예
+  //   뜨지 않는다. 외부구충만 시작일이 갈려(개 30일·고양이 21일) descriptionBySpecies 로 나눴다.
+  //   나머지 카드(신원확인·광견병·항체·허가·계류·운송·구충·임상검사·검역)는 양 종 동일하다.
   australia: seaPermitOverrides({
     key: 'australia',
     label: '호주',
@@ -1502,6 +1504,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     rabiesValidationIds: [
       'au.rabies-prime-after-84days',
       'au.microchip-before-rabies',
+      'au.rabies-booster-within-prime-validity',
       'au.rabies-valid-from-titer-to-departure',
     ],
     // ⚠️ titerDescription 을 팩토리에 넘기지 않는다 — 팩토리판은 order 55 · **귀국용** 룰로
@@ -1587,12 +1590,17 @@ export const STEP_DESTINATION_OVERRIDES: Record<
           '전염병 검사를 받아 음성을 확인하세요.\n\n출국 45일 이내에 채혈해요.\n리슈만편모충(Leishmania infantum) 검사는 모든 강아지가 받아요. 정량 IFAT 또는 정량 ELISA만 인정돼요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT·TAT(SAT)·IFAT만 인정돼요.\n렙토스피라 Canicola 백신을 접종하지 않았다면 MAT 검사를 받아요.\n간이 키트(SNAP·신속검사) 결과는 인정되지 않아요.',
         validationIds: ['au.infectious-disease-test-within-45days'],
       },
-      // 외부구충 — "Start at least 30 days before export"(7.6). DAFF 예제(1/1 처치 → 최소
-      //   1/31 출국)대로 **출국 30일 전 당일 시작**까지 허용된다.
+      // 외부구충 — 개 30일(7.6) / 고양이 21일(고양이 가이드 7.3). 시작 시점만 다르고 나머지는
+      //   같아서 descriptionBySpecies 로 갈랐다. DAFF 예제(개 1/1 처치 → 최소 1/31 출국,
+      //   고양이 1/1 → 1/22)대로 **N일 전 당일 시작**까지 허용된다.
       'external-parasite': {
         description:
-          '외부 기생충 치료를 하세요.\n\n진드기와 벼룩을 접촉 살충하는 제품이어야 해요.\n출국 30일 전에 시작해서, 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n치료를 시작한 뒤에는 병원에 갈 때마다 기생충 검사를 받아요.\n진드기나 벼룩이 발견되면 제거하고 30일을 다시 시작해야 할 수 있어요.',
-        validationIds: ['au.external-parasite-protocol-dog'],
+          '외부 기생충 치료를 하세요.\n\n진드기와 벼룩을 접촉 살충하는 제품이어야 해요.\n강아지는 출국 30일 전, 고양이는 21일 전에 시작해서 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n치료를 시작한 뒤에는 병원에 갈 때마다 기생충 검사를 받아요.\n진드기나 벼룩이 발견되면 제거하고 처치 기간을 다시 시작해야 할 수 있어요.',
+        descriptionBySpecies: {
+          dog: '외부 기생충 치료를 하세요.\n\n진드기와 벼룩을 접촉 살충하는 제품이어야 해요.\n출국 30일 전에 시작해서, 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n치료를 시작한 뒤에는 병원에 갈 때마다 기생충 검사를 받아요.\n진드기나 벼룩이 발견되면 제거하고 30일을 다시 시작해야 할 수 있어요.',
+          cat: '외부 기생충 치료를 하세요.\n\n진드기와 벼룩을 접촉 살충하는 제품이어야 해요.\n출국 21일 전에 시작해서, 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n치료를 시작한 뒤에는 병원에 갈 때마다 기생충 검사를 받아요.\n진드기나 벼룩이 발견되면 제거하고 21일을 다시 시작해야 할 수 있어요.',
+        },
+        validationIds: ['au.external-parasite-protocol-dog', 'au.external-parasite-protocol-cat'],
       },
       // 내부구충 — 45일 이내 2회 · 14일 이상 간격 · 2차는 출국 5일 이내(7.7).
       //   "It's acceptable to do the final vet check and second internal parasite treatment at

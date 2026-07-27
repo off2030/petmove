@@ -820,6 +820,13 @@ export const PARASITE_DEPARTURE_WINDOWS: Record<
   // 괌 — 내·외부 기생충 + 심장사상충을 '도착 14일 이내'에 함께 처치한다(www 괌 가이드·gu.ts).
   //   주의만 있고 저장 거부가 없으면 창 밖 날짜가 그대로 저장된다(2026-07-25 5개국 사고와 같은 구멍).
   guam: { maxGap: 13, windowLabel: '괌 도착 14일 이내', kinds: ['external', 'internal'] },
+  // 호주 — **내부구충만** 창이 있다(DAFF 7.7 "twice within 45 days before export").
+  //   DAFF 예제(출국 1/30 → 1차 12/16)가 45일 당일을 허용하므로 maxGap = 45.
+  //   ⛔ 외부구충(external)은 넣지 않는다 — 호주 요건은 "출국 **30일 전에 시작**해서 출국일까지
+  //     약효 유지"라 상한이 아니라 **하한**이다. 창으로 막으면 출국 직전의 정당한 반복 처치
+  //     (제조사 지침대로 재투여)를 거부하게 된다. 시작 시점은 주의 룰
+  //     (au.external-parasite-protocol-dog/-cat)이 판정한다.
+  australia: { maxGap: 45, windowLabel: '출국 45일 이내', kinds: ['internal'] },
 }
 
 function validateParasiteWithinDays(

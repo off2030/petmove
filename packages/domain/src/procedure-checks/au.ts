@@ -3,12 +3,15 @@ import type { ProcedureCheck } from './types'
 import {
   addYears,
   daysBetween,
+  findRabiesValidityBreaks,
   readAustraliaExtra,
   readCivEntries,
   readExternalParasiteEntries,
   readGeneralVaccineEntries,
   readInfectiousDiseaseEntries,
+  readBreed,
   readInternalParasiteEntries,
+  matchBannedBreed,
   readRabiesEntries,
   readScopedImportPermitFiled,
   readTiterEntries,
@@ -19,6 +22,8 @@ import {
 import { readByDestValue } from '../destination-scoped-fields'
 import { validateImportPermitNotAfterDeparture } from '../journey-steps/date-rules'
 import {
+  msgExportQuarantineAfterReturn,
+  msgExportQuarantineBeforeEntry,
   msgMicrochipBeforeRabies,
   msgRabiesPrimeMinAge,
   msgTiterBeforeVaccine,
@@ -49,9 +54,13 @@ import {
  *    "5일 이내" = `≤ 5`. 다른 나라의 '경계일 제외' 관례를 여기 적용하지 말 것.
  *  - 종 필터는 run() 안에서 caseRow.data.species 로 가드
  *
- * ⚠️ 지금 룰·문구는 **강아지 기준**이다. 고양이(Group 3 cat guide)는 CIV·렙토·브루셀라·
- *   리슈만편모충이 없고 외부구충 시작일도 다르다 — 고양이 작업 때 원문으로 재확인할 것.
- *   (아래 au.external-parasite-protocol-cat 의 21일은 구세대 값으로, 미검증 상태다.)
+ * 종별 차이 (Group 3 cat guide 전문 확인, 2026-07-27) — **고양이가 더 단순하다**:
+ *   같음 — 마이크로칩·신원확인(10일/30일)·광견병 84일·RNATT 180일/12개월·수입허가·
+ *          Mickleham 계류·화물 운송·내부구충(45일 2회·14일 간격·5일 이내)·최종검진 5일
+ *   다름 — CIV **없음** / 렙토 Canicola **없음** / 리슈만편모충·브루셀라 **없음** /
+ *          종합백신(FVRCP)은 "optional, not mandatory" / 외부구충 시작이 **21일 전**(개 30일)
+ *   → 개 전용 룰은 run() 안 species 가드로, 카드 노출은 catalog 의 speciesByDestination 으로
+ *     갈린다. 두 곳이 짝이므로 한쪽만 고치지 말 것.
  */
 
 const COUNTRY = 'australia'
@@ -218,6 +227,29 @@ export const AU_CHECKS: ProcedureCheck[] = [
         return { ok: false, message: msgTiterBeforeVaccine(), offendingPaths }
       }
       return { ok: true, message: '모든 채혈일 이전에 광견병 접종 기록이 있어요.' }
+    },
+  },
+  {
+    id: 'au.rabies-booster-within-prime-validity',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 추가 접종은 직전 접종 유효기간 이내',
+    description:
+      '연속된 광견병 접종은 직전 접종의 면역 유효기간 이내여야 함. 만료 후 접종은 chain 이 끊겨 새 1차가 되고, 호주는 그 순간 채혈부터 다시다(180일 재시작). 저장 거부(findRabiesChainBreak)의 짝이 되는 주의 — 펫무브워크는 저장을 막지 않아 이 룰이 없으면 운영자 화면에서 끊긴 chain 이 안 보인다.',
+    severity: 'warning',
+    addedAt: '2026-07-27',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length < 2) return SKIP
+      const offending = findRabiesValidityBreaks(rabies)
+      if (offending.length > 0) {
+        return {
+          ok: false,
+          message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
+          offendingPaths: offending,
+        }
+      }
+      return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
     },
   },
   {
@@ -443,6 +475,96 @@ export const AU_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `호주 수입검역일(${raw}) 도착 이후.` }
+    },
+  },
+
+  // ── 수입 금지 품종 ──
+  // 생물안전(biosecurity)이 아니라 환경보호·관세 법령이라 DAFF 가 아닌 다른 부처 소관이지만,
+  // 걸리면 입국 자체가 안 되므로 준비 착수 전에 걸러야 한다(Group 3 개 2.2 / 고양이 2.2).
+  {
+    id: 'au.banned-breeds',
+    country: COUNTRY,
+    category: '서류',
+    title: '수입 금지 품종 (개 5종·늑대 교잡 4종 / 고양이 교잡 4종)',
+    description:
+      '개: 도고 아르헨티노, 필라 브라질레이로, 도사견, 아메리칸 핏불테리어, 프레사 카나리오 + 늑대 교잡(체코슬로바키안 울프독, 사를로스 울프독, 루포 이탈리아노, 쿤밍견). 고양이: 사바나, 사파리, 차우지, 벵갈(2026-03-01부터 금지). 교잡 자손도 포함.',
+    severity: 'blocker',
+    addedAt: '2026-07-27',
+    run: ({ caseRow }) => {
+      const sp = species(caseRow)
+      const breed = readBreed(caseRow)
+      if (!breed.ko && !breed.en) return SKIP
+      const dogBanned = [
+        'dogo argentino', '도고 아르헨티노',
+        'fila brasileiro', '필라 브라질레이로',
+        'japanese tosa', 'tosa', '도사',
+        'pit bull', 'pitbull', '핏불',
+        'presa canario', '프레사 카나리오',
+        'czechoslovakian', '체코슬로바키안',
+        'saarloos', '사를로스',
+        'lupo italiano', '루포 이탈리아노',
+        'kunming', '쿤밍',
+      ]
+      const catBanned = [
+        'savannah', '사바나',
+        'safari', '사파리',
+        'chausie', '차우지',
+        'bengal', '벵갈',
+      ]
+      // 종 미상이면 양쪽 모두로 본다(보수적).
+      const keywords = sp === 'dog' ? dogBanned : sp === 'cat' ? catBanned : [...dogBanned, ...catBanned]
+      const match = matchBannedBreed(breed, keywords)
+      if (match) {
+        return {
+          ok: false,
+          message: `"${breed.ko || breed.en}"은 호주 수입 금지 품종이에요 (매치: ${match}).`,
+          offendingPaths: ['breed', 'breed_en'],
+        }
+      }
+      return { ok: true, message: `품종 "${breed.ko || breed.en}" 통과.` }
+    },
+  },
+
+  // ── 귀국 (왕복) ──
+  {
+    id: 'au.export-quarantine-before-return',
+    country: COUNTRY,
+    category: '검역',
+    title: '호주 수출 검역일 순서',
+    description:
+      '호주 수출 검역(수출 허가·건강증명서 발급)일은 호주 입국일 이후, 한국 귀국일 이전이어야 함. DAFF 는 허가 발급 후 **72시간 이내 출국**을 허가 조건으로 둔다.',
+    severity: 'warning',
+    addedAt: '2026-07-27',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const scoped = readByDestValue(data, destination ?? null, 'au_export_quarantine_date')
+      const raw =
+        typeof scoped === 'string'
+          ? scoped.slice(0, 10)
+          : scoped === null
+            ? ''
+            : typeof data.au_export_quarantine_date === 'string'
+              ? data.au_export_quarantine_date.slice(0, 10)
+              : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+
+      const entry = readEntryDate(caseRow, destination)
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: msgExportQuarantineBeforeEntry('호주'),
+          offendingPaths: ['au_export_quarantine_date'],
+        }
+      }
+      const ret = typeof data.return_date === 'string' ? data.return_date.slice(0, 10) : ''
+      if (ret && raw > ret) {
+        return {
+          ok: false,
+          message: msgExportQuarantineAfterReturn('호주'),
+          offendingPaths: ['au_export_quarantine_date', 'return_date'],
+        }
+      }
+      return { ok: true, message: `호주 수출검역일(${raw}) 입국 이후·귀국 이전.` }
     },
   },
 
@@ -683,7 +805,7 @@ function buildExternalParasiteRule({
           : '외부구충 (강아지): 첫 처치 30일 전 이상, 출국까지 지속',
       description:
         speciesKey === 'cat'
-          ? '⚠️ 21일은 구세대 값으로 **원문 미검증**이다 — 고양이 작업 때 Group 3 cat guide 로 확인할 것. 판정 구조는 강아지와 같다(첫 처치 ≥21일 전, 도즈 간격 ≤21일, 마지막→출국 ≤21일).'
+          ? '고양이 가이드 7.3 — "Start at least 21 days before export"(예: 1/1 처치 → 최소 1/22 출국). 개(30일)와 값만 다르고 판정 구조는 같다. 2026-07-27 원문 확인.'
           : 'DAFF 7.6 — "Start at least 30 days before export and repeat according to manufacturer\'s directions." 진드기·벼룩을 접촉 살충하는 제품으로 출국일까지 약효가 끊기지 않아야 한다. DAFF 예제(1/1 처치 → 최소 1/31 출국)대로 30일 전 당일 시작을 인정한다. 연속 보호 판정은 도즈 간격·마지막 처치→출국 간격을 30일 이하로 본다.',
       severity: 'warning',
       addedAt: '2026-05-05',

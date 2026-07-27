@@ -1221,6 +1221,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: {
       destinations: [...GENERAL_VACCINE_CARD_DESTINATIONS],
       species: 'all',
+      // 호주는 **강아지 전용** — 의무 항목이 렙토스피라 Canicola(개 요건) 하나뿐이고,
+      //   고양이 가이드 7.2 는 종합백신(FVRCP)을 "optional / not mandatory"로 둔다
+      //   (2026-07-27 원문 확인). 고양이에게 이 카드를 띄우면 없는 요건을 요구하게 된다.
+      speciesByDestination: { australia: 'dog' },
       tripType: 'all',
     },
     order: 50,
@@ -1362,6 +1366,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: {
       destinations: destinationsWithVaccine('infectious_disease'),
       species: 'all',
+      // 호주는 **강아지 전용** — Group 3 고양이 가이드에 리슈만편모충·브루셀라·렙토 검사가
+      //   아예 없다(2026-07-27 원문 확인). 뉴질랜드·남아공은 종전대로 두 종 모두.
+      speciesByDestination: { australia: 'dog' },
       tripType: 'all',
     },
     order: 70,
@@ -1935,6 +1942,49 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     links: [
       { url: 'https://avs-eservices.nparks.gov.sg/eservices', label: '도착 검사 예약 (AVS eServices)' },
     ],
+  },
+
+  // ── 호주 수출 검역 (왕복 — 귀국 출국 시, 호주 전용) ─────────────────
+  // 출처: DAFF "Exporting companion animals and other live animals"(2026-07-27 확인).
+  //   호주는 출국 절차를 **정부가 강제**한다(강제 O — 한국 수출검역증으로 갈음 불가):
+  //   ① NOI(Notice of Intention to Export Live Animals) 를 출발 주(州) 지역사무소에 이메일
+  //      제출 — **출발 10영업일 전까지**. NOI 자체에 심사 수수료가 있고, 승인이 곧 허가는 아니다.
+  //   ② 등록 수의사의 최종 건강·복지 검진 — **출발 72시간 이내**(+ 신고서 서명)
+  //   ③ DAFF 인증 수의관과의 사전 출국 예약(pre-export appointment) — ②보다 뒤여야 한다
+  //   ④ DAFF 가 **수출허가(export permit) + 건강증명서** 발급 → 발급 후 **72시간 이내 출국**
+  // 버튼 완료 카드 — 보호자가 아는 것은 '증명서를 받았다'는 사실이라, 발급일 하나로 끝낸다
+  //   (싱가포르 수출 검역과 같은 모델).
+  {
+    id: 'au-export-quarantine',
+    category: 'document',
+    title: '호주 수출 검역',
+    shortLabel: '수출',
+    description:
+      '호주 검역당국(DAFF)에서 수출 허가와 건강증명서를 받으세요.\n\n출발 10영업일 전까지 수출 신고서(NOI)를 출발하는 주의 지역사무소에 이메일로 제출해요.\n\n출발 72시간 이내에 등록 수의사에게 최종 검진을 받고 신고서에 함께 서명해요.\n\n최종 검진을 마친 뒤 DAFF 수의관과의 사전 출국 예약에서 서류를 확인받아요.\n\n수출 허가와 건강증명서가 나오면 72시간 이내에 출국해야 해요.\n\n운송업체가 대신 제출하고 예약에 참석할 수 있어요.',
+    doneSummary: '호주 수출 검역을 받았어요.',
+    cardLine: '호주 수출 검역을 받으세요.',
+    applicability: { destinations: ['australia'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'dated:au_export_quarantine_date',
+    buttonComplete: true,
+    inputs: [
+      {
+        key: 'au_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '수출 허가와 건강증명서를 발급받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '수출 허가와 건강증명서 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '호주 수출 허가·건강증명서',
+    links: [
+      {
+        url: 'https://www.agriculture.gov.au/biosecurity-trade/export/controlled-goods/live-animals/companion-and-other-live-animals',
+        label: '수출 절차·신고서(NOI) 안내 (DAFF)',
+      },
+    ],
+    validationIds: ['au.export-quarantine-before-return'],
   },
 
   // ── 싱가포르 수출 검역 (왕복 — 귀국 출국 시, 싱가포르 전용) ───────

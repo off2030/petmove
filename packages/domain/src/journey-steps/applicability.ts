@@ -184,8 +184,10 @@ export function isStepApplicable(applicability: StepApplicability, ctx: CaseJour
   if (!inMain && !inRoundOnly) return false
   // 왕복전용 목적지는 왕복 케이스에만 적용(엔트리 요건 없이 귀국 요건만 있는 경우).
   if (!inMain && inRoundOnly && ctx.tripType !== 'round') return false
-  // 종 — 'all' 또는 매칭. species 미상은 모든 종 통과(보수적으로 보여줌)
-  if (applicability.species !== 'all' && ctx.species && applicability.species !== ctx.species) {
+  // 종 — 'all' 또는 매칭. species 미상은 모든 종 통과(보수적으로 보여줌).
+  // 목적지별 덮어쓰기가 있으면 그 값이 우선(호주 종합백신·전염병 검사 = 강아지 전용).
+  const speciesFilter = (dk && applicability.speciesByDestination?.[dk]) ?? applicability.species
+  if (speciesFilter !== 'all' && ctx.species && speciesFilter !== ctx.species) {
     return false
   }
   // 왕복/편도 — 본 목적지에만 적용(왕복전용은 위에서 처리). 'all' 또는 매칭.

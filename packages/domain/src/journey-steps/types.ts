@@ -36,6 +36,16 @@ export interface StepApplicability {
    */
   roundOnlyDestinations?: string[]
   species: StepSpeciesFilter
+  /**
+   * 목적지별 종 필터 덮어쓰기 — 같은 카드가 나라마다 종 요건이 다를 때.
+   * 예: 호주 종합백신·전염병 검사는 **강아지 요건**이고 고양이 가이드엔 아예 없다
+   * (렙토 Canicola·리슈만편모충·브루셀라·CIV 전부 개 전용, 고양이 백신은 '권장').
+   *
+   * ⚠️ 카드 전체의 `species` 를 바꾸면 같은 카드를 쓰는 다른 나라(뉴질랜드·남아공)까지
+   *   끌려간다. 그래서 나라 단위로만 좁힌다. destination override(문구 교체)로는 안 된다 —
+   *   노출 필터는 override 병합보다 **먼저** 돌기 때문이다(getStepsForCase 순서).
+   */
+  speciesByDestination?: Record<string, StepSpeciesFilter>
   tripType: StepTripTypeFilter
 }
 

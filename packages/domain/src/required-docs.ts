@@ -932,6 +932,18 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'certificate-issue',
     },
     {
+      id: 'au-export-quarantine-cert',
+      name: '호주 수출 허가·건강증명서',
+      source: '호주 검역당국(DAFF)',
+      kind: 'step',
+      stepRef: 'au-export-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '호주에서 출국하기 전에 DAFF가 발급하는 서류예요.\n\n출발 10영업일 전까지 수출 신고서(NOI)를 내고, 최종 검진과 사전 출국 예약을 거쳐 발급받아요.\n\n발급 후 72시간 이내에 출국해야 해요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요. 앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'au-export-quarantine',
+    },
+    {
       id: 'au-kr-import-quarantine-cert',
       name: '한국 수입 동물검역증',
       source: '농림축산검역본부',

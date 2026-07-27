@@ -423,8 +423,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     importPermit: { selfApply: true },
     // ⚠️ importQuarantine.quarantineDays 는 선언하지 않는다 — 호주 계류는 신원확인 여부로
     //   10일/30일이 갈려 숫자 하나로 적을 수 없다. 두 값은 도착 카드 문구가 함께 말한다.
-    // ⚠️ appSupported 는 **고양이 규정까지 끝난 뒤** 켠다(레시피 마지막 단계). 이 플래그가 켜져야
-    //   항공권 카드(APP_SUPPORTED_DESTINATION_KEYS 파생)와 앱 목적지 목록에 붙는다.
+    // 개·고양이 규정을 모두 확인하고(2026-07-27) 카드·검증·서류·사진까지 끝나 앱에 노출한다.
+    appSupported: true,
   },
   new_zealand: {
     keywords: ['뉴질랜드', 'new zealand', 'nz'],
