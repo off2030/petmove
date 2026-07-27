@@ -1500,7 +1500,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     key: 'australia',
     label: '호주',
     rabiesDescription:
-      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 84일이 지난 후에 접종해야 해요.\n3년 백신도 제조사 지침대로 접종했다면 인정돼요.\n항체 검사 채혈일부터 출국일까지 면역 유효기간이 하루도 끊기면 안 돼요.\n유효기간이 끊기면 다시 접종하고 항체 검사도 다시 받아야 해요. 180일 대기도 처음부터 다시 시작돼요.',
+      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n3년 백신도 제조사 지침대로 접종했다면 인정돼요.\n항체 검사 채혈일부터 출국일까지 면역 유효기간이 하루도 끊기면 안 돼요.\n유효기간이 끊기면 다시 접종하고 항체 검사도 다시 받아야 해요. 180일 대기도 처음부터 다시 시작돼요.',
     rabiesValidationIds: [
       'au.rabies-prime-after-84days',
       'au.microchip-before-rabies',
@@ -1735,7 +1735,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     key: 'malaysia',
     label: '말레이시아',
     rabiesDescription:
-      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n출국 30일 전까지 접종해야 해요.\n입국할 때 면역 유효기간이 남아있어야 해요.'
+      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n출국 30일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.'
     ,
     rabiesValidationIds: [
       'my.rabies-prime-after-3months',
@@ -1751,14 +1751,14 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     //         고양이 = 광견병·범백혈구감소증
     generalVaccine: {
       description:
-        '강아지는 DHPPL, 고양이는 범백혈구감소증(FPV)이 포함된 종합백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
+        '강아지는 DHPPL, 고양이는 범백혈구감소증(FPV)이 포함된 종합백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
       descriptionBySpecies: {
         // 질병명 순서를 D·H·P·Pi·L 로 맞춤(2026-07-23) — 태국·아랍에미리트와 통일.
         // ⚠️ **파라인플루엔자는 유지**(태국·필리핀과 달리 말레이시아는 실제 요건). 펫무브
         //   말레이시아 가이드: '개 디스템퍼, 전염성 간염, 렙토스피라증, 개 파보바이러스,
         //   개 파라인플루엔자'. 항목은 그대로, 순서만 라벨 순으로 정렬했다.
-        dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스·파라인플루엔자·렙토스피라 예방을 포함해야 해요.\n한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n마이크로칩 삽입 후 접종해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
-        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증 예방을 포함해야 해요.\n마이크로칩 삽입 후 접종해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
+        dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스·파라인플루엔자·렙토스피라 예방을 포함해야 해요.\n한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n마이크로칩 삽입 후 접종해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증 예방을 포함해야 해요.\n마이크로칩 삽입 후 접종해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
       },
       validationIds: ['my.microchip-before-general-vaccine'],
     },
@@ -1853,7 +1853,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     key: 'singapore',
     label: '싱가포르',
     rabiesDescription:
-      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
+      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
     rabiesValidationIds: [
       'sg.rabies-prime-after-12weeks',
       'sg.microchip-before-rabies',
@@ -1868,10 +1868,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     //   복제 잔재였던 개 '파라인플루엔자·렙토스피라'는 싱가포르 요건이 아니라 삭제.
     generalVaccine: {
       description:
-        '종합백신을 접종하세요.\n\n강아지는 디스템퍼·전염성간염·파보바이러스, 고양이는 범백혈구감소증·허피스바이러스·칼리시바이러스 예방을 포함해야 해요.\n마이크로칩 삽입 후 접종해요.\n출국 14일 전까지 접종해야 해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
+        '종합백신을 접종하세요.\n\n강아지는 디스템퍼·전염성간염·파보바이러스, 고양이는 범백혈구감소증·허피스바이러스·칼리시바이러스 예방을 포함해야 해요.\n마이크로칩 삽입 후 접종해요.\n출국 14일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
       descriptionBySpecies: {
-        dog: '종합백신을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스 예방을 포함해야 해요.\n마이크로칩 삽입 후 접종해요.\n출국 14일 전까지 접종해야 해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
-        cat: '종합백신을 접종하세요.\n\n범백혈구감소증·허피스바이러스·칼리시바이러스 예방을 포함해야 해요.\n마이크로칩 삽입 후 접종해요.\n출국 14일 전까지 접종해야 해요.\n입국할 때 면역 유효기간이 남아있어야 해요.',
+        dog: '종합백신을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스 예방을 포함해야 해요.\n마이크로칩 삽입 후 접종해요.\n출국 14일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+        cat: '종합백신을 접종하세요.\n\n범백혈구감소증·허피스바이러스·칼리시바이러스 예방을 포함해야 해요.\n마이크로칩 삽입 후 접종해요.\n출국 14일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
       },
       validationIds: [
         'sg.microchip-before-general-vaccine',
@@ -2424,7 +2424,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       title: '광견병 백신',
       shortLabel: '백신',
       description:
-        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 12주(84일)이 지난 후에 접종해야 해요.\n이스라엘 입국 때 면역 유효기간이 남아있어야 해요.',
+        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n이스라엘 입국 때 면역 유효기간이 남아있어야 해요.',
       doneSummary: '광견병 백신을 접종했어요.',
       // gov.il "12주 이상 접종" = 84일 (프로파일 rabies.minAgeDays 와 동일 값 — 우크라이나와
       // 같은 기준). 구 '보수 91일 AND 캘린더 3개월'은 규정보다 과잉이라 걷어냈다(2026-07-25 ③).
@@ -2521,6 +2521,32 @@ export const STEP_DESTINATION_OVERRIDES: Record<
  *
  * 규정값(일령·간격)은 프로파일에 있고, 검증 룰 id 만 나라별로 넘긴다.
  */
+
+/**
+ * 주격 조사 '이/가' 판정 — 최소 일령 라벨 뒤에 붙일 조사.
+ *
+ * 예전엔 `${minAge}이` 로 **'이'를 고정**해서 붙였다. '생후 91일이'·'생후 3개월이'는 맞지만
+ * **'생후 12주(84일)이'는 틀린다** — 괄호는 부연이고 조사는 본말('12주')을 따라야 하므로
+ * '생후 12주(84일)**가**'다. 같은 값을 손으로 쓴 12개 목적지(EU 패밀리·태국·싱가포르 등)는
+ * 전부 '가'인데 buildRabiesCard 를 타는 이스라엘·튀르키예·우크라이나만 '이'로 나왔다
+ * (2026-07-27 사용자 발견). 라벨마다 고쳐 돌면 다음 목적지에서 또 나므로 여기서 판정한다.
+ */
+function subjectParticle(label: string): '이' | '가' {
+  // 괄호로 끝나면 괄호 앞 본말이 기준 — '생후 12주(84일)' → '주'.
+  const base = label.endsWith(')') ? label.slice(0, label.lastIndexOf('(')) : label
+  const ch = base.trim().slice(-1)
+  const code = ch.charCodeAt(0)
+  // 한글 음절 — 종성(받침) 유무로.
+  if (code >= 0xac00 && code <= 0xd7a3) return (code - 0xac00) % 28 === 0 ? '가' : '이'
+  // 숫자 — 읽는 소리의 받침 유무(영·일·삼·육·칠·팔 = 받침 O / 이·사·오·구 = 받침 X).
+  const digitFinal: Record<string, boolean> = {
+    '0': true, '1': true, '2': false, '3': true, '4': false,
+    '5': false, '6': true, '7': true, '8': true, '9': false,
+  }
+  if (ch in digitFinal) return digitFinal[ch] ? '이' : '가'
+  return '이'
+}
+
 function buildRabiesCard(opts: {
   /** destination-config 키 — 프로파일(rabies.*) 출처. */
   destKey: string
@@ -2545,7 +2571,7 @@ function buildRabiesCard(opts: {
     twoDose ? '1차 광견병 백신을 접종하세요.' : '광견병 백신을 접종하세요.',
   ]
   if (requiresChipFirst) lines.push('마이크로칩 삽입 후에 접종해야 해요.')
-  if (minAge) lines.push(`${minAge}이 지난 후에 접종해야 해요.`)
+  if (minAge) lines.push(`${minAge}${subjectParticle(minAge)} 지난 후에 접종해야 해요.`)
   for (const l of p.timingLines ?? []) lines.push(l)
   if (p.vaccineTypeLine) lines.push(p.vaccineTypeLine)
   if (p.validityLine) lines.push(p.validityLine)

@@ -377,7 +377,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       // "given when the dog was at least 84 days old" (Group 3 개 가이드 4.2). 예전 au.ts 헤더의
       //   '최소 연령 DAFF 미명시'는 오독이었다 — 원문에 84일이 명시돼 있다(2026-07-27 정정).
       minAgeDays: 84,
-      minAgeLabel: '생후 84일',
+      // DAFF 원문은 "at least **84 days** old"(주 단위 표현 없음). 84일 = 정확히 12주라
+      //   표기만 다른 목적지(EU 패밀리·태국·싱가포르 등 12곳)와 같은 형태로 통일한다
+      //   (2026-07-27 사용자 지정). 판정값(minAgeDays)은 원문 그대로 84.
+      minAgeLabel: '생후 12주(84일)',
       // 3년 백신도 제조사 지침대로면 인정 — oneYearVaccineOnly 선언하지 않는다("Rabies vaccines
       //   that are valid for 3 years are acceptable if given according to the manufacturer's
       //   instructions"). 대신 **항체 채혈일부터 출국일까지 유효기간이 하루도 끊기면 안 된다**
@@ -841,7 +844,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       //   엄격한 과보수값이었다, 2026-07-24 원문 재확인).
       minAgeDays: 84,
       minAgeLabel: '생후 12주(84일)',
-      validityLine: '입국할 때 면역 유효기간이 남아있어야 해요.',
+      validityLine: '입국 때 면역 유효기간이 남아있어야 해요.',
     },
     // ✅ 항체검사(RNATT) = 싱가포르 **입국 요건**. 접종 28일 후 채혈, 출국 90일 전·12개월 이내,
     //   0.5 IU/ml 이상. (NParks Schedule III IV(a)(iii)) 채혈 후 90일 대기 → 입력 차단 blocker.
@@ -1155,7 +1158,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       //   1차 원문 대조가 가능해지면 최종 확인할 것.)
       timingLines: ['출국 30일 전까지 접종해야 해요.'],
       entryWaitDaysAfterVaccine: 30,
-      validityLine: '입국할 때 면역 유효기간이 남아있어야 해요.',
+      validityLine: '입국 때 면역 유효기간이 남아있어야 해요.',
     },
     // 가이드: "말레이시아 입국 시 광견병항체검사는 필수가 아니지만, 한국으로 돌아오는 경우는 필수"
     // + "말레이시아에는 광견병항체검사 기관이 없기 때문에 … 한국에서 미리 해두시는 것을 권장".
