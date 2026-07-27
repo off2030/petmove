@@ -391,28 +391,25 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/guam-05.webp',
   ],
   호주: [
-    // 사용자 선별 Unsplash 20장(목적지별 사진/호주 폴더 원본, 2026-07-27).
-    // 리드(첫 장) = australia-01(시드니 오페라하우스) — 파일명 abc순 첫 장이 그대로 상징 사진.
-    '/destinations/australia-01.webp',
+    // 사용자 선별 Unsplash 14장(목적지별 사진/호주 폴더 원본, 2026-07-27).
+    // 리드(첫 장) = australia-09(오페라하우스 파스텔 노을) — 2026-07-27 사용자 지정.
+    // 나머지는 파일명 abc순 유지(괌 guam-03·미국 usa-14 리드 지정과 같은 방식).
+    // ⚠️ 사용자가 뺀 6장(01 돛 클로즈업 · 03 골드코스트 · 14 하버 야경 · 15 Vivid ·
+    //   16 모래톱 · 20 핑크 모래 코브)은 파일까지 삭제됐다 — 번호를 다시 쓰지 말 것.
+    '/destinations/australia-09.webp',
     '/destinations/australia-02.webp',
-    '/destinations/australia-03.webp',
     '/destinations/australia-04.webp',
     '/destinations/australia-05.webp',
     '/destinations/australia-06.webp',
     '/destinations/australia-07.webp',
     '/destinations/australia-08.webp',
-    '/destinations/australia-09.webp',
     '/destinations/australia-10.webp',
     '/destinations/australia-11.webp',
     '/destinations/australia-12.webp',
     '/destinations/australia-13.webp',
-    '/destinations/australia-14.webp',
-    '/destinations/australia-15.webp',
-    '/destinations/australia-16.webp',
     '/destinations/australia-17.webp',
     '/destinations/australia-18.webp',
     '/destinations/australia-19.webp',
-    '/destinations/australia-20.webp',
   ],
   미국: [
     // 사용자 선별 Unsplash 15장(목적지별 사진/미국 폴더 원본).
