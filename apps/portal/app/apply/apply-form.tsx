@@ -9,6 +9,7 @@ import { DateTextField } from '@petmove/ui'
 import { applyCase } from '@/lib/actions/apply-case'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import destsData from '@petmove/domain/data/destinations.json'
+import { isOneWayOnlyDestination } from '@petmove/domain'
 import { APP_DESTINATIONS_SORTED } from '@/lib/app-destinations'
 import breedsData from '@petmove/domain/data/breeds.json'
 import colorsData from '@petmove/domain/data/colors.json'
@@ -886,7 +887,9 @@ export function ApplyForm({
     const result = await applyCase({
       org_id: orgId,
       destination,
-      trip_type: tripType,
+      // 편도 전용 목적지는 토글이 없으니 저장값도 편도로 — 읽기(getTripType)는 어차피
+      //   프로파일이 단일 판정하지만, 저장값까지 맞춰야 펫무브워크 표시가 어긋나지 않는다.
+      trip_type: isOneWayOnlyDestination(destination) ? 'one_way' : tripType,
       customer_name: customerName.trim(),
       customer_last_name_en: capitalize(customerLastNameEn.trim()),
       customer_first_name_en: capitalize(customerFirstNameEn.trim()),
@@ -1054,6 +1057,9 @@ export function ApplyForm({
                 lang={lang}
               />
             </FieldRow>
+            {/* 편도 전용 목적지(호주·뉴질랜드·싱가포르·남아공)는 고를 게 없어 숨긴다 —
+                판정은 domain getTripType 이 프로파일(oneWayOnly)에서 단일 결정한다. */}
+            {!isOneWayOnlyDestination(destination) && (
             <FieldRow m={m} label={m.tripType} required>
               <div className="flex gap-sm">
                 <button type="button" onClick={() => setTripType('round')}
@@ -1066,6 +1072,7 @@ export function ApplyForm({
                 </button>
               </div>
             </FieldRow>
+            )}
           </section>
           )}
 

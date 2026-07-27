@@ -20,6 +20,7 @@ import {
   readDepartureDate,
 } from './utils'
 import { readByDestValue } from '../destination-scoped-fields'
+import { validateAuQuarantineReservationDate } from '../journey-steps/date-rules'
 import {
   msgExportQuarantineAfterReturn,
   msgExportQuarantineBeforeEntry,
@@ -73,6 +74,17 @@ function isIntact(caseRow: CaseRow): boolean {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const sex = typeof data.sex === 'string' ? data.sex : ''
   return sex === 'male' || sex === 'female'
+}
+
+/** 계류시설 예약(계류 시작일) — by_dest 우선, 없으면 top-level. */
+function readQuarantineReservationDate(caseRow: CaseRow, destination?: string | null): string {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const scoped = readByDestValue(data, destination ?? null, 'au_quarantine_reservation_date')
+  if (typeof scoped === 'string') return scoped.slice(0, 10)
+  if (scoped === null) return ''
+  return typeof data.au_quarantine_reservation_date === 'string'
+    ? data.au_quarantine_reservation_date.slice(0, 10)
+    : ''
 }
 
 /** 호주 도착일(entry_date) — by_dest 우선. */
@@ -382,6 +394,34 @@ export const AU_CHECKS: ProcedureCheck[] = [
   },
 
   // ── 수입 허가 · 계류 ──
+  {
+    id: 'au.quarantine-reservation-min-180days',
+    country: COUNTRY,
+    category: '검역',
+    title: '계류 시작일은 항체 검체 도착 180일 이후',
+    description:
+      '계류 시작일 = 호주 도착일이라 출국일과 같은 180일 제약을 받는다(DAFF 4.3). 저장 거부(validateAuQuarantineReservationDate)와 같은 함수 — 예약을 먼저 잡은 뒤 채혈일을 나중에 고쳐 어긋난 경우를 표면화하는 짝 주의.',
+    severity: 'warning',
+    addedAt: '2026-07-27',
+    run: ({ caseRow, destination }) => {
+      const res = readQuarantineReservationDate(caseRow, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(res)) return SKIP
+      const titers = readTiterEntries(caseRow)
+      if (titers.length === 0) return SKIP
+      const msg = validateAuQuarantineReservationDate(
+        res,
+        titers.map((t) => t.date),
+      )
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['au_quarantine_reservation_date'],
+        }
+      }
+      return { ok: true, message: `계류 시작일(${res}) 채혈 + 180일 이후.` }
+    },
+  },
   {
     id: 'au.import-quarantine-date-valid',
     country: COUNTRY,

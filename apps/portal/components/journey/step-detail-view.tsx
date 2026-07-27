@@ -24,6 +24,7 @@ import {
   validateCyAdvanceNoticeDate,
   validateImportPermitFiledDate,
   validateSgQuarantineReservationDate,
+  validateAuQuarantineReservationDate,
   validateSgBorderInspectionDate,
   validateSgDepartureVsQuarantineReservation,
   validateSgGstPermitDate,
@@ -1466,6 +1467,17 @@ export function StepDetailView({
       return validateSgGstPermitDate(
         importQuarantineDate.trim(),
         (caseRow?.departure_date ?? '').slice(0, 10),
+      )
+    }
+    if (step.id === 'au-quarantine-reservation') {
+      // 계류 시작일 = 호주 도착일이라 출국일과 같은 180일 제약을 받는다. 도메인 단일 출처
+      // (validateAuQuarantineReservationDate) — au.ts 주의 룰과 같은 함수.
+      // 채혈 목록은 예정 surface 포함(readTiterAllEntries) — 싱가포르 계류장 예약과 같은 기준.
+      return validateAuQuarantineReservationDate(
+        importQuarantineDate.trim(),
+        readTiterAllEntries(caseRow?.data)
+          .map((e) => e.date)
+          .filter((d) => d.length >= 10),
       )
     }
     if (step.id === 'sg-border-inspection') {

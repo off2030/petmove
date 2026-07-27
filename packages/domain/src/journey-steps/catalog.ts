@@ -1226,8 +1226,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '계류시설을 예약하세요.',
     applicability: { destinations: ['australia'], species: 'all', tripType: 'all' },
     order: 44,
+    // 날짜 입력 카드(2026-07-27 사용자 지정) — 운송 예약과 같은 모델. 버튼 완료였을 때는
+    //   저장값이 '완료한 날'이라 계류 시작일을 아무 데서도 알 수 없었다.
     done: 'dated:au_quarantine_reservation_date',
-    buttonComplete: true,
     inputs: [
       {
         key: 'au_quarantine_reservation_date',
@@ -1245,9 +1246,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         label: '계류시설 예약·비용 (DAFF)',
       },
     ],
-    // 계류 시작일을 따로 받지 않는 버튼 완료 카드라 비교할 날짜가 없다 — 180일 차단은
-    //   운송 예약(출발일)이 담당한다(2026-07-27 사용자 결정).
-    validationIds: [],
+    // 계류 시작일을 받게 되면서 180일 판정을 이 카드에도 붙인다(저장 거부 + 짝 주의).
+    validationIds: ['au.quarantine-reservation-min-180days'],
   },
 
   // ── 뉴질랜드 계류시설 예약 — 수입 허가 신청 **전** ──────────────────────────

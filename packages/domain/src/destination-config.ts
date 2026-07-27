@@ -898,6 +898,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   singapore: {
     keywords: ['싱가포르', 'singapore'],
     archetype: 'sea-permit',
+    // 편도 전용(2026-07-27 사용자 확정) — 호주·뉴질랜드와 같은 처리.
+    //   ⚠️ sg-export-quarantine(왕복 전용 카드)이 도달 불가가 된다.
+    oneWayOnly: true,
     // 종합백신 출국 14일 전(Schedule III IV(a)(iv)(v)) — 저장 거부·주의 공용.
     generalVaccineWaitDays: 14,
     rabies: {
@@ -1690,6 +1693,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 광견병 + RNATT + 전염병검사(ARC-OVI, Brucella/Babesia/Ehrlichia/Trypanosoma 등) + 심장사상충.
     keywords: ['남아프리카공화국', '남아공', 'south africa'],
     vaccines: ['rabies', 'rabies_titer', 'infectious_disease', 'heartworm'],
+    // 편도 전용(2026-07-27 사용자 확정).
+    oneWayOnly: true,
   },
 }
 

@@ -789,6 +789,8 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
     '차단: validateSgQuarantineReservationFiled(채혈 이후)·validateSgQuarantineReservationDate(채혈+90일~12개월)·validateSgReservationVsDeparture',
   'sg-dog-licence':
     '주의만: 절차 완료일 추적용 — 날짜 자체 제약 없음. 라이선스↔수입허가 순서는 수입허가 쪽 차단(validateSgImportPermitAfterDogLicence)·주의(sg.dog-licence-before-import-permit)가 담당',
+  'au-quarantine-reservation':
+    '차단: validateAuQuarantineReservationDate(항체 검체 도착 + 180일 이후) — 짝 주의는 au.quarantine-reservation-min-180days',
   'sg-gst-permit': '차단: validateSgGstPermitDate(도착 전 + 도착 14일 이내)',
   'sg-border-inspection': '차단: validateSgBorderInspectionDate(도착 최소 5일 전)',
   // 독감(CIV)·전염병 검사 — 호주 전용 카드(둘 다 강아지 요건).

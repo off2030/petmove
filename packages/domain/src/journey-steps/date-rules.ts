@@ -762,6 +762,33 @@ export function validateSgQuarantineReservationFiled(
  * client(발급일 입력 시 저장 거부)·procedure-check(출국일을 나중에 수정해 어긋난 경우
  * '주의') 공용 단일 출처. 출국일이 없으면 비교 불가라 통과.
  */
+/**
+ * 호주 계류 시작일 — 항체 검체 도착일 + 180일 이후여야 한다.
+ *
+ * 계류 시작일은 곧 호주 도착일이라 출국일과 같은 제약을 받는다(DAFF 4.3 — 검체가 검사실에
+ * 도착한 날부터 180일). 앱은 검체 도착일을 받지 않아 **채혈일을 proxy** 로 쓰는데, 채혈 ≤ 도착
+ * 이라 덜 엄격한 쪽이라 안전하다. 그래서 계산된 특정 날짜를 단정하지 않고 요건만 안내한다
+ * (validateEuEntryDate 의 basisReceivedDate 분기와 같은 문구 정책).
+ *
+ * client(저장 거부)·procedure-check(주의) 공용 — 한쪽 날짜가 비면 통과.
+ */
+export function validateAuQuarantineReservationDate(
+  reservationDate: string,
+  titerDates: string[],
+): string | null {
+  const res = (reservationDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(res)) return null
+  const dates = titerDates.filter((d) => /^\d{4}-\d{2}-\d{2}$/.test((d ?? '').slice(0, 10)))
+  if (dates.length === 0) return null
+  const days = TITER_ENTRY_WAIT_DAYS['australia'] ?? 180
+  const ok = dates.some((d) => {
+    const earliest = addDays(d.slice(0, 10), days)
+    return !!earliest && earliest <= res
+  })
+  if (ok) return null
+  return `항체 검사 검체가 검사기관에 도착한 날부터 ${days}일이 지나야 계류를 시작할 수 있어요.`
+}
+
 export function validateSgGstPermitDate(
   issuedDate: string,
   departureDate: string,
