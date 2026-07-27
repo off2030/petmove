@@ -23,6 +23,8 @@ import {
   msgImportQuarantineBeforeEntry,
   msgMicrochipBeforeRabies,
   msgRabiesExpiredBefore,
+  msgGeneralVaccineExpiredBefore,
+  msgGeneralVaccineMinDaysBeforeDeparture,
   msgRabiesPrimeMinAge,
   msgTiterBeforeVaccine,
   msgTiterMinDaysAfterVaccine,
@@ -517,12 +519,20 @@ function buildAnnualVaccineRule(opts: {
         return { ok: false, message: '날짜 형식이 올바르지 않아요.', offendingPaths: [`${opts.dataKey}[${latest.originalIndex}].date`] }
       }
       if (toDep < 0) {
-        issues.push(`최근 접종일(${latest.date})이 출국일(${dep})보다 늦어요.`)
+        issues.push(`${opts.label} 접종일이 출국일보다 늦어요. 날짜를 확인하세요.`)
       } else if (toDep < 10) {
-        issues.push(`최근 접종일(${latest.date})부터 출국일까지 ${toDep}일이에요. 10일 이상이어야 해요.`)
+        issues.push(
+          opts.dataKey === 'general_vaccine_dates'
+            ? msgGeneralVaccineMinDaysBeforeDeparture(10)
+            : `${opts.label} 접종은 출국 10일 전까지 해야 해요.`,
+        )
       }
       if (validUntil && validUntil < dep) {
-        issues.push(`유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`)
+        issues.push(
+          opts.dataKey === 'general_vaccine_dates'
+            ? msgGeneralVaccineExpiredBefore('출국')
+            : `${opts.label} 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.`,
+        )
       }
       if (issues.length > 0) {
         return {
@@ -567,14 +577,14 @@ function buildWithin14DaysRule(opts: {
       if (days < 0) {
         return {
           ok: false,
-          message: `${opts.label}(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.`,
+          message: `${opts.label} 치료일이 출국일보다 늦어요. 날짜를 확인하세요.`,
           offendingPaths: [`${opts.dataKey}[${latest.originalIndex}].date`],
         }
       }
       if (days > 13) {
         return {
           ok: false,
-          message: `최근 ${opts.label}(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 출국일 포함 14일 이내(13일 전부터)여야 해요.`,
+          message: `${opts.label} 치료는 출국일 포함 14일 이내에 해야 해요. 날짜를 확인하세요.`,
           offendingPaths: [`${opts.dataKey}[${latest.originalIndex}].date`],
         }
       }
