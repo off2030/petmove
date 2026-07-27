@@ -1808,6 +1808,17 @@ export function isOneWayOnlyDestination(destination: string | null | undefined):
   return !!getDestinationOverride(destination)?.oneWayOnly
 }
 
+/**
+ * 광견병 항체 **검체 도착일**(검사기관 접수일)을 대기 기준으로 쓰는 목적지인가 —
+ * 프로파일 `titer.entryWaitAfterTiter.basisReceivedDate` 파생(호주·괌·하와이).
+ *
+ * 이 목적지들만 앱 항체 카드에 '검체 도착일' 입력칸을 띄운다. 미입력이면 채혈일로 대신
+ * 판정한다(채혈 ≤ 도착이라 덜 엄격 — 규정을 지킨 사람을 막지 않는 방향).
+ */
+export function usesTiterReceivedDate(destination: string | null | undefined): boolean {
+  return !!getDestinationOverride(destination)?.titer?.entryWaitAfterTiter?.basisReceivedDate
+}
+
 export function getTripType(
   data: Record<string, unknown> | null | undefined,
   destinationToken: string | null | undefined,

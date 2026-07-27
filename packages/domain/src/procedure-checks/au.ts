@@ -410,7 +410,8 @@ export const AU_CHECKS: ProcedureCheck[] = [
       if (titers.length === 0) return SKIP
       const msg = validateAuQuarantineReservationDate(
         res,
-        titers.map((t) => t.date),
+        // 검체 도착일 우선 — 미입력이면 채혈일(저장 거부와 같은 기준).
+        titers.map((t) => t.received_date || t.date),
       )
       if (msg) {
         return {

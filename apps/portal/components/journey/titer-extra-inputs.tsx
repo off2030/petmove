@@ -4,7 +4,12 @@
 import { C } from '@/lib/palette'
 import { useState } from 'react'
 import { DateTextField } from '@petmove/ui'
-import { getTiterLabOptions, isKnownTiterLab, isSameTiterLab } from '@petmove/domain'
+import {
+  getTiterLabOptions,
+  isKnownTiterLab,
+  isSameTiterLab,
+  usesTiterReceivedDate,
+} from '@petmove/domain'
 import { OptionList } from './field-selects'
 
 /**
@@ -22,6 +27,12 @@ export interface TiterExtraEntry {
   date: string
   lab: string
   value: string
+  /**
+   * 검체가 검사기관에 도착한 날. 대기 일수의 규정 기준일이 채혈일이 아니라 도착일인
+   * 목적지(호주·괌·하와이)에서만 입력칸이 뜬다 — domain usesTiterReceivedDate 파생.
+   * **선택 입력**이라 비워도 완료된다. 비면 채혈일로 대신 판정한다.
+   */
+  received_date: string
 }
 
 const CUSTOM_LAB = '__custom__'
@@ -194,6 +205,23 @@ function ExtraCard({
           />
         </div>
       </div>
+
+      {usesTiterReceivedDate(destinationKey) && (
+        <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
+          <div style={labelStyle}>검체 도착일</div>
+          <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
+            검체가 검사기관에 도착한 날 · 선택 입력
+          </div>
+          <div style={{ marginTop: 8 }}>
+            <DateTextField
+              value={entry.received_date}
+              onChange={(v) => onChange('received_date', v)}
+              placeholder="YYYY-MM-DD"
+              block
+            />
+          </div>
+        </div>
+      )}
 
       <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
         <div style={labelStyle}>검사기관</div>

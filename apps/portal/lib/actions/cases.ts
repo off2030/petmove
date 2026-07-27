@@ -805,7 +805,13 @@ function stripTiterUnit(value: string): string {
  */
 export async function updateTiterExtraEntries(
   caseId: string,
-  entries: Array<{ date: string | null; lab: string | null; value: string | null }>,
+  entries: Array<{
+    date: string | null
+    lab: string | null
+    value: string | null
+    /** 검체가 검사기관에 도착한 날 — 호주·괌·하와이의 대기 일수 기준일(선택 입력). */
+    received_date?: string | null
+  }>,
   /**
    * entries 가 배열의 몇 번째부터인가.
    *  - 1 (기본): '추가 검사' 별도 카드 — index 0(1회차)은 본 카드 소관이라 보존한다.
@@ -816,8 +822,10 @@ export async function updateTiterExtraEntries(
 ): Promise<Result<CaseRow>> {
   try {
     for (const e of entries) {
-      if (e.date != null && e.date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) {
-        return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+      for (const v of [e.date, (e as { received_date?: string | null }).received_date]) {
+        if (v != null && v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+          return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+        }
       }
     }
 
@@ -861,6 +869,12 @@ export async function updateTiterExtraEntries(
       const v = typeof fields.value === 'string' ? stripTiterUnit(fields.value) : ''
       if (v) entry.value = v
       else delete entry.value
+
+      // 검체 도착일 — 선택 입력. 비우면 키를 지워 채혈일 fallback 으로 돌아간다.
+      //   (예전엔 비관리 키라 머지로만 보존됐고, 앱에서 지울 방법이 없었다.)
+      const rd = typeof fields.received_date === 'string' ? fields.received_date.trim() : ''
+      if (rd) entry.received_date = rd
+      else delete entry.received_date
 
       // date 없는 entry 는 의미 없는 잔여물 — drop (lab/value 만 남는 phantom 방지).
       if (!hasValidDate(entry)) continue

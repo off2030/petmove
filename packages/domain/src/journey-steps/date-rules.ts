@@ -1219,12 +1219,22 @@ export function validateEuEntryDate(v: string, ctx: DateRuleContext): string | n
     : Object.keys(TITER_ENTRY_WAIT_DAYS).find((key) => matchesDestinationKey(ctx.destination, key))
   if (!monthsKey && !daysKey) return null
 
+  // 대기 기준일 — 규정이 **검체 도착일**인 목적지(호주·괌·하와이, 프로파일
+  //   titer.entryWaitAfterTiter.basisReceivedDate)는 입력된 도착일을 우선 쓰고, 미입력이면
+  //   채혈일로 대신한다(채혈 ≤ 도착이라 덜 엄격 = 규정을 지킨 사람을 막지 않는 방향).
+  //   그 외 목적지는 종전대로 채혈일만 본다.
+  const useReceived = !!(
+    daysKey && DESTINATION_OVERRIDES[daysKey]?.titer?.entryWaitAfterTiter?.basisReceivedDate
+  )
   const titerDates: string[] = []
   const rawTiters = ctx.data.rabies_titer_records
   if (Array.isArray(rawTiters)) {
     for (const r of rawTiters) {
       if (r && typeof r === 'object') {
-        const d = (r as Record<string, unknown>).date
+        const rec = r as Record<string, unknown>
+        const received =
+          useReceived && typeof rec.received_date === 'string' ? rec.received_date : ''
+        const d = /^\d{4}-\d{2}-\d{2}$/.test(received) ? received : rec.date
         if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) titerDates.push(d)
       }
     }

@@ -1475,8 +1475,9 @@ export function StepDetailView({
       // 채혈 목록은 예정 surface 포함(readTiterAllEntries) — 싱가포르 계류장 예약과 같은 기준.
       return validateAuQuarantineReservationDate(
         importQuarantineDate.trim(),
+        // 기준일 = 검체 도착일 우선, 미입력이면 채혈일(도메인 판정과 같은 규칙).
         readTiterAllEntries(caseRow?.data)
-          .map((e) => e.date)
+          .map((e) => e.received_date || e.date)
           .filter((d) => d.length >= 10),
       )
     }
@@ -1727,6 +1728,7 @@ export function StepDetailView({
           date: e.date || null,
           lab: e.lab || null,
           value: e.value || null,
+          received_date: e.received_date || null,
         }))
         // 단일 카드 목적지는 index 0 부터가 이 카드 소관.
         const res = await updateTiterExtraEntries(
@@ -3459,8 +3461,13 @@ function vaccineEntryFilled(e: {
 }
 
 /** 항체 검사 목록 entry 에 실제 입력이 있는지 — 빈 placeholder 카드를 dirty 비교에서 제외. */
-function titerEntryFilled(e: { date?: string; lab?: string; value?: string }): boolean {
-  return !!(e.date || e.lab || e.value)
+function titerEntryFilled(e: {
+  date?: string
+  lab?: string
+  value?: string
+  received_date?: string
+}): boolean {
+  return !!(e.date || e.lab || e.value || e.received_date)
 }
 
 function makeEmptyGeneralVaccine(): GeneralVaccineEntry {
@@ -3767,7 +3774,7 @@ function rabiesExtraEqual(a: RabiesExtraEntry[], b: RabiesExtraEntry[]): boolean
  * 기본 1장이 떠야 하므로 초기/삭제 후 폴백에서 사용.
  */
 function makeEmptyTiterExtra(): TiterExtraEntry {
-  return { date: '', lab: '', value: '' }
+  return { date: '', lab: '', value: '', received_date: '' }
 }
 
 /**
@@ -3789,7 +3796,12 @@ function readTiterAllEntries(
     for (const rec of arr) {
       if (rec && typeof rec === 'object') {
         const r = rec as Record<string, unknown>
-        out.push({ date: str(r.date), lab: str(r.lab), value: str(r.value) })
+        out.push({
+          date: str(r.date),
+          lab: str(r.lab),
+          value: str(r.value),
+          received_date: str(r.received_date),
+        })
       }
     }
   }
@@ -3802,7 +3814,7 @@ function readTiterAllEntries(
     const d = sched.slice(0, 10)
     if (!out.some((e) => e.date === d)) {
       if (out.length > 0 && !out[0].date) out[0] = { ...out[0], date: d }
-      else out.unshift({ date: d, lab: '', value: '' })
+      else out.unshift({ date: d, lab: '', value: '', received_date: '' })
     }
   }
   // 추가 검사 예정(rabies_titer_extra_scheduled) — 별도 entry 로 뒤에 붙인다.
@@ -3810,7 +3822,7 @@ function readTiterAllEntries(
   if (typeof extraSched === 'string' && extraSched.length >= 10) {
     const d = extraSched.slice(0, 10)
     if (!out.some((e) => e.date === d)) {
-      out.push({ date: d, lab: '', value: '' })
+      out.push({ date: d, lab: '', value: '', received_date: '' })
     }
   }
   return out
@@ -3828,7 +3840,12 @@ function readTiterExtraEntries(
       const rec = arr[i]
       if (rec && typeof rec === 'object') {
         const r = rec as Record<string, unknown>
-        out.push({ date: str(r.date), lab: str(r.lab), value: str(r.value) })
+        out.push({
+          date: str(r.date),
+          lab: str(r.lab),
+          value: str(r.value),
+          received_date: str(r.received_date),
+        })
       }
     }
   }
@@ -3837,7 +3854,7 @@ function readTiterExtraEntries(
   if (typeof extraSched === 'string' && extraSched.length >= 10) {
     const d = extraSched.slice(0, 10)
     if (!out.some((e) => e.date === d)) {
-      out.push({ date: d, lab: '', value: '' })
+      out.push({ date: d, lab: '', value: '', received_date: '' })
     }
   }
   return out
@@ -3845,7 +3862,7 @@ function readTiterExtraEntries(
 
 function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
   // 빈 카드(3키 모두 '')는 저장 시 제외되므로 비교에서도 제외.
-  const nonEmpty = (e: TiterExtraEntry) => !!(e.date || e.lab || e.value)
+  const nonEmpty = (e: TiterExtraEntry) => !!(e.date || e.lab || e.value || e.received_date)
   const aF = a.filter(nonEmpty)
   const bF = b.filter(nonEmpty)
   if (aF.length !== bF.length) return false
@@ -3853,7 +3870,8 @@ function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
     if (
       aF[i].date !== bF[i].date ||
       aF[i].lab !== bF[i].lab ||
-      aF[i].value !== bF[i].value
+      aF[i].value !== bF[i].value ||
+      aF[i].received_date !== bF[i].received_date
     ) {
       return false
     }
