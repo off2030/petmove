@@ -1541,8 +1541,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['au.titer-min-180days-after-sample-received'],
     },
     // 수입 허가(BICON) — 항체 결과지 + RNATT 선언서를 갖춘 뒤 신청. 확정 마감일은 규정에
-    //   없고(허가 유효기간이 RNATT 만료일에 연동) 심사에 20~40영업일이 걸린다는 사실만 안내한다.
+    //   없고(허가 유효기간이 RNATT 만료일에 연동) 심사 기간만 안내한다.
     //   → base 의 '출국 30일 전' 마감 배지는 내린다(싱가포르·홍콩과 같은 처리).
+    // 심사 기간 근거 — Group 3 개·고양이 가이드 5단계 원문(2026-07-27 확인):
+    //   "Permits can take time to be issued. **Most permits are issued in 20-40 business
+    //    days. It can take up to 123 business days in some cases.**"
     importPermit: {
       description:
         '호주 검역당국(DAFF)의 BICON에서 수입 허가를 신청하세요.\n\n항체 검사 결과지와 RNATT 선언서를 함께 제출해요.\n신청할 때 수수료를 전액 결제해요.\n허가가 나오기까지 보통 20~40영업일 걸리고, 길면 123영업일까지 걸릴 수 있어요.',
