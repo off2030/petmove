@@ -1389,12 +1389,19 @@ export function StepDetailView({
       // 하나로. 각국 procedure-check(*.parasite 주의)와 같은 함수라 저장 거부·주의가 항상 일치.
       // 새 목적지는 date-rules 의 PARASITE_DEPARTURE_WINDOWS 한 줄이면 여기 자동 커버.
       // 출국일 미입력이면 dispatch 가 통과(치료 먼저 하는 순서를 막지 않기 위해).
-      if (isExternalParasite || isInternalParasite) {
+      // 심장사상충도 같은 창을 쓴다(괌 — 도착 14일 이내). 게이트에서 빠뜨리면 카드만 생기고
+      //   차단은 안 걸린다(2026-07-27 발견). 문구는 label 로 항목 이름을 넘겨 맞춘다.
+      if (isExternalParasite || isInternalParasite || isHeartworm) {
         const dep = (caseRow?.departure_date ?? '').slice(0, 10)
         const kind = isExternalParasite ? 'external' : 'internal'
         for (const e of parasite) {
           if (!e.date) continue
-          const err = validateParasiteDateForDestination(e.date, { destinationKey, kind, departureDate: dep })
+          const err = validateParasiteDateForDestination(e.date, {
+            destinationKey,
+            kind,
+            departureDate: dep,
+            ...(isHeartworm ? { label: '심장사상충 검사' } : {}),
+          })
           if (err) return err
         }
       }
@@ -2880,8 +2887,18 @@ export function StepDetailView({
             <GeneralVaccineInputs
               entries={parasite}
               // 1번째 카드 = 라벨, 2번째부터 = '라벨 n차' (차수 표기). 여러 번 치료 시 'n차'로 구분.
-              vaccineLabel={isExternalParasite ? '외부구충' : isEchinococcus ? '촌충 치료' : '내부 기생충 치료'}
-              dateLabel={isExternalParasite ? '처치일' : '치료일'}
+              // 심장사상충은 '치료'가 아니라 검사·예방이라 라벨이 다르다 — 분기를 빠뜨리면
+              //   구충 기본값('내부 기생충 치료'·'치료일')이 그대로 나온다(2026-07-27 발견).
+              vaccineLabel={
+                isExternalParasite
+                  ? '외부구충'
+                  : isEchinococcus
+                    ? '촌충 치료'
+                    : isHeartworm
+                      ? '심장사상충 검사'
+                      : '내부 기생충 치료'
+              }
+              dateLabel={isExternalParasite ? '처치일' : isHeartworm ? '검사일' : '치료일'}
               showValidUntil={false}
               // 내·외부 기생충 치료 모두 '세부 정보(선택)' = 약품명·제조사·제조번호 —
               // 이 카드가 들어가는 **모든 국가 공통**(호주·뉴질랜드 포함, 2026-07-25 사용자 확정).
@@ -2898,7 +2915,9 @@ export function StepDetailView({
                     ? externalParasitePlaceholders
                     : undefined
               }
-              addLabel={isExternalParasite ? '+ 처치 기록 추가' : '+ 치료 기록 추가'}
+              addLabel={
+                isExternalParasite ? '+ 처치 기록 추가' : isHeartworm ? '+ 검사 기록 추가' : '+ 치료 기록 추가'
+              }
               onChange={(idx, key, next) =>
                 setParasite((prev) => prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)))
               }

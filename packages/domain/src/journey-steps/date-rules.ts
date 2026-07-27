@@ -850,10 +850,16 @@ export function validateParasiteDateForDestination(
     destinationKey: string | null | undefined
     kind: 'external' | 'internal'
     departureDate: string
+    /**
+     * 문구에 쓸 항목 이름 — 기본은 kind 로 정한다('내부/외부 기생충 치료').
+     * 같은 창을 공유하지만 이름이 다른 항목(심장사상충 검사)이 넘긴다. 안 넘기면 심장사상충
+     * 카드에서 '내부 기생충 치료는…' 이 나간다(2026-07-27 카드 분리 때 발견).
+     */
+    label?: string
   },
 ): string | null {
   if (!treatDate || !ctx.departureDate) return null
-  const label = ctx.kind === 'internal' ? '내부 기생충 치료' : '외부 기생충 치료'
+  const label = ctx.label ?? (ctx.kind === 'internal' ? '내부 기생충 치료' : '외부 기생충 치료')
   // 싱가포르 — 2~7일 창(내·외부 동일).
   if (matchesDestinationKey(ctx.destinationKey, 'singapore')) {
     return validateSgParasiteWindow(treatDate, ctx.departureDate, label)
