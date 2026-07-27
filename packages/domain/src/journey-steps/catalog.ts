@@ -1212,7 +1212,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 명단은 프로파일 vaccines 의 'kennel' 선언에서 파생 — 새 목적지가 선언하면 자동으로 뜬다.
     id: 'kennel-cough-vaccine',
     category: 'vaccination',
-    title: '켄넬코프 접종',
+    title: '켄넬코프 백신',
     shortLabel: '켄넬',
     description: '켄넬코프(Bordetella) 백신을 접종하세요.',
     doneSummary: '켄넬코프 백신을 접종했어요.',

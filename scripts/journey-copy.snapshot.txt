@@ -845,7 +845,7 @@
   저장이름: 종합백신
 
 ▸ kennel-cough-vaccine
-  title: 켄넬코프 접종
+  title: 켄넬코프 백신
   short: 켄넬
   done: 켄넬코프 백신을 접종했어요.
   desc:
