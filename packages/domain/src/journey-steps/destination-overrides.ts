@@ -347,13 +347,27 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '괌 농무부(DOAG)에 수입 허가(Animal Entry Permit)를 신청하세요.\n\n검역시설 예약확인서와 접종·검사 서류를 함께 이메일로 제출해요.\n도착 30일 전까지 제출해야 하고, 늦으면 계류가 길어지거나 입국이 거부될 수 있어요.\n수수료는 반려동물 1마리당 65달러예요.',
       doneSummary: '괌 수입 허가증을 받았어요.',
       cardLine: '괌 수입 허가를 신청하세요.',
-      inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
+      // 버튼 완료 카드 — **하와이 입국 신청과 같은 모델**(2026-07-27 사용자 지정).
+      //   로잔이 대행하지 않아(selfApply) 보호자가 직접 내고, 신청하면 끝나는 절차라
+      //   날짜를 받아 검증하는 대신 '확인'만 받는다. 마감은 알림(D-37·D-30)이 담당한다.
+      //   ⛔ 신청일 기반 검증(구 gu.import-permit-30days-before-arrival)을 되살리지 말 것 —
+      //      기록되는 날짜가 '버튼 누른 날'이라 실제 제출일과 달라 거짓 주의가 난다.
+      buttonComplete: true,
+      done: 'dated:import_permit_application_date',
+      inputs: [
+        {
+          key: 'import_permit_application_date',
+          label: '허가 취득일',
+          type: 'date',
+          helpText: '수입 허가증을 받은 날짜',
+        },
+      ],
       attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
       attachmentLabel: '괌 수입 허가증(Animal Entry Permit)',
       links: [
         { url: 'https://doag.guam.gov/animal-health-animal-control/', label: '수입 허가 안내(DOAG)' },
       ],
-      validationIds: ['gu.import-permit-30days-before-arrival'],
+      validationIds: [],
     },
     'flight-purchase': {
       // 항공권 카드 문형은 전 목적지 공통(2026-07-27 전수 대조로 정렬):
