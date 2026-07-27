@@ -397,7 +397,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       //   basisReceivedDate 로 그 사실을 표시한다 — 괌(120일)·하와이와 같은 처리.
       entryWaitAfterTiter: { days: 180, basisReceivedDate: true },
     },
-    vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'infectious_disease', 'internal_parasite', 'external_parasite'],
+    // 'kennel'(켄넬코프) — **DAFF 입국 요건은 아니다**(권장 백신). 그런데 Mickleham 계류시설
+    //   예약에 접종 증명을 요구해서 실무상 필요하다(2026-07-27 사용자 확정). 카드 노출은
+    //   destinationsWithVaccine('kennel') 파생이라 이 한 줄이 곧 켄넬코프 카드 스위치다.
+    vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'infectious_disease', 'internal_parasite', 'external_parasite'],
     // 종합백신 = **렙토스피라 Canicola** 요건(7.2)이 본체다. DHPP 등 나머지는 "recommended,
     //   not mandatory". Canicola 는 "administered between 12 months and 14 days before export"
     //   → 출국 14일 전 대기를 저장 거부의 진실 출처로 선언한다.

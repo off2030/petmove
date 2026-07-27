@@ -1513,6 +1513,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // 종합백신 = **렙토스피라 Canicola** 요건(7.2)이 본체. DHPP 등 나머지는 권장 사항이다.
     //   백신 대신 MAT 검사를 받는 선택지도 규정에 있어(7.3) 마지막 줄로 안내한다.
     generalVaccine: {
+      // 백신 카드 4장을 광견병(30) 뒤에 연달아 — 종합 32 · 독감 34 · 켄넬코프 36
+      //   (2026-07-27 사용자 지정). 항체(40)·수입허가(42)·계류시설 예약(44)이 그 뒤로 밀린다.
+      order: 32,
       description:
         '종합백신을 접종하세요.\n\n렙토스피라 Canicola 혈청형이 포함된 백신이어야 해요.\n처음 접종하면 2~4주 간격으로 2회 접종해요.\n마지막 접종이나 추가 접종은 출국 14일 전까지, 12개월 이내여야 해요.\n출국할 때 면역 유효기간이 남아있어야 해요.\nCanicola 백신을 접종하지 않으면 대신 렙토스피라 검사(MAT)를 받아야 해요.',
       validationIds: [
@@ -1579,9 +1582,18 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   ⛔ '2회 정확히 14일 간격'은 DAFF 요건이 아니다(구 au.ts 룰의 과잉 해석). 규정은
       //     "제조사 지침대로 기초 접종 완료 + 마지막 접종은 출국 14일 전 이상"뿐이다.
       'civ-vaccine': {
+        order: 34,
         description:
           '개 인플루엔자(CIV) 백신을 접종하세요.\n\n한국에서 출발하는 강아지는 반드시 접종해야 해요.\n한국에서 승인되고, 국내에 도는 바이러스에 효과가 있는 백신이어야 해요.\n처음 접종하면 제조사 지침대로 기초 접종을 마쳐야 해요.\n기초 접종은 출국 14일 전까지 끝내야 해요.\n이미 접종해 온 강아지는 추가 접종을 출국 14일 전까지, 12개월 이내에 받아야 해요.',
         validationIds: ['au.civ-14days-before-departure', 'au.civ-within-12months'],
+      },
+      // 켄넬코프 — **DAFF 입국 요건이 아니다**(권장 백신). Mickleham 계류시설 예약에 접종
+      //   증명을 요구해서 넣는다(2026-07-27 사용자 확정). 그래서 카드도 계류시설 예약(44)
+      //   앞에 둔다. 요건이 아니므로 날짜 판정 룰은 두지 않는다.
+      'kennel-cough-vaccine': {
+        order: 36,
+        description:
+          '켄넬코프(Bordetella) 백신을 접종하세요.\n\n호주 입국 요건은 아니지만, 계류시설을 예약할 때 접종 증명을 요구해요.',
       },
       // 전염병 검사 — 리슈만편모충(전 개체) + 브루셀라(중성화 안 한 개체) + 렙토 MAT(백신 미접종 시).
       //   세 검사 모두 출국 45일 이내 채혈이라 한 카드에 묶는다(admin 도 같은 필드를 공유).
@@ -2644,7 +2656,9 @@ function seaPermitOverrides(opts: {
    */
   generalVaccine?: Pick<
     Partial<StepDefinition>,
-    'description' | 'descriptionBySpecies' | 'validationIds'
+    // 'order' 는 호주가 백신 카드 4장(광견병·종합·독감·켄넬코프)을 연달아 붙이려고 추가.
+    //   미지정이면 base(50) 그대로라 기존 나라들은 무동작.
+    'description' | 'descriptionBySpecies' | 'validationIds' | 'order'
   >
   flight: {
     description: string

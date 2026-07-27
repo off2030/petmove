@@ -3607,6 +3607,16 @@
   첨부안내: 백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.
   저장이름: 종합백신
 
+▸ kennel-cough-vaccine
+  title: 켄넬코프 백신
+  short: 켄넬
+  done: 켄넬코프 백신을 접종했어요.
+  desc:
+      켄넬코프(Bordetella) 백신을 접종하세요.
+      
+      호주 입국 요건은 아니지만, 계류시설을 예약할 때 접종 증명을 요구해요.
+  저장이름: 켄넬코프백신
+
 ▸ civ-vaccine
   title: 독감(CIV) 백신
   short: 독감

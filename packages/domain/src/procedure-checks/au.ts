@@ -76,25 +76,6 @@ function isIntact(caseRow: CaseRow): boolean {
   return sex === 'male' || sex === 'female'
 }
 
-/**
- * 마이크로칩 인증일(Identity Declaration) — 여정 카드(au-identity-check)가 저장하는 `id_date`.
- * by_dest(목적지별) → top-level → legacy `australia_extra.id_date` 순.
- *
- * readAustraliaExtra 는 legacy 중첩 경로만 읽어서, 앱에서 새로 입력한 값을 못 본다
- * (구 룰이 legacy 만 보고 있어 신규 케이스에서 통째로 SKIP 되던 자리).
- */
-function readIdentityCheckDate(caseRow: CaseRow, destination?: string | null): string {
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const scoped = readByDestValue(data, destination ?? null, 'id_date')
-  if (typeof scoped === 'string') return scoped.slice(0, 10)
-  // null = 그 목적지에서 **명시적으로 비움**. top-level·legacy 로 폴백하면 지운 값이 되살아난다
-  //   (clearExtraValueWithLegacy 가 막으려는 것과 같은 부활 버그).
-  if (scoped === null) return ''
-  if (typeof data.id_date === 'string') return data.id_date.slice(0, 10)
-  const legacy = readAustraliaExtra(caseRow).id_date
-  return legacy ? legacy.slice(0, 10) : ''
-}
-
 /** 계류시설 예약(계류 시작일) — by_dest 우선, 없으면 top-level. */
 function readQuarantineReservationDate(caseRow: CaseRow, destination?: string | null): string {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -141,51 +122,6 @@ export const AU_CHECKS: ProcedureCheck[] = [
         message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date'],
       }
-    },
-  },
-
-  // ── 마이크로칩 인증 (Identity Declaration) ──
-  // 선택 절차지만 계류 10일/30일을 가른다. 순서 위반은 **회복 경로가 없다**(채혈 후 소급 불가).
-  {
-    id: 'au.identity-check-before-titer',
-    country: COUNTRY,
-    category: '마이크로칩',
-    title: '마이크로칩 인증은 항체 검사 채혈 이전 · 다른 방문',
-    description:
-      'DAFF 3.2 — "Do this before having blood taken for the RNATT. An identity check cannot be done at the same **vet visit** as the RNATT." ⚠️ 금지 단위는 **방문**이지 날짜가 아니다(2026-07-27 정정). 오전 검역본부 → 오후 동물병원처럼 하루에 나눠 받는 건 위반이 아니라, 같은 날을 위반으로 단정하면 안 된다. 앱은 날짜만 저장해 순서·방문 분리를 확인할 수 없으므로 두 갈래로 나눈다: 채혈일 < 인증일 = **위반**(소급 불가, 계류 30일 확정) / 같은 날 = **확인 요청**(순서와 별도 방문 여부는 보호자만 안다).',
-    severity: 'warning',
-    addedAt: '2026-05-05',
-    run: ({ caseRow, destination }) => {
-      const idDate = readIdentityCheckDate(caseRow, destination)
-      const titers = readTiterEntries(caseRow)
-      if (!idDate || titers.length === 0) return SKIP
-
-      // ① 채혈이 인증보다 앞선 경우 — 명확한 위반(소급 적용 불가).
-      const after = titers.filter((t) => t.date < idDate)
-      if (after.length > 0) {
-        const offendingPaths = ['id_date']
-        for (const t of after) offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
-        return {
-          ok: false,
-          message:
-            '마이크로칩 인증은 항체 검사 채혈 전에 받아야 해요. 채혈이 끝난 뒤에는 소급되지 않아 계류가 최소 30일이 돼요.',
-          offendingPaths,
-        }
-      }
-      // ② 같은 날 — 규정이 금지하는 건 '같은 방문'이라 날짜만으로는 판정할 수 없다.
-      //   위반이라 단정하지 않고 확인만 요청한다(추측 단정 금지).
-      const sameDay = titers.filter((t) => t.date === idDate)
-      if (sameDay.length > 0) {
-        const offendingPaths = ['id_date']
-        for (const t of sameDay) offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
-        return {
-          ok: false,
-          message:
-            '마이크로칩 인증과 항체 검사 채혈 날짜가 같아요. 두 절차를 같은 방문에서 받으면 인증이 인정되지 않아요. 인증을 먼저, 다른 방문에서 받았는지 확인하세요.',
-          offendingPaths,
-        }
-      }
-      return { ok: true, message: `마이크로칩 인증일(${idDate}) < 모든 채혈일.` }
     },
   },
 
