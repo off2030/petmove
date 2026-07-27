@@ -970,7 +970,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     //   파생). 이 선언이 없으면 주의(gu.general-vaccine-10days-before-arrival)만 뜨고 입력은
     //   그대로 저장된다 — 항체 10일이 같은 이유로 비어 있던 것과 같은 함정(2026-07-27).
     generalVaccineWaitDays: 10,
-    importPermit: { applyDeadlineDays: 30, docName: 'Animal Entry Permit' },
+    // Animal Entry Permit — 보호자가 DOAG(quarantine@doag.guam.gov)에 직접 이메일로 제출한다.
+    //   **로잔이 대행하지 않으므로 맡기기 상품 항목에서 뺀다**(2026-07-27 사용자 확정 — 괌은
+    //   CDC 신고를 제외하면 대행하지 않는다). 여정 카드·서류 탭·마감 알림은 그대로 유지된다
+    //   — 여기서 빼는 건 '대신해 드려요' 목록뿐(대만·아랍에미리트와 같은 처리).
+    importPermit: { applyDeadlineDays: 30, docName: 'Animal Entry Permit', selfApply: true },
     // 레시피상 **마지막에 켠다** — 카드·검증·서류·사진이 모두 끝난 뒤(2026-07-26).
     //   이 플래그가 켜져야 항공권 카드(APP_SUPPORTED_DESTINATION_KEYS 파생)가 붙는다.
     appSupported: true,
