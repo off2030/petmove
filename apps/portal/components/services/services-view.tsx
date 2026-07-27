@@ -302,7 +302,9 @@ function offlineDetail(opts: {
   const hasVaccine = (k: string) => (o?.vaccines ?? []).some((v) => v === k)
   if (hasVaccine('general')) items.push({ label: '종합백신 접종', card: 'general-vaccine' })
   if (hasVaccine('civ')) items.push({ label: '독감 접종', card: 'civ-vaccine' })
-  if (hasVaccine('kennel')) items.push({ label: '켄넬코프 접종', card: 'kennel-cough-vaccine' })
+  // '켄넬코프 백신 접종'(2026-07-27 사용자 지정) — 여정 카드명('켄넬코프 백신')에 맡기기의
+  //   '접종'을 붙인 형태. 종합백신·독감이 백신 이름만 쓰는 것과 다르지만 사용자 확정 표기.
+  if (hasVaccine('kennel')) items.push({ label: '켄넬코프 백신 접종', card: 'kennel-cough-vaccine' })
   if (hasVaccine('covid')) items.push({ label: '코로나 접종', card: 'corona-vaccine' })
   if (hasVaccine('infectious_disease')) items.push({ label: '전염병 검사', card: 'infectious-disease-test' })
   if (hasVaccine('external_parasite')) items.push({ label: '외부 기생충 치료', card: 'external-parasite' })
