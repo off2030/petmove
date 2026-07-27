@@ -1564,7 +1564,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     importQuarantine: {
       fieldKey: 'au_import_quarantine_date',
       description:
-        '호주 도착 후 검역관이 멜버른 공항에서 반려동물을 인수해 Mickleham 계류시설로 옮겨요.\n\n마이크로칩 인증을 받았으면 최소 10일, 받지 않았으면 최소 30일 계류해요.\n도착 24시간 이내에 무사히 도착했다는 안내를 이메일로 받아요.\n서류·검사·기생충에 문제가 있으면 계류가 길어질 수 있어요.\n계류 비용을 모두 결제해야 반려동물이 나올 수 있어요.',
+        '호주 도착 후 검역관이 멜버른 공항에서 반려동물을 인수해 Mickleham 계류시설로 옮겨요.\n\n도착 24시간 이내에 무사히 도착했다는 안내를 이메일로 받아요.\n서류·검사·기생충에 문제가 있으면 계류가 길어질 수 있어요.\n계류 비용을 모두 결제해야 반려동물이 나올 수 있어요.',
       helpText: '호주 도착 후 계류를 시작한 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '호주 수입 검역 서류',

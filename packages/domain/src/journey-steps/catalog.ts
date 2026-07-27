@@ -1184,7 +1184,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '계류시설 예약',
     shortLabel: '계류장',
     description:
-      '멜버른 Mickleham 계류시설에 계류를 예약하세요.\n\n수입 허가를 받은 뒤에 예약할 수 있어요.\n예약할 때 계류 비용의 일부를 미리 내야 자리가 유지돼요.\n마이크로칩 인증을 마쳤으면 최소 10일, 받지 않았으면 최소 30일 계류해요.',
+      '멜버른 Mickleham 계류시설에 계류를 예약하세요.\n\n수입 허가를 받은 뒤에 예약할 수 있어요.\n예약할 때 계류 비용의 일부를 미리 내야 자리가 유지돼요.',
     doneSummary: '계류시설을 예약했어요.',
     cardLine: '계류시설을 예약하세요.',
     applicability: { destinations: ['australia'], species: 'all', tripType: 'all' },
