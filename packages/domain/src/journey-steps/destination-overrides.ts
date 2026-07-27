@@ -1521,7 +1521,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   그 7곳이 모두 다는 줄인데 호주에만 빠져 있었다 — 호주는 렙토 Canicola 가 **유일한
       //   의무 항목**이라 오히려 가장 필요한 자리다.
       description:
-        '종합백신(DHPPL)을 접종하세요.\n\n렙토스피라 Canicola 예방을 포함해야 해요.\n한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n처음 접종하면 2~4주 간격으로 2회 접종해요.\n출국 14일 전까지 접종해야 해요.\n접종 후 12개월 이내에 출국해야 해요.\n출국 때 면역 유효기간이 남아 있어야 해요.\n접종하지 않으면 렙토스피라 검사(MAT)를 받아야 해요.',
+        '종합백신을 접종하세요.\n\n처음 접종하면 2~4주 간격으로 2회 접종해요.\n출국 14일 전까지 접종해야 해요.\n접종 후 12개월 이내에 출국해야 해요.\n\n렙토스피라 예방을 포함한 백신을 권장해요. 그렇지 않은 경우 렙토스피라 검사(MAT)를 받아야 해요.',
       validationIds: [
         'au.general-vaccine-14days-before-departure',
         'au.general-vaccine-within-12months',
