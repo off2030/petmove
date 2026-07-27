@@ -352,10 +352,15 @@ export function StepDetailView({
   const isExternalParasite = step.id === 'external-parasite'
   const isInternalParasite = step.id === 'internal-parasite'
   const isEchinococcus = step.id === 'echinococcus-treatment'
-  const isParasite = isExternalParasite || isInternalParasite || isEchinococcus
+  // 심장사상충 — 구충과 **같은 입력 모델**(date_array, 유효기간 없음)이라 같은 기계를
+  //   필드키만 바꿔 재사용한다. 별개 절차라 카드는 나뉘어 있다(2026-07-27 사용자 지정).
+  const isHeartworm = step.id === 'heartworm-test'
+  const isParasite = isExternalParasite || isInternalParasite || isEchinococcus || isHeartworm
   const parasiteFieldKey = isExternalParasite
     ? 'external_parasite_dates'
-    : 'internal_parasite_dates'
+    : isHeartworm
+      ? 'heartworm_dates'
+      : 'internal_parasite_dates'
   const isInteractive =
     isMicrochip ||
     isRabies ||

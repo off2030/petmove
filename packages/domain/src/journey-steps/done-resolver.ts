@@ -5,6 +5,7 @@ import {
   isExtraTiterResultConfirmed,
   readGeneralVaccineEntries,
   readKennelCoughEntries,
+  readHeartwormEntries,
   readCivEntries,
   readExternalParasiteEntries,
   readInfectiousDiseaseEntries,
@@ -218,6 +219,9 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return hasArrivedDate(latestDateOf(readInternalParasiteEntries(caseRow).map((e) => e.date)))
     case 'has-external-parasite':
       return hasArrivedDate(latestDateOf(readExternalParasiteEntries(caseRow).map((e) => e.date)))
+    // 심장사상충 — 구충과 같은 date_array 모델(유효기간 개념 없음, 최근 기록 도래로 완료).
+    case 'has-heartworm':
+      return hasArrivedDate(latestDateOf(readHeartwormEntries(caseRow).map((e) => e.date)))
     case 'has-deworming-time':
       return typeof data.deworming_time === 'string' && (data.deworming_time as string).length > 0
     case 'has-vet-visit': {
@@ -446,6 +450,8 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       return lastEntryDate(readInternalParasiteEntries(caseRow).map((e) => e.date))
     case 'has-external-parasite':
       return lastEntryDate(readExternalParasiteEntries(caseRow).map((e) => e.date))
+    case 'has-heartworm':
+      return lastEntryDate(readHeartwormEntries(caseRow).map((e) => e.date))
     case 'has-deworming-time': {
       const dt = typeof data.deworming_time === 'string' ? data.deworming_time : null
       return dt && dt.length >= 10 ? dt.slice(0, 10) : null

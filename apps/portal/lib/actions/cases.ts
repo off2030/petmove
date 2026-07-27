@@ -2388,7 +2388,12 @@ export async function updateGeneralVaccineEntries(
 }
 
 /** 구충(내·외부) step 의 처치 기록 배열 키 — updateParasiteEntries 화이트리스트. */
-const PARASITE_FIELD_KEYS = new Set(['external_parasite_dates', 'internal_parasite_dates'])
+// 심장사상충도 같은 date_array 모델이라 같은 액션을 쓴다(2026-07-27 카드 분리).
+const PARASITE_FIELD_KEYS = new Set([
+  'external_parasite_dates',
+  'internal_parasite_dates',
+  'heartworm_dates',
+])
 
 /**
  * 구충(내·외부) step 의 처치 기록을 한 번에 patch — case.data.<fieldKey> 전체 교체.

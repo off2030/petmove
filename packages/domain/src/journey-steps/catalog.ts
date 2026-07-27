@@ -1229,6 +1229,30 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentLabel: '켄넬코프백신',
   },
+  // ── 심장사상충 검사 ────────────────────────────────────────────────
+  // 구충과 **별개 절차**라 카드를 나눈다(2026-07-27 사용자 지정). 예전엔 괌 내부 기생충
+  //   카드가 '심장사상충 예방도 함께' 로 겸했는데, 치료 기록이 구충 배열에 섞였다.
+  // 모델은 구충과 동일(date_array, 유효기간 개념 없음 — 최근 기록 도래로 완료).
+  // 명단은 프로파일 vaccines 의 'heartworm' 선언에서 파생.
+  {
+    id: 'heartworm-test',
+    category: 'lab',
+    title: '심장사상충 검사',
+    shortLabel: '심장',
+    description: '심장사상충 검사·예방을 하세요.',
+    doneSummary: '심장사상충 검사를 했어요.',
+    applicability: {
+      destinations: destinationsWithVaccine('heartworm'),
+      species: 'all',
+      tripType: 'all',
+    },
+    order: 108,
+    done: 'has-heartworm',
+    concurrent: true,
+    inputs: [{ key: 'heartworm_dates', label: '검사일', type: 'date_array' }],
+    allowAttachments: true,
+    attachmentLabel: '심장사상충 검사',
+  },
   {
     id: 'civ-vaccine',
     category: 'vaccination',

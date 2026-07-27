@@ -324,15 +324,22 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['gu.kennel-cough-10days-before-arrival'],
     },
     'external-parasite': {
+      // 도착 14일 이내라 실제로 가장 늦게 하는 절차 — 임상검사(110) 바로 앞으로 모은다
+      //   (2026-07-27 사용자 지정). base 는 80이라 그대로 두면 항공권·허가보다 앞에 온다.
+      order: 106,
       description: '외부 기생충 치료를 하세요.\n\n괌 도착일 기준 14일 이내에 해야 해요.',
       validationIds: ['gu.external-parasite-within-14days'],
     },
     'internal-parasite': {
-      // 심장사상충 예방도 **이 카드가 함께 다룬다** — 전용 카드가 없고, www 괌 가이드가
-      //   "내외부기생충 치료 및 심장사상충 예방"을 한 단계로 묶어 안내한다.
-      description:
-        '내부 기생충 치료와 심장사상충 예방을 하세요.\n\n괌 도착일 기준 14일 이내에 해야 해요.',
-      validationIds: ['gu.internal-parasite-within-14days', 'gu.heartworm-within-14days'],
+      order: 107,
+      description: '내부 기생충 치료를 하세요.\n\n괌 도착일 기준 14일 이내에 해야 해요.',
+      validationIds: ['gu.internal-parasite-within-14days'],
+    },
+    // 심장사상충 — 구충과 별개 절차라 카드를 나눴다(2026-07-27 사용자 지정).
+    //   요건은 구충과 같다(도착 14일 이내).
+    'heartworm-test': {
+      description: '심장사상충 검사·예방을 하세요.\n\n괌 도착일 기준 14일 이내에 해야 해요.',
+      validationIds: ['gu.heartworm-within-14days'],
     },
     'import-permit': {
       title: '수입 허가 신청',
@@ -355,7 +362,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         //   대기를 못 채워도 입국은 되고 대가가 격리·계류일 뿐이라 같은 구조로 쓴다.
         '괌 입국 일정에 맞춰 항공권을 구매하세요.\n\n수입 허가와 검역시설 예약을 확정한 뒤에 구매하세요.\n광견병 항체 검사 검체가 검사기관에 도착한 날부터 120일이 지나서 입국하세요.\n그 전에도 입국할 수 있지만, 이 경우 남은 기간만큼 괌 지정 시설에서 계류돼요.\n검역시설이 공항에서 동물을 받을 수 있는 시간인지 확인하세요.\n항공사에 반려동물 운송 방법을 꼭 확인하세요.',
       cardLine: '괌에 입국할 수 있어요.',
-      order: 102,
+      // 검역시설 예약(95) **앞**(2026-07-27 사용자 지적). 시설은 도착 날짜를 잡아 예약하고,
+      //   DOAG 허가 신청 서류에도 **Flight Itinerary** 가 들어간다(브로슈어 REQUIRED DOCUMENTS
+      //   5항) — 항공 일정이 먼저 있어야 뒤 두 절차가 성립한다.
+      //   ⛔ 허가 뒤(102)로 되돌리지 말 것. 원 근거였던 "허가 전에 항공권을 확정하지 말라"는
+      //   **결제 확정 시점** 주의였지 절차 순서가 아니다.
+      order: 92,
       earliest: undefined,
       validationIds: [
         'gu.dog-entry-age-six-months',
