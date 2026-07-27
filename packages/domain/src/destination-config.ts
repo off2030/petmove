@@ -366,7 +366,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   // 1차 출처: agriculture.gov.au "How to bring your dog to Australia from a Group 3 country"
   //   + "Rabies vaccination and tests for cats and dogs coming to Australia" (2026-07-27 전문 확인).
   // 아키타입 = sea-permit(광견병 1회 + 수입허가 2단계 + 종합백신 + 도착 계류). 다른 점 셋:
-  //   ① 항체 채혈 **전에** 정부 신원확인을 받으면 계류가 30일 → 10일로 줄어든다(전용 카드).
+  //   ① 항체 채혈 **전에** 검역관의 마이크로칩 인증을 받으면 계류가 30일 → 10일로 줄어든다(전용 카드).
   //   ② 180일 대기의 기준일이 채혈일이 아니라 **검체의 검사실 도착일**이다(괌 120일과 같은 모델).
   //   ③ 반려동물이 보호자와 같이 못 가고 **화물(manifested cargo)로 멜버른 공항에만** 도착한다.
   australia: {
@@ -421,7 +421,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     //   확정 '출국 N일 전' 마감은 규정에 없다(허가 유효기간이 RNATT 만료일에 연동). 대신 심사가
     //   20~40영업일(최대 123영업일) 걸린다는 사실을 카드 문구로 안내한다 — 싱가포르와 같은 처리.
     importPermit: { selfApply: true },
-    // ⚠️ importQuarantine.quarantineDays 는 선언하지 않는다 — 호주 계류는 신원확인 여부로
+    // ⚠️ importQuarantine.quarantineDays 는 선언하지 않는다 — 호주 계류는 마이크로칩 인증 여부로
     //   10일/30일이 갈려 숫자 하나로 적을 수 없다. 두 값은 도착 카드 문구가 함께 말한다.
     // 개·고양이 규정을 모두 확인하고(2026-07-27) 카드·검증·서류·사진까지 끝나 앱에 노출한다.
     appSupported: true,

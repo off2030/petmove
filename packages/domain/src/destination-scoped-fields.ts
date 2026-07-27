@@ -115,7 +115,7 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'id_export_quarantine_date',
   'id_export_quarantine_confirmed',
   // 호주 — 도착 계류(Mickleham 최소 10일/30일) + 계류시설 예약 시작일.
-  //   신원확인일은 기존 'id_date'(위 증명서·허가 묶음)를 그대로 쓴다.
+  //   마이크로칩 인증일은 기존 'id_date'(위 증명서·허가 묶음)를 그대로 쓴다.
   'au_import_quarantine_date',
   'au_import_quarantine_confirmed',
   'au_quarantine_reservation_date',

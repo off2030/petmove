@@ -1489,13 +1489,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   // 출처: agriculture.gov.au "How to bring your dog to Australia from a Group 3 country"
   //   + "Rabies vaccination and tests..." 전문(2026-07-27 확인). 수치 근거는 procedure-checks/au.ts.
   // sea-permit 골격(광견병 1회 + 수입허가 + 종합백신 + 도착 계류)에 호주 고유 절차를 얹는다:
-  //   신원확인(au-identity-check, order 25) · 계류시설 예약(au-quarantine-reservation, 44) ·
+  //   마이크로칩 인증(au-identity-check, order 25) · 계류시설 예약(au-quarantine-reservation, 44) ·
   //   독감(CIV) · 전염병 검사 · 내외부 구충.
   // 종별 처리(Group 3 cat guide 전문 확인, 2026-07-27) — 고양이는 CIV·렙토 Canicola·
   //   리슈만편모충·브루셀라가 **전부 없고** 종합백신도 권장일 뿐이다. 그래서 종합백신·전염병
   //   검사 카드는 catalog 의 `speciesByDestination: { australia: 'dog' }` 로 고양이에게 아예
   //   뜨지 않는다. 외부구충만 시작일이 갈려(개 30일·고양이 21일) descriptionBySpecies 로 나눴다.
-  //   나머지 카드(신원확인·광견병·항체·허가·계류·운송·구충·임상검사·검역)는 양 종 동일하다.
+  //   나머지 카드(마이크로칩 인증·광견병·항체·허가·계류·운송·구충·임상검사·검역)는 양 종 동일하다.
   australia: seaPermitOverrides({
     key: 'australia',
     label: '호주',
@@ -1553,11 +1553,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['au.import-permit-not-after-departure'],
       links: [{ url: 'https://bicon.agriculture.gov.au/', label: '수입 허가 신청 (BICON)' }],
     },
-    // 도착 = 멜버른 공항에서 검역관이 인수 → Mickleham 계류시설. 계류 일수는 신원확인 여부로 갈린다.
+    // 도착 = 멜버른 공항에서 검역관이 인수 → Mickleham 계류시설. 계류 일수는 마이크로칩 인증 여부로 갈린다.
     importQuarantine: {
       fieldKey: 'au_import_quarantine_date',
       description:
-        '호주 도착 후 검역관이 멜버른 공항에서 반려동물을 인수해 Mickleham 계류시설로 옮겨요.\n\n신원확인을 받았으면 최소 10일, 받지 않았으면 최소 30일 계류해요.\n도착 24시간 이내에 무사히 도착했다는 안내를 이메일로 받아요.\n서류·검사·기생충에 문제가 있으면 계류가 길어질 수 있어요.\n계류 비용을 모두 결제해야 반려동물이 나올 수 있어요.',
+        '호주 도착 후 검역관이 멜버른 공항에서 반려동물을 인수해 Mickleham 계류시설로 옮겨요.\n\n마이크로칩 인증을 받았으면 최소 10일, 받지 않았으면 최소 30일 계류해요.\n도착 24시간 이내에 무사히 도착했다는 안내를 이메일로 받아요.\n서류·검사·기생충에 문제가 있으면 계류가 길어질 수 있어요.\n계류 비용을 모두 결제해야 반려동물이 나올 수 있어요.',
       helpText: '호주 도착 후 계류를 시작한 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '호주 수입 검역 서류',
@@ -1568,7 +1568,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   호주는 광견병 비발생국이라 귀국 항체는 면제된다(isRabiesFreeOrigin) → 귀국용 룰 불필요.
       'rabies-titer': {
         description:
-          '호주 검역당국이 인정하는 검사기관에서 광견병 항체 검사(RNATT)를 받으세요.\n\n신원확인을 받은 뒤, 다른 날에 채혈해야 해요.\n채혈 전에 마이크로칩을 확인해요.\n0.5 IU/mL 이상이면 합격이에요.\n검체가 검사기관에 도착한 날부터 180일이 지나야 출국할 수 있어요.\n검사 결과는 채혈일부터 12개월간 유효하고, 출국일까지 유효해야 해요.\n처음 접종한 경우에는 접종 3~4주 후에 채혈하는 것이 좋아요.',
+          '호주 검역당국이 인정하는 검사기관에서 광견병 항체 검사(RNATT)를 받으세요.\n\n마이크로칩 인증을 받은 뒤, 다른 방문에서 채혈해야 해요.\n채혈 전에 마이크로칩을 확인해요.\n0.5 IU/mL 이상이면 합격이에요.\n검체가 검사기관에 도착한 날부터 180일이 지나야 출국할 수 있어요.\n검사 결과는 채혈일부터 12개월간 유효하고, 출국일까지 유효해야 해요.\n처음 접종한 경우에는 접종 3~4주 후에 채혈하는 것이 좋아요.',
         validationIds: [
           'au.titer-after-rabies',
           'au.titer-min-180days-after-sample-received',

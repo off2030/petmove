@@ -140,23 +140,40 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // common.microchip-after-birth (시술일 ≥ 출생일) 은 portal 입력 차단으로 이관 — timeline '주의' 노출 X.
   },
 
-  // ── 2-1. 호주 신원확인 (Identity Declaration) ─────────────────────────────
+  // ── 2-1. 호주 마이크로칩 인증 (Identity Declaration) ───────────────────────
   // DAFF 기준으로는 **선택 절차**지만, 이걸 받아두면 도착 후 계류가 최소 30일 → 최소 10일로
   // 줄어든다(Group 3 개 가이드 3.2 / 6.1). 순서가 치명적이라 별도 카드로 세운다:
-  //   · 반드시 **항체(RNATT) 채혈 전**에 받아야 하고, 채혈과 **같은 날 방문에서 할 수 없다**
+  //   · 반드시 **항체(RNATT) 채혈 전**에 받아야 하고, 채혈과 **같은 방문에서 할 수 없다**
+  //     ("cannot be done at the same **vet visit**" — '같은 날'이 아니다. 오전 검역본부 →
+  //      오후 동물병원처럼 하루에 나눠 받는 건 규정 위반이 아니다. 2026-07-27 정정)
   //   · 채혈이 끝난 뒤엔 소급 적용이 안 된다 → 그 케이스는 계류 30일 확정
-  //   · 마이크로칩 증명서·예방접종 수첩·펫 여권은 대체 불가(정부 공식수의사만 발급)
-  // 서류는 검역본부(공식수의사)가 **DAFF 로 직접 보낸다** — 보호자가 사본을 받지 못하므로
+  //   · 마이크로칩 증명서·예방접종 수첩·펫 여권은 대체 불가(검역관만 발급)
+  // 서류는 검역본부(검역관)가 **DAFF 로 직접 보낸다** — 보호자가 사본을 받지 못하므로
   //   첨부 없이 날짜 + '완료' 버튼으로만 끝낸다(괌 검역시설 예약과 같은 모델).
+  //
+  // 라벨 = '마이크로칩 인증'(2026-07-27 사용자 확정). 구 '신원확인'에서 교체한 이유:
+  //   · 신원·신분은 **사람 용어**다(검역 용어는 개체). 동물에 쓰면 어색하고, www 가이드는
+  //     '신분확인'이라 앱과 말이 갈려 있었다.
+  //   · DAFF 는 마이크로칩을 **매 방문 스캔**하라고 요구한다 → '확인'이면 그 일상 스캔과
+  //     구별되지 않는다. **'인증'**은 관이 공식 문서로 보증하는 1회성 행위를 가른다.
+  //     이 카드에서 가장 위험한 오해가 "단골 병원에서 스캔받으면 되는 줄 알았다"인데,
+  //     라벨이 그 오해를 직접 막는다.
+  //   · '인증'은 앱이 이미 같은 뜻으로 쓰는 말이다(싱가포르 'AVS 인증 건강증명서').
+  // 행위자 = **검역관**. 구 '정부 공식수의사'는 DAFF 의 두 역할(government *approved* vet =
+  //   준비를 맡는 동네 병원 / official *government* vet = 검역본부 소속)을 한국어에서 뒤섞어
+  //   "정부가 공인한 동네 수의사"로 읽힐 수 있었다. DAFF 는 둘이 **다른 사람**이라고 못박는다.
+  //   앱 전체(도착 카드·홍콩·필리핀)가 쓰는 '검역관'으로 통일한다.
   {
     id: 'au-identity-check',
     category: 'preparation',
-    title: '신원확인',
-    shortLabel: '신원',
+    title: '마이크로칩 인증',
+    // '칩'은 마이크로칩 삽입 카드(order 20)가 쓰고 있어 '인증'으로. 두 카드가 20 → 25 로
+    //   붙어 있어 타임라인에서 '칩 → 인증' 순서로 읽힌다.
+    shortLabel: '인증',
     description:
-      '동물검역소에서 정부 공식수의사에게 신원확인(Identity Declaration)을 받으세요.\n\n공식수의사가 마이크로칩을 확인하고 확인서를 호주 검역당국에 직접 보내요.\n항체 검사 채혈 전에 받아야 하고, 채혈과 같은 날에는 받을 수 없어요.\n이 절차를 마치면 도착 후 계류가 최소 10일, 받지 않으면 최소 30일이에요.\n채혈이 끝난 뒤에는 소급해서 받을 수 없어요.',
-    doneSummary: '신원확인을 받았어요.',
-    cardLine: '신원확인을 받으세요.',
+      '동물검역소에서 검역관에게 마이크로칩 인증(Identity Declaration)을 받으세요.\n\n검역관이 마이크로칩을 확인하고 확인서를 호주 검역당국에 직접 보내요.\n항체 검사 채혈 전에 받아야 하고, 채혈과 같은 방문에서는 받을 수 없어요.\n이 절차를 마치면 도착 후 계류가 최소 10일, 받지 않으면 최소 30일이에요.\n채혈이 끝난 뒤에는 소급해서 받을 수 없어요.',
+    doneSummary: '마이크로칩 인증을 받았어요.',
+    cardLine: '마이크로칩 인증을 받으세요.',
     applicability: { destinations: ['australia'], species: 'all', tripType: 'all' },
     order: 25,
     // 필드는 **기존 `id_date` 를 그대로 쓴다** — 펫무브워크 호주 추가정보(구 'ID 날짜')와 같은
@@ -167,9 +184,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     inputs: [
       {
         key: 'id_date',
-        label: '확인일',
+        label: '인증일',
         type: 'date',
-        helpText: '공식수의사가 신원을 확인한 날짜',
+        helpText: '검역관이 마이크로칩을 확인한 날짜',
       },
     ],
     validationIds: ['au.identity-check-before-titer'],
@@ -1109,7 +1126,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // Group 3 개 가이드 6.1: "Book your dog's post-entry quarantine stay — do this after you
   //   receive your import permit." 호주에 오는 모든 개·고양이가 멜버른 Mickleham 정부
   //   계류시설(135 Donnybrook Road, Mickleham VIC)에 들어가고, 예약 시 계류비 일부를
-  //   선납해야 자리가 유지된다. 계류 일수는 신원확인 여부로 갈린다(최소 10일 / 최소 30일).
+  //   선납해야 자리가 유지된다. 계류 일수는 마이크로칩 인증 여부로 갈린다(최소 10일 / 최소 30일).
   // 예약 확인 자료가 보호자에게 남으므로 첨부를 허용한다(괌 예약확인서와 같은 취급).
   {
     id: 'au-quarantine-reservation',
@@ -1117,7 +1134,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '계류시설 예약',
     shortLabel: '계류장',
     description:
-      '멜버른 Mickleham 계류시설에 계류를 예약하세요.\n\n수입 허가를 받은 뒤에 예약할 수 있어요.\n예약할 때 계류 비용의 일부를 미리 내야 자리가 유지돼요.\n신원확인을 마쳤으면 최소 10일, 받지 않았으면 최소 30일 계류해요.',
+      '멜버른 Mickleham 계류시설에 계류를 예약하세요.\n\n수입 허가를 받은 뒤에 예약할 수 있어요.\n예약할 때 계류 비용의 일부를 미리 내야 자리가 유지돼요.\n마이크로칩 인증을 마쳤으면 최소 10일, 받지 않았으면 최소 30일 계류해요.',
     doneSummary: '계류시설을 예약했어요.',
     cardLine: '계류시설을 예약하세요.',
     applicability: { destinations: ['australia'], species: 'all', tripType: 'all' },

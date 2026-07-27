@@ -55,7 +55,7 @@ import {
  *  - 종 필터는 run() 안에서 caseRow.data.species 로 가드
  *
  * 종별 차이 (Group 3 cat guide 전문 확인, 2026-07-27) — **고양이가 더 단순하다**:
- *   같음 — 마이크로칩·신원확인(10일/30일)·광견병 84일·RNATT 180일/12개월·수입허가·
+ *   같음 — 마이크로칩·마이크로칩 인증(10일/30일)·광견병 84일·RNATT 180일/12개월·수입허가·
  *          Mickleham 계류·화물 운송·내부구충(45일 2회·14일 간격·5일 이내)·최종검진 5일
  *   다름 — CIV **없음** / 렙토 Canicola **없음** / 리슈만편모충·브루셀라 **없음** /
  *          종합백신(FVRCP)은 "optional, not mandatory" / 외부구충 시작이 **21일 전**(개 30일)
@@ -77,7 +77,7 @@ function isIntact(caseRow: CaseRow): boolean {
 }
 
 /**
- * 신원확인일(Identity Declaration) — 여정 카드(au-identity-check)가 저장하는 `id_date`.
+ * 마이크로칩 인증일(Identity Declaration) — 여정 카드(au-identity-check)가 저장하는 `id_date`.
  * by_dest(목적지별) → top-level → legacy `australia_extra.id_date` 순.
  *
  * readAustraliaExtra 는 legacy 중첩 경로만 읽어서, 앱에서 새로 입력한 값을 못 본다
@@ -123,7 +123,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
-      'ISO 호환 마이크로칩이 광견병 1차 접종일 이전이어야 함. DAFF 3.1 — 공식수의사가 매 방문·모든 채혈 전에 칩을 스캔하고 모든 서류에 번호를 기재한다. 검사 결과지의 칩 번호 정정은 인정되지 않음.',
+      'ISO 호환 마이크로칩이 광견병 1차 접종일 이전이어야 함. DAFF 3.1 — 승인 수의사가 매 방문·모든 채혈 전에 칩을 스캔하고 모든 서류에 번호를 기재한다. 검사 결과지의 칩 번호 정정은 인정되지 않음.',
     severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
@@ -144,15 +144,15 @@ export const AU_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 신원확인 (Identity Declaration) ──
+  // ── 마이크로칩 인증 (Identity Declaration) ──
   // 선택 절차지만 계류 10일/30일을 가른다. 순서 위반은 **회복 경로가 없다**(채혈 후 소급 불가).
   {
     id: 'au.identity-check-before-titer',
     country: COUNTRY,
     category: '마이크로칩',
-    title: '신원확인은 항체 검사 채혈 이전 · 다른 날',
+    title: '마이크로칩 인증은 항체 검사 채혈 이전 · 다른 방문',
     description:
-      'DAFF 3.2 — "Do this before having blood taken for the RNATT. An identity check cannot be done at the same vet visit as the RNATT." 같은 날 방문도 인정되지 않으므로 `id_date < 모든 채혈일` 로 엄격 판정. 채혈이 끝난 뒤에는 소급 적용되지 않아 계류 30일이 확정된다.',
+      'DAFF 3.2 — "Do this before having blood taken for the RNATT. An identity check cannot be done at the same **vet visit** as the RNATT." ⚠️ 금지 단위는 **방문**이지 날짜가 아니다(2026-07-27 정정). 오전 검역본부 → 오후 동물병원처럼 하루에 나눠 받는 건 위반이 아니라, 같은 날을 위반으로 단정하면 안 된다. 앱은 날짜만 저장해 순서·방문 분리를 확인할 수 없으므로 두 갈래로 나눈다: 채혈일 < 인증일 = **위반**(소급 불가, 계류 30일 확정) / 같은 날 = **확인 요청**(순서와 별도 방문 여부는 보호자만 안다).',
     severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
@@ -160,18 +160,32 @@ export const AU_CHECKS: ProcedureCheck[] = [
       const titers = readTiterEntries(caseRow)
       if (!idDate || titers.length === 0) return SKIP
 
-      const violations = titers.filter((t) => t.date <= idDate)
-      if (violations.length > 0) {
+      // ① 채혈이 인증보다 앞선 경우 — 명확한 위반(소급 적용 불가).
+      const after = titers.filter((t) => t.date < idDate)
+      if (after.length > 0) {
         const offendingPaths = ['id_date']
-        for (const t of violations) offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
+        for (const t of after) offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
         return {
           ok: false,
           message:
-            '신원확인은 항체 검사 채혈 전에, 채혈과 다른 날에 받아야 해요. 같은 날이거나 채혈 이후면 계류가 최소 30일이 돼요.',
+            '마이크로칩 인증은 항체 검사 채혈 전에 받아야 해요. 채혈이 끝난 뒤에는 소급되지 않아 계류가 최소 30일이 돼요.',
           offendingPaths,
         }
       }
-      return { ok: true, message: `신원확인일(${idDate}) < 모든 채혈일.` }
+      // ② 같은 날 — 규정이 금지하는 건 '같은 방문'이라 날짜만으로는 판정할 수 없다.
+      //   위반이라 단정하지 않고 확인만 요청한다(추측 단정 금지).
+      const sameDay = titers.filter((t) => t.date === idDate)
+      if (sameDay.length > 0) {
+        const offendingPaths = ['id_date']
+        for (const t of sameDay) offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
+        return {
+          ok: false,
+          message:
+            '마이크로칩 인증과 항체 검사 채혈 날짜가 같아요. 두 절차를 같은 방문에서 받으면 인증이 인정되지 않아요. 인증을 먼저, 다른 방문에서 받았는지 확인하세요.',
+          offendingPaths,
+        }
+      }
+      return { ok: true, message: `마이크로칩 인증일(${idDate}) < 모든 채혈일.` }
     },
   },
 
