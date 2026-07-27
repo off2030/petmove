@@ -1316,7 +1316,10 @@ export function StepDetailView({
       // generalVaccineOneYearOnly 파생).
       if (generalVaccineOneYearOnly && generalVaccine.some((e) => isMultiYearValidity(e.valid_until))) {
         const ko = (destinationKey && destinationKoLabel(destinationKey)) || '이 여행지'
-        return `${ko} 입국 시 종합백신은 1년까지만 유효합니다. 면역 유효기간을 1년으로 선택하세요.`
+        // 켄넬코프도 이 분기를 공유하므로 백신 이름을 카드에 맞춘다 — 고정하면 켄넬코프 카드에
+        //   '종합백신은…' 이 나간다. 지금은 1년국(홍콩)이 켄넬코프를 요구하지 않아 잠재 함정이다.
+        const vaccineKo = isKennelCough ? '켄넬코프는' : '종합백신은'
+        return `${ko} 입국 시 ${vaccineKo} 1년까지만 유효합니다. 면역 유효기간을 1년으로 선택하세요.`
       }
       for (const e of generalVaccine) {
         // 출생일 이전 접종 — 논리적 불가능 조건이라 저장 거부.
