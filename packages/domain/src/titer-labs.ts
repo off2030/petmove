@@ -51,6 +51,11 @@ const TITER_LAB_CODES_BY_DEST: Record<string, string[]> = {
   //   Schedule I·II 국가 승인 기관만 인정 → Kansas State 만 제시(사용자 지정 2026-07-25).
   //   카드 문구("국내에 검사기관이 없어서…")와 짝. '기타'(직접 입력)는 UI 가 덧붙인다.
   singapore: ['ksvdl_r'],
+  // ⚠️ 뉴질랜드·호주는 **일부러 넣지 않는다** — 기본값(농림축산검역본부·코미팜)이 곧 정답이다.
+  //   뉴질랜드 IHS 2.1.3 guidance 가 인정하는 검사실은 ① 수출국 competent authority 승인
+  //   ② EU Commission 승인 ③ WOAH 광견병 표준검사실인데, 한국은 농림축산검역본부(정부
+  //   검사실)가 ①, 코미팜이 ②에 해당해 기본 선택지와 같다. 같은 값을 여기 또 적으면
+  //   "이 나라만 특별하다"는 오해를 남긴다. 싱가포르처럼 **기본값과 다를 때만** 등록할 것.
   // 유럽 패밀리(EEA·영국·스위스 등 EU_ENTRY_FAMILY): EU 인정 양식(apqa_eu) + 코미팜.
   ...Object.fromEntries(EU_ENTRY_FAMILY.map((k) => [k, ['apqa_eu', 'krsl']])),
   // EU 24개국('eu')은 농림축산검역본부(apqa_eu)만 — 코미팜 제외('기타'는 UI 가 덧붙임).

@@ -200,6 +200,48 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: [],
   },
 
+  // ── 2-2. 뉴질랜드 마이크로칩 인증 (Pre-export identification check) ─────────
+  // IHS 1.11(4) — category 3 는 **필수**다(호주의 같은 이름 절차가 계류를 줄이는 선택
+  //   절차인 것과 다르다. 여기 빠지면 수입 허가 자체가 나오지 않는다: 1.13 + 지원문서
+  //   "a pre-export identification check form must have been entered into our online system
+  //    by an official veterinarian before we can issue an import permit").
+  // 횟수가 **항체 채혈 시점에 따라 갈린다**:
+  //   · 채혈이 출국 6~12개월 전  → 검역관 스캔 **1회**, 채혈 전에.
+  //   · 채혈이 출국 3~6개월 전   → 검역관 스캔 **2회**. 1회차는 출국 6개월 전까지,
+  //                               2회차는 채혈 전에.
+  // ⚠️ 호주와 헷갈리지 말 것 — 뉴질랜드는 "The blood sample for the RNATT can be taken on
+  //   the same day as the microchip scan"(1.11 guidance)로 **같은 날을 명시 허용**한다.
+  //   호주는 반대로 같은 방문에서 못 한다. 두 나라 문구를 서로 복사하지 말 것.
+  // 서류는 수출국 competent authority(검역본부)가 **MPI 로 직접 보낸다** — 보호자가 사본을
+  //   받지 못하므로 첨부 없이 날짜 + '완료' 버튼으로 끝낸다(호주와 같은 모델).
+  {
+    id: 'nz-identity-check',
+    category: 'preparation',
+    title: '마이크로칩 인증',
+    shortLabel: '인증',
+    description:
+      '동물검역소에서 검역관에게 마이크로칩 인증(Pre-export identification check)을 받으세요.\n\n검역관이 마이크로칩을 확인하고 확인서를 뉴질랜드 검역당국(MPI)에 직접 보내요.\n광견병 항체 검사 채혈 전에 받아야 해요. 채혈과 같은 날에 받아도 돼요.\n채혈일이 출국 6개월 이내라면 인증을 두 번 받아요. 첫 번째는 출국 6개월 전까지, 두 번째는 채혈 전에 받아요.\n인증이 MPI에 등록되어야 수입 허가를 받을 수 있어요.',
+    doneSummary: '마이크로칩 인증을 받았어요.',
+    cardLine: '마이크로칩 인증을 받으세요.',
+    applicability: { destinations: ['new_zealand'], species: 'all', tripType: 'all' },
+    order: 25,
+    // 필드는 호주와 같은 `id_date` — 같은 사실(검역관이 칩을 확인한 날)이고 destination-scoped
+    //   등록도 이미 돼 있다. 2회 인증 케이스는 **첫 인증일**을 적는다(helpText 로 안내).
+    done: 'dated:id_date',
+    buttonComplete: true,
+    inputs: [
+      {
+        key: 'id_date',
+        label: '인증일',
+        type: 'date',
+        helpText: '검역관이 마이크로칩을 확인한 날짜 (두 번 받는 경우 첫 번째 날짜)',
+      },
+    ],
+    // 검증 없음 — 호주와 같은 이유(2026-07-27). 앱은 날짜 하나만 저장해 1회/2회 분기와
+    //   '채혈 전' 순서를 확정 판정할 수 없다. 채혈 창(3~12개월)은 항체·항공권 카드가 본다.
+    validationIds: [],
+  },
+
   // ── 3. 광견병 백신 1차 ─────────────────────────────────────────────────
   {
     id: 'rabies-vaccine-1',
@@ -1169,6 +1211,46 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['au.quarantine-reservation-matches-entry'],
   },
 
+  // ── 뉴질랜드 계류시설 예약 — 수입 허가 신청 **전** ──────────────────────────
+  // IHS 1.13.2(1)(d) — 수입 허가 신청 서류에 "Signed quarantine booking form"이 들어간다.
+  //   그래서 호주(허가 → 예약)와 **순서가 반대**다: 예약(42) → 허가(44).
+  // 계류는 마이크로칩 인증 여부와 무관하게 **최소 10일**이다(1.15(3)(a)). 호주처럼 10일/30일로
+  //   갈리지 않으니 그 문장을 복사해 오지 말 것.
+  // 시설이 공항 인수·MPI 도착 통보를 대신한다(지원문서 Notify MPI — "You are not required to
+  //   give notification of arrival of your dog. The quarantine facility will do this for you").
+  {
+    id: 'nz-quarantine-reservation',
+    category: 'permit',
+    title: '계류시설 예약',
+    shortLabel: '계류장',
+    description:
+      '뉴질랜드 검역당국(MPI)이 승인한 계류시설에 계류를 예약하세요.\n\n최소 10일 계류해요.\n서명된 예약 확인서가 있어야 수입 허가를 신청할 수 있어요.\n비용과 면회·급여 규칙은 시설마다 다르니 미리 확인하세요.\n공항에서 시설까지의 이동과 MPI 도착 통보는 시설이 대신해요.',
+    doneSummary: '계류시설을 예약했어요.',
+    cardLine: '계류시설을 예약하세요.',
+    applicability: { destinations: ['new_zealand'], species: 'all', tripType: 'all' },
+    order: 42,
+    done: 'dated:nz_quarantine_reservation_date',
+    buttonComplete: true,
+    inputs: [
+      {
+        key: 'nz_quarantine_reservation_date',
+        label: '계류 시작일',
+        type: 'date',
+        helpText: '예약한 계류 시작 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '계류시설 예약확인서를 사진·PDF로 보관하세요.',
+    attachmentLabel: '뉴질랜드 계류시설 예약확인서',
+    links: [
+      {
+        url: 'https://www.mpi.govt.nz/news-and-resources/resources/registers-and-lists/registered-quarantine-facilities/',
+        label: 'MPI 승인 계류시설 목록',
+      },
+    ],
+    validationIds: ['nz.quarantine-reservation-matches-entry'],
+  },
+
   // ── 사전 신고 다음 — 일본 수출 검역 (왕복 케이스 한정) ──────────────
   {
     id: 'jp-export-quarantine',
@@ -1347,6 +1429,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: {
       destinations: destinationsWithVaccine('heartworm'),
       species: 'all',
+      // 뉴질랜드는 **강아지 전용** — IHS 2.11 조항 제목이 "Heartworm (Dirofilaria immitis)
+      //   **(dogs)**" 다(2026-07-27 원문 확인). 괌은 종전대로 두 종 모두.
+      speciesByDestination: { new_zealand: 'dog' },
       tripType: 'all',
     },
     order: 108,
@@ -1392,8 +1477,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       destinations: destinationsWithVaccine('infectious_disease'),
       species: 'all',
       // 호주는 **강아지 전용** — Group 3 고양이 가이드에 리슈만편모충·브루셀라·렙토 검사가
-      //   아예 없다(2026-07-27 원문 확인). 뉴질랜드·남아공은 종전대로 두 종 모두.
-      speciesByDestination: { australia: 'dog' },
+      //   아예 없다(2026-07-27 원문 확인).
+      // 뉴질랜드도 **강아지 전용** — IHS 2026 Part 2 에서 바베시아(2.5~2.7)·브루셀라(2.8)·
+      //   리슈만편모충(2.12)·렙토스피라(2.13) 조항 제목이 전부 "(dogs)" 다(2026-07-27 원문 확인).
+      //   남아공은 종전대로 두 종 모두.
+      speciesByDestination: { australia: 'dog', new_zealand: 'dog' },
       tripType: 'all',
     },
     order: 70,
@@ -2010,6 +2098,48 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     validationIds: ['au.export-quarantine-before-return'],
+  },
+
+  // ── 뉴질랜드 수출 증명 (왕복 케이스 한정) ─────────────────────────────────
+  // 뉴질랜드는 출국 절차를 **정부가 강제한다**(강제 O) — MPI "Requirement documents for pets
+  //   leaving NZ": "If you're exporting live animals, you're legally required to get an Animal
+  //   Welfare Export Certificate (AWEC)." 한국 입국용 수출 건강증명서는 MPI 보안용지 서식으로
+  //   발급되고, 서명 권한이 있는 수의사가 따로 정해져 있다.
+  // ⚠️ **확정 일정(며칠 전 신청 등)은 아직 1차 출처로 확인하지 못했다.** MPI 는 목적국별
+  //   OMAR 를 따로 두는데 한국 OMAR 존재 여부가 확인되지 않아, 문구에 숫자를 넣지 않았다.
+  //   확인되면 이 카드에 '출국 N일 전까지' 를 넣을 것(호주 NOI 10영업일과 같은 자리).
+  // 버튼 완료 카드 — 보호자가 아는 것은 '증명서를 받았다'는 사실이라 발급일 하나로 끝낸다.
+  {
+    id: 'nz-export-quarantine',
+    category: 'document',
+    title: '뉴질랜드 수출 증명',
+    shortLabel: '수출',
+    description:
+      '뉴질랜드에서 출국하기 전에 수출 증명 서류를 받으세요.\n\n살아 있는 동물을 뉴질랜드 밖으로 보내려면 동물복지 수출증명서(AWEC)가 반드시 필요해요.\n\n한국 입국에 필요한 수출 건강증명서도 함께 받아요. MPI 보안용지에 인쇄된 서식으로 발급돼요.\n\n어느 동물병원에서 발급받을 수 있는지, 언제까지 신청해야 하는지는 MPI나 운송업체에 미리 확인하세요.',
+    doneSummary: '뉴질랜드 수출 증명을 받았어요.',
+    cardLine: '뉴질랜드 수출 증명을 받으세요.',
+    applicability: { destinations: ['new_zealand'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'dated:nz_export_quarantine_date',
+    buttonComplete: true,
+    inputs: [
+      {
+        key: 'nz_export_quarantine_date',
+        label: '발급일',
+        type: 'date',
+        helpText: '수출 증명 서류를 발급받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '수출증명서·건강증명서 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '뉴질랜드 수출증명서·건강증명서',
+    links: [
+      {
+        url: 'https://www.mpi.govt.nz/take-or-send-from-nz/pets-leaving-nz/',
+        label: '반려동물 수출 절차 안내 (MPI)',
+      },
+    ],
+    validationIds: ['nz.export-quarantine-before-return'],
   },
 
   // ── 싱가포르 수출 검역 (왕복 — 귀국 출국 시, 싱가포르 전용) ───────

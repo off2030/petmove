@@ -411,6 +411,26 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/australia-18.webp',
     '/destinations/australia-19.webp',
   ],
+  뉴질랜드: [
+    // Unsplash 15장(목적지별 사진/뉴질랜드 폴더 원본, 2026-07-27 등록). 파일명 abc순.
+    // ⚠️ 리드(첫 장)는 **아직 사용자가 고르지 않았다** — 현재는 abc순 첫 장이 리드다.
+    //   컨택트시트 검수 후 지정하면 그 파일을 맨 위로 올릴 것(호주 australia-09 와 같은 방식).
+    '/destinations/newzealand-01.webp',
+    '/destinations/newzealand-02.webp',
+    '/destinations/newzealand-03.webp',
+    '/destinations/newzealand-04.webp',
+    '/destinations/newzealand-05.webp',
+    '/destinations/newzealand-06.webp',
+    '/destinations/newzealand-07.webp',
+    '/destinations/newzealand-08.webp',
+    '/destinations/newzealand-09.webp',
+    '/destinations/newzealand-10.webp',
+    '/destinations/newzealand-11.webp',
+    '/destinations/newzealand-12.webp',
+    '/destinations/newzealand-13.webp',
+    '/destinations/newzealand-14.webp',
+    '/destinations/newzealand-15.webp',
+  ],
   미국: [
     // 사용자 선별 Unsplash 15장(목적지별 사진/미국 폴더 원본).
     // 리드(첫 장) = usa-14(금문교 노을) — 2026-07-26 사용자 지정. 나머지는 파일명 abc순 유지.

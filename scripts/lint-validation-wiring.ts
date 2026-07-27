@@ -91,6 +91,7 @@ const ORPHAN_RULE_OK: Record<string, string> = {
   'il.banned-breeds': '동물 속성 — 특정 단계 없음',
   'sg.banned-breeds': '동물 속성 — 특정 단계 없음',
   'au.banned-breeds': '동물 속성 — 특정 단계 없음(개 5종·늑대 교잡 4종 / 고양이 교잡 4종)',
+  'nz.banned-breeds': '동물 속성 — 특정 단계 없음(Dog Control Act 1996 개 5종)',
   // 이스라엘 3마리+ 사전 Import License — 보호자 단위 조건이라 단계가 없다(운영자 전용 staff).
   'il.import-license-3plus-pets': '보호자 단위 조건 — 특정 단계 없음',
   // 아랍에미리트 개인당 연간 2마리 한도 — 보호자 단위 조건이라 단계가 없다.

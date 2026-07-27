@@ -142,6 +142,8 @@ const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
   mongolia: '예: 울란바토르 UBN',
   uzbekistan: '예: 타슈켄트 TAS',
   canada: '예: 밴쿠버 YVR',
+  // 뉴질랜드는 오클랜드·크라이스트처치 두 공항에만 도착할 수 있다(IHS 지원문서 Arrival).
+  new_zealand: '예: 오클랜드 AKL',
   argentina: '예: 부에노스아이레스 EZE',
   morocco: '예: 카사블랑카 CMN',
   mexico: '예: 멕시코시티 MEX',

@@ -1,43 +1,72 @@
 import type { CaseRow } from '../types'
 import type { ProcedureCheck } from './types'
-import type { VaccineEntry } from './utils'
-import { msgMicrochipBeforeRabies } from './messages'
 import {
   addMonths,
   daysBetween,
+  findRabiesValidityBreaks,
+  matchBannedBreed,
+  readBreed,
   readCivEntries,
   readExternalParasiteEntries,
-  readGeneralVaccineEntries,
   readHeartwormEntries,
   readInfectiousDiseaseEntries,
   readInternalParasiteEntries,
-  readKennelCoughEntries,
   readRabiesEntries,
+  readScopedImportPermitFiled,
   readTiterEntries,
   resolveValidUntil,
   SKIP,
   readDepartureDate,
-  readVetVisitDate,
 } from './utils'
+import { readByDestValue } from '../destination-scoped-fields'
+import { validateImportPermitNotAfterDeparture } from '../journey-steps/date-rules'
+import {
+  msgExportQuarantineAfterReturn,
+  msgExportQuarantineBeforeEntry,
+  msgMicrochipBeforeRabies,
+  msgRabiesPrimeMinAge,
+  msgTiterBeforeVaccine,
+} from './messages'
 
 /**
  * 뉴질랜드 (MPI — Ministry for Primary Industries) 절차 검증.
  *
- * 한국 = **Category 3** (rabies absent or well-controlled).
- * 출처: mpi.govt.nz — "Bringing your dog/cat to New Zealand" Category 3 support docs.
+ * 한국 = **category 3**(rabies absent or well-controlled). 1차 출처 전문 확인(2026-07-27):
+ *  - Import Health Standard: Cats and Dogs 2026 (CATSDOGS.GEN, 2026-05-12 서명 / 2026-07-01 발효)
+ *  - "Bringing your Dog to New Zealand — Dogs from category 3 countries" 지원문서 + 체크리스트
  *
- * ⚠️ 검역 (post-entry quarantine) = 입국 후 최소 10일 (MPI-approved facility).
- *  → 면역 유효기간 룰은 출국 + 10일까지 cover 해야 함.
- *  → `valid_until ≥ dep + 10일` (디폴트 1년 = 접종일의 1주년 당일까지 유효, AU 와 동일).
+ * ⚠️ 2026-07-27 전면 개정 — 이 파일은 **구 IHS(2021) 기준**으로 2026-05-06 에 작성돼 있었고,
+ *   신 IHS 에서 바뀐 값들이 그대로 남아 있었다. 정정 목록:
+ *   ① **항체 채혈 창 3~24개월 → 3~12개월.** 24개월 상한은 폐지됐다(2.1.3(3)).
+ *      상한을 넉넉히 잡아 두면 **규정 위반 일정을 통과시킨다** — 가장 위험한 오류였다.
+ *   ② **광견병 최소 연령이 '캘린더 3개월'이었다.** 신 IHS 는 "at least 12 weeks of age"(84일).
+ *   ③ **면역 유효 기준이 '출국 + 계류 10일'이었다.** 규정은 "must remain continuously valid
+ *      **until shipment**"(2.1.3(2)) 뿐이다. 계류 기간까지 유효를 요구하는 건 CIV 백신 하나다
+ *      (2.9(2)(a)(i)). 종합·켄넬코프에 붙어 있던 10일 cushion 도 근거가 없어 삭제.
+ *   ④ **내부구충 2차 4일 → 5일**(2.3(1)(b)), **심장사상충 투약 4일 → 5일**(2.11(2)(a)).
+ *   ⑤ **외부구충이 '1차 30일 이내 + 2차 2일 이내'였다.** 신 IHS 2.2(2)는 기준이 다르다 —
+ *      1차는 **바베시아 채혈 14일 전까지**, 마지막은 **출국 16일 이내**.
+ *   ⑥ **전염병 검사 16일 → 30일**(2.7·2.8·2.12·2.13 모두 "in the 30 days before shipment").
+ *   ⑦ **CIV 가 '의무 아님'으로 적혀 있었다.** 신 IHS 2.9(2)는 위험국 목록(MPI-STD-SAA)에
+ *      한국을 넣었다 — 지원문서 제목 그대로 "Dogs from Canada, Korea (Republic) and USA only".
+ *      **접종 또는 출국 10일 이내 PCR** 중 하나가 필수다.
+ *   ⑧ 종합백신·켄넬코프는 **MPI 요건이 아니다**(계류시설 요구사항) → 날짜 룰 삭제.
+ *   ⑨ severity 를 전부 info → warning 으로(타임라인 '주의'에 뜨게). 신설: 마이크로칩 인증 이후
+ *      절차인 항체 순서·수입허가·계류 예약·도착 검역·수입 금지 품종.
  *
- * 컨벤션 (NZ 전용 — MPI 텍스트 그대로):
+ * 경과 규정(1.19) — 2026-07-01 ~ 2027-04-01 은 구 IHS 로도 통관되지만 앱은 **신 IHS 하나만**
+ *   판정한다. 두 벌을 동시에 통과시키면 어느 쪽으로 준비 중인지 알 수 없고, 2027-04-01 이후엔
+ *   신 기준만 남는다. 지금 준비를 시작하는 고객은 신 기준으로 가야 안전하다.
+ *
+ * 컨벤션: au 와 동일.
  *  - 필수 입력 누락 시 SKIP
- *  - MPI 원문 "in the X days prior to shipment" = 출국 X일 전까지 cover → `dep - date ≤ X`
- *    (예: 30일 → ≤30, 16일 → ≤16, 4일 → ≤4, 2일 → ≤2)
- *    AU/EU/SG 의 N-1 strict 컨벤션과 다름 — MPI Cat3 Cert A 원문 §12·13·14·16·27 의
- *    "in the X days prior" 표현이 경계일(30일 전, 4일 전 등)을 명시 허용하기 때문.
- *  - "이상" 경계는 inclusive (≥6개월 → `addMonths(date, 6) ≤ dep`)
+ *  - MPI "in the X days before shipment" = `dep - date ≤ X`(경계일 포함). 체크리스트가
+ *    '30일 전 / 16일 전 / 5일 전' 구간을 그대로 행으로 나눠 놓아 경계일을 허용한다.
+ *  - "not less than N months" 는 캘린더(`addMonths`) 기준
  *  - 종 필터는 run() 안에서 caseRow.data.species 로 가드
+ *
+ * 고양이는 아직 다루지 않았다(사용자 지시 '우선 강아지부터'). 고양이 전용 차이는 별도 확인
+ *   후 반영할 것 — 신 IHS 상 개 전용 조항은 2.4·2.5·2.6·2.7·2.8·2.10·2.11·2.12·2.13 이다.
  */
 
 const COUNTRY = 'new_zealand'
@@ -45,6 +74,45 @@ const COUNTRY = 'new_zealand'
 function species(caseRow: CaseRow): string {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   return typeof data.species === 'string' ? data.species : ''
+}
+
+/** 중성화하지 않은 개체(브루셀라 검사 대상) — sex 가 male/female 이면 entire. */
+function isIntact(caseRow: CaseRow): boolean {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const sex = typeof data.sex === 'string' ? data.sex : ''
+  return sex === 'male' || sex === 'female'
+}
+
+/** by_dest 우선 · 없으면 top-level 인 날짜 리더(호주와 같은 형태). */
+function readScopedDate(caseRow: CaseRow, destination: string | null | undefined, key: string): string {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const scoped = readByDestValue(data, destination ?? null, key)
+  if (typeof scoped === 'string') return scoped.slice(0, 10)
+  if (scoped === null) return ''
+  const raw = data[key]
+  return typeof raw === 'string' ? raw.slice(0, 10) : ''
+}
+
+/**
+ * 현재 유효한 '1차 접종'(primary) 을 찾는다.
+ *
+ * IHS 2.1.3 guidance — "A 'primary' rabies vaccination is the first vaccination ... **or** the
+ * first vaccination given if the previous vaccination(s) did not remain continuously valid."
+ * 즉 chain 이 끊기면 그 다음 접종이 새 1차가 되고, 출국 6개월 전 하한이 **거기서 다시 시작**한다.
+ *
+ * ⚠️ 구 룰(nz.rabies-primary-min-6months-before)은 접종이 2회 이상이면 "booster chain 이니
+ *   적용 제외"로 무조건 통과시켰다. 그래서 **만료 후 재접종(= 새 1차)을 놓쳤다** — 정확히
+ *   6개월 하한이 필요한 경우인데 검사를 건너뛰고 있었다.
+ */
+function findOperativePrimary(entries: ReturnType<typeof readRabiesEntries>) {
+  if (entries.length === 0) return null
+  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date))
+  let primary = sorted[0]
+  for (let i = 1; i < sorted.length; i++) {
+    const prevValid = resolveValidUntil(sorted[i - 1].date, sorted[i - 1].valid_until)
+    if (!prevValid || sorted[i].date > prevValid) primary = sorted[i]
+  }
+  return primary
 }
 
 export const NZ_CHECKS: ProcedureCheck[] = [
@@ -55,10 +123,10 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
-      '마이크로칩(ISO 11784/11785)이 광견병 1차 접종일 이전이어야 함. 모든 검사·접종·시술 전 칩 verify 필수. (MPI Category 3 OVD)',
-    severity: 'info',
+      'ISO 호환 마이크로칩(11784 / Annex A of 11785)이 광견병 1차 접종일 이전이어야 함. IHS 2.1.3(1) — 광견병 접종과 항체 채혈 **양쪽 시점에** 수의사가 칩 번호를 확인·기록해야 한다. 999 로 시작하는 번호는 고유성이 보장되지 않아 인정되지 않는다(지원문서 Microchip).',
+    severity: 'warning',
     addedAt: '2026-05-06',
-    run: ({ caseRow, destination }) => {
+    run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -78,42 +146,93 @@ export const NZ_CHECKS: ProcedureCheck[] = [
 
   // ── 광견병 ──
   {
-    id: 'nz.rabies-prime-after-3months-old',
+    id: 'nz.rabies-prime-after-84days',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종 생후 3개월령(캘린더) 이상',
+    title: '광견병 1차 접종 생후 84일(12주) 이상',
     description:
-      '광견병 1차 접종은 생년월일 기준 캘린더 3개월(`addMonths(birth, 3)`) 이후. (MPI: "at least three months old" — 월 단위 명시이므로 일수 근사 대신 정확한 캘린더 월 계산.)',
-    severity: 'info',
-    addedAt: '2026-05-06',
-    run: ({ caseRow, destination }) => {
+      'IHS 2.1.3(2) — "vaccinated or revaccinated for rabies by a veterinarian when the animal was at least 12 weeks of age". 불활화(inactivated) 또는 재조합(recombinant) 백신이어야 한다. ⚠️ 구 룰의 "캘린더 3개월"은 구 IHS 표현이라 2026-07-27 에 84일로 정정했다.',
+    severity: 'warning',
+    addedAt: '2026-07-27',
+    run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      const earliestValid = addMonths(birth, 3)
-      if (!earliestValid) return SKIP
       const age = daysBetween(birth, first.date)
-      if (first.date < earliestValid) {
+      if (age === null) return SKIP
+      if (age < 84) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 3개월령(${earliestValid}) 이전이에요. 생후 ${age ?? '?'}일이에요.`,
+          message: msgRabiesPrimeMinAge('84일'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) ≥ 3개월령(${earliestValid}). 생후 ${age}일.` }
+      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${age}일령.` }
     },
   },
   {
-    id: 'nz.rabies-valid-through-quarantine',
+    id: 'nz.rabies-booster-within-prime-validity',
     country: COUNTRY,
     category: '광견병',
-    title: '출국일 + 검역 10일까지 광견병 면역 유효',
+    title: '광견병 추가 접종은 직전 접종 유효기간 이내',
     description:
-      '입국 후 10일 검역(최소) 종료까지 광견병 면역이 유지되어야 함. `valid_until ≥ dep + 10일`. 디폴트 1년(접종일의 1주년 당일까지). valid_until 명시 시 override. (MPI: "no more than 12 months prior to travel" + 10-day quarantine)',
-    severity: 'info',
+      'IHS 2.1.3(2) — "The vaccination(s) must remain continuously valid until shipment." 만료 후 접종은 chain 이 끊겨 **새 1차**가 되고, 그 순간 출국 6개월 하한이 다시 시작된다(2.1.3(2) 마지막 문장). 저장 거부(findRabiesChainBreak)의 짝이 되는 주의 — 펫무브워크는 저장을 막지 않아 이 룰이 없으면 끊긴 chain 이 운영자 화면에서 안 보인다.',
+    severity: 'warning',
+    addedAt: '2026-07-27',
+    run: ({ caseRow }) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length < 2) return SKIP
+      const offending = findRabiesValidityBreaks(rabies)
+      if (offending.length > 0) {
+        return {
+          ok: false,
+          message: '광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.',
+          offendingPaths: offending,
+        }
+      }
+      return { ok: true, message: '모든 인접 광견병 도즈가 직전 접종 유효기간 이내.' }
+    },
+  },
+  {
+    id: 'nz.rabies-primary-min-6months-before',
+    country: COUNTRY,
+    category: '광견병',
+    title: '1차 접종은 출국 6개월 이전',
+    description:
+      'IHS 2.1.3(2) — "In the case of a primary vaccination, the vaccine must be given not less than 6 months before the date of shipment." 유효기간 안에 맞은 추가 접종(booster)에는 적용되지 않지만, **만료 후 재접종은 새 1차**라 6개월을 다시 기다려야 한다. 이 하한 때문에 개는 출국 시 생후 9개월 이상이 된다.',
+    severity: 'warning',
+    addedAt: '2026-05-06',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
+      const rabies = readRabiesEntries(caseRow)
+      if (!dep || rabies.length === 0) return SKIP
+
+      const primary = findOperativePrimary(rabies)
+      if (!primary) return SKIP
+      const earliestDep = addMonths(primary.date, 6)
+      if (!earliestDep) return SKIP
+      if (earliestDep <= dep) {
+        return { ok: true, message: `1차 접종(${primary.date}) + 6개월(${earliestDep}) ≤ 출국일(${dep}).` }
+      }
+      return {
+        ok: false,
+        message:
+          '광견병 1차 접종일로부터 6개월이 지난 후에 출국할 수 있어요. 출국일을 다시 확인하세요.',
+        offendingPaths: ['departure_date', `rabies_dates[${primary.originalIndex}].date`],
+      }
+    },
+  },
+  {
+    id: 'nz.rabies-valid-until-departure',
+    country: COUNTRY,
+    category: '광견병',
+    title: '출국일까지 광견병 면역 유효',
+    description:
+      'IHS 2.1.3(2) — "must remain continuously valid **until shipment**". ⚠️ 구 룰은 "출국 + 계류 10일"까지 요구했는데 그런 조항이 없다(2026-07-27 정정). 계류 기간까지 유효를 요구하는 건 CIV 백신 하나뿐이다(2.9(2)(a)(i)).',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -123,151 +242,93 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return SKIP
-      const cushion = daysBetween(dep, validUntil)
-      if (cushion === null) return SKIP
-      if (cushion < 10) {
+      if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})과 출국일(${dep})의 차이가 ${cushion}일이라 검역 10일을 cover할 수 없어요.`,
+          message:
+            '출국일까지 광견병 면역 유효기간이 남아 있어야 해요. 유효기간이 끝나기 전에 추가 접종을 받고 기록하세요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 출국 + 10일 (cushion ${cushion}일).` }
+      return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
     },
   },
+
+  // ── 광견병 항체 검사 (RNATT) ──
   {
-    id: 'nz.rabies-primary-min-6months-before',
+    id: 'nz.titer-after-rabies',
     country: COUNTRY,
     category: '광견병',
-    title: '1차 접종(primary)은 출국일 6개월 이전',
+    title: '항체 검사는 광견병 접종 이후 채혈',
     description:
-      '1차 접종(primary)인 경우 출국일 6개월 이전이어야 함. 부스터(booster, 직전 접종 만료 전 추가 접종)에는 미적용. (MPI: primary "no less than 6 months ... prior to travel"). 단일 접종 = 1차로 간주.',
-    severity: 'info',
-    addedAt: '2026-05-06',
-    run: ({ caseRow, destination }) => {
-      const dep = readDepartureDate(caseRow, destination)
+      'RNATT 는 접종으로 생긴 항체를 확인하는 검사라 접종 이후에만 의미가 있다. **최소 대기 일수는 두지 않는다** — IHS 2.1.3 guidance 의 "3-4 weeks" 는 권고이고, 이미 접종해 온 개는 더 일찍 채혈할 수 있다("this may not be necessary").',
+    severity: 'warning',
+    addedAt: '2026-07-27',
+    run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
-      if (!dep || rabies.length === 0) return SKIP
+      const titers = readTiterEntries(caseRow)
+      if (rabies.length === 0 || titers.length === 0) return SKIP
 
-      // 단일 접종 = 1차. 다회 접종은 booster chain 으로 간주 — 별도 chain 룰에서 검사.
-      if (rabies.length > 1) {
-        return { ok: true, message: '복수 접종 기록 — booster chain 으로 평가 (이 룰 적용 제외).' }
+      const offendingPaths: string[] = []
+      for (const t of titers) {
+        const prior = rabies.filter((r) => r.date <= t.date)
+        if (prior.length === 0) offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
       }
-
-      const primary = rabies[0]
-      const earliestValidDep = addMonths(primary.date, 6)
-      if (earliestValidDep <= dep) {
-        const days = daysBetween(primary.date, dep)
-        return { ok: true, message: `1차 접종(${primary.date}) + 6개월(${earliestValidDep}) ≤ 출국일(${dep}). ${days}일 경과.` }
+      if (offendingPaths.length > 0) {
+        return { ok: false, message: msgTiterBeforeVaccine(), offendingPaths }
       }
-      const days = daysBetween(primary.date, dep)
-      return {
-        ok: false,
-        message: `1차 접종(${primary.date}) + 6개월(${earliestValidDep})이 출국일(${dep})보다 늦어요. ${days}일밖에 되지 않아요.`,
-        offendingPaths: ['departure_date', `rabies_dates[${primary.originalIndex}].date`],
-      }
+      return { ok: true, message: '모든 채혈일 이전에 광견병 접종 기록이 있어요.' }
     },
   },
   {
-    id: 'nz.rabies-booster-chain-intact',
+    id: 'nz.titer-3to12months-before-departure',
     country: COUNTRY,
     category: '광견병',
-    title: '부스터 chain 끊김 없음 (직전 접종 만료 전 부스터)',
+    title: 'RNATT 채혈은 출국 3~12개월 전',
     description:
-      '각 부스터 접종은 직전 접종의 유효기간 만료 전이어야 함. 만료 후 접종은 1차로 간주(primary 6-12개월 룰 적용). (MPI: "must be administered before the previous rabies vaccination has expired")',
-    severity: 'info',
-    addedAt: '2026-05-06',
-    run: ({ caseRow, destination }) => {
-      const rabies = readRabiesEntries(caseRow)
-      if (rabies.length < 2) return SKIP
-
-      const breaks: Array<{ prev: typeof rabies[number]; curr: typeof rabies[number]; prevValid: string }> = []
-      for (let i = 1; i < rabies.length; i++) {
-        const prev = rabies[i - 1]
-        const curr = rabies[i]
-        const prevValidUntil = resolveValidUntil(prev.date, prev.valid_until)
-        if (curr.date > prevValidUntil) {
-          breaks.push({ prev, curr, prevValid: prevValidUntil })
-        }
-      }
-      if (breaks.length > 0) {
-        const offending: string[] = []
-        const msgs: string[] = []
-        for (const b of breaks) {
-          offending.push(
-            `rabies_dates[${b.prev.originalIndex}].date`,
-            `rabies_dates[${b.curr.originalIndex}].date`,
-          )
-          msgs.push(`${b.curr.date} 접종이 직전 접종(${b.prev.date})의 유효기간(${b.prevValid}) 만료 후에 이루어져 1차로 간주돼요.`)
-        }
-        return {
-          ok: false,
-          message: msgs.join(' / '),
-          offendingPaths: Array.from(new Set(offending)),
-        }
-      }
-      return { ok: true, message: '모든 부스터가 직전 접종 만료 전 시점.' }
-    },
-  },
-  // ── RNATT (광견병 항체 검사) ──
-  {
-    id: 'nz.rnatt-3to24months-before-departure',
-    country: COUNTRY,
-    category: '광견병',
-    title: 'RNATT 채혈은 출국일 3~24개월 전',
-    description:
-      'RNATT 채혈일이 출국일로부터 최소 3개월, 최대 24개월 이내여야 함. (MPI: "not less than 3 months and not more than 24 months prior to departing")',
-    severity: 'info',
+      'IHS 2.1.3(3) — "on a sample taken by a veterinarian **not less than 3 months and not more than 12 months** before the date of shipment, with a result of at least 0.5 IU/mL". ⚠️ 구 룰은 상한이 **24개월**이었다(구 IHS 값). 상한이 넉넉하면 규정 위반 일정을 통과시키므로 가장 먼저 정정했다(2026-07-27). 하한 3개월은 저장 거부(validateEuEntryDate, titer.entryWaitAfterTiter.months=3)와 같은 값이다.',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
-      // 가장 유리한 채혈 = 3~24개월 범위 안에 들어가는 것. 하나라도 통과하면 OK.
+      // 하나라도 3~12개월 창을 만족하면 통과.
       const valid = titers.find((t) => {
         const lower = addMonths(t.date, 3)
-        const upper = addMonths(t.date, 24)
-        return lower <= dep && upper >= dep
+        const upper = addMonths(t.date, 12)
+        return !!lower && !!upper && lower <= dep && upper >= dep
       })
       if (valid) {
         const days = daysBetween(valid.date, dep)
-        return { ok: true, message: `RNATT(${valid.date}) → 출국일(${dep}): ${days}일 (3-24개월 범위 안).` }
+        return { ok: true, message: `RNATT(${valid.date}) → 출국일(${dep}): ${days}일 (3~12개월 창 안).` }
       }
 
-      // 모두 실패 — 가장 최신 기준 메시지
       const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
       const lower = addMonths(newest.date, 3)
-      const upper = addMonths(newest.date, 24)
       const days = daysBetween(newest.date, dep)
       const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-      const reason =
-        days === null
-          ? '날짜 형식이 올바르지 않아요.'
-          : days < 0
-            ? `채혈일(${newest.date})이 출국일(${dep}) 이후예요.`
-            : lower > dep
-              ? `RNATT(${newest.date}) + 3개월(${lower})이 출국일(${dep})보다 늦어 3개월에 미달해요.`
-              : `RNATT(${newest.date}) + 24개월(${upper})이 출국일(${dep})보다 빨라 24개월을 초과하므로 추가 검사가 필요해요.`
-      return {
-        ok: false,
-        message: reason,
-        offendingPaths: offending,
-      }
+      const message =
+        days !== null && days < 0
+          ? '항체 검사 채혈일이 출국일보다 늦어요. 날짜를 확인하세요.'
+          : lower && lower > dep
+            ? '항체 검사 채혈일로부터 3개월이 지난 후에 출국할 수 있어요. 출국일을 다시 확인하세요.'
+            : '항체 검사 결과는 채혈일부터 12개월간 유효해요. 출국일까지 유효하지 않으니 재채혈이 필요해요.'
+      return { ok: false, message, offendingPaths: offending }
     },
   },
-  // (≥0.5 IU/ml 결과치 룰은 의도적 제외 — 검사기관에서 이미 fail 결과 나옴, 시스템 검증 불필요)
 
-  // ── 강아지 전용: 9개월 ──
+  // ── 강아지 최소 연령 ──
   {
     id: 'nz.dog-min-9months-on-departure',
     country: COUNTRY,
     category: '일정',
-    title: '출국일 시점 강아지 9개월 이상',
+    title: '출국일 시점 강아지 생후 9개월 이상',
     description:
-      '강아지 전용. 출국일 기준 만 9개월 이상이어야 함. (MPI: "be 9 months of age or older on the date of travel")',
-    severity: 'info',
+      '지원문서 Rabies vaccination — "dogs will be at least 9 months of age before they can be sent to New Zealand". 12주 접종 + 1차 6개월 대기 + 채혈 3개월 창이 겹쳐 나오는 결과값이라 별도 조항이 아니라 **하한들의 합**이지만, 고객이 가장 먼저 부딪히는 벽이라 룰로 둔다.',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       if (species(caseRow) !== 'dog') return SKIP
@@ -277,173 +338,232 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (!dep || !birth) return SKIP
 
       const earliestDep = addMonths(birth, 9)
+      if (!earliestDep) return SKIP
       if (earliestDep <= dep) {
         return { ok: true, message: `생년월일(${birth}) + 9개월(${earliestDep}) ≤ 출국일(${dep}).` }
       }
       return {
         ok: false,
-        message: `생년월일(${birth}) + 9개월(${earliestDep})이 출국일(${dep})보다 늦어 9개월에 미달해요.`,
+        message: '뉴질랜드에는 생후 9개월이 지난 후에 갈 수 있어요. 출국일을 다시 확인하세요.',
         offendingPaths: ['departure_date', 'birth_date'],
       }
     },
   },
 
-  // ── 구충 ──
+  // ── 수입 허가 · 계류 ──
   {
-    id: 'nz.internal-parasite-protocol',
+    id: 'nz.import-permit-not-after-departure',
     country: COUNTRY,
-    category: '구충',
-    title: '내부구충 2회 (1차 30일 이내, 2차 4일 이내, 14일+ 간격)',
+    category: '수입허가',
+    title: '수입 허가 신청일, 출국일 순서',
     description:
-      '내부구충 2회: 1차 출국 30일 이내(`≤30`) + 2차 출국 4일 이내(`≤4`), 도즈 간격 ≥14일(2주). nematodes + cestodes 효과 제품. (MPI Cat3 Cert A §12: 1st "in the 30 days prior", 2nd "in the four days prior", "at least two weeks" apart)',
-    severity: 'info',
-    addedAt: '2026-05-06',
+      '수입 허가 신청일은 출국일 이전이어야 함(출국 당일·이후엔 신청 불가). 입력 차단(validateImportPermitNotAfterDeparture)과 같은 함수. IHS 1.13 guidance — "Apply ... at least 8 weeks before it is required. Allow 30 working days for processing after all required documents have been received."',
+    severity: 'warning',
+    addedAt: '2026-07-27',
     run: ({ caseRow, destination }) => {
-      const dep = readDepartureDate(caseRow, destination)
-      const entries = readInternalParasiteEntries(caseRow)
-      if (!dep) return SKIP
-      if (entries.length === 0) return SKIP
-      if (entries.length < 2) {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
+      const msg = validateImportPermitNotAfterDeparture(filed, dep)
+      if (msg) {
         return {
           ok: false,
-          message: `내부구충이 1회만 기록되어 있어요(${entries[0].date}). 2회가 필요해요.`,
-          offendingPaths: [`internal_parasite_dates[${entries[0].originalIndex}].date`],
+          message: msg,
+          offendingPaths: ['import_permit_application_date', 'departure_date'],
         }
       }
-
-      const dose1 = entries[entries.length - 2]
-      const dose2 = entries[entries.length - 1]
-      const dep1 = daysBetween(dose1.date, dep)
-      const dep2 = daysBetween(dose2.date, dep)
-      const interval = daysBetween(dose1.date, dose2.date)
-
-      const issues: string[] = []
-      const offending: string[] = []
-      if (dep1 === null || dep1 < 0 || dep1 > 30) {
-        issues.push(`1차(${dose1.date})부터 출국까지 ${dep1 ?? '?'}일이에요. 출국 30일 이내(0~30일 범위)여야 해요.`)
-        offending.push(`internal_parasite_dates[${dose1.originalIndex}].date`)
-      }
-      if (dep2 === null || dep2 < 0 || dep2 > 4) {
-        issues.push(`2차(${dose2.date})부터 출국까지 ${dep2 ?? '?'}일이에요. 출국 4일 이내(0~4일 범위)여야 해요.`)
-        offending.push(`internal_parasite_dates[${dose2.originalIndex}].date`)
-      }
-      if (interval === null || interval < 14) {
-        issues.push(`도즈 간격이 ${interval ?? '?'}일이에요. 14일 이상이어야 해요.`)
-        offending.push(
-          `internal_parasite_dates[${dose1.originalIndex}].date`,
-          `internal_parasite_dates[${dose2.originalIndex}].date`,
-        )
-      }
-      if (issues.length > 0) {
-        return { ok: false, message: issues.join(' / '), offendingPaths: Array.from(new Set(offending)) }
-      }
-      return {
-        ok: true,
-        message: `1차(${dose1.date}) → 2차(${dose2.date}): 간격 ${interval}일, 2차→출국 ${dep2}일.`,
-      }
+      return { ok: true, message: `신청일(${filed}) < 출국일(${dep || '미입력'}).` }
     },
   },
   {
-    id: 'nz.external-parasite-protocol',
+    id: 'nz.quarantine-reservation-matches-entry',
     country: COUNTRY,
-    category: '구충',
-    title: '외부구충 2회 (1차 30일 이내, 2차 2일 이내, 14일+ 간격)',
+    category: '검역',
+    title: '계류 시작일과 뉴질랜드 도착일 일치',
     description:
-      '외부구충 2회: 1차 출국 30일 이내(`≤30`) + 2차 출국 2일 이내(`≤2`), 도즈 간격 ≥14일(2주). ticks + fleas 효과 제품. (MPI Cat3 Cert A §13: 1st "in the 30 days prior", 2nd "in the two days prior", "at least two weeks" apart)',
-    severity: 'info',
-    addedAt: '2026-05-06',
+      'IHS 1.15(3) — 도착한 동물은 수입 허가에 적힌 계류시설로 **바로** 옮겨진다. 계류 시작일과 도착일이 다르면 예약이나 항공 일정 중 하나가 어긋난 것이다.',
+    severity: 'warning',
+    addedAt: '2026-07-27',
     run: ({ caseRow, destination }) => {
-      const dep = readDepartureDate(caseRow, destination)
-      const entries = readExternalParasiteEntries(caseRow)
-      if (!dep) return SKIP
-      if (entries.length === 0) return SKIP
-      if (entries.length < 2) {
+      const reserved = readScopedDate(caseRow, destination, 'nz_quarantine_reservation_date')
+      const entry = readScopedDate(caseRow, destination, 'entry_date')
+      if (!reserved || !entry) return SKIP
+      if (reserved !== entry) {
         return {
           ok: false,
-          message: `외부구충이 1회만 기록되어 있어요(${entries[0].date}). 2회가 필요해요.`,
-          offendingPaths: [`external_parasite_dates[${entries[0].originalIndex}].date`],
+          message: '계류 시작일과 뉴질랜드 도착일이 달라요. 예약 날짜와 항공 일정을 다시 확인하세요.',
+          offendingPaths: ['nz_quarantine_reservation_date', 'entry_date'],
         }
       }
-
-      const dose1 = entries[entries.length - 2]
-      const dose2 = entries[entries.length - 1]
-      const dep1 = daysBetween(dose1.date, dep)
-      const dep2 = daysBetween(dose2.date, dep)
-      const interval = daysBetween(dose1.date, dose2.date)
-
-      const issues: string[] = []
-      const offending: string[] = []
-      if (dep1 === null || dep1 < 0 || dep1 > 30) {
-        issues.push(`1차(${dose1.date})부터 출국까지 ${dep1 ?? '?'}일이에요. 출국 30일 이내(0~30일 범위)여야 해요.`)
-        offending.push(`external_parasite_dates[${dose1.originalIndex}].date`)
+      return { ok: true, message: `계류 시작일(${reserved}) = 도착일(${entry}).` }
+    },
+  },
+  {
+    id: 'nz.import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '뉴질랜드 수입 검역일',
+    description: '뉴질랜드 수입 검역(계류 시작)일은 뉴질랜드 도착일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-07-27',
+    run: ({ caseRow, destination }) => {
+      const raw = readScopedDate(caseRow, destination, 'nz_import_quarantine_date')
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const entry = readScopedDate(caseRow, destination, 'entry_date')
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '뉴질랜드 수입 검역일은 뉴질랜드 도착일보다 빠를 수 없어요. 날짜를 확인하세요.',
+          offendingPaths: ['nz_import_quarantine_date'],
+        }
       }
-      if (dep2 === null || dep2 < 0 || dep2 > 2) {
-        issues.push(`2차(${dose2.date})부터 출국까지 ${dep2 ?? '?'}일이에요. 출국 2일 이내(0~2일 범위)여야 해요.`)
-        offending.push(`external_parasite_dates[${dose2.originalIndex}].date`)
-      }
-      if (interval === null || interval < 14) {
-        issues.push(`도즈 간격이 ${interval ?? '?'}일이에요. 14일 이상이어야 해요.`)
-        offending.push(
-          `external_parasite_dates[${dose1.originalIndex}].date`,
-          `external_parasite_dates[${dose2.originalIndex}].date`,
-        )
-      }
-      if (issues.length > 0) {
-        return { ok: false, message: issues.join(' / '), offendingPaths: Array.from(new Set(offending)) }
-      }
-      return {
-        ok: true,
-        message: `1차(${dose1.date}) → 2차(${dose2.date}): 간격 ${interval}일, 2차→출국 ${dep2}일.`,
-      }
+      return { ok: true, message: `뉴질랜드 수입검역일(${raw}) 도착 이후.` }
     },
   },
 
-  // ── 강아지 전용: 심장사상충 ──
+  // ── 귀국 (왕복) ──
   {
-    id: 'nz.heartworm-treatment-within-4days',
+    id: 'nz.export-quarantine-before-return',
     country: COUNTRY,
-    category: '구충',
-    title: '심장사상충 예방 투약은 출국 4일 이내 (강아지)',
+    category: '검역',
+    title: '뉴질랜드 수출 증명일 순서',
     description:
-      '강아지 전용. 출국 4일 이내(`≤4`) 등록 예방약 투약 (또는 sustained-release injection). (MPI Cat3 Cert A §14(a): "in the four days prior to the date of shipment")',
-    severity: 'info',
+      '뉴질랜드 수출 증명(AWEC·수출 건강증명서 발급)일은 뉴질랜드 입국일 이후, 한국 귀국일 이전이어야 함. MPI — "If you\'re exporting live animals, you\'re legally required to get an Animal Welfare Export Certificate (AWEC)."',
+    severity: 'warning',
+    addedAt: '2026-07-27',
+    run: ({ caseRow, destination }) => {
+      const raw = readScopedDate(caseRow, destination, 'nz_export_quarantine_date')
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+
+      const entry = readScopedDate(caseRow, destination, 'entry_date')
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: msgExportQuarantineBeforeEntry('뉴질랜드'),
+          offendingPaths: ['nz_export_quarantine_date'],
+        }
+      }
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const ret = typeof data.return_date === 'string' ? data.return_date.slice(0, 10) : ''
+      if (ret && raw > ret) {
+        return {
+          ok: false,
+          message: msgExportQuarantineAfterReturn('뉴질랜드'),
+          offendingPaths: ['nz_export_quarantine_date', 'return_date'],
+        }
+      }
+      return { ok: true, message: `뉴질랜드 수출증명일(${raw}) 입국 이후·귀국 이전.` }
+    },
+  },
+
+  // ── 수입 금지 품종 ──
+  // 생물안전이 아니라 Dog Control Act 1996 소관이지만, 걸리면 입국 자체가 안 되므로
+  //   준비 착수 전에 걸러야 한다(지원문서 Eligibility / 체크리스트 6-12개월 구간).
+  {
+    id: 'nz.banned-breeds',
+    country: COUNTRY,
+    category: '서류',
+    title: '수입 금지 품종 (개 5종)',
+    description:
+      'Dog Control Act 1996 — 브라질리언 필라(Brazilian fila), 도고 아르헨티노(dogo Argentino), 도사견(Japanese tosa), 프레사 카나리오(perro de presa Canario), 아메리칸 핏불테리어. 교잡 자손도 포함("wholly or predominantly"). 별개로 늑대 등 야생종과의 교잡견은 EPA(환경보호청) 승인이 필요하다.',
+    severity: 'blocker',
+    addedAt: '2026-07-27',
+    run: ({ caseRow }) => {
+      if (species(caseRow) === 'cat') return SKIP
+      const breed = readBreed(caseRow)
+      if (!breed.ko && !breed.en) return SKIP
+      const banned = [
+        'fila brasileiro', 'brazilian fila', '필라 브라질레이로', '브라질리언 필라',
+        'dogo argentino', '도고 아르헨티노',
+        'japanese tosa', 'tosa', '도사',
+        'presa canario', '프레사 카나리오',
+        'pit bull', 'pitbull', '핏불',
+      ]
+      const match = matchBannedBreed(breed, banned)
+      if (match) {
+        return {
+          ok: false,
+          message: `"${breed.ko || breed.en}"은 뉴질랜드 수입 금지 품종이에요 (매치: ${match}).`,
+          offendingPaths: ['breed', 'breed_en'],
+        }
+      }
+      return { ok: true, message: `품종 "${breed.ko || breed.en}" 통과.` }
+    },
+  },
+
+  // ── 독감(CIV) — 한국 출발 강아지 필수 ──
+  // IHS 2.9(2) — CIV 위험국(MPI-STD-SAA 등재) 출발 개는 **백신 또는 출국 10일 이내 PCR** 중
+  //   하나가 필수다. 앱은 백신 기록만 저장하므로, PCR 을 택한 케이스는 이 카드가 비어 있고
+  //   두 룰 모두 SKIP 된다(빈 입력에 경고를 띄우지 않는다).
+  {
+    id: 'nz.civ-14days-before-departure',
+    country: COUNTRY,
+    category: '종합백신',
+    title: '독감(CIV) 백신은 출국 14일 전까지',
+    description:
+      'IHS 2.9(2)(a) — "fully vaccinated against canine influenza ... **between 12 months and 14 days** before the date of shipment". 지원문서가 대상국을 "Canada, Korea (Republic) and USA only" 로 명시한다. ⚠️ 구 룰은 CIV 를 "MPI 의무 아님 — 계류장 요구"로 적어 뒀는데 신 IHS 에서 **입국 요건**이 됐다(2026-07-27 정정).',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       if (species(caseRow) !== 'dog') return SKIP
       const dep = readDepartureDate(caseRow, destination)
-      const entries = readHeartwormEntries(caseRow)
+      const entries = readCivEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
       const latest = entries[entries.length - 1]
       const days = daysBetween(latest.date, dep)
       if (days === null) return SKIP
-      if (days < 0) {
+      if (days < 14) {
         return {
           ok: false,
-          message: `심장사상충 투약일(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.`,
-          offendingPaths: [`heartworm_dates[${latest.originalIndex}].date`],
+          message: '독감(CIV) 백신은 출국 14일 전까지 접종해야 해요.',
+          offendingPaths: [`civ_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
-      if (days > 4) {
-        return {
-          ok: false,
-          message: `최근 심장사상충 투약(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 출국 4일 이내(4일 전 이후)여야 해요.`,
-          offendingPaths: [`heartworm_dates[${latest.originalIndex}].date`],
-        }
+      return { ok: true, message: `최근 CIV(${latest.date}) → 출국(${dep}): ${days}일.` }
+    },
+  },
+  {
+    id: 'nz.civ-within-12months',
+    country: COUNTRY,
+    category: '종합백신',
+    title: '독감(CIV) 백신은 출국 12개월 이내',
+    description:
+      'IHS 2.9(2)(a) — "between 12 months and 14 days before the date of shipment" 로 상한도 있다. 더해서 (a)(i) "The vaccination must remain continuously valid for the **entire period in the post-arrival transitional facility**" — 계류(최소 10일)가 끝날 때까지 유효기간이 남아 있어야 한다. 12개월을 넘겼으면 출국 전 추가 접종이 필요하다.',
+    severity: 'warning',
+    addedAt: '2026-07-27',
+    run: ({ caseRow, destination }) => {
+      if (species(caseRow) !== 'dog') return SKIP
+      const dep = readDepartureDate(caseRow, destination)
+      const entries = readCivEntries(caseRow)
+      if (!dep || entries.length === 0) return SKIP
+
+      const withinYear = entries.find((e) => {
+        const upper = addMonths(e.date, 12)
+        return !!upper && upper >= dep
+      })
+      if (withinYear) {
+        return { ok: true, message: `CIV(${withinYear.date}) 출국 12개월 이내.` }
       }
-      return { ok: true, message: `최근 심장사상충 투약(${latest.date}) → 출국일(${dep}): ${days}일.` }
+      const latest = entries[entries.length - 1]
+      return {
+        ok: false,
+        message: '독감(CIV) 백신은 출국일 기준 12개월 이내에 접종한 기록이 있어야 해요. 추가 접종이 필요해요.',
+        offendingPaths: [`civ_dates[${latest.originalIndex}].date`, 'departure_date'],
+      }
     },
   },
 
-  // ── 강아지 전용: 전염병검사 ──
+  // ── 전염병 검사 — 강아지 전용 ──
   {
-    id: 'nz.infectious-disease-test-within-16days',
+    id: 'nz.infectious-disease-test-within-30days',
     country: COUNTRY,
     category: '검사',
-    title: '전염병검사는 출국 16일 이내 (강아지)',
+    title: '전염병 검사는 출국 30일 이내 (강아지)',
     description:
-      '강아지 전용. Babesia gibsoni (IFAT/ELISA) + Brucella canis (RSAT/TAT/CPAg-AGID) 검사가 출국 16일 이내(`≤16`). (MPI Cat3 Cert A §16~21: "negative result in the 16 days prior to the date of shipment"). 단일 검체일에 통합 처리됨.',
-    severity: 'info',
+      '바베시아 깁소니(2.7 IFA·ELISA + PCR) · 리슈만편모충(2.12) · 렙토스피라 Canicola MAT(2.13) · 브루셀라(2.8, 중성화 안 한 개체) 가 **모두** "in the 30 days before the date of shipment" 다. ⚠️ 구 룰은 16일이었다(구 IHS 값, 2026-07-27 정정). 생후 6개월 미만 개의 3회 PCR 대안(44일 창)은 앱이 회차를 구분하지 않아 판정하지 않는다.',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       if (species(caseRow) !== 'dog') return SKIP
@@ -457,129 +577,187 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (days < 0) {
         return {
           ok: false,
-          message: `검사일(${latest.date})이 출국일(${dep})보다 늦어요. 날짜를 확인하세요.`,
+          message: '전염병 검사일이 출국일보다 늦어요. 날짜를 확인하세요.',
           offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`],
         }
       }
-      if (days > 16) {
+      if (days > 30) {
         return {
           ok: false,
-          message: `최근 전염병검사(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 출국 16일 이내(16일 전 이후)여야 해요.`,
-          offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`],
+          message: '전염병 검사는 출국 30일 이내에 받아야 해요. 다시 검사받아야 할 수 있어요.',
+          offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
-      return { ok: true, message: `최근 전염병검사(${latest.date}) → 출국일(${dep}): ${days}일.` }
+      const note = isIntact(caseRow) ? ' (중성화 미실시 — 브루셀라 검사 포함 대상)' : ''
+      return { ok: true, message: `최근 전염병검사(${latest.date}) → 출국일(${dep}): ${days}일.${note}` }
+    },
+  },
+  {
+    id: 'nz.infectious-disease-test-after-external-parasite',
+    country: COUNTRY,
+    category: '검사',
+    title: '바베시아 채혈은 1차 외부구충 14일 이후 (강아지)',
+    description:
+      'IHS 2.7(1) — 바베시아 깁소니 검사는 "on samples taken **at least 14 days after the first external parasite treatment** and in the 30 days before the date of shipment". 2.2 guidance 는 이 14일 연속 보호가 깨지면 **외부구충과 바베시아 검사를 처음부터 다시** 해야 한다고 못박는다. 전염병 검사 카드가 바베시아를 포함하므로 그 채혈일을 기준으로 본다.',
+    severity: 'warning',
+    addedAt: '2026-07-27',
+    run: ({ caseRow }) => {
+      if (species(caseRow) !== 'dog') return SKIP
+      const infectious = readInfectiousDiseaseEntries(caseRow)
+      const external = readExternalParasiteEntries(caseRow)
+      if (infectious.length === 0 || external.length === 0) return SKIP
+
+      const first = external[0]
+      const sample = infectious[infectious.length - 1]
+      const gap = daysBetween(first.date, sample.date)
+      if (gap === null) return SKIP
+      if (gap < 14) {
+        return {
+          ok: false,
+          message:
+            '바베시아 검사 채혈은 1차 외부 기생충 치료 14일 후부터 할 수 있어요. 지금 채혈하면 외부 기생충 치료와 검사를 다시 해야 할 수 있어요.',
+          offendingPaths: [
+            `external_parasite_dates[${first.originalIndex}].date`,
+            `infectious_disease_records[${sample.originalIndex}].date`,
+          ],
+        }
+      }
+      return { ok: true, message: `1차 외부구충(${first.date}) → 채혈(${sample.date}): ${gap}일.` }
     },
   },
 
-  // ── 종합·켄넬코프 (출국 14일 이전 + 검역 10일 cushion) ──
-  buildAnnualVaccineRule({
-    id: 'nz.general-vaccine-14to364days',
-    label: '종합백신',
-    dataKey: 'general_vaccine_dates',
-    reader: readGeneralVaccineEntries,
-    dogOnly: false,
-  }),
-  buildAnnualVaccineRule({
-    id: 'nz.kennel-cough-14to364days',
-    label: '켄넬코프',
-    dataKey: 'kennel_cough_dates',
-    reader: readKennelCoughEntries,
-    dogOnly: true,
-    sourceNote: '(MPI 의무 아님 — 계류장 입소 시 1회 접종 요구.)',
-  }),
-
-  // ── CIV (강아지 한정, 1회 접종 — 계류장 요구사항) ──
-  buildAnnualVaccineRule({
-    id: 'nz.civ-1dose-14days',
-    label: 'CIV(개 독감)',
-    dataKey: 'civ_dates',
-    reader: readCivEntries,
-    dogOnly: true,
-    sourceNote: '(MPI Cert §26 은 백신 의무 X — 21일 격리/관찰만. 계류장 입소 시 1회 접종 요구.)',
-  }),
-
-  // ── 안내(경고) ──
+  // ── 구충 ──
   {
-    id: 'nz.continuous-residence-6months',
+    id: 'nz.external-parasite-protocol',
     country: COUNTRY,
-    category: '일정',
-    title: '출국 전 6개월 승인국 거주 (안내)',
+    category: '구충',
+    title: '외부구충 2회 (1차는 바베시아 채혈 14일 전, 마지막은 출국 16일 이내)',
     description:
-      'MPI: 출국 전 6개월간 승인 국가 연속 거주(또는 since birth). 시스템에 거주 기록 데이터 없음 → 안내 경고.',
+      'IHS 2.2(2) — 개는 진드기·벼룩 제품으로 **두 번** 처치한다. (a) 1차는 바베시아 채혈 **14일 전까지**, (b) 마지막은 출국 **16일 이내**, (c) 1차부터 출국일까지 제조사 지침대로 연속 보호, (d) 매 처치 시점과 출국 2일 전 검진에서 외부 기생충이 없어야 한다. ⚠️ 구 룰은 "1차 30일 이내 + 2차 2일 이내"였다(구 IHS 값, 2026-07-27 정정). (a) 는 짝 룰(nz.infectious-disease-test-after-external-parasite)이 채혈 쪽에서 판정한다 — 여기서 또 잡으면 같은 경고가 두 번 뜬다. (c) 연속 보호는 제품마다 지속일이 달라 판정하지 않는다.',
     severity: 'warning',
     addedAt: '2026-05-06',
-    run: () => ({
-      ok: true,
-      message: '출국 전 6개월 승인국 연속 거주(또는 since birth) 여부 별도 확인 필요.',
-    }),
-  },
-]
-
-/**
- * 종합·독감·켄넬코프 공통 룰 빌더.
- * - 최근 접종 ≥ 출국 14일 전 (`dep - latest ≥ 14`)
- * - 검역 종료까지 면역 유효 (`valid_until ≥ dep + 10일` cushion, 디폴트 1년 = 1주년 당일까지)
- * - dogOnly = true 시 강아지에만 적용 (고양이는 SKIP)
- * - 1회 접종으로 충분 (다회 접종 시 가장 최근 도즈 기준)
- *
- * MPI: "검역기간 종료 시점까지 유효" — PEQ 10일 cushion 적용. 광견병 룰과 통일.
- */
-function buildAnnualVaccineRule(opts: {
-  id: string
-  label: string
-  dataKey: 'general_vaccine_dates' | 'civ_dates' | 'kennel_cough_dates'
-  reader: (cr: CaseRow) => VaccineEntry[]
-  dogOnly: boolean
-  sourceNote?: string
-}): ProcedureCheck {
-  const speciesNote = opts.dogOnly ? ' (강아지)' : ''
-  const speciesPrefix = opts.dogOnly ? '강아지 전용. ' : ''
-  const sourceSuffix = opts.sourceNote ? ` ${opts.sourceNote}` : ''
-  return {
-    id: opts.id,
-    country: COUNTRY,
-    category: '종합백신',
-    title: `${opts.label} 출국 14일 이전 + 검역 10일 cover${speciesNote}`,
-    description: `${speciesPrefix}최근 ${opts.label} 접종이 출국일 14일 이전 + 검역(10일) 종료까지 면역 유효 (cushion ≥10일). 1회 접종으로 충분. 디폴트 1년(1주년 당일까지). valid_until 명시 시 override.${sourceSuffix}`,
-    severity: 'info',
-    addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
-      if (opts.dogOnly && species(caseRow) !== 'dog') return SKIP
       const dep = readDepartureDate(caseRow, destination)
-      const entries = opts.reader(caseRow)
+      const entries = readExternalParasiteEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
-
-      const latest = entries[entries.length - 1]
-      const toDep = daysBetween(latest.date, dep)
-      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
-
-      const issues: string[] = []
-      if (toDep === null) {
-        return { ok: false, message: '날짜 형식이 올바르지 않아요.', offendingPaths: [`${opts.dataKey}[${latest.originalIndex}].date`] }
-      }
-      if (toDep < 0) {
-        issues.push(`최근 접종(${latest.date})이 출국일(${dep})보다 늦어요.`)
-      } else if (toDep < 14) {
-        issues.push(`최근 접종(${latest.date})부터 출국까지 ${toDep}일이에요. 14일 이상이어야 해요.`)
-      }
-      if (validUntil) {
-        const cushion = daysBetween(dep, validUntil)
-        if (cushion === null || cushion < 10) {
-          issues.push(`유효기간(${validUntil})과 출국일(${dep})의 차이가 ${cushion ?? '?'}일이라 검역 10일을 cover할 수 없어요.`)
-        }
-      }
-      if (issues.length > 0) {
+      // 2회는 **개 요건**이다(2.2(2)). 고양이는 2.2(1) 로 **한 번**이면 되므로 회수를 묻지 않는다 —
+      //   여기서 개 기준을 그대로 적용하면 규정대로 준비한 고양이를 잘못 잡는다.
+      if (species(caseRow) === 'dog' && entries.length < 2) {
         return {
           ok: false,
-          message: issues.join(' / '),
-          offendingPaths: ['departure_date', `${opts.dataKey}[${latest.originalIndex}].date`],
+          message: '외부 기생충 치료는 두 번 받아야 해요.',
+          offendingPaths: [`external_parasite_dates[${entries[0].originalIndex}].date`],
         }
+      }
+
+      const last = entries[entries.length - 1]
+      const toDep = daysBetween(last.date, dep)
+      if (toDep === null) return SKIP
+      if (toDep < 0) {
+        return {
+          ok: false,
+          message: '외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.',
+          offendingPaths: [`external_parasite_dates[${last.originalIndex}].date`],
+        }
+      }
+      if (toDep > 16) {
+        return {
+          ok: false,
+          message: '마지막 외부 기생충 치료는 출국 16일 이내에 해야 해요.',
+          offendingPaths: [`external_parasite_dates[${last.originalIndex}].date`, 'departure_date'],
+        }
+      }
+      return { ok: true, message: `마지막 외부구충(${last.date}) → 출국(${dep}): ${toDep}일 (총 ${entries.length}회).` }
+    },
+  },
+  {
+    id: 'nz.internal-parasite-protocol',
+    country: COUNTRY,
+    category: '구충',
+    title: '내부구충 2회 (1차 30일 이내, 14일 이상 간격, 2차 5일 이내)',
+    description:
+      'IHS 2.3(1) — 선충·조충(Echinococcus 포함) 제품으로 두 번. "The first treatment must be given in the 30 days before the date of shipment and at least 14 days before the second treatment ... The second treatment must be given in the **5 days** before the date of shipment." ⚠️ 구 룰의 2차 4일은 구 IHS 값이다(2026-07-27 정정). 폐충(Angiostrongylus vasorum, 2.4)도 출국 5일 이내라 2차와 같은 방문에서 함께 처치한다.',
+    severity: 'warning',
+    addedAt: '2026-05-06',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
+      const entries = readInternalParasiteEntries(caseRow)
+      if (!dep || entries.length === 0) return SKIP
+      if (entries.length < 2) {
+        return {
+          ok: false,
+          message: '내부 기생충 치료는 출국 30일 이내에 2회 받아야 해요.',
+          offendingPaths: [`internal_parasite_dates[${entries[0].originalIndex}].date`],
+        }
+      }
+
+      const dose1 = entries[entries.length - 2]
+      const dose2 = entries[entries.length - 1]
+      const dep1 = daysBetween(dose1.date, dep)
+      const dep2 = daysBetween(dose2.date, dep)
+      const interval = daysBetween(dose1.date, dose2.date)
+
+      const issues: string[] = []
+      const offending: string[] = []
+      if (dep1 === null || dep1 < 0 || dep1 > 30) {
+        issues.push('1차 치료는 출국 30일 이내여야 해요.')
+        offending.push(`internal_parasite_dates[${dose1.originalIndex}].date`)
+      }
+      if (dep2 === null || dep2 < 0 || dep2 > 5) {
+        issues.push('2차 치료는 출국 5일 이내여야 해요.')
+        offending.push(`internal_parasite_dates[${dose2.originalIndex}].date`)
+      }
+      if (interval === null || interval < 14) {
+        issues.push('두 번의 치료는 14일 이상 벌어져야 해요.')
+        offending.push(
+          `internal_parasite_dates[${dose1.originalIndex}].date`,
+          `internal_parasite_dates[${dose2.originalIndex}].date`,
+        )
+      }
+      if (issues.length > 0) {
+        return { ok: false, message: issues.join(' '), offendingPaths: Array.from(new Set(offending)) }
       }
       return {
         ok: true,
-        message: `최근 접종(${latest.date}) → 출국(${dep}): ${toDep}일, 유효기간 ${validUntil} (검역 cushion OK).`,
+        message: `1차(${dose1.date}) → 2차(${dose2.date}): 간격 ${interval}일, 2차→출국 ${dep2}일.`,
       }
     },
-  }
-}
+  },
+
+  // ── 심장사상충 — 강아지 전용 ──
+  {
+    id: 'nz.heartworm-within-30days',
+    country: COUNTRY,
+    category: '구충',
+    title: '심장사상충 검사·투약은 출국 30일 이내 (강아지)',
+    description:
+      'IHS 2.11 — 두 요건이 한 카드에 들어간다. (1) 생후 7개월 이상이면 ELISA 검사를 "on a sample taken in the 30 days before the date of shipment", (2) 모든 개는 예방약을 "in the 5 days before the date of shipment"(지속형 주사가 유효하면 면제). 카드 입력칸이 날짜 배열 하나(heartworm_dates)라 **바깥 창인 30일만** 판정한다 — 5일로 잡으면 검사일만 적은 정상 케이스를 오차단한다. 5일 투약 요건은 카드 문구가 안내한다.',
+    severity: 'warning',
+    addedAt: '2026-05-06',
+    run: ({ caseRow, destination }) => {
+      if (species(caseRow) !== 'dog') return SKIP
+      const dep = readDepartureDate(caseRow, destination)
+      const entries = readHeartwormEntries(caseRow)
+      if (!dep || entries.length === 0) return SKIP
+
+      const latest = entries[entries.length - 1]
+      const days = daysBetween(latest.date, dep)
+      if (days === null) return SKIP
+      if (days < 0) {
+        return {
+          ok: false,
+          message: '심장사상충 검사일이 출국일보다 늦어요. 날짜를 확인하세요.',
+          offendingPaths: [`heartworm_dates[${latest.originalIndex}].date`],
+        }
+      }
+      if (days > 30) {
+        return {
+          ok: false,
+          message: '심장사상충 검사는 출국 30일 이내에 받아야 해요. 예방약은 출국 5일 이내에 투여해요.',
+          offendingPaths: [`heartworm_dates[${latest.originalIndex}].date`, 'departure_date'],
+        }
+      }
+      return { ok: true, message: `최근 심장사상충 기록(${latest.date}) → 출국일(${dep}): ${days}일.` }
+    },
+  },
+]

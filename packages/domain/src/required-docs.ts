@@ -956,6 +956,118 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'kr-import-quarantine',
     },
   ],
+  // 뉴질랜드 — IHS 1.14 "The documentation and declarations that must accompany a cat or dog"
+  //   + category 3 개 지원문서 'On the day of travel' 체크리스트(2026-07-27 원문 확인).
+  //   순서는 그 체크리스트 순서(허가 → 증명서 → 검사 결과지 → 접종 기록 → 선언서)를 따른다.
+  // ⚠️ 계류시설 예약확인서는 서류 탭에 두지 않는다 — 검역 서류가 아니라 **허가 신청에 첨부하는
+  //   예약 증빙**이다(괌 검역시설 예약과 같은 처리). 카드 첨부는 임의 보관용으로 남는다.
+  '뉴질랜드': [
+    {
+      id: 'nz-import-permit-doc',
+      name: '뉴질랜드 수입 허가증(Import Permit)',
+      source: '뉴질랜드 검역당국(MPI)',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        '수입 허가 신청이 승인되면 발급돼요.\n\n한 번의 운송(consignment)에 한 장이 필요하고, 배서 없는 사본도 인정돼요.\n\n허가서에 적힌 계류시설로 바로 옮겨져요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'import-permit',
+    },
+    {
+      id: 'nz-entry-health-cert',
+      name: '뉴질랜드 건강증명서(Model Veterinary Certificate)',
+      source: '동물병원 · 농림축산검역본부',
+      kind: 'manual',
+      issuanceStepId: 'vet-visit',
+      description:
+        '뉴질랜드 입국용 수의 건강증명서예요. category 3 서식을 써요.\n\n출국 2일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인·서명을 받아요.\n\n모든 장에 검역관의 원본 도장·서명·날짜가 필요하고, 영문으로 작성해야 해요.\n\n모든 서류에 마이크로칩 번호가 적혀 있어야 해요.',
+    },
+    {
+      id: 'nz-rcf',
+      name: '광견병 증명서(RCF)',
+      source: '동물병원 · 농림축산검역본부',
+      kind: 'manual',
+      issuanceStepId: 'rabies-titer',
+      description:
+        '항체 검사 결과가 나온 뒤 발급받는 뉴질랜드 전용 서식이에요.\n\n정확한 서류 이름은 Rabies Certification Form (RCF) 예요.\n\n마이크로칩 삽입일·확인일, 마이크로칩 번호, 광견병 접종일, 채혈일, 항체 검사 결과가 들어가요. 동물병원 수의사가 작성·서명하고 검역관이 서명·날인해요.\n\n수입 허가를 신청할 때 함께 제출해요.',
+    },
+    {
+      id: 'nz-rabies-titer-result',
+      name: '광견병 항체 검사 결과지(RNATT)',
+      source: '검사기관',
+      kind: 'step',
+      stepRef: 'rabies-titer',
+      description:
+        '검사를 의뢰한 동물병원을 통해 발급받아요.\n\n마이크로칩 번호, 채혈일과 검사기관 도착일, 검사 종류, 결과가 들어가야 해요.\n\n수입 허가를 신청할 때 제출하고, 출국할 때도 원본이 함께 가야 해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'rabies-titer',
+    },
+    {
+      id: 'nz-rabies-vaccination-record',
+      name: '광견병 접종 기록',
+      source: '동물병원',
+      kind: 'step',
+      stepRef: 'rabies-vaccine-1',
+      description:
+        '마이크로칩 번호, 접종일, 백신 이름, 면역 유효기간, 백신 제조번호와 유효기간, 수의사 이름·서명·병원명이 들어가야 해요.\n\n수입 허가를 신청할 때 제출하고, 출국할 때도 함께 가야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'rabies-vaccine-1',
+    },
+    {
+      id: 'nz-infectious-disease-result',
+      name: '전염병 검사 결과지',
+      source: '검사기관',
+      kind: 'step',
+      stepRef: 'infectious-disease-test',
+      species: 'dog',
+      description:
+        '출국 30일 이내에 받은 검사 결과지예요.\n\n바베시아 깁소니·리슈만편모충·렙토스피라 Canicola 결과지는 모든 강아지가 필요해요.\n\n중성화하지 않았다면 브루셀라 결과지도 필요해요. 중성화했다면 수의사가 서명한 중성화 증명서를 준비해요.\n\n마이크로칩 번호, 채혈일과 검사기관 도착일, 검사 종류, 결과가 들어가야 해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'infectious-disease-test',
+    },
+    {
+      id: 'nz-civ-doc',
+      name: '독감(CIV) 백신증명서 또는 검사 결과지',
+      source: '동물병원 · 검사기관',
+      kind: 'step',
+      stepRef: 'civ-vaccine',
+      species: 'dog',
+      description:
+        '한국에서 출발하는 강아지는 둘 중 하나가 필요해요.\n\n접종했다면 CIV H3N8·H3N2에 효과가 있는 백신증명서를 준비해요. 출국 14일 전까지, 12개월 이내 접종이어야 하고 계류가 끝날 때까지 유효해야 해요.\n\n접종하지 않았다면 출국 10일 이내에 받은 PCR 검사 음성 결과지를 준비해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'civ-vaccine',
+    },
+    {
+      id: 'nz-owner-declarations',
+      name: '보호자 선언서',
+      source: '보호자 작성',
+      kind: 'manual',
+      species: 'dog',
+      description:
+        '보호자가 직접 작성해 서명하는 서류로, 세 가지가 필요해요.\n\n개 인플루엔자 선언서 — 출국 전 21일 동안 호흡기 질환 증상을 보이는 개·고양이가 있는 곳에 있지 않았고, 우리 아이도 증상이 없었다는 내용이에요.\n\n바베시아 로시 선언서 — 아프리카 본토에 산 적도, 다녀온 적도 없다는 내용이에요.\n\n브루셀라 선언서 — 중성화하지 않았다면, 검사 채혈 전 30일부터 출국일까지 교배하지 않았다는 내용이에요.\n\n서식은 뉴질랜드 수입위생기준(IHS) 부록에 있어요.',
+    },
+    // 접종 및 건강증명서(별지 제25호) — 한국 공식 양식(전 목적지 공통).
+    KR_FORM25_VACCINATION_HEALTH_CERT,
+    {
+      id: 'nz-kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      group: 'quarantine',
+      description:
+        '한국 수출 검역 후 발급돼요.\n\n반려동물과 함께 원본이 뉴질랜드로 가야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'certificate-issue',
+    },
+    {
+      id: 'nz-export-quarantine-cert',
+      name: '뉴질랜드 수출증명서·건강증명서',
+      source: '뉴질랜드 검역당국(MPI)',
+      kind: 'step',
+      stepRef: 'nz-export-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '뉴질랜드에서 출국하기 전에 받는 서류예요.\n\n살아 있는 동물을 내보내려면 동물복지 수출증명서(AWEC)가 반드시 필요하고, 한국 입국용 수출 건강증명서도 함께 받아요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요. 앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'nz-export-quarantine',
+    },
+    KR_IMPORT_QUARANTINE_CERT,
+  ],
   // 중국 — 공통(별지25·항체결과·한국 수출/수입 검역증) + 중국 고유 동물위생증명서(귀국용).
   // 중국은 항체검사가 입국 요건(비지정국)이라 roundTripOnly 아님. 입국 시 중국이 발급하는
   // 별도 증서는 없음(해관 확인만) — 그래서 '중국 수입 검역증' 항목은 두지 않는다.

@@ -8,6 +8,7 @@ import {
   APP_DEST_ASIA,
   APP_DEST_EU,
   APP_DEST_AMERICA,
+  APP_DEST_OCEANIA,
   APP_DEST_OTHER,
 } from '@/lib/site-data'
 
@@ -64,6 +65,12 @@ export function DestGrid() {
       <div className="dest-region">아메리카</div>
       <div className="grid" style={{ marginTop: 0 }}>
         {APP_DEST_AMERICA.map((d) => (
+          <Dest key={d} name={d} />
+        ))}
+      </div>
+      <div className="dest-region">오세아니아</div>
+      <div className="grid" style={{ marginTop: 0 }}>
+        {APP_DEST_OCEANIA.map((d) => (
           <Dest key={d} name={d} />
         ))}
       </div>

@@ -288,9 +288,15 @@ export const APP_DEST_EU = [
 // 2026-07-26 **미국 본토 승격**(SOON→지원) — domain 은 2026-07-25 부터 appSupported: true 인데
 //   랜딩만 '곧 지원'에 남아 있어 앱에서 고를 수 있는 나라를 미지원으로 안내하고 있었다.
 export const APP_DEST_AMERICA = ['멕시코', '미국', '브라질', '아르헨티나', '캐나다', '하와이']
+// 오세아니아 — 2026-07-27 호주·뉴질랜드 승격(SOON→지원)으로 신설. 둘 다 domain 이
+// appSupported: true 라 앱에서 고를 수 있는데, 랜딩만 '곧 지원'에 남으면 지원하는 나라를
+// 미지원으로 안내하게 된다(미국·캐나다에서 반복된 어긋남). 가나다순.
+export const APP_DEST_OCEANIA = ['뉴질랜드', '호주']
 // '곧 지원' — 위 목록에 든 나라를 여기 남기면 같은 나라가 두 번 나온다. 캐나다는 뺐다.
 // 2026-07-25 싱가포르·하와이 승격으로 제거. 2026-07-26 미국 승격으로 제거.
-export const APP_DEST_SOON = ['호주', '뉴질랜드']
+// 2026-07-27 호주·뉴질랜드 승격으로 **비었다** — 비면 랜딩의 '2026년 추가 예정' 블록 자체가
+// 렌더되지 않는다(page.tsx). 다음 예정 국가가 생기면 여기에 넣으면 블록이 다시 나온다.
+export const APP_DEST_SOON: string[] = []
 
 /**
  * 상단 지표 '지원 여행지' 숫자 — 위 네 그룹에서 **자동 계산**한다(2026-07-26).
@@ -300,7 +306,11 @@ export const APP_DEST_SOON = ['호주', '뉴질랜드']
  * 지표가 저절로 오른다. 반올림('50+')이 아니라 실제 값이라 '+' 를 붙이지 않는다.
  */
 export const APP_DEST_TOTAL =
-  APP_DEST_ASIA.length + APP_DEST_EU.length + APP_DEST_AMERICA.length + APP_DEST_OTHER.length
+  APP_DEST_ASIA.length +
+  APP_DEST_EU.length +
+  APP_DEST_AMERICA.length +
+  APP_DEST_OCEANIA.length +
+  APP_DEST_OTHER.length
 
 export const REVIEWS = [
   {

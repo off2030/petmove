@@ -432,15 +432,64 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 개·고양이 규정을 모두 확인하고(2026-07-27) 카드·검증·서류·사진까지 끝나 앱에 노출한다.
     appSupported: true,
   },
+  // ── 뉴질랜드 (MPI) — 한국 = category 3(광견병 부재 또는 잘 관리되는 나라) ──────
+  // 1차 출처(2026-07-27 전문 확인):
+  //   · Import Health Standard: Cats and Dogs 2026 (CATSDOGS.GEN, 2026-05-12 발효 2026-07-01)
+  //   · "Bringing your Dog to New Zealand — Dogs from category 3 countries" 지원문서·체크리스트
+  //   ⚠️ 경과 규정 — 2026-07-01 ~ 2027-04-01 은 구 IHS(2021)로도 통관되지만, 앱은 **신 IHS 하나만**
+  //     구현한다. 두 벌을 동시에 안내하면 어느 쪽을 따르는지가 흐려지고, 2027-04-01 이후엔 신
+  //     기준만 남는다. 지금 준비를 시작하는 고객은 어차피 신 기준으로 준비해야 안전하다.
+  // 아키타입 = sea-permit(광견병 1회 + 수입허가 + 도착 계류). 호주와 형제지만 다른 점 넷:
+  //   ① 계류가 **무조건 최소 10일**이다(호주처럼 10/30 으로 갈리지 않는다). 대신 계류 예약
+  //      확인서가 **수입 허가 신청 서류**라 예약이 허가보다 **앞**이다(호주는 반대).
+  //   ② 항체 채혈 창이 출국 **3~12개월**(호주는 180일~12개월). 하한이 캘린더 3개월이다.
+  //   ③ 광견병 **1차 접종은 출국 6개월 전**이라는 별도 하한이 있다(부스터는 면제) →
+  //      결과적으로 개는 **출국 시 생후 9개월 이상**이 된다.
+  //   ④ 마이크로칩 인증(pre-export identification check)이 **채혈 시점에 따라 1회 또는 2회**다.
   new_zealand: {
     keywords: ['뉴질랜드', 'new zealand', 'nz'],
+    archetype: 'sea-permit',
+    rabies: {
+      doses: 1,
+      // IHS 2.1.3(2) — "when the animal was at least 12 weeks of age".
+      minAgeDays: 84,
+      minAgeLabel: '생후 12주(84일)',
+      // IHS 2.1.3(2) — "The vaccination(s) must remain continuously valid until shipment."
+      //   호주(채혈일~출국일)와 달리 기준 구간이 '출국일까지'다.
+      validityLine: '출국일까지 면역 유효기간이 끊기지 않아야 해요.',
+      // ⚠️ '1차는 출국 6개월 전'을 entryWaitDaysAfterVaccine 으로 선언하지 않는다 —
+      //   그 필드는 **최근 접종일**을 보고 유효 부스터를 면제하는데, MPI 6개월은
+      //   **1차(또는 만료 후 재접종)에만** 붙는 조건부 하한이다. nz.ts 전용 룰이 판정한다.
+    },
+    titer: {
+      need: 'entry',
+      // IHS 2.1.3(3) — "on a sample taken ... not less than 3 months and not more than
+      //   12 months before the date of shipment, with a result of at least 0.5 IU/mL".
+      //   구 IHS(2021)의 24개월 상한은 **폐지**됐다 — 구 nz.ts 룰이 24개월이었다(2026-07-27 정정).
+      entryValidityMonths: 12,
+      // 하한 3개월은 캘린더 기준(호주 180일과 달리 일수가 아니다) → months 로 선언해
+      //   validateEuEntryDate 의 월 경로를 탄다.
+      entryWaitAfterTiter: { months: 3 },
+    },
     vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'infectious_disease', 'external_parasite', 'internal_parasite', 'heartworm'],
     extraSection: 'new_zealand',
-    extraFields: ['permit_no'],
-    // NOTE: 규정상 "2일 이내(MPI 2일)" 이지만 max-2-days-before 해석으로 window=3 적용 중
-    // (규정 문구와 표시 disconnect — 별도 정리 대상).
+    extraFields: [
+      // 수입 허가 번호 + 마이크로칩 인증일(호주와 같은 'id_date' 재사용 — 같은 사실이다).
+      'permit_no', 'id_date',
+      'address_overseas',
+      // 출국 항공편 — 오클랜드·크라이스트처치 두 공항에만 도착할 수 있다(지원문서 Arrival).
+      'entry_date', 'entry_flight_number', 'entry_departure_airport', 'entry_airport', 'entry_transport',
+    ],
+    // IHS 1.12 — "inspected by a veterinarian in the 2 days before the date of shipment".
+    //   이 값은 `daysBetween >= window` 로 차단하므로 '2일 이내'는 3이 맞다(호주 5일 → 6과 같은 규칙).
     vetVisitWindowDays: 3,
-    importPermit: { selfApply: true }, // MPI — 수입자 직접 신청 → 로잔 맡기기 '수입 허가 신청' 제외
+    // MPI 온라인 수입허가 — 보호자·수입자가 직접 신청 → 로잔 맡기기 '수입 허가 신청' 제외.
+    importPermit: { selfApply: true },
+    // ⚠️ importQuarantine.quarantineDays 는 선언하지 않는다 — 읽는 곳이 없는 죽은 선언이다
+    //   (lint-validation-wiring 3단계가 잡는다). 최소 10일(IHS 1.15(3)(a))은 도착 계류 카드
+    //   문구·계류시설 예약 카드가 직접 말한다. 베트남 14일과 같은 처리.
+    // 강아지 규정(카드·검증·서류·사진)까지 끝나 앱에 노출한다. 고양이는 별도 확인 예정.
+    appSupported: true,
   },
   thailand: {
     keywords: ['태국', 'thailand'],

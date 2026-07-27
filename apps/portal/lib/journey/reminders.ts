@@ -791,6 +791,40 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r45) out.push(r45)
       }
+    } else if (key === 'new_zealand') {
+      // 뉴질랜드 전염병 검사(바베시아 깁소니·리슈만편모충·렙토 MAT + 중성화 안 했으면 브루셀라)
+      //   — **출국 30일 이내** 채혈(IHS 2.7·2.8·2.12·2.13). 호주(45일)와 같은 모델이고 값만 다르다.
+      //   창이 열리는 날(D-30)을 알린다. 그 전에 받으면 무효라 '지금부터 가능'이 곧 안내다.
+      //   ⛔ 호주와 마찬가지로 **광견병 항체 채혈 알림은 만들지 않는다** — 3~12개월 창은
+      //     카드 문구·저장 거부(validateEuEntryDate)가 담당한다.
+      //   강아지 전용 절차라 고양이 케이스에는 보내지 않는다.
+      const species = str(data.species)
+      const hasInfectious = Array.isArray(data.infectious_disease_records)
+        ? data.infectious_disease_records.some(
+            (r) =>
+              !!r &&
+              typeof r === 'object' &&
+              isIsoDate(str((r as Record<string, unknown>).date)),
+          )
+        : false
+      if (departure && species === 'dog' && !hasInfectious) {
+        const r30 = leadReminder(
+          flat,
+          `${token}|nz-infectious-30`,
+          departure,
+          30,
+          '오늘부터 뉴질랜드 전염병 검사를 받을 수 있어요. 출국 30일 이내에 채혈해야 하고, 더 일찍 받으면 인정되지 않아요.',
+          now,
+        )
+        if (r30) out.push(r30)
+      }
+      // ⛔ 수입 허가 알림은 만들지 않는다(2026-07-27). MPI 가 말하는 건 "at least 8 weeks
+      //   before **it is required**" + "30 working days for processing" 뿐이고, '출국 N일 전'
+      //   앵커가 규정에 없다. 8주를 출국일에 붙이는 건 우리 추정이라 없는 마감을 안내하게 된다
+      //   (말레이시아·인도네시아가 태국 복제로 없는 마감을 안내한 사고와 같은 형태 —
+      //   lint-validation-wiring 의 IMPORT_PERMIT_NOTIFY_OK 가 이걸 막는 문지기다).
+      //   심사 30영업일·8주 사실은 수입 허가 카드 문구가 안내한다. 확정 앵커가 확인되면
+      //   IMPORT_PERMIT_NOTIFY_OK 에 근거와 함께 등록하고 알림을 붙일 것.
     } else if (key === 'switzerland') {
       // 스위스 수입허가(FSVO) — 입국 3주(21일) 전 마감. **확정 마감이 있는데 알림만 없던**
       // 유일한 목적지였다(2026-07-26 전수 대조로 발견). 카드 마감 배지·입력 차단

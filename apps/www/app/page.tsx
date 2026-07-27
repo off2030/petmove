@@ -106,17 +106,21 @@ export default function LandingPage() {
           <div className="kicker">앱 지원 여행지</div>
           <h2 className="h2">앞으로 계속 추가돼요</h2>
           <DestGrid />
-          <div className="soon-block">
-            <div className="soon-label">
-              <i className="ti ti-calendar-plus" />
-              2026년 추가 예정
+          {/* '추가 예정' 목록이 비면 블록째 감춘다 — 빈 칩 줄만 남으면 준비 중인 게 없는데도
+              뭔가 빠진 화면으로 보인다(2026-07-27 호주·뉴질랜드 승격으로 목록이 비었다). */}
+          {APP_DEST_SOON.length > 0 && (
+            <div className="soon-block">
+              <div className="soon-label">
+                <i className="ti ti-calendar-plus" />
+                2026년 추가 예정
+              </div>
+              <div className="soon-chips">
+                {APP_DEST_SOON.map((d) => (
+                  <span key={d}>{d}</span>
+                ))}
+              </div>
             </div>
-            <div className="soon-chips">
-              {APP_DEST_SOON.map((d) => (
-                <span key={d}>{d}</span>
-              ))}
-            </div>
-          </div>
+          )}
         </div>
       </section>
 

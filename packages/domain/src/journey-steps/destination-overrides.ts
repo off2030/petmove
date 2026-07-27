@@ -1643,6 +1643,174 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       },
     },
   }),
+  // ── 뉴질랜드 (MPI, category 3 — 강아지) ────────────────────────────────────
+  // 출처: Import Health Standard Cats and Dogs 2026(CATSDOGS.GEN) 전문 + category 3 개 지원문서
+  //   ·체크리스트(2026-07-27 확인). 수치 근거는 procedure-checks/nz.ts 헤더.
+  // sea-permit 골격에 뉴질랜드 고유 절차를 얹는다:
+  //   마이크로칩 인증(nz-identity-check, 25) · 계류시설 예약(nz-quarantine-reservation, 42) ·
+  //   독감(CIV) · 전염병 검사 · 심장사상충 · 내외부 구충.
+  // 호주와 형제지만 **베끼면 틀리는 자리**가 넷이다(각 카드 주석에 이유를 적었다):
+  //   ① 계류는 무조건 최소 10일 — '10일/30일' 문장을 가져오지 말 것
+  //   ② 계류 예약이 수입 허가 **신청 서류**라 순서가 예약(42) → 허가(44)
+  //   ③ 항체 채혈 창이 출국 3~12개월(호주는 검체 도착일 180일~12개월)
+  //   ④ 마이크로칩 인증과 채혈을 **같은 날 해도 된다**(호주는 금지)
+  new_zealand: seaPermitOverrides({
+    key: 'new_zealand',
+    label: '뉴질랜드',
+    // IHS 2.1.3(2) — 12주 + 불활화·재조합 백신 + 출국까지 연속 유효 + **1차는 출국 6개월 전**.
+    //   마지막 줄이 뉴질랜드 고유다(호주엔 없다). 결과적으로 개는 출국 시 생후 9개월 이상이 된다.
+    rabiesDescription:
+      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n불활화 백신이나 재조합 백신이어야 해요.\n처음 접종했거나 유효기간이 끊긴 뒤 다시 접종했다면, 출국 6개월 전까지 접종해야 해요.\n출국일까지 면역 유효기간이 끊기지 않아야 해요.',
+    rabiesValidationIds: [
+      'nz.rabies-prime-after-84days',
+      'nz.microchip-before-rabies',
+      'nz.rabies-booster-within-prime-validity',
+      'nz.rabies-primary-min-6months-before',
+      'nz.rabies-valid-until-departure',
+    ],
+    // ⚠️ titerDescription 을 팩토리에 넘기지 않는다 — 팩토리판은 order 55 · **귀국용** 룰인데
+    //   뉴질랜드 항체는 **입국 요건**이라 아래 extra['rabies-titer'] 가 통째로 교체한다(호주와 동일).
+    //   뉴질랜드는 광견병 비발생국이라 귀국 항체도 면제된다(isRabiesFreeOrigin).
+    // 종합백신 — **MPI 입국 요건이 아니다.** 지원문서 "Routine quarantine vaccinations: Check
+    //   which of the following vaccinations are required by the quarantine facility your pet will
+    //   be going to." 즉 계류시설 요구사항이다. 켄넬코프와 같은 취급(호주는 렙토 Canicola 가
+    //   입국 요건이라 문구가 완전히 다르다 — 가져오지 말 것).
+    generalVaccine: {
+      // 백신 카드 4장을 광견병(30) 뒤에 연달아 — 종합 32 · 독감 34 · 켄넬코프 36(호주와 같은 배치).
+      order: 32,
+      description:
+        '종합백신을 접종하세요.\n\n뉴질랜드 입국 요건은 아니지만, 계류시설에서 요구해요.\n디스템퍼·전염성간염·파보바이러스·파라인플루엔자·렙토스피라 예방을 포함해요.\n어떤 백신이 필요한지는 예약한 계류시설에 확인하세요.',
+      // 날짜 판정 룰을 두지 않는다 — 입국 요건이 아니라 시설 요구사항이라 규정상 기한이 없다.
+      validationIds: [],
+    },
+    // 항공권 — 화물칸 운송이지만 호주처럼 '정식 항공 화물 전용'은 아니다(지원문서는 crate in the
+    //   cargo hold 라고만 한다). 그래서 카드 이름을 '운송 예약'으로 바꾸지 않는다.
+    //   도착 공항은 **오클랜드·크라이스트처치 두 곳뿐**이다.
+    flight: {
+      description:
+        '뉴질랜드 입국 일정에 맞춰 항공권을 구매하세요.\n\n오클랜드나 크라이스트처치 공항에만 도착할 수 있어요.\n온도가 조절되는 화물칸에 IATA 규격 이동장으로 실려요.\n항공사에 따라 운송업체를 통해서만 예약할 수 있으니 미리 확인하세요.\n항체 검사 채혈일로부터 3개월이 지난 후에 출국할 수 있고, 채혈일로부터 12개월 안에 출국해야 해요.',
+      // 계류시설 예약(42) · 수입 허가(44) 다음 — 허가가 나와야 일정을 확정할 수 있다.
+      order: 46,
+      validationIds: [
+        'nz.titer-3to12months-before-departure',
+        // 생후 9개월 하한도 여기 — 접종일·생일은 이미 지나간 사실이라 바꿀 수 있는 건 출국일뿐이다.
+        'nz.dog-min-9months-on-departure',
+      ],
+    },
+    // 수입 허가 — MPI 온라인. 계류 예약 확인서·RCF·항체 결과지·접종 기록 4종이 신청 서류다
+    //   (IHS 1.13.2). 마이크로칩 인증이 MPI 시스템에 등록돼 있어야 허가가 나온다.
+    //   확정 '출국 N일 전' 마감은 규정에 없고 "at least 8 weeks before it is required" +
+    //   "30 working days for processing" 라는 사실만 있다 → base 마감 배지는 내린다(호주와 동일).
+    importPermit: {
+      description:
+        '뉴질랜드 검역당국(MPI) 온라인 시스템에서 수입 허가를 신청하세요.\n\n계류시설 예약 확인서, 광견병 증명서(RCF), 항체 검사 결과지, 광견병 접종 기록을 함께 제출해요.\n검역관이 마이크로칩 인증을 MPI에 등록해야 허가가 나와요.\n서류가 모두 접수된 뒤 심사에 30영업일이 걸려요.\n허가가 필요한 날보다 최소 8주 전에 신청하세요.',
+      doneSummary: '뉴질랜드 수입 허가를 받았어요.',
+      cardLine: '뉴질랜드 수입 허가를 신청하세요.',
+      attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
+      attachmentLabel: '뉴질랜드 수입 허가증',
+      order: 44,
+      deadline: undefined,
+      inputs: [
+        { key: 'import_permit_application_date', label: '신청일', type: 'date' },
+        { key: 'permit_no', label: '허가 번호', type: 'text' },
+      ],
+      validationIds: ['nz.import-permit-not-after-departure'],
+      links: [
+        { url: 'https://animalplantimportpermit.mpi.govt.nz/', label: '수입 허가 신청 (MPI)' },
+      ],
+    },
+    // 도착 = 오클랜드·크라이스트처치 공항 → MPI 승인 계류시설로 직행, 최소 10일.
+    //   ⛔ 호주의 '마이크로칩 인증을 받았으면 10일, 아니면 30일' 문장을 복사하지 말 것 —
+    //     뉴질랜드는 인증이 필수라 분기가 없다.
+    importQuarantine: {
+      fieldKey: 'nz_import_quarantine_date',
+      description:
+        '뉴질랜드 도착 후 MPI 승인 계류시설에서 최소 10일 계류해요.\n\n공항에서 계류시설까지 바로 옮겨져요. 이동은 시설이 준비해요.\n도착 후 72시간 이내에 MPI 검역관의 검진을 받고, 계류가 끝날 때 한 번 더 받아요.\n서류·검사·기생충에 문제가 있으면 계류가 길어질 수 있어요.\n뉴질랜드에 도착한 뒤에는 거주지 지방의회에 반려견을 등록해야 해요.',
+      helpText: '뉴질랜드 도착 후 계류를 시작한 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '뉴질랜드 수입 검역 서류',
+      validationIds: ['nz.import-quarantine-date-valid'],
+    },
+    extra: {
+      // 입국 항체 배선 override — 팩토리 기본(order 55 · 귀국용 룰)을 뉴질랜드 입국 항체로 교체.
+      //   ⚠️ 호주와 다른 두 가지: (a) 채혈 창이 **출국 3~12개월**(검체 도착일이 아니라 채혈일 기준),
+      //     (b) 마이크로칩 인증과 **같은 날 채혈 가능**(IHS 1.11 guidance 명시).
+      'rabies-titer': {
+        order: 40,
+        description:
+          '뉴질랜드 검역당국(MPI)이 인정하는 검사기관에서 광견병 항체 검사(RNATT)를 받으세요.\n\n마이크로칩 인증을 받은 뒤에 채혈해요. 인증과 같은 날에 채혈해도 돼요.\n채혈 전에 마이크로칩을 확인해요.\n0.5 IU/mL 이상이면 합격이에요.\n출국 3개월 전부터 12개월 전 사이에 채혈해야 해요.\n처음 접종한 경우에는 접종 3~4주 후에 채혈하는 것이 좋아요.',
+        validationIds: ['nz.titer-after-rabies', 'nz.titer-3to12months-before-departure'],
+      },
+      // 독감(CIV) — IHS 2.9(2). 한국은 MPI-STD-SAA 의 CIV 위험국 목록에 있다(지원문서
+      //   "Dogs from Canada, Korea (Republic) and USA only"). **백신 또는 PCR 검사** 둘 중 하나다.
+      'civ-vaccine': {
+        order: 34,
+        description:
+          '개 인플루엔자(CIV) 백신을 접종하세요.\n\n한국에서 출발하는 강아지는 접종하거나 검사를 받아야 해요.\nCIV H3N8·H3N2에 효과가 있는 백신이어야 해요.\n출국 14일 전까지, 12개월 이내에 접종해야 해요.\n계류가 끝날 때까지 면역 유효기간이 남아 있어야 해요.\n\n접종하지 않았다면 출국 10일 이내에 PCR 검사를 받아 음성을 확인해요.',
+        validationIds: ['nz.civ-14days-before-departure', 'nz.civ-within-12months'],
+      },
+      // 켄넬코프 — 종합백신과 같은 이유(계류시설 요구사항). 호주와 같은 문형.
+      'kennel-cough-vaccine': {
+        order: 36,
+        description:
+          '켄넬코프(Bordetella) 백신을 접종하세요.\n\n뉴질랜드 입국 요건은 아니지만, 계류시설에서 요구해요.',
+      },
+      // 전염병 검사 — 바베시아 깁소니(2.7) + 리슈만편모충(2.12) + 렙토 Canicola MAT(2.13) +
+      //   브루셀라(2.8, 중성화 안 한 개체). **네 검사 모두 출국 30일 이내 채혈**이라 한 카드에 묶는다.
+      //   바베시아 채혈만 추가 제약이 있다 — 1차 외부구충 14일 후 이후여야 한다(2.7(1)).
+      'infectious-disease-test': {
+        description:
+          '전염병 검사를 받아 음성을 확인하세요.\n\n출국 30일 이내에 채혈해요.\n바베시아 깁소니(Babesia gibsoni)·리슈만편모충(Leishmania infantum)·렙토스피라 Canicola(MAT) 검사는 모든 강아지가 받아요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요.\n바베시아 검사 채혈은 1차 외부 기생충 치료 14일 후부터 할 수 있어요.\n승인된 검사기관에서 받아야 하고, 동물병원 내부 간이 검사는 인정되지 않아요.',
+        validationIds: [
+          'nz.infectious-disease-test-within-30days',
+          'nz.infectious-disease-test-after-external-parasite',
+        ],
+      },
+      // 외부구충 — IHS 2.2(2). 개는 **2회**이고 기준이 서로 다르다:
+      //   1차 = 바베시아 채혈 14일 전까지 / 2차(마지막) = 출국 16일 이내 / 1차부터 출국까지 연속 보호.
+      //   ⛔ 호주의 '출국 30일 전에 시작' 문장을 가져오지 말 것 — 뉴질랜드 하한은 바베시아 채혈 기준이다.
+      'external-parasite': {
+        description:
+          '외부 기생충 치료를 하세요.\n\n진드기와 벼룩을 없애는 제품으로 두 번 치료해요.\n1차 치료는 바베시아 검사 채혈 14일 전까지 해요.\n2차 치료는 출국 16일 이내에 해요.\n1차 치료부터 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n치료할 때마다 진드기·벼룩이 없는지 확인받아요.',
+        // 고양이는 회수·기준이 다르다 — IHS 2.2(1): **한 번**, 출국 16일 이내, 그때부터
+        //   출국일까지 연속 보호. 바베시아 검사가 개 전용이라 '채혈 14일 전' 하한이 없다.
+        //   개 문구를 그대로 보여주면 없는 절차를 요구하게 된다.
+        descriptionBySpecies: {
+          dog: '외부 기생충 치료를 하세요.\n\n진드기와 벼룩을 없애는 제품으로 두 번 치료해요.\n1차 치료는 바베시아 검사 채혈 14일 전까지 해요.\n2차 치료는 출국 16일 이내에 해요.\n1차 치료부터 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n치료할 때마다 진드기·벼룩이 없는지 확인받아요.',
+          cat: '외부 기생충 치료를 하세요.\n\n진드기와 벼룩을 없애는 제품으로 출국 16일 이내에 치료해요.\n치료한 날부터 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n치료할 때와 출국 2일 전 검진에서 진드기·벼룩이 없는지 확인받아요.',
+        },
+        validationIds: ['nz.external-parasite-protocol'],
+      },
+      // 내부구충 — IHS 2.3(1): 1차 출국 30일 이내 + 14일 이상 간격 + 2차 출국 5일 이내.
+      //   폐충(Angiostrongylus vasorum, 2.4)도 출국 5일 이내라 2차와 같은 방문에서 끝난다.
+      'internal-parasite': {
+        description:
+          '내부 기생충 치료를 하세요.\n\n선충과 조충(에키노코쿠스 포함)을 모두 없애는 약이어야 해요.\n1차 치료는 출국 30일 이내에 해요.\n2차 치료는 출국 5일 이내에 하고, 1차와 14일 이상 벌어져야 해요.\n2차 치료 때 폐충(Angiostrongylus vasorum) 약도 함께 투여해요.',
+        validationIds: ['nz.internal-parasite-protocol'],
+      },
+      // 심장사상충 — IHS 2.11. 검사(생후 7개월 이상, 출국 30일 이내)와 예방 투약(출국 5일 이내)이
+      //   한 카드에 들어간다. 카드 입력칸은 날짜 배열 하나(heartworm_dates)라 두 사실을 같이 적는다.
+      'heartworm-test': {
+        description:
+          '심장사상충 검사와 예방 투약을 하세요.\n\n출국일 기준 생후 7개월 이상이면 출국 30일 이내에 채혈해서 검사를 받아요.\n모든 강아지는 출국 5일 이내에 예방약을 투여해요. 지속형 예방 주사를 맞고 있다면 유효기간 안에 있으면 돼요.\n승인된 검사기관에서 받아야 하고, 동물병원 내부 간이 검사는 인정되지 않아요.',
+        validationIds: ['nz.heartworm-within-30days'],
+      },
+      // 임상검사 — IHS 1.12: 출국 **2일 이내**(프로파일 vetVisitWindowDays: 3 과 짝).
+      //   base 문구(10일)가 그대로 노출되면 차단과 어긋난다(호주 5일과 같은 정정).
+      'vet-visit': {
+        description:
+          '출국일 기준 2일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 뉴질랜드 건강증명서(Model Veterinary Certificate)를 발급받아요.\n\n마이크로칩 확인, 전염병 증상 확인, 외부 기생충 검사를 함께 받아요. 중성화하지 않은 강아지는 생식기 검사도 받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+        deadline: { anchor: 'departure', daysBefore: 2, window: true },
+      },
+      // 한국 수출 검역도 같은 2일 창(validateKrExportDate 가 getVetVisitWindowDays 공유).
+      //   순서 제약(검역일 ≥ 임상검사일)은 validateKrExportDate 가 이미 담당한다.
+      'certificate-issue': {
+        description:
+          '출국일 기준 2일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.\n임상검사와 2차 내부 기생충 치료를 마친 뒤에 방문해야 해요.',
+        deadline: { anchor: 'departure', daysBefore: 2, window: true },
+      },
+    },
+  }),
   // 일본을 뼈대로 — 'departure' 공용 카드를 그 나라 '[국가] 수입 검역' 도착 카드로 교체.
   // 목적지마다 따로 작성(검역일 필드도 나라별: {국가}_import_quarantine_date). 제목·설명은
   // 그 나라 가이드 기준, 일본과 같은 부분은 같은 문구. 완료신호는 그 나라 검역일 필드를 실어 보낸다.

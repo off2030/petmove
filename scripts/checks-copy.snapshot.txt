@@ -161,6 +161,38 @@
   광견병 접종은 출국 30일 전까지 해야 해요.
 [my.import-quarantine-date-valid]
   말레이시아 수입 검역일은 말레이시아 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
+[nz.rabies-booster-within-prime-validity]
+  광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
+[nz.rabies-primary-min-6months-before]
+  광견병 1차 접종일로부터 6개월이 지난 후에 출국할 수 있어요. 출국일을 다시 확인하세요.
+[nz.rabies-valid-until-departure]
+  출국일까지 광견병 면역 유효기간이 남아 있어야 해요. 유효기간이 끝나기 전에 추가 접종을 받고 기록하세요.
+[nz.dog-min-9months-on-departure]
+  뉴질랜드에는 생후 9개월이 지난 후에 갈 수 있어요. 출국일을 다시 확인하세요.
+[nz.quarantine-reservation-matches-entry]
+  계류 시작일과 뉴질랜드 도착일이 달라요. 예약 날짜와 항공 일정을 다시 확인하세요.
+[nz.import-quarantine-date-valid]
+  뉴질랜드 수입 검역일은 뉴질랜드 도착일보다 빠를 수 없어요. 날짜를 확인하세요.
+[nz.banned-breeds]
+  "${breed.ko || breed.en}"은 뉴질랜드 수입 금지 품종이에요 (매치: ${match}).
+[nz.civ-14days-before-departure]
+  독감(CIV) 백신은 출국 14일 전까지 접종해야 해요.
+[nz.civ-within-12months]
+  독감(CIV) 백신은 출국일 기준 12개월 이내에 접종한 기록이 있어야 해요. 추가 접종이 필요해요.
+[nz.infectious-disease-test-within-30days]
+  전염병 검사일이 출국일보다 늦어요. 날짜를 확인하세요.
+  전염병 검사는 출국 30일 이내에 받아야 해요. 다시 검사받아야 할 수 있어요.
+[nz.infectious-disease-test-after-external-parasite]
+  바베시아 검사 채혈은 1차 외부 기생충 치료 14일 후부터 할 수 있어요. 지금 채혈하면 외부 기생충 치료와 검사를 다시 해야 할 수 있어요.
+[nz.external-parasite-protocol]
+  외부 기생충 치료는 두 번 받아야 해요.
+  외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.
+  마지막 외부 기생충 치료는 출국 16일 이내에 해야 해요.
+[nz.internal-parasite-protocol]
+  내부 기생충 치료는 출국 30일 이내에 2회 받아야 해요.
+[nz.heartworm-within-30days]
+  심장사상충 검사일이 출국일보다 늦어요. 날짜를 확인하세요.
+  심장사상충 검사는 출국 30일 이내에 받아야 해요. 예방약은 출국 5일 이내에 투여해요.
 [ph.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [ph.rabies-prime-21days-before-arrival]

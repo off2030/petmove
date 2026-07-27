@@ -827,6 +827,13 @@ export const PARASITE_DEPARTURE_WINDOWS: Record<
   //     (제조사 지침대로 재투여)를 거부하게 된다. 시작 시점은 주의 룰
   //     (au.external-parasite-protocol-dog/-cat)이 판정한다.
   australia: { maxGap: 45, windowLabel: '출국 45일 이내', kinds: ['internal'] },
+  // 뉴질랜드 — 호주와 같은 이유로 **내부구충만**(IHS 2.3(1) "first treatment must be given in
+  //   the 30 days before the date of shipment"). 2차 5일 이내·14일 간격은 창 하나로 표현할 수
+  //   없어 주의 룰(nz.internal-parasite-protocol)이 함께 본다.
+  //   ⛔ 외부구충(external)은 넣지 않는다 — 뉴질랜드 요건(2.2(2))은 1차가 **바베시아 채혈
+  //     14일 전**이라 출국일 앵커가 아니고, 1차는 30일보다 훨씬 이를 수 있다(채혈이 출국 30일
+  //     전이면 1차는 최소 44일 전). 창으로 막으면 규정대로 준비한 케이스를 거부한다.
+  new_zealand: { maxGap: 30, windowLabel: '출국 30일 이내', kinds: ['internal'] },
 }
 
 function validateParasiteWithinDays(

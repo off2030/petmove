@@ -122,6 +122,14 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 호주 수출 검역(왕복 귀국) — NOI → DAFF 수출허가·건강증명서 발급일.
   'au_export_quarantine_date',
   'au_export_quarantine_confirmed',
+  // 뉴질랜드 — 도착 계류(MPI 승인 시설 최소 10일) + 계류시설 예약 시작일.
+  //   마이크로칩 인증일은 호주와 같은 'id_date'(위 증명서·허가 묶음)를 그대로 쓴다.
+  'nz_import_quarantine_date',
+  'nz_import_quarantine_confirmed',
+  'nz_quarantine_reservation_date',
+  // 뉴질랜드 수출 증명(왕복 귀국) — AWEC + 수출 건강증명서 발급일.
+  'nz_export_quarantine_date',
+  'nz_export_quarantine_confirmed',
   // 싱가포르 — 도착 검역(AQC 30일) + 귀국 수출검역(AVS 인증).
   'sg_import_quarantine_date',
   'sg_import_quarantine_confirmed',
