@@ -232,6 +232,17 @@ export interface DestinationOverride {
   generalVaccineOneYearOnly?: boolean
   /** 펫무브 앱(포털) 목적지 화이트리스트 노출 여부. `APP_DESTINATIONS_KO` 의 파생원. */
   appSupported?: boolean
+  /**
+   * **편도만 있는 목적지** — 왕복 개념 자체가 없다(호주·뉴질랜드, 2026-07-27 사용자 확정).
+   * 준비에 6개월 이상 걸리고 도착 후 계류까지 하는 이주형 이동이라 '갔다 오는' 케이스가 없다.
+   *
+   * 선언하면 세 곳이 함께 움직인다:
+   *   · getTripType 이 저장값과 무관하게 'one_way' 를 돌려준다 → 왕복 전용 카드
+   *     (현지 수출 검역·한국 수입 검역)가 getStepsForCase 에서 자동 제외된다
+   *   · 항공권 카드의 귀국 항공권 입력 행이 사라진다(showReturn = tripType 파생)
+   *   · 동물 상세의 '왕복·편도' 토글이 숨는다(선택할 게 없다)
+   */
+  oneWayOnly?: boolean
 }
 
 export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
@@ -431,6 +442,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     //   10일/30일이 갈려 숫자 하나로 적을 수 없다. 두 값은 도착 카드 문구가 함께 말한다.
     // 개·고양이 규정을 모두 확인하고(2026-07-27) 카드·검증·서류·사진까지 끝나 앱에 노출한다.
     appSupported: true,
+    // 편도 전용 — 준비 6개월 + 도착 계류라 '갔다 오는' 여정이 없다(2026-07-27 사용자 확정).
+    oneWayOnly: true,
   },
   // ── 뉴질랜드 (MPI) — 한국 = category 3(광견병 부재 또는 잘 관리되는 나라) ──────
   // 1차 출처(2026-07-27 전문 확인):
@@ -490,6 +503,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     //   문구·계류시설 예약 카드가 직접 말한다. 베트남 14일과 같은 처리.
     // 강아지 규정(카드·검증·서류·사진)까지 끝나 앱에 노출한다. 고양이는 별도 확인 예정.
     appSupported: true,
+    // 편도 전용 — 호주와 같은 이유(2026-07-27 사용자 확정).
+    oneWayOnly: true,
   },
   thailand: {
     keywords: ['태국', 'thailand'],
@@ -1780,11 +1795,22 @@ export function resolveActiveDestination(
  * case.data.trip_type 에서 단일 목적지 토큰의 왕복/편도 값을 읽음.
  * 미저장 또는 비매칭 시 디폴트 'round'.
  */
+/**
+ * 편도만 있는 목적지인가 — 프로파일 `oneWayOnly` 파생(호주·뉴질랜드).
+ * 왕복·편도 토글 노출, 귀국 항공권 입력, 왕복 전용 카드가 모두 이 한 곳을 본다.
+ */
+export function isOneWayOnlyDestination(destination: string | null | undefined): boolean {
+  return !!getDestinationOverride(destination)?.oneWayOnly
+}
+
 export function getTripType(
   data: Record<string, unknown> | null | undefined,
   destinationToken: string | null | undefined,
 ): 'round' | 'one_way' {
   if (!destinationToken) return 'round'
+  // 편도 전용 목적지(호주·뉴질랜드)는 저장값과 무관하게 편도 — 기존 케이스에 'round' 가
+  //   남아 있어도 왕복 카드가 되살아나지 않게 여기서 단일 판정한다.
+  if (isOneWayOnlyDestination(destinationToken)) return 'one_way'
   const map = (data?.['trip_type'] as Record<string, unknown> | undefined) ?? {}
   return map[destinationToken] === 'one_way' ? 'one_way' : 'round'
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState, type ReactNode } from 'react'
-import { MAX_DESTINATIONS_PER_CASE } from '@petmove/domain'
+import { MAX_DESTINATIONS_PER_CASE, isOneWayOnlyDestination } from '@petmove/domain'
 import { APP_DESTINATIONS_SORTED } from '@/lib/app-destinations'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { SegmentField, type FieldOption } from '@/components/fields/info-fields'
@@ -181,7 +181,9 @@ export function DestinationChips({
               )}
             </div>
             {/* 삭제 예정이면 입력 행은 감춘다 — 되돌리면 다시 보임. */}
-            {!removing && (
+            {/* 편도 전용 목적지(호주·뉴질랜드)는 고를 것이 없어 토글 자체를 숨긴다 —
+                판정은 domain getTripType 이 프로파일(oneWayOnly)에서 단일 결정한다. */}
+            {!removing && !isOneWayOnlyDestination(dest) && (
               <>
                 <SegmentField
                   label="왕복·편도"
