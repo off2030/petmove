@@ -48,6 +48,8 @@
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [gu.departure-within-12months-of-titer]
   광견병 항체 검사 결과는 12개월간 유효해요. 유효기간이 지나기 전에 출국해야 해요.
+[gu.import-permit-30days-before-arrival]
+  괌 도착 30일 전까지 수입 허가 서류를 제출해야 해요. 늦으면 계류가 길어지거나 입국이 거부될 수 있어요.
 [hi.rabies-doses-31days-apart]  (allowDate)
   ${v.prev.date}부터 ${v.curr.date}까지 ${v.gap}일이에요. 31일 이상이어야 해요.
 [hi.rabies-latest-31days-before-arrival]  (allowDate)

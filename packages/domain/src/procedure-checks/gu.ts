@@ -11,6 +11,7 @@ import {
   readInternalParasiteEntries,
   readKennelCoughEntries,
   readRabiesEntries,
+  readScopedImportPermitFiled,
   readTiterEntries,
   resolveValidUntil,
   SKIP,
@@ -427,11 +428,34 @@ export const GU_CHECKS: ProcedureCheck[] = [
       return { ok: false, message: error, offendingPaths: ['birth_date', 'departure_date'] }
     },
   },
-  // 2026-07-27 제거: 수입 허가를 로잔이 대행하지 않아(selfApply) 카드가 버튼 완료 모델로
-  //   바뀌었다(하와이 입국 신청과 같은 모델). 기록되는 날짜가 '버튼 누른 날'이라 실제
-  //   제출일과 달라, 30일 판정을 돌리면 거짓 주의가 난다. 마감 안내는 reminders.ts 의
-  //   괌 알림 2회(D-37 일주일 전 · D-30 마감일)가 계속 담당한다.
-
+  {
+    id: 'gu.import-permit-30days-before-arrival',
+    country: COUNTRY,
+    category: '수입허가',
+    title: '수입 허가 서류는 도착 30일 전까지 제출',
+    description:
+      'DOAG: "All required import documents must be submitted at least 30 days prior to the intended arrival date." 14일 미만이면 처리를 보장하지 않고 장기 계류·입국 거부 위험이 있다(브로슈어 FAQ 는 2~3개월 전 권장). 마감을 놓쳐도 신청 자체는 가능하므로 주의만 — 저장 거부로 올리지 말 것.',
+    severity: 'warning',
+    addedAt: '2026-07-26',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const dep = readDepartureDate(caseRow, destination)
+      if (!dep) return SKIP
+      const days = daysBetween(filed, dep)
+      if (days === null) return SKIP
+      if (days < 30) {
+        return {
+          ok: false,
+          message:
+            '괌 도착 30일 전까지 수입 허가 서류를 제출해야 해요. 늦으면 계류가 길어지거나 입국이 거부될 수 있어요.',
+          offendingPaths: ['import_permit_application_date', 'departure_date'],
+        }
+      }
+      return { ok: true, message: `제출일(${filed}) → 도착(${dep}): ${days}일 (30일 이상).` }
+    },
+  },
   {
     id: 'gu.import-quarantine-date-valid',
     country: COUNTRY,
