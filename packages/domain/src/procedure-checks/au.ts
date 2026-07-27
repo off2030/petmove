@@ -78,9 +78,10 @@ function readIdentityCheckDate(caseRow: CaseRow, destination?: string | null): s
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const scoped = readByDestValue(data, destination ?? null, 'id_date')
   if (typeof scoped === 'string') return scoped.slice(0, 10)
-  if (scoped !== null) {
-    if (typeof data.id_date === 'string') return data.id_date.slice(0, 10)
-  }
+  // null = 그 목적지에서 **명시적으로 비움**. top-level·legacy 로 폴백하면 지운 값이 되살아난다
+  //   (clearExtraValueWithLegacy 가 막으려는 것과 같은 부활 버그).
+  if (scoped === null) return ''
+  if (typeof data.id_date === 'string') return data.id_date.slice(0, 10)
   const legacy = readAustraliaExtra(caseRow).id_date
   return legacy ? legacy.slice(0, 10) : ''
 }
