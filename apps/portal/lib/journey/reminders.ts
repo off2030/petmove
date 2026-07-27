@@ -711,6 +711,30 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
       // (미국 분기 없음 — CDC 신고 D-7·D-1, 도착 주 확인 D-14, 귀국 USDA D-30·7 알림 모두
       //  2026-07-26 사용자 결정으로 삭제. '입국 경로'·'도착 주 규정' 카드 자체도 같은 날 삭제됨.)
     } else if (key === 'guam') {
+      // 항체 검사 120일 대기 — **대만 수입허가(120일)와 같은 구조**라 알림도 같은 2단계로
+      // 맞춘다(2026-07-27 사용자 지정). 대기를 못 채워도 입국은 되지만 남은 기간만큼 계류라,
+      // 마감을 놓치면 회복이 어렵다(채혈을 앞당길 수는 없다). 채혈 전에만 보낸다 —
+      // 이미 검사를 받았으면 '받으세요' 알림은 필요 없다.
+      if (entry && readTiterEntries(flat).length === 0) {
+        const r127 = leadReminder(
+          flat,
+          `${token}|gu-titer-127`,
+          entry,
+          127,
+          '괌 광견병 항체 검사 시점이 일주일 남았어요. 입국 120일 전까지 채혈해야 계류를 최소화할 수 있어요.',
+          now,
+        )
+        if (r127) out.push(r127)
+        const r120 = leadReminder(
+          flat,
+          `${token}|gu-titer-120`,
+          entry,
+          120,
+          '오늘까지 괌 광견병 항체 검사 채혈이 필요해요(입국 120일 전). 늦으면 남은 기간만큼 괌에서 계류돼요.',
+          now,
+        )
+        if (r120) out.push(r120)
+      }
       // 괌 수입 허가(Animal Entry Permit) — DOAG: "must be submitted at least 30 days prior to
       // the intended arrival date". 14일 미만이면 처리를 보장하지 않아 장기 계류·입국 거부
       // 위험이 있고, 브로슈어 FAQ 는 2~3개월 전 제출을 권한다. 그래서 마감 일주일 전(D-37)에

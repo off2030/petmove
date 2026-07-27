@@ -23,6 +23,9 @@ import {
   msgImportQuarantineBeforeEntry,
   msgMicrochipBeforeRabies,
   msgRabiesExpiredBefore,
+  msgRabiesPrimeMinAge,
+  msgTiterBeforeVaccine,
+  msgTiterMinDaysAfterVaccine,
 } from './messages'
 import { buildDateRuleContext, validateUsDogEntryDate } from '../journey-steps/date-rules'
 
@@ -112,7 +115,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
       if (first.date < earliestValid) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 3개월령(${earliestValid}) 이전이에요. 생후 ${age ?? '?'}일이에요.`,
+          message: msgRabiesPrimeMinAge('3개월'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -134,7 +137,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
       if (rabies.length < 2) {
         return {
           ok: false,
-          message: `광견병 접종이 1회(${rabies[0].date})만 기록되어 있어요. 2회 이상 접종해야 해요.`,
+          message: '광견병 백신은 평생 2회 이상 접종해야 해요.',
           offendingPaths: [`rabies_dates[${rabies[0].originalIndex}].date`],
         }
       }
@@ -171,7 +174,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
             `rabies_dates[${v.prev.originalIndex}].date`,
             `rabies_dates[${v.curr.originalIndex}].date`,
           )
-          msgs.push(`${v.prev.date}부터 ${v.curr.date}까지 ${v.gap}일이에요. 30일 이상이어야 해요.`)
+          msgs.push('광견병 2차 접종은 1차 접종 30일 후에 할 수 있어요. 날짜를 확인하세요.')
         }
         return {
           ok: false,
@@ -234,20 +237,21 @@ export const GU_CHECKS: ProcedureCheck[] = [
         const priorDoses = rabies.filter((r) => r.date <= t.date)
         if (priorDoses.length === 0) {
           offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date}) 이전에 광견병 접종 기록이 없어요.`)
+          problems.push(msgTiterBeforeVaccine({ twoDose: true }))
           continue
         }
         const latest = priorDoses[priorDoses.length - 1]
         const gap = daysBetween(latest.date, t.date)
         if (gap === null || gap < 10) {
           offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date})과 직전 접종일(${latest.date}) 간격이 ${gap ?? '?'}일이에요. 10일 이상이어야 해요.`)
+          problems.push(msgTiterMinDaysAfterVaccine(10))
         }
       }
       if (offending.length > 0) {
         return {
           ok: false,
-          message: problems.join(' / '),
+          // 채혈이 여러 건이면 같은 문구가 반복되므로 중복 제거(고객 화면 문구 규칙).
+          message: Array.from(new Set(problems)).join(' / '),
           offendingPaths: offending,
         }
       }
@@ -288,10 +292,22 @@ export const GU_CHECKS: ProcedureCheck[] = [
         if (t.received_date) offending.push(`rabies_titer_records[${t.originalIndex}].received_date`)
         else offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       }
-      const label = earliest.received_date ? '검체 수령일' : 'RNATT 채혈일'
+      // 대만(tw.import-permit-120days-before-entry)과 같은 문형 — **대기를 못 채워도 입국은
+      //   된다. 대가가 계류일 뿐**이라 '못 간다'로 쓰면 사실과 다르다. 두 갈래로 나눈다:
+      //   ①채혈일이 출국일보다 늦다 = 논리적 불가능 → 날짜를 고쳐야 한다
+      //   ②120일 미달 = 입국은 되고 남은 기간만큼 계류 → 감수 여부는 보호자가 판단
+      //   ⛔ 날짜를 문장에 넣지 말 것(고객 노출 문구 규칙 — lint:checks 가 막는다).
+      if (days !== null && days < 0) {
+        return {
+          ok: false,
+          message: '광견병 항체 검사일이 출국일보다 늦어요. 날짜를 확인하세요.',
+          offendingPaths: offending,
+        }
+      }
       return {
         ok: false,
-        message: `${label}(${earliestBasis})부터 출국일(${dep})까지 ${days ?? '?'}일이에요. 120일 이상이어야 해요.`,
+        message:
+          '검체가 검사기관에 도착한 날부터 120일이 지나야 계류를 최소화할 수 있어요. 지금은 남은 기간만큼 괌에서 계류되는 점 참고하세요.',
         offendingPaths: offending,
       }
     },
