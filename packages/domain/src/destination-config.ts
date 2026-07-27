@@ -966,6 +966,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       //   일러도 만료된다 — 카드 문구가 둘 다 말해야 한다.
       entryValidityMonths: 12,
     },
+    // 종합백신·켄넬코프 출국 10일 대기 — **저장 거부의 진실 출처**(GENERAL_VACCINE_WAIT_DAYS
+    //   파생). 이 선언이 없으면 주의(gu.general-vaccine-10days-before-arrival)만 뜨고 입력은
+    //   그대로 저장된다 — 항체 10일이 같은 이유로 비어 있던 것과 같은 함정(2026-07-27).
+    generalVaccineWaitDays: 10,
     importPermit: { applyDeadlineDays: 30, docName: 'Animal Entry Permit' },
     // 레시피상 **마지막에 켠다** — 카드·검증·서류·사진이 모두 끝난 뒤(2026-07-26).
     //   이 플래그가 켜져야 항공권 카드(APP_SUPPORTED_DESTINATION_KEYS 파생)가 붙는다.

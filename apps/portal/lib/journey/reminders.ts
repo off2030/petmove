@@ -11,6 +11,7 @@ import {
   rabiesBoosterChainEnd,
   readCivEntries,
   readGeneralVaccineEntries,
+  readKennelCoughEntries,
   readRabiesEntries,
   readTiterEntries,
   resolveValidUntil,
@@ -396,6 +397,9 @@ function collectValidityReminders(caseRow: CaseRow, pet: string, today: string, 
   // 종합백신 / CIV — 최근 접종의 유효기간.
   for (const [label, entries] of [
     ['종합백신', readGeneralVaccineEntries(caseRow)],
+    // 켄넬코프 — 종합백신과 같은 연 1회 백신이라 만료 알림도 같이 받는다(2026-07-27 카드 분리
+    //   전에는 종합백신 카드에 얹혀 있어 알림이 없었다).
+    ['켄넬코프 백신', readKennelCoughEntries(caseRow)],
     ['독감(CIV) 백신', readCivEntries(caseRow)],
   ] as const) {
     if (!entries.length) continue

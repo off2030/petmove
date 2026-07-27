@@ -27,6 +27,7 @@ export * from './auto-fill-engine'
 export {
   readRabiesEntries,
   readGeneralVaccineEntries,
+  readKennelCoughEntries,
   readCivEntries,
   readTiterEntries,
   latestExtraTiterEntry,

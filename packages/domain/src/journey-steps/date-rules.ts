@@ -419,12 +419,19 @@ export function validateGeneralVaccineEntryWait(v: string, ctx: DateRuleContext)
   if (days <= 0) return null
   const target = v.slice(0, 10)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(target)) return null
-  const dates = readDateArray(ctx.data, 'general_vaccine_dates')
-  if (dates.length === 0) return null
-  const latest = dates.reduce((a, b) => (a > b ? a : b))
-  const earliest = addDays(latest, days)
-  if (earliest && target < earliest) {
-    return `종합백신 접종 후 ${days}일이 지나야 입국할 수 있어요. 날짜를 확인하세요.`
+  // 켄넬코프도 **같은 대기 요건**을 받는 목적지가 있다(괌 — 둘 다 출국 10일 전).
+  //   백신마다 따로 보지 않으면 켄넬코프만 차단이 새서, 배열별로 각각 판정한다.
+  for (const [key, label] of [
+    ['general_vaccine_dates', '종합백신'],
+    ['kennel_cough_dates', '켄넬코프'],
+  ] as const) {
+    const dates = readDateArray(ctx.data, key)
+    if (dates.length === 0) continue
+    const latest = dates.reduce((a, b) => (a > b ? a : b))
+    const earliest = addDays(latest, days)
+    if (earliest && target < earliest) {
+      return `${label} 접종 후 ${days}일이 지나야 입국할 수 있어요. 날짜를 확인하세요.`
+    }
   }
   return null
 }
