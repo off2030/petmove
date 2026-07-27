@@ -1575,12 +1575,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   호주는 광견병 비발생국이라 귀국 항체는 면제된다(isRabiesFreeOrigin) → 귀국용 룰 불필요.
       'rabies-titer': {
         description:
-          '호주 검역당국이 인정하는 검사기관에서 광견병 항체 검사(RNATT)를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n마이크로칩 인증을 받은 뒤, 다른 방문에서 채혈해야 해요.\n처음 접종한 경우에는 접종 3~4주 후에 채혈하는 것이 좋아요.\n0.5 IU/mL 이상이면 합격이에요.\n검체가 검사기관에 도착한 날부터 180일이 지나야 출국할 수 있어요.\n검사 결과는 채혈일로부터 1년간 유효해요.',
-        validationIds: [
-          'au.titer-after-rabies',
-          'au.titer-min-180days-after-sample-received',
-          'au.titer-within-12months-of-export',
-        ],
+          '호주에서 인정하는 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n0.5 IU/mL 이상이면 합격이에요.\n검사 결과는 채혈일로부터 1년간 유효해요.',
+        // 180일 주의(au.titer-min-180days-after-sample-received)는 **운송 예약 카드**에만 둔다.
+        //   채혈은 이미 끝난 사실이라 이 카드에서는 고칠 수 있는 게 없고, 조정 가능한 칸
+        //   (출국·도착일)은 운송 예약에 있다. 문구도 같은 이유로 그쪽에만 있다.
+        validationIds: ['au.titer-after-rabies', 'au.titer-within-12months-of-export'],
       },
       // 독감(CIV) — **한국·미국 출발 개는 필수**(7.2 "For USA and South Korea only").
       //   ⛔ '2회 정확히 14일 간격'은 DAFF 요건이 아니다(구 au.ts 룰의 과잉 해석). 규정은
