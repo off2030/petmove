@@ -14,6 +14,32 @@
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [ar.import-quarantine-date-valid]
   아르헨티나 수입 검역일은 아르헨티나 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
+[au.identity-check-before-titer]
+  신원확인은 항체 검사 채혈 전에, 채혈과 다른 날에 받아야 해요. 같은 날이거나 채혈 이후면 계류가 최소 30일이 돼요.
+[au.rabies-valid-from-titer-to-departure]
+  항체 검사 채혈일에 유효한 광견병 백신이 없어요. 채혈일부터 출국일까지 면역 유효기간이 이어져야 해요.
+  항체 검사 채혈일부터 출국일까지 광견병 면역 유효기간이 끊기지 않아야 해요. 유효기간이 끝나기 전에 추가 접종을 받고 기록하세요.
+[au.titer-min-180days-after-sample-received]
+  항체 검사 검체가 검사기관에 도착한 날부터 180일이 지나야 출국할 수 있어요. 출국일을 다시 확인하세요.
+[au.titer-within-12months-of-export]
+  항체 검사 결과는 채혈일부터 12개월간 유효해요. 출국일까지 유효하지 않으니 재채혈이 필요해요.
+[au.quarantine-reservation-matches-entry]
+  계류 시작일과 호주 도착일이 달라요. 예약 날짜와 항공 일정을 다시 확인하세요.
+[au.import-quarantine-date-valid]
+  호주 수입 검역일은 호주 도착일보다 빠를 수 없어요. 날짜를 확인하세요.
+[au.general-vaccine-14days-before-departure]
+  종합백신은 출국 14일 전까지 접종해야 해요.
+[au.general-vaccine-within-12months]
+  종합백신은 출국일 기준 12개월 이내에 접종한 기록이 있어야 해요. 추가 접종이 필요해요.
+[au.civ-14days-before-departure]
+  독감(CIV) 백신은 출국 14일 전까지 접종해야 해요.
+[au.civ-within-12months]
+  독감(CIV) 백신은 출국일 기준 12개월 이내에 접종한 기록이 있어야 해요. 추가 접종이 필요해요.
+[au.infectious-disease-test-within-45days]
+  전염병 검사일이 출국일보다 늦어요. 날짜를 확인하세요.
+  전염병 검사는 출국 45일 이내에 받아야 해요. 다시 검사받아야 할 수 있어요.
+[au.internal-parasite-protocol]
+  내부 기생충 치료는 출국 45일 이내에 2회 받아야 해요.
 [br.rabies-min-21days-before-departure]
   광견병 접종 후 21일이 지나야 브라질에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [br.rabies-booster-within-prime-validity]

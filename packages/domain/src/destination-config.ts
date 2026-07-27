@@ -362,14 +362,69 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 촌충약(Echinococcus)은 규정상 개 전용 — 고양이는 구충시간 미표시.
     extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
   },
+  // ── 호주 (DAFF) — 한국 = Group 3(광견병 발생하나 잘 관리되는 나라) ──────────
+  // 1차 출처: agriculture.gov.au "How to bring your dog to Australia from a Group 3 country"
+  //   + "Rabies vaccination and tests for cats and dogs coming to Australia" (2026-07-27 전문 확인).
+  // 아키타입 = sea-permit(광견병 1회 + 수입허가 2단계 + 종합백신 + 도착 계류). 다른 점 셋:
+  //   ① 항체 채혈 **전에** 정부 신원확인을 받으면 계류가 30일 → 10일로 줄어든다(전용 카드).
+  //   ② 180일 대기의 기준일이 채혈일이 아니라 **검체의 검사실 도착일**이다(괌 120일과 같은 모델).
+  //   ③ 반려동물이 보호자와 같이 못 가고 **화물(manifested cargo)로 멜버른 공항에만** 도착한다.
   australia: {
     keywords: ['호주', 'australia'],
+    archetype: 'sea-permit',
+    rabies: {
+      doses: 1,
+      // "given when the dog was at least 84 days old" (Group 3 개 가이드 4.2). 예전 au.ts 헤더의
+      //   '최소 연령 DAFF 미명시'는 오독이었다 — 원문에 84일이 명시돼 있다(2026-07-27 정정).
+      minAgeDays: 84,
+      minAgeLabel: '생후 84일',
+      // 3년 백신도 제조사 지침대로면 인정 — oneYearVaccineOnly 선언하지 않는다("Rabies vaccines
+      //   that are valid for 3 years are acceptable if given according to the manufacturer's
+      //   instructions"). 대신 **항체 채혈일부터 출국일까지 유효기간이 하루도 끊기면 안 된다**
+      //   (끊기면 재접종 → 재채혈 → 180일 재시작).
+      validityLine: '항체 검사 채혈일부터 출국일까지 면역 유효기간이 하루도 끊기면 안 돼요.',
+      // ⚠️ '접종 후 3~4주 뒤 채혈'은 **권고**다(정기 접종견은 더 일찍 가능 — "Check with your
+      //   vet"). titer.minDaysAfterVaccine 으로 선언하면 저장 거부가 되므로 선언하지 않는다.
+    },
+    titer: {
+      need: 'entry',
+      // "The RNATT sample must be taken between 12 months and 180 days before the date of export."
+      //   유효기간은 채혈일 기준 12개월(365일), 대기는 검체 도착일 기준 180일 — 기준일이 서로 달라
+      //   둘 다 관리해야 한다. 쓸 수 있는 창이 180일~12개월로 좁다(카드 문구가 둘 다 말해야 함).
+      entryValidityMonths: 12,
+      // 180일의 1일차 = **검체가 검사실에 도착한 날**("at least 180 days after the RNATT sample
+      //   arrives at the laboratory"). 앱은 채혈일을 proxy 로 쓰되(채혈 ≤ 도착이라 less strict)
+      //   basisReceivedDate 로 그 사실을 표시한다 — 괌(120일)·하와이와 같은 처리.
+      entryWaitAfterTiter: { days: 180, basisReceivedDate: true },
+    },
     vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'infectious_disease', 'internal_parasite', 'external_parasite'],
+    // 종합백신 = **렙토스피라 Canicola** 요건(7.2)이 본체다. DHPP 등 나머지는 "recommended,
+    //   not mandatory". Canicola 는 "administered between 12 months and 14 days before export"
+    //   → 출국 14일 전 대기를 저장 거부의 진실 출처로 선언한다.
+    // ⚠️ generalVaccineOneYearOnly 는 선언하지 않는다 — 12개월 상한은 Canicola 부스터 규정이고,
+    //   같은 카드에 기록되는 DHPP 는 3년 제품이 실재해 2·3년 선택을 막으면 정상 기록을 거부한다.
+    //   12개월 상한은 주의 룰(au.*)로 다룬다.
+    generalVaccineWaitDays: 14,
     extraSection: 'australia',
     // sample_received_date 는 rabies_titer_records[].received_date 로 이동 (광견병 항체 검사 편집화면에 표시).
-    extraFields: ['permit_no', 'id_date'],
-    vetVisitWindowDays: 5,
-    importPermit: { selfApply: true }, // DAFF BICON — 수입자 직접 신청 → 로잔 맡기기 '수입 허가 신청' 제외
+    extraFields: [
+      'permit_no', 'id_date',
+      'address_overseas',
+      // 출국 항공편 — 화물(cargo)·멜버른 도착 고정이라 도착일·편명·공항·운송방법만.
+      'entry_date', 'entry_flight_number', 'entry_departure_airport', 'entry_airport', 'entry_transport',
+    ],
+    // 최종검진·건강증명서 배서 = "Within 5 days before your dog's export date". DAFF 자체
+    //   예제(출국 1/30 → 최소 1/25)가 **5일 전 당일을 허용**하는데, 이 값은 `daysBetween >= window`
+    //   로 차단하므로 5를 넣으면 4일까지만 허용돼 규정보다 하루 엄격해진다 → 6.
+    vetVisitWindowDays: 6,
+    // DAFF BICON — 수입자 직접 신청 → 로잔 맡기기 '수입 허가 신청' 제외.
+    //   확정 '출국 N일 전' 마감은 규정에 없다(허가 유효기간이 RNATT 만료일에 연동). 대신 심사가
+    //   20~40영업일(최대 123영업일) 걸린다는 사실을 카드 문구로 안내한다 — 싱가포르와 같은 처리.
+    importPermit: { selfApply: true },
+    // ⚠️ importQuarantine.quarantineDays 는 선언하지 않는다 — 호주 계류는 신원확인 여부로
+    //   10일/30일이 갈려 숫자 하나로 적을 수 없다. 두 값은 도착 카드 문구가 함께 말한다.
+    // ⚠️ appSupported 는 **고양이 규정까지 끝난 뒤** 켠다(레시피 마지막 단계). 이 플래그가 켜져야
+    //   항공권 카드(APP_SUPPORTED_DESTINATION_KEYS 파생)와 앱 목적지 목록에 붙는다.
   },
   new_zealand: {
     keywords: ['뉴질랜드', 'new zealand', 'nz'],

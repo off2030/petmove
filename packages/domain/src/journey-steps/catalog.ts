@@ -140,6 +140,41 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // common.microchip-after-birth (시술일 ≥ 출생일) 은 portal 입력 차단으로 이관 — timeline '주의' 노출 X.
   },
 
+  // ── 2-1. 호주 신원확인 (Identity Declaration) ─────────────────────────────
+  // DAFF 기준으로는 **선택 절차**지만, 이걸 받아두면 도착 후 계류가 최소 30일 → 최소 10일로
+  // 줄어든다(Group 3 개 가이드 3.2 / 6.1). 순서가 치명적이라 별도 카드로 세운다:
+  //   · 반드시 **항체(RNATT) 채혈 전**에 받아야 하고, 채혈과 **같은 날 방문에서 할 수 없다**
+  //   · 채혈이 끝난 뒤엔 소급 적용이 안 된다 → 그 케이스는 계류 30일 확정
+  //   · 마이크로칩 증명서·예방접종 수첩·펫 여권은 대체 불가(정부 공식수의사만 발급)
+  // 서류는 검역본부(공식수의사)가 **DAFF 로 직접 보낸다** — 보호자가 사본을 받지 못하므로
+  //   첨부 없이 날짜 + '완료' 버튼으로만 끝낸다(괌 검역시설 예약과 같은 모델).
+  {
+    id: 'au-identity-check',
+    category: 'preparation',
+    title: '신원확인',
+    shortLabel: '신원',
+    description:
+      '동물검역소에서 정부 공식수의사에게 신원확인(Identity Declaration)을 받으세요.\n\n공식수의사가 마이크로칩을 확인하고 확인서를 호주 검역당국에 직접 보내요.\n항체 검사 채혈 전에 받아야 하고, 채혈과 같은 날에는 받을 수 없어요.\n이 절차를 마치면 도착 후 계류가 최소 10일, 받지 않으면 최소 30일이에요.\n채혈이 끝난 뒤에는 소급해서 받을 수 없어요.',
+    doneSummary: '신원확인을 받았어요.',
+    cardLine: '신원확인을 받으세요.',
+    applicability: { destinations: ['australia'], species: 'all', tripType: 'all' },
+    order: 25,
+    // 필드는 **기존 `id_date` 를 그대로 쓴다** — 펫무브워크 호주 추가정보(구 'ID 날짜')와 같은
+    //   사실이고, destination-scoped 등록·legacy(australia_extra.id_date) fallback 이 이미 있다.
+    //   새 키를 파면 같은 사실이 두 곳에 저장돼 검증이 갈린다.
+    done: 'dated:id_date',
+    buttonComplete: true,
+    inputs: [
+      {
+        key: 'id_date',
+        label: '확인일',
+        type: 'date',
+        helpText: '공식수의사가 신원을 확인한 날짜',
+      },
+    ],
+    validationIds: ['au.identity-check-before-titer'],
+  },
+
   // ── 3. 광견병 백신 1차 ─────────────────────────────────────────────────
   {
     id: 'rabies-vaccine-1',
@@ -1068,6 +1103,45 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { url: 'https://amcguam.com/moving-to-guam-with-pets/', label: 'Animal Medical Clinic' },
     ],
     validationIds: [],
+  },
+
+  // ── 호주 계류시설(Mickleham) 예약 — 수입 허가를 받은 뒤 ────────────────────
+  // Group 3 개 가이드 6.1: "Book your dog's post-entry quarantine stay — do this after you
+  //   receive your import permit." 호주에 오는 모든 개·고양이가 멜버른 Mickleham 정부
+  //   계류시설(135 Donnybrook Road, Mickleham VIC)에 들어가고, 예약 시 계류비 일부를
+  //   선납해야 자리가 유지된다. 계류 일수는 신원확인 여부로 갈린다(최소 10일 / 최소 30일).
+  // 예약 확인 자료가 보호자에게 남으므로 첨부를 허용한다(괌 예약확인서와 같은 취급).
+  {
+    id: 'au-quarantine-reservation',
+    category: 'permit',
+    title: '계류시설 예약',
+    shortLabel: '계류장',
+    description:
+      '멜버른 Mickleham 계류시설에 계류를 예약하세요.\n\n수입 허가를 받은 뒤에 예약할 수 있어요.\n예약할 때 계류 비용의 일부를 미리 내야 자리가 유지돼요.\n신원확인을 마쳤으면 최소 10일, 받지 않았으면 최소 30일 계류해요.',
+    doneSummary: '계류시설을 예약했어요.',
+    cardLine: '계류시설을 예약하세요.',
+    applicability: { destinations: ['australia'], species: 'all', tripType: 'all' },
+    order: 44,
+    done: 'dated:au_quarantine_reservation_date',
+    buttonComplete: true,
+    inputs: [
+      {
+        key: 'au_quarantine_reservation_date',
+        label: '계류 시작일',
+        type: 'date',
+        helpText: '예약한 계류 시작 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '계류시설 예약확인서를 사진·PDF로 보관하세요.',
+    attachmentLabel: '호주 계류시설 예약확인서',
+    links: [
+      {
+        url: 'https://www.agriculture.gov.au/biosecurity-trade/cats-dogs/quarantine-facilities-and-fees',
+        label: '계류시설 예약·비용 (DAFF)',
+      },
+    ],
+    validationIds: ['au.quarantine-reservation-matches-entry'],
   },
 
   // ── 사전 신고 다음 — 일본 수출 검역 (왕복 케이스 한정) ──────────────

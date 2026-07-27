@@ -1485,6 +1485,140 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['tw.import-quarantine-date-valid'],
     }),
   },
+  // ── 호주 (DAFF, Group 3 — 강아지) ─────────────────────────────────────────
+  // 출처: agriculture.gov.au "How to bring your dog to Australia from a Group 3 country"
+  //   + "Rabies vaccination and tests..." 전문(2026-07-27 확인). 수치 근거는 procedure-checks/au.ts.
+  // sea-permit 골격(광견병 1회 + 수입허가 + 종합백신 + 도착 계류)에 호주 고유 절차를 얹는다:
+  //   신원확인(au-identity-check, order 25) · 계류시설 예약(au-quarantine-reservation, 44) ·
+  //   독감(CIV) · 전염병 검사 · 내외부 구충.
+  // ⚠️ 지금 문구는 **강아지 기준**이다. 고양이는 CIV·렙토·브루셀라·리슈만편모충이 다르고
+  //   외부구충 시작일도 21일이라, 고양이 규정을 올릴 때 descriptionBySpecies 로 갈라야 한다.
+  //   appSupported 는 그때까지 켜지 않는다(destination-config 주석 참고).
+  australia: seaPermitOverrides({
+    key: 'australia',
+    label: '호주',
+    rabiesDescription:
+      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 84일이 지난 후에 접종해야 해요.\n3년 백신도 제조사 지침대로 접종했다면 인정돼요.\n항체 검사 채혈일부터 출국일까지 면역 유효기간이 하루도 끊기면 안 돼요.\n유효기간이 끊기면 다시 접종하고 항체 검사도 다시 받아야 해요. 180일 대기도 처음부터 다시 시작돼요.',
+    rabiesValidationIds: [
+      'au.rabies-prime-after-84days',
+      'au.microchip-before-rabies',
+      'au.rabies-valid-from-titer-to-departure',
+    ],
+    // ⚠️ titerDescription 을 팩토리에 넘기지 않는다 — 팩토리판은 order 55 · **귀국용** 룰로
+    //   만들어지는데 호주 항체는 **입국 요건**이라 아래 extra['rabies-titer'] 가 통째로 교체한다.
+    //   넘기면 같은 문구가 두 벌 생겨 한쪽만 고치는 사고가 난다(싱가포르에 남아 있는 중복).
+    // 종합백신 = **렙토스피라 Canicola** 요건(7.2)이 본체. DHPP 등 나머지는 권장 사항이다.
+    //   백신 대신 MAT 검사를 받는 선택지도 규정에 있어(7.3) 마지막 줄로 안내한다.
+    generalVaccine: {
+      description:
+        '종합백신을 접종하세요.\n\n렙토스피라 Canicola 혈청형이 포함된 백신이어야 해요.\n처음 접종하면 2~4주 간격으로 2회 접종해요.\n마지막 접종이나 추가 접종은 출국 14일 전까지, 12개월 이내여야 해요.\n출국할 때 면역 유효기간이 남아있어야 해요.\nCanicola 백신을 접종하지 않으면 대신 렙토스피라 검사(MAT)를 받아야 해요.',
+      validationIds: [
+        'au.general-vaccine-14days-before-departure',
+        'au.general-vaccine-within-12months',
+      ],
+    },
+    // 항공권이 아니라 **운송 예약** — 반려동물이 보호자와 같은 항공기로 갈 수 없고 정식 항공
+    //   화물(manifested cargo)로만 간다(6.3). 홍콩·영국과 같은 문형.
+    flight: {
+      title: '운송 예약',
+      shortLabel: '운송',
+      doneSummary: '운송 예약을 했어요.',
+      attachmentHint: '운송 예약 확인서·항공권(e-티켓)을 사진·PDF로 보관하세요.',
+      description:
+        '계류 예약 날짜에 맞춰 운송을 예약하세요.\n\n반려동물은 보호자와 같은 항공기 객실이나 수하물로 갈 수 없어요. 정식 항공 화물로만 보내요.\nIATA 규격 이동장이 필요해요.\n멜버른 국제공항에 바로 도착해야 해요. 다른 공항에 내려 국내선으로 옮길 수 없어요.\n항체 검사 검체가 검사기관에 도착한 날부터 180일이 지난 뒤에 도착할 수 있어요.\n경유는 가능하지만 승인국 공항의 국제구역에서 다른 동물과 접촉하지 않아야 해요.',
+      // 계류시설 예약(44) 다음 — DAFF 순서(허가 → 계류 예약 → 운송 예약)와 같게.
+      order: 46,
+      validationIds: ['au.titer-min-180days-after-sample-received'],
+    },
+    // 수입 허가(BICON) — 항체 결과지 + RNATT 선언서를 갖춘 뒤 신청. 확정 마감일은 규정에
+    //   없고(허가 유효기간이 RNATT 만료일에 연동) 심사에 20~40영업일이 걸린다는 사실만 안내한다.
+    //   → base 의 '출국 30일 전' 마감 배지는 내린다(싱가포르·홍콩과 같은 처리).
+    importPermit: {
+      description:
+        '호주 검역당국(DAFF)의 BICON에서 수입 허가를 신청하세요.\n\n항체 검사 결과지와 RNATT 선언서를 함께 제출해요.\n신청할 때 수수료를 전액 결제해요.\n허가가 나오기까지 보통 20~40영업일 걸리고, 길면 123영업일까지 걸릴 수 있어요.\n허가는 항체 검사가 만료되는 날(채혈일부터 12개월)까지만 유효해요.\n호주에 도착하는 날에도 허가가 유효해야 해요.',
+      doneSummary: '호주 수입 허가를 받았어요.',
+      cardLine: '호주 수입 허가를 신청하세요.',
+      attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
+      attachmentLabel: '호주 수입 허가증',
+      // 항체(40) 다음, 계류시설 예약(44) 앞 — 허가를 받아야 계류를 예약할 수 있다(6.1).
+      order: 42,
+      deadline: undefined,
+      inputs: [
+        { key: 'import_permit_application_date', label: '신청일', type: 'date' },
+        { key: 'permit_no', label: '허가 번호', type: 'text' },
+      ],
+      validationIds: ['au.import-permit-not-after-departure'],
+      links: [{ url: 'https://bicon.agriculture.gov.au/', label: '수입 허가 신청 (BICON)' }],
+    },
+    // 도착 = 멜버른 공항에서 검역관이 인수 → Mickleham 계류시설. 계류 일수는 신원확인 여부로 갈린다.
+    importQuarantine: {
+      fieldKey: 'au_import_quarantine_date',
+      description:
+        '호주 도착 후 검역관이 멜버른 공항에서 반려동물을 인수해 Mickleham 계류시설로 옮겨요.\n\n신원확인을 받았으면 최소 10일, 받지 않았으면 최소 30일 계류해요.\n도착 24시간 이내에 무사히 도착했다는 안내를 이메일로 받아요.\n서류·검사·기생충에 문제가 있으면 계류가 길어질 수 있어요.\n계류 비용을 모두 결제해야 반려동물이 나올 수 있어요.',
+      helpText: '호주 도착 후 계류를 시작한 날짜',
+      attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+      attachmentLabel: '호주 수입 검역 서류',
+      validationIds: ['au.import-quarantine-date-valid'],
+    },
+    extra: {
+      // 입국 항체 배선 override — 팩토리 기본(order 55 · 귀국용 룰)을 호주 입국 항체로 교체.
+      //   호주는 광견병 비발생국이라 귀국 항체는 면제된다(isRabiesFreeOrigin) → 귀국용 룰 불필요.
+      'rabies-titer': {
+        description:
+          '호주 검역당국이 인정하는 검사기관에서 광견병 항체 검사(RNATT)를 받으세요.\n\n신원확인을 받은 뒤, 다른 날에 채혈해야 해요.\n채혈 전에 마이크로칩을 확인해요.\n0.5 IU/mL 이상이면 합격이에요.\n검체가 검사기관에 도착한 날부터 180일이 지나야 출국할 수 있어요.\n검사 결과는 채혈일부터 12개월간 유효하고, 출국일까지 유효해야 해요.\n처음 접종한 경우에는 접종 3~4주 후에 채혈하는 것이 좋아요.',
+        validationIds: [
+          'au.titer-after-rabies',
+          'au.titer-min-180days-after-sample-received',
+          'au.titer-within-12months-of-export',
+        ],
+      },
+      // 독감(CIV) — **한국·미국 출발 개는 필수**(7.2 "For USA and South Korea only").
+      //   ⛔ '2회 정확히 14일 간격'은 DAFF 요건이 아니다(구 au.ts 룰의 과잉 해석). 규정은
+      //     "제조사 지침대로 기초 접종 완료 + 마지막 접종은 출국 14일 전 이상"뿐이다.
+      'civ-vaccine': {
+        description:
+          '개 인플루엔자(CIV) 백신을 접종하세요.\n\n한국에서 출발하는 강아지는 반드시 접종해야 해요.\n한국에서 승인되고, 국내에 도는 바이러스에 효과가 있는 백신이어야 해요.\n처음 접종하면 제조사 지침대로 기초 접종을 마쳐야 해요.\n기초 접종은 출국 14일 전까지 끝내야 해요.\n이미 접종해 온 강아지는 추가 접종을 출국 14일 전까지, 12개월 이내에 받아야 해요.',
+        validationIds: ['au.civ-14days-before-departure', 'au.civ-within-12months'],
+      },
+      // 전염병 검사 — 리슈만편모충(전 개체) + 브루셀라(중성화 안 한 개체) + 렙토 MAT(백신 미접종 시).
+      //   세 검사 모두 출국 45일 이내 채혈이라 한 카드에 묶는다(admin 도 같은 필드를 공유).
+      'infectious-disease-test': {
+        description:
+          '전염병 검사를 받아 음성을 확인하세요.\n\n출국 45일 이내에 채혈해요.\n리슈만편모충(Leishmania infantum) 검사는 모든 강아지가 받아요. 정량 IFAT 또는 정량 ELISA만 인정돼요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT·TAT(SAT)·IFAT만 인정돼요.\n렙토스피라 Canicola 백신을 접종하지 않았다면 MAT 검사를 받아요.\n간이 키트(SNAP·신속검사) 결과는 인정되지 않아요.',
+        validationIds: ['au.infectious-disease-test-within-45days'],
+      },
+      // 외부구충 — "Start at least 30 days before export"(7.6). DAFF 예제(1/1 처치 → 최소
+      //   1/31 출국)대로 **출국 30일 전 당일 시작**까지 허용된다.
+      'external-parasite': {
+        description:
+          '외부 기생충 치료를 하세요.\n\n진드기와 벼룩을 접촉 살충하는 제품이어야 해요.\n출국 30일 전에 시작해서, 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n치료를 시작한 뒤에는 병원에 갈 때마다 기생충 검사를 받아요.\n진드기나 벼룩이 발견되면 제거하고 30일을 다시 시작해야 할 수 있어요.',
+        validationIds: ['au.external-parasite-protocol-dog'],
+      },
+      // 내부구충 — 45일 이내 2회 · 14일 이상 간격 · 2차는 출국 5일 이내(7.7).
+      //   "It's acceptable to do the final vet check and second internal parasite treatment at
+      //   the same vet visit" — 임상검사와 같은 날 가능하다는 안내를 그대로 넣는다.
+      'internal-parasite': {
+        description:
+          '내부 기생충 치료를 하세요.\n\n선충과 조충을 모두 없애는 약이어야 해요.\n출국 45일 이내에 2회 치료해요.\n두 번의 치료는 14일 이상 벌어져야 해요.\n2차 치료는 출국 5일 이내에 해요. 출국 전 임상검사와 같은 날에 해도 돼요.',
+        validationIds: ['au.internal-parasite-protocol'],
+      },
+      // 임상검사 — 호주 창은 5일(프로파일 vetVisitWindowDays: 6 = '5일 전 당일까지 허용').
+      //   base 문구(10일)가 그대로 노출되면 차단과 어긋난다(싱가포르 7일과 같은 정정).
+      'vet-visit': {
+        description:
+          '출국일 기준 5일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 호주 건강증명서(Veterinary Health Certificate)를 발급받아요.\n\n마이크로칩 확인, 전염병 증상 확인, 외부 기생충 검사를 함께 받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+        deadline: { anchor: 'departure', daysBefore: 5, window: true },
+      },
+      // 한국 수출 검역도 같은 5일 창(validateKrExportDate 가 getVetVisitWindowDays 공유).
+      //   DAFF 는 배서를 **최종검진과 2차 내부구충 이후**에 받으라고 못박는다(8.3) — 순서
+      //   제약은 validateKrExportDate(검역일 ≥ 임상검사일)가 이미 담당한다.
+      'certificate-issue': {
+        description:
+          '출국일 기준 5일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.\n임상검사와 2차 내부 기생충 치료를 마친 뒤에 방문해야 해요.',
+        deadline: { anchor: 'departure', daysBefore: 5, window: true },
+      },
+    },
+  }),
   // 일본을 뼈대로 — 'departure' 공용 카드를 그 나라 '[국가] 수입 검역' 도착 카드로 교체.
   // 목적지마다 따로 작성(검역일 필드도 나라별: {국가}_import_quarantine_date). 제목·설명은
   // 그 나라 가이드 기준, 일본과 같은 부분은 같은 문구. 완료신호는 그 나라 검역일 필드를 실어 보낸다.

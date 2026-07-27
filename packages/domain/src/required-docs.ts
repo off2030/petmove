@@ -840,6 +840,110 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'kr-import-quarantine',
     },
   ],
+  // 호주 — DAFF 8.4 "Gather your import documents" 의 동행 서류 목록을 그대로 옮긴 구성.
+  //   수입 허가증 · 건강증명서 · 각 요건별 검사 결과지와 백신 증명서 · RNATT 선언서.
+  //   ⚠️ 건강증명서와 검사 결과지는 **모든 장에 정부 수의사의 원본(습식) 서명·날인**이 필요하고
+  //     건강증명서는 사본이 인정되지 않는다(8.3·8.4). 전자 사본만 보내면 안 된다.
+  //   ⚠️ 지금 목록은 **강아지 기준**이다(CIV·렙토·전염병 검사가 개 요건). 고양이 작업 때
+  //     Group 3 cat guide 로 다시 구성할 것.
+  '호주': [
+    {
+      id: 'au-rabies-titer-result',
+      name: '광견병 항체 검사 결과지(RNATT)',
+      source: '검사기관',
+      kind: 'step',
+      stepRef: 'rabies-titer',
+      description:
+        '검사를 의뢰한 동물병원을 통해 발급받아요. 검사기관의 레터헤드에 영문으로 작성돼요.\n\n마이크로칩 번호·채혈일·채혈 장소·검사 종류·결과·발급자 서명이 들어가야 해요.\n\n마이크로칩 번호, 채혈일, 결과를 나중에 정정한 결과지는 인정되지 않아요.\n\n수입 허가를 신청할 때 제출하고, 출국할 때도 원본이 함께 가야 해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'rabies-titer',
+    },
+    {
+      id: 'au-rnatt-declaration',
+      name: 'RNATT 선언서(RNATT Declaration)',
+      source: '농림축산검역본부',
+      kind: 'manual',
+      issuanceStepId: 'rabies-titer',
+      description:
+        '항체 검사 결과가 나온 뒤 농림축산검역본부에서 발급받는 호주 전용 선언서예요.\n\n광견병 접종증명서와 항체 검사 결과지를 제출하면, 정부 수의사가 작성·서명·날인해요.\n\n결과지와 선언서의 마이크로칩 번호·채혈일·결과가 한 글자도 다르면 안 돼요.\n\n수입 허가를 신청할 때 결과지와 함께 제출해요. 출국할 때도 원본이 함께 가야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+    },
+    {
+      id: 'au-import-permit-doc',
+      name: '호주 수입 허가증(Import Permit)',
+      source: '호주 검역당국(DAFF)',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        'BICON에서 신청한 수입 허가가 승인되면 발급돼요.\n\n허가서에 적힌 조건이 모두 지켜져야 해요. 계류 기간도 허가서 조건이 우선해요.\n\n항체 검사가 만료되는 날(채혈일부터 12개월)까지만 유효하고, 호주에 도착하는 날에도 유효해야 해요.\n\n첫 장에 정부 수의사의 배서를 받아 원본이 함께 가야 해요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
+      previewStepId: 'import-permit',
+    },
+    // 접종 및 건강증명서(별지 제25호) — 한국 공식 양식(전 목적지 공통).
+    KR_FORM25_VACCINATION_HEALTH_CERT,
+    {
+      id: 'au-entry-health-cert',
+      name: '호주 건강증명서(Veterinary Health Certificate)',
+      source: '동물병원 · 농림축산검역본부',
+      kind: 'manual',
+      issuanceStepId: 'vet-visit',
+      description:
+        '호주 입국용 수의 건강증명서예요. 빈 서식은 농림축산검역본부에서 받아요.\n\n출국 5일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 정부 수의사의 확인·서명을 받아요.\n\n최종 검진과 2차 내부 기생충 치료를 마친 뒤에 배서를 받아야 해요.\n\n모든 장에 정부 수의사의 원본 서명·날짜·도장이 필요해요. 사본은 인정되지 않아요.\n\n수정할 때는 줄을 그어 알아볼 수 있게 하고 정부 수의사의 서명·날인을 받아요. 수정액은 쓸 수 없어요.',
+    },
+    {
+      id: 'au-infectious-disease-result',
+      name: '전염병 검사 결과지',
+      source: '검사기관',
+      kind: 'step',
+      stepRef: 'infectious-disease-test',
+      species: 'dog',
+      description:
+        '출국 45일 이내에 받은 검사 결과지예요.\n\n리슈만편모충(Leishmania infantum) 결과지는 모든 강아지가 필요해요.\n\n중성화하지 않았다면 브루셀라(Brucella canis) 결과지도 필요해요.\n\n각 장에 정부 수의사의 원본 서명·날인을 받아야 해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'infectious-disease-test',
+    },
+    {
+      id: 'au-lepto-canicola-doc',
+      name: '렙토스피라 Canicola 백신증명서 또는 검사 결과지',
+      source: '동물병원 · 검사기관',
+      kind: 'step',
+      stepRef: 'general-vaccine',
+      species: 'dog',
+      description:
+        '둘 중 하나가 필요해요.\n\n백신을 접종했다면 Canicola 혈청형이 포함된 백신증명서를 준비해요. 마지막 접종이나 추가 접종이 출국 14일 전까지, 12개월 이내여야 해요.\n\n접종하지 않았다면 출국 45일 이내에 받은 MAT 검사 음성 결과지를 준비해요. 결과지는 각 장에 정부 수의사의 원본 서명·날인이 필요해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'general-vaccine',
+    },
+    {
+      id: 'au-civ-vaccine-cert',
+      name: '독감(CIV) 백신증명서',
+      source: '동물병원',
+      kind: 'step',
+      stepRef: 'civ-vaccine',
+      species: 'dog',
+      description:
+        '한국에서 출발하는 강아지는 반드시 필요한 서류예요.\n\n한국에서 승인되고 국내에 도는 바이러스에 효과가 있는 백신이어야 해요.\n\n기초 접종은 출국 14일 전까지, 추가 접종은 출국 14일 전까지이면서 12개월 이내여야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'civ-vaccine',
+    },
+    {
+      id: 'au-kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      group: 'quarantine',
+      description:
+        '한국 수출 검역 후 발급돼요.\n\n반려동물과 함께 원본이 호주로 가야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'certificate-issue',
+    },
+    {
+      id: 'au-kr-import-quarantine-cert',
+      name: '한국 수입 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'kr-import-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '한국 수입 검역 후 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'kr-import-quarantine',
+    },
+  ],
   // 중국 — 공통(별지25·항체결과·한국 수출/수입 검역증) + 중국 고유 동물위생증명서(귀국용).
   // 중국은 항체검사가 입국 요건(비지정국)이라 roundTripOnly 아님. 입국 시 중국이 발급하는
   // 별도 증서는 없음(해관 확인만) — 그래서 '중국 수입 검역증' 항목은 두지 않는다.
