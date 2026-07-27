@@ -53,6 +53,12 @@ import { buildDateRuleContext, validateUsDogEntryDate } from '../journey-steps/d
  *  - DOAG 서류 도착 10일 이전 수령 (Entry Permit $185~$244)
  *  - 격리 면제 위해 위 모든 조건 충족 (미충족 시 기본 120일 상업 격리)
  *
+ * ⚠️ 세대 교체(2026-07-27): 이 파일은 펫무브워크 전용 시절(2026-05-06) 문법이라 severity 가
+ *   전부 'info' 였다. 앱에서 info 는 회색 **'안내'**, warning 은 **'주의'** 배지다
+ *   (scenario.ts infoByStep vs failedByStep). 요건 위반이 안내로 뜨면 다른 목적지에서 주의로
+ *   뜨는 같은 요건보다 약하게 읽힌다 — 앱 승격에 맞춰 요건 검사 12건을 warning 으로 올렸다
+ *   (홍콩 2026-07-26 세대 교체와 같은 정리). 정보성 안내 룰이 새로 생기면 그것만 info 로.
+ *
  * 컨벤션 (다른 국가 룰과 동일):
  *  - "X일 이내" → `dep - X ≤ N-1`
  *  - "X일 이상/이전/후" → `dep - X ≥ N` (이상 inclusive)
@@ -74,7 +80,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       '마이크로칩(ISO 11784/11785) 이 광견병 1차 접종일과 같거나 이전이어야 함.',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -102,7 +108,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 생후 3개월령(캘린더) 이상',
     description:
       '광견병 1차 접종은 생년월일 기준 캘린더 3개월(`addMonths(birth, 3)`) 이후. (DOAG: "shall not be given less than 3 months of age") 91일 근사 대신 정확한 월 계산.',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -131,7 +137,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: '광견병 평생 2회 이상 접종',
     description:
       '광견병 백신은 평생 최소 2회. 1차 + 2차 모두 필수.',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -153,7 +159,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: '광견병 도즈 간 30일 이상 간격 (최소 1개월)',
     description:
       '연속된 광견병 접종 간 간격 ≥30일 (1개월). (DOAG Brochure 2024-08-09 운용. 참고: HI는 strict ">30 days = ≥31일"이며 GU 동일 강화 검토 권고)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -194,7 +200,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: '도착일에 광견병 면역 유효 (라벨 유효기간 기준)',
     description:
       '최근 광견병 접종 면역 유효기간이 도착일 이전 만료되지 않아야 함. **괌은 1년 고정이 아니라 백신 라벨(승인 유효기간)을 따른다** — CQA: "administered not more than 365 days prior to the animal\'s release (36 months for approved 3-year vaccines)". 그래서 사용자가 고른 valid_until 을 그대로 쓴다(1·2·3년 모두 선택 가능 — 괌은 RABIES_ONE_YEAR_VALIDITY_DESTINATIONS 에 없다). 미명시 시에만 디폴트 1년. ⛔ 제목·설명을 1년으로 되돌리지 말 것(2026-07-26 — 3년 백신을 1년으로 오해하게 만든다).',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -226,7 +232,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: '항체 검사는 직전 광견병 접종 후 10일 이상 경과',
     description:
       'RNATT 채혈일은 직전 광견병 접종 후 10일 이상 경과해야 함. (DOAG: 항체 형성 시간 운용 권장)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -267,7 +273,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: 'RNATT 검체 lab 수령일부터 120일 경과 후 도착',
     description:
       'DOAG: "the day that the laboratory receives the OIE-FAVN sample counts as the first day for the 120-day countdown" — 검체 lab 수령일(`rabies_titer_records[].received_date`) 우선, 미입력 시 채혈일 fallback. 채혈일 proxy 는 lab 수령일보다 며칠 빨라 less strict.',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -502,7 +508,7 @@ function buildAnnualVaccineRule(opts: {
     category: '종합백신',
     title: `${opts.label} 출국 10일 이전 + 1년 유효${speciesNote}`,
     description: `${speciesPrefix}최근 ${opts.label} 접종이 출국일 10일 이전 완료 + **1년 = 1주년 당일까지** 유효기간 안. valid_until 명시 시 override.`,
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       if (opts.dogOnly && species(caseRow) !== 'dog') return SKIP
@@ -564,7 +570,7 @@ function buildWithin14DaysRule(opts: {
     category: '구충',
     title: `${opts.label}은 출국 14일 이내(${'`≤13`'})`,
     description: `${opts.label} 가장 최근 처치가 출국일 14일 이내(\`≤13\`). (DOAG: "treated ... within 14 days of arrival on Guam")`,
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)

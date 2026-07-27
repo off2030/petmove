@@ -983,7 +983,7 @@
 ▸ guam (괌)
    입력불가 0건
    주의·차단 1건
-     - gu.rabies-2-doses-required [info]
+     - gu.rabies-2-doses-required [warning]
          광견병 백신은 평생 2회 이상 접종해야 해요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -1578,9 +1578,9 @@
    입력불가 1건
      ✕ 마이크로칩 선행: 마이크로칩 삽입 후 광견병을 접종하세요
    주의·차단 2건
-     - gu.microchip-before-rabies [info]
+     - gu.microchip-before-rabies [warning]
          접종일은 마이크로칩 삽입일 이후여야 해요.
-     - gu.rabies-2-doses-required [info]
+     - gu.rabies-2-doses-required [warning]
          광견병 백신은 평생 2회 이상 접종해야 해요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -2740,7 +2740,7 @@
    주의·차단 2건
      - gu.departure-within-12months-of-titer [warning]
          광견병 항체 검사 결과는 12개월간 유효해요. 유효기간이 지나기 전에 출국해야 해요.
-     - gu.rabies-not-expired-on-arrival [info]
+     - gu.rabies-not-expired-on-arrival [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
    상황별 설명문 3건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -4085,7 +4085,7 @@
 ▸ guam (괌)
    입력불가 0건
    주의·차단 1건
-     - gu.rabies-2-doses-required [info]
+     - gu.rabies-2-doses-required [warning]
          광견병 백신은 평생 2회 이상 접종해야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -4758,7 +4758,7 @@
 ▸ guam (괌)
    입력불가 0건
    주의·차단 1건
-     - gu.rabies-2-doses-required [info]
+     - gu.rabies-2-doses-required [warning]
          광견병 백신은 평생 2회 이상 접종해야 해요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -5356,9 +5356,9 @@
    입력불가 1건
      ✕ 광견병 1차 최소 일령: 광견병 접종은 생후 3개월이 지나서 할 수 있어요
    주의·차단 2건
-     - gu.rabies-2-doses-required [info]
+     - gu.rabies-2-doses-required [warning]
          광견병 백신은 평생 2회 이상 접종해야 해요.
-     - gu.rabies-prime-after-3months-old [info]
+     - gu.rabies-prime-after-3months-old [warning]
          광견병 접종은 생후 3개월이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ flight-purchase: 귀국 항공권 정보를 입력하세요.
@@ -7067,7 +7067,7 @@
    주의·차단 2건
      - common.rabies-extra-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2025년 7월 1일에 만료되었어요. 추가 접종 기록을 입력하세요. 추가 접종을 하지 못한 경우, 1차 접종부터 다시 준비하세요.
-     - gu.rabies-2-doses-required [info]
+     - gu.rabies-2-doses-required [warning]
          광견병 백신은 평생 2회 이상 접종해야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -7566,7 +7566,7 @@
          광견병 항체 검사 결과는 12개월간 유효해요. 유효기간이 지나기 전에 출국해야 해요.
      - gu.import-permit-30days-before-arrival [warning]
          괌 도착 30일 전까지 수입 허가 서류를 제출해야 해요. 늦으면 계류가 길어지거나 입국이 거부될 수 있어요.
-     - gu.rabies-2-doses-required [info]
+     - gu.rabies-2-doses-required [warning]
          광견병 백신은 평생 2회 이상 접종해야 해요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -8060,7 +8060,7 @@
    주의·차단 2건
      - common.rabies-extra-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2025년 7월 1일에 만료되었어요. 추가 접종 기록을 입력하세요. 추가 접종을 하지 못한 경우, 1차 접종부터 다시 준비하세요.
-     - gu.rabies-2-doses-required [info]
+     - gu.rabies-2-doses-required [warning]
          광견병 백신은 평생 2회 이상 접종해야 해요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -8603,9 +8603,9 @@
    주의·차단 3건
      - common.rabies-extra-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2025년 7월 1일에 만료되었어요. 추가 접종 기록을 입력하세요. 추가 접종을 하지 못한 경우, 1차 접종부터 다시 준비하세요.
-     - gu.rabies-2-doses-required [info]
+     - gu.rabies-2-doses-required [warning]
          광견병 백신은 평생 2회 이상 접종해야 해요.
-     - gu.rnatt-120days-before-arrival [info]
+     - gu.rnatt-120days-before-arrival [warning]
          검체가 검사기관에 도착한 날부터 120일이 지나야 계류를 최소화할 수 있어요. 지금은 남은 기간만큼 괌에서 계류되는 점 참고하세요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
@@ -9187,7 +9187,7 @@
 ▸ guam (괌)
    입력불가 0건
    주의·차단 1건
-     - gu.rnatt-after-rabies-10days [info]
+     - gu.rnatt-after-rabies-10days [warning]
          광견병 항체 검사는 접종 후 10일이 지나서 할 수 있어요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
