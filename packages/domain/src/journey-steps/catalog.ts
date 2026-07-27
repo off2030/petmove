@@ -148,6 +148,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   //      오후 동물병원처럼 하루에 나눠 받는 건 규정 위반이 아니다. 2026-07-27 정정)
   //   · 채혈이 끝난 뒤엔 소급 적용이 안 된다 → 그 케이스는 계류 30일 확정
   //   · 마이크로칩 증명서·예방접종 수첩·펫 여권은 대체 불가(검역관만 발급)
+  //   · **예외 하나** — 호주에서 수출 검역을 받고 온 동물은 이미 신원 근거가 있어 면제된다
+  //     (6.1 "your dog originated in Australia and has evidence of their identity on their
+  //      Australian-issued export certification" / rabies 페이지 "you can use the identity
+  //      check on your Australian issued export certification"). 이 경우도 계류 최소 10일.
   // 서류는 검역본부(검역관)가 **DAFF 로 직접 보낸다** — 보호자가 사본을 받지 못하므로
   //   첨부 없이 날짜 + '완료' 버튼으로만 끝낸다(괌 검역시설 예약과 같은 모델).
   //
@@ -171,7 +175,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   붙어 있어 타임라인에서 '칩 → 인증' 순서로 읽힌다.
     shortLabel: '인증',
     description:
-      '동물검역소에서 검역관에게 마이크로칩 인증(Identity Declaration)을 받으세요.\n\n검역관이 마이크로칩을 확인하고 확인서를 호주 검역당국에 직접 보내요.\n광견병 항체 검사 전에 받아야 해요.\n마이크로칩 인증을 하지 않으면 계류기간이 최소 10일에서 30일로 크게 늘어나요.',
+      '동물검역소에서 검역관에게 마이크로칩 인증(Identity Declaration)을 받으세요.\n\n검역관이 마이크로칩을 확인하고 확인서를 호주 검역당국에 직접 보내요.\n광견병 항체 검사 전에 받아야 해요.\n마이크로칩 인증을 하지 않으면 계류기간이 최소 10일에서 30일로 크게 늘어나요.\n호주에서 수출 검역을 받고 한국으로 온 경우에는 받지 않아도 돼요.',
     doneSummary: '마이크로칩 인증을 받았어요.',
     cardLine: '마이크로칩 인증을 받으세요.',
     applicability: { destinations: ['australia'], species: 'all', tripType: 'all' },
