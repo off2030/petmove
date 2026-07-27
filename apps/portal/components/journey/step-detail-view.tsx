@@ -313,6 +313,11 @@ export function StepDetailView({
   const isJpExportQuarantineVisit = step.id === 'jp-export-quarantine-visit'
   const isKrImportQuarantine = step.id === 'kr-import-quarantine'
   const isGeneralVaccine = step.id === 'general-vaccine'
+  // 켄넬코프 — 종합백신과 **같은 입력 모델**(date + valid_until + 약품 4필드)이라 같은 기계를
+  //   필드키만 바꿔 재사용한다. 별개 백신이라 카드는 나뉘어 있다(2026-07-27 사용자 지정).
+  const isKennelCough = step.id === 'kennel-cough-vaccine'
+  const isVaccineArray = isGeneralVaccine || isKennelCough
+  const vaccineArrayFieldKey = isKennelCough ? 'kennel_cough_dates' : 'general_vaccine_dates'
   const isImportPermit = step.id === 'import-permit'
   // 신청 → 발급 2단계 모델(신청일 입력=진행 중, 확인서 첨부·완료 버튼=완료). 수입 허가가 원형이고
   // 싱가포르 계류장 예약·강아지 라이선스가 같은 모델을 공유한다. 필드 키만 다르다.
@@ -366,7 +371,7 @@ export function StepDetailView({
     isJpExportQuarantineVisit ||
     isKrImportQuarantine ||
     isImportQuarantine ||
-    isGeneralVaccine ||
+    isVaccineArray ||
     isApplicationStep ||
     isParasite
   // 일정 화면 복귀 경로 — 다중 목적지에서 활성 목적지(?dest=)를 보존해야 저장·완료 후
@@ -468,7 +473,7 @@ export function StepDetailView({
   const [importQuarantineDate, setImportQuarantineDate] = useState(savedImportQuarantineDate)
 
   // 종합백신 — 가변 길이 entries. 빈 상태에서도 입력칸 한 장이 보이도록 최소 1장 유지.
-  const savedGeneralVaccine = readGeneralVaccineForm(caseRow?.data)
+  const savedGeneralVaccine = readGeneralVaccineForm(caseRow?.data, vaccineArrayFieldKey)
   const [generalVaccine, setGeneralVaccine] = useState<GeneralVaccineEntry[]>(
     savedGeneralVaccine.length === 0 ? [makeEmptyGeneralVaccine()] : savedGeneralVaccine,
   )
@@ -571,7 +576,7 @@ export function StepDetailView({
   const importQuarantineDirty =
     isImportQuarantine && importQuarantineDate !== savedImportQuarantineDate
   const generalVaccineDirty =
-    isGeneralVaccine &&
+    isVaccineArray &&
     !generalVaccineEqual(generalVaccine.filter(vaccineEntryFilled), savedGeneralVaccine.filter(vaccineEntryFilled))
   const importPermitDirty =
     isApplicationStep &&
@@ -716,7 +721,7 @@ export function StepDetailView({
     titerExtra.some((e) => typeof e.date === 'string' && e.date.length >= 10 && e.date > todayStr)
   // 종합백신 — 입력 entry 중 하나라도 미래면 '예정일로 저장'. (추가 백신과 동일.)
   const generalVaccineUpcoming =
-    isGeneralVaccine &&
+    isVaccineArray &&
     generalVaccine.some((e) => typeof e.date === 'string' && e.date.length >= 10 && e.date > todayStr)
   // 신청형 절차(수입 허가·계류장 예약·강아지 라이선스) — 신청일이 미래면 '예정일로 저장'.
   const importPermitUpcoming =
@@ -768,7 +773,7 @@ export function StepDetailView({
   }, [caseRow?.data])
   // 광견병·종합백신 step 진입 시 org 백신 카탈로그를 1회 로드 (약품 자동추천 공용).
   useEffect(() => {
-    if (!isRabies && !isRabiesExtra && !isGeneralVaccine) return
+    if (!isRabies && !isRabiesExtra && !isVaccineArray) return
     let cancelled = false
     void getCaseVaccineData(caseId).then((r) => {
       if (!cancelled && r.ok) setVaccineData(r.value)
@@ -776,7 +781,7 @@ export function StepDetailView({
     return () => {
       cancelled = true
     }
-  }, [caseId, isRabies, isRabiesExtra, isGeneralVaccine])
+  }, [caseId, isRabies, isRabiesExtra, isVaccineArray])
   useEffect(() => {
     if (!titerDirty) setTiterForm(readTiterForm(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -836,7 +841,7 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!generalVaccineDirty) {
-      const next = readGeneralVaccineForm(caseRow?.data)
+      const next = readGeneralVaccineForm(caseRow?.data, vaccineArrayFieldKey)
       setGeneralVaccine(next.length === 0 ? [makeEmptyGeneralVaccine()] : next)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1304,7 +1309,7 @@ export function StepDetailView({
         entryRuleCtx,
       )
     }
-    if (isGeneralVaccine) {
+    if (isVaccineArray) {
       const birth = readBirthDate(caseRow?.data)
       // 종합백신 면역 유효기간 1년만 인정(홍콩) — 광견병 rabiesOneYearOnly 와 같은 모델.
       // 단일 출처 = domain GENERAL_VACCINE_ONE_YEAR_VALIDITY_DESTINATIONS(프로파일
@@ -1741,7 +1746,7 @@ export function StepDetailView({
           setError(res.error)
         }
       })
-    } else if (isGeneralVaccine) {
+    } else if (isVaccineArray) {
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -1755,10 +1760,11 @@ export function StepDetailView({
             lot: e.lot || null,
             expiry: e.expiry || null,
           })),
+          vaccineArrayFieldKey,
         )
         if (res.ok) {
           updateCase(res.value)
-          const next = readGeneralVaccineForm(res.value.data)
+          const next = readGeneralVaccineForm(res.value.data, vaccineArrayFieldKey)
           setGeneralVaccine(next.length === 0 ? [makeEmptyGeneralVaccine()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
@@ -2824,12 +2830,12 @@ export function StepDetailView({
             />
           </section>
         )}
-        {isGeneralVaccine && (
+        {isVaccineArray && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <GeneralVaccineInputs
               entries={generalVaccine}
-              vaccineLabel={generalVaccineCardLabel(caseRow?.data, destinationKey)}
+              vaccineLabel={isKennelCough ? '켄넬코프' : generalVaccineCardLabel(caseRow?.data, destinationKey)}
               hideExpiry={!showProductExpiry}
               productHintsFor={(idx) => generalVaccineProductHints[idx] ?? null}
               onChange={(idx, key, next) =>
@@ -3309,9 +3315,11 @@ function readImplantDate(data: Record<string, unknown> | null | undefined): stri
  */
 function readGeneralVaccineForm(
   data: Record<string, unknown> | null | undefined,
+  // 켄넬코프가 같은 폼을 쓰므로 배열 키를 받는다(기본은 종합백신).
+  fieldKey: string = 'general_vaccine_dates',
 ): GeneralVaccineEntry[] {
   if (!data) return []
-  const arr = data['general_vaccine_dates']
+  const arr = data[fieldKey]
   const str = (v: unknown) => (typeof v === 'string' ? v : '')
   const out: GeneralVaccineEntry[] = []
   if (Array.isArray(arr)) {

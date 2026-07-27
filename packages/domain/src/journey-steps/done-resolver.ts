@@ -4,6 +4,7 @@ import {
   addYears,
   isExtraTiterResultConfirmed,
   readGeneralVaccineEntries,
+  readKennelCoughEntries,
   readCivEntries,
   readExternalParasiteEntries,
   readInfectiousDiseaseEntries,
@@ -182,11 +183,17 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       }
       return true
     }
+    // 켄넬코프 — 종합백신과 **완전히 같은 판정**(연 1회 백신 + 유효기간이 입국일 커버).
+    // 읽는 배열만 kennel_cough_dates 로 다르다. 아래 has-general-vaccine 과 한 블록으로 처리.
+    case 'has-kennel-cough':
     case 'has-general-vaccine': {
       // 광견병과 동일 — 최근 접종 유효기간이 입국일을 커버해야 완료. 입국 전 만료면 추가
       // 접종이 더 필요한 상태 → 미완료(종합백신 카드가 '다음 할 일'에 남아 추가 접종 안내).
       // 입국일 미입력이면 입력만으로 완료(기존 동작 유지).
-      const entries = readGeneralVaccineEntries(caseRow)
+      const entries =
+        signal === 'has-kennel-cough'
+          ? readKennelCoughEntries(caseRow)
+          : readGeneralVaccineEntries(caseRow)
       if (entries.length === 0) return false
       const latest = [...entries].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
@@ -429,6 +436,8 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
     }
     case 'has-general-vaccine':
       return lastEntryDate(readGeneralVaccineEntries(caseRow).map((e) => e.date))
+    case 'has-kennel-cough':
+      return lastEntryDate(readKennelCoughEntries(caseRow).map((e) => e.date))
     case 'has-civ-vaccine':
       return lastEntryDate(readCivEntries(caseRow).map((e) => e.date))
     case 'has-infectious-disease-test':

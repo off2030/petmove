@@ -81,6 +81,7 @@ export type StepDoneSignal =
   | 'has-titer-entry'
   | 'has-extra-titer'              // 2회 이상 (항체 검사 추가)
   | 'has-general-vaccine'
+  | 'has-kennel-cough'            // 켄넬코프(Bordetella) — 종합백신과 같은 모델, 필드만 다름
   | 'has-civ-vaccine'
   | 'has-infectious-disease-test'
   | 'has-internal-parasite'

@@ -655,6 +655,9 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
     '차단: validateTiterDate·validateTiterAfterBooster(입국 요건국 순서)·validateEuTiterAfterVaccine(접종 후 대기)',
   'general-vaccine':
     '차단: 출생일 이전 거부·validateMicrochipBeforeBooster(칩 선행국)·findRabiesChainBreak(추가 접종 chain)',
+  // 켄넬코프 — 종합백신과 같은 기계를 필드키만 바꿔 쓴다(2026-07-27 카드 분리).
+  'kennel-cough-vaccine':
+    '차단: 출생일 이전 거부·findRabiesChainBreak(추가 접종 chain) — 종합백신과 같은 경로(getSaveBlockError 의 isVaccineArray 분기)',
   'external-parasite': '차단: validateParasiteDateForDestination(출국일 앵커 창 dispatch)·출생일 이전 거부',
   'internal-parasite':
     '차단: validateParasiteDateForDestination + validatePhInternalParasiteWindow(필리핀 SPSIC 창)·출생일 이전 거부',

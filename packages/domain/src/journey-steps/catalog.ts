@@ -1203,6 +1203,33 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
 
   // ── 6. 독감(CIV) — 강아지만 ─────────────────────────────────────────────
   {
+    // ── 켄넬코프(Bordetella) ─────────────────────────────────────────────
+    // **종합백신과 별개 백신**이라 카드를 나눈다(2026-07-27 사용자 지정). 한동안 괌 종합백신
+    //   카드에 '켄넬코프도 함께 접종해야 해요' 한 줄로 얹혀 있었는데, 다른 백신을 한 카드에서
+    //   말하면 접종 기록도 종합백신 배열에 섞여 들어간다.
+    // 모델은 종합백신과 동일 — 연 1회 백신 + 유효기간이 입국일을 커버해야 완료
+    //   (done: has-kennel-cough 는 has-general-vaccine 과 같은 판정, 읽는 배열만 다르다).
+    // 명단은 프로파일 vaccines 의 'kennel' 선언에서 파생 — 새 목적지가 선언하면 자동으로 뜬다.
+    id: 'kennel-cough-vaccine',
+    category: 'vaccination',
+    title: '켄넬코프 접종',
+    shortLabel: '켄넬',
+    description: '켄넬코프(Bordetella) 백신을 접종하세요.',
+    doneSummary: '켄넬코프 백신을 접종했어요.',
+    applicability: {
+      destinations: destinationsWithVaccine('kennel'),
+      species: 'dog',
+      tripType: 'all',
+    },
+    order: 39,
+    done: 'has-kennel-cough',
+    // 광견병·종합백신과 순서 의존 없음 — 마이크로칩 이후 함께 진행할 수 있다.
+    concurrent: true,
+    inputs: [{ key: 'kennel_cough_dates', label: '접종일', type: 'date_array', hasValidUntil: true }],
+    allowAttachments: true,
+    attachmentLabel: '켄넬코프백신',
+  },
+  {
     id: 'civ-vaccine',
     category: 'vaccination',
     title: '독감(CIV) 백신',

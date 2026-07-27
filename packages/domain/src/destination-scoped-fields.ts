@@ -296,6 +296,7 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'microchip_implant_date',
   'rabies_dates',
   'general_vaccine_dates', //   종합백신 접종 이력 — 동물 단위 사실 (rabies_dates 동일)
+  'kennel_cough_dates', //      켄넬코프 접종 이력 — 종합백신과 같은 동물 단위 사실(2026-07-27 카드 분리)
   'rabies_titer_records',
   'rabies_titer_scheduled', //  항체검사 채혈일을 미래(예정)로 저장 시 별도 자리 — *_dates 동일 동물 단위(전역)
   'rabies_extra_confirmed',
@@ -309,6 +310,7 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'rabies_2_confirmed',
   'rabies_single_confirmed',
   'general_vaccine_confirmed',
+  'kennel_cough_confirmed',
   'civ_confirmed',
   'infectious_disease_confirmed',
   'external_parasite_confirmed',
@@ -316,6 +318,7 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   // 회차 목록 카드의 '미래(예정) 회차' 별도 저장 자리 — 대응 *_dates 와 동일 동물 단위(전역).
   // 미래 날짜를 기록 배열에서 빼서 여기 두면 입력칸은 실제 회차만, 미래는 예정 배지로만 표시.
   'general_vaccine_dates_scheduled',
+  'kennel_cough_dates_scheduled',
   'external_parasite_dates_scheduled',
   'internal_parasite_dates_scheduled',
   // 마이크로칩 삽입·광견병 접종 예정일 — 대응 *_date(s) 가 동물 단위(전역)라 예정도 전역.

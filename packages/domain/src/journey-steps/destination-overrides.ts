@@ -307,16 +307,21 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       description:
         '종합백신을 접종하세요.\n\n강아지는 DHLPP, 고양이는 FVRCP 예방을 포함해야 해요.\n한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n출국 10일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
       descriptionBySpecies: {
-        dog: '종합백신(DHLPP)을 접종하세요.\n\n디스템퍼·전염성간염·렙토스피라·파보바이러스·파라인플루엔자 예방을 포함해야 해요.\n한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n켄넬코프(Bordetella)도 함께 접종해야 해요.\n출국 10일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+        dog: '종합백신(DHLPP)을 접종하세요.\n\n디스템퍼·전염성간염·렙토스피라·파보바이러스·파라인플루엔자 예방을 포함해야 해요.\n한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n출국 10일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
         cat: '종합백신(FVRCP)을 접종하세요.\n\n허피스·칼리시·범백혈구감소증 예방을 포함해야 해요.\n출국 10일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
       },
       // 켄넬코프(Bordetella)는 **이 카드가 함께 다룬다** — 앱에 켄넬코프 전용 카드가 없고,
       //   DOAG 도 개의 백신 기록을 'DHLPP and Bordetella' 한 묶음으로 요구한다. 그래서 켄넬코프
       //   룰도 여기서 지목한다(룰이 어느 카드에도 안 붙으면 경고가 상단으로 샌다).
-      validationIds: [
-        'gu.general-vaccine-10days-before-arrival',
-        'gu.kennel-cough-10days-before-arrival',
-      ],
+      validationIds: ['gu.general-vaccine-10days-before-arrival'],
+    },
+    // 켄넬코프 — 종합백신과 별개 백신이라 카드를 나눴다(2026-07-27 사용자 지정).
+    //   요건은 종합백신과 같다(출국 10일 전 + 입국 때 유효기간). DOAG 브로슈어는 개의 백신
+    //   기록을 'DHLPP and Bordetella' 로 나란히 요구한다.
+    'kennel-cough-vaccine': {
+      description:
+        '켄넬코프(Bordetella) 백신을 접종하세요.\n\n출국 10일 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+      validationIds: ['gu.kennel-cough-10days-before-arrival'],
     },
     'external-parasite': {
       description: '외부 기생충 치료를 하세요.\n\n괌 도착일 기준 14일 이내에 해야 해요.',

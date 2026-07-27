@@ -2275,6 +2275,14 @@ export async function markImportPermitInProgress(
  * entries 는 화면 순서대로, 같은 인덱스의 기존 record 비관리 키를 보존(updateRabiesExtraEntries
  * 와 동일 모델). date 없는 phantom 은 drop.
  */
+/** 종합백신 계열 배열 필드 — 임의 키 쓰기 차단용 허용 목록(PARASITE_FIELD_KEYS 와 같은 패턴). */
+const VACCINE_ARRAY_FIELD_KEYS = new Set(['general_vaccine_dates', 'kennel_cough_dates'])
+
+/**
+ * 종합백신 계열 배열 저장 — 켄넬코프(kennel_cough_dates)도 **같은 shape**(date + valid_until
+ * + 약품 4필드)이라 필드키만 바꿔 재사용한다(2026-07-27 켄넬코프 카드 분리).
+ * ⛔ 임의 키 쓰기 방지 — 허용 목록(VACCINE_ARRAY_FIELD_KEYS) 밖은 거부한다.
+ */
 export async function updateGeneralVaccineEntries(
   caseId: string,
   entries: Array<{
@@ -2285,8 +2293,15 @@ export async function updateGeneralVaccineEntries(
     lot?: string | null
     expiry?: string | null
   }>,
+  fieldKey: string = 'general_vaccine_dates',
 ): Promise<Result<CaseRow>> {
   try {
+    if (!VACCINE_ARRAY_FIELD_KEYS.has(fieldKey)) {
+      return { ok: false, error: '잘못된 백신 필드입니다.' }
+    }
+    const scheduledKey = `${fieldKey}_scheduled`
+    const confirmedKey =
+      fieldKey === 'general_vaccine_dates' ? 'general_vaccine_confirmed' : 'kennel_cough_confirmed'
     for (const e of entries) {
       for (const key of ['date', 'valid_until', 'expiry'] as const) {
         const v = e[key]
@@ -2308,9 +2323,7 @@ export async function updateGeneralVaccineEntries(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    const prevArr = Array.isArray(prev.general_vaccine_dates)
-      ? [...(prev.general_vaccine_dates as unknown[])]
-      : []
+    const prevArr = Array.isArray(prev[fieldKey]) ? [...(prev[fieldKey] as unknown[])] : []
 
     const next: Record<string, unknown>[] = []
     for (let i = 0; i < entries.length; i++) {
@@ -2356,10 +2369,10 @@ export async function updateGeneralVaccineEntries(
 
     const nextData: Record<string, unknown> = { ...prev }
     // 미래(예정) 회차는 기록에서 빼서 별도 예정 자리로 — 입력칸 비움 + 예정 배지.
-    const gvRecords = splitScheduledDoses(next, 'general_vaccine_dates_scheduled', nextData)
-    if (gvRecords.length === 0) delete nextData.general_vaccine_dates
-    else nextData.general_vaccine_dates = gvRecords
-    applyDatedConfirm(nextData, gvRecords, 'general_vaccine_confirmed')
+    const gvRecords = splitScheduledDoses(next, scheduledKey, nextData)
+    if (gvRecords.length === 0) delete nextData[fieldKey]
+    else nextData[fieldKey] = gvRecords
+    applyDatedConfirm(nextData, gvRecords, confirmedKey)
 
     const { data: updated, error } = await admin
       .from('cases')
