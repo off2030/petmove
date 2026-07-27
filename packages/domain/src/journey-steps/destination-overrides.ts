@@ -1597,7 +1597,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       'kennel-cough-vaccine': {
         order: 36,
         description:
-          '켄넬코프(Bordetella) 백신을 접종하세요.\n\n호주 입국 요건은 아니지만, 계류시설을 예약할 때 접종 증명을 요구해요.',
+          '켄넬코프(Bordetella) 백신을 접종하세요.\n\n호주 입국 요건은 아니지만, 계류시설 예약을 위해 필요해요.',
       },
       // 전염병 검사 — 리슈만편모충(전 개체) + 브루셀라(중성화 안 한 개체) + 렙토 MAT(백신 미접종 시).
       //   세 검사 모두 출국 45일 이내 채혈이라 한 카드에 묶는다(admin 도 같은 필드를 공유).
