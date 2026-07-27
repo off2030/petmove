@@ -316,8 +316,17 @@ export function StepDetailView({
   // 켄넬코프 — 종합백신과 **같은 입력 모델**(date + valid_until + 약품 4필드)이라 같은 기계를
   //   필드키만 바꿔 재사용한다. 별개 백신이라 카드는 나뉘어 있다(2026-07-27 사용자 지정).
   const isKennelCough = step.id === 'kennel-cough-vaccine'
-  const isVaccineArray = isGeneralVaccine || isKennelCough
-  const vaccineArrayFieldKey = isKennelCough ? 'kennel_cough_dates' : 'general_vaccine_dates'
+  // 독감(CIV) — 종합백신과 **같은 입력 모델**(date + valid_until + 약품 4필드)이라 켄넬코프와
+  //   똑같이 필드키만 바꿔 재사용한다. 붙이기 전까지 이 카드는 '읽기 전용'이라 보호자가
+  //   접종일을 넣을 수 없었고(완료 판정 불가), 호주 CIV 룰 2개도 데이터가 없어 죽어 있었다
+  //   (2026-07-27 호주 앱 노출로 드러남 — 그전엔 호주·뉴질랜드·인도 모두 미노출이었다).
+  const isCiv = step.id === 'civ-vaccine'
+  const isVaccineArray = isGeneralVaccine || isKennelCough || isCiv
+  const vaccineArrayFieldKey = isKennelCough
+    ? 'kennel_cough_dates'
+    : isCiv
+      ? 'civ_dates'
+      : 'general_vaccine_dates'
   const isImportPermit = step.id === 'import-permit'
   // 신청 → 발급 2단계 모델(신청일 입력=진행 중, 확인서 첨부·완료 버튼=완료). 수입 허가가 원형이고
   // 싱가포르 계류장 예약·강아지 라이선스가 같은 모델을 공유한다. 필드 키만 다르다.
@@ -355,12 +364,19 @@ export function StepDetailView({
   // 심장사상충 — 구충과 **같은 입력 모델**(date_array, 유효기간 없음)이라 같은 기계를
   //   필드키만 바꿔 재사용한다. 별개 절차라 카드는 나뉘어 있다(2026-07-27 사용자 지정).
   const isHeartworm = step.id === 'heartworm-test'
-  const isParasite = isExternalParasite || isInternalParasite || isEchinococcus || isHeartworm
+  // 전염병 검사 — 구충과 **같은 입력 모델**(date_array, 유효기간 없음)이라 같은 기계를
+  //   필드키만 바꿔 재사용한다. 다만 **검사**라서 약품 4필드(세부 정보)는 띄우지 않는다.
+  //   CIV 와 같은 이유로 붙인다(2026-07-27) — 그전엔 읽기 전용이라 호주 45일 룰이 죽어 있었다.
+  const isInfectiousDisease = step.id === 'infectious-disease-test'
+  const isParasite =
+    isExternalParasite || isInternalParasite || isEchinococcus || isHeartworm || isInfectiousDisease
   const parasiteFieldKey = isExternalParasite
     ? 'external_parasite_dates'
     : isHeartworm
       ? 'heartworm_dates'
-      : 'internal_parasite_dates'
+      : isInfectiousDisease
+        ? 'infectious_disease_records'
+        : 'internal_parasite_dates'
   const isInteractive =
     isMicrochip ||
     isRabies ||
@@ -1323,7 +1339,7 @@ export function StepDetailView({
         const ko = (destinationKey && destinationKoLabel(destinationKey)) || '이 여행지'
         // 켄넬코프도 이 분기를 공유하므로 백신 이름을 카드에 맞춘다 — 고정하면 켄넬코프 카드에
         //   '종합백신은…' 이 나간다. 지금은 1년국(홍콩)이 켄넬코프를 요구하지 않아 잠재 함정이다.
-        const vaccineKo = isKennelCough ? '켄넬코프는' : '종합백신은'
+        const vaccineKo = isKennelCough ? '켄넬코프는' : isCiv ? '독감(CIV) 백신은' : '종합백신은'
         return `${ko} 입국 시 ${vaccineKo} 1년까지만 유효합니다. 면역 유효기간을 1년으로 선택하세요.`
       }
       for (const e of generalVaccine) {
@@ -2850,9 +2866,19 @@ export function StepDetailView({
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <GeneralVaccineInputs
               entries={generalVaccine}
-              vaccineLabel={isKennelCough ? '켄넬코프' : generalVaccineCardLabel(caseRow?.data, destinationKey)}
+              vaccineLabel={
+                isKennelCough
+                  ? '켄넬코프'
+                  : isCiv
+                    ? '독감(CIV) 백신'
+                    : generalVaccineCardLabel(caseRow?.data, destinationKey)
+              }
               hideExpiry={!showProductExpiry}
-              productHintsFor={(idx) => generalVaccineProductHints[idx] ?? null}
+              // 제품 자동채움은 **종합백신 lookup**(lookupComprehensive)이라 다른 백신 카드에
+              //   쓰면 엉뚱한 제품을 제안한다 — 켄넬코프·독감(CIV)엔 넘기지 않는다.
+              productHintsFor={(idx) =>
+                isGeneralVaccine ? (generalVaccineProductHints[idx] ?? null) : null
+              }
               onChange={(idx, key, next) =>
                 setGeneralVaccine((prev) =>
                   prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)),
@@ -2896,9 +2922,17 @@ export function StepDetailView({
                     ? '촌충 치료'
                     : isHeartworm
                       ? '심장사상충 검사'
-                      : '내부 기생충 치료'
+                      : isInfectiousDisease
+                        ? '전염병 검사'
+                        : '내부 기생충 치료'
               }
-              dateLabel={isExternalParasite ? '처치일' : isHeartworm ? '검사일' : '치료일'}
+              dateLabel={
+                isExternalParasite
+                  ? '처치일'
+                  : isHeartworm || isInfectiousDisease
+                    ? '검사일'
+                    : '치료일'
+              }
               showValidUntil={false}
               // 내·외부 기생충 치료 모두 '세부 정보(선택)' = 약품명·제조사·제조번호 —
               // 이 카드가 들어가는 **모든 국가 공통**(호주·뉴질랜드 포함, 2026-07-25 사용자 확정).
@@ -2916,7 +2950,11 @@ export function StepDetailView({
                     : undefined
               }
               addLabel={
-                isExternalParasite ? '+ 처치 기록 추가' : isHeartworm ? '+ 검사 기록 추가' : '+ 치료 기록 추가'
+                isExternalParasite
+                  ? '+ 처치 기록 추가'
+                  : isHeartworm || isInfectiousDisease
+                    ? '+ 검사 기록 추가'
+                    : '+ 치료 기록 추가'
               }
               onChange={(idx, key, next) =>
                 setParasite((prev) => prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)))

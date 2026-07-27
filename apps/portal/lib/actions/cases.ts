@@ -2276,7 +2276,19 @@ export async function markImportPermitInProgress(
  * 와 동일 모델). date 없는 phantom 은 drop.
  */
 /** 종합백신 계열 배열 필드 — 임의 키 쓰기 차단용 허용 목록(PARASITE_FIELD_KEYS 와 같은 패턴). */
-const VACCINE_ARRAY_FIELD_KEYS = new Set(['general_vaccine_dates', 'kennel_cough_dates'])
+const VACCINE_ARRAY_FIELD_KEYS = new Set([
+  'general_vaccine_dates',
+  'kennel_cough_dates',
+  // 독감(CIV) — 같은 shape. 2026-07-27 호주 노출로 입력 UI 를 붙이며 함께 허용.
+  'civ_dates',
+])
+
+/** 배열 필드 → '예정→도래' 확인 플래그 키. 전역(동물 단위) 키로 destination-scoped 아님. */
+const VACCINE_ARRAY_CONFIRMED_KEYS: Record<string, string> = {
+  general_vaccine_dates: 'general_vaccine_confirmed',
+  kennel_cough_dates: 'kennel_cough_confirmed',
+  civ_dates: 'civ_confirmed',
+}
 
 /**
  * 종합백신 계열 배열 저장 — 켄넬코프(kennel_cough_dates)도 **같은 shape**(date + valid_until
@@ -2300,8 +2312,7 @@ export async function updateGeneralVaccineEntries(
       return { ok: false, error: '잘못된 백신 필드입니다.' }
     }
     const scheduledKey = `${fieldKey}_scheduled`
-    const confirmedKey =
-      fieldKey === 'general_vaccine_dates' ? 'general_vaccine_confirmed' : 'kennel_cough_confirmed'
+    const confirmedKey = VACCINE_ARRAY_CONFIRMED_KEYS[fieldKey] ?? 'general_vaccine_confirmed'
     for (const e of entries) {
       for (const key of ['date', 'valid_until', 'expiry'] as const) {
         const v = e[key]
@@ -2393,6 +2404,8 @@ const PARASITE_FIELD_KEYS = new Set([
   'external_parasite_dates',
   'internal_parasite_dates',
   'heartworm_dates',
+  // 전염병 검사 — 같은 date_array shape(약품 필드는 화면에서 숨김). 2026-07-27 호주 노출로 추가.
+  'infectious_disease_records',
 ])
 
 /**
@@ -2470,7 +2483,10 @@ export async function updateParasiteEntries(
     const pRecords = splitScheduledDoses(next, `${fieldKey}_scheduled`, nextData)
     if (pRecords.length === 0) delete nextData[fieldKey]
     else nextData[fieldKey] = pRecords
-    applyDatedConfirm(nextData, pRecords, fieldKey.replace(/_dates$/, '_confirmed'))
+    // 확인 플래그 키 — '<이름>_dates' 뿐 아니라 '<이름>_records'(전염병 검사)도 벗겨야
+    //   'infectious_disease_confirmed' 가 된다. _dates 만 벗기면 키가 그대로 남아
+    //   'infectious_disease_records' 에 플래그를 덮어써 기록을 날린다(2026-07-27).
+    applyDatedConfirm(nextData, pRecords, fieldKey.replace(/_(dates|records)$/, '_confirmed'))
 
     const { data: updated, error } = await admin
       .from('cases')
