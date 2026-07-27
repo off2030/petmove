@@ -1535,7 +1535,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       doneSummary: '운송 예약을 했어요.',
       attachmentHint: '운송 예약 확인서·항공권(e-티켓)을 사진·PDF로 보관하세요.',
       description:
-        '계류 예약 날짜에 맞춰 운송을 예약하세요.\n\n반려동물은 보호자와 같은 항공기 객실이나 수하물로 갈 수 없어요. 정식 항공 화물로만 보내요.\nIATA 규격 이동장이 필요해요.\n멜버른 국제공항에 바로 도착해야 해요. 다른 공항에 내려 국내선으로 옮길 수 없어요.\n항체 검사 검체가 검사기관에 도착한 날부터 180일이 지난 뒤에 도착할 수 있어요.\n경유는 가능하지만 승인국 공항의 국제구역에서 다른 동물과 접촉하지 않아야 해요.',
+        '계류 예약 날짜에 맞춰 운송을 예약하세요.\n\n반려동물은 보호자와 같은 항공기 객실이나 수하물로 갈 수 없어요. 정식 항공 화물로만 보내요.\nIATA 규격 이동장이 필요해요.\n멜버른 국제공항에 바로 도착해야 해요. 다른 공항에 내려 국내선으로 옮길 수 없어요.\n항체 검사 검체가 검사기관에 도착한 날부터 180일이 지나야 출국할 수 있어요.\n경유는 가능하지만 승인국 공항의 국제구역에서 다른 동물과 접촉하지 않아야 해요.',
       // 계류시설 예약(44) 다음 — DAFF 순서(허가 → 계류 예약 → 운송 예약)와 같게.
       order: 46,
       validationIds: ['au.titer-min-180days-after-sample-received'],
@@ -1553,11 +1553,22 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // 항체(40) 다음, 계류시설 예약(44) 앞 — 허가를 받아야 계류를 예약할 수 있다(6.1).
       order: 42,
       deadline: undefined,
+      // 버튼 완료 카드(2026-07-27 사용자 결정) — 홍콩 수입 허가와 같은 모델. 보호자가 아는 건
+      //   '됐다/안 됐다'라 신청→발급 2단계 UI 대신 완료 버튼만 두고, 버튼이 오늘 날짜를
+      //   아래 필드에 기록한다.
+      //   ⛔ 신청일 기반 검증(구 au.import-permit-not-after-departure)을 되살리지 말 것 —
+      //     저장되는 값이 신청일이 아니라 허가 취득일이라 판정 근거가 달라진다.
+      buttonComplete: true,
+      done: 'dated:import_permit_application_date',
       inputs: [
-        { key: 'import_permit_application_date', label: '신청일', type: 'date' },
-        { key: 'permit_no', label: '허가 번호', type: 'text' },
+        {
+          key: 'import_permit_application_date',
+          label: '허가 취득일',
+          type: 'date',
+          helpText: '수입 허가증을 받은 날짜',
+        },
       ],
-      validationIds: ['au.import-permit-not-after-departure'],
+      validationIds: [],
       links: [{ url: 'https://bicon.agriculture.gov.au/', label: '수입 허가 신청 (BICON)' }],
     },
     // 도착 = 멜버른 공항에서 검역관이 인수 → Mickleham 계류시설. 계류 일수는 마이크로칩 인증 여부로 갈린다.

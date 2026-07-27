@@ -1187,7 +1187,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: 'RNATT 선언서',
     shortLabel: '선언서',
     description:
-      '동물검역소에서 RNATT 선언서를 발급받으세요.\n\n광견병 접종증명서와 항체 검사 결과지를 제출하면 검역관이 작성·서명·날인해요.\n수입 허가를 신청할 때 항체 검사 결과지와 함께 제출해요.\n결과지와 선언서의 마이크로칩 번호·채혈일·검사 결과가 같아야 해요.',
+      '동물검역소에서 RNATT 선언서를 발급받으세요.\n\n광견병 접종증명서와 항체 검사 결과지를 제출하면 검역관이 작성·서명·날인해요.\n수입 허가를 신청할 때 항체 검사 결과지와 함께 제출해요.',
     doneSummary: 'RNATT 선언서를 받았어요.',
     cardLine: 'RNATT 선언서를 발급받으세요.',
     applicability: { destinations: ['australia'], species: 'all', tripType: 'all' },
@@ -1221,7 +1221,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '계류시설 예약',
     shortLabel: '계류장',
     description:
-      '멜버른 Mickleham 계류시설에 계류를 예약하세요.\n\n수입 허가를 받은 뒤에 예약할 수 있어요.\n예약할 때 계류 비용의 일부를 미리 내야 자리가 유지돼요.\n항체 검사 검체가 검사기관에 도착한 날부터 180일이 지난 뒤에 도착할 수 있어요.',
+      '멜버른 Mickleham 계류시설에 계류를 예약하세요.\n\n수입 허가를 받은 뒤에 예약할 수 있어요.\n예약할 때 계류 비용의 일부를 미리 내야 자리가 유지돼요.\n항체 검사 검체가 검사기관에 도착한 날부터 180일이 지나야 출국할 수 있어요.',
     doneSummary: '계류시설을 예약했어요.',
     cardLine: '계류시설을 예약하세요.',
     applicability: { destinations: ['australia'], species: 'all', tripType: 'all' },
@@ -1245,7 +1245,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         label: '계류시설 예약·비용 (DAFF)',
       },
     ],
-    validationIds: ['au.quarantine-reservation-matches-entry'],
+    // 계류 시작일을 따로 받지 않는 버튼 완료 카드라 비교할 날짜가 없다 — 180일 차단은
+    //   운송 예약(출발일)이 담당한다(2026-07-27 사용자 결정).
+    validationIds: [],
   },
 
   // ── 뉴질랜드 계류시설 예약 — 수입 허가 신청 **전** ──────────────────────────

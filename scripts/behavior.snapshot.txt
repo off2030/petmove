@@ -6068,9 +6068,7 @@
 
 ▸ australia (호주)
    입력불가 0건
-   주의·차단 1건
-     - au.import-permit-not-after-departure [warning]
-         수입 허가 신청일은 출국일보다 빨라야 해요. 날짜를 확인하세요.
+   주의·차단 0건
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
    알림 10건

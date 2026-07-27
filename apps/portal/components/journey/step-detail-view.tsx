@@ -189,6 +189,10 @@ const SIMPLE_FLIGHT_DESTINATIONS: readonly string[] = [
   // 출국일 기준으로 바꿨다(us.dog-entry-age-six-months·validateEntryDateForDestination).
   // CDC 양식은 앱이 대신 채우지 않아 도착일이 필요 없었다(구 주석의 근거는 이미 소멸).
   'usa',
+  // 호주 — 수입 허가·계류시설 예약이 모두 **버튼 완료 카드**로 바뀌어 앱이 항공편 상세를 쓸
+  //   데가 없다(2026-07-27 사용자 결정). 180일 대기 차단도 규정 기준일이 **출국일**(date of
+  //   export)이라 출발일만으로 정확히 판정된다(validateEuEntryDate 는 entry → departure 폴백).
+  'australia',
 ]
 
 /**

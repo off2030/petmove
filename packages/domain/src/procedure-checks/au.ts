@@ -20,7 +20,6 @@ import {
   readDepartureDate,
 } from './utils'
 import { readByDestValue } from '../destination-scoped-fields'
-import { validateImportPermitNotAfterDeparture } from '../journey-steps/date-rules'
 import {
   msgExportQuarantineAfterReturn,
   msgExportQuarantineBeforeEntry,
@@ -74,17 +73,6 @@ function isIntact(caseRow: CaseRow): boolean {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const sex = typeof data.sex === 'string' ? data.sex : ''
   return sex === 'male' || sex === 'female'
-}
-
-/** 계류시설 예약(계류 시작일) — by_dest 우선, 없으면 top-level. */
-function readQuarantineReservationDate(caseRow: CaseRow, destination?: string | null): string {
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const scoped = readByDestValue(data, destination ?? null, 'au_quarantine_reservation_date')
-  if (typeof scoped === 'string') return scoped.slice(0, 10)
-  if (scoped === null) return ''
-  return typeof data.au_quarantine_reservation_date === 'string'
-    ? data.au_quarantine_reservation_date.slice(0, 10)
-    : ''
 }
 
 /** 호주 도착일(entry_date) — by_dest 우선. */
@@ -352,9 +340,9 @@ export const AU_CHECKS: ProcedureCheck[] = [
     id: 'au.rnatt-declaration-order',
     country: COUNTRY,
     category: '광견병',
-    title: 'RNATT 선언서는 채혈 이후 · 수입 허가 신청 이전',
+    title: 'RNATT 선언서는 채혈 이후 · 수입 허가 취득 이전',
     description:
-      'DAFF 4.4 — 선언서는 항체 결과지를 근거로 발급되므로 채혈보다 앞설 수 없고, 수입 허가 신청의 필수 제출물이라 신청보다 늦으면 안 된다("You must provide a copy of the RNATT laboratory report and declaration when you apply for an import permit").',
+      'DAFF 4.4 — 선언서는 항체 결과지를 근거로 발급되므로 채혈보다 앞설 수 없고, 수입 허가 신청의 필수 제출물이라 허가 취득일보다 늦으면 안 된다(허가 카드가 버튼 완료로 바뀌어 저장값이 취득일이다)("You must provide a copy of the RNATT laboratory report and declaration when you apply for an import permit").',
     severity: 'warning',
     addedAt: '2026-07-27',
     run: ({ caseRow, destination }) => {
@@ -385,7 +373,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       if (/^\d{4}-\d{2}-\d{2}$/.test(filed) && decl > filed) {
         return {
           ok: false,
-          message: '수입 허가를 신청할 때 RNATT 선언서를 함께 내야 해요. 신청일보다 늦게 발급받을 수 없어요.',
+          message: '수입 허가를 신청할 때 RNATT 선언서를 함께 내야 해요. 허가를 받은 날보다 늦게 발급받을 수 없어요.',
           offendingPaths: ['au_rnatt_declaration_date', 'import_permit_application_date'],
         }
       }
@@ -394,54 +382,6 @@ export const AU_CHECKS: ProcedureCheck[] = [
   },
 
   // ── 수입 허가 · 계류 ──
-  {
-    id: 'au.import-permit-not-after-departure',
-    country: COUNTRY,
-    category: '수입허가',
-    title: '수입 허가 신청일, 출국일 순서',
-    description:
-      '수입 허가 신청일은 출국일 이전이어야 함(출국 당일·이후엔 신청 불가). 입력 차단(validateImportPermitNotAfterDeparture)과 같은 함수. DAFF 5 — 심사에 보통 20~40영업일, 길면 123영업일이 걸린다.',
-    severity: 'warning',
-    addedAt: '2026-07-27',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const filed = readScopedImportPermitFiled(data, destination)
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
-      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
-      const msg = validateImportPermitNotAfterDeparture(filed, dep)
-      if (msg) {
-        return {
-          ok: false,
-          message: msg,
-          offendingPaths: ['import_permit_application_date', 'departure_date'],
-        }
-      }
-      return { ok: true, message: `신청일(${filed}) < 출국일(${dep || '미입력'}).` }
-    },
-  },
-  {
-    id: 'au.quarantine-reservation-matches-entry',
-    country: COUNTRY,
-    category: '검역',
-    title: '계류 시작일과 호주 도착일 일치',
-    description:
-      'DAFF 9.2 — 도착한 동물은 검역관이 멜버른 공항에서 인수해 그날 Mickleham 계류시설로 옮긴다. 계류 시작일과 도착일이 다르면 예약이나 항공 일정 중 하나가 어긋난 것이다.',
-    severity: 'warning',
-    addedAt: '2026-07-27',
-    run: ({ caseRow, destination }) => {
-      const reserved = readQuarantineReservationDate(caseRow, destination)
-      const entry = readEntryDate(caseRow, destination)
-      if (!reserved || !entry) return SKIP
-      if (reserved !== entry) {
-        return {
-          ok: false,
-          message: '계류 시작일과 호주 도착일이 달라요. 예약 날짜와 항공 일정을 다시 확인하세요.',
-          offendingPaths: ['au_quarantine_reservation_date', 'entry_date'],
-        }
-      }
-      return { ok: true, message: `계류 시작일(${reserved}) = 도착일(${entry}).` }
-    },
-  },
   {
     id: 'au.import-quarantine-date-valid',
     country: COUNTRY,

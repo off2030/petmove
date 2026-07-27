@@ -13,7 +13,9 @@ supabase/.branches/
 # Next.js (for when we add it)
 .next/
 # 검증용 dev/build 격리 산출물 (PM_DIST_DIR — apps/portal/next.config.mjs 참고)
-.next-verify/
+# .next-verify2 등 세션별 변형까지 한 번에 — 다른 세션이 새 dist 폴더를 만들면
+#   패턴에 없어서 빌드 산출물 수백 개가 커밋에 딸려 들어간다(2026-07-27 실제 발생).
+.next-verify*/
 .next-build/
 out/
 dist/
