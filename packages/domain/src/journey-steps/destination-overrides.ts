@@ -391,6 +391,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         'gu.dog-entry-age-six-months',
         'gu.rabies-not-expired-on-arrival',
         'gu.rnatt-120days-before-arrival',
+        // 상한(12개월)도 이 카드에 — **출국일을 미뤄서** 항체가 만료되는 건 항공권을 고칠 때
+        //   드러나야 한다. 하와이는 한 룰이 30일·36개월 양쪽을 보는데 괌은 두 룰로 나뉘어 있어
+        //   하한만 걸어 두면 상한이 항체 카드에만 남는다(2026-07-27 사용자 지적으로 발견).
+        'gu.departure-within-12months-of-titer',
       ],
     },
     'us-cdc-dog-import-form': {
