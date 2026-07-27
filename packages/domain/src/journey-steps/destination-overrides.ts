@@ -1521,7 +1521,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   그 7곳이 모두 다는 줄인데 호주에만 빠져 있었다 — 호주는 렙토 Canicola 가 **유일한
       //   의무 항목**이라 오히려 가장 필요한 자리다.
       description:
-        '종합백신을 접종하세요.\n\n처음 접종하면 2~4주 간격으로 2회 접종해요.\n출국 14일 전까지 접종해야 해요.\n접종 후 12개월 이내에 출국해야 해요.\n\n렙토스피라 예방을 포함한 백신을 권장해요. 그렇지 않은 경우 렙토스피라 검사(MAT)를 받아야 해요.',
+        '종합백신을 접종하세요.\n\n처음 접종하면 2~4주 간격으로 2회 접종해요.\n출국 14일 전까지 접종해야 해요.\n접종 유효기간은 1년이에요.\n\n렙토스피라 예방을 포함한 백신을 권장해요. 그렇지 않은 경우 렙토스피라 검사(MAT)를 받아야 해요.',
       validationIds: [
         'au.general-vaccine-14days-before-departure',
         'au.general-vaccine-within-12months',
@@ -1588,7 +1588,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       'civ-vaccine': {
         order: 34,
         description:
-          '개 인플루엔자(CIV) 백신을 접종하세요.\n\n한국에서 출발하는 강아지는 반드시 접종해야 해요.\n한국에서 승인되고, 국내에 도는 바이러스에 효과가 있는 백신이어야 해요.\n처음 접종하면 제조사 지침대로 기초 접종을 마쳐야 해요.\n기초 접종은 출국 14일 전까지 끝내야 해요.\n이미 접종해 온 강아지는 추가 접종을 출국 14일 전까지, 12개월 이내에 받아야 해요.',
+          '개 인플루엔자(CIV) 백신을 접종하세요.\n\n처음 접종하면 2주 간격으로 2회 접종해요.\n출국 14일 전까지 접종해야 해요.\n접종 유효기간은 1년이에요.',
         validationIds: ['au.civ-14days-before-departure', 'au.civ-within-12months'],
       },
       // 켄넬코프 — **DAFF 입국 요건이 아니다**(권장 백신). Mickleham 계류시설 예약에 접종
