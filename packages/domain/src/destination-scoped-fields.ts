@@ -119,6 +119,8 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'au_import_quarantine_date',
   'au_import_quarantine_confirmed',
   'au_quarantine_reservation_date',
+  // RNATT 선언서 발급일(검역본부) — 수입 허가 신청의 필수 제출물이라 목적지별로 따로 받는다.
+  'au_rnatt_declaration_date',
   // 호주 수출 검역(왕복 귀국) — NOI → DAFF 수출허가·건강증명서 발급일.
   'au_export_quarantine_date',
   'au_export_quarantine_confirmed',

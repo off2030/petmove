@@ -861,8 +861,11 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       id: 'au-rnatt-declaration',
       name: 'RNATT 선언서(RNATT Declaration)',
       source: '농림축산검역본부',
-      kind: 'manual',
-      issuanceStepId: 'rabies-titer',
+      // 2026-07-27 전용 카드(au-rnatt-declaration) 신설 — 발급일·첨부를 그 카드가 받는다.
+      //   그전엔 발급 단계가 없어 항체 카드(rabies-titer)에 매달아 뒀다.
+      kind: 'step',
+      stepRef: 'au-rnatt-declaration',
+      previewStepId: 'au-rnatt-declaration',
       description:
         '항체 검사 결과가 나온 뒤 농림축산검역본부에서 발급받는 호주 전용 선언서예요.\n\n광견병 접종증명서와 항체 검사 결과지를 제출하면, 정부 수의사가 작성·서명·날인해요.\n\n결과지와 선언서의 마이크로칩 번호·채혈일·결과가 한 글자도 다르면 안 돼요.\n\n수입 허가를 신청할 때 결과지와 함께 제출해요. 출국할 때도 원본이 함께 가야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     },

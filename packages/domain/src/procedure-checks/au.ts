@@ -347,6 +347,52 @@ export const AU_CHECKS: ProcedureCheck[] = [
     },
   },
 
+  // ── RNATT 선언서 ──
+  {
+    id: 'au.rnatt-declaration-order',
+    country: COUNTRY,
+    category: '광견병',
+    title: 'RNATT 선언서는 채혈 이후 · 수입 허가 신청 이전',
+    description:
+      'DAFF 4.4 — 선언서는 항체 결과지를 근거로 발급되므로 채혈보다 앞설 수 없고, 수입 허가 신청의 필수 제출물이라 신청보다 늦으면 안 된다("You must provide a copy of the RNATT laboratory report and declaration when you apply for an import permit").',
+    severity: 'warning',
+    addedAt: '2026-07-27',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const scoped = readByDestValue(data, destination ?? null, 'au_rnatt_declaration_date')
+      const decl =
+        typeof scoped === 'string'
+          ? scoped.slice(0, 10)
+          : scoped === null
+            ? ''
+            : typeof data.au_rnatt_declaration_date === 'string'
+              ? data.au_rnatt_declaration_date.slice(0, 10)
+              : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(decl)) return SKIP
+
+      const titers = readTiterEntries(caseRow)
+      if (titers.length > 0) {
+        const earliest = titers.reduce((a, b) => (a.date <= b.date ? a : b))
+        if (decl < earliest.date) {
+          return {
+            ok: false,
+            message: 'RNATT 선언서는 항체 검사 결과를 근거로 발급돼요. 채혈일보다 빠를 수 없어요.',
+            offendingPaths: ['au_rnatt_declaration_date', `rabies_titer_records[${earliest.originalIndex}].date`],
+          }
+        }
+      }
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (/^\d{4}-\d{2}-\d{2}$/.test(filed) && decl > filed) {
+        return {
+          ok: false,
+          message: '수입 허가를 신청할 때 RNATT 선언서를 함께 내야 해요. 신청일보다 늦게 발급받을 수 없어요.',
+          offendingPaths: ['au_rnatt_declaration_date', 'import_permit_application_date'],
+        }
+      }
+      return { ok: true, message: `선언서(${decl}) 채혈 이후 · 허가 신청 이전.` }
+    },
+  },
+
   // ── 수입 허가 · 계류 ──
   {
     id: 'au.import-permit-not-after-departure',

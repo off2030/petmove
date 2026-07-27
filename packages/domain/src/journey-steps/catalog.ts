@@ -1172,6 +1172,43 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: [],
   },
 
+  // ── 호주 RNATT 선언서 — 항체 결과가 나온 뒤, 수입 허가 신청 전 ───────────
+  // Group 3 가이드 4.4 "Get the RNATT declaration". 검사기관이 주는 **결과지와 별개**로,
+  //   검역본부(competent authority)의 정부 수의사가 작성·서명·날인하는 호주 전용 선언서다.
+  //   광견병 접종증명서 + 항체 결과지를 내면 발급된다.
+  // 왜 별도 카드인가 — DAFF 는 이 선언서를 **수입 허가 신청의 필수 제출물**로 못박는다
+  //   ("You must provide a copy of the RNATT laboratory report and declaration when you
+  //   apply for an import permit"). 카드가 없으면 보호자는 항체 결과지만 들고 BICON 에
+  //   가서 신청이 막힌다(2026-07-27 사용자 지적으로 신설).
+  // 결과지와 선언서의 마이크로칩 번호·채혈일·결과가 한 글자라도 다르면 심사가 지연된다.
+  {
+    id: 'au-rnatt-declaration',
+    category: 'document',
+    title: 'RNATT 선언서',
+    shortLabel: '선언서',
+    description:
+      '동물검역소에서 RNATT 선언서를 발급받으세요.\n\n광견병 접종증명서와 항체 검사 결과지를 제출하면 검역관이 작성·서명·날인해요.\n수입 허가를 신청할 때 항체 검사 결과지와 함께 제출해요.\n결과지와 선언서의 마이크로칩 번호·채혈일·검사 결과가 같아야 해요.',
+    doneSummary: 'RNATT 선언서를 받았어요.',
+    cardLine: 'RNATT 선언서를 발급받으세요.',
+    applicability: { destinations: ['australia'], species: 'all', tripType: 'all' },
+    // 항체 검사(40) 뒤, 수입 허가 신청(42) 앞.
+    order: 41,
+    done: 'dated:au_rnatt_declaration_date',
+    buttonComplete: true,
+    inputs: [
+      {
+        key: 'au_rnatt_declaration_date',
+        label: '발급일',
+        type: 'date',
+        helpText: 'RNATT 선언서를 발급받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: 'RNATT 선언서를 사진·PDF로 보관하세요.',
+    attachmentLabel: 'RNATT 선언서',
+    validationIds: ['au.rnatt-declaration-order'],
+  },
+
   // ── 호주 계류시설(Mickleham) 예약 — 수입 허가를 받은 뒤 ────────────────────
   // Group 3 개 가이드 6.1: "Book your dog's post-entry quarantine stay — do this after you
   //   receive your import permit." 호주에 오는 모든 개·고양이가 멜버른 Mickleham 정부
@@ -1184,7 +1221,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '계류시설 예약',
     shortLabel: '계류장',
     description:
-      '멜버른 Mickleham 계류시설에 계류를 예약하세요.\n\n수입 허가를 받은 뒤에 예약할 수 있어요.\n예약할 때 계류 비용의 일부를 미리 내야 자리가 유지돼요.',
+      '멜버른 Mickleham 계류시설에 계류를 예약하세요.\n\n수입 허가를 받은 뒤에 예약할 수 있어요.\n예약할 때 계류 비용의 일부를 미리 내야 자리가 유지돼요.\n항체 검사 검체가 검사기관에 도착한 날부터 180일이 지난 뒤에 도착할 수 있어요.',
     doneSummary: '계류시설을 예약했어요.',
     cardLine: '계류시설을 예약하세요.',
     applicability: { destinations: ['australia'], species: 'all', tripType: 'all' },
