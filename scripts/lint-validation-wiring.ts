@@ -31,7 +31,13 @@ import { JOURNEY_STEP_CATALOG } from '../packages/domain/src/journey-steps/catal
 import { resolveStepForDestination } from '../packages/domain/src/journey-steps/destination-overrides'
 import { ALL_PROCEDURE_CHECKS, checkCountryKeys } from '../packages/domain/src/procedure-checks/registry'
 import { DESTINATION_OVERRIDES, destinationKeysWhere } from '../packages/domain/src/destination-config'
-import { EU_ENTRY_FAMILY, PARASITE_DEPARTURE_WINDOWS } from '../packages/domain/src/journey-steps/date-rules'
+import {
+  EU_ENTRY_FAMILY,
+  GENERAL_VACCINE_WAIT_DAYS,
+  PARASITE_DEPARTURE_WINDOWS,
+  RABIES_ENTRY_WAIT_DAYS,
+} from '../packages/domain/src/journey-steps/date-rules'
+import { TITER_MIN_DAYS_AFTER_VACCINE } from '../packages/domain/src/journey-steps/titer-validity'
 
 const CHECKS_DIR = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -55,6 +61,7 @@ type Problem = {
     | 'own-calc'
     | 'no-blocker'
     | 'no-parasite-blocker'
+    | 'no-wait-blocker'
     | 'no-titer-wait-decision'
     | 'no-save-block-decision'
     | 'dead-declaration'
@@ -404,7 +411,9 @@ function parasiteWindowWithoutBlocker(appDests: string[]): Problem[] {
     if (PARASITE_BLOCK_COVERED.has(dest)) continue
     const rule = (ALL_PROCEDURE_CHECKS as Array<{ id: string; country: unknown }>).find(
       (r) =>
-        /(external|internal)-parasite|tick-treatment|tapeworm|echino/i.test(r.id) &&
+        // 심장사상충도 같은 창(PARASITE_DEPARTURE_WINDOWS)을 쓰는데 패턴에서 빠져 있어
+        //   괌 카드가 차단 없이 통과했다(2026-07-27). 같은 계열이라 함께 본다.
+        /(external|internal)-parasite|heartworm|tick-treatment|tapeworm|echino/i.test(r.id) &&
         checkCountryKeys(r.country as never).includes(dest),
     )
     if (!rule) continue
@@ -414,6 +423,89 @@ function parasiteWindowWithoutBlocker(appDests: string[]): Problem[] {
       ruleId: rule.id,
       kind: 'no-parasite-blocker',
     })
+  }
+  return out
+}
+
+/**
+ * **대기 주의 룰 ↔ 저장 거부 짝 검사** (2026-07-27 신설).
+ *
+ * 왜 필요한가: 주의 룰은 procedure-checks/<국가>.ts 에 자유롭게 쓸 수 있는데, **저장 거부는
+ * 프로파일 선언(파생 목록)에 등록해야** 걸린다. 한쪽만 하면 조용히 반쪽이 된다 —
+ * "주의는 뜨는데 입력은 그대로 저장됨". 괌 하나에서만 같은 형태를 네 번 만났다:
+ *   · gu.rnatt-after-rabies-10days      ← titer.minDaysAfterVaccine 미선언
+ *   · gu.general-vaccine-10days-…       ← generalVaccineWaitDays 미선언
+ *   · gu.kennel-cough-10days-…          ← 〃 (같은 선언이 둘을 함께 덮는다)
+ *   · gu.heartworm-within-14days        ← 기생충 창 게이트 누락(위 parasite 검사가 커버)
+ *
+ * 기존 titerWaitWithoutBlocker 는 **채혈 후 입국 대기**(entryWaitAfterTiter)만 본다 —
+ * 여기서 보는 건 **접종 후 채혈 대기**·**접종 후 출국 대기**로 계열이 다르다.
+ */
+const WAIT_RULE_BLOCK_SOURCES: Array<{
+  test: RegExp
+  what: string
+  blocked: (dest: string) => boolean
+  fix: string
+}> = [
+  {
+    // 접종 → 채혈 최소 간격 (EU 30일·싱가포르 28일·괌 10일 …)
+    test: /\.(titer|rnatt)-min-\d+days-after-vaccine$|\.rnatt-after-rabies-\d+days$/,
+    what: '접종 후 채혈 대기',
+    blocked: (d) => EU_ENTRY_FAMILY.includes(d) || TITER_MIN_DAYS_AFTER_VACCINE[d] !== undefined,
+    fix: '프로파일 titer.minDaysAfterVaccine 선언(TITER_MIN_DAYS_AFTER_VACCINE 파생)',
+  },
+  {
+    // 종합백신·켄넬코프 접종 → 출국 대기 (한 선언이 둘을 함께 덮는다)
+    test: /\.(general-vaccine|kennel-cough)-\d+days-before-(arrival|departure)$/,
+    what: '종합백신·켄넬코프 출국 대기',
+    blocked: (d) => GENERAL_VACCINE_WAIT_DAYS[d] !== undefined,
+    fix: '프로파일 generalVaccineWaitDays 선언(GENERAL_VACCINE_WAIT_DAYS 파생)',
+  },
+  {
+    // 광견병 접종 → 출국 대기
+    test: /\.rabies-min-\d+days-before-departure$|\.rabies-\d+days-before-arrival$/,
+    what: '광견병 출국 대기',
+    blocked: (d) => RABIES_ENTRY_WAIT_DAYS[d] !== undefined || WAIT_OWN_BLOCKER_DESTS.has(d),
+    fix: '프로파일 rabies.entryWaitDaysAfterVaccine 선언(RABIES_ENTRY_WAIT_DAYS 파생)',
+  },
+]
+
+/** 전용 판정 함수로 차단하는 목적지 — 파생 목록에 없어도 정상. 이유와 함께 등록할 것. */
+const WAIT_OWN_BLOCKER_DESTS = new Set<string>([
+  // 홍콩 — 상한(1년)까지 봐야 해서 violatesHkRabiesDoseWindow 전용 분기를 쓴다.
+  'hongkong',
+])
+
+/**
+ * 이미 존재하던 구멍 — **사용자 확인 대기**. 검사를 새로 만들면서 드러난 것들이라 무단으로
+ * live 목적지 동작을 바꾸지 않고 여기 적어 둔다. 실패 대신 경고로 뜨고, 결정되면 지운다.
+ * ⛔ 새 목적지를 여기 넣어 통과시키지 말 것 — 새로 만드는 건 처음부터 짝을 맞춰야 한다.
+ */
+/** 경고로 출력할 확인 대기 항목 — main 에서 읽는다. */
+const waitBacklog = new Map<string, string>()
+
+const WAIT_BLOCKER_BACKLOG: Record<string, string> = {
+  'thailand:종합백신·켄넬코프 출국 대기':
+    '2026-07-27 검사 신설로 발견. 태국 카드는 "입국 3주 전까지 접종"이라 안내하는데 차단이 없어 접종 4일 뒤 출국도 저장된다. live 목적지라 사용자 확인 후 generalVaccineWaitDays: 21 선언 예정.',
+  'thailand:광견병 출국 대기':
+    '2026-07-27 검사 신설로 발견. 위와 같은 형태 — rabies.entryWaitDaysAfterVaccine: 21 선언 예정.',
+}
+
+function waitRuleWithoutBlocker(appDests: string[]): Problem[] {
+  const out: Problem[] = []
+  for (const dest of appDests) {
+    for (const src of WAIT_RULE_BLOCK_SOURCES) {
+      if (src.blocked(dest)) continue
+      const rule = (ALL_PROCEDURE_CHECKS as Array<{ id: string; country: unknown }>).find(
+        (r) => src.test.test(r.id) && checkCountryKeys(r.country as never).includes(dest),
+      )
+      if (!rule) continue
+      if (WAIT_BLOCKER_BACKLOG[`${dest}:${src.what}`]) {
+        waitBacklog.set(`${dest} — ${src.what}`, WAIT_BLOCKER_BACKLOG[`${dest}:${src.what}`])
+        continue
+      }
+      out.push({ dest, stepId: `(${src.what})`, ruleId: `${rule.id} — ${src.fix}`, kind: 'no-wait-blocker' })
+    }
   }
   return out
 }
@@ -555,6 +647,8 @@ function describe(p: Problem): string {
     return '주의 룰은 있는데 **저장 거부가 이 목적지를 보지 않는다** — 규정 위반 날짜가 그냥 저장된다(우크라이나 2026-07-22 사고와 동일)'
   if (p.kind === 'no-parasite-blocker')
     return "기생충 처치 창 주의는 있는데 **저장 거부가 없다** — 창 밖 처치일이 그냥 저장된다(하와이·터키·멕시코·UAE·브라질 2026-07-25 사고). date-rules 의 PARASITE_DEPARTURE_WINDOWS 에 창을 선언하거나(출국일 앵커) dispatch·PARASITE_BLOCK_COVERED 에 특수 앵커 분기를 추가할 것"
+  if (p.kind === 'no-wait-blocker')
+    return '대기 주의 룰은 있는데 **저장 거부가 없다** — 주의는 뜨는데 입력은 그대로 저장된다(괌 2026-07-27 에서 같은 형태를 네 번 발견). 위 fix 대로 프로파일에 선언하거나, 전용 판정 함수로 막는다면 WAIT_OWN_BLOCKER_DESTS 에 이유와 함께 등록할 것'
   if (p.kind === 'no-save-block-decision')
     return "날짜 입력칸이 있는데 **저장 차단 결정이 등록되지 않았다** — DATE_SAVE_BLOCK_DECISIONS 에 '차단: <어느 함수가>' 또는 '주의만: <근거>' 로 등록할 것(하와이 입국 신청 2026-07-26 사고 재발 방지). 불가능한 날짜 조합이면 차단을 먼저 만들 것"
   if (p.kind === 'no-titer-wait-decision')
@@ -736,6 +830,7 @@ function main(): void {
     ...missingPairRules(appDests),
     ...ownCalcRules(appDests),
     ...titerWaitWithoutBlocker(appDests),
+    ...waitRuleWithoutBlocker(appDests),
     ...parasiteWindowWithoutBlocker(appDests),
     ...saveBlockDecisions(appDests),
     ...deadDeclarations(appDests),
@@ -752,6 +847,12 @@ function main(): void {
       `  ${[...byDest].join(', ')}`,
     )
     console.log('  해당 국가를 앱에 올릴 때(appSupported: true) 반드시 먼저 메워야 합니다.\n')
+  }
+
+  if (waitBacklog.size > 0) {
+    console.log(`· 대기 주의 룰에 저장 거부가 없는 곳 ${waitBacklog.size}건 — **사용자 확인 대기**(경고만).`)
+    for (const [where, why] of waitBacklog) console.log(`  ${where}\n    ${why}`)
+    console.log('  결정되면 프로파일에 선언하고 WAIT_BLOCKER_BACKLOG 에서 지우세요.\n')
   }
 
   if (knownDead.size > 0) {
