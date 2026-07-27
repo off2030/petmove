@@ -1500,7 +1500,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     key: 'australia',
     label: '호주',
     rabiesDescription:
-      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n호주 출국 때 면역 유효기간이 남아 있어야 합니다.',
+      '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n출국 때 면역 유효기간이 남아 있어야 해요.',
     rabiesValidationIds: [
       'au.rabies-prime-after-84days',
       'au.microchip-before-rabies',
