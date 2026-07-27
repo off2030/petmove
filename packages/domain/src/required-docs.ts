@@ -1540,16 +1540,9 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
         '검사를 의뢰한 동물병원에서 발급받아요.\n\n수입 허가를 신청할 때 함께 제출하고, 괌 도착 검역 때 원본이 필요해요.\n검사 결과는 채혈일로부터 1년간 유효해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'rabies-titer',
     },
-    {
-      id: 'gu-quarantine-reservation-doc',
-      name: '검역시설 예약확인서',
-      source: '괌 지정 검역시설',
-      kind: 'step',
-      stepRef: 'gu-quarantine-reservation',
-      description:
-        '예약한 검역시설에서 받아요.\n\n수입 허가 신청 서류에 함께 내야 해요.\n\n앱에 사본 이미지를 저장해두면 편리해요.',
-      previewStepId: 'gu-quarantine-reservation',
-    },
+    // 검역시설 예약확인서는 **서류 탭에 두지 않는다**(2026-07-27 사용자 판단) — 검역 서류가
+    //   아니라 허가 신청에 첨부하는 예약 증빙이다. 하와이 입국 신청과 같은 처리
+    //   (발행되는 검역 서류가 없으면 항목을 만들지 않고, 카드 첨부만 임의 보관용으로 남긴다).
     {
       id: 'gu-import-permit-doc',
       name: '괌 수입 허가증(Animal Entry Permit)',
@@ -1557,7 +1550,12 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'import-permit',
       description:
-        '괌 농무부에 신청해서 받아요.\n\n도착 30일 전까지 서류를 제출해야 해요.\n허가서에 적힌 조건이 계류 기간을 정해요.\n\n앱에 사본 이미지를 저장해두면 편리해요.',
+        // 문형은 수입 허가증 서류 공통(2026-07-27 전수 대조 — 태국·말레이시아·인도네시아·홍콩·
+        //   싱가포르): 리드 '수입 허가 신청이 승인되면 발급돼요.' → 유효기간·조건 → 앱 보관 안내.
+        //   발급처는 source 필드가 이미 말하므로 리드에서 반복하지 않는다.
+        // ⚠️ 유효기간 줄은 넣지 않았다 — 태국 60일·홍콩 6개월·싱가포르 90일처럼 적을 값이
+        //   DOAG 공개자료에 없다. 확인되면 그때 '발급일로부터 N일간 유효해요'를 넣을 것.
+        '수입 허가 신청이 승인되면 발급돼요.\n\n도착 30일 전까지 서류를 제출해야 해요.\n허가서에 적힌 조건이 계류 기간을 정해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'import-permit',
     },
     US_CDC_FORM_RECEIPT,
