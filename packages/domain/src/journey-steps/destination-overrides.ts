@@ -347,6 +347,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '괌 농무부(DOAG)에 수입 허가(Animal Entry Permit)를 신청하세요.\n\n검역시설 예약확인서와 접종·검사 서류를 함께 이메일로 제출해요.\n도착 30일 전까지 제출해야 하고, 늦으면 계류가 길어지거나 입국이 거부될 수 있어요.\n수수료는 반려동물 1마리당 65달러예요.',
       doneSummary: '괌 수입 허가증을 받았어요.',
       cardLine: '괌 수입 허가를 신청하세요.',
+      // **신청 → 발급 2단계 모델**(신청일 입력=진행 중, 허가증 첨부·완료 버튼=완료).
+      //   ⛔ 버튼 완료로 바꾸지 말 것(2026-07-27 시도했다가 되돌림) — 괌은 하와이 입국 신청과
+      //   달리 **실제 허가증(Animal Entry Permit, $65)이 발급된다.** 하와이는 접수번호만 나와
+      //   '신청=끝'이라 버튼 완료가 맞지만, 괌은 신청과 발급 사이에 대기가 있고 허가서에 적힌
+      //   조건이 계류 기간을 정한다. 대행하지 않아도(selfApply) 보호자가 직접 내므로 신청일을
+      //   알고, 그래서 30일 마감 판정도 의미가 있다. 싱가포르·대만과 같은 구조.
       inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
       attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
       attachmentLabel: '괌 수입 허가증(Animal Entry Permit)',
