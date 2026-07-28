@@ -1640,6 +1640,15 @@ export const STEP_DESTINATION_OVERRIDES: Record<
           dog: '외부 기생충 치료를 하세요.\n\n출국 30일 전에 시작해서 약효가 끊기지 않도록 반복해요.\n호주에서 인정하는 성분을 함유한 제품을 사용해야해요.',
           cat: '외부 기생충 치료를 하세요.\n\n출국 21일 전에 시작해서 약효가 끊기지 않도록 반복해요.\n호주에서 인정하는 성분을 함유한 제품을 사용해야해요.',
         },
+        // "호주에서 인정하는 성분" 의 실제 목록 — DAFF 가 성분·브랜드 표로 공개한다(개/고양이
+        //   외부구충 + 내부구충 4표가 한 페이지에 있다). 문구에서 성분을 나열하지 않기로 한
+        //   대신 원본을 링크로 건다(2026-07-28). canonical 확인 완료.
+        links: [
+          {
+            url: 'https://www.agriculture.gov.au/biosecurity-trade/cats-dogs/step-by-step-guides/parasite-treatment',
+            label: '인정 성분·제품 목록 (DAFF)',
+          },
+        ],
         validationIds: ['au.external-parasite-protocol-dog', 'au.external-parasite-protocol-cat'],
       },
       // 내부구충 — 45일 이내 2회 · 14일 이상 간격 · 2차는 출국 5일 이내(7.7).
