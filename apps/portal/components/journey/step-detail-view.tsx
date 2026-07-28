@@ -25,9 +25,7 @@ import {
   validateImportPermitFiledDate,
   validateSgQuarantineReservationDate,
   validateAuQuarantineReservationDate,
-  validateSgBorderInspectionDate,
   validateSgDepartureVsQuarantineReservation,
-  validateSgGstPermitDate,
   validateParasiteDateForDestination,
   validateSgQuarantineReservationFiled,
   validateSgReservationVsDeparture,
@@ -1504,14 +1502,9 @@ export function StepDetailView({
     }
     // 버튼 완료 카드(CDC 신고·귀국 절차 전체)는 날짜 검증 없음 — 전부 삭제(2026-07-26 사용자
     // 결정). 저장은 handleButtonDone 이 담당하므로 여기 분기 자체가 없다.
-    if (step.id === 'sg-gst-permit') {
-      // GST 납부 허가 — 도착 전 + 도착 14일 이내 창. 도메인 단일 출처(validateSgGstPermitDate)
-      // — sg.ts 주의 룰과 같은 함수(2026-07-25). dated 카드라 폼 날짜는 importQuarantineDate.
-      return validateSgGstPermitDate(
-        importQuarantineDate.trim(),
-        (caseRow?.departure_date ?? '').slice(0, 10),
-      )
-    }
+    // ⛔ sg-gst-permit·sg-border-inspection 저장 거부는 삭제(2026-07-28) — 두 카드가 버튼
+    //   완료로 바뀌어 저장값이 '버튼 누른 날'이다. 실제 발급일·예약일이 아니라서 도착 14일
+    //   창·5일 전 판정이 어긋난다. 대행으로 처리되는 절차라 보호자가 날짜를 알 수도 없다.
     // 마이크로칩 인증 — 항체 채혈보다 앞서야 한다(DAFF 3.2). 같은 날은 허용(원문은 같은
     //   '진료'에서 불가). 주의 룰(au.identity-check-before-titer)과 **같은 함수**.
     if (step.id === 'au-identity-check' && destinationKey === 'australia') {
@@ -1531,14 +1524,6 @@ export function StepDetailView({
         readTiterAllEntries(caseRow?.data)
           .map((e) => e.received_date || e.date)
           .filter((d) => d.length >= 10),
-      )
-    }
-    if (step.id === 'sg-border-inspection') {
-      // 국경 검사(CAPQ) 예약 — 도착 최소 5일 전. 도메인 단일 출처
-      // (validateSgBorderInspectionDate) — sg.ts 주의 룰과 같은 함수(2026-07-25).
-      return validateSgBorderInspectionDate(
-        importQuarantineDate.trim(),
-        (caseRow?.departure_date ?? '').slice(0, 10),
       )
     }
     // 하와이 입국 신청 — 차단 없음(2026-07-26). 버튼 완료 카드로 바뀌어 신청일을 입력받지

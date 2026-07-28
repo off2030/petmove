@@ -2022,7 +2022,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: { destinations: ['singapore'], species: 'dog', tripType: 'all' },
     order: 92,
     // 수입 허가와 동일 신청 → 발급 2단계 모델. 신청일 입력 = 진행 중, 라이선스 첨부·완료 버튼 = 완료.
-    done: 'has-sg-dog-licence',
+    // 버튼 완료 — 대행으로 처리되는 절차라 보호자가 날짜를 알 수 없다(2026-07-28 사용자 결정).
+    //   호주 수입 허가 신청과 같은 모델. 신청일 필드는 그대로 쓰되 버튼이 누른 날을 기록한다.
+    done: 'dated:sg_dog_licence_application_date',
+    buttonComplete: true,
     hasInputData: (caseRow) =>
       deriveApplicationStatus(caseRow, SG_DOG_LICENCE_APP_SPEC) !== 'not_started',
     situational: (caseRow) => {
@@ -2061,10 +2064,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '관세·GST 납부 허가를 받으세요.',
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },
     order: 102,
-    // 발급일 자체가 완료 증거 — 확인 게이트 없이 날짜(≤오늘) 입력만으로 완료(dated 모델).
     done: 'dated:sg_gst_permit_date',
-    // 도착 전 + 도착 14일 이내 창 — 입력 차단(validateSgGstPermitDate)과 같은 함수(2026-07-25).
-    validationIds: ['sg.gst-permit-within-14days'],
+    // 버튼 완료 — 대행 절차(2026-07-28 사용자 결정). 저장값이 '버튼 누른 날'이라 도착
+    //   14일 창 판정이 실제 발급일과 어긋나므로 검증을 뗀다(sg.gst-permit-within-14days 삭제).
+    buttonComplete: true,
+    // 버튼이 오늘 날짜를 여기에 기록한다 — 화면에는 입력칸이 뜨지 않는다.
     inputs: [{ key: 'sg_gst_permit_date', label: '발급일', type: 'date', helpText: 'GST 납부 허가를 받은 날짜' }],
     allowAttachments: true,
     attachmentHint: 'GST 허가서를 사진·PDF로 보관하세요.',
@@ -2092,9 +2096,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 예약형 — 검사 예약일이 미래여도 '예약했다'가 완료다(호주 계류시설 예약과 같은 판단,
     //   2026-07-28). ⛔ 같은 싱가포르라도 sg-gst-permit 은 **발급일**(이미 받은 것)이라
     //   dated 그대로 둔다.
-    done: 'booked:sg_border_inspection_date',
-    // 도착 최소 5일 전 예약 — 입력 차단(validateSgBorderInspectionDate)과 같은 함수(2026-07-25).
-    validationIds: ['sg.border-inspection-5days-before'],
+    // 버튼 완료 — 대행 절차(2026-07-28 사용자 결정). booked(예약일 입력) 모델에서 되돌렸다.
+    done: 'dated:sg_border_inspection_date',
+    buttonComplete: true,
+    // 저장값이 '버튼 누른 날'이라 도착 5일 전 판정이 실제 예약일과 어긋난다 — 검증 삭제.
+
+    // 버튼이 오늘 날짜를 여기에 기록한다 — 화면에는 입력칸이 뜨지 않는다.
     inputs: [{ key: 'sg_border_inspection_date', label: '예약일', type: 'date', helpText: '국경 검사를 예약한 날짜' }],
     allowAttachments: true,
     attachmentHint: '예약 확인서를 사진·PDF로 보관하세요.',
