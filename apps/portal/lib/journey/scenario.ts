@@ -1025,8 +1025,12 @@ export function buildJourney(
     //    미래형 리마인더가 완료 표시와 모순되지 않도록.
     //  - 완료(미래 — 예약 입력 상태): "받았습니다" 같은 과거형은 맞지 않으므로 미완료와
     //    동일한 안내 톤(situational/현재형) 사용.
+    //    ⚠️ 단 **예약형(booked:)은 예외** — 예약·구매는 이미 끝난 일이라 날짜가 미래여도
+    //    과거형이 맞다. 이 예외가 없으면 완료 체크가 붙은 카드에 "예약하세요"가 남는다
+    //    (2026-07-28 계류시설 예약에서 사용자 지적).
     //  - 미완료: situational.desc 가 있으면 우선, 없으면 description 첫 문장(현재형 안내문).
     const isFutureDate = date != null && date > today
+    const isBookedStep = typeof step.done === 'string' && step.done.startsWith('booked:')
     // 일본 수출검역 방문 — situational.desc 는 예약 날짜·시간(상세 '안내' 박스 + '다음 할 일'
     // 인라인 안내 전용)이다. 전체 일정 리스트 보조문구로 쓰면 '예정 [예약일]' 배지와 날짜가
     // 중복되고, 다른 검역 카드(배지 + 정적 설명)와도 어긋난다 — 리스트에선 정적 설명(summary)만.
@@ -1035,7 +1039,7 @@ export function buildJourney(
       ? PASSED_UNCONFIRMED_MSG
       : recordScheduledPassed
         ? RECORD_PASSED_MSG
-        : done && !isFutureDate
+        : done && (!isFutureDate || isBookedStep)
           ? (step.doneSummary ?? listSit ?? summary)
           : (listSit ?? summary)
     // 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있으면 step.cardLine
