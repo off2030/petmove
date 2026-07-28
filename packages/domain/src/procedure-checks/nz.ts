@@ -27,6 +27,7 @@ import {
   msgExportQuarantineAfterReturn,
   msgExportQuarantineBeforeEntry,
   msgMicrochipBeforeRabies,
+  msgRabiesExpiredBefore,
   msgRabiesPrimeMinAge,
   msgTiterBeforeVaccine,
 } from './messages'
@@ -169,7 +170,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (age < 84) {
         return {
           ok: false,
-          message: msgRabiesPrimeMinAge('84일'),
+          message: msgRabiesPrimeMinAge('84일(12주)'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -248,8 +249,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message:
-            '출국일까지 광견병 면역 유효기간이 남아 있어야 해요. 유효기간이 끝나기 전에 추가 접종을 받고 기록하세요.',
+          message: msgRabiesExpiredBefore('출국'),
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }

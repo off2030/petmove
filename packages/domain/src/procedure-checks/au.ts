@@ -163,7 +163,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       if (age < 84) {
         return {
           ok: false,
-          message: msgRabiesPrimeMinAge('84일'),
+          message: msgRabiesPrimeMinAge('84일(12주)'),
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
