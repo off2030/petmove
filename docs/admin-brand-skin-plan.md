@@ -110,6 +110,28 @@ brand 스킨일 때 상단바 아이콘을 버건디 P → **'떠오르는 P' �
 `.brand-skin-hidden`)이라 hydration 깜빡임 없음. editorial·flat 은 기존 마크 유지.
 파비콘·PWA 아이콘(`app/icon.tsx` 등)은 스킨별 분기가 불가능한 전역 자산 — Phase 4 default 승격 때 함께 교체.
 
+### Phase 2.6 — 서체 2축 체계 ✅ 2026-07-28
+
+**문제**: brand 가 flat 에서 물려받은 "전부 Pretendard 평탄화"는 서체 위계를 통째로 없앤다.
+이 앱은 `font-serif` 445곳 / `font-mono` 142곳 / `italic` 171곳을 쓰는데, editorial 에서 화면
+texture 를 만들던 이 세 축이 brand 에선 한 벌로 붕괴 → "밋밋하다"의 실제 원인.
+
+**확정 (2안)**: 사람이 쓴 말 = Pretendard, 기계가 만든 값 = JetBrains Mono 2축.
+- 케이스 번호·날짜·D-day·수치·스몰캡 라벨이 모노로 분리돼 데이터 밀집 화면의 스캔성 회복.
+- `font-serif` 는 평탄화 유지 — 되살리면 editorial 회귀.
+- `italic` 소거도 유지.
+
+**JetBrains Mono 조달**: OFL 라이선스, `@fontsource` latin 서브셋 400/500 을 self-host
+(`public/fonts/JetBrainsMono-{400,500}.woff2`, 합 43KB). Pretendard 와 동일하게 런타임
+Google Fonts 의존 배제 — `app/layout.tsx` 의 릴리스 안정성 원칙 준수.
+
+**폴백 순서 함정 (검증으로 발견)**: `--font-mono` 를 `'JetBrains Mono', ui-monospace, …`
+로만 두면, Tailwind `font-mono` 스택에서 generic `monospace` 가 `Pretendard` 보다 앞서
+한글이 윈도우 시스템 고딕으로 샌다(폭 88px vs Pretendard 69.1px). **Pretendard 를 generic
+앞에** 넣어야 한다: `'JetBrains Mono', 'Pretendard', ui-monospace, …`.
+검증 결과 — 한글 글리프 Pretendard 일치(69.1 = 69.1), latin 등폭 성립(37.7 = 37.7).
+띄어쓰기만 모노 폭(9.6px vs 4px)인데 이는 자릿수 정렬에 필요하며 editorial 도 동일.
+
 ### Phase 3 — 전 화면 시각 검수
 preview 로 주요 화면 순회: 할일(todos)·검사 테이블·케이스 목록/상세·메시지·설정(약품/문서/자동화)·
 알림·super-admin·로그인. light/dark 각각. 이때 §7 결정사항 A(캔버스 회색) A/B 시험.
