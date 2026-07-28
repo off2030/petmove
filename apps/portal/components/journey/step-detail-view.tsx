@@ -33,6 +33,7 @@ import {
   validateSgReservationVsDeparture,
   validateEntryDateForDestination,
   validateEchinococcusWindow,
+  validateAuInternalParasiteDates,
   validateExternalParasiteDates,
   validateInfectiousDiseaseTestDate,
   validatePhInternalParasiteWindow,
@@ -1440,6 +1441,17 @@ export function StepDetailView({
           (caseRow?.departure_date ?? '').slice(0, 10),
           destinationKey,
           typeof caseRow?.data?.species === 'string' ? (caseRow.data.species as string) : '',
+        )
+        if (err) return err
+      }
+      // 호주 내부구충 2회 프로토콜 — 간격 14일 이상 + 2차는 출국 5일 이내(DAFF 7.7 명문).
+      //   2회가 다 들어왔을 때만 본다. '45일 이내'·'출국일보다 늦음'은 바로 위
+      //   validateParasiteDateForDestination 이 이미 막고 있어 여기서 다시 보지 않는다.
+      //   주의 룰(au.internal-parasite-protocol)과 **같은 함수**.
+      if (isInternalParasite && destinationKey === 'australia') {
+        const err = validateAuInternalParasiteDates(
+          parasite.map((e) => e.date ?? ''),
+          (caseRow?.departure_date ?? '').slice(0, 10),
         )
         if (err) return err
       }

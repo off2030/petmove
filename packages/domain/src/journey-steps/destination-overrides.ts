@@ -1654,9 +1654,18 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // 내부구충 — 45일 이내 2회 · 14일 이상 간격 · 2차는 출국 5일 이내(7.7).
       //   "It's acceptable to do the final vet check and second internal parasite treatment at
       //   the same vet visit" — 임상검사와 같은 날 가능하다는 안내를 그대로 넣는다.
+      // ⚠️ 외부구충과 달리 **일수가 전부 DAFF 명문**이라 그대로 문구에 쓴다(제조사 지침에
+      //   기대는 값이 하나도 없다). '호주에서 인정하는 성분' 줄과 링크만 외부구충과 맞췄다
+      //   (2026-07-28) — DAFF 인정 제품 페이지에 선충·조충 성분 표가 함께 있다.
       'internal-parasite': {
         description:
-          '내부 기생충 치료를 하세요.\n\n선충과 조충을 모두 없애는 약이어야 해요.\n출국 45일 이내에 2회 치료해요.\n두 번의 치료는 14일 이상 벌어져야 해요.\n2차 치료는 출국 5일 이내에 해요. 출국 전 임상검사와 같은 날에 해도 돼요.',
+          '내부 기생충 치료를 하세요.\n\n선충과 조충을 모두 없애는 약이어야 해요.\n출국 45일 이내에 2회 치료해요.\n두 번의 치료는 14일 이상 벌어져야 해요.\n2차 치료는 출국 5일 이내에 해요. 출국 전 임상검사와 같은 날에 해도 돼요.\n호주에서 인정하는 성분을 함유한 제품을 사용해야해요.',
+        links: [
+          {
+            url: 'https://www.agriculture.gov.au/biosecurity-trade/cats-dogs/step-by-step-guides/parasite-treatment',
+            label: '인정 성분·제품 목록 (DAFF)',
+          },
+        ],
         validationIds: ['au.internal-parasite-protocol'],
       },
       // 임상검사 — 호주 창은 5일(프로파일 vetVisitWindowDays: 6 = '5일 전 당일까지 허용').

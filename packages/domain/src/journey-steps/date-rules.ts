@@ -1623,6 +1623,50 @@ export function validateExternalParasiteDates(
   return null
 }
 
+/** 호주 내부구충 프로토콜 일수 — DAFF 7.7 명문. */
+export const AU_INTERNAL_PARASITE = { windowDays: 45, minGapDays: 14, secondWithinDays: 5 }
+
+/**
+ * 호주 내부구충 2회 프로토콜 저장 거부 — **2회가 다 들어왔을 때만** 본다(2026-07-28 확정).
+ *
+ *   ① 두 치료 간격 ≥ 14일 — DAFF 7.7 "spaced at least 14 days apart"
+ *   ② 2차는 출국 5일 이내 — "The second treatment must be given within 5 days before export"
+ *
+ * ⛔ '45일 이내'·'출국일보다 늦음'은 여기서 보지 않는다 — 이미
+ *   validateParasiteDateForDestination(PARASITE_DEPARTURE_WINDOWS.australia, kinds:['internal'])
+ *   이 같은 저장 거부 자리에서 막고 있다. 두 번 막으면 문구만 갈린다.
+ * ⛔ '2회 받아야 해요'도 저장 거부가 아니다 — 1회씩 입력하는 카드라 1차 저장을 막게 된다.
+ *   그건 주의(au.internal-parasite-protocol)가 담당한다.
+ *
+ * 외부구충과 달리 일수가 전부 규정 명문이라 저장 거부로 올릴 근거가 있다(외부는 "제조사
+ * 지침대로"라 간격 판정 자체를 제거했다 — validateExternalParasiteDates 주석 참고).
+ *
+ * client(getSaveBlockError)·procedure-check(au.internal-parasite-protocol) 공용 단일 출처.
+ */
+export function validateAuInternalParasiteDates(
+  treatDates: string[],
+  departureDate: string,
+): string | null {
+  const dep = (departureDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dep)) return null
+  const dates = treatDates
+    .map((d) => (d ?? '').slice(0, 10))
+    .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+    .sort()
+  if (dates.length < 2) return null
+  const dose1 = dates[dates.length - 2]
+  const dose2 = dates[dates.length - 1]
+  const gap = daysBetween(dose1, dose2)
+  if (gap !== null && gap < AU_INTERNAL_PARASITE.minGapDays) {
+    return `두 번의 치료는 ${AU_INTERNAL_PARASITE.minGapDays}일 이상 벌어져야 해요.`
+  }
+  const toDep = daysBetween(dose2, dep)
+  if (toDep !== null && toDep > AU_INTERNAL_PARASITE.secondWithinDays) {
+    return `2차 치료는 출국 ${AU_INTERNAL_PARASITE.secondWithinDays}일 이내여야 해요.`
+  }
+  return null
+}
+
 /**
  * 전염병 검사 채혈 창 — 출국일 앵커. 목적지별 일수 단일 출처.
  *

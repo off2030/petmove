@@ -21,6 +21,7 @@ import {
 } from './utils'
 import { readByDestValue } from '../destination-scoped-fields'
 import {
+  validateAuInternalParasiteDates,
   validateAuQuarantineReservationDate,
   validateExternalParasiteDates,
   validateInfectiousDiseaseTestDate,
@@ -736,12 +737,11 @@ export const AU_CHECKS: ProcedureCheck[] = [
         issues.push('1차 치료는 출국 45일 이내여야 해요.')
         offending.push(`internal_parasite_dates[${dose1.originalIndex}].date`)
       }
-      if (dep2 === null || dep2 < 0 || dep2 > 5) {
-        issues.push('2차 치료는 출국 5일 이내여야 해요.')
-        offending.push(`internal_parasite_dates[${dose2.originalIndex}].date`)
-      }
-      if (interval === null || interval < 14) {
-        issues.push('두 번의 치료는 14일 이상 벌어져야 해요.')
+      // 간격·2차 창 — 저장 거부와 **같은 함수**(문구·일수 단일 출처). 저장 뒤에 출국일이나
+      //   다른 회차를 고쳐 어긋난 경우를 표면화하는 짝 주의다.
+      const protocol = validateAuInternalParasiteDates([dose1.date, dose2.date], dep)
+      if (protocol) {
+        issues.push(protocol)
         offending.push(
           `internal_parasite_dates[${dose1.originalIndex}].date`,
           `internal_parasite_dates[${dose2.originalIndex}].date`,
