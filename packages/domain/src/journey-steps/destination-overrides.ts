@@ -1597,6 +1597,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '호주 수입 검역 서류',
       validationIds: ['au.import-quarantine-date-valid'],
+      // 입력칸 없이 안내만 — 계류시설 편도 목적지 3국 공통(2026-07-28 사용자 결정).
+      infoOnly: true,
     },
     extra: {
       // 입국 항체 배선 override — 팩토리 기본(order 55 · 귀국용 룰)을 호주 입국 항체로 교체.
@@ -1801,6 +1803,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '뉴질랜드 수입 검역 서류',
       validationIds: ['nz.import-quarantine-date-valid'],
+      // 입력칸 없이 안내만 — 계류시설 편도 목적지 3국 공통(2026-07-28 사용자 결정).
+      infoOnly: true,
     },
     extra: {
       // 입국 항체 배선 override — 팩토리 기본(order 55 · 귀국용 룰)을 뉴질랜드 입국 항체로 교체.
@@ -2173,6 +2177,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '싱가포르 수입 검역 서류',
       validationIds: ['sg.import-quarantine-date-valid'],
+      // 입력칸 없이 안내만 — 계류시설 편도 목적지 3국 공통(2026-07-28 사용자 결정).
+      infoOnly: true,
     },
     extra: {
       // 입국 항체 배선 override — 팩토리 기본 RETURN_ONLY(귀국용)를 싱가포르 입국 항체 룰로 교체.
@@ -2877,14 +2883,35 @@ function importQuarantineCard(opts: {
    * 교차 국가 지목은 `pnpm lint:validation-wiring` 이 전수 검사한다.
    */
   validationIds: string[]
+  /**
+   * 입력칸 없이 **안내만** 하는 카드 — 계류시설이 있는 편도 목적지(싱가포르·호주·뉴질랜드).
+   *
+   * 왜 — 이 나라들은 보호자가 공항에 가지 않는다. 검역관이 공항에서 인수해 계류시설로
+   * 바로 옮기므로 보호자가 '검역일'을 직접 볼 일이 없고, 그 날짜는 **계류시설 예약 카드에
+   * 이미 입력한 계류 시작일과 같은 날**이라 같은 값을 두 번 묻는 꼴이었다
+   * (2026-07-28 사용자 결정).
+   *
+   * 완료 판정은 `departure-past` — 출국(=도착)이 지나면 자동 완료된다. 계류가 10~30일
+   * 이어지는 동안에도 카드는 완료로 뜬다(입력이 없으니 다른 신호가 없다).
+   *
+   * ⚠️ validationIds 는 그대로 둔다 — 펫무브워크에서 그 필드를 채우면 룰이 다시 돈다.
+   *   값이 없으면 룰은 SKIP 이라 앱에는 아무것도 뜨지 않는다.
+   */
+  infoOnly?: boolean
 }): Partial<StepDefinition> {
   const card: Partial<StepDefinition> = {
     title: `${opts.label} 수입 검역`,
     shortLabel: '수입',
     description: opts.description,
     doneSummary: `${opts.label} 수입 검역을 받았어요.`,
-    done: `quarantine:${opts.fieldKey}`,
-    inputs: [{ key: opts.fieldKey, label: '검역일', type: 'date', helpText: opts.helpText }],
+    done: opts.infoOnly ? 'departure-past' : `quarantine:${opts.fieldKey}`,
+    ...(opts.infoOnly
+      ? {}
+      : {
+          inputs: [
+            { key: opts.fieldKey, label: '검역일', type: 'date', helpText: opts.helpText },
+          ] as StepDefinition['inputs'],
+        }),
     allowAttachments: true,
     attachmentHint: opts.attachmentHint,
   }
@@ -2962,6 +2989,8 @@ function seaPermitOverrides(opts: {
     attachmentLabel?: string
     /** 필수 — importQuarantineCard 와 같은 이유(그 나라 룰을 반드시 지목). */
     validationIds: string[]
+    /** 입력칸 없이 안내만 — 사유는 importQuarantineCard 의 infoOnly 주석 참고. */
+    infoOnly?: boolean
   }
   /** 나라 고유 추가 카드 오버라이드(필리핀 internal-parasite 등). */
   extra?: Partial<Record<string, Partial<StepDefinition>>>
