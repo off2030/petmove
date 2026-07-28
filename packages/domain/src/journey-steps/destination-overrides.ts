@@ -1691,7 +1691,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   · '출국 전 임상검사와 같은 날에 해도 돼요'(7.7 Time saver 안내)
       'internal-parasite': {
         description:
-          '내부 기생충 치료를 하세요.\n\n출국 45일 이내에 14일 이상의 간격으로 2회 이상 치료해요.\n2차 치료는 출국 5일 이내에 해요.\n호주에서 인정하는 성분을 함유한 제품을 사용해야해요.',
+          '내부 기생충 치료를 하세요.\n\n출국 45일 이내에 14일 이상의 간격으로 2회 이상 치료해요.\n2차 치료는 출국 전 5일 이내에 해야 해요.\n호주에서 인정하는 성분을 함유한 제품을 사용해야해요.',
         links: [
           {
             url: 'https://www.agriculture.gov.au/biosecurity-trade/cats-dogs/step-by-step-guides/parasite-treatment',
