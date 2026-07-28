@@ -1575,10 +1575,23 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       links: [{ url: 'https://bicon.agriculture.gov.au/', label: '수입 허가 신청 (BICON)' }],
     },
     // 도착 = 멜버른 공항에서 검역관이 인수 → Mickleham 계류시설. 계류 일수는 마이크로칩 인증 여부로 갈린다.
+    // 문구는 사용자 확정본 4줄(2026-07-28, DAFF 9.2 + 계류시설/요금 페이지 재조사 후).
+    //   ⛔ 되돌리지 말 것 — 원문에 있고 사실도 맞지만 일부러 뺀 두 줄이 있다:
+    //     · '서류·검사·기생충에 문제가 있으면 계류가 길어질 수 있어요.'
+    //       ("If your dog does not comply with the permit conditions, further tests,
+    //         treatments or quarantine may apply.")
+    //     · '계류 비용을 모두 결제해야 반려동물이 나올 수 있어요.'
+    //       ("You must pay your account in full before your animal's release from the PEQ
+    //         facility." — 결제는 PEQ 예약 시스템에서 신용카드로만)
+    //   계류 일수(인증 10일 / 미인증 30일)는 DAFF 3.2·9.2 원문 확인 — 마이크로칩 인증 카드의
+    //     '10일에서 30일로 늘어나요' 문구와 같은 사실이다.
+    //   카드에 넣지 않은 인수 조건(오전 10~12시 · 허가서상 수입자나 사전 통보한 대리인 + 사진
+    //     신분증 · 주소 135 Donnybrook Rd Mickleham · 석방일 연장 불가)은 필요해지면 서류 탭이나
+    //     별도 안내로. 이동장 지참만 카드에 남겼다.
     importQuarantine: {
       fieldKey: 'au_import_quarantine_date',
       description:
-        '호주 도착 후 검역관이 멜버른 공항에서 반려동물을 인수해 Mickleham 계류시설로 옮겨요.\n\n도착 24시간 이내에 무사히 도착했다는 안내를 이메일로 받아요.\n서류·검사·기생충에 문제가 있으면 계류가 길어질 수 있어요.\n계류 비용을 모두 결제해야 반려동물이 나올 수 있어요.',
+        '호주 도착 후 검역관이 멜버른 공항에서 반려동물을 인수해 Mickleham 계류시설로 옮겨요.\n\n도착 24시간 이내에 무사히 도착했다는 안내를 이메일로 받아요.\n계류 기간은 마이크로칩 인증을 받은 경우 10일, 그렇지 않은 경우는 30일이에요.\n데리러 갈 때 이동장도 함께 가져가야 해요.',
       helpText: '호주 도착 후 계류를 시작한 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '호주 수입 검역 서류',
