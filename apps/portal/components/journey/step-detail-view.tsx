@@ -33,6 +33,7 @@ import {
   validateSgReservationVsDeparture,
   validateEntryDateForDestination,
   validateEchinococcusWindow,
+  validateAuIdentityCheckDate,
   validateAuInternalParasiteDates,
   validateExternalParasiteDates,
   validateInfectiousDiseaseTestDate,
@@ -1507,6 +1508,15 @@ export function StepDetailView({
         importQuarantineDate.trim(),
         (caseRow?.departure_date ?? '').slice(0, 10),
       )
+    }
+    // 마이크로칩 인증 — 항체 채혈보다 앞서야 한다(DAFF 3.2). 같은 날은 허용(원문은 같은
+    //   '진료'에서 불가). 주의 룰(au.identity-check-before-titer)과 **같은 함수**.
+    if (step.id === 'au-identity-check' && destinationKey === 'australia') {
+      const err = validateAuIdentityCheckDate(
+        importQuarantineDate.trim(),
+        readTiterAllEntries(caseRow?.data).map((e) => e.date),
+      )
+      if (err) return err
     }
     if (step.id === 'au-quarantine-reservation') {
       // 계류 시작일 = 호주 도착일이라 출국일과 같은 180일 제약을 받는다. 도메인 단일 출처

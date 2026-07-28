@@ -21,6 +21,7 @@ import {
 } from './utils'
 import { readByDestValue } from '../destination-scoped-fields'
 import {
+  validateAuIdentityCheckDate,
   validateAuInternalParasiteDates,
   validateParasiteDateForDestination,
   validateAuQuarantineReservationDate,
@@ -93,6 +94,15 @@ function readQuarantineReservationDate(caseRow: CaseRow, destination?: string | 
     : ''
 }
 
+/** 마이크로칩 인증일(id_date) — by_dest 우선 → top-level → 펫무브워크 legacy(australia_extra). */
+function readIdentityCheckDate(caseRow: CaseRow, destination?: string | null): string {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const scoped = readByDestValue(data, destination ?? null, 'id_date')
+  if (typeof scoped === 'string') return scoped.slice(0, 10)
+  if (typeof data.id_date === 'string') return data.id_date.slice(0, 10)
+  return readAustraliaExtra(caseRow).id_date?.slice(0, 10) ?? ''
+}
+
 /** 호주 도착일(entry_date) — by_dest 우선. */
 function readEntryDate(caseRow: CaseRow, destination?: string | null): string {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -158,6 +168,34 @@ export const AU_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `1차 접종일(${first.date}) 생후 ${age}일령.` }
+    },
+  },
+  {
+    id: 'au.identity-check-before-titer',
+    country: COUNTRY,
+    category: '광견병',
+    title: '마이크로칩 인증은 항체 채혈 전',
+    description:
+      'DAFF 3.2 — "Do this before having blood taken for the RNATT. An identity check cannot be done at the same vet visit as the RNATT." 원문은 같은 **진료**에서 불가이지 같은 날 불가가 아니라 같은 날은 통과시킨다(2026-07-27 사용자 확인). 어기면 계류가 10일 → 30일. 저장 거부(validateAuIdentityCheckDate)와 같은 함수 — 인증을 먼저 저장한 뒤 채혈일을 더 이른 날로 고친 경우를 표면화하는 짝 주의.',
+    severity: 'warning',
+    addedAt: '2026-07-28',
+    run: ({ caseRow, destination }) => {
+      const id = readIdentityCheckDate(caseRow, destination)
+      if (!id) return SKIP
+      const titers = readTiterEntries(caseRow)
+      if (titers.length === 0) return SKIP
+      const msg = validateAuIdentityCheckDate(
+        id,
+        titers.map((t) => t.date),
+      )
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['id_date', `rabies_titer_records[${titers[0].originalIndex}].date`],
+        }
+      }
+      return { ok: true, message: `인증(${id}) → 채혈(${titers[0].date}).` }
     },
   },
   {

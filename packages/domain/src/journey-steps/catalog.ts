@@ -184,7 +184,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   사실이고, destination-scoped 등록·legacy(australia_extra.id_date) fallback 이 이미 있다.
     //   새 키를 파면 같은 사실이 두 곳에 저장돼 검증이 갈린다.
     done: 'dated:id_date',
-    buttonComplete: true,
+    // ⛔ buttonComplete 로 되돌리지 말 것 — 인증일이 **광견병 항체 채혈일보다 앞서야** 하고
+    //   (DAFF 3.2 "Do this before having blood taken for the RNATT"), 그 순서를 검증하려면
+    //   실제 인증일이 필요하다. 버튼 완료였을 때는 저장값이 '버튼 누른 날'이라 순서 판정을
+    //   붙일 수 없었다(2026-07-28 전수 점검에서 드러남 — 문구는 순서를 말하는데 검증이 없었다).
     inputs: [
       {
         key: 'id_date',
@@ -197,7 +200,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   저장해 방문 분리·순서를 판정할 수 없다. 같은 날을 위반으로 단정하면 정상 케이스
     //   (오전 검역본부 → 오후 동물병원)를 잘못 잡고, 확인만 요청하는 주의는 노이즈라 뺐다.
     //   ⛔ '채혈 후 인증'까지 함께 내린 결정이다 — 되살릴 땐 두 갈래를 같이 판단할 것.
-    validationIds: [],
+    validationIds: ['au.identity-check-before-titer'],
   },
 
   // ── 2-2. 뉴질랜드 마이크로칩 인증 (Pre-export identification check) ─────────

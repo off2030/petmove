@@ -1623,6 +1623,35 @@ export function validateExternalParasiteDates(
   return null
 }
 
+/**
+ * 호주 마이크로칩 인증(Identity Declaration)은 **광견병 항체 채혈보다 앞서야** 한다.
+ *
+ * DAFF 3.2 — "Do this before having blood taken for the Rabies Neutralising Antibody Titre
+ * test (RNATT). An identity check cannot be done at the same vet visit as the RNATT."
+ * 원문은 '같은 **진료**에서 불가'이지 '같은 날 불가'가 아니다(2026-07-27 사용자 확인) —
+ * 오전에 검역본부에서 인증, 오후에 동물병원에서 채혈은 가능하므로 **같은 날은 통과**시킨다.
+ *
+ * 어기면 계류가 최소 10일 → 30일로 늘어난다(3.2 는 선택 절차지만 그게 단축 조건이다).
+ * client(저장 거부)·procedure-check(au.identity-check-before-titer) 공용 단일 출처.
+ * 한쪽이 비면 통과 — 인증을 먼저 하고 채혈을 나중에 넣는 정상 순서를 막지 않기 위해.
+ */
+export function validateAuIdentityCheckDate(
+  idDate: string,
+  titerDates: string[],
+): string | null {
+  const id = (idDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(id)) return null
+  const dates = titerDates
+    .map((d) => (d ?? '').slice(0, 10))
+    .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+    .sort()
+  if (dates.length === 0) return null
+  if (id > dates[0]) {
+    return '마이크로칩 인증은 광견병 항체 검사 채혈 전에 받아야 해요. 날짜를 확인하세요.'
+  }
+  return null
+}
+
 /** 호주 내부구충 프로토콜 일수 — DAFF 7.7 명문. */
 export const AU_INTERNAL_PARASITE = { windowDays: 45, minGapDays: 14, secondWithinDays: 5 }
 
