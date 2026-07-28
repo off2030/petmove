@@ -1674,9 +1674,16 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       },
       // 임상검사 — 호주 창은 5일(프로파일 vetVisitWindowDays: 6 = '5일 전 당일까지 허용').
       //   base 문구(10일)가 그대로 노출되면 차단과 어긋난다(싱가포르 7일과 같은 정정).
+      // 문구는 사용자 확정본 3줄 그대로(2026-07-28). ⛔ 되돌리지 말 것:
+      //   · 검진 항목 줄('마이크로칩 확인, 전염병 증상 확인, 외부 기생충 검사')을 뺐다.
+      //     DAFF 8.1 원문은 external parasites + clinical signs of infectious disease 둘뿐이라
+      //     마이크로칩 확인은 근거가 없었다. 뉴질랜드 카드에는 이 줄이 남아 있다(IHS 별도 확인 전).
+      //   · 마지막 줄이 다른 목적지 29곳의 공용 문형('이 서류를 발급하지 않는 동물병원도 있으니
+      //     미리 확인하세요.')과 **호주만 다르다** — 전염병 검사 카드와 같은 문형으로 맞춘
+      //     사용자 판단이다. 공용 문형으로 되돌리지 말 것.
       'vet-visit': {
         description:
-          '출국일 기준 5일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 호주 건강증명서(Veterinary Health Certificate)를 발급받아요.\n\n마이크로칩 확인, 전염병 증상 확인, 외부 기생충 검사를 함께 받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+          '출국일 기준 5일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 호주 건강증명서(Veterinary Health Certificate)를 발급받아요.\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인이 필요해요.',
         deadline: { anchor: 'departure', daysBefore: 5, window: true },
       },
       // 한국 수출 검역도 같은 5일 창(validateKrExportDate 가 getVetVisitWindowDays 공유).
