@@ -31,7 +31,7 @@ import {
   validateSgReservationVsDeparture,
   validateEntryDateForDestination,
   validateEchinococcusWindow,
-  validateAuIdentityCheckDate,
+  validateIdentityCheckBeforeTiter,
   validateAuInternalParasiteDates,
   validateExternalParasiteDates,
   validateInfectiousDiseaseTestDate,
@@ -1505,10 +1505,13 @@ export function StepDetailView({
     // ⛔ sg-gst-permit·sg-border-inspection 저장 거부는 삭제(2026-07-28) — 두 카드가 버튼
     //   완료로 바뀌어 저장값이 '버튼 누른 날'이다. 실제 발급일·예약일이 아니라서 도착 14일
     //   창·5일 전 판정이 어긋난다. 대행으로 처리되는 절차라 보호자가 날짜를 알 수도 없다.
-    // 마이크로칩 인증 — 항체 채혈보다 앞서야 한다(DAFF 3.2). 같은 날은 허용(원문은 같은
-    //   '진료'에서 불가). 주의 룰(au.identity-check-before-titer)과 **같은 함수**.
-    if (step.id === 'au-identity-check' && destinationKey === 'australia') {
-      const err = validateAuIdentityCheckDate(
+    // 마이크로칩 인증 — 항체 채혈보다 앞서야 한다(호주 DAFF 3.2 · 뉴질랜드 IHS 1.11(4)).
+    //   같은 날은 두 나라 모두 허용. 주의 룰(au/nz.identity-check-before-titer)과 **같은 함수**.
+    if (
+      (step.id === 'au-identity-check' && destinationKey === 'australia') ||
+      (step.id === 'nz-identity-check' && destinationKey === 'new_zealand')
+    ) {
+      const err = validateIdentityCheckBeforeTiter(
         importQuarantineDate.trim(),
         readTiterAllEntries(caseRow?.data).map((e) => e.date),
       )

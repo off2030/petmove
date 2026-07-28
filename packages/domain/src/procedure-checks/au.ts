@@ -21,7 +21,7 @@ import {
 } from './utils'
 import { readByDestValue } from '../destination-scoped-fields'
 import {
-  validateAuIdentityCheckDate,
+  validateIdentityCheckBeforeTiter,
   validateAuInternalParasiteDates,
   validateParasiteDateForDestination,
   validateAuQuarantineReservationDate,
@@ -176,7 +176,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '마이크로칩 인증은 항체 채혈 전',
     description:
-      'DAFF 3.2 — "Do this before having blood taken for the RNATT. An identity check cannot be done at the same vet visit as the RNATT." 원문은 같은 **진료**에서 불가이지 같은 날 불가가 아니라 같은 날은 통과시킨다(2026-07-27 사용자 확인). 어기면 계류가 10일 → 30일. 저장 거부(validateAuIdentityCheckDate)와 같은 함수 — 인증을 먼저 저장한 뒤 채혈일을 더 이른 날로 고친 경우를 표면화하는 짝 주의.',
+      'DAFF 3.2 — "Do this before having blood taken for the RNATT. An identity check cannot be done at the same vet visit as the RNATT." 원문은 같은 **진료**에서 불가이지 같은 날 불가가 아니라 같은 날은 통과시킨다(2026-07-27 사용자 확인). 어기면 계류가 10일 → 30일. 저장 거부(validateIdentityCheckBeforeTiter)와 같은 함수 — 인증을 먼저 저장한 뒤 채혈일을 더 이른 날로 고친 경우를 표면화하는 짝 주의.',
     severity: 'warning',
     addedAt: '2026-07-28',
     run: ({ caseRow, destination }) => {
@@ -184,7 +184,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       if (!id) return SKIP
       const titers = readTiterEntries(caseRow)
       if (titers.length === 0) return SKIP
-      const msg = validateAuIdentityCheckDate(
+      const msg = validateIdentityCheckBeforeTiter(
         id,
         titers.map((t) => t.date),
       )

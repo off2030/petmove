@@ -1624,18 +1624,23 @@ export function validateExternalParasiteDates(
 }
 
 /**
- * 호주 마이크로칩 인증(Identity Declaration)은 **광견병 항체 채혈보다 앞서야** 한다.
+ * 마이크로칩 인증은 **광견병 항체 채혈보다 앞서야** 한다 — 호주·뉴질랜드 공용.
  *
- * DAFF 3.2 — "Do this before having blood taken for the Rabies Neutralising Antibody Titre
- * test (RNATT). An identity check cannot be done at the same vet visit as the RNATT."
+ * 호주 DAFF 3.2 — "Do this before having blood taken for the Rabies Neutralising Antibody
+ * Titre test (RNATT). An identity check cannot be done at the same vet visit as the RNATT."
  * 원문은 '같은 **진료**에서 불가'이지 '같은 날 불가'가 아니다(2026-07-27 사용자 확인) —
  * 오전에 검역본부에서 인증, 오후에 동물병원에서 채혈은 가능하므로 **같은 날은 통과**시킨다.
- *
  * 어기면 계류가 최소 10일 → 30일로 늘어난다(3.2 는 선택 절차지만 그게 단축 조건이다).
- * client(저장 거부)·procedure-check(au.identity-check-before-titer) 공용 단일 출처.
+ *
+ * 뉴질랜드 IHS 1.11(4) — 같은 순서 요건이고 **같은 날을 명시 허용**한다("The blood sample
+ * for the RNATT can be taken on the same day as the microchip scan"). 판정식이 같아 함수를
+ * 공유한다(2026-07-28 사용자 '호주 방식으로 통일' 결정). 다만 뉴질랜드는 이 절차가 **필수**라
+ * 어기면 계류 연장이 아니라 수입 허가 자체가 나오지 않는다.
+ *
+ * client(저장 거부)·procedure-check(au/nz.identity-check-before-titer) 공용 단일 출처.
  * 한쪽이 비면 통과 — 인증을 먼저 하고 채혈을 나중에 넣는 정상 순서를 막지 않기 위해.
  */
-export function validateAuIdentityCheckDate(
+export function validateIdentityCheckBeforeTiter(
   idDate: string,
   titerDates: string[],
 ): string | null {

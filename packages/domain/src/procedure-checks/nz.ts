@@ -20,6 +20,7 @@ import {
 } from './utils'
 import { readByDestValue } from '../destination-scoped-fields'
 import {
+  validateIdentityCheckBeforeTiter,
   validateImportPermitNotAfterDeparture,
   validateInfectiousDiseaseTestDate,
 } from '../journey-steps/date-rules'
@@ -145,6 +146,34 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date'],
       }
+    },
+  },
+  {
+    id: 'nz.identity-check-before-titer',
+    country: COUNTRY,
+    category: '마이크로칩',
+    title: '마이크로칩 인증은 항체 채혈 전',
+    description:
+      'IHS 1.11(4) — 검역관의 pre-export identification check 는 RNATT 채혈 **전에** 끝나야 한다. 호주와 달리 **필수 절차**라 어기면 계류 연장이 아니라 수입 허가 자체가 나오지 않는다(1.13 "a pre-export identification check form must have been entered into our online system by an official veterinarian before we can issue an import permit"). 같은 날은 허용된다(1.11 guidance "The blood sample for the RNATT can be taken on the same day as the microchip scan"). 저장 거부(validateIdentityCheckBeforeTiter)와 같은 함수 — 인증을 먼저 저장한 뒤 채혈일을 더 이른 날로 고친 경우를 표면화하는 짝 주의.',
+    severity: 'warning',
+    addedAt: '2026-07-28',
+    run: ({ caseRow, destination }) => {
+      const id = readScopedDate(caseRow, destination, 'id_date')
+      if (!id) return SKIP
+      const titers = readTiterEntries(caseRow)
+      if (titers.length === 0) return SKIP
+      const msg = validateIdentityCheckBeforeTiter(
+        id,
+        titers.map((t) => t.date),
+      )
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['id_date', `rabies_titer_records[${titers[0].originalIndex}].date`],
+        }
+      }
+      return { ok: true, message: `인증(${id}) → 채혈(${titers[0].date}).` }
     },
   },
 

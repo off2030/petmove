@@ -216,7 +216,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   //   the same day as the microchip scan"(1.11 guidance)로 **같은 날을 명시 허용**한다.
   //   호주는 반대로 같은 방문에서 못 한다. 두 나라 문구를 서로 복사하지 말 것.
   // 서류는 수출국 competent authority(검역본부)가 **MPI 로 직접 보낸다** — 보호자가 사본을
-  //   받지 못하므로 첨부 없이 날짜 + '완료' 버튼으로 끝낸다(호주와 같은 모델).
+  //   받지 못하므로 첨부 없이 인증일만 받는다.
+  // ⛔ buttonComplete 로 되돌리지 말 것 — 호주와 같은 이유다(2026-07-28 사용자 '호주 방식으로
+  //   통일' 결정). 인증일이 **항체 채혈일보다 앞서야** 하는데, 버튼 완료는 저장값이 '버튼 누른
+  //   날'이라 지난달 받은 인증을 오늘 체크하면 순서가 뒤집혀 보인다 → 순서 판정 자체가 불가능.
+  //   뉴질랜드는 이 절차가 **필수**(빠지면 수입 허가가 안 나옴)라 호주보다 더 지켜야 한다.
   {
     id: 'nz-identity-check',
     category: 'preparation',
@@ -231,7 +235,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 필드는 호주와 같은 `id_date` — 같은 사실(검역관이 칩을 확인한 날)이고 destination-scoped
     //   등록도 이미 돼 있다. 2회 인증 케이스는 **첫 인증일**을 적는다(helpText 로 안내).
     done: 'dated:id_date',
-    buttonComplete: true,
     inputs: [
       {
         key: 'id_date',
@@ -240,9 +243,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         helpText: '검역관이 마이크로칩을 확인한 날짜 (두 번 받는 경우 첫 번째 날짜)',
       },
     ],
-    // 검증 없음 — 호주와 같은 이유(2026-07-27). 앱은 날짜 하나만 저장해 1회/2회 분기와
-    //   '채혈 전' 순서를 확정 판정할 수 없다. 채혈 창(3~12개월)은 항체·항공권 카드가 본다.
-    validationIds: [],
+    // 순서 검증만 둔다 — 인증일 ≤ 가장 이른 채혈일(같은 날 허용, IHS 1.11 guidance).
+    //   1회/2회 분기는 판정하지 않는다(앱은 첫 인증일 하나만 저장). 채혈 창(3~12개월)은
+    //   항체·항공권 카드가 본다.
+    validationIds: ['nz.identity-check-before-titer'],
   },
 
   // ── 3. 광견병 백신 1차 ─────────────────────────────────────────────────

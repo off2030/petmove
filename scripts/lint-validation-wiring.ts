@@ -754,7 +754,10 @@ function importPermitNotifyLeaks(appDests: string[]): Problem[] {
  */
 const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   'australia:au-identity-check':
-    '차단: validateAuIdentityCheckDate(인증일 ≤ 항체 채혈일 — 같은 날 허용)',
+    '차단: validateIdentityCheckBeforeTiter(인증일 ≤ 항체 채혈일 — 같은 날 허용)',
+  // 뉴질랜드도 같은 함수(2026-07-28 '호주 방식으로 통일'). 여긴 필수 절차라 어기면 수입 허가 불가.
+  'new_zealand:nz-identity-check':
+    '차단: validateIdentityCheckBeforeTiter(인증일 ≤ 항체 채혈일 — 같은 날 허용)',
   // ── 기본 정보·의료 기록 (step-detail-view getSaveBlockError 분기) ──────────
   microchip: '차단: 출생일 이전 시술일·15자리 형식 거부(isMicrochip 인라인)',
   'rabies-vaccine-1':
