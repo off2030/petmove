@@ -116,6 +116,12 @@ export type StepDoneSignal =
   // resolver 가 모든 나라를 처리(예: 'quarantine:th_import_quarantine_date',
   // 'quarantine:th_export_quarantine_date'). confirmed 키는 _date→_confirmed.
   | `quarantine:${string}`
+  // quarantine-start:<field> — 계류 **시작 예정일**로 완료·표시하는 도착 검역 카드
+  //   (싱가포르·호주·뉴질랜드). 보호자가 공항에 가지 않아 검역일 입력칸이 없는 대신,
+  //   계류시설 예약 카드에 넣은 계류 시작일을 그대로 본다. 동작은 `dated:` 와 같지만
+  //   신호를 나눈 이유는 저장 맵(DATED_STEP_FIELDS) 때문 — 그쪽은 stepId→필드 평면 맵이라
+  //   같은 'departure' step 이 나라마다 다른 필드를 가리키면 충돌한다.
+  | `quarantine-start:${string}`
   // dated:<field> — 발급일·예약일 자체가 완료 증거인 절차(싱가포르 GST 허가·국경검사 예약).
   // 확인 게이트 없이 날짜(≤오늘) 입력만으로 완료. confirm 이 필요한 검역·검사엔 쓰지 말 것.
   | `dated:${string}`

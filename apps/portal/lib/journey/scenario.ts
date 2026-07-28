@@ -594,13 +594,22 @@ export function buildJourney(
       typeof step.done === 'string' && step.done.startsWith('quarantine:')
         ? step.done.slice('quarantine:'.length)
         : null
+    // 입력칸 없는 도착 검역(싱가포르·호주·뉴질랜드) — 'quarantine-start:<계류 예약일 필드>'.
+    //   이 분기를 빠뜨리면 카드가 '평범한 출국 카드'로 분류돼 **출국일**이 예정 배지로 나간다
+    //   (2026-07-28 실제로 그렇게 났다). 항공권 날짜를 도착 검역 예정 배지로 쓰는 건
+    //   FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS 로 한정한 결정이라 그 자체가 위반이다.
+    const quarantineStartField =
+      typeof step.done === 'string' && step.done.startsWith('quarantine-start:')
+        ? step.done.slice('quarantine-start:'.length)
+        : null
     // 수입검역(= departure 의 목적지 override — 일본 'has-jp-import-quarantine' 또는 그 외
     // 나라 quarantine: 시그널)은 검역일로 완료·날짜를 잡으므로 departure 의 '출국일'
     // shortcut 에서 제외 — 일반 경로(done→완료일)를 탄다.
     const isJpImportQuarantine =
       isDeparture &&
       ((step.inputs ?? []).some((i) => i.key === 'jp_import_quarantine_date') ||
-        quarantineField !== null)
+        quarantineField !== null ||
+        quarantineStartField !== null)
     const deadline = deadlineDate(step, caseRow)
     const earliest = earliestDate(step, caseRow)
     // window 마감이면 구간 끝(기준일) — 카드에 'A ~ B' 구간으로 표시.
@@ -628,6 +637,13 @@ export function buildJourney(
       flightEntryDate &&
       flightEntryDate > today
         ? flightEntryDate
+        : null
+    // 입력칸 없는 도착 검역 — 예정 배지 = **계류시설 예약 카드에 넣은 계류 시작일**.
+    //   항공권 날짜(출국일)를 쓰지 않는 이유는 quarantineStartField 주석 참고.
+    //   예약일이 지나면 done 이 true 라 위 resolveCompletedDate 가 그 날짜를 그대로 쓴다.
+    const quarantineStartUpcoming =
+      quarantineStartField && typeof caseData[quarantineStartField] === 'string'
+        ? ((caseData[quarantineStartField] as string).slice(0, 10) || null)
         : null
     const krImportUpcoming =
       step.id === 'kr-import-quarantine' &&
@@ -939,7 +955,9 @@ export function buildJourney(
       : isDeparture && !isJpImportQuarantine
       ? dep
       : isJpImportQuarantine
-        ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? importQuarantineUpcoming
+        ? (done ? resolveCompletedDate(step.done, caseRow) : null) ??
+          quarantineStartUpcoming ??
+          importQuarantineUpcoming
         : step.id === 'kr-import-quarantine'
           ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? krImportUpcoming
           : step.id === 'jp-export-quarantine-visit'
