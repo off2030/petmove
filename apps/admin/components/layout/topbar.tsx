@@ -31,10 +31,11 @@ const LOGO_VARIANT: 'text' | 'wordmark' | 'full' | 'alonzo' | 'alonzo-text' | 'i
 
 function LogoMark() {
   if (LOGO_VARIANT === 'icon-text') {
-    // 마스터 아이콘 + 기본 웹 폰트 워드마크.
-    // 아이콘은 스킨 연동: brand → '떠오르는 P'(portal 과 동일), 그 외 → 버건디 P 마크.
-    // useSkin 대신 data-skin CSS 토글(globals.css) — hydration 전에 부트 스크립트가
-    // data-skin 을 박으므로 첫 페인트부터 올바른 마크, 깜빡임 없음.
+    // 스킨 연동 로고 — useSkin 대신 data-skin CSS 토글(globals.css): hydration 전에
+    // 부트 스크립트가 data-skin 을 박으므로 첫 페인트부터 올바른 쪽만 보임 (깜빡임 없음).
+    //   brand      → '떠오르는 P' + 한글 '펫무브워크' (portal top-bar 워드마크와 동일 스타일:
+    //                 700 / 17px / letter-spacing 0.025em / 잉크색. 영문안은 portal 에서 폐기됨)
+    //   그 외 스킨 → 기존 버건디 P + 'PETMOVE Work'
     return (
       <span className="inline-flex items-center gap-2">
         <img
@@ -44,10 +45,13 @@ function LogoMark() {
           className="brand-skin-hidden h-7 w-7 select-none rounded-[6px]"
           draggable={false}
         />
-        <BrandLogoMark size={26} className="brand-skin-only" />
-        <span className="inline-flex items-baseline gap-[5px] text-foreground leading-none whitespace-nowrap">
+        <span className="brand-skin-hidden inline-flex items-baseline gap-[5px] text-foreground leading-none whitespace-nowrap">
           <span className="text-[18px] font-semibold tracking-tight">PETMOVE</span>
           <span className="text-[13px] font-medium tracking-wide text-muted-foreground">Work</span>
+        </span>
+        <BrandLogoMark size={24} className="brand-skin-only" />
+        <span className="brand-skin-only text-[17px] font-bold tracking-[0.025em] text-foreground leading-none whitespace-nowrap">
+          펫무브워크
         </span>
       </span>
     )
