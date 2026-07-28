@@ -1373,10 +1373,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: {
       destinations: [...GENERAL_VACCINE_CARD_DESTINATIONS],
       species: 'all',
-      // 호주는 **강아지 전용** — 의무 항목이 렙토스피라 Canicola(개 요건) 하나뿐이고,
-      //   고양이 가이드 7.2 는 종합백신(FVRCP)을 "optional / not mandatory"로 둔다
-      //   (2026-07-27 원문 확인). 고양이에게 이 카드를 띄우면 없는 요건을 요구하게 된다.
-      speciesByDestination: { australia: 'dog' },
+      // 호주 고양이도 이 카드를 띄운다(2026-07-28 사용자 지시). DAFF 고양이 가이드 7.2 는
+      //   종합백신(FVRCP)을 "not mandatory" 로 두지만, 계류시설이 접종 증명을 요구해
+      //   실무상 필요하다 — 켄넬코프 카드(개)와 같은 이유다. 문구가 '입국 요건이 아니라
+      //   계류시설 예약용'임을 밝히므로 없는 요건을 요구하는 문제는 없다.
+      //   ⚠️ 검증(au.general-vaccine-14days-before-departure·within-12months)은 개 전용
+      //   그대로다 — 고양이는 DAFF 가 시점·유효기간을 규정하지 않는다.
       tripType: 'all',
     },
     order: 50,

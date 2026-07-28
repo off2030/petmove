@@ -1522,6 +1522,18 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   의무 항목**이라 오히려 가장 필요한 자리다.
       description:
         '종합백신을 접종하세요.\n\n처음 접종하면 2~4주 간격으로 2회 접종해요.\n출국 14일 전까지 접종해야 해요.\n접종 유효기간은 1년이에요.\n\n렙토스피라 예방을 포함한 백신을 권장해요. 그렇지 않은 경우 렙토스피라 검사(MAT)를 받아야 해요.',
+      // 고양이 — 2026-07-28 신설. DAFF 고양이 가이드 7.2 는 범백혈구감소증(feline
+      //   enteritis/panleukopenia)·허피스(rhinotracheitis)·칼리시를 들면서 "Vaccination is
+      //   not mandatory" 라고 못박고, 대신 "Vaccinations should be valid for the entire
+      //   post-entry quarantine period" 를 요구한다. 그래서 개처럼 '출국 14일 전'·'유효기간
+      //   1년' 같은 시점 규정을 쓰지 않는다.
+      //   3번째 줄은 켄넬코프 카드(개)의 확정 문구를 그대로 가져왔다 — 같은 사유(계류시설
+      //   요구)라 표현이 갈리면 안 된다.
+      //   질병 3종 나열은 러시아·필리핀·싱가포르와 같은 순서·표기를 따랐다.
+      descriptionBySpecies: {
+        dog: '종합백신을 접종하세요.\n\n처음 접종하면 2~4주 간격으로 2회 접종해요.\n출국 14일 전까지 접종해야 해요.\n접종 유효기간은 1년이에요.\n\n렙토스피라 예방을 포함한 백신을 권장해요. 그렇지 않은 경우 렙토스피라 검사(MAT)를 받아야 해요.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증·허피스바이러스·칼리시바이러스 예방을 포함해야 해요.\n호주 입국 요건은 아니지만, 계류시설 예약을 위해 필요해요.\n계류가 끝날 때까지 면역 유효기간이 남아 있어야 해요.',
+      },
       validationIds: [
         'au.general-vaccine-14days-before-departure',
         'au.general-vaccine-within-12months',
