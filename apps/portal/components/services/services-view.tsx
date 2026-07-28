@@ -720,7 +720,14 @@ function profileKeyForDest(dest: string): string | null {
  * ⚠️ CDC 신고는 **강아지 전용** 절차다(고양이는 CDC 서류 요건 자체가 없음). 맡기기 목록은
  *   종 구분 없이 한 벌로 보여주므로, 고양이 보호자에게도 이 줄이 보인다(2026-07-26 사용자 지정).
  */
-const EXTRA_PROCEDURE_ITEMS: Record<string, Array<{ label: string; card: string }>> = {
+// introOmit — 목록('이런 걸 대신해 드려요')에는 넣되 **소개문에서는 빼는** 항목.
+//   소개문은 라벨을 쉼표로 이어 붙이는데(introHighlight), 라벨이 길거나 '서류 준비'처럼
+//   뒤 문구와 겹치면 문장이 무너진다. 실제로 호주 '마이크로칩 인증 서류 준비(검역소 제출용)'
+//   를 넣자 "…서류 준비(검역소 제출용), 서류 준비까지" 가 됐다(2026-07-28).
+const EXTRA_PROCEDURE_ITEMS: Record<
+  string,
+  Array<{ label: string; card: string; introOmit?: boolean }>
+> = {
   usa: [{ label: 'CDC 신고', card: 'us-cdc-dog-import-form' }],
   hawaii: [
     { label: '하와이 입국 신청', card: 'hi-import-declaration' },
@@ -730,6 +737,13 @@ const EXTRA_PROCEDURE_ITEMS: Record<string, Array<{ label: string; card: string 
   //   직접 연락해 잡고, 수입 허가는 보호자가 DOAG 에 직접 이메일로 낸다(프로파일 selfApply
   //   선언으로 자동 제외). 여정 카드·알림은 그대로 — 여기서 빼는 건 맡기기 항목뿐.
   guam: [{ label: 'CDC 신고', card: 'us-cdc-dog-import-form' }],
+  // 호주 — 마이크로칩 인증(Identity Declaration)은 검역관이 발급해 DAFF 로 직접 보내지만,
+  //   그 앞의 서류 준비(접종·검사 기록 정리, 검역소 제출)를 로잔이 대행한다(2026-07-28
+  //   사용자 지정). 수입 허가(BICON)는 selfApply 라 위에서 자동 제외되므로 여기 안 적는다.
+  //   card 는 순서 정렬용 — au-identity-check(order 25)라 목록에서 마이크로칩 바로 다음.
+  australia: [
+    { label: '마이크로칩 인증 서류 준비(검역소 제출용)', card: 'au-identity-check', introOmit: true },
+  ],
 }
 
 function derivedDetail(kind: 'offline' | 'online', dest: string, trip: TripType): DestDetail | null {
@@ -746,10 +760,12 @@ function derivedDetail(kind: 'offline' | 'online', dest: string, trip: TripType)
   const permit = DESTINATION_OVERRIDES[destKey]?.importPermit
   const hasPermit = !!permit && !permit.selfApply && !permit.localApplyOnly
   // 수입 허가(프로파일 파생) + 카드로만 있는 고유 절차(EXTRA_PROCEDURE_ITEMS).
-  const permitItems = [
+  const permitItems: Array<{ label: string; card: string; introOmit?: boolean }> = [
     ...(hasPermit ? [{ label: '수입 허가 신청', card: 'import-permit' }] : []),
     ...(EXTRA_PROCEDURE_ITEMS[destKey] ?? []),
   ]
+  // 소개문에 이어 붙일 항목 — introOmit 은 목록에만 남긴다.
+  const introItems = permitItems.filter((p) => !p.introOmit)
   if (kind === 'offline') {
     return offlineDetail({
       destKey,
@@ -758,7 +774,7 @@ function derivedDetail(kind: 'offline' | 'online', dest: string, trip: TripType)
       period,
       // 항목이 하나뿐이던 시절엔 '수입 허가 신청' 고정이었다 — 이제 항목 전부를 이어 붙인다
       // (허가국은 결과가 종전과 같고, 미국·하와이만 새 절차가 문장에 들어간다).
-      introHighlight: permitItems.length ? permitItems.map((p) => p.label).join(', ') : undefined,
+      introHighlight: introItems.length ? introItems.map((p) => p.label).join(', ') : undefined,
       procedureItems: permitItems,
     })
   }
@@ -767,7 +783,7 @@ function derivedDetail(kind: 'offline' | 'online', dest: string, trip: TripType)
   // 나라는 비운다(공장이 '단계별 가이드'·'서류 점검'을 앞뒤로 붙인다). 빈칸을 메우려고
   // '검역 일정 관리' 같은 일반 항목을 지어내지 않는다 — 기존 목적지에 없는 표현이다.
   return onlineDetail({
-    introItems: permitItems.length ? permitItems.map((p) => p.label).join(', ') : undefined,
+    introItems: introItems.length ? introItems.map((p) => p.label).join(', ') : undefined,
     items: permitItems.map((p) => p.label),
     period,
   })
