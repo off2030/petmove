@@ -1559,6 +1559,28 @@ export function validateMtAdvanceNoticeDate(noticeDate: string, entryDate: strin
 }
 
 /**
+ * 전염병 검사일은 출국일보다 늦을 수 없다 — 논리적 불가능 조건이라 **저장 거부**.
+ *
+ * 창(호주 45일·뉴질랜드 30일)을 벗어난 '너무 이른' 검사는 저장 거부가 아니라 주의로 둔다.
+ * 출국일을 나중에 당기면 유효해질 수 있어서, 막으면 정상 준비를 거부하게 된다. 반대로
+ * '출국 뒤에 받은 검사'는 어떤 출국일 변경으로도 유효해지지 않는다.
+ *
+ * client(getSaveBlockError)·procedure-check(au/nz.infectious-disease-test-…) 공용 단일 출처.
+ * 한쪽 날짜가 비면 통과.
+ */
+export function validateInfectiousDiseaseTestDate(
+  testDate: string,
+  departureDate: string,
+): string | null {
+  if (!testDate || !departureDate) return null
+  const t = testDate.slice(0, 10)
+  const d = departureDate.slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return null
+  if (t > d) return '전염병 검사일이 출국일보다 늦어요. 날짜를 확인하세요.'
+  return null
+}
+
+/**
  * 촌충(에키노코쿠스) 구충 — 입국 `1~maxDays`일 전 사이에 받아야 함. EU echinococcus-free
  * 국(영국·아일랜드·몰타·노르웨이·핀란드)은 입국 직전 24~120시간(1~5일)에만 유효한 절차라, 그
  * 밖(너무 이르거나 늦음)의 구충은 의미가 없어 입력불가로 막는다. maxDays 는 앱별로 다름 —

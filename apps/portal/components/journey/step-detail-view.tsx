@@ -33,6 +33,7 @@ import {
   validateSgReservationVsDeparture,
   validateEntryDateForDestination,
   validateEchinococcusWindow,
+  validateInfectiousDiseaseTestDate,
   validatePhInternalParasiteWindow,
   readScopedImportPermitFiled,
   TITER_MIN_DAYS_AFTER_VACCINE,
@@ -1425,6 +1426,17 @@ export function StepDetailView({
             departureDate: dep,
             ...(isHeartworm ? { label: '심장사상충 검사' } : {}),
           })
+          if (err) return err
+        }
+      }
+      // 전염병 검사 — 출국일보다 늦은 검사일은 논리적 불가능이라 저장 거부(주의 룰
+      //   au/nz.infectious-disease-test-… 과 **같은 함수**). 창(호주 45일·뉴질랜드 30일)을
+      //   벗어난 '너무 이른' 검사는 출국일을 당기면 유효해질 수 있어 주의로 남겨 둔다.
+      if (isInfectiousDisease) {
+        const dep = (caseRow?.departure_date ?? '').slice(0, 10)
+        for (const e of parasite) {
+          if (!e.date) continue
+          const err = validateInfectiousDiseaseTestDate(e.date, dep)
           if (err) return err
         }
       }

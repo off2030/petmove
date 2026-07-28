@@ -39,7 +39,6 @@
 [au.civ-within-12months]
   독감(CIV) 백신은 출국일 기준 12개월 이내에 접종한 기록이 있어야 해요. 추가 접종이 필요해요.
 [au.infectious-disease-test-within-45days]
-  전염병 검사일이 출국일보다 늦어요. 날짜를 확인하세요.
   전염병 검사는 출국 45일 이내에 받아야 해요. 다시 검사받아야 할 수 있어요.
 [au.internal-parasite-protocol]
   내부 기생충 치료는 출국 45일 이내에 2회 받아야 해요.
@@ -181,7 +180,6 @@
 [nz.civ-within-12months]
   독감(CIV) 백신은 출국일 기준 12개월 이내에 접종한 기록이 있어야 해요. 추가 접종이 필요해요.
 [nz.infectious-disease-test-within-30days]
-  전염병 검사일이 출국일보다 늦어요. 날짜를 확인하세요.
   전염병 검사는 출국 30일 이내에 받아야 해요. 다시 검사받아야 할 수 있어요.
 [nz.infectious-disease-test-after-external-parasite]
   바베시아 검사 채혈은 1차 외부 기생충 치료 14일 후부터 할 수 있어요. 지금 채혈하면 외부 기생충 치료와 검사를 다시 해야 할 수 있어요.

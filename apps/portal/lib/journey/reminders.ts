@@ -786,7 +786,9 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
           `${token}|au-infectious-45`,
           departure,
           45,
-          '오늘부터 호주 전염병 검사를 받을 수 있어요. 출국 45일 이내에 채혈해야 하고, 더 일찍 받으면 인정되지 않아요.',
+          // '채혈' 로 쓰지 않는다 — 호주 카드 확정본이 '검사를 받아요'로 통일돼 있다
+          //   (2026-07-28). 뉴질랜드 카드는 아직 '채혈해요'라 아래 알림은 그대로 둔다.
+          '오늘부터 호주 전염병 검사를 받을 수 있어요. 출국 45일 이내에 받아야 하고, 더 일찍 받으면 인정되지 않아요.',
           now,
         )
         if (r45) out.push(r45)

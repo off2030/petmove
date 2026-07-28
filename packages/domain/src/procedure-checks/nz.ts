@@ -19,7 +19,10 @@ import {
   readDepartureDate,
 } from './utils'
 import { readByDestValue } from '../destination-scoped-fields'
-import { validateImportPermitNotAfterDeparture } from '../journey-steps/date-rules'
+import {
+  validateImportPermitNotAfterDeparture,
+  validateInfectiousDiseaseTestDate,
+} from '../journey-steps/date-rules'
 import {
   msgExportQuarantineAfterReturn,
   msgExportQuarantineBeforeEntry,
@@ -574,10 +577,12 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       const latest = entries[entries.length - 1]
       const days = daysBetween(latest.date, dep)
       if (days === null) return SKIP
-      if (days < 0) {
+      // 출국일보다 늦은 검사 — 저장 거부와 **같은 함수**를 본다(문구 단일 출처).
+      const afterDeparture = validateInfectiousDiseaseTestDate(latest.date, dep)
+      if (afterDeparture) {
         return {
           ok: false,
-          message: '전염병 검사일이 출국일보다 늦어요. 날짜를 확인하세요.',
+          message: afterDeparture,
           offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`],
         }
       }

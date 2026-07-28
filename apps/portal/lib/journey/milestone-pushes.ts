@@ -4,6 +4,7 @@ import {
   deriveJpExportQuarantineStatus,
   findDestinationKey,
   flattenCaseForDestination,
+  requiresInfectiousDiseaseTest,
   resolveDone,
   usesRabiesTiter,
   type CaseRow,
@@ -21,6 +22,7 @@ import { destinationTokens, petLabel } from './reminders'
  *
  * 마일스톤:
  *   - 광견병 항체검사 완료 — **모든 목적지 공통**(글로벌 검사). 케이스당 1회.
+ *   - 전염병 검사 완료 — 호주·뉴질랜드·남아공(글로벌 검사). 케이스당 1회.
  *   - 일본: 사전 신고 / 일본 수출 검역 신청·예약
  *   - 태국·필리핀·대만: 수입 허가증
  * 완료 판정은 모두 기존 도메인 함수 재사용(resolveDone·derive*) — 새 판정 로직 없음.
@@ -69,6 +71,26 @@ export function collectMilestonePushes(caseRow: CaseRow): MilestonePush[] {
       key: `${caseRow.id}|titer`,
       title: APP_TITLE,
       body: `${pet} 광견병 항체 검사가 완료됐어요. 결과를 앱에서 확인하세요. ✨`,
+    })
+  }
+
+  // 전염병 검사 — 글로벌(infectious_disease_records) 검사라 케이스당 1회. 항체 검사와 같은
+  // 모델이다: **병원이 대행해 보호자가 결과를 기다리는** 단계라 완료 푸시 대상이다
+  // (2026-07-28 사용자 지정). 검역처럼 보호자가 직접 하는 절차가 아니다.
+  //
+  // 이 검사를 요구하는 목적지(호주·뉴질랜드·남아공)가 있을 때만 보낸다 — 카드가 없는
+  // 목적지에 기록용으로 남은 값 때문에 푸시가 나가는 건 항체 푸시가 홍콩·아랍에미리트에서
+  // 겪은 사고와 같은 자리다. ⚠️ 항체와 달리 **목적지 미입력(tokens 빈 배열)은 제외**한다 —
+  // 항체는 사실상 모든 여정에 있어 미리 보내도 맞지만, 이 검사는 3개국 전용이라 목적지가
+  // 정해지기 전에 "완료됐어요"를 보내면 대부분 틀린 알림이 된다.
+  if (
+    resolveDone('has-infectious-disease-test', caseRow) &&
+    tokens.some((t) => requiresInfectiousDiseaseTest(t))
+  ) {
+    out.push({
+      key: `${caseRow.id}|infectious-disease`,
+      title: APP_TITLE,
+      body: `${pet} 전염병 검사가 완료됐어요. 결과를 앱에서 확인하세요. ✨`,
     })
   }
 
