@@ -39,7 +39,10 @@
 @layer base {
   :root {
     --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-    --font-sans-flat: var(--font-sans);
+    /* 주의: var(--font-sans) 로 쓰면 스킨 블록의 --font-sans: var(--font-sans-flat) 와
+       같은 요소에서 순환 참조 → 둘 다 invalid → 시스템 폰트 폴백 (flat 이 실제로 겪던 버그).
+       반드시 리터럴 유지. */
+    --font-sans-flat: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
     --font-sans-neu: var(--font-sans);
     --font-sans-kr: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
     --font-serif: Georgia, 'Times New Roman', serif;
@@ -559,14 +562,216 @@
     --pmw-chip-neutral-fg: 240 5% 78%;
   }
 
+  /* ─────────────────────────────────────────────────────────────
+     Skin: brand — 새 브랜드 (2026-07 리브랜딩). flat 구조 + 브랜드 팔레트.
+     순백 + 잉크 그레이 + 하늘 파랑 #0BAEFF 액센트. Pretendard 단일, tight 타이포.
+     색 값의 진실은 portal --pm-* (apps/portal/app/globals.css 의 pmw 미러 217~476행) —
+     여기는 그 팔레트를 admin 토큰 체계로 옮긴 것. 계획: docs/admin-brand-skin-plan.md
+     ───────────────────────────────────────────────────────────── */
+  [data-skin="brand"] {
+    /* 폰트 — flat 과 동일: 전부 Pretendard 평탄화 */
+    --font-sans: var(--font-sans-flat);
+    --font-serif: var(--font-sans-flat), Pretendard;
+    --font-serif-kr: var(--font-sans-kr);
+    --font-mono: var(--font-sans-flat);
+    --pmw-font-serif: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+
+    /* raw PMW — 잉크 그레이 + 하늘. portal 미러와 2곳 의도적 차이:
+       - deep: admin 에선 텍스트 강조용 → 흰 바탕 대비 확보한 deep sky #0C7AC0 (#0BAEFF 는 2.5:1 AA 미달)
+       - amber: admin 에선 경고색(백신 임박·알림 dot) → 하늘이 아닌 honey amber */
+    --pmw-near-black: #212124;
+    --pmw-olive-gray: #5C5C60;
+    --pmw-stone-gray: #97979C;
+    --pmw-deep: #0C7AC0;
+    --pmw-clay-soft: #E4F4FF;
+    --pmw-sage: #14B8A6;
+    --pmw-sage-soft: #DFE5EB;        /* chat active row — sage-paper 와 명확 구분 */
+    --pmw-sage-paper: #F4F6F8;       /* chat panel bg = 브랜드 캔버스 그레이 */
+    --pmw-amber: #9C6127;
+    --pmw-rust: #E5484D;
+    --pmw-border-warm: #E4E6EA;
+    --pmw-parchment: #FFFFFF;        /* 시작은 순백 — 회색 캔버스 #F4F6F8 는 검수 때 A/B (plan §7-A) */
+    --pmw-paper: #FFFFFF;
+
+    --background: 0 0% 100%;
+    --foreground: 240 4% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 4% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 4% 14%;
+    --primary: 200 100% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 216 15% 94%;
+    --secondary-foreground: 240 4% 14%;
+    --muted: 216 15% 94%;
+    --muted-foreground: 240 2% 37%;
+    --accent: 216 15% 94%;
+    --accent-foreground: 240 4% 14%;
+    --destructive: 358 75% 59%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 12% 91%;
+    --input: 220 12% 91%;
+    --ring: 200 100% 52%;
+    --radius: 0.5rem;
+
+    /* Semantic — 하늘 + 중립 회색 (portal 미러 값) */
+    --pmw-accent: 200 100% 52%;          /* #0BAEFF sky */
+    --pmw-accent-fg: 0 0% 100%;
+    --pmw-accent-strong: 202 88% 40%;    /* #0C7AC0 deep sky — 텍스트/hover */
+    --pmw-tag-bg: 204 100% 95%;          /* #E4F4FF soft sky */
+    --pmw-tag-fg: 203 60% 30%;           /* deep sky ink */
+    --pmw-cal-today: 200 100% 52%;
+    --pmw-cal-sunday: 358 75% 59%;       /* #E5484D danger */
+    --pmw-cal-saturday: 206 48% 52%;     /* #4B8CBF info */
+    --pmw-positive: 172 80% 40%;         /* #14B8A6 teal */
+    --pmw-avatar-bg: 204 100% 92%;       /* soft sky */
+    --pmw-avatar-fg: 203 65% 32%;        /* deep sky ink */
+    --pmw-code-label: 240 2% 49%;
+
+    /* Typography 스케일 — flat 과 동일 (Linear tight) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.4;   --pmw-tracking-2xs:  0;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.5;   --pmw-tracking-xs:   -0.005em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.5;   --pmw-tracking-sm:   -0.011em;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.5;   --pmw-tracking-base: -0.011em;
+    --pmw-text-md:   15px;   --pmw-leading-md:   1.55;  --pmw-tracking-md:   -0.011em;
+    --pmw-text-lg:   18px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.015em;
+    --pmw-text-xl:   22px;   --pmw-leading-xl:   1.3;   --pmw-tracking-xl:   -0.02em;
+    --pmw-text-2xl:  28px;   --pmw-leading-2xl:  1.2;   --pmw-tracking-2xl:  -0.025em;
+
+    /* 텍스트 색 4-tier — 잉크 그레이 */
+    --pmw-text-primary:    240 4% 14%;   /* #212124 ink */
+    --pmw-text-secondary:  240 2% 37%;   /* #5C5C60 ink-2 */
+    --pmw-text-tertiary:   240 2% 60%;   /* #97979C ink-3 */
+    --pmw-text-disabled:   220 8% 78%;
+
+    /* Warning/info */
+    --pmw-warning: 30 60% 38%;
+    --pmw-warning-bg: 36 70% 94%;
+    --pmw-warning-fg: 28 50% 25%;
+    --pmw-info: 209 29% 45%;
+
+    /* Chip 8-tone — portal cool 파스텔 전체.
+       (flat 은 6-tone 만 정의해 moss·mauve 가 editorial 웜톤으로 새는데, brand 는 8개 전부 덮는다) */
+    --pmw-chip-red-bg:     350 65% 94%;
+    --pmw-chip-red-fg:     350 55% 38%;
+    --pmw-chip-amber-bg:   35 80% 92%;
+    --pmw-chip-amber-fg:   30 60% 32%;
+    --pmw-chip-olive-bg:   210 15% 92%;
+    --pmw-chip-olive-fg:   215 25% 32%;
+    --pmw-chip-moss-bg:    150 30% 92%;
+    --pmw-chip-moss-fg:    160 35% 28%;
+    --pmw-chip-blue-bg:    208 70% 93%;
+    --pmw-chip-blue-fg:    210 60% 34%;
+    --pmw-chip-plum-bg:    260 40% 94%;
+    --pmw-chip-plum-fg:    260 35% 38%;
+    --pmw-chip-mauve-bg:   330 35% 93%;
+    --pmw-chip-mauve-fg:   330 35% 36%;
+    --pmw-chip-neutral-bg: 220 12% 93%;
+    --pmw-chip-neutral-fg: 220 10% 32%;
+  }
+
+  [data-skin="brand"].dark {
+    /* raw PMW dark — portal .dark 미러 기반. amber 만 honey (경고색) */
+    --pmw-near-black: #E6E6EA;
+    --pmw-olive-gray: #A8A8AE;
+    --pmw-stone-gray: #78787E;
+    --pmw-deep: #3FC0FF;
+    --pmw-clay-soft: #0F3348;
+    --pmw-sage: #2DD4BF;
+    --pmw-sage-soft: #2C2C32;        /* chat active row — paper 위 한 단계 lift */
+    --pmw-sage-paper: #202024;       /* chat panel bg — page(#17171A) 보다 밝게 */
+    --pmw-amber: #D6A55C;
+    --pmw-rust: #F2555A;
+    --pmw-border-warm: #2E2E33;
+    --pmw-parchment: #17171A;
+    --pmw-paper: #202024;
+
+    color-scheme: dark;
+    --background: 240 6% 10%;        /* #17171A */
+    --foreground: 240 8% 91%;        /* #E6E6EA */
+    --card: 240 6% 13%;              /* #202024 */
+    --card-foreground: 240 8% 91%;
+    --popover: 240 6% 15%;
+    --popover-foreground: 240 8% 91%;
+    --primary: 199 100% 62%;         /* #3FC0FF lifted sky */
+    --primary-foreground: 240 6% 10%;
+    --secondary: 240 5% 16%;
+    --secondary-foreground: 240 8% 91%;
+    --muted: 240 5% 16%;
+    --muted-foreground: 240 3% 67%;
+    --accent: 240 5% 16%;
+    --accent-foreground: 240 8% 91%;
+    --destructive: 358 86% 64%;      /* #F2555A */
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 5% 18%;
+    --input: 240 5% 18%;
+    --ring: 199 100% 62%;
+
+    /* Semantic dark */
+    --pmw-accent: 199 100% 62%;
+    --pmw-accent-fg: 240 6% 10%;
+    --pmw-accent-strong: 200 85% 72%;
+    --pmw-tag-bg: 205 45% 18%;
+    --pmw-tag-fg: 200 80% 80%;
+    --pmw-cal-today: 199 100% 62%;
+    --pmw-cal-sunday: 358 86% 64%;
+    --pmw-cal-saturday: 205 57% 68%;
+    --pmw-positive: 172 66% 50%;
+    --pmw-avatar-bg: 205 45% 20%;
+    --pmw-avatar-fg: 200 80% 82%;
+    --pmw-code-label: 240 3% 60%;
+
+    /* Typography 스케일 — light 와 동일 */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.4;   --pmw-tracking-2xs:  0;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.5;   --pmw-tracking-xs:   -0.005em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.5;   --pmw-tracking-sm:   -0.011em;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.5;   --pmw-tracking-base: -0.011em;
+    --pmw-text-md:   15px;   --pmw-leading-md:   1.55;  --pmw-tracking-md:   -0.011em;
+    --pmw-text-lg:   18px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.015em;
+    --pmw-text-xl:   22px;   --pmw-leading-xl:   1.3;   --pmw-tracking-xl:   -0.02em;
+    --pmw-text-2xl:  28px;   --pmw-leading-2xl:  1.2;   --pmw-tracking-2xl:  -0.025em;
+
+    /* 텍스트 색 4-tier dark */
+    --pmw-text-primary:    240 8% 91%;
+    --pmw-text-secondary:  240 3% 67%;
+    --pmw-text-tertiary:   240 3% 50%;
+    --pmw-text-disabled:   240 4% 30%;
+
+    /* Warning/info dark */
+    --pmw-warning: 36 60% 60%;
+    --pmw-warning-bg: 30 30% 16%;
+    --pmw-warning-fg: 36 70% 80%;
+    --pmw-info: 209 35% 62%;
+
+    /* Chip 8-tone dark (cool) */
+    --pmw-chip-red-bg:     350 25% 22%;
+    --pmw-chip-red-fg:     350 55% 78%;
+    --pmw-chip-amber-bg:   32 30% 20%;
+    --pmw-chip-amber-fg:   36 65% 75%;
+    --pmw-chip-olive-bg:   215 12% 20%;
+    --pmw-chip-olive-fg:   214 25% 78%;
+    --pmw-chip-moss-bg:    160 20% 18%;
+    --pmw-chip-moss-fg:    155 35% 72%;
+    --pmw-chip-blue-bg:    210 35% 20%;
+    --pmw-chip-blue-fg:    208 65% 78%;
+    --pmw-chip-plum-bg:    260 22% 22%;
+    --pmw-chip-plum-fg:    260 40% 80%;
+    --pmw-chip-mauve-bg:   330 20% 21%;
+    --pmw-chip-mauve-fg:   330 40% 78%;
+    --pmw-chip-neutral-bg: 220 8% 20%;
+    --pmw-chip-neutral-fg: 220 10% 75%;
+  }
+
 
   /* font-mono 가 sans 폰트로 평탄화된 스킨. */
-  [data-skin="flat"] .font-mono {
+  [data-skin="flat"] .font-mono,
+  [data-skin="brand"] .font-mono {
     font-variant-numeric: tabular-nums;
   }
 
   /* italic 미사용 스킨. */
-  [data-skin="flat"] .italic {
+  [data-skin="flat"] .italic,
+  [data-skin="brand"] .italic {
     font-style: normal;
   }
 
@@ -604,6 +809,16 @@
 [data-skin="flat"] [data-bubble="own"] {
   background-color: hsl(var(--primary) / 0.85);
   color: hsl(var(--primary-foreground));
+}
+
+/* brand own bubble — 소프트 스카이 틴트 (portal 버블과 동일), 글자는 기본 잉크. */
+[data-skin="brand"] [data-bubble="own"] {
+  background-color: hsl(204 100% 92%);
+  color: hsl(var(--foreground));
+}
+[data-skin="brand"].dark [data-bubble="own"] {
+  background-color: hsl(205 45% 24%);
+  color: hsl(var(--foreground));
 }
 
 @layer base {

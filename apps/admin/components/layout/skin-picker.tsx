@@ -8,6 +8,7 @@ import { useSkin, setSkin, SKIN_LIST, SKIN_LABELS, type Skin } from '@/lib/use-s
 // 스킨 비교 위해 cycle 대신 popover picker.
 // 각 항목에 mini swatch (배경 + 액센트 2-tone) 로 한눈에 톤 구분.
 const SKIN_PREVIEW: Record<Skin, { bg: string; accent: string }> = {
+  brand: { bg: '#FFFFFF', accent: '#0BAEFF' },
   editorial: { bg: '#F5F4ED', accent: '#9B4A2D' },
   flat: { bg: '#FFFFFF', accent: '#18181B' },
 }

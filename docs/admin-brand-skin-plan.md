@@ -89,12 +89,20 @@ portal `.dark` 블록에서 파생:
 
 ## 5. 단계별 계획
 
-### Phase 1 — 스킨 골격 (light)
+### Phase 1 — 스킨 골격 (light) ✅ 2026-07-28
 flat 블록 복제 → §3.1 매핑으로 색 교체 → §4 배선 5개 파일. 이 시점부터 스킨 피커에서 선택 가능.
 
-### Phase 2 — dark 블록 + 디테일
-§3.2 dark 블록. 채팅 버블·봇 아바타·달력(오늘/선택일/주말)·chip 6-tone·warning 배너 등
-semantic 토큰 사용처를 실화면에서 맞춤.
+구현 노트 (계획과 달라진 점):
+- `--pmw-amber` 는 portal 미러(하늘)가 아니라 **honey amber** — admin 에선 경고색(백신 임박·알림 dot)으로 실사용됨.
+- `--pmw-deep` 은 #0BAEFF 가 아니라 **#0C7AC0** — 텍스트 강조용이라 흰 바탕 대비 확보 (§8).
+- chip 은 6-tone 이 아니라 **8-tone 전부** 정의 — flat 이 moss·mauve 를 빼먹어 editorial 웜톤이 새던 기존 문제를 brand 에선 차단.
+- **flat 폰트 순환 버그 발견·수정**: `:root` 의 `--font-sans-flat: var(--font-sans)` 와 스킨 블록의
+  `--font-sans: var(--font-sans-flat)` 이 같은 요소에서 순환 → 셋 다 invalid → flat 이 Pretendard 가 아닌
+  Noto Sans KR 폴백으로 렌더되고 있었음. `--font-sans-flat` 을 리터럴로 바꿔 해결 (flat 도 함께 고쳐짐).
+
+### Phase 2 — dark 블록 + 디테일 ✅ 2026-07-28
+§3.2 dark 블록. 채팅 버블(소프트 스카이 틴트, portal 동일)·봇 아바타([data-skin] 공통 룰이 primary 자동 사용)·
+달력·chip 8-tone·warning 배너까지 토큰 정의 완료. 실화면 미세조정은 Phase 3 검수에서.
 
 ### Phase 3 — 전 화면 시각 검수
 preview 로 주요 화면 순회: 할일(todos)·검사 테이블·케이스 목록/상세·메시지·설정(약품/문서/자동화)·

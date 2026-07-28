@@ -3,18 +3,20 @@
 import { useEffect, useState } from 'react'
 
 /** 색·radius·폰트가 함께 바뀌는 비주얼 스킨. dark 모드와 직교. */
-export type Skin = 'editorial' | 'flat'
+export type Skin = 'editorial' | 'flat' | 'brand'
 
 const STORAGE_KEY = 'skin'
 const EVENT = 'skinchange'
 
 // 가나다 순 (한글 라벨 기준). default = editorial.
 export const SKIN_LIST: Skin[] = [
+  'brand',     // 브랜드 (2026-07 리브랜딩 — 검수 후 default 승격 예정)
   'editorial', // 에디토리얼 (default)
   'flat',      // 플랫
 ]
 
 export const SKIN_LABELS: Record<Skin, string> = {
+  brand: '브랜드',
   editorial: '에디토리얼',
   flat: '플랫',
 }
@@ -36,7 +38,7 @@ export function setSkin(skin: Skin) {
   window.dispatchEvent(new Event(EVENT))
 }
 
-/** 다음 스킨으로 순환 — editorial → clinical → mono → editorial. */
+/** 다음 스킨으로 순환 — SKIN_LIST 순서대로. */
 export function cycleSkin() {
   const current = readSkin()
   const next = SKIN_LIST[(SKIN_LIST.indexOf(current) + 1) % SKIN_LIST.length]
