@@ -811,6 +811,11 @@
   color: hsl(var(--primary-foreground));
 }
 
+/* brand 스킨 전용 요소 토글 — 로고 마크 등. 부트 스크립트가 hydration 전에
+   data-skin 을 박으므로 첫 페인트부터 올바른 쪽만 보인다 (깜빡임 없음). */
+html:not([data-skin="brand"]) .brand-skin-only { display: none !important; }
+[data-skin="brand"] .brand-skin-hidden { display: none !important; }
+
 /* brand own bubble — 소프트 스카이 틴트 (portal 버블과 동일), 글자는 기본 잉크. */
 [data-skin="brand"] [data-bubble="own"] {
   background-color: hsl(204 100% 92%);

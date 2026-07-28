@@ -104,6 +104,12 @@ flat 블록 복제 → §3.1 매핑으로 색 교체 → §4 배선 5개 파일.
 §3.2 dark 블록. 채팅 버블(소프트 스카이 틴트, portal 동일)·봇 아바타([data-skin] 공통 룰이 primary 자동 사용)·
 달력·chip 8-tone·warning 배너까지 토큰 정의 완료. 실화면 미세조정은 Phase 3 검수에서.
 
+### Phase 2.5 — 상단바 로고 스킨 연동 ✅ 2026-07-28
+brand 스킨일 때 상단바 아이콘을 버건디 P → **'떠오르는 P' 확정 마크**(portal LogoMark 와 동일 아트웍,
+`components/layout/brand-logo-mark.tsx` 복사본)로 전환. `data-skin` CSS 토글(`.brand-skin-only` /
+`.brand-skin-hidden`)이라 hydration 깜빡임 없음. editorial·flat 은 기존 마크 유지.
+파비콘·PWA 아이콘(`app/icon.tsx` 등)은 스킨별 분기가 불가능한 전역 자산 — Phase 4 default 승격 때 함께 교체.
+
 ### Phase 3 — 전 화면 시각 검수
 preview 로 주요 화면 순회: 할일(todos)·검사 테이블·케이스 목록/상세·메시지·설정(약품/문서/자동화)·
 알림·super-admin·로그인. light/dark 각각. 이때 §7 결정사항 A(캔버스 회색) A/B 시험.

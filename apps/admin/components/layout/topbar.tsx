@@ -2,6 +2,7 @@
 
 import { Folder, LayoutGrid, Bell, Settings, Menu, Monitor, Sun, Moon, User, LogOut, UserCog, X } from 'lucide-react'
 import { SkinPicker } from './skin-picker'
+import { BrandLogoMark } from './brand-logo-mark'
 import { OrgSwitcher } from './org-switcher'
 import { PlatformCasesMover } from './platform-cases-mover'
 import Link from 'next/link'
@@ -30,16 +31,20 @@ const LOGO_VARIANT: 'text' | 'wordmark' | 'full' | 'alonzo' | 'alonzo-text' | 'i
 
 function LogoMark() {
   if (LOGO_VARIANT === 'icon-text') {
-    // 마스터 아이콘(발바닥 마크) + 기본 웹 폰트 워드마크. 아이콘은 100x100 라운드.
+    // 마스터 아이콘 + 기본 웹 폰트 워드마크.
+    // 아이콘은 스킨 연동: brand → '떠오르는 P'(portal 과 동일), 그 외 → 버건디 P 마크.
+    // useSkin 대신 data-skin CSS 토글(globals.css) — hydration 전에 부트 스크립트가
+    // data-skin 을 박으므로 첫 페인트부터 올바른 마크, 깜빡임 없음.
     return (
       <span className="inline-flex items-center gap-2">
         <img
           src="/icon.svg"
           alt=""
           aria-hidden
-          className="h-7 w-7 select-none rounded-[6px]"
+          className="brand-skin-hidden h-7 w-7 select-none rounded-[6px]"
           draggable={false}
         />
+        <BrandLogoMark size={26} className="brand-skin-only" />
         <span className="inline-flex items-baseline gap-[5px] text-foreground leading-none whitespace-nowrap">
           <span className="text-[18px] font-semibold tracking-tight">PETMOVE</span>
           <span className="text-[13px] font-medium tracking-wide text-muted-foreground">Work</span>
