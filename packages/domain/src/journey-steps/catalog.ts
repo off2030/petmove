@@ -227,7 +227,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '마이크로칩 인증',
     shortLabel: '인증',
     description:
-      '동물검역소에서 검역관에게 마이크로칩 인증(Pre-export identification check)을 받으세요.\n\n검역관이 마이크로칩을 확인하고 뉴질랜드 검역당국(MPI) 온라인 시스템에 직접 등록해요.\n광견병 항체 검사 채혈 전에 받아야 해요.',
+      '동물검역소에서 검역관에게 마이크로칩 인증(Pre-export identification check)을 받으세요.\n\n검역관이 마이크로칩을 확인하고 뉴질랜드 검역당국(MPI) 온라인 시스템에 직접 등록해요.\n광견병 항체 검사 채혈 전에 받아야 해요.\n출국 6개월 전까지 받아야 해요.',
     doneSummary: '마이크로칩 인증을 받았어요.',
     cardLine: '마이크로칩 인증을 받으세요.',
     applicability: { destinations: ['new_zealand'], species: 'all', tripType: 'all' },
@@ -243,10 +243,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         helpText: '검역관이 마이크로칩을 확인한 날짜',
       },
     ],
-    // 순서 검증만 둔다 — 인증일 ≤ 가장 이른 채혈일(같은 날 허용, IHS 1.11 guidance).
-    //   1회/2회 분기는 판정하지 않는다(앱은 첫 인증일 하나만 저장). 채혈 창(3~12개월)은
+    // 두 룰 — ① 인증일 ≤ 가장 이른 채혈일(같은 날 허용, IHS 1.11 guidance)
+    //   ② 인증일 ≤ 출국 6개월 전. 1회/2회 분기는 판정하지 않는다(앱은 첫 인증일 하나만 저장)
+    //   — ②가 두 갈래의 **공통 하한**이라 분기를 몰라도 판정이 성립한다. 채혈 창(3~12개월)은
     //   항체·항공권 카드가 본다.
-    validationIds: ['nz.identity-check-before-titer'],
+    validationIds: ['nz.identity-check-before-titer', 'nz.identity-check-6months-before-departure'],
   },
 
   // ── 3. 광견병 백신 1차 ─────────────────────────────────────────────────

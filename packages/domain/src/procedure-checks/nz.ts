@@ -176,6 +176,31 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `인증(${id}) → 채혈(${titers[0].date}).` }
     },
   },
+  {
+    id: 'nz.identity-check-6months-before-departure',
+    country: COUNTRY,
+    category: '마이크로칩',
+    title: '마이크로칩 인증은 출국 6개월 이전',
+    description:
+      'IHS 1.11(4) — 인증 횟수가 채혈 시점에 따라 갈리지만(6~12개월 전 채혈이면 1회, 3~6개월 전 채혈이면 2회) **두 갈래 모두 첫 인증이 출국 6개월 이전**이다. 1회 경로도 인증이 채혈보다 앞서고 그 채혈이 출국 6개월 이전이라 자동으로 성립한다. 경과 규정(1.19)도 2027-04-01 부터 전 케이스에 "the identification check at least six months before shipment" 를 명시한다. 그래서 앱이 1회/2회 분기를 몰라도 이 하한 하나로 판정할 수 있다. **되돌릴 수 없는 마감**이라(늦으면 출국일을 미루는 수밖에 없다) 광견병 1차 6개월 하한과 같은 무게다.',
+    severity: 'warning',
+    addedAt: '2026-07-28',
+    run: ({ caseRow, destination }) => {
+      const id = readScopedDate(caseRow, destination, 'id_date')
+      const dep = readDepartureDate(caseRow, destination)
+      if (!id || !dep) return SKIP
+      const earliestDep = addMonths(id, 6)
+      if (!earliestDep) return SKIP
+      if (earliestDep <= dep) {
+        return { ok: true, message: `인증(${id}) + 6개월(${earliestDep}) ≤ 출국일(${dep}).` }
+      }
+      return {
+        ok: false,
+        message: '마이크로칩 인증은 출국 6개월 전까지 받아야 해요. 출국일을 다시 확인하세요.',
+        offendingPaths: ['departure_date', 'id_date'],
+      }
+    },
+  },
 
   // ── 광견병 ──
   {
