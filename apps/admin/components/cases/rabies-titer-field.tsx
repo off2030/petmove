@@ -650,7 +650,7 @@ function TiterRecordRow({
       {showReceivedDate && (
         <>
           <span className="text-muted-foreground/30 select-none">|</span>
-          <span className="font-mono text-[11px] uppercase tracking-[1px] text-muted-foreground/70">검사소 샘플 수령일</span>
+          <span className="font-mono text-[11px] uppercase tracking-[1px] text-muted-foreground/70">검체 접수일</span>
           {isEditing === 'received_date' ? (
             <DateInput
               initial={record.received_date || ''}

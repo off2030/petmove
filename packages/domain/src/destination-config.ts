@@ -406,7 +406,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       //   유효기간은 채혈일 기준 12개월(365일), 대기는 검체 도착일 기준 180일 — 기준일이 서로 달라
       //   둘 다 관리해야 한다. 쓸 수 있는 창이 180일~12개월로 좁다(카드 문구가 둘 다 말해야 함).
       entryValidityMonths: 12,
-      // 180일의 1일차 = **검체가 검사실에 도착한 날**("at least 180 days after the RNATT sample
+      // 180일의 1일차 = **검체가 검사실에 접수된 날**("at least 180 days after the RNATT sample
       //   arrives at the laboratory"). 앱은 채혈일을 proxy 로 쓰되(채혈 ≤ 도착이라 less strict)
       //   basisReceivedDate 로 그 사실을 표시한다 — 괌(120일)·하와이와 같은 처리.
       entryWaitAfterTiter: { days: 180, basisReceivedDate: true },
@@ -1809,10 +1809,10 @@ export function isOneWayOnlyDestination(destination: string | null | undefined):
 }
 
 /**
- * 광견병 항체 **검체 도착일**(검사기관 접수일)을 대기 기준으로 쓰는 목적지인가 —
+ * 광견병 항체 **검체 접수일**(검사기관이 검체를 받은 날)을 대기 기준으로 쓰는 목적지인가 —
  * 프로파일 `titer.entryWaitAfterTiter.basisReceivedDate` 파생(호주·괌·하와이).
  *
- * 이 목적지들만 앱 항체 카드에 '검체 도착일' 입력칸을 띄운다. 미입력이면 채혈일로 대신
+ * 이 목적지들만 앱 항체 카드에 '검체 접수일' 입력칸을 띄운다. 미입력이면 채혈일로 대신
  * 판정한다(채혈 ≤ 도착이라 덜 엄격 — 규정을 지킨 사람을 막지 않는 방향).
  */
 export function usesTiterReceivedDate(destination: string | null | undefined): boolean {

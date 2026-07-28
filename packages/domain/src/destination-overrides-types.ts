@@ -89,7 +89,7 @@ export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
   certificate_no: { key: 'certificate_no', label: 'EQC No.', type: 'text' },
   permit_no: { key: 'permit_no', label: '수입허가번호', type: 'text' },
   id_date: { key: 'id_date', label: 'ID 날짜', type: 'date' },
-  sample_received_date: { key: 'sample_received_date', label: '검사소 샘플 수령일', type: 'date' },
+  sample_received_date: { key: 'sample_received_date', label: '검체 접수일', type: 'date' },
   // ── 절차 ──
   // EU 촌충국가(영국·아일랜드·몰타·노르웨이·핀란드)의 praziquantel 투여 시각.
   // 구충일은 절차정보의 internal_parasite_dates 에 저장되고, 시각은 별도로 추가정보 영역에 표시.

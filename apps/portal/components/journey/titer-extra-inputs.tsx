@@ -28,7 +28,7 @@ export interface TiterExtraEntry {
   lab: string
   value: string
   /**
-   * 검체가 검사기관에 도착한 날. 대기 일수의 규정 기준일이 채혈일이 아니라 도착일인
+   * 검체가 검사기관에 접수된 날. 대기 일수의 규정 기준일이 채혈일이 아니라 접수일인
    * 목적지(호주·괌·하와이)에서만 입력칸이 뜬다 — domain usesTiterReceivedDate 파생.
    * **선택 입력**이라 비워도 완료된다. 비면 채혈일로 대신 판정한다.
    */
@@ -208,9 +208,9 @@ function ExtraCard({
 
       {usesTiterReceivedDate(destinationKey) && (
         <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
-          <div style={labelStyle}>검체 도착일</div>
+          <div style={labelStyle}>검체 접수일</div>
           <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-            검체가 검사기관에 도착한 날 · 선택 입력
+            결과지의 접수일 또는 샘플 수령일 · 선택 입력
           </div>
           <div style={{ marginTop: 8 }}>
             <DateTextField

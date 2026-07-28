@@ -809,7 +809,7 @@ export async function updateTiterExtraEntries(
     date: string | null
     lab: string | null
     value: string | null
-    /** 검체가 검사기관에 도착한 날 — 호주·괌·하와이의 대기 일수 기준일(선택 입력). */
+    /** 검체가 검사기관에 접수된 날 — 호주·괌·하와이의 대기 일수 기준일(선택 입력). */
     received_date?: string | null
   }>,
   /**

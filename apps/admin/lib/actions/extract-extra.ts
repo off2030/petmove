@@ -274,7 +274,7 @@ const PROMPTS: { [C in Country]: string } = {
   australia: `You extract Australia-specific pet-import fields from images or text.${COMMON_RULES}
 - permit_no: Australian import permit number. Extract whatever value follows labels like "Permit", "Permit No.", "Permit Number", "Import Permit", "허가번호". Formats vary (pure digits, alphanumeric, hyphenated). Do NOT reject unusual formats.
 - id_date: "Identity verification date" / "ID verification" / "마이크로칩 확인일" — 180-day ID check date before export. YYYY-MM-DD.
-- sample_received_date: Date RNATT blood sample was RECEIVED at the testing laboratory ("Date received", "Sample received", "수령일", "도착일", "arrived at laboratory"). NOT the collection/draw date. YYYY-MM-DD.`,
+- sample_received_date: Date RNATT blood sample was RECEIVED at the testing laboratory ("접수일", "접수일자", "검체접수일", "수령일", "샘플수령일", "도착일", "Date received", "Sample received", "arrived at laboratory" — 검사기관마다 표기가 다르다: APQA/검역본부="접수일", KRSL/코미팜="샘플 수령일"). NOT the collection/draw date. YYYY-MM-DD.`,
 
   'new-zealand': `You extract New Zealand import permit info from images or text.${COMMON_RULES}
 - permit_no: NZ MPI "Permit to Import" number. Look for labels like "Permit Number", "Permit No", "Permit", or the alphanumeric code in the header (e.g. "D2605783C", "2024/123456").`,

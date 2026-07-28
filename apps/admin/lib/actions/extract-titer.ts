@@ -21,7 +21,7 @@ const SYSTEM_PROMPT = `You extract rabies antibody titer test result information
 Return ONLY a JSON object:
 {
   "value": "Numerical titer result as a string (e.g. '3.0', '0.62', '≥0.5 IU/mL', '2.48') or null",
-  "sample_received_date": "YYYY-MM-DD — date the laboratory received the sample (샘플수령일/Date Received/Received/Reception Date) or null"
+  "sample_received_date": "YYYY-MM-DD — date the laboratory received the sample (접수일/접수일자/검체접수일/샘플수령일/수령일/Date Received/Received/Reception Date) or null"
 }
 
 CRITICAL ANTI-HALLUCINATION RULES:
@@ -32,7 +32,7 @@ CRITICAL ANTI-HALLUCINATION RULES:
 
 FIELD GUIDELINES:
 - "value" is the rabies antibody titer numeric result. Typical forms: "0.6", "2.48", "≥0.5", "3.0 IU/mL". Include the unit (IU/mL) only if it appears next to the number, otherwise just the number as string. If multiple values (different methods), prefer the primary/FAVN value.
-- "sample_received_date" is when the testing lab RECEIVED the sample. Labels: 샘플수령일, Date Received, Received, Reception Date, Arrival Date, Sample Received, Date of Receipt. This is DIFFERENT from:
+- "sample_received_date" is when the testing lab RECEIVED the sample. Labels: 접수일, 접수일자, 검체접수일, 샘플수령일, 수령일, 도착일, Date Received, Received, Reception Date, Arrival Date, Sample Received, Date of Receipt. (검사기관마다 표기가 다르다 — APQA/검역본부는 "접수일", KRSL/코미팜은 "샘플 수령일". 접수/수령/도착 계열은 모두 같은 값이다.) This is DIFFERENT from:
     * Collection Date / 채혈일 / Date of Sampling (when sample was drawn — do NOT use)
     * Test Date / 검사일 (when lab tested — do NOT use)
     * Report Date / 보고일 (when report was issued — do NOT use)

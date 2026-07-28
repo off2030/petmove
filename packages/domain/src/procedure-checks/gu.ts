@@ -270,7 +270,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     id: 'gu.rnatt-120days-before-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: 'RNATT 검체 lab 수령일부터 120일 경과 후 도착',
+    title: 'RNATT 검체 접수일부터 120일 경과 후 도착',
     description:
       'DOAG: "the day that the laboratory receives the OIE-FAVN sample counts as the first day for the 120-day countdown" — 검체 lab 수령일(`rabies_titer_records[].received_date`) 우선, 미입력 시 채혈일 fallback. 채혈일 proxy 는 lab 수령일보다 며칠 빨라 less strict.',
     severity: 'warning',
@@ -288,7 +288,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
       })
       if (valid) {
         const basis = valid.received_date || valid.date
-        const label = valid.received_date ? '검체 수령일' : 'RNATT 채혈일'
+        const label = valid.received_date ? '검체 접수일' : 'RNATT 채혈일'
         const days = daysBetween(basis, dep)
         return { ok: true, message: `${label}(${basis}) → 출국(${dep}): ${days}일 (≥120).` }
       }
@@ -315,7 +315,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message:
-          '검체가 검사기관에 도착한 날부터 120일이 지나야 계류를 최소화할 수 있어요. 지금은 남은 기간만큼 괌에서 계류되는 점 참고하세요.',
+          '검체가 검사기관에 접수된 날부터 120일이 지나야 계류를 최소화할 수 있어요. 지금은 남은 기간만큼 괌에서 계류되는 점 참고하세요.',
         offendingPaths: offending,
       }
     },

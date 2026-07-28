@@ -307,11 +307,11 @@ export const AU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message:
-            '항체 검사 검체가 검사기관에 도착한 날부터 180일이 지나야 출국할 수 있어요. 출국일을 다시 확인하세요.',
+            '항체 검사 검체가 검사기관에 접수된 날부터 180일이 지나야 출국할 수 있어요. 출국일을 다시 확인하세요.',
           offendingPaths,
         }
       }
-      const label = basis.kind === 'sample' ? '채혈일' : '검체 도착일'
+      const label = basis.kind === 'sample' ? '채혈일' : '검체 접수일'
       return { ok: true, message: `${label}(${basis.date}) → 출국일(${dep}): ${days}일.` }
     },
   },
@@ -398,7 +398,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     id: 'au.quarantine-reservation-min-180days',
     country: COUNTRY,
     category: '검역',
-    title: '계류 시작일은 항체 검체 도착 180일 이후',
+    title: '계류 시작일은 항체 검체 접수 180일 이후',
     description:
       '계류 시작일 = 호주 도착일이라 출국일과 같은 180일 제약을 받는다(DAFF 4.3). 저장 거부(validateAuQuarantineReservationDate)와 같은 함수 — 예약을 먼저 잡은 뒤 채혈일을 나중에 고쳐 어긋난 경우를 표면화하는 짝 주의.',
     severity: 'warning',
@@ -410,7 +410,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       if (titers.length === 0) return SKIP
       const msg = validateAuQuarantineReservationDate(
         res,
-        // 검체 도착일 우선 — 미입력이면 채혈일(저장 거부와 같은 기준).
+        // 검체 접수일 우선 — 미입력이면 채혈일(저장 거부와 같은 기준).
         titers.map((t) => t.received_date || t.date),
       )
       if (msg) {

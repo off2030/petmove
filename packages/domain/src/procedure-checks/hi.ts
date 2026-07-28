@@ -238,7 +238,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
     id: 'hi.favn-sample-30days-to-36months-before-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: 'FAVN 검체 lab 수령일은 출국 30일 ~ 36개월 전',
+    title: 'FAVN 검체 접수일은 출국 30일 ~ 36개월 전',
     description:
       'HDOA: lab 수령일 다음날부터 30일 이상, 36개월 이내. `rabies_titer_records[].received_date` 우선, 미입력 시 채혈일 fallback (실제 lab 수령일은 며칠 늦으므로 채혈일 proxy 는 less strict — 보수 마진 검토 권고).',
     severity: 'warning',
@@ -259,7 +259,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
       })
       if (valid) {
         const basis = basisOf(valid)
-        const label = valid.received_date ? '검체 수령일' : 'FAVN 채혈일'
+        const label = valid.received_date ? '검체 접수일' : 'FAVN 채혈일'
         const days = daysBetween(basis, dep)
         return { ok: true, message: `${label}(${basis}) → 출국(${dep}): ${days}일 (30일 이상, 36개월 이내).` }
       }
@@ -273,7 +273,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
         if (t.received_date) offending.push(`rabies_titer_records[${t.originalIndex}].received_date`)
         else offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       }
-      // 하와이 기준일은 '검체가 검사기관에 도착한 날'이고, 앱은 그 날짜를 입력받지 않아
+      // 하와이 기준일은 '검체가 검사기관에 접수된 날'이고, 앱은 그 날짜를 입력받지 않아
       // 채혈일을 proxy 로만 쓴다 — 계산된 특정 날짜를 단정하지 않고 요건만 forward-looking 으로
       // 안내한다(검사일 기준 아님·2026-07-25 사용자 지정). 상한(36개월)은 재검사 안내.
       const reason =
@@ -282,7 +282,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
           : days < 0
             ? '광견병 항체 검사일이 입국일보다 늦어요. 날짜를 확인하세요.'
             : days < 30
-              ? '광견병 항체 검사 검체가 검사기관에 도착한 날로부터 30일이 지나야 입국할 수 있어요.'
+              ? '광견병 항체 검사 검체가 검사기관에 접수된 날로부터 30일이 지나야 입국할 수 있어요.'
               : '광견병 항체 검사 후 36개월이 지나 재검사가 필요해요.'
       return {
         ok: false,

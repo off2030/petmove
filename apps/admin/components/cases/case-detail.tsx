@@ -708,7 +708,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
       if (received) {
         const nextRecords = mergeTiterReceivedDate(data.rabies_titer_records, received)
         updateLocalCaseField(caseId, 'data', 'rabies_titer_records', nextRecords)
-        void persistField('검사소 샘플 수령일', () =>
+        void persistField('검체 접수일', () =>
           updateCaseField(caseId, 'data', 'rabies_titer_records', nextRecords),
         )
       }
@@ -727,7 +727,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
         )
       }
       const labels = keys.map(k => EXTRA_FIELD_KEY_LABELS[k] ?? k)
-      if (received) labels.push('검사소 샘플 수령일')
+      if (received) labels.push('검체 접수일')
       const shown = labels.slice(0, 4).join(', ')
       setExtractMsg(`입력됨: ${shown}${labels.length > 4 ? ` 외 ${labels.length - 4}` : ''}`)
     } catch (err) {
