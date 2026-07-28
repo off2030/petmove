@@ -585,15 +585,17 @@
     --pmw-deep: #0C7AC0;
     --pmw-clay-soft: #E4F4FF;
     --pmw-sage: #14B8A6;
-    --pmw-sage-soft: #DFE5EB;        /* chat active row — sage-paper 와 명확 구분 */
-    --pmw-sage-paper: #F4F6F8;       /* chat panel bg = 브랜드 캔버스 그레이 */
+    --pmw-sage-soft: #E9EDF1;        /* chat active row — 흰 패널 위 한 단계 tint */
+    --pmw-sage-paper: #FFFFFF;       /* chat panel = 회색 캔버스 위 흰 카드 */
     --pmw-amber: #9C6127;
     --pmw-rust: #E5484D;
     --pmw-border-warm: #E4E6EA;
-    --pmw-parchment: #FFFFFF;        /* 시작은 순백 — 회색 캔버스 #F4F6F8 는 검수 때 A/B (plan §7-A) */
+    --pmw-parchment: #F4F6F8;        /* 브랜드 캔버스 그레이 (2026-07-28 순백→회색, 밋밋함 피드백) */
     --pmw-paper: #FFFFFF;
 
-    --background: 0 0% 100%;
+    /* 캔버스 = 브랜드 회색(#F4F6F8), 서피스(card/popover/채팅 패널) = 순백.
+       흰 카드가 회색 위에 떠 있는 portal 레이어감 — 순백 시안은 flat 과 구분이 안 돼 폐기. */
+    --background: 210 22% 96%;
     --foreground: 240 4% 14%;
     --card: 0 0% 100%;
     --card-foreground: 240 4% 14%;
@@ -601,11 +603,13 @@
     --popover-foreground: 240 4% 14%;
     --primary: 200 100% 52%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 216 15% 94%;
+    --secondary: 214 15% 92%;
     --secondary-foreground: 240 4% 14%;
-    --muted: 216 15% 94%;
+    --muted: 214 15% 92%;
     --muted-foreground: 240 2% 37%;
-    --accent: 216 15% 94%;
+    /* Accent(hover·선택 상태) = 소프트 스카이 — 중립 회색이면 flat 과 똑같아 브랜드 느낌이 죽는다.
+       선택된 케이스 행·활성 탭이 하늘 틴트로 표시되는 게 brand 스킨의 시그니처. */
+    --accent: 204 100% 94%;
     --accent-foreground: 240 4% 14%;
     --destructive: 358 75% 59%;
     --destructive-foreground: 0 0% 100%;
@@ -679,7 +683,7 @@
     --pmw-clay-soft: #0F3348;
     --pmw-sage: #2DD4BF;
     --pmw-sage-soft: #2C2C32;        /* chat active row — paper 위 한 단계 lift */
-    --pmw-sage-paper: #202024;       /* chat panel bg — page(#17171A) 보다 밝게 */
+    --pmw-sage-paper: #202024;       /* chat panel bg = card 와 동일 (page 위 흰 카드의 dark 대응) */
     --pmw-amber: #D6A55C;
     --pmw-rust: #F2555A;
     --pmw-border-warm: #2E2E33;
@@ -699,7 +703,8 @@
     --secondary-foreground: 240 8% 91%;
     --muted: 240 5% 16%;
     --muted-foreground: 240 3% 67%;
-    --accent: 240 5% 16%;
+    /* Accent(hover·선택) dark = 딥 스카이 틴트 — light 의 소프트 스카이와 짝 */
+    --accent: 206 30% 18%;
     --accent-foreground: 240 8% 91%;
     --destructive: 358 86% 64%;      /* #F2555A */
     --destructive-foreground: 0 0% 100%;
@@ -762,6 +767,13 @@
     --pmw-chip-neutral-fg: 220 10% 75%;
   }
 
+
+  /* brand 흰 서피스 플로팅 섀도 — 회색 캔버스 위 흰 카드가 살짝 떠 있는 느낌
+     (portal html:not([data-skin]) 카드 섀도와 동일 값, 중립 그림자). */
+  [data-skin="brand"]:not(.dark) .bg-card,
+  [data-skin="brand"]:not(.dark) .bg-popover {
+    box-shadow: 0 1px 3px rgba(20, 25, 35, 0.05), 0 1px 2px rgba(20, 25, 35, 0.03);
+  }
 
   /* font-mono 가 sans 폰트로 평탄화된 스킨. */
   [data-skin="flat"] .font-mono,
