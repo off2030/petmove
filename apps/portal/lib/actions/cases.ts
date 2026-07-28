@@ -2481,9 +2481,16 @@ export async function updateParasiteEntries(
       next.push(entry)
     }
 
+    // 날짜순 정규화 — "index 0 = 가장 이른 처치 = 1차" 불변식을 **저장 시점**에 보장한다.
+    // 광견병(normalizeRabiesOrder)과 같은 모델로 통일(2026-07-28 사용자 지정). 그전엔 입력
+    // 순서를 그대로 써서, 2차를 먼저 넣으면 화면 라벨이 '외부구충 / 외부구충 2차'인데 날짜는
+    // 거꾸로 보였다(검증 룰은 원래 날짜순으로 봐서 판정은 맞았고, 라벨만 뒤집혔다).
+    // phantom 은 위 루프에서 이미 걸러져 next 는 전부 유효 date 다.
+    const sorted = normalizeRabiesOrder(next as Array<Record<string, unknown> & { date?: string | null }>)
+
     const nextData: Record<string, unknown> = { ...prev }
     // 미래(예정) 회차는 기록에서 빼서 별도 예정 자리로 — 입력칸 비움 + 예정 배지.
-    const pRecords = splitScheduledDoses(next, `${fieldKey}_scheduled`, nextData)
+    const pRecords = splitScheduledDoses(sorted, `${fieldKey}_scheduled`, nextData)
     if (pRecords.length === 0) delete nextData[fieldKey]
     else nextData[fieldKey] = pRecords
     // 확인 플래그 키 — '<이름>_dates' 뿐 아니라 '<이름>_records'(전염병 검사)도 벗겨야
