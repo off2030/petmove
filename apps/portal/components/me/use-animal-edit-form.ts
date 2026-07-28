@@ -244,7 +244,7 @@ export function useAnimalEditForm(caseRow: CaseRow, caseId: string): UseAnimalEd
       const n = Number(form.weight)
       if (!Number.isFinite(n) || n < 0) {
         setStatus('error')
-        setError('몸무게 형식이 올바르지 않습니다.')
+        setError('몸무게 형식이 올바르지 않아요.')
         return
       }
     }
@@ -271,7 +271,7 @@ export function useAnimalEditForm(caseRow: CaseRow, caseId: string): UseAnimalEd
       for (const dest of removalsInOrder) {
         const ok = await confirm({
           message: `목적지 '${dest}' 를 삭제하시겠습니까?`,
-          description: '해당 목적지에 입력된 절차·일정 정보가 함께 삭제됩니다.',
+          description: '해당 목적지에 입력된 절차·일정 정보가 함께 삭제돼요.',
           okLabel: '삭제',
           variant: 'destructive',
         })

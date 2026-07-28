@@ -25,7 +25,7 @@ export function ComingSoonView({ title, message }: { title: string; message?: st
             color: C.ink3,
           }}
         >
-          {message ?? '곧 만나뵐게요. 준비 중입니다.'}
+          {message ?? '곧 만나뵐게요. 준비 중이에요.'}
         </p>
       </div>
     </EditPageShell>

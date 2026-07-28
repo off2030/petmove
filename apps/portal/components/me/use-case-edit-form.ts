@@ -66,14 +66,14 @@ export function useCaseEditForm(caseRow: CaseRow, caseId: string): UseCaseEditFo
       form.return_date < form.departure_date
     ) {
       setStatus('error')
-      setError('귀국일은 출국일 이후여야 합니다.')
+      setError('귀국일은 출국일 이후여야 해요.')
       return
     }
     if (form.weight.trim()) {
       const n = Number(form.weight)
       if (!Number.isFinite(n) || n < 0) {
         setStatus('error')
-        setError('몸무게 형식이 올바르지 않습니다.')
+        setError('몸무게 형식이 올바르지 않아요.')
         return
       }
     }
@@ -87,7 +87,7 @@ export function useCaseEditForm(caseRow: CaseRow, caseId: string): UseCaseEditFo
     // 이메일 — 빈 값 OK, 입력 시 단순 형식 검증 (sub@domain.tld).
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
       setStatus('error')
-      setError('이메일 형식이 올바르지 않습니다.')
+      setError('이메일 형식이 올바르지 않아요.')
       return
     }
     // 일본 입국일 — 광견병 항체 검사 + 180일 이내면 server 가 거부할 입력. 즉시 차단해

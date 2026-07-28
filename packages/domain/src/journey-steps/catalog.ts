@@ -1018,7 +1018,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '사전 통지',
     shortLabel: '통지',
     description:
-      '몰타 입국 3영업일 전까지 사전 통지를 하세요.\n\n몰타 사전 통지 포털을 이용합니다.\n웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의를 할 수 있습니다.',
+      '몰타 입국 3영업일 전까지 사전 통지를 하세요.\n\n몰타 사전 통지 포털을 이용해요.\n웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의할 수 있어요.',
     doneSummary: '몰타에 사전 통지를 했어요.',
     cardLine: '몰타에 사전 통지를 하세요.',
     applicability: { destinations: ['malta'], species: 'all', tripType: 'all' },
@@ -1974,7 +1974,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '계류장(AQC) 예약',
     shortLabel: '계류장',
     description:
-      '광견병 항체 검사 완료 후 계류장(AQC)을 예약하세요.\n\n자리가 없는 경우가 많아서 일찍 해두시는 것이 좋습니다.\n싱가포르 검역관리시스템(QMS)에서 예약해요.\n팬룸 또는 에어컨룸을 선택할 수 있어요.\n격리 기간은 30일이에요.',
+      '광견병 항체 검사 완료 후 계류장(AQC)을 예약하세요.\n\n자리가 없는 경우가 많아서 일찍 해두는 게 좋아요.\n싱가포르 검역관리시스템(QMS)에서 예약해요.\n팬룸 또는 에어컨룸을 선택할 수 있어요.\n격리 기간은 30일이에요.',
     doneSummary: '계류장(AQC)을 예약했어요.',
     cardLine: '계류장(AQC)을 예약하세요.',
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },

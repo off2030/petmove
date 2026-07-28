@@ -50,7 +50,7 @@ export function StepAttachments({
     if (!file) return
     setError(null)
     if (file.size > MAX_DOCUMENT_BYTES) {
-      setError('파일 크기는 12MB 이하여야 합니다.')
+      setError('파일 크기는 12MB 이하여야 해요.')
       return
     }
     const fd = new FormData()

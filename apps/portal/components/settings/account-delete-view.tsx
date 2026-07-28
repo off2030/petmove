@@ -42,7 +42,7 @@ export function AccountDeleteView() {
   async function handleRequest() {
     const ok = await confirm({
       message: '계정을 삭제하시겠습니까?',
-      description: '7일 유예 후 회원 정보가 삭제되며 되돌릴 수 없습니다.',
+      description: '7일 유예 후 회원 정보가 삭제되며 되돌릴 수 없어요.',
       okLabel: '삭제 요청',
       variant: 'destructive',
     })

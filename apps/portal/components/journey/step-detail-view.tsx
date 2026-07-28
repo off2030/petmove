@@ -1052,7 +1052,7 @@ export function StepDetailView({
     // 빠뜨리면 "이 여행지"로 나갔다(베트남이 실제로 그랬음). 이제 domain 의 라벨에서 파생해
     // 나라를 추가해도 이 파일을 고칠 일이 없다(2026-07-20 — 4개국 추가하며 일반화).
     const oneYearKo = (destinationKey && destinationKoLabel(destinationKey)) || '이 여행지'
-    const ONE_YEAR_VALIDITY_BLOCK_MSG = `${oneYearKo} 입국 시 광견병 백신은 1년까지만 유효합니다. 면역 유효기간을 1년으로 선택하세요.`
+    const ONE_YEAR_VALIDITY_BLOCK_MSG = `${oneYearKo} 입국 시 광견병 백신은 1년까지만 유효해요. 면역 유효기간을 1년으로 선택하세요.`
     const isMultiYearValidity = (vu: string | null | undefined): boolean => {
       const m = (vu ?? '').match(/^(\d+)\s*년$/)
       return !!m && Number(m[1]) > 1
@@ -1352,7 +1352,7 @@ export function StepDetailView({
         // 켄넬코프도 이 분기를 공유하므로 백신 이름을 카드에 맞춘다 — 고정하면 켄넬코프 카드에
         //   '종합백신은…' 이 나간다. 지금은 1년국(홍콩)이 켄넬코프를 요구하지 않아 잠재 함정이다.
         const vaccineKo = isKennelCough ? '켄넬코프는' : isCiv ? '독감(CIV) 백신은' : '종합백신은'
-        return `${ko} 입국 시 ${vaccineKo} 1년까지만 유효합니다. 면역 유효기간을 1년으로 선택하세요.`
+        return `${ko} 입국 시 ${vaccineKo} 1년까지만 유효해요. 면역 유효기간을 1년으로 선택하세요.`
       }
       for (const e of generalVaccine) {
         // 출생일 이전 접종 — 논리적 불가능 조건이라 저장 거부.
@@ -2138,7 +2138,7 @@ export function StepDetailView({
     : savedArrivedUnconfirmed
       ? `${step.title} 예정일이 지났어요. 완료 버튼을 누르시거나 예정일을 변경해주세요.`
       : recordScheduledOverdue
-        ? '예정일이 지났습니다. 완료 버튼을 누르거나 날짜를 변경하세요.'
+        ? '예정일이 지났어요. 완료 버튼을 누르거나 날짜를 변경하세요.'
         : undefined
   const noticeCount = notices.length + (situationalDesc ? 1 : 0) + (scheduledNotice ? 1 : 0)
   const stepDocuments = readCaseDocuments(caseRow?.data).filter((d) => d.stepId === step.id)

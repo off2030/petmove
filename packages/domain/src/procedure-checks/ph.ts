@@ -360,7 +360,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (others.length + 1 > 3) {
         return {
           ok: false,
-          message: `같은 보호자(${caseRow.customer_name})가 필리핀 목적 케이스를 ${others.length + 1}건 등록했어요. 한 보호자당 3마리까지만 데려갈 수 있습니다.`,
+          message: `같은 보호자(${caseRow.customer_name})가 필리핀 목적 케이스를 ${others.length + 1}건 등록했어요. 한 보호자당 3마리까지만 데려갈 수 있어요.`,
           offendingPaths: ['customer_name'],
         }
       }

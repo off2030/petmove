@@ -54,7 +54,7 @@ export function PetAvatarPicker({ case_ }: { case_: CaseRow }) {
   async function handleFile(file: File | undefined | null) {
     if (!file) return
     if (!userId) {
-      setError('로그인 정보를 확인할 수 없습니다.')
+      setError('로그인 정보를 확인할 수 없어요.')
       return
     }
     setError(null)

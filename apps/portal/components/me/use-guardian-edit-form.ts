@@ -89,7 +89,7 @@ export function useGuardianEditForm(): UseGuardianEditForm {
     }
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
       setStatus('error')
-      setError('이메일 형식이 올바르지 않습니다.')
+      setError('이메일 형식이 올바르지 않아요.')
       return
     }
     setStatus('saving')
