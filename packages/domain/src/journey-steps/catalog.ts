@@ -1279,7 +1279,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '계류시설 예약',
     shortLabel: '계류장',
     description:
-      '뉴질랜드 검역당국(MPI)이 승인한 계류시설에 계류를 예약하세요.\n\n최소 10일 계류해요.\n서명된 예약 확인서가 있어야 수입 허가를 신청할 수 있어요.\n비용과 면회·급여 규칙은 시설마다 다르니 미리 확인하세요.\n공항에서 시설까지의 이동과 MPI 도착 통보는 시설이 대신해요.',
+      '뉴질랜드 검역당국(MPI)이 승인한 계류시설을 예약하세요.\n\n예약 확인서가 있어야 수입 허가를 신청할 수 있어요.',
     doneSummary: '계류시설을 예약했어요.',
     cardLine: '계류시설을 예약하세요.',
     applicability: { destinations: ['new_zealand'], species: 'all', tripType: 'all' },
