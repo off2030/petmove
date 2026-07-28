@@ -1825,7 +1825,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       'rabies-titer': {
         order: 40,
         description:
-          '뉴질랜드 검역당국(MPI)이 인정하는 검사기관에서 광견병 항체 검사(RNATT)를 받으세요.\n\n마이크로칩 인증을 받은 뒤에 채혈해요. 인증과 같은 날에 채혈해도 돼요.\n채혈 전에 마이크로칩을 확인해요.\n0.5 IU/mL 이상이면 합격이에요.\n출국 3개월 전부터 12개월 전 사이에 채혈해야 해요.\n처음 접종한 경우에는 접종 3~4주 후에 채혈하는 것이 좋아요.',
+          '뉴질랜드 검역당국(MPI)이 인정하는 검사기관에서 광견병 항체 검사(RNATT)를 받으세요.\n\n마이크로칩 인증을 받은 뒤에 채혈해요. 인증과 같은 날에 채혈해도 돼요.\n채혈 전에 마이크로칩을 확인해요.\n0.5 IU/mL 이상이면 합격이에요.\n처음 접종한 경우에는 접종 3~4주 후에 채혈하는 것이 좋아요.',
         validationIds: ['nz.titer-after-rabies', 'nz.titer-3to12months-before-departure'],
       },
       // 독감(CIV) — IHS 2.9(2). 한국은 MPI-STD-SAA 의 CIV 위험국 목록에 있다(지원문서
