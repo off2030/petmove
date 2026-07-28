@@ -1833,7 +1833,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       'civ-vaccine': {
         order: 34,
         description:
-          '개 인플루엔자(CIV) 백신을 접종하세요.\n\n한국에서 출발하는 강아지는 접종하거나 검사를 받아야 해요.\nCIV H3N8·H3N2에 효과가 있는 백신이어야 해요.\n출국 14일 전까지, 12개월 이내에 접종해야 해요.\n계류가 끝날 때까지 면역 유효기간이 남아 있어야 해요.\n\n접종하지 않았다면 출국 10일 이내에 PCR 검사를 받아 음성을 확인해요.',
+          '개 인플루엔자(CIV) 백신을 접종하세요.\n\nCIV H3N8·H3N2에 효과가 있는 백신이어야 해요.\n출국 14일 전까지, 12개월 이내에 접종해야 해요.\n계류가 끝날 때까지 면역 유효기간이 남아 있어야 해요.',
         validationIds: ['nz.civ-14days-before-departure', 'nz.civ-within-12months'],
       },
       // 켄넬코프 — 종합백신과 같은 이유(계류시설 요구사항). 호주와 같은 문형.
