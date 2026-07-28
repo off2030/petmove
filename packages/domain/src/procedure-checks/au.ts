@@ -22,6 +22,7 @@ import {
 import { readByDestValue } from '../destination-scoped-fields'
 import {
   validateAuQuarantineReservationDate,
+  validateExternalParasiteStart,
   validateInfectiousDiseaseTestDate,
 } from '../journey-steps/date-rules'
 import {
@@ -789,12 +790,19 @@ function buildExternalParasiteRule({
         if (!dep || entries.length === 0) return SKIP
 
         const first = entries[0]
-        const firstToDep = daysBetween(first.date, dep)
         const issues: string[] = []
         const offending: string[] = []
 
-        if (firstToDep === null || firstToDep < maxIntervalDays) {
-          issues.push(`외부 기생충 치료는 출국 ${maxIntervalDays}일 전에 시작해야 해요.`)
+        // 1차 시작 하한 — 저장 거부와 **같은 함수**(문구·일수 단일 출처). 저장 뒤에 출국일을
+        //   당겨 어긋난 경우를 표면화하는 짝 주의다.
+        const lateStart = validateExternalParasiteStart(
+          entries.map((e) => e.date),
+          dep,
+          'australia',
+          speciesKey,
+        )
+        if (lateStart) {
+          issues.push(lateStart)
           offending.push(`external_parasite_dates[${first.originalIndex}].date`)
         }
 

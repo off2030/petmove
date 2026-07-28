@@ -33,6 +33,7 @@ import {
   validateSgReservationVsDeparture,
   validateEntryDateForDestination,
   validateEchinococcusWindow,
+  validateExternalParasiteStart,
   validateInfectiousDiseaseTestDate,
   validatePhInternalParasiteWindow,
   readScopedImportPermitFiled,
@@ -1428,6 +1429,19 @@ export function StepDetailView({
           })
           if (err) return err
         }
+      }
+      // 외부 기생충 1차 처치 — 출국 30일(개)·21일(고양이) 전보다 늦게 시작하면 저장 거부
+      //   (2026-07-28 사용자 확정). 주의 룰(au.external-parasite-protocol-…)과 **같은 함수**.
+      //   판정은 가장 이른 처치일 하나 — 뒤에 추가하는 2차·3차는 이 하한과 무관하다.
+      //   ⛔ 뉴질랜드는 표에 없어 자동 통과(1차 앵커가 출국일이 아니라 바베시아 채혈이다).
+      if (isExternalParasite) {
+        const err = validateExternalParasiteStart(
+          parasite.map((e) => e.date ?? ''),
+          (caseRow?.departure_date ?? '').slice(0, 10),
+          destinationKey,
+          typeof caseRow?.data?.species === 'string' ? (caseRow.data.species as string) : '',
+        )
+        if (err) return err
       }
       // 전염병 검사 — 출국일보다 늦은 검사일(논리적 불가능) + 창(호주 45일·뉴질랜드 30일)보다
       //   이른 검사일(규정상 무효) 둘 다 저장 거부. 주의 룰(au/nz.infectious-disease-test-…)과

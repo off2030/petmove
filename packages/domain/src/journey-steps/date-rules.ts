@@ -1559,6 +1559,59 @@ export function validateMtAdvanceNoticeDate(noticeDate: string, entryDate: strin
 }
 
 /**
+ * 외부 기생충 **1차 처치 시작** 하한 — 출국일 앵커, 종별로 다르다.
+ *
+ * DAFF 7.6(개) / 고양이 가이드 7.3 — "Start at least 30(21) days before export." 처치일을
+ * day 0 으로 세므로 정확히 30(21)일 전 당일 시작까지 인정한다(원문 예: 1/1 처치 → 개는
+ * 1/31, 고양이는 1/22 이 가장 이른 출국일).
+ *
+ * ⛔ 뉴질랜드는 넣지 않는다 — NZ 외부구충 1차는 **바베시아 채혈 14일 전** 앵커라 출국일
+ *   기준이 아니고, 채혈이 출국 30일 전이면 1차는 44일 전이 될 수도 있다. 출국일 창으로
+ *   막으면 규정대로 준비한 케이스를 거부한다(PARASITE_DEPARTURE_WINDOWS 의 NZ 주석과 같은
+ *   이유).
+ */
+export const EXTERNAL_PARASITE_START_WINDOWS: Record<string, { dog: number; cat: number }> = {
+  australia: { dog: 30, cat: 21 },
+}
+
+/**
+ * 외부 기생충 1차 처치가 출국 N일 전보다 늦게 시작했으면 **저장 거부**(2026-07-28 사용자 확정).
+ *
+ * 판정 대상은 **가장 이른 처치일** — 뒤에 추가하는 2차·3차는 이 하한과 무관하다.
+ * client(getSaveBlockError)·procedure-check(au.external-parasite-protocol-…) 공용 단일 출처.
+ * 출국일이 비었거나 창이 없는 목적지·종이면 통과.
+ */
+export function validateExternalParasiteStart(
+  treatDates: string[],
+  departureDate: string,
+  destinationKey: string | null | undefined,
+  speciesRaw: string | null | undefined,
+): string | null {
+  const dep = (departureDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dep)) return null
+  const table = destinationKey ? EXTERNAL_PARASITE_START_WINDOWS[destinationKey] : undefined
+  if (!table) return null
+  const raw = (speciesRaw ?? '').toLowerCase()
+  const minDays =
+    raw === 'dog' || raw === '강아지' || raw === '개'
+      ? table.dog
+      : raw === 'cat' || raw === '고양이'
+        ? table.cat
+        : null
+  if (minDays === null) return null
+  const dates = treatDates
+    .map((d) => (d ?? '').slice(0, 10))
+    .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+    .sort()
+  if (dates.length === 0) return null
+  const gap = daysBetween(dates[0], dep)
+  if (gap !== null && gap < minDays) {
+    return `외부 기생충 치료는 출국 ${minDays}일 전에 시작해야 해요.`
+  }
+  return null
+}
+
+/**
  * 전염병 검사 채혈 창 — 출국일 앵커. 목적지별 일수 단일 출처.
  *
  * ⛔ 남아공(south_africa, 29일)은 넣지 않는다 — 펫무브워크 전용 목적지라 앱 카드가 없고,
