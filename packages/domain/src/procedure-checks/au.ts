@@ -267,9 +267,9 @@ export const AU_CHECKS: ProcedureCheck[] = [
     id: 'au.titer-min-180days-after-sample-received',
     country: COUNTRY,
     category: '광견병',
-    title: '출국일은 RNATT 검체 검사실 도착일 180일 이후',
+    title: '출국일은 RNATT 검체 접수일 180일 이후',
     description:
-      'DAFF 4.3 — "cannot be exported to Australia for at least 180 days after the RNATT sample arrives at the laboratory. There are no exceptions." 기준일 우선순위: rabies_titer_records[].received_date → australia_extra.sample_received_date(legacy) → 채혈일(fallback, 검사실 도착은 그 이후라 보수적으로 +7일).',
+      'DAFF 4.3 — "cannot be exported to Australia for at least 180 days after the RNATT sample arrives at the laboratory. There are no exceptions." 기준일 우선순위: rabies_titer_records[].received_date → australia_extra.sample_received_date(legacy) → 채혈일(fallback). 채혈일 fallback 에도 마진 없이 180일 — 계류 시작일 룰(au.quarantine-reservation-min-180days)과 같은 판정이어야 한다(2026-07-28 사용자 확정). 예전엔 fallback 만 187일이라 채혈일만 입력된 케이스에서 두 카드가 서로 다르게 반응했다.',
     severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
@@ -293,9 +293,8 @@ export const AU_CHECKS: ProcedureCheck[] = [
 
       const days = daysBetween(basis.date, dep)
       if (days === null) return SKIP
-      // 정확한 검사실 도착일이 있으면 180일, 채혈일 fallback 이면 도착이 며칠 뒤이므로 +7일 마진.
-      const required = basis.kind === 'sample' ? 187 : 180
-      if (days < required) {
+      // 접수일이든 채혈일 fallback 이든 180일 — 계류 시작일 룰과 같은 기준.
+      if (days < 180) {
         const offendingPaths = ['departure_date']
         if (basis.kind === 'received_record') {
           offendingPaths.push(`rabies_titer_records[${basis.titerIdx}].received_date`)
