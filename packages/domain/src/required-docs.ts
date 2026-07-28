@@ -898,30 +898,8 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'infectious-disease-test',
       species: 'dog',
       description:
-        '출국 45일 이내에 받은 검사 결과지예요.\n\n리슈만편모충(Leishmania infantum) 결과지는 모든 강아지가 필요해요.\n\n중성화하지 않았다면 브루셀라(Brucella canis) 결과지도 필요해요.\n\n각 장에 정부 수의사의 원본 서명·날인을 받아야 해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+        '출국 45일 이내에 받은 검사 결과지예요.\n\n리슈만편모충(Leishmania infantum) 결과지는 모든 강아지가 필요해요.\n\n중성화하지 않았다면 브루셀라(Brucella canis) 결과지도 필요해요.\n\n렙토스피라(Leptospira canicola) 백신 접종을 하지 않았다면 MAT 검사 결과지도 필요해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'infectious-disease-test',
-    },
-    {
-      id: 'au-lepto-canicola-doc',
-      name: '렙토스피라 Canicola 백신증명서 또는 검사 결과지',
-      source: '동물병원 · 검사기관',
-      kind: 'step',
-      stepRef: 'general-vaccine',
-      species: 'dog',
-      description:
-        '둘 중 하나가 필요해요.\n\n백신을 접종했다면 Canicola 혈청형이 포함된 백신증명서를 준비해요. 마지막 접종이나 추가 접종이 출국 14일 전까지, 12개월 이내여야 해요.\n\n접종하지 않았다면 출국 45일 이내에 받은 MAT 검사 음성 결과지를 준비해요. 결과지는 각 장에 정부 수의사의 원본 서명·날인이 필요해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
-      previewStepId: 'general-vaccine',
-    },
-    {
-      id: 'au-civ-vaccine-cert',
-      name: '독감(CIV) 백신증명서',
-      source: '동물병원',
-      kind: 'step',
-      stepRef: 'civ-vaccine',
-      species: 'dog',
-      description:
-        '한국에서 출발하는 강아지는 반드시 필요한 서류예요.\n\n한국에서 승인되고 국내에 도는 바이러스에 효과가 있는 백신이어야 해요.\n\n기초 접종은 출국 14일 전까지, 추가 접종은 출국 14일 전까지이면서 12개월 이내여야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
-      previewStepId: 'civ-vaccine',
     },
     {
       id: 'au-kr-export-quarantine-cert',
