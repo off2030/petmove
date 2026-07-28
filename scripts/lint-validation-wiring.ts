@@ -28,6 +28,10 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { JOURNEY_STEP_CATALOG } from '../packages/domain/src/journey-steps/catalog'
+import {
+  DATED_STEP_FIELDS,
+  DATED_STEP_FIELD_CONFLICTS,
+} from '../packages/domain/src/journey-steps/dated-steps'
 import { resolveStepForDestination } from '../packages/domain/src/journey-steps/destination-overrides'
 import { ALL_PROCEDURE_CHECKS, checkCountryKeys } from '../packages/domain/src/procedure-checks/registry'
 import { DESTINATION_OVERRIDES, destinationKeysWhere } from '../packages/domain/src/destination-config'
@@ -882,6 +886,41 @@ function main(): void {
     console.log(`· 프로파일 선언 ${knownDead.size}건은 아직 진실 출처가 아닙니다 (동작은 다른 곳에 있음).`)
     for (const [field, where] of knownDead) console.log(`  ${field}: ${where}`)
     console.log('  파생으로 교체하면 DEAD_DECLARATION_KNOWN 에서 지우세요.\n')
+  }
+
+  // ── dated 카드 저장 배선 ────────────────────────────────────────────────
+  // 앱에 뜨는 목적지 × 그 목적지의 실효 `done: 'dated:<field>'` 카드가 전부 저장 맵
+  // (DATED_STEP_FIELDS — portal updateSimpleDateField 의 신뢰 목록)에 있어야 한다.
+  // 없으면 보호자가 날짜를 넣고 저장을 눌러도 "알 수 없는 절차 단계입니다." 로 죽는다
+  // (2026-07-28 계류시설 예약 실제 사고). 맵이 파생이라 평시엔 자동으로 맞지만,
+  // 파생 조건을 다시 좁히거나 목적지마다 필드가 갈리면 여기서 걸린다.
+  const datedGaps: string[] = []
+  for (const dest of appDests) {
+    for (const step of JOURNEY_STEP_CATALOG) {
+      if (!appliesToDest(step, dest)) continue
+      const resolved = resolveStepForDestination(step, dest)
+      const done = resolved.done
+      if (typeof done !== 'string' || !done.startsWith('dated:')) continue
+      const field = done.slice('dated:'.length)
+      const mapped = DATED_STEP_FIELDS[resolved.id]
+      if (mapped !== field) {
+        datedGaps.push(`  [${dest}] ${resolved.id}: 카드는 ${field}, 저장 맵은 ${mapped ?? '(없음)'}`)
+      }
+    }
+  }
+  if (DATED_STEP_FIELD_CONFLICTS.length > 0) {
+    for (const c of DATED_STEP_FIELD_CONFLICTS) {
+      datedGaps.push(`  ${c.stepId}: 목적지마다 필드가 다름 (${c.fields.join(', ')}) — 평면 맵으로 표현 불가`)
+    }
+  }
+  if (datedGaps.length > 0) {
+    console.error('✗ dated 카드 저장 배선이 끊겼습니다 — 저장이 "알 수 없는 절차 단계입니다." 로 죽습니다.\n')
+    console.error(datedGaps.join('\n'))
+    console.error(
+      '\n  고치는 법: packages/domain/src/journey-steps/dated-steps.ts 의 파생을 확인하세요.' +
+        '\n  목적지마다 필드가 갈리는 카드가 정말 필요하면 맵을 목적지별로 쪼개야 합니다.',
+    )
+    process.exit(1)
   }
 
   if (blocking.length === 0) {

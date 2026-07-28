@@ -35,7 +35,7 @@ import {
   validateThEntryDate,
   validateTwEntryDate,
   buildDateRuleContext,
-  JOURNEY_STEP_CATALOG,
+  DATED_STEP_FIELDS,
   validateImportQuarantineDate,
   validateUsDogEntryDate,
   writeByDestValue,
@@ -2095,26 +2095,11 @@ export async function markApplicationIssued(
 // ── 순수 날짜 완료 카드(발급일·예약일 = 완료 증거) — 범용 ─────────────────
 // 확인 게이트 없이 날짜만 저장(done-resolver dated:<field> 가 ≤오늘=완료 판정). 클라이언트는
 // stepId 만 넘기고 서버가 신뢰 목록에서 필드를 결정한다(임의 키 쓰기 차단).
-const SIMPLE_DATE_STEP_FIELDS: Record<string, string> = {
-  // 수입 허가 — **목적지 override 로만** 버튼 완료가 되는 카드(홍콩). 아래 자동 파생은 base
-  // 카탈로그만 훑어서 override 선언을 못 보므로 여기 명시한다. 2단계(신청→발급) 모델을 쓰는
-  // 목적지(태국·필리핀 등)에서는 UI 가 이 경로를 부르지 않는다.
-  'import-permit': 'import_permit_application_date',
-  // dated 카드 전체 — 카탈로그 `done: 'dated:<field>'` 선언에서 자동 파생(2026-07-26).
-  // 카드를 선언하면 저장이 자동 허용된다(임의 키 쓰기 차단은 그대로).
-  //
-  // ⚠️ 버튼 완료 카드로 좁히지 말 것 — 원래 `s.buttonComplete &&` 조건이 붙어 있었는데,
-  //   계류시설 예약(au-quarantine-reservation)을 버튼 완료 → 날짜 입력 카드로 바꾸자
-  //   조건에서 탈락해 저장이 "알 수 없는 절차 단계입니다." 로 죽었다(2026-07-28).
-  //   dated 카드는 버튼이든 날짜 입력이든 저장 경로가 같으므로 done 선언만 본다.
-  //   (싱가포르 sg-gst-permit·sg-border-inspection 도 같은 이유로 하드코딩돼 있었고,
-  //    이제 파생으로 덮여 목록에서 지웠다 — 값은 그대로.)
-  ...Object.fromEntries(
-    JOURNEY_STEP_CATALOG.filter(
-      (s) => typeof s.done === 'string' && s.done.startsWith('dated:'),
-    ).map((s) => [s.id, (s.done as string).slice('dated:'.length)]),
-  ),
-}
+// 카탈로그 + 전 목적지 override 의 실효 `done: 'dated:<field>'` 에서 파생한 단일 출처
+// (@petmove/domain DATED_STEP_FIELDS). ⛔ 여기서 손으로 목록을 만들지 말 것 — 그렇게 하다
+// 버튼 완료 카드만 훑는 조건 때문에 계류시설 예약 저장이 죽었다(2026-07-28). 자세한 사연은
+// packages/domain/src/journey-steps/dated-steps.ts 주석.
+const SIMPLE_DATE_STEP_FIELDS: Readonly<Record<string, string>> = DATED_STEP_FIELDS
 
 /**
  * 순수 날짜 완료 카드의 날짜 저장 — 범용. 확인 플래그 없음(dated 모델). 필드는 by_dest 분리.
