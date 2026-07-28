@@ -1559,24 +1559,47 @@ export function validateMtAdvanceNoticeDate(noticeDate: string, entryDate: strin
 }
 
 /**
- * 전염병 검사일은 출국일보다 늦을 수 없다 — 논리적 불가능 조건이라 **저장 거부**.
+ * 전염병 검사 채혈 창 — 출국일 앵커. 목적지별 일수 단일 출처.
  *
- * 창(호주 45일·뉴질랜드 30일)을 벗어난 '너무 이른' 검사는 저장 거부가 아니라 주의로 둔다.
- * 출국일을 나중에 당기면 유효해질 수 있어서, 막으면 정상 준비를 거부하게 된다. 반대로
- * '출국 뒤에 받은 검사'는 어떤 출국일 변경으로도 유효해지지 않는다.
+ * ⛔ 남아공(south_africa, 29일)은 넣지 않는다 — 펫무브워크 전용 목적지라 앱 카드가 없고,
+ *   za.infectious-disease-within-29days 가 자체 문구(날짜 보간 포함)로 담당한다.
+ *   앱에 올릴 때 여기 한 줄 추가하면 저장 거부·주의가 함께 붙는다.
+ */
+export const INFECTIOUS_TEST_DEPARTURE_WINDOWS: Record<string, number> = {
+  australia: 45,
+  new_zealand: 30,
+}
+
+/**
+ * 전염병 검사일 저장 거부 — 두 가지를 막는다(2026-07-28 사용자 확정).
+ *
+ *   ① 출국일보다 늦은 검사 — 논리적 불가능.
+ *   ② 창(호주 45일·뉴질랜드 30일)보다 이른 검사 — 규정상 무효라 다시 받아야 한다.
+ *
+ * ②를 저장 거부로 올린 이유 — 처음엔 '출국일을 나중에 당기면 유효해질 수 있으니 주의로
+ * 두자'로 갔지만, 실무 순서가 반대다. 항공권(출국일)이 먼저 정해지고 그 뒤 D-45 창이 열려야
+ * 검사를 받는다. 창보다 이른 날짜가 들어왔다는 건 검사를 헛되이 받았거나 출국일이 틀렸다는
+ * 뜻이라, 저장을 막아 그 자리에서 드러내는 편이 낫다.
  *
  * client(getSaveBlockError)·procedure-check(au/nz.infectious-disease-test-…) 공용 단일 출처.
- * 한쪽 날짜가 비면 통과.
+ * 날짜 한쪽이 비거나 창이 없는 목적지면 통과.
  */
 export function validateInfectiousDiseaseTestDate(
   testDate: string,
   departureDate: string,
+  destinationKey?: string | null,
 ): string | null {
   if (!testDate || !departureDate) return null
   const t = testDate.slice(0, 10)
   const d = departureDate.slice(0, 10)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return null
   if (t > d) return '전염병 검사일이 출국일보다 늦어요. 날짜를 확인하세요.'
+  const maxGap = destinationKey ? INFECTIOUS_TEST_DEPARTURE_WINDOWS[destinationKey] : undefined
+  if (maxGap === undefined) return null
+  const gap = daysBetween(t, d)
+  if (gap !== null && gap > maxGap) {
+    return `전염병 검사는 출국 ${maxGap}일 이내에 받아야 해요. 다시 검사받아야 할 수 있어요.`
+  }
   return null
 }
 

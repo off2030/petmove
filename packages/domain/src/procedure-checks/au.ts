@@ -680,21 +680,13 @@ export const AU_CHECKS: ProcedureCheck[] = [
       const latest = entries[entries.length - 1]
       const days = daysBetween(latest.date, dep)
       if (days === null) return SKIP
-      // 출국일보다 늦은 검사 — 저장 거부와 **같은 함수**를 본다(문구 단일 출처).
-      const afterDeparture = validateInfectiousDiseaseTestDate(latest.date, dep)
-      if (afterDeparture) {
-        return {
-          ok: false,
-          message: afterDeparture,
-          offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`],
-        }
-      }
-      if (days > 45) {
-        return {
-          ok: false,
-          message: '전염병 검사는 출국 45일 이내에 받아야 해요. 다시 검사받아야 할 수 있어요.',
-          offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`, 'departure_date'],
-        }
+      // 저장 거부와 **같은 함수**(출국일보다 늦음 + 45일 창) — 문구·일수 단일 출처.
+      //   저장 뒤에 출국일을 고쳐 어긋난 경우를 표면화하는 짝 주의다.
+      const blocked = validateInfectiousDiseaseTestDate(latest.date, dep, 'australia')
+      if (blocked) {
+        const paths = [`infectious_disease_records[${latest.originalIndex}].date`]
+        if (days >= 0) paths.push('departure_date')
+        return { ok: false, message: blocked, offendingPaths: paths }
       }
       const note = isIntact(caseRow) ? ' (중성화 미실시 — 브루셀라 검사 포함 대상)' : ''
       return { ok: true, message: `최근 전염병검사(${latest.date}) → 출국일(${dep}): ${days}일.${note}` }
