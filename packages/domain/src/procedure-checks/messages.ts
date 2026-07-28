@@ -18,14 +18,18 @@
  * 여기 두지 않고 각 나라 파일에 그대로 둔다.
  */
 
-/** 광견병 접종은 마이크로칩 삽입 이후여야 함. (전 목적지 공통) */
+/**
+ * 광견병 접종은 마이크로칩 삽입 이후여야 함. (전 목적지 공통)
+ * 저장 거부(validateMicrochipBeforeBooster)와 **같은 문장**으로 통일 — 같은 실수를 층마다
+ * 다르게 말하지 않는다(2026-07-28 사용자 확정). 한쪽만 고치지 말 것.
+ */
 export function msgMicrochipBeforeRabies(): string {
-  return '접종일은 마이크로칩 삽입일 이후여야 해요.'
+  return '마이크로칩 삽입 후 광견병을 접종하세요.'
 }
 
-/** 종합백신 접종은 마이크로칩 삽입 이후여야 함. */
+/** 종합백신 접종은 마이크로칩 삽입 이후여야 함. (위와 같은 통일 — 백신 이름만 다름) */
 export function msgMicrochipBeforeGeneralVaccine(): string {
-  return '접종일은 마이크로칩 삽입일 이후여야 해요.'
+  return '마이크로칩 삽입 후 종합백신을 접종하세요.'
 }
 
 /**

@@ -308,7 +308,7 @@ export function validateThEntryDate(v: string, ctx: DateRuleContext): string | n
     if (!latest) continue
     const earliest = addDays(latest, 21)
     if (earliest && v < earliest) {
-      return `${label} 접종 후 21일이 지나야 태국에 입국할 수 있어요`
+      return `${label} 접종 후 21일이 지나야 태국에 입국할 수 있어요.`
     }
   }
   return null
@@ -621,7 +621,7 @@ export function validatePhEntryDate(v: string, ctx: DateRuleContext): string | n
   if (!birth) return null
   const earliest = addDays(birth, 120)
   if (earliest && v < earliest) {
-    return '생후 120일(4개월)이 지나야 필리핀에 입국할 수 있어요'
+    return '생후 120일(4개월)이 지나야 필리핀에 입국할 수 있어요.'
   }
   // 접종 후 21일 대기(광견병·종합백신) — 태국과 같은 모델(최근 접종 기준, 유효 부스터 면제).
   // 태국엔 있고 필리핀엔 저장 거부가 빠져 있어 주의만 뜨고 있었다(2026-07-20 사용자 지정으로 추가).
@@ -652,7 +652,7 @@ export function validateHkEntryDate(v: string, ctx: DateRuleContext): string | n
   if (!birth) return null
   const earliest = addMonths(birth, 5)
   if (earliest && v < earliest) {
-    return '생후 5개월이 지나야 홍콩에 입국할 수 있어요'
+    return '생후 5개월이 지나야 홍콩에 입국할 수 있어요.'
   }
   return null
 }
@@ -1922,11 +1922,11 @@ export function validateRabiesPrimeAge(
   if (minMonths != null) {
     return meetsCalendarAge(birthDate, primeDate, minMonths)
       ? null
-      : `광견병 접종은 생후 ${minMonths}개월이 지나서 할 수 있어요`
+      : `광견병 접종은 생후 ${minMonths}개월이 지나서 할 수 있어요.`
   }
   const age = daysBetween(birthDate, primeDate)
   if (age < minDays) {
-    return `광견병 접종은 생후 ${minDays}일(${Math.round(minDays / 7)}주)이 지나서 할 수 있어요`
+    return `광견병 접종은 생후 ${minDays}일(${Math.round(minDays / 7)}주)이 지나서 할 수 있어요.`
   }
   return null
 }
@@ -1984,7 +1984,7 @@ export function validateMicrochipBeforeBooster(
 ): string | null {
   if (!microchipDate || !secondDate) return null
   if (microchipDate > secondDate) {
-    return `마이크로칩 삽입 후 ${vaccineLabel}을 접종하세요`
+    return `마이크로칩 삽입 후 ${vaccineLabel}을 접종하세요.`
   }
   return null
 }

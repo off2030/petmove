@@ -67,9 +67,9 @@ export function rabiesChainBreakMessage(brk: RabiesChainBreak): string {
   const n = brk.brokenAt
   switch (brk.reason) {
     case 'too-early':
-      return `${n}차 접종일이 ${n - 1}차 접종일보다 빠릅니다. 날짜를 확인하세요.`
+      return `${n}차 접종일이 ${n - 1}차 접종일보다 빨라요. 날짜를 확인하세요.`
     case 'same-date':
-      return `${n}차 접종일이 ${n - 1}차 접종일과 같습니다. 날짜를 확인하세요.`
+      return `${n}차 접종일이 ${n - 1}차 접종일과 같아요. 날짜를 확인하세요.`
     case 'expired':
       return `${n}차 접종일은 ${n - 1}차 백신 면역 유효기간 이내여야 해요.`
   }
