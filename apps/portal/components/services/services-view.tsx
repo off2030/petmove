@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
+  isOneWayOnlyDestination,
   destinationKoLabel,
   matchesDestinationKey,
   ADVANCE_NOTICE_DESTINATIONS,
@@ -1434,6 +1435,10 @@ export function ServicesView({
                 <path d="M6 9l6 6 6-6" />
               </svg>
             </button>
+            {/* 편도 전용 목적지(호주·뉴질랜드·싱가포르·남아공)는 왕복/편도 토글을 숨긴다 —
+                신청 폼(/apply)은 isOneWayOnlyDestination 으로 이미 숨기고 있었는데 여기만
+                남아 있어, 편도밖에 없는 나라에서 '왕복' 선택지가 보였다(2026-07-28 발견). */}
+            {!isOneWayOnlyDestination(selected.en) && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 2, padding: 2, borderRadius: 999, border: `0.5px solid ${C.line}`, background: C.surface }}>
               {TRIP_OPTIONS.map((o) => {
                 const on = trip === o.value
@@ -1459,6 +1464,7 @@ export function ServicesView({
                 )
               })}
             </div>
+            )}
           </div>
 
           <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
