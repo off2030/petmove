@@ -1687,11 +1687,15 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         deadline: { anchor: 'departure', daysBefore: 5, window: true },
       },
       // 한국 수출 검역도 같은 5일 창(validateKrExportDate 가 getVetVisitWindowDays 공유).
-      //   DAFF 는 배서를 **최종검진과 2차 내부구충 이후**에 받으라고 못박는다(8.3) — 순서
-      //   제약은 validateKrExportDate(검역일 ≥ 임상검사일)가 이미 담당한다.
+      //   DAFF 는 배서를 **최종검진과 2차 내부구충 이후**에 받으라고 못박지만(8.3), 그 줄은
+      //   카드에서 뺐다(2026-07-28 사용자 지정). 같은 내용이 서류 탭 au-entry-health-cert
+      //   설명("최종 검진과 2차 내부 기생충 치료를 마친 뒤에 배서를 받아야 해요")에 남아 있다.
+      //   ⛔ '검역일 ≥ 2차 구충일' 저장 거부는 넣지 말 것 — 카드가 안내하지 않는 조건으로
+      //     저장을 막게 된다. (검역일 ≥ 임상검사일은 validateKrExportDate 가 계속 담당.)
+      //   ⚠️ 뉴질랜드 카드에는 같은 줄이 남아 있다 — 이번 지시는 호주만이었다.
       'certificate-issue': {
         description:
-          '출국일 기준 5일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.\n임상검사와 2차 내부 기생충 치료를 마친 뒤에 방문해야 해요.',
+          '출국일 기준 5일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
         deadline: { anchor: 'departure', daysBefore: 5, window: true },
       },
     },
