@@ -856,7 +856,7 @@ export const PARASITE_DEPARTURE_WINDOWS: Record<
   //     약효 유지"라 상한이 아니라 **하한**이다. 창으로 막으면 출국 직전의 정당한 반복 처치
   //     (제조사 지침대로 재투여)를 거부하게 된다. 시작 시점은 주의 룰
   //     (au.external-parasite-protocol-dog/-cat)이 판정한다.
-  australia: { maxGap: 45, windowLabel: '출국 45일 이내', kinds: ['internal'] },
+  australia: { maxGap: 45, windowLabel: '출국 전 45일 이내', kinds: ['internal'] },
   // 뉴질랜드 — 호주와 같은 이유로 **내부구충만**(IHS 2.3(1) "first treatment must be given in
   //   the 30 days before the date of shipment"). 2차 5일 이내·14일 간격은 창 하나로 표현할 수
   //   없어 주의 룰(nz.internal-parasite-protocol)이 함께 본다.
@@ -1658,11 +1658,11 @@ export function validateAuInternalParasiteDates(
   const dose2 = dates[dates.length - 1]
   const gap = daysBetween(dose1, dose2)
   if (gap !== null && gap < AU_INTERNAL_PARASITE.minGapDays) {
-    return `두 번의 치료는 ${AU_INTERNAL_PARASITE.minGapDays}일 이상 벌어져야 해요.`
+    return `두 번의 치료는 최소 ${AU_INTERNAL_PARASITE.minGapDays}일 이상 간격을 두고 해야 해요.`
   }
   const toDep = daysBetween(dose2, dep)
   if (toDep !== null && toDep > AU_INTERNAL_PARASITE.secondWithinDays) {
-    return `2차 치료는 출국 ${AU_INTERNAL_PARASITE.secondWithinDays}일 이내여야 해요.`
+    return `2차 치료는 출국 전 ${AU_INTERNAL_PARASITE.secondWithinDays}일 이내에 해야 해요.`
   }
   return null
 }

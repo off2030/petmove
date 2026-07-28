@@ -22,6 +22,7 @@ import {
 import { readByDestValue } from '../destination-scoped-fields'
 import {
   validateAuInternalParasiteDates,
+  validateParasiteDateForDestination,
   validateAuQuarantineReservationDate,
   validateExternalParasiteDates,
   validateInfectiousDiseaseTestDate,
@@ -727,15 +728,24 @@ export const AU_CHECKS: ProcedureCheck[] = [
 
       const dose1 = entries[entries.length - 2]
       const dose2 = entries[entries.length - 1]
-      const dep1 = daysBetween(dose1.date, dep)
       const dep2 = daysBetween(dose2.date, dep)
       const interval = daysBetween(dose1.date, dose2.date)
 
       const issues: string[] = []
       const offending: string[] = []
-      if (dep1 === null || dep1 < 0 || dep1 > 45) {
-        issues.push('1차 치료는 출국 45일 이내여야 해요.')
-        offending.push(`internal_parasite_dates[${dose1.originalIndex}].date`)
+      // 45일 창·출국일보다 늦음 — 저장 거부와 **같은 함수**(validateParasiteDateForDestination).
+      //   예전엔 여기만 '1차 치료는 출국 45일 이내여야 해요.' 라고 따로 써서, 같은 위반인데
+      //   입력할 때와 나중에 출국일을 고쳤을 때 보호자가 다른 말을 들었다(2026-07-28 통일).
+      for (const e of entries) {
+        const err = validateParasiteDateForDestination(e.date, {
+          destinationKey: 'australia',
+          kind: 'internal',
+          departureDate: dep,
+        })
+        if (err) {
+          issues.push(err)
+          offending.push(`internal_parasite_dates[${e.originalIndex}].date`)
+        }
       }
       // 간격·2차 창 — 저장 거부와 **같은 함수**(문구·일수 단일 출처). 저장 뒤에 출국일이나
       //   다른 회차를 고쳐 어긋난 경우를 표면화하는 짝 주의다.
