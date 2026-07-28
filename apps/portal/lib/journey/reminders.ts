@@ -55,6 +55,10 @@ const APP_TITLE = '펫무브'
 const GLOBAL_ARRAY_FIELDS: Array<{ keys: string[]; label: string }> = [
   { keys: ['rabies_dates', 'rabies_dates_scheduled'], label: '광견병 접종' },
   { keys: ['general_vaccine_dates', 'general_vaccine_dates_scheduled'], label: '종합백신 접종' },
+  // 켄넬코프 — 2026-07-27 카드 분리 때 만료 알림(collectValidityReminders)에는 넣었는데 여기만
+  //   빠져 있었다(2026-07-28 발견). 호주·뉴질랜드·괌 케이스에서 예정일을 넣어도 전날·당일
+  //   알림이 가지 않던 상태.
+  { keys: ['kennel_cough_dates', 'kennel_cough_dates_scheduled'], label: '켄넬코프 접종' },
   { keys: ['civ_dates'], label: '독감(CIV) 접종' },
   { keys: ['rabies_titer_records', 'rabies_titer_scheduled'], label: '광견병 항체 검사' },
   { keys: ['infectious_disease_records'], label: '전염병 검사' },
