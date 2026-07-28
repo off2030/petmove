@@ -223,7 +223,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '마이크로칩 인증',
     shortLabel: '인증',
     description:
-      '동물검역소에서 검역관에게 마이크로칩 인증(Pre-export identification check)을 받으세요.\n\n검역관이 마이크로칩을 확인하고 확인서를 뉴질랜드 검역당국(MPI)에 직접 보내요.\n광견병 항체 검사 채혈 전에 받아야 해요. 채혈과 같은 날에 받아도 돼요.\n채혈일이 출국 6개월 이내라면 인증을 두 번 받아요. 첫 번째는 출국 6개월 전까지, 두 번째는 채혈 전에 받아요.\n인증이 MPI에 등록되어야 수입 허가를 받을 수 있어요.',
+      '동물검역소에서 검역관에게 마이크로칩 인증(Pre-export identification check)을 받으세요.\n\n검역관이 마이크로칩을 확인하고 뉴질랜드 검역당국(MPI) 온라인 시스템에 직접 등록해요.\n광견병 항체 검사 채혈 전에 받아야 해요.',
     doneSummary: '마이크로칩 인증을 받았어요.',
     cardLine: '마이크로칩 인증을 받으세요.',
     applicability: { destinations: ['new_zealand'], species: 'all', tripType: 'all' },
