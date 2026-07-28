@@ -797,6 +797,12 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
     '주의만: 절차 완료일 추적용 — 날짜 자체 제약 없음. 라이선스↔수입허가 순서는 수입허가 쪽 차단(validateSgImportPermitAfterDogLicence)·주의(sg.dog-licence-before-import-permit)가 담당',
   'au-quarantine-reservation':
     '차단: validateAuQuarantineReservationDate(항체 검체 도착 + 180일 이후) — 짝 주의는 au.quarantine-reservation-min-180days',
+  // 뉴질랜드는 호주와 달리 계류 시작일에 걸리는 **날짜 제약이 없다**(IHS 1.15 는 최소 10일
+  //   계류만 정한다 — 채혈 기준 대기는 출국일에 걸리고 항공권 카드가 담당).
+  //   남는 건 '예약을 항공 일정과 맞췄나'인데, 예약일·도착일 어느 쪽이든 고쳐서 회복할 수
+  //   있는 사실이라 저장을 막지 않는다.
+  'nz-quarantine-reservation':
+    '주의만: nz.quarantine-reservation-matches-entry(계류 시작일 ≠ 뉴질랜드 도착일) — 예약·항공 일정 어느 쪽이든 고칠 수 있어 차단 X',
   'sg-gst-permit': '차단: validateSgGstPermitDate(도착 전 + 도착 14일 이내)',
   'sg-border-inspection': '차단: validateSgBorderInspectionDate(도착 최소 5일 전)',
   // 독감(CIV)·전염병 검사 — 호주 전용 카드(둘 다 강아지 요건).

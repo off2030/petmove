@@ -1267,6 +1267,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   //   갈리지 않으니 그 문장을 복사해 오지 말 것.
   // 시설이 공항 인수·MPI 도착 통보를 대신한다(지원문서 Notify MPI — "You are not required to
   //   give notification of arrival of your dog. The quarantine facility will do this for you").
+  // ⛔ buttonComplete 로 되돌리지 말 것(2026-07-28) — `nz_quarantine_reservation_date` 를
+  //   **실제 계류 시작일로 읽는 소비처가 셋**이다: 주의 룰(nz.quarantine-reservation-matches-entry),
+  //   도착 검역 카드의 '예정' 배지(QUARANTINE_START_FIELD_BY_DESTINATION), 이 카드의 완료 판정.
+  //   버튼 완료면 저장값이 '버튼 누른 날'이라 도착일과 늘 어긋나 정상 케이스에 경고가 뜨고
+  //   예정 배지도 엉뚱한 날짜가 된다. 호주 계류 예약 카드도 같은 이유로 날짜 입력이다.
   {
     id: 'nz-quarantine-reservation',
     category: 'permit',
@@ -1279,13 +1284,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: { destinations: ['new_zealand'], species: 'all', tripType: 'all' },
     order: 42,
     done: 'dated:nz_quarantine_reservation_date',
-    buttonComplete: true,
     inputs: [
       {
         key: 'nz_quarantine_reservation_date',
         label: '계류 시작일',
         type: 'date',
-        helpText: '예약한 계류 시작 날짜',
+        helpText: '예약 확인서에 적힌 계류 시작 날짜',
       },
     ],
     allowAttachments: true,
