@@ -1246,13 +1246,22 @@ export function StepDetailView({
         // 채혈 < 접종(순서) 저장 거부 — 단일카드(1회 접종 입국요건국)는 validateTiterAfterBooster
         //   가 안 걸리고 validateTiterDate 도 2차 없으면 통과라, 접종보다 빠른 채혈이 저장되던
         //   갭(2026-07-24 발견). extra 카드(일본·대만·하와이)는 validateTiterDate 담당이라 제외.
+        // ⚠️ 기준은 **가장 이른 접종**이다 — 전체 목록의 최신 접종으로 보면 안 된다(2026-07-28
+        //   수정). 1회 접종국의 2번째 이후 기록은 '2차'가 아니라 면역을 이어주는 **부스터**이고,
+        //   채혈 뒤에 부스터를 맞는 건 규정상 정상 경로다(뉴질랜드는 출국까지 면역이 끊기면 안
+        //   되므로 오히려 권장된다). 최신 접종 기준이면 그 정상 케이스가 저장 거부됐다.
+        //   가장 이른 접종보다 채혈이 빠르면 = 접종 전에 채혈한 것 → 원래 의도대로 차단된다.
         if (
           isTiterSingleCard &&
           destinationKey &&
           TITER_REQUIRED_FOR_ENTRY_DESTINATIONS.includes(destinationKey)
         ) {
+          const doseDates = readRabiesDoseList(caseRow?.data)
+            .map((x) => x.date)
+            .filter((d) => d.length >= 10)
+          const earliestDose = doseDates.length ? doseDates.reduce((m, d) => (d < m ? d : m)) : ''
           const orderErr = validateTiterAfterBooster(
-            readRabiesDoseList(caseRow?.data).map((x) => x.date),
+            earliestDose ? [earliestDose] : [],
             entry.date.trim(),
           )
           if (orderErr) return orderErr
@@ -1280,6 +1289,7 @@ export function StepDetailView({
           false,
           destinationKey === 'japan',
           !destinationKey || !TITER_REQUIRED_FOR_ENTRY_DESTINATIONS.includes(destinationKey),
+          isTiterSingleCard,
         )
         if (err) return `채혈일 ${entry.date}: ${err}`
       }
@@ -3941,6 +3951,15 @@ function validateTiterDate(
    * 호출부에 가드가 있어도 이 함수가 같은 규칙을 다시 적용해 가드가 무력화되던 것을 막는다.
    */
   skipVaccineLinkage = false,
+  /**
+   * 1회 접종국(뉴질랜드·호주·싱가포르·EU 등) 단일카드인지 — 규칙 A를 건너뛴다.
+   *
+   * 이 나라들의 `rabies_dates[1]` 은 '2차 접종'이 아니라 면역을 이어주는 **부스터**다.
+   * 규칙 A를 그대로 적용하면 "채혈 → 이후 부스터"라는 정상 경로가 '2차 접종 후에 받아야
+   * 해요'로 저장 거부됐다(2026-07-28 발견). 접종 전 채혈 차단은 호출부가 **가장 이른 접종**
+   * 기준으로 이미 담당한다.
+   */
+  singleDoseModel = false,
 ): string | null {
   if (!date) return null
   if (skipVaccineLinkage) return null
@@ -3950,7 +3969,7 @@ function validateTiterDate(
   // 규칙 A — 채혈 ≥ 1·2차 접종일. procedure-check(common.rabies-titer-chain-consistent)와 같은
   // domain 함수(단일 출처).
   // 이 함수는 2차(r2)가 있을 때만 진행하므로 2회 접종 모델 — 메시지를 '2차 접종 후'로.
-  const afterErr = validateTiterAfterBooster([r1.date, r2.date], date, true)
+  const afterErr = singleDoseModel ? null : validateTiterAfterBooster([r1.date, r2.date], date, true)
   if (afterErr) return afterErr
   // 규칙 B — 부스터 chain 유효기간 이내. procedure-check 와 같은 domain 함수(단일 출처).
   const rabiesArr = Array.isArray(data?.['rabies_dates']) ? (data!['rabies_dates'] as unknown[]) : []
