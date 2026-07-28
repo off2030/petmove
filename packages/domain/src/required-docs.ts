@@ -898,7 +898,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'infectious-disease-test',
       species: 'dog',
       description:
-        '출국 45일 이내에 받은 검사 결과지예요.\n\n리슈만편모충(Leishmania infantum) 결과지는 모든 강아지가 필요해요.\n\n중성화하지 않았다면 브루셀라(Brucella canis) 결과지도 필요해요.\n\n렙토스피라(Leptospira canicola) 백신 접종을 하지 않았다면 MAT 검사 결과지도 필요해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+        '출국 45일 이내에 받은 검사 결과지예요.\n\n리슈만편모충(Leishmania infantum) 결과지는 모든 강아지가 필요해요.\n\n중성화하지 않았다면 브루셀라(Brucella canis) 결과지도 필요해요.\n\n접종을 하지 않았다면 렙토스피라(Leptospira canicola) 검사 결과지도 필요해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'infectious-disease-test',
     },
     {
