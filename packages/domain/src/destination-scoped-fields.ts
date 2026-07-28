@@ -119,6 +119,8 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'au_import_quarantine_date',
   'au_import_quarantine_confirmed',
   'au_quarantine_reservation_date',
+  // 예약을 마친 날(일정 목록 완료일) — 카드 입력값은 미래 계류 시작일이라 따로 찍는다.
+  'au_quarantine_reservation_recorded_at',
   // RNATT 선언서 발급일(검역본부) — 수입 허가 신청의 필수 제출물이라 목적지별로 따로 받는다.
   'au_rnatt_declaration_date',
   // 호주 수출 검역(왕복 귀국) — NOI → DAFF 수출허가·건강증명서 발급일.
@@ -153,6 +155,7 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'sg_gst_permit_date',
   'sg_gst_permit_confirmed',
   'sg_border_inspection_date',
+  'sg_border_inspection_recorded_at',
   'sg_border_inspection_confirmed',
   // 아르헨티나 — 도착 검역 + 귀국 수출 검역(SENASA CVI, 2026-07-23 추가).
   'ar_import_quarantine_date',

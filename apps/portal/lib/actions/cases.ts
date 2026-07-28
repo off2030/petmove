@@ -35,6 +35,8 @@ import {
   validateThEntryDate,
   validateTwEntryDate,
   buildDateRuleContext,
+  bookedRecordedAtKey,
+  isBookedStep,
   resolveDatedStepField,
   validateImportQuarantineDate,
   validateUsDogEntryDate,
@@ -2151,6 +2153,24 @@ export async function updateSimpleDateField(
     } else {
       if (v) nextData[field] = v // scoping-fallback-ok: token 없음(목적지 없음) 폴백
       else delete nextData[field]
+    }
+    // 예약·구매형 카드 — 카드에 넣는 날짜는 **미래**(계류 시작일·검사 예약일)라 일정 목록의
+    //   완료일로 쓸 수 없다. '예약을 마친 날'을 따로 찍어 그걸 완료일로 쓴다(항공권 구매의
+    //   flight_info_recorded_at 과 같은 모델, 2026-07-28). 최초 1회만 — 나중에 예약 날짜를
+    //   고쳐도 '언제 예약했는지'는 그대로 남아야 한다. 값을 비우면 함께 지운다.
+    if (isBookedStep(stepId, destination)) {
+      const recKey = bookedRecordedAtKey(field)
+      const existingRec = token ? readByDestValue(nextData, token, recKey) : nextData[recKey]
+      if (!v) {
+        nextData = token
+          ? writeByDestValue(nextData, token, recKey, null)
+          : (delete nextData[recKey], nextData)
+      } else if (typeof existingRec !== 'string' || existingRec.length < 10) {
+        const stamp = todayKst()
+        nextData = token
+          ? writeByDestValue(nextData, token, recKey, stamp)
+          : { ...nextData, [recKey]: stamp }
+      }
     }
 
     const { data: updated, error } = await admin

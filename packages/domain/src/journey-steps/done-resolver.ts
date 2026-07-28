@@ -17,6 +17,7 @@ import {
 } from '../procedure-checks/utils'
 import type { StepDoneSignal } from './types'
 import { buildCaseJourneyContext, isSingleDoseRabiesCase } from './applicability'
+import { bookedRecordedAtKey } from './dated-steps'
 import { findRabiesChainBreak } from './rabies-chain'
 import {
   deriveAdvanceNotificationStatus,
@@ -389,9 +390,13 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
     return dt && dt.length >= 10 ? dt.slice(0, 10) : null
   }
 
-  // booked:<field> — 표시일 = 예약·구매한 날짜(미래일 수 있다).
+  // booked:<field> — 표시일 = **예약을 마친 날**(recorded_at). 카드에 입력하는 날짜는 미래
+  // (계류 시작일·검사 예약일)라 완료일로 쓰면 다른 완료 카드와 어긋난다(항공권 구매 카드의
+  // flight_info_recorded_at 과 같은 모델). recorded_at 이 없는 예전 데이터는 입력값으로 폴백.
   if (typeof signal === 'string' && signal.startsWith('booked:')) {
     const field = signal.slice('booked:'.length)
+    const rec = data[bookedRecordedAtKey(field)]
+    if (typeof rec === 'string' && rec.length >= 10) return rec.slice(0, 10)
     const dt = typeof data[field] === 'string' ? (data[field] as string) : null
     return dt && dt.length >= 10 ? dt.slice(0, 10) : null
   }

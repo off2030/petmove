@@ -95,3 +95,31 @@ export function resolveDatedStepField(
   }
   return DATED_STEP_FIELDS[stepId] ?? null
 }
+
+/**
+ * 예약·구매형(`booked:`) 카드인가 — 목적지별 선언까지 본다.
+ * 저장 액션이 '예약을 마친 날'(recorded_at)을 함께 찍을지 판단하는 데 쓴다.
+ */
+export function isBookedStep(stepId: string, destination?: string | null): boolean {
+  const fromBase = JOURNEY_STEP_CATALOG.find((s) => s.id === stepId)?.done
+  if (typeof fromBase === 'string' && fromBase.startsWith('booked:')) return true
+  for (const [destKey, steps] of Object.entries(STEP_DESTINATION_OVERRIDES)) {
+    const done = (steps?.[stepId] as { done?: unknown } | undefined)?.done
+    if (typeof done !== 'string' || !done.startsWith('booked:')) continue
+    if (!destination) return true
+    if ((findDestinationKey(destination) ?? destination) === destKey) return true
+  }
+  return false
+}
+
+/**
+ * 예약형 카드의 '예약을 마친 날' 키 — `<필드에서 _date 뗀 것>_recorded_at`.
+ *
+ * 항공권 구매 카드의 flight_info_recorded_at 과 같은 모델이다. 카드에 입력하는 날짜는
+ * **미래**(계류 시작일·검사 예약일)라 일정 목록의 완료일로 쓸 수 없다 — 다른 완료 카드가
+ * 전부 '언제 했는지'를 보여주는데 혼자 미래 날짜가 떠서 '예정' 배지가 붙었다
+ * (2026-07-28 사용자 지적). 예약을 마친 날을 따로 찍어 그걸 완료일로 쓴다.
+ */
+export function bookedRecordedAtKey(field: string): string {
+  return `${field.replace(/_date$/, '')}_recorded_at`
+}
