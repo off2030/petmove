@@ -1614,9 +1614,16 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       },
       // 전염병 검사 — 리슈만편모충(전 개체) + 브루셀라(중성화 안 한 개체) + 렙토 MAT(백신 미접종 시).
       //   세 검사 모두 출국 45일 이내 채혈이라 한 카드에 묶는다(admin 도 같은 필드를 공유).
+      // 문구는 사용자 확정본 그대로(2026-07-28). ⛔ 다듬지 말 것 —
+      //   · '해외 공인 검사기관' · '임상 수의사만 의뢰' 는 DAFF 원문("laboratory recognised by
+      //     the government of the country of export" / "government approved veterinarian")과
+      //     달라 보이지만, 한국 실무 기준으로 사용자가 재확인한 표현이다. 원문에 맞춰
+      //     '한국 정부가 인정하는' · '검역관' 으로 되돌리지 말 것.
+      //   · '간이 키트(SNAP·신속검사) 결과는 인정되지 않아요' 와 '음성을 확인하세요' 는
+      //     확정본에 없어 뺐다(정량 인정 문구가 같은 사실을 담당).
       'infectious-disease-test': {
         description:
-          '전염병 검사를 받아 음성을 확인하세요.\n\n출국 45일 이내에 채혈해요.\n리슈만편모충(Leishmania infantum) 검사는 모든 강아지가 받아요. 정량 IFAT 또는 정량 ELISA만 인정돼요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT·TAT(SAT)·IFAT만 인정돼요.\n렙토스피라 Canicola 백신을 접종하지 않았다면 MAT 검사를 받아요.\n간이 키트(SNAP·신속검사) 결과는 인정되지 않아요.',
+          '출국일 기준 45일 이내에 전염병 검사를 받아요.\n\n리슈만편모충(Leishmania infantum) 검사를 받아요. 정량 IFAT 또는 정량 ELISA만 인정돼요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT·TAT(SAT)·IFAT만 인정돼요.\n렙토스피라(Leptospira canicola) 백신 접종을 하지 않았다면 MAT 검사를 받아요.\n해외 공인 검사기관에서 받아야 하며, 임상 수의사만 의뢰할 수 있어요.\n일반 동물병원에서는 이 검사를 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
         validationIds: ['au.infectious-disease-test-within-45days'],
       },
       // 외부구충 — 개 30일(7.6) / 고양이 21일(고양이 가이드 7.3). 시작 시점만 다르고 나머지는
