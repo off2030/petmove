@@ -1575,13 +1575,22 @@ export const EXTERNAL_PARASITE_START_WINDOWS: Record<string, { dog: number; cat:
 }
 
 /**
- * 외부 기생충 1차 처치가 출국 N일 전보다 늦게 시작했으면 **저장 거부**(2026-07-28 사용자 확정).
+ * 외부 기생충 처치일 **저장 거부** — 두 가지(2026-07-28 사용자 확정).
  *
- * 판정 대상은 **가장 이른 처치일** — 뒤에 추가하는 2차·3차는 이 하한과 무관하다.
+ *   ① 처치일이 출국일보다 늦음 — 논리적 불가능. **모든 목적지** 공통.
+ *   ② 1차 처치가 출국 N일 전보다 늦게 시작 — 호주만(EXTERNAL_PARASITE_START_WINDOWS).
+ *      판정 대상은 **가장 이른 처치일**이라 뒤에 추가하는 2차·3차는 이 하한과 무관하다.
+ *
+ * ⛔ 처치 간격·마지막 처치→출국 간격은 **검증하지 않는다**(2026-07-28 사용자 확정).
+ *   DAFF 기준이 "제조사 지침대로"라 제품마다 다르고, 앱은 제품별 재적용 간격표가 없다.
+ *   30일(개)·21일(개월 아님) 같은 임의 근사로 판정하면 규정대로 준비한 케이스를 잘못 잡거나
+ *   (프론트라인 진드기 14일) 반대로 끊긴 걸 통과시킨다. 근거 없는 판정은 넣지 않는다.
+ *   ⚠️ 뉴질랜드의 '마지막 처치는 출국 16일 이내'는 다르다 — IHS 2.2(2) 명문 규정이라 유지한다.
+ *
  * client(getSaveBlockError)·procedure-check(au.external-parasite-protocol-…) 공용 단일 출처.
- * 출국일이 비었거나 창이 없는 목적지·종이면 통과.
+ * 출국일이 비면 통과.
  */
-export function validateExternalParasiteStart(
+export function validateExternalParasiteDates(
   treatDates: string[],
   departureDate: string,
   destinationKey: string | null | undefined,
@@ -1589,6 +1598,12 @@ export function validateExternalParasiteStart(
 ): string | null {
   const dep = (departureDate ?? '').slice(0, 10)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dep)) return null
+  const all = treatDates
+    .map((d) => (d ?? '').slice(0, 10))
+    .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+  if (all.some((d) => d > dep)) {
+    return '외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.'
+  }
   const table = destinationKey ? EXTERNAL_PARASITE_START_WINDOWS[destinationKey] : undefined
   if (!table) return null
   const raw = (speciesRaw ?? '').toLowerCase()
@@ -1599,10 +1614,7 @@ export function validateExternalParasiteStart(
         ? table.cat
         : null
   if (minDays === null) return null
-  const dates = treatDates
-    .map((d) => (d ?? '').slice(0, 10))
-    .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
-    .sort()
+  const dates = [...all].sort()
   if (dates.length === 0) return null
   const gap = daysBetween(dates[0], dep)
   if (gap !== null && gap < minDays) {

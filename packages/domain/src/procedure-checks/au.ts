@@ -22,7 +22,7 @@ import {
 import { readByDestValue } from '../destination-scoped-fields'
 import {
   validateAuQuarantineReservationDate,
-  validateExternalParasiteStart,
+  validateExternalParasiteDates,
   validateInfectiousDiseaseTestDate,
 } from '../journey-steps/date-rules'
 import {
@@ -698,8 +698,8 @@ export const AU_CHECKS: ProcedureCheck[] = [
   // ⚠️ 인자를 객체로 받는 이유 — `pnpm lint:journey` 는 procedure-checks 소스에서 `id: '...'`
   //   리터럴을 정규식으로 훑어 룰 목록을 만든다. 위치 인자로 넘기면 id 리터럴이 잡히지 않아
   //   카드가 이 룰을 지목하는 순간 '없는 룰'로 실패한다(2026-07-27).
-  ...buildExternalParasiteRule({ id: 'au.external-parasite-protocol-cat', speciesKey: 'cat', maxIntervalDays: 21 }),
-  ...buildExternalParasiteRule({ id: 'au.external-parasite-protocol-dog', speciesKey: 'dog', maxIntervalDays: 30 }),
+  ...buildExternalParasiteRule({ id: 'au.external-parasite-protocol-cat', speciesKey: 'cat' }),
+  ...buildExternalParasiteRule({ id: 'au.external-parasite-protocol-dog', speciesKey: 'dog' }),
 
   // ── 내부구충 (양종 동일) ──
   {
@@ -758,15 +758,20 @@ export const AU_CHECKS: ProcedureCheck[] = [
   },
 ]
 
-/** 외부구충 룰 빌더. species 필터 + 첫 도즈 ≥ N일 전 + 도즈 간격 ≤ N + 마지막→출국 ≤ N. */
+/**
+ * 외부구충 룰 빌더 — species 필터 + **1차 시작 하한**만 본다.
+ *
+ * ⛔ 도즈 간격·마지막 처치→출국 간격 판정은 2026-07-28 사용자 확정으로 **제거**했다.
+ *   DAFF 기준이 "제조사 지침대로"라 제품마다 다른데 30일(개)·21일(고양이)을 근사로 쓰고
+ *   있었다. 프론트라인 계열은 진드기 기준 14일짜리도 있어 실제보다 느슨했고, 반대로
+ *   간격이 긴 제품은 규정대로 준비한 케이스를 잘못 잡았다. 근거 없는 판정은 넣지 않는다.
+ */
 function buildExternalParasiteRule({
   id,
   speciesKey,
-  maxIntervalDays,
 }: {
   id: string
   speciesKey: 'cat' | 'dog'
-  maxIntervalDays: number
 }): ProcedureCheck[] {
   return [
     {
@@ -775,8 +780,8 @@ function buildExternalParasiteRule({
       category: '구충',
       title:
         speciesKey === 'cat'
-          ? '외부구충 (고양이): 첫 처치 21일 전 이상, 출국까지 지속'
-          : '외부구충 (강아지): 첫 처치 30일 전 이상, 출국까지 지속',
+          ? '외부구충 (고양이): 첫 처치는 출국 21일 전 이상'
+          : '외부구충 (강아지): 첫 처치는 출국 30일 전 이상',
       description:
         speciesKey === 'cat'
           ? '고양이 가이드 7.3 — "Start at least 21 days before export"(예: 1/1 처치 → 최소 1/22 출국). 개(30일)와 값만 다르고 판정 구조는 같다. 2026-07-27 원문 확인.'
@@ -795,7 +800,7 @@ function buildExternalParasiteRule({
 
         // 1차 시작 하한 — 저장 거부와 **같은 함수**(문구·일수 단일 출처). 저장 뒤에 출국일을
         //   당겨 어긋난 경우를 표면화하는 짝 주의다.
-        const lateStart = validateExternalParasiteStart(
+        const lateStart = validateExternalParasiteDates(
           entries.map((e) => e.date),
           dep,
           'australia',
@@ -804,27 +809,6 @@ function buildExternalParasiteRule({
         if (lateStart) {
           issues.push(lateStart)
           offending.push(`external_parasite_dates[${first.originalIndex}].date`)
-        }
-
-        for (let i = 1; i < entries.length; i++) {
-          const prev = entries[i - 1]
-          const curr = entries[i]
-          const gap = daysBetween(prev.date, curr.date)
-          if (gap === null) continue
-          if (gap > maxIntervalDays) {
-            issues.push(`치료 간격이 ${maxIntervalDays}일을 넘으면 약효가 끊길 수 있어요.`)
-            offending.push(
-              `external_parasite_dates[${prev.originalIndex}].date`,
-              `external_parasite_dates[${curr.originalIndex}].date`,
-            )
-          }
-        }
-
-        const last = entries[entries.length - 1]
-        const lastToDep = daysBetween(last.date, dep)
-        if (lastToDep === null || lastToDep < 0 || lastToDep > maxIntervalDays) {
-          issues.push(`마지막 치료부터 출국일까지 약효가 이어져야 해요.`)
-          offending.push(`external_parasite_dates[${last.originalIndex}].date`)
         }
 
         if (issues.length > 0) {
@@ -836,7 +820,7 @@ function buildExternalParasiteRule({
         }
         return {
           ok: true,
-          message: `첫(${first.date}) → 마지막(${last.date}) → 출국(${dep}): 모든 간격 ≤${maxIntervalDays}일.`,
+          message: `첫 처치(${first.date}) → 출국(${dep}): ${daysBetween(first.date, dep)}일.`,
         }
       },
     } satisfies ProcedureCheck,

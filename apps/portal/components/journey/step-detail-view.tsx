@@ -33,7 +33,7 @@ import {
   validateSgReservationVsDeparture,
   validateEntryDateForDestination,
   validateEchinococcusWindow,
-  validateExternalParasiteStart,
+  validateExternalParasiteDates,
   validateInfectiousDiseaseTestDate,
   validatePhInternalParasiteWindow,
   readScopedImportPermitFiled,
@@ -1430,12 +1430,12 @@ export function StepDetailView({
           if (err) return err
         }
       }
-      // 외부 기생충 1차 처치 — 출국 30일(개)·21일(고양이) 전보다 늦게 시작하면 저장 거부
-      //   (2026-07-28 사용자 확정). 주의 룰(au.external-parasite-protocol-…)과 **같은 함수**.
-      //   판정은 가장 이른 처치일 하나 — 뒤에 추가하는 2차·3차는 이 하한과 무관하다.
-      //   ⛔ 뉴질랜드는 표에 없어 자동 통과(1차 앵커가 출국일이 아니라 바베시아 채혈이다).
+      // 외부 기생충 — ① 처치일이 출국일보다 늦음(모든 목적지) ② 1차가 출국 30일(개)·21일
+      //   (고양이) 전보다 늦게 시작(호주만) → 저장 거부. 주의 룰과 **같은 함수**.
+      //   ②의 판정 대상은 가장 이른 처치일 — 뒤에 추가하는 2차·3차는 이 하한과 무관하다.
+      //   ⛔ 뉴질랜드는 ② 표에 없어 통과(1차 앵커가 출국일이 아니라 바베시아 채혈이다).
       if (isExternalParasite) {
-        const err = validateExternalParasiteStart(
+        const err = validateExternalParasiteDates(
           parasite.map((e) => e.date ?? ''),
           (caseRow?.departure_date ?? '').slice(0, 10),
           destinationKey,
