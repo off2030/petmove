@@ -1231,7 +1231,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 44,
     // 날짜 입력 카드(2026-07-27 사용자 지정) — 운송 예약과 같은 모델. 버튼 완료였을 때는
     //   저장값이 '완료한 날'이라 계류 시작일을 아무 데서도 알 수 없었다.
-    done: 'dated:au_quarantine_reservation_date',
+    // 예약을 했다는 사실이 완료 — 계류 시작일이 미래여도 카드는 완료다(2026-07-28 사용자 지적).
+    //   dated 였을 때는 예약을 마쳐도 계류가 시작될 때까지 미완료로 남았다. 항공권 구매
+    //   카드(has-flight-date)와 같은 성격이라 판정을 맞췄다.
+    done: 'booked:au_quarantine_reservation_date',
     inputs: [
       {
         key: 'au_quarantine_reservation_date',
@@ -2086,7 +2089,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },
     order: 104,
     // 예약일 자체가 완료 증거 — 확인 게이트 없이 날짜(≤오늘) 입력만으로 완료(dated 모델).
-    done: 'dated:sg_border_inspection_date',
+    // 예약형 — 검사 예약일이 미래여도 '예약했다'가 완료다(호주 계류시설 예약과 같은 판단,
+    //   2026-07-28). ⛔ 같은 싱가포르라도 sg-gst-permit 은 **발급일**(이미 받은 것)이라
+    //   dated 그대로 둔다.
+    done: 'booked:sg_border_inspection_date',
     // 도착 최소 5일 전 예약 — 입력 차단(validateSgBorderInspectionDate)과 같은 함수(2026-07-25).
     validationIds: ['sg.border-inspection-5days-before'],
     inputs: [{ key: 'sg_border_inspection_date', label: '예약일', type: 'date', helpText: '국경 검사를 예약한 날짜' }],

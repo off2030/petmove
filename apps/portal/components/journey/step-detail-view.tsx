@@ -307,7 +307,10 @@ export function StepDetailView({
   // 국경검사 예약). quarantine 과 같은 날짜 입력 UI 를 재사용하되 '완료' 확인 게이트는 없다
   // (isConfirmStep 제외 + 저장은 updateSimpleDateField 로 분기). 완료 판정은 done-resolver
   // dated:<field> 가 날짜(≤오늘)만으로 한다.
-  const isSimpleDatedStep = typeof step.done === 'string' && step.done.startsWith('dated:')
+  // dated(도래해야 완료) · booked(입력하면 완료) — 입력 UI·저장 경로는 같다.
+  const isSimpleDatedStep =
+    typeof step.done === 'string' &&
+    (step.done.startsWith('dated:') || step.done.startsWith('booked:'))
   // 버튼 완료 카드 — 날짜가 의미 없는 절차(2026-07-26 사용자 결정, CDC 신고가 원형·같은 날
   // 귀국 절차 카드 전체로 확장). 날짜 입력칸 없이 '완료' 버튼이 오늘 날짜를 기존 필드에 자동
   // 기록한다(dated done-resolver·저장 액션·펫무브워크 표시는 그대로 — 바뀌는 건 입력 UI 뿐).
@@ -316,7 +319,7 @@ export function StepDetailView({
     typeof step.done === 'string' && step.done.startsWith('quarantine:')
       ? step.done.slice('quarantine:'.length)
       : isSimpleDatedStep
-        ? (step.done as string).slice('dated:'.length)
+        ? (step.done as string).replace(/^(dated|booked):/, '')
         : null
   const isImportQuarantine = importQuarantineField !== null
   const importQuarantineSubtitle =

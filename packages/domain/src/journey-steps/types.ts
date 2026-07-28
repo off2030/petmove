@@ -116,6 +116,12 @@ export type StepDoneSignal =
   // resolver 가 모든 나라를 처리(예: 'quarantine:th_import_quarantine_date',
   // 'quarantine:th_export_quarantine_date'). confirmed 키는 _date→_confirmed.
   | `quarantine:${string}`
+  // booked:<field> — **예약·구매형** 카드. 날짜가 입력되면 그 자리에서 완료로 본다
+  //   (미래 날짜여도). 예약을 '했다'는 사실이 완료이고, 그 날짜가 오는지는 별개다.
+  //   ⚠️ `dated:` 와 헷갈리지 말 것 — dated 는 '날짜가 도래해야 완료'(발급일·인증일처럼
+  //   이미 일어난 일을 적는 칸). 계류시설 예약에 dated 를 쓰던 시절엔 예약을 해도 계류
+  //   시작일까지 카드가 미완료로 남았다(2026-07-28 사용자 지적으로 분리).
+  | `booked:${string}`
   // dated:<field> — 발급일·예약일 자체가 완료 증거인 절차(싱가포르 GST 허가·국경검사 예약).
   // 확인 게이트 없이 날짜(≤오늘) 입력만으로 완료. confirm 이 필요한 검역·검사엔 쓰지 말 것.
   | `dated:${string}`

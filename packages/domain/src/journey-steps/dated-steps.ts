@@ -29,10 +29,14 @@ import { findDestinationKey } from './applicability'
 import { JOURNEY_STEP_CATALOG } from './catalog'
 import { STEP_DESTINATION_OVERRIDES } from './destination-overrides'
 
-const PREFIX = 'dated:'
+// 저장 경로가 같은 두 신호 — dated(도래해야 완료) · booked(입력하면 완료).
+// 완료 판정만 다르고 '이 stepId 는 이 필드를 쓴다'는 사실은 동일하다.
+const PREFIXES = ['dated:', 'booked:'] as const
 
 function datedField(done: unknown): string | null {
-  return typeof done === 'string' && done.startsWith(PREFIX) ? done.slice(PREFIX.length) : null
+  if (typeof done !== 'string') return null
+  for (const p of PREFIXES) if (done.startsWith(p)) return done.slice(p.length)
+  return null
 }
 
 const map: Record<string, string> = {}

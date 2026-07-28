@@ -55,6 +55,13 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     return isQuarantineConfirmed(data, field, field.replace(/_date$/, '_confirmed'))
   }
 
+  // booked:<field> — 예약·구매형. 날짜가 있으면 **미래여도** 완료(예약을 했다는 사실이 완료).
+  if (typeof signal === 'string' && signal.startsWith('booked:')) {
+    const field = signal.slice('booked:'.length)
+    const v = data[field]
+    return typeof v === 'string' && v.length >= 10
+  }
+
   // dated:<field> — 발급일·예약일 자체가 완료 증거인 절차(싱가포르 GST 허가·국경검사 예약).
   // 검역·검사와 달리 '완료' 확인 게이트 없이 날짜(≤오늘) 입력만으로 완료(미래=미완=예정).
   if (typeof signal === 'string' && signal.startsWith('dated:')) {
@@ -378,6 +385,13 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
   // quarantine:<field> — 나라별 도착·출국 검역. 표시일 = 그 나라 검역일 필드 값.
   if (typeof signal === 'string' && signal.startsWith('quarantine:')) {
     const field = signal.slice('quarantine:'.length)
+    const dt = typeof data[field] === 'string' ? (data[field] as string) : null
+    return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+  }
+
+  // booked:<field> — 표시일 = 예약·구매한 날짜(미래일 수 있다).
+  if (typeof signal === 'string' && signal.startsWith('booked:')) {
+    const field = signal.slice('booked:'.length)
     const dt = typeof data[field] === 'string' ? (data[field] as string) : null
     return dt && dt.length >= 10 ? dt.slice(0, 10) : null
   }
