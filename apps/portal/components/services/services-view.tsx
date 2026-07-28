@@ -260,6 +260,32 @@ function sortByCardOrder<T extends { card: string }>(
   return items.map((i) => (order.has(i.card) ? known[k++] : i))
 }
 
+/** 그 목적지 여정에 이 카드가 실제로 뜨는가(종 무관 — 개 기준으로 펼쳐 판단). */
+function cardAppliesTo(destKey: string, cardId: string): boolean {
+  const step = JOURNEY_STEP_CATALOG.find((s) => s.id === cardId)
+  if (!step) return false
+  const app = step.applicability
+  const inDest = app.destinations === 'all' || app.destinations.includes(destKey)
+  const inRound = app.roundOnlyDestinations?.includes(destKey) ?? false
+  return inDest || inRound
+}
+
+/**
+ * 맡기기 항목 라벨에 붙일 종 표기 — '(강아지)'·'(고양이)' 또는 없음.
+ *
+ * 진실 출처는 **여정 카드의 applicability**다(2026-07-28). 목적지 프로파일의 vaccines 선언
+ * 형태(string vs { key, species })로 판단하면 호주처럼 카드 쪽에서만 종을 제한한 나라를
+ * 놓친다. 카드가 없거나 전 종이면 표기하지 않는다.
+ */
+function speciesTagFor(destKey: string, cardId: string | undefined): string {
+  if (!cardId) return ''
+  const step = JOURNEY_STEP_CATALOG.find((s) => s.id === cardId)
+  if (!step) return ''
+  const app = step.applicability
+  const eff = app.speciesByDestination?.[destKey] ?? app.species
+  return eff === 'dog' ? '(강아지)' : eff === 'cat' ? '(고양이)' : ''
+}
+
 function offlineDetail(opts: {
   /** destination-config 키 — included 파생의 프로파일 출처. */
   destKey: string
@@ -297,10 +323,18 @@ function offlineDetail(opts: {
     { label: '광견병 백신 접종', card: 'rabies-vaccine-1' },
   ]
   // 백신·검사 항목은 destination 프로파일에서 파생 — 여정과 단일 출처(빠지면 서비스 목록이
-  // 여정과 어긋난다. 예: 튀르키예 external_parasite 누락 — 2026-07-23 수정). **전 종 선언
-  // (string)만** 표기: EU 촌충국의 { key:'internal_parasite', species:'dog' } 같은 종 제한
-  // 선언은 개 전용이라 '대신해 드려요'에 일반화하면 오해 → 제외. 순서는 여정 카드 순서.
-  const hasVaccine = (k: string) => (o?.vaccines ?? []).some((v) => v === k)
+  // 여정과 어긋난다. 예: 튀르키예 external_parasite 누락 — 2026-07-23 수정). 순서는 여정 카드 순서.
+  //
+  // 종 제한 항목은 **빼지 않고 라벨에 '(강아지)'·'(고양이)'를 붙인다**(2026-07-28 사용자 결정).
+  //   예전엔 object 선언({ key:'internal_parasite', species:'dog' })을 통째로 제외해서 EU
+  //   촌충국(영국·아일랜드·몰타·노르웨이·핀란드)의 촌충 치료가 맡기기 목록에서 통째로
+  //   빠져 있었다. 반대로 호주 독감·켄넬코프·전염병 검사는 선언이 string 이라 제외 규칙을
+  //   안 타고 고양이 보호자에게도 그대로 보였다. 두 문제가 같은 뿌리다 —
+  //   **제한의 진실은 선언 형태가 아니라 여정 카드**(applicability)에 있다.
+  //   그래서 카드에서 직접 읽는다(speciesLabelFor). 이 화면은 종을 모르므로 목록은 한 벌로
+  //   두고 라벨로만 구분한다.
+  const hasVaccine = (k: string) =>
+    (o?.vaccines ?? []).some((v) => (typeof v === 'string' ? v : v.key) === k)
   if (hasVaccine('general')) items.push({ label: '종합백신 접종', card: 'general-vaccine' })
   if (hasVaccine('civ')) items.push({ label: '독감 접종', card: 'civ-vaccine' })
   // '켄넬코프 백신 접종'(2026-07-27 사용자 지정) — 여정 카드명('켄넬코프 백신')에 맡기기의
@@ -309,7 +343,16 @@ function offlineDetail(opts: {
   if (hasVaccine('covid')) items.push({ label: '코로나 접종', card: 'corona-vaccine' })
   if (hasVaccine('infectious_disease')) items.push({ label: '전염병 검사', card: 'infectious-disease-test' })
   if (hasVaccine('external_parasite')) items.push({ label: '외부 기생충 치료', card: 'external-parasite' })
-  if (hasVaccine('internal_parasite')) items.push({ label: '내부 기생충 치료', card: 'internal-parasite' })
+  if (hasVaccine('internal_parasite')) {
+    // EU 촌충국은 내부구충 카드 대신 '촌충 치료'(echinococcus-treatment)를 띄운다 — 같은
+    //   internal_parasite 선언이지만 카드가 다르다. 카드가 실제로 뜨는 쪽을 그대로 쓴다.
+    const echino = cardAppliesTo(opts.destKey, 'echinococcus-treatment')
+    items.push(
+      echino
+        ? { label: '촌충 치료', card: 'echinococcus-treatment' }
+        : { label: '내부 기생충 치료', card: 'internal-parasite' },
+    )
+  }
   if (hasVaccine('heartworm')) items.push({ label: '심장사상충 검사', card: 'heartworm-test' })
   if (titerIncluded) items.push({ label: '광견병 항체 검사', card: 'rabies-titer' })
   items.push(...(opts.procedureItems ?? []))
@@ -320,7 +363,10 @@ function offlineDetail(opts: {
   //   (튀르키예·멕시코·브라질·싱가포르·하와이 = 항체/기생충 뒤바뀜, 아일랜드·몰타·노르웨이·
   //   키프로스·이스라엘·홍콩·스위스 = 사전 통지/수입 허가가 임상검사 뒤). 필리핀처럼 기생충이
   //   항체보다 **앞**인 나라도 있어 한 가지 고정 순서로는 맞출 수 없다 — 카드가 유일한 출처다.
-  const included: Prep[] = sortByCardOrder(opts.destKey, opts.trip, items)
+  const included: Prep[] = sortByCardOrder(opts.destKey, opts.trip, items).map((i) => {
+    const tag = speciesTagFor(opts.destKey, i.card)
+    return tag ? { ...i, label: `${i.label}${tag}` } : i
+  })
   included.push({ label: '서류 준비' })
 
   // 특수 절차(introHighlight)가 없는 나라도 있다 — 없으면 그 절만 빼고 문장을 만든다.
@@ -470,6 +516,24 @@ export const OFFLINE_DETAIL: Record<string, DestDetail> = {
   // 유럽(EU 24개국) — EU Reg 576/2013 공통 절차라 한 벌로 공유(resolveDetail 가 'eu' 로 정규화).
   // 한국은 EU 비지정국이라 광견병 항체검사 필수. 일본과 달리 검역소 사전신고·수출검역 신청 절차는 없음.
   eu: offlineDetail({ destKey: 'eu', cost: '36~46', period: '최소 3~4개월' }),
+  // 촌충국 5개 — EU 공통 절차는 같지만 **촌충 치료(에키노코쿠스)가 하나 더** 있다. 'eu'
+  //   블록을 그대로 쓰면 destKey 가 'eu' 라 그 나라 프로파일(internal_parasite)을 못 봐서
+  //   맡기기 목록에서 촌충이 통째로 빠졌다(2026-07-28 사용자 지적). 비용·기간은 EU 공통과
+  //   같으므로 destKey 만 자기 키로 바꿔 한 줄씩 만든다.
+  ...Object.fromEntries(
+    (
+      [
+        ['영국', 'uk'],
+        ['아일랜드', 'ireland'],
+        ['몰타', 'malta'],
+        ['노르웨이', 'norway'],
+        ['핀란드', 'finland'],
+      ] as const
+    ).map(([ko, key]) => [
+      ko,
+      offlineDetail({ destKey: key, cost: '36~46', period: '최소 3~4개월' }),
+    ]),
+  ),
   // 스위스 — EU 공통 + FSVO 수입허가 신청 추가. 그 절차로 비용 상한 +10만원(46→56만).
   스위스: offlineDetail({
     destKey: 'switzerland',
