@@ -35,7 +35,7 @@ import {
   validateThEntryDate,
   validateTwEntryDate,
   buildDateRuleContext,
-  DATED_STEP_FIELDS,
+  resolveDatedStepField,
   validateImportQuarantineDate,
   validateUsDogEntryDate,
   writeByDestValue,
@@ -2096,10 +2096,12 @@ export async function markApplicationIssued(
 // 확인 게이트 없이 날짜만 저장(done-resolver dated:<field> 가 ≤오늘=완료 판정). 클라이언트는
 // stepId 만 넘기고 서버가 신뢰 목록에서 필드를 결정한다(임의 키 쓰기 차단).
 // 카탈로그 + 전 목적지 override 의 실효 `done: 'dated:<field>'` 에서 파생한 단일 출처
-// (@petmove/domain DATED_STEP_FIELDS). ⛔ 여기서 손으로 목록을 만들지 말 것 — 그렇게 하다
+// (@petmove/domain resolveDatedStepField). ⛔ 여기서 손으로 목록을 만들지 말 것 — 그렇게 하다
 // 버튼 완료 카드만 훑는 조건 때문에 계류시설 예약 저장이 죽었다(2026-07-28). 자세한 사연은
 // packages/domain/src/journey-steps/dated-steps.ts 주석.
-const SIMPLE_DATE_STEP_FIELDS: Readonly<Record<string, string>> = DATED_STEP_FIELDS
+//
+// ⚠️ 목적지를 반드시 넘길 것 — 같은 stepId('departure')가 호주·뉴질랜드·싱가포르에서 각각
+//   다른 검역일 필드를 쓴다. 목적지를 빼면 셋 중 하나로만 저장된다.
 
 /**
  * 순수 날짜 완료 카드의 날짜 저장 — 범용. 확인 플래그 없음(dated 모델). 필드는 by_dest 분리.
@@ -2111,7 +2113,7 @@ export async function updateSimpleDateField(
   destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
-    const field = SIMPLE_DATE_STEP_FIELDS[stepId]
+    const field = resolveDatedStepField(stepId, destination)
     if (!field) return { ok: false, error: '알 수 없는 절차 단계입니다.' }
     const v = typeof date === 'string' ? date.trim() : ''
     if (v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {

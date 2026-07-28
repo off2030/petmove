@@ -151,6 +151,23 @@ export const FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS: string[] = [
   'hawaii',
   'singapore',
 ]
+/**
+ * 도착 검역 카드의 '예정 [날짜]' 배지를 **계류시설 예약일**로 띄우는 목적지 → 그 필드 키.
+ *
+ * 계류가 있는 편도 목적지(싱가포르·호주·뉴질랜드)는 보호자가 공항에 가지 않아 도착 검역
+ * 카드에 날짜 입력칸이 없다. 대신 예약 카드에 넣은 계류 시작일이 곧 검역 시작일이므로
+ * 그 날짜를 예정 배지로 쓴다(2026-07-28).
+ *
+ * ⛔ 이 목적지들에 항공권 날짜(FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS)를 쓰지 말 것 —
+ *   호주·뉴질랜드는 저녁 출발 → 다음 날 도착이 흔해 하루 어긋난다. 싱가포르는 당일 도착
+ *   노선이라 명단에 있지만, 예약일이 더 정확하므로 예약일을 우선한다(없으면 항공권 날짜로 폴백).
+ */
+export const QUARANTINE_START_FIELD_BY_DESTINATION: Record<string, string> = {
+  australia: 'au_quarantine_reservation_date',
+  new_zealand: 'nz_quarantine_reservation_date',
+  singapore: 'sg_quarantine_reservation_date',
+}
+
 export const FLIGHT_DATE_RETURN_QUARANTINE_DESTINATIONS: string[] = [
   'japan',
   'philippines',

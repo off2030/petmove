@@ -14,10 +14,18 @@
  * 그래서 **카탈로그 + 전 목적지 override 의 실효 done** 에서 파생한다. 새 dated 카드를
  * 만들거나 override 로 dated 로 바꾸면 저장이 자동으로 열린다. 손으로 적을 자리는 없다.
  *
- * ⚠️ 한 stepId 가 목적지마다 다른 필드를 가리키면 이 평면 맵으로는 표현할 수 없다.
- *    그런 충돌은 DATED_STEP_FIELD_CONFLICTS 에 모아 두고 `pnpm lint:validation-wiring`
- *    이 실패시킨다. 실제로 그런 카드가 필요해지면 맵을 목적지별로 쪼개야 한다.
+ * ── 목적지마다 필드가 다른 카드 ────────────────────────────────────────────
+ * 같은 stepId 가 목적지마다 다른 필드를 가리키는 경우가 실제로 있다 — 'departure'(도착 검역)
+ * 카드가 호주·뉴질랜드·싱가포르에서 각각 `{국가}_import_quarantine_date` 를 쓴다
+ * (2026-07-28 완료 버튼 전환). 평면 맵으로는 표현할 수 없으므로 **목적지별 맵**을 따로
+ * 만들고 `resolveDatedStepField(stepId, destination)` 로 푼다. server action 은 이미
+ * destination 을 받으므로 그대로 넘기면 된다.
+ *
+ * 평면 맵(DATED_STEP_FIELDS)은 목적지를 모를 때의 기본값이다. 목적지별로 갈리는 stepId 는
+ * DATED_STEP_FIELD_CONFLICTS 에 남고, `pnpm lint:validation-wiring` 이 **목적지별로 풀었을
+ * 때** 카드 선언과 일치하는지 전수 검사한다.
  */
+import { findDestinationKey } from './applicability'
 import { JOURNEY_STEP_CATALOG } from './catalog'
 import { STEP_DESTINATION_OVERRIDES } from './destination-overrides'
 
@@ -28,6 +36,7 @@ function datedField(done: unknown): string | null {
 }
 
 const map: Record<string, string> = {}
+const byDest: Record<string, Record<string, string>> = {}
 const conflicts: Array<{ stepId: string; fields: string[] }> = []
 const seen = new Map<string, Set<string>>()
 
@@ -42,19 +51,43 @@ for (const step of JOURNEY_STEP_CATALOG) {
   const field = datedField(step.done)
   if (field) record(step.id, field)
 }
-for (const steps of Object.values(STEP_DESTINATION_OVERRIDES)) {
+for (const [destKey, steps] of Object.entries(STEP_DESTINATION_OVERRIDES)) {
   for (const [stepId, override] of Object.entries(steps ?? {})) {
     const field = datedField((override as { done?: unknown } | undefined)?.done)
-    if (field) record(stepId, field)
+    if (!field) continue
+    record(stepId, field)
+    byDest[stepId] = { ...(byDest[stepId] ?? {}), [destKey]: field }
   }
 }
 for (const [stepId, fields] of seen) {
   if (fields.size > 1) conflicts.push({ stepId, fields: [...fields] })
 }
 
-/** stepId → 저장 필드. server action 의 '임의 키 쓰기 차단' 신뢰 목록으로 쓴다. */
+/** stepId → 저장 필드(목적지 무관 기본값). 목적지를 알면 resolveDatedStepField 를 쓸 것. */
 export const DATED_STEP_FIELDS: Readonly<Record<string, string>> = map
 
-/** 한 stepId 가 목적지마다 다른 필드를 가리키는 경우 — 린트가 실패시킨다. 평시 빈 배열. */
+/** stepId → 목적지 키 → 저장 필드. override 가 done 을 dated: 로 바꾼 카드만 들어 있다. */
+export const DATED_STEP_FIELDS_BY_DESTINATION: Readonly<
+  Record<string, Readonly<Record<string, string>>>
+> = byDest
+
+/** 한 stepId 가 목적지마다 다른 필드를 가리키는 경우 — 목적지별 맵으로 풀린다(참고용). */
 export const DATED_STEP_FIELD_CONFLICTS: ReadonlyArray<{ stepId: string; fields: string[] }> =
   conflicts
+
+/**
+ * stepId(+목적지) → 저장 필드. 목적지별 선언이 있으면 그걸, 없으면 평면 맵을 쓴다.
+ * destination 은 한글 토큰('호주')이든 키('australia')든 받는다 — findDestinationKey 로 정규화.
+ */
+export function resolveDatedStepField(
+  stepId: string,
+  destination?: string | null,
+): string | null {
+  const perDest = DATED_STEP_FIELDS_BY_DESTINATION[stepId]
+  if (perDest && destination) {
+    const key = findDestinationKey(destination) ?? destination
+    const field = perDest[key]
+    if (field) return field
+  }
+  return DATED_STEP_FIELDS[stepId] ?? null
+}

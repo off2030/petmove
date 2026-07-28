@@ -2,6 +2,7 @@ import type { CaseRow } from '@petmove/domain'
 import {
   ALL_PROCEDURE_CHECKS,
   FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS,
+  QUARANTINE_START_FIELD_BY_DESTINATION,
   FLIGHT_DATE_RETURN_QUARANTINE_DESTINATIONS,
   JOURNEY_STEP_CATALOG,
   SINGLE_DOSE_RABIES_DESTINATIONS,
@@ -594,14 +595,12 @@ export function buildJourney(
       typeof step.done === 'string' && step.done.startsWith('quarantine:')
         ? step.done.slice('quarantine:'.length)
         : null
-    // 입력칸 없는 도착 검역(싱가포르·호주·뉴질랜드) — 'quarantine-start:<계류 예약일 필드>'.
-    //   이 분기를 빠뜨리면 카드가 '평범한 출국 카드'로 분류돼 **출국일**이 예정 배지로 나간다
-    //   (2026-07-28 실제로 그렇게 났다). 항공권 날짜를 도착 검역 예정 배지로 쓰는 건
-    //   FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS 로 한정한 결정이라 그 자체가 위반이다.
-    const quarantineStartField =
-      typeof step.done === 'string' && step.done.startsWith('quarantine-start:')
-        ? step.done.slice('quarantine-start:'.length)
-        : null
+    // 날짜 입력칸 없이 '완료' 버튼만 있는 도착 검역(싱가포르·호주·뉴질랜드) — 예정 배지는
+    //   계류시설 예약 카드의 계류 시작일로 띄운다. 이 분기를 빠뜨리면 카드가 '평범한 출국
+    //   카드'로 분류돼 **출국일**이 예정 배지로 나간다(2026-07-28 실제로 그렇게 났다).
+    const quarantineStartField = isDeparture
+      ? (QUARANTINE_START_FIELD_BY_DESTINATION[ctx.destinationKey ?? ''] ?? null)
+      : null
     // 수입검역(= departure 의 목적지 override — 일본 'has-jp-import-quarantine' 또는 그 외
     // 나라 quarantine: 시그널)은 검역일로 완료·날짜를 잡으므로 departure 의 '출국일'
     // shortcut 에서 제외 — 일반 경로(done→완료일)를 탄다.

@@ -28,10 +28,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { JOURNEY_STEP_CATALOG } from '../packages/domain/src/journey-steps/catalog'
-import {
-  DATED_STEP_FIELDS,
-  DATED_STEP_FIELD_CONFLICTS,
-} from '../packages/domain/src/journey-steps/dated-steps'
+import { resolveDatedStepField } from '../packages/domain/src/journey-steps/dated-steps'
 import { resolveStepForDestination } from '../packages/domain/src/journey-steps/destination-overrides'
 import { ALL_PROCEDURE_CHECKS, checkCountryKeys } from '../packages/domain/src/procedure-checks/registry'
 import { DESTINATION_OVERRIDES, destinationKeysWhere } from '../packages/domain/src/destination-config'
@@ -902,15 +899,12 @@ function main(): void {
       const done = resolved.done
       if (typeof done !== 'string' || !done.startsWith('dated:')) continue
       const field = done.slice('dated:'.length)
-      const mapped = DATED_STEP_FIELDS[resolved.id]
+      // 목적지별로 푼 값과 비교한다 — 같은 stepId 가 나라마다 다른 필드를 쓰는 카드가 있다
+      //   ('departure' 도착 검역 = 호주·뉴질랜드·싱가포르 각각 다른 검역일 필드).
+      const mapped = resolveDatedStepField(resolved.id, dest)
       if (mapped !== field) {
         datedGaps.push(`  [${dest}] ${resolved.id}: 카드는 ${field}, 저장 맵은 ${mapped ?? '(없음)'}`)
       }
-    }
-  }
-  if (DATED_STEP_FIELD_CONFLICTS.length > 0) {
-    for (const c of DATED_STEP_FIELD_CONFLICTS) {
-      datedGaps.push(`  ${c.stepId}: 목적지마다 필드가 다름 (${c.fields.join(', ')}) — 평면 맵으로 표현 불가`)
     }
   }
   if (datedGaps.length > 0) {

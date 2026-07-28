@@ -1597,9 +1597,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '호주 수입 검역 서류',
       validationIds: ['au.import-quarantine-date-valid'],
-      // 입력칸 없이 안내만 — 계류시설 편도 목적지 3국 공통(2026-07-28 사용자 결정).
+      // 날짜 입력칸 없이 안내 + '완료' 버튼 — 계류 편도 3국 공통(2026-07-28 사용자 결정).
       infoOnly: true,
-      reservationField: 'au_quarantine_reservation_date',
     },
     extra: {
       // 입국 항체 배선 override — 팩토리 기본(order 55 · 귀국용 룰)을 호주 입국 항체로 교체.
@@ -1804,9 +1803,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '뉴질랜드 수입 검역 서류',
       validationIds: ['nz.import-quarantine-date-valid'],
-      // 입력칸 없이 안내만 — 계류시설 편도 목적지 3국 공통(2026-07-28 사용자 결정).
+      // 날짜 입력칸 없이 안내 + '완료' 버튼 — 계류 편도 3국 공통(2026-07-28 사용자 결정).
       infoOnly: true,
-      reservationField: 'nz_quarantine_reservation_date',
     },
     extra: {
       // 입국 항체 배선 override — 팩토리 기본(order 55 · 귀국용 룰)을 뉴질랜드 입국 항체로 교체.
@@ -2179,9 +2177,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '싱가포르 수입 검역 서류',
       validationIds: ['sg.import-quarantine-date-valid'],
-      // 입력칸 없이 안내만 — 계류시설 편도 목적지 3국 공통(2026-07-28 사용자 결정).
+      // 날짜 입력칸 없이 안내 + '완료' 버튼 — 계류 편도 3국 공통(2026-07-28 사용자 결정).
       infoOnly: true,
-      reservationField: 'sg_quarantine_reservation_date',
     },
     extra: {
       // 입국 항체 배선 override — 팩토리 기본 RETURN_ONLY(귀국용)를 싱가포르 입국 항체 룰로 교체.
@@ -2894,33 +2891,28 @@ function importQuarantineCard(opts: {
    * 이미 입력한 계류 시작일과 같은 날**이라 같은 값을 두 번 묻는 꼴이었다
    * (2026-07-28 사용자 결정).
    *
-   * 완료·표시는 `quarantine-start:<reservationField>` — **계류시설 예약 카드에 넣은 계류
-   * 시작일**을 그대로 본다. 예정 배지도 그 날짜로 뜬다.
+   * **완료는 보호자가 '완료' 버튼을 누를 때**(2026-07-28 사용자 결정). 누르면 그날 날짜가
+   * `{국가}_import_quarantine_date` 에 기록된다 = 실제로 데려온 날. 날짜만으로 자동 완료하지
+   * 않는 이유는 계류가 10~30일 이어지기 때문 — 도착일에 여정이 끝나 버리면 보호자가 실제로
+   * 반려동물을 되찾기 한참 전에 모든 단계가 완료로 보인다.
    *
-   * ⛔ `departure-past`(출국일)로 두지 말 것 — 호주·뉴질랜드는 인천 저녁 출발 → 다음 날
-   *   도착이 흔해 하루 어긋난다. 게다가 항공권 날짜를 도착 검역 예정 배지로 쓰는 건
-   *   FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS(일본·필리핀·하와이·싱가포르, 당일 도착
-   *   노선만) 로 이미 한정해 둔 결정이라 호주·뉴질랜드에 쓰면 그 결정과 어긋난다.
+   * 완료 전 '예정 [날짜]' 배지는 **계류시설 예약 카드에 넣은 계류 시작일**을 쓴다
+   * (scenario.ts QUARANTINE_START_FIELD_BY_DESTINATION).
+   * ⛔ 출국일(항공권)을 쓰지 말 것 — 호주·뉴질랜드는 저녁 출발 → 다음 날 도착이 흔해 하루
+   *   어긋나고, 항공권 날짜를 도착 검역 예정 배지로 쓰는 건
+   *   FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS(당일 도착 노선만)로 한정한 결정이다.
    *
-   * 예약일이 비어 있으면 배지도 완료도 없다 — '명단 밖 목적지는 예정 배지를 안 띄운다'는
-   * 기존 정책과 같은 결과다.
-   *
-   * ⚠️ validationIds 는 그대로 둔다 — 펫무브워크에서 검역일 필드를 채우면 룰이 다시 돈다.
-   *   값이 없으면 룰은 SKIP 이라 앱에는 아무것도 뜨지 않는다.
+   * ⚠️ validationIds 는 그대로 둔다 — 버튼으로 기록된 날짜에도 그 나라 룰이 그대로 돈다.
    */
   infoOnly?: boolean
-  /** infoOnly 카드의 완료·표시 기준 필드 — 계류시설 예약 카드의 계류 시작일 키. */
-  reservationField?: string
 }): Partial<StepDefinition> {
   const card: Partial<StepDefinition> = {
     title: `${opts.label} 수입 검역`,
     shortLabel: '수입',
     description: opts.description,
     doneSummary: `${opts.label} 수입 검역을 받았어요.`,
-    done:
-      opts.infoOnly && opts.reservationField
-        ? (`quarantine-start:${opts.reservationField}` as StepDefinition['done'])
-        : `quarantine:${opts.fieldKey}`,
+    done: opts.infoOnly ? `dated:${opts.fieldKey}` : `quarantine:${opts.fieldKey}`,
+    ...(opts.infoOnly ? { buttonComplete: true } : {}),
     ...(opts.infoOnly
       ? {}
       : {
@@ -3005,10 +2997,8 @@ function seaPermitOverrides(opts: {
     attachmentLabel?: string
     /** 필수 — importQuarantineCard 와 같은 이유(그 나라 룰을 반드시 지목). */
     validationIds: string[]
-    /** 입력칸 없이 안내만 — 사유는 importQuarantineCard 의 infoOnly 주석 참고. */
+    /** 날짜 입력칸 없이 안내 + '완료' 버튼 — 사유는 importQuarantineCard 의 infoOnly 주석 참고. */
     infoOnly?: boolean
-    /** infoOnly 카드의 완료·표시 기준 필드(계류 시작일). */
-    reservationField?: string
   }
   /** 나라 고유 추가 카드 오버라이드(필리핀 internal-parasite 등). */
   extra?: Partial<Record<string, Partial<StepDefinition>>>
