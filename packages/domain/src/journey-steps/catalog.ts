@@ -240,7 +240,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         key: 'id_date',
         label: '인증일',
         type: 'date',
-        helpText: '검역관이 마이크로칩을 확인한 날짜 (두 번 받는 경우 첫 번째 날짜)',
+        helpText: '검역관이 마이크로칩을 확인한 날짜',
       },
     ],
     // 순서 검증만 둔다 — 인증일 ≤ 가장 이른 채혈일(같은 날 허용, IHS 1.11 guidance).
