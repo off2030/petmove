@@ -24,7 +24,7 @@ import {
   validateIdentityCheckAfterMicrochip,
   validateIdentityCheckBeforeTiter,
   validateRabiesDocRequiresTiter,
-  validateAuInternalParasiteDates,
+  validateInternalParasiteSpacing,
   validateParasiteDateForDestination,
   validateAuQuarantineReservationDate,
   validateExternalParasiteDates,
@@ -815,7 +815,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       }
       // 간격·2차 창 — 저장 거부와 **같은 함수**(문구·일수 단일 출처). 저장 뒤에 출국일이나
       //   다른 회차를 고쳐 어긋난 경우를 표면화하는 짝 주의다.
-      const protocol = validateAuInternalParasiteDates([dose1.date, dose2.date], dep)
+      const protocol = validateInternalParasiteSpacing([dose1.date, dose2.date], dep)
       if (protocol) {
         issues.push(protocol)
         offending.push(

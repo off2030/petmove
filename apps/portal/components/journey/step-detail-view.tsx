@@ -36,7 +36,7 @@ import {
   validateIdentityCheckOrder,
   validateNzQuarantineStartAfterTiter,
   validateTiterAfterIdentityCheck,
-  validateAuInternalParasiteDates,
+  validateInternalParasiteSpacing,
   validateExternalParasiteDates,
   validateInfectiousDiseaseTestDate,
   validatePhInternalParasiteWindow,
@@ -1506,12 +1506,13 @@ export function StepDetailView({
         )
         if (err) return err
       }
-      // 호주 내부구충 2회 프로토콜 — 간격 14일 이상 + 2차는 출국 5일 이내(DAFF 7.7 명문).
-      //   2회가 다 들어왔을 때만 본다. '45일 이내'·'출국일보다 늦음'은 바로 위
+      // 내부구충 2회 프로토콜 — 간격 14일 이상 + 2차는 출국 5일 이내. 호주 DAFF 7.7 과
+      //   뉴질랜드 IHS 2.3(1)이 **같은 값**이라 한 함수를 공유한다(2026-07-29 뉴질랜드 추가).
+      //   2회가 다 들어왔을 때만 본다. 창(호주 45일·뉴질랜드 30일)과 '출국일보다 늦음'은 바로 위
       //   validateParasiteDateForDestination 이 이미 막고 있어 여기서 다시 보지 않는다.
-      //   주의 룰(au.internal-parasite-protocol)과 **같은 함수**.
-      if (isInternalParasite && destinationKey === 'australia') {
-        const err = validateAuInternalParasiteDates(
+      //   주의 룰(au/nz.internal-parasite-protocol)과 **같은 함수**.
+      if (isInternalParasite && (destinationKey === 'australia' || destinationKey === 'new_zealand')) {
+        const err = validateInternalParasiteSpacing(
           parasite.map((e) => e.date ?? ''),
           (caseRow?.departure_date ?? '').slice(0, 10),
         )

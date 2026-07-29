@@ -1903,9 +1903,13 @@ export const AU_INTERNAL_PARASITE = { windowDays: 45, minGapDays: 14, secondWith
  * 외부구충과 달리 일수가 전부 규정 명문이라 저장 거부로 올릴 근거가 있다(외부는 "제조사
  * 지침대로"라 간격 판정 자체를 제거했다 — validateExternalParasiteDates 주석 참고).
  *
- * client(getSaveBlockError)·procedure-check(au.internal-parasite-protocol) 공용 단일 출처.
+ * **뉴질랜드도 같은 함수를 쓴다**(2026-07-29 사용자 지정) — IHS 2.3(1)의 간격 14일·2차 5일이
+ * DAFF 7.7 과 값이 같다. 창만 다르고(호주 45일 / 뉴질랜드 30일) 그건 위 dispatch 가 본다.
+ * 그래서 이름에서 Au 를 뗐다.
+ *
+ * client(getSaveBlockError)·procedure-check(au/nz.internal-parasite-protocol) 공용 단일 출처.
  */
-export function validateAuInternalParasiteDates(
+export function validateInternalParasiteSpacing(
   treatDates: string[],
   departureDate: string,
 ): string | null {

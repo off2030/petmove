@@ -782,6 +782,9 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   'heartworm-test':
     '차단: validateParasiteDateForDestination(출국일 앵커 창 dispatch)·출생일 이전 거부 — 구충과 같은 경로(isParasite 분기)',
   'external-parasite': '차단: validateParasiteDateForDestination(출국일 앵커 창 dispatch)·출생일 이전 거부',
+  // 뉴질랜드 — 창 30일은 dispatch, 간격 14일·2차 5일은 호주와 같은 함수(2026-07-29 사용자 지정).
+  'new_zealand:internal-parasite':
+    '차단: validateParasiteDateForDestination(출국 30일 창)·validateInternalParasiteSpacing(간격 14일·2차 5일) + 주의: nz.internal-parasite-protocol(2회 여부)',
   'internal-parasite':
     '차단: validateParasiteDateForDestination + validatePhInternalParasiteWindow(필리핀 SPSIC 창)·출생일 이전 거부',
   'echinococcus-treatment': '차단: validateEchinococcusWindow(입국 1~5일 창)',

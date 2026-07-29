@@ -1924,6 +1924,13 @@ export function getDestinationOverride(destination: string | null | undefined): 
 /**
  * 콤마 구분 목적지 중 하나라도 지정 오버라이드 키에 매칭되는지.
  * 토큰 단위 exact-match (예: "호주, 일본" 에서 'japan' 키 → true).
+ *
+ * ⚠️ **키 형태도 받는다**(2026-07-29 수정). 예전엔 keywords 만 봤는데, 호출부 상당수가
+ * 목적지 **키**를 넘긴다(portal 의 destinationKey). 'australia'·'turkey' 처럼 키가 영문
+ * keyword 와 같은 나라는 우연히 통과했지만, **밑줄이 들어간 키는 전부 실패**했다
+ * (new_zealand·south_africa — keywords 는 'new zealand' 로 띄어쓰기다).
+ * 그 결과 뉴질랜드 내부구충 30일 저장 거부가 등록만 되고 조용히 죽어 있었다
+ * (validateParasiteDateForDestination 이 이 함수로 목적지를 고른다).
  */
 export function matchesDestinationKey(
   destination: string | null | undefined,
@@ -1932,9 +1939,10 @@ export function matchesDestinationKey(
   if (!destination) return false
   const override = DESTINATION_OVERRIDES[key]
   if (!override) return false
-  const tokens = parseDestinations(destination).map(t => t.toLowerCase())
-  const keywords = override.keywords.map(k => k.toLowerCase())
-  return tokens.some(t => keywords.includes(t))
+  const tokens = parseDestinations(destination).map((t) => t.toLowerCase())
+  if (tokens.includes(String(key).toLowerCase())) return true
+  const keywords = override.keywords.map((k) => k.toLowerCase())
+  return tokens.some((t) => keywords.includes(t))
 }
 
 /**
