@@ -1483,30 +1483,15 @@ export function validateImportPermitFiledDate(
     // 뉴질랜드·호주 — 광견병 증명서(RCF · RNATT 선언서)를 먼저 받아야 신청할 수 있다.
     //   두 나라 모두 허가 신청의 필수 제출물이다(2026-07-29 사용자 지정). 발급 카드의
     //   **완료 여부**로 본다 — 날짜 비교가 아니다(위 함수 주석 참고).
-    case 'new_zealand': {
-      // 뉴질랜드는 선행이 **둘**이다(2026-07-29 사용자 확정) — 계류시설 예약 확인서와 RCF 가
-      //   모두 허가 신청의 제출물이다. 둘 사이의 순서 제약은 없다.
-      const hasInput = /^\d{4}-\d{2}-\d{2}$/.test((filedDate ?? '').slice(0, 10)) || !!permitNo
-      return (
-        validateImportPermitPrerequisite(
-          hasInput,
-          typeof data.nz_rcf_date === 'string' ? data.nz_rcf_date : '',
-          '광견병 증명서(RCF)를 먼저 발급받으세요.',
-        ) ??
-        validateImportPermitPrerequisite(
-          hasInput,
-          typeof data.nz_quarantine_reservation_date === 'string'
-            ? data.nz_quarantine_reservation_date
-            : '',
-          '계류시설을 먼저 예약하세요.',
-        )
-      )
-    }
+    // 뉴질랜드·호주 — 선행 절차 게이트는 아래 단일 출처(importPermitPrerequisiteError)에.
+    //   '완료' 버튼 경로(markImportPermitIssued)는 저장 검증을 타지 않으므로 서버 액션이
+    //   같은 함수를 직접 부른다.
+    case 'new_zealand':
     case 'australia':
-      return validateImportPermitPrerequisite(
+      return importPermitPrerequisiteError(
+        destinationKey,
+        data,
         /^\d{4}-\d{2}-\d{2}$/.test((filedDate ?? '').slice(0, 10)) || !!permitNo,
-        typeof data.au_rnatt_declaration_date === 'string' ? data.au_rnatt_declaration_date : '',
-        'RNATT 선언서를 먼저 발급받으세요.',
       )
     // 스위스 — 입국 3주(21일) 이내 신청 불가.
     case 'switzerland':
@@ -1537,6 +1522,49 @@ export function validateImportPermitPrerequisite(
   const done = (prerequisiteDate ?? '').slice(0, 10)
   if (/^\d{4}-\d{2}-\d{2}$/.test(done)) return null
   return message
+}
+
+/**
+ * 수입 허가의 **선행 절차 게이트** — 뉴질랜드(계류 예약 + RCF)·호주(RNATT 선언서). 단일 출처.
+ *
+ * 두 경로가 이 함수를 공유한다:
+ *   ① 신청일·허가 번호 저장 — validateImportPermitFiledDate 의 목적지 분기
+ *   ② '완료' 버튼 — markImportPermitIssued(서버 액션). 이쪽은 저장 검증을 타지 않아서,
+ *      게이트를 저장 경로에만 두면 완료 버튼으로 선행 절차를 건너뛸 수 있었다(2026-07-29).
+ *
+ * @param data 활성 목적지로 **평탄화된** case.data (by_dest 값이 top-level 로 올라온 상태)
+ * @param hasPermitInput 허가 카드에 입력·완료가 들어왔는가(신청일·허가 번호·완료 버튼)
+ */
+export function importPermitPrerequisiteError(
+  destinationKey: string,
+  data: Record<string, unknown>,
+  hasPermitInput: boolean,
+): string | null {
+  const read = (k: string) => (typeof data[k] === 'string' ? (data[k] as string) : '')
+  if (destinationKey === 'new_zealand') {
+    // 선행이 **둘**이다 — 계류시설 예약 확인서와 RCF 가 모두 신청 제출물이다.
+    //   둘 사이의 순서 제약은 없다.
+    return (
+      validateImportPermitPrerequisite(
+        hasPermitInput,
+        read('nz_rcf_date'),
+        '광견병 증명서(RCF)를 먼저 발급받으세요.',
+      ) ??
+      validateImportPermitPrerequisite(
+        hasPermitInput,
+        read('nz_quarantine_reservation_date'),
+        '계류시설을 먼저 예약하세요.',
+      )
+    )
+  }
+  if (destinationKey === 'australia') {
+    return validateImportPermitPrerequisite(
+      hasPermitInput,
+      read('au_rnatt_declaration_date'),
+      'RNATT 선언서를 먼저 발급받으세요.',
+    )
+  }
+  return null
 }
 
 /**

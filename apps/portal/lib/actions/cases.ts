@@ -37,6 +37,8 @@ import {
   buildDateRuleContext,
   bookedRecordedAtKey,
   isBookedStep,
+  findDestinationKey,
+  importPermitPrerequisiteError,
   resolveDatedStepField,
   resolveStepDateFields,
   validateImportQuarantineDate,
@@ -2244,9 +2246,34 @@ export async function markImportPermitIssued(
       ? readByDestValue(prev, token, 'import_permit_application_date')
       : prev.import_permit_application_date
     const filed = typeof filedRaw === 'string' ? filedRaw : ''
-    if (filed.length < 10) {
+    // 신청일 게이트는 **신청일 칸이 있는 카드**에만 적용한다(2026-07-29). 뉴질랜드는 신청일을
+    //   받지 않고 허가 번호·첨부·완료 버튼 셋 중 하나로 완료하는 모델이라, 이 게이트를 그대로
+    //   두면 완료 버튼이 "신청일이 입력되어 있지 않습니다."로 막힌다. 판정은 카드 선언에서
+    //   파생한다(deriveApplicationStatus·완료 버튼 노출 조건과 같은 기준).
+    const collectsFiledDate = resolveStepDateFields(
+      'import-permit',
+      destination ?? caseDestStr,
+    ).includes('import_permit_application_date')
+    if (collectsFiledDate && filed.length < 10) {
       return { ok: false, error: '신청일이 입력되어 있지 않습니다.' }
     }
+    // 선행 절차 게이트(뉴질랜드 계류 예약·RCF / 호주 RNATT 선언서) — 저장 검증과 **같은 함수**.
+    //   이 버튼은 저장 경로를 타지 않아서, 게이트를 저장 쪽에만 두면 완료 버튼으로 선행 절차를
+    //   건너뛸 수 있다(2026-07-29).
+    const flatData: Record<string, unknown> = { ...prev }
+    if (token) {
+      for (const k of ['nz_rcf_date', 'nz_quarantine_reservation_date', 'au_rnatt_declaration_date']) {
+        const v = readByDestValue(prev, token, k)
+        if (typeof v === 'string') flatData[k] = v
+        else delete flatData[k]
+      }
+    }
+    const prereqErr = importPermitPrerequisiteError(
+      findDestinationKey(destination ?? caseDestStr ?? '') ?? '',
+      flatData,
+      true,
+    )
+    if (prereqErr) return { ok: false, error: prereqErr }
 
     let nextData: Record<string, unknown> = { ...prev }
     if (token) {
