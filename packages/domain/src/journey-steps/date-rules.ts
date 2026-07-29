@@ -1471,12 +1471,50 @@ export function validateImportPermitFiledDate(
         validateSgImportPermitAfterDogLicence(filedDate, sgLicence, sgSpecies)
       )
     }
+    // 뉴질랜드·호주 — 광견병 증명서(RCF · RNATT 선언서)를 먼저 받아야 신청할 수 있다.
+    //   두 나라 모두 허가 신청의 필수 제출물이다(2026-07-29 사용자 지정). 발급 카드의
+    //   **완료 여부**로 본다 — 날짜 비교가 아니다(위 함수 주석 참고).
+    case 'new_zealand':
+      return validateImportPermitAfterRabiesDoc(
+        filedDate,
+        typeof data.nz_rcf_date === 'string' ? data.nz_rcf_date : '',
+        '광견병 증명서(RCF)',
+      )
+    case 'australia':
+      return validateImportPermitAfterRabiesDoc(
+        filedDate,
+        typeof data.au_rnatt_declaration_date === 'string' ? data.au_rnatt_declaration_date : '',
+        'RNATT 선언서',
+      )
     // 스위스 — 입국 3주(21일) 이내 신청 불가.
     case 'switzerland':
       return validateChImportPermitDate(filedDate, entryDate)
     default:
       return null
   }
+}
+
+/**
+ * 수입 허가는 광견병 증명서를 **먼저 받아야** 신청할 수 있다 — 뉴질랜드 RCF · 호주 RNATT 선언서.
+ *
+ * 두 나라 모두 그 서류가 허가 신청의 필수 제출물이라, 없이 신청하는 건 절차가 성립하지 않는다.
+ * 판정 기준은 **발급 카드의 완료 여부**(=발급일 저장 여부)다 — 날짜 크기 비교가 아니다
+ * (2026-07-29 사용자 결정). 호주 카드는 버튼 완료라 저장값이 '버튼 누른 날'이어서 날짜로
+ * 비교하면 순서를 제대로 지킨 케이스에도 오경보가 난다. 완료 여부만 보면 두 나라를 같은
+ * 방식으로 판정할 수 있다.
+ *
+ * 신청일이 비어 있으면 통과 — 아직 입력 단계가 아니다.
+ */
+export function validateImportPermitAfterRabiesDoc(
+  filedDate: string,
+  docDate: string,
+  docLabel: string,
+): string | null {
+  const filed = (filedDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return null
+  const doc = (docDate ?? '').slice(0, 10)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(doc)) return null
+  return `${docLabel}를 먼저 발급받으세요.`
 }
 
 /**
