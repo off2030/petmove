@@ -27,6 +27,7 @@ import {
   validateInfectiousDiseaseTestDate,
   validateNzQuarantineStartAfterTiter,
   validateNzRcfDate,
+  validateRabiesDocRequiresTiter,
   validateTiterAfterIdentityCheck,
 } from '../journey-steps/date-rules'
 import {
@@ -548,6 +549,14 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (!rcf) return SKIP
 
       const titers = readTiterEntries(caseRow)
+      // 채혈 기록 자체가 없으면 발급이 성립하지 않는다 — 저장 거부와 같은 함수(2026-07-29).
+      const missing = validateRabiesDocRequiresTiter(
+        rcf,
+        titers.map((t) => t.date),
+      )
+      if (missing) {
+        return { ok: false, message: missing, offendingPaths: ['nz_rcf_date'] }
+      }
       if (titers.length > 0) {
         const earliest = titers.reduce((a, b) => (a.date <= b.date ? a : b))
         const msg = validateNzRcfDate(

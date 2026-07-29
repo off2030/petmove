@@ -41,6 +41,7 @@ import {
   importPermitPrerequisiteError,
   resolveDatedStepField,
   resolveStepDateFields,
+  validateRabiesDocRequiresTiter,
   validateImportQuarantineDate,
   validateUsDogEntryDate,
   writeByDestValue,
@@ -2161,6 +2162,18 @@ export async function updateSimpleDateField(
         return { ok: false, error: '미국·하와이 여정에서만 저장할 수 있는 단계입니다.' }
       }
       // 날짜 검증 없음 — CDC 신고 검증은 전부 삭제(2026-07-26 사용자 결정, 기록용 날짜만 저장).
+    }
+    // 광견병 증명서(뉴질랜드 RCF · 호주 RNATT 선언서) — 항체 결과를 옮겨 적는 서식이라
+    //   채혈 기록 없이 발급될 수 없다. 이 카드들은 **버튼 완료**라 저장 검증(getSaveBlockError)을
+    //   타지 않으므로 서버가 막는다(2026-07-29 사용자 지적 — 채혈 전에도 완료가 됐다).
+    if (stepId === 'nz-rcf' || stepId === 'au-rnatt-declaration') {
+      const titerDates = Array.isArray(prev.rabies_titer_records)
+        ? (prev.rabies_titer_records as Array<Record<string, unknown>>).map((r) =>
+            r && typeof r.date === 'string' ? r.date : '',
+          )
+        : []
+      const err = validateRabiesDocRequiresTiter(v, titerDates)
+      if (err) return { ok: false, error: err }
     }
     const caseDestStr = (existing as { destination: string | null }).destination
     const token = resolveWriteToken(caseDestStr, prev, destination)

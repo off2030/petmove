@@ -1769,6 +1769,24 @@ export function validateIdentityCheckOrder(first: string, second: string): strin
  * 채혈이 여러 건이면 **가장 이른** 채혈보다 앞선 발급만 막는다(어느 회차를 근거로 발급했는지
  * 앱이 모르므로 확정 위반만 잡는다 — 호주 선언서 룰과 같은 기준).
  */
+/**
+ * 광견병 증명서(뉴질랜드 RCF · 호주 RNATT 선언서)는 **항체 검사 기록이 있어야** 발급된다.
+ *
+ * 두 서류 모두 항체 결과를 옮겨 적는 서식이라 채혈 없이 존재할 수 없다. 카드가 버튼 완료라
+ * 날짜 크기 비교는 못 하지만(저장값이 버튼 누른 날), '채혈 기록이 있는가'는 판정할 수 있다.
+ * 완료 버튼이 저장 검증을 타지 않아 채혈 전에도 완료되던 구멍을 막는다(2026-07-29 사용자 지적).
+ * client·server(updateSimpleDateField)·procedure-check(nz.rcf-order·au.rnatt-declaration-order)
+ * 공용 단일 출처.
+ */
+export function validateRabiesDocRequiresTiter(
+  docDate: string,
+  titerDates: string[],
+): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test((docDate ?? '').slice(0, 10))) return null
+  const hasTiter = titerDates.some((d) => /^\d{4}-\d{2}-\d{2}$/.test((d ?? '').slice(0, 10)))
+  return hasTiter ? null : '광견병 항체 검사 채혈일을 입력하세요.'
+}
+
 export function validateNzRcfDate(rcfDate: string, titerDates: string[]): string | null {
   const rcf = (rcfDate ?? '').slice(0, 10)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(rcf)) return null

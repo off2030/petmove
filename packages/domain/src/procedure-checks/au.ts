@@ -23,6 +23,7 @@ import { readByDestValue } from '../destination-scoped-fields'
 import {
   validateIdentityCheckAfterMicrochip,
   validateIdentityCheckBeforeTiter,
+  validateRabiesDocRequiresTiter,
   validateAuInternalParasiteDates,
   validateParasiteDateForDestination,
   validateAuQuarantineReservationDate,
@@ -435,6 +436,15 @@ export const AU_CHECKS: ProcedureCheck[] = [
       if (!/^\d{4}-\d{2}-\d{2}$/.test(decl)) return SKIP
 
       const titers = readTiterEntries(caseRow)
+      // 채혈 기록 자체가 없으면 발급이 성립하지 않는다 — 저장 거부와 같은 함수(2026-07-29,
+      //   뉴질랜드 RCF 와 함께). 버튼 완료라 날짜 비교는 못 해도 이건 판정할 수 있다.
+      const missing = validateRabiesDocRequiresTiter(
+        decl,
+        titers.map((t) => t.date),
+      )
+      if (missing) {
+        return { ok: false, message: missing, offendingPaths: ['au_rnatt_declaration_date'] }
+      }
       if (titers.length > 0) {
         const earliest = titers.reduce((a, b) => (a.date <= b.date ? a : b))
         if (decl < earliest.date) {
