@@ -199,6 +199,11 @@ export function readHeartwormEntries(caseRow: CaseRow): ParasiteEntry[] {
   return readSimpleDatedArray(caseRow, 'heartworm_dates')
 }
 
+/** 폐충(Angiostrongylus vasorum) — `[{date}]` 형식. NZ 2.4, 구충과 별개 처치. */
+export function readLungwormEntries(caseRow: CaseRow): ParasiteEntry[] {
+  return readSimpleDatedArray(caseRow, 'lungworm_dates')
+}
+
 function readSimpleDatedArray(caseRow: CaseRow, key: string): ParasiteEntry[] {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const raw = data[key]

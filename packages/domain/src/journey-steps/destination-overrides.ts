@@ -1933,11 +1933,32 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         validationIds: ['nz.external-parasite-protocol'],
       },
       // 내부구충 — IHS 2.3(1): 1차 출국 30일 이내 + 14일 이상 간격 + 2차 출국 5일 이내.
-      //   폐충(Angiostrongylus vasorum, 2.4)도 출국 5일 이내라 2차와 같은 방문에서 끝난다.
+      // ⛔ 폐충(2.4)을 여기 한 줄로 되돌리지 말 것(2026-07-29 사용자 지정) — 시점만 같고
+      //   **약이 다르다**(구충약이 폐충까지 커버하지 않는 경우가 많다). 같은 카드에 얹으면
+      //   '구충약 하나로 끝'으로 읽힌다. 별도 카드 lungworm-treatment 로 뗐다.
       'internal-parasite': {
         description:
-          '내부 기생충 치료를 하세요.\n\n선충과 조충(에키노코쿠스 포함)을 모두 없애는 약이어야 해요.\n1차 치료는 출국 30일 이내에 해요.\n2차 치료는 출국 5일 이내에 하고, 1차와 14일 이상 벌어져야 해요.\n2차 치료 때 폐충(Angiostrongylus vasorum) 약도 함께 투여해요.',
+          '내부 기생충 치료를 하세요.\n\n선충과 조충(에키노코쿠스 포함)을 모두 없애는 약이어야 해요.\n1차 치료는 출국 30일 이내에 해요.\n2차 치료는 출국 5일 이내에 하고, 1차와 14일 이상 벌어져야 해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
+        links: [
+          {
+            url: 'https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA',
+            label: '승인 제품 목록 (MPI-STD-SAA, PDF)',
+          },
+        ],
         validationIds: ['nz.internal-parasite-protocol'],
+      },
+      // 폐충 — IHS 2.4. 신 IHS 2026 에서 새로 들어온 항목이다. 시점은 내부구충 2차와 같은
+      //   출국 5일 이내라 같은 방문에서 끝나지만 약이 달라 별도 카드로 둔다.
+      'lungworm-treatment': {
+        description:
+          '폐충(Angiostrongylus vasorum) 치료를 하세요.\n\n출국 5일 이내에 투약해요.\n내부 기생충 2차 치료와 같은 날 해도 돼요.\n구충약이 폐충까지 없애지 못하는 경우가 많아 따로 확인이 필요해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
+        links: [
+          {
+            url: 'https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA',
+            label: '승인 제품 목록 (MPI-STD-SAA, PDF)',
+          },
+        ],
+        validationIds: ['nz.lungworm-within-5days'],
       },
       // 심장사상충 — IHS 2.11. 검사(생후 7개월 이상, 출국 30일 이내)와 예방 투약(출국 5일 이내)이
       //   한 카드에 들어간다. 카드 입력칸은 날짜 배열 하나(heartworm_dates)라 두 사실을 같이 적는다.

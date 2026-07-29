@@ -64,6 +64,11 @@ const GLOBAL_ARRAY_FIELDS: Array<{ keys: string[]; label: string }> = [
   { keys: ['infectious_disease_records'], label: '전염병 검사' },
   { keys: ['external_parasite_dates'], label: '외부 기생충 치료' },
   { keys: ['internal_parasite_dates'], label: '내부 기생충 치료' },
+  // 폐충 — 심장사상충과 같은 date_array. 2026-07-29 카드 분리(뉴질랜드 2.4).
+  { keys: ['lungworm_dates'], label: '폐충 치료' },
+  // 심장사상충 — 2026-07-27 카드 분리 때 여기 등록을 빠뜨려 예정일 알림이 없었다(2026-07-29
+  //   폐충 작업 중 발견). 켄넬코프와 같은 누락이다.
+  { keys: ['heartworm_dates'], label: '심장사상충 검사' },
 ]
 
 /** GLOBAL 단일 date 필드 → 항목 라벨. */

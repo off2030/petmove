@@ -775,6 +775,10 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   'kennel-cough-vaccine':
     '차단: 출생일 이전 거부·findRabiesChainBreak(추가 접종 chain) — 종합백신과 같은 경로(getSaveBlockError 의 isVaccineArray 분기)',
   // 심장사상충 — 구충과 같은 기계를 필드키만 바꿔 쓴다(2026-07-27 카드 분리).
+  // 폐충 — 늦게 투약했으면 늦게 했다고 적고 재투약으로 푸는 자리다. 저장을 막으면 사실을
+  //   못 적는다(호주 CIV·전염병 검사와 같은 판단). 출국 5일 창은 주의가 알린다.
+  'lungworm-treatment':
+    '주의만: nz.lungworm-within-5days(출국 5일 창) — 늦게 받은 사실은 그대로 적고 재투약으로 회복하는 절차라 차단 X',
   'heartworm-test':
     '차단: validateParasiteDateForDestination(출국일 앵커 창 dispatch)·출생일 이전 거부 — 구충과 같은 경로(isParasite 분기)',
   'external-parasite': '차단: validateParasiteDateForDestination(출국일 앵커 창 dispatch)·출생일 이전 거부',

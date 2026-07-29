@@ -3943,6 +3943,21 @@
       승인된 검사기관에서 받아야 하고, 동물병원 내부 간이 검사는 인정되지 않아요.
   저장이름: 심장사상충 검사
 
+▸ lungworm-treatment
+  title: 폐충 치료
+  short: 폐충
+  done: 폐충 치료를 했어요.
+  desc:
+      폐충(Angiostrongylus vasorum) 치료를 하세요.
+      
+      출국 5일 이내에 투약해요.
+      내부 기생충 2차 치료와 같은 날 해도 돼요.
+      구충약이 폐충까지 없애지 못하는 경우가 많아 따로 확인이 필요해요.
+      뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.
+  저장이름: 폐충 치료
+  links:
+      승인 제품 목록 (MPI-STD-SAA, PDF)  →  https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA
+
 ▸ civ-vaccine
   title: 독감(CIV) 백신
   short: 독감
@@ -4017,9 +4032,11 @@
       선충과 조충(에키노코쿠스 포함)을 모두 없애는 약이어야 해요.
       1차 치료는 출국 30일 이내에 해요.
       2차 치료는 출국 5일 이내에 하고, 1차와 14일 이상 벌어져야 해요.
-      2차 치료 때 폐충(Angiostrongylus vasorum) 약도 함께 투여해요.
+      뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.
   첨부안내: 증명서, 수첩 등을 사진·PDF로 보관하세요.
   저장이름: 기생충 치료
+  links:
+      승인 제품 목록 (MPI-STD-SAA, PDF)  →  https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA
 
 ▸ import-permit
   title: 수입 허가 신청

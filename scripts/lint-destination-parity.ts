@@ -60,6 +60,8 @@ const KNOWN_DIFFERENCES: Record<string, string> = {
     '위와 같은 이유 — 뉴질랜드 카드에는 날짜 입력칸이 없다',
   'australia:new_zealand:rabies-titer:validations':
     '호주는 검체 접수일 기준 180일, 뉴질랜드는 채혈일 기준 3~12개월 — 룰 개수가 다르지만 둘 다 채워져 있다(개수 차이는 규정 차이)',
+  'australia:new_zealand:lungworm-treatment:missing':
+    '폐충(Angiostrongylus vasorum) 치료는 뉴질랜드 요건(IHS 2.4 — 신 IHS 2026 신설). DAFF 는 요구하지 않는다',
   'australia:new_zealand:heartworm-test:missing':
     '심장사상충 검사는 뉴질랜드 요건(IHS 2.11 — 생후 7개월 이상 ELISA). DAFF 는 요구하지 않는다',
   'australia:new_zealand:import-permit:validations':

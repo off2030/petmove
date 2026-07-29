@@ -394,19 +394,28 @@ export function StepDetailView({
   // 심장사상충 — 구충과 **같은 입력 모델**(date_array, 유효기간 없음)이라 같은 기계를
   //   필드키만 바꿔 재사용한다. 별개 절차라 카드는 나뉘어 있다(2026-07-27 사용자 지정).
   const isHeartworm = step.id === 'heartworm-test'
+  // 폐충 — 심장사상충과 같은 모델. 뉴질랜드 2.4(신 IHS 2026 신설), 2026-07-29 카드 분리.
+  const isLungworm = step.id === 'lungworm-treatment'
   // 전염병 검사 — 구충과 **같은 입력 모델**(date_array, 유효기간 없음)이라 같은 기계를
   //   필드키만 바꿔 재사용한다. 다만 **검사**라서 약품 4필드(세부 정보)는 띄우지 않는다.
   //   CIV 와 같은 이유로 붙인다(2026-07-27) — 그전엔 읽기 전용이라 호주 45일 룰이 죽어 있었다.
   const isInfectiousDisease = step.id === 'infectious-disease-test'
   const isParasite =
-    isExternalParasite || isInternalParasite || isEchinococcus || isHeartworm || isInfectiousDisease
+    isExternalParasite ||
+    isInternalParasite ||
+    isEchinococcus ||
+    isHeartworm ||
+    isLungworm ||
+    isInfectiousDisease
   const parasiteFieldKey = isExternalParasite
     ? 'external_parasite_dates'
     : isHeartworm
       ? 'heartworm_dates'
-      : isInfectiousDisease
-        ? 'infectious_disease_records'
-        : 'internal_parasite_dates'
+      : isLungworm
+        ? 'lungworm_dates'
+        : isInfectiousDisease
+          ? 'infectious_disease_records'
+          : 'internal_parasite_dates'
   const isInteractive =
     isMicrochip ||
     isRabies ||
@@ -3113,9 +3122,11 @@ export function StepDetailView({
                     ? '촌충 치료'
                     : isHeartworm
                       ? '심장사상충 검사'
-                      : isInfectiousDisease
-                        ? '전염병 검사'
-                        : '내부 기생충 치료'
+                      : isLungworm
+                        ? '폐충 치료'
+                        : isInfectiousDisease
+                          ? '전염병 검사'
+                          : '내부 기생충 치료'
               }
               dateLabel={
                 isExternalParasite
@@ -3145,7 +3156,7 @@ export function StepDetailView({
                   ? '+ 처치 기록 추가'
                   : isHeartworm || isInfectiousDisease
                     ? '+ 검사 기록 추가'
-                    : '+ 치료 기록 추가'
+                    : '+ 치료 기록 추가' // 폐충 포함 — 투약이라 '치료 기록'이 맞다.
               }
               onChange={(idx, key, next) =>
                 setParasite((prev) => prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)))

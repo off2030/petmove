@@ -97,6 +97,7 @@ export type StepDoneSignal =
   | 'has-internal-parasite'
   | 'has-external-parasite'
   | 'has-heartworm'                // 심장사상충 — 구충과 같은 date_array 모델(카드 분리 2026-07-27)
+  | 'has-lungworm'                 // 폐충 — 심장사상충과 같은 모델(카드 분리 2026-07-29, 뉴질랜드 2.4)
   | 'has-deworming-time'           // EU 6국 촌충약 (출국 24-120h 전)
   | 'has-vet-visit'                // 출국 전 임상검사 — 검진일 입력(≤오늘) + 도래 확인 (다른 백신·검사와 동일 dated-confirm)
   | 'all-required-docs'            // 서류 체크리스트 — 큐레이션 필수 서류가 모두 ✓ (서류 페이지에서 완료)

@@ -1565,6 +1565,33 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentLabel: '심장사상충 검사',
   },
+  // ── 폐충(Angiostrongylus vasorum) 치료 ──────────────────────────────
+  // 신 IHS 2026 에서 새로 들어온 항목(뉴질랜드 2.4). 내부구충과 **시점만 같고 약이 다르다** —
+  //   구충약이 폐충까지 커버하지 않는 경우가 많아 별도 처치가 필요하다. 구충 카드에 한 줄로
+  //   얹어 두면 '구충약 하나로 끝'으로 읽혀 카드를 뗀다(2026-07-29 사용자 지정 — 심장사상충을
+  //   구충에서 뗀 것과 같은 처리).
+  // 모델은 구충·심장사상충과 동일(date_array, 유효기간 개념 없음 — 최근 기록 도래로 완료).
+  // 명단은 프로파일 vaccines 의 'lungworm' 선언에서 파생 — 현재 뉴질랜드뿐이다.
+  {
+    id: 'lungworm-treatment',
+    category: 'lab',
+    title: '폐충 치료',
+    shortLabel: '폐충',
+    description: '폐충 치료를 하세요.',
+    doneSummary: '폐충 치료를 했어요.',
+    applicability: {
+      destinations: destinationsWithVaccine('lungworm'),
+      species: 'all',
+      tripType: 'all',
+    },
+    // 내부구충(100) 뒤, 심장사상충(108) 앞 — 같은 날 끝나는 처치라 나란히 둔다.
+    order: 104,
+    done: 'has-lungworm',
+    concurrent: true,
+    inputs: [{ key: 'lungworm_dates', label: '치료일', type: 'date_array' }],
+    allowAttachments: true,
+    attachmentLabel: '폐충 치료',
+  },
   {
     id: 'civ-vaccine',
     category: 'vaccination',

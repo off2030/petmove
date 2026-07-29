@@ -484,7 +484,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       //   validateEuEntryDate 의 월 경로를 탄다.
       entryWaitAfterTiter: { months: 3 },
     },
-    vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'infectious_disease', 'external_parasite', 'internal_parasite', 'heartworm'],
+    // 폐충(lungworm, Angiostrongylus vasorum) — **신 IHS 2026 에서 새로 들어온 항목**(2.4).
+    //   내부구충과 시점(출국 5일 이내)만 같고 약이 다르다(구충약이 폐충까지 커버하지 않는
+    //   경우가 많다). 구충 카드에 얹어 두면 '구충약 하나로 끝'으로 읽혀 별도 카드로 뗀다
+    //   (2026-07-29 사용자 지정 — 심장사상충을 구충에서 뗀 것과 같은 처리).
+    vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'infectious_disease', 'external_parasite', 'internal_parasite', 'heartworm', 'lungworm'],
     extraSection: 'new_zealand',
     extraFields: [
       // 수입 허가 번호 + 마이크로칩 인증일(호주와 같은 'id_date' 재사용 — 같은 사실이다).
@@ -2199,6 +2203,7 @@ export const ALL_VACCINE_KEYS = [
   'external_parasite',
   'internal_parasite',
   'heartworm',
+  'lungworm',
 ] as const
 
 /** UI 표시용 라벨. */
@@ -2213,6 +2218,7 @@ export const VACCINE_KEY_LABELS: Record<string, string> = {
   external_parasite: '외부 기생충 치료',
   internal_parasite: '내부 기생충 치료',
   heartworm: '심장사상충',
+  lungworm: '폐충',
 }
 
 /** 모든 케이스에 기본 적용되는 백신/검사 (광견병 + 항체 검사). */

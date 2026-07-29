@@ -9,6 +9,7 @@ import {
   readCivEntries,
   readExternalParasiteEntries,
   readHeartwormEntries,
+  readLungwormEntries,
   readInfectiousDiseaseEntries,
   readInternalParasiteEntries,
   readRabiesEntries,
@@ -920,6 +921,42 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         ok: true,
         message: `1차(${dose1.date}) → 2차(${dose2.date}): 간격 ${interval}일, 2차→출국 ${dep2}일.`,
       }
+    },
+  },
+
+  // ── 폐충(Angiostrongylus vasorum) ──
+  {
+    id: 'nz.lungworm-within-5days',
+    country: COUNTRY,
+    category: '구충',
+    title: '폐충 치료는 출국 5일 이내',
+    description:
+      'IHS 2.4 — "treated by a veterinarian with a product that is effective against Angiostrongylus vasorum, **in the 5 days before shipment**". 신 IHS 2026 에서 새로 들어온 항목이다. 내부구충 2차와 시점이 같아 같은 방문에서 끝나지만 **약이 다르다**(구충약이 폐충까지 커버하지 않는 경우가 많다). 저장 거부는 두지 않는다 — 늦게 받았으면 늦게 받았다고 적고 재투약으로 푸는 자리라 사실 기록을 막으면 안 된다(호주 CIV·전염병 검사와 같은 판단).',
+    severity: 'warning',
+    addedAt: '2026-07-29',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
+      const entries = readLungwormEntries(caseRow)
+      if (!dep || entries.length === 0) return SKIP
+
+      const latest = entries[entries.length - 1]
+      const days = daysBetween(latest.date, dep)
+      if (days === null) return SKIP
+      if (days < 0) {
+        return {
+          ok: false,
+          message: '폐충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.',
+          offendingPaths: [`lungworm_dates[${latest.originalIndex}].date`],
+        }
+      }
+      if (days > 5) {
+        return {
+          ok: false,
+          message: '폐충 치료는 출국 5일 이내에 받아야 해요.',
+          offendingPaths: [`lungworm_dates[${latest.originalIndex}].date`, 'departure_date'],
+        }
+      }
+      return { ok: true, message: `폐충 치료(${latest.date}) → 출국(${dep}): ${days}일.` }
     },
   },
 

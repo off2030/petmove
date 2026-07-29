@@ -2575,6 +2575,8 @@ const PARASITE_FIELD_KEYS = new Set([
   'external_parasite_dates',
   'internal_parasite_dates',
   'heartworm_dates',
+  // 폐충(Angiostrongylus vasorum) — 심장사상충과 같은 date_array 모델. 2026-07-29 카드 분리.
+  'lungworm_dates',
   // 전염병 검사 — 같은 date_array shape(약품 필드는 화면에서 숨김). 2026-07-27 호주 노출로 추가.
   'infectious_disease_records',
 ])
