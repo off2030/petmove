@@ -1894,7 +1894,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   판정할 수 없다 — 고양이 작업 때 함께 볼 것.
       'infectious-disease-test': {
         description:
-          '출국일 기준 30일 이내에 전염병 검사를 받아요.\n\n바베시아 깁소니(Babesia gibsoni) 검사를 받아요. IFAT 또는 ELISA와 PCR을 함께 받고, 생후 6개월 미만이면 PCR을 3회 받아요.\n리슈만편모충(Leishmania infantum) 검사를 받아요. 백신 종류에 따라 IFAT·ELISA 또는 PCR로 받아요.\n렙토스피라(Leptospira canicola) 검사를 받아요. MAT만 인정되고, 백신을 맞았어도 면제되지 않아요.\n렙토스피라는 검사 대신 출국 30일 이내에 독시사이클린을 14일 연속 투약하는 방법도 인정돼요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT 또는 TAT만 인정돼요.\n중성화했다면 수의사가 서명한 중성화 증명서를 준비해요.\n바베시아 검사 채혈은 1차 외부 기생충 치료 14일 후부터 할 수 있어요.\n해외 공인 검사기관에서 받아야 하며, 임상 수의사만 의뢰할 수 있어요.\n일반 동물병원에서는 이 검사를 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
+          '출국일 기준 30일 이내에 전염병 검사를 받아요.\n\n바베시아 깁소니(Babesia gibsoni) 검사를 받아요. IFAT 또는 ELISA와 PCR을 함께 받아요.\n바베시아 검사는 1차 외부 기생충 치료 14일 후부터 할 수 있어요.\n리슈만편모충(Leishmania infantum) 검사를 받아요. IFAT·ELISA 검사만 인정돼요.\n렙토스피라(Leptospira canicola) 검사를 받아요. MAT만 인정돼요.\n렙토스피라 검사 대신 출국 30일 이내에 14일 약물 치료를 받는 방법도 있어요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT 또는 TAT만 인정돼요.\n중성화했다면 수의사가 서명한 중성화 증명서를 준비해요.\n해외 공인 검사기관에서 받아야 하며, 임상 수의사만 의뢰할 수 있어요.\n일반 동물병원에서는 이 검사들을 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
         validationIds: [
           'nz.infectious-disease-test-within-30days',
           'nz.infectious-disease-test-after-external-parasite',
