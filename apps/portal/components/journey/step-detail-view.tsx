@@ -201,6 +201,11 @@ const SIMPLE_FLIGHT_DESTINATIONS: readonly string[] = [
   //   데가 없다(2026-07-27 사용자 결정). 180일 대기 차단도 규정 기준일이 **출국일**(date of
   //   export)이라 출발일만으로 정확히 판정된다(validateEuEntryDate 는 entry → departure 폴백).
   'australia',
+  // 뉴질랜드 — 호주와 같은 이유(2026-07-29 사용자 지정 '호주와 맞춰줘'). 수입 허가는 허가
+  //   번호·첨부·완료 버튼으로, 계류시설 예약은 계류 시작일로 끝나 앱이 항공편 상세(도착일·
+  //   공항·편명)를 쓸 데가 없다. 채혈 3~12개월 창도 규정 기준일이 **출국일**이라 출발일만으로
+  //   판정된다(nz.titer-3to12months-before-departure 는 readDepartureDate 를 본다).
+  'new_zealand',
 ]
 
 /**
