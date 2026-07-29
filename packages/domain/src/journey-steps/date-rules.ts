@@ -1415,9 +1415,18 @@ export function validateEntryDateForDestination(
 export function validateImportPermitFiledDate(
   destinationKey: string,
   filedDate: string,
-  ctx: { departureDate: string; entryDate: string; data: Record<string, unknown> },
+  ctx: {
+    departureDate: string
+    entryDate: string
+    data: Record<string, unknown>
+    /**
+     * 허가 번호 — 신청일 없이 번호만 입력하는 카드(호주·뉴질랜드)에서 '입력이 들어왔는지'를
+     * 판정하는 데 쓴다. 선행 절차 게이트가 신청일 칸에만 걸리면 번호만 넣는 경로로 빠져나간다.
+     */
+    permitNo?: string
+  },
 ): string | null {
-  const { departureDate, entryDate, data } = ctx
+  const { departureDate, entryDate, data, permitNo } = ctx
   switch (destinationKey) {
     // 태국 — ①출국일 이후 신청 불가 ②백신 접종 14일(2주) 이내 신청 불가
     //   ③R7 허가 60일 유효(출국 60일 전부터 — 더 이르면 출국 전 만료. th.ts 헤더 근거,
@@ -1474,17 +1483,30 @@ export function validateImportPermitFiledDate(
     // 뉴질랜드·호주 — 광견병 증명서(RCF · RNATT 선언서)를 먼저 받아야 신청할 수 있다.
     //   두 나라 모두 허가 신청의 필수 제출물이다(2026-07-29 사용자 지정). 발급 카드의
     //   **완료 여부**로 본다 — 날짜 비교가 아니다(위 함수 주석 참고).
-    case 'new_zealand':
-      return validateImportPermitAfterRabiesDoc(
-        filedDate,
-        typeof data.nz_rcf_date === 'string' ? data.nz_rcf_date : '',
-        '광견병 증명서(RCF)',
+    case 'new_zealand': {
+      // 뉴질랜드는 선행이 **둘**이다(2026-07-29 사용자 확정) — 계류시설 예약 확인서와 RCF 가
+      //   모두 허가 신청의 제출물이다. 둘 사이의 순서 제약은 없다.
+      const hasInput = /^\d{4}-\d{2}-\d{2}$/.test((filedDate ?? '').slice(0, 10)) || !!permitNo
+      return (
+        validateImportPermitPrerequisite(
+          hasInput,
+          typeof data.nz_rcf_date === 'string' ? data.nz_rcf_date : '',
+          '광견병 증명서(RCF)를 먼저 발급받으세요.',
+        ) ??
+        validateImportPermitPrerequisite(
+          hasInput,
+          typeof data.nz_quarantine_reservation_date === 'string'
+            ? data.nz_quarantine_reservation_date
+            : '',
+          '계류시설을 먼저 예약하세요.',
+        )
       )
+    }
     case 'australia':
-      return validateImportPermitAfterRabiesDoc(
-        filedDate,
+      return validateImportPermitPrerequisite(
+        /^\d{4}-\d{2}-\d{2}$/.test((filedDate ?? '').slice(0, 10)) || !!permitNo,
         typeof data.au_rnatt_declaration_date === 'string' ? data.au_rnatt_declaration_date : '',
-        'RNATT 선언서',
+        'RNATT 선언서를 먼저 발급받으세요.',
       )
     // 스위스 — 입국 3주(21일) 이내 신청 불가.
     case 'switzerland':
@@ -1505,16 +1527,16 @@ export function validateImportPermitFiledDate(
  *
  * 신청일이 비어 있으면 통과 — 아직 입력 단계가 아니다.
  */
-export function validateImportPermitAfterRabiesDoc(
-  filedDate: string,
-  docDate: string,
-  docLabel: string,
+export function validateImportPermitPrerequisite(
+  /** 허가 카드에 입력이 들어왔는가 — 신청일 또는 허가 번호. 둘 다 비면 아직 입력 단계가 아니다. */
+  hasPermitInput: boolean,
+  prerequisiteDate: string,
+  message: string,
 ): string | null {
-  const filed = (filedDate ?? '').slice(0, 10)
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return null
-  const doc = (docDate ?? '').slice(0, 10)
-  if (/^\d{4}-\d{2}-\d{2}$/.test(doc)) return null
-  return `${docLabel}를 먼저 발급받으세요.`
+  if (!hasPermitInput) return null
+  const done = (prerequisiteDate ?? '').slice(0, 10)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(done)) return null
+  return message
 }
 
 /**

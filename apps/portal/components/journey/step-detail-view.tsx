@@ -1544,6 +1544,7 @@ export function StepDetailView({
         departureDate: (caseRow?.departure_date ?? '').slice(0, 10),
         entryDate: entry,
         data,
+        permitNo: importPermit.permitNo.trim(),
       })
     }
     // 버튼 완료 카드(CDC 신고·귀국 절차 전체)는 날짜 검증 없음 — 전부 삭제(2026-07-26 사용자
