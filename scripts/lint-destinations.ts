@@ -106,8 +106,18 @@ function renderDestination(key: string): string {
     for (const trip of ['round', 'one_way'] as const) {
       const c = makeCase(token, species, trip)
       const steps = getStepsForCase(JOURNEY_STEP_CATALOG, c)
+      // concurrent·nonBlocking·advisoryOnly 는 **'다음 할 일'에 몇 장이 뜨는지**를 바꾸는데
+      //   예전 스냅샷은 order:id:done 만 찍어서 이 셋의 변경이 전 lint 를 조용히 통과했다
+      //   (2026-07-29 내부구충 concurrent 작업 중 발견). 화면이 달라지는 값은 스냅샷에 남긴다.
       const cards = steps
-        .map((s) => `${s.order}:${s.id}:${typeof s.done === 'string' ? s.done : 'fn'}`)
+        .map((s) => {
+          const flags = [
+            s.concurrent ? '+동시' : '',
+            s.nonBlocking ? '+귀국' : '',
+            s.advisoryOnly ? '+안내' : '',
+          ].join('')
+          return `${s.order}:${s.id}${flags}:${typeof s.done === 'string' ? s.done : 'fn'}`
+        })
         .join('  ')
       lines.push(`  [cards ${species}/${trip}] ${cards}`)
 

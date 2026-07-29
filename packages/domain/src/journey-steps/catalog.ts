@@ -1718,6 +1718,14 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     },
     order: 90,
     done: 'has-internal-parasite',
+    // 내·외부 구충은 **보통 같은 날 한 방문에서** 한다(2026-07-29 사용자 지정). 순차로 띄우면
+    //   하나 끝내야 다음이 올라와 실제 병원 방문 흐름과 어긋난다. 바로 앞 외부구충(order 80)이
+    //   '다음 할 일'일 때 이 카드도 함께 올라오도록 concurrent 로 둔다.
+    // ⛔ 이 플래그는 **뒤쪽 카드**에 다는 것이다 — 승격 로직이 mainIdx **직후**로 이어지는
+    //   concurrent 들을 올리기 때문. 외부구충에 달면 짝이 안 만들어진다.
+    // 예외 3곳은 destination-overrides 에서 concurrent: false 로 끈다(필리핀·호주·뉴질랜드) —
+    //   각 사유는 그쪽 주석 참고.
+    concurrent: true,
     inputs: [
       { key: 'internal_parasite_dates', label: '치료일', type: 'date_array' },
     ],

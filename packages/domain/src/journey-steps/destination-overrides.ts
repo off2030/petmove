@@ -1698,6 +1698,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // 2026-07-29 카드 분리 — 확정본 4줄을 **그대로 두 카드에 나눠 담았다**(문장 재작성 없음).
       //   2차 줄('2차 치료는 출국 전 5일 이내에 해야 해요.')만 internal-parasite-2 로 옮겼다.
       'internal-parasite': {
+        // base 의 concurrent 를 **끈다**(2026-07-29 사용자 지정). 호주·뉴질랜드만 구충이
+        //   1차/2차 두 장으로 갈라져 있고 카드 순서도 다른 나라와 달라, '내·외부 같은 날'
+        //   묶음을 그대로 적용하면 회차 관계가 엉킨다. 이 두 나라의 병렬 노출은 별도로 다룬다.
+        concurrent: false,
         description:
           '내부 기생충 치료를 하세요.\n\n출국 45일 이내에 14일 이상의 간격으로 2회 이상 치료해요.\n호주에서 인정하는 성분을 함유한 제품을 사용해야해요.',
         links: [
@@ -1962,6 +1966,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   and cestodes (including Echinococcus spp.)". 약 성분 판단은 승인 제품 목록이 담당한다.
       // 2026-07-29 카드 분리 — 호주와 같은 방식으로 2차 줄만 internal-parasite-2 로 옮겼다.
       'internal-parasite': {
+        // base 의 concurrent 를 **끈다** — 호주와 같은 이유(1차/2차 분리 + 카드 순서가 다름).
+        //   뉴질랜드는 특히 외부구충 1차가 바베시아 채혈 14일 전이라 내부구충과 같은 날이
+        //   아니다(2.2(2)(a)) — 다른 나라의 '같은 날' 전제가 여기선 성립하지 않는다.
+        concurrent: false,
         description:
           '내부 기생충 치료를 하세요.\n\n출국 30일 이내에 14일 이상의 간격으로 2회 치료해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
         links: [
@@ -2550,6 +2558,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
           '내부 기생충 치료를 하세요.\n\n수입 허가증(SPSIC) 신청 전 7일~3개월 사이에 치료하세요.',
         doneSummary: '내부 기생충 치료를 했어요.',
         order: 52,
+        // base 의 concurrent 를 **끈다**(2026-07-29 사용자 지정). base 는 '내·외부 구충은 같은
+        //   날'이라 뒤 카드를 함께 올리는데, 필리핀엔 외부구충 카드가 없어 앞 카드가 종합백신
+        //   (50, 이미 concurrent)이다. 그대로 두면 연쇄로 광견병·종합백신·내부구충 세 장이
+        //   함께 '다음 할 일'이 된다. 게다가 필리핀 구충 기준은 출국일이 아니라 **SPSIC
+        //   신청일**(order 100) 기준 7일~3개월이라, 접종 단계에 띄우면 아직 계산도 안 되는
+        //   일을 하라고 하는 셈이다.
+        concurrent: false,
         // 카드가 '7일~3개월'이라 말하면서 정작 그 창을 아무도 검증하지 않던 상태를 메움
         // (2026-07-22). 입력 차단(validatePhInternalParasiteWindow)과 같은 함수를 본다.
         validationIds: ['ph.internal-parasite-7days-to-3months-before-permit'],
