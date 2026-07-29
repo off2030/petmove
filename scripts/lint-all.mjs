@@ -52,6 +52,13 @@ const copyCode = await run(
   'journey copy snapshot',
   { shell: process.platform === 'win32' },
 )
+// 형제 목적지 구조 패리티 — 복사해 만든 목적지에 원본의 나중 수정이 전파됐는지(2026-07-29 신설).
+const parityCode = await run(
+  localBin('tsx'),
+  ['scripts/lint-destination-parity.ts'],
+  'destination parity',
+  { shell: process.platform === 'win32' },
+)
 
 const summary = [
   `  admin eslint:  ${eslintCode === 0 ? '✓ pass' : `✗ exit ${eslintCode}`}`,
@@ -60,7 +67,10 @@ const summary = [
   `  lint:scope:    ${scopeCode === 0 ? '✓ pass' : `✗ exit ${scopeCode}`}`,
   `  lint:journey:  ${journeyCode === 0 ? '✓ pass' : `✗ exit ${journeyCode}`}`,
   `  lint:copy:     ${copyCode === 0 ? '✓ pass' : `✗ exit ${copyCode}`}`,
+  `  lint:parity:   ${parityCode === 0 ? '✓ pass' : `✗ exit ${parityCode}`}`,
 ].join('\n')
 console.log(`\n─── summary ───\n${summary}`)
 
-process.exit(Math.max(eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode, copyCode))
+process.exit(
+  Math.max(eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode, copyCode, parityCode),
+)
