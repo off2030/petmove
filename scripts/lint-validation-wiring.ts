@@ -149,15 +149,9 @@ const UNVALIDATED_OK: Record<string, string> = {
   // 사실이라 어긋나도 못 고치고, 바꿀 수 있는 건 출국일뿐이라 조치 가능한 카드에 붙였다.
   // 신청일 칸 자체의 입력불가(출국 이후·20일 미만)는 validateImportPermitFiledDate 가 막는다.
   'taiwan:import-permit': '마감 주의는 항공권 카드가 표시(조치 가능한 칸이 거기) + 입력불가는 date-rules 담당',
-  // 마이크로칩 인증(호주·뉴질랜드) — 주의를 **뒤 카드**로 옮겼다(2026-07-29 사용자 확정).
-  //   인증 카드에서는 조치가 없다: 이미 받은 인증일은 지나간 사실이라 되돌릴 수 없고, 고칠 수
-  //   있는 건 채혈일(재채혈)과 출국일이다. 그래서 순서 주의는 항체 검사 카드, 6개월 하한 주의는
-  //   항공권 카드에 있다(생후 9개월 하한과 같은 자리). 입력칸 자체의 저장 거부는 이 카드에 유지 —
-  //   validateIdentityCheckBeforeTiter(인증일 > 채혈일 거부).
-  'australia:au-identity-check':
-    '순서 주의는 항체 검사 카드(au.identity-check-before-titer) + 저장 거부는 이 카드 입력 시점',
-  'new_zealand:nz-identity-check':
-    '순서 주의는 항체 검사 카드(nz.identity-check-before-titer)·6개월 하한 주의는 항공권 카드(nz.identity-check-6months-before-departure) + 저장 거부는 이 카드 입력 시점',
+  // (마이크로칩 인증 카드는 2026-07-29 에 칩 선행·회차 순서 주의가 붙어 면제가 필요 없어졌다.
+  //  인증↔채혈 순서 주의는 항체 검사 카드, 6개월 하한 주의는 항공권 카드에 있다 — 조치가
+  //  거기 있기 때문이고, 이 카드에도 자기 몫의 주의가 남아 있어 배선이 끊기지 않는다.)
   // 싱가포르 전용 절차 카드 — 완료일(≤오늘) 입력·첨부만. 날짜 순서 검증이 필요 없는 절차
   //   완료 추적용(강아지 라이선스·관부가세·국경검사 예약). 계류장 예약은 sg.quarantine-
   //   reservation-after-titer(채혈 이후) 룰이 있어 제외.

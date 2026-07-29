@@ -31,7 +31,9 @@ import {
   validateSgReservationVsDeparture,
   validateEntryDateForDestination,
   validateEchinococcusWindow,
+  validateIdentityCheckAfterMicrochip,
   validateIdentityCheckBeforeTiter,
+  validateIdentityCheckOrder,
   validateAuInternalParasiteDates,
   validateExternalParasiteDates,
   validateInfectiousDiseaseTestDate,
@@ -1539,10 +1541,17 @@ export function StepDetailView({
       (step.id === 'au-identity-check' && destinationKey === 'australia') ||
       (step.id === 'nz-identity-check' && destinationKey === 'new_zealand')
     ) {
-      // 2회 인증(뉴질랜드)은 **마지막 인증**이 채혈 전이어야 한다 — 1차는 6개월 전이라 자동
-      //   성립하고, 채혈 직전에 오는 2차가 실제로 걸리는 쪽이다. 주의 룰과 같은 기준.
       const first = importQuarantineDate.trim()
       const second = (secondaryDate ?? '').trim()
+      // 칩 시술 이후 — 검역관이 확인하는 대상이 칩이라 그보다 앞선 인증일은 성립하지 않는다.
+      //   2차는 아래 회차 순서 차단이 1차 이후를 보장하므로 1차만 보면 된다.
+      const chipErr = validateIdentityCheckAfterMicrochip(readImplantDate(caseRow?.data), first)
+      if (chipErr) return chipErr
+      // 회차 순서(뉴질랜드 2회 인증) — 2차가 1차보다 이른 기록은 잘못된 입력.
+      const orderErr = validateIdentityCheckOrder(first, second)
+      if (orderErr) return orderErr
+      // 2회 인증(뉴질랜드)은 **마지막 인증**이 채혈 전이어야 한다 — 1차는 6개월 전이라 자동
+      //   성립하고, 채혈 직전에 오는 2차가 실제로 걸리는 쪽이다. 주의 룰과 같은 기준.
       const latestId = second && second > first ? second : first || second
       const err = validateIdentityCheckBeforeTiter(
         latestId,

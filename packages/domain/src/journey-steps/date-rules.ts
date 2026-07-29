@@ -1640,6 +1640,38 @@ export function validateExternalParasiteDates(
  * client(저장 거부)·procedure-check(au/nz.identity-check-before-titer) 공용 단일 출처.
  * 한쪽이 비면 통과 — 인증을 먼저 하고 채혈을 나중에 넣는 정상 순서를 막지 않기 위해.
  */
+/**
+ * 마이크로칩 인증은 **칩 시술 이후**여야 한다 — 호주·뉴질랜드 공용.
+ *
+ * 검역관이 확인하는 대상이 칩이므로 칩보다 앞선 인증일은 성립하지 않는다(논리적 불가능 →
+ * 저장 거부). 광견병 접종의 validateMicrochipBeforeBooster 와 같은 자리다. 칩 시술일은 이미
+ * 지나간 사실이라 조치 가능한 쪽(인증일)으로 안내한다. 한쪽이 비면 통과.
+ */
+export function validateIdentityCheckAfterMicrochip(
+  microchipDate: string,
+  idDate: string,
+): string | null {
+  const chip = (microchipDate ?? '').slice(0, 10)
+  const id = (idDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(chip) || !/^\d{4}-\d{2}-\d{2}$/.test(id)) return null
+  if (chip > id) return '마이크로칩 삽입 후 인증을 받으세요.'
+  return null
+}
+
+/**
+ * 마이크로칩 인증 2차는 1차 이후여야 한다 — 뉴질랜드 전용(회차가 둘인 곳은 여기뿐).
+ *
+ * 광견병 접종 회차 순서(rabiesChainBreakMessage 'too-early')와 같은 성격이라 문형도 맞춘다.
+ * 한쪽이 비면 통과 — 2차 없이 1차만 있는 케이스(1회 인증)가 정상이다.
+ */
+export function validateIdentityCheckOrder(first: string, second: string): string | null {
+  const a = (first ?? '').slice(0, 10)
+  const b = (second ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(a) || !/^\d{4}-\d{2}-\d{2}$/.test(b)) return null
+  if (b < a) return '2차 인증일이 1차 인증일보다 빨라요. 날짜를 확인하세요.'
+  return null
+}
+
 export function validateIdentityCheckBeforeTiter(
   idDate: string,
   titerDates: string[],

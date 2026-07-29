@@ -21,6 +21,7 @@ import {
 } from './utils'
 import { readByDestValue } from '../destination-scoped-fields'
 import {
+  validateIdentityCheckAfterMicrochip,
   validateIdentityCheckBeforeTiter,
   validateAuInternalParasiteDates,
   validateParasiteDateForDestination,
@@ -168,6 +169,26 @@ export const AU_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `1차 접종일(${first.date}) 생후 ${age}일령.` }
+    },
+  },
+  {
+    id: 'au.microchip-before-identity-check',
+    country: COUNTRY,
+    category: '마이크로칩',
+    title: '마이크로칩 인증은 칩 시술 이후',
+    description:
+      '검역관이 확인하는 대상이 마이크로칩이므로 칩 시술일보다 앞선 인증일은 성립하지 않는다. 저장 거부(validateIdentityCheckAfterMicrochip)와 같은 함수 — 인증을 먼저 저장한 뒤 칩 시술일을 나중 날짜로 고친 경우를 표면화하는 짝 주의. 뉴질랜드와 같은 시점에 신설(2026-07-29).',
+    severity: 'warning',
+    addedAt: '2026-07-29',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const chip =
+        typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
+      const id = readIdentityCheckDate(caseRow, destination)
+      if (!chip || !id) return SKIP
+      const msg = validateIdentityCheckAfterMicrochip(chip, id)
+      if (msg) return { ok: false, message: msg, offendingPaths: ['id_date'] }
+      return { ok: true, message: `마이크로칩(${chip}) ≤ 인증(${id}).` }
     },
   },
   {

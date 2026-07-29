@@ -20,7 +20,9 @@ import {
 } from './utils'
 import { readByDestValue } from '../destination-scoped-fields'
 import {
+  validateIdentityCheckAfterMicrochip,
   validateIdentityCheckBeforeTiter,
+  validateIdentityCheckOrder,
   validateImportPermitNotAfterDeparture,
   validateInfectiousDiseaseTestDate,
 } from '../journey-steps/date-rules'
@@ -161,6 +163,44 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         message: msgMicrochipBeforeRabies(),
         offendingPaths: ['microchip_implant_date'],
       }
+    },
+  },
+  {
+    id: 'nz.microchip-before-identity-check',
+    country: COUNTRY,
+    category: '마이크로칩',
+    title: '마이크로칩 인증은 칩 시술 이후',
+    description:
+      '검역관이 확인하는 대상이 마이크로칩이므로 칩 시술일보다 앞선 인증일은 성립하지 않는다. 저장 거부(validateIdentityCheckAfterMicrochip)와 같은 함수 — 인증을 먼저 저장한 뒤 칩 시술일을 나중 날짜로 고친 경우를 표면화하는 짝 주의. 칩 시술일은 이미 지나간 사실이라 조치 가능한 쪽(인증일)으로 안내한다.',
+    severity: 'warning',
+    addedAt: '2026-07-29',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const chip =
+        typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
+      const first = readScopedDate(caseRow, destination, 'id_date')
+      if (!chip || !first) return SKIP
+      const msg = validateIdentityCheckAfterMicrochip(chip, first)
+      if (msg) return { ok: false, message: msg, offendingPaths: ['id_date'] }
+      return { ok: true, message: `마이크로칩(${chip}) ≤ 1차 인증(${first}).` }
+    },
+  },
+  {
+    id: 'nz.identity-check-order',
+    country: COUNTRY,
+    category: '마이크로칩',
+    title: '2차 인증은 1차 이후',
+    description:
+      'IHS 1.11(4) 의 2회 케이스는 1차(출국 6개월 이전) → 2차(채혈 직전) 순서다. 회차가 뒤집힌 기록은 그 자체로 잘못된 입력이라 저장 거부(validateIdentityCheckOrder)와 짝을 이룬다. 2차 없이 1차만 있는 1회 케이스는 SKIP.',
+    severity: 'warning',
+    addedAt: '2026-07-29',
+    run: ({ caseRow, destination }) => {
+      const first = readScopedDate(caseRow, destination, 'id_date')
+      const second = readScopedDate(caseRow, destination, 'id_date_2')
+      if (!first || !second) return SKIP
+      const msg = validateIdentityCheckOrder(first, second)
+      if (msg) return { ok: false, message: msg, offendingPaths: ['id_date_2', 'id_date'] }
+      return { ok: true, message: `1차(${first}) ≤ 2차(${second}).` }
     },
   },
   {

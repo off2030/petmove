@@ -202,7 +202,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 인증↔채혈 순서 주의(au.identity-check-before-titer)는 **항체 검사 카드로 옮겼다**
     //   (2026-07-29, 뉴질랜드와 함께). 조치가 재채혈이라 뒤 카드가 자리다.
     //   저장 거부는 여기 입력 시점에 그대로 있다.
-    validationIds: [],
+    // 칩 선행 주의는 여기 남긴다 — 칩 시술일은 되돌릴 수 없고 고칠 수 있는 건 인증일이다.
+    validationIds: ['au.microchip-before-identity-check'],
   },
 
   // ── 2-2. 뉴질랜드 마이크로칩 인증 (Pre-export identification check) ─────────
@@ -260,7 +261,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //     인증을 되돌릴 수 없으니 바꿀 수 있는 건 출국일뿐이다(생후 9개월 하한과 같은 자리).
     //   저장 거부(인증일 > 채혈일)는 **여기 입력 시점**에 그대로 있다 — 잘못된 값이 들어오는
     //   걸 막는 장치는 입력하는 자리에 있어야 한다.
-    validationIds: [],
+    // 칩 선행·회차 순서 주의는 여기 남긴다 — 둘 다 조치가 인증일이다(칩 시술일은 되돌릴 수
+    //   없고, 회차가 뒤집힌 건 인증일 자체가 잘못 들어간 것).
+    validationIds: ['nz.microchip-before-identity-check', 'nz.identity-check-order'],
   },
 
   // ── 3. 광견병 백신 1차 ─────────────────────────────────────────────────
