@@ -1244,7 +1244,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // ⚠️ 구 IHS(2021) 시절의 같은 서류 이름은 **OVD(Official Veterinarian Declaration)** 다.
   //   담는 항목·서명 구조가 같고 신 IHS 에서 RCF 로 대체됐다. 전환기(~2027-04-01)에는 구
   //   서식이 통할 수 있으나 앱은 신 IHS 하나로만 판정한다(nz.ts 헤더 주석).
-  // 호주는 버튼 완료지만 여기는 **발급일 입력**이다 — 아래 두 검증이 실제 발급일을 필요로 한다.
+  // 완료 방식·검증까지 **호주와 똑같이** 맞춘다(2026-07-29 사용자 확정). 버튼 완료라 저장값은
+  //   '버튼 누른 날'이고, 날짜 크기 비교에 기대는 검증은 두지 않는다. 수입 허가와의 순서는
+  //   허가 카드의 저장 거부가 **완료 여부**로 보장한다(importPermitPrerequisiteError).
   {
     id: 'nz-rcf',
     category: 'document',
@@ -1258,6 +1260,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 항체 검사(40) 뒤, 계류시설 예약(42)·수입 허가(44) 앞.
     order: 41,
     done: 'dated:nz_rcf_date',
+    buttonComplete: true,
     inputs: [
       {
         key: 'nz_rcf_date',
@@ -1269,7 +1272,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '광견병 증명서(RCF)를 사진·PDF로 보관하세요.',
     attachmentLabel: '광견병 증명서(RCF)',
-    // 호주 선언서와 같은 형태의 단일 룰(채혈 이후 · 허가 취득 이전 두 갈래).
+    // 호주 선언서와 같은 단일 룰 — **채혈 이후** 갈래만 본다. '허가 신청 이전' 갈래는
+    //   수입 허가 카드가 신청일을 받지 않게 되면서 판정할 값이 없어져 삭제했다(2026-07-29).
     validationIds: ['nz.rcf-order'],
   },
 

@@ -522,9 +522,9 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     id: 'nz.rcf-order',
     country: COUNTRY,
     category: '광견병',
-    title: 'RCF는 채혈 이후 · 수입 허가 신청 이전',
+    title: 'RCF는 채혈 이후',
     description:
-      '지원문서 Documentation — RCF 는 항체 결과를 옮겨 적는 서식이라 채혈보다 앞설 수 없고, "You will need to upload the completed, signed, and stamped RCF when applying online for the import permit" 이므로 허가 신청일보다 늦을 수 없다. 채혈 이후 갈래는 저장 거부(validateNzRcfDate)와 같은 함수 — 발급일을 먼저 저장한 뒤 채혈일을 늦춘 경우를 표면화하는 짝 주의. 구 IHS 시절 같은 서류 이름은 OVD.',
+      '지원문서 Documentation — RCF 는 항체 결과를 옮겨 적는 서식이라 채혈보다 앞설 수 없다. 완료 버튼을 먼저 누른 뒤 채혈일을 더 늦은 날로 고친 경우를 표면화한다. ⛔ 구 룰의 "허가 신청 이전" 갈래는 2026-07-29 에 삭제했다 — 수입 허가 카드가 신청일을 받지 않게 되면서 판정할 값이 사라졌다. 허가와의 순서는 허가 카드의 저장 거부(importPermitPrerequisiteError)가 **완료 여부**로 보장한다. 구 IHS 시절 같은 서류 이름은 OVD.',
     severity: 'warning',
     addedAt: '2026-07-29',
     run: ({ caseRow, destination }) => {
@@ -547,17 +547,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         }
       }
 
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const filed = readScopedImportPermitFiled(data, destination)
-      if (/^\d{4}-\d{2}-\d{2}$/.test(filed) && rcf > filed) {
-        return {
-          ok: false,
-          message:
-            '수입 허가를 신청할 때 광견병 증명서(RCF)를 함께 내야 해요. 신청일보다 늦게 발급받을 수 없어요.',
-          offendingPaths: ['nz_rcf_date', 'import_permit_application_date'],
-        }
-      }
-      return { ok: true, message: `RCF(${rcf}) 채혈 이후 · 허가 신청 이전.` }
+      return { ok: true, message: `RCF(${rcf}) 채혈 이후.` }
     },
   },
   {

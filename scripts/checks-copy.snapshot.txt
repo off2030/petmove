@@ -168,8 +168,6 @@
   뉴질랜드에는 생후 9개월이 지난 후에 갈 수 있어요. 출국일을 다시 확인하세요.
 [nz.quarantine-reservation-matches-entry]
   계류 시작일과 뉴질랜드 도착일이 달라요. 예약 날짜와 항공 일정을 다시 확인하세요.
-[nz.rcf-order]
-  수입 허가를 신청할 때 광견병 증명서(RCF)를 함께 내야 해요. 신청일보다 늦게 발급받을 수 없어요.
 [nz.import-quarantine-date-valid]
   뉴질랜드 수입 검역일은 뉴질랜드 도착일보다 빠를 수 없어요. 날짜를 확인하세요.
 [nz.banned-breeds]

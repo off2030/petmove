@@ -35,7 +35,6 @@ import {
   validateIdentityCheckBeforeTiter,
   validateIdentityCheckOrder,
   validateNzQuarantineStartAfterTiter,
-  validateNzRcfDate,
   validateTiterAfterIdentityCheck,
   validateAuInternalParasiteDates,
   validateExternalParasiteDates,
@@ -1588,15 +1587,9 @@ export function StepDetailView({
           .filter((d) => d.length >= 10),
       )
     }
-    // 뉴질랜드 RCF — 항체 결과를 옮겨 적는 서식이라 채혈보다 먼저 발급될 수 없다.
-    if (step.id === 'nz-rcf') {
-      return validateNzRcfDate(
-        importQuarantineDate.trim(),
-        readTiterAllEntries(caseRow?.data)
-          .map((e) => e.date)
-          .filter((x) => x.length >= 10),
-      )
-    }
+    // ⛔ 뉴질랜드 RCF 저장 거부는 삭제(2026-07-29) — 카드가 버튼 완료로 바뀌어 저장값이
+    //   '버튼 누른 날'이다. 채혈 이후 순서는 주의(nz.rcf-order)가, 수입 허가와의 순서는
+    //   허가 카드의 저장 거부가 완료 여부로 본다. 호주 선언서와 같은 처리.
     // 뉴질랜드 계류 예약 — 계류 시작일(=도착일)과 채혈일 간격 + 인증 횟수를 함께 본다
     //   (2026-07-29 사용자 확정). 3개월 미만은 규정 위반 확정, 3~6개월은 2차 인증이 있어야
     //   합법, 6개월 이상은 1회 인증으로 충분. 도메인 단일 출처(nz.ts 주의 룰과 같은 함수).
