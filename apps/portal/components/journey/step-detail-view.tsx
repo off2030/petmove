@@ -208,6 +208,17 @@ const SIMPLE_FLIGHT_DESTINATIONS: readonly string[] = [
   //   공항·편명)를 쓸 데가 없다. 채혈 3~12개월 창도 규정 기준일이 **출국일**이라 출발일만으로
   //   판정된다(nz.titer-3to12months-before-departure 는 readDepartureDate 를 본다).
   'new_zealand',
+  // 괌 — 하와이(이미 단순형)와 같은 미국령인데 혼자 상세형으로 남아 있었다(2026-07-30 사용자
+  //   지적 '출국·귀국 날짜면 충분'). 근거 전수 확인:
+  //   · 괌 룰 전부 readDepartureDate(출국일) — entry_date 를 읽는 룰이 하나도 없다.
+  //   · 프로파일에 extraFields 가 없다 — 항공편 정보를 채우는 증명서 PDF 가 없다
+  //     (하와이는 AQS-279 서식 때문에 extraFields 에 항공편이 들어 있다 — 괌은 그런 서식이 없다).
+  //   · DOAG 수입 허가는 **보호자가 이메일로 직접 제출**한다(펫무브 대행 아님). 신청서에 넣는
+  //     Flight Itinerary 는 e-티켓 첨부로 충분하다 — 대만·홍콩·UAE 와 같은 판단.
+  //   · FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS 에 없어 도착 검역 배지도 항공 날짜를 안 쓴다.
+  //   ⚠️ 카드 문구의 '예약한 검역시설의 운영시간에 맞는 도착 시간인지 확인하세요'는 그대로 둔다 —
+  //     확인하라는 안내지 앱에 입력하라는 뜻이 아니었고, 앱은 그 값을 판정한 적이 없다.
+  'guam',
 ]
 
 /**
