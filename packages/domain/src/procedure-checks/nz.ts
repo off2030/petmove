@@ -27,6 +27,7 @@ import {
   validateInfectiousDiseaseTestDate,
   validateNzQuarantineStartAfterTiter,
   validateNzRcfDate,
+  validateTiterAfterIdentityCheck,
 } from '../journey-steps/date-rules'
 import {
   msgExportQuarantineAfterReturn,
@@ -217,9 +218,24 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     run: ({ caseRow, destination }) => {
       // 2회 받는 케이스는 **마지막 인증**이 채혈 전이어야 한다(1차는 6개월 전이라 자동 성립).
       const id = readLatestIdentityCheckDate(caseRow, destination)
-      if (!id) return SKIP
       const titers = readTiterEntries(caseRow)
       if (titers.length === 0) return SKIP
+      // ⚠️ 인증일 미입력도 잡는다(2026-07-29 사용자 지적) — 예전엔 `if (!id) return SKIP` 이라
+      //   인증 없이 채혈만 기록된 케이스에서 아무것도 뜨지 않았다. 저장 거부는 **새로 입력할 때**만
+      //   걸리므로 이미 저장된 케이스는 그냥 지나갔다. 뉴질랜드는 인증이 필수 절차라 인증 없는
+      //   채혈은 무효이고, 저장 거부와 **같은 함수**로 판정해 문구도 하나로 맞춘다.
+      if (!id) {
+        const earliest = titers.reduce((a, b) => (a.date <= b.date ? a : b))
+        const msg = validateTiterAfterIdentityCheck('', earliest.date, { required: true })
+        if (msg) {
+          return {
+            ok: false,
+            message: msg,
+            offendingPaths: ['id_date', `rabies_titer_records[${earliest.originalIndex}].date`],
+          }
+        }
+        return SKIP
+      }
       const msg = validateIdentityCheckBeforeTiter(
         id,
         titers.map((t) => t.date),
