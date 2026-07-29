@@ -76,7 +76,14 @@ export function ImportPermitInputs({
         </div>
       )}
       {reservation && (
-        <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
+        <div
+          style={{
+            padding: '14px 0',
+            // 구분선은 **위 칸이 있을 때만** — 신청일을 숨기면(뉴질랜드) 첫 칸이 되는데
+            //   테두리가 남아 카드 위쪽에 선만 떠 있었다(2026-07-29).
+            ...(showApplicationDate ? { borderTop: `.5px solid ${C.line}` } : null),
+          }}
+        >
           <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>{reservation.label}</div>
           <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>{reservation.help}</div>
           <div style={{ marginTop: 8 }}>
@@ -90,7 +97,15 @@ export function ImportPermitInputs({
         </div>
       )}
       {showPermitNo && (
-        <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
+        <div
+          style={{
+            padding: '14px 0',
+            // 위 칸(신청일·예약일)이 하나라도 있을 때만 구분선 — 뉴질랜드는 이 칸이 유일하다.
+            ...(showApplicationDate || reservation
+              ? { borderTop: `.5px solid ${C.line}` }
+              : null),
+          }}
+        >
           <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>허가 번호</div>
           <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
             수입 허가증에 기재된 번호 — 허가증을 받은 뒤 입력하세요
