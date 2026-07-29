@@ -66,6 +66,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 수입 허가 신청 → 허가증 2단계 (import-permit step, 태국·호주 등 허가 필요국 공용) —
   // 목적지마다 허가를 따로 받으므로 신청일·완료(skip) 플래그도 by_dest 분리.
   'import_permit_application_date',
+  // 허가를 확인한 날 — 신청일 칸이 없는 카드(뉴질랜드)의 완료일 표시용. 신청일이 있으면 그쪽이
+  //   우선이고 이 값은 폴백이다(2026-07-29 — 신청일을 없앤 뒤 완료일이 비어 보였다).
+  'import_permit_recorded_at',
   'import_permit_issued_skipped',
   // '진행 중' 확인 플래그(보호자가 신청 후 '진행 중' 버튼을 눌렀는지) — skip 플래그와 동일하게 by_dest 분리.
   'import_permit_in_progress',
@@ -134,6 +137,10 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'nz_import_quarantine_date',
   'nz_import_quarantine_confirmed',
   'nz_quarantine_reservation_date',
+  // 예약을 마친 날 — 카드 입력값은 미래 계류 시작일이라 완료일로 쓸 수 없다(호주와 같은 모델).
+  //   ⚠️ 이 키를 명단에 빠뜨리면 by_dest 로 저장돼도 목적지 뷰로 평탄화되지 않아, 예약을 마쳐도
+  //   일정 목록의 날짜가 계속 비어 보인다(2026-07-29 사용자 지적으로 발견).
+  'nz_quarantine_reservation_recorded_at',
   // 광견병 증명서(RCF) 발급일 — 수입 허가 신청의 필수 제출물이라 목적지별로 따로 받는다
   //   (호주 au_rnatt_declaration_date 와 같은 자리). 구 IHS 시절 이름은 OVD.
   'nz_rcf_date',

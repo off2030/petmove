@@ -1935,6 +1935,23 @@ export async function updateImportPermitFields(
         delete nextData.import_permit_in_progress
       }
     }
+    // 허가 번호를 넣는 순간이 곧 '허가를 확인한 날' — 신청일 칸이 없는 카드(뉴질랜드)의 완료일
+    //   표시용이다(2026-07-29). 신청일이 있으면 그쪽이 우선이라 이 값은 폴백으로만 쓰인다.
+    //   번호를 지우면 함께 지운다 — 완료 근거가 사라졌는데 날짜만 남으면 안 된다.
+    const permitStampKey = 'import_permit_recorded_at'
+    const prevPermitStamp = token
+      ? readByDestValue(prev, token, permitStampKey)
+      : prev[permitStampKey]
+    if (!permitNo) {
+      nextData = token
+        ? writeByDestValue(nextData, token, permitStampKey, null)
+        : (delete nextData[permitStampKey], nextData)
+    } else if (typeof prevPermitStamp !== 'string' || prevPermitStamp.length < 10) {
+      const stamp = todayKst()
+      nextData = token
+        ? writeByDestValue(nextData, token, permitStampKey, stamp)
+        : { ...nextData, [permitStampKey]: stamp } // scoping-fallback-ok: token 없음 폴백
+    }
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -2287,6 +2304,10 @@ export async function markImportPermitIssued(
       true,
     )
     if (prereqErr) return { ok: false, error: prereqErr }
+    // 허가를 확인한 날 — 신청일 칸이 없는 카드(뉴질랜드)의 완료일 표시용. 신청일이 있으면
+    //   그쪽이 우선이라 이 값은 폴백으로만 쓰인다. 최초 1회만 찍는다.
+    const stampKey = 'import_permit_recorded_at'
+    const prevStamp = token ? readByDestValue(prev, token, stampKey) : prev[stampKey]
 
     let nextData: Record<string, unknown> = { ...prev }
     if (token) {
@@ -2294,6 +2315,12 @@ export async function markImportPermitIssued(
       delete nextData.import_permit_issued_skipped
     } else {
       nextData.import_permit_issued_skipped = true // scoping-fallback-ok: token 없음(목적지 없음) 폴백
+    }
+    if (typeof prevStamp !== 'string' || prevStamp.length < 10) {
+      const stamp = todayKst()
+      nextData = token
+        ? writeByDestValue(nextData, token, stampKey, stamp)
+        : { ...nextData, [stampKey]: stamp } // scoping-fallback-ok: token 없음 폴백
     }
 
     const { data: updated, error } = await admin

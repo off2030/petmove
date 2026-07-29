@@ -521,7 +521,12 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
         typeof data.import_permit_application_date === 'string'
           ? data.import_permit_application_date
           : null
-      return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+      if (dt && dt.length >= 10) return dt.slice(0, 10)
+      // 신청일 칸이 없는 카드(뉴질랜드 — 허가 번호·첨부·완료 버튼으로 완료)는 대신 '허가를
+      //   확인한 날'을 쓴다. 이게 없으면 완료인데 날짜가 비어 보였다(2026-07-29 사용자 지적).
+      const rec =
+        typeof data.import_permit_recorded_at === 'string' ? data.import_permit_recorded_at : null
+      return rec && rec.length >= 10 ? rec.slice(0, 10) : null
     }
     case 'has-sg-quarantine-reservation': {
       const dt =
