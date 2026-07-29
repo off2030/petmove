@@ -1969,7 +1969,15 @@ export function validateInfectiousDiseaseTestDate(
   const d = departureDate.slice(0, 10)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return null
   if (t > d) return '전염병 검사일이 출국일보다 늦어요. 날짜를 확인하세요.'
-  const maxGap = destinationKey ? INFECTIOUS_TEST_DEPARTURE_WINDOWS[destinationKey] : undefined
+  // ⚠️ 생 맵 조회(`WINDOWS[destinationKey]`)를 쓰지 말 것 — 키 형태('new_zealand')만 맞고
+  //   한글 토큰('뉴질랜드')이 들어오면 조용히 통과한다. 기생충 창이 같은 부류의 매칭 실패로
+  //   30일 차단을 통째로 잃었다(2026-07-28). 여기선 두 형태를 다 받도록 matchesDestinationKey.
+  const windowKey = destinationKey
+    ? Object.keys(INFECTIOUS_TEST_DEPARTURE_WINDOWS).find((k) =>
+        matchesDestinationKey(destinationKey, k),
+      )
+    : undefined
+  const maxGap = windowKey ? INFECTIOUS_TEST_DEPARTURE_WINDOWS[windowKey] : undefined
   if (maxGap === undefined) return null
   const gap = daysBetween(t, d)
   if (gap !== null && gap > maxGap) {

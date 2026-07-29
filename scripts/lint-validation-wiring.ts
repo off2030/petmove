@@ -35,8 +35,13 @@ import { DESTINATION_OVERRIDES, destinationKeysWhere } from '../packages/domain/
 import {
   EU_ENTRY_FAMILY,
   GENERAL_VACCINE_WAIT_DAYS,
+  INFECTIOUS_TEST_DEPARTURE_WINDOWS,
   PARASITE_DEPARTURE_WINDOWS,
   RABIES_ENTRY_WAIT_DAYS,
+  generalVaccineEntryWaitDays,
+  rabiesEntryWaitDays,
+  validateEuEntryDate,
+  validateInfectiousDiseaseTestDate,
   validateParasiteDateForDestination,
 } from '../packages/domain/src/journey-steps/date-rules'
 import { TITER_MIN_DAYS_AFTER_VACCINE } from '../packages/domain/src/journey-steps/titer-validity'
@@ -450,27 +455,112 @@ function parasiteWindowWithoutBlocker(appDests: string[]): Problem[] {
  *
  * 키 형태와 키워드 형태를 **둘 다** 넣어 본다. case.data 의 destination 값은 한글('뉴질랜드')로
  * 저장돼 있기도 하고 코드에서는 키('new_zealand')로 넘기기도 해서, 한쪽만 매칭돼도 반쪽이다.
+ *
+ * ⚠️ 새 '선언 → 차단' 계열을 만들면 여기 REACHABILITY_PROBES 에 한 줄 추가할 것. 선언 맵만
+ *   늘리고 probe 를 안 붙이면 다시 같은 사각지대가 생긴다.
  */
-function parasiteBlockerUnreachable(): Problem[] {
+const DEPARTURE = '2026-06-01'
+
+/**
+ * 계열별 도달성 probe. `violating(form)` 은 **반드시 거부돼야 하는 입력**을 그 destination
+ * 형태로 넣어 보고 거부 문구를 돌려준다 — null 이면 차단이 안 도는 것이다.
+ */
+const REACHABILITY_PROBES: Array<{
+  label: string
+  /** 선언된 목적지 키 → 그 목적지에서 시험할 항목들(항목명, 위반 입력 판정) */
+  entries: () => Array<{ key: string; item: string; violating: (form: string) => string | null }>
+}> = [
+  {
+    label: '기생충 처치 창',
+    entries: () =>
+      Object.entries(PARASITE_DEPARTURE_WINDOWS).flatMap(([key, w]) =>
+        w.kinds.map((kind) => ({
+          key,
+          item: `${kind === 'internal' ? '내부' : '외부'} 기생충`,
+          // 창 밖 = 출국일에서 maxGap 보다 훨씬 이른 날.
+          violating: (form: string) =>
+            validateParasiteDateForDestination(addDays(DEPARTURE, -(w.maxGap + 10)), {
+              destinationKey: form,
+              kind,
+              departureDate: DEPARTURE,
+            }),
+        })),
+      ),
+  },
+  {
+    label: '전염병 검사 창',
+    entries: () =>
+      Object.entries(INFECTIOUS_TEST_DEPARTURE_WINDOWS).map(([key, maxGap]) => ({
+        key,
+        item: '전염병 검사',
+        violating: (form: string) =>
+          validateInfectiousDiseaseTestDate(addDays(DEPARTURE, -(maxGap + 10)), DEPARTURE, form),
+      })),
+  },
+  {
+    label: '광견병 접종 후 입국 대기',
+    entries: () =>
+      Object.entries(RABIES_ENTRY_WAIT_DAYS).map(([key, days]) => ({
+        key,
+        item: `접종 후 ${days}일`,
+        // 해석기가 선언값을 못 찾으면(0) 차단 계산 자체가 0일이 되어 아무것도 안 막는다.
+        violating: (form: string) => (rabiesEntryWaitDays(form) === days ? '차단됨' : null),
+      })),
+  },
+  {
+    label: '종합백신 접종 후 입국 대기',
+    entries: () =>
+      Object.entries(GENERAL_VACCINE_WAIT_DAYS).map(([key, days]) => ({
+        key,
+        item: `접종 후 ${days}일`,
+        violating: (form: string) => (generalVaccineEntryWaitDays(form) === days ? '차단됨' : null),
+      })),
+  },
+  {
+    label: '채혈 후 입국 대기',
+    entries: () =>
+      destinationKeysWhere((o) => {
+        const w = o.titer?.entryWaitAfterTiter
+        return typeof w?.months === 'number' || typeof w?.days === 'number'
+      })
+        .filter((key) => !TITER_WAIT_OWN_FUNCTION[key])
+        .map((key) => {
+          const w = DESTINATION_OVERRIDES[key]!.titer!.entryWaitAfterTiter!
+          const wait = typeof w.months === 'number' ? `${w.months}개월` : `${w.days}일`
+          return {
+            key,
+            item: `채혈 후 ${wait}`,
+            // 채혈 바로 다음 날 입국 — 어떤 대기 요건에도 걸린다.
+            violating: (form: string) =>
+              validateEuEntryDate(DEPARTURE, {
+                destination: form,
+                departureDate: DEPARTURE,
+                data: {
+                  rabies_titer_records: [
+                    { date: addDays(DEPARTURE, -1), received_date: addDays(DEPARTURE, -1) },
+                  ],
+                },
+              }),
+          }
+        }),
+  },
+]
+
+/** 채혈 후 대기를 **전용 함수**가 판정하는 목적지 — validateEuEntryDate 는 일부러 비켜 간다. */
+const TITER_WAIT_OWN_FUNCTION: Record<string, string> = {
+  taiwan: '180일~2년 창 + 격리 분기를 validateTwEntryDate 가 함께 판정(이중 계산 금지)',
+}
+
+function declaredBlockerUnreachable(): Problem[] {
   const out: Problem[] = []
-  const DEPARTURE = '2026-06-01'
-  for (const [key, w] of Object.entries(PARASITE_DEPARTURE_WINDOWS)) {
-    // 창 밖 = 출국일에서 maxGap 보다 훨씬 이른 날. 반드시 거부돼야 한다.
-    const treat = addDays(DEPARTURE, -(w.maxGap + 10))
-    const forms = [key, ...(DESTINATION_OVERRIDES[key]?.keywords ?? [])]
-    for (const kind of w.kinds) {
-      const dead = forms.filter(
-        (form) =>
-          validateParasiteDateForDestination(treat, {
-            destinationKey: form,
-            kind,
-            departureDate: DEPARTURE,
-          }) === null,
-      )
+  for (const probe of REACHABILITY_PROBES) {
+    for (const { key, item, violating } of probe.entries()) {
+      const forms = [key, ...(DESTINATION_OVERRIDES[key]?.keywords ?? [])]
+      const dead = forms.filter((form) => violating(form) === null)
       if (dead.length === 0) continue
       out.push({
         dest: key,
-        stepId: `(${kind === 'internal' ? '내부' : '외부'} 기생충 처치 창)`,
+        stepId: `(${probe.label} — ${item})`,
         ruleId: dead.join(', '),
         kind: 'unreachable-parasite-blocker',
       })
@@ -931,7 +1021,7 @@ function main(): void {
     ...titerWaitWithoutBlocker(appDests),
     ...waitRuleWithoutBlocker(appDests),
     ...parasiteWindowWithoutBlocker(appDests),
-    ...parasiteBlockerUnreachable(),
+    ...declaredBlockerUnreachable(),
     ...saveBlockDecisions(appDests),
     ...deadDeclarations(appDests),
     ...importPermitNotifyLeaks(appDests),
