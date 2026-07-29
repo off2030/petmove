@@ -3365,139 +3365,128 @@ export function StepDetailView({
               진행(importPermitCompleteMode)이면 같은 버튼이 '완료'로 전환 — 저장할 변경이
               없는 상태에서 명시적 완료 액션을 직접 노출. */}
           {(() => {
-            // 버튼 완료 카드 — dirty 개념이 없어 일반 저장 버튼과 활성 조건이 다르다.
-            // 미완료='제출 완료'(accent), 완료='완료 취소'(muted). 둘 다 항상 누를 수 있다.
-            if (isButtonDoneStep) {
-              const saving = status === 'saving'
-              return (
-                <button
-                  type="button"
-                  onClick={() => handleButtonDone(done ? null : todayStr)}
-                  disabled={saving}
-                  aria-live="polite"
-                  style={{
-                    pointerEvents: 'auto',
-                    width: '100%',
-                    padding: '14px 0',
-                    borderRadius: 14,
-                    border: 0,
-                    background: justSaved ? C.sage : done ? 'var(--pm-line)' : C.accent,
-                    color: justSaved || !done ? '#fff' : C.ink,
-                    fontFamily: 'inherit',
-                    fontSize: 15,
-                    fontWeight: 600,
-                    letterSpacing: '-0.005em',
-                    cursor: saving ? 'not-allowed' : 'pointer',
-                    transition: 'background .15s, color .15s',
-                  }}
-                >
-                  {/* '제출 완료'는 버튼이 실제 제출을 수행하는 걸로 오독될 수 있어 '완료'로
-                      (2026-07-26 사용자 결정 — 다른 카드 완료 버튼 어휘와도 일관). */}
-                  {saving
-                    ? '저장 중…'
-                    : justSaved
-                      ? '✓ 저장됨'
-                      : done
-                        ? '완료 취소'
-                        : '완료'}
-                </button>
-              )
-            }
-            const completeMode =
-              advanceSkipMode || jpExportSkipMode || titerCompleteMode || importPermitCompleteMode
+            /**
+             * 주 버튼은 **하나**다. 예전엔 버튼 완료 카드용 <button> 과 그 외용 <button> 이
+             * 따로 있었고, 색·라벨·활성 조건이 각자 삼항으로 얽혀 있었다. 그래서 완료 변형을
+             * 하나 추가할 때마다 색이나 안내가 빠졌다(2026-07-29 '완료 취소'에서 세 번째).
+             *
+             * 이제 **무엇을 하는 버튼인가**(kind)를 먼저 정하고 색·라벨·활성을 거기서 파생한다.
+             * 새 변형은 kind 한 줄과 라벨 한 줄만 추가하면 색·톤이 자동으로 따라온다.
+             */
+            const saving = status === 'saving'
             const processing =
               skippingApproval ||
               skippingJpExport ||
               completingTiter ||
               completingImportPermit ||
               undoingImportPermit
-            const active =
-              (canSave || completeMode || importPermitUndoMode) &&
-              status !== 'saving' &&
-              !processing
-            return (
-          <button
-            type="button"
-            onClick={
-              advanceSkipMode
-                ? handleSkipAdvanceApproval
-                : jpExportSkipMode
-                  ? handleSkipJpExportReservation
-                  : titerCompleteMode
-                    ? handleCompleteTiter
-                    : importPermitCompleteMode
-                      ? handleCompleteImportPermit
-                      : importPermitUndoMode && !canSave
-                        ? handleUndoImportPermit
-                        : handleSaveClick
-            }
-            disabled={!active}
-            aria-live="polite"
-            style={{
-              pointerEvents: 'auto',
-              width: '100%',
-              padding: '14px 0',
-              borderRadius: 14,
-              border: 0,
-              // '완료 취소'는 되돌리는 동작이라 버튼 완료 카드와 같은 muted 톤을 쓴다 —
-              //   같은 문구·같은 역할인데 한쪽만 accent 면 화면마다 달라 보인다(2026-07-29).
-              background: justSaved
-                ? C.sage
-                : importPermitUndoMode && !canSave
-                  ? 'var(--pm-line)'
-                  : active
-                    ? C.accent
-                    : 'var(--pm-line)',
-              color: justSaved
-                ? '#fff'
-                : importPermitUndoMode && !canSave
-                  ? C.ink
-                  : active
-                    ? '#fff'
-                    : C.ink3,
-              fontFamily: 'inherit',
-              fontSize: 15,
-              fontWeight: 600,
-              letterSpacing: '-0.005em',
-              cursor: active ? 'pointer' : 'not-allowed',
-              transition: 'background .15s, color .15s',
-            }}
-          >
-            {status === 'saving'
+            const completeMode =
+              advanceSkipMode || jpExportSkipMode || titerCompleteMode || importPermitCompleteMode
+            const upcomingSave =
+              formUpcoming ||
+              jpExportApplicationUpcoming ||
+              advanceUpcoming ||
+              rabiesExtraUpcoming ||
+              vetVisitUpcoming ||
+              titerUpcoming ||
+              titerExtraUpcoming ||
+              generalVaccineUpcoming ||
+              importPermitUpcoming ||
+              simpleDatedUpcoming ||
+              parasiteUpcoming ||
+              rabiesUpcoming ||
+              rabiesSingleUpcoming ||
+              microchipUpcoming
+
+            const kind: 'buttonDone' | 'undo' | 'complete' | 'save' = isButtonDoneStep
+              ? 'buttonDone'
+              : importPermitUndoMode && !canSave
+                ? 'undo'
+                : completeMode
+                  ? 'complete'
+                  : 'save'
+
+            // 되돌리는 동작(완료 취소)은 muted — 강조색은 '지금 해야 할 주된 행동'에만 쓴다.
+            //   비활성과는 글자색으로 구분된다(muted=ink / 비활성=ink3).
+            const isUndo = kind === 'undo' || (kind === 'buttonDone' && done)
+            // 버튼 완료 카드는 dirty 개념이 없어 항상 누를 수 있다(저장 중만 제외).
+            const enabled =
+              kind === 'buttonDone'
+                ? !saving
+                : (canSave || completeMode || importPermitUndoMode) && !saving && !processing
+
+            const onClick =
+              kind === 'buttonDone'
+                ? () => handleButtonDone(done ? null : todayStr)
+                : kind === 'undo'
+                  ? handleUndoImportPermit
+                  : advanceSkipMode
+                    ? handleSkipAdvanceApproval
+                    : jpExportSkipMode
+                      ? handleSkipJpExportReservation
+                      : titerCompleteMode
+                        ? handleCompleteTiter
+                        : importPermitCompleteMode
+                          ? handleCompleteImportPermit
+                          : handleSaveClick
+
+            // '제출 완료'는 버튼이 실제 제출을 수행하는 걸로 오독될 수 있어 '완료'로
+            //   (2026-07-26 사용자 결정 — 다른 카드 완료 버튼 어휘와도 일관).
+            const label = saving
               ? '저장 중…'
               : processing
                 ? '처리 중…'
                 : justSaved
                   ? '✓ 저장됨'
-                  : // 완료 처리(skip)로 완료된 수입 허가 — 되돌릴 유일한 수단이라 라벨을 바꾼다.
-                    importPermitUndoMode && !canSave
-                    ? '완료 취소'
-                    : completeMode
-                      ? '완료'
-                    : // 기록형 예정 도래(미변경) — '완료'(=예정 날짜 그대로 저장해 승격).
-                      // 미래 예정이 함께 있어도(단일카드 목록) 도래분 승격이 우선이라 '완료'.
-                      recordScheduledComplete
-                      ? '완료'
-                    : formUpcoming ||
-                        jpExportApplicationUpcoming ||
-                        advanceUpcoming ||
-                        rabiesExtraUpcoming ||
-                        vetVisitUpcoming ||
-                        titerUpcoming ||
-                        titerExtraUpcoming ||
-                        generalVaccineUpcoming ||
-                        importPermitUpcoming ||
-                        simpleDatedUpcoming ||
-                        parasiteUpcoming ||
-                        rabiesUpcoming ||
-                        rabiesSingleUpcoming ||
-                        microchipUpcoming
-                      ? '예정일로 저장'
-                      : // 검역 confirm 단계 — 예정 저장분이 도래하면(미변경) 저장 = 완료 확정이라 '완료'.
-                        confirmArrivedComplete
+                  : kind === 'buttonDone'
+                    ? done
+                      ? '완료 취소'
+                      : '완료'
+                    : kind === 'undo'
+                      ? '완료 취소'
+                      : kind === 'complete'
                         ? '완료'
-                        : '저장'}
-          </button>
+                        : // 기록형 예정 도래(미변경) — '완료'(=예정 날짜 그대로 저장해 승격).
+                          //   미래 예정이 함께 있어도 도래분 승격이 우선이라 '완료'.
+                          recordScheduledComplete
+                          ? '완료'
+                          : upcomingSave
+                            ? '예정일로 저장'
+                            : // 검역 confirm 단계 — 예정 저장분이 도래하면 저장 = 완료 확정.
+                              confirmArrivedComplete
+                              ? '완료'
+                              : '저장'
+
+            return (
+              <button
+                type="button"
+                onClick={onClick}
+                disabled={!enabled}
+                aria-live="polite"
+                style={{
+                  pointerEvents: 'auto',
+                  width: '100%',
+                  padding: '14px 0',
+                  borderRadius: 14,
+                  border: 0,
+                  background: justSaved
+                    ? C.sage
+                    : isUndo
+                      ? 'var(--pm-line)'
+                      : enabled
+                        ? C.accent
+                        : 'var(--pm-line)',
+                  color: justSaved ? '#fff' : isUndo ? C.ink : enabled ? '#fff' : C.ink3,
+                  fontFamily: 'inherit',
+                  fontSize: 15,
+                  fontWeight: 600,
+                  letterSpacing: '-0.005em',
+                  cursor: enabled ? 'pointer' : 'not-allowed',
+                  transition: 'background .15s, color .15s',
+                }}
+              >
+                {label}
+              </button>
             )
           })()}
         </div>
