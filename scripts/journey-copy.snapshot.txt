@@ -4005,7 +4005,7 @@
   첨부안내: 증명서, 수첩 등을 사진·PDF로 보관하세요.
   저장이름: 기생충 치료
   links:
-      승인 제품 목록 (MPI-STD-SAA)  →  https://www.mpi.govt.nz/dmsdocument/2040/direct
+      승인 제품 목록 (MPI-STD-SAA, PDF)  →  https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA
 
 ▸ internal-parasite
   title: 내부 기생충 치료

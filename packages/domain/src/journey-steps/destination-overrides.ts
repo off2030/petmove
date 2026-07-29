@@ -1920,10 +1920,14 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         },
         // 승인 제품 목록은 MPI-STD-SAA(Specified Approvals) 한 문서에 다 들어 있다 —
         //   지원문서의 'Approved products can be found here' 가 가리키는 곳.
+        // ⚠️ MPI 는 이 목록을 **PDF 로만** 공개한다(HTML 페이지 없음). MPI 자기 사이트도
+        //   'Specified Approvals … [PDF, 423 KB]' 로 링크한다. 그래서 라벨에 PDF 를 밝힌다 —
+        //   /direct 주소는 곧장 다운로드가 시작돼 사이트가 열리는 줄 안 보호자가 당황한다
+        //   (2026-07-29 사용자 지적). 정식 주소는 문서 페이지를 거친다.
         links: [
           {
-            url: 'https://www.mpi.govt.nz/dmsdocument/2040/direct',
-            label: '승인 제품 목록 (MPI-STD-SAA)',
+            url: 'https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA',
+            label: '승인 제품 목록 (MPI-STD-SAA, PDF)',
           },
         ],
         validationIds: ['nz.external-parasite-protocol'],
