@@ -768,7 +768,7 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   'rabies-vaccine-2':
     '차단: validateRabiesInterval(간격)·findRabiesChainBreak(유효기간 내)·validateMicrochipBeforeBooster',
   'rabies-titer':
-    '차단: validateTiterDate·validateTiterAfterBooster(입국 요건국 순서)·validateEuTiterAfterVaccine(접종 후 대기)',
+    '차단: validateTiterDate·validateTiterAfterBooster(입국 요건국 순서)·validateEuTiterAfterVaccine(접종 후 대기)·validateTiterAfterIdentityCheck(호주·뉴질랜드 인증 이후, 뉴질랜드는 인증일 필수)',
   'general-vaccine':
     '차단: 출생일 이전 거부·validateMicrochipBeforeBooster(칩 선행국)·findRabiesChainBreak(추가 접종 chain)',
   // 켄넬코프 — 종합백신과 같은 기계를 필드키만 바꿔 쓴다(2026-07-27 카드 분리).

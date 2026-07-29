@@ -1672,6 +1672,32 @@ export function validateIdentityCheckOrder(first: string, second: string): strin
   return null
 }
 
+/**
+ * 채혈은 마이크로칩 인증 이후여야 한다(같은 날 허용) — 인증 카드 차단의 **반대 방향**.
+ *
+ * 인증 카드는 '인증일 > 채혈일'을 막지만, 항체 카드에서 채혈일을 인증보다 앞으로 고치는 건
+ * 막지 않아 같은 위반이 한쪽으로만 걸렸다(2026-07-29 사용자 지적). 양쪽을 대칭으로 막는다.
+ *
+ * `required` — 인증일이 **비어 있는 것도 거부**한다. 뉴질랜드는 인증이 필수 절차라(빠지면
+ * 수입 허가가 나오지 않는다) 인증 없는 채혈은 무효다. 중국 항체 카드가 2차 접종일을 먼저
+ * 넣게 하는 것과 같은 패턴. ⛔ 호주에는 쓰지 말 것 — 호주 인증은 **선택 절차**(안 받으면
+ * 계류가 10일 → 30일로 늘 뿐)라 인증 없는 채혈도 정상 경로다.
+ */
+export function validateTiterAfterIdentityCheck(
+  idDate: string,
+  titerDate: string,
+  opts?: { required?: boolean },
+): string | null {
+  const t = (titerDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) return null
+  const id = (idDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(id)) {
+    return opts?.required ? '마이크로칩 인증을 먼저 받고 인증일을 입력하세요.' : null
+  }
+  if (t < id) return '채혈일은 마이크로칩 인증일 이후여야 해요. 날짜를 확인하세요.'
+  return null
+}
+
 export function validateIdentityCheckBeforeTiter(
   idDate: string,
   titerDates: string[],

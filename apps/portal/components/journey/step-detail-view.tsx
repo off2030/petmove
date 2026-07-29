@@ -34,6 +34,7 @@ import {
   validateIdentityCheckAfterMicrochip,
   validateIdentityCheckBeforeTiter,
   validateIdentityCheckOrder,
+  validateTiterAfterIdentityCheck,
   validateAuInternalParasiteDates,
   validateExternalParasiteDates,
   validateInfectiousDiseaseTestDate,
@@ -1302,6 +1303,19 @@ export function StepDetailView({
           )
           // 접두사('채혈일 날짜:') 없이 문구만 — 일본 차단 톤과 통일(2026-07-24 사용자안).
           if (minErr) return minErr
+        }
+        // 마이크로칩 인증 이후 채혈 — 인증 카드 차단의 반대 방향(2026-07-29). 뉴질랜드는
+        //   인증이 **필수 절차**라 인증일이 비어 있는 것도 거부한다(중국이 2차 접종일을 먼저
+        //   넣게 하는 것과 같은 패턴). 호주는 선택 절차라 순서만 본다.
+        if (destinationKey === 'new_zealand' || destinationKey === 'australia') {
+          const d = (caseRow?.data ?? {}) as Record<string, unknown>
+          const id1 = typeof d.id_date === 'string' ? d.id_date : ''
+          const id2 = typeof d.id_date_2 === 'string' ? d.id_date_2 : ''
+          const latestId = id2 && id2 > id1 ? id2 : id1 || id2
+          const idErr = validateTiterAfterIdentityCheck(latestId, entry.date.trim(), {
+            required: destinationKey === 'new_zealand',
+          })
+          if (idErr) return idErr
         }
         const err = validateTiterDate(
           caseRow?.data,
