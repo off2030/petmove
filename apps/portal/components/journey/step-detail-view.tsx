@@ -37,6 +37,7 @@ import {
   validateNzQuarantineStartAfterTiter,
   validateTiterAfterIdentityCheck,
   validateInternalParasiteSpacing,
+  validateCivDoseInterval,
   validateExternalParasiteDates,
   JOURNEY_STEP_CATALOG,
   validateInfectiousDiseaseTestDate,
@@ -1450,6 +1451,13 @@ export function StepDetailView({
           )
           if (chipErr) return chipErr
         }
+      }
+      // 독감(CIV) 기초 접종 최소 간격 — 카드가 '2주 간격으로 2회'라고 안내하면서 정작 검증이
+      //   없어 10일 간격도 그냥 저장됐다(2026-07-30 사용자 발견). 주의 룰과 **같은 함수**.
+      //   ⚠️ 호주만 — 뉴질랜드 카드에는 그 안내가 없다(함수 주석 참고).
+      if (isCiv && destinationKey === 'australia') {
+        const civErr = validateCivDoseInterval(generalVaccine.map((e) => e.date))
+        if (civErr) return civErr
       }
       // 추가 접종 chain — 각 접종은 직전 접종 면역 유효기간 이내여야 부스터로 인정(광견병과 동일).
       // 만료 후 접종은 새 기초접종이라 직전 유효기간 이내 입력만 허용 — findRabiesChainBreak(범용)로

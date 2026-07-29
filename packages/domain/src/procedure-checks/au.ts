@@ -29,6 +29,7 @@ import {
   validateAuQuarantineReservationDate,
   validateExternalParasiteDates,
   validateInfectiousDiseaseTestDate,
+  validateCivDoseInterval,
 } from '../journey-steps/date-rules'
 import {
   msgExportQuarantineAfterReturn,
@@ -700,6 +701,30 @@ export const AU_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `최근 CIV(${latest.date}) → 출국(${dep}): ${days}일.` }
+    },
+  },
+  {
+    id: 'au.civ-min-14days-between-doses',
+    country: COUNTRY,
+    category: '종합백신',
+    title: '독감(CIV) 접종 간격은 14일 이상',
+    description:
+      'CIV 백신(H3N2·H3N8)은 제조사 지침이 **2~4주 간격 2회**다. DAFF 7.2 는 일수를 못 박지 않고 "제조사 지침대로 기초 접종 완료"라고만 하므로 **하한만** 본다 — 14일보다 짧은 간격은 어느 제조사 지침으로도 성립하지 않아 그 회차가 기초 접종으로 인정되지 않는다. 카드가 "처음 접종하면 2주 간격으로 2회 접종해요"라고 안내하면서 정작 검증이 없어 10일 간격도 그냥 저장되던 것을 메웠다(2026-07-30 사용자 발견). 저장 거부(validateCivDoseInterval)와 **같은 함수**. ⛔ "정확히 14일"로 되돌리지 말 것 — 구 룰의 과잉 해석이었고 3주 간격 같은 정상 일정을 거부한다.',
+    severity: 'warning',
+    addedAt: '2026-07-30',
+    run: ({ caseRow }) => {
+      if (species(caseRow) !== 'dog') return SKIP
+      const entries = readCivEntries(caseRow)
+      if (entries.length < 2) return SKIP
+      const err = validateCivDoseInterval(entries.map((e) => e.date))
+      if (err) {
+        return {
+          ok: false,
+          message: err,
+          offendingPaths: entries.map((e) => `civ_dates[${e.originalIndex}].date`),
+        }
+      }
+      return { ok: true, message: `CIV ${entries.length}회 — 인접 간격 모두 14일 이상.` }
     },
   },
   {

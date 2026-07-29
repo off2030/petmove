@@ -1885,6 +1885,39 @@ export function validateIdentityCheckBeforeTiter(
   return null
 }
 
+/**
+ * 독감(CIV) 기초 접종 **최소 간격** — 연속한 두 접종은 14일 이상 벌어져야 한다.
+ *
+ * 근거: CIV 백신(H3N2·H3N8)은 제조사 지침이 **2~4주 간격 2회**다. DAFF 7.2 는 일수를
+ * 못 박지 않고 "제조사 지침대로 기초 접종 완료"라고만 하므로, 앱은 **하한만** 본다.
+ *
+ * ⛔ '정확히 14일'로 되돌리지 말 것 — 구 룰의 과잉 해석이었고(그래서 삭제됐다), 3주 간격
+ *   같은 정상 일정을 거부하게 된다. 여기서 막는 건 **14일보다 짧은** 간격뿐이다. 어느
+ *   제조사 지침으로도 성립하지 않는 간격이라 그 회차는 기초 접종으로 인정되지 않는다.
+ *
+ * ⚠️ 호주 카드만 이 안내를 한다("처음 접종하면 2주 간격으로 2회 접종해요"). 뉴질랜드
+ *   카드에는 그 줄이 없어 적용하지 않는다 — 카드가 안내하지 않는 조건으로 저장을 막으면
+ *   보호자가 이유를 알 수 없다(호주 수출검역일 ⛔ 주석과 같은 원칙).
+ *
+ * client(getSaveBlockError)·procedure-check(au.civ-min-14days-between-doses) 공용 단일 출처.
+ * 접종이 1회뿐이거나 날짜가 비면 통과.
+ */
+export const CIV_MIN_DOSE_GAP_DAYS = 14
+
+export function validateCivDoseInterval(dates: string[]): string | null {
+  const sorted = dates
+    .map((d) => (d ?? '').slice(0, 10))
+    .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+    .sort()
+  for (let i = 1; i < sorted.length; i++) {
+    const gap = daysBetween(sorted[i - 1], sorted[i])
+    if (gap !== null && gap < CIV_MIN_DOSE_GAP_DAYS) {
+      return `독감(CIV) 백신은 ${CIV_MIN_DOSE_GAP_DAYS}일 이상 간격을 두고 접종해야 해요.`
+    }
+  }
+  return null
+}
+
 /** 호주 내부구충 프로토콜 일수 — DAFF 7.7 명문. */
 export const AU_INTERNAL_PARASITE = { windowDays: 45, minGapDays: 14, secondWithinDays: 5 }
 

@@ -1636,7 +1636,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         order: 34,
         description:
           '개 인플루엔자(CIV) 백신을 접종하세요.\n\n처음 접종하면 2주 간격으로 2회 접종해요.\n출국 14일 전까지 접종해야 해요.\n접종 유효기간은 1년이에요.',
-        validationIds: ['au.civ-14days-before-departure', 'au.civ-within-12months'],
+        validationIds: [
+          'au.civ-14days-before-departure',
+          'au.civ-min-14days-between-doses',
+          'au.civ-within-12months',
+        ],
       },
       // 켄넬코프 — **DAFF 입국 요건이 아니다**(권장 백신). Mickleham 계류시설 예약에 접종
       //   증명을 요구해서 넣는다(2026-07-27 사용자 확정). 그래서 카드도 계류시설 예약(44)
