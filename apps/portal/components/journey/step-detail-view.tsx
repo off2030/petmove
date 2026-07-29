@@ -2314,9 +2314,14 @@ export function StepDetailView({
   // → 발급 완료(skip) 플래그 set.
   const isImportPermitInProgress =
     isApplicationStep &&
-    savedImportPermit.applicationDate.length >= 10 &&
-    savedImportPermit.applicationDate <= todayStr &&
-    !done
+    !done &&
+    // 신청일 칸이 없는 카드(뉴질랜드 수입 허가)는 도래 게이트가 성립하지 않는다 — 허가 번호·
+    //   첨부·완료 버튼 셋 중 하나로 완료하는 모델이라, 미완료면 바로 완료 버튼을 띄운다
+    //   (2026-07-29 사용자 확정). 신청일을 받는 카드는 기존 게이트 그대로.
+    ((step.inputs ?? []).some((i) => i.key === 'import_permit_application_date')
+      ? savedImportPermit.applicationDate.length >= 10 &&
+        savedImportPermit.applicationDate <= todayStr
+      : true)
   // titer 방식(사전 신고와 동일) — '진행 중' ack 버튼 게이트 제거. 신청일 도래(미완료·미변경)면
   // 바로 '완료' 버튼. 진행 중 안내는 situational('… 진행 중이에요…')이 맡는다.
   const importPermitCompleteMode = isImportPermitInProgress && !dirty
@@ -3050,6 +3055,10 @@ export function StepDetailView({
               onChange={(key, next) => setImportPermit((prev) => ({ ...prev, [key]: next }))}
               // 허가 번호 칸은 수입 허가 전용 — 싱가포르 신청형 카드는 신청일만.
               showPermitNo={(step.inputs ?? []).some((i) => i.key === 'permit_no')}
+              // 신청일 칸도 카드 선언에서 파생 — 뉴질랜드는 받지 않는다(허가 번호·첨부·완료 버튼).
+              showApplicationDate={(step.inputs ?? []).some(
+                (i) => i.key === 'import_permit_application_date',
+              )}
               applicationHelp={applicationHelp}
               reservation={applicationReservation}
             />

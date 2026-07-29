@@ -1809,10 +1809,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentLabel: '뉴질랜드 수입 허가증',
       order: 44,
       deadline: undefined,
-      inputs: [
-        { key: 'import_permit_application_date', label: '신청일', type: 'date' },
-        { key: 'permit_no', label: '허가 번호', type: 'text' },
-      ],
+      // 신청일 칸은 두지 않는다(2026-07-29 사용자 확정) — 허가 번호·첨부·완료 버튼 셋 중
+      //   하나로 완료된다. 선행 절차 게이트(계류 예약·RCF)는 신청일이 아니라 '입력이 들어왔는가'
+      //   로 판정하므로 번호만 넣는 경로에서도 그대로 작동한다(validateImportPermitPrerequisite).
+      inputs: [{ key: 'permit_no', label: '허가 번호', type: 'text' }],
       validationIds: ['nz.import-permit-not-after-departure'],
       links: [
         { url: 'https://animalplantimportpermit.mpi.govt.nz/', label: '수입 허가 신청 (MPI)' },

@@ -21,6 +21,7 @@ export function ImportPermitInputs({
   form,
   onChange,
   showPermitNo = true,
+  showApplicationDate = true,
   applicationHelp = '동물검역소에 수입 허가를 신청한 날짜',
   reservation,
 }: {
@@ -28,6 +29,11 @@ export function ImportPermitInputs({
   onChange: (key: keyof ImportPermitForm, next: string) => void
   /** 허가 번호 입력 노출 — step.inputs 에 permit_no 가 있을 때만(태국은 신청일만). */
   showPermitNo?: boolean
+  /**
+   * 신청일 입력 노출 — step.inputs 에 import_permit_application_date 가 있을 때만.
+   * 뉴질랜드는 신청일을 받지 않고 허가 번호·첨부·완료 버튼 셋 중 하나로 완료한다(2026-07-29).
+   */
+  showApplicationDate?: boolean
   /** 신청일 아래 설명 — 카드별로 다르다(수입 허가 / 계류장 예약 / 강아지 라이선스). */
   applicationHelp?: string
   /** 신청일 아래에 부가 예약일 입력을 노출(계류장 예약 날짜 등, 정보성). 일본 수출검역 예약일 패턴. */
@@ -55,18 +61,20 @@ export function ImportPermitInputs({
         padding: '4px 16px',
       }}
     >
-      <div style={{ padding: '14px 0' }}>
-        <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>신청일</div>
-        <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>{applicationHelp}</div>
-        <div style={{ marginTop: 8 }}>
-          <DateTextField
-            value={form.applicationDate}
-            onChange={(v) => onChange('applicationDate', v)}
-            placeholder="YYYY-MM-DD"
-            block
-          />
+      {showApplicationDate && (
+        <div style={{ padding: '14px 0' }}>
+          <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>신청일</div>
+          <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>{applicationHelp}</div>
+          <div style={{ marginTop: 8 }}>
+            <DateTextField
+              value={form.applicationDate}
+              onChange={(v) => onChange('applicationDate', v)}
+              placeholder="YYYY-MM-DD"
+              block
+            />
+          </div>
         </div>
-      </div>
+      )}
       {reservation && (
         <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
           <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>{reservation.label}</div>

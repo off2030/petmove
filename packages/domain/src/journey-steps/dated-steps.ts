@@ -39,45 +39,68 @@ function datedField(done: unknown): string | null {
   return null
 }
 
-const map: Record<string, string> = {}
-const byDest: Record<string, Record<string, string>> = {}
-const conflicts: Array<{ stepId: string; fields: string[] }> = []
-const seen = new Map<string, Set<string>>()
-
-function record(stepId: string, field: string) {
-  const set = seen.get(stepId) ?? new Set<string>()
-  set.add(field)
-  seen.set(stepId, set)
-  if (!(stepId in map)) map[stepId] = field
+/**
+ * 맵은 **지연 계산**한다(2026-07-29). 예전엔 import 시점에 카탈로그를 훑었는데, report-status
+ * 가 이 모듈을 쓰기 시작하면서 순환(catalog → … → report-status → dated-steps → catalog)이
+ * 생겨 "Cannot access 'JOURNEY_STEP_CATALOG' before initialization" 으로 죽었다.
+ * 첫 호출 때 한 번만 만들고 캐시한다.
+ */
+interface DatedStepMaps {
+  map: Record<string, string>
+  byDest: Record<string, Record<string, string>>
+  conflicts: Array<{ stepId: string; fields: string[] }>
 }
+let cache: DatedStepMaps | null = null
 
-for (const step of JOURNEY_STEP_CATALOG) {
-  const field = datedField(step.done)
-  if (field) record(step.id, field)
-}
-for (const [destKey, steps] of Object.entries(STEP_DESTINATION_OVERRIDES)) {
-  for (const [stepId, override] of Object.entries(steps ?? {})) {
-    const field = datedField((override as { done?: unknown } | undefined)?.done)
-    if (!field) continue
-    record(stepId, field)
-    byDest[stepId] = { ...(byDest[stepId] ?? {}), [destKey]: field }
+function maps(): DatedStepMaps {
+  if (cache) return cache
+  const map: Record<string, string> = {}
+  const byDest: Record<string, Record<string, string>> = {}
+  const conflicts: Array<{ stepId: string; fields: string[] }> = []
+  const seen = new Map<string, Set<string>>()
+
+  const record = (stepId: string, field: string) => {
+    const set = seen.get(stepId) ?? new Set<string>()
+    set.add(field)
+    seen.set(stepId, set)
+    if (!(stepId in map)) map[stepId] = field
   }
-}
-for (const [stepId, fields] of seen) {
-  if (fields.size > 1) conflicts.push({ stepId, fields: [...fields] })
+
+  for (const step of JOURNEY_STEP_CATALOG) {
+    const field = datedField(step.done)
+    if (field) record(step.id, field)
+  }
+  for (const [destKey, steps] of Object.entries(STEP_DESTINATION_OVERRIDES)) {
+    for (const [stepId, override] of Object.entries(steps ?? {})) {
+      const field = datedField((override as { done?: unknown } | undefined)?.done)
+      if (!field) continue
+      record(stepId, field)
+      byDest[stepId] = { ...(byDest[stepId] ?? {}), [destKey]: field }
+    }
+  }
+  for (const [stepId, fields] of seen) {
+    if (fields.size > 1) conflicts.push({ stepId, fields: [...fields] })
+  }
+  cache = { map, byDest, conflicts }
+  return cache
 }
 
 /** stepId → 저장 필드(목적지 무관 기본값). 목적지를 알면 resolveDatedStepField 를 쓸 것. */
-export const DATED_STEP_FIELDS: Readonly<Record<string, string>> = map
+export function datedStepFields(): Readonly<Record<string, string>> {
+  return maps().map
+}
 
 /** stepId → 목적지 키 → 저장 필드. override 가 done 을 dated: 로 바꾼 카드만 들어 있다. */
-export const DATED_STEP_FIELDS_BY_DESTINATION: Readonly<
+export function datedStepFieldsByDestination(): Readonly<
   Record<string, Readonly<Record<string, string>>>
-> = byDest
+> {
+  return maps().byDest
+}
 
 /** 한 stepId 가 목적지마다 다른 필드를 가리키는 경우 — 목적지별 맵으로 풀린다(참고용). */
-export const DATED_STEP_FIELD_CONFLICTS: ReadonlyArray<{ stepId: string; fields: string[] }> =
-  conflicts
+export function datedStepFieldConflicts(): ReadonlyArray<{ stepId: string; fields: string[] }> {
+  return maps().conflicts
+}
 
 /**
  * stepId(+목적지) → 저장 필드. 목적지별 선언이 있으면 그걸, 없으면 평면 맵을 쓴다.
@@ -87,13 +110,13 @@ export function resolveDatedStepField(
   stepId: string,
   destination?: string | null,
 ): string | null {
-  const perDest = DATED_STEP_FIELDS_BY_DESTINATION[stepId]
+  const perDest = datedStepFieldsByDestination()[stepId]
   if (perDest && destination) {
     const key = findDestinationKey(destination) ?? destination
     const field = perDest[key]
     if (field) return field
   }
-  return DATED_STEP_FIELDS[stepId] ?? null
+  return datedStepFields()[stepId] ?? null
 }
 
 /**
@@ -121,8 +144,10 @@ export function resolveStepDateFields(stepId: string, destination?: string | nul
     const override = (STEP_DESTINATION_OVERRIDES[key] ?? {})[stepId] as
       | { inputs?: unknown }
       | undefined
-    const fromOverride = pick(override?.inputs)
-    if (fromOverride.length > 0) return fromOverride
+    // override 가 inputs 를 선언했으면 **그게 전부**다 — 날짜 칸이 하나도 없어도 base 로
+    //   폴백하지 않는다. 폴백하면 '신청일 칸을 뺀 카드'(뉴질랜드 수입 허가)가 여전히 날짜를
+    //   받는 것으로 판정돼 완료 버튼이 먹히지 않는다(2026-07-29 발견).
+    if (Array.isArray(override?.inputs)) return pick(override.inputs)
   }
   return pick(JOURNEY_STEP_CATALOG.find((s) => s.id === stepId)?.inputs)
 }

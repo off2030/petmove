@@ -1,4 +1,5 @@
 import type { CaseRow } from '../types'
+import { resolveStepDateFields } from './dated-steps'
 
 /**
  * 일본 신고 진행 상태 derive — 펫무브워크 신고 탭과 펫무브 사전 신고·일본 수출검역 step 이
@@ -161,7 +162,15 @@ export function deriveApplicationStatus(
   const filedRaw = data[spec.dateField]
   const filed = typeof filedRaw === 'string' ? filedRaw : ''
   // 완료(skip)는 신청일이 있을 때만 유효 — 신청일을 지우면 완료도 해제된다(사전 신고와 동일).
-  if (data[spec.skipFlag] === true && filed.length >= 10) return 'done'
+  //   ⚠️ 예외: **신청일 칸이 없는 카드**(뉴질랜드 수입 허가 — 허가 번호·첨부·완료 버튼 셋 중
+  //   하나로 완료, 2026-07-29 사용자 확정). 그 카드는 신청일을 받지 않으므로 이 게이트를 그대로
+  //   두면 완료 버튼이 영영 먹히지 않는다. 카드 선언에서 파생해 판정한다(손 명단 X).
+  if (data[spec.skipFlag] === true) {
+    const collectsDate = resolveStepDateFields(spec.attachStepId, caseRow.destination).includes(
+      spec.dateField,
+    )
+    if (!collectsDate || filed.length >= 10) return 'done'
+  }
   if (spec.legacyFlag) {
     const flags = data.journey_flags
     if (
