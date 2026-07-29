@@ -35,6 +35,7 @@ import {
   validateIdentityCheckBeforeTiter,
   validateIdentityCheckOrder,
   validateNzQuarantineStartAfterTiter,
+  validateNzRcfDate,
   validateTiterAfterIdentityCheck,
   validateAuInternalParasiteDates,
   validateExternalParasiteDates,
@@ -1584,6 +1585,15 @@ export function StepDetailView({
         readTiterAllEntries(caseRow?.data)
           .map((e) => e.received_date || e.date)
           .filter((d) => d.length >= 10),
+      )
+    }
+    // 뉴질랜드 RCF — 항체 결과를 옮겨 적는 서식이라 채혈보다 먼저 발급될 수 없다.
+    if (step.id === 'nz-rcf') {
+      return validateNzRcfDate(
+        importQuarantineDate.trim(),
+        readTiterAllEntries(caseRow?.data)
+          .map((e) => e.date)
+          .filter((x) => x.length >= 10),
       )
     }
     // 뉴질랜드 계류 예약 — 계류 시작일(=도착일)과 채혈일 간격 + 인증 횟수를 함께 본다

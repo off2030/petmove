@@ -134,6 +134,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'nz_import_quarantine_date',
   'nz_import_quarantine_confirmed',
   'nz_quarantine_reservation_date',
+  // 광견병 증명서(RCF) 발급일 — 수입 허가 신청의 필수 제출물이라 목적지별로 따로 받는다
+  //   (호주 au_rnatt_declaration_date 와 같은 자리). 구 IHS 시절 이름은 OVD.
+  'nz_rcf_date',
   // 뉴질랜드 수출 증명(왕복 귀국) — AWEC + 수출 건강증명서 발급일.
   'nz_export_quarantine_date',
   'nz_export_quarantine_confirmed',

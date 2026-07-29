@@ -26,6 +26,7 @@ import {
   validateImportPermitNotAfterDeparture,
   validateInfectiousDiseaseTestDate,
   validateNzQuarantineStartAfterTiter,
+  validateNzRcfDate,
 } from '../journey-steps/date-rules'
 import {
   msgExportQuarantineAfterReturn,
@@ -515,6 +516,48 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `계류 시작일(${reserved}) = 도착일(${entry}).` }
+    },
+  },
+  {
+    id: 'nz.rcf-order',
+    country: COUNTRY,
+    category: '광견병',
+    title: 'RCF는 채혈 이후 · 수입 허가 신청 이전',
+    description:
+      '지원문서 Documentation — RCF 는 항체 결과를 옮겨 적는 서식이라 채혈보다 앞설 수 없고, "You will need to upload the completed, signed, and stamped RCF when applying online for the import permit" 이므로 허가 신청일보다 늦을 수 없다. 채혈 이후 갈래는 저장 거부(validateNzRcfDate)와 같은 함수 — 발급일을 먼저 저장한 뒤 채혈일을 늦춘 경우를 표면화하는 짝 주의. 구 IHS 시절 같은 서류 이름은 OVD.',
+    severity: 'warning',
+    addedAt: '2026-07-29',
+    run: ({ caseRow, destination }) => {
+      const rcf = readScopedDate(caseRow, destination, 'nz_rcf_date')
+      if (!rcf) return SKIP
+
+      const titers = readTiterEntries(caseRow)
+      if (titers.length > 0) {
+        const earliest = titers.reduce((a, b) => (a.date <= b.date ? a : b))
+        const msg = validateNzRcfDate(
+          rcf,
+          titers.map((t) => t.date),
+        )
+        if (msg) {
+          return {
+            ok: false,
+            message: msg,
+            offendingPaths: ['nz_rcf_date', `rabies_titer_records[${earliest.originalIndex}].date`],
+          }
+        }
+      }
+
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed = readScopedImportPermitFiled(data, destination)
+      if (/^\d{4}-\d{2}-\d{2}$/.test(filed) && rcf > filed) {
+        return {
+          ok: false,
+          message:
+            '수입 허가를 신청할 때 광견병 증명서(RCF)를 함께 내야 해요. 신청일보다 늦게 발급받을 수 없어요.',
+          offendingPaths: ['nz_rcf_date', 'import_permit_application_date'],
+        }
+      }
+      return { ok: true, message: `RCF(${rcf}) 채혈 이후 · 허가 신청 이전.` }
     },
   },
   {

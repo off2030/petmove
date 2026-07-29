@@ -1673,6 +1673,29 @@ export function validateIdentityCheckOrder(first: string, second: string): strin
 }
 
 /**
+ * 뉴질랜드 광견병 증명서(RCF) 발급일은 **채혈 이후**여야 한다.
+ *
+ * RCF 는 항체 검사 결과를 옮겨 적는 서식이라(지원문서 Documentation — RCF 가 채혈일과 RNATT
+ * 결과를 증명한다) 채혈보다 먼저 발급될 수 없다. 논리적 불가능 → 저장 거부.
+ * client(발급일 입력 차단)·procedure-check(nz.rcf-order) 공용 단일 출처.
+ * 채혈이 여러 건이면 **가장 이른** 채혈보다 앞선 발급만 막는다(어느 회차를 근거로 발급했는지
+ * 앱이 모르므로 확정 위반만 잡는다 — 호주 선언서 룰과 같은 기준).
+ */
+export function validateNzRcfDate(rcfDate: string, titerDates: string[]): string | null {
+  const rcf = (rcfDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(rcf)) return null
+  const dates = titerDates
+    .map((d) => (d ?? '').slice(0, 10))
+    .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+  if (dates.length === 0) return null
+  const earliest = dates.reduce((m, d) => (d < m ? d : m))
+  if (rcf < earliest) {
+    return '광견병 증명서(RCF)는 항체 검사 결과를 근거로 발급돼요. 채혈일보다 빠를 수 없어요.'
+  }
+  return null
+}
+
+/**
  * 뉴질랜드 계류 시작일 ↔ 항체 채혈일 간격 — 인증 횟수까지 함께 본다(2026-07-29 사용자 확정).
  *
  * IHS 2.1.3(3) 의 채혈 창(출국 3~12개월 전)과 1.11(4) 의 인증 횟수 분기를 하나로 합친 판정이다.

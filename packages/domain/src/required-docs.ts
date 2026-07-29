@@ -971,8 +971,11 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       id: 'nz-rcf',
       name: '광견병 증명서(RCF)',
       source: '동물병원 · 농림축산검역본부',
-      kind: 'manual',
-      issuanceStepId: 'rabies-titer',
+      // 2026-07-29 전용 카드(nz-rcf) 신설 — 발급일·첨부를 그 카드가 받는다(호주 RNATT
+      //   선언서와 같은 처리). 그전엔 발급 단계가 없어 항체 카드에 매달아 뒀다.
+      kind: 'step',
+      stepRef: 'nz-rcf',
+      previewStepId: 'nz-rcf',
       description:
         '항체 검사 결과가 나온 뒤 발급받는 뉴질랜드 전용 서식이에요.\n\n정확한 서류 이름은 Rabies Certification Form (RCF) 예요.\n\n마이크로칩 삽입일·확인일, 마이크로칩 번호, 광견병 접종일, 채혈일, 항체 검사 결과가 들어가요. 동물병원 수의사가 작성·서명하고 검역관이 서명·날인해요.\n\n수입 허가를 신청할 때 함께 제출해요.',
     },

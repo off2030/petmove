@@ -804,6 +804,7 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   //   계류만 정한다 — 채혈 기준 대기는 출국일에 걸리고 항공권 카드가 담당).
   //   남는 건 '예약을 항공 일정과 맞췄나'인데, 예약일·도착일 어느 쪽이든 고쳐서 회복할 수
   //   있는 사실이라 저장을 막지 않는다.
+  'nz-rcf': '차단: validateNzRcfDate(채혈일보다 빠른 발급일 거부) + 주의: nz.rcf-order(허가 신청 이전 갈래는 신청일을 고칠 수 있어 차단 X)',
   'nz-quarantine-reservation':
     '차단: validateNzQuarantineStartAfterTiter(채혈 + 3개월 미만 거부, 3~6개월은 2차 인증 필수) + 주의: nz.quarantine-reservation-matches-entry(도착일과 불일치 — 예약·항공 어느 쪽이든 고칠 수 있어 차단 X)',
   'sg-gst-permit': '차단: validateSgGstPermitDate(도착 전 + 도착 14일 이내)',

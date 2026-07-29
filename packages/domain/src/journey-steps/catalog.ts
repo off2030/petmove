@@ -1233,6 +1233,46 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['au.rnatt-declaration-order'],
   },
 
+  // ── 뉴질랜드 광견병 증명서(RCF) — 항체 결과가 나온 뒤, 수입 허가 신청 전 ────
+  // 호주 RNATT 선언서와 **같은 자리·같은 이유**의 카드다(2026-07-29 사용자 지적으로 신설).
+  //   지원문서 Documentation: "Your veterinarian must prepare and sign the Rabies Certification
+  //   Form (RCF), then an official government veterinarian must sign and stamp the RCF" +
+  //   "You will need to upload the completed, signed, and stamped RCF when applying online
+  //   for the import permit". 즉 **수입 허가 신청의 필수 제출물**이고, 발급에 두 단계(동물병원
+  //   수의사 작성·서명 → 검역관 서명·날인)가 걸린다.
+  // 카드가 없으면 보호자는 항체 결과지만 들고 신청하러 갔다가 막힌다(호주에서 겪은 그대로).
+  // ⚠️ 구 IHS(2021) 시절의 같은 서류 이름은 **OVD(Official Veterinarian Declaration)** 다.
+  //   담는 항목·서명 구조가 같고 신 IHS 에서 RCF 로 대체됐다. 전환기(~2027-04-01)에는 구
+  //   서식이 통할 수 있으나 앱은 신 IHS 하나로만 판정한다(nz.ts 헤더 주석).
+  // 호주는 버튼 완료지만 여기는 **발급일 입력**이다 — 아래 두 검증이 실제 발급일을 필요로 한다.
+  {
+    id: 'nz-rcf',
+    category: 'document',
+    title: '광견병 증명서(RCF)',
+    shortLabel: 'RCF',
+    description:
+      '광견병 증명서(RCF)를 발급받으세요.\n\n동물병원 수의사가 작성·서명한 뒤, 동물검역소에서 검역관의 서명·날인을 받아요.\n마이크로칩 번호와 삽입일, 광견병 접종일, 채혈일, 항체 검사 결과가 들어가요.\n수입 허가를 신청할 때 함께 제출해요.',
+    doneSummary: '광견병 증명서(RCF)를 받았어요.',
+    cardLine: '광견병 증명서(RCF)를 발급받으세요.',
+    applicability: { destinations: ['new_zealand'], species: 'all', tripType: 'all' },
+    // 항체 검사(40) 뒤, 계류시설 예약(42)·수입 허가(44) 앞.
+    order: 41,
+    done: 'dated:nz_rcf_date',
+    inputs: [
+      {
+        key: 'nz_rcf_date',
+        label: '발급일',
+        type: 'date',
+        helpText: '검역관의 서명·날인을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '광견병 증명서(RCF)를 사진·PDF로 보관하세요.',
+    attachmentLabel: '광견병 증명서(RCF)',
+    // 호주 선언서와 같은 형태의 단일 룰(채혈 이후 · 허가 취득 이전 두 갈래).
+    validationIds: ['nz.rcf-order'],
+  },
+
   // ── 호주 계류시설(Mickleham) 예약 — 수입 허가를 받은 뒤 ────────────────────
   // Group 3 개 가이드 6.1: "Book your dog's post-entry quarantine stay — do this after you
   //   receive your import permit." 호주에 오는 모든 개·고양이가 멜버른 Mickleham 정부
