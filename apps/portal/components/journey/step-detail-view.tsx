@@ -75,6 +75,7 @@ import {
   markAdvanceNotificationApprovalSkipped,
   markApplicationIssued,
   markImportPermitIssued,
+  unmarkImportPermitIssued,
   markJpExportQuarantineReservationSkipped,
   markExtraTiterResultConfirmed,
   markTiterResultConfirmed,
@@ -2318,6 +2319,29 @@ export function StepDetailView({
   // titer 방식(사전 신고와 동일) — '진행 중' ack 버튼 게이트 제거. 신청일 도래(미완료·미변경)면
   // 바로 '완료' 버튼. 진행 중 안내는 situational('… 진행 중이에요…')이 맡는다.
   const importPermitCompleteMode = isImportPermitInProgress && !dirty
+  // '완료 취소' — 신청일 칸이 없는 카드(뉴질랜드)는 완료를 되돌릴 경로가 아예 없었다. 신청일을
+  //   받는 카드는 그 날짜를 바꾸면 완료가 풀린다(2026-07-29 사용자 지적). 완료 처리(skip)로
+  //   완료된 경우에만 — 허가 번호·첨부로 완료된 건 그 값을 지워서 푼다.
+  const importPermitUndoMode =
+    isImportPermit &&
+    done &&
+    !dirty &&
+    !(step.inputs ?? []).some((i) => i.key === 'import_permit_application_date') &&
+    ((caseRow?.data ?? {}) as Record<string, unknown>).import_permit_issued_skipped === true
+  const [undoingImportPermit, setUndoingImportPermit] = useState(false)
+  const handleUndoImportPermit = () => {
+    if (undoingImportPermit) return
+    setUndoingImportPermit(true)
+    startTransition(async () => {
+      const res = await unmarkImportPermitIssued(caseId, activeDest)
+      setUndoingImportPermit(false)
+      if (res.ok) updateCase(res.value)
+      else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
   const [completingImportPermit, setCompletingImportPermit] = useState(false)
   const handleCompleteImportPermit = () => {
     if (completingImportPermit) return
@@ -3369,8 +3393,15 @@ export function StepDetailView({
             const completeMode =
               advanceSkipMode || jpExportSkipMode || titerCompleteMode || importPermitCompleteMode
             const processing =
-              skippingApproval || skippingJpExport || completingTiter || completingImportPermit
-            const active = (canSave || completeMode) && status !== 'saving' && !processing
+              skippingApproval ||
+              skippingJpExport ||
+              completingTiter ||
+              completingImportPermit ||
+              undoingImportPermit
+            const active =
+              (canSave || completeMode || importPermitUndoMode) &&
+              status !== 'saving' &&
+              !processing
             return (
           <button
             type="button"
@@ -3383,7 +3414,9 @@ export function StepDetailView({
                     ? handleCompleteTiter
                     : importPermitCompleteMode
                       ? handleCompleteImportPermit
-                      : handleSaveClick
+                      : importPermitUndoMode && !canSave
+                        ? handleUndoImportPermit
+                        : handleSaveClick
             }
             disabled={!active}
             aria-live="polite"
@@ -3409,7 +3442,10 @@ export function StepDetailView({
                 ? '처리 중…'
                 : justSaved
                   ? '✓ 저장됨'
-                  : completeMode
+                  : // 완료 처리(skip)로 완료된 수입 허가 — 되돌릴 유일한 수단이라 라벨을 바꾼다.
+                    importPermitUndoMode && !canSave
+                    ? '완료 취소'
+                    : completeMode
                       ? '완료'
                     : // 기록형 예정 도래(미변경) — '완료'(=예정 날짜 그대로 저장해 승격).
                       // 미래 예정이 함께 있어도(단일카드 목록) 도래분 승격이 우선이라 '완료'.

@@ -2337,6 +2337,57 @@ export async function markImportPermitIssued(
 }
 
 /**
+ * 수입 허가 '완료 취소' — 완료 처리(skip)와 확인일을 함께 지운다.
+ *
+ * 신청일 칸이 있는 카드는 그 날짜를 바꾸면 완료가 풀린다(updateImportPermitFields). 신청일을
+ * 받지 않는 카드(뉴질랜드)는 그 경로가 없어 한 번 완료하면 되돌릴 수단이 아예 없었다
+ * (2026-07-29 사용자 지적). 버튼 완료 카드의 '완료 취소'와 같은 역할.
+ * 허가 번호·첨부로 완료된 상태는 이 액션으로 풀리지 않는다 — 그건 그 값을 지워서 푼다.
+ */
+export async function unmarkImportPermitIssued(
+  caseId: string,
+  destination?: string | null,
+): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data, destination')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const caseDestStr = (existing as { destination: string | null }).destination
+    const token = resolveWriteToken(caseDestStr, prev, destination)
+
+    let nextData: Record<string, unknown> = { ...prev }
+    for (const key of ['import_permit_issued_skipped', 'import_permit_recorded_at']) {
+      if (token) {
+        nextData = writeByDestValue(nextData, token, key, null)
+        delete nextData[key]
+      } else {
+        delete nextData[key]
+      }
+    }
+
+    const { data: undone, error: undoErr } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (undoErr) return { ok: false, error: undoErr.message }
+    return { ok: true, value: undone as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
  * 수입 허가 '진행 중' — 보호자가 신청 후 '진행 중' 버튼을 눌러 확인(사전 신고와 동일, 완료와 별개).
  * 신청일이 있어야 의미가 있음. 플래그는 issued_skipped 와 동일하게 by_dest 분리.
  */
