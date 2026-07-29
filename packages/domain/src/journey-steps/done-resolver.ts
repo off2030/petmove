@@ -397,8 +397,14 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
     const field = signal.slice('booked:'.length)
     const rec = data[bookedRecordedAtKey(field)]
     if (typeof rec === 'string' && rec.length >= 10) return rec.slice(0, 10)
+    // recorded_at 이 없는 예전 데이터(카드가 dated: 이던 시절 저장분) — 입력값으로 폴백하되
+    //   **미래 날짜면 폴백하지 않는다**(2026-07-29 사용자 지적). 계류 시작일·예약일은 본래
+    //   미래라, 그대로 완료일로 쓰면 완료된 카드에 '예정 27·02·28' 칩이 붙어 아직 할 일처럼
+    //   보인다. 표시할 날짜가 없으면 비우는 게 맞다 — 다음 저장 때 recorded_at 이 찍힌다.
     const dt = typeof data[field] === 'string' ? (data[field] as string) : null
-    return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+    if (!dt || dt.length < 10) return null
+    const day = dt.slice(0, 10)
+    return day <= todayKst() ? day : null
   }
 
   // dated:<field> — 표시일 = 그 필드의 날짜 값(발급일·예약일).
