@@ -37,6 +37,7 @@ import {
   GENERAL_VACCINE_WAIT_DAYS,
   PARASITE_DEPARTURE_WINDOWS,
   RABIES_ENTRY_WAIT_DAYS,
+  validateParasiteDateForDestination,
 } from '../packages/domain/src/journey-steps/date-rules'
 import { TITER_MIN_DAYS_AFTER_VACCINE } from '../packages/domain/src/journey-steps/titer-validity'
 
@@ -62,6 +63,7 @@ type Problem = {
     | 'own-calc'
     | 'no-blocker'
     | 'no-parasite-blocker'
+    | 'unreachable-parasite-blocker'
     | 'no-wait-blocker'
     | 'no-titer-wait-decision'
     | 'no-save-block-decision'
@@ -434,6 +436,56 @@ function parasiteWindowWithoutBlocker(appDests: string[]): Problem[] {
 }
 
 /**
+ * **선언한 차단이 실제로 도는가** (도달성 검사, 2026-07-28 신설).
+ *
+ * 왜 필요한가: 위의 검사들은 전부 **"결정을 등록했는가"** 만 본다 — 텍스트가 있으면 통과다.
+ * 뉴질랜드 내부 기생충이 정확히 이 틈으로 샜다:
+ *   · PARASITE_DEPARTURE_WINDOWS.new_zealand = { maxGap: 30, ... }  ← 창 선언 O
+ *   · DATE_SAVE_BLOCK_DECISIONS['new_zealand:internal-parasite'] = '차단: …'  ← 등록 O
+ *   · 그런데 matchesDestinationKey('new_zealand', 'new_zealand') === false
+ *     (키워드는 ['뉴질랜드','new zealand','nz'] 라 **밑줄 키가 자기 자신과 안 맞았다**)
+ *   → dispatch 가 매칭에 실패해 null 을 돌려주고, 40일 전 처치일이 그냥 저장됐다.
+ * 등록 문구는 참인데 동작은 거짓 — 어느 lint 도 못 잡았다. 그래서 여기서는 **함수를 실제로
+ * 호출한다**: 창 밖 날짜를 넣어 보고 null 이 나오면 실패시킨다.
+ *
+ * 키 형태와 키워드 형태를 **둘 다** 넣어 본다. case.data 의 destination 값은 한글('뉴질랜드')로
+ * 저장돼 있기도 하고 코드에서는 키('new_zealand')로 넘기기도 해서, 한쪽만 매칭돼도 반쪽이다.
+ */
+function parasiteBlockerUnreachable(): Problem[] {
+  const out: Problem[] = []
+  const DEPARTURE = '2026-06-01'
+  for (const [key, w] of Object.entries(PARASITE_DEPARTURE_WINDOWS)) {
+    // 창 밖 = 출국일에서 maxGap 보다 훨씬 이른 날. 반드시 거부돼야 한다.
+    const treat = addDays(DEPARTURE, -(w.maxGap + 10))
+    const forms = [key, ...(DESTINATION_OVERRIDES[key]?.keywords ?? [])]
+    for (const kind of w.kinds) {
+      const dead = forms.filter(
+        (form) =>
+          validateParasiteDateForDestination(treat, {
+            destinationKey: form,
+            kind,
+            departureDate: DEPARTURE,
+          }) === null,
+      )
+      if (dead.length === 0) continue
+      out.push({
+        dest: key,
+        stepId: `(${kind === 'internal' ? '내부' : '외부'} 기생충 처치 창)`,
+        ruleId: dead.join(', '),
+        kind: 'unreachable-parasite-blocker',
+      })
+    }
+  }
+  return out
+}
+
+function addDays(date: string, days: number): string {
+  const d = new Date(`${date}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + days)
+  return d.toISOString().slice(0, 10)
+}
+
+/**
  * **대기 주의 룰 ↔ 저장 거부 짝 검사** (2026-07-27 신설).
  *
  * 왜 필요한가: 주의 룰은 procedure-checks/<국가>.ts 에 자유롭게 쓸 수 있는데, **저장 거부는
@@ -653,6 +705,8 @@ function describe(p: Problem): string {
     return '주의 룰은 있는데 **저장 거부가 이 목적지를 보지 않는다** — 규정 위반 날짜가 그냥 저장된다(우크라이나 2026-07-22 사고와 동일)'
   if (p.kind === 'no-parasite-blocker')
     return "기생충 처치 창 주의는 있는데 **저장 거부가 없다** — 창 밖 처치일이 그냥 저장된다(하와이·터키·멕시코·UAE·브라질 2026-07-25 사고). date-rules 의 PARASITE_DEPARTURE_WINDOWS 에 창을 선언하거나(출국일 앵커) dispatch·PARASITE_BLOCK_COVERED 에 특수 앵커 분기를 추가할 것"
+  if (p.kind === 'unreachable-parasite-blocker')
+    return "창은 선언됐는데 **저장 거부 함수가 실제로는 안 돈다** — 창 밖 날짜를 넣어 봤더니 통과했다(뉴질랜드 2026-07-28: 밑줄 키 new_zealand 가 자기 자신과 매칭 실패). 위 ruleId 는 매칭에 실패한 destination 값 형태다. matchesDestinationKey / dispatch 분기를 고칠 것"
   if (p.kind === 'no-wait-blocker')
     return '대기 주의 룰은 있는데 **저장 거부가 없다** — 주의는 뜨는데 입력은 그대로 저장된다(괌 2026-07-27 에서 같은 형태를 네 번 발견). 위 fix 대로 프로파일에 선언하거나, 전용 판정 함수로 막는다면 WAIT_OWN_BLOCKER_DESTS 에 이유와 함께 등록할 것'
   if (p.kind === 'no-save-block-decision')
@@ -877,6 +931,7 @@ function main(): void {
     ...titerWaitWithoutBlocker(appDests),
     ...waitRuleWithoutBlocker(appDests),
     ...parasiteWindowWithoutBlocker(appDests),
+    ...parasiteBlockerUnreachable(),
     ...saveBlockDecisions(appDests),
     ...deadDeclarations(appDests),
     ...importPermitNotifyLeaks(appDests),
