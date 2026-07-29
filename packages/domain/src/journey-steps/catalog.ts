@@ -1251,7 +1251,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '광견병 증명서(RCF)',
     shortLabel: 'RCF',
     description:
-      '광견병 증명서(RCF)를 발급받으세요.\n\n동물병원 수의사가 작성·서명한 뒤, 동물검역소에서 검역관의 서명·날인을 받아요.\n마이크로칩 번호와 삽입일, 광견병 접종일, 채혈일, 항체 검사 결과가 들어가요.\n수입 허가를 신청할 때 함께 제출해요.',
+      '광견병 증명서(RCF)를 발급받으세요.\n\n동물병원 수의사가 작성·서명한 뒤, 동물검역소에서 검역관의 서명·날인을 받아요.\n수입 허가를 신청할 때 함께 제출해요.',
     doneSummary: '광견병 증명서(RCF)를 받았어요.',
     cardLine: '광견병 증명서(RCF)를 발급받으세요.',
     applicability: { destinations: ['new_zealand'], species: 'all', tripType: 'all' },
