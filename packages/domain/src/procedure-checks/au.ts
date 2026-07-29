@@ -784,13 +784,10 @@ export const AU_CHECKS: ProcedureCheck[] = [
       const entries = readInternalParasiteEntries(caseRow)
       if (!dep) return SKIP
       if (entries.length === 0) return SKIP
-      if (entries.length < 2) {
-        return {
-          ok: false,
-          message: '내부 기생충 치료는 출국 45일 이내에 2회 받아야 해요.',
-          offendingPaths: [`internal_parasite_dates[${entries[0].originalIndex}].date`],
-        }
-      }
+      // ⛔ '2회 미만이면 경고'를 되살리지 말 것(2026-07-29 사용자 지정으로 삭제).
+      //   1차만 넣고 2차를 기다리는 건 규정대로 진행 중인데 주의가 떴다. 회수는 이제
+      //   internal-parasite-2 카드의 미완료가 안내한다(뉴질랜드와 같은 처리).
+      if (entries.length < 2) return SKIP
 
       const dose1 = entries[entries.length - 2]
       const dose2 = entries[entries.length - 1]

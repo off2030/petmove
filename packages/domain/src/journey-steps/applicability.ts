@@ -339,6 +339,26 @@ export function getStepsForCase(
 }
 
 /**
+ * 이 케이스에 구충 **2차 카드**가 뜨는가 (호주·뉴질랜드 내부구충 / 뉴질랜드 강아지 외부구충).
+ *
+ * 왜 필요한가: 2차 카드가 있는 목적지에서는 **1차 카드가 첫 기록 한 칸만** 담당하고 2차 이후는
+ * 2차 카드가 가져간다(광견병 1차/2차와 같은 모델 — 배열 하나, 위치가 회차). 카드가 하나뿐인
+ * 나머지 7개국에서는 1차 카드가 전체 목록을 그대로 편집한다. 화면·저장 양쪽이 같은 기준으로
+ * 갈라져야 해서 **카탈로그 applicability 를 진실 출처로 되묻는다** — 나라 이름을 손으로 적으면
+ * 카드 노출과 입력 범위가 어긋난다.
+ */
+export function hasParasiteDose2Card(
+  catalog: readonly StepDefinition[],
+  kind: 'external' | 'internal',
+  caseRow: CaseRow,
+): boolean {
+  const step = catalog.find((s) => s.id === `${kind}-parasite-2`)
+  if (!step) return false
+  const ctx = buildCaseJourneyContext(caseRow)
+  return isStepApplicable(step.applicability, ctx) && appliesWhenMatches(step.appliesWhen, caseRow)
+}
+
+/**
  * 종(개/고양이)별 본문 교체 — descriptionBySpecies 가 있고 케이스의 종이 확정돼 있으면
  * description 을 그 종의 텍스트로 바꾼다. 종 미상이면 description(통합문) 그대로 — 모든
  * 소비자(scenario 보조줄·상세 페이지·docs)가 description 만 읽으므로 여기 한 곳에서 처리.

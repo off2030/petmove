@@ -1695,9 +1695,22 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   있는 두 가지를 일부러 덜어낸 판단이다:
       //   · '선충과 조충을 모두 없애는 약이어야 해요'(7.7 "nematodes and cestodes")
       //   · '출국 전 임상검사와 같은 날에 해도 돼요'(7.7 Time saver 안내)
+      // 2026-07-29 카드 분리 — 확정본 4줄을 **그대로 두 카드에 나눠 담았다**(문장 재작성 없음).
+      //   2차 줄('2차 치료는 출국 전 5일 이내에 해야 해요.')만 internal-parasite-2 로 옮겼다.
       'internal-parasite': {
         description:
-          '내부 기생충 치료를 하세요.\n\n출국 45일 이내에 14일 이상의 간격으로 2회 이상 치료해요.\n2차 치료는 출국 전 5일 이내에 해야 해요.\n호주에서 인정하는 성분을 함유한 제품을 사용해야해요.',
+          '내부 기생충 치료를 하세요.\n\n출국 45일 이내에 14일 이상의 간격으로 2회 이상 치료해요.\n호주에서 인정하는 성분을 함유한 제품을 사용해야해요.',
+        links: [
+          {
+            url: 'https://www.agriculture.gov.au/biosecurity-trade/cats-dogs/step-by-step-guides/parasite-treatment',
+            label: '인정 성분·제품 목록 (DAFF)',
+          },
+        ],
+        validationIds: ['au.internal-parasite-protocol'],
+      },
+      'internal-parasite-2': {
+        description:
+          '2차 내부 기생충 치료를 하세요.\n\n2차 치료는 출국 전 5일 이내에 해야 해요.\n호주에서 인정하는 성분을 함유한 제품을 사용해야해요.',
         links: [
           {
             url: 'https://www.agriculture.gov.au/biosecurity-trade/cats-dogs/step-by-step-guides/parasite-treatment',
@@ -1913,13 +1926,16 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         //   · '진드기와 벼룩을 없애는 제품으로 두 번 치료해요'(2.2(2) 회수·대상 기생충)
         //   · '치료할 때마다 진드기·벼룩이 없는지 확인받아요'(2.2 치료 전 수의사 검사)
         //   회수는 아래 1차·2차 두 줄이 이미 드러내고, 제품 요건은 승인 목록이 담당한다.
+        // 2026-07-29 카드 분리 — 2차 줄('2차 치료는 출국 16일 이내에 해요.')만
+        //   external-parasite-2(강아지 전용)로 옮겼다. 나머지 문장은 손대지 않았다.
+        //   고양이는 1회(2.2(1))라 2차 카드가 없고 문구도 그대로다.
         description:
-          '외부 기생충 치료를 하세요.\n\n1차 치료는 바베시아 검사 채혈 14일 전까지 해요.\n2차 치료는 출국 16일 이내에 해요.\n1차 치료부터 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
+          '외부 기생충 치료를 하세요.\n\n1차 치료는 바베시아 검사 채혈 14일 전까지 해요.\n1차 치료부터 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
         // 고양이는 회수·기준이 다르다 — IHS 2.2(1): **한 번**, 출국 16일 이내, 그때부터
         //   출국일까지 연속 보호. 바베시아 검사가 개 전용이라 '채혈 14일 전' 하한이 없다.
         //   개 문구를 그대로 보여주면 없는 절차를 요구하게 된다.
         descriptionBySpecies: {
-          dog: '외부 기생충 치료를 하세요.\n\n1차 치료는 바베시아 검사 채혈 14일 전까지 해요.\n2차 치료는 출국 16일 이내에 해요.\n1차 치료부터 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
+          dog: '외부 기생충 치료를 하세요.\n\n1차 치료는 바베시아 검사 채혈 14일 전까지 해요.\n1차 치료부터 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
           cat: '외부 기생충 치료를 하세요.\n\n진드기와 벼룩을 없애는 제품으로 출국 16일 이내에 치료해요.\n치료한 날부터 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n치료할 때와 출국 2일 전 검진에서 진드기·벼룩이 없는지 확인받아요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
         },
         // 승인 제품 목록은 MPI-STD-SAA(Specified Approvals) 한 문서에 다 들어 있다 —
@@ -1944,9 +1960,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   따로. ⛔ '선충과 조충(에키노코쿠스 포함)을 모두 없애는 약이어야 해요'는 일부러 뺀
       //   줄이다(호주도 같은 판단). 근거는 남긴다 — IHS 2.3(1) "effective against nematodes
       //   and cestodes (including Echinococcus spp.)". 약 성분 판단은 승인 제품 목록이 담당한다.
+      // 2026-07-29 카드 분리 — 호주와 같은 방식으로 2차 줄만 internal-parasite-2 로 옮겼다.
       'internal-parasite': {
         description:
-          '내부 기생충 치료를 하세요.\n\n출국 30일 이내에 14일 이상의 간격으로 2회 치료해요.\n2차 치료는 출국 전 5일 이내에 해야 해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
+          '내부 기생충 치료를 하세요.\n\n출국 30일 이내에 14일 이상의 간격으로 2회 치료해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
         links: [
           {
             url: 'https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA',
@@ -1954,6 +1971,29 @@ export const STEP_DESTINATION_OVERRIDES: Record<
           },
         ],
         validationIds: ['nz.internal-parasite-protocol'],
+      },
+      'internal-parasite-2': {
+        description:
+          '2차 내부 기생충 치료를 하세요.\n\n2차 치료는 출국 전 5일 이내에 해야 해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
+        links: [
+          {
+            url: 'https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA',
+            label: '승인 제품 목록 (MPI-STD-SAA, PDF)',
+          },
+        ],
+        validationIds: ['nz.internal-parasite-protocol'],
+      },
+      // 외부구충 2차 — 강아지만(2.2(1) 고양이는 1회). 1차 카드에서 옮겨온 줄 그대로.
+      'external-parasite-2': {
+        description:
+          '2차 외부 기생충 치료를 하세요.\n\n2차 치료는 출국 16일 이내에 해요.\n1차 치료부터 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
+        links: [
+          {
+            url: 'https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA',
+            label: '승인 제품 목록 (MPI-STD-SAA, PDF)',
+          },
+        ],
+        validationIds: ['nz.external-parasite-protocol'],
       },
       // 폐충 — IHS 2.4. 신 IHS 2026 에서 새로 들어온 항목이다. 시점은 내부구충 2차와 같은
       //   출국 5일 이내라 같은 방문에서 끝나지만 약이 달라 별도 카드로 둔다.

@@ -1727,6 +1727,61 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentLabel: '기생충 치료',
   },
 
+  // ── 8-2·9-2. 구충 2차 (호주·뉴질랜드) ──────────────────────────────────
+  // 왜 카드를 나눴나(2026-07-29 사용자 지정): 2회가 규정인 곳에서 1차만 입력하면
+  //   "두 번 받아야 해요" **주의**가 떴다. 2차를 기다리는 건 규정대로 하는 중인데 정상
+  //   진행을 문제로 표시한 것이다. 광견병 1차/2차와 같은 해법 — 카드를 나누면 '2차 카드
+  //   미완료'가 그 자체로 안내가 되고, 주의는 실제 위반(간격·창 어긋남)에만 남는다.
+  //
+  // 저장은 **배열 하나**를 그대로 쓴다(*_parasite_dates). 날짜순 위치가 회차이므로
+  //   1차 카드 = index 0, 2차 카드 = index 1 이후. 기존 검증·주의 룰·알림·PDF·펫무브워크가
+  //   손댈 필요 없이 그대로 돈다(광견병 rabies_dates 와 같은 모델).
+  //
+  // ⛔ 회수 요건이 없는 목적지(터키·멕시코·브라질·UAE·하와이·괌·싱가포르)에는 붙이지 말 것 —
+  //   그쪽은 '몇 회'가 규정에 없어 2차 카드가 없는 절차를 만들어낸다.
+  // ⛔ 호주 **외부**구충도 제외 — DAFF 7.6 은 '출국 30일 전 시작 + 제조사 지침대로 반복'이라
+  //   회수 요건 자체가 없다(뉴질랜드 2.2(2)만 '두 번'을 명시).
+  {
+    id: 'external-parasite-2',
+    category: 'preparation',
+    title: '외부 기생충 2차 치료',
+    shortLabel: '외부2',
+    description: '2차 외부 기생충 치료를 하세요.',
+    doneSummary: '2차 외부 기생충 치료를 했어요.',
+    // 뉴질랜드 **강아지만** — IHS 2.2(2)는 개에게 두 번을 요구하고, 고양이는 2.2(1)로 한 번이다.
+    applicability: { destinations: ['new_zealand'], species: 'dog', tripType: 'all' },
+    // 내부구충 1차(90) 뒤 — 뉴질랜드 시간순은 외부1차(68) → 전염병 검사(70) → 내부1차(90) →
+    //   외부2차(출국 16일 이내) → 내부2차(5일) → 폐충(5일).
+    order: 92,
+    done: 'has-external-parasite-2',
+    inputs: [
+      { key: 'external_parasite_dates', label: '치료일', type: 'date_array' },
+    ],
+    allowAttachments: true,
+    attachmentHint: '증명서, 수첩 등을 사진·PDF로 보관하세요.',
+    attachmentLabel: '기생충 치료',
+    validationIds: ['nz.external-parasite-protocol'],
+  },
+  {
+    id: 'internal-parasite-2',
+    category: 'preparation',
+    title: '내부 기생충 2차 치료',
+    shortLabel: '내부2',
+    description: '2차 내부 기생충 치료를 하세요.',
+    doneSummary: '2차 내부 기생충 치료를 했어요.',
+    // 호주 DAFF 7.7 · 뉴질랜드 IHS 2.3(1) — 둘 다 종 구분 없이 2회(2026-07-29 사용자 확인).
+    applicability: { destinations: ['australia', 'new_zealand'], species: 'all', tripType: 'all' },
+    order: 95,
+    done: 'has-internal-parasite-2',
+    inputs: [
+      { key: 'internal_parasite_dates', label: '치료일', type: 'date_array' },
+    ],
+    allowAttachments: true,
+    attachmentHint: '증명서, 수첩 등을 사진·PDF로 보관하세요.',
+    attachmentLabel: '기생충 치료',
+    validationIds: ['au.internal-parasite-protocol', 'nz.internal-parasite-protocol'],
+  },
+
   // ── 촌충 치료 (에키노코쿠스) — 영국·아일랜드·몰타·노르웨이·핀란드, 강아지 한정 ─────
   // EU Reg 2018/772. 입국 24~120시간(1~5일) 전 프라지콴텔 투여 — 검증은 보수적으로 1~3일
   // (eu.tapeworm-1to3days-before-entry). 데이터 키는 internal_parasite_dates 공유(admin 정합).

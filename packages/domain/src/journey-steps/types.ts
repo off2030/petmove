@@ -96,6 +96,8 @@ export type StepDoneSignal =
   | 'has-infectious-disease-test'
   | 'has-internal-parasite'
   | 'has-external-parasite'
+  | 'has-internal-parasite-2'      // 구충 2차 카드(호주·뉴질랜드) — 날짜순 2번째 기록이 도래하면 완료
+  | 'has-external-parasite-2'      // 〃 (뉴질랜드 강아지만 — 고양이는 2.2(1) 로 1회)
   | 'has-heartworm'                // 심장사상충 — 구충과 같은 date_array 모델(카드 분리 2026-07-27)
   | 'has-lungworm'                 // 폐충 — 심장사상충과 같은 모델(카드 분리 2026-07-29, 뉴질랜드 2.4)
   | 'has-deworming-time'           // EU 6국 촌충약 (출국 24-120h 전)

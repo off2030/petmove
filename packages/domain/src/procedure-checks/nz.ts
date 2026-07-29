@@ -840,16 +840,11 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       const dep = readDepartureDate(caseRow, destination)
       const entries = readExternalParasiteEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
-      // 2회는 **개 요건**이다(2.2(2)). 고양이는 2.2(1) 로 **한 번**이면 되므로 회수를 묻지 않는다 —
-      //   여기서 개 기준을 그대로 적용하면 규정대로 준비한 고양이를 잘못 잡는다.
-      if (species(caseRow) === 'dog' && entries.length < 2) {
-        return {
-          ok: false,
-          message: '외부 기생충 치료는 두 번 받아야 해요.',
-          offendingPaths: [`external_parasite_dates[${entries[0].originalIndex}].date`],
-        }
-      }
-
+      // ⛔ '2회 미만이면 경고'를 되살리지 말 것(2026-07-29 사용자 지정으로 삭제).
+      //   1차만 넣고 2차를 기다리는 건 **규정대로 진행 중**인데 주의가 떴다 — 정상 진행을
+      //   문제로 표시한 것이다. 회수는 이제 카드가 말한다: 강아지는 external-parasite-2 카드가
+      //   따로 있어 '미완료'가 곧 안내다(광견병 1차/2차와 같은 모델). 고양이는 2.2(1) 로 1회라
+      //   애초에 2차 카드가 없다.
       const last = entries[entries.length - 1]
       const toDep = daysBetween(last.date, dep)
       if (toDep === null) return SKIP
@@ -860,6 +855,11 @@ export const NZ_CHECKS: ProcedureCheck[] = [
           offendingPaths: [`external_parasite_dates[${last.originalIndex}].date`],
         }
       }
+      // '마지막 치료'는 강아지에선 **2차**다 — 1차만 있는 동안 이 판정을 돌리면 1차를 마지막으로
+      //   보고 "출국 16일 이내에 해야 해요"가 뜬다. 2차를 기다리는 정상 상태에 대고 경고하는
+      //   꼴이라(2026-07-29 카드 분리 때 발견) 2회가 다 들어온 뒤에만 본다. 고양이는 2.2(1) 로
+      //   1회라 그 한 번이 곧 마지막이므로 그대로 판정한다.
+      if (species(caseRow) === 'dog' && entries.length < 2) return SKIP
       if (toDep > 16) {
         return {
           ok: false,
@@ -883,13 +883,9 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       const dep = readDepartureDate(caseRow, destination)
       const entries = readInternalParasiteEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
-      if (entries.length < 2) {
-        return {
-          ok: false,
-          message: '내부 기생충 치료는 출국 30일 이내에 2회 받아야 해요.',
-          offendingPaths: [`internal_parasite_dates[${entries[0].originalIndex}].date`],
-        }
-      }
+      // ⛔ '2회 미만이면 경고' 삭제 — 위 외부구충과 같은 이유(2026-07-29). 회수는
+      //   internal-parasite-2 카드의 미완료가 안내한다. 2회가 다 들어왔을 때만 판정한다.
+      if (entries.length < 2) return SKIP
 
       const dose1 = entries[entries.length - 2]
       const dose2 = entries[entries.length - 1]

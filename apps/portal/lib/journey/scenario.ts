@@ -10,6 +10,7 @@ import {
   buildCaseJourneyContext,
   findStepForCheck,
   getStepsForCase,
+  hasParasiteDose2Card,
   isExtraTiterResultConfirmed,
   latestExtraTiterEntry,
   resolveCompletedDate,
@@ -844,6 +845,34 @@ export function buildJourney(
               : quarantineField
                 ? quarantineOwnDate
                 : null
+    // 구충 1차/2차 카드는 **배열 하나를 나눠 쓴다**(호주·뉴질랜드, 2026-07-29 카드 분리).
+    //   그래서 날짜 배지도 회차별로 갈라야 한다 — 안 가르면 2차에 넣은 예정일이 1차 카드에도
+    //   뜨고, 1차를 마친 뒤 2차 카드가 1차 날짜를 자기 것으로 보여준다(광견병 rabies-vaccine-2
+    //   가 merged[1] 을 보는 것과 같은 처리).
+    // 카드가 하나뿐인 목적지(터키·멕시코 등)는 null 이라 종전 경로(datedUpcoming)를 그대로 탄다.
+    const parasiteSlot = (() => {
+      const kind =
+        step.id === 'external-parasite' || step.id === 'external-parasite-2'
+          ? ('external' as const)
+          : step.id === 'internal-parasite' || step.id === 'internal-parasite-2'
+            ? ('internal' as const)
+            : null
+      if (!kind) return null
+      if (!hasParasiteDose2Card(JOURNEY_STEP_CATALOG, kind, caseRow)) return null
+      const key = `${kind}_parasite_dates`
+      const raw = caseData[key]
+      const dates = Array.isArray(raw)
+        ? raw
+            .map((e) =>
+              typeof e === 'string' ? e.slice(0, 10) : ((e as { date?: string })?.date ?? '').slice(0, 10),
+            )
+            .filter((d) => d.length >= 10)
+        : []
+      const sched = caseData[`${key}_scheduled`]
+      if (typeof sched === 'string' && sched.length >= 10) dates.push(sched.slice(0, 10))
+      dates.sort()
+      return dates[step.id.endsWith('-2') ? 1 : 0] ?? null
+    })()
     // 예정일이 지났는데(예정일 다음날부터 — 당일은 제외) 아직 확인(done) 전 — '예정 [지난 날짜]'
     // 대신 안내 문구로 표시. 당일(예정일 == 오늘)엔 아직 '지났다'가 아니라 정상 안내로 둔다.
     const passedUnconfirmed = !done && !!ownConfirmDate && ownConfirmDate < today
@@ -864,9 +893,18 @@ export function buildJourney(
             return passedStr('vet_visit_date_scheduled')
           case 'general-vaccine':
             return passedStr('general_vaccine_dates_scheduled')
+          // 2차 카드가 있는 목적지는 예정일이 어느 회차 것인지 가려야 한다 — 위 parasiteSlot 이
+          //   이 카드 몫의 날짜다. 슬롯이 비면(다른 회차 예정일) 이 카드엔 '지남' 안내를 띄우지 않는다.
           case 'external-parasite':
-            return passedStr('external_parasite_dates_scheduled')
+          case 'external-parasite-2':
+            return parasiteSlot
+              ? parasiteSlot < today
+              : passedStr('external_parasite_dates_scheduled')
           case 'internal-parasite':
+          case 'internal-parasite-2':
+            return parasiteSlot
+              ? parasiteSlot < today
+              : passedStr('internal_parasite_dates_scheduled')
           case 'echinococcus-treatment':
             return passedStr('internal_parasite_dates_scheduled')
           case 'rabies-titer':
@@ -931,6 +969,8 @@ export function buildJourney(
               : ''
         return d.length >= 10 && d > today ? d : null
       }
+      // 구충 1차/2차 분리 목적지 — 이 카드 몫의 회차만 본다(위 parasiteSlot 주석).
+      if (parasiteSlot !== null) return parasiteSlot > today ? parasiteSlot : null
       const arrKey: Record<string, string> = {
         'general-vaccine': 'general_vaccine_dates',
         'civ-vaccine': 'civ_dates',

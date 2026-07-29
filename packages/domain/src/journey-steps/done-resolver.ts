@@ -228,6 +228,14 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return hasArrivedDate(latestDateOf(readInternalParasiteEntries(caseRow).map((e) => e.date)))
     case 'has-external-parasite':
       return hasArrivedDate(latestDateOf(readExternalParasiteEntries(caseRow).map((e) => e.date)))
+    // 구충 2차 카드(호주·뉴질랜드) — 2회가 규정이라 회차마다 기준이 달라 카드를 나눴다.
+    //   광견병 1차/2차와 같은 모델: 배열 하나(*_parasite_dates)를 날짜순으로 두고 **위치**가
+    //   회차다. 2차 카드는 index 1 이 도래해야 완료다.
+    //   ⚠️ '기록이 2건 이상'이 아니라 '2번째 기록이 도래'다 — 미래(예정) 2차로는 완료되지 않는다.
+    case 'has-internal-parasite-2':
+      return nthEntryArrived(readInternalParasiteEntries(caseRow).map((e) => e.date), 1)
+    case 'has-external-parasite-2':
+      return nthEntryArrived(readExternalParasiteEntries(caseRow).map((e) => e.date), 1)
     // 심장사상충 — 구충과 같은 date_array 모델(유효기간 개념 없음, 최근 기록 도래로 완료).
     case 'has-heartworm':
       return hasArrivedDate(latestDateOf(readHeartwormEntries(caseRow).map((e) => e.date)))
@@ -361,6 +369,17 @@ function latestDateOf(dates: string[]): string | null {
  * (예정→도래→재입력 모델). 실제 배열에 미래 일자가 남은 옛 데이터는 날짜 게이트가
  * 도래 전까지 미완료(예정)로 잡고, 도래하면 자동 완료된다.
  */
+/**
+ * 날짜순 n번째(0-base) 기록이 도래(≤오늘)했으면 완료 — 구충 2차 카드 전용.
+ * 배열 위치가 회차라는 불변식(저장 시 normalizeRabiesOrder 로 보장)에 기댄다.
+ */
+function nthEntryArrived(dates: string[], n: number): boolean {
+  const valid = dates.filter((d) => typeof d === 'string' && d.length >= 10).sort()
+  const target = valid[n]
+  if (!target) return false
+  return target <= todayKst()
+}
+
 function hasArrivedDate(latestDate: string | null): boolean {
   if (!latestDate || latestDate.length < 10) return false
   return latestDate <= todayKst()
@@ -479,6 +498,11 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       return lastEntryDate(readInternalParasiteEntries(caseRow).map((e) => e.date))
     case 'has-external-parasite':
       return lastEntryDate(readExternalParasiteEntries(caseRow).map((e) => e.date))
+    // 2차 카드의 완료 표시일은 **그 회차의 날짜**(index 1) — 전체 최근일이 아니다.
+    case 'has-internal-parasite-2':
+      return nthEntryDate(readInternalParasiteEntries(caseRow).map((e) => e.date), 1)
+    case 'has-external-parasite-2':
+      return nthEntryDate(readExternalParasiteEntries(caseRow).map((e) => e.date), 1)
     case 'has-heartworm':
       return lastEntryDate(readHeartwormEntries(caseRow).map((e) => e.date))
     case 'has-lungworm':
@@ -600,6 +624,11 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
     default:
       return null
   }
+}
+
+function nthEntryDate(dates: string[], n: number): string | null {
+  const valid = dates.filter((d) => typeof d === 'string' && d.length >= 10).sort()
+  return valid[n] ?? null
 }
 
 function lastEntryDate(dates: string[]): string | null {
