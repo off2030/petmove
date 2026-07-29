@@ -94,10 +94,9 @@ export type StepDoneSignal =
   | 'has-kennel-cough'            // 켄넬코프(Bordetella) — 종합백신과 같은 모델, 필드만 다름
   | 'has-civ-vaccine'
   | 'has-infectious-disease-test'
+  // 구충 — 규정이 횟수를 명시한 곳(호주·뉴질랜드)은 그 회차를 다 채워야 완료(PARASITE_REQUIRED_DOSES).
   | 'has-internal-parasite'
   | 'has-external-parasite'
-  | 'has-internal-parasite-2'      // 구충 2차 카드(호주·뉴질랜드) — 날짜순 2번째 기록이 도래하면 완료
-  | 'has-external-parasite-2'      // 〃 (뉴질랜드 강아지만 — 고양이는 2.2(1) 로 1회)
   | 'has-heartworm'                // 심장사상충 — 구충과 같은 date_array 모델(카드 분리 2026-07-27)
   | 'has-lungworm'                 // 폐충 — 심장사상충과 같은 모델(카드 분리 2026-07-29, 뉴질랜드 2.4)
   | 'has-deworming-time'           // EU 6국 촌충약 (출국 24-120h 전)

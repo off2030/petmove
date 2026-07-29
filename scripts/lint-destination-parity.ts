@@ -62,8 +62,6 @@ const KNOWN_DIFFERENCES: Record<string, string> = {
     '호주는 검체 접수일 기준 180일, 뉴질랜드는 채혈일 기준 3~12개월 — 룰 개수가 다르지만 둘 다 채워져 있다(개수 차이는 규정 차이)',
   'australia:new_zealand:lungworm-treatment:missing':
     '폐충(Angiostrongylus vasorum) 치료는 뉴질랜드 요건(IHS 2.4 — 신 IHS 2026 신설). DAFF 는 요구하지 않는다',
-  'australia:new_zealand:external-parasite-2:missing':
-    '외부구충 **회수 요건**은 뉴질랜드만 있다(IHS 2.2(2) "두 번", 강아지 한정). DAFF 7.6 은 "출국 30일 전 시작 + 제조사 지침대로 반복"이라 회수를 정하지 않아 2차 카드가 성립하지 않는다. 내부구충은 양쪽 다 2회라 두 나라에 2차 카드가 있다(2026-07-29 카드 분리)',
   'australia:new_zealand:heartworm-test:missing':
     '심장사상충 검사는 뉴질랜드 요건(IHS 2.11 — 생후 7개월 이상 ELISA). DAFF 는 요구하지 않는다',
   'australia:new_zealand:import-permit:validations':

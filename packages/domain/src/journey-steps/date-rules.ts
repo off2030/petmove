@@ -1889,6 +1889,52 @@ export function validateIdentityCheckBeforeTiter(
 export const AU_INTERNAL_PARASITE = { windowDays: 45, minGapDays: 14, secondWithinDays: 5 }
 
 /**
+ * 구충 **필요 회차** — 규정이 횟수를 명시한 곳만 여기 적는다(2026-07-30 사용자 지정 모델).
+ *
+ * 카드는 한 장으로 두고 **상태로** 회차를 표현한다: 1회만 넣으면 '진행 중', 필요 회차를
+ * 채우면 '완료'. 카드를 1차/2차로 쪼개는 안은 카드 수가 늘어 접었다.
+ *
+ * ⛔ 회차가 규정에 없는 곳을 여기 넣지 말 것 — 앱이 없는 요건을 만들어낸다:
+ *   · 호주 **외부**구충 — DAFF 7.6 은 "Start at least 30 days before export and **repeat
+ *     according to manufacturer's directions**" 로 시작 시점만 정하고 횟수를 안 정한다.
+ *     제품마다 재적용 주기가 달라(피프로닐·퍼메트린 스팟온 월 1회, 스프레이는 더 짧음)
+ *     앱이 몇 회인지 판단할 수 없다. 그래서 1회만 넣어도 완료다.
+ *     (참고: 이소옥사졸린계 — 경구·국소 브라벡토, 넥스가드, 심파리카, 크레델리오 — 와
+ *      셀라멕틴(레볼루션)은 **호주 불가**다. 물어야 약효가 나서 그 전에 병을 옮긴다.
+ *      DAFF parasite-treatment 페이지 원문, 2026-07-30 확인.)
+ *   · 나머지 목적지(터키·멕시코·브라질·UAE·하와이·괌·싱가포르·필리핀) — 창만 있고 횟수 없음.
+ */
+export const PARASITE_REQUIRED_DOSES: Record<
+  string,
+  { internal?: number; external?: number | { dog: number; cat: number } }
+> = {
+  // 호주 — 내부만 2회(DAFF 7.7 "treated twice within 45 days before export").
+  australia: { internal: 2 },
+  // 뉴질랜드 — 내부 2회(IHS 2.3(1), 종 무관) · 외부는 **개만** 2회(2.2(2)).
+  //   고양이는 2.2(1) 로 한 번이면 된다 — 종을 안 가르면 규정대로 준비한 고양이가 계속
+  //   '진행 중'으로 남는다.
+  new_zealand: { internal: 2, external: { dog: 2, cat: 1 } },
+}
+
+/** 이 케이스에서 해당 구충에 필요한 회차. 규정에 없으면 1(=한 번 넣으면 완료). */
+export function requiredParasiteDoses(
+  kind: 'internal' | 'external',
+  destinationKey: string | null | undefined,
+  species: string | null | undefined,
+): number {
+  const key = Object.keys(PARASITE_REQUIRED_DOSES).find((k) => matchesDestinationKey(destinationKey, k))
+  if (!key) return 1
+  const spec = PARASITE_REQUIRED_DOSES[key][kind]
+  if (spec === undefined) return 1
+  if (typeof spec === 'number') return spec
+  const raw = (species ?? '').toLowerCase()
+  if (raw === 'dog' || raw === '강아지' || raw === '개') return spec.dog
+  if (raw === 'cat' || raw === '고양이') return spec.cat
+  // 종 미상 — 더 느슨한 쪽(적은 회차)으로. 규정대로 준비한 케이스를 '진행 중'에 묶어두지 않는다.
+  return Math.min(spec.dog, spec.cat)
+}
+
+/**
  * 호주 내부구충 2회 프로토콜 저장 거부 — **2회가 다 들어왔을 때만** 본다(2026-07-28 확정).
  *
  *   ① 두 치료 간격 ≥ 14일 — DAFF 7.7 "spaced at least 14 days apart"
