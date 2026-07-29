@@ -60,6 +60,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'permit_no',
   'certificate_no',
   'id_date',
+  // 마이크로칩 인증 2차 — 뉴질랜드만 회차가 둘이다(IHS 1.11(4), 채혈이 출국 3~6개월 전인 경우).
+  //   호주는 1회뿐이라 이 키를 쓰지 않는다. 1차는 위 'id_date' 를 그대로 공유한다.
+  'id_date_2',
   // 수입 허가 신청 → 허가증 2단계 (import-permit step, 태국·호주 등 허가 필요국 공용) —
   // 목적지마다 허가를 따로 받으므로 신청일·완료(skip) 플래그도 by_dest 분리.
   'import_permit_application_date',

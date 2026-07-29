@@ -234,13 +234,22 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 25,
     // 필드는 호주와 같은 `id_date` — 같은 사실(검역관이 칩을 확인한 날)이고 destination-scoped
     //   등록도 이미 돼 있다. 2회 인증 케이스는 **첫 인증일**을 적는다(helpText 로 안내).
+    // 완료 판정은 **1차 인증일** 기준 — 2차는 채혈이 출국 3~6개월 전인 케이스에만 생긴다.
+    //   앱은 어느 갈래인지 모르므로 2차를 완료 조건에 넣지 않는다(넣으면 1회 케이스가 영영
+    //   미완료로 남는다). 2차가 필요한지는 카드 문구가 알린다.
     done: 'dated:id_date',
     inputs: [
       {
         key: 'id_date',
-        label: '인증일',
+        label: '1차 인증일',
         type: 'date',
         helpText: '검역관이 마이크로칩을 확인한 날짜',
+      },
+      {
+        key: 'id_date_2',
+        label: '2차 인증일',
+        type: 'date',
+        helpText: '2회 받는 경우에만 입력해요',
       },
     ],
     // 두 룰 — ① 인증일 ≤ 가장 이른 채혈일(같은 날 허용, IHS 1.11 guidance)

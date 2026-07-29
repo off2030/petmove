@@ -322,6 +322,14 @@ export function StepDetailView({
   const isImportQuarantine = importQuarantineField !== null
   const importQuarantineSubtitle =
     (step.inputs ?? []).find((i) => i.key === importQuarantineField)?.helpText ?? ''
+  // 회차가 둘인 dated 카드의 **2번째 날짜 칸**(뉴질랜드 마이크로칩 인증 2차). 카드가 날짜 입력을
+  //   두 개 선언하면 자동으로 뜬다 — stepId 하드코딩 없이 선언에서 파생한다. 완료 판정은 1차만
+  //   본다(done: 'dated:<1차>'). 서버도 같은 파생(resolveStepDateFields)으로 키를 검증한다.
+  const secondaryDateInput =
+    importQuarantineField != null
+      ? (step.inputs ?? []).find((i) => i.type === 'date' && i.key !== importQuarantineField)
+      : undefined
+  const secondaryDateField = secondaryDateInput?.key ?? null
   const isJpExportQuarantineVisit = step.id === 'jp-export-quarantine-visit'
   const isKrImportQuarantine = step.id === 'kr-import-quarantine'
   const isGeneralVaccine = step.id === 'general-vaccine'
@@ -504,6 +512,11 @@ export function StepDetailView({
       ? (importQData[importQuarantineField] as string)
       : ''
   const [importQuarantineDate, setImportQuarantineDate] = useState(savedImportQuarantineDate)
+  const savedSecondaryDate =
+    secondaryDateField && typeof importQData[secondaryDateField] === 'string'
+      ? (importQData[secondaryDateField] as string)
+      : ''
+  const [secondaryDate, setSecondaryDate] = useState(savedSecondaryDate)
 
   // 종합백신 — 가변 길이 entries. 빈 상태에서도 입력칸 한 장이 보이도록 최소 1장 유지.
   const savedGeneralVaccine = readGeneralVaccineForm(caseRow?.data, vaccineArrayFieldKey)
@@ -607,7 +620,9 @@ export function StepDetailView({
   const krImportQuarantineDirty =
     isKrImportQuarantine && krImportQuarantineDate !== krImportQuarantineBaseline
   const importQuarantineDirty =
-    isImportQuarantine && importQuarantineDate !== savedImportQuarantineDate
+    isImportQuarantine &&
+    (importQuarantineDate !== savedImportQuarantineDate ||
+      (secondaryDateField != null && secondaryDate !== savedSecondaryDate))
   const generalVaccineDirty =
     isVaccineArray &&
     !generalVaccineEqual(generalVaccine.filter(vaccineEntryFilled), savedGeneralVaccine.filter(vaccineEntryFilled))
@@ -869,6 +884,9 @@ export function StepDetailView({
           ? (d[importQuarantineField] as string)
           : '',
       )
+      if (secondaryDateField) {
+        setSecondaryDate(typeof d[secondaryDateField] === 'string' ? (d[secondaryDateField] as string) : '')
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
@@ -1521,8 +1539,13 @@ export function StepDetailView({
       (step.id === 'au-identity-check' && destinationKey === 'australia') ||
       (step.id === 'nz-identity-check' && destinationKey === 'new_zealand')
     ) {
+      // 2회 인증(뉴질랜드)은 **마지막 인증**이 채혈 전이어야 한다 — 1차는 6개월 전이라 자동
+      //   성립하고, 채혈 직전에 오는 2차가 실제로 걸리는 쪽이다. 주의 룰과 같은 기준.
+      const first = importQuarantineDate.trim()
+      const second = (secondaryDate ?? '').trim()
+      const latestId = second && second > first ? second : first || second
       const err = validateIdentityCheckBeforeTiter(
-        importQuarantineDate.trim(),
+        latestId,
         readTiterAllEntries(caseRow?.data).map((e) => e.date),
       )
       if (err) return err
@@ -2029,6 +2052,7 @@ export function StepDetailView({
               step.id,
               importQuarantineDate || null,
               activeDest,
+              secondaryDateField ? { [secondaryDateField]: secondaryDate || null } : undefined,
             )
           : await updateImportQuarantineDate(
               caseId,
@@ -2043,6 +2067,11 @@ export function StepDetailView({
           setImportQuarantineDate(
             typeof d[importQuarantineField] === 'string' ? (d[importQuarantineField] as string) : '',
           )
+          if (secondaryDateField) {
+            setSecondaryDate(
+              typeof d[secondaryDateField] === 'string' ? (d[secondaryDateField] as string) : '',
+            )
+          }
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -3089,6 +3118,16 @@ export function StepDetailView({
                 (step.inputs ?? []).find((i) => i.key === importQuarantineField)?.label ?? '검역일'
               }
             />
+            {secondaryDateInput && (
+              <div style={{ marginTop: 12 }}>
+                <ImportQuarantineInputs
+                  date={secondaryDate}
+                  onChange={setSecondaryDate}
+                  subtitle={secondaryDateInput.helpText ?? ''}
+                  label={secondaryDateInput.label}
+                />
+              </div>
+            )}
           </section>
         )}
         {/* 버튼 완료 카드 — 입력칸 대신 완료 시 기록된 날짜만 보여준다. */}

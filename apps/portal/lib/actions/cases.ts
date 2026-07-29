@@ -38,6 +38,7 @@ import {
   bookedRecordedAtKey,
   isBookedStep,
   resolveDatedStepField,
+  resolveStepDateFields,
   validateImportQuarantineDate,
   validateUsDogEntryDate,
   writeByDestValue,
@@ -2113,6 +2114,11 @@ export async function updateSimpleDateField(
   stepId: string,
   date: string | null,
   destination?: string | null,
+  /**
+   * 회차가 둘인 카드의 **추가 날짜**(뉴질랜드 마이크로칩 인증 2차 등). 키는 그 카드가 선언한
+   * 날짜 입력에서만 고를 수 있다(resolveStepDateFields) — 임의 키 쓰기 차단.
+   */
+  extras?: Record<string, string | null>,
 ): Promise<Result<CaseRow>> {
   try {
     const field = resolveDatedStepField(stepId, destination)
@@ -2120,6 +2126,18 @@ export async function updateSimpleDateField(
     const v = typeof date === 'string' ? date.trim() : ''
     if (v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
       return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+    }
+    const allowedExtras = new Set(
+      resolveStepDateFields(stepId, destination).filter((k) => k !== field),
+    )
+    const extraEntries: Array<[string, string]> = []
+    for (const [k, raw] of Object.entries(extras ?? {})) {
+      if (!allowedExtras.has(k)) return { ok: false, error: '알 수 없는 입력 항목입니다.' }
+      const ev = typeof raw === 'string' ? raw.trim() : ''
+      if (ev !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(ev)) {
+        return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+      }
+      extraEntries.push([k, ev])
     }
 
     const access = await assertCaseAccess(caseId)
@@ -2158,6 +2176,16 @@ export async function updateSimpleDateField(
     //   완료일로 쓸 수 없다. '예약을 마친 날'을 따로 찍어 그걸 완료일로 쓴다(항공권 구매의
     //   flight_info_recorded_at 과 같은 모델, 2026-07-28). 최초 1회만 — 나중에 예약 날짜를
     //   고쳐도 '언제 예약했는지'는 그대로 남아야 한다. 값을 비우면 함께 지운다.
+    for (const [k, ev] of extraEntries) {
+      if (token) {
+        nextData = writeByDestValue(nextData, token, k, ev || null)
+        delete nextData[k] // top-level 잔존 제거 — 주 필드와 같은 처리.
+      } else if (ev) {
+        nextData[k] = ev // scoping-fallback-ok: token 없음(목적지 없음) 폴백
+      } else {
+        delete nextData[k]
+      }
+    }
     if (isBookedStep(stepId, destination)) {
       const recKey = bookedRecordedAtKey(field)
       const existingRec = token ? readByDestValue(nextData, token, recKey) : nextData[recKey]

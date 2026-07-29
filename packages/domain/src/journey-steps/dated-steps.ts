@@ -97,6 +97,37 @@ export function resolveDatedStepField(
 }
 
 /**
+ * stepId(+목적지) → 그 카드가 선언한 **모든 날짜 입력 키**(선언 순서, 주 필드 포함).
+ *
+ * `dated:` 카드는 대부분 날짜가 하나지만, 회차가 있는 카드는 둘이다 — 뉴질랜드 마이크로칩
+ * 인증이 1차·2차를 받는다(IHS 1.11(4), 채혈이 출국 3~6개월 전인 경우). 저장 액션이
+ * 주 필드 외의 날짜도 받아야 하는데, 임의 키 쓰기를 열 수는 없으므로 **카드 선언에서
+ * 파생한 허용 목록**을 쓴다(resolveDatedStepField 와 같은 원칙).
+ */
+export function resolveStepDateFields(stepId: string, destination?: string | null): string[] {
+  const pick = (inputs: unknown): string[] =>
+    Array.isArray(inputs)
+      ? inputs
+          .filter(
+            (i): i is { key: string; type?: string } =>
+              !!i && typeof i === 'object' && typeof (i as { key?: unknown }).key === 'string',
+          )
+          .filter((i) => i.type === 'date')
+          .map((i) => i.key)
+      : []
+
+  const key = destination ? (findDestinationKey(destination) ?? destination) : null
+  if (key) {
+    const override = (STEP_DESTINATION_OVERRIDES[key] ?? {})[stepId] as
+      | { inputs?: unknown }
+      | undefined
+    const fromOverride = pick(override?.inputs)
+    if (fromOverride.length > 0) return fromOverride
+  }
+  return pick(JOURNEY_STEP_CATALOG.find((s) => s.id === stepId)?.inputs)
+}
+
+/**
  * 예약·구매형(`booked:`) 카드인가 — 목적지별 선언까지 본다.
  * 저장 액션이 '예약을 마친 날'(recorded_at)을 함께 찍을지 판단하는 데 쓴다.
  */

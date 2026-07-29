@@ -99,6 +99,21 @@ function readScopedDate(caseRow: CaseRow, destination: string | null | undefined
 }
 
 /**
+ * 마이크로칩 인증일 — 1차(`id_date`)와 2차(`id_date_2`) 중 **늦은 쪽**.
+ *
+ * IHS 1.11(4) 의 2회 케이스(채혈이 출국 3~6개월 전)는 2차가 채혈 직전에 온다. '채혈 전' 판정은
+ * 마지막 인증 기준이어야 하고, '출국 6개월 이전' 판정은 1차 기준이어야 한다 — 두 룰이 서로
+ * 다른 회차를 본다. 1회 케이스는 2차가 비어 있어 자연히 1차가 쓰인다.
+ */
+function readLatestIdentityCheckDate(caseRow: CaseRow, destination?: string | null): string {
+  const first = readScopedDate(caseRow, destination, 'id_date')
+  const second = readScopedDate(caseRow, destination, 'id_date_2')
+  if (!second) return first
+  if (!first) return second
+  return second > first ? second : first
+}
+
+/**
  * 현재 유효한 '1차 접종'(primary) 을 찾는다.
  *
  * IHS 2.1.3 guidance — "A 'primary' rabies vaccination is the first vaccination ... **or** the
@@ -158,7 +173,8 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     severity: 'warning',
     addedAt: '2026-07-28',
     run: ({ caseRow, destination }) => {
-      const id = readScopedDate(caseRow, destination, 'id_date')
+      // 2회 받는 케이스는 **마지막 인증**이 채혈 전이어야 한다(1차는 6개월 전이라 자동 성립).
+      const id = readLatestIdentityCheckDate(caseRow, destination)
       if (!id) return SKIP
       const titers = readTiterEntries(caseRow)
       if (titers.length === 0) return SKIP
@@ -170,7 +186,11 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: msg,
-          offendingPaths: ['id_date', `rabies_titer_records[${titers[0].originalIndex}].date`],
+          offendingPaths: [
+            'id_date',
+            'id_date_2',
+            `rabies_titer_records[${titers[0].originalIndex}].date`,
+          ],
         }
       }
       return { ok: true, message: `인증(${id}) → 채혈(${titers[0].date}).` }
