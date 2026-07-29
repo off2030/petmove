@@ -18,6 +18,7 @@ import { createClient, getCurrentUser } from '@petmove/auth/server'
 import {
   emptyVaccineProductsData,
   applyAutoFillRules,
+  JOURNEY_STEP_CATALOG,
   buildCaseJourneyContext,
   findRabiesChainBreak,
   rabiesChainBreakMessage,
@@ -2173,10 +2174,17 @@ export async function updateSimpleDateField(
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     if (stepId === 'us-cdc-dog-import-form') {
-      // 하와이 — 미국의 주(州)라 CDC 연방 규칙이 그대로 적용(카드도 base 공유, 2026-07-26).
+      // 하와이(주)·괌(미국령) 모두 CDC 연방 규칙이 그대로 적용된다(카드도 base 공유).
+      // ⚠️ 명단은 **카드 applicability 에서 파생**한다 — 손으로 적었더니 괌이 빠져 카드는
+      //   뜨는데 '완료'를 누르면 "미국·하와이 여정에서만 저장할 수 있는 단계입니다"가 났다
+      //   (2026-07-26 괌 추가 때 카드·순서 override·서류 명단은 넣고 이 게이트만 놓침,
+      //   2026-07-30 사용자 발견). 카드가 뜨는 곳이 곧 저장 가능한 곳이다.
+      const cdcDests =
+        JOURNEY_STEP_CATALOG.find((s) => s.id === 'us-cdc-dog-import-form')?.applicability
+          .destinations ?? []
       const cdcDestKey = buildCaseJourneyContext(existing as CaseRow, destination).destinationKey
-      if (cdcDestKey !== 'usa' && cdcDestKey !== 'hawaii') {
-        return { ok: false, error: '미국·하와이 여정에서만 저장할 수 있는 단계입니다.' }
+      if (cdcDests === 'all' ? false : !cdcDestKey || !cdcDests.includes(cdcDestKey)) {
+        return { ok: false, error: '미국·하와이·괌 여정에서만 저장할 수 있는 단계입니다.' }
       }
       // 날짜 검증 없음 — CDC 신고 검증은 전부 삭제(2026-07-26 사용자 결정, 기록용 날짜만 저장).
     }
