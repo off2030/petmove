@@ -416,9 +416,9 @@ export const AU_CHECKS: ProcedureCheck[] = [
     id: 'au.rnatt-declaration-order',
     country: COUNTRY,
     category: '광견병',
-    title: 'RNATT 선언서는 채혈 이후 · 수입 허가 취득 이전',
+    title: 'RNATT 선언서는 채혈 이후',
     description:
-      'DAFF 4.4 — 선언서는 항체 결과지를 근거로 발급되므로 채혈보다 앞설 수 없고, 수입 허가 신청의 필수 제출물이라 허가 취득일보다 늦으면 안 된다(허가 카드가 버튼 완료로 바뀌어 저장값이 취득일이다)("You must provide a copy of the RNATT laboratory report and declaration when you apply for an import permit").',
+      'DAFF 4.4 — 선언서는 항체 결과지를 근거로 발급되므로 채혈보다 앞설 수 없다. ⛔ 구 룰에 있던 "허가 취득 이전" 갈래는 2026-07-29 에 삭제했다 — 이 카드가 버튼 완료라 저장값이 \'버튼 누른 날\'이어서 순서를 지킨 케이스에도 오경보가 났다. 허가 신청과의 순서는 저장 거부(validateImportPermitAfterRabiesDoc)가 **완료 여부**로 보장한다.',
     severity: 'warning',
     addedAt: '2026-07-27',
     run: ({ caseRow, destination }) => {
@@ -445,15 +445,12 @@ export const AU_CHECKS: ProcedureCheck[] = [
           }
         }
       }
-      const filed = readScopedImportPermitFiled(data, destination)
-      if (/^\d{4}-\d{2}-\d{2}$/.test(filed) && decl > filed) {
-        return {
-          ok: false,
-          message: '수입 허가를 신청할 때 RNATT 선언서를 함께 내야 해요. 허가를 받은 날보다 늦게 발급받을 수 없어요.',
-          offendingPaths: ['au_rnatt_declaration_date', 'import_permit_application_date'],
-        }
-      }
-      return { ok: true, message: `선언서(${decl}) 채혈 이후 · 허가 신청 이전.` }
+      // ⛔ '허가 취득 이전' 갈래는 삭제(2026-07-29 사용자 결정). 이 카드는 버튼 완료라
+      //   저장값이 '버튼 누른 날'이어서, 선언서를 먼저 받고 허가까지 신청한 정상 케이스라도
+      //   앱에 나중에 들어와 완료를 누르면 '늦게 발급받았다'는 오경보가 났다. 순서는
+      //   저장 거부(validateImportPermitAfterRabiesDoc — 선언서 완료 전에는 허가 신청일을
+      //   저장할 수 없음)가 **완료 여부**로 보장하므로 날짜 비교가 필요 없다.
+      return { ok: true, message: `선언서(${decl}) 채혈 이후.` }
     },
   },
 
