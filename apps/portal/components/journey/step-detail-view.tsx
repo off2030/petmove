@@ -2328,6 +2328,18 @@ export function StepDetailView({
     !dirty &&
     !(step.inputs ?? []).some((i) => i.key === 'import_permit_application_date') &&
     ((caseRow?.data ?? {}) as Record<string, unknown>).import_permit_issued_skipped === true
+  // '완료 취소'가 뜨는 카드의 완료 안내 날짜 — 버튼 완료 카드는 기록된 날짜, 수입 허가는
+  //   허가를 확인한 날. 두 카드가 같은 상태·같은 문구로 보이게 한곳에서 정한다.
+  const completedNoticeDate = isButtonDoneStep
+    ? done
+      ? savedImportQuarantineDate
+      : ''
+    : importPermitUndoMode
+      ? (() => {
+          const v = ((caseRow?.data ?? {}) as Record<string, unknown>).import_permit_recorded_at
+          return typeof v === 'string' ? v : ''
+        })()
+      : ''
   const [undoingImportPermit, setUndoingImportPermit] = useState(false)
   const handleUndoImportPermit = () => {
     if (undoingImportPermit) return
@@ -3205,8 +3217,9 @@ export function StepDetailView({
             )}
           </section>
         )}
-        {/* 버튼 완료 카드 — 입력칸 대신 완료 시 기록된 날짜만 보여준다. */}
-        {isButtonDoneStep && done && savedImportQuarantineDate.length >= 10 && (
+        {/* 완료 안내 — 버튼 완료 카드(입력칸 대신)와 수입 허가 완료 처리(2026-07-29 추가).
+            같은 '완료 취소' 상태인데 한쪽만 안내가 있으면 화면마다 달라 보인다. */}
+        {completedNoticeDate.length >= 10 && (
           <section style={{ marginTop: 22 }}>
             <div
               style={{
@@ -3218,8 +3231,8 @@ export function StepDetailView({
                 color: C.ink,
               }}
             >
-              {Number(savedImportQuarantineDate.slice(5, 7))}월{' '}
-              {Number(savedImportQuarantineDate.slice(8, 10))}일에 완료했어요.
+              {Number(completedNoticeDate.slice(5, 7))}월{' '}
+              {Number(completedNoticeDate.slice(8, 10))}일에 완료했어요.
             </div>
           </section>
         )}
@@ -3426,8 +3439,22 @@ export function StepDetailView({
               padding: '14px 0',
               borderRadius: 14,
               border: 0,
-              background: justSaved ? C.sage : active ? C.accent : 'var(--pm-line)',
-              color: justSaved || active ? '#fff' : C.ink3,
+              // '완료 취소'는 되돌리는 동작이라 버튼 완료 카드와 같은 muted 톤을 쓴다 —
+              //   같은 문구·같은 역할인데 한쪽만 accent 면 화면마다 달라 보인다(2026-07-29).
+              background: justSaved
+                ? C.sage
+                : importPermitUndoMode && !canSave
+                  ? 'var(--pm-line)'
+                  : active
+                    ? C.accent
+                    : 'var(--pm-line)',
+              color: justSaved
+                ? '#fff'
+                : importPermitUndoMode && !canSave
+                  ? C.ink
+                  : active
+                    ? '#fff'
+                    : C.ink3,
               fontFamily: 'inherit',
               fontSize: 15,
               fontWeight: 600,
