@@ -1318,7 +1318,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         label: 'MPI 승인 계류시설 목록',
       },
     ],
-    validationIds: ['nz.quarantine-reservation-matches-entry'],
+    validationIds: [
+      'nz.quarantine-reservation-matches-entry',
+      // 채혈 창·인증 횟수 짝 주의 — 예약을 저장한 뒤 채혈일을 늦추거나 2차 인증일을 지우면
+      //   저장 거부는 이미 지나갔으므로 여기서 표면화한다(2026-07-29).
+      'nz.quarantine-start-after-titer',
+    ],
   },
 
   // ── 사전 신고 다음 — 일본 수출 검역 (왕복 케이스 한정) ──────────────

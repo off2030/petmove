@@ -25,6 +25,7 @@ import {
   validateIdentityCheckOrder,
   validateImportPermitNotAfterDeparture,
   validateInfectiousDiseaseTestDate,
+  validateNzQuarantineStartAfterTiter,
 } from '../journey-steps/date-rules'
 import {
   msgExportQuarantineAfterReturn,
@@ -514,6 +515,36 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `계류 시작일(${reserved}) = 도착일(${entry}).` }
+    },
+  },
+  {
+    id: 'nz.quarantine-start-after-titer',
+    country: COUNTRY,
+    category: '검역',
+    title: '계류 시작일은 채혈 3개월 후(6개월 미만이면 인증 2회)',
+    description:
+      'IHS 2.1.3(3) 채혈 창 + 1.11(4) 인증 횟수 분기를 합친 판정. 3개월 미만은 규정 위반 확정(계류 시작일은 도착일이고 도착은 출국 이후라 출국 기준으로는 더 짧다), 3~6개월은 인증을 2회 받아야 합법, 6개월 이상은 1회로 충분. 저장 거부(validateNzQuarantineStartAfterTiter)와 같은 함수 — 예약을 먼저 저장한 뒤 채혈일을 늦추거나 2차 인증일을 지운 경우를 표면화하는 짝 주의.',
+    severity: 'warning',
+    addedAt: '2026-07-29',
+    run: ({ caseRow, destination }) => {
+      const start = readScopedDate(caseRow, destination, 'nz_quarantine_reservation_date')
+      if (!start) return SKIP
+      const titers = readTiterEntries(caseRow)
+      if (titers.length === 0) return SKIP
+      const hasSecond = !!readScopedDate(caseRow, destination, 'id_date_2')
+      const msg = validateNzQuarantineStartAfterTiter(
+        titers.map((t) => t.date),
+        start,
+        hasSecond,
+      )
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['nz_quarantine_reservation_date', 'id_date_2'],
+        }
+      }
+      return { ok: true, message: `계류 시작(${start}) — 채혈 창·인증 횟수 충족.` }
     },
   },
   {

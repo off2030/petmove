@@ -760,7 +760,7 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
     '차단: validateIdentityCheckBeforeTiter(인증일 ≤ 항체 채혈일 — 같은 날 허용)',
   // 뉴질랜드도 같은 함수(2026-07-28 '호주 방식으로 통일'). 여긴 필수 절차라 어기면 수입 허가 불가.
   'new_zealand:nz-identity-check':
-    '차단: validateIdentityCheckBeforeTiter(인증일 ≤ 항체 채혈일 — 같은 날 허용)',
+    '차단: validateIdentityCheckBeforeTiter(인증일 ≤ 항체 채혈일 — 같은 날 허용)·validateIdentityCheckAfterMicrochip(칩 선행)·validateIdentityCheckOrder(2차 ≥ 1차)',
   // ── 기본 정보·의료 기록 (step-detail-view getSaveBlockError 분기) ──────────
   microchip: '차단: 출생일 이전 시술일·15자리 형식 거부(isMicrochip 인라인)',
   'rabies-vaccine-1':
@@ -805,7 +805,7 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   //   남는 건 '예약을 항공 일정과 맞췄나'인데, 예약일·도착일 어느 쪽이든 고쳐서 회복할 수
   //   있는 사실이라 저장을 막지 않는다.
   'nz-quarantine-reservation':
-    '주의만: nz.quarantine-reservation-matches-entry(계류 시작일 ≠ 뉴질랜드 도착일) — 예약·항공 일정 어느 쪽이든 고칠 수 있어 차단 X',
+    '차단: validateNzQuarantineStartAfterTiter(채혈 + 3개월 미만 거부, 3~6개월은 2차 인증 필수) + 주의: nz.quarantine-reservation-matches-entry(도착일과 불일치 — 예약·항공 어느 쪽이든 고칠 수 있어 차단 X)',
   'sg-gst-permit': '차단: validateSgGstPermitDate(도착 전 + 도착 14일 이내)',
   'sg-border-inspection': '차단: validateSgBorderInspectionDate(도착 최소 5일 전)',
   // 독감(CIV)·전염병 검사 — 호주 전용 카드(둘 다 강아지 요건).

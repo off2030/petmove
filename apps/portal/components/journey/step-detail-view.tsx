@@ -34,6 +34,7 @@ import {
   validateIdentityCheckAfterMicrochip,
   validateIdentityCheckBeforeTiter,
   validateIdentityCheckOrder,
+  validateNzQuarantineStartAfterTiter,
   validateTiterAfterIdentityCheck,
   validateAuInternalParasiteDates,
   validateExternalParasiteDates,
@@ -1583,6 +1584,20 @@ export function StepDetailView({
         readTiterAllEntries(caseRow?.data)
           .map((e) => e.received_date || e.date)
           .filter((d) => d.length >= 10),
+      )
+    }
+    // 뉴질랜드 계류 예약 — 계류 시작일(=도착일)과 채혈일 간격 + 인증 횟수를 함께 본다
+    //   (2026-07-29 사용자 확정). 3개월 미만은 규정 위반 확정, 3~6개월은 2차 인증이 있어야
+    //   합법, 6개월 이상은 1회 인증으로 충분. 도메인 단일 출처(nz.ts 주의 룰과 같은 함수).
+    if (step.id === 'nz-quarantine-reservation' && destinationKey === 'new_zealand') {
+      const d = (caseRow?.data ?? {}) as Record<string, unknown>
+      const hasSecond = typeof d.id_date_2 === 'string' && d.id_date_2.length >= 10
+      return validateNzQuarantineStartAfterTiter(
+        readTiterAllEntries(caseRow?.data)
+          .map((e) => e.date)
+          .filter((x) => x.length >= 10),
+        importQuarantineDate.trim(),
+        hasSecond,
       )
     }
     // 하와이 입국 신청 — 차단 없음(2026-07-26). 버튼 완료 카드로 바뀌어 신청일을 입력받지

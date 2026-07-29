@@ -1673,6 +1673,47 @@ export function validateIdentityCheckOrder(first: string, second: string): strin
 }
 
 /**
+ * 뉴질랜드 계류 시작일 ↔ 항체 채혈일 간격 — 인증 횟수까지 함께 본다(2026-07-29 사용자 확정).
+ *
+ * IHS 2.1.3(3) 의 채혈 창(출국 3~12개월 전)과 1.11(4) 의 인증 횟수 분기를 하나로 합친 판정이다.
+ *   · 3개월 미만  → 규정 위반 **확정**. 계류 시작일은 도착일이고 도착은 출국 이후라, 도착
+ *     기준으로 3개월이 안 되면 출국 기준으로는 더 짧다.
+ *   · 3~6개월     → 규정상 합법이지만 **인증을 2회** 받아야 하는 구간(1.11(4)). 2차 인증일이
+ *     없으면 거부하고 그걸 넣게 안내한다.
+ *   · 6개월 이상  → 인증 1회로 충분.
+ * 채혈이 여러 건이면 **하나라도** 통과시키는 것이 있으면 통과(nz.titer-3to12months 와 같은 방식).
+ *
+ * 상한(12개월)은 여기서 보지 않는다 — 도착이 12개월을 넘겼다고 출국도 넘겼다고 단정할 수
+ * 없어 확정 위반이 아니다. 그쪽은 항공권 카드의 주의가 담당한다.
+ */
+export function validateNzQuarantineStartAfterTiter(
+  titerDates: string[],
+  startDate: string,
+  hasSecondIdentityCheck: boolean,
+): string | null {
+  const start = (startDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return null
+  const dates = titerDates
+    .map((d) => (d ?? '').slice(0, 10))
+    .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+  if (dates.length === 0) return null
+
+  let inThreeToSix = false
+  for (const t of dates) {
+    const six = addMonths(t, 6)
+    if (six && start >= six) return null
+    const three = addMonths(t, 3)
+    if (three && start >= three) {
+      if (hasSecondIdentityCheck) return null
+      inThreeToSix = true
+    }
+  }
+  return inThreeToSix
+    ? '항체 검사 채혈 후 6개월 안에 입국하려면 마이크로칩 인증을 두 번 받아야 해요. 2차 인증일을 입력하세요.'
+    : '계류 시작일은 항체 검사 채혈일로부터 3개월이 지난 후여야 해요. 날짜를 확인하세요.'
+}
+
+/**
  * 채혈은 마이크로칩 인증 이후여야 한다(같은 날 허용) — 인증 카드 차단의 **반대 방향**.
  *
  * 인증 카드는 '인증일 > 채혈일'을 막지만, 항체 카드에서 채혈일을 인증보다 앞으로 고치는 건
