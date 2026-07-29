@@ -3964,7 +3964,7 @@
       
       바베시아 깁소니(Babesia gibsoni) 검사를 받아요. IFAT 또는 ELISA와 PCR을 함께 받아야 해요.
       리슈만편모충(Leishmania infantum) 검사를 받아요. IFAT 또는 ELISA만 인정돼요.
-      렙토스피라(Leptospira canicola) 백신 접종을 하지 않았다면 MAT 검사를 받아요.
+      렙토스피라(Leptospira canicola) 검사를 받아요. MAT만 인정되고, 백신을 맞았어도 면제되지 않아요.
       중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT 또는 TAT만 인정돼요.
       바베시아 검사 채혈은 1차 외부 기생충 치료 14일 후부터 할 수 있어요.
       해외 공인 검사기관에서 받아야 하며, 임상 수의사만 의뢰할 수 있어요.

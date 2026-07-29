@@ -1876,10 +1876,14 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   한국 실무 기준으로 확정한 표현이다 — 원문(approved laboratory)에 맞춰 되돌리지 말 것.
       // 인정 검사법 근거 — 바베시아: IFAT/ELISA **와** PCR 둘 다(2.7(1)(a), 6개월 미만은 PCR
       //   3회 대안이 있으나 앱이 회차를 구분하지 않아 문구에 넣지 않는다) / 리슈만: IFAT·ELISA
-      //   (2.12) / 브루셀라: RSAT·TAT(2.8) / 렙토: MAT, 백신 접종 시 면제(2.13).
+      //   (2.12) / 브루셀라: RSAT·TAT(2.8) / 렙토: MAT(2.13).
+      // ⛔ 렙토에 **호주 문장을 가져오지 말 것**(2026-07-29 사용자 지적으로 정정). 호주는 렙토
+      //   Canicola 백신을 맞으면 MAT 를 면제하지만, 뉴질랜드 2.13 의 선택지는 ①수출국이 청정국
+      //   ②MAT 음성 ③독시사이클린 14일 투약 셋뿐이고 **백신은 면제 사유가 아니다**. 백신이
+      //   등장하는 자리는 MAT 가 약한 양성(1:100~1:400)일 때 그 수치를 설명하는 근거뿐이다.
       'infectious-disease-test': {
         description:
-          '출국일 기준 30일 이내에 전염병 검사를 받아요.\n\n바베시아 깁소니(Babesia gibsoni) 검사를 받아요. IFAT 또는 ELISA와 PCR을 함께 받아야 해요.\n리슈만편모충(Leishmania infantum) 검사를 받아요. IFAT 또는 ELISA만 인정돼요.\n렙토스피라(Leptospira canicola) 백신 접종을 하지 않았다면 MAT 검사를 받아요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT 또는 TAT만 인정돼요.\n바베시아 검사 채혈은 1차 외부 기생충 치료 14일 후부터 할 수 있어요.\n해외 공인 검사기관에서 받아야 하며, 임상 수의사만 의뢰할 수 있어요.\n일반 동물병원에서는 이 검사를 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
+          '출국일 기준 30일 이내에 전염병 검사를 받아요.\n\n바베시아 깁소니(Babesia gibsoni) 검사를 받아요. IFAT 또는 ELISA와 PCR을 함께 받아야 해요.\n리슈만편모충(Leishmania infantum) 검사를 받아요. IFAT 또는 ELISA만 인정돼요.\n렙토스피라(Leptospira canicola) 검사를 받아요. MAT만 인정되고, 백신을 맞았어도 면제되지 않아요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT 또는 TAT만 인정돼요.\n바베시아 검사 채혈은 1차 외부 기생충 치료 14일 후부터 할 수 있어요.\n해외 공인 검사기관에서 받아야 하며, 임상 수의사만 의뢰할 수 있어요.\n일반 동물병원에서는 이 검사를 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
         validationIds: [
           'nz.infectious-disease-test-within-30days',
           'nz.infectious-disease-test-after-external-parasite',
