@@ -1344,7 +1344,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '계류시설을 예약하세요.',
     applicability: { destinations: ['new_zealand'], species: 'all', tripType: 'all' },
     order: 42,
-    done: 'dated:nz_quarantine_reservation_date',
+    // 예약을 했다는 사실이 완료 — 계류 시작일이 미래여도 카드는 완료다. 호주가 2026-07-28 에
+    //   같은 이유로 booked 로 바꿨는데 뉴질랜드만 dated 로 남아 있었다(2026-07-29 사용자 발견).
+    //   dated 는 날짜가 도래해야 완료라, 예약을 마쳐도 계류 시작일까지 미완료로 남았다.
+    done: 'booked:nz_quarantine_reservation_date',
     inputs: [
       {
         key: 'nz_quarantine_reservation_date',
