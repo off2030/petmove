@@ -1621,7 +1621,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         // 180일 주의(au.titer-min-180days-after-sample-received)는 **운송 예약 카드**에만 둔다.
         //   채혈은 이미 끝난 사실이라 이 카드에서는 고칠 수 있는 게 없고, 조정 가능한 칸
         //   (출국·도착일)은 운송 예약에 있다. 문구도 같은 이유로 그쪽에만 있다.
-        validationIds: ['au.titer-after-rabies', 'au.titer-within-12months-of-export'],
+        // 인증↔채혈 순서 주의는 인증 카드가 아니라 **여기**(뒤 카드)에 둔다 — 뉴질랜드와 같은
+      //   이유·같은 시점에 옮겼다(2026-07-29 사용자 '같이 옮기자'). 저장 거부는 인증 카드에 유지.
+      validationIds: [
+        'au.titer-after-rabies',
+        'au.titer-within-12months-of-export',
+        'au.identity-check-before-titer',
+      ],
       },
       // 독감(CIV) — **한국·미국 출발 개는 필수**(7.2 "For USA and South Korea only").
       //   ⛔ '2회 정확히 14일 간격'은 DAFF 요건이 아니다(구 au.ts 룰의 과잉 해석). 규정은
@@ -1780,6 +1786,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         'nz.titer-3to12months-before-departure',
         // 생후 9개월 하한도 여기 — 접종일·생일은 이미 지나간 사실이라 바꿀 수 있는 건 출국일뿐이다.
         'nz.dog-min-9months-on-departure',
+        // 마이크로칩 인증 6개월 하한도 같은 이유로 여기(2026-07-29 사용자 확정). 인증 카드에서는
+        //   조치가 없다 — 이미 받은 인증을 더 이른 날짜로 되돌릴 수 없다.
+        'nz.identity-check-6months-before-departure',
       ],
     },
     // 수입 허가 — MPI 온라인. 계류 예약 확인서·RCF·항체 결과지·접종 기록 4종이 신청 서류다
@@ -1826,7 +1835,14 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         order: 40,
         description:
           '뉴질랜드 검역당국(MPI)이 인정하는 검사기관에서 광견병 항체 검사(RNATT)를 받으세요.\n\n마이크로칩 인증을 받은 뒤에 채혈해요. 인증과 같은 날에 채혈해도 돼요.\n채혈 전에 마이크로칩을 확인해요.\n0.5 IU/mL 이상이면 합격이에요.\n처음 접종한 경우에는 접종 3~4주 후에 채혈하는 것이 좋아요.',
-        validationIds: ['nz.titer-after-rabies', 'nz.titer-3to12months-before-departure'],
+        // 인증↔채혈 순서 주의는 **여기**에 둔다(2026-07-29 사용자 확정) — 인증 카드가 아니라
+        //   뒤 카드다. 순서가 어긋났을 때 실제 조치는 재채혈이고, 인증 카드에서는 지나간
+        //   인증일을 되돌릴 수 없다. 저장 거부는 그대로 인증 카드 입력 시점에 있다.
+        validationIds: [
+          'nz.titer-after-rabies',
+          'nz.titer-3to12months-before-departure',
+          'nz.identity-check-before-titer',
+        ],
       },
       // 독감(CIV) — IHS 2.9(2). 한국은 MPI-STD-SAA 의 CIV 위험국 목록에 있다(지원문서
       //   "Dogs from Canada, Korea (Republic) and USA only"). **백신 또는 PCR 검사** 둘 중 하나다.
