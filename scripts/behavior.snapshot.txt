@@ -207,7 +207,9 @@
 
 ▸ new_zealand (뉴질랜드)
    입력불가 0건
-   주의·차단 0건
+   주의·차단 1건
+     - nz.identity-check-before-titer [warning]
+         마이크로칩 인증일을 입력하세요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
    알림 12건
@@ -2083,7 +2085,9 @@
 
 ▸ new_zealand (뉴질랜드)
    입력불가 0건
-   주의·차단 0건
+   주의·차단 1건
+     - nz.identity-check-before-titer [warning]
+         마이크로칩 인증일을 입력하세요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
    알림 10건
@@ -2687,7 +2691,9 @@
 
 ▸ new_zealand (뉴질랜드)
    입력불가 0건
-   주의·차단 2건
+   주의·차단 3건
+     - nz.identity-check-before-titer [warning]
+         마이크로칩 인증일을 입력하세요.
      - nz.rabies-valid-until-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
      - nz.titer-3to12months-before-departure [warning]
@@ -3288,7 +3294,9 @@
 
 ▸ new_zealand (뉴질랜드)
    입력불가 0건
-   주의·차단 0건
+   주의·차단 1건
+     - nz.identity-check-before-titer [warning]
+         마이크로칩 인증일을 입력하세요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
    알림 10건
@@ -6073,7 +6081,9 @@
 ▸ new_zealand (뉴질랜드)
    입력불가 1건
      ✕ 수입허가 신청일: 광견병 증명서(RCF)를 먼저 발급받으세요.
-   주의·차단 1건
+   주의·차단 2건
+     - nz.identity-check-before-titer [warning]
+         마이크로칩 인증일을 입력하세요.
      - nz.import-permit-not-after-departure [warning]
          수입 허가 신청일은 출국일보다 빨라야 해요. 날짜를 확인하세요.
    상황별 설명문 1건
@@ -6687,7 +6697,9 @@
 ▸ new_zealand (뉴질랜드)
    입력불가 1건
      ✕ 수입허가 신청일: 광견병 증명서(RCF)를 먼저 발급받으세요.
-   주의·차단 0건
+   주의·차단 1건
+     - nz.identity-check-before-titer [warning]
+         마이크로칩 인증일을 입력하세요.
    상황별 설명문 1건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
    알림 10건
@@ -7265,9 +7277,11 @@
 ▸ new_zealand (뉴질랜드)
    입력불가 1건
      ✕ 수입허가 신청일: 광견병 증명서(RCF)를 먼저 발급받으세요.
-   주의·차단 2건
+   주의·차단 3건
      - common.rabies-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2025년 7월 1일에 만료되었어요. 추가 접종 기록을 입력하세요.
+     - nz.identity-check-before-titer [warning]
+         마이크로칩 인증일을 입력하세요.
      - nz.rabies-valid-until-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
    상황별 설명문 1건
@@ -7805,9 +7819,11 @@
 ▸ new_zealand (뉴질랜드)
    입력불가 1건
      ✕ 수입허가 신청일: 광견병 증명서(RCF)를 먼저 발급받으세요.
-   주의·차단 3건
+   주의·차단 4건
      - common.rabies-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2025년 7월 1일에 만료되었어요. 추가 접종 기록을 입력하세요.
+     - nz.identity-check-before-titer [warning]
+         마이크로칩 인증일을 입력하세요.
      - nz.rabies-valid-until-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
      - nz.titer-3to12months-before-departure [warning]
@@ -8336,9 +8352,11 @@
 
 ▸ new_zealand (뉴질랜드)
    입력불가 0건
-   주의·차단 2건
+   주의·차단 3건
      - common.rabies-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2025년 7월 1일에 만료되었어요. 추가 접종 기록을 입력하세요.
+     - nz.identity-check-before-titer [warning]
+         마이크로칩 인증일을 입력하세요.
      - nz.rabies-valid-until-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
    상황별 설명문 1건
@@ -8895,9 +8913,11 @@
 ▸ new_zealand (뉴질랜드)
    입력불가 1건
      ✕ 출국·입국일: 검사일로부터 3개월 후인 2026년 7월 2일에 입국할 수 있어요.
-   주의·차단 3건
+   주의·차단 4건
      - common.rabies-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2025년 7월 1일에 만료되었어요. 추가 접종 기록을 입력하세요.
+     - nz.identity-check-before-titer [warning]
+         마이크로칩 인증일을 입력하세요.
      - nz.rabies-valid-until-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
      - nz.titer-3to12months-before-departure [warning]
@@ -9500,7 +9520,9 @@
 
 ▸ new_zealand (뉴질랜드)
    입력불가 0건
-   주의·차단 0건
+   주의·차단 1건
+     - nz.identity-check-before-titer [warning]
+         마이크로칩 인증일을 입력하세요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
      ▸ rabies-titer: 광견병 항체 검사를 진행 중이에요. 결과가 나오면 완료 버튼을 누르세요.
@@ -10106,9 +10128,11 @@
 
 ▸ new_zealand (뉴질랜드)
    입력불가 0건
-   주의·차단 3건
+   주의·차단 4건
      - common.rabies-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2024년 8월 5일에 만료되었어요. 추가 접종 기록을 입력하세요.
+     - nz.identity-check-before-titer [warning]
+         마이크로칩 인증일을 입력하세요.
      - nz.rabies-valid-until-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
      - nz.titer-3to12months-before-departure [warning]
@@ -10671,9 +10695,11 @@
 
 ▸ new_zealand (뉴질랜드)
    입력불가 0건
-   주의·차단 3건
+   주의·차단 4건
      - common.rabies-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2023년 8월 5일에 만료되었어요. 추가 접종 기록을 입력하세요.
+     - nz.identity-check-before-titer [warning]
+         마이크로칩 인증일을 입력하세요.
      - nz.rabies-valid-until-departure [warning]
          광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.
      - nz.titer-3to12months-before-departure [warning]
@@ -11183,9 +11209,11 @@
 
 ▸ new_zealand (뉴질랜드)
    입력불가 0건
-   주의·차단 1건
+   주의·차단 2건
      - common.rabies-validity-expired [warning]
          직전 광견병 백신의 면역 유효기간이 2024년 8월 5일에 만료되었어요. 추가 접종 기록을 입력하세요.
+     - nz.identity-check-before-titer [warning]
+         마이크로칩 인증일을 입력하세요.
    상황별 설명문 2건
      ▸ microchip: 마이크로칩 번호를 입력하세요.
      ▸ rabies-titer: 광견병 항체 검사를 진행 중이에요. 결과가 나오면 완료 버튼을 누르세요.

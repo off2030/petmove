@@ -1844,7 +1844,7 @@ export function validateTiterAfterIdentityCheck(
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) return null
   const id = (idDate ?? '').slice(0, 10)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(id)) {
-    return opts?.required ? '마이크로칩 인증을 먼저 받고 인증일을 입력하세요.' : null
+    return opts?.required ? '마이크로칩 인증일을 입력하세요.' : null
   }
   if (t < id) return '채혈일은 마이크로칩 인증일 이후여야 해요. 날짜를 확인하세요.'
   return null
