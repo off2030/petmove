@@ -2039,7 +2039,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   base 문구(10일)가 그대로 노출되면 차단과 어긋난다(호주 5일과 같은 정정).
       'vet-visit': {
         description:
-          '출국일 기준 2일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 뉴질랜드 건강증명서(Model Veterinary Certificate)를 발급받아요.\n\n마이크로칩 확인, 전염병 증상 확인, 외부 기생충 검사를 함께 받아요. 중성화하지 않은 강아지는 생식기 검사도 받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
+          '출국일 기준 2일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 뉴질랜드 건강증명서(Model Veterinary Certificate)를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
         deadline: { anchor: 'departure', daysBefore: 2, window: true },
       },
       // 한국 수출 검역도 같은 2일 창(validateKrExportDate 가 getVetVisitWindowDays 공유).
