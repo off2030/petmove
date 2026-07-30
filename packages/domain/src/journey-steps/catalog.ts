@@ -1322,7 +1322,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     // 계류 시작일을 받게 되면서 180일 판정을 이 카드에도 붙인다(저장 거부 + 짝 주의).
-    validationIds: ['au.quarantine-reservation-min-180days'],
+    validationIds: [
+      'au.quarantine-reservation-min-180days',
+      // 출국일 ≤ 계류 시작일 — 저장 거부와 같은 함수(2026-07-30, 뉴질랜드와 대칭).
+      'au.quarantine-start-not-before-departure',
+    ],
   },
 
   // ── 뉴질랜드 계류시설 예약 — 수입 허가 신청 **전** ──────────────────────────
@@ -1333,7 +1337,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // 시설이 공항 인수·MPI 도착 통보를 대신한다(지원문서 Notify MPI — "You are not required to
   //   give notification of arrival of your dog. The quarantine facility will do this for you").
   // ⛔ buttonComplete 로 되돌리지 말 것(2026-07-28) — `nz_quarantine_reservation_date` 를
-  //   **실제 계류 시작일로 읽는 소비처가 셋**이다: 주의 룰(nz.quarantine-reservation-matches-entry),
+  //   **실제 계류 시작일로 읽는 소비처가 셋**이다: 주의 룰(nz.quarantine-start-not-before-departure),
   //   도착 검역 카드의 '예정' 배지(QUARANTINE_START_FIELD_BY_DESTINATION), 이 카드의 완료 판정.
   //   버튼 완료면 저장값이 '버튼 누른 날'이라 도착일과 늘 어긋나 정상 케이스에 경고가 뜨고
   //   예정 배지도 엉뚱한 날짜가 된다. 호주 계류 예약 카드도 같은 이유로 날짜 입력이다.
@@ -1370,7 +1374,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     validationIds: [
-      'nz.quarantine-reservation-matches-entry',
+      // ⛔ 구 'nz.quarantine-reservation-matches-entry'(계류 시작일 = 도착일)는 삭제했다
+      //   (2026-07-30). 항공권 카드가 단순형이 되며 도착일 칸이 사라져 판정이 영영 SKIP 이었다.
+      //   출국일 기준 하한 룰로 대체 — 저장 거부와 같은 함수.
+      'nz.quarantine-start-not-before-departure',
       // 채혈 창·인증 횟수 짝 주의 — 예약을 저장한 뒤 채혈일을 늦추거나 2차 인증일을 지우면
       //   저장 거부는 이미 지나갔으므로 여기서 표면화한다(2026-07-29).
       'nz.quarantine-start-after-titer',

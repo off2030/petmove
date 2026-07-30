@@ -27,6 +27,7 @@ import {
   validateInternalParasiteSpacing,
   validateParasiteDateForDestination,
   validateAuQuarantineReservationDate,
+  validateQuarantineStartNotBeforeDeparture,
   validateExternalParasiteDates,
   validateInfectiousDiseaseTestDate,
   validateCivDoseInterval,
@@ -493,6 +494,32 @@ export const AU_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `계류 시작일(${res}) 채혈 + 180일 이후.` }
+    },
+  },
+  {
+    // 저장 거부(validateQuarantineStartNotBeforeDeparture)와 **같은 함수**. 예약을 먼저 잡은 뒤
+    //   항공권을 뒤로 옮겨 어긋난 경우를 표면화하는 짝 주의 — 뉴질랜드와 대칭(2026-07-30).
+    id: 'au.quarantine-start-not-before-departure',
+    country: COUNTRY,
+    category: '검역',
+    title: '출국일은 계류 시작일보다 늦을 수 없음',
+    description:
+      '계류 시작일 = 호주 도착일(DAFF 9.2 — 멜버른 공항에서 검역관이 인수해 Mickleham 으로 이송)이고 도착은 출국 이후거나 같은 날이다. 출국일이 계류 시작일보다 뒤면 예약이나 항공 일정 중 하나가 어긋난 것이다. **상한은 두지 않는다** — 야간 출발·다음 날 도착이 정상이고 경유 편은 더 벌어진다.',
+    severity: 'warning',
+    addedAt: '2026-07-30',
+    run: ({ caseRow, destination }) => {
+      const res = readQuarantineReservationDate(caseRow, destination)
+      const dep = readDepartureDate(caseRow, destination)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(res) || !dep) return SKIP
+      const msg = validateQuarantineStartNotBeforeDeparture(res, dep)
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['au_quarantine_reservation_date', 'departure_date'],
+        }
+      }
+      return { ok: true, message: `출국일(${dep}) ≤ 계류 시작일(${res}).` }
     },
   },
   {

@@ -792,6 +792,43 @@ export function validateAuQuarantineReservationDate(
   return `항체 검사 검체가 검사기관에 접수된 날부터 ${days}일이 지나야 계류를 시작할 수 있어요.`
 }
 
+/**
+ * 호주·뉴질랜드 — **출국일은 계류 시작일보다 늦을 수 없다**(2026-07-30 사용자 지정).
+ *
+ * 계류 시작일 = 도착일이고(DAFF 9.2 멜버른 인수 → Mickleham / IHS 1.15(3) 허가서 시설로 직행),
+ * 도착은 출국 이후거나 같은 날이다. 출국일이 계류 시작일보다 뒤면 예약이나 항공 일정 중 하나가
+ * 어긋난 것이다. **상한은 두지 않는다** — 인천→오클랜드·시드니는 야간 출발 다음 날 도착이라
+ * 하루 차이가 정상이고, 경유 편은 더 벌어질 수 있어 '며칠 이내'를 단정할 근거가 없다.
+ * (싱가포르는 당일 도착 노선이라 {0,1}일로 좁혀 두지만 여기는 하한만 본다.)
+ *
+ * 방향별 문구 — 눈앞의 칸이 조치 대상이 되게(싱가포르와 같은 정책):
+ *   · 출국일 칸(항공권 카드) → validateDepartureNotAfterQuarantineStart
+ *   · 계류 시작일 칸(예약 카드) → validateQuarantineStartNotBeforeDeparture
+ * client(저장 거부)·procedure-check(주의) 공용 — 한쪽이 비면 통과.
+ */
+export function validateDepartureNotAfterQuarantineStart(
+  departureDate: string,
+  reservationDate: string,
+): string | null {
+  const dep = (departureDate ?? '').slice(0, 10)
+  const res = (reservationDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dep) || !/^\d{4}-\d{2}-\d{2}$/.test(res)) return null
+  if (dep <= res) return null
+  return '출국일이 계류 시작일보다 늦어요. 날짜를 확인하세요.'
+}
+
+/** 위와 같은 규칙을 계류 시작일 칸 관점 문구로. */
+export function validateQuarantineStartNotBeforeDeparture(
+  reservationDate: string,
+  departureDate: string,
+): string | null {
+  const dep = (departureDate ?? '').slice(0, 10)
+  const res = (reservationDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dep) || !/^\d{4}-\d{2}-\d{2}$/.test(res)) return null
+  if (dep <= res) return null
+  return '계류 시작일이 출국일보다 빨라요. 날짜를 확인하세요.'
+}
+
 export function validateSgGstPermitDate(
   issuedDate: string,
   departureDate: string,

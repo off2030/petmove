@@ -29,6 +29,7 @@ import {
   validateNzExternalSecondDose,
   validateNzInfectiousTestAfterExternal,
   validateNzQuarantineStartAfterTiter,
+  validateQuarantineStartNotBeforeDeparture,
   validateNzRcfDate,
   validateNzWithin5Days,
   validateRabiesDocRequiresTiter,
@@ -517,29 +518,6 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'nz.quarantine-reservation-matches-entry',
-    country: COUNTRY,
-    category: '검역',
-    title: '계류 시작일과 뉴질랜드 도착일 일치',
-    description:
-      'IHS 1.15(3) — 도착한 동물은 수입 허가에 적힌 계류시설로 **바로** 옮겨진다. 계류 시작일과 도착일이 다르면 예약이나 항공 일정 중 하나가 어긋난 것이다.',
-    severity: 'warning',
-    addedAt: '2026-07-27',
-    run: ({ caseRow, destination }) => {
-      const reserved = readScopedDate(caseRow, destination, 'nz_quarantine_reservation_date')
-      const entry = readScopedDate(caseRow, destination, 'entry_date')
-      if (!reserved || !entry) return SKIP
-      if (reserved !== entry) {
-        return {
-          ok: false,
-          message: '계류 시작일과 뉴질랜드 도착일이 달라요. 예약 날짜와 항공 일정을 다시 확인하세요.',
-          offendingPaths: ['nz_quarantine_reservation_date', 'entry_date'],
-        }
-      }
-      return { ok: true, message: `계류 시작일(${reserved}) = 도착일(${entry}).` }
-    },
-  },
-  {
     id: 'nz.rcf-order',
     country: COUNTRY,
     category: '광견병',
@@ -607,6 +585,35 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `계류 시작(${start}) — 채혈 창·인증 횟수 충족.` }
+    },
+  },
+  {
+    // ⚠️ 앞서 있던 nz.quarantine-reservation-matches-entry(계류 시작일 = 도착일)는 항공권 카드가
+    //   단순형으로 바뀌며 도착일 칸이 사라져 영영 SKIP 이었다(2026-07-30 사용자 발견). 도착일
+    //   대신 **출국일**을 기준으로, 하한만(출국 ≤ 계류 시작) 보는 이 룰로 대체한다. 상한을 두지
+    //   않는 이유는 야간 출발·다음 날 도착이 정상이고 경유 편은 더 벌어지기 때문.
+    //   저장 거부(validateQuarantineStartNotBeforeDeparture)와 **같은 함수** — 호주와 대칭.
+    id: 'nz.quarantine-start-not-before-departure',
+    country: COUNTRY,
+    category: '검역',
+    title: '출국일은 계류 시작일보다 늦을 수 없음',
+    description:
+      'IHS 1.15(3) — 도착한 동물은 수입 허가에 적힌 계류시설로 바로 옮겨진다. 계류 시작일 = 도착일이고 도착은 출국 이후거나 같은 날이라, 출국일이 계류 시작일보다 뒤면 예약이나 항공 일정 중 하나가 어긋난 것이다.',
+    severity: 'warning',
+    addedAt: '2026-07-30',
+    run: ({ caseRow, destination }) => {
+      const start = readScopedDate(caseRow, destination, 'nz_quarantine_reservation_date')
+      const dep = readDepartureDate(caseRow, destination)
+      if (!start || !dep) return SKIP
+      const msg = validateQuarantineStartNotBeforeDeparture(start, dep)
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['nz_quarantine_reservation_date', 'departure_date'],
+        }
+      }
+      return { ok: true, message: `출국일(${dep}) ≤ 계류 시작일(${start}).` }
     },
   },
   {

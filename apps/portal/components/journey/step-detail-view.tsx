@@ -26,6 +26,8 @@ import {
   validateSgQuarantineReservationDate,
   validateAuQuarantineReservationDate,
   validateSgDepartureVsQuarantineReservation,
+  validateDepartureNotAfterQuarantineStart,
+  validateQuarantineStartNotBeforeDeparture,
   validateParasiteDateForDestination,
   validateSgQuarantineReservationFiled,
   validateSgReservationVsDeparture,
@@ -1449,6 +1451,21 @@ export function StepDetailView({
         )
         if (sgErr) return sgErr
       }
+      // 호주·뉴질랜드 — 출국일이 계류 시작일보다 늦을 수 없다(2026-07-30 사용자 지정).
+      //   예약 카드 쪽 저장 거부와 같은 함수, 문구만 출국일 칸 관점. 상한은 두지 않는다
+      //   (야간 출발·다음 날 도착이 정상이고 경유 편은 더 벌어진다).
+      if (destinationKey === 'australia' || destinationKey === 'new_zealand') {
+        const resKey =
+          destinationKey === 'australia'
+            ? 'au_quarantine_reservation_date'
+            : 'nz_quarantine_reservation_date'
+        const resRaw = (caseRow?.data as Record<string, unknown> | undefined)?.[resKey]
+        const err = validateDepartureNotAfterQuarantineStart(
+          flightForm.departure_date.trim() || flightForm.entry_date.trim(),
+          typeof resRaw === 'string' ? resRaw : '',
+        )
+        if (err) return err
+      }
       // 목적지별 분기·기준일(일본=입국일 / 태국=출발일 / 그 외=입국일→출발일 폴백)은 도메인
       // 단일 출처(validateEntryDateForDestination)에 있다 — lint:behavior 가 같은 함수를
       // 태워 이 층을 스냅샷으로 기록한다.
@@ -1711,6 +1728,12 @@ export function StepDetailView({
       if (err) return err
     }
     if (step.id === 'au-quarantine-reservation') {
+      // 출국일이 계류 시작일보다 늦을 수 없다(2026-07-30 사용자 지정) — 뉴질랜드와 대칭.
+      const depErr = validateQuarantineStartNotBeforeDeparture(
+        importQuarantineDate.trim(),
+        (caseRow?.departure_date ?? '').slice(0, 10),
+      )
+      if (depErr) return depErr
       // 계류 시작일 = 호주 도착일이라 출국일과 같은 180일 제약을 받는다. 도메인 단일 출처
       // (validateAuQuarantineReservationDate) — au.ts 주의 룰과 같은 함수.
       // 채혈 목록은 예정 surface 포함(readTiterAllEntries) — 싱가포르 계류장 예약과 같은 기준.
@@ -1731,6 +1754,12 @@ export function StepDetailView({
     if (step.id === 'nz-quarantine-reservation' && destinationKey === 'new_zealand') {
       const d = (caseRow?.data ?? {}) as Record<string, unknown>
       const hasSecond = typeof d.id_date_2 === 'string' && d.id_date_2.length >= 10
+      // 출국일이 계류 시작일보다 늦을 수 없다(2026-07-30 사용자 지정) — 호주와 대칭.
+      const depErr = validateQuarantineStartNotBeforeDeparture(
+        importQuarantineDate.trim(),
+        (caseRow?.departure_date ?? '').slice(0, 10),
+      )
+      if (depErr) return depErr
       return validateNzQuarantineStartAfterTiter(
         readTiterAllEntries(caseRow?.data)
           .map((e) => e.date)
