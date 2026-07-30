@@ -1663,14 +1663,23 @@ export function StepDetailView({
         if (err) return err
       }
       // 전염병 검사 — 출국일보다 늦은 검사일(논리적 불가능) + 창(호주 45일·뉴질랜드 30일)보다
-      //   이른 검사일(규정상 무효) 둘 다 저장 거부. 주의 룰(au/nz.infectious-disease-test-…)과
-      //   **같은 함수**라 문구·일수가 항상 일치한다. 창은 목적지 키로 고르므로 남아공처럼
-      //   앱 미노출 목적지는 자동 통과(date-rules 의 INFECTIOUS_TEST_DEPARTURE_WINDOWS).
+      //   이른 검사일(규정상 무효) 둘 다 저장 거부. 주의 룰(au/nz/za.infectious-disease-test-…)과
+      //   **같은 함수**라 문구·일수가 항상 일치한다. 창은 목적지 키로 고른다
+      //   (date-rules 의 INFECTIOUS_TEST_DEPARTURE_WINDOWS).
       if (isInfectiousDisease) {
         const dep = (caseRow?.departure_date ?? '').slice(0, 10)
+        // 남아공은 규정 앵커가 **도착일**이라 검역 시작일(= 도착일)을 함께 넘긴다. 값이 있으면
+        //   규정 그대로 30일, 없으면 출국일 기준 29일로 폴백한다(주의 룰과 같은 판정).
+        //   ⚠️ by_dest 필드라 활성 목적지로 평탄화된 caseRow.data 에서 읽어야 한다.
+        const arrival = (() => {
+          const raw = (caseRow?.data as Record<string, unknown> | undefined)?.[
+            'za_quarantine_reservation_date'
+          ]
+          return typeof raw === 'string' ? raw.slice(0, 10) : ''
+        })()
         for (const e of parasite) {
           if (!e.date) continue
-          const err = validateInfectiousDiseaseTestDate(e.date, dep, destinationKey)
+          const err = validateInfectiousDiseaseTestDate(e.date, dep, destinationKey, arrival)
           if (err) return err
         }
         // 뉴질랜드 — 바베시아 채혈은 1차 외부구충 14일 이후(IHS 2.7(1)). 2.2 guidance 가

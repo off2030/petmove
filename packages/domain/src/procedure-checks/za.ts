@@ -244,9 +244,9 @@ export const ZA_CHECKS: ProcedureCheck[] = [
     id: 'za.infectious-disease-within-29days',
     country: COUNTRY,
     category: '검사',
-    title: '전염병 검사는 출국 30일 이내 (강아지)',
+    title: '전염병 검사는 도착 30일 이내 (강아지)',
     description:
-      '5종 검사(Brucella canis · Trypanosoma evansi · Babesia gibsoni · Dirofilaria immitis · Leishmania) 채혈일이 출국 30일 이내(≤29, 29일 전부터 출국일까지)여야 함. ⚠️ 규정 앵커는 **남아공 도착일**이라 창이 30일인데, 앱은 출국일로 판정하므로 29일로 잡아 비행 하루치 여유를 남긴다(다른 목적지의 "N일 이내 = ≤N-1" 컨벤션과도 같은 값이 된다). 저장 거부(validateInfectiousDiseaseTestDate)와 같은 함수 — INFECTIOUS_TEST_DEPARTURE_WINDOWS.south_africa 가 단일 출처.',
+      '5종 검사(Brucella canis · Trypanosoma evansi · Babesia gibsoni · Dirofilaria immitis · Leishmania) 채혈일이 **남아공 도착일** 기준 30일 이내여야 함 — HA2123 5항 "within 30 days from date of sample collection to the **date of import**". 도착일은 **검역 시작일**(za_quarantine_reservation_date, 검역시설 예약 카드)로 안다. 그 값이 없으면 출국일 기준 29일로 폴백한다(비행 하루치 여유 — 도착이 출국 다음 날이어도 30일을 안 넘긴다). 저장 거부(validateInfectiousDiseaseTestDate)와 같은 함수 — INFECTIOUS_TEST_DEPARTURE_WINDOWS.south_africa 가 단일 출처. ⚠️ 룰 id 의 29days 는 폴백 값 잔재다(org_disabled_checks 에 저장되므로 그대로 둔다).',
     severity: 'warning',
     addedAt: '2026-07-01',
     run: ({ caseRow, destination }) => {
@@ -258,15 +258,18 @@ export const ZA_CHECKS: ProcedureCheck[] = [
       const latest = entries[entries.length - 1]
       const days = daysBetween(latest.date, dep)
       if (days === null) return SKIP
-      const blocked = validateInfectiousDiseaseTestDate(latest.date, dep, COUNTRY)
+      // 도착일 = 검역 시작일. 있으면 규정 앵커 그대로 30일, 없으면 출국일 29일 폴백.
+      const arrival = readScopedDate(caseRow, destination, 'za_quarantine_reservation_date')
+      const blocked = validateInfectiousDiseaseTestDate(latest.date, dep, COUNTRY, arrival)
       if (blocked) {
         const paths = [`infectious_disease_records[${latest.originalIndex}].date`]
         if (days >= 0) paths.push('departure_date')
         return { ok: false, message: blocked, offendingPaths: paths }
       }
+      const anchorLabel = arrival ? `검역 시작일(${arrival})` : `출국일(${dep})`
       return {
         ok: true,
-        message: `최근 전염병검사(${latest.date}) → 출국일(${dep}): ${days}일 (≤29일).`,
+        message: `최근 전염병검사(${latest.date}) → ${anchorLabel}: 창 이내.`,
       }
     },
   },

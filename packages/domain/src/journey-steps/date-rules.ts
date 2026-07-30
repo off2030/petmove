@@ -2246,15 +2246,31 @@ export function validateInternalParasiteSpacing(
  */
 export const INFECTIOUS_TEST_DEPARTURE_WINDOWS: Record<
   string,
-  { maxGap: number; windowLabel: string }
+  {
+    /** 출국일 앵커 판정값(폴백). */
+    maxGap: number
+    /** 고객 문구에 쓰는 표기 — 판정값과 다를 수 있다(아래 남아공 참고). */
+    windowLabel: string
+    /**
+     * **도착일 앵커** 판정값 — 규정이 도착일 기준인 목적지만. 호출자가 도착일(남아공 =
+     * 검역 시작일)을 넘겨 주면 이 값으로 판정하고, 없으면 maxGap(출국일 앵커)으로 폴백한다.
+     */
+    arrivalMaxGap?: number
+  }
 > = {
   australia: { maxGap: 45, windowLabel: '출국 45일 이내' },
   new_zealand: { maxGap: 30, windowLabel: '출국 30일 이내' },
-  // ⚠️ 라벨이 판정값(29)과 다르다 — **의도한 것**이다. 규정은 도착일 기준 30일인데 앱은
-  //   출국일로 재므로 29로 하루 좁혀 두되, 보호자에게는 규정 그대로 말한다. 예전엔 문구가
-  //   판정값을 그대로 노출해 카드('도착일 기준 30일')와 경고('출국 29일')가 어긋났다
-  //   (2026-07-30 사용자 지적).
-  south_africa: { maxGap: 29, windowLabel: '남아프리카공화국 도착일 기준 30일 이내' },
+  // 남아공만 규정 앵커가 **도착일**이다 — HA2123 5항 "within 30 days from date of sample
+  //   collection to the **date of import**". 도착일을 알면(검역 시작일 = 도착일) 규정 그대로
+  //   30일로 판정하고, 모르면 출국일 기준 29일로 폴백한다(비행 하루치 여유 — 도착이 출국
+  //   다음 날이어도 30일을 안 넘긴다).
+  //   ⚠️ 라벨이 폴백 판정값(29)과 다른 건 **의도한 것**이다. 어느 경로로 걸리든 보호자에게는
+  //     규정 그대로 말한다(2026-07-30 사용자 지적 — 카드는 30, 경고는 29로 어긋나 있었다).
+  south_africa: {
+    maxGap: 29,
+    arrivalMaxGap: 30,
+    windowLabel: '남아프리카공화국 도착일 기준 30일 이내',
+  },
 }
 
 /**
@@ -2275,6 +2291,12 @@ export function validateInfectiousDiseaseTestDate(
   testDate: string,
   departureDate: string,
   destinationKey?: string | null,
+  /**
+   * (선택) **도착일** — 남아공은 검역 시작일(za_quarantine_reservation_date)이 곧 도착일이다.
+   * 넘어오고 그 목적지에 arrivalMaxGap 이 선언돼 있으면 **규정 앵커 그대로** 판정한다.
+   * 안 넘어오면 출국일 앵커(maxGap)로 폴백 — 판정이 하루 엄격해질 뿐 규정을 넘기지 않는다.
+   */
+  arrivalDate?: string | null,
 ): string | null {
   if (!testDate || !departureDate) return null
   const t = testDate.slice(0, 10)
@@ -2291,10 +2313,15 @@ export function validateInfectiousDiseaseTestDate(
     : undefined
   const w = windowKey ? INFECTIOUS_TEST_DEPARTURE_WINDOWS[windowKey] : undefined
   if (!w) return null
-  const gap = daysBetween(t, d)
-  if (gap !== null && gap > w.maxGap) {
-    // 문구는 **windowLabel** 로 — 판정값(maxGap)을 그대로 쓰면 규정과 다른 숫자가 나가는
-    //   목적지가 있다(남아공: 판정 29 / 규정 도착일 기준 30).
+  // 도착일을 알면 **규정 앵커 그대로**(남아공 검역 시작일). 모르면 출국일 앵커로 폴백.
+  const a = (arrivalDate ?? '').slice(0, 10)
+  const useArrival = w.arrivalMaxGap !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(a)
+  const anchor = useArrival ? a : d
+  const limit = useArrival ? (w.arrivalMaxGap as number) : w.maxGap
+  const gap = daysBetween(t, anchor)
+  if (gap !== null && gap > limit) {
+    // 문구는 **windowLabel** 로 — 판정값을 그대로 쓰면 규정과 다른 숫자가 나가는 목적지가
+    //   있다(남아공 폴백: 판정 29 / 규정 도착일 기준 30). 두 경로가 같은 문구를 쓴다.
     return `전염병 검사는 ${w.windowLabel}에 받아야 해요. 다시 검사받아야 할 수 있어요.`
   }
   return null
