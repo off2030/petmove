@@ -1995,7 +1995,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   출국 5일 이내라 같은 방문에서 끝나지만 약이 달라 별도 카드로 둔다.
       'lungworm-treatment': {
         description:
-          '폐충(Angiostrongylus vasorum) 치료를 하세요.\n\n출국 5일 이내에 투약해요.\n내부 기생충 2차 치료와 같은 날 해도 돼요.\n구충약이 폐충까지 없애지 못하는 경우가 많아 따로 확인이 필요해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
+          '폐충(Angiostrongylus vasorum) 치료를 하세요.\n\n출국 5일 이내에 투약해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
         links: [
           {
             url: 'https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA',
