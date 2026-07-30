@@ -901,14 +901,14 @@ export const PARASITE_DEPARTURE_WINDOWS: Record<
   //     14일 전**이라 출국일 앵커가 아니고, 1차는 30일보다 훨씬 이를 수 있다(채혈이 출국 30일
   //     전이면 1차는 최소 44일 전). 창으로 막으면 규정대로 준비한 케이스를 거부한다.
   new_zealand: { maxGap: 30, windowLabel: '출국 30일 이내', kinds: ['internal'] },
-  // 남아공 — **외부(진드기·흡혈곤충)만**. 규정 앵커가 도착일이라 출국일 기준으로는 29일
-  //   (전염병 검사 창과 같은 이유 — INFECTIOUS_TEST_DEPARTURE_WINDOWS 주석 참고).
+  // 남아공 — **외부(진드기·흡혈곤충)만**. HA2123 6.2 "within 30 days before **departure**" —
+  //   앵커가 출국일이라 그대로 30(2026-07-30 원문 확인. 구 29 는 도착일 앵커로 오해한 값).
   //   ⛔ 심장사상충(internal 로 dispatch 된다)은 넣지 않는다 — 남아공 요건은 "음성 채혈일부터
   //     출국일까지 끊기지 않게"라 **상한이 없다**. 창으로 막으면 지속형 주사(ProHeart SR12)나
   //     한 달 전 투약 같은 정상 일정을 거부한다. 시작 시점은 주의 룰
   //     (za.heartworm-not-before-infectious-test)이 판정한다.
   //   ⛔ 내부구충은 남아공 요건 자체가 없다(카드도 없다).
-  south_africa: { maxGap: 29, windowLabel: '출국 30일 이내', kinds: ['external'] },
+  south_africa: { maxGap: 30, windowLabel: '출국 30일 이내', kinds: ['external'] },
 }
 
 function validateParasiteWithinDays(
@@ -2210,10 +2210,11 @@ export function validateInternalParasiteSpacing(
 /**
  * 전염병 검사 채혈 창 — 출국일 앵커. 목적지별 일수 단일 출처.
  *
- * 남아공(29일)은 규정 앵커가 **도착일**이라 창이 30일인데, 앱은 출국일로 판정하므로 29로
- *   잡아 비행 하루치 여유를 남긴다(호주·뉴질랜드는 규정 자체가 출국일 기준이라 그대로).
- *   2026-07-30 강아지 여정을 앱에 올리며 추가 — 그 전엔 펫무브워크 전용이라 여기 없었고,
- *   za.infectious-disease-within-29days 가 자체 문구로만 담당했다.
+ * 남아공(29일)은 규정 앵커가 **도착일**이다 — HA2123 증명서 5항 "tested, with negative results,
+ *   **within 30 days from date of sample collection to the date of import**"(2026-07-30 원문 확인).
+ *   앱은 출국일로 판정하므로 29로 잡아 비행 하루치 여유를 남긴다(호주·뉴질랜드는 규정 자체가
+ *   출국일 기준이라 그대로). ⚠️ 같은 남아공이라도 **외부구충은 앵커가 출국일**이라 30이다
+ *   (6.2 "within 30 days before departure") — 두 창을 같은 값으로 맞추지 말 것.
  */
 export const INFECTIOUS_TEST_DEPARTURE_WINDOWS: Record<string, number> = {
   australia: 45,

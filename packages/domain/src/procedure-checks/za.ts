@@ -21,11 +21,7 @@ import {
   validateInfectiousDiseaseTestDate,
   violatesRabiesEntryWait,
 } from '../journey-steps/date-rules'
-import {
-  msgMicrochipBeforeRabies,
-  msgRabiesExpiredBefore,
-  msgRabiesPrimeMinAge,
-} from './messages'
+import { msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
 
 /**
  * 남아프리카공화국 (DALRRD — Department of Agriculture, Land Reform & Rural Development)
@@ -80,33 +76,11 @@ function readScopedDate(
 
 export const ZA_CHECKS: ProcedureCheck[] = [
   // ── 마이크로칩 ──
-  {
-    id: 'za.microchip-before-rabies',
-    country: COUNTRY,
-    category: '마이크로칩',
-    title: '마이크로칩은 광견병 접종 이전 시술',
-    description:
-      '마이크로칩(ISO 11784/11785)이 1차 광견병 접종일과 같거나 이전이어야 함. 남아공은 건강증명서·접종증명서·검사결과지·수입허가서가 모두 같은 마이크로칩 번호로 연결돼야 하므로 칩이 먼저 있어야 한다.',
-    severity: 'warning',
-    addedAt: '2026-07-30',
-    run: ({ caseRow }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const microchip =
-        typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
-      const rabies = readRabiesEntries(caseRow)
-      if (!microchip || rabies.length === 0) return SKIP
-
-      const first = rabies[0]
-      if (microchip <= first.date) {
-        return { ok: true, message: `마이크로칩(${microchip}) ≤ 1차 접종(${first.date}).` }
-      }
-      return {
-        ok: false,
-        message: msgMicrochipBeforeRabies(),
-        offendingPaths: ['microchip_implant_date'],
-      }
-    },
-  },
+  // ⛔ 'za.microchip-before-rabies'(칩이 1차 접종보다 앞) 룰을 다시 만들지 말 것 —
+  //   2026-07-30 원문 대조로 삭제했다. HA2123 증명서 A.1 은 칩 번호·위치 표와
+  //   "Microchip must be able to be read by ISO 11784 or ISO 11785 scanners" 한 줄이 전부이고,
+  //   접종·채혈과의 **순서 조항이 없다**. 칩을 먼저 넣는 건 실무 권고(리포 초안 "가장 안전")일
+  //   뿐인데 요건으로 올려 놨던 것이다. EU(Reg 576/2013)·일본과 달리 남아공엔 근거가 없다.
 
   // ── 광견병 ──
   {
@@ -115,7 +89,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 생후 3개월령(캘린더) 이상',
     description:
-      '광견병 1차 접종은 생년월일 기준 캘린더 3개월(`addMonths(birth, 3)`) 이후. 공개 건강증명서의 예외 조항이 "생후 3개월 미만 + 모견 접종"을 다루는 것이 이 하한의 근거다. 91일 근사 대신 정확한 월 계산 — 일수로 환산하면 생월에 따라 89~92일로 흔들려 규정을 지킨 케이스를 막는다(괌·베트남과 같은 처리).',
+      '광견병 1차 접종은 생년월일 기준 캘린더 3개월(`addMonths(birth, 3)`) 이후. ✅ 1차 출처 확인(2026-07-30) — HA2123 증명서 4항이 "for animals **over 3 months**"와 "for animals **under 3 months**"(모견 접종란)로 갈리고, 각주 1) d)가 "Animals under 3 months of age **may not be vaccinated**"라고 못박는다. 달력 개월이므로 91일 근사 대신 정확한 월 계산 — 일수로 환산하면 생월에 따라 89~92일로 흔들려 규정을 지킨 케이스를 막는다(괌·베트남과 같은 처리). ⚠️ 각주 1) d) 의 모견 예외(3개월 미만 개체는 모견이 출산 30일~12개월 전에 접종했으면 유효한 접종으로 간주, 남아공 도착 후 3개월령에 접종)는 **판정하지 않는다** — 앱이 모견 접종 기록을 저장하지 않는다.',
     severity: 'warning',
     addedAt: '2026-07-30',
     run: ({ caseRow }) => {
@@ -155,7 +129,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      '최근 광견병 접종일로부터 출국일까지 최소 30일 경과 필요(유효 부스터는 면제 — "추가접종이 기존 접종 만료 전에 이루어졌다면 30일 대기 면제"). 저장 거부(validateRabiesEntryWait ← 프로파일 rabies.entryWaitDaysAfterVaccine: 30)와 **같은 판정 함수**(violatesRabiesEntryWait)를 쓴다. 규정 앵커는 **도착일**이지만 앱은 출국일로 본다 — 도착이 출국보다 늦거나 같아 판정이 더 엄격한 쪽이다.',
+      '최근 광견병 접종일로부터 출국일까지 최소 30일 경과 필요. HA2123 각주 1) b) "In the case of the primary Rabies vaccination, the animal must have been vaccinated at least 30 days, but not longer than 12 months **prior to export**" — 앵커가 **출국(export)**이라 앱 판정과 규정이 정확히 같다(2026-07-30 원문 확인. 구 주석의 "규정 앵커는 도착일"은 오독이었다). 유효 부스터는 면제 — 각주 1) c) "The 30 days waiting period ... does not apply to the booster vaccination if it was applied before the previous Rabies vaccination expired". 저장 거부(validateRabiesEntryWait ← 프로파일 rabies.entryWaitDaysAfterVaccine: 30)와 **같은 판정 함수**(violatesRabiesEntryWait)를 쓴다.',
     severity: 'warning',
     addedAt: '2026-07-01',
     run: ({ caseRow, destination }) => {
@@ -338,7 +312,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '진드기·흡혈곤충 처치는 출국 30일 이내 (강아지)',
     description:
-      '살진드기제(acaricide)와 흡혈곤충 기피제(insect repellent) 처치는 출국 30일 이내(≤29)여야 함 — 바베시아·리슈만편모충 매개체 차단이 목적이라 검사 창과 같은 구간이다. 저장 거부(validateParasiteDateForDestination — PARASITE_DEPARTURE_WINDOWS.south_africa, kinds: [external])와 짝. ⚠️ 2026-03판 건강증명서에서 처치 항목 구성이 바뀌었다는 정보가 있다 — 발급받은 증명서가 최종 기준이라 카드 문구가 그 사실을 밝힌다.',
+      '✅ 1차 출처 확인(2026-07-30) — HA2123 증명서 6.2 "Leishmania and Babesia gibsoni: the animals must be treated with an effective **acaricide** and with **insect repellent** registered in the exporting country, **within 30 days before departure**." 앵커가 출국일이고 창이 30일이라 gap ≤ 30 으로 판정한다(구 29 는 도착일 앵커로 오해해 하루 좁혀 둔 값이었다 — 2026-07-30 정정). 저장 거부(validateParasiteDateForDestination — PARASITE_DEPARTURE_WINDOWS.south_africa, kinds: [external])와 짝. ⚠️ 리포 초안이 "2026-03판에서 처치 항목 구성이 바뀌었다"고 유보했지만, 확인된 최신 서식(2024-11-14 개정)에는 이 조항이 그대로 있다. 발급받은 증명서가 최종 기준이라는 안내는 카드 문구에 남긴다.',
     severity: 'warning',
     addedAt: '2026-07-30',
     run: ({ caseRow, destination }) => {
@@ -357,7 +331,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
-      if (days > 29) {
+      if (days > 30) {
         return {
           ok: false,
           message: '진드기·흡혈곤충 처치는 출국 30일 이내에 해야 해요. 다시 처치해야 할 수 있어요.',
@@ -369,7 +343,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: true,
-        message: `마지막 처치(${latest.date}) → 출국일(${dep}): ${days}일 (≤29일).`,
+        message: `마지막 처치(${latest.date}) → 출국일(${dep}): ${days}일 (≤30일).`,
       }
     },
   },
