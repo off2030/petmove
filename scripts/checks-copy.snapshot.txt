@@ -265,11 +265,10 @@
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [za.rabies-only-1year-vaccine]
   남아프리카공화국은 유효기간 1년인 광견병 백신만 인정해요. 2년·3년 백신은 인정되지 않아요.
-[za.heartworm-not-before-infectious-test]
-  심장사상충 예방 기록이 검사 채혈일보다 빨라요. 채혈일부터 출국일까지 끊기지 않게 투약한 기록이 필요해요.
+[za.heartworm-same-day-as-infectious-test]
+  심장사상충 예방은 검사 채혈일과 같은 날 시작해야 해요. 채혈일에 투약한 기록이 없어요.
 [za.external-parasite-within-30days]
   처치일이 출국일보다 늦어요. 날짜를 확인하세요.
-  진드기·흡혈곤충 처치는 출국 30일 이내에 해야 해요. 다시 처치해야 할 수 있어요.
 [za.aia-permit-before-import-permit]
   AIA 수입 허가를 먼저 받아야 해요. AIA 허가서를 첨부해서 수의검역 수입 허가를 신청해요.
 [za.import-quarantine-date-valid]

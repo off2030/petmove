@@ -276,14 +276,17 @@ export const ZA_CHECKS: ProcedureCheck[] = [
 
   // ── 심장사상충 예방 — 강아지 전용 ──
   {
-    id: 'za.heartworm-not-before-infectious-test',
+    // ⚠️ 구 id 는 za.heartworm-not-before-infectious-test 였다(2026-07-30~31, 하루만 존재).
+    //   '채혈일 이후'에서 '채혈일 당일'로 요건이 바뀌어 id 도 갈았다. 조직이 끈 기록이 있으면
+    //   되살아나지만, 하루짜리라 실사용 조직이 없다.
+    id: 'za.heartworm-same-day-as-infectious-test',
     country: COUNTRY,
     category: '구충',
-    title: '심장사상충 예방은 음성 검사 채혈 이후 (강아지)',
+    title: '심장사상충 예방은 검사 채혈일과 같은 날 (강아지)',
     description:
-      '건강증명서는 Dirofilaria immitis **음성 검체를 채취한 날부터 출국일까지** 예방을 유지하도록 요구한다. 예방 기록이 그 채혈일보다 앞서면 증명서가 요구하는 구간을 덮지 못한다. ⚠️ 상한(출국 N일 이내)은 두지 않는다 — 남아공은 "출국일까지 끊기지 않게"만 요구하고 마지막 투약 시점을 규정하지 않는다(뉴질랜드 5일 창을 가져오지 말 것). 채혈일은 5종 검사 카드(infectious_disease_records)에서 읽는다 — 심장사상충 검사가 그 5종에 들어 있기 때문.',
+      '건강증명서 6.1 은 Dirofilaria immitis **음성 검체를 채취한 날부터 출국일까지** 예방을 유지하도록 요구한다("from the date of negative testing until export at the required intervals"). 그래서 **채혈일 당일에 첫 투약**이 있어야 요구 구간이 처음부터 덮인다 — 하루라도 늦으면 시작점에 구멍이 생긴다(2026-07-31 사용자 확정). 채혈일은 5종 검사 카드(infectious_disease_records)에서 읽는다 — 심장사상충 검사가 그 5종에 들어 있기 때문. ⚠️ **채혈일에 투약이 하나라도 있으면 통과**다(가장 이른 투약을 보지 않는다) — 평소 하던 월 1회 예방 기록이 앞에 있어도 그건 사실이라 경고 대상이 아니고, 채혈일 이후의 월 투약도 정상이다. ⚠️ 상한(출국 N일 이내)은 두지 않는다 — 남아공은 "출국일까지 끊기지 않게"만 요구하고 마지막 투약 시점을 규정하지 않는다(뉴질랜드 5일 창을 가져오지 말 것). 첫 투약이 출국 30일 이내인지는 채혈일이 그 창 안이므로(za.infectious-disease-within-29days) 자동으로 따라온다.',
     severity: 'warning',
-    addedAt: '2026-07-30',
+    addedAt: '2026-07-31',
     run: ({ caseRow }) => {
       if (species(caseRow) !== 'dog') return SKIP
       const heartworm = readHeartwormEntries(caseRow)
@@ -292,19 +295,25 @@ export const ZA_CHECKS: ProcedureCheck[] = [
 
       // 채혈 기준일 = 가장 최근 5종 검사(증명서에 적히는 그 검사).
       const sample = infectious[infectious.length - 1]
-      const earliest = heartworm.reduce((a, b) => (a.date <= b.date ? a : b))
-      if (earliest.date < sample.date) {
-        return {
-          ok: false,
-          message:
-            '심장사상충 예방 기록이 검사 채혈일보다 빨라요. 채혈일부터 출국일까지 끊기지 않게 투약한 기록이 필요해요.',
-          offendingPaths: [
-            `heartworm_dates[${earliest.originalIndex}].date`,
-            `infectious_disease_records[${sample.originalIndex}].date`,
-          ],
-        }
+      if (heartworm.some((h) => h.date === sample.date)) {
+        return { ok: true, message: `심장사상충 예방에 채혈일(${sample.date}) 당일 투약 있음.` }
       }
-      return { ok: true, message: `심장사상충 예방(${earliest.date}) ≥ 채혈일(${sample.date}).` }
+      // 없으면 — 어느 칸을 고쳐야 하는지 보이도록 채혈일에 가장 가까운 투약을 짚는다.
+      const nearest = heartworm.reduce((a, b) =>
+        Math.abs(Date.parse(a.date) - Date.parse(sample.date)) <=
+        Math.abs(Date.parse(b.date) - Date.parse(sample.date))
+          ? a
+          : b,
+      )
+      return {
+        ok: false,
+        message:
+          '심장사상충 예방은 검사 채혈일과 같은 날 시작해야 해요. 채혈일에 투약한 기록이 없어요.',
+        offendingPaths: [
+          `heartworm_dates[${nearest.originalIndex}].date`,
+          `infectious_disease_records[${sample.originalIndex}].date`,
+        ],
+      }
     },
   },
 
@@ -313,7 +322,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
     id: 'za.external-parasite-within-30days',
     country: COUNTRY,
     category: '구충',
-    title: '진드기·흡혈곤충 처치는 출국 30일 이내 (강아지)',
+    title: '외부 기생충 치료는 출국 30일 이내 (강아지)',
     description:
       '✅ 1차 출처 확인(2026-07-30) — HA2123 증명서 6.2 "Leishmania and Babesia gibsoni: the animals must be treated with an effective **acaricide** and with **insect repellent** registered in the exporting country, **within 30 days before departure**." 앵커가 출국일이고 창이 30일이라 gap ≤ 30 으로 판정한다(구 29 는 도착일 앵커로 오해해 하루 좁혀 둔 값이었다 — 2026-07-30 정정). 저장 거부(validateParasiteDateForDestination — PARASITE_DEPARTURE_WINDOWS.south_africa, kinds: [external])와 짝. ⚠️ 리포 초안이 "2026-03판에서 처치 항목 구성이 바뀌었다"고 유보했지만, 확인된 최신 서식(2024-11-14 개정)에는 이 조항이 그대로 있다. 발급받은 증명서가 최종 기준이라는 안내는 카드 문구에 남긴다.',
     severity: 'warning',
@@ -337,7 +346,9 @@ export const ZA_CHECKS: ProcedureCheck[] = [
       if (days > 30) {
         return {
           ok: false,
-          message: '진드기·흡혈곤충 처치는 출국 30일 이내에 해야 해요. 다시 처치해야 할 수 있어요.',
+          // 문구는 **저장 거부(validateParasiteDateForDestination)와 같은 말**로 — 카드 제목이
+          //   '외부 기생충 치료'로 바뀐 뒤(2026-07-31) 주의만 옛 이름을 쓰고 있었다.
+          message: '외부 기생충 치료는 출국 30일 이내에 해야 해요. 다시 처치해야 할 수 있어요.',
           offendingPaths: [
             `external_parasite_dates[${latest.originalIndex}].date`,
             'departure_date',

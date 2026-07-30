@@ -423,14 +423,18 @@ export function StepDetailView({
   const isHeartworm = step.id === 'heartworm-test'
   // 폐충 — 심장사상충과 같은 모델. 뉴질랜드 2.4(신 IHS 2026 신설), 2026-07-29 카드 분리.
   const isLungworm = step.id === 'lungworm-treatment'
-  // 뉴질랜드 심장사상충 카드는 **예방 투약 전용**이다(검사는 전염병 검사 카드로 옮겼다,
-  //   2026-07-30). 입력 라벨도 '검사일'이 아니라 '투약일'이어야 한다.
+  // 심장사상충 카드가 **예방 투약 전용**인 목적지 — 입력 라벨이 '검사일'이 아니라 '투약일'.
+  //   · 뉴질랜드: 검사를 전염병 검사 카드로 옮겼다(2026-07-30)
+  //   · 남아공: 심장사상충 검사가 5종 전염병 검사에 들어 있어 이 카드는 투약만 담당(2026-07-31)
   //   ⚠️ 괌은 검사·예방을 한 카드에서 함께 하므로 종전 '검사' 라벨을 유지한다.
+  //   ⚠️ reminders.ts 의 HEARTWORM_PREVENTION_ONLY 와 **같은 명단**이다 — 한쪽만 고치면
+  //     카드는 '투약일'인데 알림은 '검사'라고 부르게 된다. 새 목적지는 양쪽에 넣을 것.
   // 전염병 검사 — 구충과 **같은 입력 모델**(date_array, 유효기간 없음)이라 같은 기계를
   //   필드키만 바꿔 재사용한다. 다만 **검사**라서 약품 4필드(세부 정보)는 띄우지 않는다.
   //   CIV 와 같은 이유로 붙인다(2026-07-27) — 그전엔 읽기 전용이라 호주 45일 룰이 죽어 있었다.
   const isInfectiousDisease = step.id === 'infectious-disease-test'
-  const isNzHeartwormTreatment = isHeartworm && destinationKey === 'new_zealand'
+  const isHeartwormPreventionOnly =
+    isHeartworm && (destinationKey === 'new_zealand' || destinationKey === 'south_africa')
   const isParasite =
     isExternalParasite ||
     isInternalParasite ||
@@ -1576,7 +1580,7 @@ export function StepDetailView({
       // ⛔ 뉴질랜드 심장사상충은 여기서 뺀다 — 카드가 **예방 전용**이 된 뒤 창이 5일이라
       //   (2.11(2)(a)) 내부구충용 30일 창에 걸리면 안 맞는 문구('심장사상충 검사는 출국 30일
       //   이내')가 나간다. 바로 아래 5일 차단이 대신 본다.
-      if ((isExternalParasite || isInternalParasite || isHeartworm) && !isNzHeartwormTreatment) {
+      if ((isExternalParasite || isInternalParasite || isHeartworm) && !isHeartwormPreventionOnly) {
         const dep = (caseRow?.departure_date ?? '').slice(0, 10)
         const kind = isExternalParasite ? 'external' : 'internal'
         for (const e of parasite) {
@@ -1593,7 +1597,7 @@ export function StepDetailView({
       // 뉴질랜드 폐충(2.4)·심장사상충 예방(2.11(2)(a)) — 둘 다 출국 5일 이내.
       //   주의만 있고 차단이 없어 창 밖 날짜가 그대로 저장되던 자리(2026-07-30 사용자 지정).
       //   주의 룰(nz.lungworm-within-5days·nz.heartworm-treatment-within-5days)과 **같은 함수**.
-      if ((isLungworm || isNzHeartwormTreatment) && destinationKey === 'new_zealand') {
+      if ((isLungworm || isHeartwormPreventionOnly) && destinationKey === 'new_zealand') {
         const dep = (caseRow?.departure_date ?? '').slice(0, 10)
         const label = isLungworm ? '폐충 치료' : '심장사상충 예방'
         for (const e of parasite) {
@@ -3330,7 +3334,7 @@ export function StepDetailView({
                   : isEchinococcus
                     ? '촌충 치료'
                     : isHeartworm
-                      ? isNzHeartwormTreatment
+                      ? isHeartwormPreventionOnly
                         ? '심장사상충 예방'
                         : '심장사상충 검사'
                       : isLungworm
@@ -3342,7 +3346,7 @@ export function StepDetailView({
               dateLabel={
                 isExternalParasite
                   ? '처치일'
-                  : isNzHeartwormTreatment
+                  : isHeartwormPreventionOnly
                     ? '투약일'
                     : isHeartworm || isInfectiousDisease
                       ? '검사일'
@@ -3371,7 +3375,7 @@ export function StepDetailView({
               addLabel={
                 isExternalParasite
                   ? '+ 처치 기록 추가'
-                  : isNzHeartwormTreatment
+                  : isHeartwormPreventionOnly
                     ? '+ 투약 기록 추가'
                     : isHeartworm || isInfectiousDisease
                       ? '+ 검사 기록 추가'

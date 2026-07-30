@@ -53,19 +53,25 @@ const APP_TITLE = '펫무브'
 // ── A. 예약 리마인더 필드 ────────────────────────────────────────────────
 
 /**
- * 심장사상충 라벨 — **뉴질랜드만 '예방'**(2026-07-30 사용자 지정).
+ * 심장사상충 라벨 — **뉴질랜드·남아공은 '예방'**(2026-07-30/31 사용자 지정).
  *
- * 뉴질랜드 카드는 예방 전용이다(IHS 2.11(2) — 검사는 시기가 같아 전염병 검사 카드로 옮겼다).
- * 알림만 '검사'라고 부르면 카드와 어긋난다. 괌은 검사·예방을 한 카드에서 함께 하므로 종전
- * '검사'를 유지한다 — heartworm_dates 는 **동물 단위 전역 필드**라 두 목적지가 한 케이스에
- * 있으면 기록 하나가 양쪽에 쓰인다. 그땐 넓은 쪽('검사')을 쓴다.
+ * 두 나라 카드는 예방 전용이다 — 뉴질랜드는 IHS 2.11(2)(검사는 시기가 같아 전염병 검사
+ * 카드로 옮겼다), 남아공은 HA2123 6.1(심장사상충 검사가 5종 전염병 검사에 들어 있어
+ * 이 카드는 투약만 담당한다). 알림만 '검사'라고 부르면 카드와 어긋난다.
+ *
+ * 괌은 검사·예방을 한 카드에서 함께 하므로 종전 '검사'를 유지한다 — heartworm_dates 는
+ * **동물 단위 전역 필드**라 두 목적지가 한 케이스에 있으면 기록 하나가 양쪽에 쓰인다.
+ * 그땐 넓은 쪽('검사')을 쓴다.
  */
+const HEARTWORM_PREVENTION_ONLY = new Set(['new_zealand', 'south_africa'])
 function heartwormLabel(caseRow: CaseRow): string {
   const withHeartworm = new Set(destinationsWithVaccine('heartworm'))
   const keys = destinationTokens(caseRow)
     .map((t) => findDestinationKey(t))
     .filter((k): k is string => !!k && withHeartworm.has(k))
-  if (keys.length === 0 || keys.some((k) => k !== 'new_zealand')) return '심장사상충 검사'
+  if (keys.length === 0 || keys.some((k) => !HEARTWORM_PREVENTION_ONLY.has(k))) {
+    return '심장사상충 검사'
+  }
   return '심장사상충 예방'
 }
 

@@ -1025,17 +1025,9 @@ export function TimelineCalm({
   const heroPhotoCandidates = activeHeroPhotoState.candidates
   const heroPhotoIndex = activeHeroPhotoState.index
   const heroPhoto = heroPhotoCandidates[heroPhotoIndex] ?? null
-  // 사진 후보 여러 장을 고르는 동안의 임시 비교용 — 탭하면 바로 다음 후보로 넘긴다.
-  // (앱은 keep-alive 라 자동 회전은 새로고침 때만 도는데, 비교엔 즉시 전환이 필요.)
-  // 사진 후보 검수 중엔 true, 스토어 스크린샷 등 정적 캡처 작업 땐 false.
-  const HERO_TAP_SWITCHER = true
-  const cycleHeroPhoto = () =>
-    setHeroPhotoState((state) => {
-      const current = state.destination === trip.toCity ? state : buildHeroPhotoState(trip.toCity)
-      const length = current.candidates.length
-      if (length <= 1) return current.index === 0 ? current : { ...current, index: 0 }
-      return { ...current, index: (current.index + 1) % length }
-    })
+  // ⛔ 히어로 탭 스위처(HERO_TAP_SWITCHER + cycleHeroPhoto + 점 인디케이터)는 2026-07-31
+  //   사용자 지시로 제거했다 — 사진 후보를 고르는 동안의 임시 검수 장치였다. 다시 만들지 말 것.
+  //   (사진 후보가 여러 장이면 새로고침 때 자동 회전하는 건 그대로 — buildHeroPhotoState.)
 
   // 다목적지 전환 — 헤더의 라우트(한국 ⇄ 일본) 버튼을 없애고 히어로의 목적지 칩이 담당.
   // 목적지 2개 이상이면 칩에 꺾쇠가 붙고, 탭하면 바텀시트로 활성 목적지를 바꾼다.
@@ -1424,50 +1416,11 @@ export function TimelineCalm({
                   sizes="(min-width: 672px) 672px, 100vw"
                   placeholder={HERO_BLUR_PLACEHOLDERS[heroPhoto] ? 'blur' : 'empty'}
                   blurDataURL={HERO_BLUR_PLACEHOLDERS[heroPhoto]}
-                  onClick={
-                    HERO_TAP_SWITCHER && heroPhotoCandidates.length > 1
-                      ? cycleHeroPhoto
-                      : undefined
-                  }
                   style={{
                     objectFit: 'cover',
                     objectPosition: HERO_PHOTO_POSITION[heroPhoto] ?? 'center',
-                    cursor:
-                      HERO_TAP_SWITCHER && heroPhotoCandidates.length > 1
-                        ? 'pointer'
-                        : undefined,
                   }}
                 />
-                {/* 사진 후보 여러 장 고르는 동안의 임시 리뷰용 — 탭하면 다음 후보로,
-                    점으로 현재 위치 표시. 하나로 확정되면 후보를 1장으로 줄이고 함께 제거. */}
-                {HERO_TAP_SWITCHER && heroPhotoCandidates.length > 1 && (
-                  <div
-                    aria-hidden
-                    style={{
-                      position: 'absolute',
-                      top: 14,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      display: 'flex',
-                      gap: 4,
-                      padding: '4px 8px',
-                      borderRadius: 999,
-                      background: 'rgba(0,0,0,.28)',
-                    }}
-                  >
-                    {heroPhotoCandidates.map((_, i) => (
-                      <span
-                        key={i}
-                        style={{
-                          width: 5,
-                          height: 5,
-                          borderRadius: '50%',
-                          background: i === heroPhotoIndex ? '#FFFFFF' : 'rgba(255,255,255,.4)',
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
                 {/* 하단 한정 그라데이션 스크림 — '원본 밝기 유지' 원칙의 부분 양보(하단 76px).
                     흰 오버레이(D-day·진행 바)가 사진 밝기와 무관하게 항상 성립하게 한다.
                     빈 칸 색 단방향 실험(흰38%↔검22%)이 사진에 따라 서로 반대로 무너져 채택. */}

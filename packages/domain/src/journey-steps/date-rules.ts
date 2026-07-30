@@ -906,7 +906,7 @@ export const PARASITE_DEPARTURE_WINDOWS: Record<
   //   ⛔ 심장사상충(internal 로 dispatch 된다)은 넣지 않는다 — 남아공 요건은 "음성 채혈일부터
   //     출국일까지 끊기지 않게"라 **상한이 없다**. 창으로 막으면 지속형 주사(ProHeart SR12)나
   //     한 달 전 투약 같은 정상 일정을 거부한다. 시작 시점은 주의 룰
-  //     (za.heartworm-not-before-infectious-test)이 판정한다.
+  //     (za.heartworm-same-day-as-infectious-test)이 판정한다.
   //   ⛔ 내부구충은 남아공 요건 자체가 없다(카드도 없다).
   south_africa: { maxGap: 30, windowLabel: '출국 30일 이내', kinds: ['external'] },
 }
