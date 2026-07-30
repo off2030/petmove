@@ -6,6 +6,7 @@ import {
   deriveAdvanceNotificationStatus,
   deriveImportPermitStatus,
   deriveJpExportQuarantineStatus,
+  destinationsWithVaccine,
   findDestinationKey,
   flattenCaseForDestination,
   rabiesBoosterChainEnd,
@@ -51,8 +52,32 @@ const APP_TITLE = '펫무브'
 
 // ── A. 예약 리마인더 필드 ────────────────────────────────────────────────
 
-/** GLOBAL(목적지 무관) date_array 필드 → 항목 라벨. 실제+예정 키를 함께 본다. */
-const GLOBAL_ARRAY_FIELDS: Array<{ keys: string[]; label: string }> = [
+/**
+ * 심장사상충 라벨 — **뉴질랜드만 '예방'**(2026-07-30 사용자 지정).
+ *
+ * 뉴질랜드 카드는 예방 전용이다(IHS 2.11(2) — 검사는 시기가 같아 전염병 검사 카드로 옮겼다).
+ * 알림만 '검사'라고 부르면 카드와 어긋난다. 괌은 검사·예방을 한 카드에서 함께 하므로 종전
+ * '검사'를 유지한다 — heartworm_dates 는 **동물 단위 전역 필드**라 두 목적지가 한 케이스에
+ * 있으면 기록 하나가 양쪽에 쓰인다. 그땐 넓은 쪽('검사')을 쓴다.
+ */
+function heartwormLabel(caseRow: CaseRow): string {
+  const withHeartworm = new Set(destinationsWithVaccine('heartworm'))
+  const keys = destinationTokens(caseRow)
+    .map((t) => findDestinationKey(t))
+    .filter((k): k is string => !!k && withHeartworm.has(k))
+  if (keys.length === 0 || keys.some((k) => k !== 'new_zealand')) return '심장사상충 검사'
+  return '심장사상충 예방'
+}
+
+/**
+ * GLOBAL(목적지 무관) date_array 필드 → 항목 라벨. 실제+예정 키를 함께 본다.
+ * `labelForCase` 가 있으면 케이스별로 라벨을 갈아끼운다(목적지마다 부르는 이름이 다른 항목).
+ */
+const GLOBAL_ARRAY_FIELDS: Array<{
+  keys: string[]
+  label: string
+  labelForCase?: (caseRow: CaseRow) => string
+}> = [
   { keys: ['rabies_dates', 'rabies_dates_scheduled'], label: '광견병 접종' },
   { keys: ['general_vaccine_dates', 'general_vaccine_dates_scheduled'], label: '종합백신 접종' },
   // 켄넬코프 — 2026-07-27 카드 분리 때 만료 알림(collectValidityReminders)에는 넣었는데 여기만
@@ -68,7 +93,7 @@ const GLOBAL_ARRAY_FIELDS: Array<{ keys: string[]; label: string }> = [
   { keys: ['lungworm_dates'], label: '폐충 치료' },
   // 심장사상충 — 2026-07-27 카드 분리 때 여기 등록을 빠뜨려 예정일 알림이 없었다(2026-07-29
   //   폐충 작업 중 발견). 켄넬코프와 같은 누락이다.
-  { keys: ['heartworm_dates'], label: '심장사상충 검사' },
+  { keys: ['heartworm_dates'], label: '심장사상충 검사', labelForCase: heartwormLabel },
 ]
 
 /** GLOBAL 단일 date 필드 → 항목 라벨. */
@@ -249,12 +274,13 @@ function collectEventsForCase(caseRow: CaseRow, today: string): RawEvent[] {
   }
 
   for (const field of GLOBAL_ARRAY_FIELDS) {
+    const label = field.labelForCase?.(caseRow) ?? field.label
     for (const key of field.keys) {
       const arr = data[key]
       if (!Array.isArray(arr)) continue
       for (const el of arr) {
         const rec = asRecord(el)
-        if (rec && isIsoDate(rec.date)) add(rec.date as string, field.label)
+        if (rec && isIsoDate(rec.date)) add(rec.date as string, label)
       }
     }
   }
