@@ -108,14 +108,36 @@ interface RequiredDocSpec {
  * 목적지 공통(완전히 동일한 서류)이라 단일 상수로 공유한다. id='form25' 는 목적지별 SPECS
  * 안에서 유일하므로 여러 나라가 같은 객체를 참조해도 안전.
  */
+const form25Description = (windowDays: number) =>
+  `농림축산검역본부 지정 양식의 접종 및 건강증명서예요.\n\n출국일 기준 ${windowDays}일 이내에 임상 수의사가 검진 후 발급해요.\n\n원본 2부를 준비해서, 한국 수출 검역 때 1부를 제출해요.\n\n접종과 출국 전 임상검사를 한 동물병원이 다른 경우, 각 동물병원에서 따로 증명서를 받아야 해요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`
+
+/** 별지 제25호 검진 창의 기본값 — 한국 규정(출국 10일 이내). */
+const FORM25_DEFAULT_WINDOW_DAYS = 10
+
+/**
+ * 목적지 규정이 한국 10일보다 짧은 곳 — 그쪽이 실무 기준이라 별지 제25호 문구도 짧은 쪽을
+ * 따른다(2026-07-30 사용자 지시. 전수조사 결과 39개 목적지 중 아래 5곳만 10일 미만).
+ *
+ * ⚠️ 숫자는 그 목적지 **임상검사 카드 문구와 같은 값**을 쓴다(destination-overrides 의
+ *   'vet-visit' description). config 의 `vetVisitWindowDays` 를 그대로 가져오면 안 된다 —
+ *   그 값은 저장 거부용 경계(gap < N)라 카드 표기와 1일 어긋나는 목적지가 있다
+ *   (호주 6→'5일', 뉴질랜드 3→'2일'). 새 목적지를 넣을 때도 카드 문구를 보고 적을 것.
+ */
+const FORM25_WINDOW_DAYS_BY_KEY: Record<string, number> = {
+  turkey: 2,
+  new_zealand: 2,
+  australia: 5,
+  singapore: 7,
+  malaysia: 7,
+}
+
 const KR_FORM25_VACCINATION_HEALTH_CERT: RequiredDocSpec = {
   id: 'form25',
   name: '접종 및 건강증명서(별지 제 25호 서식)',
   source: '동물병원',
   kind: 'manual',
   issuanceStepId: 'vet-visit',
-  description:
-    '농림축산검역본부 지정 양식의 접종 및 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급해요.\n\n원본 2부를 준비해서, 한국 수출 검역 때 1부를 제출해요.\n\n접종과 출국 전 임상검사를 한 동물병원이 다른 경우, 각 동물병원에서 따로 증명서를 받아야 해요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+  description: form25Description(FORM25_DEFAULT_WINDOW_DAYS),
   templates: [
     { label: 'PDF', href: '/forms/form25.pdf', filename: '별지 제 25호 서식.pdf' },
     { label: '한글(HWP)', href: '/forms/form25.hwp', filename: '별지 제 25호 서식.hwp' },
@@ -1881,12 +1903,23 @@ export function resolveRequiredDocs(
     const minimumDate = addDays(birth, spec.minReturnAgeDays)
     return !minimumDate || ret >= minimumDate
   }
-  const specs = allSpecs.filter(
-    (s) =>
-      (!s.roundTripOnly || tripType === 'round') &&
-      (!s.species || !species || s.species === species) &&
-      meetsReturnAge(s),
-  )
+  // 별지 제25호는 전 목적지 공유 상수라 검진 창만 목적지 기준으로 갈아끼운다(공유 객체를
+  //   고치면 다른 목적지로 번지므로 복사본을 만든다).
+  const form25Days = keyForDocs
+    ? (FORM25_WINDOW_DAYS_BY_KEY[keyForDocs] ?? FORM25_DEFAULT_WINDOW_DAYS)
+    : FORM25_DEFAULT_WINDOW_DAYS
+  const specs = allSpecs
+    .filter(
+      (s) =>
+        (!s.roundTripOnly || tripType === 'round') &&
+        (!s.species || !species || s.species === species) &&
+        meetsReturnAge(s),
+    )
+    .map((s) =>
+      s.id === 'form25' && form25Days !== FORM25_DEFAULT_WINDOW_DAYS
+        ? { ...s, description: form25Description(form25Days) }
+        : s,
+    )
   if (specs.length === 0) return null
   const flags = readBoolFlags(caseRow, 'required_doc_flags')
   const naFlags = readBoolFlags(caseRow, 'required_doc_na')
