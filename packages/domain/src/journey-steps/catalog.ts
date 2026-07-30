@@ -3,7 +3,10 @@ import {
   addYears,
   isExtraTiterResultConfirmed,
   latestExtraTiterEntry,
+  readExternalParasiteEntries,
   readGeneralVaccineEntries,
+  readInfectiousDiseaseEntries,
+  readInternalParasiteEntries,
   readKennelCoughEntries,
   readRabiesEntries,
   readTiterEntries,
@@ -25,7 +28,7 @@ import {
   SINGLE_DOSE_RABIES_DESTINATIONS,
   TWO_DOSE_RABIES_DESTINATIONS,
 } from './applicability'
-import { EU_ENTRY_FAMILY } from './date-rules'
+import { EU_ENTRY_FAMILY, requiredParasiteDoses } from './date-rules'
 import {
   deriveAdvanceNotificationStatus,
   deriveApplicationStatus,
@@ -1674,6 +1677,18 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     },
     order: 70,
     done: 'has-infectious-disease-test',
+    // 검사 → 결과 2단계(2026-07-30). 검사일이 도래했는데 아직 결과 확인 전이면 다음 행동을
+    //   지시한다 — 항체 검사·사전 신고와 같은 문형. 우측 '진행 중' 칩과 짝.
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (data.infectious_disease_confirmed === true) return undefined
+      const arrived = readInfectiousDiseaseEntries(caseRow).some(
+        (e) => e.date.length >= 10 && e.date <= todayKst(),
+      )
+      if (!arrived) return undefined
+      const msg = '전염병 검사를 진행 중이에요. 결과가 나오면 완료 버튼을 누르세요.'
+      return { desc: msg, cardDesc: msg }
+    },
     inputs: [
       { key: 'infectious_disease_records', label: '검사일', type: 'date_array' },
     ],
@@ -1711,6 +1726,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     },
     order: 80,
     done: 'has-external-parasite',
+    // 2회 요건국(호주)에서 1회만 마친 상태 → '2차 외부 기생충 치료를 하세요.'
+    situational: (caseRow) => parasiteNextDoseSituational(caseRow, 'external', '외부 기생충 치료'),
     inputs: [
       { key: 'external_parasite_dates', label: '치료일', type: 'date_array' },
     ],
@@ -1755,6 +1772,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     },
     order: 90,
     done: 'has-internal-parasite',
+    // 2회 요건국(호주·뉴질랜드)에서 1회만 마친 상태 → '2차 내부 기생충 치료를 하세요.'
+    situational: (caseRow) => parasiteNextDoseSituational(caseRow, 'internal', '내부 기생충 치료'),
     // 내·외부 구충은 **보통 같은 날 한 방문에서** 한다(2026-07-29 사용자 지정). 순차로 띄우면
     //   하나 끝내야 다음이 올라와 실제 병원 방문 흐름과 어긋난다. 바로 앞 외부구충(order 80)이
     //   '다음 할 일'일 때 이 카드도 함께 올라오도록 concurrent 로 둔다.
@@ -3666,4 +3685,32 @@ export function permitDeliverablesForDestination(
     }
   }
   return out
+}
+
+/**
+ * 구충 카드 '진행 중' 문구 — 필요 회차(PARASITE_REQUIRED_DOSES)를 아직 못 채운 상태에서
+ * **다음 회차를 지시**한다(2026-07-30 사용자 지정 "2차 치료하라는 말로 바뀌어야").
+ *
+ * 전에는 1회만 넣어도 카드 문구가 "외부 기생충 치료를 하세요"(= 아직 안 한 사람용) 그대로였다.
+ * 우측 칩만 '진행 중'으로 바뀌고 본문은 안 바뀌어서, 무엇이 남았는지 알 수 없었다.
+ * 광견병 항체 검사·사전 신고·수입 허가가 쓰는 situational 2단계 문구와 같은 자리다.
+ *
+ * 회차 요건이 없는 목적지는 requiredParasiteDoses 가 1 이라 첫 기록에서 done → 여기 안 온다.
+ * 뉴질랜드 외부구충은 카드가 1차/2차로 나뉘어 있어 요건이 1 이므로 역시 해당 없다.
+ */
+function parasiteNextDoseSituational(
+  caseRow: CaseRow,
+  kind: 'internal' | 'external',
+  label: string,
+): { desc: string; cardDesc: string } | undefined {
+  const entries = kind === 'internal' ? readInternalParasiteEntries(caseRow) : readExternalParasiteEntries(caseRow)
+  const today = todayKst()
+  const arrived = entries.filter((e) => e.date.length >= 10 && e.date <= today).length
+  if (arrived === 0) return undefined
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const species = typeof data.species === 'string' ? data.species : null
+  const need = requiredParasiteDoses(kind, buildCaseJourneyContext(caseRow).destinationKey, species)
+  if (arrived >= need) return undefined
+  const msg = `${arrived + 1}차 ${label}를 하세요.`
+  return { desc: msg, cardDesc: msg }
 }

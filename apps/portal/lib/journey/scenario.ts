@@ -1047,14 +1047,20 @@ export function buildJourney(
     // 칩 라벨 분기 — '마감 26·11·21' (단일 non-window 마감일이 표시 날짜인 경우) vs
     // '예정 …' (그 외 일정·이벤트·window 시작·기간 시작 등). 사전 신고처럼 deadline 자체가
     // 보호자의 행동 마감일일 때만 '마감'. window 마감(출국 10일 이내 검진 등)은 구간 시작이라 '예정' 유지.
-    const dateLabel: '예정' | '마감' =
-      !done &&
-      !isDeparture &&
-      !isJpImportQuarantine &&
-      step.id !== 'kr-import-quarantine' &&
-      step.deadline &&
-      !step.deadline.window &&
-      date === deadline
+    // ⚠️ **날짜가 없으면 라벨도 없다**(2026-07-30). 전에는 date 가 null 이어도 '예정'이
+    //   채워져서, 출국일·기록이 전혀 없는 케이스의 19개 단계 전부가 dateLabel='예정' 이었다.
+    //   지금 렌더러는 `!!s.date` 로 게이트해 화면엔 안 나갔지만, 그 게이트를 잊은 새 화면이
+    //   생기면 "날짜 없는 '예정'" 버그가 그대로 재현된다 — 실제로 타임라인에서 같은 형태가
+    //   났다(isCurr 폴백, 같은 날 제거). 게이트를 기억하는 대신 값 자체를 정직하게 둔다.
+    const dateLabel: '예정' | '마감' | undefined = !date
+      ? undefined
+      : !done &&
+          !isDeparture &&
+          !isJpImportQuarantine &&
+          step.id !== 'kr-import-quarantine' &&
+          step.deadline &&
+          !step.deadline.window &&
+          date === deadline
         ? '마감'
         : '예정'
     // 보조 문구의 기본값은 description 첫 문장(절차 설명).
