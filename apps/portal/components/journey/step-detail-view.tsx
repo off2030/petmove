@@ -3309,9 +3309,14 @@ export function StepDetailView({
               // 허가 번호 칸은 수입 허가 전용 — 싱가포르 신청형 카드는 신청일만.
               showPermitNo={(step.inputs ?? []).some((i) => i.key === 'permit_no')}
               // 신청일 칸도 카드 선언에서 파생 — 뉴질랜드는 받지 않는다(허가 번호·첨부·완료 버튼).
-              showApplicationDate={(step.inputs ?? []).some(
-                (i) => i.key === 'import_permit_application_date',
-              )}
+              // ⚠️ 비교 대상은 **그 카드의 신청일 필드**(applicationDateField)다. 예전엔
+              //   'import_permit_application_date' 를 하드코딩해, 필드 키가 다른 카드
+              //   (싱가포르 계류장 예약·강아지 라이선스, 남아공 AIA)는 신청일 칸이 통째로
+              //   안 떴다 — '입력' 헤더만 있고 아래가 비어 있었다(2026-07-30 남아공에서 발견).
+              showApplicationDate={
+                !!applicationDateField &&
+                (step.inputs ?? []).some((i) => i.key === applicationDateField)
+              }
               applicationHelp={applicationHelp}
               reservation={applicationReservation}
             />
