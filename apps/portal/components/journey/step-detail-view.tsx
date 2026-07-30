@@ -2072,6 +2072,8 @@ export function StepDetailView({
             lot: e.lot || null,
             expiry: e.expiry || null,
           })),
+          // 전염병 검사만 목적지별 저장 — 액션이 fieldKey 로 판별한다.
+          activeDest,
         )
         if (res.ok) {
           updateCase(res.value)
@@ -2526,7 +2528,7 @@ export function StepDetailView({
     startTransition(async () => {
       // 1회차/추가 각각 자기 플래그를 set — done-resolver 도 둘을 따로 본다.
       const res = isInfectiousDisease
-        ? await markInfectiousDiseaseResultConfirmed(caseId)
+        ? await markInfectiousDiseaseResultConfirmed(caseId, activeDest)
         : isTiterExtra
           ? await markExtraTiterResultConfirmed(caseId)
           : await markTiterResultConfirmed(caseId)

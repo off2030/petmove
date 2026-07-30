@@ -717,6 +717,7 @@ export async function updateTiterFields(
  */
 export async function markInfectiousDiseaseResultConfirmed(
   caseId: string,
+  destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
     const access = await assertCaseAccess(caseId)
@@ -725,15 +726,25 @@ export async function markInfectiousDiseaseResultConfirmed(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data')
+      .select('data, destination')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    const arr = Array.isArray(prev.infectious_disease_records)
-      ? (prev.infectious_disease_records as Array<Record<string, unknown>>)
-      : []
+    const writeDest = resolveWriteToken(
+      (existing as { destination: string | null }).destination,
+      prev,
+      destination,
+    )
+    const scopedRecords = writeDest
+      ? readByDestValue(prev, writeDest, 'infectious_disease_records')
+      : undefined
+    const arr = (Array.isArray(scopedRecords)
+      ? scopedRecords
+      : Array.isArray(prev.infectious_disease_records)
+        ? prev.infectious_disease_records
+        : []) as Array<Record<string, unknown>>
     const today = todayKst()
     const hasArrived = arr.some(
       (r) =>
@@ -745,9 +756,14 @@ export async function markInfectiousDiseaseResultConfirmed(
     if (!hasArrived) {
       return { ok: false, error: '검사일이 입력되어 있지 않습니다.' }
     }
-    const nextData: Record<string, unknown> = {
-      ...prev,
-      infectious_disease_confirmed: true,
+    // 확인 플래그도 **목적지별**(2026-07-30) — 검사 항목이 나라마다 달라, 호주용으로 3종만
+    //   받고 확인한 게 뉴질랜드 여정에서 '완료'로 보이면 안 된다.
+    let nextData: Record<string, unknown> = { ...prev }
+    if (writeDest) {
+      nextData = writeByDestValue(nextData, writeDest, 'infectious_disease_confirmed', true)
+      delete nextData.infectious_disease_confirmed
+    } else {
+      nextData.infectious_disease_confirmed = true // scoping-fallback-ok: 목적지 미상
     }
 
     const { data: updated, error } = await admin
@@ -2651,7 +2667,11 @@ const PARASITE_FIELD_KEYS = new Set([
 
 /**
  * 구충(내·외부) step 의 처치 기록을 한 번에 patch — case.data.<fieldKey> 전체 교체.
- * 동물 단위 사실(목적지 무관 전역 키) — updateGeneralVaccineEntries 와 동일 모델.
+ *
+ * 대부분 **동물 단위 사실**(목적지 무관 전역 키) — updateGeneralVaccineEntries 와 동일 모델.
+ * ⚠️ 예외: `infectious_disease_records` 는 **목적지별**이다(2026-07-30 사용자 지정).
+ *   검사 항목이 나라마다 달라(호주 3종 / 뉴질랜드 5종) 기록을 공유하면 부족한 검사가
+ *   다른 여정에서 '검사 완료'로 보인다. 그 키만 by_dest 로 라우팅한다.
  */
 export async function updateParasiteEntries(
   caseId: string,
@@ -2664,6 +2684,8 @@ export async function updateParasiteEntries(
     lot?: string | null
     expiry?: string | null
   }>,
+  /** 활성 목적지 — 전염병 검사(목적지별 키)의 저장 대상을 정한다. 다른 키는 무시. */
+  destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
     if (!PARASITE_FIELD_KEYS.has(fieldKey)) {
@@ -2684,13 +2706,33 @@ export async function updateParasiteEntries(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data')
+      .select('data, destination')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    const prevArr = Array.isArray(prev[fieldKey]) ? [...(prev[fieldKey] as unknown[])] : []
+    // 전염병 검사만 **목적지별** 저장(2026-07-30 사용자 지정) — 검사 항목이 나라마다 달라
+    //   (호주 3종 / 뉴질랜드 5종) 기록을 공유하면 부족한 검사가 다른 여정에서 '완료'로 보인다.
+    //   구충·심장사상충·폐충은 동물 단위 사실이라 종전대로 전역이다.
+    //   ⚠️ 읽을 때도 그 목적지 값을 본다. by_dest 엔트리가 아직 없으면 top-level 잔존값을
+    //     읽어 첫 저장에서 그 목적지로 옮겨 준다(별도 마이그레이션 없이 자연 이관).
+    const scopedField = fieldKey === 'infectious_disease_records'
+    const writeDest = scopedField
+      ? resolveWriteToken(
+          (existing as { destination: string | null }).destination,
+          prev,
+          destination,
+        )
+      : null
+    const scopedPrev = writeDest ? readByDestValue(prev, writeDest, fieldKey) : undefined
+    const prevArr = [
+      ...(Array.isArray(scopedPrev)
+        ? scopedPrev
+        : Array.isArray(prev[fieldKey])
+          ? (prev[fieldKey] as unknown[])
+          : []),
+    ]
 
     const next: Record<string, unknown>[] = []
     for (let i = 0; i < entries.length; i++) {
@@ -2726,11 +2768,26 @@ export async function updateParasiteEntries(
     // phantom 은 위 루프에서 이미 걸러져 next 는 전부 유효 date 다.
     const sorted = normalizeRabiesOrder(next as Array<Record<string, unknown> & { date?: string | null }>)
 
-    const nextData: Record<string, unknown> = { ...prev }
+    let nextData: Record<string, unknown> = { ...prev }
     // 미래(예정) 회차는 기록에서 빼서 별도 예정 자리로 — 입력칸 비움 + 예정 배지.
     const pRecords = splitScheduledDoses(sorted, `${fieldKey}_scheduled`, nextData)
     if (pRecords.length === 0) delete nextData[fieldKey]
     else nextData[fieldKey] = pRecords
+    // 전염병 검사(목적지별) — splitScheduledDoses 가 top-level 에 써 둔 두 키를 by_dest 로
+    //   옮기고 top-level 잔존을 지운다. 안 지우면 다른 목적지가 flatten fallback 으로
+    //   이 검사를 물려받는다(단일 목적지 케이스 경로).
+    if (writeDest) {
+      const sched = nextData[`${fieldKey}_scheduled`]
+      nextData = writeByDestValue(nextData, writeDest, fieldKey, pRecords.length > 0 ? pRecords : null)
+      nextData = writeByDestValue(
+        nextData,
+        writeDest,
+        `${fieldKey}_scheduled`,
+        typeof sched === 'string' && sched ? sched : null,
+      )
+      delete nextData[fieldKey]
+      delete nextData[`${fieldKey}_scheduled`]
+    }
     // 확인 플래그 키 — '<이름>_dates' 뿐 아니라 '<이름>_records'(전염병 검사)도 벗겨야
     //   'infectious_disease_confirmed' 가 된다. _dates 만 벗기면 키가 그대로 남아
     //   'infectious_disease_records' 에 플래그를 덮어써 기록을 날린다(2026-07-27).
@@ -2738,8 +2795,8 @@ export async function updateParasiteEntries(
     //   결과를 받았다고 확인**하는 플래그다(검사 → 결과 2단계, markInfectiousDiseaseResult
     //   Confirmed). 자동으로 켜면 채혈만으로 완료돼 결과 대기 구간이 사라진다.
     //   대신 **검사일이 바뀌면 확인을 해제**한다 — 새 검사 결과를 또 기다려야 하므로.
-    if (fieldKey === 'infectious_disease_records') {
-      const prevDates = (Array.isArray(prev[fieldKey]) ? (prev[fieldKey] as unknown[]) : [])
+    if (scopedField) {
+      const prevDates = prevArr
         .map((r) => (r && typeof r === 'object' ? (r as Record<string, unknown>).date : r))
         .filter((d): d is string => typeof d === 'string')
         .join(',')
@@ -2747,7 +2804,13 @@ export async function updateParasiteEntries(
         .map((r) => (typeof r.date === 'string' ? r.date : ''))
         .filter(Boolean)
         .join(',')
-      if (prevDates !== nextDates) delete nextData.infectious_disease_confirmed
+      if (prevDates !== nextDates) {
+        // 확인 플래그도 목적지별 — 그 목적지 값만 해제한다.
+        nextData = writeDest
+          ? writeByDestValue(nextData, writeDest, 'infectious_disease_confirmed', null)
+          : (delete nextData.infectious_disease_confirmed, nextData)
+        if (writeDest) delete nextData.infectious_disease_confirmed
+      }
     } else {
       applyDatedConfirm(nextData, pRecords, fieldKey.replace(/_(dates|records)$/, '_confirmed'))
     }

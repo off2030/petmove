@@ -23,6 +23,17 @@ import { parseDestinations } from './destination-config'
  *   holder_birth_date — 보호자·동물 신원은 destination 무관.
  */
 export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
+  // ── 전염병 검사 (2026-07-30 사용자 지정으로 전역 → 목적지별) ──────────────
+  // **검사 항목이 나라마다 다르다**: 호주 3종(리슈만편모충·브루셀라·렙토 MAT) vs
+  //   뉴질랜드 5종(바베시아 IFAT/ELISA+PCR·심장사상충·리슈만편모충·렙토·브루셀라).
+  //   기록 배열에는 날짜만 들어가고 검사 종목은 없어서, 전역이면 호주용으로 3종만 받은
+  //   기록이 뉴질랜드 여정에도 '검사 완료'로 보인다(실제로는 바베시아·심장사상충 누락).
+  // ⚠️ 전에는 어느 명단에도 없어 기본 전역이었다 — lint:scope 가 계산된 키
+  //   (`nextData[fieldKey]`)를 못 봐서 미분류인 채 통과했다.
+  'infectious_disease_records',
+  'infectious_disease_records_scheduled',
+  'infectious_disease_confirmed',
+
   // 일정
   'departure_date',
   'vet_visit_date',
@@ -348,7 +359,6 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'kennel_cough_confirmed',
   'heartworm_confirmed',
   'civ_confirmed',
-  'infectious_disease_confirmed',
   'external_parasite_confirmed',
   'internal_parasite_confirmed',
   // 회차 목록 카드의 '미래(예정) 회차' 별도 저장 자리 — 대응 *_dates 와 동일 동물 단위(전역).
