@@ -1550,7 +1550,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '계류 예약 날짜에 맞춰 운송을 예약하세요.\n\n반려동물은 보호자와 같은 항공기 객실이나 수하물로 갈 수 없어요. 정식 항공 화물로만 보내요.\nIATA 규격 이동장이 필요해요.\n멜버른 국제공항에 바로 도착해야 해요. 다른 공항에 내려 국내선으로 옮길 수 없어요.\n항체 검사 검체가 검사기관에 접수된 날부터 180일이 지나야 출국할 수 있어요.',
       // 계류시설 예약(44) 다음 — DAFF 순서(허가 → 계류 예약 → 운송 예약)와 같게.
       order: 46,
-      validationIds: ['au.titer-min-180days-after-sample-received'],
+      validationIds: [
+        'au.titer-min-180days-after-sample-received',
+        // 계류 시작일과의 정합은 **출국일 칸이 있는 이 카드**에 둔다(2026-07-30 사용자 확정,
+        //   싱가포르 sg.departure-matches-quarantine-reservation 과 같은 자리). 예약은 시설과
+        //   잡아 둔 결과라 대개 조정 대상이 항공편이다. 저장 거부는 양쪽 카드에 그대로.
+        'au.quarantine-start-not-before-departure',
+      ],
     },
     // 수입 허가(BICON) — 항체 결과지 + RNATT 선언서를 갖춘 뒤 신청. 확정 마감일은 규정에
     //   없고(허가 유효기간이 RNATT 만료일에 연동) 심사 기간만 안내한다.
@@ -1829,6 +1835,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         // 마이크로칩 인증 6개월 하한도 같은 이유로 여기(2026-07-29 사용자 확정). 인증 카드에서는
         //   조치가 없다 — 이미 받은 인증을 더 이른 날짜로 되돌릴 수 없다.
         'nz.identity-check-6months-before-departure',
+        // 계류 시작일과의 정합도 같은 이유로 여기(2026-07-30 사용자 확정) — 예약은 시설과 잡아
+        //   둔 결과라 대개 조정 대상이 항공편이다. 싱가포르와 같은 자리. 저장 거부는 양쪽 유지.
+        'nz.quarantine-start-not-before-departure',
       ],
     },
     // 수입 허가 — MPI 온라인. 계류 예약 확인서·RCF·항체 결과지·접종 기록 4종이 신청 서류다

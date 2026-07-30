@@ -27,7 +27,7 @@ import {
   validateInternalParasiteSpacing,
   validateParasiteDateForDestination,
   validateAuQuarantineReservationDate,
-  validateQuarantineStartNotBeforeDeparture,
+  validateDepartureNotAfterQuarantineStart,
   validateExternalParasiteDates,
   validateInfectiousDiseaseTestDate,
   validateCivDoseInterval,
@@ -497,8 +497,9 @@ export const AU_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    // 저장 거부(validateQuarantineStartNotBeforeDeparture)와 **같은 함수**. 예약을 먼저 잡은 뒤
+    // 저장 거부(validateDepartureNotAfterQuarantineStart)와 **같은 함수**. 예약을 먼저 잡은 뒤
     //   항공권을 뒤로 옮겨 어긋난 경우를 표면화하는 짝 주의 — 뉴질랜드와 대칭(2026-07-30).
+    //   카드는 **운송 예약**(출국일 칸이 있는 쪽) — 싱가포르와 같은 배치.
     id: 'au.quarantine-start-not-before-departure',
     country: COUNTRY,
     category: '검역',
@@ -511,7 +512,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       const res = readQuarantineReservationDate(caseRow, destination)
       const dep = readDepartureDate(caseRow, destination)
       if (!/^\d{4}-\d{2}-\d{2}$/.test(res) || !dep) return SKIP
-      const msg = validateQuarantineStartNotBeforeDeparture(res, dep)
+      const msg = validateDepartureNotAfterQuarantineStart(dep, res)
       if (msg) {
         return {
           ok: false,

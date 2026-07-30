@@ -29,7 +29,7 @@ import {
   validateNzExternalSecondDose,
   validateNzInfectiousTestAfterExternal,
   validateNzQuarantineStartAfterTiter,
-  validateQuarantineStartNotBeforeDeparture,
+  validateDepartureNotAfterQuarantineStart,
   validateNzRcfDate,
   validateNzWithin5Days,
   validateRabiesDocRequiresTiter,
@@ -592,7 +592,8 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     //   단순형으로 바뀌며 도착일 칸이 사라져 영영 SKIP 이었다(2026-07-30 사용자 발견). 도착일
     //   대신 **출국일**을 기준으로, 하한만(출국 ≤ 계류 시작) 보는 이 룰로 대체한다. 상한을 두지
     //   않는 이유는 야간 출발·다음 날 도착이 정상이고 경유 편은 더 벌어지기 때문.
-    //   저장 거부(validateQuarantineStartNotBeforeDeparture)와 **같은 함수** — 호주와 대칭.
+    //   저장 거부(validateDepartureNotAfterQuarantineStart)와 **같은 함수** — 호주와 대칭.
+    //   카드는 **운송 예약**(출국일 칸이 있는 쪽) — 싱가포르와 같은 배치.
     id: 'nz.quarantine-start-not-before-departure',
     country: COUNTRY,
     category: '검역',
@@ -605,7 +606,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       const start = readScopedDate(caseRow, destination, 'nz_quarantine_reservation_date')
       const dep = readDepartureDate(caseRow, destination)
       if (!start || !dep) return SKIP
-      const msg = validateQuarantineStartNotBeforeDeparture(start, dep)
+      const msg = validateDepartureNotAfterQuarantineStart(dep, start)
       if (msg) {
         return {
           ok: false,
