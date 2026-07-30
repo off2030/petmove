@@ -260,6 +260,23 @@ function sortByCardOrder<T extends { card: string }>(
   return items.map((i) => (order.has(i.card) ? known[k++] : i))
 }
 
+/**
+ * 그 목적지 여정 카드의 **실제 제목** — 맡기기 라벨이 카드와 어긋나지 않게(2026-07-30).
+ *
+ * base 제목을 맡기기 쪽에 복사해 두면 목적지 override 를 놓친다. 실제로 뉴질랜드는
+ * 심장사상충 카드가 '심장사상충 예방'(검사는 전염병 검사 카드로 옮겼다)인데 맡기기는
+ * '심장사상충 검사'로 떠 있었다. 순서(sortByCardOrder)와 같은 출처를 쓴다.
+ */
+function cardTitleFor(destKey: string, cardId: string): string | undefined {
+  const row = {
+    id: '',
+    destination: destinationKoLabel(destKey),
+    departure_date: null,
+    data: { species: 'dog', trip_type: 'round' },
+  } as unknown as CaseRow
+  return getStepsForCase(JOURNEY_STEP_CATALOG, row).find((s) => s.id === cardId)?.title
+}
+
 /** 그 목적지 여정에 이 카드가 실제로 뜨는가(종 무관 — 개 기준으로 펼쳐 판단). */
 function cardAppliesTo(destKey: string, cardId: string): boolean {
   const step = JOURNEY_STEP_CATALOG.find((s) => s.id === cardId)
@@ -353,7 +370,12 @@ function offlineDetail(opts: {
         : { label: '내부 기생충 치료', card: 'internal-parasite' },
     )
   }
-  if (hasVaccine('heartworm')) items.push({ label: '심장사상충 검사', card: 'heartworm-test' })
+  if (hasVaccine('lungworm')) items.push({ label: '폐충 치료', card: 'lungworm-treatment' })
+  // 라벨을 '심장사상충 검사'로 굳히지 않는다 — 뉴질랜드는 같은 카드가 **'심장사상충 예방'**이다
+  //   (검사는 전염병 검사 카드로 옮겼다). 카드 제목이 유일한 출처(2026-07-30).
+  if (hasVaccine('heartworm')) {
+    items.push({ label: cardTitleFor(opts.destKey, 'heartworm-test') ?? '심장사상충 검사', card: 'heartworm-test' })
+  }
   if (titerIncluded) items.push({ label: '광견병 항체 검사', card: 'rabies-titer' })
   items.push(...(opts.procedureItems ?? []))
   items.push({ label: '출국 전 임상검사', card: 'vet-visit' })
