@@ -27,7 +27,6 @@ import {
   validateAuQuarantineReservationDate,
   validateSgDepartureVsQuarantineReservation,
   validateDepartureNotAfterQuarantineStart,
-  validateImportPermitNotAfterDeparture,
   validateQuarantineStartNotBeforeDeparture,
   validateParasiteDateForDestination,
   validateSgQuarantineReservationFiled,
@@ -388,24 +387,20 @@ export function StepDetailView({
   // 싱가포르 계류장 예약·강아지 라이선스가 같은 모델을 공유한다. 필드 키만 다르다.
   const isSgQuarantineReservation = step.id === 'sg-quarantine-reservation'
   const isSgDogLicence = step.id === 'sg-dog-licence'
-  // 남아공 AIA 수입 허가(개 전용) — 같은 신청 → 발급 2단계 모델. 수의검역 수입 허가와 **별개**라
-  //   import-permit 카드를 나눠 쓸 수 없다(허가가 두 장이다).
-  const isZaAiaPermit = step.id === 'za-aia-permit'
+  // ⛔ 남아공 AIA(za-aia-permit)를 이 2단계 모델에 다시 넣지 말 것 — 2026-07-30 사용자 확정으로
+  //   **버튼 완료** 카드가 됐다(호주 수입 허가와 같은 모델). isSimpleDatedStep 경로로 자동 처리된다.
   // buttonComplete 목적지(홍콩 수입 허가)는 2단계 UI 를 타지 않는다 — 대행이라 보호자가
   // 신청일을 모르고, 아는 건 '됐다/안 됐다'뿐이라 완료 버튼만 남긴다(2026-07-26 사용자 결정).
   // 같은 형태의 가드가 isImportQuarantine·isJpExportQuarantineVisit 렌더에도 이미 있다.
   const isApplicationStep =
-    (isImportPermit || isSgQuarantineReservation || isSgDogLicence || isZaAiaPermit) &&
-    !isButtonDoneStep
+    (isImportPermit || isSgQuarantineReservation || isSgDogLicence) && !isButtonDoneStep
   const applicationDateField = isImportPermit
     ? 'import_permit_application_date'
     : isSgQuarantineReservation
       ? 'sg_quarantine_reservation_application_date'
       : isSgDogLicence
         ? 'sg_dog_licence_application_date'
-        : isZaAiaPermit
-          ? 'za_aia_permit_application_date'
-          : ''
+        : ''
   // 신청일 아래 설명(카드별) + 부가 예약일(계류장 예약 날짜, 정보성 — 일본 수출검역 예약일 패턴).
   const applicationHelp = isImportPermit
     ? '동물검역소에 수입 허가를 신청한 날짜'
@@ -413,9 +408,7 @@ export function StepDetailView({
       ? '계류장 예약을 신청한 날짜'
       : isSgDogLicence
         ? '강아지 라이선스를 신청한 날짜'
-        : isZaAiaPermit
-          ? 'AIA 수입 허가를 신청한 날짜'
-          : ''
+        : ''
   const applicationReservationField = isSgQuarantineReservation ? 'sg_quarantine_reservation_date' : ''
   const applicationReservation = isSgQuarantineReservation
     ? { label: '예약일', help: '계류를 시작하는 날짜' }
@@ -1725,14 +1718,6 @@ export function StepDetailView({
         data,
         permitNo: importPermit.permitNo.trim(),
       })
-    }
-    // 남아공 AIA 수입 허가 — 출국 당일·이후 신청은 성립하지 않는다(허가가 나와야 출국한다).
-    //   수의검역 수입 허가와 같은 함수. 확정 마감(출국 N일 전)은 규정에 없어 순서만 본다.
-    if (isZaAiaPermit) {
-      return validateImportPermitNotAfterDeparture(
-        importPermit.applicationDate.trim(),
-        (caseRow?.departure_date ?? '').slice(0, 10),
-      )
     }
     // 버튼 완료 카드(CDC 신고·귀국 절차 전체)는 날짜 검증 없음 — 전부 삭제(2026-07-26 사용자
     // 결정). 저장은 handleButtonDone 이 담당하므로 여기 분기 자체가 없다.

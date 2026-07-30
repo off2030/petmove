@@ -1624,10 +1624,11 @@ export function importPermitPrerequisiteError(
   }
   if (destinationKey === 'south_africa') {
     // ✅ 규정 명문(DALRRD 보도자료 2024-04-10) — "the Animal Improvement Permit/authorisation
-    //   must be **applied for first**, and the AIA Permit/authorisation must be **attached to**
-    //   the application for the Veterinary Import Permit". 게이트 기준을 '신청일 입력'으로 두는 건
-    //   규정 문구가 'applied for first' 라서다(발급 완료를 요구하면 허가서를 손에 들고도 카드를
-    //   안 채운 사람을 막는다 — 뉴질랜드 RCF 발급일 게이트와 같은 강도).
+    //   must be applied for first, and the AIA Permit/authorisation must be **attached to**
+    //   the application for the Veterinary Import Permit".
+    //   판정 기준은 AIA 카드의 **완료 여부**다 — 카드가 버튼 완료로 바뀌며(2026-07-30) 저장값이
+    //   '허가 취득일'이 됐고, 규정이 요구하는 것도 신청 사실이 아니라 **허가서 첨부**라 완료가
+    //   맞는 기준이다(뉴질랜드 RCF·호주 RNATT 선언서와 같은 방식 — 날짜 크기 비교가 아니다).
     // ⚠️ **고양이는 AIA 면제**라 게이트를 걸면 안 된다 — 같은 보도자료 "animals such as cats,
     //   birds and fish do not require an AIA Permit/authorisation for importation".
     //   여기서 종을 직접 읽는다(이 함수는 species 인자를 받지 않는다).
@@ -1641,7 +1642,7 @@ export function importPermitPrerequisiteError(
     return validateImportPermitPrerequisite(
       hasPermitInput,
       read('za_aia_permit_application_date'),
-      'AIA 수입 허가를 먼저 신청하세요.',
+      'AIA 수입 허가를 먼저 받으세요.',
     )
   }
   return null

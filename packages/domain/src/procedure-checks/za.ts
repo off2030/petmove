@@ -349,39 +349,18 @@ export const ZA_CHECKS: ProcedureCheck[] = [
   },
 
   // ── 허가 2장 · 검역 ──
-  {
-    id: 'za.aia-permit-not-after-departure',
-    country: COUNTRY,
-    category: '수입허가',
-    title: 'AIA 수입 허가 신청일, 출국일 순서',
-    description:
-      'AIA 수입 허가(개 전용) 신청일은 출국일 이전이어야 함. 심사에 최대 30영업일이 걸려 실제로는 훨씬 앞서야 하지만, 확정 마감이 규정에 없어 논리적 순서만 본다(수의검역 수입 허가와 같은 함수).',
-    severity: 'warning',
-    addedAt: '2026-07-30',
-    run: ({ caseRow, destination }) => {
-      if (species(caseRow) !== 'dog') return SKIP
-      const filed = readScopedDate(caseRow, destination, 'za_aia_permit_application_date')
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
-      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
-      const msg = validateImportPermitNotAfterDeparture(filed, dep)
-      if (msg) {
-        return {
-          ok: false,
-          // 허가가 두 장이라 공용 문구('수입 허가 신청일…')로는 어느 쪽인지 알 수 없다.
-          message: 'AIA 수입 허가 신청일은 출국일보다 빨라야 해요. 날짜를 확인하세요.',
-          offendingPaths: ['za_aia_permit_application_date', 'departure_date'],
-        }
-      }
-      return { ok: true, message: `AIA 신청일(${filed}) < 출국일(${dep || '미입력'}).` }
-    },
-  },
+  // ⛔ 'za.aia-permit-not-after-departure'(AIA 신청일 < 출국일) 룰을 다시 만들지 말 것 —
+  //   2026-07-30 AIA 카드가 버튼 완료로 바뀌며 삭제했다. 저장값이 신청일이 아니라 **허가
+  //   취득일**(버튼 누른 날)이라 판정 근거가 사라졌다. 호주가 같은 이유로
+  //   au.import-permit-not-after-departure 를 뗀 것과 같은 자리다. 수입 허가와의 순서는
+  //   아래 za.aia-permit-before-import-permit + importPermitPrerequisiteError 가 담당한다.
   {
     id: 'za.aia-permit-before-import-permit',
     country: COUNTRY,
     category: '수입허가',
     title: 'AIA 허가를 수의검역 수입 허가보다 먼저 (강아지)',
     description:
-      '✅ 규정 명문(DALRRD 보도자료 2024-04-10) — "the Animal Improvement Permit/authorisation must be **applied for first**, and the AIA Permit/authorisation must be **attached to** the application for the Veterinary Import Permit". AIA 허가서가 수의검역 허가 신청의 첨부물이라 순서가 뒤집히면 신청 자체가 성립하지 않는다. 저장 거부(importPermitPrerequisiteError — 뉴질랜드 RCF·호주 RNATT 선언서와 같은 함수)의 짝이 되는 주의 — 수의검역 신청일을 넣은 뒤 AIA 신청일을 지운 경우를 표면화한다. ⚠️ **고양이는 AIA 면제**라 판정하지 않는다("animals such as cats, birds and fish do not require an AIA Permit").',
+      '✅ 규정 명문(DALRRD 보도자료 2024-04-10) — "the Animal Improvement Permit/authorisation must be applied for first, and the AIA Permit/authorisation must be **attached to** the application for the Veterinary Import Permit". AIA 허가서가 수의검역 허가 신청의 첨부물이라 순서가 뒤집히면 신청 자체가 성립하지 않는다. 저장 거부(importPermitPrerequisiteError — 뉴질랜드 RCF·호주 RNATT 선언서와 같은 함수)의 짝이 되는 주의 — 수의검역 신청일을 넣은 뒤 AIA 완료를 취소한 경우를 표면화한다. ⛔ **날짜 크기 비교를 넣지 말 것** — AIA 카드가 버튼 완료라 저장값이 \'버튼 누른 날\'이어서, 순서를 제대로 지킨 케이스에도 오경보가 난다(호주 RNATT 선언서와 같은 이유). ⚠️ **고양이는 AIA 면제**라 판정하지 않는다("animals such as cats, birds and fish do not require an AIA Permit").',
     severity: 'warning',
     addedAt: '2026-07-30',
     run: ({ caseRow, destination }) => {
@@ -394,19 +373,12 @@ export const ZA_CHECKS: ProcedureCheck[] = [
       if (!/^\d{4}-\d{2}-\d{2}$/.test(aia)) {
         return {
           ok: false,
-          message: 'AIA 수입 허가를 먼저 신청해야 해요. AIA 허가서를 첨부해서 수의검역 수입 허가를 신청해요.',
+          message:
+            'AIA 수입 허가를 먼저 받아야 해요. AIA 허가서를 첨부해서 수의검역 수입 허가를 신청해요.',
           offendingPaths: ['za_aia_permit_application_date', 'import_permit_application_date'],
         }
       }
-      // 날짜 순서까지 본다 — 규정이 'applied for first' 라 같은 날은 허용한다.
-      if (aia > filed) {
-        return {
-          ok: false,
-          message: 'AIA 수입 허가 신청이 수의검역 수입 허가 신청보다 늦어요. 날짜를 확인하세요.',
-          offendingPaths: ['za_aia_permit_application_date', 'import_permit_application_date'],
-        }
-      }
-      return { ok: true, message: `AIA 신청(${aia}) ≤ 수의검역 신청(${filed}).` }
+      return { ok: true, message: `AIA 허가 취득(${aia}) 완료 — 수의검역 신청(${filed}).` }
     },
   },
   {

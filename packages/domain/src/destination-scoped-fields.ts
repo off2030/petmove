@@ -167,9 +167,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'za_quarantine_reservation_date',
   // 예약을 마친 날 — 카드 입력값은 미래 검역 시작일이라 완료일로 쓸 수 없다(호주·뉴질랜드 모델).
   'za_quarantine_reservation_recorded_at',
+  // 버튼 완료 카드라 이 필드에 **허가 취득일**(버튼 누른 날)이 기록된다 — 신청일이 아니다.
+  //   ⛔ issued_skipped·in_progress 플래그를 되살리지 말 것(2단계 모델 폐기, 2026-07-30).
   'za_aia_permit_application_date',
-  'za_aia_permit_issued_skipped',
-  'za_aia_permit_in_progress',
   // 싱가포르 — 도착 검역(AQC 30일) + 귀국 수출검역(AVS 인증).
   'sg_import_quarantine_date',
   'sg_import_quarantine_confirmed',

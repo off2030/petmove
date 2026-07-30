@@ -50,7 +50,6 @@ import {
   readByDestValue,
   SG_DOG_LICENCE_APP_SPEC,
   SG_QUARANTINE_RESERVATION_APP_SPEC,
-  ZA_AIA_PERMIT_APP_SPEC,
   type ApplicationStepSpec,
   type CaseRow,
   type VaccineProductsData,
@@ -2050,8 +2049,6 @@ export async function updateImportPermitFields(
 const APPLICATION_STEP_SPECS: Record<string, ApplicationStepSpec> = {
   [SG_QUARANTINE_RESERVATION_APP_SPEC.attachStepId]: SG_QUARANTINE_RESERVATION_APP_SPEC,
   [SG_DOG_LICENCE_APP_SPEC.attachStepId]: SG_DOG_LICENCE_APP_SPEC,
-  // 남아공 AIA 수입 허가(개 전용) — 수의검역 수입 허가와 별개의 두 번째 허가라 전용 spec.
-  [ZA_AIA_PERMIT_APP_SPEC.attachStepId]: ZA_AIA_PERMIT_APP_SPEC,
 }
 
 /**

@@ -36,7 +36,6 @@ import {
   deriveJpExportQuarantineStatus,
   SG_DOG_LICENCE_APP_SPEC,
   SG_QUARANTINE_RESERVATION_APP_SPEC,
-  ZA_AIA_PERMIT_APP_SPEC,
 } from './report-status'
 import type { StepDefinition } from './types'
 import type { CaseRow } from '../types'
@@ -1397,49 +1396,48 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   //     동물 전체 대상, 야생동물·고양이·조류·어류만 제외).
   //   ⚠️ 2024-04-01 **이전** 발급된 수의검역 수입허가에도 소급 적용된다(유효한 AIA 허가 사본 첨부).
   // 처리에 최대 30영업일이 걸려 준비 전체에서 **가장 먼저 시작해야 하는 절차**다 → 광견병
-  //   접종(30) 바로 뒤(38)에 둔다. 계류시설 예약(42)·수입 허가(44)보다 앞.
-  // ⚠️ 대행업체 주의 — 남아공 농업부가 허위·부정 신청 관련 개 수입 대리인 인가를 취소한
-  //   사례가 있다. 카드 문구에서 허가 번호·발급기관을 직접 확인하도록 안내한다.
+  //   접종(30) 바로 뒤(38)에 둔다. 수입 허가(40)·검역시설 예약(42)보다 앞.
   {
     id: 'za-aia-permit',
     category: 'permit',
     title: 'AIA 수입 허가 신청',
     shortLabel: 'AIA',
+    // 사용자 확정본 4줄(2026-07-30 직접 지정). ⛔ 다듬지 말 것 — 일부러 뺀 줄이 다섯이다:
+    //   · '강아지만 받는 허가예요.' — 카드가 개 전용(species: 'dog')이라 보는 사람에겐 자명하다.
+    //   · '이 허가서가 있어야 수의검역 수입 허가를 신청할 수 있어요.' — 순서 안내는 수입 허가
+    //     카드('강아지는 AIA 수입 허가를 먼저 받아야 신청할 수 있어요')가 담당한다.
+    //   · '3개월을 넘겨 머무는 경우에는 영구수입(Permanent Importation) 신청서를 써요.'
+    //   · '반려 목적으로 데려가는 미등록 강아지는 중성화 증명서가 필요해요.'
+    //   · '대행업체를 이용하더라도 허가 번호와 발급기관을 직접 확인하세요.'
+    //   ⚠️ 뒤 셋은 초안·AIA 신청서 서식 출처로 **1차 출처 미확인**이었다(뺀 이유와 무관하게
+    //     되살릴 땐 근거부터 확보할 것). '6개월 1회 운송'도 '6개월간 유효'로 완화했다.
     description:
-      '남아공 농업부 Animal Improvement Registrar에 AIA 수입 허가를 신청하세요.\n\n강아지만 받는 허가예요. 수의검역 수입 허가와는 별개의 서류예요.\n이 허가서가 있어야 수의검역 수입 허가를 신청할 수 있어요.\n심사에 최대 30영업일이 걸리니 가장 먼저 시작하세요.\n3개월을 넘겨 머무는 경우에는 영구수입(Permanent Importation) 신청서를 써요.\n반려 목적으로 데려가는 미등록 강아지는 중성화 증명서가 필요해요.\n허가는 발급일부터 6개월 동안 1회 운송에만 쓸 수 있어요.\n대행업체를 이용하더라도 허가 번호와 발급기관을 직접 확인하세요.',
+      '남아공 농업부 Animal Improvement Registrar에 AIA 수입 허가를 신청하세요.\n\n수의검역 수입 허가와는 별개의 서류예요.\n심사에 최대 30영업일이 걸리니 가장 먼저 시작하세요.\n허가는 발급일부터 6개월간 유효해요.',
     doneSummary: 'AIA 수입 허가를 받았어요.',
     cardLine: 'AIA 수입 허가를 신청하세요.',
     applicability: { destinations: ['south_africa'], species: 'dog', tripType: 'all' },
     order: 38,
-    // 신청 → 발급 2단계(싱가포르 강아지 라이선스와 같은 모델). 신청일 입력 = 진행 중,
-    //   허가서 첨부·완료 버튼 = 완료. 처리가 30영업일이라 두 시점이 실제로 멀다.
-    done: 'has-za-aia-permit',
-    hasInputData: (caseRow) =>
-      deriveApplicationStatus(caseRow, ZA_AIA_PERMIT_APP_SPEC) !== 'not_started',
-    situational: (caseRow) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const filed =
-        typeof data.za_aia_permit_application_date === 'string'
-          ? data.za_aia_permit_application_date
-          : ''
-      if (filed.length >= 10 && filed > todayKst()) return undefined
-      if (deriveApplicationStatus(caseRow, ZA_AIA_PERMIT_APP_SPEC) !== 'in_progress') return undefined
-      const msg =
-        'AIA 수입 허가를 신청 중이에요. 허가서가 나오면 파일을 첨부하거나 완료 버튼을 누르세요.'
-      return { desc: msg, cardDesc: msg }
-    },
+    // 버튼 완료 카드(2026-07-30 사용자 확정) — **호주 수입 허가와 같은 모델**.
+    //   이 절차에서 앱이 알아야 하는 건 '허가를 받았는가' 하나뿐이다. 규정이 요구하는 것도
+    //   수의검역 허가 신청에 **AIA 허가서를 첨부**하는 것이라, 신청일을 받아 둘 이유가 없다.
+    //   버튼이 오늘 날짜를 아래 필드에 기록한다(화면에 입력칸은 뜨지 않는다).
+    //   ⛔ 신청일 기반 검증(구 za.aia-permit-not-after-departure)을 되살리지 말 것 —
+    //     저장되는 값이 신청일이 아니라 **허가 취득일**이라 판정 근거가 달라진다(호주와 동일).
+    //     수입 허가와의 순서는 허가 카드의 게이트(importPermitPrerequisiteError)가 담당하고,
+    //     그 게이트는 이제 '날짜가 있는가'가 아니라 **완료됐는가**를 본다.
+    buttonComplete: true,
+    done: 'dated:za_aia_permit_application_date',
     inputs: [
       {
         key: 'za_aia_permit_application_date',
-        label: '신청일',
+        label: '허가 취득일',
         type: 'date',
-        helpText: 'AIA 수입 허가를 신청한 날짜',
+        helpText: 'AIA 수입 허가를 받은 날짜',
       },
     ],
     allowAttachments: true,
     attachmentHint: 'AIA 수입 허가서를 사진·PDF로 보관하세요.',
     attachmentLabel: '남아공 AIA 수입 허가서',
-    validationIds: ['za.aia-permit-not-after-departure'],
   },
 
   // ── 남아공 검역시설 예약 (개 전용) — 수의검역 수입 허가 **발급 전** ───────────────

@@ -972,10 +972,12 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   //   차단이 맞다(호주·뉴질랜드와 같은 함수, 출국일 칸 쪽 차단도 대칭으로 걸린다).
   'za-quarantine-reservation':
     '차단: validateQuarantineStartNotBeforeDeparture(검역 시작일 ≥ 출국일) — 짝 주의는 za.quarantine-start-not-before-departure(운송 예약 카드)',
-  // AIA 는 수의검역 수입 허가와 같은 판정 — 출국 당일·이후 신청은 성립하지 않는다.
-  //   확정 마감(출국 N일 전)은 규정에 없어(심사 최대 30영업일이라는 사실만 있다) 순서만 본다.
+  // 남아공 AIA — **버튼 완료 카드**(2026-07-30 사용자 확정, 호주 수입 허가와 같은 모델).
+  //   저장되는 값이 신청일이 아니라 '허가 취득일'(버튼 누른 날)이라 날짜 자체에 걸 제약이 없다.
+  //   수입 허가와의 순서는 **허가 카드 쪽**에서 막는다 — importPermitPrerequisiteError 가
+  //   AIA 완료 여부를 보고 거부하고, 짝 주의는 za.aia-permit-before-import-permit 다.
   'za-aia-permit':
-    '차단: validateImportPermitNotAfterDeparture(신청일 < 출국일) — 짝 주의는 za.aia-permit-not-after-departure',
+    '주의만: 버튼 완료라 저장값이 허가 취득일 — 날짜 제약 없음(호주 수입 허가와 같은 판단). 순서는 수입 허가 카드의 게이트(importPermitPrerequisiteError)·주의(za.aia-permit-before-import-permit)가 담당',
   'sg-gst-permit': '차단: validateSgGstPermitDate(도착 전 + 도착 14일 이내)',
   'sg-border-inspection': '차단: validateSgBorderInspectionDate(도착 최소 5일 전)',
   // 독감(CIV)·전염병 검사 — 호주 전용 카드(둘 다 강아지 요건).
