@@ -772,7 +772,9 @@ const DEST_PRICING: Record<string, { offlineCost?: string; period?: string }> = 
   // ── 오세아니아 ────────────────────────────────────────────
   // 광견병 항체검사 후 180일 대기가 필수라 준비가 가장 길다.
   australia: { offlineCost: '107~142', period: '최소 7~8개월' },
-  new_zealand: { offlineCost: '126~149', period: '최소 6개월' },
+  // 기간은 인증 6개월 하한만 보고 '최소 6개월'로 적혀 있었는데, 1차 접종이면 접종 6개월 +
+  //   채혈·허가·계류 예약이 뒤에 붙는다 → 호주와 같은 7~8개월(2026-07-30 사용자 지정).
+  new_zealand: { offlineCost: '126~149', period: '최소 7~8개월' },
 }
 
 /**
@@ -829,6 +831,11 @@ const EXTRA_PROCEDURE_ITEMS: Record<
   //   card 는 순서 정렬용 — au-identity-check(order 25)라 목록에서 마이크로칩 바로 다음.
   australia: [
     { label: '마이크로칩 인증 서류 준비(검역소 제출용)', card: 'au-identity-check', introOmit: true },
+  ],
+  // 뉴질랜드 — 호주와 같은 처리(2026-07-30 사용자 지정). 인증은 검역관이 하지만 그 앞의
+  //   서류 준비를 로잔이 대행한다. 수입 허가(MPI 온라인)는 selfApply 라 위에서 자동 제외.
+  new_zealand: [
+    { label: '마이크로칩 인증 서류 준비(검역소 제출용)', card: 'nz-identity-check', introOmit: true },
   ],
 }
 
