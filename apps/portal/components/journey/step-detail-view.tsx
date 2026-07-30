@@ -1517,8 +1517,8 @@ export function StepDetailView({
       //   (고양이) 전보다 늦게 시작(호주만) → 저장 거부. 주의 룰과 **같은 함수**.
       //   ②의 판정 대상은 가장 이른 처치일 — 뒤에 추가하는 2차·3차는 이 하한과 무관하다.
       //   ⛔ 뉴질랜드는 ② 표에 없어 통과(1차 앵커가 출국일이 아니라 바베시아 채혈이다).
-      //   ⚠️ 2차 카드가 있으면 '가장 이른 처치일'이 다른 카드에 있으므로 **합친 배열**로 본다 —
-      //     이 카드 행만 넘기면 2차 카드에서 1차가 안 보여 하한 판정이 통째로 빗나간다.
+      //   ⚠️ 호주는 2회 이상이 요건이라(PARASITE_REQUIRED_DOSES) 이 카드 한 장에 회차가 쌓인다 —
+      //     하한 판정 대상은 그 목록의 가장 이른 날짜다.
       if (isExternalParasite) {
         const err = validateExternalParasiteDates(
           parasite.map((e) => e.date ?? ''),
@@ -1533,8 +1533,8 @@ export function StepDetailView({
       //   2회가 다 들어왔을 때만 본다. 창(호주 45일·뉴질랜드 30일)과 '출국일보다 늦음'은 바로 위
       //   validateParasiteDateForDestination 이 이미 막고 있어 여기서 다시 보지 않는다.
       //   주의 룰(au/nz.internal-parasite-protocol)과 **같은 함수**.
-      //   ⚠️ 간격 판정은 두 회차가 다 필요하므로 **합친 배열**로 본다 — 카드가 나뉜 뒤
-      //     이 카드 행만 넘기면 1차·2차가 서로 안 보여 14일 간격 차단이 죽는다.
+      //   ⚠️ 판정 대상은 **날짜순 마지막 두 회차**다(3회 이상이면 최근 두 개). 2차가 출국
+      //     5일 이내여야 하는 요건이 마지막 회차에 걸리므로 그 짝을 본다.
       if (
         isInternalParasite &&
         (destinationKey === 'australia' || destinationKey === 'new_zealand')

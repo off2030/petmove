@@ -1928,21 +1928,25 @@ export const AU_INTERNAL_PARASITE = { windowDays: 45, minGapDays: 14, secondWith
  * 채우면 '완료'. 카드를 1차/2차로 쪼개는 안은 카드 수가 늘어 접었다.
  *
  * ⛔ 회차가 규정에 없는 곳을 여기 넣지 말 것 — 앱이 없는 요건을 만들어낸다:
- *   · 호주 **외부**구충 — DAFF 7.6 은 "Start at least 30 days before export and **repeat
- *     according to manufacturer's directions**" 로 시작 시점만 정하고 횟수를 안 정한다.
- *     제품마다 재적용 주기가 달라(피프로닐·퍼메트린 스팟온 월 1회, 스프레이는 더 짧음)
- *     앱이 몇 회인지 판단할 수 없다. 그래서 1회만 넣어도 완료다.
- *     (참고: 이소옥사졸린계 — 경구·국소 브라벡토, 넥스가드, 심파리카, 크레델리오 — 와
- *      셀라멕틴(레볼루션)은 **호주 불가**다. 물어야 약효가 나서 그 전에 병을 옮긴다.
- *      DAFF parasite-treatment 페이지 원문, 2026-07-30 확인.)
  *   · 나머지 목적지(터키·멕시코·브라질·UAE·하와이·괌·싱가포르·필리핀) — 창만 있고 횟수 없음.
  */
 export const PARASITE_REQUIRED_DOSES: Record<
   string,
   { internal?: number; external?: number | { dog: number; cat: number } }
 > = {
-  // 호주 — 내부만 2회(DAFF 7.7 "treated twice within 45 days before export").
-  australia: { internal: 2 },
+  // 호주 — 내부 2회(DAFF 7.7 "treated twice within 45 days before export").
+  //
+  // 외부도 2회(2026-07-30 사용자 지정). 7.6 은 횟수를 직접 적지 않고 "Start at least 30 days
+  //   before export and **repeat according to manufacturer's directions**" 라고만 하는데,
+  //   인정 제품으로는 그 창을 한 번으로 못 채운다:
+  //     · 이소옥사졸린계(경구·국소 브라벡토, 넥스가드, 심파리카, 크레델리오)와 셀라멕틴
+  //       (레볼루션)은 **불가** — 물어야 약효가 나서 그 전에 병을 옮긴다. 즉 12주 지속으로
+  //       30일을 덮는 선택지가 애초에 없다(DAFF parasite-treatment 원문, 2026-07-30 확인).
+  //     · 인정 목록은 전부 접촉 살충형(피프로닐·퍼메트린 스팟온 월 1회, 스프레이는 더 짧음)
+  //       이고, DAFF 는 "벼룩·진드기 재적용 주기가 다르면 **짧은 쪽**을 따르라"고 못박는다.
+  //   → 30일(개)·21일(고양이) 시작 하한 + 출국일까지 약효 유지를 지키려면 최소 2회다.
+  //   ⚠️ 상한은 두지 않는다 — 제품에 따라 3·4회도 정상이라 '기록 추가'로 계속 쌓을 수 있다.
+  australia: { internal: 2, external: 2 },
   // 뉴질랜드 — 내부 2회(IHS 2.3(1), 종 무관) · 외부는 **개만** 2회(2.2(2)).
   //   고양이는 2.2(1) 로 한 번이면 된다 — 종을 안 가르면 규정대로 준비한 고양이가 계속
   //   '진행 중'으로 남는다.
