@@ -467,13 +467,13 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     id: 'nz.dog-min-9months-on-departure',
     country: COUNTRY,
     category: '일정',
-    title: '출국일 시점 강아지 생후 9개월 이상',
+    title: '출국일 시점 생후 9개월 이상',
     description:
-      '지원문서 Rabies vaccination — "dogs will be at least 9 months of age before they can be sent to New Zealand". 12주 접종 + 1차 6개월 대기 + 채혈 3개월 창이 겹쳐 나오는 결과값이라 별도 조항이 아니라 **하한들의 합**이지만, 고객이 가장 먼저 부딪히는 벽이라 룰로 둔다.',
+      'IHS Guidance for transport — "A cat or dog ... approximate minimum ages from each category are: **9 months of age at the date of shipment category 3 countries**". 12주 접종 + 1차 6개월 대기 + 채혈 3개월 창이 겹쳐 나오는 결과값이라 별도 조항이 아니라 **하한들의 합**이지만, 고객이 가장 먼저 부딪히는 벽이라 룰로 둔다. ⚠️ 2026-07-30 정정 — 강아지 지원문서만 보고 개 전용으로 걸어 뒀는데, IHS 가이던스는 **고양이도 같은 9개월**이고 계산도 종에 무관하다. 생후 7개월 고양이 일정이 조용히 통과하고 있었다. (id 는 배선·스냅샷이 참조해 그대로 둔다.)',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
-      if (species(caseRow) !== 'dog') return SKIP
+      // ⛔ 종 가드를 되살리지 말 것(2026-07-30) — 9개월 하한은 고양이에게도 적용된다.
       const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
