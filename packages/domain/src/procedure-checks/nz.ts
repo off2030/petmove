@@ -982,12 +982,12 @@ export const NZ_CHECKS: ProcedureCheck[] = [
 
   // ── 심장사상충 — 강아지 전용 ──
   {
-    id: 'nz.heartworm-within-30days',
+    id: 'nz.heartworm-treatment-within-5days',
     country: COUNTRY,
     category: '구충',
-    title: '심장사상충 검사·투약은 출국 30일 이내 (강아지)',
+    title: '심장사상충 예방 투약은 출국 5일 이내 (강아지)',
     description:
-      'IHS 2.11 — 두 요건이 한 카드에 들어간다. (1) 생후 7개월 이상이면 ELISA 검사를 "on a sample taken in the 30 days before the date of shipment", (2) 모든 개는 예방약을 "in the 5 days before the date of shipment"(지속형 주사가 유효하면 면제). 카드 입력칸이 날짜 배열 하나(heartworm_dates)라 **바깥 창인 30일만** 판정한다 — 5일로 잡으면 검사일만 적은 정상 케이스를 오차단한다. 5일 투약 요건은 카드 문구가 안내한다.',
+      'IHS 2.11(2)(a) — "All dogs must be treated ... with a product registered for the prevention of heartworm **in the 5 days prior to shipment**; or be up to date with a **sustained-release injection**". 카드가 **예방 투약만** 담당하게 분리된 뒤(2026-07-30 사용자 지정) 이 창을 볼 수 있게 됐다 — 그전엔 같은 배열에 검사일이 섞여 바깥 창인 30일만 판정했다. 검사(30일 이내)는 전염병 검사 카드가 담당한다(시기가 같아 그쪽으로 옮겼다). ⚠️ 지속형 주사 케이스는 5일 창을 따르지 않으므로 **저장 거부는 만들지 않는다** — 유효기간 안에 있으면 되고 앱은 그 유효기간을 모른다.',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
@@ -1002,18 +1002,19 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (days < 0) {
         return {
           ok: false,
-          message: '심장사상충 검사일이 출국일보다 늦어요. 날짜를 확인하세요.',
+          message: '심장사상충 예방약 투여일이 출국일보다 늦어요. 날짜를 확인하세요.',
           offendingPaths: [`heartworm_dates[${latest.originalIndex}].date`],
         }
       }
-      if (days > 30) {
+      if (days > 5) {
         return {
           ok: false,
-          message: '심장사상충 검사는 출국 30일 이내에 받아야 해요. 예방약은 출국 5일 이내에 투여해요.',
+          message:
+            '심장사상충 예방약은 출국 5일 이내에 투여해야 해요. 지속형 예방 주사를 맞고 있다면 유효기간 안에 있으면 돼요.',
           offendingPaths: [`heartworm_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
-      return { ok: true, message: `최근 심장사상충 기록(${latest.date}) → 출국일(${dep}): ${days}일.` }
+      return { ok: true, message: `최근 예방 투약(${latest.date}) → 출국일(${dep}): ${days}일.` }
     },
   },
 ]

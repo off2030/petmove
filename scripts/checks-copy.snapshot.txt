@@ -180,9 +180,9 @@
 [nz.lungworm-within-5days]
   폐충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.
   폐충 치료는 출국 5일 이내에 받아야 해요.
-[nz.heartworm-within-30days]
-  심장사상충 검사일이 출국일보다 늦어요. 날짜를 확인하세요.
-  심장사상충 검사는 출국 30일 이내에 받아야 해요. 예방약은 출국 5일 이내에 투여해요.
+[nz.heartworm-treatment-within-5days]
+  심장사상충 예방약 투여일이 출국일보다 늦어요. 날짜를 확인하세요.
+  심장사상충 예방약은 출국 5일 이내에 투여해야 해요. 지속형 예방 주사를 맞고 있다면 유효기간 안에 있으면 돼요.
 [ph.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [ph.rabies-prime-21days-before-arrival]

@@ -1904,7 +1904,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   판정할 수 없다 — 고양이 작업 때 함께 볼 것.
       'infectious-disease-test': {
         description:
-          '출국일 기준 30일 이내에 전염병 검사를 받아요.\n\n바베시아 깁소니(Babesia gibsoni) 검사를 받아요. IFAT 또는 ELISA와 PCR을 함께 받아요.\n바베시아 검사는 1차 외부 기생충 치료 14일 후부터 할 수 있어요.\n리슈만편모충(Leishmania infantum) 검사를 받아요. IFAT·ELISA 검사만 인정돼요.\n렙토스피라(Leptospira canicola) 검사를 받아요. MAT만 인정돼요.\n렙토스피라 검사 대신 출국 30일 이내에 14일 약물 치료를 받는 방법도 있어요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT 또는 TAT만 인정돼요.\n중성화했다면 수의사가 서명한 중성화 증명서를 준비해요.\n해외 공인 검사기관에서 받아야 하며, 임상 수의사만 의뢰할 수 있어요.\n일반 동물병원에서는 이 검사들을 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
+          '출국일 기준 30일 이내에 전염병 검사를 받아요.\n\n바베시아 깁소니(Babesia gibsoni) 검사를 받아요. IFAT 또는 ELISA와 PCR을 함께 받아요.\n바베시아 검사는 1차 외부 기생충 치료 14일 후부터 할 수 있어요.\n출국일 기준 생후 7개월 이상이면 심장사상충(Dirofilaria immitis) 검사도 함께 받아요. ELISA 또는 ELISA SNAP만 인정돼요.\n리슈만편모충(Leishmania infantum) 검사를 받아요. IFAT·ELISA 검사만 인정돼요.\n렙토스피라(Leptospira canicola) 검사를 받아요. MAT만 인정돼요.\n렙토스피라 검사 대신 출국 30일 이내에 14일 약물 치료를 받는 방법도 있어요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT 또는 TAT만 인정돼요.\n중성화했다면 수의사가 서명한 중성화 증명서를 준비해요.\n해외 공인 검사기관에서 받아야 하며, 임상 수의사만 의뢰할 수 있어요.\n일반 동물병원에서는 이 검사들을 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
         validationIds: [
           'nz.infectious-disease-test-within-30days',
           'nz.infectious-disease-test-after-external-parasite',
@@ -1998,10 +1998,27 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       },
       // 심장사상충 — IHS 2.11. 검사(생후 7개월 이상, 출국 30일 이내)와 예방 투약(출국 5일 이내)이
       //   한 카드에 들어간다. 카드 입력칸은 날짜 배열 하나(heartworm_dates)라 두 사실을 같이 적는다.
+      // 심장사상충 — IHS 2.11 은 **검사(출국 30일 이내)와 예방 투약(5일 이내)이 시기가 다른
+      //   별개 항목**이다. 검사는 시기가 전염병 검사와 완전히 같아(둘 다 출국 30일 이내) 그
+      //   카드로 옮기고, 이 카드는 **예방 투약만** 담당한다(2026-07-30 사용자 지정).
+      //   ⛔ 검사 문구를 여기 되돌리지 말 것 — 한 카드에 두 시기를 담으면 날짜 배열 하나에
+      //     검사일과 투약일이 섞여 어느 창으로도 판정할 수 없다(그래서 30일만 보고 있었다).
+      //   ⚠️ 괌은 검사·예방을 '도착 14일 이내'에 함께 하므로 나누지 않는다 — 이 override 는
+      //     뉴질랜드 전용이고 base·괌 문구는 손대지 않았다.
       'heartworm-test': {
+        title: '심장사상충 예방 투약',
         description:
-          '심장사상충 검사와 예방 투약을 하세요.\n\n출국일 기준 생후 7개월 이상이면 출국 30일 이내에 채혈해서 검사를 받아요.\n모든 강아지는 출국 5일 이내에 예방약을 투여해요. 지속형 예방 주사를 맞고 있다면 유효기간 안에 있으면 돼요.\n승인된 검사기관에서 받아야 하고, 동물병원 내부 간이 검사는 인정되지 않아요.',
-        validationIds: ['nz.heartworm-within-30days'],
+          '심장사상충 예방약을 투여하세요.\n\n모든 강아지는 출국 5일 이내에 투여해요.\n지속형 예방 주사를 맞고 있다면 유효기간 안에 있으면 돼요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
+        doneSummary: '심장사상충 예방약을 투여했어요.',
+        // 투약은 출국 5일 이내(2.11(2)(a)). 지속형 주사 케이스는 그 창을 따르지 않으므로
+        //   저장 거부는 만들지 않고 주의로만 본다.
+        validationIds: ['nz.heartworm-treatment-within-5days'],
+        links: [
+          {
+            url: 'https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA',
+            label: '승인 제품 목록 (MPI-STD-SAA, PDF)',
+          },
+        ],
       },
       // 임상검사 — IHS 1.12: 출국 **2일 이내**(프로파일 vetVisitWindowDays: 3 과 짝).
       //   base 문구(10일)가 그대로 노출되면 차단과 어긋난다(호주 5일과 같은 정정).
