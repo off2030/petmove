@@ -2087,7 +2087,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   //   2024-04-01 AIA 지침 · 공개된 개 Veterinary Health Certificate(2026-03판).
   //   조사 정리본은 docs/south-africa-pet-travel-guide-draft.md, 수치 근거는 procedure-checks/za.ts.
   // sea-permit 골격에 남아공 고유 절차를 얹는다. 허가·예약·운송 순서는(2026-07-30 사용자 확정):
-  //   AIA 수입 허가(38) → 수의검역 수입 허가(40) → 운송 예약(42) ∥ 검역시설 예약(44).
+  //   AIA 수입 허가(38) → 수의검역 수입 허가(40) → 검역시설 예약(42) ∥ 운송 예약(46).
   //   마지막 둘은 '다음 할 일'에 **함께** 뜬다(교차 의존 — 각 카드 주석 참고).
   //   그 뒤로 5종 전염병 검사 · 살진드기·기피 처치 · 심장사상충 예방.
   // 호주·뉴질랜드와 형제로 보이지만 **베끼면 틀리는 자리**가 다섯이다:
@@ -2146,18 +2146,19 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         //   · '변경·환불이 어려운 항공권은 수입 허가가 나온 뒤에 확정하세요.'
         //   · '경유하는 나라가 있으면 그 나라의 환적 허가도 확인하세요.'
         //   · '단두종·대형견·공격성 제한 견종은 항공사별 추가 제한이 있어요.'
-        //   ⚠️ 앞 둘은 order 42(검역시설 예약 앞)를 정한 **근거였던 문장**이다. 지웠어도 순서는
-        //     그대로 둔다 — 의존 자체가 사라진 게 아니고(검역 예약 카드가 '희망 입국일을 정한 뒤
-        //     일찍 문의하세요'로 여전히 말한다), 두 카드는 어차피 '다음 할 일'에 함께 뜬다.
+        //   ⚠️ 앞 둘이 한때 운송을 검역시설 예약 앞에 두는 근거였다. 그 줄이 사라지며 순서도
+        //     검역 예약 → 운송으로 되돌렸다(2026-07-30 최종).
         '남아프리카공화국 입국 일정에 맞춰 운송을 예약하세요.\n\n기내 반입이나 위탁수하물로는 갈 수 없어요. 항공화물(Manifest Cargo)로 예약하고 화물운송장(AWB)을 받아요.\n강아지는 요하네스버그(JNB)나 케이프타운(CPT) 공항으로만 도착할 수 있어요. 두 곳에만 검역시설이 있어요.',
-      // 수입 허가(40) 다음, 검역시설 예약(44) **앞**(2026-07-30 사용자 확정).
-      //   ⛔ 검역시설 예약 뒤로 되돌리지 말 것 — 두 카드 문구가 모두 '운송 정보가 검역
-      //     예약에 필요하다'고 말한다("경로와 희망 입국일은 **먼저** 알아보세요" /
-      //     "**희망 입국일을 정한 뒤** 일찍 문의하세요"). 검역 예약이 위에 있으면 위에서부터
-      //     읽는 사람이 거기서 되돌아와야 한다.
-      //   동시 노출(concurrent)은 **쌍의 뒤쪽**인 검역시설 예약 카드에 붙어 있다
-      //     (catalog za-quarantine-reservation) — head run 이 mainIdx **뒤**를 올리기 때문.
-      order: 42,
+      // 검역시설 예약(42) 다음(2026-07-30 사용자 확정 — 최종).
+      //   검역 자리가 **귀한 자원**이라 그걸 먼저 잡고 거기 맞춰 운송을 예약하는 게 실무다.
+      //   ⚠️ 한때 운송을 앞(42)에 뒀던 적이 있다 — 카드 문구가 '경로와 희망 입국일은 먼저
+      //     알아보세요'라고 말해서였는데, 그 줄이 삭제되면서 근거도 사라졌다. 되돌리지 말 것.
+      order: 46,
+      // 검역시설 예약(42)과 **동시에** '다음 할 일'로 뜬다. concurrent 는 쌍의 **뒤쪽**에
+      //   붙는다(scenario.ts head run 이 mainIdx 뒤를 올린다).
+      //   ⚠️ 수입 허가(40) 단계에서는 안 뜬다 — 사이의 검역 예약(42)이 비-concurrent 라
+      //     head run 이 거기서 멈춘다. 허가가 끝나야 둘이 함께 올라온다.
+      concurrent: true,
       validationIds: [
         // 광견병 30일 대기·출국일 유효기간 — 조치가 '출국일을 미루는 것'이라 여기(베트남과 동일).
         'za.rabies-min-30days-before-departure',
@@ -2204,7 +2205,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       cardLine: '남아프리카공화국 수입 허가를 신청하세요.',
       attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
       attachmentLabel: '남아프리카공화국 수입 허가증',
-      // AIA(38) 바로 뒤 — 운송 예약(42)·검역시설 예약(44)보다 **앞**이다(위 ⛔ 주석의 이유).
+      // AIA(38) 바로 뒤 — 검역시설 예약(42)·운송 예약(46)보다 **앞**이다(위 ⛔ 주석의 이유).
       order: 40,
       deadline: undefined,
       // 버튼 완료 카드(2026-07-30 사용자 확정) — AIA·호주 수입 허가와 같은 모델.
@@ -3402,6 +3403,11 @@ function seaPermitOverrides(opts: {
     shortLabel?: string
     doneSummary?: string
     attachmentHint?: string
+    /**
+     * (선택) 직전 카드와 **동시에** '다음 할 일'로 올린다(남아공 — 검역시설 예약 ∥ 운송 예약).
+     * concurrent 는 쌍의 **뒤쪽**에 붙는다 — scenario.ts head run 이 mainIdx **뒤**를 올린다.
+     */
+    concurrent?: boolean
   }
   importPermit: Partial<StepDefinition>
   importQuarantine: {
@@ -3489,6 +3495,7 @@ function seaPermitOverrides(opts: {
       earliest: undefined,
       validationIds: opts.flight.validationIds,
       ...(opts.flight.links ? { links: opts.flight.links } : {}),
+      ...(opts.flight.concurrent ? { concurrent: true } : {}),
     },
     'import-permit': {
       inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
