@@ -1383,9 +1383,19 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   },
 
   // ── 남아공 AIA 수입 허가 (개 전용) — 수의검역 수입 허가 **전** ────────────────
-  // 남아공은 개에게 허가가 **두 장** 필요하다. Animal Improvement Act 허가(2024-04-01 지침으로
-  //   신설)를 Animal Improvement Registrar 에게 먼저 받고, 그 허가서를 붙여 수의검역 수입
-  //   허가(import-permit)를 신청한다. 고양이는 AIA 면제라 이 카드가 뜨지 않는다.
+  // ✅ 1차 출처(2026-07-30 원문 확인) — DALRRD 보도자료 2024-04-10 "THE DEPARTMENT OF
+  //   AGRICULTURE INTRODUCES NEW DIRECTIVES FOR THE IMPORTATION AND EXPORTATION OF LIVE ANIMALS".
+  //   허가가 **두 장**인 이유는 근거법이 다르기 때문이다:
+  //     · AIA 허가 = Animal Improvement Act, 1998 (Act 62/1998) **제16조** — 가축 개량·유전자원
+  //     · 수의검역 수입 허가 = Animal Diseases Act, 1984 (Act 35/1984) — 질병 방역
+  //   순서는 규정이 못박는다 — "the Animal Improvement Permit/authorisation must be applied for
+  //   **first**, and the AIA Permit/authorisation must be **attached to** the application for the
+  //   Veterinary Import Permit". 그래서 order 38(AIA) → 44(수의검역)다.
+  //   고양이 면제도 명문이다 — "animals such as **cats**, birds and fish **do not require** an AIA
+  //   Permit/authorisation for importation". ⛔ species: 'dog' 를 'all' 로 넓히지 말 것.
+  //   ⚠️ 개가 대상인 근거는 '개는 필요' 명시가 아니라 **제외 목록에 없다**는 방식이다(살아있는
+  //     동물 전체 대상, 야생동물·고양이·조류·어류만 제외).
+  //   ⚠️ 2024-04-01 **이전** 발급된 수의검역 수입허가에도 소급 적용된다(유효한 AIA 허가 사본 첨부).
   // 처리에 최대 30영업일이 걸려 준비 전체에서 **가장 먼저 시작해야 하는 절차**다 → 광견병
   //   접종(30) 바로 뒤(38)에 둔다. 계류시설 예약(42)·수입 허가(44)보다 앞.
   // ⚠️ 대행업체 주의 — 남아공 농업부가 허위·부정 신청 관련 개 수입 대리인 인가를 취소한
