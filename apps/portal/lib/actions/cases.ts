@@ -2364,10 +2364,17 @@ export async function markImportPermitIssued(
     //   받지 않고 허가 번호·첨부·완료 버튼 셋 중 하나로 완료하는 모델이라, 이 게이트를 그대로
     //   두면 완료 버튼이 "신청일이 입력되어 있지 않습니다."로 막힌다. 판정은 카드 선언에서
     //   파생한다(deriveApplicationStatus·완료 버튼 노출 조건과 같은 기준).
-    const collectsFiledDate = resolveStepDateFields(
-      'import-permit',
-      destination ?? caseDestStr,
-    ).includes('import_permit_application_date')
+    //   ⚠️ 목적지는 **resolveWriteToken 이 푼 token** 으로 본다. `destination ?? caseDestStr` 로
+    //   보면 둘 다 비어 있을 때(단일 목적지라 ?dest 가 없고 cases.destination 이 비어 케이스
+    //   data 에만 목적지가 있는 경우) base 카드로 폴백해 신청일 칸이 있는 것으로 판정하고,
+    //   뉴질랜드 완료 버튼이 "신청일이 입력되어 있지 않습니다."로 막혔다(2026-07-30 실기기 발견).
+    //   목적지를 못 풀면 **막지 않는다**. 못 푼 상태에서 base 카드로 폴백하면 신청일 칸이 없는
+    //   목적지(뉴질랜드)까지 신청일을 요구하게 된다. 완료 버튼 자체가 그 카드에서만 뜨므로,
+    //   판정 불가일 때 통과시키는 편이 안전하다.
+    const destForCard = token ?? destination ?? caseDestStr
+    const collectsFiledDate =
+      !!destForCard &&
+      resolveStepDateFields('import-permit', destForCard).includes('import_permit_application_date')
     if (collectsFiledDate && filed.length < 10) {
       return { ok: false, error: '신청일이 입력되어 있지 않습니다.' }
     }
