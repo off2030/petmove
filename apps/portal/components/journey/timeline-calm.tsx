@@ -412,9 +412,10 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/australia-19.webp',
   ],
   뉴질랜드: [
-    // Unsplash 15장(목적지별 사진/뉴질랜드 폴더 원본, 2026-07-27 등록). 파일명 abc순.
-    // ⚠️ 리드(첫 장)는 **아직 사용자가 고르지 않았다** — 현재는 abc순 첫 장이 리드다.
-    //   컨택트시트 검수 후 지정하면 그 파일을 맨 위로 올릴 것(호주 australia-09 와 같은 방식).
+    // Unsplash 15장(목적지별 사진/뉴질랜드 폴더 원본, 2026-07-27 등록).
+    // 리드(첫 장) = newzealand-14(푸카키 호수·남알프스 설산 해질녘) — 2026-07-30 사용자 지정.
+    // 나머지는 파일명 abc순 유지(호주 australia-09·미국 usa-14 리드 지정과 같은 방식).
+    '/destinations/newzealand-14.webp',
     '/destinations/newzealand-01.webp',
     '/destinations/newzealand-02.webp',
     '/destinations/newzealand-03.webp',
@@ -428,7 +429,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/newzealand-11.webp',
     '/destinations/newzealand-12.webp',
     '/destinations/newzealand-13.webp',
-    '/destinations/newzealand-14.webp',
     '/destinations/newzealand-15.webp',
   ],
   남아프리카공화국: [
