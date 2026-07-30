@@ -186,7 +186,12 @@ for (const { file, name } of WHITELIST_SETS) {
   } catch {
     continue
   }
-  const wm = wsrc.match(new RegExp(`${name}[^=]*=\\s*new Set\\(\\[([\\s\\S]*?)\\]\\)`, 'm'))
+  // ⚠️ **선언(`const NAME =`)에 고정**해야 한다 — 이름만 찾으면 위쪽 주석에 먼저 나온 같은
+  //   이름('PARASITE_FIELD_KEYS 와 같은 패턴')에 걸려 **엉뚱한 Set 본문**을 읽는다. 그 탓에
+  //   PARASITE 명단이 VACCINE 명단으로 해석돼 lungworm_dates 미분류를 놓쳤다(2026-07-30).
+  const wm = wsrc.match(
+    new RegExp(`const\\s+${name}\\s*(?::[^=]*)?=\\s*new Set\\(\\[([\\s\\S]*?)\\]\\)`, 'm'),
+  )
   if (!wm) continue
   for (const km of wm[1].matchAll(/'([^']+)'|"([^"]+)"/g)) {
     const key = km[1] ?? km[2]
