@@ -2046,7 +2046,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   순서 제약(검역일 ≥ 임상검사일)은 validateKrExportDate 가 이미 담당한다.
       'certificate-issue': {
         description:
-          '출국일 기준 2일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.\n임상검사와 2차 내부 기생충 치료를 마친 뒤에 방문해야 해요.',
+          '출국일 기준 2일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
         deadline: { anchor: 'departure', daysBefore: 2, window: true },
       },
     },
