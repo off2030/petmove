@@ -60,7 +60,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // 일본 전용이라 여기서만 description 을 덮어쓴다. (base 를 직접 고치면 전 목적지에 누수됨.)
     'vet-visit': {
       description:
-        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 FormAC를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 FormAC를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
     },
   },
   // ── 중국 (GACC 海关总署) ──────────────────────────────────────────────
@@ -1317,7 +1317,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // base 문구(10일)가 차단(2일)과 어긋나던 것 정정(2026-07-25 — 싱가포르와 같은 부류).
     'vet-visit': {
       description:
-        '출국일 기준 2일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+        '출국일 기준 2일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
       deadline: { anchor: 'departure', daysBefore: 1, window: true },
     },
     'certificate-issue': {
@@ -1470,7 +1470,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // 발급받아야 한다. 일본(FormAC)·EU(Annex III)와 같은 자리·같은 문형.
     'vet-visit': {
       description:
-        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 대만 건강증명서(APHIA Form 002)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 대만 건강증명서(APHIA Form 002)를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
     },
     departure: importQuarantineCard({
       label: '대만',
@@ -1730,12 +1730,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   · 검진 항목 줄('마이크로칩 확인, 전염병 증상 확인, 외부 기생충 검사')을 뺐다.
       //     DAFF 8.1 원문은 external parasites + clinical signs of infectious disease 둘뿐이라
       //     마이크로칩 확인은 근거가 없었다. 뉴질랜드 카드에는 이 줄이 남아 있다(IHS 별도 확인 전).
-      //   · 마지막 줄이 다른 목적지 29곳의 공용 문형('이 서류를 발급하지 않는 동물병원도 있으니
-      //     미리 확인하세요.')과 **호주만 다르다** — 전염병 검사 카드와 같은 문형으로 맞춘
-      //     사용자 판단이다. 공용 문형으로 되돌리지 말 것.
+      //   · 마지막 줄은 2026-07-28 에 호주만 이 문형이었는데, 2026-07-30 사용자 지정으로
+      //     **이 어투가 전 목적지 공용 문형이 됐다**('일반 동물병원에서는 이 서류를 발급하지
+      //     않아요. 동물병원 방문 전에 확인하세요.'). 구 문형('…동물병원도 있으니 미리
+      //     확인하세요.')으로 되돌리지 말 것. 어미만 '확인이 필요해요' → '확인하세요'로 통일.
       'vet-visit': {
         description:
-          '출국일 기준 5일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 호주 건강증명서(Veterinary Health Certificate)를 발급받아요.\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인이 필요해요.',
+          '출국일 기준 5일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 호주 건강증명서(Veterinary Health Certificate)를 발급받아요.\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
         deadline: { anchor: 'departure', daysBefore: 5, window: true },
       },
       // 한국 수출 검역도 같은 5일 창(validateKrExportDate 가 getVetVisitWindowDays 공유).
@@ -2036,7 +2037,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   base 문구(10일)가 그대로 노출되면 차단과 어긋난다(호주 5일과 같은 정정).
       'vet-visit': {
         description:
-          '출국일 기준 2일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 뉴질랜드 건강증명서(Model Veterinary Certificate)를 발급받아요.\n\n마이크로칩 확인, 전염병 증상 확인, 외부 기생충 검사를 함께 받아요. 중성화하지 않은 강아지는 생식기 검사도 받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+          '출국일 기준 2일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 뉴질랜드 건강증명서(Model Veterinary Certificate)를 발급받아요.\n\n마이크로칩 확인, 전염병 증상 확인, 외부 기생충 검사를 함께 받아요. 중성화하지 않은 강아지는 생식기 검사도 받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
         deadline: { anchor: 'departure', daysBefore: 2, window: true },
       },
       // 한국 수출 검역도 같은 2일 창(validateKrExportDate 가 getVetVisitWindowDays 공유).
@@ -2242,7 +2243,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // base 문구(10일)가 차단(7일)과 어긋나던 것 정정(2026-07-25 — 싱가포르와 같은 부류).
       'vet-visit': {
         description:
-          '출국일 기준 7일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+          '출국일 기준 7일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
         deadline: { anchor: 'departure', daysBefore: 6, window: true },
       },
       'certificate-issue': {
@@ -2375,7 +2376,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   base 9(10일 창)에서 6(7일 창)으로.
       'vet-visit': {
         description:
-          '출국일 기준 7일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 싱가포르 건강증명서(Schedule III)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+          '출국일 기준 7일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 싱가포르 건강증명서(Schedule III)를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
         deadline: { anchor: 'departure', daysBefore: 6, window: true },
       },
       // 한국 수출 검역도 같은 7일 창(차단 validateKrExportDate 가 getVetVisitWindowDays 공유)
@@ -3333,7 +3334,7 @@ function euFamilyOverrides(opts: {
     // EU 회원국 입국 필수 서류(Reg. (EU) 2026/705 Annex III). 비EU(영국·스위스 등)엔 미적용.
     overrides['vet-visit'] = {
       description:
-        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 EU 동물건강증명서(Annex III)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 EU 동물건강증명서(Annex III)를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
     }
   }
   return overrides
