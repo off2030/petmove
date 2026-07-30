@@ -1395,24 +1395,37 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   //   ⚠️ 개가 대상인 근거는 '개는 필요' 명시가 아니라 **제외 목록에 없다**는 방식이다(살아있는
   //     동물 전체 대상, 야생동물·고양이·조류·어류만 제외).
   //   ⚠️ 2024-04-01 **이전** 발급된 수의검역 수입허가에도 소급 적용된다(유효한 AIA 허가 사본 첨부).
-  // 처리에 최대 30영업일이 걸려 준비 전체에서 **가장 먼저 시작해야 하는 절차**다 → 광견병
-  //   접종(30) 바로 뒤(38)에 둔다. 수입 허가(40)·검역시설 예약(42)보다 앞.
+  // 광견병 접종(30) 바로 뒤(38) — 수입 허가(40)·검역시설 예약(42)보다 앞.
+  //   ⚠️ 구 주석의 근거('처리에 최대 30영업일')는 **오류였다**(2026-07-30 원문 대조). 신청서에
+  //     심사 소요기간은 없다. 그래도 38 이 맞는 자리인 이유는 규정이 정한 **순서** 자체다 —
+  //     AIA 허가서가 수의검역 허가 신청의 첨부물이고(DALRRD 2024-04-10), 그 수의검역 허가도
+  //     '출국 최소 4주 전 신청'이라 AIA 는 그보다 더 앞이어야 한다.
   {
     id: 'za-aia-permit',
     category: 'permit',
     title: 'AIA 수입 허가 신청',
     shortLabel: 'AIA',
-    // 사용자 확정본 4줄(2026-07-30 직접 지정). ⛔ 다듬지 말 것 — 일부러 뺀 줄이 다섯이다:
-    //   · '강아지만 받는 허가예요.' — 카드가 개 전용(species: 'dog')이라 보는 사람에겐 자명하다.
-    //   · '이 허가서가 있어야 수의검역 수입 허가를 신청할 수 있어요.' — 순서 안내는 수입 허가
-    //     카드('강아지는 AIA 수입 허가를 먼저 받아야 신청할 수 있어요')가 담당한다.
-    //   · '3개월을 넘겨 머무는 경우에는 영구수입(Permanent Importation) 신청서를 써요.'
-    //   · '반려 목적으로 데려가는 미등록 강아지는 중성화 증명서가 필요해요.'
-    //   · '대행업체를 이용하더라도 허가 번호와 발급기관을 직접 확인하세요.'
-    //   ⚠️ 뒤 셋은 초안·AIA 신청서 서식 출처로 **1차 출처 미확인**이었다(뺀 이유와 무관하게
-    //     되살릴 땐 근거부터 확보할 것). '6개월 1회 운송'도 '6개월간 유효'로 완화했다.
+    // ✅ 1차 출처 확보(2026-07-30) — AIA 신청서 원문 "APPLICATION FOR PERMANENT IMPORTATION OF
+    //   DOGS AND RELATED GENETIC MATERIAL", (AIA) Version I of 2026/2027, Directorate Animal
+    //   Production / Sub-directorate Animal Improvement. 확인된 사실:
+    //     · 4항 "Application to be submitted **30 days prior to importation**."
+    //       ⛔ 구 문구 '심사에 최대 30영업일이 걸리니'는 **틀렸다**(2026-07-30 정정). 서식에
+    //         심사 소요기간은 없고, 30일은 **신청 마감**(수입 30일 전)이며 영업일도 아니다.
+    //         초안의 '처리기간 30영업일'을 그대로 옮긴 것이었다.
+    //     · 6항 "Import permits are valid for a period of **six months** and apply to **one
+    //       consignment only**." → 6개월 유효 ✅ + '1회 운송'도 사실이었다(사용자가 완화한 표현
+    //       그대로 두되, 되살리려면 이 근거를 쓸 것).
+    //     · 1항 "where the intended stay **exceeds three months**" → 3개월 초과 체류가
+    //       영구수입 신청서 대상 ✅ (사용자 지시로 문구에서만 뺐다 — 사실은 맞다).
+    //     · 5(g) "Sterilization Certificate (**all companion/unregistered dogs**)" → 중성화
+    //       증명서 ✅ (같이 뺀 줄이지만 사실은 맞다. 서류 탭 za-desexing-certificate 는 유지).
+    //     · 5(c) 수수료 R420.00 (non-refundable, 2026/2027) · 제출처 The Registrar of Animal
+    //       Improvement, Animalimp@nda.gov.za → 카드의 'Animal Improvement Registrar' 표기 ✅
+    // 사용자 확정본 4줄(2026-07-30 직접 지정) — 3번째 줄만 위 정정으로 사실을 바로잡았다.
+    //   ⛔ 나머지를 다듬지 말 것. 일부러 뺀 줄: 개 전용 안내(카드가 개 전용이라 자명) · 순서 안내
+    //   (수입 허가 카드가 담당) · 영구수입 신청서 · 중성화 증명서 · 대행업체 확인.
     description:
-      '남아공 농업부 Animal Improvement Registrar에 AIA 수입 허가를 신청하세요.\n\n수의검역 수입 허가와는 별개의 서류예요.\n심사에 최대 30영업일이 걸리니 가장 먼저 시작하세요.\n허가는 발급일부터 6개월간 유효해요.',
+      '남아공 농업부 Animal Improvement Registrar에 AIA 수입 허가를 신청하세요.\n\n수의검역 수입 허가와는 별개의 서류예요.\n수입 30일 전까지 신청해야 해요.\n허가는 발급일부터 6개월간 유효해요.',
     doneSummary: 'AIA 수입 허가를 받았어요.',
     cardLine: 'AIA 수입 허가를 신청하세요.',
     applicability: { destinations: ['south_africa'], species: 'dog', tripType: 'all' },
@@ -1459,7 +1472,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '검역시설 예약',
     shortLabel: '검역장',
     description:
-      '남아공 국가 검역시설에 검역을 예약하세요.\n\n한국은 남아공의 개 검역 면제국이 아니라서 강아지는 도착 후 검역을 받아요.\n수입 허가에 검역이 명시되면 예약해요.\n입국 공항의 국가 수의사(State Veterinarian)에게 연락해 자리를 확인해요.\n요하네스버그는 Kempton Park, 케이프타운은 Milnerton 검역시설을 이용해요.\n희망 입국일을 정한 뒤 일찍 문의하세요. 자리가 없는 경우가 많아요.\n검역 면책동의서(Indemnity Declaration)도 함께 작성해요.\n예약 확인서와 면책동의서는 수입 허가가 나오기 전에 반영해요.\n검역·검사·운송 비용은 보호자가 부담해요.',
+      // ⛔ '예약 확인서와 면책동의서는 수입 허가가 나오기 전에 반영해요.' 를 되살리지 말 것
+      //   (2026-07-30 사용자 지시로 삭제). 원문이 순환이라("수입허가서에 검역이 명시되면 →
+      //   예약 → 그 예약을 수입허가 신청서에 반영") 서류가 언제 어떤 경로로 들어가는지 확실치
+      //   않은데 '반영'이라는 모호한 동사로 뭉뚱그린 문장이었다. 확실치 않으면 말하지 않는다.
+      '남아공 국가 검역시설에 검역을 예약하세요.\n\n한국은 남아공의 개 검역 면제국이 아니라서 강아지는 도착 후 검역을 받아요.\n수입 허가에 검역이 명시되면 예약해요.\n입국 공항의 국가 수의사(State Veterinarian)에게 연락해 자리를 확인해요.\n요하네스버그는 Kempton Park, 케이프타운은 Milnerton 검역시설을 이용해요.\n희망 입국일을 정한 뒤 일찍 문의하세요. 자리가 없는 경우가 많아요.\n검역 면책동의서(Indemnity Declaration)도 함께 작성해요.\n검역·검사·운송 비용은 보호자가 부담해요.',
     doneSummary: '검역시설을 예약했어요.',
     cardLine: '검역시설을 예약하세요.',
     applicability: { destinations: ['south_africa'], species: 'dog', tripType: 'all' },

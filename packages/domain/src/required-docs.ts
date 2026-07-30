@@ -1188,6 +1188,9 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       issuanceStepId: 'vet-visit',
       species: 'dog',
       desexedOnly: true,
+      // ✅ 1차 출처 확인(2026-07-30) — AIA 신청서(Version I of 2026/2027) 5(g)
+      //   "Sterilization Certificate (**all companion/unregistered dogs**)". 번식·등록견 갈래도
+      //   같은 항목에 있다 — 5(d) 2대 혈통서 · 5(e) DNA 프로파일 · 5(f) Breeders' Society 선언서.
       description:
         '반려 목적으로 데려가는 미등록 강아지는 AIA 수입 허가를 신청할 때 중성화 증명서가 필요해요.\n\n번식·등록견은 혈통서·DNA 프로파일 등 다른 증빙이 필요하니 미리 확인하세요.',
     },
