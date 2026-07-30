@@ -3935,13 +3935,13 @@
 ▸ heartworm-test
   title: 심장사상충 예방
   short: 심장
-  done: 심장사상충 예방약을 투여했어요.
+  done: 심장사상충 예방을 했어요.
   desc:
       심장사상충 예방을 하세요.
       
       출국 5일 이내에 해요.
       뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.
-  저장이름: 심장사상충 검사
+  저장이름: 심장사상충 예방
   links:
       승인 제품 목록 (MPI-STD-SAA, PDF)  →  https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA
 

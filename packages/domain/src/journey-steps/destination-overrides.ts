@@ -2017,9 +2017,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         title: '심장사상충 예방',
         description:
           '심장사상충 예방을 하세요.\n\n출국 5일 이내에 해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
-        doneSummary: '심장사상충 예방약을 투여했어요.',
-        // 투약은 출국 5일 이내(2.11(2)(a)). 지속형 주사 케이스는 그 창을 따르지 않으므로
-        //   저장 거부는 만들지 않고 주의로만 본다.
+        doneSummary: '심장사상충 예방을 했어요.',
+        // base 첨부 라벨이 '심장사상충 검사'다 — 뉴질랜드는 검사를 전염병 검사 카드로 옮겼으니
+        //   이 카드에 올리는 서류는 예방 기록이다(2026-07-30).
+        attachmentLabel: '심장사상충 예방',
+        // 출국 5일 이내(2.11(2)(a)) — 주의 + **저장 거부**(validateNzWithin5Days) 둘 다.
+        //   2026-07-30 사용자 지정으로 주의만 두던 것을 차단으로 올렸다. 지속형 주사 케이스
+        //   (2.11(2)(b))도 함께 거부되는 트레이드오프는 date-rules 주석 참고.
         validationIds: ['nz.heartworm-treatment-within-5days'],
         links: [
           {

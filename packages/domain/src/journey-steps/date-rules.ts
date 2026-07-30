@@ -1994,6 +1994,52 @@ export function validateNzInfectiousTestAfterExternal(
   return null
 }
 
+/**
+ * 뉴질랜드 '출국 5일 이내' 처치 — 폐충(IHS 2.4)·심장사상충 예방(2.11(2)(a)) 공용.
+ *
+ * 원문(2026-07-30 IHS 2026 전문 재확인):
+ *   · 2.4 Angiostrongylus vasorum **(dogs)** — "treated ... with a product listed in MPI-STD-SAA
+ *     effective against Angiostrongylus vasorum, **in the 5 days before the date of shipment**".
+ *   · 2.11(2) Heartworm **(dogs)** — "(a) Treated ... for heartworm prevention **in the 5 days
+ *     before the date of shipment**; or (b) Up to date with a **sustained-release injection**".
+ *
+ * 저장 거부로 막는다(2026-07-30 사용자 지정). 그전엔 둘 다 주의만 있어서 창 밖 날짜가 그대로
+ * 저장됐다 — 심장사상충은 바깥 창(내부구충용 30일)에 잡혀 5일 초과가 통과했고, 폐충은 아무
+ * 차단도 없었다.
+ *
+ * ⚠️ 심장사상충 2.11(2)(b) 지속형 주사 케이스는 이 창을 따르지 않는다. 앱은 제품 유효기간을
+ *   모르므로 그 케이스도 5일 밖 날짜는 거부된다 — 사용자 판단으로 감수한 트레이드오프다
+ *   (카드 문구에서도 지속형 주사 안내를 뺐다). 되살릴 땐 카드 문구·주의·차단을 함께 되돌릴 것.
+ *
+ * client(저장 거부)·procedure-check(nz.lungworm-within-5days·nz.heartworm-treatment-within-5days)
+ * 공용 단일 출처. 출국일이 비면 통과 — 처치를 먼저 하는 순서를 막지 않는다.
+ */
+export const NZ_WITHIN_5_DAYS = 5
+
+/** '…은/는' 판정 — 라벨 끝 음절의 받침 유무. (destination-overrides 의 subjectParticle 과 같은 계산.) */
+function topicParticle(label: string): '은' | '는' {
+  const code = label.trim().slice(-1).charCodeAt(0)
+  if (code >= 0xac00 && code <= 0xd7a3) return (code - 0xac00) % 28 === 0 ? '는' : '은'
+  return '은'
+}
+
+export function validateNzWithin5Days(
+  treatDate: string,
+  departureDate: string,
+  label: string,
+): string | null {
+  const date = (treatDate ?? '').slice(0, 10)
+  const dep = (departureDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{4}-\d{2}-\d{2}$/.test(dep)) return null
+  const days = daysBetween(date, dep)
+  if (days === null) return null
+  if (days < 0) return `${label}일이 출국일보다 늦어요. 날짜를 확인하세요.`
+  if (days > NZ_WITHIN_5_DAYS) {
+    return `${label}${topicParticle(label)} 출국 ${NZ_WITHIN_5_DAYS}일 이내에 해야 해요.`
+  }
+  return null
+}
+
 /** 호주 내부구충 프로토콜 일수 — DAFF 7.7 명문. */
 export const AU_INTERNAL_PARASITE = { windowDays: 45, minGapDays: 14, secondWithinDays: 5 }
 

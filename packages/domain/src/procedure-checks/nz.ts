@@ -30,6 +30,7 @@ import {
   validateNzInfectiousTestAfterExternal,
   validateNzQuarantineStartAfterTiter,
   validateNzRcfDate,
+  validateNzWithin5Days,
   validateRabiesDocRequiresTiter,
   validateTiterAfterIdentityCheck,
 } from '../journey-steps/date-rules'
@@ -951,7 +952,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '폐충 치료는 출국 5일 이내',
     description:
-      'IHS 2.4 — "treated by a veterinarian with a product that is effective against Angiostrongylus vasorum, **in the 5 days before shipment**". 신 IHS 2026 에서 새로 들어온 항목이다. 내부구충 2차와 시점이 같아 같은 방문에서 끝나지만 **약이 다르다**(구충약이 폐충까지 커버하지 않는 경우가 많다). 저장 거부는 두지 않는다 — 늦게 받았으면 늦게 받았다고 적고 재투약으로 푸는 자리라 사실 기록을 막으면 안 된다(호주 CIV·전염병 검사와 같은 판단).',
+      'IHS 2.4 Angiostrongylus vasorum **(dogs)** — "The dog must be treated by a veterinarian with a product listed in MPI-STD-SAA effective against Angiostrongylus vasorum, **in the 5 days before the date of shipment**". 신 IHS 2026 에서 새로 들어온 항목이다. 내부구충 2차와 시점이 같아 같은 방문에서 끝나지만 **약이 다르다**(구충약이 폐충까지 커버하지 않는 경우가 많다). 저장 거부(validateNzWithin5Days)와 **같은 함수**를 본다 — 2026-07-30 사용자 지정으로 주의만 두던 것을 차단으로 올렸다.',
     severity: 'warning',
     addedAt: '2026-07-29',
     run: ({ caseRow, destination }) => {
@@ -962,18 +963,15 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       const latest = entries[entries.length - 1]
       const days = daysBetween(latest.date, dep)
       if (days === null) return SKIP
-      if (days < 0) {
+      const err = validateNzWithin5Days(latest.date, dep, '폐충 치료')
+      if (err) {
         return {
           ok: false,
-          message: '폐충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.',
-          offendingPaths: [`lungworm_dates[${latest.originalIndex}].date`],
-        }
-      }
-      if (days > 5) {
-        return {
-          ok: false,
-          message: '폐충 치료는 출국 5일 이내에 받아야 해요.',
-          offendingPaths: [`lungworm_dates[${latest.originalIndex}].date`, 'departure_date'],
+          message: err,
+          offendingPaths:
+            days < 0
+              ? [`lungworm_dates[${latest.originalIndex}].date`]
+              : [`lungworm_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
       return { ok: true, message: `폐충 치료(${latest.date}) → 출국(${dep}): ${days}일.` }
@@ -985,9 +983,9 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     id: 'nz.heartworm-treatment-within-5days',
     country: COUNTRY,
     category: '구충',
-    title: '심장사상충 예방 투약은 출국 5일 이내 (강아지)',
+    title: '심장사상충 예방은 출국 5일 이내 (강아지)',
     description:
-      'IHS 2.11(2)(a) — "All dogs must be treated ... with a product registered for the prevention of heartworm **in the 5 days prior to shipment**; or be up to date with a **sustained-release injection**". 카드가 **예방 투약만** 담당하게 분리된 뒤(2026-07-30 사용자 지정) 이 창을 볼 수 있게 됐다 — 그전엔 같은 배열에 검사일이 섞여 바깥 창인 30일만 판정했다. 검사(30일 이내)는 전염병 검사 카드가 담당한다(시기가 같아 그쪽으로 옮겼다). ⚠️ 지속형 주사 케이스는 5일 창을 따르지 않으므로 **저장 거부는 만들지 않는다** — 유효기간 안에 있으면 되고 앱은 그 유효기간을 모른다.',
+      'IHS 2.11(2) Heartworm **(dogs)** — "All dogs must be either: (a) Treated by a veterinarian with a product listed in MPI-STD-SAA for heartworm prevention **in the 5 days before the date of shipment**; or (b) Up to date with a **sustained-release injection** ...". 카드가 **예방만** 담당하게 분리된 뒤(2026-07-30 사용자 지정) 이 창을 볼 수 있게 됐다 — 그전엔 같은 배열에 검사일이 섞여 바깥 창인 30일만 판정했다. 검사(30일 이내)는 전염병 검사 카드가 담당한다(시기가 같아 그쪽으로 옮겼다). 저장 거부(validateNzWithin5Days)와 **같은 함수**를 본다. ⚠️ (b) 지속형 주사 케이스는 이 창을 따르지 않지만 앱이 제품 유효기간을 몰라 함께 거부된다 — 2026-07-30 사용자 판단으로 감수한 트레이드오프(카드 문구에서도 지속형 주사 안내를 뺐다).',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
@@ -999,22 +997,18 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       const latest = entries[entries.length - 1]
       const days = daysBetween(latest.date, dep)
       if (days === null) return SKIP
-      if (days < 0) {
+      const err = validateNzWithin5Days(latest.date, dep, '심장사상충 예방')
+      if (err) {
         return {
           ok: false,
-          message: '심장사상충 예방약 투여일이 출국일보다 늦어요. 날짜를 확인하세요.',
-          offendingPaths: [`heartworm_dates[${latest.originalIndex}].date`],
+          message: err,
+          offendingPaths:
+            days < 0
+              ? [`heartworm_dates[${latest.originalIndex}].date`]
+              : [`heartworm_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
-      if (days > 5) {
-        return {
-          ok: false,
-          message:
-            '심장사상충 예방약은 출국 5일 이내에 투여해야 해요. 지속형 예방 주사를 맞고 있다면 유효기간 안에 있으면 돼요.',
-          offendingPaths: [`heartworm_dates[${latest.originalIndex}].date`, 'departure_date'],
-        }
-      }
-      return { ok: true, message: `최근 예방 투약(${latest.date}) → 출국일(${dep}): ${days}일.` }
+      return { ok: true, message: `최근 예방(${latest.date}) → 출국일(${dep}): ${days}일.` }
     },
   },
 ]

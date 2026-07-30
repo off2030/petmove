@@ -40,6 +40,7 @@ import {
   validateCivDoseInterval,
   validateNzExternalSecondDose,
   validateNzInfectiousTestAfterExternal,
+  validateNzWithin5Days,
   requiredParasiteDoses,
   validateExternalParasiteDates,
   JOURNEY_STEP_CATALOG,
@@ -1541,7 +1542,10 @@ export function StepDetailView({
       // 출국일 미입력이면 dispatch 가 통과(치료 먼저 하는 순서를 막지 않기 위해).
       // 심장사상충도 같은 창을 쓴다(괌 — 도착 14일 이내). 게이트에서 빠뜨리면 카드만 생기고
       //   차단은 안 걸린다(2026-07-27 발견). 문구는 label 로 항목 이름을 넘겨 맞춘다.
-      if (isExternalParasite || isInternalParasite || isHeartworm) {
+      // ⛔ 뉴질랜드 심장사상충은 여기서 뺀다 — 카드가 **예방 전용**이 된 뒤 창이 5일이라
+      //   (2.11(2)(a)) 내부구충용 30일 창에 걸리면 안 맞는 문구('심장사상충 검사는 출국 30일
+      //   이내')가 나간다. 바로 아래 5일 차단이 대신 본다.
+      if ((isExternalParasite || isInternalParasite || isHeartworm) && !isNzHeartwormTreatment) {
         const dep = (caseRow?.departure_date ?? '').slice(0, 10)
         const kind = isExternalParasite ? 'external' : 'internal'
         for (const e of parasite) {
@@ -1552,6 +1556,18 @@ export function StepDetailView({
             departureDate: dep,
             ...(isHeartworm ? { label: '심장사상충 검사' } : {}),
           })
+          if (err) return err
+        }
+      }
+      // 뉴질랜드 폐충(2.4)·심장사상충 예방(2.11(2)(a)) — 둘 다 출국 5일 이내.
+      //   주의만 있고 차단이 없어 창 밖 날짜가 그대로 저장되던 자리(2026-07-30 사용자 지정).
+      //   주의 룰(nz.lungworm-within-5days·nz.heartworm-treatment-within-5days)과 **같은 함수**.
+      if ((isLungworm || isNzHeartwormTreatment) && destinationKey === 'new_zealand') {
+        const dep = (caseRow?.departure_date ?? '').slice(0, 10)
+        const label = isLungworm ? '폐충 치료' : '심장사상충 예방'
+        for (const e of parasite) {
+          if (!e.date) continue
+          const err = validateNzWithin5Days(e.date, dep, label)
           if (err) return err
         }
       }

@@ -919,10 +919,14 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   'kennel-cough-vaccine':
     '차단: 출생일 이전 거부·findRabiesChainBreak(추가 접종 chain) — 종합백신과 같은 경로(getSaveBlockError 의 isVaccineArray 분기)',
   // 심장사상충 — 구충과 같은 기계를 필드키만 바꿔 쓴다(2026-07-27 카드 분리).
-  // 폐충 — 늦게 투약했으면 늦게 했다고 적고 재투약으로 푸는 자리다. 저장을 막으면 사실을
-  //   못 적는다(호주 CIV·전염병 검사와 같은 판단). 출국 5일 창은 주의가 알린다.
+  // 폐충 — 2026-07-30 사용자 지정으로 주의만 두던 것을 차단으로 올렸다(IHS 2.4 는 예외 없이
+  //   출국 5일 이내다).
   'lungworm-treatment':
-    '주의만: nz.lungworm-within-5days(출국 5일 창) — 늦게 받은 사실은 그대로 적고 재투약으로 회복하는 절차라 차단 X',
+    '차단: validateNzWithin5Days(출국 5일 창 — 뉴질랜드 2.4)·출생일 이전 거부 — 주의 짝은 nz.lungworm-within-5days',
+  // 뉴질랜드 심장사상충은 카드가 **예방 전용**이라 30일 창 dispatch 에서 빼고 5일 창으로 본다
+  //   (2.11(2)(a)). 지속형 주사(2.11(2)(b))도 함께 거부되는 트레이드오프는 date-rules 주석 참고.
+  'new_zealand:heartworm-test':
+    '차단: validateNzWithin5Days(출국 5일 창)·출생일 이전 거부 — 주의 짝은 nz.heartworm-treatment-within-5days',
   'heartworm-test':
     '차단: validateParasiteDateForDestination(출국일 앵커 창 dispatch)·출생일 이전 거부 — 구충과 같은 경로(isParasite 분기)',
   'external-parasite': '차단: validateParasiteDateForDestination(출국일 앵커 창 dispatch)·출생일 이전 거부',

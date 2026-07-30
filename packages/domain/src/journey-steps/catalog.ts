@@ -1622,6 +1622,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: {
       destinations: destinationsWithVaccine('lungworm'),
       species: 'all',
+      // 뉴질랜드는 **강아지 전용** — IHS 2026 조항 제목이 "2.4 Angiostrongylus vasorum
+      //   **(dogs)**" 이고 본문도 "The dog must be treated ..." 다(2026-07-30 원문 확인).
+      //   심장사상충(2.11 (dogs))과 같은 처리.
+      speciesByDestination: { new_zealand: 'dog' },
       tripType: 'all',
     },
     // 내부구충(100) 뒤, 심장사상충(108) 앞 — 같은 날 끝나는 처치라 나란히 둔다.
