@@ -2065,7 +2065,13 @@ export function StepDetailView({
         )
         if (res.ok) {
           updateCase(res.value)
-          const next = sortParasiteByDate(readParasiteForm(res.value.data, parasiteFieldKey))
+          // ⚠️ **flatten 한 뷰**에서 읽어야 한다 — 서버가 돌려주는 res.value 는 raw 다.
+          //   전염병 검사는 목적지별 키라 저장 결과가 by_dest 에만 있고 top-level 은 지워진다.
+          //   raw 로 읽으면 폼이 빈 배열이 되고, 그 순간 form(비어 있음) ≠ saved(1건) 이라
+          //   parasiteDirty 가 켜져 동기화 useEffect 가 되돌려주지도 못한다 — 입력한 날짜가
+          //   사라진 것처럼 보이고 버튼도 '완료'로 안 바뀐다(2026-07-30 사용자 발견).
+          const savedView = activeDestinationView(res.value, activeDest)
+          const next = sortParasiteByDate(readParasiteForm(savedView.data, parasiteFieldKey))
           setParasite(padParasiteRows(next, parasiteMinRows))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
