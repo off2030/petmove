@@ -957,16 +957,9 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   //     · 항체 결과지 이름의 '(RNATT)' 접미사 (다른 목적지 17곳과 이름·문형 통일)
   //     · 서류마다 붙어 있던 기재 항목 나열 줄(마이크로칩 번호·채혈일·검사 종류…)
   '뉴질랜드': [
-    {
-      id: 'nz-rabies-vaccination-record',
-      name: '광견병 접종 기록',
-      source: '동물병원',
-      kind: 'step',
-      stepRef: 'rabies-vaccine-1',
-      description:
-        '광견병 접종을 한 동물병원에서 발급받아요.\n\n수입 허가를 신청할 때 제출하고, 출국할 때도 원본이 함께 가야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
-      previewStepId: 'rabies-vaccine-1',
-    },
+    // ⛔ '광견병 접종 기록'(nz-rabies-vaccination-record) 항목을 다시 만들지 말 것 —
+    //   IHS 1.14.3·증명서 15항 d)에 동행 서류로 적혀 있지만, 접종 내용이 별지 제25호와
+    //   RCF 에 이미 들어가 목록에서 뺐다(2026-07-30 사용자 지시).
     {
       id: 'nz-rabies-titer-result',
       name: '광견병 항체 검사 결과지',
@@ -999,17 +992,6 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
         '수입 허가 신청이 승인되면 발급돼요.\n\n한 번의 운송(consignment)에 한 장이 필요하고, 배서 없는 사본도 인정돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'import-permit',
     },
-    // 접종 및 건강증명서(별지 제25호) — 한국 공식 양식(전 목적지 공통).
-    KR_FORM25_VACCINATION_HEALTH_CERT,
-    {
-      id: 'nz-entry-health-cert',
-      name: '뉴질랜드 건강증명서(Model Veterinary Certificate)',
-      source: '동물병원 · 농림축산검역본부',
-      kind: 'manual',
-      issuanceStepId: 'vet-visit',
-      description:
-        '뉴질랜드 입국용 수의 건강증명서예요. category 3 서식을 써요.\n\n출국 2일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인·서명을 받아요.\n\n이 서류는 일반 동물병원에서는 발행하지 않아요. 발행 가능한 동물병원 확인이 필요해요.',
-    },
     {
       id: 'nz-infectious-disease-result',
       name: '전염병 검사 결과지',
@@ -1020,6 +1002,17 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       description:
         '출국 30일 이내에 받은 검사 결과지예요.\n\n바베시아 깁소니·리슈만편모충·렙토스피라 Canicola 결과지는 모든 강아지가 필요해요.\n\n중성화하지 않았다면 브루셀라 결과지도 필요해요. 중성화했다면 수의사가 서명한 중성화 증명서를 준비해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'infectious-disease-test',
+    },
+    // 접종 및 건강증명서(별지 제25호) — 한국 공식 양식(전 목적지 공통).
+    KR_FORM25_VACCINATION_HEALTH_CERT,
+    {
+      id: 'nz-entry-health-cert',
+      name: '뉴질랜드 건강증명서(Model Veterinary Certificate)',
+      source: '동물병원 · 농림축산검역본부',
+      kind: 'manual',
+      issuanceStepId: 'vet-visit',
+      description:
+        '뉴질랜드 입국용 수의 건강증명서예요. category 3 서식을 써요.\n\n출국 2일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인·서명을 받아요.\n\n이 서류는 일반 동물병원에서는 발행하지 않아요. 발행 가능한 동물병원 확인이 필요해요.',
     },
     {
       id: 'nz-civ-doc',
