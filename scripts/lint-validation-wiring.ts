@@ -496,11 +496,13 @@ const REACHABILITY_PROBES: Array<{
   {
     label: '전염병 검사 창',
     entries: () =>
-      Object.entries(INFECTIOUS_TEST_DEPARTURE_WINDOWS).map(([key, maxGap]) => ({
+      // 값이 { maxGap, windowLabel } 로 바뀌었다(2026-07-30 — 남아공만 판정값과 표기가 다르다).
+      //   ⚠️ 예전처럼 값을 숫자로 쓰면 `-(obj + 10)` 이 NaN 이 돼 Invalid time value 로 죽는다.
+      Object.entries(INFECTIOUS_TEST_DEPARTURE_WINDOWS).map(([key, w]) => ({
         key,
         item: '전염병 검사',
         violating: (form: string) =>
-          validateInfectiousDiseaseTestDate(addDays(DEPARTURE, -(maxGap + 10)), DEPARTURE, form),
+          validateInfectiousDiseaseTestDate(addDays(DEPARTURE, -(w.maxGap + 10)), DEPARTURE, form),
       })),
   },
   {

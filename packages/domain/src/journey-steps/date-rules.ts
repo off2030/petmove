@@ -2244,10 +2244,17 @@ export function validateInternalParasiteSpacing(
  *   출국일 기준이라 그대로). ⚠️ 같은 남아공이라도 **외부구충은 앵커가 출국일**이라 30이다
  *   (6.2 "within 30 days before departure") — 두 창을 같은 값으로 맞추지 말 것.
  */
-export const INFECTIOUS_TEST_DEPARTURE_WINDOWS: Record<string, number> = {
-  australia: 45,
-  new_zealand: 30,
-  south_africa: 29,
+export const INFECTIOUS_TEST_DEPARTURE_WINDOWS: Record<
+  string,
+  { maxGap: number; windowLabel: string }
+> = {
+  australia: { maxGap: 45, windowLabel: '출국 45일 이내' },
+  new_zealand: { maxGap: 30, windowLabel: '출국 30일 이내' },
+  // ⚠️ 라벨이 판정값(29)과 다르다 — **의도한 것**이다. 규정은 도착일 기준 30일인데 앱은
+  //   출국일로 재므로 29로 하루 좁혀 두되, 보호자에게는 규정 그대로 말한다. 예전엔 문구가
+  //   판정값을 그대로 노출해 카드('도착일 기준 30일')와 경고('출국 29일')가 어긋났다
+  //   (2026-07-30 사용자 지적).
+  south_africa: { maxGap: 29, windowLabel: '남아프리카공화국 도착일 기준 30일 이내' },
 }
 
 /**
@@ -2282,11 +2289,13 @@ export function validateInfectiousDiseaseTestDate(
         matchesDestinationKey(destinationKey, k),
       )
     : undefined
-  const maxGap = windowKey ? INFECTIOUS_TEST_DEPARTURE_WINDOWS[windowKey] : undefined
-  if (maxGap === undefined) return null
+  const w = windowKey ? INFECTIOUS_TEST_DEPARTURE_WINDOWS[windowKey] : undefined
+  if (!w) return null
   const gap = daysBetween(t, d)
-  if (gap !== null && gap > maxGap) {
-    return `전염병 검사는 출국 ${maxGap}일 이내에 받아야 해요. 다시 검사받아야 할 수 있어요.`
+  if (gap !== null && gap > w.maxGap) {
+    // 문구는 **windowLabel** 로 — 판정값(maxGap)을 그대로 쓰면 규정과 다른 숫자가 나가는
+    //   목적지가 있다(남아공: 판정 29 / 규정 도착일 기준 30).
+    return `전염병 검사는 ${w.windowLabel}에 받아야 해요. 다시 검사받아야 할 수 있어요.`
   }
   return null
 }

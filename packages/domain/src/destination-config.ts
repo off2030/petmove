@@ -1919,22 +1919,11 @@ export function isRabiesTiterHiddenForOneWay(
  *
  * 'return-only'(미국·캐나다 등)는 true — 편도에선 카드가 숨지만 목적지 자체는 항체를 쓴다.
  */
-/**
- * 전염병 검사(리슈만편모충·브루셀라·렙토 MAT 등)를 요구하는 목적지인가 — 호주·뉴질랜드·남아공.
- *
- * 여정 카드(infectious-disease-test)의 applicability 와 **같은 선언**(vaccines 의
- * 'infectious_disease')에서 판정한다. 카드가 없는 목적지에 기록만 남아 있을 때
- * "검사가 완료됐어요" 푸시가 나가는 사고를 막는다 — 항체 완료 푸시가 홍콩·아랍에미리트에서
- * 겪은 자리와 같다(2026-07-26). 2026-07-28 전염병 검사 완료 푸시 추가와 함께 신설.
- */
-export function requiresInfectiousDiseaseTest(destination: string | null | undefined): boolean {
-  const o = getDestinationOverride(destination)
-  // destinationsWithVaccine 과 **같은 판정**(fallback 까지) — 한쪽만 바뀌면 카드는 뜨는데
-  // 푸시는 안 나가거나 그 반대가 된다.
-  return (o?.vaccines ?? DEFAULT_CONFIG.vaccines).some(
-    (v) => (typeof v === 'string' ? v : v.key) === 'infectious_disease',
-  )
-}
+// ⛔ requiresInfectiousDiseaseTest(목적지만 보는 전염병 검사 게이트)를 다시 만들지 말 것 —
+//   2026-07-30 삭제. 이 검사는 호주·뉴질랜드·남아공 모두 **강아지 전용**인데 종을 안 봐서
+//   고양이 케이스에 기록만 있으면 완료 푸시가 나갔다. 목적지 명단을 따로 들지 말고
+//   **카드 applicability 에 직접 물어본다**(portal milestone-pushes.ts 의 infectiousTestCardApplies
+//   — isStepApplicable + buildCaseJourneyContext). 목적지·종·왕복이 한 번에 맞는다.
 
 export function usesRabiesTiter(destination: string | null | undefined): boolean {
   const o = getDestinationOverride(destination)

@@ -1,15 +1,32 @@
 import {
+  buildCaseJourneyContext,
   deriveAdvanceNotificationStatus,
   deriveImportPermitStatus,
   deriveJpExportQuarantineStatus,
   findDestinationKey,
   flattenCaseForDestination,
-  requiresInfectiousDiseaseTest,
+  isStepApplicable,
+  JOURNEY_STEP_CATALOG,
   resolveDone,
   usesRabiesTiter,
   type CaseRow,
 } from '@petmove/domain'
 import { destinationTokens, petLabel } from './reminders'
+
+/**
+ * 전염병 검사 카드가 이 케이스·목적지에 **실제로 뜨는가** — 푸시 게이트의 단일 출처.
+ *
+ * ⚠️ 예전엔 `requiresInfectiousDiseaseTest(token)`(목적지만 봄)을 썼는데, 이 검사는 호주·
+ *   뉴질랜드·남아공 모두 **강아지 전용**(카드 applicability 의 speciesByDestination)이라
+ *   고양이 케이스에 기록만 있으면 "검사가 완료됐어요" 푸시가 나갔다(2026-07-30 사용자 지적).
+ *   목적지 명단을 따로 들지 말고 **카드 자신에게 물어본다** — 목적지·종·왕복 조건이 한 번에
+ *   맞는다. 항체 푸시가 홍콩·아랍에미리트에서 겪은 사고와 같은 부류다.
+ */
+const INFECTIOUS_CARD = JOURNEY_STEP_CATALOG.find((s) => s.id === 'infectious-disease-test')
+function infectiousTestCardApplies(caseRow: CaseRow, token: string): boolean {
+  if (!INFECTIOUS_CARD) return false
+  return isStepApplicable(INFECTIOUS_CARD.applicability, buildCaseJourneyContext(caseRow, token))
+}
 
 /**
  * 관리자(펫무브워크) 완료 → 앱 푸시용 "마일스톤 완료" 수집 — 순수 함수.
@@ -78,14 +95,14 @@ export function collectMilestonePushes(caseRow: CaseRow): MilestonePush[] {
   // 모델이다: **병원이 대행해 보호자가 결과를 기다리는** 단계라 완료 푸시 대상이다
   // (2026-07-28 사용자 지정). 검역처럼 보호자가 직접 하는 절차가 아니다.
   //
-  // 이 검사를 요구하는 목적지(호주·뉴질랜드·남아공)가 있을 때만 보낸다 — 카드가 없는
+  // 이 검사 **카드가 실제로 뜨는** 목적지·종일 때만 보낸다(호주·뉴질랜드·남아공 강아지) — 카드가 없는
   // 목적지에 기록용으로 남은 값 때문에 푸시가 나가는 건 항체 푸시가 홍콩·아랍에미리트에서
   // 겪은 사고와 같은 자리다. ⚠️ 항체와 달리 **목적지 미입력(tokens 빈 배열)은 제외**한다 —
   // 항체는 사실상 모든 여정에 있어 미리 보내도 맞지만, 이 검사는 3개국 전용이라 목적지가
   // 정해지기 전에 "완료됐어요"를 보내면 대부분 틀린 알림이 된다.
   if (
     resolveDone('has-infectious-disease-test', caseRow) &&
-    tokens.some((t) => requiresInfectiousDiseaseTest(t))
+    tokens.some((t) => infectiousTestCardApplies(caseRow, t))
   ) {
     out.push({
       key: `${caseRow.id}|infectious-disease`,
