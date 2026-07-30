@@ -951,13 +951,21 @@ export function buildJourney(
               : ''
         return d.length >= 10 && d > today ? d : null
       }
+      // ⚠️ 카드를 새로 뗄 때마다 여기 등록을 빠뜨렸다 — 켄넬코프(2026-07-27 분리)·
+      //   심장사상충(2026-07-27)·폐충(2026-07-29)이 전부 누락돼 **미래 접종·처치일을 넣어도
+      //   '예정 [날짜]' 배지가 뜨지 않았다**(2026-07-30 켄넬코프 작업 중 발견). 같은 카드들이
+      //   reminders.ts 의 GLOBAL_ARRAY_FIELDS 에서도 같은 이유로 빠져 있었다(7/28·7/29 보강).
+      //   date_array 카드를 새로 만들면 **여기 + GLOBAL_ARRAY_FIELDS 둘 다** 등록할 것.
       const arrKey: Record<string, string> = {
         'general-vaccine': 'general_vaccine_dates',
+        'kennel-cough-vaccine': 'kennel_cough_dates',
         'civ-vaccine': 'civ_dates',
         'infectious-disease-test': 'infectious_disease_records',
         'external-parasite': 'external_parasite_dates',
         'internal-parasite': 'internal_parasite_dates',
         'echinococcus-treatment': 'internal_parasite_dates',
+        'heartworm-test': 'heartworm_dates',
+        'lungworm-treatment': 'lungworm_dates',
       }
       const key = arrKey[step.id]
       if (!key) return null
@@ -1109,8 +1117,13 @@ export function buildJourney(
     // 안내 톤). 미접종이면 situational 이 undefined 라 일반 '다음 할 일'(접종하세요)로 노출.
     // 만료(advisory 마커)일 때만 안내로 강등 — 당일/지남 '완료확인' situational 은 advisory 가
     // 아니므로 '다음 할 일'에 그대로 남는다(도래일에 가장 actionable 한 항목이 묻히지 않게).
-    const isExpiryVaccineState =
-      (step.id === 'rabies-vaccine-1' || step.id === 'general-vaccine') && !done && sit?.advisory === true
+    // ⚠️ 카드 id 를 손으로 나열하던 자리다 — 켄넬코프 카드가 빠져 있어서, 유효기간 만료로
+    //   미완료인데 '안내'로 강등되지 않고 concurrent 로 '다음 할 일'에 올라갔다. 붙일 날짜도
+    //   안내도 없어 타임라인 마지막 폴백인 **'예정'** 칩이 찍혔다(이미 접종한 카드에 '예정',
+    //   2026-07-30 사용자 지적). 명단 대신 **situational 이 advisory 를 돌려주는가**로 판정한다 —
+    //   그 마커가 이미 '만료 상태'를 뜻하므로(각 카드 situational 주석 참고) 명단이 중복이었다.
+    //   새 백신 카드가 같은 모델을 쓰면 자동으로 커버된다.
+    const isExpiryVaccineState = !done && sit?.advisory === true
     const isAdvisory = step.advisoryOnly === true || isExpiryVaccineState
     // 안내 카드 본문 — info check 메시지가 있으면 그걸, 없으면 advisory step 의 desc(상황별),
     // 신청-완료 awaiting 은 situational desc 자체가 안내문.

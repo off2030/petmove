@@ -4,6 +4,7 @@ import {
   isExtraTiterResultConfirmed,
   latestExtraTiterEntry,
   readGeneralVaccineEntries,
+  readKennelCoughEntries,
   readRabiesEntries,
   readTiterEntries,
   resolveValidUntil,
@@ -1534,6 +1535,42 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     done: 'has-kennel-cough',
     // 광견병·종합백신과 순서 의존 없음 — 마이크로칩 이후 함께 진행할 수 있다.
     concurrent: true,
+    /**
+     * 만료 안내 — 종합백신 situational 과 **같은 모델**(2026-07-30 사용자 지적으로 신설).
+     *
+     * 왜 필요했나: 완료 판정(has-kennel-cough)은 종합백신과 같은 함수라 **유효기간이 입국일을
+     * 커버해야 완료**인데, 켄넬코프 카드에만 그 사실을 알리는 문구가 없었다. 그래서
+     * 접종일을 넣어도 카드가 미완료로 남고, concurrent 라 '다음 할 일'로 올라가서
+     * 붙일 날짜도 안내도 없는 상태 → 타임라인 마지막 폴백인 **'예정'** 칩이 찍혔다.
+     * 이미 접종한 카드에 '예정'이 뜨니 읽는 사람은 이유를 알 수 없다.
+     * 안내를 붙이면 칩이 '안내'로 바뀌고(렌더 순서상 안내가 예정보다 앞) 이유도 드러난다.
+     *
+     * ⚠️ 문구는 '입국 요건'이 아니라 **계류시설 제출용** 맥락이다 — 켄넬코프는 DAFF 입국
+     *   요건이 아니고(호주 override 주석), 계류시설 예약이 접종 증명을 요구해서 넣은 카드다.
+     */
+    situational: (caseRow) => {
+      const entries = readKennelCoughEntries(caseRow)
+      if (entries.length === 0) return undefined
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const latest = [...entries].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      const entry =
+        (typeof data.entry_date === 'string' && data.entry_date) ||
+        (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
+        ''
+      const today = todayKst()
+      // 미래(예정) 접종만 있으면 기본 안내로 둔다(날짜는 일정 칩에만) — 종합백신과 동일.
+      if (latest.date > today) return undefined
+      if (validUntil && validUntil < today) {
+        const msg = `켄넬코프 백신 유효기간이 ${formatKoreanDate(validUntil)}에 끝났어요. 계류시설 제출용이라 추가 접종이 필요해요.`
+        return { desc: msg, cardDesc: msg, advisory: true }
+      }
+      if (entry && validUntil && validUntil < entry) {
+        const msg = `켄넬코프 백신 유효기간이 출국 전 ${formatKoreanDate(validUntil)}에 끝나요. 계류시설 제출용이라 추가 접종이 필요해요.`
+        return { desc: msg, cardDesc: msg, advisory: true }
+      }
+      return undefined
+    },
     inputs: [{ key: 'kennel_cough_dates', label: '접종일', type: 'date_array', hasValidUntil: true }],
     allowAttachments: true,
     attachmentLabel: '켄넬코프백신',
