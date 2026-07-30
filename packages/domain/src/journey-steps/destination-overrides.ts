@@ -2264,9 +2264,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         //   real-time PCR). 뒷줄을 'real-time PCR'로만 적으면 도말 경로가 지워진다.
         description:
           '남아공 도착일 기준 30일 이내에 5가지 전염병 검사를 받아요.\n\n브루셀라(Brucella canis) 검사를 받아요. 혈청응집반응(SAT) 또는 RSAT만 인정돼요.\n트리파노소마(Trypanosoma evansi) 검사를 받아요. 카드응집반응(CAT)과 김자염색 도말검사를 함께 받아요.\n바베시아(Babesia gibsoni) 검사를 받아요. IFAT 또는 BgTRAP 항원 ELISA를 받고, 김자염색 도말검사 또는 real-time PCR을 함께 받아요.\n심장사상충(Dirofilaria immitis) 검사를 받아요. 마이크로필라리아 여과법(microfilarial filtration test)만 인정돼요. 항원 검사만으로는 부족해요.\n리슈만편모충(Leishmania) 검사를 받아요. IFAT·ELISA·직접응집반응·웨스턴블롯 중 인정되는 방법으로 받아요.\n모든 검사는 남아프리카공화국 지정 검사기관에서 받아야 해요.\n일반 동물병원에서는 이 검사들을 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
-        // 검사일을 입력해 '진행 중'이 되면 심장사상충 예방도 다음 할 일로 — 음성 결과를
-        //   기다리는 동안 예방을 시작하는 게 아니라, 검사와 같은 방문에서 시작하기 때문이다.
-        yieldsWhenInProgress: true,
+        // ⛔ yieldsWhenInProgress 를 되살리지 말 것(2026-07-31 사용자 발견으로 제거).
+        //   심장사상충(72)·외부구충(74)을 함께 띄우려고 켰던 건데, 그 둘이 **concurrent** 가 된
+        //   뒤로는 head run 이 알아서 올린다(규칙 ①). 남은 효과는 사슬(규칙 ②)이 그 뒤의
+        //   **비-concurrent** 카드까지 끌어올리는 것뿐이었다 — 검사일이 도래하면 '출국 전
+        //   임상검사'(110, 출국 10일 이내)가 한 달도 더 전에 '다음 할 일'로 떴다.
         validationIds: ['za.infectious-disease-within-29days'],
       },
       // 심장사상충 — 검사(5종에 포함)와 **예방 투약**은 별개다. 이 카드는 예방만 담당한다
