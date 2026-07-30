@@ -1199,7 +1199,10 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'za-quarantine-reservation',
       species: 'dog',
       description:
-        '검역시설 예약과 함께 작성해 서명하는 서류예요.\n\n검역 중 발생하는 비용과 위험을 보호자가 부담한다는 내용이에요.\n\n수의검역 수입 허가 신청서와 함께 제출해요.',
+        // '신청서와 함께 제출' → '허가가 나오기 전에 반영'(2026-07-30) — 순서가 허가(40) →
+        //   예약(42) 으로 정정되며 카드 문구와 함께 맞췄다. 예약·면책서는 신청 시점이 아니라
+        //   발급 전에 반영된다.
+        '검역시설 예약과 함께 작성해 서명하는 서류예요.\n\n검역 중 발생하는 비용과 위험을 보호자가 부담한다는 내용이에요.\n\n수의검역 수입 허가가 나오기 전에 반영해요.',
       previewStepId: 'za-quarantine-reservation',
     },
     {
