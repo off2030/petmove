@@ -1538,6 +1538,19 @@ export function validateImportPermitFiledDate(
         data,
         /^\d{4}-\d{2}-\d{2}$/.test((filedDate ?? '').slice(0, 10)) || !!permitNo,
       )
+    // 남아공 — 선행은 **AIA 허가**(규정 명문, 개 전용). 순서 게이트 + 출국일 순서를 함께 본다.
+    //   ⚠️ 이 case 가 없던 동안 남아공 수입 허가 신청일은 default 로 빠져 **저장 거부가 하나도
+    //     없었다**(2026-07-30 발견). za.import-permit-not-after-departure 는 주의만 있었고,
+    //     DATE_SAVE_BLOCK_DECISIONS 의 'import-permit' 일반 항목이 있어 배선 린트도 못 잡았다.
+    case 'south_africa':
+      return (
+        validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
+        importPermitPrerequisiteError(
+          destinationKey,
+          data,
+          /^\d{4}-\d{2}-\d{2}$/.test((filedDate ?? '').slice(0, 10)) || !!permitNo,
+        )
+      )
     // 스위스 — 입국 3주(21일) 이내 신청 불가.
     case 'switzerland':
       return validateChImportPermitDate(filedDate, entryDate)
@@ -1607,6 +1620,28 @@ export function importPermitPrerequisiteError(
       hasPermitInput,
       read('au_rnatt_declaration_date'),
       'RNATT 선언서를 먼저 발급받으세요.',
+    )
+  }
+  if (destinationKey === 'south_africa') {
+    // ✅ 규정 명문(DALRRD 보도자료 2024-04-10) — "the Animal Improvement Permit/authorisation
+    //   must be **applied for first**, and the AIA Permit/authorisation must be **attached to**
+    //   the application for the Veterinary Import Permit". 게이트 기준을 '신청일 입력'으로 두는 건
+    //   규정 문구가 'applied for first' 라서다(발급 완료를 요구하면 허가서를 손에 들고도 카드를
+    //   안 채운 사람을 막는다 — 뉴질랜드 RCF 발급일 게이트와 같은 강도).
+    // ⚠️ **고양이는 AIA 면제**라 게이트를 걸면 안 된다 — 같은 보도자료 "animals such as cats,
+    //   birds and fish do not require an AIA Permit/authorisation for importation".
+    //   여기서 종을 직접 읽는다(이 함수는 species 인자를 받지 않는다).
+    //   종 미상은 **판정 대상**으로 둔다 — 싱가포르 개 전용 게이트와 같은 규약
+    //   (validateSgImportPermitAfterDogLicence: `if (species && species !== 'dog') return null`).
+    //   AIA 카드 자체가 종 미상에도 노출되므로(isStepApplicable — 종 미상은 통과) 화면에 보이는
+    //   카드와 게이트가 어긋나지 않는다. 신청 폼이 종을 필수로 받아 실제로는 거의 없는 상태다.
+    const species = typeof data.species === 'string' ? data.species.toLowerCase() : ''
+    const isCat = species === 'cat' || species === '고양이'
+    if (isCat) return null
+    return validateImportPermitPrerequisite(
+      hasPermitInput,
+      read('za_aia_permit_application_date'),
+      'AIA 수입 허가를 먼저 신청하세요.',
     )
   }
   return null

@@ -2161,7 +2161,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentLabel: '남아프리카공화국 수입 허가증',
       order: 44,
       deadline: undefined,
-      validationIds: ['za.import-permit-not-after-departure'],
+      validationIds: [
+        'za.aia-permit-before-import-permit',
+        'za.import-permit-not-after-departure',
+      ],
     },
     // 도착 = 요하네스버그·케이프타운 공항 화물터미널 → 국가 검역시설, 약 14일.
     //   보호자가 공항에 가지 않으므로 날짜 입력칸 없이 안내 + '완료' 버튼(계류 편도국 공통).

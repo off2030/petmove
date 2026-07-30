@@ -270,5 +270,8 @@
 [za.external-parasite-within-30days]
   처치일이 출국일보다 늦어요. 날짜를 확인하세요.
   진드기·흡혈곤충 처치는 출국 30일 이내에 해야 해요. 다시 처치해야 할 수 있어요.
+[za.aia-permit-before-import-permit]
+  AIA 수입 허가를 먼저 신청해야 해요. AIA 허가서를 첨부해서 수의검역 수입 허가를 신청해요.
+  AIA 수입 허가 신청이 수의검역 수입 허가 신청보다 늦어요. 날짜를 확인하세요.
 [za.import-quarantine-date-valid]
   남아프리카공화국 수입 검역일은 출국일보다 빠를 수 없어요. 날짜를 확인하세요.
