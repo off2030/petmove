@@ -1961,20 +1961,22 @@ export function validateCivDoseInterval(dates: string[]): string | null {
  * 뉴질랜드만 1차 → 바베시아 채혈 → 2차 순서가 규정으로 강제돼 카드를 두 장으로 나눴다.
  * 그래서 날짜 검증도 회차 사이 관계를 본다:
  *
- *   ① 2차는 1차 후 **28일 이내** — 2.2(2)(c) "1차부터 출국일까지 연속 보호"를 날짜로 근사한
- *      값이다. MPI 승인 제품 중 진드기 지속이 가장 긴 부류가 4주다(프론트라인 플러스 라벨:
- *      "persistent acaricidal efficacy for up to 4 weeks against ticks" — 벼룩 8주와 다르다).
- *      28일을 넘기면 어떤 승인 제품으로도 보호가 끊긴다.
- *   ② 2차(마지막)는 **출국 16일 이내** — 2.2(2)(b) 명문.
+ *   · 순서 — 2차가 1차보다 빠를 수 없다.
+ *   · 2차(마지막)는 **출국 16일 이내** — 2.2(2)(b) 명문.
  *
- * ⛔ 하한(최소 투여 간격)은 넣지 않는다 — 제품 라벨의 최소 재투여 간격이 제품마다 다르고
- *   (프론트라인 플러스는 4주), 앱이 제품을 모르는 상태에서 하한을 걸면 정상 일정을 거부한다.
- * ⛔ 호주에 쓰지 말 것 — DAFF 7.6 은 회차를 정하지 않아 카드가 한 장이고, 상한 앵커가 없다.
+ * ⛔ **1차→2차 상한(구 28일)을 되살리지 말 것**(2026-07-30 사용자 확정으로 삭제).
+ *   2.2(2)(c) '1차부터 출국일까지 연속 보호'를 "승인 제품 중 진드기 지속 최장이 4주"라는
+ *   전제로 근사한 값이었는데 **전제가 틀렸다** — MPI 승인 성분 목록(MPI-STD-SAA)에
+ *   플루랄라너(브라벡토, 진드기 12주)·플루메트린(세레스토, 최장 8개월)·로틸라너 등이 있다.
+ *   장기 지속 제품으로 1차를 하고 8주 뒤 2차를 하는 **정상 일정이 저장 거부**됐다.
+ *   연속 보호 여부는 제품마다 달라 앱이 판정할 수 없다 — 카드 문구로 안내만 한다.
+ * ⛔ 하한(최소 투여 간격)도 넣지 않는다 — 같은 이유(제품별 재투여 간격이 다르다).
+ * ⛔ 호주에 쓰지 말 것 — DAFF 7.6 은 회차를 정하지 않아 카드가 한 장이다.
  *
  * client(저장 거부)·procedure-check(nz.external-parasite-protocol) 공용 단일 출처.
  * 한쪽 날짜가 비면 통과.
  */
-export const NZ_EXTERNAL_PARASITE = { maxGapFromFirst: 28, lastWithinDays: 16 }
+export const NZ_EXTERNAL_PARASITE = { lastWithinDays: 16 }
 
 export function validateNzExternalSecondDose(
   firstDate: string,
@@ -1987,9 +1989,6 @@ export function validateNzExternalSecondDose(
   const gap = daysBetween(first, second)
   if (gap !== null && gap < 0) {
     return '2차 외부 기생충 치료일이 1차보다 빨라요. 날짜를 확인하세요.'
-  }
-  if (gap !== null && gap > NZ_EXTERNAL_PARASITE.maxGapFromFirst) {
-    return `2차 외부 기생충 치료는 1차 치료 후 ${NZ_EXTERNAL_PARASITE.maxGapFromFirst}일 이내에 해야 해요. 약효가 끊기면 처음부터 다시 해야 해요.`
   }
   const dep = (departureDate ?? '').slice(0, 10)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dep)) return null
