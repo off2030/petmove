@@ -163,6 +163,64 @@ function groupByKey(list) {
   return m
 }
 
+/**
+ * ── 3-1) 계산된 키(액션 화이트리스트) 분류 강제 ────────────────────────────
+ *
+ * 위 스캔은 `nextData.KEY = …` 처럼 **리터럴로 쓴 키**만 본다. 그런데 date_array 카드들은
+ * `nextData[fieldKey]` 로 쓴다 — 키가 런타임 변수라 스캔에 안 걸리고, 분류가 없어도 통과했다.
+ * 이 구멍으로 infectious_disease_records 가 **목적지별이어야 하는데 미분류(=기본 전역)** 로
+ * 굴러다녔다(2026-07-30 발견 — 호주용 3종 검사가 뉴질랜드 여정에서 '검사 완료'로 보였다).
+ *
+ * 그래서 서버 액션의 **허용 필드 화이트리스트**를 직접 읽어 그 키들의 분류를 검사한다.
+ * 새 date_array 카드를 만들면 여기서 막힌다.
+ */
+const WHITELIST_SETS = [
+  { file: 'apps/portal/lib/actions/cases.ts', name: 'PARASITE_FIELD_KEYS' },
+  { file: 'apps/portal/lib/actions/cases.ts', name: 'VACCINE_ARRAY_FIELD_KEYS' },
+]
+const unclassifiedWhitelist = []
+for (const { file, name } of WHITELIST_SETS) {
+  let wsrc
+  try {
+    wsrc = readFileSync(path.join(ROOT, file), 'utf-8')
+  } catch {
+    continue
+  }
+  const wm = wsrc.match(new RegExp(`${name}[^=]*=\\s*new Set\\(\\[([\\s\\S]*?)\\]\\)`, 'm'))
+  if (!wm) continue
+  for (const km of wm[1].matchAll(/'([^']+)'|"([^"]+)"/g)) {
+    const key = km[1] ?? km[2]
+    if (SCOPED.has(key) || GLOBAL.has(key)) continue
+    unclassifiedWhitelist.push({ key, where: `${file} · ${name}` })
+  }
+}
+
+/**
+ * ── 3-2) 저장 후 폼 동기화는 flatten 한 뷰에서 ─────────────────────────────
+ *
+ * 서버 액션이 돌려주는 res.value 는 **raw** 다. 목적지별 키는 by_dest 에만 있고 top-level 은
+ * 지워지므로, raw 로 읽으면 폼이 빈 값이 된다. 게다가 그 순간 form ≠ saved 라 dirty 가 켜져
+ * 동기화 useEffect 마저 되돌려주지 못한다 — 입력한 값이 사라진 것처럼 보인다
+ * (2026-07-30 전염병 검사에서 실제 발생).
+ *
+ * 필드가 전역이면 flatten 이 무해한 no-op 이므로 **예외 없이 flatten 을 요구**한다 —
+ * "이 필드가 목적지별인가"를 매번 기억하지 않아도 되게.
+ */
+const RAW_READ_DIRS = ['apps/portal/components']
+const rawReads = []
+for (const rel of RAW_READ_DIRS) {
+  for (const file of walk(path.join(ROOT, rel))) {
+    const lines = readFileSync(file, 'utf-8').split('\n')
+    lines.forEach((lineText, idx) => {
+      if (!/res\.value\.data/.test(lineText)) return
+      if (lineText.includes('scoping-lint-ignore')) return
+      // 주석 줄은 규칙을 설명하는 문서라 제외.
+      if (/^\s*(\/\/|\*)/.test(lineText)) return
+      rawReads.push({ file: path.relative(ROOT, file), line: idx + 1 })
+    })
+  }
+}
+
 let failed = false
 
 if (problems.length > 0) {
@@ -199,6 +257,37 @@ if (fallbackProblems.length > 0) {
   )
 }
 
+if (unclassifiedWhitelist.length > 0) {
+  failed = true
+  console.error(
+    `\n✗ destination-scoping lint: 액션 화이트리스트에 있는데 **분류되지 않은 키** ${unclassifiedWhitelist.length}개\n`,
+  )
+  for (const { key, where } of unclassifiedWhitelist) console.error(`  • ${key}   (${where})`)
+  console.error(
+    '\n이 키들은 `nextData[fieldKey]` 처럼 **계산된 키**로 저장돼 위 스캔에 안 걸린다.\n' +
+      '  목적지마다 달라야 하면 → DESTINATION_SCOPED_FIELD_KEYS + writeByDestValue 라우팅\n' +
+      '  동물 단위 사실이면   → GLOBAL_CASE_DATA_KEYS\n' +
+      '  분류 없이 두면 기본 전역이라 한 목적지에서 한 게 다른 목적지로 샌다.',
+  )
+}
+
+if (rawReads.length > 0) {
+  failed = true
+  console.error(
+    `\n✗ destination-scoping lint: 저장 후 **raw res.value.data** 를 읽는 지점 ${rawReads.length}곳\n`,
+  )
+  for (const { file, line } of rawReads) console.error(`  • ${file}:${line}`)
+  console.error(
+    '\n서버가 돌려주는 res.value 는 raw 다 — 목적지별 키는 by_dest 에만 있고 top-level 은 지워진다.\n' +
+      '  raw 로 읽으면 폼이 빈 값이 되고, 그 순간 form ≠ saved 라 dirty 가 켜져 동기화\n' +
+      '  useEffect 마저 되돌려주지 못한다(입력값이 사라진 것처럼 보임).\n' +
+      '  → activeDestinationView(res.value, activeDest).data 로 평탄화해서 읽을 것.\n' +
+      '  전역 필드면 flatten 이 no-op 이라 무해하다 — 필드별 예외를 두지 않는다.',
+  )
+}
+
 if (failed) process.exit(1)
-console.log('✓ destination-scoping lint: 미분류 키 없음 + SCOPED 키 top-level 직접 쓰기 없음')
+console.log(
+  '✓ destination-scoping lint: 미분류 키 없음 + SCOPED top-level 직접 쓰기 없음 + 저장 후 flatten 준수',
+)
 process.exit(0)

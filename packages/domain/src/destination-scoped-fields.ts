@@ -343,6 +343,15 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'general_vaccine_dates', //   종합백신 접종 이력 — 동물 단위 사실 (rabies_dates 동일)
   'kennel_cough_dates', //      켄넬코프 접종 이력 — 종합백신과 같은 동물 단위 사실(2026-07-27 카드 분리)
   'heartworm_dates', //         심장사상충 검사 이력 — 구충과 같은 동물 단위 사실(2026-07-27 카드 분리)
+  // 아래 5개는 **미분류였다**(2026-07-30 전수조사로 발견). 기본이 전역이라 동작은 의도와
+  //   같았지만, lint:scope 가 계산된 키(`nextData[fieldKey]`)를 못 봐서 분류 없이 통과했다 —
+  //   같은 구멍으로 infectious_disease_records 가 목적지별이어야 하는데 전역으로 굴러다녔다.
+  //   이제 액션 화이트리스트(PARASITE_FIELD_KEYS 등)를 lint 가 읽어 분류를 강제한다.
+  'external_parasite_dates', //  외부구충 처치 이력 — 동물 단위 사실
+  'internal_parasite_dates', //  내부구충 처치 이력 — 〃 (촌충 카드와 키 공유)
+  'lungworm_dates', //           폐충 처치 이력 — 〃 (2026-07-29 카드 분리)
+  'civ_dates', //                독감(CIV) 접종 이력 — 〃 (종합백신과 같은 모델)
+  'rabies_titer_extra', //       추가 항체검사 회차 — rabies_titer_records 와 같은 동물 단위
   'rabies_titer_records',
   'rabies_titer_scheduled', //  항체검사 채혈일을 미래(예정)로 저장 시 별도 자리 — *_dates 동일 동물 단위(전역)
   'rabies_extra_confirmed',

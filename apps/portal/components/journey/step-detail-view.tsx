@@ -469,6 +469,19 @@ export function StepDetailView({
     () => (caseRowRaw ? activeDestinationView(caseRowRaw, activeDest) : caseRowRaw),
     [caseRowRaw, activeDest],
   )
+  /**
+   * 저장 응답을 **활성 목적지 뷰로 평탄화**해서 읽는다.
+   *
+   * 서버가 돌려주는 res.value 는 raw 다 — 목적지별 키는 by_dest 에만 있고 top-level 은
+   * 지워지므로, raw 로 읽으면 폼이 빈 값이 된다. 게다가 그 순간 form != saved 라 dirty 가
+   * 켜져 동기화 useEffect 마저 되돌려주지 못한다(입력값이 사라진 것처럼 보임 —
+   * 2026-07-30 전염병 검사에서 실제 발생).
+   *
+   * 전역 필드면 flatten 이 no-op 이라 무해하므로 **예외 없이 이걸 쓴다** — 필드별로
+   * '목적지별인가'를 기억하지 않게. lint:scope 가 raw res.value.data 사용을 막는다.
+   */
+  const savedView = (row: Parameters<typeof activeDestinationView>[0]) =>
+    activeDestinationView(row, activeDest)
   const { updateCase, profile } = useCases()
   // 자기책임 모드 — 입력불가 차단(전부) 해제. 형식·필드키 검증은 server 가 유지(데이터 파싱
   // 가능성 보존). '주의'/'안내'는 scenario(buildJourney prefs)가 담당.
@@ -1839,7 +1852,7 @@ export function StepDetailView({
           updateCase(res.value)
           // 미래(예정) 저장은 서버가 별도 자리로 분리해 실제 키가 비므로, 저장값 재읽기로
           // 입력칸이 baseline 과 일치한다(dirty 잔류·이탈 경고 방지).
-          setDate(readImplantDate(res.value.data))
+          setDate(readImplantDate(savedView(res.value).data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -1864,7 +1877,7 @@ export function StepDetailView({
         const res = await updateRabiesExtraEntries(caseId, sendEntries, 0)
         if (res.ok) {
           updateCase(res.value)
-          const next = readRabiesExtraEntries(res.value.data, 0)
+          const next = readRabiesExtraEntries(savedView(res.value).data, 0)
           setRabiesList(next.length === 0 ? [makeEmptyExtra()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
@@ -1889,7 +1902,7 @@ export function StepDetailView({
           updateCase(res.value)
           // 서버가 trim·정규화한 값으로 폼을 맞춰 dirty 해제. 미래(예정) 저장은 서버가
           // rabies_dates_scheduled 로 분리해 실제 슬롯이 비므로 재읽기로 baseline 과 일치한다.
-          setRabies(readRabiesEntryForm(res.value.data, rabiesIndex))
+          setRabies(readRabiesEntryForm(savedView(res.value).data, rabiesIndex))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -1913,7 +1926,7 @@ export function StepDetailView({
         const res = await updateRabiesExtraEntries(caseId, sendEntries, rabiesExtraBase)
         if (res.ok) {
           updateCase(res.value)
-          const next = readRabiesExtraEntries(res.value.data, rabiesExtraBase)
+          const next = readRabiesExtraEntries(savedView(res.value).data, rabiesExtraBase)
           setRabiesExtra(next.length === 0 ? [makeEmptyExtra()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
@@ -1933,7 +1946,7 @@ export function StepDetailView({
         })
         if (res.ok) {
           updateCase(res.value)
-          setTiterForm(readTiterForm(res.value.data))
+          setTiterForm(readTiterForm(savedView(res.value).data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -1960,8 +1973,8 @@ export function StepDetailView({
         if (res.ok) {
           updateCase(res.value)
           const next = isTiterSingleCard
-            ? readTiterAllEntries(res.value.data)
-            : readTiterExtraEntries(res.value.data)
+            ? readTiterAllEntries(savedView(res.value).data)
+            : readTiterExtraEntries(savedView(res.value).data)
           setTiterExtra(next.length === 0 ? [makeEmptyTiterExtra()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
@@ -2036,7 +2049,7 @@ export function StepDetailView({
         )
         if (res.ok) {
           updateCase(res.value)
-          const next = readGeneralVaccineForm(res.value.data, vaccineArrayFieldKey)
+          const next = readGeneralVaccineForm(savedView(res.value).data, vaccineArrayFieldKey)
           setGeneralVaccine(next.length === 0 ? [makeEmptyGeneralVaccine()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
@@ -2126,7 +2139,7 @@ export function StepDetailView({
         const res = await updateAdvanceNotificationDate(caseId, advanceDate || null)
         if (res.ok) {
           updateCase(res.value)
-          setAdvanceDate(readAdvanceDate(res.value.data))
+          setAdvanceDate(readAdvanceDate(savedView(res.value).data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
