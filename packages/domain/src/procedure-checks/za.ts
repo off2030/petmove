@@ -17,6 +17,7 @@ import {
 import { readByDestValue } from '../destination-scoped-fields'
 import {
   validateDepartureNotAfterQuarantineStart,
+  validateHeartwormSameDayAsInfectiousTest,
   validateInfectiousDiseaseTestDate,
   violatesRabiesEntryWait,
 } from '../journey-steps/date-rules'
@@ -295,10 +296,15 @@ export const ZA_CHECKS: ProcedureCheck[] = [
 
       // 채혈 기준일 = 가장 최근 5종 검사(증명서에 적히는 그 검사).
       const sample = infectious[infectious.length - 1]
-      if (heartworm.some((h) => h.date === sample.date)) {
+      // 판정은 도메인 함수 하나 — 저장 거부(심장사상충 카드)와 이 주의가 어긋나면 안 된다.
+      const blocked = validateHeartwormSameDayAsInfectiousTest(
+        heartworm.map((h) => h.date),
+        sample.date,
+      )
+      if (!blocked) {
         return { ok: true, message: `심장사상충 예방에 채혈일(${sample.date}) 당일 투약 있음.` }
       }
-      // 없으면 — 어느 칸을 고쳐야 하는지 보이도록 채혈일에 가장 가까운 투약을 짚는다.
+      // 어느 칸을 고쳐야 하는지 보이도록 채혈일에 가장 가까운 투약을 짚는다.
       const nearest = heartworm.reduce((a, b) =>
         Math.abs(Date.parse(a.date) - Date.parse(sample.date)) <=
         Math.abs(Date.parse(b.date) - Date.parse(sample.date))
@@ -307,8 +313,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
       )
       return {
         ok: false,
-        message:
-          '심장사상충 예방은 검사 채혈일과 같은 날 시작해야 해요. 채혈일에 투약한 기록이 없어요.',
+        message: blocked,
         offendingPaths: [
           `heartworm_dates[${nearest.originalIndex}].date`,
           `infectious_disease_records[${sample.originalIndex}].date`,

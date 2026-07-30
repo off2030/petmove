@@ -47,6 +47,7 @@ import {
   requiredParasiteDoses,
   validateExternalParasiteDates,
   JOURNEY_STEP_CATALOG,
+  validateHeartwormSameDayAsInfectiousTest,
   validateInfectiousDiseaseTestDate,
   validatePhInternalParasiteWindow,
   readScopedImportPermitFiled,
@@ -1593,6 +1594,28 @@ export function StepDetailView({
           })
           if (err) return err
         }
+      }
+      // 남아공 심장사상충 — **첫 투약이 5종 전염병 검사의 채혈일과 같은 날**이어야 한다
+      //   (HA2123 6.1 "from the date of negative testing until export"). 처음엔 주의로만
+      //   뒀는데 그러면 시작점에 구멍이 난 채 저장돼 증명서를 다시 못 쓴다 —
+      //   저장 거부로 올렸다(2026-07-31 사용자 지정). 주의 룰과 **같은 함수**.
+      //   ⚠️ 채혈일 기준은 **가장 최근** 5종 검사(증명서에 적히는 그 검사)다.
+      if (isHeartworm && destinationKey === 'south_africa') {
+        const records = (caseRow?.data as Record<string, unknown> | undefined)?.[
+          'infectious_disease_records'
+        ]
+        const sample = Array.isArray(records)
+          ? (records as Array<{ date?: unknown }>)
+              .map((r) => (typeof r?.date === 'string' ? r.date.slice(0, 10) : ''))
+              .filter((d) => d.length === 10)
+              .sort()
+              .pop()
+          : undefined
+        const err = validateHeartwormSameDayAsInfectiousTest(
+          parasite.map((e) => e.date ?? ''),
+          sample ?? null,
+        )
+        if (err) return err
       }
       // 뉴질랜드 폐충(2.4)·심장사상충 예방(2.11(2)(a)) — 둘 다 출국 5일 이내.
       //   주의만 있고 차단이 없어 창 밖 날짜가 그대로 저장되던 자리(2026-07-30 사용자 지정).

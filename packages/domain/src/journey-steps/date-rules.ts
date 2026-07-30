@@ -2274,6 +2274,34 @@ export const INFECTIOUS_TEST_DEPARTURE_WINDOWS: Record<
 }
 
 /**
+ * 심장사상충 예방 **첫 투약 = 음성 검사 채혈일** 판정 — 남아공 전용.
+ *
+ * HA2123 6.1 "from the date of negative testing until export at the required intervals" —
+ * 채혈일 당일에 투약이 있어야 요구 구간이 처음부터 덮인다. 하루라도 늦으면 시작점에 구멍이
+ * 생기고, 그건 증명서를 다시 못 쓰는 문제라 **저장 거부**로 막는다(2026-07-31 사용자 확정 —
+ * 처음엔 주의로 뒀다가 "저장 거부여야 한다"로 정정).
+ *
+ * ⚠️ 판정은 '채혈일에 투약이 **하나라도** 있으면 통과'다. 가장 이른 투약을 보지 않는다 —
+ *   평소 하던 월 1회 예방 기록이 앞에 있어도 그건 사실이라 막으면 안 되고, 채혈일 **이후**의
+ *   월 투약도 정상이다("at the required intervals").
+ * ⚠️ 상한(출국 N일 이내)은 없다 — 두면 월 투약을 거부하게 된다.
+ *
+ * client(getSaveBlockError)·procedure-check(za.heartworm-same-day-as-infectious-test) 공용
+ * 단일 출처. 한쪽이 비면 통과(SKIP) — 채혈일을 아직 안 넣었으면 판정할 게 없다.
+ */
+export function validateHeartwormSameDayAsInfectiousTest(
+  heartwormDates: readonly string[],
+  infectiousTestDate: string | null | undefined,
+): string | null {
+  const sample = (infectiousTestDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(sample)) return null
+  const doses = heartwormDates.map((d) => (d ?? '').slice(0, 10)).filter((d) => d.length === 10)
+  if (doses.length === 0) return null
+  if (doses.includes(sample)) return null
+  return '심장사상충 예방은 검사 채혈일과 같은 날 시작해야 해요. 채혈일에 투약한 기록이 없어요.'
+}
+
+/**
  * 전염병 검사일 저장 거부 — 두 가지를 막는다(2026-07-28 사용자 확정).
  *
  *   ① 출국일보다 늦은 검사 — 논리적 불가능.
