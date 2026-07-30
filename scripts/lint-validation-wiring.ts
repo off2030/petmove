@@ -163,6 +163,12 @@ const UNVALIDATED_OK: Record<string, string> = {
   //   완료 추적용(강아지 라이선스·관부가세·국경검사 예약). 계류장 예약은 sg.quarantine-
   //   reservation-after-titer(채혈 이후) 룰이 있어 제외.
   'sg-dog-licence': '절차 완료일 추적용 — 날짜 순서 제약 없음',
+  // 남아공 검역시설 예약 — 검역 시작일에 걸리는 제약이 '출국일보다 빠를 수 없다' 하나뿐이다
+  //   (호주의 채혈 + 180일, 뉴질랜드의 채혈 + 3개월 같은 대기가 없다 — 항체 요건 자체가 없다).
+  //   그 주의는 조치 가능한 칸이 있는 **운송 예약 카드**에 둔다(호주·뉴질랜드·싱가포르와 같은
+  //   배치). 이 카드에는 짝이 되는 저장 거부(validateQuarantineStartNotBeforeDeparture)가 있다.
+  'south_africa:za-quarantine-reservation':
+    '순서 주의는 운송 예약 카드(za.quarantine-start-not-before-departure) + 입력불가는 validateQuarantineStartNotBeforeDeparture 담당',
   // sg-gst-permit·sg-border-inspection 은 2026-07-25 검증 추가로 예외 목록에서 제거.
 }
 
@@ -961,6 +967,15 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   //   있는 사실이라 저장을 막지 않는다.
   'nz-quarantine-reservation':
     '차단: validateNzQuarantineStartAfterTiter(채혈 + 3개월 미만 거부, 3~6개월은 2차 인증 필수) + 주의: nz.quarantine-reservation-matches-entry(도착일과 불일치 — 예약·항공 어느 쪽이든 고칠 수 있어 차단 X)',
+  // 남아공 — 계류 예약과 같은 형태지만 채혈 기준 대기가 없다(항체 요건 자체가 없다).
+  //   남는 제약은 '검역 시작일(=도착일)이 출국일보다 빠를 수 없다' 하나이고, 이건 순서 역전이라
+  //   차단이 맞다(호주·뉴질랜드와 같은 함수, 출국일 칸 쪽 차단도 대칭으로 걸린다).
+  'za-quarantine-reservation':
+    '차단: validateQuarantineStartNotBeforeDeparture(검역 시작일 ≥ 출국일) — 짝 주의는 za.quarantine-start-not-before-departure(운송 예약 카드)',
+  // AIA 는 수의검역 수입 허가와 같은 판정 — 출국 당일·이후 신청은 성립하지 않는다.
+  //   확정 마감(출국 N일 전)은 규정에 없어(심사 최대 30영업일이라는 사실만 있다) 순서만 본다.
+  'za-aia-permit':
+    '차단: validateImportPermitNotAfterDeparture(신청일 < 출국일) — 짝 주의는 za.aia-permit-not-after-departure',
   'sg-gst-permit': '차단: validateSgGstPermitDate(도착 전 + 도착 14일 이내)',
   'sg-border-inspection': '차단: validateSgBorderInspectionDate(도착 최소 5일 전)',
   // 독감(CIV)·전염병 검사 — 호주 전용 카드(둘 다 강아지 요건).

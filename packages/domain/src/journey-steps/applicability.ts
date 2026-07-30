@@ -166,6 +166,9 @@ export const QUARANTINE_START_FIELD_BY_DESTINATION: Record<string, string> = {
   australia: 'au_quarantine_reservation_date',
   new_zealand: 'nz_quarantine_reservation_date',
   singapore: 'sg_quarantine_reservation_date',
+  // 남아공 — 개만 검역시설에 들어간다. 고양이는 예약 카드 자체가 없어 이 맵을 타지 않고
+  //   도착 카드가 배지 없이 뜬다(예약일이 없으면 폴백도 없다 — 의도된 동작).
+  south_africa: 'za_quarantine_reservation_date',
 }
 
 export const FLIGHT_DATE_RETURN_QUARANTINE_DESTINATIONS: string[] = [

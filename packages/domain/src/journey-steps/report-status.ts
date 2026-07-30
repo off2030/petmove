@@ -128,6 +128,17 @@ export const SG_DOG_LICENCE_APP_SPEC: ApplicationStepSpec = {
   inProgressFlag: 'sg_dog_licence_in_progress',
   attachStepId: 'sg-dog-licence',
 }
+/**
+ * 남아공 AIA 수입 허가(개 전용) — 수의검역 수입 허가와 **별개의 두 번째 허가**라
+ * import-permit 카드를 나눠 쓸 수 없다. 처리에 최대 30영업일이 걸려 '신청했다'와
+ * '허가가 나왔다'가 몇 주 벌어지므로 신청 → 발급 2단계 모델을 그대로 쓴다.
+ */
+export const ZA_AIA_PERMIT_APP_SPEC: ApplicationStepSpec = {
+  dateField: 'za_aia_permit_application_date',
+  skipFlag: 'za_aia_permit_issued_skipped',
+  inProgressFlag: 'za_aia_permit_in_progress',
+  attachStepId: 'za-aia-permit',
+}
 
 /**
  * 신청형 절차의 진행 상태 — 범용. 사전 신고와 동일한 신청 → 발급 2단계 모델.

@@ -1693,10 +1693,58 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer'],
     extraFields: ['address_overseas'],
   },
+  // ── 남아프리카공화국 (DALRRD — Department of Agriculture, Land Reform & Rural Development) ──
+  // 1차 출처: 남아공 정부 동물 수입 안내(gov.za) · 농업부 Animal Health 신청서·수수료 문서 ·
+  //   2024-04-01 AIA 사전승인 지침 · 공개된 개 Veterinary Health Certificate(2026-03판).
+  //   조사 정리본은 docs/south-africa-pet-travel-guide-draft.md.
+  // 아키타입 = sea-permit(광견병 1회 + 수입허가 + 도착 계류). 호주·뉴질랜드와 다른 점 넷:
+  //   ① **항체 검사(RNATT)가 입국 요건이 아니다.** 광견병은 '접종 30일 경과 + 12개월 이내'
+  //      두 조건뿐이라 채혈·대기가 통째로 없다 — 준비가 호주(6개월+)보다 훨씬 짧다.
+  //   ② 허가가 **두 장**이다. 개는 AIA 허가(Animal Improvement Act, 2024-04-01~)를 먼저 받고
+  //      그 허가서를 붙여 수의검역 수입허가를 신청한다. 고양이는 AIA 면제.
+  //   ③ 전염병 검사·심장사상충·계류가 전부 **개 전용**이다(고양이는 서류만 맞으면 격리 없음).
+  //   ④ 계류는 약 14일이고 **한국이 면제국 목록에 없어서** 붙는다(품종·인증 여부와 무관).
   south_africa: {
-    // 광견병 + RNATT + 전염병검사(ARC-OVI, Brucella/Babesia/Ehrlichia/Trypanosoma 등) + 심장사상충.
     keywords: ['남아프리카공화국', '남아공', 'south africa'],
-    vaccines: ['rabies', 'rabies_titer', 'infectious_disease', 'heartworm'],
+    archetype: 'sea-permit',
+    rabies: {
+      doses: 1,
+      // 공개 건강증명서의 예외 조항이 '생후 3개월 미만 + 모견 접종'을 다룬다 = 접종 하한이
+      //   **달력 3개월**이라는 뜻. 일수(84·91)로 환산하면 생월에 따라 89~92일로 흔들려
+      //   규정을 지킨 케이스를 막는다 — 베트남·말레이시아·인도네시아와 같은 처리.
+      minAgeMonths: 3,
+      minAgeLabel: '생후 3개월',
+      // "초회는 출국 30일 전 ~ 12개월 이내" — 유효한 접종 안에서 추가접종하면 30일 대기 면제.
+      //   그 면제는 violatesVaccineWaitDays 가 이미 구현하고 있다(유효 부스터는 통과).
+      entryWaitDaysAfterVaccine: 30,
+      // 라이선스가 2·3년이어도 **입국일 기준 12개월 이내 접종**이어야 한다 → 1년만 인정.
+      oneYearVaccineOnly: true,
+      validityLine: '면역 유효기간은 1년이에요. 2년·3년 백신은 인정되지 않아요.',
+    },
+    // ⚠️ 항체 검사는 **입국 요건이 아니다**(공식 안내·건강증명서 어디에도 RNATT 항목이 없다).
+    //   구 선언의 'RNATT' 주석은 조사 전 추정이었다 — 되살리지 말 것. 편도 전용이라 한국
+    //   귀국용 항체도 없다(귀국 케이스는 목적지를 새로 만들어 진행).
+    titer: { need: 'none' },
+    // 전염병 검사 5종(Brucella canis · Trypanosoma evansi · Babesia gibsoni ·
+    //   Dirofilaria immitis · Leishmania) + 심장사상충 예방 + 살진드기·기피 처치 — 전부 개 전용.
+    //   심장사상충은 **검사(5종에 포함)와 예방 투약이 별개**라 카드도 나눈다(뉴질랜드와 같은 처리).
+    vaccines: [
+      'rabies',
+      { key: 'infectious_disease', species: 'dog' },
+      { key: 'heartworm', species: 'dog' },
+      { key: 'external_parasite', species: 'dog' },
+    ],
+    extraFields: ['permit_no', 'address_overseas'],
+    // 건강증명서 작성 = 출국 10일 이내(한국 별지 제25호와 같은 창) → 기본값 그대로.
+    // 수입허가는 VetPermits 이메일 신청이고 AIA 는 Animal Improvement Registrar 이메일이라
+    //   둘 다 보호자·대행사가 직접 낸다 → 로잔 맡기기 '수입 허가 신청' 제외.
+    importPermit: { selfApply: true },
+    // ⚠️ importQuarantine.quarantineDays 는 선언하지 않는다 — 읽는 곳이 없는 죽은 선언이다
+    //   (호주·뉴질랜드와 같은 판단). '약 14일'은 도착 카드·검역시설 예약 카드가 직접 말한다.
+    // 강아지 규정(카드·검증·서류)까지 끝나 앱에 노출한다. 고양이는 별도 확인 예정.
+    // ⚠️ 히어로 사진 **미등록** — 등록 전까지 목적지 카드에 사진 없이 표시된다
+    //   (apps/portal/public/destinations/southafrica-NN.webp + hero-blur-placeholders.ts).
+    appSupported: true,
     // 편도 전용(2026-07-27 사용자 확정).
     oneWayOnly: true,
   },

@@ -36,6 +36,7 @@ import {
   deriveJpExportQuarantineStatus,
   SG_DOG_LICENCE_APP_SPEC,
   SG_QUARANTINE_RESERVATION_APP_SPEC,
+  ZA_AIA_PERMIT_APP_SPEC,
 } from './report-status'
 import type { StepDefinition } from './types'
 import type { CaseRow } from '../types'
@@ -1381,6 +1382,91 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
 
+  // ── 남아공 AIA 수입 허가 (개 전용) — 수의검역 수입 허가 **전** ────────────────
+  // 남아공은 개에게 허가가 **두 장** 필요하다. Animal Improvement Act 허가(2024-04-01 지침으로
+  //   신설)를 Animal Improvement Registrar 에게 먼저 받고, 그 허가서를 붙여 수의검역 수입
+  //   허가(import-permit)를 신청한다. 고양이는 AIA 면제라 이 카드가 뜨지 않는다.
+  // 처리에 최대 30영업일이 걸려 준비 전체에서 **가장 먼저 시작해야 하는 절차**다 → 광견병
+  //   접종(30) 바로 뒤(38)에 둔다. 계류시설 예약(42)·수입 허가(44)보다 앞.
+  // ⚠️ 대행업체 주의 — 남아공 농업부가 허위·부정 신청 관련 개 수입 대리인 인가를 취소한
+  //   사례가 있다. 카드 문구에서 허가 번호·발급기관을 직접 확인하도록 안내한다.
+  {
+    id: 'za-aia-permit',
+    category: 'permit',
+    title: 'AIA 수입 허가 신청',
+    shortLabel: 'AIA',
+    description:
+      '남아공 농업부 Animal Improvement Registrar에 AIA 수입 허가를 신청하세요.\n\n강아지만 받는 허가예요. 수의검역 수입 허가와는 별개의 서류예요.\n이 허가서가 있어야 수의검역 수입 허가를 신청할 수 있어요.\n심사에 최대 30영업일이 걸리니 가장 먼저 시작하세요.\n3개월을 넘겨 머무는 경우에는 영구수입(Permanent Importation) 신청서를 써요.\n반려 목적으로 데려가는 미등록 강아지는 중성화 증명서가 필요해요.\n허가는 발급일부터 6개월 동안 1회 운송에만 쓸 수 있어요.\n대행업체를 이용하더라도 허가 번호와 발급기관을 직접 확인하세요.',
+    doneSummary: 'AIA 수입 허가를 받았어요.',
+    cardLine: 'AIA 수입 허가를 신청하세요.',
+    applicability: { destinations: ['south_africa'], species: 'dog', tripType: 'all' },
+    order: 38,
+    // 신청 → 발급 2단계(싱가포르 강아지 라이선스와 같은 모델). 신청일 입력 = 진행 중,
+    //   허가서 첨부·완료 버튼 = 완료. 처리가 30영업일이라 두 시점이 실제로 멀다.
+    done: 'has-za-aia-permit',
+    hasInputData: (caseRow) =>
+      deriveApplicationStatus(caseRow, ZA_AIA_PERMIT_APP_SPEC) !== 'not_started',
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed =
+        typeof data.za_aia_permit_application_date === 'string'
+          ? data.za_aia_permit_application_date
+          : ''
+      if (filed.length >= 10 && filed > todayKst()) return undefined
+      if (deriveApplicationStatus(caseRow, ZA_AIA_PERMIT_APP_SPEC) !== 'in_progress') return undefined
+      const msg =
+        'AIA 수입 허가를 신청 중이에요. 허가서가 나오면 파일을 첨부하거나 완료 버튼을 누르세요.'
+      return { desc: msg, cardDesc: msg }
+    },
+    inputs: [
+      {
+        key: 'za_aia_permit_application_date',
+        label: '신청일',
+        type: 'date',
+        helpText: 'AIA 수입 허가를 신청한 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: 'AIA 수입 허가서를 사진·PDF로 보관하세요.',
+    attachmentLabel: '남아공 AIA 수입 허가서',
+    validationIds: ['za.aia-permit-not-after-departure'],
+  },
+
+  // ── 남아공 검역시설 예약 (개 전용) — 수의검역 수입 허가 **전** ─────────────────
+  // 한국은 남아공의 개 검역 면제국 목록에 없다 → 한국 출발 개는 도착 후 약 14일 국가
+  //   검역시설에 들어간다. 검역 자리가 확보돼야 수입 허가 신청서에 그 사실을 적을 수 있어
+  //   순서가 예약(42) → 허가(44) 다(뉴질랜드와 같은 순서, 호주와는 반대).
+  // ⛔ buttonComplete 로 바꾸지 말 것 — 이 날짜를 **실제 계류 시작일로 읽는 소비처가 셋**이다
+  //   (za.quarantine-start-not-before-departure 주의 / 도착 검역 카드의 '예정' 배지
+  //   QUARANTINE_START_FIELD_BY_DESTINATION / 이 카드의 완료 판정). 호주·뉴질랜드와 같은 이유.
+  {
+    id: 'za-quarantine-reservation',
+    category: 'permit',
+    title: '검역시설 예약',
+    shortLabel: '검역장',
+    description:
+      '남아공 국가 검역시설에 검역을 예약하세요.\n\n한국은 남아공의 개 검역 면제국이 아니라서 강아지는 도착 후 검역을 받아요.\n입국 공항의 국가 수의사(State Veterinarian)에게 연락해 자리를 확인해요.\n요하네스버그는 Kempton Park, 케이프타운은 Milnerton 검역시설을 이용해요.\n검역 면책동의서(Indemnity Declaration)도 함께 작성해요.\n예약을 마쳐야 수의검역 수입 허가를 신청할 수 있어요.\n검역·검사·운송 비용은 보호자가 부담해요.',
+    doneSummary: '검역시설을 예약했어요.',
+    cardLine: '검역시설을 예약하세요.',
+    applicability: { destinations: ['south_africa'], species: 'dog', tripType: 'all' },
+    order: 42,
+    // 예약을 했다는 사실이 완료 — 검역 시작일이 미래여도 카드는 완료다(호주·뉴질랜드와 동일).
+    done: 'booked:za_quarantine_reservation_date',
+    inputs: [
+      {
+        key: 'za_quarantine_reservation_date',
+        label: '검역 시작일',
+        type: 'date',
+        helpText: '예약한 검역 시작 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역시설 예약확인서·면책동의서를 사진·PDF로 보관하세요.',
+    attachmentLabel: '남아공 검역시설 예약확인서',
+    // 출국일 ≤ 검역 시작일 주의는 **운송 예약 카드**에 둔다(출국일 칸이 있는 쪽) —
+    //   호주·뉴질랜드·싱가포르와 같은 배치. 저장 거부는 이 카드에도 걸린다.
+  },
+
   // ── 사전 신고 다음 — 일본 수출 검역 (왕복 케이스 한정) ──────────────
   {
     id: 'jp-export-quarantine',
@@ -1599,7 +1685,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       species: 'all',
       // 뉴질랜드는 **강아지 전용** — IHS 2.11 조항 제목이 "Heartworm (Dirofilaria immitis)
       //   **(dogs)**" 다(2026-07-27 원문 확인). 괌은 종전대로 두 종 모두.
-      speciesByDestination: { new_zealand: 'dog' },
+      // 남아공도 **강아지 전용** — 심장사상충 예방 조항이 개 건강증명서에만 있다.
+      speciesByDestination: { new_zealand: 'dog', south_africa: 'dog' },
       tripType: 'all',
     },
     order: 108,
@@ -1679,8 +1766,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       //   아예 없다(2026-07-27 원문 확인).
       // 뉴질랜드도 **강아지 전용** — IHS 2026 Part 2 에서 바베시아(2.5~2.7)·브루셀라(2.8)·
       //   리슈만편모충(2.12)·렙토스피라(2.13) 조항 제목이 전부 "(dogs)" 다(2026-07-27 원문 확인).
-      //   남아공은 종전대로 두 종 모두.
-      speciesByDestination: { australia: 'dog', new_zealand: 'dog' },
+      // 남아공도 **강아지 전용**으로 바꿨다(2026-07-30) — 5종 검사(Brucella canis ·
+      //   Trypanosoma evansi · Babesia gibsoni · Dirofilaria immitis · Leishmania)는 개
+      //   건강증명서에만 있고, 고양이는 서류만 맞으면 검사·격리 없이 통관된다.
+      //   구 'all' 은 앱 카드가 없던 시절의 기본값이었을 뿐 근거가 아니었다.
+      speciesByDestination: { australia: 'dog', new_zealand: 'dog', south_africa: 'dog' },
       tripType: 'all',
     },
     order: 70,
@@ -1728,8 +1818,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'hawaii',
         'guam',
         'singapore',
+        // 남아공 — 살진드기제(acaricide)와 흡혈곤충 기피제(repellent) 처치. **개 전용**이다
+        //   (바베시아·리슈만편모충 매개체 차단이 목적이고, 두 검사가 개에게만 붙는다).
+        'south_africa',
       ],
       species: 'all',
+      speciesByDestination: { south_africa: 'dog' },
       tripType: 'all',
     },
     order: 80,

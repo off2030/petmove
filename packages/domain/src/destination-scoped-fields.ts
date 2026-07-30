@@ -158,6 +158,18 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 뉴질랜드 수출 증명(왕복 귀국) — AWEC + 수출 건강증명서 발급일.
   'nz_export_quarantine_date',
   'nz_export_quarantine_confirmed',
+  // 남아공 — 도착 검역(국가 검역시설 약 14일) + 검역시설 예약 시작일 + AIA 수입 허가(개 전용).
+  //   ⚠️ AIA 는 수의검역 수입 허가(import_permit_*)와 **별개의 두 번째 허가**라 필드도 따로다.
+  //   신청 → 발급 2단계라 신청일·완료(skip)·진행중 플래그 셋을 모두 등록해야 한다
+  //   (싱가포르 강아지 라이선스와 같은 모델 — 하나라도 빠지면 저장 후 값이 사라진다).
+  'za_import_quarantine_date',
+  'za_import_quarantine_confirmed',
+  'za_quarantine_reservation_date',
+  // 예약을 마친 날 — 카드 입력값은 미래 검역 시작일이라 완료일로 쓸 수 없다(호주·뉴질랜드 모델).
+  'za_quarantine_reservation_recorded_at',
+  'za_aia_permit_application_date',
+  'za_aia_permit_issued_skipped',
+  'za_aia_permit_in_progress',
   // 싱가포르 — 도착 검역(AQC 30일) + 귀국 수출검역(AVS 인증).
   'sg_import_quarantine_date',
   'sg_import_quarantine_confirmed',

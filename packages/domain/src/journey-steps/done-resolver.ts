@@ -28,6 +28,7 @@ import {
   deriveJpExportQuarantineStatus,
   SG_DOG_LICENCE_APP_SPEC,
   SG_QUARANTINE_RESERVATION_APP_SPEC,
+  ZA_AIA_PERMIT_APP_SPEC,
 } from './report-status'
 import { areAllRequiredDocsVerified, resolveRequiredDocs } from '../required-docs'
 
@@ -311,6 +312,9 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     case 'has-sg-dog-licence':
       // 싱가포르 강아지 라이선스 — 동일 신청 → 발급 모델.
       return deriveApplicationStatus(caseRow, SG_DOG_LICENCE_APP_SPEC) === 'done'
+    case 'has-za-aia-permit':
+      // 남아공 AIA 수입 허가(개 전용) — 동일 신청 → 발급 모델.
+      return deriveApplicationStatus(caseRow, ZA_AIA_PERMIT_APP_SPEC) === 'done'
     case 'has-jp-export-quarantine':
       // 일본 수출검역 신청도 동일 — [[deriveJpExportQuarantineStatus]] 가 단일 출처.
       // 'done' = skipped·confirmed+예약확정·legacy stored 'done'.

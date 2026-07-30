@@ -27,6 +27,7 @@ import {
   validateAuQuarantineReservationDate,
   validateSgDepartureVsQuarantineReservation,
   validateDepartureNotAfterQuarantineStart,
+  validateImportPermitNotAfterDeparture,
   validateQuarantineStartNotBeforeDeparture,
   validateParasiteDateForDestination,
   validateSgQuarantineReservationFiled,
@@ -227,6 +228,10 @@ const SIMPLE_FLIGHT_DESTINATIONS: readonly string[] = [
   //   ⚠️ 카드 문구의 '예약한 검역시설의 운영시간에 맞는 도착 시간인지 확인하세요'는 그대로 둔다 —
   //     확인하라는 안내지 앱에 입력하라는 뜻이 아니었고, 앱은 그 값을 판정한 적이 없다.
   'guam',
+  // 남아공 — 호주·뉴질랜드와 같은 이유(2026-07-30). 화물(manifest cargo) 운송이라 항공편
+  //   상세는 운송업체가 들고 있고, 허가 2장·검역시설 예약 모두 앱이 도착일·편명을 쓰지 않는다.
+  //   za 룰은 전부 readDepartureDate(출국일)만 본다.
+  'south_africa',
 ]
 
 /**
@@ -383,18 +388,24 @@ export function StepDetailView({
   // 싱가포르 계류장 예약·강아지 라이선스가 같은 모델을 공유한다. 필드 키만 다르다.
   const isSgQuarantineReservation = step.id === 'sg-quarantine-reservation'
   const isSgDogLicence = step.id === 'sg-dog-licence'
+  // 남아공 AIA 수입 허가(개 전용) — 같은 신청 → 발급 2단계 모델. 수의검역 수입 허가와 **별개**라
+  //   import-permit 카드를 나눠 쓸 수 없다(허가가 두 장이다).
+  const isZaAiaPermit = step.id === 'za-aia-permit'
   // buttonComplete 목적지(홍콩 수입 허가)는 2단계 UI 를 타지 않는다 — 대행이라 보호자가
   // 신청일을 모르고, 아는 건 '됐다/안 됐다'뿐이라 완료 버튼만 남긴다(2026-07-26 사용자 결정).
   // 같은 형태의 가드가 isImportQuarantine·isJpExportQuarantineVisit 렌더에도 이미 있다.
   const isApplicationStep =
-    (isImportPermit || isSgQuarantineReservation || isSgDogLicence) && !isButtonDoneStep
+    (isImportPermit || isSgQuarantineReservation || isSgDogLicence || isZaAiaPermit) &&
+    !isButtonDoneStep
   const applicationDateField = isImportPermit
     ? 'import_permit_application_date'
     : isSgQuarantineReservation
       ? 'sg_quarantine_reservation_application_date'
       : isSgDogLicence
         ? 'sg_dog_licence_application_date'
-        : ''
+        : isZaAiaPermit
+          ? 'za_aia_permit_application_date'
+          : ''
   // 신청일 아래 설명(카드별) + 부가 예약일(계류장 예약 날짜, 정보성 — 일본 수출검역 예약일 패턴).
   const applicationHelp = isImportPermit
     ? '동물검역소에 수입 허가를 신청한 날짜'
@@ -402,7 +413,9 @@ export function StepDetailView({
       ? '계류장 예약을 신청한 날짜'
       : isSgDogLicence
         ? '강아지 라이선스를 신청한 날짜'
-        : ''
+        : isZaAiaPermit
+          ? 'AIA 수입 허가를 신청한 날짜'
+          : ''
   const applicationReservationField = isSgQuarantineReservation ? 'sg_quarantine_reservation_date' : ''
   const applicationReservation = isSgQuarantineReservation
     ? { label: '예약일', help: '계류를 시작하는 날짜' }
@@ -1455,11 +1468,18 @@ export function StepDetailView({
       // 호주·뉴질랜드 — 출국일이 계류 시작일보다 늦을 수 없다(2026-07-30 사용자 지정).
       //   예약 카드 쪽 저장 거부와 같은 함수, 문구만 출국일 칸 관점. 상한은 두지 않는다
       //   (야간 출발·다음 날 도착이 정상이고 경유 편은 더 벌어진다).
-      if (destinationKey === 'australia' || destinationKey === 'new_zealand') {
+      // 남아공도 같은 형태 — 도착 후 바로 국가 검역시설로 옮겨지므로 검역 시작일 = 도착일이다.
+      if (
+        destinationKey === 'australia' ||
+        destinationKey === 'new_zealand' ||
+        destinationKey === 'south_africa'
+      ) {
         const resKey =
           destinationKey === 'australia'
             ? 'au_quarantine_reservation_date'
-            : 'nz_quarantine_reservation_date'
+            : destinationKey === 'new_zealand'
+              ? 'nz_quarantine_reservation_date'
+              : 'za_quarantine_reservation_date'
         const resRaw = (caseRow?.data as Record<string, unknown> | undefined)?.[resKey]
         const err = validateDepartureNotAfterQuarantineStart(
           flightForm.departure_date.trim() || flightForm.entry_date.trim(),
@@ -1706,6 +1726,14 @@ export function StepDetailView({
         permitNo: importPermit.permitNo.trim(),
       })
     }
+    // 남아공 AIA 수입 허가 — 출국 당일·이후 신청은 성립하지 않는다(허가가 나와야 출국한다).
+    //   수의검역 수입 허가와 같은 함수. 확정 마감(출국 N일 전)은 규정에 없어 순서만 본다.
+    if (isZaAiaPermit) {
+      return validateImportPermitNotAfterDeparture(
+        importPermit.applicationDate.trim(),
+        (caseRow?.departure_date ?? '').slice(0, 10),
+      )
+    }
     // 버튼 완료 카드(CDC 신고·귀국 절차 전체)는 날짜 검증 없음 — 전부 삭제(2026-07-26 사용자
     // 결정). 저장은 handleButtonDone 이 담당하므로 여기 분기 자체가 없다.
     // ⛔ sg-gst-permit·sg-border-inspection 저장 거부는 삭제(2026-07-28) — 두 카드가 버튼
@@ -1774,6 +1802,14 @@ export function StepDetailView({
           .filter((x) => x.length >= 10),
         importQuarantineDate.trim(),
         hasSecond,
+      )
+    }
+    // 남아공 검역시설 예약 — 검역 시작일(=도착일)이 출국일보다 빠를 수 없다. 호주·뉴질랜드와
+    //   같은 함수. 채혈 기준 대기가 없어(항체 요건 자체가 없다) 이 순서 하나만 본다.
+    if (step.id === 'za-quarantine-reservation') {
+      return validateQuarantineStartNotBeforeDeparture(
+        importQuarantineDate.trim(),
+        (caseRow?.departure_date ?? '').slice(0, 10),
       )
     }
     // 하와이 입국 신청 — 차단 없음(2026-07-26). 버튼 완료 카드로 바뀌어 신청일을 입력받지

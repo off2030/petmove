@@ -123,7 +123,13 @@ export function titerReminderTargets(opts: {
     }
   }
   // 귀국용 — 왕복(귀국일 있음) + 발생국(비발생국은 한국이 항체검사 자체를 면제).
-  if (returnDate && !isRabiesFreeOrigin(destinationToken)) {
+  //   ⚠️ **편도 전용 목적지는 제외**(2026-07-30 남아공을 앱에 올리며 발견). oneWayOnly 는
+  //     getTripType 이 저장값과 무관하게 'one_way' 를 돌려주게 하는데, 여기선 tripType 이
+  //     아니라 returnDate 존재만 봐서 잔여 귀국일이 남아 있으면 귀국 항체 만료 알림이 갔다.
+  //     호주·뉴질랜드는 광견병 비발생국이라 아래 조건에서 이미 걸러져 증상이 없었고,
+  //     발생국인 남아공이 처음으로 이 구멍을 드러냈다.
+  const oneWayOnly = !!(key && DESTINATION_OVERRIDES[key]?.oneWayOnly)
+  if (returnDate && !oneWayOnly && !isRabiesFreeOrigin(destinationToken)) {
     targets.push({
       kind: 'return',
       validUntil: addMonths(latestTiterDate, KR_RETURN_TITER_VALIDITY_MONTHS),
