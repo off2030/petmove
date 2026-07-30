@@ -2389,8 +2389,12 @@ export async function markImportPermitIssued(
         else delete flatData[k]
       }
     }
+    //   ⚠️ 목적지 키도 **token 기준**이다. cases.destination 은 다중 목적지를 '뉴질랜드,호주'
+    //   처럼 이어 붙인 문자열이라, 그대로 findDestinationKey 에 넣으면 선언 순서상 먼저 걸리는
+    //   목적지(호주)로 해석된다 → 뉴질랜드 카드에 'RNATT 선언서를 먼저 발급받으세요.'가 떴다
+    //   (2026-07-30 실기기 발견). token 은 ?dest·첫 토큰으로 이미 하나만 골라 준다.
     const prereqErr = importPermitPrerequisiteError(
-      findDestinationKey(destination ?? caseDestStr ?? '') ?? '',
+      findDestinationKey(token ?? destination ?? caseDestStr ?? '') ?? '',
       flatData,
       true,
     )
