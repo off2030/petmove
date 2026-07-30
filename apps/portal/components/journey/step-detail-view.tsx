@@ -84,6 +84,7 @@ import {
   markJpExportQuarantineReservationSkipped,
   markExtraTiterResultConfirmed,
   markTiterResultConfirmed,
+  markInfectiousDiseaseResultConfirmed,
   updateAdvanceNotificationDate,
   updateApplicationDate,
   updateCaseTripType,
@@ -2510,6 +2511,13 @@ export function StepDetailView({
     savedTiterExtraLatestDate.length >= 10 &&
     savedTiterExtraLatestDate <= todayStr &&
     !done
+  // 전염병 검사 — 항체 검사와 같은 2단계(2026-07-30 사용자 결정 A). 저장된 검사일이
+  //   도래했는데 미완료면 '검사 진행 중'이고, 하단 저장 버튼이 '완료'로 전환된다.
+  const isInfectiousInProgress =
+    isInfectiousDisease &&
+    !done &&
+    savedParasite.some((e) => e.date.length >= 10 && e.date <= todayStr)
+  const infectiousCompleteMode = isInfectiousInProgress && !dirty
   const titerCompleteMode = (isTiterInProgress || isTiterExtraInProgress) && !dirty
   const [completingTiter, setCompletingTiter] = useState(false)
   const handleCompleteTiter = () => {
@@ -2517,9 +2525,11 @@ export function StepDetailView({
     setCompletingTiter(true)
     startTransition(async () => {
       // 1회차/추가 각각 자기 플래그를 set — done-resolver 도 둘을 따로 본다.
-      const res = isTiterExtra
-        ? await markExtraTiterResultConfirmed(caseId)
-        : await markTiterResultConfirmed(caseId)
+      const res = isInfectiousDisease
+        ? await markInfectiousDiseaseResultConfirmed(caseId)
+        : isTiterExtra
+          ? await markExtraTiterResultConfirmed(caseId)
+          : await markTiterResultConfirmed(caseId)
       setCompletingTiter(false)
       if (res.ok) {
         updateCase(res.value)
@@ -3514,7 +3524,11 @@ export function StepDetailView({
               completingImportPermit ||
               undoingImportPermit
             const completeMode =
-              advanceSkipMode || jpExportSkipMode || titerCompleteMode || importPermitCompleteMode
+              advanceSkipMode ||
+              jpExportSkipMode ||
+              titerCompleteMode ||
+              infectiousCompleteMode ||
+              importPermitCompleteMode
             const upcomingSave =
               formUpcoming ||
               jpExportApplicationUpcoming ||
@@ -3557,7 +3571,7 @@ export function StepDetailView({
                     ? handleSkipAdvanceApproval
                     : jpExportSkipMode
                       ? handleSkipJpExportReservation
-                      : titerCompleteMode
+                      : titerCompleteMode || infectiousCompleteMode
                         ? handleCompleteTiter
                         : importPermitCompleteMode
                           ? handleCompleteImportPermit

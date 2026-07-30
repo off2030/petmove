@@ -750,6 +750,20 @@ export function buildJourney(
           .filter((d) => d.length >= 10 && d <= today).length
         return arrived > 0
       })()
+    // 전염병 검사 '진행 중' — 검사일이 도래했고 아직 결과 확인 전(2026-07-30 사용자 결정 A).
+    //   해외 공인 검사기관에 보내 결과를 기다리는 구간이라 항체 검사와 같은 2단계다.
+    const infectiousInProgress =
+      step.id === 'infectious-disease-test' &&
+      !done &&
+      (() => {
+        const raw = caseData.infectious_disease_records
+        if (!Array.isArray(raw)) return false
+        return raw.some((e) => {
+          const d =
+            typeof e === 'string' ? e.slice(0, 10) : ((e as { date?: string })?.date ?? '').slice(0, 10)
+          return d.length >= 10 && d <= today
+        })
+      })()
     // 항체검사 '진행 중' — 채혈일이 도래(≤ 오늘)했고 아직 결과·완료 전(!done). 안내 문구 없이
     // 기본 문구 + '진행 중' 칩으로 표시한다(2스텝의 1단계 완료 상태). 미래 채혈일은 위 예정 배지.
     const titerInProgress =
@@ -1168,7 +1182,8 @@ export function buildJourney(
         advanceInProgress ||
         jpExportInProgress ||
         importPermitInProgress ||
-        parasiteInProgress
+        parasiteInProgress ||
+        infectiousInProgress
           ? true
           : undefined,
       // 서류 체크리스트 행은 step 상세가 아니라 서류 페이지(/docs)로 이동.

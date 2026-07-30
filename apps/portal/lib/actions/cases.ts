@@ -704,6 +704,66 @@ export async function updateTiterFields(
 }
 
 /**
+ * 전염병 검사 step 의 '결과 확인 완료' 플래그(infectious_disease_confirmed=true) 를
+ * set — 보호자가 detail 하단의 '완료' 버튼을 누를 때 호출(2026-07-30 사용자 결정 A).
+ *
+ * 왜 2단계인가: 이 검사는 해외 공인 검사기관에 보내야 하고 결과가 음성이어야 다음으로 갈 수
+ * 있다. 채혈만으로 완료 처리하면 결과 대기 중인데 카드가 끝난 것처럼 보인다.
+ * 광견병 항체 검사(markTiterResultConfirmed)와 **같은 모델**이다.
+ *
+ * 검사일이 하나라도 도래(≤오늘)해 있어야 set — 없으면 의미가 없어 거부한다.
+ * ⚠️ 플래그는 **전역**이다(scoped 아님) — infectious_disease_records 자체가 전역 필드라
+ *   짝을 맞췄다. 한쪽만 scoped 로 만들면 기록은 공유되는데 확인은 목적지별로 갈린다.
+ */
+export async function markInfectiousDiseaseResultConfirmed(
+  caseId: string,
+): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const arr = Array.isArray(prev.infectious_disease_records)
+      ? (prev.infectious_disease_records as Array<Record<string, unknown>>)
+      : []
+    const today = todayKst()
+    const hasArrived = arr.some(
+      (r) =>
+        r &&
+        typeof r.date === 'string' &&
+        (r.date as string).length >= 10 &&
+        (r.date as string).slice(0, 10) <= today,
+    )
+    if (!hasArrived) {
+      return { ok: false, error: '검사일이 입력되어 있지 않습니다.' }
+    }
+    const nextData: Record<string, unknown> = {
+      ...prev,
+      infectious_disease_confirmed: true,
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
  * 광견병 항체 검사 step 의 '결과 확인 완료' 플래그(rabies_titer_result_confirmed=true) 를
  * set — 보호자가 검사결과 수치를 직접 입력하지 않고 detail 하단의 '완료' 버튼을 누를 때
  * 호출. 채혈일(1회차 검사일)이 입력돼 있어야 set (없으면 의미 없음 → 거부).
@@ -2674,7 +2734,23 @@ export async function updateParasiteEntries(
     // 확인 플래그 키 — '<이름>_dates' 뿐 아니라 '<이름>_records'(전염병 검사)도 벗겨야
     //   'infectious_disease_confirmed' 가 된다. _dates 만 벗기면 키가 그대로 남아
     //   'infectious_disease_records' 에 플래그를 덮어써 기록을 날린다(2026-07-27).
-    applyDatedConfirm(nextData, pRecords, fieldKey.replace(/_(dates|records)$/, '_confirmed'))
+    // ⛔ 전염병 검사는 여기서 자동 set 하지 않는다(2026-07-30) — 그 키는 이제 **보호자가
+    //   결과를 받았다고 확인**하는 플래그다(검사 → 결과 2단계, markInfectiousDiseaseResult
+    //   Confirmed). 자동으로 켜면 채혈만으로 완료돼 결과 대기 구간이 사라진다.
+    //   대신 **검사일이 바뀌면 확인을 해제**한다 — 새 검사 결과를 또 기다려야 하므로.
+    if (fieldKey === 'infectious_disease_records') {
+      const prevDates = (Array.isArray(prev[fieldKey]) ? (prev[fieldKey] as unknown[]) : [])
+        .map((r) => (r && typeof r === 'object' ? (r as Record<string, unknown>).date : r))
+        .filter((d): d is string => typeof d === 'string')
+        .join(',')
+      const nextDates = pRecords
+        .map((r) => (typeof r.date === 'string' ? r.date : ''))
+        .filter(Boolean)
+        .join(',')
+      if (prevDates !== nextDates) delete nextData.infectious_disease_confirmed
+    } else {
+      applyDatedConfirm(nextData, pRecords, fieldKey.replace(/_(dates|records)$/, '_confirmed'))
+    }
 
     const { data: updated, error } = await admin
       .from('cases')

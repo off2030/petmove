@@ -223,8 +223,26 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     }
     case 'has-civ-vaccine':
       return hasAdministeredDose(readCivEntries(caseRow).map((e) => e.date))
-    case 'has-infectious-disease-test':
-      return hasAdministeredDose(readInfectiousDiseaseEntries(caseRow).map((e) => e.date))
+    // 전염병 검사 — **검사 → 결과 2단계**(2026-07-30 사용자 결정 A). 항체 검사와 같은 모델:
+    //   채혈일이 도래하면 '진행 중'이고, 결과를 받았다는 확인
+    //   (infectious_disease_confirmed)이 있어야 완료다.
+    //
+    // 왜 2단계인가: 이 검사는 **해외 공인 검사기관**에 보내야 하고(카드 문구), 결과가
+    //   음성이어야 다음으로 갈 수 있다. 뉴질랜드 바베시아가 양성이면 계류가 크게 늘어난다
+    //   (IHS guidance "significantly extend the quarantine period"). 채혈만으로 완료
+    //   처리하면 결과 대기 중인데 카드가 끝난 것처럼 보인다.
+    // ⛔ 결과값 칸은 두지 않았다 — 뉴질랜드는 최대 4종(바베시아 IFAT/ELISA+PCR·심장사상충·
+    //   리슈만편모충·렙토·브루셀라)이고 케이스마다 필요한 검사가 달라(중성화·아프리카 체류)
+    //   칸을 나열하면 입력이 무거워진다. 결과지는 첨부로 보관한다.
+    case 'has-infectious-disease-test': {
+      if (!hasAdministeredDose(readInfectiousDiseaseEntries(caseRow).map((e) => e.date))) return false
+      // 기존 키(infectious_disease_confirmed)를 **보호자 확인 플래그로 승격**했다.
+      //   전에는 저장 액션이 '검사일 도래' 여부로 자동 set 하고 읽는 곳이 없는 유령 키였다.
+      //   이미 목적지 스코프 명단에 있어 목적지별로 갈린다 — 검사 종류가 나라마다 달라
+      //   (호주 3종 / 뉴질랜드 5종) 결과 확인도 목적지별이어야 맞다.
+      //   덕분에 기존 데이터(자동 true)는 그대로 완료로 유지된다.
+      return data.infectious_disease_confirmed === true
+    }
     // 구충 — 규정이 횟수를 명시한 곳(호주·뉴질랜드)은 **그 회차를 채워야** 완료다.
     //   1회만 넣은 상태는 미완료이고, portal 목록이 '진행 중' 칩으로 보여준다(2026-07-30
     //   사용자 지정 모델 — 카드를 1차/2차로 쪼개는 대신 상태로 표현).
