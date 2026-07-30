@@ -884,17 +884,8 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
         'BICON에서 신청한 수입 허가가 승인되면 발급돼요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
       previewStepId: 'import-permit',
     },
-    // 접종 및 건강증명서(별지 제25호) — 한국 공식 양식(전 목적지 공통).
-    KR_FORM25_VACCINATION_HEALTH_CERT,
-    {
-      id: 'au-entry-health-cert',
-      name: '호주 건강증명서(Veterinary Health Certificate)',
-      source: '동물병원 · 농림축산검역본부',
-      kind: 'manual',
-      issuanceStepId: 'vet-visit',
-      description:
-        '호주 입국용 수의 건강증명서예요.\n\n출국 5일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 정부 수의사의 확인·서명을 받아요.\n\n이 서류는 일반 동물병원에서는 발행하지 않아요. 발행 가능한 동물병원 확인이 필요해요.',
-    },
+    // 전염병 검사 결과지는 **수입 허가증 바로 다음**(2026-07-30 사용자 지정) — 한국 서류
+    //   (별지 제25호·호주 건강증명서)보다 앞이다. 순서를 바꾸지 말 것.
     {
       id: 'au-infectious-disease-result',
       name: '전염병 검사 결과지',
@@ -905,6 +896,17 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       description:
         '출국 45일 이내에 받은 검사 결과지예요.\n\n리슈만편모충(Leishmania infantum) 결과지는 모든 강아지가 필요해요.\n\n중성화하지 않았다면 브루셀라(Brucella canis) 결과지도 필요해요.\n\n접종을 하지 않았다면 렙토스피라(Leptospira canicola) 검사 결과지도 필요해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'infectious-disease-test',
+    },
+    // 접종 및 건강증명서(별지 제25호) — 한국 공식 양식(전 목적지 공통).
+    KR_FORM25_VACCINATION_HEALTH_CERT,
+    {
+      id: 'au-entry-health-cert',
+      name: '호주 건강증명서(Veterinary Health Certificate)',
+      source: '동물병원 · 농림축산검역본부',
+      kind: 'manual',
+      issuanceStepId: 'vet-visit',
+      description:
+        '호주 입국용 수의 건강증명서예요.\n\n출국 5일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 정부 수의사의 확인·서명을 받아요.\n\n이 서류는 일반 동물병원에서는 발행하지 않아요. 발행 가능한 동물병원 확인이 필요해요.',
     },
     {
       id: 'au-kr-export-quarantine-cert',
