@@ -254,15 +254,6 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     case 'has-external-parasite':
       return arrivedDoseCount(readExternalParasiteEntries(caseRow).map((e) => e.date)) >=
         requiredParasiteDoses('external', destinationKeyOf(caseRow), speciesOf(caseRow))
-    // 뉴질랜드 강아지 외부구충 2차 카드 — 1차와 같은 배열의 **index 1** 이 도래해야 완료다.
-    //   '기록 2건'이 아니라 '2번째가 도래' — 미래(예정) 2차로는 완료되지 않는다.
-    case 'has-external-parasite-2': {
-      const dates = readExternalParasiteEntries(caseRow)
-        .map((e) => e.date)
-        .filter((d) => typeof d === 'string' && d.length >= 10)
-        .sort()
-      return !!dates[1] && dates[1] <= todayKst()
-    }
     // 심장사상충 — 구충과 같은 date_array 모델(유효기간 개념 없음, 최근 기록 도래로 완료).
     case 'has-heartworm':
       return hasArrivedDate(latestDateOf(readHeartwormEntries(caseRow).map((e) => e.date)))
@@ -530,14 +521,6 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       return lastEntryDate(readInternalParasiteEntries(caseRow).map((e) => e.date))
     case 'has-external-parasite':
       return lastEntryDate(readExternalParasiteEntries(caseRow).map((e) => e.date))
-    // 2차 카드의 완료 표시일은 **그 회차의 날짜**(index 1) — 전체 최근일이 아니다.
-    case 'has-external-parasite-2': {
-      const dates = readExternalParasiteEntries(caseRow)
-        .map((e) => e.date)
-        .filter((d) => typeof d === 'string' && d.length >= 10)
-        .sort()
-      return dates[1] ?? null
-    }
     case 'has-heartworm':
       return lastEntryDate(readHeartwormEntries(caseRow).map((e) => e.date))
     case 'has-lungworm':

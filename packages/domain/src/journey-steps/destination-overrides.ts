@@ -1916,6 +1916,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       'infectious-disease-test': {
         description:
           '출국일 기준 30일 이내에 전염병 검사를 받아요.\n\n바베시아 깁소니(Babesia gibsoni) 검사를 받아요. IFAT 또는 ELISA와 PCR을 함께 받아요.\n바베시아 검사는 1차 외부 기생충 치료 14일 후부터 할 수 있어요.\n심장사상충(Dirofilaria immitis) 검사를 받아요. ELISA 또는 ELISA SNAP만 인정돼요.\n리슈만편모충(Leishmania infantum) 검사를 받아요. IFAT·ELISA 검사만 인정돼요.\n렙토스피라(Leptospira canicola) 검사를 받아요. MAT만 인정돼요.\n렙토스피라 검사 대신 출국 30일 이내에 14일 약물 치료를 받는 방법도 있어요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT 또는 TAT만 인정돼요.\n중성화했다면 수의사가 서명한 중성화 증명서를 준비해요.\n해외 공인 검사기관에서 받아야 하며, 임상 수의사만 의뢰할 수 있어요.\n일반 동물병원에서는 이 검사들을 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
+        // 검사일을 입력해 '진행 중'이 되면 내부구충도 다음 할 일로(2026-07-30 사용자 지정) —
+        //   결과를 기다리는 동안 내부구충을 시작할 수 있다.
+        yieldsWhenInProgress: true,
         validationIds: [
           'nz.infectious-disease-test-within-30days',
           'nz.infectious-disease-test-after-external-parasite',
@@ -1934,13 +1937,17 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         //   · '진드기와 벼룩을 없애는 제품으로 두 번 치료해요'(2.2(2) 회수·대상 기생충)
         //   · '치료할 때마다 진드기·벼룩이 없는지 확인받아요'(2.2 치료 전 수의사 검사)
         //   회수는 아래 1차·2차 두 줄이 이미 드러내고, 제품 요건은 승인 목록이 담당한다.
+        // 다음 할 일 사슬(2026-07-30 사용자 지정) — 1차를 입력해 '진행 중'이 되면 전염병
+        //   검사도 다음 할 일로 올라온다. 바베시아 채혈이 1차 14일 후부터 가능해
+        //   '시작한 뒤 다음도 시작'하는 관계다(concurrent 와 다름 — 미입력엔 안 뜬다).
+        yieldsWhenInProgress: true,
         description:
-          '외부 기생충 치료를 하세요.\n\n1차 치료는 바베시아 검사 채혈 14일 전까지 해요.\n1차 치료부터 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
+          '외부 기생충 치료를 하세요.\n\n1차 치료는 바베시아 검사 채혈 14일 전까지 해요.\n2차 치료는 1차 치료 후 28일 이내, 출국 16일 이내에 해요.\n1차 치료부터 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
         // 고양이는 회수·기준이 다르다 — IHS 2.2(1): **한 번**, 출국 16일 이내, 그때부터
         //   출국일까지 연속 보호. 바베시아 검사가 개 전용이라 '채혈 14일 전' 하한이 없다.
         //   개 문구를 그대로 보여주면 없는 절차를 요구하게 된다.
         descriptionBySpecies: {
-          dog: '외부 기생충 치료를 하세요.\n\n1차 치료는 바베시아 검사 채혈 14일 전까지 해요.\n1차 치료부터 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
+          dog: '외부 기생충 치료를 하세요.\n\n1차 치료는 바베시아 검사 채혈 14일 전까지 해요.\n2차 치료는 1차 치료 후 28일 이내, 출국 16일 이내에 해요.\n1차 치료부터 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
           cat: '외부 기생충 치료를 하세요.\n\n진드기와 벼룩을 없애는 제품으로 출국 16일 이내에 치료해요.\n치료한 날부터 출국일까지 약효가 끊기지 않도록 제조사 지침대로 반복해요.\n치료할 때와 출국 2일 전 검진에서 진드기·벼룩이 없는지 확인받아요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
         },
         // 승인 제품 목록은 MPI-STD-SAA(Specified Approvals) 한 문서에 다 들어 있다 —
@@ -1949,20 +1956,6 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         //   'Specified Approvals … [PDF, 423 KB]' 로 링크한다. 그래서 라벨에 PDF 를 밝힌다 —
         //   /direct 주소는 곧장 다운로드가 시작돼 사이트가 열리는 줄 안 보호자가 당황한다
         //   (2026-07-29 사용자 지적). 정식 주소는 문서 페이지를 거친다.
-        links: [
-          {
-            url: 'https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA',
-            label: '승인 제품 목록 (MPI-STD-SAA, PDF)',
-          },
-        ],
-        validationIds: ['nz.external-parasite-protocol'],
-      },
-      // 외부구충 2차 — 강아지 전용 카드(2026-07-30 분리). 1차 카드에서 옮겨온 줄 + 28일 상한.
-      //   28일은 승인 제품 중 진드기 지속이 가장 긴 부류(4주)에서 나온 값 — 넘기면 어떤
-      //   제품으로도 2.2(2)(c) 연속 보호가 끊긴다(프론트라인 플러스 라벨 확인, 2026-07-30).
-      'external-parasite-2': {
-        description:
-          '2차 외부 기생충 치료를 하세요.\n\n1차 치료 후 28일 이내에 해야 약효가 끊기지 않아요.\n출국 16일 이내에 해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
         links: [
           {
             url: 'https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA',
@@ -1984,6 +1977,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         //   내부구충(출국 30일 이내)과 **같은 날이 아니다**(2.2(2)(a)). 다른 나라의 '내·외부는
         //   같은 날' 전제가 여기선 성립하지 않는다. 켜면 전염병 검사(70)와 묶여 올라온다.
         concurrent: false,
+        // 1차를 입력해 '진행 중'이 되면 폐충·심장사상충(둘 다 concurrent)까지 다음 할 일로
+        //   올라온다(2026-07-30 사용자 지정) — 내부 2차·폐충·심장사상충이 모두 출국 5일
+        //   이내라 같은 방문에서 끝난다.
+        yieldsWhenInProgress: true,
         description:
           '내부 기생충 치료를 하세요.\n\n출국 30일 이내에 14일 이상의 간격으로 2회 치료해요.\n2차 치료는 출국 전 5일 이내에 해야 해요.\n뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.',
         links: [

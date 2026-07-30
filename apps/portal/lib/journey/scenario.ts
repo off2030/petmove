@@ -1217,15 +1217,45 @@ export function buildJourney(
     // mainIdx 직후의 concurrent step(순서 의존 없는 병렬 접종 — 광견병·종합백신)도 함께 current.
     // 사이에 비-concurrent 미완료 step 이 있으면 멈춘다(그 step 이 선행). done·nonBlocking·
     // advisory(만료 백신 포함) 는 건너뛴다.
+    //
+    // 여기에 하나 더 — **'진행 중'인 카드는 다음 카드를 막지 않는다**(yieldsWhenInProgress,
+    //   2026-07-30 사용자 지정). 뉴질랜드 구충·전염병 검사가 그렇다:
+    //     외부구충 1차 입력 → (진행 중) → 전염병 검사도 다음 할 일
+    //     전염병 검사일 입력 → (진행 중) → 내부구충도 다음 할 일
+    //     내부구충 1차 입력 → (진행 중) → 폐충·심장사상충(concurrent)까지
+    //   앞 단계를 **시작한 뒤** 다음도 시작할 수 있는 절차라, 순차로 하나씩 띄우면 준비가
+    //   그만큼 늦어진다. concurrent(미입력에도 동시)와 달리 **시작 전에는 안 뜬다**.
+    // ⚠️ mainIdx 자신이 진행 중이어도 같은 규칙이 적용돼야 첫 칸에서 사슬이 시작된다.
+    const yieldsIds = new Set(
+      applicableSteps.filter((s) => s.yieldsWhenInProgress).map((s) => s.id),
+    )
+    const yields = (s: JourneyStage) => yieldsIds.has(s.id) && s.inProgress === true
+    // 승격 규칙 셋이 함께 돈다:
+    //   ① **head run** — mainIdx 바로 뒤로 이어지는 concurrent 는 무조건 올린다.
+    //      순서 의존이 아예 없는 병렬 절차(광견병+종합백신+켄넬코프, 호주 전염병+내·외부구충).
+    //   ② **사슬(chain)** — 직전 카드가 '양보'(yieldsWhenInProgress + 진행 중)면 다음
+    //      비-concurrent 카드도 올린다. 뉴질랜드 구충·전염병 검사의 순차 시작.
+    //   ③ 사슬로 올라온 카드의 뒤 concurrent 들도 함께 올리되(같은 방문에서 끝나는 묶음),
+    //      그 묶음까지가 끝이다 — 그 뒤 비-concurrent 는 올리지 않는다(tailConsumed).
+    // 이 셋을 안 나누면 뉴질랜드에서 폐충·심장사상충이 한 단계 일찍 뜨고(내부구충을 아직
+    //   시작도 안 했는데) 출국 전 임상검사까지 새어 나온다(2026-07-30 실측).
+    let headRun = true
+    let prevYields = yields(stages[mainIdx])
+    let tailConsumed = false
     for (let i = mainIdx + 1; i < stages.length; i++) {
       const s = stages[i]
       if (s.state !== 'upcoming') continue
       if (nonBlockingIds.has(s.id) || advisoryIds.has(s.id)) continue
       if (concurrentIds.has(s.id)) {
+        if (!headRun && !prevYields) break
         s.state = 'current'
+        if (!headRun) tailConsumed = true
         continue
       }
-      break
+      headRun = false
+      if (tailConsumed || !prevYields) break
+      s.state = 'current'
+      prevYields = yields(s)
     }
   }
   // return lane step 별 노출 조건 — 충족돼야 다음 할 일에 올림.
