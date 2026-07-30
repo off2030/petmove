@@ -929,6 +929,10 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   // 뉴질랜드 — 창 30일은 dispatch, 간격 14일·2차 5일은 호주와 같은 함수(2026-07-29 사용자 지정).
   'new_zealand:internal-parasite':
     '차단: validateParasiteDateForDestination(출국 30일 창)·validateInternalParasiteSpacing(간격 14일·2차 5일)',
+  // 뉴질랜드 전용 2차 카드(2026-07-30 분리) — 1차와 같은 배열을 편집하므로 저장 거부도
+  //   같은 경로다. 기준이 되는 1차는 다른 카드에 있어 저장된 배열의 첫 항목을 본다.
+  'external-parasite-2':
+    '차단: validateNzExternalSecondDose(1차 후 28일 이내·출국 16일 이내·1차보다 빠름)·validateParasiteDateForDestination·출생일 이전 거부',
   'internal-parasite':
     '차단: validateParasiteDateForDestination + validatePhInternalParasiteWindow(필리핀 SPSIC 창)·출생일 이전 거부',
   'echinococcus-treatment': '차단: validateEchinococcusWindow(입국 1~5일 창)',

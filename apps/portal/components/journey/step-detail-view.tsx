@@ -38,6 +38,8 @@ import {
   validateTiterAfterIdentityCheck,
   validateInternalParasiteSpacing,
   validateCivDoseInterval,
+  validateNzExternalSecondDose,
+  validateNzInfectiousTestAfterExternal,
   requiredParasiteDoses,
   validateExternalParasiteDates,
   JOURNEY_STEP_CATALOG,
@@ -403,6 +405,9 @@ export function StepDetailView({
   // 구충(내·외부·촌충) — 종합백신과 같은 date_array 입력 모델. 필드 키는 base catalog input 과
   // 동일. 촌충(에키노코쿠스, EU 5국)은 내부구충과 데이터 키(internal_parasite_dates)를 공유.
   const isExternalParasite = step.id === 'external-parasite'
+  // 뉴질랜드 강아지 전용 2차 카드 — 1차와 **같은 배열**을 쓰고 index 1 이후만 담당한다.
+  //   뉴질랜드만 1차 → 바베시아 채혈 → 2차 순서가 규정으로 강제돼 카드를 나눴다(2026-07-30).
+  const isExternalParasite2 = step.id === 'external-parasite-2'
   const isInternalParasite = step.id === 'internal-parasite'
   const isEchinococcus = step.id === 'echinococcus-treatment'
   // 심장사상충 — 구충과 **같은 입력 모델**(date_array, 유효기간 없음)이라 같은 기계를
@@ -416,12 +421,13 @@ export function StepDetailView({
   const isInfectiousDisease = step.id === 'infectious-disease-test'
   const isParasite =
     isExternalParasite ||
+    isExternalParasite2 ||
     isInternalParasite ||
     isEchinococcus ||
     isHeartworm ||
     isLungworm ||
     isInfectiousDisease
-  const parasiteFieldKey = isExternalParasite
+  const parasiteFieldKey = isExternalParasite || isExternalParasite2
     ? 'external_parasite_dates'
     : isHeartworm
       ? 'heartworm_dates'
@@ -584,10 +590,31 @@ export function StepDetailView({
           typeof caseRow?.data?.species === 'string' ? (caseRow.data.species as string) : null,
         )
       : 1
-  const savedParasite = readParasiteForm(caseRow?.data, parasiteFieldKey)
+  /**
+   * 이 카드가 담당하는 배열 구간 — **뉴질랜드 외부구충만** 갈린다(2026-07-30).
+   *   1차 카드 = [0,1) 한 칸(기록 추가 없음) / 2차 카드 = [1,∞) 기록 추가 가능.
+   * 2차 카드가 없는 경우(고양이·다른 목적지)는 1차 카드가 전체 목록을 그대로 편집한다 —
+   *   고양이는 1회 요건이지만 연속 보호를 위해 반복 처치가 필요해 추가 버튼이 있어야 한다.
+   */
+  const nzExternalSplit =
+    (isExternalParasite || isExternalParasite2) &&
+    destinationKey === 'new_zealand' &&
+    (typeof caseRow?.data?.species === 'string' ? caseRow.data.species : '') === 'dog'
+  const parasiteStart = isExternalParasite2 ? 1 : 0
+  const parasiteEnd = isExternalParasite && nzExternalSplit ? 1 : undefined
+  const savedParasiteAll = sortParasiteByDate(readParasiteForm(caseRow?.data, parasiteFieldKey))
+  const savedParasite = savedParasiteAll.slice(parasiteStart, parasiteEnd)
   const [parasite, setParasite] = useState<GeneralVaccineEntry[]>(
-    padParasiteRows(savedParasite, parasiteMinRows),
+    padParasiteRows(savedParasite, nzExternalSplit ? 1 : parasiteMinRows),
   )
+  /** 이 카드 구간의 행들을 전체 배열에 도로 끼워 넣는다(검증·저장 공용). */
+  const mergeParasite = (rows: GeneralVaccineEntry[]): GeneralVaccineEntry[] => [
+    ...savedParasiteAll.slice(0, parasiteStart),
+    ...rows,
+    ...(parasiteEnd != null ? savedParasiteAll.slice(parasiteEnd) : []),
+  ]
+  /** 1차 처치일 — 2차 카드·전염병 검사 카드의 검증 기준(뉴질랜드). */
+  const nzFirstExternalDate = savedParasiteAll[0]?.date ?? ''
 
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -959,8 +986,11 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!parasiteDirty) {
-      const next = readParasiteForm(caseRow?.data, parasiteFieldKey)
-      setParasite(padParasiteRows(next, parasiteMinRows))
+      const next = sortParasiteByDate(readParasiteForm(caseRow?.data, parasiteFieldKey)).slice(
+        parasiteStart,
+        parasiteEnd,
+      )
+      setParasite(padParasiteRows(next, nzExternalSplit ? 1 : parasiteMinRows))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
@@ -1535,6 +1565,17 @@ export function StepDetailView({
       //   ⛔ 뉴질랜드는 ② 표에 없어 통과(1차 앵커가 출국일이 아니라 바베시아 채혈이다).
       //   ⚠️ 호주는 2회 이상이 요건이라(PARASITE_REQUIRED_DOSES) 이 카드 한 장에 회차가 쌓인다 —
       //     하한 판정 대상은 그 목록의 가장 이른 날짜다.
+      // 뉴질랜드 2차 외부구충 — 1차 후 28일 이내 + 출국 16일 이내(2026-07-30 사용자 지정).
+      //   기준이 되는 1차는 **다른 카드**에 있으므로 저장된 배열의 첫 항목을 본다.
+      //   주의 룰(nz.external-parasite-protocol)과 **같은 함수**.
+      if (isExternalParasite2) {
+        const dep = (caseRow?.departure_date ?? '').slice(0, 10)
+        for (const e of parasite) {
+          if (!e.date) continue
+          const err = validateNzExternalSecondDose(nzFirstExternalDate, e.date, dep)
+          if (err) return err
+        }
+      }
       if (isExternalParasite) {
         const err = validateExternalParasiteDates(
           parasite.map((e) => e.date ?? ''),
@@ -1571,6 +1612,19 @@ export function StepDetailView({
           if (!e.date) continue
           const err = validateInfectiousDiseaseTestDate(e.date, dep, destinationKey)
           if (err) return err
+        }
+        // 뉴질랜드 — 바베시아 채혈은 1차 외부구충 14일 이후(IHS 2.7(1)). 2.2 guidance 가
+        //   "깨지면 외부구충과 검사를 처음부터 다시"라고 못박아 되돌릴 수 없는 손실이라
+        //   주의가 아니라 저장 거부로 막는다(2026-07-30 사용자 지정). 주의 룰과 같은 함수.
+        if (destinationKey === 'new_zealand') {
+          const first = sortParasiteByDate(
+            readParasiteForm(caseRow?.data, 'external_parasite_dates'),
+          )[0]?.date
+          for (const e of parasite) {
+            if (!e.date || !first) continue
+            const err = validateNzInfectiousTestAfterExternal(e.date, first)
+            if (err) return err
+          }
         }
       }
       // 촌충(에키노코쿠스)은 입국 직전 1~5일(법적 24~120시간)에만 유효 — 그 밖은 의미 없어 차단.
@@ -2006,7 +2060,7 @@ export function StepDetailView({
           caseId,
           parasiteFieldKey,
           // 약품 필드는 '세부 정보(선택)' 입력값 — 내·외부 모두(2026-07-25). 촌충은 폼에 없어 빈값 전달.
-          parasite.map((e) => ({
+          mergeParasite(parasite).map((e) => ({
             date: e.date || null,
             product: e.product || null,
             manufacturer: e.manufacturer || null,
@@ -2016,8 +2070,11 @@ export function StepDetailView({
         )
         if (res.ok) {
           updateCase(res.value)
-          const next = readParasiteForm(res.value.data, parasiteFieldKey)
-          setParasite(padParasiteRows(next, parasiteMinRows))
+          const next = sortParasiteByDate(readParasiteForm(res.value.data, parasiteFieldKey)).slice(
+            parasiteStart,
+            parasiteEnd,
+          )
+          setParasite(padParasiteRows(next, nzExternalSplit ? 1 : parasiteMinRows))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -3160,7 +3217,7 @@ export function StepDetailView({
               // 심장사상충은 '치료'가 아니라 검사·예방이라 라벨이 다르다 — 분기를 빠뜨리면
               //   구충 기본값('내부 기생충 치료'·'치료일')이 그대로 나온다(2026-07-27 발견).
               vaccineLabel={
-                isExternalParasite
+                isExternalParasite || isExternalParasite2
                   ? '외부구충'
                   : isEchinococcus
                     ? '촌충 치료'
@@ -3173,18 +3230,22 @@ export function StepDetailView({
                           : '내부 기생충 치료'
               }
               dateLabel={
-                isExternalParasite
+                isExternalParasite || isExternalParasite2
                   ? '처치일'
                   : isHeartworm || isInfectiousDisease
                     ? '검사일'
                     : '치료일'
               }
               showValidUntil={false}
+              // 뉴질랜드 외부구충만 카드가 index 로 나뉜다 — 2차 카드는 첫 행이 '외부구충 2차'로
+              //   시작해야 회차가 맞고, 1차 카드는 한 회차만 담당하므로 추가 버튼을 숨긴다.
+              doseOffset={parasiteStart}
+              hideAdd={parasiteEnd != null}
               // 내·외부 기생충 치료 모두 '세부 정보(선택)' = 약품명·제조사·제조번호 —
               // 이 카드가 들어가는 **모든 국가 공통**(호주·뉴질랜드 포함, 2026-07-25 사용자 확정).
               // 촌충(에키노코쿠스) 카드는 제외(현행 유지).
               showProduct={
-                isInternalParasite || isExternalParasite
+                isInternalParasite || isExternalParasite || isExternalParasite2
               }
               // 구충 약품은 '제품 유효기간'이 어느 목적지에서도 불필요 — 항상 숨김(호주·뉴질랜드 포함).
               hideExpiry
@@ -3193,12 +3254,12 @@ export function StepDetailView({
               productPlaceholders={
                 isInternalParasite
                   ? internalParasitePlaceholders
-                  : isExternalParasite
+                  : isExternalParasite || isExternalParasite2
                     ? externalParasitePlaceholders
                     : undefined
               }
               addLabel={
-                isExternalParasite
+                isExternalParasite || isExternalParasite2
                   ? '+ 처치 기록 추가'
                   : isHeartworm || isInfectiousDisease
                     ? '+ 검사 기록 추가'
@@ -3776,6 +3837,18 @@ function generalVaccineCardLabel(
  * 구충(내·외부) 폼 값 — data[fieldKey] 배열에서 읽기. 항목은 {date} 객체 또는 legacy
  * 문자열(처치일만). GeneralVaccineEntry 모양(valid_until='')으로 정규화해 컴포넌트 공유.
  */
+/**
+ * 구충 기록을 날짜순으로 — 배열 **위치가 회차**라는 불변식(저장 시 서버가 보장)을 화면에서도
+ * 유지한다. 뉴질랜드 외부구충처럼 카드가 index 로 나뉜 경우에 필수. 빈 행은 뒤로 보낸다.
+ */
+function sortParasiteByDate(entries: GeneralVaccineEntry[]): GeneralVaccineEntry[] {
+  return entries.slice().sort((a, b) => {
+    const x = a.date || '9999-12-31'
+    const y = b.date || '9999-12-31'
+    return x.localeCompare(y)
+  })
+}
+
 /**
  * 구충 입력칸을 **필요 회차만큼** 채운다 — 저장된 기록이 모자라면 빈 행으로 메운다.
  * 호주·뉴질랜드는 2회가 요건이라 카드를 열면 '외부구충 / 외부구충 2차' 두 칸이 보인다.

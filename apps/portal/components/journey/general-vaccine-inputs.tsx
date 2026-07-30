@@ -62,6 +62,8 @@ export function GeneralVaccineInputs({
   addLabel = '+ 접종 기록 추가',
   productHintsFor,
   productPlaceholders,
+  doseOffset = 0,
+  hideAdd = false,
 }: {
   entries: GeneralVaccineEntry[]
   /** 카드 헤더 라벨 — 종별 백신명 (예: '종합백신(DHPPL)') 또는 처치명 ('외부구충'). */
@@ -82,6 +84,13 @@ export function GeneralVaccineInputs({
   productHintsFor?: (index: number) => RabiesProductHints | null
   /** 약품 예시(placeholder) 덮어쓰기 — 구충제는 백신 예시 대신 구충제 예시(종별 다름)를 보여준다. */
   productPlaceholders?: ProductPlaceholders
+  /**
+   * 회차 표기 시작 오프셋 — 카드가 배열의 **뒤쪽 구간**만 담당할 때(뉴질랜드 외부구충 2차).
+   * 0 이면 첫 행이 라벨 그대로, 1 이면 첫 행이 '<라벨> 2차'로 시작한다.
+   */
+  doseOffset?: number
+  /** 기록 추가 버튼 숨김 — 한 회차만 담당하는 카드(뉴질랜드 외부구충 1차). */
+  hideAdd?: boolean
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -89,7 +98,9 @@ export function GeneralVaccineInputs({
         <EntryCard
           key={i}
           entry={entry}
-          title={i === 0 ? vaccineLabel : `${vaccineLabel} ${i + 1}차`}
+          title={
+            i + doseOffset === 0 ? vaccineLabel : `${vaccineLabel} ${i + doseOffset + 1}차`
+          }
           dateLabel={dateLabel}
           showValidUntil={showValidUntil}
           showProduct={showProduct}
@@ -100,24 +111,26 @@ export function GeneralVaccineInputs({
           onRemove={() => onRemove(i)}
         />
       ))}
-      <button
-        type="button"
-        onClick={onAdd}
-        style={{
-          marginTop: 4,
-          padding: '12px 0',
-          borderRadius: 14,
-          border: `1px dashed ${C.line}`,
-          background: 'transparent',
-          color: C.ink2,
-          fontFamily: 'inherit',
-          fontSize: 14,
-          fontWeight: 500,
-          cursor: 'pointer',
-        }}
-      >
-        {addLabel}
-      </button>
+      {!hideAdd && (
+        <button
+          type="button"
+          onClick={onAdd}
+          style={{
+            marginTop: 4,
+            padding: '12px 0',
+            borderRadius: 14,
+            border: `1px dashed ${C.line}`,
+            background: 'transparent',
+            color: C.ink2,
+            fontFamily: 'inherit',
+            fontSize: 14,
+            fontWeight: 500,
+            cursor: 'pointer',
+          }}
+        >
+          {addLabel}
+        </button>
+      )}
     </div>
   )
 }

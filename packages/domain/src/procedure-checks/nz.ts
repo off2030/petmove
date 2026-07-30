@@ -26,6 +26,8 @@ import {
   validateIdentityCheckOrder,
   validateImportPermitNotAfterDeparture,
   validateInfectiousDiseaseTestDate,
+  validateNzExternalSecondDose,
+  validateNzInfectiousTestAfterExternal,
   validateNzQuarantineStartAfterTiter,
   validateNzRcfDate,
   validateRabiesDocRequiresTiter,
@@ -809,19 +811,20 @@ export const NZ_CHECKS: ProcedureCheck[] = [
 
       const first = external[0]
       const sample = infectious[infectious.length - 1]
-      const gap = daysBetween(first.date, sample.date)
-      if (gap === null) return SKIP
-      if (gap < 14) {
+      // 저장 거부와 **같은 함수**(2026-07-30 사용자 지정으로 저장 거부 신설) — 저장 뒤에
+      //   1차 외부구충일을 고쳐 어긋난 경우를 표면화하는 짝 주의다.
+      const err = validateNzInfectiousTestAfterExternal(sample.date, first.date)
+      if (err) {
         return {
           ok: false,
-          message:
-            '바베시아 검사 채혈은 1차 외부 기생충 치료 14일 후부터 할 수 있어요. 지금 채혈하면 외부 기생충 치료와 검사를 다시 해야 할 수 있어요.',
+          message: err,
           offendingPaths: [
             `external_parasite_dates[${first.originalIndex}].date`,
             `infectious_disease_records[${sample.originalIndex}].date`,
           ],
         }
       }
+      const gap = daysBetween(first.date, sample.date)
       return { ok: true, message: `1차 외부구충(${first.date}) → 채혈(${sample.date}): ${gap}일.` }
     },
   },
@@ -857,9 +860,30 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       }
       // '마지막 치료'는 강아지에선 **2차**다 — 1차만 있는 동안 이 판정을 돌리면 1차를 마지막으로
       //   보고 "출국 16일 이내에 해야 해요"가 뜬다. 2차를 기다리는 정상 상태에 대고 경고하는
-      //   꼴이라(2026-07-29 카드 분리 때 발견) 2회가 다 들어온 뒤에만 본다. 고양이는 2.2(1) 로
-      //   1회라 그 한 번이 곧 마지막이므로 그대로 판정한다.
+      //   꼴이라(2026-07-29 발견) 2회가 다 들어온 뒤에만 본다. 고양이는 2.2(1) 로 1회라
+      //   그 한 번이 곧 마지막이므로 그대로 판정한다.
       if (species(caseRow) === 'dog' && entries.length < 2) return SKIP
+      // 강아지 2회 — 1차 후 28일 이내 + 출국 16일 이내를 **저장 거부와 같은 함수**로 본다
+      //   (2026-07-30 사용자 지정으로 저장 거부 신설). 저장 뒤에 출국일이나 1차를 고쳐
+      //   어긋난 경우를 표면화하는 짝 주의다.
+      if (species(caseRow) === 'dog') {
+        const err = validateNzExternalSecondDose(entries[0].date, last.date, dep)
+        if (err) {
+          return {
+            ok: false,
+            message: err,
+            offendingPaths: [
+              `external_parasite_dates[${entries[0].originalIndex}].date`,
+              `external_parasite_dates[${last.originalIndex}].date`,
+              'departure_date',
+            ],
+          }
+        }
+        return {
+          ok: true,
+          message: `1차(${entries[0].date}) → 2차(${last.date}) → 출국(${dep}): 간격 ${daysBetween(entries[0].date, last.date)}일, 출국까지 ${toDep}일.`,
+        }
+      }
       if (toDep > 16) {
         return {
           ok: false,

@@ -1772,6 +1772,33 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentLabel: '기생충 치료',
   },
 
+  // ── 8-2. 외부구충 2차 — **뉴질랜드 강아지 전용** ────────────────────────
+  // 왜 뉴질랜드만 카드를 나누나(2026-07-30 사용자 지정): 뉴질랜드는 회차 사이에 **다른 절차가
+  //   끼어 있다** — 1차 외부구충 → (14일 후) 바베시아 채혈 → 2차 외부구충. 순서가 규정으로
+  //   정해져 있어 두 회차를 '다음 할 일'에 같이 띄울 수 없고, 한 카드에 목록으로 두면
+  //   "지금 두 번 다 하라"로 읽힌다. 호주는 이 의존이 없어 카드 한 장 + '진행 중' 상태로 둔다.
+  // 고양이는 2.2(1) 로 **한 번**이면 되므로 이 카드가 뜨지 않는다(species: 'dog').
+  // 저장은 1차와 **같은 배열**(external_parasite_dates)을 쓰고 날짜순 위치가 회차다 —
+  //   1차 카드 = index 0, 이 카드 = index 1 이후. 기존 검증·알림·PDF·펫무브워크가 그대로 돈다.
+  {
+    id: 'external-parasite-2',
+    category: 'preparation',
+    title: '외부 기생충 2차 치료',
+    shortLabel: '외부2',
+    description: '2차 외부 기생충 치료를 하세요.',
+    doneSummary: '2차 외부 기생충 치료를 했어요.',
+    applicability: { destinations: ['new_zealand'], species: 'dog', tripType: 'all' },
+    // 내부구충(90) 뒤 — 시간순은 외부1차(68) → 전염병 검사(70) → 내부구충(90) → 외부2차
+    //   (출국 16일 이내) → 폐충·심장사상충. 내부구충 2차는 출국 5일 이내라 더 뒤다.
+    order: 92,
+    done: 'has-external-parasite-2',
+    inputs: [{ key: 'external_parasite_dates', label: '치료일', type: 'date_array' }],
+    allowAttachments: true,
+    attachmentHint: '증명서, 수첩 등을 사진·PDF로 보관하세요.',
+    attachmentLabel: '기생충 치료',
+    validationIds: ['nz.external-parasite-protocol'],
+  },
+
   // ── 촌충 치료 (에키노코쿠스) — 영국·아일랜드·몰타·노르웨이·핀란드, 강아지 한정 ─────
   // EU Reg 2018/772. 입국 24~120시간(1~5일) 전 프라지콴텔 투여 — 검증은 보수적으로 1~3일
   // (eu.tapeworm-1to3days-before-entry). 데이터 키는 internal_parasite_dates 공유(admin 정합).

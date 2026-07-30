@@ -62,6 +62,8 @@ const KNOWN_DIFFERENCES: Record<string, string> = {
     '호주는 검체 접수일 기준 180일, 뉴질랜드는 채혈일 기준 3~12개월 — 룰 개수가 다르지만 둘 다 채워져 있다(개수 차이는 규정 차이)',
   'australia:new_zealand:lungworm-treatment:missing':
     '폐충(Angiostrongylus vasorum) 치료는 뉴질랜드 요건(IHS 2.4 — 신 IHS 2026 신설). DAFF 는 요구하지 않는다',
+  'australia:new_zealand:external-parasite-2:missing':
+    '뉴질랜드만 회차 사이에 **다른 절차가 끼어 있다** — 1차 외부구충 → (14일 후) 바베시아 채혈 → 2차 외부구충(IHS 2.2(2)+2.7(1)). 순서가 규정으로 강제돼 두 회차를 한 카드에 둘 수 없어 카드를 나눴다(2026-07-30 사용자 지정). 호주 DAFF 7.6 은 회차를 정하지 않고 그런 의존도 없어 카드 한 장 + 진행 중 상태로 둔다',
   'australia:new_zealand:heartworm-test:missing':
     '심장사상충 검사는 뉴질랜드 요건(IHS 2.11 — 생후 7개월 이상 ELISA). DAFF 는 요구하지 않는다',
   'australia:new_zealand:import-permit:validations':

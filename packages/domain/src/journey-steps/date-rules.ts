@@ -1918,6 +1918,82 @@ export function validateCivDoseInterval(dates: string[]): string | null {
   return null
 }
 
+/**
+ * 뉴질랜드 외부구충 2회 프로토콜 — **뉴질랜드 전용**(2026-07-30 사용자 지정).
+ *
+ * 뉴질랜드만 1차 → 바베시아 채혈 → 2차 순서가 규정으로 강제돼 카드를 두 장으로 나눴다.
+ * 그래서 날짜 검증도 회차 사이 관계를 본다:
+ *
+ *   ① 2차는 1차 후 **28일 이내** — 2.2(2)(c) "1차부터 출국일까지 연속 보호"를 날짜로 근사한
+ *      값이다. MPI 승인 제품 중 진드기 지속이 가장 긴 부류가 4주다(프론트라인 플러스 라벨:
+ *      "persistent acaricidal efficacy for up to 4 weeks against ticks" — 벼룩 8주와 다르다).
+ *      28일을 넘기면 어떤 승인 제품으로도 보호가 끊긴다.
+ *   ② 2차(마지막)는 **출국 16일 이내** — 2.2(2)(b) 명문.
+ *
+ * ⛔ 하한(최소 투여 간격)은 넣지 않는다 — 제품 라벨의 최소 재투여 간격이 제품마다 다르고
+ *   (프론트라인 플러스는 4주), 앱이 제품을 모르는 상태에서 하한을 걸면 정상 일정을 거부한다.
+ * ⛔ 호주에 쓰지 말 것 — DAFF 7.6 은 회차를 정하지 않아 카드가 한 장이고, 상한 앵커가 없다.
+ *
+ * client(저장 거부)·procedure-check(nz.external-parasite-protocol) 공용 단일 출처.
+ * 한쪽 날짜가 비면 통과.
+ */
+export const NZ_EXTERNAL_PARASITE = { maxGapFromFirst: 28, lastWithinDays: 16 }
+
+export function validateNzExternalSecondDose(
+  firstDate: string,
+  secondDate: string,
+  departureDate: string,
+): string | null {
+  const first = (firstDate ?? '').slice(0, 10)
+  const second = (secondDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(first) || !/^\d{4}-\d{2}-\d{2}$/.test(second)) return null
+  const gap = daysBetween(first, second)
+  if (gap !== null && gap < 0) {
+    return '2차 외부 기생충 치료일이 1차보다 빨라요. 날짜를 확인하세요.'
+  }
+  if (gap !== null && gap > NZ_EXTERNAL_PARASITE.maxGapFromFirst) {
+    return `2차 외부 기생충 치료는 1차 치료 후 ${NZ_EXTERNAL_PARASITE.maxGapFromFirst}일 이내에 해야 해요. 약효가 끊기면 처음부터 다시 해야 해요.`
+  }
+  const dep = (departureDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dep)) return null
+  const toDep = daysBetween(second, dep)
+  if (toDep !== null && toDep < 0) {
+    return '외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.'
+  }
+  if (toDep !== null && toDep > NZ_EXTERNAL_PARASITE.lastWithinDays) {
+    return `2차 외부 기생충 치료는 출국 ${NZ_EXTERNAL_PARASITE.lastWithinDays}일 이내에 해야 해요.`
+  }
+  return null
+}
+
+/**
+ * 뉴질랜드 바베시아 채혈은 **1차 외부구충 14일 이후** — IHS 2.7(1) "on samples taken at
+ * least 14 days after the first external parasite treatment".
+ *
+ * 2.2 guidance 는 이 연속 보호가 깨지면 **외부구충과 바베시아 검사를 처음부터 다시** 해야
+ * 한다고 못박는다 — 되돌릴 수 없는 손실이라 주의가 아니라 저장 거부로 막는다
+ * (2026-07-30 사용자 지정). 전염병 검사 카드가 바베시아를 포함하므로 그 채혈일을 본다.
+ *
+ * client(저장 거부)·procedure-check(nz.infectious-disease-test-after-external-parasite)
+ * 공용 단일 출처. 1차 외부구충이 아직 없으면 통과 — 검사를 먼저 잡는 순서를 막지 않는다.
+ */
+export const NZ_BABESIA_MIN_DAYS_AFTER_EXTERNAL = 14
+
+export function validateNzInfectiousTestAfterExternal(
+  testDate: string,
+  firstExternalDate: string,
+): string | null {
+  const test = (testDate ?? '').slice(0, 10)
+  const first = (firstExternalDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(test) || !/^\d{4}-\d{2}-\d{2}$/.test(first)) return null
+  const gap = daysBetween(first, test)
+  if (gap === null) return null
+  if (gap < NZ_BABESIA_MIN_DAYS_AFTER_EXTERNAL) {
+    return `바베시아 검사 채혈은 1차 외부 기생충 치료 ${NZ_BABESIA_MIN_DAYS_AFTER_EXTERNAL}일 후부터 할 수 있어요.`
+  }
+  return null
+}
+
 /** 호주 내부구충 프로토콜 일수 — DAFF 7.7 명문. */
 export const AU_INTERNAL_PARASITE = { windowDays: 45, minGapDays: 14, secondWithinDays: 5 }
 
@@ -1947,10 +2023,12 @@ export const PARASITE_REQUIRED_DOSES: Record<
   //   → 30일(개)·21일(고양이) 시작 하한 + 출국일까지 약효 유지를 지키려면 최소 2회다.
   //   ⚠️ 상한은 두지 않는다 — 제품에 따라 3·4회도 정상이라 '기록 추가'로 계속 쌓을 수 있다.
   australia: { internal: 2, external: 2 },
-  // 뉴질랜드 — 내부 2회(IHS 2.3(1), 종 무관) · 외부는 **개만** 2회(2.2(2)).
-  //   고양이는 2.2(1) 로 한 번이면 된다 — 종을 안 가르면 규정대로 준비한 고양이가 계속
-  //   '진행 중'으로 남는다.
-  new_zealand: { internal: 2, external: { dog: 2, cat: 1 } },
+  // 뉴질랜드 — 내부 2회(IHS 2.3(1), 종 무관).
+  //   ⛔ 외부는 여기 넣지 않는다 — 뉴질랜드만 1차 → 바베시아 채혈 → 2차 순서가 규정으로
+  //     강제돼 **카드를 두 장으로 나눴다**(external-parasite / external-parasite-2,
+  //     2026-07-30 사용자 지정). 회차는 카드가 표현하므로 1차 카드는 1회로 완료되고 2차
+  //     카드가 index 1 을 담당한다. 여기 2 를 넣으면 1차 카드가 2회를 요구해 영영 미완료다.
+  new_zealand: { internal: 2 },
 }
 
 /** 이 케이스에서 해당 구충에 필요한 회차. 규정에 없으면 1(=한 번 넣으면 완료). */
