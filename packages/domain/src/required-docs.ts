@@ -88,6 +88,12 @@ interface RequiredDocSpec {
   /** 귀국일에 이 일령 이상일 때만 필요한 서류. 날짜 미입력 시에는 보수적으로 노출한다. */
   minReturnAgeDays?: number
   /**
+   * 중성화한 개체에만 필요한 서류(예: 뉴질랜드 중성화 증명서 — 미중성화견은 브루셀라 검사·
+   * 보호자 선언서로 간다). 성별이 **명시적으로 미중성화**(male/female)일 때만 내리고,
+   * 성별 미입력이면 보수적으로 노출한다(minReturnAgeDays 와 같은 원칙).
+   */
+  desexedOnly?: boolean
+  /**
    * 이 서류가 실제로 발급되는 step. kind='step' 이면 stepRef 와 같은 게 보통이라 생략 가능
    * (자동 폴백). kind='manual' 인데 특정 step 의 결과로 발급되는 서류(예: 별지25·FormAC/RE 는
    * vet-visit 검진 결과)는 여기에 명시. resolveRequiredDocs 가 발급 step 보다 앞 main lane
@@ -1054,6 +1060,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       source: '동물병원',
       kind: 'manual',
       species: 'dog',
+      desexedOnly: true,
       description:
         '중성화한 강아지는 수의사가 서명한 중성화 증명서가 필요해요.\n\n중성화하지 않았다면 이 서류 대신 브루셀라 결과지와 보호자 선언서를 준비해요.',
     },
@@ -1915,6 +1922,9 @@ export function resolveRequiredDocs(
     typeof caseData.return_date === 'string' && caseData.return_date.length >= 10
       ? caseData.return_date.slice(0, 10)
       : ''
+  // 미중성화 확정('male'·'female')일 때만 중성화 전용 서류를 내린다. 'neutered_male'·
+  //   'spayed_female' 은 물론, 성별 미입력도 노출 쪽으로 둔다(필요한 서류를 감추지 않는다).
+  const isEntire = caseData.sex === 'male' || caseData.sex === 'female'
   const meetsReturnAge = (spec: RequiredDocSpec): boolean => {
     if (!spec.minReturnAgeDays || !birth || !ret) return true
     const minimumDate = addDays(birth, spec.minReturnAgeDays)
@@ -1930,6 +1940,7 @@ export function resolveRequiredDocs(
       (s) =>
         (!s.roundTripOnly || tripType === 'round') &&
         (!s.species || !species || s.species === species) &&
+        (!s.desexedOnly || !isEntire) &&
         meetsReturnAge(s),
     )
     .map((s) =>
