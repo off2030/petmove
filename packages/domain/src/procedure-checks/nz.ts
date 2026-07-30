@@ -968,6 +968,10 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     severity: 'warning',
     addedAt: '2026-07-29',
     run: ({ caseRow, destination }) => {
+      // ⚠️ 종 가드 — 폐충은 **개 전용**(2.4)이라 카드도 강아지에게만 뜬다. 그런데 이 룰엔
+      //   가드가 없어서, 폐충 기록이 있는 고양이 케이스(동물 단위 필드라 다른 목적지에서
+      //   남은 값이 보일 수 있다)에 **카드도 없는 주의**가 떴다(2026-07-30 발견).
+      if (species(caseRow) !== 'dog') return SKIP
       const dep = readDepartureDate(caseRow, destination)
       const entries = readLungwormEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
