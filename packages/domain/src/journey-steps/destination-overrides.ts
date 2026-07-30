@@ -1856,7 +1856,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     importQuarantine: {
       fieldKey: 'nz_import_quarantine_date',
       description:
-        '뉴질랜드 도착 후 MPI 승인 계류시설로 바로 옮겨져요.\n\n도착 후 72시간 이내에 MPI 검역관의 검진을 받고, 계류가 끝날 때 한 번 더 받아요.\n계류 기간은 최소 10일이에요.\n서류와 검역에 문제가 없으면 계류 기간이 끝나는 날 보호자나 대리인이 데려갈 수 있어요.',
+        '뉴질랜드 도착 후 MPI 승인 계류시설로 옮겨져요.\n\n도착 후 72시간 이내에 MPI 검역관의 검진을 받고, 계류가 끝날 때 한 번 더 받아요.\n계류 기간은 최소 10일이에요.\n서류와 검역에 문제가 없으면 계류 기간이 끝나는 날 보호자나 대리인이 데려갈 수 있어요.',
       helpText: '뉴질랜드 도착 후 계류를 시작한 날짜',
       attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
       attachmentLabel: '뉴질랜드 수입 검역 서류',
