@@ -2166,14 +2166,29 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     //   확정 '출국 N일 전' 마감은 규정에 없고 "허가 승인 후 행정 처리 3~5영업일" + "출국 최소
     //   4주 전 신청 권장"이라는 사실만 있다 → base 마감 배지(출국 30일 전)는 내린다.
     importPermit: {
-      // 사용자 확정본 7줄(2026-07-30 직접 지정). ⛔ 다듬지 말 것 — 뺀 줄이 둘이다:
-      //   · '강아지는 검역시설 예약 확인서와 면책동의서를 허가가 나오기 전에 반영해요.'
-      //     — 뜻이 불분명하다는 지적으로 삭제. 같은 내용은 검역시설 예약 카드가 그 맥락에서
-      //     말한다(예약을 마친 사람이 그 서류를 어떻게 하는지). 여기선 중복이었다.
-      //   · '한국을 출발하기 전에 허가가 나와 있어야 해요.' — '출국 최소 4주 전에 신청하세요'가
-      //     같은 일정을 이미 말한다.
+      // ✅ 1차 출처 대조(2026-07-30) — gov.za "Import animals and animal products" +
+      //   수수료 고시(2026-01-22, 2026-04-01 시행). 확인된 사실:
+      //     · 발급 주체 "the **Director: Animal Health**" ✅
+      //     · "Once the state veterinarian at the national office has approved the importation,
+      //       it takes **three to five working days** to process the application and issue the
+      //       permit." → 3~5영업일 ✅
+      //     · "a veterinary import permit and a **veterinary health certificate template** will
+      //       be issued and sent directly to you" ✅
+      //     · 수수료 R250(Issuance of an import permit, Animal Diseases Act 1984 §6)
+      //     · 온라인 신청 시스템 **e-Cert** 존재(카드는 아직 언급하지 않는다)
+      //   ❌ 구 문구 '출국 최소 4주 전에 신청하세요'는 **근거가 없었다** — gov.za 에 "4 weeks"·
+      //     "one month" 가 없다. 초안이 만든 숫자로 보인다(AIA '30영업일'과 같은 부류).
+      //     확인된 3~5영업일로 교체했다(2026-07-30 사용자 지정).
+      // 사용자 확정본 4줄(2026-07-30 직접 지정). ⛔ 다듬지 말 것 — 뺀 줄이 넷이다:
+      //   · '강아지는 AIA 수입 허가를 먼저 받아야 신청할 수 있어요.' — 순서는 AIA 카드가 앞(38)에
+      //     있고, 어길 때 저장 거부가 'AIA 수입 허가를 먼저 받으세요.'로 직접 말한다.
+      //   · '검역을 받는 강아지는 Subjected to Quarantine 신청서…' — gov.za 서식이 **3종**
+      //     (subjected to quarantine / subjected to further control / not subjected to quarantine)
+      //     이고 어느 동물이 어느 서식인지 밝히지 않는다. 단정이라 뺐다.
+      //   · '신청서와 수수료 납부증명을 함께 제출해요.'(사실은 맞다 — R250)
+      //   · '한국을 출발하기 전에 허가가 나와 있어야 해요.'
       description:
-        '남아공 농업부 동물보건국(Director: Animal Health)에 수의검역 수입 허가를 신청하세요.\n\n강아지는 AIA 수입 허가를 먼저 받아야 신청할 수 있어요.\n검역을 받는 강아지는 Subjected to Quarantine 신청서, 고양이는 Not Subjected to Quarantine 신청서를 써요.\n신청서와 수수료 납부증명을 함께 제출해요.\n출국 최소 4주 전에 신청하세요.\n허가가 나오면 남아공 건강증명서(Veterinary Health Certificate) 양식도 함께 받아요.\n\n인터넷에 도는 예시 서류보다 **발급받은 허가서와 건강증명서에 적힌 조건이 항상 우선**이에요. 검사를 시작하기 전에 허가서부터 받으세요.',
+        '남아공 농업부 동물보건국(Director: Animal Health)에 수의검역 수입 허가를 신청하세요.\n\n승인 후 발급까지 3~5영업일이 걸려요.\n허가가 나오면 남아공 건강증명서(Veterinary Health Certificate) 양식도 함께 받아요.\n\n인터넷에 도는 예시 서류보다 **발급받은 허가서와 건강증명서에 적힌 조건이 항상 우선**이에요. 검사를 시작하기 전에 허가서부터 받으세요.',
       doneSummary: '남아프리카공화국 수입 허가를 받았어요.',
       cardLine: '남아프리카공화국 수입 허가를 신청하세요.',
       attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
