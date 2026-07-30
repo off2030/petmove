@@ -38,6 +38,7 @@ import {
   validateTiterAfterIdentityCheck,
   validateInternalParasiteSpacing,
   validateCivDoseInterval,
+  requiredParasiteDoses,
   validateExternalParasiteDates,
   JOURNEY_STEP_CATALOG,
   validateInfectiousDiseaseTestDate,
@@ -568,9 +569,24 @@ export function StepDetailView({
   const [importPermit, setImportPermit] = useState<ImportPermitForm>(savedImportPermit)
 
   // 구충(내·외부) — 가변 길이 entries (종합백신과 동일 모델, 유효기간 없음).
+  //
+  // **필요 회차만큼 입력칸을 미리 띄운다**(2026-07-30 사용자 지정). 호주·뉴질랜드는 2회가
+  //   요건이라 카드를 열면 '외부구충 / 외부구충 2차' 두 칸이 보이고, 그 뒤는 '기록 추가'로
+  //   3·4회를 쌓는다. 회차 요건이 없는 목적지(터키·멕시코 등)는 1 이라 종전과 같이 한 칸이다.
+  //   같은 값(requiredParasiteDoses)이 완료 판정·'진행 중' 칩과 짝이라 화면과 판정이 갈리지 않는다.
+  // ⚠️ 빈 칸을 채워 넣어도 dirty 로 잡히지 않는다 — parasiteDirty 가 양쪽에서 빈 행을
+  //   걸러(vaccineEntryFilled) 비교하기 때문. 이 필터를 없애면 카드를 열자마자 '저장' 이 켜진다.
+  const parasiteMinRows =
+    isExternalParasite || isInternalParasite
+      ? requiredParasiteDoses(
+          isExternalParasite ? 'external' : 'internal',
+          destinationKey,
+          typeof caseRow?.data?.species === 'string' ? (caseRow.data.species as string) : null,
+        )
+      : 1
   const savedParasite = readParasiteForm(caseRow?.data, parasiteFieldKey)
   const [parasite, setParasite] = useState<GeneralVaccineEntry[]>(
-    savedParasite.length === 0 ? [makeEmptyGeneralVaccine()] : savedParasite,
+    padParasiteRows(savedParasite, parasiteMinRows),
   )
 
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -944,7 +960,7 @@ export function StepDetailView({
   useEffect(() => {
     if (!parasiteDirty) {
       const next = readParasiteForm(caseRow?.data, parasiteFieldKey)
-      setParasite(next.length === 0 ? [makeEmptyGeneralVaccine()] : next)
+      setParasite(padParasiteRows(next, parasiteMinRows))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
@@ -2001,7 +2017,7 @@ export function StepDetailView({
         if (res.ok) {
           updateCase(res.value)
           const next = readParasiteForm(res.value.data, parasiteFieldKey)
-          setParasite(next.length === 0 ? [makeEmptyGeneralVaccine()] : next)
+          setParasite(padParasiteRows(next, parasiteMinRows))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -3760,6 +3776,17 @@ function generalVaccineCardLabel(
  * 구충(내·외부) 폼 값 — data[fieldKey] 배열에서 읽기. 항목은 {date} 객체 또는 legacy
  * 문자열(처치일만). GeneralVaccineEntry 모양(valid_until='')으로 정규화해 컴포넌트 공유.
  */
+/**
+ * 구충 입력칸을 **필요 회차만큼** 채운다 — 저장된 기록이 모자라면 빈 행으로 메운다.
+ * 호주·뉴질랜드는 2회가 요건이라 카드를 열면 '외부구충 / 외부구충 2차' 두 칸이 보인다.
+ * 요건이 없는 목적지는 min=1 이라 종전대로 한 칸이다.
+ */
+function padParasiteRows(rows: GeneralVaccineEntry[], min: number): GeneralVaccineEntry[] {
+  const out = [...rows]
+  while (out.length < Math.max(1, min)) out.push(makeEmptyGeneralVaccine())
+  return out
+}
+
 function readParasiteForm(
   data: Record<string, unknown> | null | undefined,
   fieldKey: string,
