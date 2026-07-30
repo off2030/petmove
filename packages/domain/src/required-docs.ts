@@ -989,7 +989,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'import-permit',
       description:
-        '수입 허가 신청이 승인되면 발급돼요.\n\n한 번의 운송(consignment)에 한 장이 필요하고, 배서 없는 사본도 인정돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '수입 허가 신청이 승인되면 발급돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'import-permit',
     },
     {
