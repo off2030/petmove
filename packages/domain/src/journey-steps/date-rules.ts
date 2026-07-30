@@ -1978,6 +1978,31 @@ export function validateCivDoseInterval(dates: string[]): string | null {
  */
 export const NZ_EXTERNAL_PARASITE = { lastWithinDays: 16 }
 
+/**
+ * 뉴질랜드 외부구충 — **마지막 처치는 출국 16일 이내**(IHS 2.2(1)(a) 고양이 / 2.2(2)(b) 개).
+ *
+ * 고양이는 규정상 1회라 그 한 번이 곧 마지막 처치인데, 개용 2회 판정
+ * (validateNzExternalSecondDose)은 기록이 2건일 때만 돌아 **고양이가 판정에서 빠져 있었다**
+ * (2026-07-30 사용자 지적으로 신설). 기록이 더 있어도 마지막 회차만 본다.
+ *
+ * client(저장 거부)·procedure-check(nz.external-parasite-protocol 고양이 분기) 공용 단일 출처.
+ */
+export function validateNzExternalLastDose(
+  lastDate: string,
+  departureDate: string,
+): string | null {
+  const last = (lastDate ?? '').slice(0, 10)
+  const dep = (departureDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(last) || !/^\d{4}-\d{2}-\d{2}$/.test(dep)) return null
+  const toDep = daysBetween(last, dep)
+  if (toDep === null) return null
+  if (toDep < 0) return '외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.'
+  if (toDep > NZ_EXTERNAL_PARASITE.lastWithinDays) {
+    return `외부 기생충 치료는 출국 ${NZ_EXTERNAL_PARASITE.lastWithinDays}일 이내에 해야 해요.`
+  }
+  return null
+}
+
 export function validateNzExternalSecondDose(
   firstDate: string,
   secondDate: string,

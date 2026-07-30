@@ -27,6 +27,7 @@ import {
   validateImportPermitNotAfterDeparture,
   validateInfectiousDiseaseTestDate,
   validateNzExternalSecondDose,
+  validateNzExternalLastDose,
   validateNzInfectiousTestAfterExternal,
   validateNzQuarantineStartAfterTiter,
   validateDepartureNotAfterQuarantineStart,
@@ -893,10 +894,13 @@ export const NZ_CHECKS: ProcedureCheck[] = [
           message: `1차(${entries[0].date}) → 2차(${last.date}) → 출국(${dep}): 간격 ${daysBetween(entries[0].date, last.date)}일, 출국까지 ${toDep}일.`,
         }
       }
-      if (toDep > 16) {
+      // 고양이(1회) 판정 — 저장 거부(validateNzExternalLastDose)와 **같은 함수**. 예전엔 여기만
+      //   16일을 봤고 저장은 통과시켰다(2026-07-30 사용자 지정으로 저장 거부 신설).
+      const lastErr = validateNzExternalLastDose(last.date, dep)
+      if (lastErr) {
         return {
           ok: false,
-          message: '마지막 외부 기생충 치료는 출국 16일 이내에 해야 해요.',
+          message: lastErr,
           offendingPaths: [`external_parasite_dates[${last.originalIndex}].date`, 'departure_date'],
         }
       }

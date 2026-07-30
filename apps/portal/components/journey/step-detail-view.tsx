@@ -41,6 +41,7 @@ import {
   validateInternalParasiteSpacing,
   validateCivDoseInterval,
   validateNzExternalSecondDose,
+  validateNzExternalLastDose,
   validateNzInfectiousTestAfterExternal,
   validateNzWithin5Days,
   requiredParasiteDoses,
@@ -1606,12 +1607,19 @@ export function StepDetailView({
           .map((e) => (e.date ?? '').slice(0, 10))
           .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
           .sort()
-        if (dates.length >= 2) {
-          const err = validateNzExternalSecondDose(
-            dates[0],
-            dates[dates.length - 1],
-            (caseRow?.departure_date ?? '').slice(0, 10),
-          )
+        const dep = (caseRow?.departure_date ?? '').slice(0, 10)
+        const speciesRaw =
+          typeof caseRow?.data?.species === 'string' ? (caseRow.data.species as string) : ''
+        const isCat = speciesRaw === 'cat' || speciesRaw === '고양이'
+        if (isCat) {
+          // 고양이는 IHS 2.2(1) 로 **1회**라 그 한 번이 곧 마지막 처치다 — 개용 2회 판정은
+          //   기록이 2건일 때만 돌아 고양이가 빠져 있었다(2026-07-30 사용자 지정으로 신설).
+          if (dates.length >= 1) {
+            const err = validateNzExternalLastDose(dates[dates.length - 1], dep)
+            if (err) return err
+          }
+        } else if (dates.length >= 2) {
+          const err = validateNzExternalSecondDose(dates[0], dates[dates.length - 1], dep)
           if (err) return err
         }
       }
