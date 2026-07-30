@@ -1059,6 +1059,10 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       name: '중성화 증명서',
       source: '동물병원',
       kind: 'manual',
+      // 별지25·뉴질랜드 건강증명서와 같은 게이트(2026-07-30 사용자 지시) — 임상검사가 도래해야
+      //   '발급 예정' → '준비중'. 실제 중성화 수술은 훨씬 전이지만, 서류를 챙기는 시점은
+      //   증명서를 모아 검역에 가는 임상검사 단계다.
+      issuanceStepId: 'vet-visit',
       species: 'dog',
       desexedOnly: true,
       description:
@@ -1069,6 +1073,9 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       name: '보호자 선언서',
       source: '보호자 작성',
       kind: 'manual',
+      // 중성화 증명서와 같은 게이트(2026-07-30 사용자 지시). 보호자가 미리 써 둘 수는 있지만
+      //   증명서에 동봉되는 서류라 임상검사 도래 전에는 '발급 예정'으로 둔다.
+      issuanceStepId: 'vet-visit',
       species: 'dog',
       // 개 인플루엔자 선언서는 뺐다 — MPI 별도 서식(2018) 안내문이 "수출국 증명서에 CIV
       //   조항이 없을 때만 작성"이라고 못박는데, 2026 category 3 증명서에는 45항으로 그
