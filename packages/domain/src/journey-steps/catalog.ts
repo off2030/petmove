@@ -1472,8 +1472,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'za-quarantine-reservation',
     category: 'permit',
-    title: '검역시설 예약',
-    shortLabel: '검역장',
+    // 용어는 **호주·뉴질랜드와 통일**한다(2026-07-31 사용자 지정) — 같은 메커니즘(도착 후 지정
+    //   시설에 머무름)이라 '계류'로 부른다. 공용 저장 거부 문구도 '계류 시작일'이라, 카드가
+    //   '검역'이면 화면과 오류가 어긋난다. ⛔ '검역시설/검역 시작일'로 되돌리지 말 것.
+    title: '계류시설 예약',
+    shortLabel: '계류장',
     // 사용자 확정본 4줄(2026-07-30 직접 지정). ⛔ 다듬지 말 것 — 뺀 줄이 다섯이다:
     //   · '한국은 남아공의 개 검역 면제국이 아니라서 강아지는 도착 후 검역을 받아요.'
     //   · '수입 허가에 검역이 명시되면 예약해요.'
@@ -1485,9 +1488,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   ⚠️ '희망 입국일을 정한 뒤 일찍 문의하세요'는 **남았다** — 운송 정보가 필요하다는 사실을
     //     말하는 유일한 줄이다. 다만 순서는 검역 예약(42) → 운송(46)으로 확정됐다(자리가 먼저).
     description:
-      '남아공 국가 검역시설에 검역을 예약하세요.\n\n입국 공항의 국가 수의사(State Veterinarian)에게 연락해 자리를 확인해요.\n요하네스버그는 Kempton Park, 케이프타운은 Milnerton 검역시설을 이용해요.\n희망 입국일을 정한 뒤 일찍 문의하세요. 자리가 없는 경우가 많아요.',
-    doneSummary: '검역시설을 예약했어요.',
-    cardLine: '검역시설을 예약하세요.',
+      '남아공 국가 계류시설에 계류를 예약하세요.\n\n입국 공항의 국가 수의사(State Veterinarian)에게 연락해 자리를 확인해요.\n요하네스버그는 Kempton Park, 케이프타운은 Milnerton 계류시설을 이용해요.\n희망 입국일을 정한 뒤 일찍 문의하세요. 자리가 없는 경우가 많아요.',
+    doneSummary: '계류시설을 예약했어요.',
+    cardLine: '계류시설을 예약하세요.',
     applicability: { destinations: ['south_africa'], species: 'dog', tripType: 'all' },
     order: 42,
     // 예약을 했다는 사실이 완료 — 검역 시작일이 미래여도 카드는 완료다(호주·뉴질랜드와 동일).
@@ -1495,14 +1498,14 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     inputs: [
       {
         key: 'za_quarantine_reservation_date',
-        label: '검역 시작일',
+        label: '계류 시작일',
         type: 'date',
-        helpText: '예약한 검역 시작 날짜',
+        helpText: '예약한 계류 시작 날짜',
       },
     ],
     allowAttachments: true,
-    attachmentHint: '검역시설 예약확인서·면책동의서를 사진·PDF로 보관하세요.',
-    attachmentLabel: '남아공 검역시설 예약확인서',
+    attachmentHint: '계류시설 예약확인서·면책동의서를 사진·PDF로 보관하세요.',
+    attachmentLabel: '남아공 계류시설 예약확인서',
     // 출국일 ≤ 검역 시작일 주의는 **운송 예약 카드**에 둔다(출국일 칸이 있는 쪽) —
     //   호주·뉴질랜드·싱가포르와 같은 배치. 저장 거부는 이 카드에도 걸린다.
   },
