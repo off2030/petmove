@@ -1485,10 +1485,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (validUntil && validUntil < today) {
         return { advisory: true }
       }
+      // 출국(입국) 전 만료 — 문구는 **주의 룰**(common.general-vaccine-validity-expired)이
+      //   담당하고 여기서는 배치(advisory)만 남긴다. 2026-07-30 사용자 확정("카드가 있으면
+      //   모두 주의가 맞아")으로 이 상태가 안내 → 주의로 올라갔다. 문구를 여기 남기면
+      //   같은 사실이 카드 본문과 주의 배지에 두 벌로 나간다.
       if (entry && validUntil && validUntil < entry) {
-        const token = buildCaseJourneyContext(caseRow).destinationToken
-        const msg = `종합백신 면역 유효기간이 ${token ? `${token} ` : ''}입국 전에 만료돼요. ${formatKoreanDate(validUntil)}까지 추가 접종을 하세요.`
-        return { desc: msg, cardDesc: msg, advisory: true }
+        return { advisory: true }
       }
       // 만료 임박(오늘 기준 30일 이내) — 여행 미예약(!entry)일 때만 추가 접종 준비를 알린다.
       // 광견병 카드와 동일 모델(has-general-vaccine 의 임박 미완료 조건과 짝, 예약된 여행이
@@ -1561,19 +1563,17 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const today = todayKst()
       // 미래(예정) 접종만 있으면 기본 안내로 둔다(날짜는 일정 칩에만) — 종합백신과 동일.
       if (latest.date > today) return undefined
-      if (validUntil && validUntil < today) {
-        const msg = `켄넬코프 백신 유효기간이 ${formatKoreanDate(validUntil)}에 끝났어요. 계류시설 제출용이라 추가 접종이 필요해요.`
-        return { desc: msg, cardDesc: msg, advisory: true }
-      }
-      if (entry && validUntil && validUntil < entry) {
-        const msg = `켄넬코프 백신 유효기간이 출국 전 ${formatKoreanDate(validUntil)}에 끝나요. 계류시설 제출용이라 추가 접종이 필요해요.`
-        return { desc: msg, cardDesc: msg, advisory: true }
-      }
+      // 문구는 **주의 룰**(common.kennel-cough-validity-expired)이 담당 — 여기서는 배치만.
+      //   2026-07-30 사용자 확정으로 만료는 안내가 아니라 주의다(종합백신과 같은 처리).
+      if (validUntil && validUntil < today) return { advisory: true }
+      if (entry && validUntil && validUntil < entry) return { advisory: true }
       return undefined
     },
     inputs: [{ key: 'kennel_cough_dates', label: '접종일', type: 'date_array', hasValidUntil: true }],
     allowAttachments: true,
     attachmentLabel: '켄넬코프백신',
+    // 만료 '주의' — 켄넬코프 카드국 전체 공통(2026-07-30). 종합백신과 같은 자리.
+    validationIds: ['common.kennel-cough-validity-expired'],
   },
   // ── 심장사상충 검사 ────────────────────────────────────────────────
   // 구충과 **별개 절차**라 카드를 나눈다(2026-07-27 사용자 지정). 예전엔 괌 내부 기생충

@@ -1,4 +1,9 @@
-import { DESTINATION_OVERRIDES, isRabiesFreeOrigin, matchesDestinationKey } from '../destination-config'
+import {
+  DESTINATION_OVERRIDES,
+  destinationsWithVaccine,
+  isRabiesFreeOrigin,
+  matchesDestinationKey,
+} from '../destination-config'
 import {
   GENERAL_VACCINE_CARD_DESTINATIONS,
   TWO_DOSE_RABIES_DESTINATIONS,
@@ -10,11 +15,13 @@ import {
   validateVetVisitDate,
 } from '../journey-steps/date-rules'
 import { titerEntryValidUntil, TITER_EXTRA_CARD_DESTINATIONS } from '../journey-steps/titer-validity'
+import type { CaseRow } from '../types'
 import type { ProcedureCheck } from './types'
 import {
   addYears,
   formatKoreanDate,
   readGeneralVaccineEntries,
+  readKennelCoughEntries,
   readRabiesEntries,
   readTiterEntries,
   readVetVisitDate,
@@ -266,32 +273,85 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
       }
     },
   },
-  {
+  buildVaccineValidityRule({
     id: 'common.general-vaccine-validity-expired',
     country: GENERAL_VACCINE_CARD_DESTINATIONS,
     category: '종합백신',
-    title: '종합백신 면역 유효기간 만료',
-    description:
-      '가장 최근 종합백신(DHPP·FVRCP)의 면역 유효기간이 오늘 기준 이미 만료됨 — 추가 접종 기록 입력 요청. 종합백신 카드가 뜨는 목적지 전체에 적용.',
+    label: '종합백신',
+    dataKey: 'general_vaccine_dates',
+    reader: readGeneralVaccineEntries,
+  }),
+  buildVaccineValidityRule({
+    id: 'common.kennel-cough-validity-expired',
+    country: destinationsWithVaccine('kennel'),
+    category: '종합백신',
+    label: '켄넬코프 백신',
+    dataKey: 'kennel_cough_dates',
+    reader: readKennelCoughEntries,
+  }),
+]
+
+/**
+ * 백신 면역 유효기간 만료 **주의** — 카드가 뜨는 목적지 전체 공통.
+ *
+ * 왜 '주의'인가(2026-07-30 사용자 확정 "카드가 있으면 모두 주의가 맞아"): 카드가 떠 있다는
+ * 건 그 목적지가 그 백신을 **요구한다**는 뜻이다(입국 요건이든 계류시설 제출 요건이든).
+ * 만료된 접종은 어느 쪽으로도 쓸 수 없으므로 톤을 나눌 이유가 없다.
+ *
+ * ⚠️ 이전에는 '이미 만료'(오늘 기준)만 주의였고 **출국 전 만료**(미래 만료)는 카드
+ *   situational 의 '안내'로만 떴다. 그래서 같은 케이스에서 광견병·CIV 는 '주의', 종합백신·
+ *   켄넬코프는 '안내'로 갈렸고(2026-07-30 사용자 지적), 뉴질랜드 종합백신은 카드
+ *   validationIds 가 비어 있어 아무것도 안 떴다. 두 경우를 한 룰로 합친다.
+ *
+ * 기준일 = 입국일(entry_date) 있으면 그 값, 없으면 출국일(departure_date). 둘 다 없으면
+ * 오늘 기준 만료만 본다 — 여행 날짜가 안 정해졌는데 미래 만료를 단정할 수 없다.
+ */
+function buildVaccineValidityRule(opts: {
+  id: string
+  country: string[]
+  category: string
+  label: string
+  dataKey: string
+  reader: (caseRow: CaseRow) => Array<{ date: string; valid_until?: string | null; originalIndex: number }>
+}): ProcedureCheck {
+  return {
+    id: opts.id,
+    country: opts.country,
+    category: opts.category,
+    title: `${opts.label} 면역 유효기간 만료`,
+    description: `가장 최근 ${opts.label} 접종의 면역 유효기간이 오늘 기준 이미 만료됐거나, 출국(입국)일 전에 만료됨 — 추가 접종 요청. 카드가 뜨는 목적지 전체에 적용한다(카드가 있으면 그 백신을 요구한다는 뜻이므로 만료는 항상 주의, 2026-07-30 사용자 확정).`,
     allowDate: true,
     severity: 'warning',
     addedAt: '2026-07-25',
     run: ({ caseRow }) => {
-      const entries = readGeneralVaccineEntries(caseRow)
+      const entries = opts.reader(caseRow)
       if (entries.length === 0) return SKIP
-      // readGeneralVaccineEntries 는 날짜순 정렬을 보장.
+      // reader 는 날짜순 정렬을 보장.
       const latest = entries[entries.length - 1]
-      if (latest.date > todayKst()) return SKIP
-      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      const today = todayKst()
+      if (latest.date > today) return SKIP
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until ?? null)
       if (!validUntil) return SKIP
-      if (validUntil >= todayKst()) {
-        return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 오늘.` }
+      const offendingPaths = [`${opts.dataKey}[${latest.originalIndex}].date`]
+      if (validUntil < today) {
+        return {
+          ok: false,
+          message: `직전 ${opts.label}의 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 접종 기록을 입력하세요.`,
+          offendingPaths,
+        }
       }
-      return {
-        ok: false,
-        message: `직전 종합백신의 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 추가 접종 기록을 입력하세요.`,
-        offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`],
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const anchor =
+        (typeof data.entry_date === 'string' && data.entry_date.slice(0, 10)) ||
+        (typeof caseRow.departure_date === 'string' ? caseRow.departure_date.slice(0, 10) : '')
+      if (anchor && validUntil < anchor) {
+        return {
+          ok: false,
+          message: `${opts.label} 면역 유효기간이 출국 전 ${formatKoreanDate(validUntil)}에 만료돼요. 만료 전에 추가 접종을 하세요.`,
+          offendingPaths: [...offendingPaths, 'departure_date'],
+        }
       }
+      return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ ${anchor || '오늘'}.` }
     },
-  },
-]
+  }
+}
