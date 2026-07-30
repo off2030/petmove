@@ -2196,10 +2196,25 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // AIA(38) 바로 뒤 — 검역시설 예약(42)보다 **앞**이다(위 ⛔ 주석의 이유).
       order: 40,
       deadline: undefined,
-      validationIds: [
-        'za.aia-permit-before-import-permit',
-        'za.import-permit-not-after-departure',
+      // 버튼 완료 카드(2026-07-30 사용자 확정) — AIA·호주 수입 허가와 같은 모델.
+      //   신청일을 받아 둘 이유가 없다: 확정 마감이 규정에 없고("4주 전"은 근거 없어 삭제),
+      //   남은 사실은 '승인 후 3~5영업일'뿐이라 판정할 창이 없다. 보호자가 아는 건
+      //   '허가가 나왔다/아니다'뿐이다. 버튼이 오늘 날짜를 아래 필드에 기록한다.
+      //   ⛔ 신청일 기반 검증(구 za.import-permit-not-after-departure)을 되살리지 말 것 —
+      //     저장값이 신청일이 아니라 **허가 취득일**이라 판정 근거가 달라진다(호주와 동일).
+      //   ⚠️ AIA 선행 게이트는 그대로 살아 있다 — 버튼 완료 경로(서버 markImportPermitIssued)가
+      //     importPermitPrerequisiteError 를 직접 부른다(2026-07-29 호주·뉴질랜드에서 뚫렸던 자리).
+      buttonComplete: true,
+      done: 'dated:import_permit_application_date',
+      inputs: [
+        {
+          key: 'import_permit_application_date',
+          label: '허가 취득일',
+          type: 'date',
+          helpText: '수입 허가증을 받은 날짜',
+        },
       ],
+      validationIds: ['za.aia-permit-before-import-permit'],
     },
     // 도착 = 요하네스버그·케이프타운 공항 화물터미널 → 국가 검역시설, 약 14일.
     //   보호자가 공항에 가지 않으므로 날짜 입력칸 없이 안내 + '완료' 버튼(계류 편도국 공통).

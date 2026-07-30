@@ -1531,25 +1531,17 @@ export function validateImportPermitFiledDate(
     // 뉴질랜드·호주 — 선행 절차 게이트는 아래 단일 출처(importPermitPrerequisiteError)에.
     //   '완료' 버튼 경로(markImportPermitIssued)는 저장 검증을 타지 않으므로 서버 액션이
     //   같은 함수를 직접 부른다.
+    // 남아공도 같은 형태 — 선행이 **AIA 허가**(규정 명문, 개 전용)다. 세 나라 모두 카드가
+    //   버튼 완료라 저장값이 '허가 취득일'이고, 그래서 날짜 기반 검증은 두지 않는다.
+    //   ⛔ 남아공에 validateImportPermitNotAfterDeparture 를 되살리지 말 것(2026-07-30) —
+    //     신청일 칸을 떼면서 판정 근거가 사라졌다(호주가 같은 이유로 뗀 자리).
     case 'new_zealand':
     case 'australia':
+    case 'south_africa':
       return importPermitPrerequisiteError(
         destinationKey,
         data,
         /^\d{4}-\d{2}-\d{2}$/.test((filedDate ?? '').slice(0, 10)) || !!permitNo,
-      )
-    // 남아공 — 선행은 **AIA 허가**(규정 명문, 개 전용). 순서 게이트 + 출국일 순서를 함께 본다.
-    //   ⚠️ 이 case 가 없던 동안 남아공 수입 허가 신청일은 default 로 빠져 **저장 거부가 하나도
-    //     없었다**(2026-07-30 발견). za.import-permit-not-after-departure 는 주의만 있었고,
-    //     DATE_SAVE_BLOCK_DECISIONS 의 'import-permit' 일반 항목이 있어 배선 린트도 못 잡았다.
-    case 'south_africa':
-      return (
-        validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
-        importPermitPrerequisiteError(
-          destinationKey,
-          data,
-          /^\d{4}-\d{2}-\d{2}$/.test((filedDate ?? '').slice(0, 10)) || !!permitNo,
-        )
       )
     // 스위스 — 입국 3주(21일) 이내 신청 불가.
     case 'switzerland':

@@ -17,7 +17,6 @@ import {
 import { readByDestValue } from '../destination-scoped-fields'
 import {
   validateDepartureNotAfterQuarantineStart,
-  validateImportPermitNotAfterDeparture,
   validateInfectiousDiseaseTestDate,
   violatesRabiesEntryWait,
 } from '../journey-steps/date-rules'
@@ -45,7 +44,8 @@ import { msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
  *  - 5종 전염병 검사: 출국 30일 이내(≤29). 강아지 전용.
  *  - 심장사상충 예방: 음성 검사 채혈일 이후 시작. 강아지 전용.
  *  - 진드기·흡혈곤충 처치: 출국 30일 이내. 강아지 전용.
- *  - 허가 2장(AIA · 수의검역)은 각각 출국일보다 앞.
+ *  - 허가 2장(AIA · 수의검역)은 둘 다 **버튼 완료 카드**라 날짜 검증이 없다 —
+ *    남는 건 순서(AIA → 수의검역)뿐이고 그건 importPermitPrerequisiteError 가 막는다.
  *  - 검역 시작일 ≥ 출국일.
  *
  * 컨벤션 (IL/RU/MX 와 동일):
@@ -381,31 +381,9 @@ export const ZA_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `AIA 허가 취득(${aia}) 완료 — 수의검역 신청(${filed}).` }
     },
   },
-  {
-    id: 'za.import-permit-not-after-departure',
-    country: COUNTRY,
-    category: '수입허가',
-    title: '수입 허가 신청일, 출국일 순서',
-    description:
-      '수의검역 수입 허가 신청일은 출국일 이전이어야 함(출국 당일·이후엔 신청 불가). 남아공 정부는 동물을 보내기 전에 허가를 받도록 요구한다. 입력 차단(validateImportPermitNotAfterDeparture)과 같은 함수.',
-    severity: 'warning',
-    addedAt: '2026-07-30',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const filed = readScopedImportPermitFiled(data, destination)
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
-      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
-      const msg = validateImportPermitNotAfterDeparture(filed, dep)
-      if (msg) {
-        return {
-          ok: false,
-          message: msg,
-          offendingPaths: ['import_permit_application_date', 'departure_date'],
-        }
-      }
-      return { ok: true, message: `신청일(${filed}) < 출국일(${dep || '미입력'}).` }
-    },
-  },
+  // ⛔ 'za.import-permit-not-after-departure'(수입 허가 신청일 < 출국일) 룰을 다시 만들지 말 것 —
+  //   2026-07-30 수입 허가 카드가 **버튼 완료**로 바뀌며 삭제했다. 저장값이 신청일이 아니라
+  //   허가 취득일(버튼 누른 날)이라 판정 근거가 사라졌다. AIA 카드·호주 수입 허가와 같은 자리다.
   {
     id: 'za.quarantine-start-not-before-departure',
     country: COUNTRY,
