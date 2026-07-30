@@ -432,12 +432,14 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/newzealand-15.webp',
   ],
   남아프리카공화국: [
-    // Unsplash 12장(목적지별 사진/남아프리카공화국 폴더 원본, 2026-07-30 등록). 파일명 abc순.
-    // ⚠️ 리드(첫 장)는 **아직 사용자가 고르지 않았다** — 현재는 abc순 첫 장이 리드다.
-    //   컨택트시트 검수 후 지정하면 그 파일을 맨 위로 올릴 것(미국 usa-14 와 같은 방식).
+    // 사용자 선별 Unsplash 10장(목적지별 사진/남아프리카공화국 폴더 원본, 2026-07-30).
+    // 리드(첫 장) = southafrica-01(아카시아 노을) — 2026-07-30 사용자 지정.
+    //   abc순 첫 장과 같은 파일이라 순서는 그대로지만, 기본값이 아니라 **고른 결과**다.
+    // 나머지는 파일명 abc순 유지(호주 australia-09·미국 usa-14 리드 지정과 같은 방식).
+    // ⚠️ 사용자가 뺀 2장(03 · 12)은 파일까지 삭제됐다 — 번호를 다시 쓰지 말 것.
+    //   gen_hero_photos.py 를 다시 돌리면 되살아나므로 재실행 시 함께 지울 것.
     '/destinations/southafrica-01.webp',
     '/destinations/southafrica-02.webp',
-    '/destinations/southafrica-03.webp',
     '/destinations/southafrica-04.webp',
     '/destinations/southafrica-05.webp',
     '/destinations/southafrica-06.webp',
@@ -446,7 +448,6 @@ const DEST_PHOTO_CANDIDATES: Record<string, string[]> = {
     '/destinations/southafrica-09.webp',
     '/destinations/southafrica-10.webp',
     '/destinations/southafrica-11.webp',
-    '/destinations/southafrica-12.webp',
   ],
   미국: [
     // 사용자 선별 Unsplash 15장(목적지별 사진/미국 폴더 원본).
