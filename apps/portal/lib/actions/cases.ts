@@ -2044,6 +2044,35 @@ export async function updateImportPermitFields(
 }
 
 // ── 신청형 절차 카드(신청일 + 완료/첨부) — 범용 ──────────────────────────
+/**
+ * 수입 허가 **선행 절차 게이트**(importPermitPrerequisiteError)가 읽는 by_dest 필드들.
+ *
+ * 그 함수는 평탄화된 data 를 받으므로, 목적지 스코프에 저장된 값을 top-level 로 올려 줘야 한다.
+ * ⚠️ **새 목적지에 선행 절차를 추가하면 여기에도 키를 넣을 것** — 빠뜨리면 게이트가 값을
+ *   못 읽어 '선행이 없다'로 판정하고, 실제로는 통과시켜야 할 케이스를 막거나(값이 있는데 못 읽음)
+ *   막아야 할 케이스를 통과시킨다. 남아공 AIA 키가 실제로 빠져 있었다(2026-07-30 발견).
+ */
+const IMPORT_PERMIT_PREREQ_FIELDS = [
+  'nz_rcf_date',
+  'nz_quarantine_reservation_date',
+  'au_rnatt_declaration_date',
+  'za_aia_permit_application_date',
+] as const
+
+function flattenPrereqFields(
+  prev: Record<string, unknown>,
+  token: string | null,
+): Record<string, unknown> {
+  const flat: Record<string, unknown> = { ...prev }
+  if (!token) return flat
+  for (const k of IMPORT_PERMIT_PREREQ_FIELDS) {
+    const v = readByDestValue(prev, token, k)
+    if (typeof v === 'string') flat[k] = v
+    else delete flat[k]
+  }
+  return flat
+}
+
 // 수입 허가와 동일 모델이지만 permit_no 가 없는 카드(싱가포르 계류장 예약·강아지 라이선스).
 // 클라이언트는 stepId 만 넘기고, 서버가 신뢰 목록에서 필드 이름을 결정한다(임의 키 쓰기 차단).
 const APPLICATION_STEP_SPECS: Record<string, ApplicationStepSpec> = {
@@ -2279,6 +2308,23 @@ export async function updateSimpleDateField(
     const caseDestStr = (existing as { destination: string | null }).destination
     const token = resolveWriteToken(caseDestStr, prev, destination)
 
+    // 수입 허가 선행 절차 게이트 — 호주·남아공은 이 카드가 **버튼 완료**라
+    //   markImportPermitIssued 가 아니라 여기(updateSimpleDateField)로 저장된다. 게이트를
+    //   그쪽에만 두었더니 선행(호주 RNATT 선언서·남아공 AIA 허가) 없이 완료가 됐다
+    //   (2026-07-30 사용자 발견 — 남아공에서 드러났지만 호주도 2026-07-27 버튼 완료 전환
+    //   이후 같은 상태였다). nz-rcf·au-rnatt-declaration 이 위에서 같은 이유로 막는 것과 짝.
+    //   값을 **비울 때**(완료 취소)는 막지 않는다 — 되돌리기까지 막을 이유가 없다.
+    if (stepId === 'import-permit' && v) {
+      const prereqErr = importPermitPrerequisiteError(
+        // 목적지 키는 **token 기준** — cases.destination 은 다중 목적지 연결 문자열이라
+        //   그대로 넣으면 선언 순서상 먼저 걸리는 목적지로 해석된다(markImportPermitIssued 주석).
+        findDestinationKey(token ?? destination ?? caseDestStr ?? '') ?? '',
+        flattenPrereqFields(prev, token),
+        true,
+      )
+      if (prereqErr) return { ok: false, error: prereqErr }
+    }
+
     let nextData: Record<string, unknown> = { ...prev }
     if (token) {
       nextData = writeByDestValue(nextData, token, field, v || null)
@@ -2378,17 +2424,10 @@ export async function markImportPermitIssued(
     if (collectsFiledDate && filed.length < 10) {
       return { ok: false, error: '신청일이 입력되어 있지 않습니다.' }
     }
-    // 선행 절차 게이트(뉴질랜드 계류 예약·RCF / 호주 RNATT 선언서) — 저장 검증과 **같은 함수**.
-    //   이 버튼은 저장 경로를 타지 않아서, 게이트를 저장 쪽에만 두면 완료 버튼으로 선행 절차를
-    //   건너뛸 수 있다(2026-07-29).
-    const flatData: Record<string, unknown> = { ...prev }
-    if (token) {
-      for (const k of ['nz_rcf_date', 'nz_quarantine_reservation_date', 'au_rnatt_declaration_date']) {
-        const v = readByDestValue(prev, token, k)
-        if (typeof v === 'string') flatData[k] = v
-        else delete flatData[k]
-      }
-    }
+    // 선행 절차 게이트(뉴질랜드 계류 예약·RCF / 호주 RNATT 선언서 / 남아공 AIA 허가) —
+    //   저장 검증과 **같은 함수**. 이 버튼은 저장 경로를 타지 않아서, 게이트를 저장 쪽에만
+    //   두면 완료 버튼으로 선행 절차를 건너뛸 수 있다(2026-07-29).
+    const flatData = flattenPrereqFields(prev, token)
     //   ⚠️ 목적지 키도 **token 기준**이다. cases.destination 은 다중 목적지를 '뉴질랜드,호주'
     //   처럼 이어 붙인 문자열이라, 그대로 findDestinationKey 에 넣으면 선언 순서상 먼저 걸리는
     //   목적지(호주)로 해석된다 → 뉴질랜드 카드에 'RNATT 선언서를 먼저 발급받으세요.'가 떴다
