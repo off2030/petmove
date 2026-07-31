@@ -60,7 +60,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // 일본 전용이라 여기서만 description 을 덮어쓴다. (base 를 직접 고치면 전 목적지에 누수됨.)
     'vet-visit': {
       description:
-        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 FormAC를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
+        '출국 전 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 FormAC를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
     },
   },
   // ── 중국 (GACC 海关总署) ──────────────────────────────────────────────
@@ -1035,11 +1035,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     //   기준을 바꾸지 말 것 — 2026-07-22 그렇게 고칠 뻔했다. 한국 수출 검역은 출국 전 10일 이내라
     //   출국일 기준이 실무상 타당한 근사다.
     'external-parasite': {
-      description: '외부 기생충 치료를 하세요.\n\n출국일 기준 15일 이내에 해야 해요.',
+      description: '외부 기생충 치료를 하세요.\n\n출국 전 15일 이내에 해야 해요.',
       validationIds: ['br.external-parasite-within-15days'],
     },
     'internal-parasite': {
-      description: '내부 기생충 치료를 하세요.\n\n출국일 기준 15일 이내에 해야 해요.',
+      description: '내부 기생충 치료를 하세요.\n\n출국 전 15일 이내에 해야 해요.',
       validationIds: ['br.internal-parasite-within-15days'],
     },
     departure: importQuarantineCard({
@@ -1151,11 +1151,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['ae.rabies-min-21days-before-departure'],
     },
     'external-parasite': {
-      description: '외부 기생충 치료를 하세요.\n\n출국일 기준 14일 이내에 해야 해요.',
+      description: '외부 기생충 치료를 하세요.\n\n출국 전 14일 이내에 해야 해요.',
       validationIds: ['ae.external-parasite-within-14days'],
     },
     'internal-parasite': {
-      description: '내부 기생충 치료를 하세요.\n\n출국일 기준 14일 이내에 해야 해요.',
+      description: '내부 기생충 치료를 하세요.\n\n출국 전 14일 이내에 해야 해요.',
       validationIds: ['ae.internal-parasite-within-14days'],
     },
     // ⛔ 검역 반출(release) 안내를 뺐다(사용자 지정 2026-07-23). 되살리지 말 것.
@@ -1317,12 +1317,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // base 문구(10일)가 차단(2일)과 어긋나던 것 정정(2026-07-25 — 싱가포르와 같은 부류).
     'vet-visit': {
       description:
-        '출국일 기준 2일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+        '출국 전 2일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
       deadline: { anchor: 'departure', daysBefore: 1, window: true },
     },
     'certificate-issue': {
       description:
-        '출국일 기준 2일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
+        '출국 전 2일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
       deadline: { anchor: 'departure', daysBefore: 1, window: true },
     },
     'rabies-vaccine-1': buildRabiesCard({
@@ -1350,11 +1350,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // (사용자 지정 2026-07-23): 카드엔 특정 기생충(진드기·촌충 Echinococcus)을 지목하지 않고
     // '외부/내부 기생충 치료 + 출국일 기준 N일 이내'만 쓴다. 기생충 종류는 검증 룰 설명(staff)에 보존.
     'external-parasite': {
-      description: '외부 기생충 치료를 하세요.\n\n출국일 기준 30일 이내에 해야 해요.',
+      description: '외부 기생충 치료를 하세요.\n\n출국 전 30일 이내에 해야 해요.',
       validationIds: ['tr.external-parasite-within-30days'],
     },
     'internal-parasite': {
-      description: '내부 기생충 치료를 하세요.\n\n출국일 기준 30일 이내에 해야 해요.',
+      description: '내부 기생충 치료를 하세요.\n\n출국 전 30일 이내에 해야 해요.',
       validationIds: ['tr.internal-parasite-within-30days'],
     },
     'flight-purchase': {
@@ -1470,7 +1470,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // 발급받아야 한다. 일본(FormAC)·EU(Annex III)와 같은 자리·같은 문형.
     'vet-visit': {
       description:
-        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 대만 건강증명서(APHIA Form 002)를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
+        '출국 전 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 대만 건강증명서(APHIA Form 002)를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
     },
     departure: importQuarantineCard({
       label: '대만',
@@ -1670,7 +1670,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //     확정본에 없어 뺐다(정량 인정 문구가 같은 사실을 담당).
       'infectious-disease-test': {
         description:
-          '출국일 기준 45일 이내에 전염병 검사를 받아요.\n\n리슈만편모충(Leishmania infantum) 검사를 받아요. 정량 IFAT 또는 정량 ELISA만 인정돼요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT·TAT(SAT)·IFAT만 인정돼요.\n렙토스피라(Leptospira canicola) 백신 접종을 하지 않았다면 MAT 검사를 받아요.\n해외 공인 검사기관에서 받아야 하며, 임상 수의사만 의뢰할 수 있어요.\n일반 동물병원에서는 이 검사를 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
+          '출국 전 45일 이내에 전염병 검사를 받아요.\n\n리슈만편모충(Leishmania infantum) 검사를 받아요. 정량 IFAT 또는 정량 ELISA만 인정돼요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT·TAT(SAT)·IFAT만 인정돼요.\n렙토스피라(Leptospira canicola) 백신 접종을 하지 않았다면 MAT 검사를 받아요.\n해외 공인 검사기관에서 받아야 하며, 임상 수의사만 의뢰할 수 있어요.\n일반 동물병원에서는 이 검사를 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
         validationIds: ['au.infectious-disease-test-within-45days'],
       },
       // 외부구충 — 개 30일(7.6) / 고양이 21일(고양이 가이드 7.3). 시작 시점만 다르고 나머지는
@@ -1745,7 +1745,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //     미리 확인하세요.') 그대로 — 거기까지 퍼뜨렸다가 되돌린 적이 있다. 손대지 말 것.
       'vet-visit': {
         description:
-          '출국일 기준 5일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 호주 건강증명서(Veterinary Health Certificate)를 발급받아요.\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
+          '출국 전 5일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 호주 건강증명서(Veterinary Health Certificate)를 발급받아요.\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
         deadline: { anchor: 'departure', daysBefore: 5, window: true },
       },
       // 한국 수출 검역도 같은 5일 창(validateKrExportDate 가 getVetVisitWindowDays 공유).
@@ -1757,7 +1757,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   ⚠️ 뉴질랜드 카드에는 같은 줄이 남아 있다 — 이번 지시는 호주만이었다.
       'certificate-issue': {
         description:
-          '출국일 기준 5일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
+          '출국 전 5일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
         deadline: { anchor: 'departure', daysBefore: 5, window: true },
       },
     },
@@ -1939,7 +1939,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   판정할 수 없다 — 고양이 작업 때 함께 볼 것.
       'infectious-disease-test': {
         description:
-          '출국일 기준 30일 이내에 전염병 검사를 받아요.\n\n바베시아 깁소니(Babesia gibsoni) 검사를 받아요. IFAT 또는 ELISA와 PCR을 함께 받아요.\n바베시아 검사는 1차 외부 기생충 치료 14일 후부터 할 수 있어요.\n심장사상충(Dirofilaria immitis) 검사를 받아요. ELISA 또는 ELISA SNAP만 인정돼요.\n리슈만편모충(Leishmania infantum) 검사를 받아요. IFAT·ELISA 검사만 인정돼요.\n렙토스피라(Leptospira canicola) 검사를 받아요. MAT만 인정돼요.\n렙토스피라 검사 대신 출국 전 30일 이내에 14일 약물 치료를 받는 방법도 있어요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT 또는 TAT만 인정돼요.\n중성화했다면 수의사가 서명한 중성화 증명서를 준비해요.\n해외 공인 검사기관에서 받아야 하며, 임상 수의사만 의뢰할 수 있어요.\n일반 동물병원에서는 이 검사들을 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
+          '출국 전 30일 이내에 전염병 검사를 받아요.\n\n바베시아 깁소니(Babesia gibsoni) 검사를 받아요. IFAT 또는 ELISA와 PCR을 함께 받아요.\n바베시아 검사는 1차 외부 기생충 치료 14일 후부터 할 수 있어요.\n심장사상충(Dirofilaria immitis) 검사를 받아요. ELISA 또는 ELISA SNAP만 인정돼요.\n리슈만편모충(Leishmania infantum) 검사를 받아요. IFAT·ELISA 검사만 인정돼요.\n렙토스피라(Leptospira canicola) 검사를 받아요. MAT만 인정돼요.\n렙토스피라 검사 대신 출국 전 30일 이내에 14일 약물 치료를 받는 방법도 있어요.\n중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT 또는 TAT만 인정돼요.\n중성화했다면 수의사가 서명한 중성화 증명서를 준비해요.\n해외 공인 검사기관에서 받아야 하며, 임상 수의사만 의뢰할 수 있어요.\n일반 동물병원에서는 이 검사들을 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
         // 검사일을 입력해 '진행 중'이 되면 내부구충도 다음 할 일로(2026-07-30 사용자 지정) —
         //   결과를 기다리는 동안 내부구충을 시작할 수 있다.
         yieldsWhenInProgress: true,
@@ -2070,14 +2070,14 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   base 문구(10일)가 그대로 노출되면 차단과 어긋난다(호주 5일과 같은 정정).
       'vet-visit': {
         description:
-          '출국일 기준 2일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 뉴질랜드 건강증명서(Model Veterinary Certificate)를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
+          '출국 전 2일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 뉴질랜드 건강증명서(Model Veterinary Certificate)를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
         deadline: { anchor: 'departure', daysBefore: 2, window: true },
       },
       // 한국 수출 검역도 같은 2일 창(validateKrExportDate 가 getVetVisitWindowDays 공유).
       //   순서 제약(검역일 ≥ 임상검사일)은 validateKrExportDate 가 이미 담당한다.
       'certificate-issue': {
         description:
-          '출국일 기준 2일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
+          '출국 전 2일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
         deadline: { anchor: 'departure', daysBefore: 2, window: true },
       },
     },
@@ -2325,7 +2325,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   (주의 룰을 만들지 말 것 — 판정할 데이터가 없다).
       'vet-visit': {
         description:
-          '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 남아공 건강증명서(Veterinary Health Certificate)를 발급받아요.\n남아공 건강증명서는 수입 허가와 함께 받은 양식을 써요. 일반 영문 건강증명서로는 안 돼요.\n태어난 뒤 계속 한국에 있었거나, 최근 6개월 동안 한국이나 남아공에 연속으로 있었어야 해요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
+          '출국 전 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 남아공 건강증명서(Veterinary Health Certificate)를 발급받아요.\n남아공 건강증명서는 수입 허가와 함께 받은 양식을 써요. 일반 영문 건강증명서로는 안 돼요.\n태어난 뒤 계속 한국에 있었거나, 최근 6개월 동안 한국이나 남아공에 연속으로 있었어야 해요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
       },
     },
   }),
@@ -2523,12 +2523,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // base 문구(10일)가 차단(7일)과 어긋나던 것 정정(2026-07-25 — 싱가포르와 같은 부류).
       'vet-visit': {
         description:
-          '출국일 기준 7일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+          '출국 전 7일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
         deadline: { anchor: 'departure', daysBefore: 6, window: true },
       },
       'certificate-issue': {
         description:
-          '출국일 기준 7일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
+          '출국 전 7일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
         deadline: { anchor: 'departure', daysBefore: 6, window: true },
       },
     },
@@ -2656,14 +2656,14 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   base 9(10일 창)에서 6(7일 창)으로.
       'vet-visit': {
         description:
-          '출국일 기준 7일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 싱가포르 건강증명서(Schedule III)를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
+          '출국 전 7일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 싱가포르 건강증명서(Schedule III)를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
         deadline: { anchor: 'departure', daysBefore: 6, window: true },
       },
       // 한국 수출 검역도 같은 7일 창(차단 validateKrExportDate 가 getVetVisitWindowDays 공유)
       // — base 문구(10일)와 어긋나던 것 정정(2026-07-25, 임상검사와 동일 사유).
       'certificate-issue': {
         description:
-          '출국일 기준 7일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
+          '출국 전 7일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
         deadline: { anchor: 'departure', daysBefore: 6, window: true },
       },
     },
@@ -3620,7 +3620,7 @@ function euFamilyOverrides(opts: {
     // EU 회원국 입국 필수 서류(Reg. (EU) 2026/705 Annex III). 비EU(영국·스위스 등)엔 미적용.
     overrides['vet-visit'] = {
       description:
-        '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 EU 동물건강증명서(Annex III)를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
+        '출국 전 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 EU 동물건강증명서(Annex III)를 발급받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
     }
   }
   return overrides

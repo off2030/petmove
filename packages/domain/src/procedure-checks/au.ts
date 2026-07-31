@@ -307,7 +307,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message:
-            '항체 검사 채혈일에 유효한 광견병 백신이 없어요. 채혈일부터 출국일까지 면역 유효기간이 이어져야 해요.',
+            '항체 검사 채혈일에 유효한 광견병 백신이 없어요. 채혈일부터 출국일까지 면역 유효기간이 이어져야 해요. 날짜를 확인하세요.',
           offendingPaths: offending,
         }
       }
@@ -452,7 +452,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
         if (decl < earliest.date) {
           return {
             ok: false,
-            message: 'RNATT 선언서는 항체 검사 결과를 근거로 발급돼요. 채혈일보다 빠를 수 없어요.',
+            message: 'RNATT 선언서는 항체 검사 결과를 근거로 발급돼요. 채혈일보다 빠를 수 없어요. 날짜를 확인하세요.',
             offendingPaths: ['au_rnatt_declaration_date', `rabies_titer_records[${earliest.originalIndex}].date`],
           }
         }
@@ -667,7 +667,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       if (days < 14) {
         return {
           ok: false,
-          message: '종합백신은 출국 14일 전까지 접종해야 해요.',
+          message: '종합백신은 출국 14일 전까지 접종해야 해요. 출국일을 미뤄야 해요.',
           offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }
@@ -724,7 +724,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       if (days < 14) {
         return {
           ok: false,
-          message: '독감(CIV) 백신은 출국 14일 전까지 접종해야 해요.',
+          message: '독감(CIV) 백신은 출국 14일 전까지 접종해야 해요. 출국일을 미뤄야 해요.',
           offendingPaths: [`civ_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }

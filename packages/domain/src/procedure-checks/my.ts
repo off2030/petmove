@@ -170,7 +170,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
       const latest = rabies[rabies.length - 1]
       return {
         ok: false,
-        message: '광견병 접종은 출국 30일 전까지 해야 해요.',
+        message: '광견병 접종은 출국 30일 전까지 해야 해요. 출국일을 미뤄야 해요.',
         offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
       }
     },

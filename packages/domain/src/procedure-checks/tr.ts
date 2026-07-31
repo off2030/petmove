@@ -264,7 +264,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
         const gap = daysBetween(latest.date, t.date)
         if (gap === null || gap < 30) {
           offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push('광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요.')
+          problems.push('광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요. 날짜를 확인하세요.')
         }
       }
       if (offending.length > 0) {

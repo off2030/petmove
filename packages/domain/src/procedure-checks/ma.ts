@@ -255,7 +255,7 @@ export const MA_CHECKS: ProcedureCheck[] = [
       if (offending.length > 0) {
         return {
           ok: false,
-          message: '광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요.',
+          message: '광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요. 날짜를 확인하세요.',
           offendingPaths: offending,
         }
       }

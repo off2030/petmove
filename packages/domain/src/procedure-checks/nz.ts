@@ -736,7 +736,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (days < 14) {
         return {
           ok: false,
-          message: '독감(CIV) 백신은 출국 14일 전까지 접종해야 해요.',
+          message: '독감(CIV) 백신은 출국 14일 전까지 접종해야 해요. 출국일을 미뤄야 해요.',
           offendingPaths: [`civ_dates[${latest.originalIndex}].date`, 'departure_date'],
         }
       }

@@ -157,7 +157,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
             `rabies_dates[${v.prev.originalIndex}].date`,
             `rabies_dates[${v.curr.originalIndex}].date`,
           )
-          msgs.push(`${v.prev.date}부터 ${v.curr.date}까지 ${v.gap}일이에요. 31일 이상이어야 해요.`)
+          msgs.push(`${v.prev.date}부터 ${v.curr.date}까지 ${v.gap}일이에요. 31일 이상이어야 해요. 날짜를 확인하세요.`)
         }
         return {
           ok: false,

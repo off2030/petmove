@@ -150,7 +150,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (brk && brk.reason === 'expired') {
         return {
           ok: false,
-          message: '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 해요.',
+          message: '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 해요. 날짜를 확인하세요.',
           offendingPaths: [`rabies_dates[${entries[1].originalIndex}].date`],
         }
       }
@@ -230,7 +230,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message:
-            '마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 해요.',
+            '마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 해요. 날짜를 확인하세요.',
           offendingPaths: ['microchip_implant_date', `rabies_titer_records[${primary.originalIndex}].date`],
         }
       }
@@ -285,7 +285,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message:
-          '마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 해요.',
+          '마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 해요. 날짜를 확인하세요.',
         offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },

@@ -3,7 +3,7 @@
 # 변경 의도가 맞는지 확인 후 `pnpm lint:checks:write` 로 갱신할 것.
 
 [ae.general-vaccine-required]
-  종합백신 기록이 없어요.
+  종합백신 기록이 없어요. 입력하세요.
 [ae.banned-breeds]
   견종 "${breed.ko || breed.en}"은 UAE 수입 금지 견종이에요 (매치: ${match}).
 [ae.rabies-booster-within-prime-validity]
@@ -17,24 +17,24 @@
 [au.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [au.rabies-valid-from-titer-to-departure]
-  항체 검사 채혈일에 유효한 광견병 백신이 없어요. 채혈일부터 출국일까지 면역 유효기간이 이어져야 해요.
+  항체 검사 채혈일에 유효한 광견병 백신이 없어요. 채혈일부터 출국일까지 면역 유효기간이 이어져야 해요. 날짜를 확인하세요.
   항체 검사 채혈일부터 출국일까지 광견병 면역 유효기간이 끊기지 않아야 해요. 유효기간이 끝나기 전에 추가 접종을 받고 기록하세요.
 [au.titer-min-180days-after-sample-received]
   항체 검사 검체가 검사기관에 접수된 날부터 180일이 지나야 출국할 수 있어요. 출국일을 다시 확인하세요.
 [au.titer-within-12months-of-export]
   항체 검사 결과는 채혈일부터 12개월간 유효해요. 출국일까지 유효하지 않으니 재채혈이 필요해요.
 [au.rnatt-declaration-order]
-  RNATT 선언서는 항체 검사 결과를 근거로 발급돼요. 채혈일보다 빠를 수 없어요.
+  RNATT 선언서는 항체 검사 결과를 근거로 발급돼요. 채혈일보다 빠를 수 없어요. 날짜를 확인하세요.
 [au.import-quarantine-date-valid]
   호주 수입 검역일은 호주 도착일보다 빠를 수 없어요. 날짜를 확인하세요.
 [au.banned-breeds]
   "${breed.ko || breed.en}"은 호주 수입 금지 품종이에요 (매치: ${match}).
 [au.general-vaccine-14days-before-departure]
-  종합백신은 출국 14일 전까지 접종해야 해요.
+  종합백신은 출국 14일 전까지 접종해야 해요. 출국일을 미뤄야 해요.
 [au.general-vaccine-within-12months]
   종합백신은 출국일 기준 12개월 이내에 접종한 기록이 있어야 해요. 추가 접종이 필요해요.
 [au.civ-14days-before-departure]
-  독감(CIV) 백신은 출국 14일 전까지 접종해야 해요.
+  독감(CIV) 백신은 출국 14일 전까지 접종해야 해요. 출국일을 미뤄야 해요.
 [au.civ-within-12months]
   독감(CIV) 백신은 출국일 기준 12개월 이내에 접종한 기록이 있어야 해요. 추가 접종이 필요해요.
 [br.rabies-min-21days-before-departure]
@@ -68,7 +68,7 @@
 [eu.import-quarantine-date-valid]
   입국 검사일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [gu.rabies-2-doses-required]
-  광견병 백신은 평생 2회 이상 접종해야 해요.
+  광견병 백신은 평생 2회 이상 접종해야 해요. 추가 접종이 필요해요.
 [gu.rnatt-120days-before-arrival]
   광견병 항체 검사일이 출국일보다 늦어요. 날짜를 확인하세요.
   검체가 검사기관에 접수된 날부터 120일이 지나야 계류를 최소화할 수 있어요. 지금은 남은 기간만큼 괌에서 계류되는 점 참고하세요.
@@ -79,7 +79,7 @@
 [gu.import-permit-30days-before-arrival]
   괌 도착 30일 전까지 수입 허가 서류를 제출해야 해요. 늦으면 계류가 길어지거나 입국이 거부될 수 있어요.
 [hi.rabies-doses-31days-apart]  (allowDate)
-  ${v.prev.date}부터 ${v.curr.date}까지 ${v.gap}일이에요. 31일 이상이어야 해요.
+  ${v.prev.date}부터 ${v.curr.date}까지 ${v.gap}일이에요. 31일 이상이어야 해요. 날짜를 확인하세요.
 [hi.rabies-latest-31days-before-arrival]  (allowDate)
   최근 광견병 접종일로부터 31일이 지나야 입국할 수 있어요.
 [hi.import-quarantine-date-valid]
@@ -107,9 +107,9 @@
 [jp.rabies-titer-chain-consistent]
   ${missing} 정보가 없어요. 입력하세요.
 [jp.rabies-booster-within-prime-validity]
-  2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 해요.
+  2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 해요. 날짜를 확인하세요.
 [jp.microchip-rabies-sequence]
-  마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 해요.
+  마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 해요. 날짜를 확인하세요.
 [jp.rabies-titer-vs-booster]
   채혈일이 광견병 백신 면역 유효기간을 벗어났어요. 날짜를 확인하세요.
 [jp.titer-extra-within-rabies-validity]
@@ -135,7 +135,7 @@
 [ma.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [ma.rnatt-min-30days-after-vaccine]
-  광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요.
+  광견병 항체 검사는 접종일로부터 30일이 지난 뒤에 받아야 해요. 날짜를 확인하세요.
 [ma.import-quarantine-date-valid]
   모로코 수입 검역일은 모로코 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [mn.rabies-min-30days-before-departure]
@@ -153,7 +153,7 @@
 [my.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [my.rabies-min-30days-before-departure]
-  광견병 접종은 출국 30일 전까지 해야 해요.
+  광견병 접종은 출국 30일 전까지 해야 해요. 출국일을 미뤄야 해요.
 [my.import-quarantine-date-valid]
   말레이시아 수입 검역일은 말레이시아 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [nz.identity-check-6months-before-departure]
@@ -169,7 +169,7 @@
 [nz.banned-breeds]
   "${breed.ko || breed.en}"은 뉴질랜드 수입 금지 품종이에요 (매치: ${match}).
 [nz.civ-14days-before-departure]
-  독감(CIV) 백신은 출국 14일 전까지 접종해야 해요.
+  독감(CIV) 백신은 출국 14일 전까지 접종해야 해요. 출국일을 미뤄야 해요.
 [nz.civ-within-12months]
   독감(CIV) 백신은 출국일 기준 12개월 이내에 접종한 기록이 있어야 해요. 추가 접종이 필요해요.
 [nz.external-parasite-protocol]
@@ -177,11 +177,11 @@
 [ph.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [ph.rabies-prime-21days-before-arrival]
-  광견병 접종은 출국 21일 전까지 해야 해요.
+  광견병 접종은 출국 21일 전까지 해야 해요. 출국일을 미뤄야 해요.
 [ph.rabies-not-expired-on-arrival]
   광견병 백신 면역 유효기간이 ${usingEntry ? '도착' : '출국'} 전에 만료돼요. 만료 전에 추가 접종을 하세요.
 [ph.general-vaccine-prime-21days-before-arrival]
-  종합백신 접종은 출국 21일 전까지 해야 해요.
+  종합백신 접종은 출국 21일 전까지 해야 해요. 출국일을 미뤄야 해요.
 [ph.general-vaccine-not-expired-on-arrival]
   종합백신 면역 유효기간이 ${usingEntry ? '도착' : '출국'} 전에 만료돼요. 만료 전에 추가 접종을 하세요.
 [ph.min-120days-on-arrival]
@@ -197,7 +197,7 @@
 [sg.departure-min-90days-after-titer]
   광견병 항체 검사 채혈일로부터 90일이 지난 후에 출국할 수 있어요.
 [sg.comprehensive-vaccine-14days-before-departure]
-  종합백신은 출국 14일 전까지 접종해야 해요.
+  종합백신은 출국 14일 전까지 접종해야 해요. 출국일을 미뤄야 해요.
 [sg.banned-breeds]
   견종 "${breed.ko || breed.en}"은 NParks 수입 금지 대상이에요 (매치: ${match}).
 [sg.rabies-booster-within-prime-validity]
@@ -207,9 +207,9 @@
 [th.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [th.rabies-21days-before-arrival]
-  광견병 접종은 출국 21일 전까지 해야 해요.
+  광견병 접종은 출국 21일 전까지 해야 해요. 출국일을 미뤄야 해요.
 [th.general-vaccine-21days-before-arrival]
-  종합백신 접종은 출국 21일 전까지 해야 해요.
+  종합백신 접종은 출국 21일 전까지 해야 해요. 출국일을 미뤄야 해요.
 [th.banned-breeds]
   "${breed.ko || breed.en}"은 태국 수입이 금지되어 있어요 (매치: ${match}).
 [th.import-quarantine-date-valid]

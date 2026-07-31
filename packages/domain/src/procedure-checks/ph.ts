@@ -184,7 +184,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (days < 21) {
         return {
           ok: false,
-          message: '광견병 접종은 출국 21일 전까지 해야 해요.',
+          message: '광견병 접종은 출국 21일 전까지 해야 해요. 출국일을 미뤄야 해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -263,7 +263,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (days < 21) {
         return {
           ok: false,
-          message: '종합백신 접종은 출국 21일 전까지 해야 해요.',
+          message: '종합백신 접종은 출국 21일 전까지 해야 해요. 출국일을 미뤄야 해요.',
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }

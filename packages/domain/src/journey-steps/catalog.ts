@@ -2025,7 +2025,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '출국 전 임상검사',
     shortLabel: '내원',
     description:
-      '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
+      '출국 전 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)를 발급받아요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.',
     doneSummary: '출국 전 임상검사를 받았어요.',
     cardLine: '임상 수의사의 검진을 받으세요.',
     // 다른 백신·검사·구충과 동일한 dated-confirm 모델 — situational 안내 없이 검진일만으로
@@ -2068,7 +2068,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '한국 수출 검역',
     shortLabel: '검역소',
     description:
-      '출국일 기준 10일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
+      '출국 전 10일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n신분증과 필수 서류를 빠짐없이 챙기세요.',
     doneSummary: '한국 수출 검역을 받았어요.',
     cardLine: '동물검역소를 방문해 검역을 받으세요.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },

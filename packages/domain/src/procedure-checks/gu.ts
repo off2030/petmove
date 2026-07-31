@@ -145,7 +145,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
       if (rabies.length < 2) {
         return {
           ok: false,
-          message: '광견병 백신은 평생 2회 이상 접종해야 해요.',
+          message: '광견병 백신은 평생 2회 이상 접종해야 해요. 추가 접종이 필요해요.',
           offendingPaths: [`rabies_dates[${rabies[0].originalIndex}].date`],
         }
       }

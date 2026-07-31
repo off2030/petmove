@@ -205,7 +205,7 @@ export const AE_CHECKS: ProcedureCheck[] = [
       if (entries.length === 0) {
         return {
           ok: false,
-          message: '종합백신 기록이 없어요.',
+          message: '종합백신 기록이 없어요. 입력하세요.',
         }
       }
       return { ok: true, message: `종합백신 ${entries.length}회 기록됨.` }

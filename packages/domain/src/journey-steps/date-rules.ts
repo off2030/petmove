@@ -1869,7 +1869,7 @@ export function validateNzRcfDate(rcfDate: string, titerDates: string[]): string
   if (dates.length === 0) return null
   const earliest = dates.reduce((m, d) => (d < m ? d : m))
   if (rcf < earliest) {
-    return '광견병 증명서(RCF)는 항체 검사 결과를 근거로 발급돼요. 채혈일보다 빠를 수 없어요.'
+    return '광견병 증명서(RCF)는 항체 검사 결과를 근거로 발급돼요. 채혈일보다 빠를 수 없어요. 날짜를 확인하세요.'
   }
   return null
 }
@@ -2403,7 +2403,7 @@ export function validateKrExportDate(v: string, ctx: DateRuleContext): string | 
     if (v > depart) return '한국 수출 검역일은 출국일보다 늦을 수 없어요. 날짜를 확인하세요.'
     const windowDays = getVetVisitWindowDays(ctx.destination, readSpecies(ctx.data))
     if (daysBetween(v, depart) >= windowDays) {
-      return `한국 수출 검역일은 출국일 기준 ${windowDays}일 이내여야 해요.`
+      return `한국 수출 검역일은 출국 전 ${windowDays}일 이내여야 해요.`
     }
   }
   return null
@@ -2456,7 +2456,7 @@ export function validateVetVisitDate(v: string, ctx: DateRuleContext): string | 
     if (v > dep) return '입력한 날짜가 출국일보다 늦어요. 출국 전 임상검사는 출국 전에 받아야 해요.'
     const windowDays = getVetVisitWindowDays(ctx.destination, readSpecies(ctx.data))
     if (daysBetween(v, dep) >= windowDays) {
-      return `출국 전 임상검사는 출국일 기준 ${windowDays}일 이내에 받아야 해요.`
+      return `출국 전 임상검사는 출국 전 ${windowDays}일 이내에 받아야 해요.`
     }
   }
   return null

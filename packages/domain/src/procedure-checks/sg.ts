@@ -279,7 +279,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (diff < 14) {
         return {
           ok: false,
-          message: '종합백신은 출국 14일 전까지 접종해야 해요.',
+          message: '종합백신은 출국 14일 전까지 접종해야 해요. 출국일을 미뤄야 해요.',
           offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
