@@ -128,7 +128,7 @@ export const COUNTRY_POSTS: Record<string, PostRef[]> = {
   eu: [
     { title: '유럽(EU) 입국 준비 총정리', kind: 'docs', slug: 'eu-pet-travel-guide' },
     { title: '[2026] 반려동물 유럽 입국, 광견병항체검사 기관 변경 안내', kind: 'blog', slug: 'eu-pet-rabies-test' },
-    { title: '강아지 프랑스 입국 준비절차, 기간, 비용', kind: 'blog', slug: 'dog-travel-to-france' },
+    { title: '강아지 프랑스 입국 준비기간·비용·왕복 유효기간', kind: 'blog', slug: 'dog-travel-to-france' },
   ],
   thailand: [
     { title: '태국 입국 준비 총정리', kind: 'docs', slug: 'thailand-pet-travel-guide' },
