@@ -2149,7 +2149,14 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         //   ⚠️ 앞 둘이 한때 운송을 검역시설 예약 앞에 두는 근거였다. 그 줄이 사라지며 순서도
         //     검역 예약 → 운송으로 되돌렸다(2026-07-30 최종).
         '남아프리카공화국 입국 일정에 맞춰 운송을 예약하세요.\n\n기내 반입이나 위탁수하물로는 갈 수 없어요. 항공화물(Manifest Cargo)로 예약하고 화물운송장(AWB)을 받아요.\n강아지는 요하네스버그(JNB)나 케이프타운(CPT) 공항으로만 도착할 수 있어요. 두 곳에만 계류시설이 있어요.',
-      // 검역시설 예약(42) 다음(2026-07-30 사용자 확정 — 최종).
+      // ⚠️ 셋째 줄은 **강아지 전용**이다(2026-07-31 사용자 지적으로 분리). 도착 공항이 두 곳으로
+      //   묶이는 건 그 두 곳에만 계류시설이 있어서인데, 고양이는 계류가 없어 그 제약을 받지
+      //   않는다. 통합문만 두면 고양이 카드에 '강아지는…'이 그대로 떴다.
+      descriptionBySpecies: {
+        dog: '남아프리카공화국 입국 일정에 맞춰 운송을 예약하세요.\n\n기내 반입이나 위탁수하물로는 갈 수 없어요. 항공화물(Manifest Cargo)로 예약하고 화물운송장(AWB)을 받아요.\n강아지는 요하네스버그(JNB)나 케이프타운(CPT) 공항으로만 도착할 수 있어요. 두 곳에만 계류시설이 있어요.',
+        cat: '남아프리카공화국 입국 일정에 맞춰 운송을 예약하세요.\n\n기내 반입이나 위탁수하물로는 갈 수 없어요. 항공화물(Manifest Cargo)로 예약하고 화물운송장(AWB)을 받아요.',
+      },
+      // 계류시설 예약(42) 다음(2026-07-30 사용자 확정 — 최종).
       //   검역 자리가 **귀한 자원**이라 그걸 먼저 잡고 거기 맞춰 운송을 예약하는 게 실무다.
       //   ⚠️ 한때 운송을 앞(42)에 뒀던 적이 있다 — 카드 문구가 '경로와 희망 입국일은 먼저
       //     알아보세요'라고 말해서였는데, 그 줄이 삭제되면서 근거도 사라졌다. 되돌리지 말 것.
@@ -3436,10 +3443,12 @@ function seaPermitOverrides(opts: {
     doneSummary?: string
     attachmentHint?: string
     /**
-     * (선택) 직전 카드와 **동시에** '다음 할 일'로 올린다(남아공 — 검역시설 예약 ∥ 운송 예약).
+     * (선택) 직전 카드와 **동시에** '다음 할 일'로 올린다(남아공 — 계류시설 예약 ∥ 운송 예약).
      * concurrent 는 쌍의 **뒤쪽**에 붙는다 — scenario.ts head run 이 mainIdx **뒤**를 올린다.
      */
     concurrent?: boolean
+    /** (선택) 종별 본문 — 도착 공항·계류 제약이 개·고양이에서 갈릴 때(남아공). */
+    descriptionBySpecies?: StepDefinition['descriptionBySpecies']
   }
   importPermit: Partial<StepDefinition>
   importQuarantine: {
@@ -3528,6 +3537,9 @@ function seaPermitOverrides(opts: {
       validationIds: opts.flight.validationIds,
       ...(opts.flight.links ? { links: opts.flight.links } : {}),
       ...(opts.flight.concurrent ? { concurrent: true } : {}),
+      ...(opts.flight.descriptionBySpecies
+        ? { descriptionBySpecies: opts.flight.descriptionBySpecies }
+        : {}),
     },
     'import-permit': {
       inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
