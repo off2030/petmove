@@ -55,7 +55,6 @@ import {
   validateEuTiterAfterVaccine,
   validateIeAdvanceNoticeDate,
   validateIlAdvanceNoticeDate,
-  validateMtAdvanceNoticeDate,
   validateNoAdvanceNoticeDate,
   EU_ENTRY_FAMILY,
   SINGLE_DOSE_RABIES_DESTINATIONS,
@@ -1877,12 +1876,9 @@ export function StepDetailView({
       const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
       return validateCyAdvanceNoticeDate(importQuarantineDate.trim(), entry)
     }
-    // 몰타 사전 통지 — 통지일이 입국일 3영업일 이내면 차단.
-    if (step.id === 'mt-advance-notice') {
-      const data = (caseRow?.data ?? {}) as Record<string, unknown>
-      const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
-      return validateMtAdvanceNoticeDate(importQuarantineDate.trim(), entry)
-    }
+    // 몰타 사전 통지 — 차단 없음(2026-08-01). 몰타 정부가 제출 마감을 공표하지 않아
+    // 구 '입국 3영업일 전' 차단은 근거가 없었다(date-rules.ts 의 삭제 주석 참고).
+    // 마감이 없으므로 늦은 통지는 '불가능한 조건'이 아니다 — 알림만 담당한다.
     // 홍콩 사전 통지 — 차단 없음(2026-07-26). 버튼 완료 카드로 바뀌어 통지일을 입력받지 않는다
     // (기록되는 날짜는 '버튼 누른 날'). 마감은 reminders.ts 의 사전 통지 알림이 담당한다.
     // 이스라엘 사전 통보 — 통보일이 출국일 2일(2영업일 근사) 이내면 차단.

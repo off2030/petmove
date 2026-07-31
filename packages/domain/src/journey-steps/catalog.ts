@@ -1035,20 +1035,28 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   },
 
   // ── 사전 통지 (몰타 전용) ──────────────────────────────────────────
-  // 제3국에서 몰타 입국 시 도착 3영업일 전까지 온라인 포털(nldmalta.gov.mt)에 도착 정보를
-  // 등록 + 별도로 담당 수의사에게 이메일로 항공편 정보를 알려 도착 시 검사관 대기.
+  // 제3국에서 몰타 입국 시 온라인 포털(nldmalta.gov.mt)에 도착 정보를 등록한다.
+  //
+  // ⚠️ **마감이 없다**(2026-08-01 확인, 되돌리지 말 것). 구 문구·deadline·검증은 '입국
+  //   3영업일 전'이었는데 몰타 정부는 제출 마감을 공표하지 않는다 — 근거는 date-rules.ts 의
+  //   삭제 주석(법령 122건 전수·포털 HTML 점검·EU 576/2013 art.34(2)). '3영업일'은 2015년
+  //   폐기 페이지의 **관청 처리 소요**("about 3 days … Working Days")를 제출 마감으로 오독한 값.
+  //   deadline 도 뺀다 — 없는 마감으로 배지를 띄우면 고객이 지킬 수 없는 날짜를 본다.
+  //   대신 통지 누락 = 입국 거부이므로 알림(reminders.ts)이 '항공권 확정 즉시'로 리마인드한다.
+  //
+  // ⚠️ 통지 양식에 **몰타 내 주소가 필수**라 숙소가 정해져야 제출할 수 있다(다른 나라 포털에
+  //   없는 제약). 제출한 통지서는 출력해 이동 내내 소지해야 한다.
   {
     id: 'mt-advance-notice',
     category: 'permit',
     title: '사전 통지',
     shortLabel: '통지',
     description:
-      '몰타 입국 3영업일 전까지 사전 통지를 하세요.\n\n몰타 사전 통지 포털을 이용해요.\n웹사이트 이용이 어려운 경우, 이메일(petstravel.msdec@gov.mt)로 문의할 수 있어요.',
+      '몰타 사전 통지 포털에 도착 정보를 등록하세요.\n\n몰타는 제출 마감을 정해두지 않았어요. 대신 통지가 없으면 입국이 거부되니 항공권이 확정되는 대로 바로 등록하세요.\n통지 양식에 몰타 내 주소를 적어야 해서 숙소가 정해져야 제출할 수 있어요.\n등록한 통지서는 출력해서 이동 내내 지니세요.\n포털 이용이 어려우면 이메일(petstravel.mafa@gov.mt)로 반려동물·여행 정보를 보낼 수 있어요.',
     doneSummary: '몰타에 사전 통지를 했어요.',
     cardLine: '몰타에 사전 통지를 하세요.',
     applicability: { destinations: ['malta'], species: 'all', tripType: 'all' },
     order: 47,
-    deadline: { anchor: 'entry', daysBefore: 3 },
     done: 'quarantine:mt_advance_notice_date',
     inputs: [
       {
@@ -1061,7 +1069,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     links: [
       { url: 'https://nldmalta.gov.mt/MaltaPetArrivals/', label: '사전 통지 신청' },
     ],
-    validationIds: ['eu.mt-advance-notice-3days-before-entry'],
   },
 
   // ── 사전 통보 (이스라엘 전용) ──────────────────────────────────────

@@ -550,14 +550,19 @@ const ADVANCE_NOTICE_DEADLINES: Array<{
   { key: 'cyprus', dateField: 'cy_advance_notice_date', countryLabel: '키프로스', hardDeadlineDays: 2, deadlineLabel: '입국 48시간 전' },
   // 홍콩 — AFCD DC-02v05 1항(도착 24시간 전 통보). 유럽 4종과 구조가 같아 같은 테이블로.
   { key: 'hongkong', dateField: 'hk_advance_notice_date', countryLabel: '홍콩', hardDeadlineDays: 1, deadlineLabel: '도착 24시간 전' },
+  // 몰타 — ⚠️ **공표된 마감이 없다**(2026-08-01 확인). 구 '입국 3영업일 전'은 2015년 폐기
+  //   페이지의 관청 처리 소요를 제출 마감으로 오독한 값이었다(근거: date-rules.ts 삭제 주석).
+  //   그렇다고 알림을 없애면 안 된다 — 통지 누락 자체가 입국 거부 사유라 리마인드 가치가
+  //   오히려 크다. 마감을 말하는 대신 '항공권이 확정되면 바로'로 문구만 바꾼다.
+  //   hardDeadlineDays 는 알림이 뜨는 시점(입국 5일 전)일 뿐 마감이 아니다.
   {
     key: 'malta',
     dateField: 'mt_advance_notice_date',
     countryLabel: '몰타',
     hardDeadlineDays: 5,
-    deadlineLabel: '입국 3영업일 전',
-    leadMessage: '몰타 사전 통지 마감이 얼마 남지 않았어요. 입국 3영업일 전까지 통지하세요.',
-    dayMessage: '몰타 사전 통지 마감이 임박했어요. 입국 3영업일 전까지 통지하세요.',
+    deadlineLabel: '항공권 확정 후 바로',
+    leadMessage: '몰타 사전 통지를 아직 하지 않았어요. 정해진 마감은 없지만 통지가 없으면 입국이 거부되니 지금 등록하세요.',
+    dayMessage: '몰타 입국이 임박했는데 사전 통지 기록이 없어요. 통지 없이 도착하면 입국이 거부돼요.',
   },
 ]
 

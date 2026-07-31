@@ -1706,18 +1706,25 @@ export function validateIlAdvanceNoticeDate(noticeDate: string, departureDate: s
 }
 
 /**
- * 몰타 사전 통지일 — 입국 3영업일 전까지 온라인 포털(nldmalta.gov.mt)에 등록해야 함
- * (servizz.gov.mt 공식 확인, 2026-07-16). 영업일 단위를 달력일로 보수 근사(공휴일 미고려) —
- * 실제로는 이 기한보다 여유 있게 제출을 권장.
- * client(통지 입력 시 입력 불가)·procedure-check(입국일 수정 후 주의) 공용. 한쪽 비면 통과.
+ * ⛔ 몰타 사전 통지 마감 검증은 **삭제됐다**(2026-08-01). 되살리지 말 것.
+ *
+ * 구 `validateMtAdvanceNoticeDate` 는 '입국 3영업일 전'을 기준으로 저장을 거부했는데,
+ * **몰타 정부는 제출 마감을 공표하지 않는다.** 4갈래 1차 출처 조사로 확인:
+ *  · legislation.mt Cap.437 하위법령 122건 전수 — 반려동물 전용 S.L. 36.43 은 2016년 폐지,
+ *    대체 입법 없음. 현행 S.L. 437.120 에 통지 기한 조항이 한 줄도 없다.
+ *  · servizz.gov.mt 서비스 페이지(영어·몰타어) 전문 — "Fill in the online form and submit." 뿐.
+ *  · 통지 포털(nldmalta.gov.mt/MaltaPetArrivals) HTML·스크립트 직접 점검 — 리드타임 제약 없음,
+ *    도착일시 입력칸에 min/max 도 없다.
+ *  · EU 576/2013 art.34(2) 는 "at the time of entry"(입국 시점 현장 연락)만 요구한다.
+ *
+ * '3영업일'의 출처는 2015년 폐기된 페이지의 "The process to authorize your pet to travel will
+ * take about 3 days … processed only from Monday to Friday on Working Days" — **관청의 처리
+ * 소요**이지 신청자 제출 마감이 아니다. 두 문장을 합쳐 만들어진 값이었다.
+ *
+ * 마감이 없으므로 '논리적으로 불가능한 조건'이 아니고, 따라서 저장 거부의 근거가 없었다.
+ * 근거 없는 값으로 **규정대로 준비한 케이스를 거부**하고 있었다. 알림(reminders.ts)은
+ * 유지한다 — 통지 누락 자체는 입국 거부 사유라 리마인드 가치가 오히려 크다.
  */
-export function validateMtAdvanceNoticeDate(noticeDate: string, entryDate: string): string | null {
-  if (!noticeDate || !entryDate) return null
-  if (daysBetween(noticeDate, entryDate) < 3) {
-    return '입국 3영업일 전까지 사전 통지를 해야 해요. 통지가 늦은 경우 입국일을 변경해야 해요.'
-  }
-  return null
-}
 
 /**
  * 외부 기생충 **1차 처치 시작** 하한 — 출국일 앵커, 종별로 다르다.

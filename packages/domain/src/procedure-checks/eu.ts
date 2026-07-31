@@ -3,7 +3,6 @@ import {
   validateChImportPermitDate,
   validateCyAdvanceNoticeDate,
   validateIeAdvanceNoticeDate,
-  validateMtAdvanceNoticeDate,
   validateNoAdvanceNoticeDate,
   EU_ENTRY_FAMILY,
 } from '../journey-steps/date-rules'
@@ -443,35 +442,12 @@ export const EU_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 몰타 — 온라인 포털 사전 통지 (입국 3영업일 전) ──────────────────────
-  {
-    id: 'eu.mt-advance-notice-3days-before-entry',
-    country: ['malta'],
-    category: '사전통지',
-    title: '사전 통지 마감 (입국 3영업일 전)',
-    description:
-      '몰타 입국 3영업일 전까지 온라인 포털(nldmalta.gov.mt)에 사전 통지 등록. 입력 차단(validateMtAdvanceNoticeDate)과 같은 함수 — 항공편 수정 후 어긋난 케이스를 주의로 표면화. (servizz.gov.mt)',
-    severity: 'warning',
-    addedAt: '2026-07-16',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const notice =
-        typeof data.mt_advance_notice_date === 'string'
-          ? data.mt_advance_notice_date.slice(0, 10)
-          : ''
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(notice)) return SKIP
-      const ctx = buildDateRuleContext(caseRow, destination)
-      const entry =
-        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
-          ? ctx.data.entry_date.slice(0, 10)
-          : ''
-      const msg = validateMtAdvanceNoticeDate(notice, entry)
-      if (msg) {
-        return { ok: false, message: msg, offendingPaths: ['mt_advance_notice_date', 'entry_date'] }
-      }
-      return { ok: true, message: entry ? `통지일(${notice}) 입국(${entry}) 3영업일 이전.` : `통지일(${notice}) 입력됨 (입국일 미입력).` }
-    },
-  },
+  // ⛔ 몰타 사전 통지 마감 룰(eu.mt-advance-notice-3days-before-entry)은 **삭제됐다**(2026-08-01).
+  //    되살리지 말 것. 몰타 정부는 제출 마감을 공표하지 않는다 — 근거는 date-rules.ts 의
+  //    삭제 주석(법령 122건 전수·포털 HTML 점검·EU 576/2013 art.34(2)·'3영업일'의 출처 규명).
+  //    아일랜드 24시간·노르웨이 48시간·키프로스 48시간처럼 값을 명시하는 나라와 대비되는
+  //    몰타의 특징이지, 누락이 아니다. 통지 자체는 여전히 의무이고(미이행 시 입국 거부)
+  //    알림(reminders.ts)이 그 역할을 맡는다.
 
   // ── 스위스 — FSVO 수입허가 (입국 3주 전) ──
   {

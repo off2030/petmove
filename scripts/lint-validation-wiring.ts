@@ -169,6 +169,15 @@ const UNVALIDATED_OK: Record<string, string> = {
   //   배치). 이 카드에는 짝이 되는 저장 거부(validateQuarantineStartNotBeforeDeparture)가 있다.
   'south_africa:za-quarantine-reservation':
     '순서 주의는 운송 예약 카드(za.quarantine-start-not-before-departure) + 입력불가는 validateQuarantineStartNotBeforeDeparture 담당',
+  // 몰타 사전 통지 — **검증할 마감이 존재하지 않는다**(2026-08-01 확인). 다른 사전 통지
+  //   4종(아일랜드 24h·노르웨이 48h·키프로스 48h·이스라엘 출국 2영업일)과 달리 몰타
+  //   정부는 제출 마감을 공표하지 않는다. 법령 122건 전수·통지 포털 HTML(리드타임 제약
+  //   없음)·EU 576/2013 art.34(2)로 확인했고, 널리 쓰이던 '3영업일'은 2015년 폐기 페이지의
+  //   **관청 처리 소요**를 제출 마감으로 오독한 값이었다(경위는 date-rules.ts 삭제 주석).
+  //   통지일은 '언제 했는지'를 기록하는 값일 뿐 순서·창 제약이 없어 검증 대상이 아니다.
+  //   ⚠️ 이 예외는 **몰타 한정** — 다른 나라 사전 통지 카드는 전부 마감 검증이 있어야 한다.
+  'malta:mt-advance-notice':
+    '공표된 마감이 없어 검증할 날짜 제약 자체가 없음(다른 사전 통지 4종과 다른 지점) — 통지 누락은 reminders.ts 알림이 담당',
   // sg-gst-permit·sg-border-inspection 은 2026-07-25 검증 추가로 예외 목록에서 제거.
 }
 
@@ -952,7 +961,12 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   'ie-advance-notice': '차단: validateIeAdvanceNoticeDate(입국 24시간 전)',
   'no-advance-notice': '차단: validateNoAdvanceNoticeDate(입국 48시간 전)',
   'cy-advance-notice': '차단: validateCyAdvanceNoticeDate(입국 48시간 전)',
-  'mt-advance-notice': '차단: validateMtAdvanceNoticeDate(입국 3영업일 전)',
+  // 몰타 — 2026-08-01 차단 제거. 몰타 정부가 제출 마감을 **공표하지 않는다**(법령 122건 전수·
+  // 포털 HTML 점검·EU 576/2013 art.34(2) 확인, 근거는 date-rules.ts 삭제 주석). 구 '입국
+  // 3영업일 전'은 2015년 폐기 페이지의 관청 처리 소요를 제출 마감으로 오독한 값이라,
+  // 근거 없는 값으로 규정대로 준비한 케이스를 거부하고 있었다. 되살리지 말 것.
+  'mt-advance-notice':
+    '주의만: 공표된 마감이 없어 "늦은 통지"라는 개념 자체가 성립하지 않는다 — 불가능한 날짜 조합이 아니므로 저장을 막을 근거가 없다. 통지 누락은 입국 거부 사유라 reminders.ts 의 알림이 담당(항공권 확정 후 바로)',
   'il-advance-notice': '차단: validateIlAdvanceNoticeDate(출국 2일 전)',
   // 홍콩은 24시간 판정이 아일랜드와 같아 같은 함수를 쓴다(목적지 중립 메시지).
   'hk-advance-notice': '차단: validateIeAdvanceNoticeDate(도착 24시간 전 — 입국일 없으면 출국일 폴백)',
