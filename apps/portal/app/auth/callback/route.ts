@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import type { User } from '@supabase/supabase-js'
 import { createAdminClient } from '@petmove/auth'
 import { createClient } from '@petmove/auth/server'
 import { autoLinkCasesByEmail, ensureCustomerProfile } from '@/lib/supabase/customer'
@@ -66,39 +67,49 @@ export async function GET(request: Request) {
     )
   }
 
+  const supabase = await createClient()
+  let user: User | null = null
+  let kakaoProviderToken: string | null | undefined = null
+
   if (code) {
-    const supabase = await createClient()
     const { data: exchangeData, error } = await supabase.auth.exchangeCodeForSession(code)
     if (error) {
       return NextResponse.redirect(
         new URL(`/login?error=${encodeURIComponent(error.message)}`, url.origin),
       )
     }
-
-    // 첫 로그인이면 customer_profiles 생성. 실패해도 로그인 자체는 성공으로 처리.
     // exchangeCodeForSession already returns the signed-in user, so avoid an extra
     // auth-server getUser() round trip before redirecting into the app.
-    const user = exchangeData.user
-    if (user) {
-      // 카카오는 user_metadata 에 사진이 안 담겨오는 경우가 있어 provider_token 으로 직접 조회.
-      // 구글은 user_metadata(avatar_url/picture) 로 충분 → ensureCustomerProfile 내부 처리.
-      const kakaoProviderToken =
-        user.app_metadata?.provider === 'kakao' ? exchangeData.session?.provider_token : null
-      const profileResult = await ensureCustomerProfile(
-        supabase,
-        user,
-        kakaoProviderToken
-          ? { resolveAvatarUrl: () => fetchKakaoProfileImage(kakaoProviderToken) }
-          : undefined,
-      ).catch(() => ({ created: false }))
-      // 자동 매칭 — 보호자 이메일과 일치하는 기존 admin 케이스를 case_customer_links 로 연결.
-      // service role 우회 (RLS insert 는 org_member 만 허용이라).
-      if (profileResult.created) {
-        try {
-          const admin = createAdminClient()
-          await autoLinkCasesByEmail(admin, user)
-        } catch { /* best-effort */ }
-      }
+    user = exchangeData.user
+    // 카카오는 user_metadata 에 사진이 안 담겨오는 경우가 있어 provider_token 으로 직접 조회.
+    // 구글은 user_metadata(avatar_url/picture) 로 충분 → ensureCustomerProfile 내부 처리.
+    kakaoProviderToken =
+      user?.app_metadata?.provider === 'kakao' ? exchangeData.session?.provider_token : null
+  } else {
+    // 인증번호(verifyOtp) 이메일 로그인 — 브라우저에서 이미 세션 쿠키가 만들어진 뒤 프로필
+    // 생성·케이스 자동 연결을 위해 이 라우트로 온다. code 없이 세션만 확인.
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  }
+
+  // 첫 로그인이면 customer_profiles 생성. 실패해도 로그인 자체는 성공으로 처리.
+  if (user) {
+    // let 은 closure 안에서 타입이 안 좁혀지므로 const 로 고정해 넘긴다.
+    const kakaoToken = kakaoProviderToken ?? null
+    const profileResult = await ensureCustomerProfile(
+      supabase,
+      user,
+      kakaoToken
+        ? { resolveAvatarUrl: () => fetchKakaoProfileImage(kakaoToken) }
+        : undefined,
+    ).catch(() => ({ created: false }))
+    // 자동 매칭 — 보호자 이메일과 일치하는 기존 admin 케이스를 case_customer_links 로 연결.
+    // service role 우회 (RLS insert 는 org_member 만 허용이라).
+    if (profileResult.created) {
+      try {
+        const admin = createAdminClient()
+        await autoLinkCasesByEmail(admin, user)
+      } catch { /* best-effort */ }
     }
   }
 

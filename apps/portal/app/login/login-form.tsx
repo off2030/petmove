@@ -48,6 +48,15 @@ export function LoginForm({
   const [loading, setLoading] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(initialError)
+  // 이메일 로그인 = 6자리 인증번호 방식. 링크 클릭 방식은 "링크를 요청한 브라우저(앱)"와
+  // "링크를 연 브라우저(메일앱→크롬/사파리)"가 달라지면 보안 검증이 어긋나 로그인이 안 되는
+  // 구조적 문제가 있어 폐기 (2026-08-01, 실사용자 로그인 실패 사례). 인증번호는 요청한 화면
+  // 안에서 입력해 끝나므로 이 문제가 없다.
+  // step: 'email' = 이메일 입력 화면, 'otp' = 인증번호 입력 화면.
+  const [step, setStep] = useState<'email' | 'otp'>('email')
+  const [otp, setOtp] = useState('')
+  // 발송에 실제로 쓴(정규화된) 이메일 — 검증 요청은 반드시 이 값과 짝을 이뤄야 한다.
+  const [sentEmail, setSentEmail] = useState('')
   // Apple 로그인은 iOS 네이티브에서만 동작 — 그 환경에서만 버튼을 노출한다.
   const [isIOSNative, setIsIOSNative] = useState(false)
 
@@ -138,7 +147,18 @@ export function LoginForm({
 
   const isReviewLogin = normalizeEmail(email) === REVIEW_EMAIL
 
-  async function sendMagicLink(e: React.FormEvent) {
+  // Supabase 인증 에러(영어)를 사용자 언어로. 매칭 안 되면 원문 그대로.
+  function otpErrorMessage(message: string): string {
+    if (/expired|invalid/i.test(message))
+      return '인증번호가 올바르지 않거나 만료됐어요. 다시 확인하거나 아래에서 새 인증번호를 받아주세요.'
+    const wait = message.match(/after (\d+) seconds/i)
+    if (wait) return `보안을 위해 잠시 후 다시 요청할 수 있어요. (${wait[1]}초 뒤)`
+    if (/rate limit/i.test(message))
+      return '요청이 너무 많아 잠시 막혔어요. 조금 뒤에 다시 시도해주세요.'
+    return message
+  }
+
+  async function sendOtp(e: React.FormEvent) {
     e.preventDefault()
     if (!email) {
       setError('이메일을 먼저 입력하세요.')
@@ -171,17 +191,67 @@ export function LoginForm({
       document.cookie = `pm_oauth_next=${encodeURIComponent(next)}; path=/; max-age=600; samesite=lax`
     }
 
+    // 발송·검증이 같은 이메일 문자열로 짝을 이루도록 정규화본을 쓴다.
+    const target = normalizeEmail(email)
     const { error } = await supabaseBrowser.auth.signInWithOtp({
-      email,
+      email: target,
+      // 메일 템플릿의 예비 링크({{ .ConfirmationURL }})용 — 주 경로는 인증번호 입력.
       options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     })
 
     setLoading(null)
     if (error) {
-      setError(error.message)
+      setError(otpErrorMessage(error.message))
       return
     }
-    setInfo(`${email} 로 로그인 링크를 발송했습니다. 메일을 확인하세요.`)
+    setSentEmail(target)
+    setOtp('')
+    setStep('otp')
+    setInfo(null)
+  }
+
+  async function verifyCode(e: React.FormEvent) {
+    e.preventDefault()
+    const token = otp.replace(/\D/g, '')
+    if (token.length !== 6) {
+      setError('메일로 받은 6자리 인증번호를 입력하세요.')
+      return
+    }
+    setError(null)
+    setInfo(null)
+    setLoading('verify')
+
+    const { error } = await supabaseBrowser.auth.verifyOtp({
+      email: sentEmail,
+      token,
+      type: 'email',
+    })
+
+    if (error) {
+      setLoading(null)
+      setError(otpErrorMessage(error.message))
+      return
+    }
+    // 세션 쿠키가 생긴 상태 → 서버 콜백에서 보호자 프로필 생성 + 케이스 자동 연결을 마친 뒤
+    // next 로 이동한다 (OAuth 로그인과 같은 마무리 경로). loading 유지 = 이동 중 스피너.
+    window.location.href = `/auth/callback${next && next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`
+  }
+
+  async function resendOtp() {
+    setError(null)
+    setInfo(null)
+    setLoading('magic')
+    const { error } = await supabaseBrowser.auth.signInWithOtp({
+      email: sentEmail,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    })
+    setLoading(null)
+    if (error) {
+      setError(otpErrorMessage(error.message))
+      return
+    }
+    setOtp('')
+    setInfo('인증번호를 다시 보냈습니다. 메일을 확인하세요.')
   }
 
   // 소셜 로그인 진행 중(특히 구글은 외부 브라우저를 다녀오는 ~2초)에는 로그인 폼 대신
@@ -324,45 +394,98 @@ export function LoginForm({
           <div className="h-px flex-1 bg-[rgba(33,33,36,0.12)]" />
         </div>
 
-        <form onSubmit={sendMagicLink} className="space-y-sm">
-          <input
-            type="email"
-            placeholder="email@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onInput={(e) => setEmail(e.currentTarget.value)}
-            onCompositionEnd={(e) => setEmail(e.currentTarget.value)}
-            // 일부 모바일 키보드는 조합 중 onChange 를 늦게 흘려 state 가 안 갱신될 수 있다 —
-            // 포커스가 빠질 때(빈 화면 탭 등) DOM 실제 값으로 한 번 더 동기화.
-            onBlur={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            className="w-full rounded-md border border-[rgba(33,33,36,0.16)] bg-white px-sm py-2 text-sm text-[#212124] placeholder:text-[#97979C]/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#212124]/30"
-          />
-          {isReviewLogin && (
+        {step === 'email' ? (
+          <form onSubmit={sendOtp} className="space-y-sm">
             <input
-              type="password"
-              placeholder="비밀번호"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
+              type="email"
+              placeholder="email@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onInput={(e) => setEmail(e.currentTarget.value)}
+              onCompositionEnd={(e) => setEmail(e.currentTarget.value)}
+              // 일부 모바일 키보드는 조합 중 onChange 를 늦게 흘려 state 가 안 갱신될 수 있다 —
+              // 포커스가 빠질 때(빈 화면 탭 등) DOM 실제 값으로 한 번 더 동기화.
+              onBlur={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
               className="w-full rounded-md border border-[rgba(33,33,36,0.16)] bg-white px-sm py-2 text-sm text-[#212124] placeholder:text-[#97979C]/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#212124]/30"
             />
-          )}
-          <button
-            type="submit"
-            className={primaryButtonClass}
-            disabled={loading !== null || !email || (isReviewLogin && !password)}
-          >
-            {isReviewLogin
-              ? loading === 'magic'
-                ? '로그인 중…'
-                : '로그인'
-              : loading === 'magic'
-                ? '발송 중…'
-                : '이메일로 로그인 링크 받기'}
-          </button>
-        </form>
+            {isReviewLogin && (
+              <input
+                type="password"
+                placeholder="비밀번호"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                className="w-full rounded-md border border-[rgba(33,33,36,0.16)] bg-white px-sm py-2 text-sm text-[#212124] placeholder:text-[#97979C]/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#212124]/30"
+              />
+            )}
+            <button
+              type="submit"
+              className={primaryButtonClass}
+              disabled={loading !== null || !email || (isReviewLogin && !password)}
+            >
+              {isReviewLogin
+                ? loading === 'magic'
+                  ? '로그인 중…'
+                  : '로그인'
+                : loading === 'magic'
+                  ? '발송 중…'
+                  : '이메일로 인증번호 받기'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={verifyCode} className="space-y-sm">
+            <p className="text-center text-xs leading-relaxed text-[#5C5C60]">
+              <span className="font-medium text-[#212124]">{sentEmail}</span> 로 보낸
+              <br />
+              6자리 인증번호를 입력하세요.
+            </p>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              placeholder="123456"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+              // 메일앱에서 복사해 온 번호를 iOS/Android 키보드가 자동 제안하도록.
+              autoComplete="one-time-code"
+              autoFocus
+              className="w-full rounded-md border border-[rgba(33,33,36,0.16)] bg-white px-sm py-2 text-center text-[20px] font-semibold tracking-[0.4em] text-[#212124] placeholder:text-[#97979C]/40 placeholder:tracking-[0.4em] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#212124]/30"
+            />
+            <button
+              type="submit"
+              className={primaryButtonClass}
+              disabled={loading !== null || otp.length !== 6}
+            >
+              {loading === 'verify' ? '로그인 중…' : '로그인'}
+            </button>
+            <div className="flex items-center justify-center gap-md pt-1 text-xs text-[#97979C]">
+              <button
+                type="button"
+                className="underline underline-offset-2 hover:text-[#5C5C60] disabled:opacity-50"
+                disabled={loading !== null}
+                onClick={resendOtp}
+              >
+                {loading === 'magic' ? '발송 중…' : '인증번호 다시 받기'}
+              </button>
+              <button
+                type="button"
+                className="underline underline-offset-2 hover:text-[#5C5C60] disabled:opacity-50"
+                disabled={loading !== null}
+                onClick={() => {
+                  setStep('email')
+                  setOtp('')
+                  setError(null)
+                  setInfo(null)
+                }}
+              >
+                이메일 변경
+              </button>
+            </div>
+          </form>
+        )}
 
         {info && (
           <p className="rounded-md border border-[rgba(33,33,36,0.16)] bg-[#F7F7F8] p-sm text-xs text-[#5C5C60]">
