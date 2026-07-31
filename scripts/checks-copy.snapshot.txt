@@ -263,10 +263,6 @@
   광견병 접종 후 30일이 지나야 남아프리카공화국에 입국할 수 있어요. 출국일을 미뤄야 해요.
 [za.rabies-booster-within-prime-validity]
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
-[za.rabies-only-1year-vaccine]
-  남아프리카공화국은 유효기간 1년인 광견병 백신만 인정해요. 2년·3년 백신은 인정되지 않아요.
-[za.external-parasite-within-30days]
-  처치일이 출국일보다 늦어요. 날짜를 확인하세요.
 [za.aia-permit-before-import-permit]
   AIA 수입 허가를 먼저 받아야 해요. AIA 허가서를 첨부해서 수의검역 수입 허가를 신청해요.
 [za.import-quarantine-date-valid]

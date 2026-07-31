@@ -19,6 +19,7 @@ import {
   validateDepartureNotAfterQuarantineStart,
   validateHeartwormSameDayAsInfectiousTest,
   validateInfectiousDiseaseTestDate,
+  validateParasiteDateForDestination,
   violatesRabiesEntryWait,
 } from '../journey-steps/date-rules'
 import { msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
@@ -232,7 +233,9 @@ export const ZA_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message:
-            '남아프리카공화국은 유효기간 1년인 광견병 백신만 인정해요. 2년·3년 백신은 인정되지 않아요.',
+            // 문구는 중국·베트남과 **같은 꼴**로(2026-07-31 문구 일관성 정리). 남아공만
+            //   나라 이름을 앞에 붙이고 어순·동사가 달랐다 — 어차피 그 나라 카드에서만 뜬다.
+            '광견병 백신은 면역 유효기간 1년짜리만 인정돼요. 2년·3년 백신은 사용할 수 없어요.',
           offendingPaths: offending,
         }
       }
@@ -341,19 +344,19 @@ export const ZA_CHECKS: ProcedureCheck[] = [
       const latest = entries[entries.length - 1]
       const days = daysBetween(latest.date, dep)
       if (days === null) return SKIP
-      if (days < 0) {
+      // 판정·문구 모두 **저장 거부와 같은 함수**로(2026-07-31 문구 일관성 정리). 직접 문구를
+      //   적고 있어서 남아공만 다른 말을 했다 — 항목 이름은 옛 제목('진드기·흡혈곤충 처치'),
+      //   창 문구는 다른 나라에 없는 둘째 문장('다시 처치해야 할 수 있어요')이 붙어 있었다.
+      //   호주·터키·UAE 처럼 dispatch 하나만 부른다.
+      const blocked = validateParasiteDateForDestination(latest.date, {
+        destinationKey: COUNTRY,
+        kind: 'external',
+        departureDate: dep,
+      })
+      if (blocked) {
         return {
           ok: false,
-          message: '처치일이 출국일보다 늦어요. 날짜를 확인하세요.',
-          offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
-        }
-      }
-      if (days > 30) {
-        return {
-          ok: false,
-          // 문구는 **저장 거부(validateParasiteDateForDestination)와 같은 말**로 — 카드 제목이
-          //   '외부 기생충 치료'로 바뀐 뒤(2026-07-31) 주의만 옛 이름을 쓰고 있었다.
-          message: '외부 기생충 치료는 출국 30일 이내에 해야 해요. 다시 처치해야 할 수 있어요.',
+          message: blocked,
           offendingPaths: [
             `external_parasite_dates[${latest.originalIndex}].date`,
             'departure_date',
