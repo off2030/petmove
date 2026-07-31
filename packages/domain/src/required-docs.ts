@@ -1123,6 +1123,11 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   //   예약 증빙**이다(뉴질랜드 계류시설 예약과 같은 처리). 카드 첨부는 임의 보관용으로 남는다.
   // 편도 전용이라 roundTripOnly 서류(현지 수출증명·한국 수입 검역증)는 넣지 않는다.
   '남아프리카공화국': [
+    // ⚠️ 배열 순서 = **여정 카드 순서**(2026-07-31 사용자 지적으로 재배치).
+    //   AIA 허가(38) → 중성화 증명서(AIA 신청 첨부) → 수의검역 허가(40) →
+    //   계류 면책동의서(계류 예약 42) → 전염병 검사(70) → 접종·건강증명서(임상검사 110) →
+    //   남아공 건강증명서(110) → 한국 수출 검역(120).
+    //   중성화 증명서와 면책동의서가 맨 뒤에 있어 실제 준비 순서와 어긋나 있었다.
     {
       id: 'za-aia-permit-doc',
       // '허가서' → '허가증' — 같은 목적지의 다른 허가(남아공 수입 허가증)·호주·뉴질랜드가
@@ -1135,44 +1140,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       description:
         '강아지만 받는 허가서예요. 수의검역 수입 허가와는 별개예요.\n\n수의검역 수입 허가를 신청할 때 함께 제출하고, 출국할 때도 원본이 함께 가야 해요.\n\n대행업체를 이용했다면 허가 번호와 발급기관을 직접 확인하세요.',
       previewStepId: 'za-aia-permit',
-    },
-    {
-      id: 'za-import-permit-doc',
-      name: '남아공 수입 허가증(Veterinary Import Permit)',
-      source: '남아공 농업부 동물보건국',
-      kind: 'step',
-      stepRef: 'import-permit',
-      description:
-        '수입 허가 신청이 승인되면 발급돼요. 남아공 건강증명서 양식도 함께 받아요.\n\n한 번의 운송에만 쓸 수 있어요. 도착할 때 원본이나 당국이 인정하는 발급본을 제출해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
-      previewStepId: 'import-permit',
-    },
-    {
-      id: 'za-infectious-disease-result',
-      name: '전염병 검사 결과지',
-      source: '검사기관',
-      kind: 'step',
-      stepRef: 'infectious-disease-test',
-      species: 'dog',
-      description:
-        '출국 전 30일 이내에 받은 검사 결과지예요.\n\n브루셀라, 트리파노소마, 바베시아, 심장사상충, 리슈만편모충 5가지 결과지가 필요해요.\n\n영문으로 발급받고 마이크로칩 번호가 적혀 있어야 해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
-      previewStepId: 'infectious-disease-test',
-    },
-    // ⛔ 'za-heartworm-record'(심장사상충 예방 투약기록)를 다시 만들지 말 것 —
-    //   2026-07-31 사용자 지시로 삭제. 투약 기록은 건강증명서 6.1 칸에 옮겨 적는 내용이라
-    //   **따로 제출하는 서류가 아니다**. 기록 자체는 심장사상충 예방 카드(heartworm_dates)에
-    //   남고, 첨부가 필요하면 그 카드에 붙인다.
-    // 접종 및 건강증명서(별지 제25호) — 한국 공식 양식(전 목적지 공통).
-    KR_FORM25_VACCINATION_HEALTH_CERT,
-    {
-      id: 'za-entry-health-cert',
-      name: '남아공 건강증명서(Veterinary Health Certificate)',
-      source: '동물병원 · 농림축산검역본부',
-      kind: 'manual',
-      issuanceStepId: 'vet-visit',
-      description:
-        '남아공 입국용 수의 건강증명서예요. 수입 허가와 함께 받은 양식을 써요.\n\n출국 전 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인·서명을 받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
-    },
-    {
+    },    {
       id: 'za-desexing-certificate',
       name: '중성화 증명서',
       source: '동물병원',
@@ -1188,8 +1156,16 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       //   같은 항목에 있다 — 5(d) 2대 혈통서 · 5(e) DNA 프로파일 · 5(f) Breeders' Society 선언서.
       description:
         '반려 목적으로 데려가는 미등록 강아지는 AIA 수입 허가를 신청할 때 중성화 증명서가 필요해요.\n\n번식·등록견은 혈통서·DNA 프로파일 등 다른 증빙이 필요하니 미리 확인하세요.',
-    },
-    {
+    },    {
+      id: 'za-import-permit-doc',
+      name: '남아공 수입 허가증(Veterinary Import Permit)',
+      source: '남아공 농업부 동물보건국',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        '수입 허가 신청이 승인되면 발급돼요. 남아공 건강증명서 양식도 함께 받아요.\n\n한 번의 운송에만 쓸 수 있어요. 도착할 때 원본이나 당국이 인정하는 발급본을 제출해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'import-permit',
+    },    {
       id: 'za-indemnity-declaration',
       // 카드·라벨이 전부 '계류'로 통일됐는데(2026-07-31) 서류명만 '검역'이었다.
       name: '계류 면책동의서(Indemnity Declaration)',
@@ -1203,8 +1179,26 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
         //   발급 전에 반영된다.
         '계류시설 예약과 함께 작성해 서명하는 서류예요.\n\n계류 중 발생하는 비용과 위험을 보호자가 부담한다는 내용이에요.\n\n수의검역 수입 허가가 나오기 전에 반영해요.',
       previewStepId: 'za-quarantine-reservation',
-    },
+    },    {
+      id: 'za-infectious-disease-result',
+      name: '전염병 검사 결과지',
+      source: '검사기관',
+      kind: 'step',
+      stepRef: 'infectious-disease-test',
+      species: 'dog',
+      description:
+        '출국 전 30일 이내에 받은 검사 결과지예요.\n\n브루셀라, 트리파노소마, 바베시아, 심장사상충, 리슈만편모충 5가지 결과지가 필요해요.\n\n영문으로 발급받고 마이크로칩 번호가 적혀 있어야 해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'infectious-disease-test',
+    },    KR_FORM25_VACCINATION_HEALTH_CERT,
     {
+      id: 'za-entry-health-cert',
+      name: '남아공 건강증명서(Veterinary Health Certificate)',
+      source: '동물병원 · 농림축산검역본부',
+      kind: 'manual',
+      issuanceStepId: 'vet-visit',
+      description:
+        '남아공 입국용 수의 건강증명서예요. 수입 허가와 함께 받은 양식을 써요.\n\n출국 전 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인·서명을 받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
+    },    {
       id: 'za-kr-export-quarantine-cert',
       name: '한국 수출 동물검역증',
       source: '농림축산검역본부',
