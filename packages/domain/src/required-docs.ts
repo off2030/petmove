@@ -1140,15 +1140,19 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       description:
         '강아지만 받는 허가서예요. 수의검역 수입 허가와는 별개예요.\n\n수의검역 수입 허가를 신청할 때 함께 제출하고, 출국할 때도 원본이 함께 가야 해요.\n\n대행업체를 이용했다면 허가 번호와 발급기관을 직접 확인하세요.',
       previewStepId: 'za-aia-permit',
-    },    {
+    },
+    {
       id: 'za-desexing-certificate',
       name: '중성화 증명서',
       source: '동물병원',
-      kind: 'manual',
-      // 별지25·남아공 건강증명서와 같은 게이트 — 임상검사가 도래해야 '발급 예정' → '준비중'.
-      //   실제 중성화 수술은 훨씬 전이지만 서류를 챙기는 시점은 검역에 가는 임상검사 단계다.
-      //   ⚠️ AIA 신청 조건이기도 해서 실제로는 훨씬 앞서 필요하다(카드 문구가 안내한다).
-      issuanceStepId: 'vet-visit',
+      // **AIA 허가에 묶는다**(2026-07-31 사용자 지적). 이건 AIA 수입 허가를 *신청할 때 내는*
+      //   첨부라, 허가증이 나왔다는 건 이미 제출했다는 뜻이다 — AIA 가 완료인데 이 서류만
+      //   '대기'로 남아 있으면 안 된다.
+      //   ⛔ issuanceStepId: 'vet-visit' 로 되돌리지 말 것. 별지25·남아공 건강증명서와 같은
+      //     게이트로 묶어 뒀었는데(임상검사 때 챙기는 서류들), 이건 성격이 다르다.
+      kind: 'step',
+      stepRef: 'za-aia-permit',
+      issuanceStepId: 'za-aia-permit',
       species: 'dog',
       desexedOnly: true,
       // ✅ 1차 출처 확인(2026-07-30) — AIA 신청서(Version I of 2026/2027) 5(g)
@@ -1156,7 +1160,8 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       //   같은 항목에 있다 — 5(d) 2대 혈통서 · 5(e) DNA 프로파일 · 5(f) Breeders' Society 선언서.
       description:
         '반려 목적으로 데려가는 미등록 강아지는 AIA 수입 허가를 신청할 때 중성화 증명서가 필요해요.\n\n번식·등록견은 혈통서·DNA 프로파일 등 다른 증빙이 필요하니 미리 확인하세요.',
-    },    {
+    },
+    {
       id: 'za-import-permit-doc',
       name: '남아공 수입 허가증(Veterinary Import Permit)',
       source: '남아공 농업부 동물보건국',
@@ -1165,7 +1170,8 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       description:
         '수입 허가 신청이 승인되면 발급돼요. 남아공 건강증명서 양식도 함께 받아요.\n\n한 번의 운송에만 쓸 수 있어요. 도착할 때 원본이나 당국이 인정하는 발급본을 제출해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'import-permit',
-    },    {
+    },
+    {
       id: 'za-indemnity-declaration',
       // 카드·라벨이 전부 '계류'로 통일됐는데(2026-07-31) 서류명만 '검역'이었다.
       name: '계류 면책동의서(Indemnity Declaration)',
@@ -1179,7 +1185,8 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
         //   발급 전에 반영된다.
         '계류시설 예약과 함께 작성해 서명하는 서류예요.\n\n계류 중 발생하는 비용과 위험을 보호자가 부담한다는 내용이에요.\n\n수의검역 수입 허가가 나오기 전에 반영해요.',
       previewStepId: 'za-quarantine-reservation',
-    },    {
+    },
+    {
       id: 'za-infectious-disease-result',
       name: '전염병 검사 결과지',
       source: '검사기관',
@@ -1198,7 +1205,8 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       issuanceStepId: 'vet-visit',
       description:
         '남아공 입국용 수의 건강증명서예요. 수입 허가와 함께 받은 양식을 써요.\n\n출국 전 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인·서명을 받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
-    },    {
+    },
+    {
       id: 'za-kr-export-quarantine-cert',
       name: '한국 수출 동물검역증',
       source: '농림축산검역본부',
