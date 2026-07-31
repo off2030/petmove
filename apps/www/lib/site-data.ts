@@ -41,10 +41,10 @@ export const FEATURED: FeaturedGuide[] = [
   },
 ]
 
-// ── 나라별 가이드 38개국 — 5그룹(2026-07-15 재편: 괌=오세아니아, 중동·아프리카 신설.
+// ── 나라별 가이드 39개국 — 5그룹(2026-07-15 재편: 괌=오세아니아, 중동·아프리카 신설.
 //    2026-07-26 남아프리카공화국 가이드 추가 — 앱 지원 목록(APP_DEST_*)엔 아직 없다.
-//    2026-07-31 노르웨이·핀란드·키프로스 가이드 신설 — 셋 다 앱은 이미 지원 중이라
-//    APP_DEST_EU 엔 이미 있다. 몰타는 사전 통지 마감 근거 미확보로 발행 보류) ──
+//    2026-07-31~08-01 노르웨이·핀란드·키프로스·몰타 가이드 신설 — 넷 다 앱은 이미
+//    지원 중이라 APP_DEST_EU 엔 이미 있다) ──
 export interface Country {
   ko: string
   slug: string
@@ -77,6 +77,7 @@ export const COUNTRIES: Country[] = [
   { ko: '아일랜드', slug: 'ireland', region: '유럽' },
   { ko: '노르웨이', slug: 'norway', region: '유럽' },
   { ko: '핀란드', slug: 'finland', region: '유럽' },
+  { ko: '몰타', slug: 'malta', region: '유럽' },
   { ko: '키프로스', slug: 'cyprus', region: '유럽' },
   { ko: '우크라이나', slug: 'ukraine', region: '유럽' },
   { ko: '러시아', slug: 'russia', region: '유럽' },

@@ -5,7 +5,7 @@ import { GuideExplorer } from '@/components/guide-explorer'
 
 export const metadata: Metadata = {
   title: '가이드 · 펫무브',
-  description: '나라별 반려동물 출국 가이드 — 일본·태국·필리핀 등 38개국의 검역 준비 방법을 확인하세요.',
+  description: '나라별 반려동물 출국 가이드 — 일본·태국·필리핀 등 39개국의 검역 준비 방법을 확인하세요.',
 }
 
 export default function GuidePage() {
