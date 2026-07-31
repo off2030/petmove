@@ -1953,6 +1953,14 @@ export function usesRabiesTiter(destination: string | null | undefined): boolean
 export function getDestinationOverride(destination: string | null | undefined): DestinationOverride | null {
   if (!destination) return null
   const lower = destination.toLowerCase()
+  // ① **맵의 키 자체**로 먼저 찾는다(2026-07-31 신설). keywords 에는 사람이 쓰는 이름만 들어
+  //   있어서, 코드가 키(`south_africa`·`hong_kong`)를 넘기면 아무것도 안 잡히고 null 이 됐다.
+  //   그러면 호출자가 조용히 기본 분기로 떨어진다 — 맡기기 화면이 목적지 키를 넘기는 바람에
+  //   usesRabiesTiter 가 ⑥(광견병 발생국이면 true)까지 내려가, **여정에 항체 카드가 없는
+  //   남아공·홍콩의 맡기기 목록에 '광견병 항체 검사'가 들어가 있었다**(사용자 발견).
+  //   'uae' 처럼 키가 우연히 keywords 에도 있던 목적지만 멀쩡했다.
+  const byKey = DESTINATION_OVERRIDES[lower]
+  if (byKey) return byKey
   for (const override of Object.values(DESTINATION_OVERRIDES)) {
     if (override.keywords.some((kw) => lower.includes(kw.toLowerCase()))) {
       return override

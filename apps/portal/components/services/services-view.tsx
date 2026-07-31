@@ -329,7 +329,11 @@ function offlineDetail(opts: {
   //   **여정에 없는 '광견병 항체 검사'가 맡기기 상품 목록에 들어가 있었다.** 여정 카드가 유일한
   //   출처라는 이 파일의 원칙(sortByCardOrder 주석)과도 어긋나던 지점.
   //   usesRabiesTiter 는 여정 카드 노출·완료 푸시와 같은 판정을 쓴다(단일 출처).
-  const titerIncluded = !usesRabiesTiter(opts.destKey)
+  //   ⚠️ **한글 이름으로 넘긴다** — 목적지 키(`south_africa`)를 넘기면 isRabiesFreeOrigin 이
+  //     토큰 매칭이라 못 잡고 ⑥(광견병 발생국이면 true)로 떨어진다. 그래서 여정에 항체 카드가
+  //     없는 남아공·홍콩의 맡기기 목록에 '광견병 항체 검사'가 들어가 있었다(2026-07-31 사용자
+  //     발견). 이 파일의 다른 헬퍼들도 destinationKoLabel 로 넘긴다.
+  const titerIncluded = !usesRabiesTiter(destinationKoLabel(opts.destKey))
     ? false
     : o?.rabiesTiterForReturnOnly
       ? opts.trip === 'round'
