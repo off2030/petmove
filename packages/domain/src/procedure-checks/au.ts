@@ -788,7 +788,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     id: 'au.infectious-disease-test-within-45days',
     country: COUNTRY,
     category: '검사',
-    title: '전염병 검사는 출국 45일 이내 (강아지)',
+    title: '전염병 검사는 출국 전 45일 이내 (강아지)',
     description:
       'DAFF 7.3~7.5 — 리슈만편모충(전 개체, 정량 IFAT 또는 ELISA) + 브루셀라(중성화 안 한 개체, RSAT·TAT(SAT)·IFAT) + 렙토 MAT(Canicola 백신 미접종 시)가 모두 "within 45 days of the date of export". DAFF 예제(출국 1/30 → 12/16)대로 45일 당일까지 인정한다.',
     severity: 'warning',
@@ -850,7 +850,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       const issues: string[] = []
       const offending: string[] = []
       // 45일 창·출국일보다 늦음 — 저장 거부와 **같은 함수**(validateParasiteDateForDestination).
-      //   예전엔 여기만 '1차 치료는 출국 45일 이내여야 해요.' 라고 따로 써서, 같은 위반인데
+      //   예전엔 여기만 '1차 치료는 출국 전 45일 이내여야 해요.' 라고 따로 써서, 같은 위반인데
       //   입력할 때와 나중에 출국일을 고쳤을 때 보호자가 다른 말을 들었다(2026-07-28 통일).
       for (const e of entries) {
         const err = validateParasiteDateForDestination(e.date, {

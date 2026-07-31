@@ -31,7 +31,7 @@ import { msgMicrochipBeforeRabies, msgRabiesExpiredBefore, msgRabiesPrimeMinAge 
  *    증명서에 첨부. 광견병 발생국·청정국 분기 양쪽에 다 있다. 태국 복제본의 '귀국용'은 오류.
  *  - **반입 금지 지역**: "…tidak diperkenankan masuk ke wilayah bebas rabies, seperti jawa
  *    tengah, jawa timur, yogyakarta, **bali**, madura, NTB dan NTT" → 실질 입국지는 자카르타.
- *  - 도착 후 격리 약 1주~최대 2주(가이드) / 임상검사 출국 10일 이내(가이드).
+ *  - 도착 후 격리 약 1주~최대 2주(가이드) / 임상검사 출국 전 10일 이내(가이드).
  *  - 수입허가는 **현지 신청만** 가능(가이드) → 태국식 이메일 신청·R.6 는 걷어냈다.
  *
  * 확인 실패(값을 지어내지 않은 것):

@@ -37,7 +37,7 @@ import {
  *  - 광견병: 1차 12주 이상(보수 91일 AND 캘린더 3개월) + 출국 30일 전 + 출국일 면역 유효
  *  - **RNATT 필수**: 채혈 ≥ 광견병 + 30일, 0.5 IU/ml 이상, EU/WOAH 인증 lab
  *  - **입국 시 만 4개월(약 17주) 이상**, 동물 소유 90일 이상 (trafficking 방지)
- *  - 건강증명서: 출국 10일 이내 (보수 ≤9). 민간 수의사 검진 + 정부 수의관 배서
+ *  - 건강증명서: 출국 전 10일 이내 (보수 ≤9). 민간 수의사 검진 + 정부 수의관 배서
  *  - 출국 48시간 전 Ben Gurion 검역소 사전 통보
  *  - 3마리 이상 동반 시 사전 Import License 필수 (1974 동물질병규칙)
  *  - Pitbull, Argentine Dogo, Fila Brasileiro, Tosa, Staffordshire, Rottweiler 등 견종 수입 금지

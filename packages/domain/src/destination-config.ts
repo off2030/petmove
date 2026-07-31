@@ -485,7 +485,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       entryWaitAfterTiter: { months: 3 },
     },
     // 폐충(lungworm, Angiostrongylus vasorum) — **신 IHS 2026 에서 새로 들어온 항목**(2.4).
-    //   내부구충과 시점(출국 5일 이내)만 같고 약이 다르다(구충약이 폐충까지 커버하지 않는
+    //   내부구충과 시점(출국 전 5일 이내)만 같고 약이 다르다(구충약이 폐충까지 커버하지 않는
     //   경우가 많다). 구충 카드에 얹어 두면 '구충약 하나로 끝'으로 읽혀 별도 카드로 뗀다
     //   (2026-07-29 사용자 지정 — 심장사상충을 구충에서 뗀 것과 같은 처리).
     vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'infectious_disease', 'external_parasite', 'internal_parasite', 'heartworm', 'lungworm'],
@@ -1322,7 +1322,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   //   목록 https://www.qia.go.kr/livestock/qua/list93webQiaCom.do (몽골 = id 60618)
   //   안내문 https://www.qia.go.kr/livestock/qua/downloadwebQiaCom.do?id=47407
   //   §1.2 검역조건 표 원문값:
-  //     검역증명서 필수(출국 10일 이내) / 마이크로칩 **필수**(ISO 호환) / 광견병 **필수**
+  //     검역증명서 필수(출국 전 10일 이내) / 마이크로칩 **필수**(ISO 호환) / 광견병 **필수**
   //     (최소 12주령 이상, 입국 30일 이전) / 기타 백신 불필요 / **광견병 항체가 검사 불필요**
   //     / 사전수입허가 **불필요** / **입국 후 계류 불필요** / 기생충 처치 불필요
   //     / 기타: **반드시 Chinggis Khaan 국제공항을 통해 입국**
@@ -1738,7 +1738,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       { key: 'external_parasite', species: 'dog' },
     ],
     extraFields: ['permit_no', 'address_overseas'],
-    // 건강증명서 작성 = 출국 10일 이내(한국 별지 제25호와 같은 창) → 기본값 그대로.
+    // 건강증명서 작성 = 출국 전 10일 이내(한국 별지 제25호와 같은 창) → 기본값 그대로.
     // 수입허가는 VetPermits 이메일 신청이고 AIA 는 Animal Improvement Registrar 이메일이라
     //   둘 다 보호자·대행사가 직접 낸다 → 로잔 맡기기 '수입 허가 신청' 제외.
     importPermit: { selfApply: true },

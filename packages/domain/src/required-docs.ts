@@ -117,7 +117,7 @@ interface RequiredDocSpec {
 const form25Description = (windowDays: number) =>
   `농림축산검역본부 지정 양식의 접종 및 건강증명서예요.\n\n출국일 기준 ${windowDays}일 이내에 임상 수의사가 검진 후 발급해요.\n\n원본 2부를 준비해서, 한국 수출 검역 때 1부를 제출해요.\n\n접종과 출국 전 임상검사를 한 동물병원이 다른 경우, 각 동물병원에서 따로 증명서를 받아야 해요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`
 
-/** 별지 제25호 검진 창의 기본값 — 한국 규정(출국 10일 이내). */
+/** 별지 제25호 검진 창의 기본값 — 한국 규정(출국 전 10일 이내). */
 const FORM25_DEFAULT_WINDOW_DAYS = 10
 
 /**
@@ -922,7 +922,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'infectious-disease-test',
       species: 'dog',
       description:
-        '출국 45일 이내에 받은 검사 결과지예요.\n\n리슈만편모충(Leishmania infantum) 결과지는 모든 강아지가 필요해요.\n\n중성화하지 않았다면 브루셀라(Brucella canis) 결과지도 필요해요.\n\n접종을 하지 않았다면 렙토스피라(Leptospira canicola) 검사 결과지도 필요해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+        '출국 전 45일 이내에 받은 검사 결과지예요.\n\n리슈만편모충(Leishmania infantum) 결과지는 모든 강아지가 필요해요.\n\n중성화하지 않았다면 브루셀라(Brucella canis) 결과지도 필요해요.\n\n접종을 하지 않았다면 렙토스피라(Leptospira canicola) 검사 결과지도 필요해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'infectious-disease-test',
     },
     // 접종 및 건강증명서(별지 제25호) — 한국 공식 양식(전 목적지 공통).
@@ -934,7 +934,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'manual',
       issuanceStepId: 'vet-visit',
       description:
-        '호주 입국용 수의 건강증명서예요.\n\n출국 5일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 정부 수의사의 확인·서명을 받아요.\n\n이 서류는 일반 동물병원에서는 발행하지 않아요. 발행 가능한 동물병원 확인이 필요해요.',
+        '호주 입국용 수의 건강증명서예요.\n\n출국 전 5일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 정부 수의사의 확인·서명을 받아요.\n\n이 서류는 일반 동물병원에서는 발행하지 않아요. 발행 가능한 동물병원 확인이 필요해요.',
     },
     {
       id: 'au-kr-export-quarantine-cert',
@@ -1030,7 +1030,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       description:
         // 사용자 확정본 5줄(2026-07-30). ⛔ 다듬지 말 것 — 뺀 것들이 있다:
         //   '깁소니'·'Canicola' 검사명 수식 / '모든 강아지가' / 중성화견의 중성화 증명서 안내.
-        '출국 30일 이내에 받은 검사 결과지예요.\n\n바베시아, 리슈만편모충, 심장사상충 결과지가 필요해요.\n\n중성화하지 않았다면 브루셀라 결과지도 필요해요.\n\n약물 치료를 받지 않은 경우 렙토스피라 결과지도 필요해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+        '출국 전 30일 이내에 받은 검사 결과지예요.\n\n바베시아, 리슈만편모충, 심장사상충 결과지가 필요해요.\n\n중성화하지 않았다면 브루셀라 결과지도 필요해요.\n\n약물 치료를 받지 않은 경우 렙토스피라 결과지도 필요해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'infectious-disease-test',
     },
     // 접종 및 건강증명서(별지 제25호) — 한국 공식 양식(전 목적지 공통).
@@ -1044,7 +1044,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       description:
         // 사용자 확정본 3줄(2026-07-30). ⛔ 'category 3 서식을 써요.' 를 되살리지 말 것.
         //   마지막 줄은 임상검사 카드와 같은 문형으로 통일했다.
-        '뉴질랜드 입국용 수의 건강증명서예요.\n\n출국 2일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인·서명을 받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
+        '뉴질랜드 입국용 수의 건강증명서예요.\n\n출국 전 2일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인·서명을 받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
     },
     // ⛔ 독감(CIV) 서류 항목(nz-civ-doc)을 다시 만들지 말 것 — 접종으로 가면 챙길 서식이
     //   없다(뉴질랜드 건강증명서 44항 a 에 접종일·백신명·면역 유효기간을 적는다. IHS 1.14 의
@@ -1152,7 +1152,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'infectious-disease-test',
       species: 'dog',
       description:
-        '출국 30일 이내에 받은 검사 결과지예요.\n\n브루셀라, 트리파노소마, 바베시아, 심장사상충, 리슈만편모충 5가지 결과지가 필요해요.\n\n영문으로 발급받고 마이크로칩 번호가 적혀 있어야 해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+        '출국 전 30일 이내에 받은 검사 결과지예요.\n\n브루셀라, 트리파노소마, 바베시아, 심장사상충, 리슈만편모충 5가지 결과지가 필요해요.\n\n영문으로 발급받고 마이크로칩 번호가 적혀 있어야 해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'infectious-disease-test',
     },
     {
@@ -1175,7 +1175,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'manual',
       issuanceStepId: 'vet-visit',
       description:
-        '남아공 입국용 수의 건강증명서예요. 수입 허가와 함께 받은 양식을 써요.\n\n출국 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인·서명을 받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
+        '남아공 입국용 수의 건강증명서예요. 수입 허가와 함께 받은 양식을 써요.\n\n출국 전 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인·서명을 받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
     },
     {
       id: 'za-desexing-certificate',
@@ -1848,7 +1848,7 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
       // 설명문 = 하와이(hi-usda-health-cert)와 같은 2문장 — 같은 연방 절차라 지명만 다르다
       // (2026-07-26 사용자 지적으로 통일). 하와이 쪽이 사용자 확정문이라 그 문형을 따른다.
       description:
-        '미국에서 한국으로 귀국할 때 사용하는 국제 건강증명서예요.\n\n출국 30일 이내에 USDA 공인 수의사를 찾아가서 신청할 수 있어요.',
+        '미국에서 한국으로 귀국할 때 사용하는 국제 건강증명서예요.\n\n출국 전 30일 이내에 USDA 공인 수의사를 찾아가서 신청할 수 있어요.',
       previewStepId: 'us-export-health-cert',
       // 서식 다운로드는 두지 않는다(2026-07-26 사용자 결정) — USDA 서식은 별지25 모델(보호자가
       // 받아 병원 제출)이 아니라 공인 수의사가 VEHCS 에서 직접 작성·제출하는 문서다
@@ -1891,7 +1891,7 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
       // 설명문 = 사용자 확정 2문장(2026-07-26 불러준 그대로). 서식 다운로드는 두지 않는다
       // (수의사가 VEHCS 에서 직접 작성 — 미국 본토 주석 참고).
       description:
-        '하와이에서 한국으로 귀국할 때 사용하는 국제 건강증명서예요.\n\n출국 30일 이내에 USDA 공인 수의사를 찾아가서 신청할 수 있어요.',
+        '하와이에서 한국으로 귀국할 때 사용하는 국제 건강증명서예요.\n\n출국 전 30일 이내에 USDA 공인 수의사를 찾아가서 신청할 수 있어요.',
       previewStepId: 'hi-export-health-cert',
     },
     KR_IMPORT_QUARANTINE_CERT,
@@ -1964,7 +1964,7 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '괌에서 한국으로 귀국할 때 사용하는 국제 건강증명서예요.\n\n출국 30일 이내에 USDA 공인 수의사를 찾아가서 신청할 수 있어요.',
+        '괌에서 한국으로 귀국할 때 사용하는 국제 건강증명서예요.\n\n출국 전 30일 이내에 USDA 공인 수의사를 찾아가서 신청할 수 있어요.',
       previewStepId: 'us-export-health-cert',
     },
     KR_IMPORT_QUARANTINE_CERT,

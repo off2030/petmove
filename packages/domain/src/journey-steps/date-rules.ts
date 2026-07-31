@@ -879,11 +879,11 @@ export const PARASITE_DEPARTURE_WINDOWS: Record<
   string,
   { maxGap: number; windowLabel: string; kinds: Array<'external' | 'internal'> }
 > = {
-  turkey: { maxGap: 30, windowLabel: '출국 30일 이내', kinds: ['external', 'internal'] },
+  turkey: { maxGap: 30, windowLabel: '출국 전 30일 이내', kinds: ['external', 'internal'] },
   mexico: { maxGap: 180, windowLabel: '멕시코 도착 6개월 이내', kinds: ['external', 'internal'] },
-  brazil: { maxGap: 14, windowLabel: '출국 15일 이내', kinds: ['external', 'internal'] },
-  uae: { maxGap: 13, windowLabel: '출국 14일 이내', kinds: ['external', 'internal'] },
-  hawaii: { maxGap: 13, windowLabel: '출국 14일 이내', kinds: ['external'] },
+  brazil: { maxGap: 14, windowLabel: '출국 전 15일 이내', kinds: ['external', 'internal'] },
+  uae: { maxGap: 13, windowLabel: '출국 전 14일 이내', kinds: ['external', 'internal'] },
+  hawaii: { maxGap: 13, windowLabel: '출국 전 14일 이내', kinds: ['external'] },
   // 괌 — 내·외부 기생충 + 심장사상충을 '도착 14일 이내'에 함께 처치한다(www 괌 가이드·gu.ts).
   //   주의만 있고 저장 거부가 없으면 창 밖 날짜가 그대로 저장된다(2026-07-25 5개국 사고와 같은 구멍).
   guam: { maxGap: 13, windowLabel: '괌 도착 14일 이내', kinds: ['external', 'internal'] },
@@ -900,7 +900,7 @@ export const PARASITE_DEPARTURE_WINDOWS: Record<
   //   ⛔ 외부구충(external)은 넣지 않는다 — 뉴질랜드 요건(2.2(2))은 1차가 **바베시아 채혈
   //     14일 전**이라 출국일 앵커가 아니고, 1차는 30일보다 훨씬 이를 수 있다(채혈이 출국 30일
   //     전이면 1차는 최소 44일 전). 창으로 막으면 규정대로 준비한 케이스를 거부한다.
-  new_zealand: { maxGap: 30, windowLabel: '출국 30일 이내', kinds: ['internal'] },
+  new_zealand: { maxGap: 30, windowLabel: '출국 전 30일 이내', kinds: ['internal'] },
   // 남아공 — **외부(진드기·흡혈곤충)만**. HA2123 6.2 "within 30 days before **departure**" —
   //   앵커가 출국일이라 그대로 30(2026-07-30 원문 확인. 구 29 는 도착일 앵커로 오해한 값).
   //   ⛔ 심장사상충(internal 로 dispatch 된다)은 넣지 않는다 — 남아공 요건은 "음성 채혈일부터
@@ -908,7 +908,7 @@ export const PARASITE_DEPARTURE_WINDOWS: Record<
   //     한 달 전 투약 같은 정상 일정을 거부한다. 시작 시점은 주의 룰
   //     (za.heartworm-same-day-as-infectious-test)이 판정한다.
   //   ⛔ 내부구충은 남아공 요건 자체가 없다(카드도 없다).
-  south_africa: { maxGap: 30, windowLabel: '출국 30일 이내', kinds: ['external'] },
+  south_africa: { maxGap: 30, windowLabel: '출국 전 30일 이내', kinds: ['external'] },
 }
 
 function validateParasiteWithinDays(
@@ -1746,7 +1746,7 @@ export const EXTERNAL_PARASITE_START_WINDOWS: Record<string, { dog: number; cat:
  *   DAFF 기준이 "제조사 지침대로"라 제품마다 다르고, 앱은 제품별 재적용 간격표가 없다.
  *   30일(개)·21일(개월 아님) 같은 임의 근사로 판정하면 규정대로 준비한 케이스를 잘못 잡거나
  *   (프론트라인 진드기 14일) 반대로 끊긴 걸 통과시킨다. 근거 없는 판정은 넣지 않는다.
- *   ⚠️ 뉴질랜드의 '마지막 처치는 출국 16일 이내'는 다르다 — IHS 2.2(2) 명문 규정이라 유지한다.
+ *   ⚠️ 뉴질랜드의 '마지막 처치는 출국 전 16일 이내'는 다르다 — IHS 2.2(2) 명문 규정이라 유지한다.
  *
  * client(getSaveBlockError)·procedure-check(au.external-parasite-protocol-…) 공용 단일 출처.
  * 출국일이 비면 통과.
@@ -1998,7 +1998,7 @@ export function validateCivDoseInterval(dates: string[]): string | null {
  * 그래서 날짜 검증도 회차 사이 관계를 본다:
  *
  *   · 순서 — 2차가 1차보다 빠를 수 없다.
- *   · 2차(마지막)는 **출국 16일 이내** — 2.2(2)(b) 명문.
+ *   · 2차(마지막)는 **출국 전 16일 이내** — 2.2(2)(b) 명문.
  *
  * ⛔ **1차→2차 상한(구 28일)을 되살리지 말 것**(2026-07-30 사용자 확정으로 삭제).
  *   2.2(2)(c) '1차부터 출국일까지 연속 보호'를 "승인 제품 중 진드기 지속 최장이 4주"라는
@@ -2015,7 +2015,7 @@ export function validateCivDoseInterval(dates: string[]): string | null {
 export const NZ_EXTERNAL_PARASITE = { lastWithinDays: 16 }
 
 /**
- * 뉴질랜드 외부구충 — **마지막 처치는 출국 16일 이내**(IHS 2.2(1)(a) 고양이 / 2.2(2)(b) 개).
+ * 뉴질랜드 외부구충 — **마지막 처치는 출국 전 16일 이내**(IHS 2.2(1)(a) 고양이 / 2.2(2)(b) 개).
  *
  * 고양이는 규정상 1회라 그 한 번이 곧 마지막 처치인데, 개용 2회 판정
  * (validateNzExternalSecondDose)은 기록이 2건일 때만 돌아 **고양이가 판정에서 빠져 있었다**
@@ -2034,7 +2034,7 @@ export function validateNzExternalLastDose(
   if (toDep === null) return null
   if (toDep < 0) return '외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.'
   if (toDep > NZ_EXTERNAL_PARASITE.lastWithinDays) {
-    return `외부 기생충 치료는 출국 ${NZ_EXTERNAL_PARASITE.lastWithinDays}일 이내에 해야 해요.`
+    return `외부 기생충 치료는 출국 전 ${NZ_EXTERNAL_PARASITE.lastWithinDays}일 이내에 해야 해요.`
   }
   return null
 }
@@ -2058,7 +2058,7 @@ export function validateNzExternalSecondDose(
     return '외부 기생충 치료일이 출국일보다 늦어요. 날짜를 확인하세요.'
   }
   if (toDep !== null && toDep > NZ_EXTERNAL_PARASITE.lastWithinDays) {
-    return `2차 외부 기생충 치료는 출국 ${NZ_EXTERNAL_PARASITE.lastWithinDays}일 이내에 해야 해요.`
+    return `2차 외부 기생충 치료는 출국 전 ${NZ_EXTERNAL_PARASITE.lastWithinDays}일 이내에 해야 해요.`
   }
   return null
 }
@@ -2092,7 +2092,7 @@ export function validateNzInfectiousTestAfterExternal(
 }
 
 /**
- * 뉴질랜드 '출국 5일 이내' 처치 — 폐충(IHS 2.4)·심장사상충 예방(2.11(2)(a)) 공용.
+ * 뉴질랜드 '출국 전 5일 이내' 처치 — 폐충(IHS 2.4)·심장사상충 예방(2.11(2)(a)) 공용.
  *
  * 원문(2026-07-30 IHS 2026 전문 재확인):
  *   · 2.4 Angiostrongylus vasorum **(dogs)** — "treated ... with a product listed in MPI-STD-SAA
@@ -2132,7 +2132,7 @@ export function validateNzWithin5Days(
   if (days === null) return null
   if (days < 0) return `${label}일이 출국일보다 늦어요. 날짜를 확인하세요.`
   if (days > NZ_WITHIN_5_DAYS) {
-    return `${label}${topicParticle(label)} 출국 ${NZ_WITHIN_5_DAYS}일 이내에 해야 해요.`
+    return `${label}${topicParticle(label)} 출국 전 ${NZ_WITHIN_5_DAYS}일 이내에 해야 해요.`
   }
   return null
 }
@@ -2194,7 +2194,7 @@ export function requiredParasiteDoses(
  * 호주 내부구충 2회 프로토콜 저장 거부 — **2회가 다 들어왔을 때만** 본다(2026-07-28 확정).
  *
  *   ① 두 치료 간격 ≥ 14일 — DAFF 7.7 "spaced at least 14 days apart"
- *   ② 2차는 출국 5일 이내 — "The second treatment must be given within 5 days before export"
+ *   ② 2차는 출국 전 5일 이내 — "The second treatment must be given within 5 days before export"
  *
  * ⛔ '45일 이내'·'출국일보다 늦음'은 여기서 보지 않는다 — 이미
  *   validateParasiteDateForDestination(PARASITE_DEPARTURE_WINDOWS.australia, kinds:['internal'])
@@ -2258,15 +2258,15 @@ export const INFECTIOUS_TEST_DEPARTURE_WINDOWS: Record<
     arrivalMaxGap?: number
   }
 > = {
-  australia: { maxGap: 45, windowLabel: '출국 45일 이내' },
-  new_zealand: { maxGap: 30, windowLabel: '출국 30일 이내' },
+  australia: { maxGap: 45, windowLabel: '출국 전 45일 이내' },
+  new_zealand: { maxGap: 30, windowLabel: '출국 전 30일 이내' },
   // 남아공만 규정 앵커가 **도착일**이다 — HA2123 5항 "within 30 days from date of sample
   //   collection to the **date of import**". 도착일을 알면(검역 시작일 = 도착일) 규정 그대로
   //   30일로 판정하고, 모르면 출국일 기준 29일로 폴백한다(비행 하루치 여유 — 도착이 출국
   //   다음 날이어도 30일을 안 넘긴다).
   //   ⚠️ 라벨이 폴백 판정값(29)과 다른 건 **의도한 것**이다. 어느 경로로 걸리든 보호자에게는
   //     규정 그대로 말한다(2026-07-30 사용자 지적 — 카드는 30, 경고는 29로 어긋나 있었다).
-  //   ⚠️ 라벨에 **나라 이름을 넣지 않는다** — 호주('출국 45일 이내')·뉴질랜드('출국 30일
+  //   ⚠️ 라벨에 **나라 이름을 넣지 않는다** — 호주('출국 전 45일 이내')·뉴질랜드('출국 30일
   //     이내')와 같은 꼴이어야 한다. 어차피 그 나라 카드에서만 뜨는 문구다
   //     (2026-07-31 사용자 지적으로 '남아프리카공화국 도착일 기준…'에서 뺐다).
   south_africa: {

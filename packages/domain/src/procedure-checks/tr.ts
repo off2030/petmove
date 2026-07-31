@@ -343,7 +343,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
     id: 'tr.external-parasite-within-30days',
     country: COUNTRY,
     category: '기생충',
-    title: '외부 기생충 치료는 출국 30일 이내',
+    title: '외부 기생충 치료는 출국 전 30일 이내',
     description:
       '가이드: 내외부 기생충 치료를 "여행 30일 이내에 실시". 진드기에 효과적인 제제. 가장 최근 처치일이 출국일로부터 30일 이내여야 한다.',
     severity: 'warning',
@@ -375,7 +375,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
     id: 'tr.internal-parasite-within-30days',
     country: COUNTRY,
     category: '기생충',
-    title: '내부 기생충 치료는 출국 30일 이내',
+    title: '내부 기생충 치료는 출국 전 30일 이내',
     description:
       '가이드: 내외부 기생충 치료를 "여행 30일 이내에 실시". 촌충(Echinococcus)에 효과적인 구충제. 가장 최근 처치일이 출국일로부터 30일 이내여야 한다.',
     severity: 'warning',

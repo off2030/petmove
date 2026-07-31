@@ -45,7 +45,7 @@ import {
  *  - 마이크로칩 (영구, ISO 11784/11785 운용)
  *  - 광견병: 저위험국발 12주(보수 91일 AND 캘린더 3개월) + 1차/단절 시 21일 대기 + 출국일 면역 유효
  *  - 종합백신: 백신 기록 (개 DHPP+L / 고양이 FVRCP), 출국 21일 전 접종 (운용 표준)
- *  - 구충 (외부·내부): 출국 14일 이내 (MOCCAE: "preventive doses ... during the 14 days prior to shipment")
+ *  - 구충 (외부·내부): 출국 전 14일 이내 (MOCCAE: "preventive doses ... during the 14 days prior to shipment")
  *  - 건강증명서: 출국일 10일 이내 (보수 ≤9)
  *  - Import Permit (MOCCAE 사전 발급, 90일 유효)
  *  - 개인당 연간 2마리 한도

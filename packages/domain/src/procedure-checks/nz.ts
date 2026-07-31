@@ -62,11 +62,11 @@ import {
  *      (2.9(2)(a)(i)). 종합·켄넬코프에 붙어 있던 10일 cushion 도 근거가 없어 삭제.
  *   ④ **내부구충 2차 4일 → 5일**(2.3(1)(b)), **심장사상충 투약 4일 → 5일**(2.11(2)(a)).
  *   ⑤ **외부구충이 '1차 30일 이내 + 2차 2일 이내'였다.** 신 IHS 2.2(2)는 기준이 다르다 —
- *      1차는 **바베시아 채혈 14일 전까지**, 마지막은 **출국 16일 이내**.
+ *      1차는 **바베시아 채혈 14일 전까지**, 마지막은 **출국 전 16일 이내**.
  *   ⑥ **전염병 검사 16일 → 30일**(2.7·2.8·2.12·2.13 모두 "in the 30 days before shipment").
  *   ⑦ **CIV 가 '의무 아님'으로 적혀 있었다.** 신 IHS 2.9(2)는 위험국 목록(MPI-STD-SAA)에
  *      한국을 넣었다 — 지원문서 제목 그대로 "Dogs from Canada, Korea (Republic) and USA only".
- *      **접종 또는 출국 10일 이내 PCR** 중 하나가 필수다.
+ *      **접종 또는 출국 전 10일 이내 PCR** 중 하나가 필수다.
  *   ⑧ 종합백신·켄넬코프는 **MPI 요건이 아니다**(계류시설 요구사항) → 날짜 룰 삭제.
  *   ⑨ severity 를 전부 info → warning 으로(타임라인 '주의'에 뜨게). 신설: 마이크로칩 인증 이후
  *      절차인 항체 순서·수입허가·계류 예약·도착 검역·수입 금지 품종.
@@ -712,7 +712,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
   },
 
   // ── 독감(CIV) — 한국 출발 강아지 필수 ──
-  // IHS 2.9(2) — CIV 위험국(MPI-STD-SAA 등재) 출발 개는 **백신 또는 출국 10일 이내 PCR** 중
+  // IHS 2.9(2) — CIV 위험국(MPI-STD-SAA 등재) 출발 개는 **백신 또는 출국 전 10일 이내 PCR** 중
   //   하나가 필수다. 앱은 백신 기록만 저장하므로, PCR 을 택한 케이스는 이 카드가 비어 있고
   //   두 룰 모두 SKIP 된다(빈 입력에 경고를 띄우지 않는다).
   {
@@ -779,7 +779,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     id: 'nz.infectious-disease-test-within-30days',
     country: COUNTRY,
     category: '검사',
-    title: '전염병 검사는 출국 30일 이내 (강아지)',
+    title: '전염병 검사는 출국 전 30일 이내 (강아지)',
     description:
       '바베시아 깁소니(2.7 IFA·ELISA + PCR) · 리슈만편모충(2.12) · 렙토스피라 Canicola MAT(2.13) · 브루셀라(2.8, 중성화 안 한 개체) 가 **모두** "in the 30 days before the date of shipment" 다. ⚠️ 구 룰은 16일이었다(구 IHS 값, 2026-07-27 정정). 생후 6개월 미만 개의 3회 PCR 대안(44일 창)은 앱이 회차를 구분하지 않아 판정하지 않는다.',
     severity: 'warning',
@@ -844,7 +844,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     id: 'nz.external-parasite-protocol',
     country: COUNTRY,
     category: '구충',
-    title: '외부구충 2회 (1차는 바베시아 채혈 14일 전, 마지막은 출국 16일 이내)',
+    title: '외부구충 2회 (1차는 바베시아 채혈 14일 전, 마지막은 출국 전 16일 이내)',
     description:
       'IHS 2.2(2) — 개는 진드기·벼룩 제품으로 **두 번** 처치한다. (a) 1차는 바베시아 채혈 **14일 전까지**, (b) 마지막은 출국 **16일 이내**, (c) 1차부터 출국일까지 제조사 지침대로 연속 보호, (d) 매 처치 시점과 출국 2일 전 검진에서 외부 기생충이 없어야 한다. ⚠️ 구 룰은 "1차 30일 이내 + 2차 2일 이내"였다(구 IHS 값, 2026-07-27 정정). (a) 는 짝 룰(nz.infectious-disease-test-after-external-parasite)이 채혈 쪽에서 판정한다 — 여기서 또 잡으면 같은 경고가 두 번 뜬다. (c) 연속 보호는 제품마다 지속일이 달라 판정하지 않는다.',
     severity: 'warning',
@@ -869,11 +869,11 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         }
       }
       // '마지막 치료'는 강아지에선 **2차**다 — 1차만 있는 동안 이 판정을 돌리면 1차를 마지막으로
-      //   보고 "출국 16일 이내에 해야 해요"가 뜬다. 2차를 기다리는 정상 상태에 대고 경고하는
+      //   보고 "출국 전 16일 이내에 해야 해요"가 뜬다. 2차를 기다리는 정상 상태에 대고 경고하는
       //   꼴이라(2026-07-29 발견) 2회가 다 들어온 뒤에만 본다. 고양이는 2.2(1) 로 1회라
       //   그 한 번이 곧 마지막이므로 그대로 판정한다.
       if (species(caseRow) === 'dog' && entries.length < 2) return SKIP
-      // 강아지 2회 — 1차 후 28일 이내 + 출국 16일 이내를 **저장 거부와 같은 함수**로 본다
+      // 강아지 2회 — 1차 후 28일 이내 + 출국 전 16일 이내를 **저장 거부와 같은 함수**로 본다
       //   (2026-07-30 사용자 지정으로 저장 거부 신설). 저장 뒤에 출국일이나 1차를 고쳐
       //   어긋난 경우를 표면화하는 짝 주의다.
       if (species(caseRow) === 'dog') {
@@ -913,7 +913,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '내부구충 2회 (1차 30일 이내, 14일 이상 간격, 2차 5일 이내)',
     description:
-      'IHS 2.3(1) — 선충·조충(Echinococcus 포함) 제품으로 두 번. "The first treatment must be given in the 30 days before the date of shipment and at least 14 days before the second treatment ... The second treatment must be given in the **5 days** before the date of shipment." ⚠️ 구 룰의 2차 4일은 구 IHS 값이다(2026-07-27 정정). 폐충(Angiostrongylus vasorum, 2.4)도 출국 5일 이내라 2차와 같은 방문에서 함께 처치한다.',
+      'IHS 2.3(1) — 선충·조충(Echinococcus 포함) 제품으로 두 번. "The first treatment must be given in the 30 days before the date of shipment and at least 14 days before the second treatment ... The second treatment must be given in the **5 days** before the date of shipment." ⚠️ 구 룰의 2차 4일은 구 IHS 값이다(2026-07-27 정정). 폐충(Angiostrongylus vasorum, 2.4)도 출국 전 5일 이내라 2차와 같은 방문에서 함께 처치한다.',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
@@ -933,11 +933,11 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       const issues: string[] = []
       const offending: string[] = []
       if (dep1 === null || dep1 < 0 || dep1 > 30) {
-        issues.push('1차 치료는 출국 30일 이내여야 해요.')
+        issues.push('1차 치료는 출국 전 30일 이내여야 해요.')
         offending.push(`internal_parasite_dates[${dose1.originalIndex}].date`)
       }
       if (dep2 === null || dep2 < 0 || dep2 > 5) {
-        issues.push('2차 치료는 출국 5일 이내여야 해요.')
+        issues.push('2차 치료는 출국 전 5일 이내여야 해요.')
         offending.push(`internal_parasite_dates[${dose2.originalIndex}].date`)
       }
       if (interval === null || interval < 14) {
@@ -962,7 +962,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     id: 'nz.lungworm-within-5days',
     country: COUNTRY,
     category: '구충',
-    title: '폐충 치료는 출국 5일 이내',
+    title: '폐충 치료는 출국 전 5일 이내',
     description:
       'IHS 2.4 Angiostrongylus vasorum **(dogs)** — "The dog must be treated by a veterinarian with a product listed in MPI-STD-SAA effective against Angiostrongylus vasorum, **in the 5 days before the date of shipment**". 신 IHS 2026 에서 새로 들어온 항목이다. 내부구충 2차와 시점이 같아 같은 방문에서 끝나지만 **약이 다르다**(구충약이 폐충까지 커버하지 않는 경우가 많다). 저장 거부(validateNzWithin5Days)와 **같은 함수**를 본다 — 2026-07-30 사용자 지정으로 주의만 두던 것을 차단으로 올렸다.',
     severity: 'warning',
@@ -999,7 +999,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     id: 'nz.heartworm-treatment-within-5days',
     country: COUNTRY,
     category: '구충',
-    title: '심장사상충 예방은 출국 5일 이내 (강아지)',
+    title: '심장사상충 예방은 출국 전 5일 이내 (강아지)',
     description:
       'IHS 2.11(2) Heartworm **(dogs)** — "All dogs must be either: (a) Treated by a veterinarian with a product listed in MPI-STD-SAA for heartworm prevention **in the 5 days before the date of shipment**; or (b) Up to date with a **sustained-release injection** ...". 카드가 **예방만** 담당하게 분리된 뒤(2026-07-30 사용자 지정) 이 창을 볼 수 있게 됐다 — 그전엔 같은 배열에 검사일이 섞여 바깥 창인 30일만 판정했다. 검사(30일 이내)는 전염병 검사 카드가 담당한다(시기가 같아 그쪽으로 옮겼다). 저장 거부(validateNzWithin5Days)와 **같은 함수**를 본다. ⚠️ (b) 지속형 주사 케이스는 이 창을 따르지 않지만 앱이 제품 유효기간을 몰라 함께 거부된다 — 2026-07-30 사용자 판단으로 감수한 트레이드오프(카드 문구에서도 지속형 주사 안내를 뺐다).',
     severity: 'warning',

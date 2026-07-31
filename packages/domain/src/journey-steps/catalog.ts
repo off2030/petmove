@@ -881,7 +881,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // ── 귀국 서류 준비 (왕복 — 하와이 전용, USDA 승인 건강증명서) ────────────────
   // 하와이→한국 귀국은 '수출검역소 방문' 제도가 없다(AQS 는 수출 업무를 하지 않고 국제 이동은
   // USDA APHIS 관할 — dab.hawaii.gov FAQ). 미국 본토(us-export-health-cert)와 같은 구조:
-  // USDA 공인 수의사가 한국 전용 건강증명서를 작성하고 VEHCS 로 APHIS 승인(출국 30일 이내).
+  // USDA 공인 수의사가 한국 전용 건강증명서를 작성하고 VEHCS 로 APHIS 승인(출국 전 30일 이내).
   // EU·캐나다 '귀국 서류 준비'와 같은 dated-confirm 모델. 검증은 본토와 같은 함수
   // (validateUsExportHealthCertDate).
   // 카드명은 처음 '한국 입국용 건강증명서·USDA 승인'이었다가 EU·대만·캐나다의 '귀국 서류 준비'
@@ -899,7 +899,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '귀국 서류 준비',
     shortLabel: '귀국서류',
     description:
-      'USDA 승인 국제 건강증명서 또는 대체 서류를 준비하세요.\n\n출국 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 국제 건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n\n다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+      'USDA 승인 국제 건강증명서 또는 대체 서류를 준비하세요.\n\n출국 전 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 국제 건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n\n다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
     doneSummary: '귀국 서류를 준비했어요.',
     cardLine: '귀국 서류를 준비하세요.',
     applicability: { destinations: ['hawaii'], species: 'all', tripType: 'round' },
@@ -2073,7 +2073,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '동물검역소를 방문해 검역을 받으세요.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 120,
-    // 출국 전 검역소 방문 가능 구간 — 임상검사(vet-visit)와 동일한 '출국 10일 이내' 윈도우.
+    // 출국 전 검역소 방문 가능 구간 — 임상검사(vet-visit)와 동일한 '출국 전 10일 이내' 윈도우.
     deadline: { anchor: 'departure', daysBefore: 9, window: true },
     done: 'has-kr-export-quarantine',
     inputs: [
@@ -2118,7 +2118,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // ── 귀국 서류 준비 (왕복 — 미국 본토, USDA 승인 건강증명서) ────────────────
   // 미국 → 한국 귀국: 한국 입국용 건강증명서를 미국 공인 수의사에게 받고 USDA 승인을 받는다.
   // ⚠️ **하와이(hi-export-health-cert)와 같은 카드여야 한다** — 같은 연방 절차(USDA APHIS
-  //   VEHCS 배서·출국 30일 이내)라 지명 말고는 다를 이유가 없다. 2026-07-26 하와이만 '귀국
+  //   VEHCS 배서·출국 전 30일 이내)라 지명 말고는 다를 이유가 없다. 2026-07-26 하와이만 '귀국
   //   서류 준비' 가족(EU·대만·캐나다)으로 개명·재정렬되면서 본토가 혼자 옛 이름('미국 수출
   //   건강증명서')·옛 문형으로 남아 있던 것을 사용자 지적으로 맞췄다.
   //   설명문은 하와이 것을 **그대로** 쓴다(지명이 들어 있지 않아 본토에도 그대로 맞는다).
@@ -2129,7 +2129,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '귀국 서류 준비',
     shortLabel: '귀국서류',
     description:
-      'USDA 승인 국제 건강증명서 또는 대체 서류를 준비하세요.\n\n출국 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 국제 건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n\n다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+      'USDA 승인 국제 건강증명서 또는 대체 서류를 준비하세요.\n\n출국 전 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 국제 건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n\n다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
     doneSummary: '귀국 서류를 준비했어요.',
     cardLine: '귀국 서류를 준비하세요.',
     // 괌 — 미국령이라 **같은 연방 절차**(USDA 공인 수의사 → VEHCS → APHIS 승인)를 탄다.
@@ -2523,7 +2523,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '싱가포르 수출 검역',
     shortLabel: '수출',
     description:
-      '싱가포르 출국 전 수출 라이선스와 AVS 정부 수의사가 인증한 수의 건강증명서를 준비하세요.\n\n동물병원에서 검진을 받고 건강증명서를 발급받은 후 GoBusiness 포털로 수출 라이선스와 건강증명서 인증을 신청해요.\n\n건강증명서 원본은 AVS 서류 제출함(싱가포르 보타닉 가든 Raffles Building 1층, 24시간 이용)에 실물로 제출해요.\n\n2영업일 이내에 수출 라이선스와 AVS 정부 수의사가 인증한 수의 건강증명서가 발급돼요.\n\n수출 라이선스는 출국 90일 이내에 신청하고, 발급일로부터 90일간 유효해요.',
+      '싱가포르 출국 전 수출 라이선스와 AVS 정부 수의사가 인증한 수의 건강증명서를 준비하세요.\n\n동물병원에서 검진을 받고 건강증명서를 발급받은 후 GoBusiness 포털로 수출 라이선스와 건강증명서 인증을 신청해요.\n\n건강증명서 원본은 AVS 서류 제출함(싱가포르 보타닉 가든 Raffles Building 1층, 24시간 이용)에 실물로 제출해요.\n\n2영업일 이내에 수출 라이선스와 AVS 정부 수의사가 인증한 수의 건강증명서가 발급돼요.\n\n수출 라이선스는 출국 전 90일 이내에 신청하고, 발급일로부터 90일간 유효해요.',
     doneSummary: '싱가포르 수출 검역을 받았어요.',
     cardLine: '싱가포르 수출 검역을 받으세요.',
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'round' },
@@ -2739,7 +2739,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   //   'Application for Animal Health Certificate' **in person**"):
   //   · 창구 = Certification Desk (Counter No. 9), 5/F Cheung Sha Wan Government Offices,
   //     303 Cheung Sha Wan Road, Kowloon / 월~금 08:30–12:30 · 13:30–17:15
-  //   · 지참 = 개인 수의사 건강증명서(출국 10일 이내 발급) + 백신 기록 + (개)홍콩 견 등록증
+  //   · 지참 = 개인 수의사 건강증명서(출국 전 10일 이내 발급) + 백신 기록 + (개)홍콩 견 등록증
   //     + 수입 허가 등 원본 서류, 수수료
   //   · 오전 접수 → 다음날 오전 / 오후 접수 → 다음날 오후 수령
   // ⚠️ 미확인 — **공식 수의검사가 필요한 증명서는 검사일 최소 10영업일 전 예약**(2150 7062).
@@ -3520,8 +3520,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil/coreia-do-sul-out-22.pdf
     //   ⚠️ 이 PDF 는 WebFetch 로 본문 추출이 안 된다(스캔형 — 첫 조사 때 '근거 없음'으로
     //     잘못 판정했다가 사용자가 원문을 열어 정정). **못 읽었다고 근거가 없는 게 아니다.**
-    // ✅ **임상검사는 출국 10일 이내**(AS-1 Geral 서식). 같은 PDF.
-    //   ⚠️ 10일이 두 번 나오지만 **서로 다른 요건**이다 — ①임상검사가 출국 10일 이내
+    // ✅ **임상검사는 출국 전 10일 이내**(AS-1 Geral 서식). 같은 PDF.
+    //   ⚠️ 10일이 두 번 나오지만 **서로 다른 요건**이다 — ①임상검사가 출국 전 10일 이내
     //     ②CVI 가 서명일부터 10일 유효. 한쪽으로 합치지 말 것.
     // ✅ **한국은 전자 CVI(e-CVI) 대상이 아니다** — 「Sair do Brasil」 전자 발급 가능국 목록
     //   (미국·캐나다·칠레·콜롬비아·일본·멕시코·메르코수르·영국·EU·페루)에 한국이 없다.
@@ -3535,7 +3535,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       // 첫 줄은 형제 카드 문형(캄보디아·몽골·우즈베키스탄·우크라이나)에 맞춘다 —
       // '<나라> 출국 전 수출 검역을 받고 <서류명>을 발급받으세요.'
-      '브라질 출국 전 수출 검역을 받고 국제수의증명서(CVI)를 발급받으세요.\n\n먼저 현지 동물병원에서 출국 10일 이내에 임상검사를 받고 건강증명서를 받으세요.\n\n그 서류로 검역기관(VIGIAGRO) 사무소에 신청해 CVI를 발급받아요. 한국행은 전자 발급 대상이 아니라 반려동물과 함께 직접 방문해야 하고, 그 자리에서 마이크로칩을 판독해 확인해요.\n\n예약이 밀릴 수 있으니 사무소에 미리 연락해 방문 날짜를 잡으세요. CVI는 서명일로부터 10일간 유효해요.',
+      '브라질 출국 전 수출 검역을 받고 국제수의증명서(CVI)를 발급받으세요.\n\n먼저 현지 동물병원에서 출국 전 10일 이내에 임상검사를 받고 건강증명서를 받으세요.\n\n그 서류로 검역기관(VIGIAGRO) 사무소에 신청해 CVI를 발급받아요. 한국행은 전자 발급 대상이 아니라 반려동물과 함께 직접 방문해야 하고, 그 자리에서 마이크로칩을 판독해 확인해요.\n\n예약이 밀릴 수 있으니 사무소에 미리 연락해 방문 날짜를 잡으세요. CVI는 서명일로부터 10일간 유효해요.',
     doneSummary: '브라질 수출 검역을 받았어요.',
     cardLine: '브라질 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['brazil'], species: 'all', tripType: 'round' },
@@ -3678,7 +3678,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // ── 러시아 수출 검역 (왕복 — 귀국 출국 시) ────────────────────────────
   // ✅ 2026-07-23 조사로 구체화(사용자 지정). 러시아 수출은 **2단계**다:
   //   ① 거주 지역 **국립 수의서비스(государственная ветслужба)** 가 **수의증명서 Form 1** 발급
-  //      (출국 5일 이내). 광견병 등 접종·지역 무발생 확인.
+  //      (출국 전 5일 이내). 광견병 등 접종·지역 무발생 확인.
   //   ② 출국 공항 **연방수의식물위생감독청(Rosselkhoznadzor)** 이 Form 1 을 **국제수의증명서
   //      Form 5a** 로 **무료 교환**. 이게 한국행 최종 정부 수출증명서다.
   //   개·고양이 2마리 초과 시 Rosselkhoznadzor 수출 허가 별도(카드엔 안 담음 — 일반 케이스 1~2).
@@ -3689,7 +3689,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '러시아 수출 검역',
     shortLabel: '수출',
     description:
-      '러시아 출국 전 수출 검역을 받고 국제수의증명서(Form 5a)를 발급받으세요.\n\n거주 지역 국립 수의서비스에서 수의증명서(Form 1)를 출국 5일 이내에 발급받아요.\n\n출국 공항의 연방수의식물위생감독청(Rosselkhoznadzor)에서 Form 1을 국제수의증명서(Form 5a)로 교환해요.',
+      '러시아 출국 전 수출 검역을 받고 국제수의증명서(Form 5a)를 발급받으세요.\n\n거주 지역 국립 수의서비스에서 수의증명서(Form 1)를 출국 전 5일 이내에 발급받아요.\n\n출국 공항의 연방수의식물위생감독청(Rosselkhoznadzor)에서 Form 1을 국제수의증명서(Form 5a)로 교환해요.',
     doneSummary: '러시아 수출 검역을 받았어요.',
     cardLine: '러시아 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['russia'], species: 'all', tripType: 'round' },

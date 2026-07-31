@@ -297,7 +297,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
     id: 'hi.tick-treatment-within-14days',
     country: COUNTRY,
     category: '구충',
-    title: '외부구충은 출국 14일 이내 (13일 전 이후)',
+    title: '외부구충은 출국 전 14일 이내 (13일 전 이후)',
     // 고객 메시지는 멕시코·브라질·UAE 문형 통일(특정 기생충·제품 미지목). 상세(장시간 작용
     // 진드기 제품·Revolution 불가·건강증명서 기재)는 staff 설명에 보존(사용자 지정 2026-07-23).
     description:

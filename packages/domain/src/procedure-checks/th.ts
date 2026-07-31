@@ -49,7 +49,7 @@ import { msgGeneralVaccineExpiredBefore, msgMicrochipBeforeGeneralVaccine, msgMi
  *  - 종합백신 (개 DHPPL / 고양이 Panleukopenia 포함 FVRCP) 출발 21일 전 완료
  *  - **광견병 항체 검사 (RNATT)**: 태국 입국엔 비필수 (한국 귀국용은 별도 흐름)
  *  - R7 import permit: 출발 7영업일 ~ 60일 전 신청, 60일 유효 (별도 데이터 추적 미구현 → info)
- *  - 한국 APQA 검역: 출국 10일 이내 (보수 ≤9). DLD 자체 일자 명문 없음.
+ *  - 한국 APQA 검역: 출국 전 10일 이내 (보수 ≤9). DLD 자체 일자 명문 없음.
  *  - 핏불 계열 수입 금지
  *
  * 컨벤션 (NZ/HI/CN 와 동일):
@@ -363,7 +363,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     id: 'th.import-permit-within-60days',
     country: COUNTRY,
     category: '수입허가',
-    title: '수입 허가는 출국 60일 이내 신청',
+    title: '수입 허가는 출국 전 60일 이내 신청',
     description:
       'R7 수입 허가는 발급일로부터 60일 유효(th.ts 헤더) — 너무 일찍 신청하면 출국 전에 만료된다. 입력 차단과 같은 함수(validatePhImportPermitWithin60Days — 목적지 중립 60일 로직).',
     severity: 'warning',

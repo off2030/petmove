@@ -49,7 +49,7 @@ import { buildDateRuleContext, validateUsDogEntryDate } from '../journey-steps/d
  *    www 괌 가이드의 "검사 유효기간은 1년"과 같은 값. 프로파일 titer.entryValidityMonths 가 진실 출처)
  *  - 종합백신·켄넬코프: 도착 ≥10일 이전 + 1년 유효
  *  - 내·외부구충 + 심장사상충: 도착 14일 이내(`≤13`) 치료. Revolution 단독 진드기 처치 불가
- *  - 한국 APQA 검역: 출국 10일 이내(보수 ≤9)
+ *  - 한국 APQA 검역: 출국 전 10일 이내(보수 ≤9)
  *  - DOAG 서류 도착 10일 이전 수령 (Entry Permit $185~$244)
  *  - 격리 면제 위해 위 모든 조건 충족 (미충족 시 기본 120일 상업 격리)
  *
@@ -568,7 +568,7 @@ function buildWithin14DaysRule(opts: {
     id: opts.id,
     country: COUNTRY,
     category: '구충',
-    title: `${opts.label}은 출국 14일 이내(${'`≤13`'})`,
+    title: `${opts.label}은 출국 전 14일 이내(${'`≤13`'})`,
     description: `${opts.label} 가장 최근 처치가 출국일 14일 이내(\`≤13\`). (DOAG: "treated ... within 14 days of arrival on Guam")`,
     severity: 'warning',
     addedAt: '2026-05-06',

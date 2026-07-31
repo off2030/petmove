@@ -30,7 +30,7 @@ import { msgGeneralVaccineExpiredBefore, msgMicrochipBeforeGeneralVaccine, msgMi
  *    seven (7) days**" (DVS R2 Non-Scheduled 규정) — 도착 검역 카드에 명시.
  *  - **수입허가는 한국에서 신청 불가**. 현지 에이전시가 계류장 예약(최소 14일 전) 후 신청하고
  *    MAQIS 가 발급한다(가이드). 태국식 이메일 신청·R.6·60일 유효는 전부 걷어냈다.
- *  - 임상검사·수출검역 **출국 7일 이내**(가이드) → 프로파일 vetVisitWindowDays: 7.
+ *  - 임상검사·수출검역 **출국 전 7일 이내**(가이드) → 프로파일 vetVisitWindowDays: 7.
  *  - 항체검사는 입국 요건이 **아니다**(가이드: "필수가 아니지만 한국으로 돌아오는 경우는 필수").
  *
  * 확인 실패(값을 지어내지 않은 것):

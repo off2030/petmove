@@ -38,7 +38,7 @@ import { msgMicrochipBeforeGeneralVaccine, msgMicrochipBeforeRabies, msgRabiesPr
  *  - 종합백신 (개 DHPPL / 고양이 FVRCP): 1차는 SPSIC 신청 14일 전, 1년 유효, 부스터 즉시 가능
  *  - 내·외부구충: SPSIC 신청 기준 7~91일 (BAI MC 49 명시 의무)
  *  - 출국 시 만 4개월(120일) 이상 (SPSIC 신청 자격)
- *  - 한국 APQA 검역: 출국 10일 이내(보수 ≤9)
+ *  - 한국 APQA 검역: 출국 전 10일 이내(보수 ≤9)
  *  - SPSIC import permit: 60일 유효, 1회 3마리 한도
  *
  * RNATT: BAI 입국 의무 아님 (한국 귀국용 별도 흐름) → 검증 미적용.
@@ -376,7 +376,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     id: 'ph.import-permit-within-60days',
     country: COUNTRY,
     category: '수입허가',
-    title: '수입 허가는 출국 60일 이내 신청',
+    title: '수입 허가는 출국 전 60일 이내 신청',
     description:
       'SPSIC 은 발급일로부터 60일 유효 — 너무 일찍 신청하면 출국 전에 만료된다. 입력 차단과 같은 함수(validatePhImportPermitWithin60Days).',
     severity: 'warning',

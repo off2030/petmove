@@ -43,9 +43,9 @@ import { msgRabiesExpiredBefore, msgRabiesPrimeMinAge } from './messages'
  *  - 광견병: 마이크로칩 이후 · 생후 3개월(달력) 이후 · 출국 30일 전 이상(유효 부스터 면제) ·
  *    출국일이 유효기간(1년) 이내.
  *  - 항체 검사(RNATT) **없음** — 입국 요건이 아니고, 편도 전용이라 귀국용도 없다.
- *  - 5종 전염병 검사: 출국 30일 이내(≤29). 강아지 전용.
+ *  - 5종 전염병 검사: 출국 전 30일 이내(≤29). 강아지 전용.
  *  - 심장사상충 예방: 음성 검사 채혈일 이후 시작. 강아지 전용.
- *  - 진드기·흡혈곤충 처치: 출국 30일 이내. 강아지 전용.
+ *  - 진드기·흡혈곤충 처치: 출국 전 30일 이내. 강아지 전용.
  *  - 허가 2장(AIA · 수의검역)은 둘 다 **버튼 완료 카드**라 날짜 검증이 없다 —
  *    남는 건 순서(AIA → 수의검역)뿐이고 그건 importPermitPrerequisiteError 가 막는다.
  *  - 검역 시작일 ≥ 출국일.
@@ -288,7 +288,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '심장사상충 예방은 검사 채혈일과 같은 날 (강아지)',
     description:
-      '건강증명서 6.1 은 Dirofilaria immitis **음성 검체를 채취한 날부터 출국일까지** 예방을 유지하도록 요구한다("from the date of negative testing until export at the required intervals"). 그래서 **채혈일 당일에 첫 투약**이 있어야 요구 구간이 처음부터 덮인다 — 하루라도 늦으면 시작점에 구멍이 생긴다(2026-07-31 사용자 확정). 채혈일은 5종 검사 카드(infectious_disease_records)에서 읽는다 — 심장사상충 검사가 그 5종에 들어 있기 때문. ⚠️ **채혈일에 투약이 하나라도 있으면 통과**다(가장 이른 투약을 보지 않는다) — 평소 하던 월 1회 예방 기록이 앞에 있어도 그건 사실이라 경고 대상이 아니고, 채혈일 이후의 월 투약도 정상이다. ⚠️ 상한(출국 N일 이내)은 두지 않는다 — 남아공은 "출국일까지 끊기지 않게"만 요구하고 마지막 투약 시점을 규정하지 않는다(뉴질랜드 5일 창을 가져오지 말 것). 첫 투약이 출국 30일 이내인지는 채혈일이 그 창 안이므로(za.infectious-disease-within-29days) 자동으로 따라온다.',
+      '건강증명서 6.1 은 Dirofilaria immitis **음성 검체를 채취한 날부터 출국일까지** 예방을 유지하도록 요구한다("from the date of negative testing until export at the required intervals"). 그래서 **채혈일 당일에 첫 투약**이 있어야 요구 구간이 처음부터 덮인다 — 하루라도 늦으면 시작점에 구멍이 생긴다(2026-07-31 사용자 확정). 채혈일은 5종 검사 카드(infectious_disease_records)에서 읽는다 — 심장사상충 검사가 그 5종에 들어 있기 때문. ⚠️ **채혈일에 투약이 하나라도 있으면 통과**다(가장 이른 투약을 보지 않는다) — 평소 하던 월 1회 예방 기록이 앞에 있어도 그건 사실이라 경고 대상이 아니고, 채혈일 이후의 월 투약도 정상이다. ⚠️ 상한(출국 N일 이내)은 두지 않는다 — 남아공은 "출국일까지 끊기지 않게"만 요구하고 마지막 투약 시점을 규정하지 않는다(뉴질랜드 5일 창을 가져오지 말 것). 첫 투약이 출국 전 30일 이내인지는 채혈일이 그 창 안이므로(za.infectious-disease-within-29days) 자동으로 따라온다.',
     severity: 'warning',
     addedAt: '2026-07-31',
     run: ({ caseRow }) => {
@@ -330,7 +330,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
     id: 'za.external-parasite-within-30days',
     country: COUNTRY,
     category: '구충',
-    title: '외부 기생충 치료는 출국 30일 이내 (강아지)',
+    title: '외부 기생충 치료는 출국 전 30일 이내 (강아지)',
     description:
       '✅ 1차 출처 확인(2026-07-30) — HA2123 증명서 6.2 "Leishmania and Babesia gibsoni: the animals must be treated with an effective **acaricide** and with **insect repellent** registered in the exporting country, **within 30 days before departure**." 앵커가 출국일이고 창이 30일이라 gap ≤ 30 으로 판정한다(구 29 는 도착일 앵커로 오해해 하루 좁혀 둔 값이었다 — 2026-07-30 정정). 저장 거부(validateParasiteDateForDestination — PARASITE_DEPARTURE_WINDOWS.south_africa, kinds: [external])와 짝. ⚠️ 리포 초안이 "2026-03판에서 처치 항목 구성이 바뀌었다"고 유보했지만, 확인된 최신 서식(2024-11-14 개정)에는 이 조항이 그대로 있다. 발급받은 증명서가 최종 기준이라는 안내는 카드 문구에 남긴다.',
     severity: 'warning',

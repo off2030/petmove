@@ -45,7 +45,7 @@ import { msgMicrochipBeforeRabies, msgRabiesPrimeMinAge , msgTiterBeforeVaccine 
  *  ③ 항체 검사 ≥ 직전 접종 + 30일
  *  ④ 출국 ≥ 항체 검사 + 3개월 (캘린더 기준, 90일 아님)
  *  ⑤ 출국 시 광견병 면역 유효
- *  ⑥ 내원·증명서 ≤ 출국 10일 이내
+ *  ⑥ 내원·증명서 ≤ 출국 전 10일 이내
  *  ⑦ (촌충국가 한정) 촌충구충 24-120시간 (1-5일) 전
  *
  * 부스터 chain 만 유지되면 RNATT 결과는 무기한 유효 — 별도 만료 룰 없음.
