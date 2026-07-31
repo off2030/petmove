@@ -341,28 +341,40 @@ export const ZA_CHECKS: ProcedureCheck[] = [
       const entries = readExternalParasiteEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
-      const latest = entries[entries.length - 1]
-      const days = daysBetween(latest.date, dep)
-      if (days === null) return SKIP
       // 판정·문구 모두 **저장 거부와 같은 함수**로(2026-07-31 문구 일관성 정리). 직접 문구를
       //   적고 있어서 남아공만 다른 말을 했다 — 항목 이름은 옛 제목('진드기·흡혈곤충 처치'),
       //   창 문구는 다른 나라에 없는 둘째 문장('다시 처치해야 할 수 있어요')이 붙어 있었다.
       //   호주·터키·UAE 처럼 dispatch 하나만 부른다.
-      const blocked = validateParasiteDateForDestination(latest.date, {
-        destinationKey: COUNTRY,
-        kind: 'external',
-        departureDate: dep,
-      })
+      // ⚠️ **모든 기록**을 본다(2026-07-31 사용자 지정). 최근 것만 보면 2차를 넣었을 때
+      //   창 밖인 1차를 놓쳐, 저장 거부(client 는 모든 항목을 검사)보다 약해진다 —
+      //   앱에선 저장이 막히지만 펫무브워크에서 넣은 기록엔 경고가 안 뜨는 구멍이 됐다.
+      let blocked: string | null = null
+      let offender = entries[entries.length - 1]
+      for (const e of entries) {
+        const r = validateParasiteDateForDestination(e.date, {
+          destinationKey: COUNTRY,
+          kind: 'external',
+          departureDate: dep,
+        })
+        if (r) {
+          blocked = r
+          offender = e
+          break
+        }
+      }
       if (blocked) {
         return {
           ok: false,
           message: blocked,
           offendingPaths: [
-            `external_parasite_dates[${latest.originalIndex}].date`,
+            `external_parasite_dates[${offender.originalIndex}].date`,
             'departure_date',
           ],
         }
       }
+      const latest = entries[entries.length - 1]
+      const days = daysBetween(latest.date, dep)
+      if (days === null) return SKIP
       return {
         ok: true,
         message: `마지막 처치(${latest.date}) → 출국일(${dep}): ${days}일 (≤30일).`,

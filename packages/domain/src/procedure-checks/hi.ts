@@ -311,21 +311,32 @@ export const HI_CHECKS: ProcedureCheck[] = [
       const entries = readExternalParasiteEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
-      const latest = entries[entries.length - 1]
-      // 저장 거부(client)와 같은 dispatch 로 판정 — 검증 단일 출처. 처치일을 나중에 어긋나게
-      // 만든 경우를 여기서 '주의'로 재노출.
-      const err = validateParasiteDateForDestination(latest.date, {
-        destinationKey: destination,
-        kind: 'external',
-        departureDate: dep,
-      })
+      // ⚠️ **모든 기록**을 본다(2026-07-31 사용자 지정). 최근 것만 보면 2차를 넣었을 때
+      //   창 밖인 1차를 놓쳐, 저장 거부(client 는 모든 항목을 검사)보다 약해진다 —
+      //   앱에선 저장이 막히지만 펫무브워크에서 넣은 기록엔 경고가 안 뜨는 구멍이 됐다.
+      //   호주(2회 요구)가 이미 이 형태다.
+      let err: string | null = null
+      let offender = entries[entries.length - 1]
+      for (const e of entries) {
+        const r = validateParasiteDateForDestination(e.date, {
+          destinationKey: destination,
+          kind: 'external',
+          departureDate: dep,
+        })
+        if (r) {
+          err = r
+          offender = e
+          break
+        }
+      }
       if (err) {
         return {
           ok: false,
           message: err,
-          offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
+          offendingPaths: [`external_parasite_dates[${offender.originalIndex}].date`],
         }
       }
+      const latest = entries[entries.length - 1]
       const days = daysBetween(latest.date, dep)
       return { ok: true, message: `외부 기생충 치료(${latest.date}) → 출국일(${dep}): ${days}일.` }
     },
