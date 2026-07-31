@@ -83,6 +83,9 @@ const EXTRA_REDIRECTS = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // 검증용 dev 서버를 본 서버와 다른 빌드 폴더로 띄우기 위한 우회 (portal 과 같은 패턴).
+  // 평소엔 미설정 → 기본 .next 그대로.
+  distDir: process.env.PM_DIST_DIR || '.next',
   // 구 Ghost URL 이 전부 `/` 로 끝남 — 슬러그 보존의 핵심. /docs/japan-pet-travel-guide/ 형태 유지.
   trailingSlash: true,
   async redirects() {

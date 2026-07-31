@@ -97,6 +97,8 @@ export const COUNTRIES: Country[] = [
 export const countryGuideSlug = (c: Country) => `${c.slug}-pet-travel-guide`
 
 // ── 글 2개+ 여행지 = 칩 클릭 시 목록 패널. 총정리(docs) 첫 줄 고정, 제목 = 라이브 og:title ──
+// ⚠️ 총정리 1개뿐인 나라는 여기 넣지 말 것 — 명단에 없으면 칩이 총정리로 바로 이동한다
+//    (2026-07-31: 글 1개인 5개국이 잘못 들어가 '펼침→한 줄' 이중 클릭이 생겨 제거).
 export const COUNTRY_POSTS: Record<string, PostRef[]> = {
   japan: [
     { title: '일본 입국 준비 총정리', kind: 'docs', slug: 'japan-pet-travel-guide' },
@@ -126,24 +128,6 @@ export const COUNTRY_POSTS: Record<string, PostRef[]> = {
   thailand: [
     { title: '태국 입국 준비 총정리', kind: 'docs', slug: 'thailand-pet-travel-guide' },
     { title: '강아지 태국 입국 준비절차, 기간, 비용', kind: 'blog', slug: 'dog-travel-to-thailand' },
-  ],
-  // 말레이시아·인도네시아 — 앱 지원 시작(태국 복제, 2026-07-22). 블로그 글은 아직 없어 docs 만.
-  malaysia: [
-    { title: '말레이시아 입국 준비 총정리', kind: 'docs', slug: 'malaysia-pet-travel-guide' },
-  ],
-  indonesia: [
-    { title: '인도네시아 입국 준비 총정리', kind: 'docs', slug: 'indonesia-pet-travel-guide' },
-  ],
-  // 아르헨티나 — 앱 지원 시작(베트남 복제, 2026-07-22). 블로그 글은 아직 없어 docs 만.
-  argentina: [
-    { title: '아르헨티나 입국 준비 총정리', kind: 'docs', slug: 'argentina-pet-travel-guide' },
-  ],
-  // 러시아·튀르키예 — 앱 지원 시작(카자흐스탄 복제, 2026-07-22).
-  russia: [
-    { title: '러시아 입국 준비 총정리', kind: 'docs', slug: 'russia-pet-travel-guide' },
-  ],
-  turkey: [
-    { title: '튀르키예 입국 준비 총정리', kind: 'docs', slug: 'turkey-pet-travel-guide' },
   ],
   philippines: [
     { title: '필리핀 입국 준비 총정리', kind: 'docs', slug: 'philippines-pet-travel-guide' },
