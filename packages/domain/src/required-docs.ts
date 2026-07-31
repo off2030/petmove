@@ -1125,7 +1125,9 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   '남아프리카공화국': [
     {
       id: 'za-aia-permit-doc',
-      name: '남아공 AIA 수입 허가서',
+      // '허가서' → '허가증' — 같은 목적지의 다른 허가(남아공 수입 허가증)·호주·뉴질랜드가
+      //   모두 '허가증'이다(2026-07-31 명칭 검토).
+      name: '남아공 AIA 수입 허가증',
       source: '남아공 농업부(Animal Improvement Registrar)',
       kind: 'step',
       stepRef: 'za-aia-permit',
@@ -1155,17 +1157,10 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
         '출국 전 30일 이내에 받은 검사 결과지예요.\n\n브루셀라, 트리파노소마, 바베시아, 심장사상충, 리슈만편모충 5가지 결과지가 필요해요.\n\n영문으로 발급받고 마이크로칩 번호가 적혀 있어야 해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'infectious-disease-test',
     },
-    {
-      id: 'za-heartworm-record',
-      name: '심장사상충 예방 투약기록',
-      source: '동물병원',
-      kind: 'step',
-      stepRef: 'heartworm-test',
-      species: 'dog',
-      description:
-        '검사 채혈일부터 출국일까지 투약한 기록이에요.\n\n약 이름·용량·투여일이 적혀 있어야 해요. 건강증명서에 옮겨 적어요.\n\n도착 후 6개월분 약을 함께 가져갈 때 처방전으로도 쓰여요.',
-      previewStepId: 'heartworm-test',
-    },
+    // ⛔ 'za-heartworm-record'(심장사상충 예방 투약기록)를 다시 만들지 말 것 —
+    //   2026-07-31 사용자 지시로 삭제. 투약 기록은 건강증명서 6.1 칸에 옮겨 적는 내용이라
+    //   **따로 제출하는 서류가 아니다**. 기록 자체는 심장사상충 예방 카드(heartworm_dates)에
+    //   남고, 첨부가 필요하면 그 카드에 붙인다.
     // 접종 및 건강증명서(별지 제25호) — 한국 공식 양식(전 목적지 공통).
     KR_FORM25_VACCINATION_HEALTH_CERT,
     {
@@ -1196,7 +1191,8 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
     {
       id: 'za-indemnity-declaration',
-      name: '검역 면책동의서(Indemnity Declaration)',
+      // 카드·라벨이 전부 '계류'로 통일됐는데(2026-07-31) 서류명만 '검역'이었다.
+      name: '계류 면책동의서(Indemnity Declaration)',
       source: '보호자 작성',
       kind: 'step',
       stepRef: 'za-quarantine-reservation',

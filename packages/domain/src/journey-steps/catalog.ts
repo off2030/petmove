@@ -1450,7 +1450,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: 'AIA 수입 허가서를 사진·PDF로 보관하세요.',
-    attachmentLabel: '남아공 AIA 수입 허가서',
+    attachmentLabel: '남아공 AIA 수입 허가증',
   },
 
   // ── 남아공 검역시설 예약 (개 전용) — 수의검역 수입 허가 **발급 전** ───────────────
