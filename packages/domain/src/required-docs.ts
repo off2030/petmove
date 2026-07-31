@@ -1197,8 +1197,11 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'infectious-disease-test',
       species: 'dog',
+      // 사용자 확정본 2줄(2026-07-31 직접 지정). ⛔ 다듬지 말 것 — 뺀 줄이 둘이다:
+      //   · '출국 전 30일 이내에 받은 검사 결과지예요.'(여정 카드가 창을 안내한다)
+      //   · '영문으로 발급받고 마이크로칩 번호가 적혀 있어야 해요.'(같은 날 여정 카드에서도 뺐다)
       description:
-        '출국 전 30일 이내에 받은 검사 결과지예요.\n\n브루셀라, 트리파노소마, 바베시아, 심장사상충, 리슈만편모충 5가지 결과지가 필요해요.\n\n영문으로 발급받고 마이크로칩 번호가 적혀 있어야 해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+        '브루셀라, 트리파노소마, 바베시아, 심장사상충, 리슈만편모충 검사 결과지예요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'infectious-disease-test',
     },    KR_FORM25_VACCINATION_HEALTH_CERT,
     {
