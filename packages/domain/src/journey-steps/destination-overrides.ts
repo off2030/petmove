@@ -2207,7 +2207,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //   · '신청서와 수수료 납부증명을 함께 제출해요.'(사실은 맞다 — R250)
       //   · '한국을 출발하기 전에 허가가 나와 있어야 해요.'
       description:
-        '남아공 농업부 동물보건국(Director: Animal Health)에 수의검역 수입 허가를 신청하세요.\n\n승인 후 발급까지 3~5영업일이 걸려요.\n허가가 나오면 남아공 건강증명서(Veterinary Health Certificate) 양식도 함께 받아요.\n\n인터넷에 도는 예시 서류보다 **발급받은 허가서와 건강증명서에 적힌 조건이 항상 우선**이에요. 검사를 시작하기 전에 허가서부터 받으세요.',
+        '남아프리카공화국 농업부 동물보건국(Director: Animal Health)에 수의검역 수입 허가를 신청하세요.\n\n승인 후 발급까지 3~5영업일이 걸려요.\n허가가 나오면 남아프리카공화국 건강증명서(Veterinary Health Certificate) 양식도 함께 받아요.\n\n인터넷에 도는 예시 서류보다 **발급받은 허가서와 건강증명서에 적힌 조건이 항상 우선**이에요. 검사를 시작하기 전에 허가서부터 받으세요.',
       doneSummary: '남아프리카공화국 수입 허가를 받았어요.',
       cardLine: '남아프리카공화국 수입 허가를 신청하세요.',
       attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
@@ -2270,7 +2270,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         //   **두 줄짜리 조합**이다 — (IFAT 또는 BgTRAP ELISA) **AND** (김자염색 도말 또는
         //   real-time PCR). 뒷줄을 'real-time PCR'로만 적으면 도말 경로가 지워진다.
         description:
-          '남아공 도착일 기준 30일 이내에 5가지 전염병 검사를 받아요.\n\n브루셀라(Brucella canis) 검사를 받아요. 혈청응집반응(SAT) 또는 RSAT만 인정돼요.\n트리파노소마(Trypanosoma evansi) 검사를 받아요. 카드응집반응(CAT)과 김자염색 도말검사를 함께 받아요.\n바베시아(Babesia gibsoni) 검사를 받아요. IFAT 또는 BgTRAP 항원 ELISA를 받고, 김자염색 도말검사 또는 real-time PCR을 함께 받아요.\n심장사상충(Dirofilaria immitis) 검사를 받아요. 마이크로필라리아 여과법(microfilarial filtration test)만 인정돼요. 항원 검사만으로는 부족해요.\n리슈만편모충(Leishmania) 검사를 받아요. IFAT·ELISA·직접응집반응·웨스턴블롯 중 인정되는 방법으로 받아요.\n모든 검사는 남아프리카공화국 지정 검사기관에서 받아야 해요.\n일반 동물병원에서는 이 검사들을 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
+          '남아프리카공화국 도착일 기준 30일 이내에 5가지 전염병 검사를 받아요.\n\n브루셀라(Brucella canis) 검사를 받아요. 혈청응집반응(SAT) 또는 RSAT만 인정돼요.\n트리파노소마(Trypanosoma evansi) 검사를 받아요. 카드응집반응(CAT)과 김자염색 도말검사를 함께 받아요.\n바베시아(Babesia gibsoni) 검사를 받아요. IFAT 또는 BgTRAP 항원 ELISA를 받고, 김자염색 도말검사 또는 real-time PCR을 함께 받아요.\n심장사상충(Dirofilaria immitis) 검사를 받아요. 마이크로필라리아 여과법(microfilarial filtration test)만 인정돼요. 항원 검사만으로는 부족해요.\n리슈만편모충(Leishmania) 검사를 받아요. IFAT·ELISA·직접응집반응·웨스턴블롯 중 인정되는 방법으로 받아요.\n모든 검사는 남아프리카공화국 지정 검사기관에서 받아야 해요.\n일반 동물병원에서는 이 검사들을 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.',
         // ⛔ yieldsWhenInProgress 를 되살리지 말 것(2026-07-31 사용자 발견으로 제거).
         //   심장사상충(72)·외부구충(74)을 함께 띄우려고 켰던 건데, 그 둘이 **concurrent** 가 된
         //   뒤로는 head run 이 알아서 올린다(규칙 ①). 남은 효과는 사슬(규칙 ②)이 그 뒤의
@@ -2337,7 +2337,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       //       안내에서도 빠졌다. ⛔ 주의 룰을 만들지 말 것 — 판정할 데이터가 없다.
       'vet-visit': {
         description:
-          '출국 전 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 남아공 건강증명서(Veterinary Health Certificate)를 발급받아요.\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
+          '출국 전 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n\n접종 및 건강증명서(별지 제 25호 서식)와 남아프리카공화국 건강증명서(Veterinary Health Certificate)를 발급받아요.\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
       },
     },
   }),

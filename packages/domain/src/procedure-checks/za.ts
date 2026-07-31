@@ -91,7 +91,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 생후 3개월령(캘린더) 이상',
     description:
-      '광견병 1차 접종은 생년월일 기준 캘린더 3개월(`addMonths(birth, 3)`) 이후. ✅ 1차 출처 확인(2026-07-30) — HA2123 증명서 4항이 "for animals **over 3 months**"와 "for animals **under 3 months**"(모견 접종란)로 갈리고, 각주 1) d)가 "Animals under 3 months of age **may not be vaccinated**"라고 못박는다. 달력 개월이므로 91일 근사 대신 정확한 월 계산 — 일수로 환산하면 생월에 따라 89~92일로 흔들려 규정을 지킨 케이스를 막는다(괌·베트남과 같은 처리). ⚠️ 각주 1) d) 의 모견 예외(3개월 미만 개체는 모견이 출산 30일~12개월 전에 접종했으면 유효한 접종으로 간주, 남아공 도착 후 3개월령에 접종)는 **판정하지 않는다** — 앱이 모견 접종 기록을 저장하지 않는다.',
+      '광견병 1차 접종은 생년월일 기준 캘린더 3개월(`addMonths(birth, 3)`) 이후. ✅ 1차 출처 확인(2026-07-30) — HA2123 증명서 4항이 "for animals **over 3 months**"와 "for animals **under 3 months**"(모견 접종란)로 갈리고, 각주 1) d)가 "Animals under 3 months of age **may not be vaccinated**"라고 못박는다. 달력 개월이므로 91일 근사 대신 정확한 월 계산 — 일수로 환산하면 생월에 따라 89~92일로 흔들려 규정을 지킨 케이스를 막는다(괌·베트남과 같은 처리). ⚠️ 각주 1) d) 의 모견 예외(3개월 미만 개체는 모견이 출산 30일~12개월 전에 접종했으면 유효한 접종으로 간주, 남아프리카공화국 도착 후 3개월령에 접종)는 **판정하지 않는다** — 앱이 모견 접종 기록을 저장하지 않는다.',
     severity: 'warning',
     addedAt: '2026-07-30',
     run: ({ caseRow }) => {
@@ -165,7 +165,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일에 광견병 면역 유효기간이 남아있어야 함',
     description:
-      '남아공은 "출국 12개월 이내 접종"을 요구한다 = 출국일이 최근 접종의 유효기간(달력 1년, 1주년 당일 포함) 안이어야 한다. 만료됐으면 재접종이 필요하고, 재접종은 새 1차라 30일 대기가 다시 붙는다(za.rabies-min-30days-before-departure).',
+      '남아프리카공화국은 "출국 12개월 이내 접종"을 요구한다 = 출국일이 최근 접종의 유효기간(달력 1년, 1주년 당일 포함) 안이어야 한다. 만료됐으면 재접종이 필요하고, 재접종은 새 1차라 30일 대기가 다시 붙는다(za.rabies-min-30days-before-departure).',
     severity: 'warning',
     addedAt: '2026-07-30',
     run: ({ caseRow, destination }) => {
@@ -216,7 +216,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '1년 라이선스 광견병 백신만 인정 (2·3년 거부)',
     description:
-      '남아공은 라이선스 기간과 무관하게 **입국 12개월 이내 접종**을 요구하므로 유효기간을 1년만 인정한다. valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부. 프로파일 rabies.oneYearVaccineOnly 선언이 저장 거부(펫무브앱 YearSelect 비활성)의 출처이고, 이 룰이 그 짝이다.',
+      '남아프리카공화국은 라이선스 기간과 무관하게 **입국 12개월 이내 접종**을 요구하므로 유효기간을 1년만 인정한다. valid_until 이 접종일 + 1년(달력, 그날 포함) 초과면 거부. 프로파일 rabies.oneYearVaccineOnly 선언이 저장 거부(펫무브앱 YearSelect 비활성)의 출처이고, 이 룰이 그 짝이다.',
     severity: 'blocker',
     addedAt: '2026-07-30',
     run: ({ caseRow }) => {
@@ -250,7 +250,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
     category: '검사',
     title: '전염병 검사는 도착 30일 이내 (강아지)',
     description:
-      '5종 검사(Brucella canis · Trypanosoma evansi · Babesia gibsoni · Dirofilaria immitis · Leishmania) 채혈일이 **남아공 도착일** 기준 30일 이내여야 함 — HA2123 5항 "within 30 days from date of sample collection to the **date of import**". 도착일은 **검역 시작일**(za_quarantine_reservation_date, 검역시설 예약 카드)로 안다. 그 값이 없으면 출국일 기준 29일로 폴백한다(비행 하루치 여유 — 도착이 출국 다음 날이어도 30일을 안 넘긴다). 저장 거부(validateInfectiousDiseaseTestDate)와 같은 함수 — INFECTIOUS_TEST_DEPARTURE_WINDOWS.south_africa 가 단일 출처. ⚠️ 룰 id 의 29days 는 폴백 값 잔재다(org_disabled_checks 에 저장되므로 그대로 둔다).',
+      '5종 검사(Brucella canis · Trypanosoma evansi · Babesia gibsoni · Dirofilaria immitis · Leishmania) 채혈일이 **남아프리카공화국 도착일** 기준 30일 이내여야 함 — HA2123 5항 "within 30 days from date of sample collection to the **date of import**". 도착일은 **검역 시작일**(za_quarantine_reservation_date, 검역시설 예약 카드)로 안다. 그 값이 없으면 출국일 기준 29일로 폴백한다(비행 하루치 여유 — 도착이 출국 다음 날이어도 30일을 안 넘긴다). 저장 거부(validateInfectiousDiseaseTestDate)와 같은 함수 — INFECTIOUS_TEST_DEPARTURE_WINDOWS.south_africa 가 단일 출처. ⚠️ 룰 id 의 29days 는 폴백 값 잔재다(org_disabled_checks 에 저장되므로 그대로 둔다).',
     severity: 'warning',
     addedAt: '2026-07-01',
     run: ({ caseRow, destination }) => {
@@ -288,7 +288,7 @@ export const ZA_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '심장사상충 예방은 검사 채혈일과 같은 날 (강아지)',
     description:
-      '건강증명서 6.1 은 Dirofilaria immitis **음성 검체를 채취한 날부터 출국일까지** 예방을 유지하도록 요구한다("from the date of negative testing until export at the required intervals"). 그래서 **채혈일 당일에 첫 투약**이 있어야 요구 구간이 처음부터 덮인다 — 하루라도 늦으면 시작점에 구멍이 생긴다(2026-07-31 사용자 확정). 채혈일은 5종 검사 카드(infectious_disease_records)에서 읽는다 — 심장사상충 검사가 그 5종에 들어 있기 때문. ⚠️ **채혈일에 투약이 하나라도 있으면 통과**다(가장 이른 투약을 보지 않는다) — 평소 하던 월 1회 예방 기록이 앞에 있어도 그건 사실이라 경고 대상이 아니고, 채혈일 이후의 월 투약도 정상이다. ⚠️ 상한(출국 N일 이내)은 두지 않는다 — 남아공은 "출국일까지 끊기지 않게"만 요구하고 마지막 투약 시점을 규정하지 않는다(뉴질랜드 5일 창을 가져오지 말 것). 첫 투약이 출국 전 30일 이내인지는 채혈일이 그 창 안이므로(za.infectious-disease-within-29days) 자동으로 따라온다.',
+      '건강증명서 6.1 은 Dirofilaria immitis **음성 검체를 채취한 날부터 출국일까지** 예방을 유지하도록 요구한다("from the date of negative testing until export at the required intervals"). 그래서 **채혈일 당일에 첫 투약**이 있어야 요구 구간이 처음부터 덮인다 — 하루라도 늦으면 시작점에 구멍이 생긴다(2026-07-31 사용자 확정). 채혈일은 5종 검사 카드(infectious_disease_records)에서 읽는다 — 심장사상충 검사가 그 5종에 들어 있기 때문. ⚠️ **채혈일에 투약이 하나라도 있으면 통과**다(가장 이른 투약을 보지 않는다) — 평소 하던 월 1회 예방 기록이 앞에 있어도 그건 사실이라 경고 대상이 아니고, 채혈일 이후의 월 투약도 정상이다. ⚠️ 상한(출국 N일 이내)은 두지 않는다 — 남아프리카공화국은 "출국일까지 끊기지 않게"만 요구하고 마지막 투약 시점을 규정하지 않는다(뉴질랜드 5일 창을 가져오지 말 것). 첫 투약이 출국 전 30일 이내인지는 채혈일이 그 창 안이므로(za.infectious-disease-within-29days) 자동으로 따라온다.',
     severity: 'warning',
     addedAt: '2026-07-31',
     run: ({ caseRow }) => {

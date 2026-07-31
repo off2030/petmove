@@ -1132,8 +1132,8 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       id: 'za-aia-permit-doc',
       // '허가서' → '허가증' — 같은 목적지의 다른 허가(남아공 수입 허가증)·호주·뉴질랜드가
       //   모두 '허가증'이다(2026-07-31 명칭 검토).
-      name: '남아공 AIA 수입 허가증',
-      source: '남아공 농업부(Animal Improvement Registrar)',
+      name: '남아프리카공화국 AIA 수입 허가증',
+      source: '남아프리카공화국 농업부(Animal Improvement Registrar)',
       kind: 'step',
       stepRef: 'za-aia-permit',
       species: 'dog',
@@ -1142,7 +1142,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       //   · '출국할 때도 원본이 함께 가야 해요.'
       //   · '대행업체를 이용했다면 허가 번호와 발급기관을 직접 확인하세요.'
       description:
-        '남아공 농업부 Animal Improvement Registrar에서 발급하는 서류예요.\n\n수의검역 수입 허가증과는 별개의 서류예요.\n\n수의검역 수입 허가 신청을 위해 필요해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '남아프리카공화국 농업부 Animal Improvement Registrar에서 발급하는 서류예요.\n\n수의검역 수입 허가증과는 별개의 서류예요.\n\n수의검역 수입 허가 신청을 위해 필요해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'za-aia-permit',
     },
     {
@@ -1167,12 +1167,12 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
     {
       id: 'za-import-permit-doc',
-      name: '남아공 수입 허가증(Veterinary Import Permit)',
-      source: '남아공 농업부 동물보건국',
+      name: '남아프리카공화국 수입 허가증(Veterinary Import Permit)',
+      source: '남아프리카공화국 농업부 동물보건국',
       kind: 'step',
       stepRef: 'import-permit',
       description:
-        '수입 허가 신청이 승인되면 발급돼요. 남아공 건강증명서 양식도 함께 받아요.\n\n한 번의 운송에만 쓸 수 있어요. 도착할 때 원본이나 당국이 인정하는 발급본을 제출해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '수입 허가 신청이 승인되면 발급돼요. 남아프리카공화국 건강증명서 양식도 함께 받아요.\n\n한 번의 운송에만 쓸 수 있어요. 도착할 때 원본이나 당국이 인정하는 발급본을 제출해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'import-permit',
     },
     {
@@ -1206,12 +1206,12 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },    KR_FORM25_VACCINATION_HEALTH_CERT,
     {
       id: 'za-entry-health-cert',
-      name: '남아공 건강증명서(Veterinary Health Certificate)',
+      name: '남아프리카공화국 건강증명서(Veterinary Health Certificate)',
       source: '동물병원 · 농림축산검역본부',
       kind: 'manual',
       issuanceStepId: 'vet-visit',
       description:
-        '남아공 입국용 수의 건강증명서예요. 수입 허가와 함께 받은 양식을 써요.\n\n출국 전 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인·서명을 받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
+        '남아프리카공화국 입국용 수의 건강증명서예요. 수입 허가와 함께 받은 양식을 써요.\n\n출국 전 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 검역 때 검역관의 확인·서명을 받아요.\n\n일반 동물병원에서는 이 서류를 발급하지 않아요. 동물병원 방문 전에 확인하세요.',
     },
     {
       id: 'za-kr-export-quarantine-cert',
