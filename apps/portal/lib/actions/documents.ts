@@ -20,6 +20,10 @@ import { assertCaseAccess, type Result } from './_shared'
 const BUCKET = 'attachments'
 
 function isAllowedMime(mime: string): boolean {
+  // SVG 는 이미지지만 스크립트를 담을 수 있어 제외(2026-08-01 보안 리뷰) — 인라인
+  // signed URL 로 열면 실행된다. 실행 오리진은 supabase.co 라 앱 세션과 격리되지만
+  // 저장 가치도 없는 형식이라 원천 차단.
+  if (mime === 'image/svg+xml') return false
   return mime.startsWith('image/') || mime === 'application/pdf'
 }
 

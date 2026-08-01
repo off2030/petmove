@@ -45,6 +45,22 @@ function deserializeFromHistory(storage: 'column' | 'data', raw: string | null):
 }
 
 /**
+ * undo/시점 복원용 — updateCaseField·updateCaseDataBulk 는 by_dest 저장을 history 에
+ * `by_dest:{destination}:{key}` 로 인코딩한다. 복원 시 이 형식을 파싱해 writeByDestValue 로
+ * 그 목적지 슬롯에 되돌려야 한다. 평범한 data 키로 취급하면
+ * data["by_dest:일본:departure_date"] 같은 top-level 쓰레기 키가 생겨 조용히 오염된다.
+ * 형식이 아니면(prefix 없음) null — 파싱 불가한 by_dest prefix 는 호출부가 명시 실패 처리.
+ */
+function parseByDestHistoryKey(fieldKey: string): { destination: string; key: string } | null {
+  if (!fieldKey.startsWith('by_dest:')) return null
+  const rest = fieldKey.slice('by_dest:'.length)
+  const sep = rest.indexOf(':')
+  // destination·key 둘 다 비어있지 않아야 유효 (키에는 ':' 가 없고 목적지가 먼저 온다).
+  if (sep <= 0 || sep >= rest.length - 1) return null
+  return { destination: rest.slice(0, sep), key: rest.slice(sep + 1) }
+}
+
+/**
  * cases 행 조회 실패를 사용자 언어로 번역. `.single()` 이 0행이면 PostgREST 가
  * "Cannot coerce the result to a single JSON object"(PGRST116) 를 그대로 돌려주는데,
  * RLS(cases SELECT = org 멤버 ∨ super_admin) 특성상 실제 원인은 둘 중 하나다:
@@ -290,15 +306,27 @@ export async function updateCaseField(
           typeof destObjPrev['export_doc_status'] === 'string'
             ? destObjPrev['export_doc_status']
             : currentData.export_doc_status
-        if (scopedExportDocStatus === 'done') {
-          let shouldReset = false
-          if (key === 'vet_visit_date') {
-            shouldReset = true
-          } else {
-            const visit = readScopedVisit()
-            if (!visit || visit < today) shouldReset = true
+        if (key === 'vet_visit_date') {
+          // 내원일이 도래(≤오늘)하도록 저장되면 수기 서류(별지25·FormAC 등)를 자동
+          // '완료'(export_doc_status='done') — 아래 legacy(destination 미지정) 경로와 패리티.
+          // export_doc_status 는 scoped 키 — 활성 목적지 by_dest 에 쓰고 legacy top-level
+          // 잔존은 제거한다(위 260행 delete 와 동일 규약, scoping-fallback 없음).
+          // 미래(예정)·삭제로 바뀌면 발급 예정으로 복귀 — done 이었으면 리셋.
+          const newVet = typeof value === 'string' ? value.slice(0, 10) : ''
+          const vetArrived = newVet.length >= 10 && newVet <= today
+          if (vetArrived) {
+            if (scopedExportDocStatus !== 'done') {
+              nextDestObj['export_doc_status'] = 'done'
+              delete nextData.export_doc_status
+            }
+          } else if (scopedExportDocStatus === 'done') {
+            nextDestObj['export_doc_status'] = null
+            delete nextData.export_doc_status
           }
-          if (shouldReset) {
+        } else if (scopedExportDocStatus === 'done') {
+          // 출국일 변경 + 내원일 비었거나 이미 지남 → 서류 done 리셋(재출국 대비).
+          const visit = readScopedVisit()
+          if (!visit || visit < today) {
             nextDestObj['export_doc_status'] = null
             delete nextData.export_doc_status
           }
@@ -682,7 +710,14 @@ export async function updateCaseDataBulk(
 export async function undoLastChange(
   caseId: string,
 ): Promise<
-  | { ok: true; key: string; storage: 'column' | 'data'; restoredValue: unknown }
+  | {
+      ok: true
+      key: string
+      storage: 'column' | 'data'
+      restoredValue: unknown
+      /** by_dest 이력이면 복원된 목적지 — 클라이언트가 updateLocalCaseField 5번째 인자로 전달. */
+      destination?: string | null
+    }
   | { ok: false; error: string }
 > {
   if (!caseId) return { ok: false, error: 'caseId is required' }
@@ -704,6 +739,13 @@ export async function undoLastChange(
   const storage = field_storage as 'column' | 'data'
   const restoredValue = deserializeFromHistory(storage, old_value)
 
+  // by_dest 이력 파싱 — 'by_dest:{destination}:{key}' 는 그 목적지 슬롯으로 복원해야 한다.
+  const byDestRef = storage === 'data' ? parseByDestHistoryKey(field_key) : null
+  if (storage === 'data' && !byDestRef && field_key.startsWith('by_dest:')) {
+    // 형식 불명 — top-level 에 'by_dest:...' 쓰레기 키를 만드느니 명시 실패 (조용한 오염 방지).
+    return { ok: false, error: '이 항목은 복원할 수 없습니다' }
+  }
+
   // Restore the old value
   if (storage === 'column') {
     const { error } = await supabase
@@ -721,14 +763,22 @@ export async function undoLastChange(
 
     const current: Record<string, unknown> =
       (row?.data as Record<string, unknown> | null) ?? {}
-    if (restoredValue === null) {
-      delete current[field_key]
+    let next: Record<string, unknown>
+    if (byDestRef) {
+      // by_dest 슬롯 복원 — null 은 명시적 비움 sentinel 로 저장 (writeByDestValue 규약,
+      // top-level fallback 부활 방지).
+      next = writeByDestValue(current, byDestRef.destination, byDestRef.key, restoredValue)
     } else {
-      current[field_key] = restoredValue
+      next = current
+      if (restoredValue === null) {
+        delete next[field_key]
+      } else {
+        next[field_key] = restoredValue
+      }
     }
     const { error } = await supabase
       .from('cases')
-      .update({ data: current })
+      .update({ data: next })
       .eq('id', caseId)
     if (error) return { ok: false, error: error.message }
   }
@@ -738,6 +788,15 @@ export async function undoLastChange(
 
   // revalidatePath 미사용 — updateCaseField 와 동일한 사유 (클라이언트가 반환값으로
   // updateLocalCaseField 호출).
+  if (byDestRef) {
+    return {
+      ok: true,
+      key: byDestRef.key,
+      storage,
+      restoredValue,
+      destination: byDestRef.destination,
+    }
+  }
   return { ok: true, key: field_key, storage: field_storage as 'column' | 'data', restoredValue }
 }
 
@@ -752,7 +811,13 @@ export async function restoreToHistoryPoint(
 ): Promise<
   | {
       ok: true
-      restored: Array<{ key: string; storage: 'column' | 'data'; value: unknown }>
+      restored: Array<{
+        key: string
+        storage: 'column' | 'data'
+        value: unknown
+        /** by_dest 이력이면 복원된 목적지 — 클라이언트가 updateLocalCaseField 5번째 인자로 전달. */
+        destination?: string | null
+      }>
     }
   | { ok: false; error: string }
 > {
@@ -806,20 +871,31 @@ export async function restoreToHistoryPoint(
     }
   }
 
-  // 4. Separate column and data updates.
+  // 4. Separate column / data / by_dest updates.
+  //    by_dest 이력('by_dest:{destination}:{key}')은 그 목적지 슬롯으로 복원해야 한다 —
+  //    평범한 data 키로 쓰면 top-level 에 'by_dest:...' 쓰레기 키가 생긴다.
   const columnUpdates: Record<string, unknown> = {}
   const dataKeyUpdates = new Map<string, unknown>()
+  const byDestUpdates: Array<{ destination: string; key: string; value: unknown }> = []
   for (const f of finalByKey.values()) {
     if (f.storage === 'column') {
       if (REGULAR_COLUMNS.has(f.key)) columnUpdates[f.key] = f.restoredValue
     } else {
-      dataKeyUpdates.set(f.key, f.restoredValue)
+      const byDestRef = parseByDestHistoryKey(f.key)
+      if (byDestRef) {
+        byDestUpdates.push({ ...byDestRef, value: f.restoredValue })
+      } else if (f.key.startsWith('by_dest:')) {
+        // 형식 불명 by_dest 이력 — 아직 아무것도 쓰기 전이므로 안전한 no-op + 명시 실패.
+        return { ok: false, error: '이 항목은 복원할 수 없습니다' }
+      } else {
+        dataKeyUpdates.set(f.key, f.restoredValue)
+      }
     }
   }
 
   // 5+6. Column + data 업데이트를 한 번의 UPDATE 로 합쳐서 부분 실패 윈도우 최소화.
   const updateObj: Record<string, unknown> = { ...columnUpdates }
-  if (dataKeyUpdates.size > 0) {
+  if (dataKeyUpdates.size > 0 || byDestUpdates.length > 0) {
     const { data: row, error: dFetchErr } = await supabase
       .from('cases')
       .select('data')
@@ -827,10 +903,14 @@ export async function restoreToHistoryPoint(
       .single()
     if (dFetchErr) return { ok: false, error: await explainCaseFetchError(supabase, dFetchErr) }
     const current: Record<string, unknown> = (row?.data as Record<string, unknown> | null) ?? {}
-    const next = { ...current }
+    let next = { ...current }
     for (const [k, v] of dataKeyUpdates) {
       if (v === null || v === undefined) delete next[k]
       else next[k] = v
+    }
+    // by_dest 슬롯 복원 — null 은 명시적 비움 sentinel 로 저장 (writeByDestValue 규약).
+    for (const b of byDestUpdates) {
+      next = writeByDestValue(next, b.destination, b.key, b.value)
     }
     updateObj.data = next
   }
@@ -877,13 +957,21 @@ export async function restoreToHistoryPoint(
   }
 
   // revalidatePath 미사용 — 반환된 restored 배열을 클라이언트가 updateLocalCaseField 로 일괄 반영.
+  // by_dest 항목은 안쪽 키 + destination 으로 풀어서 반환 — 클라이언트가 by_dest 경로로 반영.
   return {
     ok: true,
-    restored: Array.from(finalByKey.values()).map((f) => ({
-      storage: f.storage,
-      key: f.key,
-      value: f.restoredValue,
-    })),
+    restored: Array.from(finalByKey.values()).map((f) => {
+      const byDestRef = f.storage === 'data' ? parseByDestHistoryKey(f.key) : null
+      if (byDestRef) {
+        return {
+          storage: f.storage,
+          key: byDestRef.key,
+          value: f.restoredValue,
+          destination: byDestRef.destination,
+        }
+      }
+      return { storage: f.storage, key: f.key, value: f.restoredValue }
+    }),
   }
 }
 

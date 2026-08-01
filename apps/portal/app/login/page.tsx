@@ -8,7 +8,11 @@ export const dynamic = 'force-dynamic'
 function sanitizeNext(raw: string | string[] | undefined): string {
   const v = Array.isArray(raw) ? raw[0] : raw
   if (!v) return '/'
-  if (!v.startsWith('/') || v.startsWith('//') || v.startsWith('/\\')) return '/'
+    // WHATWG URL 파서는 탭·CR·LF 를 제거하고 파싱한다 — '/'+TAB+'/evil.com' 이 선두 검사를
+  // 통과한 뒤 https://evil.com/ 으로 해석되는 open redirect 우회(2026-08-01 리뷰 발견).
+  // 제어문자·역슬래시가 하나라도 있으면 통째로 거부한다.
+  if (/[\t\n\r\\]/.test(v)) return '/'
+  if (!v.startsWith('/') || v.startsWith('//')) return '/'
   return v
 }
 

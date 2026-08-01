@@ -469,6 +469,18 @@ const ADVISORY_DEFERRED_CHECKS = new Set<string>([
   'us.rabies-valid-on-departure',
   'uz.rabies-valid-on-departure',
   'vn.rabies-valid-on-departure',
+  // 2026-08-01 후속 감사(리뷰 A) — **이전부터 warning 이던** 만료 룰 5개국이 미매핑·미등록
+  // 상태로 남아 카드 situational 과 중복 배너를 띄우고 있었다(승격분만 감사해 범위 밖이었음).
+  // 위와 동일 원칙으로 등록.
+  'ae.rabies-valid-on-departure',
+  'id.rabies-not-expired-on-arrival',
+  'my.rabies-not-expired-on-arrival',
+  'my.general-vaccine-not-expired-on-arrival',
+  'tw.rabies-not-expired-on-arrival',
+  'hk.rabies-valid-on-departure',
+  'hk.general-vaccine-valid-on-departure',
+  // 태국 수입허가 '신청일 ≤ 출국일' — 허가 카드 쪽 안내와 중복(같은 감사에서 확인).
+  'th.import-permit-not-after-departure',
 ])
 
 /**

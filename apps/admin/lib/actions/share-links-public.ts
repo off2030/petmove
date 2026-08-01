@@ -450,6 +450,13 @@ export async function submitShareLink(
     for (const [k, v] of Object.entries(colUpdate)) {
       if (useByDest && isDestinationScopedKey(k)) {
         merged = writeByDestValue(merged, scope!, k, v)
+        // departure_date 는 컬럼과 lockstep — admin updateCaseField 의 by_dest 분기와 동일하게
+        // 단일 목적지 케이스에 한해 컬럼도 함께 갱신한다(목록 필터·정렬·auto-fill 컬럼 호환).
+        // 안 하면 departure_flight_date → departure_date 동기화(위)가 by_dest 로만 빠져
+        // 컬럼이 영원히 stale. 다중 목적지는 공용 컬럼(단일값) 의미가 모호해 admin 규약대로 미적용.
+        if (k === 'departure_date' && caseDests.length === 1) {
+          colNonScoped[k] = v
+        }
       } else {
         colNonScoped[k] = v
       }
@@ -664,6 +671,16 @@ export async function createShareUploadTickets(
     const row = link as ShareLinkRow
     if (shareLinkStatus(row) !== 'active') {
       return { ok: false, error: '이 링크로는 더 이상 제출할 수 없습니다.' }
+    }
+
+    // 슬롯 키 대조 — 이 링크가 요청한 파일 키(file_request_keys)만 티켓 발급.
+    // 안 하면 active 링크 소지자가 요청되지 않은 임의 슬롯 키로 첨부를 누적할 수 있다.
+    // (정상 클라이언트는 view.file_requests = file_request_keys 에서 온 키만 보낸다.)
+    const requestedSlotKeys = new Set(row.file_request_keys ?? [])
+    for (const f of files) {
+      if (!requestedSlotKeys.has(f.slotKey)) {
+        return { ok: false, error: '요청되지 않은 파일 항목입니다.' }
+      }
     }
 
     const tickets: ShareUploadTicket[] = []

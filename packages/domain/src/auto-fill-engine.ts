@@ -234,13 +234,19 @@ function applyRuleToData(
     return writeNested(data, nestedPath, newDate)
   }
 
-  // 다중 목적지 + 활성 목적지 + scoped 키 → by_dest 경로로 라우팅.
-  // departure_date 컬럼 동기화는 by_dest 경로에선 스킵 (활성 목적지에 한정된 값).
+  // 활성 목적지 + scoped 키 → by_dest 경로로 라우팅 (B: 단일도 by_dest 통일).
   if (activeDest && isDestinationScopedKey(rule.target_field)) {
     const cur = readByDestValue(data, activeDest, rule.target_field)
     if (cur && !rule.overwrite_existing) return data
     if (cur === newDate) return data
     writtenTargets.add(rule.target_field)
+    // departure_date 는 컬럼과 lockstep — admin updateCaseField 의 by_dest 분기(직접 편집)와
+    // 동일하게 단일 목적지 케이스에 한해 columnUpdates.departure_date 도 함께 세팅한다.
+    // 안 하면 룰이 채운 출국일이 by_dest 로만 가 컬럼(목록 필터·정렬·vet_available_date
+    // 사이드이펙트)이 stale. 다중 목적지는 공용 컬럼(단일값) 의미가 모호해 종전대로 스킵.
+    if (rule.target_field === 'departure_date' && parseDestinations(destination).length === 1) {
+      columnUpdates['departure_date'] = newDate
+    }
     return writeByDestValue(data, activeDest, rule.target_field, newDate)
   }
 

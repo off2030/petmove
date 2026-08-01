@@ -3221,7 +3221,10 @@ const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 /** 빈 문자열이면 키 제거, 아니면 trim 해서 set. */
 const INFO_DATA_KEYS = [
   'phone',
-  'email',
+  // ⛔ 'email' 은 쓰기 금지(2026-08-01 보안 리뷰) — data.email 은 계정 자동 링크 매칭키라
+  //   (추가 전용 트리거 20260627000001), 고객이 임의 값으로 바꾸면 남의 계정에 이 케이스가
+  //   링크된다(케이스 공유 주입). profile.ts applyGuardianToCase 가 같은 이유로 email 전파를
+  //   이미 제거한 정책과 통일 — 연락 이메일은 customer_profiles.contact_email 에만 저장.
   'address_kr',
   'address_detail_kr',
   'address_zipcode',

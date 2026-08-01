@@ -193,6 +193,17 @@ export async function applyCase(input: ApplyInput): Promise<
     return { ok: false, error: '입력값이 너무 깁니다.' }
   }
 
+  // 날짜 형식 — 다른 액션들(ISO_DATE_RE)과 동일 규칙. 신규 생성 경로만 형식 검증이
+  // 빠져 있어 깨진 날짜가 여정 계산에 그대로 들어가던 구멍(2026-08-01 보안 리뷰).
+  const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+  for (const p of pets) {
+    for (const d of [p.birth_date, p.microchip_implant_date, p.rabies_date]) {
+      if (d && d.trim() && !ISO_DATE_RE.test(d.trim())) {
+        return { ok: false, error: '날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)' }
+      }
+    }
+  }
+
   const supabase = createAdminClient()
 
   // 신청 조직의 org_type 에 따라 슬롯 분기 (docs/org-model-refactor.md 4단계):
@@ -203,10 +214,14 @@ export async function applyCase(input: ApplyInput): Promise<
   let orgId = DIRECT_ORG_ID
   let transportOrgId: string | null = null
   if (input.org_id) {
+    // slug 가 있는 조직만 공개 신청 귀속 허용(2026-08-01 보안 리뷰) — org_id 는 클라이언트
+    // 값이라, 공개 신청 링크(/apply/<slug>)를 발행한 적 없는 조직에 임의로 케이스를 밀어
+    // 넣는 것을 막는다. 정상 경로(slug 페이지 → prop)는 항상 slug 보유 조직이다.
     const { data: org } = await supabase
       .from('organizations')
-      .select('id, org_type')
+      .select('id, org_type, slug')
       .eq('id', input.org_id)
+      .not('slug', 'is', null)
       .maybeSingle()
     if (org) {
       const o = org as { id: string; org_type: string }

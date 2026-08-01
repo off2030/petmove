@@ -272,7 +272,15 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
         e.preventDefault()
         undoLastChange(selectedId).then((result) => {
           if (result.ok) {
-            updateLocalCaseField(selectedId, result.storage, result.key, result.restoredValue)
+            // by_dest 이력 복원이면 destination 이 내려온다 — by_dest 경로로 로컬 반영
+            // (안 넘기면 top-level 에 써져 서버 복원 값과 어긋난다).
+            updateLocalCaseField(
+              selectedId,
+              result.storage,
+              result.key,
+              result.restoredValue,
+              result.destination ?? null,
+            )
           }
         })
         return

@@ -70,8 +70,9 @@ export function CaseHistory({ caseId }: { caseId: string }) {
 
     if (result.ok) {
       // Sync local state for each restored field.
+      // by_dest 이력은 destination 이 함께 내려온다 — by_dest 경로로 로컬 반영.
       for (const r of result.restored) {
-        updateLocalCaseField(caseId, r.storage, r.key, r.value)
+        updateLocalCaseField(caseId, r.storage, r.key, r.value, r.destination ?? null)
       }
       // Drop all entries at or after the restore point.
       setEntries((prev) => prev.filter((e) => e.changed_at < entry.changed_at))

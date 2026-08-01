@@ -26,15 +26,49 @@ async function requireSuperAdmin(): Promise<{ ok: true; userId: string } | { ok:
 }
 
 /**
+ * ensurePetmoveBot 인증 가드 — 'use server' export 가 createAdminClient(RLS 우회)를 쓰므로
+ * 자체 검증 필수 (admin CLAUDE.md 규칙 6).
+ *
+ * 수위 선택: requireSuperAdmin 을 걸면 evaluateAndNotify(system-notifications.ts — 일반 org
+ * 멤버가 케이스를 저장할 때마다 실행되는 시스템 알림 경로)가 깨진다. 반대로 로그인만으로는
+ * memberships 0 인 계정(invite-only 밖)도 봇 생성이 가능해진다. 따라서
+ * '로그인 + (org 멤버십 보유 또는 슈퍼 어드민)' 으로 가드 — 두 호출부(시스템 알림 발송,
+ * 설정>시스템 봇 섹션의 생성 버튼) 모두 통과하면서 외부인은 차단.
+ */
+async function requireMemberOrSuperAdmin(): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: '로그인이 필요합니다' }
+  const [{ data: membership }, { data: profile }] = await Promise.all([
+    supabase
+      .from('memberships')
+      .select('org_id')
+      .eq('user_id', user.id)
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('profiles')
+      .select('is_super_admin')
+      .eq('id', user.id)
+      .maybeSingle(),
+  ])
+  if (!membership && !profile?.is_super_admin) return { ok: false, error: '권한이 없습니다' }
+  return { ok: true }
+}
+
+/**
  * 봇 사용자가 존재함을 보장하고 ID 반환. idempotent.
  *
  * - 이메일로 lookup: 있으면 그 ID 반환
  * - 없으면 auth.admin.createUser 로 생성 (handle_new_user 트리거가 profile 도 같이 만듦)
  *
  * 호출자는 server action 또는 server-side 코드여야 한다 (admin client 필요).
+ * 'use server' export 라 클라이언트가 직접 호출할 수 있으므로 인증 가드를 자체 수행.
  */
 export async function ensurePetmoveBot(): Promise<Result<{ userId: string }>> {
   try {
+    const gate = await requireMemberOrSuperAdmin()
+    if (!gate.ok) return gate
     const admin = createAdminClient()
     // 1) 이메일로 기존 봇 조회 — profiles 가 가장 직접적.
     const { data: existing } = await admin
