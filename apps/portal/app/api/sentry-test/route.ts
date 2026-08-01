@@ -11,8 +11,10 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(request: Request) {
   const url = new URL(request.url)
-  if (url.searchParams.get('boom') === '1') {
+  // 운영 점검 전용 키 — 비밀은 아니고(민감 정보·부작용 없음), 드라이브바이 크롤러가
+  // 고의 500 을 반복 유발해 Sentry 쿼터를 태우는 것만 막는 잠금쇠(2026-08-01 리뷰 반영).
+  if (url.searchParams.get('boom') === '1' && url.searchParams.get('k') === 'pm-ops') {
     throw new Error(`[sentry-test] portal error pipeline check (${new Date().toISOString()})`)
   }
-  return NextResponse.json({ ok: true, hint: 'add ?boom=1 to throw a test error' })
+  return NextResponse.json({ ok: true })
 }

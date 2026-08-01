@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from 'next'
+// Pretendard variable dynamic subset — 유니코드 범위별 분할 woff2 (실사용 범위만 로드).
+// self-hosted: Next 가 패키지의 CSS·woff2 를 해시 정적 자산으로 번들, 외부 CDN fetch 없음.
+import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css'
 import './globals.css'
 import { ConfirmProvider } from '@petmove/ui'
 import { ServiceWorkerRegister } from '@/components/sw-register'
@@ -15,7 +18,7 @@ import { MediaViewerProvider } from '@/components/portal-shell/media-viewer'
 // 저장된 pm-theme(없으면 light) → 'system' 일 때만 OS 따라감. ThemeProvider 가 이후 상태를 이어받음.
 const themeNoFlash = `(function(){try{var m=localStorage.getItem('pm-theme')||'light';var d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.classList.toggle('dark',d);var c=d?'#17171A':'#FFFFFF';var e=document.querySelector('meta[name="theme-color"]');if(!e){e=document.createElement('meta');e.setAttribute('name','theme-color');document.head.appendChild(e);}e.setAttribute('content',c);}catch(_){}})();`
 
-// Portal 폰트는 globals.css 의 self-hosted @font-face(Pretendard/Alonzo)만 사용한다.
+// Portal 폰트: Pretendard = 위 npm 패키지 dynamic subset, Alonzo = globals.css self-hosted @font-face.
 // next/font/google 은 빌드 때 Google Fonts 네트워크 fetch 가 필요해 재현 가능한 출시 빌드를 막는다.
 
 // PWA(홈 화면 추가) 비활성 — 네이티브 앱으로만 설치 유도(manifest.ts 와 한 쌍).

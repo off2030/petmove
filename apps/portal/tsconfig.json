@@ -41,7 +41,9 @@
     ".next-verify2/types/**/*.ts",
     ".next-verify2/dev/types/**/*.ts",
     ".next-sentry-verify/types/**/*.ts",
-    ".next-sentry-verify/dev/types/**/*.ts"
+    ".next-sentry-verify/dev/types/**/*.ts",
+    ".next-agent-verify/types/**/*.ts",
+    ".next-agent-verify/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

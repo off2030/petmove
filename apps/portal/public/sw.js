@@ -7,14 +7,16 @@
  *   - GET 불변 해시 자산 (_next/static) → cache-first (파일명에 해시라 안전).
  *   - GET 가변 정적 자산 (/destinations 사진·아이콘 등, 파일명 고정) → stale-while-revalidate.
  *     (cache-first 면 파일 내용이 바뀌거나 삭제돼도 옛것을 영영 줌 — 사진 교체가 반영 안 되던 버그.)
- *   - GET HTML 문서 → network-first (실패 시 cache, 캐시도 없으면 /offline 폴백).
+ *   - GET HTML 문서 → network 직통, 실패 시 /offline 폴백만. **캐시 저장 금지** —
+ *     인증된 SSR HTML 에는 케이스·보호자 데이터가 담기므로 Cache Storage 에 남기면
+ *     로그아웃·계정 전환 후에도 이전 사용자의 화면이 남는다(2026-08-01 보안 리뷰 P0).
  *   - POST / Server Actions / Supabase → 항상 network 직통.
  *
  * ⚠️ 캐시 내용을 바꾸는(사진 교체·삭제 등) 배포에서는 VERSION 을 올려 옛 캐시를 강제 폐기한다.
  */
-const VERSION = 'portal-v23'
+const VERSION = 'portal-v24'
 const STATIC_CACHE = `portal-static-${VERSION}`
-const PAGE_CACHE = `portal-page-${VERSION}`
+// PAGE_CACHE 폐지(v24) — 인증 HTML 을 저장하던 캐시. activate 가 옛 버전째 자동 삭제한다.
 const OFFLINE_URL = '/offline'
 
 self.addEventListener('install', (event) => {
@@ -38,7 +40,7 @@ self.addEventListener('activate', (event) => {
       const keys = await caches.keys()
       await Promise.all(
         keys
-          .filter((k) => k !== STATIC_CACHE && k !== PAGE_CACHE)
+          .filter((k) => k !== STATIC_CACHE)
           .map((k) => caches.delete(k)),
       )
       await self.clients.claim()
@@ -72,9 +74,9 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // HTML 문서 — network-first, 실패 시 cache 폴백
+  // HTML 문서 — network 직통 + 실패 시 /offline 폴백. 응답을 캐시에 넣지 않는다(P0).
   if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(networkFirst(req, PAGE_CACHE))
+    event.respondWith(networkOnlyWithOfflineFallback(req))
   }
 })
 
@@ -104,16 +106,11 @@ async function staleWhileRevalidate(req, cacheName) {
   return cached || network
 }
 
-async function networkFirst(req, cacheName) {
-  const cache = await caches.open(cacheName)
+async function networkOnlyWithOfflineFallback(req) {
   try {
-    const res = await fetch(req)
-    if (res.ok) cache.put(req, res.clone())
-    return res
+    return await fetch(req)
   } catch (e) {
-    const cached = await cache.match(req)
-    if (cached) return cached
-    // 캐시도 없을 때 — 오프라인 폴백 페이지
+    // 오프라인 — 미리 캐싱해 둔 공개 /offline 페이지만 폴백(인증 HTML 캐시 없음).
     const staticCache = await caches.open(STATIC_CACHE)
     const offline = await staticCache.match(OFFLINE_URL)
     if (offline) return offline

@@ -14,6 +14,17 @@ Usage:
   예) python scripts/gen_hero_photos.py "C:/Users/off20/Desktop/스크린샷/목적지별 사진/괌" guam
 
 출력: 변환한 파일 목록 + hero-blur-placeholders.ts 에 넣을 항목(정렬된 위치에 직접 삽입).
+
+동기화(prune) 모드:
+  python scripts/gen_hero_photos.py --prune          # 명단 밖 항목 제거 + 누락 리포트
+  python scripts/gen_hero_photos.py --prune --fill   # + 누락 항목을 public 파일로부터 생성
+
+  hero-blur-placeholders.ts 를 timeline-calm.tsx 의 DEST_PHOTO_CANDIDATES(실사용 후보
+  명단)와 동기화한다 — 명단에 없는 항목은 제거(client 번들 크기). --fill 을 붙이면
+  명단에 있는데 항목이 없는 사진의 blur 도 public/destinations 파일로부터 생성해
+  추가한다(blur 없는 키는 앱이 placeholder="empty" 로 안전 폴백하므로 필수는 아님 —
+  번들이 커지는 만큼 의도적으로 옵션). 사진 검수로 후보 명단이 바뀌면 --prune 한 번.
+  (public 의 이미지 파일 자체는 검수 대기 자산일 수 있으므로 여기서 절대 삭제하지 않는다.)
 """
 import base64
 import io
@@ -73,9 +84,67 @@ def insert_placeholders(entries: dict[str, str]) -> int:
     return added
 
 
+TIMELINE = REPO / "apps" / "portal" / "components" / "journey" / "timeline-calm.tsx"
+
+
+def candidate_paths() -> set[str]:
+    """timeline-calm.tsx 의 DEST_PHOTO_CANDIDATES 블록에 나열된 사진 경로 전부."""
+    import re
+
+    text = TIMELINE.read_text(encoding="utf-8")
+    start = text.index("const DEST_PHOTO_CANDIDATES")
+    # 블록 끝 = 열림 `{` 이후 컬럼 0 의 닫는 `}` (파일 구조상 유일한 안전 경계).
+    end = text.index("\n}", start)
+    return set(re.findall(r"'(/destinations/[^']+)'", text[start:end]))
+
+
+def prune(fill: bool = False) -> None:
+    """placeholder 파일을 DEST_PHOTO_CANDIDATES 와 동기화 — 명단 밖 제거(+옵션: 누락 생성)."""
+    used = candidate_paths()
+    if not used:
+        sys.exit("✗ DEST_PHOTO_CANDIDATES 를 찾지 못했습니다 — timeline-calm.tsx 구조 확인 필요")
+
+    lines = PLACEHOLDERS.read_text(encoding="utf-8").split("\n")
+    kept: list[str] = []
+    removed = 0
+    have: set[str] = set()
+    for line in lines:
+        if line.startswith('  "/destinations/'):
+            key = line.split('"')[1]
+            if key not in used:
+                removed += 1
+                continue
+            have.add(key)
+        kept.append(line)
+    PLACEHOLDERS.write_text("\n".join(kept), encoding="utf-8")
+
+    # 명단에 있는데 placeholder 가 없는 사진 — --fill 이면 public 파일로부터 생성해 채움.
+    missing = sorted(used - have)
+    entries: dict[str, str] = {}
+    unresolved: list[str] = []
+    if fill:
+        for web in missing:
+            src = REPO / "apps" / "portal" / "public" / web.lstrip("/")
+            if src.exists():
+                entries[web] = blur_uri(src)
+            else:
+                unresolved.append(web)
+        if entries:
+            insert_placeholders(entries)
+
+    print(f"✓ 후보 명단 {len(used)}개 기준 — 유지 {len(have)}개, 제거 {removed}개, 신규 생성 {len(entries)}개")
+    if not fill and missing:
+        print(f"  ℹ blur 없는 후보 {len(missing)}개 (placeholder=\"empty\" 폴백, 필요하면 --fill)")
+    for w in unresolved:
+        print(f"  ⚠ 후보 명단에 있는데 public 에 파일이 없음: {w}")
+
+
 def main() -> None:
+    if len(sys.argv) >= 2 and sys.argv[1] == "--prune":
+        prune(fill="--fill" in sys.argv[2:])
+        return
     if len(sys.argv) < 3:
-        sys.exit("Usage: python scripts/gen_hero_photos.py <src_dir> <key>")
+        sys.exit("Usage: python scripts/gen_hero_photos.py <src_dir> <key>  |  --prune [--fill]")
     src_dir, key = Path(sys.argv[1]), sys.argv[2]
     srcs = sorted(
         [p for p in src_dir.iterdir() if p.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}],

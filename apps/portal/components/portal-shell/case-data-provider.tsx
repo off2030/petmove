@@ -221,22 +221,36 @@ export function CaseDataProvider({
   }, [caseIdsKey, refreshCases, previewMode])
 
   // 앱 포커스 복귀 시 cases + profile 갱신.
+  // focus 와 visibilitychange 는 복귀 한 번에 거의 항상 함께 발화한다 — ①진행 중이면 그
+  // in-flight promise 를 그대로 쓰고(추가 요청 0), ②직전 실행 시작 후 짧은 창(2.5초) 안의
+  // 재발화는 무시해 재조회가 복귀당 한 번만 나가게 한다. (mutation 직후의 refreshCases
+  // 직접 호출·Realtime 재조회는 이 dedupe 와 무관 — resume 핸들러에만 적용.)
+  const resumeInFlightRef = useRef<Promise<void> | null>(null)
+  const lastResumeAtRef = useRef(0)
   useEffect(() => {
     // 미리보기: 세션이 없어 refetch 가 무의미 — 생략.
     if (previewMode) return
     const onRefresh = () => {
-      void refreshCases()
-      void refreshProfile()
+      if (resumeInFlightRef.current) return // 진행 중 — 그 promise 가 곧 상태를 채운다.
+      const now = Date.now()
+      if (now - lastResumeAtRef.current < 2500) return // dedupe 창 — 연쇄 발화 무시.
+      lastResumeAtRef.current = now
       // 토큰 갱신 주체를 서버(미들웨어)로 모았으므로(browser autoRefreshToken off), 백그라운드
       // 복귀 시 realtime 이 최신 access token 을 쓰도록 다시 물린다. getSession 은 만료됐을 때만
       // on-demand 로 갱신하며, 이는 위 refetch(서버 갱신)와 같은 순간이라 10초 reuse 창에서 안전.
       // 일시 오류(네트워크 등)는 무시 — 다음 복귀에 재시도.
-      void supabaseBrowser.auth
-        .getSession()
-        .then(({ data }) => {
-          if (data.session) supabaseBrowser.realtime.setAuth(data.session.access_token)
-        })
-        .catch(() => {})
+      resumeInFlightRef.current = Promise.allSettled([
+        refreshCases(),
+        refreshProfile(),
+        supabaseBrowser.auth
+          .getSession()
+          .then(({ data }) => {
+            if (data.session) supabaseBrowser.realtime.setAuth(data.session.access_token)
+          })
+          .catch(() => {}),
+      ]).then(() => {
+        resumeInFlightRef.current = null
+      })
     }
     const onVisibility = () => {
       if (!document.hidden) onRefresh()

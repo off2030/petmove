@@ -50,9 +50,9 @@ const config: Config = {
     extend: {
       // Editorial 톤: 폰트 스택 명시 — Tailwind `font-sans`/`font-serif`/`font-mono` 가 여기를 따라감
       fontFamily: {
-        sans: ['var(--font-sans)', 'Pretendard', 'var(--font-sans-kr)', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Arial', 'sans-serif'],
+        sans: ['var(--font-sans)', '"Pretendard Variable"', 'var(--font-sans-kr)', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Arial', 'sans-serif'],
         serif: ['var(--font-serif)', 'var(--font-serif-kr)', 'Georgia', '"Times New Roman"', 'serif'],
-        mono: ['var(--font-mono)', 'Pretendard', 'ui-monospace', '"SF Mono"', 'Menlo', 'monospace'],
+        mono: ['var(--font-mono)', '"Pretendard Variable"', 'ui-monospace', '"SF Mono"', 'Menlo', 'monospace'],
         // Portal Calm 톤 — globals.css 의 --pm-font-* semantic 토큰 노출.
         display: ['var(--pm-font-display)'],
         mark: ['var(--pm-font-mark)'],

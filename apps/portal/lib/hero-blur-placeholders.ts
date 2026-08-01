@@ -1,6 +1,13 @@
-// 히어로 사진 blur placeholder — gen_blur_placeholders.py 로 자동 생성.
+// 히어로 사진 blur placeholder — scripts/gen_hero_photos.py 로 자동 생성.
 // 16px 폭 초저화질 썸네일을 base64 로 인라인 — next/image 의 placeholder="blur" 용.
 // public 경로 문자열 이미지는 Next 가 자동 생성 못 해서 직접 공급해야 한다.
+//
+// 유지 기준 = timeline-calm.tsx 의 DEST_PHOTO_CANDIDATES 전체(실사용 후보 명단).
+// 이 파일은 client 번들에 통째로 들어가므로, 명단 밖(검수 대기·삭제된 후보) 항목은
+// 싣지 않는다. 사진 검수로 후보 명단이 바뀌면 placeholder 도 함께 갱신할 것:
+//   python scripts/gen_hero_photos.py --prune          ← 명단 밖 항목 제거
+//   python scripts/gen_hero_photos.py --prune --fill   ← + 명단 내 누락 항목 생성(선택)
+// 항목이 없는 키는 timeline-calm.tsx 가 placeholder="empty"(blur 없음)로 안전 폴백한다.
 export const HERO_BLUR_PLACEHOLDERS: Record<string, string> = {
   "/destinations/australia-02.webp": "data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAADQAQCdASoQAAsAA8BgJaAC7AENU8r7lAD+ZsF+kedvNXEknoM1hwnF/QybabtwLvjvW7y4Z53zCNqDK4upAAAA",
   "/destinations/australia-04.webp": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAADQAQCdASoQAAsAA8BgJZACdAD0dy2u5AD+8jLtunz/Wqj/qjFTXDZavFkYUCAdaI0n8ZrNtpYiUFb1+AnU1m4SuAA=",
@@ -167,7 +174,6 @@ export const HERO_BLUR_PLACEHOLDERS: Record<string, string> = {
   "/destinations/japan-sakura-blossom-macro.webp": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAADwAQCdASoQAAsAA8BgJbACdAD0THlKVVgA/o8XqbQyr38CzfzcYvCRKy4PrIjampw+O6L8yytiYWVviiFpHFXYxUTVaI40neTBGAAA",
   "/destinations/japan-torii-tunnel.webp": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAADQAQCdASoQAAsAA8BgJbACdAENseK6iAD+ujlu0YrES56U9H/HpLRu9zDzZc+1NLw6LmHCq0IskM0Tq2NgUtwb9C2plQtUU//ghXuf6/uyyaFiyHzTq7cAAAA=",
   "/destinations/latvia-00.webp": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAACwAQCdASoQAAsAA8BgJZgAAhmCzhagAP7RPbn8WdabuvKsrWy+JvDR5yUjo7LIVEh9Qp4tivUF0b9rTVq4zlPIMTxYhjZXfquCsAgA",
-  "/destinations/latvia-01.webp": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAADQAQCdASoQAAkAA8BgJYwAAuRhMXZhgAD+aMbgeNeBilWKjTBiRw2A+8SXpEtVVsB1ryeLmX6UqfCg4uMmJCdTZi8LTyg/XETaAA==",
   "/destinations/latvia-02.webp": "data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAADwAQCdASoQAAsAA8BgJZgCdAEOzDrYdbgA/sBivU1AH3096yqoJ95f6+dz9SmBjQGge6WUigb4gVL1JqNsIuAA",
   "/destinations/latvia-03.webp": "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADwAQCdASoQAAsAA8BgJZQC7AC3rwgo9oAA9Zd18uhgzkmCIwY28Cmiu1WCGMmDPOAo2uU7nO4nKGAA",
   "/destinations/latvia-05.webp": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAABQAgCdASoQAAsAA8BgJbACdEf/geqJo40s7IwA/sXzeHQV/z/vX/zGd4eKmbBCYWBbh7VtGy2OrJtufYzwr6shpZQqSvn3fqY/Jo5Dt8dwAA==",
