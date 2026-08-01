@@ -15,7 +15,7 @@ export function SiteFooter() {
         <a href="https://app.petmove.co.kr/terms">이용약관</a> · <a href="https://app.petmove.co.kr/privacy">개인정보처리방침</a> ·{' '}
         <a href="https://app.petmove.co.kr/support">고객지원</a>
         <br />
-        <span style={{ color: '#97979C' }}>© 2026 펫무브</span>
+        <span style={{ color: '#97979C' }}>© 2026 펫무브 · 콘텐츠의 무단 전재·복제·배포를 금합니다</span>
       </div>
     </footer>
   )
