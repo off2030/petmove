@@ -459,36 +459,6 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 강아지 최소 연령 ──
-  {
-    id: 'nz.dog-min-9months-on-departure',
-    country: COUNTRY,
-    category: '일정',
-    title: '출국일 시점 생후 9개월 이상',
-    description:
-      'IHS Guidance for transport — "A cat or dog ... approximate minimum ages from each category are: **9 months of age at the date of shipment category 3 countries**". 12주 접종 + 1차 6개월 대기 + 채혈 3개월 창이 겹쳐 나오는 결과값이라 별도 조항이 아니라 **하한들의 합**이지만, 고객이 가장 먼저 부딪히는 벽이라 룰로 둔다. ⚠️ 2026-07-30 정정 — 강아지 지원문서만 보고 개 전용으로 걸어 뒀는데, IHS 가이던스는 **고양이도 같은 9개월**이고 계산도 종에 무관하다. 생후 7개월 고양이 일정이 조용히 통과하고 있었다. (id 는 배선·스냅샷이 참조해 그대로 둔다.)',
-    severity: 'warning',
-    addedAt: '2026-05-06',
-    run: ({ caseRow, destination }) => {
-      // ⛔ 종 가드를 되살리지 말 것(2026-07-30) — 9개월 하한은 고양이에게도 적용된다.
-      const dep = readDepartureDate(caseRow, destination)
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
-      if (!dep || !birth) return SKIP
-
-      const earliestDep = addMonths(birth, 9)
-      if (!earliestDep) return SKIP
-      if (earliestDep <= dep) {
-        return { ok: true, message: `생년월일(${birth}) + 9개월(${earliestDep}) ≤ 출국일(${dep}).` }
-      }
-      return {
-        ok: false,
-        message: '뉴질랜드에는 생후 9개월이 지난 후에 갈 수 있어요. 출국일을 다시 확인하세요.',
-        offendingPaths: ['departure_date', 'birth_date'],
-      }
-    },
-  },
-
   // ── 수입 허가 · 계류 ──
   {
     id: 'nz.import-permit-not-after-departure',

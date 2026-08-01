@@ -1860,8 +1860,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       order: 46,
       validationIds: [
         'nz.titer-3to12months-before-departure',
-        // 생후 9개월 하한도 여기 — 접종일·생일은 이미 지나간 사실이라 바꿀 수 있는 건 출국일뿐이다.
-        'nz.dog-min-9months-on-departure',
+        // (구 생후 9개월 룰은 2026-08-01 사용자 지시로 삭제 — IHS 'approximate' 파생값이고,
+        //   실제 하한은 12주 접종·1차 6개월 대기·채혈 3개월 창 룰들이 각각 지킨다.)
         // 마이크로칩 인증 6개월 하한도 같은 이유로 여기(2026-07-29 사용자 확정). 인증 카드에서는
         //   조치가 없다 — 이미 받은 인증을 더 이른 날짜로 되돌릴 수 없다.
         'nz.identity-check-6months-before-departure',
@@ -2634,14 +2634,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     },
     // 수입 허가(Licence to Import Non-Food Animals) — 보호자가 GoBusiness 온라인 직접 신청.
     importPermit: {
+      // 라이선스 선행은 **두 종 공통**(2026-08-01 AVS 재확인: "To import a dog or cat, you
+      //   must obtain a dog or cat licence before applying for an import licence." — 고양이
+      //   라이선스 2024-09 시행). 같은 날 오전의 종별 분리(고양이 줄 제거)는 반나절 만에
+      //   되돌림 — 낡은 '고양이 불요' 전제가 원인이었다.
       description:
-        '도착일 기준 90일 이내에 GoBusiness 포털에서 개인용 수입 허가(Licence to Import)를 신청하세요.\n\n강아지 라이선스를 먼저 받아야 신청할 수 있어요.\n외국인은 GoBusiness 이용이 어려워 현지 에이전트를 이용하는 경우가 많아요.',
-      // 라이선스 선행은 **개 전용**(Dog Licence) — 통합문만 두면 고양이 카드에
-      //   '강아지 라이선스…' 줄이 그대로 떴다(2026-08-01 종별 분리). description 은 폴백 유지.
-      descriptionBySpecies: {
-        dog: '도착일 기준 90일 이내에 GoBusiness 포털에서 개인용 수입 허가(Licence to Import)를 신청하세요.\n\n개 라이선스(Dog Licence)를 먼저 받아야 신청할 수 있어요.\n외국인은 GoBusiness 이용이 어려워 현지 에이전트를 이용하는 경우가 많아요.',
-        cat: '도착일 기준 90일 이내에 GoBusiness 포털에서 개인용 수입 허가(Licence to Import)를 신청하세요.\n\n외국인은 GoBusiness 이용이 어려워 현지 에이전트를 이용하는 경우가 많아요.',
-      },
+        '도착일 기준 90일 이내에 GoBusiness 포털에서 개인용 수입 허가(Licence to Import)를 신청하세요.\n\n개·고양이 라이선스를 먼저 받아야 신청할 수 있어요.\n외국인은 GoBusiness 이용이 어려워 현지 에이전트를 이용하는 경우가 많아요.',
       doneSummary: '싱가포르 수입 허가증을 받았어요.',
       cardLine: '싱가포르 수입 허가를 신청하세요.',
       attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',

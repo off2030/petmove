@@ -155,7 +155,7 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 남아공 — 도착 검역(국가 검역시설 약 14일) + 검역시설 예약 시작일 + AIA 수입 허가(개 전용).
   //   ⚠️ AIA 는 수의검역 수입 허가(import_permit_*)와 **별개의 두 번째 허가**라 필드도 따로다.
   //   신청 → 발급 2단계라 신청일·완료(skip)·진행중 플래그 셋을 모두 등록해야 한다
-  //   (싱가포르 강아지 라이선스와 같은 모델 — 하나라도 빠지면 저장 후 값이 사라진다).
+  //   (싱가포르 반려동물 라이선스와 같은 모델 — 하나라도 빠지면 저장 후 값이 사라진다).
   'za_import_quarantine_date',
   'za_import_quarantine_confirmed',
   'za_quarantine_reservation_date',
@@ -168,7 +168,7 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'sg_import_quarantine_date',
   'sg_import_quarantine_confirmed',
   // 싱가포르 전용 절차 카드.
-  // 계류장 예약·강아지 라이선스 = 수입 허가와 동일 신청 → 발급 모델(신청일 + 완료/첨부).
+  // 계류장 예약·반려동물 라이선스(개·고양이, 2026-08-01 고양이 포함 확인) = 수입 허가와 동일 신청 → 발급 모델(신청일 + 완료/첨부).
   //   목적지마다 따로 신청하므로 신청일·완료(skip)·진행중 플래그도 by_dest 분리.
   'sg_quarantine_reservation_application_date',
   'sg_quarantine_reservation_issued_skipped',

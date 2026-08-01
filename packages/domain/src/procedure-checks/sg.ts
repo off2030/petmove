@@ -552,29 +552,30 @@ export const SG_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `신청일(${filed}) < 출국일(${dep || '미입력'}).` }
     },
   },
-  // ── 강아지 라이선스 → 수입 허가 선행 순서 (2026-07-25 신설) ──
-  // AVS/GoBusiness: 강아지 라이선스(PALS)가 있어야 수입 허가를 신청할 수 있다.
+  // ── 개·고양이 라이선스 → 수입 허가 선행 순서 (2026-07-25 신설) ──
+  // AVS 수입 페이지(2026-08-01 확인): "To import a dog or cat, you must obtain a dog or cat
+  // licence before applying for an import licence." — 고양이 라이선스 제도 2024-09-01 시행으로
+  // 두 종 모두 선행 요건(구 '고양이 SKIP'은 낡은 정보라 제거).
   // 두 신청일이 모두 입력된 경우에만 순서를 비교한다 — 라이선스 날짜 미입력을 미보유로
-  // 단정하지 않는다(추측 단정 금지). 고양이는 라이선스 불요라 SKIP.
+  // 단정하지 않는다(추측 단정 금지).
   // 저장 거부(validateImportPermitFiledDate 싱가포르 분기)와 같은 함수 — 수입 허가 신청일
   // 입력은 저장이 막히고, 라이선스 날짜를 나중에 고쳐 어긋난 경우를 이 주의가 잡는다.
   {
     id: 'sg.dog-licence-before-import-permit',
     country: 'singapore',
     category: '수입허가',
-    title: '강아지 라이선스 → 수입 허가 순서',
+    title: '반려동물 라이선스 → 수입 허가 순서',
     description:
-      '수입 허가(Licence to Import)는 강아지 라이선스를 먼저 받아야 신청 가능. 라이선스 신청일과 수입 허가 신청일이 둘 다 입력된 경우에만 순서 비교(미입력은 SKIP). 입력 차단과 같은 함수(validateSgImportPermitAfterDogLicence).',
+      '수입 허가(Licence to Import)는 개·고양이 라이선스를 먼저 받아야 신청 가능(AVS, 고양이는 2024-09 제도 시행). 라이선스 신청일과 수입 허가 신청일이 둘 다 입력된 경우에만 순서 비교(미입력은 SKIP). 입력 차단과 같은 함수(validateSgImportPermitAfterDogLicence).',
     severity: 'warning',
     addedAt: '2026-07-25',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const species = typeof data.species === 'string' ? data.species : ''
       const filed = readScopedImportPermitFiled(data, destination)
       if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
       const licence = readScopedSgDogLicenceApplied(data, destination)
       if (!/^\d{4}-\d{2}-\d{2}$/.test(licence)) return SKIP
-      const msg = validateSgImportPermitAfterDogLicence(filed, licence, species)
+      const msg = validateSgImportPermitAfterDogLicence(filed, licence)
       if (msg) {
         return {
           ok: false,

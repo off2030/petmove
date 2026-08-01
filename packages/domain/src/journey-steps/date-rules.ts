@@ -1683,17 +1683,16 @@ export function validateImportPermitFiledDate(
     // 이르면 도착 전 만료. 당일 도착 노선이라 출발일 앵커 = 도착일 근사). UAE 와 동일
     // 구조(90일 유효)라 같은 함수 재사용 — 문구도 목적지 중립.
     case 'singapore': {
-      // 강아지 라이선스 → 수입 허가 선행 순서 — sg.dog-licence-before-import-permit 주의와
-      // 같은 함수(단일 출처). 라이선스 쪽을 나중에 고쳐 어긋난 경우는 그 주의가 잡는다.
+      // 개·고양이 라이선스 → 수입 허가 선행 순서 — sg.dog-licence-before-import-permit 주의와
+      // 같은 함수(단일 출처, 두 종 공통). 라이선스 쪽을 나중에 고쳐 어긋난 경우는 그 주의가 잡는다.
       const sgLicence =
         typeof data.sg_dog_licence_application_date === 'string'
           ? data.sg_dog_licence_application_date.slice(0, 10)
           : ''
-      const sgSpecies = typeof data.species === 'string' ? data.species : ''
       return (
         validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
         validateAeImportPermitWithin90Days(filedDate, departureDate) ??
-        validateSgImportPermitAfterDogLicence(filedDate, sgLicence, sgSpecies)
+        validateSgImportPermitAfterDogLicence(filedDate, sgLicence)
       )
     }
     // 뉴질랜드·호주 — 광견병 증명서(RCF · RNATT 선언서)를 먼저 받아야 신청할 수 있다.
@@ -1795,8 +1794,9 @@ export function importPermitPrerequisiteError(
     // ⚠️ **고양이는 AIA 면제**라 게이트를 걸면 안 된다 — 같은 보도자료 "animals such as cats,
     //   birds and fish do not require an AIA Permit/authorisation for importation".
     //   여기서 종을 직접 읽는다(이 함수는 species 인자를 받지 않는다).
-    //   종 미상은 **판정 대상**으로 둔다 — 싱가포르 개 전용 게이트와 같은 규약
-    //   (validateSgImportPermitAfterDogLicence: `if (species && species !== 'dog') return null`).
+    //   종 미상은 **판정 대상**으로 둔다 — 명시적으로 고양이일 때만 면제하는 규약.
+    //   (구 싱가포르 개 전용 게이트를 준거로 삼았었는데, 싱가포르는 2026-08-01 고양이
+    //   라이선스 확인으로 종 게이트 자체가 사라졌다 — AIA 의 고양이 면제는 별개 근거라 유지.)
     //   AIA 카드 자체가 종 미상에도 노출되므로(isStepApplicable — 종 미상은 통과) 화면에 보이는
     //   카드와 게이트가 어긋나지 않는다. 신청 폼이 종을 필수로 받아 실제로는 거의 없는 상태다.
     const species = typeof data.species === 'string' ? data.species.toLowerCase() : ''
@@ -1812,23 +1812,24 @@ export function importPermitPrerequisiteError(
 }
 
 /**
- * 싱가포르 — 수입 허가(Licence to Import)는 강아지 라이선스(PALS)를 먼저 받아야 신청할 수
- * 있다(AVS/GoBusiness). 수입 허가 신청일이 라이선스 신청일보다 앞서면 순서 위반이라 저장을
- * 거부한다. client(수입 허가 신청일 입력 불가 — validateImportPermitFiledDate 싱가포르 분기)·
+ * 싱가포르 — 수입 허가(Licence to Import)는 개·고양이 라이선스(PALS)를 먼저 받아야 신청할
+ * 수 있다. AVS 수입 페이지 원문(2026-08-01 확인): "To import a dog or cat, you must obtain
+ * a dog or cat licence before applying for an import licence." — 고양이 라이선스 제도는
+ * 2024-09-01 시행이라 구 '고양이 통과' 가드는 낡은 정보였다(제거).
+ * 수입 허가 신청일이 라이선스 신청일보다 앞서면 순서 위반이라 저장을 거부한다.
+ * client(수입 허가 신청일 입력 불가 — validateImportPermitFiledDate 싱가포르 분기)·
  * procedure-check(sg.dog-licence-before-import-permit — 라이선스 날짜를 나중에 고쳐 어긋난
  * 경우 주의) 공용 단일 출처.
- * 고양이는 라이선스 불요라 통과. 라이선스 날짜 미입력은 미보유로 단정하지 않고 통과
- * (둘 다 입력된 경우에만 순서 비교 — 추측 단정 금지).
+ * 라이선스 날짜 미입력은 미보유로 단정하지 않고 통과(둘 다 입력된 경우에만 순서 비교 —
+ * 추측 단정 금지). species 인자는 두 종 모두 적용이라 더 이상 안 받는다.
  */
 export function validateSgImportPermitAfterDogLicence(
   filedDate: string,
   licenceAppliedDate: string,
-  species?: string | null,
 ): string | null {
   if (!filedDate || !licenceAppliedDate) return null
-  if (species && species !== 'dog') return null
   if (filedDate.slice(0, 10) < licenceAppliedDate.slice(0, 10)) {
-    return '수입 허가 신청일이 강아지 라이선스 신청일보다 앞서 있어요. 강아지 라이선스를 먼저 받아야 수입 허가를 신청할 수 있어요 — 두 날짜를 확인해 주세요.'
+    return '수입 허가 신청일이 반려동물 라이선스 신청일보다 앞서 있어요. 개·고양이 라이선스를 먼저 받아야 수입 허가를 신청할 수 있어요 — 두 날짜를 확인해 주세요.'
   }
   return null
 }

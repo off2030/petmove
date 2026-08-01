@@ -2333,15 +2333,24 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'sg-dog-licence',
     category: 'permit',
-    title: '강아지 라이선스',
+    title: '반려동물 라이선스',
     shortLabel: '라이선스',
     description:
-      '싱가포르 반려동물 라이선스 시스템(PALS)에서 강아지 라이선스를 발급받으세요.\n\n수입 허가 신청 전에 먼저 받아야 해요.\n외국인은 PALS 이용이 어려워 현지 에이전트를 이용하는 경우가 많아요.',
-    doneSummary: '강아지 라이선스를 받았어요.',
-    cardLine: '강아지 라이선스를 받으세요.',
-    // species: 'dog' — 강아지 전용(고양이는 라이선스 불요). order 92 = 항공권(90) 바로 뒤(사용자
-    //   지정 2026-07-24: 항공권과 순서 교체). 계류장 예약(62) → 항공권(90) → 강아지 라이선스(92) → 수입허가.
-    applicability: { destinations: ['singapore'], species: 'dog', tripType: 'all' },
+      '싱가포르 반려동물 라이선스 시스템(PALS)에서 개·고양이 라이선스를 발급받으세요.\n\n수입 허가 신청 전에 먼저 받아야 해요.\n외국인은 PALS 이용이 어려워 현지 에이전트를 이용하는 경우가 많아요.',
+    descriptionBySpecies: {
+      dog: '싱가포르 반려동물 라이선스 시스템(PALS)에서 개 라이선스(Dog Licence)를 발급받으세요.\n\n수입 허가 신청 전에 먼저 받아야 해요.\n외국인은 PALS 이용이 어려워 현지 에이전트를 이용하는 경우가 많아요.',
+      cat: '싱가포르 반려동물 라이선스 시스템(PALS)에서 고양이 라이선스(Cat Licence)를 발급받으세요.\n\n수입 허가 신청 전에 먼저 받아야 해요.\n외국인은 PALS 이용이 어려워 현지 에이전트를 이용하는 경우가 많아요.',
+    },
+    doneSummary: '반려동물 라이선스를 받았어요.',
+    cardLine: '반려동물 라이선스를 받으세요.',
+    // species: 'all' (2026-08-01 정정) — 고양이도 라이선스 필수. AVS 수입 페이지 원문:
+    //   "To import a dog or cat, you must obtain a dog or cat licence before applying for an
+    //   import licence." 고양이 라이선스 제도는 2024-09-01 시행(Cat Management Framework) —
+    //   구 '고양이는 라이선스 불요'는 그 이전 정보였다. 필드 키(sg_dog_licence_*)는 저장 호환을
+    //   위해 그대로 둔다(이름만 dog 일 뿐 두 종 공용).
+    //   order 92 = 항공권(90) 바로 뒤(사용자 지정 2026-07-24: 항공권과 순서 교체).
+    //   계류장 예약(62) → 항공권(90) → 라이선스(92) → 수입허가.
+    applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },
     order: 92,
     // 수입 허가와 동일 신청 → 발급 2단계 모델. 신청일 입력 = 진행 중, 라이선스 첨부·완료 버튼 = 완료.
     // 버튼 완료 — 대행으로 처리되는 절차라 보호자가 날짜를 알 수 없다(2026-07-28 사용자 결정).
@@ -2360,17 +2369,17 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (deriveApplicationStatus(caseRow, SG_DOG_LICENCE_APP_SPEC) !== 'in_progress')
         return undefined
       const msg =
-        '강아지 라이선스를 신청 중이에요. 라이선스가 나오면 파일을 첨부하거나 완료 버튼을 누르세요.'
+        '반려동물 라이선스를 신청 중이에요. 라이선스가 나오면 파일을 첨부하거나 완료 버튼을 누르세요.'
       return { desc: msg, cardDesc: msg }
     },
     inputs: [
-      { key: 'sg_dog_licence_application_date', label: '신청일', type: 'date', helpText: '강아지 라이선스를 신청한 날짜' },
+      { key: 'sg_dog_licence_application_date', label: '신청일', type: 'date', helpText: '반려동물 라이선스를 신청한 날짜' },
     ],
     allowAttachments: true,
     attachmentHint: '라이선스를 사진·PDF로 보관하세요.',
-    attachmentLabel: '강아지 라이선스',
+    attachmentLabel: '싱가포르 반려동물 라이선스',
     links: [
-      { url: 'https://avs.nparks.gov.sg/pets/licensing-a-pet/applying-for-dog-and-cat-licences/applying/', label: '강아지 라이선스 신청(PALS)' },
+      { url: 'https://avs.nparks.gov.sg/pets/licensing-a-pet/applying-for-dog-and-cat-licences/applying/', label: '라이선스 신청(PALS)' },
     ],
   },
   {

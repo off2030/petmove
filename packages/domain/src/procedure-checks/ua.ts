@@ -288,7 +288,9 @@ export const UA_CHECKS: ProcedureCheck[] = [
     title: 'RNATT 항체가 ≥ 0.5 IU/ml',
     description:
       'SSUFSCP: "перевірений титр антитіл дорівнює або більше ніж 0,5 МО/мл" — 모든 RNATT 결과치가 0.5 IU/ml 이상이어야 함. value 미입력 시 SKIP.',
-    severity: 'info',
+    // 안내→주의 승격(2026-08-01 사용자 확정) — 0.5 미만이면 재접종→재채혈→대기 재시작으로
+    //   절차가 실제로 막히는 문제라 '정보'가 아니다.
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const titers = readTiterEntries(caseRow)

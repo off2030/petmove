@@ -314,7 +314,9 @@ export const TR_CHECKS: ProcedureCheck[] = [
     title: 'RNATT 항체가 ≥ 0.5 IU/ml',
     description:
       '튀르키예 농림부: 항체가 결과가 0.5 IU/ml 이상이어야 함. 모든 RNATT 결과치가 0.5 이상이어야 한다. value 미입력 시 SKIP.',
-    severity: 'info',
+    // 안내→주의 승격(2026-08-01 사용자 확정) — 0.5 미만이면 재접종→재채혈→대기 재시작으로
+    //   절차가 실제로 막히는 문제라 '정보'가 아니다.
+    severity: 'warning',
     addedAt: '2026-07-23',
     run: ({ caseRow }) => {
       const titers = readTiterEntries(caseRow)
