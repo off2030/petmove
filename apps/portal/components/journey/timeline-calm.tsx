@@ -3,7 +3,7 @@
 import { C as PM } from '@/lib/palette'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getTripType, readJourneyFeedback } from '@petmove/domain'
 import { CaseHeader } from '@/components/cases/case-header'
@@ -830,11 +830,36 @@ function shuffleArray<T>(arr: readonly T[]): T[] {
 
 type HeroPhotoState = { destination: string; candidates: string[]; index: number }
 
+/**
+ * 히어로 사진 회전 규칙(2026-08-01 사용자 재확정): **처음 보는 목적지는 리드(base[0]) 고정,
+ * 그 뒤로는 앱을 열 때마다 후보 전체에서 랜덤.**
+ *
+ * 7/31 탭 스위처 제거 때 index 를 넘기는 장치가 함께 사라져 항상 리드만 보이던 회귀를
+ * 복구한 것. "본 적 있음"은 localStorage(목적지 토큰 키)로 기억 — 기기·브라우저 단위면
+ * 충분하고(첫인상 연출용), 실패(사파리 프라이빗 등) 시 리드 고정으로 안전 폴백.
+ */
+const HERO_SEEN_KEY = 'pm:hero-seen'
+
+/** 이 목적지 히어로를 본 적 있는지 — 첫 호출이 곧 '봤음' 기록(기기 단위, 실패 시 false). */
+function heroSeenBefore(destination: string): boolean {
+  try {
+    const raw = localStorage.getItem(HERO_SEEN_KEY)
+    const seen: string[] = raw ? JSON.parse(raw) : []
+    if (seen.includes(destination)) return true
+    localStorage.setItem(HERO_SEEN_KEY, JSON.stringify([...seen, destination].slice(-50)))
+    return false
+  } catch {
+    return false
+  }
+}
+
 function buildHeroPhotoState(destination: string): HeroPhotoState {
   const base = DEST_PHOTO_CANDIDATES[destination] ?? []
   return {
     destination,
-    candidates: base.length > 1 ? [base[0], ...shuffleArray(base.slice(1))] : base,
+    candidates: base.length > 1 ? [base[0], ...shuffleArray(base.slice(1))] : [...base],
+    // 초기 표시는 항상 리드(index 0) — 서버 렌더·hydration 이 결정적이어야 해서(불일치 방지),
+    // 재방문 랜덤 전환은 마운트 후 effect 가 담당한다(아래 useEffect).
     index: 0,
   }
 }
@@ -1022,12 +1047,25 @@ export function TimelineCalm({
     activeHeroPhotoState = buildHeroPhotoState(trip.toCity)
     setHeroPhotoState(activeHeroPhotoState)
   }
+  // 회전 규칙(2026-08-01 사용자 재확정): 처음 보는 목적지는 리드 고정, **재방문(재마운트)
+  // 부터는 후보 전체에서 랜덤**. 7/31 탭 스위처 제거 때 index 전진 장치가 사라져 항상
+  // 리드만 보이던 회귀 복구. 마운트 후 effect 에서 바꿔야 서버 렌더와 어긋나지 않는다.
+  useEffect(() => {
+    setHeroPhotoState((s) => {
+      if (s.destination !== trip.toCity || s.candidates.length < 2) return s
+      if (!heroSeenBefore(s.destination)) return s // 첫 방문 — 리드 유지(+봤음 기록)
+      return { ...s, index: Math.floor(Math.random() * s.candidates.length) }
+    })
+    // trip.toCity 변경(목적지 칩 전환)마다도 재평가 — 새 목적지 첫 방문이면 리드.
+  }, [trip.toCity])
   const heroPhotoCandidates = activeHeroPhotoState.candidates
   const heroPhotoIndex = activeHeroPhotoState.index
   const heroPhoto = heroPhotoCandidates[heroPhotoIndex] ?? null
   // ⛔ 히어로 탭 스위처(HERO_TAP_SWITCHER + cycleHeroPhoto + 점 인디케이터)는 2026-07-31
   //   사용자 지시로 제거했다 — 사진 후보를 고르는 동안의 임시 검수 장치였다. 다시 만들지 말 것.
-  //   (사진 후보가 여러 장이면 새로고침 때 자동 회전하는 건 그대로 — buildHeroPhotoState.)
+  //   ⚠️ 그때 "자동 회전은 그대로"라고 적었지만 실제로는 index 전진 장치가 스위처뿐이라
+  //   회전이 함께 죽어 있었다(항상 리드). 2026-08-01 위 useEffect 로 복구 — 첫 방문 리드,
+  //   재마운트부터 랜덤.
 
   // 다목적지 전환 — 헤더의 라우트(한국 ⇄ 일본) 버튼을 없애고 히어로의 목적지 칩이 담당.
   // 목적지 2개 이상이면 칩에 꺾쇠가 붙고, 탭하면 바텀시트로 활성 목적지를 바꾼다.
