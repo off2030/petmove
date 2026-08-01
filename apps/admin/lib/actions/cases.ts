@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@petmove/auth/server'
-import { applyAutoFillRules, getVetVisitWindowDays } from '@petmove/domain'
+import { computeAutoFill, getVetVisitWindowDays } from '@petmove/domain'
 import { evaluateAndNotify } from './system-notifications'
 import {
   isDestinationScopedKey,
@@ -322,6 +322,42 @@ export async function updateCaseField(
     const stampedData = stampDocsChecklistCompletion(row as CaseRow, nextData, destination)
     updateObj['data'] = stampedData
 
+    // 자동 채움 — 활성 목적지 기준 trigger 가 by_dest 안의 다른 키를 채움.
+    // departure_date / vet_visit_date / entry_date 등 날짜 트리거에 한해 가동.
+    // 커밋 전 pending 스냅샷으로 계산해 본 저장과 합산 — 편집 1회당 UPDATE 1회(P1 #8,
+    // 종전엔 저장 UPDATE → 엔진 SELECT+UPDATE → refresh SELECT 로 3 SELECT/2 UPDATE).
+    let autoFilled: { data: Record<string, unknown>; columns?: Record<string, unknown> } | undefined
+    const BY_DEST_TRIGGER_KEYS = new Set([
+      'departure_date', 'departure_flight_date', 'vet_visit_date', 'entry_date',
+    ])
+    if (BY_DEST_TRIGGER_KEYS.has(key)) {
+      try {
+        const pendingDeparture =
+          'departure_date' in updateObj
+            ? (updateObj['departure_date'] as string | null)
+            : ((row as { departure_date: string | null }).departure_date ?? null)
+        const computed = await computeAutoFill(supabase, caseId, key, destination, {
+          orgId,
+          destination: destinationRaw,
+          departureDate: pendingDeparture,
+          data: stampedData,
+        })
+        if (computed.ok && computed.changed) {
+          updateObj['data'] = computed.data
+          Object.assign(updateObj, computed.columns)
+        }
+      } catch { /* best-effort — 실패 시 자동채움 없이 본 저장만 */ }
+      autoFilled = {
+        data: updateObj['data'] as Record<string, unknown>,
+        columns: {
+          departure_date:
+            'departure_date' in updateObj
+              ? (updateObj['departure_date'] as string | null)
+              : ((row as { departure_date: string | null }).departure_date ?? null),
+        },
+      }
+    }
+
     const { error: updErr } = await supabase
       .from('cases')
       .update(updateObj)
@@ -339,31 +375,10 @@ export async function updateCaseField(
         new_value: newValueByDest,
       })
     }
-    // 자동 채움 — 활성 목적지 기준 trigger 가 by_dest 안의 다른 키를 채움.
-    // departure_date / vet_visit_date / entry_date 등 날짜 트리거에 한해 가동.
-    let autoFilled: { data: Record<string, unknown>; columns?: Record<string, unknown> } | undefined
-    const BY_DEST_TRIGGER_KEYS = new Set([
-      'departure_date', 'departure_flight_date', 'vet_visit_date', 'entry_date',
-    ])
-    if (BY_DEST_TRIGGER_KEYS.has(key)) {
-      try {
-        await applyAutoFillRules(supabase, caseId, key, destination)
-        const { data: refreshed } = await supabase
-          .from('cases')
-          .select('data, departure_date')
-          .eq('id', caseId)
-          .single()
-        if (refreshed) {
-          const r = refreshed as { data: Record<string, unknown> | null; departure_date: string | null }
-          autoFilled = {
-            data: r.data ?? {},
-            columns: { departure_date: r.departure_date ?? null },
-          }
-        }
-      } catch { /* best-effort */ }
-    }
     await evaluateAndNotify(caseId)
-    return autoFilled ? { ok: true, autoFilled } : { ok: true, autoFilled: { data: stampedData } }
+    return autoFilled
+      ? { ok: true, autoFilled }
+      : { ok: true, autoFilled: { data: updateObj['data'] as Record<string, unknown> } }
   }
 
   let oldValue: string | null
@@ -493,7 +508,57 @@ export async function updateCaseField(
   const stampedData = stampDocsChecklistCompletion(row as CaseRow, nextData, destination)
   if (dataMutated || stampedData !== nextData) updateObj.data = stampedData
 
-  // Single UPDATE — column 변경 + data 부수효과 + status 리셋 모두 합산.
+  // 자동 채움 규칙 적용 — 날짜 관련 필드가 변경됐을 때만.
+  // 체이닝은 엔진 내부에서 iter loop 로 처리.
+  // entry_date: 통합 입국일 — 일본·하와이·태국·스위스 모두 같은 키. 출국일과 동기화 규칙 트리거.
+  // 커밋 전 pending 스냅샷으로 계산해 아래 단일 UPDATE 에 합산 — 편집 1회당 UPDATE 1회(P1 #8,
+  // 종전엔 저장 UPDATE → 엔진 SELECT+UPDATE → refresh SELECT 로 3 SELECT/2 UPDATE).
+  const DATE_TRIGGER_KEYS = new Set([
+    'departure_date',
+    'departure_flight_date', // 일본 출국 항공편 출발일 (departure_date 와 양방향 sync)
+    'vet_visit_date',
+    'rabies_dates',
+    'general_vaccine_dates',
+    'civ_dates',
+    'kennel_cough_dates',
+    'internal_parasite_dates',
+    'external_parasite_dates',
+    'heartworm_dates',
+    'entry_date',
+  ])
+  let autoFilled: { data: Record<string, unknown>; columns?: Record<string, unknown> } | undefined
+  if (DATE_TRIGGER_KEYS.has(key)) {
+    try {
+      const pendingDeparture =
+        'departure_date' in updateObj
+          ? (updateObj['departure_date'] as string | null)
+          : ((row as { departure_date: string | null }).departure_date ?? null)
+      // by_dest 경로(위)와 동일하게 활성 목적지를 넘긴다 — 안 넘기면 auto-fill 이 채운 scoped 타깃
+      // (예: 일본 출국 항공편일)이 다중 목적지에서 top-level 로 가 strict flatten 에 떨궈 증발한다.
+      const computed = await computeAutoFill(supabase, caseId, key, destination, {
+        orgId,
+        destination: destinationRaw,
+        departureDate: pendingDeparture,
+        data: stampedData,
+      })
+      if (computed.ok && computed.changed) {
+        updateObj.data = computed.data
+        Object.assign(updateObj, computed.columns)
+      }
+    } catch { /* best-effort — 실패 시 자동채움 없이 본 저장만 */ }
+    // 자동채움 반영 최종본을 클라이언트 context 에 리턴 — 종전 refresh SELECT 대체.
+    autoFilled = {
+      data: (updateObj.data as Record<string, unknown> | undefined) ?? stampedData,
+      columns: {
+        departure_date:
+          'departure_date' in updateObj
+            ? (updateObj['departure_date'] as string | null)
+            : ((row as { departure_date: string | null }).departure_date ?? null),
+      },
+    }
+  }
+
+  // Single UPDATE — column 변경 + data 부수효과 + status 리셋 + 자동채움 모두 합산.
   const { error: updErr } = await supabase
     .from('cases')
     .update(updateObj)
@@ -515,45 +580,6 @@ export async function updateCaseField(
       old_value: oldValue,
       new_value: newValue,
     })
-  }
-
-  // 자동 채움 규칙 적용 — 날짜 관련 필드가 변경됐을 때만.
-  // 체이닝은 엔진 내부에서 iter loop 로 처리.
-  // entry_date: 통합 입국일 — 일본·하와이·태국·스위스 모두 같은 키. 출국일과 동기화 규칙 트리거.
-  const DATE_TRIGGER_KEYS = new Set([
-    'departure_date',
-    'departure_flight_date', // 일본 출국 항공편 출발일 (departure_date 와 양방향 sync)
-    'vet_visit_date',
-    'rabies_dates',
-    'general_vaccine_dates',
-    'civ_dates',
-    'kennel_cough_dates',
-    'internal_parasite_dates',
-    'external_parasite_dates',
-    'heartworm_dates',
-    'entry_date',
-  ])
-  let autoFilled: { data: Record<string, unknown>; columns?: Record<string, unknown> } | undefined
-  if (DATE_TRIGGER_KEYS.has(key)) {
-    try {
-      // by_dest 경로(위)와 동일하게 활성 목적지를 넘긴다 — 안 넘기면 auto-fill 이 채운 scoped 타깃
-      // (예: 일본 출국 항공편일)이 다중 목적지에서 top-level 로 가 strict flatten 에 떨궈 증발한다.
-      await applyAutoFillRules(supabase, caseId, key, destination)
-      // auto-fill 이후 최신 data + 엔진이 쓸 수 있는 컬럼 (departure_date) 을 같이 읽어
-      // 클라이언트 context 에 반영할 수 있게 리턴.
-      const { data: refreshed } = await supabase
-        .from('cases')
-        .select('data, departure_date')
-        .eq('id', caseId)
-        .single()
-      if (refreshed) {
-        const r = refreshed as { data: Record<string, unknown> | null; departure_date: string | null }
-        autoFilled = {
-          data: r.data ?? {},
-          columns: { departure_date: r.departure_date ?? null },
-        }
-      }
-    } catch { /* best-effort */ }
   }
 
   // 검증 실패가 새로 생기면 펫무브워크 시스템 메시지로 알림.

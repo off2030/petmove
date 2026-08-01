@@ -263,12 +263,43 @@ function applyRuleToData(
 }
 
 /**
- * Entry point — 필드 변경 후 호출. 매칭되는 규칙 실행 + chaining.
+ * 커밋 예정 스냅샷 — computeAutoFill 에 넘기면 케이스 SELECT 를 생략하고 이 값을
+ * "곧 DB 에 쓰일 상태"로 간주해 규칙을 계산한다. 호출부가 자기 UPDATE 직전에
+ * 자동채움 결과를 머지해 단일 UPDATE 로 커밋하는 용도(P1 #8 — 이중 UPDATE 제거).
+ */
+export interface AutoFillPendingSnapshot {
+  /** cases.org_id — org_auto_fill_rules 조회용 */
+  orgId: string
+  /** cases.destination (케이스의 목적지 문자열 — activeDest 아님) */
+  destination: string | null
+  /** 커밋 예정 departure_date 컬럼 값 (변경 없으면 현재 컬럼 값) */
+  departureDate?: string | null
+  /** 커밋 예정 data (호출부 부수효과 반영 후 최종본) */
+  data: Record<string, unknown>
+}
+
+export type AutoFillComputeResult =
+  | {
+      ok: true
+      /** 규칙이 실제로 뭔가를 썼는지 — false 면 data/columns 는 입력 그대로. */
+      changed: boolean
+      /** 자동채움 반영된 data (departure_date 컬럼 값은 제외됨) */
+      data: Record<string, unknown>
+      /** 컬럼 변경분 (현재 departure_date 만) — UPDATE 객체에 spread */
+      columns: Record<string, unknown>
+    }
+  | { ok: false; error: string }
+
+/**
+ * 순수 계산 단계 — 매칭되는 규칙 실행 + chaining. DB 에 쓰지 않는다.
  *
  * `userEditedKey` 가 주어지면 그 필드를 target 으로 갖는 규칙은 건너뜀.
  * 사용자가 방금 직접 수정한 값을 자동화가 다시 덮어쓰지 못하게 하기 위함.
+ *
+ * `pending` 이 주어지면 케이스 SELECT 를 생략하고 pending 을 스냅샷으로 사용한다.
+ * 미지정 시 DB 에서 현재 상태를 읽는다(applyAutoFillRules 하위 호환 경로).
  */
-export async function applyAutoFillRules(
+export async function computeAutoFill(
   supabase: SupabaseClient,
   caseId: string,
   userEditedKey?: string,
@@ -278,24 +309,38 @@ export async function applyAutoFillRules(
    * 단일 목적지 또는 미지정: 기존 top-level/column 경로.
    */
   activeDest?: string | null,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+  pending?: AutoFillPendingSnapshot,
+): Promise<AutoFillComputeResult> {
   try {
-    const { data: row, error: fetchErr } = await supabase
-      .from('cases')
-      .select('org_id, destination, departure_date, data')
-      .eq('id', caseId)
-      .single()
-    if (fetchErr || !row) return { ok: false, error: fetchErr?.message ?? 'case not found' }
+    let orgId: string
+    let destination: string | null
+    let baseData: Record<string, unknown>
+    let departureDateCol: string | null
+    if (pending) {
+      orgId = pending.orgId
+      destination = pending.destination
+      baseData = pending.data
+      departureDateCol = pending.departureDate ?? null
+    } else {
+      const { data: row, error: fetchErr } = await supabase
+        .from('cases')
+        .select('org_id, destination, departure_date, data')
+        .eq('id', caseId)
+        .single()
+      if (fetchErr || !row) return { ok: false, error: fetchErr?.message ?? 'case not found' }
+      orgId = (row as { org_id: string }).org_id
+      destination = (row as { destination: string | null }).destination
+      baseData = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<string, unknown>
+      departureDateCol = (row as { departure_date: string | null }).departure_date ?? null
+    }
 
-    const orgId = (row as { org_id: string }).org_id
-    const destination = (row as { destination: string | null }).destination
-    const baseData = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<string, unknown>
     // departure_date 를 data 에도 포함시켜 readTriggerDate 에서 쉽게 읽도록
     const snapshot: CaseSnapshot = {
       destination,
-      data: { ...baseData, departure_date: (row as { departure_date: string | null }).departure_date ?? undefined },
+      data: { ...baseData, departure_date: departureDateCol ?? undefined },
     }
     const species = typeof snapshot.data.species === 'string' ? (snapshot.data.species as string) : ''
+    const noChange = (): AutoFillComputeResult => ({ ok: true, changed: false, data: baseData, columns: {} })
 
     // 모든 enabled 규칙
     const { data: rulesRaw, error: rulesErr } = await supabase
@@ -336,7 +381,7 @@ export async function applyAutoFillRules(
       }
       return true
     })
-    if (matchedRules.length === 0) return { ok: true }
+    if (matchedRules.length === 0) return noChange()
 
     // 반복적으로 적용 — 새로 쓴 필드가 다른 규칙의 trigger 에 해당하면 한 번 더.
     const MAX_ITER = 5
@@ -369,7 +414,7 @@ export async function applyAutoFillRules(
       // chain 이 감지된 필드만 이후 iter 에서 처리됨 — 위 loop 가 triggerDate 로 자연스럽게 걸러냄
     }
 
-    if (writtenTargetsAll.size === 0) return { ok: true }
+    if (writtenTargetsAll.size === 0) return noChange()
 
     // departure_date 가 data 에 섞여있을 수 있으니 제거 (DB column 과 중복 방지)
     delete (dataMut as { departure_date?: unknown }).departure_date
@@ -386,17 +431,36 @@ export async function applyAutoFillRules(
       } catch { /* 무시 */ }
     }
 
-    const updateObj: Record<string, unknown> = { data: dataMut, ...columnUpdates }
-    const { error: updErr } = await supabase
-      .from('cases')
-      .update(updateObj)
-      .eq('id', caseId)
-    if (updErr) return { ok: false, error: updErr.message }
-
-    return { ok: true }
+    return { ok: true, changed: true, data: dataMut, columns: columnUpdates }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }
+}
+
+/**
+ * Entry point (하위 호환) — compute + 자체 UPDATE 커밋 래퍼.
+ *
+ * 호출부가 자기 UPDATE 와 합칠 수 있으면 computeAutoFill(+pending) 을 직접 쓰고
+ * 결과를 머지해 단일 UPDATE 로 커밋하는 편이 낫다(UPDATE·Realtime publish 절감).
+ */
+export async function applyAutoFillRules(
+  supabase: SupabaseClient,
+  caseId: string,
+  userEditedKey?: string,
+  activeDest?: string | null,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const res = await computeAutoFill(supabase, caseId, userEditedKey, activeDest)
+  if (!res.ok) return res
+  if (!res.changed) return { ok: true }
+
+  const updateObj: Record<string, unknown> = { data: res.data, ...res.columns }
+  const { error: updErr } = await supabase
+    .from('cases')
+    .update(updateObj)
+    .eq('id', caseId)
+  if (updErr) return { ok: false, error: updErr.message }
+
+  return { ok: true }
 }
 
 export { COLUMN_KEYS, COLUMN_DATE_KEYS, ARRAY_DATE_FIELDS }

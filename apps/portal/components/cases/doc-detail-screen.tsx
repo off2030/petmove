@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { findRequiredDoc } from '@petmove/domain'
+import { attachmentInDestinationScope, findRequiredDoc } from '@petmove/domain'
 import { RequiredDocDetail } from '@/components/cases/required-doc-detail'
 import { useCase } from '@/components/portal-shell/case-data-provider'
 import { activeDestinationView } from '@/lib/cases/active-destination'
@@ -49,8 +49,13 @@ export function DocDetailScreen({
 
   // 첨부·미리보기 대상 — attachStepId 태그 파일 (step 연동 서류는 공유 step,
   // 그 외 별지25 등은 doc.id). 모든 필수 서류가 첨부 가능.
+  // destination 태그 스코프 필터 = verified 판정(hasAttachmentForStep)과 동일 규칙 —
+  // 다른 목적지 첨부가 미리보기에 떠서 '✓ 있음' 잠금과 체크리스트 상태가 어긋나지 않게.
+  // caseRow 는 활성 목적지 뷰라 destination 이 단일 토큰.
   const previewDocs = readCaseDocuments(caseRow.data).filter(
-    (d) => d.stepId === doc.attachStepId,
+    (d) =>
+      d.stepId === doc.attachStepId &&
+      attachmentInDestinationScope(d, doc.attachStepId, caseRow.destination),
   )
 
   return (

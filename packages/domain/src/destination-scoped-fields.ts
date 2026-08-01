@@ -394,11 +394,17 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   //                          첫 등록일이 아니라 그 목적지 시작일이 되게(재이용 고객 새 여정). 없으면 created_at
   //                          폴백(처음 등록 목적지·기존 케이스). trip_type 과 같은 패턴(컨테이너 전역, 내부 목적지별).
   'past_journeys', //        완료된 여정 비석 목록(케이스 단위)
-  // 3) 첨부 파일 — **의도적으로 케이스 공유**. 보호자가 올린 파일은 동물/케이스의 자산이라
-  //    목적지와 무관하게 서류함에서 늘 보여야 한다(목적지 분리해도 기존 첨부 사라지지 않게).
-  //    필수서류 체크리스트는 목적지별 spec 으로 노출되므로(예: 별지25 는 일본만) 같은 첨부가
-  //    다른 목적지 체크리스트에 잘못 카운트되지 않는다 — 전역 저장이라도 교차 누수 없음.
-  'documents', //            stepId 태그 첨부 배열(케이스 공유)
+  // 3) 첨부 파일 — **의도적으로 케이스 공유**(전역 저장). 보호자가 올린 파일은 동물/케이스의
+  //    자산이라 목적지와 무관하게 서류함에서 늘 보여야 한다(목적지 분리해도 기존 첨부 사라지지
+  //    않게 — by_dest 명단 등록 방식은 기존 데이터 증발 위험이라 금지).
+  //    ⚠️ 과거 주석의 "spec 이 목적지별이라 교차 카운트 없음" 주장은 **previewStepId 를 공유하는
+  //    spec 들에서 깨진다** — rabies-titer(16개 spec)·certificate-issue(14)·import-permit(13)·
+  //    kr-import-quarantine(12) 등이 같은 attachStepId 를 쓰므로, stepId 만 보면 다중 목적지에서
+  //    A 목적지 첨부가 B 목적지 체크리스트를 완료시켰다. 해결(2026-08-01): 저장은 전역 그대로
+  //    두고 문서 항목에 destination 태그를 달아(업로드 시 활성 목적지) 판정
+  //    (required-docs hasAttachmentForStep + attachmentInDestinationScope)만 스코프 필터 —
+  //    무태그(legacy)는 전 목적지 인정, 동물 단위 사실 step(SHARED_ATTACH_STEPS)은 태그 무관 공유.
+  'documents', //            stepId(+destination) 태그 첨부 배열(저장은 케이스 공유, 판정은 목적지 스코프)
   'notes', //                첨부 메모 맵(documents 와 한 묶음)
   // 4) 케이스 단위 메타·설정 / destination 키 맵 / 일본 단일 단계 (전수 조사 2026-06-11)
   'co_progress', //          '함께 준비' — 동물 1마리당 1개(DB 트리거가 보호자 형제 동기화). 의도적 케이스 단위

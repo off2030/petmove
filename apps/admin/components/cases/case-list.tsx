@@ -618,6 +618,9 @@ export function CaseList({
  * 변경 안 된 case 는 cache hit → JSON.stringify 비용 회피. 1000+ rows 에서
  * 검색 타이핑할 때 매 키스트로크마다 모든 case 의 data 객체를 stringify 하던
  * 것을 일회성으로 줄임.
+ *
+ * 캐시에는 소문자 적용본을 저장한다 — filterCases 가 매 키스트로크마다 전 케이스
+ * 문자열에 .toLowerCase() 를 재실행하던 비용도 캐시에 함께 흡수(검색어만 소문자화).
  */
 const searchStringCache = new WeakMap<CaseRow, string>()
 
@@ -633,14 +636,14 @@ export function filterCases(cases: CaseRow[], query: string): CaseRow[] {
 
   if (raw.includes(' ')) {
     const phraseMatch = cases.filter((c) =>
-      buildSearchString(c).toLowerCase().includes(raw),
+      buildSearchString(c).includes(raw),
     )
     if (phraseMatch.length > 0) return phraseMatch
   }
 
   const terms = raw.split(/\s+/).filter(Boolean)
   return cases.filter((c) => {
-    const hay = buildSearchString(c).toLowerCase()
+    const hay = buildSearchString(c)
     return terms.every((t) => hay.includes(t))
   })
 }
@@ -669,7 +672,7 @@ function buildSearchString(c: CaseRow): string {
       }
     }
   }
-  const result = parts.join(' ')
+  const result = parts.join(' ').toLowerCase()
   searchStringCache.set(c, result)
   return result
 }

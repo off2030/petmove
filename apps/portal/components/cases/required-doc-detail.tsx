@@ -323,7 +323,7 @@ export function RequiredDocDetail({
                     variant: 'destructive',
                   })
                   if (!ok) return
-                  deleteStepDocument(caseId, d.id).then((res) => {
+                  deleteStepDocument(caseId, d.id, activeDest).then((res) => {
                     if (res.ok) updateCase(res.value)
                   })
                 }}
@@ -337,6 +337,7 @@ export function RequiredDocDetail({
           stepId={doc.attachStepId}
           documents={previewDocs}
           hideList
+          destination={activeDest}
         />
 
         {/* 상태 토글 — 수기 서류. 일정 step 의 '저장' 바와 동일하게: 첨부가 있으면

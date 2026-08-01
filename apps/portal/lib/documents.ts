@@ -18,6 +18,13 @@ export interface CaseDocument {
   mime: string
   /** 업로드된 journey step id. */
   stepId: string
+  /**
+   * 업로드 당시의 활성 목적지 토큰('일본' 등). 미기재 = legacy/케이스 공유(전 목적지 인정).
+   * 다중 목적지에서 A 목적지 첨부가 B 목적지 필수서류 체크리스트(공유 previewStepId spec)를
+   * 완료시키는 교차 누수를 판정(domain attachmentInDestinationScope)에서 걸러내기 위한 태그
+   * (2026-08-01). 서류함(보관함) 목록은 필터하지 않는다 — 전부 한곳에서 보이는 게 확정 사항.
+   */
+  destination?: string
   uploadedAt: string
 }
 

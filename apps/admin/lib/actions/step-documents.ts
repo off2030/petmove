@@ -13,7 +13,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { createClient } from '@petmove/auth/server'
-import { resolveStepAttachmentName, type CaseRow } from '@petmove/domain'
+import { parseDestinations, resolveStepAttachmentName, type CaseRow } from '@petmove/domain'
 
 const BUCKET = 'attachments'
 const MAX_BYTES = 12 * 1024 * 1024
@@ -25,6 +25,12 @@ interface CaseDocument {
   size: number
   mime: string
   stepId: string
+  /**
+   * 업로드 당시의 활성 목적지 토큰. 미기재 = legacy/케이스 공유. portal CaseDocument 와 동일
+   * shape — 다중 목적지에서 A 목적지 첨부가 B 목적지 필수서류 체크리스트로 새는 교차 누수를
+   * 판정(domain attachmentInDestinationScope)이 걸러내기 위한 태그(2026-08-01).
+   */
+  destination?: string
   uploadedAt: string
 }
 
@@ -66,15 +72,26 @@ export async function uploadStepDocumentAdmin(formData: FormData): Promise<StepD
     const supabase = await createClient()
 
     // 이름 결정에 기존 documents 가 필요하므로 storage 업로드 전에 먼저 조회.
+    // (destination 은 첨부 목적지 태깅용.)
     const { data: existing, error: fetchErr } = await supabase
       .from('cases')
-      .select('data')
+      .select('data, destination')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const existingDocs = readDocs(prev)
+    // 활성 목적지 태깅 — 클라이언트(상세 화면)의 활성 목적지 토큰이 케이스 목적지 목록에
+    // 있으면 그 값, 아니면 첫 토큰(portal uploadStepDocument 와 동일 규칙).
+    const destRaw = formData.get('destination')
+    const caseTokens = parseDestinations(
+      (existing as { destination?: string | null } | null)?.destination,
+    )
+    const attachDest =
+      typeof destRaw === 'string' && destRaw && caseTokens.includes(destRaw)
+        ? destRaw
+        : (caseTokens[0] ?? null)
     const displayName = resolveStepAttachmentName(stepId, file.name, existingDocs)
     const safeName = displayName.replace(/[^a-zA-Z0-9._-]/g, '_')
     const path = `${caseId}/${Date.now()}_${safeName}`
@@ -93,6 +110,7 @@ export async function uploadStepDocumentAdmin(formData: FormData): Promise<StepD
       size: file.size,
       mime: file.type,
       stepId,
+      ...(attachDest ? { destination: attachDest } : {}),
       uploadedAt,
     }
     // 메모(notes) 섹션 동기화 — admin·portal 양쪽에서 한눈에 보이도록.

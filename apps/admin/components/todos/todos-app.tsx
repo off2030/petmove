@@ -985,9 +985,14 @@ export function TodosApp({
     return m
   }, [filteredCases, activeTab])
 
+  // 전 케이스 순회(행 구축)는 검색어·정렬과 분리 — 키 입력마다 전량 재구축하지 않는다.
+  const builtInspectionRows = useMemo(
+    () => buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault, inspectionConfig.infectiousRules),
+    [cases, inspectionConfig],
+  )
+
   const inspectionRows = useMemo(() => {
-    const built = buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault, inspectionConfig.infectiousRules)
-      .filter(r => matchesQuery(r.caseRow, q))
+    const built = builtInspectionRows.filter(r => matchesQuery(r.caseRow, q))
 
     // 날짜 DESC(최신순) — 빈 날짜는 맨 뒤.
     const dateDesc = (da: string, db: string): number => {
@@ -1026,7 +1031,7 @@ export function TodosApp({
       if (aDone && bDone) return dateDesc(a.date || '', b.date || '')
       return comparePending(a, b)
     })
-  }, [cases, q, inspectionConfig, inspectionSort])
+  }, [builtInspectionRows, q, inspectionSort])
 
   // 상세 좌우 화살표가 순회할 순서를 현재 탭의 정렬·필터 결과로 publish.
   // 검사 탭은 한 케이스가 항체 record 수만큼 여러 행이 될 수 있어 id 중복 제거.
@@ -1162,11 +1167,14 @@ export function TodosImportReportAdd() {
 export function TodosInspectionActions({ query }: { query: string }) {
   const { cases, inspectionConfig } = useCases()
   const q = query.trim().toLowerCase()
+  // 전 케이스 순회(행 구축)는 검색어와 분리 — 키 입력마다 전량 재구축하지 않는다.
+  const builtRows = useMemo(
+    () => buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault, inspectionConfig.infectiousRules),
+    [cases, inspectionConfig],
+  )
   const inspectionRows = useMemo(
-    () =>
-      buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault, inspectionConfig.infectiousRules)
-        .filter((r) => matchesQuery(r.caseRow, q)),
-    [cases, q, inspectionConfig],
+    () => builtRows.filter((r) => matchesQuery(r.caseRow, q)),
+    [builtRows, q],
   )
   const pendingRows = inspectionRows.filter(
     (r) => readInspectionStatus(r) === 'waiting',

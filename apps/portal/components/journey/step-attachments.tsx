@@ -28,6 +28,7 @@ export function StepAttachments({
   documents,
   hint,
   hideList = false,
+  destination,
 }: {
   caseId: string
   stepId: string
@@ -35,6 +36,11 @@ export function StepAttachments({
   hint?: string
   /** true 면 파일명 리스트를 숨기고 업로드 버튼만 — 미리보기를 따로 그리는 화면용. */
   hideList?: boolean
+  /**
+   * 화면의 활성 목적지(?dest= 토큰) — 업로드 파일에 목적지 태깅(다중 목적지 교차 누수 차단).
+   * 미전달이면 서버가 첫 토큰으로 해석(단일 목적지·?dest 없는 화면과 뷰 일치).
+   */
+  destination?: string | null
 }) {
   const { updateCase } = useCases()
   const { openImage } = useMediaViewer()
@@ -56,6 +62,7 @@ export function StepAttachments({
     const fd = new FormData()
     fd.set('caseId', caseId)
     fd.set('stepId', stepId)
+    if (destination) fd.set('destination', destination)
     fd.set('file', file)
     startTransition(async () => {
       const res = await uploadStepDocument(fd)
@@ -93,7 +100,7 @@ export function StepAttachments({
     if (!ok) return
     setError(null)
     startTransition(async () => {
-      const res = await deleteStepDocument(caseId, docId)
+      const res = await deleteStepDocument(caseId, docId, destination)
       if (res.ok) updateCase(res.value)
       else setError(res.error)
     })

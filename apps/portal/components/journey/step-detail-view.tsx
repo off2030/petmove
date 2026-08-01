@@ -67,6 +67,7 @@ import {
   validateTiterAfterBooster,
   validateTiterWithinChain,
   validateVetVisitDate,
+  attachmentInDestinationScope,
   type CheckResult,
   type ProcedureCheck,
   type StepDefinition,
@@ -2469,7 +2470,13 @@ export function StepDetailView({
         ? '예정일이 지났어요. 완료 버튼을 누르거나 날짜를 변경하세요.'
         : undefined
   const noticeCount = notices.length + (situationalDesc ? 1 : 0) + (scheduledNotice ? 1 : 0)
-  const stepDocuments = readCaseDocuments(caseRow?.data).filter((d) => d.stepId === step.id)
+  // destination 태그 스코프 필터 — 필수서류 판정(hasAttachmentForStep)과 동일 규칙. 다중
+  // 목적지에서 다른 목적지 첨부가 이 step 상세에 떠 보이지 않게(무태그 legacy·동물 단위
+  // 공유 step 은 그대로 전부). caseRow 는 활성 목적지 뷰라 destination 이 단일 토큰.
+  const stepDocuments = readCaseDocuments(caseRow?.data).filter(
+    (d) =>
+      d.stepId === step.id && attachmentInDestinationScope(d, step.id, caseRow?.destination),
+  )
 
   // 항공권 step + 왕복 + 출국만 입력 + 미정 아님 — '편도 전환' affordance 노출. 일본 전용 —
   // 태국·필리핀·EU 등은 귀국 leg 의 '미정' 토글만으로 처리(편도 전환 버튼 미노출, 태국과 동일).
@@ -3575,6 +3582,7 @@ export function StepDetailView({
               stepId={step.id}
               documents={stepDocuments}
               hint={step.attachmentHint}
+              destination={activeDest}
             />
           </section>
         )}

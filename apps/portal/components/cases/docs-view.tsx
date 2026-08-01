@@ -77,7 +77,7 @@ export function DocsView({
     })
     if (!ok) return
     startDelete(async () => {
-      const res = await deleteStepDocument(caseId, docId)
+      const res = await deleteStepDocument(caseId, docId, activeDest)
       if (res.ok) updateCase(res.value)
     })
   }
@@ -228,6 +228,7 @@ export function DocsView({
             documents={[]}
             hideList
             hint="추가 서류를 사진·PDF로 보관하세요."
+            destination={activeDest}
           />
         </div>
       </div>

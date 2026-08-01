@@ -1,6 +1,6 @@
 import type { CaseRow } from './types'
 import { todayKst } from './dates'
-import { DESTINATION_OVERRIDES, getDestinationOverride, getTripType } from './destination-config'
+import { DESTINATION_OVERRIDES, getDestinationOverride, getTripType, parseDestinations } from './destination-config'
 import { JOURNEY_STEP_CATALOG } from './journey-steps/catalog'
 import { buildCaseJourneyContext } from './journey-steps/applicability'
 import { resolveStepForDestination } from './journey-steps/destination-overrides'
@@ -2101,11 +2101,73 @@ function isIssuanceNotStarted(issuanceStepId: string | undefined, caseRow: CaseR
   return completed === null || completed.slice(0, 10) > todayKst()
 }
 
-/** case.data.documents 에 해당 stepId 태그의 파일이 하나라도 있으면 true. */
+/**
+ * destination 태그가 있어도 **전 목적지 공유**로 인정하는 첨부 step — 동물 한 마리의 사실
+ * (GLOBAL_CASE_DATA_KEYS 의 *_dates/records 대응 step)이라 어느 목적지 여정에서 올렸든
+ * 같은 서류다(예: 광견병 항체 결과지는 검사기관이 동물에게 발급 — 목적지 무관).
+ *
+ * 선정 기준: allowAttachments step 중 저장 키가 destination-scoped-fields.ts 의
+ * GLOBAL_CASE_DATA_KEYS(동물 단위 사실)인 것 전부. 반대로 vet_visit_date·import_permit_* 등
+ * scoped 키를 쓰는 step(certificate-issue·import-permit·kr-import-quarantine·*-export-quarantine
+ * ·departure·infectious-disease-test 등)과 manual 서류(form25 등 doc.id 태깅)는 목적지별이라 제외.
+ * 'advance-notification' 은 일본 전용 단일 단계(GLOBAL 신호 키)이고 report-status derive 도
+ * 무스코프로 읽으므로 두 판정면이 어긋나지 않게 공유로 둔다.
+ */
+export const SHARED_ATTACH_STEPS: ReadonlySet<string> = new Set([
+  'rabies-vaccine-1', //     rabies_dates (GLOBAL)
+  'rabies-vaccine-2', //     rabies_dates (GLOBAL)
+  'rabies-vaccine-extra', // rabies_dates (GLOBAL)
+  'rabies-titer', //         rabies_titer_records (GLOBAL) — 16개 spec 이 previewStepId 로 공유
+  'rabies-titer-extra', //   rabies_titer_extra (GLOBAL)
+  'general-vaccine', //      general_vaccine_dates (GLOBAL)
+  'kennel-cough-vaccine', // kennel_cough_dates (GLOBAL)
+  'heartworm-test', //       heartworm_dates (GLOBAL)
+  'lungworm-treatment', //   lungworm_dates (GLOBAL)
+  'civ-vaccine', //          civ_dates (GLOBAL)
+  'external-parasite', //    external_parasite_dates (GLOBAL)
+  'internal-parasite', //    internal_parasite_dates (GLOBAL)
+  'advance-notification', // 일본 전용 단일 단계 — report-status 무스코프 derive 와 판정 일치
+])
+
+/**
+ * 첨부 1건이 현재 케이스 뷰의 목적지 스코프에 속하는지.
+ *
+ * - doc.destination 미기재 = legacy/케이스 공유 → 항상 인정 (2026-08-01 태깅 도입 전 데이터 호환).
+ * - SHARED_ATTACH_STEPS(동물 단위 사실 step) → 태그와 무관하게 인정.
+ * - 그 외 → doc.destination 이 현재 뷰 destination 토큰에 포함될 때만 인정. caseDestination 은
+ *   flatten 뷰(단일 토큰)와 비-flatten(콤마 목록) 양쪽이 올 수 있어 parseDestinations 로 비교 —
+ *   콤마 목록이면 케이스의 어느 목적지든 매칭(태깅 도입 전과 동일 = 회귀 없음).
+ *
+ * 판정(hasAttachmentForStep)과 portal 첨부 미리보기가 같은 규칙을 쓰도록 export.
+ */
+export function attachmentInDestinationScope(
+  doc: { destination?: unknown },
+  stepId: string,
+  caseDestination: string | null | undefined,
+): boolean {
+  const tag = typeof doc.destination === 'string' && doc.destination ? doc.destination : null
+  if (!tag) return true
+  if (SHARED_ATTACH_STEPS.has(stepId)) return true
+  if (!caseDestination) return true
+  return parseDestinations(caseDestination).includes(tag)
+}
+
+/**
+ * case.data.documents 에 해당 stepId 태그의 파일이 하나라도 있으면 true.
+ * destination 태그가 있는 파일은 현재 케이스 뷰의 목적지와 일치할 때만 인정 —
+ * 다중 목적지에서 A 목적지 첨부가 B 목적지 체크리스트(공유 previewStepId spec)를
+ * 완료시키는 교차 누수 차단(2026-08-01).
+ */
 function hasAttachmentForStep(caseRow: CaseRow, stepId: string): boolean {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const docs = Array.isArray(data.documents) ? (data.documents as Array<Record<string, unknown>>) : []
-  return docs.some((d) => !!d && typeof d === 'object' && d.stepId === stepId)
+  return docs.some(
+    (d) =>
+      !!d &&
+      typeof d === 'object' &&
+      d.stepId === stepId &&
+      attachmentInDestinationScope(d, stepId, caseRow.destination),
+  )
 }
 
 /**

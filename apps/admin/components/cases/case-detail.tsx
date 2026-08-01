@@ -447,6 +447,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                             caseRow={caseRow}
                             stepId={doc.stepId}
                             label={doc.label}
+                            destination={activeDestToken}
                             onTakeoverDrag={onTakeoverDrag}
                           />
                         ))}
@@ -994,13 +995,15 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel, activ
  * case.data.documents 배열에서 stepId='advance-notification' 만 필터해 표시.
  * portal 보호자가 올린 파일도 같은 자리에 보이고, 운영자가 추가 업로드 가능.
  */
-function DeliverableDocRow({ caseId, caseRow, stepId, label, onTakeoverDrag }: {
+function DeliverableDocRow({ caseId, caseRow, stepId, label, destination, onTakeoverDrag }: {
   caseId: string
   caseRow: CaseRow
   /** case.data.documents 의 stepId — 고객앱 여정 스텝과 연결되는 통로. */
   stepId: string
   /** 행 좌측 라벨 (허가서/수입허가증 등). */
   label: string
+  /** 활성 목적지 토큰 — 업로드 파일 목적지 태깅(다중 목적지 교차 누수 차단, 2026-08-01). */
+  destination?: string | null
   /** row 가 drag/drop 을 가로챘음을 부모(SimpleExtraSection) 에 알려 자기 ring 끄게 함.
    *  row 가 stopPropagation 하므로 부모 dragLeave/drop 이 안 와서 state 가 stuck 되는 걸 방지. */
   onTakeoverDrag?: () => void
@@ -1019,6 +1022,7 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, onTakeoverDrag }: {
       const fd = new FormData()
       fd.set('caseId', caseId)
       fd.set('stepId', stepId)
+      if (destination) fd.set('destination', destination)
       fd.set('file', file)
       const res = await uploadStepDocumentAdmin(fd)
       if (res.ok) {
@@ -1056,8 +1060,9 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, onTakeoverDrag }: {
     }
     document.addEventListener('paste', onPaste)
     return () => document.removeEventListener('paste', onPaste)
+    // destination 도 deps — 활성 목적지 칩 전환 후 붙여넣기가 옛 목적지로 태깅되지 않게.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseId])
+  }, [caseId, destination])
 
   // 드래그앤드롭 — row 영역에 떨어진 파일만 받음. e.stopPropagation 으로 부모
   // SimpleExtraSection 의 AI 추출 drop 핸들러로 전파 차단. 동시에 onTakeoverDrag

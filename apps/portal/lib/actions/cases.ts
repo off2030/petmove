@@ -17,7 +17,7 @@ import { verifyPreviewToken } from '@petmove/auth/preview-token'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
 import {
   emptyVaccineProductsData,
-  applyAutoFillRules,
+  computeAutoFill,
   JOURNEY_STEP_CATALOG,
   buildCaseJourneyContext,
   findRabiesChainBreak,
@@ -1126,12 +1126,14 @@ export async function updateFlightFields(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data, destination')
+      // org_id 는 auto-fill 룰(computeAutoFill pending 스냅샷) 조회용.
+      .select('data, destination, org_id')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const caseOrgId = (existing as { org_id: string }).org_id
 
     // 다중 목적지 + 활성 목적지 지정 → 항공권 필드 + 출국일을 by_dest[destination] 에 분리 저장.
     // 부수효과(departure_date 컬럼 sync·auto-fill)는 by_dest 경로에선 스킵 — admin updateCaseField
@@ -1229,23 +1231,32 @@ export async function updateFlightFields(
         updatePayload.departure_date = departureCol || null
       }
 
-      const { error: updErr } = await admin.from('cases').update(updatePayload).eq('id', caseId)
-      if (updErr) return { ok: false, error: updErr.message }
-
       // 단일 목적지: 출국일 변경 시 org_auto_fill_rules(일본 departure↔departure_flight_date sync 등)를
-      // by_dest 경로로 적용 — top-level 경로의 applyAutoFillRules 와 동일.
+      // by_dest 경로로 적용 — top-level 경로와 동일. 커밋 전 pending 스냅샷으로 계산해 아래
+      // 단일 UPDATE 에 합산(엔진 자체 SELECT/UPDATE 제거 — P1 #8).
       if (isSingleDest) {
         try {
-          await applyAutoFillRules(admin, caseId, 'departure_date', writeDest)
-        } catch { /* best-effort */ }
+          const computed = await computeAutoFill(admin, caseId, 'departure_date', writeDest, {
+            orgId: caseOrgId,
+            destination: caseDestStr ?? null,
+            departureDate: departureCol || null,
+            data: merged,
+          })
+          if (computed.ok && computed.changed) {
+            updatePayload.data = computed.data
+            Object.assign(updatePayload, computed.columns)
+          }
+        } catch { /* best-effort — 실패 시 자동채움 없이 본 저장만 */ }
       }
 
-      const { data: updated, error: refetchErr } = await admin
+      // 단일 UPDATE + returning — 종전 UPDATE 후 refetch SELECT 를 합침.
+      const { data: updated, error: updErr } = await admin
         .from('cases')
-        .select('*')
+        .update(updatePayload)
         .eq('id', caseId)
+        .select('*')
         .single()
-      if (refetchErr) return { ok: false, error: refetchErr.message }
+      if (updErr) return { ok: false, error: updErr.message }
       return { ok: true, value: updated as CaseRow }
     }
 
@@ -1286,31 +1297,36 @@ export async function updateFlightFields(
       else delete nextData.departure_flight_date
       clearLegacyInboundDate(nextData)
     }
-    const updatePayload: { data: Record<string, unknown>; departure_date: string | null } = {
+    const updatePayload: Record<string, unknown> = {
       data: nextData,
       departure_date: departureCol || null,
     }
 
-    const { error } = await admin
+    // departure_date 가 갱신되면 org_auto_fill_rules 트리거 — 일본의 경우
+    // departure_date → departure_flight_date 양방향 sync 룰이 fire 해 출국 항공편 그룹의
+    // 출발일이 자동 채워짐. admin 의 updateCaseField 와 동일. 커밋 전 pending 스냅샷으로
+    // 계산해 아래 단일 UPDATE 에 합산(엔진 자체 SELECT/UPDATE 제거 — P1 #8).
+    try {
+      const computed = await computeAutoFill(admin, caseId, 'departure_date', null, {
+        orgId: caseOrgId,
+        destination: caseDestStr ?? null,
+        departureDate: departureCol || null,
+        data: nextData,
+      })
+      if (computed.ok && computed.changed) {
+        updatePayload.data = computed.data
+        Object.assign(updatePayload, computed.columns)
+      }
+    } catch { /* best-effort — 실패 시 자동채움 없이 본 저장만 */ }
+
+    // 단일 UPDATE + returning — 종전 UPDATE 후 refetch SELECT 를 합침.
+    const { data: updated, error } = await admin
       .from('cases')
       .update(updatePayload)
       .eq('id', caseId)
-    if (error) return { ok: false, error: error.message }
-
-    // departure_date 가 갱신되면 org_auto_fill_rules 트리거 — 일본의 경우
-    // departure_date → departure_flight_date 양방향 sync 룰이 fire 해 출국 항공편 그룹의
-    // 출발일이 자동 채워짐. admin 의 updateCaseField 와 동일.
-    try {
-      await applyAutoFillRules(admin, caseId, 'departure_date')
-    } catch { /* best-effort */ }
-
-    // auto-fill 룰 적용 결과를 포함한 최신 case row 를 다시 fetch.
-    const { data: updated, error: refetchErr } = await admin
-      .from('cases')
       .select('*')
-      .eq('id', caseId)
       .single()
-    if (refetchErr) return { ok: false, error: refetchErr.message }
+    if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
     return { ok: false, error: (e as Error).message }

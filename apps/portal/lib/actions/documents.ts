@@ -13,7 +13,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { createAdminClient } from '@petmove/auth'
-import { resolveStepAttachmentName, stampDocsChecklistCompletion, type CaseRow } from '@petmove/domain'
+import { parseDestinations, resolveStepAttachmentName, stampDocsChecklistCompletion, type CaseRow } from '@petmove/domain'
 import { type CaseDocument, MAX_DOCUMENT_BYTES, readCaseDocuments } from '@/lib/documents'
 import { assertCaseAccess, type Result } from './_shared'
 
@@ -24,7 +24,21 @@ function isAllowedMime(mime: string): boolean {
 }
 
 /**
- * step 첨부 파일 업로드. FormData 키: file / caseId / stepId.
+ * 첨부에 태깅할 활성 목적지 토큰 해석 — 클라이언트가 보낸 ?dest= 토큰이 케이스 목적지 목록에
+ * 있으면 그 값, 아니면 첫 토큰(buildCaseJourneyContext·activeDestinationView 와 동일 규칙이라
+ * 보호자가 보고 있는 뷰의 목적지와 항상 일치). 목적지 없는 케이스는 null(태깅 생략).
+ */
+function resolveAttachDestination(
+  caseDestination: string | null | undefined,
+  requested: unknown,
+): string | null {
+  const tokens = parseDestinations(caseDestination)
+  if (typeof requested === 'string' && requested && tokens.includes(requested)) return requested
+  return tokens[0] ?? null
+}
+
+/**
+ * step 첨부 파일 업로드. FormData 키: file / caseId / stepId / destination(선택, 활성 목적지).
  * attachments 버킷에 올린 뒤 case.data.documents 에 기록하고 갱신된 케이스를 반환.
  */
 export async function uploadStepDocument(formData: FormData): Promise<Result<CaseRow>> {
@@ -73,6 +87,12 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
       .upload(path, buffer, { contentType: file.type, upsert: false })
     if (uploadErr) return { ok: false, error: uploadErr.message }
 
+    // 활성 목적지 태깅 — 다중 목적지에서 이 첨부가 다른 목적지 체크리스트로 새지 않게.
+    // (무태그 = legacy/공유로 인정되므로 목적지 없는 케이스만 생략.)
+    const attachDest = resolveAttachDestination(
+      (existing as CaseRow | null)?.destination,
+      formData.get('destination'),
+    )
     const uploadedAt = new Date().toISOString()
     const doc: CaseDocument = {
       id: randomUUID(),
@@ -81,6 +101,7 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
       size: file.size,
       mime: file.type,
       stepId,
+      ...(attachDest ? { destination: attachDest } : {}),
       uploadedAt,
     }
     // admin 의 메모(notes) 섹션에서도 보이도록 동시 기록. admin 의 notes-upload.ts 와
@@ -105,8 +126,9 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
       // stored 클리어해 derive 모드 전환.
       delete nextData.import_import_status
     }
-    // 첨부가 마지막 필수 서류를 채우면 서류 체크리스트 완료일을 박는다.
-    const finalData = stampDocsChecklistCompletion(existing as CaseRow, nextData)
+    // 첨부가 마지막 필수 서류를 채우면 서류 체크리스트 완료일을 박는다 — 활성 목적지 스코프로
+    // (미전달 시 첫 목적지에 박히던 버그 수정, 2026-08-01. admin cases.ts 와 동일).
+    const finalData = stampDocsChecklistCompletion(existing as CaseRow, nextData, attachDest)
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -126,10 +148,12 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
 
 /**
  * step 첨부 파일 삭제 — case.data.documents 에서 제거 + 스토리지 객체 삭제.
+ * destination = 호출 화면의 활성 목적지(?dest=) — 완료일 재계산(stamp) 스코프용.
  */
 export async function deleteStepDocument(
   caseId: string,
   docId: string,
+  destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
     const access = await assertCaseAccess(caseId)
@@ -162,7 +186,11 @@ export async function deleteStepDocument(
       delete nextData.import_import_status
     }
     // 첨부 삭제로 필수 서류가 미완료로 돌아가면 완료일을 지운다(재완료 시 다시 박힘).
-    const finalData = stampDocsChecklistCompletion(existing as CaseRow, nextData)
+    // 스코프 = 지운 파일의 목적지 태그 우선(그 목적지 체크리스트가 되돌아가는 것) → 없으면
+    // 호출 화면의 활성 목적지.
+    const stampDest =
+      target.destination ?? resolveAttachDestination((existing as CaseRow | null)?.destination, destination)
+    const finalData = stampDocsChecklistCompletion(existing as CaseRow, nextData, stampDest)
     const { data: updated, error } = await admin
       .from('cases')
       .update({ data: finalData })

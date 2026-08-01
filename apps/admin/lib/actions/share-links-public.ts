@@ -36,7 +36,7 @@ import {
   parseDestinations,
   readByDestValue,
   writeByDestValue,
-  applyAutoFillRules,
+  computeAutoFill,
   SHARE_FILE_REQUESTS,
   shareFileRequestByKey,
   SHARE_RECIPIENT_FIELD_DESCRIPTION,
@@ -428,11 +428,14 @@ export async function submitShareLink(
     const updates: Record<string, unknown> = {}
     const { data: caseInfo } = await admin
       .from('cases')
-      .select('data, destination')
+      // org_id·departure_date 는 auto-fill 룰(computeAutoFill pending 스냅샷) 계산용.
+      .select('data, destination, org_id, departure_date')
       .eq('id', row.case_id)
       .maybeSingle()
     const current = ((caseInfo?.data as Record<string, unknown> | null) ?? {})
     const caseDestination = (caseInfo as { destination?: string | null } | null)?.destination ?? null
+    const caseOrgId = (caseInfo as { org_id?: string } | null)?.org_id ?? ''
+    const caseDepartureDate = (caseInfo as { departure_date?: string | null } | null)?.departure_date ?? null
     // 활성 목적지 토큰을 읽기(flatten)와 동일하게 해석 — scope 미지정이면 첫 토큰으로 폴백한다.
     // 읽기(activeDestinationView/buildCaseJourneyContext)가 activeDest 없을 때 첫 토큰으로 폴백하므로,
     // 쓰기도 첫 토큰 by_dest 에 저장해야 일치한다. 다중 목적지인데 scope 없이 top-level 에 쓰면
@@ -523,6 +526,28 @@ export async function submitShareLink(
     if (!claimed) return { ok: false, error: '이미 제출된 링크입니다' }
 
     if (Object.keys(updates).length > 0) {
+      // 매직링크 입력 후 org_auto_fill_rules 트리거 — 예: 일본 departure_flight_date ↔
+      // departure_date 양방향 sync, departure_date 변경 시 백신 일정 자동 계산 등이
+      // admin 의 updateCaseField 와 동일하게 매직링크 입력에서도 적용되도록.
+      //  - useByDest 면 활성 목적지 scope 를 넘겨 by_dest 경로로 라우팅.
+      //  - userEditedKey 는 명시 안 함 — 본 share-link 는 다중 키 입력이므로 전부 유효.
+      //    각 룰의 overwrite_existing 플래그로 사용자가 방금 입력한 값 보호 (기본 false).
+      //  - 커밋 전 pending 스냅샷으로 계산해 아래 단일 UPDATE 에 합산(엔진 자체
+      //    SELECT/UPDATE 제거 — P1 #8).
+      try {
+        const computed = await computeAutoFill(admin, row.case_id, undefined, useByDest ? scope : null, {
+          orgId: caseOrgId,
+          destination: caseDestination,
+          departureDate:
+            typeof updates.departure_date === 'string' ? updates.departure_date : caseDepartureDate,
+          data: (updates.data as Record<string, unknown> | undefined) ?? current,
+        })
+        if (computed.ok && computed.changed) {
+          updates.data = computed.data
+          Object.assign(updates, computed.columns)
+        }
+      } catch { /* best-effort — 실패해도 share-link 제출 자체는 성공 */ }
+
       const { error: upErr } = await admin
         .from('cases')
         .update(updates)
@@ -542,16 +567,6 @@ export async function submitShareLink(
         }
         return { ok: false, error: upErr.message }
       }
-
-      // 매직링크 입력 후 org_auto_fill_rules 트리거 — 예: 일본 departure_flight_date ↔
-      // departure_date 양방향 sync, departure_date 변경 시 백신 일정 자동 계산 등이
-      // admin 의 updateCaseField 와 동일하게 매직링크 입력에서도 적용되도록.
-      //  - useByDest 면 활성 목적지 scope 를 넘겨 by_dest 경로로 라우팅.
-      //  - userEditedKey 는 명시 안 함 — 본 share-link 는 다중 키 입력이므로 전부 유효.
-      //    각 룰의 overwrite_existing 플래그로 사용자가 방금 입력한 값 보호 (기본 false).
-      try {
-        await applyAutoFillRules(admin, row.case_id, undefined, useByDest ? scope : null)
-      } catch { /* best-effort — 실패해도 share-link 제출 자체는 성공 */ }
     }
 
     return { ok: true, value: null }
@@ -718,6 +733,13 @@ export async function recordShareUploadedFiles(
 
     const newDocs: Record<string, unknown>[] = []
     const newNotes: Record<string, unknown>[] = []
+    // 링크에 목적지 스코프가 지정돼 있으면 첨부에도 같은 목적지 태깅(portal 업로드와 동일
+    // 모델 — 무태그 = 케이스 공유). stepId 'share-submission' 은 필수서류 attachStepId 가
+    // 아니라 판정에는 안 걸리지만, 태그를 남겨 두면 이후 목적지별 표시·정리에 쓸 수 있다.
+    const shareDest =
+      typeof row.destination_scope === 'string' && row.destination_scope
+        ? row.destination_scope
+        : null
     for (const u of uploaded) {
       const uploadedAt = new Date().toISOString()
       newDocs.push({
@@ -727,6 +749,7 @@ export async function recordShareUploadedFiles(
         size: u.size,
         mime: u.mime,
         stepId: 'share-submission',
+        ...(shareDest ? { destination: shareDest } : {}),
         uploadedAt,
       })
       newNotes.push({ type: 'file', name: u.name, path: u.path, size: u.size, createdAt: uploadedAt })
