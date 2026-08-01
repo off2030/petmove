@@ -24,6 +24,8 @@ const PUBLIC_PREFIXES = [
   '/offline', // SW 가 install 시 prefetch 해서 오프라인 폴백으로 사용 — 미인증 통과 필수
   '/monitoring', // Sentry tunnelRoute — 클라이언트 에러 이벤트 POST. 로그인 전 화면의
                  // 에러도 잡아야 하므로 미인증 통과 필수(next.config.mjs withSentryConfig).
+  '/api/sentry-test', // Sentry 수신 검증용 고의 에러 라우트 — 미인증으로 쏠 수 있어야
+                      // 배포 직후 파이프라인 점검이 된다(민감 정보 없음, 500 한 번뿐).
   '/_next',
   '/favicon',
   '/manifest.webmanifest',
