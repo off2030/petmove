@@ -13,6 +13,7 @@
  * 호스팅. portal 이 service role 로 case·share-link 직접 조회/수정.
  */
 
+import { reportActionError } from './_report-error'
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import type { ShareLinkRow } from '@petmove/domain'
@@ -88,7 +89,7 @@ export async function createShareLink(
       },
     }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'share-links.createShareLink') }
   }
 }
 
@@ -103,7 +104,7 @@ export async function listShareLinksForCase(caseId: string): Promise<Result<Shar
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: (data ?? []) as ShareLinkRow[] }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'share-links.listShareLinksForCase') }
   }
 }
 
@@ -122,6 +123,6 @@ export async function revokeShareLink(id: string): Promise<Result<null>> {
     // 로 fresh 조회.
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'share-links.revokeShareLink') }
   }
 }

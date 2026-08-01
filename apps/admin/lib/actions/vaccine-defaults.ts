@@ -1,5 +1,6 @@
 'use server'
 
+import { reportActionError } from './_report-error'
 import { revalidatePath } from 'next/cache'
 import { saveVaccineDefaults, type VaccineDefaults } from '@/lib/vaccine-defaults'
 
@@ -12,6 +13,6 @@ export async function updateVaccineDefault(
     revalidatePath('/', 'layout')
     return { ok: true, value }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: reportActionError(e, 'vaccine-defaults.updateVaccineDefault') }
   }
 }

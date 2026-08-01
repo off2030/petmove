@@ -1,5 +1,6 @@
 'use server'
 
+import { reportActionError } from './_report-error'
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { revalidatePath } from 'next/cache'
@@ -44,7 +45,7 @@ export async function listOrgAutoFillRules(): Promise<Result<AutoFillRule[]>> {
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: (data ?? []) as AutoFillRule[] }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'org-auto-fill-rules.listOrgAutoFillRules') }
   }
 }
 
@@ -63,7 +64,7 @@ export async function createOrgAutoFillRule(
     revalidatePath('/settings')
     return { ok: true, value: data as AutoFillRule }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'org-auto-fill-rules.createOrgAutoFillRule') }
   }
 }
 
@@ -83,7 +84,7 @@ export async function updateOrgAutoFillRule(
     revalidatePath('/settings')
     return { ok: true, value: data as AutoFillRule }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'org-auto-fill-rules.updateOrgAutoFillRule') }
   }
 }
 
@@ -98,6 +99,6 @@ export async function deleteOrgAutoFillRule(id: string): Promise<Result<null>> {
     revalidatePath('/settings')
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'org-auto-fill-rules.deleteOrgAutoFillRule') }
   }
 }

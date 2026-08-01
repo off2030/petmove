@@ -9,6 +9,7 @@
  *   - 송신·수신·취소: 조직 멤버 누구나 가능 (admin 제한 없음)
  */
 
+import { reportActionError } from './_report-error'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@petmove/auth/server'
 import { createAdminClient } from '@petmove/auth'
@@ -146,7 +147,7 @@ export async function searchOrganizations(query: string): Promise<Result<OrgSear
       value: (data ?? []).map((o) => ({ id: o.id as string, name: o.name as string })),
     }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfers.searchOrganizations') }
   }
 }
 
@@ -282,7 +283,7 @@ export async function searchMembersGlobal(
     })
     return { ok: true, value: out.slice(0, 30) }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfers.searchMembersGlobal') }
   }
 }
 
@@ -326,7 +327,7 @@ export async function searchOrgMembers(
       })),
     }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfers.searchOrgMembers') }
   }
 }
 
@@ -417,7 +418,7 @@ export async function createTransfer(
     revalidatePath('/cases')
     return { ok: true, value: { id: inserted.id as string } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfers.createTransfer') }
   }
 }
 
@@ -437,7 +438,7 @@ export async function cancelTransfer(id: string): Promise<Result<null>> {
     revalidatePath('/cases')
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfers.cancelTransfer') }
   }
 }
 
@@ -463,7 +464,7 @@ export async function rejectTransfer(
     revalidatePath('/cases')
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfers.rejectTransfer') }
   }
 }
 
@@ -571,7 +572,7 @@ export async function acceptTransfer(
     revalidatePath('/cases')
     return { ok: true, value: { caseId: newCaseId } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfers.acceptTransfer') }
   }
 }
 
@@ -585,7 +586,7 @@ export async function listReceivedTransfers(query?: string): Promise<Result<Tran
     const orgId = await getActiveOrgId()
     return await listTransfersByOrg('to', orgId, query)
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfers.listReceivedTransfers') }
   }
 }
 
@@ -595,7 +596,7 @@ export async function listSentTransfers(query?: string): Promise<Result<Transfer
     const orgId = await getActiveOrgId()
     return await listTransfersByOrg('from', orgId, query)
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfers.listSentTransfers') }
   }
 }
 
@@ -612,7 +613,7 @@ export async function listTransfersForCase(caseId: string): Promise<Result<Trans
     const enriched = await enrichTransfers((data ?? []) as TransferRow[])
     return { ok: true, value: enriched }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfers.listTransfersForCase') }
   }
 }
 
@@ -872,7 +873,7 @@ export async function sendHandoffMessage(
       },
     }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfers.sendHandoffMessage') }
   }
 }
 
@@ -898,7 +899,7 @@ export async function getTransfer(id: string): Promise<Result<TransferWithContex
     const enriched = await enrichTransfers([data as TransferRow])
     return { ok: true, value: enriched[0] ?? null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfers.getTransfer') }
   }
 }
 
@@ -918,7 +919,7 @@ export async function getTransfersByIds(ids: string[]): Promise<Result<TransferW
     const enriched = await enrichTransfers((data ?? []) as TransferRow[])
     return { ok: true, value: enriched }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfers.getTransfersByIds') }
   }
 }
 
@@ -935,6 +936,6 @@ export async function countPendingReceived(): Promise<Result<number>> {
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: count ?? 0 }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfers.countPendingReceived') }
   }
 }

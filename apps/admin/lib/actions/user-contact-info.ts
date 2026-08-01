@@ -1,5 +1,6 @@
 'use server'
 
+import { reportActionError } from './_report-error'
 import { revalidatePath } from 'next/cache'
 import {
   loadUserContactInfo,
@@ -19,6 +20,6 @@ export async function updateUserContactInfo(
     revalidatePath('/settings')
     return { ok: true, info }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: reportActionError(e, 'user-contact-info.updateUserContactInfo') }
   }
 }

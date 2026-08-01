@@ -9,6 +9,7 @@
  */
 
 import OpenAI from 'openai'
+import { reportActionError } from './_report-error'
 import { DROP_CREATE_MODEL } from '@/lib/openai-config'
 import { lookupKoreanZipcode } from '@/lib/kakao-address'
 
@@ -194,7 +195,8 @@ export async function extractAll(input: {
 
     return { ok: true, data: parsed }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error'
+    const reported = reportActionError(err, 'extract-all.extractAll')
+    const msg = err instanceof Error ? reported : 'Unknown error'
     return { ok: false, error: msg }
   }
 }

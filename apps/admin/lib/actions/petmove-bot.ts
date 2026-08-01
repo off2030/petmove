@@ -6,6 +6,7 @@
 // 비밀번호로 로그인할 일은 없고, ensurePetmoveBot() 이 idempotent 하게 행을 보장한다.
 
 import { revalidatePath } from 'next/cache'
+import { reportActionError } from './_report-error'
 import { createClient } from '@petmove/auth/server'
 import { createAdminClient } from '@petmove/auth'
 import { PETMOVE_BOT_EMAIL } from '@/lib/petmove-bot-constants'
@@ -98,7 +99,8 @@ export async function ensurePetmoveBot(): Promise<Result<{ userId: string }>> {
 
     return { ok: true, value: { userId: botId } }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : '알 수 없는 오류' }
+    const msg = reportActionError(e, 'petmove-bot.ensurePetmoveBot')
+    return { ok: false, error: e instanceof Error ? msg : '알 수 없는 오류' }
   }
 }
 

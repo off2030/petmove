@@ -11,6 +11,7 @@
  * 우회 — assertCaseAccess(case_customer_links) 로 본인 케이스 권한을 먼저 검증.
  */
 
+import { reportActionError } from './_shared'
 import { randomUUID } from 'node:crypto'
 import { createAdminClient } from '@petmove/auth'
 import { parseDestinations, resolveStepAttachmentName, stampDocsChecklistCompletion, type CaseRow } from '@petmove/domain'
@@ -146,7 +147,7 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
     }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'documents.uploadStepDocument') }
   }
 }
 
@@ -207,7 +208,7 @@ export async function deleteStepDocument(
     await admin.storage.from(BUCKET).remove([target.path])
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'documents.deleteStepDocument') }
   }
 }
 
@@ -249,7 +250,7 @@ export async function getStepDocumentUrl(
     }
     return { ok: true, value: data.signedUrl }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'documents.getStepDocumentUrl') }
   }
 }
 
@@ -309,6 +310,6 @@ export async function pruneMissingStepDocuments(caseId: string): Promise<Result<
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'documents.pruneMissingStepDocuments') }
   }
 }

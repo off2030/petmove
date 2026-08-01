@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { reportActionError } from './_report-error'
 import { saveExternalLinks } from '@/lib/external-links'
 import type { ExternalLinksConfig } from '@petmove/domain'
 
@@ -16,6 +17,7 @@ export async function saveExternalLinksAction(
     revalidatePath('/calculator')
     return { ok: true, config: saved }
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : '저장 실패' }
+    const msg = reportActionError(err, 'external-links-action.saveExternalLinksAction')
+    return { ok: false, error: err instanceof Error ? msg : '저장 실패' }
   }
 }

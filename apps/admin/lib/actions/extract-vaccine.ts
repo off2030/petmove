@@ -1,6 +1,7 @@
 'use server'
 
 import OpenAI from 'openai'
+import { reportActionError } from './_report-error'
 
 /** 백신/구충제 이미지 추출 전용 고정밀 모델. env OPENAI_VACCINE_MODEL 로 오버라이드 가능. */
 const VACCINE_EXTRACTION_MODEL = process.env.OPENAI_VACCINE_MODEL?.trim() || 'gpt-4.1'
@@ -218,7 +219,8 @@ export async function extractVaccineInfo(input: {
 
     return { ok: true, records: nonEmpty }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error'
+    const reported = reportActionError(err, 'extract-vaccine.extractVaccineInfo')
+    const msg = err instanceof Error ? reported : 'Unknown error'
     return { ok: false, error: msg }
   }
 }

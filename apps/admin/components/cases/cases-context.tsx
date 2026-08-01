@@ -16,6 +16,7 @@ import type { InspectionConfig } from '@petmove/domain'
 import type { CertConfig } from '@petmove/domain'
 import { subscribeRealtime } from '@/lib/realtime/resilient-channel'
 import { getActiveOrgCaseById, listActiveOrgCases } from '@/lib/actions/list-cases'
+import { mergeHydratedCaseRow } from '@/lib/case-list-lite'
 import type { SharePreset } from '@/lib/share-presets-types'
 import { DEFAULT_TODO_COLUMNS_CONFIG, type TodoColumnsConfig } from '@/lib/todo-columns-config-types'
 
@@ -96,6 +97,14 @@ interface CasesContextValue {
    */
   todoColumnsConfig: TodoColumnsConfig
   setTodoColumnsConfig: (config: TodoColumnsConfig) => void
+  /**
+   * 해당 케이스 행이 "풀 데이터"인지 — 목록 초기 로드는 경량 행(data 에서
+   * CASE_LIST_EXCLUDED_DATA_KEYS 제거, @/lib/case-list-lite)이라, 제외 키를 통째 배열로
+   * 저장하는 상세 필드(notes-field·payment-field·attachments-field)는 이 값이 true 가
+   * 되기 전까지 편집을 막아야 한다(경량 data 로 서버 배열을 덮어쓰는 사고 방지).
+   * 케이스 선택 시 cases-context 가 풀 행을 자동 보강하므로 잠깐만 false 다.
+   */
+  isCaseHydrated: (id: string) => boolean
   /** 케이스 목록 검색어. 좌측 목록 + 케이스 상세 좌우 네비게이션이 같은 검색 결과를 공유. */
   searchQuery: string
   setSearchQuery: (q: string) => void
@@ -201,6 +210,25 @@ export function CasesProvider({
     casesRef.current = cases
   }, [cases])
 
+  // ── 경량 목록 행의 hydration 추적 ──────────────────────────────────────
+  // listActiveOrgCases() 는 경량 행(대형 data 키 제외)을 주므로, 풀 데이터를 받은 행의
+  // id 를 여기에 기록한다. 풀 행 출처: getActiveOrgCaseById(선택/복원/잘린 payload 재조회),
+  // addLocalCase(생성 액션 반환값), Realtime INSERT/UPDATE 의 온전한 payload.
+  const [hydratedIds, setHydratedIds] = useState<Set<string>>(() => new Set())
+  const hydratedIdsRef = useRef(hydratedIds)
+  useEffect(() => {
+    hydratedIdsRef.current = hydratedIds
+  }, [hydratedIds])
+  const markHydrated = useCallback((id: string) => {
+    setHydratedIds((prev) => {
+      if (prev.has(id)) return prev
+      const next = new Set(prev)
+      next.add(id)
+      return next
+    })
+  }, [])
+  const isCaseHydrated = useCallback((id: string) => hydratedIds.has(id), [hydratedIds])
+
   // ── 임시 진단(DIAG-REMOUNT) ─────────────────────────────────────────────
   // "상세→목록 튕김" 의 가설: (dashboard) 레이아웃이 어떤 트리거로 리마운트
   // → CasesProvider 도 새 인스턴스 → URL/sessionStorage 가 깨져 있으면 첫화면 노출.
@@ -257,6 +285,7 @@ export function CasesProvider({
         setCases((prev) =>
           prev.some((c) => c.id === restoredCase.id) ? prev : [restoredCase, ...prev],
         )
+        markHydrated(restoredCase.id)
         setSelectedId(id)
       } else {
         // 정상 조회로 "없음" 확인 — 이 조직의 케이스가 아니므로 흔적을 지운다.
@@ -270,12 +299,17 @@ export function CasesProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // URL 의 case 파라미터가 현재 목록에 없으면 단일 조회로 복원한다.
-  // 조회 자체가 실패하면 인증 refresh/RLS/네트워크 타이밍일 수 있으므로 URL 을 지우지 않는다.
-  // "정상 조회 결과 없음" 이 확인될 때만 stale id 로 보고 정리한다.
+  // 선택된 케이스의 풀 행 확보 — 두 역할을 한 effect 로:
+  //  1. URL 의 case 파라미터가 현재 목록에 없으면 단일 조회로 복원 (기존 동작).
+  //     조회 자체가 실패하면 인증 refresh/RLS/네트워크 타이밍일 수 있으므로 URL 을 지우지
+  //     않고, "정상 조회 결과 없음" 이 확인될 때만 stale id 로 보고 정리한다.
+  //  2. 목록에는 있지만 경량 행(hydration 안 됨)이면 풀 행으로 보강한다 — 목록 초기
+  //     로드가 대형 data 키를 제외하고 오기 때문(@/lib/case-list-lite). 보강 중 사용자가
+  //     다른 필드를 optimistic 편집했으면 mergeHydratedCaseRow 가 제외 키만 채워 넣는다.
   useEffect(() => {
     if (!selectedId) return
-    if (cases.some((c) => c.id === selectedId)) return
+    const inList = cases.some((c) => c.id === selectedId)
+    if (inList && hydratedIds.has(selectedId)) return
 
     let alive = true
     void (async () => {
@@ -283,14 +317,17 @@ export function CasesProvider({
       if (!alive) return
 
       if (!result.ok) return
-      const restoredCase = result.case
-      if (restoredCase) {
+      const fullCase = result.case
+      if (fullCase) {
         setCases((prev) => {
-          if (prev.some((c) => c.id === restoredCase.id)) return prev
-          return [restoredCase, ...prev]
+          const exists = prev.some((c) => c.id === fullCase.id)
+          if (!exists) return [fullCase, ...prev]
+          return prev.map((c) => (c.id === fullCase.id ? mergeHydratedCaseRow(c, fullCase) : c))
         })
-      } else {
+        markHydrated(fullCase.id)
+      } else if (!inList) {
         // 정상 조회 결과 "없음" 확인 — stale id 를 정리해 빈 상세에 갇히지 않게 한다.
+        // (목록에 있는데 없음이 오는 건 RLS/전환 타이밍일 수 있어 화면을 유지한다.)
         setSelectedId(null)
         syncCaseIdToUrl(null)
       }
@@ -299,7 +336,7 @@ export function CasesProvider({
     return () => {
       alive = false
     }
-  }, [cases, selectedId])
+  }, [cases, selectedId, hydratedIds, markHydrated])
 
   const selectCase = useCallback((id: string | null) => {
     setSelectedId(id)
@@ -352,6 +389,9 @@ export function CasesProvider({
                 if (prev.some((c) => c.id === row.id)) return prev
                 return [row, ...prev]
               })
+              // INSERT payload 는 풀 행 — 잘림(max_record_bytes) 신호가 없을 때만 hydrated 처리.
+              const insErrs = (payload as { errors?: unknown[] }).errors
+              if (!Array.isArray(insErrs) || insErrs.length === 0) markHydrated(row.id)
               setNewCaseIds((prev) => {
                 const next = new Set(prev)
                 next.add(row.id)
@@ -394,6 +434,8 @@ export function CasesProvider({
                   if (res.ok && res.case) {
                     const full = res.case
                     setCases((prev) => prev.map((c) => (c.id === full.id ? full : c)))
+                    // 목록에 있는 행을 실제로 교체했을 때만 hydrated 처리(UPDATE 핸들러와 동일 사유).
+                    if (casesRef.current.some((c) => c.id === full.id)) markHydrated(full.id)
                   }
                 })
                 return
@@ -405,6 +447,10 @@ export function CasesProvider({
                   return row
                 }),
               )
+              // 온전한 UPDATE payload 는 풀 행 — 캐시에 있던 행을 교체했을 때만 hydrated 처리.
+              // (목록에 없는 행이면 아무것도 교체 안 됐으므로 표시하면 안 된다 — 나중에
+              // 재연결 보충으로 경량 행이 들어왔을 때 hydrated 로 오인하는 누수 방지.)
+              if (cached) markHydrated(row.id)
             },
           ),
       () => {
@@ -414,7 +460,7 @@ export function CasesProvider({
           return
         }
         void (async () => {
-          let fresh: CaseRow[]
+          let fresh: CaseRow[] // 경량 행 — 대형 data 키 제외(@/lib/case-list-lite)
           try {
             fresh = await listActiveOrgCases()
           } catch {
@@ -432,7 +478,26 @@ export function CasesProvider({
           const arrivedIds = fresh
             .filter((c) => !prevIds.has(c.id) && !selfAddedRef.current.has(c.id))
             .map((c) => c.id)
-          setCases(fresh)
+          // 경량 fresh 로 전량 교체하되, 이미 hydrate 된 행은 지키기:
+          //  - updated_at 이 그대로면 캐시 행 유지 (풀 data 보존 — 열려 있는 상세가
+          //    notes·결제를 잃지 않게)
+          //  - updated_at 이 바뀌었으면 fresh(경량)를 채택하고 hydrated 표시를 내린다 —
+          //    선택된 케이스라면 위 hydration effect 가 곧바로 풀 행을 다시 받아온다.
+          const prevById = new Map(casesRef.current.map((c) => [c.id, c]))
+          const prevHydrated = hydratedIdsRef.current
+          const nextHydrated = new Set<string>()
+          const merged = fresh.map((f) => {
+            const cached = prevById.get(f.id)
+            if (cached && prevHydrated.has(f.id)) {
+              if (cached.updated_at === f.updated_at) {
+                nextHydrated.add(f.id)
+                return cached
+              }
+            }
+            return f
+          })
+          setCases(merged)
+          setHydratedIds(nextHydrated)
           if (arrivedIds.length > 0) {
             setNewCaseIds((prev) => {
               const next = new Set(prev)
@@ -451,6 +516,8 @@ export function CasesProvider({
   // 데이터는 멀쩡하고 화면의 신규 표식만 잘못 붙으므로, org 가 바뀌면 표식을 비운다.
   useEffect(() => {
     setNewCaseIds(new Set<string>())
+    // 조직이 바뀌면 hydration 기록도 무효 — 새 org 목록은 전부 경량 행에서 시작한다.
+    setHydratedIds(new Set<string>())
   }, [orgId])
 
   // 검사/신고/서류 탭에서 행 클릭 시 호출. selectCase로 케이스 선택 후
@@ -483,9 +550,11 @@ export function CasesProvider({
   const addLocalCase = useCallback((newCase: CaseRow) => {
     selfAddedRef.current.add(newCase.id)
     setCases((prev) => [newCase, ...prev])
+    // 생성 액션이 돌려준 풀 행 — 경량 아님.
+    markHydrated(newCase.id)
     setSelectedId(newCase.id)
     syncCaseIdToUrl(newCase.id)
-  }, [])
+  }, [markHydrated])
 
   const removeLocalCase = useCallback((id: string) => {
     setCases((prev) => {
@@ -514,8 +583,12 @@ export function CasesProvider({
       setCases((prev) =>
         prev.map((c) => (c.id === caseId ? { ...c, data, updated_at: new Date().toISOString() } : c)),
       )
+      // 호출처(autoFill 결과·step 첨부 업로드 결과)는 모두 서버가 fresh read 로 만든
+      // "풀 data" 를 넘긴다 — 경량 행이었어도 이제 풀 데이터. 부분 data 를 넘기는 호출을
+      // 새로 만들면 안 된다(@/lib/case-list-lite 계약).
+      markHydrated(caseId)
     },
-    [],
+    [markHydrated],
   )
 
   const updateLocalCaseField = useCallback(
@@ -592,12 +665,13 @@ export function CasesProvider({
       setSharePresets,
       todoColumnsConfig,
       setTodoColumnsConfig,
+      isCaseHydrated,
       searchQuery,
       setSearchQuery,
       navCaseIds,
       setNavCaseIds,
     }),
-    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, removeLocalCaseQuiet, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, inspectionConfig, certConfig, newCaseIds, caseAssigneeEnabled, orgMembers, sharePresets, setSharePresets, todoColumnsConfig, searchQuery, navCaseIds],
+    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, removeLocalCaseQuiet, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, inspectionConfig, certConfig, newCaseIds, caseAssigneeEnabled, orgMembers, sharePresets, setSharePresets, todoColumnsConfig, isCaseHydrated, searchQuery, navCaseIds],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

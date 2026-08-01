@@ -11,6 +11,7 @@
  * manual auth(case_customer_links 체크) 후 화이트리스트된 컬럼만 update.
  */
 
+import { reportActionError } from './_shared'
 import { cookies } from 'next/headers'
 import { createAdminClient } from '@petmove/auth'
 import { verifyPreviewToken } from '@petmove/auth/preview-token'
@@ -80,7 +81,7 @@ export async function listMyCases(): Promise<Result<CaseRow[]>> {
     const rows = (data ?? []).map(({ case_customer_links: _l, ...rest }) => rest) as CaseRow[]
     return { ok: true, value: rows }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.listMyCases') }
   }
 }
 
@@ -105,7 +106,7 @@ export async function getMyCase(caseId: string): Promise<Result<CaseRow | null>>
     const { case_customer_links: _l, ...rest } = data as Record<string, unknown>
     return { ok: true, value: rest as unknown as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.getMyCase') }
   }
 }
 
@@ -130,7 +131,7 @@ export async function softDeleteMyCase(caseId: string): Promise<Result<{ id: str
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: { id: caseId } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.softDeleteMyCase') }
   }
 }
 
@@ -181,7 +182,7 @@ export async function updateCaseAvatar(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: data as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateCaseAvatar') }
   }
 }
 
@@ -255,7 +256,7 @@ export async function updateMicrochipFields(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateMicrochipFields') }
   }
 }
 
@@ -434,7 +435,7 @@ export async function updateRabiesEntryFields(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateRabiesEntryFields') }
   }
 }
 
@@ -600,7 +601,7 @@ export async function updateRabiesExtraEntries(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateRabiesExtraEntries') }
   }
 }
 
@@ -699,7 +700,7 @@ export async function updateTiterFields(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateTiterFields') }
   }
 }
 
@@ -775,7 +776,7 @@ export async function markInfectiousDiseaseResultConfirmed(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.markInfectiousDiseaseResultConfirmed') }
   }
 }
 
@@ -821,7 +822,7 @@ export async function markTiterResultConfirmed(caseId: string): Promise<Result<C
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.markTiterResultConfirmed') }
   }
 }
 
@@ -867,7 +868,7 @@ export async function markExtraTiterResultConfirmed(caseId: string): Promise<Res
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.markExtraTiterResultConfirmed') }
   }
 }
 
@@ -1049,7 +1050,7 @@ export async function updateTiterExtraEntries(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateTiterExtraEntries') }
   }
 }
 
@@ -1329,7 +1330,7 @@ export async function updateFlightFields(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateFlightFields') }
   }
 }
 
@@ -1377,7 +1378,7 @@ export async function updateCaseTripType(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateCaseTripType') }
   }
 }
 
@@ -1423,7 +1424,7 @@ export async function markAdvanceNotificationApprovalSkipped(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.markAdvanceNotificationApprovalSkipped') }
   }
 }
 
@@ -1471,7 +1472,7 @@ export async function markAdvanceNotificationInProgress(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.markAdvanceNotificationInProgress') }
   }
 }
 
@@ -1524,7 +1525,7 @@ export async function markJpExportQuarantineReservationSkipped(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.markJpExportQuarantineReservationSkipped') }
   }
 }
 
@@ -1576,7 +1577,7 @@ export async function markJpExportQuarantineInProgress(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.markJpExportQuarantineInProgress') }
   }
 }
 
@@ -1632,7 +1633,7 @@ export async function updateAdvanceNotificationDate(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateAdvanceNotificationDate') }
   }
 }
 
@@ -1722,7 +1723,7 @@ export async function updateVetVisitDate(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateVetVisitDate') }
   }
 }
 
@@ -1838,7 +1839,7 @@ export async function updateKrExportQuarantineDate(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateKrExportQuarantineDate') }
   }
 }
 
@@ -1889,7 +1890,7 @@ export async function updateJpImportQuarantineDate(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateJpImportQuarantineDate') }
   }
 }
 
@@ -1962,7 +1963,7 @@ export async function updateImportQuarantineDate(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateImportQuarantineDate') }
   }
 }
 
@@ -2055,7 +2056,7 @@ export async function updateImportPermitFields(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateImportPermitFields') }
   }
 }
 
@@ -2177,7 +2178,7 @@ export async function updateApplicationDate(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateApplicationDate') }
   }
 }
 
@@ -2233,7 +2234,7 @@ export async function markApplicationIssued(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.markApplicationIssued') }
   }
 }
 
@@ -2388,7 +2389,7 @@ export async function updateSimpleDateField(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateSimpleDateField') }
   }
 }
 
@@ -2482,7 +2483,7 @@ export async function markImportPermitIssued(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.markImportPermitIssued') }
   }
 }
 
@@ -2533,7 +2534,7 @@ export async function unmarkImportPermitIssued(
     if (undoErr) return { ok: false, error: undoErr.message }
     return { ok: true, value: undone as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.unmarkImportPermitIssued') }
   }
 }
 
@@ -2585,7 +2586,7 @@ export async function markImportPermitInProgress(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.markImportPermitInProgress') }
   }
 }
 
@@ -2715,7 +2716,7 @@ export async function updateGeneralVaccineEntries(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateGeneralVaccineEntries') }
   }
 }
 
@@ -2890,7 +2891,7 @@ export async function updateParasiteEntries(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateParasiteEntries') }
   }
 }
 
@@ -2941,7 +2942,7 @@ export async function updateJpExportQuarantineVisitDate(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateJpExportQuarantineVisitDate') }
   }
 }
 
@@ -2992,7 +2993,7 @@ export async function updateKrImportQuarantineDate(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateKrImportQuarantineDate') }
   }
 }
 
@@ -3100,7 +3101,7 @@ export async function updateJpExportQuarantineFields(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateJpExportQuarantineFields') }
   }
 }
 
@@ -3154,7 +3155,7 @@ export async function saveCaseFeedback(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.saveCaseFeedback') }
   }
 }
 
@@ -3460,7 +3461,7 @@ export async function updateCaseInfoFields(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.updateCaseInfoFields') }
   }
 }
 
@@ -3552,6 +3553,6 @@ export async function getCaseVaccineData(caseId: string): Promise<Result<Vaccine
     }
     return { ok: true, value }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'cases.getCaseVaccineData') }
   }
 }

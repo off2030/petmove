@@ -1,5 +1,6 @@
 'use server'
 
+import { reportActionError } from './_report-error'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@petmove/auth/server'
 
@@ -57,7 +58,7 @@ export async function setMyPassword(password: string): Promise<
     revalidatePath('/', 'layout')
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: reportActionError(e, 'profile.setMyPassword') }
   }
 }
 
@@ -129,7 +130,7 @@ export async function migrateMyOAuthAvatar(): Promise<
     revalidatePath('/', 'layout')
     return { ok: true, avatar_url: newUrl, migrated: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: reportActionError(e, 'profile.migrateMyOAuthAvatar') }
   }
 }
 
@@ -166,6 +167,6 @@ export async function updateMyProfile(patch: {
     revalidatePath('/messages')
     return { ok: true, profile: data as MyProfile }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: reportActionError(e, 'profile.updateMyProfile') }
   }
 }

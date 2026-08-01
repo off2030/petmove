@@ -1,5 +1,6 @@
 'use server'
 
+import { reportActionError } from './_report-error'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
@@ -58,6 +59,6 @@ export async function updateDetailViewSettings(
     revalidatePath('/')
     return { ok: true, settings: next }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: reportActionError(e, 'detail-view-settings.updateDetailViewSettings') }
   }
 }

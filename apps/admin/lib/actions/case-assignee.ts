@@ -6,6 +6,7 @@
  * DB 컬럼은 항상 존재하고 누구나 본인 조직 케이스의 담당자를 변경할 수 있음.
  */
 
+import { reportActionError } from './_report-error'
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 
@@ -40,6 +41,6 @@ export async function setCaseAssignee(
     // 즉시 반영, 타 클라이언트는 Realtime UPDATE 채널로 동기화.
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'case-assignee.setCaseAssignee') }
   }
 }

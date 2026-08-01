@@ -7,6 +7,7 @@
  * 발송 측(서버)은 service-role 로 push_device_tokens 를 읽어 해당 보호자 기기로 푸시한다.
  */
 
+import { reportActionError } from './_shared'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
@@ -38,6 +39,6 @@ export async function saveDeviceToken(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: true }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'push-tokens.saveDeviceToken') }
   }
 }

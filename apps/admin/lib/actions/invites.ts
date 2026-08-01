@@ -1,5 +1,6 @@
 'use server'
 
+import { reportActionError } from './_report-error'
 import { headers } from 'next/headers'
 import { createClient } from '@petmove/auth/server'
 import { createAdminClient } from '@petmove/auth'
@@ -75,7 +76,7 @@ export async function listInvites(): Promise<Result<InviteRow[]>> {
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: (data ?? []) as InviteRow[] }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'invites.listInvites') }
   }
 }
 
@@ -121,7 +122,7 @@ export async function listMembers(): Promise<Result<MemberRow[]>> {
     })
     return { ok: true, value: rows }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'invites.listMembers') }
   }
 }
 
@@ -160,7 +161,7 @@ export async function listSuperAdmins(): Promise<Result<SuperAdminRow[]>> {
       })),
     }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'invites.listSuperAdmins') }
   }
 }
 
@@ -220,12 +221,12 @@ export async function createInvite(input: {
       })
       emailSent = result !== null
     } catch (e) {
-      emailError = (e as Error).message
+      emailError = reportActionError(e, 'invites.createInvite')
     }
 
     return { ok: true, value: { token, emailSent, emailError } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'invites.createInvite') }
   }
 }
 
@@ -240,7 +241,7 @@ export async function revokeInvite(id: string): Promise<Result<null>> {
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'invites.revokeInvite') }
   }
 }
 
@@ -269,7 +270,7 @@ export async function updateMemberRole(input: {
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'invites.updateMemberRole') }
   }
 }
 
@@ -297,7 +298,7 @@ export async function removeMember(userId: string): Promise<Result<null>> {
     }
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'invites.removeMember') }
   }
 }
 
@@ -342,7 +343,7 @@ export async function getInviteSummary(token: string): Promise<Result<InviteSumm
       },
     }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'invites.getInviteSummary') }
   }
 }
 
@@ -379,7 +380,7 @@ export async function sendInviteMagicLink(input: {
     if (otpErr) return { ok: false, error: otpErr.message }
     return { ok: true, value: { email: invite.email as string } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'invites.sendInviteMagicLink') }
   }
 }
 

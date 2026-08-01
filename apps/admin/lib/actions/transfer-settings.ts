@@ -8,6 +8,7 @@
  * - enabled false (기본) → UI 미노출, 자동 배정 미수행
  */
 
+import { reportActionError } from './_report-error'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
@@ -30,7 +31,7 @@ export async function getCaseAssigneeEnabled(): Promise<Result<boolean>> {
     const enabled = (data?.value as { enabled?: boolean } | null)?.enabled === true
     return { ok: true, value: enabled }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfer-settings.getCaseAssigneeEnabled') }
   }
 }
 
@@ -49,6 +50,6 @@ export async function setCaseAssigneeEnabled(enabled: boolean): Promise<Result<n
     revalidatePath('/cases')
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'transfer-settings.setCaseAssigneeEnabled') }
   }
 }

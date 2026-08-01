@@ -1,5 +1,6 @@
 'use server'
 
+import { reportActionError } from './_report-error'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
 import { signPreviewToken } from '@petmove/auth/preview-token'
 
@@ -34,6 +35,6 @@ export async function createPortalPreviewUrl(caseId: string): Promise<
       process.env.NEXT_PUBLIC_PORTAL_BASE_URL?.replace(/\/$/, '') || 'http://localhost:3002'
     return { ok: true, url: `${base}/preview/${signPreviewToken(caseId)}` }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'portal-preview.createPortalPreviewUrl') }
   }
 }

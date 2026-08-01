@@ -1,5 +1,6 @@
 'use server'
 
+import { reportActionError } from './_report-error'
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { revalidatePath } from 'next/cache'
@@ -17,7 +18,7 @@ export async function listOrgDisabledChecks(): Promise<Result<string[]>> {
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: (data ?? []).map((r) => r.check_id as string) }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'org-disabled-checks.listOrgDisabledChecks') }
   }
 }
 
@@ -60,6 +61,6 @@ export async function setOrgDisabledCheck(
     revalidatePath('/')
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'org-disabled-checks.setOrgDisabledCheck') }
   }
 }

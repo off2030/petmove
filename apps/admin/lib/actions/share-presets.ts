@@ -5,6 +5,7 @@
  * 조직 단위, 멤버 모두 공유. CRUD 는 admin 권한 RLS 로 제어 (organization_settings RLS 위임).
  */
 
+import { reportActionError } from './_report-error'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
@@ -45,7 +46,7 @@ export async function listSharePresets(): Promise<Result<SharePreset[]>> {
     const presets = sanitize((data?.value as { presets?: unknown } | null)?.presets ?? [])
     return { ok: true, value: presets }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'share-presets.listSharePresets') }
   }
 }
 
@@ -65,6 +66,6 @@ export async function saveSharePresets(presets: SharePreset[]): Promise<Result<n
     revalidatePath('/cases')
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'share-presets.saveSharePresets') }
   }
 }

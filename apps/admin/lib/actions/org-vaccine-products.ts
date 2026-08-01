@@ -1,5 +1,6 @@
 'use server'
 
+import { reportActionError } from './_report-error'
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { revalidatePath } from 'next/cache'
@@ -48,7 +49,7 @@ export async function listOrgVaccineProducts(): Promise<Result<OrgVaccineProduct
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: (data ?? []) as OrgVaccineProduct[] }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'org-vaccine-products.listOrgVaccineProducts') }
   }
 }
 
@@ -67,7 +68,7 @@ export async function createOrgVaccineProduct(
     revalidatePath('/settings')
     return { ok: true, value: data as OrgVaccineProduct }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'org-vaccine-products.createOrgVaccineProduct') }
   }
 }
 
@@ -87,7 +88,7 @@ export async function updateOrgVaccineProduct(
     revalidatePath('/settings')
     return { ok: true, value: data as OrgVaccineProduct }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'org-vaccine-products.updateOrgVaccineProduct') }
   }
 }
 
@@ -102,6 +103,6 @@ export async function deleteOrgVaccineProduct(id: string): Promise<Result<null>>
     revalidatePath('/settings')
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'org-vaccine-products.deleteOrgVaccineProduct') }
   }
 }

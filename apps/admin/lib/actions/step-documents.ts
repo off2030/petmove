@@ -11,6 +11,7 @@
  * 추가 첨부하거나 보호자가 올린 파일을 검토하기 위한 용도.
  */
 
+import { reportActionError } from './_report-error'
 import { randomUUID } from 'node:crypto'
 import { createClient } from '@petmove/auth/server'
 import { parseDestinations, resolveStepAttachmentName, type CaseRow } from '@petmove/domain'
@@ -145,7 +146,7 @@ export async function uploadStepDocumentAdmin(formData: FormData): Promise<StepD
     }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'step-documents.uploadStepDocumentAdmin') }
   }
 }
 
@@ -191,7 +192,7 @@ export async function deleteStepDocumentAdmin(
     await supabase.storage.from(BUCKET).remove([target.path])
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'step-documents.deleteStepDocumentAdmin') }
   }
 }
 
@@ -220,6 +221,6 @@ export async function getStepDocumentUrlAdmin(
     if (error || !signed) return { ok: false, error: error?.message ?? '서명 URL 생성 실패' }
     return { ok: true, url: signed.signedUrl }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'step-documents.getStepDocumentUrlAdmin') }
   }
 }

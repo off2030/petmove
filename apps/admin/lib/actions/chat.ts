@@ -1,5 +1,6 @@
 'use server'
 
+import { reportActionError } from './_report-error'
 import { createClient } from '@petmove/auth/server'
 import { createAdminClient } from '@petmove/auth'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
@@ -1054,7 +1055,7 @@ export async function getActiveOrgDmVisibility(): Promise<Result<boolean>> {
   try {
     orgId = await getActiveOrgId()
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'chat.getActiveOrgDmVisibility') }
   }
   const admin = createAdminClient()
   const { data, error } = await admin
@@ -1086,7 +1087,7 @@ export async function updateActiveOrgDmVisibility(input: {
   try {
     orgId = await getActiveOrgId()
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'chat.updateActiveOrgDmVisibility') }
   }
   return updateOrgDmVisibility({ orgId, visible: input.visible })
 }

@@ -1,5 +1,6 @@
 'use server'
 
+import { reportActionError } from './_report-error'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
@@ -20,7 +21,7 @@ export async function updateCompanyInfo(patch: Partial<VetInfo>): Promise<{ ok: 
     revalidatePath('/settings')
     return { ok: true, info }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: reportActionError(e, 'company-info.updateCompanyInfo') }
   }
 }
 
@@ -44,7 +45,7 @@ export async function resetCompanyInfo(): Promise<{ ok: true; info: VetInfo } | 
     revalidatePath('/settings')
     return { ok: true, info }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: reportActionError(e, 'company-info.resetCompanyInfo') }
   }
 }
 
@@ -100,7 +101,7 @@ export async function updateOrgType(next: OrgType): Promise<{ ok: true; org_type
     revalidatePath('/settings')
     return { ok: true, org_type: next }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: reportActionError(e, 'company-info.updateOrgType') }
   }
 }
 
@@ -181,7 +182,7 @@ export async function uploadOrgAvatar(
     revalidatePath('/settings')
     return { ok: true, avatar_url: publicUrl }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: reportActionError(e, 'company-info.uploadOrgAvatar') }
   }
 }
 
@@ -215,6 +216,6 @@ export async function removeOrgAvatar(): Promise<{ ok: true } | { ok: false; err
     revalidatePath('/settings')
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    return { ok: false, error: reportActionError(e, 'company-info.removeOrgAvatar') }
   }
 }

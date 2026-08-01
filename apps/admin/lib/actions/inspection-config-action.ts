@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { reportActionError } from './_report-error'
 import { saveInspectionConfig } from '@/lib/inspection-config'
 import type { InspectionConfig } from '@petmove/domain'
 
@@ -15,6 +16,7 @@ export async function saveInspectionConfigAction(config: InspectionConfig): Prom
     revalidatePath('/cases')
     return { ok: true, config: saved }
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : '저장 실패' }
+    const msg = reportActionError(err, 'inspection-config-action.saveInspectionConfigAction')
+    return { ok: false, error: err instanceof Error ? msg : '저장 실패' }
   }
 }

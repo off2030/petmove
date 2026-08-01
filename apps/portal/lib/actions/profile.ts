@@ -11,6 +11,7 @@
  * (terms_accepted_at, privacy_accepted_at) 는 가입 흐름에서만 설정.
  */
 
+import { reportActionError } from './_shared'
 import { redirect } from 'next/navigation'
 import { createAdminClient } from '@petmove/auth'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
@@ -67,7 +68,7 @@ export async function getMyProfile(): Promise<Result<CustomerProfileRow | null>>
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: (data as CustomerProfileRow | null) ?? null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'profile.getMyProfile') }
   }
 }
 
@@ -113,7 +114,7 @@ export async function ensureMyProfile(): Promise<Result<CustomerProfileRow | nul
       .maybeSingle()
     return { ok: true, value: (data as CustomerProfileRow | null) ?? null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'profile.ensureMyProfile') }
   }
 }
 
@@ -182,7 +183,7 @@ export async function updateMyProfile(
     revalidatePath('/me')
     return { ok: true, value: data as CustomerProfileRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'profile.updateMyProfile') }
   }
 }
 
@@ -304,7 +305,7 @@ export async function updateGuardianContact(
     revalidatePath('/me')
     return { ok: true, value: { profile: prof as CustomerProfileRow, cases: updated } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'profile.updateGuardianContact') }
   }
 }
 
@@ -378,7 +379,7 @@ export async function requestAccountDeletion(): Promise<Result<{ scheduledAt: st
     revalidatePath('/settings/account-delete')
     return { ok: true, value: { scheduledAt: now } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'profile.requestAccountDeletion') }
   }
 }
 
@@ -397,6 +398,6 @@ export async function cancelAccountDeletion(): Promise<Result<true>> {
     revalidatePath('/settings/account-delete')
     return { ok: true, value: true }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'profile.cancelAccountDeletion') }
   }
 }

@@ -1,6 +1,7 @@
 'use server'
 
 import OpenAI from 'openai'
+import { reportActionError } from './_report-error'
 import { EXTRACTION_MODEL } from '@/lib/openai-config'
 
 /* ─────────────────────────── Types ─────────────────────────── */
@@ -415,7 +416,8 @@ export async function extractExtra<C extends Country>(input: ExtractInput<C>): P
     if (!hasAnyValue(parsed)) return { ok: false, error: 'No information found' }
     return { ok: true, data: parsed }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error'
+    const reported = reportActionError(err, 'extract-extra.extractExtra')
+    const msg = err instanceof Error ? reported : 'Unknown error'
     return { ok: false, error: msg }
   }
 }

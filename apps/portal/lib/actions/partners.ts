@@ -17,6 +17,7 @@
  * 봇 알림(연결·해제 시 운영자 봇방 메시지) 은 다음 단계에서 추가 — Step 5.
  */
 
+import { reportActionError } from './_shared'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
 import { revalidatePath } from 'next/cache'
 
@@ -79,7 +80,7 @@ export async function getPartnerOrgsByIds(
       },
     }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'partners.getPartnerOrgsByIds') }
   }
 }
 
@@ -171,7 +172,7 @@ export async function getPartnerOrgInfo(
           }
     return { ok: true, value }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'partners.getPartnerOrgInfo') }
   }
 }
 
@@ -195,7 +196,7 @@ export async function listAvailableOrgs(role: PartnerRole): Promise<Result<Partn
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: (data ?? []) as PartnerOrg[] }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'partners.listAvailableOrgs') }
   }
 }
 
@@ -359,7 +360,7 @@ async function setPartnerOrg(
     revalidatePath('/me/agency')
     return { ok: true, value: { updated: caseIds.length } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'partners.setPartnerOrg') }
   }
 }
 

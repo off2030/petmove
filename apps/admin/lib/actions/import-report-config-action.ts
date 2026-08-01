@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { reportActionError } from './_report-error'
 import { saveImportReportCountries } from '@/lib/import-report-config'
 
 export type SaveResult = { ok: true; countries: string[] } | { ok: false; error: string }
@@ -16,6 +17,7 @@ export async function saveImportReportCountriesAction(list: string[]): Promise<S
     revalidateAll()
     return { ok: true, countries }
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : '저장 실패' }
+    const msg = reportActionError(err, 'import-report-config-action.saveImportReportCountriesAction')
+    return { ok: false, error: err instanceof Error ? msg : '저장 실패' }
   }
 }

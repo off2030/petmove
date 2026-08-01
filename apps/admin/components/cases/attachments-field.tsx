@@ -39,10 +39,14 @@ export interface AttachmentsFieldHandle {
 }
 
 export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: string; caseRow: CaseRow }>(function AttachmentsField({ caseId, caseRow }, ref) {
-  const { updateLocalCaseField } = useCases()
+  const { updateLocalCaseField, isCaseHydrated } = useCases()
   const editMode = useSectionEditMode()
+  // 목록 초기 로드는 경량 행(data.attachments 제외 — @/lib/case-list-lite). 업로드·삭제가
+  // 배열 통째 저장이라 풀 행 hydrate 전에는 편집을 막는다. (현재 이 컴포넌트는 미마운트 —
+  // 첨부는 NotesField 로 이관됨 — 지만 재사용 대비 게이트 유지.)
+  const hydrated = isCaseHydrated(caseId)
   const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const attachments = (data.attachments as Attachment[]) ?? []
+  const attachments = hydrated ? ((data.attachments as Attachment[]) ?? []) : []
 
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -50,9 +54,9 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
   const fileRef = useRef<HTMLInputElement>(null)
 
   useImperativeHandle(ref, () => ({
-    triggerUpload: () => fileRef.current?.click(),
+    triggerUpload: () => { if (hydrated) fileRef.current?.click() },
     uploading,
-  }), [uploading])
+  }), [uploading, hydrated])
 
   useEffect(() => { setError(null) }, [caseId])
 
@@ -77,6 +81,8 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
   }, [caseId, attachments.length])
 
   async function uploadFiles(files: File[]) {
+    // 경량 행 위에서 저장 금지 — 빈 배열 기반 재구성이 서버 attachments 를 덮어쓴다.
+    if (!hydrated) return
     if (files.length === 0) return
 
     setUploading(true)
@@ -121,6 +127,7 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
   }
 
   function handleDelete(idx: number) {
+    if (!hydrated) return
     const att = attachments[idx]
     const newAttachments = attachments.filter((_, i) => i !== idx)
     const nextVal = newAttachments.length > 0 ? newAttachments : null

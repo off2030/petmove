@@ -11,6 +11,7 @@
  * required_doc_flags 를 보지 않으므로 setRequiredDocComplete 호출이 verified 를 바꾸지 않는다.
  */
 
+import { reportActionError } from './_shared'
 import { createAdminClient } from '@petmove/auth'
 import type { CaseRow } from '@petmove/domain'
 import { parseDestinations, readByDestValue, resolveActiveDestination, stampDocsChecklistCompletion, writeByDestValue } from '@petmove/domain'
@@ -108,7 +109,7 @@ export async function setRequiredDocsComplete(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'required-docs.setRequiredDocsComplete') }
   }
 }
 
@@ -170,7 +171,7 @@ async function mutateDocState(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'required-docs.mutateDocState') }
   }
 }
 

@@ -55,10 +55,15 @@ const DATA_KEY = 'notes'
 /* ── Component ── */
 
 export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
-  const { updateLocalCaseField } = useCases()
+  const { updateLocalCaseField, isCaseHydrated } = useCases()
   const editMode = useSectionEditMode()
+  // 목록 초기 로드는 경량 행(data.notes·attachments 제외 — @/lib/case-list-lite)이라,
+  // 풀 행 hydrate 전에는 읽기·쓰기 모두 막는다. 특히 saveNotes 는 배열 통째 저장이라
+  // 경량(빈) 상태에서 저장하면 서버의 실제 메모·첨부를 지운다. 게다가 notes 가 빠진
+  // data 로 readNotes 를 부르면 레거시 memo/memos 폴백이 "메모"로 둔갑해 보인다.
+  const hydrated = isCaseHydrated(caseId)
   const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const notes = readNotes(data)
+  const notes = hydrated ? readNotes(data) : []
 
   const [saving] = useTransition()
   const [editIdx, setEditIdx] = useState<number | null>(null)
@@ -107,6 +112,8 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   /* ── Persistence ── */
 
   async function saveNotes(next: NoteItem[]) {
+    // 경량 행 위에서 저장 금지 — 빈 배열 기반 재구성이 서버 notes 를 덮어쓴다.
+    if (!hydrated) return
     const val = next.length > 0 ? next : null
     // Optimistic — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
     updateLocalCaseField(caseId, 'data', DATA_KEY, val)
@@ -148,6 +155,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   /* ── File actions ── */
 
   async function uploadFiles(files: FileList | File[]) {
+    if (!hydrated) return
     if (!files || (files as FileList).length === 0) return
 
     setUploading(true)
@@ -276,6 +284,26 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }
 
   /* ── Render ── */
+
+  // 풀 행 hydrate 전 — 같은 레이아웃의 로딩 자리표시(케이스 선택 직후 한 번의 조회 동안만).
+  if (!hydrated) {
+    return (
+      <>
+        <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80">
+          <div className="flex items-center gap-[6px] pt-1">
+            <SectionLabel>메모</SectionLabel>
+          </div>
+          <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40 animate-pulse select-none">…</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0">
+          <div className="flex items-center gap-[6px] pt-1">
+            <SectionLabel>보관함</SectionLabel>
+          </div>
+          <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40 animate-pulse select-none">…</span>
+        </div>
+      </>
+    )
+  }
 
   // 메모(텍스트)와 첨부 파일을 각각 별도 필드 행으로 분리 렌더 (아래 두 그리드 행).
   const hasText = notes.some((n) => n.type === 'text')

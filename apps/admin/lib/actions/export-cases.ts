@@ -1,5 +1,6 @@
 'use server'
 
+import { reportActionError } from './_report-error'
 import ExcelJS from 'exceljs'
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
@@ -124,6 +125,6 @@ export async function exportCasesXlsx(): Promise<
     const safeOrg = orgName.replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_')
     return { ok: true, value: { filename: `${safeOrg}_${today}.xlsx`, base64 } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'export-cases.exportCasesXlsx') }
   }
 }

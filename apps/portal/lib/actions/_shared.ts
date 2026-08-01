@@ -1,7 +1,14 @@
+import * as Sentry from '@sentry/nextjs'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
 
 /** portal server action 공통 결과 타입. */
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string }
+
+/** 서버 액션 catch 공용 — Sentry 보고 후 기존과 동일한 실패 Result 반환. */
+export function reportActionError(e: unknown, action: string): string {
+  Sentry.captureException(e, { tags: { action } })
+  return e instanceof Error ? e.message : String(e)
+}
 
 /**
  * 본인 ↔ 케이스 link 확인. portal server action 들이 admin(service-role) 클라이언트로

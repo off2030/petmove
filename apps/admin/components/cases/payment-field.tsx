@@ -41,10 +41,14 @@ export interface PaymentFieldHandle {
 }
 
 export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; caseRow: CaseRow }>(function PaymentField({ caseId, caseRow }, ref) {
-  const { updateLocalCaseField, activeDestination } = useCases()
+  const { updateLocalCaseField, activeDestination, isCaseHydrated } = useCases()
   const editMode = useSectionEditMode()
   const confirm = useConfirm()
   const { items: calcItems } = useCalculatorData()
+  // 목록 초기 로드는 경량 행(data.payments·estimate 제외 — @/lib/case-list-lite).
+  // savePayments 는 배열 통째 저장이라, 풀 행 hydrate 전에 저장하면 서버의 실제
+  // 결제 기록을 지운다 — hydrate 전에는 읽기·쓰기 모두 막는다.
+  const hydrated = isCaseHydrated(caseId)
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
   const species: 'dog' | 'cat' = data.species === 'cat' ? 'cat' : 'dog'
@@ -66,7 +70,7 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
     return []
   }
 
-  const payments = readPayments()
+  const payments = hydrated ? readPayments() : []
 
   const [saving] = useTransition()
 
@@ -78,8 +82,8 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
   const [addingNew, setAddingNew] = useState(false)
 
   useImperativeHandle(ref, () => ({
-    triggerAdd: () => setAddingNew(true),
-  }))
+    triggerAdd: () => { if (hydrated) setAddingNew(true) },
+  }), [hydrated])
 
   useEffect(() => {
     setEditIdx(null)
@@ -88,6 +92,8 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
   }, [caseId])
 
   async function savePayments(next: PaymentRecord[]) {
+    // 경량 행 위에서 저장 금지 — 빈 배열 기반 재구성이 서버 payments 를 덮어쓴다.
+    if (!hydrated) return
     const val = next.length > 0 ? next : null
     // Optimistic — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
     updateLocalCaseField(caseId, 'data', 'payments', val)
@@ -132,6 +138,18 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
     setEstimateOpen(false)
     savePayments(next).catch(() => {})
     void updateCaseField(caseId, 'data', 'estimate', estimate)
+  }
+
+  // 풀 행 hydrate 전 — 같은 레이아웃의 로딩 자리표시(케이스 선택 직후 한 번의 조회 동안만).
+  if (!hydrated) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0">
+        <div className="flex items-center gap-[6px] pt-1">
+          <SectionLabel>결제</SectionLabel>
+        </div>
+        <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40 animate-pulse select-none">…</span>
+      </div>
+    )
   }
 
   return (

@@ -21,6 +21,7 @@
  *  회귀. 입력 정보는 cases 테이블에 직접 반영되므로 펫무브 앱 연동은 DB 로 그대로 유지.
  */
 
+import { reportActionError } from './_report-error'
 import { randomUUID } from 'node:crypto'
 import { createAdminClient } from '@petmove/auth'
 import {
@@ -286,7 +287,7 @@ export async function getShareLinkByToken(
       },
     }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'share-links-public.getShareLinkByToken') }
   }
 }
 
@@ -578,7 +579,7 @@ export async function submitShareLink(
 
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'share-links-public.submitShareLink') }
   }
 }
 
@@ -698,7 +699,7 @@ export async function createShareUploadTickets(
     }
     return { ok: true, value: { tickets } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'share-links-public.createShareUploadTickets') }
   }
 }
 
@@ -781,6 +782,6 @@ export async function recordShareUploadedFiles(
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: { count: uploaded.length } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'share-links-public.recordShareUploadedFiles') }
   }
 }

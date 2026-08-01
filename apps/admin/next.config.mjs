@@ -7,6 +7,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // 검증용 격리 빌드 — PM_DIST_DIR 지정 시 별도 디렉터리로 빌드해, .next 를 쓰는
+  // dev 서버·다른 빌드와 락/캐시 충돌을 피한다. portal·www next.config 와 동일 패턴.
+  ...(process.env.PM_DIST_DIR ? { distDir: process.env.PM_DIST_DIR } : {}),
   // Monorepo root — Vercel 의 serverless 함수가 packages/* 를 번들에 포함하도록.
   // 누락 시 dynamic import('@petmove/auth/server') 같은 호출이 런타임에 모듈 못 찾아
   // 500 (Server Components render 실패). admin 은 apps/admin 이라 두 단계 위가 root.

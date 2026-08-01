@@ -1,6 +1,7 @@
 'use server'
 // 펫무브워크 자동 알림 — 케이스 데이터가 바뀌어 새 검증 실패가 생기면 시스템 메시지로 적재.
 
+import { reportActionError } from './_report-error'
 import { createClient } from '@petmove/auth/server'
 import { createAdminClient } from '@petmove/auth'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
@@ -38,7 +39,7 @@ function evaluateFailures(
     try {
       result = check.run({ caseRow })
     } catch (e) {
-      result = { ok: false, message: `검증 실행 오류: ${e instanceof Error ? e.message : String(e)}` }
+      result = { ok: false, message: `검증 실행 오류: ${reportActionError(e, 'system-notifications.evaluateFailures')}` }
     }
     if (!result.ok && check.severity !== 'info') {
       out.push({ check, result })

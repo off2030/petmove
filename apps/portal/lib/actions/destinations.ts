@@ -16,6 +16,7 @@
  * 변경에만 — 목적지는 운영자가 view 에서 자연스럽게 확인).
  */
 
+import { reportActionError } from './_shared'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@petmove/auth/server'
 import {
@@ -185,7 +186,7 @@ export async function addCaseDestination(
     revalidatePath(`/cases/${caseId}/journey`)
     return { ok: true, value: { destinations: remaining, added: true } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'destinations.addCaseDestination') }
   }
 }
 
@@ -270,7 +271,7 @@ export async function removeCaseDestination(
     revalidatePath(`/cases/${caseId}/journey`)
     return { ok: true, value: { destinations: nextTokens } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'destinations.removeCaseDestination') }
   }
 }
 
@@ -342,7 +343,7 @@ export async function setCaseDestinationTripType(
     revalidatePath(`/cases/${caseId}/journey`)
     return { ok: true, value: true }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'destinations.setCaseDestinationTripType') }
   }
 }
 
@@ -397,7 +398,7 @@ export async function setCaseCoProgress(
     revalidatePath(`/cases/${caseId}/journey`)
     return { ok: true, value: true }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'destinations.setCaseCoProgress') }
   }
 }
 
@@ -454,7 +455,7 @@ export async function dismissCompletionPrompt(
     revalidatePath(`/cases/${caseId}/journey`)
     return { ok: true, value: true }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'destinations.dismissCompletionPrompt') }
   }
 }
 
@@ -510,7 +511,7 @@ export async function confirmArrival(caseId: string, destination: string): Promi
     revalidatePath(`/cases/${caseId}/journey`)
     return { ok: true, value: true }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'destinations.confirmArrival') }
   }
 }
 
@@ -642,7 +643,7 @@ export async function finishJourney(
     revalidatePath(`/cases/${caseId}/journey`)
     return { ok: true, value: { destinations: remaining } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'destinations.finishJourney') }
   }
 }
 
@@ -732,6 +733,6 @@ export async function restoreJourney(
     revalidatePath(`/cases/${caseId}/journey`)
     return { ok: true, value: { destinations: parseDestTokens(nextDest) } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'destinations.restoreJourney') }
   }
 }

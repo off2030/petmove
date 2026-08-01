@@ -1,5 +1,6 @@
 'use server'
 
+import { reportActionError } from './_report-error'
 import { cookies, headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@petmove/auth/server'
@@ -93,7 +94,7 @@ export async function listAllOrgs(): Promise<Result<OrgSummary[]>> {
       })),
     }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.listAllOrgs') }
   }
 }
 
@@ -174,7 +175,7 @@ export async function getOrgDetail(orgId: string): Promise<Result<OrgDetail>> {
       },
     }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.getOrgDetail') }
   }
 }
 
@@ -197,7 +198,7 @@ export async function updateOrgBusinessNumber(input: {
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: { business_number: (data.business_number as string | null) ?? null } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.updateOrgBusinessNumber') }
   }
 }
 
@@ -265,12 +266,12 @@ export async function inviteToOrg(input: {
       })
       emailSent = result !== null
     } catch (e) {
-      emailError = (e as Error).message
+      emailError = reportActionError(e, 'super-admin.inviteToOrg')
     }
 
     return { ok: true, value: { token, emailSent, emailError } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.inviteToOrg') }
   }
 }
 
@@ -297,7 +298,7 @@ export async function updateOrgMemberRole(input: {
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.updateOrgMemberRole') }
   }
 }
 
@@ -323,7 +324,7 @@ export async function removeMemberFromOrg(input: {
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.removeMemberFromOrg') }
   }
 }
 
@@ -340,7 +341,7 @@ export async function revokeOrgInvite(inviteId: string): Promise<Result<null>> {
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.revokeOrgInvite') }
   }
 }
 
@@ -399,7 +400,7 @@ export async function deleteOrg(input: {
 
     return { ok: true, value: { deletedName: org.name as string } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.deleteOrg') }
   }
 }
 
@@ -430,7 +431,7 @@ export async function listSuperAdminsAll(): Promise<Result<SuperAdminEntry[]>> {
       })),
     }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.listSuperAdminsAll') }
   }
 }
 
@@ -470,7 +471,7 @@ export async function grantSuperAdmin(input: { email: string }): Promise<Result<
       },
     }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.grantSuperAdmin') }
   }
 }
 
@@ -501,7 +502,7 @@ export async function revokeSuperAdmin(userId: string): Promise<Result<null>> {
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.revokeSuperAdmin') }
   }
 }
 
@@ -534,7 +535,7 @@ export async function setImpersonation(orgId: string): Promise<Result<null>> {
     revalidatePath('/', 'layout')
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.setImpersonation') }
   }
 }
 
@@ -546,7 +547,7 @@ export async function clearImpersonation(): Promise<Result<null>> {
     revalidatePath('/', 'layout')
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.clearImpersonation') }
   }
 }
 
@@ -596,7 +597,7 @@ export async function switchActiveOrg(orgId: string): Promise<Result<null>> {
     revalidatePath('/', 'layout')
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.switchActiveOrg') }
   }
 }
 
@@ -624,7 +625,7 @@ export async function listPlatformCases(): Promise<Result<PlatformCase[]>> {
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: (data ?? []) as PlatformCase[] }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.listPlatformCases') }
   }
 }
 
@@ -678,7 +679,7 @@ export async function moveCasesToHome(
     revalidatePath('/', 'layout')
     return { ok: true, value: { moved: (moved ?? []).length, orgName: (org?.name as string) ?? '' } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.moveCasesToHome') }
   }
 }
 
@@ -697,7 +698,7 @@ export async function createOrg(input: { name: string; orgType?: OrgType }): Pro
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: { id: data.id as string } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.createOrg') }
   }
 }
 
@@ -715,7 +716,7 @@ export async function getOrgCompanyInfo(orgId: string): Promise<Result<VetInfo>>
     const { loadVetInfo } = await import('@/lib/vet-info')
     return { ok: true, value: await loadVetInfo(orgId) }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.getOrgCompanyInfo') }
   }
 }
 
@@ -730,7 +731,7 @@ export async function updateOrgCompanyInfo(input: {
     const { saveVetInfo } = await import('@/lib/vet-info')
     return { ok: true, value: await saveVetInfo(input.patch, input.orgId) }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.updateOrgCompanyInfo') }
   }
 }
 
@@ -755,7 +756,7 @@ export async function setOrgType(input: {
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: { org_type: input.orgType } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.setOrgType') }
   }
 }
 
@@ -801,7 +802,7 @@ export async function uploadOrgAvatarById(
     }
     return { ok: true, value: { avatar_url: publicUrl } }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.uploadOrgAvatarById') }
   }
 }
 
@@ -827,6 +828,6 @@ export async function removeOrgAvatarById(orgId: string): Promise<Result<Record<
     }
     return { ok: true, value: {} }
   } catch (e) {
-    return { ok: false, error: (e as Error).message }
+    return { ok: false, error: reportActionError(e, 'super-admin.removeOrgAvatarById') }
   }
 }

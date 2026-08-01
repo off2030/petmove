@@ -1,6 +1,7 @@
 'use server'
 
 import OpenAI from 'openai'
+import { reportActionError } from './_report-error'
 
 /** 광견병항체검사 결과서 추출 전용 고정밀 모델. env OPENAI_TITER_MODEL 로 오버라이드. */
 const TITER_EXTRACTION_MODEL = process.env.OPENAI_TITER_MODEL?.trim() || 'gpt-4.1'
@@ -97,7 +98,8 @@ export async function extractTiterInfo(input: {
 
     return { ok: true, data: parsed }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error'
+    const reported = reportActionError(err, 'extract-titer.extractTiterInfo')
+    const msg = err instanceof Error ? reported : 'Unknown error'
     return { ok: false, error: msg }
   }
 }
