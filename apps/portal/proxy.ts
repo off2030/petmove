@@ -22,6 +22,8 @@ const PUBLIC_PREFIXES = [
   '/share',  // 토큰 진입 (Phase 11.0.5 구현 전 까지 page 자체는 없지만 미인증 통과 정의)
   '/preview', // 펫무브워크 "고객앱 미리보기" — admin 서명 토큰으로 진입 (보호자 세션 아님)
   '/offline', // SW 가 install 시 prefetch 해서 오프라인 폴백으로 사용 — 미인증 통과 필수
+  '/monitoring', // Sentry tunnelRoute — 클라이언트 에러 이벤트 POST. 로그인 전 화면의
+                 // 에러도 잡아야 하므로 미인증 통과 필수(next.config.mjs withSentryConfig).
   '/_next',
   '/favicon',
   '/manifest.webmanifest',

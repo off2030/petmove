@@ -13,6 +13,7 @@
     "cap:open:android": "cap open android"
   },
   "dependencies": {
+    "@capacitor-firebase/messaging": "^8.3.0",
     "@capacitor/android": "^8.3.3",
     "@capacitor/app": "^8.0.0",
     "@capacitor/browser": "^8.0.0",
@@ -20,7 +21,6 @@
     "@capacitor/core": "^8.3.3",
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/ios": "^8.3.3",
-    "@capacitor-firebase/messaging": "^8.3.0",
     "@capacitor/local-notifications": "^8.1.0",
     "@capacitor/share": "^8.0.1",
     "@capacitor/splash-screen": "^8.0.1",
@@ -29,6 +29,7 @@
     "@petmove/auth": "workspace:*",
     "@petmove/domain": "workspace:*",
     "@petmove/ui": "workspace:*",
+    "@sentry/nextjs": "^10.50.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.0",
     "clsx": "^2.1.1",

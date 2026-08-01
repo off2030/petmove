@@ -1,5 +1,6 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { withSentryConfig } from '@sentry/nextjs'
 import { createRequire } from 'node:module'
 import { execSync } from 'node:child_process'
 
@@ -86,4 +87,20 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+// Sentry 에러 수집 (2026-08-01 도입 — 프로젝트 petmove/portal, admin 과 별도 프로젝트).
+// tunnelRoute: 이벤트를 /monitoring 경유로 보내 광고차단·WebView 차단을 우회한다
+//   (proxy.ts PUBLIC_PREFIXES 에 등록 — 미인증 POST 허용 필수).
+// sourcemaps: SENTRY_AUTH_TOKEN 이 빌드 환경에 없으면 업로드를 조용히 끈다 —
+//   Vercel(portal) 에 토큰을 아직 안 넣었고, 없어도 빌드가 실패하면 안 된다.
+export default withSentryConfig(nextConfig, {
+  org: 'petmove',
+  project: 'portal',
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  tunnelRoute: '/monitoring',
+  sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN },
+  webpack: {
+    treeshake: { removeDebugLogging: true },
+    automaticVercelMonitors: true,
+  },
+})

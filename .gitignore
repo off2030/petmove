@@ -17,6 +17,7 @@ supabase/.branches/
 #   패턴에 없어서 빌드 산출물 수백 개가 커밋에 딸려 들어간다(2026-07-27 실제 발생).
 .next-verify*/
 .next-build/
+.next-sentry-verify/
 out/
 dist/
 build/
