@@ -276,7 +276,8 @@ export async function removeCaseDestination(
 
 /**
  * 한 목적지의 왕복/편도 토글. data.trip_type[dest] 만 갱신.
- * TravelFormSections 안의 SegmentField "왕복·편도" 가 호출.
+ * 설정 > 동물 편집(destination-chips → use-animal-edit-form)이 호출.
+ * (구 TravelFormSections 는 2026-08-01 dead code 정리로 삭제됨.)
  */
 export async function setCaseDestinationTripType(
   caseId: string,

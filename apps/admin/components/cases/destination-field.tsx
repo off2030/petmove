@@ -12,7 +12,7 @@ import { removeCaseDestinationAdmin } from '@/lib/actions/remove-destination'
 import { useCases } from './cases-context'
 import destsData from '@petmove/domain/data/destinations.json'
 import { destCode } from '@/lib/country-code'
-import { resolveActiveDestination, getTripType } from '@petmove/domain'
+import { resolveActiveDestination, getTripType, isOneWayOnlyDestination } from '@petmove/domain'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@petmove/ui'
 
@@ -55,11 +55,28 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   const targetDest = resolveActiveDestination(destination, activeDestination)
   const tripType: TripType = getTripType(currentCase?.data, targetDest)
 
+  // 편도 전용 목적지(호주·뉴질랜드·싱가포르·남아공)는 getTripType 이 저장값을 무시하고
+  // 항상 one_way 를 돌려주므로 토글이 "먹지 않는 것처럼" 보인다 → 토글 자체를 숨긴다
+  // (portal 의 destination-chips·apply-form 과 동일 처리).
+  const tripToggleAvailable = !!targetDest && !isOneWayOnlyDestination(targetDest)
+
   async function setTripType(value: TripType) {
     if (!targetDest) return
     const next: Record<string, TripType> = { ...tripTypeMap, [targetDest]: value }
     updateLocalCaseField(caseId, 'data', 'trip_type', next)
     await persistField('여정 유형', () => updateCaseField(caseId, 'data', 'trip_type', next))
+    // 편도 전환 시 잔존 귀국 데이터 정리 — 안 지우면 남은 귀국일이 '출국 ≤ 귀국' 검증과
+    // 귀국 알림에 걸린다 (portal setCaseDestinationTripType 과 동일 의미).
+    // return_date·return_undecided 는 destination-scoped 키라 updateCaseField 에 목적지를
+    // 넘기면 다중 목적지 = by_dest null sentinel / 단일 = top-level 로 알아서 갈라진다.
+    if (value === 'one_way') {
+      for (const key of ['return_date', 'return_undecided'] as const) {
+        updateLocalCaseField(caseId, 'data', key, null)
+        await persistField('귀국 정보 정리', () =>
+          updateCaseField(caseId, 'data', key, null, targetDest),
+        )
+      }
+    }
   }
 
   // 동시 진행 — 같은 보호자의 다른 동물 케이스에 절차·추가 정보를 함께 반영.
@@ -477,9 +494,9 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
           document.body,
         )}
         </div>
-        {selected.length > 0 && (targetDest || hasSibling) && (
+        {selected.length > 0 && (tripToggleAvailable || hasSibling) && (
           <div className="flex items-start gap-md">
-        {targetDest && (
+        {tripToggleAvailable && (
           <div
             className="shrink-0 inline-flex items-center rounded-full bg-pmw-tag/30 p-0.5 font-serif text-[12px] leading-none mt-0.5"
             title={multi ? `${targetDest} 여행 유형` : '여행 유형'}

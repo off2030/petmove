@@ -144,7 +144,9 @@ export const IL_CHECKS: ProcedureCheck[] = [
     title: '출국일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (gov.il 수의국: 백신 in-force 상태 필수)',
-    severity: 'info',
+    // warning 승격(2026-08-01) — "카드가 있으면 만료는 전부 주의"(common.ts 2026-07-30 확정 원칙).
+    // 카드 미매핑 룰이라 배너 중복은 ADVISORY_DEFERRED_CHECKS(scenario.ts) 등록으로 막는다.
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -336,7 +338,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
     id: 'il.advance-notice-2days-before-departure',
     country: COUNTRY,
     category: '사전통지',
-    title: '사전 통보 마감 (출국 2영업일 전)',
+    title: '사전 통지 마감 (출국 2영업일 전)',
     description:
       '이스라엘은 출국(적재) 2영업일 전까지 사전 통보를 해야 함. 입력 차단(validateIlAdvanceNoticeDate)과 같은 함수 — 항공편 수정 후 어긋난 케이스를 주의로 표면화. (이스라엘 수의국 공식 안내 섹션 P·Q)',
     severity: 'warning',
@@ -355,7 +357,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: true,
-        message: dep ? `통보일(${notice}) 출국(${dep}) 2일 이전.` : `통보일(${notice}) 입력됨 (출국일 미입력).`,
+        message: dep ? `통지일(${notice}) 출국(${dep}) 2일 이전.` : `통지일(${notice}) 입력됨 (출국일 미입력).`,
       }
     },
   },

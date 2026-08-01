@@ -157,7 +157,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   //      Australian-issued export certification" / rabies 페이지 "you can use the identity
   //      check on your Australian issued export certification"). 이 경우도 계류 최소 10일.
   // 서류는 검역본부(검역관)가 **DAFF 로 직접 보낸다** — 보호자가 사본을 받지 못하므로
-  //   첨부 없이 날짜 + '완료' 버튼으로만 끝낸다(괌 검역시설 예약과 같은 모델).
+  //   첨부 없이 날짜 + '완료' 버튼으로만 끝낸다(괌 계류시설 예약과 같은 모델).
   //
   // 라벨 = '마이크로칩 인증'(2026-07-27 사용자 확정). 구 '신원확인'에서 교체한 이유:
   //   · 신원·신분은 **사람 용어**다(검역 용어는 개체). 동물에 쓰면 어색하고, www 가이드는
@@ -179,7 +179,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   붙어 있어 타임라인에서 '칩 → 인증' 순서로 읽힌다.
     shortLabel: '인증',
     description:
-      '동물검역소에서 검역관에게 마이크로칩 인증(Identity Declaration)을 받으세요.\n\n검역관이 마이크로칩을 확인하고 확인서를 호주 검역당국에 직접 보내요.\n광견병 항체 검사 전에 받아야 해요.\n마이크로칩 인증을 하지 않으면 계류기간이 최소 10일에서 30일로 크게 늘어나요.\n호주에서 수출 검역을 받고 한국으로 온 경우에는 받지 않아도 돼요.',
+      '동물검역소에서 검역관에게 마이크로칩 인증(Identity Declaration)을 받으세요.\n\n검역관이 마이크로칩을 확인하고 확인서를 호주 검역당국에 직접 보내요.\n광견병 항체 검사 채혈 전에 받아야 해요.\n마이크로칩 인증을 하지 않으면 계류 기간이 최소 10일에서 30일로 크게 늘어나요.\n호주에서 수출 검역을 받고 한국으로 온 경우에는 받지 않아도 돼요.',
     doneSummary: '마이크로칩 인증을 받았어요.',
     cardLine: '마이크로칩 인증을 받으세요.',
     applicability: { destinations: ['australia'], species: 'all', tripType: 'all' },
@@ -349,7 +349,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '광견병 백신 2차',
     shortLabel: '백신2',
     description:
-      '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 30일 이상 지나서 접종하세요.\n1차 접종 면역 유효기간 이내에 접종하세요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+      '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 30일 이상 지나서 접종해야 해요.\n1차 접종 면역 유효기간 이내에 접종하세요.\n입국 때 면역 유효기간이 남아있어야 해요.',
     doneSummary: '2차 광견병 백신을 접종했어요.',
     // 1회면 충분한 나라는 2차 미노출(태국·필리핀·EU 패밀리 등 — 가이드·procedure-check 에
     // 2회 강제 없음. EU 는 1회 접종 + 항체 검사 모델 — 추가 접종은 유효기간 유지용).
@@ -565,7 +565,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'rabies-titer-extra',
     category: 'lab',
-    title: '추가 검사',
+    title: '추가 항체 검사',
     shortLabel: '항체+',
     description:
       '일본 입국 전에 추가 검사를 받으세요.\n\n검사 결과가 나올 때까지 수 주가 걸리는 점을 고려해 여유 있게 검사를 진행하세요.',
@@ -899,7 +899,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '귀국 서류 준비',
     shortLabel: '귀국서류',
     description:
-      'USDA 승인 국제 건강증명서 또는 대체 서류를 준비하세요.\n\n출국 전 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 국제 건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n\n다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+      'USDA 승인 국제 건강증명서 또는 대체 서류를 준비하세요.\n\n출국 전 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 국제 건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n\n다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요.\n- 한국 출국 시 받은 동물검역증',
     doneSummary: '귀국 서류를 준비했어요.',
     cardLine: '귀국 서류를 준비하세요.',
     applicability: { destinations: ['hawaii'], species: 'all', tripType: 'round' },
@@ -1071,7 +1071,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
 
-  // ── 사전 통보 (이스라엘 전용) ──────────────────────────────────────
+  // ── 사전 통지 (이스라엘 전용) ──────────────────────────────────────
   // 1차 출처(이스라엘 수의국 공식 안내 「Importing Dogs and Cats」 26/11/2023) 섹션 P·Q:
   //   **적재(출국) 최소 2영업일 전** 통보. 벤구리온 도착은 govforms 온라인 폼, 그 외 항/포는 이메일.
   //   → 앵커를 출국(departure)으로 잡는다(EU 형제 카드의 entry 기준과 다름 — 이스라엘은 '적재 전').
@@ -1080,12 +1080,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'il-advance-notice',
     category: 'permit',
-    title: '사전 통보',
-    shortLabel: '통보',
+    title: '사전 통지',
+    shortLabel: '통지',
     description:
-      '이스라엘은 출국 2영업일 전까지 사전 통보를 해야 해요.\n\n벤구리온 공항으로 도착하는 경우 아래 온라인 폼에서 도착 정보와 건강증명서·광견병 항체검사 결과지를 제출해요.\n반려동물이 3마리 이상이면 사전 통보 대신 수입 허가(Import License)를 미리 신청해야 해요.',
-    doneSummary: '이스라엘에 사전 통보를 했어요.',
-    cardLine: '이스라엘에 사전 통보를 하세요.',
+      '출국 2영업일 전까지 사전 통지를 하세요.\n\n벤구리온 공항으로 도착하는 경우 아래 온라인 폼에서 도착 정보와 건강증명서·광견병 항체검사 결과지를 제출해요.\n반려동물이 3마리 이상이면 사전 통지 대신 수입 허가(Import License)를 미리 신청해야 해요.',
+    doneSummary: '이스라엘에 사전 통지를 했어요.',
+    cardLine: '이스라엘에 사전 통지를 하세요.',
     applicability: { destinations: ['israel'], species: 'all', tripType: 'all' },
     order: 47,
     deadline: { anchor: 'departure', daysBefore: 2 },
@@ -1093,15 +1093,15 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     inputs: [
       {
         key: 'il_advance_notice_date',
-        label: '통보일',
+        label: '통지일',
         type: 'date',
-        helpText: '온라인 폼(또는 이메일)으로 사전 통보한 날짜',
+        helpText: '온라인 폼(또는 이메일)으로 사전 통지한 날짜',
       },
     ],
     links: [
       {
         url: 'https://govforms.gov.il/mw/forms/PetPersonalImportation@moag.gov.il',
-        label: '사전 통보 온라인 폼(벤구리온)',
+        label: '사전 통지 온라인 폼(벤구리온)',
       },
       {
         url: 'https://www.gov.il/en/service/import_pets_cats_dogs',
@@ -1130,7 +1130,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '사전 통지',
     shortLabel: '통지',
     description:
-      '홍콩 도착 24시간 전까지 사전 통지를 하세요.\n\n홍콩 공항 검역사무소(AFCD)에 예상 도착일·도착 시간과 서류 사본을 보내요.\n검역사무소는 평일에만 열어요. 도착 24시간 전이 주말·공휴일이면 그 전 평일에 통지하세요.\n화물로 운송하므로 보통 동물 운송업체가 대신 통지해요.',
+      '홍콩 입국 24시간 전까지 사전 통지를 하세요.\n\n홍콩 공항 검역사무소(AFCD)에 예상 도착일·도착 시간과 서류 사본을 보내요.\n검역사무소는 평일에만 열어요. 도착 24시간 전이 주말·공휴일이면 그 전 평일에 통지하세요.\n화물로 운송하므로 보통 동물 운송업체가 대신 통지해요.',
     doneSummary: '홍콩에 사전 통지를 했어요.',
     cardLine: '홍콩에 사전 통지를 하세요.',
     applicability: { destinations: ['hongkong'], species: 'all', tripType: 'all' },
@@ -1166,7 +1166,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: [],
   },
 
-  // ── 검역시설 예약 (괌 전용) ─────────────────────────────────────────
+  // ── 계류시설 예약 (괌 전용) ─────────────────────────────────────────
   // DOAG 브로슈어 REQUIRED DOCUMENTS 6항 "Quarantine Facility Reservation" — 수입 허가
   //   신청 서류에 **예약확인서가 포함**되므로 허가 신청보다 먼저 해야 한다(order 95 < 100).
   // 승인 시설(브로슈어 FAQ "How do I make a quarantine reservation?"):
@@ -1179,12 +1179,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'gu-quarantine-reservation',
     category: 'permit',
-    title: '검역시설 예약',
-    shortLabel: '예약',
+    title: '계류시설 예약',
+    shortLabel: '계류장',
     description:
-      '괌 지정 검역시설에 계류 예약을 하세요.\n\n수입 허가를 신청할 때 예약확인서를 함께 내야 해요.\nHarper Valley Kennels 또는 Animal Medical Clinic에 연락해 예약해요.\n계류 비용은 시설마다 다르고, 수입 허가 수수료와 별도예요.',
-    doneSummary: '괌 검역시설을 예약했어요.',
-    cardLine: '괌 검역시설을 예약하세요.',
+      '괌 지정 계류시설에 계류 예약을 하세요.\n\n수입 허가를 신청할 때 예약확인서를 함께 내야 해요.\nHarper Valley Kennels 또는 Animal Medical Clinic에 연락해 예약해요.\n계류 비용은 시설마다 다르고, 수입 허가 수수료와 별도예요.',
+    doneSummary: '괌 계류시설을 예약했어요.',
+    cardLine: '괌 계류시설을 예약하세요.',
     applicability: { destinations: ['guam'], species: 'all', tripType: 'all' },
     order: 95,
     done: 'dated:gu_quarantine_reservation_date',
@@ -1194,12 +1194,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         key: 'gu_quarantine_reservation_date',
         label: '예약일',
         type: 'date',
-        helpText: '검역시설 예약을 확정한 날짜',
+        helpText: '계류시설 예약을 확정한 날짜',
       },
     ],
     allowAttachments: true,
-    attachmentHint: '검역시설 예약확인서를 사진·PDF로 보관하세요.',
-    attachmentLabel: '괌 검역시설 예약확인서',
+    attachmentHint: '계류시설 예약확인서를 사진·PDF로 보관하세요.',
+    attachmentLabel: '괌 계류시설 예약확인서',
     links: [
       { url: 'https://www.petshippersguam.com/', label: 'Harper Valley Kennels' },
       { url: 'https://amcguam.com/moving-to-guam-with-pets/', label: 'Animal Medical Clinic' },
@@ -1325,7 +1325,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     links: [
       {
         url: 'https://www.agriculture.gov.au/biosecurity-trade/cats-dogs/quarantine-facilities-and-fees',
-        label: '계류시설 예약·비용 (DAFF)',
+        label: '계류시설 예약·비용(DAFF)',
       },
     ],
     // 계류 시작일을 받게 되면서 180일 판정을 이 카드에도 붙인다(저장 거부 + 짝 주의).
@@ -1432,8 +1432,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   ⛔ 나머지를 다듬지 말 것. 일부러 뺀 줄: 개 전용 안내(카드가 개 전용이라 자명) · 순서 안내
     //   (수입 허가 카드가 담당) · 영구수입 신청서 · 중성화 증명서 · 대행업체 확인.
     description:
-      '남아프리카공화국 농업부 Animal Improvement Registrar에 AIA 수입 허가를 신청하세요.\n\n수의검역 수입 허가와는 별개의 서류예요.\n수입 30일 전까지 신청해야 해요.\n허가는 발급일부터 6개월간 유효해요.',
-    doneSummary: 'AIA 수입 허가를 받았어요.',
+      '남아프리카공화국 농업부 Animal Improvement Registrar에 AIA 수입 허가를 신청하세요.\n\n수의검역 수입 허가와는 별개의 서류예요.\n수입 30일 전까지 신청해야 해요.\n허가는 발급일로부터 6개월간 유효해요.',
+    doneSummary: 'AIA 수입 허가증을 받았어요.',
     cardLine: 'AIA 수입 허가를 신청하세요.',
     applicability: { destinations: ['south_africa'], species: 'dog', tripType: 'all' },
     order: 38,
@@ -1782,7 +1782,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     category: 'vaccination',
     title: '독감(CIV) 백신',
     shortLabel: '독감',
-    description: '강아지 인플루엔자(CIV) 백신을 접종하세요. 호주·뉴질랜드·인도 등 일부 국가에서 요구돼요.',
+    description: '개 인플루엔자(CIV) 백신을 접종하세요. 호주·뉴질랜드·인도 등 일부 국가에서 요구돼요.',
     doneSummary: '독감(CIV) 백신을 접종했어요.',
     // vaccines 선언('civ' 포함국 — 호주·뉴질랜드·인도) 파생.
     applicability: {
@@ -1988,7 +1988,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '허가',
     description:
       '도착 전에 수입허가를 신청하세요. 호주(DAFF)·뉴질랜드(MPI)·대만(APHIA)·말레이시아(DVS) 등에서 필요하며, 허가번호가 검역증에 명시되어야 해요.',
-    doneSummary: '수입 허가를 받았어요.',
+    doneSummary: '수입 허가증을 받았어요.',
     cardLine: '수입 허가를 신청하세요.',
     // importPermit 프로파일 선언국(호주·뉴질랜드·대만·말레이시아·태국·필리핀·스위스) 파생.
     applicability: {
@@ -2102,7 +2102,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'departure',
     category: 'travel',
-    title: '출국 · 도착',
+    title: '출국·도착',
     shortLabel: '출국',
     description:
       '공항 검역대 → 항공 탑승 → 도착지 검역소 입국 심사 순서로 진행하세요. 도착 후 일부 국가는 7~10일 자가 격리 또는 검역소 격리가 적용돼요.',
@@ -2136,7 +2136,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '귀국 서류 준비',
     shortLabel: '귀국서류',
     description:
-      'USDA 승인 국제 건강증명서 또는 대체 서류를 준비하세요.\n\n출국 전 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 국제 건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n\n다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+      'USDA 승인 국제 건강증명서 또는 대체 서류를 준비하세요.\n\n출국 전 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 국제 건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.\n\n다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요.\n- 한국 출국 시 받은 동물검역증',
     doneSummary: '귀국 서류를 준비했어요.',
     cardLine: '귀국 서류를 준비하세요.',
     // 괌 — 미국령이라 **같은 연방 절차**(USDA 공인 수의사 → VEHCS → APHIS 승인)를 탄다.
@@ -2225,7 +2225,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 첫 문장은 나라 이름으로 시작한다 — 수출검역 카드 전체 통일(사용자 지정 2026-07-21).
       '태국 출국 전 공항 동물검역소에서 수출 검역을 받으세요.\n출국 직전(1~3일 전 권장)에 방문하세요. 주말·공휴일·야간에는 검역을 받을 수 없어요.\n접종 증명서를 꼭 챙기세요.\n검사를 통과하면 수출허가서(R.9)와 건강증명서가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
     doneSummary: '태국 수출 검역을 받았어요.',
-    cardLine: '태국 동물검역소에서 수출 검역을 받으세요.',
+    cardLine: '태국 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['thailand'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'dated:th_export_quarantine_date',
@@ -2261,7 +2261,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '말레이시아 출국 전 수출 검역을 받고 수출 허가와 수의 건강증명서(VHC)를 받으세요.\n\n반려동물을 데리고 거주 지역의 주(州) DVS 지청에 방문해 검사를 받고 VHC를 발급받아요. 수출 허가는 MAQIS에서 받아요.\n\n두 서류 모두 E-permit 시스템으로 신청해요. 현지 계정 등록이 필요해서 보통 현지 에이전트에 의뢰해요.\n\n출국일에는 공항 MAQIS 검역소에서 서류와 반려동물을 최종 확인해요.',
     doneSummary: '말레이시아 수출 검역을 받았어요.',
-    cardLine: '말레이시아 수출 검역을 받으세요.',
+    cardLine: '말레이시아 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['malaysia'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'dated:my_export_quarantine_date',
@@ -2279,8 +2279,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentLabel: '수출 허가·건강증명서(VHC)',
     // ① 반려동물 수출 안내(DVS) ② 신청 절차(MAQIS). 둘 다 200 확인.
     links: [
-      { url: 'https://www.dvs.gov.my/index.php/pages/view/1941', label: '반려동물 수출 안내·문의처 (DVS)' },
-      { url: 'https://www.maqis.gov.my/index.php/permohonan-permit/', label: '수출 허가 신청 절차 (MAQIS)' },
+      { url: 'https://www.dvs.gov.my/index.php/pages/view/1941', label: '반려동물 수출 안내·문의처(DVS)' },
+      { url: 'https://www.maqis.gov.my/index.php/permohonan-permit/', label: '수출 허가 신청 절차(MAQIS)' },
     ],
   },
 
@@ -2294,7 +2294,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '계류장(AQC) 예약',
     shortLabel: '계류장',
     description:
-      '광견병 항체 검사 완료 후 계류장(AQC)을 예약하세요.\n\n자리가 없는 경우가 많아서 일찍 해두는 게 좋아요.\n싱가포르 검역관리시스템(QMS)에서 예약해요.\n팬룸 또는 에어컨룸을 선택할 수 있어요.\n격리 기간은 30일이에요.',
+      '광견병 항체 검사 완료 후 계류장(AQC)을 예약하세요.\n\n자리가 없는 경우가 많아서 일찍 해두는 게 좋아요.\n싱가포르 검역관리시스템(QMS)에서 예약해요.\n팬룸 또는 에어컨룸을 선택할 수 있어요.\n격리 기간은 최소 30일이에요.',
     doneSummary: '계류장(AQC)을 예약했어요.',
     cardLine: '계류장(AQC)을 예약하세요.',
     applicability: { destinations: ['singapore'], species: 'all', tripType: 'all' },
@@ -2327,7 +2327,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     // 첨부 없음(사용자 결정 2026-07-24) — 다운로드할 확정 확인서가 없어 완료는 '완료' 버튼으로만.
     links: [
-      { url: 'https://avs.nparks.gov.sg/pets/importing-exporting-a-pet/import/quarantine-management-system/', label: '계류장 예약 (QMS)' },
+      { url: 'https://avs.nparks.gov.sg/pets/importing-exporting-a-pet/import/quarantine-management-system/', label: '계류장 예약(QMS)' },
     ],
   },
   {
@@ -2370,7 +2370,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '라이선스를 사진·PDF로 보관하세요.',
     attachmentLabel: '강아지 라이선스',
     links: [
-      { url: 'https://avs.nparks.gov.sg/pets/licensing-a-pet/applying-for-dog-and-cat-licences/applying/', label: '강아지 라이선스 신청 (PALS)' },
+      { url: 'https://avs.nparks.gov.sg/pets/licensing-a-pet/applying-for-dog-and-cat-licences/applying/', label: '강아지 라이선스 신청(PALS)' },
     ],
   },
   {
@@ -2398,7 +2398,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 관세청 이주 반려동물 통관 페이지(2026-07-23 개편판) + AVS 공인 에이전트 목록 —
     // 둘 다 2026-07-25 브라우저로 유효 확인(구 forwarding agents 링크는 개편으로 404).
     links: [
-      { url: 'https://www.customs.gov.sg/personal-shipment/moving-to-singapore/importing-personal-pets-as-part-of-a-change-of-residence/', label: '반려동물 수입 통관·GST 안내 (Singapore Customs)' },
+      { url: 'https://www.customs.gov.sg/personal-shipment/moving-to-singapore/importing-personal-pets-as-part-of-a-change-of-residence/', label: '반려동물 수입 통관·GST 안내(Singapore Customs)' },
       { url: 'https://avs.nparks.gov.sg/outreach/resources/avs-recognised-pet-agents/', label: 'AVS 공인 에이전트 목록' },
     ],
   },
@@ -2430,130 +2430,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentLabel: '국경 검사 예약 확인서',
     // NParks 수입 절차가 안내하는 예약 시스템(2026-07-25 브라우저 유효 확인).
     links: [
-      { url: 'https://avs-eservices.nparks.gov.sg/eservices', label: '도착 검사 예약 (AVS eServices)' },
-    ],
-  },
-
-  // ── 호주 수출 검역 (왕복 — 귀국 출국 시, 호주 전용) ─────────────────
-  // 출처: DAFF "Exporting companion animals and other live animals"(2026-07-27 확인).
-  //   호주는 출국 절차를 **정부가 강제**한다(강제 O — 한국 수출검역증으로 갈음 불가):
-  //   ① NOI(Notice of Intention to Export Live Animals) 를 출발 주(州) 지역사무소에 이메일
-  //      제출 — **출발 10영업일 전까지**. NOI 자체에 심사 수수료가 있고, 승인이 곧 허가는 아니다.
-  //   ② 등록 수의사의 최종 건강·복지 검진 — **출발 72시간 이내**(+ 신고서 서명)
-  //   ③ DAFF 인증 수의관과의 사전 출국 예약(pre-export appointment) — ②보다 뒤여야 한다
-  //   ④ DAFF 가 **수출허가(export permit) + 건강증명서** 발급 → 발급 후 **72시간 이내 출국**
-  // 버튼 완료 카드 — 보호자가 아는 것은 '증명서를 받았다'는 사실이라, 발급일 하나로 끝낸다
-  //   (싱가포르 수출 검역과 같은 모델).
-  {
-    id: 'au-export-quarantine',
-    category: 'document',
-    title: '호주 수출 검역',
-    shortLabel: '수출',
-    description:
-      '호주 검역당국(DAFF)에서 수출 허가와 건강증명서를 받으세요.\n\n출발 10영업일 전까지 수출 신고서(NOI)를 출발하는 주의 지역사무소에 이메일로 제출해요.\n\n출발 72시간 이내에 등록 수의사에게 최종 검진을 받고 신고서에 함께 서명해요.\n\n최종 검진을 마친 뒤 DAFF 수의관과의 사전 출국 예약에서 서류를 확인받아요.\n\n수출 허가와 건강증명서가 나오면 72시간 이내에 출국해야 해요.\n\n운송업체가 대신 제출하고 예약에 참석할 수 있어요.',
-    doneSummary: '호주 수출 검역을 받았어요.',
-    cardLine: '호주 수출 검역을 받으세요.',
-    applicability: { destinations: ['australia'], species: 'all', tripType: 'round' },
-    order: 155,
-    done: 'dated:au_export_quarantine_date',
-    buttonComplete: true,
-    inputs: [
-      {
-        key: 'au_export_quarantine_date',
-        label: '검역일',
-        type: 'date',
-        helpText: '수출 허가와 건강증명서를 발급받은 날짜',
-      },
-    ],
-    allowAttachments: true,
-    attachmentHint: '수출 허가와 건강증명서 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '호주 수출 허가·건강증명서',
-    links: [
-      {
-        url: 'https://www.agriculture.gov.au/biosecurity-trade/export/controlled-goods/live-animals/companion-and-other-live-animals',
-        label: '수출 절차·신고서(NOI) 안내 (DAFF)',
-      },
-    ],
-    validationIds: ['au.export-quarantine-before-return'],
-  },
-
-  // ── 뉴질랜드 수출 증명 (왕복 케이스 한정) ─────────────────────────────────
-  // 뉴질랜드는 출국 절차를 **정부가 강제한다**(강제 O) — MPI "Requirement documents for pets
-  //   leaving NZ": "If you're exporting live animals, you're legally required to get an Animal
-  //   Welfare Export Certificate (AWEC)." 한국 입국용 수출 건강증명서는 MPI 보안용지 서식으로
-  //   발급되고, 서명 권한이 있는 수의사가 따로 정해져 있다.
-  // ⚠️ **확정 일정(며칠 전 신청 등)은 아직 1차 출처로 확인하지 못했다.** MPI 는 목적국별
-  //   OMAR 를 따로 두는데 한국 OMAR 존재 여부가 확인되지 않아, 문구에 숫자를 넣지 않았다.
-  //   확인되면 이 카드에 '출국 N일 전까지' 를 넣을 것(호주 NOI 10영업일과 같은 자리).
-  // 버튼 완료 카드 — 보호자가 아는 것은 '증명서를 받았다'는 사실이라 발급일 하나로 끝낸다.
-  {
-    id: 'nz-export-quarantine',
-    category: 'document',
-    title: '뉴질랜드 수출 증명',
-    shortLabel: '수출',
-    description:
-      '뉴질랜드에서 출국하기 전에 수출 증명 서류를 받으세요.\n\n살아 있는 동물을 뉴질랜드 밖으로 보내려면 동물복지 수출증명서(AWEC)가 반드시 필요해요.\n\n한국 입국에 필요한 수출 건강증명서도 함께 받아요. MPI 보안용지에 인쇄된 서식으로 발급돼요.\n\n어느 동물병원에서 발급받을 수 있는지, 언제까지 신청해야 하는지는 MPI나 운송업체에 미리 확인하세요.',
-    doneSummary: '뉴질랜드 수출 증명을 받았어요.',
-    cardLine: '뉴질랜드 수출 증명을 받으세요.',
-    applicability: { destinations: ['new_zealand'], species: 'all', tripType: 'round' },
-    order: 155,
-    done: 'dated:nz_export_quarantine_date',
-    buttonComplete: true,
-    inputs: [
-      {
-        key: 'nz_export_quarantine_date',
-        label: '발급일',
-        type: 'date',
-        helpText: '수출 증명 서류를 발급받은 날짜',
-      },
-    ],
-    allowAttachments: true,
-    attachmentHint: '수출증명서·건강증명서 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '뉴질랜드 수출증명서·건강증명서',
-    links: [
-      {
-        url: 'https://www.mpi.govt.nz/take-or-send-from-nz/pets-leaving-nz/',
-        label: '반려동물 수출 절차 안내 (MPI)',
-      },
-    ],
-    validationIds: ['nz.export-quarantine-before-return'],
-  },
-
-  // ── 싱가포르 수출 검역 (왕복 — 귀국 출국 시, 싱가포르 전용) ───────
-  // NParks/AVS 수출 절차(2026-07-24 조사, 2026-07-25 재확인): ① 수출 라이선스(GoBusiness, 출국
-  //   90일 이내·유효 90일) ② 건강증명서를 면허 민간 수의사(일반 동물병원)가 작성 → 원본을 AVS
-  //   서류함(보타닉 가든 Raffles Building 1층, 24h)에 실물 제출 → **AVS 관용 수의사(정부 수의사)
-  //   최종 인증(endorse), 2영업일**. EU식 자가 갈음이 아니라 정부 인증이라 한국 귀국에 강제(강제 O).
-  {
-    id: 'sg-export-quarantine',
-    category: 'document',
-    title: '싱가포르 수출 검역',
-    shortLabel: '수출',
-    description:
-      '싱가포르 출국 전 수출 라이선스와 AVS 정부 수의사가 인증한 수의 건강증명서를 준비하세요.\n\n동물병원에서 검진을 받고 건강증명서를 발급받은 후 GoBusiness 포털로 수출 라이선스와 건강증명서 인증을 신청해요.\n\n건강증명서 원본은 AVS 서류 제출함(싱가포르 보타닉 가든 Raffles Building 1층, 24시간 이용)에 실물로 제출해요.\n\n2영업일 이내에 수출 라이선스와 AVS 정부 수의사가 인증한 수의 건강증명서가 발급돼요.\n\n수출 라이선스는 출국 전 90일 이내에 신청하고, 발급일로부터 90일간 유효해요.',
-    doneSummary: '싱가포르 수출 검역을 받았어요.',
-    cardLine: '싱가포르 수출 검역을 받으세요.',
-    applicability: { destinations: ['singapore'], species: 'all', tripType: 'round' },
-    order: 155,
-    done: 'dated:sg_export_quarantine_date',
-    buttonComplete: true,
-    inputs: [
-      {
-        key: 'sg_export_quarantine_date',
-        label: '검역일',
-        type: 'date',
-        helpText: 'AVS 인증 건강증명서를 발급받은 날짜',
-      },
-    ],
-    allowAttachments: true,
-    attachmentHint: '수출 라이선스와 AVS 인증 건강증명서 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '싱가포르 수출 라이선스·건강증명서(AVS 인증)',
-    links: [
-      { url: 'https://www.gobusiness.gov.sg/', label: '수출 라이선스·건강증명서 인증 신청 (GoBusiness)' },
-      {
-        url: 'https://avs.nparks.gov.sg/pets/importing-exporting-a-pet/export/dogs-and-cats/',
-        label: '수출 절차·서류 제출처 안내 (AVS)',
-      },
+      { url: 'https://avs-eservices.nparks.gov.sg/eservices', label: '도착 검사 예약(AVS eServices)' },
     ],
   },
 
@@ -2573,7 +2450,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '인도네시아 출국 전 검역청(Barantin)에서 수출 검역을 받으세요.\n\nPTK 온라인으로 신청 후 지정된 장소를 찾아가야 해요.\n수출 검역을 받기 위해서는 거주 지역 수의당국(Dinas)으로부터 수의증명서(Veterinary Certificate)를 발급받아야 해요. 동물병원에서 준비한 접종·항체 검사·마이크로칩 기록이 필요해요.\n검역을 통과하면 동물 건강증명서(Animal Health Certificate)가 발급돼요.',
     doneSummary: '인도네시아 수출 검역을 받았어요.',
-    cardLine: '인도네시아 검역청에서 수출 검역을 받으세요.',
+    cardLine: '인도네시아 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['indonesia'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'dated:id_export_quarantine_date',
@@ -2591,7 +2468,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentLabel: '동물 건강증명서(Animal Health Certificate)',
     // PTK 온라인 — 수출 검역 신청(수출은 보호자/송하인이 직접 신고, 수입과 달리 현지 수하인 불요). 200 확인.
     links: [
-      { url: 'https://ptk.karantinaindonesia.go.id/', label: '검역 신청 (PTK 온라인)' },
+      { url: 'https://ptk.karantinaindonesia.go.id/', label: '검역 신청(PTK 온라인)' },
     ],
   },
 
@@ -2611,7 +2488,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '아르헨티나 출국 전 SENASA에서 수출 검역을 받으세요.\n\n등록 수의사(veterinario matriculado)에게 마이크로칩·접종·광견병 항체 검사·건강 상태를 확인받아요.\n\nSENASA 자가신청 시스템으로 온라인 신청·예약한 뒤, 사무소에 원본 서류를 제출해요. 한국행은 완전 온라인 발급 대상이 아니라 사무소 방문이 필요해요.\n\n심사를 통과하면 국제수의증명서(CVI)가 발급돼요.',
     doneSummary: '아르헨티나 수출 검역을 받았어요.',
-    cardLine: '아르헨티나 SENASA에서 수출 검역을 받으세요.',
+    cardLine: '아르헨티나 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['argentina'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'dated:ar_export_quarantine_date',
@@ -2629,8 +2506,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentLabel: '국제수의증명서(CVI)',
     // ① 출국 절차 안내(SENASA) ② 자가신청 시스템(Autogestión). 둘 다 브라우저 200 확인.
     links: [
-      { url: 'https://www.argentina.gob.ar/senasa/procedimiento-para-viajar-al-exterior-con-perros-y-gatos', label: '출국 절차 안내 (SENASA)' },
-      { url: 'https://mascotas.senasa.gob.ar/', label: '자가신청 시스템 (SENASA Autogestión)' },
+      { url: 'https://www.argentina.gob.ar/senasa/procedimiento-para-viajar-al-exterior-con-perros-y-gatos', label: '출국 절차 안내(SENASA)' },
+      { url: 'https://mascotas.senasa.gob.ar/', label: '자가신청 시스템(SENASA Autogestión)' },
     ],
   },
 
@@ -2714,7 +2591,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '필리핀 출국 전 BAI 동물검역소에서 수출 검역을 받으세요.\n현지 동물병원에서 받은 건강증명서가 있어야 해요.\n수출 허가증·국제 수의건강증명서가 발급돼요.',
     doneSummary: '필리핀 수출 검역을 받았어요.',
-    cardLine: '필리핀 BAI 동물검역소에서 수출 검역을 받으세요.',
+    cardLine: '필리핀 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['philippines'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'dated:ph_export_quarantine_date',
@@ -2758,7 +2635,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '귀국 서류 준비',
     shortLabel: '귀국서류',
     description:
-      '홍콩 정부가 발급한 건강증명서 또는 대체 서류를 준비하세요.\n\n동물병원에서 건강증명서를 받은 뒤, 홍콩 검역당국(AFCD)에 방문 신청해요.\n발급까지 2영업일이 걸리고, 발급일로부터 10일간 유효해요.\n\n다음 서류가 있다면 홍콩 건강증명서를 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+      '홍콩 정부가 발급한 건강증명서 또는 대체 서류를 준비하세요.\n\n동물병원에서 건강증명서를 받은 뒤, 홍콩 검역당국(AFCD)에 방문 신청해요.\n발급까지 2영업일이 걸리고, 발급일로부터 10일간 유효해요.\n\n다음 서류가 있다면 홍콩 건강증명서를 새로 받지 않아도 돼요.\n- 한국 출국 시 받은 동물검역증',
     doneSummary: '귀국 서류를 준비했어요.',
     cardLine: '귀국 서류를 준비하세요.',
     applicability: { destinations: ['hongkong'], species: 'all', tripType: 'round' },
@@ -2789,10 +2666,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   // 발급 방법·장소는 도시별로 달라(해관 온라인 신청 互联网+海关 + 현장검역) 문구는 단순화 —
   // 베이징·상하이는 지정 동물병원(베이징 观赏动物医院·상하이 申浦动物医院) 경유. 병원 링크는 확정 후.
   // cn.export 검증 룰 미작성(추후).
-  // ── 대만 수출 검역 (왕복 — 귀국 전) ────────────────────────────────────
-  // 카드 제목(절차)은 대만 용어를 따른다 — 輸出檢疫 = 수출 검역. EU 처럼 '귀국 서류 준비'로
-  // 부르지 않는 이유: EU 는 검역 자체가 없고 서류에 고정 명칭도 없어 그렇게 부른 것이고,
-  // 대만은 둘 다 있다.
+  // ── 귀국 서류 준비 (왕복 — 대만, 귀국 전) ────────────────────────────────
+  // 카드 제목은 EU·홍콩·캐나다와 같은 '귀국 서류 준비' — 대만은 자국 출국 절차를 강제하지
+  // 않는 부류(아래 '필수는 아니다')라 같은 그룹으로 부른다(2026-08-01 확정 방침).
+  // (구 제목 '대만 수출 검역'(輸出檢疫 직역)은 절차가 필수인 것처럼 읽혀 교체.)
   // 반면 **서류명은 앱 공통 표기**를 따른다 — '대만 수출 동물검역증'(한국·일본과 같은 성격,
   // 영문명도 같은 Export(ed) Animal Quarantine Certificate). 대만 원어 직역 '수출검역증명서'는
   // 앱 안에서 이 서류만 다른 이름이 돼 쓰지 않는다.
@@ -2805,8 +2682,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'tw-export-quarantine',
     category: 'document',
-    title: '대만 수출 검역',
-    shortLabel: '수출',
+    title: '귀국 서류 준비',
+    shortLabel: '귀국서류',
     description:
       // 문구는 화면에 실제로 뜨는 EU 문형(euFamilyOverrides 의 'eu-export-cert')을 따른다.
       // 3줄 + 대체서류 목록('- ' 항목이 체크 목록으로 렌더). 대체서류가 한국 검역증 하나뿐인
@@ -2817,7 +2694,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 하지만, 대만 검역증명서는 방검서가 직접 발급한다. EU 문구를 그대로 옮기면 틀린다.
       // 동물병원 선행 방문도 없다(일본과 동일) — APHIA: 「攜帶犬貓及下列文件辦理輸出檢疫」,
       // 제출 서류는 광견병 예방주사증명서·신분증·항공권 등이고 건강검진 요구가 없다.
-      '대만 정부가 발급한 동물검역증 또는 대체 서류를 준비하세요.\n대만 검역청(APHIA) 분서·검역참을 방문해 수출 검역을 받으세요.\n반려동물을 데리고 방문하고, 미리 예약하세요.\n출국 1주일 이내에 받으세요.\n타오위안 공항 검역참은 제2터미널 1층 입국장 남측에 있고 연중무휴 24시간 운영해요.\n다음 서류가 있다면 대만 수출 동물검역증을 새로 발급받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+      '대만 정부가 발급한 동물검역증 또는 대체 서류를 준비하세요.\n대만 검역청(APHIA) 분서·검역참을 방문해 수출 검역을 받으세요.\n반려동물을 데리고 방문하고, 미리 예약하세요.\n출국 1주일 이내에 받으세요.\n타오위안 공항 검역참은 제2터미널 1층 입국장 남측에 있고 연중무휴 24시간 운영해요.\n다음 서류가 있다면 대만 수출 동물검역증을 새로 발급받지 않아도 돼요.\n- 한국 출국 시 받은 동물검역증',
     doneSummary: '귀국 서류를 준비했어요.',
     cardLine: '귀국 서류를 준비하세요.',
     applicability: { destinations: ['taiwan'], species: 'all', tripType: 'round' },
@@ -3010,7 +2887,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 2026-07-21). 나머지 문장은 사용자가 직접 불러준 원문 그대로다 — 손대지 말 것.
       '캄보디아 출국 전 수출 검역을 받고 수의증명서(Veterinary Certificate)를 발급받으세요.\n\n프놈펜의 농림수산부 동물보건생산국(GDAHP)에 미리 신청하고 출국 공항 검역소에서 받아요.\n\n검역소는 프놈펜·시엠립·시아누크빌 국제공항에 있어요.',
     doneSummary: '캄보디아 수출 검역을 받았어요.',
-    cardLine: '캄보디아 출국 전 정부 수출 검역을 받으세요.',
+    cardLine: '캄보디아 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['cambodia'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'dated:kh_export_quarantine_date',
@@ -3024,14 +2901,14 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '캄보디아 수출 검역 서류',
+    attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '캄보디아 수출 동물검역증',
     links: [
       // 원래 두려던 절차 링크 1개 + 담당 부처 MAFF 홈(사용자 지정 2026-07-21).
       // MAFF 는 세부 경로가 자주 바뀌므로 홈만 건다. GDAHP 는 MAFF 산하 총국.
       {
         url: 'https://cambodiantr.gov.kh/en/procedure/?title=application-for-veterinary-certificate',
-        label: '수의증명서 신청 절차 (정부 무역포털)',
+        label: '수의증명서 신청 절차(정부 무역포털)',
       },
       {
         url: 'https://maff.gov.kh/',
@@ -3115,8 +2992,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     // 발급 서류의 정식 명칭·양식 번호를 확인하지 못했다(베트남 Mẫu 13a 에 해당하는 것).
     // 확인되면 정식 이름으로 올릴 것 — 그때까지 '검역 서류'로 뭉뚱그린다.
-    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '몽골 수출 검역 서류',
+    attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '몽골 수출 동물검역증',
     // 링크는 GAVS 공식 연락처 페이지 1개. 법 25.2 가 발급 주체를 GAVS 로 지목하므로 여기가
     //   정식 입구다. 이 페이지 하나에 주소(바양주르흐구 평화대로 16a 정부청사 9동)·산하 8개
     //   조직 직통번호(수의 검사·인증국 261644, 수도 수의청 70144007)·업무시간(08:30–17:30,
@@ -3196,8 +3073,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
-    attachmentLabel: '우즈베키스탄 수출 검역 서류',
+    attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
+    attachmentLabel: '우즈베키스탄 수출 동물검역증',
     links: [
       // 10개국 중 우즈베키스탄만 링크가 없었다(2026-07-21 추가).
       // 자체 도메인 vetgov.uz 는 **HTTP 500 으로 죽어 있다** — 쓰지 말 것. 정부 포털의
@@ -3273,7 +3150,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       //   문형은 tw-export-quarantine·eu-export-cert 를 따른다('- ' 항목이 체크 목록 렌더).
       //   '캐나다는 자체 검역을 하지 않아요…' 설명 줄은 뺐다 — 대체서류 안내가 같은 뜻을
       //   담고, 대만 카드에도 그런 줄이 없다.
-      '캐나다 정부가 배서한 수출 증명서 또는 대체 서류를 준비하세요.\n\n현지 동물병원에서 한국행 수출 증명서를 작성받은 뒤, 검역기관(CFIA) 공식 수의사의 배서를 받아요.\n배서는 예약제예요. 온라인 결제를 예약일 3일 전까지 마쳐야 하고, 캐나다를 떠난 뒤에는 받을 수 없어요.\n\n다음 서류가 있다면 캐나다 배서를 새로 받지 않아도 돼요\n- 한국 출국 시 받은 동물검역증',
+      '캐나다 정부가 배서한 수출 증명서 또는 대체 서류를 준비하세요.\n\n현지 동물병원에서 한국행 수출 증명서를 작성받은 뒤, 검역기관(CFIA) 공식 수의사의 배서를 받아요.\n배서는 예약제예요. 온라인 결제를 예약일 3일 전까지 마쳐야 하고, 캐나다를 떠난 뒤에는 받을 수 없어요.\n\n다음 서류가 있다면 캐나다 배서를 새로 받지 않아도 돼요.\n- 한국 출국 시 받은 동물검역증',
     // 완료·일정 문구는 EU(eu-export-cert)·대만과 같은 '귀국 서류'로 — 배서가 무조건
     // 필수인 게 아니라 대체서류로 갈음될 수 있는 부류라 '배서를 받으세요'로 단정하지 않는다.
     doneSummary: '귀국 서류를 준비했어요.',
@@ -3302,7 +3179,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         //   → 서식이 CFIA 공식 게시본인 건 맞지만 **최신성은 신뢰할 수 없다.** 실제 발급 전
         //     APQA 현행 요구와 대조할 것. (인계 문서 §6 에도 남겨 둠)
         url: 'https://inspection.canada.ca/en/animal-health/terrestrial-animals/exports/pets/korea',
-        label: '한국행 수출 안내·서식 (CFIA)',
+        label: '한국행 수출 안내·서식(CFIA)',
       },
       {
         // 예약 페이지(.../exports/pets/appointments)는 **연락처 없이 다시 다음 페이지로 넘긴다**
@@ -3383,9 +3260,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '모로코 수출 증명서',
-    links: [{ url: 'https://www.onssa.gov.ma/import-and-export-controls/export-certification/export-of-live-animals/dogs-and-cats/?lang=en', label: '개·고양이 수출 안내 (ONSSA)' }],
+    links: [{ url: 'https://www.onssa.gov.ma/import-and-export-controls/export-certification/export-of-live-animals/dogs-and-cats/?lang=en', label: '개·고양이 수출 안내(ONSSA)' }],
   },
   {
     id: 'ua-export-quarantine',
@@ -3459,7 +3336,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '우크라이나 국제수의증명서',
     // ⛔ **dpss.gov.ua 링크를 걸지 말 것** — 한국 IP 에서 접속이 막힌다(2026-07-22 실측 2회
     //   connect refused, 사용자도 안 열린다고 확인). 고객이 눌러도 안 열리는 링크다.
@@ -3468,7 +3345,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   발급하는 국경검사부서(ВПІК) 목록 ③사전 예약. 지점은 전시 상황에 바뀌므로 주소를
     //   카드에 박지 않고 이 링크로 넘긴다.
     links: [
-      { url: 'https://nir.gov.ua/misczya-oformlennya-domashnih-tvaryn/', label: '반려동물 서류 발급처·예약 (우크라이나 검역당국)' },
+      { url: 'https://nir.gov.ua/misczya-oformlennya-domashnih-tvaryn/', label: '반려동물 서류 발급처·예약(우크라이나 검역당국)' },
     ],
   },
   {
@@ -3511,9 +3388,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '멕시코 수출 동물위생증명서(CZE)',
-    links: [{ url: 'https://www.gob.mx/senasica/documentos/solicita-el-certificado-zoosanitario-para-exportacion-para-mascotas', label: '반려동물 수출 증명서 신청 (SENASICA)' }],
+    links: [{ url: 'https://www.gob.mx/senasica/documentos/solicita-el-certificado-zoosanitario-para-exportacion-para-mascotas', label: '반려동물 수출 증명서 신청(SENASICA)' }],
   },
   {
     id: 'br-export-quarantine',
@@ -3558,7 +3435,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '브라질 국제수의증명서(CVI)',
     // 링크 2종 — 둘 다 응답 확인(2026-07-22, HTTP 200):
     //  ①출국 절차 개요 ②지점 찾기(카드가 '미리 연락'하라고 하므로 갈 곳이 필요하다 —
@@ -3567,7 +3444,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   근거이지 고객이 읽을 문서가 아니다(포르투갈어 스캔 PDF). 근거로 참조할 주소는
     //   위 description 주석에 남겨 뒀다.
     links: [
-      { url: 'https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil', label: '브라질 출국 안내 (MAPA)' },
+      { url: 'https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil', label: '브라질 출국 안내(MAPA)' },
       { url: 'https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/unidades-de-vigilancia-agropecuaria-1', label: '검역 사무소(VIGIAGRO) 지점 찾기' },
     ],
   },
@@ -3603,7 +3480,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '아랍에미리트 수출 건강증명서',
     // 링크 — MOCCAE "Animal health certificate for export/re-export of live animals"
     //   서비스 페이지(사용자 지정 URL). 이 페이지 하단에 문의 채널(전화·이메일)이 함께
@@ -3614,7 +3491,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     links: [
       {
         url: 'https://moccae.gov.ae/en/services/animal-health-certificate-for-export-re-export-of-live-animals',
-        label: '수출 건강증명서 발급·문의 (MOCCAE)',
+        label: '수출 건강증명서 발급·문의(MOCCAE)',
       },
     ],
   },
@@ -3670,7 +3547,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '검역 서류 사본을 사진·PDF로 보관하세요.',
+    attachmentHint: '검역증 사본을 사진·PDF로 보관하세요.',
     attachmentLabel: '카자흐스탄 수출 수의증명서',
     // 링크 2종 — 둘 다 응답 확인(2026-07-22, HTTP 200).
     //  ①서비스 안내(gov.kz 3369) — **영문 페이지가 있어** egov.kz 러시아어판보다 보호자가
@@ -3678,7 +3555,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //  ②지역검사기관 연락처 — 카드가 '미리 문의'하라고 하므로 갈 곳이 필요하다
     //   (우크라이나·브라질 카드와 같은 처리).
     links: [
-      { url: 'https://www.gov.kz/services/3369?lang=en', label: '수출 수의증명서 발급 안내 (gov.kz)' },
+      { url: 'https://www.gov.kz/services/3369?lang=en', label: '수출 수의증명서 발급 안내(gov.kz)' },
       { url: 'https://www.gov.kz/memleket/entities/vetcontrol?lang=ru', label: '수의통제감독위원회 지역검사기관 연락처' },
     ],
   },
@@ -3718,7 +3595,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //   검역소가 지역마다 달라 여기서 찾는다. 러시아어지만 유일한 공식 출처라 넣는다(2026-07-23
     //   사용자 지정 A). 브라우저 200 확인.
     links: [
-      { url: 'https://fsvps.gov.ru/puteshestvujushhim-s-pitomcami-vvoz-vyvo/instrukcija-kak-puteshestvovat-s-zhivotnym-za-rubezh/', label: '반려동물 출국 절차 안내 (Rosselkhoznadzor)' },
+      { url: 'https://fsvps.gov.ru/puteshestvujushhim-s-pitomcami-vvoz-vyvo/instrukcija-kak-puteshestvovat-s-zhivotnym-za-rubezh/', label: '반려동물 출국 절차 안내(Rosselkhoznadzor)' },
     ],
   },
   // ── 튀르키예 수출 검역 (왕복 — 귀국 출국 시) ──────────────────────────
@@ -3737,7 +3614,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 뺀 간결본. 규정 상세는 카드 위 주석·procedure-checks/il 아닌 이 카드 히스토리(git) 참고.
       '튀르키예 출국 전 농림청(İl/İlçe Tarım ve Orman Müdürlüğü)에서 수출 검역을 받으세요.\n동물병원에서 필요한 서류를 준비하고, 거주지 관할 농림청에 직접 신청해요.\n검사를 통과하면 정부 수의건강증명서(Veteriner Sağlık Sertifikası)가 발급돼요.',
     doneSummary: '튀르키예 수출 검역을 받았어요.',
-    cardLine: '튀르키예 관할 농림청에서 수출 검역을 받으세요.',
+    cardLine: '튀르키예 출국 전 수출 검역을 받으세요.',
     applicability: { destinations: ['turkey'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'dated:tr_export_quarantine_date',

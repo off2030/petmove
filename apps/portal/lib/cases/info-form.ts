@@ -3,7 +3,7 @@
 // /me/{guardian,animal,travel} sub-page 들이 같은 폼 패턴을 공유.
 
 import type { CaseRow } from '@petmove/domain'
-import { buildCaseJourneyContext, parseDestinations, readByDestValue, todayKst } from '@petmove/domain'
+import { buildCaseJourneyContext, getTripType, parseDestinations, readByDestValue, todayKst } from '@petmove/domain'
 import type { CaseInfoInput } from '@/lib/actions/cases'
 
 /** caseRow → 편집 폼 state. data jsonb·컬럼을 모두 문자열 필드로 평탄화. */
@@ -172,11 +172,7 @@ export function hasSiblingForDestination(
   })
 }
 
-/** 케이스의 한 목적지 왕복/편도 — data.trip_type[dest], 기본 'round'. */
+/** 케이스의 한 목적지 왕복/편도 — getTripType 위임(편도 전용 목적지 강제 포함). */
 function tripTypeForDest(c: CaseRow, dest: string): 'round' | 'one_way' {
-  const tt = (c.data as Record<string, unknown> | null)?.trip_type
-  if (tt && typeof tt === 'object' && !Array.isArray(tt)) {
-    return (tt as Record<string, unknown>)[dest] === 'one_way' ? 'one_way' : 'round'
-  }
-  return 'round'
+  return getTripType(c.data as Record<string, unknown> | null, dest)
 }

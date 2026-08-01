@@ -472,7 +472,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       validityLine: '출국일까지 면역 유효기간이 끊기지 않아야 해요.',
       // ⚠️ '1차는 출국 6개월 전'을 entryWaitDaysAfterVaccine 으로 선언하지 않는다 —
       //   그 필드는 **최근 접종일**을 보고 유효 부스터를 면제하는데, MPI 6개월은
-      //   **1차(또는 만료 후 재접종)에만** 붙는 조건부 하한이다. nz.ts 전용 룰이 판정한다.
+      //   **1차(또는 만료 후 재접종)에만** 붙는 조건부 하한이다. nz.ts 전용 룰이 판정하고,
+      //   저장 거부는 전용 함수 validateNzPrimaryRabiesWait(date-rules)가 항공권 출국일
+      //   입력에서 같은 판정(findOperativeRabiesPrimary 공유)으로 차단한다(2026-08-01).
     },
     titer: {
       need: 'entry',
@@ -903,7 +905,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['싱가포르', 'singapore'],
     archetype: 'sea-permit',
     // 편도 전용(2026-07-27 사용자 확정) — 호주·뉴질랜드와 같은 처리.
-    //   ⚠️ sg-export-quarantine(왕복 전용 카드)이 도달 불가가 된다.
+    //   구 sg-export-quarantine(왕복 전용 카드)은 도달 불가라 2026-08-01 제거
+    //   (au·nz 카드·룰도 함께 — 조사 내용은 git history 참조). 왕복 지원 전환 시 되살릴 것.
     oneWayOnly: true,
     // 종합백신 출국 14일 전(Schedule III IV(a)(iv)(v)) — 저장 거부·주의 공용.
     generalVaccineWaitDays: 14,
@@ -1689,7 +1692,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // il-advance-notice·date-rules·reminders 가 처리한다. hardDeadlineHours(entry 기준)는
     // 이스라엘엔 소비되지 않아(EU 4국 entry 테이블 전용) 값을 빼고 선언만 유지 —
     // ADVANCE_NOTICE_DESTINATIONS(presence 파생)에 들어가야 하므로.
-    advanceNotice: { label: '사전 통보' },
+    advanceNotice: { label: '사전 통지' },
     vaccines: ['rabies', 'rabies_titer'],
     extraFields: ['address_overseas'],
   },

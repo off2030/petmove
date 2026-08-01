@@ -41,6 +41,7 @@ import {
   generalVaccineEntryWaitDays,
   rabiesEntryWaitDays,
   validateEuEntryDate,
+  validateImportPermitFiledDate,
   validateInfectiousDiseaseTestDate,
   validateParasiteDateForDestination,
 } from '../packages/domain/src/journey-steps/date-rules'
@@ -72,6 +73,7 @@ type Problem = {
     | 'no-wait-blocker'
     | 'no-titer-wait-decision'
     | 'no-save-block-decision'
+    | 'permit-dispatch-hole'
     | 'dead-declaration'
     | 'notify-unregistered'
 }
@@ -623,22 +625,36 @@ const WAIT_RULE_BLOCK_SOURCES: Array<{
     // 종합백신·켄넬코프 접종 → 출국 대기 (한 선언이 둘을 함께 덮는다)
     test: /\.(general-vaccine|kennel-cough)-\d+days-before-(arrival|departure)$/,
     what: '종합백신·켄넬코프 출국 대기',
-    blocked: (d) => GENERAL_VACCINE_WAIT_DAYS[d] !== undefined,
+    blocked: (d) => GENERAL_VACCINE_WAIT_DAYS[d] !== undefined || WAIT_OWN_BLOCKER_DESTS.has(d),
     fix: '프로파일 generalVaccineWaitDays 선언(GENERAL_VACCINE_WAIT_DAYS 파생)',
   },
   {
-    // 광견병 접종 → 출국 대기
-    test: /\.rabies-min-\d+days-before-departure$|\.rabies-\d+days-before-arrival$/,
+    // 광견병 접종 → 출국 대기. ⚠️ 하와이 룰(hi.rabies-latest-31days-before-arrival)처럼
+    //   `latest-` 가 낀 이름도 잡는다 — 예전 정규식은 이걸 못 잡아 하와이 짝 없음이 조용히
+    //   통과했다(2026-08-01 발견·보완).
+    test: /\.rabies-min-\d+days-before-departure$|\.rabies-(?:latest-)?\d+days-before-arrival$/,
     what: '광견병 출국 대기',
     blocked: (d) => RABIES_ENTRY_WAIT_DAYS[d] !== undefined || WAIT_OWN_BLOCKER_DESTS.has(d),
     fix: '프로파일 rabies.entryWaitDaysAfterVaccine 선언(RABIES_ENTRY_WAIT_DAYS 파생)',
   },
 ]
 
-/** 전용 판정 함수로 차단하는 목적지 — 파생 목록에 없어도 정상. 이유와 함께 등록할 것. */
+/**
+ * 전용 판정 함수로 차단하는 목적지 — 파생 목록에 없어도 정상. 이유와 함께 등록할 것.
+ * ⚠️ 등록 = 그 나라의 **대기 계열 전부**(광견병·종합백신·켄넬코프)를 전용 함수가 차단한다는
+ *   뜻이다 — 한 계열만 전용이고 다른 계열은 구멍이면 여기 넣지 말고 프로파일로 풀 것.
+ */
 const WAIT_OWN_BLOCKER_DESTS = new Set<string>([
-  // 홍콩 — 상한(1년)까지 봐야 해서 violatesHkRabiesDoseWindow 전용 분기를 쓴다.
+  // 홍콩 — 상한(1년)까지 봐야 해서 violatesHkRabiesDoseWindow /
+  //   violatesHkGeneralVaccineDoseWindow 전용 분기를 쓴다.
   'hongkong',
+  // 태국 — validateThEntryDate 가 광견병·종합백신 21일 대기를 함께 차단한다(date-rules.ts,
+  //   유효 부스터 면제 포함). 구 backlog 는 "차단이 없다"고 적혀 있었지만 실제로는 차단 중이었다
+  //   (2026-08-01 확인 — stale 기록 정리).
+  'thailand',
+  // 하와이 — validateHiEntryDate 전용 함수(최근 접종 + 31일, FAVN 입력 시 판정 안 함·부스터
+  //   면제 없음이라 프로파일 파생 경로와 판정이 갈려 전용으로 둔다, 2026-08-01).
+  'hawaii',
 ])
 
 /**
@@ -650,10 +666,8 @@ const WAIT_OWN_BLOCKER_DESTS = new Set<string>([
 const waitBacklog = new Map<string, string>()
 
 const WAIT_BLOCKER_BACKLOG: Record<string, string> = {
-  'thailand:종합백신·켄넬코프 출국 대기':
-    '2026-07-27 검사 신설로 발견. 태국 카드는 "입국 3주 전까지 접종"이라 안내하는데 차단이 없어 접종 4일 뒤 출국도 저장된다. live 목적지라 사용자 확인 후 generalVaccineWaitDays: 21 선언 예정.',
-  'thailand:광견병 출국 대기':
-    '2026-07-27 검사 신설로 발견. 위와 같은 형태 — rabies.entryWaitDaysAfterVaccine: 21 선언 예정.',
+  // 태국 항목 2건은 2026-08-01 제거 — validateThEntryDate 가 광견병·종합백신 21일을 실제로
+  // 차단하고 있었다(구 기록이 stale). WAIT_OWN_BLOCKER_DESTS 의 thailand 등록으로 대체.
 }
 
 function waitRuleWithoutBlocker(appDests: string[]): Problem[] {
@@ -818,6 +832,8 @@ function describe(p: Problem): string {
     return '대기 주의 룰은 있는데 **저장 거부가 없다** — 주의는 뜨는데 입력은 그대로 저장된다(괌 2026-07-27 에서 같은 형태를 네 번 발견). 위 fix 대로 프로파일에 선언하거나, 전용 판정 함수로 막는다면 WAIT_OWN_BLOCKER_DESTS 에 이유와 함께 등록할 것'
   if (p.kind === 'no-save-block-decision')
     return "날짜 입력칸이 있는데 **저장 차단 결정이 등록되지 않았다** — DATE_SAVE_BLOCK_DECISIONS 에 '차단: <어느 함수가>' 또는 '주의만: <근거>' 로 등록할 것(하와이 입국 신청 2026-07-26 사고 재발 방지). 불가능한 날짜 조합이면 차단을 먼저 만들 것"
+  if (p.kind === 'permit-dispatch-hole')
+    return "수입 허가 신청일 칸이 있는데 **validateImportPermitFiledDate dispatch 에 미등록** — '차단' 결정(범용 키)이 주장만 하고 실제로는 아무것도 안 막는다(괌 2026-08-01). date-rules 의 switch 에 목적지 분기를 추가하거나, 정당한 예외면 목적지별 '주의만:' 결정을 등록할 것"
   if (p.kind === 'no-titer-wait-decision')
     return "입국 티터 요건인데 **채혈 후 대기 차단도, '대기 없음' 명시도 없다** — 30일 안쪽 입국일이 그냥 저장된다(하와이 2026-07-25 사고). 대기가 있으면 프로파일 titer.entryWaitAfterTiter 를 선언하고, 없으면 TITER_NO_ENTRY_WAIT_KNOWN 에 근거와 함께 등록할 것"
   if (p.kind === 'notify-unregistered')
@@ -957,6 +973,8 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   'flight-purchase':
     '차단: validateEntryDateForDestination(목적지별 대기·마감 dispatch)·왕복 순서·싱가포르 예약일 연동',
   'advance-notification': '차단: validateAdvanceNotification(일본 입국 40일 전)',
+  // ⚠️ 이 범용 키는 dispatch(switch) 미등록 목적지도 덮는다 — 등록 여부는 9.5단계
+  //   (importPermitDispatchHoles)가 불가능 조합을 실제로 넣어 검증한다(괌 2026-08-01 구멍 재발 방지).
   'import-permit': '차단: validateImportPermitFiledDate(목적지별 dispatch — 출국 후·유효기간·백신 간격 등)',
   'ie-advance-notice': '차단: validateIeAdvanceNoticeDate(입국 24시간 전)',
   'no-advance-notice': '차단: validateNoAdvanceNoticeDate(입국 48시간 전)',
@@ -996,14 +1014,18 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
     '주의만: 버튼 완료라 저장값이 허가 취득일 — 날짜 제약 없음(호주 수입 허가와 같은 판단). 순서는 수입 허가 카드의 게이트(importPermitPrerequisiteError)·주의(za.aia-permit-before-import-permit)가 담당',
   'sg-gst-permit': '차단: validateSgGstPermitDate(도착 전 + 도착 14일 이내)',
   'sg-border-inspection': '차단: validateSgBorderInspectionDate(도착 최소 5일 전)',
-  // 독감(CIV)·전염병 검사 — 호주 전용 카드(둘 다 강아지 요건).
-  //   둘 다 '출국까지 N일' 요건이라 **날짜를 고쳐 회복할 수 있는** 위반이고, 실제로 그렇게
-  //   받아 온 기록을 그대로 적어야 하는 자리다(늦게 맞았으면 늦게 맞았다고 적고 재접종·재검사로
+  // 독감(CIV) — '출국까지 N일' 요건이라 **날짜를 고쳐 회복할 수 있는** 위반이고, 실제로 그렇게
+  //   받아 온 기록을 그대로 적어야 하는 자리다(늦게 맞았으면 늦게 맞았다고 적고 재접종으로
   //   푼다). 저장을 막으면 사실을 못 적는다 — 그래서 주의만 둔다(입력 조건 원칙의 예외가 아니라,
-  //   '논리적으로 불가능한 조합'이 아니기 때문).
+  //   '논리적으로 불가능한 조합'이 아니기 때문). ⚠️ 전염병 검사도 원래 같은 논리로 묶여
+  //   있었으나 실제 코드는 차단 중이었다 — 아래 infectious-disease-test 항목 참고.
   'civ-vaccine': '주의만: au.civ-14days-before-departure·au.civ-within-12months — 날짜 수정으로 회복 가능한 위반이라 기록을 막지 않는다',
+  // ⚠️ 실상 정정(2026-08-01): 구 등록은 '주의만'이라 적혀 있었지만 실제 코드는 차단 중이다
+  //   (step-detail-view isInfectiousDisease 분기 → validateInfectiousDiseaseTestDate — 출국일
+  //   이후·창 밖 검사일 저장 거부). 코드는 바꾸지 않고 등록 문구만 실상에 맞췄다.
+  //   룰 주석(civ-vaccine 위 블록)은 여전히 '주의만'을 주장 — **사용자 재확인 필요(2026-08-01)**.
   'infectious-disease-test':
-    '주의만: au.infectious-disease-test-within-45days — 45일 창 밖 검사도 사실로 기록해야 하고, 재검사로 회복된다',
+    '차단: validateInfectiousDiseaseTestDate(출국일 이후 + 창 밖 — 호주 45일·뉴질랜드 30일·남아공 30일) — 주의 짝은 au/nz/za.infectious-disease-test-*',
   // ── 검사·검역·증명서 (한국 측 공통) ──────────────────────────────────────
   'vet-visit': '차단: validateVetVisitDate(출국 전 윈도우)',
   'certificate-issue': '차단: validateKrExportDate',
@@ -1015,6 +1037,54 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
 
 function dateSaveBlockDecision(dest: string, stepId: string): string | undefined {
   return DATE_SAVE_BLOCK_DECISIONS[`${dest}:${stepId}`] ?? DATE_SAVE_BLOCK_DECISIONS[stepId]
+}
+
+/**
+ * 9.5단계 — **수입 허가 저장 거부 dispatch 에 실제로 등록됐는가** (2026-08-01 신설).
+ *
+ * DATE_SAVE_BLOCK_DECISIONS 의 'import-permit' 범용 키는 "validateImportPermitFiledDate 가
+ * 차단한다"고 주장하지만, 그 함수의 switch 는 **등록 목적지만** 판정하고 default 는 통과다.
+ * 그래서 dispatch 미등록 목적지가 범용 키에 덮여 조용히 구멍이 됐다 — 괌이 그랬다
+ * (2026-08-01 발견: 출국일 이후 신청일도 저장됨). 명단을 손으로 이중 관리하는 대신
+ * **불가능한 조합을 실제로 넣어 본다**: 신청일이 출국일보다 뒤(전 목적지 공통 논리 불가능)
+ * 인데 null 이 나오면 미등록이다. 선행 절차 게이트국(뉴질랜드·호주·남아공)은 같은 입력
+ * (신청 입력 O + 선행 완료 없음)에서 게이트 에러가 나므로 함께 통과한다.
+ * 목적지별 '주의만:' 결정이 명시돼 있으면 검사하지 않는다(범용 키가 아닌 개별 판단).
+ */
+function importPermitDispatchHoles(appDests: string[]): Problem[] {
+  const out: Problem[] = []
+  for (const dest of appDests) {
+    for (const step of JOURNEY_STEP_CATALOG) {
+      if (step.id !== 'import-permit') continue
+      if (!appliesToDest(step, dest)) continue
+      const resolved = resolveStepForDestination(step, dest, null) as {
+        inputs?: Array<{ key: string; type?: string }>
+        buttonComplete?: boolean
+      }
+      // 버튼 완료 카드(홍콩·말레이시아·인도네시아·아랍에미리트)는 신청일 입력 자체가 없다.
+      if (step.buttonComplete || resolved.buttonComplete) continue
+      const hasDateInput = (resolved.inputs ?? []).some(
+        (i) => i.type === 'date' || i.type === 'date_array',
+      )
+      if (!hasDateInput) continue
+      const perDest = DATE_SAVE_BLOCK_DECISIONS[`${dest}:import-permit`]
+      if (perDest?.startsWith('주의만: ')) continue
+      const probe = validateImportPermitFiledDate(dest, '2026-01-20', {
+        departureDate: '2026-01-10',
+        entryDate: '2026-01-10',
+        data: {},
+      })
+      if (probe === null) {
+        out.push({
+          dest,
+          stepId: 'import-permit',
+          ruleId: 'validateImportPermitFiledDate',
+          kind: 'permit-dispatch-hole',
+        })
+      }
+    }
+  }
+  return out
 }
 
 function saveBlockDecisions(appDests: string[]): Problem[] {
@@ -1060,6 +1130,7 @@ function main(): void {
     ...parasiteWindowWithoutBlocker(appDests),
     ...declaredBlockerUnreachable(),
     ...saveBlockDecisions(appDests),
+    ...importPermitDispatchHoles(appDests),
     ...deadDeclarations(appDests),
     ...importPermitNotifyLeaks(appDests),
   ]

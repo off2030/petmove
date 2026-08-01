@@ -220,9 +220,10 @@ function PetCard({ case_, index, href }: { case_: CaseRow; index: number; href: 
 /**
  * 동물 카드 subtitle 용 여행 요약 한 줄 — '한국 ⇄ 일본' (왕복) 또는 '한국 → 일본' (편도).
  *
- * tripType 은 buildCaseJourneyContext 로 — data.trip_type 이 string 이거나
- * destination-scoped 객체({ '일본': 'round' }) 인 두 형식 모두 정확히 분기. 화살표만으로
- * 왕복/편도 구분이 충분하므로 별도 라벨('왕복'·'편도')은 카드에서 제외.
+ * tripType 은 buildCaseJourneyContext 로 — data.trip_type 은 목적지 토큰 키의 객체
+ * ({ '일본': 'round' }) 단일 형식이고(스칼라 지원 없음 — getTripType 참조), 편도 전용
+ * 목적지(호주 등)는 저장값과 무관하게 편도로 강제된다. 화살표만으로 왕복/편도 구분이
+ * 충분하므로 별도 라벨('왕복'·'편도')은 카드에서 제외.
  */
 function petTravelSummaryText(case_: CaseRow): string | null {
   const dest = case_.destination?.trim() || null

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { CaseRow } from '@petmove/domain'
+import { isOneWayOnlyDestination } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { updateCaseInfoFields, type CaseInfoInput } from '@/lib/actions/cases'
@@ -177,7 +178,12 @@ export function useAnimalEditForm(caseRow: CaseRow, caseId: string): UseAnimalEd
       return {
         ...prev,
         added: [...prev.added, d],
-        tripType: { ...prev.tripType, [d]: prev.tripType[d] ?? 'round' },
+        // 편도 전용 목적지(호주 등)는 round 로 심으면 저장값과 실제 여정(강제 편도)이
+        // 어긋난 채 DB에 남는다 — 처음부터 one_way 로.
+        tripType: {
+          ...prev.tripType,
+          [d]: prev.tripType[d] ?? (isOneWayOnlyDestination(d) ? 'one_way' : 'round'),
+        },
       }
     })
   }

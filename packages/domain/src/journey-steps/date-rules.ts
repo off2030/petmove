@@ -676,6 +676,165 @@ export function validateIlEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
+ * 현재 유효한 광견병 '1차 접종'(operative primary) — 뉴질랜드 IHS 2.1.3 guidance 의 정의.
+ *
+ * "A 'primary' rabies vaccination is the first vaccination ... **or** the first vaccination
+ * given if the previous vaccination(s) did not remain continuously valid." — chain 이 끊기면
+ * (직전 접종 유효기간 밖 재접종) 그 접종이 새 1차가 되고, 6개월 하한이 거기서 다시 시작한다.
+ *
+ * nz.ts 의 nz.rabies-primary-min-6months-before 주의와 저장 거부(validateNzPrimaryRabiesWait)가
+ * **같은 함수**를 쓴다 — 두 층이 각자 계산하면 기준이 갈린다(멕시코 대기 계산 사고와 같은 부류).
+ */
+export function findOperativeRabiesPrimary<
+  T extends { date: string; valid_until?: string | null },
+>(entries: T[]): T | null {
+  if (entries.length === 0) return null
+  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date))
+  let primary = sorted[0]
+  for (let i = 1; i < sorted.length; i++) {
+    const prevValid = resolveValidUntil(sorted[i - 1].date, sorted[i - 1].valid_until ?? null)
+    if (!prevValid || sorted[i].date > prevValid) primary = sorted[i]
+  }
+  return primary
+}
+
+/** rabies_dates 배열을 {date, valid_until} 로 읽는다 — 문자열·객체 항목 모두 지원. */
+function readRabiesDoseArray(
+  data: Record<string, unknown>,
+): Array<{ date: string; valid_until: string | null }> {
+  const raw = data.rabies_dates
+  if (!Array.isArray(raw)) return []
+  const out: Array<{ date: string; valid_until: string | null }> = []
+  for (const r of raw) {
+    if (typeof r === 'string') {
+      const d = r.slice(0, 10)
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d)) out.push({ date: d, valid_until: null })
+    } else if (r && typeof r === 'object') {
+      const rec = r as Record<string, unknown>
+      const d = typeof rec.date === 'string' ? rec.date.slice(0, 10) : ''
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+        out.push({
+          date: d,
+          valid_until: typeof rec.valid_until === 'string' ? rec.valid_until : null,
+        })
+      }
+    }
+  }
+  return out
+}
+
+/**
+ * 뉴질랜드 출국일(= 선적일) — 광견병 **유효 1차** 접종 + 6개월 미만 출국만 hard 차단.
+ *
+ * IHS 2.1.3(2) — "In the case of a primary vaccination, the vaccine must be given not less
+ * than 6 months before the date of shipment." 일본 180일과 같은 기준: 접종일은 과거 사실이라
+ * 6개월을 줄일 방법이 없고, 위반 해소 경로가 "출국일을 미루는 것"뿐인 입력만 저장 거부.
+ *
+ * 판정은 nz.rabies-primary-min-6months-before 주의와 **같은 함수**(findOperativeRabiesPrimary)
+ * — 만료 후 재접종은 새 1차라 6개월이 거기서 다시 시작하고, 유효 부스터에는 하한이 붙지 않는다.
+ * 접종일 입력 경로는 막지 않는다(일본 180일과 동일 — 고칠 수 있는 건 출국일뿐이라 주의가 안내).
+ * 뉴질랜드 외 목적지·접종 미입력 시 SKIP.
+ */
+export function validateNzPrimaryRabiesWait(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!matchesDestinationKey(ctx.destination, 'new_zealand')) return null
+  const primary = findOperativeRabiesPrimary(readRabiesDoseArray(ctx.data))
+  if (!primary) return null
+  const earliest = addMonths(primary.date, 6)
+  if (earliest && v < earliest) {
+    return `광견병 1차 접종일로부터 6개월 후인 ${fmt(earliest)}부터 출국할 수 있어요.`
+  }
+  return null
+}
+
+/** 뉴질랜드 1차 인증일(id_date) — by_dest 우선, 없으면 top-level(nz.ts readScopedDate 와 동일). */
+function readNzFirstIdentityCheckDate(
+  data: Record<string, unknown>,
+  destination: string | null | undefined,
+): string {
+  const scoped = readByDestValue(data, destination ?? null, 'id_date')
+  if (typeof scoped === 'string') return scoped.slice(0, 10)
+  if (scoped === null) return ''
+  const raw = data.id_date
+  return typeof raw === 'string' ? raw.slice(0, 10) : ''
+}
+
+/**
+ * 뉴질랜드 출국일 — 마이크로칩 **1차 인증**(id_date) + 6개월 미만 출국만 hard 차단.
+ *
+ * IHS 1.11(4) — 채혈 시점에 따라 인증이 1회/2회로 갈리지만 **두 갈래 모두 첫 인증이 출국
+ * 6개월 이전**이다(nz.identity-check-6months-before-departure 주의와 같은 판정 — 2차 인증은
+ * 이 하한과 무관). 인증일도 과거 사실이라 위반 해소가 출국일 변경뿐 → 저장 거부 대상.
+ * 인증일 칸 쪽은 validateNzIdentityCheckBeforeDeparture 가 대칭으로 막는다(양방향).
+ */
+export function validateNzIdentityCheckWait(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!matchesDestinationKey(ctx.destination, 'new_zealand')) return null
+  const id = readNzFirstIdentityCheckDate(ctx.data, ctx.destination)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(id)) return null
+  const earliest = addMonths(id, 6)
+  if (earliest && v < earliest) {
+    return `마이크로칩 인증일로부터 6개월 후인 ${fmt(earliest)}부터 출국할 수 있어요.`
+  }
+  return null
+}
+
+/**
+ * 위와 같은 규칙(인증 + 6개월 ≤ 출국)을 **인증일 칸 관점** 문구로 — 출국일이 이미 있는데
+ * 인증일을 6개월 안쪽으로 넣는 경로를 막는다(호주·뉴질랜드 계류 시작일 양방향과 같은 정책).
+ * 출국일이 비면 비교 불가라 통과.
+ */
+export function validateNzIdentityCheckBeforeDeparture(
+  idDate: string,
+  departureDate: string,
+): string | null {
+  const id = (idDate ?? '').slice(0, 10)
+  const dep = (departureDate ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(id) || !/^\d{4}-\d{2}-\d{2}$/.test(dep)) return null
+  const earliest = addMonths(id, 6)
+  if (earliest && earliest > dep) {
+    return '마이크로칩 인증은 출국 6개월 전까지 받아야 해요. 날짜를 확인하세요.'
+  }
+  return null
+}
+
+/**
+ * 하와이 입국일(= 출국 항공편 날짜) — 최근 광견병 접종 + 31일 미만 입국만 hard 차단.
+ *
+ * HDOA Checklist 1 Step 3 ("more than 30 days" → ≥31) — 접종일은 과거 사실이라 위반 해소
+ * 경로가 "입국일을 늦추는 것"뿐(일본 180일과 같은 기준). 주의 룰
+ * (hi.rabies-latest-31days-before-arrival)과 같은 판정을 미러링한다:
+ *   · **FAVN(항체) 기록이 있으면 판정하지 않는다** — 채혈은 접종 이후이고 검체 수령 후 30일
+ *     대기(validateEuEntryDate, entryWaitAfterTiter)가 이 대기를 사실상 포함한다(주의 룰과
+ *     같은 SKIP 조건 — 중복 차단·문구 충돌 방지).
+ *   · 유효 부스터 면제 없음 — HDOA 는 **최근 접종**에 무조건 31일을 요구한다. 그래서 프로파일
+ *     rabies.entryWaitDaysAfterVaccine: 31 선언으로 풀지 않는다 — 그 경로
+ *     (violatesVaccineWaitDays)는 유효 부스터를 면제해 주의 룰과 판정이 갈린다(2026-08-01).
+ */
+export function validateHiEntryDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!matchesDestinationKey(ctx.destination, 'hawaii')) return null
+  // FAVN 기록 존재 여부 — 주의 룰의 readTiterEntries 와 같은 기준(유효한 날짜가 있는 항목).
+  const rawTiters = ctx.data.rabies_titer_records
+  if (Array.isArray(rawTiters)) {
+    for (const r of rawTiters) {
+      if (r && typeof r === 'object') {
+        const d = (r as Record<string, unknown>).date
+        if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) return null
+      }
+    }
+  }
+  const rabies = readDateArray(ctx.data, 'rabies_dates')
+  if (rabies.length === 0) return null
+  const latest = rabies.reduce((a, b) => (a > b ? a : b))
+  const earliest = addDays(latest, 31)
+  if (earliest && v < earliest) {
+    return '광견병 접종 후 31일이 지나야 하와이에 입국할 수 있어요. 날짜를 확인하세요.'
+  }
+  return null
+}
+
+/**
  * EU 패밀리(EU 24국 묶음 + 영국·아일랜드·몰타·노르웨이·핀란드·스위스·키프로스) —
  * destination-config 키. `archetype: 'eu-family'` 선언 파생(진실 출처는 프로파일).
  * procedure-checks/eu.ts 의 EU_REGIME 과 client(step-detail-view) 분기도 이 목록을 쓴다.
@@ -1406,6 +1565,9 @@ export function validateEntryDateForDestination(
     // 가로채지 않게 하려면 entry 우선이면 안 된다. 태국과 같은 기준이다.
     validateUsDogEntryDate(outbound, ctx) ??
     validateJpEntryDate(entry, ctx) ??
+    // 하와이 — 최근 광견병 접종 + 31일(HDOA). FAVN 입력 시 판정 안 함·부스터 면제 없음이라
+    // 프로파일 파생(validateRabiesEntryWait) 대신 전용 함수로 주의 룰과 판정을 맞춘다.
+    validateHiEntryDate(outbound, ctx) ??
     validateThEntryDate(outbound, ctx) ??
     // 말레이시아·인도네시아는 전용 함수를 두지 않는다(2026-07-22 정리) — 말레이시아 30일은
     // 프로파일 entryWaitDaysAfterVaccine 파생(validateRabiesEntryWait)이 처리하고,
@@ -1420,6 +1582,10 @@ export function validateEntryDateForDestination(
     // 종합백신 접종 후 대기(싱가포르 14·UAE 21·카자흐/러시아 20) — 프로파일 파생 저장 거부.
     validateGeneralVaccineEntryWait(entryOrDeparture, ctx) ??
     validateEuEntryDate(entryOrDeparture, ctx) ??
+    // 뉴질랜드 — 광견병 유효 1차 + 6개월(IHS 2.1.3(2)) · 마이크로칩 1차 인증 + 6개월(1.11(4)).
+    // 항체 3개월 대기는 위 validateEuEntryDate(프로파일 titer.entryWaitAfterTiter)가 담당.
+    validateNzPrimaryRabiesWait(outbound, ctx) ??
+    validateNzIdentityCheckWait(outbound, ctx) ??
     validateTwEntryDate(entryOrDeparture, ctx) ??
     // 대만 광견병 선적 대기(90/30일) — 항체 90일과 별개 요건. 재검사 체인으로 항체 대기가
     // 면제되는 경로에서는 이것만 남는다.
@@ -1505,6 +1671,11 @@ export function validateImportPermitFiledDate(
         validateImportPermitNotAfterDeparture(filedDate, departureDate) ??
         validateTwImportPermitLeadTime(filedDate, departureDate, { subject: 'filed' })
       )
+    // 괌 — 출국일 이후 신청은 논리적 불가능이라 차단(태국·필리핀·대만·싱가포르와 동일).
+    //   30일 마감은 주의(gu.import-permit-30days-before-arrival)가 담당 — 마감을 놓쳐도 신청
+    //   자체는 가능하므로 차단으로 올리지 말 것(gu.ts 룰 주석 명시).
+    case 'guam':
+      return validateImportPermitNotAfterDeparture(filedDate, departureDate)
     // 아랍에미리트 — 검증 없음(2026-07-26, 홍콩·말레이시아·인도네시아와 같은 정리).
     //   카드가 버튼 완료 모델로 바뀌어 신청일 입력 자체가 없다. 90일 유효는 카드 문구가 안내.
     //   (validateAeImportPermitWithin90Days 는 싱가포르가 계속 쓰므로 함수는 남는다.)
@@ -1700,7 +1871,7 @@ export function validateCyAdvanceNoticeDate(noticeDate: string, entryDate: strin
 export function validateIlAdvanceNoticeDate(noticeDate: string, departureDate: string): string | null {
   if (!noticeDate || !departureDate) return null
   if (daysBetween(noticeDate, departureDate) < 2) {
-    return '출국 2영업일(최소 2일) 전까지 사전 통보를 해야 해요. 통보가 늦은 경우 출국일을 변경해야 해요.'
+    return '출국 2영업일(최소 2일) 전까지 사전 통지를 해야 해요. 통지가 늦은 경우 출국일을 변경해야 해요.'
   }
   return null
 }

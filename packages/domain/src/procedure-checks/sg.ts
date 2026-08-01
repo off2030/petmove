@@ -198,7 +198,9 @@ export const SG_CHECKS: ProcedureCheck[] = [
     title: '출국일은 항체 검사일 12개월 이내',
     description:
       'RNATT 유효기간 12개월 — 출국일이 채혈일 + 1년을 넘으면 재검사 필요. 1주년 당일까지 인정. (Schedule III IV(a)(iii) "not more than 12 months prior to export")',
-    severity: 'info',
+    // warning 승격(2026-08-01) — 동일 구조 gu.departure-within-12months-of-titer 가 warning
+    // (같은 Schedule III 근거). 카드 validationIds 에 매핑돼 있어 배너 중복 없음.
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -230,7 +232,9 @@ export const SG_CHECKS: ProcedureCheck[] = [
     title: '출국일 시점 광견병 면역 유효',
     description:
       '출국일에 가장 최근 광견병 접종의 면역 유효기간이 만료되지 않아야 함. (Schedule III IV(a)(iii) "valid ... in accordance with the recommendations of the vaccine manufacturer")',
-    severity: 'info',
+    // warning 승격(2026-08-01) — "카드가 있으면 만료는 전부 주의"(common.ts 2026-07-30 확정 원칙).
+    // 카드 validationIds(destination-overrides singapore)에 매핑돼 있어 배너 중복 없음.
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -293,7 +297,9 @@ export const SG_CHECKS: ProcedureCheck[] = [
     title: '출국일 시점 종합백신 면역 유효',
     description:
       '출국일에 가장 최근 종합백신의 면역 유효기간이 만료되지 않아야 함. valid_until 미입력 시 디폴트 1년(addOneYear = 1주년 당일까지) 적용. (Schedule III IV(a)(iv)(v) "according to the vaccine manufacturer\'s recommendations")',
-    severity: 'info',
+    // warning 승격(2026-08-01) — "카드가 있으면 만료는 전부 주의"(common.ts 2026-07-30 확정 원칙,
+    // 다른 목적지 전부 warning). 카드 validationIds 에 매핑돼 있어 배너 중복 없음.
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)

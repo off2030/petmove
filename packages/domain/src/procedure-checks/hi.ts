@@ -108,7 +108,9 @@ export const HI_CHECKS: ProcedureCheck[] = [
     title: '광견병 평생 2회 이상 접종',
     description:
       '광견병 백신은 평생 최소 2회. 1차 + 부스터 모두 필수. (HDOA: "vaccinated at least twice for rabies in its lifetime")',
-    severity: 'info',
+    // warning 승격(2026-08-01) — 동일 룰 gu.rabies-2-doses-required 가 warning(입국 요건 동급).
+    // 카드 validationIds(destination-overrides hawaii)에 매핑돼 있어 배너 중복 없음.
+    severity: 'warning',
     addedAt: '2026-05-06',
     // 접종일이 정보 자체라 날짜 표기 허용(jp.ts 선례).
     allowDate: true,
@@ -208,7 +210,9 @@ export const HI_CHECKS: ProcedureCheck[] = [
     title: '도착일에 광견병 면역 유효 (1년/3년 라이선스 모두 cover)',
     description:
       '최근 광견병 접종의 라이선스 booster interval 이 도착일 이전 만료되지 않아야 함. 1년·3년 라이선스 모두 **N주년 당일까지** 유효. valid_until 명시 시 그 값 사용 — 3년 백신은 valid_until 직접 입력 필수. 미명시 시 디폴트 1년 (`addOneYear`). (HDOA: "must not be expired when your pet arrives")',
-    severity: 'info',
+    // warning 승격(2026-08-01) — "카드가 있으면 만료는 전부 주의"(common.ts 2026-07-30 확정 원칙).
+    // 카드 validationIds(destination-overrides hawaii)에 매핑돼 있어 배너 중복 없음.
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)

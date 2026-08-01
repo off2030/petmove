@@ -99,14 +99,18 @@ export interface TiterReminderTarget {
  * @param latestTiterDate 가장 최근 채혈일 (YYYY-MM-DD)
  * @param entryDate 그 목적지 입국일(없으면 입국용 SKIP)
  * @param returnDate 한국 귀국일(왕복일 때만 — 없으면 귀국용 SKIP)
+ * @param tripType 이 목적지의 왕복/편도 — getTripType(data, token) 값. 'one_way' 면 귀국용
+ *   SKIP. returnDate 존재만으로 판정하면 편도 전환 후 잔존 귀국일에 알림이 새서(카드
+ *   필터는 tripType 기준인데 알림만 다른 기준) 명시적으로 받는다. 미지정=기존 동작.
  */
 export function titerReminderTargets(opts: {
   destinationToken: string
   latestTiterDate: string
   entryDate: string
   returnDate: string
+  tripType?: 'round' | 'one_way'
 }): TiterReminderTarget[] {
-  const { destinationToken, latestTiterDate, entryDate, returnDate } = opts
+  const { destinationToken, latestTiterDate, entryDate, returnDate, tripType } = opts
   if (!latestTiterDate) return []
   const targets: TiterReminderTarget[] = []
   // 입국용 — config 에 개월수가 명시(무기한 null·미지정 제외)되고 입국일이 있을 때.
@@ -129,7 +133,7 @@ export function titerReminderTargets(opts: {
   //     호주·뉴질랜드는 광견병 비발생국이라 아래 조건에서 이미 걸러져 증상이 없었고,
   //     발생국인 남아공이 처음으로 이 구멍을 드러냈다.
   const oneWayOnly = !!(key && DESTINATION_OVERRIDES[key]?.oneWayOnly)
-  if (returnDate && !oneWayOnly && !isRabiesFreeOrigin(destinationToken)) {
+  if (returnDate && !oneWayOnly && tripType !== 'one_way' && !isRabiesFreeOrigin(destinationToken)) {
     targets.push({
       kind: 'return',
       validUntil: addMonths(latestTiterDate, KR_RETURN_TITER_VALIDITY_MONTHS),

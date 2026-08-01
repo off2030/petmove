@@ -363,7 +363,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'advance-notification',
       description:
-        '사전 신고 후 일본 동물검역소에서 발급 받을 수 있어요.\n\n발급까지 수 주 이상 걸릴 수 있으며, 1회만 사용할 수 있어요.\n\n동물검역을 받을 때 반드시 소지해야 해요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
+        '사전 신고 후 일본 동물검역소에서 발급받을 수 있어요.\n\n발급까지 수 주 이상 걸릴 수 있으며, 1회만 사용할 수 있어요.\n\n동물검역을 받을 때 반드시 소지해야 해요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
       previewStepId: 'advance-notification',
     },
     KR_FORM25_VACCINATION_HEALTH_CERT,
@@ -842,20 +842,6 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'certificate-issue',
     },
     {
-      id: 'sg-export-quarantine-cert',
-      // 2026-07-25 사용자 결정: 실제 받는 서류 두 개(수출 라이선스 + AVS 인증 건강증명서)가
-      //   이름에 드러나게. 문구도 확정 카드 문구와 정합('지정 민간 수의사' 표현 폐기).
-      name: '싱가포르 수출 라이선스·건강증명서(AVS 인증)',
-      source: '싱가포르 수의당국(NParks/AVS)',
-      kind: 'step',
-      stepRef: 'sg-export-quarantine',
-      group: 'quarantine',
-      roundTripOnly: true,
-      description:
-        '싱가포르 출국 전 GoBusiness 포털로 신청해서 받는 서류예요.\n\n동물병원에서 발급받은 건강증명서를 AVS 정부 수의사가 인증해요. 수출 라이선스와 함께 발급돼요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요. 앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
-      previewStepId: 'sg-export-quarantine',
-    },
-    {
       id: 'sg-kr-import-quarantine-cert',
       name: '한국 수입 동물검역증',
       source: '농림축산검역본부',
@@ -946,18 +932,6 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       description:
         '한국 수출 검역 후 발급돼요.\n\n반려동물과 함께 원본이 호주로 가야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'certificate-issue',
-    },
-    {
-      id: 'au-export-quarantine-cert',
-      name: '호주 수출 허가·건강증명서',
-      source: '호주 검역당국(DAFF)',
-      kind: 'step',
-      stepRef: 'au-export-quarantine',
-      group: 'quarantine',
-      roundTripOnly: true,
-      description:
-        '호주에서 출국하기 전에 DAFF가 발급하는 서류예요.\n\n출발 10영업일 전까지 수출 신고서(NOI)를 내고, 최종 검진과 사전 출국 예약을 거쳐 발급받아요.\n\n발급 후 72시간 이내에 출국해야 해요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요. 앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
-      previewStepId: 'au-export-quarantine',
     },
     {
       id: 'au-kr-import-quarantine-cert',
@@ -1098,18 +1072,6 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       description:
         '한국 수출 검역 후 발급돼요.\n\n반려동물과 함께 원본이 뉴질랜드로 가야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'certificate-issue',
-    },
-    {
-      id: 'nz-export-quarantine-cert',
-      name: '뉴질랜드 수출증명서·건강증명서',
-      source: '뉴질랜드 검역당국(MPI)',
-      kind: 'step',
-      stepRef: 'nz-export-quarantine',
-      group: 'quarantine',
-      roundTripOnly: true,
-      description:
-        '뉴질랜드에서 출국하기 전에 받는 서류예요.\n\n살아 있는 동물을 내보내려면 동물복지 수출증명서(AWEC)가 반드시 필요하고, 한국 입국용 수출 건강증명서도 함께 받아요.\n\n한국 입국 때 필요하니 원본을 잘 보관하세요. 앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
-      previewStepId: 'nz-export-quarantine',
     },
     KR_IMPORT_QUARANTINE_CERT,
   ],

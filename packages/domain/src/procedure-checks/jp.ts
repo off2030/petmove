@@ -164,7 +164,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
     title: '백신 면역 유효기간 만료',
     description:
       '추가(3차+) 광견병 접종은 직전 광견병 백신의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 부스터가 아닌 새 기초접종으로 간주됨.',
-    severity: 'info',
+    // warning 승격(2026-08-01) — 동일 룰 cn.rabies-extra-within-previous-validity 가 warning.
+    // 아래 run 주석의 "'주의'로 표면화"와도 이제 일치한다(승격 전 info 는 주석과 모순이었음).
+    severity: 'warning',
     addedAt: '2026-05-24',
     run: ({ caseRow, destination }) => {
       const entries = readRabiesEntries(caseRow)
@@ -472,7 +474,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
     // 만료 안내는 **날짜가 정보 자체**다(언제 만료되는지 모르면 안내가 성립 안 함).
     // 구 코드는 메시지를 변수에 담아 lint:checks 정적 수집을 피해갔던 것 — 명시 선언으로 정리.
     allowDate: true,
-    severity: 'info',
+    // warning 승격(2026-08-01) — "카드가 있으면 만료는 전부 주의"(common.ts 2026-07-30 확정 원칙).
+    // 포털은 ADVISORY_DEFERRED_CHECKS(scenario.ts) 기등록이라 배너 중복 없음('추가 백신' 카드가 안내).
+    severity: 'warning',
     addedAt: '2026-04-21',
     run: ({ caseRow, destination }) => {
       // 한일 노선 = 출국일이 일본 입국일 — departure_date 단일 권위.
@@ -522,7 +526,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return SKIP
-      // 입국일 전 만료 케이스는 blocker(jp.rabies-valid-until-on-departure)가 잡음 — info 는 SKIP.
+      // 입국일 전 만료 케이스는 warning(jp.rabies-valid-until-on-departure)이 잡음 — 여기선 SKIP.
       if (dep && validUntil < dep) return SKIP
       // 이미 만료된 경우는 '임박'이 아님 — 타임라인/카드 situational 이 '만료되었습니다'로 안내한다.
       if (validUntil < todayKst()) return SKIP

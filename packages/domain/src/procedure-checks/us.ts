@@ -108,9 +108,9 @@ export const US_CHECKS: ProcedureCheck[] = [
     title: '출국일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함. ca.rabies-valid-on-departure 와 동일.',
-    // ⚠️ 'info' 는 **표시 억제를 겸한다** — 캐나다·베트남과 같은 구조.
-    // severity 를 올리려면 ADVISORY_DEFERRED_CHECKS(scenario.ts)에도 함께 등록할 것.
-    severity: 'info',
+    // warning 승격(2026-08-01) — "카드가 있으면 만료는 전부 주의"(common.ts 2026-07-30 확정 원칙).
+    // 카드 미매핑 룰이라 배너 중복은 ADVISORY_DEFERRED_CHECKS(scenario.ts) 등록으로 막는다.
+    severity: 'warning',
     addedAt: '2026-07-26',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)

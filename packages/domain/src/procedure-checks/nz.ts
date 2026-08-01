@@ -21,6 +21,7 @@ import {
 } from './utils'
 import { readByDestValue } from '../destination-scoped-fields'
 import {
+  findOperativeRabiesPrimary,
   validateIdentityCheckAfterMicrochip,
   validateIdentityCheckBeforeTiter,
   validateIdentityCheckOrder,
@@ -135,16 +136,12 @@ function readLatestIdentityCheckDate(caseRow: CaseRow, destination?: string | nu
  * ⚠️ 구 룰(nz.rabies-primary-min-6months-before)은 접종이 2회 이상이면 "booster chain 이니
  *   적용 제외"로 무조건 통과시켰다. 그래서 **만료 후 재접종(= 새 1차)을 놓쳤다** — 정확히
  *   6개월 하한이 필요한 경우인데 검사를 건너뛰고 있었다.
+ *
+ * 판정 본체는 date-rules 의 findOperativeRabiesPrimary — 저장 거부(validateNzPrimaryRabiesWait,
+ * 항공권 출국일 입력)와 **같은 함수**를 쓴다(단일 출처, 2026-08-01).
  */
 function findOperativePrimary(entries: ReturnType<typeof readRabiesEntries>) {
-  if (entries.length === 0) return null
-  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date))
-  let primary = sorted[0]
-  for (let i = 1; i < sorted.length; i++) {
-    const prevValid = resolveValidUntil(sorted[i - 1].date, sorted[i - 1].valid_until)
-    if (!prevValid || sorted[i].date > prevValid) primary = sorted[i]
-  }
-  return primary
+  return findOperativeRabiesPrimary(entries)
 }
 
 export const NZ_CHECKS: ProcedureCheck[] = [
@@ -638,41 +635,6 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `뉴질랜드 수입검역일(${raw}) 도착 이후.` }
-    },
-  },
-
-  // ── 귀국 (왕복) ──
-  {
-    id: 'nz.export-quarantine-before-return',
-    country: COUNTRY,
-    category: '검역',
-    title: '뉴질랜드 수출 증명일 순서',
-    description:
-      '뉴질랜드 수출 증명(AWEC·수출 건강증명서 발급)일은 뉴질랜드 입국일 이후, 한국 귀국일 이전이어야 함. MPI — "If you\'re exporting live animals, you\'re legally required to get an Animal Welfare Export Certificate (AWEC)."',
-    severity: 'warning',
-    addedAt: '2026-07-27',
-    run: ({ caseRow, destination }) => {
-      const raw = readScopedDate(caseRow, destination, 'nz_export_quarantine_date')
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-
-      const entry = readScopedDate(caseRow, destination, 'entry_date')
-      if (entry && raw < entry) {
-        return {
-          ok: false,
-          message: msgExportQuarantineBeforeEntry('뉴질랜드'),
-          offendingPaths: ['nz_export_quarantine_date'],
-        }
-      }
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const ret = typeof data.return_date === 'string' ? data.return_date.slice(0, 10) : ''
-      if (ret && raw > ret) {
-        return {
-          ok: false,
-          message: msgExportQuarantineAfterReturn('뉴질랜드'),
-          offendingPaths: ['nz_export_quarantine_date', 'return_date'],
-        }
-      }
-      return { ok: true, message: `뉴질랜드 수출증명일(${raw}) 입국 이후·귀국 이전.` }
     },
   },
 

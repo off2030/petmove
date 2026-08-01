@@ -51,6 +51,8 @@
   광견병 백신은 직전 접종의 면역 유효기간 안에 다시 접종해야 해요.
 [cn.rabies-extra-within-previous-validity]
   ${brk.brokenAt - 1}차 백신 면역 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했어요. 날짜를 확인하세요.
+[cn.rnatt-valid-1year-on-arrival]
+  광견병 항체 검사는 중국 입국일 기준 1년 이내여야 해요. 유효기간이 지나 다시 검사해야 해요.
 [cn.rnatt-validity-expired]  (allowDate)
   광견병 항체 검사 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었어요. 다시 검사해야 해요.
 [cn.rabies-titer-chain-consistent]
@@ -78,6 +80,8 @@
   광견병 항체 검사 결과는 12개월간 유효해요. 유효기간이 지나기 전에 출국해야 해요.
 [gu.import-permit-30days-before-arrival]
   괌 도착 30일 전까지 수입 허가 서류를 제출해야 해요. 늦으면 계류가 길어지거나 입국이 거부될 수 있어요.
+[hi.rabies-2-doses-required]  (allowDate)
+  광견병 접종이 1회(${rabies[0].date})만 기록되어 있어요. 2회가 필요해요.
 [hi.rabies-doses-31days-apart]  (allowDate)
   ${v.prev.date}부터 ${v.curr.date}까지 ${v.gap}일이에요. 31일 이상이어야 해요. 날짜를 확인하세요.
 [hi.rabies-latest-31days-before-arrival]  (allowDate)
@@ -108,6 +112,8 @@
   ${missing} 정보가 없어요. 입력하세요.
 [jp.rabies-booster-within-prime-validity]
   2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 해요. 날짜를 확인하세요.
+[jp.rabies-extra-within-previous-validity]
+  ${brk.brokenAt - 1}차 백신 면역 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했어요. 날짜를 확인하세요.
 [jp.microchip-rabies-sequence]
   마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 해요. 날짜를 확인하세요.
 [jp.rabies-titer-vs-booster]
@@ -118,6 +124,8 @@
   검사일로부터 180일 후 ${earliestKr}에 일본에 입국할 수 있어요.
 [jp.entry-within-2years-of-titer]  (allowDate)
   광견병 항체 검사 유효기간이 ${validUntilKr}에 만료돼요. 일본 입국 전 재검사가 필요해요.
+[jp.rabies-valid-until-on-departure]  (allowDate)
+  광견병 백신 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료돼요. 만료 전에 추가 접종을 하세요.
 [kh.rabies-min-30days-before-departure]
   광견병 접종 후 30일이 지나야 캄보디아에 입국할 수 있어요. 입국일을 미뤄야 해요.
 [kh.rabies-booster-within-prime-validity]
@@ -196,8 +204,14 @@
   러시아 수입 검역일은 러시아 입국일보다 빠를 수 없어요. 날짜를 확인하세요.
 [sg.departure-min-90days-after-titer]
   광견병 항체 검사 채혈일로부터 90일이 지난 후에 출국할 수 있어요.
+[sg.departure-within-12months-of-titer]
+  광견병 항체 검사 결과는 12개월간 유효해요. 유효기간이 지나기 전에 출국해야 해요.
+[sg.rabies-valid-until-on-departure]
+  출국일에 광견병 백신 면역 유효기간이 남아있어야 해요.
 [sg.comprehensive-vaccine-14days-before-departure]
   종합백신은 출국 14일 전까지 접종해야 해요. 출국일을 미뤄야 해요.
+[sg.comprehensive-vaccine-valid-on-departure]
+  출국일에 종합백신 면역 유효기간이 남아있어야 해요.
 [sg.banned-breeds]
   견종 "${breed.ko || breed.en}"은 NParks 수입 금지 대상이에요 (매치: ${match}).
 [sg.rabies-booster-within-prime-validity]

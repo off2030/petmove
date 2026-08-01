@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { buildCaseJourneyContext } from '@petmove/domain'
+import { getTripType } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
 import { replaceTab } from '@/components/portal-shell/tab-nav'
@@ -50,12 +50,8 @@ export function CasesHubScreen() {
           .split(',')
           .map((t) => t.trim())
           .filter(Boolean)
-        const tripTypeRaw = (c.data as Record<string, unknown> | null)?.trip_type
-        const tripTypeByDest =
-          tripTypeRaw && typeof tripTypeRaw === 'object' && !Array.isArray(tripTypeRaw)
-            ? (tripTypeRaw as Record<string, 'round' | 'one_way'>)
-            : {}
-        const fallbackTripType = buildCaseJourneyContext(c).tripType
+        // 화살표(⇄/→)는 raw 맵이 아니라 getTripType 으로 — 편도 전용 목적지(호주 등)는
+        // 저장값과 무관하게 편도라서, raw 맵을 읽으면 "한국 ⇄ 호주"로 잘못 표시된다.
         return (
           <Link
             key={c.id}
@@ -82,7 +78,7 @@ export function CasesHubScreen() {
                 }}
               >
                 {tokens.map((t, i) => {
-                  const arrow = (tripTypeByDest[t] ?? fallbackTripType) === 'round' ? '⇄' : '→'
+                  const arrow = getTripType(c.data, t) === 'round' ? '⇄' : '→'
                   return (
                     <span key={t} style={{ display: 'inline-flex', alignItems: 'center' }}>
                       {i > 0 && (

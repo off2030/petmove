@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { readJourneyFeedback } from '@petmove/domain'
+import { getTripType, readJourneyFeedback } from '@petmove/domain'
 import { CaseHeader } from '@/components/cases/case-header'
 import { FACES, FaceIcon } from '@/components/feedback/feedback-view'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
@@ -1061,11 +1061,8 @@ export function TimelineCalm({
     if (infoStages.length === 1) router.push(stageHref(infoStages[0]))
     else setInfoSheetOpen(true)
   }
-  const tripTypeRaw = (case_?.data as Record<string, unknown> | null | undefined)?.trip_type
-  const tripTypeByDest =
-    tripTypeRaw && typeof tripTypeRaw === 'object' && !Array.isArray(tripTypeRaw)
-      ? (tripTypeRaw as Record<string, 'round' | 'one_way'>)
-      : {}
+  // 화살표(⇄/→)는 raw 맵이 아니라 getTripType 으로 — 편도 전용 목적지(호주 등)는
+  // 저장값과 무관하게 편도. raw 맵을 읽으면 여정 카드(편도)와 표시가 모순된다.
 
   function selectDest(dest: string) {
     setDestSheetOpen(false)
@@ -2024,7 +2021,7 @@ export function TimelineCalm({
             <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 4 }}>
               {destTokens.map((t) => {
                 const isActive = t === activeDestResolved
-                const arrow = (tripTypeByDest[t] ?? 'round') === 'round' ? '⇄' : '→'
+                const arrow = getTripType(case_?.data, t) === 'round' ? '⇄' : '→'
                 return (
                   <button
                     key={t}

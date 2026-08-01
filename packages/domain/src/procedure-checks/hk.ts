@@ -260,8 +260,8 @@ export const HK_CHECKS: ProcedureCheck[] = [
     category: '일정',
     title: '입국일 시점 생후 5개월 이상',
     description:
-      'AFCD DC-02v05 5항: "Dogs and cats less than 5 months old … must NOT be imported." 저장 거부(validateHkEntryDate)와 같은 함수 — 출국일을 나중에 당겨 어긋난 경우를 주의로 표면화한다.',
-    severity: 'warning',
+      'AFCD DC-02v05 5항: "Dogs and cats less than 5 months old … must NOT be imported." 저장 거부(validateHkEntryDate)와 같은 함수 — 출국일을 나중에 당겨 어긋난 경우를 표면화한다. 출생일은 못 바꾸니 해소가 날짜 변경뿐이라 blocker(gu.dog-entry-age-six-months·us.dog-entry-age-six-months 와 동일 판정 구조, 2026-08-01 승격).',
+    severity: 'blocker',
     addedAt: '2026-07-26',
     run: ({ caseRow, destination }) => {
       const dep = readEntryOrDeparture(caseRow, destination)

@@ -204,8 +204,9 @@ export const TR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일에 광견병 면역 유효',
     description: '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
-    // info — 광견병 카드 문구가 같은 말을 하므로 배지 중복을 피한다(다른 목적지와 동일 처리).
-    severity: 'info',
+    // warning 승격(2026-08-01) — "카드가 있으면 만료는 전부 주의"(common.ts 2026-07-30 확정 원칙).
+    // 카드 미매핑 룰이라 배너 중복은 ADVISORY_DEFERRED_CHECKS(scenario.ts) 등록으로 막는다.
+    severity: 'warning',
     addedAt: '2026-07-22',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -213,6 +214,11 @@ export const TR_CHECKS: ProcedureCheck[] = [
       if (!dep || rabies.length === 0) return SKIP
 
       const latest = rabies[rabies.length - 1]
+      // tr.rabies-within-12months-of-departure(warning)가 이미 fail 인 케이스(접종+1년 < 출국일)는
+      // SKIP — 1년 백신에선 두 룰의 판정이 겹쳐 같은 상황에 주의 배지가 2개 뜬다(중복 방지,
+      // 2026-08-01). 12개월 룰은 3년 백신(유효기간은 남았는데 접종 후 1년 초과)에서 독자 의미가
+      // 있으므로 삭제하지 않고 그쪽을 남긴다.
+      if (addYears(latest.date, 1) < dep) return SKIP
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return SKIP
       // 이미 만료(오늘 기준)는 common.rabies-validity-expired '주의'가 담당 — 여기선 아직

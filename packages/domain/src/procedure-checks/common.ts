@@ -1,6 +1,7 @@
 import {
   DESTINATION_OVERRIDES,
   destinationsWithVaccine,
+  getTripType,
   isRabiesFreeOrigin,
   matchesDestinationKey,
 } from '../destination-config'
@@ -145,8 +146,11 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
     run: ({ caseRow, destination }) => {
       // 비발생국 = 한국 귀국 시 항체검사 면제 → 적용 안 함.
       if (isRabiesFreeOrigin(destination)) return SKIP
-      // 편도(귀국일 없음) → 적용 안 함. (caseRow.data 는 활성 목적지로 flatten 된 상태.)
+      // 편도 → 적용 안 함. 귀국일 존재만 보면 편도 전환 후 잔존 귀국일에 걸리므로
+      // 카드 필터와 같은 tripType 기준을 먼저 본다(2026-08-01, 편도 전용국 강제 포함).
       const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (getTripType(data, destination) === 'one_way') return SKIP
+      // 귀국일 없음(미정 왕복 등) → 판정 불가라 적용 안 함. (caseRow.data 는 활성 목적지로 flatten 된 상태.)
       const ret =
         typeof data.return_date === 'string' ? data.return_date.slice(0, 10) : ''
       if (!/^\d{4}-\d{2}-\d{2}$/.test(ret)) return SKIP

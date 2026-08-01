@@ -251,7 +251,9 @@ function sortByCardOrder<T extends { card: string }>(
     destination: destinationKoLabel(destKey),
     departure_date: null,
     // 종 제한 카드(개 전용 CDC 신고 등)까지 순서를 알아야 하므로 개 기준으로 펼친다.
-    data: { species: 'dog', trip_type: trip ?? 'round' },
+    // trip_type 은 스칼라가 아니라 목적지 토큰 키의 맵 — 스칼라로 넣으면 getTripType 이
+    // 못 읽어 trip 인자가 무시된다(항상 왕복 순서로 계산되던 버그, 2026-08-01 수정).
+    data: { species: 'dog', trip_type: { [destinationKoLabel(destKey)]: trip ?? 'round' } },
   } as unknown as CaseRow
   const order = new Map<string, number>()
   for (const s of getStepsForCase(JOURNEY_STEP_CATALOG, row)) order.set(s.id, s.order)

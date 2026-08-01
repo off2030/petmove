@@ -50,7 +50,7 @@
   desc:
       2차 광견병 백신을 접종하세요.
       
-      1차 접종 후 30일 이상 지나서 접종하세요.
+      1차 접종 후 30일 이상 지나서 접종해야 해요.
       1차 접종 면역 유효기간 이내에 접종하세요.
       입국 때 면역 유효기간이 남아있어야 해요.
   첨부안내: 백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.
@@ -96,7 +96,7 @@
       동물검역 예약  →  https://eminwon.qia.go.kr/eminwon/reservation/login/login.do?ref=petmove.co.kr
 
 ▸ departure
-  title: 출국 · 도착
+  title: 출국·도착
   short: 출국
   done: 출국했어요.
   desc:
@@ -156,7 +156,7 @@
   desc:
       2차 광견병 백신을 접종하세요.
       
-      1차 접종 후 30일 이상 지나서 접종하세요.
+      1차 접종 후 30일 이상 지나서 접종해야 해요.
       1차 접종 면역 유효기간 이내에 접종하세요.
       입국 때 면역 유효기간이 남아있어야 해요.
   첨부안내: 백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.
@@ -188,7 +188,7 @@
   저장이름: 광견병 항체 검사 결과지
 
 ▸ rabies-titer-extra
-  title: 추가 검사
+  title: 추가 항체 검사
   short: 항체+
   done: 추가 광견병 항체 검사를 받았어요.
   desc:
@@ -548,13 +548,13 @@
       미국 농무부(USDA) 승인 검사기관에서 FAVN 광견병 항체 검사를 받으세요.
       
       동물병원을 통해 의뢰할 수 있어요.
-      유효기간은 3년이에요.
       0.5 IU/mL 이상이면 합격이에요.
+      유효기간은 3년이에요.
   첨부안내: 검사결과지 사본을 사진·PDF로 보관하세요.
   저장이름: 광견병 항체 검사 결과지
 
 ▸ rabies-titer-extra
-  title: 추가 검사
+  title: 추가 항체 검사
   short: 항체+
   done: 추가 광견병 항체 검사를 받았어요.
   desc:
@@ -617,7 +617,7 @@
       
       출국 전 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 국제 건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.
       
-      다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요
+      다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요.
       - 한국 출국 시 받은 동물검역증
   첨부안내: USDA 승인 국제 건강증명서 사본을 사진·PDF로 보관하세요.
   저장이름: USDA 승인 국제 건강증명서
@@ -680,7 +680,7 @@
   done: 하와이 수입 검역을 받았어요.
   desc:
       하와이 도착 후 공항 동물검역소에서 검역을 받으세요.
-      서류와 마이크로칩을 확인해요. 준비에 문제가 없으면 공항에서 바로 인계받을 수 있어요(Direct Airport Release).
+      마이크로칩과 서류를 확인해요. 준비에 문제가 없으면 공항에서 바로 인계받을 수 있어요(Direct Airport Release).
       입국 요건을 충족하지 못하면 검역소에서 최대 120일간 격리돼요.
   첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
   저장이름: 하와이 수입 검역 서류
@@ -777,12 +777,12 @@
   desc[dog]:
       괌 입국 일정에 맞춰 항공권을 구매하세요.
       
-      강아지는 생후 6개월 이상만 입국할 수 있어요.
+      괌 도착일에 생후 6개월 이상이어야 해요.
       광견병 항체 검사 검체가 검사기관에 접수된 날로부터 120일이 지난 후에 입국하면 계류를 최소화할 수 있어요.
       그 전에도 입국할 수 있지만, 이 경우 남은 기간만큼 괌 지정 시설에서 계류돼요.
       검사 결과는 채혈일로부터 1년간 유효해요.
-      항공권 구매 후 검역시설 예약과 수입 허가 신청을 해요.
-      예약한 검역시설의 운영시간에 맞는 도착 시간인지 확인하세요.
+      항공권 구매 후 계류시설 예약과 수입 허가 신청을 해요.
+      예약한 계류시설의 운영시간에 맞는 도착 시간인지 확인하세요.
       항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.
   desc[cat]:
       괌 입국 일정에 맞춰 항공권을 구매하세요.
@@ -790,8 +790,8 @@
       광견병 항체 검사 검체가 검사기관에 접수된 날로부터 120일이 지난 후에 입국하면 계류를 최소화할 수 있어요.
       그 전에도 입국할 수 있지만, 이 경우 남은 기간만큼 괌 지정 시설에서 계류돼요.
       검사 결과는 채혈일로부터 1년간 유효해요.
-      항공권 구매 후 검역시설 예약과 수입 허가 신청을 해요.
-      예약한 검역시설의 운영시간에 맞는 도착 시간인지 확인하세요.
+      항공권 구매 후 계류시설 예약과 수입 허가 신청을 해요.
+      예약한 계류시설의 운영시간에 맞는 도착 시간인지 확인하세요.
       항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.
   desc:
       괌 입국 일정에 맞춰 항공권을 구매하세요.
@@ -799,8 +799,8 @@
       광견병 항체 검사 검체가 검사기관에 접수된 날로부터 120일이 지난 후에 입국하면 계류를 최소화할 수 있어요.
       그 전에도 입국할 수 있지만, 이 경우 남은 기간만큼 괌 지정 시설에서 계류돼요.
       검사 결과는 채혈일로부터 1년간 유효해요.
-      항공권 구매 후 검역시설 예약과 수입 허가 신청을 해요.
-      예약한 검역시설의 운영시간에 맞는 도착 시간인지 확인하세요.
+      항공권 구매 후 계류시설 예약과 수입 허가 신청을 해요.
+      예약한 계류시설의 운영시간에 맞는 도착 시간인지 확인하세요.
       항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.
   첨부안내: 구매한 항공권(e-티켓)을 사진·PDF로 보관하세요.
   저장이름: 항공권
@@ -821,18 +821,18 @@
       CDC Dog Import Form 안내  →  https://www.cdc.gov/importation/dogs/dog-import-form-instructions.html
 
 ▸ gu-quarantine-reservation
-  title: 검역시설 예약
-  short: 예약
-  card: 괌 검역시설을 예약하세요.
-  done: 괌 검역시설을 예약했어요.
+  title: 계류시설 예약
+  short: 계류장
+  card: 괌 계류시설을 예약하세요.
+  done: 괌 계류시설을 예약했어요.
   desc:
-      괌 지정 검역시설에 계류 예약을 하세요.
+      괌 지정 계류시설에 계류 예약을 하세요.
       
       수입 허가를 신청할 때 예약확인서를 함께 내야 해요.
       Harper Valley Kennels 또는 Animal Medical Clinic에 연락해 예약해요.
       계류 비용은 시설마다 다르고, 수입 허가 수수료와 별도예요.
-  첨부안내: 검역시설 예약확인서를 사진·PDF로 보관하세요.
-  저장이름: 괌 검역시설 예약확인서
+  첨부안내: 계류시설 예약확인서를 사진·PDF로 보관하세요.
+  저장이름: 괌 계류시설 예약확인서
   links:
       Harper Valley Kennels  →  https://www.petshippersguam.com/
       Animal Medical Clinic  →  https://amcguam.com/moving-to-guam-with-pets/
@@ -842,7 +842,7 @@
   short: 종합
   done: 종합백신을 접종했어요.
   desc[dog]:
-      종합백신(DHLPP)을 접종하세요.
+      종합백신(DHPPL)을 접종하세요.
       
       디스템퍼·전염성간염·렙토스피라·파보바이러스·파라인플루엔자 예방을 포함해야 해요.
       한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.
@@ -857,7 +857,7 @@
   desc:
       종합백신을 접종하세요.
       
-      강아지는 DHLPP, 고양이는 FVRCP 예방을 포함해야 해요.
+      강아지는 DHPPL, 고양이는 FVRCP 예방을 포함해야 해요.
       한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.
       출국 10일 전까지 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
@@ -915,7 +915,7 @@
   desc:
       괌 농무부(DOAG)에 수입 허가(Animal Entry Permit)를 신청하세요.
       
-      검역시설 예약확인서와 접종·검사 서류를 함께 이메일로 제출해요.
+      계류시설 예약확인서와 접종·검사 서류를 함께 이메일로 제출해요.
       도착 30일 전까지 제출해야 하고, 늦으면 계류가 길어지거나 입국이 거부될 수 있어요.
       수수료는 반려동물 1마리당 65달러예요.
   첨부안내: 수입 허가증을 사진·PDF로 보관하세요.
@@ -967,9 +967,9 @@
   short: 수입
   done: 괌 수입 검역을 받았어요.
   desc:
-      괌 도착 후 지정 검역시설에서 계류해요.
+      괌 도착 후 지정 계류시설에서 계류해요.
       
-      공항에서 서류와 마이크로칩을 확인한 뒤 검역시설 직원이 동물을 인수해요.
+      공항에서 서류와 마이크로칩을 확인한 뒤 계류시설 직원이 동물을 인수해요.
       계류가 끝나면 시설 수의사의 최종 검사를 받고 인도돼요.
   첨부안내: 검역·계류 서류 사본을 사진·PDF로 보관하세요.
   저장이름: 괌 수입 검역 서류
@@ -984,7 +984,7 @@
       
       출국 전 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 국제 건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.
       
-      다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요
+      다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요.
       - 한국 출국 시 받은 동물검역증
   첨부안내: USDA 승인 국제 건강증명서 사본을 사진·PDF로 보관하세요.
   저장이름: USDA 승인 국제 건강증명서
@@ -1049,7 +1049,7 @@
       
       동물병원을 통해 의뢰할 수 있어요.
       베트남 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.
-      베트남에는 검사 기관이 없으니 출국 전에 미리 받으세요.
+      베트남에는 검사기관이 없으니 출국 전에 미리 받으세요.
       0.5 IU/mL 이상이면 합격이에요.
       유효기간은 2년이에요.
   첨부안내: 검사결과지 사본을 사진·PDF로 보관하세요.
@@ -1262,7 +1262,7 @@
 ▸ ar-export-quarantine
   title: 아르헨티나 수출 검역
   short: 수출
-  card: 아르헨티나 SENASA에서 수출 검역을 받으세요.
+  card: 아르헨티나 출국 전 수출 검역을 받으세요.
   done: 아르헨티나 수출 검역을 받았어요.
   desc:
       아르헨티나 출국 전 SENASA에서 수출 검역을 받으세요.
@@ -1275,8 +1275,8 @@
   첨부안내: 국제수의증명서(CVI) 사본을 사진·PDF로 보관하세요.
   저장이름: 국제수의증명서(CVI)
   links:
-      출국 절차 안내 (SENASA)  →  https://www.argentina.gob.ar/senasa/procedimiento-para-viajar-al-exterior-con-perros-y-gatos
-      자가신청 시스템 (SENASA Autogestión)  →  https://mascotas.senasa.gob.ar/
+      출국 절차 안내(SENASA)  →  https://www.argentina.gob.ar/senasa/procedimiento-para-viajar-al-exterior-con-perros-y-gatos
+      자가신청 시스템(SENASA Autogestión)  →  https://mascotas.senasa.gob.ar/
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
@@ -1335,7 +1335,7 @@
       
       동물병원을 통해 의뢰할 수 있어요.
       캄보디아 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.
-      캄보디아에는 검사 기관이 없으니 출국 전에 미리 받으세요.
+      캄보디아에는 검사기관이 없으니 출국 전에 미리 받으세요.
       0.5 IU/mL 이상이면 합격이에요.
       유효기간은 2년이에요.
   첨부안내: 검사결과지 사본을 사진·PDF로 보관하세요.
@@ -1407,7 +1407,7 @@
 ▸ kh-export-quarantine
   title: 캄보디아 수출 검역
   short: 수출
-  card: 캄보디아 출국 전 정부 수출 검역을 받으세요.
+  card: 캄보디아 출국 전 수출 검역을 받으세요.
   done: 캄보디아 수출 검역을 받았어요.
   desc:
       캄보디아 출국 전 수출 검역을 받고 수의증명서(Veterinary Certificate)를 발급받으세요.
@@ -1415,10 +1415,10 @@
       프놈펜의 농림수산부 동물보건생산국(GDAHP)에 미리 신청하고 출국 공항 검역소에서 받아요.
       
       검역소는 프놈펜·시엠립·시아누크빌 국제공항에 있어요.
-  첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
-  저장이름: 캄보디아 수출 검역 서류
+  첨부안내: 검역증 사본을 사진·PDF로 보관하세요.
+  저장이름: 캄보디아 수출 동물검역증
   links:
-      수의증명서 신청 절차 (정부 무역포털)  →  https://cambodiantr.gov.kh/en/procedure/?title=application-for-veterinary-certificate
+      수의증명서 신청 절차(정부 무역포털)  →  https://cambodiantr.gov.kh/en/procedure/?title=application-for-veterinary-certificate
       캄보디아 농림수산부(MAFF) — GDAHP 상위 부처  →  https://maff.gov.kh/
 
 ▸ kr-import-quarantine
@@ -1479,7 +1479,7 @@
       
       동물병원을 통해 의뢰할 수 있어요.
       몽골 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.
-      몽골에는 검사 기관이 없으니 출국 전에 미리 받으세요.
+      몽골에는 검사기관이 없으니 출국 전에 미리 받으세요.
       0.5 IU/mL 이상이면 합격이에요.
       유효기간은 2년이에요.
   첨부안내: 검사결과지 사본을 사진·PDF로 보관하세요.
@@ -1559,8 +1559,8 @@
       
       몽골 수의총국(GAVS)에 미리 연락해 신청 방법과 일정을 확인하세요.
       수출 검역을 위해 현지 동물병원 건강증명서가 필요할 수 있어요.
-  첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
-  저장이름: 몽골 수출 검역 서류
+  첨부안내: 검역증 사본을 사진·PDF로 보관하세요.
+  저장이름: 몽골 수출 동물검역증
   links:
       몽골 수의총국(GAVS) — 연락처·업무시간  →  https://vet.gov.mn/
 
@@ -1700,8 +1700,8 @@
       우즈베키스탄 출국 전 수출 검역을 받고 수의증명서를 발급받으세요.
       
       거주 지역 국가수의기관에 신청해 기초 수의증명서를 받고, 출국 당일 공항 국경수의검역소에서 최종 증명서로 바꿔 받아요.
-  첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
-  저장이름: 우즈베키스탄 수출 검역 서류
+  첨부안내: 검역증 사본을 사진·PDF로 보관하세요.
+  저장이름: 우즈베키스탄 수출 동물검역증
   links:
       우즈베키스탄 수의·축산개발위원회 — 연락처  →  https://gov.uz/en/vetgov
       지역 수의증명서 발급 담당자 명단  →  https://gov.uz/en/vetgov/sections/view/99245
@@ -1820,9 +1820,9 @@
       동물검역 예약  →  https://eminwon.qia.go.kr/eminwon/reservation/login/login.do?ref=petmove.co.kr
 
 ▸ departure
-  title: 캐나다 수입 검역
-  short: 수입
-  done: 캐나다 수입 검역을 받았어요.
+  title: 캐나다 입국 검사
+  short: 입국
+  done: 캐나다 입국 검사를 받았어요.
   desc:
       캐나다 도착 후 국경관리기관(CBSA)의 입국 심사를 받으세요.
       광견병 접종증명서와 반려동물 정보를 확인해요. 준비에 문제가 없으면 격리 없이 통과할 수 있어요.
@@ -1841,12 +1841,12 @@
       현지 동물병원에서 한국행 수출 증명서를 작성받은 뒤, 검역기관(CFIA) 공식 수의사의 배서를 받아요.
       배서는 예약제예요. 온라인 결제를 예약일 3일 전까지 마쳐야 하고, 캐나다를 떠난 뒤에는 받을 수 없어요.
       
-      다음 서류가 있다면 캐나다 배서를 새로 받지 않아도 돼요
+      다음 서류가 있다면 캐나다 배서를 새로 받지 않아도 돼요.
       - 한국 출국 시 받은 동물검역증
   첨부안내: 배서받은 증명서 사본을 사진·PDF로 보관하세요.
   저장이름: 캐나다 수출 증명서
   links:
-      한국행 수출 안내·서식 (CFIA)  →  https://inspection.canada.ca/en/animal-health/terrestrial-animals/exports/pets/korea
+      한국행 수출 안내·서식(CFIA)  →  https://inspection.canada.ca/en/animal-health/terrestrial-animals/exports/pets/korea
       CFIA 사무소 연락처 — 배서 예약 문의  →  https://inspection.canada.ca/en/about-cfia/contact-cfia/contact-cfia-office-telephone
 
 ▸ kr-import-quarantine
@@ -1913,8 +1913,17 @@
 ▸ flight-purchase
   title: 항공권 구매
   short: 항공권
-  card: 미국 입국 일정을 확인하세요.
+  card: 미국에 입국할 수 있어요.
   done: 항공권을 구매했어요.
+  desc[dog]:
+      미국 입국 일정에 맞춰 항공권을 구매하세요.
+      
+      미국 도착일에 생후 6개월 이상이어야 해요.
+      항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.
+  desc[cat]:
+      미국 입국 일정에 맞춰 항공권을 구매하세요.
+      
+      항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.
   desc:
       미국 입국 일정에 맞춰 항공권을 구매하세요.
       
@@ -1979,8 +1988,8 @@
 
 ▸ departure
   title: 미국 입국 검사
-  short: 수입
-  done: 미국 입국 검사를 마쳤어요.
+  short: 입국
+  done: 미국 입국 검사를 받았어요.
   desc[cat]:
       미국 도착 후 국경관리기관(CBP)의 입국 심사를 받으세요.
       건강에 문제가 없으면 격리 없이 통과할 수 있어요.
@@ -1988,8 +1997,8 @@
       미국 도착 후 국경관리기관(CBP)의 입국 심사를 받으세요.
       마이크로칩과 CDC 신고 접수증을 확인해요.
       준비에 문제가 없으면 격리 없이 통과할 수 있어요.
-  첨부안내: 입국 검사 관련 서류나 영수증이 있다면 사진·PDF로 보관하세요.
-  저장이름: 미국 입국 검사 서류
+  첨부안내: 확인받은 서류 사본을 사진·PDF로 보관하세요.
+  저장이름: 입국 확인 서류
 
 ▸ us-export-health-cert
   title: 귀국 서류 준비
@@ -2001,7 +2010,7 @@
       
       출국 전 30일 이내에 USDA 공인 수의사의 진료를 받아요. 수의사가 국제 건강증명서를 작성하고 VEHCS로 USDA APHIS 승인을 신청해요.
       
-      다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요
+      다음 서류가 있다면 USDA 승인을 새로 받지 않아도 돼요.
       - 한국 출국 시 받은 동물검역증
   첨부안내: USDA 승인 국제 건강증명서 사본을 사진·PDF로 보관하세요.
   저장이름: USDA 승인 국제 건강증명서
@@ -2066,7 +2075,7 @@
       국제 공인 검사기관에서 광견병 항체 검사를 받으세요.
       
       동물병원을 통해 의뢰할 수 있어요.
-      광견병 접종일로부터 30일이 지난 후에 채혈해야 해요.
+      광견병 접종 후 30일 이상 지나서 검사하세요.
       0.5 IU/mL 이상이면 합격이에요.
   첨부안내: 검사결과지 사본을 사진·PDF로 보관하세요.
   저장이름: 광견병 항체 검사 결과지
@@ -2145,10 +2154,10 @@
       수출 검역을 위해 현지 동물병원 건강증명서가 필요할 수 있어요.
       
       증명서는 출발 직전에 발급받아요. 수수료는 증명서 한 건당 150디르함이에요.
-  첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
+  첨부안내: 검역증 사본을 사진·PDF로 보관하세요.
   저장이름: 모로코 수출 증명서
   links:
-      개·고양이 수출 안내 (ONSSA)  →  https://www.onssa.gov.ma/import-and-export-controls/export-certification/export-of-live-animals/dogs-and-cats/?lang=en
+      개·고양이 수출 안내(ONSSA)  →  https://www.onssa.gov.ma/import-and-export-controls/export-certification/export-of-live-animals/dogs-and-cats/?lang=en
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
@@ -2207,7 +2216,7 @@
       국제 공인 검사기관에서 광견병 항체 검사를 받으세요.
       
       동물병원을 통해 의뢰할 수 있어요.
-      광견병 접종일로부터 30일이 지난 후에 채혈해야 해요.
+      광견병 접종 후 30일 이상 지나서 검사하세요.
       0.5 IU/mL 이상이면 합격이에요.
   첨부안내: 검사결과지 사본을 사진·PDF로 보관하세요.
   저장이름: 광견병 항체 검사 결과지
@@ -2220,7 +2229,7 @@
   desc:
       우크라이나 입국 일정에 맞춰 항공권을 구매하세요.
       
-      항체 검사 채혈일로부터 3개월이 지나야 입국할 수 있어요.
+      광견병 항체 검사 채혈일로부터 3개월이 지난 후에 입국할 수 있어요.
       우크라이나 영공이 닫혀 있어 직항편이 없어요. 유럽 공항까지 비행기로 간 뒤 육로로 국경을 넘어야 해요.
       유럽을 거치므로 유럽 입국 요건도 함께 확인하세요.
       항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.
@@ -2288,10 +2297,10 @@
       거주 지역 국가수의기관에서 임상검사를 받고 수의증서(Ф-1)를 받은 뒤, 검역기관(DPSS) 국경검사부서에서 국제수의증명서로 바꿔 받아요.
       
       증명서는 5일간만 유효해요.
-  첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
+  첨부안내: 검역증 사본을 사진·PDF로 보관하세요.
   저장이름: 우크라이나 국제수의증명서
   links:
-      반려동물 서류 발급처·예약 (우크라이나 검역당국)  →  https://nir.gov.ua/misczya-oformlennya-domashnih-tvaryn/
+      반려동물 서류 발급처·예약(우크라이나 검역당국)  →  https://nir.gov.ua/misczya-oformlennya-domashnih-tvaryn/
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
@@ -2452,10 +2461,10 @@
       그 서류로 검역기관(SENASICA) 사무소에 신청하면 3영업일 안에 발급돼요. 출국 당일 공항에서 반려동물 실물 검사를 받고 최종 서명을 받아요.
       
       발급 비용은 없어요. 증명서는 발급일로부터 8일간 유효해요.
-  첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
+  첨부안내: 검역증 사본을 사진·PDF로 보관하세요.
   저장이름: 멕시코 수출 동물위생증명서(CZE)
   links:
-      반려동물 수출 증명서 신청 (SENASICA)  →  https://www.gob.mx/senasica/documentos/solicita-el-certificado-zoosanitario-para-exportacion-para-mascotas
+      반려동물 수출 증명서 신청(SENASICA)  →  https://www.gob.mx/senasica/documentos/solicita-el-certificado-zoosanitario-para-exportacion-para-mascotas
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
@@ -2600,7 +2609,7 @@
   desc:
       브라질 도착 후 공항 농축산 검역기관(VIGIAGRO)에서 검역을 받으세요.
       한국에서 받은 수출 검역증과 반려동물을 확인해요. 요건을 갖추면 격리 없이 통과할 수 있어요.
-      요건을 충족하지 못하면 입국이 거부되거나 반송될 수 있어요.
+      입국 요건을 충족하지 못하면 입국이 거부되거나 반송될 수 있어요.
   첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
   저장이름: 브라질 수입 검역 서류
 
@@ -2617,10 +2626,10 @@
       그 서류로 검역기관(VIGIAGRO) 사무소에 신청해 CVI를 발급받아요. 한국행은 전자 발급 대상이 아니라 반려동물과 함께 직접 방문해야 하고, 그 자리에서 마이크로칩을 판독해 확인해요.
       
       예약이 밀릴 수 있으니 사무소에 미리 연락해 방문 날짜를 잡으세요. CVI는 서명일로부터 10일간 유효해요.
-  첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
+  첨부안내: 검역증 사본을 사진·PDF로 보관하세요.
   저장이름: 브라질 국제수의증명서(CVI)
   links:
-      브라질 출국 안내 (MAPA)  →  https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil
+      브라질 출국 안내(MAPA)  →  https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/sair-do-brasil
       검역 사무소(VIGIAGRO) 지점 찾기  →  https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/unidades-de-vigilancia-agropecuaria-1
 
 ▸ kr-import-quarantine
@@ -2746,7 +2755,7 @@
   첨부안내: 수입 허가증을 사진·PDF로 보관하세요.
   저장이름: 수입 허가증
   links:
-      반려동물 수입 허가증 신청 (MOCCAE)  →  https://moccae.gov.ae/en/services/import-permit-pets
+      반려동물 수입 허가증 신청(MOCCAE)  →  https://moccae.gov.ae/en/services/import-permit-pets
 
 ▸ vet-visit
   title: 출국 전 임상검사
@@ -2809,10 +2818,10 @@
       기후변화환경부(MOCCAE) 사무소에 방문해 검사를 받아요. 마이크로칩을 확인하고 예방접종 수첩을 함께 봐요.
       
       증명서는 발급일로부터 30일간 유효해요.
-  첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
+  첨부안내: 검역증 사본을 사진·PDF로 보관하세요.
   저장이름: 아랍에미리트 수출 건강증명서
   links:
-      수출 건강증명서 발급·문의 (MOCCAE)  →  https://moccae.gov.ae/en/services/animal-health-certificate-for-export-re-export-of-live-animals
+      수출 건강증명서 발급·문의(MOCCAE)  →  https://moccae.gov.ae/en/services/animal-health-certificate-for-export-re-export-of-live-animals
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
@@ -2974,10 +2983,10 @@
       카자흐스탄 출국 전 수출 검역을 받고 수출 수의증명서를 발급받으세요.
       
       현지 동물병원에서 임상검사를 받고, 그 서류로 수의통제감독위원회 지역검사기관에 신청해요.
-  첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
+  첨부안내: 검역증 사본을 사진·PDF로 보관하세요.
   저장이름: 카자흐스탄 수출 수의증명서
   links:
-      수출 수의증명서 발급 안내 (gov.kz)  →  https://www.gov.kz/services/3369?lang=en
+      수출 수의증명서 발급 안내(gov.kz)  →  https://www.gov.kz/services/3369?lang=en
       수의통제감독위원회 지역검사기관 연락처  →  https://www.gov.kz/memleket/entities/vetcontrol?lang=ru
 
 ▸ kr-import-quarantine
@@ -3145,7 +3154,160 @@
   첨부안내: 국제수의증명서(Form 5a) 사본을 사진·PDF로 보관하세요.
   저장이름: 국제수의증명서(Form 5a)
   links:
-      반려동물 출국 절차 안내 (Rosselkhoznadzor)  →  https://fsvps.gov.ru/puteshestvujushhim-s-pitomcami-vvoz-vyvo/instrukcija-kak-puteshestvovat-s-zhivotnym-za-rubezh/
+      반려동물 출국 절차 안내(Rosselkhoznadzor)  →  https://fsvps.gov.ru/puteshestvujushhim-s-pitomcami-vvoz-vyvo/instrukcija-kak-puteshestvovat-s-zhivotnym-za-rubezh/
+
+▸ kr-import-quarantine
+  title: 한국 수입 검역
+  short: 수입
+  card: 한국 공항 동물검역소에서 수입 검역을 받으세요.
+  done: 한국 수입 검역을 받았어요.
+  desc:
+      한국 도착 후 공항 동물검역소에서 수입 검역을 받으세요.
+  첨부안내: 검역증 사본을 사진·PDF로 보관하세요.
+  저장이름: 한국 수입 동물검역증
+
+════════════════════════════════════════════════════════════════════════
+[india]  india
+════════════════════════════════════════════════════════════════════════
+
+▸ intake
+  title: 펫무브 등록
+  short: 등록
+  done: 보호자와 반려동물 정보가 등록되었어요.
+  desc:
+      보호자와 반려동물 정보가 등록되었어요.
+      
+      등록하신 정보는 검역 준비의 여러 단계에 사용돼요. 준비 중 정보가 변경되는 경우, 담당 동물병원, 운송업체, 검역소와 상의하세요.
+      
+      내 정보에서 확인, 수정할 수 있어요.
+
+▸ microchip
+  title: 마이크로칩 삽입
+  short: 칩
+  done: 마이크로칩을 삽입했어요.
+  desc[cat]:
+      국제 표준 규격(15자리 번호)의 내장형 마이크로칩을 삽입하세요.
+  desc:
+      국제 표준 규격(15자리 번호)의 내장형 마이크로칩을 삽입하세요.
+      강아지는 동물등록도 함께 진행하세요.
+
+▸ rabies-vaccine-1
+  title: 광견병 백신 1차
+  short: 백신1
+  done: 1차 광견병 백신을 접종했어요.
+  desc:
+      1차 광견병 백신을 접종하세요.
+      
+      생후 91일이 지난 후에 접종해야 해요.
+  첨부안내: 백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.
+  저장이름: 광견병백신
+
+▸ rabies-vaccine-2
+  title: 광견병 백신 2차
+  short: 백신2
+  done: 2차 광견병 백신을 접종했어요.
+  desc:
+      2차 광견병 백신을 접종하세요.
+      
+      1차 접종 후 30일 이상 지나서 접종해야 해요.
+      1차 접종 면역 유효기간 이내에 접종하세요.
+      입국 때 면역 유효기간이 남아있어야 해요.
+  첨부안내: 백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.
+  저장이름: 광견병백신
+
+▸ rabies-titer
+  title: 광견병 항체 검사
+  short: 항체
+  done: 광견병 항체 검사를 받았어요.
+  desc:
+      일본 지정 검사기관에서 광견병 항체 검사를 받으세요.
+      
+      동물병원을 통해 의뢰할 수 있어요.
+      0.5 IU/mL 이상이면 합격이에요.
+      2차 접종 면역 유효기간 이내에 검사하세요.
+      유효기간은 2년이에요.
+  첨부안내: 검사결과지 사본을 사진·PDF로 보관하세요.
+  저장이름: 광견병 항체 검사 결과지
+
+▸ general-vaccine
+  title: 종합백신
+  short: 종합
+  done: 종합백신을 접종했어요.
+  desc[dog]:
+      종합백신(DHPP(C))을 접종하세요.
+      
+      출국 시점에 유효기간이 남아있어야 해요.
+  desc[cat]:
+      종합백신(FVRCP)을 접종하세요.
+      
+      출국 시점에 유효기간이 남아있어야 해요.
+  desc:
+      강아지는 DHPP(C), 고양이는 FVRCP를 접종하세요. 출국 시점에 유효기간이 남아있어야 해요.
+  첨부안내: 백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.
+  저장이름: 종합백신
+
+▸ kennel-cough-vaccine
+  title: 켄넬코프 백신
+  short: 켄넬
+  done: 켄넬코프 백신을 접종했어요.
+  desc:
+      켄넬코프(Bordetella) 백신을 접종하세요.
+  저장이름: 켄넬코프백신
+
+▸ civ-vaccine
+  title: 독감(CIV) 백신
+  short: 독감
+  done: 독감(CIV) 백신을 접종했어요.
+  desc:
+      개 인플루엔자(CIV) 백신을 접종하세요. 호주·뉴질랜드·인도 등 일부 국가에서 요구돼요.
+  저장이름: CIV백신
+
+▸ vet-visit
+  title: 출국 전 임상검사
+  short: 내원
+  card: 임상 수의사의 검진을 받으세요.
+  done: 출국 전 임상검사를 받았어요.
+  desc:
+      출국 전 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.
+      
+      접종 및 건강증명서(별지 제 25호 서식)를 발급받아요.
+      
+      이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.
+
+▸ document-checklist
+  title: 서류 체크리스트
+  short: 서류
+  card: 검역에 필요한 서류가 모두 준비됐는지 확인하세요.
+  done: 검역에 필요한 서류를 모두 준비했어요.
+  desc:
+      검역에 필요한 서류가 모두 준비됐는지 확인하세요.
+      
+      각 서류를 눌러 보유 여부를 확인하고, 발급받은 서류는 사본을 저장해두세요.
+      
+      필수 서류가 모두 준비되어야 동물검역소를 방문할 수 있어요.
+
+▸ certificate-issue
+  title: 한국 수출 검역
+  short: 검역소
+  card: 동물검역소를 방문해 검역을 받으세요.
+  done: 한국 수출 검역을 받았어요.
+  desc:
+      출국 전 10일 이내에 동물검역소를 방문해 검역을 받으세요.
+      반려동물을 데리고 방문하세요.
+      신분증과 필수 서류를 빠짐없이 챙기세요.
+  첨부안내: 검역증 사본을 사진·PDF로 보관하세요.
+  저장이름: 한국 수출 동물검역증
+  links:
+      동물검역소 위치  →  /guide/quarantine-stations
+      동물검역 예약  →  https://eminwon.qia.go.kr/eminwon/reservation/login/login.do?ref=petmove.co.kr
+
+▸ departure
+  title: 출국·도착
+  short: 출국
+  done: 출국했어요.
+  desc:
+      공항 검역대 → 항공 탑승 → 도착지 검역소 입국 심사 순서로 진행하세요. 도착 후 일부 국가는 7~10일 자가 격리 또는 검역소 격리가 적용돼요.
+  저장이름: 수입 검역 서류
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
@@ -3205,7 +3367,7 @@
       국제 공인 검사기관에서 광견병 항체 검사를 받으세요.
       
       동물병원을 통해 의뢰할 수 있어요.
-      광견병 접종일로부터 30일이 지난 후에 채혈해야 해요.
+      광견병 접종 후 30일 이상 지나서 검사하세요.
       0.5 IU/mL 이상이면 합격이에요.
   첨부안내: 검사결과지 사본을 사진·PDF로 보관하세요.
   저장이름: 광견병 항체 검사 결과지
@@ -3218,7 +3380,7 @@
   desc:
       튀르키예 입국 일정에 맞춰 항공권을 구매하세요.
       
-      항체 검사 채혈일로부터 3개월이 지나야 입국할 수 있어요.
+      광견병 항체 검사 채혈일로부터 3개월이 지난 후에 입국할 수 있어요.
       항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.
   첨부안내: 구매한 항공권(e-티켓)을 사진·PDF로 보관하세요.
   저장이름: 항공권
@@ -3297,7 +3459,7 @@
 ▸ tr-export-quarantine
   title: 튀르키예 수출 검역
   short: 수출
-  card: 튀르키예 관할 농림청에서 수출 검역을 받으세요.
+  card: 튀르키예 출국 전 수출 검역을 받으세요.
   done: 튀르키예 수출 검역을 받았어요.
   desc:
       튀르키예 출국 전 농림청(İl/İlçe Tarım ve Orman Müdürlüğü)에서 수출 검역을 받으세요.
@@ -3371,7 +3533,7 @@
   저장이름: 광견병 항체 검사 결과지
 
 ▸ rabies-titer-extra
-  title: 추가 검사
+  title: 추가 항체 검사
   short: 항체+
   done: 추가 광견병 항체 검사를 받았어요.
   desc:
@@ -3410,7 +3572,7 @@
       도착 120일 전까지 온라인으로 신청하세요.
       도착 20일 전까지 신청할 수 있지만, 이 경우 대만 도착 후 7일간 지정 시설에서 격리돼요.
   첨부안내: 수입 허가증(Import Permit)을 사진·PDF로 보관하세요.
-  저장이름: 수입 허가증(Import Permit)
+  저장이름: 대만 수입 허가증
   links:
       수입 허가 신청(APHIA)  →  https://pet-epermit.aphia.gov.tw/index-eng.html
 
@@ -3465,8 +3627,8 @@
   저장이름: 대만 수입 검역 서류
 
 ▸ tw-export-quarantine
-  title: 대만 수출 검역
-  short: 수출
+  title: 귀국 서류 준비
+  short: 귀국서류
   card: 귀국 서류를 준비하세요.
   done: 귀국 서류를 준비했어요.
   desc:
@@ -3475,7 +3637,7 @@
       반려동물을 데리고 방문하고, 미리 예약하세요.
       출국 1주일 이내에 받으세요.
       타오위안 공항 검역참은 제2터미널 1층 입국장 남측에 있고 연중무휴 24시간 운영해요.
-      다음 서류가 있다면 대만 수출 동물검역증을 새로 발급받지 않아도 돼요
+      다음 서류가 있다면 대만 수출 동물검역증을 새로 발급받지 않아도 돼요.
       - 한국 출국 시 받은 동물검역증
   첨부안내: 대만 수출 동물검역증 사본을 사진·PDF로 보관하세요.
   저장이름: 대만 수출 동물검역증
@@ -3526,8 +3688,8 @@
       동물검역소에서 검역관에게 마이크로칩 인증(Identity Declaration)을 받으세요.
       
       검역관이 마이크로칩을 확인하고 확인서를 호주 검역당국에 직접 보내요.
-      광견병 항체 검사 전에 받아야 해요.
-      마이크로칩 인증을 하지 않으면 계류기간이 최소 10일에서 30일로 크게 늘어나요.
+      광견병 항체 검사 채혈 전에 받아야 해요.
+      마이크로칩 인증을 하지 않으면 계류 기간이 최소 10일에서 30일로 크게 늘어나요.
       호주에서 수출 검역을 받고 한국으로 온 경우에는 받지 않아도 돼요.
 
 ▸ rabies-vaccine-1
@@ -3539,7 +3701,7 @@
       
       마이크로칩 삽입 후에 접종해야 해요.
       생후 12주(84일)가 지난 후에 접종해야 해요.
-      출국 때 면역 유효기간이 남아 있어야 해요.
+      출국 때 면역 유효기간이 남아있어야 해요.
   첨부안내: 백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.
   저장이름: 광견병백신
 
@@ -3548,7 +3710,7 @@
   short: 항체
   done: 광견병 항체 검사를 받았어요.
   desc:
-      호주에서 인정하는 검사기관에서 광견병 항체 검사를 받으세요.
+      호주 검역당국(DAFF)이 인정하는 검사기관에서 광견병 항체 검사를 받으세요.
       
       동물병원을 통해 의뢰할 수 있어요.
       0.5 IU/mL 이상이면 합격이에요.
@@ -3598,7 +3760,7 @@
   첨부안내: 계류시설 예약확인서를 사진·PDF로 보관하세요.
   저장이름: 호주 계류시설 예약확인서
   links:
-      계류시설 예약·비용 (DAFF)  →  https://www.agriculture.gov.au/biosecurity-trade/cats-dogs/quarantine-facilities-and-fees
+      계류시설 예약·비용(DAFF)  →  https://www.agriculture.gov.au/biosecurity-trade/cats-dogs/quarantine-facilities-and-fees
 
 ▸ general-vaccine
   title: 종합백신
@@ -3609,7 +3771,7 @@
       
       처음 접종하면 2~4주 간격으로 2회 접종해요.
       출국 14일 전까지 접종해야 해요.
-      출국 때 면역 유효기간이 남아 있어야 해요.
+      출국 때 면역 유효기간이 남아있어야 해요.
       
       렙토스피라 예방을 포함한 백신을 권장해요. 그렇지 않은 경우 렙토스피라 검사(MAT)를 받아야 해요.
   desc[cat]:
@@ -3617,13 +3779,13 @@
       
       범백혈구감소증·허피스바이러스·칼리시바이러스 예방을 포함해야 해요.
       호주 입국 요건은 아니지만, 계류시설 예약을 위해 필요해요.
-      계류가 끝날 때까지 면역 유효기간이 남아 있어야 해요.
+      계류가 끝날 때까지 면역 유효기간이 남아있어야 해요.
   desc:
       종합백신을 접종하세요.
       
       처음 접종하면 2~4주 간격으로 2회 접종해요.
       출국 14일 전까지 접종해야 해요.
-      출국 때 면역 유효기간이 남아 있어야 해요.
+      출국 때 면역 유효기간이 남아있어야 해요.
       
       렙토스피라 예방을 포함한 백신을 권장해요. 그렇지 않은 경우 렙토스피라 검사(MAT)를 받아야 해요.
   첨부안내: 백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.
@@ -3637,7 +3799,7 @@
       켄넬코프(Bordetella) 백신을 접종하세요.
       
       호주 입국 요건은 아니지만, 계류시설 예약을 위해 필요해요.
-      출국 때 면역 유효기간이 남아 있어야 해요.
+      출국 때 면역 유효기간이 남아있어야 해요.
   저장이름: 켄넬코프백신
 
 ▸ civ-vaccine
@@ -3649,7 +3811,7 @@
       
       처음 접종하면 2주 간격으로 2회 접종해요.
       출국 14일 전까지 접종해야 해요.
-      출국 때 면역 유효기간이 남아 있어야 해요.
+      출국 때 면역 유효기간이 남아있어야 해요.
   저장이름: CIV백신
 
 ▸ infectious-disease-test
@@ -3663,7 +3825,7 @@
       중성화하지 않았다면 브루셀라(Brucella canis) 검사도 받아요. RSAT·TAT(SAT)·IFAT만 인정돼요.
       렙토스피라(Leptospira canicola) 백신 접종을 하지 않았다면 MAT 검사를 받아요.
       해외 공인 검사기관에서 받아야 하며, 임상 수의사만 의뢰할 수 있어요.
-      일반 동물병원에서는 이 검사를 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.
+      일반 동물병원에서는 이 검사들을 대행할 수 없어요. 동물병원 방문 전에 확인이 필요해요.
   저장이름: 전염병 검사 결과지
 
 ▸ external-parasite
@@ -3674,21 +3836,21 @@
       외부 기생충 치료를 하세요.
       
       출국 30일 전에 시작해서 약효가 끊기지 않도록 반복해요.
-      호주에서 인정하는 성분을 함유한 제품을 사용해야해요.
+      호주에서 인정하는 성분을 함유한 제품을 사용해야 해요.
   desc[cat]:
       외부 기생충 치료를 하세요.
       
       출국 21일 전에 시작해서 약효가 끊기지 않도록 반복해요.
-      호주에서 인정하는 성분을 함유한 제품을 사용해야해요.
+      호주에서 인정하는 성분을 함유한 제품을 사용해야 해요.
   desc:
       외부 기생충 치료를 하세요.
       
       강아지는 출국 30일 전, 고양이는 21일 전에 시작해서 약효가 끊기지 않도록 반복해요.
-      호주에서 인정하는 성분을 함유한 제품을 사용해야해요.
+      호주에서 인정하는 성분을 함유한 제품을 사용해야 해요.
   첨부안내: 증명서, 수첩 등을 사진·PDF로 보관하세요.
   저장이름: 기생충 치료
   links:
-      인정 성분·제품 목록 (DAFF)  →  https://www.agriculture.gov.au/biosecurity-trade/cats-dogs/step-by-step-guides/parasite-treatment
+      인정 성분·제품 목록(DAFF)  →  https://www.agriculture.gov.au/biosecurity-trade/cats-dogs/step-by-step-guides/parasite-treatment
 
 ▸ internal-parasite
   title: 내부 기생충 치료
@@ -3699,17 +3861,17 @@
       
       출국 전 45일 이내에 14일 이상의 간격으로 2회 이상 치료해요.
       2차 치료는 출국 전 5일 이내에 해야 해요.
-      호주에서 인정하는 성분을 함유한 제품을 사용해야해요.
+      호주에서 인정하는 성분을 함유한 제품을 사용해야 해요.
   첨부안내: 증명서, 수첩 등을 사진·PDF로 보관하세요.
   저장이름: 기생충 치료
   links:
-      인정 성분·제품 목록 (DAFF)  →  https://www.agriculture.gov.au/biosecurity-trade/cats-dogs/step-by-step-guides/parasite-treatment
+      인정 성분·제품 목록(DAFF)  →  https://www.agriculture.gov.au/biosecurity-trade/cats-dogs/step-by-step-guides/parasite-treatment
 
 ▸ import-permit
   title: 수입 허가 신청
   short: 허가
   card: 호주 수입 허가를 신청하세요.
-  done: 호주 수입 허가를 받았어요.
+  done: 호주 수입 허가증을 받았어요.
   desc:
       호주 검역당국(DAFF)의 BICON에서 수입 허가를 신청하세요.
       
@@ -3719,7 +3881,7 @@
   첨부안내: 수입 허가증을 사진·PDF로 보관하세요.
   저장이름: 호주 수입 허가증
   links:
-      수입 허가 신청 (BICON)  →  https://bicon.agriculture.gov.au/
+      수입 허가 신청(BICON)  →  https://bicon.agriculture.gov.au/
 
 ▸ vet-visit
   title: 출국 전 임상검사
@@ -3771,28 +3933,6 @@
       서류와 검역에 문제가 없으면 계류 기간이 끝나는 날 보호자나 대리인이 데려갈 수 있어요.
   첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
   저장이름: 호주 수입 검역 서류
-
-▸ au-export-quarantine
-  title: 호주 수출 검역
-  short: 수출
-  card: 호주 수출 검역을 받으세요.
-  done: 호주 수출 검역을 받았어요.
-  desc:
-      호주 검역당국(DAFF)에서 수출 허가와 건강증명서를 받으세요.
-      
-      출발 10영업일 전까지 수출 신고서(NOI)를 출발하는 주의 지역사무소에 이메일로 제출해요.
-      
-      출발 72시간 이내에 등록 수의사에게 최종 검진을 받고 신고서에 함께 서명해요.
-      
-      최종 검진을 마친 뒤 DAFF 수의관과의 사전 출국 예약에서 서류를 확인받아요.
-      
-      수출 허가와 건강증명서가 나오면 72시간 이내에 출국해야 해요.
-      
-      운송업체가 대신 제출하고 예약에 참석할 수 있어요.
-  첨부안내: 수출 허가와 건강증명서 사본을 사진·PDF로 보관하세요.
-  저장이름: 호주 수출 허가·건강증명서
-  links:
-      수출 절차·신고서(NOI) 안내 (DAFF)  →  https://www.agriculture.gov.au/biosecurity-trade/export/controlled-goods/live-animals/companion-and-other-live-animals
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
@@ -3953,7 +4093,7 @@
       뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.
   저장이름: 심장사상충 예방
   links:
-      승인 제품 목록 (MPI-STD-SAA, PDF)  →  https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA
+      승인 제품 목록(MPI-STD-SAA, PDF)  →  https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA
 
 ▸ lungworm-treatment
   title: 폐충 치료
@@ -3966,7 +4106,7 @@
       뉴질랜드 검역당국(MPI)이 승인한 제품을 사용해야 해요.
   저장이름: 폐충 치료
   links:
-      승인 제품 목록 (MPI-STD-SAA, PDF)  →  https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA
+      승인 제품 목록(MPI-STD-SAA, PDF)  →  https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA
 
 ▸ civ-vaccine
   title: 독감(CIV) 백신
@@ -3977,7 +4117,7 @@
       
       CIV H3N8·H3N2에 효과가 있는 백신이어야 해요.
       출국 14일 전까지, 12개월 이내에 접종해야 해요.
-      계류가 끝날 때까지 면역 유효기간이 남아 있어야 해요.
+      계류가 끝날 때까지 면역 유효기간이 남아있어야 해요.
   저장이름: CIV백신
 
 ▸ infectious-disease-test
@@ -4024,7 +4164,7 @@
   첨부안내: 증명서, 수첩 등을 사진·PDF로 보관하세요.
   저장이름: 기생충 치료
   links:
-      승인 제품 목록 (MPI-STD-SAA, PDF)  →  https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA
+      승인 제품 목록(MPI-STD-SAA, PDF)  →  https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA
 
 ▸ internal-parasite
   title: 내부 기생충 치료
@@ -4039,13 +4179,13 @@
   첨부안내: 증명서, 수첩 등을 사진·PDF로 보관하세요.
   저장이름: 기생충 치료
   links:
-      승인 제품 목록 (MPI-STD-SAA, PDF)  →  https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA
+      승인 제품 목록(MPI-STD-SAA, PDF)  →  https://www.mpi.govt.nz/dmsdocument/2040-Specified-Approvals-for-Animal-Import-Health-Standards-MPI-STD-SAA
 
 ▸ import-permit
   title: 수입 허가 신청
   short: 허가
   card: 뉴질랜드 수입 허가를 신청하세요.
-  done: 뉴질랜드 수입 허가를 받았어요.
+  done: 뉴질랜드 수입 허가증을 받았어요.
   desc:
       뉴질랜드 검역당국(MPI) 온라인 시스템에서 수입 허가를 신청하세요.
       
@@ -4055,7 +4195,7 @@
   첨부안내: 수입 허가증을 사진·PDF로 보관하세요.
   저장이름: 뉴질랜드 수입 허가증
   links:
-      수입 허가 신청 (MPI)  →  https://animalplantimportpermit.mpi.govt.nz/
+      수입 허가 신청(MPI)  →  https://animalplantimportpermit.mpi.govt.nz/
 
 ▸ vet-visit
   title: 출국 전 임상검사
@@ -4108,24 +4248,6 @@
       서류와 검역에 문제가 없으면 계류 기간이 끝나는 날 보호자나 대리인이 데려갈 수 있어요.
   첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
   저장이름: 뉴질랜드 수입 검역 서류
-
-▸ nz-export-quarantine
-  title: 뉴질랜드 수출 증명
-  short: 수출
-  card: 뉴질랜드 수출 증명을 받으세요.
-  done: 뉴질랜드 수출 증명을 받았어요.
-  desc:
-      뉴질랜드에서 출국하기 전에 수출 증명 서류를 받으세요.
-      
-      살아 있는 동물을 뉴질랜드 밖으로 보내려면 동물복지 수출증명서(AWEC)가 반드시 필요해요.
-      
-      한국 입국에 필요한 수출 건강증명서도 함께 받아요. MPI 보안용지에 인쇄된 서식으로 발급돼요.
-      
-      어느 동물병원에서 발급받을 수 있는지, 언제까지 신청해야 하는지는 MPI나 운송업체에 미리 확인하세요.
-  첨부안내: 수출증명서·건강증명서 사본을 사진·PDF로 보관하세요.
-  저장이름: 뉴질랜드 수출증명서·건강증명서
-  links:
-      반려동물 수출 절차 안내 (MPI)  →  https://www.mpi.govt.nz/take-or-send-from-nz/pets-leaving-nz/
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
@@ -4184,16 +4306,16 @@
   desc[dog]:
       남아프리카공화국 입국 일정에 맞춰 운송을 예약하세요.
       
-      기내 반입이나 위탁수하물로는 갈 수 없어요. 항공화물(Manifest Cargo)로 예약하고 화물운송장(AWB)을 받아요.
-      강아지는 요하네스버그(JNB)나 케이프타운(CPT) 공항으로만 도착할 수 있어요. 두 곳에만 계류시설이 있어요.
+      기내 반입이나 위탁수하물로는 갈 수 없어요. 항공화물(Manifest Cargo)로 보내야 하므로 동물 운송업체와 미리 협의하세요. 예약 후 화물운송장(AWB)을 받아요.
+      요하네스버그(JNB)나 케이프타운(CPT) 공항으로만 도착할 수 있어요. 두 곳에만 계류시설이 있어요.
   desc[cat]:
       남아프리카공화국 입국 일정에 맞춰 운송을 예약하세요.
       
-      기내 반입이나 위탁수하물로는 갈 수 없어요. 항공화물(Manifest Cargo)로 예약하고 화물운송장(AWB)을 받아요.
+      기내 반입이나 위탁수하물로는 갈 수 없어요. 항공화물(Manifest Cargo)로 보내야 하므로 동물 운송업체와 미리 협의하세요. 예약 후 화물운송장(AWB)을 받아요.
   desc:
       남아프리카공화국 입국 일정에 맞춰 운송을 예약하세요.
       
-      기내 반입이나 위탁수하물로는 갈 수 없어요. 항공화물(Manifest Cargo)로 예약하고 화물운송장(AWB)을 받아요.
+      기내 반입이나 위탁수하물로는 갈 수 없어요. 항공화물(Manifest Cargo)로 보내야 하므로 동물 운송업체와 미리 협의하세요. 예약 후 화물운송장(AWB)을 받아요.
       강아지는 요하네스버그(JNB)나 케이프타운(CPT) 공항으로만 도착할 수 있어요. 두 곳에만 계류시설이 있어요.
   첨부안내: 운송 예약 확인서·항공권(e-티켓)을 사진·PDF로 보관하세요.
   저장이름: 항공권
@@ -4202,13 +4324,13 @@
   title: AIA 수입 허가 신청
   short: AIA
   card: AIA 수입 허가를 신청하세요.
-  done: AIA 수입 허가를 받았어요.
+  done: AIA 수입 허가증을 받았어요.
   desc:
       남아프리카공화국 농업부 Animal Improvement Registrar에 AIA 수입 허가를 신청하세요.
       
       수의검역 수입 허가와는 별개의 서류예요.
       수입 30일 전까지 신청해야 해요.
-      허가는 발급일부터 6개월간 유효해요.
+      허가는 발급일로부터 6개월간 유효해요.
   첨부안내: AIA 수입 허가서를 사진·PDF로 보관하세요.
   저장이름: 남아프리카공화국 AIA 수입 허가증
 
@@ -4268,7 +4390,7 @@
   title: 수입 허가 신청
   short: 허가
   card: 남아프리카공화국 수입 허가를 신청하세요.
-  done: 남아프리카공화국 수입 허가를 받았어요.
+  done: 남아프리카공화국 수입 허가증을 받았어요.
   desc:
       남아프리카공화국 농업부 동물보건국(Director: Animal Health)에 수의검역 수입 허가를 신청하세요.
       
@@ -4327,7 +4449,7 @@
       확인이 끝나면 국가 계류시설로 옮겨져요.
       계류 기간은 약 14일이에요.
       계류 중에 5가지 전염병 검사를 다시 할 수 있어요.
-      검사와 건강상태에 문제가 없으면 보호자나 대리인이 데려갈 수 있어요.
+      검사와 건강 상태에 문제가 없으면 보호자나 대리인이 데려갈 수 있어요.
   desc[cat]:
       남아프리카공화국 도착 후 화물터미널에서 수입 검역과 통관을 받아요.
       
@@ -4339,7 +4461,7 @@
       강아지는 확인이 끝나면 국가 계류시설로 옮겨져요.
       계류 기간은 약 14일이에요.
       계류 중에 5가지 전염병 검사를 다시 할 수 있어요.
-      검사와 건강상태에 문제가 없으면 보호자나 대리인이 데려갈 수 있어요.
+      검사와 건강 상태에 문제가 없으면 보호자나 대리인이 데려갈 수 있어요.
   첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
   저장이름: 남아프리카공화국 수입 검역 서류
 
@@ -4385,9 +4507,9 @@
   desc:
       광견병 백신을 접종하세요.
       
-      마이크로칩 삽입 후 접종해요.
+      마이크로칩 삽입 후에 접종해야 해요.
       생후 12주(84일)가 지난 후에 접종해야 해요.
-      입국 3주 전까지 접종해야 해요.
+      입국 21일 전까지 접종해야 해요.
       수입 허가 신청 2주 전까지 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
       
@@ -4417,7 +4539,7 @@
   desc:
       태국 입국 일정에 맞춰 항공권을 구매하세요.
       
-      접종일로부터 3주가 지난 후에 입국할 수 있어요.
+      접종일로부터 21일이 지난 후에 입국할 수 있어요.
       항공권 구매 후 수입 허가 신청을 해요. 2주 이상 충분한 시간을 확보하세요.
       항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.
   첨부안내: 구매한 항공권(e-티켓)을 사진·PDF로 보관하세요.
@@ -4432,8 +4554,8 @@
       
       디스템퍼·전염성간염·파보바이러스·렙토스피라 예방을 포함해야 해요.
       한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.
-      마이크로칩 삽입 후 접종해요.
-      입국 3주 전까지 접종해야 해요.
+      마이크로칩 삽입 후에 접종해야 해요.
+      입국 21일 전까지 접종해야 해요.
       수입 허가 신청 2주 전까지 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
       
@@ -4442,8 +4564,8 @@
       종합백신(FVRCP)을 접종하세요.
       
       범백혈구감소증 예방을 포함해야 해요.
-      마이크로칩 삽입 후 접종해요.
-      입국 3주 전까지 접종해야 해요.
+      마이크로칩 삽입 후에 접종해야 해요.
+      입국 21일 전까지 접종해야 해요.
       수입 허가 신청 2주 전까지 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
       
@@ -4451,8 +4573,8 @@
   desc:
       강아지는 DHPPL(디스템퍼·전염성간염·파보·파라인플루엔자·렙토스피라), 고양이는 범백혈구감소증(FPV)이 포함된 종합백신을 접종하세요.
       
-      마이크로칩 삽입 후 접종해요.
-      입국 3주 전까지 접종해야 해요.
+      마이크로칩 삽입 후에 접종해야 해요.
+      입국 21일 전까지 접종해야 해요.
       수입 허가 신청 2주 전까지 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
       
@@ -4529,7 +4651,7 @@
 ▸ th-export-quarantine
   title: 태국 수출 검역
   short: 수출
-  card: 태국 동물검역소에서 수출 검역을 받으세요.
+  card: 태국 출국 전 수출 검역을 받으세요.
   done: 태국 수출 검역을 받았어요.
   desc:
       태국 출국 전 공항 동물검역소에서 수출 검역을 받으세요.
@@ -4581,7 +4703,7 @@
   desc:
       광견병 백신을 접종하세요.
       
-      마이크로칩 삽입 후 접종해요.
+      마이크로칩 삽입 후에 접종해야 해요.
       생후 12주(84일)가 지난 후에 접종해야 해요.
       출국 30일 전까지 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
@@ -4597,7 +4719,7 @@
       
       동물병원을 통해 의뢰할 수 있어요.
       말레이시아 입국에는 필요 없지만, 한국으로 돌아올 때 필요해요.
-      말레이시아에는 검사 기관이 없으니 출국 전에 미리 받으세요.
+      말레이시아에는 검사기관이 없으니 출국 전에 미리 받으세요.
       0.5 IU/mL 이상이면 합격이에요.
       유효기간은 2년이에요.
   첨부안내: 검사결과지 사본을 사진·PDF로 보관하세요.
@@ -4626,18 +4748,18 @@
       
       디스템퍼·전염성간염·파보바이러스·파라인플루엔자·렙토스피라 예방을 포함해야 해요.
       한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.
-      마이크로칩 삽입 후 접종해요.
+      마이크로칩 삽입 후에 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
   desc[cat]:
       종합백신(FVRCP)을 접종하세요.
       
       범백혈구감소증 예방을 포함해야 해요.
-      마이크로칩 삽입 후 접종해요.
+      마이크로칩 삽입 후에 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
   desc:
       강아지는 DHPPL, 고양이는 범백혈구감소증(FPV)이 포함된 종합백신을 접종하세요.
       
-      마이크로칩 삽입 후 접종해요.
+      마이크로칩 삽입 후에 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
   첨부안내: 백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.
   저장이름: 종합백신
@@ -4656,10 +4778,10 @@
       
       계류장 예약을 함께 진행해요.
   첨부안내: 수입 허가증을 사진·PDF로 보관하세요.
-  저장이름: 수입 허가증
+  저장이름: 말레이시아 수입 허가증
   links:
-      수입 허가 신청 절차 (MAQIS)  →  https://www.maqis.gov.my/index.php/permohonan-permit/
-      반려동물 수입 안내·문의처 (DVS)  →  https://www.dvs.gov.my/index.php/pages/view/1941
+      수입 허가 신청 절차(MAQIS)  →  https://www.maqis.gov.my/index.php/permohonan-permit/
+      반려동물 수입 안내·문의처(DVS)  →  https://www.dvs.gov.my/index.php/pages/view/1941
 
 ▸ vet-visit
   title: 출국 전 임상검사
@@ -4714,7 +4836,7 @@
 ▸ my-export-quarantine
   title: 말레이시아 수출 검역
   short: 수출
-  card: 말레이시아 수출 검역을 받으세요.
+  card: 말레이시아 출국 전 수출 검역을 받으세요.
   done: 말레이시아 수출 검역을 받았어요.
   desc:
       말레이시아 출국 전 수출 검역을 받고 수출 허가와 수의 건강증명서(VHC)를 받으세요.
@@ -4727,8 +4849,8 @@
   첨부안내: 수출 허가와 건강증명서(VHC) 사본을 사진·PDF로 보관하세요.
   저장이름: 수출 허가·건강증명서(VHC)
   links:
-      반려동물 수출 안내·문의처 (DVS)  →  https://www.dvs.gov.my/index.php/pages/view/1941
-      수출 허가 신청 절차 (MAQIS)  →  https://www.maqis.gov.my/index.php/permohonan-permit/
+      반려동물 수출 안내·문의처(DVS)  →  https://www.dvs.gov.my/index.php/pages/view/1941
+      수출 허가 신청 절차(MAQIS)  →  https://www.maqis.gov.my/index.php/permohonan-permit/
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
@@ -4772,7 +4894,7 @@
   desc:
       광견병 백신을 접종하세요.
       
-      마이크로칩 삽입 후 접종해요.
+      마이크로칩 삽입 후에 접종해야 해요.
       생후 12주(84일)가 지난 후에 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
   첨부안내: 백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.
@@ -4801,7 +4923,8 @@
       계류장(AQC) 예약 날짜에 맞춰 항공권을 구매하세요.
       
       광견병 항체 검사 채혈일로부터 90일이 지난 후에 입국할 수 있어요.
-      창이 공항 검역소(CAPQ) 운영시간에 맞춰 도착해야 해요.
+      창이 공항 검역소(CAPQ) 운영시간에 맞는 도착 시간인지 확인하세요.
+      항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.
   첨부안내: 구매한 항공권(e-티켓)을 사진·PDF로 보관하세요.
   저장이름: 항공권
   links:
@@ -4815,21 +4938,21 @@
       종합백신을 접종하세요.
       
       디스템퍼·전염성간염·파보바이러스 예방을 포함해야 해요.
-      마이크로칩 삽입 후 접종해요.
+      마이크로칩 삽입 후에 접종해야 해요.
       출국 14일 전까지 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
   desc[cat]:
       종합백신을 접종하세요.
       
       범백혈구감소증·허피스바이러스·칼리시바이러스 예방을 포함해야 해요.
-      마이크로칩 삽입 후 접종해요.
+      마이크로칩 삽입 후에 접종해야 해요.
       출국 14일 전까지 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
   desc:
       종합백신을 접종하세요.
       
       강아지는 디스템퍼·전염성간염·파보바이러스, 고양이는 범백혈구감소증·허피스바이러스·칼리시바이러스 예방을 포함해야 해요.
-      마이크로칩 삽입 후 접종해요.
+      마이크로칩 삽입 후에 접종해야 해요.
       출국 14일 전까지 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
   첨부안내: 백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.
@@ -4859,7 +4982,16 @@
   title: 수입 허가 신청
   short: 허가
   card: 싱가포르 수입 허가를 신청하세요.
-  done: 싱가포르 수입 허가를 받았어요.
+  done: 싱가포르 수입 허가증을 받았어요.
+  desc[dog]:
+      도착일 기준 90일 이내에 GoBusiness 포털에서 개인용 수입 허가(Licence to Import)를 신청하세요.
+      
+      개 라이선스(Dog Licence)를 먼저 받아야 신청할 수 있어요.
+      외국인은 GoBusiness 이용이 어려워 현지 에이전트를 이용하는 경우가 많아요.
+  desc[cat]:
+      도착일 기준 90일 이내에 GoBusiness 포털에서 개인용 수입 허가(Licence to Import)를 신청하세요.
+      
+      외국인은 GoBusiness 이용이 어려워 현지 에이전트를 이용하는 경우가 많아요.
   desc:
       도착일 기준 90일 이내에 GoBusiness 포털에서 개인용 수입 허가(Licence to Import)를 신청하세요.
       
@@ -4868,7 +5000,7 @@
   첨부안내: 수입 허가증을 사진·PDF로 보관하세요.
   저장이름: 싱가포르 수입 허가증
   links:
-      수입 허가 신청 (GoBusiness)  →  https://www.gobusiness.gov.sg/
+      수입 허가 신청(GoBusiness)  →  https://www.gobusiness.gov.sg/
 
 ▸ vet-visit
   title: 출국 전 임상검사
@@ -4931,9 +5063,9 @@
       자리가 없는 경우가 많아서 일찍 해두는 게 좋아요.
       싱가포르 검역관리시스템(QMS)에서 예약해요.
       팬룸 또는 에어컨룸을 선택할 수 있어요.
-      격리 기간은 30일이에요.
+      격리 기간은 최소 30일이에요.
   links:
-      계류장 예약 (QMS)  →  https://avs.nparks.gov.sg/pets/importing-exporting-a-pet/import/quarantine-management-system/
+      계류장 예약(QMS)  →  https://avs.nparks.gov.sg/pets/importing-exporting-a-pet/import/quarantine-management-system/
 
 ▸ sg-dog-licence
   title: 강아지 라이선스
@@ -4948,7 +5080,7 @@
   첨부안내: 라이선스를 사진·PDF로 보관하세요.
   저장이름: 강아지 라이선스
   links:
-      강아지 라이선스 신청 (PALS)  →  https://avs.nparks.gov.sg/pets/licensing-a-pet/applying-for-dog-and-cat-licences/applying/
+      강아지 라이선스 신청(PALS)  →  https://avs.nparks.gov.sg/pets/licensing-a-pet/applying-for-dog-and-cat-licences/applying/
 
 ▸ sg-gst-permit
   title: 관세·GST 납부 허가
@@ -4964,7 +5096,7 @@
   첨부안내: GST 허가서를 사진·PDF로 보관하세요.
   저장이름: GST 납부 허가
   links:
-      반려동물 수입 통관·GST 안내 (Singapore Customs)  →  https://www.customs.gov.sg/personal-shipment/moving-to-singapore/importing-personal-pets-as-part-of-a-change-of-residence/
+      반려동물 수입 통관·GST 안내(Singapore Customs)  →  https://www.customs.gov.sg/personal-shipment/moving-to-singapore/importing-personal-pets-as-part-of-a-change-of-residence/
       AVS 공인 에이전트 목록  →  https://avs.nparks.gov.sg/outreach/resources/avs-recognised-pet-agents/
 
 ▸ sg-border-inspection
@@ -4979,28 +5111,7 @@
   첨부안내: 예약 확인서를 사진·PDF로 보관하세요.
   저장이름: 국경 검사 예약 확인서
   links:
-      도착 검사 예약 (AVS eServices)  →  https://avs-eservices.nparks.gov.sg/eservices
-
-▸ sg-export-quarantine
-  title: 싱가포르 수출 검역
-  short: 수출
-  card: 싱가포르 수출 검역을 받으세요.
-  done: 싱가포르 수출 검역을 받았어요.
-  desc:
-      싱가포르 출국 전 수출 라이선스와 AVS 정부 수의사가 인증한 수의 건강증명서를 준비하세요.
-      
-      동물병원에서 검진을 받고 건강증명서를 발급받은 후 GoBusiness 포털로 수출 라이선스와 건강증명서 인증을 신청해요.
-      
-      건강증명서 원본은 AVS 서류 제출함(싱가포르 보타닉 가든 Raffles Building 1층, 24시간 이용)에 실물로 제출해요.
-      
-      2영업일 이내에 수출 라이선스와 AVS 정부 수의사가 인증한 수의 건강증명서가 발급돼요.
-      
-      수출 라이선스는 출국 전 90일 이내에 신청하고, 발급일로부터 90일간 유효해요.
-  첨부안내: 수출 라이선스와 AVS 인증 건강증명서 사본을 사진·PDF로 보관하세요.
-  저장이름: 싱가포르 수출 라이선스·건강증명서(AVS 인증)
-  links:
-      수출 라이선스·건강증명서 인증 신청 (GoBusiness)  →  https://www.gobusiness.gov.sg/
-      수출 절차·서류 제출처 안내 (AVS)  →  https://avs.nparks.gov.sg/pets/importing-exporting-a-pet/export/dogs-and-cats/
+      도착 검사 예약(AVS eServices)  →  https://avs-eservices.nparks.gov.sg/eservices
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
@@ -5044,10 +5155,10 @@
   desc:
       광견병 백신을 접종하세요.
       
-      마이크로칩 삽입 후 접종해요.
+      마이크로칩 삽입 후에 접종해야 해요.
       생후 3개월이 지난 후에 접종해야 해요.
-      불활화 백신으로 접종해야 해요.
-      광견병 예방접종 유효기간은 1년이에요.
+      불활화(사독) 백신만 인정돼요.
+      광견병 면역 유효기간은 1년이에요.
   첨부안내: 백신 라벨, 증명서, 수첩 등을 사진·PDF로 보관하세요.
   저장이름: 광견병백신
 
@@ -5136,14 +5247,14 @@
   desc:
       인도네시아 도착 후 공항 검역소에서 검역을 받으세요.
       서류를 확인한 뒤 계류시설로 이동해요.
-      격리 기간은 보통 일주일이고 최대 2주까지 걸릴 수 있어요.
+      격리 기간은 보통 7일이고 최대 2주까지 걸릴 수 있어요.
   첨부안내: 검역 서류 사본을 사진·PDF로 보관하세요.
   저장이름: 인도네시아 수입 검역 서류
 
 ▸ id-export-quarantine
   title: 인도네시아 수출 검역
   short: 수출
-  card: 인도네시아 검역청에서 수출 검역을 받으세요.
+  card: 인도네시아 출국 전 수출 검역을 받으세요.
   done: 인도네시아 수출 검역을 받았어요.
   desc:
       인도네시아 출국 전 검역청(Barantin)에서 수출 검역을 받으세요.
@@ -5154,7 +5265,7 @@
   첨부안내: 동물 건강증명서(Animal Health Certificate) 사본을 사진·PDF로 보관하세요.
   저장이름: 동물 건강증명서(Animal Health Certificate)
   links:
-      검역 신청 (PTK 온라인)  →  https://ptk.karantinaindonesia.go.id/
+      검역 신청(PTK 온라인)  →  https://ptk.karantinaindonesia.go.id/
 
 ▸ kr-import-quarantine
   title: 한국 수입 검역
@@ -5227,8 +5338,8 @@
   desc:
       필리핀 입국 일정에 맞춰 항공권을 구매하세요.
       
-      4개월령 이상만 입국할 수 있어요.
-      접종일로부터 3주가 지난 후에 입국할 수 있어요.
+      필리핀 도착일에 생후 4개월 이상이어야 해요.
+      접종일로부터 21일이 지난 후에 입국할 수 있어요.
       수입 허가증(SPSIC) 신청이 필요해요. 충분한 시간을 확보하세요.
       항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.
   첨부안내: 구매한 항공권(e-티켓)을 사진·PDF로 보관하세요.
@@ -5243,14 +5354,14 @@
       
       디스템퍼·전염성간염·파보바이러스·파라인플루엔자·렙토스피라 예방을 포함해야 해요.
       한국 백신은 렙토스피라(L) 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.
-      마이크로칩 삽입 후 접종해요.
+      마이크로칩 삽입 후에 접종해야 해요.
       수입 허가증(SPSIC) 신청 2주 전까지 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
   desc[cat]:
       종합백신(FVRCP)을 접종하세요.
       
       범백혈구감소증·허피스바이러스·칼리시바이러스 예방을 포함해야 해요.
-      마이크로칩 삽입 후 접종해요.
+      마이크로칩 삽입 후에 접종해야 해요.
       수입 허가증(SPSIC) 신청 2주 전까지 접종해야 해요.
       입국 때 면역 유효기간이 남아있어야 해요.
   desc:
@@ -5286,7 +5397,7 @@
       승인까지 수 일이 걸려요. 최소 1~2주 전까지 신청하세요.
       수입 허가증은 발급일로부터 60일간 유효해요.
   첨부안내: 수입 허가증을 사진·PDF로 보관하세요.
-  저장이름: 수입 허가증(SPSIC)
+  저장이름: 필리핀 수입 허가증(SPSIC)
   links:
       수입 허가 신청(Intercommerce)  →  https://www.intercommerce.com.ph/login.asp?home=HOME
 
@@ -5353,7 +5464,7 @@
 ▸ ph-export-quarantine
   title: 필리핀 수출 검역
   short: 수출
-  card: 필리핀 BAI 동물검역소에서 수출 검역을 받으세요.
+  card: 필리핀 출국 전 수출 검역을 받으세요.
   done: 필리핀 수출 검역을 받았어요.
   desc:
       필리핀 출국 전 BAI 동물검역소에서 수출 검역을 받으세요.
@@ -5418,7 +5529,7 @@
   desc:
       홍콩 입국 일정에 맞춰 운송을 예약하세요.
       
-      5개월령 이상만 입국할 수 있어요.
+      홍콩 도착일에 생후 5개월 이상이어야 해요.
       광견병 접종일로부터 30일, 종합백신 접종일로부터 14일이 지난 후에 입국할 수 있어요.
       홍콩 입국 시 반려동물은 보호자와 같은 항공기로 갈 수 없어요. 화물로 보내야 하므로 동물 운송업체와 미리 협의하세요.
   첨부안내: 운송 예약 확인서·항공권(e-티켓)을 사진·PDF로 보관하세요.
@@ -5430,7 +5541,7 @@
   card: 홍콩에 사전 통지를 하세요.
   done: 홍콩에 사전 통지를 했어요.
   desc:
-      홍콩 도착 24시간 전까지 사전 통지를 하세요.
+      홍콩 입국 24시간 전까지 사전 통지를 하세요.
       
       홍콩 공항 검역사무소(AFCD)에 예상 도착일·도착 시간과 서류 사본을 보내요.
       검역사무소는 평일에만 열어요. 도착 24시간 전이 주말·공휴일이면 그 전 평일에 통지하세요.
@@ -5472,9 +5583,9 @@
       
       한국에서의 신청은 사실상 어려워요.
       현지 에이전트에 직접 의뢰하거나 연계된 동물 운송업체를 통해 진행하세요.
-      수입 허가증 유효기간은 6개월이예요
+      수입 허가증은 발급일로부터 6개월간 유효해요.
   첨부안내: 수입 허가증을 사진·PDF로 보관하세요.
-  저장이름: 수입 허가증(Special Permit)
+  저장이름: 홍콩 수입 허가증(Special Permit)
   links:
       수입 허가 안내(AFCD)  →  https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/qua_ie_ipab_idc_Group_II.html
 
@@ -5525,7 +5636,7 @@
       홍콩 도착 후 공항 화물터미널에서 AFCD 검역관에게 검역을 받아요.
       
       서류와 건강 상태를 확인해요. 이상이 없으면 격리 없이 인도돼요.
-      강아지는 검역을 마친 뒤 등록증(Dog Licence)을 받아야 해요. 수수료는 80홍콩달러예요.
+      검역을 마친 뒤 등록증(Dog Licence)을 받아야 해요. 수수료는 80홍콩달러예요.
   desc[cat]:
       홍콩 도착 후 공항 화물터미널에서 AFCD 검역관에게 검역을 받아요.
       
@@ -5549,7 +5660,7 @@
       동물병원에서 건강증명서를 받은 뒤, 홍콩 검역당국(AFCD)에 방문 신청해요.
       발급까지 2영업일이 걸리고, 발급일로부터 10일간 유효해요.
       
-      다음 서류가 있다면 홍콩 건강증명서를 새로 받지 않아도 돼요
+      다음 서류가 있다면 홍콩 건강증명서를 새로 받지 않아도 돼요.
       - 한국 출국 시 받은 동물검역증
   첨부안내: 건강증명서 사본을 사진·PDF로 보관하세요.
   저장이름: 홍콩 정부 발급 건강증명서
@@ -5687,7 +5798,7 @@
   desc:
       유럽연합(EU) 정부가 인증한 건강증명서 또는 대체 서류를 준비하세요.
       현지 동물병원에서 건강증명서를 받은 뒤, 관할 당국(공무 수의사)의 최종 인증을 받으세요.
-      다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요
+      다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요.
       - EU 반려동물 여권
       - 한국 출국 시 받은 동물검역증
   첨부안내: 건강증명서·EU 반려동물 여권 등 서류 사본을 사진·PDF로 보관하세요.
@@ -5755,8 +5866,8 @@
   저장이름: 광견병 항체 검사 결과지
 
 ▸ flight-purchase
-  title: 항공권 구매
-  short: 항공권
+  title: 운송 예약
+  short: 운송
   card: 영국에 입국할 수 있어요.
   done: 항공권을 구매했어요.
   desc:
@@ -6009,7 +6120,7 @@
   desc:
       아일랜드 정부가 인증한 건강증명서 또는 대체 서류를 준비하세요.
       현지 동물병원에서 건강증명서를 받은 뒤, 관할 당국(공무 수의사)의 최종 인증을 받으세요.
-      다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요
+      다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요.
       - EU 반려동물 여권
       - 한국 출국 시 받은 동물검역증
   첨부안내: 건강증명서·EU 반려동물 여권 등 서류 사본을 사진·PDF로 보관하세요.
@@ -6175,7 +6286,7 @@
   desc:
       몰타 정부가 인증한 건강증명서 또는 대체 서류를 준비하세요.
       현지 동물병원에서 건강증명서를 받은 뒤, 관할 당국(공무 수의사)의 최종 인증을 받으세요.
-      다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요
+      다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요.
       - EU 반려동물 여권
       - 한국 출국 시 받은 동물검역증
   첨부안내: 건강증명서·EU 반려동물 여권 등 서류 사본을 사진·PDF로 보관하세요.
@@ -6340,7 +6451,7 @@
   desc:
       노르웨이 정부가 인증한 건강증명서 또는 대체 서류를 준비하세요.
       현지 동물병원에서 건강증명서를 받은 뒤, 관할 당국(공무 수의사)의 최종 인증을 받으세요.
-      다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요
+      다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요.
       - 한국 출국 시 받은 동물검역증
   첨부안내: 건강증명서·EU 반려동물 여권 등 서류 사본을 사진·PDF로 보관하세요.
   저장이름: 노르웨이 정부 인증 건강증명서
@@ -6490,7 +6601,7 @@
   desc:
       핀란드 정부가 인증한 건강증명서 또는 대체 서류를 준비하세요.
       현지 동물병원에서 건강증명서를 받은 뒤, 관할 당국(공무 수의사)의 최종 인증을 받으세요.
-      다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요
+      다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요.
       - EU 반려동물 여권
       - 한국 출국 시 받은 동물검역증
   첨부안내: 건강증명서·EU 반려동물 여권 등 서류 사본을 사진·PDF로 보관하세요.
@@ -6641,7 +6752,7 @@
   desc:
       키프로스 정부가 인증한 건강증명서 또는 대체 서류를 준비하세요.
       현지 동물병원에서 건강증명서를 받은 뒤, 관할 당국(공무 수의사)의 최종 인증을 받으세요.
-      다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요
+      다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요.
       - EU 반려동물 여권
       - 한국 출국 시 받은 동물검역증
   첨부안내: 건강증명서·EU 반려동물 여권 등 서류 사본을 사진·PDF로 보관하세요.
@@ -6725,17 +6836,17 @@
 ▸ import-permit
   title: 수입 허가 신청
   short: 허가
-  card: 스위스 수입허가를 신청하세요.
+  card: 스위스 수입 허가를 신청하세요.
   done: 스위스 수입 허가증을 받았어요.
   desc:
-      스위스 수입허가를 신청하세요.
+      스위스 수입 허가를 신청하세요.
       
       스위스 연방 식품안전수의청(FSVO)에 입국 최소 3주 전까지 신청해야 해요.
       FSVO 웹사이트에서 신청서를 내려받아 작성한 뒤 이메일로 제출해요.
       발급받은 허가서는 스위스 입국 검사 때 제시해요.
       반려동물의 스위스 입국은 바젤·제네바·취리히 공항으로만 가능해요.
   첨부안내: 수입 허가증을 사진·PDF로 보관하세요.
-  저장이름: 수입 허가증(FSVO)
+  저장이름: 스위스 수입 허가증(FSVO)
   links:
       수입 허가 안내·신청(FSVO)  →  https://www.blv.admin.ch/blv/en/home/tiere/reisen-mit-heimtieren/hunde-katzen-und-frettchen.html
 
@@ -6796,7 +6907,7 @@
   desc:
       스위스 정부가 인증한 건강증명서 또는 대체 서류를 준비하세요.
       현지 임상 수의사에게 건강증명서를 받은 뒤, 관할 칸톤(주) 수의청의 공무 수의사에게 최종 인증을 받으세요.
-      다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요
+      다음 서류가 있다면 건강증명서를 새로 발급받지 않아도 돼요.
       - 한국 출국 시 받은 동물검역증
   첨부안내: 건강증명서·EU 반려동물 여권 등 서류 사본을 사진·PDF로 보관하세요.
   저장이름: 스위스 정부 인증 건강증명서
@@ -6854,7 +6965,7 @@
   short: 항체
   done: 광견병 항체 검사를 받았어요.
   desc:
-      EU 또는 WOAH 인증 검사기관에서 광견병 항체 검사를 받으세요.
+      EU 또는 WOAH 승인 검사기관에서 광견병 항체 검사를 받으세요.
       
       광견병 접종 후 30일 이상 지나서 검사하세요.
       동물병원을 통해 의뢰할 수 있어요.
@@ -6870,23 +6981,23 @@
   desc:
       이스라엘 입국 일정에 맞춰 항공권을 구매하세요.
       
-      출국일에 반려동물이 만 4개월(약 17주) 이상이어야 해요.
+      출국일에 생후 4개월 이상이어야 해요.
       항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.
   첨부안내: 구매한 항공권(e-티켓)을 사진·PDF로 보관하세요.
   저장이름: 항공권
 
 ▸ il-advance-notice
-  title: 사전 통보
-  short: 통보
-  card: 이스라엘에 사전 통보를 하세요.
-  done: 이스라엘에 사전 통보를 했어요.
+  title: 사전 통지
+  short: 통지
+  card: 이스라엘에 사전 통지를 하세요.
+  done: 이스라엘에 사전 통지를 했어요.
   desc:
-      이스라엘은 출국 2영업일 전까지 사전 통보를 해야 해요.
+      출국 2영업일 전까지 사전 통지를 하세요.
       
       벤구리온 공항으로 도착하는 경우 아래 온라인 폼에서 도착 정보와 건강증명서·광견병 항체검사 결과지를 제출해요.
-      반려동물이 3마리 이상이면 사전 통보 대신 수입 허가(Import License)를 미리 신청해야 해요.
+      반려동물이 3마리 이상이면 사전 통지 대신 수입 허가(Import License)를 미리 신청해야 해요.
   links:
-      사전 통보 온라인 폼(벤구리온)  →  https://govforms.gov.il/mw/forms/PetPersonalImportation@moag.gov.il
+      사전 통지 온라인 폼(벤구리온)  →  https://govforms.gov.il/mw/forms/PetPersonalImportation@moag.gov.il
       수입 허가 신청 안내(이스라엘 농업부)  →  https://www.gov.il/en/service/import_pets_cats_dogs
 
 ▸ vet-visit
@@ -6973,7 +7084,7 @@
        앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.
        광견병 백신 면역 유효기간 유지 시 최대 2년까지 사용할 수 있어요.
    · 허가서(Approval)   ← 일본 동물검역소
-       사전 신고 후 일본 동물검역소에서 발급 받을 수 있어요.
+       사전 신고 후 일본 동물검역소에서 발급받을 수 있어요.
        발급까지 수 주 이상 걸릴 수 있으며, 1회만 사용할 수 있어요.
        동물검역을 받을 때 반드시 소지해야 해요.
        PDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.

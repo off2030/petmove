@@ -140,9 +140,6 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'au_quarantine_reservation_recorded_at',
   // RNATT 선언서 발급일(검역본부) — 수입 허가 신청의 필수 제출물이라 목적지별로 따로 받는다.
   'au_rnatt_declaration_date',
-  // 호주 수출 검역(왕복 귀국) — NOI → DAFF 수출허가·건강증명서 발급일.
-  'au_export_quarantine_date',
-  'au_export_quarantine_confirmed',
   // 뉴질랜드 — 도착 계류(MPI 승인 시설 최소 10일) + 계류시설 예약 시작일.
   //   마이크로칩 인증일은 호주와 같은 'id_date'(위 증명서·허가 묶음)를 그대로 쓴다.
   'nz_import_quarantine_date',
@@ -155,9 +152,6 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 광견병 증명서(RCF) 발급일 — 수입 허가 신청의 필수 제출물이라 목적지별로 따로 받는다
   //   (호주 au_rnatt_declaration_date 와 같은 자리). 구 IHS 시절 이름은 OVD.
   'nz_rcf_date',
-  // 뉴질랜드 수출 증명(왕복 귀국) — AWEC + 수출 건강증명서 발급일.
-  'nz_export_quarantine_date',
-  'nz_export_quarantine_confirmed',
   // 남아공 — 도착 검역(국가 검역시설 약 14일) + 검역시설 예약 시작일 + AIA 수입 허가(개 전용).
   //   ⚠️ AIA 는 수의검역 수입 허가(import_permit_*)와 **별개의 두 번째 허가**라 필드도 따로다.
   //   신청 → 발급 2단계라 신청일·완료(skip)·진행중 플래그 셋을 모두 등록해야 한다
@@ -170,11 +164,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 버튼 완료 카드라 이 필드에 **허가 취득일**(버튼 누른 날)이 기록된다 — 신청일이 아니다.
   //   ⛔ issued_skipped·in_progress 플래그를 되살리지 말 것(2단계 모델 폐기, 2026-07-30).
   'za_aia_permit_application_date',
-  // 싱가포르 — 도착 검역(AQC 30일) + 귀국 수출검역(AVS 인증).
+  // 싱가포르 — 도착 검역(AQC 30일). (구 귀국 수출검역 필드는 카드 제거와 함께 정리, 2026-08-01.)
   'sg_import_quarantine_date',
   'sg_import_quarantine_confirmed',
-  'sg_export_quarantine_date',
-  'sg_export_quarantine_confirmed',
   // 싱가포르 전용 절차 카드.
   // 계류장 예약·강아지 라이선스 = 수입 허가와 동일 신청 → 발급 모델(신청일 + 완료/첨부).
   //   목적지마다 따로 신청하므로 신청일·완료(skip)·진행중 플래그도 by_dest 분리.

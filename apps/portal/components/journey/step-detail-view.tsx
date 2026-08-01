@@ -36,6 +36,7 @@ import {
   validateIdentityCheckAfterMicrochip,
   validateIdentityCheckBeforeTiter,
   validateIdentityCheckOrder,
+  validateNzIdentityCheckBeforeDeparture,
   validateNzQuarantineStartAfterTiter,
   validateTiterAfterIdentityCheck,
   validateInternalParasiteSpacing,
@@ -1782,6 +1783,16 @@ export function StepDetailView({
         readTiterAllEntries(caseRow?.data).map((e) => e.date),
       )
       if (err) return err
+      // 뉴질랜드 — **1차 인증은 출국 6개월 전까지**(IHS 1.11(4), 1회/2회 경로 공통). 출국일
+      //   칸 쪽 차단(validateNzIdentityCheckWait — 항공권 카드)과 대칭으로 양방향을 막는다.
+      //   주의 짝은 nz.identity-check-6months-before-departure. 호주에는 이 하한이 없다.
+      if (destinationKey === 'new_zealand') {
+        const sixErr = validateNzIdentityCheckBeforeDeparture(
+          first,
+          (caseRow?.departure_date ?? '').slice(0, 10),
+        )
+        if (sixErr) return sixErr
+      }
     }
     if (step.id === 'au-quarantine-reservation') {
       // 출국일이 계류 시작일보다 늦을 수 없다(2026-07-30 사용자 지정) — 뉴질랜드와 대칭.

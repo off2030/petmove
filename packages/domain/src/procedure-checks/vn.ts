@@ -212,13 +212,12 @@ export const VN_CHECKS: ProcedureCheck[] = [
     title: '출국일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
-    // ⚠️ 이 'info' 는 **표시 억제를 겸한다.** 이 룰은 어느 카드에도 매핑되지 않아서, warning 이면
-    // scenario.ts 의 case-level 배너로 올라가 광견병 카드 문구("베트남 입국 때 면역 유효기간이
-    // 남아있어야 해요")와 중복된다. 같은 성격의 태국·필리핀·EU 룰은 warning 이라 대신
-    // ADVISORY_DEFERRED_CHECKS(scenario.ts)에 명시 등록해 억제한다.
-    // → severity 를 올리려면 그 목록에도 함께 등록할 것. (중국 cn.rabies-not-expired-on-arrival
-    //   도 같은 구조.) 2026-07-20 전수 감사에서 확인.
-    severity: 'info',
+    // warning 승격(2026-08-01) — "카드가 있으면 만료는 전부 주의"(common.ts 2026-07-30 확정 원칙).
+    // 어느 카드에도 매핑되지 않아서 광견병 카드 문구("베트남 입국 때 면역 유효기간이
+    // 남아있어야 해요")와의 배너 중복은 태국·필리핀·EU 룰과 같은 방식 —
+    // ADVISORY_DEFERRED_CHECKS(scenario.ts) 명시 등록 — 으로 막는다. (중국
+    // cn.rabies-not-expired-on-arrival 도 같은 구조.)
+    severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)

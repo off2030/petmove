@@ -432,7 +432,7 @@ function mergeScheduledForChecks(data: Record<string, unknown>): Record<string, 
  * 이 규칙들은 admin(펫무브워크)에선 'warning'(문서 발행 전 운영자 경고)로 살아있어야 하므로
  * 규칙 severity 자체는 바꾸지 않고, 포털 표시에서만 제외한다.
  *  - jp.entry-within-2years-of-titer  → '추가 검사'(rabies-titer-extra) 안내가 재검사를 가리킴
- *  - jp.rabies-valid-until-on-departure → '추가 백신'(rabies-vaccine-extra) (이미 info 라 묻히지만 명시)
+ *  - jp.rabies-valid-until-on-departure → '추가 백신'(rabies-vaccine-extra) 안내가 재접종을 가리킴
  */
 const ADVISORY_DEFERRED_CHECKS = new Set<string>([
   'jp.entry-within-2years-of-titer',
@@ -450,6 +450,25 @@ const ADVISORY_DEFERRED_CHECKS = new Set<string>([
   'eu.rabies-valid-until-on-entry',
   // 우크라이나 — EU 와 같은 '조건부 무기한 항체' 모델이라 같은 처리(2026-07-21).
   'ua.rabies-valid-on-departure',
+  // '출국(입국)일에 광견병 면역 유효' 룰 info→warning 일괄 승격(2026-08-01, common.ts
+  // "카드가 있으면 만료는 전부 주의" 원칙) — 어느 카드에도 매핑되지 않은 목적지는 광견병
+  // 카드 situational 이 같은 조건을 안내하므로 태국·필리핀과 같은 방식으로 배너를 억제한다.
+  // (하와이·싱가포르는 카드 validationIds 매핑이 있어 등록 불필요, 일본은 위에 기등록.)
+  'ar.rabies-valid-on-departure',
+  'br.rabies-valid-on-departure',
+  'ca.rabies-valid-on-departure',
+  'cn.rabies-not-expired-on-arrival',
+  'il.rabies-valid-on-departure',
+  'kh.rabies-valid-on-departure',
+  'kz.rabies-valid-on-departure',
+  'ma.rabies-valid-on-departure',
+  'mn.rabies-valid-on-departure',
+  'mx.rabies-valid-on-departure',
+  'ru.rabies-valid-on-departure',
+  'tr.rabies-valid-on-departure',
+  'us.rabies-valid-on-departure',
+  'uz.rabies-valid-on-departure',
+  'vn.rabies-valid-on-departure',
 ])
 
 /**

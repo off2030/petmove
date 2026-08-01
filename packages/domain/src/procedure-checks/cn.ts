@@ -193,7 +193,9 @@ export const CN_CHECKS: ProcedureCheck[] = [
     title: '도착일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간이 도착일 이전 만료되지 않아야 함. 만료 시 추가 부스터 필요. (GACC: "유효한 광견병 백신 접종 증명서" 입경일 기준 유효)',
-    severity: 'info',
+    // warning 승격(2026-08-01) — "카드가 있으면 만료는 전부 주의"(common.ts 2026-07-30 확정 원칙).
+    // 카드 미매핑 룰이라 배너 중복은 ADVISORY_DEFERRED_CHECKS(scenario.ts) 등록으로 막는다.
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -288,7 +290,9 @@ export const CN_CHECKS: ProcedureCheck[] = [
     title: '항체 검사 유효기간 1년 — 도착일까지 유효',
     description:
       'RNATT 결과는 채혈일 기준 1년간 유효 (실무 기준). 도착일이 채혈일 + 1년 이내여야 함. (GACC 본문 미명시 — 실무 운용상 1년 한도 보수 적용)',
-    severity: 'info',
+    // warning 승격(2026-08-01) — 같은 파일 cn.rnatt-validity-expired(오늘 기준 만료)가 warning 인
+    // 것과 정합(입국 시점 만료 예정도 같은 결격). 카드 validationIds 에 매핑돼 있어 배너 중복 없음.
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)

@@ -602,49 +602,6 @@ export const AU_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 귀국 (왕복) ──
-  {
-    id: 'au.export-quarantine-before-return',
-    country: COUNTRY,
-    category: '검역',
-    title: '호주 수출 검역일 순서',
-    description:
-      '호주 수출 검역(수출 허가·건강증명서 발급)일은 호주 입국일 이후, 한국 귀국일 이전이어야 함. DAFF 는 허가 발급 후 **72시간 이내 출국**을 허가 조건으로 둔다.',
-    severity: 'warning',
-    addedAt: '2026-07-27',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const scoped = readByDestValue(data, destination ?? null, 'au_export_quarantine_date')
-      const raw =
-        typeof scoped === 'string'
-          ? scoped.slice(0, 10)
-          : scoped === null
-            ? ''
-            : typeof data.au_export_quarantine_date === 'string'
-              ? data.au_export_quarantine_date.slice(0, 10)
-              : ''
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-
-      const entry = readEntryDate(caseRow, destination)
-      if (entry && raw < entry) {
-        return {
-          ok: false,
-          message: msgExportQuarantineBeforeEntry('호주'),
-          offendingPaths: ['au_export_quarantine_date'],
-        }
-      }
-      const ret = typeof data.return_date === 'string' ? data.return_date.slice(0, 10) : ''
-      if (ret && raw > ret) {
-        return {
-          ok: false,
-          message: msgExportQuarantineAfterReturn('호주'),
-          offendingPaths: ['au_export_quarantine_date', 'return_date'],
-        }
-      }
-      return { ok: true, message: `호주 수출검역일(${raw}) 입국 이후·귀국 이전.` }
-    },
-  },
-
   // ── 종합백신 (렙토스피라 Canicola) — 강아지 전용 ──
   {
     id: 'au.general-vaccine-14days-before-departure',

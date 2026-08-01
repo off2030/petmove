@@ -9,6 +9,7 @@ import {
   destinationsWithVaccine,
   findDestinationKey,
   flattenCaseForDestination,
+  getTripType,
   rabiesBoosterChainEnd,
   readCivEntries,
   readGeneralVaccineEntries,
@@ -470,6 +471,8 @@ function collectValidityReminders(caseRow: CaseRow, pet: string, today: string, 
         latestTiterDate: latestTiter,
         entryDate,
         returnDate,
+        // 편도(사용자 선택 포함)면 귀국용 알림 SKIP — returnDate 잔존만으로 새지 않게.
+        tripType: getTripType(asRecord(flat.data), token),
       })
       for (const tg of targets) {
         out.push(
@@ -630,8 +633,9 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r40) out.push(r40)
       }
-      // 일본 수출 검역 신청 — 귀국 10일 전. 왕복(귀국일 있음) + 완료 전에만.
-      if (ret && deriveJpExportQuarantineStatus(flat) !== 'done') {
+      // 일본 수출 검역 신청 — 귀국 10일 전. 왕복 + 귀국일 있음 + 완료 전에만.
+      // (귀국일 존재만 보면 편도 전환 후 잔존 귀국일에 알림이 샘 — 카드 필터와 같은 tripType 기준.)
+      if (ret && getTripType(asRecord(flat.data), token) === 'round' && deriveJpExportQuarantineStatus(flat) !== 'done') {
         const r17 = leadReminder(
           flat,
           `${token}|jp-export-17`,
@@ -909,7 +913,7 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
           `${token}|il-advnotice-11`,
           departure,
           11,
-          '이스라엘 사전 통보 마감이 다가와요. 출국 2영업일 전까지 온라인 폼(또는 이메일)으로 통보하세요.',
+          '이스라엘 사전 통지 마감이 다가와요. 출국 2영업일 전까지 온라인 폼(또는 이메일)으로 통지하세요.',
           now,
         )
         if (r11) out.push(r11)
@@ -918,7 +922,7 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
           `${token}|il-advnotice-4`,
           departure,
           4,
-          '이스라엘 사전 통보 마감이 임박했어요. 출국 2영업일 전까지 통보하세요.',
+          '이스라엘 사전 통지 마감이 임박했어요. 출국 2영업일 전까지 통지하세요.',
           now,
         )
         if (r4) out.push(r4)
