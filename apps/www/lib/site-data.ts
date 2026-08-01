@@ -41,12 +41,13 @@ export const FEATURED: FeaturedGuide[] = [
   },
 ]
 
-// ── 나라별 가이드 41개국 — 5그룹(2026-07-15 재편: 괌=오세아니아, 중동·아프리카 신설.
+// ── 나라별 가이드 44개국 — 5그룹(2026-07-15 재편: 괌=오세아니아, 중동·아프리카 신설.
 //    2026-07-26 남아프리카공화국 가이드 추가 — 앱 지원 목록(APP_DEST_*)엔 아직 없다.
 //    2026-07-31~08-01 노르웨이·핀란드·키프로스·몰타 가이드 신설 — 넷 다 앱은 이미
 //    지원 중이라 APP_DEST_EU 엔 이미 있다.
-//    2026-08-01 프랑스·독일 가이드 신설 — 표준 EU 국가 첫 개별 가이드(허브-스포크 시범,
-//    고유 축 = 견종 규제 + 귀국 항체 필요/면제 대비. 서치콘솔로 효과 관찰 후 확장 판단) ──
+//    2026-08-01 프랑스·독일·스페인·이탈리아·네덜란드 가이드 신설 — 표준 EU 국가
+//    개별 가이드(허브-스포크). 고유 축 = 견종·품종 규제 + 귀국 항체 필요/면제 대비.
+//    서치콘솔 도메인 속성에서 나라 이름 검색 노출을 관찰해 추가 확장 판단 ──
 export interface Country {
   ko: string
   slug: string
@@ -76,6 +77,9 @@ export const COUNTRIES: Country[] = [
   { ko: '유럽(EU)', slug: 'eu', region: '유럽' },
   { ko: '프랑스', slug: 'france', region: '유럽' },
   { ko: '독일', slug: 'germany', region: '유럽' },
+  { ko: '스페인', slug: 'spain', region: '유럽' },
+  { ko: '이탈리아', slug: 'italy', region: '유럽' },
+  { ko: '네덜란드', slug: 'netherlands', region: '유럽' },
   { ko: '영국', slug: 'uk', region: '유럽' },
   { ko: '스위스', slug: 'switzerland', region: '유럽' },
   { ko: '아일랜드', slug: 'ireland', region: '유럽' },
