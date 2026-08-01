@@ -559,9 +559,14 @@
         "transform": "checkbox:falsy"
       },
       "text_78pnvw": {
-        "source": "microchip_combined",
+        "source": "microchip_primary",
         "align": "left",
-        "note": "Microchip number — 3자리 단위 스페이스 그룹핑, 보조칩 있으면 '<primary> / <secondary>'. 새 템플릿에서 폭 75→163 확장, 좌측 정렬 (구 microchip_number)"
+        "note": "Microchip number — 주칩만, 3자리 단위 스페이스 그룹핑. 보조칩은 secondary_chip_note 각주로 분리 (구 microchip_combined)"
+      },
+      "secondary_chip_note": {
+        "source": "microchip_secondary_note",
+        "align": "right",
+        "note": "보조 마이크로칩 각주 — 하단 안내문 아래 우측. '* 보조 마이크로칩 번호: <칩>[, <칩>]', 보조칩 없으면 공란 (add-form25-secondary-chip-note.mjs 로 추가한 필드)"
       },
       "text_79snvi": {
         "source": "microchip_implant_date",
@@ -872,9 +877,14 @@
         "transform": "checkbox:falsy"
       },
       "text_103mjxj": {
-        "source": "microchip_combined",
+        "source": "microchip_primary",
         "align": "left",
-        "note": "Microchip number — 3자리 단위 스페이스 그룹핑, 보조칩 있으면 '<primary> / <secondary>'. 새 템플릿에서 폭 93→162 확장, 좌측 정렬 (구 microchip_number)"
+        "note": "Microchip number — 주칩만, 3자리 단위 스페이스 그룹핑. 보조칩은 secondary_chip_note 각주로 분리 (구 microchip_combined)"
+      },
+      "secondary_chip_note": {
+        "source": "microchip_secondary_note",
+        "align": "right",
+        "note": "보조 마이크로칩 각주 — 하단 안내문 아래 우측. '* 보조 마이크로칩 번호: <칩>[, <칩>]', 보조칩 없으면 공란 (add-form25-secondary-chip-note.mjs 로 추가한 필드)"
       },
       "text_89fbkl": {
         "source": "microchip_implant_date",

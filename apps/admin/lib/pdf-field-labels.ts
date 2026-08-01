@@ -41,6 +41,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   microchip: '마이크로칩 번호',
   microchip_implant_date: '마이크로칩 삽입일',
   microchip_secondary: '보조 마이크로칩 번호',
+  microchip_tertiary: '보조 마이크로칩 번호 2',
 
   // 백신 / 검사
   rabies_dates: '광견병 백신 접종 기록',
@@ -90,7 +91,7 @@ export function groupSourceKey(source: string): string {
   if (source.startsWith('address_en')) return 'address_en'
   if (source.startsWith('address_overseas')) return 'address_overseas'
   if (source === 'postcode_place' || source === 'postal_code') return 'address_zipcode'
-  if (source === 'microchip_combined') return 'microchip'
+  if (source === 'microchip_combined' || source === 'microchip_primary') return 'microchip'
   if (source === 'customer_first_name_en' || source === 'customer_last_name_en') return 'customer_name_en'
   return source
 }
@@ -100,6 +101,7 @@ export function groupSourceKey(source: string): string {
  * — standalone 전용 4종: 케이스 발급 흐름에 등장 X
  * — infectious_date:<lab> / titer_date:<lab>: vet_visit_date 로 자연 폴백되므로
  *   별도 알림 의미 없음 (lab 매칭 누락은 절차 검증 룰이 따로 잡음)
+ * — microchip_secondary_note: 보조칩은 선택 입력 — 없으면 각주 자체가 공란 (정상)
  */
 const STANDALONE_ONLY = new Set([
   'consignee_lab',
@@ -110,6 +112,7 @@ const STANDALONE_ONLY = new Set([
 
 export function shouldSkipSourceForMissingCheck(source: string): boolean {
   if (STANDALONE_ONLY.has(source)) return true
+  if (source === 'microchip_secondary_note') return true
   if (source.startsWith('infectious_date:') || source.startsWith('titer_date:')) return true
   return false
 }

@@ -1225,38 +1225,42 @@ function ReturnFlightRow({ caseId, caseRow, activeDest }: {
   )
 }
 
+// slot 0 = 주칩(컬럼), 1·2 = 보조칩(data jsonb).
+const CHIP_SLOTS = [
+  { storage: 'column', key: 'microchip', placeholder: '마이크로칩 번호' },
+  { storage: 'data', key: 'microchip_secondary', placeholder: '보조칩 번호' },
+  { storage: 'data', key: 'microchip_tertiary', placeholder: '보조칩 번호 2' },
+] as const
+
 /**
- * Microchip: main + optional secondary (max 2). 라벨 클릭마다 새 입력 칸 추가.
+ * Microchip: 주칩 1 + 보조칩 최대 2 (총 3개). 라벨 클릭마다 새 입력 칸 추가.
  * - 빈 상태 → 라벨 클릭 → 주칩 입력
- * - 주칩 저장 후 라벨 클릭 → 우측에 보조칩 입력
- * - 둘 다 저장 → 라벨 비활성
+ * - 주칩 저장 후 라벨 클릭 → 우측에 보조칩 입력 (| 구분)
+ * - 3개 모두 저장 → 라벨 비활성
+ * - 보조칩 1 삭제 시 보조칩 2 가 앞으로 승격 (칸 사이 빈 자리 없음)
  */
 function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: CaseRow; spec: FieldSpec }) {
   const { updateLocalCaseField } = useCases()
   const editMode = useSectionEditMode()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const mainRaw = String(caseRow.microchip ?? '').trim()
-  const secRaw = String((data.microchip_secondary as string | undefined) ?? '').trim()
+  const raws = [
+    String(caseRow.microchip ?? '').trim(),
+    String((data.microchip_secondary as string | undefined) ?? '').trim(),
+    String((data.microchip_tertiary as string | undefined) ?? '').trim(),
+  ]
 
-  const [editingMain, setEditingMain] = useState(false)
-  const [editingSec, setEditingSec] = useState(false)
-  const [mainVal, setMainVal] = useState(mainRaw)
-  const [secVal, setSecVal] = useState(secRaw)
+  const [editing, setEditing] = useState<number | null>(null)
+  const [val, setVal] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [flashed, setFlashed] = useState<'main' | 'sec' | null>(null)
-  const mainRef = useRef<HTMLInputElement>(null)
-  const secRef = useRef<HTMLInputElement>(null)
+  const [flashed, setFlashed] = useState<number | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    setEditingMain(false)
-    setEditingSec(false)
+    setEditing(null)
     setError(null)
   }, [caseId])
 
-  useEffect(() => { if (!editingMain) setMainVal(mainRaw) }, [mainRaw, editingMain])
-  useEffect(() => { if (!editingSec) setSecVal(secRaw) }, [secRaw, editingSec])
-  useEffect(() => { if (editingMain) mainRef.current?.focus() }, [editingMain])
-  useEffect(() => { if (editingSec) secRef.current?.focus() }, [editingSec])
+  useEffect(() => { if (editing != null) inputRef.current?.focus() }, [editing])
 
   function formatChip(v: string) {
     const digits = v.replace(/\D/g, '')
@@ -1274,53 +1278,68 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
     return digits.replace(/(\d{3})(?=\d)/g, '$1 ')
   }
 
-  function saveChip(which: 'main' | 'sec') {
-    const isMain = which === 'main'
-    const stateVal = isMain ? mainVal : secVal
-    const digits = stateVal.replace(/\D/g, '')
-    const storage = isMain ? 'column' : 'data'
-    const key = isMain ? 'microchip' : 'microchip_secondary'
-    const setEditing = isMain ? setEditingMain : setEditingSec
+  function clearSlot(slot: number) {
+    const { storage, key } = CHIP_SLOTS[slot]
+    setError(null)
+    // 보조칩 1 삭제 + 보조칩 2 존재 → 2 를 1 로 승격 (빈 칸 없이 당김).
+    if (slot === 1 && raws[2]) {
+      const promoted = raws[2]
+      updateLocalCaseField(caseId, 'data', 'microchip_secondary', promoted)
+      updateLocalCaseField(caseId, 'data', 'microchip_tertiary', null)
+      void persistField('마이크로칩', async () => {
+        const r = await updateCaseField(caseId, 'data', 'microchip_secondary', promoted)
+        if (!r.ok) return r
+        return updateCaseField(caseId, 'data', 'microchip_tertiary', null)
+      })
+      return
+    }
+    // Optimistic clear — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
+    updateLocalCaseField(caseId, storage, key, null)
+    void persistField('마이크로칩', () => updateCaseField(caseId, storage, key, null))
+  }
+
+  function saveChip(slot: number) {
+    const digits = val.replace(/\D/g, '')
+    const { storage, key } = CHIP_SLOTS[slot]
     if (!digits) {
-      // Optimistic clear — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
-      updateLocalCaseField(caseId, storage, key, null)
-      setEditing(false)
-      void persistField('마이크로칩', () => updateCaseField(caseId, storage, key, null))
+      clearSlot(slot)
+      setEditing(null)
       return
     }
     if (digits.length !== 15) { setError('유효한 번호가 아닙니다'); return }
-    const otherDigits = (isMain ? secRaw : mainRaw).replace(/\D/g, '')
-    if (otherDigits && digits === otherDigits) {
-      setError(isMain ? '보조칩과 같은 번호입니다' : '주칩과 같은 번호입니다')
+    if (raws.some((r, i) => i !== slot && r.replace(/\D/g, '') === digits)) {
+      setError('이미 입력된 번호입니다')
       return
     }
     const formatted = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6,9)} ${digits.slice(9,12)} ${digits.slice(12)}`
     // Optimistic save.
     updateLocalCaseField(caseId, storage, key, formatted)
     setError(null)
-    setEditing(false)
-    setFlashed(which)
+    setEditing(null)
+    setFlashed(slot)
     setTimeout(() => setFlashed(null), 1500)
     void persistField('마이크로칩', () => updateCaseField(caseId, storage, key, formatted))
   }
 
-  // 라벨 클릭 동작: 주칩 비어있으면 주칩 / 주칩 있고 보조칩 비어있으면 보조칩 / 둘 다 있으면 비활성.
-  const canAdd = !mainRaw || !secRaw
+  // 라벨 클릭 동작: 첫 번째 빈 슬롯(주칩 → 보조1 → 보조2) 입력 시작 / 다 차면 비활성.
+  const firstEmpty = raws.findIndex((r) => !r)
+  const canAdd = firstEmpty !== -1
   function addNew() {
-    if (!mainRaw) { setMainVal(''); setEditingMain(true); setError(null) }
-    else if (!secRaw) { setSecVal(''); setEditingSec(true); setError(null) }
+    if (firstEmpty === -1) return
+    setVal('')
+    setEditing(firstEmpty)
+    setError(null)
   }
 
   const inputCls = 'w-52 h-8 rounded-md border border-border/80 bg-background px-2 text-sm font-mono tracking-[0.3px] focus-visible:outline-none'
-  const showMain = editingMain || !!mainRaw
-  const showSec = editingSec || !!secRaw
+  const visible = CHIP_SLOTS.map((_, i) => editing === i || !!raws[i])
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel
           onClick={editMode && canAdd ? addNew : undefined}
-          title={editMode && canAdd ? '마이크로칩 추가 (최대 2개)' : undefined}
+          title={editMode && canAdd ? '마이크로칩 추가 (주칩 1 + 보조칩 2)' : undefined}
         >
           {spec.label}
         </SectionLabel>
@@ -1328,7 +1347,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-[20px] overflow-x-auto whitespace-nowrap scrollbar-hide pl-2.5 -ml-2.5 py-2 -my-2">
           {/* 빈 상태 — 다른 필드와 동일한 옅은 — (클릭 시 입력 시작). */}
-          {!showMain && !showSec && (
+          {!visible.some(Boolean) && (
             editMode ? (
               <button type="button" onClick={addNew}
                 className="text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-pointer text-muted-foreground/40 select-none">
@@ -1338,114 +1357,67 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
               <span className="text-muted-foreground/40 select-none" aria-hidden>—</span>
             )
           )}
-          {/* Main chip */}
-          {showMain && (
-            <div className="group/main inline-flex items-baseline gap-[6px]">
-              {editingMain ? (
-                <span className="inline-flex items-center gap-sm">
-                  <input
-                    ref={mainRef}
-                    type="text"
-                    inputMode="numeric"
-                    value={mainVal}
-                    onChange={(e) => setMainVal(filterDigits(e.target.value))}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') saveChip('main')
-                      if (e.key === 'Escape') { setEditingMain(false); setError(null) }
-                    }}
-                    onBlur={() => setTimeout(() => saveChip('main'), 150)}
-                    placeholder="마이크로칩 번호"
-                    className={inputCls}
-                  />
+          {CHIP_SLOTS.map((slotSpec, i) => {
+            if (!visible[i]) return null
+            const raw = raws[i]
+            const hasEarlier = visible.slice(0, i).some(Boolean)
+            return (
+              <div key={slotSpec.key} className="group/chip inline-flex items-baseline gap-[6px]">
+                {hasEarlier && <span className="text-muted-foreground/30 select-none">|</span>}
+                {editing === i ? (
+                  <span className="inline-flex items-center gap-sm">
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      inputMode="numeric"
+                      value={val}
+                      onChange={(e) => setVal(filterDigits(e.target.value))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveChip(i)
+                        if (e.key === 'Escape') { setEditing(null); setError(null) }
+                      }}
+                      onBlur={() => setTimeout(() => saveChip(i), 150)}
+                      placeholder={slotSpec.placeholder}
+                      className={inputCls}
+                    />
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => saveChip(i)}
+                      className="shrink-0 whitespace-nowrap inline-flex h-7 items-center justify-center rounded border px-2 text-[11px] border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong hover:bg-pmw-accent/25 transition-colors disabled:opacity-50"
+                    >
+                      저장
+                    </button>
+                  </span>
+                ) : editMode ? (
+                  <button type="button" onClick={() => { setVal(raw); setEditing(i); setError(null) }}
+                    className="text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-text">
+                    {formatChip(raw)}
+                  </button>
+                ) : (
+                  <span className="rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground">
+                    {formatChip(raw)}
+                  </span>
+                )}
+                {editing !== i && raw && (
+                  <CopyButton value={formatChip(raw)} className="shrink-0 opacity-0 group-hover/chip:opacity-100" />
+                )}
+                {flashed === i && editing !== i && (
+                  <span className="text-pmw-positive text-sm select-none" aria-label="저장됨">✓</span>
+                )}
+                {editMode && i > 0 && raw && editing !== i && (
                   <button
                     type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => saveChip('main')}
-                    className="shrink-0 whitespace-nowrap inline-flex h-7 items-center justify-center rounded border px-2 text-[11px] border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong hover:bg-pmw-accent/25 transition-colors disabled:opacity-50"
+                    onClick={() => clearSlot(i)}
+                    title="보조칩 삭제"
+                    className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
                   >
-                    저장
+                    <Trash2 size={13} />
                   </button>
-                </span>
-              ) : editMode ? (
-                <button type="button" onClick={() => { setMainVal(mainRaw); setEditingMain(true); setError(null) }}
-                  className="text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-text">
-                  {formatChip(mainRaw)}
-                </button>
-              ) : (
-                <span className="rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground">
-                  {formatChip(mainRaw)}
-                </span>
-              )}
-              {!editingMain && mainRaw && (
-                <CopyButton value={formatChip(mainRaw)} className="shrink-0 opacity-0 group-hover/main:opacity-100" />
-              )}
-              {flashed === 'main' && !editingMain && (
-                <span className="text-pmw-positive text-sm select-none" aria-label="저장됨">✓</span>
-              )}
-            </div>
-          )}
-
-          {/* Secondary chip — pipe separated */}
-          {showSec && (
-            <div className="group/sec inline-flex items-baseline gap-[6px]">
-              {showMain && <span className="text-muted-foreground/30 select-none">|</span>}
-              {editingSec ? (
-                <span className="inline-flex items-center gap-sm">
-                  <input
-                    ref={secRef}
-                    type="text"
-                    inputMode="numeric"
-                    value={secVal}
-                    onChange={(e) => setSecVal(filterDigits(e.target.value))}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') saveChip('sec')
-                      if (e.key === 'Escape') { setEditingSec(false); setError(null) }
-                    }}
-                    onBlur={() => setTimeout(() => saveChip('sec'), 150)}
-                    placeholder="보조칩 번호"
-                    className={inputCls}
-                  />
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => saveChip('sec')}
-                    className="shrink-0 whitespace-nowrap inline-flex h-7 items-center justify-center rounded border px-2 text-[11px] border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong hover:bg-pmw-accent/25 transition-colors disabled:opacity-50"
-                  >
-                    저장
-                  </button>
-                </span>
-              ) : editMode ? (
-                <button type="button" onClick={() => { setSecVal(secRaw); setEditingSec(true); setError(null) }}
-                  className="text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-text">
-                  {formatChip(secRaw)}
-                </button>
-              ) : (
-                <span className="rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground">
-                  {formatChip(secRaw)}
-                </span>
-              )}
-              {!editingSec && secRaw && (
-                <CopyButton value={formatChip(secRaw)} className="shrink-0 opacity-0 group-hover/sec:opacity-100" />
-              )}
-              {flashed === 'sec' && !editingSec && (
-                <span className="text-pmw-positive text-sm select-none" aria-label="저장됨">✓</span>
-              )}
-              {editMode && secRaw && !editingSec && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    updateLocalCaseField(caseId, 'data', 'microchip_secondary', null)
-                    setError(null)
-                    void persistField('마이크로칩', () => updateCaseField(caseId, 'data', 'microchip_secondary', null))
-                  }}
-                  title="보조칩 삭제"
-                  className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover/sec:opacity-70 hover:!opacity-100"
-                >
-                  <Trash2 size={13} />
-                </button>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )
+          })}
         </div>
         {error && <div className="mt-1 text-xs text-destructive">{error}</div>}
       </div>

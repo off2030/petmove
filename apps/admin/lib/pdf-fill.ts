@@ -821,22 +821,26 @@ export function readSource(
     return /-do$/i.test(last) && secondLast ? secondLast : last
   }
 
-  // Microchip with optional secondary chip — "primary / secondary" when both exist,
-  // primary alone otherwise. caseRow.microchip 은 컬럼, microchip_secondary 는 data jsonb.
+  // Microchip 계열 — caseRow.microchip 은 컬럼(주칩), microchip_secondary /
+  // microchip_tertiary 는 data jsonb(보조칩 최대 2개).
   // 출력 포맷: 3자리 단위 스페이스 그룹핑 (예: "123 456 789 012 345").
-  if (source === 'microchip_combined') {
-    const fmt = (raw: string): string => {
-      const digits = raw.replace(/\D/g, '')
+  //   microchip_combined       — "주칩 / 보조1 / 보조2" (있는 것만)
+  //   microchip_primary        — 주칩만 (별지25/EX 칩 칸 — 보조칩은 각주로 분리)
+  //   microchip_secondary_note — "* 보조 마이크로칩 번호: <보조1>[, <보조2>]", 없으면 공란
+  if (source === 'microchip_combined' || source === 'microchip_primary' || source === 'microchip_secondary_note') {
+    const fmt = (raw: unknown): string => {
+      const digits = String(raw ?? '').replace(/\D/g, '')
       if (!digits) return ''
       // 15자리 ISO 11784 표준이면 5그룹 × 3자리. 그 외 길이도 3자리씩 좌→우 그룹핑.
       return digits.replace(/(\d{3})(?=\d)/g, '$1 ')
     }
-    const primary = fmt(String((caseRow as unknown as Record<string, unknown>).microchip ?? ''))
-    const secondary = fmt(String(data.microchip_secondary ?? ''))
-    if (!primary && !secondary) return ''
-    if (!secondary) return primary
-    if (!primary) return secondary
-    return `${primary} / ${secondary}`
+    const primary = fmt((caseRow as unknown as Record<string, unknown>).microchip)
+    const secondaries = [data.microchip_secondary, data.microchip_tertiary].map(fmt).filter(Boolean)
+    if (source === 'microchip_primary') return primary
+    if (source === 'microchip_secondary_note') {
+      return secondaries.length > 0 ? `* 보조 마이크로칩 번호: ${secondaries.join(', ')}` : ''
+    }
+    return [primary, ...secondaries].filter(Boolean).join(' / ')
   }
 
   // address_zipcode with fallback: if not stored separately, try to extract

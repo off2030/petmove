@@ -287,7 +287,7 @@ export const SHARE_RECIPIENT_SUBGROUP_META: Record<string, ShareRecipientSubgrou
  * - customer_first_name_en / customer_last_name_en: 컬럼 customer_name_en 으로 합쳐 노출
  * - breed_en / color_en / sex_en: 한글 칩만 노출 (영문은 자동 보정/표시)
  * - payment_*, payments: 외부 입력 대상 아님
- * - microchip_secondary, japan_extra: 내부/legacy 컨테이너
+ * - microchip_secondary / microchip_tertiary, japan_extra: 내부/legacy 컨테이너
  * - address_overseas: 추가정보 전용 (4번 블록에서 처리)
  * - vet_visit_date: 발신 조직 내부의 발급일 — 외부 수신자가 채울 항목 아님.
  */
@@ -296,7 +296,7 @@ export const SHARE_EXCLUDED_KEYS = new Set([
   'customer_first_name_en', 'customer_last_name_en',
   'breed_en', 'color_en', 'sex_en',
   'payment_amount', 'payment_method', 'payments',
-  'microchip_secondary', 'japan_extra',
+  'microchip_secondary', 'microchip_tertiary', 'japan_extra',
   'address_overseas',
   'vet_visit_date',
 ])
