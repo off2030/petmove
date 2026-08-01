@@ -50,6 +50,70 @@ export async function listActiveOrgCases(): Promise<CaseListRow[]> {
 }
 
 /**
+ * 첫 페인트용 첫 배치 — 최신순(created_at desc, listActiveOrgCases 와 동일 정렬) 상위
+ * limit 건 + 전체 건수. (dashboard) 레이아웃이 이것만 await 해 첫 페인트가 org 전체
+ * 크기에 비례하지 않게 한다. 나머지는 마운트 후 listActiveOrgCasesRest 로 백그라운드 로드.
+ *
+ * 인증·스코프 가드는 listActiveOrgCases 와 동일: createClient(세션 쿠키, RLS) +
+ * getActiveOrgId. service-role 미사용.
+ */
+export async function listActiveOrgCasesFirstPage(
+  limit = 300,
+): Promise<{ rows: CaseListRow[]; totalCount: number }> {
+  const supabase = await createClient()
+  let orgId: string
+  try {
+    orgId = await getActiveOrgId()
+  } catch {
+    return { rows: [], totalCount: 0 }
+  }
+
+  const { data, error, count } = await supabase
+    .from('cases')
+    .select(CASE_COLUMNS, { count: 'exact' })
+    .eq('org_id', orgId)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .range(0, limit - 1)
+  if (error) throw new Error(error.message)
+  const rows = ((data ?? []) as CaseRow[]).map(stripCaseListHeavyKeys)
+  return { rows, totalCount: count ?? rows.length }
+}
+
+/**
+ * offset 이후 전량 — listActiveOrgCases 와 같은 정렬·배치 루프를 offset 부터 시작.
+ * cases-context 가 마운트 후 백그라운드로 호출해 첫 배치와 merge 한다(id 중복은
+ * 클라이언트에서 dedupe — 로드 사이 INSERT/DELETE 로 offset 이 밀릴 수 있어 호출측이
+ * 약간의 overlap 을 두고 부른다).
+ *
+ * 실패 시 throw — 호출측(클라이언트)이 재시도/에러 보고를 하도록, 조용한 [] 반환으로
+ * "전량 로드 완료"로 오인되는 일을 막는다. (getActiveOrgId 일시 실패 포함.)
+ */
+export async function listActiveOrgCasesRest(offset: number): Promise<CaseListRow[]> {
+  const supabase = await createClient()
+  const orgId = await getActiveOrgId()
+
+  const all: CaseListRow[] = []
+  const batchSize = 1000
+  let from = Math.max(0, Math.floor(offset))
+  while (true) {
+    const { data, error } = await supabase
+      .from('cases')
+      .select(CASE_COLUMNS)
+      .eq('org_id', orgId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .range(from, from + batchSize - 1)
+    if (error) throw new Error(error.message)
+    if (!data || data.length === 0) break
+    for (const row of data as CaseRow[]) all.push(stripCaseListHeavyKeys(row))
+    if (data.length < batchSize) break
+    from += batchSize
+  }
+  return all
+}
+
+/**
  * URL 에 남아 있는 상세 case id 를 복원하기 위한 단일 조회.
  *
  * listActiveOrgCases() 가 인증 refresh/RLS/org lookup 타이밍 문제로 일시적으로

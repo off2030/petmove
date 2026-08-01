@@ -745,8 +745,16 @@ export async function searchMessagesInConversation(input: {
 // 대화방 — 생성/이름/멤버
 // ─────────────────────────────────────────────────
 
+/** DM 유일 키 — 두 참가자 uuid 를 오름차순 정렬해 ':' 로 연결. DB backfill(min/max uuid)과 동일 순서. */
+function dmKeyOf(userA: string, userB: string): string {
+  const [lo, hi] = [userA.toLowerCase(), userB.toLowerCase()].sort()
+  return `${lo}:${hi}`
+}
+
 /**
- * 1:1 DM 가져오기 또는 생성. 본인+상대 둘만 있는 대화방을 찾고, 없으면 새로 만든다.
+ * 1:1 DM 가져오기 또는 생성. conversations.dm_key unique index 가 원자성을 보장 —
+ * SELECT 1회 → 없으면 upsert(on conflict do nothing) → 충돌 시 재SELECT.
+ * 동시 호출돼도 중복 방이 생기지 않는다 (migration 20260801000004).
  */
 export async function getOrCreateDM(input: {
   otherUserId: string
@@ -757,49 +765,57 @@ export async function getOrCreateDM(input: {
     return { ok: false, error: '본인과는 DM 할 수 없습니다' }
   }
 
+  const dmKey = dmKeyOf(auth.userId, input.otherUserId)
   const supabase = await createClient()
-  // 본인이 참여하는 모든 conv 중에서 상대도 참여하고, 참여자가 정확히 2명인 것 찾기
-  const { data: myParts, error: mpErr } = await supabase
-    .from('conversation_participants')
-    .select('conversation_id')
-    .eq('user_id', auth.userId)
-  if (mpErr) return { ok: false, error: mpErr.message }
-  const myConvIds = (myParts ?? []).map((r) => r.conversation_id as string)
 
-  if (myConvIds.length > 0) {
-    const { data: shared } = await supabase
-      .from('conversation_participants')
-      .select('conversation_id')
-      .eq('user_id', input.otherUserId)
-      .in('conversation_id', myConvIds)
-    const sharedConvIds = (shared ?? []).map((r) => r.conversation_id as string)
-    if (sharedConvIds.length > 0) {
-      const { data: counts } = await supabase
-        .from('conversation_participants')
-        .select('conversation_id')
-        .in('conversation_id', sharedConvIds)
-      const countByConv = new Map<string, number>()
-      for (const r of counts ?? []) {
-        const cid = r.conversation_id as string
-        countByConv.set(cid, (countByConv.get(cid) ?? 0) + 1)
-      }
-      const dmConvId = sharedConvIds.find((cid) => countByConv.get(cid) === 2) ?? null
-      if (dmConvId) {
-        return { ok: true, value: { id: dmConvId, created: false } }
-      }
-    }
-  }
+  // 1) 기존 DM 조회 — dm_key 는 본인이 참가자임을 내포하므로 RLS select 통과
+  const { data: found, error: findErr } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('dm_key', dmKey)
+    .maybeSingle()
+  if (findErr) return { ok: false, error: findErr.message }
+  if (found) return { ok: true, value: { id: found.id as string, created: false } }
 
-  // 새로 생성 — admin client 로 participants 부트스트랩 (RLS chicken-and-egg)
+  // 2) 생성 시도 — dm_key unique 충돌 시 do nothing (동시 생성 race 흡수)
   const { data: convRow, error: convErr } = await supabase
     .from('conversations')
-    .insert({ name: null, created_by: auth.userId })
+    .upsert(
+      { name: null, created_by: auth.userId, dm_key: dmKey },
+      { onConflict: 'dm_key', ignoreDuplicates: true },
+    )
     .select('id')
-    .single()
+    .maybeSingle()
   if (convErr) return { ok: false, error: convErr.message }
-  const convId = convRow.id as string
 
   const admin = createAdminClient()
+
+  if (!convRow) {
+    // 충돌 = 다른 요청이 먼저 만듦. 상대 요청이 participants 를 아직 못 넣었을 수 있어
+    // admin client 로 재조회 (dm_key 가 본인 포함 쌍을 보장하므로 안전).
+    const { data: existing, error: reErr } = await admin
+      .from('conversations')
+      .select('id')
+      .eq('dm_key', dmKey)
+      .maybeSingle()
+    if (reErr) return { ok: false, error: reErr.message }
+    if (!existing) return { ok: false, error: 'DM 대화방 조회에 실패했습니다. 다시 시도해주세요' }
+    // 승자가 participants 삽입 전에 죽었을 가능성 방어 — 멱등 upsert 로 보정
+    const { error: healErr } = await admin
+      .from('conversation_participants')
+      .upsert(
+        [
+          { conversation_id: existing.id as string, user_id: auth.userId },
+          { conversation_id: existing.id as string, user_id: input.otherUserId },
+        ],
+        { onConflict: 'conversation_id,user_id', ignoreDuplicates: true },
+      )
+    if (healErr) return { ok: false, error: healErr.message }
+    return { ok: true, value: { id: existing.id as string, created: false } }
+  }
+
+  // 3) 새로 생성됨 — admin client 로 participants 부트스트랩 (RLS chicken-and-egg)
+  const convId = convRow.id as string
   const { error: partErr } = await admin
     .from('conversation_participants')
     .insert([

@@ -1259,6 +1259,10 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
   const [error, setError] = useState<string | null>(null)
   const [flashed, setFlashed] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  // 지연 blur 저장(150ms)이 도착했을 때 사용자가 이미 다른 슬롯을 편집 중이면 그 입력창을
+  // 닫아버리지 않도록 현재 편집 슬롯을 ref 로 추적(2026-08-01 리뷰 — 공유 편집 state 간섭).
+  const editingRef = useRef<number | null>(null)
+  editingRef.current = editing
 
   useEffect(() => {
     setEditing(null)
@@ -1287,6 +1291,9 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
     const { storage, key } = CHIP_SLOTS[slot]
     setError(null)
     // 보조칩 1 삭제 + 보조칩 2 존재 → 2 를 1 로 승격 (빈 칸 없이 당김).
+    // 2회 순차 저장이라 두 번째(3차 비움)만 실패하면 보조1=보조2 중복으로 남을 수 있다 —
+    // 값 손실은 없고 persistField '다시 시도' 토스트가 둘 다 재실행해 복구된다(수용, 2026-08-01
+    // 리뷰. 순서를 뒤집으면 실패 시 칩 값이 유실되므로 이 순서 유지).
     if (slot === 1 && raws[2]) {
       const promoted = raws[2]
       updateLocalCaseField(caseId, 'data', 'microchip_secondary', promoted)
@@ -1303,15 +1310,24 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
     void persistField('마이크로칩', () => updateCaseField(caseId, storage, key, null))
   }
 
-  function saveChip(slot: number) {
+  function saveChip(slot: number, opts?: { fromBlur?: boolean }) {
+    // blur 지연 저장이 왔는데 이미 다른 슬롯 편집 중 — 새 입력창을 닫거나 에러를 띄우지
+    // 않는다. 값이 유효하면 저장은 그대로(사용자가 다른 곳을 클릭해도 입력이 사라지지 않게),
+    // editing 상태만 건드리지 않는다.
+    const movedOn = opts?.fromBlur && editingRef.current !== slot
     const digits = val.replace(/\D/g, '')
     const { storage, key } = CHIP_SLOTS[slot]
     if (!digits) {
-      clearSlot(slot)
-      setEditing(null)
+      if (!movedOn) {
+        clearSlot(slot)
+        setEditing(null)
+      }
       return
     }
-    if (digits.length !== 15) { setError('유효한 번호가 아닙니다'); return }
+    if (digits.length !== 15) {
+      if (!movedOn) setError('유효한 번호가 아닙니다')
+      return
+    }
     if (raws.some((r, i) => i !== slot && r.replace(/\D/g, '') === digits)) {
       setError('이미 입력된 번호입니다')
       return
@@ -1319,8 +1335,10 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
     const formatted = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6,9)} ${digits.slice(9,12)} ${digits.slice(12)}`
     // Optimistic save.
     updateLocalCaseField(caseId, storage, key, formatted)
-    setError(null)
-    setEditing(null)
+    if (!movedOn) {
+      setError(null)
+      setEditing(null)
+    }
     setFlashed(slot)
     setTimeout(() => setFlashed(null), 1500)
     void persistField('마이크로칩', () => updateCaseField(caseId, storage, key, formatted))
@@ -1381,7 +1399,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
                         if (e.key === 'Enter') saveChip(i)
                         if (e.key === 'Escape') { setEditing(null); setError(null) }
                       }}
-                      onBlur={() => setTimeout(() => saveChip(i), 150)}
+                      onBlur={() => setTimeout(() => saveChip(i, { fromBlur: true }), 150)}
                       placeholder={slotSpec.placeholder}
                       className={inputCls}
                     />

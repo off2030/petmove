@@ -129,6 +129,26 @@ export async function applyCase(input: ApplyInput): Promise<
     if (!turnstileOk) {
       return { ok: true, caseIds: [FAKE_OK_CASE_ID] }
     }
+  } else {
+    // 로그인 사용자 반복 제한(2026-08-01 보안 리뷰) — 봇 검증이 미로그인만 대상이라
+    // 로그인 계정으로는 호출당 5마리 × 무제한 반복 케이스 양산 + 봇 알림 스팸이 가능했다.
+    // 24시간 내 이 계정에 링크된 신규 케이스 15건 초과면 거부(정상 최대치: 다둥이
+    // 재신청까지 넉넉히 포함 — 진짜 필요하면 상담으로).
+    const { createAdminClient } = await import('@petmove/auth')
+    const rlAdmin = createAdminClient()
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const { count } = await rlAdmin
+      .from('case_customer_links')
+      .select('case_id, cases!inner(created_at)', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('cases.created_at', since)
+    const requested = Array.isArray(input.pets) ? input.pets.length : 0
+    if ((count ?? 0) + requested > 15) {
+      return {
+        ok: false,
+        error: '하루에 등록할 수 있는 신청 수를 넘었어요. 내일 다시 시도하거나 고객센터로 문의해 주세요.',
+      }
+    }
   }
 
   // ── 서버측 입력 검증 — 클라이언트 검증의 백스톱 + 오버사이즈 페이로드 차단 ──────

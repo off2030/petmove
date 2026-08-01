@@ -14,7 +14,7 @@ import { loadExternalLinks } from '@/lib/external-links'
 import { getOrgVaccineData, getOrgVaccineDefaults } from '@/lib/vaccine-data'
 import { getCalculatorItems } from '@/lib/calculator-data'
 import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
-import { listActiveOrgCases } from '@/lib/actions/list-cases'
+import { listActiveOrgCasesFirstPage } from '@/lib/actions/list-cases'
 import { getActiveOrgId, getHomeOrg } from '@/lib/supabase/active-org'
 import { listAllOrgs, listSuperAdminsAll, type OrgSummary, type SuperAdminEntry } from '@/lib/actions/super-admin'
 import { listMyConversations, listConversationMessages, type ConversationListItem, type ConversationMessagesResult } from '@/lib/actions/chat'
@@ -87,8 +87,10 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, homeOrg, externalLinks, convsR] = await Promise.all([
-    traceLayoutFetch('listActiveOrgCases', listActiveOrgCases()),
+  // 케이스 목록은 첫 배치(최신순 300)만 await — 첫 페인트가 org 전체 크기(대형 org
+  // ~2MB 직렬화)에 비례하지 않게. 나머지는 CasesProvider 가 마운트 후 백그라운드 로드.
+  const [casesFirstPage, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, homeOrg, externalLinks, convsR] = await Promise.all([
+    traceLayoutFetch('listActiveOrgCasesFirstPage', listActiveOrgCasesFirstPage()),
     traceLayoutFetch('fetchFieldDefs', fetchFieldDefs()),
     traceLayoutFetch('loadImportReportCountries', loadImportReportCountries()),
     traceLayoutFetch('loadInspectionConfig', loadInspectionConfig()),
@@ -135,7 +137,8 @@ export default async function DashboardLayout({
 
   return (
     <CasesProvider
-      initialCases={initialCases}
+      initialCases={casesFirstPage.rows}
+      initialTotalCount={casesFirstPage.totalCount}
       fieldDefs={fieldDefs}
       initialImportReportCountries={importReportCountries}
       initialInspectionConfig={inspectionConfig}

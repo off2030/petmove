@@ -15,7 +15,7 @@ import { parseDestinations, isDestinationScopedKey, writeByDestValue, clearExtra
 import type { InspectionConfig } from '@petmove/domain'
 import type { CertConfig } from '@petmove/domain'
 import { subscribeRealtime } from '@/lib/realtime/resilient-channel'
-import { getActiveOrgCaseById, listActiveOrgCases } from '@/lib/actions/list-cases'
+import { getActiveOrgCaseById, listActiveOrgCases, listActiveOrgCasesRest } from '@/lib/actions/list-cases'
 import { mergeHydratedCaseRow } from '@/lib/case-list-lite'
 import type { SharePreset } from '@/lib/share-presets-types'
 import { DEFAULT_TODO_COLUMNS_CONFIG, type TodoColumnsConfig } from '@/lib/todo-columns-config-types'
@@ -105,6 +105,15 @@ interface CasesContextValue {
    * 케이스 선택 시 cases-context 가 풀 행을 자동 보강하므로 잠깐만 false 다.
    */
   isCaseHydrated: (id: string) => boolean
+  /**
+   * 케이스 목록 전량 로드 완료 여부 — 첫 페인트는 최신순 첫 배치만 받고(레이아웃
+   * listActiveOrgCasesFirstPage), 나머지는 마운트 후 백그라운드로 합쳐진다.
+   * false 인 동안 전체 배열 위에서 동작하는 화면(검사·신고·서류 탭, 검색)은
+   * "전체 불러오는 중" 안내를 띄워 부분 결과임을 알린다.
+   */
+  listFullyLoaded: boolean
+  /** 백그라운드 전량 로드가 재시도까지 실패한 상태 — 안내 문구 전환용(재시도 버튼은 없음). */
+  listLoadFailed: boolean
   /** 케이스 목록 검색어. 좌측 목록 + 케이스 상세 좌우 네비게이션이 같은 검색 결과를 공유. */
   searchQuery: string
   setSearchQuery: (q: string) => void
@@ -161,6 +170,7 @@ function syncCaseIdToUrl(id: string | null) {
 
 export function CasesProvider({
   initialCases,
+  initialTotalCount,
   fieldDefs,
   initialImportReportCountries,
   initialInspectionConfig,
@@ -173,6 +183,11 @@ export function CasesProvider({
   children,
 }: {
   initialCases: CaseRow[]
+  /**
+   * 조직 전체(미삭제) 케이스 수 — initialCases 가 첫 배치뿐인지 판별용.
+   * 생략 시 initialCases 가 전량이라고 간주(구 호출 규약 호환).
+   */
+  initialTotalCount?: number
   fieldDefs: FieldDefinition[]
   initialImportReportCountries: string[]
   initialInspectionConfig: InspectionConfig
@@ -228,6 +243,112 @@ export function CasesProvider({
     })
   }, [])
   const isCaseHydrated = useCallback((id: string) => hydratedIds.has(id), [hydratedIds])
+
+  // ── 백그라운드 전량 로드 (첫 배치 이후 나머지) ─────────────────────────
+  // 레이아웃은 첫 페인트 블로킹을 피하려고 최신순 첫 배치(기본 300)만 넘긴다.
+  // 나머지는 마운트 직후 listActiveOrgCasesRest 로 받아 merge — 검사·신고·서류 탭과
+  // 검색이 전체 배열 위에서 동작하는 모델은 그대로 유지된다.
+  const [listFullyLoaded, setListFullyLoaded] = useState(
+    initialCases.length >= (initialTotalCount ?? initialCases.length),
+  )
+  const [listLoadFailed, setListLoadFailed] = useState(false)
+
+  useEffect(() => {
+    if (listFullyLoaded) return
+
+    let alive = true
+
+    // 로드 사이 이 조직에서 케이스가 삭제되면 최신순 offset 이 당겨져 경계 행이
+    // 빠질 수 있다 — 약간 겹쳐 읽고 id dedupe 로 흡수한다(INSERT 로 밀리는 방향은
+    // 원래 중복만 생겨 dedupe 로 무해).
+    const OVERLAP = 50
+    const offset = Math.max(0, initialCases.length - OVERLAP)
+
+    const applyRest = (rest: CaseRow[]) => {
+      // hydrated 데모션은 스냅샷 기준으로 미리 계산 — 보수적 방향으로만 어긋난다
+      // (과잉 데모션은 hydration effect 의 재fetch 로 무해, 과소 데모션은 발생 불가:
+      // 캐시 updated_at 은 시간이 갈수록 커지기만 하므로 apply 시점에 rest 가 더 새면
+      // 스냅샷 시점에도 더 새다).
+      const snapshot = casesRef.current
+      const prevHydrated = hydratedIdsRef.current
+      const restById = new Map(rest.map((r) => [r.id, r] as const))
+      const demoted = new Set<string>()
+      for (const c of snapshot) {
+        if (!prevHydrated.has(c.id)) continue
+        const r = restById.get(c.id)
+        // rest 행은 경량(대형 data 키 제외) — hydrate 캐시 보존 규약과 동일하게,
+        // 더 새 경량 행으로 교체될 행은 hydrated 표시를 내린다. 선택된 케이스면
+        // hydration effect 가 곧바로 풀 행을 다시 받아온다.
+        if (r && c.updated_at && r.updated_at && r.updated_at > c.updated_at) demoted.add(c.id)
+      }
+
+      // merge 본체는 함수형 업데이트 — 같은 틱에 도착한 Realtime setCases 를 덮어쓰지 않게.
+      setCases((prev) => {
+        const idxById = new Map(prev.map((c, i) => [c.id, i] as const))
+        const next = prev.slice()
+        const appended: CaseRow[] = []
+        for (const r of rest) {
+          const idx = idxById.get(r.id)
+          if (idx === undefined) {
+            appended.push(r)
+            continue
+          }
+          const cached = next[idx]
+          // 최신 우선 — 백그라운드 로드 중 Realtime UPDATE·optimistic 편집이 같은
+          // 케이스를 먼저 갱신했을 수 있다. updated_at 이 캐시보다 새로울 때만 채택.
+          // 같거나 캐시가 더 새로우면 캐시 유지 (풀 data·편집 보존).
+          if (cached.updated_at && r.updated_at && r.updated_at > cached.updated_at) {
+            next[idx] = r
+          }
+        }
+        // 첫 배치(+로컬 추가분)는 최신순 상단 그대로, 나머지(더 오래된 행)는 뒤에 이어붙임
+        // — 서버 정렬(created_at desc)과 일치.
+        return appended.length > 0 ? [...next, ...appended] : next
+      })
+      if (demoted.size > 0) {
+        setHydratedIds((prevSet) => {
+          let changed = false
+          const s = new Set(prevSet)
+          for (const id of demoted) {
+            if (s.delete(id)) changed = true
+          }
+          return changed ? s : prevSet
+        })
+      }
+    }
+
+    void (async () => {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const rest = await listActiveOrgCasesRest(offset)
+          if (!alive) return
+          applyRest(rest)
+          setListFullyLoaded(true)
+          setListLoadFailed(false)
+          return
+        } catch (err) {
+          if (!alive) return
+          if (attempt === 0) {
+            // 1회 재시도 — 마운트 직후 토큰 refresh/네트워크 race 흡수.
+            await new Promise((r) => setTimeout(r, 3_000))
+            continue
+          }
+          // 조용한 영구 부분목록 금지 — 콘솔 + Sentry 로 보고하고 에러 상태 노출.
+          // (Realtime 재연결의 전량 재조회가 성공하면 그때 회복된다.)
+          console.error('[cases] background full-list load failed', err)
+          Sentry.captureException(err, { tags: { feature: 'cases-rest-load' } })
+          setListLoadFailed(true)
+        }
+      }
+    })()
+
+    return () => {
+      alive = false
+    }
+    // mount-only — 첫 배치/전체 수는 마운트 시점 프롭 기준. 이후 회복은 Realtime
+    // 재연결 전량 재조회가 담당.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── 임시 진단(DIAG-REMOUNT) ─────────────────────────────────────────────
   // "상세→목록 튕김" 의 가설: (dashboard) 레이아웃이 어떤 트리거로 리마운트
@@ -498,6 +619,10 @@ export function CasesProvider({
           })
           setCases(merged)
           setHydratedIds(nextHydrated)
+          // 재연결 전량 재조회가 성공했으므로 목록은 이제 전량 — 백그라운드 첫 로드가
+          // 실패했었더라도 여기서 회복된다.
+          setListFullyLoaded(true)
+          setListLoadFailed(false)
           if (arrivedIds.length > 0) {
             setNewCaseIds((prev) => {
               const next = new Set(prev)
@@ -666,12 +791,14 @@ export function CasesProvider({
       todoColumnsConfig,
       setTodoColumnsConfig,
       isCaseHydrated,
+      listFullyLoaded,
+      listLoadFailed,
       searchQuery,
       setSearchQuery,
       navCaseIds,
       setNavCaseIds,
     }),
-    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, removeLocalCaseQuiet, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, inspectionConfig, certConfig, newCaseIds, caseAssigneeEnabled, orgMembers, sharePresets, setSharePresets, todoColumnsConfig, isCaseHydrated, searchQuery, navCaseIds],
+    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, removeLocalCaseQuiet, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, inspectionConfig, certConfig, newCaseIds, caseAssigneeEnabled, orgMembers, sharePresets, setSharePresets, todoColumnsConfig, isCaseHydrated, listFullyLoaded, listLoadFailed, searchQuery, navCaseIds],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

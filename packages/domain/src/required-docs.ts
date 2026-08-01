@@ -2126,6 +2126,10 @@ export const SHARED_ATTACH_STEPS: ReadonlySet<string> = new Set([
   'civ-vaccine', //          civ_dates (GLOBAL)
   'external-parasite', //    external_parasite_dates (GLOBAL)
   'internal-parasite', //    internal_parasite_dates (GLOBAL)
+  // 촌충 치료(EU 5국) — 주 기록 키가 internal-parasite 와 같은 internal_parasite_dates
+  //   (GLOBAL) 라 첨부(투약 증명)도 동물 단위 공유가 정합(2026-08-01 후속 감사 반영.
+  //   deworming_time 은 scoped 지만 타이밍 보조 필드일 뿐 첨부의 귀속과 무관).
+  'echinococcus-treatment',
   'advance-notification', // 일본 전용 단일 단계 — report-status 무스코프 derive 와 판정 일치
 ])
 

@@ -181,7 +181,7 @@ export function CaseList({
   /** 펫무브 직영 보기(super_admin)일 때만 — 행별 "가져오기" 대상 org 이름. null 이면 버튼 미표시. */
   moveTargetName?: string | null
 }) {
-  const { cases, selectedId, selectCase, newCaseIds, searchQuery: query, setSearchQuery: setQuery, setNavCaseIds, removeLocalCaseQuiet } = useCases()
+  const { cases, selectedId, selectCase, newCaseIds, searchQuery: query, setSearchQuery: setQuery, setNavCaseIds, removeLocalCaseQuiet, listFullyLoaded, listLoadFailed } = useCases()
   const confirmDialog = useConfirm()
   const [movingId, setMovingId] = useState<string | null>(null)
   const [moveError, setMoveError] = useState<string | null>(null)
@@ -568,6 +568,19 @@ export function CaseList({
                   <li ref={sentinelRef} className="h-10" />
                 )}
               </ul>
+            )}
+            {/* 전량 로드 전 검색 — 첫 배치(최신순) 위에서만 매칭된 부분 결과임을 안내. */}
+            {query.trim() !== '' && !listFullyLoaded && (
+              <div className="px-lg py-3 flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                {listLoadFailed ? (
+                  <span>목록 일부를 불러오지 못했어요 — 검색 결과가 일부만 표시될 수 있습니다. 새로고침하면 다시 시도합니다.</span>
+                ) : (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>전체 목록 불러오는 중 — 검색 결과가 일부만 표시될 수 있어요</span>
+                  </>
+                )}
+              </div>
             )}
           </div>
         </div>

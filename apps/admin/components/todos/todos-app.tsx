@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Files, MoreHorizontal, Plus, Search } from 'lucide-react'
+import { Files, Loader2, MoreHorizontal, Plus, Search } from 'lucide-react'
 import type { CaseRow } from '@petmove/domain'
 import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
@@ -858,7 +858,7 @@ export function TodosApp({
   tab?: TabId
   query?: string
 } = {}) {
-  const { cases, updateLocalCaseField, importReportCountries, inspectionConfig, todoColumnsConfig, setNavCaseIds } = useCases()
+  const { cases, updateLocalCaseField, importReportCountries, inspectionConfig, todoColumnsConfig, setNavCaseIds, listFullyLoaded, listLoadFailed } = useCases()
   const [internalTab, setInternalTab] = useState<TabId>('inspection')
   const [internalQuery, setInternalQuery] = useState('')
   const activeTab = forcedTab ?? internalTab
@@ -1120,6 +1120,20 @@ export function TodosApp({
               : undefined
           }
         />
+      )}
+      {/* 전량 로드 전 — 첫 배치(최신순)만으로 만든 부분 행임을 안내. 상위(최신) 케이스는
+          대부분 정확하므로 부분 행은 그대로 보여준다. */}
+      {!listFullyLoaded && (
+        <div className="px-lg py-3 flex items-center gap-1.5 text-[12px] text-muted-foreground">
+          {listLoadFailed ? (
+            <span>목록 일부를 불러오지 못했어요 — 일부 케이스가 빠져 있을 수 있습니다. 새로고침하면 다시 시도합니다.</span>
+          ) : (
+            <>
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>전체 목록 불러오는 중 — 일부 케이스가 아직 표시되지 않을 수 있어요</span>
+            </>
+          )}
+        </div>
       )}
     </div>
   )
