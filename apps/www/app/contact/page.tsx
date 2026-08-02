@@ -5,7 +5,7 @@ import { CONTACT } from '@/lib/site-data'
 
 export const metadata: Metadata = {
   title: '문의 · 펫무브',
-  description: '펫무브 상담·문의 — 카카오톡 상담·전화·네이버 예약으로 편하게 연락주세요.',
+  description: '펫무브 상담·문의 - 카카오톡 상담·전화·네이버 예약으로 편하게 연락주세요.',
 }
 
 export default function ContactPage() {
