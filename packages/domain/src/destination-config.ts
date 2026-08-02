@@ -1499,7 +1499,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     },
     titer: { need: 'return-only' },
     appSupported: true,
-    vaccines: ['rabies', 'rabies_titer'],
+    // ✅ 내·외부 구충 추가(2026-08-02 사용자 지시). SENASA 원문: "Tratamiento contra
+    //   parásitos internos y externos dentro de los 15 (quince) días previos a la fecha de
+    //   emisión del CVI" — 브라질과 같은 구조(증명서 발급일 앵커)라 같은 창을 쓴다.
+    vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
     // 격리 없음(SENASA·가이드: 미충족 시 입국 불가·격리 규정 없음) — 베트남 복제 잔재
     // importQuarantine: { quarantineDays: 14 } 제거(2026-07-23). quarantineDays 는 렌더되지도
     // 않던 죽은 값이라 표시엔 영향 없지만, 프로파일이 규정과 어긋나 있어 정리.

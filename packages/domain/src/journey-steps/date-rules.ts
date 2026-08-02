@@ -1072,6 +1072,10 @@ export const PARASITE_DEPARTURE_WINDOWS: Record<
   turkey: { maxGap: 30, windowLabel: '출국 전 30일 이내', kinds: ['external', 'internal'] },
   mexico: { maxGap: 180, windowLabel: '멕시코 도착 6개월 이내', kinds: ['external', 'internal'] },
   brazil: { maxGap: 14, windowLabel: '출국 전 15일 이내', kinds: ['external', 'internal'] },
+  // 아르헨티나 — SENASA "dentro de los 15 días previos a la fecha de emisión del CVI".
+  //   브라질과 같은 '증명서 발급일 앵커'이고, 한국 수출 검역이 출국 전 10일 이내라
+  //   출국일 앵커 15일 창이 같은 근사가 된다(브라질과 동일 처리).
+  argentina: { maxGap: 14, windowLabel: '출국 전 15일 이내', kinds: ['external', 'internal'] },
   uae: { maxGap: 13, windowLabel: '출국 전 14일 이내', kinds: ['external', 'internal'] },
   hawaii: { maxGap: 13, windowLabel: '출국 전 14일 이내', kinds: ['external'] },
   // 괌 — 내·외부 기생충 + 심장사상충을 '도착 14일 이내'에 함께 처치한다(www 괌 가이드·gu.ts).

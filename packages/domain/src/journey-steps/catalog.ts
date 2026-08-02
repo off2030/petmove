@@ -1864,6 +1864,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'turkey',
         'mexico',
         'brazil',
+        // 아르헨티나 — SENASA "parásitos internos y externos dentro de los 15 días previos a
+        //   la fecha de emisión del CVI"(2026-08-02 원문 확인·사용자 지시로 추가). 브라질과 같은 구조.
+        'argentina',
         'uae',
         'hawaii',
         'guam',
@@ -1911,6 +1914,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         // 멕시코·브라질 — 위 외부구충과 같은 근거.
         'mexico',
         'brazil',
+        // 아르헨티나 — SENASA "parásitos internos y externos dentro de los 15 días previos a
+        //   la fecha de emisión del CVI"(2026-08-02 원문 확인·사용자 지시로 추가). 브라질과 같은 구조.
+        'argentina',
         // 아랍에미리트 — 외부 카드에는 있는데 내부만 빠져 있었다(2026-07-22 발견).
         // MOCCAE 는 내·외부를 함께 요구한다("preventive doses for internal and external
         // parasites during the 14 days prior to shipment") — 룰(ae.internal-parasite-

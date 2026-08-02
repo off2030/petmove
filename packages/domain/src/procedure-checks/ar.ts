@@ -1,12 +1,16 @@
 import {
   buildDateRuleContext,
+  validateParasiteDateForDestination,
   calendarAgeThreshold,
   meetsCalendarAge,
   violatesRabiesEntryWait,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
+  daysBetween,
   findRabiesValidityBreaks,
+  readExternalParasiteEntries,
+  readInternalParasiteEntries,
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
@@ -195,4 +199,78 @@ export const AR_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `아르헨티나 수입검역일(${raw}) 입국 이후.` }
     },
   },
+  // ── 구충 ──
+  // SENASA 원문: "Tratamiento contra parásitos internos y externos dentro de los 15 (quince)
+  //   días previos a la fecha de emisión del CVI ... con productos veterinarios aprobados".
+  //   앵커가 증명서 발급일이라 브라질과 같은 구조 → 같은 창(PARASITE_DEPARTURE_WINDOWS.argentina).
+  //   ⚠️ 2026-08-02 이전에는 이 요건이 프로파일·룰 어디에도 없어 앱이 안내하지 못했다.
+  {
+    id: 'ar.external-parasite-within-15days',
+    country: COUNTRY,
+    category: '구충',
+    title: '외부구충은 출국 포함 15일 이내 (14일 전 이후)',
+    description:
+      '외부구충(벼룩·진드기) 처치는 출국 포함 15일 이내 = 출국일 기준 14일 전 이후. (SENASA: "dentro de los 15 días previos a la fecha de emisión del CVI")',
+    severity: 'warning',
+    addedAt: '2026-08-02',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
+      const entries = readExternalParasiteEntries(caseRow)
+      if (!dep || entries.length === 0) return SKIP
+      let err: string | null = null
+      let offender = entries[entries.length - 1]
+      for (const e of entries) {
+        const r = validateParasiteDateForDestination(e.date, {
+          destinationKey: destination,
+          kind: 'external',
+          departureDate: dep,
+        })
+        if (r) {
+          err = r
+          offender = e
+          break
+        }
+      }
+      if (err) {
+        return { ok: false, message: err, offendingPaths: [`external_parasite_dates[${offender.originalIndex}].date`] }
+      }
+      const latest = entries[entries.length - 1]
+      return { ok: true, message: `외부 기생충 치료(${latest.date}) → 출국일(${dep}): ${daysBetween(latest.date, dep)}일.` }
+    },
+  },
+  {
+    id: 'ar.internal-parasite-within-15days',
+    country: COUNTRY,
+    category: '구충',
+    title: '내부구충은 출국 포함 15일 이내 (14일 전 이후)',
+    description:
+      '내부구충(선충·조충) 처치는 출국 포함 15일 이내 = 출국일 기준 14일 전 이후. (SENASA: "dentro de los 15 días previos a la fecha de emisión del CVI")',
+    severity: 'warning',
+    addedAt: '2026-08-02',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
+      const entries = readInternalParasiteEntries(caseRow)
+      if (!dep || entries.length === 0) return SKIP
+      let err: string | null = null
+      let offender = entries[entries.length - 1]
+      for (const e of entries) {
+        const r = validateParasiteDateForDestination(e.date, {
+          destinationKey: destination,
+          kind: 'internal',
+          departureDate: dep,
+        })
+        if (r) {
+          err = r
+          offender = e
+          break
+        }
+      }
+      if (err) {
+        return { ok: false, message: err, offendingPaths: [`internal_parasite_dates[${offender.originalIndex}].date`] }
+      }
+      const latest = entries[entries.length - 1]
+      return { ok: true, message: `내부 기생충 치료(${latest.date}) → 출국일(${dep}): ${daysBetween(latest.date, dep)}일.` }
+    },
+  },
+
 ]

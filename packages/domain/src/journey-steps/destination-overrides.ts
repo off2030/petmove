@@ -522,6 +522,16 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       earliest: undefined,
       validationIds: ['ar.rabies-min-21days-before-departure'],
     },
+    // 구충 — SENASA "dentro de los 15 días previos a la fecha de emisión del CVI".
+    //   그 증명서는 **한국이 발급하는 수출 검역증**이라 브라질과 같은 구조·같은 문구를 쓴다.
+    'external-parasite': {
+      description: '외부 기생충 치료를 하세요.\n\n출국 전 15일 이내에 해야 해요.',
+      validationIds: ['ar.external-parasite-within-15days'],
+    },
+    'internal-parasite': {
+      description: '내부 기생충 치료를 하세요.\n\n출국 전 15일 이내에 해야 해요.',
+      validationIds: ['ar.internal-parasite-within-15days'],
+    },
     departure: importQuarantineCard({
       label: '아르헨티나',
       fieldKey: 'ar_import_quarantine_date',
