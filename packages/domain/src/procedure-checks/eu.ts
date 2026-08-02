@@ -480,6 +480,37 @@ export const EU_CHECKS: ProcedureCheck[] = [
     },
   },
 
+  // ── 스위스 — 위험국(한국)발 생후 7개월 미만 입국 금지 ──
+  {
+    id: 'eu.ch-min-7months-on-departure',
+    country: ['switzerland'],
+    category: '일정',
+    title: '출국일 시점 생후 7개월 이상',
+    description:
+      'BLV(FSVO): "Entering Switzerland from countries with a high risk of rabies with dogs, cats or ferrets under the age of seven months is therefore not permitted." 한국은 스위스 저위험국 목록에 없어 위험국. 개·고양이 모두 대상. 입력 차단(validateChEntryDate)과 같은 함수.',
+    severity: 'warning',
+    addedAt: '2026-08-02',
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
+      if (!dep || !birth) return SKIP
+
+      const earliestDep = addMonths(birth, 7)
+      if (!earliestDep) return SKIP
+      if (earliestDep <= dep) {
+        const ageDays = daysBetween(birth, dep)
+        return { ok: true, message: `생년월일(${birth}) + 7개월(${earliestDep}) ≤ 출국일(${dep}). 생후 ${ageDays}일.` }
+      }
+      return {
+        ok: false,
+        // 고객 노출 문구 — 날짜 미보간(lint:checks). 날짜는 offendingPaths 가 칸을 지목한다.
+        message: '생후 7개월이 지나야 스위스에 입국할 수 있어요.',
+        offendingPaths: ['departure_date', 'birth_date'],
+      }
+    },
+  },
+
   // ── 검사·증명서 일정 재검증 — 입력 차단과 같은 규칙을 매 렌더 재실행 (jp/th/ph 동일 모델) ──
   {
     id: 'eu.import-quarantine-date-valid',

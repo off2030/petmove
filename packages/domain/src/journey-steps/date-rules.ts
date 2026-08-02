@@ -676,6 +676,37 @@ export function validateIlEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
+ * 스위스 — 광견병 **위험국(한국)** 출발이면 생후 **7개월** 미만은 입국 자체가 금지.
+ *
+ * BLV(FSVO) "Travelling with dogs, cats and ferrets": "Entering Switzerland from countries with
+ * a high risk of rabies with dogs, cats or ferrets **under the age of seven months** is therefore
+ * not permitted." 한국은 스위스의 저위험국 목록(= EU Annex II 등재국)에 없어 위험국으로
+ * 분류된다 — 이 가이드의 항체검사·3개월 대기 요건 자체가 위험국 경로에만 붙는 것이다.
+ *
+ * 개·고양이 **둘 다** 대상이다(미국 6개월은 CDC 개 규칙이라 개만인 것과 다르다).
+ * 달력 개월로 판정한다(210일로 환산하지 않음) — 홍콩 5개월·이스라엘 4개월과 같은 처리.
+ *
+ * 생년월일은 못 바꾸니 위반 해소가 '날짜를 늦추는 것'뿐이라 저장 거부 대상.
+ * client(입력 불가)·procedure-check(eu.ch-min-7months-on-departure, 출국일을 나중에 당겨
+ * 어긋난 경우 '주의') 공용. 스위스 외·생년월일 미입력 시 SKIP.
+ *
+ * ⚠️ 항체 채혈 후 3개월 대기(validateEuEntryDate)와 **별개 규칙**이다. 생후 12주 접종 →
+ *   30일 후 채혈 → 3개월 대기만 채우면 생후 6개월 20일쯤 되는데, 스위스는 거기서 7개월까지
+ *   더 기다려야 한다. 둘 중 늦은 날짜가 실제 입국 가능일이다.
+ */
+export function validateChEntryDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!matchesDestinationKey(ctx.destination, 'switzerland')) return null
+  const birth = readDate(ctx.data, 'birth_date')
+  if (!birth) return null
+  const earliest = addMonths(birth, 7)
+  if (earliest && v < earliest) {
+    return '생후 7개월이 지나야 스위스에 입국할 수 있어요.'
+  }
+  return null
+}
+
+/**
  * 현재 유효한 광견병 '1차 접종'(operative primary) — 뉴질랜드 IHS 2.1.3 guidance 의 정의.
  *
  * "A 'primary' rabies vaccination is the first vaccination ... **or** the first vaccination
@@ -1579,6 +1610,9 @@ export function validateEntryDateForDestination(
     // 이스라엘 — 출국일 만 4개월(생일 불변이라 저장 거부). EU 골격이나 항체 3개월 대기는 없어
     // validateEuEntryDate 에서 제외되므로 여기서 별도로 나이만 막는다.
     validateIlEntryDate(entryOrDeparture, ctx) ??
+    // 스위스 — 위험국(한국)발 생후 7개월 미만 입국 금지(BLV). 항체 3개월 대기(validateEuEntryDate)
+    // 와 별개라 여기서 나이만 따로 막는다. 둘 중 늦은 날짜가 실제 입국 가능일.
+    validateChEntryDate(entryOrDeparture, ctx) ??
     // 종합백신 접종 후 대기(싱가포르 14·UAE 21·카자흐/러시아 20) — 프로파일 파생 저장 거부.
     validateGeneralVaccineEntryWait(entryOrDeparture, ctx) ??
     validateEuEntryDate(entryOrDeparture, ctx) ??
