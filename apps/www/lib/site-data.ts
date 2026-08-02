@@ -74,7 +74,7 @@ export const COUNTRIES: Country[] = [
   { ko: '카자흐스탄', slug: 'kazakhstan', region: '아시아' },
   { ko: '우즈베키스탄', slug: 'uzbekistan', region: '아시아' },
   // 유럽
-  { ko: '유럽(EU)', slug: 'eu', region: '유럽' },
+  { ko: '유럽', slug: 'eu', region: '유럽' },
   { ko: '프랑스', slug: 'france', region: '유럽' },
   { ko: '독일', slug: 'germany', region: '유럽' },
   { ko: '스페인', slug: 'spain', region: '유럽' },
@@ -135,7 +135,7 @@ export const COUNTRY_POSTS: Record<string, PostRef[]> = {
     { title: '강아지 미국 입국 준비절차, 기간, 비용 (2024년 7월까지)', kind: 'blog', slug: 'dog-travel-to-usa-2024-rule' },
   ],
   eu: [
-    { title: '유럽(EU) 입국 준비 총정리', kind: 'docs', slug: 'eu-pet-travel-guide' },
+    { title: '유럽 입국 준비 총정리', kind: 'docs', slug: 'eu-pet-travel-guide' },
     { title: '[2026] 반려동물 유럽 입국, 광견병항체검사 기관 변경 안내', kind: 'blog', slug: 'eu-pet-rabies-test' },
   ],
   // 프랑스 글은 EU 패널에서 이동(2026-08-01 프랑스 칩 신설과 함께).
