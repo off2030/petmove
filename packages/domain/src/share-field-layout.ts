@@ -296,6 +296,25 @@ export function buildShareFieldLayout(
 }
 
 /**
+ * 공유 링크가 값을 읽고 쓸 목적지 토큰 — 읽기·쓰기가 반드시 같은 함수를 써야 한다.
+ *
+ * 쓰기(submitShareLink)는 목적지 개수와 무관하게 by_dest[토큰] 에 저장한다. 읽기만
+ * "목적지 2개 이상일 때만 by_dest" 로 게이트하던 탓에, 단일 목적지 케이스에서는 저장된
+ * 값을 아무도 못 봐서 이미 받은 항목이 '빈 칸'으로 판정됐다(다이얼로그에 입력 완료 항목이
+ * 다시 뜨고, 수신자 폼도 빈 칸으로 보임 — 2026-08-03).
+ *
+ * scope 인자가 "캐나다, 말레이시아" 같은 다중 문자열로 들어와도 첫 토큰으로 정규화한다.
+ * 정규화 없이 그대로 쓰면 by_dest["캐나다, 말레이시아"] 라는 아무도 안 읽는 칸에 저장돼
+ * 제출값이 조용히 사라진다.
+ */
+export function resolveShareScopeToken(
+  caseDestination: string | null | undefined,
+  destinationScope?: string | null,
+): string | null {
+  return parseDestinations(destinationScope)[0] ?? parseDestinations(caseDestination)[0] ?? null
+}
+
+/**
  * 케이스에 이 필드 값이 이미 채워져 있는지 — 공유 다이얼로그의 "입력된 항목 숨김"용.
  * 서버 toShareFieldSpec 의 current_value 도출과 같은 by_dest 규칙을 따른다(값 유무만 판정).
  * 공유 링크는 '아직 안 받은 정보'를 수집하는 용도라, 이미 값이 있는 필드는 기본 숨김 대상.
@@ -307,8 +326,9 @@ export function shareDescriptorHasValue(
 ): boolean {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const isMulti = parseDestinations(caseRow.destination).length > 1
-  const useByDest = isMulti && !!destinationScope && isDestinationScopedKey(d.key)
-  const byDestVal = useByDest ? readByDestValue(data, destinationScope ?? null, d.key) : undefined
+  const scopeToken = resolveShareScopeToken(caseRow.destination, destinationScope)
+  const useByDest = !!scopeToken && isDestinationScopedKey(d.key)
+  const byDestVal = useByDest ? readByDestValue(data, scopeToken, d.key) : undefined
 
   if (d.source.kind === 'synthetic-vaccine') {
     const g = d.source.group

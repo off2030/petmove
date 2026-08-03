@@ -35,6 +35,7 @@ import {
   getEffectiveExtraFieldEntries,
   isDestinationScopedKey,
   parseDestinations,
+  resolveShareScopeToken,
   readByDestValue,
   writeByDestValue,
   computeAutoFill,
@@ -114,10 +115,12 @@ function toShareFieldSpec(
     subgroup: d.subgroup,
     description: SHARE_RECIPIENT_FIELD_DESCRIPTION[d.key],
   } as const
-  // 다중 목적지 + scope 지정 + scoped 키: by_dest 우선 (null sentinel 도 인식).
-  const isMulti = parseDestinations(caseRow.destination).length > 1
-  const useByDest = isMulti && !!destinationScope && isDestinationScopedKey(d.key)
-  const byDestVal = useByDest ? readByDestValue(data, destinationScope ?? null, d.key) : undefined
+  // scoped 키는 목적지 개수와 무관하게 by_dest 우선 (null sentinel 도 인식) — 아래 제출
+  // 경로가 단일 목적지에서도 by_dest 에 쓰기 때문. isMulti 게이트를 두면 단일 목적지
+  // 케이스에서 이미 받은 값이 수신자 폼에 빈 칸으로 보인다(shareDescriptorHasValue 와 동일 수정).
+  const scopeToken = resolveShareScopeToken(caseRow.destination, destinationScope)
+  const useByDest = !!scopeToken && isDestinationScopedKey(d.key)
+  const byDestVal = useByDest ? readByDestValue(data, scopeToken, d.key) : undefined
   switch (d.source.kind) {
     case 'column': {
       const meta = d.source.meta
@@ -166,6 +169,88 @@ function toShareFieldSpec(
       }
     }
   }
+}
+
+/**
+ * 보호자가 공유 링크로 제출한 변경분을 case_history 행으로 만든다.
+ *
+ * WHY: 이 액션은 cases 를 직접 UPDATE 하면서 이력을 남기지 않았다. 그래서 링크로 들어온
+ * 값은 '이력' 화면에 아무 흔적이 없고, 나중에 어떤 경로로든 덮어써지면 되돌릴 방법이
+ * 없었다(2026-08-03 시월 해외주소 소실 — 이력 0건이라 백업 말고는 복구 수단이 없었음).
+ *
+ * 직렬화·field_key 규칙은 admin cases.ts 의 serializeForHistory / updateCaseField 와 동일해야
+ * undo(restoreToHistoryPoint)가 같은 값을 되돌릴 수 있다:
+ *   - data       : null/undefined/'' → null, 그 외 JSON.stringify
+ *   - column     : null/'' → null, 그 외 String(value)
+ *   - by_dest 키 : field_key = `by_dest:{목적지}:{키}`, storage = 'data'
+ *
+ * updates.data 전체를 before 와 비교하므로 auto-fill(computeAutoFill)이 덧붙인 변경도 함께 남는다.
+ */
+function buildSubmitHistoryRows(args: {
+  caseId: string
+  orgId: string
+  before: Record<string, unknown>
+  beforeColumns: Record<string, unknown>
+  updates: Record<string, unknown>
+}): Array<{
+  case_id: string
+  org_id: string
+  field_key: string
+  field_storage: 'column' | 'data'
+  old_value: string | null
+  new_value: string | null
+}> {
+  const { caseId, orgId, before, beforeColumns, updates } = args
+  if (!orgId) return []
+
+  const ser = (storage: 'column' | 'data', v: unknown): string | null => {
+    if (v === null || v === undefined || v === '') return null
+    return storage === 'column' ? String(v) : JSON.stringify(v)
+  }
+  const rows: Array<{
+    case_id: string
+    org_id: string
+    field_key: string
+    field_storage: 'column' | 'data'
+    old_value: string | null
+    new_value: string | null
+  }> = []
+  const push = (field_key: string, field_storage: 'column' | 'data', oldV: unknown, newV: unknown) => {
+    const o = ser(field_storage, oldV)
+    const n = ser(field_storage, newV)
+    if (o === n) return
+    rows.push({ case_id: caseId, org_id: orgId, field_key, field_storage, old_value: o, new_value: n })
+  }
+
+  const asObj = (v: unknown): Record<string, unknown> =>
+    v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {}
+
+  const after = updates.data as Record<string, unknown> | undefined
+  if (after) {
+    // top-level data 키 (by_dest 는 아래에서 목적지·키 단위로 따로 기록).
+    for (const k of new Set([...Object.keys(before), ...Object.keys(after)])) {
+      if (k === 'by_dest') continue
+      push(k, 'data', before[k], after[k])
+    }
+    // by_dest[목적지][키]
+    const bBy = asObj(before['by_dest'])
+    const aBy = asObj(after['by_dest'])
+    for (const dest of new Set([...Object.keys(bBy), ...Object.keys(aBy)])) {
+      const bDest = asObj(bBy[dest])
+      const aDest = asObj(aBy[dest])
+      for (const k of new Set([...Object.keys(bDest), ...Object.keys(aDest)])) {
+        push(`by_dest:${dest}:${k}`, 'data', bDest[k], aDest[k])
+      }
+    }
+  }
+
+  // 컬럼 — updates 에 실린 것만 (data 제외).
+  for (const [k, v] of Object.entries(updates)) {
+    if (k === 'data') continue
+    push(k, 'column', beforeColumns[k], v)
+  }
+
+  return rows
 }
 
 function mapExtraType(t: string): ShareFieldSpec['type'] {
@@ -441,8 +526,11 @@ export async function submitShareLink(
     // 읽기(activeDestinationView/buildCaseJourneyContext)가 activeDest 없을 때 첫 토큰으로 폴백하므로,
     // 쓰기도 첫 토큰 by_dest 에 저장해야 일치한다. 다중 목적지인데 scope 없이 top-level 에 쓰면
     // strict flatten 이 떨궈 제출값이 증발한다(resolveWriteToken 과 동일 컨벤션).
+    // destination_scope 가 "캐나다, 말레이시아" 같은 다중 문자열로 저장돼 있으면 첫 토큰으로
+    // 정규화한다 — 그대로 쓰면 by_dest["캐나다, 말레이시아"] 라는 아무 리더도 안 보는 칸에
+    // 저장돼 제출값이 조용히 사라진다. 읽기(toShareFieldSpec)와 같은 함수를 쓴다.
     const caseDests = parseDestinations(caseDestination)
-    const scope = row.destination_scope ?? (caseDests[0] ?? null)
+    const scope = resolveShareScopeToken(caseDestination, row.destination_scope)
     const useByDest = !!scope
 
     // colUpdate 처리 — by_dest 모드면 departure_date 같은 scoped 컬럼은 by_dest 로.
@@ -556,6 +644,17 @@ export async function submitShareLink(
         }
       } catch { /* best-effort — 실패해도 share-link 제출 자체는 성공 */ }
 
+      // 변경 이력 — UPDATE 직전 스냅샷으로 계산해두고, 성공 후 적재한다.
+      // 안 남기면 보호자가 링크로 넣은 값은 '이력'에 흔적이 없어, 이후 누가/무엇이 덮어써도
+      // 되돌릴 수 없다(2026-08-03 해외주소 소실 — 이력 0건이라 복구 불가였음).
+      const historyRows = buildSubmitHistoryRows({
+        caseId: row.case_id,
+        orgId: caseOrgId,
+        before: current,
+        beforeColumns: { destination: caseDestination, departure_date: caseDepartureDate },
+        updates,
+      })
+
       const { error: upErr } = await admin
         .from('cases')
         .update(updates)
@@ -574,6 +673,12 @@ export async function submitShareLink(
           return { ok: false, error: '이미 등록된 마이크로칩 번호입니다' }
         }
         return { ok: false, error: upErr.message }
+      }
+
+      // best-effort — 이력 적재 실패가 제출을 되돌리지는 않는다.
+      if (historyRows.length > 0) {
+        const { error: histErr } = await admin.from('case_history').insert(historyRows)
+        if (histErr) reportActionError(histErr, 'share-links-public.submitShareLink.history')
       }
     }
 
