@@ -1262,7 +1262,9 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
   // 지연 blur 저장(150ms)이 도착했을 때 사용자가 이미 다른 슬롯을 편집 중이면 그 입력창을
   // 닫아버리지 않도록 현재 편집 슬롯을 ref 로 추적(2026-08-01 리뷰 — 공유 편집 state 간섭).
   const editingRef = useRef<number | null>(null)
-  editingRef.current = editing
+  // 렌더 중 ref 쓰기는 React 규칙 위반(react-hooks/refs) — effect 에서 동기화한다.
+  // 읽는 쪽(saveChip)은 150ms 지연 blur 콜백이라 effect 반영 이후에 실행돼 동작은 동일하다.
+  useEffect(() => { editingRef.current = editing }, [editing])
 
   useEffect(() => {
     setEditing(null)
