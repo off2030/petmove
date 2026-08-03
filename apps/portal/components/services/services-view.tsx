@@ -735,7 +735,8 @@ const DEST_PRICING: Record<string, { offlineCost?: string; period?: string }> = 
   china: { offlineCost: '36~52', period: '1~2개월' },
 
   // ── 아시아 ────────────────────────────────────────────────
-  taiwan: { offlineCost: '40~51', period: '최소 4~5개월' },
+  // 수입 허가 신청(APHIA e-permit)을 로잔이 대행하게 되며 상·하한 +5만원(2026-08-03 사용자 지정).
+  taiwan: { offlineCost: '45~56', period: '최소 4~5개월' },
   // 기간은 www 홍콩 가이드 문장 그대로 — '홍콩 입국 준비는 최소 1.5~2개월 걸립니다'
   // (2026-07-26 확인. 구 주석 '문장 없음'은 사실이 아니었다).
   hongkong: { offlineCost: '21~27', period: '최소 1.5~2개월' },
@@ -853,7 +854,8 @@ function derivedDetail(kind: 'offline' | 'online', dest: string, trip: TripType)
   // importPermit(수입허가국: 대만 등) 하나 — 스위스 '수입 허가 신청'과 같은 기존 표현을 쓴다.
   // 표기 통일: 신청 대상은 '허가'라 **'수입 허가 신청'**(신청 결과물이 '허가증'). 2026-07-23.
   // 로잔이 대행하지 못하는 허가는 맡기기 상품에서 뺀다 — 두 경우:
-  //   · selfApply — 보호자·수입자가 목적국 시스템에 직접 온라인 신청(대만 APHIA e-permit / 호주·뉴질랜드)
+  //   · selfApply — 보호자·수입자가 목적국 시스템에 직접 온라인 신청(호주 BICON / 뉴질랜드 MPI)
+  //     (대만 APHIA e-permit 은 2026-08-03 부터 로잔 대행 — 플래그를 떼어 목록에 포함된다)
   //   · localApplyOnly — 현지 등록 수입자·에이전시만 현지 신청(인도네시아 Barantin·농업부 / 말레이시아 MAQIS)
   // 여정 카드·서류 탭에는 그대로 뜬다. 여기서 빼는 건 **맡기기 상품에 포함되는 항목**뿐.
   const permit = DESTINATION_OVERRIDES[destKey]?.importPermit

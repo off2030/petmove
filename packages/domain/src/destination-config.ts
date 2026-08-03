@@ -1201,11 +1201,12 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     titer: { entryValidityMonths: 12, entryWaitAfterTiter: { days: 180 } },
     vaccines: ['rabies', 'rabies_titer'],
     extraFields: ['address_overseas', 'permit_no'],
-    // APHIA pet e-permit — 보호자가 온라인으로 직접 신청(selfApply) → 맡기기 항목 제외.
+    // APHIA pet e-permit — 로잔이 대행한다(2026-08-03 사용자 지정). selfApply 플래그의 유일한
+    //   기능은 '맡기기 상품에서 제외'라, 대행하는 이상 붙여 둘 이유가 없어 뗀다.
+    //   (여정 카드·서류 탭·발급 푸시는 이 플래그와 무관하게 종전 그대로.)
     importPermit: {
       applyDeadlineDays: 120,
       docName: '수입 허가증(Import Permit)',
-      selfApply: true,
     },
     appSupported: true,
   },
