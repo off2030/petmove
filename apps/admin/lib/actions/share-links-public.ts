@@ -121,6 +121,11 @@ function toShareFieldSpec(
   const scopeToken = resolveShareScopeToken(caseRow.destination, destinationScope)
   const useByDest = !!scopeToken && isDestinationScopedKey(d.key)
   const byDestVal = useByDest ? readByDestValue(data, scopeToken, d.key) : undefined
+  // by_dest 에 없을 때의 폴백 — 단일 목적지는 top-level 잔존값(legacy)까지 보여주고,
+  // 다중 목적지는 보여주지 않는다(다른 목적지 값이 이 목적지 폼에 프리필되는 누수 차단).
+  const isMulti = parseDestinations(caseRow.destination).length > 1
+  const fallback = <T,>(topLevel: T): T | null =>
+    useByDest && isMulti ? null : (topLevel ?? null)
   switch (d.source.kind) {
     case 'column': {
       const meta = d.source.meta
@@ -128,9 +133,9 @@ function toShareFieldSpec(
         ...base,
         storage: 'column',
         type: meta.type,
-        current_value: useByDest
-          ? (byDestVal === undefined ? ((caseRow as unknown as Record<string, unknown>)[d.key] ?? null) : byDestVal)
-          : ((caseRow as unknown as Record<string, unknown>)[d.key] ?? null),
+        current_value: useByDest && byDestVal !== undefined
+          ? byDestVal
+          : fallback((caseRow as unknown as Record<string, unknown>)[d.key]),
       }
     }
     case 'data': {
@@ -140,9 +145,9 @@ function toShareFieldSpec(
         storage: 'data',
         type: def.type as ShareFieldSpec['type'],
         options: def.options ?? undefined,
-        current_value: useByDest
-          ? (byDestVal === undefined ? (data[d.key] ?? null) : byDestVal)
-          : (data[d.key] ?? null),
+        current_value: useByDest && byDestVal !== undefined
+          ? byDestVal
+          : fallback(data[d.key]),
       }
     }
     case 'synthetic-vaccine': {
@@ -163,9 +168,9 @@ function toShareFieldSpec(
         storage: 'data',
         type: mapExtraType(ed.type),
         options: ed.options?.map((o) => ({ value: o.value, label_ko: o.label })),
-        current_value: useByDest
-          ? (byDestVal === undefined ? (data[d.key] ?? null) : byDestVal)
-          : (data[d.key] ?? null),
+        current_value: useByDest && byDestVal !== undefined
+          ? byDestVal
+          : fallback(data[d.key]),
       }
     }
   }

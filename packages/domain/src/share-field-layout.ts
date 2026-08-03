@@ -347,14 +347,21 @@ export function shareDescriptorHasValue(
     return false
   }
 
-  const raw =
+  const topLevel =
     d.source.kind === 'column'
-      ? useByDest && byDestVal !== undefined
-        ? byDestVal
-        : (caseRow as unknown as Record<string, unknown>)[d.key]
-      : useByDest && byDestVal !== undefined
-        ? byDestVal
-        : data[d.key]
+      ? (caseRow as unknown as Record<string, unknown>)[d.key]
+      : data[d.key]
+
+  // by_dest 에 키가 있으면(null sentinel 포함) 그 값이 권위. 없을 때만 폴백하되, 다중 목적지는
+  // 폴백하지 않는다 — 단일 시절/다른 목적지의 top-level 잔존값이 "이미 입력됨"으로 잡히면
+  // 정작 이번 목적지에 필요한 정보를 안 받고 넘어간다(fields.ts·destination-scoped-fields 와 같은 strict 규칙).
+  const raw = useByDest
+    ? byDestVal !== undefined
+      ? byDestVal
+      : isMulti
+        ? null
+        : topLevel
+    : topLevel
 
   if (raw == null) return false
   if (typeof raw === 'string') return raw.trim() !== ''
