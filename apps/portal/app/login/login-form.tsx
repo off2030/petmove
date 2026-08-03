@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { nativeGoogleLogin } from '@/lib/native/native-oauth'
 import { nativeAppleLogin } from '@/lib/native/native-apple'
@@ -45,6 +45,8 @@ export function LoginForm({
 }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  // 자동완성 동기화용 — 아래 useEffect 참고.
+  const emailRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(initialError)
@@ -146,6 +148,26 @@ export function LoginForm({
   }
 
   const isReviewLogin = normalizeEmail(email) === REVIEW_EMAIL
+
+  // 브라우저·비밀번호 관리자가 **페이지 로드 시점에** 채우는 자동완성은 React 에 input 이벤트를
+  // 흘리지 않는다 — DOM 에는 이메일이 보이는데 state 는 빈 채로 남는다. 그래서 심사용 이메일이
+  // 채워져 있어도 isReviewLogin 이 false 라 비밀번호칸이 안 뜨고 버튼도 '인증번호 받기'에
+  // 머물렀다(2026-08-03 재현 — 자동완성만 그렇고 손으로 치면 정상이라 원인이 안 보였다).
+  // 이메일 단계가 떠 있는 동안 DOM 실제 값을 주기적으로 state 에 맞춘다. 마운트 직후 몇 번만
+  // 확인하는 방식은 자동완성이 언제 도착하느냐에 기대게 되는데, 그 시점이 브라우저·비밀번호
+  // 관리자마다 제각각이라(로드 직후 / 포커스 시 / 한참 뒤) 놓치는 조합이 남는다.
+  // 로그인 화면 한 곳의 가벼운 비교라 주기 확인이 가장 확실하다.
+  // (사용자가 직접 고른 자동완성이나 손 입력은 input 이벤트가 정상적으로 흘러 onChange 가 처리한다.)
+  useEffect(() => {
+    if (step !== 'email') return
+    const sync = () => {
+      const v = emailRef.current?.value
+      if (v) setEmail((prev) => (prev === v ? prev : v))
+    }
+    sync()
+    const id = setInterval(sync, 300)
+    return () => clearInterval(id)
+  }, [step])
 
   // Supabase 인증 에러(영어)를 사용자 언어로. 매칭 안 되면 원문 그대로.
   function otpErrorMessage(message: string): string {
@@ -397,6 +419,7 @@ export function LoginForm({
         {step === 'email' ? (
           <form onSubmit={sendOtp} className="space-y-sm">
             <input
+              ref={emailRef}
               type="email"
               placeholder="email@example.com"
               value={email}
