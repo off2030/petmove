@@ -1182,8 +1182,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   taiwan: {
     // APHIA(2023 BAPHIQ에서 개칭) — 광견병 1회(생후 90일·불활화만·유효 1년) + RNATT ≥0.5 IU/ml
-    // (채혈일 + 180일~1년 사이 도착 = 격리 면제 핵심 조건) + 수입허가증(도착 120일 전 온라인
-    // 신청 시 격리 면제, 20일 전까지도 가능하나 7일 격리). 개·고양이 동일 요건.
+    // (채혈일 + 180일~1년 사이 도착 = 격리 면제 핵심 조건) + 수입허가증(도착 20일 전까지 신청.
+    // 격리 면제는 채혈 180일 조건에 더해 ①120일 전 신청 또는 ②검사기관·수출국 검역기관이
+    // APHIA 로 보고서 직송 — 문답집 1150310, 2026-08-04 확인). 개·고양이 동일 요건.
     // APHIA Form 002 Import permit number 입력용으로 permit_no 추가정보 노출.
     // (Certificate number 는 후처리 수기 입력 — EQC No. 라벨이 일본 전용이라 공유하지 않음.)
     // 규정 상세·출처는 procedure-checks/tw.ts 헤더 주석.
@@ -1205,7 +1206,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     //   기능은 '맡기기 상품에서 제외'라, 대행하는 이상 붙여 둘 이유가 없어 뗀다.
     //   (여정 카드·서류 탭·발급 푸시는 이 플래그와 무관하게 종전 그대로.)
     importPermit: {
-      applyDeadlineDays: 120,
+      // 120 → 20 (2026-08-04): 120일은 마감이 아니라 격리 면제 경로 중 하나 — 배지·주의·알림 전부 20일 기준.
+      applyDeadlineDays: 20,
       docName: '수입 허가증(Import Permit)',
     },
     appSupported: true,

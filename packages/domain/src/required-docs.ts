@@ -1597,7 +1597,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'import-permit',
       description:
-        '대만 검역청(APHIA) 온라인 시스템에서 신청 후 발급받아요.\n\n도착 120일 전까지 신청해야 격리 없이 입국할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '대만 검역청(APHIA) 온라인 시스템에서 신청 후 발급받아요.\n\n도착 20일 전까지 신청하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'import-permit',
     },
     // 접종 및 건강증명서(별지 제25호) — 일본·태국·필리핀·중국과 동일한 한국 공식 양식.
