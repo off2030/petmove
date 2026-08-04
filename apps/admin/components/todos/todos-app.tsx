@@ -171,6 +171,11 @@ function computeJapanImportDeadline(departureDate: string): string {
   return addDays(departureDate, -40)
 }
 
+/** 대만 수입허가 신고기한 = 출국일 - 20일 (YYYY-MM-DD) — 2026-08-04 사용자 지시. */
+function computeTaiwanImportDeadline(departureDate: string): string {
+  return addDays(departureDate, -20)
+}
+
 function addDays(dateStr: string, days: number): string {
   const d = new Date(dateStr)
   if (isNaN(d.getTime())) return ''
@@ -289,13 +294,14 @@ function anyDestHasVetVisit(row: CaseRow): boolean {
   return dests.some((d) => !!getVetVisitDate(row, d))
 }
 /**
- * 신고 마감일 자동 계산 — 활성 목적지가 일본이고 그 목적지 출국일이 있으면 -40일.
+ * 신고 마감일 자동 계산 — 활성 목적지 출국일 기준. 일본 -40일, 대만 -20일.
  * 그 외 국가는 마감 규칙 미정 → 빈값(운영자 수기). 향후 국가별 규칙 추가 지점.
  */
 function autoImportDeadline(row: CaseRow): string {
   const activeDest = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
   const dep = getDepartureDate(row, activeDest)
   if (matchesDestinationKey(activeDest, 'japan') && dep) return computeJapanImportDeadline(dep)
+  if (matchesDestinationKey(activeDest, 'taiwan') && dep) return computeTaiwanImportDeadline(dep)
   return ''
 }
 
@@ -584,10 +590,10 @@ function compareByCountryOrder(a: CaseRow, b: CaseRow): number {
 
 /**
  * 신고 탭 미완료(대기·진행중) 그룹 목적지 정렬 순서.
- * 일본 → 태국 → 필리핀 → 하와이 순으로 고정, 그 외 국가(스위스·수동 추가 등)는 뒤에 가나다순.
+ * 일본 → 태국 → 필리핀 → 대만 → 하와이 순으로 고정, 그 외 국가(스위스·수동 추가 등)는 뒤에 가나다순.
  * 활성 목적지(import_report_active_dest ?? 첫 목적지) 라벨 기준으로 순위를 매긴다.
  */
-const IMPORT_REPORT_DEST_ORDER = ['일본', '태국', '필리핀', '하와이']
+const IMPORT_REPORT_DEST_ORDER = ['일본', '태국', '필리핀', '대만', '하와이']
 function reportDestRank(row: CaseRow): number {
   const active = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY) ?? ''
   const idx = IMPORT_REPORT_DEST_ORDER.indexOf(active)
@@ -612,7 +618,7 @@ function exportApplies(row: CaseRow): boolean {
 }
 
 /**
- * 수입 허가(import-permit) step 으로 신고 상태를 도출하는 목적지 — 태국·필리핀.
+ * 수입 허가(import-permit) step 으로 신고 상태를 도출하는 목적지 — 태국·필리핀·대만.
  * 이들은 일본식 사전신고가 아니라 수입 허가증 신청·발급 2단계라, 신고 탭 '수입' 칸을
  * portal 의 허가 step 시그널과 같은 derive 로 잇는다. (명시 분류 — country='all' 누수 금지)
  */
@@ -620,7 +626,8 @@ function usesImportPermitReport(row: CaseRow): boolean {
   const active = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
   return (
     matchesDestinationKey(active, 'thailand') ||
-    matchesDestinationKey(active, 'philippines')
+    matchesDestinationKey(active, 'philippines') ||
+    matchesDestinationKey(active, 'taiwan')
   )
 }
 
@@ -684,8 +691,9 @@ function reportDeadline(row: CaseRow): string {
 }
 
 /**
- * 신고기한 임박 경고 여부 — 기한이 7일 이내(경과분 포함)이고 수입·수출이 아직 '진행중/완료'가
+ * 신고기한 임박 경고 여부 — 기한이 10일 이내(경과분 포함)이고 수입·수출이 아직 '진행중/완료'가
  * 아닐 때. 신고기한·출국일 날짜를 함께 경고색으로 물들이는 데 쓴다.
+ * (7일 → 10일 전 국가 공통 통일, 2026-08-04 사용자 지시 — 일본·대만 명시.)
  */
 function isImportDeadlineWarning(row: CaseRow): boolean {
   const deadline = reportDeadline(row)
@@ -696,7 +704,7 @@ function isImportDeadlineWarning(row: CaseRow): boolean {
   today.setHours(0, 0, 0, 0)
   d.setHours(0, 0, 0, 0)
   const diffDays = Math.floor((d.getTime() - today.getTime()) / 86400000)
-  if (diffDays > 7) return false
+  if (diffDays > 10) return false
   const suppressed = (s: string) => s === 'in_progress' || s === 'done'
   if (suppressed(effectiveImportStatus(row)) || suppressed(effectiveExportStatus(row))) return false
   return true

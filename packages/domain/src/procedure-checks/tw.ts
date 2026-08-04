@@ -37,7 +37,10 @@ import {
  *  - 광견병: 생후 90일령 이상, 불활화 백신만 인정, 1차는 선적 90일~1년 / 부스터는 30일~1년
  *  - **RNATT**: 채혈일부터 **180일 경과 후** 도착, ≥0.5 IU/ml, APHIA 채신 명단 lab
  *  - 한국 APQA 검역: 출국 전 10일 이내(보수 ≤9)
- *  - 격리 기본 7일 (수입 허가증 20일 전 신청 + RNATT 180일 충족 시 면제 가능)
+ *  - 격리 기본 7일. 면제 = 채혈 후 180일 경과(또는 직전 합격 채혈일부터 180일~1년 체인) +
+ *    다음 중 하나(문답집 1150310, 2026-08-04 확인): ①수입허가를 輸入 120일 전 신청
+ *    ②20일 전 신청 + 검사기관(실험실)·수출국 검역기관(APQA, RNATTD 성명서)이
+ *    rabiesreport@aphia.gov.tw 로 직접 송부, 또는 실험실 웹사이트 조회 가능(한국 중앙백신 CAvac 해당)
  *  - 개·고양이 동일 요건
  *
  * 컨벤션 (NZ/HI/CN/TH/PH 와 동일):
@@ -301,12 +304,16 @@ export const TW_CHECKS: ProcedureCheck[] = [
 
   // ── 수입허가증 ──
   {
-    id: 'tw.import-permit-120days-before-entry',
+    // 구 tw.import-permit-120days-before-entry (2026-08-04 개편) — 120일은 마감이 아니라
+    // 여러 격리 면제 경로 중 하나라(120일 전 신청 or 검사기관·수출국 검역기관 직송, 문답집
+    // 1150310) 주의에서 뺐다. 면제 경로 안내는 수입허가 카드 설명문 담당. 여기 남는 건
+    // 진짜 마감(도착 20일 전)뿐이다.
+    id: 'tw.import-permit-20days-before-entry',
     country: COUNTRY,
     category: '수입허가증',
-    title: '수입허가증 신청은 도착 120일 전까지 (격리 면제 조건)',
+    title: '수입허가증 신청은 도착 20일 전까지',
     description:
-      '수입허가증을 도착 120일 전까지 신청해야 무격리 입국 가능. 20일 전까지 신청도 가능하나 이 경우 7일 격리. (APHIA — 격리 면제 요건)',
+      '수입허가증은 도착 20일 전까지 신청해야 함(輸入至少20日前). 격리 면제 조건(120일 전 신청 또는 보고서 직송)은 카드 설명문 안내. (APHIA)',
     severity: 'warning',
     addedAt: '2026-07-18',
     run: ({ caseRow, destination }) => {
@@ -327,11 +334,7 @@ export const TW_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['import_permit_application_date', 'departure_date'],
         }
       }
-      // 마감이 2단계라 문구도 2단계 — 조치가 다르기 때문.
-      //  120일 미달: 아직 신청은 되고, 대가는 도착 후 7일 격리(감수 가능).
-      //  20일 미달 : 신청 자체가 안 된다. 입국일을 미루는 것 말고 방법이 없다.
-      // 하나로 두면 20일도 지난 사람에게 "격리는 감수하면 되는" 것처럼 읽힌다.
-      // (카드 배지는 이미 deadline.fallbackDaysBefore 20 으로 전환된다.)
+      // 20일 미달 = 신청 자체가 안 된다. 입국일을 미루는 것 말고 방법이 없다.
       if (gap < 20) {
         return {
           ok: false,
@@ -340,15 +343,7 @@ export const TW_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['import_permit_application_date', 'departure_date'],
         }
       }
-      if (gap < 120) {
-        return {
-          ok: false,
-          message:
-            '도착 120일 전까지 수입 허가 신청을 해야 격리 없이 입국할 수 있어요. 지금은 도착 후 7일간 격리되는 점 참고하세요.',
-          offendingPaths: ['import_permit_application_date', 'departure_date'],
-        }
-      }
-      return { ok: true, message: `수입허가증 신청(${filed}) → 도착(${dep}): ${gap}일 (120일 이상).` }
+      return { ok: true, message: `수입허가증 신청(${filed}) → 도착(${dep}): ${gap}일 (20일 이상).` }
     },
   },
   // ── 도착 수입 검역 ──

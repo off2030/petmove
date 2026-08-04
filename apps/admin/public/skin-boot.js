@@ -12,7 +12,8 @@
     h.setAttribute('data-theme', theme)
     var dark = !force && (m === 'dark' || ((!m || m === 'system') && matchMedia('(prefers-color-scheme: dark)').matches))
     if (dark) h.classList.add('dark')
-    var s = force ? null : localStorage.getItem('skin')
+    // 외부 고객용(/apply·/share)은 운영자 스킨 무시하고 항상 brand(펫무브 앱 디자인).
+    var s = force ? 'brand' : localStorage.getItem('skin')
     var V = ['flat', 'brand']
     if (s && V.indexOf(s) >= 0) h.setAttribute('data-skin', s)
   } catch (e) {}

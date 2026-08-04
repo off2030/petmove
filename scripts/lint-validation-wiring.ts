@@ -758,7 +758,7 @@ function titerWaitWithoutBlocker(appDests: string[]): Problem[] {
 const DEAD_DECLARATION_KNOWN: Record<string, string> = {
   hardDeadlineHours: '아일랜드 24시간은 validateIeAdvanceNoticeDate 에 1일로 하드코딩',
   doseIntervalDays: "중국 30일 'soft' 는 cn.ts 룰 문구·카드 안내가 담당(하드 차단 없음)",
-  applyDeadlineDays: '대만 마감은 tw.import-permit-120days-before-entry 룰이 담당',
+  applyDeadlineDays: '마감 동작은 카드 deadline(destination-overrides)·procedure-check 룰·알림이 담당 (괌 30=gu.import-permit-30days-before-arrival, 대만 20=tw.import-permit-20days-before-entry)',
   docName: '서류명은 required-docs.ts 가 자체 목록으로 들고 있다',
   quarantineDays: '베트남 14일은 도착 검역 카드 문구에 직접 쓰여 있다',
 }
@@ -869,7 +869,7 @@ function describe(p: Problem): string {
 const IMPORT_PERMIT_NOTIFY_OK: Record<string, string> = {
   thailand: 'DLD — 출국 7영업일 전 신청 마감(확인됨)',
   philippines: 'BAI SPSIC — 신청 마감 관행 있음',
-  taiwan: 'APHIA — 도착 120일 전 마감',
+  taiwan: 'APHIA — 도착 20일 전 마감(輸入至少20日前, 문답집 1150310 확인. 구 120일은 격리 면제 경로라 2026-08-04 알림에서 제거)',
   guam: 'DOAG — 도착 30일 전 서류 제출 마감(확인됨. 14일 미만은 처리 보장 불가)',
   switzerland: 'FSVO — 입국 21일 전 신청 마감(확인됨. 카드 배지·입력 차단·주의가 모두 21일)',
   // ⛔ 여기 없는 앱 목적지가 알림/푸시 코드에 있으면 실패한다. 마감 근거를 확인한 뒤

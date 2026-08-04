@@ -146,8 +146,8 @@ export function collectMilestonePushes(caseRow: CaseRow): MilestonePush[] {
       //   reminders.ts 의 마감 알림 제거와 짝.
     ) {
       // 대만도 같은 import-permit 카드·같은 판정 함수를 쓴다(APHIA e-permit). 발급됐다는 사실은
-      // 앱에 기록되는 순간 알릴 가치가 있다 — 도착 120일 전 마감이라 발급 확인이 늦으면 일정
-      // 전체가 흔들린다. (신청 주체와 무관한 푸시라 로잔 대행 전환 2026-08-03 에도 그대로.)
+      // 앱에 기록되는 순간 알릴 가치가 있다 — 마감(도착 20일 전)이 있는 절차라 발급 확인이
+      // 늦으면 일정이 흔들린다. (신청 주체와 무관한 푸시라 로잔 대행 전환 2026-08-03 에도 그대로.)
       if (deriveImportPermitStatus(flat) === 'done') {
         out.push({
           key: `${caseRow.id}|${key}|import-permit`,

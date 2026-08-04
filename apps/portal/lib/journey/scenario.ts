@@ -288,9 +288,10 @@ function deadlineAnchorDate(step: StepDefinition, caseRow: CaseRow): string | nu
 /**
  * step 의 deadline 표시일 — 기준일에서 daysBefore 만큼 당김. window 면 구간 시작일.
  *
- * fallbackDaysBefore 가 있으면 **1차 마감이 지난 뒤 2차 마감으로 넘어간다**(대만 수입허가
- * 120일 → 20일). 1차만 두면 119일째부터 '마감 지남'이 되어, 아직 신청할 수 있는 사람에게
- * 이미 늦었다고 잘못 알린다. 알림도 같은 2단계(reminders.ts).
+ * fallbackDaysBefore 가 있으면 **1차 마감이 지난 뒤 2차 마감으로 넘어간다** — 1차만 두면
+ * 1차 다음 날부터 '마감 지남'이 되어, 아직 신청할 수 있는 사람에게 이미 늦었다고 잘못 알린다.
+ * (원형이던 대만 수입허가 120→20일은 2026-08-04 20일 단일 마감으로 바뀌어 현재 사용처가
+ * 없지만, 2단계 마감 구조 자체는 재등장할 수 있어 기계는 남긴다.)
  */
 function deadlineDate(step: StepDefinition, caseRow: CaseRow): string | null {
   if (!step.deadline) return null
