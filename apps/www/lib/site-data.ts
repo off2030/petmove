@@ -264,7 +264,14 @@ export const SERVICE_CARDS = [
 //   philippines·cambodia·mongolia·uzbekistan·kazakhstan·malaysia·indonesia·singapore·hongkong)
 //   + 유럽 8키(eu·uk·ireland·malta·norway·finland·cyprus·switzerland → 개별 펼침 30)
 //   + 아메리카 6(canada·mexico·brazil·argentina·hawaii·usa) + 기타 6(morocco·ukraine·russia·turkey·uae·israel).
-export const APP_DEST_PREVIEW = ['일본', '태국', '필리핀', '프랑스', '독일']
+// 접힘 상태 미리보기 (2026-08-04 사용자 지정 9개국).
+//   · 데스크톱(6열) = PREVIEW 6개로 한 줄이 딱 맞는다.
+//   · 모바일(3열)   = PREVIEW + EXTRA 9개로 3×3 이 딱 맞는다.
+// EXTRA 는 .dest-m 클래스가 붙어 760px 이상에서 숨는다(landing.css) — 데스크톱 구성은 그대로.
+// ⚠️ '더보기'는 격자 밖 링크다(dest-grid.tsx). 격자에 넣으면 9+1=10칸이 되어 모바일 넷째 줄에
+//    '더보기'만 혼자 남는다. 개수를 바꿀 땐 PREVIEW 6 / 합계 9 를 유지할 것.
+export const APP_DEST_PREVIEW = ['일본', '태국', '필리핀', '프랑스', '중국', '하와이']
+export const APP_DEST_PREVIEW_EXTRA = ['대만', '싱가포르', '호주']
 // 가나다순. 우즈베키스탄·몽골은 중앙아시아·동아시아라 아시아 그룹에 둔다.
 // 2026-07-22 말레이시아·인도네시아 추가(태국 복제 — APP_DEST_SOON 에서 승격).
 // 2026-07-26 홍콩 추가(필리핀 골격 — AFCD Group II).

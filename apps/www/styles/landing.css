@@ -86,6 +86,8 @@
   .dest{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:15px 8px;
     text-align:center;position:relative;font-size:13.5px}
   .dest.soon{border-style:dashed;color:var(--ink3)}
+  /* 접힘 미리보기 — 모바일(3열)에서만 보이는 3개국. 760px 이상은 6열 한 줄이라 숨긴다. */
+  .dest-m{display:block}
   .dest .dot{position:absolute;top:9px;right:9px;width:6px;height:6px;border-radius:50%;background:var(--sage)}
   .note{display:flex;align-items:center;gap:7px;justify-content:center;margin-top:16px;font-size:12px;color:var(--ink2)}
   .note .dot{width:6px;height:6px;border-radius:50%;background:var(--sage);display:inline-block}
@@ -219,6 +221,7 @@
     .frows{max-width:620px;margin-left:auto;margin-right:auto}
     .path{padding:30px 28px}
     .grid{grid-template-columns:repeat(6,1fr)}
+    .dest-m{display:none}
     .rlist{max-width:none;flex-direction:row;gap:14px;align-items:stretch}
     .rcard{flex:1 1 0}
     .trust .n{font-size:30px} .trust .l{font-size:13px}
