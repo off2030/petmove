@@ -691,8 +691,9 @@ function reportDeadline(row: CaseRow): string {
 }
 
 /**
- * 신고기한 임박 경고 여부 — 기한이 임박(일본 등 7일, 대만 10일 이내 — 경과분 포함)이고
- * 수입·수출이 아직 '진행중/완료'가 아닐 때. 신고기한·출국일 날짜를 함께 경고색으로 물들이는 데 쓴다.
+ * 신고기한 임박 경고 여부 — 기한이 10일 이내(경과분 포함)이고 수입·수출이 아직 '진행중/완료'가
+ * 아닐 때. 신고기한·출국일 날짜를 함께 경고색으로 물들이는 데 쓴다.
+ * (7일 → 10일 전 국가 공통 통일, 2026-08-04 사용자 지시 — 일본·대만 명시.)
  */
 function isImportDeadlineWarning(row: CaseRow): boolean {
   const deadline = reportDeadline(row)
@@ -703,11 +704,7 @@ function isImportDeadlineWarning(row: CaseRow): boolean {
   today.setHours(0, 0, 0, 0)
   d.setHours(0, 0, 0, 0)
   const diffDays = Math.floor((d.getTime() - today.getTime()) / 86400000)
-  // 대만은 마감(출국 -20일) 약 10일 전부터 경고 (2026-08-04 사용자 지시). 그 외는 7일.
-  const warnDays = matchesDestinationKey(
-    resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY), 'taiwan',
-  ) ? 10 : 7
-  if (diffDays > warnDays) return false
+  if (diffDays > 10) return false
   const suppressed = (s: string) => s === 'in_progress' || s === 'done'
   if (suppressed(effectiveImportStatus(row)) || suppressed(effectiveExportStatus(row))) return false
   return true
