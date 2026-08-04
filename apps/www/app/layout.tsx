@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { CopyAttribution } from '@/components/copy-attribution'
+import { SiteJsonLd } from '@/components/structured-data'
 import '@/styles/site.css'
 import '@/styles/landing.css'
 import '@/styles/hub.css'
@@ -7,6 +8,8 @@ import '@/styles/article.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.petmove.co.kr'),
+  // 하위 페이지는 각자 alternates.canonical 로 덮어쓴다(랜딩만 이 값을 그대로 쓴다).
+  alternates: { canonical: '/' },
   title: '펫무브 · 반려동물 해외 이동',
   description: '우리 아이 해외여행, 펫무브가 챙겨줘요. 앱으로 쉽게 준비하고, 복잡한 검역 절차는 전문가에게 맡기세요.',
   openGraph: {
@@ -32,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
+        <SiteJsonLd />
         {children}
         <CopyAttribution />
       </body>
