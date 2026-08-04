@@ -53,6 +53,7 @@ const REPORT_PRESET_LABEL: Record<string, string> = {
   필리핀: '필리핀 수입허가증 신청',
   하와이: '하와이 수입신고',
   스위스: '스위스 수입허가증 신청',
+  대만: '대만 수입허가증 신청',
 }
 
 interface Props {

@@ -274,10 +274,11 @@ function SelectCell({
   const isJapanReport =
     matchesDestinationKey(reportDest, 'japan') &&
     (col.key === 'import_import_status' || col.key === 'import_export_status')
-  // 태국·필리핀 '수입' 칸 = 수입 허가 step 과 양방향 sync (일본 사전신고의 짝, '수출'은 해당 없음).
+  // 태국·필리핀·대만 '수입' 칸 = 수입 허가 step 과 양방향 sync (일본 사전신고의 짝, '수출'은 해당 없음).
   const isImportPermitReport =
     (matchesDestinationKey(reportDest, 'thailand') ||
-      matchesDestinationKey(reportDest, 'philippines')) &&
+      matchesDestinationKey(reportDest, 'philippines') ||
+      matchesDestinationKey(reportDest, 'taiwan')) &&
     col.key === 'import_import_status'
   async function pick(v: string) {
     if (v === value) return

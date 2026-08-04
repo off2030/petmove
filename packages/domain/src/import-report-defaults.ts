@@ -12,6 +12,8 @@ export const DEFAULT_IMPORT_REPORT_COUNTRIES: string[] = [
   // 스냅샷이 defaults 를 가리므로 설정 화면에서 체크해야 반영된다.
   '말레이시아',
   '인도네시아',
+  // 대만 — 수입허가 신청·발급 모델, 마감 = 출국 20일 전 (2026-08-04 사용자 지시).
+  '대만',
 ]
 
 /**
