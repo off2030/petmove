@@ -344,7 +344,8 @@ function StatusCell({ row, options, onUpdate, overdue = false }: {
     ? 'font-serif text-[16px] text-pmw-positive'
     : overdue
     ? 'font-serif text-[16px] text-pmw-warning'
-    : 'font-serif text-[16px] text-muted-foreground'
+    : // 대기 — tertiary 로 한 단계 물러남 (todo-table 상태 셀과 동일 규칙).
+      'font-serif text-[16px] text-pmw-text-tertiary'
 
   return <StatusPicker row={row} options={options} value={value} label={label} cls={cls} isDone={isDone} onUpdate={onUpdate} />
 }

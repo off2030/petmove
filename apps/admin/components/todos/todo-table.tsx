@@ -97,7 +97,9 @@ function StatusBadge({ value, options, warn = false }: { value: string; options:
     ? 'text-pmw-positive'
     : warn
     ? 'text-pmw-warning'
-    : 'text-muted-foreground'
+    : // 대기 — 한 단계 연한 회색(tertiary). brand 는 이탤릭 평탄화로 muted 가 본문과
+      // 같은 무게가 돼 상태 위계가 사라졌던 것 교정 (editorial 은 자체 tertiary 정의).
+      'text-pmw-text-tertiary'
 
   return (
     <span className={cn('inline-flex items-center font-serif text-[16px]', cls)}>

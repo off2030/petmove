@@ -490,9 +490,9 @@
     --pmw-text-disabled:   220 8% 78%;
 
     /* Warning/info */
-    --pmw-warning: 30 60% 38%;
-    --pmw-warning-bg: 36 70% 94%;
-    --pmw-warning-fg: 28 50% 25%;
+    --pmw-warning: 38 92% 40%;
+    --pmw-warning-bg: 48 95% 92%;
+    --pmw-warning-fg: 35 85% 27%;
     --pmw-info: 209 29% 45%;
 
     /* Chip 8-tone — portal cool 파스텔 전체.
@@ -584,9 +584,9 @@
     --pmw-text-disabled:   240 4% 30%;
 
     /* Warning/info dark */
-    --pmw-warning: 36 60% 60%;
-    --pmw-warning-bg: 30 30% 16%;
-    --pmw-warning-fg: 36 70% 80%;
+    --pmw-warning: 45 93% 58%;
+    --pmw-warning-bg: 42 45% 15%;
+    --pmw-warning-fg: 48 95% 78%;
     --pmw-info: 209 35% 62%;
 
     /* Chip 8-tone dark (cool) */
