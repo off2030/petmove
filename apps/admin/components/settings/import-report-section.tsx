@@ -13,10 +13,7 @@ import { SettingsShell, SettingsSection, SettingsSubsectionTitle } from './setti
 export function ImportReportSection() {
   return (
     <SettingsShell size="lg">
-      <SettingsSection
-        title="신고"
-        description="체크한 국가는 출국일을 입력하면 신고 탭에 자동으로 올라옵니다. 개별 케이스는 신고 탭의 + 버튼으로 직접 올릴 수 있습니다."
-      >
+      <SettingsSection title="신고">
         <TodoColumnsToggle
           tabId="import_report"
           title="표시 항목 설정"

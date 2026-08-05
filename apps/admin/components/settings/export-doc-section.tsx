@@ -10,10 +10,7 @@ import { TodoColumnsToggle } from './todo-columns-toggle'
 export function ExportDocSection() {
   return (
     <SettingsShell size="lg">
-      <SettingsSection
-        title="서류"
-        description='서류 탭 테이블에 표시되는 항목을 관리합니다. 증명서 버튼 구성은 "상세" 탭으로 이동했어요.'
-      >
+      <SettingsSection title="서류">
         <TodoColumnsToggle
           tabId="export_doc"
           title="표시 항목 설정"

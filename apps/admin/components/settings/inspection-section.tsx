@@ -648,10 +648,7 @@ export function InspectionSection() {
 
   return (
     <SettingsShell size="lg">
-      <SettingsSection
-        title="검사"
-        description="목적지별 광견병항체검사·전염병검사 의뢰 기관을 매핑합니다. 케이스 등록 시 자동 적용됩니다."
-      >
+      <SettingsSection title="검사">
         <TodoColumnsToggle
           tabId="inspection"
           title="표시 항목 설정"
