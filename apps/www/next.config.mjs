@@ -41,6 +41,8 @@ const DOCS_RENAMES = {
   'dongmulgeomyeogso-bangmun-yeyag': 'pet-quarantine-reservation',
   aqsreservation: 'pet-quarantine-reservation',
   suculdongmulgeomyeog: 'pet-export-inspection',
+  // 2026-08-05 내부 링크 전수조사에서 발견된 죽은 옛 슬러그
+  'hanggongsabyeol-gangaji-goyangi-ginaebanib-heoyonggijun': 'airline-pet-cabin-policy',
 }
 
 // /blog/<옛슬러그>/ → /blog/<새슬러그>/
@@ -64,6 +66,9 @@ const BLOG_RENAMES = {
     'travel-to-uk-with-pet-via-france',
   'goyangi-migug-ibgug-jeolca': 'cat-travel-to-usa',
   'haeoeeseo-gangajireul-hangugeuro-derigo-oneun-bangbeob': 'bring-dog-to-korea',
+  // 2026-08-05 내부 링크 전수조사에서 발견된 죽은 옛 슬러그
+  animalinspecton: 'pet-quarantine-guide',
+  jnaqs: 'japan-pet-quarantine-office',
 }
 
 // 프리픽스 없는 루트 옛 주소 / 대응 글이 없어 허브·홈으로 보내는 것들
@@ -78,6 +83,8 @@ const EXTRA_REDIRECTS = [
   { source: '/tag/:path*', destination: '/guide/', wildcard: true },
   // 고스트 테마 잔재 페이지 → 홈 (서치콘솔 '리디렉션 오류' 1건이 이 주소)
   { source: '/changelog', destination: '/' },
+  // 2026-08-05 내부 링크 전수조사 — 루트형 옛 주소 (구 글 본문에서 참조되던 형태)
+  { source: '/gangaji-migug-ibgug-gyujeong-byeongyeong-ganghwa-annae', destination: '/blog/dog-travel-to-usa/' },
 ]
 
 /** @type {import('next').NextConfig} */
