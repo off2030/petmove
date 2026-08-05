@@ -2,6 +2,7 @@
 
 
 import { COAT_COLOR_HEX as COLOR_HEX } from '@/lib/coat-colors'
+import * as Sentry from '@sentry/nextjs'
 import { Fragment, useEffect, useRef, useState, useTransition } from 'react'
 import { CheckCircle2, Plus, X } from 'lucide-react'
 import { DateTextField } from '@petmove/ui'
@@ -140,6 +141,9 @@ export function ShareForm({ initial }: Props) {
   const [done, setDone] = useState(false)
   const [pending, startTransition] = useTransition()
   const [expiresLabel, setExpiresLabel] = useState('')
+  // 카톡 인앱 브라우저 — 파일 첨부가 무반응으로 실패하는 사례가 있어(2026-08-05 실사용)
+  // 파일 요청 섹션에 기본 브라우저로 여는 우회 안내를 띄운다. SSR 불일치 방지 위해 effect 에서 감지.
+  const [isKakaoInApp, setIsKakaoInApp] = useState(false)
   // #3 미입력 확인 — 비어있는 항목이 있으면 한 번 알리고, 다시 누르면 그대로 전송.
   const [emptyWarn, setEmptyWarn] = useState<string[] | null>(null)
   const emptyConfirmedRef = useRef(false)
@@ -150,6 +154,10 @@ export function ShareForm({ initial }: Props) {
   useEffect(() => {
     setExpiresLabel(new Date(view.expires_at).toLocaleString('ko-KR'))
   }, [view.expires_at])
+
+  useEffect(() => {
+    if (/KAKAOTALK/i.test(navigator.userAgent)) setIsKakaoInApp(true)
+  }, [])
 
   // #5 마운트 후 임시 저장 복원 (SSR 하이드레이션 불일치 방지 위해 initializer 아닌 effect 에서).
   useEffect(() => {
@@ -217,7 +225,10 @@ export function ShareForm({ initial }: Props) {
 
   function addSlotFiles(key: string, list: FileList | null) {
     if (!list || list.length === 0) return
-    setFilesBySlot((prev) => ({ ...prev, [key]: [...(prev[key] ?? []), ...Array.from(list)] }))
+    // input.value='' 리셋 전에 동기 스냅샷 — setState 업데이터(리렌더 시점)에서 읽으면
+    // 일부 WebView(카톡 인앱 등)가 리셋 때 참조 FileList 를 비워 선택 파일이 소리 없이 사라진다.
+    const files = Array.from(list)
+    setFilesBySlot((prev) => ({ ...prev, [key]: [...(prev[key] ?? []), ...files] }))
   }
   function removeSlotFile(key: string, idx: number) {
     setFilesBySlot((prev) => ({ ...prev, [key]: (prev[key] ?? []).filter((_, i) => i !== idx) }))
@@ -260,6 +271,13 @@ export function ShareForm({ initial }: Props) {
           pending.map((p) => ({ slotKey: p.slotKey, name: p.file.name, size: p.file.size, mime: p.file.type })),
         )
         if (!ticketRes.ok) {
+          // 실패가 setError 로만 끝나면 서버·Sentry 어디에도 흔적이 없어 원인 추적이 불가했다
+          // (2026-08-04 태국 케이스 — 첨부 유실 원인을 DB 정황으로만 역추적). 이하 3곳 동일.
+          Sentry.captureMessage('share upload ticket failed', {
+            level: 'warning',
+            tags: { feature: 'share-upload' },
+            extra: { error: ticketRes.error, files: pending.map((p) => ({ slot: p.slotKey, name: p.file.name, size: p.file.size, mime: p.file.type })) },
+          })
           setError(ticketRes.error)
           return
         }
@@ -271,7 +289,12 @@ export function ShareForm({ initial }: Props) {
             .from('attachments')
             .uploadToSignedUrl(t.path, t.token, pending[i].file, { contentType: pending[i].file.type })
           if (upErr) {
-            setError(upErr.message)
+            Sentry.captureMessage('share upload to storage failed', {
+              level: 'warning',
+              tags: { feature: 'share-upload' },
+              extra: { error: upErr.message, slot: pending[i].slotKey, name: pending[i].file.name, size: pending[i].file.size, mime: pending[i].file.type },
+            })
+            setError(`파일 업로드에 실패했습니다: ${upErr.message}`)
             return
           }
           uploaded.push({ path: t.path, name: t.name, size: pending[i].file.size, mime: pending[i].file.type })
@@ -279,6 +302,11 @@ export function ShareForm({ initial }: Props) {
         }
         const recRes = await recordShareUploadedFiles(view.token, uploaded)
         if (!recRes.ok) {
+          Sentry.captureMessage('share upload record failed', {
+            level: 'warning',
+            tags: { feature: 'share-upload' },
+            extra: { error: recRes.error, count: uploaded.length },
+          })
           setError(recRes.error)
           return
         }
@@ -414,6 +442,21 @@ export function ShareForm({ initial }: Props) {
               <p className="mb-3 font-serif text-[13px] leading-relaxed text-muted-foreground">
                 아래 파일을 첨부해주세요.
               </p>
+              {isKakaoInApp && (
+                <div className="mb-4 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 font-serif text-[13px] leading-relaxed text-amber-800 dark:text-amber-300">
+                  카카오톡 브라우저에서는 파일 첨부가 안 될 수 있어요. 첨부가 안 되면{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(window.location.href)}`
+                    }}
+                    className="font-medium underline underline-offset-2"
+                  >
+                    기본 브라우저로 열기
+                  </button>
+                  를 눌러주세요.
+                </div>
+              )}
               {view.file_requests.map((r) => {
                 const slotFiles = filesBySlot[r.key] ?? []
                 return (
