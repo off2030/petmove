@@ -296,6 +296,36 @@ export async function listMyConversations(): Promise<Result<ConversationListItem
   return { ok: true, value }
 }
 
+/**
+ * 대화 목록 + 상위 N개 방 메시지 스냅샷을 액션 하나로 — 대시보드 레이아웃 SSR 이
+ * "목록 대기 → 스냅샷 대기" 2단 워터폴을 만들지 않게 합쳤다(2026-08-05 조직 전환
+ * 속도 개선 B). 내부에서 목록 → 상위 방 메시지를 병렬로 가져오며, 다른 레이아웃
+ * fetch 들과는 같은 Promise.all 층에서 나란히 돈다.
+ */
+export async function listMyConversationsWithSnapshots(cap = 5): Promise<
+  Result<{
+    conversations: ConversationListItem[]
+    snapshots: Record<string, ConversationMessagesResult>
+  }>
+> {
+  const convsR = await listMyConversations()
+  if (!convsR.ok) return convsR
+  const ids = convsR.value.slice(0, cap).map((c) => c.id)
+  const results = await Promise.all(
+    ids.map((id) =>
+      listConversationMessages({ convId: id }).catch(
+        () => ({ ok: false as const, error: 'failed' }),
+      ),
+    ),
+  )
+  const snapshots: Record<string, ConversationMessagesResult> = {}
+  ids.forEach((id, i) => {
+    const r = results[i]
+    if (r.ok) snapshots[id] = r.value
+  })
+  return { ok: true, value: { conversations: convsR.value, snapshots } }
+}
+
 // ─────────────────────────────────────────────────
 // 메시지
 // ─────────────────────────────────────────────────

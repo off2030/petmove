@@ -17,7 +17,7 @@ import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import { listActiveOrgCasesFirstPage } from '@/lib/actions/list-cases'
 import { getActiveOrgId, getHomeOrg } from '@/lib/supabase/active-org'
 import { listAllOrgs, listSuperAdminsAll, type OrgSummary, type SuperAdminEntry } from '@/lib/actions/super-admin'
-import { listMyConversations, listConversationMessages, type ConversationListItem, type ConversationMessagesResult } from '@/lib/actions/chat'
+import { listMyConversationsWithSnapshots, type ConversationListItem, type ConversationMessagesResult } from '@/lib/actions/chat'
 import { InstallPrompt } from '@/components/pwa/install-prompt'
 import { Toaster } from '@/components/ui/toaster'
 
@@ -89,7 +89,13 @@ export default async function DashboardLayout({
 }) {
   // 케이스 목록은 첫 배치(최신순 300)만 await — 첫 페인트가 org 전체 크기(대형 org
   // ~2MB 직렬화)에 비례하지 않게. 나머지는 CasesProvider 가 마운트 후 백그라운드 로드.
-  const [casesFirstPage, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, homeOrg, externalLinks, convsR] = await Promise.all([
+  //
+  // 첫 바이트 전 대기는 이 Promise.all 한 층뿐이다(2026-08-05 조직 전환 속도 개선 B).
+  //  - 대화 목록+메시지 스냅샷: listMyConversationsWithSnapshots 가 액션 내부에서 처리
+  //    (예전엔 목록 await 후 별도 스냅샷 await — 2단 워터폴이었다).
+  //  - super_admin 조직·운영자 목록: 무조건 병렬 실행. 일반 직원은 액션 내부 권한
+  //    체크에서 바로 실패(쿼리 1회 손해)하고, super_admin 은 별도 3단 대기가 사라진다.
+  const [casesFirstPage, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, homeOrg, externalLinks, convsR, orgsR, adminsR] = await Promise.all([
     traceLayoutFetch('listActiveOrgCasesFirstPage', listActiveOrgCasesFirstPage()),
     traceLayoutFetch('fetchFieldDefs', fetchFieldDefs()),
     traceLayoutFetch('loadImportReportCountries', loadImportReportCountries()),
@@ -103,37 +109,16 @@ export default async function DashboardLayout({
     getActiveOrgId().catch(() => null),
     getHomeOrg().catch(() => null),
     traceLayoutFetch('loadExternalLinks', loadExternalLinks()),
-    listMyConversations().catch(() => ({ ok: false as const, error: 'failed' })),
+    listMyConversationsWithSnapshots().catch(() => ({ ok: false as const, error: 'failed' })),
+    listAllOrgs().catch(() => ({ ok: false as const, error: 'failed' })),
+    listSuperAdminsAll().catch(() => ({ ok: false as const, error: 'failed' })),
   ])
-  const initialConversations: ConversationListItem[] = convsR.ok ? convsR.value : []
-
-  // 최근 N 개 대화방 메시지를 서버에서 미리 가져와 클라이언트 캐시에 hydrate.
-  // 클라 진입 후 첫 클릭에서도 "불러오는 중…" 없이 즉시 표시. 이전엔 idle prefetch 였는데
-  // 사용자가 idle 전에 클릭하면 cache miss → loading 이 보였음.
-  const MESSAGES_PREFETCH_CAP = 5
-  const prefetchConvIds = initialConversations.slice(0, MESSAGES_PREFETCH_CAP).map((c) => c.id)
-  const prefetchResults = await Promise.all(
-    prefetchConvIds.map((id) =>
-      listConversationMessages({ convId: id }).catch(() => ({ ok: false as const, error: 'failed' })),
-    ),
-  )
-  const initialConvSnapshots: Record<string, ConversationMessagesResult> = {}
-  prefetchConvIds.forEach((id, i) => {
-    const r = prefetchResults[i]
-    if (r.ok) initialConvSnapshots[id] = r.value
-  })
-
-  // Super admin 이면 org 목록 + 운영자 목록 prefetch — 탭 전환 시 즉시 표시 (불러오기 깜빡임 제거).
-  let initialOrgs: OrgSummary[] = []
-  let initialSuperAdmins: SuperAdminEntry[] = []
-  if (userCtx.isSuperAdmin) {
-    const [orgsR, adminsR] = await Promise.all([
-      listAllOrgs().catch(() => ({ ok: false as const, error: 'failed' })),
-      listSuperAdminsAll().catch(() => ({ ok: false as const, error: 'failed' })),
-    ])
-    if (orgsR.ok) initialOrgs = orgsR.value
-    if (adminsR.ok) initialSuperAdmins = adminsR.value
-  }
+  const initialConversations: ConversationListItem[] = convsR.ok ? convsR.value.conversations : []
+  const initialConvSnapshots: Record<string, ConversationMessagesResult> = convsR.ok
+    ? convsR.value.snapshots
+    : {}
+  const initialOrgs: OrgSummary[] = userCtx.isSuperAdmin && orgsR.ok ? orgsR.value : []
+  const initialSuperAdmins: SuperAdminEntry[] = userCtx.isSuperAdmin && adminsR.ok ? adminsR.value : []
 
   return (
     <CasesProvider

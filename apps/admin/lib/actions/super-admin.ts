@@ -39,7 +39,9 @@ export interface OrgDetail {
   invites: { id: string; email: string; role: string; token: string; expires_at: string; created_at: string }[]
 }
 
-async function requireSuperAdmin(): Promise<{ ok: true } | { ok: false; error: string }> {
+async function requireSuperAdmin(): Promise<
+  { ok: true; userId: string } | { ok: false; error: string }
+> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, error: '로그인이 필요합니다' }
@@ -49,7 +51,8 @@ async function requireSuperAdmin(): Promise<{ ok: true } | { ok: false; error: s
     .eq('id', user.id)
     .maybeSingle()
   if (!profile?.is_super_admin) return { ok: false, error: '권한 없음 (super_admin 전용)' }
-  return { ok: true }
+  // userId 동봉 — 호출자가 getUser() 를 중복 호출하지 않게 (조직 전환 왕복 절감).
+  return { ok: true, userId: user.id }
 }
 
 export async function listAllOrgs(): Promise<Result<OrgSummary[]>> {
@@ -560,25 +563,20 @@ export async function switchActiveOrg(orgId: string): Promise<Result<null>> {
   const gate = await requireSuperAdmin()
   if (!gate.ok) return gate
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { ok: false, error: '로그인이 필요합니다' }
-
+    // 왕복 절감(2026-08-05 조직 전환 속도 개선 C): getUser 재호출 제거(gate.userId 재사용),
+    // 조직 존재 확인과 home org 조회는 서로 독립이라 병렬로.
     const admin = createAdminClient()
-    const { data: org } = await admin
-      .from('organizations')
-      .select('id')
-      .eq('id', orgId)
-      .maybeSingle()
+    const [{ data: org }, { data: mem }] = await Promise.all([
+      admin.from('organizations').select('id').eq('id', orgId).maybeSingle(),
+      admin
+        .from('memberships')
+        .select('org_id')
+        .eq('user_id', gate.userId)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+    ])
     if (!org) return { ok: false, error: '조직을 찾을 수 없음' }
-
-    const { data: mem } = await admin
-      .from('memberships')
-      .select('org_id')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle()
     const homeOrgId = mem?.org_id as string | undefined
 
     const cookieStore = await cookies()
