@@ -560,8 +560,6 @@ export async function clearImpersonation(): Promise<Result<null>> {
  * 아니면 쿠키를 세팅해 그 조직으로 본다. (기존 임시보기와 같은 메커니즘, UI 만 상단바로 승격.)
  */
 export async function switchActiveOrg(orgId: string): Promise<Result<null>> {
-  // 임시 측정(TIMING-ORG-SWITCH) — 전환 액션 자체의 소요시간.
-  const t0 = Date.now()
   const gate = await requireSuperAdmin()
   if (!gate.ok) return gate
   try {
@@ -595,7 +593,6 @@ export async function switchActiveOrg(orgId: string): Promise<Result<null>> {
       })
     }
     revalidatePath('/', 'layout')
-    console.log(`[org-switch-timing] action=${Date.now() - t0}ms`)
     return { ok: true, value: null }
   } catch (e) {
     return { ok: false, error: reportActionError(e, 'super-admin.switchActiveOrg') }
