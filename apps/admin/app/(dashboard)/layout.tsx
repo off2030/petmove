@@ -10,7 +10,6 @@ import { DestinationOverridesProvider } from '@/components/providers/destination
 import { loadImportReportCountries } from '@/lib/import-report-config'
 import { loadInspectionConfig } from '@/lib/inspection-config'
 import { loadCertConfig } from '@/lib/cert-config'
-import { loadExternalLinks } from '@/lib/external-links'
 import { getOrgVaccineData, getOrgVaccineDefaults } from '@/lib/vaccine-data'
 import { getCalculatorItems } from '@/lib/calculator-data'
 import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
@@ -106,7 +105,7 @@ export default async function DashboardLayout({
   //    (예전엔 목록 await 후 별도 스냅샷 await — 2단 워터폴이었다).
   //  - super_admin 조직·운영자 목록: 무조건 병렬 실행. 일반 직원은 액션 내부 권한
   //    체크에서 바로 실패(쿼리 1회 손해)하고, super_admin 은 별도 3단 대기가 사라진다.
-  const [casesFirstPage, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, homeOrg, externalLinks, convsR, orgsR, adminsR] = await Promise.all([
+  const [casesFirstPage, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, homeOrg, convsR, orgsR, adminsR] = await Promise.all([
     timed('cases', traceLayoutFetch('listActiveOrgCasesFirstPage', listActiveOrgCasesFirstPage())),
     timed('fieldDefs', traceLayoutFetch('fetchFieldDefs', fetchFieldDefs())),
     timed('importReport', traceLayoutFetch('loadImportReportCountries', loadImportReportCountries())),
@@ -119,7 +118,6 @@ export default async function DashboardLayout({
     timed('settingsBootstrap', getSettingsBootstrap().catch(() => null)),
     timed('activeOrgId', getActiveOrgId().catch(() => null)),
     timed('homeOrg', getHomeOrg().catch(() => null)),
-    timed('externalLinks', traceLayoutFetch('loadExternalLinks', loadExternalLinks())),
     timed('conversations', listMyConversationsWithSnapshots().catch(() => ({ ok: false as const, error: 'failed' }))),
     timed('superAdminOrgs', listAllOrgs().catch(() => ({ ok: false as const, error: 'failed' }))),
     timed('superAdminList', listSuperAdminsAll().catch(() => ({ ok: false as const, error: 'failed' }))),
@@ -176,7 +174,6 @@ export default async function DashboardLayout({
               initialSuperAdmins={initialSuperAdmins}
               activeOrgId={orgId}
               homeOrg={homeOrg}
-              initialExternalLinks={externalLinks}
               initialConversations={initialConversations}
               initialConvSnapshots={initialConvSnapshots}
             />

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { ChevronDown, Menu, Plus, Printer, Search, Copy, Trash2 } from 'lucide-react'
 import { EditModeButton } from '@/components/ui/edit-mode-button'
 import { useCalculatorData } from '@/components/providers/calculator-data-provider'
@@ -13,21 +13,15 @@ import { useConfirm } from '@petmove/ui'
 import { Calculator } from './calculator'
 import { CalculatorOutputModal } from './calculator-output-modal'
 import { ScheduleCalculator, type ScheduleCountry } from './schedule-calculator'
-import {
-  ExternalLinks,
-  type ExternalLinksHandle,
-  type ExternalLinksMode,
-} from './external-links'
 import { PageShell, PageTabs } from '@petmove/ui'
-import type { ExternalLinksConfig } from '@petmove/domain'
 import { EU_ALIAS_NAMES, isEuAliasCountry } from '@/lib/calculator-aliases'
 
-type Mode = 'cost' | 'schedule' | 'links'
+// '바로가기'(외부 링크) 모드는 2026-08-05 사용자 지시로 삭제 — 비용·일정 2모드.
+type Mode = 'cost' | 'schedule'
 
 const MODES = [
   { id: 'cost', label: '비용' },
   { id: 'schedule', label: '일정' },
-  { id: 'links', label: '바로가기' },
 ] as const satisfies ReadonlyArray<{ readonly id: Mode; readonly label: string }>
 
 const SCHEDULE_COUNTRIES: Array<{ value: ScheduleCountry; label: string }> = [
@@ -36,11 +30,7 @@ const SCHEDULE_COUNTRIES: Array<{ value: ScheduleCountry; label: string }> = [
   { value: 'nz', label: '뉴질랜드' },
 ]
 
-export function CalculatorApp({
-  initialExternalLinks,
-}: {
-  initialExternalLinks: ExternalLinksConfig
-}) {
+export function CalculatorApp() {
   const { items, setItems } = useCalculatorData()
   const confirm = useConfirm()
   const [mode, setMode] = useState<Mode>('cost')
@@ -63,13 +53,6 @@ export function CalculatorApp({
 
   // Schedule mode toolbar state
   const [scheduleCountry, setScheduleCountry] = useState<ScheduleCountry>('japan')
-
-  // Links mode toolbar state (controlled from inside ExternalLinks via ref + callbacks)
-  const linksRef = useRef<ExternalLinksHandle>(null)
-  const [linksMode, setLinksMode] = useState<ExternalLinksMode>('view')
-  const [linksSaving, setLinksSaving] = useState(false)
-  const onLinksModeChange = useCallback((m: ExternalLinksMode) => setLinksMode(m), [])
-  const onLinksSavingChange = useCallback((s: boolean) => setLinksSaving(s), [])
 
   useEffect(() => {
     if (!dropOpen) return
@@ -453,15 +436,6 @@ export function CalculatorApp({
           )
         })}
       </div>
-    ) : mode === 'links' ? (
-      <EditModeButton
-        editMode={linksMode === 'edit'}
-        onToggle={() => {
-          if (linksMode === 'edit') linksRef.current?.save()
-          else linksRef.current?.startEdit()
-        }}
-        saving={linksSaving}
-      />
     ) : undefined
 
   return (
@@ -479,16 +453,6 @@ export function CalculatorApp({
         />
       )}
       {mode === 'schedule' && <ScheduleCalculator country={scheduleCountry} />}
-      {mode === 'links' && (
-        <div className="px-lg">
-          <ExternalLinks
-            ref={linksRef}
-            initialConfig={initialExternalLinks}
-            onModeChange={onLinksModeChange}
-            onSavingChange={onLinksSavingChange}
-          />
-        </div>
-      )}
       {outputOpen && country && (
         <CalculatorOutputModal
           initialCountry={country}

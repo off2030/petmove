@@ -16,7 +16,6 @@ import { subscribeRealtime } from '@/lib/realtime/resilient-channel'
 import type { SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import type { OrgSummary, SuperAdminEntry } from '@/lib/actions/super-admin'
 import type { ConversationListItem, ConversationMessagesResult } from '@/lib/actions/chat'
-import type { ExternalLinksConfig } from '@petmove/domain'
 
 const MemoizedCases = memo(CasesApp)
 const MemoizedSettings = memo(SettingsApp)
@@ -47,7 +46,6 @@ export function DashboardShell({
   initialSuperAdmins = [],
   activeOrgId = null,
   homeOrg = null,
-  initialExternalLinks,
   initialConversations = [],
   initialConvSnapshots = {},
 }: {
@@ -63,7 +61,6 @@ export function DashboardShell({
   activeOrgId?: string | null
   /** 본인 home org(원래 소속). 미배정 신청 이동 대상 라벨. */
   homeOrg?: { id: string; name: string } | null
-  initialExternalLinks: ExternalLinksConfig
   initialConversations?: ConversationListItem[]
   initialConvSnapshots?: Record<string, ConversationMessagesResult>
 }) {
@@ -247,7 +244,7 @@ export function DashboardShell({
         )}
         {mounted.has('calculator') && (
           <div className="h-full" style={{ display: activeTab === 'calculator' ? 'block' : 'none' }}>
-            <MemoizedCalculator initialExternalLinks={initialExternalLinks} />
+            <MemoizedCalculator />
           </div>
         )}
         {mounted.has('messages') && (
