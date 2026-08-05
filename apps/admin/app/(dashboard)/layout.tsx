@@ -87,6 +87,17 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  // 임시 측정(TIMING-ORG-SWITCH, 2026-08-05) — 조직 전환이 무거운 원인 판별용.
+  // fetch 별 소요시간을 모아 한 줄로 로그 → Vercel Functions 로그에서 확인.
+  // 병목 판별이 끝나면 wrapper 와 로그 줄을 제거한다.
+  const timings: Record<string, number> = {}
+  const timed = <T,>(label: string, p: Promise<T>): Promise<T> => {
+    const t0 = Date.now()
+    return p.finally(() => {
+      timings[label] = Date.now() - t0
+    })
+  }
+  const tAll = Date.now()
   // 케이스 목록은 첫 배치(최신순 300)만 await — 첫 페인트가 org 전체 크기(대형 org
   // ~2MB 직렬화)에 비례하지 않게. 나머지는 CasesProvider 가 마운트 후 백그라운드 로드.
   //
@@ -96,23 +107,31 @@ export default async function DashboardLayout({
   //  - super_admin 조직·운영자 목록: 무조건 병렬 실행. 일반 직원은 액션 내부 권한
   //    체크에서 바로 실패(쿼리 1회 손해)하고, super_admin 은 별도 3단 대기가 사라진다.
   const [casesFirstPage, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, homeOrg, externalLinks, convsR, orgsR, adminsR] = await Promise.all([
-    traceLayoutFetch('listActiveOrgCasesFirstPage', listActiveOrgCasesFirstPage()),
-    traceLayoutFetch('fetchFieldDefs', fetchFieldDefs()),
-    traceLayoutFetch('loadImportReportCountries', loadImportReportCountries()),
-    traceLayoutFetch('loadInspectionConfig', loadInspectionConfig()),
-    traceLayoutFetch('loadCertConfig', loadCertConfig()),
-    traceLayoutFetch('fetchUserContext', fetchUserContext()),
-    traceLayoutFetch('getOrgVaccineData', getOrgVaccineData()),
-    traceLayoutFetch('getOrgVaccineDefaults', getOrgVaccineDefaults()),
-    traceLayoutFetch('getCalculatorItems', getCalculatorItems()),
-    getSettingsBootstrap().catch(() => null),
-    getActiveOrgId().catch(() => null),
-    getHomeOrg().catch(() => null),
-    traceLayoutFetch('loadExternalLinks', loadExternalLinks()),
-    listMyConversationsWithSnapshots().catch(() => ({ ok: false as const, error: 'failed' })),
-    listAllOrgs().catch(() => ({ ok: false as const, error: 'failed' })),
-    listSuperAdminsAll().catch(() => ({ ok: false as const, error: 'failed' })),
+    timed('cases', traceLayoutFetch('listActiveOrgCasesFirstPage', listActiveOrgCasesFirstPage())),
+    timed('fieldDefs', traceLayoutFetch('fetchFieldDefs', fetchFieldDefs())),
+    timed('importReport', traceLayoutFetch('loadImportReportCountries', loadImportReportCountries())),
+    timed('inspection', traceLayoutFetch('loadInspectionConfig', loadInspectionConfig())),
+    timed('cert', traceLayoutFetch('loadCertConfig', loadCertConfig())),
+    timed('userCtx', traceLayoutFetch('fetchUserContext', fetchUserContext())),
+    timed('vaccineData', traceLayoutFetch('getOrgVaccineData', getOrgVaccineData())),
+    timed('vaccineDefaults', traceLayoutFetch('getOrgVaccineDefaults', getOrgVaccineDefaults())),
+    timed('calculator', traceLayoutFetch('getCalculatorItems', getCalculatorItems())),
+    timed('settingsBootstrap', getSettingsBootstrap().catch(() => null)),
+    timed('activeOrgId', getActiveOrgId().catch(() => null)),
+    timed('homeOrg', getHomeOrg().catch(() => null)),
+    timed('externalLinks', traceLayoutFetch('loadExternalLinks', loadExternalLinks())),
+    timed('conversations', listMyConversationsWithSnapshots().catch(() => ({ ok: false as const, error: 'failed' }))),
+    timed('superAdminOrgs', listAllOrgs().catch(() => ({ ok: false as const, error: 'failed' }))),
+    timed('superAdminList', listSuperAdminsAll().catch(() => ({ ok: false as const, error: 'failed' }))),
   ])
+  // TIMING-ORG-SWITCH — 느린 순 정렬 한 줄 로그.
+  console.log(
+    `[layout-timing] total=${Date.now() - tAll}ms ` +
+      Object.entries(timings)
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, v]) => `${k}=${v}`)
+        .join(' '),
+  )
   const initialConversations: ConversationListItem[] = convsR.ok ? convsR.value.conversations : []
   const initialConvSnapshots: Record<string, ConversationMessagesResult> = convsR.ok
     ? convsR.value.snapshots
