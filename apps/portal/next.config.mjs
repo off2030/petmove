@@ -71,6 +71,8 @@ const nextConfig = {
     '/terms': ['../../docs/legal/terms.md'],
     '/privacy': ['../../docs/legal/privacy.md'],
     '/support': ['../../docs/legal/support.md'],
+    '/help/start': ['../../docs/legal/help-start.md'],
+    '/help/faq': ['../../docs/legal/help-faq.md'],
   },
   // 여정 히어로 사진(public/destinations) — 파일명 그대로 재압축해 교체되는 경우가
   // 있어(2026-07 WebP 전환 때도 그랬음) immutable 은 위험. 7일 fresh + 30일
