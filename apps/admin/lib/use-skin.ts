@@ -3,36 +3,35 @@
 import { useEffect, useState } from 'react'
 
 /** 색·radius·폰트가 함께 바뀌는 비주얼 스킨. dark 모드와 직교. */
-export type Skin = 'editorial' | 'flat' | 'brand'
+export type Skin = 'editorial' | 'brand'
 
 const STORAGE_KEY = 'skin'
 const EVENT = 'skinchange'
 
-// 가나다 순 (한글 라벨 기준). default = editorial.
+// 가나다 순 (한글 라벨 기준). default = brand (2026-08-05 승격 — flat 은 삭제됨).
 export const SKIN_LIST: Skin[] = [
-  'brand',     // 브랜드 (2026-07 리브랜딩 — 검수 후 default 승격 예정)
-  'editorial', // 에디토리얼 (default)
-  'flat',      // 플랫
+  'brand',     // 브랜드 (default — 2026-07 리브랜딩)
+  'editorial', // 에디토리얼
 ]
 
 export const SKIN_LABELS: Record<Skin, string> = {
   brand: '브랜드',
   editorial: '에디토리얼',
-  flat: '플랫',
 }
 
 function readSkin(): Skin {
   try {
     const v = localStorage.getItem(STORAGE_KEY)
+    // legacy 'flat' 등 목록 밖 값은 default(brand)로 흡수.
     if (v && (SKIN_LIST as string[]).includes(v)) return v as Skin
   } catch {}
-  return 'editorial'
+  return 'brand'
 }
 
 /** 스킨 변경 (전역) — localStorage 저장 + skinchange 이벤트로 동기화. */
 export function setSkin(skin: Skin) {
   try {
-    if (skin === 'editorial') localStorage.removeItem(STORAGE_KEY)
+    if (skin === 'brand') localStorage.removeItem(STORAGE_KEY)
     else localStorage.setItem(STORAGE_KEY, skin)
   } catch {}
   window.dispatchEvent(new Event(EVENT))
@@ -46,7 +45,7 @@ export function cycleSkin() {
 }
 
 export function useSkin() {
-  const [skin, setSkinState] = useState<Skin>('editorial')
+  const [skin, setSkinState] = useState<Skin>('brand')
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {

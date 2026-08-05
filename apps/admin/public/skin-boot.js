@@ -13,8 +13,9 @@
     var dark = !force && (m === 'dark' || ((!m || m === 'system') && matchMedia('(prefers-color-scheme: dark)').matches))
     if (dark) h.classList.add('dark')
     // 외부 고객용(/apply·/share)은 운영자 스킨 무시하고 항상 brand(펫무브 앱 디자인).
+    // default = brand (2026-08-05 승격). editorial 만 무속성(기본 CSS 블록),
+    // 그 외(미설정·brand·legacy flat)는 전부 brand 로.
     var s = force ? 'brand' : localStorage.getItem('skin')
-    var V = ['flat', 'brand']
-    if (s && V.indexOf(s) >= 0) h.setAttribute('data-skin', s)
+    if (s !== 'editorial') h.setAttribute('data-skin', 'brand')
   } catch (e) {}
 })()

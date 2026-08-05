@@ -10,10 +10,10 @@ import { usePathname } from 'next/navigation'
 const FORCE_DEFAULT_PATHS = ['/apply', '/share']
 
 type Mode = 'system' | 'light' | 'dark'
-type Skin = 'editorial' | 'flat' | 'brand'
+type Skin = 'editorial' | 'brand'
 
-// 가나다 순 — use-skin.ts SKIN_LIST 와 동기화 유지.
-const VALID_SKINS: Skin[] = ['brand', 'editorial', 'flat']
+// 가나다 순 — use-skin.ts SKIN_LIST 와 동기화 유지. default = brand (2026-08-05).
+const VALID_SKINS: Skin[] = ['brand', 'editorial']
 
 function readMode(): Mode {
   try {
@@ -26,9 +26,10 @@ function readMode(): Mode {
 function readSkin(): Skin {
   try {
     const v = localStorage.getItem('skin')
+    // legacy 'flat' 등 목록 밖 값은 default(brand)로 흡수.
     if (v && (VALID_SKINS as string[]).includes(v)) return v as Skin
   } catch {}
-  return 'editorial'
+  return 'brand'
 }
 
 function applyEffective(mode: Mode, skin: Skin, forceDefault: boolean) {

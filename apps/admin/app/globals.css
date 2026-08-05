@@ -397,193 +397,6 @@
      ═════════════════════════════════════════════════════════════ */
 
   /* ─────────────────────────────────────────────────────────────
-     Skin: flat — Linear / Notion / Stripe 류 미니멀.
-     순백 + zinc grays + 검정 solid primary. 단일 sans (Inter), 작은 radius.
-     채도 거의 0 — destructive 만 빨간색 유지. italic 미사용.
-     ───────────────────────────────────────────────────────────── */
-  [data-skin="flat"] {
-    /* Inter Tight → Inter (regular) — Linear/Notion 톤.
-       --font-sans/serif/serif-kr/mono 모두 sans 로 평탄화 — Linear/Notion 처럼 한 폰트로 통일.
-       Inter 의 tabular 숫자(OpenType tnum) 가 JetBrains Mono 정렬 대체. */
-    --font-sans: var(--font-sans-flat);
-    --font-serif: var(--font-sans-flat), Pretendard;
-    --font-serif-kr: var(--font-sans-kr);
-    --font-mono: var(--font-sans-flat);
-    --pmw-font-serif: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-
-    --pmw-near-black: #09090B;
-    --pmw-olive-gray: #71717A;
-    --pmw-stone-gray: #A1A1AA;
-    --pmw-deep: #18181B;
-    --pmw-clay-soft: #F4F4F5;       /* zinc-100 — surface tint */
-    --pmw-sage: #18181B;
-    --pmw-sage-soft: #E4E4E7;       /* zinc-200 — chat active row, paper 와 명확 구분 */
-    --pmw-sage-paper: #FAFAFA;       /* zinc-50 — chat panel bg */
-    --pmw-amber: #18181B;
-    --pmw-rust: #DC2626;
-    --pmw-border-warm: #E4E4E7;
-    --pmw-parchment: #FFFFFF;
-    --pmw-paper: #FFFFFF;
-
-    --background: 0 0% 100%;
-    --foreground: 240 10% 4%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 4%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 4%;
-    --primary: 240 6% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 10% 4%;
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 240 5% 96%;
-    --accent-foreground: 240 10% 4%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 240 10% 4%;
-    --radius: 0.5rem;
-
-    /* Semantic 토큰 — flat (Linear/Notion 톤. 채도 0, 주말만 subtle 컬러) */
-    --pmw-accent: 240 6% 10%;
-    --pmw-accent-fg: 0 0% 98%;
-    --pmw-accent-strong: 240 5% 26%;
-    --pmw-tag-bg: 240 5% 96%;
-    --pmw-tag-fg: 240 6% 25%;
-    --pmw-cal-today: 240 6% 10%;
-    --pmw-cal-sunday: 0 65% 55%;
-    --pmw-cal-saturday: 220 50% 45%;
-    --pmw-positive: 142 60% 35%;
-    --pmw-avatar-bg: 240 5% 92%;
-    --pmw-avatar-fg: 240 6% 25%;
-    --pmw-code-label: 240 4% 46%;
-
-    /* Typography 스케일 — Linear/Notion 모델
-       (각 사이즈에 맞는 line-height + tracking + weight 조합) */
-    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.4;   --pmw-tracking-2xs:  0;
-    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.5;   --pmw-tracking-xs:   -0.005em;
-    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.5;   --pmw-tracking-sm:   -0.011em;
-    --pmw-text-base: 14px;   --pmw-leading-base: 1.5;   --pmw-tracking-base: -0.011em;
-    --pmw-text-md:   15px;   --pmw-leading-md:   1.55;  --pmw-tracking-md:   -0.011em;
-    --pmw-text-lg:   18px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.015em;
-    --pmw-text-xl:   22px;   --pmw-leading-xl:   1.3;   --pmw-tracking-xl:   -0.02em;
-    --pmw-text-2xl:  28px;   --pmw-leading-2xl:  1.2;   --pmw-tracking-2xl:  -0.025em;
-
-    /* 텍스트 색 4-tier (Linear) */
-    --pmw-text-primary:    240 10% 4%;     /* zinc-950 — 본문 */
-    --pmw-text-secondary:  240 4% 46%;     /* zinc-500 — 라벨 */
-    --pmw-text-tertiary:   240 5% 65%;     /* zinc-400 — 메타 */
-    --pmw-text-disabled:   240 5% 84%;     /* zinc-300 — 비활성 */
-
-    /* Warning/info — Linear/Notion 톤 (vivid 보다 차분한 amber/blue) */
-    --pmw-warning: 32 70% 40%;             /* warm amber, vivid 보다 차분 */
-    --pmw-warning-bg: 38 60% 95%;          /* light amber tint */
-    --pmw-warning-fg: 28 70% 22%;          /* deep amber */
-    --pmw-info: 217 65% 45%;               /* muted blue (Linear 시그니처보다 차분) */
-
-    /* Chip 6-tone flat — zinc + 살짝 hue tint (Linear/Notion 톤) */
-    --pmw-chip-red-bg:     0 70% 95%;
-    --pmw-chip-red-fg:     0 60% 35%;
-    --pmw-chip-amber-bg:   38 70% 92%;
-    --pmw-chip-amber-fg:   28 65% 30%;
-    --pmw-chip-olive-bg:   90 30% 92%;
-    --pmw-chip-olive-fg:   90 35% 28%;
-    --pmw-chip-blue-bg:    215 60% 94%;
-    --pmw-chip-blue-fg:    218 55% 35%;
-    --pmw-chip-plum-bg:    280 35% 93%;
-    --pmw-chip-plum-fg:    280 35% 35%;
-    --pmw-chip-neutral-bg: 240 5% 94%;
-    --pmw-chip-neutral-fg: 240 6% 28%;
-  }
-
-  [data-skin="flat"].dark {
-    --pmw-near-black: #FAFAFA;
-    --pmw-olive-gray: #A1A1AA;
-    --pmw-stone-gray: #71717A;
-    --pmw-deep: #FAFAFA;
-    --pmw-clay-soft: #27272A;
-    --pmw-sage: #FAFAFA;
-    --pmw-sage-soft: #27272A;
-    --pmw-sage-paper: #18181B;
-    --pmw-amber: #FAFAFA;
-    --pmw-rust: #EF4444;
-    --pmw-border-warm: #27272A;
-    --pmw-parchment: #09090B;
-    --pmw-paper: #18181B;
-
-    color-scheme: dark;
-    --background: 240 10% 4%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 4%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 4%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 6% 10%;
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 240 4% 16%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 63% 41%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 240 5% 84%;
-
-    --pmw-accent: 0 0% 98%;
-    --pmw-accent-fg: 240 6% 10%;
-    --pmw-accent-strong: 240 5% 84%;
-    --pmw-tag-bg: 240 4% 16%;
-    --pmw-tag-fg: 240 5% 84%;
-    --pmw-cal-today: 0 0% 98%;
-    --pmw-cal-sunday: 0 65% 65%;
-    --pmw-cal-saturday: 220 50% 65%;
-    --pmw-positive: 142 50% 60%;
-    --pmw-avatar-bg: 240 4% 22%;
-    --pmw-avatar-fg: 240 5% 84%;
-    --pmw-code-label: 240 5% 65%;
-
-    /* Typography 스케일 + tracking — light 와 동일 (사이즈는 light/dark 무관) */
-    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.4;   --pmw-tracking-2xs:  0;
-    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.5;   --pmw-tracking-xs:   -0.005em;
-    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.5;   --pmw-tracking-sm:   -0.011em;
-    --pmw-text-base: 14px;   --pmw-leading-base: 1.5;   --pmw-tracking-base: -0.011em;
-    --pmw-text-md:   15px;   --pmw-leading-md:   1.55;  --pmw-tracking-md:   -0.011em;
-    --pmw-text-lg:   18px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.015em;
-    --pmw-text-xl:   22px;   --pmw-leading-xl:   1.3;   --pmw-tracking-xl:   -0.02em;
-    --pmw-text-2xl:  28px;   --pmw-leading-2xl:  1.2;   --pmw-tracking-2xl:  -0.025em;
-
-    /* 텍스트 색 4-tier (dark 반전) */
-    --pmw-text-primary:    0 0% 98%;
-    --pmw-text-secondary:  240 5% 65%;
-    --pmw-text-tertiary:   240 5% 50%;
-    --pmw-text-disabled:   240 4% 35%;
-
-    --pmw-warning: 38 92% 60%;
-    --pmw-warning-bg: 32 65% 18%;
-    --pmw-warning-fg: 38 92% 80%;
-    --pmw-info: 217 91% 65%;
-
-    /* Chip 6-tone flat dark */
-    --pmw-chip-red-bg:     0 30% 18%;
-    --pmw-chip-red-fg:     0 70% 78%;
-    --pmw-chip-amber-bg:   28 25% 18%;
-    --pmw-chip-amber-fg:   38 70% 78%;
-    --pmw-chip-olive-bg:   90 18% 16%;
-    --pmw-chip-olive-fg:   90 35% 78%;
-    --pmw-chip-blue-bg:    218 20% 18%;
-    --pmw-chip-blue-fg:    215 55% 78%;
-    --pmw-chip-plum-bg:    280 18% 18%;
-    --pmw-chip-plum-fg:    280 40% 78%;
-    --pmw-chip-neutral-bg: 240 4% 18%;
-    --pmw-chip-neutral-fg: 240 5% 78%;
-  }
-
-  /* ─────────────────────────────────────────────────────────────
      Skin: brand — 새 브랜드 (2026-07 리브랜딩). flat 구조 + 브랜드 팔레트.
      순백 + 잉크 그레이 + 하늘 파랑 #0BAEFF 액센트. Pretendard 단일, tight 타이포.
      색 값의 진실은 portal --pm-* (apps/portal/app/globals.css 의 pmw 미러 217~476행) —
@@ -803,11 +616,6 @@
     box-shadow: 0 1px 3px rgba(20, 25, 35, 0.05), 0 1px 2px rgba(20, 25, 35, 0.03);
   }
 
-  /* font-mono 가 sans 폰트로 평탄화된 스킨 — tabular 로 모노의 정렬만 흉내. */
-  [data-skin="flat"] .font-mono {
-    font-variant-numeric: tabular-nums;
-  }
-
   /* brand 는 진짜 모노(JetBrains Mono)라 tabular 가 기본이지만, 한글이 섞인 라벨은
      unicode-range 때문에 Pretendard 로 폴백된다. 그 폴백 구간의 숫자도 자릿수를
      맞추려면 tabular 를 명시해야 한다. */
@@ -816,7 +624,6 @@
   }
 
   /* italic 미사용 스킨. */
-  [data-skin="flat"] .italic,
   [data-skin="brand"] .italic {
     font-style: normal;
   }
@@ -824,7 +631,7 @@
   /* 모든 스킨 body baseline — letter-spacing + line-height 를 body 에 부여하면
      모든 자식 텍스트가 inherit. 스킨별로 token 값이 다르므로 자동으로 분기.
      - editorial: 자연 spacing + line-height 1.6 (매거진 톤)
-     - flat: -0.011em + 1.5 (Linear 타이트) */
+     - brand: -0.011em + 1.5 (타이트) */
   body {
     letter-spacing: var(--pmw-tracking-base, normal);
     line-height: var(--pmw-leading-base, 1.5);
@@ -849,12 +656,6 @@
     color: hsl(var(--foreground));
   }
 
-}
-
-/* flat own bubble — 약간 옅게 (사용자 피드백). */
-[data-skin="flat"] [data-bubble="own"] {
-  background-color: hsl(var(--primary) / 0.85);
-  color: hsl(var(--primary-foreground));
 }
 
 /* brand 스킨 전용 요소 토글 — 로고 마크 등. 부트 스크립트가 hydration 전에
