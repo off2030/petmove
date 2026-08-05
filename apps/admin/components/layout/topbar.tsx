@@ -31,26 +31,13 @@ const LOGO_VARIANT: 'text' | 'wordmark' | 'full' | 'alonzo' | 'alonzo-text' | 'i
 
 function LogoMark() {
   if (LOGO_VARIANT === 'icon-text') {
-    // 스킨 연동 로고 — useSkin 대신 data-skin CSS 토글(globals.css): hydration 전에
-    // 부트 스크립트가 data-skin 을 박으므로 첫 페인트부터 올바른 쪽만 보임 (깜빡임 없음).
-    //   brand      → '떠오르는 P' + 한글 '펫무브워크' (portal top-bar 워드마크와 동일 스타일:
-    //                 700 / 17px / letter-spacing 0.025em / 잉크색. 영문안은 portal 에서 폐기됨)
-    //   그 외 스킨 → 기존 버건디 P + 'PETMOVE Work'
+    // 로고 = 브랜드 상수 — 스킨 불문 '떠오르는 P' + 한글 '펫무브워크' (2026-08-05 A안 확정).
+    // 마크는 원색 고정(간판이지 인테리어가 아니다), 워드마크 글자색만 스킨 잉크를 따른다.
+    // (구 에디토리얼 전용 버건디 P + 'PETMOVE Work' 분기 폐기 — brand-skin-only/hidden 토글 제거)
     return (
       <span className="inline-flex items-center gap-2">
-        <img
-          src="/icon.svg"
-          alt=""
-          aria-hidden
-          className="brand-skin-hidden h-7 w-7 select-none rounded-[6px]"
-          draggable={false}
-        />
-        <span className="brand-skin-hidden inline-flex items-baseline gap-[5px] text-foreground leading-none whitespace-nowrap">
-          <span className="text-[18px] font-semibold tracking-tight">PETMOVE</span>
-          <span className="text-[13px] font-medium tracking-wide text-muted-foreground">Work</span>
-        </span>
-        <BrandLogoMark size={24} className="brand-skin-only" />
-        <span className="brand-skin-only text-[17px] font-bold tracking-[0.025em] text-foreground leading-none whitespace-nowrap">
+        <BrandLogoMark size={24} />
+        <span className="text-[17px] font-bold tracking-[0.025em] text-foreground leading-none whitespace-nowrap">
           펫무브워크
         </span>
       </span>

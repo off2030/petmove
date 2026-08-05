@@ -2,8 +2,8 @@
  * PETMOVE 브랜드 로고 마크 — '떠오르는 P' 확정안 (2026-07-12, P-1 투명).
  * portal 상단바 LogoMark(apps/portal/components/portal-shell/logo-mark.tsx)와 동일 아트웍.
  * (앱 간 import 금지 규칙 때문에 복사본 — 원본 SVG: docs/brand/logo-rising-p1-transparent.svg)
- * brand 스킨 상단바에서만 노출 — 토글은 globals.css 의 .brand-skin-only/.brand-skin-hidden.
- * 색은 아이콘 원본 고정(하늘 블루·노랑) — 다크에서도 그대로.
+ * 상단바 로고 — 스킨 불문 항상 노출 (2026-08-05 A안: 로고는 브랜드 상수).
+ * 색은 아이콘 원본 고정(하늘 블루·노랑) — 다크·에디토리얼에서도 그대로.
  */
 'use client'
 
