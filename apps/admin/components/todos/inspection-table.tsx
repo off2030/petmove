@@ -338,14 +338,13 @@ function StatusCell({ row, options, onUpdate, overdue = false }: {
   // 단 검사일 5일 이상 지난 대기는 경고색(날짜와 동일)으로 지연 신호.
   const isActive = value === 'testing'
   const isDone = value === 'done'
+  // 상태 색 규칙(2026-08-05 통일, todo-table 과 동일): 대기는 항상 tertiary.
+  // 지연 경고는 날짜 셀만 물들인다 — 상태 글자 물들임은 탭 간 대기 색 불일치를 낳았다.
   const cls = isActive
     ? 'font-serif text-[16px] text-primary'
     : isDone
     ? 'font-serif text-[16px] text-pmw-positive'
-    : overdue
-    ? 'font-serif text-[16px] text-pmw-warning'
-    : // 대기 — tertiary 로 한 단계 물러남 (todo-table 상태 셀과 동일 규칙).
-      'font-serif text-[16px] text-pmw-text-tertiary'
+    : 'font-serif text-[16px] text-pmw-text-tertiary'
 
   return <StatusPicker row={row} options={options} value={value} label={label} cls={cls} isDone={isDone} onUpdate={onUpdate} />
 }

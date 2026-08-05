@@ -63,8 +63,6 @@ export interface TodoColumn {
   readonly?: boolean
   /** 표시 모드 셀에 추가로 붙일 className (예: 경고 색상). */
   cellClass?: (row: CaseRow) => string
-  /** select 셀 '대기' 뱃지를 경고색으로 물들일 조건 (예: 신고기한 임박). */
-  warn?: (row: CaseRow) => boolean
 }
 
 function getCellValue(row: CaseRow, col: TodoColumn): string {
@@ -80,26 +78,22 @@ function getCellValue(row: CaseRow, col: TodoColumn): string {
   return col.defaultValue ?? ''
 }
 
-function StatusBadge({ value, options, warn = false }: { value: string; options: Array<{ value: string; label: string }>; warn?: boolean }) {
+function StatusBadge({ value, options }: { value: string; options: Array<{ value: string; label: string }> }) {
   const opt = options.find((o) => o.value === value)
   if (!opt) {
     return <span className="font-serif italic text-[15px] text-muted-foreground/40">—</span>
   }
 
-  // Editorial tone: 배지 제거, 이탤릭 세리프로 표시.
-  // 진행 중 → primary(테라코타, warm). 완료 → sage(차분한 녹색, cool 대비).
-  // 대기(그 외) → 기본 muted, 단 warn(신고기한 임박)이면 경고색 — 날짜와 함께 물든다.
+  // 상태 색 규칙(2026-08-05 통일): 진행 중 → primary, 완료 → positive,
+  // 대기 → tertiary(연회색) 고정. 기한 임박·지연 경고는 날짜 셀(cellClass)만 물들인다 —
+  // 상태 글자까지 물들이면 탭마다 대기 색이 달라 보여 위계가 흐려진다(사용자 피드백).
   const isActive = value === 'in_progress' || value === 'testing'
   const isDone = value === 'done'
   const cls = isActive
     ? 'text-primary'
     : isDone
     ? 'text-pmw-positive'
-    : warn
-    ? 'text-pmw-warning'
-    : // 대기 — 한 단계 연한 회색(tertiary). brand 는 이탤릭 평탄화로 muted 가 본문과
-      // 같은 무게가 돼 상태 위계가 사라졌던 것 교정 (editorial 은 자체 tertiary 정의).
-      'text-pmw-text-tertiary'
+    : 'text-pmw-text-tertiary'
 
   return (
     <span className={cn('inline-flex items-center font-serif text-[16px]', cls)}>
@@ -351,7 +345,7 @@ function SelectCell({
       } as React.ButtonHTMLAttributes<HTMLButtonElement>}
       renderTrigger={() => (
         <>
-          <StatusBadge value={value} options={col.options!} warn={col.warn?.(row) ?? false} />
+          <StatusBadge value={value} options={col.options!} />
           <span aria-hidden className="not-italic ml-1 text-[10px] leading-none opacity-0 transition-opacity group-hover:opacity-70">▼</span>
         </>
       )}

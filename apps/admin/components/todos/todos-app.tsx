@@ -516,8 +516,6 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
     options: STATUS_OPTIONS,
     defaultValue: 'not_started',
     resolveValue: exportDocStatus,
-    // 내원일 D-7 임박 시 '대기' 뱃지도 경고색(내원일 날짜와 함께 물든다).
-    warn: (row) => isExportDocVisitImminent(row),
   },
   { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: EXPORT_DOC_COL_W, readonly: true },
   { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: EXPORT_DOC_COL_W, readonly: true },
@@ -796,8 +794,6 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     width: BASE_COL_W,
     options: IMPORT_STATUS_OPTIONS,
     resolveValue: effectiveImportStatus,
-    // 신고기한 임박 시 '대기' 뱃지도 경고색(날짜와 함께 물든다).
-    warn: (row) => isImportDeadlineWarning(row),
   },
   {
     key: 'import_export_status',
@@ -809,8 +805,6 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     resolveValue: effectiveExportStatus,
     // 수출은 일본 + 왕복(귀국일 있음)일 때만 표시 — 그 외는 '—'.
     condition: (row) => exportApplies(row),
-    // 신고기한 임박 시 '대기' 뱃지도 경고색.
-    warn: (row) => isImportDeadlineWarning(row),
   },
   { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: BASE_COL_W, readonly: true },
   { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: BASE_COL_W, readonly: true },
