@@ -141,6 +141,19 @@ function EmptyState() {
       >
         시작하기
       </Link>
+      {/* 사용 안내(/help/start) — 가이드가 가장 필요한 신규 사용자가 마주치는 자리.
+          설정>지원에도 같은 링크가 있지만 거기는 '찾으러 오는 사람'용이다. */}
+      <Link
+        href="/help/start"
+        style={{
+          fontSize: 12.5,
+          color: 'var(--pm-ink-3)',
+          textDecoration: 'underline',
+          textUnderlineOffset: 3,
+        }}
+      >
+        처음이신가요? 사용 안내 보기
+      </Link>
     </div>
   )
 }
