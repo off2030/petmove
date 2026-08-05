@@ -1486,10 +1486,8 @@ export function ServicesView({
   // 맞춤 서비스를 보여줄 수 있으므로. 동물을 등록하면 아래 일반 화면으로 돌아간다.
   if (cases.length === 0) {
     return (
-      <StartHereEmpty
-        title="반려동물을 먼저 등록해주세요"
-        subtitle="등록하면 여행지에 맞는 서비스를 안내해 드려요"
-      />
+      {/* 준비 탭 환영 화면과 동일 문구 — 등록 전 3개 탭(준비·맡기기·내 정보) 통일 (2026-08-05). */}
+      <StartHereEmpty title="펫무브에 오신 것을 환영합니다" />
     )
   }
 
