@@ -15,7 +15,7 @@ export const SKIN_LIST: Skin[] = [
 ]
 
 export const SKIN_LABELS: Record<Skin, string> = {
-  brand: '브랜드',
+  brand: '기본',
   editorial: '에디토리얼',
 }
 
