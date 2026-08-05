@@ -139,8 +139,10 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     if (!value.trim()) { setAddingText(false); return }
     const item: TextNote = { type: 'text', content: value, createdAt: new Date().toISOString() }
     const next = [...notes, item]
-    await saveNotes(next)
+    // 입력창은 즉시 닫는다 — saveNotes 의 optimistic 렌더(새 메모가 위에 뜸)와
+    // 서버 응답을 기다리는 입력창이 겹쳐 화면이 아래로 밀리는 현상 방지.
     setAddingText(false)
+    await saveNotes(next)
   }
 
   function updateText(idx: number, value: string) {
@@ -515,7 +517,9 @@ function NoteTextInput({ initial, onSave, onCancel, saving }: {
         }}
         onBlur={() => setTimeout(() => { if (!saving) onSave(val.trim()) }, 150)}
         placeholder="메모 입력 (Shift+Enter로 줄바꿈)"
-        className="flex-1 min-w-0 min-h-[2rem] rounded-md border border-border/80 bg-background p-2 text-sm focus-visible:outline-none resize-none"
+        // 저장 후 표시(font-serif 17px medium)와 동일 타이포·동일 좌표(px-2 -mx-2) —
+        // 입력↔저장 전환 시 글씨가 바뀌거나 자리가 튀지 않도록.
+        className="flex-1 min-w-0 min-h-[2rem] rounded-md border border-border/80 bg-background px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground focus-visible:outline-none resize-none"
       />
       <button
         type="button"
