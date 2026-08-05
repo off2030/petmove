@@ -4,8 +4,11 @@ import { SiteFooter } from '@/components/site-footer'
 import { AppLink } from '@/components/app-link'
 import { Toc } from '@/components/toc'
 import type { Article } from '@/lib/content'
+import { relatedPosts } from '@/lib/related'
+import { postPath } from '@/lib/site-data'
 
 export function ArticleShell({ article }: { article: Article }) {
+  const related = relatedPosts(article.slug)
   return (
     <div className="pg pg-article">
       <SiteHeader active="guide" />
@@ -38,6 +41,19 @@ export function ArticleShell({ article }: { article: Article }) {
             무료 앱으로 시작하기
           </AppLink>
         </div>
+
+        {/* 같은 여행지 글 묶음 — CTA 아래(전환 동선을 가리지 않는 위치). 데이터=lib/related.ts */}
+        {related.length > 0 && (
+          <div className="related">
+            <div className="rel-h">함께 보면 좋은 글</div>
+            {related.map((p) => (
+              <a key={p.slug} href={postPath(p)}>
+                <span>{p.title}</span>
+                <i className="ti ti-arrow-right" />
+              </a>
+            ))}
+          </div>
+        )}
       </article>
       <SiteFooter />
     </div>

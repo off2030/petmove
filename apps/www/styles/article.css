@@ -148,6 +148,14 @@
   .cta2 a.svc{background:var(--accent);color:#fff;font-weight:600;padding:15px 22px;font-size:15px}
   .cta2 a.app{border:1.5px solid var(--accent);color:var(--accent-ink);font-weight:600;padding:14px 22px;font-size:14.5px}
   .cta2 a i{font-size:17px}
+  /* 함께 보면 좋은 글 — CTA 아래 같은 여행지 글 목록(행 전체 클릭) */
+  .related{margin:0 0 56px;border-top:0.5px solid var(--border);padding-top:26px}
+  .related .rel-h{font-size:12px;font-weight:700;color:var(--ink3);letter-spacing:.03em;margin-bottom:4px}
+  .related a{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:13px 4px;border-bottom:0.5px solid var(--border);text-decoration:none;
+    font-size:14.5px;font-weight:600;color:var(--accent-ink);line-height:1.5}
+  .related a i{font-size:15px;color:var(--ink3);flex:0 0 auto}
+
   /* 유용한 정보 — 도구 링크를 별개 항목으로(행 전체 클릭) */
   .prose .info-list{margin:14px 0 4px;border-top:0.5px solid var(--border)}
   .prose .info-list a{display:block;padding:14px 4px;border-bottom:0.5px solid var(--border);text-decoration:none}
