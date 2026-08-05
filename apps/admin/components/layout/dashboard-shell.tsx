@@ -11,11 +11,10 @@ import { CalculatorApp } from '@/components/calculator/calculator-app'
 import { AlertsApp } from '@/components/alerts/alerts-app'
 import { SuperAdminApp } from '@/components/super-admin/super-admin-app'
 import { migrateMyOAuthAvatar } from '@/lib/actions/profile'
-import { listMyConversations } from '@/lib/actions/chat'
+import { listMyNotifications, type NotificationRow } from '@/lib/actions/notifications'
 import { subscribeRealtime } from '@/lib/realtime/resilient-channel'
 import type { SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import type { OrgSummary, SuperAdminEntry } from '@/lib/actions/super-admin'
-import type { ConversationListItem, ConversationMessagesResult } from '@/lib/actions/chat'
 
 const MemoizedCases = memo(CasesApp)
 const MemoizedSettings = memo(SettingsApp)
@@ -46,8 +45,7 @@ export function DashboardShell({
   initialSuperAdmins = [],
   activeOrgId = null,
   homeOrg = null,
-  initialConversations = [],
-  initialConvSnapshots = {},
+  initialNotifications = [],
 }: {
   isSuperAdmin?: boolean
   userEmail?: string | null
@@ -61,24 +59,22 @@ export function DashboardShell({
   activeOrgId?: string | null
   /** 본인 home org(원래 소속). 미배정 신청 이동 대상 라벨. */
   homeOrg?: { id: string; name: string } | null
-  initialConversations?: ConversationListItem[]
-  initialConvSnapshots?: Record<string, ConversationMessagesResult>
+  initialNotifications?: NotificationRow[]
 }) {
   const pathname = usePathname()
   const [activeTab, setActiveTab] = useState<TabId>(() => pathToTab(pathname))
-  // 'messages' 는 항상 프리마운트 — 첫 로그인 시점부터 백그라운드 prefetch 워커가
-  // 돌아 채팅창을 어떤 시점에 열어도 캐시 적중. 보이지는 않음 (display:none).
+  // 'messages'(알림 탭) 는 항상 프리마운트 — 탭 전환 시 즉시 표시. 보이지는 않음 (display:none).
   const [mounted, setMounted] = useState<Set<TabId>>(() => new Set([activeTab, 'messages']))
-  const [conversations, setConversations] = useState<ConversationListItem[]>(initialConversations)
+  const [notifications, setNotifications] = useState<NotificationRow[]>(initialNotifications)
   const [resolvedAvatarUrl, setResolvedAvatarUrl] = useState<string | null>(userAvatarUrl ?? null)
   // 우측 하단 플로팅 버튼이 여는 알림 팝업. 알림 탭으로 이동하지 않고 그 자리에서 본다.
   const [alertsPopupOpen, setAlertsPopupOpen] = useState(false)
 
-  // RSC subtree 재요청 (router.refresh() 등) 으로 새 initialConversations 가 내려오면 동기화.
+  // RSC subtree 재요청 (router.refresh() 등) 으로 새 initialNotifications 가 내려오면 동기화.
   // useState 의 초기값은 한 번만 채택되므로 명시적 effect 가 필요.
   useEffect(() => {
-    setConversations(initialConversations)
-  }, [initialConversations])
+    setNotifications(initialNotifications)
+  }, [initialNotifications])
 
   // OAuth 가입 시 박힌 외부 avatar URL(Google CDN 등)을 우리 user-avatars 버킷으로 이전.
   // 이미 우리 버킷이거나 비어있으면 no-op. 한 번 성공하면 DB 가 우리 URL로 갱신되어 이후 무동작.
@@ -95,37 +91,26 @@ export function DashboardShell({
     return () => { alive = false }
   }, [userAvatarUrl])
 
-  // Realtime — 통합 채팅 (1:1/그룹 같은 테이블).
-  // RLS 가 postgres_changes 에 적용되므로 본인 참여 대화방 이벤트만 도달.
+  // Realtime — notifications 테이블만 구독. RLS 가 postgres_changes 에 적용되므로
+  // 본인 앞 알림 이벤트만 도달한다.
   useEffect(() => {
     let alive = true
     const refetch = async () => {
-      const r = await listMyConversations()
+      const r = await listMyNotifications()
       if (!alive || !r.ok) return
-      setConversations(r.value)
+      setNotifications(r.value)
     }
 
     // subscribeRealtime 이 setAuth·재연결·토큰갱신을 자체 관리한다.
-    // onSubscribed 가 (재)구독 때마다 refetch — 끊긴 동안 놓친 메시지·읽음 상태 보충.
+    // onSubscribed 가 (재)구독 때마다 refetch — 끊긴 동안 놓친 알림 보충.
     const unsubscribe = subscribeRealtime(
-      'topbar-inbox',
+      'notifications',
       (channel) =>
-        channel
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, refetch)
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, refetch)
-          .on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'conversation_participants' },
-            refetch,
-          )
-          .on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'message_reads' },
-            refetch,
-          )
-          // 봇 (또는 다른 사용자) 의 name/avatar_url 이 바뀌면 conversations 의 participant
-          // 정보도 stale → 같이 refetch. profiles 변경은 빈번하지 않아 부하 미미.
-          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, refetch),
+        channel.on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'notifications' },
+          refetch,
+        ),
       () => {
         void refetch()
       },
@@ -136,13 +121,9 @@ export function DashboardShell({
     }
   }, [])
 
-  // 알림 = 시스템 대화방(kind='system')만. 사람↔사람 대화는 제거되어 배지에서 제외.
   const messagesUnread = useMemo(
-    () =>
-      conversations
-        .filter((c) => c.kind === 'system')
-        .reduce((s, c) => s + c.unread_count, 0),
-    [conversations],
+    () => notifications.reduce((s, n) => s + (n.read_at ? 0 : 1), 0),
+    [notifications],
   )
 
   // Esc 로 알림 팝업 닫기.
@@ -250,12 +231,10 @@ export function DashboardShell({
         {mounted.has('messages') && (
           <div className="h-full" style={{ display: activeTab === 'messages' ? 'block' : 'none' }}>
             <MemoizedAlerts
-              conversations={conversations}
-              setConversations={setConversations}
-              currentUserId={currentUserId}
+              notifications={notifications}
+              setNotifications={setNotifications}
               isActive={activeTab === 'messages'}
               variant="tab"
-              initialSnapshots={initialConvSnapshots}
             />
           </div>
         )}
@@ -317,12 +296,10 @@ export function DashboardShell({
               </div>
               <div className="flex-1 min-h-0">
                 <MemoizedAlerts
-                  conversations={conversations}
-                  setConversations={setConversations}
-                  currentUserId={currentUserId}
+                  notifications={notifications}
+                  setNotifications={setNotifications}
                   isActive
                   variant="popup"
-                  initialSnapshots={initialConvSnapshots}
                 />
               </div>
             </div>

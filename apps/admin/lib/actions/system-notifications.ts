@@ -1,11 +1,10 @@
 'use server'
-// 펫무브워크 자동 알림 — 케이스 데이터가 바뀌어 새 검증 실패가 생기면 시스템 메시지로 적재.
+// 펫무브워크 자동 알림 — 케이스 데이터가 바뀌어 새 검증 실패가 생기면 notifications 에 적재.
 
 import { reportActionError } from './_report-error'
 import { createClient } from '@petmove/auth/server'
 import { createAdminClient } from '@petmove/auth'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
-import { ensurePetmoveBot } from './petmove-bot'
 import { getChecksForCountry, DESTINATION_OVERRIDES, matchesDestinationKey } from '@petmove/domain'
 import type { CaseRow } from '@petmove/domain'
 import type { CheckResult, ProcedureCheck } from '@petmove/domain'
@@ -61,7 +60,7 @@ function buildMetaLines(c: CaseRow): string[] {
 }
 
 /**
- * 케이스를 다시 평가해 신규 실패가 있으면 본인 시스템 대화방에 메시지 1건 적재.
+ * 케이스를 다시 평가해 신규 실패가 있으면 본인 앞으로 알림 1건 적재.
  * `cases.notified_check_ids` 와 비교해 직전 알림 이후 새로 추가된 check.id 만 발송 대상.
  * 검증이 회복되면 집합에서 빠져, 재발생 시 다시 알림이 간다.
  *
@@ -112,44 +111,7 @@ export async function evaluateAndNotify(caseId: string): Promise<void> {
       return
     }
 
-    // 4) 봇 사용자 보장 + 시스템 대화방 lookup or create.
-    const botRes = await ensurePetmoveBot()
-    if (!botRes.ok) return
-    const botUserId = botRes.value.userId
-
-    const admin = createAdminClient()
-    const { data: existing } = await admin
-      .from('conversations')
-      .select('id')
-      .eq('kind', 'system')
-      .eq('created_by', user.id)
-      .maybeSingle()
-    let convId: string
-    if (existing) {
-      convId = existing.id as string
-    } else {
-      const { data: created, error: cerr } = await admin
-        .from('conversations')
-        .insert({ kind: 'system', created_by: user.id, name: null })
-        .select('id')
-        .single()
-      if (cerr || !created) return
-      convId = created.id as string
-    }
-
-    // 참가자 보장 — idempotent (기존 대화방 backfill 도 같이 처리).
-    // unique 제약이 conversation_id+user_id 에 잡혀 있다고 가정하고 upsert ignore.
-    await admin
-      .from('conversation_participants')
-      .upsert(
-        [
-          { conversation_id: convId, user_id: user.id },
-          { conversation_id: convId, user_id: botUserId },
-        ],
-        { onConflict: 'conversation_id,user_id', ignoreDuplicates: true },
-      )
-
-    // 5) 메시지 본문 — 제목 → 메타(고객/동물/국가) → 본문 3단 구조.
+    // 4) 알림 본문 — 제목 → 메타(고객/동물/국가) → 본문 3단 구조.
     const titleLine = newFailures.length === 1
       ? '검증 실패 알림'
       : `검증 실패 알림 (${newFailures.length}건)`
@@ -162,15 +124,12 @@ export async function evaluateAndNotify(caseId: string): Promise<void> {
       lines.push(`외 ${newFailures.length - 12}건…`)
     }
 
-    // 6) 메시지 적재 + dedup 셋 업데이트. sender 는 봇 사용자 — 다른 1:1 대화처럼
-    //     profiles 룩업으로 이름·아바타가 자동으로 잡힌다.
-    //     case_label 은 본문에 메타 통합으로 중복 회피 — null.
-    await admin.from('messages').insert({
-      conversation_id: convId,
-      sender_user_id: botUserId,
-      sender_name: null,
+    // 5) 알림 적재 + dedup 셋 업데이트. insert 정책이 없는 테이블이라 admin client —
+    //    위에서 본인 인증을 마쳤고 수신자는 본인 고정이므로 안전.
+    const admin = createAdminClient()
+    await admin.from('notifications').insert({
+      user_id: user.id,
       case_id: caseId,
-      case_label: null,
       content: lines.join('\n'),
     })
     await supabase.from('cases').update({ notified_check_ids: currentIds }).eq('id', caseId)

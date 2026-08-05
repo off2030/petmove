@@ -16,7 +16,7 @@ import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import { listActiveOrgCasesFirstPage } from '@/lib/actions/list-cases'
 import { getActiveOrgId, getHomeOrg } from '@/lib/supabase/active-org'
 import { listAllOrgs, listSuperAdminsAll, type OrgSummary, type SuperAdminEntry } from '@/lib/actions/super-admin'
-import { listMyConversationsWithSnapshots, type ConversationListItem, type ConversationMessagesResult } from '@/lib/actions/chat'
+import { listMyNotifications, type NotificationRow } from '@/lib/actions/notifications'
 import { InstallPrompt } from '@/components/pwa/install-prompt'
 import { Toaster } from '@/components/ui/toaster'
 
@@ -101,11 +101,10 @@ export default async function DashboardLayout({
   // ~2MB 직렬화)에 비례하지 않게. 나머지는 CasesProvider 가 마운트 후 백그라운드 로드.
   //
   // 첫 바이트 전 대기는 이 Promise.all 한 층뿐이다(2026-08-05 조직 전환 속도 개선 B).
-  //  - 대화 목록+메시지 스냅샷: listMyConversationsWithSnapshots 가 액션 내부에서 처리
-  //    (예전엔 목록 await 후 별도 스냅샷 await — 2단 워터폴이었다).
+  //  - 알림: 평범한 notifications 테이블 단건 조회 (구 대화방+스냅샷 워터폴 폐기, 2026-08-05).
   //  - super_admin 조직·운영자 목록: 무조건 병렬 실행. 일반 직원은 액션 내부 권한
   //    체크에서 바로 실패(쿼리 1회 손해)하고, super_admin 은 별도 3단 대기가 사라진다.
-  const [casesFirstPage, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, homeOrg, convsR, orgsR, adminsR] = await Promise.all([
+  const [casesFirstPage, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, homeOrg, notifsR, orgsR, adminsR] = await Promise.all([
     timed('cases', traceLayoutFetch('listActiveOrgCasesFirstPage', listActiveOrgCasesFirstPage())),
     timed('fieldDefs', traceLayoutFetch('fetchFieldDefs', fetchFieldDefs())),
     timed('importReport', traceLayoutFetch('loadImportReportCountries', loadImportReportCountries())),
@@ -118,7 +117,7 @@ export default async function DashboardLayout({
     timed('settingsBootstrap', getSettingsBootstrap().catch(() => null)),
     timed('activeOrgId', getActiveOrgId().catch(() => null)),
     timed('homeOrg', getHomeOrg().catch(() => null)),
-    timed('conversations', listMyConversationsWithSnapshots().catch(() => ({ ok: false as const, error: 'failed' }))),
+    timed('notifications', listMyNotifications().catch(() => ({ ok: false as const, error: 'failed' }))),
     timed('superAdminOrgs', listAllOrgs().catch(() => ({ ok: false as const, error: 'failed' }))),
     timed('superAdminList', listSuperAdminsAll().catch(() => ({ ok: false as const, error: 'failed' }))),
   ])
@@ -130,10 +129,7 @@ export default async function DashboardLayout({
         .map(([k, v]) => `${k}=${v}`)
         .join(' '),
   )
-  const initialConversations: ConversationListItem[] = convsR.ok ? convsR.value.conversations : []
-  const initialConvSnapshots: Record<string, ConversationMessagesResult> = convsR.ok
-    ? convsR.value.snapshots
-    : {}
+  const initialNotifications: NotificationRow[] = notifsR.ok ? notifsR.value : []
   const initialOrgs: OrgSummary[] = userCtx.isSuperAdmin && orgsR.ok ? orgsR.value : []
   const initialSuperAdmins: SuperAdminEntry[] = userCtx.isSuperAdmin && adminsR.ok ? adminsR.value : []
 
@@ -174,8 +170,7 @@ export default async function DashboardLayout({
               initialSuperAdmins={initialSuperAdmins}
               activeOrgId={orgId}
               homeOrg={homeOrg}
-              initialConversations={initialConversations}
-              initialConvSnapshots={initialConvSnapshots}
+              initialNotifications={initialNotifications}
             />
             <InstallPrompt />
             <Toaster />

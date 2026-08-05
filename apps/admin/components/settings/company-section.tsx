@@ -17,10 +17,6 @@ import {
   getUserContactInfo,
   updateUserContactInfo,
 } from '@/lib/actions/user-contact-info'
-import {
-  getActiveOrgDmVisibility,
-  updateActiveOrgDmVisibility,
-} from '@/lib/actions/chat'
 import type { VetInfo } from '@/lib/vet-info'
 import type { UserContactInfo, UserContactKey } from '@/lib/user-contact'
 import {
@@ -368,19 +364,6 @@ export function CompanySection({
           </div>
         </section>
 
-        {/* DM 노출 — admin 만 변경 */}
-        {isAdmin && (
-          <section className="mb-xl">
-            <SectionLabel className="mb-2">메시지</SectionLabel>
-            <div className="border-t border-border/80">
-              <OrgDmVisibilityRow
-                onError={setError}
-                onSaved={() => setLastSaved(new Date())}
-              />
-            </div>
-          </section>
-        )}
-
         {error && (
           <p className="font-serif text-[13px] text-destructive mb-md">{error}</p>
         )}
@@ -503,63 +486,3 @@ function EnglishNameSplitRow<K extends string>({
   )
 }
 
-function OrgDmVisibilityRow({
-  onError,
-  onSaved,
-}: {
-  onError: (msg: string | null) => void
-  onSaved: () => void
-}) {
-  const [value, setValue] = useState<boolean | null>(null)
-  const [pending, startTransition] = useTransition()
-
-  useEffect(() => {
-    let alive = true
-    getActiveOrgDmVisibility().then((r) => {
-      if (!alive) return
-      if (r.ok) setValue(r.value)
-      else onError(r.error)
-    })
-    return () => { alive = false }
-  }, [])
-
-  function toggle() {
-    if (value === null) return
-    const next = !value
-    setValue(next)
-    onError(null)
-    startTransition(async () => {
-      const r = await updateActiveOrgDmVisibility({ visible: next })
-      if (!r.ok) {
-        setValue(!next)
-        onError(r.error)
-      } else {
-        onSaved()
-      }
-    })
-  }
-
-  return (
-    <SettingsField label="검색 노출">
-      <div className="flex items-baseline gap-md">
-        <button
-          type="button"
-          onClick={toggle}
-          disabled={pending || value === null}
-          className={cn(
-            'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
-            value
-              ? 'border-primary/50 bg-primary/10 text-primary'
-              : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-            (pending || value === null) && 'opacity-60',
-          )}
-        >
-          {value === null ? '불러오는 중…' : value ? '검색 노출' : '검색 숨김'}
-        </button>
-        <span className="font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
-          끄면 외부 조직 사용자가 새 대화 만들기에서 우리 조직을 찾을 수 없습니다. 같은 조직 내부 검색은 영향 없음.
-        </span>
-      </div>
-    </SettingsField>
-  )
-}

@@ -365,9 +365,9 @@ async function setPartnerOrg(
 }
 
 // ─────────────────────────────────────────────────
-// 봇 알림 — 연결/해제 시 운영자 system 대화방에 펫무브워크 봇 메시지
-// notify_new_apply_case 패턴(20260516000001) 재사용. row 별 트리거가 아니라
-// 보호자 단위로 1회만 발송 — 케이스 N개여도 메시지는 조직별 1건.
+// 파트너 변경 알림 — 연결/해제 시 해당 조직 멤버에게 notifications 적재
+// (2026-08-05 구 봇/system 대화방 폐지). row 별 트리거가 아니라
+// 보호자 단위로 1회만 발송 — 케이스 N개여도 알림은 조직별 1건.
 // ─────────────────────────────────────────────────
 
 const ROLE_LABEL: Record<PartnerRole, string> = {
@@ -389,40 +389,28 @@ async function notifyPartnerChange(
     caseCount: number
   },
 ): Promise<void> {
-  // 봇 사용자 — 없으면 알림 skip (super-admin 의 봇 설정에서 생성됨).
-  const { data: bot } = await admin
-    .from('profiles')
-    .select('id')
-    .eq('email', 'bot@petmove.work')
-    .maybeSingle()
-  const botId = (bot as { id: string } | null)?.id
-  if (!botId) return
-
   const label = ROLE_LABEL[args.role]
   const sizeNote = args.caseCount > 1 ? ` (케이스 ${args.caseCount}건)` : ''
 
   for (const orgId of args.prevOrgIds) {
-    await sendBotMessageToOrg(
+    await notifyOrgMembers(
       admin,
-      botId,
       orgId,
       `${label} 연결 해제 — ${args.customerName} 보호자가 ${label} 연결을 해제했습니다.${sizeNote}`,
     )
   }
   if (args.newOrgId) {
-    await sendBotMessageToOrg(
+    await notifyOrgMembers(
       admin,
-      botId,
       args.newOrgId,
       `새 ${label} 연결 — ${args.customerName} 보호자가 ${label} 로 연결했습니다.${sizeNote}`,
     )
   }
 }
 
-/** 조직의 모든 멤버에게 system 대화방을 통해 봇 메시지 1건씩. */
-async function sendBotMessageToOrg(
+/** 조직의 모든 멤버에게 notifications 1건씩. */
+async function notifyOrgMembers(
   admin: AdminClient,
-  botId: string,
   orgId: string,
   body: string,
 ): Promise<void> {
@@ -430,37 +418,9 @@ async function sendBotMessageToOrg(
     .from('memberships')
     .select('user_id')
     .eq('org_id', orgId)
-  for (const m of (members ?? []) as Array<{ user_id: string }>) {
-    const userId = m.user_id
-    // system 대화방 — 사용자별 1개, 없으면 생성.
-    const { data: existing } = await admin
-      .from('conversations')
-      .select('id')
-      .eq('kind', 'system')
-      .eq('created_by', userId)
-      .limit(1)
-      .maybeSingle()
-    let convId = (existing as { id: string } | null)?.id ?? null
-    if (!convId) {
-      const { data: created } = await admin
-        .from('conversations')
-        .insert({ kind: 'system', created_by: userId, name: null })
-        .select('id')
-        .single()
-      convId = (created as { id: string } | null)?.id ?? null
-    }
-    if (!convId) continue
-    await admin
-      .from('conversation_participants')
-      .upsert(
-        [
-          { conversation_id: convId, user_id: userId },
-          { conversation_id: convId, user_id: botId },
-        ],
-        { onConflict: 'conversation_id,user_id', ignoreDuplicates: true },
-      )
-    await admin
-      .from('messages')
-      .insert({ conversation_id: convId, sender_user_id: botId, content: body })
-  }
+  const rows = ((members ?? []) as Array<{ user_id: string }>).map((m) => ({
+    user_id: m.user_id,
+    content: body,
+  }))
+  if (rows.length > 0) await admin.from('notifications').insert(rows)
 }

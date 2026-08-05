@@ -14,7 +14,6 @@ import { MembersSection } from './members-section'
 import { ProfileSection } from './profile-section'
 import { DetailViewSection } from './detail-view-section'
 import { TransfersSection } from './transfers-section'
-import { SystemBotSection } from './system-bot-section'
 import { FeedbackSection } from './feedback-section'
 import { SuperAdminApp } from '@/components/super-admin/super-admin-app'
 import { getSettingsBootstrap, type SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
@@ -57,7 +56,6 @@ type TabDef = {
     | 'verification'
     | 'feedback'
     | 'data'
-    | 'system_bot'
   label: string
   category: TabCategory
   visibility?: 'super_admin'
@@ -78,7 +76,6 @@ const TABS: readonly TabDef[] = [
   { id: 'export_doc', label: '서류', category: 'work' },
   { id: 'feedback', label: '고객 의견', category: 'data' },
   { id: 'data', label: '데이터', category: 'data' },
-  { id: 'system_bot', label: '펫무브워크 봇', category: 'data', visibility: 'super_admin' },
 ] as const
 
 type TabId = TabDef['id']
@@ -349,9 +346,6 @@ export function SettingsApp({
           )}
           {activeTab === 'feedback' && <FeedbackSection />}
           {activeTab === 'data' && <DataSection isSuperAdmin={bootstrap?.myRole?.isSuperAdmin ?? false} />}
-          {activeTab === 'system_bot' && (bootstrap?.myRole?.isSuperAdmin ?? false) && (
-            <SystemBotSection initialProfile={bootstrap?.botProfile ?? null} />
-          )}
         </div>
       </div>
     </div>

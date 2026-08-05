@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { getMyProfile, updateMyProfile, type MyProfile } from '@/lib/actions/profile'
-import { updateMyDmVisibility } from '@/lib/actions/chat'
 import {
   SettingsShell,
   SettingsSection,
@@ -157,19 +156,6 @@ export function ProfileSection({
                 </span>
               </SettingsField>
             )}
-          </div>
-        </section>
-
-        {/* DM visibility toggle */}
-        <section className="mb-xl">
-          <SectionLabel className="mb-2">메시지</SectionLabel>
-          <div className="border-t border-border/80">
-            <DmVisibilityRow
-              value={profile.dm_visible}
-              onChange={(next) => setProfile((p) => (p ? { ...p, dm_visible: next } : p))}
-              onError={(msg) => setError(msg)}
-              onSaved={() => setLastSaved(new Date())}
-            />
           </div>
         </section>
 
@@ -351,55 +337,3 @@ function AvatarRow({
   )
 }
 
-function DmVisibilityRow({
-  value,
-  onChange,
-  onError,
-  onSaved,
-}: {
-  value: boolean
-  onChange: (next: boolean) => void
-  onError: (msg: string | null) => void
-  onSaved: () => void
-}) {
-  const [pending, startTransition] = useTransition()
-
-  function toggle() {
-    const next = !value
-    onChange(next)
-    onError(null)
-    startTransition(async () => {
-      const r = await updateMyDmVisibility({ visible: next })
-      if (!r.ok) {
-        onChange(!next)
-        onError(r.error)
-      } else {
-        onSaved()
-      }
-    })
-  }
-
-  return (
-    <SettingsField label="검색 노출">
-      <div className="flex items-baseline gap-md">
-        <button
-          type="button"
-          onClick={toggle}
-          disabled={pending}
-          className={cn(
-            'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
-            value
-              ? 'border-primary/50 bg-primary/10 text-primary'
-              : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-            pending && 'opacity-60',
-          )}
-        >
-          {value ? '검색 노출' : '검색 숨김'}
-        </button>
-        <span className="font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
-          끄면 다른 사용자가 새 대화 만들기에서 본인을 찾을 수 없습니다. 기존 대화는 영향 없음.
-        </span>
-      </div>
-    </SettingsField>
-  )
-}

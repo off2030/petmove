@@ -1,38 +1,24 @@
 'use client'
 
-// 펫무브워크 알림 — 각 사용자의 '시스템 대화방'(kind='system') 에 봇이 쌓아 둔
-// 자동 알림 메시지를 목록으로 보여준다. 조직 간 대화(사람↔사람 채팅)는 제거됨.
+// 펫무브워크 알림 — notifications 테이블의 내 알림을 목록으로 보여준다.
+// (구 채팅 유산 — system 대화방 + 봇 발신자 — 는 2026-08-05 평범한 알림 테이블로 대체됨.)
 //
 // 같은 컴포넌트를 두 곳에서 재사용:
 //   variant='tab'   — 상단 '알림' 탭, 전체 화면 큰 목록
 //   variant='popup' — 우측 하단 플로팅 버튼이 여는 작은 창
 //
-// 실시간 갱신: DashboardShell 의 'topbar-inbox' 구독이 새 메시지 도착 시 conversations
-// 를 refetch 한다. 그때 systemConv.last_message_at 이 바뀌므로, 여기선 그 값만 watch 해
-// 메시지를 다시 불러온다 — 별도 realtime 구독을 만들지 않아 중복 구독이 없다.
+// 데이터는 DashboardShell 이 소유 — 서버 prefetch 로 초기값을 받고, realtime 구독이
+// 새 알림 도착 시 refetch 한다. 여기서는 표시와 읽음 처리만 담당.
 //
 // 디자인: editorial 톤(docs/design-system.md) — 카드 박스/그림자 없이 얇은 점선으로
 // 행을 구분, 서체 중심, 상태는 작은 dot 로 절제, 날짜별 그룹 헤더.
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from 'react'
+import { useEffect, useMemo, type Dispatch, type SetStateAction } from 'react'
 import { Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PageShell } from '@petmove/ui'
 import { useCases } from '@/components/cases/cases-context'
-import {
-  listConversationMessages,
-  markConversationRead,
-  type ConversationListItem,
-  type ConversationMessagesResult,
-  type MessageRow,
-} from '@/lib/actions/chat'
+import { markAllNotificationsRead, type NotificationRow } from '@/lib/actions/notifications'
 
 // 시:분 (같은 그룹=같은 날짜라 시각만).
 function formatClock(iso: string): string {
@@ -93,105 +79,43 @@ function parseAlert(content: string | null): ParsedAlert {
 }
 
 export function AlertsApp({
-  conversations,
-  setConversations,
-  currentUserId,
+  notifications,
+  setNotifications,
   isActive,
   variant = 'tab',
-  initialSnapshots = {},
 }: {
-  conversations: ConversationListItem[]
-  setConversations: Dispatch<SetStateAction<ConversationListItem[]>>
-  currentUserId: string | null
+  notifications: NotificationRow[]
+  setNotifications: Dispatch<SetStateAction<NotificationRow[]>>
   isActive: boolean
   variant?: 'tab' | 'popup'
-  initialSnapshots?: Record<string, ConversationMessagesResult>
 }) {
   const { openCase } = useCases()
 
-  const systemConv = useMemo(
-    () => conversations.find((c) => c.kind === 'system') ?? null,
-    [conversations],
-  )
-  const convId = systemConv?.id ?? null
-  const lastMsgAt = systemConv?.last_message_at ?? null
+  const hasUnread = useMemo(() => notifications.some((n) => !n.read_at), [notifications])
 
-  const [messages, setMessages] = useState<MessageRow[]>([])
-  const [myLastRead, setMyLastRead] = useState<string | null>(null)
-  const [loaded, setLoaded] = useState(false)
-
-  const refetch = useCallback(async () => {
-    if (!convId) {
-      setMessages([])
-      setLoaded(true)
-      return
-    }
-    const r = await listConversationMessages({ convId })
-    if (r.ok) {
-      setMessages(r.value.messages)
-      const mine = r.value.reads.find((x) => x.user_id === currentUserId)
-      setMyLastRead(mine?.last_read_at ?? null)
-    }
-    setLoaded(true)
-  }, [convId, currentUserId])
-
-  // conv 확정 / 새 알림 도착(last_message_at 변화) 시 메시지 재적재.
-  // 서버 prefetch 스냅샷이 있으면 즉시 표시 후 백그라운드로 최신화.
+  // 화면에 보이는 동안(활성) 읽음 처리 — 서버 일괄 + 로컬 즉시 반영.
   useEffect(() => {
-    if (!convId) {
-      setMessages([])
-      setLoaded(true)
-      return
-    }
-    const snap = initialSnapshots[convId]
-    if (snap) {
-      setMessages(snap.messages)
-      const mine = snap.reads.find((x) => x.user_id === currentUserId)
-      setMyLastRead(mine?.last_read_at ?? null)
-      setLoaded(true)
-    }
-    void refetch()
-    // initialSnapshots 는 첫 마운트 값만 의미 — 의존성에서 제외.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [convId, lastMsgAt, refetch])
-
-  // 화면에 보이는 동안(활성) 안 읽음 처리.
-  useEffect(() => {
-    if (!convId || !isActive) return
-    if (systemConv && systemConv.unread_count === 0) return
-    markConversationRead(convId).then((r) => {
+    if (!isActive || !hasUnread) return
+    markAllNotificationsRead().then((r) => {
       if (!r.ok) return
-      setMyLastRead(new Date().toISOString())
-      setConversations((prev) =>
-        prev.map((c) => (c.id === convId ? { ...c, unread_count: 0 } : c)),
-      )
+      const now = new Date().toISOString()
+      setNotifications((prev) => prev.map((n) => (n.read_at ? n : { ...n, read_at: now })))
     })
-  }, [convId, isActive, systemConv, setConversations])
+  }, [isActive, hasUnread, setNotifications])
 
-  const isUnread = useCallback(
-    (m: MessageRow) => {
-      if (!myLastRead) return true
-      return new Date(m.created_at) > new Date(myLastRead)
-    },
-    [myLastRead],
-  )
-
-  // 최신순 + 삭제 제외 → 날짜별 그룹.
+  // 서버가 최신순으로 주므로 그대로 날짜별 그룹.
   const groups = useMemo(() => {
-    const ordered = messages.filter((m) => !m.deleted_at).slice().reverse()
-    const out: Array<{ label: string; items: MessageRow[] }> = []
-    for (const m of ordered) {
-      const label = formatDayLabel(m.created_at)
+    const out: Array<{ label: string; items: NotificationRow[] }> = []
+    for (const n of notifications) {
+      const label = formatDayLabel(n.created_at)
       const last = out[out.length - 1]
-      if (last && last.label === label) last.items.push(m)
-      else out.push({ label, items: [m] })
+      if (last && last.label === label) last.items.push(n)
+      else out.push({ label, items: [n] })
     }
     return out
-  }, [messages])
+  }, [notifications])
 
-  const isEmpty = loaded && groups.length === 0
-
-  const list = isEmpty ? (
+  const list = groups.length === 0 ? (
     <EmptyAlerts />
   ) : (
     <div className={variant === 'tab' ? 'px-sm md:px-0' : ''}>
@@ -201,13 +125,13 @@ export function AlertsApp({
             {g.label}
           </div>
           <ul className="border-t border-border/60">
-            {g.items.map((m) => (
+            {g.items.map((n) => (
               <AlertRow
-                key={m.id}
-                msg={m}
-                unread={isUnread(m)}
+                key={n.id}
+                item={n}
+                unread={!n.read_at}
                 variant={variant}
-                onOpen={m.case_id ? () => openCase(m.case_id as string) : undefined}
+                onOpen={n.case_id ? () => openCase(n.case_id as string) : undefined}
               />
             ))}
           </ul>
@@ -229,17 +153,17 @@ export function AlertsApp({
 }
 
 function AlertRow({
-  msg,
+  item,
   unread,
   variant,
   onOpen,
 }: {
-  msg: MessageRow
+  item: NotificationRow
   unread: boolean
   variant: 'tab' | 'popup'
   onOpen?: () => void
 }) {
-  const { title, meta, bullets, notes } = useMemo(() => parseAlert(msg.content), [msg.content])
+  const { title, meta, bullets, notes } = useMemo(() => parseAlert(item.content), [item.content])
   const clickable = !!onOpen
   const isWarning = /검증|실패|만료|주의/.test(title)
   const dotColor = isWarning ? 'var(--pmw-amber)' : 'var(--pmw-sage)'
@@ -282,7 +206,7 @@ function AlertRow({
               className="shrink-0 font-mono text-[11px] text-muted-foreground/55 tabular-nums"
               suppressHydrationWarning
             >
-              {formatClock(msg.created_at)}
+              {formatClock(item.created_at)}
             </span>
           </span>
           {meta && (

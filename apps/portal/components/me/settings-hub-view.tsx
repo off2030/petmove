@@ -401,10 +401,8 @@ export function SettingsHubView() {
 
   // 등록한 반려동물이 0마리면 휑한 허브 대신 '시작하기' 한 길만 보여준다.
   if (cases.length === 0) {
-    return (
-      {/* 준비 탭 환영 화면과 동일 문구 — 등록 전 3개 탭(준비·맡기기·내 정보) 통일 (2026-08-05). */}
-      <StartHereEmpty title="펫무브에 오신 것을 환영합니다" />
-    )
+    // 준비 탭 환영 화면과 동일 문구 — 등록 전 3개 탭(준비·맡기기·내 정보) 통일 (2026-08-05).
+    return <StartHereEmpty title="펫무브에 오신 것을 환영합니다" />
   }
 
   return (
