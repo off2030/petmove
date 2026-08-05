@@ -368,7 +368,7 @@ export function SettingsView() {
       </SectionCard>
 
       <SectionCard label="지원" plain>
-        <LinkRow href="/help/start" label="처음 사용하시는 분" />
+        <LinkRow href="/help/start" label="펫무브 시작 가이드" />
         <LinkRow href="/help/faq" label="자주 묻는 질문" />
         <ExtRow href={`mailto:${SUPPORT_EMAIL}`} label="이메일" value={SUPPORT_EMAIL} last />
       </SectionCard>

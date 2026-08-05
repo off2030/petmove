@@ -6,15 +6,15 @@ import { LegalBackBar } from '@/components/legal-back-bar'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: '처음 사용하시는 분 — 펫무브',
-  description: '펫무브 앱 시작 안내 — 가입부터 준비 일정까지',
+  title: '펫무브 시작 가이드 — 펫무브',
+  description: '펫무브 앱 시작 가이드 — 등록부터 알림까지',
 }
 
 export default async function HelpStartPage() {
   const html = await renderLegalDoc('help-start')
   return (
     <>
-      <LegalBackBar title="처음 사용하시는 분" />
+      <LegalBackBar title="펫무브 시작 가이드" />
       <article
         className="legal-prose mx-auto max-w-2xl px-md py-xl md:py-2xl"
         dangerouslySetInnerHTML={{ __html: html }}
