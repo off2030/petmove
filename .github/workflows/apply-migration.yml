@@ -1,0 +1,65 @@
+name: Apply DB Migration
+
+# supabase/migrations/ 의 SQL 파일 하나를 프로덕션 DB(Seoul)에 적용한다.
+#
+# WHY: 로컬 SUPABASE_DB_PASSWORD 가 만료된 상태라 `pnpm db:push` 가 안 되고,
+#      SQL Editor 수동 붙여넣기는 사람 손을 탄다. 백업 워크플로(backup-db.yml)가
+#      매일 쓰는 살아있는 secrets.SUPABASE_DB_URL 을 재사용해 지정한 마이그레이션
+#      파일만 psql 로 실행한다. (supabase db push 는 쓰지 않는다 — 과거 SQL Editor
+#      로 적용한 마이그레이션들과 history 테이블이 어긋나 전체 재적용을 시도할 위험.)
+#
+# 사용: GitHub → Actions → Apply DB Migration → Run workflow → 파일 경로 입력.
+#      또는 `gh workflow run apply-migration.yml -f file=supabase/migrations/<...>.sql`
+# 주의: 실행할 SQL 은 재실행에 안전(멱등)하게 작성할 것 — 이 워크플로는 history 를
+#      기록하지 않으므로 같은 파일을 두 번 돌릴 수 있다.
+
+on:
+  workflow_dispatch:
+    inputs:
+      file:
+        description: '적용할 SQL 파일 경로 (supabase/migrations/ 아래만 허용)'
+        required: true
+        type: string
+
+concurrency:
+  group: apply-migration
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    name: psql apply
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate input path
+        env:
+          FILE: ${{ inputs.file }}
+        run: |
+          set -euo pipefail
+          case "$FILE" in
+            supabase/migrations/*.sql) ;;
+            *) echo "::error::supabase/migrations/ 아래 .sql 파일만 허용: $FILE"; exit 1 ;;
+          esac
+          if [ ! -f "$FILE" ]; then
+            echo "::error::파일 없음: $FILE"; exit 1
+          fi
+
+      - name: Check secret configured
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$DB_URL" ]; then
+            echo "::error::SUPABASE_DB_URL secret 미설정 — docs/backup-setup.md 참고"; exit 1
+          fi
+
+      - name: Apply migration
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          FILE: ${{ inputs.file }}
+        run: |
+          set -euo pipefail
+          # ubuntu-latest 에 psql 기본 포함. 세션 풀러(5432) URL 이라 DDL 문제 없음.
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$FILE"
+          echo "적용 완료: $FILE"
