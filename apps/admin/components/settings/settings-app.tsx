@@ -118,14 +118,17 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
 
   return (
     <SettingsShell>
-      <SettingsSection
-        title="데이터 관리"
-        description="삭제된 케이스 복원과 데이터 내보내기를 관리합니다."
-      >
+      <SettingsSection title="데이터 관리">
         <div className="space-y-md">
           <SettingsRow
-            title="휴지통"
-            description="삭제된 케이스를 복원하거나 영구 삭제할 수 있습니다. 30일 후 자동 영구 삭제됩니다."
+            title={
+              <>
+                휴지통{' '}
+                <span className="font-serif text-[13px] font-normal text-muted-foreground">
+                  (보관기간 30일)
+                </span>
+              </>
+            }
           >
             <button
               type="button"
@@ -140,12 +143,9 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
             <SettingsRow
               title="데이터 내보내기"
               description={
-                <>
-                  활성 조직의 전체 케이스를 Excel(.xlsx)로 내려받습니다.
-                  {exportError && (
-                    <span className="block mt-1 font-serif text-[13px] text-destructive">{exportError}</span>
-                  )}
-                </>
+                exportError ? (
+                  <span className="font-serif text-[13px] text-destructive">{exportError}</span>
+                ) : undefined
               }
             >
               <button

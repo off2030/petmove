@@ -66,14 +66,7 @@ export function FeedbackSection() {
 
   return (
     <SettingsShell size="lg">
-      <SettingsSection
-        title="고객 의견"
-        description={
-          isSuperAdmin
-            ? '펫무브(고객 앱) 여정 완료 후 보호자가 남긴 만족도·의견입니다. 슈퍼어드민은 모든 조직의 의견을 봅니다.'
-            : '펫무브(고객 앱) 여정 완료 후 보호자가 남긴 만족도·의견입니다.'
-        }
-      >
+      <SettingsSection title="고객 의견">
         {loading && <p className="pmw-st__sec-lead">불러오는 중…</p>}
         {!loading && error && (
           <p className="font-serif text-[14px] text-destructive">{error}</p>
