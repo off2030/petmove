@@ -10,7 +10,7 @@
  *   - 'notificationclick' event → 해당 URL 열기 (이미 열린 탭이면 focus)
  *   - 발송 인프라(VAPID, web-push, push_subscriptions 테이블)는 별도 작업.
  */
-const VERSION = 'v5'
+const VERSION = 'v6'
 const STATIC_CACHE = `static-${VERSION}`
 const PAGE_CACHE = `page-${VERSION}`
 const OFFLINE_URL = '/offline'
@@ -51,6 +51,11 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url)
   // 다른 origin (Supabase, Sentry 등) 은 패스
   if (url.origin !== self.location.origin) return
+
+  // FOUC 방지 부트 스크립트 — 절대 캐시하지 않는다(항상 네트워크).
+  // cache-first 에 물리면 스킨 기본값 로직이 바뀌어도 옛 스크립트가 계속 실행돼,
+  // 첫 페인트가 옛 기본 스킨으로 번쩍인다(2026-08-05 brand 승격 때 실제 발생).
+  if (url.pathname === '/skin-boot.js') return
 
   // 정적 자산 — cache-first
   if (
