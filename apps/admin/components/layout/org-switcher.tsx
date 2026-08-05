@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { usePathname, useRouter } from 'next/navigation'
-import { Building2, Loader2 } from 'lucide-react'
+import { ArrowLeftRight, Loader2 } from 'lucide-react'
 import { switchActiveOrg } from '@/lib/actions/super-admin'
 import { cn } from '@/lib/utils'
 
@@ -71,6 +71,8 @@ export function OrgSwitcher({
 
   return (
     <>
+      {/* 아이콘 단독(⇄) — 상단바 아이콘 버튼(스킨 피커 등)과 동일 문법. 현재/다음
+          조직은 툴팁(title)으로 안내 (2026-08-05 사용자 확정 ①안). */}
       <button
         type="button"
         onClick={toggle}
@@ -78,11 +80,10 @@ export function OrgSwitcher({
         title={`${active.name} → ${next.name} 전환`}
         aria-label={`조직 전환 (현재 ${active.name})`}
         className={cn(
-          'inline-flex items-center gap-1.5 h-9 pl-2.5 pr-3 rounded-md border border-border/70 bg-transparent text-foreground transition-colors hover:bg-accent disabled:opacity-50',
+          'h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-50',
         )}
       >
-        <Building2 size={15} className="shrink-0 text-muted-foreground" />
-        <span className="max-w-[120px] truncate text-[13px] font-medium">{active.name}</span>
+        <ArrowLeftRight size={18} />
       </button>
       {switching !== null &&
         typeof document !== 'undefined' &&
