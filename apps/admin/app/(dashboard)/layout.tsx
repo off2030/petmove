@@ -140,7 +140,11 @@ export default async function DashboardLayout({
   const initialSuperAdmins: SuperAdminEntry[] = userCtx.isSuperAdmin && adminsR.ok ? adminsR.value : []
 
   return (
+    // key={orgId} — 조직 전환(soft navigation) 시 대시보드 클라이언트 트리 전체를
+    // 리마운트해 이전 조직의 클라이언트 상태(케이스 캐시·선택·채팅 등)를 통째로 버린다.
+    // hard reload 없이도 "새로 켠 것과 동일한" 초기화를 보장하는 장치 (2026-08-05 D).
     <CasesProvider
+      key={orgId ?? 'home'}
       initialCases={casesFirstPage.rows}
       initialTotalCount={casesFirstPage.totalCount}
       fieldDefs={fieldDefs}

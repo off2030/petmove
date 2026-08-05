@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
+import { usePathname, useRouter } from 'next/navigation'
 import { Building2, Loader2 } from 'lucide-react'
 import { switchActiveOrg } from '@/lib/actions/super-admin'
 import { cn } from '@/lib/utils'
@@ -9,12 +10,19 @@ import { cn } from '@/lib/utils'
 /**
  * 상단바 조직 스위처 (super_admin 전용). 다크모드 토글처럼 아이콘 한 번 클릭으로
  * 다음 조직으로 전환(조직 2개면 로잔 ⇄ 펫무브 토글). 드롭다운 없음.
- * 기존 "설정 → 운영 → 조직관리 → 임시보기" 경로 대체. 클릭 시 서버가 impersonation
- * 쿠키를 세팅/해제하고, 케이스 목록을 SSR 재호출하기 위해 hard reload 한다.
+ * 기존 "설정 → 운영 → 조직관리 → 임시보기" 경로 대체.
  *
- * 전환 중에는 전체 화면 오버레이("OO(으)로 전환 중")를 띄운다 — 서버액션 + hard
- * reload 로 수 초가 걸리는데, 화면이 멈춘 채면 무겁게 느껴지고 재클릭도 유발한다
- * (2026-08-05 속도 개선 A). 오버레이는 새 문서가 로드되면서 자연히 사라진다.
+ * 전환 방식(2026-08-05 속도 개선 D): hard reload 를 버리고 soft navigation.
+ * 측정 결과 서버 몫은 0.4초(액션 0.1 + 레이아웃 fetch 0.3)뿐이고 체감 수 초는
+ * JS 재다운로드·파싱·전체 하이드레이션(앱 재부팅) 비용이었다([layout-timing] 로그).
+ *  - 액션이 impersonation 쿠키 교체 + revalidatePath('/', 'layout') → 서버 액션의
+ *    revalidatePath 는 클라이언트 라우터 캐시(staleTimes 30분 포함)도 무효화한다.
+ *  - router.push('/cases')(이미 /cases 면 refresh)로 새 RSC 페이로드만 받아온다.
+ *  - 레이아웃의 key={orgId} 가 대시보드 클라이언트 트리를 리마운트해 이전 조직
+ *    상태를 전부 버린다 — 정확성은 hard reload 와 동일, 앱 재부팅 비용만 제거.
+ *
+ * 전환 중에는 전체 화면 오버레이("OO(으)로 전환 중")를 띄운다(개선 A). 오버레이는
+ * 새 orgId 로 트리가 리마운트되면서(스위처도 새로 마운트) 자연히 사라진다.
  */
 
 /** 받침 유무에 따라 '으로/로' — 한글이 아니면 '로'. */
@@ -31,8 +39,10 @@ export function OrgSwitcher({
   orgs: { id: string; name: string }[]
   activeOrgId: string | null
 }) {
+  const router = useRouter()
+  const pathname = usePathname()
   const [pending, startTransition] = useTransition()
-  // pending(액션 왕복)과 별개로, reload 가 시작된 뒤에도 오버레이를 유지하기 위한 플래그.
+  // 액션 왕복 + RSC 페이로드 수신 동안 오버레이 유지. 리마운트(key 교체)로 자연 소멸.
   const [switching, setSwitching] = useState<string | null>(null)
 
   // 조직이 하나뿐이면 전환할 게 없어 숨김.
@@ -48,9 +58,11 @@ export function OrgSwitcher({
     startTransition(async () => {
       const r = await switchActiveOrg(next.id)
       if (r.ok) {
-        // hard reload — 조직 전환은 SSR 데이터(케이스 목록·설정) 전체가 바뀌므로
-        // 케이스 페이지를 서버에서 다시 그린다. 오버레이는 새 문서 로드로 사라진다.
-        window.location.href = '/cases'
+        // soft navigation — 액션의 revalidatePath 가 라우터 캐시를 비웠으므로
+        // push/refresh 가 새 조직의 RSC 페이로드를 받아오고, 레이아웃 key={orgId}
+        // 리마운트가 이전 조직 클라이언트 상태를 정리한다.
+        if (pathname === '/cases') router.refresh()
+        else router.push('/cases')
       } else {
         setSwitching(null)
       }
