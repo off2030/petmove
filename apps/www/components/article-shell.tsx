@@ -29,14 +29,14 @@ export function ArticleShell({ article }: { article: Article }) {
 
         <hr className="cta-sep" />
         <div className="cta2">
+          <a className="svc" href="/contact/">
+            <i className="ti ti-message-circle" />
+            전문가에게 맡기기
+          </a>
           <AppLink className="app">
             <i className="ti ti-download" />
             무료 앱으로 시작하기
           </AppLink>
-          <a className="svc" href="/#service">
-            <i className="ti ti-message-circle" />
-            전문가에게 맡기기
-          </a>
         </div>
       </article>
       <SiteFooter />

@@ -136,12 +136,12 @@
   .svc-app a{color:var(--accent-ink);font-weight:600;text-decoration:none}
   /* 본문 → CTA 전환 구분선 (얇은 하프라인, 섹션 톤과 일치) */
   .cta-sep{border:0;border-top:0.5px solid var(--border);margin:40px 0 0}
-  /* 심플 2버튼 CTA — 랜딩 히어로처럼 풀폭 세로 스택 (앱=블루 채움·흰 글씨 / 서비스=블루 아웃라인) */
+  /* 심플 2버튼 CTA — 랜딩 히어로처럼 풀폭 세로 스택 (서비스=블루 채움·흰 글씨 / 앱=블루 아웃라인) */
   .cta2{display:flex;flex-direction:column;gap:11px;max-width:440px;margin:24px auto 48px}
   .cta2 a{display:flex;align-items:center;justify-content:center;gap:8px;
     border-radius:14px;text-decoration:none}
-  .cta2 a.app{background:var(--accent);color:#fff;font-weight:600;padding:15px 22px;font-size:15px}
-  .cta2 a.svc{border:1.5px solid var(--accent);color:var(--accent-ink);font-weight:600;padding:14px 22px;font-size:14.5px}
+  .cta2 a.svc{background:var(--accent);color:#fff;font-weight:600;padding:15px 22px;font-size:15px}
+  .cta2 a.app{border:1.5px solid var(--accent);color:var(--accent-ink);font-weight:600;padding:14px 22px;font-size:14.5px}
   .cta2 a i{font-size:17px}
   /* 유용한 정보 — 도구 링크를 별개 항목으로(행 전체 클릭) */
   .prose .info-list{margin:14px 0 4px;border-top:0.5px solid var(--border)}
