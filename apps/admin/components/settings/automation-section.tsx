@@ -21,33 +21,14 @@ import {
 } from './settings-layout'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import { cn } from '@/lib/utils'
+import { DESTINATION_OVERRIDES } from '@petmove/domain'
 
-const DESTINATION_OPTIONS: { key: string; label: string }[] = [
-  { key: 'hawaii', label: '하와이' },
-  { key: 'australia', label: '호주' },
-  { key: 'new_zealand', label: '뉴질랜드' },
-  { key: 'japan', label: '일본' },
-  { key: 'eu', label: '유럽연합' },
-  { key: 'uk', label: '영국' },
-  { key: 'switzerland', label: '스위스' },
-  { key: 'usa', label: '미국' },
-  { key: 'singapore', label: '싱가포르' },
-  { key: 'hongkong', label: '홍콩' },
-  { key: 'thailand', label: '태국' },
-  { key: 'philippines', label: '필리핀' },
-  { key: 'malaysia', label: '말레이시아' },
-  { key: 'indonesia', label: '인도네시아' },
-  { key: 'turkey', label: '튀르키예' },
-  { key: 'mexico', label: '멕시코' },
-  { key: 'russia', label: '러시아' },
-  { key: 'uae', label: '아랍에미리트' },
-  { key: 'guam', label: '괌' },
-  { key: 'brazil', label: '브라질' },
-  { key: '아일랜드', label: '아일랜드' },
-  { key: '몰타', label: '몰타' },
-  { key: '노르웨이', label: '노르웨이' },
-  { key: '핀란드', label: '핀란드' },
-]
+// 목적지 목록은 도메인 단일 출처(DESTINATION_OVERRIDES)에서 파생 — 첫 keyword 가 한글
+// 정식 명칭 컨벤션. 예전 손 목록은 20개에서 멈춰 있어서 뒤에 추가된 목적지(south_africa 등)의
+// 규칙이 그룹 제목에 raw 키로 뜨고 한글 검색에도 안 잡혔다(2026-08-05 사용자 발견).
+const DESTINATION_OPTIONS: { key: string; label: string }[] = Object.entries(DESTINATION_OVERRIDES)
+  .map(([key, o]) => ({ key, label: o.keywords[0] ?? key }))
+  .sort((a, b) => a.label.localeCompare(b.label, 'ko'))
 
 const SPECIES_OPTIONS: { key: string; label: string }[] = [
   { key: 'all', label: '전체' },
@@ -117,6 +98,8 @@ function ruleSearchText(rule: AutoFillRule): string {
   return [
     rule.destination_key,
     destLabel(rule.destination_key),
+    // 별칭까지 검색에 태운다 — '남아공'(정식 명칭은 남아프리카공화국) 같은 줄임말 검색용.
+    ...(DESTINATION_OVERRIDES[rule.destination_key]?.keywords ?? []),
     rule.species_filter ?? 'all',
     speciesLabel(rule.species_filter ?? 'all'),
     rule.trigger_field,
@@ -608,7 +591,19 @@ function RuleEditModal({
 
         <div className="px-lg py-md space-y-md">
           <Field label="목적지">
-            <EditorialSelect value={destination} onChange={setDestination} options={DESTINATION_OPTIONS} searchable />
+            {/* 레거시 규칙은 destination_key 가 한글 자유 문자열('아일랜드' 등)일 수 있다 —
+                파생 목록에 없으면 현재 값을 옵션으로 붙여, 수정 화면에서 목적지가 빈 값/
+                다른 값으로 튀지 않게 한다. */}
+            <EditorialSelect
+              value={destination}
+              onChange={setDestination}
+              options={
+                DESTINATION_OPTIONS.some((o) => o.key === destination)
+                  ? DESTINATION_OPTIONS
+                  : [{ key: destination, label: destLabel(destination) }, ...DESTINATION_OPTIONS]
+              }
+              searchable
+            />
           </Field>
           <Field label="종">
             <EditorialSelect value={species} onChange={setSpecies} options={SPECIES_OPTIONS} />
