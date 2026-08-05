@@ -89,7 +89,7 @@ export default function SupportPage() {
       <main style={{ maxWidth: '42rem', margin: '0 auto', padding: '20px 20px 56px' }}>
         <p style={{ margin: '0 4px 22px', fontSize: 14, lineHeight: 1.7, color: C.ink2 }}>
           펫무브를 이용하면서 궁금한 점이나 도움이 필요하시면 아래로 문의해 주세요. 확인 후
-          순차적으로 답변드립니다.
+          순차적으로 답변드려요.
         </p>
 
         <Section title="도움말" first>
