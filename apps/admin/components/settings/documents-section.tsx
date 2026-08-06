@@ -10,10 +10,9 @@ import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   SettingsActionButton,
   SettingsCard,
+  SettingsField,
   SettingsFooter,
-  SettingsSectionLabelSerif as SectionLabel,
 } from './settings-layout'
-import { DestinationPill, OverflowPill } from './destination-pills'
 import { saveCertConfigAction } from '@/lib/actions/cert-config-action'
 import {
   ALL_CERTS,
@@ -130,20 +129,14 @@ function CertMultiSelect({
   )
 }
 
-const COUNTRY_PREVIEW_MAX = 4
-
-
 export function DocumentsSection() {
   const { certConfig, setCertConfig } = useCases()
   const [draft, setDraft] = useState<CertConfig>(certConfig)
   const [saving, startSave] = useTransition()
   const [msg, setMsg] = useState<string | null>(null)
 
-  // 새 규칙 추가 입력 상태
+  // 매핑 추가 팝업 열림 여부.
   const [addOpen, setAddOpen] = useState(false)
-
-  // 규칙 편집 상태 — 여행지 목록 편집 중인 row idx.
-  const [editingIdx, setEditingIdx] = useState<number | null>(null)
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(certConfig)
 
@@ -201,35 +194,20 @@ export function DocumentsSection() {
   function setRuleCountries(idx: number, nextCountries: string[]) {
     setRules(draft.rules.map((r, i) => i === idx ? { ...r, countries: nextCountries } : r))
   }
-  function setRuleLabel(idx: number, nextLabel: string) {
-    const trimmed = nextLabel.trim()
-    setRules(draft.rules.map((r, i) => {
-      if (i !== idx) return r
-      if (trimmed) return { ...r, label: trimmed }
-      const { label: _unused, ...rest } = r
-      void _unused
-      return rest
-    }))
-  }
 
-  // ── 새 규칙 추가 (모달에서 호출) ──
+  // ── 새 매핑 추가 (팝업에서 호출) ──
   function commitNewRule(rule: CertRule) {
     setRules([...draft.rules, rule])
     setAddOpen(false)
   }
 
   return (
-    <SettingsCard
-      title="증명서"
-      description="케이스 상세페이지에 표시되는 증명서 버튼 구성. 기본 증명서는 모든 케이스에 공통이며, 국가별 규칙은 여행지에 따라 추가됩니다."
-    >
-
+    <SettingsCard title="증명서">
       {/* 기본 증명서 */}
-      <section className="mb-xl">
-        <SectionLabel>기본 증명서</SectionLabel>
-        <div className="border-t border-border/80 pt-3 space-y-2">
+      <SettingsField label="기본 증명서" align="start">
+        <div className="min-w-0 space-y-2">
           <p className="font-serif text-[13px] text-muted-foreground">
-            모든 국가의 상세페이지에 표시됩니다. 국가별 규칙은 이 목록에 추가로 붙습니다.
+            모든 여행지에 표시됩니다.
           </p>
           <CertMultiSelect
             selected={draft.defaultCerts}
@@ -238,112 +216,63 @@ export function DocumentsSection() {
             minOne
           />
         </div>
-      </section>
+      </SettingsField>
 
-      {/* 국가별 규칙 */}
-      <section className="mb-xl">
-        <SectionLabel>국가별 추가 증명서</SectionLabel>
-        <div className="border-t border-border/80 pt-3 mb-3">
-          <p className="font-serif text-[13px] text-muted-foreground">
-            해당 국가(또는 국가 그룹)가 여행지인 경우 기본 증명서에 더해 표시됩니다.
+      {/* 여행지 → 증명서 매핑 — 검사 탭(inspection-section)과 동일 구조:
+          행마다 여행지·증명서 모두 복수 선택, 항상 즉시 편집, 추가는 팝업 (2026-08-06). */}
+      <SettingsField label="여행지별 추가 증명서" align="start">
+        <div className="min-w-0">
+          <p className="font-serif text-[13px] text-muted-foreground mb-2">
+            기본 증명서에 더해 표시됩니다.
           </p>
+          {draft.rules.length === 0 && (
+            <p className="py-1 pmw-st__btn-ghost">매핑 없음.</p>
+          )}
+          {draft.rules.map((r, i) => (
+            <div
+              key={i}
+              className="grid grid-cols-[1fr_auto_auto] items-start gap-md py-2 border-b border-dotted border-border/80"
+            >
+              <DestinationPicker
+                values={r.countries}
+                onChange={(next) => setRuleCountries(i, next)}
+                placeholder="여행지 검색"
+                aria-label="여행지"
+                variant="underline"
+              />
+              <div className="pt-1">
+                <CertMultiSelect
+                  selected={r.certs}
+                  onAdd={(k) => addCertToRule(i, k)}
+                  onRemove={(k) => removeCertFromRule(i, k)}
+                  minOne
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => removeRule(i)}
+                className="text-muted-foreground/50 hover:text-foreground transition-colors pt-1.5"
+                title="매핑 삭제"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => setAddOpen(true)}
+              className="inline-flex items-center gap-1 rounded-sm border border-dashed px-2 py-1 font-sans text-[13px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+              style={{ borderColor: 'var(--pmw-border-warm)' }}
+            >
+              ＋ 매핑 추가
+            </button>
+          </div>
         </div>
-
-        {draft.rules.length === 0 ? (
-          <div className="py-3 pmw-st__btn-ghost">추가된 규칙 없음.</div>
-        ) : (
-          <ul>
-            {draft.rules.map((r, i) => {
-              const visibleCountries = r.countries.slice(0, COUNTRY_PREVIEW_MAX)
-              const overflowCount = r.countries.length - visibleCountries.length
-              return (
-                <li
-                  key={i}
-                  className="grid grid-cols-[1fr_auto_auto] items-start gap-md py-3 border-b border-dotted border-border/80"
-                >
-                  {/* Left: group label + destination pills (click to edit) */}
-                  {editingIdx === i ? (
-                    <div className="min-w-0 space-y-1.5">
-                      <input
-                        type="text"
-                        value={r.label ?? ''}
-                        onChange={(e) => setRuleLabel(i, e.target.value)}
-                        placeholder="그룹명 (선택사항)"
-                        className="pmw-st__input bg-transparent outline-none border-b border-border/80 font-serif text-[15px] px-0.5 py-0.5 w-full max-w-[240px]"
-                        style={{ color: 'var(--pmw-deep)' }}
-                      />
-                      <DestinationPicker
-                        values={r.countries}
-                        onChange={(next) => setRuleCountries(i, next)}
-                        placeholder="여행지 검색 (예: 독일, DE)"
-                        aria-label="여행지 편집"
-                        variant="underline"
-                      />
-                      <div className="pt-0.5">
-                        <button
-                          type="button"
-                          onClick={() => setEditingIdx(null)}
-                          className="pmw-st__btn-ghost hover:text-foreground transition-colors text-[11px]"
-                        >
-                          저장
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div
-                      className="min-w-0 cursor-pointer group/row-edit"
-                      onClick={() => setEditingIdx(i)}
-                      title="여행지 편집"
-                    >
-                      {r.label && (
-                        <div className="font-serif text-[13px] text-muted-foreground mb-1.5 group-hover/row-edit:underline decoration-dotted underline-offset-2">
-                          {r.label}
-                        </div>
-                      )}
-                      <div className="flex flex-wrap gap-1.5">
-                        {visibleCountries.map(c => (
-                          <DestinationPill key={c} name={c} />
-                        ))}
-                        {overflowCount > 0 && <OverflowPill count={overflowCount} />}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Right: certs */}
-                  <div className="flex items-start justify-end">
-                    <CertMultiSelect
-                      selected={r.certs}
-                      onAdd={(k) => addCertToRule(i, k)}
-                      onRemove={(k) => removeCertFromRule(i, k)}
-                      minOne
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => removeRule(i)}
-                    className="text-muted-foreground/50 hover:text-foreground transition-colors pt-0.5"
-                    title="규칙 제거"
-                  >
-                    <X size={14} />
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-
-        {/* Add new rule — modal trigger */}
-        <div className="mt-md flex items-center justify-end">
-          <SettingsActionButton onClick={() => setAddOpen(true)}>
-            <Plus className="h-3 w-3" />
-            규칙 추가
-          </SettingsActionButton>
-        </div>
-      </section>
+      </SettingsField>
 
       {addOpen && (
-        <CertRuleAddModal
+        <CertMappingAddModal
           onClose={() => setAddOpen(false)}
           onSubmit={commitNewRule}
         />
@@ -365,17 +294,15 @@ export function DocumentsSection() {
   )
 }
 
-/* ── Cert Rule Add Modal: Step 1 (여행지 vs 그룹) → Step 2 (form) ── */
+/* ── 매핑 추가 팝업 — 여행지·증명서 모두 복수 선택 후 확정 (검사 탭과 동일 구조) ── */
 
-function CertRuleAddModal({
+function CertMappingAddModal({
   onClose,
   onSubmit,
 }: {
   onClose: () => void
   onSubmit: (rule: CertRule) => void
 }) {
-  const [mode, setMode] = useState<'single' | 'group' | null>(null)
-  const [label, setLabel] = useState('')
   const [countries, setCountries] = useState<string[]>([])
   const [certs, setCerts] = useState<string[]>([])
   const [mounted, setMounted] = useState(false)
@@ -386,14 +313,11 @@ function CertRuleAddModal({
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        if (mode) setMode(null)
-        else onClose()
-      }
+      if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [mode, onClose])
+  }, [onClose])
 
   if (!mounted) return null
 
@@ -401,113 +325,54 @@ function CertRuleAddModal({
 
   function submit() {
     if (!canSubmit) return
-    const trimmedLabel = label.trim()
-    const rule: CertRule = mode === 'group' && trimmedLabel
-      ? { label: trimmedLabel, countries, certs: [...certs] }
-      : { countries, certs: [...certs] }
-    onSubmit(rule)
+    onSubmit({ countries, certs: [...certs] })
   }
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-background rounded-sm border border-border/80 shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="bg-background rounded-sm border border-border/80 shadow-xl w-full max-w-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between border-b border-border/80 px-lg py-3">
-          <div className="flex items-baseline gap-2">
-            {mode && (
-              <button
-                type="button"
-                onClick={() => setMode(null)}
-                className="font-serif text-[15px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                규칙 추가
-              </button>
-            )}
-            {mode && <span className="font-serif text-[15px] text-muted-foreground/60">›</span>}
-            <h3 className="font-serif text-[15px] text-foreground">
-              {mode === 'single' ? '여행지 추가' : mode === 'group' ? '그룹 추가' : '규칙 추가'}
-            </h3>
-          </div>
-          <button type="button" onClick={onClose} className="p-1 rounded hover:bg-muted">
-            <X className="h-4 w-4" />
+          <span className="font-serif text-[16px] text-foreground">매핑 추가</span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-muted-foreground/60 hover:text-foreground transition-colors"
+            aria-label="닫기"
+          >
+            <X size={16} />
           </button>
         </div>
 
-        <div className="px-lg py-md">
-          {!mode && (
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => setMode('single')}
-                className="w-full text-left px-md py-3 rounded-md border border-border/80 hover:bg-muted/40 transition-colors"
-              >
-                <div className="font-serif text-[15px] text-foreground">여행지 추가</div>
-                <div className="pmw-st__sec-lead mt-1">한 개의 여행지에 추가 증명서를 매핑합니다.</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode('group')}
-                className="w-full text-left px-md py-3 rounded-md border border-border/80 hover:bg-muted/40 transition-colors"
-              >
-                <div className="font-serif text-[15px] text-foreground">그룹 추가</div>
-                <div className="pmw-st__sec-lead mt-1">여러 여행지를 한 그룹으로 묶어 같은 증명서를 매핑합니다.</div>
-              </button>
-            </div>
-          )}
-
-          {mode && (
-            <div className="space-y-md">
-              {mode === 'group' && (
-                <div>
-                  <label className="font-serif text-[13px] text-muted-foreground/80 block mb-1">그룹명</label>
-                  <input
-                    type="text"
-                    value={label}
-                    onChange={(e) => setLabel(e.target.value)}
-                    placeholder="예: 유럽연합"
-                    autoFocus
-                    className="w-full font-serif text-[15px] bg-transparent outline-none border-b border-border/80 focus:border-foreground/40 pb-1 transition-colors"
-                  />
-                </div>
-              )}
-              <div>
-                <label className="font-serif text-[13px] text-muted-foreground/80 block mb-1">
-                  {mode === 'single' ? '여행지' : '여행지 (여러 개 선택)'}
-                </label>
-                <DestinationPicker
-                  values={countries}
-                  onChange={(next) => {
-                    if (mode === 'single' && next.length > 1) {
-                      setCountries([next[next.length - 1]])
-                    } else {
-                      setCountries(next)
-                    }
-                  }}
-                  placeholder="검색 (예: 독일, DE)"
-                  aria-label="여행지"
-                  variant="underline"
-                />
-              </div>
-              <div>
-                <label className="font-serif text-[13px] text-muted-foreground/80 block mb-1">추가 증명서</label>
-                <CertMultiSelect
-                  selected={certs}
-                  onAdd={(k) => setCerts(prev => prev.includes(k) ? prev : [...prev, k])}
-                  onRemove={(k) => setCerts(prev => prev.filter(c => c !== k))}
-                />
-              </div>
-            </div>
-          )}
+        <div className="px-lg py-md space-y-md">
+          <div>
+            <p className="mb-1.5 font-serif text-[13px] text-muted-foreground">여행지</p>
+            <DestinationPicker
+              values={countries}
+              onChange={setCountries}
+              placeholder="여행지 검색"
+              aria-label="여행지"
+            />
+          </div>
+          <div>
+            <p className="mb-1.5 font-serif text-[13px] text-muted-foreground">추가 증명서</p>
+            <CertMultiSelect
+              selected={certs}
+              onAdd={(k) => setCerts((prev) => (prev.includes(k) ? prev : [...prev, k]))}
+              onRemove={(k) => setCerts((prev) => prev.filter((c) => c !== k))}
+            />
+          </div>
         </div>
 
-        {mode && (
-          <DialogFooter
-            bordered
-            onCancel={onClose}
-            onPrimary={submit}
-            primaryLabel="추가"
-            primaryDisabled={!canSubmit}
-          />
-        )}
+        <DialogFooter
+          bordered
+          onCancel={onClose}
+          onPrimary={submit}
+          primaryLabel="추가"
+          primaryDisabled={!canSubmit}
+        />
       </div>
     </div>,
     document.body,
