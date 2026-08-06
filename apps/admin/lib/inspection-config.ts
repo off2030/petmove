@@ -18,7 +18,7 @@ function normalizeRule(o: unknown): InspectionLabRule | null {
   if (!o || typeof o !== 'object') return null
   const r = o as Record<string, unknown>
 
-  // 신 포맷: { label?, countries: string[], labs: string[] }
+  // 신 포맷: { countries: string[], labs: string[] }
   if (Array.isArray(r.countries) && Array.isArray(r.labs)) {
     const countries = r.countries
       .filter((x): x is string => typeof x === 'string')
@@ -29,11 +29,8 @@ function normalizeRule(o: unknown): InspectionLabRule | null {
       .map(x => x.trim())
       .filter(Boolean)
     if (countries.length === 0 || labs.length === 0) return null
-    const label = typeof r.label === 'string' && r.label.trim() ? r.label.trim() : undefined
-    // 중복 제거
-    const dedupCountries = Array.from(new Set(countries))
-    const dedupLabs = Array.from(new Set(labs))
-    return label ? { label, countries: dedupCountries, labs: dedupLabs } : { countries: dedupCountries, labs: dedupLabs }
+    // 그룹명(label)은 폐기된 개념 — 과거 저장분에 남아 있어도 여기서 버린다.
+    return { countries: Array.from(new Set(countries)), labs: Array.from(new Set(labs)) }
   }
 
   // 구 포맷: { country: string, lab: string }

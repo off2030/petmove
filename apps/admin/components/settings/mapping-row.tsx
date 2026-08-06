@@ -3,7 +3,8 @@
 /**
  * 여행지 → X 매핑 목록의 공용 행 (2026-08-06 재설계).
  *
- * 목록은 **읽기 전용 한 줄**: 여행지 3개 미리보기 + "+N", 오른쪽에 결과 칩, 끝에 편집 버튼.
+ * 목록은 **읽기 전용 한 줄**: 여행지 3개 미리보기 + "+N개국", 오른쪽에 결과 칩, 끝에 편집 버튼.
+ * 그룹(유럽연합 등) 개념은 없다 — 어떤 행이든 여행지 목록일 뿐이다.
  * 편집·삭제는 팝업(MappingEditModal)에서만 — 목록에 ✕ 를 두지 않아 스치는 클릭으로
  * 매핑이 사라지는 사고를 구조적으로 막는다(사용자가 스위스 매핑을 실수로 지운 사건).
  *
@@ -23,13 +24,10 @@ const PREVIEW_MAX = 3
 
 export function MappingRow({
   countries,
-  label,
   children,
   onEdit,
 }: {
   countries: string[]
-  /** 그룹명(유럽연합 등) — 있으면 칩 대신 이름으로 요약. */
-  label?: string
   /** 오른쪽 결과 칩(검사기관·증명서 등) — 읽기 전용 렌더. */
   children: React.ReactNode
   onEdit: () => void
@@ -40,21 +38,10 @@ export function MappingRow({
   return (
     <div className="grid grid-cols-[1fr_auto_auto] items-center gap-md py-2 border-b border-dotted border-border/80">
       <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-        {label ? (
-          <>
-            <span className="font-serif text-[14px] text-foreground">{label}</span>
-            <span className="font-mono text-[11px] text-muted-foreground/70">
-              {countries.length}개국
-            </span>
-          </>
-        ) : (
-          <>
-            {visible.map((c) => (
-              <DestinationPill key={c} name={c} />
-            ))}
-            {overflow > 0 && <OverflowPill count={overflow} />}
-          </>
-        )}
+        {visible.map((c) => (
+          <DestinationPill key={c} name={c} />
+        ))}
+        {overflow > 0 && <OverflowPill count={overflow} />}
       </div>
       <div className="flex items-center gap-1.5">{children}</div>
       <SettingsActionButton onClick={onEdit}>편집</SettingsActionButton>

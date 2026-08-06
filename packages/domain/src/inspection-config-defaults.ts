@@ -4,8 +4,6 @@
  */
 
 export interface InspectionLabRule {
-  /** 그룹 표시명 (예: "유럽연합"). 단일 국가면 보통 생략. */
-  label?: string
   /** 이 규칙이 적용되는 목적지 국가(1개 이상). */
   countries: string[]
   /** 검사기관(1개 이상). 여러 개면 해당 국가 케이스에 검사기관별로 기록이 하나씩 생성됨. */
@@ -54,7 +52,7 @@ export const INFECTIOUS_LABS: { value: string; label: string }[] = [
   { value: 'arc_ovi', label: 'ARC-OVI' },
 ]
 
-/** 유럽연합(EU) 27개 회원국 — "유럽연합" 그룹 기본 구성. */
+/** 유럽연합(EU) 27개 회원국 — 기본 매핑 구성용 목록. */
 export const EU_COUNTRIES = [
   '독일', '프랑스', '이탈리아', '스페인', '네덜란드', '벨기에', '오스트리아',
   '스웨덴', '덴마크', '핀란드', '폴란드', '체코', '헝가리', '포르투갈',
@@ -65,7 +63,7 @@ export const EU_COUNTRIES = [
 
 /**
  * 기본 설정 = 로잔 운영 상태 스냅샷 (2026-08-06 사용자 지시 — "기본값을 지금 상태로").
- * - 광견병: 유럽연합 그룹에 영국·스위스·노르웨이까지 포함(별도 행 없음). 튀르키예 매핑 없음
+ * - 광견병: EU 27개국 + 영국·스위스·노르웨이가 한 행(별도 행 없음). 튀르키예 매핑 없음
  *   — 튀르키예행은 기본 검사기관(krsl)으로 떨어진다.
  * - 전염병: 호주·뉴질랜드·남아공. 뉴질랜드는 labs 여러 개(이중 검사) — VBDDL 먼저.
  */
@@ -75,7 +73,7 @@ export const DEFAULT_INSPECTION_CONFIG: InspectionConfig = {
     { countries: ['싱가포르'], labs: ['ksvdl_r'] },
     { countries: ['일본'], labs: ['apqa_seoul'] },
     { countries: ['하와이'], labs: ['apqa_seoul'] },
-    { label: '유럽연합', countries: [...EU_COUNTRIES, '영국', '스위스', '노르웨이'], labs: ['apqa_eu'] },
+    { countries: [...EU_COUNTRIES, '영국', '스위스', '노르웨이'], labs: ['apqa_eu'] },
   ],
   infectiousRules: [
     { countries: ['호주'], labs: ['ksvdl'] },

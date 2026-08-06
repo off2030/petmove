@@ -14,8 +14,6 @@ export interface CertDefinition {
 }
 
 export interface CertRule {
-  /** 그룹 표시명 (예: "유럽연합"). 단일 국가면 보통 생략. */
-  label?: string
   /** 이 규칙이 적용되는 목적지 국가(1개 이상). */
   countries: string[]
   /** 디폴트에 더해 추가되는 증명서 키(1개 이상). */
@@ -59,7 +57,7 @@ export const DEFAULT_CERT_CONFIG: CertConfig = {
   defaultCerts: ['form25', 'form25AuNz'],
   rules: [
     { countries: ['일본'], certs: ['formAC', 'formRE'] },
-    { label: '유럽연합', countries: [...EU_COUNTRIES], certs: ['annexIII'] },
+    { countries: [...EU_COUNTRIES], certs: ['annexIII'] },
     { countries: ['스위스'], certs: ['annexIII', 'ch'] },
     { countries: ['영국'], certs: ['annexIII', 'uk'] },
     { countries: ['호주'], certs: ['idDeclaration', 'au', 'au2', 'auCat', 'auCat2'] },

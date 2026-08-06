@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { Plus, X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { TodoColumnsToggle } from './todo-columns-toggle'
@@ -13,7 +13,6 @@ import {
   SettingsSection,
   SettingsField,
   SettingsFooter,
-  SettingsSubsectionTitle,
 } from './settings-layout'
 import { MappingEditModal, MappingRow } from './mapping-row'
 import { labColor } from '@/lib/lab-color'
@@ -21,19 +20,12 @@ import { cn } from '@/lib/utils'
 import { saveInspectionConfigAction } from '@/lib/actions/inspection-config-action'
 import {
   DEFAULT_INSPECTION_CONFIG,
-  EU_COUNTRIES,
   INFECTIOUS_LABS,
   TITER_LABS,
   type InspectionConfig,
   type InspectionLabOption,
   type InspectionLabRule,
 } from '@petmove/domain'
-
-function sameSet(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) return false
-  const s = new Set(a)
-  return b.every(x => s.has(x))
-}
 
 /**
  * "기관 목록" 행 — 기본·사용자 정의 기관 전체 CRUD (2026-08-06).
@@ -264,7 +256,6 @@ function SectionBlock({
   rules,
   onDefaultChange,
   onRulesChange,
-  showEuPreset,
   footer,
 }: {
   title: string
@@ -279,7 +270,6 @@ function SectionBlock({
   rules: InspectionLabRule[]
   onDefaultChange?: (lab: string) => void
   onRulesChange: (next: InspectionLabRule[]) => void
-  showEuPreset?: boolean
   /** 카드 하단 저장 영역 — 광견병·전염병 카드가 같은 config 를 저장하므로 양쪽에 동일하게 붙는다. */
   footer?: React.ReactNode
 }) {
@@ -292,19 +282,6 @@ function SectionBlock({
       .map(l => ({ value: l.value, label: labelOverrides[l.value] ?? l.label })),
     ...customLabs,
   ]
-
-  // Add-rule modal state
-  const hasEuRule = rules.some(r => r.label === '유럽연합' || sameSet(r.countries, EU_COUNTRIES))
-
-  function addEuPreset() {
-    if (hasEuRule) return
-    const newRule: InspectionLabRule = {
-      label: '유럽연합',
-      countries: [...EU_COUNTRIES],
-      labs: labs[0] ? [labs[0].value] : [],
-    }
-    onRulesChange([...rules, newRule])
-  }
 
   // 매핑 추가 팝업 / 편집 중인 행 idx.
   const [addOpen, setAddOpen] = useState(false)
@@ -357,12 +334,7 @@ function SectionBlock({
             </p>
           )}
           {rules.map((r, i) => (
-            <MappingRow
-              key={i}
-              countries={r.countries}
-              label={r.label}
-              onEdit={() => setEditingIdx(i)}
-            >
+            <MappingRow key={i} countries={r.countries} onEdit={() => setEditingIdx(i)}>
               {r.labs.map((v) => {
                 const tone = labColor(v)
                 return (
@@ -379,7 +351,7 @@ function SectionBlock({
               })}
             </MappingRow>
           ))}
-          <div className="pt-2 flex items-center gap-md">
+          <div className="pt-2">
             <button
               type="button"
               onClick={() => setAddOpen(true)}
@@ -388,16 +360,6 @@ function SectionBlock({
             >
               ＋ 매핑 추가
             </button>
-            {showEuPreset && !hasEuRule && (
-              <button
-                type="button"
-                onClick={addEuPreset}
-                className="pmw-st__btn-ghost hover:text-foreground transition-colors"
-                title={`유럽연합 ${EU_COUNTRIES.length}개국 매핑 추가`}
-              >
-                + 유럽연합 매핑
-              </button>
-            )}
           </div>
         </div>
       </SettingsField>
@@ -457,12 +419,7 @@ function MappingAddModal({
 
   function submit() {
     if (!canSubmit) return
-    // 그룹명(유럽연합 등)은 편집에서 건드리지 않고 보존한다.
-    onSubmit({
-      ...(initial?.label ? { label: initial.label } : {}),
-      countries,
-      labs: [...selectedLabs],
-    })
+    onSubmit({ countries, labs: [...selectedLabs] })
   }
 
   return (
@@ -571,7 +528,6 @@ export function InspectionSection() {
           rules={draft.titerRules}
           onDefaultChange={(lab) => setDraft({ ...draft, titerDefault: lab })}
           onRulesChange={(titerRules) => setDraft({ ...draft, titerRules })}
-          showEuPreset
         />
 
         <SectionBlock

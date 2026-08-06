@@ -25,12 +25,11 @@ function normalizeRule(o: unknown): CertRule | null {
     .map(x => x.trim())
     .filter(Boolean)
   if (countries.length === 0 || certs.length === 0) return null
-  const label = typeof r.label === 'string' && r.label.trim() ? r.label.trim() : undefined
-  const dedupCountries = Array.from(new Set(countries))
-  const dedupCerts = Array.from(new Set(certs))
-  return label
-    ? { label, countries: dedupCountries, certs: dedupCerts }
-    : { countries: dedupCountries, certs: dedupCerts }
+  // 그룹명(label)은 폐기된 개념 — 과거 저장분에 남아 있어도 여기서 버린다.
+  return {
+    countries: Array.from(new Set(countries)),
+    certs: Array.from(new Set(certs)),
+  }
 }
 
 function normalize(raw: unknown): CertConfig {

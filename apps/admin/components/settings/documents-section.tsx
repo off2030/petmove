@@ -228,12 +228,7 @@ export function DocumentsSection() {
             <p className="py-1 pmw-st__btn-ghost">매핑 없음.</p>
           )}
           {draft.rules.map((r, i) => (
-            <MappingRow
-              key={i}
-              countries={r.countries}
-              label={r.label}
-              onEdit={() => setEditingIdx(i)}
-            >
+            <MappingRow key={i} countries={r.countries} onEdit={() => setEditingIdx(i)}>
               {r.certs.map((k) => (
                 <span
                   key={k}
@@ -317,12 +312,7 @@ function CertMappingAddModal({
 
   function submit() {
     if (!canSubmit) return
-    // 그룹명(유럽연합 등)은 편집에서 건드리지 않고 보존한다.
-    onSubmit({
-      ...(initial?.label ? { label: initial.label } : {}),
-      countries,
-      certs: [...certs],
-    })
+    onSubmit({ countries, certs: [...certs] })
   }
 
   return (
