@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { TrashModal } from '@/components/cases/trash-modal'
-import { SettingsActionButton, SettingsShell, SettingsSection, SettingsRow } from './settings-layout'
+import { SettingsActionButton, SettingsCard, SettingsListRow, SettingsShell, SettingsSection } from './settings-layout'
 import { VaccineSection } from './vaccine-section'
 import { CompanySection } from './company-section'
 import { ImportReportSection } from './import-report-section'
@@ -119,8 +119,9 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
   return (
     <SettingsShell>
       <SettingsSection title="데이터 관리">
-        <div className="space-y-md">
-          <SettingsRow
+        {/* 그룹=카드 문법(2026-08-06)에 맞춰 카드 하나 안에 행으로 — 마지막 행 구분선 제거. */}
+        <SettingsCard>
+          <SettingsListRow
             title={
               <>
                 휴지통{' '}
@@ -129,27 +130,29 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
                 </span>
               </>
             }
+            className={!isSuperAdmin ? 'border-b-0' : undefined}
           >
             <SettingsActionButton onClick={() => setShowTrash(true)}>
               휴지통 열기
             </SettingsActionButton>
-          </SettingsRow>
+          </SettingsListRow>
 
           {isSuperAdmin && (
-            <SettingsRow
+            <SettingsListRow
               title="데이터 내보내기"
               description={
                 exportError ? (
                   <span className="font-serif text-[13px] text-destructive">{exportError}</span>
                 ) : undefined
               }
+              className="border-b-0"
             >
               <SettingsActionButton onClick={handleExport} disabled={exporting}>
                 {exporting ? '내보내는 중…' : 'Excel 내보내기'}
               </SettingsActionButton>
-            </SettingsRow>
+            </SettingsListRow>
           )}
-        </div>
+        </SettingsCard>
       </SettingsSection>
 
       {showTrash && (
