@@ -6,7 +6,7 @@ import { useCases } from '@/components/cases/cases-context'
 import { listSharePresets, saveSharePresets } from '@/lib/actions/share-presets'
 import { PillButton, useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
-import { SettingsActionButton, SettingsCard, SettingsSectionLabelSerif, SettingsSubsectionTitle } from './settings-layout'
+import { SettingsActionButton, SettingsCard, SettingsFooter, SettingsSectionLabelSerif } from './settings-layout'
 import { ALL_EXTRA_FIELD_KEYS } from '@petmove/domain'
 import { buildShareFieldLayout } from '@petmove/domain'
 import type { SharePreset } from '@/lib/share-presets-types'
@@ -111,33 +111,19 @@ export function SharePresetsSection({
   }
 
   return (
-    <SettingsCard>
-      <div className="flex items-baseline justify-between mb-2 gap-md flex-wrap">
-        <SettingsSubsectionTitle className="inline-flex items-center gap-sm">
+    <SettingsCard
+      title={
+        <span className="inline-flex items-center gap-sm">
           공유
           {isDirty && (
             <span className="font-mono text-[10.5px] uppercase tracking-[1.2px] px-1.5 py-0.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400">
               변경됨
             </span>
           )}
-          {!isDirty && savedAt && (
-            <span className="font-serif text-[12px] text-muted-foreground/60">
-              저장됨 · {savedAt.toLocaleTimeString()}
-            </span>
-          )}
-        </SettingsSubsectionTitle>
-        <div className="flex items-center gap-sm">
-          <SettingsActionButton onClick={handleDiscard} disabled={pending || !isDirty}>
-            되돌리기
-          </SettingsActionButton>
-          <PillButton variant="solid" onClick={handleSave} disabled={pending || !isDirty}>
-            {pending ? '저장 중…' : '변경사항 저장'}
-          </PillButton>
-        </div>
-      </div>
-      <p className="pmw-st__sec-lead mb-md">
-        공유 링크 발급 시 빠른 선택으로 노출됩니다. 자주 쓰는 필드 묶음을 미리 만들어두세요.
-      </p>
+        </span>
+      }
+      description="공유 링크 발급 시 빠른 선택으로 노출됩니다. 자주 쓰는 필드 묶음을 미리 만들어두세요."
+    >
       {error && (
         <p className="font-serif text-[13px] text-destructive mb-2">{error}</p>
       )}
@@ -240,6 +226,21 @@ export function SharePresetsSection({
       >
         <Plus size={13} /> 새 프리셋
       </button>
+
+      {/* 저장 영역 — 다른 카드와 동일하게 카드 하단 (2026-08-06 위치 통일). */}
+      <SettingsFooter className="justify-between">
+        <span className="font-serif text-[12px] text-muted-foreground/60">
+          {!isDirty && savedAt ? `저장됨 · ${savedAt.toLocaleTimeString()}` : ''}
+        </span>
+        <div className="flex items-center gap-sm">
+          <SettingsActionButton onClick={handleDiscard} disabled={pending || !isDirty}>
+            되돌리기
+          </SettingsActionButton>
+          <PillButton variant="solid" onClick={handleSave} disabled={pending || !isDirty}>
+            {pending ? '저장 중…' : '저장'}
+          </PillButton>
+        </div>
+      </SettingsFooter>
     </SettingsCard>
   )
 }

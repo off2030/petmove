@@ -623,7 +623,7 @@ export function InspectionSection() {
           <div className="flex items-center gap-md">
             {msg && <span className="pmw-st__sec-lead">{msg}</span>}
             <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
-              {saving ? '저장 중…' : '변경사항 저장'}
+              {saving ? '저장 중…' : '저장'}
             </PillButton>
           </div>
         </SettingsFooter>
