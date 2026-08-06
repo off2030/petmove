@@ -222,11 +222,24 @@ export function CompanySection({
   return (
     <SettingsShell>
       <SettingsSection title={title}>
+        {/* 동물병원/운송회사 — 카드 밖. 이 선택이 아래 카드 구성을 바꾼다
+            (동물병원 = 병원·수의사·추가 정보 / 운송회사 = 회사만, 2026-08-06 사용자 지시). */}
+        <SettingsControlGroup size="md" className="gap-xs">
+          {(['hospital', 'transport'] as const).map((t) => (
+            <SettingsToggleButton
+              key={t}
+              pressed={issuerTab === t}
+              onClick={() => setIssuerTab(t)}
+              className="px-lg"
+            >
+              {t === 'hospital' ? '동물병원' : '운송회사'}
+            </SettingsToggleButton>
+          ))}
+        </SettingsControlGroup>
+
         <div className="space-y-lg">
-        {/* 조직정보(아바타·병원/운송 필드·추가정보·기본값 복원) — 슈퍼어드민 화면과 공유.
-            멤버는 유형 변경 불가(canEditOrgType=false), 보기 전환 탭만. */}
-        {/* 카드 제목 없음 — 페이지 제목이 '조직정보'라 '조직'은 같은 말 반복이었다(2026-08-06). */}
-        <SettingsCard>
+        {/* 조직정보(병원·회사 필드 + 아바타 / 추가정보 / 기본값 복원) — 슈퍼어드민 화면과 공유.
+            멤버는 유형 변경 불가(canEditOrgType=false). 보기 전환은 위 버튼이 소유. */}
         <OrgInfoForm
           info={info}
           orgType={orgType}
@@ -239,35 +252,19 @@ export function CompanySection({
           onAvatarRemove={removeOrgAvatar}
           onReset={resetCompanyInfo}
           hasDefault={hasDefault}
-        />
-        </SettingsCard>
-
-        {/* 발급자 본인 정보 — 동물병원이면 "수의사", 운송회사면 "담당자" 그룹으로 노출.
+          viewTab={issuerTab}
+          onViewTabChange={setIssuerTab}
+        >
+        {/* 발급자 본인 정보 — 동물병원 화면에서 "수의사" 카드로. 운송회사는 회사 정보만.
             로그인 사용자 본인 (profiles.contact_info) 만 보이고 편집됨. 한 조직에 멤버
             여럿일 때 각자 본인 명의로 cert 발급되도록 — PDF 매핑(vet:name_en 등) 은
             org_type 에 따라 hospital 측 vet 키 / transport 측 transport_contact 키로
             overlay. 다른 멤버에게는 영향 없음. */}
-        <SettingsCard>
-          {/* 발급자 정보를 수의사/담당자 중 어느 쪽으로 입력할지 전환하는 보기 탭.
-              'both' 유형에서만 노출 — 단일 유형은 위 sync effect 가 orgType 을 따라 고정.
-              OrgInfoForm 내부 탭과 별개 — 발급자(본인) 섹션 전용. */}
-          {orgType === 'both' && (
-            <SettingsControlGroup size="md" className="mb-md gap-xs">
-              {(['hospital', 'transport'] as const).map((t) => (
-                <SettingsToggleButton
-                  key={t}
-                  pressed={issuerTab === t}
-                  onClick={() => setIssuerTab(t)}
-                >
-                  {t === 'hospital' ? '수의사' : '담당자'}
-                </SettingsToggleButton>
-              ))}
-            </SettingsControlGroup>
-          )}
-          <SectionLabel className="mb-1">{isTransport ? '담당자' : '수의사'}</SectionLabel>
-          <p className="pmw-st__sec-lead mb-3 max-w-md">
-            본인 정보를 넣으면 그 이름·휴대폰{isTransport ? '' : '·면허'}로 발급되고, 비워두면 회색 글씨의 조직 기본값으로 발급됩니다.
-          </p>
+        {!isTransport && (
+        <SettingsCard
+          title="수의사"
+          description="본인 정보를 넣으면 그 이름·휴대폰·면허로 발급되고, 비워두면 회색 글씨의 조직 기본값으로 발급됩니다."
+        >
           <div>
             {!myInfo ? (
               <p className="py-3 font-serif text-[12px] text-muted-foreground/60">
@@ -345,6 +342,8 @@ export function CompanySection({
             )}
           </div>
         </SettingsCard>
+        )}
+        </OrgInfoForm>
         </div>
 
         {error && (

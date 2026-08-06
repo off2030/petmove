@@ -6,6 +6,7 @@ import type { OrgType } from '@/lib/actions/company-info'
 import type { CustomField, VetInfo, VetInfoKey } from '@/lib/vet-info'
 import {
   SettingsActionButton,
+  SettingsCard,
   SettingsControlGroup,
   SettingsField,
   SettingsFooter,
@@ -188,6 +189,9 @@ export function OrgInfoForm({
   onAvatarRemove,
   onReset,
   hasDefault = false,
+  viewTab: controlledViewTab,
+  onViewTabChange,
+  children,
 }: {
   info: VetInfo
   orgType: OrgType
@@ -200,15 +204,24 @@ export function OrgInfoForm({
   onAvatarRemove: () => Promise<{ ok: boolean; error?: string }>
   onReset?: () => Promise<{ ok: boolean; error?: string; info?: VetInfo }>
   hasDefault?: boolean
+  /** 부모가 동물병원/운송회사 전환을 소유할 때. 주면 폼 안에는 전환 버튼을 그리지 않는다. */
+  viewTab?: 'hospital' | 'transport'
+  onViewTabChange?: (t: 'hospital' | 'transport') => void
+  /** 병원/회사 카드와 '추가 정보' 카드 사이에 끼울 카드 (조직정보 화면의 수의사 카드). */
+  children?: React.ReactNode
 }) {
   const confirm = useConfirm()
   const [info, setInfo] = useState<VetInfo>(initialInfo)
   const [orgType, setOrgType] = useState<OrgType>(initialOrgType)
   // 동물병원/운송회사 탭 — 유형 '선택'이 아니라 보기·입력 전환(둘 다 입력 가능).
-  // canEditOrgType=false 일 때만 사용. 어느 쪽 필드를 보여줄지만 결정.
-  const [viewTab, setViewTab] = useState<'hospital' | 'transport'>(
+  // 조직정보 화면은 부모가 소유(카드 밖에 두고 화면 전체 구성을 바꾼다). 슈퍼어드민 등
+  // 안 넘기는 쪽은 폼이 자체 상태 + 자체 전환 버튼을 쓴다.
+  const controlled = controlledViewTab !== undefined && onViewTabChange !== undefined
+  const [ownViewTab, setOwnViewTab] = useState<'hospital' | 'transport'>(
     initialOrgType === 'transport' ? 'transport' : 'hospital',
   )
+  const viewTab = controlled ? controlledViewTab : ownViewTab
+  const setViewTab = controlled ? onViewTabChange : setOwnViewTab
   const [drafts, setDrafts] = useState<Partial<Record<VetInfoKey, string>>>({})
   const [savingKey, setSavingKey] = useState<VetInfoKey | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -226,7 +239,9 @@ export function OrgInfoForm({
   }, [initialInfo])
   useEffect(() => {
     setOrgType(initialOrgType)
-    setViewTab(initialOrgType === 'transport' ? 'transport' : 'hospital')
+    // 보기 탭 정렬은 폼이 탭을 소유할 때만 — 부모 소유면 부모가 알아서 맞춘다.
+    if (!controlled) setOwnViewTab(initialOrgType === 'transport' ? 'transport' : 'hospital')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialOrgType])
   useEffect(() => {
     setOrgAvatarUrl(initialAvatarUrl)
@@ -430,11 +445,10 @@ export function OrgInfoForm({
   const fields: FieldDef[] = isTransport ? TRANSPORT_FIELDS : HOSPITAL_FIELDS
 
   return (
-    <div>
+    <div className="space-y-lg">
       {canEditOrgType ? (
         /* 유형 선택 — 슈퍼어드민 전용. organizations.org_type 직접 변경(병원/운송/둘다). */
-        <section className="mb-lg">
-          <SectionLabel className="mb-2">유형</SectionLabel>
+        <SettingsCard title="유형">
           <SettingsControlGroup size="md" className="gap-xs">
             {ORG_TYPE_TABS.map((t) => (
               <SettingsToggleButton
@@ -449,17 +463,16 @@ export function OrgInfoForm({
             ))}
           </SettingsControlGroup>
           {orgType === 'both' && (
-            <p className="mt-2 font-serif text-[12px] text-muted-foreground/70 leading-relaxed">
+            <p className="pmw-st__sec-lead mt-2">
               아래 동물병원·운송회사 탭에서 양쪽 정보를 각각 입력할 수 있습니다.
             </p>
           )}
-        </section>
+        </SettingsCard>
       ) : null}
 
-      {/* 동물병원/운송회사 — 보기·입력 전환 탭.
-          canEditOrgType=true 면 'both' 일 때 양쪽 입력용으로, 그 외엔 보기 전환용.
-          유형 '선택' 아님(유형은 위 유형 섹션 또는 슈퍼어드민이 결정). */}
-      <section className="mb-lg">
+      {/* 동물병원/운송회사 — 보기·입력 전환. 부모가 탭을 소유하면(조직정보 화면)
+          카드 밖에서 그리므로 여기선 그리지 않는다. */}
+      {!controlled && (
         <SettingsControlGroup size="md" className="gap-xs">
           {(['hospital', 'transport'] as const).map((t) => (
             <SettingsToggleButton
@@ -472,10 +485,10 @@ export function OrgInfoForm({
             </SettingsToggleButton>
           ))}
         </SettingsControlGroup>
-      </section>
+      )}
 
       {!isAdmin && (
-        <p className="mb-xl font-serif text-[12px] text-muted-foreground/70 leading-relaxed">
+        <p className="pmw-st__sec-lead">
           조직 정보는 관리자만 수정할 수 있습니다. 변경이 필요하면 조직 관리자에게 요청해 주세요.
         </p>
       )}
@@ -487,9 +500,8 @@ export function OrgInfoForm({
         // 뜨므로 건너뛴다. (동물병원에 '수의사'가 두 번 보이던 문제.)
         if (groupFields.length === 0) return null
         return (
-        <section key={group} className="mb-xl">
-          <SectionLabel className="mb-2">{GROUP_LABELS[group] ?? group}</SectionLabel>
-          <div className="border-t border-border/80">
+        <SettingsCard key={group} title={GROUP_LABELS[group] ?? group}>
+          <div>
             {/* 아바타는 병원명·회사명 바로 위 첫 행 (2026-08-06 사용자 지시로 이 그룹 안으로 이동).
                 값은 org-level 한 개라 병원·운송 탭 어느 쪽에서 바꿔도 같은 이미지다. */}
             {group === AVATAR_HOST_GROUP[viewTab] && (
@@ -586,61 +598,66 @@ export function OrgInfoForm({
               )
             })}
           </div>
-        </section>
+
+          {/* 기본값 복원 + 저장시각 — onReset 이 주입된 경우(멤버 설정)에만 reset 노출. */}
+          <SettingsFooter className="justify-between gap-sm">
+            {isAdmin && onReset && hasDefault ? (
+              <SettingsActionButton onClick={handleReset}>
+                기본값으로 되돌리기
+              </SettingsActionButton>
+            ) : (
+              <span />
+            )}
+            <span className="font-serif text-[12px] text-muted-foreground/60">
+              {formatSavedAgo(lastSaved)}
+            </span>
+          </SettingsFooter>
+        </SettingsCard>
         )
       })}
 
-      {/* 사용자 정의 추가 필드 — 라벨/값 자유 입력 */}
-      <section className="mb-xl">
-        <SectionLabel className="mb-2">추가 정보</SectionLabel>
-        <div className="border-t border-border/80">
-          {getCustomFields(info).map((f) => (
-            <CustomFieldRow
-              key={f.id}
-              field={f}
-              isAdmin={isAdmin}
-              onChange={(patch) => updateCustomField(f.id, patch)}
-              onCommit={() => saveCustomFields(getCustomFields(info))}
-              onRemove={() => removeCustomField(f.id)}
-            />
-          ))}
-          {isAdmin && (
-            <div className="py-3 border-b border-dotted border-border/80">
-              <button
-                type="button"
-                onClick={addCustomField}
-                className="inline-flex items-center gap-xs font-serif text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Plus size={14} />
-                <span>정보 추가</span>
-              </button>
-            </div>
-          )}
-          {!isAdmin && getCustomFields(info).length === 0 && (
-            <p className="py-3 font-serif text-[12px] text-muted-foreground/60">
-              추가 정보가 없습니다.
-            </p>
-          )}
-        </div>
-      </section>
+      {/* 병원/회사 다음에 낄 카드 — 조직정보 화면의 '수의사'(발급자) 카드. */}
+      {children}
 
-      {error && (
-        <p className="font-serif text-[13px] text-destructive mb-md">{error}</p>
+      {/* 사용자 정의 추가 필드 — 라벨/값 자유 입력.
+          동물병원 화면에만 노출 (2026-08-06 사용자 지시 — 운송회사는 회사 정보만). */}
+      {!isTransport && (
+        <SettingsCard title="추가 정보">
+          <div>
+            {getCustomFields(info).map((f) => (
+              <CustomFieldRow
+                key={f.id}
+                field={f}
+                isAdmin={isAdmin}
+                onChange={(patch) => updateCustomField(f.id, patch)}
+                onCommit={() => saveCustomFields(getCustomFields(info))}
+                onRemove={() => removeCustomField(f.id)}
+              />
+            ))}
+            {isAdmin && (
+              <div className="py-3 border-b border-dotted border-border/80">
+                <button
+                  type="button"
+                  onClick={addCustomField}
+                  className="inline-flex items-center gap-xs font-serif text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Plus size={14} />
+                  <span>정보 추가</span>
+                </button>
+              </div>
+            )}
+            {!isAdmin && getCustomFields(info).length === 0 && (
+              <p className="py-3 font-serif text-[12px] text-muted-foreground/60">
+                추가 정보가 없습니다.
+              </p>
+            )}
+          </div>
+        </SettingsCard>
       )}
 
-      {/* 기본값 복원 + 저장시각 풋터 — onReset 이 주입된 경우(멤버 설정)에만 reset 노출. */}
-      <SettingsFooter className="justify-between gap-sm">
-        {isAdmin && onReset && hasDefault ? (
-          <SettingsActionButton onClick={handleReset}>
-            기본값으로 되돌리기
-          </SettingsActionButton>
-        ) : (
-          <span />
-        )}
-        <span className="font-serif text-[12px] text-muted-foreground/60">
-          {formatSavedAgo(lastSaved)}
-        </span>
-      </SettingsFooter>
+      {error && (
+        <p className="font-serif text-[13px] text-destructive">{error}</p>
+      )}
     </div>
   )
 }
