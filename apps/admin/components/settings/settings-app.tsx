@@ -13,7 +13,6 @@ import { AutomationSection } from './automation-section'
 import { MembersSection } from './members-section'
 import { ProfileSection } from './profile-section'
 import { DetailViewSection } from './detail-view-section'
-import { TransfersSection } from './transfers-section'
 import { FeedbackSection } from './feedback-section'
 import { SuperAdminApp } from '@/components/super-admin/super-admin-app'
 import { getSettingsBootstrap, type SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
@@ -47,7 +46,6 @@ type TabDef = {
     | 'company'
     | 'members'
     | 'detail_view'
-    | 'transfers'
     | 'vaccines'
     | 'inspection'
     | 'import_report'
@@ -67,7 +65,6 @@ const TABS: readonly TabDef[] = [
   { id: 'company', label: '조직정보', category: 'account' },
   { id: 'members', label: '멤버', category: 'account' },
   { id: 'detail_view', label: '상세', category: 'case' },
-  { id: 'transfers', label: '전달', category: 'case' },
   { id: 'vaccines', label: '약품관리', category: 'case' },
   { id: 'automation', label: '자동화', category: 'case' },
   { id: 'verification', label: '검증', category: 'case' },
@@ -334,7 +331,6 @@ export function SettingsApp({
               initialRules={bootstrap?.autoFillRules ?? null}
             />
           )}
-          {activeTab === 'transfers' && <TransfersSection />}
           {activeTab === 'detail_view' && (
             <DetailViewSection initialSettings={bootstrap?.detailViewSettings} />
           )}

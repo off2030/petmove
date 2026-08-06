@@ -22,7 +22,7 @@ import { DocumentsSection } from './documents-section'
 import {
   getCaseAssigneeEnabled,
   setCaseAssigneeEnabled,
-} from '@/lib/actions/transfer-settings'
+} from '@/lib/actions/case-assignee-settings'
 
 export function DetailViewSection({
   initialSettings = DETAIL_VIEW_DEFAULTS,
@@ -39,7 +39,7 @@ export function DetailViewSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // 담당자 기능 토글 — 전달 탭에서 이전됨.
+  // 담당자 기능 토글 — 옛 전달 탭에서 이전됨(전달 기능은 2026-08-06 폐지).
   useEffect(() => {
     let cancelled = false
     void getCaseAssigneeEnabled().then((r) => {
@@ -106,7 +106,7 @@ export function DetailViewSection({
             </SettingsListRow>
             <SettingsListRow
               title="담당자 표시"
-              description="ON 시 케이스 상세에 담당자 선택 메뉴가 노출되고, 다른 조직에서 멤버 지정해 보낸 전달이 자동 배정됩니다."
+              description="ON 시 케이스 상세에 담당자 선택 메뉴가 노출됩니다."
             >
               <SettingsToggleButton pressed={assigneeEnabled} onClick={toggleAssignee} />
             </SettingsListRow>

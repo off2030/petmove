@@ -18,7 +18,7 @@ import { Check, Search, X } from 'lucide-react'
 
 /**
  * 페이지 컨테이너 — max-width + 하단 padding. 모든 설정 섹션의 최외곽.
- * - `md` (default, 3xl): profile / company / members / transfers / DataSection 등 폼 위주.
+ * - `md` (default, 3xl): profile / company / members / DataSection 등 폼 위주.
  * - `lg` (5xl): inspection / import_report / export_doc / automation / verification 등
  *   다중 여행지 칩 / 테이블·리스트가 들어가는 섹션.
  * 4xl(detail-view) 같은 중간 폭은 `className="max-w-4xl"` 로 override.
@@ -297,7 +297,7 @@ export function SettingsListRow({
 
 /**
  * sub-section 제목 — settings 안 sub-group 의 한국어 h3.
- * `font-serif text-[18px] text-foreground` 패턴이 transfers / detail-view /
+ * `font-serif text-[18px] text-foreground` 패턴이 detail-view /
  * documents / share-presets / destinations 등 7곳 이상에서 반복.
  *
  * `<SettingsSectionLabel>` (mono uppercase) / `<SettingsSectionLabelSerif>`

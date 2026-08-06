@@ -1,11 +1,14 @@
 'use server'
 
 /**
- * 핸드오프·담당자 관련 조직 설정 (organization_settings 의 'case_assignee' key).
+ * 담당자 표시 조직 설정 (organization_settings 의 'case_assignee' key).
  *
  * value shape: { enabled: boolean }
- * - enabled true → 케이스 상세에 담당자 드롭다운 노출, 핸드오프 수신 시 to_user_id 자동 배정
- * - enabled false (기본) → UI 미노출, 자동 배정 미수행
+ * - enabled true → 케이스 상세에 담당자 드롭다운 노출
+ * - enabled false (기본) → UI 미노출
+ *
+ * (구 파일명 transfer-settings — 조직 간 전달 기능과 함께 도입됐지만 전달은 2026-08-06
+ *  폐지되고 담당자 설정만 남아 이름을 바로잡음.)
  */
 
 import { reportActionError } from './_report-error'
@@ -31,7 +34,7 @@ export async function getCaseAssigneeEnabled(): Promise<Result<boolean>> {
     const enabled = (data?.value as { enabled?: boolean } | null)?.enabled === true
     return { ok: true, value: enabled }
   } catch (e) {
-    return { ok: false, error: reportActionError(e, 'transfer-settings.getCaseAssigneeEnabled') }
+    return { ok: false, error: reportActionError(e, 'case-assignee-settings.getCaseAssigneeEnabled') }
   }
 }
 
@@ -50,6 +53,6 @@ export async function setCaseAssigneeEnabled(enabled: boolean): Promise<Result<n
     revalidatePath('/cases')
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: reportActionError(e, 'transfer-settings.setCaseAssigneeEnabled') }
+    return { ok: false, error: reportActionError(e, 'case-assignee-settings.setCaseAssigneeEnabled') }
   }
 }

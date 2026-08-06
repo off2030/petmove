@@ -1,0 +1,16 @@
+-- ⏸ 보류 중 (파일명 `_pending_` 접두어 — 아직 적용하지 말 것)
+--
+-- 조직 간 케이스 전달(case_transfers) 폐지에 따른 DB 정리 (2026-08-06 코드 삭제 완료).
+-- 코드 쪽 삭제는 이미 배포되지만, 테이블 drop 은 되돌릴 수 없어 채팅 테이블 정리
+-- (project_admin_messages_to_alerts 메모리의 phase 5)와 **한 번에** 처리한다.
+--
+-- 적용 전 확인: select count(*) from public.case_transfers;  -- 0 이어야 한다(2026-08-06 기준 0건)
+--
+-- 적용 시 함께 지울 코드:
+--   - apps/admin/lib/actions/super-admin.ts 의 case_transfers 선삭제 블록
+--   - apps/admin/scripts/verify-db-invariants.sql 의 검증 1) 트리거 존재 확인
+--   - messages.transfer_id 컬럼 (messages 테이블 자체가 phase 5 에서 사라짐)
+
+-- drop trigger if exists case_transfers_validate_status_change on public.case_transfers;
+-- drop function if exists public.validate_transfer_status_change() cascade;
+-- drop table if exists public.case_transfers cascade;
