@@ -1,13 +1,24 @@
 'use client'
 
+/**
+ * 정보 요청 링크 프리셋 설정 — 요약 목록 + 편집 팝업 (2026-08-06 재설계).
+ *
+ * 옛 구조는 카드 안에서 아코디언을 펼쳐 필드 칩 수십 개를 쏟아내고, 카드 하단에
+ * 되돌리기/저장을 따로 뒀다. 이제 목록은 한 줄 요약(이름·필드 수·파일 수)만 보여주고
+ * 편집은 팝업에서 끝낸다(팝업 저장 = 서버 저장). 프리셋은 필드에 더해 **파일 요청**도
+ * 담는다 — 프리셋 하나로 필드+파일이 함께 선택되도록.
+ */
+
 import { useEffect, useMemo, useState, useTransition } from 'react'
-import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
+import { Plus, Trash2, X } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { useCases } from '@/components/cases/cases-context'
 import { listSharePresets, saveSharePresets } from '@/lib/actions/share-presets'
-import { PillButton, useConfirm } from '@petmove/ui'
+import { useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
-import { SettingsActionButton, SettingsCard, SettingsFooter, SettingsSectionLabelSerif } from './settings-layout'
-import { ALL_EXTRA_FIELD_KEYS } from '@petmove/domain'
+import { DialogFooter } from '@/components/ui/dialog-footer'
+import { SettingsActionButton, SettingsCard, SettingsSectionLabelSerif } from './settings-layout'
+import { ALL_EXTRA_FIELD_KEYS, SHARE_FILE_REQUESTS } from '@petmove/domain'
 import { buildShareFieldLayout } from '@petmove/domain'
 import type { SharePreset } from '@/lib/share-presets-types'
 
@@ -29,28 +40,19 @@ export function SharePresetsSection({
   const confirm = useConfirm()
   const { fieldDefs } = useCases()
   const [presets, setPresets] = useState<SharePreset[]>(initialPresets ?? [])
-  const [savedPresets, setSavedPresets] = useState<SharePreset[]>(initialPresets ?? [])
   const [loading, setLoading] = useState(initialPresets === null)
-  const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  /** 편집 중 프리셋 — 'new' 면 추가. */
+  const [editing, setEditing] = useState<SharePreset | 'new' | null>(null)
 
   useEffect(() => {
     if (initialPresets !== null) return
     listSharePresets().then((r) => {
-      if (r.ok) {
-        setPresets(r.value)
-        setSavedPresets(r.value)
-      }
+      if (r.ok) setPresets(r.value)
       setLoading(false)
     })
   }, [initialPresets])
-
-  const isDirty = useMemo(
-    () => JSON.stringify(presets) !== JSON.stringify(savedPresets),
-    [presets, savedPresets],
-  )
 
   /** 모든 가능 필드 — 다이얼로그/수신자 폼/case-detail 과 동일한 좌표계 (단일 진실 공급원). */
   const groupedFields = useMemo(
@@ -62,67 +64,37 @@ export function SharePresetsSection({
     [fieldDefs],
   )
 
-  function addPreset() {
-    const next: SharePreset = { id: genId(), name: '새 프리셋', field_keys: [] }
-    setPresets((prev) => [...prev, next])
-    setExpandedId(next.id)
-  }
-
-  function renamePreset(id: string, name: string) {
-    setPresets((prev) => prev.map((p) => (p.id === id ? { ...p, name } : p)))
-  }
-
-  function toggleField(id: string, key: string) {
-    setPresets((prev) =>
-      prev.map((p) => {
-        if (p.id !== id) return p
-        const has = p.field_keys.includes(key)
-        return {
-          ...p,
-          field_keys: has ? p.field_keys.filter((k) => k !== key) : [...p.field_keys, key],
-        }
-      }),
-    )
-  }
-
-  async function deletePreset(id: string) {
-    const target = presets.find((p) => p.id === id)
-    if (!await confirm({
-      message: `"${target?.name ?? '프리셋'}" 을 삭제하시겠습니까? 저장하기 전엔 되돌릴 수 있습니다.`,
-      okLabel: '삭제',
-      variant: 'destructive',
-    })) return
-    setPresets((prev) => prev.filter((p) => p.id !== id))
-  }
-
-  function handleSave() {
+  /** 목록 변경을 즉시 서버 저장 — 팝업 저장·삭제 양쪽에서 사용. */
+  function persist(next: SharePreset[]) {
+    const prev = presets
+    setPresets(next)
     setError(null)
     startTransition(async () => {
-      const r = await saveSharePresets(presets)
-      if (!r.ok) { setError(r.error); return }
-      setSavedPresets(presets)
-      setSavedAt(new Date())
+      const r = await saveSharePresets(next)
+      if (!r.ok) {
+        setPresets(prev)
+        setError(r.error)
+      }
     })
   }
 
-  function handleDiscard() {
-    setPresets(savedPresets)
-    setError(null)
+  function commit(preset: SharePreset) {
+    const exists = presets.some((p) => p.id === preset.id)
+    persist(exists ? presets.map((p) => (p.id === preset.id ? preset : p)) : [...presets, preset])
+    setEditing(null)
+  }
+
+  async function deletePreset(p: SharePreset) {
+    if (!await confirm({
+      message: `"${p.name}" 을 삭제할까요?`,
+      okLabel: '삭제',
+      variant: 'destructive',
+    })) return
+    persist(presets.filter((x) => x.id !== p.id))
   }
 
   return (
-    <SettingsCard
-      title={
-        <span className="inline-flex items-center gap-sm">
-          정보 요청 링크 프리셋
-          {isDirty && (
-            <span className="font-mono text-[10.5px] uppercase tracking-[1.2px] px-1.5 py-0.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400">
-              변경됨
-            </span>
-          )}
-        </span>
-      }
-    >
+    <SettingsCard title="정보 요청 링크 프리셋">
       {error && (
         <p className="font-serif text-[13px] text-destructive mb-2">{error}</p>
       )}
@@ -132,114 +104,235 @@ export function SharePresetsSection({
           <p className="py-4 font-serif text-[14px] text-muted-foreground">불러오는 중…</p>
         ) : presets.length === 0 ? (
           <p className="py-4 font-serif text-[14px] text-muted-foreground">
-            아직 만든 프리셋이 없습니다.
+            자주 쓰는 요청 묶음을 만들어두면 링크 발급 때 한 번에 선택할 수 있어요.
           </p>
         ) : (
-          presets.map((p) => {
-            const expanded = expandedId === p.id
-            return (
-              <div key={p.id} className="border-b border-dotted border-border/80 py-3">
-                <div className="flex items-center gap-sm">
-                  <button
-                    type="button"
-                    onClick={() => setExpandedId(expanded ? null : p.id)}
-                    className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                    aria-label={expanded ? '접기' : '펼치기'}
-                  >
-                    {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                  </button>
-                  <input
-                    type="text"
-                    value={p.name}
-                    onChange={(e) => renamePreset(p.id, e.target.value)}
-                    placeholder="프리셋 이름"
-                    className="flex-1 bg-transparent font-serif text-[15px] text-foreground border-0 px-0 py-1 focus:outline-none focus:ring-0 placeholder:text-muted-foreground/40"
-                  />
-                  <span className="shrink-0 font-mono text-[10.5px] uppercase tracking-[1.2px] text-muted-foreground/70">
-                    {p.field_keys.length} 개
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => deletePreset(p.id)}
-                    disabled={pending}
-                    aria-label="삭제"
-                    className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-40"
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-
-                {expanded && (
-                  <div className="mt-3 space-y-lg pl-9">
-                    {groupedFields.map((g) => (
-                      <div key={g.category}>
-                        <SettingsSectionLabelSerif className="pb-1 border-b border-dotted border-border/60">
-                          {g.category}
-                        </SettingsSectionLabelSerif>
-                        <div className="space-y-2 pl-2 border-l border-border/40">
-                          {g.blocks.map((block, bi) => (
-                            <div key={block.subgroup ?? `__flat-${bi}`} className="pl-2">
-                              {block.subgroup && (
-                                <p className="font-mono text-[10px] uppercase tracking-[1.1px] text-muted-foreground/70 mb-1">
-                                  {block.subgroup}
-                                </p>
-                              )}
-                              <div className="flex flex-wrap gap-1">
-                                {block.fields.map((f) => {
-                                  const active = p.field_keys.includes(f.key)
-                                  return (
-                                    <button
-                                      key={f.key}
-                                      type="button"
-                                      onClick={() => toggleField(p.id, f.key)}
-                                      className={cn(
-                                        'h-7 px-2.5 rounded-full border font-serif text-[12px] transition-colors',
-                                        active
-                                          ? 'border-foreground bg-foreground text-background'
-                                          : 'border-border/80 text-muted-foreground hover:bg-accent hover:text-foreground',
-                                      )}
-                                    >
-                                      {f.label}
-                                    </button>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )
-          })
+          presets.map((p) => (
+            <div
+              key={p.id}
+              className="flex items-center gap-md py-2.5 border-b border-dotted border-border/80"
+            >
+              <span className="flex-1 min-w-0 truncate font-serif text-[15px] text-foreground">
+                {p.name}
+              </span>
+              <span className="shrink-0 font-mono text-[11px] tracking-[0.5px] text-muted-foreground/70">
+                필드 {p.field_keys.length}
+              </span>
+              <span className="shrink-0 font-mono text-[11px] tracking-[0.5px] text-muted-foreground/70">
+                파일 {p.file_keys?.length ?? 0}
+              </span>
+              <SettingsActionButton onClick={() => setEditing(p)} disabled={pending}>
+                편집
+              </SettingsActionButton>
+              <button
+                type="button"
+                onClick={() => deletePreset(p)}
+                disabled={pending}
+                aria-label={`${p.name} 삭제`}
+                title="삭제"
+                className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-40"
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          ))
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={addPreset}
-        disabled={pending}
-        className="mt-3 inline-flex items-center gap-1 h-8 px-3 rounded-full border border-dashed border-border/70 font-serif text-[13px] text-muted-foreground hover:border-foreground/40 hover:text-foreground transition-colors disabled:opacity-40"
-      >
-        <Plus size={13} /> 새 프리셋
-      </button>
+      <div className="pt-3">
+        <SettingsActionButton onClick={() => setEditing('new')} disabled={pending}>
+          <Plus className="h-3 w-3" />
+          프리셋 추가
+        </SettingsActionButton>
+      </div>
 
-      {/* 저장 영역 — 다른 카드와 동일하게 카드 하단 (2026-08-06 위치 통일). */}
-      <SettingsFooter className="justify-between">
-        <span className="font-serif text-[12px] text-muted-foreground/60">
-          {!isDirty && savedAt ? `저장됨 · ${savedAt.toLocaleTimeString()}` : ''}
-        </span>
-        <div className="flex items-center gap-sm">
-          <SettingsActionButton onClick={handleDiscard} disabled={pending || !isDirty}>
-            되돌리기
-          </SettingsActionButton>
-          <PillButton variant="solid" onClick={handleSave} disabled={pending || !isDirty}>
-            {pending ? '저장 중…' : '저장'}
-          </PillButton>
-        </div>
-      </SettingsFooter>
+      {editing && (
+        <PresetEditModal
+          initial={editing === 'new' ? { id: genId(), name: '', field_keys: [], file_keys: [] } : editing}
+          isNew={editing === 'new'}
+          groupedFields={groupedFields}
+          onClose={() => setEditing(null)}
+          onSubmit={commit}
+        />
+      )}
     </SettingsCard>
+  )
+}
+
+/* ── 편집 팝업 — 이름 + 필드/파일 선택 ── */
+
+type GroupedFields = ReturnType<typeof buildShareFieldLayout>
+
+function PresetEditModal({
+  initial,
+  isNew,
+  groupedFields,
+  onClose,
+  onSubmit,
+}: {
+  initial: SharePreset
+  isNew: boolean
+  groupedFields: GroupedFields
+  onClose: () => void
+  onSubmit: (preset: SharePreset) => void
+}) {
+  const [name, setName] = useState(initial.name)
+  const [fieldKeys, setFieldKeys] = useState<string[]>(initial.field_keys)
+  const [fileKeys, setFileKeys] = useState<string[]>(initial.file_keys ?? [])
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  if (!mounted) return null
+
+  function toggleField(key: string) {
+    setFieldKeys((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]))
+  }
+  function toggleFile(key: string) {
+    setFileKeys((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]))
+  }
+
+  const canSubmit = name.trim().length > 0 && (fieldKeys.length > 0 || fileKeys.length > 0)
+
+  function submit() {
+    if (!canSubmit) return
+    onSubmit({
+      id: initial.id,
+      name: name.trim(),
+      field_keys: fieldKeys,
+      ...(fileKeys.length > 0 ? { file_keys: fileKeys } : {}),
+    })
+  }
+
+  const chipCls = (active: boolean) =>
+    cn(
+      'h-7 px-2.5 rounded-full border font-serif text-[12px] transition-colors',
+      active
+        ? 'border-foreground bg-foreground text-background'
+        : 'border-border/80 text-muted-foreground hover:bg-accent hover:text-foreground',
+    )
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div
+        className="w-[600px] max-w-full max-h-[85vh] flex flex-col rounded-sm border border-border/80 bg-background shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="shrink-0 flex items-center justify-between border-b border-border/80 px-lg py-3">
+          <span className="font-serif text-[16px] text-foreground">
+            {isNew ? '프리셋 추가' : '프리셋 편집'}
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-muted-foreground/60 hover:text-foreground transition-colors"
+            aria-label="닫기"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="flex-1 min-h-0 overflow-y-auto px-lg py-md space-y-lg">
+          <div>
+            <p className="mb-1.5 font-serif text-[13px] text-muted-foreground">이름</p>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="예: 일본 사전 신고"
+              autoFocus
+              className="w-full bg-transparent font-serif text-[15px] text-foreground border-b border-border/80 px-0.5 py-1 focus:outline-none focus:border-foreground/40 transition-colors placeholder:text-muted-foreground/40"
+            />
+          </div>
+
+          <div>
+            <div className="mb-2 flex items-baseline justify-between gap-md">
+              <p className="font-serif text-[13px] text-muted-foreground">
+                요청 항목
+                <span className="ml-2 font-mono text-[11px] text-muted-foreground/70">
+                  필드 {fieldKeys.length} · 파일 {fileKeys.length}
+                </span>
+              </p>
+              {(fieldKeys.length > 0 || fileKeys.length > 0) && (
+                <button
+                  type="button"
+                  onClick={() => { setFieldKeys([]); setFileKeys([]) }}
+                  className="pmw-st__btn-ghost hover:text-foreground transition-colors"
+                >
+                  모두 해제
+                </button>
+              )}
+            </div>
+
+            {/* 파일 요청 — 필드보다 개수가 적고 케이스마다 매번 필요해 맨 위. */}
+            <div className="mb-lg">
+              <SettingsSectionLabelSerif className="mb-2">파일</SettingsSectionLabelSerif>
+              <div className="flex flex-wrap gap-1">
+                {SHARE_FILE_REQUESTS.map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => toggleFile(f.key)}
+                    className={chipCls(fileKeys.includes(f.key))}
+                    title={f.destinations === 'all' ? '모든 여행지' : `${f.destinations.join(', ')} 요청 파일`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {groupedFields.map((g) => (
+              <div key={g.category} className="mb-lg last:mb-0">
+                <SettingsSectionLabelSerif className="mb-2">{g.category}</SettingsSectionLabelSerif>
+                <div className="space-y-2">
+                  {g.blocks.map((block, bi) => (
+                    <div key={block.subgroup ?? `__flat-${bi}`}>
+                      {block.subgroup && (
+                        <p className="font-mono text-[10px] uppercase tracking-[1.1px] text-muted-foreground/70 mb-1">
+                          {block.subgroup}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-1">
+                        {block.fields.map((f) => (
+                          <button
+                            key={f.key}
+                            type="button"
+                            onClick={() => toggleField(f.key)}
+                            className={chipCls(fieldKeys.includes(f.key))}
+                          >
+                            {f.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <DialogFooter
+          bordered
+          className="shrink-0"
+          onCancel={onClose}
+          onPrimary={submit}
+          primaryLabel="저장"
+          primaryDisabled={!canSubmit}
+        />
+      </div>
+    </div>,
+    document.body,
   )
 }

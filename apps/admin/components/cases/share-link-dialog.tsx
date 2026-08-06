@@ -97,7 +97,7 @@ function formatDateTime(iso: string): string {
 export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
   const caseId = caseRow.id
   const confirm = useConfirm()
-  const { fieldDefs, activeDestination, importReportCountries } = useCases()
+  const { fieldDefs, activeDestination, importReportCountries, sharePresets } = useCases()
   const { config: destOverridesConfig } = useDestinationOverrides()
 
   // 여행지 기반 필터링 — case detail 과 동일하게 activeDestination 우선.
@@ -178,6 +178,17 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
       }))
       .filter((p) => p.field_keys.length > 0 || p.fileKeys.length > 0)
   }, [destination, importReportCountries, allDescriptors])
+
+  // 설정(정보 요청 링크 프리셋)에서 만든 조직 프리셋 — 자동 프리셋 뒤에 함께 노출.
+  // 2026-08-06 연결: 그전까지 설정에서 만들어도 이 팝업에 나타나지 않아 쓸 수 없었다.
+  const userPresets = useMemo<AutoPreset[]>(
+    () => sharePresets.map((p) => ({ ...p, fileKeys: p.file_keys ?? [] })),
+    [sharePresets],
+  )
+  const quickPresets = useMemo<AutoPreset[]>(
+    () => [...autoPresets, ...userPresets],
+    [autoPresets, userPresets],
+  )
 
   // '전체 선택' 대상 = 아직 안 채워진 필드만. '모두 보기'로 이미 입력된 항목을 펼쳐도
   // 전체 선택엔 포함되지 않는다(이 링크는 안 받은 정보 수집용). 재수집은 개별 칩 클릭.
@@ -341,7 +352,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     setError(null)
     startTransition(async () => {
       // 적용된 프리셋이 있으면 그 이름을 template 라벨로 (감사용 메타).
-      const matchedPreset = autoPresets.find((p) => isPresetFullySelected(p))
+      const matchedPreset = quickPresets.find((p) => isPresetFullySelected(p))
       const templateLabel = matchedPreset?.name ?? null
       const r = await createShareLink({
         caseId,
@@ -468,7 +479,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                 >
                   전체 선택
                 </button>
-                {autoPresets.map((p) => {
+                {quickPresets.map((p) => {
                   const active = isPresetFullySelected(p)
                   const applicable = presetApplicableCount(p)
                   return (

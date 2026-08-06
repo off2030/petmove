@@ -26,8 +26,12 @@ function sanitize(presets: unknown): SharePreset[] {
     const keys = Array.isArray(obj.field_keys)
       ? (obj.field_keys as unknown[]).filter((k): k is string => typeof k === 'string')
       : []
+    const fileKeys = Array.isArray(obj.file_keys)
+      ? (obj.file_keys as unknown[]).filter((k): k is string => typeof k === 'string')
+      : []
     if (!id || !name) continue
-    out.push({ id, name, field_keys: keys })
+    // file_keys 는 빈 배열이면 생략 — 옛 프리셋과 같은 모양을 유지(불필요한 diff 방지).
+    out.push({ id, name, field_keys: keys, ...(fileKeys.length > 0 ? { file_keys: fileKeys } : {}) })
   }
   return out
 }

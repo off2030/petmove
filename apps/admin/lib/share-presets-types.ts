@@ -6,4 +6,9 @@ export interface SharePreset {
   name: string
   /** 선택할 필드 키 배열 — 컬럼·data·EXTRA·합성(__rabies 등) 모두 가능 */
   field_keys: string[]
+  /**
+   * 함께 요청할 파일 슬롯 키(SHARE_FILE_REQUESTS.key). 2026-08-06 추가 —
+   * 프리셋 하나로 필드+파일을 같이 고르기 위함. 옛 프리셋은 없으므로 optional.
+   */
+  file_keys?: string[]
 }
