@@ -10,7 +10,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClass: Record<Variant, string> = {
-  default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  // 비활성은 회색으로 — 투명도만 낮추면 브랜드 하늘색이 옅어서 활성과 구분이 안 된다
+  // (로그인 '인증번호 받기' 가 눌리는데도 꺼져 보인다는 보고, 2026-08-06).
+  default:
+    'bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground/60 disabled:opacity-100',
   outline:
     'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
   ghost: 'hover:bg-accent hover:text-accent-foreground',

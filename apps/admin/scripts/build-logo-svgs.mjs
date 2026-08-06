@@ -124,8 +124,8 @@ async function main() {
   const font = opentype.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength))
   console.log(`Loaded font: ${font.names.fontFamily?.en} (${font.glyphs.length} glyphs)`)
 
-  // ⚠️ 앱 아이콘(public/icon.svg · icon-maskable.svg)은 이제 PMW 모노그램이 아니라
-  // 리본P (버건디) 로 교체됨 — 펫무브워크 앱 아이콘 = 펫무브와 같은 리본P, 색만 버건디.
+  // ⚠️ 앱 아이콘(public/icon.svg · icon-maskable.svg)은 PMW 모노그램이 아니라
+  // 새 브랜드 '떠오르는 P'(하늘·구름) — 2026-08-06 교체(그 전엔 리본P 버건디).
   // hand-authored: public/icon{,-maskable}.svg + app/_icon-art.tsx 가 출처.
   // 이 스크립트는 더 이상 앱 아이콘을 생성하지 않는다(아래 봇 아바타만). 재실행해도
   // 아이콘 SVG 를 덮어쓰지 않으므로 안전.

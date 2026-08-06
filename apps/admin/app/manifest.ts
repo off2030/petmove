@@ -11,8 +11,9 @@ export default function manifest(): MetadataRoute.Manifest {
     description: '반려동물 해외 이동 검역 관리',
     start_url: '/',
     display: 'standalone',
-    background_color: '#F5F4ED',
-    theme_color: '#F5F4ED',
+    // 새 브랜드 캔버스 그레이 + 하늘 (2026-08-06 — 구 브랜드 크림 #F5F4ED 에서 교체).
+    background_color: '#F4F6F8',
+    theme_color: '#0BAEFF',
     lang: 'ko',
     orientation: 'portrait',
     icons: [
@@ -39,7 +40,7 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any',
       },
       // maskable — Android 적응형 아이콘 (둥근/사각/물방울 등 자유 crop).
-      // 안전영역(80%)에 PMW 모노그램 배치 + full-bleed 배경.
+      // 안전영역(80%)에 떠오르는 P 배치 + full-bleed 하늘 배경.
       {
         src: '/icon-maskable.svg',
         sizes: 'any',
