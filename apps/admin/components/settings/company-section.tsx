@@ -222,25 +222,23 @@ export function CompanySection({
   return (
     <SettingsShell>
       <SettingsSection title={title}>
-        {/* 동물병원/운송회사 — 카드 밖. 이 선택이 아래 카드 구성을 바꾼다.
-            유형이 '둘 다'인 조직에서만 뜬다 — 단일 유형이면 보여줄 게 한 쪽뿐이라
-            반대쪽 빈 카드와 조직 공용 항목(로고·추가 정보)이 두 번 보였다(2026-08-06). */}
-        {orgType === 'both' && (
-          <SettingsControlGroup size="md" className="gap-xs">
-            {(['hospital', 'transport'] as const).map((t) => (
-              <SettingsToggleButton
-                key={t}
-                pressed={issuerTab === t}
-                onClick={() => setIssuerTab(t)}
-                className="px-lg"
-              >
-                {t === 'hospital' ? '동물병원' : '운송회사'}
-              </SettingsToggleButton>
-            ))}
-          </SettingsControlGroup>
-        )}
-
         <div className="space-y-lg">
+        {/* 동물병원/운송회사 — 카드 밖. 이 선택이 아래 카드 구성을 바꾼다.
+            space-y-lg 안에 두어 아래 카드와 간격을 둔다 (붙어 있으면 카드에 딸린
+            탭처럼 보인다 — 2026-08-06). */}
+        <SettingsControlGroup size="md" className="gap-xs">
+          {(['hospital', 'transport'] as const).map((t) => (
+            <SettingsToggleButton
+              key={t}
+              pressed={issuerTab === t}
+              onClick={() => setIssuerTab(t)}
+              className="px-lg"
+            >
+              {t === 'hospital' ? '동물병원' : '운송회사'}
+            </SettingsToggleButton>
+          ))}
+        </SettingsControlGroup>
+
         {/* 조직정보(병원·회사 필드 + 아바타 / 추가정보 / 기본값 복원) — 슈퍼어드민 화면과 공유.
             멤버는 유형 변경 불가(canEditOrgType=false). 보기 전환은 위 버튼이 소유. */}
         <OrgInfoForm

@@ -301,9 +301,6 @@ function AvatarRow({
             제거
           </SettingsActionButton>
         )}
-        <span className="font-serif text-[12px] text-muted-foreground/70">
-          PNG · JPG · WebP · GIF · 자동 512px 리사이즈
-        </span>
       </SettingsControlGroup>
     </SettingsField>
   )

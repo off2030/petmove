@@ -45,10 +45,14 @@ const GROUP_LABELS: Record<string, string> = {
   Company: '회사',
 }
 
-/** 아바타 행이 붙는 그룹 — 보기 탭에 따라 병원(Clinic) 또는 회사(Company) 첫 행. */
-const AVATAR_HOST_GROUP: Record<'hospital' | 'transport', string> = {
-  hospital: 'Clinic',
-  transport: 'Company',
+/**
+ * 로고 행이 붙는 그룹 — 조직당 로고는 하나뿐이라 한 곳에서만 편집한다.
+ * 운송 전용 조직이면 회사 쪽, 그 외(병원·둘 다)는 병원 쪽.
+ * 보기 탭이 아니라 **조직 유형**으로 정한다 — 탭을 따라가면 양쪽에 다 떠서
+ * 로고가 두 개인 것처럼 보인다(2026-08-06).
+ */
+function avatarHostGroup(orgType: OrgType): string {
+  return orgType === 'transport' ? 'Company' : 'Clinic'
 }
 
 // org-level (모든 멤버 공유) 필드만 — 개인 담당자 정보(이름·휴대폰·면허) 는 user-level
@@ -471,9 +475,8 @@ export function OrgInfoForm({
       ) : null}
 
       {/* 동물병원/운송회사 — 보기·입력 전환. 부모가 탭을 소유하면(조직정보 화면)
-          카드 밖에서 그리므로 여기선 그리지 않는다.
-          유형이 '둘 다'일 때만 — 단일 유형은 보여줄 게 한 쪽뿐이다. */}
-      {!controlled && orgType === 'both' && (
+          카드 밖에서 그리므로 여기선 그리지 않는다. */}
+      {!controlled && (
         <SettingsControlGroup size="md" className="gap-xs">
           {(['hospital', 'transport'] as const).map((t) => (
             <SettingsToggleButton
@@ -503,9 +506,9 @@ export function OrgInfoForm({
         return (
         <SettingsCard key={group} title={GROUP_LABELS[group] ?? group}>
           <div>
-            {/* 아바타는 병원명·회사명 바로 위 첫 행 (2026-08-06 사용자 지시로 이 그룹 안으로 이동).
-                값은 org-level 한 개라 병원·운송 탭 어느 쪽에서 바꿔도 같은 이미지다. */}
-            {group === AVATAR_HOST_GROUP[viewTab] && (
+            {/* 로고는 병원명·회사명 바로 위 첫 행 (2026-08-06 사용자 지시로 이 그룹 안으로 이동).
+                조직당 하나라 유형에 맞는 한 쪽에만 그린다. */}
+            {group === avatarHostGroup(orgType) && (
               <OrgAvatarRow
                 url={orgAvatarUrl}
                 isAdmin={isAdmin}
