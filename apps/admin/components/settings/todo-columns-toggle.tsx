@@ -20,10 +20,13 @@ export function TodoColumnsToggle({
   tabId,
   title = '표시 컬럼',
   description,
+  bare = false,
 }: {
   tabId: TodoTabId
   title?: string
   description?: string
+  /** true 면 제목·설명·섹션 여백 없이 체크박스 그리드만 — SettingsCard 안에 넣을 때. */
+  bare?: boolean
 }) {
   const { todoColumnsConfig, setTodoColumnsConfig } = useCases()
   const [, startSave] = useTransition()
@@ -54,14 +57,10 @@ export function TodoColumnsToggle({
     })
   }
 
-  return (
-    <section className="mb-xl">
-      <SettingsSubsectionTitle className="mb-2">{title}</SettingsSubsectionTitle>
-      <p className="font-serif italic text-[13px] text-muted-foreground mb-3">
-        {description ?? '체크된 컬럼만 테이블에 표시됩니다.'}
-      </p>
+  const grid = (
+    <>
       {error && (
-        <p className="-mt-2 mb-2 font-serif text-[12px] text-destructive">저장 실패: {error}</p>
+        <p className="mb-2 font-serif text-[12px] text-destructive">저장 실패: {error}</p>
       )}
       <ul className="grid grid-cols-2 md:grid-cols-3 gap-x-md gap-y-1.5">
         {meta.map((col) => {
@@ -83,6 +82,18 @@ export function TodoColumnsToggle({
           )
         })}
       </ul>
+    </>
+  )
+
+  if (bare) return grid
+
+  return (
+    <section className="mb-xl">
+      <SettingsSubsectionTitle className="mb-2">{title}</SettingsSubsectionTitle>
+      <p className="font-serif italic text-[13px] text-muted-foreground mb-3">
+        {description ?? '체크된 컬럼만 테이블에 표시됩니다.'}
+      </p>
+      {grid}
     </section>
   )
 }

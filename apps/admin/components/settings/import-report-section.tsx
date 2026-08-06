@@ -8,18 +8,22 @@ import { saveImportReportCountriesAction } from '@/lib/actions/import-report-con
 import { DEFAULT_IMPORT_REPORT_COUNTRIES } from '@petmove/domain'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { PillButton } from '@petmove/ui'
-import { SettingsActionButton, SettingsShell, SettingsSection, SettingsFooter, SettingsSubsectionTitle } from './settings-layout'
+import { SettingsActionButton, SettingsCard, SettingsShell, SettingsSection, SettingsFooter, SettingsSubsectionTitle } from './settings-layout'
 
 export function ImportReportSection() {
   return (
     <SettingsShell size="lg">
       <SettingsSection title="신고">
-        <TodoColumnsToggle
-          tabId="import_report"
-          title="표시 항목 설정"
-          description="신고 탭 테이블에 표시할 항목을 선택합니다. 모두 체크가 기본값."
-        />
-        <AutoCountriesEditor />
+        {/* 그룹 = 카드 하나 (2026-08-06 카드 구조 시범 — 신고 탭 먼저). */}
+        <div className="space-y-lg">
+          <SettingsCard
+            title="표시 항목 설정"
+            description="신고 탭 테이블에 표시할 항목을 선택합니다. 모두 체크가 기본값."
+          >
+            <TodoColumnsToggle tabId="import_report" bare />
+          </SettingsCard>
+          <AutoCountriesEditor />
+        </div>
       </SettingsSection>
     </SettingsShell>
   )
@@ -62,7 +66,7 @@ function AutoCountriesEditor() {
   }
 
   return (
-    <section>
+    <SettingsCard>
       <div className="mb-2 flex items-baseline justify-between gap-md flex-wrap">
         <SettingsSubsectionTitle>적용 국가 · {draft.length}</SettingsSubsectionTitle>
         <span className="font-serif text-[12px] text-muted-foreground/60">
@@ -70,7 +74,7 @@ function AutoCountriesEditor() {
         </span>
       </div>
 
-      <div className="border-t border-border/80 pt-3 pb-lg">
+      <div className="pt-1 pb-lg">
         <div className="flex flex-wrap items-center gap-1.5">
           {draft.map((v) => (
             <span
@@ -132,6 +136,6 @@ function AutoCountriesEditor() {
           </PillButton>
         </div>
       </SettingsFooter>
-    </section>
+    </SettingsCard>
   )
 }

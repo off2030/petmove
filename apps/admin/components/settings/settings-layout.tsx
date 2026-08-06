@@ -345,6 +345,31 @@ export function SettingsSectionLabelSerif({
 }
 
 /**
+ * 설정 그룹 카드 — "이 박스 = 한 가지 설정 그룹". 제목·설명·본문을 카드 테두리로 묶어
+ * 그룹 경계를 명시한다 (2026-08-06 — 선(line) 기반 그룹 구분에서 카드 기반으로 전환).
+ * footer(저장 버튼 영역)는 카드 안 마지막에 SettingsFooter 로.
+ */
+export function SettingsCard({
+  title,
+  description,
+  children,
+  className,
+}: {
+  title?: React.ReactNode
+  description?: React.ReactNode
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <section className={cn('rounded-md border border-border/80 bg-card px-lg py-lg', className)}>
+      {title ? <SettingsSubsectionTitle className="mb-1">{title}</SettingsSubsectionTitle> : null}
+      {description ? <p className="pmw-st__sec-lead mb-3">{description}</p> : null}
+      {children}
+    </section>
+  )
+}
+
+/**
  * "자동 저장됨 · N분 전" — 즉시 저장 화면의 저장 시각 표시.
  * profile / company / org-info-form 에 각자 복제돼 있던 것을 공용화 (2026-08-06).
  */
