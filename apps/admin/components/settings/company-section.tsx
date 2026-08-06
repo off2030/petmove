@@ -225,7 +225,8 @@ export function CompanySection({
         <div className="space-y-lg">
         {/* 조직정보(아바타·병원/운송 필드·추가정보·기본값 복원) — 슈퍼어드민 화면과 공유.
             멤버는 유형 변경 불가(canEditOrgType=false), 보기 전환 탭만. */}
-        <SettingsCard title="조직">
+        {/* 카드 제목 없음 — 페이지 제목이 '조직정보'라 '조직'은 같은 말 반복이었다(2026-08-06). */}
+        <SettingsCard>
         <OrgInfoForm
           info={info}
           orgType={orgType}

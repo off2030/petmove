@@ -44,6 +44,12 @@ const GROUP_LABELS: Record<string, string> = {
   Company: '회사',
 }
 
+/** 아바타 행이 붙는 그룹 — 보기 탭에 따라 병원(Clinic) 또는 회사(Company) 첫 행. */
+const AVATAR_HOST_GROUP: Record<'hospital' | 'transport', string> = {
+  hospital: 'Clinic',
+  transport: 'Company',
+}
+
 // org-level (모든 멤버 공유) 필드만 — 개인 담당자 정보(이름·휴대폰·면허) 는 user-level
 // 로 분리되어 "내 담당자 정보" 섹션에서 별도 편집.
 const HOSPITAL_FIELDS: FieldDef[] = [
@@ -425,24 +431,6 @@ export function OrgInfoForm({
 
   return (
     <div>
-      {/* 조직 아바타 — org-level(병원·운송 공용). 펫무브 보호자 [내 정보] 의
-          담당 동물병원·운송업체 카드에 이 이미지가 표시됨. */}
-      <section className="mb-lg">
-        <SectionLabel className="mb-2">아바타</SectionLabel>
-        <div className="border-t border-border/80">
-          <OrgAvatarRow
-            url={orgAvatarUrl}
-            isAdmin={isAdmin}
-            fallbackLabel={info.clinic_ko || info.transport_company_ko || ''}
-            onUpload={onAvatarUpload}
-            onRemove={onAvatarRemove}
-            onChange={setOrgAvatarUrl}
-            onSaved={() => setLastSaved(new Date())}
-            onError={setError}
-          />
-        </div>
-      </section>
-
       {canEditOrgType ? (
         /* 유형 선택 — 슈퍼어드민 전용. organizations.org_type 직접 변경(병원/운송/둘다). */
         <section className="mb-lg">
@@ -502,6 +490,20 @@ export function OrgInfoForm({
         <section key={group} className="mb-xl">
           <SectionLabel className="mb-2">{GROUP_LABELS[group] ?? group}</SectionLabel>
           <div className="border-t border-border/80">
+            {/* 아바타는 병원명·회사명 바로 위 첫 행 (2026-08-06 사용자 지시로 이 그룹 안으로 이동).
+                값은 org-level 한 개라 병원·운송 탭 어느 쪽에서 바꿔도 같은 이미지다. */}
+            {group === AVATAR_HOST_GROUP[viewTab] && (
+              <OrgAvatarRow
+                url={orgAvatarUrl}
+                isAdmin={isAdmin}
+                fallbackLabel={info.clinic_ko || info.transport_company_ko || ''}
+                onUpload={onAvatarUpload}
+                onRemove={onAvatarRemove}
+                onChange={setOrgAvatarUrl}
+                onSaved={() => setLastSaved(new Date())}
+                onError={setError}
+              />
+            )}
             {groupFields.map((f) => {
               const saving = savingKey === f.key
               // 한국주소 행에 한정해 우측에 "주소검색" 버튼 노출 — 검색 결과로
@@ -788,7 +790,7 @@ function OrgAvatarRow({
   }
 
   return (
-    <SettingsField label="조직 아바타" align="center">
+    <SettingsField label="아바타" align="center">
       <SettingsControlGroup size="md" className="gap-md">
         <Avatar label={label} imageUrl={url} size="md" />
         {isAdmin ? (
