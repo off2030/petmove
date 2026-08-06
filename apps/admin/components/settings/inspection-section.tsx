@@ -75,7 +75,7 @@ function LabsAdminRow({
     .filter(d => !hiddenSet.has(d.value))
     .map(d => ({ value: d.value, label: overrides[d.value] ?? d.label, isCustom: false }))
   const visibleCustoms = customLabs.map(c => ({ ...c, isCustom: true }))
-  const allValues = [...defaults.map(d => d.value), ...customLabs.map(c => c.value)]
+  const visibleValues = [...visibleDefaults.map(d => d.value), ...customLabs.map(c => c.value)]
 
   function submit() {
     const rawValue = valueInput.trim().toLowerCase().replace(/\s+/g, '_')
@@ -84,11 +84,19 @@ function LabsAdminRow({
       setError('식별자와 표시명을 모두 입력하세요')
       return
     }
-    if (allValues.includes(rawValue)) {
+    if (visibleValues.includes(rawValue)) {
       setError('이미 존재하는 식별자입니다')
       return
     }
-    onCustomLabsChange([...customLabs, { value: rawValue, label: rawLabel }])
+    // 삭제했던 내장 기관과 같은 식별자로 추가하면 — 새 기관을 만들지 않고 원래 기관을
+    // 되살린다(서식·규칙 연동 보존). 표시명이 다르면 override 로 반영.
+    const hiddenMatch = defaults.find(d => d.value === rawValue && hiddenSet.has(d.value))
+    if (hiddenMatch) {
+      onHiddenChange(hidden.filter(x => x !== rawValue))
+      if (rawLabel !== hiddenMatch.label) onOverridesChange({ ...overrides, [rawValue]: rawLabel })
+    } else {
+      onCustomLabsChange([...customLabs, { value: rawValue, label: rawLabel }])
+    }
     setValueInput('')
     setLabelInput('')
     setError(null)
@@ -241,26 +249,6 @@ function LabsAdminRow({
           <span className="w-full font-serif text-[12px] text-destructive mt-1">
             {error}
           </span>
-        )}
-        {hidden.length > 0 && (
-          <div className="w-full mt-1 flex flex-wrap items-center gap-1.5">
-            <span className="font-serif text-[12px] text-muted-foreground/60">삭제한 기본 기관:</span>
-            {hidden.map(v => {
-              const label = overrides[v] ?? defaults.find(d => d.value === v)?.label ?? v
-              return (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => onHiddenChange(hidden.filter(x => x !== v))}
-                  title="클릭해 복원"
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border border-dashed border-border/80 font-mono text-[11px] uppercase tracking-[1px] text-muted-foreground/60 line-through hover:text-foreground hover:no-underline transition-colors"
-                >
-                  {label}
-                  <span className="font-sans normal-case tracking-normal no-underline">복원</span>
-                </button>
-              )
-            })}
-          </div>
         )}
       </div>
     </SettingsField>
