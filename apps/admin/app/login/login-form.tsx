@@ -21,6 +21,12 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
   const [loading, setLoading] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(resolveError(initialError))
+  // 이메일 로그인 2단계 — 'email'(주소 입력) → 'otp'(6자리 인증번호 입력).
+  // 메일 템플릿이 인증번호 방식(펫무브와 공용, 2026-08 교체)이라 링크 대기가 아니라
+  // 번호 입력이 주 경로다. 메일의 예비 링크(ConfirmationURL)도 여전히 동작한다.
+  const [step, setStep] = useState<'email' | 'otp'>('email')
+  const [sentEmail, setSentEmail] = useState('')
+  const [otp, setOtp] = useState('')
 
   // 차단 결과로 표시된 에러 파라미터는 한 번만 보여주고 URL 에서 제거.
   // 새로고침/공유 시 미리 차단된 것처럼 보이는 UX 문제 방지.
@@ -63,8 +69,8 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
     }
   }
 
-  // 매직링크 발송 — 이메일 로그인의 유일한 방식. 비번 운영 X.
-  async function sendMagicLink(e: React.FormEvent) {
+  // 인증번호 발송 — 이메일 로그인의 유일한 방식. 비번 운영 X.
+  async function sendOtp(e: React.FormEvent) {
     e.preventDefault()
     if (!email) {
       setError('이메일을 먼저 입력하세요.')
@@ -76,8 +82,10 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
     if (next && next !== '/cases') {
       document.cookie = `pm_oauth_next=${encodeURIComponent(next)}; path=/; max-age=600; samesite=lax`
     }
+    const target = email.trim().toLowerCase()
     const { error } = await supabaseBrowser.auth.signInWithOtp({
-      email,
+      email: target,
+      // 메일 템플릿의 예비 링크({{ .ConfirmationURL }})용 — 주 경로는 인증번호 입력.
       options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     })
     setLoading(null)
@@ -85,7 +93,51 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
       setError(error.message)
       return
     }
-    setInfo(`${email} 로 로그인 링크를 발송했습니다. 메일을 확인하세요.`)
+    setSentEmail(target)
+    setOtp('')
+    setStep('otp')
+    setInfo(`${target} 로 6자리 인증번호를 보냈습니다. 메일을 확인하세요.`)
+  }
+
+  async function verifyCode(e: React.FormEvent) {
+    e.preventDefault()
+    const token = otp.replace(/\D/g, '')
+    if (token.length !== 6) {
+      setError('메일로 받은 6자리 인증번호를 입력하세요.')
+      return
+    }
+    setError(null)
+    setInfo(null)
+    setLoading('verify')
+    const { error } = await supabaseBrowser.auth.verifyOtp({
+      email: sentEmail,
+      token,
+      type: 'email',
+    })
+    if (error) {
+      setLoading(null)
+      setError('인증번호가 올바르지 않거나 만료되었습니다. 다시 확인해 주세요.')
+      return
+    }
+    // 세션 쿠키가 생긴 상태 → callback 이 next 쿠키를 읽어 목적지로 이동.
+    window.location.href = '/auth/callback'
+  }
+
+  async function resendOtp() {
+    setError(null)
+    setInfo(null)
+    setLoading('magic')
+    const { error } = await supabaseBrowser.auth.signInWithOtp({
+      email: sentEmail,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    })
+    setLoading(null)
+    if (error) {
+      setError(error.message)
+      return
+    }
+    setOtp('')
+    setInfo('인증번호를 다시 보냈습니다. 메일을 확인하세요.')
   }
 
   return (
@@ -94,7 +146,7 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
         <div className="space-y-xs text-center">
           <h1 className="text-xl font-semibold">펫무브워크 로그인</h1>
           <p className="text-sm text-muted-foreground">
-            소셜 계정 또는 이메일 링크로 로그인하세요.
+            소셜 계정 또는 이메일 인증번호로 로그인하세요.
           </p>
         </div>
 
@@ -131,26 +183,72 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        <form onSubmit={sendMagicLink} className="space-y-sm">
-          <Input
-            type="email"
-            placeholder="email@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading !== null || !email}
-          >
-            {loading === 'magic' ? '발송 중…' : '이메일로 로그인 링크 받기'}
-          </Button>
-          <p className="text-center text-xs text-muted-foreground/80">
-            처음이신가요? 초대받은 이메일로 링크를 받아 입장하세요.
-          </p>
-        </form>
+        {step === 'email' ? (
+          <form onSubmit={sendOtp} className="space-y-sm">
+            <Input
+              type="email"
+              placeholder="email@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading !== null || !email}
+            >
+              {loading === 'magic' ? '발송 중…' : '이메일로 인증번호 받기'}
+            </Button>
+            <p className="text-center text-xs text-muted-foreground/80">
+              처음이신가요? 초대받은 이메일로 인증번호를 받아 입장하세요.
+            </p>
+          </form>
+        ) : (
+          <form onSubmit={verifyCode} className="space-y-sm">
+            <Input
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              placeholder="6자리 인증번호"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              maxLength={6}
+              autoFocus
+              className="text-center tracking-[0.4em] font-mono text-base"
+            />
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading !== null || otp.length !== 6}
+            >
+              {loading === 'verify' ? '확인 중…' : '인증하고 로그인'}
+            </Button>
+            <div className="flex items-center justify-center gap-md text-xs text-muted-foreground">
+              <button
+                type="button"
+                onClick={resendOtp}
+                disabled={loading !== null}
+                className="underline underline-offset-2 hover:text-foreground transition-colors disabled:opacity-50"
+              >
+                인증번호 다시 보내기
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStep('email')
+                  setOtp('')
+                  setInfo(null)
+                  setError(null)
+                }}
+                disabled={loading !== null}
+                className="underline underline-offset-2 hover:text-foreground transition-colors disabled:opacity-50"
+              >
+                다른 이메일로
+              </button>
+            </div>
+          </form>
+        )}
 
         {info && (
           <p className="rounded border border-pmw-positive/40 bg-pmw-positive/10 p-sm text-xs text-pmw-positive">
