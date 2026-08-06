@@ -268,7 +268,7 @@ export function CompanySection({
             </div>
           )}
           <SectionLabel className="mb-1">{isTransport ? '담당자' : '수의사'}</SectionLabel>
-          <p className="mb-3 font-serif text-[12px] text-muted-foreground/70 leading-relaxed max-w-md">
+          <p className="pmw-st__sec-lead mb-3 max-w-md">
             본인 정보를 넣으면 그 이름·휴대폰{isTransport ? '' : '·면허'}로 발급되고, 비워두면 회색 글씨의 조직 기본값으로 발급됩니다.
           </p>
           <div>

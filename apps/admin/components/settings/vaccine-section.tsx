@@ -1119,11 +1119,11 @@ function DefaultsSection({ products }: { products: OrgVaccineProduct[] }) {
   }
 
   return (
-    <SettingsCard className="mt-lg">
-      <div className="mb-2 flex items-baseline gap-sm">
-        <SettingsSubsectionTitle>구충 디폴트 설정</SettingsSubsectionTitle>
-        <span className="pmw-st__sec-lead">상세페이지에서 날짜 입력 시 자동 채움</span>
-      </div>
+    <SettingsCard
+      className="mt-lg"
+      title="구충 디폴트 설정"
+      description="상세페이지에서 날짜 입력 시 자동으로 채워지는 제품입니다."
+    >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-lg gap-y-2">
         {DEFAULT_SLOTS.map((slot) => {
           const matching = products.filter((p) => slot.categories.includes(p.category))

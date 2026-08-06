@@ -144,7 +144,7 @@ export function TransfersSection() {
               </span>
             )}
           </SettingsSubsectionTitle>
-          <p className="mt-1 mb-2 font-serif text-[12px] text-muted-foreground/70">
+          <p className="pmw-st__sec-lead mt-1 mb-2">
             수락·거부는 메시지 화면의 케이스 카드에서 진행합니다.
           </p>
           <div>

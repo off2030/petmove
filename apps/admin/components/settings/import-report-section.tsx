@@ -66,14 +66,10 @@ function AutoCountriesEditor() {
   }
 
   return (
-    <SettingsCard>
-      <div className="mb-2 flex items-baseline justify-between gap-md flex-wrap">
-        <SettingsSubsectionTitle>적용 국가 · {draft.length}</SettingsSubsectionTitle>
-        <span className="font-serif text-[12px] text-muted-foreground/60">
-          출국일 입력 시 신고 탭에 자동 진입
-        </span>
-      </div>
-
+    <SettingsCard
+      title={<>적용 국가 · {draft.length}</>}
+      description="여기 있는 국가는 출국일을 입력하면 신고 탭에 자동으로 올라옵니다."
+    >
       <div className="pt-1 pb-lg">
         <div className="flex flex-wrap items-center gap-1.5">
           {draft.map((v) => (
