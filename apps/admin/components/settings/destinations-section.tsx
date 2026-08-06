@@ -46,6 +46,8 @@ export function DestinationsArea() {
   const [list, setList] = useState<CustomDestination[]>(buildInitial)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
+  /** 검색에서 고른, 아직 목록에 없는 여행지 — 편집 모달의 시작값. */
+  const [pendingNew, setPendingNew] = useState<CustomDestination | null>(null)
   const [saving, startSaving] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [savedFlash, setSavedFlash] = useState(false)
@@ -88,6 +90,7 @@ export function DestinationsArea() {
     persist(next)
     setEditingId(null)
     setAdding(false)
+    setPendingNew(null)
   }
 
   function handleDeleteOne(id: string) {
@@ -95,43 +98,21 @@ export function DestinationsArea() {
     setEditingId(null)
   }
 
-  function handleAddNew() {
-    setAdding(true)
-  }
-
   return (
     <SettingsCard
-      title="여행지"
-      description="케이스 여행지에 따라 절차정보·추가정보 영역에 표시할 항목을 종별로 설정합니다. 항목을 클릭하여 편집하세요."
+      title="여행지별 표시 항목"
+      description="여행지에 따라 표시할 절차정보·추가정보 항목을 설정합니다."
     >
+      {/* 여행지 칩 나열 폐기(2026-08-06 사용자 지시) — 이름만 늘어놓을 뿐 정보가 없었다.
+          검색으로 여행지를 골라 바로 편집 모달로 들어간다. */}
+      <DestinationSearchPicker
+        list={list}
+        disabled={saving}
+        onPick={(d) => setEditingId(d.id)}
+        onPickNew={(d) => { setPendingNew(d); setAdding(true) }}
+      />
 
-      <div className="flex flex-wrap gap-2 mb-md">
-        {/* 디폴트(광견병+항체검사 만, extraFields/Section 없음) 와 동일한 여행지는 숨김. */}
-        {list.filter((d) => !isDestinationEqualToDefault(d)).map((d) => (
-          <button
-            key={d.id}
-            type="button"
-            onClick={() => setEditingId(d.id)}
-            disabled={saving}
-            className="inline-flex items-center gap-1 rounded-full border border-border/80 bg-card px-3 h-8 text-[13px] hover:border-foreground/40 transition-colors disabled:opacity-50"
-          >
-            {d.name || <span className="text-muted-foreground">이름 없음</span>}
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={handleAddNew}
-          disabled={saving}
-          className="inline-flex items-center gap-1 rounded-full border border-dashed border-border/80 bg-card px-3 h-8 text-[13px] text-muted-foreground hover:border-foreground/40 hover:text-foreground transition-colors disabled:opacity-50"
-        >
-          <Plus size={13} /> 추가
-        </button>
-      </div>
-      <p className="pmw-st__sec-lead -mt-2 mb-md text-[12px] text-muted-foreground/70">
-        디폴트(광견병 + 항체검사) 와 동일한 여행지는 자동으로 숨겨집니다. 추가 항목이 필요한 여행지만 표시됩니다.
-      </p>
-
-      <div className="flex items-center gap-md min-h-[20px]">
+      <div className="flex items-center gap-md min-h-[20px] mt-2">
         {saving && <span className="text-sm text-muted-foreground">저장 중...</span>}
         {error && <span className="text-sm text-destructive">{error}</span>}
         {!saving && !error && savedFlash && <span className="text-sm text-pmw-positive">저장됨 ✓</span>}
@@ -148,31 +129,131 @@ export function DestinationsArea() {
         />
       )}
 
-      {/* Add new */}
-      {adding && (
+      {/* 검색에서 새 여행지를 고른 경우 — 이미 이름·키워드가 정해져 있어 모달 내부 검색 단계를
+          건너뛰고 바로 항목 편집으로 들어간다. */}
+      {adding && pendingNew && (
         <DestinationEditModal
-          initial={makeEmpty(list)}
+          initial={pendingNew}
           existingIds={list.map((d) => d.id)}
-          isNew
           onSave={handleSaveOne}
-          onClose={() => setAdding(false)}
+          onClose={() => { setAdding(false); setPendingNew(null) }}
         />
       )}
     </SettingsCard>
   )
 }
 
-function makeEmpty(existing: CustomDestination[]): CustomDestination {
-  let n = existing.length + 1
-  let id = `custom_${n}`
-  const ids = new Set(existing.map((d) => d.id))
-  while (ids.has(id)) { n += 1; id = `custom_${n}` }
-  return {
-    id,
-    name: '',
-    keywords: [],
-    vaccines: [{ key: 'rabies' }, { key: 'rabies_titer' }],
+/* ── 여행지 검색 — 고르면 그 여행지의 표시 항목 편집으로 진입 ── */
+
+function DestinationSearchPicker({
+  list,
+  disabled,
+  onPick,
+  onPickNew,
+}: {
+  list: CustomDestination[]
+  disabled?: boolean
+  /** 이미 목록에 있는 여행지 — 그대로 편집. */
+  onPick: (d: CustomDestination) => void
+  /** 목록에 없는 내장 여행지 — 편집 모달의 시작값으로 넘긴다. */
+  onPickNew: (d: CustomDestination) => void
+}) {
+  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onDoc(e: MouseEvent) {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [open])
+
+  // 후보 = 저장된 목록 + 아직 손대지 않은 내장 여행지. 이름·키워드·id 로 검색.
+  const options = useMemo(() => {
+    const byId = new Map(list.map((d) => [d.id, d]))
+    const merged = [...list]
+    for (const h of getHardcodedDestinationsAsCustom()) {
+      if (!byId.has(h.id)) merged.push(h)
+    }
+    const q = query.trim().toLowerCase()
+    return merged
+      .filter((d) => {
+        if (!q) return true
+        return (
+          d.name.toLowerCase().includes(q) ||
+          d.keywords.some((kw) => kw.toLowerCase().includes(q)) ||
+          d.id.toLowerCase().includes(q)
+        )
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+      .slice(0, 40)
+  }, [list, query])
+
+  const existingIds = useMemo(() => new Set(list.map((d) => d.id)), [list])
+
+  function pick(d: CustomDestination) {
+    setOpen(false)
+    setQuery('')
+    if (existingIds.has(d.id)) onPick(d)
+    else onPickNew(d)
   }
+
+  return (
+    <div ref={ref} className="relative">
+      <input
+        type="text"
+        value={query}
+        disabled={disabled}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true) }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && options[0]) { e.preventDefault(); pick(options[0]) }
+          if (e.key === 'Escape') { e.preventDefault(); setOpen(false) }
+        }}
+        placeholder="여행지 검색 (예: 일본, japan)"
+        aria-label="여행지 검색"
+        className="w-full h-9 rounded-md border border-border/80 bg-background px-2 font-sans text-[13.5px] text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 disabled:opacity-50"
+      />
+      {open && (
+        <ul
+          role="listbox"
+          className="absolute left-0 right-0 top-full mt-1 z-30 max-h-72 overflow-auto rounded-md border border-border/80 bg-popover py-1 shadow-md scrollbar-minimal"
+        >
+          {options.length === 0 ? (
+            <li className="px-md py-2 font-serif text-[13px] text-muted-foreground">
+              일치하는 여행지가 없습니다
+            </li>
+          ) : (
+            options.map((d) => {
+              const customized = existingIds.has(d.id) && !isDestinationEqualToDefault(d)
+              return (
+                <li key={d.id}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); pick(d) }}
+                    className="w-full text-left px-md py-1.5 flex items-baseline gap-2 hover:bg-accent/60 transition-colors"
+                  >
+                    <span className="font-serif text-[14px] text-foreground">{d.name}</span>
+                    {customized && (
+                      <span className="font-mono text-[10px] uppercase tracking-[1px] text-muted-foreground/70">
+                        설정됨
+                      </span>
+                    )}
+                    <span className="ml-auto font-mono text-[11px] text-muted-foreground/60 truncate max-w-[45%]">
+                      {d.keywords.filter((k) => k !== d.name).join(', ')}
+                    </span>
+                  </button>
+                </li>
+              )
+            })
+          )}
+        </ul>
+      )}
+    </div>
+  )
 }
 
 /* ── Edit modal ────────────────────────────────────────────────────────── */
@@ -180,14 +261,12 @@ function makeEmpty(existing: CustomDestination[]): CustomDestination {
 function DestinationEditModal({
   initial,
   existingIds,
-  isNew,
   onSave,
   onClose,
   onDelete,
 }: {
   initial: CustomDestination
   existingIds: string[]
-  isNew?: boolean
   onSave: (next: CustomDestination) => void
   onClose: () => void
   onDelete?: () => void
@@ -195,56 +274,12 @@ function DestinationEditModal({
   const [draft, setDraft] = useState<CustomDestination>(initial)
   const [tab, setTab] = useState<SpeciesTab>('dog')
   const [error, setError] = useState<string | null>(null)
-  // 새 여행지(이름 비어있음) 면 타이틀이 input 으로 시작.
+  // 여행지 선택은 카드의 검색이 끝낸다 — 모달은 항목 편집 전용(2026-08-06).
+  // 이름 수정(쉼표로 매칭 키워드 추가)은 제목 클릭으로 계속 가능.
   const [editingTitle, setEditingTitle] = useState<boolean>(!initial.name)
-  // 새 추가 모드: 여행지 미선택 상태(draft.name 비어있음) 면 dropdown 노출, 선택되면 닫힘.
-  const [searchOpen, setSearchOpen] = useState<boolean>(!!isNew && !initial.name)
-  const [searchQuery, setSearchQuery] = useState('')
   const titleInitial = [initial.name, ...initial.keywords.filter((k) => k !== initial.name)]
     .filter(Boolean)
     .join(', ')
-
-  // 검색 후보: 하드코딩 destinations 중 사용자 custom 에 없는 것들.
-  const suggestions = useMemo(() => {
-    const hardcoded = getHardcodedDestinationsAsCustom()
-    const taken = new Set(existingIds)
-    const q = searchQuery.trim().toLowerCase()
-    return hardcoded
-      .filter((h) => !taken.has(h.id))
-      .filter((h) => {
-        if (!q) return true
-        return (
-          h.name.toLowerCase().includes(q) ||
-          h.keywords.some((kw) => kw.toLowerCase().includes(q)) ||
-          h.id.toLowerCase().includes(q)
-        )
-      })
-  }, [existingIds, searchQuery])
-
-  function handlePickSuggestion(s: CustomDestination) {
-    setDraft({
-      ...s,
-      // 새 적용 시 vaccines 배열 보존(기본 species 필터 포함).
-    })
-    setSearchOpen(false)
-    setSearchQuery('')
-  }
-
-  function handlePickFreeText() {
-    const text = searchQuery.trim()
-    if (!text) return
-    const tokens = text.split(',').map((s) => s.trim()).filter(Boolean)
-    const name = tokens[0]
-    const keywords = Array.from(new Set(tokens))
-    setDraft({
-      ...draft,
-      name,
-      keywords,
-      id: suggestDestinationId(name) || draft.id,
-    })
-    setSearchOpen(false)
-    setSearchQuery('')
-  }
 
   function handleTitleCommit(input: string) {
     const tokens = input.split(',').map((s) => s.trim()).filter(Boolean)
@@ -373,53 +408,7 @@ function DestinationEditModal({
       <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-lg border border-border/80 bg-background shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between gap-md px-md py-3 border-b border-border/80">
-          {searchOpen ? (
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    if (suggestions.length > 0) handlePickSuggestion(suggestions[0])
-                    else handlePickFreeText()
-                  } else if (e.key === 'Escape') {
-                    e.preventDefault()
-                    onClose()
-                  }
-                }}
-                placeholder="여행지 검색 (예: 일본, japan)"
-                className="w-full h-9 rounded-md border border-border/80 bg-background px-2 font-serif text-[16px] text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
-              />
-              <div className="absolute left-0 right-0 top-full mt-1 z-10 max-h-72 overflow-auto rounded-md border border-border/80 bg-popover shadow-md scrollbar-minimal">
-                {suggestions.length === 0 && !searchQuery.trim() && (
-                  <div className="px-2 py-2 text-[13px] text-muted-foreground">검색어를 입력하거나 항목을 선택하세요</div>
-                )}
-                {suggestions.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => handlePickSuggestion(s)}
-                    className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent transition-colors flex items-baseline gap-2"
-                  >
-                    <span className="font-serif text-foreground">{s.name}</span>
-                    <span className="font-mono text-[11px] text-muted-foreground/60">{s.keywords.filter((k) => k !== s.name).join(', ')}</span>
-                  </button>
-                ))}
-                {searchQuery.trim() && (
-                  <button
-                    type="button"
-                    onClick={handlePickFreeText}
-                    className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent transition-colors border-t border-border/40 text-muted-foreground"
-                  >
-                    "{searchQuery.trim()}" 직접 입력
-                  </button>
-                )}
-              </div>
-            </div>
-          ) : editingTitle ? (
+          {editingTitle ? (
             <input
               type="text"
               defaultValue={titleInitial}
@@ -451,12 +440,6 @@ function DestinationEditModal({
 
         {/* Body */}
         <div className="flex-1 overflow-auto px-md py-md space-y-md scrollbar-minimal">
-          {searchOpen && (
-            <p className="text-[13px] text-muted-foreground/70">
-              위에서 여행지를 선택하면 항목 편집 영역이 나타납니다.
-            </p>
-          )}
-          {!searchOpen && (
           <>
           {/* 종 탭 */}
           <div className="flex items-center gap-1 border-b border-border/80">
@@ -491,7 +474,6 @@ function DestinationEditModal({
             />
           </ModalSection>
           </>
-          )}
         </div>
 
         {/* Footer — 표준 DialogFooter */}
