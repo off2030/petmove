@@ -1,18 +1,16 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { createPortal } from 'react-dom'
 import { ChevronDown, Plus, X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
-import { DestinationPicker } from '@/components/ui/destination-picker'
 import { PillButton } from '@petmove/ui'
-import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   SettingsActionButton,
   SettingsCard,
   SettingsField,
   SettingsFooter,
 } from './settings-layout'
+import { MappingEditModal, MappingRow } from './mapping-row'
 import { saveCertConfigAction } from '@/lib/actions/cert-config-action'
 import {
   ALL_CERTS,
@@ -135,8 +133,9 @@ export function DocumentsSection() {
   const [saving, startSave] = useTransition()
   const [msg, setMsg] = useState<string | null>(null)
 
-  // 매핑 추가 팝업 열림 여부.
+  // 매핑 추가 팝업 열림 여부 / 편집 중인 행 idx.
   const [addOpen, setAddOpen] = useState(false)
+  const [editingIdx, setEditingIdx] = useState<number | null>(null)
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(certConfig)
 
@@ -218,8 +217,8 @@ export function DocumentsSection() {
         </div>
       </SettingsField>
 
-      {/* 여행지 → 증명서 매핑 — 검사 탭(inspection-section)과 동일 구조:
-          행마다 여행지·증명서 모두 복수 선택, 항상 즉시 편집, 추가는 팝업 (2026-08-06). */}
+      {/* 여행지 → 증명서 매핑 — 목록은 읽기 전용 한 줄, 편집·삭제는 팝업 (2026-08-06).
+          목록에 ✕ 를 두지 않아 스치는 클릭으로 매핑이 사라지지 않는다. */}
       <SettingsField label="여행지별 추가 증명서" align="start">
         <div className="min-w-0">
           <p className="font-serif text-[13px] text-muted-foreground mb-2">
@@ -229,34 +228,22 @@ export function DocumentsSection() {
             <p className="py-1 pmw-st__btn-ghost">매핑 없음.</p>
           )}
           {draft.rules.map((r, i) => (
-            <div
+            <MappingRow
               key={i}
-              className="grid grid-cols-[1fr_auto_auto] items-start gap-md py-2 border-b border-dotted border-border/80"
+              countries={r.countries}
+              label={r.label}
+              onEdit={() => setEditingIdx(i)}
             >
-              <DestinationPicker
-                values={r.countries}
-                onChange={(next) => setRuleCountries(i, next)}
-                placeholder="여행지 검색"
-                aria-label="여행지"
-                variant="underline"
-              />
-              <div className="pt-1">
-                <CertMultiSelect
-                  selected={r.certs}
-                  onAdd={(k) => addCertToRule(i, k)}
-                  onRemove={(k) => removeCertFromRule(i, k)}
-                  minOne
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => removeRule(i)}
-                className="text-muted-foreground/50 hover:text-foreground transition-colors pt-1.5"
-                title="매핑 삭제"
-              >
-                <X size={14} />
-              </button>
-            </div>
+              {r.certs.map((k) => (
+                <span
+                  key={k}
+                  className="inline-flex items-center rounded-sm border px-2 py-0.5 font-sans text-[12px] whitespace-nowrap"
+                  style={{ borderColor: 'var(--pmw-border-warm)', color: 'var(--pmw-near-black)' }}
+                >
+                  {certLabel(k)}
+                </span>
+              ))}
+            </MappingRow>
           ))}
           <div className="pt-2">
             <button
@@ -278,6 +265,21 @@ export function DocumentsSection() {
         />
       )}
 
+      {editingIdx !== null && draft.rules[editingIdx] && (
+        <CertMappingAddModal
+          initial={draft.rules[editingIdx]}
+          onClose={() => setEditingIdx(null)}
+          onSubmit={(rule) => {
+            setRules(draft.rules.map((r, i) => (i === editingIdx ? rule : r)))
+            setEditingIdx(null)
+          }}
+          onDelete={() => {
+            removeRule(editingIdx)
+            setEditingIdx(null)
+          }}
+        />
+      )}
+
       {/* Footer actions */}
       <SettingsFooter className="justify-between">
         <SettingsActionButton onClick={resetToDefaults}>
@@ -294,87 +296,51 @@ export function DocumentsSection() {
   )
 }
 
-/* ── 매핑 추가 팝업 — 여행지·증명서 모두 복수 선택 후 확정 (검사 탭과 동일 구조) ── */
+/* ── 매핑 추가·편집 팝업 — 공용 MappingEditModal 위에 증명서 선택만 얹는다 ── */
 
 function CertMappingAddModal({
+  initial,
   onClose,
   onSubmit,
+  onDelete,
 }: {
+  /** 있으면 편집 모드 — 없으면 추가. */
+  initial?: CertRule
   onClose: () => void
   onSubmit: (rule: CertRule) => void
+  onDelete?: () => void
 }) {
-  const [countries, setCountries] = useState<string[]>([])
-  const [certs, setCerts] = useState<string[]>([])
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
-  if (!mounted) return null
+  const [countries, setCountries] = useState<string[]>(initial?.countries ?? [])
+  const [certs, setCerts] = useState<string[]>(initial?.certs ?? [])
 
   const canSubmit = countries.length > 0 && certs.length > 0
 
   function submit() {
     if (!canSubmit) return
-    onSubmit({ countries, certs: [...certs] })
+    // 그룹명(유럽연합 등)은 편집에서 건드리지 않고 보존한다.
+    onSubmit({
+      ...(initial?.label ? { label: initial.label } : {}),
+      countries,
+      certs: [...certs],
+    })
   }
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div
-        className="bg-background rounded-sm border border-border/80 shadow-xl w-full max-w-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-border/80 px-lg py-3">
-          <span className="font-serif text-[16px] text-foreground">매핑 추가</span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-muted-foreground/60 hover:text-foreground transition-colors"
-            aria-label="닫기"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="px-lg py-md space-y-md">
-          <div>
-            <p className="mb-1.5 font-serif text-[13px] text-muted-foreground">여행지</p>
-            <DestinationPicker
-              values={countries}
-              onChange={setCountries}
-              placeholder="여행지 검색"
-              aria-label="여행지"
-            />
-          </div>
-          <div>
-            <p className="mb-1.5 font-serif text-[13px] text-muted-foreground">추가 증명서</p>
-            <CertMultiSelect
-              selected={certs}
-              onAdd={(k) => setCerts((prev) => (prev.includes(k) ? prev : [...prev, k]))}
-              onRemove={(k) => setCerts((prev) => prev.filter((c) => c !== k))}
-            />
-          </div>
-        </div>
-
-        <DialogFooter
-          bordered
-          onCancel={onClose}
-          onPrimary={submit}
-          primaryLabel="추가"
-          primaryDisabled={!canSubmit}
-        />
-      </div>
-    </div>,
-    document.body,
+  return (
+    <MappingEditModal
+      title={initial ? '매핑 편집' : '매핑 추가'}
+      countries={countries}
+      onCountriesChange={setCountries}
+      resultLabel="추가 증명서"
+      canSubmit={canSubmit}
+      onSubmit={submit}
+      onDelete={onDelete}
+      onClose={onClose}
+    >
+      <CertMultiSelect
+        selected={certs}
+        onAdd={(k) => setCerts((prev) => (prev.includes(k) ? prev : [...prev, k]))}
+        onRemove={(k) => setCerts((prev) => prev.filter((c) => c !== k))}
+      />
+    </MappingEditModal>
   )
 }

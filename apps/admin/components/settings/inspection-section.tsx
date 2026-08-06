@@ -1,14 +1,11 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
-import { createPortal } from 'react-dom'
 import { Plus, X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { TodoColumnsToggle } from './todo-columns-toggle'
-import { DestinationPicker } from '@/components/ui/destination-picker'
 import { LabPillSelect, LabPillMultiSelect } from '@/components/ui/lab-pill-select'
 import { PillButton } from '@petmove/ui'
-import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   SettingsActionButton,
   SettingsCard,
@@ -18,6 +15,7 @@ import {
   SettingsFooter,
   SettingsSubsectionTitle,
 } from './settings-layout'
+import { MappingEditModal, MappingRow } from './mapping-row'
 import { labColor } from '@/lib/lab-color'
 import { cn } from '@/lib/utils'
 import { saveInspectionConfigAction } from '@/lib/actions/inspection-config-action'
@@ -308,19 +306,12 @@ function SectionBlock({
     onRulesChange([...rules, newRule])
   }
 
-  // 매핑 추가 — 팝업에서 여행지·기관을 고른 뒤 확정 (2026-08-06 사용자 지시).
+  // 매핑 추가 팝업 / 편집 중인 행 idx.
   const [addOpen, setAddOpen] = useState(false)
+  const [editingIdx, setEditingIdx] = useState<number | null>(null)
 
   function removeRule(idx: number) {
     onRulesChange(rules.filter((_, i) => i !== idx))
-  }
-
-  function setRuleLabs(idx: number, labValues: string[]) {
-    onRulesChange(rules.map((r, i) => i === idx ? { ...r, labs: labValues } : r))
-  }
-
-  function setRuleCountries(idx: number, nextCountries: string[]) {
-    onRulesChange(rules.map((r, i) => i === idx ? { ...r, countries: nextCountries } : r))
   }
 
   // 현재 이 섹션에서 참조 중인 lab value — 사용자 정의 lab 제거 가능 여부 판정용.
@@ -354,8 +345,8 @@ function SectionBlock({
         </SettingsField>
       )}
 
-      {/* 여행지 → 검사기관 매핑 — 행마다 여행지·기관 모두 복수 선택, 즉시 편집.
-          (2026-08-06 구조 단순화 — 그룹명·추가 모달 폐기, 사용자 지시) */}
+      {/* 여행지 → 검사기관 매핑 — 목록은 읽기 전용 한 줄, 편집·삭제는 팝업 (2026-08-06).
+          목록에 ✕ 를 두지 않아 스치는 클릭으로 매핑이 사라지지 않는다. */}
       <SettingsField label="여행지별 검사기관" align="start">
         <div className="min-w-0">
           {rules.length === 0 && (
@@ -366,34 +357,27 @@ function SectionBlock({
             </p>
           )}
           {rules.map((r, i) => (
-            <div
+            <MappingRow
               key={i}
-              className="grid grid-cols-[1fr_auto_auto] items-start gap-md py-2 border-b border-dotted border-border/80"
+              countries={r.countries}
+              label={r.label}
+              onEdit={() => setEditingIdx(i)}
             >
-              <DestinationPicker
-                values={r.countries}
-                onChange={(next) => setRuleCountries(i, next)}
-                placeholder="여행지 검색"
-                aria-label="여행지"
-                variant="underline"
-              />
-              <LabPillMultiSelect
-                values={r.labs}
-                onChange={(next) => setRuleLabs(i, next)}
-                options={labs}
-                placeholder="검사기관 선택"
-                aria-label="검사기관"
-                className="pt-1"
-              />
-              <button
-                type="button"
-                onClick={() => removeRule(i)}
-                className="text-muted-foreground/50 hover:text-foreground transition-colors pt-1.5"
-                title="매핑 삭제"
-              >
-                <X size={14} />
-              </button>
-            </div>
+              {r.labs.map((v) => {
+                const tone = labColor(v)
+                return (
+                  <span
+                    key={v}
+                    className={cn(
+                      'inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap',
+                      tone ? cn(tone.bg, tone.text) : 'bg-muted/60 text-muted-foreground',
+                    )}
+                  >
+                    {labs.find((l) => l.value === v)?.label ?? v}
+                  </span>
+                )
+              })}
+            </MappingRow>
           ))}
           <div className="pt-2 flex items-center gap-md">
             <button
@@ -418,6 +402,22 @@ function SectionBlock({
         </div>
       </SettingsField>
 
+      {editingIdx !== null && rules[editingIdx] && (
+        <MappingAddModal
+          labs={labs}
+          initial={rules[editingIdx]}
+          onClose={() => setEditingIdx(null)}
+          onSubmit={(rule) => {
+            onRulesChange(rules.map((r, i) => (i === editingIdx ? rule : r)))
+            setEditingIdx(null)
+          }}
+          onDelete={() => {
+            removeRule(editingIdx)
+            setEditingIdx(null)
+          }}
+        />
+      )}
+
       {addOpen && (
         <MappingAddModal
           labs={labs}
@@ -434,93 +434,56 @@ function SectionBlock({
   )
 }
 
-/* ── 매핑 추가 팝업 — 여행지·검사기관 모두 복수 선택 후 확정 ── */
+/* ── 매핑 추가·편집 팝업 — 공용 MappingEditModal 위에 검사기관 선택만 얹는다 ── */
 
 function MappingAddModal({
   labs,
+  initial,
   onClose,
   onSubmit,
+  onDelete,
 }: {
   labs: InspectionLabOption[]
+  /** 있으면 편집 모드 — 없으면 추가. */
+  initial?: InspectionLabRule
   onClose: () => void
   onSubmit: (rule: InspectionLabRule) => void
+  onDelete?: () => void
 }) {
-  const [countries, setCountries] = useState<string[]>([])
-  const [selectedLabs, setSelectedLabs] = useState<string[]>([])
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
-  if (!mounted) return null
+  const [countries, setCountries] = useState<string[]>(initial?.countries ?? [])
+  const [selectedLabs, setSelectedLabs] = useState<string[]>(initial?.labs ?? [])
 
   const canSubmit = countries.length > 0 && selectedLabs.length > 0
 
   function submit() {
     if (!canSubmit) return
-    onSubmit({ countries, labs: [...selectedLabs] })
+    // 그룹명(유럽연합 등)은 편집에서 건드리지 않고 보존한다.
+    onSubmit({
+      ...(initial?.label ? { label: initial.label } : {}),
+      countries,
+      labs: [...selectedLabs],
+    })
   }
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div
-        className="bg-background rounded-sm border border-border/80 shadow-xl w-full max-w-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-border/80 px-lg py-3">
-          <span className="font-serif text-[16px] text-foreground">매핑 추가</span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-muted-foreground/60 hover:text-foreground transition-colors"
-            aria-label="닫기"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="px-lg py-md space-y-md">
-          <div>
-            <p className="mb-1.5 font-serif text-[13px] text-muted-foreground">여행지</p>
-            {/* autoFocus 금지 — 포커스가 곧 드롭다운 열림이라 팝업이 목록 펼친 채 뜬다(2026-08-06 사용자 지적). */}
-            <DestinationPicker
-              values={countries}
-              onChange={setCountries}
-              placeholder="여행지 검색 (예: 독일, DE)"
-              aria-label="여행지"
-            />
-          </div>
-          <div>
-            <p className="mb-1.5 font-serif text-[13px] text-muted-foreground">검사기관</p>
-            <LabPillMultiSelect
-              values={selectedLabs}
-              onChange={setSelectedLabs}
-              options={labs}
-              placeholder="검사기관 선택"
-              aria-label="검사기관"
-            />
-          </div>
-        </div>
-
-        <DialogFooter
-          bordered
-          onCancel={onClose}
-          onPrimary={submit}
-          primaryLabel="추가"
-          primaryDisabled={!canSubmit}
-        />
-      </div>
-    </div>,
-    document.body,
+  return (
+    <MappingEditModal
+      title={initial ? '매핑 편집' : '매핑 추가'}
+      countries={countries}
+      onCountriesChange={setCountries}
+      resultLabel="검사기관"
+      canSubmit={canSubmit}
+      onSubmit={submit}
+      onDelete={onDelete}
+      onClose={onClose}
+    >
+      <LabPillMultiSelect
+        values={selectedLabs}
+        onChange={setSelectedLabs}
+        options={labs}
+        placeholder="검사기관 선택"
+        aria-label="검사기관"
+      />
+    </MappingEditModal>
   )
 }
 
