@@ -260,6 +260,18 @@ export function AutomationSection({
               placeholder="트리거, 대상 필드, 여행지 검색"
               className="flex-1"
             />
+            {/* 추가 = 검색창 바로 우측 + 아이콘 (2026-08-06 사용자 지시).
+                목록 위라 규칙이 쌓여도 스크롤 없이 닿는다. */}
+            {isAdmin && (
+              <SettingsActionButton
+                onClick={() => setEditing('new')}
+                title="규칙 추가"
+                aria-label="규칙 추가"
+                className="h-11 w-11 justify-center px-0 shrink-0"
+              >
+                <Plus className="h-4 w-4" />
+              </SettingsActionButton>
+            )}
             <SettingsFilterPills options={STATUS_FILTERS} value={statusFilter} onChange={setStatusFilter} />
           </div>
         </div>
@@ -336,23 +348,16 @@ export function AutomationSection({
           </div>
         )}
   
-        {isAdmin && (
-          <SettingsFooter className="justify-between mt-lg border-t-0">
+        {/* 삭제 복원은 실수 복구용 — 자주 쓰지 않으므로 하단 유지. */}
+        {isAdmin && deletedStack.length > 0 && (
+          <SettingsFooter className="mt-lg border-t-0">
             <SettingsActionButton
               onClick={handleRestore}
-              disabled={pending || deletedStack.length === 0}
-              title={
-                deletedStack.length > 0
-                  ? `최근 삭제: ${destLabel(deletedStack[0].rule.destination_key)} · ${fieldLabel(deletedStack[0].rule.trigger_field)} → ${fieldLabel(deletedStack[0].rule.target_field)}`
-                  : '최근 삭제한 규칙이 없습니다'
-              }
+              disabled={pending}
+              title={`최근 삭제: ${destLabel(deletedStack[0].rule.destination_key)} · ${fieldLabel(deletedStack[0].rule.trigger_field)} → ${fieldLabel(deletedStack[0].rule.target_field)}`}
             >
               <RotateCcw className="h-3 w-3" />
-              삭제 복원{deletedStack.length > 0 ? ` (${deletedStack.length})` : ''}
-            </SettingsActionButton>
-            <SettingsActionButton onClick={() => setEditing('new')}>
-              <Plus className="h-3 w-3" />
-              규칙 추가
+              삭제 복원 ({deletedStack.length})
             </SettingsActionButton>
           </SettingsFooter>
         )}
