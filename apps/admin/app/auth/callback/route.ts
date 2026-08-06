@@ -7,6 +7,8 @@ const OAUTH_NEXT_COOKIE = 'pm_oauth_next'
 /** next 검증 — open redirect 방지. 같은 오리진의 경로만 허용. */
 function sanitizeNext(v: string | null | undefined): string {
   if (!v) return '/cases'
+  // '/' 는 어차피 proxy 가 /cases 로 보낸다 — 리다이렉트 한 홉(미들웨어 왕복) 절약.
+  if (v === '/') return '/cases'
     // WHATWG URL 파서는 탭·CR·LF 를 제거하고 파싱한다 — '/'+TAB+'/evil.com' 이 선두 검사를
   // 통과한 뒤 https://evil.com/ 으로 해석되는 open redirect 우회(2026-08-01 리뷰 발견).
   // 제어문자·역슬래시가 하나라도 있으면 통째로 거부한다.
