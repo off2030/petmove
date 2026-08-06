@@ -30,7 +30,9 @@ export function AssigneePicker({ caseId, currentAssigneeId, members, onChanged }
   const ref = useRef<HTMLDivElement>(null)
 
   const current = members.find((m) => m.user_id === currentAssigneeId) ?? null
-  const triggerLabel = current ? memberLabel(current) : '담당자 없음'
+  // 트리거는 아이콘만 — 옆의 이력·미리보기·요청 링크 버튼과 같은 모양(2026-08-06 사용자 지시).
+  // 지정 여부는 색으로, 담당자 이름은 tooltip 으로 전달.
+  const triggerTitle = error ?? (current ? `담당자 · ${memberLabel(current)}` : '담당자 지정')
 
   useEffect(() => {
     if (!open) return
@@ -69,16 +71,14 @@ export function AssigneePicker({ caseId, currentAssigneeId, members, onChanged }
         onClick={() => setOpen((p) => !p)}
         disabled={pending}
         className={cn(
-          'inline-flex items-center gap-1 h-7 px-2.5 rounded-full border transition-colors text-[12px] font-serif',
-          current
-            ? 'border-foreground/40 text-foreground hover:bg-muted/40'
-            : 'border-dashed border-border/70 text-muted-foreground hover:border-foreground/40 hover:text-foreground',
+          'inline-flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-accent hover:text-foreground',
+          current ? 'text-foreground' : 'text-muted-foreground',
           pending && 'opacity-50',
         )}
-        title={error ?? '담당자 변경'}
+        title={triggerTitle}
+        aria-label={triggerTitle}
       >
-        <User size={12} className="shrink-0" />
-        <span className="truncate max-w-[120px]">{triggerLabel}</span>
+        <User className="h-3.5 w-3.5" />
       </button>
       {open && (
         <ul
