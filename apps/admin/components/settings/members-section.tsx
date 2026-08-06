@@ -333,10 +333,7 @@ export function MembersSection({
 
         {/* Invite form — admin only */}
         {isAdmin ? (
-          <SettingsCard
-            title="멤버 초대"
-            description="유효기간 7일. 초대 생성 시 링크가 클립보드에 복사되고 이메일로도 발송됩니다."
-          >
+          <SettingsCard title="멤버 초대">
             <div className="flex items-center gap-sm">
               <input
                 type="email"
