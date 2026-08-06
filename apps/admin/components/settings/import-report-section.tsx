@@ -18,7 +18,7 @@ export function ImportReportSection() {
         <div className="space-y-lg">
           <SettingsCard
             title="표시 항목 설정"
-            description="신고 탭 테이블에 표시할 항목을 선택합니다. 모두 체크가 기본값."
+            description="신고 탭 테이블에 표시할 항목을 선택합니다."
           >
             <TodoColumnsToggle tabId="import_report" bare />
           </SettingsCard>
@@ -68,7 +68,7 @@ function AutoCountriesEditor() {
   return (
     <SettingsCard
       title={<>적용 국가 · {draft.length}</>}
-      description="여기 있는 국가는 출국일을 입력하면 신고 탭에 자동으로 올라옵니다."
+      description="출국일을 입력하면 신고 탭에 자동으로 올라옵니다."
     >
       <div className="pt-1 pb-lg">
         <div className="flex flex-wrap items-center gap-1.5">

@@ -622,7 +622,7 @@ export function InspectionSection() {
         <div className="space-y-lg">
         <SettingsCard
           title="표시 항목 설정"
-          description="검사 탭 테이블에 표시할 항목을 선택합니다. 모두 체크가 기본값."
+          description="검사 탭 테이블에 표시할 항목을 선택합니다."
         >
           <TodoColumnsToggle tabId="inspection" bare />
         </SettingsCard>
