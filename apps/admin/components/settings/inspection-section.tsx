@@ -16,6 +16,7 @@ import {
   SettingsSection,
   SettingsField,
   SettingsFooter,
+  SettingsSubsectionTitle,
 } from './settings-layout'
 import { labColor } from '@/lib/lab-color'
 import { cn } from '@/lib/utils'
@@ -324,8 +325,11 @@ function SectionBlock({
   if (defaultLab) referencedValues.add(defaultLab)
   for (const r of rules) for (const l of r.labs) referencedValues.add(l)
 
+  // 카드가 아니라 소그룹 — 광견병·전염병 두 블록이 "검사기관" 카드 하나를 공유한다
+  // (2026-08-06 저장 버튼 위치 통일: 저장 범위=카드 하나, 버튼은 그 카드 하단).
   return (
-    <SettingsCard title={title}>
+    <section>
+      <SettingsSubsectionTitle className="mb-2">{title}</SettingsSubsectionTitle>
       {/* 기관 목록 (기본 + 사용자 정의) + 추가 */}
       <LabsAdminRow
         defaults={defaultLabs}
@@ -424,7 +428,7 @@ function SectionBlock({
           }}
         />
       )}
-    </SettingsCard>
+    </section>
   )
 }
 
@@ -555,6 +559,9 @@ export function InspectionSection() {
           <TodoColumnsToggle tabId="inspection" bare />
         </SettingsCard>
 
+        {/* 검사기관 = 카드 하나 (광견병·전염병 소그룹) — 저장 범위와 카드가 1:1 이라
+            저장 버튼이 이 카드 하단에 온다. 신고 탭과 동일 구조 (2026-08-06). */}
+        <SettingsCard className="space-y-xl">
         <SectionBlock
           title="광견병항체검사"
           defaultLabs={TITER_LABS}
@@ -613,20 +620,20 @@ export function InspectionSection() {
           rules={draft.infectiousRules}
           onRulesChange={(infectiousRules) => setDraft({ ...draft, infectiousRules })}
         />
-        </div>
 
-        {/* Footer actions — 두 카드(광견병·전염병) 공통 저장 */}
-        <SettingsFooter className="justify-between mt-lg border-t-0">
-          <SettingsActionButton onClick={resetToDefaults}>
-            기본값으로 되돌리기
-          </SettingsActionButton>
-          <div className="flex items-center gap-md">
-            {msg && <span className="pmw-st__sec-lead">{msg}</span>}
-            <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
-              {saving ? '저장 중…' : '저장'}
-            </PillButton>
-          </div>
-        </SettingsFooter>
+          <SettingsFooter className="justify-between">
+            <SettingsActionButton onClick={resetToDefaults}>
+              기본값으로 되돌리기
+            </SettingsActionButton>
+            <div className="flex items-center gap-md">
+              {msg && <span className="pmw-st__sec-lead">{msg}</span>}
+              <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
+                {saving ? '저장 중…' : '저장'}
+              </PillButton>
+            </div>
+          </SettingsFooter>
+        </SettingsCard>
+        </div>
       </SettingsSection>
     </SettingsShell>
   )
