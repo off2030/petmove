@@ -11,7 +11,6 @@ import {
   SettingsField,
   SettingsFooter,
   SettingsIconButton,
-  SettingsSubsectionTitle as SectionLabel,
   SettingsToggleButton,
   formatSavedAgo,
 } from './settings-layout'
@@ -19,7 +18,6 @@ import { EnglishNameSplitRow } from './english-name-split-row'
 import { CompanyAddressSearch, type CompanyAddressResult } from './company-address-search'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { resizeSquareJpeg } from '@/lib/image/resize-avatar'
-import { useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
 
 const AVATAR_MAX_BYTES = 20 * 1024 * 1024
@@ -191,8 +189,6 @@ export function OrgInfoForm({
   avatarUrl: initialAvatarUrl,
   onAvatarUpload,
   onAvatarRemove,
-  onReset,
-  hasDefault = false,
   viewTab: controlledViewTab,
   onViewTabChange,
   children,
@@ -206,15 +202,12 @@ export function OrgInfoForm({
   avatarUrl: string | null
   onAvatarUpload: (fd: FormData) => Promise<{ ok: boolean; error?: string; avatar_url?: string }>
   onAvatarRemove: () => Promise<{ ok: boolean; error?: string }>
-  onReset?: () => Promise<{ ok: boolean; error?: string; info?: VetInfo }>
-  hasDefault?: boolean
   /** 부모가 동물병원/운송회사 전환을 소유할 때. 주면 폼 안에는 전환 버튼을 그리지 않는다. */
   viewTab?: 'hospital' | 'transport'
   onViewTabChange?: (t: 'hospital' | 'transport') => void
   /** 병원/회사 카드와 '추가 정보' 카드 사이에 끼울 카드 (조직정보 화면의 수의사 카드). */
   children?: React.ReactNode
 }) {
-  const confirm = useConfirm()
   const [info, setInfo] = useState<VetInfo>(initialInfo)
   const [orgType, setOrgType] = useState<OrgType>(initialOrgType)
   // 동물병원/운송회사 탭 — 유형 '선택'이 아니라 보기·입력 전환(둘 다 입력 가능).
@@ -414,20 +407,6 @@ export function OrgInfoForm({
     saveCustomFields(next)
   }
 
-  async function handleReset() {
-    if (!onReset) return
-    if (!await confirm({ message: '회사 정보를 기본값으로 되돌릴까요?', okLabel: '되돌리기' })) return
-    setError(null)
-    const r = await onReset()
-    if (r.ok) {
-      if (r.info) setInfo(r.info)
-      setDrafts({})
-      setLastSaved(new Date())
-    } else {
-      setError(r.error ?? '되돌리기에 실패했습니다.')
-    }
-  }
-
   async function handleSetOrgType(next: OrgType) {
     if (next === orgType) return
     setSettingType(true)
@@ -603,15 +582,10 @@ export function OrgInfoForm({
             })}
           </div>
 
-          {/* 기본값 복원 + 저장시각 — onReset 이 주입된 경우(멤버 설정)에만 reset 노출. */}
-          <SettingsFooter className="justify-between gap-sm">
-            {isAdmin && onReset && hasDefault ? (
-              <SettingsActionButton onClick={handleReset}>
-                기본값으로 되돌리기
-              </SettingsActionButton>
-            ) : (
-              <span />
-            )}
+          {/* 저장시각 — 즉시 저장 화면이라 저장 버튼은 없다.
+              '기본값으로 되돌리기'는 제거(2026-08-06) — 초기 세팅용 장치인데
+              한 번 누르면 병원 정보 전체를 덮어써 실수 위험만 컸다. */}
+          <SettingsFooter>
             <span className="font-serif text-[12px] text-muted-foreground/60">
               {formatSavedAgo(lastSaved)}
             </span>

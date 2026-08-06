@@ -15,7 +15,6 @@ import { createPortal } from 'react-dom'
 import { useCases } from '@/components/cases/cases-context'
 import { listSharePresets, saveSharePresets } from '@/lib/actions/share-presets'
 import { useConfirm } from '@petmove/ui'
-import { cn } from '@/lib/utils'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   SettingsActionButton,

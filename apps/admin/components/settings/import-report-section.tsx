@@ -1,13 +1,11 @@
 'use client'
 
 import { useRef, useState, useTransition } from 'react'
-import { X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { TodoColumnsToggle } from './todo-columns-toggle'
 import { saveImportReportCountriesAction } from '@/lib/actions/import-report-config-action'
 import { DEFAULT_IMPORT_REPORT_COUNTRIES } from '@petmove/domain'
 import { DestinationPicker } from '@/components/ui/destination-picker'
-import { PillButton } from '@petmove/ui'
 import {
   SettingsActionButton,
   SettingsAddButton,
@@ -18,7 +16,6 @@ import {
   SettingsSection,
   SettingsFooter,
   SettingsSaveButton,
-  SettingsSubsectionTitle,
 } from './settings-layout'
 
 export function ImportReportSection() {

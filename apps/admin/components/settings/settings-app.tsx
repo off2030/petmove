@@ -303,6 +303,7 @@ export function SettingsApp({
             <CompanySection
               initialInfo={bootstrap?.companyInfo ?? null}
               initialOrgType={bootstrap?.orgType ?? null}
+              initialAvatarUrl={bootstrap?.orgAvatarUrl ?? null}
               isAdmin={bootstrap?.myRole?.isAdmin ?? false}
             />
           )}

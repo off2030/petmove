@@ -1,13 +1,11 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import {
   getCompanyInfo,
   updateCompanyInfo,
-  resetCompanyInfo,
   getOrgType,
   updateOrgType,
-  hasCompanyInfoDefault,
   getOrgAvatar,
   uploadOrgAvatar,
   removeOrgAvatar,
@@ -26,7 +24,6 @@ import {
   SettingsSection,
   SettingsField,
   SettingsFooter,
-  SettingsSubsectionTitle as SectionLabel,
   SettingsToggleButton,
   formatSavedAgo,
 } from './settings-layout'
@@ -66,10 +63,13 @@ function formatPhoneForSave(raw: string): string {
 export function CompanySection({
   initialInfo = null,
   initialOrgType = null,
+  initialAvatarUrl = null,
   isAdmin = false,
 }: {
   initialInfo?: VetInfo | null
   initialOrgType?: OrgType | null
+  /** bootstrap 에서 실어온 조직 로고 — 없으면 마운트 후 자체 fetch. */
+  initialAvatarUrl?: string | null
   isAdmin?: boolean
 } = {}) {
   const [info, setInfo] = useState<VetInfo | null>(initialInfo)
@@ -82,8 +82,7 @@ export function CompanySection({
   )
   const [error, setError] = useState<string | null>(null)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
-  const [hasDefault, setHasDefault] = useState(false)
-  const [orgAvatarUrl, setOrgAvatarUrl] = useState<string | null>(null)
+  const [orgAvatarUrl, setOrgAvatarUrl] = useState<string | null>(initialAvatarUrl)
   const [, setTick] = useState(0)
   const [, startTransition] = useTransition()
   // user-level (본인 담당자) 정보 — org_type 무관하게 로그인 사용자 자신의 이름·휴대폰·면허.
@@ -116,18 +115,15 @@ export function CompanySection({
     else if (orgType === 'hospital') setIssuerTab('hospital')
   }, [orgType])
 
+  // 조직 로고(organizations.avatar_url) — org-level. 펫무브 보호자 화면에 표시됨.
+  // 보통 bootstrap 이 실어주므로 여기선 안 부른다. 없을 때만(직접 마운트 등) 보충 —
+  // 매번 부르면 로고가 빈 칸으로 떴다가 채워진다(2026-08-06).
   useEffect(() => {
-    let alive = true
-    hasCompanyInfoDefault().then((v) => { if (alive) setHasDefault(v) })
-    return () => { alive = false }
-  }, [])
-
-  // 조직 아바타(organizations.avatar_url) — org-level. 펫무브 보호자 화면에 표시됨.
-  // OrgInfoForm 에 초기값으로 넘긴다(폼 내부에서 업로드/제거 후 자체 갱신).
-  useEffect(() => {
+    if (initialAvatarUrl !== null) return
     let alive = true
     getOrgAvatar().then((u) => { if (alive) setOrgAvatarUrl(u) })
     return () => { alive = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // user-level 본인 담당자 정보 로드 — admin 여부와 무관하게 항상 본인 row 만 read/write 가능.
@@ -251,8 +247,6 @@ export function CompanySection({
           avatarUrl={orgAvatarUrl}
           onAvatarUpload={uploadOrgAvatar}
           onAvatarRemove={removeOrgAvatar}
-          onReset={resetCompanyInfo}
-          hasDefault={hasDefault}
           viewTab={issuerTab}
           onViewTabChange={setIssuerTab}
         >

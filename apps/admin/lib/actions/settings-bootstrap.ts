@@ -1,6 +1,6 @@
 'use server'
 
-import { getCompanyInfo, getOrgType, type OrgType } from './company-info'
+import { getCompanyInfo, getOrgAvatar, getOrgType, type OrgType } from './company-info'
 import { listMembers, listInvites, listSuperAdmins, type MemberRow, type InviteRow, type SuperAdminRow } from './invites'
 import { listOrgVaccineProducts, type OrgVaccineProduct } from './org-vaccine-products'
 import { listOrgAutoFillRules, type AutoFillRule } from './org-auto-fill-rules'
@@ -19,6 +19,8 @@ import type { SharePreset } from '@/lib/share-presets-types'
 export interface SettingsBootstrap {
   companyInfo: VetInfo
   orgType: OrgType
+  /** 조직 로고 — 여기서 같이 실어야 조직정보 화면이 빈 칸으로 떴다가 채워지지 않는다. */
+  orgAvatarUrl: string | null
   members: MemberRow[]
   invites: InviteRow[]
   superAdmins: SuperAdminRow[]
@@ -40,9 +42,10 @@ export interface SettingsBootstrap {
  * 각 호출이 같은 요청 scope 이므로 getActiveOrgId() 는 React cache() 에 의해 한 번만 실행.
  */
 export async function getSettingsBootstrap(): Promise<SettingsBootstrap> {
-  const [companyInfo, orgType, membersRes, invitesRes, superAdminsRes, vaccineRes, autoFillRes, myProfile, myRole, detailViewSettings, destinationOverrides, assigneeRes, presetsRes, todoColumnsConfig] = await Promise.all([
+  const [companyInfo, orgType, orgAvatarUrl, membersRes, invitesRes, superAdminsRes, vaccineRes, autoFillRes, myProfile, myRole, detailViewSettings, destinationOverrides, assigneeRes, presetsRes, todoColumnsConfig] = await Promise.all([
     getCompanyInfo(),
     getOrgType(),
+    getOrgAvatar(),
     listMembers(),
     listInvites(),
     listSuperAdmins(),
@@ -72,5 +75,5 @@ export async function getSettingsBootstrap(): Promise<SettingsBootstrap> {
   const caseAssigneeEnabled = assigneeRes.ok ? assigneeRes.value : false
   const sharePresets = presetsRes.ok ? presetsRes.value : []
 
-  return { companyInfo, orgType, members, invites, superAdmins, vaccineProducts, autoFillRules, myProfile, myRole, detailViewSettings, destinationOverrides, caseAssigneeEnabled, sharePresets, todoColumnsConfig, errors }
+  return { companyInfo, orgType, orgAvatarUrl, members, invites, superAdmins, vaccineProducts, autoFillRules, myProfile, myRole, detailViewSettings, destinationOverrides, caseAssigneeEnabled, sharePresets, todoColumnsConfig, errors }
 }

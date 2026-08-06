@@ -1,9 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { ChevronDown, Plus, X } from 'lucide-react'
+import { ChevronDown, Plus } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
-import { PillButton } from '@petmove/ui'
 import {
   SettingsActionButton,
   SettingsAddButton,
@@ -163,25 +162,6 @@ export function DocumentsSection() {
   function removeRule(idx: number) {
     setRules(draft.rules.filter((_, i) => i !== idx))
   }
-  function addCertToRule(idx: number, key: string) {
-    setRules(draft.rules.map((r, i) => {
-      if (i !== idx) return r
-      if (r.certs.includes(key)) return r
-      return { ...r, certs: [...r.certs, key] }
-    }))
-  }
-  function removeCertFromRule(idx: number, key: string) {
-    setRules(draft.rules.map((r, i) => {
-      if (i !== idx) return r
-      const next = r.certs.filter(c => c !== key)
-      if (next.length === 0) return r
-      return { ...r, certs: next }
-    }))
-  }
-  function setRuleCountries(idx: number, nextCountries: string[]) {
-    setRules(draft.rules.map((r, i) => i === idx ? { ...r, countries: nextCountries } : r))
-  }
-
   // ── 새 매핑 추가 (팝업에서 호출) ──
   function commitNewRule(rule: CertRule) {
     setRules([...draft.rules, rule])

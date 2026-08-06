@@ -15,7 +15,6 @@ import {
 } from './settings-layout'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { supabaseBrowser } from '@/lib/supabase/browser'
-import { PushPermission } from '@/components/pwa/push-permission'
 import { resizeSquareJpeg } from '@/lib/image/resize-avatar'
 import { cn } from '@/lib/utils'
 
@@ -138,30 +137,14 @@ export function ProfileSection({
               </div>
             </SettingsField>
 
-            {/* Provider (read-only) */}
-            {profile.provider && (
-              <SettingsField label="로그인 방식">
-                <span className="font-serif text-[15px] text-muted-foreground">
-                  {providerLabel(profile.provider)}
-                </span>
-              </SettingsField>
-            )}
+            {/* '로그인 방식' 행 제거(2026-08-06) — 읽기 전용인데다 이메일 로그인을
+                '로그인 링크'로 표기해 실제(인증번호)와 어긋나 있었다. */}
           </div>
         </SettingsCard>
 
-        {/* Push notification permission */}
-        <SettingsCard title="알림">
-          <div>
-            <SettingsField label="푸시 알림">
-              <div className="flex flex-col gap-1">
-                <PushPermission />
-                <span className="font-serif text-[12px] text-muted-foreground/70 leading-relaxed">
-                  홈 화면에 추가한 PWA 또는 데스크톱 브라우저에서 백그라운드 알림을 받습니다.
-                </span>
-              </div>
-            </SettingsField>
-          </div>
-        </SettingsCard>
+        {/* '알림' 카드 제거(2026-08-06) — 브라우저 푸시는 구독만 저장될 뿐 서버에
+            발송 코드가 없어(라이브러리 제거 시 함께 사라짐) 켜도 알림이 오지 않는다.
+            발송 인프라를 붙일 때 PushPermission 과 함께 되살릴 것. */}
         </div>
 
         {error && (
@@ -176,16 +159,6 @@ export function ProfileSection({
       </SettingsFooter>
     </SettingsShell>
   )
-}
-
-function providerLabel(provider: string): string {
-  switch (provider) {
-    case 'email': return '이메일 (로그인 링크)'
-    case 'google': return 'Google'
-    case 'kakao': return 'Kakao'
-    case 'naver': return 'Naver'
-    default: return provider
-  }
 }
 
 function AvatarRow({
