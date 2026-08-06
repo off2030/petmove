@@ -6,7 +6,7 @@ import { useCases } from '@/components/cases/cases-context'
 import { listSharePresets, saveSharePresets } from '@/lib/actions/share-presets'
 import { PillButton, useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
-import { SettingsActionButton, SettingsSubsectionTitle } from './settings-layout'
+import { SettingsActionButton, SettingsSectionLabelSerif, SettingsSubsectionTitle } from './settings-layout'
 import { ALL_EXTRA_FIELD_KEYS } from '@petmove/domain'
 import { buildShareFieldLayout } from '@petmove/domain'
 import type { SharePreset } from '@/lib/share-presets-types'
@@ -188,9 +188,9 @@ export function SharePresetsSection({
                   <div className="mt-3 space-y-lg pl-9">
                     {groupedFields.map((g) => (
                       <div key={g.category}>
-                        <h5 className="font-serif text-[15px] font-semibold text-foreground mb-3 pb-1 border-b border-dotted border-border/60">
+                        <SettingsSectionLabelSerif className="pb-1 border-b border-dotted border-border/60">
                           {g.category}
-                        </h5>
+                        </SettingsSectionLabelSerif>
                         <div className="space-y-2 pl-2 border-l border-border/40">
                           {g.blocks.map((block, bi) => (
                             <div key={block.subgroup ?? `__flat-${bi}`} className="pl-2">

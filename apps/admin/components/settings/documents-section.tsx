@@ -262,7 +262,7 @@ export function DocumentsSection() {
               return (
                 <li
                   key={i}
-                  className="grid grid-cols-[1fr_auto_auto] items-start gap-md py-3 border-b border-border/80"
+                  className="grid grid-cols-[1fr_auto_auto] items-start gap-md py-3 border-b border-dotted border-border/80"
                 >
                   {/* Left: group label + destination pills (click to edit) */}
                   {editingIdx === i ? (

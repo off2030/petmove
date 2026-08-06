@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { SettingsShell, SettingsSection } from './settings-layout'
+import { SettingsShell, SettingsSection, SettingsSubsectionTitle } from './settings-layout'
 import { listFeedback, type FeedbackEntry } from '@/lib/actions/feedback'
 
 /**
@@ -85,9 +85,9 @@ export function FeedbackSection() {
               <div key={g.orgId || 'self'} className="space-y-sm">
                 {isSuperAdmin && (
                   <div className="flex items-baseline gap-2 border-b border-border/60 pb-2">
-                    <h3 className="font-serif text-[16px] text-foreground">
+                    <SettingsSubsectionTitle>
                       {g.orgName ?? '(이름 없는 조직)'}
-                    </h3>
+                    </SettingsSubsectionTitle>
                     <span className="font-mono text-[12px] text-muted-foreground/70">
                       {g.items.length}건
                     </span>
