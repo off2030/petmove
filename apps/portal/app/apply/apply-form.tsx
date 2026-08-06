@@ -47,7 +47,7 @@ const messages = {
     tripOneWay: '편도',
     sec2: '보호자 정보',
     // 펫무브 앱 전용 — 마지막 단계이자 선택 입력임을 알려준다.
-    sec2OptionalLead: '서류를 만들 때 필요한 정보예요. 지금 넣지 않아도 되고, 나중에 내 정보에서 넣을 수 있어요.',
+    sec2OptionalLead: "검역에 필요한 필수 정보입니다. 지금 등록을 원치 않으시면 나중에 '내 정보'에서 입력할 수 있어요.",
     skipOwner: '건너뛰고 시작하기',
     name: '이름',
     namePlaceholder: '예: 홍길동',
@@ -152,7 +152,7 @@ const messages = {
     tripRound: 'Round-trip',
     tripOneWay: 'One-way',
     sec2: 'Owner Information',
-    sec2OptionalLead: 'Needed when we prepare your documents. You can skip it now and add it later in My Info.',
+    sec2OptionalLead: 'Required for quarantine. If you prefer not to enter it now, you can add it later in My Info.',
     skipOwner: 'Skip and start',
     name: 'Name',
     namePlaceholder: 'e.g. 홍길동',
@@ -1238,14 +1238,18 @@ export function ApplyForm({
           {/* Step 2 · 소유주 */}
           {step === 2 && (
           <section className={sectionCardClass}>
-            <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(33,33,36,0.12)] mb-1">
-              <h2 className={sectionTitleClass}>{m.sec2}</h2>
+            {/* 안내문은 제목 블록 안(구분선 위)에 — 밖에 두면 첫 필드 행이 first-child 를
+                잃어 윗선이 하나 더 생긴다(fieldRowClass 의 first:border-t-0). */}
+            <div className="pb-3 border-b border-[rgba(33,33,36,0.12)] mb-1">
+              <div className="flex items-baseline gap-[10px]">
+                <h2 className={sectionTitleClass}>{m.sec2}</h2>
+              </div>
+              {ownerOptional && (
+                <p className="mt-2 text-[13px] leading-relaxed text-[#97979C]">
+                  {m.sec2OptionalLead}
+                </p>
+              )}
             </div>
-            {ownerOptional && (
-              <p className="pt-2 pb-1 text-[13px] leading-relaxed text-[#97979C]">
-                {m.sec2OptionalLead}
-              </p>
-            )}
             <FieldRow m={m} label={m.name} required fieldKey="customerName" missing={missing.has('customerName')}>
               <input type="text" autoComplete="name" value={customerName} onChange={(e) => setCustomerName(e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase()))}
                 placeholder={m.namePlaceholder} className={inputClass} />
