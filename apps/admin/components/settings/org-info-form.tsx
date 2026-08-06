@@ -5,6 +5,7 @@ import { Plus, X } from 'lucide-react'
 import type { OrgType } from '@/lib/actions/company-info'
 import type { CustomField, VetInfo, VetInfoKey } from '@/lib/vet-info'
 import {
+  SettingsActionButton,
   SettingsField,
   SettingsFooter,
   SettingsSubsectionTitle as SectionLabel,
@@ -636,13 +637,9 @@ export function OrgInfoForm({
       {/* 기본값 복원 + 저장시각 풋터 — onReset 이 주입된 경우(멤버 설정)에만 reset 노출. */}
       <SettingsFooter className="justify-between gap-sm">
         {isAdmin && onReset && hasDefault ? (
-          <button
-            type="button"
-            onClick={handleReset}
-            className="font-serif text-[12px] text-muted-foreground/60 hover:text-destructive transition-colors"
-          >
+          <SettingsActionButton onClick={handleReset}>
             기본값으로 되돌리기
-          </button>
+          </SettingsActionButton>
         ) : (
           <span />
         )}

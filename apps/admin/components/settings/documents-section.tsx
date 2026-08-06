@@ -354,13 +354,9 @@ export function DocumentsSection() {
 
       {/* Footer actions */}
       <SettingsFooter className="justify-between">
-        <button
-          type="button"
-          onClick={resetToDefaults}
-          className="pmw-st__btn-ghost hover:text-foreground transition-colors"
-        >
+        <SettingsActionButton onClick={resetToDefaults}>
           기본값으로 되돌리기
-        </button>
+        </SettingsActionButton>
         <div className="flex items-center gap-md">
           {msg && <span className="pmw-st__sec-lead">{msg}</span>}
           <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
