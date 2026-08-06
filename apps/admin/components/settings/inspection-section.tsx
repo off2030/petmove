@@ -1,14 +1,12 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
-import { createPortal } from 'react-dom'
+import { useState, useTransition } from 'react'
 import { Plus, X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { TodoColumnsToggle } from './todo-columns-toggle'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { LabPillSelect, LabPillMultiSelect } from '@/components/ui/lab-pill-select'
 import { PillButton } from '@petmove/ui'
-import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   SettingsActionButton,
   SettingsCard,
@@ -17,7 +15,6 @@ import {
   SettingsField,
   SettingsFooter,
 } from './settings-layout'
-import { DestinationPill, OverflowPill } from './destination-pills'
 import { labColor } from '@/lib/lab-color'
 import { cn } from '@/lib/utils'
 import { saveInspectionConfigAction } from '@/lib/actions/inspection-config-action'
@@ -30,8 +27,6 @@ import {
   type InspectionLabOption,
   type InspectionLabRule,
 } from '@petmove/domain'
-
-const COUNTRY_PREVIEW_MAX = 4
 
 function sameSet(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false
@@ -269,7 +264,6 @@ function SectionBlock({
   onDefaultChange,
   onRulesChange,
   showEuPreset,
-  singleLab,
 }: {
   title: string
   defaultLabs: InspectionLabOption[]
@@ -284,7 +278,6 @@ function SectionBlock({
   onDefaultChange?: (lab: string) => void
   onRulesChange: (next: InspectionLabRule[]) => void
   showEuPreset?: boolean
-  singleLab?: boolean
 }) {
   const hasDefault = defaultLab !== undefined && !!onDefaultChange
   // 선택지 = 효과 목록(숨김 제외 + 표시명 override) — 상세페이지·검사 탭과 같은 단일 출처 규칙.
@@ -297,16 +290,6 @@ function SectionBlock({
   ]
 
   // Add-rule modal state
-  const [addOpen, setAddOpen] = useState(false)
-
-  // 규칙 편집 상태 — 목적지 목록 편집 중인 row idx.
-  const [editingIdx, setEditingIdx] = useState<number | null>(null)
-
-  function commitNewRule(rule: InspectionLabRule) {
-    onRulesChange([...rules, rule])
-    setAddOpen(false)
-  }
-
   const hasEuRule = rules.some(r => r.label === '유럽연합' || sameSet(r.countries, EU_COUNTRIES))
 
   function addEuPreset() {
@@ -319,12 +302,13 @@ function SectionBlock({
     onRulesChange([...rules, newRule])
   }
 
-  function removeRule(idx: number) {
-    onRulesChange(rules.filter((_, i) => i !== idx))
+  // 빈 매핑 행 추가 — 목적지·기관을 채우지 않고 저장하면 그 행은 저장 시 조용히 제외된다.
+  function addRule() {
+    onRulesChange([...rules, { countries: [], labs: [] }])
   }
 
-  function setRuleLab(idx: number, labValue: string) {
-    onRulesChange(rules.map((r, i) => i === idx ? { ...r, labs: [labValue] } : r))
+  function removeRule(idx: number) {
+    onRulesChange(rules.filter((_, i) => i !== idx))
   }
 
   function setRuleLabs(idx: number, labValues: string[]) {
@@ -333,17 +317,6 @@ function SectionBlock({
 
   function setRuleCountries(idx: number, nextCountries: string[]) {
     onRulesChange(rules.map((r, i) => i === idx ? { ...r, countries: nextCountries } : r))
-  }
-
-  function setRuleLabel(idx: number, nextLabel: string) {
-    const trimmed = nextLabel.trim()
-    onRulesChange(rules.map((r, i) => {
-      if (i !== idx) return r
-      if (trimmed) return { ...r, label: trimmed }
-      const { label: _unused, ...rest } = r
-      void _unused
-      return rest
-    }))
   }
 
   // 현재 이 섹션에서 참조 중인 lab value — 사용자 정의 lab 제거 가능 여부 판정용.
@@ -377,304 +350,70 @@ function SectionBlock({
         </SettingsField>
       )}
 
-      {/* Rules list */}
-      {rules.length === 0 ? (
-        <div className="py-3 pmw-st__btn-ghost">
-          {hasDefault
-            ? '추가된 규칙 없음 — 모든 케이스가 기본 검사기관으로 자동 지정됩니다.'
-            : '추가된 규칙 없음.'}
-        </div>
-      ) : (
-        <ul>
-          {rules.map((r, i) => {
-            const visibleCountries = r.countries.slice(0, COUNTRY_PREVIEW_MAX)
-            const overflowCount = r.countries.length - visibleCountries.length
-            return (
-              <li
-                key={i}
-                className="grid grid-cols-[1fr_auto_auto] items-start gap-md py-3 border-b border-dotted border-border/80"
+      {/* 목적지 → 검사기관 매핑 — 행마다 목적지·기관 모두 복수 선택, 즉시 편집.
+          (2026-08-06 구조 단순화 — 그룹명·추가 모달 폐기, 사용자 지시) */}
+      <SettingsField label="목적지별 검사기관" align="start">
+        <div className="min-w-0">
+          {rules.length === 0 && (
+            <p className="py-1 pmw-st__btn-ghost">
+              {hasDefault
+                ? '매핑 없음 — 모든 케이스가 기본 검사기관으로 지정됩니다.'
+                : '매핑 없음.'}
+            </p>
+          )}
+          {rules.map((r, i) => (
+            <div
+              key={i}
+              className="grid grid-cols-[1fr_auto_auto] items-start gap-md py-2 border-b border-dotted border-border/80"
+            >
+              <DestinationPicker
+                values={r.countries}
+                onChange={(next) => setRuleCountries(i, next)}
+                placeholder="목적지 검색"
+                aria-label="목적지"
+                variant="underline"
+              />
+              <LabPillMultiSelect
+                values={r.labs}
+                onChange={(next) => setRuleLabs(i, next)}
+                options={labs}
+                placeholder="검사기관 선택"
+                aria-label="검사기관"
+                className="pt-1"
+              />
+              <button
+                type="button"
+                onClick={() => removeRule(i)}
+                className="text-muted-foreground/50 hover:text-foreground transition-colors pt-1.5"
+                title="매핑 삭제"
               >
-                {/* Left: group label + destination pills (click to edit) */}
-                {editingIdx === i ? (
-                  <div className="min-w-0 space-y-1.5">
-                    <input
-                      type="text"
-                      value={r.label ?? ''}
-                      onChange={(e) => setRuleLabel(i, e.target.value)}
-                      placeholder="그룹명 (선택사항)"
-                      className="pmw-st__input bg-transparent outline-none border-b border-border/80 font-serif text-[15px] px-0.5 py-0.5 w-full max-w-[240px]"
-                      style={{ color: 'var(--pmw-deep)' }}
-                    />
-                    <DestinationPicker
-                      values={r.countries}
-                      onChange={(next) => setRuleCountries(i, next)}
-                      placeholder="목적지 검색 (예: 독일, DE)"
-                      aria-label="목적지 편집"
-                      variant="underline"
-                    />
-                    <div className="pt-0.5">
-                      <button
-                        type="button"
-                        onClick={() => setEditingIdx(null)}
-                        className="pmw-st__btn-ghost hover:text-foreground transition-colors text-[11px]"
-                      >
-                        저장
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    className="min-w-0 cursor-pointer group/row-edit"
-                    onClick={() => setEditingIdx(i)}
-                    title="목적지 편집"
-                  >
-                    {r.label && (
-                      <div className="font-serif text-[13px] text-muted-foreground mb-1.5 group-hover/row-edit:underline decoration-dotted underline-offset-2">
-                        {r.label}
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-1.5">
-                      {visibleCountries.map(c => (
-                        <DestinationPill key={c} name={c} />
-                      ))}
-                      {overflowCount > 0 && <OverflowPill count={overflowCount} />}
-                    </div>
-                  </div>
-                )}
-
-                {/* Right: labs */}
-                <div className="flex items-start justify-end">
-                  {singleLab ? (
-                    <LabPillSelect
-                      value={r.labs[0] ?? ''}
-                      onChange={(v) => setRuleLab(i, v)}
-                      options={labs}
-                      aria-label="검사기관"
-                    />
-                  ) : (
-                    <LabPillMultiSelect
-                      values={r.labs}
-                      onChange={(next) => setRuleLabs(i, next)}
-                      options={labs}
-                      minSelection={1}
-                      placeholder="검사기관 선택"
-                      aria-label="검사기관"
-                    />
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => removeRule(i)}
-                  className="text-muted-foreground/50 hover:text-foreground transition-colors pt-0.5"
-                  title="규칙 제거"
-                >
-                  <X size={14} />
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-
-      {/* Add new rule — modal trigger */}
-      <div className="mt-md flex items-center justify-between">
-        <div>
-          {showEuPreset && !hasEuRule && (
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+          <div className="pt-2 flex items-center gap-md">
             <button
               type="button"
-              onClick={addEuPreset}
-              className="pmw-st__btn-ghost hover:text-foreground transition-colors"
-              title={`유럽연합 ${EU_COUNTRIES.length}개국 프리셋 추가`}
+              onClick={addRule}
+              className="inline-flex items-center gap-1 rounded-sm border border-dashed px-2 py-1 font-sans text-[13px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+              style={{ borderColor: 'var(--pmw-border-warm)' }}
             >
-              + 유럽연합 프리셋
+              ＋ 매핑 추가
             </button>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => setAddOpen(true)}
-          className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/80 hover:bg-muted/40 transition-colors"
-        >
-          <Plus className="h-3 w-3" />
-          규칙 추가
-        </button>
-      </div>
-
-      {addOpen && (
-        <RuleAddModal
-          labs={labs}
-          singleLab={!!singleLab}
-          onClose={() => setAddOpen(false)}
-          onSubmit={commitNewRule}
-        />
-      )}
-    </SettingsCard>
-  )
-}
-
-/* ── Rule Add Modal: Step 1 (목적지 vs 그룹) → Step 2 (form) ── */
-
-function RuleAddModal({
-  labs,
-  singleLab,
-  onClose,
-  onSubmit,
-}: {
-  labs: InspectionLabOption[]
-  singleLab: boolean
-  onClose: () => void
-  onSubmit: (rule: InspectionLabRule) => void
-}) {
-  const [mode, setMode] = useState<'single' | 'group' | null>(null)
-  const [label, setLabel] = useState('')
-  const [countries, setCountries] = useState<string[]>([])
-  const [selectedLabs, setSelectedLabs] = useState<string[]>([])
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        if (mode) setMode(null)
-        else onClose()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [mode, onClose])
-
-  if (!mounted) return null
-
-  const canSubmit = countries.length > 0 && selectedLabs.length > 0 && (mode === 'single' || (mode === 'group' && countries.length >= 1))
-
-  function submit() {
-    if (!canSubmit) return
-    const trimmedLabel = label.trim()
-    const rule: InspectionLabRule = mode === 'group' && trimmedLabel
-      ? { label: trimmedLabel, countries, labs: [...selectedLabs] }
-      : { countries, labs: [...selectedLabs] }
-    onSubmit(rule)
-  }
-
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-background rounded-sm border border-border/80 shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-border/80 px-lg py-3">
-          <div className="flex items-baseline gap-2">
-            {mode && (
+            {showEuPreset && !hasEuRule && (
               <button
                 type="button"
-                onClick={() => setMode(null)}
-                className="font-serif text-[15px] text-muted-foreground hover:text-foreground transition-colors"
+                onClick={addEuPreset}
+                className="pmw-st__btn-ghost hover:text-foreground transition-colors"
+                title={`유럽연합 ${EU_COUNTRIES.length}개국 매핑 추가`}
               >
-                규칙 추가
+                + 유럽연합 매핑
               </button>
             )}
-            {mode && <span className="font-serif text-[15px] text-muted-foreground/60">›</span>}
-            <h3 className="font-serif text-[15px] text-foreground">
-              {mode === 'single' ? '목적지 추가' : mode === 'group' ? '그룹 추가' : '규칙 추가'}
-            </h3>
           </div>
-          <button type="button" onClick={onClose} className="p-1 rounded hover:bg-muted">
-            <X className="h-4 w-4" />
-          </button>
         </div>
-
-        <div className="px-lg py-md">
-          {!mode && (
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => setMode('single')}
-                className="w-full text-left px-md py-3 rounded-md border border-border/80 hover:bg-muted/40 transition-colors"
-              >
-                <div className="font-serif text-[15px] text-foreground">목적지 추가</div>
-                <div className="pmw-st__sec-lead mt-1">한 개의 목적지에 검사기관을 매핑합니다.</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode('group')}
-                className="w-full text-left px-md py-3 rounded-md border border-border/80 hover:bg-muted/40 transition-colors"
-              >
-                <div className="font-serif text-[15px] text-foreground">그룹 추가</div>
-                <div className="pmw-st__sec-lead mt-1">여러 목적지를 한 그룹으로 묶어 같은 검사기관을 매핑합니다.</div>
-              </button>
-            </div>
-          )}
-
-          {mode && (
-            <div className="space-y-md">
-              {mode === 'group' && (
-                <div>
-                  <label className="font-serif text-[13px] text-muted-foreground/80 block mb-1">그룹명</label>
-                  <input
-                    type="text"
-                    value={label}
-                    onChange={(e) => setLabel(e.target.value)}
-                    placeholder="예: 유럽연합"
-                    autoFocus
-                    className="w-full font-serif text-[15px] bg-transparent outline-none border-b border-border/80 focus:border-foreground/40 pb-1 transition-colors"
-                  />
-                </div>
-              )}
-              <div>
-                <label className="font-serif text-[13px] text-muted-foreground/80 block mb-1">
-                  {mode === 'single' ? '목적지' : '목적지 (여러 개 선택)'}
-                </label>
-                <DestinationPicker
-                  values={countries}
-                  onChange={(next) => {
-                    if (mode === 'single' && next.length > 1) {
-                      setCountries([next[next.length - 1]])
-                    } else {
-                      setCountries(next)
-                    }
-                  }}
-                  placeholder="검색 (예: 독일, DE)"
-                  aria-label="목적지"
-                  variant="underline"
-                />
-              </div>
-              <div>
-                <label className="font-serif text-[13px] text-muted-foreground/80 block mb-1">검사기관</label>
-                {singleLab ? (
-                  <LabPillSelect
-                    value={selectedLabs[0] ?? ''}
-                    onChange={(v) => setSelectedLabs(v ? [v] : [])}
-                    options={labs}
-                    placeholder="검사기관 선택"
-                    aria-label="검사기관"
-                  />
-                ) : (
-                  <LabPillMultiSelect
-                    values={selectedLabs}
-                    onChange={setSelectedLabs}
-                    options={labs}
-                    placeholder="검사기관 선택"
-                    aria-label="검사기관"
-                  />
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {mode && (
-          <DialogFooter
-            bordered
-            onCancel={onClose}
-            onPrimary={submit}
-            primaryLabel="추가"
-            primaryDisabled={!canSubmit}
-          />
-        )}
-      </div>
-    </div>,
-    document.body,
+      </SettingsField>
+    </SettingsCard>
   )
 }
 
@@ -744,7 +483,6 @@ export function InspectionSection() {
           onDefaultChange={(lab) => setDraft({ ...draft, titerDefault: lab })}
           onRulesChange={(titerRules) => setDraft({ ...draft, titerRules })}
           showEuPreset
-          singleLab
         />
 
         <SectionBlock
