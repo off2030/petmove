@@ -596,9 +596,15 @@ export function ApplyForm({
    * 펫무브워크 병원·업체 신청서(/apply/<slug>)는 접수 창구라 종전대로 앞에서 전부 받는다.
    */
   const visibleSteps = isPublic ? [1, 2, 3, 4] : skipOwner ? [1, 3] : [1, 3, 2]
-  const [step, setStep] = useState(() =>
+  const [rawStep, setStep] = useState(() =>
     initialDraft && visibleSteps.includes(initialDraft.step) ? initialDraft.step : 1,
   )
+  /**
+   * 단계 목록에 없는 값이 남아 있으면 첫 단계로 되돌린다.
+   * 그냥 두면 `step === 2` 화면이 뜨는데 진행 표시는 '1 / 2' 라고 하는 어긋남이 생긴다
+   * (indexOf 가 -1 이라 위치가 0 으로 계산됨). 임시저장 복원·조건 변화 등으로 실제 발생.
+   */
+  const step = visibleSteps.includes(rawStep) ? rawStep : visibleSteps[0]
   // 복원했음을 알리는 줄 — 사용자가 '처음부터'를 누르면 감춘다.
   const [restored, setRestored] = useState(!!initialDraft)
   /** 펫무브 앱의 보호자 단계 = 마지막 + 선택(건너뛰기 가능). */
