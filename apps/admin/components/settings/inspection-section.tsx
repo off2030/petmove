@@ -485,12 +485,12 @@ function MappingAddModal({
         <div className="px-lg py-md space-y-md">
           <div>
             <p className="mb-1.5 font-serif text-[13px] text-muted-foreground">목적지</p>
+            {/* autoFocus 금지 — 포커스가 곧 드롭다운 열림이라 팝업이 목록 펼친 채 뜬다(2026-08-06 사용자 지적). */}
             <DestinationPicker
               values={countries}
               onChange={setCountries}
               placeholder="목적지 검색 (예: 독일, DE)"
               aria-label="목적지"
-              autoFocus
             />
           </div>
           <div>
