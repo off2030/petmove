@@ -114,7 +114,7 @@ export function SharePresetsSection({
     <SettingsCard
       title={
         <span className="inline-flex items-center gap-sm">
-          공유
+          정보 요청 링크 프리셋
           {isDirty && (
             <span className="font-mono text-[10.5px] uppercase tracking-[1.2px] px-1.5 py-0.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400">
               변경됨
@@ -122,7 +122,6 @@ export function SharePresetsSection({
           )}
         </span>
       }
-      description="공유 링크 발급 시 빠른 선택으로 노출됩니다. 자주 쓰는 필드 묶음을 미리 만들어두세요."
     >
       {error && (
         <p className="font-serif text-[13px] text-destructive mb-2">{error}</p>

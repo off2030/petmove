@@ -54,7 +54,7 @@ export async function createShareLink(
       .maybeSingle()
     if (cErr) return { ok: false, error: cErr.message }
     if (!caseRow || (caseRow as { org_id: string }).org_id !== orgId) {
-      return { ok: false, error: '본인 조직의 케이스만 공유 링크를 만들 수 있습니다' }
+      return { ok: false, error: '본인 조직의 케이스만 정보 요청 링크를 만들 수 있습니다' }
     }
 
     const days = Math.max(1, Math.min(input.expiresInDays ?? 30, 365))

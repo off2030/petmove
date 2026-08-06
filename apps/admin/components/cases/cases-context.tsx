@@ -88,7 +88,7 @@ interface CasesContextValue {
   caseAssigneeEnabled: boolean
   /** 본인 조직 멤버 목록 — 담당자 picker 옵션. */
   orgMembers: Array<{ user_id: string; name: string | null; email: string }>
-  /** 공유 링크 발급 시 빠른 선택용 사용자 정의 프리셋. */
+  /** 정보 요청 링크 발급 시 빠른 선택용 사용자 정의 프리셋. */
   sharePresets: SharePreset[]
   setSharePresets: (list: SharePreset[]) => void
   /**

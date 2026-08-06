@@ -1,7 +1,7 @@
 'use server'
 
 /**
- * 공유 링크 프리셋 — organization_settings 의 'share_link_presets' jsonb 에 배열 저장.
+ * 정보 요청 링크 프리셋 — organization_settings 의 'share_link_presets' jsonb 에 배열 저장.
  * 조직 단위, 멤버 모두 공유. CRUD 는 admin 권한 RLS 로 제어 (organization_settings RLS 위임).
  */
 
