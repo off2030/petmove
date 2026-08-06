@@ -47,7 +47,7 @@ const messages = {
     tripOneWay: '편도',
     sec2: '보호자 정보',
     // 펫무브 앱 전용 — 마지막 단계이자 선택 입력임을 알려준다.
-    sec2OptionalLead: "검역을 위해 필요한 정보입니다. 지금 등록을 원치 않으시면 나중에 '내 정보'에서 입력할 수 있어요.",
+    sec2OptionalLead: "검역을 위해 필요한 정보입니다. 지금 입력하거나 나중에 '내 정보' 탭에서 넣을 수 있어요.",
     skipOwner: '건너뛰고 시작하기',
     name: '이름',
     namePlaceholder: '예: 홍길동',
