@@ -13,6 +13,7 @@ import {
   SettingsShell,
   SettingsSection,
   SettingsField,
+  SettingsFooter,
   SettingsSubsectionTitle,
 } from './settings-layout'
 import { DestinationPill, OverflowPill } from './destination-pills'
@@ -659,7 +660,7 @@ export function InspectionSection() {
         />
 
         {/* Footer actions */}
-        <div className="flex items-center justify-between pt-lg border-t border-border/80">
+        <SettingsFooter className="justify-between">
           <button
             type="button"
             onClick={resetToDefaults}
@@ -673,7 +674,7 @@ export function InspectionSection() {
               {saving ? '저장 중…' : '변경사항 저장'}
             </PillButton>
           </div>
-        </div>
+        </SettingsFooter>
       </SettingsSection>
     </SettingsShell>
   )

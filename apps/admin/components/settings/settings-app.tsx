@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { TrashModal } from '@/components/cases/trash-modal'
-import { SettingsShell, SettingsSection, SettingsRow } from './settings-layout'
+import { SettingsActionButton, SettingsShell, SettingsSection, SettingsRow } from './settings-layout'
 import { VaccineSection } from './vaccine-section'
 import { CompanySection } from './company-section'
 import { ImportReportSection } from './import-report-section'
@@ -130,13 +130,9 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
               </>
             }
           >
-            <button
-              type="button"
-              onClick={() => setShowTrash(true)}
-              className="shrink-0 h-9 px-4 rounded-full border border-border/80 bg-card text-[14px] hover:border-foreground/40 transition-colors"
-            >
+            <SettingsActionButton onClick={() => setShowTrash(true)}>
               휴지통 열기
-            </button>
+            </SettingsActionButton>
           </SettingsRow>
 
           {isSuperAdmin && (
@@ -148,14 +144,9 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
                 ) : undefined
               }
             >
-              <button
-                type="button"
-                onClick={handleExport}
-                disabled={exporting}
-                className="shrink-0 h-9 px-4 rounded-full border border-border/80 bg-card text-[14px] hover:border-foreground/40 transition-colors disabled:opacity-50"
-              >
+              <SettingsActionButton onClick={handleExport} disabled={exporting}>
                 {exporting ? '내보내는 중…' : 'Excel 내보내기'}
-              </button>
+              </SettingsActionButton>
             </SettingsRow>
           )}
         </div>

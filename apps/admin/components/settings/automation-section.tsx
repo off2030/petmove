@@ -15,6 +15,7 @@ import {
   SettingsActionButton,
   SettingsCheckBox,
   SettingsFilterPills,
+  SettingsFooter,
   SettingsSearchInput,
   SettingsShell,
   SettingsSection,
@@ -336,7 +337,7 @@ export function AutomationSection({
         )}
   
         {isAdmin && (
-          <div className="flex items-center justify-between pt-md border-t border-border/80">
+          <SettingsFooter className="justify-between">
             <SettingsActionButton
               onClick={handleRestore}
               disabled={pending || deletedStack.length === 0}
@@ -353,7 +354,7 @@ export function AutomationSection({
               <Plus className="h-3 w-3" />
               규칙 추가
             </SettingsActionButton>
-          </div>
+          </SettingsFooter>
         )}
   
         {!isAdmin && (

@@ -9,9 +9,11 @@ import {
 import {
   SettingsShell,
   SettingsSection,
+  SettingsFooter,
   SettingsListRow,
   SettingsSubsectionTitle,
   SettingsToggleButton,
+  formatSavedAgo,
 } from './settings-layout'
 import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
 import { DestinationsArea } from './destinations-section'
@@ -109,11 +111,11 @@ export function DetailViewSection({
               <SettingsToggleButton pressed={assigneeEnabled} onClick={toggleAssignee} />
             </SettingsListRow>
           </div>
-          <div className="flex items-center justify-end pt-2">
+          <SettingsFooter className="border-t-0 pt-2">
             <span className="font-serif italic text-[12px] text-muted-foreground/60">
-              {savedAt ? `자동 저장됨 · ${savedAt.toLocaleTimeString()}` : ''}
+              {formatSavedAgo(savedAt)}
             </span>
-          </div>
+          </SettingsFooter>
         </section>
 
         {/* ── 공유 ── */}

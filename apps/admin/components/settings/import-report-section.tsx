@@ -8,7 +8,7 @@ import { saveImportReportCountriesAction } from '@/lib/actions/import-report-con
 import { DEFAULT_IMPORT_REPORT_COUNTRIES } from '@petmove/domain'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { PillButton } from '@petmove/ui'
-import { SettingsShell, SettingsSection, SettingsSubsectionTitle } from './settings-layout'
+import { SettingsShell, SettingsSection, SettingsFooter, SettingsSubsectionTitle } from './settings-layout'
 
 export function ImportReportSection() {
   return (
@@ -70,7 +70,7 @@ function AutoCountriesEditor() {
         </span>
       </div>
 
-      <div className="border-t border-b border-border/80 pt-3 pb-lg">
+      <div className="border-t border-border/80 pt-3 pb-lg">
         <div className="flex flex-wrap items-center gap-1.5">
           {draft.map((v) => (
             <span
@@ -121,7 +121,7 @@ function AutoCountriesEditor() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-lg">
+      <SettingsFooter className="justify-between">
         <button
           type="button"
           onClick={resetToDefaults}
@@ -135,7 +135,7 @@ function AutoCountriesEditor() {
             {saving ? '저장 중…' : '변경사항 저장'}
           </PillButton>
         </div>
-      </div>
+      </SettingsFooter>
     </section>
   )
 }

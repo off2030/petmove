@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Check } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { saveTodoColumnsConfigAction } from '@/lib/actions/todo-columns-config-action'
 import {
@@ -9,8 +8,7 @@ import {
   type TodoTabId,
   type TodoColumnsConfig,
 } from '@/lib/todo-columns-config-types'
-import { SettingsSubsectionTitle } from './settings-layout'
-import { cn } from '@/lib/utils'
+import { SettingsCheckBox, SettingsSubsectionTitle } from './settings-layout'
 
 /**
  * 검사/신고/서류 탭의 컬럼 노출 여부 토글 UI.
@@ -76,17 +74,7 @@ export function TodoColumnsToggle({
                 className="inline-flex items-center gap-2 font-serif text-[14px] hover:text-foreground transition-colors"
                 aria-pressed={visible}
               >
-                <span
-                  className={cn(
-                    'inline-flex h-4 w-4 items-center justify-center rounded-sm border transition-colors',
-                    visible
-                      ? 'border-foreground/60 bg-foreground/5'
-                      : 'border-border/80 bg-transparent',
-                  )}
-                  aria-hidden
-                >
-                  {visible && <Check className="h-3 w-3 text-foreground" strokeWidth={2.5} />}
-                </span>
+                <SettingsCheckBox checked={visible} />
                 <span className={visible ? 'text-foreground' : 'text-muted-foreground/70'}>
                   {col.label}
                 </span>

@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState, useTransition } from 'react'
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { listSharePresets, saveSharePresets } from '@/lib/actions/share-presets'
-import { useConfirm } from '@petmove/ui'
+import { PillButton, useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
-import { SettingsSubsectionTitle } from './settings-layout'
+import { SettingsActionButton, SettingsSubsectionTitle } from './settings-layout'
 import { ALL_EXTRA_FIELD_KEYS } from '@petmove/domain'
 import { buildShareFieldLayout } from '@petmove/domain'
 import type { SharePreset } from '@/lib/share-presets-types'
@@ -127,22 +127,12 @@ export function SharePresetsSection({
           )}
         </SettingsSubsectionTitle>
         <div className="flex items-center gap-sm">
-          <button
-            type="button"
-            onClick={handleDiscard}
-            disabled={pending || !isDirty}
-            className="h-8 px-3 rounded-full border border-border/80 font-serif text-[13px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
-          >
+          <SettingsActionButton onClick={handleDiscard} disabled={pending || !isDirty}>
             되돌리기
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={pending || !isDirty}
-            className="h-8 px-3 rounded-full bg-foreground text-background font-serif text-[13px] hover:bg-foreground/90 transition-colors disabled:opacity-40"
-          >
-            {pending ? '저장 중…' : '저장'}
-          </button>
+          </SettingsActionButton>
+          <PillButton variant="solid" onClick={handleSave} disabled={pending || !isDirty}>
+            {pending ? '저장 중…' : '변경사항 저장'}
+          </PillButton>
         </div>
       </div>
       <p className="pmw-st__sec-lead mb-md">
