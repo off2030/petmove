@@ -39,23 +39,42 @@ function sameSet(a: string[], b: string[]): boolean {
   return b.every(x => s.has(x))
 }
 
-/** "기관 목록" 행: 기본/사용자 정의 기관을 작은 tone chip 으로 나열 + 추가/제거. */
+/**
+ * "기관 목록" 행 — 기본·사용자 정의 기관 전체 CRUD (2026-08-06).
+ * 칩 클릭=표시명 수정, ✕=삭제(기본 기관은 숨김 처리 — 과거 데이터 표시는 유지),
+ * 사용 중(규칙·기본 검사기관 참조) 기관은 삭제 불가. 숨긴 기본 기관은 아래에서 복원.
+ */
 function LabsAdminRow({
   defaults,
   customLabs,
+  hidden,
+  overrides,
   onCustomLabsChange,
+  onHiddenChange,
+  onOverridesChange,
   referencedValues,
 }: {
   defaults: InspectionLabOption[]
   customLabs: InspectionLabOption[]
+  hidden: string[]
+  overrides: Record<string, string>
   onCustomLabsChange: (next: InspectionLabOption[]) => void
+  onHiddenChange: (next: string[]) => void
+  onOverridesChange: (next: Record<string, string>) => void
   referencedValues: Set<string>
 }) {
   const [adding, setAdding] = useState(false)
   const [valueInput, setValueInput] = useState('')
   const [labelInput, setLabelInput] = useState('')
+  const [editing, setEditing] = useState<string | null>(null)
+  const [editLabel, setEditLabel] = useState('')
   const [error, setError] = useState<string | null>(null)
 
+  const hiddenSet = new Set(hidden)
+  const visibleDefaults = defaults
+    .filter(d => !hiddenSet.has(d.value))
+    .map(d => ({ value: d.value, label: overrides[d.value] ?? d.label, isCustom: false }))
+  const visibleCustoms = customLabs.map(c => ({ ...c, isCustom: true }))
   const allValues = [...defaults.map(d => d.value), ...customLabs.map(c => c.value)]
 
   function submit() {
@@ -76,45 +95,87 @@ function LabsAdminRow({
     setAdding(false)
   }
 
-  function removeCustom(value: string) {
+  function remove(value: string, isCustom: boolean) {
     if (referencedValues.has(value)) return
-    onCustomLabsChange(customLabs.filter(l => l.value !== value))
+    if (isCustom) onCustomLabsChange(customLabs.filter(l => l.value !== value))
+    else onHiddenChange([...hidden, value])
   }
 
-  function chipCls(tone: ReturnType<typeof labColor>, isCustom: boolean): string {
+  function startEdit(value: string, currentLabel: string) {
+    setEditing(value)
+    setEditLabel(currentLabel)
+    setError(null)
+  }
+
+  function commitEdit() {
+    if (!editing) return
+    const label = editLabel.trim()
+    if (!label) { setError('표시명을 입력하세요'); return }
+    const isCustom = customLabs.some(c => c.value === editing)
+    if (isCustom) {
+      onCustomLabsChange(customLabs.map(c => (c.value === editing ? { ...c, label } : c)))
+    } else {
+      const original = defaults.find(d => d.value === editing)?.label
+      const next = { ...overrides }
+      if (label === original) delete next[editing]
+      else next[editing] = label
+      onOverridesChange(next)
+    }
+    setEditing(null)
+    setError(null)
+  }
+
+  function chipCls(tone: ReturnType<typeof labColor>): string {
     const base = 'inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap'
     if (tone) return cn(base, tone.bg, tone.text)
-    if (isCustom) return cn(base, 'bg-muted/50 text-muted-foreground')
     return cn(base, 'bg-muted/60 text-muted-foreground')
   }
 
   return (
     <SettingsField label="기관 목록" align="start">
       <div className="flex flex-wrap items-center gap-1.5">
-        {defaults.map(d => {
-          const tone = labColor(d.value)
-          return (
-            <span key={d.value} className={chipCls(tone, false)} title={d.value}>
-              {d.label}
-            </span>
-          )
-        })}
-        {customLabs.map(c => {
-          const tone = labColor(c.value)
-          const referenced = referencedValues.has(c.value)
+        {[...visibleDefaults, ...visibleCustoms].map(lab => {
+          const tone = labColor(lab.value)
+          const referenced = referencedValues.has(lab.value)
+          if (editing === lab.value) {
+            return (
+              <span key={lab.value} className="inline-flex items-center gap-1.5">
+                <input
+                  type="text"
+                  value={editLabel}
+                  onChange={(e) => { setEditLabel(e.target.value); setError(null) }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); commitEdit() }
+                    if (e.key === 'Escape') { e.preventDefault(); setEditing(null); setError(null) }
+                  }}
+                  className="pmw-st__input bg-transparent outline-none border-b border-border/80 w-[140px] text-[12px] px-1 py-0.5"
+                  autoFocus
+                />
+                <button type="button" onClick={commitEdit} className="pmw-st__btn-ghost text-[11px] hover:text-foreground">저장</button>
+                <button type="button" onClick={() => { setEditing(null); setError(null) }} className="pmw-st__btn-ghost text-[11px] hover:text-foreground">취소</button>
+              </span>
+            )
+          }
           return (
             <span
-              key={c.value}
-              className={cn(chipCls(tone, true), 'group/lab relative pr-1')}
-              title={referenced ? `${c.value} (사용 중 — 제거 불가)` : c.value}
+              key={lab.value}
+              className={cn(chipCls(tone), 'group/lab relative pr-1')}
+              title={referenced ? `${lab.value} — 사용 중(규칙·기본 검사기관)이라 삭제 불가. 클릭해 표시명 수정` : `${lab.value} — 클릭해 표시명 수정`}
             >
-              {c.label}
+              <button
+                type="button"
+                onClick={() => startEdit(lab.value, lab.label)}
+                className="hover:underline decoration-dotted underline-offset-2"
+                aria-label={`${lab.label} 표시명 수정`}
+              >
+                {lab.label}
+              </button>
               {!referenced && (
                 <button
                   type="button"
-                  onClick={() => removeCustom(c.value)}
+                  onClick={() => remove(lab.value, lab.isCustom)}
                   className="ml-1 opacity-40 group-hover/lab:opacity-80 hover:!opacity-100 transition-opacity"
-                  aria-label={`${c.label} 제거`}
+                  aria-label={`${lab.label} 삭제`}
                   tabIndex={-1}
                 >
                   <X size={10} />
@@ -181,6 +242,26 @@ function LabsAdminRow({
             {error}
           </span>
         )}
+        {hidden.length > 0 && (
+          <div className="w-full mt-1 flex flex-wrap items-center gap-1.5">
+            <span className="font-serif text-[12px] text-muted-foreground/60">삭제한 기본 기관:</span>
+            {hidden.map(v => {
+              const label = overrides[v] ?? defaults.find(d => d.value === v)?.label ?? v
+              return (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => onHiddenChange(hidden.filter(x => x !== v))}
+                  title="클릭해 복원"
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border border-dashed border-border/80 font-mono text-[11px] uppercase tracking-[1px] text-muted-foreground/60 line-through hover:text-foreground hover:no-underline transition-colors"
+                >
+                  {label}
+                  <span className="font-sans normal-case tracking-normal no-underline">복원</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
     </SettingsField>
   )
@@ -190,7 +271,11 @@ function SectionBlock({
   title,
   defaultLabs,
   customLabs,
+  hiddenLabs,
+  labelOverrides,
   onCustomLabsChange,
+  onHiddenChange,
+  onOverridesChange,
   defaultLab,
   rules,
   onDefaultChange,
@@ -201,7 +286,11 @@ function SectionBlock({
   title: string
   defaultLabs: InspectionLabOption[]
   customLabs: InspectionLabOption[]
+  hiddenLabs: string[]
+  labelOverrides: Record<string, string>
   onCustomLabsChange: (next: InspectionLabOption[]) => void
+  onHiddenChange: (next: string[]) => void
+  onOverridesChange: (next: Record<string, string>) => void
   defaultLab?: string
   rules: InspectionLabRule[]
   onDefaultChange?: (lab: string) => void
@@ -210,7 +299,14 @@ function SectionBlock({
   singleLab?: boolean
 }) {
   const hasDefault = defaultLab !== undefined && !!onDefaultChange
-  const labs: InspectionLabOption[] = [...defaultLabs, ...customLabs]
+  // 선택지 = 효과 목록(숨김 제외 + 표시명 override) — 상세페이지·검사 탭과 같은 단일 출처 규칙.
+  const hiddenSet = new Set(hiddenLabs)
+  const labs: InspectionLabOption[] = [
+    ...defaultLabs
+      .filter(l => !hiddenSet.has(l.value))
+      .map(l => ({ value: l.value, label: labelOverrides[l.value] ?? l.label })),
+    ...customLabs,
+  ]
 
   // Add-rule modal state
   const [addOpen, setAddOpen] = useState(false)
@@ -273,7 +369,11 @@ function SectionBlock({
       <LabsAdminRow
         defaults={defaultLabs}
         customLabs={customLabs}
+        hidden={hiddenLabs}
+        overrides={labelOverrides}
         onCustomLabsChange={onCustomLabsChange}
+        onHiddenChange={onHiddenChange}
+        onOverridesChange={onOverridesChange}
         referencedValues={referencedValues}
       />
 
@@ -631,10 +731,24 @@ export function InspectionSection() {
           title="광견병항체검사"
           defaultLabs={TITER_LABS}
           customLabs={draft.customTiterLabs ?? []}
+          hiddenLabs={draft.hiddenTiterLabs ?? []}
+          labelOverrides={draft.titerLabelOverrides ?? {}}
           onCustomLabsChange={(customTiterLabs) =>
             setDraft({
               ...draft,
               customTiterLabs: customTiterLabs.length > 0 ? customTiterLabs : undefined,
+            })
+          }
+          onHiddenChange={(hiddenTiterLabs) =>
+            setDraft({
+              ...draft,
+              hiddenTiterLabs: hiddenTiterLabs.length > 0 ? hiddenTiterLabs : undefined,
+            })
+          }
+          onOverridesChange={(titerLabelOverrides) =>
+            setDraft({
+              ...draft,
+              titerLabelOverrides: Object.keys(titerLabelOverrides).length > 0 ? titerLabelOverrides : undefined,
             })
           }
           defaultLab={draft.titerDefault}
@@ -649,10 +763,24 @@ export function InspectionSection() {
           title="전염병검사"
           defaultLabs={INFECTIOUS_LABS}
           customLabs={draft.customInfectiousLabs ?? []}
+          hiddenLabs={draft.hiddenInfectiousLabs ?? []}
+          labelOverrides={draft.infectiousLabelOverrides ?? {}}
           onCustomLabsChange={(customInfectiousLabs) =>
             setDraft({
               ...draft,
               customInfectiousLabs: customInfectiousLabs.length > 0 ? customInfectiousLabs : undefined,
+            })
+          }
+          onHiddenChange={(hiddenInfectiousLabs) =>
+            setDraft({
+              ...draft,
+              hiddenInfectiousLabs: hiddenInfectiousLabs.length > 0 ? hiddenInfectiousLabs : undefined,
+            })
+          }
+          onOverridesChange={(infectiousLabelOverrides) =>
+            setDraft({
+              ...draft,
+              infectiousLabelOverrides: Object.keys(infectiousLabelOverrides).length > 0 ? infectiousLabelOverrides : undefined,
             })
           }
           rules={draft.infectiousRules}

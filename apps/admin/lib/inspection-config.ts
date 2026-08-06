@@ -61,6 +61,25 @@ function normalizeLabOption(o: unknown): InspectionLabOption | null {
   return { value, label }
 }
 
+/** 숨긴 내장 기관 목록 — 문자열 배열만 수용, 중복 제거. */
+function normalizeHidden(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return []
+  return Array.from(
+    new Set(raw.filter((x): x is string => typeof x === 'string').map(x => x.trim()).filter(Boolean)),
+  )
+}
+
+/** 내장 기관 표시명 override — {식별자: 표시명} 문자열 맵만 수용. */
+function normalizeOverrides(raw: unknown): Record<string, string> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    const key = k.trim()
+    if (key && typeof v === 'string' && v.trim()) out[key] = v.trim()
+  }
+  return out
+}
+
 function normalizeLabOptions(raw: unknown): InspectionLabOption[] {
   if (!Array.isArray(raw)) return []
   const out: InspectionLabOption[] = []
@@ -136,12 +155,21 @@ function normalize(raw: unknown): InspectionConfig {
     : Array.isArray(src.infectiousOverrides) ? src.infectiousOverrides : []
   const customTiterLabs = normalizeLabOptions(src.customTiterLabs)
   const customInfectiousLabs = normalizeLabOptions(src.customInfectiousLabs)
+  // 기본 검사기관은 숨길 수 없다 — 숨김 목록에 있으면 안전상 제거 (UI 도 막지만 이중 방어).
+  const hiddenTiterLabs = normalizeHidden(src.hiddenTiterLabs).filter(v => v !== titerDefault)
+  const hiddenInfectiousLabs = normalizeHidden(src.hiddenInfectiousLabs)
+  const titerLabelOverrides = normalizeOverrides(src.titerLabelOverrides)
+  const infectiousLabelOverrides = normalizeOverrides(src.infectiousLabelOverrides)
   return {
     titerDefault,
     titerRules: applyApqaEuShim(normalizeRules(titerRaw)),
     infectiousRules: mergeMissingInfectiousDefaults(normalizeRules(infectiousRaw)),
     ...(customTiterLabs.length > 0 ? { customTiterLabs } : {}),
     ...(customInfectiousLabs.length > 0 ? { customInfectiousLabs } : {}),
+    ...(hiddenTiterLabs.length > 0 ? { hiddenTiterLabs } : {}),
+    ...(hiddenInfectiousLabs.length > 0 ? { hiddenInfectiousLabs } : {}),
+    ...(Object.keys(titerLabelOverrides).length > 0 ? { titerLabelOverrides } : {}),
+    ...(Object.keys(infectiousLabelOverrides).length > 0 ? { infectiousLabelOverrides } : {}),
   }
 }
 

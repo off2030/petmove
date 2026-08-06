@@ -9,7 +9,7 @@ import { persistField } from '@/lib/toast-bus'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
 import { labColor } from '@/lib/lab-color'
-import { resolveInspectionLabs, INFECTIOUS_LABS } from '@petmove/domain'
+import { allLabOptions, effectiveInfectiousLabs, resolveInspectionLabs } from '@petmove/domain'
 import { DateTextField } from '@petmove/ui'
 import { DropdownSelect } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
@@ -28,8 +28,10 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
   const confirm = useConfirm()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
-  // 검사기관 옵션 = 공용(INFECTIOUS_LABS) + 조직 커스텀. 하드코딩 금지 — 설정에서 추가한 기관도 표시.
-  const labOptions = [...INFECTIOUS_LABS, ...(inspectionConfig.customInfectiousLabs ?? [])]
+  // 검사기관 옵션 = 설정의 효과 목록(단일 출처) — 숨김·표시명 수정·커스텀 모두 반영.
+  // 표시 라벨은 숨긴 기관까지 lookup(allLabs) — 과거 케이스에 저장된 값 보존.
+  const labOptions = effectiveInfectiousLabs(inspectionConfig)
+  const allLabs = allLabOptions(inspectionConfig)
 
   // Read array (backward compat: old flat key)
   function readRecords(): InfectiousRecord[] {
@@ -123,6 +125,7 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
             indices={group.indices}
             records={records}
             labOptions={labOptions}
+            displayLabs={allLabs}
             editIdx={editIdx}
             editField={editField}
             onStartEdit={(idx, f) => { setEditIdx(idx); setEditField(f) }}
@@ -181,13 +184,15 @@ function groupByDate(records: InfectiousRecord[]): { date: string | null; indice
 /* ── 한 행: 날짜 + (같은 날짜의 모든) lab 들 ── */
 
 function InfectiousGroup({
-  date, indices, records, labOptions, editIdx, editField,
+  date, indices, records, labOptions, displayLabs, editIdx, editField,
   onStartEdit, onStopEdit, onUpdateField, onUpdateGroupDate, onDelete, saving,
 }: {
   date: string | null
   indices: number[]
   records: InfectiousRecord[]
   labOptions: { value: string; label: string }[]
+  /** 표시 라벨 lookup — 숨긴 기관 포함(과거 데이터 라벨 보존). */
+  displayLabs: { value: string; label: string }[]
   editIdx: number | null
   editField: 'date' | 'lab' | null
   onStartEdit: (idx: number, f: 'date' | 'lab') => void
@@ -229,17 +234,22 @@ function InfectiousGroup({
       {/* Labs — | 로 구분하여 나열 */}
       {indices.map((idx, n) => {
         const rec = records[idx]
-        const labObj = labOptions.find(l => l.value === rec.lab)
+        const labObj = displayLabs.find(l => l.value === rec.lab)
         const labDisplay = labObj?.label || rec.lab || '—'
         const labTone = labColor(rec.lab)
         const labIsEditing = editIdx === idx && editField === 'lab'
+        // 저장된 값이 선택지에 없으면(설정에서 삭제된 기관 등) 옵션에 동적 추가 — 값 소실 방지.
+        const inOptions = !rec.lab || labOptions.some(l => l.value === rec.lab)
+        const rowOptions = inOptions
+          ? [{ value: '', label: '—' }, ...labOptions]
+          : [{ value: '', label: '—' }, ...labOptions, { value: rec.lab as string, label: labDisplay }]
         return (
           <span key={idx} className="group/lab inline-flex items-baseline gap-[10px]">
             <span className="text-muted-foreground/30 select-none">|</span>
             {editMode ? (
               <DropdownSelect
                 value={rec.lab ?? ''}
-                options={[{ value: '', label: '—' }, ...labOptions]}
+                options={rowOptions}
                 onChange={(v) => onUpdateField(idx, 'lab', v || null)}
                 triggerClassName={cn(
                   'text-left',

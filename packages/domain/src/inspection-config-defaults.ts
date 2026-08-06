@@ -28,6 +28,15 @@ export interface InspectionConfig {
   customTiterLabs?: InspectionLabOption[]
   /** 전염병검사 사용자 정의 기관(`INFECTIOUS_LABS` 에 없는 기관). 없으면 빈 배열/undef. */
   customInfectiousLabs?: InspectionLabOption[]
+  /**
+   * 설정에서 "삭제"한 내장 기관(식별자 목록) — 선택지에서만 빠지고,
+   * 과거 케이스에 저장된 값의 표시는 유지된다 (2026-08-06 기관 전체 CRUD).
+   */
+  hiddenTiterLabs?: string[]
+  hiddenInfectiousLabs?: string[]
+  /** 내장 기관 표시명 수정(식별자 → 새 표시명). 식별자는 불변 — 서식·규칙 연결 보존. */
+  titerLabelOverrides?: Record<string, string>
+  infectiousLabelOverrides?: Record<string, string>
 }
 
 export const TITER_LABS: { value: string; label: string }[] = [
@@ -75,6 +84,57 @@ export const DEFAULT_INSPECTION_CONFIG: InspectionConfig = {
     { countries: ['뉴질랜드'], labs: ['apqa_hq', 'vbddl'] },
     { countries: ['남아프리카공화국'], labs: ['arc_ovi'] },
   ],
+}
+
+/**
+ * 효과 기관 목록 — 내장 기관(숨김 제외, 표시명 override 반영) + 사용자 정의 기관.
+ * **선택지의 단일 출처**: 설정 화면·케이스 상세·검사 탭이 모두 이걸 쓴다 (2026-08-06).
+ */
+function buildEffectiveLabs(
+  defaults: InspectionLabOption[],
+  hidden: string[] | undefined,
+  overrides: Record<string, string> | undefined,
+  customs: InspectionLabOption[] | undefined,
+): InspectionLabOption[] {
+  const hiddenSet = new Set(hidden ?? [])
+  const ov = overrides ?? {}
+  return [
+    ...defaults
+      .filter((l) => !hiddenSet.has(l.value))
+      .map((l) => ({ value: l.value, label: ov[l.value] ?? l.label })),
+    ...(customs ?? []),
+  ]
+}
+
+/** 광견병 항체 검사 — 선택 가능한 기관 목록. */
+export function effectiveTiterLabs(config: InspectionConfig): InspectionLabOption[] {
+  return buildEffectiveLabs(TITER_LABS, config.hiddenTiterLabs, config.titerLabelOverrides, config.customTiterLabs)
+}
+
+/** 전염병검사 — 선택 가능한 기관 목록. */
+export function effectiveInfectiousLabs(config: InspectionConfig): InspectionLabOption[] {
+  return buildEffectiveLabs(INFECTIOUS_LABS, config.hiddenInfectiousLabs, config.infectiousLabelOverrides, config.customInfectiousLabs)
+}
+
+/**
+ * 표시용 전체 기관 목록 — 숨긴 내장 기관까지 포함(override 라벨 반영).
+ * 과거 케이스에 저장된 기관 값의 라벨을 잃지 않기 위한 lookup 용. 선택지에는 쓰지 말 것.
+ */
+export function allLabOptions(config: InspectionConfig): InspectionLabOption[] {
+  const ovT = config.titerLabelOverrides ?? {}
+  const ovI = config.infectiousLabelOverrides ?? {}
+  const out: InspectionLabOption[] = []
+  const seen = new Set<string>()
+  const push = (value: string, label: string) => {
+    if (seen.has(value)) return
+    seen.add(value)
+    out.push({ value, label })
+  }
+  for (const l of TITER_LABS) push(l.value, ovT[l.value] ?? l.label)
+  for (const l of INFECTIOUS_LABS) push(l.value, ovI[l.value] ?? l.label)
+  for (const l of config.customTiterLabs ?? []) push(l.value, l.label)
+  for (const l of config.customInfectiousLabs ?? []) push(l.value, l.label)
+  return out
 }
 
 /**

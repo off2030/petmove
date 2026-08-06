@@ -15,7 +15,7 @@ import { labColor } from '@/lib/lab-color'
 import { extractTiterInfo } from '@/lib/actions/extract-titer'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
-import { addDays, formatKoreanDate, resolveTiterLab, type InspectionLabRule } from '@petmove/domain'
+import { addDays, allLabOptions, effectiveTiterLabs, formatKoreanDate, resolveTiterLab, type InspectionLabRule } from '@petmove/domain'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 import { DateTextField } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
@@ -29,13 +29,7 @@ interface TiterRecord {
   received_date?: string | null
 }
 
-const LABS = [
-  { value: 'krsl', label: 'KRSL' },
-  { value: 'apqa_seoul', label: 'APQA Seoul' },
-  { value: 'apqa_eu', label: 'APQA EU' },
-  { value: 'ksvdl_r', label: 'KSVDL-R' },
-]
-
+// 검사기관 목록은 설정(inspection_config)이 단일 출처 — effectiveTiterLabs 로 파생 (2026-08-06).
 const DATA_KEY = 'rabies_titer_records'
 
 /**
@@ -570,18 +564,21 @@ function TiterRecordRow({
   showReceivedDate: boolean
   entryTooltip?: string
 }) {
+  const { inspectionConfig } = useCases()
   const cleanValue = stripTiterUnit(record.value)
   const valueDisplay = cleanValue ? `${cleanValue} IU/ml` : 'IU/ml'
-  const labObj = LABS.find(l => l.value === record.lab)
+  // 선택지 = 설정의 효과 목록(단일 출처). 표시 라벨은 숨긴 기관까지 lookup — 과거 데이터 보존.
+  const titerLabs = effectiveTiterLabs(inspectionConfig)
+  const labObj = allLabOptions(inspectionConfig).find(l => l.value === record.lab)
   const labDisplay = labObj?.label || record.lab || '—'
   const labTone = labColor(record.lab)
-  // 고객(펫무브앱)이 '직접 입력'으로 저장한 자유텍스트 기관명 — LABS 코드에 없으면
+  // 저장된 값이 선택지에 없으면(고객 직접입력 자유텍스트 또는 설정에서 삭제된 기관)
   // 드롭다운 옵션에 동적 추가해 선택 상태로 보존한다. (옵션에 없으면 미선택으로 보여
-  // 매니저가 무심코 다른 값을 골랐을 때 보호자 입력값이 소실됨.)
-  const isCustomLab = !!record.lab && !labObj
-  const labOptions = isCustomLab
-    ? [{ value: '', label: '—' }, ...LABS, { value: record.lab as string, label: `${record.lab} (직접입력)` }]
-    : [{ value: '', label: '—' }, ...LABS]
+  // 매니저가 무심코 다른 값을 골랐을 때 기존 값이 소실됨.)
+  const inEffective = !!record.lab && titerLabs.some(l => l.value === record.lab)
+  const labOptions = record.lab && !inEffective
+    ? [{ value: '', label: '—' }, ...titerLabs, { value: record.lab, label: labObj ? labObj.label : `${record.lab} (직접입력)` }]
+    : [{ value: '', label: '—' }, ...titerLabs]
   const dateInfo = useFieldVerification(`${DATA_KEY}[${recordIdx}].date`)
   const dateColorCls = dateInfo ? severityTextClass(dateInfo.severity) : ''
   const dateTitle = [dateInfo ? tooltipText(dateInfo) : undefined, entryTooltip].filter(Boolean).join('\n') || undefined

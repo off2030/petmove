@@ -8,6 +8,7 @@ import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
+  allLabOptions,
   buildDateRuleContext,
   deriveAdvanceNotificationStatus,
   deriveImportPermitStatus,
@@ -861,6 +862,8 @@ export function TodosApp({
   query?: string
 } = {}) {
   const { cases, updateLocalCaseField, importReportCountries, inspectionConfig, todoColumnsConfig, setNavCaseIds, listFullyLoaded, listLoadFailed } = useCases()
+  // 기관 라벨 = 설정(inspection_config) 단일 출처 — 표시명 수정·커스텀 기관이 검사 탭에도 반영 (2026-08-06).
+  const labOptions = useMemo(() => allLabOptions(inspectionConfig), [inspectionConfig])
   const [internalTab, setInternalTab] = useState<TabId>('inspection')
   const [internalQuery, setInternalQuery] = useState('')
   const activeTab = forcedTab ?? internalTab
@@ -1099,7 +1102,7 @@ export function TodosApp({
       {activeTab === 'inspection' ? (
         <InspectionTable
           rows={inspectionRows}
-          labOptions={LAB_OPTIONS}
+          labOptions={labOptions}
           statusOptions={INSPECTION_STATUS_OPTIONS}
           onUpdate={updateLocalCaseField}
           hiddenColumns={todoColumnsConfig.hiddenColumns.inspection}
