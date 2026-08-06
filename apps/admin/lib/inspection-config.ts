@@ -3,6 +3,7 @@
  */
 import {
   DEFAULT_INSPECTION_CONFIG,
+  canonicalDestinations,
   type InspectionConfig,
   type InspectionLabOption,
   type InspectionLabRule,
@@ -30,7 +31,8 @@ function normalizeRule(o: unknown): InspectionLabRule | null {
       .filter(Boolean)
     if (countries.length === 0 || labs.length === 0) return null
     // 그룹명(label)은 폐기된 개념 — 과거 저장분에 남아 있어도 여기서 버린다.
-    return { countries: Array.from(new Set(countries)), labs: Array.from(new Set(labs)) }
+    // 여행지는 정식 표기로 통일 — 구 표기(터키·대한민국 등)가 따로 남지 않는다.
+    return { countries: canonicalDestinations(countries), labs: Array.from(new Set(labs)) }
   }
 
   // 구 포맷: { country: string, lab: string }
@@ -38,7 +40,7 @@ function normalizeRule(o: unknown): InspectionLabRule | null {
     const country = r.country.trim()
     const lab = r.lab.trim()
     if (!country || !lab) return null
-    return { countries: [country], labs: [lab] }
+    return { countries: canonicalDestinations([country]), labs: [lab] }
   }
 
   return null

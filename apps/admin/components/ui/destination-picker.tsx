@@ -2,17 +2,19 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
-import { COUNTRY_CODE_MAP, destCode } from '@/lib/country-code'
+import { DESTINATION_NAMES, matchesDestination } from '@petmove/domain'
+import { destCode } from '@/lib/country-code'
 import { cn } from '@/lib/utils'
 
 /**
  * 여행지 검색형 multi-select combobox.
- * - 입력 = `COUNTRY_CODE_MAP` 기준으로만 선택 (오타·유효하지 않은 값 차단).
+ * - 목록 = `DESTINATION_NAMES` (정식 명칭만). 별칭(터키·대한민국 등)은 뜨지 않는다 —
+ *   예전에 국가코드 맵을 목록으로 써서 "튀르키예"와 "터키"가 따로 선택됐다(2026-08-06).
  * - 선택된 항목은 tan pill (MONO code + Serif 이름) — 할일→검사 탭의 DestinationCell 과 동일.
  * - 키보드: ↓↑ 네비, Enter 선택, Backspace(빈 input) 마지막 chip 제거, Esc 닫기.
  */
 
-const ALL_DESTINATIONS = Object.keys(COUNTRY_CODE_MAP)
+const ALL_DESTINATIONS = DESTINATION_NAMES
 
 interface DestinationPickerProps {
   values: string[]
@@ -57,7 +59,8 @@ export function DestinationPicker({
     return ALL_DESTINATIONS.filter(d => {
       if (selected.has(d)) return false
       if (q === '') return true
-      if (d.toLowerCase().includes(q)) return true
+      // 영문·별칭도 검색 대상 — "터키" 로 찾으면 튀르키예가 나온다.
+      if (matchesDestination(d, q)) return true
       const code = destCode(d)?.toLowerCase()
       return code ? code.includes(q) : false
     }).slice(0, 40)

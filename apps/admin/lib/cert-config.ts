@@ -3,6 +3,7 @@
  */
 import {
   DEFAULT_CERT_CONFIG,
+  canonicalDestinations,
   type CertConfig,
   type CertRule,
 } from '@petmove/domain'
@@ -26,8 +27,9 @@ function normalizeRule(o: unknown): CertRule | null {
     .filter(Boolean)
   if (countries.length === 0 || certs.length === 0) return null
   // 그룹명(label)은 폐기된 개념 — 과거 저장분에 남아 있어도 여기서 버린다.
+  // 여행지는 정식 표기로 통일 — 구 표기(터키·대한민국 등)가 따로 남지 않는다.
   return {
-    countries: Array.from(new Set(countries)),
+    countries: canonicalDestinations(countries),
     certs: Array.from(new Set(certs)),
   }
 }

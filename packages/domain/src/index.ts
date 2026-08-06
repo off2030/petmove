@@ -1,6 +1,7 @@
 export * from './types'
 export * from './dates'
 export * from './destination-config'
+export * from './destination-names'
 export * from './destination-overrides-types'
 export * from './destination-scoped-fields'
 export * from './inspection-config-defaults'

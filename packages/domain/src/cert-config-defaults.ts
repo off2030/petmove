@@ -64,7 +64,7 @@ export const DEFAULT_CERT_CONFIG: CertConfig = {
     { countries: ['뉴질랜드'], certs: ['nz', 'ovd', 'vbc'] },
     { countries: ['태국'], certs: ['formR11'] },
     { countries: ['인도네시아'], certs: ['vhc'] },
-    { countries: ['튀르키예', '터키'], certs: ['tk'] },
+    { countries: ['튀르키예'], certs: ['tk'] },
     { countries: ['싱가포르'], certs: ['sgp'] },
     { countries: ['하와이'], certs: ['aqs'] },
     { countries: ['대만'], certs: ['tw'] },
