@@ -46,6 +46,9 @@ const messages = {
     tripRound: '왕복',
     tripOneWay: '편도',
     sec2: '보호자 정보',
+    // 펫무브 앱 전용 — 마지막 단계이자 선택 입력임을 알려준다.
+    sec2OptionalLead: '서류를 만들 때 필요한 정보예요. 지금 넣지 않아도 되고, 나중에 내 정보에서 넣을 수 있어요.',
+    skipOwner: '건너뛰고 시작하기',
     name: '이름',
     namePlaceholder: '예: 홍길동',
     nameEn: '영문 이름',
@@ -149,6 +152,8 @@ const messages = {
     tripRound: 'Round-trip',
     tripOneWay: 'One-way',
     sec2: 'Owner Information',
+    sec2OptionalLead: 'Needed when we prepare your documents. You can skip it now and add it later in My Info.',
+    skipOwner: 'Skip and start',
     name: 'Name',
     namePlaceholder: 'e.g. 홍길동',
     nameEn: 'English Name',
@@ -579,21 +584,25 @@ export function ApplyForm({
   // 선택 입력으로 더 받는다. (펫무브워크와 분리)
   const skipOwner = !!prefillOwner
   /**
-   * 펫무브 앱(직영)은 등록에서 **보호자 정보를 받지 않는다** (2026-08-06 사용자 결정).
+   * 펫무브 앱(직영) 순서 = 목적지 → 반려동물 → **보호자(건너뛰기 가능)** (2026-08-06).
    *
-   * 목적지·동물만 있으면 준비 일정을 그릴 수 있다 — 이름·영문성명·전화·주소는 전부
-   * 서류를 만들 때 필요한 값이라, 앱을 막 깐 사람에게 먼저 요구할 이유가 없었다.
-   * (직접 등록이 3개월에 3건. 아무것도 보여주기 전에 13칸을 묻던 구조가 원인으로 의심됨.)
-   * 보호자 정보는 '내 정보 > 보호자 정보'와 서류 단계에서 받는다.
+   * 보호자 정보(이름·영문성명·전화·주소)는 전부 서류를 만들 때 필요한 값이지 일정을
+   * 그리는 데 필요한 값이 아니다. 그런데 앞에 두는 바람에, 아무것도 보여주기 전에
+   * 13칸을 요구하는 꼴이었다(직접 등록 3개월에 3건). 뒤로 보내고 선택으로 바꾼다 —
+   * 지금 쓸 사람은 여기서 끝내고, 아닌 사람은 건너뛰고 일정부터 본다.
+   * 건너뛴 정보는 '내 정보 > 보호자'와 서류 단계에서 받는다.
    *
-   * 펫무브워크 병원·업체 신청서(/apply/<slug>)는 접수 창구라 종전대로 전부 받는다.
+   * skipOwner(동물 추가 — 기존 보호자) 는 이미 아는 정보라 그 단계 자체가 없다.
+   * 펫무브워크 병원·업체 신청서(/apply/<slug>)는 접수 창구라 종전대로 앞에서 전부 받는다.
    */
-  const visibleSteps = isPublic ? [1, 2, 3, 4] : [1, 3]
+  const visibleSteps = isPublic ? [1, 2, 3, 4] : skipOwner ? [1, 3] : [1, 3, 2]
   const [step, setStep] = useState(() =>
     initialDraft && visibleSteps.includes(initialDraft.step) ? initialDraft.step : 1,
   )
   // 복원했음을 알리는 줄 — 사용자가 '처음부터'를 누르면 감춘다.
   const [restored, setRestored] = useState(!!initialDraft)
+  /** 펫무브 앱의 보호자 단계 = 마지막 + 선택(건너뛰기 가능). */
+  const ownerOptional = !isPublic && !skipOwner
   const stepPos = Math.max(0, visibleSteps.indexOf(step))
   const isFirstStep = stepPos === 0
   const isLastStep = stepPos === visibleSteps.length - 1
@@ -626,6 +635,18 @@ export function ApplyForm({
   const [addressZipcode, setAddressZipcode] = useState(dStr('addressZipcode', prefillOwner?.zipcode ?? ''))
   const [addressSido, setAddressSido] = useState(dStr('addressSido', prefillOwner?.sido ?? ''))
   const [addressSigungu, setAddressSigungu] = useState(dStr('addressSigungu', prefillOwner?.sigungu ?? ''))
+
+  /**
+   * 선택 단계인데 사용자가 아직 아무것도 안 넣은 상태 — 제출 버튼이 '건너뛰고 시작'으로 바뀐다.
+   * 이름(customerName)은 로그인 계정에서 자동으로 채워지므로 판정에서 뺀다. 그걸 세면
+   * 손도 안 댔는데 버튼이 '정보 등록'으로 떠서, 건너뛸 수 있다는 걸 알 수 없다.
+   */
+  const ownerSkipping =
+    ownerOptional &&
+    !customerLastNameEn.trim() &&
+    !customerFirstNameEn.trim() &&
+    !phone.trim() &&
+    !addressKr.trim()
 
   // Daum Postcode
   const [scriptLoaded, setScriptLoaded] = useState(false)
@@ -866,6 +887,15 @@ export function ApplyForm({
     if (s === 1) {
       if (!destination) miss.add('destination')
     } else if (s === 2) {
+      // 펫무브 앱은 보호자 단계가 마지막이고 선택이다 — 빈칸은 통과시키고,
+      // 적은 값의 형식만 본다(잘못된 전화번호가 서류로 흘러가지 않게).
+      if (ownerOptional) {
+        if (phone.trim() && !/^010\d{8}$/.test(phone)) {
+          formatError = m.phoneFormatError
+          miss.add('phone')
+        }
+        return { miss, formatError }
+      }
       if (!customerName.trim()) miss.add('customerName')
       // Apple 로그인은 영문 이름을 필수로 강요하지 않는다(App Store Guideline 4.0).
       // 비워도 다음 단계 진행 가능 → 로그인 후 '내 정보 > 보호자 정보'에서 입력.
@@ -1205,6 +1235,11 @@ export function ApplyForm({
             <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(33,33,36,0.12)] mb-1">
               <h2 className={sectionTitleClass}>{m.sec2}</h2>
             </div>
+            {ownerOptional && (
+              <p className="pt-2 pb-1 text-[13px] leading-relaxed text-[#97979C]">
+                {m.sec2OptionalLead}
+              </p>
+            )}
             <FieldRow m={m} label={m.name} required fieldKey="customerName" missing={missing.has('customerName')}>
               <input type="text" autoComplete="name" value={customerName} onChange={(e) => setCustomerName(e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase()))}
                 placeholder={m.namePlaceholder} className={inputClass} />
@@ -1360,7 +1395,9 @@ export function ApplyForm({
                 disabled={submitting || (isPublic && !!TURNSTILE_SITE_KEY && !turnstileToken)}
                 className={cn(primaryButtonClass, 'flex-1')}
               >
-                {submitting ? m.submitting : m.submit}
+                {/* 보호자 정보를 안 채웠으면 버튼이 '건너뛰고 시작' 이라고 말한다 —
+                    빈칸으로 넘어가도 되는지 눈치 보지 않게. 버튼은 하나로 유지. */}
+                {submitting ? m.submitting : ownerSkipping ? m.skipOwner : m.submit}
               </button>
             )}
           </div>
