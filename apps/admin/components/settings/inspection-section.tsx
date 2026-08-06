@@ -11,11 +11,11 @@ import { PillButton } from '@petmove/ui'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   SettingsActionButton,
+  SettingsCard,
   SettingsShell,
   SettingsSection,
   SettingsField,
   SettingsFooter,
-  SettingsSubsectionTitle,
 } from './settings-layout'
 import { DestinationPill, OverflowPill } from './destination-pills'
 import { labColor } from '@/lib/lab-color'
@@ -268,10 +268,7 @@ function SectionBlock({
   for (const r of rules) for (const l of r.labs) referencedValues.add(l)
 
   return (
-    <section className="mb-xl">
-      <SettingsSubsectionTitle className="mb-2">{title}</SettingsSubsectionTitle>
-      <div className="border-t border-border/80" />
-
+    <SettingsCard title={title}>
       {/* 기관 목록 (기본 + 사용자 정의) + 추가 */}
       <LabsAdminRow
         defaults={defaultLabs}
@@ -424,7 +421,7 @@ function SectionBlock({
           onSubmit={commitNewRule}
         />
       )}
-    </section>
+    </SettingsCard>
   )
 }
 
@@ -622,11 +619,13 @@ export function InspectionSection() {
   return (
     <SettingsShell size="lg">
       <SettingsSection title="검사">
-        <TodoColumnsToggle
-          tabId="inspection"
+        <div className="space-y-lg">
+        <SettingsCard
           title="표시 항목 설정"
           description="검사 탭 테이블에 표시할 항목을 선택합니다. 모두 체크가 기본값."
-        />
+        >
+          <TodoColumnsToggle tabId="inspection" bare />
+        </SettingsCard>
 
         <SectionBlock
           title="광견병항체검사"
@@ -659,9 +658,10 @@ export function InspectionSection() {
           rules={draft.infectiousRules}
           onRulesChange={(infectiousRules) => setDraft({ ...draft, infectiousRules })}
         />
+        </div>
 
-        {/* Footer actions */}
-        <SettingsFooter className="justify-between">
+        {/* Footer actions — 두 카드(광견병·전염병) 공통 저장 */}
+        <SettingsFooter className="justify-between mt-lg border-t-0">
           <SettingsActionButton onClick={resetToDefaults}>
             기본값으로 되돌리기
           </SettingsActionButton>

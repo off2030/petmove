@@ -7,11 +7,11 @@ import {
   type DetailViewSettings,
 } from '@/lib/detail-view-settings-types'
 import {
+  SettingsCard,
   SettingsShell,
   SettingsSection,
   SettingsFooter,
   SettingsListRow,
-  SettingsSubsectionTitle,
   SettingsToggleButton,
   formatSavedAgo,
 } from './settings-layout'
@@ -95,9 +95,9 @@ export function DetailViewSection({
         )}
 
         {/* ── 기본 ── */}
-        <section className="mb-2xl">
-          <SettingsSubsectionTitle className="mb-2">기본</SettingsSubsectionTitle>
-          <div className="border-t border-border/80">
+        <div className="space-y-lg">
+        <SettingsCard title="기본">
+          <div>
             <SettingsListRow
               title="한·영 병기"
               description='종·품종·모색·성별을 "한글 | 영문" 으로 함께 표시'
@@ -116,7 +116,7 @@ export function DetailViewSection({
               {formatSavedAgo(savedAt)}
             </span>
           </SettingsFooter>
-        </section>
+        </SettingsCard>
 
         {/* ── 공유 ── */}
         <SharePresetsSection />
@@ -126,6 +126,7 @@ export function DetailViewSection({
 
         {/* ── 증명서 ── */}
         <DocumentsSection />
+        </div>
       </SettingsSection>
     </SettingsShell>
   )

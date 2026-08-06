@@ -4,11 +4,11 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { getMyProfile, updateMyProfile, type MyProfile } from '@/lib/actions/profile'
 import {
+  SettingsCard,
   SettingsShell,
   SettingsSection,
   SettingsFooter,
   SettingsField,
-  SettingsSubsectionTitle as SectionLabel,
   formatSavedAgo,
 } from './settings-layout'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
@@ -94,10 +94,10 @@ export function ProfileSection({
   return (
     <SettingsShell>
       <SettingsSection title="내 프로필">
+        <div className="space-y-lg">
         {/* Profile fields */}
-        <section className="mb-xl">
-          <SectionLabel className="mb-2">계정</SectionLabel>
-          <div className="border-t border-border/80">
+        <SettingsCard title="계정">
+          <div>
             {/* Avatar */}
             <AvatarRow
               profile={profile}
@@ -145,12 +145,11 @@ export function ProfileSection({
               </SettingsField>
             )}
           </div>
-        </section>
+        </SettingsCard>
 
         {/* Push notification permission */}
-        <section className="mb-xl">
-          <SectionLabel className="mb-2">알림</SectionLabel>
-          <div className="border-t border-border/80">
+        <SettingsCard title="알림">
+          <div>
             <SettingsField label="푸시 알림">
               <div className="flex flex-col gap-1">
                 <PushPermission />
@@ -160,14 +159,15 @@ export function ProfileSection({
               </div>
             </SettingsField>
           </div>
-        </section>
+        </SettingsCard>
+        </div>
 
         {error && (
-          <p className="font-serif text-[13px] text-destructive mb-md">{error}</p>
+          <p className="font-serif text-[13px] text-destructive mt-md">{error}</p>
         )}
       </SettingsSection>
 
-      <SettingsFooter>
+      <SettingsFooter className="border-t-0">
         <span className="font-serif text-[12px] text-muted-foreground/60">
           {formatSavedAgo(lastSaved)}
         </span>

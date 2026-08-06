@@ -20,6 +20,7 @@ import {
 import type { VetInfo } from '@/lib/vet-info'
 import type { UserContactInfo, UserContactKey } from '@/lib/user-contact'
 import {
+  SettingsCard,
   SettingsShell,
   SettingsSection,
   SettingsField,
@@ -219,8 +220,10 @@ export function CompanySection({
   return (
     <SettingsShell>
       <SettingsSection title={title}>
+        <div className="space-y-lg">
         {/* 조직정보(아바타·병원/운송 필드·추가정보·기본값 복원) — 슈퍼어드민 화면과 공유.
             멤버는 유형 변경 불가(canEditOrgType=false), 보기 전환 탭만. */}
+        <SettingsCard title="조직">
         <OrgInfoForm
           info={info}
           orgType={orgType}
@@ -234,13 +237,14 @@ export function CompanySection({
           onReset={resetCompanyInfo}
           hasDefault={hasDefault}
         />
+        </SettingsCard>
 
         {/* 발급자 본인 정보 — 동물병원이면 "수의사", 운송회사면 "담당자" 그룹으로 노출.
             로그인 사용자 본인 (profiles.contact_info) 만 보이고 편집됨. 한 조직에 멤버
             여럿일 때 각자 본인 명의로 cert 발급되도록 — PDF 매핑(vet:name_en 등) 은
             org_type 에 따라 hospital 측 vet 키 / transport 측 transport_contact 키로
             overlay. 다른 멤버에게는 영향 없음. */}
-        <section className="mt-xl mb-xl">
+        <SettingsCard>
           {/* 발급자 정보를 수의사/담당자 중 어느 쪽으로 입력할지 전환하는 보기 탭.
               'both' 유형에서만 노출 — 단일 유형은 위 sync effect 가 orgType 을 따라 고정.
               OrgInfoForm 내부 탭과 별개 — 발급자(본인) 섹션 전용. */}
@@ -263,11 +267,11 @@ export function CompanySection({
               ))}
             </div>
           )}
-          <SectionLabel className="mb-2">{isTransport ? '담당자' : '수의사'}</SectionLabel>
-          <p className="mb-2 font-serif text-[12px] text-muted-foreground/70 leading-relaxed max-w-md">
+          <SectionLabel className="mb-1">{isTransport ? '담당자' : '수의사'}</SectionLabel>
+          <p className="mb-3 font-serif text-[12px] text-muted-foreground/70 leading-relaxed max-w-md">
             본인 정보를 넣으면 그 이름·휴대폰{isTransport ? '' : '·면허'}로 발급되고, 비워두면 회색 글씨의 조직 기본값으로 발급됩니다.
           </p>
-          <div className="border-t border-border/80">
+          <div>
             {!myInfo ? (
               <p className="py-3 font-serif text-[12px] text-muted-foreground/60">
                 불러오는 중...
@@ -343,15 +347,16 @@ export function CompanySection({
               </>
             )}
           </div>
-        </section>
+        </SettingsCard>
+        </div>
 
         {error && (
-          <p className="font-serif text-[13px] text-destructive mb-md">{error}</p>
+          <p className="font-serif text-[13px] text-destructive mt-md">{error}</p>
         )}
 
         {/* 발급자 저장시각 — 조직정보 자체 풋터는 OrgInfoForm 내부에 있음. */}
         {lastSaved && (
-          <SettingsFooter>
+          <SettingsFooter className="border-t-0">
             <span className="font-serif text-[12px] text-muted-foreground/60">
               {formatSavedAgo(lastSaved)}
             </span>

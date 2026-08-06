@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { RotateCcw } from 'lucide-react'
 import {
   SettingsActionButton,
+  SettingsCard,
   SettingsSearchInput,
   SettingsShell,
   SettingsSection,
@@ -105,7 +106,8 @@ export function TransfersSection() {
         />
 
         {/* 보낸 전달 */}
-        <section className="mb-2xl">
+        <div className="space-y-lg">
+        <SettingsCard>
           <div className="flex items-baseline justify-between mb-2">
             <SettingsSubsectionTitle>보낸 전달</SettingsSubsectionTitle>
             <SettingsActionButton onClick={refresh} disabled={loading}>
@@ -113,7 +115,7 @@ export function TransfersSection() {
               새로고침
             </SettingsActionButton>
           </div>
-          <div className="border-t border-border/80">
+          <div>
             {loading ? (
               <p className="font-serif text-[14px] text-muted-foreground py-4">불러오는 중…</p>
             ) : !sent || sent.length === 0 ? (
@@ -130,10 +132,10 @@ export function TransfersSection() {
               ))
             )}
           </div>
-        </section>
+        </SettingsCard>
 
         {/* 받은 전달 */}
-        <section>
+        <SettingsCard>
           <SettingsSubsectionTitle className="mb-2">
             받은 전달
             {pendingCount > 0 && (
@@ -145,7 +147,7 @@ export function TransfersSection() {
           <p className="mt-1 mb-2 font-serif text-[12px] text-muted-foreground/70">
             수락·거부는 메시지 화면의 케이스 카드에서 진행합니다.
           </p>
-          <div className="border-t border-border/80">
+          <div>
             {loading ? (
               <p className="font-serif text-[14px] text-muted-foreground py-4">불러오는 중…</p>
             ) : !received || received.length === 0 ? (
@@ -162,7 +164,8 @@ export function TransfersSection() {
               ))
             )}
           </div>
-        </section>
+        </SettingsCard>
+        </div>
       </SettingsSection>
     </SettingsShell>
   )

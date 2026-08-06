@@ -16,7 +16,7 @@ import {
 } from '@/lib/actions/invites'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { PillButton } from '@petmove/ui'
-import { SettingsShell, SettingsSection, SettingsSubsectionTitle } from './settings-layout'
+import { SettingsCard, SettingsShell, SettingsSection } from './settings-layout'
 import { useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
 
@@ -169,10 +169,10 @@ export function MembersSection({
   return (
     <SettingsShell>
       <SettingsSection title="멤버">
+        <div className="space-y-lg">
         {/* Active members */}
-        <section className="mb-xl">
-          <SettingsSubsectionTitle className="mb-2">활성 멤버 · {members.length}</SettingsSubsectionTitle>
-          <div className="border-t border-border/80">
+        <SettingsCard title={<>활성 멤버 · {members.length}</>}>
+          <div>
             {loading ? (
               <p className="font-serif text-[14px] text-muted-foreground py-4">불러오는 중…</p>
             ) : members.length === 0 ? (
@@ -241,15 +241,12 @@ export function MembersSection({
             </>
             )}
           </div>
-        </section>
-  
+        </SettingsCard>
+
         {/* External super_admins (조직 외 SaaS 운영자) — admin 만 표시 */}
         {isAdmin && externalSuperAdmins.length > 0 && (
-          <section className="mb-xl">
-            <SettingsSubsectionTitle className="mb-2">
-              SaaS 운영자 (조직 외) · {externalSuperAdmins.length}
-            </SettingsSubsectionTitle>
-            <div className="border-t border-border/80">
+          <SettingsCard title={<>SaaS 운영자 (조직 외) · {externalSuperAdmins.length}</>}>
+            <div>
               {externalSuperAdmins.map((s) => {
                 const hasRealName = !!s.name && s.name.trim() !== '' && s.name !== s.email
                 return (
@@ -281,13 +278,12 @@ export function MembersSection({
             <p className="font-serif text-[12px] text-muted-foreground/70 mt-2 leading-relaxed">
               조직 멤버는 아니지만 SaaS 운영을 위해 모든 조직 데이터에 접근할 수 있습니다.
             </p>
-          </section>
+          </SettingsCard>
         )}
-  
+
         {/* Pending invites */}
-        <section className="mb-xl">
-          <SettingsSubsectionTitle className="mb-2">대기 중 초대 · {invites.length}</SettingsSubsectionTitle>
-          <div className="border-t border-border/80">
+        <SettingsCard title={<>대기 중 초대 · {invites.length}</>}>
+          <div>
             {invites.length === 0 ? (
               <p className="font-serif text-[14px] text-muted-foreground py-4">대기 중인 초대가 없습니다.</p>
             ) : (
@@ -332,11 +328,11 @@ export function MembersSection({
               })
             )}
           </div>
-        </section>
-  
+        </SettingsCard>
+
         {/* Invite form — admin only */}
         {isAdmin ? (
-          <section className="pt-md border-t border-border/80">
+          <SettingsCard title="멤버 초대">
             <div className="flex items-center gap-sm">
               <input
                 type="email"
@@ -363,12 +359,13 @@ export function MembersSection({
             <p className="mt-sm font-serif text-[12px] text-muted-foreground/70 leading-relaxed">
               유효기간 7일. 초대 생성 시 링크가 클립보드에 복사되고 이메일로도 발송됩니다.
             </p>
-          </section>
+          </SettingsCard>
         ) : (
-          <p className="pt-md border-t border-border/80 font-serif text-[12px] text-muted-foreground/70 leading-relaxed">
+          <p className="font-serif text-[12px] text-muted-foreground/70 leading-relaxed">
             멤버 초대는 관리자만 가능합니다.
           </p>
         )}
+        </div>
       </SettingsSection>
     </SettingsShell>
   )

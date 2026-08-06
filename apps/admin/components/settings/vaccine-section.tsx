@@ -25,6 +25,7 @@ import { SectionHeader } from '@petmove/ui'
 import {
   SETTINGS_ACTION_BUTTON_CLASS,
   SettingsActionButton,
+  SettingsCard,
   SettingsSubsectionTitle,
 } from './settings-layout'
 import { cn } from '@/lib/utils'
@@ -551,10 +552,11 @@ export function VaccineSection({
       {loading ? (
         <p className="font-serif text-[14px] text-muted-foreground">불러오는 중…</p>
       ) : (
-        grouped.map(({ section, categories }) => {
+        <div className="space-y-lg">
+        {grouped.map(({ section, categories }) => {
           const totalInSection = categories.reduce((sum, c) => sum + c.list.length, 0)
           return (
-            <section key={section} className="mb-xl">
+            <SettingsCard key={section}>
               <div className="mb-2 flex items-baseline gap-sm">
                 <SettingsSubsectionTitle>{section}</SettingsSubsectionTitle>
                 <span className="pmw-st__tab-count">{totalInSection}</span>
@@ -626,9 +628,10 @@ export function VaccineSection({
                   </div>
                 )
               })}
-            </section>
+            </SettingsCard>
           )
-        })
+        })}
+        </div>
       )}
 
       {!loading && isAdmin && (
@@ -1116,7 +1119,7 @@ function DefaultsSection({ products }: { products: OrgVaccineProduct[] }) {
   }
 
   return (
-    <section className="mb-xl border-b border-border/80 pb-lg">
+    <SettingsCard className="mt-lg">
       <div className="mb-2 flex items-baseline gap-sm">
         <SettingsSubsectionTitle>구충 디폴트 설정</SettingsSubsectionTitle>
         <span className="pmw-st__sec-lead">상세페이지에서 날짜 입력 시 자동 채움</span>
@@ -1149,6 +1152,6 @@ function DefaultsSection({ products }: { products: OrgVaccineProduct[] }) {
         })}
       </div>
       {msg && <p className="mt-2 font-serif text-[12px] text-destructive">{msg}</p>}
-    </section>
+    </SettingsCard>
   )
 }

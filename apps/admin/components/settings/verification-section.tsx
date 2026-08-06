@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from 'react'
 import { ALL_PROCEDURE_CHECKS, checkCountryKeys } from '@petmove/domain'
 import type { ProcedureCheck } from '@petmove/domain'
 import {
+  SettingsCard,
   SettingsCheckBox,
   SettingsFilterPills,
   SettingsSearchInput,
@@ -204,8 +205,9 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
         ) : countries.length === 0 ? (
           <p className="pmw-st__sec-lead py-md">검색 결과 없음.</p>
         ) : (
-          countries.map((country) => (
-            <section key={country} className="mb-xl">
+          <div className="space-y-lg">
+          {countries.map((country) => (
+            <SettingsCard key={country}>
               <div className="flex items-baseline gap-2 pb-2 border-b border-border/80 mb-2">
                 <SettingsSubsectionTitle>{countryLabel(country)}</SettingsSubsectionTitle>
                 <span className="text-muted-foreground/60">·</span>
@@ -257,8 +259,9 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
                   </button>
                 )
               })}
-            </section>
-          ))
+            </SettingsCard>
+          ))}
+          </div>
         )}
 
         {!isSuperAdmin && (

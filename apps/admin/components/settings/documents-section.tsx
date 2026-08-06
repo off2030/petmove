@@ -9,9 +9,9 @@ import { PillButton } from '@petmove/ui'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   SettingsActionButton,
+  SettingsCard,
   SettingsFooter,
   SettingsSectionLabelSerif as SectionLabel,
-  SettingsSubsectionTitle,
 } from './settings-layout'
 import { DestinationPill, OverflowPill } from './destination-pills'
 import { saveCertConfigAction } from '@/lib/actions/cert-config-action'
@@ -219,13 +219,10 @@ export function DocumentsSection() {
   }
 
   return (
-    <section className="mt-2xl pt-xl border-t border-border/40">
-      <div className="mb-md">
-        <SettingsSubsectionTitle>증명서</SettingsSubsectionTitle>
-        <p className="pmw-st__sec-lead mt-1">
-          케이스 상세페이지에 표시되는 증명서 버튼 구성. 기본 증명서는 모든 케이스에 공통이며, 국가별 규칙은 목적지에 따라 추가됩니다.
-        </p>
-      </div>
+    <SettingsCard
+      title="증명서"
+      description="케이스 상세페이지에 표시되는 증명서 버튼 구성. 기본 증명서는 모든 케이스에 공통이며, 국가별 규칙은 목적지에 따라 추가됩니다."
+    >
 
       {/* 기본 증명서 */}
       <section className="mb-xl">
@@ -364,7 +361,7 @@ export function DocumentsSection() {
           </PillButton>
         </div>
       </SettingsFooter>
-    </section>
+    </SettingsCard>
   )
 }
 

@@ -6,7 +6,7 @@ import { useCases } from '@/components/cases/cases-context'
 import { listSharePresets, saveSharePresets } from '@/lib/actions/share-presets'
 import { PillButton, useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
-import { SettingsActionButton, SettingsSectionLabelSerif, SettingsSubsectionTitle } from './settings-layout'
+import { SettingsActionButton, SettingsCard, SettingsSectionLabelSerif, SettingsSubsectionTitle } from './settings-layout'
 import { ALL_EXTRA_FIELD_KEYS } from '@petmove/domain'
 import { buildShareFieldLayout } from '@petmove/domain'
 import type { SharePreset } from '@/lib/share-presets-types'
@@ -111,7 +111,7 @@ export function SharePresetsSection({
   }
 
   return (
-    <section className="mt-2xl">
+    <SettingsCard>
       <div className="flex items-baseline justify-between mb-2 gap-md flex-wrap">
         <SettingsSubsectionTitle className="inline-flex items-center gap-sm">
           공유
@@ -240,6 +240,6 @@ export function SharePresetsSection({
       >
         <Plus size={13} /> 새 프리셋
       </button>
-    </section>
+    </SettingsCard>
   )
 }

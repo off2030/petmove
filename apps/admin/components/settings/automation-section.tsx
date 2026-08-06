@@ -13,6 +13,7 @@ import {
 } from '@/lib/actions/org-auto-fill-rules'
 import {
   SettingsActionButton,
+  SettingsCard,
   SettingsCheckBox,
   SettingsFilterPills,
   SettingsFooter,
@@ -275,8 +276,9 @@ export function AutomationSection({
         ) : filteredRules.length === 0 ? (
           <p className="pmw-st__sec-lead py-md">검색 결과 없음.</p>
         ) : (
-          sortedDests.map((dk) => (
-            <section key={dk} className="mb-xl">
+          <div className="space-y-lg">
+          {sortedDests.map((dk) => (
+            <SettingsCard key={dk}>
               <div className="flex items-baseline gap-2 pb-2 border-b border-border/80 mb-2">
                 <SettingsSubsectionTitle>{destLabel(dk)}</SettingsSubsectionTitle>
                 <span className="text-muted-foreground/60">·</span>
@@ -332,12 +334,13 @@ export function AutomationSection({
                   )}
                 </div>
               ))}
-            </section>
-          ))
+            </SettingsCard>
+          ))}
+          </div>
         )}
   
         {isAdmin && (
-          <SettingsFooter className="justify-between">
+          <SettingsFooter className="justify-between mt-lg border-t-0">
             <SettingsActionButton
               onClick={handleRestore}
               disabled={pending || deletedStack.length === 0}
