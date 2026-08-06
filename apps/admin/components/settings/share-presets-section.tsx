@@ -104,7 +104,7 @@ export function SharePresetsSection({
           <p className="py-4 font-serif text-[14px] text-muted-foreground">불러오는 중…</p>
         ) : presets.length === 0 ? (
           <p className="py-4 font-serif text-[14px] text-muted-foreground">
-            자주 쓰는 요청 묶음을 만들어두면 링크 발급 때 한 번에 선택할 수 있어요.
+            아직 만든 프리셋이 없습니다.
           </p>
         ) : (
           presets.map((p) => (
