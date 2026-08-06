@@ -64,9 +64,10 @@ export const EU_COUNTRIES = [
 ]
 
 /**
- * 기본 설정. 기존 하드코딩 규칙을 규칙 기반으로 이관.
- * - 광견병: EU는 하나의 그룹으로 묶음. 영국은 EU 회원국 아니어서 별도.
- * - 전염병: 호주·뉴질랜드만 기본 포함. 뉴질랜드는 labs 여러 개(이중 검사).
+ * 기본 설정 = 로잔 운영 상태 스냅샷 (2026-08-06 사용자 지시 — "기본값을 지금 상태로").
+ * - 광견병: 유럽연합 그룹에 영국·스위스·노르웨이까지 포함(별도 행 없음). 튀르키예 매핑 없음
+ *   — 튀르키예행은 기본 검사기관(krsl)으로 떨어진다.
+ * - 전염병: 호주·뉴질랜드·남아공. 뉴질랜드는 labs 여러 개(이중 검사) — VBDDL 먼저.
  */
 export const DEFAULT_INSPECTION_CONFIG: InspectionConfig = {
   titerDefault: 'krsl',
@@ -74,14 +75,11 @@ export const DEFAULT_INSPECTION_CONFIG: InspectionConfig = {
     { countries: ['싱가포르'], labs: ['ksvdl_r'] },
     { countries: ['일본'], labs: ['apqa_seoul'] },
     { countries: ['하와이'], labs: ['apqa_seoul'] },
-    { label: '유럽연합', countries: [...EU_COUNTRIES], labs: ['apqa_eu'] },
-    { countries: ['영국'], labs: ['apqa_eu'] },
-    { countries: ['스위스'], labs: ['apqa_eu'] },
-    { countries: ['튀르키예', '터키'], labs: ['apqa_eu'] },
+    { label: '유럽연합', countries: [...EU_COUNTRIES, '영국', '스위스', '노르웨이'], labs: ['apqa_eu'] },
   ],
   infectiousRules: [
     { countries: ['호주'], labs: ['ksvdl'] },
-    { countries: ['뉴질랜드'], labs: ['apqa_hq', 'vbddl'] },
+    { countries: ['뉴질랜드'], labs: ['vbddl', 'apqa_hq'] },
     { countries: ['남아프리카공화국'], labs: ['arc_ovi'] },
   ],
 }
