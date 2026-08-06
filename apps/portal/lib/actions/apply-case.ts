@@ -160,13 +160,20 @@ export async function applyCase(input: ApplyInput): Promise<
   // Apple 로그인 사용자는 영문 이름을 필수에서 제외(App Store Guideline 4.0 — 클라이언트
   // 검증과 동일한 백스톱). 영문 이름은 로그인 후 '내 정보 > 보호자 정보'에서 입력·수정 가능.
   const isAppleLogin = user?.app_metadata?.provider === 'apple'
+  // 펫무브 앱(직영·로그인)은 보호자 정보를 등록에서 받지 않는다 — 폼에서 그 단계를 없앴고
+  // (2026-08-06), 서버 검증도 같이 풀어야 제출이 통과한다. 보호자 정보는 서류 만들 때 받는다.
+  // 조직 공개 신청서(/apply/<slug>)는 접수 창구라 종전대로 전부 필수.
+  // 펫무브 앱 = 직영 창구 + 로그인 계정. 조직 신청서를 로그인 상태로 열어도 그쪽은 종전대로.
+  const isPetmoveApp = !!user && input.org_id === DIRECT_ORG_ID
+  const ownerRequired = !isPetmoveApp
   const sharedMissing =
     !input.destination?.trim() ||
-    !input.customer_name?.trim() ||
-    (!isAppleLogin &&
-      (!input.customer_last_name_en?.trim() || !input.customer_first_name_en?.trim())) ||
-    !input.phone?.trim() ||
-    !input.address_kr?.trim()
+    (ownerRequired &&
+      (!input.customer_name?.trim() ||
+        (!isAppleLogin &&
+          (!input.customer_last_name_en?.trim() || !input.customer_first_name_en?.trim())) ||
+        !input.phone?.trim() ||
+        !input.address_kr?.trim()))
   const petMissing = pets.some(
     (p) =>
       !p.pet_name?.trim() ||

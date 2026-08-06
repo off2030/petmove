@@ -578,7 +578,17 @@ export function ApplyForm({
   // 조직 공개폼(isPublic — 병원·업체 신청서, 예: /apply/lvmc)은 마지막에 추가 정보(step 4)를
   // 선택 입력으로 더 받는다. (펫무브워크와 분리)
   const skipOwner = !!prefillOwner
-  const visibleSteps = skipOwner ? [1, 3] : isPublic ? [1, 2, 3, 4] : [1, 2, 3]
+  /**
+   * 펫무브 앱(직영)은 등록에서 **보호자 정보를 받지 않는다** (2026-08-06 사용자 결정).
+   *
+   * 목적지·동물만 있으면 준비 일정을 그릴 수 있다 — 이름·영문성명·전화·주소는 전부
+   * 서류를 만들 때 필요한 값이라, 앱을 막 깐 사람에게 먼저 요구할 이유가 없었다.
+   * (직접 등록이 3개월에 3건. 아무것도 보여주기 전에 13칸을 묻던 구조가 원인으로 의심됨.)
+   * 보호자 정보는 '내 정보 > 보호자 정보'와 서류 단계에서 받는다.
+   *
+   * 펫무브워크 병원·업체 신청서(/apply/<slug>)는 접수 창구라 종전대로 전부 받는다.
+   */
+  const visibleSteps = isPublic ? [1, 2, 3, 4] : [1, 3]
   const [step, setStep] = useState(() =>
     initialDraft && visibleSteps.includes(initialDraft.step) ? initialDraft.step : 1,
   )
