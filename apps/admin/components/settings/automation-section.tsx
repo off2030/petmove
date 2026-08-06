@@ -14,6 +14,7 @@ import {
 import {
   SettingsActionButton,
   SettingsCheckBox,
+  SettingsFilterPills,
   SettingsSearchInput,
   SettingsShell,
   SettingsSection,
@@ -257,7 +258,7 @@ export function AutomationSection({
               placeholder="트리거, 대상 필드, 목적지 검색"
               className="flex-1"
             />
-            <StatusFilterPills value={statusFilter} onChange={setStatusFilter} />
+            <SettingsFilterPills options={STATUS_FILTERS} value={statusFilter} onChange={setStatusFilter} />
           </div>
           <p className="pmw-st__sec-lead px-1">
             검색 대상: 트리거 필드, 대상 필드, 목적지, 종, 오프셋, 활성 상태. 공백으로 여러 단어를 넣으면 모두 포함된 규칙만 보여줍니다.
@@ -374,33 +375,6 @@ export function AutomationSection({
   )
 }
 
-function StatusFilterPills({
-  value,
-  onChange,
-}: {
-  value: StatusFilter
-  onChange: (value: StatusFilter) => void
-}) {
-  return (
-    <div className="flex shrink-0 items-center gap-1 rounded-full border border-border/80 bg-card p-1">
-      {STATUS_FILTERS.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          onClick={() => onChange(option.value)}
-          className={cn(
-            'h-8 rounded-full px-3 font-serif text-[13px] transition-colors',
-            value === option.value
-              ? 'bg-foreground text-background'
-              : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-          )}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 /* ── Custom Editorial Dropdown ── */
 

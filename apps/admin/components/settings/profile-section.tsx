@@ -9,6 +9,7 @@ import {
   SettingsFooter,
   SettingsField,
   SettingsSubsectionTitle as SectionLabel,
+  formatSavedAgo,
 } from './settings-layout'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { supabaseBrowser } from '@/lib/supabase/browser'
@@ -18,19 +19,6 @@ import { cn } from '@/lib/utils'
 
 const AVATAR_MAX_BYTES = 20 * 1024 * 1024
 const AVATAR_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif'
-
-function formatSavedAgo(date: Date | null): string {
-  if (!date) return ''
-  const diff = Date.now() - date.getTime()
-  const sec = Math.floor(diff / 1000)
-  if (sec < 5) return '자동 저장됨 · 방금 전'
-  if (sec < 60) return `자동 저장됨 · ${sec}초 전`
-  const min = Math.floor(sec / 60)
-  if (min < 60) return `자동 저장됨 · ${min}분 전`
-  const hour = Math.floor(min / 60)
-  if (hour < 24) return `자동 저장됨 · ${hour}시간 전`
-  return `자동 저장됨 · ${date.toLocaleDateString()}`
-}
 
 function displayName(p: MyProfile | null): string {
   if (!p) return ''

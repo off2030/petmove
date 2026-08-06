@@ -13,9 +13,9 @@ import {
   SettingsShell,
   SettingsSection,
   SettingsField,
-  SettingsSectionLabelSerif as SectionLabel,
   SettingsSubsectionTitle,
 } from './settings-layout'
+import { DestinationPill, OverflowPill } from './destination-pills'
 import { labColor } from '@/lib/lab-color'
 import { cn } from '@/lib/utils'
 import { saveInspectionConfigAction } from '@/lib/actions/inspection-config-action'
@@ -35,35 +35,6 @@ function sameSet(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false
   const s = new Set(a)
   return b.every(x => s.has(x))
-}
-
-/** 신고 탭과 동일 — 얇은 border + sans 12px. */
-function DestinationPill({ name }: { name: string }) {
-  return (
-    <span
-      className="inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 font-sans text-[12px] whitespace-nowrap"
-      style={{
-        borderColor: 'var(--pmw-border-warm)',
-        color: 'var(--pmw-near-black)',
-      }}
-    >
-      {name}
-    </span>
-  )
-}
-
-function OverflowPill({ count }: { count: number }) {
-  return (
-    <span
-      className="inline-flex items-center rounded-sm border px-2 py-0.5 font-sans text-[12px]"
-      style={{
-        borderColor: 'var(--pmw-border-warm)',
-        color: 'var(--pmw-near-black)',
-      }}
-    >
-      +{count}개국
-    </span>
-  )
 }
 
 /** "기관 목록" 행: 기본/사용자 정의 기관을 작은 tone chip 으로 나열 + 추가/제거. */

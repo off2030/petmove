@@ -12,6 +12,7 @@ import {
   SettingsSectionLabelSerif as SectionLabel,
   SettingsSubsectionTitle,
 } from './settings-layout'
+import { DestinationPill, OverflowPill } from './destination-pills'
 import { saveCertConfigAction } from '@/lib/actions/cert-config-action'
 import {
   ALL_CERTS,
@@ -22,16 +23,6 @@ import {
 
 function certLabel(key: string): string {
   return ALL_CERTS.find(c => c.key === key)?.label ?? key
-}
-
-function DestinationPill({ name }: { name: string }) {
-  return (
-    <span
-      className="inline-flex h-8 items-center gap-1 rounded-full border border-border/80 bg-card px-3 font-serif text-[13px] text-foreground whitespace-nowrap"
-    >
-      {name}
-    </span>
-  )
 }
 
 /** Editorial 증명서 multi-select — 검사 탭의 LabPillMultiSelect 와 동일 패턴, 색조 없는 bordered chip. */
@@ -139,16 +130,6 @@ function CertMultiSelect({
 }
 
 const COUNTRY_PREVIEW_MAX = 4
-
-function OverflowPill({ count }: { count: number }) {
-  return (
-    <span
-      className="inline-flex h-8 items-center rounded-full border border-border/80 bg-card px-3 font-serif text-[13px] text-foreground whitespace-nowrap"
-    >
-      +{count}개국
-    </span>
-  )
-}
 
 
 export function DocumentsSection() {

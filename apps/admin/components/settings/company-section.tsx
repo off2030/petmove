@@ -23,8 +23,11 @@ import {
   SettingsShell,
   SettingsSection,
   SettingsField,
+  SettingsFooter,
   SettingsSubsectionTitle as SectionLabel,
+  formatSavedAgo,
 } from './settings-layout'
+import { EnglishNameSplitRow } from './english-name-split-row'
 import { OrgInfoForm } from './org-info-form'
 import { cn } from '@/lib/utils'
 
@@ -55,28 +58,6 @@ function formatPhoneForSave(raw: string): string {
   if (digits.length === 11) return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`
   if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
   return trimmed
-}
-
-/** 영문만 남기고 한글 자모/완성형 제거. 케이스 상세의 customer-name-row 와 동일. */
-function filterKorean(str: string): string {
-  return str.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
-}
-/** 단어 첫 글자 대문자화. "john doe" → "John Doe". */
-function capitalizeWords(str: string): string {
-  return str.replace(/\b[a-z]/g, (c) => c.toUpperCase())
-}
-
-function formatSavedAgo(date: Date | null): string {
-  if (!date) return ''
-  const diff = Date.now() - date.getTime()
-  const sec = Math.floor(diff / 1000)
-  if (sec < 5) return '자동 저장됨 · 방금 전'
-  if (sec < 60) return `자동 저장됨 · ${sec}초 전`
-  const min = Math.floor(sec / 60)
-  if (min < 60) return `자동 저장됨 · ${min}분 전`
-  const hour = Math.floor(min / 60)
-  if (hour < 24) return `자동 저장됨 · ${hour}시간 전`
-  return `자동 저장됨 · ${date.toLocaleDateString()}`
 }
 
 export function CompanySection({
@@ -368,121 +349,17 @@ export function CompanySection({
           <p className="font-serif text-[13px] text-destructive mb-md">{error}</p>
         )}
 
-        {/* 발급자/DM 저장시각 — 조직정보 자체 풋터는 OrgInfoForm 내부에 있음. */}
+        {/* 발급자 저장시각 — 조직정보 자체 풋터는 OrgInfoForm 내부에 있음. */}
         {lastSaved && (
-          <p className="text-right font-serif italic text-[12px] text-muted-foreground/60">
-            {formatSavedAgo(lastSaved)}
-          </p>
+          <SettingsFooter>
+            <span className="font-serif italic text-[12px] text-muted-foreground/60">
+              {formatSavedAgo(lastSaved)}
+            </span>
+          </SettingsFooter>
         )}
       </SettingsSection>
     </SettingsShell>
   )
 }
 
-/**
- * 영문명 First/Last 합성 행 — 케이스 상세의 customer-name-row 와 동일 패턴 (이름은 단일 행).
- * IME 입력 중에는 한글 자모 통과시키고 composition end 시점에 필터·대문자화 후 commit.
- *
- * (OrgInfoForm 에도 동일 컴포넌트가 있음 — 거긴 조직정보 영문명, 여긴 발급자 본인 영문명.
- *  제네릭 키 타입이 달라 각자 보유. 시각/동작은 동일하게 유지.)
- */
-function EnglishNameSplitRow<K extends string>({
-  label = '영문명',
-  firstKey,
-  lastKey,
-  firstValue,
-  lastValue,
-  isAdmin,
-  saving,
-  onChange,
-  onCommit,
-  onCancel,
-  firstPlaceholder,
-  lastPlaceholder,
-}: {
-  label?: string
-  firstKey: K
-  lastKey: K
-  firstValue: string
-  lastValue: string
-  isAdmin: boolean
-  saving: boolean
-  onChange: (key: K, v: string) => void
-  onCommit: (key: K) => void
-  onCancel: (key: K) => void
-  firstPlaceholder?: string
-  lastPlaceholder?: string
-}) {
-  const firstComposing = useRef(false)
-  const lastComposing = useRef(false)
-
-  function handleFirstChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (firstComposing.current) {
-      onChange(firstKey, e.target.value)
-      return
-    }
-    onChange(firstKey, capitalizeWords(filterKorean(e.target.value)))
-  }
-  function handleLastChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (lastComposing.current) {
-      onChange(lastKey, e.target.value)
-      return
-    }
-    onChange(lastKey, capitalizeWords(filterKorean(e.target.value)))
-  }
-  function handleFirstCompositionEnd(e: React.CompositionEvent<HTMLInputElement>) {
-    firstComposing.current = false
-    const raw = (e.target as HTMLInputElement).value
-    onChange(firstKey, capitalizeWords(filterKorean(raw)))
-  }
-  function handleLastCompositionEnd(e: React.CompositionEvent<HTMLInputElement>) {
-    lastComposing.current = false
-    const raw = (e.target as HTMLInputElement).value
-    onChange(lastKey, capitalizeWords(filterKorean(raw)))
-  }
-  function makeKeyDown(key: K) {
-    return (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-      if (e.key === 'Escape') onCancel(key)
-    }
-  }
-
-  const inputCls = cn(
-    'flex-1 min-w-0 bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30',
-    saving && 'opacity-60',
-    !isAdmin && 'cursor-default',
-  )
-
-  return (
-    <SettingsField label={label}>
-      <div className="flex items-baseline gap-md">
-        <input
-          type="text"
-          value={firstValue}
-          onChange={handleFirstChange}
-          onCompositionStart={() => { firstComposing.current = true }}
-          onCompositionEnd={handleFirstCompositionEnd}
-          onBlur={() => onCommit(firstKey)}
-          onKeyDown={makeKeyDown(firstKey)}
-          placeholder={isAdmin ? (firstPlaceholder || 'First (이름)') : ''}
-          readOnly={!isAdmin}
-          className={inputCls}
-        />
-        <span className="text-muted-foreground/30 select-none shrink-0">·</span>
-        <input
-          type="text"
-          value={lastValue}
-          onChange={handleLastChange}
-          onCompositionStart={() => { lastComposing.current = true }}
-          onCompositionEnd={handleLastCompositionEnd}
-          onBlur={() => onCommit(lastKey)}
-          onKeyDown={makeKeyDown(lastKey)}
-          placeholder={isAdmin ? (lastPlaceholder || 'Last (성)') : ''}
-          readOnly={!isAdmin}
-          className={inputCls}
-        />
-      </div>
-    </SettingsField>
-  )
-}
 

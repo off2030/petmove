@@ -345,6 +345,68 @@ export function SettingsSectionLabelSerif({
 }
 
 /**
+ * "자동 저장됨 · N분 전" — 즉시 저장 화면의 저장 시각 표시.
+ * profile / company / org-info-form 에 각자 복제돼 있던 것을 공용화 (2026-08-06).
+ */
+export function formatSavedAgo(date: Date | null): string {
+  if (!date) return ''
+  const diff = Date.now() - date.getTime()
+  const sec = Math.floor(diff / 1000)
+  if (sec < 5) return '자동 저장됨 · 방금 전'
+  if (sec < 60) return `자동 저장됨 · ${sec}초 전`
+  const min = Math.floor(sec / 60)
+  if (min < 60) return `자동 저장됨 · ${min}분 전`
+  const hour = Math.floor(min / 60)
+  if (hour < 24) return `자동 저장됨 · ${hour}시간 전`
+  return `자동 저장됨 · ${date.toLocaleDateString()}`
+}
+
+/**
+ * 알약 세그먼트 필터/토글 — '전체·활성·비활성' 필터, '병원·운송' 전환 등
+ * 소수 옵션 중 하나 선택. 높이 h-8 고정 (설정 컨트롤 공통 높이).
+ * verification / automation 에 복제돼 있던 StatusFilterPills 를 제네릭으로 공용화.
+ */
+export function SettingsFilterPills<V extends string>({
+  options,
+  value,
+  onChange,
+  disabled,
+  className,
+}: {
+  options: ReadonlyArray<{ value: V; label: string }>
+  value: V
+  onChange: (value: V) => void
+  disabled?: boolean
+  className?: string
+}) {
+  return (
+    <div
+      className={cn(
+        'flex shrink-0 items-center gap-1 rounded-full border border-border/80 bg-card p-1',
+        className,
+      )}
+    >
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          disabled={disabled}
+          onClick={() => onChange(option.value)}
+          className={cn(
+            'h-8 rounded-full px-3 font-serif text-[13px] transition-colors disabled:opacity-60',
+            value === option.value
+              ? 'bg-foreground text-background'
+              : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/**
  * 저장 상태 / 보조 액션 / reset 버튼 영역. 보통 SettingsShell 하단.
  * 본문과 시각적으로 분리되도록 상단 border + pt-md 가 default.
  * 양쪽 정렬이 필요하면 `<SettingsFooter className="justify-between">`.
