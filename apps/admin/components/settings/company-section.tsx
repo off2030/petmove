@@ -194,7 +194,7 @@ export function CompanySection({
   if (!info || !orgType) {
     return (
       <SettingsShell>
-        <p className="font-serif italic text-sm text-muted-foreground">불러오는 중...</p>
+        <p className="font-serif text-sm text-muted-foreground">불러오는 중...</p>
       </SettingsShell>
     )
   }
@@ -264,12 +264,12 @@ export function CompanySection({
             </div>
           )}
           <SectionLabel className="mb-2">{isTransport ? '담당자' : '수의사'}</SectionLabel>
-          <p className="mb-2 font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed max-w-md">
+          <p className="mb-2 font-serif text-[12px] text-muted-foreground/70 leading-relaxed max-w-md">
             본인 정보를 넣으면 그 이름·휴대폰{isTransport ? '' : '·면허'}로 발급되고, 비워두면 회색 글씨의 조직 기본값으로 발급됩니다.
           </p>
           <div className="border-t border-border/80">
             {!myInfo ? (
-              <p className="py-3 font-serif italic text-[12px] text-muted-foreground/60">
+              <p className="py-3 font-serif text-[12px] text-muted-foreground/60">
                 불러오는 중...
               </p>
             ) : (
@@ -352,7 +352,7 @@ export function CompanySection({
         {/* 발급자 저장시각 — 조직정보 자체 풋터는 OrgInfoForm 내부에 있음. */}
         {lastSaved && (
           <SettingsFooter>
-            <span className="font-serif italic text-[12px] text-muted-foreground/60">
+            <span className="font-serif text-[12px] text-muted-foreground/60">
               {formatSavedAgo(lastSaved)}
             </span>
           </SettingsFooter>

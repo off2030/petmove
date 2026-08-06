@@ -285,7 +285,7 @@ export function SettingsListRow({
       <div className="flex flex-col gap-0.5">
         <span className="font-serif text-[15px] text-foreground">{title}</span>
         {description ? (
-          <span className="font-serif italic text-[12px] text-muted-foreground/70">
+          <span className="font-serif text-[12px] text-muted-foreground/70">
             {description}
           </span>
         ) : null}

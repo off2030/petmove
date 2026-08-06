@@ -121,7 +121,7 @@ export function SharePresetsSection({
             </span>
           )}
           {!isDirty && savedAt && (
-            <span className="font-serif italic text-[12px] text-muted-foreground/60">
+            <span className="font-serif text-[12px] text-muted-foreground/60">
               저장됨 · {savedAt.toLocaleTimeString()}
             </span>
           )}
@@ -144,9 +144,9 @@ export function SharePresetsSection({
 
       <div className="border-t border-border/80">
         {loading ? (
-          <p className="py-4 font-serif italic text-[14px] text-muted-foreground">불러오는 중…</p>
+          <p className="py-4 font-serif text-[14px] text-muted-foreground">불러오는 중…</p>
         ) : presets.length === 0 ? (
-          <p className="py-4 font-serif italic text-[14px] text-muted-foreground">
+          <p className="py-4 font-serif text-[14px] text-muted-foreground">
             아직 만든 프리셋이 없습니다.
           </p>
         ) : (

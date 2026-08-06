@@ -231,7 +231,7 @@ export function DocumentsSection() {
       <section className="mb-xl">
         <SectionLabel>기본 증명서</SectionLabel>
         <div className="border-t border-border/80 pt-3 space-y-2">
-          <p className="font-serif italic text-[13px] text-muted-foreground">
+          <p className="font-serif text-[13px] text-muted-foreground">
             모든 국가의 상세페이지에 표시됩니다. 국가별 규칙은 이 목록에 추가로 붙습니다.
           </p>
           <CertMultiSelect
@@ -247,7 +247,7 @@ export function DocumentsSection() {
       <section className="mb-xl">
         <SectionLabel>국가별 추가 증명서</SectionLabel>
         <div className="border-t border-border/80 pt-3 mb-3">
-          <p className="font-serif italic text-[13px] text-muted-foreground">
+          <p className="font-serif text-[13px] text-muted-foreground">
             해당 국가(또는 국가 그룹)가 목적지인 경우 기본 증명서에 더해 표시됩니다.
           </p>
         </div>
@@ -272,7 +272,7 @@ export function DocumentsSection() {
                         value={r.label ?? ''}
                         onChange={(e) => setRuleLabel(i, e.target.value)}
                         placeholder="그룹명 (선택사항)"
-                        className="pmw-st__input bg-transparent outline-none border-b border-border/80 font-serif italic text-[15px] px-0.5 py-0.5 w-full max-w-[240px]"
+                        className="pmw-st__input bg-transparent outline-none border-b border-border/80 font-serif text-[15px] px-0.5 py-0.5 w-full max-w-[240px]"
                         style={{ color: 'var(--pmw-deep)' }}
                       />
                       <DestinationPicker

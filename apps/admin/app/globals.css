@@ -730,8 +730,8 @@ select:-webkit-autofill {
     color: var(--pmw-near-black);
   }
   .pmw-st__sec-lead {
+    /* 이탤릭 제거(2026-08-06) — 한글엔 이탤릭 자형이 없어 기울임 왜곡만 생긴다. */
     font-family: var(--pmw-font-serif);
-    font-style: italic;
     font-size: 14.5px;
     line-height: 1.55;
     color: var(--pmw-olive-gray);

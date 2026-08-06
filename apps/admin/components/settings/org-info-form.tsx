@@ -464,7 +464,7 @@ export function OrgInfoForm({
             ))}
           </div>
           {orgType === 'both' && (
-            <p className="mt-2 font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+            <p className="mt-2 font-serif text-[12px] text-muted-foreground/70 leading-relaxed">
               아래 동물병원·운송회사 탭에서 양쪽 정보를 각각 입력할 수 있습니다.
             </p>
           )}
@@ -495,7 +495,7 @@ export function OrgInfoForm({
       </section>
 
       {!isAdmin && (
-        <p className="mb-xl font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+        <p className="mb-xl font-serif text-[12px] text-muted-foreground/70 leading-relaxed">
           조직 정보는 관리자만 수정할 수 있습니다. 변경이 필요하면 조직 관리자에게 요청해 주세요.
         </p>
       )}
@@ -623,7 +623,7 @@ export function OrgInfoForm({
             </div>
           )}
           {!isAdmin && getCustomFields(info).length === 0 && (
-            <p className="py-3 font-serif italic text-[12px] text-muted-foreground/60">
+            <p className="py-3 font-serif text-[12px] text-muted-foreground/60">
               추가 정보가 없습니다.
             </p>
           )}
@@ -643,7 +643,7 @@ export function OrgInfoForm({
         ) : (
           <span />
         )}
-        <span className="font-serif italic text-[12px] text-muted-foreground/60">
+        <span className="font-serif text-[12px] text-muted-foreground/60">
           {formatSavedAgo(lastSaved)}
         </span>
       </SettingsFooter>
@@ -836,12 +836,12 @@ function OrgAvatarRow({
                 제거
               </button>
             )}
-            <span className="font-serif italic text-[12px] text-muted-foreground/70">
+            <span className="font-serif text-[12px] text-muted-foreground/70">
               PNG · JPG · WebP · GIF · 자동 512px · 펫무브 보호자 화면에 표시
             </span>
           </>
         ) : (
-          <span className="font-serif italic text-[12px] text-muted-foreground/70">
+          <span className="font-serif text-[12px] text-muted-foreground/70">
             {url ? '조직 관리자만 변경할 수 있습니다.' : '설정된 조직 아바타가 없습니다.'}
           </span>
         )}

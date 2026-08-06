@@ -502,10 +502,10 @@ export function VaccineSection({
                 약품 추가
               </SettingsActionButton>
               {extracting && (
-                <span className="font-serif italic text-[12px] text-muted-foreground">이미지에서 제품 정보를 읽는 중…</span>
+                <span className="font-serif text-[12px] text-muted-foreground">이미지에서 제품 정보를 읽는 중…</span>
               )}
               {dragOver && !extracting && (
-                <span className="font-serif italic text-[12px] text-muted-foreground">놓으면 자동 분류</span>
+                <span className="font-serif text-[12px] text-muted-foreground">놓으면 자동 분류</span>
               )}
             </div>
           )}
@@ -532,7 +532,7 @@ export function VaccineSection({
               ? 'text-destructive bg-destructive/10'
               : extractMsg.kind === 'success'
               ? 'text-pmw-positive bg-pmw-positive/10'
-              : 'italic text-muted-foreground bg-muted/60'
+              : 'text-muted-foreground bg-muted/60'
           }`}
         >
           <span>{extractMsg.text}</span>
@@ -549,7 +549,7 @@ export function VaccineSection({
 
 
       {loading ? (
-        <p className="font-serif italic text-[14px] text-muted-foreground">불러오는 중…</p>
+        <p className="font-serif text-[14px] text-muted-foreground">불러오는 중…</p>
       ) : (
         grouped.map(({ section, categories }) => {
           const totalInSection = categories.reduce((sum, c) => sum + c.list.length, 0)
@@ -802,7 +802,7 @@ function CategoryPickerModal({ products, onClose, onPickExisting, onPickNew }: C
               </button>
 
               {productsInCategory.length === 0 ? (
-                <p className="font-serif italic text-[13px] text-muted-foreground py-md text-center">
+                <p className="font-serif text-[13px] text-muted-foreground py-md text-center">
                   등록된 제품 없음
                 </p>
               ) : (
@@ -902,7 +902,7 @@ function ProductFormModal({ mode, initial, pending, fromExtract, extractRemainin
 
         {fromExtract && (
           <div className="border-b border-border/80 bg-muted/40 px-lg py-2 flex items-center justify-between gap-sm">
-            <span className="font-serif italic text-[13px] text-muted-foreground">
+            <span className="font-serif text-[13px] text-muted-foreground">
               AI 가 카테고리를 자동 분류하지 못했습니다. 카테고리를 골라주세요.
               {extractRemaining && extractRemaining > 0 ? ` (남은 ${extractRemaining}건)` : ''}
             </span>

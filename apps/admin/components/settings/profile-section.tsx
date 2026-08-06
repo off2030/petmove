@@ -84,7 +84,7 @@ export function ProfileSection({
   if (!profile) {
     return (
       <SettingsShell>
-        <p className="font-serif italic text-sm text-muted-foreground">불러오는 중…</p>
+        <p className="font-serif text-sm text-muted-foreground">불러오는 중…</p>
       </SettingsShell>
     )
   }
@@ -154,7 +154,7 @@ export function ProfileSection({
             <SettingsField label="푸시 알림">
               <div className="flex flex-col gap-1">
                 <PushPermission />
-                <span className="font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+                <span className="font-serif text-[12px] text-muted-foreground/70 leading-relaxed">
                   홈 화면에 추가한 PWA 또는 데스크톱 브라우저에서 백그라운드 알림을 받습니다.
                 </span>
               </div>
@@ -168,7 +168,7 @@ export function ProfileSection({
       </SettingsSection>
 
       <SettingsFooter>
-        <span className="font-serif italic text-[12px] text-muted-foreground/60">
+        <span className="font-serif text-[12px] text-muted-foreground/60">
           {formatSavedAgo(lastSaved)}
         </span>
       </SettingsFooter>
@@ -317,7 +317,7 @@ function AvatarRow({
             제거
           </button>
         )}
-        <span className="font-serif italic text-[12px] text-muted-foreground/70">
+        <span className="font-serif text-[12px] text-muted-foreground/70">
           PNG · JPG · WebP · GIF · 자동 512px 리사이즈
         </span>
       </div>

@@ -174,9 +174,9 @@ export function MembersSection({
           <SettingsSubsectionTitle className="mb-2">활성 멤버 · {members.length}</SettingsSubsectionTitle>
           <div className="border-t border-border/80">
             {loading ? (
-              <p className="font-serif italic text-[14px] text-muted-foreground py-4">불러오는 중…</p>
+              <p className="font-serif text-[14px] text-muted-foreground py-4">불러오는 중…</p>
             ) : members.length === 0 ? (
-              <p className="font-serif italic text-[14px] text-muted-foreground py-4">멤버가 없습니다.</p>
+              <p className="font-serif text-[14px] text-muted-foreground py-4">멤버가 없습니다.</p>
             ) : (
             <>
               {members.map((m) => {
@@ -193,7 +193,7 @@ export function MembersSection({
                         {hasRealName ? m.name : m.email}
                       </div>
                       {hasRealName && (
-                        <div className="font-serif italic text-[13px] text-muted-foreground truncate mt-0.5">
+                        <div className="font-serif text-[13px] text-muted-foreground truncate mt-0.5">
                           {m.email}
                         </div>
                       )}
@@ -219,7 +219,7 @@ export function MembersSection({
                         </span>
                       )}
                       {isSelf && (
-                        <span className="font-serif italic text-[12px] text-muted-foreground/70">나</span>
+                        <span className="font-serif text-[12px] text-muted-foreground/70">나</span>
                       )}
                       {isAdmin && !isSelf && (
                         <button
@@ -263,7 +263,7 @@ export function MembersSection({
                         {hasRealName ? s.name : s.email}
                       </div>
                       {hasRealName && (
-                        <div className="font-serif italic text-[13px] text-muted-foreground truncate mt-0.5">
+                        <div className="font-serif text-[13px] text-muted-foreground truncate mt-0.5">
                           {s.email}
                         </div>
                       )}
@@ -278,7 +278,7 @@ export function MembersSection({
                 )
               })}
             </div>
-            <p className="font-serif italic text-[12px] text-muted-foreground/70 mt-2 leading-relaxed">
+            <p className="font-serif text-[12px] text-muted-foreground/70 mt-2 leading-relaxed">
               조직 멤버는 아니지만 SaaS 운영을 위해 모든 조직 데이터에 접근할 수 있습니다.
             </p>
           </section>
@@ -289,7 +289,7 @@ export function MembersSection({
           <SettingsSubsectionTitle className="mb-2">대기 중 초대 · {invites.length}</SettingsSubsectionTitle>
           <div className="border-t border-border/80">
             {invites.length === 0 ? (
-              <p className="font-serif italic text-[14px] text-muted-foreground py-4">대기 중인 초대가 없습니다.</p>
+              <p className="font-serif text-[14px] text-muted-foreground py-4">대기 중인 초대가 없습니다.</p>
             ) : (
               invites.map((inv) => {
                 const expired = now !== null && new Date(inv.expires_at).getTime() < now
@@ -307,7 +307,7 @@ export function MembersSection({
                         {ROLE_LABEL[inv.role]}
                         {' · '}
                         {expired ? (
-                          <span className="italic text-destructive">만료됨</span>
+                          <span className="text-destructive">만료됨</span>
                         ) : (
                           <span>만료 {formatExpiry(inv.expires_at)}</span>
                         )}
@@ -358,14 +358,14 @@ export function MembersSection({
               <p className="mt-sm font-serif text-[13px] text-destructive">{inviteError}</p>
             )}
             {inviteNotice && (
-              <p className="mt-sm font-serif italic text-[13px] text-muted-foreground">{inviteNotice}</p>
+              <p className="mt-sm font-serif text-[13px] text-muted-foreground">{inviteNotice}</p>
             )}
-            <p className="mt-sm font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+            <p className="mt-sm font-serif text-[12px] text-muted-foreground/70 leading-relaxed">
               유효기간 7일. 초대 생성 시 링크가 클립보드에 복사되고 이메일로도 발송됩니다.
             </p>
           </section>
         ) : (
-          <p className="pt-md border-t border-border/80 font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+          <p className="pt-md border-t border-border/80 font-serif text-[12px] text-muted-foreground/70 leading-relaxed">
             멤버 초대는 관리자만 가능합니다.
           </p>
         )}

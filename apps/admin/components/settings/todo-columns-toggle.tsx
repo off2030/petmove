@@ -90,7 +90,7 @@ export function TodoColumnsToggle({
   return (
     <section className="mb-xl">
       <SettingsSubsectionTitle className="mb-2">{title}</SettingsSubsectionTitle>
-      <p className="font-serif italic text-[13px] text-muted-foreground mb-3">
+      <p className="font-serif text-[13px] text-muted-foreground mb-3">
         {description ?? '체크된 컬럼만 테이블에 표시됩니다.'}
       </p>
       {grid}

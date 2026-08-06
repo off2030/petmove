@@ -267,9 +267,9 @@ export function AutomationSection({
         </div>
 
         {loading ? (
-          <p className="font-serif italic text-[14px] text-muted-foreground">불러오는 중…</p>
+          <p className="font-serif text-[14px] text-muted-foreground">불러오는 중…</p>
         ) : rules.length === 0 ? (
-          <p className="font-serif italic text-[14px] text-muted-foreground/60 mb-md">
+          <p className="font-serif text-[14px] text-muted-foreground/60 mb-md">
             아직 등록된 규칙이 없습니다.
           </p>
         ) : filteredRules.length === 0 ? (
@@ -476,7 +476,7 @@ function EditorialSelect({
             className="max-h-60 overflow-y-auto py-1"
           >
             {filtered.length === 0 && (
-              <li className="px-3 py-1.5 font-serif italic text-[13px] text-muted-foreground/50">결과 없음</li>
+              <li className="px-3 py-1.5 font-serif text-[13px] text-muted-foreground/50">결과 없음</li>
             )}
             {filtered.map((o, i) => {
               const active = o.key === value
@@ -636,7 +636,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
     <label className="block space-y-1">
       <span className="font-serif text-[13px] text-muted-foreground/80 flex items-baseline gap-sm">
         {label}
-        {hint && <span className="font-serif italic text-[12px] text-muted-foreground/60">{hint}</span>}
+        {hint && <span className="font-serif text-[12px] text-muted-foreground/60">{hint}</span>}
       </span>
       {children}
     </label>

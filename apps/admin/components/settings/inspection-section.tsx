@@ -177,7 +177,7 @@ function LabsAdminRow({
           </button>
         )}
         {error && (
-          <span className="w-full font-serif italic text-[12px] text-destructive mt-1">
+          <span className="w-full font-serif text-[12px] text-destructive mt-1">
             {error}
           </span>
         )}
@@ -317,7 +317,7 @@ function SectionBlock({
                       value={r.label ?? ''}
                       onChange={(e) => setRuleLabel(i, e.target.value)}
                       placeholder="그룹명 (선택사항)"
-                      className="pmw-st__input bg-transparent outline-none border-b border-border/80 font-serif italic text-[15px] px-0.5 py-0.5 w-full max-w-[240px]"
+                      className="pmw-st__input bg-transparent outline-none border-b border-border/80 font-serif text-[15px] px-0.5 py-0.5 w-full max-w-[240px]"
                       style={{ color: 'var(--pmw-deep)' }}
                     />
                     <DestinationPicker

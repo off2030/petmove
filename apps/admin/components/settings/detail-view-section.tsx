@@ -112,7 +112,7 @@ export function DetailViewSection({
             </SettingsListRow>
           </div>
           <SettingsFooter className="border-t-0 pt-2">
-            <span className="font-serif italic text-[12px] text-muted-foreground/60">
+            <span className="font-serif text-[12px] text-muted-foreground/60">
               {formatSavedAgo(savedAt)}
             </span>
           </SettingsFooter>

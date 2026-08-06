@@ -115,9 +115,9 @@ export function TransfersSection() {
           </div>
           <div className="border-t border-border/80">
             {loading ? (
-              <p className="font-serif italic text-[14px] text-muted-foreground py-4">불러오는 중…</p>
+              <p className="font-serif text-[14px] text-muted-foreground py-4">불러오는 중…</p>
             ) : !sent || sent.length === 0 ? (
-              <p className="font-serif italic text-[14px] text-muted-foreground py-4">
+              <p className="font-serif text-[14px] text-muted-foreground py-4">
                 {query.trim() ? '검색 결과가 없습니다.' : '보낸 전달이 없습니다.'}
               </p>
             ) : (
@@ -142,14 +142,14 @@ export function TransfersSection() {
               </span>
             )}
           </SettingsSubsectionTitle>
-          <p className="mt-1 mb-2 font-serif italic text-[12px] text-muted-foreground/70">
+          <p className="mt-1 mb-2 font-serif text-[12px] text-muted-foreground/70">
             수락·거부는 메시지 화면의 케이스 카드에서 진행합니다.
           </p>
           <div className="border-t border-border/80">
             {loading ? (
-              <p className="font-serif italic text-[14px] text-muted-foreground py-4">불러오는 중…</p>
+              <p className="font-serif text-[14px] text-muted-foreground py-4">불러오는 중…</p>
             ) : !received || received.length === 0 ? (
-              <p className="font-serif italic text-[14px] text-muted-foreground py-4">
+              <p className="font-serif text-[14px] text-muted-foreground py-4">
                 {query.trim() ? '검색 결과가 없습니다.' : '받은 전달이 없습니다.'}
               </p>
             ) : (
@@ -195,7 +195,7 @@ function ReceivedRow({
         {t.responded_at && ` · 응답 ${formatDateTime(t.responded_at)}`}
       </div>
       {t.note && (
-        <div className="mt-1 font-serif italic text-[13px] text-muted-foreground/90 whitespace-pre-wrap">
+        <div className="mt-1 font-serif text-[13px] text-muted-foreground/90 whitespace-pre-wrap">
           “{t.note}”
         </div>
       )}
@@ -239,7 +239,7 @@ function SentRow({
         {t.responded_at && ` · 응답 ${formatDateTime(t.responded_at)}`}
       </div>
       {t.response_note && (
-        <div className="mt-1 font-serif italic text-[13px] text-muted-foreground/90 whitespace-pre-wrap">
+        <div className="mt-1 font-serif text-[13px] text-muted-foreground/90 whitespace-pre-wrap">
           응답: {t.response_note}
         </div>
       )}

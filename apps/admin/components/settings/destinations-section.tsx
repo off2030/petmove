@@ -118,7 +118,7 @@ export function DestinationsArea() {
             disabled={saving}
             className="inline-flex items-center gap-1 rounded-full border border-border/80 bg-card px-3 h-8 text-[13px] hover:border-foreground/40 transition-colors disabled:opacity-50"
           >
-            {d.name || <span className="italic text-muted-foreground">이름 없음</span>}
+            {d.name || <span className="text-muted-foreground">이름 없음</span>}
           </button>
         ))}
         <button
@@ -398,7 +398,7 @@ function DestinationEditModal({
               />
               <div className="absolute left-0 right-0 top-full mt-1 z-10 max-h-72 overflow-auto rounded-md border border-border/80 bg-popover shadow-md scrollbar-minimal">
                 {suggestions.length === 0 && !searchQuery.trim() && (
-                  <div className="px-2 py-2 text-[13px] italic text-muted-foreground">검색어를 입력하거나 항목을 선택하세요</div>
+                  <div className="px-2 py-2 text-[13px] text-muted-foreground">검색어를 입력하거나 항목을 선택하세요</div>
                 )}
                 {suggestions.map((s) => (
                   <button
@@ -447,7 +447,7 @@ function DestinationEditModal({
               title="이름 수정 (쉼표로 매칭 키워드 추가 가능)"
               className="font-serif text-[18px] text-foreground hover:text-muted-foreground transition-colors text-left"
             >
-              {draft.name || <span className="italic text-muted-foreground">이름 없음</span>}
+              {draft.name || <span className="text-muted-foreground">이름 없음</span>}
             </button>
           )}
         </div>
@@ -455,7 +455,7 @@ function DestinationEditModal({
         {/* Body */}
         <div className="flex-1 overflow-auto px-md py-md space-y-md scrollbar-minimal">
           {searchOpen && (
-            <p className="text-[13px] italic text-muted-foreground/70">
+            <p className="text-[13px] text-muted-foreground/70">
               위에서 목적지를 선택하면 항목 편집 영역이 나타납니다.
             </p>
           )}
