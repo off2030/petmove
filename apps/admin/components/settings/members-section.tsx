@@ -15,8 +15,16 @@ import {
   type SuperAdminRow,
 } from '@/lib/actions/invites'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
-import { PillButton } from '@petmove/ui'
-import { SettingsCard, SettingsShell, SettingsSection } from './settings-layout'
+import {
+  SettingsActionButton,
+  SettingsCard,
+  SettingsChip,
+  SettingsControlGroup,
+  SettingsSaveButton,
+  SettingsSection,
+  SettingsSelectTrigger,
+  SettingsShell,
+} from './settings-layout'
 import { useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
 
@@ -26,12 +34,6 @@ const ROLE_LABEL: Record<InviteRole, string> = {
 }
 
 const ROLE_OPTIONS: InviteRole[] = ['member', 'admin']
-
-/**
- * 멤버 행 오른쪽에 서는 것들(역할·운영자 배지, '나', 제거 버튼, 역할 드롭다운)의 공통 치수.
- * 높이를 고정해 두지 않으면 배지와 버튼이 폰트 line-height 차이로 1~2px 씩 어긋난다.
- */
-const ROW_CHIP = 'inline-flex items-center h-[22px] px-2.5 rounded-full font-serif text-[12px] whitespace-nowrap'
 
 function formatExpiry(iso: string): string {
   const d = new Date(iso)
@@ -204,45 +206,34 @@ export function MembersSection({
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <SettingsControlGroup size="sm" className="shrink-0">
                       {isAdmin && !isSelf ? (
                         <RoleSelect
                           value={m.role}
                           onChange={(next) => onChangeRole(m, next)}
                           disabled={pending}
-                          size="sm"
                         />
                       ) : (
-                        <span className={cn(ROW_CHIP, 'border border-border/80 text-muted-foreground')}>
-                          {ROLE_LABEL[m.role]}
-                        </span>
+                        <SettingsChip>{ROLE_LABEL[m.role]}</SettingsChip>
                       )}
                       {superAdminIds.has(m.user_id) && (
-                        <span
-                          title="SaaS 운영자 — 모든 조직 데이터 접근 권한"
-                          className={cn(ROW_CHIP, 'border border-primary/40 bg-primary/5 text-primary/80')}
-                        >
+                        <SettingsChip tone="primary" title="SaaS 운영자 — 모든 조직 데이터 접근 권한">
                           운영자
-                        </span>
+                        </SettingsChip>
                       )}
                       {isSelf && (
-                        <span className={cn(ROW_CHIP, 'px-1 text-muted-foreground/70')}>나</span>
+                        <SettingsChip tone="plain" className="px-1">나</SettingsChip>
                       )}
                       {isAdmin && !isSelf && (
-                        <button
-                          type="button"
+                        <SettingsActionButton
+                          variant="destructive"
                           onClick={() => onRemove(m)}
                           disabled={pending}
-                          className={cn(
-                            ROW_CHIP,
-                            'border border-border/80 text-muted-foreground transition-colors disabled:opacity-40',
-                            'hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive',
-                          )}
                         >
                           제거
-                        </button>
+                        </SettingsActionButton>
                       )}
-                    </div>
+                    </SettingsControlGroup>
                   </div>
                 )
               })}
@@ -276,12 +267,11 @@ export function MembersSection({
                         </div>
                       )}
                     </div>
-                    <span
-                      title="SaaS 운영자 — 모든 조직 데이터 접근 권한"
-                      className={cn(ROW_CHIP, 'shrink-0 border border-primary/40 bg-primary/5 text-primary/80')}
-                    >
-                      운영자
-                    </span>
+                    <SettingsControlGroup size="sm" className="shrink-0">
+                      <SettingsChip tone="primary" title="SaaS 운영자 — 모든 조직 데이터 접근 권한">
+                        운영자
+                      </SettingsChip>
+                    </SettingsControlGroup>
                   </div>
                 )
               })}
@@ -321,18 +311,18 @@ export function MembersSection({
                       </div>
                     </div>
                     {isAdmin && (
-                      <div className="flex gap-1.5 shrink-0">
-                        <PillButton onClick={() => copy(inv.token)} disabled={expired}>
+                      <SettingsControlGroup size="sm" className="shrink-0">
+                        <SettingsActionButton onClick={() => copy(inv.token)} disabled={expired}>
                           {copiedToken === inv.token ? '복사됨' : '링크 복사'}
-                        </PillButton>
-                        <PillButton
+                        </SettingsActionButton>
+                        <SettingsActionButton
+                          variant="destructive"
                           onClick={() => onRevoke(inv.id)}
                           disabled={pending}
-                          className="hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive"
                         >
                           취소
-                        </PillButton>
-                      </div>
+                        </SettingsActionButton>
+                      </SettingsControlGroup>
                     )}
                   </div>
                 )
@@ -359,10 +349,12 @@ export function MembersSection({
                 disabled={pending}
                 className="flex-1 bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/40 disabled:opacity-60"
               />
-              <RoleSelect value={role} onChange={setRole} disabled={pending} />
-              <PillButton variant="solid" onClick={onCreate} disabled={pending || !email}>
-                초대 보내기
-              </PillButton>
+              <SettingsControlGroup size="md" className="shrink-0">
+                <RoleSelect value={role} onChange={setRole} disabled={pending} />
+                <SettingsSaveButton onClick={onCreate} disabled={pending || !email}>
+                  초대 보내기
+                </SettingsSaveButton>
+              </SettingsControlGroup>
             </div>
             {inviteError && (
               <p className="mt-sm font-serif text-[13px] text-destructive">{inviteError}</p>
@@ -382,23 +374,15 @@ export function MembersSection({
   )
 }
 
-/**
- * 역할 선택 드롭다운.
- *
- * `size` 는 옆에 서는 것들에 맞춘다 — 멤버 행에서는 역할·운영자 배지, 제거 버튼과
- * 같은 작은 pill('sm'), 초대 폼에서는 '초대 보내기' solid 버튼과 같은 높이('md').
- * (2026-08-06 — 한 줄에 22px 배지와 32px 드롭다운이 섞여 크기가 제각각이었다.)
- */
+/** 역할 선택 드롭다운. 크기는 감싼 무리에서 물려받는다. */
 function RoleSelect({
   value,
   onChange,
   disabled,
-  size = 'md',
 }: {
   value: InviteRole
   onChange: (v: InviteRole) => void
   disabled?: boolean
-  size?: 'sm' | 'md'
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -414,40 +398,13 @@ function RoleSelect({
 
   return (
     <div className="relative" ref={ref}>
-      <button
-        type="button"
+      <SettingsSelectTrigger
+        open={open}
         onClick={() => setOpen((p) => !p)}
         disabled={disabled}
-        className={cn(
-          'inline-flex items-center rounded-full border border-border/80 bg-transparent font-serif text-foreground transition-colors',
-          size === 'sm'
-            ? 'gap-1 h-[22px] pl-2.5 pr-1.5 text-[12px]'
-            : 'gap-1.5 h-8 pl-3 pr-2 text-[14px]',
-          'hover:bg-muted/40 focus:outline-none focus:border-primary/50',
-          'disabled:opacity-60 disabled:cursor-not-allowed',
-          open && 'border-foreground/40 bg-muted/30',
-        )}
       >
-        <span>{ROLE_LABEL[value]}</span>
-        <svg
-          aria-hidden
-          viewBox="0 0 12 12"
-          className={cn(
-            'text-muted-foreground transition-transform',
-            size === 'sm' ? 'h-2.5 w-2.5' : 'h-3 w-3',
-            open && 'rotate-180',
-          )}
-        >
-          <path
-            d="M2 4.5l4 4 4-4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
+        {ROLE_LABEL[value]}
+      </SettingsSelectTrigger>
       {open && (
         <div className="absolute right-0 top-full mt-1 z-20 min-w-[120px] rounded-md border border-border bg-popover py-1 shadow-md">
           {ROLE_OPTIONS.map((r) => (

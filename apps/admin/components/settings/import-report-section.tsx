@@ -8,7 +8,18 @@ import { saveImportReportCountriesAction } from '@/lib/actions/import-report-con
 import { DEFAULT_IMPORT_REPORT_COUNTRIES } from '@petmove/domain'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { PillButton } from '@petmove/ui'
-import { SettingsActionButton, SettingsCard, SettingsShell, SettingsSection, SettingsFooter, SettingsSubsectionTitle } from './settings-layout'
+import {
+  SettingsActionButton,
+  SettingsAddButton,
+  SettingsCard,
+  SettingsChip,
+  SettingsControlGroup,
+  SettingsShell,
+  SettingsSection,
+  SettingsFooter,
+  SettingsSaveButton,
+  SettingsSubsectionTitle,
+} from './settings-layout'
 
 export function ImportReportSection() {
   return (
@@ -71,23 +82,15 @@ function AutoCountriesEditor() {
       description="출국일을 입력하면 신고 탭에 자동으로 올라옵니다."
     >
       <div className="pt-1 pb-lg">
-        <div className="flex flex-wrap items-center gap-1.5">
+        <SettingsControlGroup size="sm" wrap>
           {draft.map((v) => (
-            <span
+            <SettingsChip
               key={v}
-              className="inline-flex items-center gap-1 rounded-sm border px-2 py-1 font-sans text-[13px] whitespace-nowrap"
-              style={{ borderColor: 'var(--pmw-border-warm)', color: 'var(--pmw-near-black)' }}
+              onRemove={() => setDraft(draft.filter((x) => x !== v))}
+              removeLabel={`${v} 제거`}
             >
               {v}
-              <button
-                type="button"
-                onClick={() => setDraft(draft.filter((x) => x !== v))}
-                className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                aria-label={`${v} 제거`}
-              >
-                <X size={13} />
-              </button>
-            </span>
+            </SettingsChip>
           ))}
           {adding ? (
             <div
@@ -109,16 +112,9 @@ function AutoCountriesEditor() {
               />
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => setAdding(true)}
-              className="inline-flex items-center gap-1 rounded-sm border border-dashed px-2 py-1 font-sans text-[13px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
-              style={{ borderColor: 'var(--pmw-border-warm)' }}
-            >
-              ＋ 추가
-            </button>
+            <SettingsAddButton onClick={() => setAdding(true)} />
           )}
-        </div>
+        </SettingsControlGroup>
       </div>
 
       <SettingsFooter className="justify-between">
@@ -127,9 +123,9 @@ function AutoCountriesEditor() {
         </SettingsActionButton>
         <div className="flex items-center gap-md">
           {msg && <span className="pmw-st__sec-lead">{msg}</span>}
-          <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
+          <SettingsSaveButton onClick={save} disabled={!dirty || saving}>
             {saving ? '저장 중…' : '저장'}
-          </PillButton>
+          </SettingsSaveButton>
         </div>
       </SettingsFooter>
     </SettingsCard>

@@ -1,7 +1,13 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { SettingsShell, SettingsSection, SettingsSubsectionTitle } from './settings-layout'
+import {
+  SettingsChip,
+  SettingsControlGroup,
+  SettingsShell,
+  SettingsSection,
+  SettingsSubsectionTitle,
+} from './settings-layout'
 import { listFeedback, type FeedbackEntry } from '@/lib/actions/feedback'
 
 /**
@@ -120,9 +126,11 @@ function FeedbackCard({ entry }: { entry: FeedbackEntry }) {
         <span className="flex items-baseline gap-2">
           <span className="font-serif text-[15px] text-foreground">{who || '케이스'}</span>
           {entry.destination && (
-            <span className="shrink-0 rounded-sm bg-muted/60 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-              {entry.destination}
-            </span>
+            <SettingsControlGroup size="sm">
+              <SettingsChip tone="plain" className="bg-muted/60 text-muted-foreground">
+                {entry.destination}
+              </SettingsChip>
+            </SettingsControlGroup>
           )}
         </span>
         <span className="shrink-0 font-mono text-[12px] text-muted-foreground/70">

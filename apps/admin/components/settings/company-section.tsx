@@ -21,11 +21,13 @@ import type { VetInfo } from '@/lib/vet-info'
 import type { UserContactInfo, UserContactKey } from '@/lib/user-contact'
 import {
   SettingsCard,
+  SettingsControlGroup,
   SettingsShell,
   SettingsSection,
   SettingsField,
   SettingsFooter,
   SettingsSubsectionTitle as SectionLabel,
+  SettingsToggleButton,
   formatSavedAgo,
 } from './settings-layout'
 import { EnglishNameSplitRow } from './english-name-split-row'
@@ -249,23 +251,17 @@ export function CompanySection({
               'both' 유형에서만 노출 — 단일 유형은 위 sync effect 가 orgType 을 따라 고정.
               OrgInfoForm 내부 탭과 별개 — 발급자(본인) 섹션 전용. */}
           {orgType === 'both' && (
-            <div className="mb-md flex items-center gap-xs">
+            <SettingsControlGroup size="md" className="mb-md gap-xs">
               {(['hospital', 'transport'] as const).map((t) => (
-                <button
+                <SettingsToggleButton
                   key={t}
-                  type="button"
+                  pressed={issuerTab === t}
                   onClick={() => setIssuerTab(t)}
-                  className={cn(
-                    'h-8 px-md font-serif text-[13px] rounded-full border transition-colors',
-                    issuerTab === t
-                      ? 'border-primary/50 bg-primary/10 text-primary'
-                      : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-                  )}
                 >
                   {t === 'hospital' ? '수의사' : '담당자'}
-                </button>
+                </SettingsToggleButton>
               ))}
-            </div>
+            </SettingsControlGroup>
           )}
           <SectionLabel className="mb-1">{isTransport ? '담당자' : '수의사'}</SectionLabel>
           <p className="pmw-st__sec-lead mb-3 max-w-md">

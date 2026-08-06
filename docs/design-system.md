@@ -237,6 +237,43 @@ import { DateTextField } from '@/components/ui/date-text-field'
 
 ---
 
+## 4.5 설정 화면 크기 규격 (2026-08-06)
+
+펫무브워크 **설정 화면**(`apps/admin/components/settings/`)의 컨트롤·칩은 세 단만 쓴다.
+
+| 단 | 높이 / 글자 | 쓰는 곳 |
+|---|---|---|
+| `lg` | 44px / 15px | 화면 상단 검색 줄 — 검색창과 그 옆 버튼·필터 |
+| `md` | 32px / 13px | 카드·페이지 단위 액션 — 저장, 필터, 툴바 버튼, 폼 드롭다운 |
+| `sm` | 22px / 12px | 글과 나란히 서는 것 — 칩·배지, 행 오른쪽 작은 버튼 |
+
+모양은 역할로 갈린다: **누르는 것은 알약**(`rounded-full` · serif), **데이터 태그는 각진 것**(`rounded-sm` · sans).
+
+### 부품이 크기를 정하지 않는다
+
+크기를 고르는 판단이 호출처마다 반복되면 한 줄 안에 22px 배지와 32px 드롭다운이 섞인다(실제로 멤버 화면이 그랬다). 그래서 **무리를 감싸는 쪽이 크기를 한 번 선언하고 안쪽 부품이 물려받는다.**
+
+```tsx
+<SettingsControlGroup size="sm">      {/* 이 줄의 모든 컨트롤이 22px */}
+  <SettingsChip>관리자</SettingsChip>
+  <SettingsActionButton variant="destructive">제거</SettingsActionButton>
+</SettingsControlGroup>
+```
+
+`SettingsFooter` 는 카드 단위 액션 영역이라 `md` 를 자동으로 준다.
+
+부품: `SettingsActionButton` · `SettingsSaveButton` · `SettingsChip` · `SettingsToggleButton` ·
+`SettingsSelectTrigger` · `SettingsAddButton` · `SettingsIconButton` · `SettingsFilterPills`.
+테두리 있는 입력은 `SETTINGS_BOXED_INPUT_CLASS`(36px).
+
+### 강제
+
+설정 폴더에서 높이 클래스(`h-8`, `h-[22px]` 등)를 직접 쓰면 `pnpm lint` 가 실패한다
+(`scripts/lint-settings-size.mjs`). 아이콘 크기(`h-3`·`h-4`)는 대상이 아니다.
+정말 예외면 그 줄에 `settings-size-ok` 주석 + 이유.
+
+---
+
 ## 5. Do / Don't
 
 ### Do

@@ -6,9 +6,12 @@ import type { OrgType } from '@/lib/actions/company-info'
 import type { CustomField, VetInfo, VetInfoKey } from '@/lib/vet-info'
 import {
   SettingsActionButton,
+  SettingsControlGroup,
   SettingsField,
   SettingsFooter,
+  SettingsIconButton,
   SettingsSubsectionTitle as SectionLabel,
+  SettingsToggleButton,
   formatSavedAgo,
 } from './settings-layout'
 import { EnglishNameSplitRow } from './english-name-split-row'
@@ -444,25 +447,19 @@ export function OrgInfoForm({
         /* 유형 선택 — 슈퍼어드민 전용. organizations.org_type 직접 변경(병원/운송/둘다). */
         <section className="mb-lg">
           <SectionLabel className="mb-2">유형</SectionLabel>
-          <div className="flex items-center gap-xs">
+          <SettingsControlGroup size="md" className="gap-xs">
             {ORG_TYPE_TABS.map((t) => (
-              <button
+              <SettingsToggleButton
                 key={t.value}
-                type="button"
+                pressed={orgType === t.value}
                 onClick={() => handleSetOrgType(t.value)}
                 disabled={!isAdmin || settingType}
-                className={cn(
-                  'h-8 px-lg font-serif text-[14px] rounded-full border transition-colors',
-                  orgType === t.value
-                    ? 'border-primary/50 bg-primary/10 text-primary'
-                    : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-                  (!isAdmin || settingType) && 'opacity-60',
-                )}
+                className={cn('px-lg', (!isAdmin || settingType) && 'opacity-60')}
               >
                 {t.label}
-              </button>
+              </SettingsToggleButton>
             ))}
-          </div>
+          </SettingsControlGroup>
           {orgType === 'both' && (
             <p className="mt-2 font-serif text-[12px] text-muted-foreground/70 leading-relaxed">
               아래 동물병원·운송회사 탭에서 양쪽 정보를 각각 입력할 수 있습니다.
@@ -475,23 +472,18 @@ export function OrgInfoForm({
           canEditOrgType=true 면 'both' 일 때 양쪽 입력용으로, 그 외엔 보기 전환용.
           유형 '선택' 아님(유형은 위 유형 섹션 또는 슈퍼어드민이 결정). */}
       <section className="mb-lg">
-        <div className="flex items-center gap-xs">
+        <SettingsControlGroup size="md" className="gap-xs">
           {(['hospital', 'transport'] as const).map((t) => (
-            <button
+            <SettingsToggleButton
               key={t}
-              type="button"
+              pressed={viewTab === t}
               onClick={() => setViewTab(t)}
-              className={cn(
-                'h-8 px-lg font-serif text-[14px] rounded-full border transition-colors',
-                viewTab === t
-                  ? 'border-primary/50 bg-primary/10 text-primary'
-                  : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-              )}
+              className="px-lg"
             >
               {t === 'hospital' ? '동물병원' : '운송회사'}
-            </button>
+            </SettingsToggleButton>
           ))}
-        </div>
+        </SettingsControlGroup>
       </section>
 
       {!isAdmin && (
@@ -584,7 +576,7 @@ export function OrgInfoForm({
                     {showAddressSearch && (
                       <CompanyAddressSearch
                         onSelected={(result) => handleAddressSelected(result, f.key as 'address_ko' | 'transport_address_ko')}
-                        className="shrink-0 mt-0.5 inline-flex h-7 items-center rounded border px-2 font-serif text-[12px] border-border/80 text-muted-foreground hover:bg-accent/60 hover:text-foreground transition-colors disabled:opacity-50"
+                        className="mt-0.5 border-border/80 bg-transparent text-muted-foreground hover:bg-accent/60 hover:text-foreground"
                       />
                     )}
                   </div>
@@ -697,15 +689,17 @@ function CustomFieldRow({
         )}
       />
       {isAdmin && (
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label="항목 삭제"
-          title="삭제"
-          className="opacity-0 group-hover:opacity-100 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive transition-all"
-        >
-          <X size={14} />
-        </button>
+        <SettingsControlGroup size="sm">
+          <SettingsIconButton
+            variant="destructive"
+            onClick={onRemove}
+            aria-label="항목 삭제"
+            title="삭제"
+            className="opacity-0 group-hover:opacity-100 transition-all"
+          >
+            <X size={14} />
+          </SettingsIconButton>
+        </SettingsControlGroup>
       )}
     </div>
   )
@@ -795,7 +789,7 @@ function OrgAvatarRow({
 
   return (
     <SettingsField label="조직 아바타" align="center">
-      <div className="flex items-center gap-md">
+      <SettingsControlGroup size="md" className="gap-md">
         <Avatar label={label} imageUrl={url} size="md" />
         {isAdmin ? (
           <>
@@ -810,31 +804,13 @@ function OrgAvatarRow({
                 e.target.value = ''
               }}
             />
-            <button
-              type="button"
-              onClick={pickFile}
-              disabled={busy}
-              className={cn(
-                'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
-                'border-border/80 text-foreground hover:bg-muted/40',
-                busy && 'opacity-60',
-              )}
-            >
+            <SettingsActionButton onClick={pickFile} disabled={busy}>
               {url ? '이미지 변경' : '이미지 업로드'}
-            </button>
+            </SettingsActionButton>
             {url && (
-              <button
-                type="button"
-                onClick={handleRemove}
-                disabled={busy}
-                className={cn(
-                  'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
-                  'border-border/80 text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40',
-                  busy && 'opacity-60',
-                )}
-              >
+              <SettingsActionButton variant="destructive" onClick={handleRemove} disabled={busy}>
                 제거
-              </button>
+              </SettingsActionButton>
             )}
             <span className="font-serif text-[12px] text-muted-foreground/70">
               PNG · JPG · WebP · GIF · 자동 512px · 펫무브 보호자 화면에 표시
@@ -845,7 +821,7 @@ function OrgAvatarRow({
             {url ? '조직 관리자만 변경할 수 있습니다.' : '설정된 조직 아바타가 없습니다.'}
           </span>
         )}
-      </div>
+      </SettingsControlGroup>
     </SettingsField>
   )
 }

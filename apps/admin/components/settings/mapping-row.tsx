@@ -16,7 +16,7 @@ import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { DialogFooter } from '@/components/ui/dialog-footer'
-import { SettingsActionButton } from './settings-layout'
+import { SettingsActionButton, SettingsAddButton, SettingsChip, SettingsControlGroup } from './settings-layout'
 import { DestinationPill, OverflowPill } from './destination-pills'
 
 /** 한 줄에 보여줄 여행지 칩 수 — 넘치면 "+N개국". */
@@ -36,7 +36,10 @@ export function MappingRow({
   const overflow = countries.length - visible.length
 
   return (
-    <div className="grid grid-cols-[1fr_auto_auto] items-center gap-md py-2 border-b border-dotted border-border/80">
+    <SettingsControlGroup
+      size="sm"
+      className="grid grid-cols-[1fr_auto_auto] items-center gap-md py-2 border-b border-dotted border-border/80"
+    >
       <div className="flex flex-wrap items-center gap-1.5 min-w-0">
         {visible.map((c) => (
           <DestinationPill key={c} name={c} />
@@ -45,7 +48,7 @@ export function MappingRow({
       </div>
       <div className="flex items-center gap-1.5">{children}</div>
       <SettingsActionButton onClick={onEdit}>편집</SettingsActionButton>
-    </div>
+    </SettingsControlGroup>
   )
 }
 
@@ -64,23 +67,15 @@ function CountryChipEditor({
   const addWrapRef = useRef<HTMLDivElement>(null)
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <SettingsControlGroup size="sm" wrap>
       {values.map((v) => (
-        <span
+        <SettingsChip
           key={v}
-          className="inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 font-sans text-[12px] whitespace-nowrap"
-          style={{ borderColor: 'var(--pmw-border-warm)', color: 'var(--pmw-near-black)' }}
+          onRemove={() => onChange(values.filter((x) => x !== v))}
+          removeLabel={`${v} 제거`}
         >
           {v}
-          <button
-            type="button"
-            onClick={() => onChange(values.filter((x) => x !== v))}
-            className="text-muted-foreground/50 hover:text-foreground transition-colors"
-            aria-label={`${v} 제거`}
-          >
-            <X size={12} />
-          </button>
-        </span>
+        </SettingsChip>
       ))}
       {adding ? (
         <div
@@ -101,16 +96,9 @@ function CountryChipEditor({
           />
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => setAdding(true)}
-          className="inline-flex items-center gap-1 rounded-sm border border-dashed px-2 py-0.5 font-sans text-[12px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
-          style={{ borderColor: 'var(--pmw-border-warm)' }}
-        >
-          ＋ 추가
-        </button>
+        <SettingsAddButton onClick={() => setAdding(true)} />
       )}
-    </div>
+    </SettingsControlGroup>
   )
 }
 

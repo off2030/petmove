@@ -6,6 +6,7 @@ import type { ProcedureCheck } from '@petmove/domain'
 import {
   SettingsCard,
   SettingsCheckBox,
+  SettingsControlGroup,
   SettingsFilterPills,
   SettingsSearchInput,
   SettingsShell,
@@ -184,7 +185,7 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
         )}
 
         <div className="mb-md space-y-2">
-          <div className="flex items-center gap-sm">
+          <SettingsControlGroup size="lg" className="gap-sm">
             <SettingsSearchInput
               value={query}
               onChange={setQuery}
@@ -192,7 +193,7 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
               className="flex-1"
             />
             <SettingsFilterPills options={STATUS_FILTERS} value={statusFilter} onChange={setStatusFilter} />
-          </div>
+          </SettingsControlGroup>
         </div>
 
         {total === 0 ? (

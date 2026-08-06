@@ -6,9 +6,13 @@ import { useCases } from '@/components/cases/cases-context'
 import { PillButton } from '@petmove/ui'
 import {
   SettingsActionButton,
+  SettingsAddButton,
   SettingsCard,
+  SettingsChip,
+  SettingsControlGroup,
   SettingsField,
   SettingsFooter,
+  SettingsSaveButton,
 } from './settings-layout'
 import { MappingEditModal, MappingRow } from './mapping-row'
 import { saveCertConfigAction } from '@/lib/actions/cert-config-action'
@@ -54,47 +58,31 @@ function CertMultiSelect({
 
   return (
     <div ref={ref} className="relative inline-block">
-      <div className="flex flex-wrap items-center gap-1.5">
+      <SettingsControlGroup size="sm" wrap>
         {selected.map(key => {
           const removable = !minOne || selected.length > 1
           return (
-            <span
+            <SettingsChip
               key={key}
-              className="inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 font-sans text-[12px] whitespace-nowrap"
-              style={{
-                borderColor: 'var(--pmw-border-warm)',
-                color: 'var(--pmw-near-black)',
-              }}
+              onRemove={removable ? () => onRemove(key) : undefined}
+              removeLabel={`${certLabel(key)} 제거`}
             >
               {certLabel(key)}
-              {removable && (
-                <button
-                  type="button"
-                  onClick={() => onRemove(key)}
-                  className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                  aria-label={`${certLabel(key)} 제거`}
-                  tabIndex={-1}
-                >
-                  <X size={12} />
-                </button>
-              )}
-            </span>
+            </SettingsChip>
           )
         })}
         {remaining.length > 0 && (
-          <button
-            type="button"
+          <SettingsAddButton
             onClick={() => setOpen(o => !o)}
-            className="inline-flex items-center gap-1 rounded-sm border border-dashed border-border/80 px-2 py-0.5 font-sans text-[12px] text-muted-foreground hover:text-foreground hover:border-border transition-colors"
             aria-haspopup="listbox"
             aria-expanded={open}
           >
             <Plus size={11} />
             {triggerLabel}
             <ChevronDown size={11} className="opacity-60" />
-          </button>
+          </SettingsAddButton>
         )}
-      </div>
+      </SettingsControlGroup>
 
       {open && remaining.length > 0 && (
         <ul
@@ -230,26 +218,13 @@ export function DocumentsSection() {
           {draft.rules.map((r, i) => (
             <MappingRow key={i} countries={r.countries} onEdit={() => setEditingIdx(i)}>
               {r.certs.map((k) => (
-                <span
-                  key={k}
-                  className="inline-flex items-center rounded-sm border px-2 py-0.5 font-sans text-[12px] whitespace-nowrap"
-                  style={{ borderColor: 'var(--pmw-border-warm)', color: 'var(--pmw-near-black)' }}
-                >
-                  {certLabel(k)}
-                </span>
+                <SettingsChip key={k}>{certLabel(k)}</SettingsChip>
               ))}
             </MappingRow>
           ))}
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="inline-flex items-center gap-1 rounded-sm border border-dashed px-2 py-1 font-sans text-[13px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
-              style={{ borderColor: 'var(--pmw-border-warm)' }}
-            >
-              ＋ 매핑 추가
-            </button>
-          </div>
+          <SettingsControlGroup size="sm" className="pt-2">
+            <SettingsAddButton onClick={() => setAddOpen(true)}>＋ 매핑 추가</SettingsAddButton>
+          </SettingsControlGroup>
         </div>
       </SettingsField>
 
@@ -282,9 +257,9 @@ export function DocumentsSection() {
         </SettingsActionButton>
         <div className="flex items-center gap-md">
           {msg && <span className="pmw-st__sec-lead">{msg}</span>}
-          <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
+          <SettingsSaveButton onClick={save} disabled={!dirty || saving}>
             {saving ? '저장 중…' : '저장'}
-          </PillButton>
+          </SettingsSaveButton>
         </div>
       </SettingsFooter>
     </SettingsCard>

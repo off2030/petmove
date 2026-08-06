@@ -4,7 +4,9 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { getMyProfile, updateMyProfile, type MyProfile } from '@/lib/actions/profile'
 import {
+  SettingsActionButton,
   SettingsCard,
+  SettingsControlGroup,
   SettingsShell,
   SettingsSection,
   SettingsFooter,
@@ -272,7 +274,7 @@ function AvatarRow({
 
   return (
     <SettingsField label="프로필 이미지" align="center">
-      <div className="flex items-center gap-md">
+      <SettingsControlGroup size="md" className="gap-md">
         <div className="relative">
           <Avatar
             label={label}
@@ -291,36 +293,18 @@ function AvatarRow({
             e.target.value = ''
           }}
         />
-        <button
-          type="button"
-          onClick={pickFile}
-          disabled={busy}
-          className={cn(
-            'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
-            'border-border/80 text-foreground hover:bg-muted/40',
-            busy && 'opacity-60',
-          )}
-        >
+        <SettingsActionButton onClick={pickFile} disabled={busy}>
           {profile.avatar_url ? '이미지 변경' : '이미지 업로드'}
-        </button>
+        </SettingsActionButton>
         {profile.avatar_url && (
-          <button
-            type="button"
-            onClick={handleRemove}
-            disabled={busy}
-            className={cn(
-              'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
-              'border-border/80 text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40',
-              busy && 'opacity-60',
-            )}
-          >
+          <SettingsActionButton variant="destructive" onClick={handleRemove} disabled={busy}>
             제거
-          </button>
+          </SettingsActionButton>
         )}
         <span className="font-serif text-[12px] text-muted-foreground/70">
           PNG · JPG · WebP · GIF · 자동 512px 리사이즈
         </span>
-      </div>
+      </SettingsControlGroup>
     </SettingsField>
   )
 }

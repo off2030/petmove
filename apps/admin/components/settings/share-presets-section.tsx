@@ -17,7 +17,14 @@ import { listSharePresets, saveSharePresets } from '@/lib/actions/share-presets'
 import { useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
 import { DialogFooter } from '@/components/ui/dialog-footer'
-import { SettingsActionButton, SettingsCard, SettingsSectionLabelSerif } from './settings-layout'
+import {
+  SettingsActionButton,
+  SettingsCard,
+  SettingsControlGroup,
+  SettingsIconButton,
+  SettingsSectionLabelSerif,
+  SettingsToggleButton,
+} from './settings-layout'
 import { ALL_EXTRA_FIELD_KEYS, SHARE_FILE_REQUESTS } from '@petmove/domain'
 import { buildShareFieldLayout } from '@petmove/domain'
 import type { SharePreset } from '@/lib/share-presets-types'
@@ -121,19 +128,20 @@ export function SharePresetsSection({
               <span className="shrink-0 font-mono text-[11px] tracking-[0.5px] text-muted-foreground/70">
                 파일 {p.file_keys?.length ?? 0}
               </span>
-              <SettingsActionButton onClick={() => setEditing(p)} disabled={pending}>
-                편집
-              </SettingsActionButton>
-              <button
-                type="button"
-                onClick={() => deletePreset(p)}
-                disabled={pending}
-                aria-label={`${p.name} 삭제`}
-                title="삭제"
-                className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-40"
-              >
-                <Trash2 size={13} />
-              </button>
+              <SettingsControlGroup size="sm" className="shrink-0">
+                <SettingsActionButton onClick={() => setEditing(p)} disabled={pending}>
+                  편집
+                </SettingsActionButton>
+                <SettingsIconButton
+                  variant="destructive"
+                  onClick={() => deletePreset(p)}
+                  disabled={pending}
+                  aria-label={`${p.name} 삭제`}
+                  title="삭제"
+                >
+                  <Trash2 size={13} />
+                </SettingsIconButton>
+              </SettingsControlGroup>
             </div>
           ))
         )}
@@ -214,14 +222,6 @@ function PresetEditModal({
     })
   }
 
-  const chipCls = (active: boolean) =>
-    cn(
-      'h-7 px-2.5 rounded-full border font-serif text-[12px] transition-colors',
-      active
-        ? 'border-foreground bg-foreground text-background'
-        : 'border-border/80 text-muted-foreground hover:bg-accent hover:text-foreground',
-    )
-
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div
@@ -277,19 +277,18 @@ function PresetEditModal({
             {/* 파일 요청 — 필드보다 개수가 적고 케이스마다 매번 필요해 맨 위. */}
             <div className="mb-lg">
               <SettingsSectionLabelSerif className="mb-2">파일</SettingsSectionLabelSerif>
-              <div className="flex flex-wrap gap-1">
+              <SettingsControlGroup size="sm" wrap className="gap-1">
                 {SHARE_FILE_REQUESTS.map((f) => (
-                  <button
+                  <SettingsToggleButton
                     key={f.key}
-                    type="button"
+                    pressed={fileKeys.includes(f.key)}
                     onClick={() => toggleFile(f.key)}
-                    className={chipCls(fileKeys.includes(f.key))}
                     title={f.destinations === 'all' ? '모든 여행지' : `${f.destinations.join(', ')} 요청 파일`}
                   >
                     {f.label}
-                  </button>
+                  </SettingsToggleButton>
                 ))}
-              </div>
+              </SettingsControlGroup>
             </div>
 
             {groupedFields.map((g) => (
@@ -303,18 +302,17 @@ function PresetEditModal({
                           {block.subgroup}
                         </p>
                       )}
-                      <div className="flex flex-wrap gap-1">
+                      <SettingsControlGroup size="sm" wrap className="gap-1">
                         {block.fields.map((f) => (
-                          <button
+                          <SettingsToggleButton
                             key={f.key}
-                            type="button"
+                            pressed={fieldKeys.includes(f.key)}
                             onClick={() => toggleField(f.key)}
-                            className={chipCls(fieldKeys.includes(f.key))}
                           >
                             {f.label}
-                          </button>
+                          </SettingsToggleButton>
                         ))}
-                      </div>
+                      </SettingsControlGroup>
                     </div>
                   ))}
                 </div>

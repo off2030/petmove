@@ -12,9 +12,11 @@ import {
   type AutoFillRuleInput,
 } from '@/lib/actions/org-auto-fill-rules'
 import {
+  SETTINGS_BOXED_INPUT_CLASS,
   SettingsActionButton,
   SettingsCard,
   SettingsCheckBox,
+  SettingsControlGroup,
   SettingsFilterPills,
   SettingsFooter,
   SettingsSearchInput,
@@ -253,7 +255,7 @@ export function AutomationSection({
         )}
 
         <div className="mb-md space-y-2">
-          <div className="flex items-center gap-sm">
+          <SettingsControlGroup size="lg" className="gap-sm">
             <SettingsSearchInput
               value={query}
               onChange={setQuery}
@@ -267,13 +269,13 @@ export function AutomationSection({
                 onClick={() => setEditing('new')}
                 title="규칙 추가"
                 aria-label="규칙 추가"
-                className="h-11 w-11 justify-center px-0 shrink-0"
+                className="w-11 px-0"
               >
                 <Plus className="h-4 w-4" />
               </SettingsActionButton>
             )}
             <SettingsFilterPills options={STATUS_FILTERS} value={statusFilter} onChange={setStatusFilter} />
-          </div>
+          </SettingsControlGroup>
         </div>
 
         {loading ? (
@@ -445,7 +447,7 @@ function EditorialSelect({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full inline-flex items-center justify-between gap-2 h-9 rounded-md border border-border/80 bg-background px-3 font-serif text-[14px] hover:border-foreground/40 transition-colors"
+        className={cn(SETTINGS_BOXED_INPUT_CLASS, 'inline-flex items-center justify-between gap-2 px-3 hover:border-foreground/40')}
       >
         <span className={cn(!current && 'text-muted-foreground/60')}>{current?.label ?? placeholder}</span>
         <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', open && 'rotate-180')} />

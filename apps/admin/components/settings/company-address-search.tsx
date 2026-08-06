@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { cn } from '@/lib/utils'
+import { SETTINGS_ACTION_BUTTON_CLASS } from './settings-layout'
 
 declare global {
   interface Window {
@@ -107,7 +109,11 @@ export function CompanyAddressSearch({
         type="button"
         onClick={handleSearch}
         disabled={!scriptLoaded || disabled}
-        className={className ?? 'shrink-0 whitespace-nowrap inline-flex h-7 items-center rounded border px-2 text-[11px] border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong hover:bg-pmw-accent/25 transition-colors disabled:opacity-50'}
+        className={cn(
+          SETTINGS_ACTION_BUTTON_CLASS,
+          'shrink-0 border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong hover:bg-pmw-accent/25 hover:border-pmw-accent',
+          className,
+        )}
       >
         주소검색
       </button>

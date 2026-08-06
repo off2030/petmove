@@ -5,7 +5,13 @@ import { createPortal } from 'react-dom'
 import { Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DialogFooter } from '@/components/ui/dialog-footer'
-import { SettingsCard } from './settings-layout'
+import {
+  SETTINGS_BOXED_INPUT_CLASS,
+  SettingsAddButton,
+  SettingsCard,
+  SettingsChip,
+  SettingsControlGroup,
+} from './settings-layout'
 import { saveDestinationOverridesAction } from '@/lib/actions/destination-overrides-action'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import {
@@ -215,7 +221,7 @@ function DestinationSearchPicker({
         }}
         placeholder="여행지 검색 (예: 일본, japan)"
         aria-label="여행지 검색"
-        className="w-full h-9 rounded-md border border-border/80 bg-background px-2 font-sans text-[13.5px] text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 disabled:opacity-50"
+        className={SETTINGS_BOXED_INPUT_CLASS}
       />
       {open && (
         <ul
@@ -424,7 +430,7 @@ function DestinationEditModal({
                 }
               }}
               placeholder="예: 호주, australia"
-              className="flex-1 h-9 rounded-md border border-border/80 bg-background px-2 font-serif text-[18px] text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+              className={cn(SETTINGS_BOXED_INPUT_CLASS, 'flex-1 text-[18px]')}
             />
           ) : (
             <button
@@ -609,9 +615,9 @@ function ChipList({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2" ref={wrapRef}>
+    <SettingsControlGroup size="sm" wrap className="gap-2" ref={wrapRef}>
       {ordered.map((k, i) => (
-        <span
+        <SettingsChip
           key={k}
           draggable={!!onReorder}
           onDragStart={onReorder ? (e) => { setDragIdx(i); e.dataTransfer.effectAllowed = 'move' } : undefined}
@@ -619,34 +625,22 @@ function ChipList({
           onDragLeave={onReorder ? () => setDropIdx((cur) => (cur === i ? null : cur)) : undefined}
           onDrop={onReorder ? (e) => { e.preventDefault(); handleDrop(i) } : undefined}
           onDragEnd={onReorder ? () => { setDragIdx(null); setDropIdx(null) } : undefined}
+          onRemove={() => onRemove(k)}
+          removeLabel="삭제"
           className={cn(
-            "group/chip inline-flex items-center gap-1 rounded-full border border-foreground/30 bg-transparent px-2.5 py-0.5 font-serif text-[13px] text-foreground transition-all",
             onReorder && 'cursor-grab active:cursor-grabbing select-none',
             dragIdx === i && 'opacity-40',
             dropIdx === i && dragIdx !== i && 'ring-2 ring-foreground/40 ring-offset-1 ring-offset-background',
           )}
         >
           {labels[k] ?? k}
-          <button
-            type="button"
-            onClick={() => onRemove(k)}
-            title="삭제"
-            className="rounded-full p-0.5 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
-          >
-            <X size={11} />
-          </button>
-        </span>
+        </SettingsChip>
       ))}
       {inactive.length > 0 && (
         <>
-          <button
-            ref={addBtnRef}
-            type="button"
-            onClick={() => setMenuOpen((p) => !p)}
-            className="inline-flex items-center gap-1 rounded-full border border-dashed border-foreground/30 bg-card px-2.5 py-0.5 font-serif text-[13px] text-muted-foreground hover:text-foreground hover:border-foreground/50 transition-colors"
-          >
+          <SettingsAddButton ref={addBtnRef} onClick={() => setMenuOpen((p) => !p)}>
             <Plus size={11} /> 추가
-          </button>
+          </SettingsAddButton>
           {menuOpen && menuPos && typeof document !== 'undefined' && createPortal(
             <div
               ref={menuRef}
@@ -671,7 +665,7 @@ function ChipList({
           )}
         </>
       )}
-    </div>
+    </SettingsControlGroup>
   )
 }
 

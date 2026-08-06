@@ -5,14 +5,17 @@ import { Plus, X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { TodoColumnsToggle } from './todo-columns-toggle'
 import { LabPillSelect, LabPillMultiSelect } from '@/components/ui/lab-pill-select'
-import { PillButton } from '@petmove/ui'
 import {
   SettingsActionButton,
+  SettingsAddButton,
   SettingsCard,
+  SettingsChip,
+  SettingsControlGroup,
   SettingsShell,
   SettingsSection,
   SettingsField,
   SettingsFooter,
+  SettingsSaveButton,
 } from './settings-layout'
 import { MappingEditModal, MappingRow } from './mapping-row'
 import { labColor } from '@/lib/lab-color'
@@ -26,6 +29,9 @@ import {
   type InspectionLabOption,
   type InspectionLabRule,
 } from '@petmove/domain'
+
+/** 검사기관 칩의 글꼴 — 코드성 식별자라 mono·대문자. 크기는 규격에서 물려받는다. */
+const LAB_CHIP_FONT = 'font-mono uppercase tracking-[1px]'
 
 /**
  * "기관 목록" 행 — 기본·사용자 정의 기관 전체 CRUD (2026-08-06).
@@ -121,15 +127,9 @@ function LabsAdminRow({
     setError(null)
   }
 
-  function chipCls(tone: ReturnType<typeof labColor>): string {
-    const base = 'inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap'
-    if (tone) return cn(base, tone.bg, tone.text)
-    return cn(base, 'bg-muted/60 text-muted-foreground')
-  }
-
   return (
     <SettingsField label="기관 목록" align="start">
-      <div className="flex flex-wrap items-center gap-1.5">
+      <SettingsControlGroup size="sm" wrap>
         {[...visibleDefaults, ...visibleCustoms].map(lab => {
           const tone = labColor(lab.value)
           const referenced = referencedValues.has(lab.value)
@@ -153,10 +153,13 @@ function LabsAdminRow({
             )
           }
           return (
-            <span
+            <SettingsChip
               key={lab.value}
-              className={cn(chipCls(tone), 'group/lab relative pr-1')}
+              tone="plain"
+              className={cn(LAB_CHIP_FONT, tone ? cn(tone.bg, tone.text) : 'bg-muted/60 text-muted-foreground')}
               title={referenced ? `${lab.value} — 사용 중(규칙·기본 검사기관)이라 삭제 불가. 클릭해 표시명 수정` : `${lab.value} — 클릭해 표시명 수정`}
+              onRemove={referenced ? undefined : () => remove(lab.value, lab.isCustom)}
+              removeLabel={`${lab.label} 삭제`}
             >
               <button
                 type="button"
@@ -166,18 +169,7 @@ function LabsAdminRow({
               >
                 {lab.label}
               </button>
-              {!referenced && (
-                <button
-                  type="button"
-                  onClick={() => remove(lab.value, lab.isCustom)}
-                  className="ml-1 opacity-40 group-hover/lab:opacity-80 hover:!opacity-100 transition-opacity"
-                  aria-label={`${lab.label} 삭제`}
-                  tabIndex={-1}
-                >
-                  <X size={10} />
-                </button>
-              )}
-            </span>
+            </SettingsChip>
           )
         })}
         {adding ? (
@@ -223,22 +215,21 @@ function LabsAdminRow({
             </button>
           </div>
         ) : (
-          <button
-            type="button"
+          <SettingsAddButton
             onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 border border-dashed border-border/80 text-muted-foreground hover:text-foreground hover:border-border transition-colors font-mono text-[11px] uppercase tracking-[1px]"
+            className={LAB_CHIP_FONT}
             title="검사기관 추가"
           >
             <Plus size={11} />
             추가
-          </button>
+          </SettingsAddButton>
         )}
         {error && (
           <span className="w-full font-serif text-[12px] text-destructive mt-1">
             {error}
           </span>
         )}
-      </div>
+      </SettingsControlGroup>
     </SettingsField>
   )
 }
@@ -338,29 +329,23 @@ function SectionBlock({
               {r.labs.map((v) => {
                 const tone = labColor(v)
                 return (
-                  <span
+                  <SettingsChip
                     key={v}
+                    tone="plain"
                     className={cn(
-                      'inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap',
+                      LAB_CHIP_FONT,
                       tone ? cn(tone.bg, tone.text) : 'bg-muted/60 text-muted-foreground',
                     )}
                   >
                     {labs.find((l) => l.value === v)?.label ?? v}
-                  </span>
+                  </SettingsChip>
                 )
               })}
             </MappingRow>
           ))}
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="inline-flex items-center gap-1 rounded-sm border border-dashed px-2 py-1 font-sans text-[13px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
-              style={{ borderColor: 'var(--pmw-border-warm)' }}
-            >
-              ＋ 매핑 추가
-            </button>
-          </div>
+          <SettingsControlGroup size="sm" className="pt-2">
+            <SettingsAddButton onClick={() => setAddOpen(true)}>＋ 매핑 추가</SettingsAddButton>
+          </SettingsControlGroup>
         </div>
       </SettingsField>
 
@@ -478,9 +463,9 @@ export function InspectionSection() {
       </SettingsActionButton>
       <div className="flex items-center gap-md">
         {msg && <span className="pmw-st__sec-lead">{msg}</span>}
-        <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
+        <SettingsSaveButton onClick={save} disabled={!dirty || saving}>
           {saving ? '저장 중…' : '저장'}
-        </PillButton>
+        </SettingsSaveButton>
       </div>
     </SettingsFooter>
   )
