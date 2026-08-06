@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
+import { X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { TodoColumnsToggle } from './todo-columns-toggle'
 import { saveImportReportCountriesAction } from '@/lib/actions/import-report-config-action'
@@ -36,6 +37,9 @@ function AutoCountriesEditor() {
   const [draft, setDraft] = useState<string[]>(() => sortKo(importReportCountries))
   const [saving, startSave] = useTransition()
   const [msg, setMsg] = useState<string | null>(null)
+  // '+ 추가' 클릭 시에만 검색창 노출 — 검사 탭 기관 목록의 +추가 패턴과 통일.
+  const [adding, setAdding] = useState(false)
+  const addWrapRef = useRef<HTMLDivElement>(null)
 
   const dirty = JSON.stringify(sortKo(draft)) !== JSON.stringify(sortKo(importReportCountries))
 
@@ -66,14 +70,55 @@ function AutoCountriesEditor() {
         </span>
       </div>
 
-      <div className="border-t border-border/80 pt-3 pb-lg border-b">
-        <DestinationPicker
-          values={draft}
-          onChange={(values) => setDraft(sortKo(values))}
-          variant="underline"
-          placeholder="국가 검색해서 추가"
-          aria-label="신고 국가 추가"
-        />
+      <div className="border-t border-b border-border/80 pt-3 pb-lg">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {draft.map((v) => (
+            <span
+              key={v}
+              className="inline-flex items-center gap-1 rounded-sm border px-2 py-1 font-sans text-[13px] whitespace-nowrap"
+              style={{ borderColor: 'var(--pmw-border-warm)', color: 'var(--pmw-near-black)' }}
+            >
+              {v}
+              <button
+                type="button"
+                onClick={() => setDraft(draft.filter((x) => x !== v))}
+                className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                aria-label={`${v} 제거`}
+              >
+                <X size={13} />
+              </button>
+            </span>
+          ))}
+          {adding ? (
+            <div
+              ref={addWrapRef}
+              className="flex-1 min-w-[220px]"
+              // 검색창 밖으로 포커스가 나가면 접기 — 다시 '+ 추가' 버튼으로.
+              onBlur={(e) => {
+                if (!addWrapRef.current?.contains(e.relatedTarget as Node)) setAdding(false)
+              }}
+            >
+              <DestinationPicker
+                values={draft}
+                onChange={(values) => setDraft(sortKo(values))}
+                hideSelectedChips
+                autoFocus
+                variant="underline"
+                placeholder="국가 검색"
+                aria-label="신고 국가 추가"
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAdding(true)}
+              className="inline-flex items-center gap-1 rounded-sm border border-dashed px-2 py-1 font-sans text-[13px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+              style={{ borderColor: 'var(--pmw-border-warm)' }}
+            >
+              ＋ 추가
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center justify-between pt-lg">
