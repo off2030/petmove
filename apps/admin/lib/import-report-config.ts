@@ -6,17 +6,10 @@
  * 기본값은 @petmove/domain (client-safe). 설정 화면에서 편집 가능.
  *
  * 이 파일은 @/lib/supabase/server 를 참조하므로 client 컴포넌트에서 직접 import 금지.
- * client 는 DEFAULT_IMPORT_REPORT_COUNTRIES / IMPORT_REPORT_CANDIDATE_COUNTRIES 가
- * 필요하면 @petmove/domain 에서 가져올 것.
+ * client 는 DEFAULT_IMPORT_REPORT_COUNTRIES 가 필요하면 @petmove/domain 에서 가져올 것.
  */
-import {
-  DEFAULT_IMPORT_REPORT_COUNTRIES,
-  IMPORT_REPORT_CANDIDATE_COUNTRIES,
-} from '@petmove/domain'
-export {
-  DEFAULT_IMPORT_REPORT_COUNTRIES,
-  IMPORT_REPORT_CANDIDATE_COUNTRIES,
-}
+import { DEFAULT_IMPORT_REPORT_COUNTRIES } from '@petmove/domain'
+export { DEFAULT_IMPORT_REPORT_COUNTRIES }
 
 const AUTO_KEY = 'import_report_countries'
 
