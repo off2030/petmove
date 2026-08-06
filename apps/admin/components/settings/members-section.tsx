@@ -27,6 +27,12 @@ const ROLE_LABEL: Record<InviteRole, string> = {
 
 const ROLE_OPTIONS: InviteRole[] = ['member', 'admin']
 
+/**
+ * 멤버 행 오른쪽에 서는 것들(역할·운영자 배지, '나', 제거 버튼, 역할 드롭다운)의 공통 치수.
+ * 높이를 고정해 두지 않으면 배지와 버튼이 폰트 line-height 차이로 1~2px 씩 어긋난다.
+ */
+const ROW_CHIP = 'inline-flex items-center h-[22px] px-2.5 rounded-full font-serif text-[12px] whitespace-nowrap'
+
 function formatExpiry(iso: string): string {
   const d = new Date(iso)
   return d.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\./g, '-').replace(/ /g, '').replace(/-$/, '')
@@ -204,29 +210,34 @@ export function MembersSection({
                           value={m.role}
                           onChange={(next) => onChangeRole(m, next)}
                           disabled={pending}
+                          size="sm"
                         />
                       ) : (
-                        <span className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/80 text-muted-foreground">
+                        <span className={cn(ROW_CHIP, 'border border-border/80 text-muted-foreground')}>
                           {ROLE_LABEL[m.role]}
                         </span>
                       )}
                       {superAdminIds.has(m.user_id) && (
                         <span
                           title="SaaS 운영자 — 모든 조직 데이터 접근 권한"
-                          className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-primary/40 bg-primary/5 text-primary/80"
+                          className={cn(ROW_CHIP, 'border border-primary/40 bg-primary/5 text-primary/80')}
                         >
                           운영자
                         </span>
                       )}
                       {isSelf && (
-                        <span className="font-serif text-[12px] text-muted-foreground/70">나</span>
+                        <span className={cn(ROW_CHIP, 'px-1 text-muted-foreground/70')}>나</span>
                       )}
                       {isAdmin && !isSelf && (
                         <button
                           type="button"
                           onClick={() => onRemove(m)}
                           disabled={pending}
-                          className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/80 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
+                          className={cn(
+                            ROW_CHIP,
+                            'border border-border/80 text-muted-foreground transition-colors disabled:opacity-40',
+                            'hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive',
+                          )}
                         >
                           제거
                         </button>
@@ -267,7 +278,7 @@ export function MembersSection({
                     </div>
                     <span
                       title="SaaS 운영자 — 모든 조직 데이터 접근 권한"
-                      className="shrink-0 font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-primary/40 bg-primary/5 text-primary/80"
+                      className={cn(ROW_CHIP, 'shrink-0 border border-primary/40 bg-primary/5 text-primary/80')}
                     >
                       운영자
                     </span>
@@ -371,14 +382,23 @@ export function MembersSection({
   )
 }
 
+/**
+ * 역할 선택 드롭다운.
+ *
+ * `size` 는 옆에 서는 것들에 맞춘다 — 멤버 행에서는 역할·운영자 배지, 제거 버튼과
+ * 같은 작은 pill('sm'), 초대 폼에서는 '초대 보내기' solid 버튼과 같은 높이('md').
+ * (2026-08-06 — 한 줄에 22px 배지와 32px 드롭다운이 섞여 크기가 제각각이었다.)
+ */
 function RoleSelect({
   value,
   onChange,
   disabled,
+  size = 'md',
 }: {
   value: InviteRole
   onChange: (v: InviteRole) => void
   disabled?: boolean
+  size?: 'sm' | 'md'
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -399,7 +419,10 @@ function RoleSelect({
         onClick={() => setOpen((p) => !p)}
         disabled={disabled}
         className={cn(
-          'inline-flex items-center gap-1.5 h-8 pl-3 pr-2 rounded-full border border-border/80 bg-transparent font-serif text-[14px] text-foreground transition-colors',
+          'inline-flex items-center rounded-full border border-border/80 bg-transparent font-serif text-foreground transition-colors',
+          size === 'sm'
+            ? 'gap-1 h-[22px] pl-2.5 pr-1.5 text-[12px]'
+            : 'gap-1.5 h-8 pl-3 pr-2 text-[14px]',
           'hover:bg-muted/40 focus:outline-none focus:border-primary/50',
           'disabled:opacity-60 disabled:cursor-not-allowed',
           open && 'border-foreground/40 bg-muted/30',
@@ -409,7 +432,11 @@ function RoleSelect({
         <svg
           aria-hidden
           viewBox="0 0 12 12"
-          className={cn('h-3 w-3 text-muted-foreground transition-transform', open && 'rotate-180')}
+          className={cn(
+            'text-muted-foreground transition-transform',
+            size === 'sm' ? 'h-2.5 w-2.5' : 'h-3 w-3',
+            open && 'rotate-180',
+          )}
         >
           <path
             d="M2 4.5l4 4 4-4"
