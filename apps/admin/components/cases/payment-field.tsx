@@ -205,7 +205,7 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
                   onClick={() => setEstimateOpen(true)}
                   disabled={!country}
                   className={roundIconBtn}
-                  title={country ? '비용 안내' : '목적지를 먼저 선택해주세요'}
+                  title={country ? '비용 안내' : '여행지를 먼저 선택해주세요'}
                 >
                   <CalculatorIcon size={15} />
                 </button>

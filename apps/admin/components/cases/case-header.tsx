@@ -14,10 +14,10 @@ import { destCode } from '@/lib/country-code'
  * 케이스 상세 상단 고정 헤더 (표시 전용).
  * 스크롤되는 필드 목록 위에 남아 "지금 누구 케이스인지"를 잡아준다.
  *
- * 표시: 동물이름 + (종·품종·성별·모색, 값 있는 것만 점 연결) / 보호자이름 / 목적지 칩.
+ * 표시: 동물이름 + (종·품종·성별·모색, 값 있는 것만 점 연결) / 보호자이름 / 여행지 칩.
  *  - species·sex 는 select 라 DB 옵션 라벨을 renderFieldValue 로 변환.
  *  - breed·color 는 한글 우선(영문 폴백) 저장값 그대로.
- *  - 다중 목적지는 활성 칩 하나 + "+N".
+ *  - 다중 여행지는 활성 칩 하나 + "+N".
  */
 export function CaseHeader({ caseRow }: { caseRow: CaseRow }) {
   const { fieldDefs, activeDestination, cases } = useCases()

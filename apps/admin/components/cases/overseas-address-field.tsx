@@ -27,7 +27,7 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
     })
     if (ok) save(null)
   }
-  // 활성 목적지 + scoped 키 → by_dest 경로 read/write. 단일 목적지도 resolveActiveDestination
+  // 활성 여행지 + scoped 키 → by_dest 경로 read/write. 단일 여행지도 resolveActiveDestination
   // 이 유일 토큰을 돌려줘 by_dest 로 저장/삭제한다(B: 단일도 by_dest 통일 — 서버 useByDest·다른
   // scoped 필드와 동일 패턴). read 도 by_dest 우선이므로 읽기/쓰기 경로가 일치해야 한다.
   // isMultiDest 게이트를 두면 값은 by_dest 에 있는데 삭제는 top-level 로 가 삭제가 안 먹혔다(버그).

@@ -98,7 +98,7 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
 
   function saveNewRecord(date: string) {
     if (!date) { setAddingNew(false); return }
-    // 설정(전염병 규칙)에서 목적지별 검사기관 resolve. 규칙 여러 개면 각 lab별로 기록 생성.
+    // 설정(전염병 규칙)에서 여행지별 검사기관 resolve. 규칙 여러 개면 각 lab별로 기록 생성.
     // 매칭되는 규칙이 없으면 lab 미지정(null) 1건.
     const labs = resolveInspectionLabs(destination, inspectionConfig.infectiousRules)
     const newRows: InfectiousRecord[] = labs.length > 0

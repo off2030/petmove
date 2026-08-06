@@ -11,7 +11,7 @@ import type { CaseRow } from '@petmove/domain'
  *  1. 목록 소비자가 data 를 사실상 전부 읽는다:
  *     - 검색(case-list buildSearchString)은 data 의 **모든 값**을 문자열화해 매칭
  *     - 검사 탭(todos-app buildInspectionRows)은 rabies_titer_records ·
- *       infectious_disease_records · by_dest(목적지별 출국일) · species 등 다수 키
+ *       infectious_disease_records · by_dest(여행지별 출국일) · species 등 다수 키
  *     - 신고 탭 상태 derive(domain report-status)는 documents(stepId 태그) ·
  *       advance_notification_* · import_permit_* · jp_export_quarantine_* 등
  *     - 서류 탭 · destination-overrides · procedure-check 도 임의 키를 opt-in 없이 읽음

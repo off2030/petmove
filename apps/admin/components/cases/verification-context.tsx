@@ -46,7 +46,7 @@ export function VerificationProvider({
   children,
 }: {
   caseRow: CaseRow
-  /** 다중 목적지 케이스에서 현재 활성 목적지 (없으면 caseRow.destination). */
+  /** 다중 여행지 케이스에서 현재 활성 여행지 (없으면 caseRow.destination). */
   destination?: string | null
   children: ReactNode
 }) {
@@ -103,7 +103,7 @@ export function useVerificationResults(): CheckEntry[] {
 }
 
 /**
- * 케이스 + 목적지 + 비활성 규칙 셋을 받아 모든 체크를 실행한 결과 배열 반환.
+ * 케이스 + 여행지 + 비활성 규칙 셋을 받아 모든 체크를 실행한 결과 배열 반환.
  * VerificationProvider 내부 계산과 PDF 발급 게이트가 공유한다.
  */
 export function evaluateCase(
@@ -114,7 +114,7 @@ export function evaluateCase(
 ): CheckEntry[] {
   const country = detectCountryKey(destination ?? caseRow.destination)
   const checks = country ? getChecksForCountry(country) : getChecksForCountry('all')
-  // destination 인자(활성 목적지 토큰) 를 ctx 로 전달 — 다중 목적지 케이스에서
+  // destination 인자(활성 여행지 토큰) 를 ctx 로 전달 — 다중 여행지 케이스에서
   // procedure-check 가 by_dest 의 destination-scoped 값을 정확히 읽도록.
   const ctxDestination = destination ?? null
   const results: CheckEntry[] = []

@@ -46,7 +46,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   const selected = parseDests(destination)
   const multi = selected.length > 1
 
-  // 목적지별 왕복/편도 토글 — case.data.trip_type 객체에 저장. 디폴트 round.
+  // 여행지별 왕복/편도 토글 — case.data.trip_type 객체에 저장. 디폴트 round.
   const currentCase = cases.find(c => c.id === caseId)
   const tripTypeMap =
     ((currentCase?.data as Record<string, unknown> | undefined)?.trip_type as
@@ -55,7 +55,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   const targetDest = resolveActiveDestination(destination, activeDestination)
   const tripType: TripType = getTripType(currentCase?.data, targetDest)
 
-  // 편도 전용 목적지(호주·뉴질랜드·싱가포르·남아공)는 getTripType 이 저장값을 무시하고
+  // 편도 전용 여행지(호주·뉴질랜드·싱가포르·남아공)는 getTripType 이 저장값을 무시하고
   // 항상 one_way 를 돌려주므로 토글이 "먹지 않는 것처럼" 보인다 → 토글 자체를 숨긴다
   // (portal 의 destination-chips·apply-form 과 동일 처리).
   const tripToggleAvailable = !!targetDest && !isOneWayOnlyDestination(targetDest)
@@ -67,8 +67,8 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     await persistField('여정 유형', () => updateCaseField(caseId, 'data', 'trip_type', next))
     // 편도 전환 시 잔존 귀국 데이터 정리 — 안 지우면 남은 귀국일이 '출국 ≤ 귀국' 검증과
     // 귀국 알림에 걸린다 (portal setCaseDestinationTripType 과 동일 의미).
-    // return_date·return_undecided 는 destination-scoped 키라 updateCaseField 에 목적지를
-    // 넘기면 다중 목적지 = by_dest null sentinel / 단일 = top-level 로 알아서 갈라진다.
+    // return_date·return_undecided 는 destination-scoped 키라 updateCaseField 에 여행지를
+    // 넘기면 다중 여행지 = by_dest null sentinel / 단일 = top-level 로 알아서 갈라진다.
     if (value === 'one_way') {
       for (const key of ['return_date', 'return_undecided'] as const) {
         updateLocalCaseField(caseId, 'data', key, null)
@@ -158,7 +158,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   }, [open])
 
   // 팝업 위치 측정 — fixed 로 띄워 부모 overflow:auto 클리핑 우회.
-  // containerRef(목적지 값 영역) 바로 아래 — 칩이 없으면 그 자리에, 칩이 있으면 칩 아래.
+  // containerRef(여행지 값 영역) 바로 아래 — 칩이 없으면 그 자리에, 칩이 있으면 칩 아래.
   useEffect(() => {
     if (!open) return
     function measure() {
@@ -192,25 +192,25 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     const val = joinDests([...selected, dest.ko])
     // Optimistic update first
     updateLocalCaseField(caseId, 'column', 'destination', val)
-    await persistField('목적지', () => updateCaseField(caseId, 'column', 'destination', val))
+    await persistField('여행지', () => updateCaseField(caseId, 'column', 'destination', val))
   }
 
   async function removeDest(ko: string) {
     const ok = await confirm({
-      message: `목적지 "${ko}"를 삭제하시겠습니까? 이 목적지의 일정·항공편·추가정보 입력값도 함께 삭제됩니다.`,
+      message: `여행지 "${ko}"를 삭제하시겠습니까? 이 여행지의 일정·항공편·추가정보 입력값도 함께 삭제됩니다.`,
       okLabel: '삭제',
       variant: 'destructive',
     })
     if (!ok) return
     const val = joinDests(selected.filter(s => s !== ko))
     // 완료 처리와 동일한 정리(by_dest·top-level scoped 잔존·출국일 컬럼)까지 서버 액션이 수행 —
-    // 다음에 넣는 목적지가 이전 목적지의 추가정보를 물려받지 않게 한다. past_journeys 는 안 남김.
+    // 다음에 넣는 여행지가 이전 여행지의 추가정보를 물려받지 않게 한다. past_journeys 는 안 남김.
     updateLocalCaseField(caseId, 'column', 'destination', val)
-    await persistField('목적지', () => removeCaseDestinationAdmin(caseId, ko))
+    await persistField('여행지', () => removeCaseDestinationAdmin(caseId, ko))
   }
 
   // 스태프 수동 전환 — 완료된(혹은 다녀온) 여정을 '지난 여정'으로 보관. 삭제와 달리
-  // by_dest 요약을 past_journeys 로 남기고 목적지에서 뺀다. (design journey-lifecycle §4·§5)
+  // by_dest 요약을 past_journeys 로 남기고 여행지에서 뺀다. (design journey-lifecycle §4·§5)
   async function demoteToPast(ko: string) {
     const ok = await confirm({
       message: `"${ko}" 여정을 완료해 '지난 여정'으로 보관할까요?`,
@@ -233,7 +233,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     next.splice(toIdx, 0, moved)
     const val = joinDests(next)
     updateLocalCaseField(caseId, 'column', 'destination', val)
-    await persistField('목적지', () => updateCaseField(caseId, 'column', 'destination', val))
+    await persistField('여행지', () => updateCaseField(caseId, 'column', 'destination', val))
   }
 
   // 포인터 기반 드래그 재정렬 — 네이티브 HTML5 DnD 는 칩 본문 버튼이 mousedown 을
@@ -261,7 +261,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     return best
   }
 
-  // 칩 전체가 드래그 영역. 탭(이동<임계)=활성 목적지 전환, 드래그(이동≥임계, 편집모드)=순서 변경.
+  // 칩 전체가 드래그 영역. 탭(이동<임계)=활성 여행지 전환, 드래그(이동≥임계, 편집모드)=순서 변경.
   // 전역(document) 리스너로 추적 — 리렌더(realtime 구독 등)·포인터 캡처 상실과 무관하게 끝까지
   // 따라간다. 보관/삭제 버튼 위 누름은 무시(그쪽 클릭이 처리).
   const DRAG_THRESHOLD = 5
@@ -299,7 +299,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
       if (dragging) {
         if (st && st.over !== st.from) void reorderDests(st.from, st.over)
       } else {
-        setActiveDestination(ko) // 탭 — 활성 목적지 전환
+        setActiveDestination(ko) // 탭 — 활성 여행지 전환
       }
     }
     document.addEventListener('pointermove', handleMove)
@@ -312,9 +312,9 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel
           onClick={editMode ? () => { setOpen(true); setQuery(''); setHighlightIdx(0) } : undefined}
-          title={editMode ? '목적지 추가' : undefined}
+          title={editMode ? '여행지 추가' : undefined}
         >
-          목적지
+          여행지
         </SectionLabel>
       </div>
       <div ref={containerRef} className="relative min-w-0 flex flex-col md:flex-row items-start gap-md">
@@ -393,7 +393,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                         data-chip-action
                         onClick={(e) => { e.stopPropagation(); removeDest(ko) }}
                         className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-pmw-tag-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
-                        title="목적지 삭제"
+                        title="여행지 삭제"
                       >
                         <Trash2 size={12} className="pointer-events-none" />
                       </button>

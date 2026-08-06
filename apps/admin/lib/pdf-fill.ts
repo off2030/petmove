@@ -303,7 +303,7 @@ function destinationIsChina(dest: unknown): boolean {
   return dest.split(',').map(s => s.trim()).includes('중국')
 }
 
-/** 호주·뉴질랜드 목적지 — 별지25 제조번호 칸에 제품 유효기간 병기 대상. */
+/** 호주·뉴질랜드 여행지 — 별지25 제조번호 칸에 제품 유효기간 병기 대상. */
 function destinationIsAuNz(dest: unknown): boolean {
   if (typeof dest !== 'string' || !dest) return false
   const tokens = dest.split(',').map(s => s.trim())
@@ -741,7 +741,7 @@ const EN_FALLBACK: Record<string, string> = {
   color_en: 'color',
   sex_en: 'sex',
   address_en: 'address_kr',
-  // address_overseas: 폴백 없음 — 비어있으면 그대로 비움 (목적지 해외 주소는 한국 주소로 대체 불가)
+  // address_overseas: 폴백 없음 — 비어있으면 그대로 비움 (여행지 해외 주소는 한국 주소로 대체 불가)
 }
 
 export function readSource(
@@ -1747,8 +1747,8 @@ function resolveField(
   // Form25 "기타 예방접종" slot filler. `other_vacc_seq:<attr>[<n>]`.
   // Pulls the nth entry of the compressed vaccine sequence built from
   // comprehensive → external → internal (skipping missing types).
-  // `serial_with_expiry` — 호주·뉴질랜드 목적지에서만 batch + 제품 유효기간(제품 사용기한) 병기.
-  // 그 외 목적지는 batch 만. (별지25는 모든 목적지 공용이라 destination gating.)
+  // `serial_with_expiry` — 호주·뉴질랜드 여행지에서만 batch + 제품 유효기간(제품 사용기한) 병기.
+  // 그 외 여행지는 batch 만. (별지25는 모든 여행지 공용이라 destination gating.)
   // 면역유효기간은 별도 1Y/2Y/3Y 체크박스가 담당하므로 여기 병기하지 않는다.
   const seqMatch = transform?.match(/^other_vacc_seq:(type|name|manufacturer|serial|serial_with_expiry|date)\[(\d+)\]$/)
   if (seqMatch) {
@@ -1988,7 +1988,7 @@ function resolveField(
     if (attr === 'serial') return merged.serial
     if (attr === 'serial_with_expiry') {
       // 별지25 제조번호 칸 = 제품 유효기간(입력/카탈로그 제품 사용기한) — 호주·뉴질랜드 한정.
-      // 그 외 목적지는 batch 만. 면역유효기간은 별도 1Y/2Y/3Y 체크박스가 담당.
+      // 그 외 여행지는 batch 만. 면역유효기간은 별도 1Y/2Y/3Y 체크박스가 담당.
       const suffix = destinationIsAuNz(caseRow.destination) ? (merged.expiry ?? '') : ''
       return joinBatchExpiry(merged.serial, suffix)
     }

@@ -178,7 +178,7 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
 
   return (
     <SettingsShell size="lg">
-      <SettingsSection title="절차 검증">
+      <SettingsSection title="검증">
         {error && (
           <p className="-mt-md mb-md font-serif text-[13px] text-destructive">저장 실패: {error}</p>
         )}
@@ -188,14 +188,11 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
             <SettingsSearchInput
               value={query}
               onChange={setQuery}
-              placeholder="규칙명, 메시지, 목적지 검색"
+              placeholder="규칙명, 메시지, 여행지 검색"
               className="flex-1"
             />
             <SettingsFilterPills options={STATUS_FILTERS} value={statusFilter} onChange={setStatusFilter} />
           </div>
-          <p className="pmw-st__sec-lead px-1">
-            검색 대상: 규칙명, 설명 메시지, 목적지, 절차명, 심각도, 활성 상태. 공백으로 여러 단어를 넣으면 모두 포함된 규칙만 보여줍니다.
-          </p>
         </div>
 
         {total === 0 ? (

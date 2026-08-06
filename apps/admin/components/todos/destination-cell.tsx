@@ -8,14 +8,14 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { resolveTabActiveDest, type CaseRow } from '@petmove/domain'
 
 /**
- * 다중 목적지 케이스에서 한 줄에 "활성" 목적지 한 개만 보여주는 chip + dropdown.
+ * 다중 여행지 케이스에서 한 줄에 "활성" 여행지 한 개만 보여주는 chip + dropdown.
  *
- * overrideKey: case data 의 어느 키에 활성 목적지를 영속 저장할지.
+ * overrideKey: case data 의 어느 키에 활성 여행지를 영속 저장할지.
  *  - 신고 탭: 'import_report_active_dest'
  *  - 서류 탭: 'export_doc_active_dest'
  *  - 검사 탭: 'inspection_active_dest'
  *
- * 첫 번째 목적지를 고르면 override 가 비워져 default 동작으로 돌아간다.
+ * 첫 번째 여행지를 고르면 override 가 비워져 default 동작으로 돌아간다.
  *
  * dismissAction: 옵션. 드롭다운 하단에 "X 내리기" 항목 추가. 신고 탭에서 사용해
  * 케이스를 탭에서 명시적으로 제외하는 용도.
@@ -42,7 +42,7 @@ export function DestinationCell({
 }) {
   const confirm = useConfirm()
   const dests = (row.destination ?? '').split(',').map(s => s.trim()).filter(Boolean)
-  // 활성 목적지: override ?? 출국일 있는 목적지 ?? 첫 목적지. todos 탭의 날짜 flatten 과
+  // 활성 여행지: override ?? 출국일 있는 여행지 ?? 첫 여행지. todos 탭의 날짜 flatten 과
   // 동일 기준(resolveTabActiveDest)이라 칩과 표시 데이터가 일치.
   const active = resolveTabActiveDest(row, overrideKey)
   const [open, setOpen] = useState(false)
@@ -81,8 +81,8 @@ export function DestinationCell({
 
   async function pick(d: string) {
     setOpen(false)
-    // 명시적으로 고른 목적지는 항상 override 로 저장. (기본 활성이 '출국일 있는 목적지'라
-    // 첫 목적지 선택 시 override 를 비우면 다시 default 로 튕겨 선택이 안 남는다.)
+    // 명시적으로 고른 여행지는 항상 override 로 저장. (기본 활성이 '출국일 있는 여행지'라
+    // 첫 여행지 선택 시 override 를 비우면 다시 default 로 튕겨 선택이 안 남는다.)
     onUpdate(row.id, 'data', overrideKey, d)
     await updateCaseField(row.id, 'data', overrideKey, d)
   }
@@ -109,7 +109,7 @@ export function DestinationCell({
         type="button"
         onClick={(e) => { e.stopPropagation(); setOpen(o => !o) }}
         className="inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 bg-pmw-tag text-pmw-tag-foreground whitespace-nowrap hover:brightness-95 transition-all cursor-pointer"
-        title={isMulti ? `다른 목적지로 변경 (총 ${dests.length}개)` : '메뉴'}
+        title={isMulti ? `다른 여행지로 변경 (총 ${dests.length}개)` : '메뉴'}
       >
         {chipInner}
         <span className="ml-0.5 text-[10px] text-pmw-tag-foreground/60">▾</span>

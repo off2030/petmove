@@ -114,7 +114,7 @@ export const REGULAR_COLUMN_SPECS: FieldSpec[] = [
 export const DESTINATION_SPEC: FieldSpec = {
   key: 'destination',
   storage: 'column',
-  label: '목적지',
+  label: '여행지',
   type: 'text',
   group: '절차정보',
   groupOrder: 2,

@@ -18,7 +18,7 @@ const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
 
 /**
- * 로컬 상태 반영 콜백. 5번째 destination 은 다중 목적지 케이스에서 scoped key 를
+ * 로컬 상태 반영 콜백. 5번째 destination 은 다중 여행지 케이스에서 scoped key 를
  * by_dest 로 라우팅할 때 전달 (updateLocalCaseField 와 동일 시그니처).
  */
 type OnUpdate = (
@@ -112,7 +112,7 @@ function EditableCell({
   row: CaseRow
   col: TodoColumn
   onUpdate: OnUpdate
-  /** 다중 목적지 케이스의 활성 목적지 — scoped key 저장을 by_dest 로 라우팅. */
+  /** 다중 여행지 케이스의 활성 여행지 — scoped key 저장을 by_dest 로 라우팅. */
   activeDest?: string | null
 }) {
   const { replaceLocalCaseData, updateLocalCaseField } = useCases()
@@ -130,7 +130,7 @@ function EditableCell({
         return
       }
       const saveVal = trimmed === '' ? null : trimmed
-      // scoped key(출국일·내원일 등)는 활성 목적지로 by_dest 라우팅. 그 외는 기존 경로.
+      // scoped key(출국일·내원일 등)는 활성 여행지로 by_dest 라우팅. 그 외는 기존 경로.
       const dest = isDestinationScopedKey(col.key) ? (activeDest ?? undefined) : undefined
       onUpdate(row.id, col.storage, col.key, saveVal, dest)
       setEditing(false)
@@ -255,7 +255,7 @@ function SelectCell({
   row: CaseRow
   col: TodoColumn
   onUpdate: OnUpdate
-  /** 다중/단일 목적지 scoped key 저장을 by_dest 로 라우팅할 활성 목적지. */
+  /** 다중/단일 여행지 scoped key 저장을 by_dest 로 라우팅할 활성 여행지. */
   activeDest?: string | null
 }) {
   const value = getCellValue(row, col)
@@ -263,9 +263,9 @@ function SelectCell({
   const confirm = useConfirm()
   // 일본 케이스 + 신고탭 status 컬럼은 portal data 필드를 직접 patch (양방향 sync).
   // 다른 컬럼·다른 국가는 기존 단일키 path 그대로.
-  // 국가 판정은 활성 목적지 기준 — destination 전체 문자열("일본, 태국")로 매칭하면 일본·태국
+  // 국가 판정은 활성 여행지 기준 — destination 전체 문자열("일본, 태국")로 매칭하면 일본·태국
   // 분기에 동시에 걸려, 아래 순서상 태국 액션이 이기고 read(todos-app effectiveImportStatus,
-  // 활성 목적지=일본이면 일본 derive)와 엇갈린다 — 수입 칸이 대기로 되돌아오던 버그.
+  // 활성 여행지=일본이면 일본 derive)와 엇갈린다 — 수입 칸이 대기로 되돌아오던 버그.
   const reportDest = activeDest ?? row.destination
   const isJapanReport =
     matchesDestinationKey(reportDest, 'japan') &&
@@ -379,7 +379,7 @@ export function TodoTable({
   columns: TodoColumn[]
   onUpdate: OnUpdate
   rowClass?: (row: CaseRow) => string
-  /** caseId → 활성 목적지. scoped key 편집을 by_dest 로 라우팅하는 데 사용. */
+  /** caseId → 활성 여행지. scoped key 편집을 by_dest 로 라우팅하는 데 사용. */
   activeDestById?: Map<string, string | null>
 }) {
   const [visible, setVisible] = useState(INITIAL_VISIBLE)

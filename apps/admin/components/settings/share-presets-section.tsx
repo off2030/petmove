@@ -57,7 +57,7 @@ export function SharePresetsSection({
     () => buildShareFieldLayout({
       fieldDefs,
       extraFieldEntries: ALL_EXTRA_ENTRIES,
-      caseScoped: null, // 조직 단위 — 목적지/종 필터 미적용
+      caseScoped: null, // 조직 단위 — 여행지/종 필터 미적용
     }),
     [fieldDefs],
   )

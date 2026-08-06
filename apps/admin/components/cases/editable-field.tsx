@@ -104,7 +104,7 @@ export function EditableField({
 }) {
   const { cases, updateLocalCaseField, replaceLocalCaseData, activeDestination } = useCases()
   // scoped 키 → data.by_dest[destination][key] 경로 (B: 단일도 by_dest 통일).
-  // 단일 목적지면 resolveActiveDestination 이 유일 토큰을 돌려줘 그 칸으로 저장된다.
+  // 단일 여행지면 resolveActiveDestination 이 유일 토큰을 돌려줘 그 칸으로 저장된다.
   // destArg 가 set 이면 server action·local mutator 둘 다 5번째 인자로 전달.
   const currentCase = cases.find((c) => c.id === caseId)
   const activeDest = resolveActiveDestination(currentCase?.destination, activeDestination)
@@ -356,7 +356,7 @@ export function EditableField({
         }
       }
 
-      // 출국일/내원일 입력 시 활성 목적지를 캡처해 서류/신고 탭의 active_dest에 영속 저장.
+      // 출국일/내원일 입력 시 활성 여행지를 캡처해 서류/신고 탭의 active_dest에 영속 저장.
       // 사용자가 칩 클릭으로 바꾼 활성이 있고 비어있지 않은 새 값일 때만.
       // 항상 동기화 — 신고국이면 자동 포함, 비-신고국이면 자동 포함 안 됨 (filter에서 판정).
       const isDeparture = spec.key === 'departure_date'

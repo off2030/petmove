@@ -603,7 +603,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         const msg = `${buildCaseJourneyContext(caseRow).destinationToken || ''} 입국 전에 추가 검사를 받으세요.`.trim()
         return { desc: msg, cardDesc: msg }
       }
-      const token = buildCaseJourneyContext(caseRow).destinationToken || '목적지'
+      const token = buildCaseJourneyContext(caseRow).destinationToken || '여행지'
       // 대만은 만료의 의미가 다르다 — 만료 **전** 재검사면 체인이 유지돼 대기 없이 가지만,
       // 만료 후 재검사는 체인이 끊겨 채혈일로부터 180일을 다시 기다려야 한다
       // (APHIA 문답집 情形 2: 該次抽血日為前次檢測合格報告之抽血日起 180 日至 1 년 內).

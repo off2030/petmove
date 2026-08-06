@@ -521,7 +521,7 @@ export function CaseList({
               <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm font-sans text-[12px] uppercase tracking-[0.08em] text-muted-foreground">
                 <span>보호자</span>
                 <span>반려동물</span>
-                <span>목적지</span>
+                <span>여행지</span>
                 <span className="hidden md:block">마이크로칩</span>
               </div>
             </div>

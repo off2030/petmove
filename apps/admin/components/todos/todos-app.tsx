@@ -85,7 +85,7 @@ const LAB_OPTIONS = [
 
 /**
  * Auto-detect titer lab from destination using inspection config rules.
- * 여러 목적지 중 규칙이 매칭되는 첫 국가의 첫 lab 반환, 없으면 default.
+ * 여러 여행지 중 규칙이 매칭되는 첫 국가의 첫 lab 반환, 없으면 default.
  */
 function autoDetectLab(
   destination: string | null | undefined,
@@ -187,18 +187,18 @@ function addDays(dateStr: string, days: number): string {
   return `${y}-${m}-${day}`
 }
 
-// ── 다중 목적지 by_dest 인지 헬퍼 ──────────────────────────────────────────
-// 출국일·내원일은 목적지별(data.by_dest[목적지])로 저장될 수 있다. 탭은 활성
-// 목적지(override ?? 출국일 있는 목적지 ?? 첫 목적지) 기준으로 읽고, 포함 판정은
-// 모든 목적지를 스캔한다. 단일 목적지면 컬럼/top-level 폴백이라 기존 동작 유지.
+// ── 다중 여행지 by_dest 인지 헬퍼 ──────────────────────────────────────────
+// 출국일·내원일은 여행지별(data.by_dest[여행지])로 저장될 수 있다. 탭은 활성
+// 여행지(override ?? 출국일 있는 여행지 ?? 첫 여행지) 기준으로 읽고, 포함 판정은
+// 모든 여행지를 스캔한다. 단일 여행지면 컬럼/top-level 폴백이라 기존 동작 유지.
 const IMPORT_REPORT_DEST_KEY = 'import_report_active_dest'
 const EXPORT_DOC_DEST_KEY = 'export_doc_active_dest'
 
-/** 서류 탭 활성 목적지 출국일. */
+/** 서류 탭 활성 여행지 출국일. */
 function exportDocDeparture(row: CaseRow): string {
   return getDepartureDate(row, resolveTabActiveDest(row, EXPORT_DOC_DEST_KEY)) ?? ''
 }
-/** 서류 탭 활성 목적지 내원일. */
+/** 서류 탭 활성 여행지 내원일. */
 function exportDocVetVisit(row: CaseRow): string {
   return getVetVisitDate(row, resolveTabActiveDest(row, EXPORT_DOC_DEST_KEY)) ?? ''
 }
@@ -227,7 +227,7 @@ function isExportDocVisitOutOfWindow(row: CaseRow): boolean {
 }
 
 /**
- * 서류 탭 내원가능일 — 저장값 우선, 없으면 활성 목적지·종의 임상검사 윈도우로 자동 계산.
+ * 서류 탭 내원가능일 — 저장값 우선, 없으면 활성 여행지·종의 임상검사 윈도우로 자동 계산.
  * 내원가능일(가장 이른 날) = 출국일 - (윈도우 - 1). 기본 10일 → -9, 촌충국 강아지(영국 등) 4일 → -3.
  */
 function exportDocVetAvailable(row: CaseRow): string {
@@ -241,51 +241,51 @@ function exportDocVetAvailable(row: CaseRow): string {
   const windowDays = getVetVisitWindowDays(dest, species)
   return addDays(departure, -(windowDays - 1))
 }
-/** 서류 탭 활성 목적지 기준으로 평탄화한 뷰. */
+/** 서류 탭 활성 여행지 기준으로 평탄화한 뷰. */
 function exportDocView(row: CaseRow): CaseRow {
   return flattenCaseForDestination(row, resolveTabActiveDest(row, EXPORT_DOC_DEST_KEY))
 }
-/** 서류 탭 준비상태 — 활성 목적지 by_dest 우선. */
+/** 서류 탭 준비상태 — 활성 여행지 by_dest 우선. */
 function exportDocStatus(row: CaseRow): string {
   const data = (exportDocView(row).data ?? {}) as Record<string, unknown>
   const status = data.export_doc_status
   return typeof status === 'string' && status ? status : 'not_started'
 }
-/** 서류 탭 메모 — 활성 목적지 by_dest 우선. */
+/** 서류 탭 메모 — 활성 여행지 by_dest 우선. */
 function exportDocMemo(row: CaseRow): string {
   const data = (exportDocView(row).data ?? {}) as Record<string, unknown>
   const memo = data.export_doc_memo
   return typeof memo === 'string' ? memo : ''
 }
-/** 신고 탭 활성 목적지 출국일. */
+/** 신고 탭 활성 여행지 출국일. */
 function importReportDeparture(row: CaseRow): string {
   return getDepartureDate(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)) ?? ''
 }
-/** 신고 탭 활성 목적지 귀국일 (by_dest 우선) — 수출 검역 상태 판정용. */
+/** 신고 탭 활성 여행지 귀국일 (by_dest 우선) — 수출 검역 상태 판정용. */
 function importReportReturnDate(row: CaseRow): string {
   const activeDest = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
   const data = (row.data as Record<string, unknown> | null) ?? null
   const v = readByDestValue(data, activeDest, 'return_date')
   if (typeof v === 'string' && v) return v
-  // 다중 목적지 + 특정 목적지 지정: top-level fallback 안 함 — 누수 차단(B).
+  // 다중 여행지 + 특정 여행지 지정: top-level fallback 안 함 — 누수 차단(B).
   if (activeDest && parseDestinations(row.destination).length > 1) return ''
   const top = data?.return_date
   return typeof top === 'string' && top ? top : ''
 }
-/** 케이스의 어떤 목적지든 출국일이 있는지 (by_dest 우선 + 컬럼 폴백). */
+/** 케이스의 어떤 여행지든 출국일이 있는지 (by_dest 우선 + 컬럼 폴백). */
 function anyDestHasDeparture(row: CaseRow): boolean {
   const dests = parseDestinations(row.destination)
   if (dests.length === 0) return !!row.departure_date
   return dests.some((d) => !!getDepartureDate(row, d))
 }
-/** 특정 검사국(예: 'australia')에 해당하는 목적지의 출국일 (by_dest 우선). */
+/** 특정 검사국(예: 'australia')에 해당하는 여행지의 출국일 (by_dest 우선). */
 function destDeparture(row: CaseRow, destKey: string): string {
   const dests = parseDestinations(row.destination)
   const match = dests.find((d) => matchesDestinationKey(d, destKey))
   if (!match) return ''
   return getDepartureDate(row, match) ?? ''
 }
-/** 케이스의 어떤 목적지든 내원일이 있는지. */
+/** 케이스의 어떤 여행지든 내원일이 있는지. */
 function anyDestHasVetVisit(row: CaseRow): boolean {
   const dests = parseDestinations(row.destination)
   if (dests.length === 0) {
@@ -295,7 +295,7 @@ function anyDestHasVetVisit(row: CaseRow): boolean {
   return dests.some((d) => !!getVetVisitDate(row, d))
 }
 /**
- * 신고 마감일 자동 계산 — 활성 목적지 출국일 기준. 일본 -40일, 대만 -20일.
+ * 신고 마감일 자동 계산 — 활성 여행지 출국일 기준. 일본 -40일, 대만 -20일.
  * 그 외 국가는 마감 규칙 미정 → 빈값(운영자 수기). 향후 국가별 규칙 추가 지점.
  */
 function autoImportDeadline(row: CaseRow): string {
@@ -399,8 +399,8 @@ function buildInspectionRows(
       }
     }
     // 3) 전염병검사 — 그 외 국가 (설정 infectiousRules 매칭). AU/NZ 는 위에서 전용 처리.
-    //    케이스의 목적지 토큰마다 매칭 규칙의 lab 별로 1행. 검사일(해당 lab record) 또는
-    //    그 목적지 출국일 중 하나라도 있으면 탭에 올린다(호주 동작과 동일).
+    //    케이스의 여행지 토큰마다 매칭 규칙의 lab 별로 1행. 검사일(해당 lab record) 또는
+    //    그 여행지 출국일 중 하나라도 있으면 탭에 올린다(호주 동작과 동일).
     const infRecs = readInfectiousRecords(c)
     for (const dest of parseDestinations(c.destination)) {
       if (matchesDestinationKey(dest, 'australia') || matchesDestinationKey(dest, 'new_zealand')) continue
@@ -463,7 +463,7 @@ const INSPECTION_COLUMNS: TodoColumn[] = [
   { key: 'rabies_titer_date', label: '검사일', storage: 'data', type: 'date', width: BASE_COL_W, resolveValue: resolveTiterDate },
   { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: BASE_COL_W },
   { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: BASE_COL_W },
-  { key: 'destination', label: '목적지', storage: 'column', type: 'text', width: BASE_COL_W },
+  { key: 'destination', label: '여행지', storage: 'column', type: 'text', width: BASE_COL_W },
   { key: 'inspection_status', label: '진행상태', storage: 'data', type: 'select', width: BASE_COL_W, options: INSPECTION_STATUS_OPTIONS, defaultValue: 'waiting' },
   { key: 'inspection_memo', label: '메모', storage: 'data', type: 'text', width: BASE_COL_W },
 ]
@@ -476,7 +476,7 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
     storage: 'data',
     type: 'date',
     width: EXPORT_DOC_COL_W,
-    // 활성 목적지 내원일 (by_dest 우선) 표시. 편집은 TodoTable 이 active dest 로 라우팅.
+    // 활성 여행지 내원일 (by_dest 우선) 표시. 편집은 TodoTable 이 active dest 로 라우팅.
     resolveValue: (row) => exportDocVetVisit(row),
     // 경고색 조건: ① 가능일 윈도우 밖(상세페이지와 동일 — 완료여도 표시)
     //             ② 오늘 기준 7일 이내(경과 포함) + 준비 미완료.
@@ -494,7 +494,7 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
     width: EXPORT_DOC_COL_W,
     // 서류 탭에서는 읽기 전용 — 수정은 상세페이지에서. (내원일만 탭에서 편집 가능)
     readonly: true,
-    // 활성 목적지 출국일 (by_dest 우선) 표시.
+    // 활성 여행지 출국일 (by_dest 우선) 표시.
     resolveValue: (row) => exportDocDeparture(row),
   },
   {
@@ -503,9 +503,9 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
     storage: 'data',
     type: 'date',
     width: EXPORT_DOC_COL_W,
-    // 내원가능일은 출국일·목적지에서 자동 계산되는 값이라 직접 수정 불가(읽기 전용).
+    // 내원가능일은 출국일·여행지에서 자동 계산되는 값이라 직접 수정 불가(읽기 전용).
     readonly: true,
-    // 저장값 우선, 없으면 목적지·종별 임상검사 윈도우로 자동 계산(기본 -9, 촌충국 강아지 -3 등).
+    // 저장값 우선, 없으면 여행지·종별 임상검사 윈도우로 자동 계산(기본 -9, 촌충국 강아지 -3 등).
     resolveValue: (row) => exportDocVetAvailable(row),
   },
   {
@@ -522,7 +522,7 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
   { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: EXPORT_DOC_COL_W, readonly: true },
   {
     key: 'destination',
-    label: '목적지',
+    label: '여행지',
     storage: 'column',
     type: 'custom',
     width: EXPORT_DOC_COL_W,
@@ -536,11 +536,11 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
 
 
 /**
- * 자동 포함 판정 — 신고국이면서 출국일(by_dest 우선)이 있는 목적지가 있어야 함.
+ * 자동 포함 판정 — 신고국이면서 출국일(by_dest 우선)이 있는 여행지가 있어야 함.
  *
- * 활성 목적지(import_report_active_dest)가 명시 저장돼 있으면 그 목적지 기준으로만
+ * 활성 여행지(import_report_active_dest)가 명시 저장돼 있으면 그 여행지 기준으로만
  * 판정 (비-신고국으로 옮겨 두면 자동 포함 안 됨). 저장값 없으면 케이스의 모든
- * 목적지를 스캔 — 다중 목적지에서 한 목적지에만 출국일이 있어도 포함된다.
+ * 여행지를 스캔 — 다중 여행지에서 한 여행지에만 출국일이 있어도 포함된다.
  */
 function isAutoImportReport(row: CaseRow, countries: string[]): boolean {
   const data = (row.data ?? {}) as Record<string, unknown>
@@ -565,7 +565,7 @@ function isDismissedImportReport(row: CaseRow): boolean {
 
 /**
  * 신고 탭 정렬: 일본 우선, 그 외 국가는 한글 철자(가나다) 순.
- * 복수 목적지인 경우 가장 앞순위 국가를 기준으로 비교.
+ * 복수 여행지인 경우 가장 앞순위 국가를 기준으로 비교.
  */
 function compareByCountryOrder(a: CaseRow, b: CaseRow): number {
   const primaryDest = (row: CaseRow): string => {
@@ -588,9 +588,9 @@ function compareByCountryOrder(a: CaseRow, b: CaseRow): number {
 }
 
 /**
- * 신고 탭 미완료(대기·진행중) 그룹 목적지 정렬 순서.
+ * 신고 탭 미완료(대기·진행중) 그룹 여행지 정렬 순서.
  * 일본 → 태국 → 필리핀 → 대만 → 하와이 순으로 고정, 그 외 국가(스위스·수동 추가 등)는 뒤에 가나다순.
- * 활성 목적지(import_report_active_dest ?? 첫 목적지) 라벨 기준으로 순위를 매긴다.
+ * 활성 여행지(import_report_active_dest ?? 첫 여행지) 라벨 기준으로 순위를 매긴다.
  */
 const IMPORT_REPORT_DEST_ORDER = ['일본', '태국', '필리핀', '대만', '하와이']
 function reportDestRank(row: CaseRow): number {
@@ -600,7 +600,7 @@ function reportDestRank(row: CaseRow): number {
 }
 
 /**
- * 신고 탭 국가 분기 — 활성 목적지 기준. destination 전체 문자열("일본, 태국")로 매칭하면
+ * 신고 탭 국가 분기 — 활성 여행지 기준. destination 전체 문자열("일본, 태국")로 매칭하면
  * 일본·태국 분기에 동시에 걸려 read(일본 derive)와 write(태국 액션)가 엇갈린다 —
  * 수입 칸을 진행중으로 바꿔도 대기로 되돌아오던 버그. todo-table 의 셀 분기와 같은 기준.
  */
@@ -617,7 +617,7 @@ function exportApplies(row: CaseRow): boolean {
 }
 
 /**
- * 수입 허가(import-permit) step 으로 신고 상태를 도출하는 목적지 — 태국·필리핀·대만.
+ * 수입 허가(import-permit) step 으로 신고 상태를 도출하는 여행지 — 태국·필리핀·대만.
  * 이들은 일본식 사전신고가 아니라 수입 허가증 신청·발급 2단계라, 신고 탭 '수입' 칸을
  * portal 의 허가 step 시그널과 같은 derive 로 잇는다. (명시 분류 — country='all' 누수 금지)
  */
@@ -639,14 +639,14 @@ function usesImportPermitReport(row: CaseRow): boolean {
  */
 function effectiveImportStatus(row: CaseRow): string {
   // 일본 derive 는 신청일·skip 등 by_dest 스코핑 필드를 top-level 에서 읽으므로(단일 출처 계약),
-  // 활성 목적지로 평탄화한 view 를 넘긴다 — 안 그러면 by_dest 에 저장된 신청일을 못 봐 상태가
+  // 활성 여행지로 평탄화한 view 를 넘긴다 — 안 그러면 by_dest 에 저장된 신청일을 못 봐 상태가
   // portal(평탄화함)과 어긋난다. (admin 수출/수입 칸이 펫무브앱과 달리 '대기중'으로 보이던 버그.)
   if (isJapan(row)) {
     const view = flattenCaseForDestination(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY))
     return deriveAdvanceNotificationStatus(view)
   }
   // 태국·필리핀 — 수입 허가 step 시그널(신청일·완료·첨부·허가번호)로 derive. 신청일·완료 플래그가
-  // by_dest 스코핑이라 활성 목적지로 평탄화한 view 를 넘긴다(일본 derive 와 동일 컨벤션).
+  // by_dest 스코핑이라 활성 여행지로 평탄화한 view 를 넘긴다(일본 derive 와 동일 컨벤션).
   if (usesImportPermitReport(row)) {
     const view = flattenCaseForDestination(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY))
     return deriveImportPermitStatus(view)
@@ -659,7 +659,7 @@ function effectiveImportStatus(row: CaseRow): string {
 
 function effectiveExportStatus(row: CaseRow): string {
   if (!importReportReturnDate(row)) return 'na'
-  // 일본 derive 는 신청일(by_dest) 을 top-level 에서 읽으므로 활성 목적지로 평탄화 후 넘긴다.
+  // 일본 derive 는 신청일(by_dest) 을 top-level 에서 읽으므로 활성 여행지로 평탄화 후 넘긴다.
   // (평탄화 안 하면 신청일을 못 봐 'done'→'in_progress'로 오판 → 펫무브앱과 불일치.)
   if (isJapan(row)) {
     const view = flattenCaseForDestination(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY))
@@ -710,7 +710,7 @@ function isImportDeadlineWarning(row: CaseRow): boolean {
 }
 
 /**
- * 미완료 그룹 내 진행 순위 — 0=대기중, 1=진행중. 같은 목적지 안에서 대기중을 위에 둔다.
+ * 미완료 그룹 내 진행 순위 — 0=대기중, 1=진행중. 같은 여행지 안에서 대기중을 위에 둔다.
  * 진행중 판정 = 적용되는 모든 쪽(수입 + 수출 적용 시 수출)이 시작됨. 한쪽만 진행이면 대기중 유지.
  */
 function reportProgressRank(row: CaseRow): number {
@@ -724,7 +724,7 @@ function reportProgressRank(row: CaseRow): number {
   return importStarted ? 1 : 0
 }
 
-/** 활성 목적지 출국일이 오늘보다 전 = 이미 출국한 케이스. */
+/** 활성 여행지 출국일이 오늘보다 전 = 이미 출국한 케이스. */
 function isPastDeparture(row: CaseRow): boolean {
   const dep = exportDocDeparture(row)
   if (!dep) return false
@@ -733,7 +733,7 @@ function isPastDeparture(row: CaseRow): boolean {
 
 /**
  * 출국일 미정 + 준비상태 완료 + 내원일 경과 = 사실상 마무리된 케이스.
- * 서류 탭에서 dim 처리하고 정렬상 하단으로 보낸다. (활성 목적지 기준)
+ * 서류 탭에서 dim 처리하고 정렬상 하단으로 보낸다. (활성 여행지 기준)
  */
 function isExportDocFinishedNoDeparture(row: CaseRow): boolean {
   if (exportDocDeparture(row)) return false
@@ -747,7 +747,7 @@ function isExportDocFinishedNoDeparture(row: CaseRow): boolean {
 const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
   {
     key: 'destination',
-    label: '목적지',
+    label: '여행지',
     storage: 'column',
     type: 'custom',
     width: BASE_COL_W,
@@ -779,7 +779,7 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     width: BASE_COL_W,
     // 신고 탭에서는 읽기 전용 — 수정은 상세페이지에서만.
     readonly: true,
-    // 일본: 저장된 값이 없으면 활성 목적지 출국일 - 40일로 자동 계산하여 표시.
+    // 일본: 저장된 값이 없으면 활성 여행지 출국일 - 40일로 자동 계산하여 표시.
     resolveValue: (row) => reportDeadline(row),
     // 기한 임박 시 주황 — 출국일 날짜도 함께 물든다.
     cellClass: (row) => (isImportDeadlineWarning(row) ? 'text-pmw-warning' : ''),
@@ -817,7 +817,7 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     type: 'custom',
     width: 32,
     // 수동 포함(import_report_manual=true)인 케이스에만 ✕ 버튼 노출.
-    // 자동 포함 케이스에는 출국일이나 목적지를 지워야 탭에서 빠지므로 버튼 숨김.
+    // 자동 포함 케이스에는 출국일이나 여행지를 지워야 탭에서 빠지므로 버튼 숨김.
     render: (row, onUpdate) => {
       if (!isManualImportReport(row)) return null
       return (
@@ -844,7 +844,7 @@ const COLUMNS_MAP: Record<TabId, TodoColumn[]> = {
   import_report: IMPORT_REPORT_COLUMNS,
 }
 
-/** 동물/고객/목적지 매칭. 빈 query면 항상 true. */
+/** 동물/고객/여행지 매칭. 빈 query면 항상 true. */
 function matchesQuery(row: CaseRow, q: string): boolean {
   if (!q) return true
   const hay = [row.pet_name, row.pet_name_en, row.customer_name, row.destination]
@@ -912,18 +912,18 @@ export function TodosApp({
             return d !== 0 ? d : compareByCountryOrder(a, b)
           }
 
-          // 미완료(대기·진행중) 그룹: 목적지 순(일본→태국→필리핀→하와이→그 외 가나다).
+          // 미완료(대기·진행중) 그룹: 여행지 순(일본→태국→필리핀→하와이→그 외 가나다).
           const ra = reportDestRank(a)
           const rb = reportDestRank(b)
           if (ra !== rb) return ra - rb
-          // 같은 순위가 '그 외'면 활성 목적지 라벨 가나다로 정렬.
+          // 같은 순위가 '그 외'면 활성 여행지 라벨 가나다로 정렬.
           if (ra === IMPORT_REPORT_DEST_ORDER.length) {
             const la = resolveTabActiveDest(a, IMPORT_REPORT_DEST_KEY) ?? ''
             const lb = resolveTabActiveDest(b, IMPORT_REPORT_DEST_KEY) ?? ''
             const cmp = la.localeCompare(lb, 'ko')
             if (cmp !== 0) return cmp
           }
-          // 같은 목적지 안: ① 대기중 → 진행중.
+          // 같은 여행지 안: ① 대기중 → 진행중.
           const pa = reportProgressRank(a)
           const pb = reportProgressRank(b)
           if (pa !== pb) return pa - pb
@@ -941,7 +941,7 @@ export function TodosApp({
     }
     if (activeTab === 'export_doc') {
       const todayStr = new Date().toISOString().slice(0, 10)
-      // 활성 목적지 기준 내원일·출국일 (by_dest 우선).
+      // 활성 여행지 기준 내원일·출국일 (by_dest 우선).
       const visitDate = (c: CaseRow) => exportDocVetVisit(c)
       // 0=내원일 미래, 1=내원일 미정, 2=내원일 경과(출국일 미경과), 3=하단(출국일 지남
       //   또는 출국일 미정 + 준비상태 완료 + 내원일 경과 — 후자도 마무리된 케이스로 간주).
@@ -955,7 +955,7 @@ export function TodosApp({
         return 0
       }
       return cases
-        // 포함: 어떤 목적지든 출국일 또는 내원일이 있으면 (by_dest 스캔).
+        // 포함: 어떤 여행지든 출국일 또는 내원일이 있으면 (by_dest 스캔).
         .filter((c) => anyDestHasDeparture(c) || anyDestHasVetVisit(c))
         .filter(c => matchesQuery(c, q))
         .sort((a, b) => {
@@ -976,7 +976,7 @@ export function TodosApp({
     return cases
   }, [cases, activeTab, q])
 
-  // 탭별 활성 목적지 맵 — TodoTable 의 scoped key 편집을 by_dest 로 라우팅하는 데 사용.
+  // 탭별 활성 여행지 맵 — TodoTable 의 scoped key 편집을 by_dest 로 라우팅하는 데 사용.
   const activeDestById = useMemo(() => {
     const key =
       activeTab === 'import_report'
@@ -1629,7 +1629,7 @@ function ShipmentPackDialog({ label, rows, variant, consigneeLab, onClose }: {
 
 /**
  * 신고 탭 상단 "신고 추가" 피커.
- * 동물명·고객명·목적지로 검색하고, 이미 탭에 포함된 케이스(자동/수동)는
+ * 동물명·고객명·여행지로 검색하고, 이미 탭에 포함된 케이스(자동/수동)는
  * 목록에서 제외한다. 선택 시 `data.import_report_manual = true` 로 저장.
  */
 function ImportReportAddPicker({

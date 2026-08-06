@@ -1,7 +1,7 @@
 'use server'
 
 /**
- * 스태프(펫무브워크)가 한 목적지(여정)를 완료/취소 처리 → 지난 여정으로 내림.
+ * 스태프(펫무브워크)가 한 여행지(여정)를 완료/취소 처리 → 지난 여정으로 내림.
  * portal 의 markJourneyComplete 와 동일 로직 — admin 은 createClient(RLS·org 멤버)로 직접.
  * 설계: docs/journey-lifecycle-design.md §4·§5.
  *
@@ -26,7 +26,7 @@ export async function markJourneyCompleteAdmin(
   completedDate?: string,
 ): Promise<Result> {
   const dest = destination.trim()
-  if (!caseId || !dest) return { ok: false, error: 'caseId·목적지가 필요합니다.' }
+  if (!caseId || !dest) return { ok: false, error: 'caseId·여행지가 필요합니다.' }
 
   const supabase = await createClient()
 
@@ -87,8 +87,8 @@ export async function markJourneyCompleteAdmin(
   const updatePayload: Record<string, unknown> = { destination: nextDest, data: nextData }
 
   // demote 정리 (portal finishJourney 와 동일) — 내려간 여정의 공용 잔존(top-level scoped 필드·
-  // 도착확인·완료 prompt·출국일 컬럼)을 남은(특히 단일 결과) 목적지가 물려받지 않게 비운다.
-  // 단일 목적지 케이스는 scoped 필드(예: return_date)가 top-level 에 사는데, 안 비우면 다음
+  // 도착확인·완료 prompt·출국일 컬럼)을 남은(특히 단일 결과) 여행지가 물려받지 않게 비운다.
+  // 단일 여행지 케이스는 scoped 필드(예: return_date)가 top-level 에 사는데, 안 비우면 다음
   // 여정으로 새어 '수출검역 신청'이 잘못 '예정'으로 뜨는 등 누수가 생긴다. 백신·항체(동물 단위)는 유지.
   for (const k of DESTINATION_SCOPED_FIELD_KEYS) delete nextData[k]
   const ac = { ...((nextData.arrival_confirmed as Record<string, unknown> | undefined) ?? {}) }

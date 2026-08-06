@@ -56,18 +56,18 @@ async function generate(
   if (OTHER_HOSPITAL_EXCLUDED_FORMS.has(formKey)) {
     caseRow = { ...caseRow, data: stripOtherHospitalRecords(data) }
   }
-  // 다중 목적지 케이스에서 UI 활성 목적지를 받아 그 나라 규칙만 적용.
-  // 지정이 없으면 컬럼 전체 문자열을 사용(단일 목적지 케이스는 동작 동일).
-  // 모든 form 이 케이스 상세 노출 규칙(목적지별 vaccine list + extra_visible_fields
+  // 다중 여행지 케이스에서 UI 활성 여행지를 받아 그 나라 규칙만 적용.
+  // 지정이 없으면 컬럼 전체 문자열을 사용(단일 여행지 케이스는 동작 동일).
+  // 모든 form 이 케이스 상세 노출 규칙(여행지별 vaccine list + extra_visible_fields
   // 토글)과 동일한 필터 — 별지25/AuNz 도 예외 없이. 추가 백신 기록을 PDF 에 노출
   // 하려면 케이스 상세 "절차정보 → 항목 추가" 로 해당 vaccine 토글 ON.
   const destForRules = options?.destination ?? caseRow.destination
   const allowedVaccines = getEffectiveVaccineList(destForRules, extraFields)
-  // 다중 목적지 케이스: 활성 목적지의 by_dest 값을 top-level 로 평탄화한 caseRow 로 채움.
-  // 단일 목적지 또는 by_dest 미사용 케이스는 그대로.
+  // 다중 여행지 케이스: 활성 여행지의 by_dest 값을 top-level 로 평탄화한 caseRow 로 채움.
+  // 단일 여행지 또는 by_dest 미사용 케이스는 그대로.
   // destination 미지정 호출(검사탭 KSVDL·VBDDL+APQA·ARC 버튼 등 — caseId 만 넘김)에서도
-  // 단일 목적지면 그 토큰으로 flatten 해서 by_dest 에 저장된 scoped 값(vet_visit_date 등)이
-  // top-level 로 올라와 폼에 채워지게 한다. 다중 목적지인데 미지정이면 어느 토큰인지 알 수
+  // 단일 여행지면 그 토큰으로 flatten 해서 by_dest 에 저장된 scoped 값(vet_visit_date 등)이
+  // top-level 로 올라와 폼에 채워지게 한다. 다중 여행지인데 미지정이면 어느 토큰인지 알 수
   // 없어 no-op(기존 동작) — 콤마-조인 문자열을 by_dest 키로 쓰면 scoped 필드가 전부 삭제됨.
   // (cases-app 은 단일·다중 모두 항상 destination 을 넘기므로 이 폴백 영향 없음.)
   const flattenDest =
@@ -115,11 +115,11 @@ export async function recommendForm25RabiesSelection(
   if (OTHER_HOSPITAL_EXCLUDED_FORMS.has(formKey)) {
     caseRow = { ...caseRow, data: stripOtherHospitalRecords(data) }
   }
-  // 활성 목적지 기준 평탄화 — by_dest 출국일·검사일 등이 top-level 로 올라와 체크가 정확.
+  // 활성 여행지 기준 평탄화 — by_dest 출국일·검사일 등이 top-level 로 올라와 체크가 정확.
   const flattenDest =
     destination ?? (parseDestinations(caseRow.destination).length === 1 ? caseRow.destination : null)
   caseRow = flattenCaseForDestination(caseRow, flattenDest)
-  // country 키 — 활성 목적지 토큰 우선, 없으면 케이스 destination 으로 정규화.
+  // country 키 — 활성 여행지 토큰 우선, 없으면 케이스 destination 으로 정규화.
   const destToken = destination ?? caseRow.destination
   const key = buildCaseJourneyContext({ ...caseRow, destination: destToken ?? null }).destinationKey
   // 적용 대상: 1회+항체검사 모델(EU 가족·태국·필리핀) 또는 입국 항체검사 없는 국가(미국·캐나다 등).
@@ -154,7 +154,7 @@ async function generateStandalone(
   return fillPdf(formKey, stub, { extras })
 }
 
-/** 모든 generate* 진입점의 공통 옵션. UI 활성 목적지를 destination 으로 전달. */
+/** 모든 generate* 진입점의 공통 옵션. UI 활성 여행지를 destination 으로 전달. */
 export type GenerateOpts = {
   includeSignature?: boolean
   /** 수의사/병원 정보·발급일 노출 여부. 기본 true. false 면 해당 필드 모두 공백. */
@@ -524,9 +524,9 @@ export async function generateNZ(caseId: string, opts?: GenerateOpts) {
 
 export async function generateAQS(caseId: string, opts?: GenerateOpts) {
   // AQS-279 의 "TOTAL NUMBER of DOGS and CATS ARRIVING in HAWAII on that DATE"
-  // 는 같은 보호자 + 같은 목적지 + 같은 출국일 케이스 수로 자동 계산.
+  // 는 같은 보호자 + 같은 여행지 + 같은 출국일 케이스 수로 자동 계산.
   // hawaii_extra.total_pets_arriving 가 양의 정수로 입력돼 있으면 그 값을 우선.
-  // 다중 목적지: opts.destination 으로 활성 목적지를 받아 sibling 매칭에 by_dest 출국일 사용.
+  // 다중 여행지: opts.destination 으로 활성 여행지를 받아 sibling 매칭에 by_dest 출국일 사용.
   const activeDest = opts?.destination ?? null
   const sib = await fetchSiblings(caseId, activeDest)
   let totalPets = 1
@@ -581,9 +581,9 @@ export interface SiblingPreview {
 /**
  * Find cases that share the same customer + destination + departure_date with the given case.
  *
- * 다중 목적지 케이스 + activeDestination 인자가 주어진 경우: 출국일·내원일 비교를
+ * 다중 여행지 케이스 + activeDestination 인자가 주어진 경우: 출국일·내원일 비교를
  * `by_dest[activeDestination][departure_date|vet_visit_date]` 기준으로 수행 (top-level
- * column/data fallback). pivot 과 candidate 모두 같은 활성 목적지 컨텍스트로 읽혀야
+ * column/data fallback). pivot 과 candidate 모두 같은 활성 여행지 컨텍스트로 읽혀야
  * destination 별 분리된 출국일이 다른 경우에도 정확한 sibling 묶음이 잡힌다.
  */
 export async function fetchSiblings(caseId: string, activeDestination?: string | null): Promise<
@@ -598,9 +598,9 @@ export async function fetchSiblings(caseId: string, activeDestination?: string |
   if (pivotErr || !pivot) return { ok: false, error: pivotErr?.message ?? '케이스를 찾을 수 없습니다' }
   const p = pivot as CaseRow
 
-  // 1차 필터: 같은 보호자(이메일 우선 + 이름 폴백) + 같은 목적지 (server side).
+  // 1차 필터: 같은 보호자(이메일 우선 + 이름 폴백) + 같은 여행지 (server side).
   // co_progress 트리거와 동일하게 이메일이 있으면 이메일로도 매칭 — 이름 표기가
-  // 달라도(영문/한글) 같은 보호자를 잡는다. org_id 명시(인덱스+의도) + 같은 목적지.
+  // 달라도(영문/한글) 같은 보호자를 잡는다. org_id 명시(인덱스+의도) + 같은 여행지.
   // 이름·이메일 각각 cap 50 (초과는 매우 비정상이라 안전).
   const pEmail = String((p.data as Record<string, unknown> | undefined)?.email ?? '')
     .trim()
@@ -625,7 +625,7 @@ export async function fetchSiblings(caseId: string, activeDestination?: string |
   }
   const rows = [...candidates.values()]
 
-  // 2차 필터: 활성 목적지 기준 출국일 OR 내원일 일치.
+  // 2차 필터: 활성 여행지 기준 출국일 OR 내원일 일치.
   // by_dest 우선, 없으면 column/data fallback — destination-scoped-fields 헬퍼가 처리.
   const pivotDeparture = getDepartureDate(p, activeDestination)
   const pivotVet = getVetVisitDate(p, activeDestination)
@@ -654,7 +654,7 @@ export async function fetchSiblings(caseId: string, activeDestination?: string |
 export async function previewSiblings(
   caseId: string,
   formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC',
-  /** 다중 목적지 케이스 — 활성 목적지의 출국일·내원일 기준으로 sibling 매칭. */
+  /** 다중 여행지 케이스 — 활성 여행지의 출국일·내원일 기준으로 sibling 매칭. */
   activeDestination?: string | null,
 ): Promise<
   { ok: true; preview: SiblingPreview } | { ok: false; error: string }
@@ -718,7 +718,7 @@ async function generateMulti(
   const supabase = await createClient()
   const { data: rows, error } = await supabase.from('cases').select('*').in('id', caseIds)
   if (error) return { ok: false, error: error.message }
-  // Preserve the order of caseIds + 활성 목적지 기준 평탄화.
+  // Preserve the order of caseIds + 활성 여행지 기준 평탄화.
   const byId = new Map((rows ?? []).map(r => [(r as CaseRow).id, r as CaseRow]))
   const ordered = caseIds
     .map(id => byId.get(id))
@@ -752,7 +752,7 @@ export async function generateVBCMulti(caseIds: string[], opts?: { includeVet?: 
  * NZ 다중 — primary(첫 케이스)의 광견병 접종 횟수로 NZ vs NZ_2 템플릿 선택.
  * 한 인증서에는 동일한 (10a)/(10b) 룰이 적용되므로, 같이 묶인 케이스들의 광견병
  * 이력은 primary 기준만 출력된다 (Cert A 의 다른 백신/검사 행도 모두 primary 기준).
- * UI 가 같은 보호자·목적지·출국일 또는 내원일 케이스를 사전 필터하므로 보통은
+ * UI 가 같은 보호자·여행지·출국일 또는 내원일 케이스를 사전 필터하므로 보통은
  * primary 이력으로 대표가 충분하다.
  */
 export async function generateNZMulti(caseIds: string[], opts?: { includeVet?: boolean; destination?: string | null }): Promise<GenerateMultiPdfResult> {

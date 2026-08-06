@@ -9,7 +9,7 @@ import { listJourneyFeedback, parseDestinations } from '@petmove/domain'
 
 export interface FeedbackEntry {
   caseId: string
-  /** 의견을 남긴 목적지 토큰(여정별). legacy 단일 의견·미상이면 null. */
+  /** 의견을 남긴 여행지 토큰(여정별). legacy 단일 의견·미상이면 null. */
   destination: string | null
   orgId: string
   orgName: string | null
@@ -90,7 +90,7 @@ export async function listFeedback(): Promise<ListFeedbackResult> {
   const entries: FeedbackEntry[] = []
   for (const r of rows) {
     const firstToken = parseDestinations(r.destination)[0] ?? null
-    // 케이스당 목적지별 의견 — 여러 여정이면 여러 건. legacy 단일 의견은 firstToken 1건.
+    // 케이스당 여행지별 의견 — 여러 여정이면 여러 건. legacy 단일 의견은 firstToken 1건.
     for (const { destination, feedback } of listJourneyFeedback(
       r.data as Record<string, unknown> | null,
       firstToken,

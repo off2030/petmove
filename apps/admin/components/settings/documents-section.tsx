@@ -142,7 +142,7 @@ export function DocumentsSection() {
   // 새 규칙 추가 입력 상태
   const [addOpen, setAddOpen] = useState(false)
 
-  // 규칙 편집 상태 — 목적지 목록 편집 중인 row idx.
+  // 규칙 편집 상태 — 여행지 목록 편집 중인 row idx.
   const [editingIdx, setEditingIdx] = useState<number | null>(null)
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(certConfig)
@@ -221,7 +221,7 @@ export function DocumentsSection() {
   return (
     <SettingsCard
       title="증명서"
-      description="케이스 상세페이지에 표시되는 증명서 버튼 구성. 기본 증명서는 모든 케이스에 공통이며, 국가별 규칙은 목적지에 따라 추가됩니다."
+      description="케이스 상세페이지에 표시되는 증명서 버튼 구성. 기본 증명서는 모든 케이스에 공통이며, 국가별 규칙은 여행지에 따라 추가됩니다."
     >
 
       {/* 기본 증명서 */}
@@ -245,7 +245,7 @@ export function DocumentsSection() {
         <SectionLabel>국가별 추가 증명서</SectionLabel>
         <div className="border-t border-border/80 pt-3 mb-3">
           <p className="font-serif text-[13px] text-muted-foreground">
-            해당 국가(또는 국가 그룹)가 목적지인 경우 기본 증명서에 더해 표시됩니다.
+            해당 국가(또는 국가 그룹)가 여행지인 경우 기본 증명서에 더해 표시됩니다.
           </p>
         </div>
 
@@ -275,8 +275,8 @@ export function DocumentsSection() {
                       <DestinationPicker
                         values={r.countries}
                         onChange={(next) => setRuleCountries(i, next)}
-                        placeholder="목적지 검색 (예: 독일, DE)"
-                        aria-label="목적지 편집"
+                        placeholder="여행지 검색 (예: 독일, DE)"
+                        aria-label="여행지 편집"
                         variant="underline"
                       />
                       <div className="pt-0.5">
@@ -293,7 +293,7 @@ export function DocumentsSection() {
                     <div
                       className="min-w-0 cursor-pointer group/row-edit"
                       onClick={() => setEditingIdx(i)}
-                      title="목적지 편집"
+                      title="여행지 편집"
                     >
                       {r.label && (
                         <div className="font-serif text-[13px] text-muted-foreground mb-1.5 group-hover/row-edit:underline decoration-dotted underline-offset-2">
@@ -365,7 +365,7 @@ export function DocumentsSection() {
   )
 }
 
-/* ── Cert Rule Add Modal: Step 1 (목적지 vs 그룹) → Step 2 (form) ── */
+/* ── Cert Rule Add Modal: Step 1 (여행지 vs 그룹) → Step 2 (form) ── */
 
 function CertRuleAddModal({
   onClose,
@@ -424,7 +424,7 @@ function CertRuleAddModal({
             )}
             {mode && <span className="font-serif text-[15px] text-muted-foreground/60">›</span>}
             <h3 className="font-serif text-[15px] text-foreground">
-              {mode === 'single' ? '목적지 추가' : mode === 'group' ? '그룹 추가' : '규칙 추가'}
+              {mode === 'single' ? '여행지 추가' : mode === 'group' ? '그룹 추가' : '규칙 추가'}
             </h3>
           </div>
           <button type="button" onClick={onClose} className="p-1 rounded hover:bg-muted">
@@ -440,8 +440,8 @@ function CertRuleAddModal({
                 onClick={() => setMode('single')}
                 className="w-full text-left px-md py-3 rounded-md border border-border/80 hover:bg-muted/40 transition-colors"
               >
-                <div className="font-serif text-[15px] text-foreground">목적지 추가</div>
-                <div className="pmw-st__sec-lead mt-1">한 개의 목적지에 추가 증명서를 매핑합니다.</div>
+                <div className="font-serif text-[15px] text-foreground">여행지 추가</div>
+                <div className="pmw-st__sec-lead mt-1">한 개의 여행지에 추가 증명서를 매핑합니다.</div>
               </button>
               <button
                 type="button"
@@ -449,7 +449,7 @@ function CertRuleAddModal({
                 className="w-full text-left px-md py-3 rounded-md border border-border/80 hover:bg-muted/40 transition-colors"
               >
                 <div className="font-serif text-[15px] text-foreground">그룹 추가</div>
-                <div className="pmw-st__sec-lead mt-1">여러 목적지를 한 그룹으로 묶어 같은 증명서를 매핑합니다.</div>
+                <div className="pmw-st__sec-lead mt-1">여러 여행지를 한 그룹으로 묶어 같은 증명서를 매핑합니다.</div>
               </button>
             </div>
           )}
@@ -471,7 +471,7 @@ function CertRuleAddModal({
               )}
               <div>
                 <label className="font-serif text-[13px] text-muted-foreground/80 block mb-1">
-                  {mode === 'single' ? '목적지' : '목적지 (여러 개 선택)'}
+                  {mode === 'single' ? '여행지' : '여행지 (여러 개 선택)'}
                 </label>
                 <DestinationPicker
                   values={countries}
@@ -483,7 +483,7 @@ function CertRuleAddModal({
                     }
                   }}
                   placeholder="검색 (예: 독일, DE)"
-                  aria-label="목적지"
+                  aria-label="여행지"
                   variant="underline"
                 />
               </div>

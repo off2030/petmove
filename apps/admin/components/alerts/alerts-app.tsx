@@ -38,11 +38,11 @@ function formatDayLabel(iso: string): string {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`
 }
 
-const META_LABELS = new Set(['고객', '동물', '국가', '목적지'])
+const META_LABELS = new Set(['고객', '동물', '국가', '여행지'])
 
 interface ParsedAlert {
   title: string
-  /** 고객·동물·국가·목적지 값을 라벨 없이 ' · ' 로 이은 요약 라인. */
+  /** 고객·동물·국가·여행지 값을 라벨 없이 ' · ' 로 이은 요약 라인. */
   meta: string | null
   /** '•' 불릿 (검증 실패 항목들). */
   bullets: string[]
@@ -53,7 +53,7 @@ interface ParsedAlert {
 /**
  * 시스템 알림 본문 파싱 — notify 트리거/시스템알림이 만드는 공통 구조를 분해.
  *   1줄: 제목
- *   "라벨 · 값" 라인: 고객/동물/국가/목적지 → 메타(요약)로, 그 외 → 노트로
+ *   "라벨 · 값" 라인: 고객/동물/국가/여행지 → 메타(요약)로, 그 외 → 노트로
  *   "• …" 라인: 불릿(검증 실패)
  */
 function parseAlert(content: string | null): ParsedAlert {

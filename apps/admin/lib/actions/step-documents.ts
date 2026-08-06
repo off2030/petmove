@@ -27,8 +27,8 @@ interface CaseDocument {
   mime: string
   stepId: string
   /**
-   * 업로드 당시의 활성 목적지 토큰. 미기재 = legacy/케이스 공유. portal CaseDocument 와 동일
-   * shape — 다중 목적지에서 A 목적지 첨부가 B 목적지 필수서류 체크리스트로 새는 교차 누수를
+   * 업로드 당시의 활성 여행지 토큰. 미기재 = legacy/케이스 공유. portal CaseDocument 와 동일
+   * shape — 다중 여행지에서 A 여행지 첨부가 B 여행지 필수서류 체크리스트로 새는 교차 누수를
    * 판정(domain attachmentInDestinationScope)이 걸러내기 위한 태그(2026-08-01).
    */
   destination?: string
@@ -73,7 +73,7 @@ export async function uploadStepDocumentAdmin(formData: FormData): Promise<StepD
     const supabase = await createClient()
 
     // 이름 결정에 기존 documents 가 필요하므로 storage 업로드 전에 먼저 조회.
-    // (destination 은 첨부 목적지 태깅용.)
+    // (destination 은 첨부 여행지 태깅용.)
     const { data: existing, error: fetchErr } = await supabase
       .from('cases')
       .select('data, destination')
@@ -83,7 +83,7 @@ export async function uploadStepDocumentAdmin(formData: FormData): Promise<StepD
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const existingDocs = readDocs(prev)
-    // 활성 목적지 태깅 — 클라이언트(상세 화면)의 활성 목적지 토큰이 케이스 목적지 목록에
+    // 활성 여행지 태깅 — 클라이언트(상세 화면)의 활성 여행지 토큰이 케이스 여행지 목록에
     // 있으면 그 값, 아니면 첫 토큰(portal uploadStepDocument 와 동일 규칙).
     const destRaw = formData.get('destination')
     const caseTokens = parseDestinations(

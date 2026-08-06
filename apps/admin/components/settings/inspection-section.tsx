@@ -267,6 +267,7 @@ function SectionBlock({
   onDefaultChange,
   onRulesChange,
   showEuPreset,
+  footer,
 }: {
   title: string
   defaultLabs: InspectionLabOption[]
@@ -281,6 +282,8 @@ function SectionBlock({
   onDefaultChange?: (lab: string) => void
   onRulesChange: (next: InspectionLabRule[]) => void
   showEuPreset?: boolean
+  /** 카드 하단 저장 영역 — 광견병·전염병 카드가 같은 config 를 저장하므로 양쪽에 동일하게 붙는다. */
+  footer?: React.ReactNode
 }) {
   const hasDefault = defaultLab !== undefined && !!onDefaultChange
   // 선택지 = 효과 목록(숨김 제외 + 표시명 override) — 상세페이지·검사 탭과 같은 단일 출처 규칙.
@@ -305,7 +308,7 @@ function SectionBlock({
     onRulesChange([...rules, newRule])
   }
 
-  // 매핑 추가 — 팝업에서 목적지·기관을 고른 뒤 확정 (2026-08-06 사용자 지시).
+  // 매핑 추가 — 팝업에서 여행지·기관을 고른 뒤 확정 (2026-08-06 사용자 지시).
   const [addOpen, setAddOpen] = useState(false)
 
   function removeRule(idx: number) {
@@ -325,11 +328,8 @@ function SectionBlock({
   if (defaultLab) referencedValues.add(defaultLab)
   for (const r of rules) for (const l of r.labs) referencedValues.add(l)
 
-  // 카드가 아니라 소그룹 — 광견병·전염병 두 블록이 "검사기관" 카드 하나를 공유한다
-  // (2026-08-06 저장 버튼 위치 통일: 저장 범위=카드 하나, 버튼은 그 카드 하단).
   return (
-    <section>
-      <SettingsSubsectionTitle className="mb-2">{title}</SettingsSubsectionTitle>
+    <SettingsCard title={title}>
       {/* 기관 목록 (기본 + 사용자 정의) + 추가 */}
       <LabsAdminRow
         defaults={defaultLabs}
@@ -354,9 +354,9 @@ function SectionBlock({
         </SettingsField>
       )}
 
-      {/* 목적지 → 검사기관 매핑 — 행마다 목적지·기관 모두 복수 선택, 즉시 편집.
+      {/* 여행지 → 검사기관 매핑 — 행마다 여행지·기관 모두 복수 선택, 즉시 편집.
           (2026-08-06 구조 단순화 — 그룹명·추가 모달 폐기, 사용자 지시) */}
-      <SettingsField label="목적지별 검사기관" align="start">
+      <SettingsField label="여행지별 검사기관" align="start">
         <div className="min-w-0">
           {rules.length === 0 && (
             <p className="py-1 pmw-st__btn-ghost">
@@ -373,8 +373,8 @@ function SectionBlock({
               <DestinationPicker
                 values={r.countries}
                 onChange={(next) => setRuleCountries(i, next)}
-                placeholder="목적지 검색"
-                aria-label="목적지"
+                placeholder="여행지 검색"
+                aria-label="여행지"
                 variant="underline"
               />
               <LabPillMultiSelect
@@ -428,11 +428,13 @@ function SectionBlock({
           }}
         />
       )}
-    </section>
+
+      {footer}
+    </SettingsCard>
   )
 }
 
-/* ── 매핑 추가 팝업 — 목적지·검사기관 모두 복수 선택 후 확정 ── */
+/* ── 매핑 추가 팝업 — 여행지·검사기관 모두 복수 선택 후 확정 ── */
 
 function MappingAddModal({
   labs,
@@ -488,13 +490,13 @@ function MappingAddModal({
 
         <div className="px-lg py-md space-y-md">
           <div>
-            <p className="mb-1.5 font-serif text-[13px] text-muted-foreground">목적지</p>
+            <p className="mb-1.5 font-serif text-[13px] text-muted-foreground">여행지</p>
             {/* autoFocus 금지 — 포커스가 곧 드롭다운 열림이라 팝업이 목록 펼친 채 뜬다(2026-08-06 사용자 지적). */}
             <DestinationPicker
               values={countries}
               onChange={setCountries}
-              placeholder="목적지 검색 (예: 독일, DE)"
-              aria-label="목적지"
+              placeholder="여행지 검색 (예: 독일, DE)"
+              aria-label="여행지"
             />
           </div>
           <div>
@@ -548,6 +550,21 @@ export function InspectionSection() {
     setDraft(DEFAULT_INSPECTION_CONFIG)
   }
 
+  // 저장 영역 — 두 카드가 같은 config 를 저장하므로 동일 노드를 양쪽 하단에 배치.
+  const saveFooter = (
+    <SettingsFooter className="justify-between">
+      <SettingsActionButton onClick={resetToDefaults}>
+        기본값으로 되돌리기
+      </SettingsActionButton>
+      <div className="flex items-center gap-md">
+        {msg && <span className="pmw-st__sec-lead">{msg}</span>}
+        <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
+          {saving ? '저장 중…' : '저장'}
+        </PillButton>
+      </div>
+    </SettingsFooter>
+  )
+
   return (
     <SettingsShell size="lg">
       <SettingsSection title="검사">
@@ -559,11 +576,12 @@ export function InspectionSection() {
           <TodoColumnsToggle tabId="inspection" bare />
         </SettingsCard>
 
-        {/* 검사기관 = 카드 하나 (광견병·전염병 소그룹) — 저장 범위와 카드가 1:1 이라
-            저장 버튼이 이 카드 하단에 온다. 신고 탭과 동일 구조 (2026-08-06). */}
-        <SettingsCard className="space-y-xl">
+        {/* 광견병·전염병은 서로 다른 설정이라 카드도 각각 (2026-08-06 사용자 지시).
+            둘 다 같은 inspection_config 를 저장하므로 저장 영역(saveFooter)이 양쪽 카드
+            하단에 동일하게 붙는다 — 어느 쪽을 눌러도 탭 전체 변경이 함께 저장된다. */}
         <SectionBlock
           title="광견병항체검사"
+          footer={saveFooter}
           defaultLabs={TITER_LABS}
           customLabs={draft.customTiterLabs ?? []}
           hiddenLabs={draft.hiddenTiterLabs ?? []}
@@ -595,6 +613,7 @@ export function InspectionSection() {
 
         <SectionBlock
           title="전염병검사"
+          footer={saveFooter}
           defaultLabs={INFECTIOUS_LABS}
           customLabs={draft.customInfectiousLabs ?? []}
           hiddenLabs={draft.hiddenInfectiousLabs ?? []}
@@ -620,19 +639,6 @@ export function InspectionSection() {
           rules={draft.infectiousRules}
           onRulesChange={(infectiousRules) => setDraft({ ...draft, infectiousRules })}
         />
-
-          <SettingsFooter className="justify-between">
-            <SettingsActionButton onClick={resetToDefaults}>
-              기본값으로 되돌리기
-            </SettingsActionButton>
-            <div className="flex items-center gap-md">
-              {msg && <span className="pmw-st__sec-lead">{msg}</span>}
-              <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
-                {saving ? '저장 중…' : '저장'}
-              </PillButton>
-            </div>
-          </SettingsFooter>
-        </SettingsCard>
         </div>
       </SettingsSection>
     </SettingsShell>

@@ -90,19 +90,19 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
     })
   }
 
-  // 다중 목적지 케이스는 활성 목적지 하나만 기준으로 필드·백신을 결정한다.
+  // 다중 여행지 케이스는 활성 여행지 하나만 기준으로 필드·백신을 결정한다.
   // 활성값이 아직 비어있으면(초기 렌더) caseRow.destination 전체를 그대로 넘겨
   // 적어도 첫 매칭 오버라이드라도 적용되게 한다.
   const viewDestination = activeDestination ?? caseRow.destination
 
-  // 활성 목적지 단일 토큰 — trip_type map 키 + 광견병항체 필터 게이트 기준.
+  // 활성 여행지 단일 토큰 — trip_type map 키 + 광견병항체 필터 게이트 기준.
   const activeDestToken = resolveActiveDestination(caseRow.destination, activeDestination)
   const tripType = getTripType(caseRow.data, activeDestToken)
   const hideRabiesTiterOneWay = tripType === 'one_way' && isRabiesTiterHiddenForOneWay(activeDestToken)
 
   const allowedFields = getAllowedFields(viewDestination, extraFields)
   const vaccineEntries = getEffectiveVaccineEntries(viewDestination, extraFields, destOverridesConfig)
-  // 커스텀 목적지가 매칭되면 baseVaccines = 커스텀의 entries — 토글 메뉴는 이미 들어간 키 제외하고 노출.
+  // 커스텀 여행지가 매칭되면 baseVaccines = 커스텀의 entries — 토글 메뉴는 이미 들어간 키 제외하고 노출.
   const customDest = findCustomDestination(viewDestination, destOverridesConfig)
   const baseVaccineKeys = customDest
     ? customDest.vaccines.map(v => v.key)
@@ -413,8 +413,8 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
               flightGroup.items.unshift({ key: 'departure_date', label: '출발일', type: 'date' })
             }
           }
-          // 전달 서류(허가 서류) 첨부 — 활성 목적지의 permit 서류를 catalog 에서 파생해 행으로 노출.
-          // (일본=허가서(Approval), 태국·필리핀·스위스·호주·NZ 등=수입 허가증). 다중 목적지면 활성 기준.
+          // 전달 서류(허가 서류) 첨부 — 활성 여행지의 permit 서류를 catalog 에서 파생해 행으로 노출.
+          // (일본=허가서(Approval), 태국·필리핀·스위스·호주·NZ 등=수입 허가증). 다중 여행지면 활성 기준.
           // portal 보호자·admin 운영자 모두 업로드, case.data.documents 공유(stepId 로 고객앱과 연결).
           // 첨부 = 완료 시그널(advance-notification 은 업로드 시 admin_demoted_at 해제 — step-documents 내부).
           const permitDocs = permitDeliverablesForDestination(viewDestination)
@@ -472,7 +472,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
 
 /**
  * 추가정보 — extraSection 컴포넌트가 없는 케이스용 일반 wrapper.
- * 커스텀 목적지 설정의 extraFields 토글에 따라 EditableField 행이 동적으로 렌더된다.
+ * 커스텀 여행지 설정의 extraFields 토글에 따라 EditableField 행이 동적으로 렌더된다.
  * `address_overseas` 만 전용 OverseasAddressField, 나머지는 일반 EditableField 로 처리.
  */
 /**
@@ -646,7 +646,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
   const confirm = useConfirm()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   // scoped 키 입력은 by_dest 경로로 라우팅 (B: 단일도 by_dest 통일).
-  // 단일 목적지면 resolveActiveDestination 이 유일 토큰을 돌려줘 그 칸으로 저장된다.
+  // 단일 여행지면 resolveActiveDestination 이 유일 토큰을 돌려줘 그 칸으로 저장된다.
   const activeDest = resolveActiveDestination(caseRow.destination, activeDestination)
   const destArgFor = (key: string): string | null | undefined =>
     activeDest && isDestinationScopedKey(key) ? activeDest : undefined
@@ -693,7 +693,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
   }
 
   async function tryExtract(input: { images?: { base64: string; mediaType: string }[]; text?: string }) {
-    if (!country) { setExtractMsg('이 목적지는 자동 추출 미지원'); setTimeout(() => setExtractMsg(null), 3000); return }
+    if (!country) { setExtractMsg('이 여행지는 자동 추출 미지원'); setTimeout(() => setExtractMsg(null), 3000); return }
     setExtracting(true)
     setExtractMsg(null)
     try {
@@ -702,7 +702,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
       const unified = mapExtractResultToUnified(country, result.data as unknown as Record<string, unknown>)
       const keys = Object.keys(unified)
       // 호주 '검사소 샘플 수령일' — flat 키가 아니라 항체검사 회차(rabies_titer_records)에 병합.
-      // rabies_titer_records 는 목적지 공통(non-scoped) 키라 destArgFor 불필요.
+      // rabies_titer_records 는 여행지 공통(non-scoped) 키라 destArgFor 불필요.
       const rawReceived = (result.data as unknown as Record<string, unknown>).sample_received_date
       const received = country === 'australia' && typeof rawReceived === 'string' && rawReceived ? rawReceived : null
       if (keys.length === 0 && !received) { setExtractMsg('관련 정보를 찾지 못했습니다'); return }
@@ -742,7 +742,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
   async function handleFiles(files: File[]) {
     const extractable = files.filter(isExtractableFile)
     if (extractable.length === 0) return
-    // SimpleExtraSection 은 dedicated 컴포넌트 없는 목적지의 폴백 — country 가 결정되면
+    // SimpleExtraSection 은 dedicated 컴포넌트 없는 여행지의 폴백 — country 가 결정되면
     // '${country} 추가정보' 라벨, 아니면 generic '추가정보' 로 명명.
     const label = country ? `${country} 추가정보` : '추가정보'
     for (const file of extractable) {
@@ -935,7 +935,7 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel, activ
   items: ExtraFieldDef[]
   /** 빌더가 destination 별로 결정한 라벨 모드 — 일본만 true(날짜/시간), 그 외 false(도착일/도착시간). */
   useShortLabel: boolean
-  /** 활성 목적지 토큰 — by_dest 경로 읽기용. 다중 목적지 케이스에서만 의미 있음. */
+  /** 활성 여행지 토큰 — by_dest 경로 읽기용. 다중 여행지 케이스에서만 의미 있음. */
   activeDest: string | null
 }) {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -948,7 +948,7 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel, activ
       <div className="min-w-0">
         {items.map((def) => {
           // 출발일(departure_date)은 절차정보 '출국일'과 같은 컬럼 필드 — 그룹 안에서도 같은 데이터를
-          // 출발일로 노출(태국). storage='column' + 목적지 scoped 라우팅·완료 부수효과는 EditableField/
+          // 출발일로 노출(태국). storage='column' + 여행지 scoped 라우팅·완료 부수효과는 EditableField/
           // updateCaseField 가 절차정보와 동일하게 처리. 값은 readCaseField 로 컬럼+by_dest 읽기.
           if (def.key === 'departure_date') {
             const spec: FieldSpec = {
@@ -990,7 +990,7 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel, activ
 }
 
 /**
- * 사전신고 허가서 첨부 row — 일본 목적지 한정.
+ * 사전신고 허가서 첨부 row — 일본 여행지 한정.
  * 추가정보 섹션 마지막 행으로 통합 (별도 카테고리 X). 좌측 라벨 + 우측 파일 리스트·첨부 버튼.
  * case.data.documents 배열에서 stepId='advance-notification' 만 필터해 표시.
  * portal 보호자가 올린 파일도 같은 자리에 보이고, 운영자가 추가 업로드 가능.
@@ -1002,7 +1002,7 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, destination, onTake
   stepId: string
   /** 행 좌측 라벨 (허가서/수입허가증 등). */
   label: string
-  /** 활성 목적지 토큰 — 업로드 파일 목적지 태깅(다중 목적지 교차 누수 차단, 2026-08-01). */
+  /** 활성 여행지 토큰 — 업로드 파일 여행지 태깅(다중 여행지 교차 누수 차단, 2026-08-01). */
   destination?: string | null
   /** row 가 drag/drop 을 가로챘음을 부모(SimpleExtraSection) 에 알려 자기 ring 끄게 함.
    *  row 가 stopPropagation 하므로 부모 dragLeave/drop 이 안 와서 state 가 stuck 되는 걸 방지. */
@@ -1060,7 +1060,7 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, destination, onTake
     }
     document.addEventListener('paste', onPaste)
     return () => document.removeEventListener('paste', onPaste)
-    // destination 도 deps — 활성 목적지 칩 전환 후 붙여넣기가 옛 목적지로 태깅되지 않게.
+    // destination 도 deps — 활성 여행지 칩 전환 후 붙여넣기가 옛 여행지로 태깅되지 않게.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseId, destination])
 
@@ -1142,8 +1142,8 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, destination, onTake
  * 펫무브앱(portal)의 ReturnUndecidedToggle 과 동작 동일:
  *  - 귀국일 입력 시 '미정' 자동 해제, '미정' 체크는 귀국일이 비었을 때만 노출.
  *  - '미정' = 출국편만으로 항공권 step 완료 인정(done-resolver has-flight-date, return_undecided='1').
- * return_date·return_undecided 는 by_dest 스코핑 키라 활성 목적지 칸으로 저장(updateCaseField 5번째 인자).
- * portal 은 활성 목적지로 flatten 해 읽으므로 같은 칸에 쓰면 보호자 앱에서도 완료로 보인다.
+ * return_date·return_undecided 는 by_dest 스코핑 키라 활성 여행지 칸으로 저장(updateCaseField 5번째 인자).
+ * portal 은 활성 여행지로 flatten 해 읽으므로 같은 칸에 쓰면 보호자 앱에서도 완료로 보인다.
  */
 function ReturnFlightRow({ caseId, caseRow, activeDest }: {
   caseId: string

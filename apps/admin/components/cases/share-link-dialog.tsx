@@ -100,8 +100,8 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
   const { fieldDefs, activeDestination, importReportCountries } = useCases()
   const { config: destOverridesConfig } = useDestinationOverrides()
 
-  // 목적지 기반 필터링 — case detail 과 동일하게 activeDestination 우선.
-  // 다중 목적지 케이스("호주, 뉴질랜드, 일본") 일 때 사용자가 보고 있는 목적지 하나로만 필터.
+  // 여행지 기반 필터링 — case detail 과 동일하게 activeDestination 우선.
+  // 다중 여행지 케이스("호주, 뉴질랜드, 일본") 일 때 사용자가 보고 있는 여행지 하나로만 필터.
   const destination = activeDestination ?? caseRow.destination
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const extraFields = (data.extra_visible_fields as string[] | undefined) ?? []
@@ -118,7 +118,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     () => getEffectiveExtraFieldEntries(destination, destOverridesConfig),
     [destination, destOverridesConfig],
   )
-  /** 백신 그룹 키가 현재 케이스(목적지+종) 에 적용되는지. */
+  /** 백신 그룹 키가 현재 케이스(여행지+종) 에 적용되는지. */
   function vaccineApplies(vaccineKey: string): boolean {
     const entry = vaccineEntries.find((v) => v.key === vaccineKey)
     return !!entry && vaccineMatchesSpecies(entry, speciesValue)
@@ -153,7 +153,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     return groupShareDescriptorsByCategory(visible)
   }, [allDescriptors, showFilled, caseRow, destination])
 
-  // 빠른 선택 = 신고 탭에 오르는 국가 중 이 케이스 목적지에 해당하는 국가의 "{국가} 신고" 프리셋.
+  // 빠른 선택 = 신고 탭에 오르는 국가 중 이 케이스 여행지에 해당하는 국가의 "{국가} 신고" 프리셋.
   // 그 국가의 추가정보(항공편·해외주소·검역증 번호 등)를 한 번에 선택. (이미 입력된 항목은 자동 숨김)
   const autoPresets = useMemo<AutoPreset[]>(() => {
     const tokens = parseDestinations(destination)
@@ -186,7 +186,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     [allDescriptors, caseRow, destination],
   )
 
-  // 목적지별 파일 요청 — 필수/선택 구분 없이 한 줄로 나열, 모두 토글. 프리셋이 기본 선택을 잡는다.
+  // 여행지별 파일 요청 — 필수/선택 구분 없이 한 줄로 나열, 모두 토글. 프리셋이 기본 선택을 잡는다.
   // (필수/선택의 성격은 정의에 남아 고객 폼에서 '필수' 배지·검증으로 살아있음.)
   const fileRequests = useMemo(() => shareFileRequestsForDestination(destination), [destination])
   const [selectedFileKeys, setSelectedFileKeys] = useState<Set<string>>(() => new Set())
@@ -447,7 +447,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-lg py-md space-y-lg">
-          {/* 빠른 선택 — 전체 선택 + 목적지 신고 국가 사전신고 프리셋 */}
+          {/* 빠른 선택 — 전체 선택 + 여행지 신고 국가 사전신고 프리셋 */}
           {groupedFields.length > 0 && (
             <section>
               <h3 className="font-sans text-[12px] font-semibold text-foreground/80 mb-2 pb-1.5 border-b border-border/60">
@@ -572,7 +572,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
             </div>
           </section>
 
-          {/* 파일 첨부 요청 — 목적지별 필수/선택 슬롯 */}
+          {/* 파일 첨부 요청 — 여행지별 필수/선택 슬롯 */}
           {fileRequests.length > 0 && (
             <section>
               <div className="flex items-baseline justify-between gap-md mb-2 pb-1.5 border-b border-border/60">

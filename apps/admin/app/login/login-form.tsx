@@ -119,7 +119,7 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
       setError('인증번호가 올바르지 않거나 만료되었습니다. 다시 확인해 주세요.')
       return
     }
-    // 세션 쿠키가 생긴 상태 → callback 이 next 쿠키를 읽어 목적지로 이동.
+    // 세션 쿠키가 생긴 상태 → callback 이 next 쿠키를 읽어 여행지로 이동.
     window.location.href = '/auth/callback'
   }
 

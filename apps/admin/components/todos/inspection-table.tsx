@@ -415,7 +415,7 @@ function LabCell({ row, options }: {
   row: InspectionRow
   options: LabOption[]
 }) {
-  // Editorial pill: rounded-full + MONO uppercase (목적지 pill과 동일 shape, 각 lab 고유 tone 유지).
+  // Editorial pill: rounded-full + MONO uppercase (여행지 pill과 동일 shape, 각 lab 고유 tone 유지).
   const pillCls = 'inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap'
 
   // Multi-lab row (e.g., NZ: APQA HQ + VBDDL) — render one chip per lab with its own tone. 항상 한 줄.
@@ -462,7 +462,7 @@ const COLUMNS: { key: string; label: string; width: number; sortKey?: Inspection
   { key: 'status', label: '진행상태', width: BASE_W, sortKey: 'status' },
   { key: 'pet_name', label: '반려동물', width: BASE_W },
   { key: 'customer_name', label: '보호자', width: BASE_W },
-  { key: 'destination', label: '목적지', width: 146 },
+  { key: 'destination', label: '여행지', width: 146 },
   { key: 'departure_date', label: '출국일', width: BASE_W },
   { key: 'memo', label: '메모', width: 120 },
 ]
@@ -610,8 +610,8 @@ export function InspectionTable({
             {!hidden.has('departure_date') && (
               <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
                 {(() => {
-                  // 활성 목적지(inspection_active_dest) 출국일 — 다중 목적지면 by_dest,
-                  // 단일이면 컬럼. 편집도 같은 목적지로 라우팅.
+                  // 활성 여행지(inspection_active_dest) 출국일 — 다중 여행지면 by_dest,
+                  // 단일이면 컬럼. 편집도 같은 여행지로 라우팅.
                   const activeDest = resolveTabActiveDest(row.caseRow, 'inspection_active_dest')
                   return (
                     <DateCell

@@ -27,8 +27,8 @@ import {
 type SpeciesTab = 'dog' | 'cat'
 
 /**
- * 목적지별 표시정보 — 상세뷰 탭 안에 임베드되는 섹션.
- * 디폴트(코드) + 커스텀 목적지를 한 리스트로 보여주고, 클릭 시 모달로 편집.
+ * 여행지별 표시정보 — 상세뷰 탭 안에 임베드되는 섹션.
+ * 디폴트(코드) + 커스텀 여행지를 한 리스트로 보여주고, 클릭 시 모달로 편집.
  * 강아지/고양이 탭으로 절차정보 + 추가정보 항목을 종별로 설정.
  */
 export function DestinationsArea() {
@@ -64,7 +64,7 @@ export function DestinationsArea() {
     startSaving(async () => {
       // 검증
       for (const d of next) {
-        if (!d.name.trim()) { setError('표시명이 비어있는 목적지가 있습니다'); return }
+        if (!d.name.trim()) { setError('표시명이 비어있는 여행지가 있습니다'); return }
         if (!isValidDestinationId(d.id)) { setError(`'${d.name}' ID 형식이 잘못됨`); return }
         if (d.keywords.length === 0) { setError(`'${d.name}' 키워드를 1개 이상 입력`); return }
       }
@@ -101,12 +101,12 @@ export function DestinationsArea() {
 
   return (
     <SettingsCard
-      title="목적지"
-      description="케이스 목적지에 따라 절차정보·추가정보 영역에 표시할 항목을 종별로 설정합니다. 항목을 클릭하여 편집하세요."
+      title="여행지"
+      description="케이스 여행지에 따라 절차정보·추가정보 영역에 표시할 항목을 종별로 설정합니다. 항목을 클릭하여 편집하세요."
     >
 
       <div className="flex flex-wrap gap-2 mb-md">
-        {/* 디폴트(광견병+항체검사 만, extraFields/Section 없음) 와 동일한 목적지는 숨김. */}
+        {/* 디폴트(광견병+항체검사 만, extraFields/Section 없음) 와 동일한 여행지는 숨김. */}
         {list.filter((d) => !isDestinationEqualToDefault(d)).map((d) => (
           <button
             key={d.id}
@@ -128,7 +128,7 @@ export function DestinationsArea() {
         </button>
       </div>
       <p className="pmw-st__sec-lead -mt-2 mb-md text-[12px] text-muted-foreground/70">
-        디폴트(광견병 + 항체검사) 와 동일한 목적지는 자동으로 숨겨집니다. 추가 항목이 필요한 목적지만 표시됩니다.
+        디폴트(광견병 + 항체검사) 와 동일한 여행지는 자동으로 숨겨집니다. 추가 항목이 필요한 여행지만 표시됩니다.
       </p>
 
       <div className="flex items-center gap-md min-h-[20px]">
@@ -195,9 +195,9 @@ function DestinationEditModal({
   const [draft, setDraft] = useState<CustomDestination>(initial)
   const [tab, setTab] = useState<SpeciesTab>('dog')
   const [error, setError] = useState<string | null>(null)
-  // 새 목적지(이름 비어있음) 면 타이틀이 input 으로 시작.
+  // 새 여행지(이름 비어있음) 면 타이틀이 input 으로 시작.
   const [editingTitle, setEditingTitle] = useState<boolean>(!initial.name)
-  // 새 추가 모드: 목적지 미선택 상태(draft.name 비어있음) 면 dropdown 노출, 선택되면 닫힘.
+  // 새 추가 모드: 여행지 미선택 상태(draft.name 비어있음) 면 dropdown 노출, 선택되면 닫힘.
   const [searchOpen, setSearchOpen] = useState<boolean>(!!isNew && !initial.name)
   const [searchQuery, setSearchQuery] = useState('')
   const titleInitial = [initial.name, ...initial.keywords.filter((k) => k !== initial.name)]
@@ -390,7 +390,7 @@ function DestinationEditModal({
                     onClose()
                   }
                 }}
-                placeholder="목적지 검색 (예: 일본, japan)"
+                placeholder="여행지 검색 (예: 일본, japan)"
                 className="w-full h-9 rounded-md border border-border/80 bg-background px-2 font-serif text-[16px] text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               />
               <div className="absolute left-0 right-0 top-full mt-1 z-10 max-h-72 overflow-auto rounded-md border border-border/80 bg-popover shadow-md scrollbar-minimal">
@@ -453,7 +453,7 @@ function DestinationEditModal({
         <div className="flex-1 overflow-auto px-md py-md space-y-md scrollbar-minimal">
           {searchOpen && (
             <p className="text-[13px] text-muted-foreground/70">
-              위에서 목적지를 선택하면 항목 편집 영역이 나타납니다.
+              위에서 여행지를 선택하면 항목 편집 영역이 나타납니다.
             </p>
           )}
           {!searchOpen && (

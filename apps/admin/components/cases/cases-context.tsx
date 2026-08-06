@@ -46,7 +46,7 @@ interface CasesContextValue {
     key: string,
     value: unknown,
     /**
-     * 다중 목적지 케이스에서 destination-scoped 키 입력 시 활성 목적지 토큰.
+     * 다중 여행지 케이스에서 destination-scoped 키 입력 시 활성 여행지 토큰.
      * 지정 시 `data.by_dest[destination][key]` 로 로컬 상태 반영.
      */
     destination?: string | null,
@@ -54,7 +54,7 @@ interface CasesContextValue {
   /** auto-fill 엔진 등 여러 필드가 한 번에 바뀔 때 data 객체 전체를 교체. */
   replaceLocalCaseData: (caseId: string, data: Record<string, unknown>) => void
   /**
-   * 선택된 케이스의 목적지 여럿 중 "현재 활성" 목적지. 단일 목적지면 그 값.
+   * 선택된 케이스의 여행지 여럿 중 "현재 활성" 여행지. 단일 여행지면 그 값.
    * 상세페이지 필드 필터·증명서 버튼·검증 기준이 됨. DB 저장 안 함.
    */
   activeDestination: string | null
@@ -729,7 +729,7 @@ export function CasesProvider({
           if (c.id !== caseId) return c
           const now = new Date().toISOString()
           // by_dest 경로 — 서버 updateCaseField 와 동일하게 destination 지정 + scoped 키면
-          // 단일 목적지도 by_dest 에 반영한다. 표시 헬퍼는 by_dest 를 먼저 읽고, 서버가
+          // 단일 여행지도 by_dest 에 반영한다. 표시 헬퍼는 by_dest 를 먼저 읽고, 서버가
           // 필요한 legacy column 동기화를 뒤따라 보낸다.
           if (destination && isDestinationScopedKey(key)) {
             const nextData = writeByDestValue(

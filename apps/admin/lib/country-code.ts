@@ -1,4 +1,4 @@
-/** 한글 목적지 → ISO 3166-1 alpha-2 국가 코드 (에디토리얼 prefix 표시용). 매칭 안 되면 null. */
+/** 한글 여행지 → ISO 3166-1 alpha-2 국가 코드 (에디토리얼 prefix 표시용). 매칭 안 되면 null. */
 export const COUNTRY_CODE_MAP: Record<string, string> = {
   // === 아시아 ===
   '한국': 'KR',

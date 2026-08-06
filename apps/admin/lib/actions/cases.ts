@@ -47,7 +47,7 @@ function deserializeFromHistory(storage: 'column' | 'data', raw: string | null):
 /**
  * undo/시점 복원용 — updateCaseField·updateCaseDataBulk 는 by_dest 저장을 history 에
  * `by_dest:{destination}:{key}` 로 인코딩한다. 복원 시 이 형식을 파싱해 writeByDestValue 로
- * 그 목적지 슬롯에 되돌려야 한다. 평범한 data 키로 취급하면
+ * 그 여행지 슬롯에 되돌려야 한다. 평범한 data 키로 취급하면
  * data["by_dest:일본:departure_date"] 같은 top-level 쓰레기 키가 생겨 조용히 오염된다.
  * 형식이 아니면(prefix 없음) null — 파싱 불가한 by_dest prefix 는 호출부가 명시 실패 처리.
  */
@@ -55,7 +55,7 @@ function parseByDestHistoryKey(fieldKey: string): { destination: string; key: st
   if (!fieldKey.startsWith('by_dest:')) return null
   const rest = fieldKey.slice('by_dest:'.length)
   const sep = rest.indexOf(':')
-  // destination·key 둘 다 비어있지 않아야 유효 (키에는 ':' 가 없고 목적지가 먼저 온다).
+  // destination·key 둘 다 비어있지 않아야 유효 (키에는 ':' 가 없고 여행지가 먼저 온다).
   if (sep <= 0 || sep >= rest.length - 1) return null
   return { destination: rest.slice(0, sep), key: rest.slice(sep + 1) }
 }
@@ -82,9 +82,9 @@ async function explainCaseFetchError(
 }
 
 /**
- * 내원·임상검진일은 출국일 포함 N일 이내여야 함 — 목적지별 윈도우(@petmove/domain
+ * 내원·임상검진일은 출국일 포함 N일 이내여야 함 — 여행지별 윈도우(@petmove/domain
  * getVetVisitWindowDays). 한국 APQA 디폴트 10일, 말레이·싱가포르 7일,
- * 호주·러시아 5일, 뉴질랜드 3일, 튀르키예 2일(임상검사 24h). 다중 목적지 시 가장 엄격한 윈도우.
+ * 호주·러시아 5일, 뉴질랜드 3일, 튀르키예 2일(임상검사 24h). 다중 여행지 시 가장 엄격한 윈도우.
  */
 function validateVetVisitVsDeparture(
   visit: string | null | undefined,
@@ -118,7 +118,7 @@ function validateVetVisitVsDeparture(
  * 다시 올라와도 '완료'로 남는다(=버그). dismissImportReport 의 'not_started' 클리어와 동일한
  * 필드를 비운다. 첨부(documents)·허가번호(permit_no)는 실제 산출물이라 손대지 않는다(dismiss 동일).
  *
- * scoped 키(jp_export_quarantine_application_date, import_permit_*)는 활성 목적지 by_dest 잔존도
+ * scoped 키(jp_export_quarantine_application_date, import_permit_*)는 활성 여행지 by_dest 잔존도
  * null sentinel 로 비워야 derive 가 되살아나지 않는다. `data` 는 in-place 로 정리(top-level delete +
  * by_dest 는 새 객체로 교체 — 호출측 currentData 앨리어싱 방지). 시그널이 하나라도 있어 실제로
  * 비웠으면 true.
@@ -193,9 +193,9 @@ export async function updateCaseField(
   key: string,
   value: unknown,
   /**
-   * 다중 목적지 케이스에서 destination-scoped 키 입력 시 활성 목적지 토큰.
+   * 다중 여행지 케이스에서 destination-scoped 키 입력 시 활성 여행지 토큰.
    * - 미지정: 기존 경로 (column 또는 data top-level).
-   * - 지정 + isDestinationScopedKey(key) + 다중 목적지 케이스 → `data.by_dest[destination][key]` 에 저장.
+   * - 지정 + isDestinationScopedKey(key) + 다중 여행지 케이스 → `data.by_dest[destination][key]` 에 저장.
    * - 부수효과(vet_available_date 동기화·status 리셋·auto-fill)는 by_dest 경로에선 우선 스킵.
    */
   destination?: string | null,
@@ -218,12 +218,12 @@ export async function updateCaseField(
   const currentData = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<string, unknown>
   const destinationRaw = (row as { destination: string | null }).destination
   const isSingleDest = parseDestinations(destinationRaw).length === 1
-  // by_dest 경로 적용 조건: 활성 목적지 + scoped 키 (B: 단일도 by_dest 통일 — isMultiDest 게이트 제거).
+  // by_dest 경로 적용 조건: 활성 여행지 + scoped 키 (B: 단일도 by_dest 통일 — isMultiDest 게이트 제거).
   const useByDest = !!destination && isDestinationScopedKey(key)
 
-  // 내원일 ↔ 출국일 N일 이내 룰 — 한국 APQA 공통, 모든 목적지에 적용.
+  // 내원일 ↔ 출국일 N일 이내 룰 — 한국 APQA 공통, 모든 여행지에 적용.
   // 입력 시점에 거부 (procedure-check 안내 배지 아님).
-  // 다중 목적지(useByDest)면 비교 대상도 같은 destination scope 안에서만 본다.
+  // 다중 여행지(useByDest)면 비교 대상도 같은 destination scope 안에서만 본다.
   // top-level fallback 을 허용하면 다른 destination 의 값이 leak 됨 (예: KZ tab 에서 CN 의
   // 출국일/내원일로 검증돼 KZ 입력이 거부되는 버그).
   function readScopedDep(): string | null {
@@ -277,10 +277,10 @@ export async function updateCaseField(
       delete nextData[key]
     }
 
-    // 공용 부수효과 패리티 — 단일 목적지 케이스 한정.
+    // 공용 부수효과 패리티 — 단일 여행지 케이스 한정.
     // B(단일도 by_dest) 전환으로 단일 케이스의 scoped 키 저장이 이 분기로 들어온다. 종전 top-level
     // 경로가 하던 공용 부수효과(출국일 컬럼 sync·내원가능일·서류/신고 상태 리셋)를 단일 케이스에선
-    // 동일하게 재현한다. 다중 목적지는 공용 필드(단일값)의 의미가 모호하므로 종전대로 미적용.
+    // 동일하게 재현한다. 다중 여행지는 공용 필드(단일값)의 의미가 모호하므로 종전대로 미적용.
     const updateObj: Record<string, unknown> = { data: nextData }
     if (isSingleDest) {
       const today = new Date().toISOString().slice(0, 10)
@@ -300,7 +300,7 @@ export async function updateCaseField(
         }
       }
       // 서류/신고 상태 리셋 — 내원일/출국일 변경 시 'done' 클리어 (재출국 정리). scoped
-      // 서류 상태는 활성 목적지 by_dest 를 비우고, legacy top-level 잔존도 제거한다.
+      // 서류 상태는 활성 여행지 by_dest 를 비우고, legacy top-level 잔존도 제거한다.
       if ((key === 'vet_visit_date' || key === 'departure_date') && changed) {
         const scopedExportDocStatus =
           typeof destObjPrev['export_doc_status'] === 'string'
@@ -309,7 +309,7 @@ export async function updateCaseField(
         if (key === 'vet_visit_date') {
           // 내원일이 도래(≤오늘)하도록 저장되면 수기 서류(별지25·FormAC 등)를 자동
           // '완료'(export_doc_status='done') — 아래 legacy(destination 미지정) 경로와 패리티.
-          // export_doc_status 는 scoped 키 — 활성 목적지 by_dest 에 쓰고 legacy top-level
+          // export_doc_status 는 scoped 키 — 활성 여행지 by_dest 에 쓰고 legacy top-level
           // 잔존은 제거한다(위 260행 delete 와 동일 규약, scoping-fallback 없음).
           // 미래(예정)·삭제로 바뀌면 발급 예정으로 복귀 — done 이었으면 리셋.
           const newVet = typeof value === 'string' ? value.slice(0, 10) : ''
@@ -338,7 +338,7 @@ export async function updateCaseField(
               : ((row as { departure_date: string | null }).departure_date ?? '')
           const wasPast = !!prevDep && prevDep < today
           // 재출국 — legacy stored 뿐 아니라 derive 시그널(사전 신고·수출검역·수입 허가)까지
-          // 활성 목적지(destination) 스코프로 비운다. nextData.by_dest[destination] 는 위에서
+          // 활성 여행지(destination) 스코프로 비운다. nextData.by_dest[destination] 는 위에서
           // 새 출국일이 이미 반영된 nextDestObj 이지만, 헬퍼는 by_dest 를 새 객체로 교체하며
           // 출국일은 건드리지 않으므로(scoped 키 목록에 없음) 그대로 보존된다.
           if (wasPast) clearReportSignalsOnRedeparture(nextData, destination)
@@ -346,11 +346,11 @@ export async function updateCaseField(
       }
     }
 
-    // 서류 체크리스트 완료일 — 이 목적지 기준 '모두 ✓' 전환 시 박거나(미완료 복귀 시) 지운다.
+    // 서류 체크리스트 완료일 — 이 여행지 기준 '모두 ✓' 전환 시 박거나(미완료 복귀 시) 지운다.
     const stampedData = stampDocsChecklistCompletion(row as CaseRow, nextData, destination)
     updateObj['data'] = stampedData
 
-    // 자동 채움 — 활성 목적지 기준 trigger 가 by_dest 안의 다른 키를 채움.
+    // 자동 채움 — 활성 여행지 기준 trigger 가 by_dest 안의 다른 키를 채움.
     // departure_date / vet_visit_date / entry_date 등 날짜 트리거에 한해 가동.
     // 커밋 전 pending 스냅샷으로 계산해 본 저장과 합산 — 편집 1회당 UPDATE 1회(P1 #8,
     // 종전엔 저장 UPDATE → 엔진 SELECT+UPDATE → refresh SELECT 로 3 SELECT/2 UPDATE).
@@ -434,9 +434,9 @@ export async function updateCaseField(
         }
       } catch { /* 날짜 계산 실패 무시 */ }
     }
-    // 단일 목적지 departure_date 컬럼 쓰기는 by_dest 와 lockstep 유지 — destArg 없이(by_dest 우회)
+    // 단일 여행지 departure_date 컬럼 쓰기는 by_dest 와 lockstep 유지 — destArg 없이(by_dest 우회)
     // 컬럼만 비우면 화면은 by_dest 우선이라 옛 값이 남아 "삭제가 안 되는" 유령이 된다(과거 누수 사례).
-    // 단일 목적지면 유일 토큰의 by_dest.departure_date 도 같은 값으로 동기화(빈 값은 null sentinel).
+    // 단일 여행지면 유일 토큰의 by_dest.departure_date 도 같은 값으로 동기화(빈 값은 null sentinel).
     if (key === 'departure_date') {
       const tokens = parseDestinations(destinationRaw)
       if (tokens.length === 1) {
@@ -520,7 +520,7 @@ export async function updateCaseField(
       if (wasPast) {
         // 재출국 — legacy stored 만이 아니라 derive 시그널(사전 신고·수출검역·수입 허가)까지 비운다.
         // 완료가 derive(skip 플래그·신청일)에서 나오는 일본·태국·필리핀 케이스는 stored 만 지우면
-        // 신고 탭에서 '완료'로 남는 버그가 있었다. 활성 목적지 by_dest 잔존도 함께 정리.
+        // 신고 탭에서 '완료'로 남는 버그가 있었다. 활성 여행지 by_dest 잔존도 함께 정리.
         const activeDest = resolveTabActiveDest(
           { destination: destinationRaw, data: nextData, departure_date: oldValue } as CaseRow,
           'import_report_active_dest',
@@ -532,7 +532,7 @@ export async function updateCaseField(
 
   // 서류 체크리스트 완료일 — 운영자가 준비상태를 done 으로 바꾸거나(export_doc_status) 내원·
   // 출국일 변경으로 done 이 리셋되면 완료/미완료가 뒤집힌다. nextData 기준으로 재계산해 박거나
-  // 지운다(top-level 키라 단일/다중 모두 활성 목적지 스코프로). 변화가 있으면 data 를 쓴다.
+  // 지운다(top-level 키라 단일/다중 모두 활성 여행지 스코프로). 변화가 있으면 data 를 쓴다.
   const stampedData = stampDocsChecklistCompletion(row as CaseRow, nextData, destination)
   if (dataMutated || stampedData !== nextData) updateObj.data = stampedData
 
@@ -561,8 +561,8 @@ export async function updateCaseField(
         'departure_date' in updateObj
           ? (updateObj['departure_date'] as string | null)
           : ((row as { departure_date: string | null }).departure_date ?? null)
-      // by_dest 경로(위)와 동일하게 활성 목적지를 넘긴다 — 안 넘기면 auto-fill 이 채운 scoped 타깃
-      // (예: 일본 출국 항공편일)이 다중 목적지에서 top-level 로 가 strict flatten 에 떨궈 증발한다.
+      // by_dest 경로(위)와 동일하게 활성 여행지를 넘긴다 — 안 넘기면 auto-fill 이 채운 scoped 타깃
+      // (예: 일본 출국 항공편일)이 다중 여행지에서 top-level 로 가 strict flatten 에 떨궈 증발한다.
       const computed = await computeAutoFill(supabase, caseId, key, destination, {
         orgId,
         destination: destinationRaw,
@@ -715,7 +715,7 @@ export async function undoLastChange(
       key: string
       storage: 'column' | 'data'
       restoredValue: unknown
-      /** by_dest 이력이면 복원된 목적지 — 클라이언트가 updateLocalCaseField 5번째 인자로 전달. */
+      /** by_dest 이력이면 복원된 여행지 — 클라이언트가 updateLocalCaseField 5번째 인자로 전달. */
       destination?: string | null
     }
   | { ok: false; error: string }
@@ -739,7 +739,7 @@ export async function undoLastChange(
   const storage = field_storage as 'column' | 'data'
   const restoredValue = deserializeFromHistory(storage, old_value)
 
-  // by_dest 이력 파싱 — 'by_dest:{destination}:{key}' 는 그 목적지 슬롯으로 복원해야 한다.
+  // by_dest 이력 파싱 — 'by_dest:{destination}:{key}' 는 그 여행지 슬롯으로 복원해야 한다.
   const byDestRef = storage === 'data' ? parseByDestHistoryKey(field_key) : null
   if (storage === 'data' && !byDestRef && field_key.startsWith('by_dest:')) {
     // 형식 불명 — top-level 에 'by_dest:...' 쓰레기 키를 만드느니 명시 실패 (조용한 오염 방지).
@@ -815,7 +815,7 @@ export async function restoreToHistoryPoint(
         key: string
         storage: 'column' | 'data'
         value: unknown
-        /** by_dest 이력이면 복원된 목적지 — 클라이언트가 updateLocalCaseField 5번째 인자로 전달. */
+        /** by_dest 이력이면 복원된 여행지 — 클라이언트가 updateLocalCaseField 5번째 인자로 전달. */
         destination?: string | null
       }>
     }
@@ -872,7 +872,7 @@ export async function restoreToHistoryPoint(
   }
 
   // 4. Separate column / data / by_dest updates.
-  //    by_dest 이력('by_dest:{destination}:{key}')은 그 목적지 슬롯으로 복원해야 한다 —
+  //    by_dest 이력('by_dest:{destination}:{key}')은 그 여행지 슬롯으로 복원해야 한다 —
   //    평범한 data 키로 쓰면 top-level 에 'by_dest:...' 쓰레기 키가 생긴다.
   const columnUpdates: Record<string, unknown> = {}
   const dataKeyUpdates = new Map<string, unknown>()
@@ -1074,11 +1074,11 @@ export async function setJpExportQuarantineReportStatus(
   const destination = (row?.destination as string | null) ?? null
 
   // 신청일(jp_export_quarantine_application_date)은 by_dest 스코핑 키다(DESTINATION_SCOPED_FIELD_KEYS).
-  // 다중 목적지에서 신청일을 top-level 에 쓰면, 신고 탭 read(effectiveExportStatus →
-  // flattenCaseForDestination strict)가 활성 목적지 by_dest 만 신뢰하고 top-level 을 떨궈
+  // 다중 여행지에서 신청일을 top-level 에 쓰면, 신고 탭 read(effectiveExportStatus →
+  // flattenCaseForDestination strict)가 활성 여행지 by_dest 만 신뢰하고 top-level 을 떨궈
   // derive 가 신청일을 못 본다 → '완료'(reservation_skipped + 신청일>=10) 가 성립 안 해 칸이
-  // '대기중'으로 되돌아간다(신고 탭 수출 완료가 안 먹던 버그). 그래서 다중 목적지는 portal 과
-  // 동일하게 by_dest[활성목적지]에 쓴다. 단일 목적지는 기존 top-level 그대로(정상 동작 유지).
+  // '대기중'으로 되돌아간다(신고 탭 수출 완료가 안 먹던 버그). 그래서 다중 여행지는 portal 과
+  // 동일하게 by_dest[활성여행지]에 쓴다. 단일 여행지는 기존 top-level 그대로(정상 동작 유지).
   const isMulti = parseDestinations(destination).length > 1
   const activeDest = resolveTabActiveDest(
     {
@@ -1088,10 +1088,10 @@ export async function setJpExportQuarantineReportStatus(
     } as CaseRow,
     'import_report_active_dest',
   )
-  // scopedToken: non-null 이면 신청일을 by_dest 에 쓴다(다중 목적지 한정). null 이면 top-level.
+  // scopedToken: non-null 이면 신청일을 by_dest 에 쓴다(다중 여행지 한정). null 이면 top-level.
   const scopedToken = isMulti ? activeDest : null
 
-  // 기존 신청일 — by_dest(활성 목적지) 우선, 마이그 전 top-level 폴백 (portal·read 와 동일 경로).
+  // 기존 신청일 — by_dest(활성 여행지) 우선, 마이그 전 top-level 폴백 (portal·read 와 동일 경로).
   const appliedRaw = activeDest
     ? readByDestValue(current, activeDest, 'jp_export_quarantine_application_date')
     : undefined
@@ -1108,18 +1108,18 @@ export async function setJpExportQuarantineReportStatus(
   // 새 액션 호출 = derive 모드 전환. legacy stored 클리어.
   delete next.import_export_status
 
-  // 신청일이 없을 때 오늘로 폴백 — 다중 목적지면 by_dest[활성목적지]에, 아니면 top-level.
+  // 신청일이 없을 때 오늘로 폴백 — 다중 여행지면 by_dest[활성여행지]에, 아니면 top-level.
   const writeAppDateToday = () => {
     if (scopedToken) {
       next = writeByDestValue(next, scopedToken, 'jp_export_quarantine_application_date', today)
       delete next.jp_export_quarantine_application_date
     } else {
-      next.jp_export_quarantine_application_date = today // scoping-fallback-ok: 단일 목적지(scopedToken 없음) 폴백
+      next.jp_export_quarantine_application_date = today // scoping-fallback-ok: 단일 여행지(scopedToken 없음) 폴백
     }
   }
 
   if (target === 'not_started') {
-    // 신청일·완료/진행 플래그 모두 클리어. 다중 목적지는 by_dest 스코핑 신청일도 명시적으로
+    // 신청일·완료/진행 플래그 모두 클리어. 다중 여행지는 by_dest 스코핑 신청일도 명시적으로
     // 비워야(null sentinel) derive 가 신청일을 보고 'in_progress' 로 되살아나지 않는다
     // (top-level delete 만으로는 by_dest 잔존이 남는다).
     delete next.jp_export_quarantine_application_date
@@ -1166,8 +1166,8 @@ export async function setJpExportQuarantineReportStatus(
  * 첨부(stepId 'import-permit')·허가번호(permit_no)는 portal/추가정보 관할이라 손대지 않는다 —
  * 둘 중 하나라도 있으면 derive 가 'done' 으로 잡으므로 '대기/진행중'으로 못 내릴 수 있다(UI confirm 안내).
  *
- * portal(updateImportPermitFields)이 단일 목적지도 by_dest 에 쓰므로(B안), 읽기(flatten)와
- * 일치하도록 admin 도 활성 목적지 토큰이 해석되면 항상 by_dest 에 쓰고 top-level 잔존은 지운다.
+ * portal(updateImportPermitFields)이 단일 여행지도 by_dest 에 쓰므로(B안), 읽기(flatten)와
+ * 일치하도록 admin 도 활성 여행지 토큰이 해석되면 항상 by_dest 에 쓰고 top-level 잔존은 지운다.
  */
 export async function setImportPermitReportStatus(
   caseId: string,
@@ -1237,8 +1237,8 @@ export async function setImportPermitReportStatus(
  * 수출(수출검역) 진행 정보를 모두 비운다 — 두 setter 의 'not_started' 클리어와 동일한 필드를
  * 한 번의 read/write 로 처리. 비운 뒤에도 dismissed=true 로 신고 탭에서 계속 숨김.
  *
- * 수출 신청일은 by_dest 스코핑(DESTINATION_SCOPED_FIELD_KEYS)이라, 다중 목적지는 top-level
- * delete 만으로 부족하고 활성 목적지 by_dest 도 null sentinel 로 비워야 derive 가 'in_progress'
+ * 수출 신청일은 by_dest 스코핑(DESTINATION_SCOPED_FIELD_KEYS)이라, 다중 여행지는 top-level
+ * delete 만으로 부족하고 활성 여행지 by_dest 도 null sentinel 로 비워야 derive 가 'in_progress'
  * 로 되살아나지 않는다(setJpExportQuarantineReportStatus not_started 와 동일 처리).
  */
 export async function dismissImportReport(caseId: string): Promise<UpdateResult> {
@@ -1281,7 +1281,7 @@ export async function dismissImportReport(caseId: string): Promise<UpdateResult>
 
   // 수입 허가(태국·필리핀 등) 진행 정보 클리어 — setImportPermitReportStatus('not_started') 와 동일.
   // 첨부(stepId 'import-permit')·허가번호(permit_no)는 손대지 않는다(보호자/추가정보 관할, 위 안내문과 일치).
-  // 신호는 by_dest 스코핑 — portal 이 단일 목적지도 by_dest 에 쓰므로 활성 목적지 by_dest 도 null
+  // 신호는 by_dest 스코핑 — portal 이 단일 여행지도 by_dest 에 쓰므로 활성 여행지 by_dest 도 null
   // sentinel 로 비워야(top-level delete 만으론 부족) derive 가 되살아나지 않는다.
   for (const k of ['import_permit_application_date', 'import_permit_issued_skipped', 'import_permit_in_progress'] as const) {
     delete next[k]

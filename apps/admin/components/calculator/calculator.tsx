@@ -225,7 +225,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
     const name = addName.trim()
     if (!name) return
     if (visibleItems.some((it) => it.item_name === name)) {
-      alert('이미 이 목적지에 추가된 메뉴입니다')
+      alert('이미 이 여행지에 추가된 메뉴입니다')
       return
     }
     const costStr = addCost.trim()
@@ -254,11 +254,11 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
 
   if (!effectiveCountry) return null
 
-  // 강아지 전용 목적지(예: 남아프리카공화국) + 고양이 → 해당 없음.
+  // 강아지 전용 여행지(예: 남아프리카공화국) + 고양이 → 해당 없음.
   if (species === 'cat' && isDogOnly(country)) {
     return (
       <div className="px-lg py-16 text-center">
-        <p className="font-serif text-[17px] text-foreground">고양이는 해당 없는 목적지입니다</p>
+        <p className="font-serif text-[17px] text-foreground">고양이는 해당 없는 여행지입니다</p>
         <p className="mt-1 text-sm text-muted-foreground">{country}은(는) 강아지만 진행됩니다.</p>
       </div>
     )

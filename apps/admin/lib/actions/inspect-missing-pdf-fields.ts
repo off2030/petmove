@@ -242,7 +242,7 @@ export async function inspectMissingPdfFields(
     // 종 필터 포함 entries 로 allowed 백신 계산 — 촌충국 내부구충처럼 개 전용
     // 항목이 고양이 케이스에서 "비어 있는 정보"로 오탐되지 않도록. 렌더(case-detail·
     // 공유 다이얼로그)와 동일하게 vaccineMatchesSpecies 로 걸러낸다. (org 커스텀
-    // 목적지 config 는 기존 getEffectiveVaccineList 도 안 봤으므로 null 유지.)
+    // 여행지 config 는 기존 getEffectiveVaccineList 도 안 봤으므로 null 유지.)
     const allowedVaccines = new Set(
       getEffectiveVaccineEntries(destination ?? caseRow.destination, extraFields, null)
         .filter((e) => vaccineMatchesSpecies(e, species))

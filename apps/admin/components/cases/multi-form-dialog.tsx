@@ -14,7 +14,7 @@ interface Props {
   formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC'
   /** 수의사/병원 정보·발급일 노출 여부. 부모 cases-app 의 토글 상태를 그대로 전달. */
   includeVet?: boolean
-  /** 다중 목적지 케이스의 활성 목적지 — PDF 생성 시 by_dest 평탄화에 사용. */
+  /** 다중 여행지 케이스의 활성 여행지 — PDF 생성 시 by_dest 평탄화에 사용. */
   destination?: string | null
   /**
    * 발급 직전 사전 안내 — 절차 검증 실패 + 빈 필드를 동물별로 묶어 한 다이얼로그에 표시.

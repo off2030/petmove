@@ -1,5 +1,5 @@
 /**
- * 계산기 목적지 alias.
+ * 계산기 여행지 alias.
  *
  * - CAT_VARIANTS: 종(species)이 cat 일 때 부모 국가 → 별도 (고양이) 변종 row
  *   (호주(고양이) 등 calculator_items 에 실제 row 존재)
@@ -13,7 +13,7 @@ export const CAT_VARIANTS: Record<string, string> = {
 }
 
 /**
- * 강아지만 진행하는 목적지 — 고양이 선택 시 계산기에서 '해당 없음' 표시.
+ * 강아지만 진행하는 여행지 — 고양이 선택 시 계산기에서 '해당 없음' 표시.
  * (남아프리카공화국 = ARC-OVI, 개 전용.)
  */
 export const DOG_ONLY_COUNTRIES = new Set<string>(['남아프리카공화국'])

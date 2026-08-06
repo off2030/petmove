@@ -26,8 +26,8 @@ import { DialogFooter } from '@/components/ui/dialog-footer'
 import { cn } from '@/lib/utils'
 import { DESTINATION_OVERRIDES } from '@petmove/domain'
 
-// 목적지 목록은 도메인 단일 출처(DESTINATION_OVERRIDES)에서 파생 — 첫 keyword 가 한글
-// 정식 명칭 컨벤션. 예전 손 목록은 20개에서 멈춰 있어서 뒤에 추가된 목적지(south_africa 등)의
+// 여행지 목록은 도메인 단일 출처(DESTINATION_OVERRIDES)에서 파생 — 첫 keyword 가 한글
+// 정식 명칭 컨벤션. 예전 손 목록은 20개에서 멈춰 있어서 뒤에 추가된 여행지(south_africa 등)의
 // 규칙이 그룹 제목에 raw 키로 뜨고 한글 검색에도 안 잡혔다(2026-08-05 사용자 발견).
 const DESTINATION_OPTIONS: { key: string; label: string }[] = Object.entries(DESTINATION_OVERRIDES)
   .map(([key, o]) => ({ key, label: o.keywords[0] ?? key }))
@@ -257,14 +257,11 @@ export function AutomationSection({
             <SettingsSearchInput
               value={query}
               onChange={setQuery}
-              placeholder="트리거, 대상 필드, 목적지 검색"
+              placeholder="트리거, 대상 필드, 여행지 검색"
               className="flex-1"
             />
             <SettingsFilterPills options={STATUS_FILTERS} value={statusFilter} onChange={setStatusFilter} />
           </div>
-          <p className="pmw-st__sec-lead px-1">
-            검색 대상: 트리거 필드, 대상 필드, 목적지, 종, 오프셋, 활성 상태. 공백으로 여러 단어를 넣으면 모두 포함된 규칙만 보여줍니다.
-          </p>
         </div>
 
         {loading ? (
@@ -568,9 +565,9 @@ function RuleEditModal({
         </div>
 
         <div className="px-lg py-md space-y-md">
-          <Field label="목적지">
+          <Field label="여행지">
             {/* 레거시 규칙은 destination_key 가 한글 자유 문자열('아일랜드' 등)일 수 있다 —
-                파생 목록에 없으면 현재 값을 옵션으로 붙여, 수정 화면에서 목적지가 빈 값/
+                파생 목록에 없으면 현재 값을 옵션으로 붙여, 수정 화면에서 여행지가 빈 값/
                 다른 값으로 튀지 않게 한다. */}
             <EditorialSelect
               value={destination}

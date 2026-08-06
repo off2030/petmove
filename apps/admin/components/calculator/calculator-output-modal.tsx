@@ -89,7 +89,7 @@ export function CalculatorOutputModal({
     return rowsFromItems(itemsForCountry(initialCountry, initialSpecies))
   })
 
-  // 목적지/종 변경 시 해당 목적지 기본 항목으로 교체. 초기 마운트는 건너뜀.
+  // 여행지/종 변경 시 해당 여행지 기본 항목으로 교체. 초기 마운트는 건너뜀.
   const isFirstRender = useRef(true)
   useEffect(() => {
     if (isFirstRender.current) {
@@ -162,14 +162,14 @@ export function CalculatorOutputModal({
   }, [pickerOpen])
 
   // 항목 추가 picker — 항목명 기준 dedupe. 같은 이름은 1번만 보이고
-  // 가격은 현재 목적지의 값을 우선, 없으면 country_order 가장 빠른 국가 값.
-  // 현재 목적지에 있는 항목을 위에(해당 목적지 item_order 순),
+  // 가격은 현재 여행지의 값을 우선, 없으면 country_order 가장 빠른 국가 값.
+  // 현재 여행지에 있는 항목을 위에(해당 여행지 item_order 순),
   // 그 외 항목은 아래에 가나다 순.
   const pickerItems = useMemo(() => {
     const current = targetCountry(country, species)
     const byName = new Map<string, CalculatorItem>()
 
-    // 1차: 현재 목적지 항목 우선 등록 (가격·order 의 기준)
+    // 1차: 현재 여행지 항목 우선 등록 (가격·order 의 기준)
     for (const it of allItems) {
       if (it.country === current && !byName.has(it.item_name)) {
         byName.set(it.item_name, it)
@@ -197,7 +197,7 @@ export function CalculatorOutputModal({
     return q ? list.filter((it) => it.item_name.toLowerCase().includes(q)) : list
   }, [country, species, allItems, pickerSearch])
 
-  // 목적지 dropdown
+  // 여행지 dropdown
   const [countryOpen, setCountryOpen] = useState(false)
   const [countrySearch, setCountrySearch] = useState('')
   const countryRef = useRef<HTMLDivElement>(null)
@@ -291,7 +291,7 @@ export function CalculatorOutputModal({
         </div>
 
         <div className="flex-1 overflow-y-auto px-md py-sm space-y-3 scrollbar-minimal">
-          {/* 목적지 + 종 */}
+          {/* 여행지 + 종 */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1" ref={countryRef}>
               <button
@@ -303,7 +303,7 @@ export function CalculatorOutputModal({
                     : 'border-border/80 hover:border-foreground/40'
                 }`}
               >
-                <span>{country || '목적지 선택'}</span>
+                <span>{country || '여행지 선택'}</span>
                 <ChevronDown
                   size={13}
                   className={`transition-transform ${countryOpen ? 'rotate-180' : ''}`}
@@ -336,7 +336,7 @@ export function CalculatorOutputModal({
                             setCountrySearch('')
                           }
                         }}
-                        placeholder="목적지 검색..."
+                        placeholder="여행지 검색..."
                         className="h-9 w-full rounded-md border border-border bg-background py-2 pl-8 pr-2 text-sm outline-none focus:border-pmw-accent"
                       />
                     </div>
@@ -488,7 +488,7 @@ export function CalculatorOutputModal({
                     </button>
                     {pickerItems.length === 0 ? (
                       <div className="px-3 py-3 text-sm text-muted-foreground">
-                        {country ? '항목 없음' : '목적지 선택 필요'}
+                        {country ? '항목 없음' : '여행지 선택 필요'}
                       </div>
                     ) : (
                       pickerItems.map((it) => (
@@ -644,7 +644,7 @@ function renderPrintHtml(input: {
     )
   }
   infoCells.push(
-    `<div class="info-cell"><div class="info-label">목적지</div><div class="info-value">${escapeHtml(input.country)} <span class="info-sub">· ${speciesLabel}</span></div></div>`,
+    `<div class="info-cell"><div class="info-label">여행지</div><div class="info-value">${escapeHtml(input.country)} <span class="info-sub">· ${speciesLabel}</span></div></div>`,
   )
   const infoBlock = `<div class="info">${infoCells.join('')}</div>`
 

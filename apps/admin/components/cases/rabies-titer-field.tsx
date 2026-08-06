@@ -43,7 +43,7 @@ function stripTiterUnit(value: string | null | undefined): string | null {
 }
 
 /**
- * 광견병항체 검사기관 자동 감지 — 단일 목적지일 때만.
+ * 광견병항체 검사기관 자동 감지 — 단일 여행지일 때만.
  */
 function autoDetectLab(
   destination: string | null | undefined,
@@ -58,7 +58,7 @@ function autoDetectLab(
 
 /**
  * 검사소 샘플 수령일 입력 노출 — AU/HI/GU 에서만 검증에 사용되므로
- * 그 외 목적지에선 UI 비표시. multi-destination 시 하나라도 포함되면 표시.
+ * 그 외 여행지에선 UI 비표시. multi-destination 시 하나라도 포함되면 표시.
  */
 function destinationNeedsReceivedDate(destination: string | null | undefined): boolean {
   if (!destination) return false
@@ -72,7 +72,7 @@ function destinationNeedsReceivedDate(destination: string | null | undefined): b
 
 /**
  * 일본 입국 가능일 hover 툴팁 — 채혈일 + 180일 (jp.entry-180days-after-titer 룰과 동일 기준).
- * 목적지에 일본이 포함될 때만 노출. multi-destination 이어도 일본이 있으면 표시.
+ * 여행지에 일본이 포함될 때만 노출. multi-destination 이어도 일본이 있으면 표시.
  */
 function japanEntryTooltip(date: string | null, destination: string | null | undefined): string | undefined {
   if (!date || !destination) return undefined
@@ -160,7 +160,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       }
       const xValue = stripTiterUnit(result.data.value)
       // 샘플수령일(received_date)은 호주·하와이·괌 전용(RNATT 180일 대기 기준).
-      // 그 외 목적지(뉴질랜드 등)는 필드 미표시·검증 미사용이므로 추출값을 무시한다 —
+      // 그 외 여행지(뉴질랜드 등)는 필드 미표시·검증 미사용이므로 추출값을 무시한다 —
       // 적용 시 메시지에 "샘플수령일 업데이트됨"이 잘못 떠 혼란을 준다.
       const xReceived = showReceivedDate ? result.data.sample_received_date : null
 

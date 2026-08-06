@@ -86,7 +86,7 @@ type MultiPdfBody = {
   caseIds: string[]
   part?: number
   includeVet?: boolean
-  /** 다중 목적지 케이스 평탄화 — 활성 목적지 토큰 */
+  /** 다중 여행지 케이스 평탄화 — 활성 여행지 토큰 */
   destination?: string | null
 }
 

@@ -121,7 +121,7 @@ export function DetailViewSection({
         {/* ── 공유 ── */}
         <SharePresetsSection />
 
-        {/* ── 목적지 ── */}
+        {/* ── 여행지 ── */}
         <DestinationsArea />
 
         {/* ── 증명서 ── */}

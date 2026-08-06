@@ -42,7 +42,7 @@ export function CalculatorApp() {
   const [dropOpen, setDropOpen] = useState(false)
   const [search, setSearch] = useState('')
   const dropRef = useRef<HTMLDivElement>(null)
-  // 목적지 메뉴 (복제/추가/삭제/출력) state
+  // 여행지 메뉴 (복제/추가/삭제/출력) state
   const [destMenuOpen, setDestMenuOpen] = useState(false)
   const [destAction, setDestAction] = useState<'clone' | 'add' | null>(null)
   const [outputOpen, setOutputOpen] = useState(false)
@@ -66,7 +66,7 @@ export function CalculatorApp() {
     return () => document.removeEventListener('mousedown', onDown)
   }, [dropOpen])
 
-  // 목적지 메뉴 / 인라인 폼 외부 클릭 시 닫기
+  // 여행지 메뉴 / 인라인 폼 외부 클릭 시 닫기
   useEffect(() => {
     if (!destMenuOpen && !destAction) return
     const onDown = (e: MouseEvent) => {
@@ -126,8 +126,8 @@ export function CalculatorApp() {
     if (!country) return
     setDestMenuOpen(false)
     const ok = await confirm({
-      message: `"${country}" 목적지를 삭제하시겠습니까?`,
-      description: '이 목적지의 모든 비용 항목이 함께 삭제됩니다. 되돌릴 수 없습니다.',
+      message: `"${country}" 여행지를 삭제하시겠습니까?`,
+      description: '이 여행지의 모든 비용 항목이 함께 삭제됩니다. 되돌릴 수 없습니다.',
       okLabel: '삭제',
       variant: 'destructive',
     })
@@ -140,7 +140,7 @@ export function CalculatorApp() {
       }
       const deleted = new Set(r.data.deletedIds)
       setItems((prev) => prev.filter((it) => !deleted.has(it.id)))
-      // 다른 목적지로 자동 전환
+      // 다른 여행지로 자동 전환
       const remaining = countries.filter((c) => c !== country)
       setCountry(remaining[0] ?? '')
       resetDestMenu()
@@ -164,7 +164,7 @@ export function CalculatorApp() {
     return [...baseList.slice(0, europeIdx + 1), ...aliases, ...baseList.slice(europeIdx + 1)]
   })()
 
-  // EU alias 목적지는 '유럽' 항목을 공유 — 편집/복제/삭제는 '유럽' 에서 직접 해야 함.
+  // EU alias 여행지는 '유럽' 항목을 공유 — 편집/복제/삭제는 '유럽' 에서 직접 해야 함.
   const isAlias = isEuAliasCountry(country)
 
   useEffect(() => {
@@ -213,7 +213,7 @@ export function CalculatorApp() {
                 : 'border-border/80 text-muted-foreground hover:text-foreground'
             }`}
           >
-            <span>{country || '목적지'}</span>
+            <span>{country || '여행지'}</span>
             <ChevronDown
               size={13}
               className={`transition-transform ${dropOpen ? 'rotate-180' : ''}`}
@@ -246,7 +246,7 @@ export function CalculatorApp() {
                         setSearch('')
                       }
                     }}
-                    placeholder="목적지 검색..."
+                    placeholder="여행지 검색..."
                     className="h-9 w-full rounded-md border border-border bg-background py-2 pl-8 pr-2 text-sm outline-none focus:border-pmw-accent"
                   />
                 </div>
@@ -289,7 +289,7 @@ export function CalculatorApp() {
           title={isAlias ? '유럽 회원국은 "유럽" 에서 편집해주세요' : undefined}
         />
 
-        {/* 목적지 메뉴 — 복제 / 추가 / 삭제 */}
+        {/* 여행지 메뉴 — 복제 / 추가 / 삭제 */}
         <div className="relative" ref={destMenuRef}>
           <button
             type="button"
@@ -297,8 +297,8 @@ export function CalculatorApp() {
               if (destAction) return
               setDestMenuOpen((v) => !v)
             }}
-            aria-label="목적지 메뉴"
-            title="목적지 메뉴"
+            aria-label="여행지 메뉴"
+            title="여행지 메뉴"
             className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/80 bg-transparent text-muted-foreground hover:text-foreground transition-colors"
           >
             <Menu size={14} />
@@ -363,8 +363,8 @@ export function CalculatorApp() {
             <div className="absolute right-0 top-[calc(100%+4px)] z-50 w-72 rounded-md border border-border bg-popover shadow-lg p-3 space-y-2">
               <div className="text-[12px] text-muted-foreground">
                 {destAction === 'clone'
-                  ? `"${country}" → 새 목적지 이름`
-                  : '새 목적지 이름'}
+                  ? `"${country}" → 새 여행지 이름`
+                  : '새 여행지 이름'}
               </div>
               <input
                 autoFocus
@@ -384,7 +384,7 @@ export function CalculatorApp() {
                   }
                 }}
                 disabled={destPending}
-                placeholder="목적지 이름"
+                placeholder="여행지 이름"
                 className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none focus:border-pmw-accent disabled:opacity-50"
               />
               {destError && (

@@ -1,5 +1,5 @@
 /**
- * 조직별 커스텀 목적지 설정 — admin (active_org) 컨텍스트 wrapper.
+ * 조직별 커스텀 여행지 설정 — admin (active_org) 컨텍스트 wrapper.
  *
  * 도메인 normalize / loadDestinationOverridesByOrg 는 packages/domain 으로 이전됨
  * (anon 토큰 흐름 portal 도 동일 로직 사용). 이 파일은 admin-only 의 active_org 의존

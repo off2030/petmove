@@ -64,7 +64,7 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
     country: ALL_DESTINATION_KEYS,
     category: '검사',
     title: '출국 전 임상검사일',
-    description: '출국 전 임상검사일은 출국일 이전·목적지별 검진 가능 윈도우 이내여야 함.',
+    description: '출국 전 임상검사일은 출국일 이전·여행지별 검진 가능 윈도우 이내여야 함.',
     severity: 'warning',
     addedAt: '2026-06-11',
     run: ({ caseRow, destination }) => {
@@ -248,7 +248,7 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 항체 검사 유효기간 만료',
     description:
-      '목적지 입국용 항체 검사(일본 24·대만 12·하와이 36개월)의 유효기간이 오늘 기준 이미 만료됨 — 추가 검사 카드에서 안내. 대만은 만료 후 재검사면 채혈일로부터 180일 재대기.',
+      '여행지 입국용 항체 검사(일본 24·대만 12·하와이 36개월)의 유효기간이 오늘 기준 이미 만료됨 — 추가 검사 카드에서 안내. 대만은 만료 후 재검사면 채혈일로부터 180일 재대기.',
     allowDate: true,
     severity: 'warning',
     addedAt: '2026-07-25',

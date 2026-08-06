@@ -1,12 +1,12 @@
 'use server'
 
 /**
- * 스태프(펫무브워크)가 한 목적지를 케이스에서 삭제 — portal removeCaseDestination 과 동일 정리.
+ * 스태프(펫무브워크)가 한 여행지를 케이스에서 삭제 — portal removeCaseDestination 과 동일 정리.
  * markJourneyCompleteAdmin(완료 처리)과 달리 past_journeys 요약을 남기지 않는다(삭제 = 잘못
- * 넣은 목적지 빼기). 정리 범위는 완료 처리와 동일:
+ * 넣은 여행지 빼기). 정리 범위는 완료 처리와 동일:
  *   - by_dest[dest]·trip_type[dest]·arrival_confirmed[dest]·completion_prompt_dismissed[dest] 제거
- *   - top-level destination-scoped 잔존 + departure_date 컬럼 비움 — 단일 목적지 케이스는
- *     scoped 필드가 top-level 에 살아서, 안 비우면 다음에 넣는 목적지가 이전 목적지의
+ *   - top-level destination-scoped 잔존 + departure_date 컬럼 비움 — 단일 여행지 케이스는
+ *     scoped 필드가 top-level 에 살아서, 안 비우면 다음에 넣는 여행지가 이전 여행지의
  *     추가정보(항공편·해외주소·허가번호)·출국일·검역일을 물려받는다. 백신·항체(동물 단위)는 유지.
  */
 
@@ -20,7 +20,7 @@ export async function removeCaseDestinationAdmin(
   destination: string,
 ): Promise<Result> {
   const dest = destination.trim()
-  if (!caseId || !dest) return { ok: false, error: 'caseId·목적지가 필요합니다.' }
+  if (!caseId || !dest) return { ok: false, error: 'caseId·여행지가 필요합니다.' }
 
   const supabase = await createClient()
 

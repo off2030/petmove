@@ -115,14 +115,14 @@ function toShareFieldSpec(
     subgroup: d.subgroup,
     description: SHARE_RECIPIENT_FIELD_DESCRIPTION[d.key],
   } as const
-  // scoped 키는 목적지 개수와 무관하게 by_dest 우선 (null sentinel 도 인식) — 아래 제출
-  // 경로가 단일 목적지에서도 by_dest 에 쓰기 때문. isMulti 게이트를 두면 단일 목적지
+  // scoped 키는 여행지 개수와 무관하게 by_dest 우선 (null sentinel 도 인식) — 아래 제출
+  // 경로가 단일 여행지에서도 by_dest 에 쓰기 때문. isMulti 게이트를 두면 단일 여행지
   // 케이스에서 이미 받은 값이 수신자 폼에 빈 칸으로 보인다(shareDescriptorHasValue 와 동일 수정).
   const scopeToken = resolveShareScopeToken(caseRow.destination, destinationScope)
   const useByDest = !!scopeToken && isDestinationScopedKey(d.key)
   const byDestVal = useByDest ? readByDestValue(data, scopeToken, d.key) : undefined
-  // by_dest 에 없을 때의 폴백 — 단일 목적지는 top-level 잔존값(legacy)까지 보여주고,
-  // 다중 목적지는 보여주지 않는다(다른 목적지 값이 이 목적지 폼에 프리필되는 누수 차단).
+  // by_dest 에 없을 때의 폴백 — 단일 여행지는 top-level 잔존값(legacy)까지 보여주고,
+  // 다중 여행지는 보여주지 않는다(다른 여행지 값이 이 여행지 폼에 프리필되는 누수 차단).
   const isMulti = parseDestinations(caseRow.destination).length > 1
   const fallback = <T,>(topLevel: T): T | null =>
     useByDest && isMulti ? null : (topLevel ?? null)
@@ -187,7 +187,7 @@ function toShareFieldSpec(
  * undo(restoreToHistoryPoint)가 같은 값을 되돌릴 수 있다:
  *   - data       : null/undefined/'' → null, 그 외 JSON.stringify
  *   - column     : null/'' → null, 그 외 String(value)
- *   - by_dest 키 : field_key = `by_dest:{목적지}:{키}`, storage = 'data'
+ *   - by_dest 키 : field_key = `by_dest:{여행지}:{키}`, storage = 'data'
  *
  * updates.data 전체를 before 와 비교하므로 auto-fill(computeAutoFill)이 덧붙인 변경도 함께 남는다.
  */
@@ -232,12 +232,12 @@ function buildSubmitHistoryRows(args: {
 
   const after = updates.data as Record<string, unknown> | undefined
   if (after) {
-    // top-level data 키 (by_dest 는 아래에서 목적지·키 단위로 따로 기록).
+    // top-level data 키 (by_dest 는 아래에서 여행지·키 단위로 따로 기록).
     for (const k of new Set([...Object.keys(before), ...Object.keys(after)])) {
       if (k === 'by_dest') continue
       push(k, 'data', before[k], after[k])
     }
-    // by_dest[목적지][키]
+    // by_dest[여행지][키]
     const bBy = asObj(before['by_dest'])
     const aBy = asObj(after['by_dest'])
     for (const dest of new Set([...Object.keys(bBy), ...Object.keys(aBy)])) {
@@ -515,7 +515,7 @@ export async function submitShareLink(
     }
 
     // 현재 case data + destination 컨텍스트 머지.
-    // 다중 목적지 케이스 + share-link 가 destination_scope 지정 시: scoped 키는 by_dest 경로로.
+    // 다중 여행지 케이스 + share-link 가 destination_scope 지정 시: scoped 키는 by_dest 경로로.
     const updates: Record<string, unknown> = {}
     const { data: caseInfo } = await admin
       .from('cases')
@@ -527,9 +527,9 @@ export async function submitShareLink(
     const caseDestination = (caseInfo as { destination?: string | null } | null)?.destination ?? null
     const caseOrgId = (caseInfo as { org_id?: string } | null)?.org_id ?? ''
     const caseDepartureDate = (caseInfo as { departure_date?: string | null } | null)?.departure_date ?? null
-    // 활성 목적지 토큰을 읽기(flatten)와 동일하게 해석 — scope 미지정이면 첫 토큰으로 폴백한다.
+    // 활성 여행지 토큰을 읽기(flatten)와 동일하게 해석 — scope 미지정이면 첫 토큰으로 폴백한다.
     // 읽기(activeDestinationView/buildCaseJourneyContext)가 activeDest 없을 때 첫 토큰으로 폴백하므로,
-    // 쓰기도 첫 토큰 by_dest 에 저장해야 일치한다. 다중 목적지인데 scope 없이 top-level 에 쓰면
+    // 쓰기도 첫 토큰 by_dest 에 저장해야 일치한다. 다중 여행지인데 scope 없이 top-level 에 쓰면
     // strict flatten 이 떨궈 제출값이 증발한다(resolveWriteToken 과 동일 컨벤션).
     // destination_scope 가 "캐나다, 말레이시아" 같은 다중 문자열로 저장돼 있으면 첫 토큰으로
     // 정규화한다 — 그대로 쓰면 by_dest["캐나다, 말레이시아"] 라는 아무 리더도 안 보는 칸에
@@ -545,9 +545,9 @@ export async function submitShareLink(
       if (useByDest && isDestinationScopedKey(k)) {
         merged = writeByDestValue(merged, scope!, k, v)
         // departure_date 는 컬럼과 lockstep — admin updateCaseField 의 by_dest 분기와 동일하게
-        // 단일 목적지 케이스에 한해 컬럼도 함께 갱신한다(목록 필터·정렬·auto-fill 컬럼 호환).
+        // 단일 여행지 케이스에 한해 컬럼도 함께 갱신한다(목록 필터·정렬·auto-fill 컬럼 호환).
         // 안 하면 departure_flight_date → departure_date 동기화(위)가 by_dest 로만 빠져
-        // 컬럼이 영원히 stale. 다중 목적지는 공용 컬럼(단일값) 의미가 모호해 admin 규약대로 미적용.
+        // 컬럼이 영원히 stale. 다중 여행지는 공용 컬럼(단일값) 의미가 모호해 admin 규약대로 미적용.
         if (k === 'departure_date' && caseDests.length === 1) {
           colNonScoped[k] = v
         }
@@ -570,7 +570,7 @@ export async function submitShareLink(
       }
       // 항공권 정보 최초 입력 시점에만 캡처 — 기존 값이 있으면 덮어쓰지 않음 (updateFlightFields 와 동일).
       // flight_info_recorded_at 은 destination-scoped 키 — by_dest 모드면 by_dest[scope]에 저장/조회해야
-      // read(flatten strict)와 일치한다. top-level 에 쓰면 다중 목적지에서 strict flatten 이 떨궈
+      // read(flatten strict)와 일치한다. top-level 에 쓰면 다중 여행지에서 strict flatten 이 떨궈
       // 항공 단계 완료 표시일이 증발한다(다른 scoped 키와 동일 처리).
       if (recordingFlightInfo) {
         const existingRecordedAt = useByDest
@@ -579,7 +579,7 @@ export async function submitShareLink(
         if (typeof existingRecordedAt !== 'string') {
           const recordedAt = new Date().toISOString().slice(0, 10)
           if (useByDest) merged = writeByDestValue(merged, scope!, 'flight_info_recorded_at', recordedAt)
-          else merged.flight_info_recorded_at = recordedAt // scoping-fallback-ok: scope 없음(목적지 없는 케이스) 폴백
+          else merged.flight_info_recorded_at = recordedAt // scoping-fallback-ok: scope 없음(여행지 없는 케이스) 폴백
         }
       }
       for (const { group, entries } of vaccineSubmissions) {
@@ -630,7 +630,7 @@ export async function submitShareLink(
       // 매직링크 입력 후 org_auto_fill_rules 트리거 — 예: 일본 departure_flight_date ↔
       // departure_date 양방향 sync, departure_date 변경 시 백신 일정 자동 계산 등이
       // admin 의 updateCaseField 와 동일하게 매직링크 입력에서도 적용되도록.
-      //  - useByDest 면 활성 목적지 scope 를 넘겨 by_dest 경로로 라우팅.
+      //  - useByDest 면 활성 여행지 scope 를 넘겨 by_dest 경로로 라우팅.
       //  - userEditedKey 는 명시 안 함 — 본 share-link 는 다중 키 입력이므로 전부 유효.
       //    각 룰의 overwrite_existing 플래그로 사용자가 방금 입력한 값 보호 (기본 false).
       //  - 커밋 전 pending 스냅샷으로 계산해 아래 단일 UPDATE 에 합산(엔진 자체
@@ -861,9 +861,9 @@ export async function recordShareUploadedFiles(
 
     const newDocs: Record<string, unknown>[] = []
     const newNotes: Record<string, unknown>[] = []
-    // 링크에 목적지 스코프가 지정돼 있으면 첨부에도 같은 목적지 태깅(portal 업로드와 동일
+    // 링크에 여행지 스코프가 지정돼 있으면 첨부에도 같은 여행지 태깅(portal 업로드와 동일
     // 모델 — 무태그 = 케이스 공유). stepId 'share-submission' 은 필수서류 attachStepId 가
-    // 아니라 판정에는 안 걸리지만, 태그를 남겨 두면 이후 목적지별 표시·정리에 쓸 수 있다.
+    // 아니라 판정에는 안 걸리지만, 태그를 남겨 두면 이후 여행지별 표시·정리에 쓸 수 있다.
     const shareDest =
       typeof row.destination_scope === 'string' && row.destination_scope
         ? row.destination_scope

@@ -365,7 +365,7 @@ export function applyDestinationFieldOverride<T extends ExtraFieldDef>(
     return { ...def, type: 'select', options: THAILAND_ENTRY_AIRPORT_OPTIONS, placeholder: undefined }
   }
   if (override?.extraSection === 'philippines' && def.key === 'entry_airport') {
-    return { ...def, label: '도착공항 / 목적지' }
+    return { ...def, label: '도착공항 / 여행지' }
   }
   return def
 }

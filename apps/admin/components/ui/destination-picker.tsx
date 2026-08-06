@@ -6,7 +6,7 @@ import { COUNTRY_CODE_MAP, destCode } from '@/lib/country-code'
 import { cn } from '@/lib/utils'
 
 /**
- * 목적지 검색형 multi-select combobox.
+ * 여행지 검색형 multi-select combobox.
  * - 입력 = `COUNTRY_CODE_MAP` 기준으로만 선택 (오타·유효하지 않은 값 차단).
  * - 선택된 항목은 tan pill (MONO code + Serif 이름) — 할일→검사 탭의 DestinationCell 과 동일.
  * - 키보드: ↓↑ 네비, Enter 선택, Backspace(빈 input) 마지막 chip 제거, Esc 닫기.
@@ -32,7 +32,7 @@ interface DestinationPickerProps {
 export function DestinationPicker({
   values,
   onChange,
-  placeholder = '목적지 검색',
+  placeholder = '여행지 검색',
   disabled,
   className,
   hideSelectedChips,
@@ -174,7 +174,7 @@ export function DestinationPicker({
         onFocus={() => setOpen(true)}
         onKeyDown={onKey}
         placeholder={hideSelectedChips || values.length === 0 ? placeholder : ''}
-        aria-label={ariaLabel ?? '목적지 검색'}
+        aria-label={ariaLabel ?? '여행지 검색'}
         className="flex-1 min-w-[120px] bg-transparent outline-none border-0 font-sans text-[13.5px] pmw-st__input px-1"
       />
 
@@ -189,7 +189,7 @@ export function DestinationPicker({
         >
           {filtered.length === 0 ? (
             <li className="px-md py-2 font-serif italic text-[13px] text-muted-foreground">
-              일치하는 목적지가 없습니다
+              일치하는 여행지가 없습니다
             </li>
           ) : (
             filtered.map((d, i) => {

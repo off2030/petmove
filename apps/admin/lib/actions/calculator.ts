@@ -29,7 +29,7 @@ export async function updateCalculatorItem(id: number, patch: { item_name?: stri
 }
 
 /**
- * 한 목적지 안에서 항목 순서 재정렬 — orderedIds 배열 순서대로 item_order 0..n-1 재부여.
+ * 한 여행지 안에서 항목 순서 재정렬 — orderedIds 배열 순서대로 item_order 0..n-1 재부여.
  * 클라이언트는 낙관적으로 먼저 반영하고 실패 시 롤백한다.
  */
 export async function reorderCalculatorItems(input: {
@@ -39,7 +39,7 @@ export async function reorderCalculatorItems(input: {
   const auth = await requireAuth()
   if (!auth.ok) return auth
   const country = input.country.trim()
-  if (!country) return { ok: false, error: '목적지가 비어있습니다' }
+  if (!country) return { ok: false, error: '여행지가 비어있습니다' }
   if (input.orderedIds.length === 0) return { ok: true }
 
   const now = new Date().toISOString()
@@ -80,8 +80,8 @@ export async function createCalculatorItem(input: {
 }
 
 /**
- * 기존 목적지의 비용 항목 전체를 새 목적지로 복제.
- * 새 목적지명이 이미 존재하면 거부. 새 country_order 는 현재 최대값 + 1.
+ * 기존 여행지의 비용 항목 전체를 새 여행지로 복제.
+ * 새 여행지명이 이미 존재하면 거부. 새 country_order 는 현재 최대값 + 1.
  */
 export async function cloneCalculatorDestination(input: {
   source: string
@@ -91,9 +91,9 @@ export async function cloneCalculatorDestination(input: {
   if (!auth.ok) return auth
   const source = input.source.trim()
   const target = input.target.trim()
-  if (!source) return { ok: false, error: '원본 목적지가 비어있습니다' }
-  if (!target) return { ok: false, error: '새 목적지명을 입력하세요' }
-  if (source === target) return { ok: false, error: '새 목적지명이 원본과 동일합니다' }
+  if (!source) return { ok: false, error: '원본 여행지가 비어있습니다' }
+  if (!target) return { ok: false, error: '새 여행지명을 입력하세요' }
+  if (source === target) return { ok: false, error: '새 여행지명이 원본과 동일합니다' }
 
   const { data: srcItems, error: srcErr } = await auth.supabase
     .from('calculator_items')
@@ -112,7 +112,7 @@ export async function cloneCalculatorDestination(input: {
     .limit(1)
   if (chkErr) return { ok: false, error: chkErr.message }
   if (existing && existing.length > 0) {
-    return { ok: false, error: '이미 존재하는 목적지명입니다' }
+    return { ok: false, error: '이미 존재하는 여행지명입니다' }
   }
 
   const { data: maxRow } = await auth.supabase
@@ -141,7 +141,7 @@ export async function cloneCalculatorDestination(input: {
 }
 
 /**
- * 빈 목적지를 추가 — placeholder 항목 1개로 시작.
+ * 빈 여행지를 추가 — placeholder 항목 1개로 시작.
  * 사용자가 비용 탭 진입 후 편집 모드에서 항목을 채워나가는 흐름.
  */
 export async function addCalculatorDestination(input: {
@@ -150,7 +150,7 @@ export async function addCalculatorDestination(input: {
   const auth = await requireAuth()
   if (!auth.ok) return auth
   const target = input.target.trim()
-  if (!target) return { ok: false, error: '목적지명을 입력하세요' }
+  if (!target) return { ok: false, error: '여행지명을 입력하세요' }
 
   const { data: existing, error: chkErr } = await auth.supabase
     .from('calculator_items')
@@ -159,7 +159,7 @@ export async function addCalculatorDestination(input: {
     .limit(1)
   if (chkErr) return { ok: false, error: chkErr.message }
   if (existing && existing.length > 0) {
-    return { ok: false, error: '이미 존재하는 목적지명입니다' }
+    return { ok: false, error: '이미 존재하는 여행지명입니다' }
   }
 
   const { data: maxRow } = await auth.supabase
@@ -187,7 +187,7 @@ export async function addCalculatorDestination(input: {
 }
 
 /**
- * 목적지의 모든 비용 항목을 삭제 — 해당 country 가 country 드롭다운에서 사라짐.
+ * 여행지의 모든 비용 항목을 삭제 — 해당 country 가 country 드롭다운에서 사라짐.
  */
 export async function deleteCalculatorDestination(input: {
   country: string
@@ -195,7 +195,7 @@ export async function deleteCalculatorDestination(input: {
   const auth = await requireAuth()
   if (!auth.ok) return auth
   const country = input.country.trim()
-  if (!country) return { ok: false, error: '목적지가 비어있습니다' }
+  if (!country) return { ok: false, error: '여행지가 비어있습니다' }
 
   const { data: rows, error: selErr } = await auth.supabase
     .from('calculator_items')
