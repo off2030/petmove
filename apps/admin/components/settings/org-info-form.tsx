@@ -471,8 +471,9 @@ export function OrgInfoForm({
       ) : null}
 
       {/* 동물병원/운송회사 — 보기·입력 전환. 부모가 탭을 소유하면(조직정보 화면)
-          카드 밖에서 그리므로 여기선 그리지 않는다. */}
-      {!controlled && (
+          카드 밖에서 그리므로 여기선 그리지 않는다.
+          유형이 '둘 다'일 때만 — 단일 유형은 보여줄 게 한 쪽뿐이다. */}
+      {!controlled && orgType === 'both' && (
         <SettingsControlGroup size="md" className="gap-xs">
           {(['hospital', 'transport'] as const).map((t) => (
             <SettingsToggleButton
@@ -619,10 +620,9 @@ export function OrgInfoForm({
       {/* 병원/회사 다음에 낄 카드 — 조직정보 화면의 '수의사'(발급자) 카드. */}
       {children}
 
-      {/* 사용자 정의 추가 필드 — 라벨/값 자유 입력.
-          동물병원 화면에만 노출 (2026-08-06 사용자 지시 — 운송회사는 회사 정보만). */}
-      {!isTransport && (
-        <SettingsCard title="추가 정보">
+      {/* 사용자 정의 추가 필드 — 라벨/값 자유 입력. 병원·운송 양쪽에 노출.
+          값은 org-level 한 벌이라 어느 쪽에서 고쳐도 같은 목록이다. */}
+      <SettingsCard title="추가 정보">
           <div>
             {getCustomFields(info).map((f) => (
               <CustomFieldRow
@@ -652,8 +652,7 @@ export function OrgInfoForm({
               </p>
             )}
           </div>
-        </SettingsCard>
-      )}
+      </SettingsCard>
 
       {error && (
         <p className="font-serif text-[13px] text-destructive">{error}</p>
@@ -807,7 +806,7 @@ function OrgAvatarRow({
   }
 
   return (
-    <SettingsField label="아바타" align="center">
+    <SettingsField label="로고" align="center">
       <SettingsControlGroup size="md" className="gap-md">
         <Avatar label={label} imageUrl={url} size="md" />
         {isAdmin ? (
@@ -831,13 +830,10 @@ function OrgAvatarRow({
                 제거
               </SettingsActionButton>
             )}
-            <span className="font-serif text-[12px] text-muted-foreground/70">
-              PNG · JPG · WebP · GIF · 자동 512px · 펫무브 보호자 화면에 표시
-            </span>
           </>
         ) : (
           <span className="font-serif text-[12px] text-muted-foreground/70">
-            {url ? '조직 관리자만 변경할 수 있습니다.' : '설정된 조직 아바타가 없습니다.'}
+            {url ? '조직 관리자만 변경할 수 있습니다.' : '설정된 로고가 없습니다.'}
           </span>
         )}
       </SettingsControlGroup>

@@ -222,20 +222,23 @@ export function CompanySection({
   return (
     <SettingsShell>
       <SettingsSection title={title}>
-        {/* 동물병원/운송회사 — 카드 밖. 이 선택이 아래 카드 구성을 바꾼다
-            (동물병원 = 병원·수의사·추가 정보 / 운송회사 = 회사만, 2026-08-06 사용자 지시). */}
-        <SettingsControlGroup size="md" className="gap-xs">
-          {(['hospital', 'transport'] as const).map((t) => (
-            <SettingsToggleButton
-              key={t}
-              pressed={issuerTab === t}
-              onClick={() => setIssuerTab(t)}
-              className="px-lg"
-            >
-              {t === 'hospital' ? '동물병원' : '운송회사'}
-            </SettingsToggleButton>
-          ))}
-        </SettingsControlGroup>
+        {/* 동물병원/운송회사 — 카드 밖. 이 선택이 아래 카드 구성을 바꾼다.
+            유형이 '둘 다'인 조직에서만 뜬다 — 단일 유형이면 보여줄 게 한 쪽뿐이라
+            반대쪽 빈 카드와 조직 공용 항목(로고·추가 정보)이 두 번 보였다(2026-08-06). */}
+        {orgType === 'both' && (
+          <SettingsControlGroup size="md" className="gap-xs">
+            {(['hospital', 'transport'] as const).map((t) => (
+              <SettingsToggleButton
+                key={t}
+                pressed={issuerTab === t}
+                onClick={() => setIssuerTab(t)}
+                className="px-lg"
+              >
+                {t === 'hospital' ? '동물병원' : '운송회사'}
+              </SettingsToggleButton>
+            ))}
+          </SettingsControlGroup>
+        )}
 
         <div className="space-y-lg">
         {/* 조직정보(병원·회사 필드 + 아바타 / 추가정보 / 기본값 복원) — 슈퍼어드민 화면과 공유.
@@ -261,10 +264,7 @@ export function CompanySection({
             org_type 에 따라 hospital 측 vet 키 / transport 측 transport_contact 키로
             overlay. 다른 멤버에게는 영향 없음. */}
         {!isTransport && (
-        <SettingsCard
-          title="수의사"
-          description="본인 정보를 넣으면 그 이름·휴대폰·면허로 발급되고, 비워두면 회색 글씨의 조직 기본값으로 발급됩니다."
-        >
+        <SettingsCard title="수의사">
           <div>
             {!myInfo ? (
               <p className="py-3 font-serif text-[12px] text-muted-foreground/60">
