@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
+import { createPortal } from 'react-dom'
 import { Plus, X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { TodoColumnsToggle } from './todo-columns-toggle'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { LabPillSelect, LabPillMultiSelect } from '@/components/ui/lab-pill-select'
 import { PillButton } from '@petmove/ui'
+import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   SettingsActionButton,
   SettingsCard,
@@ -302,10 +304,8 @@ function SectionBlock({
     onRulesChange([...rules, newRule])
   }
 
-  // 빈 매핑 행 추가 — 목적지·기관을 채우지 않고 저장하면 그 행은 저장 시 조용히 제외된다.
-  function addRule() {
-    onRulesChange([...rules, { countries: [], labs: [] }])
-  }
+  // 매핑 추가 — 팝업에서 목적지·기관을 고른 뒤 확정 (2026-08-06 사용자 지시).
+  const [addOpen, setAddOpen] = useState(false)
 
   function removeRule(idx: number) {
     onRulesChange(rules.filter((_, i) => i !== idx))
@@ -394,7 +394,7 @@ function SectionBlock({
           <div className="pt-2 flex items-center gap-md">
             <button
               type="button"
-              onClick={addRule}
+              onClick={() => setAddOpen(true)}
               className="inline-flex items-center gap-1 rounded-sm border border-dashed px-2 py-1 font-sans text-[13px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
               style={{ borderColor: 'var(--pmw-border-warm)' }}
             >
@@ -413,7 +413,108 @@ function SectionBlock({
           </div>
         </div>
       </SettingsField>
+
+      {addOpen && (
+        <MappingAddModal
+          labs={labs}
+          onClose={() => setAddOpen(false)}
+          onSubmit={(rule) => {
+            onRulesChange([...rules, rule])
+            setAddOpen(false)
+          }}
+        />
+      )}
     </SettingsCard>
+  )
+}
+
+/* ── 매핑 추가 팝업 — 목적지·검사기관 모두 복수 선택 후 확정 ── */
+
+function MappingAddModal({
+  labs,
+  onClose,
+  onSubmit,
+}: {
+  labs: InspectionLabOption[]
+  onClose: () => void
+  onSubmit: (rule: InspectionLabRule) => void
+}) {
+  const [countries, setCountries] = useState<string[]>([])
+  const [selectedLabs, setSelectedLabs] = useState<string[]>([])
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  if (!mounted) return null
+
+  const canSubmit = countries.length > 0 && selectedLabs.length > 0
+
+  function submit() {
+    if (!canSubmit) return
+    onSubmit({ countries, labs: [...selectedLabs] })
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div
+        className="bg-background rounded-sm border border-border/80 shadow-xl w-full max-w-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-border/80 px-lg py-3">
+          <span className="font-serif text-[16px] text-foreground">매핑 추가</span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-muted-foreground/60 hover:text-foreground transition-colors"
+            aria-label="닫기"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="px-lg py-md space-y-md">
+          <div>
+            <p className="mb-1.5 font-serif text-[13px] text-muted-foreground">목적지</p>
+            <DestinationPicker
+              values={countries}
+              onChange={setCountries}
+              placeholder="목적지 검색 (예: 독일, DE)"
+              aria-label="목적지"
+              autoFocus
+            />
+          </div>
+          <div>
+            <p className="mb-1.5 font-serif text-[13px] text-muted-foreground">검사기관</p>
+            <LabPillMultiSelect
+              values={selectedLabs}
+              onChange={setSelectedLabs}
+              options={labs}
+              placeholder="검사기관 선택"
+              aria-label="검사기관"
+            />
+          </div>
+        </div>
+
+        <DialogFooter
+          bordered
+          onCancel={onClose}
+          onPrimary={submit}
+          primaryLabel="추가"
+          primaryDisabled={!canSubmit}
+        />
+      </div>
+    </div>,
+    document.body,
   )
 }
 
