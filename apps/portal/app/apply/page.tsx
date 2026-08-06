@@ -1,6 +1,7 @@
 import { ApplyForm, type OwnerPrefill } from './apply-form'
 import { listMyCases } from '@/lib/actions/cases'
 import { getMyProfile } from '@/lib/actions/profile'
+import { loadApplyDraft } from '@/lib/actions/apply-draft'
 import { getCurrentUser } from '@petmove/auth/server'
 
 // 조직 표시 없는 /apply = 펫무브 직영(platform). 어느 병원/운송 업체에도 안 속하는
@@ -54,7 +55,12 @@ async function loadOwnerPrefill(): Promise<OwnerPrefill | null> {
 export default async function ApplyPage() {
   // 직영(펫무브 플랫폼) 자체 신청 — 로그인 후 진입(계정 이메일 사용). isPublic=false.
   // 기존 케이스가 있으면 보호자 정보 prefill → 소유주 단계 건너뜀.
-  const [prefillOwner, profileRes] = await Promise.all([loadOwnerPrefill(), getMyProfile()])
+  // 작성하다 만 내용이 있으면 그 상태로 복원 (apply_drafts).
+  const [prefillOwner, profileRes, draft] = await Promise.all([
+    loadOwnerPrefill(),
+    getMyProfile(),
+    loadApplyDraft(),
+  ])
 
   // 첫 신청(케이스 prefill 없음)이라도 로그인 계정 이름(Apple·카카오·네이버·구글이 제공)을
   // 이름 칸에 prefill → 재입력 강요 방지(App Store Guideline 4.0). 단, display_name 이
@@ -81,6 +87,7 @@ export default async function ApplyPage() {
       prefillOwner={prefillOwner}
       prefillName={prefillName}
       isAppleLogin={isAppleLogin}
+      initialDraft={draft ? { step: draft.step, data: draft.data } : null}
     />
   )
 }

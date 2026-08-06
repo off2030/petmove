@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { cn } from '@petmove/ui'
 import { DateTextField } from '@petmove/ui'
 import { applyCase } from '@/lib/actions/apply-case'
+import { clearApplyDraft, saveApplyDraft } from '@/lib/actions/apply-draft'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import destsData from '@petmove/domain/data/destinations.json'
 import { isOneWayOnlyDestination } from '@petmove/domain'
@@ -524,6 +525,7 @@ export function ApplyForm({
   prefillOwner,
   prefillName,
   isAppleLogin = false,
+  initialDraft = null,
 }: {
   orgId: string
   orgName: string
@@ -549,8 +551,17 @@ export function ApplyForm({
    * '내 정보 > 보호자 정보'에서 입력·수정 가능(서류 생성 시 반영). 다른 provider 는 기존대로 필수.
    */
   isAppleLogin?: boolean
+  /**
+   * 작성하다 만 내용(서버 임시 저장). 있으면 그 상태로 복원하고 안내 줄을 띄운다.
+   * 로그인 직영 신청에만 쓰인다 — 공개 조직폼은 저장하지 않는다.
+   */
+  initialDraft?: { step: number; data: Record<string, unknown> } | null
 }) {
   const router = useRouter()
+  // 복원값 꺼내기 — 없거나 타입이 안 맞으면 기본값. 폼 필드가 바뀌어도 안전하게.
+  const d = initialDraft?.data ?? null
+  const dStr = (k: string, fallback = ''): string =>
+    d && typeof d[k] === 'string' ? (d[k] as string) : fallback
   const [lang, setLang] = useState<Lang>('ko')
   const m = messages[lang]
   const [submitting, setSubmitting] = useState(false)
@@ -568,7 +579,11 @@ export function ApplyForm({
   // 선택 입력으로 더 받는다. (펫무브워크와 분리)
   const skipOwner = !!prefillOwner
   const visibleSteps = skipOwner ? [1, 3] : isPublic ? [1, 2, 3, 4] : [1, 2, 3]
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(() =>
+    initialDraft && visibleSteps.includes(initialDraft.step) ? initialDraft.step : 1,
+  )
+  // 복원했음을 알리는 줄 — 사용자가 '처음부터'를 누르면 감춘다.
+  const [restored, setRestored] = useState(!!initialDraft)
   const stepPos = Math.max(0, visibleSteps.indexOf(step))
   const isFirstStep = stepPos === 0
   const isLastStep = stepPos === visibleSteps.length - 1
@@ -576,23 +591,31 @@ export function ApplyForm({
   // 마지막 단계 도착 시각 — 단계 전환 직후의 모바일 ghost click/더블탭으로 인한 자동 제출 방지.
   const lastAdvanceRef = useRef(0)
 
-  // Form state
-  const [destination, setDestination] = useState('')
+  // Form state — 임시 저장이 있으면 그 값이 prefill 보다 우선(사용자가 직접 쓴 값이므로).
+  const [destination, setDestination] = useState(dStr('destination'))
   const [destQuery, setDestQuery] = useState('')
   const [destSheetOpen, setDestSheetOpen] = useState(false)
-  const [tripType, setTripType] = useState<'round' | 'one_way'>('round')
-  const [customerName, setCustomerName] = useState(prefillOwner?.customerName ?? prefillName ?? '')
-  const [customerLastNameEn, setCustomerLastNameEn] = useState(prefillOwner?.lastNameEn ?? '')
-  const [customerFirstNameEn, setCustomerFirstNameEn] = useState(prefillOwner?.firstNameEn ?? '')
-  const [phone, setPhone] = useState(prefillOwner?.phone ?? '')
+  const [tripType, setTripType] = useState<'round' | 'one_way'>(
+    dStr('tripType') === 'one_way' ? 'one_way' : 'round',
+  )
+  const [customerName, setCustomerName] = useState(
+    dStr('customerName', prefillOwner?.customerName ?? prefillName ?? ''),
+  )
+  const [customerLastNameEn, setCustomerLastNameEn] = useState(
+    dStr('customerLastNameEn', prefillOwner?.lastNameEn ?? ''),
+  )
+  const [customerFirstNameEn, setCustomerFirstNameEn] = useState(
+    dStr('customerFirstNameEn', prefillOwner?.firstNameEn ?? ''),
+  )
+  const [phone, setPhone] = useState(dStr('phone', prefillOwner?.phone ?? ''))
   const [email, setEmail] = useState('')  // 공개(조직별) 폼만 — 직영은 계정 이메일 사용
   // prefill 의 address_kr 은 이미 상세주소 합본 — addressDetail 은 비우고 그대로 제출.
-  const [addressKr, setAddressKr] = useState(prefillOwner?.addressKr ?? '')  // 검색된 기본주소
-  const [addressDetail, setAddressDetail] = useState('')  // 상세주소
-  const [addressEn, setAddressEn] = useState(prefillOwner?.addressEn ?? '')
-  const [addressZipcode, setAddressZipcode] = useState(prefillOwner?.zipcode ?? '')
-  const [addressSido, setAddressSido] = useState(prefillOwner?.sido ?? '')
-  const [addressSigungu, setAddressSigungu] = useState(prefillOwner?.sigungu ?? '')
+  const [addressKr, setAddressKr] = useState(dStr('addressKr', prefillOwner?.addressKr ?? ''))
+  const [addressDetail, setAddressDetail] = useState(dStr('addressDetail'))
+  const [addressEn, setAddressEn] = useState(dStr('addressEn', prefillOwner?.addressEn ?? ''))
+  const [addressZipcode, setAddressZipcode] = useState(dStr('addressZipcode', prefillOwner?.zipcode ?? ''))
+  const [addressSido, setAddressSido] = useState(dStr('addressSido', prefillOwner?.sido ?? ''))
+  const [addressSigungu, setAddressSigungu] = useState(dStr('addressSigungu', prefillOwner?.sigungu ?? ''))
 
   // Daum Postcode
   const [scriptLoaded, setScriptLoaded] = useState(false)
@@ -694,7 +717,14 @@ export function ApplyForm({
       }).embed(addrModalRef.current)
     }, 100)
   }
-  const [pets, setPets] = useState<PetForm[]>([emptyPet()])
+  const [pets, setPets] = useState<PetForm[]>(() => {
+    const saved = d?.pets
+    if (Array.isArray(saved) && saved.length > 0) {
+      // 저장분에 없는 필드는 빈 폼 값으로 메운다(폼 필드가 늘어난 뒤 복원해도 안전).
+      return saved.map((p) => ({ ...emptyPet(), ...(p as Partial<PetForm>) }))
+    }
+    return [emptyPet()]
+  })
   const MAX_PETS = 5
 
   function updatePet(idx: number, field: keyof PetForm, value: PetForm[keyof PetForm]) {
@@ -709,6 +739,67 @@ export function ApplyForm({
   }
   const [enWarnings, setEnWarnings] = useState<Record<string, string | null>>({})
   const composingRef = useRef(false)
+
+  /* ── 작성 중 임시 저장 ────────────────────────────────────────────────
+   * 3~4단계짜리 폼이라 중간에 나가면 전부 날아갔다. 1.5초 멈출 때마다 서버에
+   * 저장해 두고, 다시 들어오면 이어서 쓰게 한다.
+   * 로그인 직영 신청만 — 공개 조직폼(미로그인)은 저장할 주인이 없다.
+   * 저장 실패는 무시한다(보조 기능이 신청을 막으면 안 된다).
+   */
+  const draftEnabled = !isPublic
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // 아무것도 안 쓴 빈 폼까지 저장하면 '시도했다'는 신호가 오염된다 → 첫 입력 후부터.
+  const draftTouched = useRef(false)
+
+  useEffect(() => {
+    if (!draftEnabled || submitted) return
+    const hasInput =
+      destination.trim() !== '' ||
+      customerName.trim() !== '' ||
+      phone.trim() !== '' ||
+      pets.some((p) => p.petName.trim() !== '' || p.petNameEn.trim() !== '')
+    if (!hasInput && !draftTouched.current) return
+    draftTouched.current = true
+
+    if (draftTimer.current) clearTimeout(draftTimer.current)
+    draftTimer.current = setTimeout(() => {
+      void saveApplyDraft({
+        orgId,
+        step,
+        data: {
+          destination,
+          tripType,
+          customerName,
+          customerLastNameEn,
+          customerFirstNameEn,
+          phone,
+          addressKr,
+          addressDetail,
+          addressEn,
+          addressZipcode,
+          addressSido,
+          addressSigungu,
+          pets,
+        },
+      })
+    }, 1500)
+    return () => {
+      if (draftTimer.current) clearTimeout(draftTimer.current)
+    }
+  }, [
+    draftEnabled, submitted, orgId, step, destination, tripType, customerName,
+    customerLastNameEn, customerFirstNameEn, phone, addressKr, addressDetail,
+    addressEn, addressZipcode, addressSido, addressSigungu, pets,
+  ])
+
+  /** '처음부터 다시' — 저장분을 지우고 폼을 새로 연다. */
+  function discardDraft() {
+    if (draftTimer.current) clearTimeout(draftTimer.current)
+    draftTouched.current = false
+    void clearApplyDraft()
+    setRestored(false)
+    router.refresh()
+  }
 
   function showEnWarning(field: string, msg: string) {
     setEnWarnings(prev => ({ ...prev, [field]: msg }))
@@ -927,6 +1018,9 @@ export function ApplyForm({
     if (!result.ok) setError(result.error)
 
     if (allOk) {
+      // 제출 성공 = 임시 저장의 역할 끝. 개인정보를 남겨둘 이유가 없다.
+      if (draftTimer.current) clearTimeout(draftTimer.current)
+      if (draftEnabled) await clearApplyDraft()
       // 조직별 공개폼(미로그인): /me 는 로그인 필요 → '접수 완료' 화면을 보여준다.
       // 첫 등록(직영·신규): 방금 만든 여정의 '일정' 탭으로 — /cases 가 1건이면 그 여정으로
       //   자동 이동(다묘면 목록). 등록하자마자 준비 일정을 보게 하는 게 자연스러움.
@@ -1000,6 +1094,25 @@ export function ApplyForm({
           </div>
           <StepProgress step={stepPos + 1} total={visibleSteps.length} />
         </header>
+
+        {/* 임시 저장 복원 안내 — 이어서 쓰는 게 기본, 원하면 처음부터. */}
+        {restored && (
+          <div
+            className="mb-md flex items-center justify-between gap-sm rounded-xl px-4 py-3"
+            style={{ background: 'rgba(11,174,255,0.08)' }}
+          >
+            <span className="text-[13px] text-[#212124]">
+              작성하던 내용을 불러왔어요.
+            </span>
+            <button
+              type="button"
+              onClick={discardDraft}
+              className="shrink-0 text-[13px] text-[#0BAEFF] underline underline-offset-2"
+            >
+              처음부터
+            </button>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-md"
           onKeyDown={(e) => {
