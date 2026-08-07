@@ -19,6 +19,8 @@ export interface VaccineProduct {
   weightMin?: number
   weightMax?: number
   size?: string
+  /** DB 등록 시각(ISO). 정적 JSON 시드 등 출처가 없는 데이터는 undefined — 그 경우 등록일 우선순위 없이 기존 만료일 순으로만 정렬됨. */
+  createdAt?: string
 }
 
 export interface VaccineProductsData {
@@ -285,12 +287,30 @@ export interface VaccineLookups {
 }
 
 export function createVaccineLookups(data: VaccineProductsData, defaults: VaccineDefaults = {}): VaccineLookups {
+  const byExpiryAsc = (a: VaccineProduct, b: VaccineProduct) => (a.expiry! < b.expiry! ? -1 : 1)
+
+  /**
+   * 만료일이 접종일을 커버하는 배치 중 선택.
+   * 등록일(createdAt)이 접종일 이전인(= 접종 시점에 실제 존재했던) 배치만 우선 후보로 놓고,
+   * 그중 "가장 최근에 등록된" 배치를 고른다 — 새 배치를 등록하면 등록일 이후 접종부터
+   * 곧바로 우선 적용되고(유효기간이 더 남아있는 옛 배치가 있어도), 과거 접종 건은 그 시점에
+   * 아직 등록 전이었던 배치 후보에서 자동으로 제외되므로 결과가 바뀌지 않는다.
+   * createdAt 이 없거나(정적 JSON 시드) 전부 접종일보다 나중에 등록됐다면(이 표 도입 이전 접종 재계산 등)
+   * 등록일 우선순위를 포기하고 기존 방식(만료일 빠른 순)으로 폴백.
+   */
   function lookupByDateRange(list: VaccineProduct[], vaccinationDate: string): VaccineProduct | null {
     if (!vaccinationDate) return null
-    const candidates = list
-      .filter(p => p.expiry && vaccinationDate <= p.expiry)
-      .sort((a, b) => (a.expiry! < b.expiry! ? -1 : 1))
-    return candidates[0] ?? null
+    const valid = list.filter(p => p.expiry && vaccinationDate <= p.expiry)
+    if (valid.length === 0) return null
+    const existedAtVaccination = valid.filter(p => !p.createdAt || p.createdAt.slice(0, 10) <= vaccinationDate)
+    if (existedAtVaccination.length > 0) {
+      return existedAtVaccination.slice().sort((a, b) => {
+        const ca = a.createdAt ?? '', cb = b.createdAt ?? ''
+        if (ca !== cb) return ca > cb ? -1 : 1
+        return byExpiryAsc(a, b)
+      })[0]
+    }
+    return valid.slice().sort(byExpiryAsc)[0]
   }
 
   function lookupByWeightAndDate(
@@ -320,25 +340,21 @@ export function createVaccineLookups(data: VaccineProductsData, defaults: Vaccin
     if (!year) return null
 
     // 광견병은 두 시대의 데이터가 혼재.
-    // (1) year 필드를 가진 구세대 레코드 — 접종 연도로 엄격 매칭. 2025년까지는 이 방식만.
-    // (2) 마지막 year 레코드(= 현재 G98321/2026)는 자기 year 이후 접종에 대해
-    //     expiry 까지 fallback 으로 계속 매칭. 즉 2027-10-07 전까지 G98321 이 선택됨.
-    // (3) year 필드가 없는 신규 레코드 — 다른 백신과 동일하게 date-range 매칭.
-    //     G98321 만료 후 등록될 신규 batch 가 여기에 해당.
+    // (1) year 필드를 가진 구세대 레코드 — maxYear 이전(완전히 지난 해)은 접종 연도로 엄격 매칭,
+    //     등록일과 무관하게 고정. "이미 지난 것"이라 새 배치 등록에 영향받지 않아야 함.
+    // (2) maxYear 이후(현재 진행 중인 해 포함) — 그 해의 yearBased 레코드(예: G98321)와
+    //     year 필드 없는 신규 레코드(예: 새로 등록한 배치)를 한 풀에 놓고 lookupByDateRange 로
+    //     등록일 우선순위 매칭. 새 배치를 등록하면 등록일 이후 접종부터 곧바로 우선 적용되고,
+    //     등록 이전 접종 건은 아직 존재하지 않았던 배치라 자동으로 후보에서 빠짐.
     const yearBased = data.rabies.filter(r => r.year != null)
     const maxYear = yearBased.reduce((m, r) => Math.max(m, r.year!), 0)
 
     let entry: VaccineProduct | undefined
-    if (year <= maxYear) {
+    if (year < maxYear) {
       entry = yearBased.find(r => r.year === year)
     } else {
-      entry = yearBased
-        .filter(r => r.expiry && vaccinationDate <= r.expiry)
-        .sort((a, b) => (b.year! - a.year!))[0]
-      if (!entry) {
-        const noYearList = data.rabies.filter(r => r.year == null)
-        entry = lookupByDateRange(noYearList, vaccinationDate) ?? undefined
-      }
+      const candidates = [...yearBased.filter(r => r.year === maxYear), ...data.rabies.filter(r => r.year == null)]
+      entry = lookupByDateRange(candidates, vaccinationDate) ?? undefined
     }
 
     if (!entry) return null
