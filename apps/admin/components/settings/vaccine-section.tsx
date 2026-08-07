@@ -7,6 +7,8 @@ import {
   PARASITE_FAMILIES,
   daysUntilExpiry,
   getExpiryStatus,
+  isValidExpiryDate,
+  normalizeExpiryDate,
   type ExpiryStatus,
 } from '@petmove/domain'
 import {
@@ -166,7 +168,7 @@ function toInput(form: FormState): OrgVaccineProductInput {
     product: kind === 'parasite' ? txt(form.product) : null,
     manufacturer: form.manufacturer.trim(),
     batch: txt(form.batch),
-    expiry: txt(form.expiry),
+    expiry: txt(normalizeExpiryDate(form.expiry)),
     year: num(form.year),
     weight_min: weightless ? null : num(form.weight_min),
     weight_max: weightless ? null : num(form.weight_max),
@@ -871,6 +873,8 @@ function ProductFormModal({ mode, initial, pending, fromExtract, extractRemainin
   // family 미선택 시엔 보수적으로 weight 필드 노출 (사용자가 수동 입력 가능),
   // family 선택됐고 그게 weight tier 없는 약(Drontal/Frontline Spray 등)이면 숨김.
   const showWeightFields = !selectedFamily || selectedFamily.hasWeightTiers
+  // 만료일: 정규화해도 표준형이 안 되면 저장 차단 (빈 값은 허용)
+  const expiryInvalid = form.expiry.trim() !== '' && !isValidExpiryDate(normalizeExpiryDate(form.expiry))
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -979,9 +983,18 @@ function ProductFormModal({ mode, initial, pending, fromExtract, extractRemainin
               <input
                 value={form.expiry}
                 onChange={(e) => update('expiry', e.target.value)}
+                onBlur={(e) => update('expiry', normalizeExpiryDate(e.target.value))}
                 placeholder="2027-06"
-                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
+                className={cn(
+                  'w-full px-sm py-1.5 text-sm rounded-md border bg-background',
+                  expiryInvalid ? 'border-red-400' : 'border-border/80',
+                )}
               />
+              {expiryInvalid && (
+                <span className="block text-[12px] text-red-600">
+                  날짜 형식을 인식할 수 없습니다 — 예: 2028-10-11, 2028-10, 20281011
+                </span>
+              )}
             </Field>
           </div>
 
@@ -1044,7 +1057,7 @@ function ProductFormModal({ mode, initial, pending, fromExtract, extractRemainin
           cancelLabel={fromExtract ? '건너뛰기' : '취소'}
           onPrimary={() => onSave(form)}
           primaryLabel={mode === 'create' ? '추가' : '저장'}
-          primaryDisabled={!form.manufacturer.trim()}
+          primaryDisabled={!form.manufacturer.trim() || expiryInvalid}
           saving={pending}
           destructive={
             mode === 'edit' && onDelete

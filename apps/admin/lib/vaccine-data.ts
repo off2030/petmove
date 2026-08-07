@@ -32,6 +32,7 @@ interface OrgProductRow {
   weight_max: number | null
   size: string | null
   parasite_id: string | null
+  created_at: string
 }
 
 function rowToVaccineProduct(row: OrgProductRow): VaccineProduct {
@@ -46,6 +47,7 @@ function rowToVaccineProduct(row: OrgProductRow): VaccineProduct {
     weightMin: row.weight_min ?? undefined,
     weightMax: row.weight_max ?? undefined,
     size: row.size ?? undefined,
+    createdAt: row.created_at,
   }
 }
 
@@ -69,7 +71,7 @@ export const getOrgVaccineData = cache(async (): Promise<VaccineProductsData> =>
     const orgId = await getActiveOrgId()
     const { data, error } = await supabase
       .from('org_vaccine_products')
-      .select('id, category, vaccine, product, manufacturer, batch, expiry, year, weight_min, weight_max, size, parasite_id')
+      .select('id, category, vaccine, product, manufacturer, batch, expiry, year, weight_min, weight_max, size, parasite_id, created_at')
       .eq('org_id', orgId)
     if (error || !data) return emptyVaccineProductsData()
     return orgProductsToData(data as OrgProductRow[])

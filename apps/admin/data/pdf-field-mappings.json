@@ -1529,9 +1529,13 @@
         "transform": "multi:microchip[2]",
         "note": "시각적 위치: Transponder/tattoo 셋째 칸"
       },
-      "decl_place_date": {
+      "decl_undersigned_name": {
         "source": "customer_name_en",
-        "note": "시각적 위치: 'either [the owner]' 고객명 칸 (PDF 필드명은 place_date지만 실제로는 owner 위치)"
+        "note": "시각적 위치: 'I, the undersigned' 밑줄 — 선언인(보호자) 이름. 2026-08 신설 (기존엔 'either [the owner]' 옆에 잘못 들어감)"
+      },
+      "decl_place_date": {
+        "source": null,
+        "note": "시각적 위치: 'either [the owner]' 줄 — Delete as appropriate 선택지라 비움. 이름은 decl_undersigned_name 으로 이동"
       },
       "decl_signature": {
         "source": "vet_visit_date",
@@ -1975,9 +1979,13 @@
         "transform": "multi:microchip[2]",
         "note": "시각적 위치: Transponder/tattoo 셋째 칸"
       },
-      "decl_place_date": {
+      "decl_undersigned_name": {
         "source": "customer_name_en",
-        "note": "시각적 위치: 'either [the owner]' 고객명 칸"
+        "note": "시각적 위치: 'I, the undersigned' 점선 — 선언인(보호자) 이름. 2026-08 신설 (기존엔 'either [the owner]' 옆에 잘못 들어감)"
+      },
+      "decl_place_date": {
+        "source": null,
+        "note": "시각적 위치: 'either [the owner]' 줄 — Delete as appropriate 선택지라 비움. 이름은 decl_undersigned_name 으로 이동"
       },
       "decl_signature": {
         "source": "vet_visit_date",

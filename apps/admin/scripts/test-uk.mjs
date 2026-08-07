@@ -273,7 +273,7 @@ pdfForm.updateFieldAppearances(customFont)
 
 console.log('destination:', caseRow.destination)
 console.log('filled fields:', Object.keys(filled).length)
-const showKeys = ['I1_consignor_address','I1_consignor_address2','I5_consignee_address','I5_consignee_address2','decl_owner_name','decl_transponder1','decl_transponder2','decl_place_date','decl_signature','vet_date','vet_qualification']
+const showKeys = ['I1_consignor_address','I1_consignor_address2','I5_consignee_address','I5_consignee_address2','decl_owner_name','decl_transponder1','decl_transponder2','decl_undersigned_name','decl_place_date','decl_signature','vet_date','vet_qualification']
 console.log('\nkey fields:')
 for (const k of showKeys) console.log(`  ${k.padEnd(32)} ${filled[k] === undefined ? '(empty)' : JSON.stringify(filled[k])}`)
 const parasiteKeys = Object.keys(filled).filter(k => k.startsWith('parasite_row'))
