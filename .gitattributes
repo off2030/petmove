@@ -1,4 +1,8 @@
 # 골든 스냅샷은 LF 로 고정 — Windows 체크아웃 시 CRLF 변환을 막아
 # lint 가드(lint-journey-copy.ts / lint-destinations.ts)가 줄바꿈 차이로 헛failure 내지 않게 한다.
+# ⚠️ 스냅샷을 새로 만들면 여기에도 반드시 추가할 것. 빠뜨리면 Windows 에서만 전 줄이
+#    다르다고 나오는 헛failure 가 난다(behavior·checks-copy 가 2026-08-07 까지 그랬다).
 scripts/journey-copy.snapshot.txt text eol=lf
 scripts/destinations.snapshot.txt text eol=lf
+scripts/behavior.snapshot.txt text eol=lf
+scripts/checks-copy.snapshot.txt text eol=lf

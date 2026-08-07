@@ -9,8 +9,6 @@ import { todayKst } from '../dates'
 import type { ProcedureCheck } from './types'
 import {
   daysBetween,
-  matchBannedBreed,
-  readBreed,
   readGeneralVaccineEntries,
   readRabiesEntries,
   readScopedImportPermitFiled,
@@ -50,7 +48,12 @@ import { msgGeneralVaccineExpiredBefore, msgMicrochipBeforeGeneralVaccine, msgMi
  *  - **광견병 항체 검사 (RNATT)**: 태국 입국엔 비필수 (한국 귀국용은 별도 흐름)
  *  - R7 import permit: 출발 7영업일 ~ 60일 전 신청, 60일 유효 (별도 데이터 추적 미구현 → info)
  *  - 한국 APQA 검역: 출국 전 10일 이내 (보수 ≤9). DLD 자체 일자 명문 없음.
- *  - 핏불 계열 수입 금지
+ *  - **견종 제한 없음** (2026-08-07 재확인 — 아래 '수입 금지 견종' 묘비 참조)
+ *
+ * 2026-08-07 재확인: 위 DLD PDF 3종을 평문 HTTP 로 다시 받아 원문 대조했다. 세 문서의
+ *   Remarks 가 여전히 토씨까지 동일하며 12주·21일(출발 기준)·렙토 30일이 모두 확인됐다.
+ *   반면 **견종 제한**과 **도착 시 최대 30일 계류**는 세 문서 어디에도 없다(1C 는 요건 미충족
+ *   시 "fined or the animal shall be returned to the country of export" 라고만 적는다).
  *
  * 컨벤션 (NZ/HI/CN 와 동일):
  *  - 필수 입력 누락 시 SKIP
@@ -293,37 +296,16 @@ export const TH_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 수입 금지 견종 ──
-  {
-    id: 'th.banned-breeds',
-    country: COUNTRY,
-    category: '서류',
-    title: '수입 금지 견종 (Pit Bull 계열)',
-    description:
-      '태국은 American Pit Bull Terrier, American Staffordshire Terrier 등 핏불 계열 수입 금지. (DLD/태국 정부)',
-    severity: 'blocker',
-    addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const species = typeof data.species === 'string' ? data.species : ''
-      if (species && species !== 'dog') return SKIP
-      const breed = readBreed(caseRow)
-      if (!breed.ko && !breed.en) return SKIP
-      const match = matchBannedBreed(breed, [
-        'pit bull', 'pitbull', '핏불',
-        'american staffordshire terrier', '아메리칸 스태퍼드셔',
-        'staffordshire bull terrier', '스태퍼드셔 불 테리어',
-      ])
-      if (match) {
-        return {
-          ok: false,
-          message: `"${breed.ko || breed.en}"은 태국 수입이 금지되어 있어요 (매치: ${match}).`,
-          offendingPaths: ['breed', 'breed_en'],
-        }
-      }
-      return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
-    },
-  },
+  // ── 수입 금지 견종 — **룰을 두지 않는다**(2026-08-07 DLD 원문 재확인).
+  //   구 th.banned-breeds(핏불 계열 blocker, addedAt 2026-05-07)를 제거했다. DLD 수완나품
+  //   검역소 안내문 3종(1A.cargo_ / B.Checked-baggage / 1C.on-arrival — Remarks 동일)에
+  //   견종 제한이 전혀 없고, 주미 태국대사관 농무관실 안내문(Rev. 30 Jan 2025)은 오히려
+  //   "No dog breeds are banned from importation, but airlines may have their own
+  //   restrictions" 라고 명시적으로 부인한다. 근거가 확인되지 않은 blocker 였다.
+  //   ⚠️ 이 룰은 id.ts·my.ts 로 복제돼 나갔다가 같은 이유로 제거된 전력이 있다(2026-07-22).
+  //      태국이 그 복제의 원본이었다 — 여기서 지워야 재확산이 끊긴다.
+  //   되살리려면 근거부터 확보할 것 — blocker 는 저장을 막아 우회할 방법이 없다.
+  //   (항공사 자체 운송 제한(단두종 등)은 별개 문제로, 규정이 아니라 안내 문구로 다룬다.)
 
   // ── 수입 허가 ──
   {
