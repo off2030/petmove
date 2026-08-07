@@ -5,6 +5,6 @@ import { brandIconResponse } from '../_icon-art'
 export const runtime = 'nodejs'
 
 export function GET() {
-  // 0.75 — 런처 crop/확대 보정해 P 에 여백(펫무브 네이티브 아이콘과 크기 통일).
-  return brandIconResponse(192, false, 0.75)
+  // 축소 금지 — 구름이 가장자리를 물고 나가는 full-bleed 설계라 줄이면 단차가 생긴다(_icon-art.tsx ⚠️).
+  return brandIconResponse(192, false)
 }

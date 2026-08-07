@@ -4,9 +4,10 @@
       <stop offset="0" stop-color="#63C9FF"/>
       <stop offset="1" stop-color="#0BAEFF"/>
     </linearGradient>
+    <clipPath id="box"><rect width="200" height="200"/></clipPath>
   </defs>
-  <rect width="200" height="200" fill="url(#sky)"/>
-  <g transform="translate(100 100) scale(0.75) translate(-100 -100)">
+  <g clip-path="url(#box)">
+    <rect width="200" height="200" fill="url(#sky)"/>
     <path d="M116 132 L116 82 A6 6 0 0 1 122 76 L128 76 A15 15 0 0 1 128 106 L118 106" fill="none" stroke="#FFC93C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
     <rect x="0" y="160" width="200" height="40" fill="#ffffff"/>
     <circle cx="46" cy="168" r="52" fill="#ffffff"/>
