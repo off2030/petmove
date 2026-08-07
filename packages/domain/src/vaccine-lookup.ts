@@ -94,6 +94,44 @@ export function getExpiryStatus(expiry: string | null | undefined, now = new Dat
   return 'ok'
 }
 
+/**
+ * 만료일 자유입력 정규화 — 바이알 인쇄 형식이 제각각이라 흔한 변형을 표준형으로 바꾼다.
+ * "20281011"→"2028-10-11", "202810"→"2028-10", "2028.10.11"→"2028-10-11",
+ * "10/2028"→"2028-10", "11.10.2028"(D.M.Y)→"2028-10-11", "2028-1-3"→"2028-01-03".
+ * 인식 불가한 입력은 원문 그대로 반환 (호출부가 isValidExpiryDate 로 판별).
+ */
+export function normalizeExpiryDate(input: string): string {
+  const s = input.trim()
+  if (!s) return ''
+  const groups = s.split(/\D+/).filter(Boolean)
+  let y: string | undefined, m: string | undefined, d: string | undefined
+  if (groups.length === 1) {
+    const g = groups[0]
+    if (g.length === 8) { y = g.slice(0, 4); m = g.slice(4, 6); d = g.slice(6, 8) }
+    else if (g.length === 6) { y = g.slice(0, 4); m = g.slice(4, 6) }
+    else return s
+  } else if (groups.length === 2) {
+    if (groups[0].length === 4) [y, m] = groups
+    else if (groups[1].length === 4) [m, y] = groups // "10/2028" 월-연 인쇄
+    else return s
+  } else if (groups.length === 3) {
+    if (groups[0].length === 4) [y, m, d] = groups
+    else if (groups[2].length === 4) [d, m, y] = groups // 유럽식 D.M.Y
+    else return s
+  } else return s
+  const yn = Number(y), mn = Number(m), dn = d != null ? Number(d) : null
+  if (yn < 2000 || yn > 2099 || mn < 1 || mn > 12) return s
+  if (dn != null && (dn < 1 || dn > new Date(yn, mn, 0).getDate())) return s
+  const mm = String(mn).padStart(2, '0')
+  return dn != null ? `${y}-${mm}-${String(dn).padStart(2, '0')}` : `${y}-${mm}`
+}
+
+/** 정규화된 만료일이 저장 가능한 표준형(YYYY-MM-DD 또는 YYYY-MM)인지 */
+export function isValidExpiryDate(s: string): boolean {
+  if (!/^\d{4}-\d{2}(-\d{2})?$/.test(s)) return false
+  return parseDate(s) != null
+}
+
 /** 일수 계산 (음수 = 이미 만료) */
 export function daysUntilExpiry(expiry: string | null | undefined, now = new Date()): number | null {
   if (!expiry) return null
