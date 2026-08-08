@@ -49,3 +49,8 @@ jobs:
 
       - name: Typecheck packages/ui
         run: pnpm --filter @petmove/ui exec tsc --noEmit -p .
+
+      # 웹 가이드 문구가 앱 판정값(destination-config)과 어긋나면 실패.
+      # 사람이 눈으로 훑는 방식으로는 27곳 중 5곳이 어긋난 채 오래 남아 있었다.
+      - name: Check www 최소 일령 정합성
+        run: pnpm --filter www check:min-age
