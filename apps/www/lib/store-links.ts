@@ -7,6 +7,11 @@ export function detectStoreHref(): string | null {
   if (typeof navigator === 'undefined') return null
   const ua = navigator.userAgent
   if (/iPhone|iPad|iPod/i.test(ua)) return STORE_IOS
+  // iPadOS 13+ 는 사파리가 UA 를 맥으로 보고한다(데스크톱급 브라우징이 기본). 그래서 위
+  // /iPad/ 매칭에 안 걸리고 데스크톱 취급돼 하단 배지 섹션으로 빠졌다.
+  // UA 는 못 믿지만 터치포인트는 못 속인다 — 맥은 0(터치 모니터를 붙여도 0), 아이패드는 5.
+  // "맥이라 주장하는데 멀티터치가 되는 기기" = 아이패드로 확정한다.
+  if (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1) return STORE_IOS
   if (/Android/i.test(ua)) return STORE_ANDROID
   return null
 }
