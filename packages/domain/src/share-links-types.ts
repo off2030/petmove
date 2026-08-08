@@ -41,6 +41,13 @@ export interface ShareFieldSpec {
   current_value: unknown
   /** date_array 인 경우: 한도 (e.g. comprehensive 는 2까지). undefined = 제한 없음. */
   max_entries?: number
+  /**
+   * date_array + has_other_hospital 그룹 전용: 자체(우리 병원) 기록 건수 — 회차 라벨을
+   * "우리 병원 + 타병원 합산"으로 보이게 하는 오프셋. 예: 자체 2건 있으면 수신자가 채우는
+   * 첫 항목은 "03회차"로 표시. current_value 는 타병원 항목만 담고 있어 그 배열의
+   * index+1 만으로는 실제 차수를 못 구하므로 별도로 내려준다.
+   */
+  dose_offset?: number
   /** date_array 인 경우: 면역유효기간 입력 숨김 (구충·심장사상충). */
   hide_valid_until?: boolean
   /** 공유 폼 그룹핑 — '고객정보' | '동물정보' | '절차정보' | '추가정보'. 미지정 시 카테고리 헤더 없이 표시. */

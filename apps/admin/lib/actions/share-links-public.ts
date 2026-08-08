@@ -159,6 +159,7 @@ function toShareFieldSpec(
         max_entries: g.max_entries,
         hide_valid_until: g.hide_valid_until,
         current_value: extractVaccineEntries(g, data),
+        dose_offset: g.has_other_hospital ? countOwnHospitalEntries(g, data) : undefined,
       }
     }
     case 'extra': {
@@ -299,6 +300,29 @@ function extractVaccineEntries(
     }
   }
   return entries
+}
+
+/** rabies_dates 등 배열에서 '우리 병원' 기록(other_hospital 플래그 없는) 건수 — dose_offset 계산용. */
+function countOwnHospitalEntries(
+  group: ShareVaccineGroup,
+  data: Record<string, unknown>,
+): number {
+  if (group.storage_mode !== 'array' || !group.array_key) return 0
+  const arr = data[group.array_key]
+  if (!Array.isArray(arr)) return 0
+  let count = 0
+  for (const item of arr) {
+    if (typeof item === 'string') {
+      if (item.trim()) count++
+      continue
+    }
+    if (!item || typeof item !== 'object' || Array.isArray(item)) continue
+    const obj = item as Record<string, unknown>
+    if (obj.other_hospital === true) continue
+    const date = typeof obj.date === 'string' ? obj.date : ''
+    if (date) count++
+  }
+  return count
 }
 
 function caseLabelFrom(c: CaseRow): string {

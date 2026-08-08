@@ -1402,7 +1402,7 @@ function DateArrayInput({
           >
             <div className="mb-3 flex items-center justify-between">
               <span className="font-mono text-[12px] tracking-[0.6px] text-muted-foreground/70">
-                {String(index + 1).padStart(2, '0')}회차
+                {String((field.dose_offset ?? 0) + index + 1).padStart(2, '0')}회차
               </span>
               {records.length > 0 && (
                 <button
