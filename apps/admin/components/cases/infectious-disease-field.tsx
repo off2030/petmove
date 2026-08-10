@@ -9,7 +9,8 @@ import { persistField } from '@/lib/toast-bus'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
 import { labColor } from '@/lib/lab-color'
-import { allLabOptions, effectiveInfectiousLabs, resolveInspectionLabs } from '@petmove/domain'
+import { allLabOptions, effectiveInfectiousLabs, resolveActiveDestination, resolveInspectionLabs } from '@petmove/domain'
+import { stampInspectionActiveDest } from '@/lib/inspection-active-dest'
 import { DateTextField } from '@petmove/ui'
 import { DropdownSelect } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
@@ -23,10 +24,14 @@ interface InfectiousRecord {
 const DATA_KEY = 'infectious_disease_records'
 
 export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
-  const { updateLocalCaseField, inspectionConfig } = useCases()
+  const { updateLocalCaseField, inspectionConfig, activeDestination } = useCases()
   const editMode = useSectionEditMode()
   const confirm = useConfirm()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
+  // 다중 여행지에서 현재 탭 — 검사 탭 활성 여행지 각인 기준.
+  const activeDest = resolveActiveDestination(caseRow.destination, activeDestination)
+  const stampActiveDest = () =>
+    stampInspectionActiveDest(caseId, caseRow.destination, activeDest, updateLocalCaseField)
 
   // 검사기관 옵션 = 설정의 효과 목록(단일 출처) — 숨김·표시명 수정·커스텀 모두 반영.
   // 표시 라벨은 숨긴 기관까지 lookup(allLabs) — 과거 케이스에 저장된 값 보존.
@@ -94,6 +99,8 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
   function updateRecord(idx: number, field: keyof InfectiousRecord, value: unknown) {
     const next = records.map((rec, i) => i === idx ? { ...rec, [field]: value || null } : rec)
     saveRecords(next).catch(() => {})
+    // 검사기관을 이 탭에서 골랐다 = 이 검사는 이 여행지 것 → 검사 탭 여행지 각인.
+    if (field === 'lab') stampActiveDest()
   }
 
   function saveNewRecord(date: string) {
@@ -107,6 +114,7 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
     const next = [...records, ...newRows]
     setAddingNew(false)
     saveRecords(next).catch(() => {})
+    stampActiveDest()
   }
 
   return (

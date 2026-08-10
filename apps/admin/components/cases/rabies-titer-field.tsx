@@ -15,7 +15,8 @@ import { labColor } from '@/lib/lab-color'
 import { extractTiterInfo } from '@/lib/actions/extract-titer'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
-import { addDays, allLabOptions, effectiveTiterLabs, formatKoreanDate, resolveTiterLab, type InspectionLabRule } from '@petmove/domain'
+import { addDays, allLabOptions, effectiveTiterLabs, formatKoreanDate, resolveActiveDestination, resolveTiterLab, type InspectionLabRule } from '@petmove/domain'
+import { stampInspectionActiveDest } from '@/lib/inspection-active-dest'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 import { DateTextField } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
@@ -84,11 +85,15 @@ function japanEntryTooltip(date: string | null, destination: string | null | und
 }
 
 export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
-  const { updateLocalCaseField, inspectionConfig } = useCases()
+  const { updateLocalCaseField, inspectionConfig, activeDestination } = useCases()
   const editMode = useSectionEditMode()
   const confirm = useConfirm()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const showReceivedDate = destinationNeedsReceivedDate(destination)
+  // 다중 여행지에서 현재 탭 — 검사 탭 활성 여행지 각인 기준.
+  const activeDest = resolveActiveDestination(caseRow.destination, activeDestination)
+  const stampActiveDest = () =>
+    stampInspectionActiveDest(caseId, caseRow.destination, activeDest, updateLocalCaseField)
 
   function readRecords(): TiterRecord[] {
     if (Array.isArray(data[DATA_KEY])) return data[DATA_KEY] as TiterRecord[]
@@ -200,6 +205,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
           const statusKey = `inspection_status_titer_${createdAtIdx}`
           updateLocalCaseField(caseId, 'data', statusKey, 'waiting')
           void updateCaseField(caseId, 'data', statusKey, 'waiting')
+          stampActiveDest()
         }
       }
 
@@ -309,6 +315,8 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
     const cleaned = field === 'value' ? stripTiterUnit(typeof value === 'string' ? value : null) : (value || null)
     const next = records.map((rec, i) => i === idx ? { ...rec, [field]: cleaned } : rec)
     saveRecords(next).catch(() => {})
+    // 검사기관을 이 탭에서 골랐다 = 이 검사는 이 여행지 것 → 검사 탭 여행지 각인.
+    if (field === 'lab') stampActiveDest()
   }
 
   function saveNewDate(date: string) {
@@ -322,6 +330,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       const statusKey = `inspection_status_titer_${newIdx}`
       updateLocalCaseField(caseId, 'data', statusKey, 'waiting')
       void updateCaseField(caseId, 'data', statusKey, 'waiting')
+      stampActiveDest()
     })()
   }
 
