@@ -1472,7 +1472,7 @@ function BulkApplyDialog({
 
 /**
  * 발송 팩 다이얼로그 — 케이스 체크 + 검체수 + 발송일 입력 → 인보이스(맨 앞) + 선택 케이스별
- * 검사 서류를 하나의 PDF 로 병합 생성. 검체수 기본값 = 선택 마리 수(수정 가능). ARC 는 16점 고정.
+ * 검사 서류를 하나의 PDF 로 병합 생성. 검체수 기본값 = 선택 마리 수(수정 가능). ARC 는 8점 고정.
  * 인보이스 수신처(consigneeLab)는 항목별 고정.
  */
 function ShipmentPackDialog({ label, rows, variant, consigneeLab, onClose }: {
@@ -1584,12 +1584,12 @@ function ShipmentPackDialog({ label, rows, variant, consigneeLab, onClose }: {
           })}
         </ul>
 
-        {/* 인보이스 정보 — 검체수(기본=선택 수) + 발송일. ARC 는 16점 고정. */}
+        {/* 인보이스 정보 — 검체수(기본=선택 수) + 발송일. ARC 는 8점 고정. */}
         <div className="flex items-center gap-md mb-4">
           <div className="flex-1">
             <label className="text-[12px] text-muted-foreground mb-1 block">검체수</label>
             {isArc ? (
-              <div className="h-9 flex items-center text-sm text-foreground">ARC 표준 <span className="font-medium ml-1">16점</span></div>
+              <div className="h-9 flex items-center text-sm text-foreground">ARC 표준 <span className="font-medium ml-1">8점</span></div>
             ) : (
               <input
                 type="number"
