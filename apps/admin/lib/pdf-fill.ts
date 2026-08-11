@@ -778,14 +778,20 @@ export function readSource(
 
   // Lab-specific inspection date from infectious_disease_records.
   // Pattern: `infectious_date:<lab>` (e.g. ksvdl, vbddl, apqa_hq).
-  // Falls back to vet_visit_date when no record exists for that lab.
+  // ① 해당 기관 기록 → ② 기관 미지정(lab 비어있음) 기록 → ③ vet_visit_date.
+  // ②가 필요한 이유: 자동채움이 검사기관을 못 붙인 기록(2026-08-11 이전 버그 · 펫무브앱에서
+  //   보호자가 직접 입력한 검사일)이 있으면 ①이 빈손이라 채혈일 칸이 내원일로 튀거나 비었다.
+  //   다른 기관 기록은 절대 끌어오지 않는다 — lab 이 붙어 있으면 그 기관 것이다.
   const infDateMatch = source.match(/^infectious_date:(.+)$/)
   if (infDateMatch) {
     const lab = infDateMatch[1]
     const recs = data.infectious_disease_records
     if (Array.isArray(recs)) {
-      const rec = (recs as Array<{ lab?: string; date?: string | null }>).find(r => r.lab === lab)
+      const list = recs as Array<{ lab?: string | null; date?: string | null }>
+      const rec = list.find(r => r.lab === lab)
       if (rec?.date) return rec.date
+      const unlabeled = list.find(r => !r.lab && r.date)
+      if (unlabeled?.date) return unlabeled.date
     }
     return data.vet_visit_date ?? ''
   }
