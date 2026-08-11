@@ -3166,6 +3166,19 @@ async function applyFontFixes(
             }
             size = Math.max(5, Math.min(daSize, Math.floor(s * 2) / 2))
           }
+        } else {
+          // 단일 라인: 셀 폭을 넘으면 넘는 만큼만 줄인다. wrap 이 없어 폭을 넘으면
+          // 그냥 잘려 나간다 (Invoice HS 코드 '3002.12.00.6' 이 60pt 칸에서 끝자리
+          // 잘리던 케이스 — 2026-08-11). 커지는 일은 없다: daSize 가 상한.
+          const rect = tf.acroField.getWidgets()[0]?.getRectangle()
+          if (rect && text) {
+            const availW = Math.max(1, rect.width - 4)
+            const w = customFont.widthOfTextAtSize(text, daSize)
+            if (w > availW) {
+              const scaled = daSize * (availW / w) * 0.98
+              size = Math.max(5, Math.min(daSize, Math.floor(scaled * 2) / 2))
+            }
+          }
         }
       }
     }
