@@ -4771,7 +4771,7 @@
   },
   "VHC_MIP": {
     "template": "VHC_MIP.pdf",
-    "description": "남아공 Onderstepoort 진단시료 수입용 Veterinary Health Certificate (MIP, April 2019). ARC-OVI 시료 발송에 동봉. page1=식별/원산지(text_1~16), page2=수취/운송/건강확약/발급(text_17~31). 발송 병원=수출자/발급수의사, 수취=ARC-Onderstepoort 고정. SA IMPORT NUMBER·Means of transport·Seal numbers 는 수동/케이스별이라 비움. Net weight=0.3kg 고정.",
+    "description": "남아공 Onderstepoort 진단시료 수입용 Veterinary Health Certificate (MIP, April 2019). ARC-OVI 시료 발송에 동봉. page1=식별/원산지(text_1~16), page2=수취/운송/건강확약/발급(text_17~31). 발송 병원=수출자/발급수의사, 수취=ARC-Onderstepoort 고정. SA IMPORT NUMBER·Means of transport·Seal numbers 는 수동/케이스별이라 비움. Net weight=0.25kg 고정.",
     "filename": "VHC_MIP_{pet_name}.pdf",
     "dateFormat": "ymd_dash",
     "flatten": true,
@@ -4782,7 +4782,7 @@
       "text_5atie":  { "source": null, "default": "Serum 2ml × 3, Unstained blood smear × 3, EDTA whole blood 2.5ml × 2", "note": "p1 A.1.a) Type of sample — 수량 포함(ARC-OVI 시료 내역과 동일)" },
       "text_6vgec":  { "source": "species", "transform": "species_paren_en", "note": "p1 A.1.b) Species of origin — Canine(Dog)/Feline(Cat)" },
       "text_7krhr":  { "source": null, "default": "1 package", "note": "p1 A.2 Type and number of packages" },
-      "text_9wcbo":  { "source": null, "default": "0.3kg", "note": "p1 A.3 Net weight of consignment — ARC-OVI 표준 시료 무게 고정" },
+      "text_9wcbo":  { "source": null, "default": "0.25kg", "note": "p1 A.3 Net weight of consignment — ARC-OVI 표준 시료 무게 고정(인보이스 Total weight 와 동일)" },
       "text_10jlvd": { "source": "microchip_combined", "transform": "prefix:Microchip No. ", "note": "p1 A.4 Identification marks — 'Microchip No. {칩번호}'(주칩+보조칩)" },
       "text_12jirj": { "source": null, "transform": "vet:country", "note": "p1 B.1 Origin of specimen/s — 국가명만 (검체 원산지 국가)" },
       "text_14iwcs": { "source": null, "transform": "vet:clinic_en", "note": "p1 B.2 Name and Address of exporter — 병원명" },
@@ -4852,6 +4852,7 @@
       "Text16": { "source": "tube_count", "note": "QTY — 검체 갯수 (ARC 는 16 고정)" },
       "Text15": { "source": "goods_hs_code", "note": "HS 코드 — ARC(남아공) '3002.12.00.6', 그 외 빈 값→템플릿 기본 '3002905250' 유지" },
       "Text17": { "source": "goods_unit", "note": "Unit — ARC 'EA'(혼합 검체), 그 외 빈 값→템플릿 기본 'Tube' 유지" },
+      "Text22": { "source": "goods_total_weight", "note": "Total weight — ARC '0.25kg'(VHC for MIP Net weight 와 동일), 그 외 빈 값→템플릿 기본 '0.3kg' 유지" },
       "Text20": { "source": "tube_count", "transform": "invoice_total_value", "note": "Total Value — tube_count × 1.00" },
       "Text24": { "source": "tube_count", "transform": "invoice_total_value", "note": "Total Invoice Value — tube_count × 1.00" },
       "Text29": { "source": "ship_date", "transform": "date_or_today", "note": "Date — 발송일(전염병 검사일=채혈일), 없으면 오늘" }

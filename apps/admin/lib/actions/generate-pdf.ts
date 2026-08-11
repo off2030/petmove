@@ -340,6 +340,8 @@ export async function generateInvoice(opts: ShipmentOpts): Promise<GeneratePdfRe
     goods_unit: isArc ? 'EA' : '',
     // ARC(남아공) 수출용 HS 코드. 그 외 lab 은 빈 값 → 템플릿 기본(3002905250) 유지.
     goods_hs_code: isArc ? '3002.12.00.6' : '',
+    // ARC(남아공) 총 중량 — VHC for MIP 의 Net weight 와 동일값. 그 외 lab 은 템플릿 기본(0.3kg) 유지.
+    goods_total_weight: isArc ? '0.25kg' : '',
   })
   if (r.ok) r.filename = `Invoice_${tubeCount}tubes.pdf`
   return r
