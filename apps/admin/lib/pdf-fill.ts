@@ -3103,6 +3103,23 @@ function forceRegenerateButtonAppearances(pdfForm: import('pdf-lib').PDFForm): v
   // 라디오는 widget 별 onValue 가 다양해 별도 처리가 필요함.
 }
 
+/**
+ * `measure` 가 `availW` 안에 들어가도록 글씨 크기를 줄인다(하한 5pt). 이미 들어가면
+ * 그대로 — 절대 키우지 않는다(호출부의 size 가 상한).
+ */
+function shrinkToWidth(
+  measure: string,
+  size: number,
+  availW: number,
+  font: import('pdf-lib').PDFFont,
+): number {
+  if (!measure) return size
+  const w = font.widthOfTextAtSize(measure, size)
+  if (w <= availW) return size
+  // 0.98: 폰트 메트릭 추정 오차 여유. 0.5pt 단위로 내림.
+  return Math.max(5, Math.min(size, Math.floor(size * (availW / w) * 0.98 * 2) / 2))
+}
+
 /** Shared font/appearance post-processing extracted so both single and multi paths use it.
  *  `touchedFieldNames` limits DA/appearance regeneration to the listed fields — used by
  *  Invoice where template carries pre-filled content that must keep its original look. */
@@ -3165,19 +3182,18 @@ async function applyFontFixes(
               s *= (availH / needed) * 0.94
             }
             size = Math.max(5, Math.min(daSize, Math.floor(s * 2) / 2))
+            // 줄바꿈 불가 토큰(공백 없는 덩어리) 폭 맞춤 — 높이는 남는데 토큰 하나가
+            // 칸보다 넓으면 wrap 이 그 안을 못 쪼개 글자가 잘리거나 숫자가 두 줄로
+            // 쪼개진다 (Invoice HS 코드 '3002.12.00.6' 이 60pt 칸에서 끝자리 잘리던
+            // 케이스 — 2026-08-11). 높이 기준 결과보다 더 줄여야 할 때만 줄인다.
+            const longestToken = text.split(/\s+/).reduce((a, b) => (b.length > a.length ? b : a), '')
+            size = shrinkToWidth(longestToken, size, availW, customFont)
           }
         } else {
-          // 단일 라인: 셀 폭을 넘으면 넘는 만큼만 줄인다. wrap 이 없어 폭을 넘으면
-          // 그냥 잘려 나간다 (Invoice HS 코드 '3002.12.00.6' 이 60pt 칸에서 끝자리
-          // 잘리던 케이스 — 2026-08-11). 커지는 일은 없다: daSize 가 상한.
+          // 단일 라인: wrap 이 없어 폭을 넘으면 그냥 잘려 나간다 — 전체 문자열이 기준.
           const rect = tf.acroField.getWidgets()[0]?.getRectangle()
           if (rect && text) {
-            const availW = Math.max(1, rect.width - 4)
-            const w = customFont.widthOfTextAtSize(text, daSize)
-            if (w > availW) {
-              const scaled = daSize * (availW / w) * 0.98
-              size = Math.max(5, Math.min(daSize, Math.floor(scaled * 2) / 2))
-            }
+            size = shrinkToWidth(text, size, Math.max(1, rect.width - 4), customFont)
           }
         }
       }
