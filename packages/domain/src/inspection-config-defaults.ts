@@ -83,6 +83,43 @@ export const DEFAULT_INSPECTION_CONFIG: InspectionConfig = {
 }
 
 /**
+ * 저장된(persisted) 전염병 규칙 + 아직 등장하지 않은 내장 기본 규칙 병합.
+ *
+ * DB 에 inspection_config 가 이미 저장된 조직은 DEFAULT_INSPECTION_CONFIG 에 새 국가가
+ * 추가돼도 반영되지 않는다(load 시 persisted 우선). 그래서 **읽는 쪽마다** 이 보강을
+ * 거쳐야 한다 — 설정 로드(apps/admin/lib/inspection-config.ts)뿐 아니라 자동채움 엔진도
+ * 마찬가지다. 엔진이 이걸 빼먹어서 남아공 케이스의 전염병검사가 `lab: null` 로
+ * 채워졌다(2026-08-11 수정).
+ *
+ * persisted 규칙에 한 번도 등장하지 않은 국가의 기본 규칙만 합쳐, 조직이 의도적으로
+ * 편집·삭제한 기존 규칙은 건드리지 않는다.
+ */
+export function mergeMissingInfectiousDefaults(rules: InspectionLabRule[]): InspectionLabRule[] {
+  const covered = new Set(rules.flatMap(r => r.countries))
+  const missing = DEFAULT_INSPECTION_CONFIG.infectiousRules.filter(
+    dr => dr.countries.every(c => !covered.has(c)),
+  )
+  return missing.length > 0 ? [...rules, ...missing] : rules
+}
+
+/**
+ * organization_settings.value.infectiousRules 원본(unknown) → 사용 가능한 규칙 배열.
+ * 설정 행 자체가 없는 조직(신규 SaaS org)은 기본 규칙 전체를 쓴다.
+ */
+export function normalizeInfectiousRules(raw: unknown): InspectionLabRule[] {
+  const parsed = Array.isArray(raw)
+    ? raw.filter(
+        (r): r is InspectionLabRule =>
+          !!r &&
+          typeof r === 'object' &&
+          Array.isArray((r as { countries?: unknown }).countries) &&
+          Array.isArray((r as { labs?: unknown }).labs),
+      )
+    : []
+  return mergeMissingInfectiousDefaults(parsed)
+}
+
+/**
  * 효과 기관 목록 — 내장 기관(숨김 제외, 표시명 override 반영) + 사용자 정의 기관.
  * **선택지의 단일 출처**: 설정 화면·케이스 상세·검사 탭이 모두 이걸 쓴다 (2026-08-06).
  */
