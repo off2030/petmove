@@ -470,9 +470,12 @@ export async function generateShipmentPack(params: {
     ship_date: params.ship_date,
   })
   if (!front.ok) return front
+  // 파일명 검체수 표기 — ARC(남아공)는 구성이 8점 고정이라 붙이지 않는다(2026-08-11 사용자 지시).
+  //   그 외 lab 은 발송 건마다 튜브 갯수가 달라 파일명으로 구분한다.
+  const packName = `${params.consignee_lab}_shipment${params.variant === 'arc' ? '' : `_${params.tube_count}tubes`}.pdf`
   // KSVDL-R 등 invoice-only 는 케이스별 서류가 없으므로 앞장 서류가 곧 발송 팩.
   if (params.variant === 'invoice-only') {
-    return { ...front, filename: `${params.consignee_lab}_shipment_${params.tube_count}tubes.pdf` }
+    return { ...front, filename: packName }
   }
 
   const parts: string[] = [front.pdf]
@@ -497,7 +500,7 @@ export async function generateShipmentPack(params: {
   return {
     ok: true,
     pdf: Buffer.from(pdfBytes).toString('base64'),
-    filename: `${params.consignee_lab}_shipment_${params.tube_count}tubes.pdf`,
+    filename: packName,
   }
 }
 

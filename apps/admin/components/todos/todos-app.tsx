@@ -1492,9 +1492,10 @@ function ShipmentPackDialog({ label, rows, variant, consigneeLab, onClose }: {
   const allSelected = rows.length > 0 && selected.size === rows.length
   const isArc = variant === 'arc'
   const selCount = selected.size
-  // 검체수: 빈 칸이면 선택 마리 수, 입력하면 그 값(1~99). ARC 는 16 고정.
+  // 검체수: 빈 칸이면 선택 마리 수, 입력하면 그 값(1~99). ARC 는 8 고정
+  // (서버 generateInvoice 의 ARC_SPECIMEN_COUNT 와 같은 값 — 표시·전달용 사본).
   const effectiveTube = isArc
-    ? 16
+    ? 8
     : tube.trim()
     ? Math.max(1, Math.min(99, Math.trunc(Number(tube)) || selCount))
     : selCount
