@@ -723,9 +723,16 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
       // 배치 1회 저장(순차 N 왕복 → 1 왕복). 실패 시 '다시 시도' 토스트.
       // keys 가 비어도(수령일만 추출된 경우) 위에서 별도 저장했으므로 빈 배치는 건너뛴다.
       if (keys.length > 0) {
-        void persistField('추가정보', () =>
+        const saved = await persistField('추가정보', () =>
           updateCaseDataBulk(caseId, keys.map((k) => ({ key: k, value: unified[k], destination: destArgFor(k) }))),
         )
+        // 서버 자동채움이 컬럼(출국일)까지 채웠으면 화면에도 반영 — 안 하면 일본 항공권 추출 후
+        // 새로고침 전까지 절차정보 '출국일'이 빈 칸으로 보인다.
+        if (saved?.columns) {
+          for (const [col, val] of Object.entries(saved.columns)) {
+            updateLocalCaseField(caseId, 'column', col, val, destArgFor(col))
+          }
+        }
       }
       const labels = keys.map(k => EXTRA_FIELD_KEY_LABELS[k] ?? k)
       if (received) labels.push('검체 접수일')

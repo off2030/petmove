@@ -301,6 +301,8 @@ export type AutoFillComputeResult =
  *
  * `userEditedKey` 가 주어지면 그 필드를 target 으로 갖는 규칙은 건너뜀.
  * 사용자가 방금 직접 수정한 값을 자동화가 다시 덮어쓰지 못하게 하기 위함.
+ * 배열도 받는다 — 일괄 저장(updateCaseDataBulk·자동추출)은 한 번에 여러 칸을 쓰므로
+ * 그중 하나만 넘기면 나머지 편집분이 룰에 덮여 사라진다.
  *
  * `pending` 이 주어지면 케이스 SELECT 를 생략하고 pending 을 스냅샷으로 사용한다.
  * 미지정 시 DB 에서 현재 상태를 읽는다(applyAutoFillRules 하위 호환 경로).
@@ -308,7 +310,7 @@ export type AutoFillComputeResult =
 export async function computeAutoFill(
   supabase: SupabaseClient,
   caseId: string,
-  userEditedKey?: string,
+  userEditedKey?: string | string[],
   /**
    * 활성 목적지 토큰 — 다중 목적지 케이스에서 by_dest scoped 키 자동채움 라우팅용.
    * 지정 시: scoped 키 read/write 가 `data.by_dest[activeDest][key]` 경로로.
@@ -379,12 +381,13 @@ export async function computeAutoFill(
     }
 
     // 매칭 필터: 목적지 + 종 + (사용자가 방금 수정한 필드를 target 으로 갖는 규칙 제외)
+    const userEditedKeys = new Set(
+      typeof userEditedKey === 'string' ? [userEditedKey] : (userEditedKey ?? []),
+    )
     const matchedRules = rules.filter((r) => {
       if (!destinationMatches(r.destination_key, destination)) return false
       if (!speciesMatches(r.species_filter, species)) return false
-      if (userEditedKey) {
-        if (getBaseKey(r.target_field) === userEditedKey) return false
-      }
+      if (userEditedKeys.has(getBaseKey(r.target_field))) return false
       return true
     })
     if (matchedRules.length === 0) return noChange()
@@ -452,7 +455,7 @@ export async function computeAutoFill(
 export async function applyAutoFillRules(
   supabase: SupabaseClient,
   caseId: string,
-  userEditedKey?: string,
+  userEditedKey?: string | string[],
   activeDest?: string | null,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const res = await computeAutoFill(supabase, caseId, userEditedKey, activeDest)

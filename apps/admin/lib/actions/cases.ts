@@ -29,6 +29,31 @@ export type UpdateResult =
   | { ok: true; autoFilled?: { data: Record<string, unknown>; columns?: Record<string, unknown> } }
   | { ok: false; error: string }
 
+/**
+ * 자동채움(org_auto_fill_rules) 을 가동시키는 날짜 필드 — 단일 저장(updateCaseField)과
+ * 일괄 저장(updateCaseDataBulk) 이 **같은 명단**을 본다.
+ *
+ * ⚠️ 명단을 함수 안에 복제하지 말 것. 예전엔 일괄 저장 경로가 자동채움 자체를 안 돌려서
+ * 일본 항공권을 자동추출로 입력하면 `departure_flight_date` 만 by_dest 에 들어가고
+ * 출국일(departure_date) 이 빈 채로 남았다 — 룰은 멀쩡한데 트리거가 안 걸린 것이라
+ * 원인 추적이 오래 걸렸다. 새 트리거 키는 반드시 여기 한 곳에만 추가한다.
+ *
+ * entry_date: 통합 입국일 — 일본·하와이·태국·스위스 모두 같은 키. 출국일과 동기화 규칙 트리거.
+ */
+const DATE_TRIGGER_KEYS = new Set([
+  'departure_date',
+  'departure_flight_date', // 일본 출국 항공편 출발일 (departure_date 와 양방향 sync)
+  'vet_visit_date',
+  'rabies_dates',
+  'general_vaccine_dates',
+  'civ_dates',
+  'kennel_cough_dates',
+  'internal_parasite_dates',
+  'external_parasite_dates',
+  'heartworm_dates',
+  'entry_date',
+])
+
 // case_history.old_value/new_value 는 text 컬럼.
 // column storage 는 원래 text 라 그대로 저장. data storage 는 jsonb 이므로 JSON 직렬화.
 // 과거(2026-04 이전) 엔트리는 String(value) 로 저장돼 배열·객체가 깨진 형태 — 역직렬화 시 fallback.
@@ -536,24 +561,10 @@ export async function updateCaseField(
   const stampedData = stampDocsChecklistCompletion(row as CaseRow, nextData, destination)
   if (dataMutated || stampedData !== nextData) updateObj.data = stampedData
 
-  // 자동 채움 규칙 적용 — 날짜 관련 필드가 변경됐을 때만.
+  // 자동 채움 규칙 적용 — 날짜 관련 필드가 변경됐을 때만 (명단은 모듈 상단 DATE_TRIGGER_KEYS).
   // 체이닝은 엔진 내부에서 iter loop 로 처리.
-  // entry_date: 통합 입국일 — 일본·하와이·태국·스위스 모두 같은 키. 출국일과 동기화 규칙 트리거.
   // 커밋 전 pending 스냅샷으로 계산해 아래 단일 UPDATE 에 합산 — 편집 1회당 UPDATE 1회(P1 #8,
   // 종전엔 저장 UPDATE → 엔진 SELECT+UPDATE → refresh SELECT 로 3 SELECT/2 UPDATE).
-  const DATE_TRIGGER_KEYS = new Set([
-    'departure_date',
-    'departure_flight_date', // 일본 출국 항공편 출발일 (departure_date 와 양방향 sync)
-    'vet_visit_date',
-    'rabies_dates',
-    'general_vaccine_dates',
-    'civ_dates',
-    'kennel_cough_dates',
-    'internal_parasite_dates',
-    'external_parasite_dates',
-    'heartworm_dates',
-    'entry_date',
-  ])
   let autoFilled: { data: Record<string, unknown>; columns?: Record<string, unknown> } | undefined
   if (DATE_TRIGGER_KEYS.has(key)) {
     try {
@@ -631,26 +642,34 @@ export async function updateCaseField(
  * '전체 삭제'·이미지 자동추출처럼 여러 필드를 한꺼번에 바꾸는 UI 전용 — updateCaseField 를
  * N 번 순차 호출(N 왕복)하던 것을 1 왕복으로 줄인다.
  *
- * data storage 만 지원한다. 컬럼 쓰기·출국일 auto-fill·서류/신고 상태 리셋 같은 단일 함수의
- * 부수효과는 적용하지 않는다(추가정보/추출 대상 필드엔 불필요). by_dest scoped 키 라우팅과
- * 빈 값의 legacy 정리(clearExtraValueWithLegacy), 키별 case_history 기록(undo 모델 유지)은
- * 단일 함수와 동일하게 처리한다. 인증은 RLS(user client)로 보장.
+ * 입력은 data storage 만 받는다. by_dest scoped 키 라우팅과 빈 값의 legacy 정리
+ * (clearExtraValueWithLegacy), 키별 case_history 기록(undo 모델 유지)은 단일 함수와 동일.
+ * 서류/신고 상태 리셋은 여전히 적용하지 않는다(추가정보 필드엔 해당 없음).
+ *
+ * **자동채움(auto-fill)은 단일 함수와 동일하게 가동한다** — 종전엔 "추가정보 필드엔 불필요"
+ * 라고 보고 건너뛰었으나, 일본의 출국 항공편 출발일(departure_flight_date)이 바로 그 추가정보
+ * 필드이면서 출국일(departure_date) 동기화를 전적으로 룰에 의존한다. 그래서 항공권을
+ * 자동추출로 입력하면 출국일이 빈 채로 남았다. 룰이 departure_date 컬럼을 타겟하면
+ * data 뿐 아니라 컬럼도 함께 쓴다.
+ *
+ * 인증은 RLS(user client)로 보장.
  */
 export async function updateCaseDataBulk(
   caseId: string,
   updates: { key: string; value: unknown; destination?: string | null }[],
-): Promise<UpdateResult & { data?: Record<string, unknown> }> {
+): Promise<UpdateResult & { data?: Record<string, unknown>; columns?: Record<string, unknown> }> {
   if (!caseId) return { ok: false, error: 'caseId is required' }
   if (updates.length === 0) return { ok: true }
 
   const supabase = await createClient()
   const { data: row, error: fetchErr } = await supabase
     .from('cases')
-    .select('id, org_id, data')
+    .select('id, org_id, destination, departure_date, data')
     .eq('id', caseId)
     .single()
   if (fetchErr) return { ok: false, error: await explainCaseFetchError(supabase, fetchErr) }
   const orgId = (row as { org_id: string }).org_id
+  const destinationRaw = (row as { destination: string | null }).destination
   const currentData = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<string, unknown>
 
   let nextData: Record<string, unknown> = { ...currentData }
@@ -695,13 +714,47 @@ export async function updateCaseDataBulk(
     }
   }
 
-  const { error: updErr } = await supabase.from('cases').update({ data: nextData }).eq('id', caseId)
+  // 자동채움 — 이번 배치에 날짜 트리거 키가 하나라도 있으면 단일 저장과 동일하게 가동.
+  // 커밋 전 pending 스냅샷으로 계산해 아래 단일 UPDATE 에 합산(추가 왕복 없음).
+  //  · userEditedKey 로 **이번 배치의 모든 키**를 넘긴다 — 하나만 넘기면 나머지 편집분이
+  //    같은 배치 안에서 룰에 덮여 사라진다(예: 출발일 트리거가 방금 추출한 도착일을 재계산).
+  //  · activeDest 는 트리거 키가 저장된 여행지 스코프. 미지정이면 top-level/컬럼 경로.
+  const editedKeys = updates.filter((u) => u.key).map((u) => u.key)
+  const triggerUpdate = updates.find((u) => u.key && DATE_TRIGGER_KEYS.has(u.key))
+  const updateObj: Record<string, unknown> = { data: nextData }
+  if (triggerUpdate) {
+    try {
+      const computed = await computeAutoFill(
+        supabase,
+        caseId,
+        editedKeys,
+        triggerUpdate.destination ?? null,
+        {
+          orgId,
+          destination: destinationRaw,
+          departureDate: (row as { departure_date: string | null }).departure_date ?? null,
+          data: nextData,
+        },
+      )
+      if (computed.ok && computed.changed) {
+        updateObj.data = computed.data
+        Object.assign(updateObj, computed.columns)
+      }
+    } catch { /* best-effort — 실패 시 자동채움 없이 본 저장만 */ }
+  }
+
+  const { error: updErr } = await supabase.from('cases').update(updateObj).eq('id', caseId)
   if (updErr) return { ok: false, error: updErr.message }
   if (historyRows.length > 0 && orgId) {
     await supabase.from('case_history').insert(historyRows)
   }
   await evaluateAndNotify(caseId)
-  return { ok: true, data: nextData }
+  const { data: savedData, ...savedColumns } = updateObj
+  return {
+    ok: true,
+    data: savedData as Record<string, unknown>,
+    ...(Object.keys(savedColumns).length > 0 ? { columns: savedColumns } : {}),
+  }
 }
 
 /**
