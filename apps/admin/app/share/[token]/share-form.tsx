@@ -15,7 +15,11 @@ import type {
   ShareLinkPublicView,
   ShareVaccineEntry,
 } from '@petmove/domain'
-import { SHARE_RECIPIENT_SUBGROUP_META } from '@petmove/domain'
+import {
+  SHARE_RECIPIENT_SUBGROUP_META,
+  splitCustomerNameEn,
+  composeCustomerNameEn,
+} from '@petmove/domain'
 import breedsData from '@petmove/domain/data/breeds.json'
 import colorsData from '@petmove/domain/data/colors.json'
 
@@ -896,18 +900,26 @@ function CustomerNameEnInput({
 }) {
   const composingRef = useRef(false)
   const { warn, show: showWarn } = useEnWarning()
-  const [last, setLast] = useState(() => {
-    const parts = (value || '').trim().split(/\s+/).filter(Boolean)
-    return parts[0] || ''
-  })
-  const [first, setFirst] = useState(() => {
-    const parts = (value || '').trim().split(/\s+/).filter(Boolean)
-    return parts.slice(1).join(' ') || ''
-  })
+  const [last, setLast] = useState(() => splitCustomerNameEn(value).last)
+  const [first, setFirst] = useState(() => splitCustomerNameEn(value).first)
+  // 마지막으로 이 컴포넌트가 부모에 올려보낸 값. 외부발 변경과 자기 입력을 구분한다.
+  const emittedRef = useRef(value)
+
+  // 임시 저장 복원(마운트 후 setValues)처럼 값이 밖에서 바뀌면 두 칸을 다시 맞춘다.
+  // 안 하면 화면에 보이는 이름과 실제 제출되는 값이 어긋난 채로 남는다.
+  useEffect(() => {
+    if (value === emittedRef.current) return
+    emittedRef.current = value
+    const parts = splitCustomerNameEn(value)
+    setLast(parts.last)
+    setFirst(parts.first)
+  }, [value])
 
   useEffect(() => {
-    const combined = [last.trim(), first.trim()].filter(Boolean).join(' ')
-    if (combined !== value) onChange(combined)
+    const combined = composeCustomerNameEn(last, first)
+    if (combined === value) return
+    emittedRef.current = combined
+    onChange(combined)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [last, first])
 

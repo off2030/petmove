@@ -9,7 +9,7 @@ import { readFile } from 'node:fs/promises'
 import zlib from 'node:zlib'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
-import { getParasiteFamily, PARASITE_FAMILIES } from '@petmove/domain'
+import { getParasiteFamily, PARASITE_FAMILIES, splitCustomerNameEn } from '@petmove/domain'
 import {
   lookupRabies,
   lookupExternalParasite,
@@ -761,19 +761,14 @@ export function readSource(
     return (caseRow as unknown as Record<string, unknown>).customer_name ?? ''
   }
 
-  // Split English name parts — share form 은 합본 column 에만 저장하므로 (CustomerNameEnInput
-  // 의 "Last First" 순서) data 분리 필드가 비면 legacy column 을 같은 순서로 분해해 폴백.
-  // apply 경로는 data 분리 저장이 항상 되므로 폴백 미발동.
+  // Split English name parts — data 분리 필드가 비면 legacy column 을 같은 순서("Last First")
+  // 로 분해해 폴백. 예전 share 폼·엑셀 유입분은 합본 column 에만 남아 있다.
   if (source === 'customer_first_name_en' || source === 'customer_last_name_en') {
     const direct = String((data[source] as string | undefined) ?? '').trim()
     if (direct) return direct
-    const legacy = String(
-      ((caseRow as unknown as Record<string, unknown>).customer_name_en as string | undefined) ?? '',
-    ).trim()
-    if (!legacy) return ''
-    const parts = legacy.split(/\s+/).filter(Boolean)
-    if (source === 'customer_last_name_en') return parts[0] ?? ''
-    return parts.slice(1).join(' ')
+    const legacy = (caseRow as unknown as Record<string, unknown>).customer_name_en
+    const parts = splitCustomerNameEn(typeof legacy === 'string' ? legacy : '')
+    return source === 'customer_last_name_en' ? parts.last : parts.first
   }
 
   // Lab-specific inspection date from infectious_disease_records.

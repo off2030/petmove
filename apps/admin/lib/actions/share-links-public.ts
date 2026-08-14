@@ -31,6 +31,8 @@ import {
   shareLinkStatus,
   SHARE_COLUMN_FIELDS,
   SHARE_VACCINE_GROUPS,
+  splitCustomerNameEn,
+  composeCustomerNameEn,
   loadDestinationOverridesByOrg,
   getEffectiveExtraFieldEntries,
   isDestinationScopedKey,
@@ -135,7 +137,7 @@ function toShareFieldSpec(
         type: meta.type,
         current_value: useByDest && byDestVal !== undefined
           ? byDestVal
-          : fallback((caseRow as unknown as Record<string, unknown>)[d.key]),
+          : fallback(readShareColumnValue(d.key, caseRow, data)),
       }
     }
     case 'data': {
@@ -175,6 +177,27 @@ function toShareFieldSpec(
       }
     }
   }
+}
+
+/**
+ * 컬럼 프리필 값 — 기본은 케이스 컬럼 그대로.
+ *
+ * customer_name_en 만 예외: 진짜 출처는 data 분리 필드(customer_last_name_en /
+ * customer_first_name_en)라, 컬럼을 그대로 보여주면 케이스 상세·PDF 와 다른 이름이
+ * 보호자에게 프리필된다. 분리 필드가 있으면 그걸 합쳐 보여주고, 없을 때만 legacy 컬럼.
+ */
+function readShareColumnValue(
+  key: string,
+  caseRow: CaseRow,
+  data: Record<string, unknown>,
+): unknown {
+  const raw = (caseRow as unknown as Record<string, unknown>)[key]
+  if (key !== 'customer_name_en') return raw
+  const composed = composeCustomerNameEn(
+    data.customer_last_name_en as string | undefined,
+    data.customer_first_name_en as string | undefined,
+  )
+  return composed || raw
 }
 
 /**
@@ -484,6 +507,19 @@ export async function submitShareLink(
         colUpdate[key] = value
       } else {
         dataUpdate[key] = value
+      }
+    }
+
+    // 영문 성함 — 합본 컬럼만 갱신하면 아무 데도 반영되지 않는다. 케이스 상세·PDF(readSource)
+    // 는 data 분리 필드를 먼저 읽고 컬럼은 폴백이라, 분리 필드에 옛 값이 남아 있으면 보호자가
+    // 링크로 고친 이름이 조용히 무시됐다(2026-08-14 김미예/호두 — 컬럼 "KIM, MI YE" vs
+    // 분리 "MINJIN KIM"). 둘 다 같은 값으로 쓴다. 컬럼도 쉼표 없는 정규형으로 정리.
+    if (typeof colUpdate.customer_name_en === 'string') {
+      const { last, first } = splitCustomerNameEn(colUpdate.customer_name_en)
+      if (last || first) {
+        dataUpdate.customer_last_name_en = last || null
+        dataUpdate.customer_first_name_en = first || null
+        colUpdate.customer_name_en = composeCustomerNameEn(last, first)
       }
     }
 
