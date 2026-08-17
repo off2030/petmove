@@ -4638,6 +4638,7 @@
       "owner_city": {"source": "address_city", "note": "Owner City"},
       "owner_zip": {"source": "address_zipcode", "note": "Owner ZIP — 비어있으면 address_kr/address_en 에서 자동 추출"},
       "owner_country": {"source": null, "default": "REPUBLIC OF KOREA", "note": "Owner Country"},
+      "bill_to_clinic": {"source": null, "transform": "checkbox:always_true", "note": "Bill To: Clinic — 항상 체크 (병원 청구)"},
       "owner_cell": {"source": "phone", "transform": "phone_intl_kr", "note": "Owner Cell phone"},
       "owner_phone": {"source": null, "default": "", "note": "Owner Phone (유선) — 별도 유선 데이터 없어 빈 값"},
       "animal_species": {"source": "species", "transform": "en", "note": "Species (Dog/Cat)"},
