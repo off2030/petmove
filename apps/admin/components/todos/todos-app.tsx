@@ -536,20 +536,42 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
 
 
 /**
- * 자동 포함 판정 — 신고국이면서 출국일(by_dest 우선)이 있는 여행지가 있어야 함.
+ * 신고 탭 자동 포함의 '일정 있음' 판정 — **출국일 또는 내원일** 하나라도 있으면 참.
+ *
+ * 출국일은 세 자리를 본다(2026-08-18):
+ *   ① by_dest[여행지].departure_date  ② cases.departure_date 컬럼  ③ **출국 항공편 출발일**
+ * ③ 이 필요한 이유 — departure_flight_date ↔ departure_date 양방향 sync 는 **일본 전용**
+ * org_auto_fill_rules 로만 시드돼 있다(20260527000003). 그래서 하와이처럼 항공편 정보를
+ * 추가정보에서 넣은 케이스는 출국일 컬럼이 빈 채로 남아 신고 탭에서 통째로 빠졌다.
+ * 내원일도 트리거로 넣는다 — 내원일이 잡혔다는 건 출국이 임박했다는 뜻이라 신고 대상이다.
+ */
+function hasReportSchedule(row: CaseRow, dest: string | null): boolean {
+  if (getDepartureDate(row, dest)) return true
+  if (getVetVisitDate(row, dest)) return true
+  const data = (row.data as Record<string, unknown> | null) ?? null
+  const flight = readByDestValue(data, dest, 'departure_flight_date')
+  if (typeof flight === 'string' && flight) return true
+  // 다중 여행지 + 특정 여행지 지정이면 top-level 폴백 안 함 — 다른 여행지 잔존값 누수 차단(B).
+  if (dest && parseDestinations(row.destination).length > 1) return false
+  const top = data?.departure_flight_date
+  return typeof top === 'string' && !!top
+}
+
+/**
+ * 자동 포함 판정 — 신고국이면서 출국일·내원일이 있는 여행지가 있어야 함.
  *
  * 활성 여행지(import_report_active_dest)가 명시 저장돼 있으면 그 여행지 기준으로만
  * 판정 (비-신고국으로 옮겨 두면 자동 포함 안 됨). 저장값 없으면 케이스의 모든
- * 여행지를 스캔 — 다중 여행지에서 한 여행지에만 출국일이 있어도 포함된다.
+ * 여행지를 스캔 — 다중 여행지에서 한 여행지에만 일정이 있어도 포함된다.
  */
 function isAutoImportReport(row: CaseRow, countries: string[]): boolean {
   const data = (row.data ?? {}) as Record<string, unknown>
   const active = data.import_report_active_dest
   if (typeof active === 'string' && active) {
-    return countries.includes(active) && !!getDepartureDate(row, active)
+    return countries.includes(active) && hasReportSchedule(row, active)
   }
   const dests = parseDestinations(row.destination)
-  return dests.some((d) => countries.includes(d) && !!getDepartureDate(row, d))
+  return dests.some((d) => countries.includes(d) && hasReportSchedule(row, d))
 }
 
 function isManualImportReport(row: CaseRow): boolean {
