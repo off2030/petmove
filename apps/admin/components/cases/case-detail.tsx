@@ -569,9 +569,24 @@ function mapExtractResultToUnified(country: Country, result: Record<string, unkn
     set('address_overseas', result.address_overseas)
     set('postal_code', result.postal_code)
     set('overseas_phone', result.phone)
-    set('departure_flight_date', result.departure_date)
+    // 항공편은 일본과 같은 노선 기반 2편 구조(2026-08-18). 예전엔 스칼라 4개(출국일·도착일·
+    // 편명·도착시각)만 받아서 **출발/도착 공항과 귀국편이 통째로 비어 있었고**, 왕복 일정을
+    // 붙여 넣으면 모델이 귀국편 날짜를 하와이 도착일로 잘못 고르는 일이 있었다.
+    const hiIn = (result.korea_to_hawaii ?? {}) as Record<string, unknown>
+    const hiOut = (result.hawaii_to_korea ?? {}) as Record<string, unknown>
+    set('departure_flight_date', hiIn.date)
+    set('entry_departure_airport', hiIn.departure_airport)
+    set('entry_airport', hiIn.arrival_airport)
+    set('entry_transport', hiIn.transport)
+    set('entry_flight_number', hiIn.flight_number)
+    set('return_date', hiOut.date)
+    set('return_departure_airport', hiOut.departure_airport)
+    set('return_arrival_airport', hiOut.arrival_airport)
+    set('return_transport', hiOut.transport)
+    set('return_flight_number', hiOut.flight_number)
+    // 하와이 도착일·도착시각은 별도 필드 — 날짜변경선 때문에 출발일과 같을 수 있어
+    // 편의 date(출발일)로 대체하지 않는다.
     set('entry_date', result.entry_date)
-    set('entry_flight_number', result.flight_number)
     set('entry_time', result.arrival_time)
   } else if (country === 'switzerland') {
     set('entry_date', result.entry_date)
