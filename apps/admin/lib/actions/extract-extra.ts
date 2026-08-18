@@ -80,7 +80,12 @@ export interface HawaiiResult {
   phone: string | null
   /** 한국 → 하와이 출국편. (일본과 같은 노선 기반 슬롯 — 날짜 순서로 배정하지 않는다) */
   korea_to_hawaii: FlightEntry
-  /** 하와이 → 한국 귀국편. */
+  /**
+   * 하와이 → 한국 귀국편.
+   * ⚠️ 케이스 필드에 **반영하지 않는다**(2026-08-18 사용자 지정 — 귀국편은 운영자 입력).
+   * 그래도 슬롯을 받는 이유: 왕복 일정을 붙여 넣었을 때 귀국편이 갈 자리가 없으면 모델이
+   * 귀국 날짜·인천 도착 시각을 하와이 도착 정보로 잘못 넣는다. 미끼 슬롯이다.
+   */
   hawaii_to_korea: FlightEntry
   /** 하와이 도착일 — 날짜변경선 때문에 출발일과 같을 수도, 하루 빠를 수도 있다. */
   entry_date: string | null
@@ -364,6 +369,7 @@ Example input: "출국: 2026년 10월 4일 인천(ICN) 22:10 출발 → 호놀�
   ONLY when the text actually says how the pet travels — never infer it from the airline or the aircraft. If nothing is said, return null.
   If transport is given for one flight but not the other, apply the same value to both.
 - If only one flight is found, put it in the slot its route matches and leave the other all nulls.
+- Always fill hawaii_to_korea when a return flight is present, even though only the outbound leg is used downstream — it keeps return-trip dates out of the Hawaii arrival fields.
 - entry_date: date the pet ARRIVES in Hawaii, YYYY-MM-DD. Korea→Hawaii crosses the date line eastbound, so the Hawaii arrival is usually the SAME calendar day as the Korean departure (a 22:10 ICN departure lands 12:20 the same day). Use the date printed next to the Hawaii arrival if one is shown; otherwise use korea_to_hawaii.date. NEVER use a date from the return trip, and never use the Incheon arrival date.
 - arrival_time: scheduled ARRIVAL time IN HAWAII, 24h "HH:mm" (the time next to the HNL/OGG/KOA/LIH arrival). Do NOT use the Korea arrival time of the return flight. If no Hawaii arrival time is shown, return null.
 - CRITICAL — if a year is missing (e.g. just "10/4" or "Oct 4"): output the next upcoming occurrence AFTER today's date. NEVER output a year in the past.`,

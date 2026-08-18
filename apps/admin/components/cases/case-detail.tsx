@@ -569,21 +569,21 @@ function mapExtractResultToUnified(country: Country, result: Record<string, unkn
     set('address_overseas', result.address_overseas)
     set('postal_code', result.postal_code)
     set('overseas_phone', result.phone)
-    // 항공편은 일본과 같은 노선 기반 2편 구조(2026-08-18). 예전엔 스칼라 4개(출국일·도착일·
-    // 편명·도착시각)만 받아서 **출발/도착 공항과 귀국편이 통째로 비어 있었고**, 왕복 일정을
-    // 붙여 넣으면 모델이 귀국편 날짜를 하와이 도착일로 잘못 고르는 일이 있었다.
+    // 항공편은 노선 기반 슬롯 구조(2026-08-18). 예전엔 스칼라 4개(출국일·도착일·편명·
+    // 도착시각)만 받아서 **출발/도착 공항이 통째로 비어 있었다**.
+    //
+    // ⚠️ **채우는 건 출국편(한국 → 하와이)뿐이다**(2026-08-18 사용자 지정). 귀국편은 추출
+    //   결과를 쓰지 않는다 — return_* 칸은 운영자가 직접 확인해 넣는다.
+    //   다만 추출 스키마의 hawaii_to_korea 슬롯은 **일부러 남겨 둔다**: 왕복 일정을 붙여
+    //   넣었을 때 귀국편이 갈 자리가 없으면 모델이 '귀국 10/9'·'인천 10/10 도착'을 하와이
+    //   도착일·도착시각으로 잘못 집어넣는다(원래 버그). 슬롯이 미끼 역할을 해 출국편
+    //   추출이 정확해진다. 슬롯을 지우려면 그 오인식이 재발하는지 먼저 확인할 것.
     const hiIn = (result.korea_to_hawaii ?? {}) as Record<string, unknown>
-    const hiOut = (result.hawaii_to_korea ?? {}) as Record<string, unknown>
     set('departure_flight_date', hiIn.date)
     set('entry_departure_airport', hiIn.departure_airport)
     set('entry_airport', hiIn.arrival_airport)
     set('entry_transport', hiIn.transport)
     set('entry_flight_number', hiIn.flight_number)
-    set('return_date', hiOut.date)
-    set('return_departure_airport', hiOut.departure_airport)
-    set('return_arrival_airport', hiOut.arrival_airport)
-    set('return_transport', hiOut.transport)
-    set('return_flight_number', hiOut.flight_number)
     // 하와이 도착일·도착시각은 별도 필드 — 날짜변경선 때문에 출발일과 같을 수 있어
     // 편의 date(출발일)로 대체하지 않는다.
     set('entry_date', result.entry_date)
