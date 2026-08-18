@@ -22,6 +22,7 @@ import {
   rabiesIntervalMinDays,
   validateRabiesPrimeAge,
   validateCyAdvanceNoticeDate,
+  validatePtAdvanceNoticeDate,
   validateImportPermitFiledDate,
   validateSgQuarantineReservationDate,
   validateAuQuarantineReservationDate,
@@ -201,7 +202,7 @@ const SIMPLE_FLIGHT_DESTINATIONS: readonly string[] = [
   // 절차는 있으나 펫무브가 대행하지 않는 목적지(2026-07-25 사용자 결정) — 신청은 보호자/
   // 현지 에이전트 몫이라 앱이 항공편 상세를 들고 있을 이유가 없다. 필요하면 첨부로 보관.
   'taiwan', 'malaysia', 'indonesia', 'uae', 'ireland', 'malta', 'israel', 'singapore',
-  'norway', 'cyprus',
+  'norway', 'cyprus', 'portugal',
   // 홍콩 — 수입 허가(Special Permit)·사전 통지 둘 다 **현지 대리인**이 하는 절차라 펫무브가
   // 대행하지 않는다(가이드: 해외 신청 불가). 항공편 상세는 운송 에이전트가 들고 있다.
   'hongkong',
@@ -1887,6 +1888,12 @@ export function StepDetailView({
       const data = (caseRow?.data ?? {}) as Record<string, unknown>
       const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
       return validateCyAdvanceNoticeDate(importQuarantineDate.trim(), entry)
+    }
+    // 포르투갈 도착 통보 — 통보일이 도착일 48시간(2일) 이내면 차단.
+    if (step.id === 'pt-advance-notice') {
+      const data = (caseRow?.data ?? {}) as Record<string, unknown>
+      const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
+      return validatePtAdvanceNoticeDate(importQuarantineDate.trim(), entry)
     }
     // 몰타 사전 통지 — 차단 없음(2026-08-01). 몰타 정부가 제출 마감을 공표하지 않아
     // 구 '입국 3영업일 전' 차단은 근거가 없었다(date-rules.ts 의 삭제 주석 참고).

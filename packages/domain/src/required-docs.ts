@@ -1952,6 +1952,7 @@ const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
   // 수입에 같은 Annex III 서식을 쓴다(BLV 공식 안내 확인, 2026-07-17).
   switzerland: euFamilyDocSpecs('스위스', { withImportPermit: true, euAhc: true }),
   cyprus: euFamilyDocSpecs('키프로스', { euAhc: true }),
+  portugal: euFamilyDocSpecs('포르투갈', { euAhc: true }),
   // 이스라엘 — eu-family인데 맵 누락으로 DEFAULT_SPECS(별지25+한국검역증)로 폴백해 항체 결과지·
   // 이스라엘 국제건강증명서가 빠져 있었다(2026-07-23 수정). euAhc 아님(EU 아님) — 입국 건강증명서는
   // 이스라엘 모델(Annex A). 수출 국제건강증명서 = 이스라엘 수의당국(Veterinary Services) 정부 수의사 인증.

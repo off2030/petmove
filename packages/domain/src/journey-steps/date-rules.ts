@@ -1900,6 +1900,21 @@ export function validateCyAdvanceNoticeDate(noticeDate: string, entryDate: strin
 }
 
 /**
+ * 포르투갈 도착 통보일(Aviso de Chegada) — 도착 48시간(2일) 전까지 관할 여행자 진입지점(PEV,
+ * 리스본·포르투 공항 등)에 공식 서식을 이메일로 보내야 함 (dgav.pt 공식 확인, 2026-08-18:
+ * "O MAIS CEDO POSSÍVEL (o máximo pelo menos 48 horas antes da chegada)").
+ * 보호자/위임자가 직접 보내야 하며 운송사 대행은 인정되지 않는다.
+ * client(통보 입력 시 입력 불가)·procedure-check(입국일 수정 후 주의) 공용. 한쪽 비면 통과.
+ */
+export function validatePtAdvanceNoticeDate(noticeDate: string, entryDate: string): string | null {
+  if (!noticeDate || !entryDate) return null
+  if (daysBetween(noticeDate, entryDate) < 2) {
+    return '도착 48시간(2일) 전까지 도착 통보를 해야 해요. 통보가 늦은 경우 입국일을 변경해야 해요.'
+  }
+  return null
+}
+
+/**
  * 이스라엘 사전 통보일 — **출국(적재) 2영업일 전**까지 통보해야 함(공식 안내 섹션 P·Q).
  * client(통보 입력 시 입력 불가)·procedure-check(출국일 수정 후 주의) 공용. 한쪽 비면 통과.
  *

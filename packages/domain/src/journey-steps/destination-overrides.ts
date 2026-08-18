@@ -3125,6 +3125,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       '아일랜드 도착 후 공항에서 입국 검사(Compliance Check)를 받으세요.\n사전 통지 후 이메일로 안내받은 절차에 따라 진행돼요.\n검역관이 마이크로칩과 서류(건강증명서·광견병 항체 검사 결과지·촌충 치료 기록)를 확인해요.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도돼요.',
   }),
   malta: euFamilyOverrides({ label: '몰타' }),
+  portugal: euFamilyOverrides({ label: '포르투갈' }),
   norway: {
     ...euFamilyOverrides({ label: '노르웨이' }),
     // 노르웨이는 EU 비회원국(EEA) → 한국 재입국 시 EU 반려동물 여권으로 검역증명서를 대체할 수

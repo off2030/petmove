@@ -332,14 +332,28 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     advanceNotice: { hardDeadlineHours: 48 },
     extraFields: ['address_overseas'],
   },
+  // 포르투갈 — 절차는 표준 EU 그대로지만 **도착 48시간 전 DGAV 도착 통보(Aviso de Chegada)가
+  // 의무**라 eu 묶음에서 분리(키프로스와 같은 사유). eu 보다 먼저 매칭.
+  //   · 근거: dgav.pt "O MAIS CEDO POSSÍVEL (o máximo pelo menos 48 horas antes da chegada)"
+  //   · 보호자/위임자가 직접 보내야 하고(운송사 대행 불가) 지정 PEV 주소 외로 보내면 무효.
+  //   · 통지 없이 도착하면 검사가 지연·거부될 수 있고, 미비 시 반송까지 간다.
+  portugal: {
+    keywords: ['포르투갈', 'portugal'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
+    titer: { entryValidityMonths: null },
+    appSupported: true,
+    advanceNotice: { hardDeadlineHours: 48 },
+    extraFields: ['address_overseas'],
+  },
   eu: {
     keywords: [
       '유럽연합', '프랑스', '독일', '이탈리아', '스페인', '네덜란드', '벨기에', '오스트리아',
-      '스웨덴', '덴마크', '폴란드', '체코', '포르투갈', '그리스',
+      '스웨덴', '덴마크', '폴란드', '체코', '그리스',
       '헝가리', '루마니아', '불가리아', '크로아티아', '슬로바키아',
       '슬로베니아', '리투아니아', '라트비아', '에스토니아', '룩셈부르크',
       'france', 'germany', 'italy', 'spain', 'netherlands', 'belgium', 'austria',
-      'sweden', 'denmark', 'poland', 'czech', 'portugal', 'greece',
+      'sweden', 'denmark', 'poland', 'czech', 'greece',
       'hungary', 'romania', 'bulgaria', 'croatia', 'slovakia',
       'slovenia', 'lithuania', 'latvia', 'estonia', 'luxembourg',
       'eu',

@@ -482,6 +482,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'finland',
         'switzerland',
         'cyprus',
+        // 포르투갈 — 표준 EU 절차인데 도착 통보(48h) 때문에 eu 묶음에서 분리했다(2026-08-18).
+        // 이 목록은 키 하드코딩이라 분리 시 함께 넣어야 항체 카드가 사라지지 않는다.
+        'portugal',
         'australia',
         'new_zealand',
         // 말레이시아 — **한국 귀국용**(rabiesTiterForReturnOnly) 국가라 main 목록에서 빼고
@@ -1032,6 +1035,42 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     validationIds: ['eu.cy-advance-notice-48h-before-entry'],
+  },
+
+  // ── 도착 통보 (포르투갈 전용) ────────────────────────────────────────
+  // 제3국에서 포르투갈 입국 시 도착 48시간 전까지 관할 여행자 진입지점(PEV — 리스본·포르투
+  // 공항 등)에 공식 서식(Aviso de Chegada)을 이메일로 보낸다. 통지만 하면 되는 단순형이지만
+  // 두 가지가 다른 나라와 다르다:
+  //   ① **보호자/위임자가 직접** 보내야 한다(운송사 대행 불가 — dgav.pt 명시).
+  //   ② PEV 가 야간에 닫는다(리스본 00~06시·포르투 23~07시) — 심야 도착편은 검사가 안 된다.
+  {
+    id: 'pt-advance-notice',
+    category: 'permit',
+    title: '도착 통보',
+    shortLabel: '통보',
+    description:
+      '포르투갈 도착 48시간 전까지 도착 통보를 하세요.\n\n도착 공항의 여행자 진입지점(PEV)에 공식 서식(Aviso de Chegada)을 이메일로 보내요.\n운송사가 아니라 보호자나 위임받은 사람이 직접 보내야 해요.\n지정된 주소가 아닌 곳으로 보내면 처리되지 않아요.\n여유 있게 며칠 전에 미리 보내는 것을 권장해요.',
+    doneSummary: '포르투갈에 도착 통보를 했어요.',
+    cardLine: '포르투갈에 도착 통보를 하세요.',
+    applicability: { destinations: ['portugal'], species: 'all', tripType: 'all' },
+    order: 47,
+    deadline: { anchor: 'entry', daysBefore: 2 },
+    done: 'quarantine:pt_advance_notice_date',
+    inputs: [
+      {
+        key: 'pt_advance_notice_date',
+        label: '통보일',
+        type: 'date',
+        helpText: '여행자 진입지점(PEV)에 이메일로 통보한 날짜',
+      },
+    ],
+    links: [
+      {
+        url: 'https://www.dgav.pt/vaiviajar/conteudo/conteudo-animais-de-companhia/entrar-em-portugal-a-partir-de-um-pais-fora-da-ue-inclui-o-reino-unido-exceto-a-irlanda-do-norte/caes-e-gatos/aviso-de-chegada-como-fazer/',
+        label: '도착 통보 서식·방법',
+      },
+    ],
+    validationIds: ['eu.pt-advance-notice-48h-before-entry'],
   },
 
   // ── 사전 통지 (몰타 전용) ──────────────────────────────────────────
