@@ -458,6 +458,21 @@ export interface SubmitShareLinkInput {
   submitterNote?: string | null
 }
 
+/**
+ * 제출 원문(submitted_values) 저장 상한. 클라이언트가 보낸 임의 payload 라 무제한으로
+ * 받아 적지 않는다. 초과하면 원문만 생략하고 제출 자체는 정상 진행 — 보존은 사후 추적용
+ * 편의지, 고객의 제출을 막을 만한 사유가 아니다.
+ */
+const SUBMITTED_VALUES_MAX_BYTES = 128 * 1024
+
+/** 케이스에 실제로 쓰이는 값인지 — null·공백 문자열·빈 배열은 제출 로직이 전부 건너뛴다. */
+function hasMeaningfulValue(v: unknown): boolean {
+  if (v === null || v === undefined) return false
+  if (typeof v === 'string') return v.trim() !== ''
+  if (Array.isArray(v)) return v.length > 0
+  return true
+}
+
 export async function submitShareLink(
   input: SubmitShareLinkInput,
 ): Promise<Result<null>> {
@@ -620,6 +635,40 @@ export async function submitShareLink(
     const scope = resolveShareScopeToken(caseDestination, row.destination_scope)
     const useByDest = !!scope
 
+    // 완전히 빈 제출은 반려 — 링크를 '제출됨'으로 태우지 않는다.
+    //
+    // 폼은 빈 항목을 한 번 경고한 뒤 '그대로 보내기'로 빈 제출을 허용하고, 여기서는 빈 값이
+    // 전부 걸러지므로 케이스에 아무것도 쓰이지 않는다. 그런데도 예전에는 ok 를 돌려줘
+    // 링크가 소진되고 담당자에게 "정보를 입력했어요" 알림까지 갔다 — 고객은 보냈다고 믿고
+    // 담당자는 바뀐 게 없어 서로 어긋났다(2026-08-18 배유/추어). 링크를 살려둬야 고객이
+    // 같은 URL 로 다시 채워 보낼 수 있다.
+    //
+    // 파일만 첨부하고 값은 비우는 제출은 정상이다. 첨부는 값 제출보다 먼저 별도 액션
+    // (recordShareUploadedFiles)으로 이미 케이스에 기록되므로, 그 흔적이 있으면 통과시킨다.
+    // 같은 케이스에 동시 활성 링크가 여러 개면 다른 링크의 첨부를 이 링크 것으로 볼 수
+    // 있는데, 그 방향의 오판은 '빈 제출을 통과시킴' 이라 값을 잃지 않는다.
+    const submittedFieldCount =
+      [...Object.values(colUpdate), ...Object.values(dataUpdate)].filter(hasMeaningfulValue).length +
+      vaccineSubmissions.reduce((n, v) => n + v.entries.length, 0)
+    if (submittedFieldCount === 0) {
+      const linkCreatedMs = new Date(row.created_at).getTime()
+      const docs = Array.isArray(current.documents) ? (current.documents as unknown[]) : []
+      const hasLinkUpload = docs.some((d) => {
+        if (!d || typeof d !== 'object' || Array.isArray(d)) return false
+        const doc = d as { stepId?: unknown; uploadedAt?: unknown }
+        if (doc.stepId !== 'share-submission') return false
+        if (typeof doc.uploadedAt !== 'string') return false
+        const at = new Date(doc.uploadedAt).getTime()
+        return Number.isFinite(at) && at >= linkCreatedMs
+      })
+      if (!hasLinkUpload) {
+        return {
+          ok: false,
+          error: '입력된 내용이 없어요. 항목을 채우거나 파일을 첨부한 뒤 다시 보내주세요.',
+        }
+      }
+    }
+
     // colUpdate 처리 — by_dest 모드면 departure_date 같은 scoped 컬럼은 by_dest 로.
     const colNonScoped: Record<string, unknown> = {}
     let merged: Record<string, unknown> = { ...current }
@@ -692,6 +741,25 @@ export async function submitShareLink(
       updates.data = merged
     }
 
+    // 제출 원문 — 화이트리스트 필터 **전** 값 그대로 남긴다. 필터에 걸려 반영되지 않은
+    // 입력이야말로 추적 대상이라, 걸러낸 뒤를 저장하면 목적을 잃는다. 이게 없던 동안에는
+    // 케이스에 반영되지 않은 제출에 대해 "무엇을 보냈는지" 확인할 방법이 아예 없었다
+    // (case_history 는 반영된 차이만, 폼의 localStorage 임시저장은 제출 성공 시 삭제).
+    const submittedValues = (() => {
+      try {
+        const json = JSON.stringify(input.values ?? {})
+        if (Buffer.byteLength(json, 'utf8') <= SUBMITTED_VALUES_MAX_BYTES) return input.values
+        Sentry.captureMessage('share submitted_values too large', {
+          level: 'warning',
+          tags: { feature: 'share-form' },
+          extra: { bytes: Buffer.byteLength(json, 'utf8'), keys: Object.keys(input.values ?? {}).length },
+        })
+        return null
+      } catch {
+        return null
+      }
+    })()
+
     // Atomic claim
     const submittedAt = new Date().toISOString()
     const { data: claimed, error: markErr } = await admin
@@ -700,6 +768,7 @@ export async function submitShareLink(
         submitted_at: submittedAt,
         submitter_name: input.submitterName?.trim() || null,
         submitter_note: input.submitterNote?.trim() || null,
+        submitted_values: submittedValues,
       })
       .eq('id', row.id)
       .is('submitted_at', null)
@@ -747,6 +816,8 @@ export async function submitShareLink(
         .update(updates)
         .eq('id', row.case_id)
       if (upErr) {
+        // submitted_values 는 되돌리지 않는다 — 저장에 실패한 제출이야말로 "무엇을 보냈는지"
+        // 를 알아야 하는 경우다. 링크는 다시 active 가 되고, 재제출 시 새 원문으로 덮인다.
         await admin
           .from('case_share_links')
           .update({

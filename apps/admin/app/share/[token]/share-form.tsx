@@ -210,17 +210,14 @@ export function ShareForm({ initial }: Props) {
   }, [values, storageKey])
 
   if (view.status === 'submitted' || done) {
+    // 부연 문구 없이 '제출 완료'만. 예전엔 "정보가 … 여정에 반영되었습니다"라고 단언했는데,
+    // 이 화면은 제출이 접수됐을 때 뜰 뿐 반영 여부를 보증하지 않는다 — 빈 값만 담겨 케이스에
+    // 아무것도 안 쓰인 경우에도 같은 문구가 떠서, 고객은 보냈다고 믿고 담당자는 바뀐 게 없어
+    // 서로 어긋났다(2026-08-18 배유/추어). 못 지키는 약속은 하지 않는다.
     return (
       <StatusScreen
         eyebrow="Completed"
         title="제출 완료"
-        description={
-          <>
-            입력해주신 정보가 {view.org_name || '담당 조직'} 여정에 반영되었습니다.
-            <br />
-            감사합니다.
-          </>
-        }
         icon={<CheckCircle2 className="mx-auto mb-6 text-emerald-600" size={40} />}
       />
     )
@@ -568,7 +565,8 @@ function StatusScreen({
 }: {
   eyebrow: string
   title: string
-  description: React.ReactNode
+  /** 없으면 본문 단락 자체를 렌더하지 않는다(제목만 남는 화면 — 빈 <p> 여백 방지). */
+  description?: React.ReactNode
   icon?: React.ReactNode
 }) {
   return (
@@ -578,12 +576,19 @@ function StatusScreen({
         <p className="mb-4 font-mono text-[11px] uppercase tracking-[2px] text-muted-foreground">
           {eyebrow}
         </p>
-        <h1 className="mb-3 font-serif text-2xl font-medium tracking-tight text-foreground">
+        <h1
+          className={cn(
+            'font-serif text-2xl font-medium tracking-tight text-foreground',
+            description ? 'mb-3' : '',
+          )}
+        >
           {title}
         </h1>
-        <p className="text-[15px] leading-relaxed text-muted-foreground">
-          {description}
-        </p>
+        {description && (
+          <p className="text-[15px] leading-relaxed text-muted-foreground">
+            {description}
+          </p>
+        )}
       </div>
     </div>
   )
