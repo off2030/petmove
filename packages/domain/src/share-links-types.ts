@@ -19,6 +19,12 @@ export interface ShareLinkRow {
   submitted_at: string | null
   submitter_name: string | null
   submitter_note: string | null
+  /**
+   * 보호자가 제출한 원문 payload(화이트리스트 필터 **전**). 필터에 걸려 케이스에 반영되지
+   * 않은 입력까지 남기는 게 목적이라, 걸러낸 뒤 값을 저장하면 의미가 없다.
+   * 이 컬럼 도입(2026-08-18) 이전 제출 행은 null.
+   */
+  submitted_values: Record<string, unknown> | null
   revoked_at: string | null
 }
 
