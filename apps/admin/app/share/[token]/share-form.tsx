@@ -126,6 +126,29 @@ function isEmptyValue(field: ShareFieldSpec, v: unknown): boolean {
   return false
 }
 
+/**
+ * 업로드 실패 문구 — Supabase Storage 는 영어 원문만 준다("Failed to fetch",
+ * "Invalid signature", "The resource already exists" 등). 보호자 화면에 그대로 띄우면
+ * 무슨 뜻인지도 무엇을 해야 하는지도 알 수 없어(2026-08-18 신고) 한국어로 바꿔 준다.
+ * 원문은 위 Sentry.captureMessage 가 이미 들고 간다.
+ */
+function uploadErrorMessage(raw: string): string {
+  const m = (raw || '').toLowerCase()
+  if (m.includes('failed to fetch') || m.includes('network') || m.includes('timeout')) {
+    return '네트워크가 끊겨 파일을 올리지 못했어요. 연결을 확인하고 다시 시도해 주세요.'
+  }
+  if (m.includes('signature') || m.includes('expired') || m.includes('jwt')) {
+    return '업로드 유효시간이 지났어요. 페이지를 새로고침한 뒤 다시 올려 주세요.'
+  }
+  if (m.includes('exceeded') || m.includes('too large') || m.includes('413')) {
+    return '파일 용량이 너무 커요. 각 8MB 이하로 줄여서 올려 주세요.'
+  }
+  if (m.includes('already exists') || m.includes('duplicate')) {
+    return '이미 올라간 파일이에요. 페이지를 새로고침한 뒤 확인해 주세요.'
+  }
+  return '파일을 올리지 못했어요. 잠시 후 다시 시도해 주세요. 계속되면 담당자에게 이 코드를 알려주세요. (SL-10)'
+}
+
 export function ShareForm({ initial }: Props) {
   const [view] = useState(initial)
   const [values, setValues] = useState<Record<string, unknown>>(() => {
@@ -298,7 +321,7 @@ export function ShareForm({ initial }: Props) {
               tags: { feature: 'share-upload' },
               extra: { error: upErr.message, slot: pending[i].slotKey, name: pending[i].file.name, size: pending[i].file.size, mime: pending[i].file.type },
             })
-            setError(`파일 업로드에 실패했습니다: ${upErr.message}`)
+            setError(uploadErrorMessage(upErr.message))
             return
           }
           uploaded.push({ path: t.path, name: t.name, size: pending[i].file.size, mime: pending[i].file.type })

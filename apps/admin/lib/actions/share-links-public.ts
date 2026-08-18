@@ -21,7 +21,29 @@
  *  회귀. 입력 정보는 cases 테이블에 직접 반영되므로 펫무브 앱 연동은 DB 로 그대로 유지.
  */
 
+import * as Sentry from '@sentry/nextjs'
 import { reportActionError } from './_report-error'
+
+/**
+ * 고객(보호자)에게 보여줄 실패 문구.
+ *
+ * 이 파일의 네 액션은 **로그인하지 않은 보호자**가 여는 /share 폼이 호출한다. 그동안
+ * Postgres·Storage 원문(`error.message`)이나 예외 메시지를 그대로 돌려줘서, 화면에
+ * "invalid input syntax for type date" 같은 **영어 문장**이 떴다 — 보호자는 무슨 뜻인지도,
+ * 무엇을 고쳐야 하는지도 알 수 없다(2026-08-18 일본 고객 신고).
+ *
+ * 원문은 Sentry 로만 보내고 화면에는 한국어 + 코드만 남긴다. 코드는 문의가 왔을 때
+ * 어느 지점인지 바로 찾기 위한 것.
+ */
+function customerError(raw: unknown, code: string, hint?: string): string {
+  const detail = raw instanceof Error ? raw.message : typeof raw === 'string' ? raw : String(raw)
+  Sentry.captureMessage(`share ${code}`, {
+    level: 'warning',
+    tags: { feature: 'share-form', code },
+    extra: { detail },
+  })
+  return `${hint ?? '처리 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.'} 계속되면 담당자에게 이 코드를 알려주세요. (${code})`
+}
 import { randomUUID } from 'node:crypto'
 import { createAdminClient } from '@petmove/auth'
 import {
@@ -371,7 +393,7 @@ export async function getShareLinkByToken(
       .select('*')
       .eq('token', token)
       .maybeSingle()
-    if (lErr) return { ok: false, error: lErr.message }
+    if (lErr) return { ok: false, error: customerError(lErr, 'SL-01', '링크 정보를 불러오지 못했어요.') }
     if (!link) return { ok: false, error: '유효하지 않은 링크입니다' }
 
     const row = link as ShareLinkRow
@@ -424,7 +446,7 @@ export async function getShareLinkByToken(
       },
     }
   } catch (e) {
-    return { ok: false, error: reportActionError(e, 'share-links-public.getShareLinkByToken') }
+    return { ok: false, error: customerError(e, 'SL-06', '링크를 여는 중 문제가 발생했어요.') }
   }
 }
 
@@ -447,7 +469,7 @@ export async function submitShareLink(
       .select('*')
       .eq('token', input.token)
       .maybeSingle()
-    if (lErr) return { ok: false, error: lErr.message }
+    if (lErr) return { ok: false, error: customerError(lErr, 'SL-02', '링크 정보를 불러오지 못했어요.') }
     if (!link) return { ok: false, error: '유효하지 않은 링크입니다' }
     const row = link as ShareLinkRow
     const status = shareLinkStatus(row)
@@ -683,7 +705,7 @@ export async function submitShareLink(
       .is('submitted_at', null)
       .select('id')
       .maybeSingle()
-    if (markErr) return { ok: false, error: markErr.message }
+    if (markErr) return { ok: false, error: customerError(markErr, 'SL-03', '제출 상태를 저장하지 못했어요.') }
     if (!claimed) return { ok: false, error: '이미 제출된 링크입니다' }
 
     if (Object.keys(updates).length > 0) {
@@ -737,7 +759,7 @@ export async function submitShareLink(
         if (upErr.message.includes('cases_microchip_global_unique')) {
           return { ok: false, error: '이미 등록된 마이크로칩 번호입니다' }
         }
-        return { ok: false, error: upErr.message }
+        return { ok: false, error: customerError(upErr, 'SL-04', '입력하신 내용을 저장하지 못했어요.') }
       }
 
       // best-effort — 이력 적재 실패가 제출을 되돌리지는 않는다.
@@ -749,7 +771,7 @@ export async function submitShareLink(
 
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: reportActionError(e, 'share-links-public.submitShareLink') }
+    return { ok: false, error: customerError(e, 'SL-07', '제출하지 못했어요.') }
   }
 }
 
@@ -869,7 +891,7 @@ export async function createShareUploadTickets(
     }
     return { ok: true, value: { tickets } }
   } catch (e) {
-    return { ok: false, error: reportActionError(e, 'share-links-public.createShareUploadTickets') }
+    return { ok: false, error: customerError(e, 'SL-08', '파일 업로드를 준비하지 못했어요.') }
   }
 }
 
@@ -949,9 +971,9 @@ export async function recordShareUploadedFiles(
       notes: [...existingNotes, ...newNotes],
     }
     const { error } = await admin.from('cases').update({ data: nextData }).eq('id', row.case_id)
-    if (error) return { ok: false, error: error.message }
+    if (error) return { ok: false, error: customerError(error, 'SL-05', '첨부 파일 정보를 저장하지 못했어요.') }
     return { ok: true, value: { count: uploaded.length } }
   } catch (e) {
-    return { ok: false, error: reportActionError(e, 'share-links-public.recordShareUploadedFiles') }
+    return { ok: false, error: customerError(e, 'SL-09', '첨부 파일을 저장하지 못했어요.') }
   }
 }
