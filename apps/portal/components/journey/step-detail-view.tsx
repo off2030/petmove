@@ -1933,13 +1933,15 @@ export function StepDetailView({
       const reserved = (jpExport.date ?? '').trim()
       const resErr = validateJpExportReservationDate(reserved, { data, destination: null, departureDate: null })
       if (resErr) return resErr
-      // 신청일 마감 — 예약일(없으면 귀국일) −10일. 서버 updateJpExportQuarantineFields 와 동일.
+      // 신청일 마감 — 예약일(없으면 귀국일) −14일. 서버 updateJpExportQuarantineFields 와 동일.
+      // 14일: 動物検疫所 "輸出の14日前まで" (maff.go.jp/aqs, 2026-08 확인). 앵커를 예약일로
+      // 두면 공식 기준(수출일=귀국일)보다 이르거나 같아 항상 안전하다.
       const app = (jpExport.applicationDate ?? '').trim()
       if (app) {
         const returnDate = typeof data.return_date === 'string' ? data.return_date : ''
         const anchor = reserved || (returnDate.length >= 10 ? returnDate.slice(0, 10) : '')
-        if (anchor && app > addDays(anchor, -10)) {
-          return '일본 수출 검역은 최소 10일 전에 신청, 예약해야 해요.'
+        if (anchor && app > addDays(anchor, -14)) {
+          return '일본 수출 검역은 최소 14일 전에 신청, 예약해야 해요.'
         }
       }
       return null

@@ -633,27 +633,28 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r40) out.push(r40)
       }
-      // 일본 수출 검역 신청 — 귀국 10일 전. 왕복 + 귀국일 있음 + 완료 전에만.
-      // (귀국일 존재만 보면 편도 전환 후 잔존 귀국일에 알림이 샘 — 카드 필터와 같은 tripType 기준.)
+      // 일본 수출 검역 신청 — 귀국 14일 전(動物検疫所 "輸出の14日前まで"). 왕복 + 귀국일 있음 +
+      // 완료 전에만. (귀국일 존재만 보면 편도 전환 후 잔존 귀국일에 알림이 샘 — 카드 필터와
+      // 같은 tripType 기준.)
       if (ret && getTripType(asRecord(flat.data), token) === 'round' && deriveJpExportQuarantineStatus(flat) !== 'done') {
-        const r17 = leadReminder(
+        const r21 = leadReminder(
           flat,
-          `${token}|jp-export-17`,
+          `${token}|jp-export-21`,
           ret,
-          17,
-          '일본 수출 검역 신청 마감이 일주일 남았어요. 귀국 10일 전까지 신청·예약하세요.',
+          21,
+          '일본 수출 검역 신청 마감이 일주일 남았어요. 귀국 14일 전까지 신청·예약하세요.',
           now,
         )
-        if (r17) out.push(r17)
-        const r10 = leadReminder(
+        if (r21) out.push(r21)
+        const r14 = leadReminder(
           flat,
-          `${token}|jp-export-10`,
+          `${token}|jp-export-14`,
           ret,
-          10,
-          '오늘까지 일본 수출 검역 신청이 필요해요(귀국 10일 전).',
+          14,
+          '오늘까지 일본 수출 검역 신청이 필요해요(귀국 14일 전).',
           now,
         )
-        if (r10) out.push(r10)
+        if (r14) out.push(r14)
       }
     } else if (key === 'hawaii') {
       // 하와이 입국 신청(AQS 서류 사전 제출) — 도착 10일 전 마감. 일본 사전 신고(D-47·D-40)와
