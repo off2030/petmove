@@ -16,6 +16,7 @@ import {
   flattenCaseForDestination,
   getDepartureDate,
   getVetVisitDate,
+  getTripType,
   getVetVisitWindowDays,
   matchesDestinationKey,
   parseDestinations,
@@ -635,7 +636,16 @@ function isJapan(row: CaseRow): boolean {
  * 그 외(비일본, 또는 편도)는 수출 칸을 숨기고 완료 판정에서도 제외한다.
  */
 function exportApplies(row: CaseRow): boolean {
-  return isJapan(row) && !!importReportReturnDate(row)
+  if (!isJapan(row)) return false
+  // ⚠️ 왕복 판정은 **여정 종류(trip_type)** 로 한다 — 귀국일 존재만 보면 안 된다(2026-08-19).
+  // 편도로 바꾼 케이스에도 by_dest 에 귀국일이 남아 있는 일이 흔하고(항공편 입력·추출 때
+  // 왕복 칸이 함께 채워졌다가 편도 전환), 그러면 편도인데 수출 칸이 '대기'로 떠 영영
+  // 완료되지 않는 줄이 신고 탭에 남는다. reminders.ts 의 일본 수출검역 알림은 이미 같은
+  // 이유로 tripType 기준 — 화면과 알림 기준을 맞춘다.
+  // getTripType 은 trip_type 미설정 시 'round' 를 돌려주므로 옛 케이스는 영향 없다.
+  const dest = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
+  if (getTripType((row.data ?? {}) as Record<string, unknown>, dest) !== 'round') return false
+  return !!importReportReturnDate(row)
 }
 
 /**
