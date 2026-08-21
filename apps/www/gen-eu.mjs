@@ -42,7 +42,7 @@ import { q, B, more, ul } from './helpers.mjs'
 
 const MARK = {
   summary: '<h2 id="%ED%95%B5%EC%8B%AC%EC%A0%88%EC%B0%A8-%EC%9A%94%EC%95%BD">핵심절차 요약</h2>',
-  stepsH3: '<h3 id="%EB%8F%85%EC%9D%BC-%EC%9E%85%EA%B5%AD-%EC%A4%80%EB%B9%84-9%EB%8B%A8%EA%B3%84">독일 입국 준비 9단계</h3>',
+  stepsH3: '<h3 id="%EB%8F%85%EC%9D%BC-%EC%9E%85%EA%B5%AD-%EC%A4%80%EB%B9%84-8%EB%8B%A8%EA%B3%84">독일 입국 준비 8단계</h3>',
   breedH2: '<h2 id="%EB%B0%98%EC%9E%85-%EA%B0%80%EB%8A%A5-%EA%B2%AC%EC%A2%85-%ED%99%95%EC%9D%B8">',
   chipH2: '<h2 id="%EB%A7%88%EC%9D%B4%ED%81%AC%EB%A1%9C%EC%B9%A9-%EC%9D%B4%EC%8B%9D">',
   returnTiter: '<p><span style="white-space: pre-wrap;">독일은 한국이 지정한 광견병 비발생 지역이라 <strong style="white-space: pre-wrap;">귀국할 때는 항체검사 결과지가 필요하지 않습니다</strong>. 이 검사는 입국용으로만 쓰입니다.</span></p>',
@@ -150,18 +150,22 @@ for (const spec of SPECS) {
     console.warn('⚠️ 원형 잔재:', spec.slug)
   }
 
+  // 최종 수정일은 이미 생성된 파일 값을 이어받는다(재생성이 날짜를 되돌리지 않도록).
+  const outPath = path.join(DOCS, `${spec.slug}-pet-travel-guide.json`)
+  const prevUpdated = existsSync(outPath) ? JSON.parse(readFileSync(outPath, 'utf8')).updated : null
+
   const json = {
     slug: `${spec.slug}-pet-travel-guide`,
     kind: 'docs',
     title,
     description: `수의사가 직접 정리한 2026년 최신 가이드입니다. 100% 믿을 수 있는 강아지·고양이 ${n} 입국 준비 방법을 알려드립니다. ${spec.desc}`,
     category: '지역별 가이드',
-    updated: '2026.08.17',
+    updated: prevUpdated ?? '2026.08.17',
     minutes: 9,
     feature_image: cover_,
     html: s,
   }
-  writeFileSync(path.join(DOCS, json.slug + '.json'), JSON.stringify(json, null, 1) + '\n')
+  writeFileSync(outPath, JSON.stringify(json, null, 1) + '\n')
   await cover(spec)
   console.log('✔', json.slug, (s.length / 1000).toFixed(1) + 'k')
 }
