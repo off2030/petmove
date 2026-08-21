@@ -38,6 +38,7 @@ import {
   validateTwEntryDate,
   buildDateRuleContext,
   bookedRecordedAtKey,
+  clearLegacyReportStatusForStep,
   isBookedStep,
   findDestinationKey,
   importPermitPrerequisiteError,
@@ -1413,7 +1414,7 @@ export async function markAdvanceNotificationApprovalSkipped(
     // 완료 시그널 — admin demote 상태를 자동 해제.
     delete nextData.advance_notification_admin_demoted_at
     // stored 클리어해 derive 모드 전환.
-    delete nextData.import_import_status
+    clearLegacyReportStatusForStep(nextData, 'advance-notification', 'import')
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1461,7 +1462,7 @@ export async function markAdvanceNotificationInProgress(
       advance_notification_in_progress: true,
     }
     // 운영자 수동 stored 값보다 보호자의 적극적 입력을 우선 — derive 모드로 전환(date-patch 와 동일).
-    delete nextData.import_import_status
+    clearLegacyReportStatusForStep(nextData, 'advance-notification', 'import')
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1514,7 +1515,7 @@ export async function markJpExportQuarantineReservationSkipped(
     // 완료 시그널 — admin demote 상태를 자동 해제.
     delete nextData.jp_export_quarantine_admin_demoted_at
     // stored 클리어해 derive 모드 전환.
-    delete nextData.import_export_status
+    clearLegacyReportStatusForStep(nextData, 'jp-export-quarantine', 'export')
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1566,7 +1567,7 @@ export async function markJpExportQuarantineInProgress(
       ...prev,
       jp_export_quarantine_in_progress: true,
     }
-    delete nextData.import_export_status
+    clearLegacyReportStatusForStep(nextData, 'jp-export-quarantine', 'export')
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1622,7 +1623,7 @@ export async function updateAdvanceNotificationDate(
     }
     // 신고탭 stored 값을 클리어해 derive 모드로 전환 — portal 보호자의 적극적 입력이
     // 운영자의 기존 수동 상태보다 우선시되도록. 액션이 일어난 케이스만 영향.
-    delete nextData.import_import_status
+    clearLegacyReportStatusForStep(nextData, 'advance-notification', 'import')
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -3090,7 +3091,7 @@ export async function updateJpExportQuarantineFields(
     // (admin 의 명시적 액션이라 portal 입력 변화로 자동 무력화하지 않음).
     // 신청일·예약·확정 어떤 시점이든 보호자가 portal 에서 적극적 입력을 했다는 뜻 —
     // stored 클리어해 derive 모드로 전환 (운영자 수동값이 있었다면 그 시점부터만 무력화).
-    delete nextData.import_export_status
+    clearLegacyReportStatusForStep(nextData, 'jp-export-quarantine', 'export')
 
     const { data: updated, error } = await admin
       .from('cases')

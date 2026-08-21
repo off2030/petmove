@@ -9,6 +9,7 @@ export { JOURNEY_STEP_CATALOG, permitDeliverablesForDestination } from './catalo
 export * from './dated-steps'
 export * from './attachment-naming'
 export * from './report-status'
+export * from './report-slots'
 export * from './rabies-chain'
 export * from './lifecycle'
 export * from './feedback'

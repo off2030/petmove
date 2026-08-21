@@ -29,6 +29,10 @@ import { fileURLToPath } from 'node:url'
 
 import { JOURNEY_STEP_CATALOG } from '../packages/domain/src/journey-steps/catalog'
 import { resolveDatedStepField } from '../packages/domain/src/journey-steps/dated-steps'
+import {
+  destinationsWithReportBinding,
+  resolveReportBinding,
+} from '../packages/domain/src/journey-steps/report-slots'
 import { resolveStepForDestination } from '../packages/domain/src/journey-steps/destination-overrides'
 import { ALL_PROCEDURE_CHECKS, checkCountryKeys } from '../packages/domain/src/procedure-checks/registry'
 import { DESTINATION_OVERRIDES, destinationKeysWhere } from '../packages/domain/src/destination-config'
@@ -1186,6 +1190,44 @@ function main(): void {
     console.error(
       '\n  고치는 법: packages/domain/src/journey-steps/dated-steps.ts 의 파생을 확인하세요.' +
         '\n  목적지마다 필드가 갈리는 카드가 정말 필요하면 맵을 목적지별로 쪼개야 합니다.',
+    )
+    process.exit(1)
+  }
+
+  // ── 신고 탭 ↔ 여정 카드 연결 ────────────────────────────────────────────
+  // 목적지 프로파일의 `report: { importStep, exportStep }` 이 가리키는 카드가
+  //   ① 그 목적지에 실제로 뜨고
+  //   ② 모델을 해석할 수 있어야(신청형 spec 또는 `dated:` 날짜 필드) 한다.
+  // 어긋나면 펫무브워크 신고 탭에서 상태를 바꿔도 앱 카드에 반영되지 않는다 —
+  // 하와이가 아예 연결이 없어 그렇게 굴렀다(2026-08-21).
+  const reportGaps: string[] = []
+  for (const decl of destinationsWithReportBinding()) {
+    for (const slot of ['import', 'export'] as const) {
+      const stepId = slot === 'import' ? decl.importStep : decl.exportStep
+      if (!stepId) continue
+      const step = JOURNEY_STEP_CATALOG.find((x) => x.id === stepId)
+      if (!step) {
+        reportGaps.push(`  [${decl.key}] ${slot}: 카드 '${stepId}' 가 카탈로그에 없습니다.`)
+        continue
+      }
+      if (!appliesToDest(step, decl.key)) {
+        reportGaps.push(`  [${decl.key}] ${slot}: 카드 '${stepId}' 가 이 목적지에 뜨지 않습니다.`)
+        continue
+      }
+      if (!resolveReportBinding(decl.key, slot)) {
+        reportGaps.push(
+          `  [${decl.key}] ${slot}: 카드 '${stepId}' 의 모델을 해석할 수 없습니다` +
+            ` (신청형 spec 도 아니고 done 이 'dated:' 도 아님).`,
+        )
+      }
+    }
+  }
+  if (reportGaps.length > 0) {
+    console.error('✗ 신고 탭 ↔ 여정 카드 연결이 끊겼습니다 — 신고 탭 상태가 앱에 반영되지 않습니다.\n')
+    console.error(reportGaps.join('\n'))
+    console.error(
+      '\n  고치는 법: destination-config 의 `report` 선언을 그 목적지에 실제로 뜨는 카드로 맞추세요.' +
+        '\n  신청형 카드를 새로 이으려면 report-slots.ts 의 APPLICATION_SPEC_BY_STEP 에 spec 을 등록하세요.',
     )
     process.exit(1)
   }

@@ -214,6 +214,23 @@ export interface DestinationOverride {
     docName?: string
   }
   /**
+   * 펫무브워크 **신고 탭 '수입'·'수출' 칸이 이어지는 여정 카드** — 카드 id 하나만 적는다.
+   * 상태 판정·저장 모델·필드는 전부 그 카드 선언에서 파생한다([[resolveReportBinding]]).
+   *
+   * ⛔ admin 안에 나라 분기를 다시 만들지 말 것 — 예전엔 read·write·폴백 세 벌의 손 명단이
+   *   있었고, 명단에 없는 나라(하와이)는 신고 탭 '완료'가 앱 카드에 전혀 반영되지 않았다
+   *   (2026-08-21). 선언이 없으면 그 칸은 운영자 수동값(by_dest 스코핑)으로만 남는다.
+   *
+   * 어느 카드를 걸지는 편집 판단이다 — 하와이처럼 '입국 신청'과 'CDC 신고'가 둘 다 신고인
+   * 나라가 있어 카드에서 자동으로 고를 수 없다. 그래서 프로파일에 명시한다.
+   */
+  report?: {
+    /** '수입' 칸과 이어질 카드 id (예: 'advance-notification', 'hi-import-declaration'). */
+    importStep?: string
+    /** '수출' 칸과 이어질 카드 id. 선언한 나라만 수출 칸이 뜬다(현재 일본 하나). */
+    exportStep?: string
+  }
+  /**
    * 내원·임상검진 윈도우("출국일 포함 N일 이내"의 N — 기본 10).
    * 종 제한이 필요하면 배열로(촌충국 개 전용 4일 등). `VET_VISIT_WINDOW_OVERRIDES` 의 파생원.
    */
@@ -248,6 +265,8 @@ export interface DestinationOverride {
 export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   japan: {
     keywords: ['일본', 'japan'],
+    // 신고 탭 — 수입=NACCS 사전 신고, 수출=일본 수출 검역 신청(왕복 전용 카드).
+    report: { importStep: 'advance-notification', exportStep: 'jp-export-quarantine' },
     archetype: 'jp-2dose',
     rabies: { doses: 2 },
     titer: { entryValidityMonths: 24 },
@@ -528,6 +547,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   thailand: {
     keywords: ['태국', 'thailand'],
+    // 신고 탭 수입 = 수입 허가(R.6) 신청 카드.
+    report: { importStep: 'import-permit' },
     archetype: 'sea-permit',
     // 1회 접종 + "최근 접종 12개월 이내" 관례 — 1년 유효기간만 취급(다년 백신 실무상 미인정).
     rabies: {
@@ -564,6 +585,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   philippines: {
     keywords: ['필리핀', 'philippines'],
+    // 신고 탭 수입 = 수입 허가(SPSIC) 신청 카드.
+    report: { importStep: 'import-permit' },
     archetype: 'sea-permit',
     // 1회 접종 + "최근 접종 12개월 이내" 관례 — 태국과 동일(다년 백신 실무상 미인정).
     rabies: { doses: 1, oneYearVaccineOnly: true },
@@ -1017,6 +1040,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   //     hawaii_extra 에 묶여 있어 'japan' 으로 바꾸면 발급 서식이 깨진다.
   hawaii: {
     keywords: ['하와이', 'hawaii'],
+    // 신고 탭 수입 = 하와이 입국 신청(AQS·HIPOP) 카드. CDC 신고(us-cdc-dog-import-form)도
+    //   같은 자리의 '신고' 지만, 하와이 주(州) 검역 신청 쪽이 신고 탭이 추적하는 절차다.
+    report: { importStep: 'hi-import-declaration' },
     archetype: 'jp-2dose',
     // 광견병 = 평생 2회(1차 + 부스터). 31일 간격·출국 31일 전·미만료는 hi.ts 가 검증.
     // 최소 연령 = hi.ts 보수 기준(생후 91일 AND 캘린더 3개월). buildRabiesCard 가 카드 문구·
@@ -1203,6 +1229,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // (Certificate number 는 후처리 수기 입력 — EQC No. 라벨이 일본 전용이라 공유하지 않음.)
     // 규정 상세·출처는 procedure-checks/tw.ts 헤더 주석.
     keywords: ['대만', 'taiwan'],
+    // 신고 탭 수입 = 수입 허가(APHIA e-permit) 신청 카드.
+    report: { importStep: 'import-permit' },
     // minAgeDays 를 두지 않는다 — 베트남 규정은 일수가 아니라 '생후 3개월(달력)'이고,
     // 판정은 카드의 earliest.monthsAfter + date-rules meetsCalendarAge 가 담당한다.
     rabies: {

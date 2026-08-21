@@ -5,7 +5,12 @@ import { computeAutoFill, getVetVisitWindowDays } from '@petmove/domain'
 import { evaluateAndNotify } from './system-notifications'
 import {
   isDestinationScopedKey,
+  destinationsWithReportBinding,
   parseDestinations,
+  planReportSlotWrite,
+  REPORT_LEGACY_STATUS_KEY,
+  reportSlotSignalKeys,
+  resolveReportBinding,
   resolveTabActiveDest,
   readByDestValue,
   stampDocsChecklistCompletion,
@@ -13,6 +18,7 @@ import {
   flattenCaseForDestination,
   clearExtraValueWithLegacy,
   type CaseRow,
+  type ReportSlot,
 } from '@petmove/domain'
 
 const REGULAR_COLUMNS = new Set([
@@ -111,46 +117,41 @@ function validateVetVisitVsDeparture(
 }
 
 /**
- * 재출국(이전 출국일이 과거 → 새 출국일 입력) 시 이전 여정의 **신고 완료·진행 시그널**을 모두
- * 비운다. 옛 코드는 legacy stored(`import_import_status`/`import_export_status`)만 지웠는데,
- * 일본·태국·필리핀은 derive 모델로 전환돼 완료가 stored 가 아닌 시그널(skip 플래그·신청일)에서
- * 도출된다(report-status.ts). 그래서 stored 만 지우면 신고 탭에서 이미 다녀온 케이스가 새 출국일로
- * 다시 올라와도 '완료'로 남는다(=버그). dismissImportReport 의 'not_started' 클리어와 동일한
- * 필드를 비운다. 첨부(documents)·허가번호(permit_no)는 실제 산출물이라 손대지 않는다(dismiss 동일).
- *
- * scoped 키(jp_export_quarantine_application_date, import_permit_*)는 활성 여행지 by_dest 잔존도
- * null sentinel 로 비워야 derive 가 되살아나지 않는다. `data` 는 in-place 로 정리(top-level delete +
- * by_dest 는 새 객체로 교체 — 호출측 currentData 앨리어싱 방지). 시그널이 하나라도 있어 실제로
- * 비웠으면 true.
+ * 재출국 시 비울 **신고 완료·진행 시그널** 목록 — 카드 연결에서 파생한다(2026-08-21).
+ * 손으로 적던 시절 하와이 입국 신청(hi_import_declaration_date)이 빠져 있었다 — 신고 탭의
+ * 다른 손 명단들과 같은 사고다. 새 목적지는 프로파일에 `report: { importStep }` 만 선언하면
+ * 여기에 자동으로 들어온다.
  */
-const REDEPARTURE_REPORT_SIGNAL_KEYS = [
-  // 사전 신고(NACCS)
-  'import_import_status',
-  'advance_notification_date',
-  'advance_notification_approval_skipped',
-  'advance_notification_admin_demoted_at',
-  'advance_notification_in_progress',
-  // 일본 수출검역
-  'import_export_status',
-  'jp_export_quarantine_application_date',
-  'jp_export_quarantine_reservation_skipped',
-  'jp_export_quarantine_confirmed',
-  'jp_export_quarantine_admin_demoted_at',
-  'jp_export_quarantine_in_progress',
-  // 수입 허가(태국·필리핀 등)
-  'import_permit_application_date',
-  'import_permit_issued_skipped',
-  'import_permit_in_progress',
-  // 재출국이므로 숨김 해제 — 다시 신고 탭에 노출
-  'import_report_dismissed',
-] as const
-const REDEPARTURE_SCOPED_SIGNAL_KEYS = [
-  'jp_export_quarantine_application_date',
-  'import_permit_application_date',
-  'import_permit_issued_skipped',
-  'import_permit_in_progress',
-] as const
+const REDEPARTURE_REPORT_SIGNAL_KEYS: readonly string[] = (() => {
+  const out = new Set<string>([
+    // 슬롯별 legacy 수동값(카드 연결이 없는 목적지용) + 옛 모델 잔재.
+    'import_import_status',
+    'import_export_status',
+    'jp_export_quarantine_confirmed',
+    // 재출국이므로 숨김 해제 — 다시 신고 탭에 노출
+    'import_report_dismissed',
+  ])
+  for (const d of destinationsWithReportBinding()) {
+    for (const k of reportSlotSignalKeys(d.key)) out.add(k)
+  }
+  return Array.from(out)
+})()
+/** 위 목록 중 by_dest 스코핑 키 — top-level delete 만으론 부족해 null sentinel 도 찍는다. */
+const REDEPARTURE_SCOPED_SIGNAL_KEYS: readonly string[] =
+  REDEPARTURE_REPORT_SIGNAL_KEYS.filter(isDestinationScopedKey)
 
+/**
+ * 재출국(이전 출국일이 과거 → 새 출국일 입력) 시 이전 여정의 신고 시그널을 모두 비운다.
+ * 옛 코드는 legacy stored(`import_import_status`/`import_export_status`)만 지웠는데, 완료는
+ * stored 가 아닌 카드 시그널(skip 플래그·신청일·완료일)에서 도출된다. 그래서 stored 만
+ * 지우면 이미 다녀온 케이스가 새 출국일로 다시 올라와도 '완료'로 남는다(=버그).
+ * dismissImportReport 의 'not_started' 클리어와 같은 필드를 비운다. 첨부(documents)·
+ * 허가번호(permit_no)는 실제 산출물이라 손대지 않는다(dismiss 동일).
+ *
+ * scoped 키는 활성 여행지 by_dest 잔존도 null sentinel 로 비워야 derive 가 되살아나지 않는다.
+ * `data` 는 in-place 로 정리(top-level delete + by_dest 는 새 객체로 교체 — 호출측 currentData
+ * 앨리어싱 방지). 시그널이 하나라도 있어 실제로 비웠으면 true.
+ */
 function clearReportSignalsOnRedeparture(
   data: Record<string, unknown>,
   activeDest: string | null,
@@ -975,211 +976,58 @@ export async function restoreToHistoryPoint(
   }
 }
 
-// ───── 신고 탭 상태 변경 (일본 케이스 양방향 sync) ─────
+// ───── 신고 탭 상태 변경 (여정 카드 양방향 sync) ─────
 //
-// admin 신고탭 dropdown 변경 시 portal data 필드를 atomic 하게 patch.
-// portal 의 사전신고·수출검역 step 시그널과 같은 키를 공유 — 어느 쪽 변경이든 즉시 반영.
+// admin 신고탭 dropdown 변경 시 그 목적지의 **여정 카드 시그널**을 atomic 하게 patch 한다.
+// 어느 카드와 이어지는지는 목적지 프로파일이 단일 출처 — [[resolveReportBinding]].
 //
-// 매핑:
-//   - not_started: 진행 시그널 제거 (date·skipped·confirmed·demoted_at). 첨부는 portal
-//     관할이라 손대지 않음 — 첨부가 남아 있으면 derive 가 'done' 으로 잡으므로 admin 의
-//     '대기' 의도가 표면에 안 보일 수 있음. UI 에서 confirm 시 안내.
-//   - in_progress: 현재 done 시그널이 있으면 demote (admin_demoted_at = now).
-//     date 가 비어 있으면 today 로 set (derive 가 'in_progress' 로 잡히도록).
-//   - done: skipped (사전신고) / confirmed (수출검역, date+time 있는 경우만; 없으면 skipped)
-//     set + demoted_at 클리어.
+// ⛔ 여기에 나라별 분기(`if (isJapan) … else if (태국·필리핀) …`)를 다시 만들지 말 것.
+//   예전엔 read(todos-app)·write(todo-table)·폴백 세 벌의 손 명단이 있었고, 명단에 없는
+//   하와이는 신고 탭 '완료'가 앱 카드에 전혀 반영되지 않았다(2026-08-21 사용자 발견).
+//   새 목적지는 destination-config 의 `report: { importStep }` 한 줄만 선언하면 된다.
+//
+// 매핑(신청형 카드):
+//   - not_started: 진행 시그널 제거(신청일·완료·진행중·demote). 첨부는 portal 관할이라
+//     손대지 않음 — 첨부가 남아 있으면 derive 가 'done' 으로 잡으므로 admin 의 '대기'
+//     의도가 표면에 안 보일 수 있음. UI 에서 confirm 시 안내.
+//   - in_progress: 완료(skip) 해제 + 신청일 없으면 today. 완료였다면 demote 시각 기록.
+//   - done: skip 플래그 set + 신청일 없으면 today.
+// 버튼 완료형 카드(하와이 입국 신청 등)는 날짜 하나가 완료 증거 — done=today / 대기=비움.
 
 type ReportTarget = 'not_started' | 'in_progress' | 'done'
 
-async function patchCaseData(
-  caseId: string,
-  mutate: (data: Record<string, unknown>) => void,
-): Promise<UpdateResult> {
-  const supabase = await createClient()
-  const { data: row, error: fetchErr } = await supabase
-    .from('cases')
-    .select('data')
-    .eq('id', caseId)
-    .single()
-  if (fetchErr) return { ok: false, error: await explainCaseFetchError(supabase, fetchErr) }
-  const current = ((row?.data as Record<string, unknown> | null) ?? {}) as Record<string, unknown>
-  const next = { ...current }
-  mutate(next)
-  const { error } = await supabase.from('cases').update({ data: next }).eq('id', caseId)
-  if (error) return { ok: false, error: error.message }
-  // autoFilled.data 채널로 patched data 를 클라이언트에 반환 — 호출자가 replaceLocalCaseData
-  // 로 반영. (UpdateResult 형 호환 유지하면서 다중 키 업데이트 결과를 전달.)
-  return { ok: true, autoFilled: { data: next } }
-}
-
-function hasAdvanceAttachment(data: Record<string, unknown>): boolean {
-  const docs = Array.isArray(data.documents) ? data.documents : []
-  return docs.some(
-    (d) =>
-      !!d &&
-      typeof d === 'object' &&
-      (d as Record<string, unknown>).stepId === 'advance-notification',
-  )
-}
-
-export async function setAdvanceNotificationReportStatus(
-  caseId: string,
-  target: ReportTarget,
-): Promise<UpdateResult> {
-  return patchCaseData(caseId, (d) => {
-    // 새 액션이 호출되는 시점 = derive 모드로 전환. legacy stored 는 클리어.
-    delete d.import_import_status
-    if (target === 'not_started') {
-      delete d.advance_notification_date
-      delete d.advance_notification_approval_skipped
-      delete d.advance_notification_admin_demoted_at
-      return
-    }
-    if (target === 'in_progress') {
-      const wasDone =
-        hasAdvanceAttachment(d) || d.advance_notification_approval_skipped === true
-      if (wasDone) {
-        d.advance_notification_admin_demoted_at = new Date().toISOString()
-        delete d.advance_notification_approval_skipped
-      } else {
-        // 대기 → 진행중: 신청일이 없으면 오늘로 — derive 가 'in_progress' 로 잡힘.
-        if (typeof d.advance_notification_date !== 'string' || (d.advance_notification_date as string).length < 10) {
-          d.advance_notification_date = new Date().toISOString().slice(0, 10)
-        }
-      }
-      return
-    }
-    // target === 'done'
-    d.advance_notification_approval_skipped = true
-    delete d.advance_notification_admin_demoted_at
-    // 신청일이 비어 있으면 오늘로 (skipped + date 가 정합).
-    if (typeof d.advance_notification_date !== 'string' || (d.advance_notification_date as string).length < 10) {
-      d.advance_notification_date = new Date().toISOString().slice(0, 10)
-    }
-  })
-}
-
-export async function setJpExportQuarantineReportStatus(
-  caseId: string,
-  target: ReportTarget,
-): Promise<UpdateResult> {
-  const supabase = await createClient()
-  const { data: row, error: fetchErr } = await supabase
-    .from('cases')
-    .select('data, destination, departure_date')
-    .eq('id', caseId)
-    .single()
-  if (fetchErr) return { ok: false, error: await explainCaseFetchError(supabase, fetchErr) }
-  const current = ((row?.data as Record<string, unknown> | null) ?? {}) as Record<string, unknown>
-  const destination = (row?.destination as string | null) ?? null
-
-  // 신청일(jp_export_quarantine_application_date)은 by_dest 스코핑 키다(DESTINATION_SCOPED_FIELD_KEYS).
-  // 다중 여행지에서 신청일을 top-level 에 쓰면, 신고 탭 read(effectiveExportStatus →
-  // flattenCaseForDestination strict)가 활성 여행지 by_dest 만 신뢰하고 top-level 을 떨궈
-  // derive 가 신청일을 못 본다 → '완료'(reservation_skipped + 신청일>=10) 가 성립 안 해 칸이
-  // '대기중'으로 되돌아간다(신고 탭 수출 완료가 안 먹던 버그). 그래서 다중 여행지는 portal 과
-  // 동일하게 by_dest[활성여행지]에 쓴다. 단일 여행지는 기존 top-level 그대로(정상 동작 유지).
-  const isMulti = parseDestinations(destination).length > 1
-  const activeDest = resolveTabActiveDest(
-    {
-      destination,
-      data: current,
-      departure_date: (row?.departure_date as string | null) ?? null,
-    } as CaseRow,
-    'import_report_active_dest',
-  )
-  // scopedToken: non-null 이면 신청일을 by_dest 에 쓴다(다중 여행지 한정). null 이면 top-level.
-  const scopedToken = isMulti ? activeDest : null
-
-  // 기존 신청일 — by_dest(활성 여행지) 우선, 마이그 전 top-level 폴백 (portal·read 와 동일 경로).
-  const appliedRaw = activeDest
-    ? readByDestValue(current, activeDest, 'jp_export_quarantine_application_date')
-    : undefined
-  const applied =
-    typeof appliedRaw === 'string' && appliedRaw.length >= 10
-      ? appliedRaw
-      : typeof current.jp_export_quarantine_application_date === 'string'
-        ? (current.jp_export_quarantine_application_date as string)
-        : ''
-  const hasAppDate = applied.length >= 10
-  const today = new Date().toISOString().slice(0, 10)
-
-  let next: Record<string, unknown> = { ...current }
-  // 새 액션 호출 = derive 모드 전환. legacy stored 클리어.
-  delete next.import_export_status
-
-  // 신청일이 없을 때 오늘로 폴백 — 다중 여행지면 by_dest[활성여행지]에, 아니면 top-level.
-  const writeAppDateToday = () => {
-    if (scopedToken) {
-      next = writeByDestValue(next, scopedToken, 'jp_export_quarantine_application_date', today)
-      delete next.jp_export_quarantine_application_date
-    } else {
-      next.jp_export_quarantine_application_date = today // scoping-fallback-ok: 단일 여행지(scopedToken 없음) 폴백
-    }
-  }
-
-  if (target === 'not_started') {
-    // 신청일·완료/진행 플래그 모두 클리어. 다중 여행지는 by_dest 스코핑 신청일도 명시적으로
-    // 비워야(null sentinel) derive 가 신청일을 보고 'in_progress' 로 되살아나지 않는다
-    // (top-level delete 만으로는 by_dest 잔존이 남는다).
-    delete next.jp_export_quarantine_application_date
-    if (scopedToken) {
-      next = writeByDestValue(next, scopedToken, 'jp_export_quarantine_application_date', null)
-    }
-    delete next.jp_export_quarantine_reservation_skipped
-    delete next.jp_export_quarantine_confirmed
-    delete next.jp_export_quarantine_admin_demoted_at
-  } else if (target === 'in_progress') {
-    // 완료 단일 경로(skip 플래그) 기준. legacy confirmed=true 가 남아 있을 수 있으니
-    // 같이 정리한다(이제 derive 에서 무시되지만 데이터 위생 차원).
-    const wasDone = next.jp_export_quarantine_reservation_skipped === true
-    delete next.jp_export_quarantine_confirmed
-    if (wasDone) {
-      next.jp_export_quarantine_admin_demoted_at = new Date().toISOString()
-      delete next.jp_export_quarantine_reservation_skipped
-    } else if (!hasAppDate) {
-      writeAppDateToday()
-    }
-  } else {
-    // target === 'done' — 완료는 단일 경로(reservation_skipped 플래그)로 일원화.
-    // 예약일·시간은 '희망' 데이터로만 취급되고 완료 판정에 영향 없음. legacy confirmed
-    // 플래그가 남아 있다면 정리한다(이제 derive 에서 무시되지만 데이터 위생 차원).
-    delete next.jp_export_quarantine_admin_demoted_at
-    next.jp_export_quarantine_reservation_skipped = true
-    delete next.jp_export_quarantine_confirmed
-    if (!hasAppDate) writeAppDateToday()
-  }
-
-  const { error } = await supabase.from('cases').update({ data: next }).eq('id', caseId)
-  if (error) return { ok: false, error: error.message }
-  return { ok: true, autoFilled: { data: next } }
-}
-
 /**
- * 수입 허가(import-permit) 신고 상태 변경 — 태국·필리핀 등 허가 필요국. portal 의 수입 허가
- * step 시그널과 같은 by_dest 키를 공유해 양방향 sync (일본 사전 신고 setter 의 짝).
- *
- * 신호(모두 by_dest 스코핑):
- *   - import_permit_application_date (신청일) → derive 'in_progress'
- *   - import_permit_issued_skipped (첨부 없이 완료 처리) → derive 'done'
- *   - import_permit_in_progress (보호자/운영자 '진행 중' 확인 ack — portal '진행 중' 톤 게이트)
- * 첨부(stepId 'import-permit')·허가번호(permit_no)는 portal/추가정보 관할이라 손대지 않는다 —
- * 둘 중 하나라도 있으면 derive 가 'done' 으로 잡으므로 '대기/진행중'으로 못 내릴 수 있다(UI confirm 안내).
- *
- * portal(updateImportPermitFields)이 단일 여행지도 by_dest 에 쓰므로(B안), 읽기(flatten)와
- * 일치하도록 admin 도 활성 여행지 토큰이 해석되면 항상 by_dest 에 쓰고 top-level 잔존은 지운다.
+ * data 에 한 신호를 쓴다. scoped 키(by_dest 명단)는 활성 여행지 슬롯에 쓰고 top-level 잔존을
+ * 지운다 — read(flatten)와 경로를 맞춰야 "저장했는데 대기로 되돌아오는" 칸이 안 생긴다.
+ * token 이 없으면(여행지 미해석) top-level 그대로.
  */
-export async function setImportPermitReportStatus(
-  caseId: string,
-  target: ReportTarget,
-): Promise<UpdateResult> {
+function writeCaseSignal(
+  data: Record<string, unknown>,
+  token: string | null,
+  key: string,
+  value: unknown,
+): Record<string, unknown> {
+  const empty = value === null || value === undefined || value === ''
+  if (token && isDestinationScopedKey(key)) {
+    const next = writeByDestValue(data, token, key, empty ? null : value)
+    delete next[key]
+    return next
+  }
+  const next = { ...data }
+  if (empty) delete next[key]
+  else next[key] = value
+  return next
+}
+
+/** 신고 탭 read 와 같은 경로로 케이스를 읽는다 — 활성 여행지 토큰 + flatten 된 view. */
+async function loadReportContext(caseId: string) {
   const supabase = await createClient()
-  const { data: row, error: fetchErr } = await supabase
+  const { data: row, error } = await supabase
     .from('cases')
     .select('data, destination, departure_date')
     .eq('id', caseId)
     .single()
-  if (fetchErr) return { ok: false, error: await explainCaseFetchError(supabase, fetchErr) }
+  if (error) return { ok: false as const, error: await explainCaseFetchError(supabase, error) }
   const current = ((row?.data as Record<string, unknown> | null) ?? {}) as Record<string, unknown>
   const caseRow = {
     destination: (row?.destination as string | null) ?? null,
@@ -1187,44 +1035,43 @@ export async function setImportPermitReportStatus(
     departure_date: (row?.departure_date as string | null) ?? null,
   } as CaseRow
   const token = resolveTabActiveDest(caseRow, 'import_report_active_dest')
-  const today = new Date().toISOString().slice(0, 10)
+  const viewData = (flattenCaseForDestination(caseRow, token).data ?? {}) as Record<string, unknown>
+  return { ok: true as const, supabase, current, caseRow, token, viewData }
+}
 
-  // 신청일은 read flatten 과 동일 경로로 읽는다(by_dest 우선, 단일 by_dest 엔트리 없으면 top-level).
-  const view = flattenCaseForDestination(caseRow, token)
-  const viewData = (view.data ?? {}) as Record<string, unknown>
-  const appliedRaw = viewData.import_permit_application_date
-  const hasAppDate = typeof appliedRaw === 'string' && appliedRaw.length >= 10
+/**
+ * 신고 탭 '수입'·'수출' 칸 상태 변경 — 목적지 무관 범용.
+ *
+ * 카드 연결이 있으면 그 카드의 시그널을 쓰고 legacy 수동값을 지운다(= 앱과 같은 출처로 합류).
+ * 연결이 없는 목적지(미국·인도네시아 등)는 수동값 자체를 저장하되, 그 값도 by_dest 스코핑이라
+ * 다중 여행지에서 옆 나라 칸으로 새지 않는다.
+ */
+export async function setReportSlotStatus(
+  caseId: string,
+  slot: ReportSlot,
+  target: ReportTarget,
+): Promise<UpdateResult> {
+  const ctx = await loadReportContext(caseId)
+  if (!ctx.ok) return { ok: false, error: ctx.error }
+  const { supabase, current, token, viewData } = ctx
+  const today = new Date().toISOString().slice(0, 10)
+  const legacyKey = REPORT_LEGACY_STATUS_KEY[slot]
 
   let next: Record<string, unknown> = { ...current }
-  // 새 액션 호출 = derive 모드. legacy 수동 stored 클리어.
-  delete next.import_import_status
+  const binding = resolveReportBinding(token, slot)
 
-  // token 있으면 by_dest 에 쓰고 top-level 잔존 제거(flatten fallback 누수 차단). 없으면 top-level.
-  const writeSignal = (key: string, value: unknown) => {
-    if (token) {
-      next = writeByDestValue(next, token, key, value)
-      delete next[key]
-    } else if (value === null || value === undefined || value === '') {
-      delete next[key]
-    } else {
-      next[key] = value
+  if (binding) {
+    // 카드가 단일 출처 — 계획에 수동값 정리까지 포함돼 있다(planReportSlotWrite).
+    // top-level 잔존도 함께 지워 옛 전역 값이 되살아나지 않게 한다.
+    delete next[legacyKey]
+    for (const [key, value] of Object.entries(
+      planReportSlotWrite(binding, target, viewData, today),
+    )) {
+      next = writeCaseSignal(next, token, key, value)
     }
-  }
-
-  if (target === 'not_started') {
-    writeSignal('import_permit_application_date', null)
-    writeSignal('import_permit_issued_skipped', null)
-    writeSignal('import_permit_in_progress', null)
-  } else if (target === 'in_progress') {
-    // 완료(skip) 해제 + 신청일 없으면 오늘로 → derive 'in_progress'. '진행 중' ack set.
-    writeSignal('import_permit_issued_skipped', null)
-    if (!hasAppDate) writeSignal('import_permit_application_date', today)
-    writeSignal('import_permit_in_progress', true)
   } else {
-    // target === 'done' — 첨부 없이 완료 처리(skip). 신청일 없으면 오늘로(skip+신청일 정합).
-    writeSignal('import_permit_issued_skipped', true)
-    if (!hasAppDate) writeSignal('import_permit_application_date', today)
-    writeSignal('import_permit_in_progress', null)
+    // 이어질 카드가 아직 정해지지 않은 목적지 — 운영자 수동값만 저장(by_dest 스코핑).
+    next = writeCaseSignal(next, token, legacyKey, target)
   }
 
   const { error } = await supabase.from('cases').update({ data: next }).eq('id', caseId)
@@ -1233,60 +1080,29 @@ export async function setImportPermitReportStatus(
 }
 
 /**
- * 신고 내리기 = 신고 취소. 단순 숨김(import_report_dismissed=true)에 더해, 수입(사전 신고)·
- * 수출(수출검역) 진행 정보를 모두 비운다 — 두 setter 의 'not_started' 클리어와 동일한 필드를
- * 한 번의 read/write 로 처리. 비운 뒤에도 dismissed=true 로 신고 탭에서 계속 숨김.
+ * 신고 내리기 = 신고 취소. 단순 숨김(import_report_dismissed=true)에 더해, 활성 여행지의
+ * 수입·수출 진행 정보를 모두 비운다 — 두 슬롯의 'not_started' 클리어와 동일한 필드를 한 번의
+ * read/write 로 처리. 비운 뒤에도 dismissed=true 로 신고 탭에서 계속 숨김.
  *
- * 수출 신청일은 by_dest 스코핑(DESTINATION_SCOPED_FIELD_KEYS)이라, 다중 여행지는 top-level
- * delete 만으로 부족하고 활성 여행지 by_dest 도 null sentinel 로 비워야 derive 가 'in_progress'
- * 로 되살아나지 않는다(setJpExportQuarantineReportStatus not_started 와 동일 처리).
+ * 비울 키는 [[reportSlotSignalKeys]] 가 카드 연결에서 파생한다 — 나라가 늘어도 손댈 곳이 없다.
+ * (첨부·허가번호는 보호자 관할이라 손대지 않는다 — UI confirm 문구와 같은 약속.)
  */
 export async function dismissImportReport(caseId: string): Promise<UpdateResult> {
-  const supabase = await createClient()
-  const { data: row, error: fetchErr } = await supabase
-    .from('cases')
-    .select('data, destination, departure_date')
-    .eq('id', caseId)
-    .single()
-  if (fetchErr) return { ok: false, error: await explainCaseFetchError(supabase, fetchErr) }
-  const current = ((row?.data as Record<string, unknown> | null) ?? {}) as Record<string, unknown>
-  const destination = (row?.destination as string | null) ?? null
+  const ctx = await loadReportContext(caseId)
+  if (!ctx.ok) return { ok: false, error: ctx.error }
+  const { supabase, current, token } = ctx
 
   let next: Record<string, unknown> = { ...current }
-
-  // 수입(사전 신고) 클리어 — setAdvanceNotificationReportStatus('not_started') 와 동일.
-  delete next.import_import_status
-  delete next.advance_notification_date
-  delete next.advance_notification_approval_skipped
-  delete next.advance_notification_admin_demoted_at
-
-  // 수출(수출검역) 클리어 — setJpExportQuarantineReportStatus('not_started') 와 동일.
-  const isMulti = parseDestinations(destination).length > 1
-  const activeDest = resolveTabActiveDest(
-    {
-      destination,
-      data: current,
-      departure_date: (row?.departure_date as string | null) ?? null,
-    } as CaseRow,
-    'import_report_active_dest',
-  )
-  delete next.import_export_status
-  delete next.jp_export_quarantine_application_date
-  if (isMulti && activeDest) {
-    next = writeByDestValue(next, activeDest, 'jp_export_quarantine_application_date', null)
+  for (const slot of ['import', 'export'] as const) {
+    const legacyKey = REPORT_LEGACY_STATUS_KEY[slot]
+    delete next[legacyKey]
+    if (token) next = writeByDestValue(next, token, legacyKey, null)
   }
-  delete next.jp_export_quarantine_reservation_skipped
+  for (const key of reportSlotSignalKeys(token)) {
+    next = writeCaseSignal(next, token, key, null)
+  }
+  // 옛 모델 잔재 — derive 는 무시하지만 '취소' 의미상 같이 정리.
   delete next.jp_export_quarantine_confirmed
-  delete next.jp_export_quarantine_admin_demoted_at
-
-  // 수입 허가(태국·필리핀 등) 진행 정보 클리어 — setImportPermitReportStatus('not_started') 와 동일.
-  // 첨부(stepId 'import-permit')·허가번호(permit_no)는 손대지 않는다(보호자/추가정보 관할, 위 안내문과 일치).
-  // 신호는 by_dest 스코핑 — portal 이 단일 여행지도 by_dest 에 쓰므로 활성 여행지 by_dest 도 null
-  // sentinel 로 비워야(top-level delete 만으론 부족) derive 가 되살아나지 않는다.
-  for (const k of ['import_permit_application_date', 'import_permit_issued_skipped', 'import_permit_in_progress'] as const) {
-    delete next[k]
-    if (activeDest) next = writeByDestValue(next, activeDest, k, null)
-  }
 
   // 숨김 유지.
   next.import_report_dismissed = true
@@ -1295,4 +1111,3 @@ export async function dismissImportReport(caseId: string): Promise<UpdateResult>
   if (error) return { ok: false, error: error.message }
   return { ok: true, autoFilled: { data: next } }
 }
-

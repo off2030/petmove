@@ -10,9 +10,7 @@ import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   allLabOptions,
   buildDateRuleContext,
-  deriveAdvanceNotificationStatus,
-  deriveImportPermitStatus,
-  deriveJpExportQuarantineStatus,
+  deriveReportSlotStatus,
   flattenCaseForDestination,
   getDepartureDate,
   getVetVisitDate,
@@ -21,6 +19,8 @@ import {
   matchesDestinationKey,
   parseDestinations,
   readByDestValue,
+  REPORT_LEGACY_STATUS_KEY,
+  resolveReportBinding,
   resolveTabActiveDest,
   validateVetVisitDate,
 } from '@petmove/domain'
@@ -623,20 +623,21 @@ function reportDestRank(row: CaseRow): number {
 }
 
 /**
- * 신고 탭 국가 분기 — 활성 여행지 기준. destination 전체 문자열("일본, 태국")로 매칭하면
- * 일본·태국 분기에 동시에 걸려 read(일본 derive)와 write(태국 액션)가 엇갈린다 —
- * 수입 칸을 진행중으로 바꿔도 대기로 되돌아오던 버그. todo-table 의 셀 분기와 같은 기준.
+ * 신고 탭 활성 여행지 — 국가 분기의 유일한 기준. destination 전체 문자열("일본, 태국")로
+ * 매칭하면 두 분기에 동시에 걸려 read 와 write 가 엇갈린다(수입 칸을 바꿔도 대기로 되돌아오던
+ * 버그). todo-table 의 셀 분기와 같은 기준을 쓴다.
  */
-function isJapan(row: CaseRow): boolean {
-  return matchesDestinationKey(resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY), 'japan')
+function reportDest(row: CaseRow): string | null {
+  return resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
 }
 
 /**
- * 수출(수출검역) 칸을 표시·집계하는 조건 — 일본 + 왕복(귀국일 있음)인 경우만.
- * 그 외(비일본, 또는 편도)는 수출 칸을 숨기고 완료 판정에서도 제외한다.
+ * 수출(수출검역) 칸을 표시·집계하는 조건 — **수출 카드를 선언한 목적지** + 왕복(귀국일 있음).
+ * 그 외(선언 없음, 또는 편도)는 수출 칸을 숨기고 완료 판정에서도 제외한다.
+ * (현재 수출 카드를 선언한 나라는 일본 하나 — 나라가 늘면 프로파일 선언만 추가하면 된다.)
  */
 function exportApplies(row: CaseRow): boolean {
-  if (!isJapan(row)) return false
+  if (!resolveReportBinding(reportDest(row), 'export')) return false
   // ⚠️ 왕복 판정은 **여정 종류(trip_type)** 로 한다 — 귀국일 존재만 보면 안 된다(2026-08-19).
   // 편도로 바꾼 케이스에도 by_dest 에 귀국일이 남아 있는 일이 흔하고(항공편 입력·추출 때
   // 왕복 칸이 함께 채워졌다가 편도 전환), 그러면 편도인데 수출 칸이 '대기'로 떠 영영
@@ -649,58 +650,37 @@ function exportApplies(row: CaseRow): boolean {
 }
 
 /**
- * 수입 허가(import-permit) step 으로 신고 상태를 도출하는 여행지 — 태국·필리핀·대만.
- * 이들은 일본식 사전신고가 아니라 수입 허가증 신청·발급 2단계라, 신고 탭 '수입' 칸을
- * portal 의 허가 step 시그널과 같은 derive 로 잇는다. (명시 분류 — country='all' 누수 금지)
- */
-function usesImportPermitReport(row: CaseRow): boolean {
-  const active = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
-  return (
-    matchesDestinationKey(active, 'thailand') ||
-    matchesDestinationKey(active, 'philippines') ||
-    matchesDestinationKey(active, 'taiwan')
-  )
-}
-
-/**
- * 신고 탭 상태 — 일본 케이스는 공용 derive 헬퍼([[deriveAdvanceNotificationStatus]])로,
- * 그 외 destination 은 stored 값만 본다. derive 헬퍼는 portal 의 사전 신고 step 도 같이
- * 사용 — 한곳에 모아 양쪽이 비대칭으로 보이지 않게 한다.
+ * 신고 탭 '수입'·'수출' 칸 상태 — **여정 카드가 단일 출처**.
  *
- * 수출은 추가로 귀국일 없으면 'na' (admin 만의 표기).
+ * 어느 카드와 이어지는지는 목적지 프로파일이 정한다([[resolveReportBinding]]). 연결이 있으면
+ * 그 카드 시그널에서 파생하고(= 펫무브 앱 카드와 같은 값), 연결이 없는 목적지만 운영자
+ * 수동값(by_dest 스코핑)을 본다.
+ *
+ * ⛔ 나라별 if 분기를 다시 만들지 말 것 — 예전엔 일본·태국·필리핀·대만만 명단에 있었고, 명단
+ *   밖의 하와이는 '완료'로 바꿔도 앱 카드가 미완료로 남았다(2026-08-21 사용자 발견).
+ *
+ * 카드 시그널·수동값 모두 by_dest 스코핑이라 **활성 여행지로 평탄화한 view** 를 넘긴다 —
+ * 원본 row 를 넘기면 다중 여행지에서 신호를 못 봐 '대기중'으로 보인다.
  */
-function effectiveImportStatus(row: CaseRow): string {
-  // 일본 derive 는 신청일·skip 등 by_dest 스코핑 필드를 top-level 에서 읽으므로(단일 출처 계약),
-  // 활성 여행지로 평탄화한 view 를 넘긴다 — 안 그러면 by_dest 에 저장된 신청일을 못 봐 상태가
-  // portal(평탄화함)과 어긋난다. (admin 수출/수입 칸이 펫무브앱과 달리 '대기중'으로 보이던 버그.)
-  if (isJapan(row)) {
-    const view = flattenCaseForDestination(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY))
-    return deriveAdvanceNotificationStatus(view)
-  }
-  // 태국·필리핀 — 수입 허가 step 시그널(신청일·완료·첨부·허가번호)로 derive. 신청일·완료 플래그가
-  // by_dest 스코핑이라 활성 여행지로 평탄화한 view 를 넘긴다(일본 derive 와 동일 컨벤션).
-  if (usesImportPermitReport(row)) {
-    const view = flattenCaseForDestination(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY))
-    return deriveImportPermitStatus(view)
-  }
-  const data = (row.data ?? {}) as Record<string, unknown>
-  const stored = data.import_import_status
+function reportSlotStatus(row: CaseRow, slot: 'import' | 'export'): string {
+  const dest = reportDest(row)
+  const view = flattenCaseForDestination(row, dest)
+  const derived = deriveReportSlotStatus(view, dest, slot)
+  if (derived) return derived
+  const data = (view.data ?? {}) as Record<string, unknown>
+  const stored = data[REPORT_LEGACY_STATUS_KEY[slot]]
   if (stored != null && String(stored) !== '') return String(stored)
   return 'not_started'
 }
 
+function effectiveImportStatus(row: CaseRow): string {
+  return reportSlotStatus(row, 'import')
+}
+
+/** 수출은 추가로 귀국일 없으면 'na' (admin 만의 표기). */
 function effectiveExportStatus(row: CaseRow): string {
   if (!importReportReturnDate(row)) return 'na'
-  // 일본 derive 는 신청일(by_dest) 을 top-level 에서 읽으므로 활성 여행지로 평탄화 후 넘긴다.
-  // (평탄화 안 하면 신청일을 못 봐 'done'→'in_progress'로 오판 → 펫무브앱과 불일치.)
-  if (isJapan(row)) {
-    const view = flattenCaseForDestination(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY))
-    return deriveJpExportQuarantineStatus(view)
-  }
-  const data = (row.data ?? {}) as Record<string, unknown>
-  const stored = data.import_export_status
-  if (stored != null && String(stored) !== '') return String(stored)
-  return 'not_started'
+  return reportSlotStatus(row, 'export')
 }
 
 /**
@@ -836,7 +816,7 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     width: BASE_COL_W,
     options: IMPORT_STATUS_OPTIONS,
     resolveValue: effectiveExportStatus,
-    // 수출은 일본 + 왕복(귀국일 있음)일 때만 표시 — 그 외는 '—'.
+    // 수출은 수출 카드를 선언한 나라 + 왕복(귀국일 있음)일 때만 표시 — 그 외는 '—'.
     condition: (row) => exportApplies(row),
   },
   { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: BASE_COL_W, readonly: true },

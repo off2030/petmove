@@ -46,6 +46,13 @@ const portalEslintCode = await run(
 const rlsCode = await run(process.execPath, ['scripts/lint-rls.mjs'], 'RLS recursion lint')
 const scopeCode = await run(process.execPath, ['scripts/lint-destination-scoping.mjs'], 'destination scoping lint')
 const journeyCode = await run(process.execPath, ['scripts/lint-journey-catalog.mjs'], 'journey catalog lint')
+// 신고 탭 '수입'·'수출' 칸 ↔ 여정 카드 연결 — 관리자 화면과 앱 카드가 같은 값을 보는지.
+const reportSlotsCode = await run(
+  localBin('tsx'),
+  ['scripts/check-report-slots.ts'],
+  'report slots contract',
+  { shell: process.platform === 'win32' },
+)
 // 설정 화면 컨트롤·칩 크기 규격 — 높이 클래스를 직접 쓰면 실패(2026-08-06 신설).
 const sizeCode = await run(process.execPath, ['scripts/lint-settings-size.mjs'], 'settings size scale')
 const copyCode = await run(
@@ -68,6 +75,7 @@ const summary = [
   `  lint:rls:      ${rlsCode === 0 ? '✓ pass' : `✗ exit ${rlsCode}`}`,
   `  lint:scope:    ${scopeCode === 0 ? '✓ pass' : `✗ exit ${scopeCode}`}`,
   `  lint:journey:  ${journeyCode === 0 ? '✓ pass' : `✗ exit ${journeyCode}`}`,
+  `  report slots:  ${reportSlotsCode === 0 ? '✓ pass' : `✗ exit ${reportSlotsCode}`}`,
   `  lint:size:     ${sizeCode === 0 ? '✓ pass' : `✗ exit ${sizeCode}`}`,
   `  lint:copy:     ${copyCode === 0 ? '✓ pass' : `✗ exit ${copyCode}`}`,
   `  lint:parity:   ${parityCode === 0 ? '✓ pass' : `✗ exit ${parityCode}`}`,
@@ -75,5 +83,8 @@ const summary = [
 console.log(`\n─── summary ───\n${summary}`)
 
 process.exit(
-  Math.max(eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode, sizeCode, copyCode, parityCode),
+  Math.max(
+    eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode,
+    reportSlotsCode, sizeCode, copyCode, parityCode,
+  ),
 )
