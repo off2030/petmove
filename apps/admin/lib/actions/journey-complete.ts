@@ -11,7 +11,9 @@
 import { createClient } from '@petmove/auth/server'
 import {
   DESTINATION_SCOPED_FIELD_KEYS,
+  captureJourneySnapshot,
   parseDestinations,
+  planJourneyRestore,
   summarizeJourney,
   type PastJourneySummary,
 } from '@petmove/domain'
@@ -61,11 +63,21 @@ export async function markJourneyCompleteAdmin(
   const returnDate = (readScoped('return_date') as string | null) ?? null
 
   const today = new Date().toISOString().slice(0, 10)
-  const summary: PastJourneySummary = summarizeJourney(
-    { destination: dest, tripType, departureDate, returnDate },
-    outcome,
-    completedDate ?? today,
-  )
+  // ⚠️ 지우기 **전에** 원본을 담는다 — 지난 여정 목록의 '되돌리기'가 이걸로 복원한다.
+  //   (칩의 작은 보관 버튼을 잘못 눌러도 일정·항공편·검역일이 날아가지 않게, 2026-08-21.)
+  const summary: PastJourneySummary = {
+    ...summarizeJourney(
+      { destination: dest, tripType, departureDate, returnDate },
+      outcome,
+      completedDate ?? today,
+    ),
+    snapshot: captureJourneySnapshot({
+      destination: dest,
+      data,
+      destinationColumn: r.destination,
+      departureColumn: r.departure_date,
+    }),
+  }
 
   const pastJourneys: PastJourneySummary[] = [
     ...((data.past_journeys as PastJourneySummary[] | undefined) ?? []),
@@ -108,4 +120,85 @@ export async function markJourneyCompleteAdmin(
   if (updErr) return { ok: false, error: updErr.message }
 
   return { ok: true }
+}
+
+/**
+ * 지난 여정 되돌리기 — 보관했던 여정 1건을 다시 진행 중으로 올린다.
+ *
+ * 보관(markJourneyCompleteAdmin)이 지우기 전에 담아 둔 스냅샷으로 복원한다. 스냅샷이 없는
+ * 옛 기록은 복원할 수 없다(UI 가 버튼을 감춘다). 판정·계획은 전부 도메인의 순수 함수
+ * [[planJourneyRestore]] 가 하고, 여기서는 읽기·쓰기와 메시지만 담당한다.
+ *
+ * `entryIndex` 는 **정렬 전 `data.past_journeys` 원본 인덱스** — 화면은 완료일 내림차순으로
+ * 정렬해 보여주므로 표시 순서를 그대로 넘기면 엉뚱한 여정이 복원된다.
+ */
+export type RestoreResult =
+  | {
+      ok: true
+      /** 복원된 여행지 토큰. */
+      restored: string
+      /** 낙관적 로컬 갱신용 — 저장된 최종 값 그대로. */
+      destination: string
+      departureDate: string | null
+      data: Record<string, unknown>
+    }
+  | { ok: false; error: string }
+
+export async function restoreJourneyFromPastAdmin(
+  caseId: string,
+  entryIndex: number,
+): Promise<RestoreResult> {
+  if (!caseId) return { ok: false, error: 'caseId 가 필요합니다.' }
+
+  const supabase = await createClient()
+  const { data: row, error: fetchErr } = await supabase
+    .from('cases')
+    .select('destination, departure_date, data')
+    .eq('id', caseId)
+    .single()
+  if (fetchErr || !row) {
+    return { ok: false, error: fetchErr?.message ?? '케이스를 찾을 수 없습니다.' }
+  }
+  const r = row as {
+    destination: string | null
+    departure_date: string | null
+    data: Record<string, unknown> | null
+  }
+
+  const plan = planJourneyRestore(
+    {
+      destination: r.destination,
+      departure_date: r.departure_date,
+      data: (r.data ?? {}) as Record<string, unknown>,
+    },
+    entryIndex,
+  )
+  if ('reason' in plan) {
+    const message: Record<typeof plan.reason, string> = {
+      'not-found': '해당 지난 여정을 찾을 수 없습니다. 화면을 새로고침해 주세요.',
+      'no-snapshot':
+        '이 기록은 되돌리기 정보가 없어요. 되돌리기가 생기기 전(2026-08-21 이전)에 보관된 여정입니다.',
+      'already-active': '이미 진행 중인 여행지예요.',
+      'at-limit': `진행 중 여행지가 이미 최대치예요. 하나를 정리한 뒤 되돌려 주세요.`,
+    }
+    return { ok: false, error: message[plan.reason] }
+  }
+
+  const { error: updErr } = await supabase
+    .from('cases')
+    .update({
+      destination: plan.destination,
+      departure_date: plan.departure_date,
+      data: plan.data,
+    })
+    .eq('id', caseId)
+  if (updErr) return { ok: false, error: updErr.message }
+
+  return {
+    ok: true,
+    restored: plan.restored,
+    destination: plan.destination,
+    departureDate: plan.departure_date,
+    data: plan.data,
+  }
 }
