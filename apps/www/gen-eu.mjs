@@ -150,9 +150,12 @@ for (const spec of SPECS) {
     console.warn('⚠️ 원형 잔재:', spec.slug)
   }
 
-  // 최종 수정일은 이미 생성된 파일 값을 이어받는다(재생성이 날짜를 되돌리지 않도록).
+  // 최종 수정일 — 본문이 실제로 바뀌었을 때만 오늘 날짜로 올리고, 그대로면 기존 값을 이어받는다.
   const outPath = path.join(DOCS, `${spec.slug}-pet-travel-guide.json`)
-  const prevUpdated = existsSync(outPath) ? JSON.parse(readFileSync(outPath, 'utf8')).updated : null
+  const prev = existsSync(outPath) ? JSON.parse(readFileSync(outPath, 'utf8')) : null
+  const d = new Date()
+  const today = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+  const updated = prev && prev.html === s ? prev.updated : today
 
   const json = {
     slug: `${spec.slug}-pet-travel-guide`,
@@ -160,7 +163,7 @@ for (const spec of SPECS) {
     title,
     description: `수의사가 직접 정리한 2026년 최신 가이드입니다. 100% 믿을 수 있는 강아지·고양이 ${n} 입국 준비 방법을 알려드립니다. ${spec.desc}`,
     category: '지역별 가이드',
-    updated: prevUpdated ?? '2026.08.17',
+    updated,
     minutes: 9,
     feature_image: cover_,
     html: s,
