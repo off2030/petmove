@@ -421,6 +421,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
           <PortalPreviewDialog
             caseId={previewOpen.caseId}
             caseLabel={previewOpen.label}
+            destination={activeDestination}
             onClose={() => setPreviewOpen(null)}
           />
         )}

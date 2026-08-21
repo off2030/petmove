@@ -26,10 +26,13 @@ export async function GET(
     )
   }
 
-  const dest = req.nextUrl.clone()
-  dest.pathname = `/cases/${payload.caseId}/journey`
-  dest.search = ''
-  const res = NextResponse.redirect(dest)
+  // 활성 여행지(?dest=) 는 그대로 실어 보낸다 — 다중 여행지 케이스에서 펫무브워크가 보고 있던
+  // 여행지와 미리보기가 어긋나지 않게(안 실으면 portal 이 첫 여행지로 떨어진다).
+  const activeDest = req.nextUrl.searchParams.get('dest')
+  const target = req.nextUrl.clone()
+  target.pathname = `/cases/${payload.caseId}/journey`
+  target.search = activeDest ? `?dest=${encodeURIComponent(activeDest)}` : ''
+  const res = NextResponse.redirect(target)
 
   // 토큰 수명(30분)과 동일하게 쿠키도 제한. NextResponse.cookies 는 Partitioned 를
   // 지원하지 않아 Set-Cookie 헤더를 직접 구성한다.
