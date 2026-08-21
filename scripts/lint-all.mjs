@@ -68,6 +68,14 @@ const copyCode = await run(
   'journey copy snapshot',
   { shell: process.platform === 'win32' },
 )
+// 카드 ↔ 검증 룰 배선 + 저장 차단 결정 — 여기 없어서 포르투갈 사전통지 미등록이 오래 방치됐다
+// (2026-08-21 등록). 날짜칸 카드가 늘 때마다 결정을 강제하는 게 이 lint 의 핵심이라 상시 실행한다.
+const wiringCode = await run(
+  localBin('tsx'),
+  ['scripts/lint-validation-wiring.ts'],
+  'validation wiring',
+  { shell: process.platform === 'win32' },
+)
 // 형제 목적지 구조 패리티 — 복사해 만든 목적지에 원본의 나중 수정이 전파됐는지(2026-07-29 신설).
 const parityCode = await run(
   localBin('tsx'),
@@ -86,6 +94,7 @@ const summary = [
   `  journey undo:  ${journeyRestoreCode === 0 ? '✓ pass' : `✗ exit ${journeyRestoreCode}`}`,
   `  lint:size:     ${sizeCode === 0 ? '✓ pass' : `✗ exit ${sizeCode}`}`,
   `  lint:copy:     ${copyCode === 0 ? '✓ pass' : `✗ exit ${copyCode}`}`,
+  `  lint:wiring:   ${wiringCode === 0 ? '✓ pass' : `✗ exit ${wiringCode}`}`,
   `  lint:parity:   ${parityCode === 0 ? '✓ pass' : `✗ exit ${parityCode}`}`,
 ].join('\n')
 console.log(`\n─── summary ───\n${summary}`)
@@ -93,6 +102,6 @@ console.log(`\n─── summary ───\n${summary}`)
 process.exit(
   Math.max(
     eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode,
-    reportSlotsCode, journeyRestoreCode, sizeCode, copyCode, parityCode,
+    reportSlotsCode, journeyRestoreCode, sizeCode, copyCode, wiringCode, parityCode,
   ),
 )

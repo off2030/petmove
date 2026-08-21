@@ -1019,6 +1019,15 @@ export function validateQuarantineStartNotBeforeDeparture(
   return '계류 시작일이 출국일보다 빨라요. 날짜를 확인하세요.'
 }
 
+/**
+ * ⛔ **지금 어디에도 배선돼 있지 않다**(2026-08-21 확인). 두 카드(sg-gst-permit·
+ *   sg-border-inspection)가 2026-07-28 에 **버튼 완료**로 바뀌면서 저장 거부를 지웠기
+ *   때문이다 — 저장값이 '버튼 누른 날'이라 실제 발급일·예약일 기준의 이 계산은 어긋난다
+ *   (대행 절차라 보호자가 실제 날짜를 알 수도 없다).
+ *
+ *   규정 계산 자체는 맞고, 카드가 다시 **날짜 입력형**으로 돌아오면 그대로 쓸 수 있어
+ *   지우지 않고 남긴다. 그 전에는 다시 호출하지 말 것 — 거짓 거부만 낸다.
+ */
 export function validateSgGstPermitDate(
   issuedDate: string,
   departureDate: string,
@@ -1177,6 +1186,7 @@ export function validateHiTickWindow(treatDate: string, departureDate: string): 
  * client(예약일 입력 시 저장 거부)·procedure-check(출국일을 나중에 수정해 어긋난 경우
  * '주의') 공용 단일 출처. 출국일이 없으면 비교 불가라 통과.
  */
+/** ⛔ 위 validateSgGstPermitDate 와 같은 이유로 미배선 — 배선 전 그 주석을 먼저 읽을 것. */
 export function validateSgBorderInspectionDate(
   bookedDate: string,
   departureDate: string,
