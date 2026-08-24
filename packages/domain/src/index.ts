@@ -34,6 +34,8 @@ export {
   latestExtraTiterEntry,
   isExtraTiterResultConfirmed,
   resolveValidUntil,
+  normalizeValidUntil,
+  parseValidUntilYears,
   addYears,
   // 일본 항체검사 날짜 hover 툴팁(admin rabies-titer-field)의 입국 가능일(+180일) 계산.
   addDays,

@@ -220,19 +220,45 @@ function readSimpleDatedArray(caseRow: CaseRow, key: string): ParasiteEntry[] {
 // ── 날짜 산수 ──
 
 /**
- * 면역 유효기간 끝. 입력 valid_until 우선:
- *  - "N년" (한글 ValidUntilSelector 저장값) → date + N년 마지막 유효일로 변환
- *  - ISO 'YYYY-MM-DD' → 그대로
- *  - 빈 값 → date + 1년 (디폴트)
+ * 면역 유효기간 문자열 → **연수**. 인식 못 하면 null.
  *
- * "N년" 을 ISO 로 변환하지 않으면 후속 `validUntil < dep` / `validUntil >= other.date`
- * 비교가 문자열 사전순으로 끊겨 ("1년" < "2026-..." 처럼) 만료 판정이 전부 깨진다.
+ * 표준 저장형은 한글 "N년"(ValidUntilSelector)이지만, 접종증명서 AI 추출이 원문 표기를
+ * 그대로 흘려보내 "1 year"·"1 Year"·"1Y"·"3Y" 같은 값이 실제로 저장돼 있다. 읽는 쪽에서
+ * 전부 받아 준다 — 표기 흔들림이 의료 판정을 바꾸면 안 된다.
+ */
+export function parseValidUntilYears(validUntil?: string | null): number | null {
+  if (!validUntil) return null
+  const m = validUntil.trim().match(/^(\d+)\s*(?:년|y|yr|yrs|year|years)$/i)
+  if (!m) return null
+  const n = parseInt(m[1], 10)
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+
+/** 저장 표준형 "N년" 으로 정규화. 연수로 못 읽으면 null (호출 측이 원값 유지 판단). */
+export function normalizeValidUntil(validUntil?: string | null): string | null {
+  const years = parseValidUntilYears(validUntil)
+  return years == null ? null : `${years}년`
+}
+
+/**
+ * 면역 유효기간 끝. 입력 valid_until 우선:
+ *  - 연수 표기("N년"·"1 year"·"1Y" …) → date + N년 마지막 유효일로 변환
+ *  - ISO 'YYYY-MM-DD' → 그대로 (뒤에 시각 등이 붙어 있으면 앞 10자만)
+ *  - 빈 값 **또는 못 알아먹는 값** → date + 1년 (디폴트)
+ *
+ * ⚠️ **ISO 가 아닌 문자열을 절대 그대로 돌려주지 말 것.** 반환값은 곧바로
+ * `cur.date > prevValidUntil` · `validUntil < dep` 같은 **문자열 비교**에 쓰인다. 원문을
+ * 흘려보내면 사전순 비교가 엉뚱한 답을 내놓는다 — 실제로 `"2026-08-22" > "1 year"` 가 true 라
+ * 1차 유효기간 안에 맞은 멀쩡한 2차 접종이 "유효기간 초과(chain 끊김)"로 경고됐다
+ * (2026-08-24 황현선/루이). 못 알아먹는 값은 조용히 디폴트로 떨어뜨리는 편이 안전하다.
  */
 export function resolveValidUntil(date: string, validUntil?: string | null): string {
   if (!validUntil) return addOneYear(date)
-  const m = validUntil.match(/^(\d+)\s*년$/)
-  if (m) return addYears(date, parseInt(m[1], 10))
-  return validUntil
+  const years = parseValidUntilYears(validUntil)
+  if (years != null) return addYears(date, years)
+  const iso = validUntil.trim().match(/^(\d{4}-\d{2}-\d{2})/)
+  if (iso) return iso[1]
+  return addOneYear(date)
 }
 
 /**

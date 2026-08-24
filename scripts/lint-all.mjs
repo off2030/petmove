@@ -83,6 +83,13 @@ const parityCode = await run(
   'destination parity',
   { shell: process.platform === 'win32' },
 )
+// 면역 유효기간 해석 — 표기 흔들림("1 year"/"1Y")이 의료 판정을 뒤집었다(2026-08-24 신설).
+const validUntilCode = await run(
+  localBin('tsx'),
+  ['scripts/check-vaccine-validity.ts'],
+  'vaccine validity',
+  { shell: process.platform === 'win32' },
+)
 // 한 장에 여러 마리를 적는 폼(태국 R.1/1)의 동물 슬롯 매핑 — 짝이 어긋나면 두 번째 동물
 // 칸이 조용히 빈 채로 발급된다(2026-08-24 신설).
 const multiSlotCode = await run(
@@ -114,6 +121,7 @@ const summary = [
   `  lint:parity:   ${parityCode === 0 ? '✓ pass' : `✗ exit ${parityCode}`}`,
   `  dep sync seed: ${departureSyncCode === 0 ? '✓ pass' : `✗ exit ${departureSyncCode}`}`,
   `  multi slots:   ${multiSlotCode === 0 ? '✓ pass' : `✗ exit ${multiSlotCode}`}`,
+  `  valid-until:   ${validUntilCode === 0 ? '✓ pass' : `✗ exit ${validUntilCode}`}`,
 ].join('\n')
 console.log(`\n─── summary ───\n${summary}`)
 
@@ -121,6 +129,6 @@ process.exit(
   Math.max(
     eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode,
     reportSlotsCode, journeyRestoreCode, sizeCode, copyCode, wiringCode, parityCode,
-    departureSyncCode, multiSlotCode,
+    departureSyncCode, multiSlotCode, validUntilCode,
   ),
 )
