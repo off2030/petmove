@@ -12,6 +12,7 @@ import { deleteCase } from '@/lib/actions/delete-case'
 import { undoLastChange, updateCaseField } from '@/lib/actions/cases'
 import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateVBC, generateSGP, generateTW, generateTK, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti, recommendForm25RabiesSelection } from '@/lib/actions/generate-pdf'
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
+import type { MultiFormKey } from '@/lib/pdf-multi-forms'
 import { MultiFormDialog } from './multi-form-dialog'
 import { RabiesSelectDialog, RABIES_SLOT_CAP } from './rabies-select-dialog'
 import { ChevronLeft, ChevronRight, Link2, Smartphone, Trash2 } from 'lucide-react'
@@ -84,11 +85,13 @@ const CERT_FORM_KEYS: Record<string, string> = {
 }
 
 /** Cert key → multi-form dialog formKey mapping */
-const CERT_MULTI_KEYS: Record<string, string> = {
+const CERT_MULTI_KEYS: Record<string, MultiFormKey> = {
   annexIII: 'AnnexIII',
   uk: 'UK',
   nz: 'NZ',
   vbc: 'VBC',
+  // 태국 R.1/1 — 양식의 좌·우 칸에 두 마리까지 한 장(2026-08-24).
+  formR11: 'Form_R11',
 }
 
 /** rabies_titer_records 의 1차 (가장 오래된) 검사 날짜. FormRE 의 "기재 대상" 판정용. */
@@ -131,7 +134,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
     }
   }, [navCaseIds, cases, searchQuery, selectedCase])
   const detailScrollRef = useRef<HTMLDivElement>(null)
-  const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC'; destination: string | null } | null>(null)
+  const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: MultiFormKey; destination: string | null } | null>(null)
   const [shareOpen, setShareOpen] = useState<{ case: CaseRow; label: string } | null>(null)
   const [previewOpen, setPreviewOpen] = useState<{ caseId: string; label: string } | null>(null)
   // 별지 25호/EX 의 광견병 슬롯이 부족할 때 띄우는 선택 모달.
@@ -361,7 +364,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
   // Annex III / UK: if the case has siblings (same customer + destination +
   // departure date), show the multi-animal preview modal. Otherwise skip the
   // modal and generate a single-animal document directly.
-  const handleMultiForm = useCallback(async (caseId: string, formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC', destination: string | null) => {
+  const handleMultiForm = useCallback(async (caseId: string, formKey: MultiFormKey, destination: string | null) => {
     const row = cases.find((c) => c.id === caseId)
     if (row && !(await confirmIfFailing(row, destination))) return
     const p = await previewSiblings(caseId, formKey, destination)
@@ -604,7 +607,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
                             <button
                               key={btn.key}
                               type="button"
-                              onClick={() => handleMultiForm(selectedCase.id, (CERT_MULTI_KEYS[btn.key] ?? btn.key) as 'AnnexIII' | 'UK' | 'NZ' | 'VBC', focusDest)}
+                              onClick={() => handleMultiForm(selectedCase.id, (CERT_MULTI_KEYS[btn.key] ?? btn.key) as MultiFormKey, focusDest)}
                               className="shrink-0 whitespace-nowrap rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
                             >
                               {btn.label}

@@ -44,7 +44,9 @@ export const ALL_CERTS: CertDefinition[] = [
   { key: 'nz', label: 'NZ', type: 'multi' },
   { key: 'ovd', label: 'OVD', type: 'single' },
   { key: 'vbc', label: 'VBC', type: 'multi', species: 'dog' },
-  { key: 'formR11', label: 'R.11', type: 'single' },
+  // R.1/1 은 양식에 동물 칸이 좌·우 두 개 — 같은 보호자·같은 일정이면 두 마리를 한 장에
+  // (2026-08-24 사용자 지시). 3마리 이상은 2+1 로 자동 분할된다.
+  { key: 'formR11', label: 'R.11', type: 'multi' },
   { key: 'vhc', label: 'VHC', type: 'single' },
   { key: 'sgp', label: 'SGP', type: 'single' },
   { key: 'aqs', label: 'AQS-279', type: 'single' },

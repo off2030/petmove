@@ -83,6 +83,14 @@ const parityCode = await run(
   'destination parity',
   { shell: process.platform === 'win32' },
 )
+// 한 장에 여러 마리를 적는 폼(태국 R.1/1)의 동물 슬롯 매핑 — 짝이 어긋나면 두 번째 동물
+// 칸이 조용히 빈 채로 발급된다(2026-08-24 신설).
+const multiSlotCode = await run(
+  localBin('tsx'),
+  ['scripts/check-multi-slot-forms.ts'],
+  'multi-slot forms',
+  { shell: process.platform === 'win32' },
+)
 // 추가정보 '출발일' ↔ 출국일 sync 룰 시드 패리티 — 선언만 하고 시드를 빼먹으면 출국일 컬럼이
 // 영영 안 채워져 신고 탭·목록·D-day 가 그 케이스를 통째로 놓친다(2026-08-24 신설).
 const departureSyncCode = await run(
@@ -105,6 +113,7 @@ const summary = [
   `  lint:wiring:   ${wiringCode === 0 ? '✓ pass' : `✗ exit ${wiringCode}`}`,
   `  lint:parity:   ${parityCode === 0 ? '✓ pass' : `✗ exit ${parityCode}`}`,
   `  dep sync seed: ${departureSyncCode === 0 ? '✓ pass' : `✗ exit ${departureSyncCode}`}`,
+  `  multi slots:   ${multiSlotCode === 0 ? '✓ pass' : `✗ exit ${multiSlotCode}`}`,
 ].join('\n')
 console.log(`\n─── summary ───\n${summary}`)
 
@@ -112,6 +121,6 @@ process.exit(
   Math.max(
     eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode,
     reportSlotsCode, journeyRestoreCode, sizeCode, copyCode, wiringCode, parityCode,
-    departureSyncCode,
+    departureSyncCode, multiSlotCode,
   ),
 )

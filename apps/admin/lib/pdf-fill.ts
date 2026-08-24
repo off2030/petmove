@@ -9,6 +9,7 @@ import { readFile } from 'node:fs/promises'
 import zlib from 'node:zlib'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
+import { FORM_CAPACITY } from '@/lib/pdf-multi-forms'
 import { getParasiteFamily, PARASITE_FAMILIES, splitCustomerNameEn } from '@petmove/domain'
 import {
   lookupRabies,
@@ -89,6 +90,16 @@ type FieldMapping = {
   align?: 'left' | 'center' | 'right'
   /** 케이스의 species 가 이 값일 때만 채움. 다른 종이면 빈 값 (또는 default). */
   speciesOnly?: 'dog' | 'cat'
+  /**
+   * **동물 슬롯**(0-based) — 한 장에 여러 마리를 적는 폼에서 "이 칸은 N번째 동물 것"이라고
+   * 필드마다 직접 지정한다. 지정된 슬롯에 동물이 없으면 빈 칸으로 남는다.
+   *
+   * 행 이름 규칙(`I28_row2_…`)을 쓰는 Annex III·UK·NZ 와 달리, 템플릿 필드 이름이 임의
+   * (`text_15acce`)인 폼을 위한 것 — 태국 R.1/1 이 그 경우다(좌/우 두 마리 칸).
+   * 슬롯 0 은 생략해도 되지만(비-슬롯 필드는 대표 케이스로 해석), 좌/우 짝을 눈으로
+   * 확인할 수 있게 명시해 두는 편이 낫다.
+   */
+  animalSlot?: number
 }
 
 type SignatureOverlay = {
@@ -2582,17 +2593,7 @@ interface PackedDoc {
   parasiteSlots: number[]    // parasiteSlots[rowIdx] = caseIdx within doc
 }
 
-interface FormCapacity { animals: number; vaccRows: number }
 
-const FORM_CAPACITY: Record<string, FormCapacity | undefined> = {
-  AnnexIII: { animals: 3, vaccRows: 5 },
-  UK:       { animals: 5, vaccRows: 5 },
-  // NZ 인증서는 (10)/(11)/(12)... 의 백신/검사 행이 동물별이 아니라 인증서당 1개씩만
-  // 있어서 packer 의 vaccRows 제약이 의미 없다. 큰 값으로 두면 동물 5마리까지 한
-  // 인증서에 채워진다 (Cert A p1 5-row table + Cert B (4) 의 multi-line microchip 목록).
-  NZ:       { animals: 5, vaccRows: 9999 },
-  NZ_2:     { animals: 5, vaccRows: 9999 },
-}
 
 function rabiesDoseCount(c: CaseRow): number {
   const data = (c.data ?? {}) as Record<string, unknown>
@@ -2775,6 +2776,18 @@ function resolveFieldMulti(
   // take precedence before we dispatch by field name.
   const agg = resolveMultiTransform(mapping?.transform, doc)
   if (agg !== null) return agg
+
+  // 필드가 직접 지정한 동물 슬롯 — 행 이름 규칙이 없는 폼(태국 R.1/1)용.
+  // 그 슬롯에 동물이 없으면(1마리짜리 문서의 두 번째 칸) 빈 칸으로 둔다.
+  // 단일 케이스 경로(fillPdfCore 의 soloDoc)는 animalSlots 가 [0] 뿐이라, 슬롯 1 이상은
+  // 자동으로 빈 칸이 된다 — 같은 동물이 좌·우에 두 번 찍히지 않는다.
+  if (mapping?.animalSlot != null) {
+    const slotCaseIdx = doc.animalSlots[mapping.animalSlot]
+    if (slotCaseIdx === undefined) return ''
+    const slotCase = doc.cases[slotCaseIdx]
+    if (!slotCase) return ''
+    return resolveField(mapping, slotCase, (slotCase.data ?? {}) as Record<string, unknown>, allowedVaccines)
+  }
 
   const parsed = parseRowField(fieldName)
   if (!parsed) {

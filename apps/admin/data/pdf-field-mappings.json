@@ -4245,43 +4245,54 @@
       },
       "text_14hvlw": {
         "source": "breed_en",
-        "note": "Breed (좌측 동물) — 품종"
+        "animalSlot": 0,
+        "note": "Breed (좌측 동물, 1번째) — 품종"
       },
       "text_16usib": {
         "source": "sex",
         "transform": "sex_label",
-        "note": "Sex (좌측 동물) — 성별"
+        "animalSlot": 0,
+        "note": "Sex (좌측 동물, 1번째) — 성별"
       },
       "text_17lwoz": {
         "source": "birth_date",
-        "note": "Birth (좌측 동물) — 생년월일"
+        "animalSlot": 0,
+        "note": "Birth (좌측 동물, 1번째) — 생년월일"
       },
       "text_18leei": {
         "source": "color_en",
-        "note": "Color (좌측 동물) — 모색"
+        "animalSlot": 0,
+        "note": "Color (좌측 동물, 1번째) — 모색"
       },
       "text_19qhjq": {
         "source": "microchip",
-        "note": "Microchip No. (좌측 동물) — 마이크로칩 번호"
+        "animalSlot": 0,
+        "note": "Microchip No. (좌측 동물, 1번째) — 마이크로칩 번호"
       },
       "text_15acce": {
-        "source": null,
-        "note": "Breed (우측 동물, 2번째) — 케이스당 1마리"
+        "source": "breed_en",
+        "animalSlot": 1,
+        "note": "Breed (우측 동물, 2번째) — 같은 보호자·같은 일정의 두 번째 동물. 없으면 빈 칸"
       },
       "text_23bfem": {
-        "source": null,
+        "source": "sex",
+        "transform": "sex_label",
+        "animalSlot": 1,
         "note": "Sex (우측 동물, 2번째)"
       },
       "text_22mbr": {
-        "source": null,
+        "source": "birth_date",
+        "animalSlot": 1,
         "note": "Birth (우측 동물, 2번째)"
       },
       "text_21iwzo": {
-        "source": null,
+        "source": "color_en",
+        "animalSlot": 1,
         "note": "Color (우측 동물, 2번째)"
       },
       "text_20dymn": {
-        "source": null,
+        "source": "microchip",
+        "animalSlot": 1,
         "note": "Microchip No. (우측 동물, 2번째)"
       },
       "text_24bbbw": {
