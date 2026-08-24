@@ -537,25 +537,37 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
 
 
 /**
- * 신고 탭 자동 포함의 '일정 있음' 판정 — **출국일 또는 내원일** 하나라도 있으면 참.
+ * 신고 탭 자동 포함의 '일정 있음' 판정 — 날짜 신호가 **하나라도** 있으면 참.
  *
- * 출국일은 세 자리를 본다(2026-08-18):
- *   ① by_dest[여행지].departure_date  ② cases.departure_date 컬럼  ③ **출국 항공편 출발일**
- * ③ 이 필요한 이유 — departure_flight_date ↔ departure_date 양방향 sync 는 **일본 전용**
- * org_auto_fill_rules 로만 시드돼 있다(20260527000003). 그래서 하와이처럼 항공편 정보를
- * 추가정보에서 넣은 케이스는 출국일 컬럼이 빈 채로 남아 신고 탭에서 통째로 빠졌다.
- * 내원일도 트리거로 넣는다 — 내원일이 잡혔다는 건 출국이 임박했다는 뜻이라 신고 대상이다.
+ * 보는 자리(넓은 순):
+ *   ① 출국일 — by_dest[여행지].departure_date → cases.departure_date 컬럼
+ *   ② 내원일 — 내원일이 잡혔다는 건 출국이 임박했다는 뜻이라 신고 대상이다
+ *   ③ 출국 항공편 **출발일**(departure_flight_date)
+ *   ④ **도착일**(entry_date)
+ *
+ * ③④ 가 필요한 이유 — 추가정보로 항공 일정을 받는 나라는 그 값이 `data` 에 먼저 들어오고
+ * `departure_date` 컬럼은 sync 룰이 돌아야 채워진다. 룰이 없거나(하와이 2026-08-18 이전)
+ * 애초에 출발일을 **묻지 않는**(도착일만 받는 스위스·미국·대만·EU 통지국) 케이스는 컬럼이
+ * 빈 채로 남아 신고 탭에서 통째로 빠졌다 — 실제로 태국 3건이 그렇게 사라졌다(2026-08-24
+ * 어일용/남촉·남락·남숙). 그 나라들은 출발일을 프로파일 필드로 올려 근본을 고쳤지만,
+ * **도착일만 받는 나라가 남아 있는 한 ④ 가 마지막 안전망**이다.
+ * (도착일은 신고기한 계산엔 안 쓴다 — 기한은 여전히 출국일 기준.)
  */
 function hasReportSchedule(row: CaseRow, dest: string | null): boolean {
   if (getDepartureDate(row, dest)) return true
   if (getVetVisitDate(row, dest)) return true
   const data = (row.data as Record<string, unknown> | null) ?? null
-  const flight = readByDestValue(data, dest, 'departure_flight_date')
-  if (typeof flight === 'string' && flight) return true
+  const flightKeys = ['departure_flight_date', 'entry_date'] as const
+  for (const key of flightKeys) {
+    const v = readByDestValue(data, dest, key)
+    if (typeof v === 'string' && v) return true
+  }
   // 다중 여행지 + 특정 여행지 지정이면 top-level 폴백 안 함 — 다른 여행지 잔존값 누수 차단(B).
   if (dest && parseDestinations(row.destination).length > 1) return false
-  const top = data?.departure_flight_date
-  return typeof top === 'string' && !!top
+  return flightKeys.some((key) => {
+    const top = data?.[key]
+    return typeof top === 'string' && !!top
+  })
 }
 
 /**
@@ -567,11 +579,16 @@ function hasReportSchedule(row: CaseRow, dest: string | null): boolean {
  */
 function isAutoImportReport(row: CaseRow, countries: string[]): boolean {
   const data = (row.data ?? {}) as Record<string, unknown>
+  const dests = parseDestinations(row.destination)
   const active = data.import_report_active_dest
-  if (typeof active === 'string' && active) {
+  // 저장된 활성 여행지는 **케이스의 현재 여행지 목록에 남아 있을 때만** 믿는다
+  // ([[resolveTabActiveDest]] 와 같은 가드). 여행지를 갈아탄 케이스에 옛 칩 값이 남아 있으면
+  // 그 나라 하나로만 판정돼, 새 여행지에 일정·신청일이 있어도 신고 탭에서 영영 빠졌다
+  // (2026-08-24 감사 — 최유나/말랑이: active='태국' 인데 여행지는 호주·대만·포르투갈,
+  //  대만 수입허가 신청일 2026-08-04 이 있는데도 목록에 없었다).
+  if (typeof active === 'string' && active && dests.includes(active)) {
     return countries.includes(active) && hasReportSchedule(row, active)
   }
-  const dests = parseDestinations(row.destination)
   return dests.some((d) => countries.includes(d) && hasReportSchedule(row, d))
 }
 

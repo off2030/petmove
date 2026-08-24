@@ -575,11 +575,19 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer', 'general'],
     extraSection: 'thailand',
     // 태국은 검역소·도착지 = 입국공항 (Bangkok=BKK, Phuket=HKT, Chiang Mai=CNX) 이라 entry_airport 로 통합.
-    // 표시 순서: 여권 정보 → 해외주소 → 항공편(날짜·시간·항공편명·도착공항).
+    // 표시 순서: 여권 정보 → 해외주소 → 항공편(출발일·도착일·시간·항공편명·도착공항).
+    //
+    // departure_flight_date(출발일) 는 2026-08-24 추가 — 그전엔 케이스 상세에서 departure_date
+    // **컬럼**을 그룹 맨 앞에 얹어 보여주기만 했다(case-detail 의 unshift). 화면엔 보이는데
+    // 프로파일엔 없는 줄이라 정보 요청 링크의 "{국가} 신고" 프리셋(= 추가정보 카테고리 필드
+    // 전부)에서 조용히 빠졌고, 보호자는 출발일을 물어보지도 못 한 채 제출 → 출국일이 영영
+    // 비어 신고 탭에서 케이스가 통째로 누락됐다(2026-08-24 어일용/남촉·남락·남숙 3건).
+    // 일본·하와이처럼 **진짜 추가정보 필드**로 선언하고 departure_date 컬럼과는
+    // org_auto_fill_rules 양방향 sync 로 맞춘다(20260824000001).
     extraFields: [
       'passport_number', 'passport_expiry_date', 'passport_issuer',
       'address_overseas',
-      'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
+      'departure_flight_date', 'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
     ],
     rabiesTiterForReturnOnly: true,
   },
@@ -638,10 +646,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer'],
     // 가이드: "출국 직전(항공기 탑승 전 10일 이내)에 수의사에게 임상 검사" — 기본값과 같아
     // 선언하지 않는다(getVetVisitWindowDays 기본 10).
+    // 출발일(departure_flight_date) — 태국과 같은 이유로 2026-08-24 추가. 상세 주석은 thailand 참고.
     extraFields: [
       'passport_number', 'passport_expiry_date', 'passport_issuer',
       'address_overseas',
-      'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
+      'departure_flight_date', 'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
     ],
   },
   india: {
@@ -1289,10 +1298,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 가이드: "출국 직전(항공기 탑승 전 7일 이내)에 수의사에게 임상 검사" + "수출동물검역은
     // 대부분 10일 이내지만 말레이시아는 7일 이내". 태국 복제 때 지웠던 값을 되살렸다.
     vetVisitWindowDays: 7,
+    // 출발일(departure_flight_date) — 태국과 같은 이유로 2026-08-24 추가. 상세 주석은 thailand 참고.
     extraFields: [
       'passport_number', 'passport_expiry_date', 'passport_issuer',
       'address_overseas',
-      'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
+      'departure_flight_date', 'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
     ],
     rabiesTiterForReturnOnly: true,
   },
@@ -2389,6 +2399,23 @@ export function getEffectiveExtraFieldEntries(
   if (custom) return custom.extraFields ?? []
   const override = getDestinationOverride(destination)
   return (override?.extraFields ?? []).map((k) => (typeof k === 'string' ? { key: k } : k))
+}
+
+/**
+ * 이 목적지가 **추가정보 '출발일'(`departure_flight_date`)** 을 쓰는가 — 프로파일 파생.
+ *
+ * 쓰는 목적지는 `departure_flight_date` 와 `cases.departure_date` 컬럼이 org_auto_fill_rules
+ * 로 양방향 sync 된다. 그래서 저장 측(포털 항공권 카드 등)은 출국일을 쓸 때 이 키도 같이
+ * 맞춰 줘야 한다 — 안 맞추면 지운 출국일을 stale 한 출발일이 sync 로 되살린다.
+ *
+ * ⛔ 나라 이름 하드코딩(`=== 'japan'`) 을 다시 만들지 말 것 — 목적지가 늘 때마다 저장 측을
+ *   같이 고쳐야 해서 하와이(2026-08-18)·태국(2026-08-24)에서 같은 사고가 반복됐다.
+ */
+export function usesDepartureFlightDate(destination: string | null | undefined): boolean {
+  const override = getDestinationOverride(destination)
+  return (override?.extraFields ?? []).some((k) =>
+    (typeof k === 'string' ? k : k.key) === 'departure_flight_date',
+  )
 }
 
 /** 한 extra-field entry 가 현재 케이스 종에 적용되는지. */

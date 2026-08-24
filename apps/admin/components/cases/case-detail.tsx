@@ -395,24 +395,15 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
               segments.push({ type: 'flat', entry: def })
             }
           }
-          // 태국 — 출국 항공편 그룹 맨 앞에 출발일(departure_date 컬럼)을 노출. 포털 출국 항공편 카드는
-          // 출발일+도착일을 함께 보여주는데 펫무브워크 그룹엔 도착일만 있었음. departure_date 는 절차정보
-          // '출국일'과 같은 필드라 별도 동기화 없이 자동 일치(편집·완료 동작도 동일). 태국만 — 일본은 이미
-          // departure_flight_date 로 출발일이 그룹에 있고, 필리핀은 출발=도착(같은 날)이라 도착일이 곧 출발일.
-          // 말레이시아·인도네시아 — 태국 복제(2026-07-22): 같은 출발일·도착일 분리 모델.
-          if (
-            matchesDestinationKey(viewDestination, 'thailand') ||
-            matchesDestinationKey(viewDestination, 'malaysia') ||
-            matchesDestinationKey(viewDestination, 'indonesia')
-          ) {
-            const flightGroup = segments.find(
-              (s): s is Extract<ExtraSegment, { type: 'group' }> =>
-                s.type === 'group' && s.name === '출국 항공편',
-            )
-            if (flightGroup && !flightGroup.items.some((i) => i.key === 'departure_date')) {
-              flightGroup.items.unshift({ key: 'departure_date', label: '출발일', type: 'date' })
-            }
-          }
+          // ⛔ 여기서 화면에만 줄을 얹지 말 것 (2026-08-24 제거).
+          //   태국·말레이시아·인도네시아는 '출국 항공편' 그룹 맨 앞에 출발일(departure_date **컬럼**)을
+          //   unshift 로 끼워 넣고 있었다. 화면엔 보이는데 프로파일에는 없는 줄이라, 필드 목록을
+          //   descriptor 에서 만드는 정보 요청 링크("{국가} 신고" 프리셋 = 추가정보 카테고리 전부)가
+          //   그 줄을 볼 수 없었고 → 보호자에게 출발일을 묻지 못한 채 제출 → 출국일이 영영 비어
+          //   신고 탭에서 케이스가 통째로 빠졌다(어일용/남촉·남락·남숙 3건).
+          //   이제 세 나라 모두 일본·하와이처럼 departure_flight_date 를 **프로파일 extraFields 에**
+          //   선언한다 — 상세·공유 다이얼로그·프리셋·수신자 폼이 같은 목록을 본다.
+          //   departure_date 컬럼과는 org_auto_fill_rules 양방향 sync(20260824000001).
           // 전달 서류(허가 서류) 첨부 — 활성 여행지의 permit 서류를 catalog 에서 파생해 행으로 노출.
           // (일본=허가서(Approval), 태국·필리핀·스위스·호주·NZ 등=수입 허가증). 다중 여행지면 활성 기준.
           // portal 보호자·admin 운영자 모두 업로드, case.data.documents 공유(stepId 로 고객앱과 연결).
