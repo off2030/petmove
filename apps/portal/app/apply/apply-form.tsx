@@ -10,7 +10,7 @@ import { applyCase } from '@/lib/actions/apply-case'
 import { clearApplyDraft, saveApplyDraft } from '@/lib/actions/apply-draft'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import destsData from '@petmove/domain/data/destinations.json'
-import { isOneWayOnlyDestination } from '@petmove/domain'
+import { isOneWayOnlyDestination, formatKoreanPhone, phoneDigits, KOREAN_PHONE_MAX_DIGITS } from '@petmove/domain'
 import { APP_DESTINATIONS_SORTED } from '@/lib/app-destinations'
 import breedsData from '@petmove/domain/data/breeds.json'
 import colorsData from '@petmove/domain/data/colors.json'
@@ -1270,10 +1270,12 @@ export function ApplyForm({
               {(enWarnings.lastNameEn || enWarnings.firstNameEn) && <p className="mt-1.5 text-xs text-[#C26A4A]">{enWarnings.lastNameEn || enWarnings.firstNameEn}</p>}
             </FieldRow>
             <FieldRow m={m} label={m.phone} required fieldKey="phone" missing={missing.has('phone')}>
-              <input type="tel" inputMode="numeric" autoComplete="tel"
-                value={phone.replace(/(\d{3})(\d{4})(\d{0,4})/, (_, a, b, c) => c ? `${a}-${b}-${c}` : b ? `${a}-${b}` : a)}
-                maxLength={13}
-                onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, '').slice(0, 11))}
+              {/* 표기·자릿수는 domain/phone.ts 단일 출처 — 0507 안심번호(12자리)·서울 9자리 포함.
+                  신청폼은 유입 경로라 형식 미달을 제출 차단까지 하지는 않는다(정보 요청 링크와 다름). */}
+              <input type="tel" inputMode="tel" autoComplete="tel"
+                value={formatKoreanPhone(phone)}
+                maxLength={KOREAN_PHONE_MAX_DIGITS + 2}
+                onChange={(e) => setPhone(phoneDigits(e.target.value).slice(0, KOREAN_PHONE_MAX_DIGITS))}
                 placeholder={m.phonePlaceholder} className={numericInputClass} />
             </FieldRow>
             <FieldRow m={m} label={m.addressKr} required fieldKey="addressKr" missing={missing.has('addressKr')}>

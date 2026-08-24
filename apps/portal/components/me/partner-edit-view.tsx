@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition, type CSSProperties
 import { useConfirm } from '@petmove/ui'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
+import { formatKoreanPhone as formatKoreanPhoneShared, looksLikeKoreanPhoneInput } from '@petmove/domain'
 import { C, EditPageShell, SectionCard, OrgAvatar } from './settings-shared'
 import {
   getPartnerOrgInfo,
@@ -394,15 +395,9 @@ function withScheme(url: string): string {
  */
 function formatKoreanPhone(raw: string): string {
   const trimmed = raw.trim()
-  if (!trimmed || /^\+/.test(trimmed)) return trimmed
-  const d = trimmed.replace(/\D/g, '')
-  if (d.startsWith('02')) {
-    if (d.length === 10) return `02-${d.slice(2, 6)}-${d.slice(6)}`
-    if (d.length === 9) return `02-${d.slice(2, 5)}-${d.slice(5)}`
-  }
-  if (d.length === 11) return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`
-  if (d.length === 10) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`
-  return trimmed
+  // 국가번호(+82·+81…)나 글자가 섞인 자유 입력은 손대지 않는다.
+  if (!trimmed || !looksLikeKoreanPhoneInput(trimmed)) return trimmed
+  return formatKoreanPhoneShared(trimmed)
 }
 
 /**

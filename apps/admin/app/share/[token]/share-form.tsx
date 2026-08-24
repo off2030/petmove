@@ -19,6 +19,10 @@ import {
   SHARE_RECIPIENT_SUBGROUP_META,
   splitCustomerNameEn,
   composeCustomerNameEn,
+  formatKoreanPhone,
+  phoneInputError,
+  phoneDigits,
+  KOREAN_PHONE_MAX_DIGITS,
 } from '@petmove/domain'
 import breedsData from '@petmove/domain/data/breeds.json'
 import colorsData from '@petmove/domain/data/colors.json'
@@ -261,6 +265,13 @@ export function ShareForm({ initial }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    // 전화번호는 **지정 형식만** 받는다 — 자릿수가 모자라거나 없는 번호대면 제출을 막는다.
+    // 빈 값은 아래 '빈 항목' 경고가 담당하므로 여기선 형식만 본다.
+    for (const f of view.fields) {
+      if (f.key !== 'phone') continue
+      const phoneErr = phoneInputError(values[f.key] as string | null | undefined)
+      if (phoneErr) { setError(phoneErr); return }
+    }
     // #3 비어있는 항목 확인 — address_en 은 주소검색으로 자동 채워지므로 제외.
     const emptyFieldLabels = view.fields
       .filter((f) => f.key !== 'address_en' && isEmptyValue(f, values[f.key]))
@@ -775,19 +786,29 @@ function FieldInput({
     )
   }
 
-  // 신청폼과 동일: 전화번호 자동 포맷팅 (010-1234-5678)
+  // 전화번호 — **지정 형식만** 받는다(2026-08-24 사용자 결정).
+  //   · 한국 번호: 숫자만 입력받고 표기는 formatKoreanPhone 이 담당(휴대폰·서울 9자리·
+  //     0507 안심번호 12자리 모두 대응).
+  //   · 해외 거주 보호자: 맨 앞에 '+' 를 치면 국제번호 모드 — 한국 번호만 받으면 제출 자체를
+  //     못 하는 보호자가 실제로 있다(일본 090…·UAE +971… 16건).
+  // 자릿수·번호대 검증은 제출 시 phoneInputError 가 막는다(client + anon 서버 액션 공용).
   if (field.key === 'phone') {
-    const formatted = strVal.replace(/(\d{3})(\d{4})(\d{0,4})/, (_, a, b, c) => (c ? `${a}-${b}-${c}` : b ? `${a}-${b}` : a))
+    const intl = strVal.trim().startsWith('+')
     return (
       <FieldRow label={field.label}>
         <input
           type="tel"
-          inputMode="numeric"
+          inputMode="tel"
           autoComplete="tel"
-          value={formatted}
-          maxLength={13}
-          onChange={(e) => onChange(e.target.value.replace(/[^\d]/g, '').slice(0, 11))}
-          placeholder="010-1234-5678"
+          value={intl ? strVal : formatKoreanPhone(strVal)}
+          maxLength={20}
+          onChange={(e) => {
+            const raw = e.target.value.trim()
+            const plus = raw.startsWith('+')
+            const digits = phoneDigits(raw).slice(0, plus ? 15 : KOREAN_PHONE_MAX_DIGITS)
+            onChange(plus ? `+${digits}` : digits)
+          }}
+          placeholder="010-1234-5678 (해외는 +81…)"
           className={numericInputClass}
         />
       </FieldRow>

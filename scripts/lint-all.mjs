@@ -83,6 +83,13 @@ const parityCode = await run(
   'destination parity',
   { shell: process.platform === 'win32' },
 )
+// 전화번호 표기 — 네 화면이 각자 11자리로 잘라 0507 안심번호가 깨졌다(2026-08-24 신설).
+const phoneCode = await run(
+  localBin('tsx'),
+  ['scripts/check-phone-format.ts'],
+  'phone format',
+  { shell: process.platform === 'win32' },
+)
 // 면역 유효기간 해석 — 표기 흔들림("1 year"/"1Y")이 의료 판정을 뒤집었다(2026-08-24 신설).
 const validUntilCode = await run(
   localBin('tsx'),
@@ -122,6 +129,7 @@ const summary = [
   `  dep sync seed: ${departureSyncCode === 0 ? '✓ pass' : `✗ exit ${departureSyncCode}`}`,
   `  multi slots:   ${multiSlotCode === 0 ? '✓ pass' : `✗ exit ${multiSlotCode}`}`,
   `  valid-until:   ${validUntilCode === 0 ? '✓ pass' : `✗ exit ${validUntilCode}`}`,
+  `  phone format:  ${phoneCode === 0 ? '✓ pass' : `✗ exit ${phoneCode}`}`,
 ].join('\n')
 console.log(`\n─── summary ───\n${summary}`)
 
@@ -129,6 +137,6 @@ process.exit(
   Math.max(
     eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode,
     reportSlotsCode, journeyRestoreCode, sizeCode, copyCode, wiringCode, parityCode,
-    departureSyncCode, multiSlotCode, validUntilCode,
+    departureSyncCode, multiSlotCode, validUntilCode, phoneCode,
   ),
 )

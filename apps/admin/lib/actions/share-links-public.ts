@@ -57,6 +57,7 @@ import {
   composeCustomerNameEn,
   loadDestinationOverridesByOrg,
   getEffectiveExtraFieldEntries,
+  phoneInputError,
   isDestinationScopedKey,
   parseDestinations,
   resolveShareScopeToken,
@@ -540,6 +541,12 @@ export async function submitShareLink(
       if (value === null) continue
       if (typeof value === 'string' && value.trim() === '') continue
       if (Array.isArray(value) && value.length === 0) continue
+      // 전화번호는 **지정 형식만** 받는다 — 폼 검증만 두면 우회 제출로 뚫린다(anon 액션).
+      // 관리자 화면(펫무브워크)은 하이브리드라 자유 입력이 되지만, 링크로 들어오는 값은 막는다.
+      if (key === 'phone') {
+        const phoneErr = phoneInputError(typeof value === 'string' ? value : '')
+        if (phoneErr) return { ok: false, error: phoneErr }
+      }
       if (SHARE_COLUMN_FIELDS.has(key)) {
         colUpdate[key] = value
       } else {
