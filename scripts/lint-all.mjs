@@ -83,6 +83,14 @@ const parityCode = await run(
   'destination parity',
   { shell: process.platform === 'win32' },
 )
+// 추가정보 '출발일' ↔ 출국일 sync 룰 시드 패리티 — 선언만 하고 시드를 빼먹으면 출국일 컬럼이
+// 영영 안 채워져 신고 탭·목록·D-day 가 그 케이스를 통째로 놓친다(2026-08-24 신설).
+const departureSyncCode = await run(
+  localBin('tsx'),
+  ['scripts/lint-departure-sync.ts'],
+  'departure sync seeds',
+  { shell: process.platform === 'win32' },
+)
 
 const summary = [
   `  admin eslint:  ${eslintCode === 0 ? '✓ pass' : `✗ exit ${eslintCode}`}`,
@@ -96,6 +104,7 @@ const summary = [
   `  lint:copy:     ${copyCode === 0 ? '✓ pass' : `✗ exit ${copyCode}`}`,
   `  lint:wiring:   ${wiringCode === 0 ? '✓ pass' : `✗ exit ${wiringCode}`}`,
   `  lint:parity:   ${parityCode === 0 ? '✓ pass' : `✗ exit ${parityCode}`}`,
+  `  dep sync seed: ${departureSyncCode === 0 ? '✓ pass' : `✗ exit ${departureSyncCode}`}`,
 ].join('\n')
 console.log(`\n─── summary ───\n${summary}`)
 
@@ -103,5 +112,6 @@ process.exit(
   Math.max(
     eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode,
     reportSlotsCode, journeyRestoreCode, sizeCode, copyCode, wiringCode, parityCode,
+    departureSyncCode,
   ),
 )

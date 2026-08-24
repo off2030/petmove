@@ -97,10 +97,16 @@ export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
   // ── 출국 항공편 (그룹) — 한국 출발 → 도착국 도착. 보호자 시점으로 라벨 통일.
   //    표시 순서: 날짜 → 항공편명 → 출발/도착공항 → 운송방법 → 시간. ──
   //
-  // departure_flight_date: 항공권에 적힌 한국 **출발일**.
-  //    일본 등 한국 → 도착국 같은 날 도착 노선에서 사용. 케이스의 departure_date 컬럼과
-  //    양방향 sync (updateCaseField hardcode + share-link 동일 처리).
+  // departure_flight_date: 항공권에 적힌 한국 **출발일**. 케이스의 departure_date 컬럼과
+  //    양방향 sync 되며, sync 를 실제로 거는 건 `org_auto_fill_rules` **시드 마이그레이션**이다.
   //    (출발시간은 한일 같은 날 노선엔 불필요해 미사용.)
+  //
+  //    ⚠️ 이 키를 새 목적지의 extraFields 에 넣으면 **시드도 같이 추가**해야 한다. 안 하면
+  //    화면엔 출발일 칸이 생기는데 출국일 컬럼이 영영 안 채워져, 목록 정렬·D-day·신고 탭
+  //    자동 포함이 그 케이스를 통째로 놓친다(하와이 2026-08-18, 태국 2026-08-24 가 그랬다).
+  //    `pnpm lint` 의 `lint-departure-sync.ts` 가 이 짝을 강제한다 — 본보기 시드는
+  //    20260824000002_seed_report_departure_sync_rules.sql.
+  //    2026-08-24 기준 신고국 14개 전부가 이 키를 쓴다(정보 요청 링크로 출발일을 받기 위해).
   // entry_date / entry_time: 도착국 **도착일·도착시간**. 시차 큰 destination(스위스·태국·미국·하와이)
   //    에서 출국일과 다른 날일 수 있는 경우에 사용. 일본은 사용하지 않음.
   departure_flight_date: { key: 'departure_flight_date', label: '출발일', type: 'date', group: '출국 항공편', shortLabel: '날짜' },

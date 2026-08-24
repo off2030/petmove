@@ -302,7 +302,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     advanceNotice: { hardDeadlineHours: 24 },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     // 촌충약(Echinococcus, praziquantel)은 규정상 개 전용 — 고양이는 면제(EU Reg 2018/772).
-    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }, 'departure_flight_date'],
     // 임상검사 창 = 기본 10일. 예전엔 촌충 동시 내원 가정으로 개 window=4 였으나, 촌충
     // 타이밍(법정 24~120h)은 촌충 카드의 저장 차단이 담당하므로 임상검사까지 좁힐 근거가
     // 없다 — 2026-07-25 사용자 확정, 몰타·노르웨이·핀란드·영국의 같은 선언도 함께 제거.
@@ -316,7 +316,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 사전 통지 — servizz.gov.mt 포털, 입국 3영업일 전까지(영업일 기준이라 시간 필드 미지정).
     advanceNotice: {},
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
-    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }, 'departure_flight_date'],
   },
   norway: {
     keywords: ['노르웨이', 'norway'],
@@ -327,7 +327,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 사전 통지 — Mattilsynet 이메일, 입국 48시간 전까지.
     advanceNotice: { hardDeadlineHours: 48 },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
-    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }, 'departure_flight_date'],
   },
   finland: {
     keywords: ['핀란드', 'finland'],
@@ -349,7 +349,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     appSupported: true,
     // 사전 통지 — 지구 수의검역국 이메일(moa.gov.cy), 입국 48시간 전까지.
     advanceNotice: { hardDeadlineHours: 48 },
-    extraFields: ['address_overseas'],
+    extraFields: ['address_overseas', 'departure_flight_date'],
   },
   // 포르투갈 — 절차는 표준 EU 그대로지만 **도착 48시간 전 DGAV 도착 통보(Aviso de Chegada)가
   // 의무**라 eu 묶음에서 분리(키프로스와 같은 사유). eu 보다 먼저 매칭.
@@ -393,7 +393,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 스위스 전용 BLV 수입허가 신청서(CH) — 수입허가 카드 대상.
     importPermit: {},
     extraSection: 'switzerland',
-    extraFields: ['email', 'entry_date', 'entry_airport', 'entry_purpose', 'cropped'],
+    extraFields: ['email', 'departure_flight_date', 'entry_date', 'entry_airport', 'entry_purpose', 'cropped'],
   },
   uk: {
     keywords: ['영국', '북아일랜드', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'],
@@ -604,7 +604,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     extraSection: 'philippines',
     extraFields: [
       'address_overseas', 'postal_code', 'email',
-      'passport_number', 'passport_expiry_date', 'entry_airport',
+      'passport_number', 'passport_expiry_date',
+      'departure_flight_date', 'entry_airport',
     ],
     rabiesTiterForReturnOnly: true,
   },
@@ -762,6 +763,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       'overseas_phone',
       'passport_number',
       'holder_birth_date',
+      'departure_flight_date',
       'entry_date',
     ],
     rabiesTiterForReturnOnly: true,
@@ -1252,7 +1254,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     },
     titer: { entryValidityMonths: 12, entryWaitAfterTiter: { days: 180 } },
     vaccines: ['rabies', 'rabies_titer'],
-    extraFields: ['address_overseas', 'permit_no'],
+    extraFields: ['address_overseas', 'permit_no', 'departure_flight_date'],
     // APHIA pet e-permit — 로잔이 대행한다(2026-08-03 사용자 지정). selfApply 플래그의 유일한
     //   기능은 '맡기기 상품에서 제외'라, 대행하는 이상 붙여 둘 이유가 없어 뗀다.
     //   (여정 카드·서류 탭·발급 푸시는 이 플래그와 무관하게 종전 그대로.)
@@ -1752,7 +1754,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // ADVANCE_NOTICE_DESTINATIONS(presence 파생)에 들어가야 하므로.
     advanceNotice: { label: '사전 통지' },
     vaccines: ['rabies', 'rabies_titer'],
-    extraFields: ['address_overseas'],
+    extraFields: ['address_overseas', 'departure_flight_date'],
   },
   // ── 남아프리카공화국 (DALRRD — Department of Agriculture, Land Reform & Rural Development) ──
   // 1차 출처: 남아공 정부 동물 수입 안내(gov.za) · 농업부 Animal Health 신청서·수수료 문서 ·
