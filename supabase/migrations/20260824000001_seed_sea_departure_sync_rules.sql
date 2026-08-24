@@ -57,4 +57,66 @@ begin
   end loop;
 end $$;
 
+
+-- ── 백필: 이미 만들어진 케이스의 '출발일' 채우기 ──────────────────────────────
+-- 룰은 저장 시점에만 돈다. 그래서 이 마이그레이션 이전에 만들어진 태국·말레이시아·
+-- 인도네시아 케이스는 출국일(departure_date)만 있고 departure_flight_date 가 비어,
+-- 배포 직후 케이스 상세 '출국 항공편 > 출발일' 칸이 **빈 것처럼** 보인다(값은 절차정보
+-- '출국일'에 그대로 있는데 추가정보 필드가 새 키를 읽기 때문).
+-- 이미 있는 출국일을 새 키로 **복사만** 한다 — 기존 값이 있으면 건드리지 않는다.
+--
+-- 저장 위치는 read 규칙(readEffectiveExtraValue)과 맞춘다:
+--   · 다중 여행지 → by_dest[여행지].departure_flight_date (옆 나라로 새지 않게)
+--   · 단일 여행지 → top-level data.departure_flight_date (by_dest 에 그 키가 없으면 폴백)
+do $$
+declare
+  r record;
+  dests text[];
+  dest text;
+  dep text;
+  multi boolean;
+  newdata jsonb;
+  touched int := 0;
+begin
+  for r in
+    select id, destination, departure_date, coalesce(data, '{}'::jsonb) as data
+    from public.cases
+    where destination ~ '태국|말레이시아|인도네시아'
+  loop
+    dests := array(
+      select btrim(x) from unnest(string_to_array(r.destination, ',')) x where btrim(x) <> ''
+    );
+    multi := coalesce(array_length(dests, 1), 0) > 1;
+    newdata := r.data;
+
+    foreach dest in array dests loop
+      continue when dest !~ '태국|말레이시아|인도네시아';
+      dep := coalesce(
+        newdata->'by_dest'->dest->>'departure_date',
+        case when multi then null else nullif(r.departure_date::text, '') end
+      );
+      continue when dep is null or dep = '';
+
+      if multi then
+        if newdata->'by_dest'->dest is not null
+           and coalesce(newdata->'by_dest'->dest->>'departure_flight_date', '') = '' then
+          newdata := jsonb_set(
+            newdata, array['by_dest', dest, 'departure_flight_date'], to_jsonb(dep), true
+          );
+        end if;
+      elsif coalesce(newdata->'by_dest'->dest->>'departure_flight_date', '') = ''
+        and coalesce(newdata->>'departure_flight_date', '') = '' then
+        newdata := jsonb_set(newdata, array['departure_flight_date'], to_jsonb(dep), true);
+      end if;
+    end loop;
+
+    if newdata is distinct from r.data then
+      update public.cases set data = newdata where id = r.id;
+      touched := touched + 1;
+    end if;
+  end loop;
+
+  raise notice '출발일 백필: 케이스 % 건', touched;
+end $$;
+
 notify pgrst, 'reload schema';
