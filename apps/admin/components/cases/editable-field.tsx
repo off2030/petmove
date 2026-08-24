@@ -272,14 +272,11 @@ export function EditableField({
         return
       }
     }
-    // 전화번호 — 010 + 8자리 강제 (펫무브 portal 과 동일). 빈 값은 OK.
-    if (spec.key === 'phone' && value.trim()) {
-      const digits = value.trim().replace(/\D/g, '')
-      if (!/^010\d{8}$/.test(digits)) {
-        setError('010-XXXX-XXXX 형식으로 입력해 주세요')
-        return
-      }
-    }
+    // 전화번호 — 펫무브워크(관리자)는 **형식을 강제하지 않는다**(2026-08-24 사용자 결정).
+    //   예전엔 `010 + 8자리` 만 저장할 수 있어서 0507 안심번호·02 유선·해외번호를 아예 못 넣었다
+    //   (0507-1400-4069 가 저장 단계에서 막힌 게 이 줄이다). 운영자는 예외를 적을 수 있어야 하고,
+    //   형식 강제는 보호자가 직접 입력하는 쪽(정보 요청 링크·신청폼·앱)에서만 한다.
+    //   저장값 정규화(한국 번호면 숫자만, 그 외는 원문)는 PhoneInput 이 담당한다.
     // 이메일 — 단순 형식(sub@domain.tld). 빈 값은 OK.
     if (spec.key === 'email' && value.trim()) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {

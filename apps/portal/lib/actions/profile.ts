@@ -16,6 +16,7 @@ import { redirect } from 'next/navigation'
 import { createAdminClient } from '@petmove/auth'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
 import type { CaseRow } from '@petmove/domain'
+import { phoneInputError, normalizePhoneForStorage } from '@petmove/domain'
 import { revalidatePath } from 'next/cache'
 import { AVATAR_COLOR_IDS } from '@/lib/avatar'
 import { autoLinkCasesByEmail, ensureCustomerProfile } from '@/lib/supabase/customer'
@@ -245,11 +246,11 @@ export async function updateGuardianContact(
     const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
 
-    // 검증 — use-case-edit-form/updateCaseInfoFields 와 동일 규칙.
-    const phone = input.phone.replace(/\D/g, '')
-    if (phone && !/^010\d{8}$/.test(phone)) {
-      return { ok: false, error: '전화번호는 010-XXXX-XXXX 형식으로 입력하세요.' }
-    }
+    // 검증 — 형식 규칙은 domain/phone.ts 단일 출처(휴대폰·02 유선·0507 안심번호·'+' 국제번호).
+    // 예전엔 010 + 8자리만 통과시켜 0507·유선·해외번호를 쓰는 보호자가 저장을 못 했다(2026-08-24).
+    const phoneErr = phoneInputError(input.phone)
+    if (phoneErr) return { ok: false, error: phoneErr }
+    const phone = normalizePhoneForStorage(input.phone)
     const email = input.contact_email.trim()
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return { ok: false, error: '이메일 형식이 올바르지 않습니다.' }

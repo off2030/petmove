@@ -10,7 +10,7 @@ import zlib from 'node:zlib'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
 import { FORM_CAPACITY } from '@/lib/pdf-multi-forms'
-import { getParasiteFamily, PARASITE_FAMILIES, splitCustomerNameEn } from '@petmove/domain'
+import { getParasiteFamily, PARASITE_FAMILIES, splitCustomerNameEn, formatKoreanPhone, looksLikeKoreanPhoneInput } from '@petmove/domain'
 import {
   lookupRabies,
   lookupExternalParasite,
@@ -364,10 +364,13 @@ function issueDateOf(data: Record<string, unknown>): Date {
 
 /** Format raw digit string into 010-XXXX-XXXX (10–11 digit Korean mobile). */
 function fmtPhoneDash(raw: unknown): string {
-  const s = String(raw ?? '').replace(/\D/g, '')
-  if (s.length === 11) return `${s.slice(0, 3)}-${s.slice(3, 7)}-${s.slice(7)}`
-  if (s.length === 10) return `${s.slice(0, 3)}-${s.slice(3, 6)}-${s.slice(6)}`
-  return s
+  const s = String(raw ?? '').trim()
+  if (!s) return ''
+  // 해외번호·내선·메모 같은 자유 입력은 **그대로** 찍는다 — 숫자만 남기면 +81 이 81 로 둔갑한다.
+  if (!looksLikeKoreanPhoneInput(s)) return s
+  // 한국 번호 표기는 domain/phone.ts 단일 출처 — 0507 안심번호(12자리)·서울 9자리 포함.
+  // 예전엔 10·11자리만 끊어서 0507 번호가 하이픈 없이 통째로 찍혔다.
+  return formatKoreanPhone(s)
 }
 
 // Korean phone → +82-AREA-XXXX-YYYY. Seoul (02) keeps 1-digit area code,
