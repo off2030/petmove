@@ -10,7 +10,7 @@ import zlib from 'node:zlib'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
 import { FORM_CAPACITY } from '@/lib/pdf-multi-forms'
-import { getParasiteFamily, PARASITE_FAMILIES, splitCustomerNameEn, formatKoreanPhone, looksLikeKoreanPhoneInput } from '@petmove/domain'
+import { getParasiteFamily, PARASITE_FAMILIES, splitCustomerNameEn, formatKoreanPhone, looksLikeKoreanPhoneInput, destinationEnglish } from '@petmove/domain'
 import {
   lookupRabies,
   lookupExternalParasite,
@@ -783,6 +783,13 @@ export function readSource(
     const legacy = (caseRow as unknown as Record<string, unknown>).customer_name_en
     const parts = splitCustomerNameEn(typeof legacy === 'string' ? legacy : '')
     return source === 'customer_last_name_en' ? parts.last : parts.first
+  }
+
+  // 여행지의 영문 표기 — 해외 기관 서식의 "Country Being Sent To" 같은 칸에 쓴다.
+  // caseRow.destination 은 한글(예: 뉴질랜드)이라 그대로 넣으면 현지에서 못 읽는다.
+  if (source === 'destination_en') {
+    const dest = (caseRow as unknown as Record<string, unknown>).destination
+    return typeof dest === 'string' && dest.trim() ? destinationEnglish(dest) : ''
   }
 
   // Lab-specific inspection date from infectious_disease_records.

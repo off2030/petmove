@@ -4655,6 +4655,7 @@
       "animal_species": {"source": "species", "transform": "en", "note": "Species (Dog/Cat)"},
       "animal_name": {"source": "pet_name_en", "note": "Animal Name"},
       "animal_microchip": {"source": "microchip", "note": "Microchip Number"},
+      "animal_country_sent_to": {"source": "destination_en", "note": "Country Being Sent To — 케이스 여행지의 영문 표기(한글 저장값을 destinationEnglish 로 변환)"},
       "animal_date_blood_drawn": {"source": "infectious_date:ksvdl", "transform": "date_mdy_compact", "note": "Date Blood Drawn — MMDDYYYY (KSVDL 검사일 우선, 없으면 내원일)"},
       "test_brucellosis": {"source": "sex", "transform": "checkbox:in:male|female", "note": "Canine Brucellosis — 중성화 안된 경우만 체크 (sex=male/female)"},
       "test_leptospira": {"source": "general_vaccine_dates", "transform": "checkbox:empty_array", "note": "Leptospira Canicola — 종합백신 접종 없을 때만 체크"},
