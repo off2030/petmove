@@ -17,6 +17,10 @@ import { logOutbound } from '@/lib/actions/outbound'
  *    나가서 따로 걸어 아무 기록도 안 남는다. 모바일에선 버튼이 UX 도 더 낫다.
  *
  * 표기: '제휴'·'추천'·평가·가격 없음. 계약 관계가 아니라는 걸 문구로 명시한다.
+ *
+ * 시각: 연락 링크는 앱의 기존 '연락처' 패턴(검역소 연락처·일본 공항검역·담당 병원 카드)과
+ * 같은 종족 — accent 인라인 링크 + 13px 아이콘, 테두리·배경 없음. 테두리 있는 알약 버튼은
+ * 이 맥락에서 광고 배너처럼 읽혀서 쓰지 않는다.
  */
 
 const SOURCE = 'journey-flight-step'
@@ -60,17 +64,15 @@ export function TransportPartners({
     void logOutbound({ event, source: SOURCE, partnerSlug, destination: dest, caseId })
   }
 
-  const btn = {
+  // 검역소 연락처·담당 병원 카드와 동일 — accent 텍스트 + 13px 아이콘. 세로 패딩은
+  // 터치 영역용(시각적으로는 안 보인다).
+  const link = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 5,
-    padding: '7px 13px',
-    borderRadius: 999,
-    border: `.5px solid ${C.line}`,
-    background: C.surface,
-    color: C.ink,
+    padding: '7px 0',
+    color: C.accent,
     fontSize: 13,
-    fontWeight: 500,
     textDecoration: 'none',
     fontFamily: 'inherit',
   } as const
@@ -96,42 +98,29 @@ export function TransportPartners({
           {partners.map((p) => (
             <div
               key={p.slug}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 10,
-                flexWrap: 'wrap',
-                paddingTop: 12,
-                borderTop: `.5px solid ${C.line}`,
-              }}
+              style={{ paddingTop: 12, borderTop: `.5px solid ${C.line}` }}
             >
-              <span style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{p.name}</span>
-              <span style={{ display: 'inline-flex', gap: 8 }}>
+              <div style={{ fontSize: 14, fontWeight: 500, color: C.ink }}>{p.name}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 1 }}>
                 <a
                   href={`tel:${p.tel}`}
                   onClick={() => onContact(p.slug, 'tel')}
-                  style={btn}
+                  style={link}
                   aria-label={`${p.name} 전화하기`}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z" />
-                  </svg>
+                  <IconPhone />
                   전화하기
                 </a>
                 <a
                   href={`mailto:${p.email}`}
                   onClick={() => onContact(p.slug, 'mail')}
-                  style={btn}
+                  style={link}
                   aria-label={`${p.name} 이메일 보내기`}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <rect x="2.5" y="4.5" width="19" height="15" rx="2.5" />
-                    <path d="M3 7l9 6 9-6" />
-                  </svg>
-                  메일
+                  <IconMail />
+                  메일 보내기
                 </a>
-              </span>
+              </div>
             </div>
           ))}
         </div>
@@ -141,5 +130,23 @@ export function TransportPartners({
         </p>
       </div>
     </section>
+  )
+}
+
+/* 아이콘은 기존 연락처 화면(guide/jp-quarantine-contacts)과 같은 path·굵기를 쓴다. */
+function IconPhone() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ flexShrink: 0 }}>
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  )
+}
+
+function IconMail() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ flexShrink: 0 }}>
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="m22 6-10 7L2 6" />
+    </svg>
   )
 }

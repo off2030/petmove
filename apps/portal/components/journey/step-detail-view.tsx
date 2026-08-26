@@ -3160,6 +3160,14 @@ export function StepDetailView({
           </section>
         )}
 
+        {/* 운송업체 안내 — 운송 예약/항공권 카드에서만, **아직 예약 전**일 때. 이 카드에서
+            할 일의 실제 순서가 '업체 정해 예약 → 출발일 입력 → 확인서 첨부'라 입력 위에 둔다.
+            예약을 마친(done) 사람에겐 쓸모없어 숨긴다 — 노출 모수가 실제 잠재 수요자로
+            좁혀져 클릭률도 더 정확해진다. 협의 전 수요 실험(노출·클릭 기록). */}
+        {isFlight && !done && (
+          <TransportPartners caseId={caseId} destination={activeDest ?? null} />
+        )}
+
         {/* Inputs — 마이크로칩·광견병1·2차 step 은 인터랙티브, 그 외는 read-only 스키마 미리보기. */}
         {isMicrochip && (
           <section style={{ marginTop: 22 }}>
@@ -3596,10 +3604,6 @@ export function StepDetailView({
             />
           </section>
         )}
-
-        {/* 운송업체 안내 — 운송 예약/항공권 카드에서만. 노출·클릭을 기록해 수요를 먼저 잰다
-            (협의 전 실험). 입력·첨부 아래에 둬서 본래 할 일을 가리지 않는다. */}
-        {isFlight && <TransportPartners caseId={caseId} destination={activeDest ?? null} />}
 
         {/* '지난 예정/당일' 안내는 위의 정식 '안내' 카드(scheduledNotice)로 합류 —
             라벨 없는 별도 박스는 제거(2026-07-25 채널 통일). */}
