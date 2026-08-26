@@ -76,19 +76,27 @@ export default function TransportQuotePage() {
           <div className="art-meta">마지막 업데이트 2026.08.26 · 읽는 데 약 3분</div>
         </div>
 
+        {/* 순서 = 클릭 의도 우선. '운송업체'를 눌러 들어온 사람에게 설명부터 들이밀지 않는다 —
+            연락처를 먼저 주고, 왜 견적이 필요한지는 그 아래에서 설명한다(2026-08-26 사용자 지적). */}
         <div className="prose">
           <p>
-            반려동물을 해외로 보낼 때 가는 방법은 세 가지입니다. 그중 <strong>항공 화물</strong>은
-            요금이 정해져 있지 않아 운송업체에 견적을 받아야 합니다. 왜 그런지, 견적을 받을 때
-            무엇을 준비하면 되는지 정리했습니다.
+            반려동물을 <strong>항공 화물</strong>로 보낼 때는 운송업체를 통해 예약합니다. 화물
+            운임은 정해진 표가 없어 아이 기준으로 견적을 받아야 합니다. 객실이나 수하물로 함께
+            갈 수 있다면 항공사가 공지한 요금표대로입니다.
           </p>
 
-          <h2 id="ways">가는 방법 세 가지</h2>
+          <h2 id="partners">운송을 대행하는 업체</h2>
+          <p>
+            펫무브와 계약 관계가 있는 업체는 아니며, 공개된 대표 연락처를 안내해 드립니다.
+            비용과 조건은 업체에 직접 확인해 주세요.
+          </p>
+          <TransportPartners />
+
+          <h2 id="quote-inputs">연락하기 전에 챙길 것</h2>
+          <p>아래 정보를 미리 정리해서 전달하면 견적이 한 번에 나옵니다.</p>
           <ul>
-            {WAYS.map((w) => (
-              <li key={w.label}>
-                <strong>{w.label}</strong> — {w.body}
-              </li>
+            {QUOTE_INPUTS.map((q) => (
+              <li key={q}>{q}</li>
             ))}
           </ul>
 
@@ -103,20 +111,14 @@ export default function TransportQuotePage() {
             받아보셔야 정확한 금액을 알 수 있습니다.
           </p>
 
-          <h2 id="quote-inputs">견적 받을 때 알려줄 것</h2>
-          <p>아래 정보를 미리 정리해서 전달하면 견적이 한 번에 나옵니다.</p>
+          <h2 id="ways">가는 방법 세 가지</h2>
           <ul>
-            {QUOTE_INPUTS.map((q) => (
-              <li key={q}>{q}</li>
+            {WAYS.map((w) => (
+              <li key={w.label}>
+                <strong>{w.label}</strong> — {w.body}
+              </li>
             ))}
           </ul>
-
-          <h2 id="partners">운송을 대행하는 업체</h2>
-          <p>
-            펫무브와 계약 관계가 있는 업체는 아니며, 공개된 대표 연락처를 안내해 드립니다.
-            비용과 조건은 업체에 직접 확인해 주세요.
-          </p>
-          <TransportPartners />
 
           <h2 id="airline-fees">기내·수하물로 갈 때의 요금은</h2>
           <p>
