@@ -134,6 +134,7 @@ import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm, type RabiesProductHints } from './rabies-entry-inputs'
 import { RabiesExtraInputs, type RabiesExtraEntry } from './rabies-extra-inputs'
 import { StepAttachments } from './step-attachments'
+import { TransportPartners } from './transport-partners'
 import { TiterExtraInputs, type TiterExtraEntry } from './titer-extra-inputs'
 import { TiterInputs, type TiterForm } from './titer-inputs'
 import { VetVisitInputs } from './vet-visit-inputs'
@@ -3595,6 +3596,10 @@ export function StepDetailView({
             />
           </section>
         )}
+
+        {/* 운송업체 안내 — 운송 예약/항공권 카드에서만. 노출·클릭을 기록해 수요를 먼저 잰다
+            (협의 전 실험). 입력·첨부 아래에 둬서 본래 할 일을 가리지 않는다. */}
+        {isFlight && <TransportPartners caseId={caseId} destination={activeDest ?? null} />}
 
         {/* '지난 예정/당일' 안내는 위의 정식 '안내' 카드(scheduledNotice)로 합류 —
             라벨 없는 별도 박스는 제거(2026-07-25 채널 통일). */}

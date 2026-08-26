@@ -33,6 +33,7 @@ import { TopBar } from '@/components/layout/topbar'
 import { OrgInfoForm } from '@/components/settings/org-info-form'
 import { PillButton } from '@petmove/ui'
 import { cn } from '@/lib/utils'
+import { OutboundStatsCard } from './outbound-stats-card'
 
 interface Props {
   initialOrgs: OrgSummary[]
@@ -262,6 +263,9 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
               {/* 좌: SaaS 운영자 + 조직 목록 + 생성 폼 */}
               <section className="lg:col-span-2 flex flex-col gap-lg">
                 <SuperAdminsCard initialAdmins={initialSuperAdmins} currentUserId={currentUserId} />
+
+                {/* 운송업체 안내(고객앱 여정 카드) 노출·클릭 — 협의 전 수요 실험 성적표. */}
+                <OutboundStatsCard />
 
                 {/* Orgs card — Editorial borderless */}
                 <div className="rounded-xl bg-card px-lg pt-md pb-sm">
