@@ -218,3 +218,16 @@
   }
 }
 .pg-article{background:#FFFFFF}
+
+/* ── 운송업체 견적 페이지 — 업체 연락 블록 ────────────────────────────────
+   연락 링크는 사이트의 다른 링크와 같은 accent 톤. 전화번호는 평문으로 두지 않는다
+   (읽고 나가면 기록이 안 남는다 — 측정이 이 페이지의 목적 중 하나). */
+.pg-article .partners{border:0.5px solid var(--border);border-radius:14px;background:var(--surface);padding:4px 18px;margin:18px 0}
+.pg-article .partner{padding:15px 0;border-bottom:0.5px solid var(--border)}
+.pg-article .partner:last-of-type{border-bottom:0}
+.pg-article .partner-name{font-size:15.5px;font-weight:600;color:var(--ink)}
+.pg-article .partner-links{display:flex;flex-wrap:wrap;gap:18px;margin-top:5px}
+.pg-article .partner-links a{display:inline-flex;align-items:center;gap:6px;color:var(--accent-ink);font-size:14px;padding:5px 0}
+.pg-article .partner-links a:hover{text-decoration:underline}
+.pg-article .partner-links i{font-size:17px;flex:0 0 auto}
+.pg-article .partner-note{font-size:12px;color:var(--ink3);margin:0 0 14px;padding-top:12px;border-top:0.5px solid var(--border)}
