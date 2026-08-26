@@ -2391,6 +2391,37 @@ export function getHardcodedDestinationsAsCustom(): CustomDestination[] {
 }
 
 /**
+ * 이 custom 여행지가 코드 하드코딩 정의와 **완전히 같은가** — 조직 설정 저장 시
+ * '손대지 않은 여행지'를 걸러내는 데 쓴다.
+ *
+ * ⛔ WHY (2026-08-26): 설정 → 여행지별 표시정보는 코드 여행지 + custom 을 한 목록으로 보여주고
+ *   저장 때 **목록 전체**를 쓴다. 그래서 여행지 하나만 고쳐도 40개 전부가 조직 설정에 얼어붙었고,
+ *   getEffectiveExtraFieldEntries 는 custom 이 있으면 코드를 통째로 대체하므로 그 뒤로 코드에
+ *   추가된 필드가 그 조직에 **영영 닿지 않았다**.
+ *   실제 피해: 2026-08-24 에 신고국 14개 추가정보로 승격한 '출발일'(departure_flight_date)이
+ *   13개국에서 통째로 묻혔다. 태국·말레이시아·인도네시아는 같은 커밋이 케이스 상세의 화면 전용
+ *   줄(unshift)까지 걷어냈던 터라 **입력칸이 아예 사라졌고**, 링크로 출발일을 못 받아
+ *   cases.departure_date 가 비어 신고 탭에서 케이스가 누락됐다(홍소영/토비).
+ *
+ *   손대지 않은 항목을 저장하지 않으면 그 여행지는 계속 코드 프로파일을 따라간다.
+ *   실제로 커스터마이즈한 여행지만 스냅샷으로 남고, 거기서는 완전 대체가 그대로 유지된다
+ *   (사용자가 일부러 뺀 항목이 코드 때문에 되살아나면 안 되므로).
+ */
+export function isSameAsHardcodedDestination(custom: CustomDestination): boolean {
+  const code = getHardcodedDestinationsAsCustom().find((h) => h.id === custom.id)
+  if (!code) return false // 코드에 없는 순수 커스텀 여행지 — 항상 보존
+  const norm = (d: CustomDestination) => JSON.stringify({
+    name: d.name,
+    keywords: d.keywords,
+    // 표시 순서도 사용자가 바꿀 수 있으므로 순서까지 그대로 비교한다.
+    vaccines: d.vaccines.map((v) => ({ key: v.key, species: v.species ?? null })),
+    extraFields: (d.extraFields ?? []).map((f) => ({ key: f.key, species: f.species ?? null })),
+    extraSection: d.extraSection ?? null,
+  })
+  return norm(custom) === norm(code)
+}
+
+/**
  * 케이스에 적용할 추가정보 extra fields entries 반환 (커스텀 우선, 폴백 하드코딩).
  */
 export function getEffectiveExtraFieldEntries(
@@ -2412,6 +2443,12 @@ export function getEffectiveExtraFieldEntries(
  *
  * ⛔ 나라 이름 하드코딩(`=== 'japan'`) 을 다시 만들지 말 것 — 목적지가 늘 때마다 저장 측을
  *   같이 고쳐야 해서 하와이(2026-08-18)·태국(2026-08-24)에서 같은 사고가 반복됐다.
+ *
+ * ⚠️ 이 함수는 **코드 프로파일만** 본다(조직 설정 override 미반영). 포털(고객 앱)에서 불려
+ *   org 컨텍스트가 없기 때문이다. 손대지 않은 여행지는 조직 설정에 저장되지 않으므로
+ *   (isSameAsHardcodedDestination) 코드가 곧 실효 정의라 일치하지만, 운영자가 그 여행지를
+ *   실제로 커스터마이즈해 이 필드를 빼면 표시 측과 어긋난다. 그때는 이 함수에 config 를
+ *   넘기도록 확장할 것 — 지금 미리 하지 않는 이유는 포털까지 org 설정을 끌고 가야 해서다.
  */
 export function usesDepartureFlightDate(destination: string | null | undefined): boolean {
   const override = getDestinationOverride(destination)
