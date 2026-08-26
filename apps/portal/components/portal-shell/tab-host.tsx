@@ -102,6 +102,9 @@ const GUIDE_SCREENS: Record<string, ReturnType<typeof dynamic>> = {
   'th-aqs-contacts': dynamic(() => import('@/components/guide/th-aqs-contacts'), {
     loading: () => <TabSkeleton rows={3} />,
   }),
+  'transport-quote': dynamic(() => import('@/components/guide/transport-quote'), {
+    loading: () => <TabSkeleton rows={3} />,
+  }),
 }
 
 type PaneKey = 'journey' | 'docs' | 'services' | 'me' | 'settings'

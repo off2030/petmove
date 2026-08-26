@@ -18,8 +18,8 @@ import { TRANSPORT_PARTNER_SLUGS } from '@petmove/domain'
 const EVENTS = ['impression', 'tel', 'mail'] as const
 type OutboundEvent = (typeof EVENTS)[number]
 
-const SOURCES = ['journey-flight-step'] as const
-type OutboundSource = (typeof SOURCES)[number]
+const SOURCES = ['journey-flight-step', 'app-guide'] as const
+export type OutboundSource = (typeof SOURCES)[number]
 
 export interface LogOutboundInput {
   event: OutboundEvent

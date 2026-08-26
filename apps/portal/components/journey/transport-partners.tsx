@@ -1,14 +1,15 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useMemo, useRef } from 'react'
 import { buildCaseJourneyContext, orderedTransportPartners } from '@petmove/domain'
 import { C } from '@/lib/palette'
 import { monoCap } from '@/components/me/settings-shared'
 import { useCase } from '@/components/portal-shell/case-data-provider'
-import { logOutbound } from '@/lib/actions/outbound'
+import { logOutbound, type OutboundSource } from '@/lib/actions/outbound'
 
 /**
- * 운송 예약 / 항공권 구매 카드 하단의 운송업체 안내.
+ * 운송업체 연락 블록 — 여정 '운송 예약' 카드와 운송업체 견적 안내 페이지가 함께 쓴다.
  *
  * 협의 전 트래픽 실험 — "우리 고객이 운송업체를 실제로 찾는가"를 숫자로 먼저 본다.
  *  - 노출: 블록이 **화면에 실제로 보인** 순간 1건(IntersectionObserver). 화면 맨 아래라
@@ -23,19 +24,27 @@ import { logOutbound } from '@/lib/actions/outbound'
  * 이 맥락에서 광고 배너처럼 읽혀서 쓰지 않는다.
  */
 
-const SOURCE = 'journey-flight-step'
-
 export function TransportPartners({
-  caseId,
-  destination,
+  source,
+  caseId = null,
+  destination = null,
+  intro = true,
+  moreHref,
 }: {
-  caseId: string
-  destination: string | null
+  /** 노출 자리 — 집계를 자리별로 가른다. 이걸 안 나누면 클릭률이 뒤섞여 무의미해진다. */
+  source: OutboundSource
+  caseId?: string | null
+  destination?: string | null
+  /** 안내 문구 표시 — 페이지 본문이 이미 설명했으면 끈다. */
+  intro?: boolean
+  /** 있으면 카드 하단에 견적 안내 페이지로 가는 줄을 붙인다(여정 카드용). */
+  moreHref?: string
 }) {
-  const partners = useMemo(() => orderedTransportPartners(caseId), [caseId])
+  // 순서 회전 seed — 케이스가 없으면(견적 페이지) 고정 seed. 한 사람에게 순서가 안 흔들린다.
+  const partners = useMemo(() => orderedTransportPartners(caseId ?? 'guide'), [caseId])
   // activeDest 는 다중 목적지의 `?dest=` 토큰이라 단일 목적지 케이스에선 null 이다.
   // 그대로 기록하면 나라별 집계가 전부 '(미지정)'이 된다 — 케이스의 실제 목적지로 채운다.
-  const caseRow = useCase(caseId)
+  const caseRow = useCase(caseId ?? '')
   const dest =
     destination ?? (caseRow ? buildCaseJourneyContext(caseRow).destinationToken : null) ?? null
   const ref = useRef<HTMLDivElement>(null)
@@ -51,17 +60,17 @@ export function TransportPartners({
         io.disconnect()
         if (logged.current) return
         logged.current = true
-        void logOutbound({ event: 'impression', source: SOURCE, destination: dest, caseId })
+        void logOutbound({ event: 'impression', source, destination: dest, caseId })
       },
       { threshold: 0.5 },
     )
     io.observe(el)
     return () => io.disconnect()
-  }, [caseId, dest])
+  }, [caseId, dest, source])
 
   function onContact(partnerSlug: string, event: 'tel' | 'mail') {
     // 기다리지 않는다 — tel:/mailto: 기본 동작이 즉시 이어져야 한다.
-    void logOutbound({ event, source: SOURCE, partnerSlug, destination: dest, caseId })
+    void logOutbound({ event, source, partnerSlug, destination: dest, caseId })
   }
 
   // 검역소 연락처·담당 병원 카드와 동일 — accent 텍스트 + 13px 아이콘. 세로 패딩은
@@ -79,7 +88,7 @@ export function TransportPartners({
 
   return (
     <section ref={ref} style={{ marginTop: 22 }}>
-      <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>운송업체</h3>
+      {intro && <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>운송업체</h3>}
 
       <div
         style={{
@@ -89,12 +98,14 @@ export function TransportPartners({
           padding: '14px 16px',
         }}
       >
-        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.ink2 }}>
-          반려동물 운송을 대행하는 업체예요. 펫무브와 계약 관계는 아니고, 공개된 대표
-          연락처를 안내해 드려요.
-        </p>
+        {intro && (
+          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.ink2 }}>
+            반려동물 운송을 대행하는 업체예요. 펫무브와 계약 관계는 아니고, 공개된 대표
+            연락처를 안내해 드려요.
+          </p>
+        )}
 
-        <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ marginTop: intro ? 14 : 2, display: 'flex', flexDirection: 'column', gap: 12 }}>
           {partners.map((p) => (
             <div
               key={p.slug}
@@ -126,8 +137,29 @@ export function TransportPartners({
         </div>
 
         <p style={{ margin: '12px 0 0', fontSize: 11.5, color: C.ink3 }}>
-          순서는 무작위예요. 비용·조건은 업체에 직접 확인해 주세요.
+          {intro ? '순서는 무작위예요. 비용·조건은 업체에 직접 확인해 주세요.' : '순서는 무작위예요.'}
         </p>
+
+        {moreHref && (
+          <Link
+            href={moreHref}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              marginTop: 12,
+              paddingTop: 12,
+              borderTop: `.5px solid ${C.line}`,
+              width: '100%',
+              color: C.accent,
+              fontSize: 13,
+              textDecoration: 'none',
+            }}
+          >
+            견적은 어떻게 받나요?
+            <span style={{ color: C.ink3 }}>→</span>
+          </Link>
+        )}
       </div>
     </section>
   )

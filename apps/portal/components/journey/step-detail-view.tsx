@@ -3165,7 +3165,12 @@ export function StepDetailView({
             예약을 마친(done) 사람에겐 쓸모없어 숨긴다 — 노출 모수가 실제 잠재 수요자로
             좁혀져 클릭률도 더 정확해진다. 협의 전 수요 실험(노출·클릭 기록). */}
         {isFlight && !done && (
-          <TransportPartners caseId={caseId} destination={activeDest ?? null} />
+          <TransportPartners
+            source="journey-flight-step"
+            caseId={caseId}
+            destination={activeDest ?? null}
+            moreHref="/guide/transport-quote"
+          />
         )}
 
         {/* Inputs — 마이크로칩·광견병1·2차 step 은 인터랙티브, 그 외는 read-only 스키마 미리보기. */}
