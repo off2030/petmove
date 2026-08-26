@@ -11,7 +11,7 @@ import type { CaseRow } from '@petmove/domain'
 import { supabaseBrowser as supabase } from '@/lib/supabase/browser'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@petmove/ui'
-import { signAttachmentUrls } from '@/lib/actions/attachment-urls'
+import { useSignedAttachmentUrls } from '@/lib/use-signed-attachment-urls'
 
 /* ── Types ── */
 
@@ -71,7 +71,6 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
-  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
   const fileRef = useRef<HTMLInputElement>(null)
   const dropRef = useRef<HTMLDivElement>(null)
 
@@ -82,32 +81,16 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     setDragOver(false)
   }, [caseId])
 
-  // 첨부파일 path 들 모아서 signed URL 일괄 발급. 버킷 private 이라 매 렌더마다 갱신 필요.
-  // notes 의 file note 만 대상; text note 는 무관.
-  useEffect(() => {
-    const fileNotes = notes.filter((n): n is FileNote => n.type === 'file')
-    const paths: string[] = []
-    // path → 표시명: 다운로드 시 storage safeName(한글→'_') 대신 업로드명을 쓰도록.
-    const names: Record<string, string> = {}
-    for (const n of fileNotes) {
-      const p = derivePath(n)
-      if (!p) continue
-      paths.push(p)
-      names[p] = n.name
-    }
-    if (paths.length === 0) {
-      setSignedUrls({})
-      return
-    }
-    let cancelled = false
-    signAttachmentUrls(paths, names).then((map) => {
-      if (!cancelled) setSignedUrls(map)
-    }).catch(() => {})
-    return () => { cancelled = true }
-  // notes 길이·path 시그니처 기반 리렌더 — JSON.stringify 보다 가벼운 비교를 위해 caseId+개수 사용.
-  // path 변동(추가/삭제) 시는 saveNotes 흐름에서 caseRow 갱신으로 자연스럽게 트리거됨.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseId, notes.length])
+  // 첨부파일 signed URL — 버킷이 private 이라 발급이 필요하고, TTL(1시간)이 지나기 전에
+  // 훅이 알아서 재발급한다(useSignedAttachmentUrls). notes 의 file note 만 대상.
+  const attachmentFiles: { path: string; name: string }[] = []
+  for (const n of notes) {
+    if (n.type !== 'file') continue
+    const p = derivePath(n)
+    if (!p) continue
+    attachmentFiles.push({ path: p, name: n.name })
+  }
+  const signedUrls = useSignedAttachmentUrls(caseId, attachmentFiles)
 
   /* ── Persistence ── */
 
