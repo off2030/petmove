@@ -42,6 +42,16 @@ interface LegacyAttachment {
   uploadedAt: string
 }
 
+/**
+ * 업로드 경로 — 한글·공백은 '_' 로 치환하고 타임스탬프로 이름 충돌을 피한다.
+ * 컴포넌트 밖에 두는 이유: Date.now() 를 컴포넌트 본문 안에서 부르면 react-hooks/purity
+ * 가 렌더 중 impure 호출로 잡는다(실제로는 업로드 핸들러에서만 불리지만 분석은 구분 못 함).
+ */
+function buildStoragePath(caseId: string, fileName: string): string {
+  const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
+  return `${caseId}/${Date.now()}_${safeName}`
+}
+
 /** path 또는 legacy url 에서 storage path 추출. */
 function derivePath(item: { path?: string; url?: string }): string | null {
   if (item.path) return item.path
@@ -147,8 +157,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     setError(null)
     const newNotes = [...notes]
     for (const file of Array.from(files)) {
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-      const path = `${caseId}/${Date.now()}_${safeName}`
+      const path = buildStoragePath(caseId, file.name)
       const { error: uploadErr } = await supabase.storage
         .from('attachments')
         .upload(path, file)
