@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Trash2, Archive } from 'lucide-react'
+import { Trash2, Archive, MoreHorizontal } from 'lucide-react'
+import { DropdownSelect } from '@petmove/ui'
 import { SectionLabel } from '@/components/ui/section-label'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
@@ -12,6 +13,12 @@ import { removeCaseDestinationAdmin } from '@/lib/actions/remove-destination'
 import { useCases } from './cases-context'
 import destsData from '@petmove/domain/data/destinations.json'
 import { destCode } from '@/lib/country-code'
+
+/** 여행지 칩의 ⋯ 메뉴 — 오조작이 잦던 보관·삭제를 한 겹 안으로 넣었다. */
+const CHIP_MENU_OPTIONS = [
+  { value: 'archive', label: '지난 여정으로 보관' },
+  { value: 'delete', label: '여행지 삭제' },
+]
 import { resolveActiveDestination, getTripType, isOneWayOnlyDestination } from '@petmove/domain'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@petmove/ui'
@@ -212,9 +219,16 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   // 스태프 수동 전환 — 완료된(혹은 다녀온) 여정을 '지난 여정'으로 보관. 삭제와 달리
   // by_dest 요약을 past_journeys 로 남기고 여행지에서 뺀다. (design journey-lifecycle §4·§5)
   async function demoteToPast(ko: string) {
+    // 확인 문구는 **무엇이 사라지는지**를 적는다 — 옆 삭제 버튼과 지우는 양이 사실상 같은데
+    //   예전엔 한 줄짜리 가벼운 확인만 받아 오조작 위험이 컸다(2026-08-21 사용자 지적).
+    //   되돌리기가 생겼으므로 '복구 가능'도 같이 알려 과한 공포는 주지 않는다.
     const ok = await confirm({
-      message: `"${ko}" 여정을 완료해 '지난 여정'으로 보관할까요?`,
-      okLabel: '지난 여정으로',
+      message: `"${ko}" 여정을 지난 여정으로 보관할까요?`,
+      description:
+        `진행 중 여행지에서 빠지고, 이 여행지의 일정·항공편·검역 기록이 화면에서 사라집니다.
+` +
+        `잘못 눌렀다면 아래 '지난 여정' 목록의 되돌리기(↩)로 복원할 수 있어요.`,
+      okLabel: '지난 여정으로 보관',
     })
     if (!ok) return
     const res = await markJourneyCompleteAdmin(caseId, ko, 'done')
@@ -378,26 +392,48 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                     </span>
                   </span>
                   {editMode && (
-                    <>
-                      <button
-                        type="button"
-                        data-chip-action
-                        onClick={(e) => { e.stopPropagation(); demoteToPast(ko) }}
-                        className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-pmw-tag-foreground/60 hover:text-pmw-accent hover:bg-pmw-accent/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
-                        title="지난 여정으로 보관"
-                      >
-                        <Archive size={12} className="pointer-events-none" />
-                      </button>
-                      <button
-                        type="button"
-                        data-chip-action
-                        onClick={(e) => { e.stopPropagation(); removeDest(ko) }}
-                        className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-pmw-tag-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
-                        title="여행지 삭제"
-                      >
-                        <Trash2 size={12} className="pointer-events-none" />
-                      </button>
-                    </>
+                    // 보관·삭제는 **⋯ 메뉴 안**에 둔다(2026-08-21). 예전엔 12px 아이콘 두 개가
+                    //   칩 위에 나란히 붙어 있어, 여행지를 바꾸려다 보관을 누르기 쉬웠다.
+                    //   ⛔ 아이콘을 다시 칩 위로 꺼내지 말 것 — 되돌리기가 생겼어도 오조작
+                    //   자체를 줄이는 게 먼저다.
+                    // 래퍼는 self-center 로 못 박는다 — 칩이 items-baseline 이라 아이콘 정렬이
+                    //   내용에 따라 흔들리지 않게. data-chip-action 은 칩 드래그 핸들러가
+                    //   이 안의 누름을 무시하게 하는 표식(onChipPointerDown).
+                    <span
+                      data-chip-action
+                      className="shrink-0 inline-flex self-center"
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      <DropdownSelect
+                        value=""
+                        options={CHIP_MENU_OPTIONS}
+                        onChange={(v) => {
+                          if (v === 'archive') void demoteToPast(ko)
+                          else if (v === 'delete') void removeDest(ko)
+                        }}
+                        portal
+                        align="right"
+                        triggerClassName="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-pmw-tag-foreground/60 hover:text-pmw-tag-foreground hover:bg-pmw-tag-foreground/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
+                        triggerProps={{
+                          title: `${ko} 여행지 관리`,
+                          'aria-label': `${ko} 여행지 관리`,
+                        }}
+                        renderTrigger={() => (
+                          <MoreHorizontal size={12} className="pointer-events-none" />
+                        )}
+                        renderOption={(o) => (
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-2 text-[14px]',
+                              o.value === 'delete' ? 'text-destructive' : 'text-foreground',
+                            )}
+                          >
+                            {o.value === 'delete' ? <Trash2 size={13} /> : <Archive size={13} />}
+                            {o.label}
+                          </span>
+                        )}
+                      />
+                    </span>
                   )}
                 </span>
               )

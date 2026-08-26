@@ -22,6 +22,7 @@ import {
   DEFAULT_VACCINE_KEYS,
   getHardcodedDestinationsAsCustom,
   isDestinationEqualToDefault,
+  isSameAsHardcodedDestination,
   isValidDestinationId,
   suggestDestinationId,
   type CustomDestination,
@@ -81,7 +82,11 @@ export function DestinationsArea() {
         if (ids.has(d.id)) { setError(`중복된 ID: '${d.id}'`); return }
         ids.add(d.id)
       }
-      const r = await saveDestinationOverridesAction({ custom: next })
+      // 손대지 않은(코드와 동일한) 여행지는 저장하지 않는다 — 저장하면 그 여행지가 조직
+      // 설정에 얼어붙어, 이후 코드 프로파일에 추가되는 필드가 영영 안 보인다.
+      // (isSameAsHardcodedDestination 주석의 2026-08-24 '출발일' 사고 참조.)
+      const toSave = next.filter((d) => !isSameAsHardcodedDestination(d))
+      const r = await saveDestinationOverridesAction({ custom: toSave })
       if (!r.ok) { setError(r.error); return }
       setConfig(r.config)
       setSavedFlash(true)

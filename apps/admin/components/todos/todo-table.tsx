@@ -2,13 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CaseRow } from '@petmove/domain'
-import { isDestinationScopedKey, matchesDestinationKey } from '@petmove/domain'
-import {
-  setAdvanceNotificationReportStatus,
-  setImportPermitReportStatus,
-  setJpExportQuarantineReportStatus,
-  updateCaseField,
-} from '@/lib/actions/cases'
+import { isDestinationScopedKey, type ReportSlot } from '@petmove/domain'
+import { setReportSlotStatus, updateCaseField } from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
 import { cn } from '@/lib/utils'
 import { DateTextField, useConfirm } from '@petmove/ui'
@@ -261,56 +256,31 @@ function SelectCell({
   const value = getCellValue(row, col)
   const { replaceLocalCaseData, updateLocalCaseField } = useCases()
   const confirm = useConfirm()
-  // 일본 케이스 + 신고탭 status 컬럼은 portal data 필드를 직접 patch (양방향 sync).
-  // 다른 컬럼·다른 국가는 기존 단일키 path 그대로.
-  // 국가 판정은 활성 여행지 기준 — destination 전체 문자열("일본, 태국")로 매칭하면 일본·태국
-  // 분기에 동시에 걸려, 아래 순서상 태국 액션이 이기고 read(todos-app effectiveImportStatus,
-  // 활성 여행지=일본이면 일본 derive)와 엇갈린다 — 수입 칸이 대기로 되돌아오던 버그.
-  const reportDest = activeDest ?? row.destination
-  const isJapanReport =
-    matchesDestinationKey(reportDest, 'japan') &&
-    (col.key === 'import_import_status' || col.key === 'import_export_status')
-  // 태국·필리핀·대만 '수입' 칸 = 수입 허가 step 과 양방향 sync (일본 사전신고의 짝, '수출'은 해당 없음).
-  const isImportPermitReport =
-    (matchesDestinationKey(reportDest, 'thailand') ||
-      matchesDestinationKey(reportDest, 'philippines') ||
-      matchesDestinationKey(reportDest, 'taiwan')) &&
-    col.key === 'import_import_status'
+  // 신고 탭 '수입'·'수출' 칸은 목적지 무관 단일 액션([[setReportSlotStatus]])으로 저장한다.
+  // 그 목적지가 어느 여정 카드와 이어지는지는 프로파일이 정하고, 연결이 없으면 액션이
+  // 수동값(by_dest 스코핑)으로 떨어뜨린다 — 여기에 나라 분기가 있을 이유가 없다.
+  //
+  // ⛔ 나라별 분기를 다시 만들지 말 것 — 예전엔 일본·태국·필리핀·대만 명단이 여기 박혀
+  //   있었고, 명단 밖(하와이)은 '완료'로 바꿔도 앱 카드가 미완료로 남았다(2026-08-21).
+  //   destination 전체 문자열("일본, 태국")로 매칭하던 시절엔 두 분기에 동시에 걸려
+  //   read/write 가 엇갈리기까지 했다.
+  const reportSlot: ReportSlot | null =
+    col.key === 'import_import_status' ? 'import' : col.key === 'import_export_status' ? 'export' : null
   async function pick(v: string) {
     if (v === value) return
-    if (isImportPermitReport && (v === 'not_started' || v === 'in_progress' || v === 'done')) {
+    if (reportSlot && (v === 'not_started' || v === 'in_progress' || v === 'done')) {
       if (v === 'not_started') {
         const ok = await confirm({
           message: '대기로 되돌리시겠어요?',
           description:
-            '수입 허가 진행 정보(신청일·완료 표시)가 지워집니다. 보호자가 첨부한 허가증이나 입력된 허가번호는 그대로 유지됩니다.',
-          okLabel: '대기로 되돌리기',
-        })
-        if (!ok) return
-      }
-      const res = await setImportPermitReportStatus(row.id, v as 'not_started' | 'in_progress' | 'done')
-      if (res.ok && res.autoFilled?.data) {
-        replaceLocalCaseData(row.id, res.autoFilled.data)
-      }
-      return
-    }
-    if (isJapanReport && (v === 'not_started' || v === 'in_progress' || v === 'done')) {
-      if (v === 'not_started') {
-        const ok = await confirm({
-          message: '대기로 되돌리시겠어요?',
-          description:
-            col.key === 'import_import_status'
-              ? '사전 신고 진행 정보(신청일·완료 표시)가 지워집니다. 보호자가 첨부한 허가서는 그대로 유지됩니다.'
+            reportSlot === 'import'
+              ? '신고·신청 진행 정보(신청일·완료 표시)가 지워집니다. 보호자가 첨부한 서류나 입력된 허가번호는 그대로 유지됩니다.'
               : '수출검역 진행 정보(신청일·확정·완료 표시)가 지워집니다.',
           okLabel: '대기로 되돌리기',
         })
         if (!ok) return
       }
-      const action =
-        col.key === 'import_import_status'
-          ? setAdvanceNotificationReportStatus
-          : setJpExportQuarantineReportStatus
-      const res = await action(row.id, v as 'not_started' | 'in_progress' | 'done')
+      const res = await setReportSlotStatus(row.id, reportSlot, v as 'not_started' | 'in_progress' | 'done')
       if (res.ok && res.autoFilled?.data) {
         replaceLocalCaseData(row.id, res.autoFilled.data)
       }

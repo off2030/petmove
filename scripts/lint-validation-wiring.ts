@@ -29,6 +29,10 @@ import { fileURLToPath } from 'node:url'
 
 import { JOURNEY_STEP_CATALOG } from '../packages/domain/src/journey-steps/catalog'
 import { resolveDatedStepField } from '../packages/domain/src/journey-steps/dated-steps'
+import {
+  destinationsWithReportBinding,
+  resolveReportBinding,
+} from '../packages/domain/src/journey-steps/report-slots'
 import { resolveStepForDestination } from '../packages/domain/src/journey-steps/destination-overrides'
 import { ALL_PROCEDURE_CHECKS, checkCountryKeys } from '../packages/domain/src/procedure-checks/registry'
 import { DESTINATION_OVERRIDES, destinationKeysWhere } from '../packages/domain/src/destination-config'
@@ -978,6 +982,10 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   'ie-advance-notice': '차단: validateIeAdvanceNoticeDate(입국 24시간 전)',
   'no-advance-notice': '차단: validateNoAdvanceNoticeDate(입국 48시간 전)',
   'cy-advance-notice': '차단: validateCyAdvanceNoticeDate(입국 48시간 전)',
+  // 포르투갈 — 도착 통보(Aviso de Chegada). 아일랜드·노르웨이·키프로스와 같은 모델이고
+  //   기준일만 **도착일(entry_date)** 이다. 카드 추가(2026-08-18) 때 검증·차단·알림은 다
+  //   붙였는데 이 결정 등록만 빠져 lint 가 걸려 있었다(2026-08-21 정리).
+  'pt-advance-notice': '차단: validatePtAdvanceNoticeDate(도착 48시간 전)',
   // 몰타 — 2026-08-01 차단 제거. 몰타 정부가 제출 마감을 **공표하지 않는다**(법령 122건 전수·
   // 포털 HTML 점검·EU 576/2013 art.34(2) 확인, 근거는 date-rules.ts 삭제 주석). 구 '입국
   // 3영업일 전'은 2015년 폐기 페이지의 관청 처리 소요를 제출 마감으로 오독한 값이라,
@@ -987,7 +995,14 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   'il-advance-notice': '차단: validateIlAdvanceNoticeDate(출국 2일 전)',
   // 홍콩은 24시간 판정이 아일랜드와 같아 같은 함수를 쓴다(목적지 중립 메시지).
   'hk-advance-notice': '차단: validateIeAdvanceNoticeDate(도착 24시간 전 — 입국일 없으면 출국일 폴백)',
-  'hi-import-declaration': '차단: validateHiImportDeclarationDate(도착 이후·도착 10일 미만 모두)',
+  // 하와이 입국 신청 — **버튼 완료 카드**(2026-07-26 사용자 결정). HIPOP 에 접수하면 끝나는
+  //   절차라 날짜를 받아 검증하는 대신 '확인'만 받는다. 기록되는 날짜가 '버튼 누른 날'이라
+  //   실제 신청일과 달라 날짜 검증은 거짓 주의를 낸다(구 hi.import-declaration-10days-
+  //   before-arrival 을 되살리지 말 것 — 카드 주석의 ⛔).
+  //   ⚠️ 등록은 그때 '차단: validateHiImportDeclarationDate' 로 남아 있었는데 **그 함수는
+  //     어디에도 존재하지 않는다** — 막는다고 주장만 하던 자리다(2026-08-21 정리).
+  'hi-import-declaration':
+    '주의만: 버튼 완료라 저장값이 신청 확인일(버튼 누른 날) — 실제 신청일이 아니라 날짜 검증이 거짓 주의를 낸다. 마감(도착 10일 전)은 reminders.ts 의 알림 2회(D-17·D-10)가 담당',
   'sg-quarantine-reservation':
     '차단: validateSgQuarantineReservationFiled(채혈 이후)·validateSgQuarantineReservationDate(채혈+90일~12개월)·validateSgReservationVsDeparture',
   'sg-dog-licence':
@@ -1011,8 +1026,17 @@ const DATE_SAVE_BLOCK_DECISIONS: Record<string, string> = {
   //   AIA 완료 여부를 보고 거부하고, 짝 주의는 za.aia-permit-before-import-permit 다.
   'za-aia-permit':
     '주의만: 버튼 완료라 저장값이 허가 취득일 — 날짜 제약 없음(호주 수입 허가와 같은 판단). 순서는 수입 허가 카드의 게이트(importPermitPrerequisiteError)·주의(za.aia-permit-before-import-permit)가 담당',
-  'sg-gst-permit': '차단: validateSgGstPermitDate(도착 전 + 도착 14일 이내)',
-  'sg-border-inspection': '차단: validateSgBorderInspectionDate(도착 최소 5일 전)',
+  // 싱가포르 GST 허가·국경 검사 — **버튼 완료 카드**(2026-07-28). 저장값이 '버튼 누른 날'이라
+  //   도착 14일 창·도착 5일 전 판정이 어긋난다(대행 절차라 보호자가 실제 발급일·예약일을
+  //   모른다). 그때 step-detail-view 의 저장 거부를 지웠는데 **이 등록만 '차단:' 으로 남아**
+  //   막지도 않으면서 막는다고 주장하고 있었다(2026-08-21 정리).
+  //   ⛔ validateSgGstPermitDate·validateSgBorderInspectionDate 를 다시 배선하지 말 것 —
+  //     date-rules 에 규정 계산은 남겨 뒀지만(카드가 날짜 입력형으로 돌아올 때를 위해)
+  //     지금 모델에서는 거짓 거부만 낸다.
+  'sg-gst-permit':
+    '주의만: 버튼 완료라 저장값이 허가 취득일(버튼 누른 날) — 실제 발급일이 아니라 도착 14일 창 판정이 성립하지 않는다',
+  'sg-border-inspection':
+    '주의만: 버튼 완료라 저장값이 예약 확인일(버튼 누른 날) — 실제 예약일이 아니라 도착 5일 전 판정이 성립하지 않는다',
   // 독감(CIV) — '출국까지 N일' 요건이라 **날짜를 고쳐 회복할 수 있는** 위반이고, 실제로 그렇게
   //   받아 온 기록을 그대로 적어야 하는 자리다(늦게 맞았으면 늦게 맞았다고 적고 재접종으로
   //   푼다). 저장을 막으면 사실을 못 적는다 — 그래서 주의만 둔다(입력 조건 원칙의 예외가 아니라,
@@ -1186,6 +1210,77 @@ function main(): void {
     console.error(
       '\n  고치는 법: packages/domain/src/journey-steps/dated-steps.ts 의 파생을 확인하세요.' +
         '\n  목적지마다 필드가 갈리는 카드가 정말 필요하면 맵을 목적지별로 쪼개야 합니다.',
+    )
+    process.exit(1)
+  }
+
+  // ── '차단' 등록이 실제로 배선돼 있는지 ──────────────────────────────────
+  // DATE_SAVE_BLOCK_DECISIONS 에 '차단: validateXxx(...)' 로 적어 두고, 정작 그 함수가
+  // 없거나 아무 저장 경로에서도 안 불리는 경우를 잡는다. 등록 문구는 참인데 동작은 거짓 —
+  // 이 지점이 실제로 세 건이나 썩어 있었다(2026-08-21 발견):
+  //   · hi-import-declaration → validateHiImportDeclarationDate 는 **존재하지도 않았다**
+  //   · sg-gst-permit / sg-border-inspection → 카드가 버튼 완료로 바뀌며 저장 거부를
+  //     지웠는데(2026-07-28) 등록만 '차단:' 으로 남아 있었다
+  // 셋 다 카드가 날짜 입력형에서 버튼 완료형으로 바뀐 wave 의 잔재였다 — 모델이 바뀌면
+  // 이 등록도 같이 바뀌어야 한다는 걸 기계가 지키게 한다.
+  // 저장 경로는 앱 쪽에 있다 — getSaveBlockError(step-detail-view)와 서버 액션.
+  const appSources: string[] = []
+  collectSource(path.join(CHECKS_DIR, '..', '..', '..', '..', 'apps'), appSources)
+  const deadClaims: string[] = []
+  for (const [card, decision] of Object.entries(DATE_SAVE_BLOCK_DECISIONS)) {
+    if (!decision.startsWith('차단')) continue
+    // 함수명을 적지 않은 결정(다른 경로를 서술)은 이 검사 대상이 아니다.
+    for (const fn of decision.match(/\bvalidate[A-Za-z0-9_]+/g) ?? []) {
+      if (!appSources.some((src) => src.includes(fn))) {
+        deadClaims.push(`  [${card}] '차단: ${fn}' — 어느 저장 경로에서도 호출되지 않음`)
+      }
+    }
+  }
+  if (deadClaims.length > 0) {
+    console.error('✗ 저장 차단 등록이 실제 배선과 어긋납니다 — 막는다고 주장만 합니다.\n')
+    console.error(deadClaims.join('\n'))
+    console.error(
+      '\n  고치는 법: 정말 막아야 하면 저장 경로(step-detail-view 의 getSaveBlockError 또는' +
+        '\n  서버 액션)에 그 함수를 연결하세요. 막지 않기로 한 것이면 등록을' +
+        '\n  \'주의만: <근거>\' 로 바꾸세요.',
+    )
+    process.exit(1)
+  }
+
+  // ── 신고 탭 ↔ 여정 카드 연결 ────────────────────────────────────────────
+  // 목적지 프로파일의 `report: { importStep, exportStep }` 이 가리키는 카드가
+  //   ① 그 목적지에 실제로 뜨고
+  //   ② 모델을 해석할 수 있어야(신청형 spec 또는 `dated:` 날짜 필드) 한다.
+  // 어긋나면 펫무브워크 신고 탭에서 상태를 바꿔도 앱 카드에 반영되지 않는다 —
+  // 하와이가 아예 연결이 없어 그렇게 굴렀다(2026-08-21).
+  const reportGaps: string[] = []
+  for (const decl of destinationsWithReportBinding()) {
+    for (const slot of ['import', 'export'] as const) {
+      const stepId = slot === 'import' ? decl.importStep : decl.exportStep
+      if (!stepId) continue
+      const step = JOURNEY_STEP_CATALOG.find((x) => x.id === stepId)
+      if (!step) {
+        reportGaps.push(`  [${decl.key}] ${slot}: 카드 '${stepId}' 가 카탈로그에 없습니다.`)
+        continue
+      }
+      if (!appliesToDest(step, decl.key)) {
+        reportGaps.push(`  [${decl.key}] ${slot}: 카드 '${stepId}' 가 이 목적지에 뜨지 않습니다.`)
+        continue
+      }
+      if (!resolveReportBinding(decl.key, slot)) {
+        reportGaps.push(
+          `  [${decl.key}] ${slot}: 카드 '${stepId}' 의 모델을 해석할 수 없습니다` +
+            ` (신청형 spec 도 아니고 done 이 'dated:' 도 아님).`,
+        )
+      }
+    }
+  }
+  if (reportGaps.length > 0) {
+    console.error('✗ 신고 탭 ↔ 여정 카드 연결이 끊겼습니다 — 신고 탭 상태가 앱에 반영되지 않습니다.\n')
+    console.error(reportGaps.join('\n'))
+    console.error(
+      '\n  고치는 법: destination-config 의 `report` 선언을 그 목적지에 실제로 뜨는 카드로 맞추세요.' +
+        '\n  신청형 카드를 새로 이으려면 report-slots.ts 의 APPLICATION_SPEC_BY_STEP 에 spec 을 등록하세요.',
     )
     process.exit(1)
   }

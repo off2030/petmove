@@ -45,6 +45,20 @@ export function canonicalDestination(name: string): string {
   return ALIAS_TO_CANONICAL.get(key) ?? key
 }
 
+/** 정식 명칭 → 영문 표기. */
+const KO_TO_EN = new Map<string, string>()
+for (const d of ENTRIES) KO_TO_EN.set(d.ko, d.en)
+
+/**
+ * 여행지의 영문 표기 — 해외 기관에 내는 서식(KSVDL 등)의 국가 칸에 쓴다.
+ * 별칭으로 저장된 값도 정식 표기로 맞춘 뒤 찾는다. 모르는 이름이면 입력값 그대로
+ * 돌려준다(임의로 버리지 않는다 — canonicalDestination 과 같은 방침).
+ */
+export function destinationEnglish(name: string): string {
+  const ko = canonicalDestination(name)
+  return KO_TO_EN.get(ko) ?? ko
+}
+
 /** 정식 명칭 → 검색어 후보(정식 명칭·영문·별칭), 모두 소문자. */
 const SEARCH_TOKENS = new Map<string, string[]>()
 for (const d of ENTRIES) {

@@ -1,6 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { DESTINATION_OVERRIDES, matchesDestinationKey, parseDestinations } from './destination-config'
-import { resolveInspectionLabs, type InspectionLabRule } from './inspection-config-defaults'
+import {
+  normalizeInfectiousRules,
+  resolveInspectionLabs,
+  type InspectionLabRule,
+} from './inspection-config-defaults'
 import {
   isDestinationScopedKey,
   readByDestValue,
@@ -359,7 +363,11 @@ export async function computeAutoFill(
     if (rulesErr) return { ok: false, error: rulesErr.message }
     const rules = (rulesRaw ?? []) as RuleRow[]
 
-    // 검사기관 매핑 — infectious_disease_records 타겟 처리에 필요
+    // 검사기관 매핑 — infectious_disease_records 타겟 처리에 필요.
+    // ⚠️ persisted 값을 그대로 쓰면 안 된다. 설정 행이 없는 조직(신규 org)이나 새 국가가
+    //   추가되기 전에 저장된 조직은 매칭 규칙이 없어 lab 이 통째로 null 로 채워진다
+    //   (남아공 케이스 실제 사례 2026-08-05). normalizeInfectiousRules 가 설정 로드
+    //   경로(apps/admin/lib/inspection-config.ts)와 같은 기본 규칙 보강을 해 준다.
     let infectiousRules: InspectionLabRule[] = []
     if (rules.some((r) => LAB_ARRAY_FIELDS.has(r.target_field))) {
       const { data: settingsRow } = await supabase
@@ -369,15 +377,7 @@ export async function computeAutoFill(
         .eq('key', 'inspection_config')
         .maybeSingle()
       const raw = (settingsRow as { value?: { infectiousRules?: unknown } } | null)?.value?.infectiousRules
-      if (Array.isArray(raw)) {
-        infectiousRules = raw.filter(
-          (r): r is InspectionLabRule =>
-            !!r &&
-            typeof r === 'object' &&
-            Array.isArray((r as { countries?: unknown }).countries) &&
-            Array.isArray((r as { labs?: unknown }).labs),
-        )
-      }
+      infectiousRules = normalizeInfectiousRules(raw)
     }
 
     // 매칭 필터: 목적지 + 종 + (사용자가 방금 수정한 필드를 target 으로 갖는 규칙 제외)

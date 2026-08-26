@@ -10,7 +10,7 @@ import { applyCase } from '@/lib/actions/apply-case'
 import { clearApplyDraft, saveApplyDraft } from '@/lib/actions/apply-draft'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import destsData from '@petmove/domain/data/destinations.json'
-import { isOneWayOnlyDestination } from '@petmove/domain'
+import { isOneWayOnlyDestination, formatKoreanPhone, phoneDigits, phoneInputError, KOREAN_PHONE_MAX_DIGITS } from '@petmove/domain'
 import { APP_DESTINATIONS_SORTED } from '@/lib/app-destinations'
 import breedsData from '@petmove/domain/data/breeds.json'
 import colorsData from '@petmove/domain/data/colors.json'
@@ -107,7 +107,7 @@ const messages = {
     optionalStepTitle: '추가 정보 (선택)',
     addressModalTitle: '주소 검색',
     fillRequest: '작성 요청',
-    phoneFormatError: '전화번호는 010-1234-5678 형식으로 입력하세요.',
+    phoneFormatError: '전화번호 형식을 확인해주세요. (010-1234-5678 · 02-123-4567 · 0507-1400-4069, 해외는 +81-90-1234-5678)',
     microchipFormatErrorPrefixSingle: '',
     microchipFormatErrorPrefixN: (n: number) => `반려동물 ${n}: `,
     microchipFormatError: '15자리 숫자를 입력하세요.',
@@ -212,7 +212,7 @@ const messages = {
     optionalStepTitle: 'Additional (optional)',
     addressModalTitle: 'Address search',
     fillRequest: 'Required',
-    phoneFormatError: 'Phone must be in 010-1234-5678 format.',
+    phoneFormatError: 'Check the phone number format (010-1234-5678, 02-123-4567, or +81-90-1234-5678 for overseas).',
     microchipFormatErrorPrefixSingle: '',
     microchipFormatErrorPrefixN: (n: number) => `Pet ${n}: `,
     microchipFormatError: 'Microchip number must be 15 digits.',
@@ -896,7 +896,8 @@ export function ApplyForm({
       // 펫무브 앱은 보호자 단계가 마지막이고 선택이다 — 빈칸은 통과시키고,
       // 적은 값의 형식만 본다(잘못된 전화번호가 서류로 흘러가지 않게).
       if (ownerOptional) {
-        if (phone.trim() && !/^010\d{8}$/.test(phone)) {
+        // 형식은 domain/phone.ts 단일 출처 — 0507 안심번호·02 유선·국제번호도 통과.
+        if (phone.trim() && phoneInputError(phone)) {
           formatError = m.phoneFormatError
           miss.add('phone')
         }
@@ -908,7 +909,7 @@ export function ApplyForm({
       if (!isAppleLogin && (!customerLastNameEn.trim() || !customerFirstNameEn.trim())) miss.add('customerNameEn')
       if (!phone.trim()) miss.add('phone')
       if (!addressKr.trim()) miss.add('addressKr')
-      if (!miss.has('phone') && !/^010\d{8}$/.test(phone)) {
+      if (!miss.has('phone') && phoneInputError(phone)) {
         formatError = m.phoneFormatError
         miss.add('phone')
       }
@@ -1270,10 +1271,12 @@ export function ApplyForm({
               {(enWarnings.lastNameEn || enWarnings.firstNameEn) && <p className="mt-1.5 text-xs text-[#C26A4A]">{enWarnings.lastNameEn || enWarnings.firstNameEn}</p>}
             </FieldRow>
             <FieldRow m={m} label={m.phone} required fieldKey="phone" missing={missing.has('phone')}>
-              <input type="tel" inputMode="numeric" autoComplete="tel"
-                value={phone.replace(/(\d{3})(\d{4})(\d{0,4})/, (_, a, b, c) => c ? `${a}-${b}-${c}` : b ? `${a}-${b}` : a)}
-                maxLength={13}
-                onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, '').slice(0, 11))}
+              {/* 표기·자릿수는 domain/phone.ts 단일 출처 — 0507 안심번호(12자리)·서울 9자리 포함.
+                  신청폼은 유입 경로라 형식 미달을 제출 차단까지 하지는 않는다(정보 요청 링크와 다름). */}
+              <input type="tel" inputMode="tel" autoComplete="tel"
+                value={formatKoreanPhone(phone)}
+                maxLength={KOREAN_PHONE_MAX_DIGITS + 2}
+                onChange={(e) => setPhone(phoneDigits(e.target.value).slice(0, KOREAN_PHONE_MAX_DIGITS))}
                 placeholder={m.phonePlaceholder} className={numericInputClass} />
             </FieldRow>
             <FieldRow m={m} label={m.addressKr} required fieldKey="addressKr" missing={missing.has('addressKr')}>

@@ -10,16 +10,17 @@ import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   allLabOptions,
   buildDateRuleContext,
-  deriveAdvanceNotificationStatus,
-  deriveImportPermitStatus,
-  deriveJpExportQuarantineStatus,
+  deriveReportSlotStatus,
   flattenCaseForDestination,
   getDepartureDate,
   getVetVisitDate,
+  getTripType,
   getVetVisitWindowDays,
   matchesDestinationKey,
   parseDestinations,
   readByDestValue,
+  REPORT_LEGACY_STATUS_KEY,
+  resolveReportBinding,
   resolveTabActiveDest,
   validateVetVisitDate,
 } from '@petmove/domain'
@@ -536,20 +537,59 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
 
 
 /**
- * 자동 포함 판정 — 신고국이면서 출국일(by_dest 우선)이 있는 여행지가 있어야 함.
+ * 신고 탭 자동 포함의 '일정 있음' 판정 — 날짜 신호가 **하나라도** 있으면 참.
+ *
+ * 보는 자리(넓은 순):
+ *   ① 출국일 — by_dest[여행지].departure_date → cases.departure_date 컬럼
+ *   ② 내원일 — 내원일이 잡혔다는 건 출국이 임박했다는 뜻이라 신고 대상이다
+ *   ③ 출국 항공편 **출발일**(departure_flight_date)
+ *   ④ **도착일**(entry_date)
+ *
+ * ③④ 가 필요한 이유 — 추가정보로 항공 일정을 받는 나라는 그 값이 `data` 에 먼저 들어오고
+ * `departure_date` 컬럼은 sync 룰이 돌아야 채워진다. 룰이 없거나(하와이 2026-08-18 이전)
+ * 애초에 출발일을 **묻지 않는**(도착일만 받는 스위스·미국·대만·EU 통지국) 케이스는 컬럼이
+ * 빈 채로 남아 신고 탭에서 통째로 빠졌다 — 실제로 태국 3건이 그렇게 사라졌다(2026-08-24
+ * 어일용/남촉·남락·남숙). 그 나라들은 출발일을 프로파일 필드로 올려 근본을 고쳤지만,
+ * **도착일만 받는 나라가 남아 있는 한 ④ 가 마지막 안전망**이다.
+ * (도착일은 신고기한 계산엔 안 쓴다 — 기한은 여전히 출국일 기준.)
+ */
+function hasReportSchedule(row: CaseRow, dest: string | null): boolean {
+  if (getDepartureDate(row, dest)) return true
+  if (getVetVisitDate(row, dest)) return true
+  const data = (row.data as Record<string, unknown> | null) ?? null
+  const flightKeys = ['departure_flight_date', 'entry_date'] as const
+  for (const key of flightKeys) {
+    const v = readByDestValue(data, dest, key)
+    if (typeof v === 'string' && v) return true
+  }
+  // 다중 여행지 + 특정 여행지 지정이면 top-level 폴백 안 함 — 다른 여행지 잔존값 누수 차단(B).
+  if (dest && parseDestinations(row.destination).length > 1) return false
+  return flightKeys.some((key) => {
+    const top = data?.[key]
+    return typeof top === 'string' && !!top
+  })
+}
+
+/**
+ * 자동 포함 판정 — 신고국이면서 출국일·내원일이 있는 여행지가 있어야 함.
  *
  * 활성 여행지(import_report_active_dest)가 명시 저장돼 있으면 그 여행지 기준으로만
  * 판정 (비-신고국으로 옮겨 두면 자동 포함 안 됨). 저장값 없으면 케이스의 모든
- * 여행지를 스캔 — 다중 여행지에서 한 여행지에만 출국일이 있어도 포함된다.
+ * 여행지를 스캔 — 다중 여행지에서 한 여행지에만 일정이 있어도 포함된다.
  */
 function isAutoImportReport(row: CaseRow, countries: string[]): boolean {
   const data = (row.data ?? {}) as Record<string, unknown>
-  const active = data.import_report_active_dest
-  if (typeof active === 'string' && active) {
-    return countries.includes(active) && !!getDepartureDate(row, active)
-  }
   const dests = parseDestinations(row.destination)
-  return dests.some((d) => countries.includes(d) && !!getDepartureDate(row, d))
+  const active = data.import_report_active_dest
+  // 저장된 활성 여행지는 **케이스의 현재 여행지 목록에 남아 있을 때만** 믿는다
+  // ([[resolveTabActiveDest]] 와 같은 가드). 여행지를 갈아탄 케이스에 옛 칩 값이 남아 있으면
+  // 그 나라 하나로만 판정돼, 새 여행지에 일정·신청일이 있어도 신고 탭에서 영영 빠졌다
+  // (2026-08-24 감사 — 최유나/말랑이: active='태국' 인데 여행지는 호주·대만·포르투갈,
+  //  대만 수입허가 신청일 2026-08-04 이 있는데도 목록에 없었다).
+  if (typeof active === 'string' && active && dests.includes(active)) {
+    return countries.includes(active) && hasReportSchedule(row, active)
+  }
+  return dests.some((d) => countries.includes(d) && hasReportSchedule(row, d))
 }
 
 function isManualImportReport(row: CaseRow): boolean {
@@ -600,75 +640,64 @@ function reportDestRank(row: CaseRow): number {
 }
 
 /**
- * 신고 탭 국가 분기 — 활성 여행지 기준. destination 전체 문자열("일본, 태국")로 매칭하면
- * 일본·태국 분기에 동시에 걸려 read(일본 derive)와 write(태국 액션)가 엇갈린다 —
- * 수입 칸을 진행중으로 바꿔도 대기로 되돌아오던 버그. todo-table 의 셀 분기와 같은 기준.
+ * 신고 탭 활성 여행지 — 국가 분기의 유일한 기준. destination 전체 문자열("일본, 태국")로
+ * 매칭하면 두 분기에 동시에 걸려 read 와 write 가 엇갈린다(수입 칸을 바꿔도 대기로 되돌아오던
+ * 버그). todo-table 의 셀 분기와 같은 기준을 쓴다.
  */
-function isJapan(row: CaseRow): boolean {
-  return matchesDestinationKey(resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY), 'japan')
+function reportDest(row: CaseRow): string | null {
+  return resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
 }
 
 /**
- * 수출(수출검역) 칸을 표시·집계하는 조건 — 일본 + 왕복(귀국일 있음)인 경우만.
- * 그 외(비일본, 또는 편도)는 수출 칸을 숨기고 완료 판정에서도 제외한다.
+ * 수출(수출검역) 칸을 표시·집계하는 조건 — **수출 카드를 선언한 목적지** + 왕복(귀국일 있음).
+ * 그 외(선언 없음, 또는 편도)는 수출 칸을 숨기고 완료 판정에서도 제외한다.
+ * (현재 수출 카드를 선언한 나라는 일본 하나 — 나라가 늘면 프로파일 선언만 추가하면 된다.)
  */
 function exportApplies(row: CaseRow): boolean {
-  return isJapan(row) && !!importReportReturnDate(row)
+  if (!resolveReportBinding(reportDest(row), 'export')) return false
+  // ⚠️ 왕복 판정은 **여정 종류(trip_type)** 로 한다 — 귀국일 존재만 보면 안 된다(2026-08-19).
+  // 편도로 바꾼 케이스에도 by_dest 에 귀국일이 남아 있는 일이 흔하고(항공편 입력·추출 때
+  // 왕복 칸이 함께 채워졌다가 편도 전환), 그러면 편도인데 수출 칸이 '대기'로 떠 영영
+  // 완료되지 않는 줄이 신고 탭에 남는다. reminders.ts 의 일본 수출검역 알림은 이미 같은
+  // 이유로 tripType 기준 — 화면과 알림 기준을 맞춘다.
+  // getTripType 은 trip_type 미설정 시 'round' 를 돌려주므로 옛 케이스는 영향 없다.
+  const dest = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
+  if (getTripType((row.data ?? {}) as Record<string, unknown>, dest) !== 'round') return false
+  return !!importReportReturnDate(row)
 }
 
 /**
- * 수입 허가(import-permit) step 으로 신고 상태를 도출하는 여행지 — 태국·필리핀·대만.
- * 이들은 일본식 사전신고가 아니라 수입 허가증 신청·발급 2단계라, 신고 탭 '수입' 칸을
- * portal 의 허가 step 시그널과 같은 derive 로 잇는다. (명시 분류 — country='all' 누수 금지)
- */
-function usesImportPermitReport(row: CaseRow): boolean {
-  const active = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
-  return (
-    matchesDestinationKey(active, 'thailand') ||
-    matchesDestinationKey(active, 'philippines') ||
-    matchesDestinationKey(active, 'taiwan')
-  )
-}
-
-/**
- * 신고 탭 상태 — 일본 케이스는 공용 derive 헬퍼([[deriveAdvanceNotificationStatus]])로,
- * 그 외 destination 은 stored 값만 본다. derive 헬퍼는 portal 의 사전 신고 step 도 같이
- * 사용 — 한곳에 모아 양쪽이 비대칭으로 보이지 않게 한다.
+ * 신고 탭 '수입'·'수출' 칸 상태 — **여정 카드가 단일 출처**.
  *
- * 수출은 추가로 귀국일 없으면 'na' (admin 만의 표기).
+ * 어느 카드와 이어지는지는 목적지 프로파일이 정한다([[resolveReportBinding]]). 연결이 있으면
+ * 그 카드 시그널에서 파생하고(= 펫무브 앱 카드와 같은 값), 연결이 없는 목적지만 운영자
+ * 수동값(by_dest 스코핑)을 본다.
+ *
+ * ⛔ 나라별 if 분기를 다시 만들지 말 것 — 예전엔 일본·태국·필리핀·대만만 명단에 있었고, 명단
+ *   밖의 하와이는 '완료'로 바꿔도 앱 카드가 미완료로 남았다(2026-08-21 사용자 발견).
+ *
+ * 카드 시그널·수동값 모두 by_dest 스코핑이라 **활성 여행지로 평탄화한 view** 를 넘긴다 —
+ * 원본 row 를 넘기면 다중 여행지에서 신호를 못 봐 '대기중'으로 보인다.
  */
-function effectiveImportStatus(row: CaseRow): string {
-  // 일본 derive 는 신청일·skip 등 by_dest 스코핑 필드를 top-level 에서 읽으므로(단일 출처 계약),
-  // 활성 여행지로 평탄화한 view 를 넘긴다 — 안 그러면 by_dest 에 저장된 신청일을 못 봐 상태가
-  // portal(평탄화함)과 어긋난다. (admin 수출/수입 칸이 펫무브앱과 달리 '대기중'으로 보이던 버그.)
-  if (isJapan(row)) {
-    const view = flattenCaseForDestination(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY))
-    return deriveAdvanceNotificationStatus(view)
-  }
-  // 태국·필리핀 — 수입 허가 step 시그널(신청일·완료·첨부·허가번호)로 derive. 신청일·완료 플래그가
-  // by_dest 스코핑이라 활성 여행지로 평탄화한 view 를 넘긴다(일본 derive 와 동일 컨벤션).
-  if (usesImportPermitReport(row)) {
-    const view = flattenCaseForDestination(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY))
-    return deriveImportPermitStatus(view)
-  }
-  const data = (row.data ?? {}) as Record<string, unknown>
-  const stored = data.import_import_status
+function reportSlotStatus(row: CaseRow, slot: 'import' | 'export'): string {
+  const dest = reportDest(row)
+  const view = flattenCaseForDestination(row, dest)
+  const derived = deriveReportSlotStatus(view, dest, slot)
+  if (derived) return derived
+  const data = (view.data ?? {}) as Record<string, unknown>
+  const stored = data[REPORT_LEGACY_STATUS_KEY[slot]]
   if (stored != null && String(stored) !== '') return String(stored)
   return 'not_started'
 }
 
+function effectiveImportStatus(row: CaseRow): string {
+  return reportSlotStatus(row, 'import')
+}
+
+/** 수출은 추가로 귀국일 없으면 'na' (admin 만의 표기). */
 function effectiveExportStatus(row: CaseRow): string {
   if (!importReportReturnDate(row)) return 'na'
-  // 일본 derive 는 신청일(by_dest) 을 top-level 에서 읽으므로 활성 여행지로 평탄화 후 넘긴다.
-  // (평탄화 안 하면 신청일을 못 봐 'done'→'in_progress'로 오판 → 펫무브앱과 불일치.)
-  if (isJapan(row)) {
-    const view = flattenCaseForDestination(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY))
-    return deriveJpExportQuarantineStatus(view)
-  }
-  const data = (row.data ?? {}) as Record<string, unknown>
-  const stored = data.import_export_status
-  if (stored != null && String(stored) !== '') return String(stored)
-  return 'not_started'
+  return reportSlotStatus(row, 'export')
 }
 
 /**
@@ -804,7 +833,7 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     width: BASE_COL_W,
     options: IMPORT_STATUS_OPTIONS,
     resolveValue: effectiveExportStatus,
-    // 수출은 일본 + 왕복(귀국일 있음)일 때만 표시 — 그 외는 '—'.
+    // 수출은 수출 카드를 선언한 나라 + 왕복(귀국일 있음)일 때만 표시 — 그 외는 '—'.
     condition: (row) => exportApplies(row),
   },
   { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: BASE_COL_W, readonly: true },
@@ -1472,7 +1501,7 @@ function BulkApplyDialog({
 
 /**
  * 발송 팩 다이얼로그 — 케이스 체크 + 검체수 + 발송일 입력 → 인보이스(맨 앞) + 선택 케이스별
- * 검사 서류를 하나의 PDF 로 병합 생성. 검체수 기본값 = 선택 마리 수(수정 가능). ARC 는 16점 고정.
+ * 검사 서류를 하나의 PDF 로 병합 생성. 검체수 기본값 = 선택 마리 수(수정 가능). ARC 는 8점 고정.
  * 인보이스 수신처(consigneeLab)는 항목별 고정.
  */
 function ShipmentPackDialog({ label, rows, variant, consigneeLab, onClose }: {
@@ -1492,9 +1521,10 @@ function ShipmentPackDialog({ label, rows, variant, consigneeLab, onClose }: {
   const allSelected = rows.length > 0 && selected.size === rows.length
   const isArc = variant === 'arc'
   const selCount = selected.size
-  // 검체수: 빈 칸이면 선택 마리 수, 입력하면 그 값(1~99). ARC 는 16 고정.
+  // 검체수: 빈 칸이면 선택 마리 수, 입력하면 그 값(1~99). ARC 는 8 고정
+  // (서버 generateInvoice 의 ARC_SPECIMEN_COUNT 와 같은 값 — 표시·전달용 사본).
   const effectiveTube = isArc
-    ? 16
+    ? 8
     : tube.trim()
     ? Math.max(1, Math.min(99, Math.trunc(Number(tube)) || selCount))
     : selCount
@@ -1584,12 +1614,12 @@ function ShipmentPackDialog({ label, rows, variant, consigneeLab, onClose }: {
           })}
         </ul>
 
-        {/* 인보이스 정보 — 검체수(기본=선택 수) + 발송일. ARC 는 16점 고정. */}
+        {/* 인보이스 정보 — 검체수(기본=선택 수) + 발송일. ARC 는 8점 고정. */}
         <div className="flex items-center gap-md mb-4">
           <div className="flex-1">
             <label className="text-[12px] text-muted-foreground mb-1 block">검체수</label>
             {isArc ? (
-              <div className="h-9 flex items-center text-sm text-foreground">ARC 표준 <span className="font-medium ml-1">16점</span></div>
+              <div className="h-9 flex items-center text-sm text-foreground">ARC 표준 <span className="font-medium ml-1">8점</span></div>
             ) : (
               <input
                 type="number"

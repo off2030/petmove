@@ -78,10 +78,19 @@ export interface HawaiiResult {
   address_overseas: string | null
   postal_code: string | null
   phone: string | null
-  departure_date: string | null
+  /** 한국 → 하와이 출국편. (일본과 같은 노선 기반 슬롯 — 날짜 순서로 배정하지 않는다) */
+  korea_to_hawaii: FlightEntry
+  /**
+   * 하와이 → 한국 귀국편.
+   * ⚠️ 케이스 필드에 **반영하지 않는다**(2026-08-18 사용자 지정 — 귀국편은 운영자 입력).
+   * 그래도 슬롯을 받는 이유: 왕복 일정을 붙여 넣었을 때 귀국편이 갈 자리가 없으면 모델이
+   * 귀국 날짜·인천 도착 시각을 하와이 도착 정보로 잘못 넣는다. 미끼 슬롯이다.
+   */
+  hawaii_to_korea: FlightEntry
+  /** 하와이 도착일 — 날짜변경선 때문에 출발일과 같을 수도, 하루 빠를 수도 있다. */
   entry_date: string | null
+  /** 하와이 도착 시각(24h). 인천 도착 시각이 아니다. */
   arrival_time: string | null
-  flight_number: string | null
 }
 
 export interface UkResult {
@@ -222,7 +231,7 @@ const SCHEMAS: { [C in Country]: Record<string, unknown> } = {
     required: [
       'passport_number', 'passport_issuing_country', 'passport_expiry_date',
       'date_of_birth', 'email_address', 'address_overseas', 'postal_code',
-      'phone', 'departure_date', 'entry_date', 'arrival_time', 'flight_number',
+      'phone', 'korea_to_hawaii', 'hawaii_to_korea', 'entry_date', 'arrival_time',
     ],
     properties: {
       passport_number: nullable(),
@@ -233,10 +242,10 @@ const SCHEMAS: { [C in Country]: Record<string, unknown> } = {
       address_overseas: nullable(),
       postal_code: nullable(),
       phone: nullable(),
-      departure_date: nullable(),
+      korea_to_hawaii: FLIGHT_ENTRY_SCHEMA,
+      hawaii_to_korea: FLIGHT_ENTRY_SCHEMA,
       entry_date: nullable(),
       arrival_time: nullable(),
-      flight_number: nullable(),
     },
   },
   uk: {
@@ -333,19 +342,37 @@ Worked example — input:
 - certificate_no: Export Quarantine Certificate number (수출검역증명서/輸出検疫証明書 / 検疫証明書番号) if present.
 - IMPORTANT: If the image is ONLY an Export Quarantine Certificate, extract certificate_no only and set flight fields to null (the cert contains old trip data).`,
 
-  hawaii: `You extract Hawaii entry form fields from images or text.${COMMON_RULES}
+  hawaii: `You extract Hawaii round-trip flight info plus passport/address fields from images or text.
+The customer transports a pet between Korea and Hawaii — typically TWO flights:
+1. "korea_to_hawaii" = the flight that DEPARTS a Korean airport (ICN/GMP/PUS/CJU) and ARRIVES in Hawaii (HNL/OGG/KOA/LIH).
+2. "hawaii_to_korea" = the flight that DEPARTS Hawaii and ARRIVES at a Korean airport.
+Assign each flight to its slot by its ROUTE (airports) — never by date order or the order flights appear.
+Korean labels: "출국"/"가는 편" = korea_to_hawaii, "귀국"/"오는 편"/"복귀" = hawaii_to_korea. Trust the AIRPORTS over the label if they disagree.
+Route notation "A-B", "A→B", "A발 B행", "인천(ICN) 22:10 출발 → 호놀룰루(HNL) 12:20 도착" means departure_airport=A, arrival_airport=B. Keep each airport with its own flight and slot — NEVER copy the same airport into both departure and arrival.
+Example input: "출국: 2026년 10월 4일 인천(ICN) 22:10 출발 → 호놀룰루(HNL) 12:20 도착 / 귀국: 2026년 10월 9일 호놀룰루(HNL) 14:20 출발 → 2026년 10월 10일 인천(ICN) 19:05 도착"
+→ korea_to_hawaii: { date: "2026-10-04", time: "22:10", departure_airport: "ICN", arrival_airport: "HNL" }
+→ hawaii_to_korea: { date: "2026-10-09", time: "14:20", departure_airport: "HNL", arrival_airport: "ICN" }
+→ entry_date: "2026-10-04", arrival_time: "12:20"${COMMON_RULES}
 - passport_number: FULL passport number as written (e.g. "M218A9542"). Korean passports start with a letter (M/S/R/DP/O/TP) followed by 8 digits. Do NOT truncate or take only last 4 digits — always return the full number.
 - passport_issuing_country: Issuing country full English name (e.g. "Republic of Korea"). Map codes like KOR → "Republic of Korea". Korean labels: "발행국가", "국적", "Issuing Country", "Nationality".
 - passport_expiry_date: Passport EXPIRY date ("기간만료일" / "Date of expiry"), YYYY-MM-DD. NOT date of issue.
 - date_of_birth: Holder's DATE OF BIRTH ("생년월일" / "소유주 생년월일" / "Date of birth"), YYYY-MM-DD. If only YYMMDD (e.g. "930120"), expand: years 30-99 → 19xx, years 00-29 → 20xx.
 - email_address: Email address.
-- address_overseas: Overseas address in English (street + city + state if present). EXCLUDE postal code.
-- postal_code: Postal/ZIP code.
+- address_overseas: Hawaii address in English (street + city + state). EXCLUDE the ZIP code — if the address line ends with a ZIP (e.g. "2005 Kalia Rd, Honolulu, HI 96815"), return "2005 Kalia Rd, Honolulu, HI" here and put "96815" in postal_code.
+- postal_code: ZIP code only (e.g. "96815"). Always fill it when the address contains one.
 - phone: Holder's phone number for Hawaii entry. Accept any format the user wrote — international ("+1-808-555-0199"), digits only ("18085550199" or "8085550199"), with separators. Return as written, do not reformat.
-- entry_date: Date of arrival in Hawaii, YYYY-MM-DD. Labels include "도착", "입국일", "arrival", "하와이 도착". If TWO dates appear like "출국 5/10, 도착 5/10" or "departure/arrival" pair, use the ARRIVAL date. CRITICAL — if year is missing (e.g. just "5/10" or "May 10"): output the next upcoming occurrence AFTER today's date. NEVER output a year in the past.
-- departure_date: Date the owner/pet DEPARTS Korea (출국일/departure), YYYY-MM-DD. The earlier date in a "출국/도착" or "departure/arrival" pair. Same missing-year rule as entry_date.
-- arrival_time: Scheduled ARRIVAL time in Hawaii, 24h format "HH:mm". Convert AM/PM (e.g. "2:30 PM" → "14:30"). If only a departure time is shown, return null.
-- flight_number: Flight number of the arriving flight into Hawaii (e.g. "KE053", "HA458"). If multiple legs, use the final leg arriving in Hawaii.`,
+- For each flight: date (YYYY-MM-DD), time (24h "HH:mm"), departure_airport (IATA), arrival_airport (IATA), transport, flight_number.
+- date: the DEPARTURE date of that flight (the date the flight takes off), not the arrival date. For hawaii_to_korea this is the date it leaves Hawaii — Korea arrival is usually the NEXT day, and that later date must NOT be used.
+- time: scheduled DEPARTURE time of that flight in 24h "HH:mm". Convert AM/PM if needed ("9:30 AM" → "09:30", "5:45 PM" → "17:45").
+- flight_number: that flight's own number (e.g. "KE053", "HA458"). If a leg has no number shown, null.
+- transport: how the pet travels ("위탁수하물"/"화물칸 위탁" → "Checked-baggage", "기내"/"기내동반" → "Carry-on", "화물"/"카고" → "Cargo", "해상" → "Cargo(Sea)").
+  ONLY when the text actually says how the pet travels — never infer it from the airline or the aircraft. If nothing is said, return null.
+  If transport is given for one flight but not the other, apply the same value to both.
+- If only one flight is found, put it in the slot its route matches and leave the other all nulls.
+- Always fill hawaii_to_korea when a return flight is present, even though only the outbound leg is used downstream — it keeps return-trip dates out of the Hawaii arrival fields.
+- entry_date: date the pet ARRIVES in Hawaii, YYYY-MM-DD. Korea→Hawaii crosses the date line eastbound, so the Hawaii arrival is usually the SAME calendar day as the Korean departure (a 22:10 ICN departure lands 12:20 the same day). Use the date printed next to the Hawaii arrival if one is shown; otherwise use korea_to_hawaii.date. NEVER use a date from the return trip, and never use the Incheon arrival date.
+- arrival_time: scheduled ARRIVAL time IN HAWAII, 24h "HH:mm" (the time next to the HNL/OGG/KOA/LIH arrival). Do NOT use the Korea arrival time of the return flight. If no Hawaii arrival time is shown, return null.
+- CRITICAL — if a year is missing (e.g. just "10/4" or "Oct 4"): output the next upcoming occurrence AFTER today's date. NEVER output a year in the past.`,
 
   uk: `You extract the overseas destination address for UK pet-import from images or text.${COMMON_RULES}
 - address_overseas: UK destination address in English, including postal code if visible. Return null if no address found.`,
@@ -411,7 +438,7 @@ export async function extractExtra<C extends Country>(input: ExtractInput<C>): P
     )
 
     const text = response.choices[0]?.message?.content ?? ''
-    const parsed = JSON.parse(text) as ResultMap[C]
+    const parsed = sanitizeBlanks(JSON.parse(text) as ResultMap[C])
 
     if (!hasAnyValue(parsed)) return { ok: false, error: 'No information found' }
     return { ok: true, data: parsed }
@@ -420,6 +447,28 @@ export async function extractExtra<C extends Country>(input: ExtractInput<C>): P
     const msg = err instanceof Error ? reported : 'Unknown error'
     return { ok: false, error: msg }
   }
+}
+
+/**
+ * 모델이 값 대신 돌려주는 **문자열 'null'** 같은 가짜 값을 진짜 null 로 바꾼다.
+ * (gpt-4o-mini 가 time 칸에 "null" 을 넣어 화면에 그대로 찍히던 사례 — 2026-08-18)
+ * 중첩 객체(항공편 슬롯)까지 재귀 적용.
+ */
+const BLANK_TOKENS = new Set(['null', 'none', 'n/a', 'na', '-', '없음', '미정', 'unknown'])
+function sanitizeBlanks<T>(obj: T): T {
+  if (obj === null || typeof obj !== 'object') return obj
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+    if (typeof v === 'string') {
+      const t = v.trim()
+      out[k] = t === '' || BLANK_TOKENS.has(t.toLowerCase()) ? null : t
+    } else if (v && typeof v === 'object') {
+      out[k] = sanitizeBlanks(v)
+    } else {
+      out[k] = v
+    }
+  }
+  return out as T
 }
 
 function hasAnyValue(obj: unknown): boolean {

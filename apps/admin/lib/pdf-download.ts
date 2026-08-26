@@ -1,3 +1,5 @@
+import type { MultiFormKey } from '@/lib/pdf-multi-forms'
+
 export type SinglePdfRequest = {
   kind: 'single'
   formKey:
@@ -37,7 +39,7 @@ export type SinglePdfRequest = {
 
 export type MultiPdfRequest = {
   kind: 'multi'
-  formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC'
+  formKey: MultiFormKey
   caseIds: string[]
   part?: number
   includeVet?: boolean

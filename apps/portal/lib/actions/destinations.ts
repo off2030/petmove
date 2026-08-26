@@ -25,6 +25,7 @@ import {
   writeByDestValue,
   DESTINATION_SCOPED_FIELD_KEYS,
   MAX_DESTINATIONS_PER_CASE,
+  captureJourneySnapshot,
   type PastJourneySummary,
   type CaseRow,
 } from '@petmove/domain'
@@ -108,8 +109,8 @@ export async function addCaseDestination(
       const view = activeDestinationView(caseRow, token)
       if (!resolveDone('has-arrived', view)) continue // 미완료 여정은 그대로 (병렬 유지)
       const viewData = (view.data ?? {}) as Record<string, unknown>
-      pastJourneys.push(
-        summarizeJourney(
+      pastJourneys.push({
+        ...summarizeJourney(
           {
             destination: token,
             tripType: tripTypeAll[token] ?? 'round',
@@ -119,7 +120,14 @@ export async function addCaseDestination(
           'done',
           today,
         ),
-      )
+        // 지우기 전 원본 — 펫무브워크 '지난 여정'의 되돌리기가 이걸로 복원한다.
+        snapshot: captureJourneySnapshot({
+          destination: token,
+          data,
+          destinationColumn: caseRow.destination,
+          departureColumn: caseRow.departure_date ?? null,
+        }),
+      })
       delete byDestAll[token]
       delete tripTypeAll[token]
       remaining = remaining.filter((t) => t !== token)
@@ -593,8 +601,8 @@ export async function finishJourney(
     ]
     const today = new Date().toISOString().slice(0, 10)
     const viewData = (view.data ?? {}) as Record<string, unknown>
-    pastJourneys.push(
-      summarizeJourney(
+    pastJourneys.push({
+      ...summarizeJourney(
         {
           destination: dest,
           tripType: tripType[dest] ?? 'round',
@@ -604,7 +612,14 @@ export async function finishJourney(
         'done',
         today,
       ),
-    )
+      // 지우기 전 원본 — 토스트가 사라진 뒤에도 펫무브워크에서 되돌릴 수 있게.
+      snapshot: captureJourneySnapshot({
+        destination: dest,
+        data,
+        destinationColumn: caseRow.destination,
+        departureColumn: caseRow.departure_date ?? null,
+      }),
+    })
     delete byDest[dest]
     delete tripType[dest]
     const remaining = tokens.filter((t) => t !== dest)

@@ -2,6 +2,7 @@
 
 import { createClient } from '@petmove/auth/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
+import { FORM_CAPACITY, type MultiFormKey } from '@/lib/pdf-multi-forms'
 import type { CaseRow } from '@petmove/domain'
 import { getEffectiveVaccineList, flattenCaseForDestination, getDepartureDate, getVetVisitDate, parseDestinations, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly, recommendRabiesDoseIndices } from '@petmove/domain'
 import { loadEffectiveVetInfo } from '@/lib/vet-info'
@@ -309,15 +310,15 @@ function generateShipperExportRef(shipDate?: string): string {
   return `LVMC${y}${mm}${day}`
 }
 
-/** ARC-OVI(남아공) 표준 검체 구성 — 혈청 3ml×3 + EDTA 전혈 0.5ml×10 + 무염색 도말×3 = 16점. */
-const ARC_SPECIMEN_COUNT = 16
+/** ARC-OVI(남아공) 표준 검체 구성 — 혈청 2ml×3 + EDTA 전혈 2.5ml×2 + 무염색 도말×3 = 8점. */
+const ARC_SPECIMEN_COUNT = 8
 /** ARC 인보이스 Full Description of Goods (혼합 검체라 통관 단위는 EA). */
 const ARC_INVOICE_GOODS = [
   'Exempt Animal Specimen',
   '',
   'Non-infectious canine specimens for diagnostic testing:',
-  ' - Serum 3ml x 3 tubes',
-  ' - EDTA whole blood 0.5ml x 10 tubes',
+  ' - Serum 2ml x 3 tubes',
+  ' - EDTA whole blood 2.5ml x 2 tubes',
   ' - Unstained blood smear x 3 slides',
   '',
   'For diagnostic testing only. Not for resale.',
@@ -326,7 +327,7 @@ const ARC_INVOICE_GOODS = [
 ].join('\n')
 
 export async function generateInvoice(opts: ShipmentOpts): Promise<GeneratePdfResult> {
-  // ARC-OVI(남아공)는 표준 16점 혼합 검체 — 수량·품목 설명·단위를 고정값으로 덮어씀.
+  // ARC-OVI(남아공)는 표준 8점 혼합 검체 — 수량·품목 설명·단위를 고정값으로 덮어씀.
   // 그 외 lab 은 빈 값 → preserveTemplateText 가 템플릿 기본값(canine serum / Tube) 유지.
   const isArc = (opts.consignee_lab ?? '').toLowerCase() === 'arc_ovr'
   const tubeCount = isArc ? ARC_SPECIMEN_COUNT : opts.tube_count
@@ -340,6 +341,8 @@ export async function generateInvoice(opts: ShipmentOpts): Promise<GeneratePdfRe
     goods_unit: isArc ? 'EA' : '',
     // ARC(남아공) 수출용 HS 코드. 그 외 lab 은 빈 값 → 템플릿 기본(3002905250) 유지.
     goods_hs_code: isArc ? '3002.12.00.6' : '',
+    // ARC(남아공) 총 중량 — VHC for MIP 의 Net weight 와 동일값. 그 외 lab 은 템플릿 기본(0.3kg) 유지.
+    goods_total_weight: isArc ? '0.25kg' : '',
   })
   if (r.ok) r.filename = `Invoice_${tubeCount}tubes.pdf`
   return r
@@ -468,9 +471,12 @@ export async function generateShipmentPack(params: {
     ship_date: params.ship_date,
   })
   if (!front.ok) return front
+  // 파일명 검체수 표기 — ARC(남아공)는 구성이 8점 고정이라 붙이지 않는다(2026-08-11 사용자 지시).
+  //   그 외 lab 은 발송 건마다 튜브 갯수가 달라 파일명으로 구분한다.
+  const packName = `${params.consignee_lab}_shipment${params.variant === 'arc' ? '' : `_${params.tube_count}tubes`}.pdf`
   // KSVDL-R 등 invoice-only 는 케이스별 서류가 없으므로 앞장 서류가 곧 발송 팩.
   if (params.variant === 'invoice-only') {
-    return { ...front, filename: `${params.consignee_lab}_shipment_${params.tube_count}tubes.pdf` }
+    return { ...front, filename: packName }
   }
 
   const parts: string[] = [front.pdf]
@@ -495,7 +501,7 @@ export async function generateShipmentPack(params: {
   return {
     ok: true,
     pdf: Buffer.from(pdfBytes).toString('base64'),
-    filename: `${params.consignee_lab}_shipment_${params.tube_count}tubes.pdf`,
+    filename: packName,
   }
 }
 
@@ -575,7 +581,7 @@ export interface SiblingPreview {
   /** Number of documents the pack will produce given current capacity rules. */
   docCount: number
   /** Form key the preview was computed for. */
-  formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC'
+  formKey: MultiFormKey
 }
 
 /**
@@ -653,7 +659,7 @@ export async function fetchSiblings(caseId: string, activeDestination?: string |
 
 export async function previewSiblings(
   caseId: string,
-  formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC',
+  formKey: MultiFormKey,
   /** 다중 여행지 케이스 — 활성 여행지의 출국일·내원일 기준으로 sibling 매칭. */
   activeDestination?: string | null,
 ): Promise<
@@ -682,13 +688,12 @@ function rabiesDoseCountOf(c: CaseRow): number {
     .length
 }
 
-function simulatePackCount(formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC', summaries: SiblingSummary[]): number {
-  // VBC 는 동물 테이블이 없어 페이지 용량 제한이 없다 — 항상 1장에 모두 들어간다.
-  if (formKey === 'VBC') return summaries.length > 0 ? 1 : 0
-  const cap =
-    formKey === 'AnnexIII' ? { animals: 3, vaccRows: 5 } :
-    formKey === 'NZ' ? { animals: 5, vaccRows: 9999 } :
-    { animals: 5, vaccRows: 5 }
+function simulatePackCount(formKey: MultiFormKey, summaries: SiblingSummary[]): number {
+  // 용량 선언은 packCases 와 **같은 표**(FORM_CAPACITY)를 본다 — 예전엔 여기에 같은 숫자를
+  // 손으로 한 벌 더 적어 둬서, 폼을 추가하면 미리보기 장수와 실제 발급 장수가 어긋났다.
+  // 표에 없는 폼(VBC — 동물 테이블이 없어 제한 없음)은 packCases 와 똑같이 한 장으로 본다.
+  const cap = FORM_CAPACITY[formKey]
+  if (!cap) return summaries.length > 0 ? 1 : 0
   let docs = 0
   let remaining = summaries.slice()
   while (remaining.length > 0) {
@@ -709,7 +714,7 @@ function simulatePackCount(formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC', summaries:
 }
 
 async function generateMulti(
-  formKey: 'AnnexIII' | 'UK' | 'NZ' | 'NZ_2' | 'VBC',
+  formKey: MultiFormKey | 'NZ_2',
   caseIds: string[],
   options?: { includeVet?: boolean; destination?: string | null },
 ): Promise<GenerateMultiPdfResult> {
@@ -741,6 +746,14 @@ export async function generateAnnexIIIMulti(caseIds: string[], opts?: { includeV
 
 export async function generateUKMulti(caseIds: string[], opts?: { includeVet?: boolean; destination?: string | null }) {
   return generateMulti('UK', caseIds, opts)
+}
+
+/**
+ * 태국 R.1/1 다중 — 양식의 좌·우 동물 칸에 **두 마리까지** 한 장에 기재(2026-08-24).
+ * 신청자·주소·항공편 등 동물 외 항목은 대표(첫) 케이스 기준. 3마리 이상은 2+1 로 분할된다.
+ */
+export async function generateFormR11Multi(caseIds: string[], opts?: { includeVet?: boolean; destination?: string | null }) {
+  return generateMulti('Form_R11', caseIds, opts)
 }
 
 /** VBC 다중 — 같은 보호자의 여러 마리를 한 선언서에. 이름·품종을 ', ' 로 join. */

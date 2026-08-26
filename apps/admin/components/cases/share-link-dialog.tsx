@@ -38,6 +38,26 @@ import type { SharePreset } from '@/lib/share-presets-types'
 // 정보 요청 링크 만료 — 외부(보호자) 개인정보가 담기므로 무기한은 지양, 30일 고정(UI 미노출).
 const SHARE_LINK_EXPIRY_DAYS = 30
 
+/** 제출 원문 1건을 사람이 읽을 문자열로. 백신 항목처럼 객체 배열이면 날짜만 추린다. */
+function formatSubmittedValue(v: unknown): string {
+  if (typeof v === 'string') return v.trim()
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v)
+  if (Array.isArray(v)) {
+    return v
+      .map((item) => {
+        if (item && typeof item === 'object' && !Array.isArray(item)) {
+          const rec = item as Record<string, unknown>
+          return typeof rec.date === 'string' ? rec.date : JSON.stringify(item)
+        }
+        return typeof item === 'string' ? item.trim() : String(item)
+      })
+      .filter(Boolean)
+      .join(', ')
+  }
+  if (v && typeof v === 'object') return JSON.stringify(v)
+  return ''
+}
+
 // 국가 프리셋 = 필드(field_keys) + 그 국가 필수 파일(fileKeys) 를 함께 선택.
 type AutoPreset = SharePreset & { fileKeys: string[] }
 
@@ -243,6 +263,8 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
+  /** 제출 원문을 펼쳐 둔 링크 id. 한 번에 하나만 — 목록이 길어지는 걸 막는다. */
+  const [openValuesId, setOpenValuesId] = useState<string | null>(null)
   // 생성 성공 배너(자동복사 안내). 화면 하단 고정 위치에 잠깐 노출.
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
@@ -279,6 +301,23 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     }
     return map
   }, [groupedFields])
+
+  /**
+   * 링크의 제출 원문을 표시용 항목으로. 값이 비어 있는 키는 제외 — 케이스에 쓰이지 않는
+   * 값이라 담당자가 대조할 대상이 아니고, 목록만 길어진다.
+   * 라벨은 현재 케이스 기준으로 되살리고, 못 찾으면(정의가 바뀐 옛 키) 키를 그대로 보여준다.
+   */
+  function submittedEntries(l: ShareLinkRow): Array<{ key: string; label: string; text: string }> {
+    const values = l.submitted_values
+    if (!values || typeof values !== 'object') return []
+    const out: Array<{ key: string; label: string; text: string }> = []
+    for (const [key, raw] of Object.entries(values)) {
+      const text = formatSubmittedValue(raw)
+      if (!text) continue
+      out.push({ key, label: fieldsByKey.get(key)?.[0]?.label ?? key, text })
+    }
+    return out
+  }
 
   const selectedFields = useMemo(() => {
     const out: Array<{ id: string; key: string; label: string }> = []
@@ -631,6 +670,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
               ) : (
                 visibleLinks.map((l) => {
                   const status = shareLinkStatus(l)
+                  const submitted = submittedEntries(l)
                   return (
                     <div key={l.id} className="grid grid-cols-[1fr_auto] gap-md py-3 border-b border-dotted border-border/80">
                       <div className="min-w-0">
@@ -656,6 +696,33 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                         {l.submitter_note && (
                           <div className="mt-1 font-serif italic text-[12px] text-muted-foreground/80 whitespace-pre-wrap">
                             {l.submitter_note}
+                          </div>
+                        )}
+                        {/*
+                          제출 원문 — 케이스에 반영된 값이 아니라 보호자가 실제로 보낸 그대로다.
+                          둘이 다를 수 있다는 게 핵심(화이트리스트 밖 키·여행지 스코프 등으로
+                          반영이 누락될 수 있음). "고객은 보냈다는데 케이스는 그대로"인 문의를
+                          여기서 바로 대조한다.
+                        */}
+                        {submitted.length > 0 && (
+                          <div className="mt-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setOpenValuesId((prev) => (prev === l.id ? null : l.id))}
+                              className="font-serif text-[12px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+                            >
+                              제출 내용 {openValuesId === l.id ? '접기' : `보기 · ${submitted.length}개`}
+                            </button>
+                            {openValuesId === l.id && (
+                              <dl className="mt-1.5 space-y-1 rounded-md border border-border/60 bg-muted/30 px-3 py-2">
+                                {submitted.map(({ key, label, text }) => (
+                                  <div key={key} className="grid grid-cols-[minmax(0,7rem)_1fr] gap-2">
+                                    <dt className="font-serif text-[12px] text-muted-foreground truncate">{label}</dt>
+                                    <dd className="font-serif text-[12px] text-foreground break-words">{text}</dd>
+                                  </div>
+                                ))}
+                              </dl>
+                            )}
                           </div>
                         )}
                       </div>

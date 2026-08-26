@@ -35,9 +35,11 @@ import {
   generateTW,
   generateTK,
   generateUKMulti,
+  generateFormR11Multi,
   generateVbddl,
   generateVHC,
 } from '@/lib/actions/generate-pdf'
+import type { MultiFormKey } from '@/lib/pdf-multi-forms'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -82,7 +84,7 @@ type SinglePdfBody = {
 
 type MultiPdfBody = {
   kind: 'multi'
-  formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC'
+  formKey: MultiFormKey
   caseIds: string[]
   part?: number
   includeVet?: boolean
@@ -250,6 +252,8 @@ export async function POST(req: NextRequest) {
           ? await generateNZMulti(body.caseIds, multiOpts)
           : body.formKey === 'VBC'
           ? await generateVBCMulti(body.caseIds, multiOpts)
+          : body.formKey === 'Form_R11'
+          ? await generateFormR11Multi(body.caseIds, multiOpts)
           : await generateUKMulti(body.caseIds, multiOpts)
       if (!result.ok) return jsonError(result.error, 500)
       if (result.docs.length === 0) return jsonError('생성된 문서가 없습니다.', 500)

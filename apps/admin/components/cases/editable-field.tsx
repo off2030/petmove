@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { FieldSpec } from '@petmove/domain'
-import { calculateAge, coerceInputValue, renderFieldValue, isDestinationScopedKey, resolveActiveDestination } from '@petmove/domain'
+import { calculateAge, coerceInputValue, renderFieldValue, isDestinationScopedKey, resolveActiveDestination, formatKoreanPhone, looksLikeKoreanPhoneInput, phoneDigits, KOREAN_PHONE_MAX_DIGITS } from '@petmove/domain'
 import { updateCaseField } from '@/lib/actions/cases'
 import { persistField } from '@/lib/toast-bus'
 import { CopyButton } from '@/components/cases/copy-button'
@@ -272,14 +272,11 @@ export function EditableField({
         return
       }
     }
-    // 전화번호 — 010 + 8자리 강제 (펫무브 portal 과 동일). 빈 값은 OK.
-    if (spec.key === 'phone' && value.trim()) {
-      const digits = value.trim().replace(/\D/g, '')
-      if (!/^010\d{8}$/.test(digits)) {
-        setError('010-XXXX-XXXX 형식으로 입력해 주세요')
-        return
-      }
-    }
+    // 전화번호 — 펫무브워크(관리자)는 **형식을 강제하지 않는다**(2026-08-24 사용자 결정).
+    //   예전엔 `010 + 8자리` 만 저장할 수 있어서 0507 안심번호·02 유선·해외번호를 아예 못 넣었다
+    //   (0507-1400-4069 가 저장 단계에서 막힌 게 이 줄이다). 운영자는 예외를 적을 수 있어야 하고,
+    //   형식 강제는 보호자가 직접 입력하는 쪽(정보 요청 링크·신청폼·앱)에서만 한다.
+    //   저장값 정규화(한국 번호면 숫자만, 그 외는 원문)는 PhoneInput 이 담당한다.
     // 이메일 — 단순 형식(sub@domain.tld). 빈 값은 OK.
     if (spec.key === 'email' && value.trim()) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
@@ -1020,7 +1017,14 @@ function TimeInput({ inputRef, initial, onChange, onKeyDown, onBlur, onSave, cla
 
 /**
  * Phone input: uncontrolled to avoid IME conflicts.
- * Formats display as 010-1234-5678, stores digits only, max 11.
+ *
+ * **하이브리드**(2026-08-24 사용자 결정) — 한국 번호처럼 치면 지금까지처럼 자동 포맷하고
+ * 숫자만 저장한다(앱·PDF·검색과 round-trip). 그 외(+81-90-…, 내선, '010-1234-5678 (남편)'
+ * 같은 메모)는 **친 그대로** 보존한다. 정보 요청 링크 폼은 반대로 지정 형식만 받는다 —
+ * 보호자 입력은 형식이 흔들리면 안 되고, 운영자는 예외를 적을 수 있어야 한다.
+ *
+ * 표기·판정은 domain/phone.ts 단일 출처. 0507 안심번호(12자리)도 여기서 지원된다 —
+ * 예전엔 네 화면 모두 11자리에서 잘라 마지막 숫자가 조용히 사라졌다.
  */
 function PhoneInput({ inputRef, initial, onChange, onKeyDown, onBlur, className }: {
   inputRef: React.RefObject<HTMLInputElement | null>
@@ -1034,32 +1038,32 @@ function PhoneInput({ inputRef, initial, onChange, onKeyDown, onBlur, className 
   const ref = inputRef || localRef
   const composing = useRef(false)
 
-  function formatPhone(digits: string) {
-    if (digits.length <= 3) return digits
-    if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`
-    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`
-  }
-
   function sync() {
     const el = ref.current
     if (!el) return
-    const digits = el.value.replace(/\D/g, '').slice(0, 11)
-    const hadNonDigit = /[^\d\s-]/.test(el.value)
-    el.value = formatPhone(digits)
+    // 한국 번호로 보이면 하이픈 표기로 다듬고 숫자만 저장. 그 외는 손대지 않는다 —
+    // 자유 입력을 지우면 운영자가 해외번호·내선을 아예 못 적는다.
+    if (!looksLikeKoreanPhoneInput(el.value)) {
+      onChange(el.value.trim())
+      return
+    }
+    const digits = phoneDigits(el.value).slice(0, KOREAN_PHONE_MAX_DIGITS)
+    el.value = formatKoreanPhone(digits)
     onChange(digits)
-    return hadNonDigit
   }
 
   useEffect(() => {
-    if (ref.current) ref.current.value = formatPhone(initial)
+    if (ref.current) {
+      ref.current.value = looksLikeKoreanPhoneInput(initial) ? formatKoreanPhone(initial) : initial
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <input
       ref={ref}
       type="tel"
-      inputMode="numeric"
-      defaultValue={formatPhone(initial)}
+      inputMode="tel"
+      defaultValue={looksLikeKoreanPhoneInput(initial) ? formatKoreanPhone(initial) : initial}
       onCompositionStart={() => { composing.current = true }}
       onCompositionEnd={() => {
         composing.current = false
@@ -1072,7 +1076,8 @@ function PhoneInput({ inputRef, initial, onChange, onKeyDown, onBlur, className 
       onKeyDown={onKeyDown}
       onBlur={() => { sync(); onBlur() }}
       placeholder="010-1234-5678"
-      maxLength={13}
+      // 자유 입력(해외번호·내선·메모)을 허용하므로 한국 번호 자릿수로 자르지 않는다.
+      maxLength={40}
       className={className}
     />
   )

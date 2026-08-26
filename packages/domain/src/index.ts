@@ -2,6 +2,7 @@ export * from './types'
 export * from './dates'
 export * from './destination-config'
 export * from './destination-names'
+export * from './phone'
 export * from './destination-overrides-types'
 export * from './destination-scoped-fields'
 export * from './inspection-config-defaults'
@@ -22,6 +23,7 @@ export * from './journey-steps'
 export * from './required-docs'
 export * from './docs-completion'
 export * from './auto-fill-engine'
+export * from './transport-partners'
 
 // 유효기간·날짜 헬퍼 — procedure-checks/utils 는 `export *` 대상이 아니라(내부 전용 다수),
 // 외부에서 재활용이 필요한 순수 함수만 좁게 노출(예: portal 로컬 알림의 유효기간 만료 계산).
@@ -34,6 +36,8 @@ export {
   latestExtraTiterEntry,
   isExtraTiterResultConfirmed,
   resolveValidUntil,
+  normalizeValidUntil,
+  parseValidUntilYears,
   addYears,
   // 일본 항체검사 날짜 hover 툴팁(admin rabies-titer-field)의 입국 가능일(+180일) 계산.
   addDays,

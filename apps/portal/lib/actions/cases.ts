@@ -38,6 +38,7 @@ import {
   validateTwEntryDate,
   buildDateRuleContext,
   bookedRecordedAtKey,
+  clearLegacyReportStatusForStep,
   isBookedStep,
   findDestinationKey,
   importPermitPrerequisiteError,
@@ -49,6 +50,7 @@ import {
   writeByDestValue,
   writeJourneyFeedback,
   readByDestValue,
+  usesDepartureFlightDate,
   SG_DOG_LICENCE_APP_SPEC,
   SG_QUARANTINE_RESERVATION_APP_SPEC,
   type ApplicationStepSpec,
@@ -1142,12 +1144,19 @@ export async function updateFlightFields(
     // 우선 읽어 has-flight-date·D-day 가 목적지별로 작동한다.
     const caseDestStr = (existing as { destination: string | null }).destination
     const isSingleDest = parseDestinations(caseDestStr).length === 1
-    // 일본은 출국일(departure_date)이 departure_flight_date 와 양방향 sync — 출국일 쓸 때 이 키도
-    // 함께 맞춰야 stale 잔존이 출국일을 되살리지 않는다. (Japan 한정 — 다른 목적지엔 이 키 없음.)
+    // 추가정보 '출발일'(departure_flight_date)을 쓰는 목적지는 출국일(departure_date)과
+    // org_auto_fill_rules 양방향 sync — 출국일 쓸 때 이 키도 함께 맞춰야 stale 잔존이
+    // 지운 출국일을 되살리지 않는다.
+    //
+    // ⚠️ 예전엔 `=== 'japan'` 하드코딩이었다. 그래서 같은 모델을 쓰는 하와이(2026-08-18)·
+    //   태국·말레이시아·인도네시아(2026-08-24)가 추가될 때마다 이 줄이 뒤처졌다. 이제
+    //   프로파일 선언에서 파생한다([[usesDepartureFlightDate]]) — 목적지가 늘어도 손댈 곳 없음.
     const flightCtx = buildCaseJourneyContext(
       { destination: caseDestStr ?? null, data: prev } as CaseRow,
       destination ?? null,
     )
+    const usesFlightDeparture = usesDepartureFlightDate(flightCtx.destinationKey)
+    // japan_extra.inbound.date 정리는 **일본 legacy 전용** — 다른 목적지엔 그 잔재가 없다.
     const isJapanFlight = flightCtx.destinationKey === 'japan'
     // 미국 강아지 생후 6개월 규칙은 항공권 저장의 서버 backstop 에도 적용한다. 클라이언트
     // 가드를 우회해도 같은 도메인 함수가 거부한다. 다른 목적지는 기존 서버 정책을 유지한다.
@@ -1206,13 +1215,13 @@ export async function updateFlightFields(
       const explicitDep = typeof fields.departure_date === 'string' ? fields.departure_date.trim() : ''
       const departureCol = explicitDep || entryDate
       merged = writeByDestValue(merged, writeDest, 'departure_date', departureCol || null)
-      // 일본: departure_flight_date 를 출국일과 항상 동일하게 맞춘다(변경·삭제 모두). auto-fill 은 빈
+      // departure_flight_date 를 출국일과 항상 동일하게 맞춘다(변경·삭제 모두). auto-fill 은 빈
       // source 를 무시·채우기만 하므로, 안 맞추면 stale 한 departure_flight_date 가 양방향 sync 로
       // 출국일을 되살려 D-day 가 안 바뀐다. top-level/legacy fallback 도 정리.
-      if (isJapanFlight) {
+      if (usesFlightDeparture) {
         merged = writeByDestValue(merged, writeDest, 'departure_flight_date', departureCol || null)
         delete merged.departure_flight_date // top-level 잔존 제거(by_dest 우선)
-        clearLegacyInboundDate(merged)
+        if (isJapanFlight) clearLegacyInboundDate(merged)
       }
 
       // 공용 부수효과 패리티 — 단일 목적지 한정(다중은 종전대로 by_dest 만). top-level 경로와 동일하게:
@@ -1291,12 +1300,12 @@ export async function updateFlightFields(
     const entryDate = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
     const explicitDep = typeof fields.departure_date === 'string' ? fields.departure_date.trim() : ''
     const departureCol = explicitDep || entryDate
-    // 일본: departure_flight_date 를 출국일과 항상 동일하게 맞춘다(변경·삭제 모두) — by_dest 경로와 동일.
+    // departure_flight_date 를 출국일과 항상 동일하게 맞춘다(변경·삭제 모두) — by_dest 경로와 동일.
     // 안 맞추면 stale 한 값이 양방향 sync 로 departure_date 컬럼을 되살린다.
-    if (isJapanFlight) {
+    if (usesFlightDeparture) {
       if (departureCol) nextData.departure_flight_date = departureCol // scoping-fallback-ok: writeDest 없음(목적지 미해석) 폴백
       else delete nextData.departure_flight_date
-      clearLegacyInboundDate(nextData)
+      if (isJapanFlight) clearLegacyInboundDate(nextData)
     }
     const updatePayload: Record<string, unknown> = {
       data: nextData,
@@ -1413,7 +1422,7 @@ export async function markAdvanceNotificationApprovalSkipped(
     // 완료 시그널 — admin demote 상태를 자동 해제.
     delete nextData.advance_notification_admin_demoted_at
     // stored 클리어해 derive 모드 전환.
-    delete nextData.import_import_status
+    clearLegacyReportStatusForStep(nextData, 'advance-notification', 'import')
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1461,7 +1470,7 @@ export async function markAdvanceNotificationInProgress(
       advance_notification_in_progress: true,
     }
     // 운영자 수동 stored 값보다 보호자의 적극적 입력을 우선 — derive 모드로 전환(date-patch 와 동일).
-    delete nextData.import_import_status
+    clearLegacyReportStatusForStep(nextData, 'advance-notification', 'import')
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1514,7 +1523,7 @@ export async function markJpExportQuarantineReservationSkipped(
     // 완료 시그널 — admin demote 상태를 자동 해제.
     delete nextData.jp_export_quarantine_admin_demoted_at
     // stored 클리어해 derive 모드 전환.
-    delete nextData.import_export_status
+    clearLegacyReportStatusForStep(nextData, 'jp-export-quarantine', 'export')
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1566,7 +1575,7 @@ export async function markJpExportQuarantineInProgress(
       ...prev,
       jp_export_quarantine_in_progress: true,
     }
-    delete nextData.import_export_status
+    clearLegacyReportStatusForStep(nextData, 'jp-export-quarantine', 'export')
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1622,7 +1631,7 @@ export async function updateAdvanceNotificationDate(
     }
     // 신고탭 stored 값을 클리어해 derive 모드로 전환 — portal 보호자의 적극적 입력이
     // 운영자의 기존 수동 상태보다 우선시되도록. 액션이 일어난 케이스만 영향.
-    delete nextData.import_import_status
+    clearLegacyReportStatusForStep(nextData, 'advance-notification', 'import')
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -3090,7 +3099,7 @@ export async function updateJpExportQuarantineFields(
     // (admin 의 명시적 액션이라 portal 입력 변화로 자동 무력화하지 않음).
     // 신청일·예약·확정 어떤 시점이든 보호자가 portal 에서 적극적 입력을 했다는 뜻 —
     // stored 클리어해 derive 모드로 전환 (운영자 수동값이 있었다면 그 시점부터만 무력화).
-    delete nextData.import_export_status
+    clearLegacyReportStatusForStep(nextData, 'jp-export-quarantine', 'export')
 
     const { data: updated, error } = await admin
       .from('cases')

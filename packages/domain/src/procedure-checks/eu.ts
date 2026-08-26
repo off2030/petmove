@@ -2,6 +2,7 @@ import {
   buildDateRuleContext,
   validateChImportPermitDate,
   validateCyAdvanceNoticeDate,
+  validatePtAdvanceNoticeDate,
   validateIeAdvanceNoticeDate,
   validateNoAdvanceNoticeDate,
   EU_ENTRY_FAMILY,
@@ -439,6 +440,36 @@ export const EU_CHECKS: ProcedureCheck[] = [
         return { ok: false, message: msg, offendingPaths: ['cy_advance_notice_date', 'entry_date'] }
       }
       return { ok: true, message: entry ? `통지일(${notice}) 입국(${entry}) 48시간 이전.` : `통지일(${notice}) 입력됨 (입국일 미입력).` }
+    },
+  },
+
+  // ── 포르투갈 — DGAV 도착 통보 (도착 48시간 전) ──────────────────────
+  {
+    id: 'eu.pt-advance-notice-48h-before-entry',
+    country: ['portugal'],
+    category: '사전통지',
+    title: '도착 통보 마감 (도착 48시간 전)',
+    description:
+      '포르투갈 도착 48시간(2일) 전까지 관할 여행자 진입지점(PEV — 리스본·포르투 공항 등)에 공식 서식(Aviso de Chegada)을 이메일로 통보. 보호자/위임자가 직접 보내야 하고 운송사 대행은 불가. 입력 차단(validatePtAdvanceNoticeDate)과 같은 함수 — 항공편 수정 후 어긋난 케이스를 주의로 표면화. (dgav.pt)',
+    severity: 'warning',
+    addedAt: '2026-08-18',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const notice =
+        typeof data.pt_advance_notice_date === 'string'
+          ? data.pt_advance_notice_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(notice)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      const msg = validatePtAdvanceNoticeDate(notice, entry)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: ['pt_advance_notice_date', 'entry_date'] }
+      }
+      return { ok: true, message: entry ? `통보일(${notice}) 도착(${entry}) 48시간 이전.` : `통보일(${notice}) 입력됨 (입국일 미입력).` }
     },
   },
 

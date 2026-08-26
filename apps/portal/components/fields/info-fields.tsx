@@ -10,6 +10,7 @@ import destsData from '@petmove/domain/data/destinations.json'
 import { APP_DESTINATIONS_SORTED } from '@/lib/app-destinations'
 import breedsData from '@petmove/domain/data/breeds.json'
 import colorsData from '@petmove/domain/data/colors.json'
+import { formatKoreanPhone, phoneDigits, KOREAN_PHONE_MAX_DIGITS } from '@petmove/domain'
 import type { DaumPostcodeResult } from '@/types/daum'
 import { BottomSheet } from './bottom-sheet'
 import { PortalCalendar, ymdLocal } from './portal-calendar'
@@ -55,14 +56,12 @@ const COLORS = colorsData as ColorItem[]
 
 // ── 마스크/포맷 헬퍼 ─────────────────────────────────────────────────────
 
-/** 숫자 11자리 → 010-1234-5678 (10자리는 3-3-4). 표시 전용. */
-export function formatPhone(digits: string): string {
-  const d = digits.replace(/\D/g, '').slice(0, 11)
-  if (d.length <= 3) return d
-  if (d.length <= 7) return `${d.slice(0, 3)}-${d.slice(3)}`
-  if (d.length <= 10) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`
-  return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`
-}
+/**
+ * 전화번호 하이픈 표기 — domain/phone.ts 단일 출처를 그대로 쓴다(표시 전용 re-export).
+ * 예전엔 여기 자체 구현이 11자리에서 잘라 **0507 안심번호(12자리)** 의 마지막 숫자가
+ * 사라졌고, 서울 9자리도 010 규칙으로 끊겼다(2026-08-24).
+ */
+export const formatPhone = formatKoreanPhone
 
 /** 숫자 → 3자리씩 공백 (마이크로칩 표시). */
 function formatChip(digits: string): string {
@@ -297,7 +296,7 @@ export function TextField({
 
   function handle(raw: string) {
     if (inputMode === 'email') onChange(raw.toLowerCase())
-    else if (mask === 'phone') onChange(raw.replace(/\D/g, '').slice(0, 11))
+    else if (mask === 'phone') onChange(phoneDigits(raw).slice(0, KOREAN_PHONE_MAX_DIGITS))
     else if (mask === 'microchip') onChange(raw.replace(/\D/g, '').slice(0, 15))
     else if (mask === 'weight') {
       // 숫자 + 소수점 1개만.

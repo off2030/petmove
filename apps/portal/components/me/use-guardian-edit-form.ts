@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import type { CaseRow } from '@petmove/domain'
+import { phoneInputError } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { updateGuardianContact, type CustomerProfileRow, type GuardianContactInput } from '@/lib/actions/profile'
 import { readForm } from '@/lib/cases/info-form'
@@ -82,9 +83,11 @@ export function useGuardianEditForm(): UseGuardianEditForm {
 
   function handleSave() {
     if (!dirty || status === 'saving') return
-    if (form.phone && !/^010\d{8}$/.test(form.phone)) {
+    // 형식 규칙은 domain/phone.ts 단일 출처 — 0507 안심번호·02 유선·'+' 국제번호도 통과.
+    const phoneErr = phoneInputError(form.phone)
+    if (phoneErr) {
       setStatus('error')
-      setError('전화번호는 010-XXXX-XXXX 형식으로 입력하세요.')
+      setError(phoneErr)
       return
     }
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {

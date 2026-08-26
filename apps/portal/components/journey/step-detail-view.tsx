@@ -22,6 +22,7 @@ import {
   rabiesIntervalMinDays,
   validateRabiesPrimeAge,
   validateCyAdvanceNoticeDate,
+  validatePtAdvanceNoticeDate,
   validateImportPermitFiledDate,
   validateSgQuarantineReservationDate,
   validateAuQuarantineReservationDate,
@@ -133,6 +134,7 @@ import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm, type RabiesProductHints } from './rabies-entry-inputs'
 import { RabiesExtraInputs, type RabiesExtraEntry } from './rabies-extra-inputs'
 import { StepAttachments } from './step-attachments'
+import { TransportPartners } from './transport-partners'
 import { TiterExtraInputs, type TiterExtraEntry } from './titer-extra-inputs'
 import { TiterInputs, type TiterForm } from './titer-inputs'
 import { VetVisitInputs } from './vet-visit-inputs'
@@ -201,7 +203,7 @@ const SIMPLE_FLIGHT_DESTINATIONS: readonly string[] = [
   // 절차는 있으나 펫무브가 대행하지 않는 목적지(2026-07-25 사용자 결정) — 신청은 보호자/
   // 현지 에이전트 몫이라 앱이 항공편 상세를 들고 있을 이유가 없다. 필요하면 첨부로 보관.
   'taiwan', 'malaysia', 'indonesia', 'uae', 'ireland', 'malta', 'israel', 'singapore',
-  'norway', 'cyprus',
+  'norway', 'cyprus', 'portugal',
   // 홍콩 — 수입 허가(Special Permit)·사전 통지 둘 다 **현지 대리인**이 하는 절차라 펫무브가
   // 대행하지 않는다(가이드: 해외 신청 불가). 항공편 상세는 운송 에이전트가 들고 있다.
   'hongkong',
@@ -1888,6 +1890,12 @@ export function StepDetailView({
       const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
       return validateCyAdvanceNoticeDate(importQuarantineDate.trim(), entry)
     }
+    // 포르투갈 도착 통보 — 통보일이 도착일 48시간(2일) 이내면 차단.
+    if (step.id === 'pt-advance-notice') {
+      const data = (caseRow?.data ?? {}) as Record<string, unknown>
+      const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
+      return validatePtAdvanceNoticeDate(importQuarantineDate.trim(), entry)
+    }
     // 몰타 사전 통지 — 차단 없음(2026-08-01). 몰타 정부가 제출 마감을 공표하지 않아
     // 구 '입국 3영업일 전' 차단은 근거가 없었다(date-rules.ts 의 삭제 주석 참고).
     // 마감이 없으므로 늦은 통지는 '불가능한 조건'이 아니다 — 알림만 담당한다.
@@ -1933,13 +1941,15 @@ export function StepDetailView({
       const reserved = (jpExport.date ?? '').trim()
       const resErr = validateJpExportReservationDate(reserved, { data, destination: null, departureDate: null })
       if (resErr) return resErr
-      // 신청일 마감 — 예약일(없으면 귀국일) −10일. 서버 updateJpExportQuarantineFields 와 동일.
+      // 신청일 마감 — 예약일(없으면 귀국일) −14일. 서버 updateJpExportQuarantineFields 와 동일.
+      // 14일: 動物検疫所 "輸出の14日前まで" (maff.go.jp/aqs, 2026-08 확인). 앵커를 예약일로
+      // 두면 공식 기준(수출일=귀국일)보다 이르거나 같아 항상 안전하다.
       const app = (jpExport.applicationDate ?? '').trim()
       if (app) {
         const returnDate = typeof data.return_date === 'string' ? data.return_date : ''
         const anchor = reserved || (returnDate.length >= 10 ? returnDate.slice(0, 10) : '')
-        if (anchor && app > addDays(anchor, -10)) {
-          return '일본 수출 검역은 최소 10일 전에 신청, 예약해야 해요.'
+        if (anchor && app > addDays(anchor, -14)) {
+          return '일본 수출 검역은 최소 14일 전에 신청, 예약해야 해요.'
         }
       }
       return null
@@ -3148,6 +3158,14 @@ export function StepDetailView({
               ))}
             </ul>
           </section>
+        )}
+
+        {/* 운송업체 안내 — 운송 예약/항공권 카드에서만, **아직 예약 전**일 때. 이 카드에서
+            할 일의 실제 순서가 '업체 정해 예약 → 출발일 입력 → 확인서 첨부'라 입력 위에 둔다.
+            예약을 마친(done) 사람에겐 쓸모없어 숨긴다 — 노출 모수가 실제 잠재 수요자로
+            좁혀져 클릭률도 더 정확해진다. 협의 전 수요 실험(노출·클릭 기록). */}
+        {isFlight && !done && (
+          <TransportPartners caseId={caseId} destination={activeDest ?? null} />
         )}
 
         {/* Inputs — 마이크로칩·광견병1·2차 step 은 인터랙티브, 그 외는 read-only 스키마 미리보기. */}

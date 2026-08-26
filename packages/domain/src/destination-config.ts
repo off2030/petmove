@@ -214,6 +214,23 @@ export interface DestinationOverride {
     docName?: string
   }
   /**
+   * 펫무브워크 **신고 탭 '수입'·'수출' 칸이 이어지는 여정 카드** — 카드 id 하나만 적는다.
+   * 상태 판정·저장 모델·필드는 전부 그 카드 선언에서 파생한다([[resolveReportBinding]]).
+   *
+   * ⛔ admin 안에 나라 분기를 다시 만들지 말 것 — 예전엔 read·write·폴백 세 벌의 손 명단이
+   *   있었고, 명단에 없는 나라(하와이)는 신고 탭 '완료'가 앱 카드에 전혀 반영되지 않았다
+   *   (2026-08-21). 선언이 없으면 그 칸은 운영자 수동값(by_dest 스코핑)으로만 남는다.
+   *
+   * 어느 카드를 걸지는 편집 판단이다 — 하와이처럼 '입국 신청'과 'CDC 신고'가 둘 다 신고인
+   * 나라가 있어 카드에서 자동으로 고를 수 없다. 그래서 프로파일에 명시한다.
+   */
+  report?: {
+    /** '수입' 칸과 이어질 카드 id (예: 'advance-notification', 'hi-import-declaration'). */
+    importStep?: string
+    /** '수출' 칸과 이어질 카드 id. 선언한 나라만 수출 칸이 뜬다(현재 일본 하나). */
+    exportStep?: string
+  }
+  /**
    * 내원·임상검진 윈도우("출국일 포함 N일 이내"의 N — 기본 10).
    * 종 제한이 필요하면 배열로(촌충국 개 전용 4일 등). `VET_VISIT_WINDOW_OVERRIDES` 의 파생원.
    */
@@ -248,6 +265,8 @@ export interface DestinationOverride {
 export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   japan: {
     keywords: ['일본', 'japan'],
+    // 신고 탭 — 수입=NACCS 사전 신고, 수출=일본 수출 검역 신청(왕복 전용 카드).
+    report: { importStep: 'advance-notification', exportStep: 'jp-export-quarantine' },
     archetype: 'jp-2dose',
     rabies: { doses: 2 },
     titer: { entryValidityMonths: 24 },
@@ -283,7 +302,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     advanceNotice: { hardDeadlineHours: 24 },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
     // 촌충약(Echinococcus, praziquantel)은 규정상 개 전용 — 고양이는 면제(EU Reg 2018/772).
-    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }, 'departure_flight_date'],
     // 임상검사 창 = 기본 10일. 예전엔 촌충 동시 내원 가정으로 개 window=4 였으나, 촌충
     // 타이밍(법정 24~120h)은 촌충 카드의 저장 차단이 담당하므로 임상검사까지 좁힐 근거가
     // 없다 — 2026-07-25 사용자 확정, 몰타·노르웨이·핀란드·영국의 같은 선언도 함께 제거.
@@ -297,7 +316,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 사전 통지 — servizz.gov.mt 포털, 입국 3영업일 전까지(영업일 기준이라 시간 필드 미지정).
     advanceNotice: {},
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
-    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }, 'departure_flight_date'],
   },
   norway: {
     keywords: ['노르웨이', 'norway'],
@@ -308,7 +327,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 사전 통지 — Mattilsynet 이메일, 입국 48시간 전까지.
     advanceNotice: { hardDeadlineHours: 48 },
     vaccines: ['rabies', 'rabies_titer', { key: 'internal_parasite', species: 'dog' }],
-    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }],
+    extraFields: ['address_overseas', { key: 'deworming_time', species: 'dog' }, 'departure_flight_date'],
   },
   finland: {
     keywords: ['핀란드', 'finland'],
@@ -330,16 +349,30 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     appSupported: true,
     // 사전 통지 — 지구 수의검역국 이메일(moa.gov.cy), 입국 48시간 전까지.
     advanceNotice: { hardDeadlineHours: 48 },
+    extraFields: ['address_overseas', 'departure_flight_date'],
+  },
+  // 포르투갈 — 절차는 표준 EU 그대로지만 **도착 48시간 전 DGAV 도착 통보(Aviso de Chegada)가
+  // 의무**라 eu 묶음에서 분리(키프로스와 같은 사유). eu 보다 먼저 매칭.
+  //   · 근거: dgav.pt "O MAIS CEDO POSSÍVEL (o máximo pelo menos 48 horas antes da chegada)"
+  //   · 보호자/위임자가 직접 보내야 하고(운송사 대행 불가) 지정 PEV 주소 외로 보내면 무효.
+  //   · 통지 없이 도착하면 검사가 지연·거부될 수 있고, 미비 시 반송까지 간다.
+  portugal: {
+    keywords: ['포르투갈', 'portugal'],
+    archetype: 'eu-family',
+    rabies: { doses: 1 },
+    titer: { entryValidityMonths: null },
+    appSupported: true,
+    advanceNotice: { hardDeadlineHours: 48 },
     extraFields: ['address_overseas'],
   },
   eu: {
     keywords: [
       '유럽연합', '프랑스', '독일', '이탈리아', '스페인', '네덜란드', '벨기에', '오스트리아',
-      '스웨덴', '덴마크', '폴란드', '체코', '포르투갈', '그리스',
+      '스웨덴', '덴마크', '폴란드', '체코', '그리스',
       '헝가리', '루마니아', '불가리아', '크로아티아', '슬로바키아',
       '슬로베니아', '리투아니아', '라트비아', '에스토니아', '룩셈부르크',
       'france', 'germany', 'italy', 'spain', 'netherlands', 'belgium', 'austria',
-      'sweden', 'denmark', 'poland', 'czech', 'portugal', 'greece',
+      'sweden', 'denmark', 'poland', 'czech', 'greece',
       'hungary', 'romania', 'bulgaria', 'croatia', 'slovakia',
       'slovenia', 'lithuania', 'latvia', 'estonia', 'luxembourg',
       'eu',
@@ -360,7 +393,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 스위스 전용 BLV 수입허가 신청서(CH) — 수입허가 카드 대상.
     importPermit: {},
     extraSection: 'switzerland',
-    extraFields: ['email', 'entry_date', 'entry_airport', 'entry_purpose', 'cropped'],
+    extraFields: ['email', 'departure_flight_date', 'entry_date', 'entry_airport', 'entry_purpose', 'cropped'],
   },
   uk: {
     keywords: ['영국', '북아일랜드', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'],
@@ -514,6 +547,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   thailand: {
     keywords: ['태국', 'thailand'],
+    // 신고 탭 수입 = 수입 허가(R.6) 신청 카드.
+    report: { importStep: 'import-permit' },
     archetype: 'sea-permit',
     // 1회 접종 + "최근 접종 12개월 이내" 관례 — 1년 유효기간만 취급(다년 백신 실무상 미인정).
     rabies: {
@@ -540,16 +575,26 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer', 'general'],
     extraSection: 'thailand',
     // 태국은 검역소·도착지 = 입국공항 (Bangkok=BKK, Phuket=HKT, Chiang Mai=CNX) 이라 entry_airport 로 통합.
-    // 표시 순서: 여권 정보 → 해외주소 → 항공편(날짜·시간·항공편명·도착공항).
+    // 표시 순서: 여권 정보 → 해외주소 → 항공편(출발일·도착일·시간·항공편명·도착공항).
+    //
+    // departure_flight_date(출발일) 는 2026-08-24 추가 — 그전엔 케이스 상세에서 departure_date
+    // **컬럼**을 그룹 맨 앞에 얹어 보여주기만 했다(case-detail 의 unshift). 화면엔 보이는데
+    // 프로파일엔 없는 줄이라 정보 요청 링크의 "{국가} 신고" 프리셋(= 추가정보 카테고리 필드
+    // 전부)에서 조용히 빠졌고, 보호자는 출발일을 물어보지도 못 한 채 제출 → 출국일이 영영
+    // 비어 신고 탭에서 케이스가 통째로 누락됐다(2026-08-24 어일용/남촉·남락·남숙 3건).
+    // 일본·하와이처럼 **진짜 추가정보 필드**로 선언하고 departure_date 컬럼과는
+    // org_auto_fill_rules 양방향 sync 로 맞춘다(20260824000001).
     extraFields: [
       'passport_number', 'passport_expiry_date', 'passport_issuer',
       'address_overseas',
-      'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
+      'departure_flight_date', 'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
     ],
     rabiesTiterForReturnOnly: true,
   },
   philippines: {
     keywords: ['필리핀', 'philippines'],
+    // 신고 탭 수입 = 수입 허가(SPSIC) 신청 카드.
+    report: { importStep: 'import-permit' },
     archetype: 'sea-permit',
     // 1회 접종 + "최근 접종 12개월 이내" 관례 — 태국과 동일(다년 백신 실무상 미인정).
     rabies: { doses: 1, oneYearVaccineOnly: true },
@@ -559,7 +604,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     extraSection: 'philippines',
     extraFields: [
       'address_overseas', 'postal_code', 'email',
-      'passport_number', 'passport_expiry_date', 'entry_airport',
+      'passport_number', 'passport_expiry_date',
+      'departure_flight_date', 'entry_airport',
     ],
     rabiesTiterForReturnOnly: true,
   },
@@ -601,10 +647,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer'],
     // 가이드: "출국 직전(항공기 탑승 전 10일 이내)에 수의사에게 임상 검사" — 기본값과 같아
     // 선언하지 않는다(getVetVisitWindowDays 기본 10).
+    // 출발일(departure_flight_date) — 태국과 같은 이유로 2026-08-24 추가. 상세 주석은 thailand 참고.
     extraFields: [
       'passport_number', 'passport_expiry_date', 'passport_issuer',
       'address_overseas',
-      'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
+      'departure_flight_date', 'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
     ],
   },
   india: {
@@ -716,6 +763,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       'overseas_phone',
       'passport_number',
       'holder_birth_date',
+      'departure_flight_date',
       'entry_date',
     ],
     rabiesTiterForReturnOnly: true,
@@ -1003,6 +1051,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   //     hawaii_extra 에 묶여 있어 'japan' 으로 바꾸면 발급 서식이 깨진다.
   hawaii: {
     keywords: ['하와이', 'hawaii'],
+    // 신고 탭 수입 = 하와이 입국 신청(AQS·HIPOP) 카드. CDC 신고(us-cdc-dog-import-form)도
+    //   같은 자리의 '신고' 지만, 하와이 주(州) 검역 신청 쪽이 신고 탭이 추적하는 절차다.
+    report: { importStep: 'hi-import-declaration' },
     archetype: 'jp-2dose',
     // 광견병 = 평생 2회(1차 + 부스터). 31일 간격·출국 31일 전·미만료는 hi.ts 가 검증.
     // 최소 연령 = hi.ts 보수 기준(생후 91일 AND 캘린더 3개월). buildRabiesCard 가 카드 문구·
@@ -1189,6 +1240,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // (Certificate number 는 후처리 수기 입력 — EQC No. 라벨이 일본 전용이라 공유하지 않음.)
     // 규정 상세·출처는 procedure-checks/tw.ts 헤더 주석.
     keywords: ['대만', 'taiwan'],
+    // 신고 탭 수입 = 수입 허가(APHIA e-permit) 신청 카드.
+    report: { importStep: 'import-permit' },
     // minAgeDays 를 두지 않는다 — 베트남 규정은 일수가 아니라 '생후 3개월(달력)'이고,
     // 판정은 카드의 earliest.monthsAfter + date-rules meetsCalendarAge 가 담당한다.
     rabies: {
@@ -1201,7 +1254,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     },
     titer: { entryValidityMonths: 12, entryWaitAfterTiter: { days: 180 } },
     vaccines: ['rabies', 'rabies_titer'],
-    extraFields: ['address_overseas', 'permit_no'],
+    extraFields: ['address_overseas', 'permit_no', 'departure_flight_date'],
     // APHIA pet e-permit — 로잔이 대행한다(2026-08-03 사용자 지정). selfApply 플래그의 유일한
     //   기능은 '맡기기 상품에서 제외'라, 대행하는 이상 붙여 둘 이유가 없어 뗀다.
     //   (여정 카드·서류 탭·발급 푸시는 이 플래그와 무관하게 종전 그대로.)
@@ -1247,10 +1300,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 가이드: "출국 직전(항공기 탑승 전 7일 이내)에 수의사에게 임상 검사" + "수출동물검역은
     // 대부분 10일 이내지만 말레이시아는 7일 이내". 태국 복제 때 지웠던 값을 되살렸다.
     vetVisitWindowDays: 7,
+    // 출발일(departure_flight_date) — 태국과 같은 이유로 2026-08-24 추가. 상세 주석은 thailand 참고.
     extraFields: [
       'passport_number', 'passport_expiry_date', 'passport_issuer',
       'address_overseas',
-      'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
+      'departure_flight_date', 'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
     ],
     rabiesTiterForReturnOnly: true,
   },
@@ -1700,7 +1754,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // ADVANCE_NOTICE_DESTINATIONS(presence 파생)에 들어가야 하므로.
     advanceNotice: { label: '사전 통지' },
     vaccines: ['rabies', 'rabies_titer'],
-    extraFields: ['address_overseas'],
+    extraFields: ['address_overseas', 'departure_flight_date'],
   },
   // ── 남아프리카공화국 (DALRRD — Department of Agriculture, Land Reform & Rural Development) ──
   // 1차 출처: 남아공 정부 동물 수입 안내(gov.za) · 농업부 Animal Health 신청서·수수료 문서 ·
@@ -2337,6 +2391,37 @@ export function getHardcodedDestinationsAsCustom(): CustomDestination[] {
 }
 
 /**
+ * 이 custom 여행지가 코드 하드코딩 정의와 **완전히 같은가** — 조직 설정 저장 시
+ * '손대지 않은 여행지'를 걸러내는 데 쓴다.
+ *
+ * ⛔ WHY (2026-08-26): 설정 → 여행지별 표시정보는 코드 여행지 + custom 을 한 목록으로 보여주고
+ *   저장 때 **목록 전체**를 쓴다. 그래서 여행지 하나만 고쳐도 40개 전부가 조직 설정에 얼어붙었고,
+ *   getEffectiveExtraFieldEntries 는 custom 이 있으면 코드를 통째로 대체하므로 그 뒤로 코드에
+ *   추가된 필드가 그 조직에 **영영 닿지 않았다**.
+ *   실제 피해: 2026-08-24 에 신고국 14개 추가정보로 승격한 '출발일'(departure_flight_date)이
+ *   13개국에서 통째로 묻혔다. 태국·말레이시아·인도네시아는 같은 커밋이 케이스 상세의 화면 전용
+ *   줄(unshift)까지 걷어냈던 터라 **입력칸이 아예 사라졌고**, 링크로 출발일을 못 받아
+ *   cases.departure_date 가 비어 신고 탭에서 케이스가 누락됐다(홍소영/토비).
+ *
+ *   손대지 않은 항목을 저장하지 않으면 그 여행지는 계속 코드 프로파일을 따라간다.
+ *   실제로 커스터마이즈한 여행지만 스냅샷으로 남고, 거기서는 완전 대체가 그대로 유지된다
+ *   (사용자가 일부러 뺀 항목이 코드 때문에 되살아나면 안 되므로).
+ */
+export function isSameAsHardcodedDestination(custom: CustomDestination): boolean {
+  const code = getHardcodedDestinationsAsCustom().find((h) => h.id === custom.id)
+  if (!code) return false // 코드에 없는 순수 커스텀 여행지 — 항상 보존
+  const norm = (d: CustomDestination) => JSON.stringify({
+    name: d.name,
+    keywords: d.keywords,
+    // 표시 순서도 사용자가 바꿀 수 있으므로 순서까지 그대로 비교한다.
+    vaccines: d.vaccines.map((v) => ({ key: v.key, species: v.species ?? null })),
+    extraFields: (d.extraFields ?? []).map((f) => ({ key: f.key, species: f.species ?? null })),
+    extraSection: d.extraSection ?? null,
+  })
+  return norm(custom) === norm(code)
+}
+
+/**
  * 케이스에 적용할 추가정보 extra fields entries 반환 (커스텀 우선, 폴백 하드코딩).
  */
 export function getEffectiveExtraFieldEntries(
@@ -2347,6 +2432,29 @@ export function getEffectiveExtraFieldEntries(
   if (custom) return custom.extraFields ?? []
   const override = getDestinationOverride(destination)
   return (override?.extraFields ?? []).map((k) => (typeof k === 'string' ? { key: k } : k))
+}
+
+/**
+ * 이 목적지가 **추가정보 '출발일'(`departure_flight_date`)** 을 쓰는가 — 프로파일 파생.
+ *
+ * 쓰는 목적지는 `departure_flight_date` 와 `cases.departure_date` 컬럼이 org_auto_fill_rules
+ * 로 양방향 sync 된다. 그래서 저장 측(포털 항공권 카드 등)은 출국일을 쓸 때 이 키도 같이
+ * 맞춰 줘야 한다 — 안 맞추면 지운 출국일을 stale 한 출발일이 sync 로 되살린다.
+ *
+ * ⛔ 나라 이름 하드코딩(`=== 'japan'`) 을 다시 만들지 말 것 — 목적지가 늘 때마다 저장 측을
+ *   같이 고쳐야 해서 하와이(2026-08-18)·태국(2026-08-24)에서 같은 사고가 반복됐다.
+ *
+ * ⚠️ 이 함수는 **코드 프로파일만** 본다(조직 설정 override 미반영). 포털(고객 앱)에서 불려
+ *   org 컨텍스트가 없기 때문이다. 손대지 않은 여행지는 조직 설정에 저장되지 않으므로
+ *   (isSameAsHardcodedDestination) 코드가 곧 실효 정의라 일치하지만, 운영자가 그 여행지를
+ *   실제로 커스터마이즈해 이 필드를 빼면 표시 측과 어긋난다. 그때는 이 함수에 config 를
+ *   넘기도록 확장할 것 — 지금 미리 하지 않는 이유는 포털까지 org 설정을 끌고 가야 해서다.
+ */
+export function usesDepartureFlightDate(destination: string | null | undefined): boolean {
+  const override = getDestinationOverride(destination)
+  return (override?.extraFields ?? []).some((k) =>
+    (typeof k === 'string' ? k : k.key) === 'departure_flight_date',
+  )
 }
 
 /** 한 extra-field entry 가 현재 케이스 종에 적용되는지. */

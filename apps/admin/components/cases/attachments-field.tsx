@@ -9,7 +9,7 @@ import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
 import { createClient } from '@supabase/supabase-js'
 import { useSectionEditMode } from './section-edit-mode-context'
-import { signAttachmentUrls } from '@/lib/actions/attachment-urls'
+import { useSignedAttachmentUrls } from '@/lib/use-signed-attachment-urls'
 
 interface Attachment {
   name: string
@@ -50,8 +50,17 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
 
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // 첨부파일 signed URL — 버킷이 private 이라 발급이 필요하고, TTL(1시간)이 지나기 전에
+  // 훅이 알아서 재발급한다(useSignedAttachmentUrls).
+  const attachmentFiles: { path: string; name: string }[] = []
+  for (const att of attachments) {
+    const p = derivePath(att)
+    if (!p) continue
+    attachmentFiles.push({ path: p, name: att.name })
+  }
+  const signedUrls = useSignedAttachmentUrls(caseId, attachmentFiles)
 
   useImperativeHandle(ref, () => ({
     triggerUpload: () => { if (hydrated) fileRef.current?.click() },
@@ -59,26 +68,6 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
   }), [uploading, hydrated])
 
   useEffect(() => { setError(null) }, [caseId])
-
-  // 첨부파일 path → signed URL 매핑 갱신. private 버킷이라 매번 발급 필요.
-  useEffect(() => {
-    const paths: string[] = []
-    // path → 표시명: 다운로드 시 storage safeName 대신 업로드명을 쓰도록.
-    const names: Record<string, string> = {}
-    for (const att of attachments) {
-      const p = derivePath(att)
-      if (!p) continue
-      paths.push(p)
-      names[p] = att.name
-    }
-    if (paths.length === 0) { setSignedUrls({}); return }
-    let cancelled = false
-    signAttachmentUrls(paths, names).then((map) => {
-      if (!cancelled) setSignedUrls(map)
-    }).catch(() => {})
-    return () => { cancelled = true }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseId, attachments.length])
 
   async function uploadFiles(files: File[]) {
     // 경량 행 위에서 저장 금지 — 빈 배열 기반 재구성이 서버 attachments 를 덮어쓴다.

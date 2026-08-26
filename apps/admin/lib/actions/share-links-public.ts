@@ -21,7 +21,29 @@
  *  회귀. 입력 정보는 cases 테이블에 직접 반영되므로 펫무브 앱 연동은 DB 로 그대로 유지.
  */
 
+import * as Sentry from '@sentry/nextjs'
 import { reportActionError } from './_report-error'
+
+/**
+ * 고객(보호자)에게 보여줄 실패 문구.
+ *
+ * 이 파일의 네 액션은 **로그인하지 않은 보호자**가 여는 /share 폼이 호출한다. 그동안
+ * Postgres·Storage 원문(`error.message`)이나 예외 메시지를 그대로 돌려줘서, 화면에
+ * "invalid input syntax for type date" 같은 **영어 문장**이 떴다 — 보호자는 무슨 뜻인지도,
+ * 무엇을 고쳐야 하는지도 알 수 없다(2026-08-18 일본 고객 신고).
+ *
+ * 원문은 Sentry 로만 보내고 화면에는 한국어 + 코드만 남긴다. 코드는 문의가 왔을 때
+ * 어느 지점인지 바로 찾기 위한 것.
+ */
+function customerError(raw: unknown, code: string, hint?: string): string {
+  const detail = raw instanceof Error ? raw.message : typeof raw === 'string' ? raw : String(raw)
+  Sentry.captureMessage(`share ${code}`, {
+    level: 'warning',
+    tags: { feature: 'share-form', code },
+    extra: { detail },
+  })
+  return `${hint ?? '처리 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.'} 계속되면 담당자에게 이 코드를 알려주세요. (${code})`
+}
 import { randomUUID } from 'node:crypto'
 import { createAdminClient } from '@petmove/auth'
 import {
@@ -31,8 +53,11 @@ import {
   shareLinkStatus,
   SHARE_COLUMN_FIELDS,
   SHARE_VACCINE_GROUPS,
+  splitCustomerNameEn,
+  composeCustomerNameEn,
   loadDestinationOverridesByOrg,
   getEffectiveExtraFieldEntries,
+  phoneInputError,
   isDestinationScopedKey,
   parseDestinations,
   resolveShareScopeToken,
@@ -135,7 +160,7 @@ function toShareFieldSpec(
         type: meta.type,
         current_value: useByDest && byDestVal !== undefined
           ? byDestVal
-          : fallback((caseRow as unknown as Record<string, unknown>)[d.key]),
+          : fallback(readShareColumnValue(d.key, caseRow, data)),
       }
     }
     case 'data': {
@@ -175,6 +200,27 @@ function toShareFieldSpec(
       }
     }
   }
+}
+
+/**
+ * 컬럼 프리필 값 — 기본은 케이스 컬럼 그대로.
+ *
+ * customer_name_en 만 예외: 진짜 출처는 data 분리 필드(customer_last_name_en /
+ * customer_first_name_en)라, 컬럼을 그대로 보여주면 케이스 상세·PDF 와 다른 이름이
+ * 보호자에게 프리필된다. 분리 필드가 있으면 그걸 합쳐 보여주고, 없을 때만 legacy 컬럼.
+ */
+function readShareColumnValue(
+  key: string,
+  caseRow: CaseRow,
+  data: Record<string, unknown>,
+): unknown {
+  const raw = (caseRow as unknown as Record<string, unknown>)[key]
+  if (key !== 'customer_name_en') return raw
+  const composed = composeCustomerNameEn(
+    data.customer_last_name_en as string | undefined,
+    data.customer_first_name_en as string | undefined,
+  )
+  return composed || raw
 }
 
 /**
@@ -348,7 +394,7 @@ export async function getShareLinkByToken(
       .select('*')
       .eq('token', token)
       .maybeSingle()
-    if (lErr) return { ok: false, error: lErr.message }
+    if (lErr) return { ok: false, error: customerError(lErr, 'SL-01', '링크 정보를 불러오지 못했어요.') }
     if (!link) return { ok: false, error: '유효하지 않은 링크입니다' }
 
     const row = link as ShareLinkRow
@@ -401,7 +447,7 @@ export async function getShareLinkByToken(
       },
     }
   } catch (e) {
-    return { ok: false, error: reportActionError(e, 'share-links-public.getShareLinkByToken') }
+    return { ok: false, error: customerError(e, 'SL-06', '링크를 여는 중 문제가 발생했어요.') }
   }
 }
 
@@ -411,6 +457,21 @@ export interface SubmitShareLinkInput {
   values: Record<string, unknown>
   submitterName?: string | null
   submitterNote?: string | null
+}
+
+/**
+ * 제출 원문(submitted_values) 저장 상한. 클라이언트가 보낸 임의 payload 라 무제한으로
+ * 받아 적지 않는다. 초과하면 원문만 생략하고 제출 자체는 정상 진행 — 보존은 사후 추적용
+ * 편의지, 고객의 제출을 막을 만한 사유가 아니다.
+ */
+const SUBMITTED_VALUES_MAX_BYTES = 128 * 1024
+
+/** 케이스에 실제로 쓰이는 값인지 — null·공백 문자열·빈 배열은 제출 로직이 전부 건너뛴다. */
+function hasMeaningfulValue(v: unknown): boolean {
+  if (v === null || v === undefined) return false
+  if (typeof v === 'string') return v.trim() !== ''
+  if (Array.isArray(v)) return v.length > 0
+  return true
 }
 
 export async function submitShareLink(
@@ -424,7 +485,7 @@ export async function submitShareLink(
       .select('*')
       .eq('token', input.token)
       .maybeSingle()
-    if (lErr) return { ok: false, error: lErr.message }
+    if (lErr) return { ok: false, error: customerError(lErr, 'SL-02', '링크 정보를 불러오지 못했어요.') }
     if (!link) return { ok: false, error: '유효하지 않은 링크입니다' }
     const row = link as ShareLinkRow
     const status = shareLinkStatus(row)
@@ -480,10 +541,29 @@ export async function submitShareLink(
       if (value === null) continue
       if (typeof value === 'string' && value.trim() === '') continue
       if (Array.isArray(value) && value.length === 0) continue
+      // 전화번호는 **지정 형식만** 받는다 — 폼 검증만 두면 우회 제출로 뚫린다(anon 액션).
+      // 관리자 화면(펫무브워크)은 하이브리드라 자유 입력이 되지만, 링크로 들어오는 값은 막는다.
+      if (key === 'phone') {
+        const phoneErr = phoneInputError(typeof value === 'string' ? value : '')
+        if (phoneErr) return { ok: false, error: phoneErr }
+      }
       if (SHARE_COLUMN_FIELDS.has(key)) {
         colUpdate[key] = value
       } else {
         dataUpdate[key] = value
+      }
+    }
+
+    // 영문 성함 — 합본 컬럼만 갱신하면 아무 데도 반영되지 않는다. 케이스 상세·PDF(readSource)
+    // 는 data 분리 필드를 먼저 읽고 컬럼은 폴백이라, 분리 필드에 옛 값이 남아 있으면 보호자가
+    // 링크로 고친 이름이 조용히 무시됐다(2026-08-14 김미예/호두 — 컬럼 "KIM, MI YE" vs
+    // 분리 "MINJIN KIM"). 둘 다 같은 값으로 쓴다. 컬럼도 쉼표 없는 정규형으로 정리.
+    if (typeof colUpdate.customer_name_en === 'string') {
+      const { last, first } = splitCustomerNameEn(colUpdate.customer_name_en)
+      if (last || first) {
+        dataUpdate.customer_last_name_en = last || null
+        dataUpdate.customer_first_name_en = first || null
+        colUpdate.customer_name_en = composeCustomerNameEn(last, first)
       }
     }
 
@@ -562,6 +642,40 @@ export async function submitShareLink(
     const scope = resolveShareScopeToken(caseDestination, row.destination_scope)
     const useByDest = !!scope
 
+    // 완전히 빈 제출은 반려 — 링크를 '제출됨'으로 태우지 않는다.
+    //
+    // 폼은 빈 항목을 한 번 경고한 뒤 '그대로 보내기'로 빈 제출을 허용하고, 여기서는 빈 값이
+    // 전부 걸러지므로 케이스에 아무것도 쓰이지 않는다. 그런데도 예전에는 ok 를 돌려줘
+    // 링크가 소진되고 담당자에게 "정보를 입력했어요" 알림까지 갔다 — 고객은 보냈다고 믿고
+    // 담당자는 바뀐 게 없어 서로 어긋났다(2026-08-18 배유/추어). 링크를 살려둬야 고객이
+    // 같은 URL 로 다시 채워 보낼 수 있다.
+    //
+    // 파일만 첨부하고 값은 비우는 제출은 정상이다. 첨부는 값 제출보다 먼저 별도 액션
+    // (recordShareUploadedFiles)으로 이미 케이스에 기록되므로, 그 흔적이 있으면 통과시킨다.
+    // 같은 케이스에 동시 활성 링크가 여러 개면 다른 링크의 첨부를 이 링크 것으로 볼 수
+    // 있는데, 그 방향의 오판은 '빈 제출을 통과시킴' 이라 값을 잃지 않는다.
+    const submittedFieldCount =
+      [...Object.values(colUpdate), ...Object.values(dataUpdate)].filter(hasMeaningfulValue).length +
+      vaccineSubmissions.reduce((n, v) => n + v.entries.length, 0)
+    if (submittedFieldCount === 0) {
+      const linkCreatedMs = new Date(row.created_at).getTime()
+      const docs = Array.isArray(current.documents) ? (current.documents as unknown[]) : []
+      const hasLinkUpload = docs.some((d) => {
+        if (!d || typeof d !== 'object' || Array.isArray(d)) return false
+        const doc = d as { stepId?: unknown; uploadedAt?: unknown }
+        if (doc.stepId !== 'share-submission') return false
+        if (typeof doc.uploadedAt !== 'string') return false
+        const at = new Date(doc.uploadedAt).getTime()
+        return Number.isFinite(at) && at >= linkCreatedMs
+      })
+      if (!hasLinkUpload) {
+        return {
+          ok: false,
+          error: '입력된 내용이 없어요. 항목을 채우거나 파일을 첨부한 뒤 다시 보내주세요.',
+        }
+      }
+    }
+
     // colUpdate 처리 — by_dest 모드면 departure_date 같은 scoped 컬럼은 by_dest 로.
     const colNonScoped: Record<string, unknown> = {}
     let merged: Record<string, unknown> = { ...current }
@@ -634,6 +748,25 @@ export async function submitShareLink(
       updates.data = merged
     }
 
+    // 제출 원문 — 화이트리스트 필터 **전** 값 그대로 남긴다. 필터에 걸려 반영되지 않은
+    // 입력이야말로 추적 대상이라, 걸러낸 뒤를 저장하면 목적을 잃는다. 이게 없던 동안에는
+    // 케이스에 반영되지 않은 제출에 대해 "무엇을 보냈는지" 확인할 방법이 아예 없었다
+    // (case_history 는 반영된 차이만, 폼의 localStorage 임시저장은 제출 성공 시 삭제).
+    const submittedValues = (() => {
+      try {
+        const json = JSON.stringify(input.values ?? {})
+        if (Buffer.byteLength(json, 'utf8') <= SUBMITTED_VALUES_MAX_BYTES) return input.values
+        Sentry.captureMessage('share submitted_values too large', {
+          level: 'warning',
+          tags: { feature: 'share-form' },
+          extra: { bytes: Buffer.byteLength(json, 'utf8'), keys: Object.keys(input.values ?? {}).length },
+        })
+        return null
+      } catch {
+        return null
+      }
+    })()
+
     // Atomic claim
     const submittedAt = new Date().toISOString()
     const { data: claimed, error: markErr } = await admin
@@ -642,12 +775,13 @@ export async function submitShareLink(
         submitted_at: submittedAt,
         submitter_name: input.submitterName?.trim() || null,
         submitter_note: input.submitterNote?.trim() || null,
+        submitted_values: submittedValues,
       })
       .eq('id', row.id)
       .is('submitted_at', null)
       .select('id')
       .maybeSingle()
-    if (markErr) return { ok: false, error: markErr.message }
+    if (markErr) return { ok: false, error: customerError(markErr, 'SL-03', '제출 상태를 저장하지 못했어요.') }
     if (!claimed) return { ok: false, error: '이미 제출된 링크입니다' }
 
     if (Object.keys(updates).length > 0) {
@@ -689,6 +823,8 @@ export async function submitShareLink(
         .update(updates)
         .eq('id', row.case_id)
       if (upErr) {
+        // submitted_values 는 되돌리지 않는다 — 저장에 실패한 제출이야말로 "무엇을 보냈는지"
+        // 를 알아야 하는 경우다. 링크는 다시 active 가 되고, 재제출 시 새 원문으로 덮인다.
         await admin
           .from('case_share_links')
           .update({
@@ -701,7 +837,7 @@ export async function submitShareLink(
         if (upErr.message.includes('cases_microchip_global_unique')) {
           return { ok: false, error: '이미 등록된 마이크로칩 번호입니다' }
         }
-        return { ok: false, error: upErr.message }
+        return { ok: false, error: customerError(upErr, 'SL-04', '입력하신 내용을 저장하지 못했어요.') }
       }
 
       // best-effort — 이력 적재 실패가 제출을 되돌리지는 않는다.
@@ -713,7 +849,7 @@ export async function submitShareLink(
 
     return { ok: true, value: null }
   } catch (e) {
-    return { ok: false, error: reportActionError(e, 'share-links-public.submitShareLink') }
+    return { ok: false, error: customerError(e, 'SL-07', '제출하지 못했어요.') }
   }
 }
 
@@ -833,7 +969,7 @@ export async function createShareUploadTickets(
     }
     return { ok: true, value: { tickets } }
   } catch (e) {
-    return { ok: false, error: reportActionError(e, 'share-links-public.createShareUploadTickets') }
+    return { ok: false, error: customerError(e, 'SL-08', '파일 업로드를 준비하지 못했어요.') }
   }
 }
 
@@ -913,9 +1049,9 @@ export async function recordShareUploadedFiles(
       notes: [...existingNotes, ...newNotes],
     }
     const { error } = await admin.from('cases').update({ data: nextData }).eq('id', row.case_id)
-    if (error) return { ok: false, error: error.message }
+    if (error) return { ok: false, error: customerError(error, 'SL-05', '첨부 파일 정보를 저장하지 못했어요.') }
     return { ok: true, value: { count: uploaded.length } }
   } catch (e) {
-    return { ok: false, error: reportActionError(e, 'share-links-public.recordShareUploadedFiles') }
+    return { ok: false, error: customerError(e, 'SL-09', '첨부 파일을 저장하지 못했어요.') }
   }
 }

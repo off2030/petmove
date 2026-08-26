@@ -19,6 +19,12 @@ export interface ShareLinkRow {
   submitted_at: string | null
   submitter_name: string | null
   submitter_note: string | null
+  /**
+   * 보호자가 제출한 원문 payload(화이트리스트 필터 **전**). 필터에 걸려 케이스에 반영되지
+   * 않은 입력까지 남기는 게 목적이라, 걸러낸 뒤 값을 저장하면 의미가 없다.
+   * 이 컬럼 도입(2026-08-18) 이전 제출 행은 null.
+   */
+  submitted_values: Record<string, unknown> | null
   revoked_at: string | null
 }
 
@@ -220,6 +226,40 @@ export const SHARE_COLUMN_FIELDS = new Set([
   'destination',
   'departure_date',
 ])
+
+/**
+ * 영문 성함 — 공유 폼의 합본 문자열 ↔ 분리 저장(data.customer_last_name_en /
+ * customer_first_name_en) 변환.
+ *
+ * 진짜 출처(source of truth)는 분리 저장 쪽이다. 케이스 상세·PDF(readSource)가 분리 필드를
+ * 먼저 읽고 컬럼 customer_name_en 은 폴백으로만 쓴다. 공유 폼은 UI 가 성/이름 두 칸이라
+ * 합본 컬럼 키(customer_name_en)로 오가므로, 여기서 양방향 변환을 한 곳에 모은다.
+ * (분리 없이 컬럼만 갱신하던 시절엔 보호자가 링크로 고친 영문 이름이 화면·PDF 어디에도
+ * 반영되지 않았다 — 2026-08-14 김미예/호두.)
+ *
+ * 합본 순서는 폼 입력 순서와 같은 "성 이름"(Last First). "KIM, MI YE" 처럼 쉼표로 구분된
+ * 여권 표기도 받아들인다.
+ */
+export function splitCustomerNameEn(
+  combined: string | null | undefined,
+): { last: string; first: string } {
+  const s = (combined ?? '').trim()
+  if (!s) return { last: '', first: '' }
+  const comma = s.indexOf(',')
+  if (comma >= 0) {
+    return { last: s.slice(0, comma).trim(), first: s.slice(comma + 1).trim() }
+  }
+  const parts = s.split(/\s+/).filter(Boolean)
+  return { last: parts[0] ?? '', first: parts.slice(1).join(' ') }
+}
+
+/** 분리 저장 → 공유 폼 합본 문자열 ("성 이름"). */
+export function composeCustomerNameEn(
+  last: string | null | undefined,
+  first: string | null | undefined,
+): string {
+  return [(last ?? '').trim(), (first ?? '').trim()].filter(Boolean).join(' ')
+}
 
 export interface ShareColumnFieldMeta {
   key: string

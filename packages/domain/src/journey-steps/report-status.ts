@@ -2,84 +2,22 @@ import type { CaseRow } from '../types'
 import { resolveStepDateFields } from './dated-steps'
 
 /**
- * 일본 신고 진행 상태 derive — 펫무브워크 신고 탭과 펫무브 사전 신고·일본 수출검역 step 이
- * 같이 사용. 옛 운영자 수동값(stored)이 있으면 그대로 우선, 그 외에는 portal data 시그널.
+ * 신고·신청형 절차의 진행 상태 derive — 펫무브워크 신고 탭과 펫무브 카드가 같이 쓰는 단일 출처.
  *
  * 분리 사유: 옛 코드는 stored 값(`import_import_status` / `import_export_status`)만 박았고,
- * 새 액션(setAdvanceNotificationReportStatus 등)은 derive 시그널(advance_notification_date 등)
- * 만 박은 채 stored 를 클리어한다. 두 표면이 같은 case 를 다른 상태로 보지 않도록 한곳에 합친다.
+ * 새 액션은 derive 시그널(advance_notification_date 등)만 박은 채 stored 를 클리어했다.
+ * 두 표면이 같은 case 를 다른 상태로 보지 않도록 한곳에 합친다.
+ *
+ * ⚠️ **legacy stored 는 이제 여기서 읽지 않는다**(2026-08-21). 신고 탭이 이어질 카드를
+ * 목적지 프로파일(`report.importStep`/`exportStep`)에 선언하는 구조로 바뀌면서, 카드가
+ * 연결된 목적지의 진행 상태는 **카드 시그널 하나만**이 출처다. 남아 있던 42건의 stored 는
+ * `scripts/migrate-report-status.mjs` 로 카드 시그널로 옮겼다. 카드가 연결되지 않은 목적지
+ * (미국·인도네시아 등)만 stored 를 계속 쓰고, 그 값은 이제 by_dest 스코핑된다.
+ * ⛔ 여기에 stored 폴백을 되살리지 말 것 — 그게 "관리자에선 완료인데 앱은 미완료" 의 원인이었다.
  */
 
 export type JpReportStatus = 'not_started' | 'in_progress' | 'done'
 
-function hasAdvanceAttachment(data: Record<string, unknown>): boolean {
-  const docs = Array.isArray(data.documents) ? data.documents : []
-  return docs.some(
-    (d) =>
-      !!d &&
-      typeof d === 'object' &&
-      (d as Record<string, unknown>).stepId === 'advance-notification',
-  )
-}
-
-/**
- * 사전 신고(NACCS) 진행 상태. 일본 케이스에만 의미 — 호출 측이 destination 분기.
- *
- *  - stored `import_import_status`: legacy 수동값. 'in_progress'/'done'/'not_started' 그대로.
- *    'na' 같은 admin-only 값은 portal 입장에선 미진행으로 묶는다.
- *  - 첨부 = 'done'
- *  - 신청일 입력 + `advance_notification_approval_skipped` = 'done' (신청일 없으면 skip 무효)
- *  - `advance_notification_admin_demoted_at` OR `advance_notification_date` 입력 = 'in_progress'
- *  - 그 외 = 'not_started'
- */
-export function deriveAdvanceNotificationStatus(caseRow: CaseRow): JpReportStatus {
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const stored = data.import_import_status
-  if (stored != null && String(stored) !== '') {
-    const v = String(stored)
-    if (v === 'in_progress' || v === 'done' || v === 'not_started') return v
-    return 'not_started'
-  }
-  if (hasAdvanceAttachment(data)) return 'done'
-  const dt =
-    typeof data.advance_notification_date === 'string' ? data.advance_notification_date : ''
-  // skip(첨부 없이 완료 처리)은 신청일이 있을 때만 유효 — 신청일을 지우면 완료 처리도 해제된다.
-  if (data.advance_notification_approval_skipped === true && dt.length >= 10) return 'done'
-  if (typeof data.advance_notification_admin_demoted_at === 'string') return 'in_progress'
-  if (dt.length >= 10) return 'in_progress'
-  return 'not_started'
-}
-
-/**
- * 사전 신고가 '진행 중'으로 확인됐는지 — 신청일이 도래(≤오늘)만 한 상태(=예정)와 구분한다.
- * 보호자가 portal 에서 '진행 중' 버튼을 눌렀거나(advance_notification_in_progress), 운영자가
- * 진행 중으로 표시(admin demote / stored 'in_progress')한 경우 = 확인됨. 신청일 도래만으론 부족
- * (검역 5단계의 '예정일 지나도 자동완료 X' 와 같은 명시적 확인 게이트 — design feedback_date_based_completion).
- * derive(in_progress)는 그대로 두고(=admin·충돌검출 영향 X), 이 ack 가 portal '진행 중' 톤만 게이트한다.
- */
-export function isAdvanceNotificationInProgressAck(caseRow: CaseRow): boolean {
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
-  return (
-    data.advance_notification_in_progress === true ||
-    typeof data.advance_notification_admin_demoted_at === 'string' ||
-    data.import_import_status === 'in_progress'
-  )
-}
-
-/**
- * 일본 수출 동물검역 진행 상태. 일본 + 왕복 케이스에서만 의미.
- *
- *  - stored `import_export_status`: legacy 수동값. 처리 동일.
- *  - 신청일 입력 + `jp_export_quarantine_reservation_skipped` = 'done'
- *    (신청일 없으면 skip 무효. portal·admin 의 '완료' 액션이 이 플래그를 set — 단일 done 경로)
- *  - `jp_export_quarantine_admin_demoted_at` OR 신청일(application_date) 입력 = 'in_progress'
- *  - 그 외 = 'not_started'
- *
- * `jp_export_quarantine_confirmed` 플래그는 옛 모델(예약일·시간 입력 시 자동 done)의 잔재.
- * 새 모델에선 완료는 명시적 '완료' 액션 단일 경로만 인정한다 — confirmed 는 derive 에
- * 영향 X(존재해도 단순 데이터). 옛 케이스가 confirmed=true 만 있다면 이제 'in_progress'
- * 로 보이며, 보호자가 '완료' 버튼을 한 번 더 누르면 done 으로 정리된다.
- */
 /**
  * 신청 → 발급 2단계(신청일 입력=진행 중, 첨부·완료 액션=완료) 모델의 범용 spec.
  * 수입 허가(import-permit)가 원형이고, 싱가포르 계류장 예약·강아지 라이선스처럼 "신청하고
@@ -91,6 +29,14 @@ export function isAdvanceNotificationInProgressAck(caseRow: CaseRow): boolean {
  *  - attachStepId  : 첨부가 이 step 에 달렸는지 판정할 stepId
  *  - permitNoField : (선택) 번호 입력 = 완료로 보는 필드 (수입 허가 permit_no 전용)
  *  - legacyFlag    : (선택) 옛 manual-flag(journey_flags[legacyFlag]) 하위 호환
+ *  - demotedField  : (선택) 운영자가 완료 → 진행중으로 내린 시각. 완료(skip)를 지우면서 이
+ *                    타임스탬프를 찍는다. 일본 사전신고·수출검역이 이 자리를 쓴다.
+ *  - legacyStoredKey: (선택) **옛 운영자 수동값**(신고 탭 드롭다운을 손으로 바꾸던 시절의
+ *                    `import_import_status` 등). 카드 시그널 없이 이 값만 있는 옛 케이스가
+ *                    완료 표시를 잃지 않도록 **바닥(floor)** 으로만 쓴다 — 카드가 더 진행된
+ *                    상태면 카드가 이긴다. ⛔ '수동값이 우선' 으로 되돌리지 말 것: 그러면 앱이
+ *                    진행해도 관리자 화면이 옛 값에 붙들려 두 화면이 어긋난다.
+ *                    새 저장은 항상 카드 시그널로만 하고 이 키를 지운다([[setReportSlotStatus]]).
  */
 export type ApplicationStepSpec = {
   dateField: string
@@ -99,9 +45,42 @@ export type ApplicationStepSpec = {
   attachStepId: string
   permitNoField?: string
   legacyFlag?: string
+  demotedField?: string
+  legacyStoredKey?: string
   // (선택) 신청일과 함께 입력받는 부가 예약일(계류장 예약 날짜 등) — 정보성. 완료 판정엔
   // 영향 없다(일본 수출검역의 예약일과 동일). deriveApplicationStatus 는 이 필드를 보지 않는다.
   reservationField?: string
+}
+
+/**
+ * 일본 사전 신고(NACCS) — 신청 → 허가서 2단계. 수입 허가와 같은 모델이라 같은 spec 을 쓴다
+ * (2026-08-21 통합. 예전엔 deriveAdvanceNotificationStatus 가 같은 판정을 손으로 한 번 더
+ * 적고 있었고, 그 사본만 legacy stored 를 읽어 admin·portal 이 어긋났다).
+ */
+export const ADVANCE_NOTIFICATION_APP_SPEC: ApplicationStepSpec = {
+  dateField: 'advance_notification_date',
+  skipFlag: 'advance_notification_approval_skipped',
+  inProgressFlag: 'advance_notification_in_progress',
+  attachStepId: 'advance-notification',
+  demotedField: 'advance_notification_admin_demoted_at',
+  legacyStoredKey: 'import_import_status',
+}
+
+/**
+ * 일본 수출 검역 신청 — 위와 같은 모델. 예약일·시간은 '희망' 데이터라 완료 판정에 영향 없다
+ * (reservationField 는 정보성 표기용). 이 카드는 첨부를 받지 않아 attachStepId 는 무해한 자리.
+ *
+ * `jp_export_quarantine_confirmed` 는 옛 모델(예약일·시간 입력 시 자동 done)의 잔재로 derive
+ * 에 영향이 없다 — 완료는 skip 플래그 단일 경로.
+ */
+export const JP_EXPORT_QUARANTINE_APP_SPEC: ApplicationStepSpec = {
+  dateField: 'jp_export_quarantine_application_date',
+  skipFlag: 'jp_export_quarantine_reservation_skipped',
+  inProgressFlag: 'jp_export_quarantine_in_progress',
+  attachStepId: 'jp-export-quarantine',
+  demotedField: 'jp_export_quarantine_admin_demoted_at',
+  legacyStoredKey: 'import_export_status',
+  reservationField: 'jp_export_quarantine_date',
 }
 
 export const IMPORT_PERMIT_APP_SPEC: ApplicationStepSpec = {
@@ -150,6 +129,38 @@ export function deriveApplicationStatus(
   spec: ApplicationStepSpec,
 ): JpReportStatus {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const floor = spec.legacyStoredKey ? readLegacyStatusFloor(data[spec.legacyStoredKey]) : null
+  return maxStatus(floor, deriveApplicationSignals(data, caseRow, spec))
+}
+
+const STATUS_RANK: Record<JpReportStatus, number> = {
+  not_started: 0,
+  in_progress: 1,
+  done: 2,
+}
+
+/** 두 상태 중 더 진행된 쪽. 옛 수동값이 카드 진행을 **가리지 못하게** 하는 장치. */
+export function maxStatus(
+  a: JpReportStatus | null,
+  b: JpReportStatus | null,
+): JpReportStatus {
+  const x = a ?? 'not_started'
+  const y = b ?? 'not_started'
+  return STATUS_RANK[x] >= STATUS_RANK[y] ? x : y
+}
+
+/** 옛 수동값 문자열 → 상태. 'na' 같은 admin 전용 표기는 바닥 없음(null). */
+export function readLegacyStatusFloor(stored: unknown): JpReportStatus | null {
+  if (stored == null || String(stored) === '') return null
+  const v = String(stored)
+  return v === 'in_progress' || v === 'done' || v === 'not_started' ? v : null
+}
+
+function deriveApplicationSignals(
+  data: Record<string, unknown>,
+  caseRow: CaseRow,
+  spec: ApplicationStepSpec,
+): JpReportStatus {
   const docs = Array.isArray(data.documents) ? data.documents : []
   const hasAttachment = docs.some(
     (d) =>
@@ -184,8 +195,21 @@ export function deriveApplicationStatus(
       return 'done'
     }
   }
+  // 운영자가 완료 → 진행중으로 내린 흔적. 완료 조건이 모두 풀린 뒤에 보므로 done 을 덮지 않는다
+  // (첨부·허가번호가 남아 있으면 그쪽이 이겨 'done' — 신고 탭 confirm 문구가 그걸 안내한다).
+  if (spec.demotedField && typeof data[spec.demotedField] === 'string') return 'in_progress'
   if (filed.length >= 10) return 'in_progress'
   return 'not_started'
+}
+
+/** 사전 신고(NACCS) 진행 상태 — 범용 derive 의 wrapper. 일본 케이스에만 의미. */
+export function deriveAdvanceNotificationStatus(caseRow: CaseRow): JpReportStatus {
+  return deriveApplicationStatus(caseRow, ADVANCE_NOTIFICATION_APP_SPEC)
+}
+
+/** 일본 수출 검역 신청 진행 상태 — 범용 derive 의 wrapper. 일본 + 왕복 케이스에만 의미. */
+export function deriveJpExportQuarantineStatus(caseRow: CaseRow): JpReportStatus {
+  return deriveApplicationStatus(caseRow, JP_EXPORT_QUARANTINE_APP_SPEC)
 }
 
 /** 수입 허가(import-permit step) 진행 상태 — 허가가 필요한 모든 목적지 공용. 범용 derive 의 wrapper. */
@@ -203,7 +227,9 @@ export function isApplicationInProgressAck(
   spec: ApplicationStepSpec,
 ): boolean {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
-  return data[spec.inProgressFlag] === true
+  if (data[spec.inProgressFlag] === true) return true
+  // 운영자가 완료 → 진행중으로 내린 경우도 '확인됨'. (일본 두 카드만 이 자리를 쓴다.)
+  return !!spec.demotedField && typeof data[spec.demotedField] === 'string'
 }
 
 /** 수입 허가 '진행 중' 확인 — 범용 ack 의 wrapper. */
@@ -211,34 +237,12 @@ export function isImportPermitInProgressAck(caseRow: CaseRow): boolean {
   return isApplicationInProgressAck(caseRow, IMPORT_PERMIT_APP_SPEC)
 }
 
-export function deriveJpExportQuarantineStatus(caseRow: CaseRow): JpReportStatus {
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const stored = data.import_export_status
-  if (stored != null && String(stored) !== '') {
-    const v = String(stored)
-    if (v === 'in_progress' || v === 'done' || v === 'not_started') return v
-    return 'not_started'
-  }
-  const applied =
-    typeof data.jp_export_quarantine_application_date === 'string'
-      ? data.jp_export_quarantine_application_date
-      : ''
-  // 완료(skip)는 신청일이 있을 때만 유효 — 신청일을 지우면 완료도 해제된다.
-  if (data.jp_export_quarantine_reservation_skipped === true && applied.length >= 10) return 'done'
-  if (typeof data.jp_export_quarantine_admin_demoted_at === 'string') return 'in_progress'
-  if (applied.length >= 10) return 'in_progress'
-  return 'not_started'
+/** 사전 신고 '진행 중' 확인 — 범용 ack 의 wrapper. */
+export function isAdvanceNotificationInProgressAck(caseRow: CaseRow): boolean {
+  return isApplicationInProgressAck(caseRow, ADVANCE_NOTIFICATION_APP_SPEC)
 }
 
-/**
- * 일본 수출검역 신청이 '진행 중'으로 확인됐는지 — 사전 신고와 동일 게이트.
- * jp_export_quarantine_in_progress(보호자 버튼) / admin demote / stored 'in_progress'.
- */
+/** 일본 수출검역 신청 '진행 중' 확인 — 범용 ack 의 wrapper. */
 export function isJpExportQuarantineInProgressAck(caseRow: CaseRow): boolean {
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
-  return (
-    data.jp_export_quarantine_in_progress === true ||
-    typeof data.jp_export_quarantine_admin_demoted_at === 'string' ||
-    data.import_export_status === 'in_progress'
-  )
+  return isApplicationInProgressAck(caseRow, JP_EXPORT_QUARANTINE_APP_SPEC)
 }

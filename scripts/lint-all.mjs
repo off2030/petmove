@@ -46,12 +46,34 @@ const portalEslintCode = await run(
 const rlsCode = await run(process.execPath, ['scripts/lint-rls.mjs'], 'RLS recursion lint')
 const scopeCode = await run(process.execPath, ['scripts/lint-destination-scoping.mjs'], 'destination scoping lint')
 const journeyCode = await run(process.execPath, ['scripts/lint-journey-catalog.mjs'], 'journey catalog lint')
+// 신고 탭 '수입'·'수출' 칸 ↔ 여정 카드 연결 — 관리자 화면과 앱 카드가 같은 값을 보는지.
+const reportSlotsCode = await run(
+  localBin('tsx'),
+  ['scripts/check-report-slots.ts'],
+  'report slots contract',
+  { shell: process.platform === 'win32' },
+)
+// 지난 여정 '되돌리기' — 보관이 지운 데이터를 스냅샷으로 온전히 복원하는지(오조작 안전망).
+const journeyRestoreCode = await run(
+  localBin('tsx'),
+  ['scripts/check-journey-restore.ts'],
+  'journey restore contract',
+  { shell: process.platform === 'win32' },
+)
 // 설정 화면 컨트롤·칩 크기 규격 — 높이 클래스를 직접 쓰면 실패(2026-08-06 신설).
 const sizeCode = await run(process.execPath, ['scripts/lint-settings-size.mjs'], 'settings size scale')
 const copyCode = await run(
   localBin('tsx'),
   ['scripts/lint-journey-copy.ts'],
   'journey copy snapshot',
+  { shell: process.platform === 'win32' },
+)
+// 카드 ↔ 검증 룰 배선 + 저장 차단 결정 — 여기 없어서 포르투갈 사전통지 미등록이 오래 방치됐다
+// (2026-08-21 등록). 날짜칸 카드가 늘 때마다 결정을 강제하는 게 이 lint 의 핵심이라 상시 실행한다.
+const wiringCode = await run(
+  localBin('tsx'),
+  ['scripts/lint-validation-wiring.ts'],
+  'validation wiring',
   { shell: process.platform === 'win32' },
 )
 // 형제 목적지 구조 패리티 — 복사해 만든 목적지에 원본의 나중 수정이 전파됐는지(2026-07-29 신설).
@@ -61,6 +83,36 @@ const parityCode = await run(
   'destination parity',
   { shell: process.platform === 'win32' },
 )
+// 전화번호 표기 — 네 화면이 각자 11자리로 잘라 0507 안심번호가 깨졌다(2026-08-24 신설).
+const phoneCode = await run(
+  localBin('tsx'),
+  ['scripts/check-phone-format.ts'],
+  'phone format',
+  { shell: process.platform === 'win32' },
+)
+// 면역 유효기간 해석 — 표기 흔들림("1 year"/"1Y")이 의료 판정을 뒤집었다(2026-08-24 신설).
+const validUntilCode = await run(
+  localBin('tsx'),
+  ['scripts/check-vaccine-validity.ts'],
+  'vaccine validity',
+  { shell: process.platform === 'win32' },
+)
+// 한 장에 여러 마리를 적는 폼(태국 R.1/1)의 동물 슬롯 매핑 — 짝이 어긋나면 두 번째 동물
+// 칸이 조용히 빈 채로 발급된다(2026-08-24 신설).
+const multiSlotCode = await run(
+  localBin('tsx'),
+  ['scripts/check-multi-slot-forms.ts'],
+  'multi-slot forms',
+  { shell: process.platform === 'win32' },
+)
+// 추가정보 '출발일' ↔ 출국일 sync 룰 시드 패리티 — 선언만 하고 시드를 빼먹으면 출국일 컬럼이
+// 영영 안 채워져 신고 탭·목록·D-day 가 그 케이스를 통째로 놓친다(2026-08-24 신설).
+const departureSyncCode = await run(
+  localBin('tsx'),
+  ['scripts/lint-departure-sync.ts'],
+  'departure sync seeds',
+  { shell: process.platform === 'win32' },
+)
 
 const summary = [
   `  admin eslint:  ${eslintCode === 0 ? '✓ pass' : `✗ exit ${eslintCode}`}`,
@@ -68,12 +120,23 @@ const summary = [
   `  lint:rls:      ${rlsCode === 0 ? '✓ pass' : `✗ exit ${rlsCode}`}`,
   `  lint:scope:    ${scopeCode === 0 ? '✓ pass' : `✗ exit ${scopeCode}`}`,
   `  lint:journey:  ${journeyCode === 0 ? '✓ pass' : `✗ exit ${journeyCode}`}`,
+  `  report slots:  ${reportSlotsCode === 0 ? '✓ pass' : `✗ exit ${reportSlotsCode}`}`,
+  `  journey undo:  ${journeyRestoreCode === 0 ? '✓ pass' : `✗ exit ${journeyRestoreCode}`}`,
   `  lint:size:     ${sizeCode === 0 ? '✓ pass' : `✗ exit ${sizeCode}`}`,
   `  lint:copy:     ${copyCode === 0 ? '✓ pass' : `✗ exit ${copyCode}`}`,
+  `  lint:wiring:   ${wiringCode === 0 ? '✓ pass' : `✗ exit ${wiringCode}`}`,
   `  lint:parity:   ${parityCode === 0 ? '✓ pass' : `✗ exit ${parityCode}`}`,
+  `  dep sync seed: ${departureSyncCode === 0 ? '✓ pass' : `✗ exit ${departureSyncCode}`}`,
+  `  multi slots:   ${multiSlotCode === 0 ? '✓ pass' : `✗ exit ${multiSlotCode}`}`,
+  `  valid-until:   ${validUntilCode === 0 ? '✓ pass' : `✗ exit ${validUntilCode}`}`,
+  `  phone format:  ${phoneCode === 0 ? '✓ pass' : `✗ exit ${phoneCode}`}`,
 ].join('\n')
 console.log(`\n─── summary ───\n${summary}`)
 
 process.exit(
-  Math.max(eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode, sizeCode, copyCode, parityCode),
+  Math.max(
+    eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode,
+    reportSlotsCode, journeyRestoreCode, sizeCode, copyCode, wiringCode, parityCode,
+    departureSyncCode, multiSlotCode, validUntilCode, phoneCode,
+  ),
 )

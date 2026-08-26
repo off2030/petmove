@@ -31,7 +31,7 @@ import {
  *      일본 수출 검역은 예약 시간(있으면) 문구 포함.
  *   B. 유효기간 만료 — 광견병 백신·종합백신·CIV·광견병 항체검사(=titer)만. 만료 30일 전,
  *      그리고 출국 전 만료 시 경고. (도메인 계산 재활용)
- *   C. 목적지별 신청 마감 — 일본 사전신고(입국 40·47일 전)·일본 수출검역 신청(귀국 10·17일 전)
+ *   C. 목적지별 신청 마감 — 일본 사전신고(입국 40·47일 전)·일본 수출검역 신청(귀국 14·21일 전)
  *      ·태국 수입허가(출국 14일 전)·필리핀 수입허가(출국 7일 전)·대만 수입허가(도착 27·20일 전).
  *      **신청을 마쳤으면(신청일 입력 = in_progress) 더 보내지 않는다** — 문구가 전부
  *      '신청하세요/준비하세요'라 신청 후엔 목적이 끝났고, 허가증이 늦게 나오는 건 관청
@@ -551,6 +551,8 @@ const ADVANCE_NOTICE_DEADLINES: Array<{
   { key: 'ireland', dateField: 'ie_advance_notice_date', countryLabel: '아일랜드', hardDeadlineDays: 1, deadlineLabel: '입국 24시간 전' },
   { key: 'norway', dateField: 'no_advance_notice_date', countryLabel: '노르웨이', hardDeadlineDays: 2, deadlineLabel: '입국 48시간 전' },
   { key: 'cyprus', dateField: 'cy_advance_notice_date', countryLabel: '키프로스', hardDeadlineDays: 2, deadlineLabel: '입국 48시간 전' },
+  // 포르투갈 — DGAV 도착 통보(Aviso de Chegada). 보호자가 직접 보내야 해 리마인드 가치가 크다.
+  { key: 'portugal', dateField: 'pt_advance_notice_date', countryLabel: '포르투갈', hardDeadlineDays: 2, deadlineLabel: '도착 48시간 전' },
   // 홍콩 — AFCD DC-02v05 1항(도착 24시간 전 통보). 유럽 4종과 구조가 같아 같은 테이블로.
   { key: 'hongkong', dateField: 'hk_advance_notice_date', countryLabel: '홍콩', hardDeadlineDays: 1, deadlineLabel: '도착 24시간 전' },
   // 몰타 — ⚠️ **공표된 마감이 없다**(2026-08-01 확인). 구 '입국 3영업일 전'은 2015년 폐기
@@ -633,27 +635,28 @@ function collectDeadlineReminders(caseRow: CaseRow, now: Date): AppReminder[] {
         )
         if (r40) out.push(r40)
       }
-      // 일본 수출 검역 신청 — 귀국 10일 전. 왕복 + 귀국일 있음 + 완료 전에만.
-      // (귀국일 존재만 보면 편도 전환 후 잔존 귀국일에 알림이 샘 — 카드 필터와 같은 tripType 기준.)
+      // 일본 수출 검역 신청 — 귀국 14일 전(動物検疫所 "輸出の14日前まで"). 왕복 + 귀국일 있음 +
+      // 완료 전에만. (귀국일 존재만 보면 편도 전환 후 잔존 귀국일에 알림이 샘 — 카드 필터와
+      // 같은 tripType 기준.)
       if (ret && getTripType(asRecord(flat.data), token) === 'round' && deriveJpExportQuarantineStatus(flat) !== 'done') {
-        const r17 = leadReminder(
+        const r21 = leadReminder(
           flat,
-          `${token}|jp-export-17`,
+          `${token}|jp-export-21`,
           ret,
-          17,
-          '일본 수출 검역 신청 마감이 일주일 남았어요. 귀국 10일 전까지 신청·예약하세요.',
+          21,
+          '일본 수출 검역 신청 마감이 일주일 남았어요. 귀국 14일 전까지 신청·예약하세요.',
           now,
         )
-        if (r17) out.push(r17)
-        const r10 = leadReminder(
+        if (r21) out.push(r21)
+        const r14 = leadReminder(
           flat,
-          `${token}|jp-export-10`,
+          `${token}|jp-export-14`,
           ret,
-          10,
-          '오늘까지 일본 수출 검역 신청이 필요해요(귀국 10일 전).',
+          14,
+          '오늘까지 일본 수출 검역 신청이 필요해요(귀국 14일 전).',
           now,
         )
-        if (r10) out.push(r10)
+        if (r14) out.push(r14)
       }
     } else if (key === 'hawaii') {
       // 하와이 입국 신청(AQS 서류 사전 제출) — 도착 10일 전 마감. 일본 사전 신고(D-47·D-40)와

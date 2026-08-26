@@ -4,6 +4,8 @@
 import {
   DEFAULT_INSPECTION_CONFIG,
   canonicalDestinations,
+  // 신설 built-in 규칙(예: 남아공 → ARC-OVI) 보강 — 자동채움 엔진과 같은 단일 출처.
+  mergeMissingInfectiousDefaults,
   type InspectionConfig,
   type InspectionLabOption,
   type InspectionLabRule,
@@ -122,24 +124,6 @@ function applyApqaEuShim(rules: InspectionLabRule[]): InspectionLabRule[] {
     const dedup = Array.from(new Set(labs))
     return { ...rule, labs: dedup }
   })
-}
-
-/**
- * 새로 신설된 built-in 전염병검사 기관 규칙을 기존 조직의 persisted 설정에도 보강.
- *
- * 2026-06 남아프리카공화국 → ARC-OVI 신설. DB 에 inspection_config 가 이미 저장된
- * 조직은 DEFAULT_INSPECTION_CONFIG 변경이 반영되지 않으므로(load 시 persisted 우선),
- * read-path 에서 보강해 마이그레이션 없이 즉시 적용. (applyApqaEuShim 과 동일 취지.)
- *
- * persisted 규칙에 한 번도 등장하지 않은 국가의 DEFAULT 규칙만 합쳐, 조직이 의도적으로
- * 편집·삭제한 기존 규칙은 건드리지 않는다.
- */
-function mergeMissingInfectiousDefaults(rules: InspectionLabRule[]): InspectionLabRule[] {
-  const covered = new Set(rules.flatMap(r => r.countries))
-  const missing = DEFAULT_INSPECTION_CONFIG.infectiousRules.filter(
-    dr => dr.countries.every(c => !covered.has(c)),
-  )
-  return missing.length > 0 ? [...rules, ...missing] : rules
 }
 
 function normalize(raw: unknown): InspectionConfig {

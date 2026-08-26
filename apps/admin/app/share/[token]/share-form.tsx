@@ -15,7 +15,15 @@ import type {
   ShareLinkPublicView,
   ShareVaccineEntry,
 } from '@petmove/domain'
-import { SHARE_RECIPIENT_SUBGROUP_META } from '@petmove/domain'
+import {
+  SHARE_RECIPIENT_SUBGROUP_META,
+  splitCustomerNameEn,
+  composeCustomerNameEn,
+  formatKoreanPhone,
+  phoneInputError,
+  phoneDigits,
+  KOREAN_PHONE_MAX_DIGITS,
+} from '@petmove/domain'
 import breedsData from '@petmove/domain/data/breeds.json'
 import colorsData from '@petmove/domain/data/colors.json'
 
@@ -122,6 +130,29 @@ function isEmptyValue(field: ShareFieldSpec, v: unknown): boolean {
   return false
 }
 
+/**
+ * 업로드 실패 문구 — Supabase Storage 는 영어 원문만 준다("Failed to fetch",
+ * "Invalid signature", "The resource already exists" 등). 보호자 화면에 그대로 띄우면
+ * 무슨 뜻인지도 무엇을 해야 하는지도 알 수 없어(2026-08-18 신고) 한국어로 바꿔 준다.
+ * 원문은 위 Sentry.captureMessage 가 이미 들고 간다.
+ */
+function uploadErrorMessage(raw: string): string {
+  const m = (raw || '').toLowerCase()
+  if (m.includes('failed to fetch') || m.includes('network') || m.includes('timeout')) {
+    return '네트워크가 끊겨 파일을 올리지 못했어요. 연결을 확인하고 다시 시도해 주세요.'
+  }
+  if (m.includes('signature') || m.includes('expired') || m.includes('jwt')) {
+    return '업로드 유효시간이 지났어요. 페이지를 새로고침한 뒤 다시 올려 주세요.'
+  }
+  if (m.includes('exceeded') || m.includes('too large') || m.includes('413')) {
+    return '파일 용량이 너무 커요. 각 8MB 이하로 줄여서 올려 주세요.'
+  }
+  if (m.includes('already exists') || m.includes('duplicate')) {
+    return '이미 올라간 파일이에요. 페이지를 새로고침한 뒤 확인해 주세요.'
+  }
+  return '파일을 올리지 못했어요. 잠시 후 다시 시도해 주세요. 계속되면 담당자에게 이 코드를 알려주세요. (SL-10)'
+}
+
 export function ShareForm({ initial }: Props) {
   const [view] = useState(initial)
   const [values, setValues] = useState<Record<string, unknown>>(() => {
@@ -183,17 +214,14 @@ export function ShareForm({ initial }: Props) {
   }, [values, storageKey])
 
   if (view.status === 'submitted' || done) {
+    // 부연 문구 없이 '제출 완료'만. 예전엔 "정보가 … 여정에 반영되었습니다"라고 단언했는데,
+    // 이 화면은 제출이 접수됐을 때 뜰 뿐 반영 여부를 보증하지 않는다 — 빈 값만 담겨 케이스에
+    // 아무것도 안 쓰인 경우에도 같은 문구가 떠서, 고객은 보냈다고 믿고 담당자는 바뀐 게 없어
+    // 서로 어긋났다(2026-08-18 배유/추어). 못 지키는 약속은 하지 않는다.
     return (
       <StatusScreen
         eyebrow="Completed"
         title="제출 완료"
-        description={
-          <>
-            입력해주신 정보가 {view.org_name || '담당 조직'} 여정에 반영되었습니다.
-            <br />
-            감사합니다.
-          </>
-        }
         icon={<CheckCircle2 className="mx-auto mb-6 text-emerald-600" size={40} />}
       />
     )
@@ -237,6 +265,13 @@ export function ShareForm({ initial }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    // 전화번호는 **지정 형식만** 받는다 — 자릿수가 모자라거나 없는 번호대면 제출을 막는다.
+    // 빈 값은 아래 '빈 항목' 경고가 담당하므로 여기선 형식만 본다.
+    for (const f of view.fields) {
+      if (f.key !== 'phone') continue
+      const phoneErr = phoneInputError(values[f.key] as string | null | undefined)
+      if (phoneErr) { setError(phoneErr); return }
+    }
     // #3 비어있는 항목 확인 — address_en 은 주소검색으로 자동 채워지므로 제외.
     const emptyFieldLabels = view.fields
       .filter((f) => f.key !== 'address_en' && isEmptyValue(f, values[f.key]))
@@ -294,7 +329,7 @@ export function ShareForm({ initial }: Props) {
               tags: { feature: 'share-upload' },
               extra: { error: upErr.message, slot: pending[i].slotKey, name: pending[i].file.name, size: pending[i].file.size, mime: pending[i].file.type },
             })
-            setError(`파일 업로드에 실패했습니다: ${upErr.message}`)
+            setError(uploadErrorMessage(upErr.message))
             return
           }
           uploaded.push({ path: t.path, name: t.name, size: pending[i].file.size, mime: pending[i].file.type })
@@ -541,7 +576,8 @@ function StatusScreen({
 }: {
   eyebrow: string
   title: string
-  description: React.ReactNode
+  /** 없으면 본문 단락 자체를 렌더하지 않는다(제목만 남는 화면 — 빈 <p> 여백 방지). */
+  description?: React.ReactNode
   icon?: React.ReactNode
 }) {
   return (
@@ -551,12 +587,19 @@ function StatusScreen({
         <p className="mb-4 font-mono text-[11px] uppercase tracking-[2px] text-muted-foreground">
           {eyebrow}
         </p>
-        <h1 className="mb-3 font-serif text-2xl font-medium tracking-tight text-foreground">
+        <h1
+          className={cn(
+            'font-serif text-2xl font-medium tracking-tight text-foreground',
+            description ? 'mb-3' : '',
+          )}
+        >
           {title}
         </h1>
-        <p className="text-[15px] leading-relaxed text-muted-foreground">
-          {description}
-        </p>
+        {description && (
+          <p className="text-[15px] leading-relaxed text-muted-foreground">
+            {description}
+          </p>
+        )}
       </div>
     </div>
   )
@@ -743,19 +786,29 @@ function FieldInput({
     )
   }
 
-  // 신청폼과 동일: 전화번호 자동 포맷팅 (010-1234-5678)
+  // 전화번호 — **지정 형식만** 받는다(2026-08-24 사용자 결정).
+  //   · 한국 번호: 숫자만 입력받고 표기는 formatKoreanPhone 이 담당(휴대폰·서울 9자리·
+  //     0507 안심번호 12자리 모두 대응).
+  //   · 해외 거주 보호자: 맨 앞에 '+' 를 치면 국제번호 모드 — 한국 번호만 받으면 제출 자체를
+  //     못 하는 보호자가 실제로 있다(일본 090…·UAE +971… 16건).
+  // 자릿수·번호대 검증은 제출 시 phoneInputError 가 막는다(client + anon 서버 액션 공용).
   if (field.key === 'phone') {
-    const formatted = strVal.replace(/(\d{3})(\d{4})(\d{0,4})/, (_, a, b, c) => (c ? `${a}-${b}-${c}` : b ? `${a}-${b}` : a))
+    const intl = strVal.trim().startsWith('+')
     return (
       <FieldRow label={field.label}>
         <input
           type="tel"
-          inputMode="numeric"
+          inputMode="tel"
           autoComplete="tel"
-          value={formatted}
-          maxLength={13}
-          onChange={(e) => onChange(e.target.value.replace(/[^\d]/g, '').slice(0, 11))}
-          placeholder="010-1234-5678"
+          value={intl ? strVal : formatKoreanPhone(strVal)}
+          maxLength={20}
+          onChange={(e) => {
+            const raw = e.target.value.trim()
+            const plus = raw.startsWith('+')
+            const digits = phoneDigits(raw).slice(0, plus ? 15 : KOREAN_PHONE_MAX_DIGITS)
+            onChange(plus ? `+${digits}` : digits)
+          }}
+          placeholder="010-1234-5678 (해외는 +81…)"
           className={numericInputClass}
         />
       </FieldRow>
@@ -896,18 +949,26 @@ function CustomerNameEnInput({
 }) {
   const composingRef = useRef(false)
   const { warn, show: showWarn } = useEnWarning()
-  const [last, setLast] = useState(() => {
-    const parts = (value || '').trim().split(/\s+/).filter(Boolean)
-    return parts[0] || ''
-  })
-  const [first, setFirst] = useState(() => {
-    const parts = (value || '').trim().split(/\s+/).filter(Boolean)
-    return parts.slice(1).join(' ') || ''
-  })
+  const [last, setLast] = useState(() => splitCustomerNameEn(value).last)
+  const [first, setFirst] = useState(() => splitCustomerNameEn(value).first)
+  // 마지막으로 이 컴포넌트가 부모에 올려보낸 값. 외부발 변경과 자기 입력을 구분한다.
+  const emittedRef = useRef(value)
+
+  // 임시 저장 복원(마운트 후 setValues)처럼 값이 밖에서 바뀌면 두 칸을 다시 맞춘다.
+  // 안 하면 화면에 보이는 이름과 실제 제출되는 값이 어긋난 채로 남는다.
+  useEffect(() => {
+    if (value === emittedRef.current) return
+    emittedRef.current = value
+    const parts = splitCustomerNameEn(value)
+    setLast(parts.last)
+    setFirst(parts.first)
+  }, [value])
 
   useEffect(() => {
-    const combined = [last.trim(), first.trim()].filter(Boolean).join(' ')
-    if (combined !== value) onChange(combined)
+    const combined = composeCustomerNameEn(last, first)
+    if (combined === value) return
+    emittedRef.current = combined
+    onChange(combined)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [last, first])
 

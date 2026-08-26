@@ -395,24 +395,15 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
               segments.push({ type: 'flat', entry: def })
             }
           }
-          // 태국 — 출국 항공편 그룹 맨 앞에 출발일(departure_date 컬럼)을 노출. 포털 출국 항공편 카드는
-          // 출발일+도착일을 함께 보여주는데 펫무브워크 그룹엔 도착일만 있었음. departure_date 는 절차정보
-          // '출국일'과 같은 필드라 별도 동기화 없이 자동 일치(편집·완료 동작도 동일). 태국만 — 일본은 이미
-          // departure_flight_date 로 출발일이 그룹에 있고, 필리핀은 출발=도착(같은 날)이라 도착일이 곧 출발일.
-          // 말레이시아·인도네시아 — 태국 복제(2026-07-22): 같은 출발일·도착일 분리 모델.
-          if (
-            matchesDestinationKey(viewDestination, 'thailand') ||
-            matchesDestinationKey(viewDestination, 'malaysia') ||
-            matchesDestinationKey(viewDestination, 'indonesia')
-          ) {
-            const flightGroup = segments.find(
-              (s): s is Extract<ExtraSegment, { type: 'group' }> =>
-                s.type === 'group' && s.name === '출국 항공편',
-            )
-            if (flightGroup && !flightGroup.items.some((i) => i.key === 'departure_date')) {
-              flightGroup.items.unshift({ key: 'departure_date', label: '출발일', type: 'date' })
-            }
-          }
+          // ⛔ 여기서 화면에만 줄을 얹지 말 것 (2026-08-24 제거).
+          //   태국·말레이시아·인도네시아는 '출국 항공편' 그룹 맨 앞에 출발일(departure_date **컬럼**)을
+          //   unshift 로 끼워 넣고 있었다. 화면엔 보이는데 프로파일에는 없는 줄이라, 필드 목록을
+          //   descriptor 에서 만드는 정보 요청 링크("{국가} 신고" 프리셋 = 추가정보 카테고리 전부)가
+          //   그 줄을 볼 수 없었고 → 보호자에게 출발일을 묻지 못한 채 제출 → 출국일이 영영 비어
+          //   신고 탭에서 케이스가 통째로 빠졌다(어일용/남촉·남락·남숙 3건).
+          //   이제 세 나라 모두 일본·하와이처럼 departure_flight_date 를 **프로파일 extraFields 에**
+          //   선언한다 — 상세·공유 다이얼로그·프리셋·수신자 폼이 같은 목록을 본다.
+          //   departure_date 컬럼과는 org_auto_fill_rules 양방향 sync(20260824000001).
           // 전달 서류(허가 서류) 첨부 — 활성 여행지의 permit 서류를 catalog 에서 파생해 행으로 노출.
           // (일본=허가서(Approval), 태국·필리핀·스위스·호주·NZ 등=수입 허가증). 다중 여행지면 활성 기준.
           // portal 보호자·admin 운영자 모두 업로드, case.data.documents 공유(stepId 로 고객앱과 연결).
@@ -569,9 +560,24 @@ function mapExtractResultToUnified(country: Country, result: Record<string, unkn
     set('address_overseas', result.address_overseas)
     set('postal_code', result.postal_code)
     set('overseas_phone', result.phone)
-    set('departure_flight_date', result.departure_date)
+    // 항공편은 노선 기반 슬롯 구조(2026-08-18). 예전엔 스칼라 4개(출국일·도착일·편명·
+    // 도착시각)만 받아서 **출발/도착 공항이 통째로 비어 있었다**.
+    //
+    // ⚠️ **채우는 건 출국편(한국 → 하와이)뿐이다**(2026-08-18 사용자 지정). 귀국편은 추출
+    //   결과를 쓰지 않는다 — return_* 칸은 운영자가 직접 확인해 넣는다.
+    //   다만 추출 스키마의 hawaii_to_korea 슬롯은 **일부러 남겨 둔다**: 왕복 일정을 붙여
+    //   넣었을 때 귀국편이 갈 자리가 없으면 모델이 '귀국 10/9'·'인천 10/10 도착'을 하와이
+    //   도착일·도착시각으로 잘못 집어넣는다(원래 버그). 슬롯이 미끼 역할을 해 출국편
+    //   추출이 정확해진다. 슬롯을 지우려면 그 오인식이 재발하는지 먼저 확인할 것.
+    const hiIn = (result.korea_to_hawaii ?? {}) as Record<string, unknown>
+    set('departure_flight_date', hiIn.date)
+    set('entry_departure_airport', hiIn.departure_airport)
+    set('entry_airport', hiIn.arrival_airport)
+    set('entry_transport', hiIn.transport)
+    set('entry_flight_number', hiIn.flight_number)
+    // 하와이 도착일·도착시각은 별도 필드 — 날짜변경선 때문에 출발일과 같을 수 있어
+    // 편의 date(출발일)로 대체하지 않는다.
     set('entry_date', result.entry_date)
-    set('entry_flight_number', result.flight_number)
     set('entry_time', result.arrival_time)
   } else if (country === 'switzerland') {
     set('entry_date', result.entry_date)

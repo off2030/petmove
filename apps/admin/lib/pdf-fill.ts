@@ -9,7 +9,8 @@ import { readFile } from 'node:fs/promises'
 import zlib from 'node:zlib'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
-import { getParasiteFamily, PARASITE_FAMILIES } from '@petmove/domain'
+import { FORM_CAPACITY } from '@/lib/pdf-multi-forms'
+import { getParasiteFamily, PARASITE_FAMILIES, splitCustomerNameEn, formatKoreanPhone, looksLikeKoreanPhoneInput, destinationEnglish } from '@petmove/domain'
 import {
   lookupRabies,
   lookupExternalParasite,
@@ -89,6 +90,16 @@ type FieldMapping = {
   align?: 'left' | 'center' | 'right'
   /** 케이스의 species 가 이 값일 때만 채움. 다른 종이면 빈 값 (또는 default). */
   speciesOnly?: 'dog' | 'cat'
+  /**
+   * **동물 슬롯**(0-based) — 한 장에 여러 마리를 적는 폼에서 "이 칸은 N번째 동물 것"이라고
+   * 필드마다 직접 지정한다. 지정된 슬롯에 동물이 없으면 빈 칸으로 남는다.
+   *
+   * 행 이름 규칙(`I28_row2_…`)을 쓰는 Annex III·UK·NZ 와 달리, 템플릿 필드 이름이 임의
+   * (`text_15acce`)인 폼을 위한 것 — 태국 R.1/1 이 그 경우다(좌/우 두 마리 칸).
+   * 슬롯 0 은 생략해도 되지만(비-슬롯 필드는 대표 케이스로 해석), 좌/우 짝을 눈으로
+   * 확인할 수 있게 명시해 두는 편이 낫다.
+   */
+  animalSlot?: number
 }
 
 type SignatureOverlay = {
@@ -353,10 +364,13 @@ function issueDateOf(data: Record<string, unknown>): Date {
 
 /** Format raw digit string into 010-XXXX-XXXX (10–11 digit Korean mobile). */
 function fmtPhoneDash(raw: unknown): string {
-  const s = String(raw ?? '').replace(/\D/g, '')
-  if (s.length === 11) return `${s.slice(0, 3)}-${s.slice(3, 7)}-${s.slice(7)}`
-  if (s.length === 10) return `${s.slice(0, 3)}-${s.slice(3, 6)}-${s.slice(6)}`
-  return s
+  const s = String(raw ?? '').trim()
+  if (!s) return ''
+  // 해외번호·내선·메모 같은 자유 입력은 **그대로** 찍는다 — 숫자만 남기면 +81 이 81 로 둔갑한다.
+  if (!looksLikeKoreanPhoneInput(s)) return s
+  // 한국 번호 표기는 domain/phone.ts 단일 출처 — 0507 안심번호(12자리)·서울 9자리 포함.
+  // 예전엔 10·11자리만 끊어서 0507 번호가 하이픈 없이 통째로 찍혔다.
+  return formatKoreanPhone(s)
 }
 
 // Korean phone → +82-AREA-XXXX-YYYY. Seoul (02) keeps 1-digit area code,
@@ -761,31 +775,39 @@ export function readSource(
     return (caseRow as unknown as Record<string, unknown>).customer_name ?? ''
   }
 
-  // Split English name parts — share form 은 합본 column 에만 저장하므로 (CustomerNameEnInput
-  // 의 "Last First" 순서) data 분리 필드가 비면 legacy column 을 같은 순서로 분해해 폴백.
-  // apply 경로는 data 분리 저장이 항상 되므로 폴백 미발동.
+  // Split English name parts — data 분리 필드가 비면 legacy column 을 같은 순서("Last First")
+  // 로 분해해 폴백. 예전 share 폼·엑셀 유입분은 합본 column 에만 남아 있다.
   if (source === 'customer_first_name_en' || source === 'customer_last_name_en') {
     const direct = String((data[source] as string | undefined) ?? '').trim()
     if (direct) return direct
-    const legacy = String(
-      ((caseRow as unknown as Record<string, unknown>).customer_name_en as string | undefined) ?? '',
-    ).trim()
-    if (!legacy) return ''
-    const parts = legacy.split(/\s+/).filter(Boolean)
-    if (source === 'customer_last_name_en') return parts[0] ?? ''
-    return parts.slice(1).join(' ')
+    const legacy = (caseRow as unknown as Record<string, unknown>).customer_name_en
+    const parts = splitCustomerNameEn(typeof legacy === 'string' ? legacy : '')
+    return source === 'customer_last_name_en' ? parts.last : parts.first
+  }
+
+  // 여행지의 영문 표기 — 해외 기관 서식의 "Country Being Sent To" 같은 칸에 쓴다.
+  // caseRow.destination 은 한글(예: 뉴질랜드)이라 그대로 넣으면 현지에서 못 읽는다.
+  if (source === 'destination_en') {
+    const dest = (caseRow as unknown as Record<string, unknown>).destination
+    return typeof dest === 'string' && dest.trim() ? destinationEnglish(dest) : ''
   }
 
   // Lab-specific inspection date from infectious_disease_records.
   // Pattern: `infectious_date:<lab>` (e.g. ksvdl, vbddl, apqa_hq).
-  // Falls back to vet_visit_date when no record exists for that lab.
+  // ① 해당 기관 기록 → ② 기관 미지정(lab 비어있음) 기록 → ③ vet_visit_date.
+  // ②가 필요한 이유: 자동채움이 검사기관을 못 붙인 기록(2026-08-11 이전 버그 · 펫무브앱에서
+  //   보호자가 직접 입력한 검사일)이 있으면 ①이 빈손이라 채혈일 칸이 내원일로 튀거나 비었다.
+  //   다른 기관 기록은 절대 끌어오지 않는다 — lab 이 붙어 있으면 그 기관 것이다.
   const infDateMatch = source.match(/^infectious_date:(.+)$/)
   if (infDateMatch) {
     const lab = infDateMatch[1]
     const recs = data.infectious_disease_records
     if (Array.isArray(recs)) {
-      const rec = (recs as Array<{ lab?: string; date?: string | null }>).find(r => r.lab === lab)
+      const list = recs as Array<{ lab?: string | null; date?: string | null }>
+      const rec = list.find(r => r.lab === lab)
       if (rec?.date) return rec.date
+      const unlabeled = list.find(r => !r.lab && r.date)
+      if (unlabeled?.date) return unlabeled.date
     }
     return data.vet_visit_date ?? ''
   }
@@ -2581,17 +2603,7 @@ interface PackedDoc {
   parasiteSlots: number[]    // parasiteSlots[rowIdx] = caseIdx within doc
 }
 
-interface FormCapacity { animals: number; vaccRows: number }
 
-const FORM_CAPACITY: Record<string, FormCapacity | undefined> = {
-  AnnexIII: { animals: 3, vaccRows: 5 },
-  UK:       { animals: 5, vaccRows: 5 },
-  // NZ 인증서는 (10)/(11)/(12)... 의 백신/검사 행이 동물별이 아니라 인증서당 1개씩만
-  // 있어서 packer 의 vaccRows 제약이 의미 없다. 큰 값으로 두면 동물 5마리까지 한
-  // 인증서에 채워진다 (Cert A p1 5-row table + Cert B (4) 의 multi-line microchip 목록).
-  NZ:       { animals: 5, vaccRows: 9999 },
-  NZ_2:     { animals: 5, vaccRows: 9999 },
-}
 
 function rabiesDoseCount(c: CaseRow): number {
   const data = (c.data ?? {}) as Record<string, unknown>
@@ -2774,6 +2786,18 @@ function resolveFieldMulti(
   // take precedence before we dispatch by field name.
   const agg = resolveMultiTransform(mapping?.transform, doc)
   if (agg !== null) return agg
+
+  // 필드가 직접 지정한 동물 슬롯 — 행 이름 규칙이 없는 폼(태국 R.1/1)용.
+  // 그 슬롯에 동물이 없으면(1마리짜리 문서의 두 번째 칸) 빈 칸으로 둔다.
+  // 단일 케이스 경로(fillPdfCore 의 soloDoc)는 animalSlots 가 [0] 뿐이라, 슬롯 1 이상은
+  // 자동으로 빈 칸이 된다 — 같은 동물이 좌·우에 두 번 찍히지 않는다.
+  if (mapping?.animalSlot != null) {
+    const slotCaseIdx = doc.animalSlots[mapping.animalSlot]
+    if (slotCaseIdx === undefined) return ''
+    const slotCase = doc.cases[slotCaseIdx]
+    if (!slotCase) return ''
+    return resolveField(mapping, slotCase, (slotCase.data ?? {}) as Record<string, unknown>, allowedVaccines)
+  }
 
   const parsed = parseRowField(fieldName)
   if (!parsed) {
@@ -3097,6 +3121,23 @@ function forceRegenerateButtonAppearances(pdfForm: import('pdf-lib').PDFForm): v
   // 라디오는 widget 별 onValue 가 다양해 별도 처리가 필요함.
 }
 
+/**
+ * `measure` 가 `availW` 안에 들어가도록 글씨 크기를 줄인다(하한 5pt). 이미 들어가면
+ * 그대로 — 절대 키우지 않는다(호출부의 size 가 상한).
+ */
+function shrinkToWidth(
+  measure: string,
+  size: number,
+  availW: number,
+  font: import('pdf-lib').PDFFont,
+): number {
+  if (!measure) return size
+  const w = font.widthOfTextAtSize(measure, size)
+  if (w <= availW) return size
+  // 0.98: 폰트 메트릭 추정 오차 여유. 0.5pt 단위로 내림.
+  return Math.max(5, Math.min(size, Math.floor(size * (availW / w) * 0.98 * 2) / 2))
+}
+
 /** Shared font/appearance post-processing extracted so both single and multi paths use it.
  *  `touchedFieldNames` limits DA/appearance regeneration to the listed fields — used by
  *  Invoice where template carries pre-filled content that must keep its original look. */
@@ -3159,6 +3200,18 @@ async function applyFontFixes(
               s *= (availH / needed) * 0.94
             }
             size = Math.max(5, Math.min(daSize, Math.floor(s * 2) / 2))
+            // 줄바꿈 불가 토큰(공백 없는 덩어리) 폭 맞춤 — 높이는 남는데 토큰 하나가
+            // 칸보다 넓으면 wrap 이 그 안을 못 쪼개 글자가 잘리거나 숫자가 두 줄로
+            // 쪼개진다 (Invoice HS 코드 '3002.12.00.6' 이 60pt 칸에서 끝자리 잘리던
+            // 케이스 — 2026-08-11). 높이 기준 결과보다 더 줄여야 할 때만 줄인다.
+            const longestToken = text.split(/\s+/).reduce((a, b) => (b.length > a.length ? b : a), '')
+            size = shrinkToWidth(longestToken, size, availW, customFont)
+          }
+        } else {
+          // 단일 라인: wrap 이 없어 폭을 넘으면 그냥 잘려 나간다 — 전체 문자열이 기준.
+          const rect = tf.acroField.getWidgets()[0]?.getRectangle()
+          if (rect && text) {
+            size = shrinkToWidth(text, size, Math.max(1, rect.width - 4), customFont)
           }
         }
       }

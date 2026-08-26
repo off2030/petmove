@@ -302,6 +302,8 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 몰타 사전 통지 (온라인 포털 + 수의사 이메일, 3영업일 전)
   'mt_advance_notice_date',
   'mt_advance_notice_confirmed',
+  'pt_advance_notice_date',
+  'pt_advance_notice_confirmed',
   // 이스라엘 사전 통보 (벤구리온 공항 검역소, 48시간 전)
   'il_advance_notice_date',
   'il_advance_notice_confirmed',
@@ -319,6 +321,13 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 필수서류 체크리스트로 새면 완료 판정이 오염된다.
   'export_doc_status',
   'export_doc_memo',
+  // 펫무브워크 신고 탭의 수기 수입·수출 진행 상태 — **카드 연결이 없는 목적지에서만** 쓰이는
+  //   운영자 수동값(연결이 있으면 카드 시그널이 단일 출처 — [[resolveReportBinding]]).
+  //   예전엔 top-level 전역이라 "하와이, 일본" 처럼 신고국이 둘인 케이스에서 한 나라 신고를
+  //   완료로 바꾸면 다른 나라 칸도 완료로 보였다(2026-08-21 발견). 서류 탭 상태와 같은 이유로 분리.
+  //   기존 top-level 값은 scripts/migrate-report-status.mjs 가 카드 시그널·by_dest 로 옮겼다.
+  'import_import_status',
+  'import_export_status',
 ])
 
 export function isDestinationScopedKey(key: string): boolean {

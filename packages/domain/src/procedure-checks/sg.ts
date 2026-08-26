@@ -617,8 +617,9 @@ export const SG_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 관세·GST 납부 허가 — 도착 전 + 14일 창 (2026-07-25 신설) ──
-  // 입력 차단(validateSgGstPermitDate)과 같은 함수 — 출국일을 나중에 수정해 어긋난 경우 주의.
+  // ── 계류장 예약은 항체 채혈 이후 ──
+  //   (이 자리에 있던 'GST 허가 14일 창' 헤더 주석은 그 룰이 사라진 뒤 남은 잔재였다 —
+  //    아래 룰과 무관해 오해를 부르므로 정리했다. 2026-08-21)
   {
     id: 'sg.quarantine-reservation-after-titer',
     country: 'singapore',

@@ -7,11 +7,12 @@ import {
   type SiblingPreview,
 } from '@/lib/actions/generate-pdf'
 import { downloadMultipartPdfRequest } from '@/lib/pdf-download'
+import { FORM_CAPACITY, type MultiFormKey } from '@/lib/pdf-multi-forms'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 
 interface Props {
   caseId: string
-  formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC'
+  formKey: MultiFormKey
   /** 수의사/병원 정보·발급일 노출 여부. 부모 cases-app 의 토글 상태를 그대로 전달. */
   includeVet?: boolean
   /** 다중 여행지 케이스의 활성 여행지 — PDF 생성 시 by_dest 평탄화에 사용. */
@@ -30,15 +31,13 @@ interface Props {
 }
 
 function simulatePackCount(
-  formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC',
+  formKey: MultiFormKey,
   cases: Array<{ rabiesDoseCount: number }>,
 ): number {
-  // VBC 는 동물 테이블이 없어 페이지 용량 제한이 없다 — 항상 1장.
-  if (formKey === 'VBC') return cases.length > 0 ? 1 : 0
-  const cap =
-    formKey === 'AnnexIII' ? { animals: 3, vaccRows: 5 } :
-    formKey === 'NZ' ? { animals: 5, vaccRows: 9999 } :
-    { animals: 5, vaccRows: 5 }
+  // 용량은 packCases·서버 미리보기와 **같은 표**를 본다([[FORM_CAPACITY]]).
+  // 표에 없는 폼(VBC — 동물 테이블 없음)은 몇 마리든 한 장.
+  const cap = FORM_CAPACITY[formKey]
+  if (!cap) return cases.length > 0 ? 1 : 0
   let docs = 0
   let remaining = cases.slice()
 
@@ -117,6 +116,7 @@ export function MultiFormDialog({ caseId, formKey, includeVet, destination, onPr
     formKey === 'AnnexIII' ? 'Annex III'
     : formKey === 'NZ' ? 'NZ'
     : formKey === 'VBC' ? 'VBC'
+    : formKey === 'Form_R11' ? 'R.1/1'
     : 'UK'
 
   const [mounted, setMounted] = useState(false)

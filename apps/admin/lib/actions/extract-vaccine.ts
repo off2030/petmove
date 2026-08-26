@@ -1,6 +1,7 @@
 'use server'
 
 import OpenAI from 'openai'
+import { normalizeValidUntil } from '@petmove/domain'
 import { reportActionError } from './_report-error'
 
 /** 백신/구충제 이미지 추출 전용 고정밀 모델. env OPENAI_VACCINE_MODEL 로 오버라이드 가능. */
@@ -217,7 +218,17 @@ export async function extractVaccineInfo(input: {
     const nonEmpty = records.filter(r => r && Object.values(r).some(v => v !== null))
     if (nonEmpty.length === 0) return { ok: false, error: 'No vaccination info found' }
 
-    return { ok: true, records: nonEmpty }
+    // 면역 유효기간은 저장 표준형("N년")으로 맞춰서 내보낸다. 프롬프트가 "1년" 을 요구해도
+    // 모델은 증명서에 인쇄된 표기를 그대로 옮겨 "1 year"·"1 Year"·"1Y"·"3Y" 를 돌려줄 때가
+    // 있고, 그 값은 유효기간 셀렉터에서 **아무 칸도 선택 안 된 상태**로 보인다
+    // (2026-08-24 황현선/루이). 읽는 쪽(resolveValidUntil)도 받아 주지만, 저장값 자체를
+    // 하나로 모아 둬야 화면·PDF·검증이 같은 걸 본다. 날짜(ISO)나 못 알아먹는 값은 그대로.
+    const normalized = nonEmpty.map(r => {
+      const canon = normalizeValidUntil(r.valid_until)
+      return canon && canon !== r.valid_until ? { ...r, valid_until: canon } : r
+    })
+
+    return { ok: true, records: normalized }
   } catch (err) {
     const reported = reportActionError(err, 'extract-vaccine.extractVaccineInfo')
     const msg = err instanceof Error ? reported : 'Unknown error'

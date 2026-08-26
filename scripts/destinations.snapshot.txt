@@ -1,6 +1,6 @@
 # 목적지 동작(구조) 스냅샷 — scripts/lint-destinations.ts 로 자동 생성.
 # 문구(text)는 journey-copy.snapshot.txt 가 담당. 여기는 구조만.
-# 목적지 39개.
+# 목적지 40개.
 === argentina  (token: 아르헨티나) ===
   [consts] singleDose=true oneYearVaccine=false titerEntryMonths=- vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
   [checks:12] ar.external-parasite-within-15days, ar.import-quarantine-date-valid, ar.internal-parasite-within-15days, ar.rabies-booster-within-prime-validity, ar.rabies-min-21days-before-departure, ar.rabies-prime-after-3months-old, ar.rabies-valid-on-departure, common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.rabies-validity-expired, common.vet-visit-date-valid
@@ -312,6 +312,18 @@
   [docs  cat/round] ph-rabies-titer-result, ph-spsic-doc, form25, ph-kr-export-quarantine-cert, ph-export-quarantine-cert, ph-kr-import-quarantine-cert
   [cards cat/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  50:general-vaccine+동시:has-general-vaccine  52:internal-parasite:has-internal-parasite  95:flight-purchase:has-flight-date  100:import-permit:has-import-permit  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:ph_import_quarantine_date
   [docs  cat/one_way] ph-spsic-doc, form25, ph-kr-export-quarantine-cert
+
+=== portugal  (token: 포르투갈) ===
+  [consts] singleDose=true oneYearVaccine=false titerEntryMonths=null vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
+  [checks:13] common.kr-export-quarantine-date-valid, common.kr-import-quarantine-date-valid, common.kr-return-titer-within-2years, common.rabies-validity-expired, common.vet-visit-date-valid, eu.entry-min-3months-after-titer, eu.import-quarantine-date-valid, eu.microchip-before-rabies, eu.pt-advance-notice-48h-before-entry, eu.rabies-booster-within-prime-validity, eu.rabies-prime-after-12weeks, eu.rabies-valid-until-on-entry, eu.titer-min-30days-after-vaccine
+  [cards dog/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  47:pt-advance-notice:quarantine:pt_advance_notice_date  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:eu_import_quarantine_date  155:eu-export-cert:dated:eu_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
+  [docs  dog/round] eu-rabies-titer-result, form25, eu-health-cert, eu-kr-export-quarantine-cert, eu-kr-import-quarantine-cert
+  [cards dog/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  47:pt-advance-notice:quarantine:pt_advance_notice_date  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:eu_import_quarantine_date
+  [docs  dog/one_way] eu-rabies-titer-result, form25, eu-health-cert, eu-kr-export-quarantine-cert
+  [cards cat/round] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  47:pt-advance-notice:quarantine:pt_advance_notice_date  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:eu_import_quarantine_date  155:eu-export-cert:dated:eu_export_quarantine_date  160:kr-import-quarantine:has-kr-import-quarantine
+  [docs  cat/round] eu-rabies-titer-result, form25, eu-health-cert, eu-kr-export-quarantine-cert, eu-kr-import-quarantine-cert
+  [cards cat/one_way] 10:intake:always-done  20:microchip:microchip-set  30:rabies-vaccine-1:has-rabies-valid  40:rabies-titer:has-titer-entry  45:flight-purchase:has-flight-date  47:pt-advance-notice:quarantine:pt_advance_notice_date  110:vet-visit:has-vet-visit  115:document-checklist:all-required-docs  120:certificate-issue:has-kr-export-quarantine  140:departure:quarantine:eu_import_quarantine_date
+  [docs  cat/one_way] eu-rabies-titer-result, form25, eu-health-cert, eu-kr-export-quarantine-cert
 
 === russia  (token: 러시아) ===
   [consts] singleDose=true oneYearVaccine=false titerEntryMonths=- vetWindowDog=10 vetWindowCat=10 flightImportBadge=false flightReturnBadge=false
