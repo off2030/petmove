@@ -77,3 +77,10 @@ __pycache__/
 
 # fontconfig 캐시 (이미지 생성 스크립트가 만듦)
 fccache/
+
+# 펫무브와 무관한 별개 프로젝트 작업물 (레트로차트 등) — 이 저장소에 섞이지 않게.
+.codex-temp/
+apps/rechart/
+
+# 참고용으로 내려받은 임시 파일
+tmp/
