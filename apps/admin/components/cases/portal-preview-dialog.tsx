@@ -14,7 +14,7 @@ interface Props {
 }
 
 /**
- * 펫무브(portal) 고객앱 미리보기 — 케이스 상세에서 띄우는 폰 프레임 모달.
+ * 펫무브 앱(portal) 미리보기 — 케이스 상세에서 띄우는 폰 프레임 모달.
  *
  * 열릴 때 admin 서버액션으로 단기 서명 토큰 URL 을 받아 iframe 으로 portal 의
  * /preview/[token] 을 로드한다. 보호자가 보는 여정 화면을 그대로 보여준다.
@@ -68,7 +68,7 @@ export function PortalPreviewDialog({ caseId, caseLabel, destination, onClose }:
           <div className="min-w-0">
             <h2 className="flex items-center gap-1.5 font-serif text-[16px] font-medium leading-tight text-white">
               <Smartphone className="h-4 w-4 shrink-0" />
-              고객앱 미리보기
+              펫무브 앱 미리보기
             </h2>
             <p className="mt-0.5 truncate font-serif text-[12px] text-white/55">
               {destination ? `${caseLabel} · ${destination}` : caseLabel}
@@ -116,7 +116,7 @@ export function PortalPreviewDialog({ caseId, caseLabel, destination, onClose }:
             ) : url ? (
               <iframe
                 src={url}
-                title="펫무브 고객앱 미리보기"
+                title="펫무브 앱 미리보기"
                 className="h-full border-0"
                 style={{ width: 'calc(100% + 17px)' }}
               />

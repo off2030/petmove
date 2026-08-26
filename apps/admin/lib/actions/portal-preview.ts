@@ -6,9 +6,9 @@ import { signPreviewToken } from '@petmove/auth/preview-token'
 import { parseDestinations } from '@petmove/domain'
 
 /**
- * 펫무브(portal) 고객앱 미리보기 URL 생성.
+ * 펫무브 앱(portal) 미리보기 URL 생성.
  *
- * 케이스 상세의 "고객앱 미리보기" 가 호출 — caseId 에 대한 단기 서명 토큰을 만들어
+ * 케이스 상세의 "펫무브 앱 미리보기" 가 호출 — caseId 에 대한 단기 서명 토큰을 만들어
  * portal 의 /preview/[token] 절대 URL 을 돌려준다. 클라이언트가 iframe 으로 띄운다.
  *
  * 인증: getUser + admin RLS(org_member/super_admin) 로 케이스가 보이는지 확인한 뒤에만

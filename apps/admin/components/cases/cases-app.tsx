@@ -15,10 +15,11 @@ import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-downl
 import type { MultiFormKey } from '@/lib/pdf-multi-forms'
 import { MultiFormDialog } from './multi-form-dialog'
 import { RabiesSelectDialog, RABIES_SLOT_CAP } from './rabies-select-dialog'
-import { ChevronLeft, ChevronRight, Link2, Smartphone, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Link2, Trash2 } from 'lucide-react'
 import { AssigneePicker } from './assignee-picker'
 import { ShareLinkDialog } from './share-link-dialog'
 import { PortalPreviewDialog } from './portal-preview-dialog'
+import { AppPreviewButton } from './app-preview-button'
 import { resolveCerts, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly } from '@petmove/domain'
 import type { CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
@@ -514,18 +515,14 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
                       />
                     )}
                     <CaseHistory caseId={selectedCase.id} />
-                    <button
-                      type="button"
-                      onClick={() => setPreviewOpen({
+                    {/* 아이콘 색이 앱 연결 상태 — 초록=연결됨, 앰버=같은 이메일 계정만 있음, 회색=미연결. */}
+                    <AppPreviewButton
+                      caseId={selectedCase.id}
+                      onOpen={() => setPreviewOpen({
                         caseId: selectedCase.id,
                         label: `${selectedCase.customer_name || '(이름 없음)'}${selectedCase.pet_name ? ` / ${selectedCase.pet_name}` : ''}`,
                       })}
-                      title="고객앱 미리보기"
-                      aria-label="고객앱 미리보기"
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                    >
-                      <Smartphone className="h-3.5 w-3.5" />
-                    </button>
+                    />
                     <button
                       type="button"
                       onClick={() => setShareOpen({

@@ -25,7 +25,6 @@ import { SectionLabel } from '@/components/ui/section-label'
 import { EditableField } from './editable-field'
 import { PairedField } from './paired-field'
 import { CustomerNameRow } from './customer-name-row'
-import { AppLinkRow } from './app-link-row'
 import { AddressField } from './address-field'
 import { BreedField } from './breed-field'
 import { ColorField } from './color-field'
@@ -367,8 +366,6 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                 />
               )
             })}
-            {/* 고객정보 끝: 고객앱(portal) 계정 연결 상태 — 이메일 필드로는 알 수 없는 실제 소유권. */}
-            {g.group === '고객정보' && <AppLinkRow caseId={caseRow.id} />}
             {/* 기타정보: Payment (attachments now inside NotesField) */}
             {g.group === '기타정보' && (
               <PaymentField caseId={caseRow.id} caseRow={caseRow} />
