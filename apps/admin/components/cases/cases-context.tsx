@@ -595,10 +595,30 @@ export function CasesProvider({
           // 진짜 0건은 다음 정상 reconnect 또는 Realtime DELETE 가 반영한다.
           if (fresh.length === 0 && casesRef.current.length > 0) return
 
-          const prevIds = new Set(casesRef.current.map((c) => c.id))
-          const arrivedIds = fresh
-            .filter((c) => !prevIds.has(c.id) && !selfAddedRef.current.has(c.id))
-            .map((c) => c.id)
+          // '신규' 판정 — 예전엔 "내 목록에 없으면 신규"였는데, 재연결 시점에 목록이
+          // 비어 있거나 일부만 있으면(첫 배치 실패·토큰 갱신 race 등) 돌아온 전량이
+          // 신규로 잡혔다(1,900행 전부 파란 표식). 목록 상태에 기대는 판정이라 원인이
+          // 남아 있었고, 조직 전환 케이스만 따로 막아 뒀을 뿐이다.
+          //
+          // 기준을 **생성 시각**으로 바꾼다: 끊기기 전 목록에서 가장 최근 created_at 을
+          // 기준선으로 삼고, 그보다 나중에 만들어진 행만 신규다. 양쪽 값 모두 DB 가 준
+          // 같은 형식이라 문자열 비교가 안전하고, 클라이언트 시계와도 무관하다.
+          // 기준선이 없으면(목록이 비어 있으면) 아무것도 신규로 보지 않는다 — 판단 근거가
+          // 없을 때 표식을 안 붙이는 쪽이 전량 오표시보다 낫다.
+          const prevRows = casesRef.current
+          const prevIds = new Set(prevRows.map((c) => c.id))
+          let newestSeen = ''
+          for (const c of prevRows) if (c.created_at > newestSeen) newestSeen = c.created_at
+          const arrivedIds = newestSeen
+            ? fresh
+                .filter(
+                  (c) =>
+                    !prevIds.has(c.id) &&
+                    !selfAddedRef.current.has(c.id) &&
+                    c.created_at > newestSeen,
+                )
+                .map((c) => c.id)
+            : []
           // 경량 fresh 로 전량 교체하되, 이미 hydrate 된 행은 지키기:
           //  - updated_at 이 그대로면 캐시 행 유지 (풀 data 보존 — 열려 있는 상세가
           //    notes·결제를 잃지 않게)
