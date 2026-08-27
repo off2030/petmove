@@ -15,16 +15,20 @@ import { getCurrentUser } from '@petmove/auth/server'
 import { createAdminClient } from '@petmove/auth'
 import { TRANSPORT_PARTNER_SLUGS } from '@petmove/domain'
 
-const EVENTS = ['impression', 'tel', 'mail'] as const
+const EVENTS = ['impression', 'tel', 'mail', 'web', 'guide_link'] as const
 type OutboundEvent = (typeof EVENTS)[number]
 
-const SOURCES = ['journey-flight-step'] as const
-type OutboundSource = (typeof SOURCES)[number]
+// 'journey-note' = 여정 카드 본문에 붙는 한 줄 안내 링크. 어느 카드인지는 stepId 로 가른다
+// (카드가 늘 때마다 source 를 늘리면 집계 축이 둘로 쪼개진다).
+const SOURCES = ['journey-flight-step', 'app-guide', 'journey-note'] as const
+export type OutboundSource = (typeof SOURCES)[number]
 
 export interface LogOutboundInput {
   event: OutboundEvent
   source: OutboundSource
-  /** impression 은 목록 단위라 생략. 클릭은 업체 slug 필수. */
+  /** 여정 카드 id — 어느 카드에서 눌렀는지. 카드 밖(안내 페이지)은 생략. */
+  stepId?: string | null
+  /** impression·guide_link 는 업체를 지목하지 않는다. 나머지 클릭은 업체 slug 필수. */
   partnerSlug?: string | null
   destination?: string | null
   caseId?: string | null
@@ -35,8 +39,10 @@ export async function logOutbound(input: LogOutboundInput): Promise<void> {
     if (!EVENTS.includes(input.event)) return
     if (!SOURCES.includes(input.source)) return
 
-    const slug = input.event === 'impression' ? null : (input.partnerSlug ?? null)
-    if (input.event !== 'impression' && (!slug || !TRANSPORT_PARTNER_SLUGS.includes(slug))) return
+    // 테이블 제약과 같은 규칙 — 업체 없는 이벤트는 slug 를 비우고, 업체 클릭은 반드시 채운다.
+    const partnerless = input.event === 'impression' || input.event === 'guide_link'
+    const slug = partnerless ? null : (input.partnerSlug ?? null)
+    if (!partnerless && (!slug || !TRANSPORT_PARTNER_SLUGS.includes(slug))) return
 
     // 로그인 사용자만 기록한다. 펫무브워크 '펫무브 앱 미리보기'는 세션 없는 pm_preview
     // 쿠키로 도는데, 그걸 세면 운영자가 케이스를 열어볼 때마다 노출이 부풀어 클릭률이
@@ -48,6 +54,7 @@ export async function logOutbound(input: LogOutboundInput): Promise<void> {
     await admin.from('outbound_clicks').insert({
       event: input.event,
       partner_slug: slug,
+      step_id: input.stepId ?? null,
       source: input.source,
       // 여행지는 자유 문자열이라 길이만 자른다(표시용 토큰, 조회 키가 아님).
       destination: input.destination ? input.destination.slice(0, 60) : null,

@@ -253,6 +253,18 @@ export interface DestinationOverride {
    * **편도만 있는 목적지** — 왕복 개념 자체가 없다(호주·뉴질랜드, 2026-07-27 사용자 확정).
    * 준비에 6개월 이상 걸리고 도착 후 계류까지 하는 이주형 이동이라 '갔다 오는' 케이스가 없다.
    *
+   * ── 판단 기준(2026-08-27 사용자 확정) ──────────────────────────────────
+   * 기본: **화물 운송 + 도착 후 계류**가 있으면 편도만 만든다. 이주형 이동이라
+   *       왕복 수요가 없고, 귀국 여정을 지탱할 근거도 없다.
+   * 예외: **귀국용 광견병 항체검사가 필요한 나라는 왕복을 허용한다.** 한국으로
+   *       돌아올 때 항체검사를 새로 받아야 하면 그 절차를 앱이 안내해야 하므로
+   *       귀국 여정이 실제로 필요하다(말레이시아).
+   *   · 광견병 비발생국(isRabiesFreeOrigin)은 귀국 항체검사가 면제라 이 예외에
+   *     해당하지 않는다 — 홍콩·싱가포르가 편도인 이유.
+   *   · 입국 요건으로 이미 항체검사를 받는 나라도 해당하지 않는다(인도네시아).
+   *   · **영국은 예외다** — 프랑스 경유 등 화물이 아닌 경로가 있어 왕복을 남긴다.
+   *     화물 전용국이라는 이유만으로 편도로 돌리지 말 것.
+   *
    * 선언하면 세 곳이 함께 움직인다:
    *   · getTripType 이 저장값과 무관하게 'one_way' 를 돌려준다 → 왕복 전용 카드
    *     (현지 수출 검역·한국 수입 검역)가 getStepsForCase 에서 자동 제외된다
@@ -617,6 +629,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   indonesia: {
     keywords: ['인도네시아', 'indonesia'],
     archetype: 'sea-permit',
+    // 편도 전용(2026-08-27 사용자 확정) — 화물 + 도착 후 7일 계류. 입국 요건으로 이미
+    //   광견병 항체검사(RNATT)를 받으므로 '귀국 항체검사 때문에 왕복이 필요한' 예외에
+    //   해당하지 않는다. 말레이시아는 같은 계류국이지만 귀국 항체검사가 필요해 왕복 유지.
+    oneWayOnly: true,
     rabies: {
       doses: 1,
       // ✅ **생후 3개월**(2026-07-22 조사 확정). 인도네시아 외교부 공관 안내가 인용한
@@ -999,6 +1015,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   hongkong: {
     keywords: ['홍콩', 'hong kong', 'hongkong'],
     archetype: 'sea-permit',
+    // 편도 전용(2026-08-27 사용자 확정) — 화물로만 갈 수 있는 나라인데 왕복이 열려 있어
+    //   귀국 여정이 준비되지 않은 채 선택될 수 있었다. 호주·뉴질랜드·남아공과 같은 처리.
+    //   기존에 저장된 'round' 케이스는 getTripType 이 편도로 단일 판정한다.
+    //   ⚠️ 영국도 같은 화물 전용국이지만 이번 판단에서 제외했다 — 함께 켜지 말 것.
+    oneWayOnly: true,
     rabies: {
       doses: 1,
       // DC-02v05 11(c) "In the case of primary vaccination the animal was at least 90 days
@@ -1919,7 +1940,7 @@ export function resolveActiveDestination(
  * 미저장 또는 비매칭 시 디폴트 'round'.
  */
 /**
- * 편도만 있는 목적지인가 — 프로파일 `oneWayOnly` 파생(호주·뉴질랜드).
+ * 편도만 있는 목적지인가 — 프로파일 `oneWayOnly` 파생(호주·뉴질랜드·싱가포르·홍콩·남아공).
  * 왕복·편도 토글 노출, 귀국 항공권 입력, 왕복 전용 카드가 모두 이 한 곳을 본다.
  */
 export function isOneWayOnlyDestination(destination: string | null | undefined): boolean {
@@ -1942,7 +1963,7 @@ export function getTripType(
   destinationToken: string | null | undefined,
 ): 'round' | 'one_way' {
   if (!destinationToken) return 'round'
-  // 편도 전용 목적지(호주·뉴질랜드)는 저장값과 무관하게 편도 — 기존 케이스에 'round' 가
+  // 편도 전용 목적지는 저장값과 무관하게 편도 — 기존 케이스에 'round' 가
   //   남아 있어도 왕복 카드가 되살아나지 않게 여기서 단일 판정한다.
   if (isOneWayOnlyDestination(destinationToken)) return 'one_way'
   const map = (data?.['trip_type'] as Record<string, unknown> | undefined) ?? {}

@@ -11,7 +11,10 @@ function toDate(updated: string | undefined): Date | undefined {
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const pages = ['', '/guide/', '/contact/'].map((p) => ({ url: `${BASE}${p || '/'}` }))
+  // React 페이지는 content JSON 이 없어 listSlugs 에 안 잡힌다 — 여기에 직접 넣는다.
+  const pages = ['', '/guide/', '/contact/', '/docs/pet-transport-quote/'].map((p) => ({
+    url: `${BASE}${p || '/'}`,
+  }))
   const docs = listSlugs('docs').map((s) => ({
     url: `${BASE}/docs/${s}/`,
     lastModified: toDate(getArticle('docs', s)?.updated),

@@ -20,15 +20,19 @@
 
 create table if not exists public.outbound_clicks (
   id bigint generated always as identity primary key,
-  event text not null check (event in ('impression', 'tel', 'mail', 'web')),
-  -- impression 은 목록 단위라 slug 가 없고, 클릭은 반드시 업체를 지목한다.
+  event text not null
+    check (event in ('impression', 'tel', 'mail', 'web', 'guide_link')),
+  -- impression(목록 노출)·guide_link(안내 페이지로 가는 링크)는 업체를 지목하지 않는다.
+  -- 나머지(tel·mail·web)는 특정 업체로 나가는 클릭이라 slug 가 반드시 있다.
   partner_slug text,
   constraint outbound_clicks_slug_matches_event
-    check ((event = 'impression') = (partner_slug is null)),
+    check ((event in ('impression', 'guide_link')) = (partner_slug is null)),
   /** 노출 위치 — 'journey-flight-step' 등. 자리를 늘리면 여기서 갈린다. */
   source text not null,
   /** 여행지(한글 토큰). 나라별 반응 차이를 보기 위해. */
   destination text,
+  /** 여정 카드 id — 어느 카드에서 눌렀는지(수입 허가 vs 계류 예약). 카드 밖 노출은 NULL. */
+  step_id text,
   user_id uuid references auth.users(id) on delete set null,
   case_id uuid references public.cases(id) on delete set null,
   created_at timestamptz not null default now()
@@ -43,5 +47,18 @@ comment on table public.outbound_clicks is
   '외부 업체 접점의 노출·클릭 로그. service-role 전용(RLS 정책 없음).';
 
 alter table public.outbound_clicks enable row level security;
+
+-- 이미 테이블이 만들어진 DB 를 위한 보정 — create table if not exists 는 기존 테이블의
+-- 제약을 갱신하지 않는다. guide_link(항공권 구매 카드 → 운송업체 안내 링크)를 받으려면
+-- 두 제약을 모두 갈아끼워야 한다. 재실행해도 안전하다.
+alter table public.outbound_clicks drop constraint if exists outbound_clicks_event_check;
+alter table public.outbound_clicks add constraint outbound_clicks_event_check
+  check (event in ('impression', 'tel', 'mail', 'web', 'guide_link'));
+
+alter table public.outbound_clicks add column if not exists step_id text;
+
+alter table public.outbound_clicks drop constraint if exists outbound_clicks_slug_matches_event;
+alter table public.outbound_clicks add constraint outbound_clicks_slug_matches_event
+  check ((event in ('impression', 'guide_link')) = (partner_slug is null));
 
 notify pgrst, 'reload schema';

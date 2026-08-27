@@ -27,6 +27,7 @@ export const SHELL_GUIDE_SLUGS = [
   'japan-airport-quarantine',
   'quarantine-stations',
   'th-aqs-contacts',
+  'transport-quote',
 ] as const
 
 /**

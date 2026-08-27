@@ -11,6 +11,7 @@
     "check:min-age": "tsx scripts/check-min-age.mts"
   },
   "dependencies": {
+    "@petmove/domain": "workspace:*",
     "next": "^16.2.3",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
