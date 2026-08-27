@@ -134,7 +134,6 @@ import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm, type RabiesProductHints } from './rabies-entry-inputs'
 import { RabiesExtraInputs, type RabiesExtraEntry } from './rabies-extra-inputs'
 import { StepAttachments } from './step-attachments'
-import { TransportPartners } from './transport-partners'
 import { TiterExtraInputs, type TiterExtraEntry } from './titer-extra-inputs'
 import { TiterInputs, type TiterForm } from './titer-inputs'
 import { VetVisitInputs } from './vet-visit-inputs'
@@ -3160,13 +3159,11 @@ export function StepDetailView({
           </section>
         )}
 
-        {/* 운송업체 안내 — 운송 예약/항공권 카드에서만, **아직 예약 전**일 때. 이 카드에서
-            할 일의 실제 순서가 '업체 정해 예약 → 출발일 입력 → 확인서 첨부'라 입력 위에 둔다.
-            예약을 마친(done) 사람에겐 쓸모없어 숨긴다 — 노출 모수가 실제 잠재 수요자로
-            좁혀져 클릭률도 더 정확해진다. 협의 전 수요 실험(노출·클릭 기록). */}
-        {isFlight && !done && (
-          <TransportPartners caseId={caseId} destination={activeDest ?? null} />
-        )}
+        {/* 운송업체 안내는 여기 있었지만 고객에게 내보내지 않는다(2026-08-27 내림).
+            모든 목적지의 항공권 카드에 떠서, 기내·수하물로 함께 갈 수 있는 나라의 고객에게도
+            화물 운송업체를 권하고 있었다. 목적지별 노출 조건과 견적 문의 폼을 갖춘 판을
+            feat/transport-partners 에서 준비 중 — 그게 들어올 때 다시 켠다.
+            부품(TransportPartners)·기록(outbound_clicks)·집계 카드는 그대로 둔다. */}
 
         {/* Inputs — 마이크로칩·광견병1·2차 step 은 인터랙티브, 그 외는 read-only 스키마 미리보기. */}
         {isMicrochip && (
