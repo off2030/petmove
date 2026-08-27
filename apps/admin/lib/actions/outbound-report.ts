@@ -92,7 +92,8 @@ export async function getOutboundReport(days = 30): Promise<Result<OutboundRepor
     // 업체별 연락(전화·메일·문의)이 일어나는 자리는 안내 페이지 하나뿐이다 —
     // 여정 카드의 연락처 블록은 2026-08-27 에 걷어냈고, 여정에는 버튼만 남았다.
     const PLACES: { key: string; label: string }[] = [
-      { key: 'app-guide', label: '운송업체 페이지' },
+      { key: 'app-guide', label: '운송업체 페이지 (앱)' },
+      { key: 'www-quote', label: '운송업체 페이지 (홈페이지)' },
     ]
 
     type Acc = {
@@ -133,8 +134,8 @@ export async function getOutboundReport(days = 30): Promise<Result<OutboundRepor
       const dest = perDest.get(destKey) ?? { impressions: 0, clicks: 0 }
 
       // 항공권 구매 카드의 한 줄 안내 → 업체를 지목하지 않는 내부 링크.
-      // 여정 카드 버튼 — 노출·클릭 모두 source 가 'journey-note' 다.
-      if (r.source === 'journey-note') {
+      // 안내 페이지로 들어온 링크 — 앱 여정 카드('journey-note')와 홈페이지 글('www-article').
+      if (r.source === 'journey-note' || r.source === 'www-article') {
         const key = r.step_id ?? '(미지정)'
         const st = stepAcc(key)
         if (r.event === 'impression') {

@@ -205,13 +205,12 @@ export const OTHER_GROUPS: Array<{ label: string; items: PostRef[] }> = [
   {
     label: '항공·운송',
     items: [
-      { title: '반려동물 비행기 탑승 준비', kind: 'docs', slug: 'dog-flight-preparation' },
-      { title: '반려동물 기내반입 기준', kind: 'docs', slug: 'airline-pet-cabin-policy' },
-      { title: '반려동물 운송요금', kind: 'docs', slug: 'airline-pet-cabin-fees' },
+      { title: '강아지·고양이 비행기 탑승 준비', kind: 'docs', slug: 'dog-flight-preparation' },
+      { title: '반려동물 운송요금·기내반입 기준', kind: 'docs', slug: 'airline-pet-cabin-fees' },
       { title: '반려동물 비행기 스트레스의 원인과 예방', kind: 'blog', slug: 'dog-flight-medication' },
       // 콘텐츠 JSON 이 아니라 React 페이지(app/docs/pet-transport-quote) — 경로 규칙은 같아
       // postPath 가 그대로 /docs/pet-transport-quote/ 를 만든다.
-      { title: '반려동물 항공 운송업체 견적', kind: 'docs', slug: 'pet-transport-quote' },
+      { title: '반려동물 항공 운송업체 문의', kind: 'docs', slug: 'pet-transport-quote' },
     ],
   },
   {

@@ -78,7 +78,7 @@ export default function TransportQuoteScreen() {
         </button>
 
         <h1 style={{ ...serif, fontSize: 26, lineHeight: 1.15, margin: '8px 0 0', color: C.ink }}>
-          운송업체
+          운송업체 문의
         </h1>
         <p style={{ fontSize: 13, color: C.ink2, margin: '8px 0 0', lineHeight: 1.6 }}>
           반려동물을 항공 화물로 보낼 때는 운송업체를 통해 비행기를 예약해요. 계류시설 예약,

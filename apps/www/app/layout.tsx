@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { CopyAttribution } from '@/components/copy-attribution'
+import { TransportLinkTracker } from '@/components/transport-link-tracker'
 import { SiteJsonLd } from '@/components/structured-data'
 import '@/styles/site.css'
 import '@/styles/landing.css'
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SiteJsonLd />
         {children}
         <CopyAttribution />
+        <TransportLinkTracker />
       </body>
     </html>
   )

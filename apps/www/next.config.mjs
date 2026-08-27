@@ -42,7 +42,9 @@ const DOCS_RENAMES = {
   aqsreservation: 'pet-quarantine-reservation',
   suculdongmulgeomyeog: 'pet-export-inspection',
   // 2026-08-05 내부 링크 전수조사에서 발견된 죽은 옛 슬러그
-  'hanggongsabyeol-gangaji-goyangi-ginaebanib-heoyonggijun': 'airline-pet-cabin-policy',
+  // 기내반입 기준 글은 운송요금 글로 병합(2026-08-27) — 옛 주소를 policy 로 보내면
+  //   리디렉트를 두 번 타므로 최종 목적지로 바로 보낸다.
+  'hanggongsabyeol-gangaji-goyangi-ginaebanib-heoyonggijun': 'airline-pet-cabin-fees',
 }
 
 // /blog/<옛슬러그>/ → /blog/<새슬러그>/
@@ -73,6 +75,11 @@ const BLOG_RENAMES = {
 
 // 프리픽스 없는 루트 옛 주소 / 대응 글이 없어 허브·홈으로 보내는 것들
 const EXTRA_REDIRECTS = [
+  // 글 병합 — 기내반입 기준을 운송요금 글로 합쳤다(2026-08-27). 같은 7개 항공사 표를
+  //   둘로 나눠 갖고 있어 검색어가 흩어졌다. 자리가 더 좋은 쪽(요금: 클릭 23·CTR 4.1%)으로
+  //   합치고 기준 글(클릭 2·CTR 0.7%)을 넘긴다. ⛔ 이 리디렉트를 지우면 그동안 쌓인
+  //   외부 링크와 검색 순위가 끊긴다.
+  { source: '/docs/airline-pet-cabin-policy', destination: '/docs/airline-pet-cabin-fees/' },
   // 고스트 초기(루트 슬러그) 시절 주소
   { source: '/dongmulgeomyeogso-wicireul-alryeojuseyo', destination: '/docs/pet-quarantine-station/' },
   { source: '/gangaji-simjangsusuleul-wihan-ilbon-ibgug-junbi-annae', destination: '/blog/japan-entry-for-dog-heart-surgery/' },
