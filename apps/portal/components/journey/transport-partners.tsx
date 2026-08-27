@@ -1,11 +1,11 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useMemo, useRef } from 'react'
 import { buildCaseJourneyContext, orderedTransportPartners } from '@petmove/domain'
 import { C } from '@/lib/palette'
 import { monoCap } from '@/components/me/settings-shared'
 import { useCase } from '@/components/portal-shell/case-data-provider'
+import { openExternalUrl } from '@/lib/native/open-external'
 import { logOutbound, type OutboundSource } from '@/lib/actions/outbound'
 
 /**
@@ -28,17 +28,14 @@ export function TransportPartners({
   source,
   caseId = null,
   destination = null,
-  intro = true,
-  moreHref,
+  heading = true,
 }: {
   /** 노출 자리 — 집계를 자리별로 가른다. 이걸 안 나누면 클릭률이 뒤섞여 무의미해진다. */
   source: OutboundSource
   caseId?: string | null
   destination?: string | null
-  /** 안내 문구 표시 — 페이지 본문이 이미 설명했으면 끈다. */
-  intro?: boolean
-  /** 있으면 카드 하단에 견적 안내 페이지로 가는 줄을 붙인다(여정 카드용). */
-  moreHref?: string
+  /** 소제목('운송업체') 표시 — 페이지가 이미 같은 제목을 달았으면 끈다. */
+  heading?: boolean
 }) {
   // 순서 회전 seed — 케이스가 없으면(견적 페이지) 고정 seed. 한 사람에게 순서가 안 흔들린다.
   const partners = useMemo(() => orderedTransportPartners(caseId ?? 'guide'), [caseId])
@@ -88,7 +85,7 @@ export function TransportPartners({
 
   return (
     <section ref={ref} style={{ marginTop: 22 }}>
-      {intro && <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>운송업체</h3>}
+      {heading && <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>운송업체</h3>}
 
       <div
         style={{
@@ -98,18 +95,11 @@ export function TransportPartners({
           padding: '14px 16px',
         }}
       >
-        {intro && (
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.ink2 }}>
-            반려동물 운송을 대행하는 업체예요. 펫무브와 계약 관계는 아니고, 공개된 대표
-            연락처를 안내해 드려요.
-          </p>
-        )}
-
-        <div style={{ marginTop: intro ? 14 : 2, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ marginTop: 2, display: 'flex', flexDirection: 'column', gap: 12 }}>
           {partners.map((p, i) => {
-            // 첫 업체 위의 선은 안내 문구와 목록을 가르는 용도다. 문구가 없는 화면
-            // (가이드 페이지)에선 카드 테두리 바로 아래 뜬금없이 그어져 지운다.
-            const topLine = i > 0 || intro
+            // 선은 업체 사이를 가르는 용도다. 첫 업체 위에 그으면 카드 테두리 바로
+            // 아래 뜬금없이 겹쳐 보인다.
+            const topLine = i > 0
             return (
             <div
               key={p.slug}
@@ -138,11 +128,17 @@ export function TransportPartners({
                   <IconMail />
                   메일 보내기
                 </a>
+                {/* 네이티브 WebView 는 <a target="_blank"> 로 외부 URL 을 못 여는 경우가 많다 —
+                    다른 외부 링크와 같이 인앱 브라우저(openExternalUrl)로 연다. */}
                 <a
                   href={p.web}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => onContact(p.slug, 'web')}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onContact(p.slug, 'web')
+                    void openExternalUrl(p.web)
+                  }}
                   style={link}
                   aria-label={`${p.name} 견적 문의하기`}
                 >
@@ -155,33 +151,7 @@ export function TransportPartners({
           })}
         </div>
 
-        {/* 가이드 페이지(intro=false)엔 안내 문구를 두지 않는다 — 목록만 남긴다. */}
-        {intro && (
-          <p style={{ margin: '12px 0 0', fontSize: 11.5, color: C.ink3 }}>
-            비용·조건은 업체에 직접 확인해 주세요.
-          </p>
-        )}
 
-        {moreHref && (
-          <Link
-            href={moreHref}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              marginTop: 12,
-              paddingTop: 12,
-              borderTop: `.5px solid ${C.line}`,
-              width: '100%',
-              color: C.accent,
-              fontSize: 13,
-              textDecoration: 'none',
-            }}
-          >
-            견적은 어떻게 받나요?
-            <span style={{ color: C.ink3 }}>→</span>
-          </Link>
-        )}
       </div>
     </section>
   )

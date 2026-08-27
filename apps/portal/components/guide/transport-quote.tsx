@@ -78,22 +78,23 @@ export default function TransportQuoteScreen() {
         </button>
 
         <h1 style={{ ...serif, fontSize: 26, lineHeight: 1.15, margin: '8px 0 0', color: C.ink }}>
-          운송업체·견적
+          운송업체
         </h1>
         <p style={{ fontSize: 13, color: C.ink2, margin: '8px 0 0', lineHeight: 1.6 }}>
-          반려동물을 항공 화물로 보낼 때는 운송업체를 통해 비행기를 예약해요. 비용은 여행지,
-          동물의 크기, 서비스 범위에 따라 달라져요. 우리 아이 상황에 맞게 견적을 받아보세요.
+          반려동물을 항공 화물로 보낼 때는 운송업체를 통해 비행기를 예약해요. 계류시설 예약,
+          수입 허가 신청 등도 함께 의뢰할 수 있어요. 비용은 여행지, 동물의 크기, 서비스 범위에
+          따라 달라져요. 우리 아이 상황에 맞게 견적을 받아보세요.
         </p>
 
         {/* ── 업체 ── */}
         <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>
-          운송업체
+          문의처
         </div>
-        <TransportPartners source="app-guide" intro={false} />
+        <TransportPartners source="app-guide" heading={false} />
 
         {/* ── 연락 전 준비물 ── */}
         <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>
-          견적에 필요한 필수 정보
+          이런 정보가 필요해요
         </div>
         <div
           style={{

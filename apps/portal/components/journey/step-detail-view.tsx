@@ -134,10 +134,10 @@ import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm, type RabiesProductHints } from './rabies-entry-inputs'
 import { RabiesExtraInputs, type RabiesExtraEntry } from './rabies-extra-inputs'
 import { StepAttachments } from './step-attachments'
-import { TransportPartners } from './transport-partners'
 import { TiterExtraInputs, type TiterExtraEntry } from './titer-extra-inputs'
 import { TiterInputs, type TiterForm } from './titer-inputs'
 import { VetVisitInputs } from './vet-visit-inputs'
+import { logOutbound } from '@/lib/actions/outbound'
 
 interface CollectedCheck {
   check: ProcedureCheck
@@ -311,6 +311,74 @@ export function StepDetailView({
    * (2026-08-01 통일). 운송업체 블록은 전자에만, 후자엔 한 줄 안내만 둔다.
    */
   const isCargoOnlyFlight = isFlight && step.title === '운송 예약'
+  /**
+   * 운송업체 안내 버튼의 노출 측정 — 예전엔 카드 안 연락처 블록이 노출을 셌는데 블록을
+   * 걷어내면서 그 자리가 비었다. 버튼이 화면에 실제로 보인 순간을 1건으로 남긴다.
+   * 카드마다 세므로 '이 카드를 본 N명 중 M명이 눌렀다'를 카드별로 만들 수 있다.
+   */
+  const transportPillRef = useRef<HTMLAnchorElement | null>(null)
+  const transportPillLogged = useRef(false)
+  useEffect(() => {
+    transportPillLogged.current = false
+  }, [step.id])
+  useEffect(() => {
+    const el = transportPillRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return
+        io.disconnect()
+        if (transportPillLogged.current) return
+        transportPillLogged.current = true
+        void logOutbound({
+          event: 'impression',
+          source: 'journey-note',
+          stepId: step.id,
+          destination: activeDest ?? null,
+          caseId,
+        })
+      },
+      { threshold: 0.5 },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [step.id, activeDest, caseId])
+  /**
+   * 운송업체가 대신 처리해 주기도 하는 사전 절차 카드 — 수입 허가·계류시설 예약.
+   * 카드 id 로 고른다(번호로 세지 않는다): 개·고양이는 뜨는 카드가 달라 번호가 밀린다.
+   * 화물 전용국 중 영국은 제외 — 프랑스 경유 등 화물이 아닌 경로가 있다.
+   */
+  // 카드별 문구 — 키는 '<여행지>:<카드 id>' 또는 '<카드 id>'(여행지 무관). 같은 카드라도
+  // 나라마다 신청 주체가 달라 여행지까지 봐야 한다(수입 허가는 호주·뉴질랜드·홍콩 공용).
+  // 문장은 불릿(설명), 이동은 알약 버튼 — 앱의 기존 규칙을 따른다. 링크를 문장 안에
+  // 넣지 말 것(다른 22개 카드가 전부 버튼 방식이고, 불릿에 링크가 들어간 전례가 없다).
+  const MUST_DELEGATE = { text: '이 절차는 보호자가 직접 하기 어려워요. 운송업체에 문의하세요.' }
+  const CAN_DELEGATE = { text: '이 절차는 운송업체에 의뢰할 수 있어요.' }
+  const AGENT_NOTE_STEPS: Record<string, { text: string }> = {
+    // 남아공 — 보호자가 직접 신청할 수 없어 '대신 해주기도'가 아니라 '의뢰해야 한다'.
+    // (2026-08-27 사용자 지정 문구, 그대로 쓸 것)
+    'za-aia-permit': MUST_DELEGATE,
+    'south_africa:import-permit': MUST_DELEGATE,
+    'south_africa:za-quarantine-reservation': MUST_DELEGATE,
+    // 호주·뉴질랜드·홍콩은 기본값(CAN_DELEGATE)을 그대로 쓴다 — 2026-08-27 사용자 지정으로
+    //   세 나라 문구를 통일했다. 남아공만 위의 MUST_DELEGATE 로 남는다.
+  }
+  const AGENT_NOTE_DEFAULT = CAN_DELEGATE
+  const agentNote =
+    ['australia', 'new_zealand', 'south_africa', 'hongkong'].includes(destinationKey ?? '') &&
+    [
+      'import-permit',
+      'za-aia-permit',
+      'au-rnatt-declaration',
+      'au-quarantine-reservation',
+      'nz-rcf',
+      'nz-quarantine-reservation',
+      'za-quarantine-reservation',
+    ].includes(step.id)
+      ? (AGENT_NOTE_STEPS[`${destinationKey}:${step.id}`] ??
+        AGENT_NOTE_STEPS[step.id] ??
+        AGENT_NOTE_DEFAULT)
+      : null
   /**
    * 출발일(departure_date)을 **별도 입력칸으로 노출**하는 목적지인지.
    *
@@ -2936,6 +3004,17 @@ export function StepDetailView({
                 {/* 동반 가능국(항공권 구매)에는 업체 블록 대신 이 한 줄만 둔다 — 기내로 갈 수
                     있는 사람에게 화물업체를 권하지 않되, 동물만 부치는 경우의 길은 남긴다.
                     링크가 들어가야 해서 description 문자열이 아니라 여기서 렌더한다. */}
+                {agentNote && (
+                  <li
+                    key="agent-note"
+                    style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 8 }}
+                  >
+                    <span style={{ flexShrink: 0, color: C.ink3 }} aria-hidden>
+                      •
+                    </span>
+                    <span>{agentNote.text}</span>
+                  </li>
+                )}
                 {isFlight && !isCargoOnlyFlight && (
                   <li
                     key="cargo-only-note"
@@ -2944,16 +3023,7 @@ export function StepDetailView({
                     <span style={{ flexShrink: 0, color: C.ink3 }} aria-hidden>
                       •
                     </span>
-                    <span>
-                      동물만 항공 화물로 보내는 경우는{' '}
-                      <Link
-                        href="/guide/transport-quote"
-                        style={{ color: C.accent, textDecoration: 'underline' }}
-                      >
-                        운송업체
-                      </Link>
-                      를 통해 비행기를 예약해요.
-                    </span>
+                    <span>동물만 항공 화물로 보내는 경우는 운송업체를 통해 비행기를 예약해요.</span>
                   </li>
                 )}
               </ul>
@@ -3067,6 +3137,43 @@ export function StepDetailView({
               </a>
             )
           })}
+
+          {/* 운송업체 안내로 가는 길 — step.links 와 같은 알약 버튼 모양을 쓴다(내부 링크라 '→').
+              카드 본 할 일(BICON 등) 버튼 뒤에 놓아 위계를 지킨다. */}
+          {(agentNote || isFlight) && (
+            <Link
+              href="/guide/transport-quote"
+              ref={transportPillRef}
+              onClick={() => {
+                void logOutbound({
+                  event: 'guide_link',
+                  source: 'journey-note',
+                  stepId: step.id,
+                  destination: activeDest ?? null,
+                  caseId,
+                })
+              }}
+              style={{
+                marginTop: 14,
+                marginRight: 8,
+                padding: '9px 14px',
+                borderRadius: 999,
+                border: `.5px solid ${C.line}`,
+                background: 'rgb(var(--pm-surface-rgb) / 0.55)',
+                color: C.ink,
+                fontSize: 13,
+                fontWeight: 500,
+                letterSpacing: '-0.005em',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                textDecoration: 'none',
+              }}
+            >
+              운송업체 문의
+              <span style={{ color: C.ink3 }}>→</span>
+            </Link>
+          )}
         </section>
 
         {/* 안내 — situational 메시지와 procedure-check info 를 한 박스에 합친다.
@@ -3189,18 +3296,9 @@ export function StepDetailView({
           </section>
         )}
 
-        {/* 운송업체 안내 — 운송 예약/항공권 카드에서만, **아직 예약 전**일 때. 이 카드에서
-            할 일의 실제 순서가 '업체 정해 예약 → 출발일 입력 → 확인서 첨부'라 입력 위에 둔다.
-            예약을 마친(done) 사람에겐 쓸모없어 숨긴다 — 노출 모수가 실제 잠재 수요자로
-            좁혀져 클릭률도 더 정확해진다. 협의 전 수요 실험(노출·클릭 기록). */}
-        {isCargoOnlyFlight && !done && (
-          <TransportPartners
-            source="journey-flight-step"
-            caseId={caseId}
-            destination={activeDest ?? null}
-            moreHref="/guide/transport-quote"
-          />
-        )}
+        {/* 운송업체 연락처 블록은 여정에서 걷어냈다(2026-08-27) — 카드에서 밖으로 나가는 길은
+            앱 전체가 알약 버튼 하나로 통일돼 있고, 연락처를 카드 안에 심은 건 여기뿐이었다.
+            연락처는 '운송업체' 안내 페이지가 맡고, 여정에는 그리로 가는 버튼만 둔다. */}
 
         {/* Inputs — 마이크로칩·광견병1·2차 step 은 인터랙티브, 그 외는 read-only 스키마 미리보기. */}
         {isMicrochip && (
