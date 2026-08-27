@@ -31,6 +31,7 @@ export const metadata: Metadata = {
     title: '반려동물 항공 운송업체 견적 받는 방법 · 펫무브',
     description:
       '비용은 여행지·동물의 크기·서비스 범위에 따라 달라집니다. 문의할 때 필요한 정보와 운송업체 연락처를 안내합니다.',
+    images: ['/content/images/2026/08/pet-transport-quote-cover.webp'],
   },
 }
 
@@ -63,6 +64,12 @@ export default function TransportQuotePage() {
             아는 걸 되풀이하는 것이었다(2026-08-26 삭제). 연락처 · 연락 전 준비물 · 왜 견적이
             필요한지 한 문장만 남긴다. */}
         <div className="prose">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            className="art-cover"
+            src="/content/images/2026/08/pet-transport-quote-cover.webp"
+            alt="공항에서 이동장과 함께 있는 강아지와 고양이"
+          />
           <p>
             반려동물을 <strong>항공 화물</strong>로 보낼 때는 운송업체를 통해 비행기를 예약합니다.
             계류시설 예약, 수입 허가 신청 등도 함께 의뢰할 수 있습니다. 비용은 여행지, 동물의
