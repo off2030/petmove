@@ -9,7 +9,7 @@
  * 기록 실패로 사용자의 연락을 막을 이유가 없다.
  */
 
-const EVENTS = new Set(['impression', 'tel', 'mail'])
+const EVENTS = new Set(['impression', 'tel', 'mail', 'web'])
 const SOURCES = new Set(['www-quote'])
 const SLUGS = new Set(['petairline', 'worldpettour'])
 

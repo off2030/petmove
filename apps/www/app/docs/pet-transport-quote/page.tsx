@@ -36,8 +36,10 @@ export const metadata: Metadata = {
 
 /** 견적 요청할 때 업체가 묻는 것들 — 미리 챙기면 한 번에 끝난다. */
 const QUOTE_INPUTS: string[] = [
-  '반려동물 종류·품종·몸무게',
-  '이동장(케이지) 크기 — 가로·세로·높이',
+  '반려동물 종류·품종·이름',
+  '나이·성별·몸무게',
+  '반려동물 몸 치수 — 가로·세로·높이',
+  '이동장(케이지) 치수 — 가로·세로·높이',
   '출발 공항과 도착 도시',
   '희망 출국일 (또는 대략적인 시기)',
   '편도인지 왕복인지',
@@ -85,7 +87,7 @@ export default function TransportQuotePage() {
 
           <p>
             객실이나 수하물로 함께 갈 수 있다면 항공사가 공지한 요금표대로입니다 —{' '}
-            <a href="/docs/airline-pet-cabin-fees/">반려동물 운송요금</a> 에서 확인하세요.
+            <a href="/docs/airline-pet-cabin-fees/">반려동물 운송요금</a>에서 확인하세요.
           </p>
         </div>
 

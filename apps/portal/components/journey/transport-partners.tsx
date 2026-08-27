@@ -68,7 +68,7 @@ export function TransportPartners({
     return () => io.disconnect()
   }, [caseId, dest, source])
 
-  function onContact(partnerSlug: string, event: 'tel' | 'mail') {
+  function onContact(partnerSlug: string, event: 'tel' | 'mail' | 'web') {
     // 기다리지 않는다 — tel:/mailto: 기본 동작이 즉시 이어져야 한다.
     void logOutbound({ event, source, partnerSlug, destination: dest, caseId })
   }
@@ -106,12 +106,19 @@ export function TransportPartners({
         )}
 
         <div style={{ marginTop: intro ? 14 : 2, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {partners.map((p) => (
+          {partners.map((p, i) => {
+            // 첫 업체 위의 선은 안내 문구와 목록을 가르는 용도다. 문구가 없는 화면
+            // (가이드 페이지)에선 카드 테두리 바로 아래 뜬금없이 그어져 지운다.
+            const topLine = i > 0 || intro
+            return (
             <div
               key={p.slug}
-              style={{ paddingTop: 12, borderTop: `.5px solid ${C.line}` }}
+              style={{
+                paddingTop: topLine ? 12 : 0,
+                borderTop: topLine ? `.5px solid ${C.line}` : undefined,
+              }}
             >
-              <div style={{ fontSize: 14, fontWeight: 500, color: C.ink }}>{p.name}</div>
+              <div style={{ fontSize: 14.5, fontWeight: 600, color: C.ink }}>{p.name}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 1 }}>
                 <a
                   href={`tel:${p.tel}`}
@@ -131,14 +138,29 @@ export function TransportPartners({
                   <IconMail />
                   메일 보내기
                 </a>
+                <a
+                  href={p.web}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => onContact(p.slug, 'web')}
+                  style={link}
+                  aria-label={`${p.name} 견적 문의하기`}
+                >
+                  <IconForm />
+                  견적 문의
+                </a>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
 
-        <p style={{ margin: '12px 0 0', fontSize: 11.5, color: C.ink3 }}>
-          {intro ? '순서는 무작위예요. 비용·조건은 업체에 직접 확인해 주세요.' : '순서는 무작위예요.'}
-        </p>
+        {/* 가이드 페이지(intro=false)엔 안내 문구를 두지 않는다 — 목록만 남긴다. */}
+        {intro && (
+          <p style={{ margin: '12px 0 0', fontSize: 11.5, color: C.ink3 }}>
+            비용·조건은 업체에 직접 확인해 주세요.
+          </p>
+        )}
 
         {moreHref && (
           <Link
@@ -170,6 +192,18 @@ function IconPhone() {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ flexShrink: 0 }}>
       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  )
+}
+
+/** 견적 문의 폼 — 업체 사이트의 신청서로 나간다. 같은 굵기·크기의 문서 아이콘. */
+function IconForm() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ flexShrink: 0 }}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+      <path d="M8 13h8" />
+      <path d="M8 17h5" />
     </svg>
   )
 }

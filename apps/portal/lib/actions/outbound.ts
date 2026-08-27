@@ -15,7 +15,7 @@ import { getCurrentUser } from '@petmove/auth/server'
 import { createAdminClient } from '@petmove/auth'
 import { TRANSPORT_PARTNER_SLUGS } from '@petmove/domain'
 
-const EVENTS = ['impression', 'tel', 'mail'] as const
+const EVENTS = ['impression', 'tel', 'mail', 'web'] as const
 type OutboundEvent = (typeof EVENTS)[number]
 
 const SOURCES = ['journey-flight-step', 'app-guide'] as const

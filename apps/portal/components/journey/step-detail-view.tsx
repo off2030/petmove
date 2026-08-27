@@ -306,6 +306,12 @@ export function StepDetailView({
     isTiter && !!destinationKey && !TITER_EXTRA_CARD_DESTINATIONS.includes(destinationKey)
   const isFlight = step.id === 'flight-purchase'
   /**
+   * 화물 전용국인지 — 기내·수하물 동반이 안 돼 반드시 운송업체를 거치는 나라.
+   * 카드 이름으로 갈린다: 화물 전용국은 '운송 예약', 동반 가능국은 '항공권 구매'
+   * (2026-08-01 통일). 운송업체 블록은 전자에만, 후자엔 한 줄 안내만 둔다.
+   */
+  const isCargoOnlyFlight = isFlight && step.title === '운송 예약'
+  /**
    * 출발일(departure_date)을 **별도 입력칸으로 노출**하는 목적지인지.
    *
    * 태국·필리핀·EU 패밀리만 출발일·도착일을 따로 받는다. 그 외(일본·대만·중국 등)는 날짜가
@@ -2927,6 +2933,29 @@ export function StepDetailView({
                     </li>
                   )
                 })}
+                {/* 동반 가능국(항공권 구매)에는 업체 블록 대신 이 한 줄만 둔다 — 기내로 갈 수
+                    있는 사람에게 화물업체를 권하지 않되, 동물만 부치는 경우의 길은 남긴다.
+                    링크가 들어가야 해서 description 문자열이 아니라 여기서 렌더한다. */}
+                {isFlight && !isCargoOnlyFlight && (
+                  <li
+                    key="cargo-only-note"
+                    style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 8 }}
+                  >
+                    <span style={{ flexShrink: 0, color: C.ink3 }} aria-hidden>
+                      •
+                    </span>
+                    <span>
+                      동물만 항공 화물로 보내는 경우는{' '}
+                      <Link
+                        href="/guide/transport-quote"
+                        style={{ color: C.accent, textDecoration: 'underline' }}
+                      >
+                        운송업체
+                      </Link>
+                      를 통해 비행기를 예약해요.
+                    </span>
+                  </li>
+                )}
               </ul>
             )
           })()}
@@ -3164,7 +3193,7 @@ export function StepDetailView({
             할 일의 실제 순서가 '업체 정해 예약 → 출발일 입력 → 확인서 첨부'라 입력 위에 둔다.
             예약을 마친(done) 사람에겐 쓸모없어 숨긴다 — 노출 모수가 실제 잠재 수요자로
             좁혀져 클릭률도 더 정확해진다. 협의 전 수요 실험(노출·클릭 기록). */}
-        {isFlight && !done && (
+        {isCargoOnlyFlight && !done && (
           <TransportPartners
             source="journey-flight-step"
             caseId={caseId}

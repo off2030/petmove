@@ -36,12 +36,10 @@ const monoCap: React.CSSProperties = {
 
 /** 견적 요청할 때 업체가 묻는 것들 — 미리 챙기면 한 번에 끝난다. */
 const QUOTE_INPUTS: string[] = [
-  '반려동물 종류·품종·몸무게',
-  '이동장(케이지) 크기 — 가로·세로·높이',
-  '출발 공항과 도착 도시',
-  '희망 출국일 (또는 대략적인 시기)',
-  '편도인지 왕복인지',
-  '마이크로칩·광견병 백신 등 준비 상황',
+  '반려동물 종·품종',
+  '반려동물 나이·성별',
+  '반려동물 체중·크기(가로·세로·높이)',
+  '여행지·출발 예정일',
 ]
 
 export default function TransportQuoteScreen() {
@@ -80,25 +78,22 @@ export default function TransportQuoteScreen() {
         </button>
 
         <h1 style={{ ...serif, fontSize: 26, lineHeight: 1.15, margin: '8px 0 0', color: C.ink }}>
-          운송업체 견적
+          운송업체·견적
         </h1>
         <p style={{ fontSize: 13, color: C.ink2, margin: '8px 0 0', lineHeight: 1.6 }}>
-          항공 화물은 운송업체를 통해 예약해요. 운임은 이동장을 포함한 부피와 노선에 따라
-          달라져서 정해진 표가 없어요. 우리 아이 기준으로 견적을 받아보셔야 해요.
+          반려동물을 항공 화물로 보낼 때는 운송업체를 통해 비행기를 예약해요. 비용은 여행지,
+          동물의 크기, 서비스 범위에 따라 달라져요. 우리 아이 상황에 맞게 견적을 받아보세요.
         </p>
 
         {/* ── 업체 ── */}
         <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>
-          운송을 대행하는 업체
+          운송업체
         </div>
-        <p style={{ fontSize: 12.5, color: C.ink3, margin: '0 4px 10px', lineHeight: 1.55 }}>
-          펫무브와 계약 관계는 아니고, 공개된 대표 연락처예요.
-        </p>
         <TransportPartners source="app-guide" intro={false} />
 
         {/* ── 연락 전 준비물 ── */}
         <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>
-          연락하기 전에 챙길 것
+          견적에 필요한 필수 정보
         </div>
         <div
           style={{
@@ -116,7 +111,7 @@ export default function TransportQuoteScreen() {
                 gap: 8,
                 padding: '10px 0',
                 borderBottom: i === QUOTE_INPUTS.length - 1 ? 'none' : `.5px solid ${C.line}`,
-                fontSize: 13.5,
+                fontSize: 13,
                 color: C.ink,
                 lineHeight: 1.5,
               }}
@@ -126,10 +121,6 @@ export default function TransportQuoteScreen() {
             </div>
           ))}
         </div>
-        <p style={{ fontSize: 12.5, color: C.ink3, margin: '10px 4px 0', lineHeight: 1.55 }}>
-          대부분 펫무브에 이미 입력하신 내용이에요. 준비 화면에서 확인하고 그대로 알려주시면
-          견적이 빨라집니다.
-        </p>
       </div>
     </div>
   )
