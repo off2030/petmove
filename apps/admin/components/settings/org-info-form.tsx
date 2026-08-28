@@ -35,12 +35,13 @@ interface FieldDef {
  * hospital: 병원 + 수의사. transport: 회사 정보만.
  */
 const HOSPITAL_GROUPS = ['Clinic', 'Veterinarian'] as const
-const TRANSPORT_GROUPS = ['Company'] as const
+const TRANSPORT_GROUPS = ['Company', 'Contact'] as const
 
 const GROUP_LABELS: Record<string, string> = {
   Clinic: '병원',
   Veterinarian: '수의사',
   Company: '회사',
+  Contact: '담당자',
 }
 
 /**
@@ -53,8 +54,10 @@ function avatarHostGroup(orgType: OrgType): string {
   return orgType === 'transport' ? 'Company' : 'Clinic'
 }
 
-// org-level (모든 멤버 공유) 필드만 — 개인 담당자 정보(이름·휴대폰·면허) 는 user-level
-// 로 분리되어 "내 담당자 정보" 섹션에서 별도 편집.
+// 조직정보에 들어가는 전부 — org-level(모든 멤버 공유) 한 벌이 증명서 출력의 유일한
+// 출처다. 여기 입력한 값이 그대로 나가고, 비우면 그 칸은 빈 채로 발급된다.
+// (2026-08-28 이전에는 수의사·담당자 이름/휴대폰/면허가 user-level(profiles.contact_info)
+//  에 따로 있어, 조직값이 보이지 않는 fallback 으로 남아 지워도 출력이 안 바뀌었다.)
 const HOSPITAL_FIELDS: FieldDef[] = [
   { key: 'clinic_ko', label: '병원명', group: 'Clinic' },
   { key: 'clinic_en', label: '영문 병원명', group: 'Clinic' },
@@ -67,6 +70,11 @@ const HOSPITAL_FIELDS: FieldDef[] = [
   { key: 'email', label: '이메일', group: 'Clinic' },
   { key: 'naver_booking_url', label: '네이버예약 링크', group: 'Clinic' },
   { key: 'kakao_chat_url', label: '카카오톡 채널 링크', group: 'Clinic' },
+  { key: 'name_ko', label: '한글 이름', group: 'Veterinarian' },
+  { key: 'name_first_en', label: '영문 이름', group: 'Veterinarian' },
+  { key: 'name_last_en', label: '영문 성', group: 'Veterinarian' },
+  { key: 'mobile_phone', label: '휴대폰', group: 'Veterinarian' },
+  { key: 'license_no', label: '면허번호', group: 'Veterinarian' },
 ]
 
 const TRANSPORT_FIELDS: FieldDef[] = [
@@ -77,6 +85,10 @@ const TRANSPORT_FIELDS: FieldDef[] = [
   { key: 'transport_address_en', label: '영문 주소', group: 'Company', type: 'textarea' },
   { key: 'transport_address_detail_en', label: '영문 상세주소', group: 'Company' },
   { key: 'transport_postal_code', label: '우편번호', group: 'Company' },
+  { key: 'transport_contact_ko', label: '한글 이름', group: 'Contact' },
+  { key: 'transport_contact_first_en', label: '영문 이름', group: 'Contact' },
+  { key: 'transport_contact_last_en', label: '영문 성', group: 'Contact' },
+  { key: 'transport_mobile_phone', label: '휴대폰', group: 'Contact' },
 ]
 
 /**
@@ -191,7 +203,6 @@ export function OrgInfoForm({
   onAvatarRemove,
   viewTab: controlledViewTab,
   onViewTabChange,
-  children,
 }: {
   info: VetInfo
   orgType: OrgType
@@ -205,8 +216,6 @@ export function OrgInfoForm({
   /** 부모가 동물병원/운송회사 전환을 소유할 때. 주면 폼 안에는 전환 버튼을 그리지 않는다. */
   viewTab?: 'hospital' | 'transport'
   onViewTabChange?: (t: 'hospital' | 'transport') => void
-  /** 병원/회사 카드와 '추가 정보' 카드 사이에 끼울 카드 (조직정보 화면의 수의사 카드). */
-  children?: React.ReactNode
 }) {
   const [info, setInfo] = useState<VetInfo>(initialInfo)
   const [orgType, setOrgType] = useState<OrgType>(initialOrgType)
@@ -479,8 +488,7 @@ export function OrgInfoForm({
       {/* Field groups */}
       {groups.map((group) => {
         const groupFields = fields.filter((f) => f.group === group)
-        // org-level 필드가 없는 그룹(예: 수의사 — 본인 정보는 발급자 섹션) 은 빈 헤더만
-        // 뜨므로 건너뛴다. (동물병원에 '수의사'가 두 번 보이던 문제.)
+        // 필드가 하나도 없는 그룹은 빈 헤더만 뜨므로 건너뛴다.
         if (groupFields.length === 0) return null
         return (
         <SettingsCard key={group} title={GROUP_LABELS[group] ?? group}>
@@ -593,9 +601,6 @@ export function OrgInfoForm({
         </SettingsCard>
         )
       })}
-
-      {/* 병원/회사 다음에 낄 카드 — 조직정보 화면의 '수의사'(발급자) 카드. */}
-      {children}
 
       {/* 사용자 정의 추가 필드 — 라벨/값 자유 입력. 병원·운송 양쪽에 노출.
           값은 org-level 한 벌이라 어느 쪽에서 고쳐도 같은 목록이다. */}
