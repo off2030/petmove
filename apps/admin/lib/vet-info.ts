@@ -8,6 +8,10 @@
  * PDF 생성 server action 진입 시 loadVetInfo() 를 호출해 캐시를 갱신한다.
  */
 
+import { withActiveVetApplied, type VetEntry } from './vet-entry'
+export { activeVet, emptyVetEntry, listVets, withActiveVetApplied, VET_ENTRY_KEYS } from './vet-entry'
+export type { VetEntry, VetEntryKey } from './vet-entry'
+
 /**
  * 사용자가 임의로 추가하는 조직 메타데이터(주차정보·세무번호 등 고정 필드 외).
  * organization_settings.company_info 의 같은 JSON blob 안에 저장.
@@ -80,6 +84,18 @@ export interface VetInfo {
   transport_contact_last_en: string
   transport_mobile_phone: string
 
+  /**
+   * 수의사 명단. 위의 평면 수의사 필드(name_* / mobile_phone / license_no)는 이 중
+   * 선택된 한 명의 사본이다.
+   *
+   * key 자체가 **없으면** 명단 도입 이전 데이터로 보고 평면 필드를 첫 수의사로 승격한다
+   * (listVets). 빈 배열([])은 "수의사를 모두 지웠다"는 뜻이라 승격하지 않는다 — 그래야
+   * 지운 게 실제로 증명서에서 사라진다.
+   */
+  vets?: VetEntry[]
+  /** 증명서에 쓸 수의사 id. 비었거나 명단에 없으면 첫 번째. */
+  active_vet_id?: string
+
   /** 사용자 정의 추가 필드 — 동물병원 토글에서 입력. UI 의 "정보 추가 +" 로 자유롭게 늘릴 수 있음. */
   custom_fields?: CustomField[]
   /** 사용자 정의 추가 필드 — 운송회사 토글에서 입력. 동물병원과 독립 저장. */
@@ -131,7 +147,7 @@ export const DEFAULT_VET_INFO: VetInfo = {
 }
 
 /** custom_fields 를 제외한 단순 문자열 필드 키. UI 에서 input/textarea 로 편집됨. */
-export type VetInfoKey = Exclude<keyof VetInfo, 'custom_fields' | 'transport_custom_fields'>
+export type VetInfoKey = Exclude<keyof VetInfo, 'custom_fields' | 'transport_custom_fields' | 'vets' | 'active_vet_id'>
 
 let _cached: VetInfo = DEFAULT_VET_INFO
 
@@ -149,12 +165,13 @@ export const VET_INFO = new Proxy({} as VetInfo, {
 
 /**
  * Supabase 에서 organization_settings.company_info override 를 읽어 캐시 갱신.
- * 조직 공유 정보(회사명·주소·우편번호 등) 만 — 발급자 본인 정보(이름·휴대폰·면허) 는
- * loadEffectiveVetInfo() 가 user-level overlay 로 덧씌움.
  *
- * 설정 페이지(병원/회사 정보 편집) 가 사용 — 해당 화면은 org-level 만 보고 편집.
+ * 증명서에 나가는 조직 정보의 **유일한 출처**. 설정 → 조직정보 화면에서 보이는 값이
+ * 그대로 발급되고, 비운 칸은 빈 채로 나간다.
  *
- * PDF 생성 경로는 loadEffectiveVetInfo() 사용해야 본인 정보가 cert 에 반영됨.
+ * 2026-08-28 이전에는 여기에 profiles.contact_info(user-level)를 덧씌우는
+ * loadEffectiveVetInfo() 가 있었다. 발급자 본인이 이름·휴대폰·면허를 비워두면 조직값이
+ * 조용히 대신 들어가서, 화면에서 지워도 출력이 그대로인 문제가 있어 한 층으로 정리.
  */
 export async function loadVetInfo(orgId?: string): Promise<VetInfo> {
   try {
@@ -168,7 +185,7 @@ export async function loadVetInfo(orgId?: string): Promise<VetInfo> {
       .eq('key', 'company_info')
       .maybeSingle()
     const override = (data?.value as Partial<VetInfo> | null) ?? {}
-    const result = { ...DEFAULT_VET_INFO, ...override }
+    const result = withActiveVetApplied({ ...DEFAULT_VET_INFO, ...override })
     // 활성 조직 조회일 때만 PDF용 module 캐시 갱신. 슈퍼어드민이 남의 조직(orgId 지정)을
     // 조회할 때는 캐시를 건드리지 않는다(PDF 발급자 정보 오염 방지).
     if (!orgId) _cached = result
@@ -177,66 +194,6 @@ export async function loadVetInfo(orgId?: string): Promise<VetInfo> {
     if (!orgId) _cached = DEFAULT_VET_INFO
     return DEFAULT_VET_INFO
   }
-}
-
-/**
- * loadVetInfo() 결과(org-level)에 현재 로그인 사용자의 contact_info 를 overlay.
- * 한 조직에 멤버가 여럿일 때 발급자 본인의 이름·휴대폰·면허번호가 cert 에 반영되도록.
- *
- * Overlay 매핑은 org_type 별로 다름:
- *   hospital  → user.{name_ko/first_en/last_en/en/mobile_phone/license_no} 가
- *               vet.{name_ko/name_first_en/name_last_en/name_en/mobile_phone/license_no} 덮음.
- *   transport → user.{transport_name_ko/_first_en/_last_en/_en, transport_mobile_phone} 가
- *               vet.{transport_contact_ko/_first_en/_last_en/_en, transport_mobile_phone} 덮음.
- *               (담당자는 수의사(name_*)와 독립 필드. license_no 는 transport 에 의미 없음)
- *
- * 빈 user 값은 overlay 안 함 — 사용자가 본인 정보 미입력 상태면 org-level 기본값 그대로.
- *
- * PDF 생성 server action 진입 시 await 한 번 호출. _cached 도 effective 결과로 갱신
- * → VET_INFO Proxy 가 fillPdf 안 vet:* transform 에서 read 시점에 effective 값 반환.
- */
-export async function loadEffectiveVetInfo(): Promise<VetInfo> {
-  const org = await loadVetInfo()
-  let userInfo: Partial<{
-    name_ko: string; name_first_en: string; name_last_en: string; name_en: string;
-    mobile_phone: string; license_no: string;
-    transport_name_ko: string; transport_name_first_en: string; transport_name_last_en: string;
-    transport_name_en: string; transport_mobile_phone: string;
-  }> = {}
-  let orgType: 'hospital' | 'transport' = 'hospital'
-  try {
-    const { loadUserContactInfo } = await import('@/lib/user-contact')
-    userInfo = await loadUserContactInfo()
-    const { createClient } = await import('@petmove/auth/server')
-    const { getActiveOrgId } = await import('@/lib/supabase/active-org')
-    const supabase = await createClient()
-    const orgId = await getActiveOrgId()
-    const { data } = await supabase.from('organizations').select('org_type').eq('id', orgId).maybeSingle()
-    if ((data as { org_type?: string } | null)?.org_type === 'transport') orgType = 'transport'
-  } catch {
-    // user 정보 fail 시 org-level 만 그대로 — cached 도 그대로.
-    return org
-  }
-  const overlay: Partial<VetInfo> = {}
-  // overlay only when user value is non-empty (preserve org defaults otherwise)
-  if (orgType === 'hospital') {
-    if (userInfo.name_ko) overlay.name_ko = userInfo.name_ko
-    if (userInfo.name_first_en) overlay.name_first_en = userInfo.name_first_en
-    if (userInfo.name_last_en) overlay.name_last_en = userInfo.name_last_en
-    if (userInfo.name_en) overlay.name_en = userInfo.name_en
-    if (userInfo.mobile_phone) overlay.mobile_phone = userInfo.mobile_phone
-    if (userInfo.license_no) overlay.license_no = userInfo.license_no
-  } else {
-    // 담당자(transport_name_*) — 수의사(name_*)와 독립. 운송 발급자 본인 정보로 overlay.
-    if (userInfo.transport_name_ko) overlay.transport_contact_ko = userInfo.transport_name_ko
-    if (userInfo.transport_name_first_en) overlay.transport_contact_first_en = userInfo.transport_name_first_en
-    if (userInfo.transport_name_last_en) overlay.transport_contact_last_en = userInfo.transport_name_last_en
-    if (userInfo.transport_name_en) overlay.transport_contact_en = userInfo.transport_name_en
-    if (userInfo.transport_mobile_phone) overlay.transport_mobile_phone = userInfo.transport_mobile_phone
-  }
-  const effective: VetInfo = { ...org, ...overlay }
-  _cached = effective
-  return effective
 }
 
 /**
@@ -259,7 +216,7 @@ export async function saveVetInfo(patch: Partial<VetInfo>, orgId?: string): Prom
     .eq('key', 'company_info')
     .maybeSingle()
   const existing = (existingRow?.value as Partial<VetInfo> | null) ?? {}
-  const merged: VetInfo = { ...DEFAULT_VET_INFO, ...existing, ...patch }
+  const merged: VetInfo = withActiveVetApplied({ ...DEFAULT_VET_INFO, ...existing, ...patch })
   const { error } = await supabase
     .from('organization_settings')
     .upsert({ org_id: targetOrg, key: 'company_info', value: merged, updated_at: new Date().toISOString() })

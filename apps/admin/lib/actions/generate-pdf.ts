@@ -5,7 +5,7 @@ import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import { FORM_CAPACITY, type MultiFormKey } from '@/lib/pdf-multi-forms'
 import type { CaseRow } from '@petmove/domain'
 import { getEffectiveVaccineList, flattenCaseForDestination, getDepartureDate, getVetVisitDate, parseDestinations, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly, recommendRabiesDoseIndices } from '@petmove/domain'
-import { loadEffectiveVetInfo } from '@/lib/vet-info'
+import { loadVetInfo } from '@/lib/vet-info'
 
 export type GeneratePdfResult =
   | { ok: true; pdf: string; filename: string }
@@ -43,7 +43,7 @@ async function generate(
   caseId: string,
   options?: { includeSignature?: boolean; includeVet?: boolean; destination?: string | null; extras?: Record<string, unknown>; rabiesIndices?: number[] },
 ): Promise<GeneratePdfResult> {
-  await loadEffectiveVetInfo()
+  await loadVetInfo()
   const supabase = await createClient()
   const { data: row, error } = await supabase
     .from('cases')
@@ -139,7 +139,7 @@ async function generateStandalone(
   formKey: string,
   extras: Record<string, unknown>,
 ): Promise<GeneratePdfResult> {
-  await loadEffectiveVetInfo()
+  await loadVetInfo()
   const stub: CaseRow = {
     id: 'standalone', org_id: '',
     microchip: null, microchip_extra: [],
@@ -719,7 +719,7 @@ async function generateMulti(
   options?: { includeVet?: boolean; destination?: string | null },
 ): Promise<GenerateMultiPdfResult> {
   if (caseIds.length === 0) return { ok: false, error: '대상 동물이 없습니다' }
-  await loadEffectiveVetInfo()
+  await loadVetInfo()
   const supabase = await createClient()
   const { data: rows, error } = await supabase.from('cases').select('*').in('id', caseIds)
   if (error) return { ok: false, error: error.message }

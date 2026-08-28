@@ -4,9 +4,12 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import { Plus, X } from 'lucide-react'
 import type { OrgType } from '@/lib/actions/company-info'
 import type { CustomField, VetInfo, VetInfoKey } from '@/lib/vet-info'
+// 순수 모듈에서 가져온다 — vet-info 를 런타임 import 하면 서버 전용 코드가 클라이언트로 딸려온다.
+import { activeVet, emptyVetEntry, listVets, type VetEntry } from '@/lib/vet-entry'
 import {
   SettingsActionButton,
   SettingsCard,
+  SettingsCheckBox,
   SettingsControlGroup,
   SettingsField,
   SettingsFooter,
@@ -34,13 +37,14 @@ interface FieldDef {
  * org_type 별 필드 그룹 구성.
  * hospital: 병원 + 수의사. transport: 회사 정보만.
  */
-const HOSPITAL_GROUPS = ['Clinic', 'Veterinarian'] as const
-const TRANSPORT_GROUPS = ['Company'] as const
+// 수의사는 명단(여러 명 + 선택)이라 일반 필드 그룹이 아닌 전용 카드(VetListCard)로 그린다.
+const HOSPITAL_GROUPS = ['Clinic'] as const
+const TRANSPORT_GROUPS = ['Company', 'Contact'] as const
 
 const GROUP_LABELS: Record<string, string> = {
   Clinic: '병원',
-  Veterinarian: '수의사',
   Company: '회사',
+  Contact: '담당자',
 }
 
 /**
@@ -53,8 +57,10 @@ function avatarHostGroup(orgType: OrgType): string {
   return orgType === 'transport' ? 'Company' : 'Clinic'
 }
 
-// org-level (모든 멤버 공유) 필드만 — 개인 담당자 정보(이름·휴대폰·면허) 는 user-level
-// 로 분리되어 "내 담당자 정보" 섹션에서 별도 편집.
+// 조직정보에 들어가는 전부 — org-level(모든 멤버 공유) 한 벌이 증명서 출력의 유일한
+// 출처다. 여기 입력한 값이 그대로 나가고, 비우면 그 칸은 빈 채로 발급된다.
+// (2026-08-28 이전에는 수의사·담당자 이름/휴대폰/면허가 user-level(profiles.contact_info)
+//  에 따로 있어, 조직값이 보이지 않는 fallback 으로 남아 지워도 출력이 안 바뀌었다.)
 const HOSPITAL_FIELDS: FieldDef[] = [
   { key: 'clinic_ko', label: '병원명', group: 'Clinic' },
   { key: 'clinic_en', label: '영문 병원명', group: 'Clinic' },
@@ -77,6 +83,10 @@ const TRANSPORT_FIELDS: FieldDef[] = [
   { key: 'transport_address_en', label: '영문 주소', group: 'Company', type: 'textarea' },
   { key: 'transport_address_detail_en', label: '영문 상세주소', group: 'Company' },
   { key: 'transport_postal_code', label: '우편번호', group: 'Company' },
+  { key: 'transport_contact_ko', label: '한글 이름', group: 'Contact' },
+  { key: 'transport_contact_first_en', label: '영문 이름', group: 'Contact' },
+  { key: 'transport_contact_last_en', label: '영문 성', group: 'Contact' },
+  { key: 'transport_mobile_phone', label: '휴대폰', group: 'Contact' },
 ]
 
 /**
@@ -156,6 +166,13 @@ function derivePhoneIntl(raw: string): string {
   return `+82-${m[1]}-${m[2]}`
 }
 
+/** 새 행(수의사·추가정보)의 로컬 id. 저장 전에도 key 로 쓰이므로 렌더 밖에서 만든다. */
+function newRowId(prefix: string): string {
+  return (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+    ? crypto.randomUUID()
+    : `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+}
+
 const PHONE_KEYS: Set<VetInfoKey> = new Set([
   'phone',
   'mobile_phone',
@@ -191,7 +208,6 @@ export function OrgInfoForm({
   onAvatarRemove,
   viewTab: controlledViewTab,
   onViewTabChange,
-  children,
 }: {
   info: VetInfo
   orgType: OrgType
@@ -205,8 +221,6 @@ export function OrgInfoForm({
   /** 부모가 동물병원/운송회사 전환을 소유할 때. 주면 폼 안에는 전환 버튼을 그리지 않는다. */
   viewTab?: 'hospital' | 'transport'
   onViewTabChange?: (t: 'hospital' | 'transport') => void
-  /** 병원/회사 카드와 '추가 정보' 카드 사이에 끼울 카드 (조직정보 화면의 수의사 카드). */
-  children?: React.ReactNode
 }) {
   const [info, setInfo] = useState<VetInfo>(initialInfo)
   const [orgType, setOrgType] = useState<OrgType>(initialOrgType)
@@ -357,6 +371,78 @@ export function OrgInfoForm({
     })
   }
 
+  // ────────────────────────────────────────────────────────────────────
+  // 수의사 명단 — 여러 명 등록, 그중 하나만 증명서에 나간다(active_vet_id).
+  // 평면 필드(name_* / license_no …) 는 저장 시 서버(withActiveVetApplied)가 선택된
+  // 수의사 값으로 다시 채우므로 여기서는 명단만 다룬다.
+  // ────────────────────────────────────────────────────────────────────
+
+  const vets = listVets(info)
+  const activeVetId = activeVet(info)?.id ?? ''
+
+  /** 저장 직전 정규화 — 영문 합성명·휴대폰 포맷. (평면 필드 저장 경로와 동일 규칙) */
+  function normalizeVet(v: VetEntry): VetEntry {
+    const first = v.name_first_en.trim()
+    const last = v.name_last_en.trim()
+    return {
+      ...v,
+      name_first_en: first,
+      name_last_en: last,
+      name_en: [first, last].filter(Boolean).join(' '),
+      mobile_phone: formatPhoneForSave(v.mobile_phone),
+    }
+  }
+
+  function saveVets(next: VetEntry[], nextActiveId?: string) {
+    if (!info) return
+    const normalized = next.map(normalizeVet)
+    const patch: Partial<VetInfo> = { vets: normalized }
+    if (nextActiveId !== undefined) patch.active_vet_id = nextActiveId
+    setError(null)
+    startTransition(async () => {
+      const r = await onSaveFields(patch)
+      if (r.ok) {
+        if (r.info) setInfo(r.info)
+        setLastSaved(new Date())
+      } else {
+        setError(r.error ?? '저장에 실패했습니다.')
+      }
+    })
+  }
+
+  /** 입력 중에는 로컬만 갱신 — 커밋은 blur(commitVets) 에서. */
+  function updateVet(id: string, patch: Partial<VetEntry>) {
+    if (!info) return
+    setInfo({ ...info, vets: vets.map((v) => v.id === id ? { ...v, ...patch } : v) })
+  }
+
+  function commitVets() {
+    saveVets(vets)
+  }
+
+  function addVet() {
+    if (!info || !isAdmin) return
+    const entry = emptyVetEntry(newRowId('vet'))
+    // 첫 수의사는 자동으로 선택 상태 — 한 명뿐인 조직이 체크를 따로 누를 일이 없도록.
+    const next = [...vets, entry]
+    setInfo({ ...info, vets: next, active_vet_id: vets.length === 0 ? entry.id : (info.active_vet_id ?? '') })
+  }
+
+  function removeVet(id: string) {
+    if (!info) return
+    const next = vets.filter((v) => v.id !== id)
+    // 선택된 수의사를 지웠으면 첫 번째로 넘긴다. 다 지우면 선택도 없음(출력 빈칸).
+    const nextActive = activeVetId === id ? (next[0]?.id ?? '') : activeVetId
+    setInfo({ ...info, vets: next, active_vet_id: nextActive })
+    saveVets(next, nextActive)
+  }
+
+  function selectVet(id: string) {
+    if (!isAdmin || id === activeVetId) return
+    setInfo({ ...info, active_vet_id: id })
+    saveVets(vets, id)
+  }
+
   /**
    * 추가 정보 키 — active 보기(viewTab) 별로 독립 저장.
    * hospital → custom_fields (legacy 호환)
@@ -479,8 +565,7 @@ export function OrgInfoForm({
       {/* Field groups */}
       {groups.map((group) => {
         const groupFields = fields.filter((f) => f.group === group)
-        // org-level 필드가 없는 그룹(예: 수의사 — 본인 정보는 발급자 섹션) 은 빈 헤더만
-        // 뜨므로 건너뛴다. (동물병원에 '수의사'가 두 번 보이던 문제.)
+        // 필드가 하나도 없는 그룹은 빈 헤더만 뜨므로 건너뛴다.
         if (groupFields.length === 0) return null
         return (
         <SettingsCard key={group} title={GROUP_LABELS[group] ?? group}>
@@ -594,8 +679,46 @@ export function OrgInfoForm({
         )
       })}
 
-      {/* 병원/회사 다음에 낄 카드 — 조직정보 화면의 '수의사'(발급자) 카드. */}
-      {children}
+      {/* 수의사 명단 — 동물병원 보기에서만. 체크한 한 명이 증명서에 나간다. */}
+      {!isTransport && (
+        <SettingsCard
+          title="수의사"
+          description="증명서에는 체크한 수의사 한 명이 들어갑니다. 여러 명을 등록해 두고 발급 전에 바꿔 체크하세요."
+        >
+          <div>
+            {vets.length === 0 && (
+              <p className="py-3 font-serif text-[12px] text-muted-foreground/60">
+                등록된 수의사가 없습니다. 증명서의 수의사 칸은 빈 채로 발급됩니다.
+              </p>
+            )}
+            {vets.map((v, i) => (
+              <VetEntryBlock
+                key={v.id}
+                vet={v}
+                index={i}
+                selected={v.id === activeVetId}
+                isAdmin={isAdmin}
+                onSelect={() => selectVet(v.id)}
+                onChange={(patch) => updateVet(v.id, patch)}
+                onCommit={commitVets}
+                onRemove={() => removeVet(v.id)}
+              />
+            ))}
+            {isAdmin && (
+              <div className="py-3 border-b border-dotted border-border/80">
+                <button
+                  type="button"
+                  onClick={addVet}
+                  className="inline-flex items-center gap-xs font-serif text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Plus size={14} />
+                  <span>수의사 추가</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </SettingsCard>
+      )}
 
       {/* 사용자 정의 추가 필드 — 라벨/값 자유 입력. 병원·운송 양쪽에 노출.
           값은 org-level 한 벌이라 어느 쪽에서 고쳐도 같은 목록이다. */}
@@ -634,6 +757,118 @@ export function OrgInfoForm({
       {error && (
         <p className="font-serif text-[13px] text-destructive">{error}</p>
       )}
+    </div>
+  )
+}
+
+/**
+ * 수의사 한 명 — 체크(선택) 행 + 이름·영문명·휴대폰·면허번호.
+ * 체크한 한 명이 증명서에 나간다(active_vet_id). 값 편집은 로컬 갱신 후 blur 에 커밋.
+ */
+function VetEntryBlock({
+  vet,
+  index,
+  selected,
+  isAdmin,
+  onSelect,
+  onChange,
+  onCommit,
+  onRemove,
+}: {
+  vet: VetEntry
+  index: number
+  selected: boolean
+  isAdmin: boolean
+  onSelect: () => void
+  onChange: (patch: Partial<VetEntry>) => void
+  onCommit: () => void
+  onRemove: () => void
+}) {
+  const inputCls = 'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30'
+  const label = vet.name_ko.trim() || vet.name_en.trim() || `수의사 ${index + 1}`
+
+  return (
+    // 두 번째 수의사부터는 위에 여백 — 명단이 길어져도 사람 단위로 끊겨 보이게.
+    <div className={cn('group', index > 0 && 'mt-md')}>
+      <div className="flex items-center justify-between gap-md py-3 border-b border-dotted border-border/80">
+        <button
+          type="button"
+          onClick={onSelect}
+          disabled={!isAdmin}
+          aria-pressed={selected}
+          className="inline-flex items-center gap-sm font-serif text-[14px] disabled:cursor-default"
+        >
+          <SettingsCheckBox checked={selected} />
+          <span className={cn(selected ? 'text-foreground' : 'text-muted-foreground')}>{label}</span>
+          {selected && (
+            <span className="font-serif text-[12px] text-muted-foreground/60">증명서에 사용</span>
+          )}
+        </button>
+        {isAdmin && (
+          <SettingsControlGroup size="sm">
+            <SettingsIconButton
+              variant="destructive"
+              onClick={onRemove}
+              aria-label="수의사 삭제"
+              title="삭제"
+              className="opacity-0 group-hover:opacity-100 transition-all"
+            >
+              <X size={14} />
+            </SettingsIconButton>
+          </SettingsControlGroup>
+        )}
+      </div>
+
+      <SettingsField label="한글 이름">
+        <input
+          type="text"
+          value={vet.name_ko}
+          onChange={(e) => onChange({ name_ko: e.target.value })}
+          onBlur={onCommit}
+          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+          placeholder={isAdmin ? '—' : ''}
+          readOnly={!isAdmin}
+          className={cn(inputCls, !isAdmin && 'cursor-default')}
+        />
+      </SettingsField>
+
+      <EnglishNameSplitRow<'name_first_en' | 'name_last_en'>
+        firstKey="name_first_en"
+        lastKey="name_last_en"
+        firstValue={vet.name_first_en}
+        lastValue={vet.name_last_en}
+        isAdmin={isAdmin}
+        saving={false}
+        onChange={(key, v) => onChange({ [key]: v } as Partial<VetEntry>)}
+        onCommit={onCommit}
+        onCancel={() => {}}
+      />
+
+      <SettingsField label="휴대폰">
+        <input
+          type="text"
+          value={vet.mobile_phone}
+          onChange={(e) => onChange({ mobile_phone: e.target.value })}
+          onBlur={onCommit}
+          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+          placeholder={isAdmin ? '—' : ''}
+          readOnly={!isAdmin}
+          className={cn(inputCls, !isAdmin && 'cursor-default')}
+        />
+      </SettingsField>
+
+      <SettingsField label="면허번호">
+        <input
+          type="text"
+          value={vet.license_no}
+          onChange={(e) => onChange({ license_no: e.target.value })}
+          onBlur={onCommit}
+          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+          placeholder={isAdmin ? '—' : ''}
+          readOnly={!isAdmin}
+          className={cn(inputCls, !isAdmin && 'cursor-default')}
+        />
+      </SettingsField>
     </div>
   )
 }
