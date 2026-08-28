@@ -752,7 +752,7 @@
       },
       "vet_license_number": {
         "source": null,
-        "default": "9608"
+        "transform": "vet:license_no"
       },
       "vet_name": {
         "source": null,
@@ -1142,7 +1142,7 @@
       },
       "text_106cfap": {
         "source": null,
-        "default": "9608",
+        "transform": "vet:license_no",
         "note": "Vet license number (구 vet_license_number)"
       },
       "text_105qnjy": {
@@ -3909,7 +3909,7 @@
       "text_9qhaf": { "source": "microchip",   "note": "p1 Microchip Number" },
       "text_10ehnj": { "source": "vet_visit_date", "note": "p1 Microchip scan date (내원일 자동)" },
 
-      "text_11qfuf": { "source": null, "default": "JINWON LEE",       "note": "p1 Section III — Vet name (BLOCK LETTERS)" },
+      "text_11qfuf": { "source": null, "transform": "vet:name_en_upper", "note": "p1 Section III — Vet name (BLOCK LETTERS)" },
       "text_12gljs": { "source": null, "default": "Republic of Korea", "note": "p1 Section III — Country/region of export" },
 
       "text_13vpdl": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "speciesOnly": "dog", "note": "p1 Canine distemper virus date (강아지 전용)" },

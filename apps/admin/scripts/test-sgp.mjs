@@ -61,6 +61,7 @@ function resolve(mp, c) {
   let m
 
   if (transform === 'en' && source === 'species') return SPECIES_EN[String(raw ?? '').toLowerCase()] ?? ''
+  if (transform === 'vet:name_en_upper') return String(VET_INFO.name_en ?? '').toUpperCase()
   if ((m = transform?.match(/^vet:(.+)$/))) return VET_INFO[m[1]] ?? ''
   if ((m = transform?.match(/^checkbox:eq:(.+)$/))) return String(raw ?? '') === m[1]
   if ((m = transform?.match(/^vaccine_desc:(rabies|ext_parasite|int_parasite|comprehensive):(name|date)\[(\d+)\]$/))) {

@@ -2186,6 +2186,10 @@ function resolveField(
       if (!name) return ''
       return name.split(/\s+/).map((t) => t[0]?.toUpperCase() ?? '').join('')
     }
+    // vet:name_en_upper — 영문명 대문자. 싱가포르 서식처럼 BLOCK LETTERS 칸용.
+    if (key === 'name_en_upper') {
+      return String(VET_INFO.name_en ?? '').toUpperCase()
+    }
     // vet:mobile_phone_intl — 휴대폰을 한국 국제표기(+82-10-…)로 변환.
     if (key === 'mobile_phone_intl') {
       return fmtPhoneIntlKr(VET_INFO.mobile_phone)
