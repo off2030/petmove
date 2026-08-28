@@ -8,6 +8,10 @@
  * PDF 생성 server action 진입 시 loadVetInfo() 를 호출해 캐시를 갱신한다.
  */
 
+import { withActiveVetApplied, type VetEntry } from './vet-entry'
+export { activeVet, emptyVetEntry, listVets, withActiveVetApplied, VET_ENTRY_KEYS } from './vet-entry'
+export type { VetEntry, VetEntryKey } from './vet-entry'
+
 /**
  * 사용자가 임의로 추가하는 조직 메타데이터(주차정보·세무번호 등 고정 필드 외).
  * organization_settings.company_info 의 같은 JSON blob 안에 저장.
@@ -80,6 +84,18 @@ export interface VetInfo {
   transport_contact_last_en: string
   transport_mobile_phone: string
 
+  /**
+   * 수의사 명단. 위의 평면 수의사 필드(name_* / mobile_phone / license_no)는 이 중
+   * 선택된 한 명의 사본이다.
+   *
+   * key 자체가 **없으면** 명단 도입 이전 데이터로 보고 평면 필드를 첫 수의사로 승격한다
+   * (listVets). 빈 배열([])은 "수의사를 모두 지웠다"는 뜻이라 승격하지 않는다 — 그래야
+   * 지운 게 실제로 증명서에서 사라진다.
+   */
+  vets?: VetEntry[]
+  /** 증명서에 쓸 수의사 id. 비었거나 명단에 없으면 첫 번째. */
+  active_vet_id?: string
+
   /** 사용자 정의 추가 필드 — 동물병원 토글에서 입력. UI 의 "정보 추가 +" 로 자유롭게 늘릴 수 있음. */
   custom_fields?: CustomField[]
   /** 사용자 정의 추가 필드 — 운송회사 토글에서 입력. 동물병원과 독립 저장. */
@@ -131,7 +147,7 @@ export const DEFAULT_VET_INFO: VetInfo = {
 }
 
 /** custom_fields 를 제외한 단순 문자열 필드 키. UI 에서 input/textarea 로 편집됨. */
-export type VetInfoKey = Exclude<keyof VetInfo, 'custom_fields' | 'transport_custom_fields'>
+export type VetInfoKey = Exclude<keyof VetInfo, 'custom_fields' | 'transport_custom_fields' | 'vets' | 'active_vet_id'>
 
 let _cached: VetInfo = DEFAULT_VET_INFO
 
@@ -169,7 +185,7 @@ export async function loadVetInfo(orgId?: string): Promise<VetInfo> {
       .eq('key', 'company_info')
       .maybeSingle()
     const override = (data?.value as Partial<VetInfo> | null) ?? {}
-    const result = { ...DEFAULT_VET_INFO, ...override }
+    const result = withActiveVetApplied({ ...DEFAULT_VET_INFO, ...override })
     // 활성 조직 조회일 때만 PDF용 module 캐시 갱신. 슈퍼어드민이 남의 조직(orgId 지정)을
     // 조회할 때는 캐시를 건드리지 않는다(PDF 발급자 정보 오염 방지).
     if (!orgId) _cached = result
@@ -200,7 +216,7 @@ export async function saveVetInfo(patch: Partial<VetInfo>, orgId?: string): Prom
     .eq('key', 'company_info')
     .maybeSingle()
   const existing = (existingRow?.value as Partial<VetInfo> | null) ?? {}
-  const merged: VetInfo = { ...DEFAULT_VET_INFO, ...existing, ...patch }
+  const merged: VetInfo = withActiveVetApplied({ ...DEFAULT_VET_INFO, ...existing, ...patch })
   const { error } = await supabase
     .from('organization_settings')
     .upsert({ org_id: targetOrg, key: 'company_info', value: merged, updated_at: new Date().toISOString() })
