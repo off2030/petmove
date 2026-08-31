@@ -5,7 +5,8 @@
 //  · WebSite       — 사이트 이름 확정(검색결과 상단 표기가 도메인 대신 '펫무브'로).
 //  · BreadcrumbList — 검색결과에 '펫무브 > 가이드 > 지역별 가이드' 경로가 표시된다.
 //                    구글이 지금도 실제로 렌더하는 몇 안 되는 리치 결과.
-//  · Article       — 문서 성격·수정일·발행처 전달.
+//  · Article       — 문서 성격·발행일·수정일·발행처 전달. datePublished 는 이 사이트에서
+//                    처음 발행한 글에만 넣는다(고스트 이관분은 원 발행일을 알 수 없어 생략).
 //
 // ⚠️ FAQPage 는 넣지 않았다. 이 사이트엔 문답형 소제목이 1,400개 넘어 형식은 딱 맞지만,
 //    구글이 2023년 8월부터 FAQ 리치 결과를 정부·의료 기관 사이트에만 노출하도록 축소해
@@ -83,6 +84,7 @@ function isoDate(updated: string | undefined): string | undefined {
 export function ArticleJsonLd({ article }: { article: Article }) {
   const url = `${BASE}/${article.kind}/${article.slug}/`
   const modified = isoDate(article.updated)
+  const published = isoDate(article.published)
   return (
     <Ld
       data={{
@@ -96,6 +98,7 @@ export function ArticleJsonLd({ article }: { article: Article }) {
             description: article.description,
             inLanguage: 'ko-KR',
             ...(article.feature_image ? { image: `${BASE}${article.feature_image}` } : {}),
+            ...(published ? { datePublished: published } : {}),
             ...(modified ? { dateModified: modified } : {}),
             author: { '@id': ORG_ID },
             publisher: { '@id': ORG_ID },

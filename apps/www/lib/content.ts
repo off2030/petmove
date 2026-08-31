@@ -9,6 +9,8 @@ export interface Article {
   title: string
   description: string
   category: string
+  /** 최초 발행일 "2026.08.01". 고스트에서 이관한 글은 원 발행일을 알 수 없어 비워 둔다. */
+  published?: string
   updated: string
   minutes: number
   feature_image: string | null

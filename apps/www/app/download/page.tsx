@@ -17,6 +17,8 @@ import { DownloadRedirect } from '@/components/download-redirect'
 export const metadata: Metadata = {
   title: '앱 다운로드 · 펫무브',
   description: '펫무브 앱 설치 - 반려동물 해외 출국 준비 일정을 자동으로 계산해드립니다.',
+  // 루트 레이아웃의 canonical('/')이 상속되면 noindex 와 신호가 엇갈린다 — 자기 자신으로 고정.
+  alternates: { canonical: '/download/' },
   robots: { index: false, follow: true },
 }
 
