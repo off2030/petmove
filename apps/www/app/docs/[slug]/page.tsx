@@ -16,14 +16,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const a = getArticle('docs', slug)
   if (!a) return {}
   return {
-    title: `${a.title} · 펫무브`,
+    title: a.title,
     description: a.description,
     // trailingSlash: true 라 /docs/x 와 /docs/x/ 가 함께 존재할 수 있다 — 정본을 명시한다.
     alternates: { canonical: `/docs/${slug}/` },
     openGraph: {
       type: 'article',
+      siteName: '펫무브',
       url: `/docs/${slug}/`,
-      title: `${a.title} · 펫무브`,
+      title: a.title,
       description: a.description,
       ...(a.feature_image ? { images: [a.feature_image] } : {}),
     },
