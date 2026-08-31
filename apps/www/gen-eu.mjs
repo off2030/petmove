@@ -96,7 +96,9 @@ for (const spec of SPECS) {
   let s = T(H)
 
   // 1) 헤더(커버+리드 콜아웃)
-  const title = `[2026] 강아지·고양이 ${n} 입국 준비 총정리 | 동물검역 절차·서류·기간`
+  // 제목 앞머리에 `·` 를 두지 않는다 — 구글이 그 구분자로 쪼개 앞 조각을 버리면서
+  // "고양이 독일 입국 준비…" 처럼 앞이 잘린 제목이 검색결과에 노출됐다.
+  const title = `강아지 고양이 ${n} 입국 준비 총정리 | 2026 검역 절차·서류`
   const cover_ = `/content/images/2026/08/${spec.slug}-pet-travel-cover.webp`
   const lead = `<img class="art-cover" src="${cover_}" alt="${title}"><div class="callout-note">수의사가 직접 정리한 2026년 최신 가이드입니다. 100% 믿을 수 있는 강아지·고양이 ${n} 입국 준비 방법을 알려드립니다.<br/><br/>${spec.lead1}<br/><br/>${spec.lead2}<br/><br/>펫무브 앱을 설치하시면 단계별 가이드에 따라 준비를 하실 수 있습니다. <a href="/#download">[무료 앱 받기]</a></div>`
   {
@@ -161,7 +163,10 @@ for (const spec of SPECS) {
     slug: `${spec.slug}-pet-travel-guide`,
     kind: 'docs',
     title,
-    description: `수의사가 직접 정리한 2026년 최신 가이드입니다. 100% 믿을 수 있는 강아지·고양이 ${n} 입국 준비 방법을 알려드립니다. ${spec.desc}`,
+    // meta description — 62개국 공통 리드를 붙이지 않는다. 구글이 그 문장을 보일러플레이트로
+    // 보고 잘라내면서 정작 나라별 차이가 스니펫에서 밀려났다. 한글 스니펫 한도는 약 80자라
+    // spec.metaDesc(짧은 요약)를 우선 쓰고, 없으면 spec.desc 의 앞 문장들로 90자쯤 채운다.
+    description: metaDesc(spec),
     category: '지역별 가이드',
     updated,
     minutes: 9,
@@ -171,4 +176,23 @@ for (const spec of SPECS) {
   writeFileSync(outPath, JSON.stringify(json, null, 1) + '\n')
   await cover(spec)
   console.log('✔', json.slug, (s.length / 1000).toFixed(1) + 'k')
+}
+
+// spec.metaDesc 가 있으면 그대로, 없으면 spec.desc 를 문장 단위로 잘라 70자를 넘는 순간 멈춘다.
+function metaDesc(spec) {
+  if (spec.metaDesc) return spec.metaDesc
+  // EU 국가가 공유하는 첫 문장은 줄여서, 나라별로 갈리는 두 번째 문장 자리를 만든다.
+  let rest = spec.desc
+  let out = ''
+  const g = rest.match(/^(.+?)는 광견병 항체검사와 3개월 대기가 필요하고, 지정 입국 지점에서 서류 확인을 받습니다\.\s*/)
+  if (g) {
+    out = `${g[1]}는 광견병 항체검사 후 3개월 대기가 필요합니다.`
+    rest = rest.slice(g[0].length)
+  }
+  for (const s of rest.match(/[^.]+\./g) ?? [rest]) {
+    if (out.length >= 70) break
+    if (out && (out + ' ' + s.trim()).length > 130) break
+    out = out ? out + ' ' + s.trim() : s.trim()
+  }
+  return out || spec.desc
 }
