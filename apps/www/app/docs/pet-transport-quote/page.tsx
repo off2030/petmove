@@ -69,6 +69,10 @@ export default function TransportQuotePage() {
             className="art-cover"
             src="/content/images/2026/08/pet-transport-quote-cover.webp"
             alt="공항에서 이동장과 함께 있는 강아지와 고양이"
+            width={1600}
+            height={900}
+            fetchPriority="high"
+            decoding="async"
           />
           <p>
             반려동물을 <strong>항공 화물</strong>로 보낼 때는 운송업체를 통해 비행기를 예약합니다.
