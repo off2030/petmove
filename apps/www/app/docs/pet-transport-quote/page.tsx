@@ -21,14 +21,16 @@ import { TransportPartners } from '@/components/transport-partners'
  */
 
 export const metadata: Metadata = {
-  title: '반려동물 항공 운송업체 견적 받는 방법 · 펫무브',
+  title: '반려동물 항공 운송업체 문의 · 펫무브',
   description:
     '반려동물을 항공 화물로 보낼 때 비용이 어떻게 정해지는지, 문의할 때 무엇을 알려줘야 하는지 정리했습니다. 운송업체 연락처도 함께 확인하세요.',
   alternates: { canonical: '/docs/pet-transport-quote/' },
   openGraph: {
     type: 'article',
+    // 페이지의 openGraph 는 루트를 병합이 아니라 대체한다 — siteName 을 여기서 다시 준다.
+    siteName: '펫무브',
     url: '/docs/pet-transport-quote/',
-    title: '반려동물 항공 운송업체 견적 받는 방법 · 펫무브',
+    title: '반려동물 항공 운송업체 문의 · 펫무브',
     description:
       '비용은 여행지·동물의 크기·서비스 범위에 따라 달라집니다. 문의할 때 필요한 정보와 운송업체 연락처를 안내합니다.',
     images: ['/content/images/2026/08/pet-transport-quote-cover.webp'],
