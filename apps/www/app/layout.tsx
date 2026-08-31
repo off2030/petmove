@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { CopyAttribution } from '@/components/copy-attribution'
 import { TransportLinkTracker } from '@/components/transport-link-tracker'
 import { SiteJsonLd } from '@/components/structured-data'
+import '@/styles/pretendard.css'
+import '@/styles/icons.css'
 import '@/styles/site.css'
 import '@/styles/landing.css'
 import '@/styles/hub.css'
@@ -26,15 +28,6 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <head>
-        {/* Pretendard·Tabler 아이콘 — 프로토타입과 동일한 CDN. next/font/local 전환은 후속 과제. */}
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css" />
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-        />
-      </head>
       <body>
         <SiteJsonLd />
         {children}

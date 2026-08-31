@@ -102,6 +102,18 @@ const nextConfig = {
   distDir: process.env.PM_DIST_DIR || '.next',
   // 구 Ghost URL 이 전부 `/` 로 끝남 — 슬러그 보존의 핵심. /docs/japan-pet-travel-guide/ 형태 유지.
   trailingSlash: true,
+  async headers() {
+    return [
+      {
+        // 자체 호스팅 폰트 — 기본값(max-age=0)이면 방문할 때마다 재검증해 CDN 시절보다 느려진다.
+        // 1년 immutable 이 안전한 건 경로에 버전이 박혀 있기 때문(/fonts/pretendard-1.3.9/).
+        // ⛔ 폰트를 업그레이드할 땐 반드시 새 버전 폴더로 넣을 것 — 같은 경로에 덮어쓰면
+        //    이미 캐시된 브라우저가 1년간 옛 파일을 계속 쓴다.
+        source: '/fonts/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+    ]
+  },
   async redirects() {
     const entry = (source, destination, wildcard = false) => ({
       // `{/}?` = 끝 슬래시 유무 모두 매칭 (trailingSlash 정규화보다 먼저 걸려도 안전)
