@@ -57,16 +57,41 @@ const mb = (n) => (n / 1024 / 1024).toFixed(1)
 console.log(`Mode: ${apply ? 'APPLY (실제 업로드)' : 'DRY-RUN (계산만)'}`)
 console.log(`대상: ${REMOTE}\n`)
 
+/**
+ * 5xx·429·네트워크 오류는 잠깐 기다렸다 다시 시도한다.
+ * 무인으로 도는 야간 작업이라, 일시적인 503 하나에 그날 백업 전체가 날아가면 안 된다.
+ */
+async function fetchRetry(url, init, { attempts = 5, label = '' } = {}) {
+  let lastErr
+  for (let i = 0; i < attempts; i++) {
+    if (i > 0) await new Promise((res) => setTimeout(res, 1000 * 2 ** (i - 1))) // 1s, 2s, 4s, 8s
+    try {
+      const r = await fetch(url, init)
+      if (r.ok) return r
+      if (r.status < 500 && r.status !== 429) return r // 400·404 등은 재시도해도 같다
+      lastErr = new Error(`HTTP ${r.status}`)
+    } catch (e) {
+      lastErr = e
+    }
+    console.log(`  … 재시도 ${i + 1}/${attempts - 1} (${label}: ${lastErr.message})`)
+  }
+  throw new Error(`${label} 실패 — ${attempts}번 시도: ${lastErr?.message}`)
+}
+
 /** 버킷 한 단계 나열 (Supabase list 는 재귀가 안 돼 폴더를 직접 파고든다). */
 async function listPrefix(bucket, prefix) {
   const out = []
   let offset = 0
   for (;;) {
-    const r = await fetch(`${URL_}/storage/v1/object/list/${bucket}`, {
-      method: 'POST',
-      headers: H,
-      body: JSON.stringify({ prefix, limit: 1000, offset, sortBy: { column: 'name', order: 'asc' } }),
-    })
+    const r = await fetchRetry(
+      `${URL_}/storage/v1/object/list/${bucket}`,
+      {
+        method: 'POST',
+        headers: H,
+        body: JSON.stringify({ prefix, limit: 1000, offset, sortBy: { column: 'name', order: 'asc' } }),
+      },
+      { label: `목록 ${bucket}/${prefix}` },
+    )
     if (!r.ok) throw new Error(`list 실패 ${bucket}/${prefix}: ${r.status}`)
     const rows = await r.json()
     if (!Array.isArray(rows) || rows.length === 0) break
@@ -120,9 +145,18 @@ for (const bucket of BUCKETS) {
   const stage = path.join(tmp, bucket)
   let done = 0
   for (const f of missing) {
-    const r = await fetch(`${URL_}/storage/v1/object/${bucket}/${f.path.split('/').map(encodeURIComponent).join('/')}`, {
-      headers: { apikey: KEY, Authorization: `Bearer ${KEY}` },
-    })
+    let r
+    try {
+      r = await fetchRetry(
+        `${URL_}/storage/v1/object/${bucket}/${f.path.split('/').map(encodeURIComponent).join('/')}`,
+        { headers: { apikey: KEY, Authorization: `Bearer ${KEY}` } },
+        { label: `내려받기 ${f.path}` },
+      )
+    } catch (e) {
+      // 한 파일이 끝내 안 내려와도 나머지는 올린다. 다음 실행에서 다시 시도된다.
+      console.log(`  ! 내려받기 실패(건너뜀): ${f.path} — ${e.message}`)
+      continue
+    }
     if (!r.ok) { console.log(`  ! 내려받기 실패(건너뜀): ${f.path} — ${r.status}`); continue }
     const dest = path.join(stage, f.path)
     mkdirSync(path.dirname(dest), { recursive: true })

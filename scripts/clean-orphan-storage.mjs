@@ -60,9 +60,30 @@ const REMOTE = process.env.BACKUP_REMOTE || 'gdrive:Petmove-Backups/storage'
 const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' }
 const mb = (n) => (n / 1024 / 1024).toFixed(1)
 
+/**
+ * 5xx·429·네트워크 오류는 잠깐 기다렸다 다시 시도한다. 참조 판정이 통신 실패로 비어버리면
+ * '고아 아님'을 '고아'로 오판할 수 있어, 여기서는 재시도가 곧 안전장치다.
+ */
+async function fetchRetry(url, init, { attempts = 5, label = '' } = {}) {
+  let lastErr
+  for (let i = 0; i < attempts; i++) {
+    if (i > 0) await new Promise((res) => setTimeout(res, 1000 * 2 ** (i - 1)))
+    try {
+      const r = await fetch(url, init)
+      if (r.ok) return r
+      if (r.status < 500 && r.status !== 429) return r
+      lastErr = new Error(`HTTP ${r.status}`)
+    } catch (e) {
+      lastErr = e
+    }
+    console.log(`  … 재시도 ${i + 1}/${attempts - 1} (${label}: ${lastErr.message})`)
+  }
+  throw new Error(`${label} 실패 — ${attempts}번 시도: ${lastErr?.message}`)
+}
+
 /** PostgREST 가 노출하는 전체 테이블 — 새 테이블이 생겨도 자동 포함된다. */
 async function allTables() {
-  const spec = await (await fetch(`${URL_}/rest/v1/`, { headers: H })).json()
+  const spec = await (await fetchRetry(`${URL_}/rest/v1/`, { headers: H }, { label: '테이블 목록' })).json()
   return Object.keys(spec.paths || {})
     .filter((k) => k.startsWith('/') && k.length > 1 && !k.startsWith('/rpc/')) // 함수(rpc)는 제외
     .map((k) => k.slice(1))
@@ -72,7 +93,11 @@ async function fetchAllText(table) {
   let text = ''
   let offset = 0
   for (;;) {
-    const r = await fetch(`${URL_}/rest/v1/${table}?select=*&limit=1000&offset=${offset}`, { headers: H })
+    const r = await fetchRetry(
+      `${URL_}/rest/v1/${table}?select=*&limit=1000&offset=${offset}`,
+      { headers: H },
+      { label: `테이블 ${table}` },
+    )
     if (!r.ok) return text
     let rows
     try {
@@ -92,11 +117,15 @@ async function listPrefix(bucket, prefix) {
   const out = []
   let offset = 0
   for (;;) {
-    const r = await fetch(`${URL_}/storage/v1/object/list/${bucket}`, {
-      method: 'POST',
-      headers: H,
-      body: JSON.stringify({ prefix, limit: 1000, offset, sortBy: { column: 'name', order: 'asc' } }),
-    })
+    const r = await fetchRetry(
+      `${URL_}/storage/v1/object/list/${bucket}`,
+      {
+        method: 'POST',
+        headers: H,
+        body: JSON.stringify({ prefix, limit: 1000, offset, sortBy: { column: 'name', order: 'asc' } }),
+      },
+      { label: `목록 ${bucket}/${prefix}` },
+    )
     const rows = await r.json()
     if (!Array.isArray(rows) || rows.length === 0) break
     out.push(...rows)
@@ -129,7 +158,11 @@ const caseState = new Map()
 {
   let offset = 0
   for (;;) {
-    const r = await fetch(`${URL_}/rest/v1/cases?select=id,deleted_at&limit=1000&offset=${offset}`, { headers: H })
+    const r = await fetchRetry(
+      `${URL_}/rest/v1/cases?select=id,deleted_at&limit=1000&offset=${offset}`,
+      { headers: H },
+      { label: '케이스 목록' },
+    )
     const rows = await r.json()
     if (!Array.isArray(rows) || rows.length === 0) break
     for (const row of rows) caseState.set(row.id, row.deleted_at)
