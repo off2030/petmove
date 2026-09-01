@@ -27,6 +27,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      # 사진·서류 미러 스크립트(scripts/backup-storage-mirror.mjs)를 쓰기 위해 먼저 받아둔다.
+      # 덤프 파일보다 앞에 둬야 한다 — checkout 은 작업 폴더를 청소하므로 뒤에 두면 덤프가 날아간다.
+      - uses: actions/checkout@v4
+
       - name: Check secrets configured
         id: cfg
         env:
@@ -75,13 +79,40 @@ jobs:
           set -euo pipefail
           mkdir -p ~/.config/rclone
           printf '%s' "$RCLONE_CONF" > ~/.config/rclone/rclone.conf
-          # 리모트 이름은 'gdrive', 대상 폴더는 'Petmove-Backups/'(없으면 자동 생성).
-          rclone copy "petmove-db-$STAMP.tar.gz" gdrive:Petmove-Backups/ --no-traverse
-          echo "업로드 완료: petmove-db-$STAMP.tar.gz"
+          # 리모트 이름은 'gdrive'. DB 덤프는 'db/', 사진·서류는 'storage/' 로 나눈다 —
+          # 아래 30일 정리가 'db/' 만 훑게 하기 위한 분리다(사진까지 지우면 안 된다).
+          rclone copy "petmove-db-$STAMP.tar.gz" gdrive:Petmove-Backups/db/ --no-traverse
+          echo "업로드 완료: db/petmove-db-$STAMP.tar.gz"
 
-      - name: Prune backups older than 30 days
+      - name: Prune DB dumps older than 30 days
         if: steps.cfg.outputs.ready == 'true'
         run: |
           set -euo pipefail
-          rclone delete --min-age 30d gdrive:Petmove-Backups/ || true
-          echo "30일 초과 백업 정리 완료"
+          # 반드시 'db/' 하위만 — 'Petmove-Backups/' 전체를 주면 사진·서류 미러까지 지워진다.
+          rclone delete --min-age 30d gdrive:Petmove-Backups/db/ || true
+          echo "30일 초과 DB 덤프 정리 완료"
+
+      # ── 사진·서류(Supabase Storage) 미러 ────────────────────────────────
+      # DB 덤프에는 '파일이 어디 있다'는 주소만 들어 있어 실물이 없으면 복구해도 첨부가 전부
+      # 깨진다. 드라이브에 없는 파일만 골라 올리는 증분 미러라 매일 돌아도 부담이 적다.
+      # SUPABASE_SERVICE_ROLE_KEY 미설정이면 이 단계만 조용히 건너뛴다(기존 DB 백업은 유지).
+      - name: Check storage backup configured
+        id: storage
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SERVICE_KEY" ]; then
+            echo "::warning::SUPABASE_SERVICE_ROLE_KEY 미설정 — 사진·서류 백업을 건너뜁니다. docs/backup-setup.md 참고."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Mirror storage files to Google Drive
+        if: steps.storage.outputs.ready == 'true'
+        env:
+          # 프로젝트 URL 은 공개값이라 그대로 둔다. 스크립트가 Seoul 프로젝트인지 한 번 더 확인한다.
+          NEXT_PUBLIC_SUPABASE_URL: https://ugywxiyivfzflqkcnqvu.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/backup-storage-mirror.mjs --apply
