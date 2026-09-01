@@ -135,15 +135,44 @@ async function listPrefix(bucket, prefix) {
   return out
 }
 
-/** Supabase list 는 재귀가 안 돼 폴더를 직접 파고든다. */
-async function walk(bucket, prefix = '') {
+/** 동시 실행을 limit 개로 묶어 처리한다 — 폴더 수백 개를 순차로 훑으면 몇 분씩 걸린다. */
+async function pool(items, limit, fn) {
+  const results = new Array(items.length)
+  let next = 0
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, async () => {
+      for (;;) {
+        const i = next++
+        if (i >= items.length) return
+        results[i] = await fn(items[i], i)
+      }
+    }),
+  )
+  return results
+}
+
+const LIST_CONCURRENCY = 8
+
+/** Supabase list 는 재귀가 안 돼 폴더를 직접 파고든다(폴더 내부는 얕아 순차로 충분). */
+async function walkSeq(bucket, prefix) {
   const files = []
   for (const row of await listPrefix(bucket, prefix)) {
     const full = prefix ? `${prefix}/${row.name}` : row.name
-    if (row.id === null) files.push(...(await walk(bucket, full)))
+    if (row.id === null) files.push(...(await walkSeq(bucket, full)))
     else files.push({ bucket, path: full, size: row.metadata?.size ?? 0, created: row.created_at })
   }
   return files
+}
+
+/** 최상위 폴더(케이스·사용자 단위)만 병렬로 — 재귀 전체를 병렬화하면 요청이 폭발한다. */
+async function walk(bucket) {
+  const rows = await listPrefix(bucket, '')
+  const files = rows
+    .filter((r) => r.id !== null)
+    .map((r) => ({ bucket, path: r.name, size: r.metadata?.size ?? 0, created: r.created_at }))
+  const folders = rows.filter((r) => r.id === null).map((r) => r.name)
+  const nested = await pool(folders, LIST_CONCURRENCY, (name) => walkSeq(bucket, name))
+  return [...files, ...nested.flat()]
 }
 
 console.log(`Mode: ${apply ? 'APPLY (실제 삭제)' : 'DRY-RUN (목록만)'} / 범위: ${scope}\n`)

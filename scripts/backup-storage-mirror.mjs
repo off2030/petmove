@@ -102,14 +102,49 @@ async function listPrefix(bucket, prefix) {
   return out
 }
 
-async function walk(bucket, prefix = '') {
+/**
+ * 동시 실행을 limit 개로 묶어 처리한다. 이 작업의 병목은 용량이 아니라 '파일 개수'다 —
+ * 파일 하나마다 목록/내려받기 왕복이 붙어, 순차로 돌리면 6MB짜리 79개도 몇 분씩 걸린다.
+ */
+async function pool(items, limit, fn) {
+  const results = new Array(items.length)
+  let next = 0
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, async () => {
+      for (;;) {
+        const i = next++
+        if (i >= items.length) return
+        results[i] = await fn(items[i], i)
+      }
+    }),
+  )
+  return results
+}
+
+const LIST_CONCURRENCY = 8
+const DOWNLOAD_CONCURRENCY = 8
+
+/** 한 폴더 아래를 순차로 파고든다(케이스 폴더 내부는 얕아 병렬화 이득이 없다). */
+async function walkSeq(bucket, prefix) {
   const files = []
   for (const row of await listPrefix(bucket, prefix)) {
     const full = prefix ? `${prefix}/${row.name}` : row.name
-    if (row.id === null) files.push(...(await walk(bucket, full)))
+    if (row.id === null) files.push(...(await walkSeq(bucket, full)))
     else files.push({ path: full, size: row.metadata?.size ?? 0 })
   }
   return files
+}
+
+/**
+ * 버킷 전체 나열. 최상위 폴더(케이스·사용자 단위, 수백 개)만 병렬로 훑는다 —
+ * 재귀 전체를 병렬화하면 깊이마다 곱해져 동시 요청이 폭발한다.
+ */
+async function walk(bucket) {
+  const rows = await listPrefix(bucket, '')
+  const files = rows.filter((r) => r.id !== null).map((r) => ({ path: r.name, size: r.metadata?.size ?? 0 }))
+  const folders = rows.filter((r) => r.id === null).map((r) => r.name)
+  const nested = await pool(folders, LIST_CONCURRENCY, (name) => walkSeq(bucket, name))
+  return [...files, ...nested.flat()]
 }
 
 /** 드라이브에 이미 있는 파일 목록 (없는 폴더면 빈 목록). */
@@ -144,7 +179,7 @@ for (const bucket of BUCKETS) {
   // 내려받아 임시 폴더에 원본 경로 그대로 쌓은 뒤 한 번에 올린다.
   const stage = path.join(tmp, bucket)
   let done = 0
-  for (const f of missing) {
+  await pool(missing, DOWNLOAD_CONCURRENCY, async (f) => {
     let r
     try {
       r = await fetchRetry(
@@ -155,14 +190,14 @@ for (const bucket of BUCKETS) {
     } catch (e) {
       // 한 파일이 끝내 안 내려와도 나머지는 올린다. 다음 실행에서 다시 시도된다.
       console.log(`  ! 내려받기 실패(건너뜀): ${f.path} — ${e.message}`)
-      continue
+      return
     }
-    if (!r.ok) { console.log(`  ! 내려받기 실패(건너뜀): ${f.path} — ${r.status}`); continue }
+    if (!r.ok) { console.log(`  ! 내려받기 실패(건너뜀): ${f.path} — ${r.status}`); return }
     const dest = path.join(stage, f.path)
     mkdirSync(path.dirname(dest), { recursive: true })
     writeFileSync(dest, Buffer.from(await r.arrayBuffer()))
     if (++done % 50 === 0) console.log(`  …${done}/${missing.length}`)
-  }
+  })
   execFileSync('rclone', ['copy', stage, `${REMOTE}/${bucket}/`, '--transfers', '8', '--stats-one-line'], {
     stdio: 'inherit',
   })
