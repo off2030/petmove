@@ -20,7 +20,7 @@ function fmtDate(s) { return typeof s === 'string' && s ? s.replace(/-/g, '/') :
 
 const LAB_INFO = {
   krsl: { name: 'Komipharm Rabies Serology Laboratory', country: 'Republic of Korea' },
-  apqa_seoul: { name: 'Inspection devision, Seoul Regional office of Animal and Plant Qurantine Agency', country: 'Republic of Korea' },
+  apqa_seoul: { name: 'Inspection Devision, Seoul Regional office of APQA', country: 'Republic of Korea' },
   apqa_hq: { name: 'Animal and Plant Quarantine Agency (APQA)', country: 'Republic of Korea' },
 }
 const SPECIES_EN = { dog: 'Dog', cat: 'Cat' }

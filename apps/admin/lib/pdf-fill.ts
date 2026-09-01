@@ -177,7 +177,7 @@ const MAPS = mappings as MappingsJson
 const LAB_INFO: Record<string, { name: string; country: string }> = {
   krsl:        { name: 'Komipharm Rabies Serology Laboratory', country: 'Republic of Korea' },
   // 서울지역본부 검사과 정식 영문 표기 — 일본 FormAC·FormRE, 대만 Form 002 에 이 이름이 찍힌다.
-  apqa_seoul:  { name: 'Inspection devision, Seoul Regional office of Animal and Plant Qurantine Agency', country: 'Republic of Korea' },
+  apqa_seoul:  { name: 'Inspection Devision, Seoul Regional office of APQA', country: 'Republic of Korea' },
   apqa_hq:     { name: 'Animal and Plant Quarantine Agency (APQA)', country: 'Republic of Korea' },
   apqa_eu:     { name: 'Animal and Plant Quarantine Agency (APQA)', country: 'Republic of Korea' },
   ksvdl_r:     { name: 'Kansas State Rabies Laboratory', country: 'United States of America' },
