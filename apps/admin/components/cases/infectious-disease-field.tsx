@@ -128,11 +128,15 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
       </div>
       <div className="min-w-0 flex-1 space-y-0.5">
         {/* 같은 날짜의 기록은 하나의 행으로 묶고 lab 만 옆에 나열한다. */}
-        {groupByDate(records).map((group) => (
+        {(() => {
+          const groups = groupByDate(records)
+          const latestIdx = latestGroupIndex(groups)
+          return groups.map((group, gi) => (
           <InfectiousGroup
             key={group.date ?? `null-${group.indices.join('_')}`}
             caseId={caseId}
             caseRow={caseRow}
+            showStatus={gi === latestIdx}
             date={group.date}
             indices={group.indices}
             records={records}
@@ -152,7 +156,8 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
             onDelete={(idx) => deleteRecord(idx)}
             saving={saving}
           />
-        ))}
+          ))
+        })()}
 
         {/* 빈 상태 — 다른 필드와 동일한 옅은 — (클릭 시 검사 추가). */}
         {records.length === 0 && !addingNew && (
@@ -193,14 +198,31 @@ function groupByDate(records: InfectiousRecord[]): { date: string | null; indice
   return result
 }
 
+/**
+ * 진행상태 칩을 붙일 **최신 회차** 그룹의 인덱스.
+ * 날짜가 가장 늦은 그룹. 날짜 없는 기록('')은 가장 낮게 쳐서, 전부 비어 있으면
+ * 마지막(=가장 최근에 추가된) 그룹을 고른다.
+ */
+function latestGroupIndex(groups: { date: string | null }[]): number {
+  let best = -1
+  let bestDate = ''
+  groups.forEach((g, i) => {
+    const d = g.date ?? ''
+    if (best === -1 || d >= bestDate) { best = i; bestDate = d }
+  })
+  return best
+}
+
 /* ── 한 행: 날짜 + (같은 날짜의 모든) lab 들 ── */
 
 function InfectiousGroup({
-  caseId, caseRow, date, indices, records, labOptions, displayLabs, editIdx, editField,
+  caseId, caseRow, showStatus, date, indices, records, labOptions, displayLabs, editIdx, editField,
   onStartEdit, onStopEdit, onUpdateField, onUpdateGroupDate, onDelete, saving,
 }: {
   caseId: string
   caseRow: CaseRow
+  /** 최신 회차 그룹에만 진행상태 칩을 붙인다 — 옛 회차는 '완료' 반복이라 줄만 길어진다. */
+  showStatus: boolean
   date: string | null
   indices: number[]
   records: InfectiousRecord[]
@@ -295,7 +317,7 @@ function InfectiousGroup({
                 {labDisplay}
               </span>
             )}
-            {isLastOfStatus(n) && statusTargets[n] && (
+            {showStatus && isLastOfStatus(n) && statusTargets[n] && (
               <InspectionStatusChip
                 caseId={caseId}
                 caseRow={caseRow}

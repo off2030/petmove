@@ -376,13 +376,18 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
               separator={si > 0}
               onClick={openEditModal}
               extraTitle={japanEntryTooltip(rec.date, destination)}
-              // 회차마다 진행상태가 따로 — 검사 탭도 record 별 1행이다.
+              // 진행상태는 **최신 회차에만** — 옛 회차는 거의 항상 '완료'라 같은 칩이
+              // 반복되며 줄만 길어진다. 회차별 상태 자체는 그대로 살아 있고(검사 탭도
+              // record 별 1행), 편집 모달의 각 행에서 보고 바꿀 수 있다.
+              // sortedForExpand 는 날짜 내림차순이라 si === 0 이 최신.
               status={
-                <InspectionStatusChip
-                  caseId={caseId}
-                  caseRow={caseRow}
-                  target={{ kind: 'titer', recordIdx: origIdx(si) }}
-                />
+                si === 0 ? (
+                  <InspectionStatusChip
+                    caseId={caseId}
+                    caseRow={caseRow}
+                    target={{ kind: 'titer', recordIdx: origIdx(si) }}
+                  />
+                ) : undefined
               }
             />
           ))
