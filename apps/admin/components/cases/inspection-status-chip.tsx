@@ -1,11 +1,9 @@
 'use client'
 
-import { DropdownSelect } from '@petmove/ui'
-import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { persistField } from '@/lib/toast-bus'
 import { useCases } from './cases-context'
-import { useSectionEditMode } from './section-edit-mode-context'
+import { StatusChip } from './status-chip'
 import {
   INSPECTION_STATUS_OPTIONS,
   inspectionStatusKey,
@@ -21,7 +19,6 @@ import type { CaseRow } from '@petmove/domain'
  *
  * 검사 탭(todos)과 **같은 키**를 읽고 쓴다 — 저장 키·legacy 폴백 규칙은
  * lib/inspection-status 단일 출처. 여기선 표시와 저장만 담당한다.
- * 읽기 모드(절차정보 접힘 상태)에선 드롭다운 없이 글자만 보여준다.
  */
 export function InspectionStatusChip({
   caseId,
@@ -36,10 +33,7 @@ export function InspectionStatusChip({
   date?: string | null
 }) {
   const { updateLocalCaseField } = useCases()
-  const editMode = useSectionEditMode()
   const value = readInspectionStatus(caseRow, target, date)
-  const label = inspectionStatusLabel(value)
-  const tone = inspectionStatusTone(value)
 
   async function pick(next: string) {
     if (next === value) return
@@ -49,54 +43,14 @@ export function InspectionStatusChip({
     await persistField('진행상태', () => updateCaseField(caseId, 'data', key, next))
   }
 
-  const face = (
-    <>
-      <span
-        aria-hidden
-        className="mr-1.5 inline-block h-[6px] w-[6px] shrink-0 rounded-full bg-current align-middle"
-      />
-      {label}
-    </>
-  )
-
-  if (!editMode) {
-    return (
-      <span className={cn('inline-flex items-center font-serif text-[15px]', tone)}>{face}</span>
-    )
-  }
-
   return (
-    <DropdownSelect
+    <StatusChip
       value={value}
+      label={inspectionStatusLabel(value)}
+      tone={inspectionStatusTone(value)}
       options={INSPECTION_STATUS_OPTIONS}
-      onChange={pick}
-      portal
-      // 평소엔 차분한 글자, hover 시 링+꺾쇠로 '눌러서 바꾸는 드롭다운' 신호 — 검사 탭과 동일.
-      triggerClassName={cn(
-        'group inline-flex items-center rounded-md px-2 py-0.5 -mx-1 font-serif text-[15px]',
-        'hover:ring-1 hover:ring-inset hover:ring-border/60 transition-colors',
-        tone,
-      )}
-      renderTrigger={() => (
-        <>
-          {face}
-          <span
-            aria-hidden
-            className="ml-1 text-[10px] leading-none opacity-0 transition-opacity group-hover:opacity-70"
-          >
-            ▼
-          </span>
-        </>
-      )}
-      renderOption={(o) => (
-        <span className={cn('inline-flex items-center', inspectionStatusTone(o.value))}>
-          <span
-            aria-hidden
-            className="mr-1.5 inline-block h-[6px] w-[6px] shrink-0 rounded-full bg-current align-middle"
-          />
-          {o.label}
-        </span>
-      )}
+      optionTone={inspectionStatusTone}
+      onPick={pick}
     />
   )
 }

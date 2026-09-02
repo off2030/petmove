@@ -33,12 +33,14 @@ import { PaymentField } from './payment-field'
 import { RabiesTiterField } from './rabies-titer-field'
 import { RepeatableDateField } from './repeatable-date-field'
 import { InfectiousDiseaseField } from './infectious-disease-field'
+import { ReportStatusField } from './report-status-field'
 import { NotesField } from './notes-field'
 // 통합 리팩터: country-specific extra section 컴포넌트들은 더 이상 라우팅 안 됨.
 // 모든 destination 이 SimpleExtraSection 으로 일반 렌더링됨. 컴포넌트 파일은 보관 (file extraction 로직 등 향후 통합 가능).
 import { OverseasAddressField } from './overseas-address-field'
 import { PastJourneysAdminSection } from './past-journeys-admin'
 import { useCases } from './cases-context'
+import { reportRowApplies } from '@/lib/report-status'
 import { VerificationProvider, severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 import { SectionEditModeProvider, useSectionEditMode } from './section-edit-mode-context'
 import { extractExtra, type Country } from '@/lib/actions/extract-extra'
@@ -56,7 +58,7 @@ const COLLAPSED_KEY = 'petmove:case-detail:collapsed-sections'
  * then a footer with timestamps.
  */
 export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef?: React.Ref<HTMLDivElement> }) {
-  const { fieldDefs, updateLocalCaseField, activeDestination } = useCases()
+  const { fieldDefs, updateLocalCaseField, activeDestination, importReportCountries } = useCases()
   const { config: destOverridesConfig } = useDestinationOverrides()
   // fieldDefs 는 컨텍스트에서 stable — 매 렌더마다 buildFieldSpecs 호출 회피.
   // 입력마다 case-detail 가 재렌더되는데 fieldDefs 자체는 안 바뀌므로 큰 절약.
@@ -99,6 +101,9 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
   const activeDestToken = resolveActiveDestination(caseRow.destination, activeDestination)
   const tripType = getTripType(caseRow.data, activeDestToken)
   const hideRabiesTiterOneWay = tripType === 'one_way' && isRabiesTiterHiddenForOneWay(activeDestToken)
+
+  // 신고(수입·수출) 행 — 신고 대상 여행지에서만. 설정(신고 국가) + 목적지 프로파일이 판정.
+  const showReportRow = reportRowApplies(caseRow, activeDestToken, importReportCountries)
 
   const allowedFields = getAllowedFields(viewDestination, extraFields)
   const vaccineEntries = getEffectiveVaccineEntries(viewDestination, extraFields, destOverridesConfig)
@@ -366,6 +371,14 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                 />
               )
             })}
+            {/* 절차정보 끝: 신고 진행상태. 출국일 다음에 오도록 그룹 마지막에 붙인다. */}
+            {isProcedure && showReportRow && (
+              <ReportStatusField
+                caseId={caseRow.id}
+                caseRow={caseRow}
+                destination={activeDestToken}
+              />
+            )}
             {/* 기타정보: Payment (attachments now inside NotesField) */}
             {g.group === '기타정보' && (
               <PaymentField caseId={caseRow.id} caseRow={caseRow} />

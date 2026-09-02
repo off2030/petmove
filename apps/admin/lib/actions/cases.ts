@@ -1072,8 +1072,14 @@ function writeCaseSignal(
   return next
 }
 
-/** 신고 탭 read 와 같은 경로로 케이스를 읽는다 — 활성 여행지 토큰 + flatten 된 view. */
-async function loadReportContext(caseId: string) {
+/**
+ * 신고 탭 read 와 같은 경로로 케이스를 읽는다 — 활성 여행지 토큰 + flatten 된 view.
+ *
+ * `destination` 을 주면 그 토큰을 쓴다 — 상세페이지는 지금 보고 있는 여행지 탭 기준으로
+ * 읽고 쓰므로, 탭의 각인값(import_report_active_dest)이 다른 나라를 가리켜도 화면과 저장이
+ * 엇갈리지 않아야 한다. 케이스의 여행지 목록에 없는 토큰은 무시하고 각인값으로 되돌아간다.
+ */
+async function loadReportContext(caseId: string, destination?: string | null) {
   const supabase = await createClient()
   const { data: row, error } = await supabase
     .from('cases')
@@ -1087,7 +1093,10 @@ async function loadReportContext(caseId: string) {
     data: current,
     departure_date: (row?.departure_date as string | null) ?? null,
   } as CaseRow
-  const token = resolveTabActiveDest(caseRow, 'import_report_active_dest')
+  const token =
+    destination && parseDestinations(caseRow.destination).includes(destination)
+      ? destination
+      : resolveTabActiveDest(caseRow, 'import_report_active_dest')
   const viewData = (flattenCaseForDestination(caseRow, token).data ?? {}) as Record<string, unknown>
   return { ok: true as const, supabase, current, caseRow, token, viewData }
 }
@@ -1103,8 +1112,10 @@ export async function setReportSlotStatus(
   caseId: string,
   slot: ReportSlot,
   target: ReportTarget,
+  /** 상세페이지가 보고 있는 여행지. 미지정이면 신고 탭 각인값(기존 동작). */
+  destination?: string | null,
 ): Promise<UpdateResult> {
-  const ctx = await loadReportContext(caseId)
+  const ctx = await loadReportContext(caseId, destination)
   if (!ctx.ok) return { ok: false, error: ctx.error }
   const { supabase, current, token, viewData } = ctx
   const today = new Date().toISOString().slice(0, 10)

@@ -10,17 +10,12 @@ import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   allLabOptions,
   buildDateRuleContext,
-  deriveReportSlotStatus,
   flattenCaseForDestination,
   getDepartureDate,
   getVetVisitDate,
-  getTripType,
   getVetVisitWindowDays,
   matchesDestinationKey,
   parseDestinations,
-  readByDestValue,
-  REPORT_LEGACY_STATUS_KEY,
-  resolveReportBinding,
   resolveTabActiveDest,
   validateVetVisitDate,
 } from '@petmove/domain'
@@ -29,6 +24,13 @@ import { dismissImportReport } from '@/lib/actions/cases'
 import { TodoTable, type TodoColumn } from './todo-table'
 import { InspectionTable, readInspectionStatus, type InspectionRow } from './inspection-table'
 import { INSPECTION_STATUS_OPTIONS, nzInfectiousLabs } from '@/lib/inspection-status'
+import {
+  exportSlotApplies,
+  hasReportSchedule,
+  REPORT_STATUS_OPTIONS,
+  reportReturnDateFor,
+  reportSlotStatusFor,
+} from '@/lib/report-status'
 import { DestinationCell } from './destination-cell'
 import { updateCaseField } from '@/lib/actions/cases'
 import { downloadPdfRequest, type PdfDownloadRequest } from '@/lib/pdf-download'
@@ -53,18 +55,12 @@ const INSPECTION_STATUS_ORDER: Record<string, number> = { waiting: 0, testing: 1
 
 // 서류 탭 준비상태 — 대기/완료 2지. (export_doc_status 전용. 기존 'in_progress' 값은
 // 운영 DB 에 0건이라 옵션 제거. 다른 column 은 INSPECTION_STATUS_OPTIONS /
-// IMPORT_STATUS_OPTIONS 를 별도로 씀.)
+// REPORT_STATUS_OPTIONS 를 별도로 씀.)
 const STATUS_OPTIONS = [
   { value: 'not_started', label: '대기' },
   { value: 'done', label: '완료' },
 ]
 
-// 신고 탭 수입·수출 진행상태 — 대기 / 진행 / 완료 (N/A 없음). '대기' 라벨은 검사·서류 탭과 통일.
-const IMPORT_STATUS_OPTIONS = [
-  { value: 'not_started', label: '대기' },
-  { value: 'in_progress', label: '진행' },
-  { value: 'done', label: '완료' },
-]
 
 // nz_combined 은 실제 lab 이 아닌 NZ 묶음 행 식별용 내부 마커 (정렬·필터용).
 // 칩은 multi-lab 분기에서 apqa_hq/vbddl 각각 렌더되므로 옵션·색상 매핑 모두 불필요.
@@ -259,14 +255,7 @@ function importReportDeparture(row: CaseRow): string {
 }
 /** 신고 탭 활성 여행지 귀국일 (by_dest 우선) — 수출 검역 상태 판정용. */
 function importReportReturnDate(row: CaseRow): string {
-  const activeDest = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
-  const data = (row.data as Record<string, unknown> | null) ?? null
-  const v = readByDestValue(data, activeDest, 'return_date')
-  if (typeof v === 'string' && v) return v
-  // 다중 여행지 + 특정 여행지 지정: top-level fallback 안 함 — 누수 차단(B).
-  if (activeDest && parseDestinations(row.destination).length > 1) return ''
-  const top = data?.return_date
-  return typeof top === 'string' && top ? top : ''
+  return reportReturnDateFor(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY))
 }
 /** 케이스의 어떤 여행지든 출국일이 있는지 (by_dest 우선 + 컬럼 폴백). */
 function anyDestHasDeparture(row: CaseRow): boolean {
@@ -516,41 +505,6 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
   { key: 'export_doc_memo', label: '메모', storage: 'data', type: 'text', width: EXPORT_DOC_COL_W, resolveValue: exportDocMemo },
 ]
 
-
-/**
- * 신고 탭 자동 포함의 '일정 있음' 판정 — 날짜 신호가 **하나라도** 있으면 참.
- *
- * 보는 자리(넓은 순):
- *   ① 출국일 — by_dest[여행지].departure_date → cases.departure_date 컬럼
- *   ② 내원일 — 내원일이 잡혔다는 건 출국이 임박했다는 뜻이라 신고 대상이다
- *   ③ 출국 항공편 **출발일**(departure_flight_date)
- *   ④ **도착일**(entry_date)
- *
- * ③④ 가 필요한 이유 — 추가정보로 항공 일정을 받는 나라는 그 값이 `data` 에 먼저 들어오고
- * `departure_date` 컬럼은 sync 룰이 돌아야 채워진다. 룰이 없거나(하와이 2026-08-18 이전)
- * 애초에 출발일을 **묻지 않는**(도착일만 받는 스위스·미국·대만·EU 통지국) 케이스는 컬럼이
- * 빈 채로 남아 신고 탭에서 통째로 빠졌다 — 실제로 태국 3건이 그렇게 사라졌다(2026-08-24
- * 어일용/남촉·남락·남숙). 그 나라들은 출발일을 프로파일 필드로 올려 근본을 고쳤지만,
- * **도착일만 받는 나라가 남아 있는 한 ④ 가 마지막 안전망**이다.
- * (도착일은 신고기한 계산엔 안 쓴다 — 기한은 여전히 출국일 기준.)
- */
-function hasReportSchedule(row: CaseRow, dest: string | null): boolean {
-  if (getDepartureDate(row, dest)) return true
-  if (getVetVisitDate(row, dest)) return true
-  const data = (row.data as Record<string, unknown> | null) ?? null
-  const flightKeys = ['departure_flight_date', 'entry_date'] as const
-  for (const key of flightKeys) {
-    const v = readByDestValue(data, dest, key)
-    if (typeof v === 'string' && v) return true
-  }
-  // 다중 여행지 + 특정 여행지 지정이면 top-level 폴백 안 함 — 다른 여행지 잔존값 누수 차단(B).
-  if (dest && parseDestinations(row.destination).length > 1) return false
-  return flightKeys.some((key) => {
-    const top = data?.[key]
-    return typeof top === 'string' && !!top
-  })
-}
-
 /**
  * 자동 포함 판정 — 신고국이면서 출국일·내원일이 있는 여행지가 있어야 함.
  *
@@ -629,46 +583,18 @@ function reportDest(row: CaseRow): string | null {
   return resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
 }
 
-/**
- * 수출(수출검역) 칸을 표시·집계하는 조건 — **수출 카드를 선언한 목적지** + 왕복(귀국일 있음).
- * 그 외(선언 없음, 또는 편도)는 수출 칸을 숨기고 완료 판정에서도 제외한다.
- * (현재 수출 카드를 선언한 나라는 일본 하나 — 나라가 늘면 프로파일 선언만 추가하면 된다.)
- */
+/** 수출 칸 표시·집계 조건 — 조건 본문은 lib/report-status 의 [[exportSlotApplies]]. */
 function exportApplies(row: CaseRow): boolean {
-  if (!resolveReportBinding(reportDest(row), 'export')) return false
-  // ⚠️ 왕복 판정은 **여정 종류(trip_type)** 로 한다 — 귀국일 존재만 보면 안 된다(2026-08-19).
-  // 편도로 바꾼 케이스에도 by_dest 에 귀국일이 남아 있는 일이 흔하고(항공편 입력·추출 때
-  // 왕복 칸이 함께 채워졌다가 편도 전환), 그러면 편도인데 수출 칸이 '대기'로 떠 영영
-  // 완료되지 않는 줄이 신고 탭에 남는다. reminders.ts 의 일본 수출검역 알림은 이미 같은
-  // 이유로 tripType 기준 — 화면과 알림 기준을 맞춘다.
-  // getTripType 은 trip_type 미설정 시 'round' 를 돌려주므로 옛 케이스는 영향 없다.
-  const dest = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
-  if (getTripType((row.data ?? {}) as Record<string, unknown>, dest) !== 'round') return false
-  return !!importReportReturnDate(row)
+  return exportSlotApplies(row, reportDest(row))
 }
 
 /**
- * 신고 탭 '수입'·'수출' 칸 상태 — **여정 카드가 단일 출처**.
- *
- * 어느 카드와 이어지는지는 목적지 프로파일이 정한다([[resolveReportBinding]]). 연결이 있으면
- * 그 카드 시그널에서 파생하고(= 펫무브 앱 카드와 같은 값), 연결이 없는 목적지만 운영자
- * 수동값(by_dest 스코핑)을 본다.
- *
- * ⛔ 나라별 if 분기를 다시 만들지 말 것 — 예전엔 일본·태국·필리핀·대만만 명단에 있었고, 명단
- *   밖의 하와이는 '완료'로 바꿔도 앱 카드가 미완료로 남았다(2026-08-21 사용자 발견).
- *
- * 카드 시그널·수동값 모두 by_dest 스코핑이라 **활성 여행지로 평탄화한 view** 를 넘긴다 —
- * 원본 row 를 넘기면 다중 여행지에서 신호를 못 봐 '대기중'으로 보인다.
+ * 신고 탭 '수입'·'수출' 칸 상태 — 여정 카드가 단일 출처.
+ * 파생 규칙은 lib/report-status 단일 출처(상세페이지 신고 행과 공유). 탭은 목적지를
+ * 각인값(import_report_active_dest)으로 푼다는 점만 다르다.
  */
 function reportSlotStatus(row: CaseRow, slot: 'import' | 'export'): string {
-  const dest = reportDest(row)
-  const view = flattenCaseForDestination(row, dest)
-  const derived = deriveReportSlotStatus(view, dest, slot)
-  if (derived) return derived
-  const data = (view.data ?? {}) as Record<string, unknown>
-  const stored = data[REPORT_LEGACY_STATUS_KEY[slot]]
-  if (stored != null && String(stored) !== '') return String(stored)
-  return 'not_started'
+  return reportSlotStatusFor(row, reportDest(row), slot)
 }
 
 function effectiveImportStatus(row: CaseRow): string {
@@ -803,7 +729,7 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     storage: 'data',
     type: 'select',
     width: BASE_COL_W,
-    options: IMPORT_STATUS_OPTIONS,
+    options: REPORT_STATUS_OPTIONS,
     resolveValue: effectiveImportStatus,
   },
   {
@@ -812,7 +738,7 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     storage: 'data',
     type: 'select',
     width: BASE_COL_W,
-    options: IMPORT_STATUS_OPTIONS,
+    options: REPORT_STATUS_OPTIONS,
     resolveValue: effectiveExportStatus,
     // 수출은 수출 카드를 선언한 나라 + 왕복(귀국일 있음)일 때만 표시 — 그 외는 '—'.
     condition: (row) => exportApplies(row),
