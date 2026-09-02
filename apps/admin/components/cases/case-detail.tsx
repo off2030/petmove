@@ -285,6 +285,11 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                   <div key="general_vaccine+schedule">
                     {showVaccine('rabies') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="광견병" dataKey="rabies_dates" />}
                     {showVaccine('rabies_titer') && <RabiesTiterField caseId={caseRow.id} caseRow={caseRow} destination={viewDestination} />}
+                    {/* 신고 진행상태 — 광견병항체검사 바로 다음(목적지 무관 동일 규칙).
+                        항체검사가 숨는 목적지(편도 태국·필리핀·미국·말레이시아 — titer 가
+                        귀국용뿐)에선 이 자리가 자연히 그 앞 단계(광견병) 다음이 된다.
+                        ⛔ 나라별 위치 분기를 만들지 말 것. */}
+                    {showReportRow && <ReportStatusField caseId={caseRow.id} caseRow={caseRow} destination={activeDestToken} />}
                     {showVaccine('general') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="종합백신" dataKey="general_vaccine_dates" legacyKey="general_vaccine" lockOneYearValidity />}
                     {showVaccine('civ') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="독감" dataKey="civ_dates" lockOneYearValidity />}
                     {showVaccine('kennel') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="켄넬코프" dataKey="kennel_cough_dates" lockOneYearValidity />}
@@ -371,14 +376,6 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                 />
               )
             })}
-            {/* 절차정보 끝: 신고 진행상태. 출국일 다음에 오도록 그룹 마지막에 붙인다. */}
-            {isProcedure && showReportRow && (
-              <ReportStatusField
-                caseId={caseRow.id}
-                caseRow={caseRow}
-                destination={activeDestToken}
-              />
-            )}
             {/* 기타정보: Payment (attachments now inside NotesField) */}
             {g.group === '기타정보' && (
               <PaymentField caseId={caseRow.id} caseRow={caseRow} />
