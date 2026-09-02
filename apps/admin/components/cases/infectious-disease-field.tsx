@@ -15,6 +15,8 @@ import { DateTextField } from '@petmove/ui'
 import { DropdownSelect } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@petmove/ui'
+import { InspectionStatusChip } from './inspection-status-chip'
+import { infectiousStatusTarget, inspectionStatusKey } from '@/lib/inspection-status'
 
 interface InfectiousRecord {
   date: string | null
@@ -129,6 +131,8 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
         {groupByDate(records).map((group) => (
           <InfectiousGroup
             key={group.date ?? `null-${group.indices.join('_')}`}
+            caseId={caseId}
+            caseRow={caseRow}
             date={group.date}
             indices={group.indices}
             records={records}
@@ -192,9 +196,11 @@ function groupByDate(records: InfectiousRecord[]): { date: string | null; indice
 /* ── 한 행: 날짜 + (같은 날짜의 모든) lab 들 ── */
 
 function InfectiousGroup({
-  date, indices, records, labOptions, displayLabs, editIdx, editField,
+  caseId, caseRow, date, indices, records, labOptions, displayLabs, editIdx, editField,
   onStartEdit, onStopEdit, onUpdateField, onUpdateGroupDate, onDelete, saving,
 }: {
+  caseId: string
+  caseRow: CaseRow
   date: string | null
   indices: number[]
   records: InfectiousRecord[]
@@ -211,10 +217,21 @@ function InfectiousGroup({
   saving: boolean
 }) {
   const editMode = useSectionEditMode()
+  const { inspectionConfig } = useCases()
   const dateDisplay = date || '—'
   // date 행 편집은 그룹의 첫 인덱스를 기준으로 표시.
   const dateEditingIdx = indices[0]
   const dateIsEditing = editIdx === dateEditingIdx && editField === 'date'
+
+  // 진행상태는 검사기관별. 단 뉴질랜드처럼 여러 기관이 한 상태를 공유하는 묶음은
+  // 마지막 기관 뒤에서 한 번만 그린다 (같은 상태가 칩 여러 개로 중복되지 않도록).
+  const statusTargets = indices.map((idx) => {
+    const lab = records[idx]?.lab
+    return lab ? infectiousStatusTarget(caseRow, lab, inspectionConfig.infectiousRules) : null
+  })
+  const statusKeys = statusTargets.map((t) => (t ? inspectionStatusKey(t) : null))
+  const isLastOfStatus = (n: number) =>
+    statusKeys[n] !== null && statusKeys.lastIndexOf(statusKeys[n]) === n
 
   return (
     <div className="group/item flex items-baseline gap-[10px] min-w-0 overflow-x-auto whitespace-nowrap scrollbar-hide">
@@ -278,6 +295,14 @@ function InfectiousGroup({
                 {labDisplay}
               </span>
             )}
+            {isLastOfStatus(n) && statusTargets[n] && (
+              <InspectionStatusChip
+                caseId={caseId}
+                caseRow={caseRow}
+                target={statusTargets[n]}
+                date={date}
+              />
+            )}
             {editMode && (
               <button
                 type="button"
@@ -288,8 +313,6 @@ function InfectiousGroup({
                 <Trash2 size={13} />
               </button>
             )}
-            {/* suppress unused warning */}
-            <span className="hidden">{n}</span>
           </span>
         )
       })}

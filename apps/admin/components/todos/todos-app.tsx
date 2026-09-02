@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils'
 import { dismissImportReport } from '@/lib/actions/cases'
 import { TodoTable, type TodoColumn } from './todo-table'
 import { InspectionTable, readInspectionStatus, type InspectionRow } from './inspection-table'
+import { INSPECTION_STATUS_OPTIONS, nzInfectiousLabs } from '@/lib/inspection-status'
 import { DestinationCell } from './destination-cell'
 import { updateCaseField } from '@/lib/actions/cases'
 import { downloadPdfRequest, type PdfDownloadRequest } from '@/lib/pdf-download'
@@ -43,12 +44,6 @@ export const TABS = [
 ] as const
 
 export type TabId = (typeof TABS)[number]['id']
-
-const INSPECTION_STATUS_OPTIONS = [
-  { value: 'waiting', label: '대기' },
-  { value: 'testing', label: '검사' },
-  { value: 'done', label: '완료' },
-]
 
 // 검사 탭 정렬 모드 — 상단 라벨 클릭으로 전환, 선택은 localStorage 에 기억.
 type InspectionSort = 'lab' | 'date' | 'status'
@@ -308,20 +303,6 @@ function autoImportDeadline(row: CaseRow): string {
 }
 
 /**
- * 설정의 infectiousRules에서 특정 국가(예: '뉴질랜드') 규칙의 labs 배열을 찾는다.
- * 표시 순서는 사용자가 설정 → 전염병 규칙에서 멀티 선택한 순서를 그대로 따른다.
- * 매칭 규칙 없거나 labs 비어 있으면 fallback 반환.
- */
-function findInfectiousLabs(
-  rules: import('@petmove/domain').InspectionLabRule[],
-  country: string,
-  fallback: string[],
-): string[] {
-  const rule = rules.find(r => r.countries.includes(country))
-  return rule && rule.labs.length > 0 ? [...rule.labs] : fallback
-}
-
-/**
  * 검사 탭에 뿌릴 행 목록을 케이스별로 펼친다.
  * 공통 규칙: 상세페이지에서 검사일을 지우면 탭에서도 사라진다.
  * - 광견병항체: titer 기록이 있으면 1행
@@ -336,7 +317,7 @@ function buildInspectionRows(
   infectiousRules: import('@petmove/domain').InspectionLabRule[],
 ): InspectionRow[] {
   const rows: InspectionRow[] = []
-  const nzLabs = findInfectiousLabs(infectiousRules, '뉴질랜드', ['apqa_hq', 'vbddl'])
+  const nzLabs = nzInfectiousLabs(infectiousRules)
   for (const c of cases) {
     // 1) 광견병항체 — record 마다 별도 행. 재검사 등으로 record 가 여러 개면 각각 추적.
     const titerEntries = readAllTiterEntries(c)

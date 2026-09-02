@@ -9,6 +9,12 @@ import { cn } from '@/lib/utils'
 import { DateTextField } from '@petmove/ui'
 import { DropdownSelect } from '@petmove/ui'
 import { DestinationCell } from './destination-cell'
+import {
+  inspectionStatusKey as statusKeyFor,
+  readInspectionStatus as readStatus,
+  inspectionStatusTone,
+  type InspectionStatusTarget,
+} from '@/lib/inspection-status'
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
@@ -37,69 +43,18 @@ export interface InspectionRow {
   date: string
   /** false면 날짜 셀은 읽기 전용(뉴질랜드 전염병검사 = 출국일-15일 규칙). */
   dateEditable: boolean
-  /** 날짜 수정 시 어느 저장소를 업데이트할지. */
-  dateStorage:
-    | { kind: 'titer'; recordIdx: number }
-    | { kind: 'infectious'; lab: string }
-    | { kind: 'infectious_multi'; labs: string[] }
+  /** 날짜 수정 시 어느 저장소를 업데이트할지. 진행상태 저장 키도 이걸로 판별한다. */
+  dateStorage: InspectionStatusTarget
 }
 
-/**
- * 행별 진행상태 저장 키. 같은 케이스에 항체검사/전염병검사가 동시에 올라온 경우
- * 각 검사의 상태가 독립적으로 관리되도록 분리. 항체검사는 record 인덱스별.
- */
+/** 행별 진행상태 저장 키 — 검사 탭·상세페이지 공용(lib/inspection-status). */
 export function inspectionStatusKey(row: InspectionRow): string {
-  if (row.dateStorage.kind === 'titer') return `inspection_status_titer_${row.dateStorage.recordIdx}`
-  if (row.dateStorage.kind === 'infectious') return `inspection_status_inf_${row.dateStorage.lab}`
-  if (row.dateStorage.kind === 'infectious_multi') {
-    return `inspection_status_inf_${[...row.dateStorage.labs].sort().join('_')}`
-  }
-  return 'inspection_status'
+  return statusKeyFor(row.dateStorage)
 }
 
-/**
- * legacy 케이스단위 `inspection_status` 일괄 done cutoff.
- * 20260425000004_inspection_done_pre_march.sql 가 검사일 < 2026-03-01 케이스를
- * 일괄 done 처리했고, 단일행 시절 UI 도 이 필드만 썼다. 이 날짜 이후 검사일을 가진
- * 행은 "옛 케이스에 새로 추가된 검사"이므로 케이스단위 done 을 상속하면 안 된다.
- */
-const INSPECTION_LEGACY_DONE_CUTOFF = '2026-03-01'
-
-/**
- * 행 진행상태 조회. 행별 키 우선, 없으면 legacy 폴백.
- *
- * legacy `inspection_status` 는 단일행 시절·pre-March 일괄 done 마이그레이션에서만
- * 쓰인 케이스단위 필드다. 같은 케이스에 새 검사 행이 추가되면 옛 'done' 이 잘못
- * 번지므로, "옛 행"에만 상속해야 한다 — 옛 행 판별:
- *  - titer idx 0: 단일행 시절부터 있던 행 → `inspection_status_titer` → `inspection_status`.
- *  - titer idx ≥ 1: 재검사 신규 record → legacy 무시, 'waiting' 출발.
- *  - infectious / infectious_multi: 검사일이 cutoff 이전이면 옛 행 → legacy 상속,
- *    cutoff 이후(=옛 케이스에 새로 추가된 검사)면 무시하고 'waiting'.
- *    (titer 의 idx 분리와 동일 취지를 날짜로 판별. 호주행 노견에 광견병항체 done
- *    이후 새 전염병검사를 추가하면 stale done 을 물려받던 버그 방지.)
- */
+/** 행 진행상태 조회 — legacy 폴백 포함. 규칙은 lib/inspection-status 단일 출처. */
 export function readInspectionStatus(row: InspectionRow): string {
-  const data = (row.caseRow.data ?? {}) as Record<string, unknown>
-  const v = data[inspectionStatusKey(row)]
-  if (typeof v === 'string') return v
-  if (row.dateStorage.kind === 'titer' && row.dateStorage.recordIdx === 0) {
-    // idx 0 는 옛 단일행 시절 부터 있었을 가능성이 있으므로 legacy 폴백 유지.
-    // 새 회차가 옛 'done' 을 상속하지 않게 하려면 saveNewRecord 가
-    // inspection_status_titer_<newIdx> 를 'waiting' 으로 명시 저장 (rabies-titer-field).
-    const legacyTiter = data.inspection_status_titer
-    if (typeof legacyTiter === 'string') return legacyTiter
-    const legacy = data.inspection_status
-    if (typeof legacy === 'string') return legacy
-  }
-  if (row.dateStorage.kind === 'infectious' || row.dateStorage.kind === 'infectious_multi') {
-    const legacy = data.inspection_status
-    // 검사일이 있고 cutoff 이전인 옛 행만 케이스단위 done 을 상속.
-    // 검사일이 없거나(아직 미검사 → waiting) cutoff 이후면 상속 안 함.
-    if (typeof legacy === 'string' && row.date && row.date < INSPECTION_LEGACY_DONE_CUTOFF) {
-      return legacy
-    }
-  }
-  return 'waiting'
+  return readStatus(row.caseRow, row.dateStorage, row.date)
 }
 
 interface LabOption { value: string; label: string }
@@ -336,15 +291,10 @@ function StatusCell({ row, options, onUpdate, overdue = false }: {
 
   // "검사중" → primary(테라코타, warm). "완료" → sage(차분한 녹색). 대기 → muted,
   // 단 검사일 5일 이상 지난 대기는 경고색(날짜와 동일)으로 지연 신호.
-  const isActive = value === 'testing'
   const isDone = value === 'done'
   // 상태 색 규칙(2026-08-05 통일, todo-table 과 동일): 대기는 항상 tertiary.
   // 지연 경고는 날짜 셀만 물들인다 — 상태 글자 물들임은 탭 간 대기 색 불일치를 낳았다.
-  const cls = isActive
-    ? 'font-serif text-[16px] text-primary'
-    : isDone
-    ? 'font-serif text-[16px] text-pmw-positive'
-    : 'font-serif text-[16px] text-pmw-text-tertiary'
+  const cls = cn('font-serif text-[16px]', inspectionStatusTone(value))
 
   return <StatusPicker row={row} options={options} value={value} label={label} cls={cls} isDone={isDone} onUpdate={onUpdate} />
 }
