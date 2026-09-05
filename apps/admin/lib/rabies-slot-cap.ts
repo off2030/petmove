@@ -12,4 +12,31 @@ export const RABIES_SLOT_CAP: Record<string, number> = {
   Form25: 3,
   Form25AuNz: 2,
   FormRE: 2,
+  FormAC: 6,
+}
+
+/**
+ * 모달을 띄우는 **최소 접종 수**. 미지정이면 slot cap + 1 = "슬롯에 다 안 들어갈 때".
+ *
+ * Form AC 만 예외로 명시한다 — 슬롯이 6개라 '넘칠 때' 규칙으로는 사실상 열리지 않는다
+ * (운영 일본 케이스 570건 최대 4회, 2026-09-05 확인). Form AC 는 "다 안 들어가서"가 아니라
+ * "다 들어가지만 골라 찍으려고" 여는 모달이라 별지25(일본)와 같은 4건으로 맞췄다.
+ */
+const RABIES_PICK_MIN: Record<string, number> = {
+  FormAC: 4,
+}
+
+/** 이 form 에서 광견병 선택 모달을 띄울 최소 접종 수. cap 이 없으면 null(모달 미지원). */
+export function rabiesPickMin(formKey: string): number | null {
+  const cap = RABIES_SLOT_CAP[formKey]
+  if (cap === undefined) return null
+  return RABIES_PICK_MIN[formKey] ?? cap + 1
+}
+
+/**
+ * 선택분이 넘쳤을 때 "기타 예방접종" 칸으로 흘릴 수 있는 서식인가.
+ * Form AC 는 그 칸이 없어(rabies1~6 + titer1~2 뿐) 선택하지 않은 접종은 그냥 빠진다.
+ */
+export function hasRabiesOverflowSlot(formKey: string): boolean {
+  return formKey !== 'FormAC'
 }

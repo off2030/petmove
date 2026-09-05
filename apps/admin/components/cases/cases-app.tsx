@@ -14,7 +14,7 @@ import { generateFormRE, generateFormAC, generateIdentificationDeclaration, gene
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import type { MultiFormKey } from '@/lib/pdf-multi-forms'
 import { MultiFormDialog } from './multi-form-dialog'
-import { RabiesSelectDialog, RABIES_SLOT_CAP } from './rabies-select-dialog'
+import { RabiesSelectDialog, RABIES_SLOT_CAP, rabiesPickMin, hasRabiesOverflowSlot } from './rabies-select-dialog'
 import { ChevronLeft, ChevronRight, Link2, Trash2 } from 'lucide-react'
 import { AssigneePicker } from './assignee-picker'
 import { ShareLinkDialog } from './share-link-dialog'
@@ -140,7 +140,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
   const [previewOpen, setPreviewOpen] = useState<{ caseId: string; label: string } | null>(null)
   // 별지 25호/EX 의 광견병 슬롯이 부족할 때 띄우는 선택 모달.
   const [rabiesPick, setRabiesPick] = useState<
-    | { caseId: string; formKey: 'Form25' | 'Form25AuNz' | 'FormRE'; rabiesDates: unknown; destination: string | null; cap: number; eligibleAfterDate?: string | null; includeOtherHospital?: boolean; recommendedIndices?: number[] | null }
+    | { caseId: string; formKey: 'Form25' | 'Form25AuNz' | 'FormRE' | 'FormAC'; rabiesDates: unknown; destination: string | null; cap: number; eligibleAfterDate?: string | null; includeOtherHospital?: boolean; recommendedIndices?: number[] | null }
     | null
   >(null)
   const [includeSignature, setIncludeSignature] = useState(false)
@@ -435,6 +435,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
           formLabel={
             rabiesPick?.formKey === 'Form25AuNz' ? '별지 25호 EX (호주/뉴질랜드)' :
             rabiesPick?.formKey === 'FormRE' ? '일본 재입국 (FormRE)' :
+            rabiesPick?.formKey === 'FormAC' ? '일본 건강증명서 (Form AC)' :
             '별지 25호'
           }
           slotCount={rabiesPick?.cap ?? 3}
@@ -442,6 +443,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
           eligibleAfterDate={rabiesPick?.eligibleAfterDate}
           includeOtherHospital={rabiesPick?.includeOtherHospital}
           recommendedIndices={rabiesPick?.recommendedIndices}
+          hasOverflowSlot={rabiesPick ? hasRabiesOverflowSlot(rabiesPick.formKey) : true}
           onClose={(indices) => {
             const pick = rabiesPick
             setRabiesPick(null)
@@ -640,6 +642,26 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
                                         })
                                         return
                                       }
+                                    }
+                                  } else if (formKey === 'FormAC') {
+                                    // Form AC: 타병원 포함 전체 접종 기준(FormRE 와 동일 — 서버도 strip 안 함).
+                                    // 슬롯이 6개라 '넘칠 때' 로는 안 열리므로 rabiesPickMin(=4) 으로 판정.
+                                    const min = rabiesPickMin(formKey) ?? cap + 1
+                                    // 날짜 없는 빈 기록은 모달 목록(normalize)에서도 빠지므로 카운트에서 제외.
+                                    const dated = rabiesAll.filter((r) => {
+                                      const d = typeof r === 'string' ? r : (r && typeof r === 'object' ? (r as { date?: string }).date : null)
+                                      return typeof d === 'string' && !!d
+                                    })
+                                    if (dated.length >= min) {
+                                      setRabiesPick({
+                                        caseId: selectedCase.id,
+                                        formKey: 'FormAC',
+                                        rabiesDates: dataObj.rabies_dates,
+                                        destination: focusDest,
+                                        cap,
+                                        includeOtherHospital: true,
+                                      })
+                                      return
                                     }
                                   } else {
                                     // 별지 25호/EX: 타병원 접종 제외하고 카운트
