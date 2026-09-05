@@ -10,6 +10,7 @@ import {
   validateTiterWithinChain,
 } from '../journey-steps/date-rules'
 import { findRabiesChainBreak } from '../journey-steps/rabies-chain'
+import { deriveAdvanceNotificationStatus } from '../journey-steps/report-status'
 import type { ProcedureCheck } from './types'
 import {
   addDays,
@@ -457,6 +458,15 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const entry = readDepartureDate(caseRow, destination) ?? ''
       // 필수: 사전 신고 신청일 + 출국일(=입국일)
       if (!notif || !entry) return SKIP
+      // 신고가 이미 완료됐으면 마감은 지난 이야기 — 늦게 신청했더라도 지금 할 조치가 없다.
+      // 게다가 저장된 신청일이 **실제 신고일이 아니라 '완료를 누른 날'** 인 경우가 많다:
+      // 신청일이 빈 채로 신고 탭·상세에서 완료로 바꾸면 planReportSlotWrite 가 today 를 박는다.
+      // 그래서 40일 전에 신고한 케이스에도 오경보가 났다(2026-09-05 사용자 보고 — 최인혜/보름:
+      // 실제 신고는 기한 내, 저장값은 완료 처리일 2026-08-19 로 34일).
+      // au.rabies-doc 이 '버튼 누른 날' 저장값 때문에 순서 갈래를 걷어낸 것과 같은 부류.
+      if (deriveAdvanceNotificationStatus(caseRow) === 'done') {
+        return { ok: true, message: '사전 신고 완료 — 마감 검사 대상 아님.' }
+      }
       // 단일 출처 — client 입력 차단과 같은 함수.
       const msg = validateAdvanceNotification(notif, entry)
       if (msg) {
