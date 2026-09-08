@@ -10,6 +10,7 @@ import {
 } from '@petmove/domain'
 import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, matchesDestinationKey, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, isDestinationScopedKey, applyDestinationFieldOverride, HARDCODED_VACCINE_SPECIES_DEFAULTS, type ExtraFieldDef } from '@petmove/domain'
 import { buildShareFieldDescriptors, permitDeliverablesForDestination } from '@petmove/domain'
+import { EXTRA_FIELD_DEFS, normalizeTimeHhmm } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Trash2, ChevronDown, Check } from 'lucide-react'
@@ -516,7 +517,15 @@ function destinationToCountry(destination: string | null | undefined): Country |
 function mapExtractResultToUnified(country: Country, result: Record<string, unknown>): Record<string, string | null> {
   const out: Record<string, string | null> = {}
   const set = (k: string, v: unknown) => {
-    if (typeof v === 'string' && v) out[k] = v
+    if (typeof v !== 'string' || !v) return
+    // 시간 필드는 원문 표기가 그대로 온다 — 일본 검역소 예약 메일의 '1300' 처럼.
+    // 저장 형식 HH:mm 으로 정규화하고, 못 읽는 값은 아예 넣지 않는다(깨진 시간보다 빈 칸).
+    if (EXTRA_FIELD_DEFS[k]?.type === 'time') {
+      const t = normalizeTimeHhmm(v)
+      if (t) out[k] = t
+      return
+    }
+    out[k] = v
   }
   if (country === 'japan') {
     const inb = (result.korea_to_japan ?? {}) as Record<string, unknown>
