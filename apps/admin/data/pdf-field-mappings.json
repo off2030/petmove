@@ -3881,6 +3881,23 @@
         }
       }
     ],
+    "conditionalLines": [
+      {
+        "source": "species",
+        "thickness": 1,
+        "_note": "'the dog/cat (delete as appropriate)' — 종에 맞춰 반대쪽 단어에 취소선. cases 키는 케이스의 species 값이고, 그 안엔 '지울 단어'의 좌표가 들어간다(dog → cat 을 지움). 좌표는 SGP.pdf 픽셀 분석(2482x3508 이미지, 배치 cm 565 0 0 798.558 15 21.7212)으로 산출 — 취소선 y 는 소문자 x-height 중앙.",
+        "cases": {
+          "dog": [
+            { "_at": "p1 SECTION II — 'cat'", "page": 0, "x1": 256.07, "y1": 385.6, "x2": 269.27, "y2": 385.6 },
+            { "_at": "p1 SECTION III — 'cat'", "page": 0, "x1": 179.13, "y1": 292.27, "x2": 192.33, "y2": 292.27 }
+          ],
+          "cat": [
+            { "_at": "p1 SECTION II — 'dog'", "page": 0, "x1": 237.4, "y1": 385.6, "x2": 253.79, "y2": 385.6 },
+            { "_at": "p1 SECTION III — 'dog'", "page": 0, "x1": 160.23, "y1": 292.27, "x2": 176.62, "y2": 292.27 }
+          ]
+        }
+      }
+    ],
     "fields": {
       "text_1vqxe": { "source": null, "note": "p1 NParks/AVS Import Licence No. (수동입력)" },
       "text_2dlhd": { "source": null, "note": "p1 Veterinary Certificate No. (수동입력)" },

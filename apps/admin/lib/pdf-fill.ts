@@ -169,6 +169,21 @@ type FormMapping = {
     borderWidth?: number
     cases: Record<string, { cx: number; cy: number; rx: number; ry: number }>
   }[]
+  /**
+   * Conditional line overlays driven by a data value — "(delete as appropriate)"
+   * 문구를 자동으로 그어 준다. e.g. SGP 의 "the dog/cat (delete as appropriate)":
+   * species 가 dog 면 'cat' 에, cat 이면 'dog' 에 취소선을 긋는다.
+   *
+   * `cases` 의 키는 **데이터 값**(readSource 결과 소문자)이고, 값은 그 값일 때
+   * 그을 선들이다 — 즉 cases.dog 에는 '강아지일 때 지울 것'(= cat)이 들어간다.
+   * 좌표는 PDF user-space(원점 좌하단), 선 하나가 취소선 하나.
+   */
+  conditionalLines?: {
+    source: string
+    page?: number
+    thickness?: number
+    cases: Record<string, { page?: number; x1: number; y1: number; x2: number; y2: number; _at?: string }[]>
+  }[]
 }
 
 type MappingsJson = Record<string, FormMapping>
@@ -3516,6 +3531,28 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
         borderColor: rgb(0, 0, 0),
         borderWidth: mk.borderWidth ?? 1.2,
       })
+    }
+  }
+
+  // Conditional line overlays — strike the option that does not apply.
+  // e.g. SGP "the dog/cat (delete as appropriate)": species 에 맞춰 반대쪽 단어에
+  // 취소선. 페이지 컨텐트에 그리므로 flatten 후에도 남는다.
+  if (form.conditionalLines?.length) {
+    const pages = pdf.getPages()
+    for (const cl of form.conditionalLines) {
+      const raw = readSource(cl.source, caseRow, data)
+      const lines = cl.cases[String(raw ?? '').toLowerCase()]
+      if (!lines?.length) continue
+      for (const l of lines) {
+        const page = pages[l.page ?? cl.page ?? 0]
+        if (!page) continue
+        page.drawLine({
+          start: { x: l.x1, y: l.y1 },
+          end: { x: l.x2, y: l.y2 },
+          thickness: cl.thickness ?? 1,
+          color: rgb(0, 0, 0),
+        })
+      }
     }
   }
 
