@@ -129,7 +129,7 @@
       "titer1_date": {
         "source": "rabies_titer_records",
         "transform": "array[0].date",
-        "note": "Row I = 최신 항체검사"
+        "note": "Row I = 최신 항체검사. 검사가 2회 이상이어도 최신 1건만 출력한다(Row II 는 비움)."
       },
       "titer1_value": {
         "source": "rabies_titer_records",
@@ -142,22 +142,6 @@
       "titer1_lab_country": {
         "source": "rabies_titer_records",
         "transform": "array[0].lab_country"
-      },
-      "titer2_date": {
-        "source": "rabies_titer_records",
-        "transform": "array[1].date"
-      },
-      "titer2_value": {
-        "source": "rabies_titer_records",
-        "transform": "array[1].value"
-      },
-      "titer2_lab_name": {
-        "source": "rabies_titer_records",
-        "transform": "array[1].lab"
-      },
-      "titer2_lab_country": {
-        "source": "rabies_titer_records",
-        "transform": "array[1].lab_country"
       },
       "vet_name": {
         "source": null,
