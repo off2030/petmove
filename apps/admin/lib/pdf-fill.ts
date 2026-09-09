@@ -153,7 +153,7 @@ type FormMapping = {
    * wagon, ship, or aircraft)": strike every option except aircraft).
    * Coordinates are PDF user-space (origin = bottom-left). thickness 기본 0.8pt.
    */
-  lineOverlays?: { page?: number; x1: number; y1: number; x2: number; y2: number; thickness?: number }[]
+  lineOverlays?: { page?: number; x1: number; y1: number; x2: number; y2: number; thickness?: number; _at?: string }[]
   /**
    * Conditional ellipse (circle) overlays driven by a data value. For forms
    * where an option must be circled rather than typed — e.g. SGP's
