@@ -28,6 +28,9 @@ const BREEDS = breedsData as Breed[]
 interface Color { ko: string; en: string; alias?: string[] }
 const COLORS = colorsData as Color[]
 
+// 이메일 형식 — portal 의 다른 이메일 입력(내 정보 > 보호자 정보)과 같은 기준.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 // Cloudflare Turnstile site key (공개 신청폼 봇 차단). 미설정 시 위젯 미표시 + 서버 검증도 스킵.
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
@@ -64,6 +67,7 @@ const messages = {
     addressDetail: '상세주소 · 동/호수 등',
     email: '이메일',
     emailPlaceholder: 'example@email.com',
+    emailHint: '앱 연결에 사용',
     sec3: '동반 마리수',
     petCount: '마리수',
     petInfo: '반려동물 정보',
@@ -108,6 +112,7 @@ const messages = {
     addressModalTitle: '주소 검색',
     fillRequest: '작성 요청',
     phoneFormatError: '전화번호 형식을 확인해주세요. (010-1234-5678 · 02-123-4567 · 0507-1400-4069, 해외는 +81-90-1234-5678)',
+    emailFormatError: '이메일 형식을 확인해주세요. (example@email.com)',
     microchipFormatErrorPrefixSingle: '',
     microchipFormatErrorPrefixN: (n: number) => `반려동물 ${n}: `,
     microchipFormatError: '15자리 숫자를 입력하세요.',
@@ -169,6 +174,7 @@ const messages = {
     addressDetail: 'Detail · unit / floor',
     email: 'Email',
     emailPlaceholder: 'example@email.com',
+    emailHint: 'Used to link the app',
     sec3: 'Number of Pets',
     petCount: 'Pets',
     petInfo: 'Pet Information',
@@ -213,6 +219,7 @@ const messages = {
     addressModalTitle: 'Address search',
     fillRequest: 'Required',
     phoneFormatError: 'Check the phone number format (010-1234-5678, 02-123-4567, or +81-90-1234-5678 for overseas).',
+    emailFormatError: 'Check the email format (example@email.com).',
     microchipFormatErrorPrefixSingle: '',
     microchipFormatErrorPrefixN: (n: number) => `Pet ${n}: `,
     microchipFormatError: 'Microchip number must be 15 digits.',
@@ -909,9 +916,16 @@ export function ApplyForm({
       if (!isAppleLogin && (!customerLastNameEn.trim() || !customerFirstNameEn.trim())) miss.add('customerNameEn')
       if (!phone.trim()) miss.add('phone')
       if (!addressKr.trim()) miss.add('addressKr')
+      // 조직 공개폼은 계정이 없다 — 이메일이 비면 나중에 보호자가 가입해도
+      //   케이스가 자동으로 연결되지 않는다(트리거 매칭키가 data.email). 그래서 필수.
+      if (isPublic && !email.trim()) miss.add('email')
       if (!miss.has('phone') && phoneInputError(phone)) {
         formatError = m.phoneFormatError
         miss.add('phone')
+      }
+      if (isPublic && !miss.has('email') && !EMAIL_RE.test(email.trim())) {
+        formatError = formatError ? `${formatError} ${m.emailFormatError}` : m.emailFormatError
+        miss.add('email')
       }
     } else if (s === 3) {
       for (let i = 0; i < pets.length; i++) {
@@ -1299,7 +1313,7 @@ export function ApplyForm({
               )}
             </FieldRow>
             {isPublic && (
-              <FieldRow m={m} label={m.email}>
+              <FieldRow m={m} label={m.email} required hint={m.emailHint} fieldKey="email" missing={missing.has('email')}>
                 <input type="email" inputMode="email" autoComplete="email" value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={m.emailPlaceholder} className={inputClass} />

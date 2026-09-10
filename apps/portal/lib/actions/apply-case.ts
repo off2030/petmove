@@ -186,6 +186,15 @@ export async function applyCase(input: ApplyInput): Promise<
   if (sharedMissing || petMissing) {
     return { ok: false, error: '필수 항목이 누락되었습니다.' }
   }
+  // 이메일 — 계정 이메일이 없는 접수(조직 공개폼, 익명)에서는 필수.
+  // 비어 있으면 나중에 보호자가 가입해도 case_customer_links 의 email-match 가
+  // 돌지 않아 여정이 앱에 연결되지 않는다. 클라이언트 검증의 백스톱.
+  if (ownerRequired && !user?.email) {
+    const e = input.email?.trim() ?? ''
+    if (!e || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
+      return { ok: false, error: '이메일을 정확히 입력해주세요.' }
+    }
+  }
   const lengthChecks: Array<[string | undefined, number]> = [
     [input.destination, MAX_LEN.short],
     [input.customer_name, MAX_LEN.short],
