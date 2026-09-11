@@ -3302,6 +3302,11 @@ export type FillOptions = {
    *  - 빈 배열을 넘기면 광견병 칸 전부 공란.
    */
   rabiesIndices?: number[]
+  /**
+   * 호주 서류(AU 계열) RNATT 칸에 쓸 광견병 항체검사 — 채혈일 오름차순(날짜 있는 기록) 인덱스.
+   * 지정 시 rabies_titer_records 를 그 1건으로 좁혀 채혈일·검체 도착일·결과가 같은 검사에서 나온다.
+   */
+  titerIndex?: number
 }
 
 /**
@@ -3372,10 +3377,18 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
     data.rabies_overflow = olderAsc.slice().reverse()
   }
 
+  // 호주 서류 RNATT 검사 선택 — titerIndex(채혈일 오름차순, titer_date_asc 와 같은 공간)의 기록
+  // 1건만 남겨 채혈일·검체 도착일·결과 칸이 모두 그 검사에서 나오게 한다.
+  const titerPicked = typeof options?.titerIndex === 'number'
+  if (titerPicked) {
+    const picked = sortedTiters(data.rabies_titer_records).slice().reverse()[options!.titerIndex!]
+    if (picked) data.rabies_titer_records = [picked]
+  }
+
   // extras(예: tube_count, consignee_lab)는 resolveField가 `caseRow.data` 를
   // 통해 읽으므로, solo fill 경로에서도 extras 가 적용되도록 data 를 주입한
   // 사본을 만들어 soloDoc 에 전달한다.
-  const caseRowWithExtras: CaseRow = options?.extras || options?.rabiesIndices ? { ...caseRow, data } : caseRow
+  const caseRowWithExtras: CaseRow = options?.extras || options?.rabiesIndices || titerPicked ? { ...caseRow, data } : caseRow
 
   // Date reformatter for form-level dateFormat override (e.g. Annex III uses dd/mm/yyyy).
   // Converts a stand-alone YYYY-MM-DD or YYYY/MM/DD token to dd/mm/yyyy.

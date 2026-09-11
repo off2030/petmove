@@ -15,6 +15,7 @@ import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-downl
 import type { MultiFormKey } from '@/lib/pdf-multi-forms'
 import { MultiFormDialog } from './multi-form-dialog'
 import { RabiesSelectDialog, RABIES_SLOT_CAP, rabiesPickMin, hasRabiesOverflowSlot } from './rabies-select-dialog'
+import { TiterSelectDialog, AU_TITER_PICK_FORMS, sortTiterRecords, type AuTiterFormKey } from './titer-select-dialog'
 import { ChevronLeft, ChevronRight, Link2, Trash2 } from 'lucide-react'
 import { AssigneePicker } from './assignee-picker'
 import { ShareLinkDialog } from './share-link-dialog'
@@ -141,6 +142,11 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
   // 별지 25호/EX 의 광견병 슬롯이 부족할 때 띄우는 선택 모달.
   const [rabiesPick, setRabiesPick] = useState<
     | { caseId: string; formKey: 'Form25' | 'Form25AuNz' | 'FormRE' | 'FormAC'; rabiesDates: unknown; destination: string | null; cap: number; eligibleAfterDate?: string | null; includeOtherHospital?: boolean; recommendedIndices?: number[] | null }
+    | null
+  >(null)
+  // 호주 서류(AU 계열) — 광견병 항체검사가 2건 이상일 때 RNATT 칸에 쓸 검사를 고르는 모달.
+  const [titerPick, setTiterPick] = useState<
+    | { caseId: string; formKey: AuTiterFormKey; label: string; records: unknown; destination: string | null }
     | null
   >(null)
   const [includeSignature, setIncludeSignature] = useState(false)
@@ -315,7 +321,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
   }, [selectedId, updateLocalCaseField, prevCase, nextCase, selectCase])
 
   const downloadCertPdf = useCallback(
-    async (formKey: string, caseId: string, destination: string | null, rabiesIndices?: number[]) => {
+    async (formKey: string, caseId: string, destination: string | null, rabiesIndices?: number[], titerIndex?: number) => {
       const row = cases.find((c) => c.id === caseId)
       if (row && !(await confirmIfFailing(row, destination, formKey))) return
       try {
@@ -345,6 +351,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
           includeVet,
           destination,
           ...(rabiesIndices ? { rabiesIndices } : {}),
+          ...(titerIndex !== undefined ? { titerIndex } : {}),
         })
       } catch (error) {
         toastError('PDF 다운로드 실패', error instanceof Error ? error.message : '잠시 후 다시 시도하세요.')
@@ -449,6 +456,19 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
             setRabiesPick(null)
             if (pick && indices) {
               void downloadCertPdf(pick.formKey, pick.caseId, pick.destination, indices)
+            }
+          }}
+        />
+
+        <TiterSelectDialog
+          open={!!titerPick}
+          formLabel={titerPick?.label ?? '호주 서류'}
+          records={titerPick?.records}
+          onClose={(index) => {
+            const pick = titerPick
+            setTiterPick(null)
+            if (pick && index !== null) {
+              void downloadCertPdf(pick.formKey, pick.caseId, pick.destination, undefined, index)
             }
           }}
         />
@@ -618,6 +638,21 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
                               onClick={async () => {
                                 const formKey = CERT_FORM_KEYS[btn.key]
                                 if (!formKey) return
+                                // 호주 서류: 광견병 항체검사가 2건 이상이면 RNATT 칸에 쓸 검사를 고른다
+                                // (호주용 KRSL + 프랑스용 APQA EU 처럼 여러 나라 검사가 섞인 케이스).
+                                if (AU_TITER_PICK_FORMS.has(formKey)) {
+                                  const titerRecords = (selectedCase.data as Record<string, unknown> | null)?.rabies_titer_records
+                                  if (sortTiterRecords(titerRecords).length >= 2) {
+                                    setTiterPick({
+                                      caseId: selectedCase.id,
+                                      formKey: formKey as AuTiterFormKey,
+                                      label: btn.label,
+                                      records: titerRecords,
+                                      destination: focusDest,
+                                    })
+                                    return
+                                  }
+                                }
                                 const cap = RABIES_SLOT_CAP[formKey]
                                 if (cap !== undefined) {
                                   const dataObj = (selectedCase.data ?? {}) as Record<string, unknown>

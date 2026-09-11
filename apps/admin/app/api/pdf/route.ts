@@ -80,6 +80,8 @@ type SinglePdfBody = {
   destination?: string | null
   /** 별지 25호/EX 의 dedicated 광견병 슬롯 선택 (sortedAsc 기준 인덱스). */
   rabiesIndices?: number[]
+  /** 호주 서류(AU 계열) RNATT 칸에 쓸 항체검사 — 채혈일 오름차순(날짜 있는 기록) 인덱스. */
+  titerIndex?: number
 }
 
 type MultiPdfBody = {
@@ -189,6 +191,7 @@ export async function POST(req: NextRequest) {
         includeVet: body.includeVet,
         destination: body.destination,
         rabiesIndices: body.rabiesIndices,
+        titerIndex: body.titerIndex,
       })
       if (!result.ok) return jsonError(result.error, 500)
       return pdfResponse(result.pdf, result.filename)
