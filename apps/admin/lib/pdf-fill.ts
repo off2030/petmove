@@ -1919,7 +1919,9 @@ function resolveField(
   // as `vaccine:...` plus `civ` (CIV uses lookupCiv).
   // For civ, validity_to/validity_from fall back to vaccinationDate ± 1 year
   // because lookupCiv doesn't compute an explicit immunity window.
-  const vacDescMatch = transform?.match(/^vaccine_desc:(rabies|ext_parasite|int_parasite|civ|comprehensive):(name|manufacturer|serial|date|validity_from|validity_to)\[(\d+)\]$/)
+  // `product_expiry` = 약품(배치) 유효기간 — 기록 입력값 → 카탈로그 expiry (별지25 배치칸과 동일 출처).
+  //   AU 서류 종합백신·독감 'Expiry date' 칸용. 면역 유효기간(validity_to)은 'booster due' 칸.
+  const vacDescMatch = transform?.match(/^vaccine_desc:(rabies|ext_parasite|int_parasite|civ|comprehensive):(name|manufacturer|serial|product_expiry|date|validity_from|validity_to)\[(\d+)\]$/)
   if (vacDescMatch) {
     const kind = vacDescMatch[1]
     const attr = vacDescMatch[2]
@@ -1946,6 +1948,7 @@ function resolveField(
     if (attr === 'name') return merged.name
     if (attr === 'manufacturer') return merged.manufacturer
     if (attr === 'serial') return merged.serial
+    if (attr === 'product_expiry') return merged.expiry
     if (attr === 'validity_from') return fmtDate(p?.validityFrom ?? '')
     if (attr === 'validity_to') return fmtDate(p?.validityTo ?? '')
     return ''

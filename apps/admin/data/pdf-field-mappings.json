@@ -2151,9 +2151,9 @@
       },
       "text_36nfaw": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[0]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[0]",
         "default": "N/A",
-        "note": "p2 Leptospira 1 expiry"
+        "note": "p2 Leptospira 1 expiry — 약품(배치) 유효기간"
       },
       "text_37pkcs": {
         "source": "general_vaccine_dates",
@@ -2181,9 +2181,9 @@
       },
       "text_39comw": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[1]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[1]",
         "default": "N/A",
-        "note": "p2 Leptospira 2 expiry"
+        "note": "p2 Leptospira 2 expiry — 약품(배치) 유효기간"
       },
       "text_38xmqh": {
         "source": "general_vaccine_dates",
@@ -2211,9 +2211,9 @@
       },
       "text_44jwab": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[2]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[2]",
         "default": "N/A",
-        "note": "p3 Leptospira 3 expiry"
+        "note": "p3 Leptospira 3 expiry — 약품(배치) 유효기간"
       },
       "text_45rmek": {
         "source": "general_vaccine_dates",
@@ -2241,9 +2241,9 @@
       },
       "text_48bvcr": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[3]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[3]",
         "default": "N/A",
-        "note": "p3 Leptospira 4 expiry"
+        "note": "p3 Leptospira 4 expiry — 약품(배치) 유효기간"
       },
       "text_49vxhc": {
         "source": "general_vaccine_dates",
@@ -2268,8 +2268,8 @@
       },
       "text_58mtsy": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:validity_to[0]",
-        "note": "p3 CIV 1 expiry date (접종일 + 1y)"
+        "transform": "vaccine_desc:civ:product_expiry[0]",
+        "note": "p3 CIV 1 expiry date — 약품(배치) 유효기간"
       },
       "text_52uxaw": {
         "source": "civ_dates",
@@ -2296,9 +2296,9 @@
       },
       "text_59iaww": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:validity_to[1]",
+        "transform": "vaccine_desc:civ:product_expiry[1]",
         "default": "N/A",
-        "note": "p3 CIV 2 expiry date"
+        "note": "p3 CIV 2 expiry date — 약품(배치) 유효기간"
       },
       "text_53jqcz": {
         "source": "civ_dates",
@@ -2625,9 +2625,9 @@
       },
       "text_36nfaw": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[0]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[0]",
         "default": "N/A",
-        "note": "p2 Leptospira 1 expiry"
+        "note": "p2 Leptospira 1 expiry — 약품(배치) 유효기간"
       },
       "text_37pkcs": {
         "source": "general_vaccine_dates",
@@ -2655,9 +2655,9 @@
       },
       "text_39comw": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[1]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[1]",
         "default": "N/A",
-        "note": "p2 Leptospira 2 expiry"
+        "note": "p2 Leptospira 2 expiry — 약품(배치) 유효기간"
       },
       "text_38xmqh": {
         "source": "general_vaccine_dates",
@@ -2685,9 +2685,9 @@
       },
       "text_44jwab": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[2]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[2]",
         "default": "N/A",
-        "note": "p3 Leptospira 3 expiry"
+        "note": "p3 Leptospira 3 expiry — 약품(배치) 유효기간"
       },
       "text_45rmek": {
         "source": "general_vaccine_dates",
@@ -2715,9 +2715,9 @@
       },
       "text_48bvcr": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[3]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[3]",
         "default": "N/A",
-        "note": "p3 Leptospira 4 expiry"
+        "note": "p3 Leptospira 4 expiry — 약품(배치) 유효기간"
       },
       "text_49vxhc": {
         "source": "general_vaccine_dates",
@@ -2742,8 +2742,8 @@
       },
       "text_58mtsy": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:validity_to[0]",
-        "note": "p3 CIV 1 expiry date (접종일 + 1y)"
+        "transform": "vaccine_desc:civ:product_expiry[0]",
+        "note": "p3 CIV 1 expiry date — 약품(배치) 유효기간"
       },
       "text_52uxaw": {
         "source": "civ_dates",
@@ -2770,9 +2770,9 @@
       },
       "text_59iaww": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:validity_to[1]",
+        "transform": "vaccine_desc:civ:product_expiry[1]",
         "default": "N/A",
-        "note": "p3 CIV 2 expiry date"
+        "note": "p3 CIV 2 expiry date — 약품(배치) 유효기간"
       },
       "text_53jqcz": {
         "source": "civ_dates",
