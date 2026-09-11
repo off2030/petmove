@@ -2062,8 +2062,8 @@
       },
       "text_17mhge": {
         "source": "rabies_titer_records",
-        "transform": "array[0].value",
-        "note": "p1 RNATT result IU/mL (최신 titer value)"
+        "transform": "titer_value_asc[0]",
+        "note": "p1 RNATT result IU/mL — Collection date 와 같은 회차(오래된 순)"
       },
       "text_18rgpy": {
         "source": null,
@@ -2536,8 +2536,8 @@
       },
       "text_17mhge": {
         "source": "rabies_titer_records",
-        "transform": "array[0].value",
-        "note": "p1 RNATT result IU/mL (최신 titer value)"
+        "transform": "titer_value_asc[0]",
+        "note": "p1 RNATT result IU/mL — Collection date 와 같은 회차(오래된 순)"
       },
       "text_18rgpy": {
         "source": null,
@@ -3005,8 +3005,8 @@
       },
       "text_17igkd": {
         "source": "rabies_titer_records",
-        "transform": "array[0].value",
-        "note": "p1 RNATT result IU/ml"
+        "transform": "titer_value_asc[0]",
+        "note": "p1 RNATT result IU/ml — Collection date 와 같은 회차(오래된 순)"
       },
       "text_18rloc": {
         "source": "rabies_dates",
@@ -3243,8 +3243,8 @@
       },
       "text_17igkd": {
         "source": "rabies_titer_records",
-        "transform": "array[0].value",
-        "note": "p1 RNATT result IU/ml"
+        "transform": "titer_value_asc[0]",
+        "note": "p1 RNATT result IU/ml — Collection date 와 같은 회차(오래된 순)"
       },
       "text_18rloc": {
         "source": "rabies_dates",

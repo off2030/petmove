@@ -1871,6 +1871,16 @@ function resolveField(
     return typeof legacy === 'string' && legacy ? legacy : ''
   }
 
+  // AU RNATT 결과값 — titer_date_asc[n]·titer_received_asc[n] 과 같은 회차(오래된 순 n번째).
+  // 예전엔 array[0].value(최신순)라 검사가 2건 이상이면 채혈일은 1차 검사, 결과는 최신 검사
+  // 값이 섞여 찍혔다(2026-09-11 — KRSL 1/14 채혈일 옆에 APQA EU 6/9 결과 '≥ 0.5').
+  const titerValueAscMatch = transform?.match(/^titer_value_asc\[(\d+)\]$/)
+  if (titerValueAscMatch && source === 'rabies_titer_records') {
+    const idx = Number(titerValueAscMatch[1])
+    const rec = sortedTiters(raw).slice().reverse()[idx]
+    return rec?.value ?? ''
+  }
+
   // Annex III parasite row — echo microchip/product/date/vet from Nth internal parasite entry.
   // Pattern: `annex_parasite:(transponder|product|date|vet)[n]` — oldest-first.
   // Only filled when the destination requires echinococcus treatment (UK/IE/MT/NI/NO/FI).
