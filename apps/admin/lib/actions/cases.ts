@@ -316,7 +316,9 @@ export async function updateCaseField(
     nextData['by_dest'] = nextByDest
     // 신규 scoped 서류 탭 값은 by_dest 를 truth 로 둔다. top-level legacy 잔존은 flatten 단일
     // fallback 에서 되살아나지 않도록 같이 정리.
-    if (key === 'export_doc_status' || key === 'export_doc_memo') {
+    // 전염병 검사 기록도 같은 규약(2026-07-30 목적지별 전환) — 잔존을 안 지우면 다른 여행지가
+    // 입력 화면 legacy 폴백으로 이 검사를 물려받는다. 펫무브 updateParasiteEntries 와 패리티.
+    if (key === 'export_doc_status' || key === 'export_doc_memo' || key === 'infectious_disease_records') {
       delete nextData[key]
     }
 

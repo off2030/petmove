@@ -9,7 +9,7 @@ import { persistField } from '@/lib/toast-bus'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
 import { labColor } from '@/lib/lab-color'
-import { allLabOptions, effectiveInfectiousLabs, resolveActiveDestination, resolveInspectionLabs } from '@petmove/domain'
+import { allLabOptions, effectiveInfectiousLabs, readScopedWithLegacyFallback, resolveActiveDestination, resolveInspectionLabs } from '@petmove/domain'
 import { stampInspectionActiveDest } from '@/lib/inspection-active-dest'
 import { DateTextField } from '@petmove/ui'
 import { DropdownSelect } from '@petmove/ui'
@@ -40,9 +40,12 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
   const labOptions = effectiveInfectiousLabs(inspectionConfig)
   const allLabs = allLabOptions(inspectionConfig)
 
-  // Read array (backward compat: old flat key)
+  // Read array — 목적지별(by_dest[활성 여행지]) 우선, 이관 전 top-level 잔존 폴백 (+ old flat key).
+  // 전염병 검사는 2026-07-30 부터 목적지별이다(호주 3종 / 뉴질랜드 5종이라 기록 공유 금지).
+  // 예전엔 여기서 top-level 로 저장해 다중 여행지 PDF 의 검사일이 N/A 로 빠졌다(2026-09-11).
   function readRecords(): InfectiousRecord[] {
-    if (Array.isArray(data[DATA_KEY])) return data[DATA_KEY] as InfectiousRecord[]
+    const stored = readScopedWithLegacyFallback(data, activeDest, DATA_KEY)
+    if (Array.isArray(stored)) return stored as InfectiousRecord[]
     if (data.infectious_disease_test) {
       return [{ date: data.infectious_disease_test as string, lab: 'ksvdl' }]
     }
@@ -64,13 +67,14 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
   async function saveRecords(next: InfectiousRecord[]) {
     const val = next.length > 0 ? next : null
     // Optimistic — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
-    updateLocalCaseField(caseId, 'data', DATA_KEY, val)
+    // 활성 여행지 by_dest 로 저장 — 서버가 top-level 잔존을 지워 이관한다.
+    updateLocalCaseField(caseId, 'data', DATA_KEY, val, activeDest)
     // Also clear legacy flat key if it exists
     if (data.infectious_disease_test) {
       updateLocalCaseField(caseId, 'data', 'infectious_disease_test', null)
       updateCaseField(caseId, 'data', 'infectious_disease_test', null).catch(() => {})
     }
-    const r = await persistField('전염병 검사', () => updateCaseField(caseId, 'data', DATA_KEY, val))
+    const r = await persistField('전염병 검사', () => updateCaseField(caseId, 'data', DATA_KEY, val, activeDest))
     if (!r) return
 
     // If clearing all records, remove from toggleable fields

@@ -2078,6 +2078,17 @@ export function matchesDestinationKey(
 }
 
 /**
+ * 케이스 destination 문자열에서 목적지 키(australia 등)에 해당하는 여행지 토큰.
+ * 다중 여행지("호주, 프랑스")에서 그 나라의 by_dest 슬롯을 고를 때 쓴다. 매칭 없으면 null.
+ */
+export function findDestinationToken(
+  destination: string | null | undefined,
+  key: keyof typeof DESTINATION_OVERRIDES,
+): string | null {
+  return parseDestinations(destination).find((t) => matchesDestinationKey(t, key)) ?? null
+}
+
+/**
  * 한국 농림축산검역본부 지정 '광견병 비발생 지역'. 이 지역(국가)에서 한국으로 (재)입국하는
  * 개·고양이는 광견병 중화항체가(RNATT) 검사를 면제받는다 → 귀국 항체검사 2년 룰
  * (common.kr-return-titer-within-2years)·귀국 항체 만료 알림(titerReminderTargets)도

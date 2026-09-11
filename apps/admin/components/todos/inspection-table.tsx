@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getDepartureDate, resolveTabActiveDest, type CaseRow } from '@petmove/domain'
+import { getDepartureDate, readScopedWithLegacyFallback, resolveTabActiveDest, type CaseRow } from '@petmove/domain'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
 import { labColor } from '@/lib/lab-color'
@@ -45,6 +45,11 @@ export interface InspectionRow {
   dateEditable: boolean
   /** 날짜 수정 시 어느 저장소를 업데이트할지. 진행상태 저장 키도 이걸로 판별한다. */
   dateStorage: InspectionStatusTarget
+  /**
+   * 전염병검사 기록이 저장된 여행지 토큰(by_dest 슬롯) — 호주 행이면 '호주'.
+   * 기록이 목적지별(2026-07-30)이라 읽기·저장을 이 토큰으로 한다. 광견병항체 행은 없음(전역).
+   */
+  recordsDest?: string | null
 }
 
 /** 행별 진행상태 저장 키 — 검사 탭·상세페이지 공용(lib/inspection-status). */
@@ -110,14 +115,21 @@ function upsertInfectiousRecords(
   return next
 }
 
-async function saveInfectiousDates(caseRow: CaseRow, labs: string[], newDate: string): Promise<Array<{ date?: string | null; lab?: string | null }> | null> {
+/** 전염병검사 기록 저장 — 목적지별(by_dest[dest]). 서버가 top-level 잔존을 지워 이관한다. */
+async function saveInfectiousDates(
+  caseRow: CaseRow,
+  labs: string[],
+  newDate: string,
+  dest: string | null,
+): Promise<Array<{ date?: string | null; lab?: string | null }> | null> {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const current = Array.isArray(data.infectious_disease_records)
-    ? (data.infectious_disease_records as Array<{ date?: string | null; lab?: string | null }>)
+  const stored = readScopedWithLegacyFallback(data, dest, 'infectious_disease_records')
+  const current = Array.isArray(stored)
+    ? (stored as Array<{ date?: string | null; lab?: string | null }>)
     : []
   const next = upsertInfectiousRecords(current, labs, newDate)
   const val = next.length > 0 ? next : null
-  await updateCaseField(caseRow.id, 'data', 'infectious_disease_records', val)
+  await updateCaseField(caseRow.id, 'data', 'infectious_disease_records', val, dest)
   return val
 }
 
@@ -472,8 +484,9 @@ export function InspectionTable({
       const labs = row.dateStorage.kind === 'infectious_multi'
         ? row.dateStorage.labs
         : [row.dateStorage.lab]
-      const val = await saveInfectiousDates(row.caseRow, labs, v)
-      onUpdate(row.caseRow.id, 'data', 'infectious_disease_records', val)
+      const dest = row.recordsDest ?? null
+      const val = await saveInfectiousDates(row.caseRow, labs, v, dest)
+      onUpdate(row.caseRow.id, 'data', 'infectious_disease_records', val, dest)
     }
   }, [onUpdate])
 

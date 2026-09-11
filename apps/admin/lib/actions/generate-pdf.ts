@@ -4,7 +4,7 @@ import { createClient } from '@petmove/auth/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import { FORM_CAPACITY, type MultiFormKey } from '@/lib/pdf-multi-forms'
 import type { CaseRow } from '@petmove/domain'
-import { getEffectiveVaccineList, flattenCaseForDestination, getDepartureDate, getVetVisitDate, parseDestinations, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly, recommendRabiesDoseIndices } from '@petmove/domain'
+import { getEffectiveVaccineList, findDestinationToken, flattenCaseForDestination, getDepartureDate, getVetVisitDate, parseDestinations, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly, recommendRabiesDoseIndices } from '@petmove/domain'
 import { loadVetInfo } from '@/lib/vet-info'
 
 export type GeneratePdfResult =
@@ -480,13 +480,27 @@ export async function generateShipmentPack(params: {
   }
 
   const parts: string[] = [front.pdf]
+  // 케이스별 서류는 그 검사국 여행지로 평탄화해야 한다 — 전염병 검사 기록이 목적지별(by_dest)이라
+  //   다중 여행지("호주, 프랑스")를 destination 없이 생성하면 검사일이 빈다(2026-09-11).
+  const destKey = params.variant === 'ksvdl' ? 'australia' : params.variant === 'nz' ? 'new_zealand' : 'south_africa'
+  const destByCase = new Map<string, string | null>()
+  if (!params.opts?.destination && params.caseIds.length > 0) {
+    const supabase = await createClient()
+    const { data: destRows } = await supabase.from('cases').select('id, destination').in('id', params.caseIds)
+    for (const row of (destRows ?? []) as Array<{ id: string; destination: string | null }>) {
+      destByCase.set(row.id, findDestinationToken(row.destination, destKey))
+    }
+  }
   for (const caseId of params.caseIds) {
+    const opts = params.opts?.destination
+      ? params.opts
+      : { ...params.opts, destination: destByCase.get(caseId) ?? null }
     const r =
       params.variant === 'ksvdl'
-        ? await generateKsvdl(caseId, params.opts)
+        ? await generateKsvdl(caseId, opts)
         : params.variant === 'nz'
-        ? await generateNzInfectionPack(caseId, params.opts)
-        : await generateArcOviPack(caseId, params.opts)
+        ? await generateNzInfectionPack(caseId, opts)
+        : await generateArcOviPack(caseId, opts)
     if (!r.ok) return r
     parts.push(r.pdf)
   }
