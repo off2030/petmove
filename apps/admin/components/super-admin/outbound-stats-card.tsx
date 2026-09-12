@@ -64,16 +64,24 @@ function ChannelBlock({ ch }: { ch: OutboundChannel }) {
               count={ch.entry.impressions}
               users={hasUsers ? ch.entry.impressionUsers : null}
             />
-            <Step
-              label="링크 클릭"
-              count={ch.entry.clicks}
-              users={hasUsers ? ch.entry.clickUsers : null}
-              pct={rate(ch.entry.clicks, ch.entry.impressions)}
-            />
+            {/* 클릭은 홈페이지에서만 보여준다. 앱은 누르면 곧바로 안내 페이지라 '업체 목록 봄'과
+                같은 사건인데, 클릭 쪽이 더 잘 깨진다(이동과 경쟁 — 2026-08-27 유실). 같은 걸 두 번
+                재면서 덜 믿음직한 쪽을 화면에 둘 이유가 없다. 홈페이지는 다르다: 안내 페이지가
+                검색 유입이 있는 공개 글이라, **어느 글이 끌어왔는지는 클릭에만 남는다.**
+                수집은 양쪽 다 계속한다 — 기록이 있어야 나중에 되짚는다. */}
+            {ch.key === 'www' && (
+              <Step
+                label="링크 클릭"
+                count={ch.entry.clicks}
+                users={hasUsers ? ch.entry.clickUsers : null}
+                pct={rate(ch.entry.clicks, ch.entry.impressions)}
+              />
+            )}
             <Step
               label="업체 목록 봄"
               count={ch.page.impressions}
               users={hasUsers ? ch.page.impressionUsers : null}
+              pct={ch.key === 'app' ? rate(ch.page.impressions, ch.entry.impressions) : null}
               note={direct > 0 ? `직접 방문 ${direct}` : null}
             />
             <Step
