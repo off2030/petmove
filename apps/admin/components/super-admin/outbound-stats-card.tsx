@@ -92,8 +92,36 @@ function ChannelBlock({ ch }: { ch: OutboundChannel }) {
             />
           </dl>
 
-          {/* 어느 카드·글이 끌어왔나. 한 줄뿐이면 위 깔때기와 같은 숫자라 그리지 않는다. */}
-          {ch.entry.rows.length > 1 && (
+          {/* 어느 목적지가 끌어왔나 — 협상에서 제일 쓰이는 쪼갬. 화물 전용국(호주·뉴질랜드·
+              남아공)은 운송업체가 필수고 동반 가능국(일본·EU)은 선택이라, 합쳐 놓으면 둘 다
+              흐려진다. 카드별(항공권 구매·수입 허가…) 쪼갬은 화면에서 뺐다 — 어느 화면에서
+              눌렀나보다 어느 나라 고객이 찾았나가 협상 문장이 된다(기록은 그대로 쌓인다).
+              홈페이지 기록에는 목적지가 없어(글은 나라를 특정하지 않는다) 글별 표를 쓴다. */}
+          {ch.byDestination.some((d) => d.destination !== '(미지정)') && (
+            <table className="mt-sm w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-border/60 text-[11px] uppercase tracking-[0.5px] text-muted-foreground">
+                  <th className="py-1 text-left font-mono font-normal">목적지</th>
+                  <th className="py-1 text-right font-mono font-normal">노출</th>
+                  <th className="py-1 text-right font-mono font-normal">목록</th>
+                  <th className="py-1 text-right font-mono font-normal">연락</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ch.byDestination.map((d) => (
+                  <tr key={d.destination} className="border-b border-border/40 last:border-0">
+                    <td className="py-1.5 text-foreground">{d.destination}</td>
+                    <td className="py-1.5 text-right font-mono tabular-nums">{d.impressions}</td>
+                    <td className="py-1.5 text-right font-mono tabular-nums">{d.pageViews}</td>
+                    <td className="py-1.5 text-right font-mono tabular-nums">{d.contacts}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {/* 글별 — 홈페이지 전용. 어느 가이드 글이 운송업체로 보냈나는 클릭에만 남는다. */}
+          {ch.key === 'www' && ch.entry.rows.length > 0 && (
             <table className="mt-sm w-full text-[13px]">
               <thead>
                 <tr className="border-b border-border/60 text-[11px] uppercase tracking-[0.5px] text-muted-foreground">
@@ -236,18 +264,6 @@ export function OutboundStatsCard() {
             <ChannelBlock key={ch.key} ch={ch} />
           ))}
 
-          {/* 나라별 — 실제 나라가 하나라도 잡혔을 때만. '(미지정)'만 있는 줄은 정보가 없다
-              (홈페이지 기록엔 여행지가 없고, 앱도 2026-09-12 이전 기록은 비어 있다). */}
-          {report.byDestination.some((d) => d.destination !== '(미지정)') && (
-            <p className="mt-sm text-[12px] leading-relaxed text-muted-foreground">
-              {report.byDestination
-                .filter((d) => d.destination !== '(미지정)')
-                .slice(0, 6)
-                .map((d) => `${d.destination} ${d.clicks}/${d.impressions}`)
-                .join(' · ')}
-              <span className="ml-1 text-muted-foreground/60">(업체 연락/링크 노출)</span>
-            </p>
-          )}
         </>
       )}
     </div>

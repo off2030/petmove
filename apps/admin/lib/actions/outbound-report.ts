@@ -63,13 +63,23 @@ export interface OutboundChannel {
     clickUsers: number
     partners: OutboundPartnerStat[]
   }
+  /**
+   * 목적지별 깔때기 — 협상에서 제일 쓰이는 쪼갬. 화물 전용국(호주·뉴질랜드·남아공)과
+   * 동반 가능국(일본·EU)은 수요가 아예 다른 이야기라, 합치면 둘 다 흐려진다.
+   * 홈페이지 기록에는 목적지가 없다(글은 나라를 특정하지 않는다) — 앱에서만 채워진다.
+   */
+  byDestination: {
+    destination: string
+    impressions: number
+    pageViews: number
+    contacts: number
+  }[]
 }
 
 export interface OutboundReport {
   days: number
   since: string
   channels: OutboundChannel[]
-  byDestination: { destination: string; impressions: number; clicks: number }[]
 }
 
 interface Row {
@@ -182,16 +192,22 @@ export async function getOutboundReport(days = 30): Promise<Result<OutboundRepor
     }
 
     /**
-     * 나라별 줄 — 깔때기의 **양 끝**만 센다: 링크 노출(맨 위)과 업체 연락(맨 아래).
-     * 중간 단계(링크 클릭·페이지 노출)까지 더하면 같은 사람의 한 흐름이 여러 번 세어져
-     * 나라별 비율이 실제보다 부풀어 보인다.
+     * 목적지별 — 채널 안에서 다시 나라로 쪼갠다. 깔때기와 같은 세 단계를 그대로 센다
+     * (링크 노출 → 업체 목록 봄 → 업체 연락). 중간의 링크 클릭은 앱에서 '목록 봄'과 같은
+     * 사건이라 넣지 않는다 — 한 흐름이 두 번 세어지면 나라별 비율이 부풀어 보인다.
      */
-    const perDest = new Map<string, { impressions: number; clicks: number }>()
-    const bumpDest = (key: string | null, field: 'impressions' | 'clicks') => {
-      const k = key ?? '(미지정)'
-      const d = perDest.get(k) ?? { impressions: 0, clicks: 0 }
+    type DestAcc = { impressions: number; pageViews: number; contacts: number }
+    const perDest = new Map<string, Map<string, DestAcc>>(CHANNELS.map((c) => [c.key, new Map()]))
+    const bumpDest = (
+      channelKey: string,
+      destination: string | null,
+      field: keyof DestAcc,
+    ) => {
+      const m = perDest.get(channelKey)!
+      const k = destination ?? '(미지정)'
+      const d = m.get(k) ?? { impressions: 0, pageViews: 0, contacts: 0 }
       d[field]++
-      perDest.set(k, d)
+      m.set(k, d)
     }
 
     for (const r of rows) {
@@ -206,7 +222,7 @@ export async function getOutboundReport(days = 30): Promise<Result<OutboundRepor
           acc.impressions++
           row.impressions++
           if (r.user_id) acc.impressionUsers.add(r.user_id)
-          bumpDest(r.destination, 'impressions')
+          bumpDest(channel.key, r.destination, 'impressions')
         } else {
           acc.clicks++
           row.clicks++
@@ -224,6 +240,7 @@ export async function getOutboundReport(days = 30): Promise<Result<OutboundRepor
       if (r.event === 'impression') {
         acc.impressions++
         if (r.user_id) acc.impressionUsers.add(r.user_id)
+        bumpDest(channel.key, r.destination, 'pageViews')
       } else if (r.partner_slug) {
         acc.clicks++
         if (r.user_id) acc.clickUsers.add(r.user_id)
@@ -237,7 +254,7 @@ export async function getOutboundReport(days = 30): Promise<Result<OutboundRepor
         else if (r.event === 'mail') p.mail++
         else if (r.event === 'web') p.web++
         if (r.user_id) p.users.add(r.user_id)
-        bumpDest(r.destination, 'clicks')
+        bumpDest(channel.key, r.destination, 'contacts')
         acc.perPartner.set(r.partner_slug, p)
       }
     }
@@ -284,15 +301,19 @@ export async function getOutboundReport(days = 30): Promise<Result<OutboundRepor
           clickUsers: p.clickUsers.size,
           partners,
         },
+        byDestination: [...(perDest.get(c.key) ?? new Map()).entries()]
+          .map(([destination, v]) => ({ destination, ...v }))
+          .filter((d) => d.impressions > 0 || d.pageViews > 0 || d.contacts > 0)
+          .sort(
+            (a, b) =>
+              b.contacts - a.contacts ||
+              b.pageViews - a.pageViews ||
+              b.impressions - a.impressions,
+          ),
       }
     })
 
-    const byDestination = [...perDest.entries()]
-      .map(([destination, v]) => ({ destination, ...v }))
-      .filter((d) => d.impressions > 0 || d.clicks > 0)
-      .sort((a, b) => b.impressions - a.impressions)
-
-    return { ok: true, value: { days: span, since, channels, byDestination } }
+    return { ok: true, value: { days: span, since, channels } }
   } catch (e) {
     return { ok: false, error: reportActionError(e, 'outbound-report.getOutboundReport') }
   }
