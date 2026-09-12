@@ -7,6 +7,7 @@ import { monoCap } from '@/components/me/settings-shared'
 import { useCase } from '@/components/portal-shell/case-data-provider'
 import { openExternalUrl } from '@/lib/native/open-external'
 import { logOutbound, type OutboundSource } from '@/lib/actions/outbound'
+import { beaconOutbound } from '@/lib/outbound-beacon'
 
 /**
  * 운송업체 연락 블록 — 여정 '운송 예약' 카드와 운송업체 견적 안내 페이지가 함께 쓴다.
@@ -66,8 +67,9 @@ export function TransportPartners({
   }, [caseId, dest, source])
 
   function onContact(partnerSlug: string, event: 'tel' | 'mail' | 'web') {
-    // 기다리지 않는다 — tel:/mailto: 기본 동작이 즉시 이어져야 한다.
-    void logOutbound({ event, source, partnerSlug, destination: dest, caseId })
+    // sendBeacon — 기다리지 않고, 화면을 떠나도 전송이 보장된다. tel:/mailto:·외부 브라우저로
+    // 이탈하는 클릭이라 서버 액션으로 보내면 요청이 중간에 사라질 수 있다.
+    beaconOutbound({ event, source, partnerSlug, destination: dest, caseId })
   }
 
   // 검역소 연락처·담당 병원 카드와 동일 — accent 텍스트 + 13px 아이콘. 세로 패딩은
