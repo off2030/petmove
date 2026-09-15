@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import {
+  buildCaseJourneyContext,
   createVaccineLookups,
   findRabiesChainBreak,
   rabiesChainBreakMessage,
@@ -138,6 +139,7 @@ import { TiterExtraInputs, type TiterExtraEntry } from './titer-extra-inputs'
 import { TiterInputs, type TiterForm } from './titer-inputs'
 import { VetVisitInputs } from './vet-visit-inputs'
 import { logOutbound } from '@/lib/actions/outbound'
+import { beaconOutbound } from '@/lib/outbound-beacon'
 
 interface CollectedCheck {
   check: ProcedureCheck
@@ -321,28 +323,6 @@ export function StepDetailView({
   useEffect(() => {
     transportPillLogged.current = false
   }, [step.id])
-  useEffect(() => {
-    const el = transportPillRef.current
-    if (!el || typeof IntersectionObserver === 'undefined') return
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((e) => e.isIntersecting)) return
-        io.disconnect()
-        if (transportPillLogged.current) return
-        transportPillLogged.current = true
-        void logOutbound({
-          event: 'impression',
-          source: 'journey-note',
-          stepId: step.id,
-          destination: activeDest ?? null,
-          caseId,
-        })
-      },
-      { threshold: 0.5 },
-    )
-    io.observe(el)
-    return () => io.disconnect()
-  }, [step.id, activeDest, caseId])
   /**
    * 운송업체가 대신 처리해 주기도 하는 사전 절차 카드 — 수입 허가·계류시설 예약.
    * 카드 id 로 고른다(번호로 세지 않는다): 개·고양이는 뜨는 카드가 달라 번호가 밀린다.
@@ -561,6 +541,39 @@ export function StepDetailView({
     () => (caseRowRaw ? activeDestinationView(caseRowRaw, activeDest) : caseRowRaw),
     [caseRowRaw, activeDest],
   )
+  /**
+   * 나라별 집계에 쓸 목적지 — activeDest 는 다중 목적지의 ?dest= 토큰이라 단일 목적지
+   * 케이스에선 null 이다. 그대로 남기면 기록이 전부 '(미지정)'으로 쌓인다(2026-08~09 의
+   * 13건이 그랬다). 안내 블록(transport-partners)과 같은 규칙으로 케이스 목적지를 채운다.
+   */
+  const outboundDest =
+    activeDest ?? (caseRowRaw ? buildCaseJourneyContext(caseRowRaw).destinationToken : null) ?? null
+  // 안내 페이지에 출처를 넘긴다 — 페이지 쪽 노출도 나라·케이스를 알고 쌓이게.
+  const transportQuoteHref =
+    `/guide/transport-quote?case=${encodeURIComponent(caseId)}` +
+    (outboundDest ? `&dest=${encodeURIComponent(outboundDest)}` : '')
+  useEffect(() => {
+    const el = transportPillRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return
+        io.disconnect()
+        if (transportPillLogged.current) return
+        transportPillLogged.current = true
+        void logOutbound({
+          event: 'impression',
+          source: 'journey-note',
+          stepId: step.id,
+          destination: outboundDest,
+          caseId,
+        })
+      },
+      { threshold: 0.5 },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [step.id, outboundDest, caseId])
   /**
    * 저장 응답을 **활성 목적지 뷰로 평탄화**해서 읽는다.
    *
@@ -3142,14 +3155,16 @@ export function StepDetailView({
               카드 본 할 일(BICON 등) 버튼 뒤에 놓아 위계를 지킨다. */}
           {(agentNote || isFlight) && (
             <Link
-              href="/guide/transport-quote"
+              href={transportQuoteHref}
               ref={transportPillRef}
               onClick={() => {
-                void logOutbound({
+                // sendBeacon — 이 클릭은 곧바로 화면을 바꾼다. 서버 액션으로 보내면
+                // 라우터 전환에 요청이 묻혀 기록이 사라진다(2026-08-27 유실 2건).
+                beaconOutbound({
                   event: 'guide_link',
                   source: 'journey-note',
                   stepId: step.id,
-                  destination: activeDest ?? null,
+                  destination: outboundDest,
                   caseId,
                 })
               }}

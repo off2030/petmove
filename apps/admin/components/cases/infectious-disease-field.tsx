@@ -9,12 +9,14 @@ import { persistField } from '@/lib/toast-bus'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
 import { labColor } from '@/lib/lab-color'
-import { allLabOptions, effectiveInfectiousLabs, resolveActiveDestination, resolveInspectionLabs } from '@petmove/domain'
+import { allLabOptions, effectiveInfectiousLabs, readScopedWithLegacyFallback, resolveActiveDestination, resolveInspectionLabs } from '@petmove/domain'
 import { stampInspectionActiveDest } from '@/lib/inspection-active-dest'
 import { DateTextField } from '@petmove/ui'
 import { DropdownSelect } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@petmove/ui'
+import { InspectionStatusChip } from './inspection-status-chip'
+import { infectiousStatusTarget, inspectionStatusKey } from '@/lib/inspection-status'
 
 interface InfectiousRecord {
   date: string | null
@@ -38,9 +40,12 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
   const labOptions = effectiveInfectiousLabs(inspectionConfig)
   const allLabs = allLabOptions(inspectionConfig)
 
-  // Read array (backward compat: old flat key)
+  // Read array — 목적지별(by_dest[활성 여행지]) 우선, 이관 전 top-level 잔존 폴백 (+ old flat key).
+  // 전염병 검사는 2026-07-30 부터 목적지별이다(호주 3종 / 뉴질랜드 5종이라 기록 공유 금지).
+  // 예전엔 여기서 top-level 로 저장해 다중 여행지 PDF 의 검사일이 N/A 로 빠졌다(2026-09-11).
   function readRecords(): InfectiousRecord[] {
-    if (Array.isArray(data[DATA_KEY])) return data[DATA_KEY] as InfectiousRecord[]
+    const stored = readScopedWithLegacyFallback(data, activeDest, DATA_KEY)
+    if (Array.isArray(stored)) return stored as InfectiousRecord[]
     if (data.infectious_disease_test) {
       return [{ date: data.infectious_disease_test as string, lab: 'ksvdl' }]
     }
@@ -62,13 +67,14 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
   async function saveRecords(next: InfectiousRecord[]) {
     const val = next.length > 0 ? next : null
     // Optimistic — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
-    updateLocalCaseField(caseId, 'data', DATA_KEY, val)
+    // 활성 여행지 by_dest 로 저장 — 서버가 top-level 잔존을 지워 이관한다.
+    updateLocalCaseField(caseId, 'data', DATA_KEY, val, activeDest)
     // Also clear legacy flat key if it exists
     if (data.infectious_disease_test) {
       updateLocalCaseField(caseId, 'data', 'infectious_disease_test', null)
       updateCaseField(caseId, 'data', 'infectious_disease_test', null).catch(() => {})
     }
-    const r = await persistField('전염병 검사', () => updateCaseField(caseId, 'data', DATA_KEY, val))
+    const r = await persistField('전염병 검사', () => updateCaseField(caseId, 'data', DATA_KEY, val, activeDest))
     if (!r) return
 
     // If clearing all records, remove from toggleable fields
@@ -126,9 +132,15 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
       </div>
       <div className="min-w-0 flex-1 space-y-0.5">
         {/* 같은 날짜의 기록은 하나의 행으로 묶고 lab 만 옆에 나열한다. */}
-        {groupByDate(records).map((group) => (
+        {(() => {
+          const groups = groupByDate(records)
+          const latestIdx = latestGroupIndex(groups)
+          return groups.map((group, gi) => (
           <InfectiousGroup
             key={group.date ?? `null-${group.indices.join('_')}`}
+            caseId={caseId}
+            caseRow={caseRow}
+            showStatus={gi === latestIdx}
             date={group.date}
             indices={group.indices}
             records={records}
@@ -148,7 +160,8 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
             onDelete={(idx) => deleteRecord(idx)}
             saving={saving}
           />
-        ))}
+          ))
+        })()}
 
         {/* 빈 상태 — 다른 필드와 동일한 옅은 — (클릭 시 검사 추가). */}
         {records.length === 0 && !addingNew && (
@@ -189,12 +202,31 @@ function groupByDate(records: InfectiousRecord[]): { date: string | null; indice
   return result
 }
 
+/**
+ * 진행상태 칩을 붙일 **최신 회차** 그룹의 인덱스.
+ * 날짜가 가장 늦은 그룹. 날짜 없는 기록('')은 가장 낮게 쳐서, 전부 비어 있으면
+ * 마지막(=가장 최근에 추가된) 그룹을 고른다.
+ */
+function latestGroupIndex(groups: { date: string | null }[]): number {
+  let best = -1
+  let bestDate = ''
+  groups.forEach((g, i) => {
+    const d = g.date ?? ''
+    if (best === -1 || d >= bestDate) { best = i; bestDate = d }
+  })
+  return best
+}
+
 /* ── 한 행: 날짜 + (같은 날짜의 모든) lab 들 ── */
 
 function InfectiousGroup({
-  date, indices, records, labOptions, displayLabs, editIdx, editField,
+  caseId, caseRow, showStatus, date, indices, records, labOptions, displayLabs, editIdx, editField,
   onStartEdit, onStopEdit, onUpdateField, onUpdateGroupDate, onDelete, saving,
 }: {
+  caseId: string
+  caseRow: CaseRow
+  /** 최신 회차 그룹에만 진행상태 칩을 붙인다 — 옛 회차는 '완료' 반복이라 줄만 길어진다. */
+  showStatus: boolean
   date: string | null
   indices: number[]
   records: InfectiousRecord[]
@@ -211,10 +243,21 @@ function InfectiousGroup({
   saving: boolean
 }) {
   const editMode = useSectionEditMode()
+  const { inspectionConfig } = useCases()
   const dateDisplay = date || '—'
   // date 행 편집은 그룹의 첫 인덱스를 기준으로 표시.
   const dateEditingIdx = indices[0]
   const dateIsEditing = editIdx === dateEditingIdx && editField === 'date'
+
+  // 진행상태는 검사기관별. 단 뉴질랜드처럼 여러 기관이 한 상태를 공유하는 묶음은
+  // 마지막 기관 뒤에서 한 번만 그린다 (같은 상태가 칩 여러 개로 중복되지 않도록).
+  const statusTargets = indices.map((idx) => {
+    const lab = records[idx]?.lab
+    return lab ? infectiousStatusTarget(caseRow, lab, inspectionConfig.infectiousRules) : null
+  })
+  const statusKeys = statusTargets.map((t) => (t ? inspectionStatusKey(t) : null))
+  const isLastOfStatus = (n: number) =>
+    statusKeys[n] !== null && statusKeys.lastIndexOf(statusKeys[n]) === n
 
   return (
     <div className="group/item flex items-baseline gap-[10px] min-w-0 overflow-x-auto whitespace-nowrap scrollbar-hide">
@@ -278,6 +321,14 @@ function InfectiousGroup({
                 {labDisplay}
               </span>
             )}
+            {showStatus && isLastOfStatus(n) && statusTargets[n] && (
+              <InspectionStatusChip
+                caseId={caseId}
+                caseRow={caseRow}
+                target={statusTargets[n]}
+                date={date}
+              />
+            )}
             {editMode && (
               <button
                 type="button"
@@ -288,8 +339,6 @@ function InfectiousGroup({
                 <Trash2 size={13} />
               </button>
             )}
-            {/* suppress unused warning */}
-            <span className="hidden">{n}</span>
           </span>
         )
       })}

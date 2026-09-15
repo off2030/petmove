@@ -56,7 +56,10 @@ export const ALL_CERTS: CertDefinition[] = [
 
 /** 기본 설정. 기존 하드코딩 규칙(destination-config.ts)에서 이관. */
 export const DEFAULT_CERT_CONFIG: CertConfig = {
-  defaultCerts: ['form25', 'form25AuNz'],
+  // vhc = 국제 반려동물 건강증명서(Veterinary Health Certificate) — 나라 전용 서식이 아니라
+  // 목적지가 자체 서식을 요구하지 않을 때 두루 쓰는 일반 양식이라 기본 증명서로 둔다
+  // (2026-09-05 사용자 지시 — 인도네시아 전용 규칙에서 승격).
+  defaultCerts: ['form25', 'form25AuNz', 'vhc'],
   rules: [
     { countries: ['일본'], certs: ['formAC', 'formRE'] },
     { countries: [...EU_COUNTRIES], certs: ['annexIII'] },
@@ -65,7 +68,6 @@ export const DEFAULT_CERT_CONFIG: CertConfig = {
     { countries: ['호주'], certs: ['idDeclaration', 'au', 'au2', 'auCat', 'auCat2'] },
     { countries: ['뉴질랜드'], certs: ['nz', 'ovd', 'vbc'] },
     { countries: ['태국'], certs: ['formR11'] },
-    { countries: ['인도네시아'], certs: ['vhc'] },
     { countries: ['튀르키예'], certs: ['tk'] },
     { countries: ['싱가포르'], certs: ['sgp'] },
     { countries: ['하와이'], certs: ['aqs'] },

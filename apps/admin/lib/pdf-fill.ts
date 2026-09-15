@@ -153,7 +153,7 @@ type FormMapping = {
    * wagon, ship, or aircraft)": strike every option except aircraft).
    * Coordinates are PDF user-space (origin = bottom-left). thickness 기본 0.8pt.
    */
-  lineOverlays?: { page?: number; x1: number; y1: number; x2: number; y2: number; thickness?: number }[]
+  lineOverlays?: { page?: number; x1: number; y1: number; x2: number; y2: number; thickness?: number; _at?: string }[]
   /**
    * Conditional ellipse (circle) overlays driven by a data value. For forms
    * where an option must be circled rather than typed — e.g. SGP's
@@ -168,6 +168,21 @@ type FormMapping = {
     page?: number
     borderWidth?: number
     cases: Record<string, { cx: number; cy: number; rx: number; ry: number }>
+  }[]
+  /**
+   * Conditional line overlays driven by a data value — "(delete as appropriate)"
+   * 문구를 자동으로 그어 준다. e.g. SGP 의 "the dog/cat (delete as appropriate)":
+   * species 가 dog 면 'cat' 에, cat 이면 'dog' 에 취소선을 긋는다.
+   *
+   * `cases` 의 키는 **데이터 값**(readSource 결과 소문자)이고, 값은 그 값일 때
+   * 그을 선들이다 — 즉 cases.dog 에는 '강아지일 때 지울 것'(= cat)이 들어간다.
+   * 좌표는 PDF user-space(원점 좌하단), 선 하나가 취소선 하나.
+   */
+  conditionalLines?: {
+    source: string
+    page?: number
+    thickness?: number
+    cases: Record<string, { page?: number; x1: number; y1: number; x2: number; y2: number; _at?: string }[]>
   }[]
 }
 
@@ -1856,6 +1871,16 @@ function resolveField(
     return typeof legacy === 'string' && legacy ? legacy : ''
   }
 
+  // AU RNATT 결과값 — titer_date_asc[n]·titer_received_asc[n] 과 같은 회차(오래된 순 n번째).
+  // 예전엔 array[0].value(최신순)라 검사가 2건 이상이면 채혈일은 1차 검사, 결과는 최신 검사
+  // 값이 섞여 찍혔다(2026-09-11 — KRSL 1/14 채혈일 옆에 APQA EU 6/9 결과 '≥ 0.5').
+  const titerValueAscMatch = transform?.match(/^titer_value_asc\[(\d+)\]$/)
+  if (titerValueAscMatch && source === 'rabies_titer_records') {
+    const idx = Number(titerValueAscMatch[1])
+    const rec = sortedTiters(raw).slice().reverse()[idx]
+    return rec?.value ?? ''
+  }
+
   // Annex III parasite row — echo microchip/product/date/vet from Nth internal parasite entry.
   // Pattern: `annex_parasite:(transponder|product|date|vet)[n]` — oldest-first.
   // Only filled when the destination requires echinococcus treatment (UK/IE/MT/NI/NO/FI).
@@ -1904,7 +1929,9 @@ function resolveField(
   // as `vaccine:...` plus `civ` (CIV uses lookupCiv).
   // For civ, validity_to/validity_from fall back to vaccinationDate ± 1 year
   // because lookupCiv doesn't compute an explicit immunity window.
-  const vacDescMatch = transform?.match(/^vaccine_desc:(rabies|ext_parasite|int_parasite|civ|comprehensive):(name|manufacturer|serial|date|validity_from|validity_to)\[(\d+)\]$/)
+  // `product_expiry` = 약품(배치) 유효기간 — 기록 입력값 → 카탈로그 expiry (별지25 배치칸과 동일 출처).
+  //   AU 서류 종합백신·독감 'Expiry date' 칸용. 면역 유효기간(validity_to)은 'booster due' 칸.
+  const vacDescMatch = transform?.match(/^vaccine_desc:(rabies|ext_parasite|int_parasite|civ|comprehensive):(name|manufacturer|serial|product_expiry|date|validity_from|validity_to)\[(\d+)\]$/)
   if (vacDescMatch) {
     const kind = vacDescMatch[1]
     const attr = vacDescMatch[2]
@@ -1931,6 +1958,7 @@ function resolveField(
     if (attr === 'name') return merged.name
     if (attr === 'manufacturer') return merged.manufacturer
     if (attr === 'serial') return merged.serial
+    if (attr === 'product_expiry') return merged.expiry
     if (attr === 'validity_from') return fmtDate(p?.validityFrom ?? '')
     if (attr === 'validity_to') return fmtDate(p?.validityTo ?? '')
     return ''
@@ -3274,6 +3302,11 @@ export type FillOptions = {
    *  - 빈 배열을 넘기면 광견병 칸 전부 공란.
    */
   rabiesIndices?: number[]
+  /**
+   * 호주 서류(AU 계열) RNATT 칸에 쓸 광견병 항체검사 — 채혈일 오름차순(날짜 있는 기록) 인덱스.
+   * 지정 시 rabies_titer_records 를 그 1건으로 좁혀 채혈일·검체 도착일·결과가 같은 검사에서 나온다.
+   */
+  titerIndex?: number
 }
 
 /**
@@ -3344,10 +3377,18 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
     data.rabies_overflow = olderAsc.slice().reverse()
   }
 
+  // 호주 서류 RNATT 검사 선택 — titerIndex(채혈일 오름차순, titer_date_asc 와 같은 공간)의 기록
+  // 1건만 남겨 채혈일·검체 도착일·결과 칸이 모두 그 검사에서 나오게 한다.
+  const titerPicked = typeof options?.titerIndex === 'number'
+  if (titerPicked) {
+    const picked = sortedTiters(data.rabies_titer_records).slice().reverse()[options!.titerIndex!]
+    if (picked) data.rabies_titer_records = [picked]
+  }
+
   // extras(예: tube_count, consignee_lab)는 resolveField가 `caseRow.data` 를
   // 통해 읽으므로, solo fill 경로에서도 extras 가 적용되도록 data 를 주입한
   // 사본을 만들어 soloDoc 에 전달한다.
-  const caseRowWithExtras: CaseRow = options?.extras || options?.rabiesIndices ? { ...caseRow, data } : caseRow
+  const caseRowWithExtras: CaseRow = options?.extras || options?.rabiesIndices || titerPicked ? { ...caseRow, data } : caseRow
 
   // Date reformatter for form-level dateFormat override (e.g. Annex III uses dd/mm/yyyy).
   // Converts a stand-alone YYYY-MM-DD or YYYY/MM/DD token to dd/mm/yyyy.
@@ -3516,6 +3557,28 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
         borderColor: rgb(0, 0, 0),
         borderWidth: mk.borderWidth ?? 1.2,
       })
+    }
+  }
+
+  // Conditional line overlays — strike the option that does not apply.
+  // e.g. SGP "the dog/cat (delete as appropriate)": species 에 맞춰 반대쪽 단어에
+  // 취소선. 페이지 컨텐트에 그리므로 flatten 후에도 남는다.
+  if (form.conditionalLines?.length) {
+    const pages = pdf.getPages()
+    for (const cl of form.conditionalLines) {
+      const raw = readSource(cl.source, caseRow, data)
+      const lines = cl.cases[String(raw ?? '').toLowerCase()]
+      if (!lines?.length) continue
+      for (const l of lines) {
+        const page = pages[l.page ?? cl.page ?? 0]
+        if (!page) continue
+        page.drawLine({
+          start: { x: l.x1, y: l.y1 },
+          end: { x: l.x2, y: l.y2 },
+          thickness: cl.thickness ?? 1,
+          color: rgb(0, 0, 0),
+        })
+      }
     }
   }
 

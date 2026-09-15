@@ -6,7 +6,7 @@ import { X } from 'lucide-react'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import { cn } from '@/lib/utils'
 
-export { RABIES_SLOT_CAP } from '@/lib/rabies-slot-cap'
+export { RABIES_SLOT_CAP, rabiesPickMin, hasRabiesOverflowSlot } from '@/lib/rabies-slot-cap'
 
 interface RabiesRecord {
   date?: string | null
@@ -57,6 +57,11 @@ interface Props {
   /** dedicated 슬롯 수 — 별지 25호=3, 별지 25 EX=2, FormRE=2. */
   slotCount: number
   rabiesDates: unknown
+  /**
+   * 선택분이 슬롯을 넘칠 때 "기타 예방접종" 칸으로 흘릴 수 있는지.
+   * false(Form AC — 그 칸 없음)면 안내 문구·집계에서 기타 슬롯을 빼고, 슬롯 수를 상한으로 안내.
+   */
+  hasOverflowSlot?: boolean
   /** 표시할 접종을 이 날짜 이후 (>) 로 제한. FormRE 는 1차 항체검사일 전달. */
   eligibleAfterDate?: string | null
   /** 타병원 접종(`other_hospital: true`) 도 후보에 포함. FormRE 만 true. */
@@ -71,7 +76,7 @@ interface Props {
   onClose: (indices: number[] | null) => void
 }
 
-export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, eligibleAfterDate, includeOtherHospital, recommendedIndices, onClose }: Props) {
+export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, eligibleAfterDate, includeOtherHospital, recommendedIndices, hasOverflowSlot = true, onClose }: Props) {
   const sorted = useMemo(
     () => normalize(rabiesDates, eligibleAfterDate, includeOtherHospital),
     [rabiesDates, eligibleAfterDate, includeOtherHospital],
@@ -136,9 +141,19 @@ export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, el
 
         <div className="px-lg py-md space-y-2">
           <p className="font-serif text-[13px] text-muted-foreground">
-            증명서에 기재할 광견병 접종을 선택하세요. 선택한 접종 중 최근 {slotCount}개는
-            광견병 슬롯에, 그 이전은 "기타 예방접종" 칸에 기재됩니다. 선택하지 않은 접종은
-            증명서에 나오지 않습니다.
+            {hasOverflowSlot ? (
+              <>
+                증명서에 기재할 광견병 접종을 선택하세요. 선택한 접종 중 최근 {slotCount}개는
+                광견병 슬롯에, 그 이전은 &quot;기타 예방접종&quot; 칸에 기재됩니다. 선택하지 않은
+                접종은 증명서에 나오지 않습니다.
+              </>
+            ) : (
+              <>
+                증명서에 기재할 광견병 접종을 선택하세요. 광견병 칸은 {slotCount}개이고, 이
+                서식에는 &quot;기타 예방접종&quot; 칸이 없습니다. 선택하지 않은 접종은 증명서에
+                나오지 않습니다.
+              </>
+            )}
           </p>
           {autoSelected && (
             <p className="font-serif text-[12px] text-pmw-info">
@@ -176,7 +191,9 @@ export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, el
             })}
           </ul>
           <p className="font-serif text-[12px] text-muted-foreground italic">
-            선택 {selected.size}건 · 광견병 슬롯 {dedicatedCount}건 · 기타 슬롯 {otherCount}건
+            {hasOverflowSlot
+              ? `선택 ${selected.size}건 · 광견병 슬롯 ${dedicatedCount}건 · 기타 슬롯 ${otherCount}건`
+              : `선택 ${selected.size}건 · 광견병 칸 ${slotCount}개`}
           </p>
         </div>
 

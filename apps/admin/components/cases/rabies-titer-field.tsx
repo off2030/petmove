@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Paperclip, Trash2 } from 'lucide-react'
 import { AttachButton } from '@/components/ui/attach-button'
@@ -21,6 +21,7 @@ import { severityTextClass, tooltipText, useFieldVerification } from './verifica
 import { DateTextField } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@petmove/ui'
+import { InspectionStatusChip } from './inspection-status-chip'
 
 interface TiterRecord {
   date: string | null
@@ -375,6 +376,19 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
               separator={si > 0}
               onClick={openEditModal}
               extraTitle={japanEntryTooltip(rec.date, destination)}
+              // 진행상태는 **최신 회차에만** — 옛 회차는 거의 항상 '완료'라 같은 칩이
+              // 반복되며 줄만 길어진다. 회차별 상태 자체는 그대로 살아 있고(검사 탭도
+              // record 별 1행), 편집 모달의 각 행에서 보고 바꿀 수 있다.
+              // sortedForExpand 는 날짜 내림차순이라 si === 0 이 최신.
+              status={
+                si === 0 ? (
+                  <InspectionStatusChip
+                    caseId={caseId}
+                    caseRow={caseRow}
+                    target={{ kind: 'titer', recordIdx: origIdx(si) }}
+                  />
+                ) : undefined
+              }
             />
           ))
         )}
@@ -458,6 +472,8 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
                     )}
                   >
                     <TiterRecordRow
+                      caseId={caseId}
+                      caseRow={caseRow}
                       record={rec}
                       recordIdx={oi}
                       isEditing={editIdx === oi ? editField : null}
@@ -532,7 +548,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 
 /* ── 인라인 날짜 chip (verification color 적용) ── */
 
-function InlineDateChip({ path, date, separator, onClick, extraTitle }: { path: string; date: string | null; separator: boolean; onClick?: () => void; extraTitle?: string }) {
+function InlineDateChip({ path, date, separator, onClick, extraTitle, status }: { path: string; date: string | null; separator: boolean; onClick?: () => void; extraTitle?: string; status?: ReactNode }) {
   const editMode = useSectionEditMode()
   const info = useFieldVerification(path)
   const colorCls = info ? severityTextClass(info.severity) : ''
@@ -551,6 +567,7 @@ function InlineDateChip({ path, date, separator, onClick, extraTitle }: { path: 
       ) : (
         <span title={title} className={baseCls}>{display}</span>
       )}
+      {status}
     </span>
   )
 }
@@ -558,8 +575,10 @@ function InlineDateChip({ path, date, separator, onClick, extraTitle }: { path: 
 /* ── 모달 안의 단일 record row: date | lab | value | attach | delete ── */
 
 function TiterRecordRow({
-  record, recordIdx, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, onAttachFile, saving, extracting, showReceivedDate, entryTooltip,
+  caseId, caseRow, record, recordIdx, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, onAttachFile, saving, extracting, showReceivedDate, entryTooltip,
 }: {
+  caseId: string
+  caseRow: CaseRow
   record: TiterRecord
   recordIdx: number
   isEditing: 'date' | 'value' | 'lab' | 'received_date' | null
@@ -677,6 +696,7 @@ function TiterRecordRow({
       )}
 
       <div className="flex items-center gap-1 ml-auto">
+        <InspectionStatusChip caseId={caseId} caseRow={caseRow} target={{ kind: 'titer', recordIdx: recordIdx }} />
         <AttachButton
           accept="image/*,.pdf"
           onFile={onAttachFile}

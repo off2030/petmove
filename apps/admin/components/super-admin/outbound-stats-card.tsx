@@ -3,16 +3,206 @@
 import { useEffect, useState, useTransition } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getOutboundReport, type OutboundReport } from '@/lib/actions/outbound-report'
+import {
+  getOutboundReport,
+  type OutboundChannel,
+  type OutboundReport,
+} from '@/lib/actions/outbound-report'
 
 /**
- * 운송업체 안내 반응 — 고객앱 여정 '운송 예약/항공권 구매' 카드 하단 블록의 성적표.
+ * 운송업체 검색 통계 — 협상용 성적표.
  *
- * 협상용 문장이 바로 나오게 구성한다: "안내를 본 N명 중 M명이 연락을 눌렀다".
- * 절대 건수는 앱 규모에 묶이지만 비율은 수요의 존재를 증명한다.
+ * 채널(앱·홈페이지)이 기둥이다. 두 곳은 구조가 같지만(글·카드의 링크 → 안내 페이지)
+ * 맥락이 달라 합치면 어느 쪽이 통했는지 알 수 없다.
+ *
+ * 각 채널은 깔때기 순서로 읽는다: 링크 노출 → 클릭 → 업체 목록 봄 → 업체 연락.
+ * '업체 목록 봄'은 클릭과 겹쳐 보이지만 다른 걸 잰다 — 페이지에 들어와 **목록까지 실제로
+ * 화면에 띄운** 경우만이다(클릭하고 바로 나가면 빠진다). 홈페이지는 안내 페이지가 검색
+ * 유입이 있는 공개 글이라 클릭 없이 생기는 노출이 따로 있고, 그 차이를 '직접 방문'으로
+ * 따로 보여준다.
+ *
+ * 빈 칸은 그리지 않는다 — 연락 0건이면 업체 표를, 나라가 안 잡히면 나라별 줄을, 사람 수가
+ * 없으면(홈페이지는 로그인이 없다) 사람 열을 뺀다. 0 만 늘어선 표는 읽는 사람을 지치게 한다.
  */
 
 const RANGES = [14, 30, 90] as const
+
+/** 두 단계 사이의 전환율 — 분모가 0 이면 보여줄 게 없다. */
+function rate(top: number, bottom: number): string | null {
+  if (bottom <= 0) return null
+  return `${Math.round((top / bottom) * 100)}%`
+}
+
+function Num({ children }: { children: React.ReactNode }) {
+  return <span className="font-mono tabular-nums">{children}</span>
+}
+
+function ChannelBlock({ ch }: { ch: OutboundChannel }) {
+  const hasUsers = ch.entry.impressionUsers > 0 || ch.page.impressionUsers > 0
+  const contacts = ch.page.partners.reduce((n, p) => n + p.tel + p.mail + p.web, 0)
+  const empty = ch.entry.impressions === 0 && ch.entry.clicks === 0 && ch.page.impressions === 0
+  // 링크를 안 누르고 안내 페이지에 닿은 몫 — 홈페이지는 검색 유입, 앱은 주소로 직접 들어온
+  // 경우다. 음수가 나올 수 있다(클릭하고 목록까지 안 내려간 사람이 더 많을 때) — 그땐 안 쓴다.
+  const direct = ch.page.impressions - ch.entry.clicks
+
+  return (
+    <section className="pt-md first:pt-0">
+      <h3 className="font-serif text-[15px] text-foreground">{ch.label}</h3>
+      <p className="pb-1 font-mono text-[11px] uppercase tracking-[0.5px] text-muted-foreground">
+        {ch.entryLabel} → 안내 페이지
+      </p>
+
+      {empty ? (
+        <p className="py-1 font-serif italic text-[13px] text-muted-foreground">
+          아직 기록이 없습니다.
+        </p>
+      ) : (
+        <>
+          <dl className="py-1 text-[13px]">
+            <Step
+              label="링크 노출"
+              count={ch.entry.impressions}
+              users={hasUsers ? ch.entry.impressionUsers : null}
+            />
+            {/* 클릭은 홈페이지에서만 보여준다. 앱은 누르면 곧바로 안내 페이지라 '업체 목록 봄'과
+                같은 사건인데, 클릭 쪽이 더 잘 깨진다(이동과 경쟁 — 2026-08-27 유실). 같은 걸 두 번
+                재면서 덜 믿음직한 쪽을 화면에 둘 이유가 없다. 홈페이지는 다르다: 안내 페이지가
+                검색 유입이 있는 공개 글이라, **어느 글이 끌어왔는지는 클릭에만 남는다.**
+                수집은 양쪽 다 계속한다 — 기록이 있어야 나중에 되짚는다. */}
+            {ch.key === 'www' && (
+              <Step
+                label="링크 클릭"
+                count={ch.entry.clicks}
+                users={hasUsers ? ch.entry.clickUsers : null}
+                pct={rate(ch.entry.clicks, ch.entry.impressions)}
+              />
+            )}
+            <Step
+              label="업체 목록 봄"
+              count={ch.page.impressions}
+              users={hasUsers ? ch.page.impressionUsers : null}
+              pct={ch.key === 'app' ? rate(ch.page.impressions, ch.entry.impressions) : null}
+              note={direct > 0 ? `직접 방문 ${direct}` : null}
+            />
+            <Step
+              label="업체 연락"
+              count={contacts}
+              users={hasUsers ? ch.page.clickUsers : null}
+              pct={rate(contacts, ch.page.impressions)}
+            />
+          </dl>
+
+          {/* 어느 목적지가 끌어왔나 — 협상에서 제일 쓰이는 쪼갬. 화물 전용국(호주·뉴질랜드·
+              남아공)은 운송업체가 필수고 동반 가능국(일본·EU)은 선택이라, 합쳐 놓으면 둘 다
+              흐려진다. 카드별(항공권 구매·수입 허가…) 쪼갬은 화면에서 뺐다 — 어느 화면에서
+              눌렀나보다 어느 나라 고객이 찾았나가 협상 문장이 된다(기록은 그대로 쌓인다).
+              홈페이지 기록에는 목적지가 없어(글은 나라를 특정하지 않는다) 글별 표를 쓴다. */}
+          {ch.byDestination.some((d) => d.destination !== '(미지정)') && (
+            <table className="mt-sm w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-border/60 text-[11px] uppercase tracking-[0.5px] text-muted-foreground">
+                  <th className="py-1 text-left font-mono font-normal">목적지</th>
+                  <th className="py-1 text-right font-mono font-normal">노출</th>
+                  <th className="py-1 text-right font-mono font-normal">목록</th>
+                  <th className="py-1 text-right font-mono font-normal">연락</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ch.byDestination.map((d) => (
+                  <tr key={d.destination} className="border-b border-border/40 last:border-0">
+                    <td className="py-1.5 text-foreground">{d.destination}</td>
+                    <td className="py-1.5 text-right font-mono tabular-nums">{d.impressions}</td>
+                    <td className="py-1.5 text-right font-mono tabular-nums">{d.pageViews}</td>
+                    <td className="py-1.5 text-right font-mono tabular-nums">{d.contacts}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {/* 글별 — 홈페이지 전용. 어느 가이드 글이 운송업체로 보냈나는 클릭에만 남는다. */}
+          {ch.key === 'www' && ch.entry.rows.length > 0 && (
+            <table className="mt-sm w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-border/60 text-[11px] uppercase tracking-[0.5px] text-muted-foreground">
+                  <th className="py-1 text-left font-mono font-normal">{ch.entryLabel}</th>
+                  <th className="py-1 text-right font-mono font-normal">노출</th>
+                  <th className="py-1 text-right font-mono font-normal">클릭</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ch.entry.rows.map((r) => (
+                  <tr key={r.key} className="border-b border-border/40 last:border-0">
+                    <td className="py-1.5 text-foreground">{r.label}</td>
+                    <td className="py-1.5 text-right font-mono tabular-nums">{r.impressions}</td>
+                    <td className="py-1.5 text-right font-mono tabular-nums">{r.clicks}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {/* 업체별 연락 — 한 건도 없으면 0 만 늘어선 표라 그리지 않는다. */}
+          {contacts > 0 && (
+            <table className="mt-sm w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-border/60 text-[11px] uppercase tracking-[0.5px] text-muted-foreground">
+                  <th className="py-1 text-left font-mono font-normal">업체</th>
+                  <th className="py-1 text-right font-mono font-normal">전화</th>
+                  <th className="py-1 text-right font-mono font-normal">메일</th>
+                  <th className="py-1 text-right font-mono font-normal">문의</th>
+                  {hasUsers && <th className="py-1 text-right font-mono font-normal">사람</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {ch.page.partners.map((p) => (
+                  <tr key={p.slug} className="border-b border-border/40 last:border-0">
+                    <td className="py-1.5 text-foreground">{p.name}</td>
+                    <td className="py-1.5 text-right font-mono tabular-nums">{p.tel}</td>
+                    <td className="py-1.5 text-right font-mono tabular-nums">{p.mail}</td>
+                    <td className="py-1.5 text-right font-mono tabular-nums">{p.web}</td>
+                    {hasUsers && (
+                      <td className="py-1.5 text-right font-mono tabular-nums text-muted-foreground">
+                        {p.users}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </>
+      )}
+    </section>
+  )
+}
+
+function Step({
+  label,
+  count,
+  users,
+  pct,
+  note,
+}: {
+  label: string
+  count: number
+  users: number | null
+  pct?: string | null
+  /** 이 단계에만 붙는 짧은 주석 — 예: 링크를 안 거치고 들어온 몫. */
+  note?: string | null
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-2 py-0.5">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="text-foreground">
+        <Num>{count}</Num>회
+        {users !== null && <span className="text-muted-foreground"> · {users}명</span>}
+        {pct && <span className="text-muted-foreground"> ({pct})</span>}
+        {note && <span className="text-muted-foreground/70"> · {note}</span>}
+      </dd>
+    </div>
+  )
+}
 
 export function OutboundStatsCard() {
   const [days, setDays] = useState<number>(14)
@@ -34,12 +224,12 @@ export function OutboundStatsCard() {
 
   const hasAny =
     !!report &&
-    (report.places.some((pl) => pl.impressions > 0) || report.guideLinks.length > 0)
+    report.channels.some((c) => c.entry.impressions > 0 || c.entry.clicks > 0 || c.page.impressions > 0)
 
   return (
     <div className="rounded-xl bg-card px-lg pt-md pb-md">
       <div className="flex items-baseline justify-between pb-sm border-b border-border/80 mb-sm">
-        <h2 className="font-serif text-[17px] text-foreground">운송업체 안내 반응</h2>
+        <h2 className="font-serif text-[17px] text-foreground">운송업체 검색 통계</h2>
         <div className="flex items-center gap-1.5">
           {RANGES.map((d) => (
             <button
@@ -70,107 +260,10 @@ export function OutboundStatsCard() {
         </p>
       ) : (
         <>
-          {/* 자리별로 나눠 본다 — 같은 안내라도 여정 카드와 안내 페이지는 반응이 다르다. */}
-          {report.places.map((pl) => {
-            const clicks = pl.partners.reduce((n, p) => n + p.tel + p.mail + p.web, 0)
-            const rate =
-              pl.impressionUsers > 0
-                ? Math.round((pl.clickUsers / pl.impressionUsers) * 100)
-                : null
-            return (
-              <section key={pl.key} className="pt-sm first:pt-0">
-                <h3 className="font-mono text-[11px] uppercase tracking-[0.5px] text-muted-foreground">
-                  {pl.label}
-                </h3>
+          {report.channels.map((ch) => (
+            <ChannelBlock key={ch.key} ch={ch} />
+          ))}
 
-                {pl.impressions === 0 ? (
-                  <p className="py-1 font-serif italic text-[13px] text-muted-foreground">
-                    아직 기록이 없습니다.
-                  </p>
-                ) : (
-                  <>
-                    <p className="py-1 text-[13px] leading-relaxed text-foreground">
-                      본 <span className="font-mono tabular-nums">{pl.impressionUsers}</span>명 중{' '}
-                      <span className="font-mono tabular-nums">{pl.clickUsers}</span>명이 연락을
-                      눌렀어요
-                      {rate !== null && <span className="text-muted-foreground"> ({rate}%)</span>}.
-                    </p>
-                    <p className="pb-sm text-[12px] text-muted-foreground">
-                      View <span className="font-mono tabular-nums">{pl.impressions}</span>회 · 클릭{' '}
-                      <span className="font-mono tabular-nums">{clicks}</span>회
-                    </p>
-
-                    <table className="w-full text-[13px]">
-                      <thead>
-                        <tr className="border-b border-border/60 text-[11px] uppercase tracking-[0.5px] text-muted-foreground">
-                          <th className="py-1 text-left font-mono font-normal">업체</th>
-                          <th className="py-1 text-right font-mono font-normal">전화</th>
-                          <th className="py-1 text-right font-mono font-normal">메일</th>
-                          <th className="py-1 text-right font-mono font-normal">문의</th>
-                          <th className="py-1 text-right font-mono font-normal">사람</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pl.partners.map((p) => (
-                          <tr key={p.slug} className="border-b border-border/40 last:border-0">
-                            <td className="py-1.5 text-foreground">{p.name}</td>
-                            <td className="py-1.5 text-right font-mono tabular-nums">{p.tel}</td>
-                            <td className="py-1.5 text-right font-mono tabular-nums">{p.mail}</td>
-                            <td className="py-1.5 text-right font-mono tabular-nums">{p.web}</td>
-                            <td className="py-1.5 text-right font-mono tabular-nums text-muted-foreground">
-                              {p.users}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </>
-                )}
-              </section>
-            )
-          })}
-
-          {/* 여정 카드의 한 줄 안내 → 운송업체 페이지. 업체를 지목하지 않는 내부 링크라
-              업체별 표에 넣을 수 없다. 어느 카드가 수요를 끌었는지가 핵심이라 카드별로 나눈다. */}
-          {report.guideLinks.length > 0 && (
-            <section className="pt-sm">
-              <h3 className="font-mono text-[11px] uppercase tracking-[0.5px] text-muted-foreground">
-                여정 카드 → 운송업체 문의 버튼
-              </h3>
-              <table className="w-full text-[13px]">
-                <thead>
-                  <tr className="border-b border-border/60 text-[11px] uppercase tracking-[0.5px] text-muted-foreground">
-                    <th className="py-1 text-left font-mono font-normal">카드</th>
-                    <th className="py-1 text-right font-mono font-normal">View</th>
-                    <th className="py-1 text-right font-mono font-normal">클릭</th>
-                    <th className="py-1 text-right font-mono font-normal">사람</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.guideLinks.map((g) => (
-                    <tr key={g.stepId} className="border-b border-border/40 last:border-0">
-                      <td className="py-1.5 text-foreground">{g.label}</td>
-                      <td className="py-1.5 text-right font-mono tabular-nums">{g.impressions}</td>
-                      <td className="py-1.5 text-right font-mono tabular-nums">{g.clicks}</td>
-                      <td className="py-1.5 text-right font-mono tabular-nums text-muted-foreground">
-                        {g.users}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
-          )}
-
-          {report.byDestination.length > 0 && (
-            <p className="mt-sm text-[12px] leading-relaxed text-muted-foreground">
-              {report.byDestination
-                .slice(0, 6)
-                .map((d) => `${d.destination} ${d.clicks}/${d.impressions}`)
-                .join(' · ')}
-              <span className="ml-1 text-muted-foreground/60">(클릭/노출)</span>
-            </p>
-          )}
         </>
       )}
     </div>

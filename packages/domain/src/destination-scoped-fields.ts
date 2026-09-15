@@ -466,6 +466,23 @@ export function readByDestValue(
 }
 
 /**
+ * scoped 키 읽기 + legacy 폴백 — `by_dest[destination][key]` 우선, 그 목적지 엔트리에 키가
+ * 없으면 top-level 잔존값. null sentinel(명시적 비움)은 폴백하지 않는다.
+ *
+ * 저장이 by_dest 로 옮겨 주는 "자연 이관" 필드(전염병 검사 등)의 **입력 화면** 읽기용 —
+ * 이관 전 기록이 화면에서 사라지지 않게 한다. PDF·검증은 flattenCaseForDestination 을 쓴다.
+ */
+export function readScopedWithLegacyFallback(
+  data: Record<string, unknown> | null | undefined,
+  destination: string | null | undefined,
+  key: string,
+): unknown {
+  const v = readByDestValue(data, destination, key)
+  if (v !== undefined) return v
+  return data?.[key]
+}
+
+/**
  * `data.by_dest[destination][key] = value` 를 갱신한 새 data 객체 반환 (immutable).
  *
  * value 가 null/undefined/빈문자열 이면 **명시적 null sentinel** 로 저장 (delete X).

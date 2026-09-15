@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { C } from '@/lib/palette'
 import { TransportPartners } from '@/components/journey/transport-partners'
 
@@ -44,6 +44,14 @@ const QUOTE_INPUTS: string[] = [
 
 export default function TransportQuoteScreen() {
   const router = useRouter()
+  /**
+   * 어디서 들어왔는지 — 여정 카드가 ?case=&dest= 를 붙여 보낸다. 이게 없으면 이 페이지의
+   * 노출 기록은 나라를 모른 채 쌓여 전부 '(미지정)'이 된다(카드 쪽 유입만 나라가 남고
+   * 페이지 쪽은 비는 비대칭). 링크 없이 직접 들어온 경우엔 그냥 null.
+   */
+  const params = useSearchParams()
+  const fromCase = params.get('case')
+  const fromDest = params.get('dest')
 
   return (
     <div
@@ -90,7 +98,12 @@ export default function TransportQuoteScreen() {
         <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>
           문의처
         </div>
-        <TransportPartners source="app-guide" heading={false} />
+        <TransportPartners
+          source="app-guide"
+          caseId={fromCase}
+          destination={fromDest}
+          heading={false}
+        />
 
         {/* ── 연락 전 준비물 ── */}
         <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>

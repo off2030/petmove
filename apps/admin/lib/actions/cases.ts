@@ -17,9 +17,24 @@ import {
   writeByDestValue,
   flattenCaseForDestination,
   clearExtraValueWithLegacy,
+  EXTRA_FIELD_DEFS,
+  normalizeTimeHhmm,
   type CaseRow,
   type ReportSlot,
 } from '@petmove/domain'
+
+/**
+ * 시간(type: 'time') 필드의 저장 직전 마지막 방어선 — 'HH:mm' 이 아닌 표기를 교정한다.
+ *
+ * 입력 폼은 이미 마스킹하지만 AI 자동추출·되돌리기(history 복원) 같은 비-폼 경로가
+ * 원문('1300')을 그대로 실어보낼 수 있다. 읽을 수 있으면 고치고, 못 읽으면 **원본을
+ * 그대로 둔다** — 서버가 임의로 값을 지우는 쪽이 더 위험하다.
+ */
+function coerceTimeValue(key: string, value: unknown): unknown {
+  if (EXTRA_FIELD_DEFS[key]?.type !== 'time') return value
+  if (typeof value !== 'string' || !value.trim()) return value
+  return normalizeTimeHhmm(value) ?? value
+}
 
 const REGULAR_COLUMNS = new Set([
   'customer_name',
@@ -230,6 +245,8 @@ export async function updateCaseField(
   if (storage === 'column' && !REGULAR_COLUMNS.has(key)) {
     return { ok: false, error: `column "${key}" is not updatable` }
   }
+  // 시간 필드 표기 교정 — 폼 밖 경로(자동추출·되돌리기)로 들어와도 저장은 항상 HH:mm.
+  if (storage === 'data') value = coerceTimeValue(key, value)
 
   const supabase = await createClient()
 
@@ -299,7 +316,9 @@ export async function updateCaseField(
     nextData['by_dest'] = nextByDest
     // 신규 scoped 서류 탭 값은 by_dest 를 truth 로 둔다. top-level legacy 잔존은 flatten 단일
     // fallback 에서 되살아나지 않도록 같이 정리.
-    if (key === 'export_doc_status' || key === 'export_doc_memo') {
+    // 전염병 검사 기록도 같은 규약(2026-07-30 목적지별 전환) — 잔존을 안 지우면 다른 여행지가
+    // 입력 화면 legacy 폴백으로 이 검사를 물려받는다. 펫무브 updateParasiteEntries 와 패리티.
+    if (key === 'export_doc_status' || key === 'export_doc_memo' || key === 'infectious_disease_records') {
       delete nextData[key]
     }
 
@@ -685,7 +704,9 @@ export async function updateCaseDataBulk(
 
   for (const u of updates) {
     if (!u.key) continue
-    const empty = u.value === null || u.value === undefined || u.value === ''
+    // 단일 저장(updateCaseField)과 동일한 시간 표기 교정 — 자동추출 배치가 주 진입점.
+    const value = coerceTimeValue(u.key, u.value)
+    const empty = value === null || value === undefined || value === ''
     const useByDest = !!u.destination && isDestinationScopedKey(u.key)
     if (useByDest) {
       const byDest = { ...((nextData['by_dest'] as Record<string, Record<string, unknown>> | undefined) ?? {}) }
@@ -693,10 +714,10 @@ export async function updateCaseDataBulk(
       const oldV = serializeForHistory('data', destObjPrev[u.key])
       const destObj = { ...destObjPrev }
       // 빈 값도 키 삭제 X — null sentinel(top-level fallback 부활 방지).
-      destObj[u.key] = empty ? null : u.value
+      destObj[u.key] = empty ? null : value
       byDest[u.destination!] = destObj
       nextData['by_dest'] = byDest
-      const newV = serializeForHistory('data', empty ? null : u.value)
+      const newV = serializeForHistory('data', empty ? null : value)
       if (oldV !== newV) {
         historyRows.push({ case_id: caseId, org_id: orgId, field_key: `by_dest:${u.destination}:${u.key}`, field_storage: 'data', old_value: oldV, new_value: newV })
       }
@@ -706,9 +727,9 @@ export async function updateCaseDataBulk(
         // top-level + legacy *_extra 잔존까지 제거(read fallback 으로 부활 방지).
         nextData = { ...clearExtraValueWithLegacy(nextData, u.key) }
       } else {
-        nextData[u.key] = u.value
+        nextData[u.key] = value
       }
-      const newV = serializeForHistory('data', empty ? null : u.value)
+      const newV = serializeForHistory('data', empty ? null : value)
       if (oldV !== newV) {
         historyRows.push({ case_id: caseId, org_id: orgId, field_key: u.key, field_storage: 'data', old_value: oldV, new_value: newV })
       }
@@ -1072,8 +1093,14 @@ function writeCaseSignal(
   return next
 }
 
-/** 신고 탭 read 와 같은 경로로 케이스를 읽는다 — 활성 여행지 토큰 + flatten 된 view. */
-async function loadReportContext(caseId: string) {
+/**
+ * 신고 탭 read 와 같은 경로로 케이스를 읽는다 — 활성 여행지 토큰 + flatten 된 view.
+ *
+ * `destination` 을 주면 그 토큰을 쓴다 — 상세페이지는 지금 보고 있는 여행지 탭 기준으로
+ * 읽고 쓰므로, 탭의 각인값(import_report_active_dest)이 다른 나라를 가리켜도 화면과 저장이
+ * 엇갈리지 않아야 한다. 케이스의 여행지 목록에 없는 토큰은 무시하고 각인값으로 되돌아간다.
+ */
+async function loadReportContext(caseId: string, destination?: string | null) {
   const supabase = await createClient()
   const { data: row, error } = await supabase
     .from('cases')
@@ -1087,7 +1114,10 @@ async function loadReportContext(caseId: string) {
     data: current,
     departure_date: (row?.departure_date as string | null) ?? null,
   } as CaseRow
-  const token = resolveTabActiveDest(caseRow, 'import_report_active_dest')
+  const token =
+    destination && parseDestinations(caseRow.destination).includes(destination)
+      ? destination
+      : resolveTabActiveDest(caseRow, 'import_report_active_dest')
   const viewData = (flattenCaseForDestination(caseRow, token).data ?? {}) as Record<string, unknown>
   return { ok: true as const, supabase, current, caseRow, token, viewData }
 }
@@ -1103,8 +1133,10 @@ export async function setReportSlotStatus(
   caseId: string,
   slot: ReportSlot,
   target: ReportTarget,
+  /** 상세페이지가 보고 있는 여행지. 미지정이면 신고 탭 각인값(기존 동작). */
+  destination?: string | null,
 ): Promise<UpdateResult> {
-  const ctx = await loadReportContext(caseId)
+  const ctx = await loadReportContext(caseId, destination)
   if (!ctx.ok) return { ok: false, error: ctx.error }
   const { supabase, current, token, viewData } = ctx
   const today = new Date().toISOString().slice(0, 10)

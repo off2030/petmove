@@ -26,16 +26,52 @@ export function stampInspectionActiveDest(
   caseId: string,
   destination: string | null | undefined,
   activeDest: string | null | undefined,
-  updateLocalCaseField: (
-    caseId: string,
-    storage: 'column' | 'data',
-    key: string,
-    value: unknown,
-  ) => void,
+  updateLocalCaseField: UpdateLocalCaseField,
+) {
+  stampTabActiveDest(INSPECTION_ACTIVE_DEST_KEY, caseId, destination, activeDest, updateLocalCaseField)
+}
+
+/** 신고 탭이 케이스 한 줄의 "활성 여행지"를 읽는 키. */
+export const IMPORT_REPORT_ACTIVE_DEST_KEY = 'import_report_active_dest'
+
+/**
+ * 상세페이지에서 신고(수입·수출) 상태를 그 여행지 탭 기준으로 바꿨음을 신고 탭에 각인.
+ *
+ * 각인이 없으면 다중 여행지 케이스에서 "일본 탭에서 완료로 바꿨는데 신고 탭 줄은 태국 기준
+ * 대기" 가 된다. 상태 저장 자체는 [[setReportSlotStatus]] 에 목적지를 명시해 넘기므로
+ * 각인은 탭 표시를 따라오게 하는 용도다 — 저장 경합과 무관.
+ *
+ * ⚠️ 신고 탭 자동 포함 판정(isAutoImportReport)이 이 각인값을 본다 — 신고 대상이 아닌
+ * 여행지로 각인하면 케이스가 탭에서 빠진다. 호출부(신고 행)는 신고 대상 여행지에서만
+ * 렌더되므로 안전하다.
+ */
+export function stampImportReportActiveDest(
+  caseId: string,
+  destination: string | null | undefined,
+  activeDest: string | null | undefined,
+  updateLocalCaseField: UpdateLocalCaseField,
+) {
+  stampTabActiveDest(IMPORT_REPORT_ACTIVE_DEST_KEY, caseId, destination, activeDest, updateLocalCaseField)
+}
+
+type UpdateLocalCaseField = (
+  caseId: string,
+  storage: 'column' | 'data',
+  key: string,
+  value: unknown,
+) => void
+
+/** 단일 여행지 케이스는 각인 불필요(해석 기본값이 곧 그 여행지). */
+function stampTabActiveDest(
+  key: string,
+  caseId: string,
+  destination: string | null | undefined,
+  activeDest: string | null | undefined,
+  updateLocalCaseField: UpdateLocalCaseField,
 ) {
   if (!activeDest) return
   const dests = parseDestinations(destination)
   if (dests.length < 2 || !dests.includes(activeDest)) return
-  updateLocalCaseField(caseId, 'data', INSPECTION_ACTIVE_DEST_KEY, activeDest)
-  void updateCaseField(caseId, 'data', INSPECTION_ACTIVE_DEST_KEY, activeDest)
+  updateLocalCaseField(caseId, 'data', key, activeDest)
+  void updateCaseField(caseId, 'data', key, activeDest)
 }

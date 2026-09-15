@@ -129,7 +129,7 @@
       "titer1_date": {
         "source": "rabies_titer_records",
         "transform": "array[0].date",
-        "note": "Row I = 최신 항체검사"
+        "note": "Row I = 최신 항체검사. 검사가 2회 이상이어도 최신 1건만 출력한다(Row II 는 비움)."
       },
       "titer1_value": {
         "source": "rabies_titer_records",
@@ -142,22 +142,6 @@
       "titer1_lab_country": {
         "source": "rabies_titer_records",
         "transform": "array[0].lab_country"
-      },
-      "titer2_date": {
-        "source": "rabies_titer_records",
-        "transform": "array[1].date"
-      },
-      "titer2_value": {
-        "source": "rabies_titer_records",
-        "transform": "array[1].value"
-      },
-      "titer2_lab_name": {
-        "source": "rabies_titer_records",
-        "transform": "array[1].lab"
-      },
-      "titer2_lab_country": {
-        "source": "rabies_titer_records",
-        "transform": "array[1].lab_country"
       },
       "vet_name": {
         "source": null,
@@ -2078,8 +2062,8 @@
       },
       "text_17mhge": {
         "source": "rabies_titer_records",
-        "transform": "array[0].value",
-        "note": "p1 RNATT result IU/mL (최신 titer value)"
+        "transform": "titer_value_asc[0]",
+        "note": "p1 RNATT result IU/mL — Collection date 와 같은 회차(오래된 순)"
       },
       "text_18rgpy": {
         "source": null,
@@ -2167,9 +2151,9 @@
       },
       "text_36nfaw": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[0]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[0]",
         "default": "N/A",
-        "note": "p2 Leptospira 1 expiry"
+        "note": "p2 Leptospira 1 expiry — 약품(배치) 유효기간"
       },
       "text_37pkcs": {
         "source": "general_vaccine_dates",
@@ -2197,9 +2181,9 @@
       },
       "text_39comw": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[1]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[1]",
         "default": "N/A",
-        "note": "p2 Leptospira 2 expiry"
+        "note": "p2 Leptospira 2 expiry — 약품(배치) 유효기간"
       },
       "text_38xmqh": {
         "source": "general_vaccine_dates",
@@ -2227,9 +2211,9 @@
       },
       "text_44jwab": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[2]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[2]",
         "default": "N/A",
-        "note": "p3 Leptospira 3 expiry"
+        "note": "p3 Leptospira 3 expiry — 약품(배치) 유효기간"
       },
       "text_45rmek": {
         "source": "general_vaccine_dates",
@@ -2257,9 +2241,9 @@
       },
       "text_48bvcr": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[3]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[3]",
         "default": "N/A",
-        "note": "p3 Leptospira 4 expiry"
+        "note": "p3 Leptospira 4 expiry — 약품(배치) 유효기간"
       },
       "text_49vxhc": {
         "source": "general_vaccine_dates",
@@ -2284,8 +2268,8 @@
       },
       "text_58mtsy": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:validity_to[0]",
-        "note": "p3 CIV 1 expiry date (접종일 + 1y)"
+        "transform": "vaccine_desc:civ:product_expiry[0]",
+        "note": "p3 CIV 1 expiry date — 약품(배치) 유효기간"
       },
       "text_52uxaw": {
         "source": "civ_dates",
@@ -2312,9 +2296,9 @@
       },
       "text_59iaww": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:validity_to[1]",
+        "transform": "vaccine_desc:civ:product_expiry[1]",
         "default": "N/A",
-        "note": "p3 CIV 2 expiry date"
+        "note": "p3 CIV 2 expiry date — 약품(배치) 유효기간"
       },
       "text_53jqcz": {
         "source": "civ_dates",
@@ -2552,8 +2536,8 @@
       },
       "text_17mhge": {
         "source": "rabies_titer_records",
-        "transform": "array[0].value",
-        "note": "p1 RNATT result IU/mL (최신 titer value)"
+        "transform": "titer_value_asc[0]",
+        "note": "p1 RNATT result IU/mL — Collection date 와 같은 회차(오래된 순)"
       },
       "text_18rgpy": {
         "source": null,
@@ -2641,9 +2625,9 @@
       },
       "text_36nfaw": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[0]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[0]",
         "default": "N/A",
-        "note": "p2 Leptospira 1 expiry"
+        "note": "p2 Leptospira 1 expiry — 약품(배치) 유효기간"
       },
       "text_37pkcs": {
         "source": "general_vaccine_dates",
@@ -2671,9 +2655,9 @@
       },
       "text_39comw": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[1]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[1]",
         "default": "N/A",
-        "note": "p2 Leptospira 2 expiry"
+        "note": "p2 Leptospira 2 expiry — 약품(배치) 유효기간"
       },
       "text_38xmqh": {
         "source": "general_vaccine_dates",
@@ -2701,9 +2685,9 @@
       },
       "text_44jwab": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[2]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[2]",
         "default": "N/A",
-        "note": "p3 Leptospira 3 expiry"
+        "note": "p3 Leptospira 3 expiry — 약품(배치) 유효기간"
       },
       "text_45rmek": {
         "source": "general_vaccine_dates",
@@ -2731,9 +2715,9 @@
       },
       "text_48bvcr": {
         "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:validity_to[3]",
+        "transform": "vaccine_desc:comprehensive:product_expiry[3]",
         "default": "N/A",
-        "note": "p3 Leptospira 4 expiry"
+        "note": "p3 Leptospira 4 expiry — 약품(배치) 유효기간"
       },
       "text_49vxhc": {
         "source": "general_vaccine_dates",
@@ -2758,8 +2742,8 @@
       },
       "text_58mtsy": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:validity_to[0]",
-        "note": "p3 CIV 1 expiry date (접종일 + 1y)"
+        "transform": "vaccine_desc:civ:product_expiry[0]",
+        "note": "p3 CIV 1 expiry date — 약품(배치) 유효기간"
       },
       "text_52uxaw": {
         "source": "civ_dates",
@@ -2786,9 +2770,9 @@
       },
       "text_59iaww": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:validity_to[1]",
+        "transform": "vaccine_desc:civ:product_expiry[1]",
         "default": "N/A",
-        "note": "p3 CIV 2 expiry date"
+        "note": "p3 CIV 2 expiry date — 약품(배치) 유효기간"
       },
       "text_53jqcz": {
         "source": "civ_dates",
@@ -3021,8 +3005,8 @@
       },
       "text_17igkd": {
         "source": "rabies_titer_records",
-        "transform": "array[0].value",
-        "note": "p1 RNATT result IU/ml"
+        "transform": "titer_value_asc[0]",
+        "note": "p1 RNATT result IU/ml — Collection date 와 같은 회차(오래된 순)"
       },
       "text_18rloc": {
         "source": "rabies_dates",
@@ -3259,8 +3243,8 @@
       },
       "text_17igkd": {
         "source": "rabies_titer_records",
-        "transform": "array[0].value",
-        "note": "p1 RNATT result IU/ml"
+        "transform": "titer_value_asc[0]",
+        "note": "p1 RNATT result IU/ml — Collection date 와 같은 회차(오래된 순)"
       },
       "text_18rloc": {
         "source": "rabies_dates",
@@ -3894,6 +3878,40 @@
           "neutered_male": { "cx": 260.6, "cy": 573, "rx": 35, "ry": 9 },
           "female": { "cx": 339.3, "cy": 573, "rx": 21, "ry": 9 },
           "spayed_female": { "cx": 431.1, "cy": 573, "rx": 39, "ry": 9 }
+        }
+      }
+    ],
+    "_lineOverlays_note": "SECTION III 의 'Government approved veterinarian / Official government veterinarian (delete as appropriate)' — 우리는 항상 민간 government-approved 수의사로 발급하므로 'Official government veterinarian' 쪽을 늘 지운다. 문구가 두 줄에 걸쳐 있어 선도 두 개.",
+    "lineOverlays": [
+      { "_at": "p1 SECTION III — 'Official government'", "page": 0, "x1": 427.25, "y1": 313.9, "x2": 509.89, "y2": 313.9, "thickness": 1 },
+      { "_at": "p1 SECTION III — 'veterinarian' (앞 줄에서 이어짐)", "page": 0, "x1": 62.35, "y1": 303.2, "x2": 112.2, "y2": 303.2, "thickness": 1 }
+    ],
+    "conditionalLines": [
+      {
+        "source": "species",
+        "thickness": 1,
+        "_note": "'the dog/cat (delete as appropriate)' 와 'General Vaccinations (strike out whichever does not apply)' 의 종별 접종 블록 — 종에 맞춰 해당 없는 쪽에 취소선(단어 2곳 + 접종 블록 6줄). cases 키는 케이스의 species 값이고, 그 안엔 '지울 단어'의 좌표가 들어간다(dog → cat 을 지움). 좌표는 SGP.pdf 픽셀 분석(2482x3508 이미지, 배치 cm 565 0 0 798.558 15 21.7212)으로 산출 — 취소선 y 는 소문자 x-height 중앙.",
+        "cases": {
+          "dog": [
+            { "_at": "p1 SECTION II — 'cat'", "page": 0, "x1": 256.07, "y1": 385.6, "x2": 269.27, "y2": 385.6 },
+            { "_at": "p1 SECTION III — 'cat'", "page": 0, "x1": 179.13, "y1": 292.27, "x2": 192.33, "y2": 292.27 },
+            { "_at": "p1 고양이 접종문단 1줄", "page": 0, "x1": 62.35, "y1": 146.47, "x2": 539.02, "y2": 146.47 },
+            { "_at": "p1 고양이 접종문단 2줄", "page": 0, "x1": 62.35, "y1": 135.65, "x2": 405.17, "y2": 135.65 },
+            { "_at": "p2 Date of vaccinations:", "page": 1, "x1": 62.8, "y1": 731.04, "x2": 150.45, "y2": 731.04 },
+            { "_at": "p2 Feline Calicivirus", "page": 1, "x1": 62.8, "y1": 715.22, "x2": 319.35, "y2": 715.22 },
+            { "_at": "p2 Feline Herpesvirus-1", "page": 1, "x1": 62.8, "y1": 700.65, "x2": 330.05, "y2": 700.65 },
+            { "_at": "p2 Feline Panleukopenia virus", "page": 1, "x1": 62.8, "y1": 685.86, "x2": 369.66, "y2": 685.86 }
+          ],
+          "cat": [
+            { "_at": "p1 SECTION II — 'dog'", "page": 0, "x1": 237.4, "y1": 385.6, "x2": 253.79, "y2": 385.6 },
+            { "_at": "p1 SECTION III — 'dog'", "page": 0, "x1": 160.23, "y1": 292.27, "x2": 176.62, "y2": 292.27 },
+            { "_at": "p1 강아지 접종문단 1줄", "page": 0, "x1": 62.35, "y1": 245.49, "x2": 526.28, "y2": 245.49 },
+            { "_at": "p1 강아지 접종문단 2줄", "page": 0, "x1": 62.58, "y1": 234.68, "x2": 459.35, "y2": 234.68 },
+            { "_at": "p1 Date of vaccinations:", "page": 0, "x1": 62.8, "y1": 220.91, "x2": 150.45, "y2": 220.91 },
+            { "_at": "p1 Canine distemper virus", "page": 0, "x1": 62.58, "y1": 205.31, "x2": 344.85, "y2": 205.31 },
+            { "_at": "p1 Canine adenovirus type 1", "page": 0, "x1": 62.58, "y1": 190.52, "x2": 350.08, "y2": 190.52 },
+            { "_at": "p1 Canine parvovirus type 2", "page": 0, "x1": 62.58, "y1": 175.95, "x2": 360.78, "y2": 175.95 }
+          ]
         }
       }
     ],

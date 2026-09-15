@@ -35,6 +35,8 @@ export type SinglePdfRequest = {
   destination?: string | null
   /** 별지 25호 (3슬롯) / 별지 25 EX (2슬롯) 의 dedicated 광견병 슬롯 선택. sortedAsc 기준 인덱스. */
   rabiesIndices?: number[]
+  /** 호주 서류(AU 계열) RNATT 칸에 쓸 항체검사 — 채혈일 오름차순(날짜 있는 기록) 인덱스. */
+  titerIndex?: number
 }
 
 export type MultiPdfRequest = {

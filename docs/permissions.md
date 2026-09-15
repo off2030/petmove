@@ -59,6 +59,13 @@
 | `calculator_items` | `authenticated` (전체) | `SA` | `SA` | `SA` |
 | `app_settings` | `authenticated` (전체) | `SA` | `SA` | `SA` |
 | `profiles` | 본인 ∨ `SA` ∨ 같은 org 멤버 | (트리거) | 본인 ∨ `SA` | `SA` |
+| `outbound_clicks` | (없음 — service role) | `anon` 제한 허용¹ | (없음 — service role) | (없음 — service role) |
+
+¹ `outbound_clicks` — 홈페이지(www)가 익명키로 노출·클릭을 기록해야 해서 INSERT 만 연다.
+공개 사이트에 service_role(DB 전권) 키를 두지 않으려는 교환이다. 대신 정책이 `source` 를
+화이트리스트로 제한하고 `user_id`·`case_id` 가 NULL 인 행만 받는다 — 사람 수(distinct user)가
+협상 문장의 근거라 그 칸의 위조를 막는 게 핵심. 읽기는 슈퍼어드민 서버 액션(service role)만.
+익명키는 공개 값이므로 **홈페이지 건수는 부풀릴 수 있다**; 오염되면 이 정책만 drop 하면 된다.
 
 **원칙**:
 - **데이터 편집(케이스·기록)** 은 모든 멤버 허용

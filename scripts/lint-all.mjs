@@ -76,6 +76,29 @@ const wiringCode = await run(
   'validation wiring',
   { shell: process.platform === 'win32' },
 )
+// 목적지 동작 골든 — 카드·서류·체크 구성이 의도치 않게 바뀌었는지(2026-09-05 CI 편입).
+//   copy 만 물려 있어 dest·behavior·checks 는 3f25a261(2026-08-27) 이후 9일간 깨진 채
+//   아무도 몰랐다. 골든 4종은 세트로 돌려야 "어느 층이 바뀌었는지"가 드러난다.
+const destCode = await run(
+  localBin('tsx'),
+  ['scripts/lint-destinations.ts'],
+  'destinations snapshot',
+  { shell: process.platform === 'win32' },
+)
+// 알림·주의·설명문 골든. NOW 를 2026-01-01 로 고정해 돌리므로 날짜가 흘러도 안 흔들린다.
+const behaviorCode = await run(
+  localBin('tsx'),
+  ['scripts/lint-behavior.ts'],
+  'behavior snapshot',
+  { shell: process.platform === 'win32' },
+)
+// 고객 노출 문구에 날짜가 새지 않는지 + 룰 목록 골든.
+const checksCode = await run(
+  localBin('tsx'),
+  ['scripts/lint-checks.ts'],
+  'checks snapshot',
+  { shell: process.platform === 'win32' },
+)
 // 형제 목적지 구조 패리티 — 복사해 만든 목적지에 원본의 나중 수정이 전파됐는지(2026-07-29 신설).
 const parityCode = await run(
   localBin('tsx'),
@@ -124,6 +147,9 @@ const summary = [
   `  journey undo:  ${journeyRestoreCode === 0 ? '✓ pass' : `✗ exit ${journeyRestoreCode}`}`,
   `  lint:size:     ${sizeCode === 0 ? '✓ pass' : `✗ exit ${sizeCode}`}`,
   `  lint:copy:     ${copyCode === 0 ? '✓ pass' : `✗ exit ${copyCode}`}`,
+  `  lint:dest:     ${destCode === 0 ? '✓ pass' : `✗ exit ${destCode}`}`,
+  `  lint:behavior: ${behaviorCode === 0 ? '✓ pass' : `✗ exit ${behaviorCode}`}`,
+  `  lint:checks:   ${checksCode === 0 ? '✓ pass' : `✗ exit ${checksCode}`}`,
   `  lint:wiring:   ${wiringCode === 0 ? '✓ pass' : `✗ exit ${wiringCode}`}`,
   `  lint:parity:   ${parityCode === 0 ? '✓ pass' : `✗ exit ${parityCode}`}`,
   `  dep sync seed: ${departureSyncCode === 0 ? '✓ pass' : `✗ exit ${departureSyncCode}`}`,
@@ -138,5 +164,6 @@ process.exit(
     eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode,
     reportSlotsCode, journeyRestoreCode, sizeCode, copyCode, wiringCode, parityCode,
     departureSyncCode, multiSlotCode, validUntilCode, phoneCode,
+    destCode, behaviorCode, checksCode,
   ),
 )

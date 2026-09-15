@@ -185,10 +185,17 @@ function applyRuleToData(
 
   // {date, lab} 배열 — 목적지 매칭 lab 으로 entry 생성 (saveNewRecord 와 동일 동작)
   if (!arrayName && LAB_ARRAY_FIELDS.has(rule.target_field)) {
-    const existing = (data[rule.target_field] as Array<{ date?: string; lab?: string | null }> | undefined) ?? []
+    // 전염병 검사 기록은 목적지별(by_dest) — 활성 여행지가 있으면 그 슬롯을 읽고 쓴다.
+    //   top-level 로 쓰면 다중 여행지 PDF(flatten strict)에서 검사일이 빠진다(2026-09-11).
+    const scopedDest = activeDest && isDestinationScopedKey(rule.target_field) ? activeDest : null
+    const scopedCur = scopedDest ? readByDestValue(data, scopedDest, rule.target_field) : undefined
+    const existing = ((scopedCur !== undefined ? scopedCur : data[rule.target_field]) as
+      | Array<{ date?: string; lab?: string | null }>
+      | null
+      | undefined) ?? []
     const hasAnyDate = existing.some((e) => e?.date)
     if (hasAnyDate && !rule.overwrite_existing) return data
-    const labs = resolveInspectionLabs(destination, infectiousRules)
+    const labs = resolveInspectionLabs(scopedDest ?? destination, infectiousRules)
     const newEntries: Array<{ date: string; lab: string | null }> = []
     for (const off of offsets) {
       const date = addDays(triggerDate, off)
@@ -199,6 +206,12 @@ function applyRuleToData(
       }
     }
     writtenTargets.add(rule.target_field)
+    if (scopedDest) {
+      // by_dest 저장 + top-level 잔존 제거 — admin updateCaseField 의 by_dest 분기와 같은 규약.
+      const next = writeByDestValue(data, scopedDest, rule.target_field, newEntries)
+      delete next[rule.target_field]
+      return next
+    }
     return { ...data, [rule.target_field]: newEntries }
   }
 
