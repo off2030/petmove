@@ -1263,8 +1263,6 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['대만', 'taiwan'],
     // 신고 탭 수입 = 수입 허가(APHIA e-permit) 신청 카드.
     report: { importStep: 'import-permit' },
-    // minAgeDays 를 두지 않는다 — 베트남 규정은 일수가 아니라 '생후 3개월(달력)'이고,
-    // 판정은 카드의 earliest.monthsAfter + date-rules meetsCalendarAge 가 담당한다.
     rabies: {
       doses: 1,
       minAgeDays: 90,
@@ -1275,7 +1273,18 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     },
     titer: { entryValidityMonths: 12, entryWaitAfterTiter: { days: 180 } },
     vaccines: ['rabies', 'rabies_titer'],
-    extraFields: ['address_overseas', 'permit_no', 'departure_flight_date'],
+    // APHIA Form 002(수입허가 신청) 에 들어가는 항목 — 전부 기존 필드를 켜기만 한다.
+    //   로잔이 대행하므로 이 값들은 보호자에게 '정보 요청 링크' 로 받는다. 그 링크의
+    //   선택 목록도 이 배열에서 파생되므로(getEffectiveExtraFieldEntries), 여기 한 곳만
+    //   고치면 케이스 상세 추가정보와 요청 링크가 함께 따라온다.
+    //   縣市·현지 연락처는 별도 칸을 만들지 않는다(2026-09-16 사용자 지정) —
+    //   주소는 address_overseas 한 칸에, 연락처는 overseas_phone 에 담는다.
+    extraFields: [
+      'address_overseas', 'postal_code', 'overseas_phone', 'email',
+      'passport_number',
+      'permit_no',
+      'departure_flight_date', 'entry_date', 'entry_airport',
+    ],
     // APHIA pet e-permit — 로잔이 대행한다(2026-08-03 사용자 지정). selfApply 플래그의 유일한
     //   기능은 '맡기기 상품에서 제외'라, 대행하는 이상 붙여 둘 이유가 없어 뗀다.
     //   (여정 카드·서류 탭·발급 푸시는 이 플래그와 무관하게 종전 그대로.)

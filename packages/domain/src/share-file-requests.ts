@@ -32,6 +32,11 @@ export const SHARE_FILE_REQUESTS: ShareFileRequestDef[] = [
   { key: 'flight_itinerary', label: '항공 일정표', required: true, destinations: ['태국', '말레이시아', '인도네시아'] },
   // 선택 — 상황에 따라
   { key: 'jp_export_cert', label: '일본 수출 동물검역증', required: false, destinations: ['일본'] },
+  // 대만 수입허가(APHIA) 신청 대행용 — 대행하는 케이스에서만 켠다(required:false).
+  //   태국·말레이시아의 passport_photo 를 빌려 쓰지 않는 이유: 그쪽은 required:true 라
+  //   대만에 붙이는 순간 대행하지 않는 케이스까지 여권을 요구하게 된다.
+  { key: 'tw_permit_passport', label: '여권 사본', required: false, destinations: ['대만'] },
+  { key: 'tw_permit_poa', label: '위임장', required: false, destinations: ['대만'] },
   // 구충은 필리핀만 해당 — 필리핀은 '타병원 접종 및 구충증명서'로 통일, 그 외는 '타병원 접종증명서'.
   { key: 'other_hospital_vaccine', label: '타병원 접종증명서', required: false, destinations: 'all', excludeDestinations: ['필리핀'] },
   { key: 'other_hospital_deworming', label: '타병원 접종 및 구충증명서', required: false, destinations: ['필리핀'] },
