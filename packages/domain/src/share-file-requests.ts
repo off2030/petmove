@@ -29,14 +29,16 @@ export const SHARE_FILE_REQUESTS: ShareFileRequestDef[] = [
   // 말레이시아·인도네시아 — 태국 복제(2026-07-22).
   { key: 'pet_photo', label: '반려동물 사진', required: true, destinations: ['태국', '필리핀', '말레이시아', '인도네시아'] },
   { key: 'passport_photo', label: '여권 사진', required: true, destinations: ['태국', '말레이시아', '인도네시아'] },
+  // 대만 — APHIA e-permit 의 'Copied ID upload (front side)' 가 *Required. 대만 허가는
+  //   로잔이 전건 대행하므로 링크에 자동으로 싣는다(2026-09-16 사용자 지정).
+  //   뒷면(back side) 은 폼에서 *Required 가 아니다 — 대만 신분증·거류증처럼 앞뒤가 나뉜
+  //   증서를 위한 칸이라, 여권이면 정보면 한 장으로 끝난다. 그래서 슬롯도 하나만 둔다.
+  //   위 passport_photo 를 재사용하지 않는 이유는 라벨('여권 사진')이 태국 계열 기준이라
+  //   대만 서류(사본)와 어긋나서다.
+  { key: 'tw_permit_passport', label: '여권 사본', required: true, destinations: ['대만'] },
   { key: 'flight_itinerary', label: '항공 일정표', required: true, destinations: ['태국', '말레이시아', '인도네시아'] },
   // 선택 — 상황에 따라
   { key: 'jp_export_cert', label: '일본 수출 동물검역증', required: false, destinations: ['일본'] },
-  // 대만 수입허가(APHIA) 신청 대행용 — 대행하는 케이스에서만 켠다(required:false).
-  //   태국·말레이시아의 passport_photo 를 빌려 쓰지 않는 이유: 그쪽은 required:true 라
-  //   대만에 붙이는 순간 대행하지 않는 케이스까지 여권을 요구하게 된다.
-  { key: 'tw_permit_passport', label: '여권 사본', required: false, destinations: ['대만'] },
-  { key: 'tw_permit_poa', label: '위임장', required: false, destinations: ['대만'] },
   // 구충은 필리핀만 해당 — 필리핀은 '타병원 접종 및 구충증명서'로 통일, 그 외는 '타병원 접종증명서'.
   { key: 'other_hospital_vaccine', label: '타병원 접종증명서', required: false, destinations: 'all', excludeDestinations: ['필리핀'] },
   { key: 'other_hospital_deworming', label: '타병원 접종 및 구충증명서', required: false, destinations: ['필리핀'] },
