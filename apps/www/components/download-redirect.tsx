@@ -40,6 +40,12 @@ export function DownloadRedirect() {
             Google Play
           </a>
         </div>
+        {/* 데스크톱에서 이 페이지를 본다는 건 리디렉트가 안 걸렸다는 뜻(= PC) — 설치는 결국
+            폰에서 해야 한다. 랜딩과 같은 QR 로 건너갈 다리를 준다. 모바일은 CSS 로 숨김. */}
+        <div className="qr-block">
+          <img className="qr" src="/img/qr-download.svg" alt="펫무브 앱 설치 QR코드" width={116} height={116} />
+          <p className="qr-cap">폰 카메라로 찍으면 바로 설치할 수 있어요</p>
+        </div>
       </div>
       <svg className="clouds" viewBox="-6 92 208 68" aria-hidden>
         <g transform="translate(0,26)">
