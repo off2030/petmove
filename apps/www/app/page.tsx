@@ -201,6 +201,14 @@ export default function LandingPage() {
               Google Play
             </a>
           </div>
+          {/* 데스크톱 전용 QR — PC 에서 배지를 눌러봐야 스토어 '웹페이지'에 갇힌다(설치는 결국 폰에서).
+              여기가 폰으로 건너가는 다리다. 모바일에서는 배지가 곧 설치라 CSS 로 숨긴다 —
+              자기가 보고 있는 화면을 찍으라는 소리가 되니까.
+              QR 목적지 = /download (기기를 보고 해당 스토어로 보내는 단축 주소). */}
+          <div className="qr-block">
+            <img className="qr" src="/img/qr-download.svg" alt="펫무브 앱 설치 QR코드" width={116} height={116} />
+            <p className="qr-cap">폰 카메라로 찍으면 바로 설치할 수 있어요</p>
+          </div>
         </div>
         <svg className="clouds" viewBox="-6 92 208 68" aria-hidden>
           <g transform="translate(0,26)">
