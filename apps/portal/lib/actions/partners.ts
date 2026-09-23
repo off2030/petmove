@@ -420,6 +420,8 @@ async function notifyOrgMembers(
     .eq('org_id', orgId)
   const rows = ((members ?? []) as Array<{ user_id: string }>).map((m) => ({
     user_id: m.user_id,
+    // 알림 목록의 조직 칩·필터용 — 여러 org 멤버(super_admin)가 출처를 구분한다.
+    org_id: orgId,
     content: body,
   }))
   if (rows.length > 0) await admin.from('notifications').insert(rows)

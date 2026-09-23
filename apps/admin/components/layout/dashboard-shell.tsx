@@ -235,6 +235,8 @@ export function DashboardShell({
               setNotifications={setNotifications}
               isActive={activeTab === 'messages'}
               variant="tab"
+              activeOrgId={activeOrgId}
+              canSwitchOrg={isSuperAdmin}
             />
           </div>
         )}
@@ -300,6 +302,8 @@ export function DashboardShell({
                   setNotifications={setNotifications}
                   isActive
                   variant="popup"
+                  activeOrgId={activeOrgId}
+                  canSwitchOrg={isSuperAdmin}
                 />
               </div>
             </div>

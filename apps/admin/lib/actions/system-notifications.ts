@@ -130,6 +130,9 @@ export async function evaluateAndNotify(caseId: string): Promise<void> {
     await admin.from('notifications').insert({
       user_id: user.id,
       case_id: caseId,
+      // 알림 목록에서 조직을 구분하려면 케이스의 org 를 그대로 물려준다(활성 org 아님 —
+      // super_admin 이 다른 조직을 보는 중에도 알림은 케이스 소속으로 남아야 한다).
+      org_id: caseRow.org_id,
       content: lines.join('\n'),
     })
     await supabase.from('cases').update({ notified_check_ids: currentIds }).eq('id', caseId)

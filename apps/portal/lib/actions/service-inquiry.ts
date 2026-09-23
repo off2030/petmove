@@ -44,6 +44,8 @@ export async function notifyServiceInquiry(input: {
       .eq('org_id', PLATFORM_ORG_ID)
     const rows = ((members ?? []) as Array<{ user_id: string }>).map((m) => ({
       user_id: m.user_id,
+      // 문의는 직영 몫 — 알림 목록에서 '펫무브' 로 묶여 보이도록 org 를 박는다.
+      org_id: PLATFORM_ORG_ID,
       content: body,
     }))
     if (rows.length > 0) await admin.from('notifications').insert(rows)
