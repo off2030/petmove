@@ -29,7 +29,7 @@ export interface SortedTiter {
 }
 
 /**
- * 채혈일 있는 항체검사를 오래된 순으로. 서버 fillPdfCore 의 titerIndex 와 같은 공간이어야 한다 —
+ * 채혈일 있는 항체검사를 오래된 순으로. 서버 fillPdfCore 의 titerIndices 와 같은 공간이어야 한다 —
  * pdf-fill 의 sortedTiters(채혈일 내림차순)를 뒤집은 순서(titer_date_asc 와 동일)를 그대로 재현.
  */
 export function sortTiterRecords(records: unknown): SortedTiter[] {
@@ -52,24 +52,31 @@ interface Props {
   open: boolean
   formLabel: string
   records: unknown
-  /** 취소 = null, 발급 = 고른 검사의 ascIndex. */
-  onClose: (index: number | null) => void
+  /** 취소 = null, 발급 = 고른 검사들의 ascIndex (오래된 순). */
+  onClose: (indices: number[] | null) => void
 }
 
 /**
  * 호주 서류 — 광견병 항체검사가 2건 이상일 때 RNATT 칸(채혈일·검체 도착일·결과)에 쓸 검사 선택.
  * 호주용 KRSL + 프랑스용 APQA EU 처럼 여러 나라 검사가 한 케이스에 섞이면 어느 것을 쓸지
- * 코드로 정할 수 없어 사용자가 고른다(2026-09-11). 기본 선택은 가장 오래된 검사(종전 출력).
+ * 코드로 정할 수 없어 사용자가 고른다(2026-09-11).
+ *
+ * 중복 선택 가능(2026-09-23) — 호주 서류에 검사를 두 건 다 적어야 하는 케이스가 있어,
+ * 고른 검사가 여럿이면 RNATT 각 칸에 " / " 로 병기된다. 기본 선택은 종전과 같이
+ * 가장 오래된 검사 1건 — 섞여 들어온 타국 검사가 자동으로 딸려 나가지 않게.
  */
 export function TiterSelectDialog({ open, formLabel, records, onClose }: Props) {
   const { inspectionConfig } = useCases()
   const labs = useMemo(() => allLabOptions(inspectionConfig), [inspectionConfig])
   const sorted = useMemo(() => sortTiterRecords(records), [records])
-  const [selected, setSelected] = useState(0)
+  const [selected, setSelected] = useState<number[]>([0])
 
   useEffect(() => {
-    if (open) setSelected(0)
+    if (open) setSelected([0])
   }, [open, records])
+
+  const toggle = (idx: number) =>
+    setSelected((prev) => (prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx].sort((a, b) => a - b)))
 
   useEffect(() => {
     if (!open) return
@@ -102,11 +109,12 @@ export function TiterSelectDialog({ open, formLabel, records, onClose }: Props) 
         <div className="px-lg py-md space-y-2">
           <p className="font-serif text-[13px] text-muted-foreground">
             항체검사가 {sorted.length}건 있어요. 서류의 RNATT 칸(채혈일·검체 도착일·결과)에 기재할
-            검사를 하나 선택하세요.
+            검사를 고르세요. 여럿 고르면 칸마다 <span className="font-mono text-[12px]">/</span> 로
+            나란히 적힙니다.
           </p>
           <ul className="mt-2 divide-y divide-border/60 border border-border/80 rounded-md">
             {sorted.map((r) => {
-              const checked = selected === r.ascIndex
+              const checked = selected.includes(r.ascIndex)
               return (
                 <li key={r.ascIndex}>
                   <label className={cn(
@@ -114,10 +122,10 @@ export function TiterSelectDialog({ open, formLabel, records, onClose }: Props) 
                     checked ? 'bg-accent/40' : 'hover:bg-accent/20',
                   )}>
                     <input
-                      type="radio"
+                      type="checkbox"
                       name="titer-pick"
                       checked={checked}
-                      onChange={() => setSelected(r.ascIndex)}
+                      onChange={() => toggle(r.ascIndex)}
                       className="cursor-pointer"
                     />
                     <span className="font-mono text-[14px] tabular-nums">{r.date}</span>
@@ -143,7 +151,8 @@ export function TiterSelectDialog({ open, formLabel, records, onClose }: Props) 
           bordered
           onCancel={() => onClose(null)}
           onPrimary={() => onClose(selected)}
-          primaryLabel="이대로 발급"
+          primaryDisabled={selected.length === 0}
+          primaryLabel={selected.length > 1 ? `${selected.length}건 기재해 발급` : '이대로 발급'}
         />
       </div>
     </div>,

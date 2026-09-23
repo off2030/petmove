@@ -41,7 +41,7 @@ function stripOtherHospitalRecords(data: Record<string, unknown>): Record<string
 async function generate(
   formKey: string,
   caseId: string,
-  options?: { includeSignature?: boolean; includeVet?: boolean; destination?: string | null; extras?: Record<string, unknown>; rabiesIndices?: number[]; titerIndex?: number },
+  options?: { includeSignature?: boolean; includeVet?: boolean; destination?: string | null; extras?: Record<string, unknown>; rabiesIndices?: number[]; titerIndices?: number[] },
 ): Promise<GeneratePdfResult> {
   await loadVetInfo()
   const supabase = await createClient()
@@ -81,7 +81,7 @@ async function generate(
     allowedVaccines,
     extras: options?.extras,
     rabiesIndices: options?.rabiesIndices,
-    titerIndex: options?.titerIndex,
+    titerIndices: options?.titerIndices,
   })
 }
 
@@ -164,8 +164,8 @@ export type GenerateOpts = {
   destination?: string | null
   /** 별지 25호/EX 의 dedicated 광견병 슬롯에 들어갈 접종 선택. sortedAsc 기준 인덱스. */
   rabiesIndices?: number[]
-  /** 호주 서류(AU 계열) RNATT 칸에 쓸 항체검사 — 채혈일 오름차순(날짜 있는 기록) 인덱스. */
-  titerIndex?: number
+  /** 호주 서류(AU 계열) RNATT 칸에 쓸 항체검사 — 채혈일 오름차순(날짜 있는 기록) 인덱스. 여러 건이면 칸에 병기. */
+  titerIndices?: number[]
 }
 
 export async function generateFormRE(caseId: string, opts?: GenerateOpts) {

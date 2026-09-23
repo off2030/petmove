@@ -1162,6 +1162,43 @@ export function readSource(
   return v
 }
 
+/**
+ * vaccine_desc 계열 한 회차의 항목값. `vaccine_desc`(행별)과 `vaccine_desc_rest`(나머지 병합)가 공유.
+ * kind 별 카탈로그 조회 + 기록 입력값(applyRecOverrides) 우선 규칙은 한 곳에만 둔다.
+ */
+function resolveVaccineDescAttr(
+  kind: string,
+  attr: string,
+  rec: ParasiteRecord,
+  data: Record<string, unknown>,
+): string {
+  const date = rec.date
+  if (!date) return ''
+  if (attr === 'date') return fmtDate(date)
+  if ((kind === 'civ' || kind === 'comprehensive') && attr === 'validity_from') return fmtDate(date)
+  // validity_to: rec.valid_until (예: "3년") 우선, 없으면 접종일 + 1년 기본.
+  // rabies/civ/comprehensive는 기본 1년. 다른 kind는 아래 catalog fallback 사용.
+  if ((kind === 'civ' || kind === 'comprehensive' || kind === 'rabies') && attr === 'validity_to') {
+    return resolveValidityTo(rec, date, 1)
+  }
+  const species = String(data.species ?? '').toLowerCase()
+  const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
+  let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; expiry?: string | null; validityFrom?: string; validityTo?: string } | null = null
+  if (kind === 'rabies') p = lookupRabies(date)
+  else if (kind === 'civ') p = lookupCiv(date)
+  else if (kind === 'comprehensive' && (species === 'dog' || species === 'cat')) p = lookupComprehensive(species, date)
+  else if (kind === 'ext_parasite' && (species === 'dog' || species === 'cat')) p = lookupExternalParasite(species, date, weightKg)
+  else if (kind === 'int_parasite' && (species === 'dog' || species === 'cat')) p = lookupInternalParasite(species, date, weightKg)
+  const merged = applyRecOverrides(rec, p)
+  if (attr === 'name') return merged.name
+  if (attr === 'manufacturer') return merged.manufacturer
+  if (attr === 'serial') return merged.serial
+  if (attr === 'product_expiry') return merged.expiry
+  if (attr === 'validity_from') return fmtDate(p?.validityFrom ?? '')
+  if (attr === 'validity_to') return fmtDate(p?.validityTo ?? '')
+  return ''
+}
+
 function resolveField(
   mapping: FieldMapping,
   caseRow: CaseRow,
@@ -1890,6 +1927,42 @@ function resolveField(
     return rec?.value ?? ''
   }
 
+  // AU RNATT — 선택한 항체검사를 **전부** 한 칸에 " / " 로 병기 (채혈일·도착일·결과 각각).
+  // 호주 서류는 RNATT 칸이 한 줄뿐이라 검사가 2건이면 종전엔 1건만 찍히고 나머지는 사라졌다.
+  // fillPdfCore 가 titerIndices 로 배열을 사용자 선택분으로 이미 좁혀 두므로, 여기서는
+  // 남아 있는 기록 전부(채혈일 오름차순)를 이어 붙이면 된다. 검사 1건이면 종전과 동일.
+  const titerSelMatch = transform?.match(/^titer_(date|received|value)_sel$/)
+  if (titerSelMatch && source === 'rabies_titer_records') {
+    const kind = titerSelMatch[1]
+    const asc = sortedTiters(raw).slice().reverse()
+    // 2건 이상이면 칸끼리 자리가 맞아야 한다 — 비는 값은 '-' 로 채워
+    // "16/Aug/2025 / 27/Jun/2026" 와 "165.57 / -" 가 같은 순서로 읽히게.
+    const joinAligned = (values: string[]): string => {
+      const filled = values.map(v => v.trim()).filter(Boolean)
+      if (filled.length === 0) return ''
+      if (values.length === 1) return filled[0]
+      return values.map(v => v.trim() || '-').join(' / ')
+    }
+    if (kind === 'date') {
+      return joinAligned(asc.map(r => fmtDate(r.date)))
+    }
+    if (kind === 'value') {
+      return joinAligned(asc.map(r => r.value ?? ''))
+    }
+    // received — 회차별 수령일. 옛 케이스는 australia_extra.sample_received_date 에만 있어 폴백.
+    const received = joinAligned(
+      asc.map(r => (r as unknown as { received_date?: string | null }).received_date ?? ''),
+    )
+    if (received) return received
+    if (Array.isArray(raw)) {
+      const orphan = (raw as { date?: string | null; received_date?: string | null }[])
+        .find(r => r && !r.date && r.received_date)
+      if (orphan?.received_date) return orphan.received_date
+    }
+    const legacy = ((data.australia_extra as Record<string, unknown>) ?? {}).sample_received_date
+    return typeof legacy === 'string' && legacy ? legacy : ''
+  }
+
   // Annex III parasite row — echo microchip/product/date/vet from Nth internal parasite entry.
   // Pattern: `annex_parasite:(transponder|product|date|vet)[n]` — oldest-first.
   // Only filled when the destination requires echinococcus treatment (UK/IE/MT/NI/NO/FI).
@@ -1946,31 +2019,27 @@ function resolveField(
     const attr = vacDescMatch[2]
     const idx = Number(vacDescMatch[3])
     const rec = sortedDescRecords(raw)[idx]
-    const date = rec?.date
-    if (!date) return ''
-    if (attr === 'date') return fmtDate(date)
-    if ((kind === 'civ' || kind === 'comprehensive') && attr === 'validity_from') return fmtDate(date)
-    // validity_to: rec.valid_until (예: "3년") 우선, 없으면 접종일 + 1년 기본.
-    // rabies/civ/comprehensive는 기본 1년. 다른 kind는 아래 catalog fallback 사용.
-    if ((kind === 'civ' || kind === 'comprehensive' || kind === 'rabies') && attr === 'validity_to') {
-      return resolveValidityTo(rec, date, 1)
-    }
-    const species = String(data.species ?? '').toLowerCase()
-    const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
-    let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; expiry?: string | null; validityFrom?: string; validityTo?: string } | null = null
-    if (kind === 'rabies') p = lookupRabies(date)
-    else if (kind === 'civ') p = lookupCiv(date)
-    else if (kind === 'comprehensive' && (species === 'dog' || species === 'cat')) p = lookupComprehensive(species, date)
-    else if (kind === 'ext_parasite' && (species === 'dog' || species === 'cat')) p = lookupExternalParasite(species, date, weightKg)
-    else if (kind === 'int_parasite' && (species === 'dog' || species === 'cat')) p = lookupInternalParasite(species, date, weightKg)
-    const merged = applyRecOverrides(rec, p)
-    if (attr === 'name') return merged.name
-    if (attr === 'manufacturer') return merged.manufacturer
-    if (attr === 'serial') return merged.serial
-    if (attr === 'product_expiry') return merged.expiry
-    if (attr === 'validity_from') return fmtDate(p?.validityFrom ?? '')
-    if (attr === 'validity_to') return fmtDate(p?.validityTo ?? '')
-    return ''
+    if (!rec?.date) return ''
+    return resolveVaccineDescAttr(kind, attr, rec, data)
+  }
+
+  // AU 서식 CIV — 칸(2행)보다 접종이 많을 때 마지막 행에 **나머지 회차를 전부** 병기.
+  // Pattern: `vaccine_desc_rest:<kind>:<attr>[<n>]` — 최신순 n번째부터 끝까지.
+  // 날짜는 회차마다 다르니 그대로 이어 붙이고(최신 → 과거), 이름·배치·유효기간은
+  // 같은 약이면 한 번만 (vaccine_combined:rabies 와 같은 dedupe 규칙).
+  // 예) 독감 3회 → 1행 = 최신 1회, 2행 = "13/Aug/2025 / 30/Jul/2025".
+  const vacDescRestMatch = transform?.match(/^vaccine_desc_rest:(rabies|ext_parasite|int_parasite|civ|comprehensive):(name|manufacturer|serial|product_expiry|date|validity_from|validity_to)\[(\d+)\]$/)
+  if (vacDescRestMatch) {
+    const kind = vacDescRestMatch[1]
+    const attr = vacDescRestMatch[2]
+    const from = Number(vacDescRestMatch[3])
+    const recs = sortedDescRecords(raw).slice(from)
+    if (recs.length === 0) return ''
+    const values = recs.map(rec => resolveVaccineDescAttr(kind, attr, rec, data)).filter(Boolean)
+    if (values.length === 0) return ''
+    // 날짜(회차 구분)는 중복 제거하지 않는다 — 같은 날 두 번 맞았으면 두 번 적힌다.
+    const list = attr === 'date' ? values : Array.from(new Set(values))
+    return list.join(' / ')
   }
 
   // AU certificate — combined rabies vaccine info across all doses.
@@ -3313,9 +3382,10 @@ export type FillOptions = {
   rabiesIndices?: number[]
   /**
    * 호주 서류(AU 계열) RNATT 칸에 쓸 광견병 항체검사 — 채혈일 오름차순(날짜 있는 기록) 인덱스.
-   * 지정 시 rabies_titer_records 를 그 1건으로 좁혀 채혈일·검체 도착일·결과가 같은 검사에서 나온다.
+   * 지정 시 rabies_titer_records 를 선택분으로 좁혀, 채혈일·검체 도착일·결과가 같은 검사(들)에서 나온다.
+   * 2건 이상 고르면 RNATT 칸에 " / " 로 병기된다(titer_*_sel transform).
    */
-  titerIndex?: number
+  titerIndices?: number[]
 }
 
 /**
@@ -3386,12 +3456,15 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
     data.rabies_overflow = olderAsc.slice().reverse()
   }
 
-  // 호주 서류 RNATT 검사 선택 — titerIndex(채혈일 오름차순, titer_date_asc 와 같은 공간)의 기록
-  // 1건만 남겨 채혈일·검체 도착일·결과 칸이 모두 그 검사에서 나오게 한다.
-  const titerPicked = typeof options?.titerIndex === 'number'
+  // 호주 서류 RNATT 검사 선택 — titerIndices(채혈일 오름차순, titer_date_asc 와 같은 공간)의
+  // 기록만 남겨, 채혈일·검체 도착일·결과 칸이 모두 같은 검사(들)에서 나오게 한다.
+  // 2건 이상이면 칸마다 " / " 로 병기 (titer_*_sel).
+  const titerPicked = Array.isArray(options?.titerIndices) && options.titerIndices.length > 0
   if (titerPicked) {
-    const picked = sortedTiters(data.rabies_titer_records).slice().reverse()[options!.titerIndex!]
-    if (picked) data.rabies_titer_records = [picked]
+    const asc = sortedTiters(data.rabies_titer_records).slice().reverse()
+    const idxSet = new Set(options!.titerIndices!)
+    const picked = asc.filter((_, i) => idxSet.has(i))
+    if (picked.length > 0) data.rabies_titer_records = picked
   }
 
   // extras(예: tube_count, consignee_lab)는 resolveField가 `caseRow.data` 를

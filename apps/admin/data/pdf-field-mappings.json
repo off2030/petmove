@@ -2052,18 +2052,18 @@
       },
       "text_15xzcb": {
         "source": "rabies_titer_records",
-        "transform": "titer_date_asc[0]",
-        "note": "p1 RNATT 1. Collection date — oldest titer (= most recent titer when 1 record)"
+        "transform": "titer_date_sel",
+        "note": "p1 RNATT 1. Collection date — 고른 항체검사 전부 \" / \" 병기 (1건이면 그 1건)"
       },
       "text_16zsj": {
         "source": "rabies_titer_records",
-        "transform": "titer_received_asc[0]",
-        "note": "p1 RNATT 2. Date arrived at laboratory (dmy)"
+        "transform": "titer_received_sel",
+        "note": "p1 RNATT 2. Date arrived at laboratory — 고른 항체검사 전부 \" / \" 병기 (1건이면 그 1건)"
       },
       "text_17mhge": {
         "source": "rabies_titer_records",
-        "transform": "titer_value_asc[0]",
-        "note": "p1 RNATT result IU/mL — Collection date 와 같은 회차(오래된 순)"
+        "transform": "titer_value_sel",
+        "note": "p1 RNATT result IU/mL — 고른 항체검사 전부 \" / \" 병기 (1건이면 그 1건)"
       },
       "text_18rgpy": {
         "source": null,
@@ -2278,33 +2278,33 @@
       },
       "text_51vpfk": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:date[1]",
+        "transform": "vaccine_desc_rest:civ:date[1]",
         "default": "N/A",
-        "note": "p3 CIV 2 vaccination date (없으면 N/A)"
+        "note": "p3 CIV 2 vaccination date — 2회차 이후 전부 \" / \" 병기 (없으면 N/A)"
       },
       "text_55nend": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:name[1]",
+        "transform": "vaccine_desc_rest:civ:name[1]",
         "default": "N/A",
-        "note": "p3 CIV 2 vaccine name"
+        "note": "p3 CIV 2 vaccine name — 2회차 이후 (같은 약이면 하나)"
       },
       "text_57hyjt": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:serial[1]",
+        "transform": "vaccine_desc_rest:civ:serial[1]",
         "default": "N/A",
-        "note": "p3 CIV 2 batch"
+        "note": "p3 CIV 2 batch — 2회차 이후 (같은 배치면 하나)"
       },
       "text_59iaww": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:product_expiry[1]",
+        "transform": "vaccine_desc_rest:civ:product_expiry[1]",
         "default": "N/A",
-        "note": "p3 CIV 2 expiry date — 약품(배치) 유효기간"
+        "note": "p3 CIV 2 expiry date — 2회차 이후 (같은 배치면 하나)"
       },
       "text_53jqcz": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:validity_to[1]",
+        "transform": "vaccine_desc_rest:civ:validity_to[1]",
         "default": "N/A",
-        "note": "p3 CIV 2 booster due"
+        "note": "p3 CIV 2 booster due — 2회차 이후"
       },
       "text_60urhp": {
         "source": "external_parasite_dates",
@@ -2526,18 +2526,18 @@
       },
       "text_15xzcb": {
         "source": "rabies_titer_records",
-        "transform": "titer_date_asc[0]",
-        "note": "p1 RNATT 1. Collection date — oldest titer (= most recent titer when 1 record)"
+        "transform": "titer_date_sel",
+        "note": "p1 RNATT 1. Collection date — 고른 항체검사 전부 \" / \" 병기 (1건이면 그 1건)"
       },
       "text_16zsj": {
         "source": "rabies_titer_records",
-        "transform": "titer_received_asc[0]",
-        "note": "p1 RNATT 2. Date arrived at laboratory (dmy)"
+        "transform": "titer_received_sel",
+        "note": "p1 RNATT 2. Date arrived at laboratory — 고른 항체검사 전부 \" / \" 병기 (1건이면 그 1건)"
       },
       "text_17mhge": {
         "source": "rabies_titer_records",
-        "transform": "titer_value_asc[0]",
-        "note": "p1 RNATT result IU/mL — Collection date 와 같은 회차(오래된 순)"
+        "transform": "titer_value_sel",
+        "note": "p1 RNATT result IU/mL — 고른 항체검사 전부 \" / \" 병기 (1건이면 그 1건)"
       },
       "text_18rgpy": {
         "source": null,
@@ -2752,33 +2752,33 @@
       },
       "text_51vpfk": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:date[1]",
+        "transform": "vaccine_desc_rest:civ:date[1]",
         "default": "N/A",
-        "note": "p3 CIV 2 vaccination date (없으면 N/A)"
+        "note": "p3 CIV 2 vaccination date — 2회차 이후 전부 \" / \" 병기 (없으면 N/A)"
       },
       "text_55nend": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:name[1]",
+        "transform": "vaccine_desc_rest:civ:name[1]",
         "default": "N/A",
-        "note": "p3 CIV 2 vaccine name"
+        "note": "p3 CIV 2 vaccine name — 2회차 이후 (같은 약이면 하나)"
       },
       "text_57hyjt": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:serial[1]",
+        "transform": "vaccine_desc_rest:civ:serial[1]",
         "default": "N/A",
-        "note": "p3 CIV 2 batch"
+        "note": "p3 CIV 2 batch — 2회차 이후 (같은 배치면 하나)"
       },
       "text_59iaww": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:product_expiry[1]",
+        "transform": "vaccine_desc_rest:civ:product_expiry[1]",
         "default": "N/A",
-        "note": "p3 CIV 2 expiry date — 약품(배치) 유효기간"
+        "note": "p3 CIV 2 expiry date — 2회차 이후 (같은 배치면 하나)"
       },
       "text_53jqcz": {
         "source": "civ_dates",
-        "transform": "vaccine_desc:civ:validity_to[1]",
+        "transform": "vaccine_desc_rest:civ:validity_to[1]",
         "default": "N/A",
-        "note": "p3 CIV 2 booster due"
+        "note": "p3 CIV 2 booster due — 2회차 이후"
       },
       "text_60urhp": {
         "source": "external_parasite_dates",
@@ -2995,18 +2995,18 @@
       },
       "text_15aqiu": {
         "source": "rabies_titer_records",
-        "transform": "titer_date_asc[0]",
-        "note": "p1 RNATT 1. Collection date (최신 titer)"
+        "transform": "titer_date_sel",
+        "note": "p1 RNATT 1. Collection date — 고른 항체검사 전부 \" / \" 병기 (1건이면 그 1건)"
       },
       "text_16oxvq": {
         "source": "rabies_titer_records",
-        "transform": "titer_received_asc[0]",
-        "note": "p1 RNATT 2. Date arrived at laboratory"
+        "transform": "titer_received_sel",
+        "note": "p1 RNATT 2. Date arrived at laboratory — 고른 항체검사 전부 \" / \" 병기 (1건이면 그 1건)"
       },
       "text_17igkd": {
         "source": "rabies_titer_records",
-        "transform": "titer_value_asc[0]",
-        "note": "p1 RNATT result IU/ml — Collection date 와 같은 회차(오래된 순)"
+        "transform": "titer_value_sel",
+        "note": "p1 RNATT result IU/mL — 고른 항체검사 전부 \" / \" 병기 (1건이면 그 1건)"
       },
       "text_18rloc": {
         "source": "rabies_dates",
@@ -3233,18 +3233,18 @@
       },
       "text_15aqiu": {
         "source": "rabies_titer_records",
-        "transform": "titer_date_asc[0]",
-        "note": "p1 RNATT 1. Collection date (최신 titer)"
+        "transform": "titer_date_sel",
+        "note": "p1 RNATT 1. Collection date — 고른 항체검사 전부 \" / \" 병기 (1건이면 그 1건)"
       },
       "text_16oxvq": {
         "source": "rabies_titer_records",
-        "transform": "titer_received_asc[0]",
-        "note": "p1 RNATT 2. Date arrived at laboratory"
+        "transform": "titer_received_sel",
+        "note": "p1 RNATT 2. Date arrived at laboratory — 고른 항체검사 전부 \" / \" 병기 (1건이면 그 1건)"
       },
       "text_17igkd": {
         "source": "rabies_titer_records",
-        "transform": "titer_value_asc[0]",
-        "note": "p1 RNATT result IU/ml — Collection date 와 같은 회차(오래된 순)"
+        "transform": "titer_value_sel",
+        "note": "p1 RNATT result IU/mL — 고른 항체검사 전부 \" / \" 병기 (1건이면 그 1건)"
       },
       "text_18rloc": {
         "source": "rabies_dates",

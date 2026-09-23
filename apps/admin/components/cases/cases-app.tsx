@@ -321,7 +321,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
   }, [selectedId, updateLocalCaseField, prevCase, nextCase, selectCase])
 
   const downloadCertPdf = useCallback(
-    async (formKey: string, caseId: string, destination: string | null, rabiesIndices?: number[], titerIndex?: number) => {
+    async (formKey: string, caseId: string, destination: string | null, rabiesIndices?: number[], titerIndices?: number[]) => {
       const row = cases.find((c) => c.id === caseId)
       if (row && !(await confirmIfFailing(row, destination, formKey))) return
       try {
@@ -351,7 +351,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
           includeVet,
           destination,
           ...(rabiesIndices ? { rabiesIndices } : {}),
-          ...(titerIndex !== undefined ? { titerIndex } : {}),
+          ...(titerIndices?.length ? { titerIndices } : {}),
         })
       } catch (error) {
         toastError('PDF 다운로드 실패', error instanceof Error ? error.message : '잠시 후 다시 시도하세요.')
@@ -464,11 +464,11 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
           open={!!titerPick}
           formLabel={titerPick?.label ?? '호주 서류'}
           records={titerPick?.records}
-          onClose={(index) => {
+          onClose={(indices) => {
             const pick = titerPick
             setTiterPick(null)
-            if (pick && index !== null) {
-              void downloadCertPdf(pick.formKey, pick.caseId, pick.destination, undefined, index)
+            if (pick && indices && indices.length > 0) {
+              void downloadCertPdf(pick.formKey, pick.caseId, pick.destination, undefined, indices)
             }
           }}
         />
