@@ -25,6 +25,7 @@ import {
 import { getOrgVaccineLookups } from '@/lib/vaccine-data'
 import { VET_INFO } from '@/lib/vet-info'
 import { RABIES_SLOT_CAP } from '@/lib/rabies-slot-cap'
+import { mergeParasiticideDoses } from '@/lib/pdf-other-slots'
 import type { CaseRow } from '@petmove/domain'
 
 /* ─── Performance feature flags ────────────────────────────────────────
@@ -728,12 +729,20 @@ function buildVaccineSequenceUnified(
   return out
 }
 
+/** Form25 — "기타 예방접종" 3칸. */
+const FORM25_OTHER_SLOTS = 3
+/** Form25AuNz(별지25 EX) — 확장 8칸. */
+const FORM25_AUNZ_OTHER_SLOTS = 8
+
 function buildOtherVaccineSequence(data: Record<string, unknown>, allowedVaccines?: string[]): OtherVacEntry[] {
-  return buildVaccineSequenceUnified(data, 1, allowedVaccines)
+  return mergeParasiticideDoses(buildVaccineSequenceUnified(data, 1, allowedVaccines), FORM25_OTHER_SLOTS)
 }
 
 function buildExpandedVaccineSequence(data: Record<string, unknown>, maxPerType = 3, allowedVaccines?: string[]): OtherVacEntry[] {
-  return buildVaccineSequenceUnified(data, maxPerType, allowedVaccines)
+  return mergeParasiticideDoses(
+    buildVaccineSequenceUnified(data, maxPerType, allowedVaccines),
+    FORM25_AUNZ_OTHER_SLOTS,
+  )
 }
 
 interface TiterRec { date: string | null; value: string | null; lab: string | null }

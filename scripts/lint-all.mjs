@@ -128,6 +128,14 @@ const multiSlotCode = await run(
   'multi-slot forms',
   { shell: process.platform === 'win32' },
 )
+// 별지25 계열 '기타 예방접종' 슬롯 압축 — 칸이 모자랄 때만, 같은 구충제만 합쳐야 한다.
+// 잘못 합치면 배치번호가 틀린 증명서가 나가고, 안 합치면 처치 기록이 조용히 잘린다(2026-09-23 신설).
+const parasiticideMergeCode = await run(
+  localBin('tsx'),
+  ['scripts/check-parasiticide-merge.ts'],
+  'parasiticide merge',
+  { shell: process.platform === 'win32' },
+)
 // 추가정보 '출발일' ↔ 출국일 sync 룰 시드 패리티 — 선언만 하고 시드를 빼먹으면 출국일 컬럼이
 // 영영 안 채워져 신고 탭·목록·D-day 가 그 케이스를 통째로 놓친다(2026-08-24 신설).
 const departureSyncCode = await run(
@@ -154,6 +162,7 @@ const summary = [
   `  lint:parity:   ${parityCode === 0 ? '✓ pass' : `✗ exit ${parityCode}`}`,
   `  dep sync seed: ${departureSyncCode === 0 ? '✓ pass' : `✗ exit ${departureSyncCode}`}`,
   `  multi slots:   ${multiSlotCode === 0 ? '✓ pass' : `✗ exit ${multiSlotCode}`}`,
+  `  25호 슬롯병합: ${parasiticideMergeCode === 0 ? '✓ pass' : `✗ exit ${parasiticideMergeCode}`}`,
   `  valid-until:   ${validUntilCode === 0 ? '✓ pass' : `✗ exit ${validUntilCode}`}`,
   `  phone format:  ${phoneCode === 0 ? '✓ pass' : `✗ exit ${phoneCode}`}`,
 ].join('\n')
@@ -163,7 +172,7 @@ process.exit(
   Math.max(
     eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode,
     reportSlotsCode, journeyRestoreCode, sizeCode, copyCode, wiringCode, parityCode,
-    departureSyncCode, multiSlotCode, validUntilCode, phoneCode,
+    departureSyncCode, multiSlotCode, parasiticideMergeCode, validUntilCode, phoneCode,
     destCode, behaviorCode, checksCode,
   ),
 )
