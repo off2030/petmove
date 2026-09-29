@@ -601,6 +601,8 @@ function applyRecOverrides(
  */
 interface OtherVacEntry {
   type: 'Vaccination' | 'Parasiticide'
+  /** 세부 종류 — VHC 처럼 행마다 종류명(DHPPL·Kennel Cough…)을 적는 서식용. */
+  kind: OtherVacKind
   name: string
   manufacturer: string
   serial: string
@@ -615,6 +617,8 @@ interface OtherVacEntry {
   validity: string
   date: string
 }
+type OtherVacKind = 'rabies' | 'general' | 'civ' | 'kennel' | 'external' | 'internal' | 'combo' | 'heartworm'
+
 /**
  * 별지 제25호 (Form25 / Form25AuNz) "기타 예방접종 및 기생충 처치내역" 슬롯 시퀀스.
  *
@@ -657,7 +661,7 @@ function buildVaccineSequenceUnified(
     for (const rec of rabiesOverflow as ParasiteRecord[]) {
       if (!rec?.date) continue
       const p = lookupRabies(rec.date)
-      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), validity: resolveValidityTo(rec, rec.date, 1), date: fmtDate(rec.date) })
+      out.push({ type: 'Vaccination', kind: 'rabies', ...applyRecOverrides(rec, p), validity: resolveValidityTo(rec, rec.date, 1), date: fmtDate(rec.date) })
     }
   }
 
@@ -665,7 +669,7 @@ function buildVaccineSequenceUnified(
   if (allowed('general')) {
     for (const rec of latestAscending(data.general_vaccine_dates)) {
       const p = hasSpecies ? lookupComprehensive(species as 'dog' | 'cat', rec.date) : null
-      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), validity: resolveValidityTo(rec, rec.date, 1), date: fmtDate(rec.date) })
+      out.push({ type: 'Vaccination', kind: 'general', ...applyRecOverrides(rec, p), validity: resolveValidityTo(rec, rec.date, 1), date: fmtDate(rec.date) })
     }
   }
 
@@ -673,7 +677,7 @@ function buildVaccineSequenceUnified(
   if (allowed('civ')) {
     for (const rec of latestAscending(data.civ_dates)) {
       const p = lookupCiv(rec.date)
-      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), validity: resolveValidityTo(rec, rec.date, 1), date: fmtDate(rec.date) })
+      out.push({ type: 'Vaccination', kind: 'civ', ...applyRecOverrides(rec, p), validity: resolveValidityTo(rec, rec.date, 1), date: fmtDate(rec.date) })
     }
   }
 
@@ -681,7 +685,7 @@ function buildVaccineSequenceUnified(
   if (allowed('kennel')) {
     for (const rec of latestAscending(data.kennel_cough_dates)) {
       const p = lookupKennelCough()
-      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), validity: resolveValidityTo(rec, rec.date, 1), date: fmtDate(rec.date) })
+      out.push({ type: 'Vaccination', kind: 'kennel', ...applyRecOverrides(rec, p), validity: resolveValidityTo(rec, rec.date, 1), date: fmtDate(rec.date) })
     }
   }
 
@@ -694,9 +698,11 @@ function buildVaccineSequenceUnified(
     }
   }
   const pushParasite = (rec: ParasiteRecord, side: 'external' | 'internal' | 'heartworm') => {
+    const isCombo = !!rec.product_id && getParasiteFamily(rec.product_id)?.kind === 'combo'
+    const kind: OtherVacKind = isCombo && side !== 'heartworm' ? 'combo' : side
     if (rec.product_id) {
       const p = lookupParasiteById(rec.product_id, { date: rec.date, weightKg })
-      out.push({ type: 'Parasiticide', ...applyRecOverrides(rec, p), validity: '', date: fmtDate(rec.date) })
+      out.push({ type: 'Parasiticide', kind, ...applyRecOverrides(rec, p), validity: '', date: fmtDate(rec.date) })
       return
     }
     let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; expiry?: string | null } | null = null
@@ -705,7 +711,7 @@ function buildVaccineSequenceUnified(
       else if (side === 'internal') p = lookupInternalParasite(species as 'dog' | 'cat', rec.date, weightKg)
       else p = lookupHeartworm(species as 'dog' | 'cat', weightKg)
     }
-    out.push({ type: 'Parasiticide', ...applyRecOverrides(rec, p), validity: '', date: fmtDate(rec.date) })
+    out.push({ type: 'Parasiticide', kind, ...applyRecOverrides(rec, p), validity: '', date: fmtDate(rec.date) })
   }
   for (const rec of externalRecords) pushParasite(rec, 'external')
 
@@ -743,6 +749,35 @@ function buildExpandedVaccineSequence(data: Record<string, unknown>, maxPerType 
     buildVaccineSequenceUnified(data, maxPerType, allowedVaccines),
     FORM25_AUNZ_OTHER_SLOTS,
   )
+}
+
+/** VHC — 광견병(1행 고정) 아래 "Vaccination & Treatment" 5칸. */
+const VHC_OTHER_SLOTS = 5
+
+/**
+ * VHC 2~6행 — 별지25 와 같은 순서(종합→독감→켄넬코프→외부→내부→심장사상충),
+ * 종류당 최신 1건, 없는 종류는 건너뛰어 앞으로 당긴다. 종전엔 행마다 종류가 고정돼
+ * (종합·독감·외부·내부 + 6행 수동) 켄넬코프·심장사상충이 기입되지 않았다.
+ *
+ * 6종이 다 있으면 5칸을 넘는다 → 마지막 칸에 남은 항목을 전부 " / " 로 병기
+ * (AU 서식 vaccine_desc_rest 와 같은 방식 — 잘려서 처치가 증명서에서 빠지는 것보다 낫다).
+ */
+function vhcSlotEntries(data: Record<string, unknown>, idx: number, allowedVaccines?: string[]): OtherVacEntry[] {
+  const seq = buildVaccineSequenceUnified(data, 1, allowedVaccines)
+  return idx === VHC_OTHER_SLOTS - 1 ? seq.slice(idx) : seq.slice(idx, idx + 1)
+}
+
+function vhcTypeLabel(kind: OtherVacKind, species: string): string {
+  switch (kind) {
+    case 'rabies': return 'Rabies'
+    case 'general': return species === 'cat' ? 'FVRCP' : 'DHPPL'
+    case 'civ': return 'CIV'
+    case 'kennel': return 'Kennel Cough'
+    case 'external': return 'External Parasite'
+    case 'internal': return 'Internal Parasite'
+    case 'combo': return 'External & Internal Parasite'
+    case 'heartworm': return 'Heartworm'
+  }
 }
 
 interface TiterRec { date: string | null; value: string | null; lab: string | null }
@@ -1845,6 +1880,21 @@ function resolveField(
       return joinBatchExpiry(entry.serial, suffix)
     }
     return entry[attr as keyof OtherVacEntry]
+  }
+
+  // VHC 2~6행 filler. `vhc_vacc_seq:<attr>[<n>]` — 종류명(type)은 행별 세부 종류,
+  // validity 는 백신만(구충은 지속기간이 일정치 않아 공란, 종전과 동일).
+  const vhcSeqMatch = transform?.match(/^vhc_vacc_seq:(type|name|manufacturer|serial|date|validity)\[(\d+)\]$/)
+  if (vhcSeqMatch) {
+    const attr = vhcSeqMatch[1]
+    const entries = vhcSlotEntries(data, Number(vhcSeqMatch[2]), allowedVaccines)
+    const species = String(data.species ?? '').toLowerCase()
+    const values = entries
+      .map(e => attr === 'type' ? vhcTypeLabel(e.kind, species) : e[attr as 'name' | 'manufacturer' | 'serial' | 'date' | 'validity'])
+      .filter(Boolean)
+    // 날짜는 회차 구분이라 중복 제거하지 않는다. 약품명 등은 같은 약이면 한 번만.
+    const list = attr === 'date' || attr === 'type' ? values : Array.from(new Set(values))
+    return list.join(' / ')
   }
 
   // Form25AuNz expanded filler (8 slots, 3 doses per type).
