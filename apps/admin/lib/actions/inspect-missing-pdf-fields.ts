@@ -109,34 +109,52 @@ function readEffectiveExtraEmpty(
 
 const TITER_DATE_LABEL = '광견병 항체검사 검사일'
 const TITER_LAB_LABEL = '광견병 항체검사 검사기관'
+const TITER_VALUE_LABEL = '광견병 항체검사 수치'
 
 /**
  * 이 폼이 항체검사(rabies_titer_records) 의 어떤 서브칸을 실제로 출력하는지.
- * PDF 는 검사일·검사기관을 레코드별 칸으로 따로 찍으므로, 폼이 그 칸을 가질 때만
- * 해당 누락을 알린다. (검사일만 찍는 NZ·SGP·AnnexIII 등에서 검사기관 오탐 방지.)
+ * PDF 는 검사일·검사기관·수치를 레코드별 칸으로 따로 찍으므로, 폼이 그 칸을 가질 때만
+ * 해당 누락을 알린다. (검사일만 찍는 AnnexIII·TK 등에서 검사기관·수치 오탐 방지.)
+ *
+ * printedIdx — 모든 항체검사 칸이 `array[i]`(최신순 i번째)로만 찍히는 폼이면 그 인덱스들.
+ * FormAC·TW 처럼 최신 1건만 찍는 폼에서 옛 검사의 빈 칸까지 경고하던 오탐 방지.
+ * 다른 방식(if_multi·titer_*_sel·titer_part 등)이 섞이면 null = 전체 레코드 검사(종전).
  */
-function renderedTiterProps(fields: Record<string, FieldMapping>): { date: boolean; lab: boolean } {
+function renderedTiterProps(fields: Record<string, FieldMapping>): {
+  date: boolean
+  lab: boolean
+  value: boolean
+  printedIdx: Set<number> | null
+} {
   let date = false
   let lab = false
+  let value = false
+  let printedIdx: Set<number> | null = new Set()
   for (const fm of Object.values(fields)) {
     if (fm.source !== 'rabies_titer_records') continue
     const t = fm.transform ?? ''
     if (/\.lab$/.test(t)) lab = true // array[i].lab / if_multi[i].lab (lab_country 는 제외)
-    else if (/\.date$/.test(t) || /^titer_date_asc\[/.test(t) || /^titer_part\[\d+\]:date_/.test(t)) date = true
+    else if (/\.value$/.test(t) || t === 'titer_value_sel' || /^titer_part\[\d+\]:value_/.test(t)) value = true
+    else if (/\.date$/.test(t) || t === 'titer_date_sel' || /^titer_date_asc\[/.test(t) || /^titer_part\[\d+\]:date_/.test(t)) date = true
+    const idx = t.match(/^array\[(\d+)\]\./)
+    if (idx) printedIdx?.add(Number(idx[1]))
+    else printedIdx = null
   }
-  return { date, lab }
+  return { date, lab, value, printedIdx }
 }
 
 /**
  * 항체검사 기록의 누락 라벨.
  *  - 기록(내용 있는 레코드)이 하나도 없으면 "광견병 항체 검사 기록" 전체 누락 1건.
- *  - 기록은 있는데 검사일/검사기관이 빈 레코드가 하나라도 있으면 각각 안내.
+ *  - 기록은 있는데 검사일/검사기관/수치가 빈 레코드가 하나라도 있으면 각각 안내.
  *    값(value)만 입력하고 검사일·기관을 비워두면 배열 자체는 비어있지 않아
  *    기존 isEmpty(배열) 검사로는 놓쳤다 — 그래서 레코드 서브칸까지 본다.
+ *  - 검사기관·수치는 폼이 실제로 찍는 레코드만 본다(printedIdx). 검사일은 전체 —
+ *    검사일 없는 레코드는 PDF 정렬(pdf-fill sortedTiters)에서 빠져 엉뚱한 검사가 찍힌다.
  */
 function missingTiterLabels(fields: Record<string, FieldMapping>, raw: unknown): string[] {
   const rendered = renderedTiterProps(fields)
-  if (!rendered.date && !rendered.lab) return [] // 항체검사 칸이 없는 폼
+  if (!rendered.date && !rendered.lab && !rendered.value) return [] // 항체검사 칸이 없는 폼
   const records = Array.isArray(raw)
     ? raw.filter((r): r is Record<string, unknown> => !!r && typeof r === 'object' && !Array.isArray(r))
     : []
@@ -145,9 +163,17 @@ function missingTiterLabels(fields: Record<string, FieldMapping>, raw: unknown):
     ['date', 'lab', 'value', 'lab_country'].some((k) => !isEmpty(r[k])),
   )
   if (meaningful.length === 0) return [labelForSource('rabies_titer_records')]
+  // PDF 와 같은 순서(검사일 있는 것만, 최신순)에서 찍히는 인덱스만.
+  const printed = rendered.printedIdx
+    ? meaningful
+        .filter((r) => !isEmpty(r.date))
+        .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+        .filter((_, i) => rendered.printedIdx!.has(i))
+    : meaningful
   const out: string[] = []
   if (rendered.date && meaningful.some((r) => isEmpty(r.date))) out.push(TITER_DATE_LABEL)
-  if (rendered.lab && meaningful.some((r) => isEmpty(r.lab))) out.push(TITER_LAB_LABEL)
+  if (rendered.lab && printed.some((r) => isEmpty(r.lab))) out.push(TITER_LAB_LABEL)
+  if (rendered.value && printed.some((r) => isEmpty(r.value))) out.push(TITER_VALUE_LABEL)
   return out
 }
 
