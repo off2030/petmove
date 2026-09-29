@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getDepartureDate, readScopedWithLegacyFallback, resolveTabActiveDest, type CaseRow } from '@petmove/domain'
-import { updateCaseField } from '@/lib/actions/cases'
+import { updateCaseDataBulk, updateCaseField } from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
 import { labColor } from '@/lib/lab-color'
 import { cn } from '@/lib/utils'
@@ -13,6 +13,7 @@ import {
   inspectionStatusKey as statusKeyFor,
   readInspectionStatus as readStatus,
   inspectionStatusTone,
+  titerStatusShiftOnDelete,
   type InspectionStatusTarget,
 } from '@/lib/inspection-status'
 
@@ -478,8 +479,19 @@ export function InspectionTable({
 
   const handleDateSave = useCallback(async (row: InspectionRow, v: string) => {
     if (row.dateStorage.kind === 'titer') {
-      const val = await saveTiterDate(row.caseRow, row.dateStorage.recordIdx, v)
+      const idx = row.dateStorage.recordIdx
+      const data = (row.caseRow.data ?? {}) as Record<string, unknown>
+      const count = Array.isArray(data.rabies_titer_records) ? data.rabies_titer_records.length : 0
+      const val = await saveTiterDate(row.caseRow, idx, v)
       onUpdate(row.caseRow.id, 'data', 'rabies_titer_records', val)
+      if (!v) {
+        // 날짜 비움 = record 삭제 → 뒤 회차 상태 키를 한 칸씩 당긴다(지운 회차 상태 상속 방지).
+        const statusUpdates = titerStatusShiftOnDelete(row.caseRow, idx, count)
+        if (statusUpdates.length > 0) {
+          await updateCaseDataBulk(row.caseRow.id, statusUpdates)
+          for (const u of statusUpdates) onUpdate(row.caseRow.id, 'data', u.key, u.value)
+        }
+      }
     } else {
       const labs = row.dateStorage.kind === 'infectious_multi'
         ? row.dateStorage.labs

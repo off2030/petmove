@@ -7,7 +7,7 @@ import { AttachButton } from '@/components/ui/attach-button'
 import { SectionLabel } from '@/components/ui/section-label'
 import { DropdownSelect } from '@petmove/ui'
 import { cn, roundIconBtn } from '@/lib/utils'
-import { updateCaseField } from '@/lib/actions/cases'
+import { updateCaseDataBulk, updateCaseField } from '@/lib/actions/cases'
 import { persistField } from '@/lib/toast-bus'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
@@ -17,6 +17,7 @@ import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { addDays, allLabOptions, effectiveTiterLabs, formatKoreanDate, resolveActiveDestination, resolveTiterLab, type InspectionLabRule } from '@petmove/domain'
 import { stampInspectionActiveDest } from '@/lib/inspection-active-dest'
+import { titerStatusShiftOnDelete } from '@/lib/inspection-status'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 import { DateTextField } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
@@ -308,7 +309,15 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
     })
     if (!ok) return
     const next = records.filter((_, i) => i !== idx)
-    saveRecords(next).catch(() => {})
+    // 상태 키도 인덱스를 따라 당긴다 — 안 그러면 뒤 회차가 지운 회차의 상태('완료')를 물려받는다.
+    const statusUpdates = titerStatusShiftOnDelete(caseRow, idx, records.length)
+    for (const u of statusUpdates) updateLocalCaseField(caseId, 'data', u.key, u.value)
+    void (async () => {
+      await saveRecords(next)
+      if (statusUpdates.length > 0) {
+        await persistField('검사 상태', () => updateCaseDataBulk(caseId, statusUpdates))
+      }
+    })()
   }
 
   function updateRecord(idx: number, field: keyof TiterRecord, value: unknown) {

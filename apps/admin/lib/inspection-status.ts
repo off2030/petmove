@@ -83,6 +83,33 @@ export function readInspectionStatus(
 }
 
 /**
+ * 항체검사 record 삭제 시 상태 키 재배치.
+ *
+ * 상태는 record 인덱스로 저장되므로(`inspection_status_titer_<idx>`) records 배열에서
+ * 하나를 빼면 뒤 회차들이 한 칸씩 당겨지는데 상태 키는 그대로 남는다. 그러면 완료된
+ * 옛 검사(idx 0)를 지웠을 때 새 검사(idx 1→0)가 옛 'done' 을 물려받는다.
+ * 삭제 지점 이후 상태를 한 칸씩 당겨 쓰고 마지막 키는 비운다(null = 키 삭제).
+ * 호출 측은 records 저장과 함께 이 갱신들을 적용해야 한다.
+ */
+export function titerStatusShiftOnDelete(
+  caseRow: CaseRow,
+  deletedIdx: number,
+  recordCount: number,
+): { key: string; value: string | null }[] {
+  const updates: { key: string; value: string | null }[] = []
+  for (let i = deletedIdx; i < recordCount - 1; i++) {
+    updates.push({
+      key: inspectionStatusKey({ kind: 'titer', recordIdx: i }),
+      value: readInspectionStatus(caseRow, { kind: 'titer', recordIdx: i + 1 }),
+    })
+  }
+  if (deletedIdx < recordCount) {
+    updates.push({ key: inspectionStatusKey({ kind: 'titer', recordIdx: recordCount - 1 }), value: null })
+  }
+  return updates
+}
+
+/**
  * 상태 색 — 검사 탭 StatusCell 과 동일 규칙.
  * "검사" → primary(테라코타), "완료" → sage, "대기" → tertiary.
  * 지연 경고는 날짜 셀만 물들인다(탭 간 대기 색 불일치 방지, 2026-08-05 통일).
