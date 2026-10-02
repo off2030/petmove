@@ -10,9 +10,12 @@ import {
   inspectionStatusLabel,
   inspectionStatusTone,
   readInspectionStatus,
+  titerDoneWithoutResult,
+  TITER_DONE_WITHOUT_RESULT_CONFIRM,
   type InspectionStatusTarget,
 } from '@/lib/inspection-status'
 import type { CaseRow } from '@petmove/domain'
+import { useConfirm } from '@petmove/ui'
 
 /**
  * 상세페이지에서 검사 진행상태를 보고 바꾸는 칩.
@@ -33,10 +36,12 @@ export function InspectionStatusChip({
   date?: string | null
 }) {
   const { updateLocalCaseField } = useCases()
+  const confirm = useConfirm()
   const value = readInspectionStatus(caseRow, target, date)
 
   async function pick(next: string) {
     if (next === value) return
+    if (titerDoneWithoutResult(caseRow, target, next) && !(await confirm(TITER_DONE_WITHOUT_RESULT_CONFIRM))) return
     const key = inspectionStatusKey(target)
     // Optimistic — 실패해도 값 보존 + '다시 시도' 토스트(persistField).
     updateLocalCaseField(caseId, 'data', key, next)

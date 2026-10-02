@@ -1,19 +1,21 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getDepartureDate, readScopedWithLegacyFallback, resolveTabActiveDest, type CaseRow } from '@petmove/domain'
 import { updateCaseDataBulk, updateCaseField } from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
 import { labColor } from '@/lib/lab-color'
 import { cn } from '@/lib/utils'
 import { DateTextField } from '@petmove/ui'
-import { DropdownSelect } from '@petmove/ui'
+import { DropdownSelect, useConfirm } from '@petmove/ui'
 import { DestinationCell } from './destination-cell'
 import {
   inspectionStatusKey as statusKeyFor,
   readInspectionStatus as readStatus,
   inspectionStatusTone,
   titerStatusShiftOnDelete,
+  titerDoneWithoutResult,
+  TITER_DONE_WITHOUT_RESULT_CONFIRM,
   type InspectionStatusTarget,
 } from '@/lib/inspection-status'
 
@@ -291,10 +293,12 @@ function MemoCell({ row, onUpdate }: {
  * Status — 배지 없음. 이탤릭 세리프 + "검사중" 활성 상태만 브랜드 색으로 강조.
  * 상세페이지의 Status 규칙과 동일.
  */
-function StatusCell({ row, options, onUpdate, overdue = false }: {
+function StatusCell({ row, options, onUpdate, onBeforePick, overdue = false }: {
   row: InspectionRow
   options: StatusOption[]
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+  /** 상태 저장 직전 — 표가 줄 순서를 고정한다(옆 줄 오클릭 방지). */
+  onBeforePick: () => void
   /** 대기 + 검사일 5일 이상 경과 시 '대기'를 경고색으로. */
   overdue?: boolean
 }) {
@@ -309,11 +313,11 @@ function StatusCell({ row, options, onUpdate, overdue = false }: {
   // 지연 경고는 날짜 셀만 물들인다 — 상태 글자 물들임은 탭 간 대기 색 불일치를 낳았다.
   const cls = cn('font-serif text-[16px]', inspectionStatusTone(value))
 
-  return <StatusPicker row={row} options={options} value={value} label={label} cls={cls} isDone={isDone} onUpdate={onUpdate} />
+  return <StatusPicker row={row} options={options} value={value} label={label} cls={cls} isDone={isDone} onUpdate={onUpdate} onBeforePick={onBeforePick} />
 }
 
 /** Editorial 커스텀 진행상태 드롭다운 — 통일 DropdownSelect 사용. */
-function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
+function StatusPicker({ row, options, value, label, cls, isDone, onUpdate, onBeforePick }: {
   row: InspectionRow
   options: StatusOption[]
   value: string
@@ -321,9 +325,13 @@ function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
   cls: string
   isDone: boolean
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+  onBeforePick: () => void
 }) {
+  const confirm = useConfirm()
   async function pick(v: string) {
     if (v === value) return
+    if (titerDoneWithoutResult(row.caseRow, row.dateStorage, v) && !(await confirm(TITER_DONE_WITHOUT_RESULT_CONFIRM))) return
+    onBeforePick()
     const key = inspectionStatusKey(row)
     onUpdate(row.caseRow.id, 'data', key, v || null)
     await updateCaseField(row.caseRow.id, 'data', key, v || null)
@@ -463,6 +471,35 @@ export function InspectionTable({
 
   useEffect(() => { setVisible(INITIAL_VISIBLE) }, [rows.length])
 
+  // 진행상태를 바꾸면 정렬상 그 줄이 즉시 이동한다(완료 → 맨 아래). 연달아 처리하다
+  // 커서 아래로 밀려 올라온 옆 줄을 누르는 사고가 있었다(2026-09 하리·채소 오완료).
+  // 상태를 바꾼 순간의 줄 순서를 고정해 두고, 마우스가 표를 떠나거나 정렬을 바꾸면 푼다.
+  // 드롭다운은 portal 이지만 React 트리상 표 안이라 메뉴로 이동해도 mouseleave 가 안 난다.
+  const [frozenOrder, setFrozenOrder] = useState<string[] | null>(null)
+  const rowsRef = useRef(rows)
+  rowsRef.current = rows
+  const unfreezeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const freezeOrder = useCallback(() => {
+    // 이미 고정 중이면 그 순서 유지 — 지금 화면에 보이는 순서가 기준.
+    setFrozenOrder(cur => cur ?? rowsRef.current.map(r => r.id))
+  }, [])
+  const cancelUnfreeze = useCallback(() => {
+    if (unfreezeTimer.current) { clearTimeout(unfreezeTimer.current); unfreezeTimer.current = null }
+  }, [])
+  const scheduleUnfreeze = useCallback(() => {
+    cancelUnfreeze()
+    unfreezeTimer.current = setTimeout(() => setFrozenOrder(null), 300)
+  }, [cancelUnfreeze])
+  useEffect(() => { setFrozenOrder(null) }, [sortMode])
+  useEffect(() => cancelUnfreeze, [cancelUnfreeze])
+
+  const orderedRows = useMemo(() => {
+    if (!frozenOrder) return rows
+    const pos = new Map(frozenOrder.map((id, i) => [id, i]))
+    // 고정 이후 새로 생긴 행은 원래 정렬 순서대로 뒤에.
+    return [...rows].sort((a, b) => (pos.get(a.id) ?? Infinity) - (pos.get(b.id) ?? Infinity))
+  }, [rows, frozenOrder])
+
   useEffect(() => {
     const node = sentinelRef.current
     if (!node) return
@@ -475,7 +512,7 @@ export function InspectionTable({
     return () => observer.disconnect()
   }, [visible, rows.length])
 
-  const visibleRows = rows.slice(0, visible)
+  const visibleRows = orderedRows.slice(0, visible)
 
   const handleDateSave = useCallback(async (row: InspectionRow, v: string) => {
     if (row.dateStorage.kind === 'titer') {
@@ -503,7 +540,7 @@ export function InspectionTable({
   }, [onUpdate])
 
   return (
-    <table className="w-full border-collapse table-fixed">
+    <table className="w-full border-collapse table-fixed" onMouseEnter={cancelUnfreeze} onMouseLeave={scheduleUnfreeze}>
       <thead className="sticky top-0 z-10 bg-background">
         <tr>
           {visibleColumns.map(col => (
@@ -564,7 +601,7 @@ export function InspectionTable({
             )}
             {!hidden.has('status') && (
               <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
-                <StatusCell row={row} options={statusOptions} onUpdate={onUpdate} overdue={overdue} />
+                <StatusCell row={row} options={statusOptions} onUpdate={onUpdate} onBeforePick={freezeOrder} overdue={overdue} />
               </td>
             )}
             {!hidden.has('pet_name') && (

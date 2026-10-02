@@ -110,6 +110,33 @@ export function titerStatusShiftOnDelete(
 }
 
 /**
+ * 항체검사 행을 '완료'로 바꾸려는데 수치가 비어 있는가.
+ *
+ * 결과 없이 완료를 찍으면 실제로 검사 안 된 아이가 완료로 숨는다(2026-09 하리·채소 —
+ * 연달아 완료 처리하다 옆 줄을 누름). 검사 탭·상세페이지 둘 다 이걸로 확인창을 띄운다.
+ * 전염병검사 기록엔 수치 필드가 없어 대상 아님.
+ */
+export function titerDoneWithoutResult(
+  caseRow: CaseRow,
+  target: InspectionStatusTarget,
+  next: string,
+): boolean {
+  if (next !== 'done' || target.kind !== 'titer') return false
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const records = Array.isArray(data.rabies_titer_records) ? data.rabies_titer_records : []
+  const rec = records[target.recordIdx] as { value?: unknown } | undefined
+  const v = rec?.value
+  return v === null || v === undefined || String(v).trim() === ''
+}
+
+/** {@link titerDoneWithoutResult} 확인창 문구 — 두 화면 공용. */
+export const TITER_DONE_WITHOUT_RESULT_CONFIRM = {
+  message: '항체검사 수치가 아직 입력되지 않았습니다. 완료로 바꿀까요?',
+  description: '결과를 실제로 받은 검사인지 확인해 주세요.',
+  okLabel: '완료로 변경',
+}
+
+/**
  * 상태 색 — 검사 탭 StatusCell 과 동일 규칙.
  * "검사" → primary(테라코타), "완료" → sage, "대기" → tertiary.
  * 지연 경고는 날짜 셀만 물들인다(탭 간 대기 색 불일치 방지, 2026-08-05 통일).
