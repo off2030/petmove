@@ -195,8 +195,9 @@
     .kicker{font-size:13.5px}
     .phead .lead{font-size:16px;max-width:520px}
     .sec-h{font-size:14px}
-    /* 검색창 — 520px 라 PC 에서 아래 목록(1036px)에 비해 짧았다(2026-10-05). 넓히고 높인다. */
-    .search{max-width:720px;margin-top:26px}
+    /* 검색창 — 520px 라 PC 에서 아래 목록에 비해 짧았다(2026-10-05). 인기 가이드·나라 목록과
+       같은 전체 폭으로 맞추고 높인다. */
+    .search{max-width:none;margin-top:26px}
     .search input{font-size:16px;padding:17px 18px 17px 50px;border-radius:15px}
     .search i{left:18px;font-size:20px}
     /* 인기 가이드 = 여행지별 가이드와 같은 전체 폭에 한 줄 2개(6개 → 3줄). 나라 칸은 한 줄 6개 —
