@@ -390,5 +390,6 @@ export const CONTACT = {
   naverBooking: 'https://naver.me/GUwSYQ9h',
   tel: '02-872-7588',
   email: 'petmove@naver.com',
-  hours: '평일 10:00–18:00 · 주말·공휴일 휴진',
+  // '휴진'은 진료 용어라 상담 창구엔 '휴무'(2026-10-05).
+  hours: '평일 10:00–18:00 · 주말·공휴일 휴무',
 }
