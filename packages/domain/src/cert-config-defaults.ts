@@ -37,10 +37,10 @@ export const ALL_CERTS: CertDefinition[] = [
   { key: 'ch', label: 'CH', type: 'single' },
   { key: 'uk', label: 'UK', type: 'multi' },
   { key: 'idDeclaration', label: 'ID Declaration', type: 'single' },
+  // 호주는 종마다 버튼 하나 — 추가정보 'ID' 경로로 AU / AU 2 / AU 3 양식을 자동 선택한다
+  // (au-identity-option.ts). 예전 'au2'·'auCat2' 버튼은 경로 선택으로 대체돼 제거(2026-10-05).
   { key: 'au', label: 'AU', type: 'single', species: 'dog' },
-  { key: 'au2', label: 'AU 2', type: 'single', species: 'dog' },
   { key: 'auCat', label: 'AU C', type: 'single', species: 'cat' },
-  { key: 'auCat2', label: 'AU C 2', type: 'single', species: 'cat' },
   { key: 'nz', label: 'NZ', type: 'multi' },
   { key: 'ovd', label: 'OVD', type: 'single' },
   { key: 'vbc', label: 'VBC', type: 'multi', species: 'dog' },
@@ -65,7 +65,7 @@ export const DEFAULT_CERT_CONFIG: CertConfig = {
     { countries: [...EU_COUNTRIES], certs: ['annexIII'] },
     { countries: ['스위스'], certs: ['annexIII', 'ch'] },
     { countries: ['영국'], certs: ['annexIII', 'uk'] },
-    { countries: ['호주'], certs: ['idDeclaration', 'au', 'au2', 'auCat', 'auCat2'] },
+    { countries: ['호주'], certs: ['idDeclaration', 'au', 'auCat'] },
     { countries: ['뉴질랜드'], certs: ['nz', 'ovd', 'vbc'] },
     { countries: ['태국'], certs: ['formR11'] },
     { countries: ['튀르키예'], certs: ['tk'] },

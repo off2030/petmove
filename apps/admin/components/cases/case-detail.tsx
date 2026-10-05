@@ -10,7 +10,7 @@ import {
 } from '@petmove/domain'
 import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, matchesDestinationKey, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, isDestinationScopedKey, applyDestinationFieldOverride, HARDCODED_VACCINE_SPECIES_DEFAULTS, type ExtraFieldDef } from '@petmove/domain'
 import { buildShareFieldDescriptors, permitDeliverablesForDestination } from '@petmove/domain'
-import { EXTRA_FIELD_DEFS, normalizeTimeHhmm } from '@petmove/domain'
+import { EXTRA_FIELD_DEFS, normalizeTimeHhmm, readAuIdOption } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Trash2, ChevronDown, Check } from 'lucide-react'
@@ -941,6 +941,13 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
               return <OverseasAddressField key={def.key} caseId={caseId} caseRow={caseRow} />
             }
             const spec = buildSpecForExtra(def, false)
+            // 호주 ID 경로에 따라 날짜 칸의 뜻이 바뀐다(au-identity-option.ts) — 호주에서 출국해
+            // 온 경우엔 '호주 출국일'(AU 2), ID 를 안 받으면 날짜가 필요 없어 칸을 숨긴다(AU 3).
+            if (def.key === 'id_date' && country === 'australia') {
+              const idOption = readAuIdOption(data, activeDest)
+              if (idOption === 'none') return null
+              if (idOption === 'exported') spec.label = '호주 출국일'
+            }
             const rawValue = readEffectiveExtraValue(data, def.key, activeDest)
             return (
               <EditableField

@@ -10,7 +10,7 @@ import { CaseHistory } from './case-history'
 import { createCase } from '@/lib/actions/create-case'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { undoLastChange, updateCaseField } from '@/lib/actions/cases'
-import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateVBC, generateSGP, generateTW, generateTK, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti, recommendForm25RabiesSelection } from '@/lib/actions/generate-pdf'
+import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAUCat, generateNZ, generateOVD, generateVBC, generateSGP, generateTW, generateTK, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti, recommendForm25RabiesSelection } from '@/lib/actions/generate-pdf'
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import type { MultiFormKey } from '@/lib/pdf-multi-forms'
 import { MultiFormDialog } from './multi-form-dialog'
@@ -21,7 +21,7 @@ import { AssigneePicker } from './assignee-picker'
 import { ShareLinkDialog } from './share-link-dialog'
 import { PortalPreviewDialog } from './portal-preview-dialog'
 import { AppPreviewButton } from './app-preview-button'
-import { resolveCerts, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly } from '@petmove/domain'
+import { resolveCerts, readAuIdOption, resolveAuCertFormKey, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly } from '@petmove/domain'
 import type { CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { evaluateCase } from './verification-context'
@@ -49,9 +49,7 @@ const CERT_ACTIONS: Record<string, CertAction> = {
   formAC: generateFormAC,
   idDeclaration: generateIdentificationDeclaration,
   au: generateAU,
-  au2: generateAU2,
   auCat: generateAUCat,
-  auCat2: generateAUCat2,
   nz: generateNZ,
   ovd: generateOVD,
   vbc: generateVBC,
@@ -70,10 +68,9 @@ const CERT_FORM_KEYS: Record<string, string> = {
   formRE: 'FormRE',
   formAC: 'FormAC',
   idDeclaration: 'IdentificationDeclaration',
+  // 호주는 버튼 하나 — 추가정보 'ID' 경로로 AU / AU_2 / AU_3 중 실제 양식을 고른다(resolveAuCertFormKey).
   au: 'AU',
-  au2: 'AU_2',
   auCat: 'AU_Cat',
-  auCat2: 'AU_Cat_2',
   nz: 'NZ',
   ovd: 'OVD',
   vbc: 'VBC',
@@ -335,8 +332,10 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
             | 'IdentificationDeclaration'
             | 'AU'
             | 'AU_2'
+            | 'AU_3'
             | 'AU_Cat'
             | 'AU_Cat_2'
+            | 'AU_Cat_3'
             | 'NZ'
             | 'OVD'
             | 'SGP'
@@ -636,8 +635,12 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
                               key={btn.key}
                               type="button"
                               onClick={async () => {
-                                const formKey = CERT_FORM_KEYS[btn.key]
-                                if (!formKey) return
+                                const baseFormKey = CERT_FORM_KEYS[btn.key]
+                                if (!baseFormKey) return
+                                const formKey = resolveAuCertFormKey(
+                                  baseFormKey,
+                                  readAuIdOption(selectedCase.data as Record<string, unknown> | null, focusDest),
+                                )
                                 // 호주 서류: 광견병 항체검사가 2건 이상이면 RNATT 칸에 쓸 검사를 고른다
                                 // (호주용 KRSL + 프랑스용 APQA EU 처럼 여러 나라 검사가 섞인 케이스).
                                 if (AU_TITER_PICK_FORMS.has(formKey)) {

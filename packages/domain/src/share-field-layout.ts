@@ -97,7 +97,9 @@ const FIELD_TO_VACCINE_KEY: Record<string, string> = {
 }
 
 /** 추가정보(EXTRA) 카테고리에서 제외할 키 — 다른 카테고리 전용. */
-const EXTRA_EXCLUDED_FROM_EXTRA = new Set(['email'])
+// id_option(호주 ID 경로) — 어느 증명서(AU/AU 2/AU 3)를 발급할지 운영자가 정하는 내부 선택이라
+// 정보 요청 링크로 보호자에게 묻지 않는다.
+const EXTRA_EXCLUDED_FROM_EXTRA = new Set(['email', 'id_option'])
 
 /**
  * descriptor 의 source — ShareFieldSpec 변환 시 storage·type·options·current_value 의 단일 근거.

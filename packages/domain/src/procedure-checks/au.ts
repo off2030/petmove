@@ -20,6 +20,7 @@ import {
   readDepartureDate,
 } from './utils'
 import { readByDestValue } from '../destination-scoped-fields'
+import { readAuIdOption } from '../au-identity-option'
 import {
   validateIdentityCheckAfterMicrochip,
   validateIdentityCheckBeforeTiter,
@@ -98,9 +99,15 @@ function readQuarantineReservationDate(caseRow: CaseRow, destination?: string | 
     : ''
 }
 
-/** 마이크로칩 인증일(id_date) — by_dest 우선 → top-level → 펫무브워크 legacy(australia_extra). */
+/**
+ * 마이크로칩 인증일(id_date) — by_dest 우선 → top-level → 펫무브워크 legacy(australia_extra).
+ *
+ * 추가정보 'ID' 경로가 인증('id')이 아니면 빈 값 — 'exported' 면 같은 칸이 **호주 출국일**이라
+ * 인증 순서 검증(칩 선행·채혈 전)을 걸면 엉뚱한 주의가 뜬다(au-identity-option.ts).
+ */
 function readIdentityCheckDate(caseRow: CaseRow, destination?: string | null): string {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
+  if (readAuIdOption(data, destination) !== 'id') return ''
   const scoped = readByDestValue(data, destination ?? null, 'id_date')
   if (typeof scoped === 'string') return scoped.slice(0, 10)
   if (typeof data.id_date === 'string') return data.id_date.slice(0, 10)

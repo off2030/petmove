@@ -470,7 +470,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     extraSection: 'australia',
     // sample_received_date 는 rabies_titer_records[].received_date 로 이동 (광견병 항체 검사 편집화면에 표시).
     extraFields: [
-      'permit_no', 'id_date',
+      // id_option = 인증 경로(ID 받음/호주 출국/안 받음) → 발급 양식 AU·AU 2·AU 3 를 고른다.
+      'permit_no', 'id_option', 'id_date',
       'address_overseas',
       // 출국 항공편 — 화물(cargo)·멜버른 도착 고정이라 도착일·편명·공항·운송방법만.
       'entry_date', 'entry_flight_number', 'entry_departure_airport', 'entry_airport', 'entry_transport',

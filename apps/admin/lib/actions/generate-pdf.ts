@@ -204,6 +204,15 @@ export async function generateAUCat2(caseId: string, opts?: GenerateOpts) {
   return generate('AU_Cat_2', caseId, opts)
 }
 
+/** ID 인증 없이 출국(Declaration 3번째 문장) — 추가정보 'ID' = 'none'. */
+export async function generateAU3(caseId: string, opts?: GenerateOpts) {
+  return generate('AU_3', caseId, opts)
+}
+
+export async function generateAUCat3(caseId: string, opts?: GenerateOpts) {
+  return generate('AU_Cat_3', caseId, opts)
+}
+
 export async function generateSGP(caseId: string, opts?: GenerateOpts) {
   return generate('SGP', caseId, opts)
 }

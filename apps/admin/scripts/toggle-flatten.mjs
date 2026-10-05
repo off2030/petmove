@@ -22,7 +22,7 @@ import { readFileSync, writeFileSync } from 'node:fs'
 //  - Invoice: preserveTemplateText 와의 상호작용 미검증 — 별도 점검 후 결정
 const OFFICIAL_CERTS = [
   // 호주
-  'AU', 'AU_2', 'AU_Cat', 'AU_Cat_2',
+  'AU', 'AU_2', 'AU_3', 'AU_Cat', 'AU_Cat_2', 'AU_Cat_3',
   'IdentificationDeclaration',
   // 뉴질랜드
   'NZ', 'NZ_2', 'OVD',

@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils'
 import { useCases } from './cases-context'
 
 /** 광견병 항체검사를 골라 RNATT 칸을 채우는 호주 서류(AU 계열). */
-export type AuTiterFormKey = 'AU' | 'AU_2' | 'AU_Cat' | 'AU_Cat_2'
-export const AU_TITER_PICK_FORMS: ReadonlySet<string> = new Set<AuTiterFormKey>(['AU', 'AU_2', 'AU_Cat', 'AU_Cat_2'])
+export type AuTiterFormKey = 'AU' | 'AU_2' | 'AU_3' | 'AU_Cat' | 'AU_Cat_2' | 'AU_Cat_3'
+export const AU_TITER_PICK_FORMS: ReadonlySet<string> = new Set<AuTiterFormKey>(['AU', 'AU_2', 'AU_3', 'AU_Cat', 'AU_Cat_2', 'AU_Cat_3'])
 
 interface TiterRecord {
   date?: string | null

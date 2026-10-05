@@ -71,6 +71,8 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'permit_no',
   'certificate_no',
   'id_date',
+  // 호주 마이크로칩 인증 경로(au-identity-option.ts) — id_date 와 짝이라 같이 분리.
+  'id_option',
   // 마이크로칩 인증 2차 — 뉴질랜드만 회차가 둘이다(IHS 1.11(4), 채혈이 출국 3~6개월 전인 경우).
   //   호주는 1회뿐이라 이 키를 쓰지 않는다. 1차는 위 'id_date' 를 그대로 공유한다.
   'id_date_2',

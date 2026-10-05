@@ -9,6 +9,8 @@ import {
   generateAU2,
   generateAUCat,
   generateAUCat2,
+  generateAU3,
+  generateAUCat3,
   generateCH,
   generateESD,
   generateForm25,
@@ -54,8 +56,10 @@ type SinglePdfBody = {
     | 'IdentificationDeclaration'
     | 'AU'
     | 'AU_2'
+    | 'AU_3'
     | 'AU_Cat'
     | 'AU_Cat_2'
+    | 'AU_Cat_3'
     | 'NZ'
     | 'OVD'
     | 'VBC'
@@ -131,8 +135,10 @@ const SINGLE_GENERATORS = {
   IdentificationDeclaration: generateIdentificationDeclaration,
   AU: generateAU,
   AU_2: generateAU2,
+  AU_3: generateAU3,
   AU_Cat: generateAUCat,
   AU_Cat_2: generateAUCat2,
+  AU_Cat_3: generateAUCat3,
   NZ: generateNZ,
   OVD: generateOVD,
   VBC: generateVBC,
