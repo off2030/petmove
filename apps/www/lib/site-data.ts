@@ -18,12 +18,27 @@ export interface FeaturedGuide extends PostRef {
 }
 
 export const FEATURED: FeaturedGuide[] = [
+  // 순서 = 사용자 지정(2026-10-05). 모바일은 앞 3개만, PC(760px 이상)는 6개 전부(hub.css .fcard:nth-child).
   {
     title: '일본 입국 준비 총정리',
     excerpt: '마이크로칩부터 항체검사 180일 대기까지, 준비 순서와 기간을 한눈에 정리했어요',
     kind: 'docs',
     slug: 'japan-pet-travel-guide',
     image: '/content/images/2026/01/japan-pet-travel-cover.webp',
+  },
+  {
+    title: '호주 입국 준비 총정리',
+    excerpt: '준비 기간이 가장 긴 여행지 중 하나예요. 무엇부터 시작할지 순서대로 정리했어요',
+    kind: 'docs',
+    slug: 'australia-pet-travel-guide',
+    image: '/content/images/2026/03/Gemini_Generated_Image_3prrqm3prrqm3prr.png',
+  },
+  {
+    title: '뉴질랜드 입국 준비 총정리',
+    excerpt: '최소 7개월 준비와 10일 이상 계류가 필요해요. 2026년 7월 바뀐 규정을 반영했어요',
+    kind: 'docs',
+    slug: 'newzealand-pet-travel-guide',
+    image: '/content/images/2026/03/Gemini_Generated_Image_4874wk4874wk4874.png',
   },
   {
     title: '싱가포르 입국 준비 총정리',
@@ -33,15 +48,6 @@ export const FEATURED: FeaturedGuide[] = [
     image: '/content/images/2026/03/Gemini_Generated_Image_m9o5ipm9o5ipm9o5.png',
   },
   {
-    title: '호주 입국 준비 총정리',
-    excerpt: '준비 기간이 가장 긴 여행지 중 하나예요. 무엇부터 시작할지 순서대로 정리했어요',
-    kind: 'docs',
-    slug: 'australia-pet-travel-guide',
-    image: '/content/images/2026/03/Gemini_Generated_Image_3prrqm3prrqm3prr.png',
-  },
-  // 4~6번째는 PC(760px 이상)에서만 보인다 — 모바일은 위 3개(hub.css .fcard:nth-child).
-  // 2026-10-05 추가: 가이드 글 조회 상위(3주 집계 미국 107·중국 60·베트남 53).
-  {
     title: '미국 입국 준비 총정리',
     excerpt: '2024년 8월부터 바뀐 CDC 규정 기준으로, 필요한 서류와 순서를 정리했어요',
     kind: 'docs',
@@ -49,18 +55,11 @@ export const FEATURED: FeaturedGuide[] = [
     image: '/content/images/2026/03/Gemini_Generated_Image_nik17qnik17qnik1.png',
   },
   {
-    title: '중국 입국 준비 총정리',
-    excerpt: '광견병 2회 접종과 항체검사가 필요해요. 검역관마다 갈리는 부분까지 정리했어요',
+    title: '대만 입국 준비 총정리',
+    excerpt: '요건을 갖추면 계류 없이 입국할 수 있어요. 필요한 절차를 순서대로 정리했어요',
     kind: 'docs',
-    slug: 'china-pet-travel-guide',
-    image: '/content/images/2026/03/Gemini_Generated_Image_59w54459w54459w5.png',
-  },
-  {
-    title: '베트남 입국 준비 총정리',
-    excerpt: '2026년 새 검역 규칙 기준이에요. 허가 절차 없이 비교적 간단하게 준비할 수 있어요',
-    kind: 'docs',
-    slug: 'vietnam-pet-travel-guide',
-    image: '/content/images/2026/07/vietnam-pet-travel-cover.webp',
+    slug: 'taiwan-pet-travel-guide',
+    image: '/content/images/2026/07/taiwan-pet-travel-cover.webp',
   },
 ]
 
