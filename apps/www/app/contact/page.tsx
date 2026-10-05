@@ -30,7 +30,9 @@ export default function ContactPage() {
                 <i className="ti ti-message-circle" />
                 <span>
                   <span className="cv">카카오톡 상담</span>
-                  <div className="cs">펫무브 공식 채널</div>
+                  {/* 앱 이용 문의 카드는 2026-10-05 삭제 — 앱 고객지원(app /support)도 결국 카카오톡·메일로
+                      이어져 같은 길이 하나 더 있던 셈. 앱 문의도 여기서 받는다는 걸 설명에 적는다. */}
+                  <div className="cs">상담 · 앱 이용 문의</div>
                 </span>
               </a>
               <a className="chan" href={`tel:${CONTACT.tel}`}>
@@ -51,16 +53,6 @@ export default function ContactPage() {
                 <i className="ti ti-clock" />
                 응대 시간 {CONTACT.hours}
               </div>
-            </div>
-            <div className="cblock">
-              <h2 className="cl">앱 이용 문의</h2>
-              <a className="chan" href="https://app.petmove.co.kr/support" target="_blank" rel="noopener">
-                <i className="ti ti-device-mobile" />
-                <span>
-                  <span className="cv">앱 고객지원</span>
-                  <div className="cs">로그인 · 오류 등 앱 사용 관련</div>
-                </span>
-              </a>
             </div>
             <div className="cblock">
               <h2 className="cl">제휴 · 업무 문의</h2>
