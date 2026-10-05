@@ -39,6 +39,29 @@ export const FEATURED: FeaturedGuide[] = [
     slug: 'australia-pet-travel-guide',
     image: '/content/images/2026/03/Gemini_Generated_Image_3prrqm3prrqm3prr.png',
   },
+  // 4~6번째는 PC(760px 이상)에서만 보인다 — 모바일은 위 3개(hub.css .fcard:nth-child).
+  // 2026-10-05 추가: 가이드 글 조회 상위(3주 집계 미국 107·중국 60·베트남 53).
+  {
+    title: '미국 입국 준비 총정리',
+    excerpt: '2024년 8월부터 바뀐 CDC 규정 기준으로, 필요한 서류와 순서를 정리했어요',
+    kind: 'docs',
+    slug: 'usa-pet-travel-guide',
+    image: '/content/images/2026/03/Gemini_Generated_Image_nik17qnik17qnik1.png',
+  },
+  {
+    title: '중국 입국 준비 총정리',
+    excerpt: '광견병 2회 접종과 항체검사가 필요해요. 검역관마다 갈리는 부분까지 정리했어요',
+    kind: 'docs',
+    slug: 'china-pet-travel-guide',
+    image: '/content/images/2026/03/Gemini_Generated_Image_59w54459w54459w5.png',
+  },
+  {
+    title: '베트남 입국 준비 총정리',
+    excerpt: '2026년 새 검역 규칙 기준이에요. 허가 절차 없이 비교적 간단하게 준비할 수 있어요',
+    kind: 'docs',
+    slug: 'vietnam-pet-travel-guide',
+    image: '/content/images/2026/07/vietnam-pet-travel-cover.webp',
+  },
 ]
 
 // ── 나라별 가이드 62개국 — 5그룹(2026-07-15 재편: 괌=오세아니아, 중동·아프리카 신설.

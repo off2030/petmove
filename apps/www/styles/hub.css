@@ -37,6 +37,8 @@
 
   /* 추천 가이드(featured) */
   .feat{display:grid;grid-template-columns:1fr;gap:10px}
+  /* 인기 가이드는 6개 — 모바일은 앞의 3개만(2026-10-05 사용자 지정). */
+  .fcard:nth-child(n+4){display:none}
   .fcard{display:flex;align-items:center;gap:14px;background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:14px 15px}
   .fcard .ftxt{flex:1;min-width:0}
   .fcard .ft{display:block;font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.42}
@@ -177,6 +179,7 @@
     .drawer,.drawer-ov{display:none}
     .phead h1{font-size:38px}
     .feat-wrap{max-width:640px;margin:0 auto}
+    .fcard:nth-child(n+4){display:flex}
     .fcard .fthumb{width:128px;height:88px}
     .cgrid{grid-template-columns:repeat(4,1fr)}
   }
@@ -196,8 +199,11 @@
     .search{max-width:720px;margin-top:26px}
     .search input{font-size:16px;padding:17px 18px 17px 50px;border-radius:15px}
     .search i{left:18px;font-size:20px}
-    /* 인기 가이드(제목+카드)도 검색창과 같은 720px 줄에 맞춘다. */
-    .feat-wrap{max-width:720px}
+    /* 인기 가이드 = 여행지별 가이드와 같은 전체 폭에 한 줄 2개(6개 → 3줄). 나라 칸은 한 줄 6개 —
+       4개일 땐 두세 글자 나라 이름에 비해 칸이 너무 넓었다(2026-10-05). */
+    .feat-wrap{max-width:none}
+    .feat{grid-template-columns:1fr 1fr;gap:12px}
+    .cgrid{grid-template-columns:repeat(6,1fr)}
     .fcard .ft{font-size:16px}
     .fcard .fx{font-size:13.5px}
     .region{font-size:13.5px}
