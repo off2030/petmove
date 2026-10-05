@@ -239,3 +239,56 @@
       background:url('/img/hero-card.jpg') center 32% / cover no-repeat}
   }
 }
+
+/* ── PC 글씨 크기(960px 이상) — 설명 문구가 모바일 크기(11.5~13.5px)로 남아 PC 에서 작았다
+   (2026-10-05). 큰 제목(.hero h1·.h2)은 위 블록에서 이미 키우므로 여기선 본문·설명만. */
+.pg-landing{
+  @media(min-width:960px){
+    .wm{font-size:19px}
+    .nav-links{font-size:15px}
+    .nav-app{font-size:14px}
+    .eyebrow{font-size:13px}
+    .kicker{font-size:14px}
+    .sub{font-size:16.5px}
+    .btn-primary{font-size:16px}
+    .btn-ghost{font-size:15.5px}
+    .trust .l{font-size:14px}
+    .step .t{font-size:16.5px}
+    .step .d{font-size:14.5px}
+    .step .num{font-size:13px}
+    .path .tag{font-size:13px}
+    .path h3{font-size:21px}
+    .path .pd{font-size:15px}
+    .path .pt{font-size:13px}
+    .path li{font-size:14.5px}
+    .path .go{font-size:15px}
+    .dest-region{font-size:13.5px}
+    .dest-collapse{font-size:14px}
+    .dest{font-size:15px}
+    .note{font-size:13px}
+    .soon-label{font-size:14px}
+    .soon-chips span{font-size:13.5px}
+    .band p{font-size:15.5px}
+    .vlabel{font-size:13px}
+    .more-line{font-size:13.5px}
+    .frow .ft{font-size:16.5px}
+    .frow .fd{font-size:14px}
+    .fcell .ft{font-size:15px}
+    .fcell .fd{font-size:13px}
+    .fslide .fcap{font-size:13.5px}
+    .acard .at{font-size:17px}
+    .acard .ad{font-size:14.5px}
+    .acard.more{font-size:14px}
+    .slead{font-size:14.5px}
+    .score .st{font-size:16.5px}
+    .score .sd{font-size:14.5px}
+    .svc-cap{font-size:13px}
+    .svc-item{font-size:15px}
+    .svc-sub{font-size:14px}
+    .rname{font-size:15px}
+    .rmeta{font-size:13px}
+    .rtext{font-size:15px}
+    .hrow span{font-size:14px}
+    footer{font-size:13px}
+  }
+}

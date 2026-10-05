@@ -182,3 +182,60 @@
   }
 }
 .pg-hub.pg-reading{background:#FFFFFF}
+
+/* ── PC 글씨 크기(960px 이상) — article.css 의 같은 블록과 짝(2026-10-05). 모바일 값은 그대로. */
+.pg-hub{
+  @media(min-width:960px){
+    .wm{font-size:19px}
+    .nav-links{font-size:15px}
+    .nav-app{font-size:14px}
+    .kicker{font-size:13.5px}
+    .phead .lead{font-size:16px;max-width:520px}
+    .sec-h{font-size:14px}
+    .search input{font-size:15.5px}
+    .fcard .ft{font-size:16px}
+    .fcard .fx{font-size:13.5px}
+    .region{font-size:13.5px}
+    .chip{font-size:15px}
+    .other-label{font-size:13.5px}
+    .other-links a{font-size:14px}
+    .no-hit{font-size:15px}
+    .cprow{font-size:15px}
+    .cblock .cl{font-size:13px}
+    .chan .cv{font-size:15px}
+    .chan .cs{font-size:13px}
+    .copen{font-size:13px}
+    .cnote{font-size:13px}
+    .crumb{font-size:13.5px}
+    .art-cat{font-size:13px}
+    .art-head h1{font-size:32px}
+    .art-meta{font-size:13.5px}
+    .prose{font-size:17.5px}
+    .prose h2{font-size:23px}
+    .prose h3{font-size:18.5px}
+    .prose blockquote{font-size:16px}
+    .prose table{font-size:15px}
+    .prose .callout-note{font-size:16px}
+    .callout .ch{font-size:16px}
+    .callout .cp{font-size:15px}
+    .callout .cbtn{font-size:14px}
+    .prose .more-label{font-size:13px}
+    .prose details.more>summary{font-size:15px}
+    .art-cta h3{font-size:20px}
+    .art-cta p{font-size:14.5px}
+    .art-cta a{font-size:15px}
+    .svc-block .svc-title{font-size:18px}
+    .svc-block .svc-desc{font-size:14.5px}
+    .svc-cta{font-size:16px}
+    .svc-sub{font-size:14px}
+    .svc-app{font-size:13.5px}
+    .pcard .pt{font-size:16.5px}
+    .pcard .pd{font-size:14px}
+    .pcard .psub{font-size:13px}
+    .related .rl-h{font-size:14px}
+    .related a{font-size:15.5px}
+    a.bookmark .bk-title{font-size:15.5px}
+    a.bookmark .bk-host{font-size:13px}
+    footer{font-size:13px}
+  }
+}

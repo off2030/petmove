@@ -55,5 +55,8 @@ a{text-decoration:none;color:inherit}
   .qr-block{display:block;margin-top:24px}
   .qr{display:block;width:116px;height:116px;margin:0 auto;background:#fff;border-radius:12px;padding:9px;
     box-shadow:0 8px 20px rgba(2,62,102,.20)}
-  .final .qr-cap{font-size:12.5px;color:#EAF6FF;margin:11px 0 0}
+  .final .qr-cap{font-size:13.5px;color:#EAF6FF;margin:11px 0 0}
+  /* PC 글씨 크기 — 모바일 기준 13.5px 가 PC 에서 작았다(2026-10-05). */
+  .final p{font-size:15.5px}
+  .store{font-size:15px}
 }
