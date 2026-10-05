@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { InstallAppSheet } from '@/components/settings/install-app-sheet'
 
 /**
@@ -11,12 +12,15 @@ import { InstallAppSheet } from '@/components/settings/install-app-sheet'
  *  - Capacitor 네이티브 앱이 **아님** (이미 앱 안인데 설치 권유는 무의미)
  *  - 모바일 브라우저 (iOS/Android UA) — 데스크톱은 모바일 앱 설치 불가라 제외
  *  - 최근에 닫지 않음 (DISMISS_DAYS 안에 '나중에' 누르면 다시 안 뜸 — 매 방문 도배 방지)
+ *  - 문서 페이지가 **아님** — 이용약관·개인정보처리방침·고객지원은 홈페이지 푸터·스토어에서
+ *    문서를 읽으러 들어오는 곳이라 설치 권유가 방해만 된다(2026-10-05).
  *
  * 설정의 '일정 알림' 토글에서 띄우는 InstallAppSheet 와 같은 시트를 재사용하되, 문구만
  * 일반 설치 유도용으로 바꿔 넘긴다.
  */
 
 const DISMISS_KEY = 'pm_app_promo_dismissed_at'
+const NO_PROMO_PREFIXES = ['/terms', '/privacy', '/support']
 const DISMISS_DAYS = 7
 const SHOW_DELAY_MS = 700 // 첫 페인트 후 살짝 뒤에 슬라이드업 — 진입과 동시는 거슬림
 
@@ -56,12 +60,14 @@ function recentlyDismissed(): boolean {
 
 export function AppInstallPromo() {
   const [open, setOpen] = useState(false)
+  const pathname = usePathname() ?? ''
+  const isDocPage = NO_PROMO_PREFIXES.some((p) => pathname.startsWith(p))
 
   useEffect(() => {
-    if (isNativeApp() || !isMobileBrowser() || recentlyDismissed()) return
+    if (isDocPage || isNativeApp() || !isMobileBrowser() || recentlyDismissed()) return
     const t = window.setTimeout(() => setOpen(true), SHOW_DELAY_MS)
     return () => window.clearTimeout(t)
-  }, [])
+  }, [isDocPage])
 
   function close() {
     setOpen(false)
