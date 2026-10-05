@@ -24,6 +24,9 @@ export function SiteFooter() {
               <div className="sf-h">바로가기</div>
               <a href="/#service">서비스</a>
               <a href="/guide/">가이드</a>
+              <a href="https://blog.naver.com/petmove" target="_blank" rel="noopener" className="sf-blog">
+                <span className="nlogo">N</span>네이버 블로그
+              </a>
               <a href="/contact/">고객지원</a>
             </div>
             <div className="sf-col">
@@ -34,9 +37,6 @@ export function SiteFooter() {
             <div className="sf-col">
               <div className="sf-h">제휴 문의</div>
               <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
-              <a href="https://blog.naver.com/petmove" target="_blank" rel="noopener" className="sf-blog">
-                <span className="nlogo">N</span>네이버 블로그
-              </a>
             </div>
           </nav>
         </div>
