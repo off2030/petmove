@@ -25,7 +25,7 @@ export default function ContactPage() {
         <div className="container">
           <div className="csec">
             <div className="cblock">
-              <h2 className="cl">상담 · 문의</h2>
+              <h2 className="cl">고객 상담</h2>
               <a className="chan" href={CONTACT.kakao} target="_blank" rel="noopener">
                 <i className="ti ti-message-circle" />
                 <span>
@@ -55,7 +55,7 @@ export default function ContactPage() {
               </div>
             </div>
             <div className="cblock">
-              <h2 className="cl">제휴 · 업무 문의</h2>
+              <h2 className="cl">제휴 업무 문의</h2>
               <a className="chan" href={`mailto:${CONTACT.email}`}>
                 <i className="ti ti-mail" />
                 <span>
