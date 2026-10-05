@@ -97,9 +97,16 @@ const FIELD_TO_VACCINE_KEY: Record<string, string> = {
 }
 
 /** 추가정보(EXTRA) 카테고리에서 제외할 키 — 다른 카테고리 전용. */
-// id_option(호주 ID 경로) — 어느 증명서(AU/AU 2/AU 3)를 발급할지 운영자가 정하는 내부 선택이라
-// 정보 요청 링크로 보호자에게 묻지 않는다.
-const EXTRA_EXCLUDED_FROM_EXTRA = new Set(['email', 'id_option'])
+const EXTRA_EXCLUDED_FROM_EXTRA = new Set(['email'])
+
+/**
+ * 운영자 전용 추가정보 — 관리자 상세(`includeInternalExtra`)에만 나오고 정보 요청 링크
+ * (공유 다이얼로그·프리셋·수신자 폼)에서는 빠진다.
+ * - id_option(호주 ID 경로): 어느 증명서(AU/AU 2/AU 3)를 발급할지 운영자가 정하는 선택.
+ * ⚠️ EXTRA_EXCLUDED_FROM_EXTRA 에 넣지 말 것 — 관리자 상세도 이 빌더로 추가정보를 그려서
+ *   거기 넣으면 운영자 화면에서도 칸이 사라진다(2026-10-05 실제로 그랬다).
+ */
+const INTERNAL_EXTRA_KEYS = new Set(['id_option'])
 
 /**
  * descriptor 의 source — ShareFieldSpec 변환 시 storage·type·options·current_value 의 단일 근거.
@@ -150,6 +157,8 @@ export interface ShareFieldLayoutOptions {
     vaccineApplies: (vaccineKey: string) => boolean
     speciesValue: string
   } | null
+  /** 운영자 전용 추가정보(INTERNAL_EXTRA_KEYS)까지 포함 — 관리자 케이스 상세만 true. */
+  includeInternalExtra?: boolean
 }
 
 /**
@@ -225,6 +234,7 @@ export function buildShareFieldDescriptors(
   let extraOrder = 0
   for (const entry of extraFieldEntries) {
     if (EXTRA_EXCLUDED_FROM_EXTRA.has(entry.key)) continue
+    if (!opts.includeInternalExtra && INTERNAL_EXTRA_KEYS.has(entry.key)) continue
     if (caseScoped && !extraFieldMatchesSpecies(entry, speciesValue)) continue
     const rawDef = EXTRA_FIELD_DEFS[entry.key]
     if (!rawDef) continue

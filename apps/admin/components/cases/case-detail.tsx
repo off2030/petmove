@@ -177,6 +177,8 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
       destinationScope: viewDestination,
       extraFieldEntries: extraEntriesFiltered,
       caseScoped: { allowedFields, vaccineApplies: () => false, speciesValue },
+      // 운영자 전용 칸(호주 'ID' 경로 등)은 상세에서만 보인다 — 정보 요청 링크에선 빠짐.
+      includeInternalExtra: true,
     }).filter((d) => d.category === '추가정보')
   })()
   const hasExtraSection = extraDescriptors.length > 0
