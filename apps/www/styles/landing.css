@@ -48,6 +48,10 @@
   .trust .n{font-size:24px;font-weight:700;letter-spacing:-.01em;line-height:1.1}
   .trust .n span{color:#FFC93C} /* 로고의 해 노랑 — 파랑 일색을 깨는 유일한 웜 포인트 */
   .trust .l{font-size:12px;color:var(--ink2);margin-top:5px}
+  /* '지원 여행지' 지표 = 나라별 가이드 목록으로 가는 링크(여행지 섹션 삭제 후 그 역할을 맡음). */
+  .trust-link{display:block;color:inherit}
+  .trust-link .ti{font-size:.9em;color:var(--ink3);vertical-align:-.15em}
+  .trust-link:hover .l{color:var(--accent-ink)}
   .trust > div + div{border-left:0.5px solid rgba(33,33,36,.08)}
 
   .steps{display:grid;grid-template-columns:1fr;gap:14px;margin-top:26px}

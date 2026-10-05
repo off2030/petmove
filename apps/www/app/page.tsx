@@ -1,13 +1,13 @@
 // 랜딩(/) — 구 prototype-mobile.html 이식. 섹션 배경 교차:
-// 흰(스트립) → 회(앱) → 흰(여행지) → 회(서비스) → 흰(후기) → 밴드 → 하늘 CTA → 흰 푸터.
+// 흰(스트립) → 회(앱) → 흰(서비스) → 회(후기) → 밴드 → 하늘 CTA → 흰 푸터.
+// (앱 지원 여행지 섹션은 2026-10-05 삭제 — 나라 이름만 늘어놓은 목록이라 할 수 있는 게 없었다.
+//  나라 수는 위 지표 '지원 여행지'가 보여주고, 누르면 나라별 가이드 목록으로 간다.)
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { AppLink } from '@/components/app-link'
-import { DestGrid } from '@/components/dest-grid'
 import {
   APP_FEATURES,
   SERVICE_CARDS,
-  APP_DEST_SOON,
   APP_DEST_TOTAL,
   REVIEWS,
   CONTACT,
@@ -61,8 +61,10 @@ export default function LandingPage() {
         </div>
         <div>
           {/* 손으로 적은 '50+' 였다 — 목적지를 올려도 안 따라와서 site-data 목록에서 파생. */}
-          <div className="n">{APP_DEST_TOTAL}</div>
-          <div className="l">지원 여행지</div>
+          <a href="/guide" className="trust-link">
+            <div className="n">{APP_DEST_TOTAL}</div>
+            <div className="l">지원 여행지 <i className="ti ti-chevron-right" /></div>
+          </a>
         </div>
         <div>
           <div className="n">
@@ -101,30 +103,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section style={{ background: 'var(--surface)', borderTop: '0.5px solid var(--border)', borderBottom: '0.5px solid var(--border)' }}>
-        <div className="container">
-          <div className="kicker">앱 지원 여행지</div>
-          <h2 className="h2">앞으로 계속 추가돼요</h2>
-          <DestGrid />
-          {/* '추가 예정' 목록이 비면 블록째 감춘다 — 빈 칩 줄만 남으면 준비 중인 게 없는데도
-              뭔가 빠진 화면으로 보인다(2026-07-27 호주·뉴질랜드 승격으로 목록이 비었다). */}
-          {APP_DEST_SOON.length > 0 && (
-            <div className="soon-block">
-              <div className="soon-label">
-                <i className="ti ti-calendar-plus" />
-                2026년 추가 예정
-              </div>
-              <div className="soon-chips">
-                {APP_DEST_SOON.map((d) => (
-                  <span key={d}>{d}</span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section id="service">
+      <section id="service" style={{ background: 'var(--surface)', borderTop: '0.5px solid var(--border)', borderBottom: '0.5px solid var(--border)' }}>
         <div className="container">
           <div className="kicker">펫무브 서비스 소개</div>
           <h2 className="h2">전문가에게 안심하고 맡기세요</h2>
@@ -158,7 +137,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section style={{ background: 'var(--surface)', borderTop: '0.5px solid var(--border)' }}>
+      <section>
         <div className="container">
           <div className="kicker">고객 후기</div>
           <h2 className="h2">펫무브와 함께한 이야기</h2>
