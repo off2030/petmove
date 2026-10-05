@@ -94,9 +94,9 @@ export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
     label: 'ID',
     type: 'select',
     options: [
-      { value: 'id', label: 'ID 인증 받음 (AU)' },
-      { value: 'exported', label: '호주에서 출국해 옴 (AU 2)' },
-      { value: 'none', label: 'ID 안 받음 · 계류 연장 (AU 3)' },
+      { value: 'id', label: 'ID 받음' },
+      { value: 'exported', label: '호주에서 출국' },
+      { value: 'none', label: 'ID 안 받음' },
     ],
   },
   id_date: { key: 'id_date', label: 'ID 날짜', type: 'date' },

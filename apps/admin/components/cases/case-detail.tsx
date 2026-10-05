@@ -10,7 +10,7 @@ import {
 } from '@petmove/domain'
 import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, matchesDestinationKey, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, isDestinationScopedKey, applyDestinationFieldOverride, HARDCODED_VACCINE_SPECIES_DEFAULTS, type ExtraFieldDef } from '@petmove/domain'
 import { buildShareFieldDescriptors, permitDeliverablesForDestination } from '@petmove/domain'
-import { EXTRA_FIELD_DEFS, normalizeTimeHhmm, readAuIdOption } from '@petmove/domain'
+import { EXTRA_FIELD_DEFS, normalizeTimeHhmm, readAuIdOption, type AuIdOption } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Trash2, ChevronDown, Check } from 'lucide-react'
@@ -942,6 +942,9 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
             if (def.key === 'address_overseas') {
               return <OverseasAddressField key={def.key} caseId={caseId} caseRow={caseRow} />
             }
+            if (def.key === 'id_option') {
+              return <AuIdOptionField key={def.key} caseId={caseId} caseRow={caseRow} activeDest={activeDest} />
+            }
             const spec = buildSpecForExtra(def, false)
             // 호주 ID 경로에 따라 날짜 칸의 뜻이 바뀐다(au-identity-option.ts) — 호주에서 출국해
             // 온 경우엔 '호주 출국일'(AU 2), ID 를 안 받으면 날짜가 필요 없어 칸을 숨긴다(AU 3).
@@ -965,6 +968,70 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
         </div>
       </SectionEditModeProvider>
     </section>
+  )
+}
+
+/**
+ * 호주 'ID' 경로 — 드롭다운 대신 체크박스 셋을 한 줄로(하나만 선택, 다시 누르면 해제).
+ * 선택값이 증명서 양식(AU / AU 2 / AU 3)을 정한다 — au-identity-option.ts.
+ * 체크 모양은 귀국 항공편 '미정' 토글과 같은 스타일.
+ */
+const AU_ID_CHOICES: { value: AuIdOption; label: string }[] = [
+  { value: 'id', label: 'ID 받음' },
+  { value: 'exported', label: '호주에서 출국' },
+  { value: 'none', label: 'ID 안 받음' },
+]
+
+function AuIdOptionField({ caseId, caseRow, activeDest }: {
+  caseId: string
+  caseRow: CaseRow
+  activeDest: string | null
+}) {
+  const { updateLocalCaseField } = useCases()
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const raw = readEffectiveExtraValue(data, 'id_option', activeDest)
+  // 미선택은 체크 없이 둔다(발급은 'ID 받음'으로 처리 — readAuIdOption 기본값).
+  const selected = typeof raw === 'string' ? raw : null
+  const dest = activeDest && isDestinationScopedKey('id_option') ? activeDest : undefined
+
+  function choose(value: AuIdOption) {
+    const next = selected === value ? null : value
+    updateLocalCaseField(caseId, 'data', 'id_option', next, dest)
+    void persistField('ID', () => updateCaseField(caseId, 'data', 'id_option', next, dest))
+  }
+
+  return (
+    <div data-field="id_option" className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors">
+      <div className="flex items-center gap-[6px] pt-1">
+        <SectionLabel>ID</SectionLabel>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1">
+        {AU_ID_CHOICES.map((c) => {
+          const on = selected === c.value
+          return (
+            <button
+              key={c.value}
+              type="button"
+              onClick={() => choose(c.value)}
+              aria-pressed={on}
+              className="inline-flex items-center gap-2"
+            >
+              <span
+                className={cn(
+                  'flex h-[18px] w-[18px] items-center justify-center rounded-[5px] border transition-colors',
+                  on ? 'border-foreground bg-foreground text-background' : 'border-muted-foreground/50',
+                )}
+              >
+                {on && <Check className="h-3 w-3" strokeWidth={3} />}
+              </span>
+              <span className={cn('text-[14px] font-medium', on ? 'text-foreground' : 'text-muted-foreground')}>
+                {c.label}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
