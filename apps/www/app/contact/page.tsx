@@ -30,9 +30,7 @@ export default function ContactPage() {
                 <i className="ti ti-message-circle" />
                 <span>
                   <span className="cv">카카오톡 상담</span>
-                  {/* 앱 이용 문의 카드는 2026-10-05 삭제 — 앱 고객지원(app /support)도 결국 카카오톡·메일로
-                      이어져 같은 길이 하나 더 있던 셈. 앱 문의도 여기서 받는다는 걸 설명에 적는다. */}
-                  <div className="cs">상담 · 앱 이용 문의</div>
+                  {/* 설명 줄 없음(2026-10-05 사용자 지정). 앱 이용 문의 카드를 지운 뒤 앱 문의도 이 채널로 받는다. */}
                 </span>
               </a>
               <a className="chan" href={`tel:${CONTACT.tel}`}>
