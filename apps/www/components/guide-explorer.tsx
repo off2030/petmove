@@ -89,6 +89,8 @@ export function GuideExplorer() {
         <>
           <section>
             <div className="container">
+              {/* 제목과 카드가 같은 폭 안에 있어야 왼쪽 선이 맞는다 — 예전엔 제목만 컨테이너 왼쪽 끝에 붙었다. */}
+              <div className="feat-wrap">
               <h2 className="sec-h">인기 가이드</h2>
               <div className="feat">
                 {FEATURED.map((f) => (
@@ -101,6 +103,7 @@ export function GuideExplorer() {
                     <img className="fthumb" src={f.image} alt="" loading="lazy" />
                   </a>
                 ))}
+              </div>
               </div>
             </div>
           </section>

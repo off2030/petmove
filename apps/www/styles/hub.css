@@ -176,7 +176,7 @@
     .burger{display:none}
     .drawer,.drawer-ov{display:none}
     .phead h1{font-size:38px}
-    .feat{max-width:640px;margin:0 auto}
+    .feat-wrap{max-width:640px;margin:0 auto}
     .fcard .fthumb{width:128px;height:88px}
     .cgrid{grid-template-columns:repeat(4,1fr)}
   }
@@ -192,7 +192,12 @@
     .kicker{font-size:13.5px}
     .phead .lead{font-size:16px;max-width:520px}
     .sec-h{font-size:14px}
-    .search input{font-size:15.5px}
+    /* 검색창 — 520px 라 PC 에서 아래 목록(1036px)에 비해 짧았다(2026-10-05). 넓히고 높인다. */
+    .search{max-width:720px;margin-top:26px}
+    .search input{font-size:16px;padding:17px 18px 17px 50px;border-radius:15px}
+    .search i{left:18px;font-size:20px}
+    /* 인기 가이드(제목+카드)도 검색창과 같은 720px 줄에 맞춘다. */
+    .feat-wrap{max-width:720px}
     .fcard .ft{font-size:16px}
     .fcard .fx{font-size:13.5px}
     .region{font-size:13.5px}
