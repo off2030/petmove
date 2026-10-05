@@ -64,6 +64,8 @@ a{text-decoration:none;color:inherit}
 /* ── 공통 푸터(site-footer.tsx) — 2026-10-05 재구성. 페이지 스코프의 옛 footer 규칙
    (.pg-landing footer 등)보다 무게를 올리려고 .pg footer.sf 로 건다. 배경·윗선은 그대로. ── */
 .pg footer.sf{background:#fff;border-top:0.5px solid var(--border);padding:34px 0 28px;font-size:13px;line-height:1.6;color:var(--ink2)}
+/* 하늘 CTA(.final) 바로 아래에선 윗선을 뺀다 — 구름이 흰 푸터로 이어져야 하는데 선이 구름을 잘랐다. */
+.pg .final + footer.sf{border-top:0}
 .pg footer.sf a{color:var(--ink2)}
 .pg footer.sf a:hover{color:var(--ink)}
 .sf-top{display:flex;flex-direction:column;gap:26px}
@@ -77,6 +79,17 @@ a{text-decoration:none;color:inherit}
 .sf-blog{display:inline-flex;align-items:center;gap:5px}
 .sf-blog .nlogo{font-weight:800;font-size:12px;line-height:1;color:#03C75A}
 .sf-bottom{display:flex;flex-direction:column;gap:2px;margin-top:28px;padding-top:18px;border-top:0.5px solid var(--border);font-size:12px;color:var(--ink3)}
+/* 모바일 — 묶음 제목 세 개가 세로로 쌓여 산만했다(2026-10-05). 제목을 빼고 링크를 가로 줄로
+   모은다: 바로가기 한 줄 · 안내 한 줄 · '제휴 문의' 한 줄. 한 줄 소개도 모바일에선 생략. */
+@media(max-width:759px){
+  .sf-top{gap:18px}
+  .sf-tag{display:none}
+  .sf-cols{display:flex;flex-direction:column;gap:9px}
+  .sf-col{flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 16px}
+  .sf-col:not(:last-child) .sf-h{display:none}
+  .sf-col:last-child .sf-h{font-size:13px;font-weight:600;color:var(--ink2);margin:0}
+  .sf-bottom{margin-top:20px;padding-top:14px}
+}
 @media(min-width:760px){
   .sf-top{flex-direction:row;justify-content:space-between;align-items:flex-start;gap:40px}
   .sf-cols{grid-template-columns:repeat(3,auto);gap:0 56px}
