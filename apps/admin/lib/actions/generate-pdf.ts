@@ -540,19 +540,46 @@ export async function generateVBC(caseId: string, opts?: GenerateOpts) {
   return generate('VBC', caseId, opts)
 }
 
+/**
+ * 뉴질랜드 건강증명서 양식 — 여행지가 신 규정 '뉴질랜드'면 IHS 2026 건강증명서(NZ26),
+ * 구 규정 '뉴질랜드(구)'(한시 — 2026-10-06 분리)면 예전 Model Veterinary Certificate A(NZ/NZ_2).
+ * 활성 여행지 토큰(destination)이 없으면 케이스 여행지 문자열에서 찾는다.
+ */
+function isNewIhsNz(destination: string | null | undefined): boolean {
+  return !!findDestinationToken(destination, 'new_zealand')
+}
+
 export async function generateNZ(caseId: string, opts?: GenerateOpts) {
-  // 광견병 접종 횟수로 템플릿 선택: 1회면 NZ(primary), 2회 이상이면 NZ_2(booster).
-  // 템플릿마다 (10a)/(10b) 구간에 미리 그어진 취소선이 달라서 결과 PDF의 해당 구간이
-  // 깔끔하게 하나만 보이게 된다.
   const supabase = await createClient()
   const { data: row } = await supabase
     .from('cases')
-    .select('data')
+    .select('data, destination')
     .eq('id', caseId)
     .single()
+  if (isNewIhsNz(opts?.destination ?? (row?.destination as string | null | undefined))) {
+    return generate('NZ26', caseId, opts)
+  }
+  // 구 양식 — 광견병 접종 횟수로 템플릿 선택: 1회면 NZ(primary), 2회 이상이면 NZ_2(booster).
+  // 템플릿마다 (10a)/(10b) 구간에 미리 그어진 취소선이 달라서 결과 PDF의 해당 구간이
+  // 깔끔하게 하나만 보이게 된다.
   const dates = ((row?.data as Record<string, unknown> | undefined)?.rabies_dates ?? []) as unknown[]
   const formKey = Array.isArray(dates) && dates.length >= 2 ? 'NZ_2' : 'NZ'
   return generate(formKey, caseId, opts)
+}
+
+/** 사전 마이크로칩 확인서(Appendix 2B) — 신 IHS 2026. 한 마리 발급. */
+export async function generateNZId(caseId: string, opts?: GenerateOpts) {
+  return generate('NZ_ID', caseId, opts)
+}
+
+/** 사전 마이크로칩 확인서 다중 — 표의 동물 칸 4개에 같은 보호자의 여러 마리를 한 장에. */
+export async function generateNZIdMulti(caseIds: string[], opts?: { includeVet?: boolean; destination?: string | null }) {
+  return generateMulti('NZ_ID', caseIds, opts)
+}
+
+/** 광견병 증명서(RCF) — 신 IHS 2026 에서 OVD 를 대신한다. */
+export async function generateRCF(caseId: string, opts?: GenerateOpts) {
+  return generate('RCF', caseId, opts)
 }
 
 export async function generateAQS(caseId: string, opts?: GenerateOpts) {
@@ -741,7 +768,7 @@ function simulatePackCount(formKey: MultiFormKey, summaries: SiblingSummary[]): 
 }
 
 async function generateMulti(
-  formKey: MultiFormKey | 'NZ_2',
+  formKey: MultiFormKey | 'NZ_2' | 'NZ26',
   caseIds: string[],
   options?: { includeVet?: boolean; destination?: string | null },
 ): Promise<GenerateMultiPdfResult> {
@@ -800,9 +827,13 @@ export async function generateNZMulti(caseIds: string[], opts?: { includeVet?: b
   const supabase = await createClient()
   const { data: primary } = await supabase
     .from('cases')
-    .select('data')
+    .select('data, destination')
     .eq('id', caseIds[0])
     .single()
+  // 신 규정 '뉴질랜드' → IHS 2026 건강증명서. 구 규정 '뉴질랜드(구)' 만 아래 NZ/NZ_2 로 간다.
+  if (isNewIhsNz(opts?.destination ?? (primary?.destination as string | null | undefined))) {
+    return generateMulti('NZ26', caseIds, opts)
+  }
   const dates = ((primary?.data as Record<string, unknown> | undefined)?.rabies_dates ?? []) as unknown[]
   const formKey: 'NZ' | 'NZ_2' = Array.isArray(dates) && dates.length >= 2 ? 'NZ_2' : 'NZ'
   return generateMulti(formKey, caseIds, opts)

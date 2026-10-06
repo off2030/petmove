@@ -28,6 +28,9 @@ import {
   generateArcOviPack,
   generateNZ,
   generateNZMulti,
+  generateNZId,
+  generateNZIdMulti,
+  generateRCF,
   generateVBCMulti,
   generateNzInfectionPack,
   generateShipmentPack,
@@ -61,7 +64,9 @@ type SinglePdfBody = {
     | 'AU_Cat_2'
     | 'AU_Cat_3'
     | 'NZ'
+    | 'NZ_ID'
     | 'OVD'
+    | 'RCF'
     | 'VBC'
     | 'SGP'
     | 'TW'
@@ -140,7 +145,9 @@ const SINGLE_GENERATORS = {
   AU_Cat_2: generateAUCat2,
   AU_Cat_3: generateAUCat3,
   NZ: generateNZ,
+  NZ_ID: generateNZId,
   OVD: generateOVD,
+  RCF: generateRCF,
   VBC: generateVBC,
   SGP: generateSGP,
   TW: generateTW,
@@ -259,6 +266,8 @@ export async function POST(req: NextRequest) {
           ? await generateAnnexIIIMulti(body.caseIds, multiOpts)
           : body.formKey === 'NZ'
           ? await generateNZMulti(body.caseIds, multiOpts)
+          : body.formKey === 'NZ_ID'
+          ? await generateNZIdMulti(body.caseIds, multiOpts)
           : body.formKey === 'VBC'
           ? await generateVBCMulti(body.caseIds, multiOpts)
           : body.formKey === 'Form_R11'

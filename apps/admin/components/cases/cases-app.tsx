@@ -10,7 +10,7 @@ import { CaseHistory } from './case-history'
 import { createCase } from '@/lib/actions/create-case'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { undoLastChange, updateCaseField } from '@/lib/actions/cases'
-import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAUCat, generateNZ, generateOVD, generateVBC, generateSGP, generateTW, generateTK, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti, recommendForm25RabiesSelection } from '@/lib/actions/generate-pdf'
+import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAUCat, generateNZ, generateNZId, generateOVD, generateRCF, generateVBC, generateSGP, generateTW, generateTK, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti, recommendForm25RabiesSelection } from '@/lib/actions/generate-pdf'
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import type { MultiFormKey } from '@/lib/pdf-multi-forms'
 import { MultiFormDialog } from './multi-form-dialog'
@@ -51,7 +51,9 @@ const CERT_ACTIONS: Record<string, CertAction> = {
   au: generateAU,
   auCat: generateAUCat,
   nz: generateNZ,
+  nzId: generateNZId,
   ovd: generateOVD,
+  rcf: generateRCF,
   vbc: generateVBC,
   sgp: generateSGP,
   tw: generateTW,
@@ -72,7 +74,9 @@ const CERT_FORM_KEYS: Record<string, string> = {
   au: 'AU',
   auCat: 'AU_Cat',
   nz: 'NZ',
+  nzId: 'NZ_ID',
   ovd: 'OVD',
+  rcf: 'RCF',
   vbc: 'VBC',
   sgp: 'SGP',
   tw: 'TW',
@@ -88,6 +92,8 @@ const CERT_MULTI_KEYS: Record<string, MultiFormKey> = {
   annexIII: 'AnnexIII',
   uk: 'UK',
   nz: 'NZ',
+  // 뉴질랜드 사전 ID 확인서 — 동물 칸 4개(같은 보호자 여러 마리 한 장).
+  nzId: 'NZ_ID',
   vbc: 'VBC',
   // 태국 R.1/1 — 양식의 좌·우 칸에 두 마리까지 한 장(2026-08-24).
   formR11: 'Form_R11',
@@ -337,7 +343,9 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
             | 'AU_Cat_2'
             | 'AU_Cat_3'
             | 'NZ'
+            | 'NZ_ID'
             | 'OVD'
+            | 'RCF'
             | 'SGP'
             | 'TW'
             | 'TK'

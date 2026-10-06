@@ -115,6 +115,7 @@ export function MultiFormDialog({ caseId, formKey, includeVet, destination, onPr
   const formLabel =
     formKey === 'AnnexIII' ? 'Annex III'
     : formKey === 'NZ' ? 'NZ'
+    : formKey === 'NZ_ID' ? 'NZ ID'
     : formKey === 'VBC' ? 'VBC'
     : formKey === 'Form_R11' ? 'R.1/1'
     : 'UK'

@@ -301,6 +301,8 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                     {showVaccine('external_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" hideValidUntil />}
                     {showVaccine('internal_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" hideValidUntil />}
                     {showVaccine('heartworm') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="심장사상충" dataKey="heartworm_dates" hideValidUntil />}
+                    {/* 폐충(Angiostrongylus vasorum) — 신 IHS 2026 뉴질랜드 항목(출국 5일 이내). 카탈로그가 없어 제품명은 직접 입력. */}
+                    {showVaccine('lungworm') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="폐충" dataKey="lungworm_dates" hideValidUntil />}
                   </div>
                 )
               }

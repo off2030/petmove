@@ -5601,5 +5601,1132 @@
     "signatures": [
       { "image": "lausanne.png", "page": 0, "x": 14, "y": 55, "w": 120, "h": 34 }
     ]
+  },
+  "NZ26": {
+    "template": "NZ26.pdf",
+    "description": "New Zealand 신 IHS 2026 건강증명서 — Model certificate template for Category 3 (사용자 제공 docx 를 PDF 변환, 쪽마다 정부 수의사 서명칸). 개·고양이 공용, 한 장에 최대 5마리(표 6행 중 5행 — 구 NZ 와 같은 용량). \"(*delete as appropriate)\" 문장은 케이스 조건대로 취소선(strikeFlags nz26 — lib/pdf-nz2026.ts). 원본·좌표: scripts/nz2026-layout.py → build-nz2026-templates.mjs. 뉴질랜드(구) 케이스는 구 NZ/NZ_2.",
+    "filename": "NZ_{pet_name}.pdf",
+    "dateFormat": "dmmmy",
+    "flatten": true,
+    "strikeFlags": "nz26",
+    "fields": {
+      "nz26_consignor_name": {
+        "source": "customer_name_en",
+        "note": "p1 (1) Consignor(Exporter) Name — 보호자"
+      },
+      "nz26_consignor_address": {
+        "source": "address_en",
+        "note": "p1 (1) Consignor Address — 한국 주소(영문)"
+      },
+      "nz26_competent_authority": {
+        "source": null,
+        "default": "Animal and Plant Quarantine Agency (APQA)",
+        "note": "p1 (3) Competent Authority"
+      },
+      "nz26_consignee_name": {
+        "source": "customer_name_en",
+        "note": "p1 (4) Consignee(Importer) Name — 보호자 본인"
+      },
+      "nz26_consignee_address": {
+        "source": "address_overseas",
+        "note": "p1 (4) Consignee Address — 뉴질랜드 주소(추가정보 해외 주소)"
+      },
+      "nz26_origin_country": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p1 (5) Country of origin"
+      },
+      "nz26_origin_iso": {
+        "source": null,
+        "default": "KOR",
+        "note": "p1 (5) ISO Code"
+      },
+      "nz26_departure_date": {
+        "source": "departure_date",
+        "note": "p1 (7) Scheduled date of departure"
+      },
+      "nz26_port_departure": {
+        "source": "entry_departure_airport",
+        "note": "p1 (8) Port of departure — 추가정보 출발 공항"
+      },
+      "nz26_origin_place_name": {
+        "source": "customer_name_en",
+        "note": "p1 (9) Place of origin Name — 동물이 지내던 곳 = 보호자"
+      },
+      "nz26_origin_place_address": {
+        "source": "address_en",
+        "note": "p1 (9) Place of origin Address"
+      },
+      "nz26_transport_aeroplane": {
+        "source": null,
+        "transform": "checkbox:always_true",
+        "note": "p1 (10) Means of transport — Aeroplane(항상 항공)"
+      },
+      "nz26_transport_identification": {
+        "source": "entry_flight_number",
+        "note": "p1 (10) Identification — 항공편명"
+      },
+      "nz26_port_arrival": {
+        "source": "entry_airport",
+        "note": "p1 (11) Port of arrival — 추가정보 도착 공항(AKL/CHC)"
+      },
+      "nz26_permit_no": {
+        "source": "new_zealand_extra",
+        "transform": "json:permit_no",
+        "note": "p1 (12) Import permit number — 추가정보 수입허가번호"
+      },
+      "nz26_total_animals": {
+        "source": null,
+        "transform": "multi:count",
+        "note": "p1 (13) Total number of animals"
+      },
+      "nz26_transit_country": {
+        "source": null,
+        "note": "p1 (14) 경유국 — 직접 기입"
+      },
+      "nz26_animal_row1_name": {
+        "source": "pet_name_en",
+        "animalSlot": 0,
+        "note": "p1 (15) 1행 Name"
+      },
+      "nz26_animal_row1_species": {
+        "source": "species",
+        "transform": "en",
+        "animalSlot": 0
+      },
+      "nz26_animal_row1_breed": {
+        "source": "breed_en",
+        "animalSlot": 0
+      },
+      "nz26_animal_row1_microchip": {
+        "source": "microchip",
+        "animalSlot": 0
+      },
+      "nz26_animal_row1_age": {
+        "source": "birth_date",
+        "animalSlot": 0,
+        "note": "Age or Date of birth — 생년월일"
+      },
+      "nz26_animal_row1_sex": {
+        "source": "sex",
+        "transform": "sex_mf_only",
+        "animalSlot": 0
+      },
+      "nz26_animal_row1_desexed": {
+        "source": "sex",
+        "transform": "sex_neutered_status",
+        "animalSlot": 0
+      },
+      "nz26_animal_row2_name": {
+        "source": "pet_name_en",
+        "animalSlot": 1,
+        "note": "p1 (15) 2행 Name"
+      },
+      "nz26_animal_row2_species": {
+        "source": "species",
+        "transform": "en",
+        "animalSlot": 1
+      },
+      "nz26_animal_row2_breed": {
+        "source": "breed_en",
+        "animalSlot": 1
+      },
+      "nz26_animal_row2_microchip": {
+        "source": "microchip",
+        "animalSlot": 1
+      },
+      "nz26_animal_row2_age": {
+        "source": "birth_date",
+        "animalSlot": 1,
+        "note": "Age or Date of birth — 생년월일"
+      },
+      "nz26_animal_row2_sex": {
+        "source": "sex",
+        "transform": "sex_mf_only",
+        "animalSlot": 1
+      },
+      "nz26_animal_row2_desexed": {
+        "source": "sex",
+        "transform": "sex_neutered_status",
+        "animalSlot": 1
+      },
+      "nz26_animal_row3_name": {
+        "source": "pet_name_en",
+        "animalSlot": 2,
+        "note": "p1 (15) 3행 Name"
+      },
+      "nz26_animal_row3_species": {
+        "source": "species",
+        "transform": "en",
+        "animalSlot": 2
+      },
+      "nz26_animal_row3_breed": {
+        "source": "breed_en",
+        "animalSlot": 2
+      },
+      "nz26_animal_row3_microchip": {
+        "source": "microchip",
+        "animalSlot": 2
+      },
+      "nz26_animal_row3_age": {
+        "source": "birth_date",
+        "animalSlot": 2,
+        "note": "Age or Date of birth — 생년월일"
+      },
+      "nz26_animal_row3_sex": {
+        "source": "sex",
+        "transform": "sex_mf_only",
+        "animalSlot": 2
+      },
+      "nz26_animal_row3_desexed": {
+        "source": "sex",
+        "transform": "sex_neutered_status",
+        "animalSlot": 2
+      },
+      "nz26_animal_row4_name": {
+        "source": "pet_name_en",
+        "animalSlot": 3,
+        "note": "p1 (15) 4행 Name"
+      },
+      "nz26_animal_row4_species": {
+        "source": "species",
+        "transform": "en",
+        "animalSlot": 3
+      },
+      "nz26_animal_row4_breed": {
+        "source": "breed_en",
+        "animalSlot": 3
+      },
+      "nz26_animal_row4_microchip": {
+        "source": "microchip",
+        "animalSlot": 3
+      },
+      "nz26_animal_row4_age": {
+        "source": "birth_date",
+        "animalSlot": 3,
+        "note": "Age or Date of birth — 생년월일"
+      },
+      "nz26_animal_row4_sex": {
+        "source": "sex",
+        "transform": "sex_mf_only",
+        "animalSlot": 3
+      },
+      "nz26_animal_row4_desexed": {
+        "source": "sex",
+        "transform": "sex_neutered_status",
+        "animalSlot": 3
+      },
+      "nz26_animal_row5_name": {
+        "source": "pet_name_en",
+        "animalSlot": 4,
+        "note": "p1 (15) 5행 Name"
+      },
+      "nz26_animal_row5_species": {
+        "source": "species",
+        "transform": "en",
+        "animalSlot": 4
+      },
+      "nz26_animal_row5_breed": {
+        "source": "breed_en",
+        "animalSlot": 4
+      },
+      "nz26_animal_row5_microchip": {
+        "source": "microchip",
+        "animalSlot": 4
+      },
+      "nz26_animal_row5_age": {
+        "source": "birth_date",
+        "animalSlot": 4,
+        "note": "Age or Date of birth — 생년월일"
+      },
+      "nz26_animal_row5_sex": {
+        "source": "sex",
+        "transform": "sex_mf_only",
+        "animalSlot": 4
+      },
+      "nz26_animal_row5_desexed": {
+        "source": "sex",
+        "transform": "sex_neutered_status",
+        "animalSlot": 4
+      },
+      "nz26_exporting_country_p2": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p2 머리글 Exporting Country"
+      },
+      "nz26_exporting_country_p3": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p3 머리글 Exporting Country"
+      },
+      "nz26_exporting_country_p4": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p4 머리글 Exporting Country"
+      },
+      "nz26_exporting_country_p5": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p5 머리글 Exporting Country"
+      },
+      "nz26_exporting_country_p6": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p6 머리글 Exporting Country"
+      },
+      "nz26_exporting_country_p7": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p7 머리글 Exporting Country"
+      },
+      "nz26_exporting_country_p8": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p8 머리글 Exporting Country"
+      },
+      "nz26_rabies_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine_desc:rabies:date[0]",
+        "note": "p3 (20) Date of vaccination — 최근 접종"
+      },
+      "nz26_rabies_doi": {
+        "source": "rabies_dates",
+        "transform": "rabies_doi_desc[0]",
+        "note": "p3 (20) Duration of immunity — 기록의 유효기간(기본 1년)"
+      },
+      "nz26_rabies_prev_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine_desc:rabies:date[1]",
+        "note": "p3 (20) Date of previous vaccination"
+      },
+      "nz26_rabies_prev_doi": {
+        "source": "rabies_dates",
+        "transform": "rabies_doi_desc[1]"
+      },
+      "nz26_titer_test": {
+        "source": null,
+        "transform": "if_any:rabies_titer_records:FAVN",
+        "note": "p3 (21) Test used — 국내 검사기관(KRSL·APQA)은 FAVN"
+      },
+      "nz26_titer_date": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].date",
+        "note": "p3 (21) Sample collection date — 최근 채혈"
+      },
+      "nz26_titer_result": {
+        "source": "rabies_titer_records",
+        "transform": "titer_result_iu",
+        "note": "p3 (21) Test Result"
+      },
+      "nz26_scan1_date": {
+        "source": null,
+        "transform": "nzid:cert_first_scan",
+        "note": "p3 (22a i) Date of first scan — 3~6개월 경로만"
+      },
+      "nz26_scan2_date": {
+        "source": null,
+        "transform": "nzid:cert_second_scan",
+        "note": "p4 (22a ii) Date of second scan — 3~6개월 경로만"
+      },
+      "nz26_ext_cat_date": {
+        "source": "external_parasite_dates",
+        "transform": "pick:latest:vaccine_desc:ext_parasite:date[{i}]",
+        "speciesOnly": "cat",
+        "note": "p4 (27) 고양이 외부구충 — 최근 1회"
+      },
+      "nz26_ext_cat_product": {
+        "source": "external_parasite_dates",
+        "transform": "pick:latest:vaccine_desc:ext_parasite:name[{i}]",
+        "speciesOnly": "cat"
+      },
+      "nz26_ext_cat_ingredient": {
+        "source": "external_parasite_dates",
+        "transform": "pick:latest:parasite_info:external:ingredient[{i}]",
+        "speciesOnly": "cat"
+      },
+      "nz26_ext_cat_dose": {
+        "source": "external_parasite_dates",
+        "transform": "pick:latest:parasite_info:external:dose[{i}]",
+        "speciesOnly": "cat"
+      },
+      "nz26_ext_cat_weight": {
+        "source": null,
+        "transform": "weight_if:external_parasite_dates",
+        "speciesOnly": "cat"
+      },
+      "nz26_ext1_date": {
+        "source": "external_parasite_dates",
+        "transform": "pick:ext_first:vaccine_desc:ext_parasite:date[{i}]",
+        "speciesOnly": "dog",
+        "note": "p4 (28a) 첫 치료"
+      },
+      "nz26_ext1_product": {
+        "source": "external_parasite_dates",
+        "transform": "pick:ext_first:vaccine_desc:ext_parasite:name[{i}]",
+        "speciesOnly": "dog"
+      },
+      "nz26_ext1_ingredient": {
+        "source": "external_parasite_dates",
+        "transform": "pick:ext_first:parasite_info:external:ingredient[{i}]",
+        "speciesOnly": "dog"
+      },
+      "nz26_ext1_dose": {
+        "source": "external_parasite_dates",
+        "transform": "pick:ext_first:parasite_info:external:dose[{i}]",
+        "speciesOnly": "dog"
+      },
+      "nz26_ext2_date": {
+        "source": "external_parasite_dates",
+        "transform": "pick:ext_last:vaccine_desc:ext_parasite:date[{i}]",
+        "speciesOnly": "dog",
+        "note": "p4 (28b) 마지막 치료"
+      },
+      "nz26_ext2_product": {
+        "source": "external_parasite_dates",
+        "transform": "pick:ext_last:vaccine_desc:ext_parasite:name[{i}]",
+        "speciesOnly": "dog"
+      },
+      "nz26_ext2_ingredient": {
+        "source": "external_parasite_dates",
+        "transform": "pick:ext_last:parasite_info:external:ingredient[{i}]",
+        "speciesOnly": "dog"
+      },
+      "nz26_ext2_dose": {
+        "source": "external_parasite_dates",
+        "transform": "pick:ext_last:parasite_info:external:dose[{i}]",
+        "speciesOnly": "dog"
+      },
+      "nz26_ext3_date": {
+        "source": "external_parasite_dates",
+        "transform": "pick:ext_extra:vaccine_desc:ext_parasite:date[{i}]",
+        "speciesOnly": "dog",
+        "note": "p4 (28c) 추가 치료 — 3회 이상일 때 가운데 회차"
+      },
+      "nz26_ext3_product": {
+        "source": "external_parasite_dates",
+        "transform": "pick:ext_extra:vaccine_desc:ext_parasite:name[{i}]",
+        "speciesOnly": "dog"
+      },
+      "nz26_ext3_ingredient": {
+        "source": "external_parasite_dates",
+        "transform": "pick:ext_extra:parasite_info:external:ingredient[{i}]",
+        "speciesOnly": "dog"
+      },
+      "nz26_ext3_dose": {
+        "source": "external_parasite_dates",
+        "transform": "pick:ext_extra:parasite_info:external:dose[{i}]",
+        "speciesOnly": "dog"
+      },
+      "nz26_ext_dog_weight": {
+        "source": null,
+        "transform": "weight_if:external_parasite_dates",
+        "speciesOnly": "dog"
+      },
+      "nz26_int1_date": {
+        "source": "internal_parasite_dates",
+        "transform": "pick:int_first:vaccine_desc:int_parasite:date[{i}]",
+        "note": "p5 (29a) 1차"
+      },
+      "nz26_int1_product": {
+        "source": "internal_parasite_dates",
+        "transform": "pick:int_first:vaccine_desc:int_parasite:name[{i}]"
+      },
+      "nz26_int1_ingredient": {
+        "source": "internal_parasite_dates",
+        "transform": "pick:int_first:parasite_info:internal:ingredient[{i}]"
+      },
+      "nz26_int1_dose": {
+        "source": "internal_parasite_dates",
+        "transform": "pick:int_first:parasite_info:internal:dose[{i}]"
+      },
+      "nz26_int1_weight": {
+        "source": null,
+        "transform": "weight_if:internal_parasite_dates"
+      },
+      "nz26_int2_date": {
+        "source": "internal_parasite_dates",
+        "transform": "pick:int_last:vaccine_desc:int_parasite:date[{i}]",
+        "note": "p5 (29b) 2차"
+      },
+      "nz26_int2_product": {
+        "source": "internal_parasite_dates",
+        "transform": "pick:int_last:vaccine_desc:int_parasite:name[{i}]"
+      },
+      "nz26_int2_ingredient": {
+        "source": "internal_parasite_dates",
+        "transform": "pick:int_last:parasite_info:internal:ingredient[{i}]"
+      },
+      "nz26_int2_dose": {
+        "source": "internal_parasite_dates",
+        "transform": "pick:int_last:parasite_info:internal:dose[{i}]"
+      },
+      "nz26_int2_weight": {
+        "source": null,
+        "transform": "weight_if:internal_parasite_dates"
+      },
+      "nz26_lungworm_date": {
+        "source": "lungworm_dates",
+        "transform": "pick:latest:rec_desc[{i}].date",
+        "speciesOnly": "dog",
+        "note": "p5 (30) 폐충 치료일"
+      },
+      "nz26_lungworm_treatment": {
+        "source": "lungworm_dates",
+        "transform": "pick:latest:rec_desc[{i}].product",
+        "speciesOnly": "dog",
+        "note": "p5 (30) Treatment used — 기록의 제품명(카탈로그 없음)"
+      },
+      "nz26_lungworm_weight": {
+        "source": null,
+        "transform": "weight_if:lungworm_dates",
+        "speciesOnly": "dog"
+      },
+      "nz26_lungworm_dose": {
+        "source": null,
+        "speciesOnly": "dog",
+        "note": "용량 — 데이터 없음(직접 기입)"
+      },
+      "nz26_heartworm_test_date": {
+        "source": null,
+        "transform": "nz_infectious_date",
+        "speciesOnly": "dog",
+        "note": "p5 (31) 심장사상충 항원 검사 채혈일 — 전염병검사 채혈일"
+      },
+      "nz26_heartworm_date": {
+        "source": "heartworm_dates",
+        "transform": "pick:latest:vaccine_desc:int_parasite:date[{i}]",
+        "speciesOnly": "dog",
+        "note": "p5 (32a) 예방약 투약일"
+      },
+      "nz26_heartworm_treatment": {
+        "source": "heartworm_dates",
+        "transform": "pick:latest:heartworm_name[{i}]",
+        "speciesOnly": "dog"
+      },
+      "nz26_heartworm_weight": {
+        "source": null,
+        "transform": "weight_if:heartworm_dates",
+        "speciesOnly": "dog"
+      },
+      "nz26_heartworm_dose": {
+        "source": null,
+        "speciesOnly": "dog",
+        "note": "Total dose — 데이터 없음(직접 기입)"
+      },
+      "nz26_babesia_rossi_no": {
+        "source": null,
+        "transform": "checkbox:always_true",
+        "speciesOnly": "dog",
+        "note": "p5 (33) 아프리카 거주·여행 이력 없음 — 한국 출발 개(호주 서식 Babesia N/A 와 같은 판단)"
+      },
+      "nz26_gibsoni_ext_date": {
+        "source": "external_parasite_dates",
+        "transform": "pick:ext_first:vaccine_desc:ext_parasite:date[{i}]",
+        "speciesOnly": "dog",
+        "note": "p6 (38a) First external parasite treatment date"
+      },
+      "nz26_gibsoni_ifa_date": {
+        "source": null,
+        "transform": "nz_infectious_date",
+        "speciesOnly": "dog",
+        "note": "p6 (38a) IFA/ELISA 채혈일"
+      },
+      "nz26_gibsoni_test": {
+        "source": null,
+        "speciesOnly": "dog",
+        "note": "IFA/ELISA 구분 — 검사기관 확인 후 기입"
+      },
+      "nz26_gibsoni_pcr_date": {
+        "source": null,
+        "transform": "nz_infectious_date",
+        "speciesOnly": "dog",
+        "note": "p6 (38a) PCR 채혈일"
+      },
+      "nz26_brucella_test": {
+        "source": null,
+        "speciesOnly": "dog",
+        "note": "RSAT/TAT/IFA 구분 — 직접 기입"
+      },
+      "nz26_brucella_date": {
+        "source": null,
+        "transform": "nz_infectious_date_entire",
+        "speciesOnly": "dog",
+        "note": "p7 (42a) 채혈일 — 미중성화견만"
+      },
+      "nz26_civ_date": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc_rest:civ:date[0]",
+        "speciesOnly": "dog",
+        "note": "p7 (44a ii) Date of vaccination(s) — 회차 전부"
+      },
+      "nz26_civ_name": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:name[0]",
+        "speciesOnly": "dog"
+      },
+      "nz26_civ_doi": {
+        "source": null,
+        "transform": "label_if:civ:1 year",
+        "speciesOnly": "dog"
+      },
+      "nz26_civ_pcr_date": {
+        "source": null,
+        "speciesOnly": "dog",
+        "note": "p7 (44b) PCR 채혈일 — 접종 대신 PCR 을 한 경우 직접 기입"
+      },
+      "nz26_leish_test": {
+        "source": null,
+        "speciesOnly": "dog",
+        "note": "IFA/ELISA 구분 — 검사기관 확인 후 기입"
+      },
+      "nz26_leish_date": {
+        "source": null,
+        "transform": "nz_infectious_date",
+        "speciesOnly": "dog",
+        "note": "p8 (47a) 채혈일"
+      },
+      "nz26_lepto_date": {
+        "source": null,
+        "transform": "nz_infectious_date",
+        "speciesOnly": "dog",
+        "note": "p8 (49) MAT 채혈일"
+      },
+      "nz26_vet_name": {
+        "source": null,
+        "transform": "vet:name_en",
+        "note": "p8 Veterinarian registered to practice — Name"
+      },
+      "nz26_vet_address": {
+        "source": null,
+        "transform": "vet:address_full_en"
+      },
+      "nz26_vet_email": {
+        "source": null,
+        "transform": "vet:email"
+      },
+      "nz26_vet_date": {
+        "source": "vet_visit_date",
+        "note": "p8 Date — 발급일 = 내원일(구 NZ 서식과 같은 규칙)"
+      }
+    }
+  },
+  "NZ_ID": {
+    "template": "NZ_ID.pdf",
+    "description": "New Zealand 사전 마이크로칩 확인서 — Appendix 2B Model pre-export identification check form (category 3). 검역관이 스캔할 때마다 작성해 MPI 에 올리는 서식(사용자 제공 docx 를 PDF 변환). 한 장에 최대 4마리. 경로·회차 체크는 1차·2차 인증일과 채혈일↔출국일로 판정, 판정 못 하면 비워 둔다(lib/pdf-nz2026.ts).",
+    "filename": "NZ_ID_{pet_name}.pdf",
+    "dateFormat": "dmy",
+    "flatten": true,
+    "fields": {
+      "nzid_path_6to12": {
+        "source": null,
+        "transform": "nzid:path_6to12",
+        "note": "☐ 채혈 출국 6~12개월 전 경로(인증 1회) — lib/pdf-nz2026.ts readNzIdScan"
+      },
+      "nzid_path_3to6": {
+        "source": null,
+        "transform": "nzid:path_3to6",
+        "note": "☐ 채혈 출국 3~6개월 전 경로(인증 2회)"
+      },
+      "nzid_scan_first": {
+        "source": null,
+        "transform": "nzid:scan_first",
+        "note": "1: ☐ 첫 번째 인증(3~6개월 경로)"
+      },
+      "nzid_scan_second": {
+        "source": null,
+        "transform": "nzid:scan_second",
+        "note": "2. ☐ 두 번째 인증(3~6개월 경로)"
+      },
+      "nzid_path_6to12_date": {
+        "source": null,
+        "transform": "nzid:path_6to12_date",
+        "note": "6~12개월 경로 문장의 (date) — 이번 인증일"
+      },
+      "nzid_path_3to6_date": {
+        "source": null,
+        "transform": "nzid:path_3to6_date",
+        "note": "3~6개월 경로 문장의 (date) — 이번 인증일"
+      },
+      "nzid_animal_row1_microchip": {
+        "source": "microchip",
+        "animalSlot": 0,
+        "note": "Animal details 1번째 칸"
+      },
+      "nzid_animal_row1_sex": {
+        "source": "sex",
+        "transform": "sex_desexed_en",
+        "animalSlot": 0
+      },
+      "nzid_animal_row1_description": {
+        "source": "animal_description",
+        "animalSlot": 0
+      },
+      "nzid_animal_row1_scan_date": {
+        "source": "id_date",
+        "transform": "nzid:scan_date",
+        "animalSlot": 0
+      },
+      "nzid_animal_row2_microchip": {
+        "source": "microchip",
+        "animalSlot": 1,
+        "note": "Animal details 2번째 칸"
+      },
+      "nzid_animal_row2_sex": {
+        "source": "sex",
+        "transform": "sex_desexed_en",
+        "animalSlot": 1
+      },
+      "nzid_animal_row2_description": {
+        "source": "animal_description",
+        "animalSlot": 1
+      },
+      "nzid_animal_row2_scan_date": {
+        "source": "id_date",
+        "transform": "nzid:scan_date",
+        "animalSlot": 1
+      },
+      "nzid_animal_row3_microchip": {
+        "source": "microchip",
+        "animalSlot": 2,
+        "note": "Animal details 3번째 칸"
+      },
+      "nzid_animal_row3_sex": {
+        "source": "sex",
+        "transform": "sex_desexed_en",
+        "animalSlot": 2
+      },
+      "nzid_animal_row3_description": {
+        "source": "animal_description",
+        "animalSlot": 2
+      },
+      "nzid_animal_row3_scan_date": {
+        "source": "id_date",
+        "transform": "nzid:scan_date",
+        "animalSlot": 2
+      },
+      "nzid_animal_row4_microchip": {
+        "source": "microchip",
+        "animalSlot": 3,
+        "note": "Animal details 4번째 칸"
+      },
+      "nzid_animal_row4_sex": {
+        "source": "sex",
+        "transform": "sex_desexed_en",
+        "animalSlot": 3
+      },
+      "nzid_animal_row4_description": {
+        "source": "animal_description",
+        "animalSlot": 3
+      },
+      "nzid_animal_row4_scan_date": {
+        "source": "id_date",
+        "transform": "nzid:scan_date",
+        "animalSlot": 3
+      },
+      "nzid_ov_name": {
+        "source": null,
+        "note": "Official Veterinarian — 검역관 기입"
+      },
+      "nzid_ov_authority": {
+        "source": null,
+        "default": "Animal and Plant Quarantine Agency (APQA)"
+      },
+      "nzid_ov_address": {
+        "source": null,
+        "note": "검역관 소속 사무소 주소 — 검역관 기입"
+      },
+      "nzid_ov_country": {
+        "source": null,
+        "default": "Republic of Korea"
+      },
+      "nzid_ov_phone": {
+        "source": null
+      },
+      "nzid_ov_email": {
+        "source": null
+      },
+      "nzid_ov_date": {
+        "source": null
+      }
+    }
+  },
+  "RCF": {
+    "template": "RCF.pdf",
+    "description": "New Zealand Rabies Certification Form (RCF) — 신 IHS 2026 에서 OVD 를 대신하는 광견병 접종·항체검사 선언서(MPI 공식 PDF, Version: October 2025). 칸 구성이 OVD 와 같아 OVD 입력칸·매핑을 옮기고(좌표만 구역별 이동), 수의사·병원·주소·검사기관을 칸으로 추가했다. 뉴질랜드(구) 케이스는 OVD.",
+    "filename": "RCF_{pet_name}.pdf",
+    "dateFormat": "dmy",
+    "flatten": true,
+    "fields": {
+      "text_1barn": {
+        "source": null,
+        "transform": "today_ymd_slash",
+        "note": "Registered Vet 서명일 — 버튼 클릭한 오늘 날짜 (DD/MM/YYYY). OVD는 발급일=내원일 규칙의 예외"
+      },
+      "text_53wspu": {
+        "source": "microchip",
+        "transform": "digit[0]",
+        "align": "center",
+        "note": "Primary microchip digit 1"
+      },
+      "text_52tpog": {
+        "source": "microchip",
+        "transform": "digit[1]",
+        "align": "center",
+        "note": "Primary microchip digit 2"
+      },
+      "text_51rkrw": {
+        "source": "microchip",
+        "transform": "digit[2]",
+        "align": "center",
+        "note": "Primary microchip digit 3"
+      },
+      "text_50noht": {
+        "source": "microchip",
+        "transform": "digit[3]",
+        "align": "center",
+        "note": "Primary microchip digit 4"
+      },
+      "text_49xcfr": {
+        "source": "microchip",
+        "transform": "digit[4]",
+        "align": "center",
+        "note": "Primary microchip digit 5"
+      },
+      "text_48slkl": {
+        "source": "microchip",
+        "transform": "digit[5]",
+        "align": "center",
+        "note": "Primary microchip digit 6"
+      },
+      "text_47zfmi": {
+        "source": "microchip",
+        "transform": "digit[6]",
+        "align": "center",
+        "note": "Primary microchip digit 7"
+      },
+      "text_46otex": {
+        "source": "microchip",
+        "transform": "digit[7]",
+        "align": "center",
+        "note": "Primary microchip digit 8"
+      },
+      "text_45xomb": {
+        "source": "microchip",
+        "transform": "digit[8]",
+        "align": "center",
+        "note": "Primary microchip digit 9"
+      },
+      "text_44yxby": {
+        "source": "microchip",
+        "transform": "digit[9]",
+        "align": "center",
+        "note": "Primary microchip digit 10"
+      },
+      "text_43tswy": {
+        "source": "microchip",
+        "transform": "digit[10]",
+        "align": "center",
+        "note": "Primary microchip digit 11"
+      },
+      "text_42auuw": {
+        "source": "microchip",
+        "transform": "digit[11]",
+        "align": "center",
+        "note": "Primary microchip digit 12"
+      },
+      "text_41vruq": {
+        "source": "microchip",
+        "transform": "digit[12]",
+        "align": "center",
+        "note": "Primary microchip digit 13"
+      },
+      "text_40akbj": {
+        "source": "microchip",
+        "transform": "digit[13]",
+        "align": "center",
+        "note": "Primary microchip digit 14"
+      },
+      "text_39cgqq": {
+        "source": "microchip",
+        "transform": "digit[14]",
+        "align": "center",
+        "note": "Primary microchip digit 15"
+      },
+      "text_6cjms": {
+        "source": "microchip_implant_date",
+        "transform": "date_part:day",
+        "note": "Microchip implant Day"
+      },
+      "text_7norq": {
+        "source": "microchip_implant_date",
+        "transform": "date_part:month",
+        "note": "Microchip implant Month"
+      },
+      "text_8esbt": {
+        "source": "microchip_implant_date",
+        "transform": "date_part:year",
+        "note": "Microchip implant Year"
+      },
+      "text_11uvn": {
+        "source": "rabies_titer_records",
+        "transform": "titer_part[0]:date_day",
+        "note": "Blood sample Day (latest titer)"
+      },
+      "text_10cemh": {
+        "source": "rabies_titer_records",
+        "transform": "titer_part[0]:date_month",
+        "note": "Blood sample Month"
+      },
+      "text_9bpit": {
+        "source": "rabies_titer_records",
+        "transform": "titer_part[0]:date_year",
+        "note": "Blood sample Year"
+      },
+      "text_38axmr": {
+        "source": "rabies_titer_records",
+        "transform": "titer_part[0]:value_b0",
+        "note": "Titer XXX.XX digit b0"
+      },
+      "text_37bkse": {
+        "source": "rabies_titer_records",
+        "transform": "titer_part[0]:value_b1",
+        "note": "Titer digit b1"
+      },
+      "text_36aefb": {
+        "source": "rabies_titer_records",
+        "transform": "titer_part[0]:value_b2",
+        "note": "Titer digit b2 (just before decimal)"
+      },
+      "text_35jmhg": {
+        "source": "rabies_titer_records",
+        "transform": "titer_part[0]:value_a0",
+        "note": "Titer digit a0 (just after decimal)"
+      },
+      "text_34oqam": {
+        "source": "rabies_titer_records",
+        "transform": "titer_part[0]:value_a1",
+        "note": "Titer digit a1"
+      },
+      "text_12puyn": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[0]:date_day",
+        "note": "Vacc1 Day (older of two recent, or only dose)"
+      },
+      "text_13byis": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[0]:date_month",
+        "note": "Vacc1 Month"
+      },
+      "text_14eblq": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[0]:date_year",
+        "note": "Vacc1 Year"
+      },
+      "checkbox_18aaad": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[0]:doi_1y",
+        "note": "Vacc1 DOI 1 year (default when dose present)"
+      },
+      "checkbox_20dsiy": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[0]:doi_2y",
+        "note": "Vacc1 DOI 2 years"
+      },
+      "checkbox_22yude": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[0]:doi_3y",
+        "note": "Vacc1 DOI 3 years"
+      },
+      "text_25aish": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[0]:batch",
+        "note": "Vacc1 Batch Number"
+      },
+      "text_28fxpz": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[0]:expiry_day",
+        "note": "Vacc1 Batch Expiry Day"
+      },
+      "text_30cnai": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[0]:expiry_month",
+        "note": "Vacc1 Batch Expiry Month"
+      },
+      "text_32bokc": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[0]:expiry_year",
+        "note": "Vacc1 Batch Expiry Year"
+      },
+      "text_15vsaw": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[1]:date_day",
+        "note": "Vacc2 Day (newest, blank if 1 dose)"
+      },
+      "text_16lx": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[1]:date_month",
+        "note": "Vacc2 Month"
+      },
+      "text_17oay": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[1]:date_year",
+        "note": "Vacc2 Year"
+      },
+      "checkbox_19qpqb": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[1]:doi_1y",
+        "note": "Vacc2 DOI 1 year"
+      },
+      "checkbox_21amam": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[1]:doi_2y",
+        "note": "Vacc2 DOI 2 years"
+      },
+      "checkbox_23nitt": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[1]:doi_3y",
+        "note": "Vacc2 DOI 3 years"
+      },
+      "text_27ssea": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[1]:batch",
+        "note": "Vacc2 Batch Number"
+      },
+      "text_29wkrm": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[1]:expiry_day",
+        "note": "Vacc2 Batch Expiry Day"
+      },
+      "text_31udku": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[1]:expiry_month",
+        "note": "Vacc2 Batch Expiry Month"
+      },
+      "text_33ukje": {
+        "source": "rabies_dates",
+        "transform": "ovd_vacc[1]:expiry_year",
+        "note": "Vacc2 Batch Expiry Year"
+      },
+      "text_48beft": {
+        "source": "microchip_secondary",
+        "transform": "digit[0]",
+        "align": "center",
+        "note": "Secondary microchip digit 1"
+      },
+      "text_49gpcq": {
+        "source": "microchip_secondary",
+        "transform": "digit[1]",
+        "align": "center",
+        "note": "Secondary microchip digit 2"
+      },
+      "text_56iaav": {
+        "source": "microchip_secondary",
+        "transform": "digit[2]",
+        "align": "center",
+        "note": "Secondary microchip digit 3"
+      },
+      "text_57xlsj": {
+        "source": "microchip_secondary",
+        "transform": "digit[3]",
+        "align": "center",
+        "note": "Secondary microchip digit 4"
+      },
+      "text_58ygyt": {
+        "source": "microchip_secondary",
+        "transform": "digit[4]",
+        "align": "center",
+        "note": "Secondary microchip digit 5"
+      },
+      "text_59muoq": {
+        "source": "microchip_secondary",
+        "transform": "digit[5]",
+        "align": "center",
+        "note": "Secondary microchip digit 6"
+      },
+      "text_60wnai": {
+        "source": "microchip_secondary",
+        "transform": "digit[6]",
+        "align": "center",
+        "note": "Secondary microchip digit 7"
+      },
+      "text_61kzti": {
+        "source": "microchip_secondary",
+        "transform": "digit[7]",
+        "align": "center",
+        "note": "Secondary microchip digit 8"
+      },
+      "text_62hufo": {
+        "source": "microchip_secondary",
+        "transform": "digit[8]",
+        "align": "center",
+        "note": "Secondary microchip digit 9"
+      },
+      "text_63ugrl": {
+        "source": "microchip_secondary",
+        "transform": "digit[9]",
+        "align": "center",
+        "note": "Secondary microchip digit 10"
+      },
+      "text_64zvsx": {
+        "source": "microchip_secondary",
+        "transform": "digit[10]",
+        "align": "center",
+        "note": "Secondary microchip digit 11"
+      },
+      "text_65volj": {
+        "source": "microchip_secondary",
+        "transform": "digit[11]",
+        "align": "center",
+        "note": "Secondary microchip digit 12"
+      },
+      "text_66qvky": {
+        "source": "microchip_secondary",
+        "transform": "digit[12]",
+        "align": "center",
+        "note": "Secondary microchip digit 13"
+      },
+      "text_67vqqh": {
+        "source": "microchip_secondary",
+        "transform": "digit[13]",
+        "align": "center",
+        "note": "Secondary microchip digit 14"
+      },
+      "text_68pfha": {
+        "source": "microchip_secondary",
+        "transform": "digit[14]",
+        "align": "center",
+        "note": "Secondary microchip digit 15"
+      },
+      "text_69wrep": {
+        "source": null,
+        "note": "Secondary microchip implant Day — 데이터 모델에 보조칩 시술일 필드 없음. 수동 입력 또는 향후 microchip_secondary_implant_date 추가 시 매핑."
+      },
+      "text_70mpzo": {
+        "source": null,
+        "note": "Secondary microchip implant Month — 동일 (수동)"
+      },
+      "text_71zaeb": {
+        "source": null,
+        "note": "Secondary microchip implant Year — 동일 (수동)"
+      },
+      "rcf_vet_name": {
+        "source": null,
+        "transform": "vet:name_en",
+        "note": "Registered Veterinarian — Name (OVD 는 페이지 글자로 박혀 있던 자리)"
+      },
+      "rcf_vet_practice": {
+        "source": null,
+        "transform": "vet:clinic_en"
+      },
+      "rcf_vet_address": {
+        "source": null,
+        "transform": "vet:address_full_en"
+      },
+      "rcf_lab_name": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].lab",
+        "note": "항체검사 기관명 — 최근 검사 기록"
+      }
+    }
   }
 }

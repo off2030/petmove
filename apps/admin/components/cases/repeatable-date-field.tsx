@@ -269,6 +269,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
         '외부구충': 'vaccine:external_parasite',
         '내부구충': 'vaccine:internal_parasite',
         '심장사상충': 'vaccine:heartworm',
+        '폐충': 'vaccine:lungworm',
       }
       const toggleKey = labelToToggleKey[label]
       if (toggleKey) {

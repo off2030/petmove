@@ -11,7 +11,7 @@
  *   다이얼로그·다운로드 헬퍼에 네 번 복사돼 있어서 폼을 하나 추가할 때마다 네 곳이
  *   따로 놀았다(태국 R.1/1 추가 때 정리, 2026-08-24).
  */
-export type MultiFormKey = 'AnnexIII' | 'UK' | 'NZ' | 'VBC' | 'Form_R11'
+export type MultiFormKey = 'AnnexIII' | 'UK' | 'NZ' | 'NZ_ID' | 'VBC' | 'Form_R11'
 
 /** 한 장(문서)에 담을 수 있는 동물 수 / 백신 행 수. */
 export interface FormCapacity { animals: number; vaccRows: number }
@@ -34,6 +34,11 @@ export const FORM_CAPACITY: Record<string, FormCapacity | undefined> = {
   // 인증서에 채워진다 (Cert A p1 5-row table + Cert B (4) 의 multi-line microchip 목록).
   NZ:       { animals: 5, vaccRows: 9999 },
   NZ_2:     { animals: 5, vaccRows: 9999 },
+  // 신 IHS 2026 건강증명서 — 표는 6행이지만 구 NZ 와 같은 5마리로 둔다(6행은 매핑하지 않음). 다이얼로그의 장수
+  // 미리보기는 버튼 키 'NZ'(구·신 공용)의 용량을 보므로 둘이 다르면 미리보기와 실제 장수가 어긋난다.
+  NZ26:     { animals: 5, vaccRows: 9999 },
+  // 사전 ID 확인서(Appendix 2B) — 동물 칸 4개.
+  NZ_ID:    { animals: 4, vaccRows: 9999 },
   // 태국 수입허가 신청서 R.1/1 — 양식에 동물 칸이 좌·우 **두 개**뿐이다. 백신/검사 행이
   // 없는 양식이라 vaccRows 제약은 의미가 없어 크게 둔다(NZ 와 같은 이유).
   // 3마리면 2장(2+1), 5마리면 3장(2+2+1) 으로 자동 분할된다.

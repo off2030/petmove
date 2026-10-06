@@ -9,6 +9,7 @@ import { readFile } from 'node:fs/promises'
 import zlib from 'node:zlib'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
+import nz26Strikes from '@/data/pdf-strikes-nz26.json'
 import { FORM_CAPACITY } from '@/lib/pdf-multi-forms'
 import { getParasiteFamily, PARASITE_FAMILIES, splitCustomerNameEn, formatKoreanPhone, looksLikeKoreanPhoneInput, destinationEnglish } from '@petmove/domain'
 import {
@@ -25,6 +26,7 @@ import {
 import { getOrgVaccineLookups } from '@/lib/vaccine-data'
 import { VET_INFO } from '@/lib/vet-info'
 import { RABIES_SLOT_CAP } from '@/lib/rabies-slot-cap'
+import { resolveNzIdTransform, nz26StrikeFlags } from '@/lib/pdf-nz2026'
 import { mergeParasiticideDoses } from '@/lib/pdf-other-slots'
 import type { CaseRow } from '@petmove/domain'
 
@@ -185,6 +187,13 @@ type FormMapping = {
     thickness?: number
     cases: Record<string, { page?: number; x1: number; y1: number; x2: number; y2: number; _at?: string }[]>
   }[]
+  /**
+   * 조건 묶음 취소선 — conditionalLines 가 값 **하나**로 고르는 것과 달리, 여러 조건(종·중성화·
+   * 인증 경로 등)이 **모두** 켜졌을 때 긋는다. 'nz26' = 뉴질랜드 신 IHS 건강증명서 — 조건은
+   * lib/pdf-nz2026.ts, 좌표는 data/pdf-strikes-nz26.json(scripts/nz2026-layout.py 가 원본 문구
+   * 위치에서 계산한 생성물 — 손으로 고치지 말 것). 여러 마리를 한 장에 쓰면 모든 동물 기준.
+   */
+  strikeFlags?: 'nz26'
 }
 
 type MappingsJson = Record<string, FormMapping>
@@ -1248,6 +1257,101 @@ function resolveField(
     if (sp !== speciesOnly) return mapping.default ?? ''
   }
   const raw = source ? readSource(source, caseRow, data) : null
+
+  // ── 뉴질랜드 신 IHS 2026 서식(NZ26·NZ_ID) 변환 ──
+  // 회차 고르기 — `pick:<role>:<안쪽 변환, 인덱스 자리 {i}>`. 기록(최신순)의 개수에 따라 인덱스를 정한다.
+  //   ext_first / ext_last / ext_extra — 개 외부구충: 첫 치료 · 마지막 치료 · 추가 치료(3회 이상일 때 가운데)
+  //   int_first / int_last            — 내부구충 2회: 1차(이전) · 2차(최근)
+  //   latest                          — 가장 최근 1건
+  // 고를 회차가 없으면(1회뿐인데 '마지막'을 묻는 등) 빈 칸 — 같은 치료가 두 칸에 찍히지 않게 한다.
+  const pickMatch = transform?.match(/^pick:(ext_first|ext_last|ext_extra|int_first|int_last|latest):(.+)$/)
+  if (pickMatch) {
+    const n = sortedDescRecords(raw).length
+    const role = pickMatch[1]
+    const idx =
+      role === 'latest' ? (n >= 1 ? 0 : -1)
+      : role === 'ext_first' ? (n >= 1 ? Math.min(n - 1, 2) : -1)
+      : role === 'ext_last' ? (n >= 2 ? 0 : -1)
+      : role === 'ext_extra' ? (n >= 3 ? 1 : -1)
+      : role === 'int_first' ? (n >= 2 ? 1 : n === 1 ? 0 : -1)
+      : (n >= 2 ? 0 : -1)
+    if (idx < 0) return mapping.default ?? ''
+    return resolveField({ ...mapping, transform: pickMatch[2].replace('{i}', String(idx)) }, caseRow, data, allowedVaccines)
+  }
+  // 기록 속성 — `rec_desc[N].<prop>`: 최신순 N번째 기록의 입력값(예: 폐충 치료의 제품명은 카탈로그가 없어 입력값뿐).
+  const recDescMatch = transform?.match(/^rec_desc\[(\d+)\]\.(\w+)$/)
+  if (recDescMatch) {
+    const rec = sortedDescRecords(raw)[Number(recDescMatch[1])] as unknown as Record<string, unknown> | undefined
+    if (!rec) return ''
+    const v = rec[recDescMatch[2]]
+    if (recDescMatch[2] === 'date' && typeof v === 'string') return fmtDate(v)
+    return typeof v === 'string' ? v.trim() : v == null ? '' : String(v)
+  }
+  // 면역 기간 — `rabies_doi_desc[N]`: 최신순 N번째 광견병 접종의 면역 기간("1 year" / "3 years").
+  const doiMatch = transform?.match(/^rabies_doi_desc\[(\d+)\]$/)
+  if (doiMatch) {
+    const rec = sortedDescRecords(raw)[Number(doiMatch[1])]
+    if (!rec) return ''
+    const y = parseValidYears(rec)
+    return y === 1 ? '1 year' : `${y} years`
+  }
+  // 심장사상충 약 이름 — `heartworm_name[N]`: 기록 입력값 → 카탈로그(체중별) 순.
+  //   용량은 카탈로그에 없어(PARASITE_PRODUCT_INFO 는 외부·내부구충만) 칸을 비운다.
+  const hwMatch = transform?.match(/^heartworm_name\[(\d+)\]$/)
+  if (hwMatch) {
+    const rec = sortedDescRecords(raw)[Number(hwMatch[1])]
+    if (!rec) return ''
+    const species = String(data.species ?? '').toLowerCase()
+    if (species !== 'dog' && species !== 'cat') return ''
+    const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
+    const p = rec.product_id ? lookupParasiteById(rec.product_id, { date: rec.date, weightKg }) : lookupHeartworm(species, weightKg)
+    return applyRecOverrides(rec, p).name
+  }
+  // 조건부 고정 문구 — `if_any:<data 키>:<문구>`: 그 기록(배열·값)이 있을 때만 문구. 검사법 칸('FAVN' 등)용.
+  const ifAnyMatch = transform?.match(/^if_any:([a-z_0-9]+):(.+)$/)
+  if (ifAnyMatch) {
+    const v = data[ifAnyMatch[1]]
+    const present = Array.isArray(v) ? v.length > 0 : v != null && v !== ''
+    return present ? ifAnyMatch[2] : ''
+  }
+  // 항체가 결과 — 최신 검사 "0.95 IU/mL".
+  if (transform === 'titer_result_iu') {
+    const rec = sortedTiters(raw)[0]
+    const v = rec?.value != null ? String(rec.value).trim() : ''
+    return v ? `${v} IU/mL` : ''
+  }
+  // 성별(중성화 포함) 영문 — NZ_ID 'Sex (male/desexed male/female/desexed female)' 칸.
+  if (transform === 'sex_desexed_en') {
+    const s = String(raw ?? '').toLowerCase()
+    return s === 'male' ? 'Male' : s === 'neutered_male' ? 'Desexed male'
+      : s === 'female' ? 'Female' : s === 'spayed_female' ? 'Desexed female' : ''
+  }
+  // 전염병검사 채혈일 — 기관 무관 가장 최근 기록(NZ 는 한 번 채혈로 기관별 검사를 함께 보낸다).
+  //   infectious_date:<lab> 과 달리 내원일로 폴백하지 않는다 — 채혈일 칸에 내원일이 찍히면 안 된다.
+  if (transform === 'nz_infectious_date') {
+    const recs = Array.isArray(data.infectious_disease_records) ? data.infectious_disease_records : []
+    const dates = (recs as Array<{ date?: string | null }>).map((r) => r?.date ?? '').filter(Boolean).sort()
+    return dates.length ? fmtDate(dates[dates.length - 1] as string) : ''
+  }
+  // 브루셀라 채혈일 — 미중성화견만(중성화견은 42a 가 지워지고 중성화 기록으로 갈음한다).
+  if (transform === 'nz_infectious_date_entire') {
+    const sx = String(data.sex ?? '').toLowerCase()
+    if (sx !== 'male' && sx !== 'female') return ''
+    return resolveField({ ...mapping, transform: 'nz_infectious_date' }, caseRow, data, allowedVaccines)
+  }
+  // 체중 — 그 처치 기록이 있을 때만(`weight_if:<data 키>`). 처치가 없는 줄에 체중만 찍히지 않게.
+  const weightIfMatch = transform?.match(/^weight_if:([a-z_]+)$/)
+  if (weightIfMatch) {
+    const v = data[weightIfMatch[1]]
+    if (!Array.isArray(v) || v.length === 0) return ''
+    const w = String(data.weight ?? '').trim()
+    return w
+  }
+  const nzIdMatch = transform?.match(/^nzid:(\w+)$/)
+  if (nzIdMatch) {
+    const v = resolveNzIdTransform(nzIdMatch[1], caseRow, data)
+    return typeof v === 'string' ? fmtDate(v) : v
+  }
 
   // 한글 도로명 주소를 도로명+번지(base)와 건물명/호수(detail) 로 분리.
   // address_detail_kr 가 저장돼 있으면 그걸로 분리, 없으면 "...로/길 N(-N)?" 패턴 뒤를 detail 로 휴리스틱 분리.
@@ -2992,6 +3096,24 @@ function resolveFieldMulti(
   return resolveField(finalMapping, target, (target.data ?? {}) as Record<string, unknown>, allowedVaccines)
 }
 
+type FlagStrikeGroup = { when: string[]; lines: { page: number; x1: number; y1: number; x2: number; y2: number }[] }
+
+/** 조건 묶음 취소선(FormMapping.strikeFlags) — 단일·다중 발급 공통. */
+function drawFlagStrikes(pdf: PDFDocument, form: FormMapping, cases: CaseRow[]): void {
+  if (form.strikeFlags !== 'nz26') return
+  const groups = nz26Strikes as FlagStrikeGroup[]
+  const flags = nz26StrikeFlags(cases)
+  const pages = pdf.getPages()
+  for (const g of groups) {
+    if (!g.when.every((f) => flags.has(f))) continue
+    for (const l of g.lines) {
+      const page = pages[l.page]
+      if (!page) continue
+      page.drawLine({ start: { x: l.x1, y: l.y1 }, end: { x: l.x2, y: l.y2 }, thickness: 0.7, color: rgb(0, 0, 0) })
+    }
+  }
+}
+
 export async function fillPdfMulti(
   formKey: string,
   cases: CaseRow[],
@@ -3119,6 +3241,8 @@ async function fillOnePackedDoc(
       page.drawText(sanitizeForFont(t.text), { x: t.x, y: t.y, size: t.size ?? 10, font: customFont })
     }
   }
+
+  drawFlagStrikes(pdf, form, doc.cases)
 
   // 평탄화 — solo 경로와 동일.
   if (form.flatten) {
@@ -3713,6 +3837,8 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
       }
     }
   }
+
+  drawFlagStrikes(pdf, form, [caseRowWithExtras])
 
   if (missing.length) console.warn(`[${formKey}] missing PDF fields:`, missing)
 

@@ -41,7 +41,11 @@ export const ALL_CERTS: CertDefinition[] = [
   // (au-identity-option.ts). 예전 'au2'·'auCat2' 버튼은 경로 선택으로 대체돼 제거(2026-10-05).
   { key: 'au', label: 'AU', type: 'single', species: 'dog' },
   { key: 'auCat', label: 'AU C', type: 'single', species: 'cat' },
+  // 뉴질랜드 — 'nz' 버튼 하나로 구·신 양식을 고른다: '뉴질랜드(구)' = 구 NZ/NZ_2, '뉴질랜드' = 신 IHS 2026
+  //   건강증명서(NZ26). 사전 ID 확인서·RCF 는 신 규정에서 새로 생긴 서류(2026-10-06).
   { key: 'nz', label: 'NZ', type: 'multi' },
+  { key: 'nzId', label: 'NZ ID', type: 'multi' },
+  { key: 'rcf', label: 'RCF', type: 'single' },
   { key: 'ovd', label: 'OVD', type: 'single' },
   { key: 'vbc', label: 'VBC', type: 'multi', species: 'dog' },
   // R.1/1 은 양식에 동물 칸이 좌·우 두 개 — 같은 보호자·같은 일정이면 두 마리를 한 장에
@@ -66,7 +70,8 @@ export const DEFAULT_CERT_CONFIG: CertConfig = {
     { countries: ['스위스'], certs: ['annexIII', 'ch'] },
     { countries: ['영국'], certs: ['annexIII', 'uk'] },
     { countries: ['호주'], certs: ['idDeclaration', 'au', 'auCat'] },
-    { countries: ['뉴질랜드'], certs: ['nz', 'ovd', 'vbc'] },
+    // 신 IHS 2026 — OVD 는 RCF 로 바뀌었다(MPI 서식 목록: OVD 는 2021 IHS 칸에만 남음).
+    { countries: ['뉴질랜드'], certs: ['nzId', 'nz', 'rcf', 'vbc'] },
     // 뉴질랜드(구) — 구 IHS(2021) 케이스 전용 한시 목적지(2026-10-06). 구 양식 그대로.
     { countries: ['뉴질랜드(구)'], certs: ['nz', 'ovd', 'vbc'] },
     { countries: ['태국'], certs: ['formR11'] },
