@@ -111,6 +111,7 @@ function readEffectiveExtraEmpty(
 const TITER_DATE_LABEL = '광견병 항체검사 검사일'
 const TITER_LAB_LABEL = '광견병 항체검사 검사기관'
 const TITER_VALUE_LABEL = '광견병 항체검사 수치'
+const TITER_RECEIVED_LABEL = '광견병 항체검사 검체 접수일'
 
 /**
  * 이 폼이 항체검사(rabies_titer_records) 의 어떤 서브칸을 실제로 출력하는지.
@@ -125,23 +126,27 @@ function renderedTiterProps(fields: Record<string, FieldMapping>): {
   date: boolean
   lab: boolean
   value: boolean
+  /** 검체 접수일(Date arrived at laboratory) — 호주 서식. */
+  received: boolean
   printedIdx: Set<number> | null
 } {
   let date = false
   let lab = false
   let value = false
+  let received = false
   let printedIdx: Set<number> | null = new Set()
   for (const fm of Object.values(fields)) {
     if (fm.source !== 'rabies_titer_records') continue
     const t = fm.transform ?? ''
-    if (/\.lab$/.test(t)) lab = true // array[i].lab / if_multi[i].lab (lab_country 는 제외)
+    if (/^titer_received_(?:sel$|asc\[)/.test(t)) received = true
+    else if (/\.lab$/.test(t)) lab = true // array[i].lab / if_multi[i].lab (lab_country 는 제외)
     else if (/\.value$/.test(t) || t === 'titer_value_sel' || /^titer_part\[\d+\]:value_/.test(t)) value = true
     else if (/\.date$/.test(t) || t === 'titer_date_sel' || /^titer_date_asc\[/.test(t) || /^titer_part\[\d+\]:date_/.test(t)) date = true
     const idx = t.match(/^array\[(\d+)\]\./)
     if (idx) printedIdx?.add(Number(idx[1]))
     else printedIdx = null
   }
-  return { date, lab, value, printedIdx }
+  return { date, lab, value, received, printedIdx }
 }
 
 /**
@@ -153,9 +158,15 @@ function renderedTiterProps(fields: Record<string, FieldMapping>): {
  *  - 검사기관·수치는 폼이 실제로 찍는 레코드만 본다(printedIdx). 검사일은 전체 —
  *    검사일 없는 레코드는 PDF 정렬(pdf-fill sortedTiters)에서 빠져 엉뚱한 검사가 찍힌다.
  */
-function missingTiterLabels(fields: Record<string, FieldMapping>, raw: unknown): string[] {
+function missingTiterLabels(
+  fields: Record<string, FieldMapping>,
+  raw: unknown,
+  data: Record<string, unknown>,
+  /** 호주 서류에서 고른 항체검사 — 채혈일 오름차순(날짜 있는 기록) 인덱스. pdf-fill 의 titerIndices 와 같은 공간. */
+  titerIndices?: number[],
+): string[] {
   const rendered = renderedTiterProps(fields)
-  if (!rendered.date && !rendered.lab && !rendered.value) return [] // 항체검사 칸이 없는 폼
+  if (!rendered.date && !rendered.lab && !rendered.value && !rendered.received) return [] // 항체검사 칸이 없는 폼
   const records = Array.isArray(raw)
     ? raw.filter((r): r is Record<string, unknown> => !!r && typeof r === 'object' && !Array.isArray(r))
     : []
@@ -165,7 +176,14 @@ function missingTiterLabels(fields: Record<string, FieldMapping>, raw: unknown):
   )
   if (meaningful.length === 0) return [labelForSource('rabies_titer_records')]
   // PDF 와 같은 순서(검사일 있는 것만, 최신순)에서 찍히는 인덱스만.
-  const printed = rendered.printedIdx
+  //   호주처럼 서류에 쓸 검사를 고른 경우(titerIndices)는 **고른 검사만** — 고르지 않은 다른 나라용
+  //   검사의 빈 칸까지 알리면 오탐이다.
+  const datedAsc = meaningful
+    .filter((r) => !isEmpty(r.date))
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+  const printed = titerIndices?.length
+    ? datedAsc.filter((_, i) => titerIndices.includes(i))
+    : rendered.printedIdx
     ? meaningful
         .filter((r) => !isEmpty(r.date))
         .sort((a, b) => String(b.date).localeCompare(String(a.date)))
@@ -175,6 +193,12 @@ function missingTiterLabels(fields: Record<string, FieldMapping>, raw: unknown):
   if (rendered.date && meaningful.some((r) => isEmpty(r.date))) out.push(TITER_DATE_LABEL)
   if (rendered.lab && printed.some((r) => isEmpty(r.lab))) out.push(TITER_LAB_LABEL)
   if (rendered.value && printed.some((r) => isEmpty(r.value))) out.push(TITER_VALUE_LABEL)
+  // 검체 접수일 — 기록마다 received_date. 2026-07-19 이전 케이스는 australia_extra.sample_received_date
+  //   (또는 top-level)에만 있어 pdf-fill 도 그쪽으로 폴백한다 — 같은 기준으로 본다.
+  if (rendered.received) {
+    const legacy = ((data.australia_extra as Record<string, unknown> | undefined)?.sample_received_date) ?? data.sample_received_date
+    if (isEmpty(legacy) && printed.some((r) => isEmpty(r.received_date))) out.push(TITER_RECEIVED_LABEL)
+  }
   return out
 }
 
@@ -245,6 +269,7 @@ export async function inspectMissingPdfFields(
   formKey: string,
   caseIds: string[],
   destination: string | null,
+  options?: { titerIndices?: number[] },
 ): Promise<InspectMissingPdfFieldsResult> {
   if (caseIds.length === 0) return { ok: true, cases: [] }
 
@@ -290,7 +315,7 @@ export async function inspectMissingPdfFields(
     // 항체검사 기록은 배열 전체 유무가 아니라 폼이 출력하는 검사일·검사기관 칸 기준으로
     // 레코드별 누락까지 본다 (값만 입력하고 검사일·기관을 비운 레코드 포함).
     if (allowedVaccines.has('rabies_titer')) {
-      for (const label of missingTiterLabels(mapping.fields, data.rabies_titer_records)) {
+      for (const label of missingTiterLabels(mapping.fields, data.rabies_titer_records, data, options?.titerIndices)) {
         missingLabels.add(label)
       }
     }

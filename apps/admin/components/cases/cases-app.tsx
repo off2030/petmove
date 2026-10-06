@@ -166,7 +166,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
   }, [])
 
   const confirmIfFailing = useCallback(
-    async (caseRow: CaseRow, destination: string | null, formKey?: string): Promise<boolean> => {
+    async (caseRow: CaseRow, destination: string | null, formKey?: string, titerIndices?: number[]): Promise<boolean> => {
       // 1) 절차 검증 — blocker/warning 만 노출 (info 는 안 묻고 통과)
       const results = evaluateCase(caseRow, destination, disabledChecks)
       const failing = results.filter((r) => !r.result.ok && r.check.severity !== 'info')
@@ -174,7 +174,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
       // 2) PDF 빈 필드 — formKey 있을 때만 검사
       let missingLabels: string[] = []
       if (formKey) {
-        const r = await inspectMissingPdfFields(formKey, [caseRow.id], destination)
+        const r = await inspectMissingPdfFields(formKey, [caseRow.id], destination, { titerIndices })
         if (r.ok && r.cases.length > 0) missingLabels = r.cases[0].missingLabels
       }
 
@@ -326,7 +326,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
   const downloadCertPdf = useCallback(
     async (formKey: string, caseId: string, destination: string | null, rabiesIndices?: number[], titerIndices?: number[]) => {
       const row = cases.find((c) => c.id === caseId)
-      if (row && !(await confirmIfFailing(row, destination, formKey))) return
+      if (row && !(await confirmIfFailing(row, destination, formKey, titerIndices))) return
       try {
         await downloadPdfRequest({
           kind: 'single',
