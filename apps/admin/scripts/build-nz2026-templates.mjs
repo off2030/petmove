@@ -24,6 +24,9 @@ for (const [key, lay] of Object.entries(layouts)) {
   for (const f of lay.fields) {
     const page = pages[f.page]
     const rect = { x: f.x, y: f.y, width: f.w, height: f.h, borderWidth: 0 }
+    // pdf-lib 은 바탕색을 안 주면 흰색으로 칠한다 — 인쇄된 상자 선과 겹치는 서식(RCF)은 투명으로.
+    //   키를 **명시적으로 undefined** 로 넣어야 기본값(흰색)이 안 붙는다.
+    if (lay.transparent) Object.assign(rect, { backgroundColor: undefined, borderColor: undefined })
     if (f.type === 'check') {
       const cb = form.createCheckBox(f.name)
       cb.addToPage(page, rect)

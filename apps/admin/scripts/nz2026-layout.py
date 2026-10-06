@@ -406,6 +406,55 @@ def build_rcf():
         f.append({'name': w.field_name, 'page': 0, 'type': 'check' if w.field_type == fitz.PDF_WIDGET_TYPE_CHECKBOX else 'text',
                   'x': round(x0, 2), 'y': round(H - y1, 2), 'w': round(x1 - x0, 2), 'h': round(y1 - y0, 2),
                   'fontSize': w.text_fontsize or 0})
+    # 숫자 한 칸짜리 입력칸(칩 번호·항체가 숫자)은 RCF 의 인쇄된 상자 안쪽에 **정확히** 붙인다 —
+    #   구역 이동량만으로는 상자 폭이 OVD 와 조금 달라 숫자가 상자 한쪽으로 쏠렸다(2026-10-06 발견).
+    #   상자는 가는 사각형(세로선)으로 그려져 있어 세로선 사이 8~16pt 간격을 칸으로 본다.
+    verticals = {}
+    for d in rcf.get_drawings():
+        for it in d['items']:
+            if it[0] == 're' and it[1].width < 0.8 and 10 < it[1].height < 25:
+                r = it[1]
+                verticals.setdefault((round(r.y0), round(r.y1)), []).append((r.x0, r.x1))
+    cells = []
+    for (y0, y1), xs in verticals.items():
+        xs.sort()
+        for (a0, a1), (b0, b1) in zip(xs, xs[1:]):
+            if 8 <= b0 - a1 <= 16:
+                cells.append((a1, y0, b0, y1))
+    for x in f:
+        if x['type'] != 'text' or x['w'] > 16:
+            continue
+        top = H - x['y'] - x['h']
+        cy, cx = top + x['h'] / 2, x['x'] + x['w'] / 2
+        near = [c for c in cells if c[1] - 3 <= cy <= c[3] + 3]
+        if not near:
+            continue
+        c = min(near, key=lambda c: abs((c[0] + c[2]) / 2 - cx))
+        if abs((c[0] + c[2]) / 2 - cx) > 8:
+            continue
+        x.update({'x': round(c[0] + 0.4, 2), 'y': round(H - c[3] + 2.5, 2), 'w': round(c[2] - c[0] - 0.8, 2), 'h': round(c[3] - c[1] - 5, 2)})  # 위아래 2.5pt 여유 — 칸 높이가 곧 글자 크기라 꽉 채우면 숫자가 13pt 로 커진다
+
+    # 접종 표(Vaccination 1·2) — OVD 좌표가 칸 선에 걸쳐 글자가 선에 닿았다. 표의 세로선(가는 사각형)으로
+    #   칸을 구해 각 입력칸을 칸 안쪽에 맞춘다(글자칸은 좌우 3pt 여백, 체크칸은 칸 가운데 9pt).
+    col_x = sorted({round(it[1].x0, 1) for d in rcf.get_drawings() for it in d['items']
+                    if it[0] == 're' and it[1].width < 1.6 and it[1].height > 8 and 700 < it[1].y0 < 745})
+    row_y = sorted({(round(it[1].y0, 1), round(it[1].y1, 1)) for d in rcf.get_drawings() for it in d['items']
+                    if it[0] == 're' and it[1].width < 1.6 and it[1].height > 8 and 700 < it[1].y0 < 745})
+    for x in f:
+        top = H - x['y'] - x['h']
+        if top <= 700:
+            continue
+        cx, cy = x['x'] + x['w'] / 2, top + x['h'] / 2
+        col = next(((a, b) for a, b in zip(col_x, col_x[1:]) if a <= cx <= b), None)
+        row = next(((a, b) for a, b in row_y if a - 3 <= cy <= b + 3), None)
+        if not col or not row:
+            continue
+        if x['type'] == 'check':
+            sz, mx, my = 9.0, (col[0] + col[1]) / 2, (row[0] + row[1]) / 2
+            x.update({'x': round(mx - sz / 2, 2), 'y': round(H - (my + sz / 2), 2), 'w': sz, 'h': sz})
+        else:
+            x.update({'x': round(col[0] + 3, 2), 'y': round(H - (row[1] - 1.5), 2), 'w': round(col[1] - col[0] - 6, 2), 'h': round(row[1] - row[0] - 3, 2)})
+
     # OVD 에는 수의사·병원·주소·검사기관이 페이지 글자로 박혀 있었다(로잔 고정) — RCF 는 칸으로 만들어
     # 선택한 수의사·검사기관이 찍히게 한다. 값 칸 = 등록 수의사 열(x 133~291).
     pg = Page(rcf_doc, 0)
@@ -421,7 +470,9 @@ def build_rcf():
     row('Address', 'rcf_vet_address', bottom=date_ln['y0'] - 4, after=185)
     lab_ln, _ = pg.find('Name of the government-approved laboratory')
     f.append({'name': 'rcf_lab_name', 'page': 0, 'type': 'text', **pg.bl(lab_ln['x0'], lab_ln['y1'] + 1, 400, lab_ln['y1'] + 13)})
-    return {'base': 'RCF_base.pdf', 'out': 'RCF.pdf', 'fields': f, 'strikes': []}
+    # 칸 바탕 투명 — RCF 는 칩 번호·날짜 칸이 인쇄된 상자와 딱 붙어 있어, 흰 바탕이면 상자 선을
+    #   덮어 끊긴 것처럼 보인다(2026-10-06 발급본에서 사용자 발견).
+    return {'base': 'RCF_base.pdf', 'out': 'RCF.pdf', 'fields': f, 'strikes': [], 'transparent': True}
 
 
 def preview(layouts, out_dir):
