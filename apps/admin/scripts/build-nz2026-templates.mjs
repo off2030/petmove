@@ -5,7 +5,7 @@
 //
 // 원본(data/pdf-templates/src/):
 //   NZ26_base.pdf  — 사용자 제공 'Model-certificate-template.docx' 를 Word 로 PDF 변환(2026-10-06)
-//   NZ_ID_base.pdf — 사용자 제공 '_Model pre-export identification check form.docx' 변환(2026-10-06)
+//   NZ_ID_base.pdf — MPI 'Appendix 2B (guidance) … category 3 … 2026 IHS' 공식 PDF(2026-09-29 수정본, 2쪽)
 //   RCF_base.pdf   — MPI 'Rabies Certification Form (RCF) 2026 IHS' 공식 PDF(Version: October 2025)
 // 입력칸 이름·채움 규칙은 data/pdf-field-mappings.json 의 NZ26 / NZ_ID / RCF.
 // 실행: apps/admin 에서. 기존 출력은 덮어쓴다(원본에서 다시 만들기 때문에 안전하다).

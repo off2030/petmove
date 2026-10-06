@@ -6212,7 +6212,7 @@
   },
   "NZ_ID": {
     "template": "NZ_ID.pdf",
-    "description": "New Zealand 사전 마이크로칩 확인서 — Appendix 2B Model pre-export identification check form (category 3). 검역관이 스캔할 때마다 작성해 MPI 에 올리는 서식(사용자 제공 docx 를 PDF 변환). 한 장에 최대 4마리. 경로 체크는 기본 6~12개월(첫 칸) — 2차 인증일이 있거나 채혈일↔출국일이 3~6개월이면 3~6개월 경로(lib/pdf-nz2026.ts).",
+    "description": "New Zealand 사전 마이크로칩 확인서 — Appendix 2B Model pre-export identification check form (category 3). 검역관이 스캔할 때마다 작성해 MPI 에 올리는 서식(MPI 공식 PDF 2026-09-29 수정본 — 채혈을 'is to be taken'(예정)으로 고치고 문장 속 (date) 칸을 없앤 판, 사용자 지시로 docx 판에서 교체). 한 장에 최대 4마리. 경로 체크는 기본 6~12개월(첫 칸) — 2차 인증일이 있거나 채혈일↔출국일이 3~6개월이면 3~6개월 경로(lib/pdf-nz2026.ts).",
     "filename": "NZ_ID_{pet_name}.pdf",
     "dateFormat": "dmy",
     "flatten": true,
@@ -6236,16 +6236,6 @@
         "source": null,
         "transform": "nzid:scan_second",
         "note": "2. ☐ 두 번째 인증(3~6개월 경로)"
-      },
-      "nzid_path_6to12_date": {
-        "source": null,
-        "transform": "nzid:path_6to12_date",
-        "note": "6~12개월 경로 문장의 (date) — 이번 인증일"
-      },
-      "nzid_path_3to6_date": {
-        "source": null,
-        "transform": "nzid:path_3to6_date",
-        "note": "3~6개월 경로 문장의 (date) — 이번 인증일"
       },
       "nzid_animal_row1_microchip": {
         "source": "microchip",

@@ -75,7 +75,6 @@ export function readNzIdScan(caseRow: CaseRow, data: Record<string, unknown>): N
  * `nzid:<key>` 변환.
  *  path_6to12 / path_3to6        — 경로 체크박스
  *  scan_first / scan_second      — 3~6개월 경로의 회차 체크박스
- *  path_6to12_date / path_3to6_date — 체크한 경로 문장의 '(date)' 칸 = 이번 인증일
  *  scan_date                      — 동물 표 'Date microchip scanned'
  *  cert_first_scan / cert_second_scan — NZ26 건강증명서 22a 의 1차·2차 인증일
  */
@@ -86,8 +85,6 @@ export function resolveNzIdTransform(key: string, caseRow: CaseRow, data: Record
     case 'path_3to6': return scan.path === '3to6'
     case 'scan_first': return scan.path === '3to6' && scan.event === 1
     case 'scan_second': return scan.path === '3to6' && scan.event === 2
-    case 'path_6to12_date': return scan.path === '6to12' ? scan.date : ''
-    case 'path_3to6_date': return scan.path === '3to6' ? scan.date : ''
     case 'scan_date': return scan.date
     // NZ26 건강증명서 22a — 3~6개월 경로에서만 1차·2차 인증일(6~12개월 경로면 22a 가 지워진다).
     case 'cert_first_scan': return scan.path === '3to6' ? str(data.id_date) : ''

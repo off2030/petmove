@@ -1,7 +1,7 @@
 # 뉴질랜드 신 IHS 2026 서식 3종의 입력칸·취소선 좌표 계산 (2026-10-06).
 #
 #   NZ26   — Model certificate template for Category 3 (사용자 제공 docx → Word PDF 변환본)
-#   NZ_ID  — Appendix 2B Model pre-export identification check form (사용자 제공 docx → PDF)
+#   NZ_ID  — Appendix 2B Model pre-export identification check form (MPI 공식 PDF, 2026-09-29 수정본)
 #   RCF    — Rabies Certification Form (MPI 2026 IHS 공식 PDF, Version: October 2025)
 #
 # 좌표를 손으로 적지 않고 **문구 위치에서 계산**한다 — 양식이 바뀌면 원본만 바꿔 다시 돌리면 된다.
@@ -341,27 +341,29 @@ def build_nz26():
 # ── NZ_ID 사전 ID 확인서 ──────────────────────────────────────────────────────
 
 def build_nz_id():
+    # MPI 공식 'Appendix 2B (guidance)' 2026 IHS 판(2026-09-29 수정본, 2쪽). 사용자 제공 docx 판은
+    #   "The RNATT sample **was taken** … on (date)" 처럼 아직 하지 않은 채혈을 한 것처럼 읽혀 헷갈렸다 —
+    #   MPI 가 "is to be taken" 으로 고치고 문장 속 (date) 칸을 없앤 이 판으로 교체(2026-10-06 사용자 지시).
     doc = fitz.open(SRC / 'NZ_ID_base.pdf')
-    p = Page(doc, 0)
+    p1, p2 = Page(doc, 0), Page(doc, 1)
     f = []
-    # 경로 체크 — ☐ 6~12개월 / ☐ 3~6개월, 그 아래 1: 첫 인증 / 2. 두 번째 인증.
-    f.append({**check_on_glyph(p, 'path_6to12', 220, x_max=60), 'type': 'check'})
-    f.append({**check_on_glyph(p, 'path_3to6', 248, x_max=60), 'type': 'check'})
-    f.append({**check_on_glyph(p, 'scan_first', 275), 'type': 'check'})
-    f.append({**check_on_glyph(p, 'scan_second', 290), 'type': 'check'})
-    f.append(span_box(p, 'path_6to12_date', '.......', 236, 242))
-    f.append(span_box(p, 'path_3to6_date', '.......', 262, 268))
-    # 동물 표 — 5행 × 4마리. 표 선 좌표(get_drawings).
-    rows_y = [362.6, 403.7, 444.9, 486.1, 514.6, 543.2]
-    cols_x = [165.0, 269.2, 368.5, 474.7, 573.8]
+    # 경로 체크 — ☐ * 6~12개월 / ☐ ** 3~6개월, 그 아래 1: 첫 인증 / 2. 두 번째 인증.
+    f.append({**check_on_glyph(p1, 'path_6to12', 255, x_max=75), 'type': 'check'})
+    f.append({**check_on_glyph(p1, 'path_3to6', 320, x_max=75), 'type': 'check'})
+    f.append({**check_on_glyph(p1, 'scan_first', 350), 'type': 'check'})
+    f.append({**check_on_glyph(p1, 'scan_second', 390), 'type': 'check'})
+    # Section A 동물 표 — 5행 × 4마리. 표 선 좌표(get_drawings 의 얇은 사각형).
+    rows_y = [489.5, 529.5, 569.5, 622.7, 662.7, 702.7]
+    cols_x = [171.1, 263.2, 355.4, 447.6, 539.9]
     keys = ['microchip', 'sex', 'description', 'scan_date', 'permit_app']
     for a in range(4):
         for r, key in enumerate(keys):
-            f.append(field_box(p, f'animal_row{a + 1}_{key}', cols_x[a] + 2, rows_y[r] + 1.5, cols_x[a + 1] - 2, rows_y[r + 1] - 1.5, max_h=13))
-    vrows = [568.4, 584.3, 612.7, 641.3, 657.2, 673.2, 689.0, 704.9, 720.8, 736.8]
-    vkeys = ['ov_name', 'ov_authority', 'ov_address', 'ov_country', 'ov_phone', 'ov_email', 'ov_date']
-    for i, key in enumerate(vkeys):
-        f.append(field_box(p, key, 200.5, vrows[i] + 1, 571.5, vrows[i + 1] - 1, max_h=13))
+            f.append(field_box(p1, f'animal_row{a + 1}_{key}', cols_x[a] + 2, rows_y[r] + 1.5, cols_x[a + 1] - 2, rows_y[r + 1] - 1.5, max_h=13))
+    # Section B 검역관 — 이름은 1쪽 끝, 나머지는 2쪽.
+    f.append(field_box(p1, 'ov_name', 223, 742.7 + 1, 538, 758.7 - 1, max_h=13))
+    vrows = [72.2, 100.7, 129.2, 143.0, 156.7, 170.4, 184.1]
+    for i, key in enumerate(['ov_authority', 'ov_address', 'ov_country', 'ov_phone', 'ov_email', 'ov_date']):
+        f.append(field_box(p2, key, 223, vrows[i] + 1, 538, vrows[i + 1] - 1, max_h=13))
     for x in f:
         x['name'] = 'nzid_' + x['name']
         x.setdefault('type', 'text')
