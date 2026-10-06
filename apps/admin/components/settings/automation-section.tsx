@@ -55,6 +55,7 @@ const FIELD_OPTIONS: { key: string; label: string }[] = [
   { key: 'internal_parasite_dates', label: '내부구충' },
   { key: 'external_parasite_dates', label: '외부구충' },
   { key: 'heartworm_dates', label: '심장사상충' },
+  { key: 'lungworm_dates', label: '폐충' },
   { key: 'entry_date', label: '입국일 (통합)' },
   { key: 'return_date', label: '귀국일' },
 ]

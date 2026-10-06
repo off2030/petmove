@@ -33,6 +33,8 @@ const ARRAY_DATE_FIELDS = new Set([
   'internal_parasite_dates',
   'external_parasite_dates',
   'heartworm_dates',
+  // 폐충(뉴질랜드 신 IHS 2026) — 심장사상충과 같은 {date} 배열(2026-10-06 자동채움 대상 추가).
+  'lungworm_dates',
 ])
 
 // {date, lab} 구조 — 목적지 → lab 자동 해석 후 entry 생성
