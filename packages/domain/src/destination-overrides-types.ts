@@ -100,6 +100,9 @@ export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
     ],
   },
   id_date: { key: 'id_date', label: 'ID 날짜', type: 'date' },
+  // 뉴질랜드 마이크로칩 인증 2차 — 채혈이 출국 3~6개월 전이면 인증을 두 번 받는다(IHS 1.11(4)).
+  //   1차는 id_date 를 그대로 쓴다(펫무브워크 상세에서 뉴질랜드는 'ID 1차 날짜'로 표시).
+  id_date_2: { key: 'id_date_2', label: 'ID 2차 날짜', type: 'date' },
   sample_received_date: { key: 'sample_received_date', label: '검체 접수일', type: 'date' },
   // ── 절차 ──
   // EU 촌충국가(영국·아일랜드·몰타·노르웨이·핀란드)의 praziquantel 투여 시각.

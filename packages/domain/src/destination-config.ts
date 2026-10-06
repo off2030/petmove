@@ -560,7 +560,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     extraSection: 'new_zealand',
     extraFields: [
       // 수입 허가 번호 + 마이크로칩 인증일(호주와 같은 'id_date' 재사용 — 같은 사실이다).
-      'permit_no', 'id_date',
+      //   2차 인증일(id_date_2)은 채혈이 출국 3~6개월 전인 경우만 — 사전 ID 확인서·건강증명서
+      //   22a 의 경로 판정이 이 칸을 본다(apps/admin/lib/pdf-nz2026.ts, 2026-10-06 추가).
+      'permit_no', 'id_date', 'id_date_2',
       'address_overseas',
       // 출국 항공편 — 오클랜드·크라이스트처치 두 공항에만 도착할 수 있다(지원문서 Arrival).
       'entry_date', 'entry_flight_number', 'entry_departure_airport', 'entry_airport', 'entry_transport',

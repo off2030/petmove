@@ -955,6 +955,8 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
               if (idOption === 'none') return null
               if (idOption === 'exported') spec.label = '호주 출국일'
             }
+            // 뉴질랜드는 인증이 1회 또는 2회 — 아래 'ID 2차 날짜'와 짝이 보이게 1차임을 밝힌다.
+            if (def.key === 'id_date' && country === 'new-zealand') spec.label = 'ID 1차 날짜'
             const rawValue = readEffectiveExtraValue(data, def.key, activeDest)
             return (
               <EditableField
