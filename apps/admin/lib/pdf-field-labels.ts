@@ -51,10 +51,13 @@ export const SOURCE_LABELS: Record<string, string> = {
   external_parasite_dates: '외부 구충 기록',
   internal_parasite_dates: '내부 구충 기록',
   heartworm_dates: '심장사상충 기록',
+  lungworm_dates: '폐충 치료 기록',
   infectious_disease_records: '전염병 검사 기록',
 
   // 항공편
   entry_flight_number: '항공편명',
+  entry_departure_airport: '출발 공항',
+  entry_airport: '도착 공항',
 
   // 일정
   departure_date: '출국일',
@@ -63,6 +66,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   // 증명서·허가
   certificate_no: '증명서 번호',
   permit_no: '허가증 번호',
+  id_date: 'ID 날짜(마이크로칩 인증일)',
 
   // 국가별 추가정보
   australia_extra: '호주 추가 정보',
@@ -102,6 +106,8 @@ export function groupSourceKey(source: string): string {
  * — infectious_date:<lab> / titer_date:<lab>: vet_visit_date 로 자연 폴백되므로
  *   별도 알림 의미 없음 (lab 매칭 누락은 절차 검증 룰이 따로 잡음)
  * — microchip_secondary_note: 보조칩은 선택 입력 — 없으면 각주 자체가 공란 (정상)
+ * — microchip_secondary: 보조칩 번호 칸(OVD·RCF 'where applicable') — 칩이 두 개인 동물만 적는다.
+ *   비어 있는 게 정상인데 '비어 있는 정보'로 떴다(2026-10-06 사용자 발견).
  */
 const STANDALONE_ONLY = new Set([
   'consignee_lab',
@@ -112,7 +118,7 @@ const STANDALONE_ONLY = new Set([
 
 export function shouldSkipSourceForMissingCheck(source: string): boolean {
   if (STANDALONE_ONLY.has(source)) return true
-  if (source === 'microchip_secondary_note') return true
+  if (source === 'microchip_secondary_note' || source === 'microchip_secondary') return true
   if (source.startsWith('infectious_date:') || source.startsWith('titer_date:')) return true
   return false
 }

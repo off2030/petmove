@@ -2,7 +2,7 @@
 
 import { createClient } from '@petmove/auth/server'
 import type { CaseRow } from '@petmove/domain'
-import { flattenCaseForDestination, getEffectiveVaccineEntries, vaccineMatchesSpecies } from '@petmove/domain'
+import { findDestinationToken, flattenCaseForDestination, getEffectiveVaccineEntries, vaccineMatchesSpecies } from '@petmove/domain'
 import mappingsRaw from '@/data/pdf-field-mappings.json'
 import { readSource } from '@/lib/pdf-fill'
 import {
@@ -43,6 +43,7 @@ const VACCINE_KEY_TO_DATA_KEY: Record<string, string> = {
   external_parasite: 'external_parasite_dates',
   internal_parasite: 'internal_parasite_dates',
   heartworm: 'heartworm_dates',
+  lungworm: 'lungworm_dates',
 }
 const DATA_KEY_TO_VACCINE_KEY: Record<string, string> = Object.fromEntries(
   Object.entries(VACCINE_KEY_TO_DATA_KEY).map(([k, v]) => [v, k]),
@@ -218,6 +219,10 @@ function readGroupValue(
       if (stored && !/^republic of korea$/i.test(stored)) return stored
       return ''
     }
+    // 품종·색·체중으로 **만들어 찍는** 칸(ID 확인서·호주 ID 선언서) — 저장된 키가 없어 data 만 보면
+    //   늘 비었다고 오판했다(2026-10-06 발견). PDF 와 같은 readSource 로 판정.
+    case 'animal_description':
+      return readSource('animal_description', caseRow, data)
     default:
       return data[groupKey]
   }
@@ -241,8 +246,6 @@ export async function inspectMissingPdfFields(
   caseIds: string[],
   destination: string | null,
 ): Promise<InspectMissingPdfFieldsResult> {
-  const mapping = mappings[formKey]
-  if (!mapping?.fields) return { ok: true, cases: [] }
   if (caseIds.length === 0) return { ok: true, cases: [] }
 
   const supabase = await createClient()
@@ -251,6 +254,13 @@ export async function inspectMissingPdfFields(
     .select('*')
     .in('id', caseIds)
   if (error) return { ok: false, error: error.message }
+
+  // 'NZ' 버튼은 여행지로 양식이 갈린다(generate-pdf generateNZ) — 신 규정 '뉴질랜드'는 IHS 2026
+  //   건강증명서(NZ26). 버튼 키 그대로 보면 구 NZ 양식 칸으로 빈칸을 판정한다(2026-10-06 발견).
+  const firstDest = destination ?? ((rows?.[0] as CaseRow | undefined)?.destination ?? null)
+  const effectiveKey = formKey === 'NZ' && findDestinationToken(firstDest, 'new_zealand') ? 'NZ26' : formKey
+  const mapping = mappings[effectiveKey]
+  if (!mapping?.fields) return { ok: true, cases: [] }
 
   // 입력 caseIds 순서 보존
   const byId = new Map((rows ?? []).map((r) => [(r as CaseRow).id, r as CaseRow]))
