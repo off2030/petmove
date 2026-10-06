@@ -84,3 +84,4 @@ apps/rechart/
 
 # 참고용으로 내려받은 임시 파일
 tmp/
+scripts/backups/
