@@ -6212,7 +6212,7 @@
   },
   "NZ_ID": {
     "template": "NZ_ID.pdf",
-    "description": "New Zealand 사전 마이크로칩 확인서 — Appendix 2B Model pre-export identification check form (category 3). 검역관이 스캔할 때마다 작성해 MPI 에 올리는 서식(사용자 제공 docx 를 PDF 변환). 한 장에 최대 4마리. 경로·회차 체크는 1차·2차 인증일과 채혈일↔출국일로 판정, 판정 못 하면 비워 둔다(lib/pdf-nz2026.ts).",
+    "description": "New Zealand 사전 마이크로칩 확인서 — Appendix 2B Model pre-export identification check form (category 3). 검역관이 스캔할 때마다 작성해 MPI 에 올리는 서식(사용자 제공 docx 를 PDF 변환). 한 장에 최대 4마리. 경로 체크는 기본 6~12개월(첫 칸) — 2차 인증일이 있거나 채혈일↔출국일이 3~6개월이면 3~6개월 경로(lib/pdf-nz2026.ts).",
     "filename": "NZ_ID_{pet_name}.pdf",
     "dateFormat": "dmy",
     "flatten": true,
@@ -6220,7 +6220,7 @@
       "nzid_path_6to12": {
         "source": null,
         "transform": "nzid:path_6to12",
-        "note": "☐ 채혈 출국 6~12개월 전 경로(인증 1회) — lib/pdf-nz2026.ts readNzIdScan"
+        "note": "☐ 채혈 출국 6~12개월 전 경로(인증 1회) — 기본 체크. 2차 인증일이 있거나 채혈↔출국이 3~6개월이면 아래 칸(lib/pdf-nz2026.ts readNzIdScan)"
       },
       "nzid_path_3to6": {
         "source": null,

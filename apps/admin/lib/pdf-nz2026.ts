@@ -9,12 +9,14 @@
  *  · 3~6개월 경로:  채혈이 출국 3~6개월 전 → 인증 2회(1차 = 출국 6개월 전, 2차 = 채혈 전).
  * 케이스에는 인증일 두 칸(id_date = 1차, id_date_2 = 2차)만 있고 경로 선택값이 없다.
  *  → 2차 인증일이 있으면 3~6개월 경로(두 번째 인증).
- *  → 1차뿐이면 채혈일↔출국일 간격으로 판정. 둘 중 하나라도 없으면 **판정하지 않는다** —
- *    추측으로 체크하면 검역관이 서명하는 문서에 틀린 경로가 찍힌다. 비워 두면 손으로 체크한다.
+ *  → 그 밖에는 채혈일↔출국일 간격이 3~6개월로 확인될 때만 3~6개월 경로.
+ *  → 나머지(간격이 6~12개월이거나, 채혈일·출국일·인증일이 아직 없는 경우)는 **6~12개월 경로가 기본**
+ *    (2026-10-06 사용자 지시 — "기본적으로 첫번째 체크박스"). 인증 1회가 보통이고, 2회 경로는
+ *    2차 인증일을 입력하는 순간 바뀐다.
  */
 import { getDepartureDate, type CaseRow } from '@petmove/domain'
 
-export type NzIdPath = '6to12' | '3to6' | null
+export type NzIdPath = '6to12' | '3to6'
 
 export interface NzIdScan {
   path: NzIdPath
@@ -53,7 +55,7 @@ function addMonths(date: string, n: number): string {
 }
 
 /** 채혈일 → 출국일 간격으로 경로. 3개월 미만·12개월 초과는 어느 경로도 아니다(규정 위반은 검증이 알린다). */
-function pathByTiter(titer: string, departure: string): NzIdPath {
+function pathByTiter(titer: string, departure: string): NzIdPath | null {
   if (!titer || !departure) return null
   if (addMonths(titer, 6) <= departure && departure <= addMonths(titer, 12)) return '6to12'
   if (addMonths(titer, 3) <= departure && departure < addMonths(titer, 6)) return '3to6'
@@ -64,9 +66,9 @@ export function readNzIdScan(caseRow: CaseRow, data: Record<string, unknown>): N
   const first = str(data.id_date)
   const second = str(data.id_date_2)
   if (second) return { path: '3to6', event: 2, date: second }
-  if (!first) return { path: null, event: null, date: '' }
-  const path = pathByTiter(latestTiterDate(data), getDepartureDate(caseRow, null) ?? '')
-  return { path, event: path === '3to6' ? 1 : null, date: first }
+  const byTiter = pathByTiter(latestTiterDate(data), getDepartureDate(caseRow, null) ?? '')
+  if (byTiter === '3to6') return { path: '3to6', event: 1, date: first }
+  return { path: '6to12', event: null, date: first }
 }
 
 /**
