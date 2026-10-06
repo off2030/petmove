@@ -335,7 +335,7 @@ function destinationIsChina(dest: unknown): boolean {
 function destinationIsAuNz(dest: unknown): boolean {
   if (typeof dest !== 'string' || !dest) return false
   const tokens = dest.split(',').map(s => s.trim())
-  return tokens.includes('호주') || tokens.includes('뉴질랜드')
+  return tokens.includes('호주') || tokens.includes('뉴질랜드') || tokens.includes('뉴질랜드(구)')
 }
 
 /** YYYY-MM-DD → YYYY/MM/DD for Japan forms. */

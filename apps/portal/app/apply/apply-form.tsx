@@ -19,10 +19,11 @@ function capitalize(s: string) {
   return s.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
 }
 
-interface Dest { ko: string; en: string }
+interface Dest { ko: string; en: string; staffOnly?: boolean }
 const DESTS = destsData as Dest[]
 // 전체 국가 가나다순 (펫무브워크 성격의 조직 공개폼용). 지원 국가만 쓰는 직영 앱은 APP_DESTINATIONS_SORTED.
-const DESTS_SORTED: Dest[] = [...DESTS].sort((a, b) => a.ko.localeCompare(b.ko, 'ko'))
+//   staffOnly(예: '뉴질랜드(구)' — 구 규정 케이스 전용 한시 목적지)는 보호자가 고르는 신청서에서 뺀다.
+const DESTS_SORTED: Dest[] = DESTS.filter(d => !d.staffOnly).sort((a, b) => a.ko.localeCompare(b.ko, 'ko'))
 interface Breed { ko: string; en: string; type: string; alias?: string[] }
 const BREEDS = breedsData as Breed[]
 interface Color { ko: string; en: string; alias?: string[] }

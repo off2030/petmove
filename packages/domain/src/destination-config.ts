@@ -491,6 +491,26 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 편도 전용 — 준비 6개월 + 도착 계류라 '갔다 오는' 여정이 없다(2026-07-27 사용자 확정).
     oneWayOnly: true,
   },
+  // ── 뉴질랜드(구) — 구 IHS(2021) 기준. **펫무브워크 전용·한시 목적지** (2026-10-06 사용자 지시) ──
+  // 신 IHS 2026 으로 new_zealand 를 고치기(3df76bc9, 2026-07-27) 전에 구 규정으로 준비를 시작한
+  // 케이스가 남아 있다. 구 IHS 도 2027-04-01 까지 유효해 그 아이들은 구 규정대로 끝까지 가야 하므로,
+  // 7월 이전의 구성(항목·추가정보·검증)을 이 키로 되살리고 기존 '뉴질랜드' 케이스를 이 이름으로 옮겼다.
+  //   · 앱(펫무브)과는 연결하지 않는다(appSupported 없음) — 앱은 신 규정 '뉴질랜드'만 쓴다.
+  //   · 기존 케이스가 모두 끝나면 **삭제할 목적지**다. 새 케이스에 쓰지 말 것.
+  //   · 검증은 procedure-checks/nz-legacy.ts(7월 이전 nz.ts 그대로).
+  //   · ⚠️ **반드시 new_zealand 보다 앞에 선언** — '뉴질랜드(구)'는 '뉴질랜드'를 품고 있어서,
+  //     getDestinationOverride 의 부분 일치가 선언 순서대로 돌 때 뒤에 두면 new_zealand(신 규정)로 샌다.
+  new_zealand_legacy: {
+    keywords: ['뉴질랜드(구)'],
+    // 7월 이전 구성 그대로 — 폐충(lungworm)은 신 IHS 항목이라 없다.
+    vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'infectious_disease', 'external_parasite', 'internal_parasite', 'heartworm'],
+    extraSection: 'new_zealand',
+    extraFields: ['permit_no'],
+    vetVisitWindowDays: 3,
+    importPermit: { selfApply: true },
+    // 편도 — 기존 케이스가 모두 편도(trip_type one_way)로 저장돼 있어 왕복 선택을 열지 않는다.
+    oneWayOnly: true,
+  },
   // ── 뉴질랜드 (MPI) — 한국 = category 3(광견병 부재 또는 잘 관리되는 나라) ──────
   // 1차 출처(2026-07-27 전문 확인):
   //   · Import Health Standard: Cats and Dogs 2026 (CATSDOGS.GEN, 2026-05-12 발효 2026-07-01)
@@ -2099,6 +2119,17 @@ export function findDestinationToken(
 }
 
 /**
+ * 뉴질랜드 여행지 토큰 — 신 규정('뉴질랜드')과 구 규정('뉴질랜드(구)', 한시) 어느 쪽이든.
+ * 검사 탭 묶음·발송 팩처럼 **규정과 무관하게 뉴질랜드면 같은 처리**를 하는 펫무브워크 화면용.
+ * 규정이 갈리는 판단(검증·항목)은 각 키의 프로파일·룰이 따로 한다.
+ * new_zealand_legacy 를 지울 때 이 함수의 두 번째 줄만 지우면 된다.
+ */
+export function findNewZealandToken(destination: string | null | undefined): string | null {
+  return findDestinationToken(destination, 'new_zealand')
+    ?? findDestinationToken(destination, 'new_zealand_legacy')
+}
+
+/**
  * 한국 농림축산검역본부 지정 '광견병 비발생 지역'. 이 지역(국가)에서 한국으로 (재)입국하는
  * 개·고양이는 광견병 중화항체가(RNATT) 검사를 면제받는다 → 귀국 항체검사 2년 룰
  * (common.kr-return-titer-within-2years)·귀국 항체 만료 알림(titerReminderTargets)도
@@ -2151,7 +2182,7 @@ const RABIES_FREE_TOKENS: ReadonlySet<string> = new Set(
     '세이셜', '세이셸', 'seychelles',
     '지부티', 'djibouti', '카보베르데', 'cape verde', '코모로', 'comoros',
     // ── 오세아니아 ──
-    '뉴칼레도니아', 'new caledonia', '뉴질랜드', 'new zealand', 'nz',
+    '뉴칼레도니아', 'new caledonia', '뉴질랜드', '뉴질랜드(구)', 'new zealand', 'nz',
     '미크로네시아', 'micronesia', '바누아투', 'vanuatu', '사모아', 'samoa',
     '월리스프투나', '월리스푸투나', 'wallis and futuna', '키리바시', 'kiribati',
     '파푸아뉴기니', 'papua new guinea', '프랑스령 폴리네시아', '프랑스령폴리네시아',

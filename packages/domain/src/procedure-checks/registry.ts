@@ -19,6 +19,7 @@ import { MN_CHECKS } from './mn'
 import { MX_CHECKS } from './mx'
 import { MY_CHECKS } from './my'
 import { NZ_CHECKS } from './nz'
+import { NZ_LEGACY_CHECKS } from './nz-legacy'
 import { PH_CHECKS } from './ph'
 import { RU_CHECKS } from './ru'
 import { SG_CHECKS } from './sg'
@@ -46,6 +47,7 @@ export const ALL_PROCEDURE_CHECKS: ProcedureCheck[] = [
   ...EU_CHECKS,
   ...AU_CHECKS,
   ...NZ_CHECKS,
+  ...NZ_LEGACY_CHECKS,
   ...HI_CHECKS,
   ...CN_CHECKS,
   ...TH_CHECKS,

@@ -14,6 +14,7 @@
   {"ko":"중국","en":"China"},
   {"ko":"필리핀","en":"Philippines"},
   {"ko":"뉴질랜드","en":"New Zealand"},
+  {"ko":"뉴질랜드(구)","en":"New Zealand","staffOnly":true},
   {"ko":"네덜란드","en":"Netherlands","alias":["홀란드"]},
   {"ko":"인도네시아","en":"Indonesia"},
   {"ko":"말레이시아","en":"Malaysia"},

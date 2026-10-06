@@ -4,7 +4,7 @@ import { createClient } from '@petmove/auth/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import { FORM_CAPACITY, type MultiFormKey } from '@/lib/pdf-multi-forms'
 import type { CaseRow } from '@petmove/domain'
-import { getEffectiveVaccineList, findDestinationToken, flattenCaseForDestination, getDepartureDate, getVetVisitDate, parseDestinations, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly, recommendRabiesDoseIndices } from '@petmove/domain'
+import { getEffectiveVaccineList, findDestinationToken, findNewZealandToken, flattenCaseForDestination, getDepartureDate, getVetVisitDate, parseDestinations, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly, recommendRabiesDoseIndices } from '@petmove/domain'
 import { loadVetInfo } from '@/lib/vet-info'
 
 export type GeneratePdfResult =
@@ -500,7 +500,8 @@ export async function generateShipmentPack(params: {
     const supabase = await createClient()
     const { data: destRows } = await supabase.from('cases').select('id, destination').in('id', params.caseIds)
     for (const row of (destRows ?? []) as Array<{ id: string; destination: string | null }>) {
-      destByCase.set(row.id, findDestinationToken(row.destination, destKey))
+      // 뉴질랜드는 구 규정 '뉴질랜드(구)' 케이스도 같은 발송 팩을 쓴다(2026-10-06).
+      destByCase.set(row.id, params.variant === 'nz' ? findNewZealandToken(row.destination) : findDestinationToken(row.destination, destKey))
     }
   }
   for (const caseId of params.caseIds) {

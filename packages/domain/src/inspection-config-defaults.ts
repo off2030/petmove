@@ -78,6 +78,8 @@ export const DEFAULT_INSPECTION_CONFIG: InspectionConfig = {
   infectiousRules: [
     { countries: ['호주'], labs: ['ksvdl'] },
     { countries: ['뉴질랜드'], labs: ['vbddl', 'apqa_hq'] },
+    // 뉴질랜드(구) — 구 IHS(2021) 케이스 전용 한시 목적지(2026-10-06). 기관은 같다.
+    { countries: ['뉴질랜드(구)'], labs: ['vbddl', 'apqa_hq'] },
     { countries: ['남아프리카공화국'], labs: ['arc_ovi'] },
   ],
 }

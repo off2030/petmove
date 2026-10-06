@@ -16,6 +16,7 @@ import {
   getVetVisitDate,
   getVetVisitWindowDays,
   matchesDestinationKey,
+  findNewZealandToken,
   parseDestinations,
   readScopedWithLegacyFallback,
   resolveTabActiveDest,
@@ -330,7 +331,9 @@ function buildInspectionRows(
     }
     // 2) 전염병검사 — 호주/뉴질랜드
     const isAU = matchesDestinationKey(c.destination, 'australia')
-    const isNZ = matchesDestinationKey(c.destination, 'new_zealand')
+    // 뉴질랜드(구 규정 '뉴질랜드(구)' 포함) — 검사 묶음 행은 규정과 무관하게 같다.
+    const nzDest = findNewZealandToken(c.destination)
+    const isNZ = !!nzDest
     if (isAU && caseSpecies(c) === 'dog') {
       // 호주 전염병검사(KSVDL)는 강아지 전용 — 고양이 제외 (au.ts 도메인 룰과 일치).
       // 검사일(infectious ksvdl.date) 또는 호주 출국일(by_dest 우선) 중 하나라도
@@ -352,7 +355,7 @@ function buildInspectionRows(
         })
       }
     }
-    const nzDeparture = destDeparture(c, 'new_zealand')
+    const nzDeparture = nzDest ? (getDepartureDate(c, nzDest) ?? '') : ''
     if (isNZ && caseSpecies(c) === 'dog') {
       // 뉴질랜드 전염병검사도 강아지 전용 — 고양이 제외 (nz.ts 도메인 룰과 일치).
       // 설정 labs 순서대로 묶음 한 행으로 표시.
@@ -360,7 +363,6 @@ function buildInspectionRows(
       // 표시 날짜는 저장값 우선(설정 순서대로 첫 hit), 없으면 뉴질랜드 출국일 - 15일 자동.
       // 호주(AU)와 동일: 검사 기록 또는 출국일 중 하나라도 있으면 탭에 올린다.
       // (출국일 없이 전염병검사만 직접 입력한 경우도 검사 탭에 나와야 함.)
-      const nzDest = findDestinationToken(c.destination, 'new_zealand')
       const recs = readInfectiousRecords(c, nzDest)
       const existing = nzLabs.map(lab => recs.find(r => r.lab === lab)).find(Boolean)
       const referenceDate = existing?.date || nzDeparture
@@ -384,7 +386,7 @@ function buildInspectionRows(
     //    그 여행지 출국일 중 하나라도 있으면 탭에 올린다(호주 동작과 동일).
     //    기록은 여행지별 슬롯에서 읽는다.
     for (const dest of parseDestinations(c.destination)) {
-      if (matchesDestinationKey(dest, 'australia') || matchesDestinationKey(dest, 'new_zealand')) continue
+      if (matchesDestinationKey(dest, 'australia') || findNewZealandToken(dest)) continue
       const rule = infectiousRules.find(r => r.countries.includes(dest))
       if (!rule || rule.labs.length === 0) continue
       const depDate = getDepartureDate(c, dest) ?? ''

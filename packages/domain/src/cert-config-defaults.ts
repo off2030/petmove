@@ -67,6 +67,8 @@ export const DEFAULT_CERT_CONFIG: CertConfig = {
     { countries: ['영국'], certs: ['annexIII', 'uk'] },
     { countries: ['호주'], certs: ['idDeclaration', 'au', 'auCat'] },
     { countries: ['뉴질랜드'], certs: ['nz', 'ovd', 'vbc'] },
+    // 뉴질랜드(구) — 구 IHS(2021) 케이스 전용 한시 목적지(2026-10-06). 구 양식 그대로.
+    { countries: ['뉴질랜드(구)'], certs: ['nz', 'ovd', 'vbc'] },
     { countries: ['태국'], certs: ['formR11'] },
     { countries: ['튀르키예'], certs: ['tk'] },
     { countries: ['싱가포르'], certs: ['sgp'] },

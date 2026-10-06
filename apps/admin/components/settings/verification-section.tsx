@@ -23,6 +23,7 @@ const COUNTRY_LABELS: Record<string, string> = {
   singapore: '싱가포르',
   australia: '호주',
   new_zealand: '뉴질랜드',
+  new_zealand_legacy: '뉴질랜드(구)',
   uk: '영국',
   switzerland: '스위스',
   ireland: '아일랜드',

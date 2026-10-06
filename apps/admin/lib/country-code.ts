@@ -212,6 +212,7 @@ export const COUNTRY_CODE_MAP: Record<string, string> = {
   // === 오세아니아 ===
   '호주': 'AU',
   '뉴질랜드': 'NZ',
+  '뉴질랜드(구)': 'NZ',
   '파푸아뉴기니': 'PG',
   '피지': 'FJ',
   '솔로몬제도': 'SB',

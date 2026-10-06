@@ -1,4 +1,4 @@
-import { matchesDestinationKey } from '@petmove/domain'
+import { findNewZealandToken } from '@petmove/domain'
 import type { CaseRow, InspectionLabRule } from '@petmove/domain'
 
 /**
@@ -185,7 +185,7 @@ export function infectiousStatusTarget(
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const species = typeof data.species === 'string' ? data.species : ''
   // 탭의 묶음 조건과 동일 — 뉴질랜드 + 강아지 (고양이는 NZ 전염병검사 대상 아님).
-  if (species === 'dog' && matchesDestinationKey(caseRow.destination, 'new_zealand')) {
+  if (species === 'dog' && findNewZealandToken(caseRow.destination)) {
     const nzLabs = nzInfectiousLabs(infectiousRules)
     if (nzLabs.includes(lab)) return { kind: 'infectious_multi', labs: nzLabs }
   }
