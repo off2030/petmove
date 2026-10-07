@@ -12,10 +12,11 @@ function joinBatchExpiry(batch, expiry) {
   if (!batch) return expiry
   return `${batch} / ${expiry}`
 }
+// lib/pdf-fill.ts destinationShowsProductExpiry 와 같은 목록.
 function destinationIsAuNz(d) {
   if (typeof d !== 'string' || !d) return false
   const t = d.split(',').map(s => s.trim())
-  return t.includes('호주') || t.includes('뉴질랜드')
+  return ['호주', '뉴질랜드', '뉴질랜드(구)', '대만'].some((x) => t.includes(x))
 }
 function lookupRabies(date) { const y = Number(String(date).slice(0, 4)); return vaccines.rabies.find(r => r.year === y) ?? null }
 function lookupByDateRange(list, date) {
@@ -81,11 +82,11 @@ const base = {
 
 // 2026 광견병 배치 G98321. 호주·뉴질랜드 = 제품 유효기간 2027/10/07 병기,
 // 그 외 목적지 = batch(G98321)만. (면역유효기간 2027/03/23 은 어디에도 안 나옴.)
-for (const dest of ['호주', '뉴질랜드', '일본']) {
+for (const dest of ['호주', '뉴질랜드', '대만', '일본']) {
   const caseRow = { ...base, destination: dest }
   const r1 = resolve(mappings.Form25.fields.rabies1_serial, caseRow)
   const o1 = resolve(mappings.Form25.fields.other1_serial, caseRow)
-  const expect = (dest === '호주' || dest === '뉴질랜드') ? 'G98321 / 2027/10/07' : 'G98321'
+  const expect = (dest === '호주' || dest === '뉴질랜드' || dest === '대만') ? 'G98321 / 2027/10/07' : 'G98321'
   const ok = r1 === expect ? 'OK' : `FAIL (expected "${expect}")`
   console.log(`[${dest}]`)
   console.log(`  rabies1_serial value    : "${r1}"  ${ok}`)
