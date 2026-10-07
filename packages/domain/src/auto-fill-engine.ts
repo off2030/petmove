@@ -407,12 +407,20 @@ export async function computeAutoFill(
     })
     if (matchedRules.length === 0) return noChange()
 
-    // 반복적으로 적용 — 새로 쓴 필드가 다른 규칙의 trigger 에 해당하면 한 번 더.
+    // 반복적으로 적용 — 새로 쓴 필드가 다른 규칙의 trigger 에 해당하면 한 번 더(체인).
+    //
+    // ⛔ 규칙은 **자기 trigger 가 이번 편집(또는 직전 단계에서 규칙이 쓴 필드)일 때만** 돈다.
+    //   예전엔 날짜 칸 하나를 저장할 때마다 그 목적지의 규칙을 전부 다시 돌렸다(방금 편집한
+    //   칸을 target 으로 갖는 규칙만 제외). 규칙은 '비어 있으면 채움'이라, 운영자가 구충 칸을
+    //   하나씩 지우면 다음 칸을 지울 때 앞서 지운 칸이 다시 채워져 셋을 다 지울 수 없었다
+    //   (2026-10-07 뉴질랜드(구) 방울이 — 내원일→내부·외부구충·심장사상충).
+    //   userEditedKey 를 안 넘기는 호출(매직링크 일괄 입력)은 종전처럼 전체 규칙을 돌린다.
     const MAX_ITER = 5
     let dataMut = { ...snapshot.data }
     const columnUpdates: Record<string, unknown> = {}
-    const processedTriggers = new Set<string>()
     const writtenTargetsAll = new Set<string>()
+    // null = 전체 규칙. 아니면 trigger 의 기본 키(rabies_dates[0] → rabies_dates)가 이 안에 있어야 돈다.
+    let activeTriggers: Set<string> | null = userEditedKeys.size > 0 ? new Set(userEditedKeys) : null
 
     // activeDest 가 주어지면 단일/다중 무관하게 by_dest 경로 사용 (B: 단일도 by_dest 통일).
     // 호출부가 activeDest 를 안 넘기면(top-level 경로용) null → 종전과 동일.
@@ -420,22 +428,15 @@ export async function computeAutoFill(
     for (let iter = 0; iter < MAX_ITER; iter++) {
       const written = new Set<string>()
       for (const rule of matchedRules) {
-        const triggerKey = rule.trigger_field
-        if (processedTriggers.has(triggerKey)) continue
-        const triggerDate = readTriggerDate({ destination, data: dataMut }, triggerKey, effectiveActiveDest)
+        if (activeTriggers && !activeTriggers.has(getBaseKey(rule.trigger_field))) continue
+        const triggerDate = readTriggerDate({ destination, data: dataMut }, rule.trigger_field, effectiveActiveDest)
         if (!triggerDate) continue
         dataMut = applyRuleToData(dataMut, columnUpdates, rule, triggerDate, written, destination, infectiousRules, effectiveActiveDest)
       }
       if (written.size === 0) break
-      for (const t of written) {
-        writtenTargetsAll.add(t)
-        processedTriggers.add(t)
-      }
-      // 이번 iteration 에 써진 triggers 를 다음 loop 에서 처리되도록 reset
-      // matchedRules 의 trigger_field 가 처음 iteration 에서는 false 인 경우(데이터 아직 없음) 도
-      // 다음 iter 에서 true 가 됨.
-      for (const rule of matchedRules) processedTriggers.delete(rule.trigger_field)
-      // chain 이 감지된 필드만 이후 iter 에서 처리됨 — 위 loop 가 triggerDate 로 자연스럽게 걸러냄
+      for (const t of written) writtenTargetsAll.add(t)
+      // 다음 단계는 방금 규칙이 쓴 필드를 trigger 로 갖는 규칙만(출국일 → 내원일 → 구충 체인).
+      activeTriggers = new Set([...written].map(getBaseKey))
     }
 
     if (writtenTargetsAll.size === 0) return noChange()

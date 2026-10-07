@@ -594,7 +594,13 @@ export async function updateCaseField(
           : ((row as { departure_date: string | null }).departure_date ?? null)
       // by_dest 경로(위)와 동일하게 활성 여행지를 넘긴다 — 안 넘기면 auto-fill 이 채운 scoped 타깃
       // (예: 일본 출국 항공편일)이 다중 여행지에서 top-level 로 가 strict flatten 에 떨궈 증발한다.
-      const computed = await computeAutoFill(supabase, caseId, key, destination, {
+      // 구충·접종처럼 scoped 가 아닌 키는 클라이언트가 여행지를 안 넘긴다 → 단일 여행지면 그 토큰을
+      // 쓴다. 안 그러면 엔진이 top-level 잔존 내원일(화면엔 안 보이는 사본)을 trigger 로 읽고, 규칙이
+      // 쓴 내원일도 top-level 로 가 by_dest 와 갈라진다(2026-10-07 방울이). 다중 여행지는 어느 쪽인지
+      // 알 수 없어 종전대로 null.
+      const engineDest =
+        destination ?? (isSingleDest ? parseDestinations(destinationRaw)[0] ?? null : null)
+      const computed = await computeAutoFill(supabase, caseId, key, engineDest, {
         orgId,
         destination: destinationRaw,
         departureDate: pendingDeparture,
