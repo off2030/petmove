@@ -17,6 +17,7 @@ import {
   getVetVisitWindowDays,
   matchesDestinationKey,
   findNewZealandToken,
+  findNewZealandTokenWithData,
   parseDestinations,
   readScopedWithLegacyFallback,
   resolveTabActiveDest,
@@ -332,7 +333,8 @@ function buildInspectionRows(
     // 2) 전염병검사 — 호주/뉴질랜드
     const isAU = matchesDestinationKey(c.destination, 'australia')
     // 뉴질랜드(구 규정 '뉴질랜드(구)' 포함) — 검사 묶음 행은 규정과 무관하게 같다.
-    const nzDest = findNewZealandToken(c.destination)
+    // 둘 다 있으면 기록·출국일이 있는 쪽 슬롯을 읽는다(신 규정 칸만 보면 행이 빠짐).
+    const nzDest = findNewZealandTokenWithData(c)
     const isNZ = !!nzDest
     if (isAU && caseSpecies(c) === 'dog') {
       // 호주 전염병검사(KSVDL)는 강아지 전용 — 고양이 제외 (au.ts 도메인 룰과 일치).

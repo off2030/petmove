@@ -14,7 +14,7 @@
  */
 
 import type { CaseRow } from './types'
-import { parseDestinations } from './destination-config'
+import { findNewZealandToken, parseDestinations } from './destination-config'
 
 /**
  * 분리 대상 키. 이 키들에 대한 입력은 다중 목적지 시 by_dest 에 저장돼야 함.
@@ -552,6 +552,29 @@ export function getDepartureDate(
   // 다중 목적지 + 특정 목적지 지정 → by_dest 만 신뢰. 컬럼 fallback 안 함(엔트리 유무 무관) — 누수 차단(B).
   if (destination && parseDestinations(caseRow.destination).length > 1) return null
   return caseRow.departure_date ?? null
+}
+
+/**
+ * 케이스의 뉴질랜드 여행지 토큰 — **데이터가 있는 쪽** 우선.
+ *
+ * '뉴질랜드(구)'·'뉴질랜드'를 함께 가진 케이스에서 findNewZealandToken 은 신 규정 토큰을
+ * 고르는데, 전염병검사 기록·출국일이 구 규정 by_dest 칸에만 있으면 그 칸을 못 읽어
+ * 검사 탭 묶음 행이 빠지고 발송 팩 검사일이 빈다(2026-10-10).
+ * 순서: by_dest 전염병검사 기록 있는 토큰 → 출국일 있는 토큰 → findNewZealandToken.
+ */
+export function findNewZealandTokenWithData(
+  caseRow: Pick<CaseRow, 'data' | 'departure_date' | 'destination'>,
+): string | null {
+  const tokens = parseDestinations(caseRow.destination).filter((t) => findNewZealandToken(t))
+  if (tokens.length <= 1) return tokens[0] ?? null
+  const data = caseRow.data as Record<string, unknown> | null
+  const withRecords = tokens.find((t) => {
+    const recs = readByDestValue(data, t, 'infectious_disease_records')
+    return Array.isArray(recs) && recs.length > 0
+  })
+  if (withRecords) return withRecords
+  const withDeparture = tokens.find((t) => !!getDepartureDate(caseRow, t))
+  return withDeparture ?? findNewZealandToken(caseRow.destination)
 }
 
 /**
