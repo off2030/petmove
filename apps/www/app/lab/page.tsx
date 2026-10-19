@@ -13,7 +13,7 @@ export default function LabIndex() {
     <main style={{ maxWidth: 640, margin: '0 auto', padding: '48px 18px' }}>
       <h1 style={{ fontSize: 24, margin: '0 0 6px' }}>비공개 시안</h1>
       <p style={{ color: 'var(--ink2)', margin: '0 0 24px', fontSize: 14 }}>
-        비밀번호로 보호된 페이지예요. 검색엔진에 노출되지 않아요.
+        키 주소로만 열리는 페이지예요. 검색엔진에 노출되지 않아요.
       </p>
       {DRAFTS.map((d) => (
         <a
