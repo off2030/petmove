@@ -72,7 +72,51 @@ function blockedResponse(status: 403 | 429, retryAfter?: number): NextResponse {
   return response
 }
 
+// ── /lab/* 비공개 시안 게이트 ─────────────────────────────────────────────
+// HTTP Basic 인증(아이디 아무거나, 비밀번호 = LAB_PASSWORD). 크롤러 예외·레이트리밋보다
+// **먼저** 건다 — 검색봇 UA 를 흉내 내도 통과하지 못해야 한다.
+// env 가 없으면 401 이 아니라 404 — 설정 안 된 배포에서 시안이 열리지도, 존재가 드러나지도 않게.
+const LAB_REALM = 'Basic realm="petmove-lab", charset="UTF-8"'
+
+function safeEqual(a: string, b: string): boolean {
+  // 길이·내용에 따라 비교 시간이 갈리지 않게 끝까지 돈다.
+  let diff = a.length ^ b.length
+  for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
+    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0)
+  }
+  return diff === 0
+}
+
+function labGate(request: NextRequest): NextResponse {
+  const secret = process.env.LAB_PASSWORD
+  const noindex = { 'X-Robots-Tag': 'noindex, nofollow', 'Cache-Control': 'private, no-store' }
+  if (!secret) return new NextResponse('Not Found', { status: 404, headers: noindex })
+
+  const auth = request.headers.get('authorization') ?? ''
+  if (auth.startsWith('Basic ')) {
+    try {
+      const decoded = new TextDecoder().decode(Uint8Array.from(atob(auth.slice(6)), (c) => c.charCodeAt(0)))
+      const password = decoded.slice(decoded.indexOf(':') + 1)
+      if (safeEqual(password, secret)) {
+        const res = NextResponse.next()
+        for (const [k, v] of Object.entries(noindex)) res.headers.set(k, v)
+        return res
+      }
+    } catch {
+      /* 깨진 헤더 = 인증 실패로 처리 */
+    }
+  }
+  return new NextResponse('인증이 필요합니다.', {
+    status: 401,
+    headers: { ...noindex, 'WWW-Authenticate': LAB_REALM, 'Content-Type': 'text/plain; charset=utf-8' },
+  })
+}
+
 export function proxy(request: NextRequest): NextResponse {
+  if (request.nextUrl.pathname === '/lab' || request.nextUrl.pathname.startsWith('/lab/')) {
+    return labGate(request)
+  }
+
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     return NextResponse.next()
   }
@@ -109,5 +153,5 @@ export function proxy(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  matcher: ['/', '/guide/:path*', '/docs/:path*', '/blog/:path*', '/contact/:path*'],
+  matcher: ['/', '/guide/:path*', '/docs/:path*', '/blog/:path*', '/contact/:path*', '/lab', '/lab/:path*'],
 }
