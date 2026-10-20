@@ -522,13 +522,17 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
 ]
 
 /**
- * 자동 포함 판정 — 신고국이면서 출국일·내원일이 있는 여행지가 있어야 함.
+ * 자동 포함 판정의 기준 여행지 — 신고국이면서 일정(출국일·내원일 등)이 있는 여행지. 없으면 null.
  *
- * 활성 여행지(import_report_active_dest)가 명시 저장돼 있으면 그 여행지 기준으로만
- * 판정 (비-신고국으로 옮겨 두면 자동 포함 안 됨). 저장값 없으면 케이스의 모든
- * 여행지를 스캔 — 다중 여행지에서 한 여행지에만 일정이 있어도 포함된다.
+ * 활성 여행지(import_report_active_dest)가 **신고국**으로 저장돼 있으면 그 여행지 기준으로만
+ * 판정한다(칩으로 일본을 골라 둔 케이스는 일본 일정만 본다). 저장값이 없거나 **신고국이 아니면**
+ * 케이스의 모든 여행지를 스캔 — 다중 여행지에서 한 여행지에만 일정이 있어도 포함된다.
+ *
+ * ⚠️ 비-신고국 각인으로 판정을 고정하면 안 된다(2026-10-20 황현선/루이: 중국 출국일 입력 때
+ *   각인이 '중국'이 됐고, 이후 추가정보 폼으로 들어온 대만 출국일은 각인을 안 바꿔 신고 탭에서
+ *   통째로 빠졌다). 비-신고국 고정의 결과는 '제외' 뿐이고, 일부러 뺄 케이스는 '신고 내리기'가 있다.
  */
-function isAutoImportReport(row: CaseRow, countries: string[]): boolean {
+function autoImportReportDest(row: CaseRow, countries: string[]): string | null {
   const data = (row.data ?? {}) as Record<string, unknown>
   const dests = parseDestinations(row.destination)
   const active = data.import_report_active_dest
@@ -537,10 +541,25 @@ function isAutoImportReport(row: CaseRow, countries: string[]): boolean {
   // 그 나라 하나로만 판정돼, 새 여행지에 일정·신청일이 있어도 신고 탭에서 영영 빠졌다
   // (2026-08-24 감사 — 최유나/말랑이: active='태국' 인데 여행지는 호주·대만·포르투갈,
   //  대만 수입허가 신청일 2026-08-04 이 있는데도 목록에 없었다).
-  if (typeof active === 'string' && active && dests.includes(active)) {
-    return countries.includes(active) && hasReportSchedule(row, active)
+  if (typeof active === 'string' && active && dests.includes(active) && countries.includes(active)) {
+    return hasReportSchedule(row, active) ? active : null
   }
-  return dests.some((d) => countries.includes(d) && hasReportSchedule(row, d))
+  return dests.find((d) => countries.includes(d) && hasReportSchedule(row, d)) ?? null
+}
+
+function isAutoImportReport(row: CaseRow, countries: string[]): boolean {
+  return autoImportReportDest(row, countries) != null
+}
+
+/**
+ * 신고 탭에 넘길 행 — 각인이 비-신고국이라 스캔으로 다른 여행지가 잡혔으면 그 여행지를 각인한
+ * 사본을 돌려준다. 칩·출국일·마감일·수입/수출 칸이 전부 [[resolveTabActiveDest]] 로 목적지를
+ * 푸니, 사본 한 번으로 행 전체가 '포함시킨 그 여행지' 기준으로 맞춰진다(원본 data 는 안 건드림).
+ */
+function withImportReportDest(row: CaseRow, countries: string[]): CaseRow {
+  const dest = autoImportReportDest(row, countries)
+  if (!dest || resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY) === dest) return row
+  return { ...row, data: { ...((row.data ?? {}) as Record<string, unknown>), [IMPORT_REPORT_DEST_KEY]: dest } }
 }
 
 function isManualImportReport(row: CaseRow): boolean {
@@ -843,6 +862,8 @@ export function TodosApp({
       return cases
         .filter(c => (isAutoImportReport(c, importReportCountries) || isManualImportReport(c)) && !isDismissedImportReport(c))
         .filter(c => matchesQuery(c, q))
+        // 정렬·완료 판정·표시가 모두 포함 기준 여행지로 풀리도록 먼저 각인 사본으로 바꾼다.
+        .map(c => withImportReportDest(c, importReportCountries))
         .sort((a, b) => {
           // 1차: 완료(수입 완료 + 수출 적용 시 수출도 완료)는 무조건 미완료보다 뒤.
           const ca = isImportReportComplete(a) ? 1 : 0
@@ -926,7 +947,7 @@ export function TodosApp({
         })
     }
     return cases
-  }, [cases, activeTab, q])
+  }, [cases, activeTab, q, importReportCountries])
 
   // 탭별 활성 여행지 맵 — TodoTable 의 scoped key 편집을 by_dest 로 라우팅하는 데 사용.
   const activeDestById = useMemo(() => {

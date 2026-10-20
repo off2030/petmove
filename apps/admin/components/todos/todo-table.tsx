@@ -280,7 +280,9 @@ function SelectCell({
         })
         if (!ok) return
       }
-      const res = await setReportSlotStatus(row.id, reportSlot, v as 'not_started' | 'in_progress' | 'done')
+      // 목적지를 명시해 넘긴다 — 신고 탭 행은 저장된 각인과 다른 여행지로 풀릴 수 있다
+      // (비-신고국 각인 → 스캔된 신고국, todos-app withImportReportDest). 화면과 저장을 일치시킨다.
+      const res = await setReportSlotStatus(row.id, reportSlot, v as 'not_started' | 'in_progress' | 'done', activeDest ?? undefined)
       if (res.ok && res.autoFilled?.data) {
         replaceLocalCaseData(row.id, res.autoFilled.data)
       }

@@ -36,7 +36,7 @@ export function DestinationCell({
   dismissAction?: {
     label: string
     dismissKey: string
-    action?: (caseId: string) => Promise<{ ok: boolean; error?: string }>
+    action?: (caseId: string, activeDest?: string | null) => Promise<{ ok: boolean; error?: string }>
     confirm?: { message: string; description?: string; okLabel?: string }
   }
 }) {
@@ -97,7 +97,7 @@ export function DestinationCell({
     // optimistic 숨김 — 액션이 필드도 비우지만, 행은 dismissKey 만으로 즉시 사라진다.
     onUpdate(row.id, 'data', dismissAction.dismissKey, true)
     if (dismissAction.action) {
-      await dismissAction.action(row.id)
+      await dismissAction.action(row.id, active)
     } else {
       await updateCaseField(row.id, 'data', dismissAction.dismissKey, true)
     }

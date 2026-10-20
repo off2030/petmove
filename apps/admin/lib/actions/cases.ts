@@ -1178,8 +1178,12 @@ export async function setReportSlotStatus(
  * 비울 키는 [[reportSlotSignalKeys]] 가 카드 연결에서 파생한다 — 나라가 늘어도 손댈 곳이 없다.
  * (첨부·허가번호는 보호자 관할이라 손대지 않는다 — UI confirm 문구와 같은 약속.)
  */
-export async function dismissImportReport(caseId: string): Promise<UpdateResult> {
-  const ctx = await loadReportContext(caseId)
+export async function dismissImportReport(
+  caseId: string,
+  /** 신고 탭 행이 보여 주던 여행지 — 각인과 다를 수 있다(비-신고국 각인 → 스캔된 신고국). */
+  destination?: string | null,
+): Promise<UpdateResult> {
+  const ctx = await loadReportContext(caseId, destination)
   if (!ctx.ok) return { ok: false, error: ctx.error }
   const { supabase, current, token } = ctx
 
