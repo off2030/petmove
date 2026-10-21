@@ -8,6 +8,9 @@ Use the existing PETMOVE Work tab in the user's 펫무브 Chrome profile. The cu
 
 ## Prepare and submit
 
+- 소유주 이름은 실제 서류에 들어갈 현재 영문 이름을 기준으로 한다. 펫무브워크의 `data.customer_first_name_en`과 `data.customer_last_name_en`을 확인하고, 두 필드가 있으면 조합한 이름을 기존 통합 `customer_name_en` 칼럼보다 우선한다. 조회 스크립트의 통합 영문 이름만 믿지 않는다. 한글 고객명은 신청자이고 영문 이름은 실제 소유주인 경우가 있으므로 서로 다르다고 임의로 한글 고객명의 로마자 표기로 바꾸지 않는다.
+- 실제 소유주가 외국인이며 서류상 이름이 영문인 경우, 검사 신청서의 **한글 이름 칸과 영문 이름 칸 모두 해당 영문 소유주 이름**으로 입력한다. 한글명에서 국적이나 별도 소유주를 추정하지 말고 케이스의 현재 이름 필드와 사용자 설명을 따른다. 분리 이름이 일부 누락되거나 실제 소유주가 불분명하면 기존 값으로 덮어 채우지 않고 확인한다. 대소문자 자동 변환은 의미 차이로 보지 않는다.
+
 - Recheck the provider's existing applications before creating one. Do not duplicate a case after an ambiguous submit response.
 - For APQA, select the destination from the visible country result so the institution and country code are set. Use **주소 검색**, select the matching road address and enter the case's unit detail. Preserve account-provided veterinarian data unless case-specific evidence differs.
 - Map PETMOVE neutered male/female to the provider's available Male/Female choices when the form does not represent neutering separately.
