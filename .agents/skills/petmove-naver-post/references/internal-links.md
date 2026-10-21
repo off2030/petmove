@@ -24,6 +24,7 @@
 독일: https://blog.naver.com/petmove/224395888270
 러시아: https://blog.naver.com/petmove/224400608792
 말레이시아: https://blog.naver.com/petmove/224378275548
+말레이시아 고양이 포함(공식 홈페이지): https://www.petmove.co.kr/docs/malaysia-pet-travel-guide/
 멕시코: https://blog.naver.com/petmove/224400611905
 몰타: https://blog.naver.com/petmove/224400601569
 몽골: https://blog.naver.com/petmove/224378352808
@@ -46,6 +47,7 @@
 인도네시아: https://blog.naver.com/petmove/224378326698
 일본: https://blog.naver.com/petmove/224142581966
 중국: https://blog.naver.com/petmove/224168598299
+중국 개·고양이 공통(공식 홈페이지): https://www.petmove.co.kr/docs/china-pet-travel-guide/
 카자흐스탄: https://blog.naver.com/petmove/224387425735
 캄보디아: https://blog.naver.com/petmove/224378375121
 캐나다: https://blog.naver.com/petmove/224374205241
