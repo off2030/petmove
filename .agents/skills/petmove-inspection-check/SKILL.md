@@ -9,6 +9,8 @@ Perform the check immediately when the animal name is available. Do not search G
 
 Read PETMOVE data initially with the local read-only lookup script. Use the user's Chrome profile for provider systems and for PETMOVE details omitted by that script. A verification request is read-only. When the user explicitly requests an application, follow [references/application.md](references/application.md); that authorization permits preparing and submitting that animal's application, but does not imply payment or changes to other cases. Never modify the lookup script to write to the database.
 
+For a whole inspection-tab overview, read every page of the active organization's non-deleted cases with a stable sort and explicit ranges, and compare the fetched case count with the exact database count before reporting totals. A large `.limit()` alone does not override the server response cap. Derive inspection rows and statuses using the current application's rules, including repeated titer records and destination-scoped infectious tests; case counts and inspection-row counts differ. Do not report the first response as the entire tab.
+
 ## Workflow
 
 ### Chrome access
