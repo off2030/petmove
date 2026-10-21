@@ -19,6 +19,8 @@ Use the existing PETMOVE Work tab in the user's 펫무브 Chrome profile. The cu
 
 ## Photos
 
+사진은 강아지만 첨부한다. **1세 이상은 전신 전면·전신 측면 2장**, **1세 미만은 그 2장에 구강 전면·구강 좌(우)측면 2장을 추가해 총 4장**을 맞는 슬롯에 넣는다. 펫무브워크의 실제 케이스 첨부사진을 먼저 확인하고 파일명만으로 부위를 판단하지 않는다. 필요한 사진이 없거나 일부 부족하면 확보된 사진과 누락을 구분해 보고하고 신청은 하지 않은 채 저장까지만 한다. 필요한 사진이 모두 있고 신청을 위임받았으면 첨부 후 신청까지 진행한다. 사용자가 입력까지만 등 더 좁은 범위를 지정하면 그 범위를 따른다. 고양이는 사진을 요구하지 않는 이 업무 기준을 적용한다.
+
 When the user identifies Downloads as the source, inspect candidate images before selecting files. Match available front/side/oral views to the actual form categories. Never substitute a body image for an oral image or invent missing views.
 
 APQA currently displays a 70KB maximum per photo. Prepare compressed copies in the task's `work/` directory, preserve originals, check each file size and upload through the documented file chooser flow. Verify the visible thumbnail/canvas after upload and again in the saved application detail.
