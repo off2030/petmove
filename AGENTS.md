@@ -3,6 +3,7 @@
 이 저장소의 펫무브 업무 지침은 `.agents/skills/`에서 관리한다. 관련 업무를 요청받으면 해당 `SKILL.md`와 필요한 참조 문서를 읽는다.
 
 - 고객 문의를 네이버 블로그 초안으로 작성: `.agents/skills/petmove-naver-post/SKILL.md`
+- 카카오톡에서 블로그용 문의를 선별해 로컬 텍스트로 저장: `.agents/skills/petmove-kakao-inquiries/SKILL.md`
 - 일본 NACCS 수입 사전신고·수입검사·수출검역·신고 수정: `.agents/skills/petmove-japan-naccs/SKILL.md`
 - 검사기관 신청 대조·검사 신청: `.agents/skills/petmove-inspection-check/SKILL.md`
 

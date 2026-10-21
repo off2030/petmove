@@ -46,6 +46,7 @@
 인도: https://blog.naver.com/petmove/224382046352
 인도네시아: https://blog.naver.com/petmove/224378326698
 일본: https://blog.naver.com/petmove/224142581966
+일본 개·고양이 공통(공식 홈페이지): https://www.petmove.co.kr/docs/japan-pet-travel-guide/
 중국: https://blog.naver.com/petmove/224168598299
 중국 개·고양이 공통(공식 홈페이지): https://www.petmove.co.kr/docs/china-pet-travel-guide/
 카자흐스탄: https://blog.naver.com/petmove/224387425735
