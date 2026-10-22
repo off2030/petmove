@@ -8,6 +8,14 @@ Use the existing PETMOVE Work tab in the user's 펫무브 Chrome profile. The cu
 
 ## Prepare and submit
 
+- 광견병 접종 기록이 두 개 이상이면 검사일을 기준으로 직전 접종 정보를 입력한다. 직전 접종일이 검사일(채혈일)과 같으면 그 당일 접종이 아니라 그 전 접종 기록을 사용한다。 다만 그 이전 접종의 제품·제조사·제조번호 등 상세정보가 없어 입력할 수 없으면 상세정보가 확인되는 최신 접종 기록을 사용한다(검사일 당일 접종도 가능). 선택한 기록의 제품·제조사·제조번호·면역기간을 함께 확인하고 다른 회차의 정보를 섞지 않는다. 사용자가 특정 기록을 명시하면 그 지시를 따른다.
+- 작성 중 애매하거나 확인되지 않은 항목이 있으면 가능한 내용까지 임시저장하고 해당 항목을 사용자에게 묻는다. 자료와 입력 기준이 확실하고 요청된 신청에 필요한 항목이 모두 갖춰졌으면 신청까지 진행한다. 결제는 별도 권한 범위를 따른다.
+- KRSL 검사 진행 안내 수신 대상은 수의사로 선택한다.
+- KRSL 시료 접수는 택배, 결과서는 병원 주소로 우편 수령을 기본으로 한다. 수령 병원·수의사·주소·연락처를 확인하고 출국 국가를 요구하는 배송메모에 해당 국가를 적는다. 사용자가 별도 방식을 지정하면 그 지시를 따른다. 저장된 리스트의 결제 전 등록과 결제 후 최종 접수 완료를 구분하고, 별도 결제 권한 없이 결제하지 않는다.
+
+- 소유주 이름은 실제 서류에 들어갈 현재 영문 이름을 기준으로 한다. 펫무브워크의 `data.customer_first_name_en`과 `data.customer_last_name_en`을 확인하고, 두 필드가 있으면 조합한 이름을 기존 통합 `customer_name_en` 칼럼보다 우선한다. 조회 스크립트의 통합 영문 이름만 믿지 않는다. 한글 고객명은 신청자이고 영문 이름은 실제 소유주인 경우가 있으므로 서로 다르다고 임의로 한글 고객명의 로마자 표기로 바꾸지 않는다.
+- 실제 소유주가 외국인이며 서류상 이름이 영문인 경우, 검사 신청서의 **한글 이름 칸과 영문 이름 칸 모두 해당 영문 소유주 이름**으로 입력한다. 한글명에서 국적이나 별도 소유주를 추정하지 말고 케이스의 현재 이름 필드와 사용자 설명을 따른다. 분리 이름이 일부 누락되거나 실제 소유주가 불분명하면 기존 값으로 덮어 채우지 않고 확인한다. 대소문자 자동 변환은 의미 차이로 보지 않는다.
+
 - Recheck the provider's existing applications before creating one. Do not duplicate a case after an ambiguous submit response.
 - For APQA, select the destination from the visible country result so the institution and country code are set. Use **주소 검색**, select the matching road address and enter the case's unit detail. Preserve account-provided veterinarian data unless case-specific evidence differs.
 - Map PETMOVE neutered male/female to the provider's available Male/Female choices when the form does not represent neutering separately.
@@ -15,6 +23,8 @@ Use the existing PETMOVE Work tab in the user's 펫무브 Chrome profile. The cu
 - Submit only the animal requested by the user. Handle ordinary **신청하시겠습니까?** confirmation using the documented dialog API. Payment requires its own authorization and is not part of a bare application request.
 
 ## Photos
+
+사진은 강아지만 첨부한다. **1세 이상은 전신 전면·전신 측면 2장**, **1세 미만은 그 2장에 구강 전면·구강 좌(우)측면 2장을 추가해 총 4장**을 맞는 슬롯에 넣는다. 펫무브워크의 실제 케이스 첨부사진을 먼저 확인하고 파일명만으로 부위를 판단하지 않는다. 필요한 사진이 없거나 일부 부족하면 확보된 사진과 누락을 구분해 보고하고 신청은 하지 않은 채 저장까지만 한다. 필요한 사진이 모두 있고 신청을 위임받았으면 첨부 후 신청까지 진행한다. 사용자가 입력까지만 등 더 좁은 범위를 지정하면 그 범위를 따른다. 고양이는 사진을 요구하지 않는 이 업무 기준을 적용한다.
 
 When the user identifies Downloads as the source, inspect candidate images before selecting files. Match available front/side/oral views to the actual form categories. Never substitute a body image for an oral image or invent missing views.
 
