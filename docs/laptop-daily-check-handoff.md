@@ -59,11 +59,14 @@ Git으로 공유되는 것은 인계 문서와 업무 지침이다. 실제 예�
 
 공유 원본은 업무용 계정 `lvmcfile@gmail.com`의 Google Drive에 있다. 2026-10-22에 업무 PC의 기존 이력을 올리고, 동일 파일 ID로 갱신한 뒤 다시 내려받아 원본과 바이트 단위로 일치함을 확인했다. 폴더와 파일의 공유 권한은 해당 계정 소유자만이다. 실제 이력 내용과 메시지 ID는 Git에 넣지 않는다.
 
+- 위치: `내 드라이브 / Petmove-Backups / 펫무브워크 / PETMOVE 자동화 이력`
 - 폴더: [PETMOVE 자동화 이력](https://drive.google.com/drive/folders/1e6MLQnV4Y7t4tA9qZ7UxUUzZktiPn3PL)
 - 파일: [japan-mail-review.json](https://drive.google.com/file/d/1TC5PWYeBOsRiUzUc4kW3yDk5QpVWrxgf/view)
 - 파일 ID: `1TC5PWYeBOsRiUzUc4kW3yDk5QpVWrxgf`
 - 폴더 ID: `1e6MLQnV4Y7t4tA9qZ7UxUUzZktiPn3PL`
 - 로컬 작업 사본: 각 저장소 루트의 `work/naver-inquiries/japan-mail-review.json`(Git 제외)
+
+이력 폴더는 사용자가 지정한 `Petmove-Backups / 펫무브워크` 아래로 이동했다. 기존 폴더 ID와 이력 파일 ID·링크는 유지된다. 업무 PC와 노트북 모두 위의 동일 파일을 이어서 사용하며, 위치 변경 때문에 새 파일을 만들거나 이력을 초기화하지 않는다.
 
 1. 정기·수동 점검 시작 전에 연결된 Google Drive 도구에서 업무 계정을 선택하고, 이 파일 ID의 메타데이터와 최신 원본 JSON을 읽는다. 다른 계정의 동명 파일이나 로컬 사본을 공유 원본으로 간주하지 않는다. `fetch`의 텍스트가 비어 있어도 파일이 비었다고 판단하지 말고 raw-file 다운로드를 사용한다. 다운로드 참조는 로컬 비공개 경로에만 materialize하고 서명된 다운로드 URL·인코딩된 본문을 출력하거나 Git에 저장하지 않는다.
 2. JSON 문법과 기존 필드(`checkedOn`, `account`, `latestReceived`, `reviewedMessageIds`, `pending`, `completed`, `automationMode`)를 확인한다. 업무 계정과 맞는지 검증하고, 로컬 사본이 있으면 먼저 비공개 백업을 남겨 비교한다. 메시지 ID는 합집합으로 보존하고 미완료·완료 상태는 최신 메일 근거를 대조한다. 파일 수정 시각만으로 내용을 무조건 덮어쓰거나 미검토 메일을 검토 완료로 만들지 않는다.
