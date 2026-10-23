@@ -22,3 +22,5 @@ Open eminwon in the user's Chrome and enter through the **광견병 항체검사
 ## KSVDL / KSVDL-R
 
 Use only the KSVDL or KSVDL-R application PDF supplied by the user for the current check. Compare that PDF's application fields with PETMOVE Work without editing or submitting it. Do not generate, download, or search for a replacement application through PETMOVE Work or another service. If the user has not supplied the relevant PDF, report that the provider was identified and ask the user to attach the application; do not search Gmail or Notion for it.
+
+This PDF-only procedure covers application verification. For an explicitly requested laboratory-fee payment, follow the separate [KSVDL payment skill](../../petmove-ksvdl-payment/SKILL.md) using the current billing evidence and authorized payment scope.

@@ -4,6 +4,7 @@ description: 펫무브 카카오톡 채널에서 블로그용 문의를 선별�
 ---
 
 ## 범위와 저장 위치
+- 고객이 보낸 서류·사진을 펫무브워크에 보관하는 실무 요청은 [카카오 서류 저장 스킬](../petmove-kakao-documents/SKILL.md)을 사용한다.
 - 문의 수집만 수행한다. 네이버 임시저장·답변 작성·태그·링크 카드·발행은 하지 않는다. 블로그 글쓰기와 예약 발행은 별도 `petmove-naver-post` 스킬의 단계다.
 - 저장소 루트를 기준으로 `work/naver-inquiries/pending/`에 문의별 UTF-8 `.txt` 파일을 저장하고 `work/naver-inquiries/index.json`에서 원본과 처리 상태를 관리한다. 특정 PC의 절대 경로에 고정하지 않는다.
 - `published/`는 예약 발행과 저장본 검증이 완료된 문의 보관용이다. 수집 시 이 폴더로 옮기지 않는다.

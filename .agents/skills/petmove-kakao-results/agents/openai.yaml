@@ -1,0 +1,4 @@
+interface:
+  display_name: "PETMOVE 카카오 검사결과 안내"
+  short_description: "새 검사결과의 고객 안내 목록을 관리·보고하고 문구 확인 후 지시받은 안내만 발송합니다"
+  default_prompt: "Use $petmove-kakao-results to review new test reports, maintain and report customer notification tasks, and send the notice and reports only after the user instructs and reviews the message."

@@ -7,7 +7,11 @@ description: "Check PETMOVE inspection applications against their provider, or p
 
 Perform the check immediately when the animal name is available. Do not search Gmail or Notion; they are unrelated.
 
+Apply the [shared field-resolution rules](../../../docs/work-management/operations.md#조회값은-화면pdf의-실제-선택-규칙으로-해석) before comparison or reporting missing/mismatched data. Use the fields and precedence consumed by the current UI/PDF, including split guardian names, destination scope, and inspection record index. Lookup output is a summary, not an override of those rules: if it exposes a legacy field (for example `guardian.nameEn` from `customer_name_en`), read the current split fields and resolve them as the UI/PDF does before judging a mismatch. Do not request a correction solely because an unused legacy value differs.
+
 Read PETMOVE data initially with the local read-only lookup script. Use the user's Chrome profile for provider systems and for PETMOVE details omitted by that script. Verification does not authorize a new application, payment, or provider-side edits. The user has authorized the PETMOVE status update described below after an application is confirmed; a specific request to inspect without changes overrides that standing instruction. When the user explicitly requests an application, follow [references/application.md](references/application.md). Never modify the lookup script to write to the database.
+
+For an explicit KSVDL fee-payment request, use the separate [KSVDL payment skill](../petmove-ksvdl-payment/SKILL.md). Its payment workflow does not require an application PDF; the PDF requirement below applies to application verification.
 
 For a whole inspection-tab overview, read every page of the active organization's non-deleted cases with a stable sort and explicit ranges, and compare the fetched case count with the exact database count before reporting totals. A large `.limit()` alone does not override the server response cap. Derive inspection rows and statuses using the current application's rules, including repeated titer records and destination-scoped infectious tests; case counts and inspection-row counts differ. Do not report the first response as the entire tab.
 

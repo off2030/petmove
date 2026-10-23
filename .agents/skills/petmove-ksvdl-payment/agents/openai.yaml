@@ -1,0 +1,4 @@
+interface:
+  display_name: "PETMOVE 캔자스 검사비 결제"
+  short_description: "캔자스 검사실 청구를 대조하고 승인된 카드 결제를 진행합니다"
+  default_prompt: "Use $petmove-ksvdl-payment to review the current KSVDL bill and prepare or perform the authorized payment."

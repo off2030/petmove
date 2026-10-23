@@ -12,8 +12,11 @@
 
 - 고객 문의를 네이버 블로그 초안으로 작성: `.agents/skills/petmove-naver-post/SKILL.md`
 - 카카오톡에서 블로그용 문의를 선별해 로컬 텍스트로 저장: `.agents/skills/petmove-kakao-inquiries/SKILL.md`
+- 카카오톡 수신 서류 대조·다운로드·보관 및 요청한 칩·접종·항체검사 정보 입력: `.agents/skills/petmove-kakao-documents/SKILL.md`
+- 검사결과 확인·기존 카카오 고객 채팅방 안내문/결과지 발송·재확인: `.agents/skills/petmove-kakao-results/SKILL.md`
 - 일본 NACCS 수입 사전신고·수입검사·수출검역·신고 수정: `.agents/skills/petmove-japan-naccs/SKILL.md`
 - 검사기관 신청 대조·검사 신청: `.agents/skills/petmove-inspection-check/SKILL.md`
+- 캔자스 KSVDL 검사비 결제: `.agents/skills/petmove-ksvdl-payment/SKILL.md`
 
 같은 이름의 개인 스킬이 있으면 이 저장소의 버전을 사용한다. 펫무브 업무 스킬 수정도 저장소 버전에 반영하여 Git으로 공유한다. 확인·초안 요청을 신청 제출 권한으로 해석하지 말고 각 스킬의 업무 범위를 따른다.
 

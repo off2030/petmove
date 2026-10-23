@@ -1,0 +1,4 @@
+interface:
+  display_name: "PETMOVE 카카오 서류 저장·정보 입력"
+  short_description: "카카오 수신 서류를 대조·보관하고 요청한 칩·접종·항체검사 정보를 입력합니다"
+  default_prompt: "Use $petmove-kakao-documents to verify and store KakaoTalk documents, recover normal download failures, and enter and verify the requested microchip, vaccination, and titer information in PETMOVE Work."
