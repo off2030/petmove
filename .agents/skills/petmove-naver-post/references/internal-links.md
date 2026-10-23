@@ -7,7 +7,7 @@
 4. 네이버 글이 없는 나라(뉴질랜드, 튀르키예)만 [네이버 글이 없는 나라]의 petmove.co.kr 링크를 쓴다.
 5. 나라와 무관한 공통 주제(비행기 탑승, 기내반입, 항공사 요금, 마이크로칩 등)는 [공통 주제] 링크를 쓴다.
 6. 맞는 링크가 없으면 URL을 지어내지 말고 [🔗 관련글: 제목] 형식으로 자리만 표시한다.
-7. 나라별 네이버 글은 모두 강아지 기준이다. 고양이 문의에도 그 나라 글을 걸 수 있지만, 링크 문장에서 "강아지 글"이라고 단정하지 않는다. (예: "대만 검역 절차를 단계별로 보고 싶으시면 다음 글을 참고하세요.")
+7. 문의의 동물 종류에 맞는 글을 우선한다. 고양이용 네이버 가이드가 없으면 펫무브 공식 홈페이지에서 확인한 고양이 전용 가이드를 사용한다. 강아지 전용 글을 고양이 글에 그대로 연결하지 않는다. 이 경우 홈페이지 링크를 허용하며 확인한 주소를 목록에 추가한다.
 8. EU 개별국(독일·프랑스·이탈리아·스페인·네덜란드·아일랜드·핀란드·몰타·키프로스) 문의는 그 나라 글을 우선 쓰고, 여러 EU 국가나 유럽 전반 문의는 유럽(EU 공통) 글을 쓴다.
 9. 하와이는 미국 글이 아니라 하와이 글, 괌은 괌 글을 쓴다.
 10. 아래 목록에 없는 URL은 절대 만들지 않는다. 숫자 한 자리라도 바꾸지 않는다.
@@ -24,6 +24,7 @@
 독일: https://blog.naver.com/petmove/224395888270
 러시아: https://blog.naver.com/petmove/224400608792
 말레이시아: https://blog.naver.com/petmove/224378275548
+말레이시아 고양이 포함(공식 홈페이지): https://www.petmove.co.kr/docs/malaysia-pet-travel-guide/
 멕시코: https://blog.naver.com/petmove/224400611905
 몰타: https://blog.naver.com/petmove/224400601569
 몽골: https://blog.naver.com/petmove/224378352808
@@ -45,7 +46,9 @@
 인도: https://blog.naver.com/petmove/224382046352
 인도네시아: https://blog.naver.com/petmove/224378326698
 일본: https://blog.naver.com/petmove/224142581966
+일본 개·고양이 공통(공식 홈페이지): https://www.petmove.co.kr/docs/japan-pet-travel-guide/
 중국: https://blog.naver.com/petmove/224168598299
+중국 개·고양이 공통(공식 홈페이지): https://www.petmove.co.kr/docs/china-pet-travel-guide/
 카자흐스탄: https://blog.naver.com/petmove/224387425735
 캄보디아: https://blog.naver.com/petmove/224378375121
 캐나다: https://blog.naver.com/petmove/224374205241
@@ -56,6 +59,7 @@
 필리핀: https://blog.naver.com/petmove/224371506169
 하와이: https://blog.naver.com/petmove/224372394039
 호주: https://blog.naver.com/petmove/224377844959
+호주 고양이 전용(공식 홈페이지): https://www.petmove.co.kr/blog/australia-cat-travel-guide/
 홍콩: https://blog.naver.com/petmove/224378279308
 
 [일본 세부 주제 — 네이버]
