@@ -1,5 +1,7 @@
 'use server'
 
+import { preserveLegacyJapanReportSignals } from '@petmove/domain'
+
 /**
  * 한 case(=동물) 안의 목적지 추가·제거 server actions — Phase 3 multi-destination.
  *
@@ -91,7 +93,7 @@ export async function addCaseDestination(
     if (tokens.includes(dest)) {
       return { ok: true, value: { destinations: tokens, added: false } }
     }
-    const data = (caseRow.data ?? {}) as Record<string, unknown>
+    const data = preserveLegacyJapanReportSignals(caseRow.data ?? {}, caseRow.destination)
 
     // 완료(has-arrived)된 기존 여정을 지난 여정으로 내림 — **새 목적지가 생길 때만**.
     // (완료 즉시 제거 X — 완료 카드는 진행 중 다른 여정이 없으면 그대로 유지. design §4·§6)
@@ -242,7 +244,7 @@ export async function removeCaseDestination(
     const nextTokens = tokens.filter((t) => t !== dest)
     const nextDest = joinDestTokens(nextTokens)
 
-    const data = (r.data ?? {}) as Record<string, unknown>
+    const data = preserveLegacyJapanReportSignals(r.data ?? {}, r.destination)
     const tripType = { ...((data.trip_type as Record<string, TripType> | undefined) ?? {}) }
     delete tripType[dest]
     const byDest = { ...((data.by_dest as Record<string, Record<string, unknown>> | undefined) ?? {}) }
@@ -593,7 +595,7 @@ export async function finishJourney(
       return { ok: false, error: '아직 완료되지 않은 여정이에요.' }
     }
 
-    const data = (caseRow.data ?? {}) as Record<string, unknown>
+    const data = preserveLegacyJapanReportSignals(caseRow.data ?? {}, caseRow.destination)
     const byDest = { ...((data.by_dest as Record<string, Record<string, unknown>> | undefined) ?? {}) }
     const tripType = { ...((data.trip_type as Record<string, TripType> | undefined) ?? {}) }
     const pastJourneys: PastJourneySummary[] = [

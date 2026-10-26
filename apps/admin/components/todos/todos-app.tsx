@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   allLabOptions,
+  destinationCountry,
   buildDateRuleContext,
   findDestinationToken,
   flattenCaseForDestination,
@@ -92,7 +93,7 @@ function autoDetectLab(
   const dests = destination.split(',').map(s => s.trim()).filter(Boolean)
   for (const d of dests) {
     for (const r of rules) {
-      if (r.countries.includes(d) && r.labs.length > 0) return r.labs[0]
+      if (r.countries.includes(destinationCountry(d)) && r.labs.length > 0) return r.labs[0]
     }
   }
   return defaultLab
@@ -389,7 +390,7 @@ function buildInspectionRows(
     //    기록은 여행지별 슬롯에서 읽는다.
     for (const dest of parseDestinations(c.destination)) {
       if (matchesDestinationKey(dest, 'australia') || findNewZealandToken(dest)) continue
-      const rule = infectiousRules.find(r => r.countries.includes(dest))
+      const rule = infectiousRules.find(r => r.countries.includes(destinationCountry(dest)))
       if (!rule || rule.labs.length === 0) continue
       const depDate = getDepartureDate(c, dest) ?? ''
       const infRecs = readInfectiousRecords(c, dest)
@@ -541,10 +542,10 @@ function autoImportReportDest(row: CaseRow, countries: string[]): string | null 
   // 그 나라 하나로만 판정돼, 새 여행지에 일정·신청일이 있어도 신고 탭에서 영영 빠졌다
   // (2026-08-24 감사 — 최유나/말랑이: active='태국' 인데 여행지는 호주·대만·포르투갈,
   //  대만 수입허가 신청일 2026-08-04 이 있는데도 목록에 없었다).
-  if (typeof active === 'string' && active && dests.includes(active) && countries.includes(active)) {
+  if (typeof active === 'string' && active && dests.includes(active) && countries.includes(destinationCountry(active))) {
     return hasReportSchedule(row, active) ? active : null
   }
-  return dests.find((d) => countries.includes(d) && hasReportSchedule(row, d)) ?? null
+  return dests.find((d) => countries.includes(destinationCountry(d)) && hasReportSchedule(row, d)) ?? null
 }
 
 function isAutoImportReport(row: CaseRow, countries: string[]): boolean {
@@ -587,8 +588,8 @@ function compareByCountryOrder(a: CaseRow, b: CaseRow): number {
   const da = primaryDest(a)
   const db = primaryDest(b)
   // 일본 우선.
-  const ja = da === '일본' ? 0 : 1
-  const jb = db === '일본' ? 0 : 1
+  const ja = destinationCountry(da) === '일본' ? 0 : 1
+  const jb = destinationCountry(db) === '일본' ? 0 : 1
   if (ja !== jb) return ja - jb
   // 그 외는 가나다 순. 빈 destination은 맨 아래.
   if (!da && !db) return 0

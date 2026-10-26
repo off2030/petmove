@@ -10,6 +10,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { persistField } from '@/lib/toast-bus'
 import { markJourneyCompleteAdmin } from '@/lib/actions/journey-complete'
 import { removeCaseDestinationAdmin } from '@/lib/actions/remove-destination'
+import { addCaseDestinationAdmin } from '@/lib/actions/add-destination'
 import { useCases } from './cases-context'
 import destsData from '@petmove/domain/data/destinations.json'
 import { destCode } from '@/lib/country-code'
@@ -19,7 +20,7 @@ const CHIP_MENU_OPTIONS = [
   { value: 'archive', label: '지난 여정으로 보관' },
   { value: 'delete', label: '여행지 삭제' },
 ]
-import { resolveActiveDestination, getTripType, isOneWayOnlyDestination } from '@petmove/domain'
+import { destinationCountry, planCaseDestinationAddition, todayKst, resolveActiveDestination, getTripType, isOneWayOnlyDestination } from '@petmove/domain'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@petmove/ui'
 
@@ -46,7 +47,7 @@ function joinDests(arr: string[]): string | null {
 type TripType = 'round' | 'one_way'
 
 export function DestinationField({ caseId, destination }: { caseId: string; destination: string | null }) {
-  const { cases, updateLocalCaseField, activeDestination, setActiveDestination } = useCases()
+  const { cases, updateLocalCaseField, replaceLocalCaseData, activeDestination, setActiveDestination } = useCases()
   const editMode = useSectionEditMode()
   const confirm = useConfirm()
 
@@ -131,6 +132,8 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     : '—'
 
   const [open, setOpen] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const addingRef = useRef(false)
   const [query, setQuery] = useState('')
   const [highlightIdx, setHighlightIdx] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -190,16 +193,29 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     }
   }, [open])
 
-  async function toggleDest(dest: Dest) {
-    if (selected.includes(dest.ko)) {
-      // 체크 해제 = 삭제 — X 버튼과 동일 경로(확인 + scoped 잔존 정리)로 통일.
-      await removeDest(dest.ko)
+  async function addDest(dest: Dest) {
+    if (!currentCase || addingRef.current) return
+    const plan = planCaseDestinationAddition(currentCase, dest.ko, todayKst())
+    if (!plan.ok) {
+      await persistField('여행지', async () => plan)
       return
     }
-    const val = joinDests([...selected, dest.ko])
-    // Optimistic update first
-    updateLocalCaseField(caseId, 'column', 'destination', val)
-    await persistField('여행지', () => updateCaseField(caseId, 'column', 'destination', val))
+    addingRef.current = true
+    setAdding(true)
+    try {
+      await persistField('여행지', async () => {
+        const result = await addCaseDestinationAdmin(caseId, dest.ko, plan.token)
+        if (result.ok) {
+          replaceLocalCaseData(caseId, result.row.data)
+          updateLocalCaseField(caseId, 'column', 'destination', result.row.destination)
+          setActiveDestination(result.token)
+        }
+        return result
+      })
+    } finally {
+      addingRef.current = false
+      setAdding(false)
+    }
   }
 
   async function removeDest(ko: string) {
@@ -482,7 +498,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                   if (e.key === 'Enter') {
                     e.preventDefault()
                     if (filtered.length > 0) {
-                      await toggleDest(filtered[highlightIdx])
+                      await addDest(filtered[highlightIdx])
                       setOpen(false); setQuery('')
                     }
                   }
@@ -496,21 +512,22 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                 <li className="px-sm py-2 text-sm text-muted-foreground">검색 결과 없음</li>
               ) : (
                 filtered.map((d, i) => {
-                  const isSelected = selected.includes(d.ko)
+                  const isSelected = selected.some(t => destinationCountry(t) === d.ko)
                   return (
                     <li key={d.ko}>
                       <button
                         type="button"
-                        onClick={async () => { await toggleDest(d); setOpen(false); setQuery('') }}
+                        disabled={adding}
+                        onClick={async () => { await addDest(d); setOpen(false); setQuery('') }}
                         className={cn(
                           'w-full text-left px-sm py-1.5 text-sm transition-colors',
                           i === highlightIdx ? 'bg-accent' : 'hover:bg-accent/60',
                           isSelected && 'font-medium',
                         )}
                       >
-                        {isSelected && <span className="mr-1">✓</span>}
+                        <span className="mr-1">＋</span>
                         <span>{d.ko}</span>
-                        <span className="ml-2 text-muted-foreground">{d.en}</span>
+                        <span className="ml-2 text-muted-foreground">{isSelected ? '다른 일정 추가' : d.en}</span>
                       </button>
                     </li>
                   )

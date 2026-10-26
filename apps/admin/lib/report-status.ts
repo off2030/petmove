@@ -1,5 +1,6 @@
 import {
   deriveReportSlotStatus,
+  destinationCountry,
   flattenCaseForDestination,
   getDepartureDate,
   getTripType,
@@ -111,7 +112,7 @@ export function reportRowApplies(
   // 수동 포함은 운영자가 명시적으로 "이 케이스는 신고 대상" 이라고 정한 것 — 일정 불문.
   if (data.import_report_manual === true) return true
   if (!hasReportSchedule(caseRow, dest)) return false
-  if (importReportCountries.includes(dest)) return true
+  if (importReportCountries.includes(destinationCountry(dest))) return true
   return !!resolveReportBinding(dest, 'import')
 }
 

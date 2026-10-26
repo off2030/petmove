@@ -2351,7 +2351,7 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateAdvanceNotificationDate(caseId, advanceDate || null)
+        const res = await updateAdvanceNotificationDate(caseId, advanceDate || null, activeDest)
         if (res.ok) {
           updateCase(res.value)
           setAdvanceDate(readAdvanceDate(savedView(res.value).data))
@@ -2608,7 +2608,7 @@ export function StepDetailView({
     if (skippingApproval) return
     setSkippingApproval(true)
     startTransition(async () => {
-      const res = await markAdvanceNotificationApprovalSkipped(caseId)
+      const res = await markAdvanceNotificationApprovalSkipped(caseId, activeDest)
       setSkippingApproval(false)
       if (res.ok) {
         updateCase(res.value)

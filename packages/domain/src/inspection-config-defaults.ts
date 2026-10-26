@@ -1,3 +1,5 @@
+import { destinationCountry } from './destination-names'
+
 /**
  * 광견병 항체 검사·전염병검사 기관 설정. client-safe 상수/타입.
  * 실제 load/save 는 @/lib/inspection-config 에서 (서버 전용).
@@ -183,7 +185,7 @@ export function resolveInspectionLabs(
   const dests = destination.split(',').map(s => s.trim()).filter(Boolean)
   for (const d of dests) {
     for (const r of rules) {
-      if (r.countries.includes(d)) return [...r.labs]
+      if (r.countries.includes(destinationCountry(d))) return [...r.labs]
     }
   }
   return []

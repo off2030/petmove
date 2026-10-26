@@ -16,6 +16,7 @@ import { randomUUID } from 'node:crypto'
 import { createClient } from '@petmove/auth/server'
 import {
   clearLegacyReportStatusForStep,
+  writeByDestValue,
   parseDestinations,
   resolveStepAttachmentName,
   type CaseRow,
@@ -135,8 +136,11 @@ export async function uploadStepDocumentAdmin(formData: FormData): Promise<StepD
     }
     // 사전신고 첨부 = 완료 시그널. demote 자동 해제 + stored 클리어 (derive 전환).
     if (stepId === 'advance-notification') {
+      if (attachDest) {
+        nextData.by_dest = writeByDestValue(nextData, attachDest, 'advance_notification_admin_demoted_at', null).by_dest
+      }
       delete nextData.advance_notification_admin_demoted_at
-      clearLegacyReportStatusForStep(nextData, 'advance-notification', 'import')
+      clearLegacyReportStatusForStep(nextData, 'advance-notification', 'import', attachDest)
     }
 
     const { data: updated, error } = await supabase
@@ -184,7 +188,7 @@ export async function deleteStepDocumentAdmin(
     }
     // 사전신고 첨부 삭제 = 운영자의 명시적 transition — stored 클리어해 derive 전환.
     if (target.stepId === 'advance-notification') {
-      clearLegacyReportStatusForStep(nextData, 'advance-notification', 'import')
+      clearLegacyReportStatusForStep(nextData, 'advance-notification', 'import', target.destination)
     }
     const { data: updated, error } = await supabase
       .from('cases')

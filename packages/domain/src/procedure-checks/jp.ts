@@ -12,6 +12,8 @@ import {
 import { findRabiesChainBreak } from '../journey-steps/rabies-chain'
 import { deriveAdvanceNotificationStatus } from '../journey-steps/report-status'
 import type { ProcedureCheck } from './types'
+import { flattenCaseForDestination } from '../destination-scoped-fields'
+import { resolveActiveDestination } from '../destination-config'
 import {
   addDays,
   addYears,
@@ -451,7 +453,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
     severity: 'warning',
     addedAt: '2026-05-17',
     run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const view = flattenCaseForDestination(caseRow, resolveActiveDestination(caseRow.destination, destination))
+      const data = view.data
       const notif =
         typeof data.advance_notification_date === 'string' ? data.advance_notification_date : ''
       // 한일 노선 = 출국일이 일본 입국일.
@@ -464,7 +467,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       // 그래서 40일 전에 신고한 케이스에도 오경보가 났다(2026-09-05 사용자 보고 — 최인혜/보름:
       // 실제 신고는 기한 내, 저장값은 완료 처리일 2026-08-19 로 34일).
       // au.rabies-doc 이 '버튼 누른 날' 저장값 때문에 순서 갈래를 걷어낸 것과 같은 부류.
-      if (deriveAdvanceNotificationStatus(caseRow) === 'done') {
+      if (deriveAdvanceNotificationStatus(view) === 'done') {
         return { ok: true, message: '사전 신고 완료 — 마감 검사 대상 아님.' }
       }
       // 단일 출처 — client 입력 차단과 같은 함수.
@@ -601,7 +604,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
     severity: 'warning',
     addedAt: '2026-06-04',
     run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const view = flattenCaseForDestination(caseRow, resolveActiveDestination(caseRow.destination, destination))
+      const data = view.data
       const raw =
         typeof data.jp_export_quarantine_date === 'string'
           ? data.jp_export_quarantine_date.slice(0, 10)
@@ -624,7 +628,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
     severity: 'warning',
     addedAt: '2026-06-04',
     run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const view = flattenCaseForDestination(caseRow, resolveActiveDestination(caseRow.destination, destination))
+      const data = view.data
       const raw =
         typeof data.jp_import_quarantine_date === 'string'
           ? data.jp_import_quarantine_date.slice(0, 10)

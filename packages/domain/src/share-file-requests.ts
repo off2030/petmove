@@ -1,3 +1,5 @@
+import { destinationCountry } from './destination-names'
+
 /**
  * 정보 요청 링크의 목적지별 파일 첨부 요청 정의 (단일 출처).
  *
@@ -54,7 +56,7 @@ export function shareFileRequestByKey(key: string): ShareFileRequestDef | undefi
 export function shareFileRequestsForDestination(
   destination: string | null | undefined,
 ): ShareFileRequestDef[] {
-  const tokens = parseDestinations(destination)
+  const tokens = parseDestinations(destination).map(destinationCountry)
   return SHARE_FILE_REQUESTS.filter((r) => {
     if (r.excludeDestinations?.some((d) => tokens.includes(d))) return false
     if (r.destinations === 'all') return true

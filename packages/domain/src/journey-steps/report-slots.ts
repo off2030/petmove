@@ -198,6 +198,7 @@ export function clearLegacyReportStatusForStep(
   data: Record<string, unknown>,
   stepId: string,
   slot: ReportSlot,
+  destination?: string | null,
 ): void {
   const key = REPORT_LEGACY_STATUS_KEY[slot]
   delete data[key]
@@ -206,6 +207,7 @@ export function clearLegacyReportStatusForStep(
   let changed = false
   const nextByDest: Record<string, Record<string, unknown>> = { ...byDest }
   for (const [dest, obj] of Object.entries(byDest)) {
+    if (destination && dest !== destination) continue
     if (!obj || !(key in obj)) continue
     if (reportStepIdFor(dest, slot) !== stepId) continue
     nextByDest[dest] = { ...obj, [key]: null }

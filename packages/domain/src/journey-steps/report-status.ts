@@ -1,5 +1,6 @@
 import type { CaseRow } from '../types'
 import { resolveStepDateFields } from './dated-steps'
+import { attachmentInDestinationScope } from '../attachment-scope'
 
 /**
  * 신고·신청형 절차의 진행 상태 derive — 펫무브워크 신고 탭과 펫무브 카드가 같이 쓰는 단일 출처.
@@ -166,7 +167,8 @@ function deriveApplicationSignals(
     (d) =>
       !!d &&
       typeof d === 'object' &&
-      (d as Record<string, unknown>).stepId === spec.attachStepId,
+      (d as Record<string, unknown>).stepId === spec.attachStepId &&
+      attachmentInDestinationScope(d as { destination?: unknown }, spec.attachStepId, caseRow.destination),
   )
   if (hasAttachment) return 'done'
   if (spec.permitNoField) {

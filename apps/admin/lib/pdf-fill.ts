@@ -12,7 +12,7 @@ import mappings from '@/data/pdf-field-mappings.json'
 import nz26Strikes from '@/data/pdf-strikes-nz26.json'
 import nzLegacyStrikes from '@/data/pdf-strikes-nz-legacy.json'
 import { FORM_CAPACITY } from '@/lib/pdf-multi-forms'
-import { getParasiteFamily, PARASITE_FAMILIES, splitCustomerNameEn, formatKoreanPhone, looksLikeKoreanPhoneInput, destinationEnglish } from '@petmove/domain'
+import { getParasiteFamily, PARASITE_FAMILIES, splitCustomerNameEn, formatKoreanPhone, looksLikeKoreanPhoneInput, destinationEnglish, destinationCountry } from '@petmove/domain'
 import {
   lookupRabies,
   lookupExternalParasite,
@@ -319,7 +319,7 @@ const TAPEWORM_REQUIRED_DESTINATIONS = [
 
 function destinationRequiresTapeworm(dest: unknown): boolean {
   if (typeof dest !== 'string' || !dest) return false
-  return dest.split(',').map(s => s.trim()).some(d => TAPEWORM_REQUIRED_DESTINATIONS.includes(d))
+  return dest.split(',').map(destinationCountry).some(d => TAPEWORM_REQUIRED_DESTINATIONS.includes(d))
 }
 
 /** batch + expiry 병기 포맷 ("batch / expiry"). expiry 없으면 batch만. */
@@ -339,7 +339,7 @@ function requiresTapewormForCase(caseRow: CaseRow, data: Record<string, unknown>
 /** Destination contains 중국 (transit 케이스 포함, 콤마 분리). */
 function destinationIsChina(dest: unknown): boolean {
   if (typeof dest !== 'string' || !dest) return false
-  return dest.split(',').map(s => s.trim()).includes('중국')
+  return dest.split(',').map(destinationCountry).includes('중국')
 }
 
 /**
@@ -349,7 +349,7 @@ function destinationIsChina(dest: unknown): boolean {
 const PRODUCT_EXPIRY_DESTINATIONS = ['호주', '뉴질랜드', '뉴질랜드(구)', '대만']
 function destinationShowsProductExpiry(dest: unknown): boolean {
   if (typeof dest !== 'string' || !dest) return false
-  const tokens = dest.split(',').map(s => s.trim())
+  const tokens = dest.split(',').map(destinationCountry)
   return tokens.some((t) => PRODUCT_EXPIRY_DESTINATIONS.includes(t))
 }
 

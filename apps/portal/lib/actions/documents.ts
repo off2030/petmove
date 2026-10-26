@@ -19,6 +19,7 @@ import {
   parseDestinations,
   resolveStepAttachmentName,
   stampDocsChecklistCompletion,
+  writeByDestValue,
   type CaseRow,
 } from '@petmove/domain'
 import { type CaseDocument, MAX_DOCUMENT_BYTES, readCaseDocuments } from '@/lib/documents'
@@ -133,9 +134,12 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
     // 사전신고 첨부 = 완료 시그널. admin 이 진행중으로 demote 한 상태였더라도
     // 보호자가 새 허가서를 첨부하면 자동 해제 — 다시 완료로 derive.
     if (stepId === 'advance-notification') {
+      if (attachDest) {
+        nextData.by_dest = writeByDestValue(nextData, attachDest, 'advance_notification_admin_demoted_at', null).by_dest
+      }
       delete nextData.advance_notification_admin_demoted_at
       // stored 클리어해 derive 모드 전환.
-      clearLegacyReportStatusForStep(nextData, 'advance-notification', 'import')
+      clearLegacyReportStatusForStep(nextData, 'advance-notification', 'import', attachDest)
     }
     // 첨부가 마지막 필수 서류를 채우면 서류 체크리스트 완료일을 박는다 — 활성 목적지 스코프로
     // (미전달 시 첫 목적지에 박히던 버그 수정, 2026-08-01. admin cases.ts 와 동일).
@@ -194,7 +198,8 @@ export async function deleteStepDocument(
     }
     // 사전신고 첨부 삭제 = portal 보호자의 명시적 액션 — stored 클리어해 derive 전환.
     if (target.stepId === 'advance-notification') {
-      clearLegacyReportStatusForStep(nextData, 'advance-notification', 'import')
+      clearLegacyReportStatusForStep(nextData, 'advance-notification', 'import',
+        target.destination ?? resolveAttachDestination((existing as CaseRow).destination, destination))
     }
     // 첨부 삭제로 필수 서류가 미완료로 돌아가면 완료일을 지운다(재완료 시 다시 박힘).
     // 스코프 = 지운 파일의 목적지 태그 우선(그 목적지 체크리스트가 되돌아가는 것) → 없으면

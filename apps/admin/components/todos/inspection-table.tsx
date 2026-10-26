@@ -477,7 +477,7 @@ export function InspectionTable({
   // 드롭다운은 portal 이지만 React 트리상 표 안이라 메뉴로 이동해도 mouseleave 가 안 난다.
   const [frozenOrder, setFrozenOrder] = useState<string[] | null>(null)
   const rowsRef = useRef(rows)
-  rowsRef.current = rows
+  useEffect(() => { rowsRef.current = rows }, [rows])
   const unfreezeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const freezeOrder = useCallback(() => {
     // 이미 고정 중이면 그 순서 유지 — 지금 화면에 보이는 순서가 기준.

@@ -4,6 +4,7 @@
  */
 
 import { EU_COUNTRIES } from './inspection-config-defaults'
+import { destinationCountry } from './destination-names'
 
 export interface CertDefinition {
   key: string
@@ -98,7 +99,7 @@ export function resolveCerts(
     const dests = destination.split(',').map(s => s.trim()).filter(Boolean)
     for (const d of dests) {
       for (const r of config.rules) {
-        if (r.countries.includes(d)) {
+        if (r.countries.includes(destinationCountry(d))) {
           for (const k of r.certs) if (!keys.includes(k)) keys.push(k)
         }
       }

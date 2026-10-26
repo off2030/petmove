@@ -10,11 +10,23 @@
  *   2. top-level data[key]  (또는 column for departure_date)
  *   3. legacy country_extra 경로 (readEffectiveExtraValue 내부)
  *
- * 단일 목적지 케이스: by_dest 미사용, 기존 경로 그대로.
+ * 단일 목적지도 by_dest 우선이며, 기존 첫 여행의 top-level 값은 하위 호환한다.
  */
 
 import type { CaseRow } from './types'
-import { findNewZealandToken, parseDestinations } from './destination-config'
+import { findNewZealandToken, matchesDestinationKey, parseDestinations } from './destination-config'
+import { isRepeatDestination } from './destination-names'
+
+/** 기존 일본 단일 여정에서 top-level 에 저장하던 신고 신호. 첫 여정만 legacy 폴백. */
+export const LEGACY_JAPAN_REPORT_KEYS: ReadonlySet<string> = new Set([
+  'advance_notification_date',
+  'advance_notification_approval_skipped',
+  'jp_export_quarantine_reservation_skipped',
+  'advance_notification_in_progress',
+  'jp_export_quarantine_in_progress',
+  'advance_notification_admin_demoted_at',
+  'jp_export_quarantine_admin_demoted_at',
+])
 
 /**
  * 분리 대상 키. 이 키들에 대한 입력은 다중 목적지 시 by_dest 에 저장돼야 함.
@@ -23,6 +35,14 @@ import { findNewZealandToken, parseDestinations } from './destination-config'
  *   holder_birth_date — 보호자·동물 신원은 destination 무관.
  */
 export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
+  // 같은 국가의 2차 여행도 별도 신고: 일본 신청일·진행·완료 신호를 여정 슬롯에 저장.
+  'advance_notification_date',
+  'advance_notification_approval_skipped',
+  'jp_export_quarantine_reservation_skipped',
+  'advance_notification_in_progress',
+  'jp_export_quarantine_in_progress',
+  'advance_notification_admin_demoted_at',
+  'jp_export_quarantine_admin_demoted_at',
   // ── 전염병 검사 (2026-07-30 사용자 지정으로 전역 → 목적지별) ──────────────
   // **검사 항목이 나라마다 다르다**: 호주 3종(리슈만편모충·브루셀라·렙토 MAT) vs
   //   뉴질랜드 5종(바베시아 IFAT/ELISA+PCR·심장사상충·리슈만편모충·렙토·브루셀라).
@@ -426,22 +446,26 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'vet_available_date', //   출국일 파생 내원가능일(admin) — 단일 목적지에서만 기록(다중 부수효과 스킵)이라 누수 없음
   'import_report_dismissed', // 신고 탭 '신고 내리기'(취소) 플래그 — 케이스를 신고 탭에서 숨김.
   //                            케이스 단위(목적지 무관)로 한 줄을 내리는 동작이라 전역. isDismissedImportReport 가 top-level read.
-  // 일본 전용 단계 신호 — 케이스당 일본 1개뿐이라 동시 다중목적지 누수 없음. portal·admin 양쪽이
-  // top-level 로 read/write 해 정합(스코핑하면 양쪽 다 고쳐야 하고 실익 없음).
-  'advance_notification_date',
-  'advance_notification_approval_skipped',
-  'jp_export_quarantine_reservation_skipped',
-  // 보호자가 '진행 중' 버튼을 눌렀는지 — 위 skip 플래그와 같은 일본 단일 단계 내부 신호라 전역.
-  'advance_notification_in_progress',
-  'jp_export_quarantine_in_progress',
-  // admin '진행중'(demote) 시그널 — 위 skip 플래그와 같은 일본 단일 단계 내부 신호. derive 가
-  // top-level 로 read(report-status.ts), admin action 이 top-level 로 write. 같은 이유로 전역.
-  'advance_notification_admin_demoted_at',
-  'jp_export_quarantine_admin_demoted_at',
 ])
 
 export function isGlobalCaseDataKey(key: string): boolean {
   return GLOBAL_CASE_DATA_KEYS.has(key)
+}
+
+/** 다른 여행을 삭제·보관할 때 기존 일본의 전역 신고 신호가 함께 지워지지 않게 보존한다. */
+export function preserveLegacyJapanReportSignals(
+  data: Record<string, unknown>,
+  destination: string | null | undefined,
+): Record<string, unknown> {
+  const japan = parseDestinations(destination).find(t =>
+    !isRepeatDestination(t) && matchesDestinationKey(t, 'japan'))
+  if (!japan) return data
+  const byDest = (data.by_dest as Record<string, Record<string, unknown>> | undefined) ?? {}
+  const entry = { ...(byDest[japan] ?? {}) }
+  for (const key of LEGACY_JAPAN_REPORT_KEYS) {
+    if (!(key in entry) && key in data) entry[key] = data[key]
+  }
+  return { ...data, by_dest: { ...byDest, [japan]: entry } }
 }
 
 /**
@@ -462,7 +486,11 @@ export function readByDestValue(
   if (!data || !destination) return undefined
   const byDest = data['by_dest'] as Record<string, Record<string, unknown>> | undefined
   const destObj = byDest?.[destination]
-  if (!destObj || !(key in destObj)) return undefined
+  if (!destObj || !(key in destObj)) {
+    if (LEGACY_JAPAN_REPORT_KEYS.has(key) && !isRepeatDestination(destination) &&
+        matchesDestinationKey(destination, 'japan')) return data[key]
+    return undefined
+  }
   const v = destObj[key]
   return v === undefined ? null : v
 }
@@ -481,6 +509,7 @@ export function readScopedWithLegacyFallback(
 ): unknown {
   const v = readByDestValue(data, destination, key)
   if (v !== undefined) return v
+  if (destination && isRepeatDestination(destination) && data?.by_dest) return undefined
   return data?.[key]
 }
 
@@ -615,7 +644,8 @@ export function flattenCaseForDestination<T extends CaseRow>(
   const data = (caseRow.data as Record<string, unknown> | null) ?? {}
   const byDest = data['by_dest'] as Record<string, Record<string, unknown>> | undefined
   const destObj = byDest?.[destination]
-  const isMulti = parseDestinations(caseRow.destination).length > 1
+  // 이미 평탄화된 뷰(by_dest 없음)는 다시 호출해도 같은 값을 유지한다.
+  const isMulti = parseDestinations(caseRow.destination).length > 1 || (isRepeatDestination(destination) && !!byDest)
   // 단일/legacy + by_dest 엔트리 없음: top-level/컬럼 그대로(누수 상대 없음). 다중은 엔트리가
   // 없어도 strict 처리(아래) — 컬럼/top-level 잔존을 물려받지 않게.
   if (!isMulti && !destObj) return caseRow
@@ -628,9 +658,8 @@ export function flattenCaseForDestination<T extends CaseRow>(
     const obj = destObj ?? {}
     for (const k of DESTINATION_SCOPED_FIELD_KEYS) {
       if (k === 'departure_date') continue
-      const has = Object.prototype.hasOwnProperty.call(obj, k)
-      const v = has ? obj[k] : undefined
-      if (!has || v === null || v === undefined) delete nextData[k]
+      const v = readByDestValue(data, destination, k)
+      if (v === null || v === undefined) delete nextData[k]
       else nextData[k] = v
     }
     nextDeparture =
@@ -651,5 +680,5 @@ export function flattenCaseForDestination<T extends CaseRow>(
       }
     }
   }
-  return { ...caseRow, departure_date: nextDeparture, data: nextData }
+  return { ...caseRow, destination, departure_date: nextDeparture, data: nextData }
 }

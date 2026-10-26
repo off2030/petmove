@@ -13,6 +13,7 @@ import {
   DESTINATION_SCOPED_FIELD_KEYS,
   captureJourneySnapshot,
   parseDestinations,
+  preserveLegacyJapanReportSignals,
   planJourneyRestore,
   summarizeJourney,
   type PastJourneySummary,
@@ -47,7 +48,7 @@ export async function markJourneyCompleteAdmin(
   const tokens = parseDestinations(r.destination)
   if (!tokens.includes(dest)) return { ok: true } // 이미 진행 중에 없음 — 멱등 성공.
 
-  const data = (r.data ?? {}) as Record<string, unknown>
+  const data = preserveLegacyJapanReportSignals(r.data ?? {}, r.destination)
   const byDestAll = {
     ...((data.by_dest as Record<string, Record<string, unknown>> | undefined) ?? {}),
   }

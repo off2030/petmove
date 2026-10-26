@@ -18,6 +18,7 @@ import type {
   SpeciesFilter,
 } from './destination-overrides-types'
 import { HARDCODED_VACCINE_SPECIES_DEFAULTS } from './destination-overrides-types'
+import { destinationCountry } from './destination-names'
 
 /**
  * 한 동물(case)에 동시에 진행할 수 있는 목적지(여정) 최대 개수.
@@ -2103,7 +2104,7 @@ export function matchesDestinationKey(
   if (!destination) return false
   const override = DESTINATION_OVERRIDES[key]
   if (!override) return false
-  const tokens = parseDestinations(destination).map((t) => t.toLowerCase())
+  const tokens = parseDestinations(destination).map((t) => destinationCountry(t).toLowerCase())
   if (tokens.includes(String(key).toLowerCase())) return true
   const keywords = override.keywords.map((k) => k.toLowerCase())
   return tokens.some((t) => keywords.includes(t))
@@ -2206,7 +2207,7 @@ const RABIES_FREE_TOKENS: ReadonlySet<string> = new Set(
 )
 
 function normalizeRabiesFreeToken(token: string): string {
-  return token.trim().toLowerCase().replace(/\s+/g, '')
+  return destinationCountry(token).toLowerCase().replace(/\s+/g, '')
 }
 
 /**

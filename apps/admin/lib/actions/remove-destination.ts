@@ -11,7 +11,7 @@
  */
 
 import { createClient } from '@petmove/auth/server'
-import { DESTINATION_SCOPED_FIELD_KEYS, parseDestinations } from '@petmove/domain'
+import { DESTINATION_SCOPED_FIELD_KEYS, parseDestinations, preserveLegacyJapanReportSignals } from '@petmove/domain'
 
 type Result = { ok: true } | { ok: false; error: string }
 
@@ -38,7 +38,7 @@ export async function removeCaseDestinationAdmin(
   const nextTokens = tokens.filter((t) => t !== dest)
   const nextDest = nextTokens.length > 0 ? nextTokens.join(', ') : null
 
-  const data = (r.data ?? {}) as Record<string, unknown>
+  const data = preserveLegacyJapanReportSignals(r.data ?? {}, r.destination)
   const tripTypeAll = { ...((data.trip_type as Record<string, unknown> | undefined) ?? {}) }
   delete tripTypeAll[dest]
   const byDestAll = {

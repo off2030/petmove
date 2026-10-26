@@ -1,3 +1,5 @@
+import { destinationCountry } from '@petmove/domain'
+
 import { findNewZealandToken } from '@petmove/domain'
 import type { CaseRow, InspectionLabRule } from '@petmove/domain'
 
@@ -161,7 +163,7 @@ export function findInfectiousLabs(
   country: string,
   fallback: string[],
 ): string[] {
-  const rule = rules.find((r) => r.countries.includes(country))
+  const rule = rules.find((r) => r.countries.includes(destinationCountry(country)))
   return rule && rule.labs.length > 0 ? [...rule.labs] : fallback
 }
 

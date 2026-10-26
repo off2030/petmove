@@ -42,7 +42,29 @@ for (const d of ENTRIES) {
  */
 export function canonicalDestination(name: string): string {
   const key = name.trim()
+  const visit = key.match(/^(.*) \(([2-9]|[1-9]\d+)차\)$/)
+  if (visit) return `${canonicalDestination(visit[1])} (${visit[2]}차)`
   return ALIAS_TO_CANONICAL.get(key) ?? key
+}
+
+/** 저장 토큰은 여정별로 유지하고, 국가 규칙·영문명 조회에만 회차를 뺀다. */
+export function destinationCountry(token: string): string {
+  return canonicalDestination(token).replace(/ \(([2-9]|[1-9]\d+)차\)$/, '')
+}
+
+export function isRepeatDestination(token: string): boolean {
+  return / \(([2-9]|[1-9]\d+)차\)$/.test(token.trim())
+}
+
+/** 삭제·보관된 슬롯도 재사용하지 않아 이전 여행의 첨부와 새 여행을 구분한다. */
+export function nextDestinationVisit(country: string, usedTokens: string[]): string {
+  const base = destinationCountry(country)
+  const used = new Set(usedTokens.map(canonicalDestination))
+  if (!used.has(base) && !usedTokens.some(t => destinationCountry(t) === base)) return base
+  const visits = [...used].filter(t => destinationCountry(t) === base)
+    .map(t => Number(t.match(/ \((\d+)차\)$/)?.[1] ?? 1))
+  const visit = Math.max(1, ...visits) + 1
+  return `${base} (${visit}차)`
 }
 
 /** 정식 명칭 → 영문 표기. */
@@ -55,7 +77,7 @@ for (const d of ENTRIES) KO_TO_EN.set(d.ko, d.en)
  * 돌려준다(임의로 버리지 않는다 — canonicalDestination 과 같은 방침).
  */
 export function destinationEnglish(name: string): string {
-  const ko = canonicalDestination(name)
+  const ko = destinationCountry(name)
   return KO_TO_EN.get(ko) ?? ko
 }
 
@@ -72,7 +94,7 @@ for (const d of ENTRIES) {
 export function matchesDestination(ko: string, query: string): boolean {
   const q = query.trim().toLowerCase()
   if (!q) return true
-  const tokens = SEARCH_TOKENS.get(ko)
+  const tokens = SEARCH_TOKENS.get(destinationCountry(ko))
   return tokens ? tokens.some(t => t.includes(q)) : ko.toLowerCase().includes(q)
 }
 

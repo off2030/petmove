@@ -10,6 +10,7 @@ import { useDestinationOverrides } from '@/components/providers/destination-over
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   getAllowedFields,
+  destinationCountry,
   getEffectiveVaccineEntries,
   getEffectiveExtraFieldEntries,
   vaccineMatchesSpecies,
@@ -193,7 +194,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
         field_keys: extraKeys,
         // 그 국가의 필수 파일도 함께 선택(예: 일본 사전 신고 → 이동 가방 사진). 선택 파일은 미선택.
         fileKeys: SHARE_FILE_REQUESTS
-          .filter((r) => r.required && r.destinations !== 'all' && r.destinations.includes(c))
+          .filter((r) => r.required && r.destinations !== 'all' && r.destinations.includes(destinationCountry(c)))
           .map((r) => r.key),
       }))
       .filter((p) => p.field_keys.length > 0 || p.fileKeys.length > 0)

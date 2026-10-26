@@ -60,6 +60,12 @@ const journeyRestoreCode = await run(
   'journey restore contract',
   { shell: process.platform === 'win32' },
 )
+const repeatJourneysCode = await run(
+  localBin('tsx'),
+  ['scripts/check-repeat-journeys.ts'],
+  'repeat journeys contract',
+  { shell: process.platform === 'win32' },
+)
 // 설정 화면 컨트롤·칩 크기 규격 — 높이 클래스를 직접 쓰면 실패(2026-08-06 신설).
 const sizeCode = await run(process.execPath, ['scripts/lint-settings-size.mjs'], 'settings size scale')
 const copyCode = await run(
@@ -153,6 +159,7 @@ const summary = [
   `  lint:journey:  ${journeyCode === 0 ? '✓ pass' : `✗ exit ${journeyCode}`}`,
   `  report slots:  ${reportSlotsCode === 0 ? '✓ pass' : `✗ exit ${reportSlotsCode}`}`,
   `  journey undo:  ${journeyRestoreCode === 0 ? '✓ pass' : `✗ exit ${journeyRestoreCode}`}`,
+  `  repeat trips:  ${repeatJourneysCode === 0 ? '✓ pass' : `✗ exit ${repeatJourneysCode}`}`,
   `  lint:size:     ${sizeCode === 0 ? '✓ pass' : `✗ exit ${sizeCode}`}`,
   `  lint:copy:     ${copyCode === 0 ? '✓ pass' : `✗ exit ${copyCode}`}`,
   `  lint:dest:     ${destCode === 0 ? '✓ pass' : `✗ exit ${destCode}`}`,
@@ -171,7 +178,7 @@ console.log(`\n─── summary ───\n${summary}`)
 process.exit(
   Math.max(
     eslintCode, portalEslintCode, rlsCode, scopeCode, journeyCode,
-    reportSlotsCode, journeyRestoreCode, sizeCode, copyCode, wiringCode, parityCode,
+    reportSlotsCode, journeyRestoreCode, repeatJourneysCode, sizeCode, copyCode, wiringCode, parityCode,
     departureSyncCode, multiSlotCode, parasiticideMergeCode, validUntilCode, phoneCode,
     destCode, behaviorCode, checksCode,
   ),
