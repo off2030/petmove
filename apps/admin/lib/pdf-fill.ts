@@ -10,6 +10,7 @@ import zlib from 'node:zlib'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
 import nz26Strikes from '@/data/pdf-strikes-nz26.json'
+import nzLegacyStrikes from '@/data/pdf-strikes-nz-legacy.json'
 import { FORM_CAPACITY } from '@/lib/pdf-multi-forms'
 import { getParasiteFamily, PARASITE_FAMILIES, splitCustomerNameEn, formatKoreanPhone, looksLikeKoreanPhoneInput, destinationEnglish } from '@petmove/domain'
 import {
@@ -191,9 +192,10 @@ type FormMapping = {
    * 조건 묶음 취소선 — conditionalLines 가 값 **하나**로 고르는 것과 달리, 여러 조건(종·중성화·
    * 인증 경로 등)이 **모두** 켜졌을 때 긋는다. 'nz26' = 뉴질랜드 신 IHS 건강증명서 — 조건은
    * lib/pdf-nz2026.ts, 좌표는 data/pdf-strikes-nz26.json(scripts/nz2026-layout.py 가 원본 문구
-   * 위치에서 계산한 생성물 — 손으로 고치지 말 것). 여러 마리를 한 장에 쓰면 모든 동물 기준.
+   * 위치에서 계산한 생성물 — 손으로 고치지 말 것). 'nz-legacy'는 구 서식의 종별 항목과
+   * 봉인 면제 부분만 처리한다. 여러 마리를 한 장에 쓰면 문서 안의 모든 동물을 확인한다.
    */
-  strikeFlags?: 'nz26'
+  strikeFlags?: 'nz26' | 'nz-legacy'
 }
 
 type MappingsJson = Record<string, FormMapping>
@@ -2944,6 +2946,26 @@ function rewriteTransformIndex(transform: string | undefined, newIdx: number): s
 function resolveMultiTransform(transform: string | undefined, doc: PackedDoc): string | null {
   if (!transform) return null
 
+  // NZ's RNATT box is shared by the shipment, not by the first animal. Keep
+  // every result paired with its animal even when two results happen to match.
+  const nzTiter = transform.match(/^multi:nz_titer_(date|value)$/)
+  if (nzTiter) {
+    const attr = nzTiter[1]
+    const values = doc.cases.map(c => {
+      const value = resolveField({ source: 'rabies_titer_records', transform: `array[0].${attr}` }, c, (c.data ?? {}) as Record<string, unknown>)
+      return typeof value === 'string' ? value : ''
+    })
+    if (doc.cases.length === 1 || (attr === 'date' && values[0] && values.every(v => v === values[0]))) return values[0] ?? ''
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    return values.map((v, i) => {
+      const name = (doc.cases[i].pet_name_en || doc.cases[i].pet_name || String.fromCharCode(65 + i)).trim()
+      const value = attr === 'date'
+        ? v.replace(/^(\d{4})[-/](\d{2})[-/](\d{2})$/, (_, y, m, d) => `${d}/${months[Number(m) - 1]}/${y}`)
+        : v
+      return `${name}: ${value || '[not recorded]'}`
+    }).join(' / ') + (attr === 'value' ? ' IU/ml' : '')
+  }
+
   if (transform === 'multi:species_en') {
     const kinds = new Set<string>()
     for (const c of doc.cases) {
@@ -3070,7 +3092,9 @@ function resolveFieldMulti(
 
   const parsed = parseRowField(fieldName)
   if (!parsed) {
-    const primary = doc.cases[0]
+    // Shared species-only boxes must use an animal of that species, including
+    // mixed cat/dog shipments whose first animal happens to be a cat.
+    const primary = (mapping?.speciesOnly && doc.cases.find(c => String(c.data?.species ?? '').toLowerCase() === mapping.speciesOnly)) || doc.cases[0]
     return resolveField(mapping, primary, (primary.data ?? {}) as Record<string, unknown>, allowedVaccines)
   }
 
@@ -3104,9 +3128,12 @@ type FlagStrikeGroup = { when: string[]; lines: { page: number; x1: number; y1: 
 
 /** 조건 묶음 취소선(FormMapping.strikeFlags) — 단일·다중 발급 공통. */
 function drawFlagStrikes(pdf: PDFDocument, form: FormMapping, cases: CaseRow[]): void {
-  if (form.strikeFlags !== 'nz26') return
-  const groups = nz26Strikes as FlagStrikeGroup[]
-  const flags = nz26StrikeFlags(cases)
+  if (!form.strikeFlags) return
+  const legacy = form.strikeFlags === 'nz-legacy'
+  const groups = (legacy ? nzLegacyStrikes[form.template as keyof typeof nzLegacyStrikes] : nz26Strikes) as FlagStrikeGroup[]
+  const flags = legacy
+    ? new Set(['always', ...(cases.some(c => String(c.data?.species ?? '').toLowerCase() === 'dog') ? ['dog'] : []), ...(cases.length > 0 && cases.every(c => String(c.data?.species ?? '').toLowerCase() === 'cat') ? ['cat'] : [])])
+    : nz26StrikeFlags(cases)
   const pages = pdf.getPages()
   for (const g of groups) {
     if (!g.when.every((f) => flags.has(f))) continue

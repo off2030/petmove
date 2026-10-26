@@ -4117,7 +4117,9 @@
     "filename": "NZ_{pet_name}.pdf",
     "dateFormat": "dmmmy",
     "flatten": true,
+    "strikeFlags": "nz-legacy",
     "fields": {
+      "Check Box72": { "source": "species", "transform": "checkbox:eq:dog", "speciesOnly": "dog", "note": "Dog-only South Africa declaration; blank for cats" },
       "Text2": {
         "source": "new_zealand_extra",
         "transform": "json:permit_no",
@@ -4209,12 +4211,12 @@
       },
       "Text58": {
         "source": "rabies_titer_records",
-        "transform": "array[0].date",
+        "transform": "multi:nz_titer_date",
         "note": "p2 (11) RNATT sample collection date"
       },
       "Text59": {
         "source": "rabies_titer_records",
-        "transform": "array[0].value",
+        "transform": "multi:nz_titer_value",
         "note": "p2 (11) RNATT test result IU/ml"
       },
       "Text60": {
@@ -4258,26 +4260,31 @@
         "note": "p2 (13b) External 2nd active ingredient"
       },
       "Text68": {
+        "speciesOnly": "dog",
         "source": "heartworm_dates",
         "transform": "vaccine_desc:int_parasite:date[0]",
         "note": "p2 (14a) Heartworm treatment date (최근)"
       },
       "Text69": {
+        "speciesOnly": "dog",
         "source": "infectious_disease_records",
         "transform": "array[0].date",
         "note": "p2 (15a) Heartworm antigen ELISA sample collection date"
       },
       "Text70": {
+        "speciesOnly": "dog",
         "source": "infectious_disease_records",
         "transform": "array[0].date",
         "note": "p2 (16) Babesia gibsoni IFA/ELISA sample collection date"
       },
       "Text71": {
+        "speciesOnly": "dog",
         "source": "infectious_disease_records",
         "transform": "array[0].date",
         "note": "p3 (18) Brucella canis RSAT sample collection date"
       },
       "Text73": {
+        "speciesOnly": "dog",
         "source": "infectious_disease_records",
         "transform": "array[0].date",
         "note": "p3 (24) Leptospira MAT sample collection date"
@@ -4337,6 +4344,7 @@
     "filename": "NZ_{pet_name}.pdf",
     "dateFormat": "dmmmy",
     "flatten": true,
+    "strikeFlags": "nz-legacy",
     "fields": {
       "Text2": {
         "source": "new_zealand_extra",
@@ -4429,12 +4437,12 @@
       },
       "Text58": {
         "source": "rabies_titer_records",
-        "transform": "array[0].date",
+        "transform": "multi:nz_titer_date",
         "note": "p2 (11) RNATT sample collection date"
       },
       "Text59": {
         "source": "rabies_titer_records",
-        "transform": "array[0].value",
+        "transform": "multi:nz_titer_value",
         "note": "p2 (11) RNATT test result IU/ml"
       },
       "Text60": {
@@ -4478,26 +4486,31 @@
         "note": "p2 (13b) External 2nd active ingredient"
       },
       "Text68": {
+        "speciesOnly": "dog",
         "source": "heartworm_dates",
         "transform": "vaccine_desc:int_parasite:date[0]",
         "note": "p2 (14a) Heartworm treatment date (최근)"
       },
       "Text69": {
+        "speciesOnly": "dog",
         "source": "infectious_disease_records",
         "transform": "array[0].date",
         "note": "p2 (15a) Heartworm antigen ELISA sample collection date"
       },
       "Text70": {
+        "speciesOnly": "dog",
         "source": "infectious_disease_records",
         "transform": "array[0].date",
         "note": "p2 (16) Babesia gibsoni IFA/ELISA sample collection date"
       },
       "Text71": {
+        "speciesOnly": "dog",
         "source": "infectious_disease_records",
         "transform": "array[0].date",
         "note": "p3 (18) Brucella canis RSAT sample collection date"
       },
       "Text73": {
+        "speciesOnly": "dog",
         "source": "infectious_disease_records",
         "transform": "array[0].date",
         "note": "p3 (24) Leptospira MAT sample collection date"

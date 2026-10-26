@@ -503,7 +503,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   new_zealand_legacy: {
     keywords: ['뉴질랜드(구)'],
     // 7월 이전 구성 그대로 — 폐충(lungworm)은 신 IHS 항목이라 없다.
-    vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'infectious_disease', 'external_parasite', 'internal_parasite', 'heartworm'],
+    vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'infectious_disease', 'external_parasite', 'internal_parasite', { key: 'heartworm', species: 'dog' }],
     extraSection: 'new_zealand',
     extraFields: ['permit_no'],
     vetVisitWindowDays: 3,
@@ -556,7 +556,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     //   내부구충과 시점(출국 전 5일 이내)만 같고 약이 다르다(구충약이 폐충까지 커버하지 않는
     //   경우가 많다). 구충 카드에 얹어 두면 '구충약 하나로 끝'으로 읽혀 별도 카드로 뗀다
     //   (2026-07-29 사용자 지정 — 심장사상충을 구충에서 뗀 것과 같은 처리).
-    vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'infectious_disease', 'external_parasite', 'internal_parasite', 'heartworm', 'lungworm'],
+    vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'infectious_disease', 'external_parasite', 'internal_parasite', { key: 'heartworm', species: 'dog' }, { key: 'lungworm', species: 'dog' }],
     extraSection: 'new_zealand',
     extraFields: [
       // 수입 허가 번호 + 마이크로칩 인증일(호주와 같은 'id_date' 재사용 — 같은 사실이다).

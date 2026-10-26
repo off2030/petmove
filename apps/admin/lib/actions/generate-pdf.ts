@@ -4,7 +4,7 @@ import { createClient } from '@petmove/auth/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import { FORM_CAPACITY, type MultiFormKey } from '@/lib/pdf-multi-forms'
 import type { CaseRow } from '@petmove/domain'
-import { getEffectiveVaccineList, findDestinationToken, findNewZealandTokenWithData, flattenCaseForDestination, getDepartureDate, getVetVisitDate, parseDestinations, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly, recommendRabiesDoseIndices } from '@petmove/domain'
+import { getEffectiveVaccineEntries, vaccineMatchesSpecies, findDestinationToken, findNewZealandTokenWithData, flattenCaseForDestination, getDepartureDate, getVetVisitDate, parseDestinations, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly, recommendRabiesDoseIndices } from '@petmove/domain'
 import { loadVetInfo } from '@/lib/vet-info'
 
 export type GeneratePdfResult =
@@ -63,7 +63,9 @@ async function generate(
   // 토글)과 동일한 필터 — 별지25/AuNz 도 예외 없이. 추가 백신 기록을 PDF 에 노출
   // 하려면 케이스 상세 "절차정보 → 항목 추가" 로 해당 vaccine 토글 ON.
   const destForRules = options?.destination ?? caseRow.destination
-  const allowedVaccines = getEffectiveVaccineList(destForRules, extraFields)
+  const allowedVaccines = getEffectiveVaccineEntries(destForRules, extraFields, null)
+    .filter(entry => vaccineMatchesSpecies(entry, String(data.species ?? '')))
+    .map(entry => entry.key)
   // 다중 여행지 케이스: 활성 여행지의 by_dest 값을 top-level 로 평탄화한 caseRow 로 채움.
   // 단일 여행지 또는 by_dest 미사용 케이스는 그대로.
   // destination 미지정 호출(검사탭 KSVDL·VBDDL+APQA·ARC 버튼 등 — caseId 만 넘김)에서도
@@ -818,10 +820,8 @@ export async function generateVBCMulti(caseIds: string[], opts?: { includeVet?: 
 
 /**
  * NZ 다중 — primary(첫 케이스)의 광견병 접종 횟수로 NZ vs NZ_2 템플릿 선택.
- * 한 인증서에는 동일한 (10a)/(10b) 룰이 적용되므로, 같이 묶인 케이스들의 광견병
- * 이력은 primary 기준만 출력된다 (Cert A 의 다른 백신/검사 행도 모두 primary 기준).
- * UI 가 같은 보호자·여행지·출국일 또는 내원일 케이스를 사전 필터하므로 보통은
- * primary 이력으로 대표가 충분하다.
+ * 광견병 (10a)/(10b) 선택은 primary 기준이다. RNATT 결과는 같은 출국일이어도
+ * 동물별로 다르므로 각 동물 이름과 결과를 병기한다. 개 전용 칸은 개의 기록만 읽는다.
  */
 export async function generateNZMulti(caseIds: string[], opts?: { includeVet?: boolean; destination?: string | null }): Promise<GenerateMultiPdfResult> {
   if (caseIds.length === 0) return { ok: false, error: '대상 동물이 없습니다' }
