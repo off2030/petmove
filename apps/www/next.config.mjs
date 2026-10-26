@@ -105,6 +105,15 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: '/admin/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store' },
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
+          { key: 'Referrer-Policy', value: 'same-origin' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+        ],
+      },
+      {
         // 자체 호스팅 폰트 — 기본값(max-age=0)이면 방문할 때마다 재검증해 CDN 시절보다 느려진다.
         // 1년 immutable 이 안전한 건 경로에 버전이 박혀 있기 때문(/fonts/pretendard-1.3.9/).
         // ⛔ 폰트를 업그레이드할 땐 반드시 새 버전 폴더로 넣을 것 — 같은 경로에 덮어쓰면

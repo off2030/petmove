@@ -41,6 +41,15 @@ jobs:
       - name: Typecheck portal
         run: pnpm --filter @petmove/portal exec tsc --noEmit
 
+      - name: Typecheck www
+        run: pnpm --filter @petmove/www exec tsc --noEmit
+
+      - name: Check automation calendar authentication and schedules
+        run: pnpm tsx scripts/check-automation-calendar.ts
+
+      - name: Check automation reporting and offline retry
+        run: node scripts/check-automation-reporter.mjs
+
       - name: Typecheck packages/auth
         run: pnpm --filter @petmove/auth exec tsc --noEmit -p .
 

@@ -22,6 +22,7 @@ jobs:
     # 실패 시 이슈를 만들어 알림 보내려면 issues 쓰기 권한 필요.
     permissions:
       contents: read
+      actions: read
       issues: write
     steps:
       # 펫무브 앱 서버 워밍 — 10분마다 한 번 찔러 Vercel 함수 콜드 스타트(첫 실행 렉)를
@@ -31,6 +32,13 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Record automation start
+        continue-on-error: true
+        env:
+          AUTOMATION_REPORT_TOKEN: ${{ secrets.AUTOMATION_REPORT_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/automation-calendar.mjs github --workflow send-milestone-pushes.yml --phase start
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -76,3 +84,12 @@ jobs:
             } else {
               await github.rest.issues.create({ owner, repo, title: '⚠️ 푸시 발송 작업 실패 — 확인 필요', labels: ['push-failure'], body });
             }
+
+      - name: Record automation finish
+        if: always()
+        continue-on-error: true
+        env:
+          AUTOMATION_REPORT_TOKEN: ${{ secrets.AUTOMATION_REPORT_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          CALENDAR_RUN_STATUS: ${{ job.status }}
+        run: node scripts/automation-calendar.mjs github --workflow send-milestone-pushes.yml --phase finish

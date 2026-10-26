@@ -1,0 +1,47 @@
+name: Deploy WWW
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'apps/www/**'
+      - 'packages/domain/**'
+      - 'pnpm-lock.yaml'
+      - 'scripts/configure-www-admin-env.mjs'
+      - '.github/workflows/deploy-www.yml'
+      - '!**/*.md'
+  workflow_dispatch:
+concurrency:
+  group: deploy-www-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WWW }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm add -g vercel@65.2.0
+      - name: Pull project metadata
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+      - name: Configure private admin environment
+        run: node scripts/configure-www-admin-env.mjs
+        env:
+          WWW_ADMIN_ACCESS_KEY_HASH: ${{ secrets.WWW_ADMIN_ACCESS_KEY_HASH }}
+          WWW_ADMIN_SESSION_SECRET: ${{ secrets.WWW_ADMIN_SESSION_SECRET }}
+          AUTOMATION_REPORT_TOKEN_HASH: ${{ secrets.AUTOMATION_REPORT_TOKEN_HASH }}
+          AUTOMATION_CALENDAR_DB_KEY: ${{ secrets.AUTOMATION_CALENDAR_DB_KEY }}
+          WWW_SUPABASE_URL: ${{ secrets.WWW_SUPABASE_URL }}
+          WWW_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.WWW_SUPABASE_PUBLISHABLE_KEY }}
+      - name: Deploy WWW
+        run: vercel deploy --prod --yes --token="$VERCEL_TOKEN"

@@ -26,10 +26,20 @@ jobs:
     name: Dump + upload to Google Drive
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
     steps:
       # 사진·서류 미러 스크립트(scripts/backup-storage-mirror.mjs)를 쓰기 위해 먼저 받아둔다.
       # 덤프 파일보다 앞에 둬야 한다 — checkout 은 작업 폴더를 청소하므로 뒤에 두면 덤프가 날아간다.
       - uses: actions/checkout@v4
+
+      - name: Record automation start
+        continue-on-error: true
+        env:
+          AUTOMATION_REPORT_TOKEN: ${{ secrets.AUTOMATION_REPORT_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/automation-calendar.mjs github --workflow backup-db.yml --phase start
 
       - name: Check secrets configured
         id: cfg
@@ -116,3 +126,12 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://ugywxiyivfzflqkcnqvu.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/backup-storage-mirror.mjs --apply
+
+      - name: Record automation finish
+        if: always()
+        continue-on-error: true
+        env:
+          AUTOMATION_REPORT_TOKEN: ${{ secrets.AUTOMATION_REPORT_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          CALENDAR_RUN_STATUS: ${{ steps.cfg.outputs.ready == 'false' && 'skipped' || job.status }}
+        run: node scripts/automation-calendar.mjs github --workflow backup-db.yml --phase finish
