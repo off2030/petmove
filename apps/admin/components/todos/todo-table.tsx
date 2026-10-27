@@ -379,7 +379,7 @@ export function TodoTable({
   }, [visible, cases.length])
 
   const visibleCases = cases.slice(0, visible)
-  const { openCase } = useCases()
+  const { openCase, setActiveDestination } = useCases()
 
   return (
     <table className="w-full border-collapse table-fixed">
@@ -404,7 +404,13 @@ export function TodoTable({
               'border-b border-dashed border-border/80 hover:bg-accent/40 transition-colors cursor-pointer',
               rowClass?.(row),
             )}
-            onClick={() => openCase(row.id)}
+            onClick={() => {
+              // 목록에서 보고 있던 여행으로 상세도 연다. 새 여행 신고 행을 눌렀는데
+              // 이전 완료 여행이 열려 다른 신고를 편집하지 않도록 표시 범위를 맞춘다.
+              const destination = activeDestById?.get(row.id)
+              if (destination) setActiveDestination(destination)
+              openCase(row.id)
+            }}
           >
             {columns.map((col) => {
               // readonly 셀은 행 클릭(네비게이션) 허용, 그 외 편집 셀은 클릭 전파 차단.
