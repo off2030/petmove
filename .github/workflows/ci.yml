@@ -38,6 +38,9 @@ jobs:
       - name: Typecheck admin
         run: pnpm --filter @petmove/admin exec tsc --noEmit
 
+      - name: Check report list journey selection
+        run: pnpm tsx scripts/check-import-report-selection.ts
+
       - name: Typecheck portal
         run: pnpm --filter @petmove/portal exec tsc --noEmit
 

@@ -31,11 +31,12 @@ import { InspectionTable, readInspectionStatus, type InspectionRow } from './ins
 import { INSPECTION_STATUS_OPTIONS, nzInfectiousLabs } from '@/lib/inspection-status'
 import {
   exportSlotApplies,
-  hasReportSchedule,
+  reportCompleteFor,
   REPORT_STATUS_OPTIONS,
   reportReturnDateFor,
   reportSlotStatusFor,
 } from '@/lib/report-status'
+import { IMPORT_REPORT_DEST_KEY, isAutoImportReport, withImportReportDest } from '@/lib/import-report-selection'
 import { DestinationCell } from './destination-cell'
 import { updateCaseField } from '@/lib/actions/cases'
 import { downloadPdfRequest, type PdfDownloadRequest } from '@/lib/pdf-download'
@@ -192,7 +193,6 @@ function addDays(dateStr: string, days: number): string {
 // 출국일·내원일은 여행지별(data.by_dest[여행지])로 저장될 수 있다. 탭은 활성
 // 여행지(override ?? 출국일 있는 여행지 ?? 첫 여행지) 기준으로 읽고, 포함 판정은
 // 모든 여행지를 스캔한다. 단일 여행지면 컬럼/top-level 폴백이라 기존 동작 유지.
-const IMPORT_REPORT_DEST_KEY = 'import_report_active_dest'
 const EXPORT_DOC_DEST_KEY = 'export_doc_active_dest'
 
 /** 서류 탭 활성 여행지 출국일. */
@@ -522,47 +522,6 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
   { key: 'export_doc_memo', label: '메모', storage: 'data', type: 'text', width: EXPORT_DOC_COL_W, resolveValue: exportDocMemo },
 ]
 
-/**
- * 자동 포함 판정의 기준 여행지 — 신고국이면서 일정(출국일·내원일 등)이 있는 여행지. 없으면 null.
- *
- * 활성 여행지(import_report_active_dest)가 **신고국**으로 저장돼 있으면 그 여행지 기준으로만
- * 판정한다(칩으로 일본을 골라 둔 케이스는 일본 일정만 본다). 저장값이 없거나 **신고국이 아니면**
- * 케이스의 모든 여행지를 스캔 — 다중 여행지에서 한 여행지에만 일정이 있어도 포함된다.
- *
- * ⚠️ 비-신고국 각인으로 판정을 고정하면 안 된다(2026-10-20 황현선/루이: 중국 출국일 입력 때
- *   각인이 '중국'이 됐고, 이후 추가정보 폼으로 들어온 대만 출국일은 각인을 안 바꿔 신고 탭에서
- *   통째로 빠졌다). 비-신고국 고정의 결과는 '제외' 뿐이고, 일부러 뺄 케이스는 '신고 내리기'가 있다.
- */
-function autoImportReportDest(row: CaseRow, countries: string[]): string | null {
-  const data = (row.data ?? {}) as Record<string, unknown>
-  const dests = parseDestinations(row.destination)
-  const active = data.import_report_active_dest
-  // 저장된 활성 여행지는 **케이스의 현재 여행지 목록에 남아 있을 때만** 믿는다
-  // ([[resolveTabActiveDest]] 와 같은 가드). 여행지를 갈아탄 케이스에 옛 칩 값이 남아 있으면
-  // 그 나라 하나로만 판정돼, 새 여행지에 일정·신청일이 있어도 신고 탭에서 영영 빠졌다
-  // (2026-08-24 감사 — 최유나/말랑이: active='태국' 인데 여행지는 호주·대만·포르투갈,
-  //  대만 수입허가 신청일 2026-08-04 이 있는데도 목록에 없었다).
-  if (typeof active === 'string' && active && dests.includes(active) && countries.includes(destinationCountry(active))) {
-    return hasReportSchedule(row, active) ? active : null
-  }
-  return dests.find((d) => countries.includes(destinationCountry(d)) && hasReportSchedule(row, d)) ?? null
-}
-
-function isAutoImportReport(row: CaseRow, countries: string[]): boolean {
-  return autoImportReportDest(row, countries) != null
-}
-
-/**
- * 신고 탭에 넘길 행 — 각인이 비-신고국이라 스캔으로 다른 여행지가 잡혔으면 그 여행지를 각인한
- * 사본을 돌려준다. 칩·출국일·마감일·수입/수출 칸이 전부 [[resolveTabActiveDest]] 로 목적지를
- * 푸니, 사본 한 번으로 행 전체가 '포함시킨 그 여행지' 기준으로 맞춰진다(원본 data 는 안 건드림).
- */
-function withImportReportDest(row: CaseRow, countries: string[]): CaseRow {
-  const dest = autoImportReportDest(row, countries)
-  if (!dest || resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY) === dest) return row
-  return { ...row, data: { ...((row.data ?? {}) as Record<string, unknown>), [IMPORT_REPORT_DEST_KEY]: dest } }
-}
-
 function isManualImportReport(row: CaseRow): boolean {
   const data = (row.data ?? {}) as Record<string, unknown>
   return data.import_report_manual === true
@@ -606,7 +565,7 @@ function compareByCountryOrder(a: CaseRow, b: CaseRow): number {
 const IMPORT_REPORT_DEST_ORDER = ['일본', '태국', '필리핀', '대만', '하와이']
 function reportDestRank(row: CaseRow): number {
   const active = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY) ?? ''
-  const idx = IMPORT_REPORT_DEST_ORDER.indexOf(active)
+  const idx = IMPORT_REPORT_DEST_ORDER.indexOf(destinationCountry(active))
   return idx === -1 ? IMPORT_REPORT_DEST_ORDER.length : idx
 }
 
@@ -648,9 +607,7 @@ function effectiveExportStatus(row: CaseRow): string {
  * 수출은 일본·왕복일 때만 집계(그 외는 수입만으로 완료).
  */
 function isImportReportComplete(row: CaseRow): boolean {
-  if (effectiveImportStatus(row) !== 'done') return false
-  if (exportApplies(row)) return effectiveExportStatus(row) === 'done'
-  return true
+  return reportCompleteFor(row, reportDest(row))
 }
 
 /** 신고기한 — 저장값 우선, 없으면 자동 계산(일본: 출국일-40일). */
@@ -716,7 +673,8 @@ function isExportDocFinishedNoDeparture(row: CaseRow): boolean {
 }
 
 
-const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
+function createImportReportColumns(onPick?: (caseId: string, destination: string) => void): TodoColumn[] {
+  return [
   {
     key: 'destination',
     label: '여행지',
@@ -727,8 +685,9 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     render: (row, onUpdate) => (
       <DestinationCell
         row={row}
-        overrideKey="import_report_active_dest"
+        overrideKey={IMPORT_REPORT_DEST_KEY}
         onUpdate={onUpdate}
+        onPick={(dest) => onPick?.(row.id, dest)}
         dismissAction={{
           label: '신고 내리기',
           dismissKey: 'import_report_dismissed',
@@ -808,12 +767,13 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
       )
     },
   },
-]
+  ]
+}
 
 const COLUMNS_MAP: Record<TabId, TodoColumn[]> = {
   inspection: INSPECTION_COLUMNS,
   export_doc: EXPORT_DOC_COLUMNS,
-  import_report: IMPORT_REPORT_COLUMNS,
+  import_report: createImportReportColumns(),
 }
 
 /** 동물/고객/여행지 매칭. 빈 query면 항상 true. */
@@ -838,6 +798,11 @@ export function TodosApp({
   const labOptions = useMemo(() => allLabOptions(inspectionConfig), [inspectionConfig])
   const [internalTab, setInternalTab] = useState<TabId>('inspection')
   const [internalQuery, setInternalQuery] = useState('')
+  // 기본은 미완료 여행 우선. 직접 고른 완료 내역은 이번 목록 세션에서 계속 확인한다.
+  const [reportSelections, setReportSelections] = useState<Record<string, string>>({})
+  const reportColumns = useMemo(() => createImportReportColumns((caseId, dest) => {
+    setReportSelections(previous => ({ ...previous, [caseId]: dest }))
+  }), [])
   const activeTab = forcedTab ?? internalTab
   const setActiveTab = setInternalTab
   const query = forcedQuery ?? internalQuery
@@ -864,7 +829,7 @@ export function TodosApp({
         .filter(c => (isAutoImportReport(c, importReportCountries) || isManualImportReport(c)) && !isDismissedImportReport(c))
         .filter(c => matchesQuery(c, q))
         // 정렬·완료 판정·표시가 모두 포함 기준 여행지로 풀리도록 먼저 각인 사본으로 바꾼다.
-        .map(c => withImportReportDest(c, importReportCountries))
+        .map(c => withImportReportDest(c, importReportCountries, reportSelections[c.id]))
         .sort((a, b) => {
           // 1차: 완료(수입 완료 + 수출 적용 시 수출도 완료)는 무조건 미완료보다 뒤.
           const ca = isImportReportComplete(a) ? 1 : 0
@@ -948,7 +913,7 @@ export function TodosApp({
         })
     }
     return cases
-  }, [cases, activeTab, q, importReportCountries])
+  }, [cases, activeTab, q, importReportCountries, reportSelections])
 
   // 탭별 활성 여행지 맵 — TodoTable 의 scoped key 편집을 by_dest 로 라우팅하는 데 사용.
   const activeDestById = useMemo(() => {
@@ -1086,7 +1051,7 @@ export function TodosApp({
       ) : (
         <TodoTable
           cases={filteredCases}
-          columns={COLUMNS_MAP[activeTab].filter(
+          columns={(activeTab === 'import_report' ? reportColumns : COLUMNS_MAP[activeTab]).filter(
             (col) => !todoColumnsConfig.hiddenColumns[activeTab].includes(col.key),
           )}
           onUpdate={updateLocalCaseField}

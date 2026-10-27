@@ -446,6 +446,7 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'vet_available_date', //   출국일 파생 내원가능일(admin) — 단일 목적지에서만 기록(다중 부수효과 스킵)이라 누수 없음
   'import_report_dismissed', // 신고 탭 '신고 내리기'(취소) 플래그 — 케이스를 신고 탭에서 숨김.
   //                            케이스 단위(목적지 무관)로 한 줄을 내리는 동작이라 전역. isDismissedImportReport 가 top-level read.
+  'import_report_active_dest', // 신고 목록에서 선택한 여행 토큰. 신고 상태와 달리 케이스 단위의 표시 설정.
 ])
 
 export function isGlobalCaseDataKey(key: string): boolean {

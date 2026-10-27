@@ -1165,6 +1165,10 @@ export async function setReportSlotStatus(
     next = writeCaseSignal(next, token, legacyKey, target)
   }
 
+  // 사용자가 방금 처리한 여행을 표시 기준으로 함께 저장한다. 마지막 미완료 여행을
+  // 완료로 바꾼 직후, 옛 완료 여행으로 되돌아가 다른 날짜가 표시되는 것을 막는다.
+  if (token) next.import_report_active_dest = token
+
   const { error } = await supabase.from('cases').update({ data: next }).eq('id', caseId)
   if (error) return { ok: false, error: error.message }
   return { ok: true, autoFilled: { data: next } }

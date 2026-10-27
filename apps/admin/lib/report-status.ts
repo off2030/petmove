@@ -77,6 +77,12 @@ export function exportSlotApplies(caseRow: CaseRow, dest: string | null): boolea
   return !!reportReturnDateFor(caseRow, dest)
 }
 
+/** 한 여행의 신고 완료 여부. 같은 케이스의 다른 여행 상태는 집계하지 않는다. */
+export function reportCompleteFor(caseRow: CaseRow, dest: string | null): boolean {
+  if (reportSlotStatusFor(caseRow, dest, 'import') !== 'done') return false
+  return !exportSlotApplies(caseRow, dest) || reportSlotStatusFor(caseRow, dest, 'export') === 'done'
+}
+
 /**
  * 상태 색 — 검사 진행상태와 같은 규칙. '진행' → primary(테라코타), '완료' → sage, 나머지 muted.
  */

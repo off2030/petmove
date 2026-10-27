@@ -28,11 +28,13 @@ export function DestinationCell({
   row,
   overrideKey,
   onUpdate,
+  onPick,
   dismissAction,
 }: {
   row: CaseRow
   overrideKey: string
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+  onPick?: (destination: string) => void
   dismissAction?: {
     label: string
     dismissKey: string
@@ -81,6 +83,7 @@ export function DestinationCell({
 
   async function pick(d: string) {
     setOpen(false)
+    onPick?.(d)
     // 명시적으로 고른 여행지는 항상 override 로 저장. (기본 활성이 '출국일 있는 여행지'라
     // 첫 여행지 선택 시 override 를 비우면 다시 default 로 튕겨 선택이 안 남는다.)
     onUpdate(row.id, 'data', overrideKey, d)
