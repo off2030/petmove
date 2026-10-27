@@ -285,7 +285,7 @@ const SPECIES_EN: Record<string, string> = { dog: 'Dog', cat: 'Cat' }
  * Dose strings are per-product manufacturer instructions in English for AU.
  */
 const PARASITE_PRODUCT_INFO: Record<string, { ingredient: string; dose: string }> = {
-  frontline_plus_dog:  { ingredient: 'Fipronil', dose: '1 vial' },
+  frontline_plus_dog:  { ingredient: 'Fipronil, (S)-methoprene', dose: '1 vial' },
   frontline_spray_cat: { ingredient: 'Fipronil', dose: '3-6 ml/kg BW' },
   drontal_plus_dog:    { ingredient: 'Pyrantel Pamoate, Praziquantel, Febantel', dose: '1 tablet/10 kg BW' },
   panacur_dog:         { ingredient: 'Fenbendazole', dose: '50 mg/kg BW' },

@@ -4586,7 +4586,7 @@
   },
   "SGP": {
     "template": "SGP.pdf",
-    "description": "Singapore 수출용 반려동물 건강증명서 (Veterinary Certificate for Import of Dogs and Cats — Schedule III). 개/고양이 공통 양식. 성별은 폼에 plain text(Male/Neutered Male/Female/Neutered female)라 폼 필드가 없어, markOverlays 로 케이스 sex 에 맞는 옵션에 자동 동그라미(타원)를 그린다.",
+    "description": "Singapore Schedule III veterinary certificate — official AVS 01042026, certificate pages 4-6. Dog/cat fields and sex/species overlays are aligned to this edition.",
     "filename": "SGP_{pet_name}.pdf",
     "dateFormat": "dmy",
     "flatten": true,
@@ -4595,91 +4595,369 @@
         "source": "sex",
         "page": 0,
         "borderWidth": 1.2,
-        "_note": "p1 'Sex (please circle):' 줄. 라벨이 템플릿 이미지에 인쇄돼 폼 필드가 없음. 좌표는 SGP.pdf 픽셀 분석(2482x3508, 페이지 x∈[15,580] y∈[21.7,820.3])으로 산출. 줄 세로 중심 pageY≈573.",
+        "_note": "Ellipse bounds derived from the sex labels in the official 01042026 certificate.",
         "cases": {
-          "male": { "cx": 191.3, "cy": 573, "rx": 16, "ry": 9 },
-          "neutered_male": { "cx": 260.6, "cy": 573, "rx": 35, "ry": 9 },
-          "female": { "cx": 339.3, "cy": 573, "rx": 21, "ry": 9 },
-          "spayed_female": { "cx": 431.1, "cy": 573, "rx": 39, "ry": 9 }
+          "male": {
+            "cx": 200.56,
+            "cy": 546.55,
+            "rx": 16.88,
+            "ry": 8
+          },
+          "neutered_male": {
+            "cx": 270.76,
+            "cy": 546.55,
+            "rx": 36.2,
+            "ry": 8
+          },
+          "female": {
+            "cx": 348.82,
+            "cy": 546.55,
+            "rx": 21.02,
+            "ry": 8
+          },
+          "spayed_female": {
+            "cx": 439.9,
+            "cy": 546.55,
+            "rx": 40.1,
+            "ry": 8
+          }
         }
       }
     ],
-    "_lineOverlays_note": "SECTION III 의 'Government approved veterinarian / Official government veterinarian (delete as appropriate)' — 우리는 항상 민간 government-approved 수의사로 발급하므로 'Official government veterinarian' 쪽을 늘 지운다. 문구가 두 줄에 걸쳐 있어 선도 두 개.",
+    "_lineOverlays_note": "Strike the non-applicable official-vet alternative in Sections I-III only; preserve Section IV.",
     "lineOverlays": [
-      { "_at": "p1 SECTION III — 'Official government'", "page": 0, "x1": 427.25, "y1": 313.9, "x2": 509.89, "y2": 313.9, "thickness": 1 },
-      { "_at": "p1 SECTION III — 'veterinarian' (앞 줄에서 이어짐)", "page": 0, "x1": 62.35, "y1": 303.2, "x2": 112.2, "y2": 303.2, "thickness": 1 }
+      {
+        "_at": "SECTION III official government",
+        "page": 0,
+        "x1": 435.48,
+        "y1": 289.51,
+        "x2": 516.56,
+        "y2": 289.51
+      },
+      {
+        "_at": "SECTION III veterinarian continuation",
+        "page": 0,
+        "x1": 73.32,
+        "y1": 278.71,
+        "x2": 122.32,
+        "y2": 278.71
+      },
+      {
+        "_at": "Endorsement alternative official veterinarian",
+        "page": 2,
+        "x1": 257.88,
+        "y1": 658.03,
+        "x2": 412.96,
+        "y2": 658.03
+      }
     ],
     "conditionalLines": [
       {
         "source": "species",
         "thickness": 1,
-        "_note": "'the dog/cat (delete as appropriate)' 와 'General Vaccinations (strike out whichever does not apply)' 의 종별 접종 블록 — 종에 맞춰 해당 없는 쪽에 취소선(단어 2곳 + 접종 블록 6줄). cases 키는 케이스의 species 값이고, 그 안엔 '지울 단어'의 좌표가 들어간다(dog → cat 을 지움). 좌표는 SGP.pdf 픽셀 분석(2482x3508 이미지, 배치 cm 565 0 0 798.558 15 21.7212)으로 산출 — 취소선 y 는 소문자 x-height 중앙.",
+        "_note": "Species words and non-applicable core-vaccination blocks from official 01042026 coordinates.",
         "cases": {
           "dog": [
-            { "_at": "p1 SECTION II — 'cat'", "page": 0, "x1": 256.07, "y1": 385.6, "x2": 269.27, "y2": 385.6 },
-            { "_at": "p1 SECTION III — 'cat'", "page": 0, "x1": 179.13, "y1": 292.27, "x2": 192.33, "y2": 292.27 },
-            { "_at": "p1 고양이 접종문단 1줄", "page": 0, "x1": 62.35, "y1": 146.47, "x2": 539.02, "y2": 146.47 },
-            { "_at": "p1 고양이 접종문단 2줄", "page": 0, "x1": 62.35, "y1": 135.65, "x2": 405.17, "y2": 135.65 },
-            { "_at": "p2 Date of vaccinations:", "page": 1, "x1": 62.8, "y1": 731.04, "x2": 150.45, "y2": 731.04 },
-            { "_at": "p2 Feline Calicivirus", "page": 1, "x1": 62.8, "y1": 715.22, "x2": 319.35, "y2": 715.22 },
-            { "_at": "p2 Feline Herpesvirus-1", "page": 1, "x1": 62.8, "y1": 700.65, "x2": 330.05, "y2": 700.65 },
-            { "_at": "p2 Feline Panleukopenia virus", "page": 1, "x1": 62.8, "y1": 685.86, "x2": 369.66, "y2": 685.86 }
+            {
+              "_at": "After due enquiry I am satisfied that the dog/cat — cat",
+              "page": 0,
+              "x1": 265.56,
+              "y1": 360.55,
+              "x2": 278.12,
+              "y2": 360.55
+            },
+            {
+              "_at": "certify in respect of the dog/cat — cat",
+              "page": 0,
+              "x1": 189.0,
+              "y1": 267.91,
+              "x2": 201.56,
+              "y2": 267.91
+            },
+            {
+              "_at": "The cat was vaccinated",
+              "page": 0,
+              "x1": 73.32,
+              "y1": 123.31,
+              "x2": 549.2,
+              "y2": 123.31
+            },
+            {
+              "_at": "the vaccine manufacturer",
+              "page": 0,
+              "x1": 73.32,
+              "y1": 112.51,
+              "x2": 416.12,
+              "y2": 112.51
+            },
+            {
+              "_at": "Date of vaccinations:",
+              "page": 1,
+              "x1": 73.32,
+              "y1": 702.43,
+              "x2": 163.28,
+              "y2": 702.43
+            },
+            {
+              "_at": "Feline Calicivirus:",
+              "page": 1,
+              "x1": 73.32,
+              "y1": 687.79,
+              "x2": 330.8,
+              "y2": 687.79
+            },
+            {
+              "_at": "Feline Herpesvirus-1:",
+              "page": 1,
+              "x1": 73.32,
+              "y1": 673.27,
+              "x2": 341.36,
+              "y2": 673.27
+            },
+            {
+              "_at": "Feline Panleukopenia virus:",
+              "page": 1,
+              "x1": 73.32,
+              "y1": 658.63,
+              "x2": 380.6,
+              "y2": 658.63
+            }
           ],
           "cat": [
-            { "_at": "p1 SECTION II — 'dog'", "page": 0, "x1": 237.4, "y1": 385.6, "x2": 253.79, "y2": 385.6 },
-            { "_at": "p1 SECTION III — 'dog'", "page": 0, "x1": 160.23, "y1": 292.27, "x2": 176.62, "y2": 292.27 },
-            { "_at": "p1 강아지 접종문단 1줄", "page": 0, "x1": 62.35, "y1": 245.49, "x2": 526.28, "y2": 245.49 },
-            { "_at": "p1 강아지 접종문단 2줄", "page": 0, "x1": 62.58, "y1": 234.68, "x2": 459.35, "y2": 234.68 },
-            { "_at": "p1 Date of vaccinations:", "page": 0, "x1": 62.8, "y1": 220.91, "x2": 150.45, "y2": 220.91 },
-            { "_at": "p1 Canine distemper virus", "page": 0, "x1": 62.58, "y1": 205.31, "x2": 344.85, "y2": 205.31 },
-            { "_at": "p1 Canine adenovirus type 1", "page": 0, "x1": 62.58, "y1": 190.52, "x2": 350.08, "y2": 190.52 },
-            { "_at": "p1 Canine parvovirus type 2", "page": 0, "x1": 62.58, "y1": 175.95, "x2": 360.78, "y2": 175.95 }
+            {
+              "_at": "After due enquiry I am satisfied that the dog/cat — dog",
+              "page": 0,
+              "x1": 247.32,
+              "y1": 360.55,
+              "x2": 262.96,
+              "y2": 360.55
+            },
+            {
+              "_at": "certify in respect of the dog/cat — dog",
+              "page": 0,
+              "x1": 170.52,
+              "y1": 267.91,
+              "x2": 186.28,
+              "y2": 267.91
+            },
+            {
+              "_at": "The dog was vaccinated",
+              "page": 0,
+              "x1": 73.32,
+              "y1": 221.71,
+              "x2": 536.0,
+              "y2": 221.71
+            },
+            {
+              "_at": "according to the vaccine manufacturer",
+              "page": 0,
+              "x1": 73.32,
+              "y1": 210.79,
+              "x2": 469.88,
+              "y2": 210.79
+            },
+            {
+              "_at": "Date of vaccinations:",
+              "page": 0,
+              "x1": 73.32,
+              "y1": 196.27,
+              "x2": 163.28,
+              "y2": 196.27
+            },
+            {
+              "_at": "Canine distemper virus:",
+              "page": 0,
+              "x1": 73.32,
+              "y1": 181.63,
+              "x2": 356.0,
+              "y2": 181.63
+            },
+            {
+              "_at": "Canine adenovirus type 1:",
+              "page": 0,
+              "x1": 73.32,
+              "y1": 167.11,
+              "x2": 361.16,
+              "y2": 167.11
+            },
+            {
+              "_at": "Canine parvovirus type 2:",
+              "page": 0,
+              "x1": 73.32,
+              "y1": 152.47,
+              "x2": 371.72,
+              "y2": 152.47
+            }
           ]
         }
       }
     ],
     "fields": {
-      "text_1vqxe": { "source": null, "note": "p1 NParks/AVS Import Licence No. (수동입력)" },
-      "text_2dlhd": { "source": null, "note": "p1 Veterinary Certificate No. (수동입력)" },
-
-      "text_3tcic": { "source": "species", "transform": "en", "note": "p1 Section I — Species" },
-      "text_4okuj": { "source": "breed_en",    "note": "p1 Section I — Breed" },
-      "text_5wcle": { "source": "pet_name_en", "note": "p1 Section I — Name of animal" },
-      "text_6vatu": { "source": "birth_date",  "note": "p1 Age or Date of Birth" },
-      "text_7nvqf": { "source": "color_en",    "note": "p1 Colour" },
-      "text_9qhaf": { "source": "microchip",   "note": "p1 Microchip Number" },
-      "text_10ehnj": { "source": "vet_visit_date", "note": "p1 Microchip scan date (내원일 자동)" },
-
-      "text_11qfuf": { "source": null, "transform": "vet:name_en_upper", "note": "p1 Section III — Vet name (BLOCK LETTERS)" },
-      "text_12gljs": { "source": null, "default": "Republic of Korea", "note": "p1 Section III — Country/region of export" },
-
-      "text_13vpdl": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "speciesOnly": "dog", "note": "p1 Canine distemper virus date (강아지 전용)" },
-      "text_14yyzu": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "speciesOnly": "dog", "note": "p1 Canine adenovirus type 1 date (강아지 전용)" },
-      "text_15ggyf": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "speciesOnly": "dog", "note": "p1 Canine parvovirus type 2 date (강아지 전용)" },
-
-      "text_16wkhs": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "speciesOnly": "cat", "note": "p2 Feline Calicivirus date (고양이 전용)" },
-      "text_17ffjz": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "speciesOnly": "cat", "note": "p2 Feline Herpesvirus-1 date (고양이 전용)" },
-      "text_18uqim": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "speciesOnly": "cat", "note": "p2 Feline Panleukopenia date (고양이 전용)" },
-
-      "text_19jz":   { "source": "rabies_dates",         "transform": "vaccine_desc:rabies:date[0]", "note": "p2 Rabies vaccination date" },
-      "text_20olqh": { "source": "rabies_titer_records", "transform": "array[0].date",              "note": "p2 Blood sampling date (RNATT)" },
-      "text_21irsk": { "source": "rabies_titer_records", "transform": "array[0].value",             "note": "p2 Rabies titre IU/ml" },
-
-      "text_22mqjk": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:date[0]", "note": "p2 Ext parasite treatment date" },
-      "text_23ltyb": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:name[0]", "note": "p2 Ext parasite product name" },
-      "text_24egtj": { "source": "external_parasite_dates", "transform": "parasite_info:external:ingredient[0]", "note": "p2 Ext parasite active ingredient" },
-
-      "text_25pv":   { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:date[0]", "note": "p2 Int parasite treatment date" },
-      "text_26zheb": { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:name[0]", "note": "p2 Int parasite product name" },
-      "text_27lonm": { "source": "internal_parasite_dates", "transform": "parasite_info:internal:ingredient[0]", "note": "p2 Int parasite active ingredient" },
-
-      "text_28wkfi": { "source": "vet_visit_date", "note": "p3 Endorsement signature date" },
-      "text_32xsfq": { "source": null, "transform": "vet:name_en",    "note": "p3 Endorsement — Name of government-approved veterinarian (Date 라벨 바로 아래 칸). 2026-05-08 템플릿 업데이트로 추가." },
-      "text_29ulae": { "source": null, "transform": "vet:clinic_en",  "note": "p3 Practice name" },
-      "text_30hspb": { "source": null, "transform": "vet:address_en", "note": "p3 Address" },
-      "text_31tz":   { "source": null, "transform": "vet:phone_intl", "note": "p3 Phone" },
-      "text_32fjpy": { "source": null, "transform": "vet:email",      "note": "p3 Email" }
-    }
+      "text_1vqxe": {
+        "source": null,
+        "note": "p1 NParks/AVS Import Licence No. (수동입력)"
+      },
+      "text_2dlhd": {
+        "source": null,
+        "note": "p1 Veterinary Certificate No. (수동입력)"
+      },
+      "text_3tcic": {
+        "source": "species",
+        "transform": "en",
+        "note": "p1 Section I — Species"
+      },
+      "text_4okuj": {
+        "source": "breed_en",
+        "note": "p1 Section I — Breed"
+      },
+      "text_5wcle": {
+        "source": "pet_name_en",
+        "note": "p1 Section I — Name of animal"
+      },
+      "text_6vatu": {
+        "source": "birth_date",
+        "note": "p1 Age or Date of Birth"
+      },
+      "text_7nvqf": {
+        "source": "color_en",
+        "note": "p1 Colour"
+      },
+      "text_9qhaf": {
+        "source": "microchip",
+        "note": "p1 Microchip Number"
+      },
+      "text_10ehnj": {
+        "source": "vet_visit_date",
+        "note": "p1 Microchip scan date (내원일 자동)"
+      },
+      "text_11qfuf": {
+        "source": null,
+        "transform": "vet:name_en_upper",
+        "note": "p1 Section III — Vet name (BLOCK LETTERS)"
+      },
+      "text_12gljs": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p1 Section III — Country/region of export"
+      },
+      "text_13vpdl": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[0]",
+        "speciesOnly": "dog",
+        "note": "p1 Canine distemper virus date (강아지 전용)"
+      },
+      "text_14yyzu": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[0]",
+        "speciesOnly": "dog",
+        "note": "p1 Canine adenovirus type 1 date (강아지 전용)"
+      },
+      "text_15ggyf": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[0]",
+        "speciesOnly": "dog",
+        "note": "p1 Canine parvovirus type 2 date (강아지 전용)"
+      },
+      "text_16wkhs": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[0]",
+        "speciesOnly": "cat",
+        "note": "p2 Feline Calicivirus date (고양이 전용)"
+      },
+      "text_17ffjz": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[0]",
+        "speciesOnly": "cat",
+        "note": "p2 Feline Herpesvirus-1 date (고양이 전용)"
+      },
+      "text_18uqim": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[0]",
+        "speciesOnly": "cat",
+        "note": "p2 Feline Panleukopenia date (고양이 전용)"
+      },
+      "text_19jz": {
+        "source": "rabies_dates",
+        "transform": "vaccine_desc:rabies:date[0]",
+        "note": "p2 Rabies vaccination date"
+      },
+      "text_20olqh": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].date",
+        "note": "p2 Blood sampling date (RNATT)"
+      },
+      "text_21irsk": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].value",
+        "note": "p2 Rabies titre IU/ml"
+      },
+      "text_22mqjk": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[0]",
+        "note": "p2 Ext parasite treatment date"
+      },
+      "text_23ltyb": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:name[0]",
+        "note": "p2 Ext parasite product name"
+      },
+      "text_24egtj": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[0]",
+        "note": "p2 Ext parasite active ingredient"
+      },
+      "text_25pv": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:date[0]",
+        "note": "p2 Int parasite treatment date"
+      },
+      "text_26zheb": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:name[0]",
+        "note": "p2 Int parasite product name"
+      },
+      "text_27lonm": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[0]",
+        "note": "p2 Int parasite active ingredient"
+      },
+      "text_28wkfi": {
+        "source": "vet_visit_date",
+        "note": "p3 Endorsement signature date"
+      },
+      "text_32xsfq": {
+        "source": null,
+        "transform": "vet:name_en",
+        "note": "p3 Endorsement — Name of government-approved veterinarian (Date 라벨 바로 아래 칸). 2026-05-08 템플릿 업데이트로 추가."
+      },
+      "text_29ulae": {
+        "source": null,
+        "transform": "vet:clinic_en",
+        "note": "p3 Practice name"
+      },
+      "text_30hspb": {
+        "source": null,
+        "transform": "vet:address_en",
+        "note": "p3 Address"
+      },
+      "text_31tz": {
+        "source": null,
+        "transform": "vet:phone_intl",
+        "note": "p3 Phone"
+      },
+      "text_32fjpy": {
+        "source": null,
+        "transform": "vet:email",
+        "note": "p3 Email"
+      }
+    },
+    "_source_url": "https://isomer-user-content.by.gov.sg/30/09b135c8-00b2-4859-8d90-9ee700d2b67b/DOGCAT%2083-3%20(w_feeattd1)%2001042026.pdf",
+    "_source_sha256": "9641cc283790cd169763c96b9a59d606f9a6d02479270e4a581058ca82660458",
+    "_source_pages": [
+      4,
+      5,
+      6
+    ]
   },
   "TW": {
     "template": "TW.pdf",
