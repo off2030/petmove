@@ -71,6 +71,12 @@ export const THAILAND_ENTRY_AIRPORT_OPTIONS: ExtraFieldOption[] = [
   { value: 'Chiang Mai', label: 'Chiang Mai (CNX)' },
 ]
 
+/** 뉴질랜드 개·고양이 입국이 허용된 두 공항. 서류 출력은 이 IATA 코드를 공항명으로 변환한다. */
+export const NEW_ZEALAND_ENTRY_AIRPORT_OPTIONS: ExtraFieldOption[] = [
+  { value: 'AKL', label: '오클랜드 (AKL)' },
+  { value: 'CHC', label: '크라이스트처치 (CHC)' },
+]
+
 export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
   // ── 연락처 / 주소 ──
   address_overseas: { key: 'address_overseas', label: '해외주소', type: 'text' },
@@ -369,6 +375,7 @@ export const HARDCODED_VACCINE_SPECIES_DEFAULTS: Record<string, SpeciesFilter | 
  *
  * - switzerland.entry_airport: 공항 select (Zürich/Geneva/Basel)
  * - thailand.entry_airport: 공항 select (Bangkok/Phuket/Chiang Mai)
+ * - new_zealand.entry_airport: 공항 select (Auckland/Christchurch), 구·신 서식 공통.
  * - philippines.entry_airport: label "도착공항 / 목적지" — 보호자가 도시·지역으로
  *   해석하기 쉽도록 (보홀·세부 등 공항이자 목적지인 케이스가 많음).
  */
@@ -390,7 +397,7 @@ export function applyDestinationFieldOverride<T extends ExtraFieldDef>(
   }
   if (override?.extraSection === 'new_zealand' && def.key === 'entry_airport') {
     // 주소의 도시와 실제 입국항은 다를 수 있으므로, 항공편의 도착공항을 직접 확인한다.
-    return { ...def, placeholder: 'AKL / CHC' }
+    return { ...def, type: 'select', options: NEW_ZEALAND_ENTRY_AIRPORT_OPTIONS, placeholder: undefined }
   }
   return def
 }

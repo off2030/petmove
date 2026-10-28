@@ -2,7 +2,8 @@
 import assert from 'node:assert/strict'
 import {
   getEffectiveExtraFieldEntries, flattenCaseForDestination, readEffectiveExtraValue,
-  DESTINATION_SCOPED_FIELD_KEYS, type CaseRow,
+  DESTINATION_SCOPED_FIELD_KEYS, applyDestinationFieldOverride, EXTRA_FIELD_DEFS,
+  getDestinationOverride, type CaseRow,
 } from '../packages/domain/src'
 import { nzImporterName, nzArrivalPort } from '../apps/admin/lib/pdf-nz-consignment'
 
@@ -12,6 +13,9 @@ for (const destination of ['뉴질랜드', '뉴질랜드(구)']) {
     assert.ok(keys.includes(key), `${destination}: ${key} must be editable`)
     assert.ok(DESTINATION_SCOPED_FIELD_KEYS.has(key), `${key} must belong to a trip`)
   }
+  const airport = applyDestinationFieldOverride(EXTRA_FIELD_DEFS.entry_airport, destination, getDestinationOverride)
+  assert.equal(airport.type, 'select', `${destination}: arrival airport must be a dropdown`)
+  assert.deepEqual(airport.options?.map(o => o.value), ['AKL', 'CHC'])
 }
 const row = {
   destination: '뉴질랜드, 뉴질랜드 (2차)', customer_name_en: 'Legacy Owner',
