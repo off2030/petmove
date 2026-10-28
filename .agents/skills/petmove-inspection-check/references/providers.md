@@ -8,6 +8,8 @@
 
 ## APQA / eminwon
 
+2026-10-28 사용자 확인: 하와이행도 APQA 검사결과지로 진행한다. 이 사용자의 신청 업무에서는 Work에 지정된 APQA를 유지하고, 하와이 웹페이지의 검사기관 열거에 APQA가 없다는 이유만으로 부적합으로 단정하거나 해외 검사실로 변경을 요구하지 않는다. 이는 사용자가 확인한 업무 기준이며 공식 사이트의 인정 목록이 갱신되었다는 뜻은 아니다. 상대국은 실제 화면의 **하와이** 항목을 찾아 선택한다. 미국·다른 국가로 대체하거나 readonly 국가 코드/영문명을 주입하지 않는다. 검색에 없으면 정상 기관/국가 선택 경로와 계정 설정을 확인하고, 끝내 선택할 수 없으면 실제 화면의 제약을 보고한다.
+
 Open eminwon in the user's Chrome and enter through the **광견병 항체검사** menu at `https://eminwon.qia.go.kr/eminwon/rabies`. Do not use the general 검역본부 민원신청시스템. Use the saved ID and password by clicking the login button only. Open **광견병 항체검사 신청** and locate the corresponding application. Compare its displayed application information with PETMOVE Work. Remain read-only and do not submit, alter, cancel, or pay for anything.
 
 ## KRSL / Komipharm
