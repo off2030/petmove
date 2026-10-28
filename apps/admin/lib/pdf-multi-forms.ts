@@ -44,3 +44,36 @@ export const FORM_CAPACITY: Record<string, FormCapacity | undefined> = {
   // 3마리면 2장(2+1), 5마리면 3장(2+2+1) 으로 자동 분할된다.
   Form_R11: { animals: 2, vaccRows: 9999 },
 }
+
+/** Shared owner fields require a separate document when the printed owners differ. */
+export interface PdfPackingCase {
+  rabiesDoseCount: number
+  ownerGroup?: string
+}
+
+/** The server preview and selected-animal download must predict the same grouping. */
+export function countPackedDocuments(formKey: string, cases: PdfPackingCase[]): number {
+  const cap = FORM_CAPACITY[formKey]
+  if (!cap) return cases.length > 0 ? 1 : 0
+  let docs = 0
+  let remaining = cases.slice()
+  while (remaining.length > 0) {
+    const fit: PdfPackingCase[] = []
+    const leftover: PdfPackingCase[] = []
+    let vaccRows = 0
+    for (const c of remaining) {
+      const doses = Math.max(1, c.rabiesDoseCount)
+      if ((fit.length > 0 && fit[0].ownerGroup !== c.ownerGroup)
+        || fit.length >= cap.animals || vaccRows + doses > cap.vaccRows) {
+        leftover.push(c)
+      } else {
+        fit.push(c)
+        vaccRows += doses
+      }
+    }
+    if (fit.length === 0) return docs
+    docs++
+    remaining = leftover
+  }
+  return docs
+}

@@ -1,8 +1,8 @@
 'use server'
 
 import { createClient } from '@petmove/auth/server'
-import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
-import { FORM_CAPACITY, type MultiFormKey } from '@/lib/pdf-multi-forms'
+import { fillPdf, fillPdfMulti, pdfDocumentOwnerGroup } from '@/lib/pdf-fill'
+import { countPackedDocuments, type MultiFormKey } from '@/lib/pdf-multi-forms'
 import type { CaseRow } from '@petmove/domain'
 import { getEffectiveVaccineEntries, vaccineMatchesSpecies, findDestinationToken, findNewZealandTokenWithData, flattenCaseForDestination, getDepartureDate, getVetVisitDate, parseDestinations, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly, recommendRabiesDoseIndices } from '@petmove/domain'
 import { loadVetInfo } from '@/lib/vet-info'
@@ -631,6 +631,7 @@ export interface SiblingSummary {
   pet_name: string | null
   pet_name_en: string | null
   rabiesDoseCount: number
+  ownerGroup?: string
 }
 
 export interface SiblingPreview {
@@ -729,9 +730,10 @@ export async function previewSiblings(
     pet_name: c.pet_name,
     pet_name_en: c.pet_name_en,
     rabiesDoseCount: rabiesDoseCountOf(c),
+    ownerGroup: pdfDocumentOwnerGroup(formKey, c),
   }))
   // Simulate packing to get doc count without actually building PDFs.
-  const docCount = simulatePackCount(formKey, summaries)
+  const docCount = countPackedDocuments(formKey, summaries)
   return { ok: true, preview: { cases: summaries, docCount, formKey } }
 }
 
@@ -743,31 +745,6 @@ function rabiesDoseCountOf(c: CaseRow): number {
     .map(d => (typeof d === 'string' ? d : (d as { date?: string })?.date))
     .filter((d): d is string => typeof d === 'string' && !!d)
     .length
-}
-
-function simulatePackCount(formKey: MultiFormKey, summaries: SiblingSummary[]): number {
-  // 용량 선언은 packCases 와 **같은 표**(FORM_CAPACITY)를 본다 — 예전엔 여기에 같은 숫자를
-  // 손으로 한 벌 더 적어 둬서, 폼을 추가하면 미리보기 장수와 실제 발급 장수가 어긋났다.
-  // 표에 없는 폼(VBC — 동물 테이블이 없어 제한 없음)은 packCases 와 똑같이 한 장으로 본다.
-  const cap = FORM_CAPACITY[formKey]
-  if (!cap) return summaries.length > 0 ? 1 : 0
-  let docs = 0
-  let remaining = summaries.slice()
-  while (remaining.length > 0) {
-    const fit: SiblingSummary[] = []
-    const leftover: SiblingSummary[] = []
-    let vacc = 0
-    for (const s of remaining) {
-      const d = Math.max(1, s.rabiesDoseCount)
-      if (fit.length < cap.animals && vacc + d <= cap.vaccRows) {
-        fit.push(s); vacc += d
-      } else leftover.push(s)
-    }
-    if (fit.length === 0) return docs // avoid infinite loop if a single case over-capacity
-    docs++
-    remaining = leftover
-  }
-  return docs
 }
 
 async function generateMulti(

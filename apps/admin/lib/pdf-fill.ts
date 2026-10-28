@@ -2889,19 +2889,25 @@ function rabiesDoseCount(c: CaseRow): number {
     .length
 }
 
+/** Forms without a shared owner field keep their existing packing behavior. */
+export function pdfDocumentOwnerGroup(formKey: string, row: CaseRow): string | undefined {
+  return Object.values(MAPS[formKey]?.fields ?? {}).some(f => f.source === 'document_owner_names_en')
+    ? documentOwnerNames(row, row.data ?? {})
+    : undefined
+}
+
 export function packCases(formKey: string, cases: CaseRow[]): PackedDoc[] {
   const cap = FORM_CAPACITY[formKey]
   if (!cap) return [{ cases, vaccSlots: [], animalSlots: cases.map((_, i) => i), parasiteSlots: cases.map((_, i) => i) }]
 
   const docs: PackedDoc[] = []
-  const sharedOwnerNames = Object.values(MAPS[formKey]?.fields ?? {}).some(f => f.source === 'document_owner_names_en')
   let remaining = cases.slice()
   while (remaining.length > 0) {
     const doc: PackedDoc = { cases: [], vaccSlots: [], animalSlots: [], parasiteSlots: [] }
     const leftover: CaseRow[] = []
     for (const c of remaining) {
       const doses = Math.max(1, rabiesDoseCount(c))
-      if (sharedOwnerNames && doc.cases.length && documentOwnerNames(doc.cases[0], doc.cases[0].data ?? {}) !== documentOwnerNames(c, c.data ?? {})) {
+      if (doc.cases.length && pdfDocumentOwnerGroup(formKey, doc.cases[0]) !== pdfDocumentOwnerGroup(formKey, c)) {
         leftover.push(c)
         continue
       }

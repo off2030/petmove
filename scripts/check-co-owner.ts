@@ -9,6 +9,7 @@ import {
   isGlobalCaseDataKey,
   type CaseRow,
 } from "../packages/domain/src";
+import { countPackedDocuments } from "../apps/admin/lib/pdf-multi-forms";
 const extra = { name_ko: "이공동", first_name_en: "Bora", last_name_en: "Lee" };
 const row = {
   customer_name: "김보호",
@@ -85,6 +86,25 @@ const maps = JSON.parse(
   ),
 );
 assert.equal(maps.Form25.fields.owner_name.source, "document_owner_names_en");
+assert.equal(maps.Form25AuNz.fields.owner_name.source, "document_owner_names_en");
+for (const key of ['NZ', 'NZ_2']) {
+  assert.equal(maps[key].fields.Text47.source, 'document_owner_names_en');
+  assert.equal(maps[key].fields.Text51.source, 'document_owner_names_en');
+}
+assert.equal(maps.NZ26.fields.nz26_consignor_name.source, 'document_owner_names_en');
+assert.equal(maps.NZ26.fields.nz26_consignee_name.source, 'document_owner_names_en');
+for (const form of ['NZ', 'NZ_2', 'NZ26']) {
+  const cases = [
+    { rabiesDoseCount: 1, ownerGroup: 'Alice Kim / Bora Lee' },
+    { rabiesDoseCount: 1, ownerGroup: 'Alice Kim / Other Owner' },
+    { rabiesDoseCount: 1, ownerGroup: 'Alice Kim / Bora Lee' },
+  ];
+  assert.equal(countPackedDocuments(form, cases), 2, '공동 보호자가 다른 동물은 별도 문서');
+  assert.equal(countPackedDocuments(form, [cases[0], cases[2]]), 1, '같은 보호자 둘은 합본 유지');
+  assert.equal(countPackedDocuments(form, [cases[1]]), 1, '선택한 동물만 장수 계산');
+  assert.equal(countPackedDocuments(form, Array(6).fill(cases[0])), 2, '동물 수 한도 유지');
+}
+assert.equal(countPackedDocuments('NZ', []), 0);
 assert.equal(
   maps.FormAC.fields.consignor_name.source,
   "document_owner_names_en",

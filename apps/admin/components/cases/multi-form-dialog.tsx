@@ -7,7 +7,7 @@ import {
   type SiblingPreview,
 } from '@/lib/actions/generate-pdf'
 import { downloadMultipartPdfRequest } from '@/lib/pdf-download'
-import { FORM_CAPACITY, type MultiFormKey } from '@/lib/pdf-multi-forms'
+import { countPackedDocuments, type MultiFormKey } from '@/lib/pdf-multi-forms'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 
 interface Props {
@@ -28,40 +28,6 @@ interface Props {
     formKey: string,
   ) => Promise<boolean>
   onClose: () => void
-}
-
-function simulatePackCount(
-  formKey: MultiFormKey,
-  cases: Array<{ rabiesDoseCount: number }>,
-): number {
-  // 용량은 packCases·서버 미리보기와 **같은 표**를 본다([[FORM_CAPACITY]]).
-  // 표에 없는 폼(VBC — 동물 테이블 없음)은 몇 마리든 한 장.
-  const cap = FORM_CAPACITY[formKey]
-  if (!cap) return cases.length > 0 ? 1 : 0
-  let docs = 0
-  let remaining = cases.slice()
-
-  while (remaining.length > 0) {
-    const fit: Array<{ rabiesDoseCount: number }> = []
-    const leftover: Array<{ rabiesDoseCount: number }> = []
-    let vaccRows = 0
-
-    for (const c of remaining) {
-      const doseCount = Math.max(1, c.rabiesDoseCount)
-      if (fit.length < cap.animals && vaccRows + doseCount <= cap.vaccRows) {
-        fit.push(c)
-        vaccRows += doseCount
-      } else {
-        leftover.push(c)
-      }
-    }
-
-    if (fit.length === 0) return docs
-    docs += 1
-    remaining = leftover
-  }
-
-  return docs
 }
 
 export function MultiFormDialog({ caseId, formKey, includeVet, destination, onPreflightConfirm, onClose }: Props) {
@@ -103,7 +69,7 @@ export function MultiFormDialog({ caseId, formKey, includeVet, destination, onPr
       try {
         await downloadMultipartPdfRequest(
           { kind: 'multi', formKey, caseIds: ids, includeVet, destination },
-          simulatePackCount(formKey, selectedCases),
+          countPackedDocuments(formKey, selectedCases),
         )
         onClose()
       } catch (error) {
