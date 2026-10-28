@@ -11,7 +11,11 @@ on:
     branches: [master]
     paths:
       - 'apps/portal/**'
-      - 'packages/**'
+      - 'packages/auth/**'
+      - 'packages/domain/**'
+      - 'packages/ui/**'
+      - 'package.json'
+      - '.npmrc'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - 'turbo.json'

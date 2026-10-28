@@ -3,6 +3,12 @@
 // 고스트 안에서 글 주소를 바꿨을 때 죽은 옛 주소들 — 외부 링크·검색 유입 회수용.
 // 새 항목은 아래 표에만 추가 (source 는 슬러그만, 프리픽스는 조립 시 붙음).
 
+import { readFileSync } from 'node:fs'
+
+const optimizedImageRedirects = JSON.parse(
+  readFileSync(new URL('./data/optimized-image-redirects.json', import.meta.url), 'utf8'),
+)
+
 // /docs/<옛슬러그>/ → /docs/<새슬러그>/
 const DOCS_RENAMES = {
   // 나라 가이드: 옛 짧은 슬러그 → *-pet-travel-guide
@@ -131,6 +137,12 @@ const nextConfig = {
       permanent: true,
     })
     return [
+      // Preserve image URLs indexed by search engines and linked from older pages.
+      ...Object.entries(optimizedImageRedirects).map(([source, destination]) => ({
+        source,
+        destination,
+        permanent: true,
+      })),
       ...Object.entries(DOCS_RENAMES).map(([o, n]) => entry(`/docs/${o}`, `/docs/${n}/`)),
       ...Object.entries(BLOG_RENAMES).map(([o, n]) => entry(`/blog/${o}`, `/blog/${n}/`)),
       ...EXTRA_REDIRECTS.map(({ source, destination, wildcard }) => entry(source, destination, wildcard)),

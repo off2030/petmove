@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { orderedTransportPartners } from '@petmove/domain'
+import { orderedTransportPartners } from '@petmove/domain/transport-partners'
 
 /**
  * 운송업체 연락 블록(www) — 앱과 **같은 목록**(@petmove/domain)을 쓴다. 업체가 바뀌면

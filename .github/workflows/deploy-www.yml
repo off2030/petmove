@@ -4,8 +4,14 @@ on:
     branches: [master]
     paths:
       - 'apps/www/**'
-      - 'packages/domain/**'
+      # WWW uses only the standalone transport directory, not case/report domain logic.
+      - 'packages/domain/src/transport-partners.ts'
+      - 'packages/domain/package.json'
+      - 'package.json'
+      - '.npmrc'
       - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
       - 'scripts/configure-www-admin-env.mjs'
       - '.github/workflows/deploy-www.yml'
       - '!**/*.md'

@@ -8,6 +8,7 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
+    "./transport-partners": "./src/transport-partners.ts",
     "./data/*.json": "./src/data/*.json"
   },
   "devDependencies": {

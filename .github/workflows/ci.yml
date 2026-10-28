@@ -56,6 +56,12 @@ jobs:
       - name: Typecheck www
         run: pnpm --filter @petmove/www exec tsc --noEmit
 
+      - name: Check deployment scopes and WWW shared dependencies
+        run: node scripts/check-deployment-scopes.mjs
+
+      - name: Check WWW asset size and legacy image URLs
+        run: node scripts/check-www-assets.mjs
+
       - name: Check automation calendar authentication and schedules
         run: pnpm tsx scripts/check-automation-calendar.ts
 
