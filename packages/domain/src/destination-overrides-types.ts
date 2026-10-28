@@ -74,6 +74,7 @@ export const THAILAND_ENTRY_AIRPORT_OPTIONS: ExtraFieldOption[] = [
 export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
   // ── 연락처 / 주소 ──
   address_overseas: { key: 'address_overseas', label: '해외주소', type: 'text' },
+  nz_importer_name: { key: 'nz_importer_name', label: '수입자 영문명', type: 'text', placeholder: 'Name of importer (consignee)' },
   postal_code: { key: 'postal_code', label: '우편번호', type: 'text' },
   email: { key: 'email', label: '이메일', type: 'email' },
   overseas_phone: { key: 'overseas_phone', label: '해외 전화번호', type: 'text', placeholder: '+1-...' },
@@ -386,6 +387,10 @@ export function applyDestinationFieldOverride<T extends ExtraFieldDef>(
   }
   if (override?.extraSection === 'philippines' && def.key === 'entry_airport') {
     return { ...def, label: '도착공항 / 여행지' }
+  }
+  if (override?.extraSection === 'new_zealand' && def.key === 'entry_airport') {
+    // 주소의 도시와 실제 입국항은 다를 수 있으므로, 항공편의 도착공항을 직접 확인한다.
+    return { ...def, placeholder: 'AKL / CHC' }
   }
   return def
 }

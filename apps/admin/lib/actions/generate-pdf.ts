@@ -725,13 +725,15 @@ export async function previewSiblings(
 > {
   const r = await fetchSiblings(caseId, activeDestination ?? null)
   if (!r.ok) return r
-  const summaries: SiblingSummary[] = r.siblings.map(c => ({
-    id: c.id,
-    pet_name: c.pet_name,
-    pet_name_en: c.pet_name_en,
-    rabiesDoseCount: rabiesDoseCountOf(c),
-    ownerGroup: pdfDocumentOwnerGroup(formKey, c),
-  }))
+  const summaries: SiblingSummary[] = r.siblings
+    .map(c => flattenCaseForDestination(c, activeDestination ?? null))
+    .map(c => ({
+      id: c.id,
+      pet_name: c.pet_name,
+      pet_name_en: c.pet_name_en,
+      rabiesDoseCount: rabiesDoseCountOf(c),
+      ownerGroup: pdfDocumentOwnerGroup(formKey, c),
+    }))
   // Simulate packing to get doc count without actually building PDFs.
   const docCount = countPackedDocuments(formKey, summaries)
   return { ok: true, preview: { cases: summaries, docCount, formKey } }

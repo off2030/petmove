@@ -615,6 +615,9 @@ function mapExtractResultToUnified(country: Country, result: Record<string, unkn
     // → tryExtract 의 mergeTiterReceivedDate 가 처리. 여기서 set() 하면 안 됨(구 australia_extra 부활).
   } else if (country === 'new-zealand') {
     set('permit_no', result.permit_no)
+    set('nz_importer_name', result.nz_importer_name)
+    set('address_overseas', result.address_overseas)
+    set('entry_airport', result.entry_airport)
   } else if (country === 'uk') {
     set('address_overseas', result.address_overseas)
   }

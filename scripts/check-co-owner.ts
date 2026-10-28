@@ -89,10 +89,10 @@ assert.equal(maps.Form25.fields.owner_name.source, "document_owner_names_en");
 assert.equal(maps.Form25AuNz.fields.owner_name.source, "document_owner_names_en");
 for (const key of ['NZ', 'NZ_2']) {
   assert.equal(maps[key].fields.Text47.source, 'document_owner_names_en');
-  assert.equal(maps[key].fields.Text51.source, 'document_owner_names_en');
+  assert.equal(maps[key].fields.Text51.source, 'nz_importer_document_name');
 }
 assert.equal(maps.NZ26.fields.nz26_consignor_name.source, 'document_owner_names_en');
-assert.equal(maps.NZ26.fields.nz26_consignee_name.source, 'document_owner_names_en');
+assert.equal(maps.NZ26.fields.nz26_consignee_name.source, 'nz_importer_document_name');
 for (const form of ['NZ', 'NZ_2', 'NZ26']) {
   const cases = [
     { rabiesDoseCount: 1, ownerGroup: 'Alice Kim / Bora Lee' },

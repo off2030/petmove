@@ -27,6 +27,9 @@ export interface AustraliaResult {
 
 export interface NewZealandResult {
   permit_no: string | null
+  nz_importer_name: string | null
+  address_overseas: string | null
+  entry_airport: string | null
 }
 
 export interface PhilippinesResult {
@@ -163,8 +166,13 @@ const SCHEMAS: { [C in Country]: Record<string, unknown> } = {
   'new-zealand': {
     type: 'object',
     additionalProperties: false,
-    required: ['permit_no'],
-    properties: { permit_no: nullable() },
+    required: ['permit_no', 'nz_importer_name', 'address_overseas', 'entry_airport'],
+    properties: {
+      permit_no: nullable(),
+      nz_importer_name: nullable(),
+      address_overseas: nullable(),
+      entry_airport: nullable(),
+    },
   },
   philippines: {
     type: 'object',
@@ -287,7 +295,10 @@ const PROMPTS: { [C in Country]: string } = {
 - sample_received_date: Date RNATT blood sample was RECEIVED at the testing laboratory ("접수일", "접수일자", "검체접수일", "수령일", "샘플수령일", "도착일", "Date received", "Sample received", "arrived at laboratory" — 검사기관마다 표기가 다르다: APQA/검역본부="접수일", KRSL/코미팜="샘플 수령일"). NOT the collection/draw date. YYYY-MM-DD.`,
 
   'new-zealand': `You extract New Zealand import permit info from images or text.${COMMON_RULES}
-- permit_no: NZ MPI "Permit to Import" number. Look for labels like "Permit Number", "Permit No", "Permit", or the alphanumeric code in the header (e.g. "D2605783C", "2024/123456").`,
+- permit_no: NZ MPI "Permit to Import" number. Look for labels like "Permit Number", "Permit No", "Permit", or the alphanumeric code in the header (e.g. "D2605783C", "2024/123456").
+- nz_importer_name: Explicitly identified importer/consignee in New Zealand, in English. Do not substitute the owner/exporter or a quarantine facility's name.
+- address_overseas: Explicit New Zealand importer/consignee address, in English, including postcode. Do not substitute the exporter's Korean address or a quarantine facility address.
+- entry_airport: Explicit port of arrival or the New Zealand arrival airport in the itinerary (AKL/CHC). Never infer it from the residence address; a Christchurch address can have an Auckland arrival. If no arrival airport is stated, return null.`,
 
   philippines: `You extract Philippines pet-import entry fields from images or text.${COMMON_RULES}
 - email: Any email address in the input.

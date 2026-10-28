@@ -506,7 +506,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 7월 이전 구성 그대로 — 폐충(lungworm)은 신 IHS 항목이라 없다.
     vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'infectious_disease', 'external_parasite', 'internal_parasite', { key: 'heartworm', species: 'dog' }],
     extraSection: 'new_zealand',
-    extraFields: ['permit_no'],
+    extraFields: ['permit_no', 'nz_importer_name', 'address_overseas', 'entry_airport'],
     vetVisitWindowDays: 3,
     importPermit: { selfApply: true },
     // 편도 — 기존 케이스가 모두 편도(trip_type one_way)로 저장돼 있어 왕복 선택을 열지 않는다.
@@ -564,7 +564,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       //   2차 인증일(id_date_2)은 채혈이 출국 3~6개월 전인 경우만 — 사전 ID 확인서·건강증명서
       //   22a 의 경로 판정이 이 칸을 본다(apps/admin/lib/pdf-nz2026.ts, 2026-10-06 추가).
       'permit_no', 'id_date', 'id_date_2',
-      'address_overseas',
+      'nz_importer_name', 'address_overseas',
       // 출국 항공편 — 오클랜드·크라이스트처치 두 공항에만 도착할 수 있다(지원문서 Arrival).
       'entry_date', 'entry_flight_number', 'entry_departure_airport', 'entry_airport', 'entry_transport',
     ],

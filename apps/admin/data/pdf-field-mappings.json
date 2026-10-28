@@ -4320,12 +4320,20 @@
       },
       "Text53": {
         "source": null,
-        "default": "Air transport",
+        "default": "Airplane",
         "note": "p1 (5) Means of transport (새 템플릿 라벨 시프트)"
       },
       "Text51": {
-        "source": "document_owner_names_en",
-        "note": "p1 (4) Name and address of importer (consignee) — exporter와 동일"
+        "source": "nz_importer_document_name",
+        "note": "p1 (4) Importer — 추가정보 수입자 우선, 미입력 시 기존 보호자 이름"
+      },
+      "Text52": {
+        "source": "nz_importer_address",
+        "note": "p1 (4) Importer address — 현재 뉴질랜드 여행의 해외주소"
+      },
+      "Text54": {
+        "source": "nz_arrival_port",
+        "note": "p1 (6) Port of arrival — 실제 도착공항, 주소로 추정하지 않음"
       },
       "Text47": {
         "source": "document_owner_names_en",
@@ -4561,12 +4569,20 @@
       },
       "Text53": {
         "source": null,
-        "default": "Air transport",
+        "default": "Airplane",
         "note": "p1 (5) Means of transport (새 템플릿 라벨 시프트)"
       },
       "Text51": {
-        "source": "document_owner_names_en",
-        "note": "p1 (4) Name and address of importer (consignee) — exporter와 동일"
+        "source": "nz_importer_document_name",
+        "note": "p1 (4) Importer — 추가정보 수입자 우선, 미입력 시 기존 보호자 이름"
+      },
+      "Text52": {
+        "source": "nz_importer_address",
+        "note": "p1 (4) Importer address — 현재 뉴질랜드 여행의 해외주소"
+      },
+      "Text54": {
+        "source": "nz_arrival_port",
+        "note": "p1 (6) Port of arrival — 실제 도착공항, 주소로 추정하지 않음"
       },
       "Text47": {
         "source": "document_owner_names_en",
@@ -5915,11 +5931,11 @@
         "note": "p1 (3) Competent Authority"
       },
       "nz26_consignee_name": {
-        "source": "document_owner_names_en",
-        "note": "p1 (4) Consignee(Importer) Name — 보호자 본인"
+        "source": "nz_importer_document_name",
+        "note": "p1 (4) Consignee Name — 추가정보 수입자 우선, 미입력 시 기존 보호자 이름"
       },
       "nz26_consignee_address": {
-        "source": "address_overseas",
+        "source": "nz_importer_address",
         "note": "p1 (4) Consignee Address — 뉴질랜드 주소(추가정보 해외 주소)"
       },
       "nz26_origin_country": {
@@ -5958,7 +5974,7 @@
         "note": "p1 (10) Identification — 항공편명"
       },
       "nz26_port_arrival": {
-        "source": "entry_airport",
+        "source": "nz_arrival_port",
         "note": "p1 (11) Port of arrival — 추가정보 도착 공항(AKL/CHC)"
       },
       "nz26_permit_no": {

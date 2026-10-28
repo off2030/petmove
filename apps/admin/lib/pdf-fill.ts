@@ -29,6 +29,7 @@ import { VET_INFO } from '@/lib/vet-info'
 import { RABIES_SLOT_CAP } from '@/lib/rabies-slot-cap'
 import { resolveNzIdTransform, nz26StrikeFlags } from '@/lib/pdf-nz2026'
 import { mergeParasiticideDoses } from '@/lib/pdf-other-slots'
+import { nzImporterName, nzArrivalPort } from '@/lib/pdf-nz-consignment'
 import type { CaseRow } from '@petmove/domain'
 import { documentOwnerNames } from '@petmove/domain'
 
@@ -841,6 +842,9 @@ export function readSource(
 ): unknown {
   if (source === 'document_owner_names_en') return documentOwnerNames(caseRow, data, 'en')
   if (source === 'document_owner_names_ko') return documentOwnerNames(caseRow, data, 'ko')
+  if (source === 'nz_importer_document_name') return nzImporterName(caseRow, data)
+  if (source === 'nz_importer_address') return data.address_overseas ?? ''
+  if (source === 'nz_arrival_port') return nzArrivalPort(data.entry_airport)
   // Composite English customer name: "First Last" from split data fields,
   // falling back to the legacy customer_name_en column.
   if (source === 'customer_name_en') {
@@ -2889,8 +2893,18 @@ function rabiesDoseCount(c: CaseRow): number {
     .length
 }
 
-/** Forms without a shared owner field keep their existing packing behavior. */
+/** Shared certificate header must agree; an NZ importer can differ from the owners. */
 export function pdfDocumentOwnerGroup(formKey: string, row: CaseRow): string | undefined {
+  if (['NZ', 'NZ_2', 'NZ26'].includes(formKey)) {
+    const data = row.data ?? {}
+    return JSON.stringify([
+      documentOwnerNames(row, data), nzImporterName(row, data),
+      data.address_en ?? '', data.address_overseas ?? '',
+      nzArrivalPort(data.entry_airport),
+      (readSource('new_zealand_extra', row, data) as Record<string, unknown>).permit_no ?? '',
+      row.departure_date ?? '', data.entry_flight_number ?? '',
+    ])
+  }
   return Object.values(MAPS[formKey]?.fields ?? {}).some(f => f.source === 'document_owner_names_en')
     ? documentOwnerNames(row, row.data ?? {})
     : undefined

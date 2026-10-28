@@ -2,7 +2,7 @@
 // Requires PyMuPDF; set PYTHON to the installed Python executable when necessary.
 import assert from 'node:assert/strict'
 import { build } from 'esbuild'
-import { mkdir, mkdtemp, writeFile, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, writeFile, copyFile, rm } from 'node:fs/promises'
 import { execFileSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -44,6 +44,10 @@ try {
     assert.equal(result.ok, true, result.error)
     const file = path.join(temp, `${name}.pdf`)
     await writeFile(file, Buffer.from(result.pdf, 'base64'))
+    if (process.env.PDF_CHECK_OUTPUT_DIR) {
+      await mkdir(process.env.PDF_CHECK_OUTPUT_DIR, { recursive: true })
+      await copyFile(file, path.join(process.env.PDF_CHECK_OUTPUT_DIR, `${name}.pdf`))
+    }
     specs.push({ file, contains, absent })
   }
   process.chdir(admin)
@@ -63,15 +67,39 @@ try {
       await save(`${form}-different-co-owner`, docs[1], ['ALICE KIM / DIFFERENT MONTGOMERY', 'OTHER CAT'], ['CHARLES', 'THIRD CAT'])
     }
   }
+  for (const form of ['NZ', 'NZ_2', 'NZ26']) {
+    const row = makeCase('FIRST CAT')
+    row.data.nz_importer_name = 'DAVID LEE'
+    row.data.address_overseas = '5 Example Road, Christchurch 8041, New Zealand'
+    row.data.entry_airport = 'AKL'
+    await save(`${form}-importer`, await fillPdf(form, row, { includeSignature: false }),
+      ['DAVID LEE', row.data.address_overseas, 'Auckland Airport (AKL)', 'ALICE KIM / CHARLES MONTGOMERY', ...(form === 'NZ26' ? [] : ['Airplane'])])
+    const second = structuredClone(row); second.pet_name_en = 'SECOND CAT'; second.microchip = '999000000000002'
+    const third = structuredClone(row); third.pet_name_en = 'THIRD CAT'; third.microchip = '999000000000003'
+    const same = [row, second, third]
+    assert.equal(packCases(form, same).length, 1)
+    const docs = await fillPdfMulti(form, same, { includeSignature: false })
+    assert.equal(docs.length, 1)
+    await save(`${form}-three-cats`, docs[0], ['DAVID LEE', 'Auckland Airport (AKL)', ...same.flatMap(c => [c.pet_name_en, c.microchip])])
+    const other = structuredClone(row); other.data.nz_importer_name = 'OTHER IMPORTER'
+    const mixed = [row, other, third]
+    assert.equal(packCases(form, mixed).length, 2, 'Different importers must not share the first animal header')
+    assert.equal(countPackedDocuments(form, mixed.map(c => ({ rabiesDoseCount: 1, ownerGroup: pdfDocumentOwnerGroup(form, c) }))), 2)
+    other.data.nz_importer_name = row.data.nz_importer_name
+    other.data.entry_airport = 'CHC'
+    assert.equal(packCases(form, [row, other]).length, 2, 'Different arrival ports must remain separate')
+    delete row.data.entry_airport
+    await save(`${form}-no-arrival`, await fillPdf(form, row, { includeSignature: false }), ['DAVID LEE', row.data.address_overseas], ['Auckland Airport (AKL)', 'Christchurch Airport (CHC)'])
+  }
   await writeFile(path.join(temp, 'checks.json'), JSON.stringify(specs))
   execFileSync(process.env.PYTHON || 'python', ['-c', `import json,sys,pymupdf
 for s in json.load(open(sys.argv[1],encoding='utf-8')):
  d=pymupdf.open(s['file']); text='\\n'.join(p.get_text() for p in d)
  assert not any(list(p.widgets() or []) for p in d),s['file']
- for v in s['contains']: assert v in text,(s['file'],v)
- for v in s['absent']: assert v not in text,(s['file'],v)
+ for v in s['contains']: assert ' '.join(v.split()) in ' '.join(text.split()),(s['file'],v)
+ for v in s['absent']: assert ' '.join(v.split()) not in ' '.join(text.split()),(s['file'],v)
 `, path.join(temp, 'checks.json')], { stdio: 'inherit' })
-  console.log(`✓ ${specs.length} PDFs: both owners, legacy single owner, multi-animal owner separation and preview count verified`)
+  console.log(`✓ ${specs.length} PDFs: owners, NZ importer/address/airport, three animals, missing airport and packing preview verified`)
 } finally {
   process.chdir(root)
   assert(temp.startsWith(path.join(cache, 'co-owner-pdf-')))
