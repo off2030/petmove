@@ -30,6 +30,7 @@ import { RABIES_SLOT_CAP } from '@/lib/rabies-slot-cap'
 import { resolveNzIdTransform, nz26StrikeFlags } from '@/lib/pdf-nz2026'
 import { mergeParasiticideDoses } from '@/lib/pdf-other-slots'
 import type { CaseRow } from '@petmove/domain'
+import { documentOwnerNames } from '@petmove/domain'
 
 /* ─── Performance feature flags ────────────────────────────────────────
  * Flip any to `false` to revert to the original slower-but-safe behavior.
@@ -838,6 +839,8 @@ export function readSource(
   caseRow: CaseRow,
   data: Record<string, unknown>,
 ): unknown {
+  if (source === 'document_owner_names_en') return documentOwnerNames(caseRow, data, 'en')
+  if (source === 'document_owner_names_ko') return documentOwnerNames(caseRow, data, 'ko')
   // Composite English customer name: "First Last" from split data fields,
   // falling back to the legacy customer_name_en column.
   if (source === 'customer_name_en') {
@@ -2891,12 +2894,17 @@ export function packCases(formKey: string, cases: CaseRow[]): PackedDoc[] {
   if (!cap) return [{ cases, vaccSlots: [], animalSlots: cases.map((_, i) => i), parasiteSlots: cases.map((_, i) => i) }]
 
   const docs: PackedDoc[] = []
+  const sharedOwnerNames = Object.values(MAPS[formKey]?.fields ?? {}).some(f => f.source === 'document_owner_names_en')
   let remaining = cases.slice()
   while (remaining.length > 0) {
     const doc: PackedDoc = { cases: [], vaccSlots: [], animalSlots: [], parasiteSlots: [] }
     const leftover: CaseRow[] = []
     for (const c of remaining) {
       const doses = Math.max(1, rabiesDoseCount(c))
+      if (sharedOwnerNames && doc.cases.length && documentOwnerNames(doc.cases[0], doc.cases[0].data ?? {}) !== documentOwnerNames(c, c.data ?? {})) {
+        leftover.push(c)
+        continue
+      }
       if (doc.cases.length >= cap.animals || doc.vaccSlots.length + doses > cap.vaccRows) {
         leftover.push(c)
         continue

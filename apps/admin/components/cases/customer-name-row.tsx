@@ -6,7 +6,8 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { persistField } from '@/lib/toast-bus'
 import { CopyButton } from './copy-button'
 import { useCases } from './cases-context'
-import type { CaseRow } from '@petmove/domain'
+import { readCoOwner, type CaseRow } from '@petmove/domain'
+import { CoOwnerNameRow } from './co-owner-name-row'
 import { SectionLabel } from '@/components/ui/section-label'
 import { useSectionEditMode } from './section-edit-mode-context'
 
@@ -42,6 +43,8 @@ export function CustomerNameRow({
   const { updateLocalCaseField } = useCases()
   const editMode = useSectionEditMode()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const [addingCoOwner, setAddingCoOwner] = useState(false)
+  const hasCoOwner = !!readCoOwner(data)
 
   const koName = (caseRow.customer_name ?? '').trim()
   const lastName = ((data.customer_last_name_en as string) ?? '').trim()
@@ -82,6 +85,7 @@ export function CustomerNameRow({
   useEffect(() => {
     setEditing(false)
     setError(null)
+    setAddingCoOwner(false)
   }, [caseId])
 
   function startEdit(focus: 'ko' | 'first' | 'last' = 'ko') {
@@ -150,8 +154,9 @@ export function CustomerNameRow({
   const inputCls = 'h-8 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none'
 
   return (
+    <>
     <div data-field="customer_name" className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
-      <SectionLabel className="pt-1">
+      <SectionLabel className="pt-1" onClick={editMode && !hasCoOwner ? () => setAddingCoOwner(true) : undefined} title={hasCoOwner ? undefined : '클릭하여 공동 보호자 추가'}>
         성함
       </SectionLabel>
 
@@ -300,5 +305,7 @@ export function CustomerNameRow({
         )}
       </div>
     </div>
+    {(hasCoOwner || addingCoOwner) && <CoOwnerNameRow key={caseId} caseRow={caseRow} onDone={() => setAddingCoOwner(false)}/>}
+    </>
   )
 }

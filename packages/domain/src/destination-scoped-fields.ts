@@ -447,6 +447,7 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'import_report_dismissed', // 신고 탭 '신고 내리기'(취소) 플래그 — 케이스를 신고 탭에서 숨김.
   //                            케이스 단위(목적지 무관)로 한 줄을 내리는 동작이라 전역. isDismissedImportReport 가 top-level read.
   'import_report_active_dest', // 신고 목록에서 선택한 여행 토큰. 신고 상태와 달리 케이스 단위의 표시 설정.
+  'co_owner', // 공동 보호자 이름 {name_ko, first_name_en, last_name_en}. 동물 케이스 공통 신원.
 ])
 
 export function isGlobalCaseDataKey(key: string): boolean {

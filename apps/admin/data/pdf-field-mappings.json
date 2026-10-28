@@ -7,13 +7,13 @@
     "flatten": true,
     "fields": {
       "consignor_name": {
-        "source": "customer_name_en"
+        "source": "document_owner_names_en"
       },
       "consignor_address": {
         "source": "address_en"
       },
       "consignee_name": {
-        "source": "customer_name_en"
+        "source": "document_owner_names_en"
       },
       "consignee_address": {
         "source": "address_overseas"
@@ -164,13 +164,13 @@
     "flatten": true,
     "fields": {
       "consignor_name": {
-        "source": "customer_name_en"
+        "source": "document_owner_names_en"
       },
       "consignor_address": {
         "source": "address_en"
       },
       "consignee_name": {
-        "source": "customer_name_en"
+        "source": "document_owner_names_en"
       },
       "consignee_address": {
         "source": "address_overseas"
@@ -308,7 +308,7 @@
         "transform": "checkbox:eq:spayed_female"
       },
       "importer_name": {
-        "source": "customer_name_en"
+        "source": "document_owner_names_en"
       },
       "animal_name_b": {
         "source": "pet_name_en"
@@ -455,7 +455,7 @@
     "flatten": true,
     "fields": {
       "owner_name": {
-        "source": "customer_name_en"
+        "source": "document_owner_names_en"
       },
       "text_73xhcg": {
         "source": "phone",
@@ -767,7 +767,7 @@
     "flatten": true,
     "fields": {
       "owner_name": {
-        "source": "customer_name_en"
+        "source": "document_owner_names_en"
       },
       "text_91ldww": {
         "source": "phone",
@@ -1159,7 +1159,7 @@
     "flatten": true,
     "fields": {
       "I1_consignor_name": {
-        "source": "customer_name_en"
+        "source": "document_owner_names_en"
       },
       "I1_consignor_address": {
         "source": "address_en",
@@ -1176,7 +1176,7 @@
         "transform": "phone_intl_kr"
       },
       "I5_consignee_name": {
-        "source": "customer_name_en"
+        "source": "document_owner_names_en"
       },
       "I5_consignee_address": {
         "source": "address_overseas",
@@ -1535,7 +1535,7 @@
     "flatten": true,
     "fields": {
       "I1_consignor_name": {
-        "source": "customer_name_en"
+        "source": "document_owner_names_en"
       },
       "I1_consignor_address": {
         "source": "address_en",
@@ -1552,7 +1552,7 @@
         "transform": "phone_intl_kr"
       },
       "I3_consignee_name": {
-        "source": "customer_name_en"
+        "source": "document_owner_names_en"
       },
       "I3_consignee_address": {
         "source": "address_overseas",
@@ -4324,11 +4324,11 @@
         "note": "p1 (5) Means of transport (새 템플릿 라벨 시프트)"
       },
       "Text51": {
-        "source": "customer_name_en",
+        "source": "document_owner_names_en",
         "note": "p1 (4) Name and address of importer (consignee) — exporter와 동일"
       },
       "Text47": {
-        "source": "customer_name_en",
+        "source": "document_owner_names_en",
         "note": "p1 (1) Name and address line 1 (owner name)"
       },
       "Text76": {
@@ -4565,11 +4565,11 @@
         "note": "p1 (5) Means of transport (새 템플릿 라벨 시프트)"
       },
       "Text51": {
-        "source": "customer_name_en",
+        "source": "document_owner_names_en",
         "note": "p1 (4) Name and address of importer (consignee) — exporter와 동일"
       },
       "Text47": {
-        "source": "customer_name_en",
+        "source": "document_owner_names_en",
         "note": "p1 (1) Name and address line 1 (owner name)"
       },
       "text_80gijj": {
@@ -4969,9 +4969,9 @@
       "text_1mvmm":  { "source": null, "default": "Republic of Korea", "note": "p1 Country (zone) of origin — 한국 고정" },
       "text_2addf":  { "source": "certificate_no", "note": "p1 Certificate number — data.certificate_no (추가정보 수동 입력). 비어있으면 공란." },
       "text_3vcbl":  { "source": "permit_no",      "note": "p1 Import permit number — data.permit_no (추가정보 수동 입력). 비어있으면 공란." },
-      "text_4peiu":  { "source": "customer_name_en", "note": "p1 Exporter/consignor — 보호자 영문명 (line 1)" },
+      "text_4peiu":  { "source": "document_owner_names_en", "note": "p1 Exporter/consignor — 보호자 영문명 (line 1)" },
       "text_5gotc":  { "source": "address_en",       "note": "p1 Exporter/consignor — 한국주소 영문 (line 2)" },
-      "text_6ilfz":  { "source": "customer_name_en", "note": "p1 Importer/consignee — 보호자 영문명 (line 1)" },
+      "text_6ilfz":  { "source": "document_owner_names_en", "note": "p1 Importer/consignee — 보호자 영문명 (line 1)" },
       "text_7vwpg":  { "source": "address_overseas", "note": "p1 Importer/consignee — 대만 해외주소 (line 2)" },
       "text_8epkh":  { "source": "species",  "transform": "en",     "note": "p1 Species (Dog/Cat)" },
       "text_9klwh":  { "source": "breed_en",                         "note": "p1 Breed" },
@@ -5004,10 +5004,10 @@
       "text_1hpqx": { "source": null, "default": "Republic of Korea", "note": "p1 Menşe Ülke/Country of Origin — 한국 고정" },
       "text_3xyve": { "source": null, "default": "Republic of Korea", "note": "p1 Sevkeden Ülke/Country of dispatch — 한국 고정" },
       "text_4qrwb": { "source": null, "default": "Incheon International Airport", "note": "p1 Yükleme Yeri/Place of Loading — 한국→튀르키예는 사실상 전부 인천 출발이라 고정 default. 국가명은 위 Country of Origin/Dispatch 와 중복이라 생략. 예외 노선이면 생성된 PDF에서 직접 수정." },
-      "text_5pdah": { "source": "customer_name_en", "note": "p1 Consignor name (Gönderenin adı) — 보호자 영문명" },
+      "text_5pdah": { "source": "document_owner_names_en", "note": "p1 Consignor name (Gönderenin adı) — 보호자 영문명" },
       "text_6epwu": { "source": "address_en", "note": "p1 Consignor address — 한국 주소 영문" },
       "text_8juia": { "source": "entry_flight_number", "note": "p1 Registration no/ship name/flight number — 상세페이지 '항공편명'(entry_flight_number) 자동 채움. 미입력 시 공란." },
-      "text_10ploi": { "source": "customer_name_en", "note": "p1 Consignee name (Alıcının adı) — 동일 보호자가 현지 수령" },
+      "text_10ploi": { "source": "document_owner_names_en", "note": "p1 Consignee name (Alıcının adı) — 동일 보호자가 현지 수령" },
       "text_12gwyq": { "source": "address_overseas", "note": "p1 Consignee address — 튀르키예 현지 주소" },
 
       "text_14ibfi": { "source": "species", "transform": "en", "note": "p1 동물표 1행 Türü/Species (Dog/Cat)" },
@@ -5484,7 +5484,7 @@
     "dateFormat": "dmy",
     "flatten": true,
     "fields": {
-      "owner_name":    { "source": "customer_name_en", "note": "§I Owner name" },
+      "owner_name":    { "source": "document_owner_names_en", "note": "§I Owner name" },
       "owner_address": { "source": "address_en",       "note": "§I Owner address" },
       "owner_phone":   { "source": "phone", "transform": "phone_intl_kr", "note": "§I Owner phone" },
 
@@ -5902,7 +5902,7 @@
     "strikeFlags": "nz26",
     "fields": {
       "nz26_consignor_name": {
-        "source": "customer_name_en",
+        "source": "document_owner_names_en",
         "note": "p1 (1) Consignor(Exporter) Name — 보호자"
       },
       "nz26_consignor_address": {
@@ -5915,7 +5915,7 @@
         "note": "p1 (3) Competent Authority"
       },
       "nz26_consignee_name": {
-        "source": "customer_name_en",
+        "source": "document_owner_names_en",
         "note": "p1 (4) Consignee(Importer) Name — 보호자 본인"
       },
       "nz26_consignee_address": {
@@ -5941,7 +5941,7 @@
         "note": "p1 (8) Port of departure — 추가정보 출발 공항"
       },
       "nz26_origin_place_name": {
-        "source": "customer_name_en",
+        "source": "document_owner_names_en",
         "note": "p1 (9) Place of origin Name — 동물이 지내던 곳 = 보호자"
       },
       "nz26_origin_place_address": {

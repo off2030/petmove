@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@petmove/auth/server'
+import { normalizeCoOwner } from '@petmove/domain'
 import { computeAutoFill, getVetVisitWindowDays } from '@petmove/domain'
 import { evaluateAndNotify } from './system-notifications'
 import {
@@ -242,6 +243,10 @@ export async function updateCaseField(
   destination?: string | null,
 ): Promise<UpdateResult> {
   if (!caseId || !key) return { ok: false, error: 'caseId and key are required' }
+  if (storage === 'data' && key === 'co_owner') {
+    try { value = normalizeCoOwner(value) }
+    catch (error) { return { ok: false, error: error instanceof Error ? error.message : '공동 보호자 이름을 확인해 주세요.' } }
+  }
   if (storage === 'column' && !REGULAR_COLUMNS.has(key)) {
     return { ok: false, error: `column "${key}" is not updatable` }
   }

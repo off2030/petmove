@@ -16,6 +16,8 @@ export const SOURCE_LABELS: Record<string, string> = {
   // 보호자
   customer_name: '보호자 한글 이름',
   customer_name_en: '보호자 영문 이름',
+  document_owner_names_en: '보호자·공동 보호자 영문 이름',
+  document_owner_names_ko: '보호자·공동 보호자 한글 이름',
   phone: '전화번호',
   email: '이메일',
 
@@ -92,6 +94,8 @@ export const SOURCE_LABELS: Record<string, string> = {
  * — 보호자 영문 이름 split 분리 저장도 한 라벨로 합침
  */
 export function groupSourceKey(source: string): string {
+  if (source === 'document_owner_names_en') return 'customer_name_en'
+  if (source === 'document_owner_names_ko') return 'customer_name'
   if (source.startsWith('address_en')) return 'address_en'
   if (source.startsWith('address_overseas')) return 'address_overseas'
   if (source === 'postcode_place' || source === 'postal_code') return 'address_zipcode'
