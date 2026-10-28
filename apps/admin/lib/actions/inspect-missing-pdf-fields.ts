@@ -246,7 +246,12 @@ function readGroupValue(
     // 품종·색·체중으로 **만들어 찍는** 칸(ID 확인서·호주 ID 선언서) — 저장된 키가 없어 data 만 보면
     //   늘 비었다고 오판했다(2026-10-06 발견). PDF 와 같은 readSource 로 판정.
     case 'animal_description':
-      return readSource('animal_description', caseRow, data)
+    // 뉴질랜드 수입자·도착항은 저장 키가 아니라 PDF에서 계산하는 source다.
+    // 수입자 이름의 보호자 폴백과 현재 여행지의 주소·공항을 출력과 똑같이 읽는다.
+    case 'nz_importer_document_name':
+    case 'nz_importer_address':
+    case 'nz_arrival_port':
+      return readSource(groupKey, caseRow, data)
     default:
       return data[groupKey]
   }

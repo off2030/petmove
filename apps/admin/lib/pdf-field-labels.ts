@@ -60,6 +60,9 @@ export const SOURCE_LABELS: Record<string, string> = {
   entry_flight_number: '항공편명',
   entry_departure_airport: '출발 공항',
   entry_airport: '도착 공항',
+  nz_arrival_port: '도착 공항',
+  nz_importer_address: '해외 주소',
+  nz_importer_document_name: '뉴질랜드 수입자 영문명',
 
   // 일정
   departure_date: '출국일',

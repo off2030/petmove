@@ -47,6 +47,9 @@ jobs:
       - name: Check NZ importer and arrival port
         run: pnpm tsx scripts/check-nz-consignment.ts
 
+      - name: Check NZ certificate missing-field warnings
+        run: node scripts/check-nz-pdf-missing.mjs
+
       - name: Typecheck portal
         run: pnpm --filter @petmove/portal exec tsc --noEmit
 
