@@ -4810,8 +4810,8 @@
     ],
     "fields": {
       "text_1vqxe": {
-        "source": null,
-        "note": "p1 NParks/AVS Import Licence No. (수동입력)"
+        "source": "permit_no",
+        "note": "p1 NParks/AVS Import Licence No. — 싱가포르 추가정보의 수입허가번호"
       },
       "text_2dlhd": {
         "source": null,
