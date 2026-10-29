@@ -1026,6 +1026,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer', 'general', 'external_parasite', 'internal_parasite'],
     vetVisitWindowDays: 7,
     extraFields: [
+      // 펫무브워크 추가정보에서 허가증 파일과 함께 수입허가번호를 기록한다.
+      // permit_no 는 destination-scoped key 라 다중 여행지에서도 싱가포르 값만 저장된다.
+      'permit_no',
       'passport_number', 'passport_expiry_date', 'passport_issuer',
       'address_overseas',
       'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
