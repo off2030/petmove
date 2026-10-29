@@ -2658,7 +2658,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       doneSummary: '싱가포르 수입 허가증을 받았어요.',
       cardLine: '싱가포르 수입 허가를 신청하세요.',
       attachmentHint: '수입 허가증을 사진·PDF로 보관하세요.',
-      attachmentLabel: '싱가포르 수입 허가증',
+      attachmentLabel: '수입허가증',
       // 마감 배지 제거(2026-07-26) — base 의 '출국 30일 전'을 물려받고 있었는데, GoBusiness
       //   수입 허가는 '도착 90일 이내 신청·발급 90일 유효'라 확정 마감일이 없다. 같은 근거로
       //   마감 알림은 진작 만들지 않았는데(reminders.ts 싱가포르 주석) 배지만 남아 없는 기한을

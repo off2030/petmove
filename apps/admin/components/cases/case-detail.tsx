@@ -1238,10 +1238,12 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, destination, permit
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
-      {/* 일반 허가 행은 라벨 클릭으로 첨부. 번호 결합 행은 라벨을 번호 입력에 대응시킨다. */}
+      {/* 다른 허가 행과 동일하게 라벨 클릭으로 파일 선택. 번호는 우측 값 영역에서 편집한다. */}
       <SectionLabel
-        onClick={permitNumber ? undefined : () => inputRef.current?.click()}
-        title={permitNumber ? '허가번호 입력 · 자료 첨부' : '클릭 · 드래그 · Ctrl+V 로 첨부'}
+        onClick={() => inputRef.current?.click()}
+        title={permitNumber
+          ? '클릭 · 드래그 · Ctrl+V 로 수입허가증 첨부'
+          : '클릭 · 드래그 · Ctrl+V 로 첨부'}
       >
         {label}
       </SectionLabel>
@@ -1266,23 +1268,17 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, destination, permit
             />
           </div>
         )}
-        {permitNumber && <span className="text-muted-foreground/30 select-none">|</span>}
         {uploading ? (
           <span className="text-xs text-muted-foreground">업로드 중…</span>
-        ) : (
+        ) : !permitNumber ? (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className={cn(
-              'text-left rounded-md px-2 py-1 transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-pointer select-none',
-              permitNumber
-                ? 'text-xs font-medium text-muted-foreground'
-                : '-mx-2 text-muted-foreground/40',
-            )}
+            className="text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/40 hover:ring-1 hover:ring-inset hover:ring-border cursor-pointer text-muted-foreground/40 select-none"
           >
-            {permitNumber ? '자료 첨부' : '—'}
+            —
           </button>
-        )}
+        ) : null}
         {error && <span className="text-xs text-destructive">{error}</span>}
       </div>
     </div>

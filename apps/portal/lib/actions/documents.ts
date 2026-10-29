@@ -15,6 +15,7 @@ import { reportActionError } from './_shared'
 import { randomUUID } from 'node:crypto'
 import { createAdminClient } from '@petmove/auth'
 import {
+  buildCaseJourneyContext,
   clearLegacyReportStatusForStep,
   parseDestinations,
   resolveStepAttachmentName,
@@ -86,10 +87,21 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    // step 라벨 기반 이름 통일 (광견병 항체 검사 → '광견병 항체 검사 결과지').
-    // 같은 step 의 기존 업로드 개수에 따라 '_2', '_3' (gap-fill).
+    // 활성 목적지 태깅 — 다중 목적지에서 이 첨부가 다른 목적지 체크리스트로 새지 않게.
+    // (무태그 = legacy/공유로 인정되므로 목적지 없는 케이스만 생략.)
+    const attachDest = resolveAttachDestination(
+      (existing as CaseRow | null)?.destination,
+      formData.get('destination'),
+    )
+
+    // 목적지별 step 라벨 기반 이름 통일 (예: 싱가포르 → '수입허가증').
+    // 같은 라벨의 기존 업로드 개수에 따라 '_2', '_3' (gap-fill).
     const existingDocs = readCaseDocuments(prev)
-    const displayName = resolveStepAttachmentName(stepId, file.name, existingDocs)
+    const journeyContext = buildCaseJourneyContext(existing as CaseRow, attachDest)
+    const displayName = resolveStepAttachmentName(stepId, file.name, existingDocs, {
+      key: journeyContext.destinationKey,
+      token: journeyContext.destinationToken,
+    })
     const safeName = displayName.replace(/[^a-zA-Z0-9._-]/g, '_')
     const path = `${caseId}/${Date.now()}_${safeName}`
     const buffer = Buffer.from(await file.arrayBuffer())
@@ -99,12 +111,6 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
       .upload(path, buffer, { contentType: file.type, upsert: false })
     if (uploadErr) return { ok: false, error: uploadErr.message }
 
-    // 활성 목적지 태깅 — 다중 목적지에서 이 첨부가 다른 목적지 체크리스트로 새지 않게.
-    // (무태그 = legacy/공유로 인정되므로 목적지 없는 케이스만 생략.)
-    const attachDest = resolveAttachDestination(
-      (existing as CaseRow | null)?.destination,
-      formData.get('destination'),
-    )
     const uploadedAt = new Date().toISOString()
     const doc: CaseDocument = {
       id: randomUUID(),
