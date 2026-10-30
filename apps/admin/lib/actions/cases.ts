@@ -435,7 +435,7 @@ export async function updateCaseField(
 
     const pendingRow = { ...row, ...updateObj } as CaseRow
     const reopenedData = reopenReportForNewSchedule(row as CaseRow, pendingRow)
-    if (reopenedData !== pendingRow.data) updateObj.data = reopenedData
+    if (pendingRow.data?.import_report_dismissed === true && reopenedData !== pendingRow.data) updateObj.data = reopenedData
     if (autoFilled) autoFilled.data = updateObj.data as Record<string, unknown>
 
     const { error: updErr } = await supabase
@@ -634,7 +634,7 @@ export async function updateCaseField(
   // Single UPDATE — column 변경 + data 부수효과 + status 리셋 + 자동채움 모두 합산.
   const pendingRow = { ...row, ...updateObj } as CaseRow
   const reopenedData = reopenReportForNewSchedule(row as CaseRow, pendingRow)
-  if (reopenedData !== pendingRow.data) updateObj.data = reopenedData
+  if (pendingRow.data?.import_report_dismissed === true && reopenedData !== pendingRow.data) updateObj.data = reopenedData
   if (autoFilled) autoFilled.data = (updateObj.data as Record<string, unknown> | undefined) ?? stampedData
   const { error: updErr } = await supabase
     .from('cases')

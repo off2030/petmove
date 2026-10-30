@@ -812,7 +812,7 @@ export async function submitShareLink(
       const beforeSchedule = { destination: caseDestination, departure_date: caseDepartureDate, data: current }
       const pendingSchedule = { ...beforeSchedule, ...updates } as CaseRow
       const reopenedData = reopenReportForNewSchedule(beforeSchedule, pendingSchedule)
-      if (reopenedData !== pendingSchedule.data) updates.data = reopenedData
+      if (pendingSchedule.data?.import_report_dismissed === true && reopenedData !== pendingSchedule.data) updates.data = reopenedData
 
       // 변경 이력 — UPDATE 직전 스냅샷으로 계산해두고, 성공 후 적재한다.
       // 안 남기면 보호자가 링크로 넣은 값은 '이력'에 흔적이 없어, 이후 누가/무엇이 덮어써도
