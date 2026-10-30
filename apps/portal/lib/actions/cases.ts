@@ -19,6 +19,7 @@ import { createClient, getCurrentUser } from '@petmove/auth/server'
 import {
   emptyVaccineProductsData,
   computeAutoFill,
+  reopenReportForNewSchedule,
   JOURNEY_STEP_CATALOG,
   buildCaseJourneyContext,
   findRabiesChainBreak,
@@ -1133,7 +1134,7 @@ export async function updateFlightFields(
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
       // org_id 는 auto-fill 룰(computeAutoFill pending 스냅샷) 조회용.
-      .select('data, destination, org_id')
+      .select('data, destination, org_id, departure_date')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
@@ -1146,6 +1147,7 @@ export async function updateFlightFields(
     // 와 동일. 컬럼은 단일값이라 다중 목적지를 못 담고, flatten 이 by_dest[dest].departure_date 를
     // 우선 읽어 has-flight-date·D-day 가 목적지별로 작동한다.
     const caseDestStr = (existing as { destination: string | null }).destination
+    const beforeSchedule = { data: prev, destination: caseDestStr, departure_date: existing?.departure_date ?? null }
     const isSingleDest = parseDestinations(caseDestStr).length === 1
     // 추가정보 '출발일'(departure_flight_date)을 쓰는 목적지는 출국일(departure_date)과
     // org_auto_fill_rules 양방향 sync — 출국일 쓸 때 이 키도 함께 맞춰야 stale 잔존이
@@ -1262,6 +1264,7 @@ export async function updateFlightFields(
         } catch { /* best-effort — 실패 시 자동채움 없이 본 저장만 */ }
       }
 
+      updatePayload.data = reopenReportForNewSchedule(beforeSchedule, { ...beforeSchedule, ...updatePayload } as CaseRow)
       // 단일 UPDATE + returning — 종전 UPDATE 후 refetch SELECT 를 합침.
       const { data: updated, error: updErr } = await admin
         .from('cases')
@@ -1332,6 +1335,7 @@ export async function updateFlightFields(
       }
     } catch { /* best-effort — 실패 시 자동채움 없이 본 저장만 */ }
 
+    updatePayload.data = reopenReportForNewSchedule(beforeSchedule, { ...beforeSchedule, ...updatePayload } as CaseRow)
     // 단일 UPDATE + returning — 종전 UPDATE 후 refetch SELECT 를 합침.
     const { data: updated, error } = await admin
       .from('cases')
@@ -1511,6 +1515,7 @@ export async function updateVetVisitDate(
       nextData = writeByDestValue(nextData, writeDest, 'vet_visit_date_scheduled', vvFuture ? v : null)
       // vet_visit_confirmed 는 공용(top-level) 플래그 — 실제(≤오늘) 검진일만 완료로.
       applyDatedConfirm(nextData, !vvFuture && v ? [{ date: v }] : [], 'vet_visit_confirmed')
+      nextData = reopenReportForNewSchedule(existing as CaseRow, { ...existing, data: nextData } as CaseRow)
       const { data: updated, error } = await admin
         .from('cases')
         .update({ data: nextData })
@@ -1540,7 +1545,7 @@ export async function updateVetVisitDate(
 
     const { data: updated, error } = await admin
       .from('cases')
-      .update({ data: nextData })
+      .update({ data: reopenReportForNewSchedule(existing as CaseRow, { ...existing, data: nextData } as CaseRow) })
       .eq('id', caseId)
       .select('*')
       .single()
@@ -3276,7 +3281,12 @@ export async function updateCaseInfoFields(
         microchip: chip,
         destination: effective.destination.trim() || null,
         departure_date: effective.departure_date || null,
-        data: nextData,
+        data: reopenReportForNewSchedule(fresh, {
+          ...fresh,
+          destination: effective.destination.trim() || null,
+          departure_date: effective.departure_date || null,
+          data: nextData,
+        }),
       })
       .eq('id', caseId)
       .select('*')

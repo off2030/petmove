@@ -2,13 +2,12 @@ import {
   deriveReportSlotStatus,
   destinationCountry,
   flattenCaseForDestination,
-  getDepartureDate,
   getTripType,
-  getVetVisitDate,
   parseDestinations,
   readByDestValue,
   resolveReportBinding,
   REPORT_LEGACY_STATUS_KEY,
+  reportScheduleDatesFor,
   type CaseRow,
   type ReportSlot,
 } from '@petmove/domain'
@@ -127,7 +126,7 @@ export function reportRowApplies(
  *
  * 보는 자리(넓은 순):
  *   ① 출국일 — by_dest[여행지].departure_date → cases.departure_date 컬럼
- *   ② 내원일 — 내원일이 잡혔다는 건 출국이 임박했다는 뜻이라 신고 대상이다
+ *   ② 내원일(예정 내원일 포함) — 내원일이 잡혔다는 건 출국이 임박했다는 뜻이라 신고 대상이다
  *   ③ 출국 항공편 **출발일**(departure_flight_date)
  *   ④ **도착일**(entry_date)
  *
@@ -140,18 +139,5 @@ export function reportRowApplies(
  * (도착일은 신고기한 계산엔 안 쓴다 — 기한은 여전히 출국일 기준.)
  */
 export function hasReportSchedule(caseRow: CaseRow, dest: string | null): boolean {
-  if (getDepartureDate(caseRow, dest)) return true
-  if (getVetVisitDate(caseRow, dest)) return true
-  const data = (caseRow.data as Record<string, unknown> | null) ?? null
-  const flightKeys = ['departure_flight_date', 'entry_date'] as const
-  for (const key of flightKeys) {
-    const v = readByDestValue(data, dest, key)
-    if (typeof v === 'string' && v) return true
-  }
-  // 다중 여행지 + 특정 여행지 지정이면 top-level 폴백 안 함 — 다른 여행지 잔존값 누수 차단(B).
-  if (dest && parseDestinations(caseRow.destination).length > 1) return false
-  return flightKeys.some((key) => {
-    const top = data?.[key]
-    return typeof top === 'string' && !!top
-  })
+  return Object.values(reportScheduleDatesFor(caseRow, dest)).some(Boolean)
 }

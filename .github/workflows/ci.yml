@@ -41,6 +41,9 @@ jobs:
       - name: Check report list journey selection
         run: pnpm tsx scripts/check-import-report-selection.ts
 
+      - name: Check report visibility on new schedules
+        run: pnpm tsx scripts/check-report-schedule-reopen.ts
+
       - name: Check co-owner names and certificate mappings
         run: pnpm tsx scripts/check-co-owner.ts
 

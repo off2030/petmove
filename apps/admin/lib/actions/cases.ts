@@ -1,8 +1,7 @@
 'use server'
 
 import { createClient } from '@petmove/auth/server'
-import { normalizeCoOwner } from '@petmove/domain'
-import { computeAutoFill, getVetVisitWindowDays } from '@petmove/domain'
+import { normalizeCoOwner, reopenReportForNewSchedule, computeAutoFill, getVetVisitWindowDays } from '@petmove/domain'
 import { evaluateAndNotify } from './system-notifications'
 import {
   isDestinationScopedKey,
@@ -169,8 +168,6 @@ const REDEPARTURE_REPORT_SIGNAL_KEYS: readonly string[] = (() => {
     'import_import_status',
     'import_export_status',
     'jp_export_quarantine_confirmed',
-    // 재출국이므로 숨김 해제 — 다시 신고 탭에 노출
-    'import_report_dismissed',
   ])
   for (const d of destinationsWithReportBinding()) {
     for (const k of reportSlotSignalKeys(d.key)) out.add(k)
@@ -436,6 +433,11 @@ export async function updateCaseField(
       }
     }
 
+    const pendingRow = { ...row, ...updateObj } as CaseRow
+    const reopenedData = reopenReportForNewSchedule(row as CaseRow, pendingRow)
+    if (reopenedData !== pendingRow.data) updateObj.data = reopenedData
+    if (autoFilled) autoFilled.data = updateObj.data as Record<string, unknown>
+
     const { error: updErr } = await supabase
       .from('cases')
       .update(updateObj)
@@ -533,7 +535,8 @@ export async function updateCaseField(
   //     · 내원일(vet_visit_date) 변경 → 무조건 리셋
   //     · 출국일(departure_date) 변경 + 내원일 비었거나 이미 지남 → 리셋
   //   신고(import_import_status, import_export_status):
-  //     · 출국일 변경 + 이전 값이 과거(이미 다녀온 케이스) → 둘 다 + dismissed 플래그 클리어
+  //     · 출국일 변경 + 이전 값이 과거(이미 다녀온 케이스) → 진행 시그널 클리어.
+  //       숨김은 최종 일정의 실제 변경을 확인한 reopenReportForNewSchedule 에서만 해제한다.
   const newValue = serializeForHistory(storage, value)
   const valueChanged = oldValue !== newValue
   const isVetVisit = storage === 'data' && key === 'vet_visit_date'
@@ -629,6 +632,10 @@ export async function updateCaseField(
   }
 
   // Single UPDATE — column 변경 + data 부수효과 + status 리셋 + 자동채움 모두 합산.
+  const pendingRow = { ...row, ...updateObj } as CaseRow
+  const reopenedData = reopenReportForNewSchedule(row as CaseRow, pendingRow)
+  if (reopenedData !== pendingRow.data) updateObj.data = reopenedData
+  if (autoFilled) autoFilled.data = (updateObj.data as Record<string, unknown> | undefined) ?? stampedData
   const { error: updErr } = await supabase
     .from('cases')
     .update(updateObj)
@@ -776,6 +783,7 @@ export async function updateCaseDataBulk(
     } catch { /* best-effort — 실패 시 자동채움 없이 본 저장만 */ }
   }
 
+  updateObj.data = reopenReportForNewSchedule(row as CaseRow, { ...row, ...updateObj } as CaseRow)
   const { error: updErr } = await supabase.from('cases').update(updateObj).eq('id', caseId)
   if (updErr) return { ok: false, error: updErr.message }
   if (historyRows.length > 0 && orgId) {

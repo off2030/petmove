@@ -167,5 +167,11 @@
 
 회귀 검증: `pnpm tsx scripts/check-import-report-selection.ts`.
 
+### 새 일정의 신고 숨김 복원 (2026-10-30)
+
+`import_report_dismissed`는 케이스 공통 숨김이다. 숨긴 케이스에 오늘 이후의 출국일·항공편 출발일·도착일·내원일(예정 포함)이 새로 입력되거나 변경되면 숨김만 해제한다. 같은 날짜 재저장, 날짜 삭제, 과거 기록 수정, 기타 정보 수정은 숨김을 유지한다. 비교는 `by_dest` 우선의 실제 표시 규칙으로 하며, 날짜 없는 새 목적지는 다른 여행의 전역 잔존값으로 복원하지 않는다. 기존 신고 진행상태·첨부는 복원 함수가 변경하지 않는다.
+
+공통 함수 `reopenReportForNewSchedule`은 자동채움까지 합산한 최종 저장본에 적용한다. 펫무브워크 단일·일괄 입력, 보호자 추가정보 링크, 보호자 앱 항공편·기본정보·내원일 저장이 같은 함수를 사용한다. 신고 목록의 일정 판정도 `reportScheduleDatesFor`를 공유한다. 합성 데이터 회귀 검증: `pnpm tsx scripts/check-report-schedule-reopen.ts`.
+
 - [journey-lifecycle-design.md](journey-lifecycle-design.md) — 여정 생애주기(완료→지난 여정). 이 버그의 모태. B 완료 후 남은 작업: 의료기록 관련성 · prompt B형.
 - 메모리 `project_journey_lifecycle_impl` — 포인터.
