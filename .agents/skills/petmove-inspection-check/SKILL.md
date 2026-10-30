@@ -15,6 +15,8 @@ For an explicit KSVDL fee-payment request, use the separate [KSVDL payment skill
 
 For a whole inspection-tab overview, read every page of the active organization's non-deleted cases with a stable sort and explicit ranges, and compare the fetched case count with the exact database count before reporting totals. A large `.limit()` alone does not override the server response cap. Derive inspection rows and statuses using the current application's rules, including repeated titer records and destination-scoped infectious tests; case counts and inspection-row counts differ. Do not report the first response as the entire tab.
 
+For the existing daily operational check, the user's 2026-10-30 instruction requires **all three tabs: 검사, 신고, 서류**. Follow [daily three-tab checks](references/daily-three-tabs.md); completing inspection delay checks or Japan mail checks alone is not a complete three-tab review. Preserve existing device schedules and action permissions.
+
 ## 신청 확인과 검사 상태 변경의 구분
 
 - 사용자가 특정 셀프서비스 케이스를 병원 대행 대상에서 제외하고 정보 변경까지 무시하라고 지정하면, 비공개 공유 이력의 `inspectionDelayExclusions`에서 케이스 ID·제외 사유·현재 정보 지문을 읽어 해당 건의 반복 점검 보고를 제외한다. 조직 전체나 다른 동물로 제외 범위를 넓히지 않고 공식 상태는 변경하지 않는다. 다음 조회에서 저장 정보가 기준 지문과 달라졌으면 다시 확인하며, 과거 결과가 있어도 상태가 비어 대기로 산출되는 건을 실제 기관 분석 지연으로 단정하지 않는다.
