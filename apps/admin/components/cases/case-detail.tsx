@@ -393,9 +393,13 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
           const sectionNumber = extraSectionNumber
           // descriptor.subgroup 으로 인접 그룹화 — 빌더가 이미 ≥2 일 때만 subgroup 을 박았으므로 1개짜리는 자동 평면.
           const segments: ExtraSegment[] = []
+          const combineSingaporePermitNumber = matchesDestinationKey(viewDestination, 'singapore')
           for (const d of extraDescriptors) {
             if (d.source.kind !== 'extra') continue
             const def = applyDestinationFieldOverride(d.source.def, viewDestination, getDestinationOverride)
+            // 싱가포르는 수입허가번호와 허가증 첨부를 한 행에서 다룬다. permit_no 를 일반
+            // EditableField 로도 렌더하면 같은 값이 두 줄로 중복되므로 trailing 허가 행에 맡긴다.
+            if (combineSingaporePermitNumber && def.key === 'permit_no') continue
             // useShortLabel 은 빌더가 destination 별로 결정한 값을 그대로 신뢰
             // (일본만 'shortLabel' — 날짜/시간/항공편명, 그 외는 풀라벨 — 도착일/도착시간).
             const groupUseShortLabel = d.source.useShortLabel
@@ -440,6 +444,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
               sectionNumber={sectionNumber}
               segments={segments}
               destination={viewDestination}
+              trailingFieldKeys={combineSingaporePermitNumber ? ['permit_no'] : undefined}
               isCollapsed={collapsed.has('추가정보')}
               onToggleCollapsed={() => toggleCollapsed('추가정보')}
               trailing={
@@ -452,8 +457,11 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                             caseId={caseRow.id}
                             caseRow={caseRow}
                             stepId={doc.stepId}
-                            label={doc.label}
+                            label={combineSingaporePermitNumber && doc.stepId === 'import-permit'
+                              ? '수입허가번호'
+                              : doc.label}
                             destination={activeDestToken}
+                            permitNumber={combineSingaporePermitNumber && doc.stepId === 'import-permit'}
                             onTakeoverDrag={onTakeoverDrag}
                           />
                         ))}
@@ -660,12 +668,14 @@ function mergeTiterReceivedDate(records: unknown, received: string): TiterRecord
   return list
 }
 
-function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destination, isCollapsed, onToggleCollapsed, trailing }: {
+function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destination, trailingFieldKeys, isCollapsed, onToggleCollapsed, trailing }: {
   caseId: string
   caseRow: CaseRow
   sectionNumber: string
   segments: ExtraSegment[]
   destination: string | null | undefined
+  /** trailing 커스텀 행에서 관리하지만 추가정보 전체 삭제·값 판정에는 포함할 data key. */
+  trailingFieldKeys?: string[]
   isCollapsed: boolean
   onToggleCollapsed: () => void
   /**
@@ -694,7 +704,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
 
   // 이 섹션이 차지하는 모든 데이터 키 — 그룹 항목까지 평탄화.
   const allKeys = (() => {
-    const keys: string[] = []
+    const keys: string[] = [...(trailingFieldKeys ?? [])]
     for (const seg of segments) {
       if (seg.type === 'flat') keys.push(seg.entry.key)
       // departure_date 는 그룹에 출발일로 노출만 하는 컬럼 필드(절차정보 '출국일') — 추가정보
@@ -704,7 +714,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
     return keys
   })()
   const hasAnyValue = allKeys.some((k) => {
-    const v = data[k]
+    const v = readEffectiveExtraValue(data, k, activeDest)
     return v !== null && v !== undefined && v !== ''
   })
 
@@ -1110,7 +1120,7 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel, activ
  * case.data.documents 배열에서 stepId='advance-notification' 만 필터해 표시.
  * portal 보호자가 올린 파일도 같은 자리에 보이고, 운영자가 추가 업로드 가능.
  */
-function DeliverableDocRow({ caseId, caseRow, stepId, label, destination, onTakeoverDrag }: {
+function DeliverableDocRow({ caseId, caseRow, stepId, label, destination, permitNumber = false, onTakeoverDrag }: {
   caseId: string
   caseRow: CaseRow
   /** case.data.documents 의 stepId — 고객앱 여정 스텝과 연결되는 통로. */
@@ -1119,6 +1129,8 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, destination, onTake
   label: string
   /** 활성 여행지 토큰 — 업로드 파일 여행지 태깅(다중 여행지 교차 누수 차단, 2026-08-01). */
   destination?: string | null
+  /** 싱가포르 수입 허가 행: 허가번호 편집과 자료 첨부를 같은 행에 표시. */
+  permitNumber?: boolean
   /** row 가 drag/drop 을 가로챘음을 부모(SimpleExtraSection) 에 알려 자기 ring 끄게 함.
    *  row 가 stopPropagation 하므로 부모 dragLeave/drop 이 안 와서 state 가 stuck 되는 걸 방지. */
   onTakeoverDrag?: () => void
@@ -1129,6 +1141,12 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, destination, onTake
   const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const rowRef = useRef<HTMLDivElement>(null)
+  const permitNoSpec = buildSpecForExtra(EXTRA_FIELD_DEFS.permit_no, false)
+  const permitNoValue = readEffectiveExtraValue(
+    (caseRow.data ?? {}) as Record<string, unknown>,
+    'permit_no',
+    destination,
+  )
 
   async function handleFile(file: File) {
     setError(null)
@@ -1220,8 +1238,13 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, destination, onTake
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
-      {/* 라벨 클릭으로 파일 선택. 드래그·Ctrl+V 도 지원. 올린 파일은 '첨부 파일' 행(메모 분리)에 표시. */}
-      <SectionLabel onClick={() => inputRef.current?.click()} title="클릭 · 드래그 · Ctrl+V 로 첨부">
+      {/* 다른 허가 행과 동일하게 라벨 클릭으로 파일 선택. 번호는 우측 값 영역에서 편집한다. */}
+      <SectionLabel
+        onClick={() => inputRef.current?.click()}
+        title={permitNumber
+          ? '클릭 · 드래그 · Ctrl+V 로 수입허가증 첨부'
+          : '클릭 · 드래그 · Ctrl+V 로 첨부'}
+      >
         {label}
       </SectionLabel>
       <div className="min-w-0 flex items-center flex-wrap gap-2">
@@ -1235,9 +1258,19 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, destination, onTake
             if (f) handleFile(f)
           }}
         />
+        {permitNumber && (
+          <div className="min-w-[12rem] max-w-full flex-1">
+            <EditableField
+              caseId={caseId}
+              spec={permitNoSpec}
+              rawValue={permitNoValue}
+              inline
+            />
+          </div>
+        )}
         {uploading ? (
           <span className="text-xs text-muted-foreground">업로드 중…</span>
-        ) : (
+        ) : !permitNumber ? (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
@@ -1245,7 +1278,7 @@ function DeliverableDocRow({ caseId, caseRow, stepId, label, destination, onTake
           >
             —
           </button>
-        )}
+        ) : null}
         {error && <span className="text-xs text-destructive">{error}</span>}
       </div>
     </div>

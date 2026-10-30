@@ -15,6 +15,7 @@ import { reportActionError } from './_report-error'
 import { randomUUID } from 'node:crypto'
 import { createClient } from '@petmove/auth/server'
 import {
+  buildCaseJourneyContext,
   clearLegacyReportStatusForStep,
   writeByDestValue,
   parseDestinations,
@@ -99,7 +100,11 @@ export async function uploadStepDocumentAdmin(formData: FormData): Promise<StepD
       typeof destRaw === 'string' && destRaw && caseTokens.includes(destRaw)
         ? destRaw
         : (caseTokens[0] ?? null)
-    const displayName = resolveStepAttachmentName(stepId, file.name, existingDocs)
+    const journeyContext = buildCaseJourneyContext(existing as CaseRow, attachDest)
+    const displayName = resolveStepAttachmentName(stepId, file.name, existingDocs, {
+      key: journeyContext.destinationKey,
+      token: journeyContext.destinationToken,
+    })
     const safeName = displayName.replace(/[^a-zA-Z0-9._-]/g, '_')
     const path = `${caseId}/${Date.now()}_${safeName}`
     const buffer = Buffer.from(await file.arrayBuffer())

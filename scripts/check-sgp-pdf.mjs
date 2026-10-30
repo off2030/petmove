@@ -14,7 +14,11 @@ const temp = await mkdtemp(path.join(cache, 'sgp-pdf-'))
 try {
   const runtime = path.join(temp, 'runtime.mjs')
   await build({
-    stdin: { contents: `export {fillPdf} from './lib/pdf-fill'`, resolveDir: admin, loader: 'ts' },
+    stdin: {
+      contents: `export {fillPdf} from './lib/pdf-fill'; export {flattenCaseForDestination} from '@petmove/domain'`,
+      resolveDir: admin,
+      loader: 'ts',
+    },
     outfile: runtime, bundle: true, platform: 'node', format: 'esm', tsconfig: path.join(admin, 'tsconfig.json'),
     external: ['pdf-lib', '@pdf-lib/fontkit', 'react'],
     plugins: [{ name: 'offline-only', setup(b) {
@@ -30,17 +34,20 @@ try {
       }))
     } }],
   })
-  const { fillPdf } = await import(pathToFileURL(runtime).href)
+  const { fillPdf, flattenCaseForDestination } = await import(pathToFileURL(runtime).href)
   process.chdir(admin)
   const specs = []
   for (const [species, sex] of [['dog','male'],['dog','female'],['dog','neutered_male'],['dog','spayed_female'],['cat','female']]) {
     const row = { id: 'offline', pet_name_en: 'TEST ANIMAL', microchip: '999000000000001', destination: '싱가포르', data: {
       species, sex, breed_en: 'TEST BREED', color_en: 'White', birth_date: '2020-07-09', vet_visit_date: '2026-10-28',
+      by_dest: { '싱가포르': { permit_no: 'SGP-IMPORT-2026-001' } },
       rabies_dates: [{date:'2026-04-29'}], general_vaccine_dates: [{date:'2026-04-29'}], rabies_titer_records: [{date:'2026-05-28',value:'1.99'}],
       external_parasite_dates: [{date:'2026-10-28'}], internal_parasite_dates: species === 'dog' ? [{date:'2026-10-28'}] : [],
     } }
     const before = JSON.stringify(row)
-    const result = await fillPdf('SGP', row, {includeSignature:false,includeVet:true})
+    const flattened = flattenCaseForDestination(row, '싱가포르')
+    assert.equal(flattened.data.permit_no, 'SGP-IMPORT-2026-001', 'Singapore permit number was not flattened')
+    const result = await fillPdf('SGP', flattened, {includeSignature:false,includeVet:true})
     assert(result.ok, result.error)
     assert.equal(JSON.stringify(row), before, 'PDF generation changed source records')
     const file = path.join(temp, `${species}-${sex}.pdf`)
@@ -60,7 +67,7 @@ for spec in s['specs']:
  d=pdf.open(spec['file']); assert len(d)==3
  assert not any(list(p.widgets() or []) for p in d)
  text='\n'.join(p.get_text() for p in d)
- for val in ['TEST ANIMAL','999000000000001','28/05/2026','1.99','28/10/2026','01042026']:
+ for val in ['SGP-IMPORT-2026-001','TEST ANIMAL','999000000000001','28/05/2026','1.99','28/10/2026','01042026']:
   assert val in text,(spec['file'],val)
  ingredient='Fipronil, (S)-methoprene' if spec['species']=='dog' else 'Fipronil'
  assert ingredient in text

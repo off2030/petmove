@@ -10,6 +10,7 @@
  */
 
 import { JOURNEY_STEP_CATALOG } from './catalog'
+import { resolveStepForDestination } from './destination-overrides'
 
 /**
  * journey step 이 아닌 필수 서류(required-docs)의 첨부 stepId(= doc.id) → 파일 라벨.
@@ -78,13 +79,18 @@ export function resolveAttachmentName(
  * 중복(_2) 판정은 stepId 가 아니라 **라벨 기준 전체 documents** 로 — 광견병백신 1차/2차
  * 처럼 서로 다른 step 이 같은 라벨('광견병백신')을 쓰면 보관함에서 이름이 충돌하므로,
  * 같은 라벨이 이미 있으면(어느 step 이든) 다음 번호를 붙인다.
+ * 목적지 컨텍스트가 있으면 해당 목적지의 attachmentLabel override 를 우선 적용한다.
  */
 export function resolveStepAttachmentName(
   stepId: string,
   originalFileName: string,
   existingDocs: Array<{ stepId?: string; name?: string }>,
+  destination?: { key: string | null; token: string | null },
 ): string {
-  const step = JOURNEY_STEP_CATALOG.find((s) => s.id === stepId)
+  const baseStep = JOURNEY_STEP_CATALOG.find((s) => s.id === stepId)
+  const step = baseStep
+    ? resolveStepForDestination(baseStep, destination?.key, destination?.token)
+    : undefined
   // journey step 라벨 우선, 없으면 필수 서류 첨부 라벨(별지25 등).
   const label = step?.attachmentLabel ?? REQUIRED_DOC_ATTACH_LABELS[stepId]
   if (!label) return originalFileName

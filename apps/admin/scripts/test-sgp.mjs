@@ -120,6 +120,7 @@ const c = {
   data: {
     species: 'dog', breed_en: 'Maltese', color_en: 'White',
     sex: 'neutered_male', weight: '4.2', birth_date: '2020-03-15',
+    permit_no: 'SGP-IMPORT-2026-001',
     rabies_dates: [{ date: '2025-09-14', valid_until: '2026-09-14' }],
     rabies_titer_records: [{ date: '2025-10-20', value: '16.8', lab: 'krsl' }],
     general_vaccine_dates: [{ date: '2025-08-10', valid_until: '2026-08-10' }],
@@ -180,6 +181,7 @@ if (missing.length) console.warn('  ⚠ pdfForm.getField failed for:', missing)
 
 console.log('\nkey values:')
 const checks = [
+  ['ImportPermit', 'text_1vqxe'],
   ['Species', 'text_3tcic'], ['Breed', 'text_4okuj'], ['Name', 'text_5wcle'],
   ['DOB', 'text_6vatu'], ['Colour', 'text_7nvqf'], ['Microchip', 'text_9qhaf'],
   ['SecIII Vet', 'text_11qfuf'], ['Country', 'text_12gljs'],
