@@ -42,6 +42,15 @@ try {
   await cli('finish','--id','fixture','--status','succeeded')
   assert.equal(records.at(-1).runs[0].state,'succeeded')
   await assert.rejects(cli('finish','--id','fixture'))
+  const operations=path.join(temp,'automations','automation');await fs.mkdir(operations,{recursive:true})
+  await fs.writeFile(path.join(operations,'automation.toml'),'id = "automation"\nname = "펫무브 실무 검증"\nstatus = "ACTIVE"\nrrule = "FREQ=DAILY;BYHOUR=10;BYMINUTE=30"\n')
+  await cli('start','--id','automation')
+  const before=records.length
+  await assert.rejects(cli('finish','--id','automation','--status','succeeded'),/review-dir/)
+  assert.equal(records.length,before,'Failed coverage must not publish a success')
+  assert.equal(JSON.parse(await fs.readFile(path.join(state,'run-automation.json'),'utf8')).state,'running')
+  await cli('finish','--id','automation','--status','needs_attention','--summary','누락 검증 미완료')
+  assert.equal(records.at(-1).runs[0].state,'needs_attention')
   console.log('자동화 보고: 시작·중복 차단·종료·통신 실패 보관·재전송 검증 통과 (메모리 서버, 운영 쓰기 없음)')
 } finally {
   server.close()

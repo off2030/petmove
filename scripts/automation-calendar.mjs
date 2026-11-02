@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-/** 예약 메타데이터·실행 기록만 전송한다. 고객/동물/검사/신고 데이터는 읽지 않는다. */
+/** 예약 메타데이터·실행 기록만 전송한다. 실무 성공 종료 때 비공개 보고를 로컬 검증하며 고객 자료는 전송하지 않는다. */
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { verifyCompletion } from "./daily-review.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const HOME = process.env.CODEX_HOME ?? path.join(os.homedir(), ".codex");
 const STATE = path.join(HOME, "automation-calendar");
@@ -275,6 +276,11 @@ async function main() {
     if (!fs.existsSync(file))
       throw new Error("시작 기록이 없어 실행 시각을 추정하지 않습니다.");
     const run = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (id === "automation" && state === "succeeded") {
+      const reviewDir = option("review-dir");
+      if (!reviewDir) throw new Error("실무 누락 검증이 필요합니다. --review-dir로 검증된 실행 폴더를 지정하세요.");
+      verifyCompletion(run, reviewDir);
+    }
     Object.assign(run, {
       state,
       ended_at: new Date().toISOString(),

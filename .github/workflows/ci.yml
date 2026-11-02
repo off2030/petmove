@@ -71,6 +71,9 @@ jobs:
       - name: Check automation reporting and offline retry
         run: node scripts/check-automation-reporter.mjs
 
+      - name: Check daily review coverage and appointment warnings
+        run: node scripts/check-daily-review.mjs
+
       - name: Typecheck packages/auth
         run: pnpm --filter @petmove/auth exec tsc --noEmit -p .
 

@@ -12,7 +12,7 @@ Use the existing PETMOVE Work tab in the user's 펫무브 Chrome profile. The cu
 - 작성 중 애매하거나 확인되지 않은 항목이 있으면 가능한 내용까지 임시저장하고 해당 항목을 사용자에게 묻는다. 자료와 입력 기준이 확실하고 요청된 신청에 필요한 항목이 모두 갖춰졌으면 신청까지 진행한다. 결제는 별도 권한 범위를 따른다.
 - KRSL 검사 진행 안내 수신 대상은 수의사로 선택한다.
 - KRSL 시료 접수는 택배, 결과서는 병원 주소로 우편 수령을 기본으로 한다. 수령 병원·수의사·주소·연락처를 확인하고 출국 국가를 요구하는 배송메모에 해당 국가를 적는다. 사용자가 별도 방식을 지정하면 그 지시를 따른다. 저장된 리스트의 결제 전 등록과 결제 후 최종 접수 완료를 구분하고, 별도 결제 권한 없이 결제하지 않는다.
-- 2026-10-27 최신 사용자 지시에 따라 기관 초안 저장·신청 제출·내역 확인 후에도 펫무브워크의 검사/진행 상태를 미리 바꾸지 않는다. 결제와 그 이후 검사 상태 변경은 사용자가 직접 한다. 기관 저장 결과·신청번호·결제 여부를 보고하고, 별도의 명시적 상태 변경 지시가 없으면 현재 워크 상태를 유지한다. 상세 권한은 [스킬 본문](../SKILL.md#신청-확인과-검사-상태-변경의-구분)을 따른다.
+- 공통 실무 권한에 따라 기관 초안 저장·신청 제출·내역 확인 후에도 펫무브워크의 검사/진행 상태를 미리 바꾸지 않는다. 결제와 그 이후 검사 상태 변경은 사용자가 직접 한다. 기관 저장 결과·신청번호·결제 여부를 보고하고, 별도의 명시적 상태 변경 지시가 없으면 현재 워크 상태를 유지한다. 상세 권한은 [실무 운영 기준](../../../../docs/work-management/operations.md#권한)을 따른다.
 
 ### 입력 누락 방지와 저장 후 대조
 
@@ -48,5 +48,3 @@ In the verified run, clicking **신청** created a real browser confirm dialog e
 3. If the native confirm remains and the API cannot process it, explain that browser dialog control failed, not that the server is slow. Ask the user to click the visible confirmation once. Do not loop through the same failing action or bypass a Windows URL-policy stop.
 4. Keep the unfinished application tab with `markHandoff()` before yielding. After user confirmation, inspect the saved provider list and open the matching guardian/animal row. Recheck animal identifiers, birth date, breed, sex, color, collection date, selected vaccination/date/manufacturer/immunity, guardian contact/address, destination, veterinarian and photos.
 5. Record the actual saved request number, application status and payment status. Report **신청·미납** distinctly from receipt/testing or payment completion. A draft's filled values, a click attempt, an empty `reqNo` URL or an alert alone is not completion proof.
-
-Verified example: 복실 / 이헌준 was saved as request `202610020016`, with two body photos and 신청·미납 status, only after the human clicked the remaining confirm dialog. The numeric request/tab/browser IDs are historical evidence, never values to reuse for a new application.

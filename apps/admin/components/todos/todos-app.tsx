@@ -203,6 +203,20 @@ function exportDocDeparture(row: CaseRow): string {
 function exportDocVetVisit(row: CaseRow): string {
   return getVetVisitDate(row, resolveTabActiveDest(row, EXPORT_DOC_DEST_KEY)) ?? ''
 }
+/** 한국 날짜 기준 출국 14일 전부터 당일까지 내원 미예약 경고. */
+function isExportDocBookingRequired(row: CaseRow, today?: string): boolean {
+  if (exportDocVetVisit(row).trim()) return false
+  const departure = exportDocDeparture(row)
+  const day = today ?? new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date())
+  const valid = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value)
+    && Number.isFinite(Date.parse(value))
+    && new Date(value).toISOString().slice(0, 10) === value
+  if (!valid(departure) || !valid(day)) return false
+  const days = (Date.parse(departure) - Date.parse(day)) / 86400000
+  return days >= 0 && days <= 14
+}
 /** 서류 탭 내원일이 오늘 기준 7일 이내(경과 포함) — 임박·경과 신호. */
 function isExportDocVisitImminent(row: CaseRow): boolean {
   const visit = exportDocVetVisit(row)
@@ -459,6 +473,17 @@ const INSPECTION_COLUMNS: TodoColumn[] = [
 const EXPORT_DOC_COL_W = BASE_COL_W + 18
 const EXPORT_DOC_COLUMNS: TodoColumn[] = [
   {
+    key: 'visit_booking_notice',
+    label: '내원예약',
+    storage: 'data',
+    type: 'custom',
+    width: EXPORT_DOC_COL_W,
+    readonly: true,
+    render: (row) => isExportDocBookingRequired(row)
+      ? <span className="text-pmw-warning font-medium" role="status">예약 필요</span>
+      : <span className="text-pmw-text-tertiary">{exportDocVetVisit(row) ? '예약됨' : '—'}</span>,
+  },
+  {
     key: 'vet_visit_date',
     label: '내원일',
     storage: 'data',
@@ -484,6 +509,7 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
     readonly: true,
     // 활성 여행지 출국일 (by_dest 우선) 표시.
     resolveValue: (row) => exportDocDeparture(row),
+    cellClass: (row) => isExportDocBookingRequired(row) ? 'text-pmw-warning' : '',
   },
   {
     key: 'vet_available_date',
