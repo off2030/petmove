@@ -787,17 +787,6 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
         >
           추가정보
         </button>
-        {country && (
-          <button
-            type="button"
-            onClick={() => attachTriggerRef.current?.()}
-            disabled={extracting}
-            title="이미지·PDF 선택, 드래그 또는 이 영역에 마우스를 두고 Ctrl+V"
-            className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
-          >
-            AI 추출
-          </button>
-        )}
         {hasAnyValue && showDelete && (
           <button
             type="button"
