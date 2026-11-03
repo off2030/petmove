@@ -1288,6 +1288,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // (Certificate number 는 후처리 수기 입력 — EQC No. 라벨이 일본 전용이라 공유하지 않음.)
     // 규정 상세·출처는 procedure-checks/tw.ts 헤더 주석.
     keywords: ['대만', 'taiwan'],
+    extraSection: 'taiwan',
     // 신고 탭 수입 = 수입 허가(APHIA e-permit) 신청 카드.
     report: { importStep: 'import-permit' },
     rabies: {

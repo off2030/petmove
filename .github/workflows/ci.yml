@@ -56,6 +56,9 @@ jobs:
       - name: Check Taiwan APHIA certificate output
         run: node scripts/check-tw-pdf.mjs
 
+      - name: Check additional information extraction
+        run: node scripts/check-extra-extraction.mjs
+
       - name: Typecheck portal
         run: pnpm --filter @petmove/portal exec tsc --noEmit
 
