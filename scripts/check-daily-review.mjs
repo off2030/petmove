@@ -5,6 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {POLICY_VERSION,collectObligations,reconcile,validateReview,kstDay,dayDistance,digest} from './lib/daily-review-policy.mjs';
 import {loadReviewSelectors} from './lib/daily-review-source.mjs';
 import {ROOT,historyTasks,verifyCompletion,privatePath} from './daily-review.mjs';
+import {sourceAreas,workArea} from './lib/daily-review-areas.mjs';
+import {acquireLock,releaseLock} from './review-lock.mjs';
 
 const now='2026-11-02T03:00:00Z',org={id:'clinic',name:'로잔동물의료센터'};
 const ident={orgId:org.id,caseId:'case-a',pet:'테스트 동물',guardian:'테스트 보호자',destination:'일본'};
@@ -60,10 +62,43 @@ assert.throws(()=>verifyCompletion({id:'no-proof',started_at:now},'work/naver-in
 const tasks=historyTasks({pending:[{caseId:'case-a',reason:'회신 대기'},{caseId:'other',orgId:'other-org',reason:'범위 밖'}],manualNaccsContinuation:{remaining:[{caseId:'case-a',next:'중단 지시'}]}},[{id:'case-a',pet_name:'테스트',customer_name:'보호자'}],org);
 assert.equal(tasks.length,2);assert.equal(tasks.filter(t=>t.interrupted).length,1);
 
+// Area partition must cover the full scan, with ambiguous legacy commands reported
+// by every area until someone classifies them; never silently discard a warning.
+const partition=base();
+partition.inspections=[{...ident,rowId:'late',lab:'KRSL',date:'2026-10-20',status:'waiting'}];
+partition.reports=[{...ident,departure:'2026-12-21',importStatus:'not_started',exportStatus:'na',deadline:'2026-11-05'},{...ident,destination:'대만',departure:'2026-12-21',importStatus:'not_started',exportStatus:'na',deadline:'2026-11-05'}];
+partition.documents=[{...ident,departure:'2026-11-07',vetVisit:'',status:'not_started'}];
+partition.tasks=['inspection','japan','documents','unassigned'].map(area=>({...ident,key:'task-'+area,workArea:area,nextAction:'가상 미완료 지시',interrupted:true}));
+const union=new Set();
+for(const scope of ['inspection','japan','documents']) {
+  const s={...partition,scope},required=collectObligations(s);
+  for(const i of required){assert.ok(i.workArea===scope||i.workArea==='unassigned');union.add(i.id);}
+  assert.ok(required.some(i=>i.workArea==='unassigned'&&i.mustReport));
+  const scoped={reviews:Object.fromEntries(sourceAreas(scope).map(k=>[k,{complete:true,checkedAt:now,evidence:'담당 소스 원본 대조'}])),items:required.map(i=>({id:i.id,disposition:'reported',evidence:'가상 근거',nextAction:'남은 행동'}))};
+  const check=decisions=>validateReview({initial:s,final:s,decisions,historyHash:'s',verifiedHistoryHash:'s',now});
+  assert.equal(check(scoped).ok,true);
+  const missing=structuredClone(scoped);missing.items.shift();assert.equal(check(missing).ok,false);
+  const source=structuredClone(scoped);delete source.reviews[sourceAreas(scope)[0]];assert.equal(check(source).ok,false);
+  assert.equal(validateReview({initial:s,final:{...s,scope:'all'},decisions:scoped,historyHash:'s',verifiedHistoryHash:'s',now}).ok,false);
+}
+assert.deepEqual([...union].sort(),collectObligations(partition).map(i=>i.id).sort());
+assert.equal(workArea({destination:'일본',task:'검사 결과 확인'}),'inspection');
+assert.equal(workArea({task:'NACCS 수입검사 수정'}),'japan');
+assert.equal(workArea({task:'내원 예약 안내'}),'documents');
+assert.equal(workArea({task:'확인 필요'}),'unassigned');
+assert.equal(workArea({workArea:'documents',task:'일본 자료 보관'}),'documents');
+
 // Compile the live UI selectors; exercise destination scoping and repeated tests.
 fs.mkdirSync(path.join(ROOT,'work/naver-inquiries'),{recursive:true});
 const tmp=fs.mkdtempSync(path.join(ROOT,'work/naver-inquiries/review-test-private-'));
 try {
+  const locks=path.join(tmp,'locks');
+  assert.equal(acquireLock(locks,'history','run-a').acquired,true);
+  assert.equal(acquireLock(locks,'history','run-b').acquired,false);
+  assert.throws(()=>releaseLock(locks,'history','run-b'));
+  assert.equal(acquireLock(locks,'case:synthetic-case','run-b').acquired,true);
+  releaseLock(locks,'case:synthetic-case','run-b');releaseLock(locks,'history','run-a');
+  assert.equal(acquireLock(locks,'history','run-b').acquired,true);releaseLock(locks,'history','run-b');fs.rmdirSync(locks);
   const {selectors:u}=await loadReviewSelectors(ROOT,tmp);
   const row={id:'synthetic-case',org_id:'clinic',destination:'일본, 일본 (2차)',departure_date:'2026-10-22',data:{species:'dog',by_dest:{'일본':{departure_date:'2026-10-22',entry_date:'2026-10-22',return_date:'2026-11-16'},'일본 (2차)':{departure_date:'2026-12-21',entry_date:'2026-12-21',vet_visit_date:'2026-11-07',export_doc_status:'not_started'}},rabies_titer_records:[{date:'2026-10-20',lab:'krsl'},{date:'2026-10-28',lab:'apqa_seoul'}],inspection_status_titer_0:'done',inspection_status_titer_1:'waiting'}};
   assert.equal(u.buildInspectionRows([row],[], 'krsl',[]).length,2);
@@ -103,6 +138,17 @@ try {
   fixtureDecisions.items[0].needsUserAction=true;write('decisions.private.json',fixtureDecisions);
   assert.equal(cli('render').status,0);assert.equal(cli('complete').status,0);
   assert.throws(()=>verifyCompletion(run,tmp));
+  // Each scheduled role must publish and read back its own coverage slot.
+  for(const scope of ['inspection','japan','documents']) {
+    const s={...fixture,scope,tasks:[{...ident,workArea:scope,key:'scoped-interruption',interrupted:true,nextAction:'담당 중단 사유'}]};
+    const ds={reviews:Object.fromEntries(sourceAreas(scope).map(k=>[k,{complete:true,checkedAt:stamp,evidence:'담당 소스 근거'}])),items:collectObligations(s).map(i=>({id:i.id,disposition:'reported',nextAction:'보고',evidence:'근거'}))};
+    write('initial.private.json',s);write('final.private.json',s);write('decisions.private.json',ds);cli('render');
+    const areaCoverage=JSON.parse(fs.readFileSync(path.join(tmp,'coverage.private.json'),'utf8'));
+    const shared={dailyReviewCoverage:{runId:'old-full-run',byArea:{[scope]:areaCoverage,other:{runId:'preserved'}}}};
+    write('history-uploaded.private.json',shared);write('history-verified.private.json',shared);cli('complete');
+    assert.equal(verifyCompletion(run,tmp,scope).ok,true);
+    assert.throws(()=>verifyCompletion(run,tmp,'all'));
+  }
 } finally {
   // Only files created by this test in the verified private temp directory.
   for(const f of fs.readdirSync(tmp))fs.unlinkSync(path.join(tmp,f));fs.rmdirSync(tmp);

@@ -51,6 +51,15 @@ try {
   assert.equal(JSON.parse(await fs.readFile(path.join(state,'run-automation.json'),'utf8')).state,'running')
   await cli('finish','--id','automation','--status','needs_attention','--summary','누락 검증 미완료')
   assert.equal(records.at(-1).runs[0].state,'needs_attention')
+  for(const [key,name] of [['inspection','펫무브 검사 정기 점검'],['japan','펫무브 일본 수입신고 정기 점검'],['documents','펫무브 서류 및 기타 정기 점검']]) {
+    const roleDir=path.join(temp,'automations',key);await fs.mkdir(roleDir,{recursive:true})
+    await fs.writeFile(path.join(roleDir,'automation.toml'),`id = "${key}"\nname = "${name}"\nstatus = "ACTIVE"\nrrule = "FREQ=DAILY;BYHOUR=10;BYMINUTE=30"\n`)
+    await cli('start','--id',key)
+    const beforeRole=records.length
+    await assert.rejects(cli('finish','--id',key,'--status','succeeded'),/review-dir/)
+    assert.equal(records.length,beforeRole)
+    await cli('finish','--id',key,'--status','needs_attention','--summary','담당 검증 미완료')
+  }
   // Match Actions: checkout only, no node_modules or operations verifier.
   const checkout=path.join(temp,'dependency-free-checkout')
   await fs.mkdir(path.join(checkout,'scripts'),{recursive:true})

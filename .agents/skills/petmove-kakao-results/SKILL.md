@@ -5,6 +5,8 @@ description: Work 검사결과지의 고객 안내 할 일을 관리·보고하�
 
 # 검사결과 고객 안내
 
+[검사 담당](../../../docs/work-management/inspection.md)의 결과 안내 절차다. 일반 서류 보관·일본 검역소 회신과 구분하며, 원본의 보관 위치는 서류 담당과 공유해 중복 발송을 막는다.
+
 [실무 운영 기준](../../../docs/work-management/operations.md), [공유 이력](../../../docs/laptop-daily-check-handoff.md)을 적용한다. 수신 파일 보관/정보 입력은 [자료 스킬](../petmove-kakao-documents/SKILL.md), 기관 신청 대조는 [검사 스킬](../petmove-inspection-check/SKILL.md)이다.
 
 ## 권한과 대상

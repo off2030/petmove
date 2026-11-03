@@ -1,11 +1,13 @@
 ---
 name: petmove-inspection-check
-description: 펫무브워크의 검사 신청을 실제 기관 내역과 대조하거나, 명시적으로 지시한 동물의 검사 신청서를 작성·제출·저장 재확인한다. 검사 신청 확인·기관 대조·특정 검사 신청에 사용한다.
+description: 펫무브워크의 검사 의뢰·기관 접수 대조·진행 상황·결과 원본 확인을 처리한다. 요청한 동물의 검사 신청·기관 진행 확인·검사 회차 완료 대조에 사용하며 결과 고객 안내와 검사비는 해당 전문 스킬로 연결한다.
 ---
 
-# 검사기관 신청 대조·신청
+# 검사
 
-[실무 운영 기준](../../../docs/work-management/operations.md)의 조직·필드 해석·권한·중단 인계를 적용한다. 정기 세 탭 전체 점검은 [정기 점검 스킬](../petmove-daily-review/SKILL.md)과 [세 탭 검증 절차](references/daily-three-tabs.md)를 사용한다.
+[검사 담당 범위](../../../docs/work-management/inspection.md)와 [실무 운영 기준](../../../docs/work-management/operations.md)의 조직·필드 해석·권한·중단 인계를 적용한다. 정기 세 탭 전체 점검은 [정기 점검 스킬](../petmove-daily-review/SKILL.md)과 [세 탭 검증 절차](../petmove-daily-review/references/daily-three-tabs.md)를 사용한다.
+
+진행 확인은 현재 회차의 Work 상태와 기관 실제 접수·진행·결과 근거를 대조한다. 결과지는 공통 완료 위임 기준을 적용하고, 고객 안내는 [결과 안내](../petmove-kakao-results/SKILL.md), KSVDL 청구는 [검사비](../petmove-ksvdl-payment/SKILL.md)를 필요한 단계에서만 읽는다. 일본 신고나 일반 서류 준비를 검사 진행 확인에 섞지 않는다.
 
 ## 요청과 자료
 

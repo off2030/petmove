@@ -3,9 +3,9 @@ name: petmove-japan-naccs
 description: 펫무브워크의 현재 여행 자료로 일본 NACCS 수입·수출 신고·수정, 검역소 회신, Form AC 사전 검토본 준비·발송을 진행한다.
 ---
 
-# 일본 신고·검역소 업무
+# 일본 수입신고 · 수입·수출
 
-[실무 운영 기준](../../../docs/work-management/operations.md)의 대상·권한·필드 해석·중단 인계를 적용한다. 정기 전체 점검은 [정기 점검 스킬](../petmove-daily-review/SKILL.md)로 시작한다. 데이터·PDF 생성은 직접 도구, NACCS와 이메일 작성·첨부·발송·사용자 검토는 로그인된 **Chrome**을 사용한다.
+[일본 담당 범위](../../../docs/work-management/japan.md)와 [실무 운영 기준](../../../docs/work-management/operations.md)의 대상·권한·필드 해석·중단 인계를 적용한다. 담당 이름은 일본 수입신고이며 수출 신고·검역소 메일·일본 제출용 Form AC도 포함한다. 검사기관 의뢰·진행·결과 확인은 검사 담당, 일반 자료 보관·내원 안내는 서류 및 기타와 연결한다. 정기 전체 점검은 [정기 점검 스킬](../petmove-daily-review/SKILL.md)로 시작한다. 데이터·PDF 생성은 직접 도구, NACCS와 이메일 작성·첨부·발송·사용자 검토는 로그인된 **Chrome**을 사용한다.
 
 ## 작업 선택
 

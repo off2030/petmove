@@ -5,6 +5,8 @@ description: 카카오톡 수신 서류·사진을 대상과 대조해 Work에 �
 
 # 카카오 수신 자료 보관·정보 입력
 
+기본 담당은 [서류 및 기타](../../../docs/work-management/documents.md)다. 검사·일본 신고 담당도 지정 자료를 수신·보관할 때 이 전문 절차를 사용할 수 있다. 보관 후 기관 제출·검사 판정은 해당 담당에 원본 위치와 근거를 연결하며 같은 자료를 동시에 처리하지 않는다.
+
 [실무 운영 기준](../../../docs/work-management/operations.md)의 조직·권한·현재 필드 해석·중단 인계를 적용한다. [다운로드·보관·입력 절차](references/workflow.md)와 접속 전 [Chrome 연결](../petmove-inspection-check/references/chrome-access.md)을 읽는다. Work의 새 결과를 고객에게 안내하는 업무는 [결과 안내 스킬](../petmove-kakao-results/SKILL.md)을 사용한다.
 
 ## 범위

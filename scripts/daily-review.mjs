@@ -9,6 +9,7 @@ import {randomUUID} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {loadReviewSelectors} from './lib/daily-review-source.mjs';
 import {POLICY_VERSION,kstDay,collectObligations,reconcile,validateReview,digest} from './lib/daily-review-policy.mjs';
+import {reviewScope,sourceAreas,workArea,coverageFor} from './lib/daily-review-areas.mjs';
 export const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
 const save=(p,v)=>fs.writeFileSync(p,JSON.stringify(v,null,2)+'\n');
@@ -36,35 +37,36 @@ function dbClient(){
 const canonical=x=>Array.isArray(x)?x.map(canonical):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,canonical(x[k])])):x;
 export function historyTasks(history,cases,org) {
   const tasks=[], map=new Map(cases.map(c=>[c.id,c]));
-  const add=(x,key,interrupted=false)=>{
+  const add=(x,key,interrupted=false,area=workArea(x))=>{
     const ids=x.caseIds??[x.caseId??x.evidence?.caseId].filter(Boolean);
     const declared=x.orgId??x.organizationId;
     if(declared&&declared!==org.id)return;
     if(!ids.length) {
       // Unidentified legacy work cannot be silently dismissed as another org.
-      if(!declared||declared===org.id)tasks.push({orgId:org.id,key,caseId:null,pet:x.pet??x.animal??'',guardian:x.guardian??'',nextAction:'대상 조직·케이스 식별 필요: '+(x.next??x.task??x.reason??''),interrupted:true});
+      if(!declared||declared===org.id)tasks.push({orgId:org.id,key,workArea:area,caseId:null,pet:x.pet??x.animal??'',guardian:x.guardian??'',nextAction:'대상 조직·케이스 식별 필요: '+(x.next??x.task??x.reason??''),interrupted:true});
       return;
     }
     for(const id of ids) {
-      const c=map.get(id);if(!c){if(declared===org.id)tasks.push({orgId:org.id,key:key+':'+id,caseId:null,pet:x.pet??'',nextAction:'공유 이력의 로잔 대상이 현재 비삭제 케이스에 없음. 삭제·다른 여행 여부 확인',interrupted:true});continue;}
-      tasks.push({orgId:org.id,key:key+':'+id,caseId:id,pet:c.pet_name,guardian:c.customer_name,destination:x.destination??null,nextAction:x.next??x.nextAction??x.task??x.reason??x.remaining??'미완료 할 일의 다음 행동 확인',interrupted});
+      const c=map.get(id);if(!c){if(declared===org.id)tasks.push({orgId:org.id,key:key+':'+id,workArea:area,caseId:null,pet:x.pet??'',nextAction:'공유 이력의 로잔 대상이 현재 비삭제 케이스에 없음. 삭제·다른 여행 여부 확인',interrupted:true});continue;}
+      tasks.push({orgId:org.id,key:key+':'+id,workArea:area,caseId:id,pet:c.pet_name,guardian:c.customer_name,destination:x.destination??null,nextAction:x.nextAction??x.next??x.task??x.reason??x.remaining??'미완료 할 일의 다음 행동 확인',interrupted});
     }
   };
   for(const [i,x] of (history.pending??[]).entries())add(x,'pending:'+(x.key??x.messageId??x.caseId??i));
-  for(const [i,x] of (history.manualNaccsContinuation?.remaining??[]).entries())add(x,'manual-naccs:'+(x.caseId??i),true);
+  for(const [i,x] of (history.manualNaccsContinuation?.remaining??[]).entries())add(x,'manual-naccs:'+(x.caseId??i),true,'japan');
   // Canonical place for new interrupted commands, including non-NACCS workflows.
   for(const x of history.delegatedTasks??[])if(!x.resolvedAt&&!x.cancelledAt)add(x,'delegated:'+x.id,true);
   const queue=history.kakaoResultNoticeQueue;
-  if(queue?.organization?.id===org.id)for(const x of queue.tasks??[])if(!x.resolvedAt&&!x.cancelledAt)add({...x,orgId:org.id,nextAction:x.remainingAction??x.waitingFor??'결과 안내 남은 확인'},'result-notice:'+x.taskId);
+  if(queue?.organization?.id===org.id)for(const x of queue.tasks??[])if(!x.resolvedAt&&!x.cancelledAt)add({...x,orgId:org.id,nextAction:x.remainingAction??x.waitingFor??'결과 안내 남은 확인'},'result-notice:'+x.taskId,false,'inspection');
   const booking=history.visitBookingNoticeQueue;
-  if(booking?.organization?.id===org.id)for(const x of booking.tasks??[])if(!x.resolvedAt&&!x.cancelledAt)add({...x,orgId:org.id,nextAction:x.remainingAction??'내원 예약 안내 문구 확인·발송 또는 예약 회신 대기'},'visit-booking:'+x.taskId);
+  if(booking?.organization?.id===org.id)for(const x of booking.tasks??[])if(!x.resolvedAt&&!x.cancelledAt)add({...x,orgId:org.id,nextAction:x.remainingAction??'내원 예약 안내 문구 확인·발송 또는 예약 회신 대기'},'visit-booking:'+x.taskId,false,'documents');
   return tasks;
 }
 export function historyFindings(history,cases,org) {
   const ids=new Set(cases.map(c=>c.id));
-  return (history.attachmentReviewFindings??[]).filter(x=>!x.resolvedAt&&!x.cancelledAt&&x.orgId===org.id).map((x,i)=>({orgId:org.id,caseId:ids.has(x.caseId)?x.caseId:null,key:'attachment:'+(x.fingerprint??i),pet:x.pet??'',guardian:x.guardian??'',destination:x.destination??null,reason:[x.finding,x.remainingAction].filter(Boolean).join('; ')}));
+  return (history.attachmentReviewFindings??[]).filter(x=>!x.resolvedAt&&!x.cancelledAt&&x.orgId===org.id).map((x,i)=>({orgId:org.id,workArea:workArea(x),caseId:ids.has(x.caseId)?x.caseId:null,key:'attachment:'+(x.fingerprint??i),pet:x.pet??'',guardian:x.guardian??'',destination:x.destination??null,reason:[x.finding,x.remainingAction].filter(Boolean).join('; ')}));
 }
-export async function scan(history,dir,runId) {
+export async function scan(history,dir,runId,scope='all') {
+  reviewScope(scope);
   process.env.TZ='Asia/Seoul';
   if(history.account!=='lvmcfile@gmail.com')throw Error('Shared history account mismatch');
   const db=dbClient();
@@ -95,7 +97,7 @@ export async function scan(history,dir,runId) {
   const activeReport=c=>u.parseDestinations(c.destination).find(d=>d===c.data?.import_report_active_dest)??u.parseDestinations(c.destination)[0]??null;
   const makeReport=(c,dest)=>{
     const selected={...c,data:{...c.data,import_report_active_dest:dest}};
-    return {...identity(c),destination:dest,departure:u.importReportDeparture(selected),return:u.importReportReturnDate(selected),importStatus:u.reportSlotStatusFor(c,dest,'import'),exportStatus:u.exportSlotApplies(c,dest)?u.reportSlotStatusFor(c,dest,'export'):'na',deadline:u.reportDeadline(selected),excluded:excluded.has(c.id)};
+    return {...identity(c),workArea:u.destinationCountry(dest??'')==='일본'?'japan':'documents',destination:dest,departure:u.importReportDeparture(selected),return:u.importReportReturnDate(selected),importStatus:u.reportSlotStatusFor(c,dest,'import'),exportStatus:u.exportSlotApplies(c,dest)?u.reportSlotStatusFor(c,dest,'export'):'na',deadline:u.reportDeadline(selected),excluded:excluded.has(c.id)};
   };
   // UI active rows for count parity + every scheduled reporting destination for coverage.
   const reports=reportCases.flatMap(c=>{
@@ -110,13 +112,14 @@ export async function scan(history,dir,runId) {
       return {...identity(c),destination,departure:u.exportDocDeparture(selected),vetVisit:u.exportDocVetVisit(selected),available:u.exportDocVetAvailable(selected),status:u.exportDocStatus(selected),memo:u.exportDocMemo(selected),outOfWindow:u.isExportDocVisitOutOfWindow(selected),bookingRequired:u.isExportDocBookingRequired(selected),excluded:excluded.has(c.id)};
     });
   });
-  return {policyVersion:POLICY_VERSION,runId,checkedAt:new Date().toISOString(),today:kstDay(),organization,allPagesRead:true,exactCount:count,fetchedCount:cases.length,caseIds:cases.map(c=>c.id),tabRowCounts:{inspection:inspections.length,report:reportRows.length,document:docCases.length},sourceHashes,inspections,reports,documents,tasks:historyTasks(history,cases,organization),findings:historyFindings(history,cases,organization),priorReports:history.dailyReviewCoverage?.reportedItems??{}};
+  return {policyVersion:POLICY_VERSION,scope,runId,checkedAt:new Date().toISOString(),today:kstDay(),organization,allPagesRead:true,exactCount:count,fetchedCount:cases.length,caseIds:cases.map(c=>c.id),tabRowCounts:{inspection:inspections.length,report:reportRows.length,document:docCases.length},sourceHashes,inspections,reports,documents,tasks:historyTasks(history,cases,organization),findings:historyFindings(history,cases,organization),priorReports:coverageFor(history,scope)?.reportedItems??{}};
 }
-export function verifyCompletion(run,dirValue) {
+export function verifyCompletion(run,dirValue,expectedScope='all') {
   const dir=privatePath(dirValue),proof=read(path.join(dir,'completion.private.json'));
   const started=Date.parse(run.started_at),created=Date.parse(proof.createdAt),now=Date.now();
   if(!Number.isFinite(started)||!Number.isFinite(created)||created<started||created>now||proof.runId!==run.id||proof.today!==kstDay())throw Error('Review proof is not for this active run');
   const initial=read(path.join(dir,'initial.private.json')),final=read(path.join(dir,'final.private.json')),decisions=read(path.join(dir,'decisions.private.json'));
+  if((initial.scope??'all')!==reviewScope(expectedScope))throw Error('Review scope differs from this automation');
   if(initial.runId!==run.id||Date.parse(initial.checkedAt)<started)throw Error('Review snapshot predates this active run');
   const history=fs.readFileSync(path.join(dir,'history-uploaded.private.json'),'utf8'),verified=fs.readFileSync(path.join(dir,'history-verified.private.json'),'utf8');
   const result=validateReview({initial,final,decisions,historyHash:digest(history),verifiedHistoryHash:digest(verified)});
@@ -124,7 +127,8 @@ export function verifyCompletion(run,dirValue) {
   if(proof.inputHash!==digest({initial,final,decisions,historyHash:digest(history)}))throw Error('Review inputs changed after validation');
   if(fs.readFileSync(path.join(dir,'report.private.md'),'utf8')!==result.report)throw Error('Report differs from validated mandatory report');
   const historyJson=JSON.parse(verified);
-  if(historyJson.dailyReviewCoverage?.runId!==run.id||historyJson.dailyReviewCoverage?.reportHash!==digest(result.report))throw Error('Shared history does not contain this report coverage');
+  const stored=coverageFor(historyJson,expectedScope);
+  if(stored?.runId!==run.id||stored?.reportHash!==digest(result.report))throw Error('Shared history does not contain this report coverage');
   return {ok:true,required:result.required.length};
 }
 async function main(){
@@ -136,17 +140,19 @@ async function main(){
     const id=opt('id','automation'),runFile=path.join(process.env.CODEX_HOME??path.join(os.homedir(),'.codex'),'automation-calendar',`run-${id}.json`);
     const runId=opt('manual')==='true'?'manual:'+randomUUID():read(runFile).id;
     const initial=fs.existsSync(path.join(dir,'initial.private.json'))?read(path.join(dir,'initial.private.json')):null;
+    const scope=reviewScope(opt('scope',initial?.scope??'all'));
+    if(initial&&(initial.scope??'all')!==scope)throw Error('Cannot change review scope within a run');
     if(initial&&(initial.today!==kstDay()||(opt('manual')!=='true'&&initial.runId!==runId)))throw Error('Use a fresh per-run directory');
     const phase=opt('phase','initial');
     if(!['initial','final'].includes(phase)||phase==='final'&&!initial)throw Error('Final snapshot requires this run initial snapshot');
-    const snapshot=await scan(history,dir,initial?.runId??runId);
+    const snapshot=await scan(history,dir,initial?.runId??runId,scope);
     const filename=phase==='final'?'final.private.json':'initial.private.json';
     if(filename==='initial.private.json'&&initial)throw Error('Initial snapshot already exists; use phase final or a fresh run directory');
     save(path.join(dir,filename),snapshot);
     const required=initial?reconcile(initial,snapshot):collectObligations(snapshot);
     save(path.join(dir,'required.private.json'),required);
-    if(!fs.existsSync(path.join(dir,'decisions.private.json')))save(path.join(dir,'decisions.private.json'),{reviews:{mail:{complete:false},resultNotices:{complete:false}},items:required.map(x=>({id:x.id,disposition:'',nextAction:'',evidence:''}))});
-    console.log(JSON.stringify({snapshotWritten:true,phase:filename,exactCases:snapshot.exactCount,tabRows:snapshot.tabRowCounts,obligations:required.length,mandatory:required.filter(x=>x.mustReport).length}));return;
+    if(!fs.existsSync(path.join(dir,'decisions.private.json')))save(path.join(dir,'decisions.private.json'),{reviews:Object.fromEntries(sourceAreas(scope).map(k=>[k,{complete:false}])),items:required.map(x=>({id:x.id,disposition:'',nextAction:'',evidence:''}))});
+    console.log(JSON.stringify({snapshotWritten:true,scope,phase:filename,exactCases:snapshot.exactCount,tabRows:snapshot.tabRowCounts,obligations:required.length,mandatory:required.filter(x=>x.mustReport).length}));return;
   }
   if(command==='render'||command==='complete') {
     const initial=read(path.join(dir,'initial.private.json')),final=read(path.join(dir,'final.private.json')),decisions=read(path.join(dir,'decisions.private.json'));
@@ -154,7 +160,7 @@ async function main(){
       const result=validateReview({initial,final,decisions,historyHash:'render',verifiedHistoryHash:'render'});
       if(!result.ok){save(path.join(dir,'validation-errors.private.json'),result.errors);throw Error('Coverage validation failed; see validation-errors.private.json in the private run folder');}
       fs.writeFileSync(path.join(dir,'report.private.md'),result.report);
-      const coverage={runId:initial.runId,checkedAt:final.checkedAt,reportHash:digest(result.report),required:result.required.length,reportedItems:{...initial.priorReports}};
+      const coverage={scope:initial.scope??'all',runId:initial.runId,checkedAt:final.checkedAt,reportHash:digest(result.report),required:result.required.length,reportedItems:{...initial.priorReports}};
       for(const i of result.required)if(decisions.items.find(d=>d.id===i.id)?.disposition!=='unchanged')coverage.reportedItems[i.id]={fingerprint:i.fingerprint,reportedAt:new Date().toISOString()};
       save(path.join(dir,'coverage.private.json'),coverage);
       const bookingCandidates=collectObligations(final).filter(i=>i.kind==='booking').map(i=>({taskId:i.id,orgId:final.organization.id,caseId:i.caseId,destination:i.destination,pet:i.pet,guardian:i.guardian,departure:final.documents.find(r=>r.caseId===i.caseId&&r.destination===i.destination)?.departure,remainingAction:decisions.items.find(d=>d.id===i.id)?.nextAction,sendMode:'user-reviewed',detectedAt:final.checkedAt}));
@@ -164,7 +170,7 @@ async function main(){
     const h=fs.readFileSync(path.join(dir,'history-uploaded.private.json'),'utf8'),v=fs.readFileSync(path.join(dir,'history-verified.private.json'),'utf8');
     const result=validateReview({initial,final,decisions,historyHash:digest(h),verifiedHistoryHash:digest(v)});
     if(!result.ok||fs.readFileSync(path.join(dir,'report.private.md'),'utf8')!==result.report){save(path.join(dir,'validation-errors.private.json'),result.errors);throw Error('Report/history coverage validation failed; see the private run folder');}
-    const stored=JSON.parse(v).dailyReviewCoverage;
+    const stored=coverageFor(JSON.parse(v),initial.scope??'all');
     if(stored?.runId!==initial.runId||stored.reportHash!==digest(result.report))throw Error('Shared coverage record missing');
     save(path.join(dir,'completion.private.json'),{runId:initial.runId,today:final.today,createdAt:new Date().toISOString(),inputHash:digest({initial,final,decisions,historyHash:digest(h)}),reportHash:digest(result.report),needsAttention:result.needsAttention});
     console.log(JSON.stringify({coverageVerified:true,required:result.required.length,finishStatus:result.needsAttention?'needs_attention':'succeeded'}));return;

@@ -1,0 +1,4 @@
+interface:
+  display_name: "PETMOVE 2 · 일본 수입신고"
+  short_description: "일본 수입·수출 신고, 변경신청, 검역소 회신과 Form AC를 처리합니다"
+  default_prompt: "Use $petmove-japan-naccs to handle the requested Japan import/export notification, modification, or quarantine correspondence for the current trip."

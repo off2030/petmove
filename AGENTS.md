@@ -10,8 +10,19 @@
 
 이 저장소의 펫무브 업무 지침은 `.agents/skills/`에서 관리한다. 관련 업무를 요청받으면 해당 `SKILL.md`와 필요한 참조 문서를 읽는다.
 
+실무 개별 업무와 담당 채팅은 아래 세 가지로 나눈다. 권한·공식 상태·보고 기준은 공통 [실무 지침](docs/work-management/operations.md)을 공유한다.
+
+| 담당 | 범위·진입 문서 | 기본 스킬 |
+| --- | --- | --- |
+| 1. 검사 | 검사 의뢰·기관 진행·결과 확인·결과 안내·검사비. [검사](docs/work-management/inspection.md) | `.agents/skills/petmove-inspection-check/SKILL.md` |
+| 2. 일본 수입신고 | 일본 수입·수출·변경신청·검역소 회신·Form AC. [일본](docs/work-management/japan.md) | `.agents/skills/petmove-japan-naccs/SKILL.md` |
+| 3. 서류 및 기타 | 자료 보관·정보 입력·일반 서류·내원 안내·기타 실무. [서류](docs/work-management/documents.md) | `.agents/skills/petmove-documents/SKILL.md` |
+
+정기 점검도 세 담당이 각각 `petmove-daily-review`의 `inspection`·`japan`·`documents` 범위로 자기 담당 전체를 대조한다. 세 예약 모두 업무 PC에서 월·화·수·금·토 10:30에 시작한다. 이전 통합 예약은 중지하며 명시적 수동 전체 점검에는 `--scope all`을 사용한다. 담당 분리는 신청·발송·결제의 포괄 권한을 만들지 않는다.
+
 - 고객 문의를 네이버 블로그 초안으로 작성: `.agents/skills/petmove-naver-post/SKILL.md`
 - 정기 실무 점검·세 탭 전체 확인·보고 누락 검증: `.agents/skills/petmove-daily-review/SKILL.md`
+- 일반 서류 준비·출력·내원 안내·기타 실무: `.agents/skills/petmove-documents/SKILL.md`
 - 카카오톡에서 블로그용 문의를 선별해 로컬 텍스트로 저장: `.agents/skills/petmove-kakao-inquiries/SKILL.md`
 - 카카오톡 수신 서류 대조·다운로드·보관 및 요청한 칩·접종·항체검사 정보 입력: `.agents/skills/petmove-kakao-documents/SKILL.md`
 - 검사결과 확인·기존 카카오 고객 채팅방 안내문/결과지 발송·재확인: `.agents/skills/petmove-kakao-results/SKILL.md`
@@ -21,7 +32,7 @@
 
 같은 이름의 개인 스킬이 있으면 이 저장소의 버전을 사용한다. 펫무브 업무 스킬 수정도 저장소 버전에 반영하여 Git으로 공유한다. 확인·초안 요청을 신청 제출 권한으로 해석하지 말고 각 스킬의 업무 범위를 따른다.
 
-정기 실무 점검은 `scripts/daily-review.mjs`의 전체 대상 대조·필수 보고 검증을 통과해야 완료다. 내원 0~7일 서류 준비 미완료는 매일 보고하며, 경고·중단된 지시가 빠지면 완료하지 않는다. 공통 권한과 보고 기준은 `docs/work-management/operations.md` 한 곳에서 관리하고, 스킬·인계 문서에 날짜별 예외를 덧붙여 중복 규칙을 만들지 않는다.
+정기 실무 점검은 `scripts/daily-review.mjs`의 `--scope <담당>`으로 담당 전체 대상 대조·필수 보고 검증을 통과해야 완료다(실제 명령은 담당별 검증 절차 참조). 내원 0~7일 서류 준비 미완료는 서류 담당이 매일 보고하며, 각 담당의 경고·중단된 지시가 빠지면 완료하지 않는다. 공통 권한과 보고 기준은 `docs/work-management/operations.md` 한 곳에서 관리하고, 스킬·인계 문서에 날짜별 예외를 덧붙여 중복 규칙을 만들지 않는다.
 
 검사 조회는 저장소 루트에서 `node scripts/inspection-lookup.mjs <동물이름>`으로 실행한다. 체크아웃 위치를 `C:\dev\petmove`로 고정하지 않는다. 이 스크립트의 데이터베이스 조회는 읽기 전용으로 유지한다.
 

@@ -1,6 +1,6 @@
 interface:
-  display_name: "PETMOVE 검사 신청·확인"
-  short_description: "검사기관 신청정보를 대조하고 요청한 동물의 신청을 진행합니다"
-  default_prompt: "Use $petmove-inspection-check to verify the inspection application for MONG."
+  display_name: "PETMOVE 1 · 검사"
+  short_description: "검사 의뢰·기관 대조·진행과 결과 확인을 맡고 결과 안내·검사비 절차를 연결합니다"
+  default_prompt: "Use $petmove-inspection-check to handle the requested PETMOVE inspection application, provider progress, or result verification for the current case and test round."
 policy:
   allow_implicit_invocation: true

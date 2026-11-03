@@ -1,0 +1,4 @@
+interface:
+  display_name: "PETMOVE 3 · 서류 및 기타"
+  short_description: "일반 서류 준비·출력, 자료 보관·정보 입력과 내원 안내를 처리합니다"
+  default_prompt: "Use $petmove-documents to handle the requested PETMOVE Work documents and other operations within the current authorized scope."

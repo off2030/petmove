@@ -1,5 +1,6 @@
 import {createHash} from 'node:crypto';
-export const POLICY_VERSION = 1;
+import {reviewScope,sourceAreas,REVIEW_LABELS} from './daily-review-areas.mjs';
+export const POLICY_VERSION = 2;
 export const digest = value => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex');
 export function kstDay(value = new Date()) { return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value)); }
 export function dayDistance(a,b) {
@@ -9,40 +10,46 @@ export function dayDistance(a,b) {
 }
 export const itemId = (...parts) => JSON.stringify(parts);
 export function collectObligations(snapshot) {
+  const scope=reviewScope(snapshot.scope??'all');
   const items = [];
-  const add = (kind,row,slot,reason,mustReport=false) => {
+  const add = (kind,row,slot,reason,mustReport=false,area=row.workArea??'unassigned') => {
+    if(!['inspection','japan','documents'].includes(area))area='unassigned';
+    if(scope!=='all'&&area!==scope&&area!=='unassigned')return;
+    if(area==='unassigned'){mustReport=true;reason='담당 분류 확인 필요; '+reason;}
     const id=itemId(kind,row.caseId??'',row.destination??'',slot);
-    const content={kind,caseId:row.caseId??null,destination:row.destination??null,slot,pet:row.pet??'',guardian:row.guardian??'',reason,mustReport};
+    const content={kind,workArea:area,caseId:row.caseId??null,destination:row.destination??null,slot,pet:row.pet??'',guardian:row.guardian??'',reason,mustReport};
     items.push({...content,id,fingerprint:digest(content)});
   };
   for (const r of snapshot.inspections) {
     if (r.excluded || !['waiting','testing'].includes(r.status)) continue;
     const days=dayDistance(r.date,snapshot.today);
     const late=r.status==='waiting' && days!==null && days>=5;
-    add('inspection',r,r.rowId,late?`${r.lab} 검사일 ${r.date}, 대기 ${days}일`: `${r.lab} ${r.status}, 검사일 ${r.date||'미정'}`,late);
-    if (r.result && r.status!=='done') add('warning',r,r.rowId+':result-status','검사 결과 등록과 Work 검사 상태의 차이 확인',true);
+    add('inspection',r,r.rowId,late?`${r.lab} 검사일 ${r.date}, 대기 ${days}일`: `${r.lab} ${r.status}, 검사일 ${r.date||'미정'}`,late,'inspection');
+    if (r.result && r.status!=='done') add('warning',r,r.rowId+':result-status','검사 결과 등록과 Work 검사 상태의 차이 확인',true,'inspection');
   }
   for (const r of snapshot.reports) {
     if (r.excluded) continue;
+    const area=r.workArea??(/^일본(?:\s|\(|$)/.test(r.destination??'')?'japan':'documents');
     // Do not filter by Korean departure date. Import and return-export are independent.
     for (const slot of ['import','export']) {
       const status=r[slot+'Status']; if (status==='done'||status==='na') continue;
-      add('report',r,slot,`${slot==='import'?'수입':'수출'} ${status}; 출국 ${r.departure||'미정'}, 귀국 ${r.return||'미정'}`);
+      add('report',r,slot,`${slot==='import'?'수입':'수출'} ${status}; 출국 ${r.departure||'미정'}, 귀국 ${r.return||'미정'}`,false,area);
     }
     const until=dayDistance(snapshot.today,r.deadline);
-    if (r.deadlineWarning || (r.importStatus==='not_started' && until!==null && until<=10)) add('warning',r,'import-deadline',`수입 신고기한 ${r.deadline}${until===null?'':` (${until<0?`${-until}일 경과`:`${until}일 남음`})`}`,true);
+    if (r.deadlineWarning || (r.importStatus==='not_started' && until!==null && until<=10)) add('warning',r,'import-deadline',`수입 신고기한 ${r.deadline}${until===null?'':` (${until<0?`${-until}일 경과`:`${until}일 남음`})`}`,true,area);
   }
   for (const r of snapshot.documents) {
     if (r.excluded) continue;
+    const row={...r,workArea:'documents'};
     const visitIn=dayDistance(snapshot.today,r.vetVisit);
     const departureIn=dayDistance(snapshot.today,r.departure);
     const upcoming=visitIn!==null && visitIn>=0 && visitIn<=7;
     const currentDeparture=departureIn!==null && departureIn>=0;
-    if(!r.vetVisit?.trim()&&currentDeparture&&departureIn<=14) add('booking',r,'visit-booking:'+r.departure,`내원 예약 미등록; 출국 ${r.departure} (${departureIn}일 남음); 기존 카카오 채팅방 대조 후 예약 요청 안내 필요`,true);
+    if(!r.vetVisit?.trim()&&currentDeparture&&departureIn<=14) add('booking',row,'visit-booking:'+r.departure,`내원 예약 미등록; 출국 ${r.departure} (${departureIn}일 남음); 기존 카카오 채팅방 대조 후 예약 요청 안내 필요`,true);
     // Future visits with no departure are still real work; old undated cases are not.
-    if (r.status!=='done' && ((upcoming && (departureIn===null||currentDeparture)) || (visitIn!==null&&visitIn<0&&currentDeparture))) add('document',r,'preparation',`서류 준비 미완료; 내원 ${r.vetVisit}, 출국 ${r.departure||'미정'}${visitIn<0?'; 내원일 경과':''}`,true);
-    else if (r.status!=='done' && currentDeparture) add('document',r,'preparation',`서류 준비 대기; 내원 ${r.vetVisit||'미정'}, 출국 ${r.departure}`);
-    if (r.outOfWindow && (currentDeparture||upcoming)) add('warning',r,'visit-window',`내원일 ${r.vetVisit}과 출국일 ${r.departure||'미정'}의 날짜 구간 불일치`,true);
+    if (r.status!=='done' && ((upcoming && (departureIn===null||currentDeparture)) || (visitIn!==null&&visitIn<0&&currentDeparture))) add('document',row,'preparation',`서류 준비 미완료; 내원 ${r.vetVisit}, 출국 ${r.departure||'미정'}${visitIn<0?'; 내원일 경과':''}`,true);
+    else if (r.status!=='done' && currentDeparture) add('document',row,'preparation',`서류 준비 대기; 내원 ${r.vetVisit||'미정'}, 출국 ${r.departure}`);
+    if (r.outOfWindow && (currentDeparture||upcoming)) add('warning',row,'visit-window',`내원일 ${r.vetVisit}과 출국일 ${r.departure||'미정'}의 날짜 구간 불일치`,true);
   }
   for (const task of snapshot.tasks) add(task.interrupted?'interrupted':'followup',task,task.key,task.nextAction,!!task.interrupted);
   for (const finding of snapshot.findings??[]) add('finding',finding,finding.key,finding.reason,true);
@@ -63,6 +70,8 @@ export function reconcile(initial, final) {
 }
 export function validateReview({initial,final,decisions,historyHash,verifiedHistoryHash,now=new Date()}) {
   const errors=[],nowMs=new Date(now).getTime();
+  const scope=reviewScope(initial.scope??'all');
+  if((final.scope??'all')!==scope)errors.push('review-scope');
   if(initial.policyVersion!==POLICY_VERSION||final.policyVersion!==POLICY_VERSION) errors.push('policy-version');
   for(const s of [initial,final]) {
     if(s.organization?.name!=='로잔동물의료센터'||!s.organization?.id||s.organization.id!==initial.organization.id) errors.push('organization');
@@ -89,7 +98,7 @@ export function validateReview({initial,final,decisions,historyHash,verifiedHist
     if(d.disposition==='resolved'&&!d.resolutionEvidence?.trim())errors.push('resolution-without-proof:'+item.id);
   }
   for(const id of byId.keys())if(!required.some(i=>i.id===id))errors.push('unknown-item:'+id);
-  for(const area of ['mail','resultNotices']) {
+  for(const area of sourceAreas(scope)) {
     const r=decisions.reviews?.[area];
     if(r?.complete!==true||!r.evidence?.trim()||!Number.isFinite(Date.parse(r.checkedAt))||Date.parse(r.checkedAt)<Date.parse(initial.checkedAt)||Date.parse(r.checkedAt)>nowMs)errors.push('unreviewed-source:'+area);
   }
@@ -98,6 +107,6 @@ export function validateReview({initial,final,decisions,historyHash,verifiedHist
     const d=byId.get(i.id)??{};
     return `- **${i.pet||'대상 확인 필요'}${i.guardian?' / '+i.guardian:''}${i.destination?' · '+i.destination:''}** — ${i.reason}. ${d.nextAction||'다음 행동 미확인'}${d.disposition==='resolved'?' (처리 결과 확인)':''}`;
   });
-  const report=lines.length?`${final.today} 실무 점검 — 필수 보고와 변경 사항\n\n${lines.join('\n')}\n`:'알릴 변화와 일일 필수 보고 대상이 없습니다.\n';
+  const report=lines.length?`${final.today} ${REVIEW_LABELS[scope]} 실무 점검 — 필수 보고와 변경 사항\n\n${lines.join('\n')}\n`:`${REVIEW_LABELS[scope]}: 알릴 변화와 일일 필수 보고 대상이 없습니다.\n`;
   return {ok:errors.length===0,errors:[...new Set(errors)],required,report,needsAttention:(decisions.items??[]).some(x=>x.needsUserAction===true)};
 }

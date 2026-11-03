@@ -31,7 +31,7 @@ node scripts/automation-calendar.mjs finish --id 31 --status succeeded --summary
 
 보고 실패 시 로컬 `outbox`에 메타데이터를 보관한다. 다음 `sync` 또는 `start`에서 재전송한다. 실패한 기록을 완료로 바꾸지 않는다. 업무 권한과 업무 실행 판단은 원래 지침을 따른다.
 
-실무 예약 `automation`의 성공 종료에는 `--review-dir <비공개 실행 폴더>`가 필수다. `scripts/daily-review.mjs`가 만든 현재 실행의 완료 증거를 재검증하며, 필수 보고 누락·미검토 소스·다른 실행의 증거·변경된 보고문·공유 원본 불일치·사용자 조치 대기가 있으면 성공 기록 전에 종료한다. 고객 자료나 검증 파일 자체는 달력 서버에 전송하지 않는다. 실행 순서는 [세 탭 검증 절차](../../.agents/skills/petmove-inspection-check/references/daily-three-tabs.md)를 따른다.
+실무는 검사 `automation-2`, 일본 수입신고 `automation-3`, 서류 및 기타 `automation-4`가 각 담당 채팅에서 월·화·수·금·토 10:30에 시작한다. 이전 통합 `automation` 예약은 PAUSED로 보존한다. 각 담당 예약의 성공 종료에는 `--review-dir <비공개 실행 폴더>`가 필수다. `scripts/daily-review.mjs`가 만든 현재 담당 scope와 실행의 완료 증거를 재검증하며, 필수 보고 누락·미검토 소스·다른 실행/담당의 증거·변경된 보고문·공유 원본 불일치·사용자 조치 대기가 있으면 성공 기록 전에 종료한다. 고객 자료나 검증 파일 자체는 달력 서버에 전송하지 않는다. 실행과 동시 처리 잠금은 [담당별 검증 절차](../../.agents/skills/petmove-daily-review/references/daily-three-tabs.md)를 따른다.
 
 다른 PC도 최신 저장소와 Node.js, 별도로 전달받은 보고 설정이 필요하다. `reporter.json`의 `hostId`를 고유하게 하고 `hostLabel`에 실제 기기를 적는다. 해당 PC에서 먼저 `sync`한 뒤 그 예약의 원래 프롬프트에 같은 시작·종료 지시를 연결한다. 예약 변경·중지 후에도 `sync`해 반영한다. 자동화는 해당 로컬 실행 환경이 작동해야 실제 실행될 수 있다.
 

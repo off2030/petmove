@@ -232,6 +232,12 @@ function runFile(id) {
   if (!/^[a-zA-Z0-9_-]+$/.test(id)) throw new Error("예약 ID를 확인하세요.");
   return path.join(STATE, `run-${id}.json`);
 }
+function reviewScopeForAutomation(id) {
+  if(id==='automation')return 'all';
+  const file=path.join(HOME,'automations',id,'automation.toml');
+  if(!fs.existsSync(file))return null;
+  return {'펫무브 검사 정기 점검':'inspection','펫무브 일본 수입신고 정기 점검':'japan','펫무브 서류 및 기타 정기 점검':'documents'}[readToml(file).name]??null;
+}
 async function main() {
   const c = config();
   fs.mkdirSync(STATE, { recursive: true });
@@ -275,13 +281,14 @@ async function main() {
     if (!fs.existsSync(file))
       throw new Error("시작 기록이 없어 실행 시각을 추정하지 않습니다.");
     const run = JSON.parse(fs.readFileSync(file, "utf8"));
-    if (id === "automation" && state === "succeeded") {
+    const reviewScope=reviewScopeForAutomation(id);
+    if (reviewScope && state === "succeeded") {
       const reviewDir = option("review-dir");
       if (!reviewDir) throw new Error("실무 누락 검증이 필요합니다. --review-dir로 검증된 실행 폴더를 지정하세요.");
       // GitHub reporting runs without project dependencies; load the operations
       // verifier only for the successful operations completion that needs it.
       const { verifyCompletion } = await import("./daily-review.mjs");
-      verifyCompletion(run, reviewDir);
+      verifyCompletion(run, reviewDir,reviewScope);
     }
     Object.assign(run, {
       state,
