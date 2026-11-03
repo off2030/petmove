@@ -6,7 +6,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { verifyCompletion } from "./daily-review.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const HOME = process.env.CODEX_HOME ?? path.join(os.homedir(), ".codex");
 const STATE = path.join(HOME, "automation-calendar");
@@ -279,6 +278,9 @@ async function main() {
     if (id === "automation" && state === "succeeded") {
       const reviewDir = option("review-dir");
       if (!reviewDir) throw new Error("실무 누락 검증이 필요합니다. --review-dir로 검증된 실행 폴더를 지정하세요.");
+      // GitHub reporting runs without project dependencies; load the operations
+      // verifier only for the successful operations completion that needs it.
+      const { verifyCompletion } = await import("./daily-review.mjs");
       verifyCompletion(run, reviewDir);
     }
     Object.assign(run, {
