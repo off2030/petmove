@@ -58,7 +58,8 @@ jobs:
         if: steps.cfg.outputs.ready == 'true'
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # v3 removed legacy config keys (including [inbucket]); upgrade deliberately.
+          version: 2.122.1
 
       - name: Install rclone
         if: steps.cfg.outputs.ready == 'true'

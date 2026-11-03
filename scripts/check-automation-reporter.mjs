@@ -51,6 +51,19 @@ try {
   assert.equal(JSON.parse(await fs.readFile(path.join(state,'run-automation.json'),'utf8')).state,'running')
   await cli('finish','--id','automation','--status','needs_attention','--summary','누락 검증 미완료')
   assert.equal(records.at(-1).runs[0].state,'needs_attention')
+  // Match Actions: checkout only, no node_modules or operations verifier.
+  const checkout=path.join(temp,'dependency-free-checkout')
+  await fs.mkdir(path.join(checkout,'scripts'),{recursive:true})
+  await fs.mkdir(path.join(checkout,'.github','workflows'),{recursive:true})
+  await fs.copyFile('scripts/automation-calendar.mjs',path.join(checkout,'scripts','automation-calendar.mjs'))
+  await fs.copyFile('.github/workflows/backup-db.yml',path.join(checkout,'.github','workflows','backup-db.yml'))
+  const githubEnv={...env,PATH:'',GITHUB_ACTIONS:'true',GITHUB_RUN_ID:'123456789',CALENDAR_RUN_STATUS:'success'}
+  for(const phase of ['start','finish']) {
+    await exec(process.execPath,['scripts/automation-calendar.mjs','github','--workflow','backup-db.yml','--phase',phase],{cwd:checkout,env:githubEnv})
+    assert.equal(records.at(-1).runs[0].id,'github:123456789')
+    assert.equal(records.at(-1).runs[0].state,phase==='start'?'running':'succeeded')
+  }
+  assert.ok(records.at(-1).runs[0].ended_at)
   console.log('자동화 보고: 시작·중복 차단·종료·통신 실패 보관·재전송 검증 통과 (메모리 서버, 운영 쓰기 없음)')
 } finally {
   server.close()

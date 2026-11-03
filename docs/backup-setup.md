@@ -3,6 +3,10 @@
 매일 KST 02:00 에 GitHub Actions(`.github/workflows/backup-db.yml`)가 Supabase(Seoul) 의
 **DB + 사진·서류 파일**을 구글 드라이브에 올립니다.
 
+백업용 Supabase CLI는 `2.122.1`로 고정합니다. `latest`는 사용하지 않습니다.
+CLI v3는 기존 `[inbucket]` 설정을 지원하지 않으므로, 메이저 버전 업그레이드 시
+설정과 덤프 명령의 호환성을 별도로 검증한 뒤 변경합니다.
+
 ```
 Petmove-Backups/
   db/                     ← DB 덤프 tar.gz (매일 1개, 30일 보관)
