@@ -95,6 +95,7 @@ export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
   // ── 증명서 / 허가 ──
   certificate_no: { key: 'certificate_no', label: 'EQC No.', type: 'text' },
   permit_no: { key: 'permit_no', label: '수입허가번호', type: 'text' },
+  tw_permit_rabies_date: { key: 'tw_permit_rabies_date', label: '수입허가서 광견병 접종일 (최신 접종과 다를 때)', type: 'date' },
   // 호주 마이크로칩 인증 경로 — 어느 증명서(AU/AU 2/AU 3)를 발급할지 정한다(au-identity-option.ts).
   id_option: {
     key: 'id_option',

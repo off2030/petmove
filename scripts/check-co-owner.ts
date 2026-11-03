@@ -113,7 +113,7 @@ assert.equal(
   maps.FormAC.fields.consignee_name.source,
   "document_owner_names_en",
 );
-assert.equal(maps.TW.fields.text_4peiu.source, 'document_owner_names_en');
+assert.equal(maps.TW.fields.exporter_name.source, 'document_owner_names_en');
 assert.equal(maps.VHC.fields.owner_name.source, 'document_owner_names_en');
 assert.equal(
   maps.AQS_279.fields.FIRST.source,

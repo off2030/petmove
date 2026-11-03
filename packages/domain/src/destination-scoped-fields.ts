@@ -89,6 +89,7 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'return_undecided',
   // 증명서·허가 (국가별)
   'permit_no',
+  'tw_permit_rabies_date',
   'certificate_no',
   'id_date',
   // 호주 마이크로칩 인증 경로(au-identity-option.ts) — id_date 와 짝이라 같이 분리.

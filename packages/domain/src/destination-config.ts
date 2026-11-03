@@ -1310,6 +1310,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       'address_overseas', 'postal_code', 'overseas_phone', 'email',
       'passport_number',
       'permit_no',
+      'tw_permit_rabies_date',
       'departure_flight_date', 'entry_date', 'entry_airport',
     ],
     // APHIA pet e-permit — 로잔이 대행한다(2026-08-03 사용자 지정). selfApply 플래그의 유일한

@@ -53,6 +53,9 @@ jobs:
       - name: Check NZ certificate missing-field warnings
         run: node scripts/check-nz-pdf-missing.mjs
 
+      - name: Check Taiwan APHIA certificate output
+        run: node scripts/check-tw-pdf.mjs
+
       - name: Typecheck portal
         run: pnpm --filter @petmove/portal exec tsc --noEmit
 

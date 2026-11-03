@@ -1271,6 +1271,17 @@ function resolveField(
   }
   const raw = source ? readSource(source, caseRow, data) : null
 
+  // APHIA Form 002: the second vaccine is the dose on the import permit,
+  // not simply the second-most-recent dose. Never infer it from array order.
+  const twPermitRabies = transform?.match(/^tw_permit_rabies:(name|manufacturer|date)$/)
+  if (twPermitRabies) {
+    const records = sortedDescRecords(data.rabies_dates)
+    const permitDate = String(data.tw_permit_rabies_date ?? '').trim()
+    if (!permitDate || permitDate === records[0]?.date) return ''
+    const rec = records.find(r => r.date === permitDate)
+    return rec ? resolveVaccineDescAttr('rabies', twPermitRabies[1], rec, data) : ''
+  }
+
   // ── 뉴질랜드 신 IHS 2026 서식(NZ26·NZ_ID) 변환 ──
   // 회차 고르기 — `pick:<role>:<안쪽 변환, 인덱스 자리 {i}>`. 기록(최신순)의 개수에 따라 인덱스를 정한다.
   //   ext_first / ext_last / ext_extra — 개 외부구충: 첫 치료 · 마지막 치료 · 추가 치료(3회 이상일 때 가운데)
@@ -3669,6 +3680,13 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
 
   const pdfForm = pdf.getForm()
   const data = { ...(caseRow.data ?? {}), ...(options?.extras ?? {}) } as Record<string, unknown>
+
+  if (formKey === 'TW' && data.tw_permit_rabies_date) {
+    const date = String(data.tw_permit_rabies_date).trim()
+    if (date && !sortedDescRecords(data.rabies_dates).some(r => r.date === date)) {
+      return { ok: false, error: '수입허가서 광견병 접종일과 일치하는 접종 기록이 없습니다. 접종 기록을 확인해 주세요.' }
+    }
+  }
 
   // 광견병 선택 처리 — rabiesIndices 가 주어지면 sortedAsc 기준 그 인덱스에
   // 해당하는 접종만 증명서에 기재 (미선택분은 드롭).
