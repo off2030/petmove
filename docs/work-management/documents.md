@@ -13,4 +13,4 @@
 
 여러 업무가 섞이면 현재 요청의 산출물을 기준으로 담당을 정한다. 자료 수신·보관은 이 담당, 그 자료를 이용한 기관 제출은 해당 담당이 맡으며 원본 위치와 대조 근거를 이어받는다. 기능 오류·개선은 [개발](development.md), 블로그 글은 [콘텐츠](content.md)로 구분한다.
 
-정기 점검은 이 채팅에서 [점검 스킬](../../.agents/skills/petmove-daily-review/SKILL.md)의 `--scope documents`로 수행하며 documentSources·visitBookings의 실제 검토와 서류 및 기타 담당 전체 대상의 누락 검증을 통과해 보고한다. 일본 여행의 일반 내원·최종 서류 준비도 여기서 확인하되 검역소 Form AC 제출을 중복 실행하지 않는다.
+정기 점검은 이 채팅에서 Work **서류 탭**을 기준으로 [서류 담당 상시 업무](operations.md#서류-담당-상시-업무)를 수행한다. [점검 스킬](../../.agents/skills/petmove-daily-review/SKILL.md)의 `--scope documents`로 documentSources·visitBookings의 실제 검토와 서류 및 기타 담당 전체 대상의 누락 검증을 통과해 보고한다. 일본 여행의 일반 내원·최종 서류 준비도 여기서 확인하되 검역소 Form AC 제출을 중복 실행하지 않는다.

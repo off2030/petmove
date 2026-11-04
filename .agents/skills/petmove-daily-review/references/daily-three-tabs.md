@@ -52,7 +52,7 @@ Work 검사탭의 대기 → 진행 → 완료 전체를 UI와 같은 회차·�
 
 ## 서류 및 기타 담당
 
-여행별 출국일·내원일·내원가능일·준비상태·메모·날짜 구간을 확인한다. **출국 0~14일 전인데 내원일이 없으면 매일 경고·보고**하고 [예약 요청 안내](../../petmove-daily-review/references/visit-booking.md)를 준비한다. **내원 당일~7일 이내(0~7일 포함) 준비 미완료도 매일 보고**한다. 미래 출국이 남은 내원일 경과 미완료도 보고한다. 출국일 없는 과거 내원을 임박 업무로 만들지 않는다. Form AC 발신·사전 검토 통과는 최종 준비 완료가 아니다. PDF를 열지 않았으면 원본 검토 완료라고 쓰지 않는다.
+Work 서류 탭의 여행별 출국일·내원일·내원가능일·준비상태·메모·날짜 구간을 확인하고 [서류 담당 상시 업무](../../../../docs/work-management/operations.md#서류-담당-상시-업무)에 따라 보고한다. 내원일이 등록된 준비 미완료 건은 내원까지 남은 일수와 관계없이 보고한다. 출국일만 있는 건은 [예약 요청 안내](visit-booking.md)로 출국 2주 전 미예약 안내를 관리하며, 2주 넘게 남은 단순 예약 대기는 실제 재확인 근거를 붙여 monitored로 내부 관리할 수 있다. 새 요구·불일치·자료/판단 필요는 숨기지 않는다. Form AC 발신·사전 검토 통과는 최종 준비 완료가 아니다. PDF를 열지 않았으면 원본 검토 완료라고 쓰지 않는다.
 
 일반 자료·서류·일본 외 기관 요청은 documentSources, 내원 예약 필요·기발송·예약 회신은 visitBookings에 검토 근거를 남긴다. 검사결과 판정·결과 고객 안내는 검사 담당, 일본 검역소 회신·Form AC 제출은 일본 담당이다.
 
@@ -79,7 +79,7 @@ required.private.json은 시작·종료 합집합이다. 모든 ID에 판단을 
 | disposition=reported | 미완료/경고의 nextAction, 현재 evidence |
 | disposition=resolved | 처리 결과 nextAction, evidence, 실제 실행·저장 재조회 resolutionEvidence. 처리 결과도 보고됨 |
 | disposition=unchanged | 일반 대기만 허용. 실제 과거 보고 지문·reportedAt·deliveryEvidence와 이번 recheckedAt/evidence/nextAction 필요. 경고·중단 지시·일일 필수 건은 금지 |
-| disposition=monitored | 검사 담당의 정상 진행·예정·조치 없는 일반 대기만 허용. 이번 recheckedAt/evidence/nextAction 필수. 과거 보고 증거는 불필요하며 사용자 알림에서는 제외. 결과 발송 할 일·경고·중단·사용자 조치 대기는 금지 |
+| disposition=monitored | 검사 담당의 정상 진행·예정·조치 없는 일반 대기 또는 서류 담당의 출국 2주 초과·내원 미등록 단순 예약 대기만 허용. 이번 recheckedAt/evidence/nextAction 필수. 과거 보고 증거는 불필요하며 사용자 알림에서는 제외. 결과 발송 할 일·내원일 등록 준비 미완료·경고·중단·사용자 조치 대기는 금지 |
 | needsUserAction=true | 자료·판단·인증이 필요하면 표시. 종료는 needs_attention |
 | reviews의 담당별 필수 소스 | 위 scope 표의 각 항목에 complete=true, checkedAt, evidence. 실제 전체 원문·첨부·페이지·발신 대조 근거이며 미검토를 true로 표시하지 않음 |
 
@@ -108,6 +108,6 @@ node scripts/automation-calendar.mjs finish --id $automationId --status succeede
 
 complete 통과·사용자 조치 대기 없음일 때만 성공을 기록한다. 달력은 현재 실행 ID·한국 날짜·종료 조회 신선도·전체 대상·필수 판단·입력/보고/공유 이력 해시를 다시 검증한다. 오류면 failed, 사용자 대기면 needs_attention, 업무를 하지 않은 기기/요일 생략만 skipped다. 누락 실패를 skipped로 바꾸지 않는다. 고객 정보는 달력에 보내지 않는다.
 
-최종 응답에는 검증된 보고의 필수 사실·처리 결과를 빠짐없이 사용한다. 일본 담당은 같은 동물·여행의 항목을 합쳐 현재 상태·오늘 처리·다음 행동·기한을 쓰고 특이사항을 따로 표시한다. 비공개 보고의 개별 ID·근거는 유지하며 원문 작업 지시·중복 행을 그대로 붙이지 않는다. 필수 보고가 없고 일반 대기도 실제 기보고 근거로 조용히 처리할 수 있을 때만 DONT_NOTIFY다. 일부 미조회·원격 충돌·검증 실패는 전체 완료가 아니다. 점검 실행 완료와 모든 고객 업무 완료를 구분한다.
+최종 응답에는 검증된 보고의 필수 사실·처리 결과를 빠짐없이 사용한다. 일본 담당은 같은 동물·여행의 항목을 합쳐 현재 상태·오늘 처리·다음 행동·기한을 쓰고 특이사항을 따로 표시한다. 서류 담당은 공통 기준의 서류 준비 필요 / 예약 안내·회신 / 특이사항 순서로 같은 동물·여행을 한 행에 묶는다. 비공개 보고의 개별 ID·근거는 유지하며 원문 작업 지시·중복 행을 그대로 붙이지 않는다. 필수 보고가 없고 일반 대기도 실제 기보고 또는 허용된 monitored 근거로 조용히 처리할 수 있을 때만 DONT_NOTIFY다. 일부 미조회·원격 충돌·검증 실패는 전체 완료가 아니다. 점검 실행 완료와 모든 고객 업무 완료를 구분한다.
 
 회귀 검증: `node scripts/check-daily-review.mjs`.
