@@ -62,6 +62,9 @@ jobs:
       - name: Typecheck portal
         run: pnpm --filter @petmove/portal exec tsc --noEmit
 
+      - name: Check Kakao chat web and native links
+        run: node scripts/check-kakao-chat.mjs
+
       - name: Typecheck www
         run: pnpm --filter @petmove/www exec tsc --noEmit
 

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import type { CSSProperties, ReactNode } from 'react'
 import { LegalBackBar } from '@/components/legal-back-bar'
 import { C } from '@/lib/palette'
+import { KakaoChatLink } from '@/components/kakao-chat-link'
 
 /**
  * 고객지원 (/support) — 앱스토어 지원 URL. 시작 가이드와 같은 앱 톤(카드형)으로 렌더.
@@ -16,7 +17,6 @@ export const metadata: Metadata = {
 }
 
 const SUPPORT_EMAIL = 'petmove@naver.com'
-const KAKAO_URL = 'https://pf.kakao.com/_zDDxhj'
 
 const label: CSSProperties = {
   fontSize: 12,
@@ -102,9 +102,9 @@ export default function SupportPage() {
         </Section>
 
         <Section title="문의 채널">
-          <a href={KAKAO_URL} target="_blank" rel="noopener noreferrer" style={rowStyle()}>
+          <KakaoChatLink style={rowStyle()}>
             <RowInner title="카카오톡 채널" value="pf.kakao.com/_zDDxhj" />
-          </a>
+          </KakaoChatLink>
           <a href={`mailto:${SUPPORT_EMAIL}`} style={rowStyle(true)}>
             <RowInner title="이메일" value={SUPPORT_EMAIL} />
           </a>

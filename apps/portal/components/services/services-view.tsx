@@ -23,6 +23,7 @@ import { PAGE_TOP, pageTitle, sectionTitle } from '@/lib/tokens'
 import { APP_DESTINATIONS_KO, APP_EU_INDIVIDUAL_DESTINATIONS_KO } from '@/lib/app-destinations'
 import { buildProfileView } from '@/lib/profile/catalog'
 import { notifyServiceInquiry } from '@/lib/actions/service-inquiry'
+import { KakaoChatLink } from '@/components/kakao-chat-link'
 
 /**
  * 서비스 탭 (/services) — 펫무브 유료 상품 안내. 목적지 + 여정 유형(왕복·편도) 인식형.
@@ -60,9 +61,6 @@ const OFFERED_KO: readonly string[] = APP_DESTINATIONS_KO
 const OFFERED: Dest[] = OFFERED_KO.map((ko) => DESTS.find((d) => d.ko === ko) ?? { ko, en: '' })
 // 여행지 선택 시트 표시용 — 가나다순. (OFFERED_KO 자체 순서는 폴백 기본값[0] 등 로직에 쓰여 보존.)
 const OFFERED_SORTED: Dest[] = [...OFFERED].sort((a, b) => a.ko.localeCompare(b.ko, 'ko'))
-
-/** 펫무브 카카오톡 채널 채팅 링크 — '카카오톡으로 문의' 진입. */
-const KAKAO_CHAT_URL = 'https://pf.kakao.com/_zDDxhj/chat'
 
 type TripType = 'round' | 'one_way'
 const TRIP_OPTIONS: readonly FieldOption[] = [
@@ -1398,9 +1396,8 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         </>
       )}
 
-      <button
-        type="button"
-        onClick={onInquire}
+      <KakaoChatLink
+        onOpen={onInquire}
         style={{
           width: '100%',
           marginTop: 22,
@@ -1413,6 +1410,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
           fontSize: 15,
           fontWeight: 600,
           cursor: 'pointer',
+          textDecoration: 'none',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1423,7 +1421,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
           <path d="M12 3.5C6.8 3.5 2.5 6.9 2.5 11c0 2.6 1.8 4.9 4.5 6.3-.2.7-.7 2.5-.8 2.9-.1.4.2.55.45.42.3-.16 2.6-1.78 3.55-2.42.55.08 1.12.12 1.7.12 5.2 0 9.5-3.4 9.5-7.6S17.2 3.5 12 3.5z" />
         </svg>
         카카오톡으로 상담하기
-      </button>
+      </KakaoChatLink>
     </div>
   )
 }
@@ -1490,8 +1488,8 @@ export function ServicesView({
   }
 
   function startInquiry() {
-    void notifyServiceInquiry({ name: guardian.name, destination: selectedKo, tripType: trip })
-    window.open(KAKAO_CHAT_URL, '_blank', 'noopener,noreferrer')
+    // 문의 알림 실패가 상담 연결을 막지 않도록 독립적으로 처리한다.
+    void notifyServiceInquiry({ name: guardian.name, destination: selectedKo, tripType: trip }).catch(() => {})
   }
 
   const offers = buildOffers(selectedKo, trip)

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition, type CSSProperties
 import { useConfirm } from '@petmove/ui'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
+import { KakaoChatLink } from '@/components/kakao-chat-link'
 import { formatKoreanPhone as formatKoreanPhoneShared, looksLikeKoreanPhoneInput } from '@petmove/domain'
 import { C, EditPageShell, SectionCard, OrgAvatar } from './settings-shared'
 import {
@@ -405,7 +406,7 @@ function formatKoreanPhone(raw: string): string {
  * 색 박스 없이 정보 카드 안에 작은 브랜드 아이콘 + 라벨 한 줄로. 가장 절제된 형태.
  * '›'(화면 이동 표시)는 안 붙임 — 전화·이메일과 동일하게, 외부를 여는 동작이라
  * 브랜드 아이콘+라벨만으로 탭 가능함을 나타냄(카드 내 affordance 일관).
- * 새 탭으로 병원이 등록한 링크를 연다. URL 이 있는 채널만 렌더(호출부 가드).
+ * 카카오톡은 공통 상담 연결을 사용한다. URL 이 있는 채널만 렌더(호출부 가드).
  */
 function ChannelLink({ kind, href }: { kind: 'naver' | 'kakao'; href: string }) {
   const brand =
@@ -415,8 +416,9 @@ function ChannelLink({ kind, href }: { kind: 'naver' | 'kakao'; href: string }) 
       : // 카카오 브랜드 브라운(#3C1E1E·붉은기) 대신 한 단계 연한 회갈색(var(--pm-ink-2))로
         // 채도를 낮춰 sage 와 톤을 맞춤. 라이트/다크 자동.
         { fg: C.ink2, label: '카카오톡' }
+  const Link = kind === 'kakao' ? KakaoChatLink : 'a'
   return (
-    <a
+    <Link
       href={withScheme(href)}
       target="_blank"
       rel="noopener noreferrer"
@@ -439,7 +441,7 @@ function ChannelLink({ kind, href }: { kind: 'naver' | 'kakao'; href: string }) 
         </svg>
       )}
       {brand.label}
-    </a>
+    </Link>
   )
 }
 
