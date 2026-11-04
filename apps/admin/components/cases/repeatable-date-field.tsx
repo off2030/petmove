@@ -649,7 +649,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                           accept="image/*,.pdf"
                           onFile={(f) => handleFile(f, oi)}
                           disabled={extracting}
-                          cropMode="fixed"
+                          cropMode="free"
                           title="이 기록에 이미지/PDF 추출 (모바일 카메라 시 자동 크롭)"
                           className="shrink-0 p-1 text-muted-foreground/50 hover:text-foreground hover:bg-accent/40"
                         >
@@ -784,7 +784,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                 accept="image/*,.pdf"
                 onFile={(f) => handleFile(f, null)}
                 disabled={extracting}
-                cropMode="fixed"
+                cropMode="free"
                 className={roundIconBtn}
                 title="이미지/PDF 로 새 기록 추출 (모바일 카메라 시 자동 크롭)"
               >
