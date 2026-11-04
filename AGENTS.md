@@ -18,7 +18,7 @@
 | 2. 일본 수입신고 | 일본 수입·수출·변경신청·검역소 회신·Form AC. [일본](docs/work-management/japan.md) | `.agents/skills/petmove-japan-naccs/SKILL.md` |
 | 3. 서류 및 기타 | 자료 보관·정보 입력·일반 서류·내원 안내·기타 실무. [서류](docs/work-management/documents.md) | `.agents/skills/petmove-documents/SKILL.md` |
 
-정기 점검도 세 담당이 각각 `petmove-daily-review`의 `inspection`·`japan`·`documents` 범위로 자기 담당 전체를 대조한다. 세 예약 모두 업무 PC에서 월·화·수·금·토 10:30에 시작한다. 이전 통합 예약은 중지하며 명시적 수동 전체 점검에는 `--scope all`을 사용한다. 담당 분리는 신청·발송·결제의 포괄 권한을 만들지 않는다.
+정기 점검도 세 담당이 각각 `petmove-daily-review`의 `inspection`·`japan`·`documents` 범위로 자기 담당 전체를 대조한다. 세 예약 모두 업무 PC에서 월·화·수·금·토 10:30에 시작한다. 이전 통합 예약은 중지하며 명시적 수동 전체 점검에는 `--scope all`을 사용한다. 담당 분리 자체는 신청·발송·결제 권한을 만들지 않으며, 실제 실행은 공통 실무 지침에 명시된 담당별 상시 위임과 사용자 개별 지시를 따른다.
 
 - 고객 문의를 네이버 블로그 초안으로 작성: `.agents/skills/petmove-naver-post/SKILL.md`
 - 정기 실무 점검·세 탭 전체 확인·보고 누락 검증: `.agents/skills/petmove-daily-review/SKILL.md`
