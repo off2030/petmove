@@ -31,7 +31,11 @@ initial.private.json과 required.private.json의 모든 대상을 확인한다. 
 
 ## 검사 담당
 
-UI와 같은 검사 회차·여행지별 전염병 행 및 상태 함수를 적용한다. 케이스 수와 검사 행 수를 구분한다. 미래 검사일은 예정, 누락 날짜는 추정 금지. waiting이며 검사일에서 달력일 5일 이상이면 매일 보고한다(당일=0, 5일째 포함). testing은 이 지연에 넣지 않는다. 결과 등록과 미완료 상태의 차이는 원본·현재 회차와 대조하고, 공통 권한의 결과 확인 완료 위임에 해당하면 해당 회차를 완료·직접 재조회한다. 확인 불가·불일치는 경고와 다음 행동을 보고하며 별도 지시 대기로 미루거나 완료로 추정하지 않는다. 지연 사실만으로 신청·결제·진행 전환을 하지 않는다. 사용자 지정 제외는 실제 정보 지문이 같을 때만 적용한다.
+Work 검사탭의 대기 → 진행 → 완료 전체를 UI와 같은 회차·여행별 함수로 감독한다. 케이스 수와 검사 행 수를 구분한다. 미래 검사일은 예정, 누락 날짜는 추정 금지. waiting이며 검사일에서 달력일 5일 이상이면 매일 보고한다(당일=0, 5일째 포함). testing은 이 지연에 넣지 않는다. 정상 진행·예정·조치 없는 대기는 `monitored`로 내부 검증하며 과거 보고 증거가 없어도 매일 나열하지 않는다.
+
+매일 검사 종료 후 Work에 입력된 결과지와 미발송 큐를 확인한다. 원본·현재 회차·기존 방을 대조 → 안내문·결과지 카톡 발송 → 실제 발송 재확인 → 해당 Work 회차 완료·저장 재조회 순서를 따른다. 결과가 등록되고 아직 미완료인 것만으로 상태 오류라고 단정하거나 발송 전에 완료로 바꾸지 않는다. 확인 불가·불일치·발송 실패는 특이사항으로 보고한다. 신청 지시가 있는 건은 기관 신청·저장 확인 후 사용자에게 결제를 요청한다. 상세 권한은 공통 운영 기준을 따른다.
+
+매일 보고는 5일 이상 미진행, 신청 후 결제 요청, 결과 발송·완료 처리 결과, 실제 별도 조치가 필요한 특이사항이다. 기관 공지·동물 연결이 안 된 일반 메일을 무조건 필수 발견으로 만들지 않는다. 전체 확인 기록과 사용자 알림을 구분한다.
 
 검사기관 접수·진행·결과·청구 관련 메일과 결과 안내 원본·큐를 검토하고 inspectionMail과 resultNotices에 실제 근거를 남긴다. 일본 검역소 메일 전체를 대신 검토하지 않는다.
 
@@ -56,7 +60,7 @@ UI와 같은 검사 회차·여행지별 전염병 행 및 상태 함수를 적�
 
 일본 메일은 수신·실제 SENT·현재 본문·후속 페이지·기존 미완료와 대조한다. 검색 기간을 겹치고 ID로 중복 제거하며 미검토 메일을 남긴 채 기준 시각을 앞당기지 않는다. Form AC 21일 대상 전체와 기발송을 확인한다. 미지원 요청은 이유·자료·기한·필요 판단을 보고한다.
 
-[결과 안내 스킬](../../petmove-kakao-results/SKILL.md)의 전체 첨부 스냅샷·원본·연락 할 일·실제 발송을 대조한다. 고객 자동 발송은 금지다. 신규 첨부를 미확인 채 seen으로 넘기지 않는다.
+[결과 안내 스킬](../../petmove-kakao-results/SKILL.md)의 전체 첨부 스냅샷·원본·연락 할 일·실제 발송을 대조한다. 검증된 현재 회차 결과는 검사 담당 상시 지시에 따라 발송·재확인한 뒤 Work 완료를 반영한다. 신규 첨부를 미확인 채 seen으로 넘기지 않는다.
 
 각 담당은 위 표의 소스를 검토한다. 위 일본 메일·결과 안내 설명은 해당 담당에만 적용하며 all일 때만 모두 수행한다. pending, manualNaccsContinuation.remaining, delegatedTasks의 담당 분류를 대조한다. 중단 지시를 완료/취소 근거 없이 삭제·기보고 대기로 숨기지 않는다. 새 요구·오류·결과 안내 후보 등 추가 발견은 종료 스냅샷 findings에 `key,caseId,orgId,destination,pet,guardian,reason,workArea`로 넣어 검증 대상에 포함한다.
 
@@ -75,6 +79,7 @@ required.private.json은 시작·종료 합집합이다. 모든 ID에 판단을 
 | disposition=reported | 미완료/경고의 nextAction, 현재 evidence |
 | disposition=resolved | 처리 결과 nextAction, evidence, 실제 실행·저장 재조회 resolutionEvidence. 처리 결과도 보고됨 |
 | disposition=unchanged | 일반 대기만 허용. 실제 과거 보고 지문·reportedAt·deliveryEvidence와 이번 recheckedAt/evidence/nextAction 필요. 경고·중단 지시·일일 필수 건은 금지 |
+| disposition=monitored | 검사 담당의 정상 진행·예정·조치 없는 일반 대기만 허용. 이번 recheckedAt/evidence/nextAction 필수. 과거 보고 증거는 불필요하며 사용자 알림에서는 제외. 결과 발송 할 일·경고·중단·사용자 조치 대기는 금지 |
 | needsUserAction=true | 자료·판단·인증이 필요하면 표시. 종료는 needs_attention |
 | reviews의 담당별 필수 소스 | 위 scope 표의 각 항목에 complete=true, checkedAt, evidence. 실제 전체 원문·첨부·페이지·발신 대조 근거이며 미검토를 true로 표시하지 않음 |
 
@@ -84,7 +89,7 @@ node scripts/daily-review.mjs render --dir $reviewDir
 
 실패하면 누락을 해결한다. report.private.md는 모든 필수 행·처리 결과를 담은 사용자 보고 원문이다. coverage.private.json은 같은 보고의 ID·지문·시각·해시다. visit-booking-candidates.private.json의 미예약 대상도 공유 visitBookingNoticeQueue에 병합하며 기존 문구 승인·발송 이력을 보존한다. 몇 건만 골라 다시 요약하지 않는다.
 
-보고 파일 생성은 실제 알림 전달의 근거가 아니다. 다음 실행 시작에 담당 채팅의 실제 이전 사용자 알림을 재조회하고 해당 항목이 포함된 메시지·시각 근거를 initial.priorReports의 deliveryEvidence에 기록한다. 이를 공유 dailyReviewCoverage.byArea[scope].reportedItems에도 병합한다. 전달을 확인할 수 없으면 일반 대기도 기보고로 숨기지 않는다. 이번 생성 파일에 전달 근거를 미리 만들지 않는다.
+보고 파일 생성은 실제 알림 전달의 근거가 아니다. `unchanged`를 사용할 때는 담당 채팅의 실제 이전 알림과 메시지·시각을 확인해 initial.priorReports의 deliveryEvidence와 공유 reportedItems에 반영한다. 검사 담당의 정상 항목은 별도 `monitored`로 검증하며 과거 알림을 찾지 못했다는 이유로 재보고하지 않는다. 이번 생성 파일에 전달 근거를 미리 만들거나 monitored를 reportedItems에 넣지 않는다.
 
 ## 공유 저장과 완료 차단
 

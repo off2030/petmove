@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {reviewScope,sourceAreas,REVIEW_LABELS} from './daily-review-areas.mjs';
-export const POLICY_VERSION = 2;
+export const POLICY_VERSION = 3;
 export const digest = value => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex');
 export function kstDay(value = new Date()) { return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value)); }
 export function dayDistance(a,b) {
@@ -25,7 +25,7 @@ export function collectObligations(snapshot) {
     const days=dayDistance(r.date,snapshot.today);
     const late=r.status==='waiting' && days!==null && days>=5;
     add('inspection',r,r.rowId,late?`${r.lab} 검사일 ${r.date}, 대기 ${days}일`: `${r.lab} ${r.status}, 검사일 ${r.date||'미정'}`,late,'inspection');
-    if (r.result && r.status!=='done') add('warning',r,r.rowId+':result-status','검사 결과 등록과 Work 검사 상태의 차이 확인',true,'inspection');
+    if (r.result) add('result-notice',r,r.rowId+':result-notice','Work 등록 결과지 확인·카톡 발송 재확인 후 해당 검사 회차 완료 필요',true,'inspection');
   }
   for (const r of snapshot.reports) {
     if (r.excluded) continue;
@@ -89,7 +89,11 @@ export function validateReview({initial,final,decisions,historyHash,verifiedHist
   for(const item of required) {
     const d=byId.get(item.id);
     if(!d) {errors.push('unaccounted-item:'+item.id);continue;}
-    if(!['reported','resolved','unchanged'].includes(d.disposition)||!d.nextAction?.trim()||!d.evidence?.trim()) errors.push('incomplete-decision:'+item.id);
+    if(!['reported','resolved','unchanged','monitored'].includes(d.disposition)||!d.nextAction?.trim()||!d.evidence?.trim()) errors.push('incomplete-decision:'+item.id);
+    if(d.disposition==='monitored') {
+      if(item.workArea!=='inspection'||!['inspection','followup'].includes(item.kind)||item.mustReport||d.needsUserAction===true||(item.kind==='followup'&&item.slot.startsWith('result-notice:')))errors.push('nonroutine-item-monitored:'+item.id);
+      if(!Number.isFinite(Date.parse(d.recheckedAt))||Date.parse(d.recheckedAt)<Date.parse(initial.checkedAt)||Date.parse(d.recheckedAt)>nowMs)errors.push('monitored-without-recheck:'+item.id);
+    }
     if(d.disposition==='unchanged') {
       if(item.mustReport)errors.push('mandatory-item-suppressed:'+item.id);
       const previous=initial.priorReports?.[item.id];
@@ -103,7 +107,7 @@ export function validateReview({initial,final,decisions,historyHash,verifiedHist
     if(r?.complete!==true||!r.evidence?.trim()||!Number.isFinite(Date.parse(r.checkedAt))||Date.parse(r.checkedAt)<Date.parse(initial.checkedAt)||Date.parse(r.checkedAt)>nowMs)errors.push('unreviewed-source:'+area);
   }
   if(!historyHash||historyHash!==verifiedHistoryHash) errors.push('shared-history-not-verified');
-  const lines=required.filter(i=>byId.get(i.id)?.disposition!=='unchanged').map(i=> {
+  const lines=required.filter(i=>!['unchanged','monitored'].includes(byId.get(i.id)?.disposition)).map(i=> {
     const d=byId.get(i.id)??{};
     return `- **${i.pet||'대상 확인 필요'}${i.guardian?' / '+i.guardian:''}${i.destination?' · '+i.destination:''}** — ${i.reason}. ${d.nextAction||'다음 행동 미확인'}${d.disposition==='resolved'?' (처리 결과 확인)':''}`;
   });

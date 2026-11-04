@@ -33,6 +33,27 @@ d0.documents.push({...ident,destination:'과거무출국일',vetVisit:'2026-01-0
 assert.equal(collectObligations(d0).some(i=>i.destination==='과거무출국일'),false);
 const ins=base();ins.inspections=[['waiting','2026-10-28'],['waiting','2026-11-03'],['testing','2026-10-01'],['waiting','']].map(([status,date],i)=>({...ident,rowId:'r'+i,status,date,lab:'KRSL'}));
 assert.equal(collectObligations(ins).filter(i=>i.mustReport).length,1);
+// Routine inspection supervision is audited without requiring a prior notification.
+// Daily delays, entered results awaiting delivery, interruptions and user action
+// must still be visible; other roles retain their existing report requirements.
+const routine={...base(),scope:'inspection',inspections:[{...ident,rowId:'routine',lab:'KRSL',date:'2026-10-30',status:'testing'}]};
+const routineDecision=()=>({reviews:Object.fromEntries(sourceAreas('inspection').map(k=>[k,{complete:true,checkedAt:now,evidence:'가상 기관·원본·발신 검토'}])),items:collectObligations(routine).map(i=>({id:i.id,disposition:'monitored',nextAction:'확인된 예정일에 결과 추적',evidence:'가상 기관 검사 중 근거',recheckedAt:now}))});
+const checkRoutine=(s,d)=>validateReview({initial:s,final:s,decisions:d,historyHash:'s',verifiedHistoryHash:'s',now});
+assert.equal(checkRoutine(routine,routineDecision()).ok,true);
+assert.equal(checkRoutine(routine,routineDecision()).report.includes('테스트 동물'),false);
+const withoutRecheck=routineDecision();delete withoutRecheck.items[0].recheckedAt;assert.equal(checkRoutine(routine,withoutRecheck).ok,false);
+const needsAction=routineDecision();needsAction.items[0].needsUserAction=true;assert.equal(checkRoutine(routine,needsAction).ok,false);
+for(const s of [
+  {...routine,inspections:[{...routine.inspections[0],status:'waiting',date:'2026-10-28'}]},
+  {...routine,inspections:[{...routine.inspections[0],result:'1.25'}]},
+  {...routine,inspections:[],tasks:[{...ident,key:'result-notice:awaiting-delivery',workArea:'inspection',nextAction:'현재 결과지 발송 필요'}]},
+  {...routine,inspections:[],tasks:[{...ident,key:'stopped',workArea:'inspection',interrupted:true,nextAction:'발송 실패 재개 필요'}]},
+  {...routine,scope:'documents',inspections:[],documents:[{...ident,departure:'2026-12-01',vetVisit:'2026-11-20',status:'not_started'}]}
+]) {
+  const d=routineDecision();d.items=collectObligations(s).map(i=>({...d.items[0],id:i.id}));
+  assert.equal(checkRoutine(s,d).ok,false);
+}
+assert.equal(collectObligations({...routine,inspections:[{...routine.inspections[0],result:'1.25'}]}).some(i=>i.kind==='result-notice'&&i.mustReport),true);
 const booking=base();for(const days of [-1,0,14,15])booking.documents.push({...ident,destination:'예약'+days,vetVisit:'',departure:new Date(Date.parse('2026-11-02')+days*86400000).toISOString().slice(0,10),status:'not_started'});
 assert.equal(collectObligations(booking).filter(i=>i.kind==='booking'&&i.mustReport).length,2);
 booking.documents[1].vetVisit='2026-11-02';
@@ -149,6 +170,13 @@ try {
     assert.equal(verifyCompletion(run,tmp,scope).ok,true);
     assert.throws(()=>verifyCompletion(run,tmp,'all'));
   }
+  const quiet={...routine,runId:run.id,today:kstDay(current),checkedAt:stamp};
+  const quietDecisions=routineDecision();
+  for(const source of Object.values(quietDecisions.reviews))source.checkedAt=stamp;
+  for(const item of quietDecisions.items)item.recheckedAt=stamp;
+  write('initial.private.json',quiet);write('final.private.json',quiet);write('decisions.private.json',quietDecisions);cli('render');
+  const quietCoverage=JSON.parse(fs.readFileSync(path.join(tmp,'coverage.private.json'),'utf8'));
+  assert.deepEqual(quietCoverage.reportedItems,{},'Internal monitoring must not invent reported notifications');
 } finally {
   // Only files created by this test in the verified private temp directory.
   for(const f of fs.readdirSync(tmp))fs.unlinkSync(path.join(tmp,f));fs.rmdirSync(tmp);

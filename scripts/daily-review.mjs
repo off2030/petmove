@@ -161,7 +161,7 @@ async function main(){
       if(!result.ok){save(path.join(dir,'validation-errors.private.json'),result.errors);throw Error('Coverage validation failed; see validation-errors.private.json in the private run folder');}
       fs.writeFileSync(path.join(dir,'report.private.md'),result.report);
       const coverage={scope:initial.scope??'all',runId:initial.runId,checkedAt:final.checkedAt,reportHash:digest(result.report),required:result.required.length,reportedItems:{...initial.priorReports}};
-      for(const i of result.required)if(decisions.items.find(d=>d.id===i.id)?.disposition!=='unchanged')coverage.reportedItems[i.id]={fingerprint:i.fingerprint,reportedAt:new Date().toISOString()};
+      for(const i of result.required)if(['reported','resolved'].includes(decisions.items.find(d=>d.id===i.id)?.disposition))coverage.reportedItems[i.id]={fingerprint:i.fingerprint,reportedAt:new Date().toISOString()};
       save(path.join(dir,'coverage.private.json'),coverage);
       const bookingCandidates=collectObligations(final).filter(i=>i.kind==='booking').map(i=>({taskId:i.id,orgId:final.organization.id,caseId:i.caseId,destination:i.destination,pet:i.pet,guardian:i.guardian,departure:final.documents.find(r=>r.caseId===i.caseId&&r.destination===i.destination)?.departure,remainingAction:decisions.items.find(d=>d.id===i.id)?.nextAction,sendMode:'user-reviewed',detectedAt:final.checkedAt}));
       save(path.join(dir,'visit-booking-candidates.private.json'),{organization:final.organization,tasks:bookingCandidates});
