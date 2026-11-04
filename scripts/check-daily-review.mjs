@@ -54,6 +54,12 @@ for(const s of [
   assert.equal(checkRoutine(s,d).ok,false);
 }
 assert.equal(collectObligations({...routine,inspections:[{...routine.inspections[0],result:'1.25'}]}).some(i=>i.kind==='result-notice'&&i.mustReport),true);
+// Explicitly excluded historical results do not reopen notices; ordinary delay
+// supervision and genuinely new result delivery remain required.
+const historicalResult={...routine.inspections[0],result:'1.25',resultNoticeEligible:false};
+assert.equal(collectObligations({...routine,inspections:[historicalResult]}).some(i=>i.kind==='result-notice'),false);
+assert.ok(collectObligations({...routine,inspections:[{...historicalResult,status:'waiting',date:'2026-10-28'}]}).some(i=>i.kind==='inspection'&&i.mustReport));
+assert.ok(collectObligations({...routine,inspections:[{...historicalResult,resultNoticeEligible:true}]}).some(i=>i.kind==='result-notice'&&i.mustReport));
 const booking=base();for(const days of [-1,0,14,15])booking.documents.push({...ident,destination:'예약'+days,vetVisit:'',departure:new Date(Date.parse('2026-11-02')+days*86400000).toISOString().slice(0,10),status:'not_started'});
 assert.equal(collectObligations(booking).filter(i=>i.kind==='booking'&&i.mustReport).length,2);
 booking.documents[1].vetVisit='2026-11-02';
@@ -82,6 +88,8 @@ assert.throws(()=>privatePath('scripts/public.json'));
 assert.throws(()=>verifyCompletion({id:'no-proof',started_at:now},'work/naver-inquiries/nonexistent-review-private'));
 const tasks=historyTasks({pending:[{caseId:'case-a',reason:'회신 대기'},{caseId:'other',orgId:'other-org',reason:'범위 밖'}],manualNaccsContinuation:{remaining:[{caseId:'case-a',next:'중단 지시'}]}},[{id:'case-a',pet_name:'테스트',customer_name:'보호자'}],org);
 assert.equal(tasks.length,2);assert.equal(tasks.filter(t=>t.interrupted).length,1);
+const prospectiveTasks=historyTasks({kakaoResultNoticeQueue:{organization:org,prospectiveOnly:{excludedTaskIds:['historical']},tasks:[{taskId:'historical',caseId:'case-a'},{taskId:'new-result',caseId:'case-a'}]}},[{id:'case-a',pet_name:'테스트',customer_name:'보호자'}],org);
+assert.equal(prospectiveTasks.length,1);assert.ok(prospectiveTasks[0].key.includes('new-result'));
 
 // Area partition must cover the full scan, with ambiguous legacy commands reported
 // by every area until someone classifies them; never silently discard a warning.

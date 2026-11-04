@@ -56,7 +56,8 @@ export function historyTasks(history,cases,org) {
   // Canonical place for new interrupted commands, including non-NACCS workflows.
   for(const x of history.delegatedTasks??[])if(!x.resolvedAt&&!x.cancelledAt)add(x,'delegated:'+x.id,true);
   const queue=history.kakaoResultNoticeQueue;
-  if(queue?.organization?.id===org.id)for(const x of queue.tasks??[])if(!x.resolvedAt&&!x.cancelledAt)add({...x,orgId:org.id,nextAction:x.remainingAction??x.waitingFor??'결과 안내 남은 확인'},'result-notice:'+x.taskId,false,'inspection');
+  const excludedNotices=new Set(queue?.prospectiveOnly?.excludedTaskIds??[]);
+  if(queue?.organization?.id===org.id)for(const x of queue.tasks??[])if(!x.resolvedAt&&!x.cancelledAt&&!excludedNotices.has(x.taskId))add({...x,orgId:org.id,nextAction:x.remainingAction??x.waitingFor??'결과 안내 남은 확인'},'result-notice:'+x.taskId,false,'inspection');
   const booking=history.visitBookingNoticeQueue;
   if(booking?.organization?.id===org.id)for(const x of booking.tasks??[])if(!x.resolvedAt&&!x.cancelledAt)add({...x,orgId:org.id,nextAction:x.remainingAction??'내원 예약 안내 문구 확인·발송 또는 예약 회신 대기'},'visit-booking:'+x.taskId,false,'documents');
   return tasks;
@@ -91,7 +92,8 @@ export async function scan(history,dir,runId,scope='all') {
     const c=cases.find(c=>c.id===e.caseId);return c&&Array.isArray(e.fingerprintFields)&&digest(canonical(Object.fromEntries(e.fingerprintFields.map(k=>[k,c[k]]))))===e.baselineInfoFingerprint;
   }).map(e=>e.caseId));
   const identity=c=>({orgId:organization.id,caseId:c.id,pet:c.pet_name,guardian:c.customer_name});
-  const inspections=u.buildInspectionRows(cases,conf.titerRules,conf.titerDefault,conf.infectiousRules).map(r=>({...identity(r.caseRow),rowId:r.id,lab:r.lab,date:r.date,status:u.readInspectionStatus(r.recordsDest?u.flattenCaseForDestination(r.caseRow,r.recordsDest):r.caseRow,r.dateStorage,r.date),result:r.dateStorage.kind==='titer'?r.caseRow.data?.rabies_titer_records?.[r.dateStorage.recordIdx]?.value:null,excluded:excluded.has(r.caseRow.id)}));
+  const priorResults=history.kakaoResultNoticeQueue?.prospectiveOnly?.baselineResultFingerprints??{};
+  const inspections=u.buildInspectionRows(cases,conf.titerRules,conf.titerDefault,conf.infectiousRules).map(r=>({...identity(r.caseRow),rowId:r.id,lab:r.lab,date:r.date,status:u.readInspectionStatus(r.recordsDest?u.flattenCaseForDestination(r.caseRow,r.recordsDest):r.caseRow,r.dateStorage,r.date),result:r.dateStorage.kind==='titer'?r.caseRow.data?.rabies_titer_records?.[r.dateStorage.recordIdx]?.value:null,excluded:excluded.has(r.caseRow.id)})).map(r=>({...r,resultNoticeEligible:priorResults[r.rowId]!==digest([r.lab,r.date,r.result])}));
   const reportCases=cases.filter(c=>(u.isAutoImportReport(c,countries)||u.isManualImportReport(c))&&!u.isDismissedImportReport(c));
   const reportRows=reportCases.map(c=>u.withImportReportDest(c,countries));
   const activeReport=c=>u.parseDestinations(c.destination).find(d=>d===c.data?.import_report_active_dest)??u.parseDestinations(c.destination)[0]??null;

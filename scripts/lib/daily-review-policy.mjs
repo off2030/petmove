@@ -25,7 +25,7 @@ export function collectObligations(snapshot) {
     const days=dayDistance(r.date,snapshot.today);
     const late=r.status==='waiting' && days!==null && days>=5;
     add('inspection',r,r.rowId,late?`${r.lab} 검사일 ${r.date}, 대기 ${days}일`: `${r.lab} ${r.status}, 검사일 ${r.date||'미정'}`,late,'inspection');
-    if (r.result) add('result-notice',r,r.rowId+':result-notice','Work 등록 결과지 확인·카톡 발송 재확인 후 해당 검사 회차 완료 필요',true,'inspection');
+    if (r.result && r.resultNoticeEligible!==false) add('result-notice',r,r.rowId+':result-notice','Work 신규 입력 결과지 확인·카톡 발송 재확인 후 해당 검사 회차 완료 필요',true,'inspection');
   }
   for (const r of snapshot.reports) {
     if (r.excluded) continue;
