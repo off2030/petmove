@@ -46,10 +46,10 @@ export function collectObligations(snapshot) {
     const upcoming=visitIn!==null && visitIn>=0 && visitIn<=7;
     const currentDeparture=departureIn!==null && departureIn>=0;
     if(!r.vetVisit?.trim()&&currentDeparture&&departureIn<=14) add('booking',row,'visit-booking:'+r.departure,`내원 예약 미등록; 출국 ${r.departure} (${departureIn}일 남음); 기존 카카오 채팅방 대조 후 예약 요청 안내 필요`,true);
-    // Every scheduled visit needs preparation, including visits more than a week away.
-    // Historical visits without a remaining departure are not current preparation work.
-    if (r.status!=='done' && visitIn!==null && ((visitIn>=0 && (departureIn===null||currentDeparture)) || (visitIn<0&&currentDeparture))) add('document',row,'preparation',`서류 준비 필요; 내원 ${r.vetVisit}, 출국 ${r.departure||'미정'}${visitIn<0?'; 내원일 경과':''}`,true);
-    else if (r.status!=='done' && currentDeparture) add('document',row,'preparation',`서류 준비 대기; 내원 ${r.vetVisit||'미정'}, 출국 ${r.departure}`);
+    // Daily preparation warnings start seven days before the visit, including day zero.
+    // Later visits remain managed; old visits without a remaining departure are not current work.
+    if (r.status!=='done' && ((upcoming && (departureIn===null||currentDeparture)) || (visitIn!==null&&visitIn<0&&currentDeparture))) add('document',row,'preparation',`서류 준비 미완료; 내원 ${r.vetVisit}, 출국 ${r.departure||'미정'}${visitIn<0?'; 내원일 경과':''}`,true);
+    else if (r.status!=='done' && (currentDeparture||(visitIn!==null&&visitIn>7&&departureIn===null))) add('document',row,'preparation',`서류 준비 대기; 내원 ${r.vetVisit||'미정'}, 출국 ${r.departure||'미정'}`);
     if (r.outOfWindow && (currentDeparture||upcoming)) add('warning',row,'visit-window',`내원일 ${r.vetVisit}과 출국일 ${r.departure||'미정'}의 날짜 구간 불일치`,true);
   }
   for (const task of snapshot.tasks) add(task.interrupted?'interrupted':'followup',task,task.key,task.nextAction,!!task.interrupted);
@@ -95,7 +95,8 @@ export function validateReview({initial,final,decisions,historyHash,verifiedHist
       const routineInspection=item.workArea==='inspection'&&['inspection','followup'].includes(item.kind)&&!(item.kind==='followup'&&item.slot.startsWith('result-notice:'));
       const documentRow=final.documents.find(r=>r.caseId===item.caseId&&r.destination===item.destination);
       const distantBooking=item.workArea==='documents'&&item.kind==='document'&&!documentRow?.vetVisit?.trim()&&dayDistance(final.today,documentRow?.departure)>14;
-      if((!routineInspection&&!distantBooking)||item.mustReport||d.needsUserAction===true)errors.push('nonroutine-item-monitored:'+item.id);
+      const distantPreparation=item.workArea==='documents'&&item.kind==='document'&&dayDistance(final.today,documentRow?.vetVisit)>7;
+      if((!routineInspection&&!distantBooking&&!distantPreparation)||item.mustReport||d.needsUserAction===true)errors.push('nonroutine-item-monitored:'+item.id);
       if(!Number.isFinite(Date.parse(d.recheckedAt))||Date.parse(d.recheckedAt)<Date.parse(initial.checkedAt)||Date.parse(d.recheckedAt)>nowMs)errors.push('monitored-without-recheck:'+item.id);
     }
     if(d.disposition==='unchanged') {

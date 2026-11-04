@@ -28,9 +28,9 @@ for(const kind of ['warning','document','interrupted']) {
 const returning=base();returning.reports=[{...ident,departure:'2026-10-22',return:'2026-11-16',importStatus:'done',exportStatus:'not_started',deadline:'2026-09-12'}];
 assert.ok(collectObligations(returning).some(i=>i.kind==='report'&&i.slot==='export'));
 const d0=base();for(const days of [0,5,7,8]) d0.documents.push({...ident,destination:'여행'+days,vetVisit:new Date(Date.parse('2026-11-02')+days*86400000).toISOString().slice(0,10),departure:'2026-12-01',status:'not_started'});
-assert.equal(collectObligations(d0).filter(i=>i.mustReport).length,4);
+assert.equal(collectObligations(d0).filter(i=>i.mustReport).length,3);
 d0.documents.push({...ident,destination:'미래내원무출국일',vetVisit:'2026-12-01',departure:'',status:'not_started'});
-assert.ok(collectObligations(d0).some(i=>i.destination==='미래내원무출국일'&&i.mustReport));
+assert.ok(collectObligations(d0).some(i=>i.destination==='미래내원무출국일'&&!i.mustReport));
 assert.equal(collectObligations({...base(),documents:[{...ident,vetVisit:'2026-12-01',departure:'2026-12-05',status:'done'}]}).length,0);
 d0.documents.push({...ident,destination:'과거무출국일',vetVisit:'2026-01-01',departure:'',status:'not_started'});
 assert.equal(collectObligations(d0).some(i=>i.destination==='과거무출국일'),false);
@@ -51,7 +51,7 @@ for(const s of [
   {...routine,inspections:[{...routine.inspections[0],result:'1.25'}]},
   {...routine,inspections:[],tasks:[{...ident,key:'result-notice:awaiting-delivery',workArea:'inspection',nextAction:'현재 결과지 발송 필요'}]},
   {...routine,inspections:[],tasks:[{...ident,key:'stopped',workArea:'inspection',interrupted:true,nextAction:'발송 실패 재개 필요'}]},
-  {...routine,scope:'documents',inspections:[],documents:[{...ident,departure:'2026-12-01',vetVisit:'2026-11-20',status:'not_started'}]}
+  {...routine,scope:'documents',inspections:[],documents:[{...ident,departure:'2026-12-01',vetVisit:'2026-11-07',status:'not_started'}]}
 ]) {
   const d=routineDecision();d.items=collectObligations(s).map(i=>({...d.items[0],id:i.id}));
   assert.equal(checkRoutine(s,d).ok,false);
@@ -69,6 +69,11 @@ const distantDocuments={...base(),scope:'documents',documents:[{...ident,vetVisi
 const distantDecisions={reviews:Object.fromEntries(sourceAreas('documents').map(k=>[k,{complete:true,checkedAt:now,evidence:'서류탭·기발송 대조'}])),items:collectObligations(distantDocuments).map(i=>({id:i.id,disposition:'monitored',nextAction:'출국 14일 전 미예약 여부 확인',evidence:'미래 출국일만 등록·새 요구 없음',recheckedAt:now}))};
 assert.equal(checkRoutine(distantDocuments,distantDecisions).ok,true);
 assert.equal(checkRoutine(distantDocuments,distantDecisions).report.includes('테스트 동물'),false);
+const laterVisit={...distantDocuments,documents:[{...ident,vetVisit:'2026-11-10',departure:'2026-12-01',status:'not_started'}]};
+const laterDecisions={...distantDecisions,items:collectObligations(laterVisit).map(i=>({...distantDecisions.items[0],id:i.id}))};
+assert.equal(checkRoutine(laterVisit,laterDecisions).ok,true,'내원 8일 전은 정상 내부 관리');
+const weekVisit={...laterVisit,documents:[{...laterVisit.documents[0],vetVisit:'2026-11-09'}]};
+assert.equal(checkRoutine(weekVisit,{...laterDecisions,items:collectObligations(weekVisit).map(i=>({...laterDecisions.items[0],id:i.id}))}).ok,false,'내원 7일 전 경고를 숨기지 않음');
 const imminentDocuments={...distantDocuments,documents:[{...ident,vetVisit:'',departure:'2026-11-16',status:'not_started'}]};
 const imminentDecisions={...distantDecisions,items:collectObligations(imminentDocuments).map(i=>({...distantDecisions.items[0],id:i.id}))};
 assert.equal(checkRoutine(imminentDocuments,imminentDecisions).ok,false,'14일 전 예약 안내를 내부 대기로 숨기지 않음');
@@ -199,4 +204,4 @@ try {
   // Only files created by this test in the verified private temp directory.
   for(const f of fs.readdirSync(tmp))fs.unlinkSync(path.join(tmp,f));fs.rmdirSync(tmp);
 }
-console.log('누락 검증 통과: 경고·중단 지시·내원일 등록 서류 준비·출국 0~14일 미예약·먼 예약 내부 관리·귀국 전 수출·회차·범위·보고 전달 근거·공유 이력·완료 차단');
+console.log('누락 검증 통과: 경고·중단 지시·내원 0~7일 서류 경고·출국 0~14일 미예약·먼 내원/예약 내부 관리·귀국 전 수출·회차·범위·보고 전달 근거·공유 이력·완료 차단');
