@@ -44,6 +44,7 @@ export const SHARE_FILE_REQUESTS: ShareFileRequestDef[] = [
   // 구충은 필리핀만 해당 — 필리핀은 '타병원 접종 및 구충증명서'로 통일, 그 외는 '타병원 접종증명서'.
   { key: 'other_hospital_vaccine', label: '타병원 접종증명서', required: false, destinations: 'all', excludeDestinations: ['필리핀'] },
   { key: 'other_hospital_deworming', label: '타병원 접종 및 구충증명서', required: false, destinations: ['필리핀'] },
+  { key: 'other_hospital_health', label: '타병원 건강증명서', required: false, destinations: 'all' },
 ]
 
 const BY_KEY = new Map(SHARE_FILE_REQUESTS.map((r) => [r.key, r]))
