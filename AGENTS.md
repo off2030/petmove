@@ -10,15 +10,16 @@
 
 이 저장소의 펫무브 업무 지침은 `.agents/skills/`에서 관리한다. 관련 업무를 요청받으면 해당 `SKILL.md`와 필요한 참조 문서를 읽는다.
 
-실무 개별 업무와 담당 채팅은 아래 세 가지로 나눈다. 권한·공식 상태·보고 기준은 공통 [실무 지침](docs/work-management/operations.md)을 공유한다.
+실무 개별 업무와 담당 채팅은 아래 네 가지로 나눈다. 권한·공식 상태·보고 기준은 공통 [실무 지침](docs/work-management/operations.md)을 공유한다.
 
 | 담당 | 범위·진입 문서 | 기본 스킬 |
 | --- | --- | --- |
 | 1. 검사 | 검사 의뢰·기관 진행·결과 확인·결과 안내·검사비. [검사](docs/work-management/inspection.md) | `.agents/skills/petmove-inspection-check/SKILL.md` |
 | 2. 일본 수입신고 | 일본 수입·수출·변경신청·검역소 회신·Form AC. [일본](docs/work-management/japan.md) | `.agents/skills/petmove-japan-naccs/SKILL.md` |
 | 3. 서류 및 기타 | 자료 보관·정보 입력·일반 서류·내원 안내·기타 실무. [서류](docs/work-management/documents.md) | `.agents/skills/petmove-documents/SKILL.md` |
+| 4. 필리핀 수입허가증 | 필리핀 SPSIC 신청 요건·신청·승인 확인. [필리핀](docs/work-management/philippines.md) | `.agents/skills/petmove-philippines-import/SKILL.md` |
 
-정기 점검도 세 담당이 각각 `petmove-daily-review`의 `inspection`·`japan`·`documents` 범위로 자기 담당 전체를 대조한다. 세 예약 모두 업무 PC에서 월·화·수·금·토 10:30에 시작한다. 이전 통합 예약은 중지하며 명시적 수동 전체 점검에는 `--scope all`을 사용한다. 담당 분리 자체는 신청·발송·결제 권한을 만들지 않으며, 실제 실행은 공통 실무 지침에 명시된 담당별 상시 위임과 사용자 개별 지시를 따른다.
+정기 점검도 각 담당이 `petmove-daily-review`의 `inspection`·`japan`·`documents`·`philippines` 범위로 자기 담당 전체를 대조한다. 기존 세 예약은 업무 PC에서 월·화·수·금·토 10:30, 필리핀은 목·일을 포함해 매일 10:30에 시작한다. 이전 통합 예약은 중지하며 명시적 수동 전체 점검에는 `--scope all`을 사용한다. 담당 분리 자체는 신청·발송·결제 권한을 만들지 않으며, 실제 실행은 공통 실무 지침에 명시된 담당별 상시 위임과 사용자 개별 지시를 따른다.
 
 - 고객 문의를 네이버 블로그 초안으로 작성: `.agents/skills/petmove-naver-post/SKILL.md`
 - 정기 실무 점검·세 탭 전체 확인·보고 누락 검증: `.agents/skills/petmove-daily-review/SKILL.md`
@@ -27,6 +28,7 @@
 - 카카오톡 수신 서류 대조·다운로드·보관 및 요청한 칩·접종·항체검사 정보 입력: `.agents/skills/petmove-kakao-documents/SKILL.md`
 - 검사결과 확인·기존 카카오 고객 채팅방 안내문/결과지 발송·재확인: `.agents/skills/petmove-kakao-results/SKILL.md`
 - 일본 NACCS 수입 사전신고·수입검사·수출검역·신고 수정: `.agents/skills/petmove-japan-naccs/SKILL.md`
+- 필리핀 SPSIC 수입허가증 신청·승인 확인: `.agents/skills/petmove-philippines-import/SKILL.md`
 - 검사기관 신청 대조·검사 신청: `.agents/skills/petmove-inspection-check/SKILL.md`
 - 캔자스 KSVDL 검사비 결제: `.agents/skills/petmove-ksvdl-payment/SKILL.md`
 

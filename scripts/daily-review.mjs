@@ -9,7 +9,7 @@ import {randomUUID} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {loadReviewSelectors} from './lib/daily-review-source.mjs';
 import {POLICY_VERSION,kstDay,collectObligations,reconcile,validateReview,digest} from './lib/daily-review-policy.mjs';
-import {reviewScope,sourceAreas,workArea,coverageFor} from './lib/daily-review-areas.mjs';
+import {reviewScope,sourceAreas,workArea,coverageFor,reportWorkArea} from './lib/daily-review-areas.mjs';
 export const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
 const save=(p,v)=>fs.writeFileSync(p,JSON.stringify(v,null,2)+'\n');
@@ -99,7 +99,8 @@ export async function scan(history,dir,runId,scope='all') {
   const activeReport=c=>u.parseDestinations(c.destination).find(d=>d===c.data?.import_report_active_dest)??u.parseDestinations(c.destination)[0]??null;
   const makeReport=(c,dest)=>{
     const selected={...c,data:{...c.data,import_report_active_dest:dest}};
-    return {...identity(c),workArea:u.destinationCountry(dest??'')==='일본'?'japan':'documents',destination:dest,departure:u.importReportDeparture(selected),return:u.importReportReturnDate(selected),importStatus:u.reportSlotStatusFor(c,dest,'import'),exportStatus:u.exportSlotApplies(c,dest)?u.reportSlotStatusFor(c,dest,'export'):'na',deadline:u.reportDeadline(selected),excluded:excluded.has(c.id)};
+    const area=reportWorkArea(u.destinationCountry(dest??''));
+    return {...identity(c),workArea:area,destination:dest,departure:u.importReportDeparture(selected),return:u.importReportReturnDate(selected),importStatus:u.reportSlotStatusFor(c,dest,'import'),exportStatus:u.exportSlotApplies(c,dest)?u.reportSlotStatusFor(c,dest,'export'):'na',deadline:u.reportDeadline(selected),excluded:area==='philippines'?false:excluded.has(c.id)};
   };
   // UI active rows for count parity + every scheduled reporting destination for coverage.
   const reports=reportCases.flatMap(c=>{

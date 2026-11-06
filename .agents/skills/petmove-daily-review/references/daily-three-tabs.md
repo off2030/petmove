@@ -1,13 +1,14 @@
 # 담당별 정기 점검과 보고 누락 검증
 
-세 담당이 각자 자기 범위 전체를 점검한다. 아래 표에서 scope와 필수 검토 소스를 정한다. 명시적 수동 전체 점검만 all을 사용한다.
+각 담당이 자기 범위 전체를 점검한다. 아래 표에서 scope와 필수 검토 소스를 정한다. 명시적 수동 전체 점검만 all을 사용한다.
 
 | scope | 대상 | decisions.reviews 필수 소스 |
 | --- | --- | --- |
 | inspection | 모든 검사 회차·진행·결과·검사 관련 미완료 | inspectionMail, resultNotices |
 | japan | 일본 여행 수입/수출 슬롯·검역소 메일·Form AC·일본 미완료 | mail, formAc |
-| documents | 모든 여행의 일반 서류·내원 안내·일본 외 신고·자료 관련 미완료 | documentSources, visitBookings |
-| all | 명시적 수동 전체 점검 | mail, resultNotices(전체 메일·Form AC·자료 대조 포함) |
+| documents | 모든 여행의 일반 서류·내원 안내·일본/필리핀 수입 외 신고·자료 관련 미완료 | documentSources, visitBookings |
+| philippines | 필리핀 수입허가의 전체 여행·신청 요건·신청 건 승인 확인·필리핀 허가 관련 미완료 | philippineRequirements, philippineApplications |
+| all | 명시적 수동 전체 점검 | mail, resultNotices(전체 메일·Form AC·자료 대조 포함), philippineRequirements, philippineApplications |
 
 scope는 최초 스냅샷에 고정되며 실행 중 바꿀 수 없다. 전체 DB 페이지·건수·현재 UI 선택 함수는 공통으로 대조하고 required.private.json에서 자기 담당의 전체 대상을 확인한다. 분류되지 않은 기존 지시·경고는 어느 담당에서도 누락시키지 않으며 workArea를 확인해 공유 이력에서 분류한다. 분류 전에는 임의 실행하지 않는다.
 
@@ -19,7 +20,7 @@ scope는 최초 스냅샷에 고정되며 실행 중 바꿀 수 없다. 전체 D
 
 ```powershell
 $automationId = '<현재 담당 예약 ID: 업무 구조 문서 참조>'
-$scope = 'inspection' # japan 또는 documents
+$scope = 'inspection' # japan, documents 또는 philippines
 node scripts/automation-calendar.mjs start --id $automationId
 $reviewDir = 'work/naver-inquiries/daily-review-SCOPE-YYYYMMDD-HHMM-private'
 node scripts/daily-review.mjs snapshot --dir $reviewDir --id $automationId --scope $scope --history <현재 실행 전용 공유 사본 경로>
@@ -41,7 +42,7 @@ Work 검사탭의 대기 → 진행 → 완료 전체를 UI와 같은 회차·�
 
 ## 일본 수입신고 담당
 
-현재 신고 탭의 일본 여행 토큰 전체 수입·수출 슬롯을 각각 읽는다. 활성 여행은 화면 건수 확인용이며 다른 여행을 가리지 못한다. 출국일 경과·한쪽 완료·새 메일 없음으로 제외하지 않는다. 일본 외 신고는 서류 및 기타 담당의 documents scope로 검증한다.
+현재 신고 탭의 일본 여행 토큰 전체 수입·수출 슬롯을 각각 읽는다. 활성 여행은 화면 건수 확인용이며 다른 여행을 가리지 못한다. 출국일 경과·한쪽 완료·새 메일 없음으로 제외하지 않는다. 필리핀 수입은 philippines, 그 외 신고는 documents scope로 검증한다.
 
 - 대기: 공통 운영 기준의 일본 담당 상시 지시에 따라 새 대기 항목의 현재 자료·기존 신청·실제 발신을 대조하고 신고를 제출한다. 실제 미제출·자료 부족·판단·로그인 장애는 해당 건의 이유와 다음 행동을 남긴다.
 - 진행: 실제 신청번호, 현재 회신·발신, 승인/예약 확정, 승인서 파일 후속 작업 확인.
@@ -50,11 +51,19 @@ Work 검사탭의 대기 → 진행 → 완료 전체를 UI와 같은 회차·�
 
 일본 메일과 실제 SENT는 mail, 모든 수입 승인 완료 메일의 Form AC 사전 검토본 즉시 회신 대상·기존 승인 여행의 미발송·출국 직전 검역/정부 확인 최종본 전달 대상·각 단계 기발송·현재 명시 요청은 formAc에 별도로 검토 근거를 남긴다. 승인 확인 후 출국까지 남은 일수로 사전본 발송을 미루지 않는다. Form AC 제출은 일반 서류 담당과 중복 실행하지 않는다.
 
+## 필리핀 수입허가 담당
+
+[필리핀 스킬](../../petmove-philippines-import/SKILL.md)과 공통 상시 지시에 따라 신고탭의 모든 필리핀 여행별 요건·현재 신청을 대조한다. 대기는 모든 정보·서류·신고 시기가 맞을 때만 신청하며 미비는 구체적인 재개 조건·다음 적정 신청일·기한을 보고한다. 실제 접수 후 진행, 승인 원본 대조·보관 후 완료를 각각 저장·재조회한다.
+
+`philippineRequirements`에는 현재 공식 규정·적용일·전체 후보별 원본/Work/시기 대조, `philippineApplications`에는 기존 목록·신청번호별 현재 기관 상세·보완/반려/승인·허가 원본·Work 대조의 실제 근거를 남긴다. 대상이 없어도 실제 전체 조회 근거가 있어야 complete다. 인증 실패나 미조회 상태를 complete=true로 표시하지 않는다. 진행 건은 출국 후에도 유지하고 완료 건은 출국일까지 허가 유효성을 확인한다. 날짜 미등록·오류는 자동 제외 사유가 아니다.
+
+매일 신청 건의 승인 여부를 변화가 없어도 보고한다. 필리핀 수입 행은 일일 필수이므로 unchanged/monitored로 숨기지 못한다. 새 발견·보완·원본/Work 저장 불일치는 findings와 담당 `workArea: philippines`로 검증에 포함한다. 기존 documents 이력은 실제 허가 업무만 잠금 후 담당을 정리하며 일반 자료·내원·임상 값 불일치는 원래 담당을 보존한다.
+
 ## 서류 및 기타 담당
 
 Work 서류 탭의 여행별 출국일·내원일·내원가능일·준비상태·메모·날짜 구간을 확인하고 [서류 담당 상시 업무](../../../../docs/work-management/operations.md#서류-담당-상시-업무)에 따라 보고한다. 내원 7일 전부터 당일(0~7일 포함)까지 준비 미완료를 매일 경고하며, 미래 출국이 남은 내원일 경과 미완료도 계속 보고한다. 출국일만 있는 건은 [예약 요청 안내](visit-booking.md)로 출국 2주 전 미예약 안내를 관리한다. 내원 8일 이상 남은 정상 준비 대기와 출국 2주 넘게 남은 단순 예약 대기는 실제 재확인 근거를 붙여 monitored로 내부 관리할 수 있다. 새 요구·불일치·자료/판단 필요는 숨기지 않는다. Form AC 발신·사전 검토 통과는 최종 준비 완료가 아니다. PDF를 열지 않았으면 원본 검토 완료라고 쓰지 않는다.
 
-일반 자료·서류·일본 외 기관 요청은 documentSources, 내원 예약 필요·기발송·예약 회신은 visitBookings에 검토 근거를 남긴다. 검사결과 판정·결과 고객 안내는 검사 담당, 일본 검역소 회신·Form AC 제출은 일본 담당이다.
+일반 자료·서류·일본/필리핀 수입 외 기관 요청은 documentSources, 내원 예약 필요·기발송·예약 회신은 visitBookings에 검토 근거를 남긴다. 검사결과 판정·결과 고객 안내는 검사 담당, 일본 검역소 회신·Form AC 제출은 일본 담당, 필리핀 수입허가는 필리핀 담당이다.
 
 ## 담당의 소스와 중단 지시
 
@@ -93,7 +102,7 @@ node scripts/daily-review.mjs render --dir $reviewDir
 
 ## 공유 저장과 완료 차단
 
-동시 시작이므로 시작·종료의 공유 원본은 각 실행 폴더로 내려받는다. 공용 로컬 파일을 세 실행의 입력·출력으로 동시에 덮어쓰지 않는다.
+동시 시작이므로 시작·종료의 공유 원본은 각 실행 폴더로 내려받는다. 공용 로컬 파일을 여러 실행의 입력·출력으로 동시에 덮어쓰지 않는다.
 
 공유 저장 직전 `node scripts/review-lock.mjs acquire --key history --owner <현재 runId>`로 잠금을 얻는다. 종료 코드 2 또는 acquired=false면 저장하지 말고 30초 이내 간격으로 다시 확인한다. 사용자에게 상태를 알리면서 최대 10분 대기 후에도 막히면 needs_attention으로 기록한다. 남의 잠금·중단 흔적을 지우거나 소유자를 사칭하지 않는다.
 

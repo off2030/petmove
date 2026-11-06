@@ -1,21 +1,23 @@
 ---
 name: petmove-daily-review
-description: 로잔동물의료센터 정기 실무를 검사·일본 수입신고·서류 및 기타 담당 범위로 점검하고 누락 검증 보고를 만든다. 담당별 정기 점검과 명시적인 세 탭 전체 점검에 사용한다.
+description: 로잔동물의료센터 정기 실무를 검사·일본 수입신고·서류 및 기타·필리핀 수입허가 담당 범위로 점검하고 누락 검증 보고를 만든다. 담당별 정기 점검과 명시적인 세 탭 전체 점검에 사용한다.
 ---
 
 # 정기 실무 점검
 
-시작 전 저장소 `AGENTS.md`, [업무 구조](../../../docs/work-management/README.md), [실무 운영 기준](../../../docs/work-management/operations.md), [기기·공유 이력](../../../docs/laptop-daily-check-handoff.md)을 읽는다. 업무 PC의 세 담당이 각각 월·화·수·금·토 10:30 한국 시간에 점검하며 노트북은 명시적 수동 요청만 수행한다.
+시작 전 저장소 `AGENTS.md`, [업무 구조](../../../docs/work-management/README.md), [실무 운영 기준](../../../docs/work-management/operations.md), [기기·공유 이력](../../../docs/laptop-daily-check-handoff.md)을 읽는다. 업무 PC의 기존 검사·일본·서류 담당은 월·화·수·금·토 10:30, 필리핀 담당은 목·일 포함 매일 10:30 한국 시간에 점검한다. 노트북은 명시적 수동 요청만 수행한다.
 
 [세 탭 실행·누락 검증 절차](references/daily-three-tabs.md)를 끝까지 수행한다. 임시 선별 요약을 새로 만들지 않고 `scripts/daily-review.mjs`를 사용한다. 현재 UI 조회 함수의 빌드가 실패하면 조회 경로 오류로 보고하고 부분 목록으로 완료하지 않는다.
 
-정기 담당은 [검사](../../../docs/work-management/inspection.md) `--scope inspection`, [일본 수입신고](../../../docs/work-management/japan.md) `--scope japan`, [서류 및 기타](../../../docs/work-management/documents.md) `--scope documents`다. 각자 자기 담당의 전체 대상을 시작·종료 합집합으로 검증하고 해당 채팅에서 보고한다. 이전 통합 예약은 중지했으며 `--scope all`은 명시적 수동 전체 점검에 사용한다. 담당 외 항목을 임의 완료로 표시하지 않는다.
+정기 담당은 [검사](../../../docs/work-management/inspection.md) `--scope inspection`, [일본 수입신고](../../../docs/work-management/japan.md) `--scope japan`, [서류 및 기타](../../../docs/work-management/documents.md) `--scope documents`, [필리핀 수입허가](../../../docs/work-management/philippines.md) `--scope philippines`다. 각자 자기 담당의 전체 대상을 시작·종료 합집합으로 검증하고 해당 채팅에서 보고한다. 이전 통합 예약은 중지했으며 `--scope all`은 명시적 수동 전체 점검에 사용한다. 담당 외 항목을 임의 완료로 표시하지 않는다.
 
-세 담당은 동시에 시작한다. 공유 원본의 읽기·병합·교체·원본 재조회 구간은 `scripts/review-lock.mjs`의 `history` 잠금을, 같은 케이스 수정·기관 제출·발송은 `case:<caseId>` 잠금을 먼저 얻는다. 잠금 획득 실패는 진행 허가가 아니다. 세부 순서와 각 담당의 필수 소스는 [검증 절차](references/daily-three-tabs.md)를 따른다.
+예약 시간이 겹치는 담당은 동시에 시작한다. 공유 원본의 읽기·병합·교체·원본 재조회 구간은 `scripts/review-lock.mjs`의 `history` 잠금을, 같은 케이스 수정·기관 제출·발송은 `case:<caseId>` 잠금을 먼저 얻는다. 잠금 획득 실패는 진행 허가가 아니다. 세부 순서와 각 담당의 필수 소스는 [검증 절차](references/daily-three-tabs.md)를 따른다.
 
 업무 판단은 자기 담당의 [검사](../petmove-inspection-check/SKILL.md), [일본 신고·메일·Form AC](../petmove-japan-naccs/SKILL.md), [서류](../petmove-documents/SKILL.md), [결과 안내](../petmove-kakao-results/SKILL.md)를 필요한 단계에서만 읽는다. 신규 포괄 권한을 지침 자체에서 만들지 않으며 **공통 운영 기준의 담당별 상시 실행 지시와 기존에 유효하게 지시받은 미완료 작업을 수행**한다. 일본 담당은 신고탭 새 대기 항목 제출·진행 이메일 확인·승인서 저장/수입 완료·수출 예약 완료·검역소 대응·수입 승인 메일 확인 즉시 사전 Form AC 회신 및 출국 직전 최종본 전달·특이사항 보고의 8단계를 적용한다.
 
 검사 담당의 결과 발송·회차 완료는 공통 운영 기준의 상시 지시에 따라 카톡 발송 재확인 후 완료 순서를 적용한다. 정상 진행·예정은 `monitored`로 내부 확인하고, 매일 보고는 5일 이상 미진행·신청 후 결제 요청·결과 발송 및 완료 처리·특이사항으로 한정한다.
+
+필리핀 담당은 [필리핀 스킬](../petmove-philippines-import/SKILL.md)로 현재 정보·서류·신고 시기가 모두 완비된 건을 신청하고 접수 후 진행을 반영한다. 신청 건의 기관 승인 여부를 매일 실제 확인·보고하며 승인 원본 대조·보관 후 완료를 반영·재조회한다. `philippineRequirements`, `philippineApplications`를 필수 검토하고 일일 보고를 unchanged/monitored로 숨기지 않는다. 다른 국가와 필리핀 일반 서류·내원 안내는 이 범위로 가져오지 않는다.
 
 서류 담당은 Work 서류 탭을 바탕으로 내원 7일 전부터 당일(0~7일 포함)까지 준비 미완료를 매일 경고·보고하고 출국 2주 전 미예약 안내를 관리한다. 상세 기준은 [서류 담당 상시 업무](../../../docs/work-management/operations.md#서류-담당-상시-업무)를 따른다. 검사 5일 이상 waiting과 각 담당의 현재 경고·오류·중단 지시도 필수 보고다. 기보고·새 메일 없음으로 생략하지 않는다. 한국 출국일이 지나도 귀국 전 수출검역을 포함한다.
 

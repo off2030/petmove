@@ -5,7 +5,7 @@ import {spawnSync} from 'node:child_process';
 import {POLICY_VERSION,collectObligations,reconcile,validateReview,kstDay,dayDistance,digest} from './lib/daily-review-policy.mjs';
 import {loadReviewSelectors} from './lib/daily-review-source.mjs';
 import {ROOT,historyTasks,verifyCompletion,privatePath} from './daily-review.mjs';
-import {sourceAreas,workArea} from './lib/daily-review-areas.mjs';
+import {sourceAreas,workArea,reportWorkArea} from './lib/daily-review-areas.mjs';
 import {acquireLock,releaseLock} from './review-lock.mjs';
 
 const now='2026-11-02T03:00:00Z',org={id:'clinic',name:'로잔동물의료센터'};
@@ -15,7 +15,7 @@ const initial=base();initial.reports=[{...ident,departure:'2026-12-21',return:''
 initial.documents=[{...ident,vetVisit:'2026-11-07',departure:'2026-11-14',status:'not_started'}];
 initial.tasks=[{...ident,key:'authorized-export',interrupted:true,nextAction:'기존 제출 지시가 오류로 중단됨; 재개 필요'}];
 const final=structuredClone(initial);
-const decisions=()=>({reviews:Object.fromEntries(['mail','resultNotices'].map(k=>[k,{complete:true,checkedAt:now,evidence:'실제 원문·첨부 전체 대조 근거'}])),items:reconcile(initial,final).map(i=>({id:i.id,disposition:'reported',nextAction:'남은 조치와 기한 보고',evidence:'실제 조회 근거'}))});
+const decisions=()=>({reviews:Object.fromEntries(sourceAreas('all').map(k=>[k,{complete:true,checkedAt:now,evidence:'실제 원문·첨부 전체 대조 근거'}])),items:reconcile(initial,final).map(i=>({id:i.id,disposition:'reported',nextAction:'남은 조치와 기한 보고',evidence:'실제 조회 근거'}))});
 const validate=d=>validateReview({initial,final,decisions:d,historyHash:'same',verifiedHistoryHash:'same',now});
 assert.equal(validate(decisions()).ok,true);
 for(const kind of ['warning','document','interrupted']) {
@@ -112,9 +112,10 @@ const partition=base();
 partition.inspections=[{...ident,rowId:'late',lab:'KRSL',date:'2026-10-20',status:'waiting'}];
 partition.reports=[{...ident,departure:'2026-12-21',importStatus:'not_started',exportStatus:'na',deadline:'2026-11-05'},{...ident,destination:'대만',departure:'2026-12-21',importStatus:'not_started',exportStatus:'na',deadline:'2026-11-05'}];
 partition.documents=[{...ident,departure:'2026-11-07',vetVisit:'',status:'not_started'}];
-partition.tasks=['inspection','japan','documents','unassigned'].map(area=>({...ident,key:'task-'+area,workArea:area,nextAction:'가상 미완료 지시',interrupted:true}));
+partition.reports.push({...ident,destination:'필리핀 (2차)',workArea:'philippines',departure:'2026-12-21',importStatus:'in_progress',exportStatus:'na',deadline:''});
+partition.tasks=['inspection','japan','documents','philippines','unassigned'].map(area=>({...ident,key:'task-'+area,workArea:area,nextAction:'가상 미완료 지시',interrupted:true}));
 const union=new Set();
-for(const scope of ['inspection','japan','documents']) {
+for(const scope of ['inspection','japan','documents','philippines']) {
   const s={...partition,scope},required=collectObligations(s);
   for(const i of required){assert.ok(i.workArea===scope||i.workArea==='unassigned');union.add(i.id);}
   assert.ok(required.some(i=>i.workArea==='unassigned'&&i.mustReport));
@@ -131,6 +132,42 @@ assert.equal(workArea({task:'NACCS 수입검사 수정'}),'japan');
 assert.equal(workArea({task:'내원 예약 안내'}),'documents');
 assert.equal(workArea({task:'확인 필요'}),'unassigned');
 assert.equal(workArea({workArea:'documents',task:'일본 자료 보관'}),'documents');
+assert.equal(workArea({destination:'필리핀 (2차)',task:'수입신고 승인 확인'}),'philippines');
+assert.equal(workArea({task:'SPSIC 보완 요청'}),'philippines');
+assert.equal(workArea({destination:'필리핀',task:'사진·서류 보관'}),'documents');
+assert.equal(workArea({workArea:'inspection',task:'필리핀 RNATT 검사 신청'}),'inspection');
+assert.equal(workArea({destination:'필리핀',task:'RNATT 검사 신청'}),'inspection');
+assert.equal(workArea({destination:'필리핀',task:'수출검역 신청'}),'documents');
+assert.equal(reportWorkArea('필리핀'),'philippines');
+assert.equal(reportWorkArea('대만'),'documents');
+
+// Philippine application status must be reported every day, including pending
+// applications after departure and approvals still covering an upcoming trip.
+const phi={...base(),scope:'philippines'};
+const phiRow={...ident,destination:'필리핀',departure:'2026-11-10',importStatus:'in_progress',exportStatus:'na',deadline:''};
+phi.reports=[phiRow];
+assert.equal(collectObligations(phi).length,1);
+assert.equal(collectObligations({...phi,scope:'documents'}).length,0);
+const phiItems=()=>collectObligations(phi).map(i=>({id:i.id,disposition:'reported',nextAction:'기관 승인 여부·다음 확인일 보고',evidence:'현재 신청 상세 근거'}));
+const phiDecision={reviews:Object.fromEntries(sourceAreas('philippines').map(k=>[k,{complete:true,checkedAt:now,evidence:'현재 전체 대상 대조'}])),items:phiItems()};
+const checkPhi=d=>validateReview({initial:phi,final:phi,decisions:d,historyHash:'s',verifiedHistoryHash:'s',now});
+assert.equal(checkPhi(phiDecision).ok,true);
+for(const disposition of ['unchanged','monitored']) {
+  const suppressed=structuredClone(phiDecision);suppressed.items[0].disposition=disposition;suppressed.items[0].recheckedAt=now;
+  assert.equal(checkPhi(suppressed).ok,false,'Daily approval status cannot be suppressed');
+}
+for(const source of sourceAreas('philippines')) {
+  const missing=structuredClone(phiDecision);delete missing.reviews[source];assert.equal(checkPhi(missing).ok,false);
+}
+for(const [status,departure,count] of [['in_progress','2026-01-01',1],['done','2026-11-02',1],['done','2026-11-03',1],['done','2026-11-01',0],['done','',1],['done','2026-09-31',1],['na','2026-11-10',0]]) {
+  const items=collectObligations({...phi,reports:[{...phiRow,importStatus:status,departure}]});
+  assert.equal(items.length,count,status+' '+departure);assert.ok(items.every(i=>i.mustReport));
+}
+const phiExport={...phiRow,exportStatus:'not_started'};
+assert.equal(collectObligations({...phi,reports:[phiExport]}).filter(i=>i.slot==='export').length,0);
+assert.equal(collectObligations({...phi,scope:'documents',reports:[phiExport]}).filter(i=>i.slot==='export').length,1);
+const afterSubmission={...phi,reports:[{...phiRow,importStatus:'done'}]};
+assert.equal(reconcile(phi,afterSubmission).length,1,'Approval on the same run must still be reported');
 
 // Compile the live UI selectors; exercise destination scoping and repeated tests.
 fs.mkdirSync(path.join(ROOT,'work/naver-inquiries'),{recursive:true});
@@ -162,7 +199,7 @@ try {
   const current=new Date(),stamp=current.toISOString(),run={id:'fixture-current-run',started_at:new Date(+current-1000).toISOString()};
   const fixture=base();Object.assign(fixture,{runId:run.id,today:kstDay(current),checkedAt:stamp});
   fixture.tasks=[{...ident,key:'fixture-stopped',interrupted:true,nextAction:'인증 대기로 중단'}];
-  const fixtureDecisions={reviews:Object.fromEntries(['mail','resultNotices'].map(k=>[k,{complete:true,checkedAt:stamp,evidence:'가상 검토 근거'}])),items:collectObligations(fixture).map(i=>({id:i.id,disposition:'reported',nextAction:'중단 사유 보고',evidence:'가상 근거'}))};
+  const fixtureDecisions={reviews:Object.fromEntries(sourceAreas('all').map(k=>[k,{complete:true,checkedAt:stamp,evidence:'가상 검토 근거'}])),items:collectObligations(fixture).map(i=>({id:i.id,disposition:'reported',nextAction:'중단 사유 보고',evidence:'가상 근거'}))};
   const write=(f,v)=>fs.writeFileSync(path.join(tmp,f),JSON.stringify(v));
   write('initial.private.json',fixture);write('final.private.json',fixture);write('decisions.private.json',fixtureDecisions);
   const cli=cmd=>{const r=spawnSync(process.execPath,['scripts/daily-review.mjs',cmd,'--dir',tmp],{cwd:ROOT,encoding:'utf8'});assert.equal(r.status,0,r.stderr);return r};
@@ -183,7 +220,7 @@ try {
   assert.equal(cli('render').status,0);assert.equal(cli('complete').status,0);
   assert.throws(()=>verifyCompletion(run,tmp));
   // Each scheduled role must publish and read back its own coverage slot.
-  for(const scope of ['inspection','japan','documents']) {
+  for(const scope of ['inspection','japan','documents','philippines']) {
     const s={...fixture,scope,tasks:[{...ident,workArea:scope,key:'scoped-interruption',interrupted:true,nextAction:'담당 중단 사유'}]};
     const ds={reviews:Object.fromEntries(sourceAreas(scope).map(k=>[k,{complete:true,checkedAt:stamp,evidence:'담당 소스 근거'}])),items:collectObligations(s).map(i=>({id:i.id,disposition:'reported',nextAction:'보고',evidence:'근거'}))};
     write('initial.private.json',s);write('final.private.json',s);write('decisions.private.json',ds);cli('render');

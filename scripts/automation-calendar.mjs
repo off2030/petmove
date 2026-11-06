@@ -236,7 +236,7 @@ function reviewScopeForAutomation(id) {
   if(id==='automation')return 'all';
   const file=path.join(HOME,'automations',id,'automation.toml');
   if(!fs.existsSync(file))return null;
-  return {'펫무브 검사 정기 점검':'inspection','펫무브 일본 수입신고 정기 점검':'japan','펫무브 서류 및 기타 정기 점검':'documents'}[readToml(file).name]??null;
+  return {'펫무브 검사 정기 점검':'inspection','펫무브 일본 수입신고 정기 점검':'japan','펫무브 서류 및 기타 정기 점검':'documents','펫무브 필리핀 수입신고 정기 점검':'philippines'}[readToml(file).name]??null;
 }
 async function main() {
   const c = config();

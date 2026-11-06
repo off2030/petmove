@@ -1,0 +1,4 @@
+interface:
+  display_name: "PETMOVE 4 · 필리핀 수입허가증"
+  short_description: "필리핀 SPSIC 신청 요건을 점검하고 신청·승인 확인과 Work 반영을 처리합니다"
+  default_prompt: "Use $petmove-philippines-import to check eligible Philippine SPSIC applications and report their current approval status."

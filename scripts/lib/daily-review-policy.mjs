@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
-import {reviewScope,sourceAreas,REVIEW_LABELS} from './daily-review-areas.mjs';
-export const POLICY_VERSION = 3;
+import {reviewScope,sourceAreas,REVIEW_LABELS,reportWorkArea} from './daily-review-areas.mjs';
+export const POLICY_VERSION = 4;
 export const digest = value => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex');
 export function kstDay(value = new Date()) { return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value)); }
 export function dayDistance(a,b) {
@@ -13,7 +13,7 @@ export function collectObligations(snapshot) {
   const scope=reviewScope(snapshot.scope??'all');
   const items = [];
   const add = (kind,row,slot,reason,mustReport=false,area=row.workArea??'unassigned') => {
-    if(!['inspection','japan','documents'].includes(area))area='unassigned';
+    if(!['inspection','japan','documents','philippines'].includes(area))area='unassigned';
     if(scope!=='all'&&area!==scope&&area!=='unassigned')return;
     if(area==='unassigned'){mustReport=true;reason='담당 분류 확인 필요; '+reason;}
     const id=itemId(kind,row.caseId??'',row.destination??'',slot);
@@ -29,11 +29,16 @@ export function collectObligations(snapshot) {
   }
   for (const r of snapshot.reports) {
     if (r.excluded) continue;
-    const area=r.workArea??(/^일본(?:\s|\(|$)/.test(r.destination??'')?'japan':'documents');
+    const area=r.workArea??reportWorkArea((r.destination??'').replace(/\s*\(.*$/,''));
     // Do not filter by Korean departure date. Import and return-export are independent.
     for (const slot of ['import','export']) {
-      const status=r[slot+'Status']; if (status==='done'||status==='na') continue;
-      add('report',r,slot,`${slot==='import'?'수입':'수출'} ${status}; 출국 ${r.departure||'미정'}, 귀국 ${r.return||'미정'}`,false,area);
+      const status=r[slot+'Status'];
+      const philippineImport=area==='philippines'&&slot==='import';
+      const departureIn=dayDistance(snapshot.today,r.departure);
+      // Track all unresolved applications, even after departure. Recheck approved
+      // current/future trips daily; a completed past trip is not an endless task.
+      if(status==='na'||(status==='done'&&(!philippineImport||(departureIn!==null&&departureIn<0))))continue;
+      add('report',r,slot,`${slot==='import'?'수입':'수출'} ${status}; 출국 ${r.departure||'미정'}, 귀국 ${r.return||'미정'}${philippineImport?'; 신청 요건·기관 승인 여부 일일 확인':''}`,philippineImport,area==='philippines'&&slot==='export'?'documents':area);
     }
     const until=dayDistance(snapshot.today,r.deadline);
     if (r.deadlineWarning || (r.importStatus==='not_started' && until!==null && until<=10)) add('warning',r,'import-deadline',`수입 신고기한 ${r.deadline}${until===null?'':` (${until<0?`${-until}일 경과`:`${until}일 남음`})`}`,true,area);
