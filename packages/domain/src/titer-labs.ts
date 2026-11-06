@@ -10,6 +10,7 @@
  * 유럽=EU 인정 양식 apqa_eu). 고객은 어느 변형이든 '농림축산검역본부' 한 이름으로만 본다.
  */
 import { EU_ENTRY_FAMILY } from './journey-steps/date-rules'
+import { JAPAN_TITER_LAB_CODES } from './journey-steps/japan-titer'
 
 export interface TiterLabOption {
   value: string
@@ -39,7 +40,7 @@ export const DEFAULT_TITER_LAB_CODES = ['apqa_seoul', 'krsl']
  * destinationKey 는 step-detail-view 가 쓰는 정규화 키(japan / thailand / philippines / eu ...).
  */
 const TITER_LAB_CODES_BY_DEST: Record<string, string[]> = {
-  japan: ['apqa_seoul', 'ksvdl_r'],
+  japan: [...JAPAN_TITER_LAB_CODES],
   // 하와이 — FAVN 은 USDA 승인 검사기관(Kansas State KSVDL 등). 일본과 동일 선택지(복제).
   hawaii: ['apqa_seoul', 'ksvdl_r'],
   thailand: ['apqa_seoul', 'krsl'],

@@ -14,6 +14,7 @@ import { deriveAdvanceNotificationStatus } from '../journey-steps/report-status'
 import type { ProcedureCheck } from './types'
 import { flattenCaseForDestination } from '../destination-scoped-fields'
 import { resolveActiveDestination } from '../destination-config'
+import { isJapanTiterLabApproved, readJapanTiterEntries } from '../journey-steps/japan-titer'
 import {
   addDays,
   addYears,
@@ -42,6 +43,29 @@ import {
  */
 
 export const JP_CHECKS: ProcedureCheck[] = [
+  {
+    id: 'jp.titer-designated-lab',
+    country: 'japan',
+    category: '광견병',
+    title: '일본 지정 항체검사 기관',
+    description: '일본 입국용 항체검사는 MAFF 지정기관에서 받은 결과만 인정하며, KRSL 등 미지정 기관의 기록으로 대기기간을 계산하지 않음.',
+    severity: 'warning',
+    addedAt: '2026-11-06',
+    run: ({ caseRow }) => {
+      const data = caseRow.data ?? {}
+      const entries = readTiterEntries(caseRow)
+      if (entries.length === 0) return SKIP
+      const raw = data.rabies_titer_records as Array<Record<string, unknown>>
+      if (entries.some((entry) => isJapanTiterLabApproved(raw[entry.originalIndex]?.lab))) {
+        return { ok: true, message: '일본 지정기관 검사 기록이 있어요.' }
+      }
+      return {
+        ok: false,
+        message: '일본 지정기관의 항체검사가 필요해요. APQA Seoul·KSVDL-R·RIAS 등 지정기관을 확인하세요. 기존 기록의 기관명만 바꾸면 안 돼요.',
+        offendingPaths: entries.map((entry) => `rabies_titer_records[${entry.originalIndex}].lab`),
+      }
+    },
+  },
   {
     id: 'jp.rabies-prime-after-91days-old',
     country: 'japan',
@@ -80,7 +104,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     severity: 'warning',
     addedAt: '2026-06-04',
     run: ({ caseRow }) => {
-      const titers = readTiterEntries(caseRow)
+      const titers = readJapanTiterEntries(caseRow.data ?? {})
       if (titers.length === 0) return SKIP
       const rabies = readRabiesEntries(caseRow)
       const titerDate = titers.map((t) => t.date).sort()[0]
@@ -212,7 +236,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
 
       const first = rabies[0]
       const second = rabies[1]
-      const titers = readTiterEntries(caseRow)
+      const titers = readJapanTiterEntries(caseRow.data ?? {})
 
       // 조건 1: 마이크로칩 ≤ 1차
       if (microchip <= first.date) {
@@ -221,10 +245,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
 
       // 조건 2: 1차 < 마이크로칩 ≤ 2차 AND 2차 == 1차(기준) 항체 검사일
       if (microchip <= second.date) {
-        // 이 룰은 '1차(기준) 항체 검사'만 본다 — 추가 검사(2차+)는 jp.titer-extra-* 담당.
-        // 추가 검사가 남아있어도 1차 채혈을 지웠으면 미입력으로 보고 사전 안내
-        // (jp.rabies-prime-before-microchip)로 환원해야 한다. (jp.rabies-titer-vs-booster 와 동일 패턴.)
-        const primary = titers.find((t) => t.originalIndex === 0)
+        // 미지정 기관의 과거 기록을 제외한 첫 일본용 채혈을 기준으로 한다.
+        const primary = [...titers].sort((a, b) => a.date.localeCompare(b.date))[0]
         if (!primary) return SKIP
         if (primary.date === second.date) {
           return {
@@ -263,11 +285,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const rabies = readRabiesEntries(caseRow)
       // 필수: 마이크로칩 시술일 + 1차 접종 기록
       if (!microchip || rabies.length === 0) return SKIP
-      // 1차(기준) 항체 검사 입력 후에는 jp.microchip-rabies-sequence 가 본 검증 — 사전 안내 종료.
-      // (2차 입력만으로는 사라지지 않음 — 보호자가 "2차와 항체 검사를 같은 날" 룰을
-      // 잊지 않도록 1차 채혈 입력까지 안내 유지. 추가 검사(2차+)만 있고 1차 채혈을
-      // 지운 상태면 미입력으로 보고 안내를 다시 띄운다 — 검증 실패가 아니므로 '주의' 아님.)
-      if (readTiterEntries(caseRow).some((t) => t.originalIndex === 0)) return SKIP
+      // 일본용 채혈이 있으면 jp.microchip-rabies-sequence가 검증한다.
+      if (readJapanTiterEntries(caseRow.data ?? {}).length > 0) return SKIP
 
       const first = rabies[0]
       if (first.date >= microchip) {
@@ -309,7 +328,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     addedAt: '2026-04-21',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
-      const titers = readTiterEntries(caseRow)
+      const titers = readJapanTiterEntries(caseRow.data ?? {})
       // 필수: 2차 접종 기록 + 1개 이상의 항체 검사
       if (rabies.length < 2 || titers.length === 0) return SKIP
 
@@ -318,13 +337,13 @@ export const JP_CHECKS: ProcedureCheck[] = [
       // 부스터 chain 면역 밖인 경우는 jp.titer-extra-within-rabies-validity 가 '추가 검사' step
       // 에서 '안내'로 다룬다. boosters = 2차부터(입력 순서) — client 입력 차단과 같은 함수.
       const boosters = rabies.slice(1)
-      const primary = titers.find((t) => t.originalIndex === 0)
+      const primary = [...titers].sort((a, b) => a.date.localeCompare(b.date))[0]
       if (!primary) return SKIP
       if (validateTiterWithinChain(boosters, primary.date)) {
         return {
           ok: false,
           message: '채혈일이 광견병 백신 면역 유효기간을 벗어났어요. 날짜를 확인하세요.',
-          offendingPaths: ['rabies_titer_records[0].date'],
+          offendingPaths: [`rabies_titer_records[${primary.originalIndex}].date`],
         }
       }
       return { ok: true, message: '항체 검사 시기 적합.' }
@@ -341,7 +360,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     addedAt: '2026-06-11',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
-      const titers = readTiterEntries(caseRow)
+      const titers = readJapanTiterEntries(caseRow.data ?? {})
       if (rabies.length < 2) return SKIP
       const extras = titers.filter((t) => t.originalIndex >= 1)
       if (extras.length === 0) return SKIP
@@ -377,7 +396,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     run: ({ caseRow, destination }) => {
       // 한일 노선 = 출국일이 일본 입국일 — departure_date 사용.
       const entryDate = readDepartureDate(caseRow, destination) ?? ''
-      const titers = readTiterEntries(caseRow)
+      const titers = readJapanTiterEntries(caseRow.data ?? {}, true)
       // 필수: 출국일(=입국일) + 1개 이상의 항체 검사
       if (!entryDate || titers.length === 0) return SKIP
 
@@ -418,7 +437,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     run: ({ caseRow, destination }) => {
       // 한일 노선 = 출국일이 일본 입국일 — departure_date 사용.
       const entryDate = readDepartureDate(caseRow, destination) ?? ''
-      const titers = readTiterEntries(caseRow)
+      const titers = readJapanTiterEntries(caseRow.data ?? {}, true)
       if (!entryDate || titers.length === 0) return SKIP
 
       // 입국일 이전에 한 채혈만 그 입국을 보증할 수 있음 — 입국 후(또는 미래) 채혈은
@@ -498,7 +517,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       // 항체 검사 입력 전에는 입국 시기가 확정되지 않아 평가 불가 — 같은 step(항공권 구매)의
       // jp.entry-* 체크와 동일하게 titer 입력 후에만 평가한다. 그 전의 백신 만료는 항공권
       // 구매 step 이 아니라 '추가 백신' advisory step 이 재접종으로 안내한다.
-      if (!dep || rabies.length === 0 || readTiterEntries(caseRow).length === 0) return SKIP
+      if (!dep || rabies.length === 0 || readJapanTiterEntries(caseRow.data ?? {}).length === 0) return SKIP
 
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
@@ -569,7 +588,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     addedAt: '2026-05-21',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination) ?? ''
-      const titers = readTiterEntries(caseRow)
+      const titers = readJapanTiterEntries(caseRow.data ?? {}, true)
       if (titers.length === 0) return SKIP
 
       const latest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]

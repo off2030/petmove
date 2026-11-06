@@ -21,6 +21,7 @@ import { buildCaseJourneyContext, isSingleDoseRabiesCase } from './applicability
 import { bookedRecordedAtKey } from './dated-steps'
 import { requiredParasiteDoses } from './date-rules'
 import { findRabiesChainBreak } from './rabies-chain'
+import { isJapanTiterResultConfirmed, readJapanTiterEntries } from './japan-titer'
 import {
   deriveAdvanceNotificationStatus,
   deriveApplicationStatus,
@@ -149,12 +150,14 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return true
     }
     case 'has-titer-entry': {
+      if (buildCaseJourneyContext(caseRow).destinationKey === 'japan') {
+        return readJapanTiterEntries(data, true).length > 0
+      }
       // 검사 → 결과 2단계 (사전 신고·일본 수출검역 신청과 동일 모델).
       //  - 채혈일(primary record[0])만 있으면 in_progress (검사 진행 중, done 아님).
       //  - 결과값(value) 입력 OR 보호자 '완료' 플래그(rabies_titer_result_confirmed) 면 done.
       // 180일 앵커(flight-purchase)·procedure-check 는 readTiterEntries(채혈일)를 직접 봐서
       // 무관 — 채혈일이 곧 1회차 검사일이라는 의미는 그대로다.
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
       const arr = Array.isArray(data.rabies_titer_records)
         ? (data.rabies_titer_records as Array<Record<string, unknown>>)
         : []
@@ -169,7 +172,8 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 추가 항체 검사(2회+) 는 (a) 2개 이상 입력되고, (b) 가장 최근 채혈일이 도래했고,
       // (c) 그 검사의 결과가 확인됐고, (d) 입국일이 입력된 경우 어떤 titer 의 2년 유효기간이
       // 입국일을 커버해야 완료. 못 만족하면 추가 검사가 더 필요한 상태.
-      const t = readTiterEntries(caseRow)
+      const isJapan = buildCaseJourneyContext(caseRow).destinationKey === 'japan'
+      const t = isJapan ? readJapanTiterEntries(data) : readTiterEntries(caseRow)
       if (t.length < 2) return false
       // 미래 채혈일은 '예정' — 도래해야 완료로 잡힘. (추가 백신 has-extra-rabies 와 동일 게이트.)
       // readTiterEntries 는 입력 순서라 위치로 최신을 못 잡음 — 최대 날짜로 판정.
@@ -178,7 +182,10 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 검사 → 결과 2단계 — 1차(has-titer-entry)와 동일. 채혈일만 도래한 상태는 '검사 진행 중'
       // 이고, 최신 추가 회차의 결과값(value) 입력 OR 보호자 '완료' 클릭(플래그)이어야 done.
       // (결과가 나오기까지 수 주 걸리는 검사라 진행 중 상태를 유지한다.)
-      if (!isExtraTiterResultConfirmed(caseRow)) return false
+      if (isJapan) {
+        const latest = [...t].sort((a, b) => b.date.localeCompare(a.date))[0]
+        if (!isJapanTiterResultConfirmed(data, latest)) return false
+      } else if (!isExtraTiterResultConfirmed(caseRow)) return false
       // 입국일 = entry_date 우선, 없으면 출국일 폴백 (일본 등).
       const entry =
         (typeof data.entry_date === 'string' && data.entry_date) ||
@@ -495,7 +502,9 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
     case 'has-titer-entry': {
       // 1회차 = 가장 이른 항체 검사일 (180일 대기·2년 입국 기한의 기준일).
       // 광견병 백신(has-rabies-entry)이 r[0]=1차 인 것과 동일 컨벤션.
-      const dates = readTiterEntries(caseRow)
+      const entries = buildCaseJourneyContext(caseRow).destinationKey === 'japan'
+        ? readJapanTiterEntries(data, true) : readTiterEntries(caseRow)
+      const dates = entries
         .map((e) => e.date)
         .filter((d): d is string => typeof d === 'string' && d.length >= 10)
       if (dates.length === 0) return null
@@ -503,7 +512,9 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
     }
     case 'has-extra-titer': {
       // 추가 항체 검사(2회+) = 가장 최근 검사일.
-      const dates = readTiterEntries(caseRow)
+      const entries = buildCaseJourneyContext(caseRow).destinationKey === 'japan'
+        ? readJapanTiterEntries(data, true) : readTiterEntries(caseRow)
+      const dates = entries
         .map((e) => e.date)
         .filter((d) => typeof d === 'string' && d.length >= 10)
       if (dates.length < 2) return null

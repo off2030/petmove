@@ -68,6 +68,9 @@ jobs:
       - name: Check Kakao chat web and native links
         run: node scripts/check-kakao-chat.mjs
 
+      - name: Check Japan designated titer labs and waiting period
+        run: pnpm --filter @petmove/portal exec tsx ../../scripts/check-japan-titer.ts
+
       - name: Typecheck www
         run: pnpm --filter @petmove/www exec tsc --noEmit
 

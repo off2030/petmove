@@ -619,6 +619,18 @@ function build(): string {
 
     for (const destKey of sc.destinations ?? APP_SUPPORTED_DESTINATION_KEYS) {
       const token = koLabel(destKey)
+      // These date-order fixtures predate lab eligibility and use the old `result`
+      // fixture field. Model a passing designated-lab result for Japan so the
+      // existing timing scenarios keep exercising timing, not missing-lab errors.
+      const data = destKey === 'japan' && Array.isArray(sc.data.rabies_titer_records)
+        ? {
+          ...sc.data,
+          rabies_titer_records: sc.data.rabies_titer_records.map((record) => {
+            const titer = record as Record<string, unknown>
+            return { ...titer, lab: titer.lab ?? 'apqa_seoul', value: titer.value ?? titer.result ?? null }
+          }),
+        }
+        : sc.data
       const caseRow = {
         id: 'snapshot',
         pet_name: '테스트',
@@ -626,7 +638,7 @@ function build(): string {
         trip_type: sc.tripType ?? 'round',
         departure_date: sc.departure ?? null,
         data: {
-          ...sc.data,
+          ...data,
           trip_type: { [token]: sc.tripType ?? 'round' },
         },
       } as never
@@ -660,9 +672,9 @@ function build(): string {
       }
 
       const blocks = [
-        ...inputBlocks(destKey, sc.data),
-        ...importPermitBlocks(destKey, sc.data, sc.departure ?? ''),
-        ...entryDateBlocks(destKey, sc.data, sc.departure ?? ''),
+        ...inputBlocks(destKey, data),
+        ...importPermitBlocks(destKey, data, sc.departure ?? ''),
+        ...entryDateBlocks(destKey, data, sc.departure ?? ''),
       ]
 
       out.push('')

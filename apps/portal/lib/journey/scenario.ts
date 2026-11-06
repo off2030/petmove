@@ -1,6 +1,7 @@
 import type { CaseRow } from '@petmove/domain'
 import {
   ALL_PROCEDURE_CHECKS,
+  addYears,
   FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS,
   QUARANTINE_START_FIELD_BY_DESTINATION,
   FLIGHT_DATE_RETURN_QUARANTINE_DESTINATIONS,
@@ -11,7 +12,9 @@ import {
   findStepForCheck,
   getStepsForCase,
   isExtraTiterResultConfirmed,
+  isJapanTiterResultConfirmed,
   latestExtraTiterEntry,
+  readJapanTiterEntries,
   resolveCompletedDate,
   resolveDone,
   runChecksForCase,
@@ -199,7 +202,6 @@ function formatYmdDot(iso: string): string {
 
 const JP_TITER_WAIT_DAYS = 180 // 일본: 항체검사 채혈일 + 180일 이후 입국 가능
 const JP_PRIME_BOOST_GAP_DAYS = 30 // 1차→2차 광견병 접종 최소 간격
-const RABIES_TITER_PASS_IU = 0.5 // 합격 항체값(IU/mL)
 
 /**
  * 일본 최소 준비기간 / 입국 가능일 힌트 — 출국일이 미정일 때만 링 보조줄에 노출.
@@ -212,37 +214,28 @@ const RABIES_TITER_PASS_IU = 0.5 // 합격 항체값(IU/mL)
  *  - 1차만 완료: 1차일+30 에 2차+채혈 → 그만큼 + 180
  *  - 광견병 시작 안 함(또는 칩 미완 — 최소기간 동일): 1차→+30→채혈→+180 ≈ 7개월
  *
- * 항체 2년 만료·백신 유효기간·40일 사전신고는 '정해진 출국일의 유효성' 문제라 최소기간엔 제외.
+ * 항체 결과가 이미 만료됐다면 갱신 안내. 백신 유효기간·40일 사전신고와 미래 출국일의
+ * 항체 만료 여부는 별도의 일정 검증에서 확인한다.
  */
 function jpPrepHint(
   caseData: Record<string, unknown>,
   today: string,
 ): { label: string } | null {
-  // ① 항체검사 채혈일 — 180 카운트다운의 기준점. value 는 명시적 불합격(<0.5)일 때만 제외하고,
-  // 비어 있으면 '완료' 버튼(rabies_titer_result_confirmed) 경로라 합격 취급. (done-resolver 와 동일)
-  const records = Array.isArray(caseData.rabies_titer_records) ? caseData.rabies_titer_records : []
-  let drawDate: string | null = null
-  let hasValue = false
-  for (const r of records) {
-    if (!r || typeof r !== 'object') continue
-    const rec = r as Record<string, unknown>
-    const d = typeof rec.date === 'string' && rec.date.length >= 10 ? rec.date.slice(0, 10) : ''
-    if (!d) continue
-    const vStr = typeof rec.value === 'string' ? rec.value.trim() : ''
-    if (vStr) {
-      hasValue = true
-      const v = parseFloat(vStr)
-      if (Number.isFinite(v) && v < RABIES_TITER_PASS_IU) continue // 명시적 불합격 채혈 제외
-    }
-    if (!drawDate || d < drawDate) drawDate = d // 가장 이른 합격 채혈일
+  // 기관 적격성과 결과 확인을 같은 회차에서 판단한다. KRSL의 과거 검사나
+  // 다른 회차의 완료 플래그를 일본 지정기관 검사에 빌려 쓰지 않는다.
+  const eligible = readJapanTiterEntries(caseData)
+  const confirmed = eligible.filter((t) => isJapanTiterResultConfirmed(caseData, t))
+  if (confirmed.length > 0 && !confirmed.some((t) => addYears(t.date, 2) >= today)) {
+    return { label: '일본용 항체검사 결과 갱신 필요' }
   }
-  // 항체검사 완료 판정 — 결과확인 플래그 OR 결과값 입력 (앱 done-resolver 기준).
-  const titerDone = caseData.rabies_titer_result_confirmed === true || hasValue
-  if (titerDone) {
-    // 완료됐는데 채혈일이 없으면(자동추출분 등) 확정 입국일을 못 구함 → 표시 안 함.
-    if (!drawDate) return null
+  const drawDate = confirmed.map((t) => t.date).sort()[0]
+  if (drawDate) {
     if (daysBetween(drawDate, today) >= JP_TITER_WAIT_DAYS) return { label: '입국 가능' }
     return { label: `${formatYmdDot(addDays(drawDate, JP_TITER_WAIT_DAYS))} 입국 가능` }
+  }
+  if (eligible.length > 0) return { label: '항체검사 결과 확인 필요' }
+  if (Array.isArray(caseData.rabies_titer_records) && caseData.rabies_titer_records.length > 0) {
+    return { label: '일본 지정기관의 합격 검사 필요' }
   }
 
   // ②③④ 접종 진행도 → 가장 빠른 채혈 가능일.
@@ -802,6 +795,9 @@ export function buildJourney(
       step.id === 'rabies-titer' &&
       !done &&
       (() => {
+        if (ctx.destinationKey === 'japan') {
+          return readJapanTiterEntries(caseData).some((t) => t.date <= today)
+        }
         const arr = Array.isArray(caseData.rabies_titer_records) ? caseData.rabies_titer_records : []
         const p = arr[0] as Record<string, unknown> | undefined
         const d = p && typeof p.date === 'string' ? p.date.slice(0, 10) : ''
@@ -813,6 +809,12 @@ export function buildJourney(
       step.id === 'rabies-titer-extra' &&
       !done &&
       (() => {
+        if (ctx.destinationKey === 'japan') {
+          const entries = readJapanTiterEntries(caseData)
+          if (entries.length < 2) return false
+          const latest = [...entries].sort((a, b) => b.date.localeCompare(a.date))[0]
+          return latest.date <= today && !isJapanTiterResultConfirmed(caseData, latest)
+        }
         const latest = latestExtraTiterEntry(caseRow)
         if (!latest || latest.date.slice(0, 10) > today) return false
         return !isExtraTiterResultConfirmed(caseRow)

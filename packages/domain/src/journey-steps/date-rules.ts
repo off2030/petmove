@@ -11,6 +11,7 @@ import { getDepartureDate, getVetVisitDate, readByDestValue } from '../destinati
 import { addDays, addMonths, addYears, resolveValidUntil, todayKst } from '../procedure-checks/utils'
 import { msgTiterBeforeVaccine } from '../procedure-checks/messages'
 import type { StepDefinition } from './types'
+import { readJapanTiterEntries } from './japan-titer'
 
 /**
  * 검역·검사 날짜의 순방향 검증 — 단일 출처.
@@ -112,7 +113,7 @@ export function validateUsDogEntryDate(v: string, ctx: DateRuleContext): string 
  *  - 백신 면역 유효기간 만료 → 재접종으로 회복 (jp.rabies-valid-until-on-departure)
  *  - 사전 신고 40일·검역 윈도우 등 후행 일정 — 항공편 수정 시 갇힘 방지
  *
- * 일본 외 목적지·항체 검사 미입력 시 SKIP.
+ * 일본 외 목적지·지정기관 합격 결과 미확인 시 SKIP (기관 확인은 별도 주의로 안내).
  */
 export function validateJpEntryDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
@@ -120,22 +121,12 @@ export function validateJpEntryDate(v: string, ctx: DateRuleContext): string | n
   // 만 쓰면 한글 토큰을 놓침.
   if (!matchesDestinationKey(ctx.destination, 'japan')) return null
 
-  const titerDates: string[] = []
-  const rawTiters = ctx.data.rabies_titer_records
-  if (Array.isArray(rawTiters)) {
-    for (const r of rawTiters) {
-      if (r && typeof r === 'object') {
-        const d = (r as Record<string, unknown>).date
-        if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) titerDates.push(d)
-      }
-    }
-  }
+  const titerDates = readJapanTiterEntries(ctx.data, true).map((t) => t.date)
   if (titerDates.length === 0) return null
 
-  // 가장 최근 채혈일이 가장 유리(180일 미래로 밂) — ISO 사전순 max.
+  // 지정기관의 최초 적격 채혈부터 대기한다. 재검사 때마다 180일을 다시 시작하지 않는다.
   titerDates.sort()
-  const latestTiter = titerDates[titerDates.length - 1]
-  const earliest = addDays(latestTiter, 180)
+  const earliest = addDays(titerDates[0], 180)
   if (earliest && v < earliest) {
     return `검사일로부터 180일 후인 ${fmt(earliest)}에 일본에 입국할 수 있어요.`
   }

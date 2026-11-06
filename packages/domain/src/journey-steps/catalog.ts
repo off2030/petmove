@@ -29,6 +29,7 @@ import {
   TWO_DOSE_RABIES_DESTINATIONS,
 } from './applicability'
 import { EU_ENTRY_FAMILY, requiredParasiteDoses } from './date-rules'
+import { isJapanTiterResultConfirmed, readJapanTiterEntries } from './japan-titer'
 import {
   deriveAdvanceNotificationStatus,
   deriveApplicationStatus,
@@ -550,6 +551,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentLabel: '광견병 항체 검사 결과지',
     validationIds: [
       'jp.rabies-titer-vs-booster',
+      'jp.titer-designated-lab',
       // 출국일 ± 180일/2년 룰은 항체 검사 step 에서 보호자가 조치 불가 — 항공권
       // 구매 step (flight-purchase) 에 jp.entry-* 로 매핑되어 거기서만 안내.
       'jp.microchip-rabies-sequence',
@@ -578,7 +580,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 직전 항체 검사의 유효기간(채혈일 + 2년) = 재검사 마감일을 카드/일정 row 에 정확한
     // 날짜로 노출. 광견병 백신 추가 step 의 situational 과 같은 패턴.
     situational: (caseRow) => {
-      const titers = readTiterEntries(caseRow)
+      const isJapan = buildCaseJourneyContext(caseRow).destinationKey === 'japan'
+      const titers = isJapan ? readJapanTiterEntries(caseRow.data ?? {}) : readTiterEntries(caseRow)
       if (titers.length === 0) return undefined
       // 입국일 = entry_date 우선, 없으면 출국일 폴백 (일본 등).
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -589,11 +592,13 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const today = todayKst()
       // 검사 → 결과 2단계 (1회차 rabies-titer 와 동일 모델). 추가 채혈일이 도래했는데 아직
       // 결과값·완료 플래그가 없으면 '검사 진행 중' — 우측 '진행 중' 칩(scenario inProgress)과 짝.
-      const latestExtra = latestExtraTiterEntry(caseRow)
+      const latestExtra = isJapan
+        ? [...titers].filter((t) => t.originalIndex > 0).sort((a, b) => b.date.localeCompare(a.date))[0]
+        : latestExtraTiterEntry(caseRow)
       if (
         latestExtra &&
         latestExtra.date <= today &&
-        !isExtraTiterResultConfirmed(caseRow)
+        !(isJapan ? isJapanTiterResultConfirmed(data, latestExtra) : isExtraTiterResultConfirmed(caseRow))
       ) {
         const msg = '추가 광견병 항체 검사를 진행 중이에요. 결과가 나오면 완료 버튼을 누르세요.'
         return { desc: msg, cardDesc: msg }
