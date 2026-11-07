@@ -35,6 +35,7 @@
 스페인: https://blog.naver.com/petmove/224395891370
 싱가포르: https://blog.naver.com/petmove/224372986208
 아랍에미리트: https://blog.naver.com/petmove/224402107380
+아랍에미리트 고양이 포함(공식 홈페이지): https://www.petmove.co.kr/docs/uae-pet-travel-guide/
 아르헨티나: https://blog.naver.com/petmove/224400794300
 아일랜드: https://blog.naver.com/petmove/224395947887
 영국: https://blog.naver.com/petmove/224373987525
