@@ -6,6 +6,7 @@
 
 - 신규 등록: [BAI registration](https://www.intercommerce.com.ph/registrationbai.asp). 기존 계정·등록 여부부터 확인한다. Company N/A·TIN 대체 여권번호 등은 현재 사이트 안내와 실제 신청자 조건을 확인한 경우만 사용한다. 비밀번호는 스킬에 고정하지 않는다.
 - [로그인](https://www.intercommerce.com.ph/login.asp?home=HOME) → 회원 메뉴 → WebCWS → `Create/Open BAI OneTimeImporter` → 실제 Importer 선택 → 기존 목록 확인 → 신규 신청 또는 기존 신청 열기.
+- 로그인 아이디는 **보호자 이메일**을 사용한다(사용자 확인 기준). Work의 현재 이메일과 기존 등록 계정을 대조하며, 이메일 변경 등 모순이 없으면 이미 확인된 아이디를 다시 묻지 않는다. 비밀번호는 사용자가 제공한 유효한 정보나 기존 안전한 로그인 수단을 사용하고 이 스킬·Git에 저장하지 않는다.
 - 주요 화면: `cws_ic_step0DA1tym.asp`, `cws_ic_step1DA1tym.asp`, `cws_ic_step2DA1tym.asp`, 본문 `cws_ic_impdecDA1tym.asp`.
 - 계정·Importer 이름·여권이 현재 대상과 일치하는지 **본문에서도** 재확인한다. 다른 사람 정보가 보이면 멈추고 올바른 계정으로 다시 들어가 기존 목록부터 확인한다. 비활성 사람 정보를 강제로 수정하지 않는다.
 
