@@ -3276,14 +3276,6 @@
       켄넬코프(Bordetella) 백신을 접종하세요.
   저장이름: 켄넬코프백신
 
-▸ civ-vaccine
-  title: 독감(CIV) 백신
-  short: 독감
-  done: 독감(CIV) 백신을 접종했어요.
-  desc:
-      개 인플루엔자(CIV) 백신을 접종하세요. 호주·뉴질랜드·인도 등 일부 국가에서 요구돼요.
-  저장이름: CIV백신
-
 ▸ vet-visit
   title: 출국 전 임상검사
   short: 내원
