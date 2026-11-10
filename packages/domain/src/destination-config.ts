@@ -698,7 +698,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 'india' / '인도' 는 'indonesia' / '인도네시아' 의 부분문자열이므로
     // getDestinationOverride 의 substring 매칭에서 indonesia 가 먼저 잡히도록 반드시 그 뒤에 위치.
     keywords: ['인도', 'india'],
-    vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'covid'],
+    vaccines: ['rabies', 'rabies_titer', 'general', 'kennel', 'covid'],
   },
   // ── 튀르키예 — ⚠️ 카자흐스탄 한 벌 복제(2026-07-22). 수치는 아직 카자흐스탄 것 그대로다.
   //   나라별 규정 확정 후 수정 예정(사용자 지정 — "카자흐스탄 복사").

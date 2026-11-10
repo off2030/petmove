@@ -1,7 +1,7 @@
 'use client'
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, useTransition } from 'react'
-import { Calculator as CalculatorIcon, Trash2 } from 'lucide-react'
+import { Calculator as CalculatorIcon, Plus, Trash2 } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
@@ -130,6 +130,7 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
   }
 
   function handleSaveEstimate({ amount, estimate }: { amount: number; estimate: EstimateSnapshot }) {
+    if (!hydrated || !editMode) return
     const today = new Date().toISOString().slice(0, 10)
     const method = estimate.priceMode === 'cash' ? 'cash' : 'card'
     const next = [...payments, { amount, method, date: today }]
@@ -156,11 +157,23 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel
-          onClick={editMode ? () => setAddingNew(true) : undefined}
-          title={editMode ? '결제 추가' : undefined}
+          onClick={country ? () => setEstimateOpen(true) : undefined}
+          title={country ? '비용 안내' : '여행지를 먼저 선택해주세요'}
         >
           결제
         </SectionLabel>
+        {editMode && (
+          <button
+            type="button"
+            onClick={() => setAddingNew(true)}
+            disabled={addingNew}
+            title="결제 추가"
+            aria-label="결제 추가"
+            className={roundIconBtn}
+          >
+            <Plus size={13} />
+          </button>
+        )}
       </div>
       <div className="min-w-0 flex items-start gap-md">
         <div className="flex-1 min-w-0 space-y-0.5">
@@ -225,7 +238,7 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
           initialSpecies={species}
           allItems={calcItems}
           initialEstimate={savedEstimate}
-          onSaveAsPayment={handleSaveEstimate}
+          onSaveAsPayment={editMode ? handleSaveEstimate : undefined}
           saving={saving}
           customerName={(caseRow as { customer_name?: string | null }).customer_name ?? null}
           petName={(caseRow as { pet_name?: string | null }).pet_name ?? null}
