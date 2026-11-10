@@ -4,11 +4,19 @@
 
 ## 계정과 신청 찾기
 
-- 신규 등록: [BAI registration](https://www.intercommerce.com.ph/registrationbai.asp). 기존 계정·등록 여부부터 확인한다. Company N/A·TIN 대체 여권번호 등은 현재 사이트 안내와 실제 신청자 조건을 확인한 경우만 사용한다. 비밀번호는 스킬에 고정하지 않는다.
+- 신규 등록: [BAI registration](https://www.intercommerce.com.ph/registrationbai.asp). 기존 계정·등록 여부부터 확인한다. **사용자 상시 지시에 따라 TIN은 해당 보호자의 현재 여권번호로 입력**한다. 별도 TIN을 매번 묻지 않으며 여권번호 자체가 없거나 불일치할 때만 확인한다. Company N/A 등 다른 값은 현재 안내와 실제 신청자 조건을 대조한다.
 - [로그인](https://www.intercommerce.com.ph/login.asp?home=HOME) → 회원 메뉴 → WebCWS → `Create/Open BAI OneTimeImporter` → 실제 Importer 선택 → 기존 목록 확인 → 신규 신청 또는 기존 신청 열기.
-- 로그인 아이디는 **보호자 이메일**을 사용한다(사용자 확인 기준). Work의 현재 이메일과 기존 등록 계정을 대조하며, 이메일 변경 등 모순이 없으면 이미 확인된 아이디를 다시 묻지 않는다. 비밀번호는 사용자가 제공한 유효한 정보나 기존 안전한 로그인 수단을 사용하고 이 스킬·Git에 저장하지 않는다.
+- 로그인 아이디는 **보호자 이메일**을 사용한다(사용자 확인 기준). Work의 현재 이메일과 기존 등록 계정을 대조하며, 이메일 변경 등 모순이 없으면 이미 확인된 아이디를 다시 묻지 않는다. **비밀번호는 이미 사용자가 지정한 공통값을 아래 로컬 저장소에서 불러오고 반복해서 묻지 않는다.** 비밀번호 평문은 이 스킬·Git·공유 이력·예약 프롬프트에 넣지 않는다.
 - 주요 화면: `cws_ic_step0DA1tym.asp`, `cws_ic_step1DA1tym.asp`, `cws_ic_step2DA1tym.asp`, 본문 `cws_ic_impdecDA1tym.asp`.
 - 계정·Importer 이름·여권이 현재 대상과 일치하는지 **본문에서도** 재확인한다. 다른 사람 정보가 보이면 멈추고 올바른 계정으로 다시 들어가 기존 목록부터 확인한다. 비활성 사람 정보를 강제로 수정하지 않는다.
+
+### 지정 비밀번호 불러오기
+
+사용자가 지정하고 저장을 요청한 InterCommerce 공통 비밀번호는 Windows 현재 사용자 DPAPI로 암호화하여 `%LOCALAPPDATA%\Petmove\Credentials\intercommerce-default.dpapi`에 보관한다. 암호문도 Git·Drive로 복사하지 않는다. 다른 PC에는 자동으로 이전되지 않는다.
+
+- 이 스킬의 `scripts/intercommerce-credential.ps1`을 PowerShell에서 dot-source하고 `Read-PetmoveInterCommercePassword`로 `SecureString`을 받는다. 실제 값이 필요한 **허용된 기존 계정 로그인**에서는 같은 로컬 프로세스의 메모리에서만 복원해 브라우저 입력에 전달하고 즉시 참조를 해제한다. 명령줄 인자·표준 출력·도구 결과·로그·클립보드에 평문을 노출하지 않는다.
+- 읽기 실패 시 비밀번호를 추측하거나 다시 저장하지 않는다. 저장소 미설정·Windows 사용자/PC 변경·기관 거절 등 실제 사유를 설명한다. 비밀번호가 저장되어 있어도 계정 미가입과 오입력을 구분하고, 오류 뒤 같은 값으로 반복 로그인하지 않는다.
+- **값 재질문과 현재 도구 정책상 사용자 직접 설정 단계는 구분한다.** 기존 비밀번호를 알고 있어도 새 비밀번호 설정을 사용자에게 넘겨야 하는 도구에서는 가입 비밀번호 입력·확인·제출을 우회하지 않는다. 나머지 정보는 먼저 완성하고 같은 값을 다시 알려달라고 요구하지 않는다. 저장된 값은 신규 가입·약관·CAPTCHA·비용에 대한 추가 권한이 아니다.
 
 ## 본문과 동물
 
