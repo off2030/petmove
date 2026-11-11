@@ -8,6 +8,7 @@
 - [로그인](https://www.intercommerce.com.ph/login.asp?home=HOME) → 회원 메뉴 → WebCWS → `Create/Open BAI OneTimeImporter` → 실제 Importer 선택 → 기존 목록 확인 → 신규 신청 또는 기존 신청 열기.
 - 로그인 아이디는 **보호자 이메일**을 사용한다(사용자 확인 기준). Work의 현재 이메일과 기존 등록 계정을 대조하며, 이메일 변경 등 모순이 없으면 이미 확인된 아이디를 다시 묻지 않는다. **비밀번호는 이미 사용자가 지정한 공통값을 아래 로컬 저장소에서 불러오고 반복해서 묻지 않는다.** 비밀번호 평문은 이 스킬·Git·공유 이력·예약 프롬프트에 넣지 않는다.
 - 주요 화면: `cws_ic_step0DA1tym.asp`, `cws_ic_step1DA1tym.asp`, `cws_ic_step2DA1tym.asp`, 본문 `cws_ic_impdecDA1tym.asp`.
+- 기존 내역을 조회할 때는 `Open an Existing Application` **라디오 자체를 선택하고 checked 상태를 확인한 뒤** Next를 누른다. 같은 문구의 링크를 누르는 것만으로는 선택되지 않을 수 있다. 다음 목록의 제목도 `Open an Existing Application`인지 확인한다. `Create From an Existing Application`이면 링크 선택으로 복제 초안이 생성되므로 조회 목적으로 신청번호를 누르지 말고 이전 단계에서 선택을 바로잡는다. 본문 진입 후에도 원래 신청번호·상태를 대조한다.
 - 계정·Importer 이름·여권이 현재 대상과 일치하는지 **본문에서도** 재확인한다. 다른 사람 정보가 보이면 멈추고 올바른 계정으로 다시 들어가 기존 목록부터 확인한다. 비활성 사람 정보를 강제로 수정하지 않는다.
 
 ### 지정 비밀번호 불러오기
