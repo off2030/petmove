@@ -30,6 +30,7 @@ import { RABIES_SLOT_CAP } from '@/lib/rabies-slot-cap'
 import { resolveNzIdTransform, nz26StrikeFlags } from '@/lib/pdf-nz2026'
 import { mergeParasiticideDoses } from '@/lib/pdf-other-slots'
 import { nzImporterName, nzArrivalPort } from '@/lib/pdf-nz-consignment'
+import { nzCatParasiteDefaults } from '@/lib/pdf-nz-parasite'
 import type { CaseRow } from '@petmove/domain'
 import { documentOwnerNames } from '@petmove/domain'
 
@@ -292,6 +293,9 @@ const PARASITE_PRODUCT_INFO: Record<string, { ingredient: string; dose: string }
   drontal_plus_dog:    { ingredient: 'Pyrantel Pamoate, Praziquantel, Febantel', dose: '1 tablet/10 kg BW' },
   panacur_dog:         { ingredient: 'Fenbendazole', dose: '50 mg/kg BW' },
   panacur_cat:         { ingredient: 'Fenbendazole', dose: '50 mg/kg BW' },
+  // Manufacturer's active ingredients; no dose is inferred from the product name.
+  // https://www.boehringer-ingelheim.com/animal-health/products/nexgard-combo
+  nexgard_cat_combo_cat: { ingredient: 'Esafoxolaner, Eprinomectin, Praziquantel', dose: '' },
 }
 
 /** sex code → English label used by Annex III (N. = neutered/spayed). */
@@ -1244,6 +1248,7 @@ function resolveVaccineDescAttr(
   if (kind === 'rabies') p = lookupRabies(date)
   else if (kind === 'civ') p = lookupCiv(date)
   else if (kind === 'comprehensive' && (species === 'dog' || species === 'cat')) p = lookupComprehensive(species, date)
+  else if ((kind === 'ext_parasite' || kind === 'int_parasite') && rec.product_id) p = lookupParasiteById(rec.product_id, { date, weightKg })
   else if (kind === 'ext_parasite' && (species === 'dog' || species === 'cat')) p = lookupExternalParasite(species, date, weightKg)
   else if (kind === 'int_parasite' && (species === 'dog' || species === 'cat')) p = lookupInternalParasite(species, date, weightKg)
   const merged = applyRecOverrides(rec, p)
@@ -2278,6 +2283,7 @@ function resolveField(
     const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
     let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; expiry?: string | null; validityFrom?: string; validityTo?: string } | null = null
     if (kind === 'rabies') p = lookupRabies(date)
+    else if ((kind === 'ext_parasite' || kind === 'int_parasite') && rec.product_id) p = lookupParasiteById(rec.product_id, { date, weightKg })
     else if (kind === 'ext_parasite' && (species === 'dog' || species === 'cat')) p = lookupExternalParasite(species, date, weightKg)
     else if (kind === 'int_parasite' && (species === 'dog' || species === 'cat')) p = lookupInternalParasite(species, date, weightKg)
     const merged = applyRecOverrides(rec, p)
@@ -3195,10 +3201,11 @@ export async function fillPdfMulti(
   // 본병원/타병원 약품 규칙:
   //  - 본병원(other_hospital !== true): 입력값 있으면 사용, 없으면 카탈로그(지정 약품) 폴백.
   //  - 타병원(other_hospital === true): 입력값만, 카탈로그 폴백 X.
-  // applyRecOverrides 가 record 별로 단일 처리 — 별도 전처리 불필요.
+  // NZ cat defaults apply only to otherwise unspecified parasite products;
+  // applyRecOverrides still preserves each record's explicit/outside-hospital values.
   return runWithOrgLookups(lookups, async () => {
     let docs: PackedDoc[]
-    try { docs = packCases(formKey, cases) }
+    try { docs = packCases(formKey, cases.map(c => ({ ...c, data: nzCatParasiteDefaults(c.destination, c.data ?? {}) }))) }
     catch (e) { return [{ ok: false, error: (e as Error).message }] }
 
     const results: FillResult[] = []
@@ -3680,7 +3687,7 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
   const customFont = await pdf.embedFont(fontBytes, { subset: PDF_SUBSET_FONT })
 
   const pdfForm = pdf.getForm()
-  const data = { ...(caseRow.data ?? {}), ...(options?.extras ?? {}) } as Record<string, unknown>
+  const data = nzCatParasiteDefaults(caseRow.destination, { ...(caseRow.data ?? {}), ...(options?.extras ?? {}) })
 
   if (formKey === 'TW' && data.tw_permit_rabies_date) {
     const date = String(data.tw_permit_rabies_date).trim()
@@ -3719,10 +3726,9 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
     if (picked.length > 0) data.rabies_titer_records = picked
   }
 
-  // extras(예: tube_count, consignee_lab)는 resolveField가 `caseRow.data` 를
-  // 통해 읽으므로, solo fill 경로에서도 extras 가 적용되도록 data 를 주입한
-  // 사본을 만들어 soloDoc 에 전달한다.
-  const caseRowWithExtras: CaseRow = options?.extras || options?.rabiesIndices || titerPicked ? { ...caseRow, data } : caseRow
+  // The solo resolver reads caseRow.data: pass the prepared copy for printing
+  // defaults, extras and selected records without mutating the stored case.
+  const caseRowWithExtras: CaseRow = { ...caseRow, data }
 
   // Date reformatter for form-level dateFormat override (e.g. Annex III uses dd/mm/yyyy).
   // Converts a stand-alone YYYY-MM-DD or YYYY/MM/DD token to dd/mm/yyyy.

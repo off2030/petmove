@@ -15,7 +15,7 @@ const temp = await mkdtemp(path.join(cache, 'nz-pdf-'))
 try {
   const runtime = path.join(temp, 'runtime.mjs')
   await build({
-    stdin: { contents: `export {fillPdf, fillPdfMulti} from './lib/pdf-fill'; export {getEffectiveVaccineEntries, vaccineMatchesSpecies} from '@petmove/domain'`, resolveDir: admin, loader: 'ts' },
+    stdin: { contents: `export {fillPdf, fillPdfMulti} from './lib/pdf-fill'; export {nzCatParasiteDefaults} from './lib/pdf-nz-parasite'; export {getEffectiveVaccineEntries, vaccineMatchesSpecies} from '@petmove/domain'`, resolveDir: admin, loader: 'ts' },
     outfile: runtime, bundle: true, platform: 'node', format: 'esm',
     tsconfig: path.join(admin, 'tsconfig.json'), external: ['pdf-lib', '@pdf-lib/fontkit', 'react'],
     plugins: [{ name: 'offline-lookups', setup(b) {
@@ -30,7 +30,7 @@ try {
       }))
     } }],
   })
-  const { fillPdf, fillPdfMulti, getEffectiveVaccineEntries, vaccineMatchesSpecies } = await import(pathToFileURL(runtime).href)
+  const { fillPdf, fillPdfMulti, nzCatParasiteDefaults, getEffectiveVaccineEntries, vaccineMatchesSpecies } = await import(pathToFileURL(runtime).href)
   process.chdir(admin)
   const makeCase = (name, value, species = 'cat', date = '2026-04-27') => ({
     id: name, pet_name: name, pet_name_en: name, customer_name: 'Test Owner', microchip: `99900000000000${name.length}`, destination: '뉴질랜드(구)', departure_date: '2026-11-03',
@@ -42,12 +42,29 @@ try {
   })
   const cats = [makeCase('Alpha', '23.93'), makeCase('Beta', '125.59'), makeCase('Gamma', '23.93')]
   const before = JSON.stringify(cats)
+  const raw = { species: 'cat', external_parasite_dates: [
+    '2026-10-05', { date: '2026-11-02' }, { date: '2026-11-02', product: 'Custom product' },
+    { date: '2026-11-02', product_id: 'frontline_spray_cat' }, { date: '2026-11-02', other_hospital: true },
+  ], internal_parasite_dates: [{ date: '2026-10-05' }] }
+  const rawBefore = JSON.stringify(raw)
+  for (const destination of ['뉴질랜드', '뉴질랜드(구)', '뉴질랜드 (2차)']) {
+    const prepared = nzCatParasiteDefaults(destination, raw)
+    assert.equal(prepared.external_parasite_dates[0].product_id, 'nexgard_cat_combo_cat')
+    assert.equal(prepared.external_parasite_dates[1].product_id, 'nexgard_cat_combo_cat')
+    assert.deepEqual(prepared.external_parasite_dates.slice(2), raw.external_parasite_dates.slice(2))
+    assert.equal(prepared.internal_parasite_dates[0].product_id, 'nexgard_cat_combo_cat')
+  }
+  for (const destination of ['호주', '일본', '미국']) assert.equal(nzCatParasiteDefaults(destination, raw), raw)
+  const dogData = { ...raw, species: 'dog' }
+  assert.equal(nzCatParasiteDefaults('뉴질랜드', dogData), dogData)
+  assert.deepEqual(nzCatParasiteDefaults('뉴질랜드', { species: 'cat' }), { species: 'cat' })
+  assert.equal(JSON.stringify(raw), rawBefore, 'Printing defaults mutated source records')
   const specs = []
   const save = async (name, result, assertions) => {
     assert.equal(result.ok, true, result.error)
     const file = path.join(temp, `${name}.pdf`)
     await writeFile(file, Buffer.from(result.pdf, 'base64'))
-    if (process.env.NZ_PDF_PROOF_DIR && name.endsWith('-dob-and-port')) {
+    if (process.env.NZ_PDF_PROOF_DIR && (name.endsWith('-dob-and-port') || name.endsWith('-cat-parasite'))) {
       const proofDir = path.resolve(process.env.NZ_PDF_PROOF_DIR)
       await mkdir(proofDir, { recursive: true })
       await writeFile(path.join(proofDir, `${name}.pdf`), Buffer.from(result.pdf, 'base64'))
@@ -80,7 +97,36 @@ try {
     await save(`${form}-explicit-port`, await fillPdf(form, {
       ...animals[0], data: { ...animals[0].data, entry_airport: 'CHC' },
     }), { headerOnly: true, pages: form === 'NZ26' ? 8 : 5, contains: ['Christchurch Airport (CHC)', 'DOB', '12/01/2024'] })
+    await save(`${form}-cat-parasite`, await fillPdf(form, animals[0]), {
+      headerOnly: true, pages: form === 'NZ26' ? 8 : 5,
+      contains: ['Esafoxolaner, Eprinomectin, Praziquantel'],
+      ...(form === 'NZ26' ? { counts: { 'NexGard Cat Combo': 3 } } : {}),
+      absent: ['Fipronil'],
+    })
   }
+  for (const [name, destination, species] of [['au-cat', '호주', 'cat'], ['nz-dog', '뉴질랜드', 'dog']]) {
+    const animal = { ...makeCase(name, '3.14', species), destination }
+    await save(`${name}-parasite`, await fillPdf('Form25AuNz', animal), {
+      headerOnly: true, pages: 1, absent: ['NexGard Cat Combo'],
+    })
+  }
+  await save('form25-cat-parasite', await fillPdf('Form25AuNz', { ...cats[0], destination: '뉴질랜드' }), {
+    headerOnly: true, pages: 1, counts: { 'NexGard Cat Combo': 2 },
+  })
+  const outsideCat = { ...cats[0], destination: '뉴질랜드', data: { ...cats[0].data,
+    external_parasite_dates: [{ date: '2026-11-02', other_hospital: true }],
+    internal_parasite_dates: [{ date: '2026-11-02', other_hospital: true }],
+  } }
+  await save('nz26-outside-hospital', await fillPdf('NZ26', outsideCat), {
+    headerOnly: true, pages: 8, absent: ['NexGard Cat Combo', 'Esafoxolaner'],
+  })
+  const explicitCat = { ...outsideCat, data: { ...outsideCat.data,
+    external_parasite_dates: [{ date: '2026-11-02', product: 'Custom external product' }],
+    internal_parasite_dates: [{ date: '2026-10-05', product: 'Custom internal product' }, { date: '2026-11-02', product_id: 'panacur_cat' }],
+  } }
+  await save('nz26-explicit-products', await fillPdf('NZ26', explicitCat), {
+    headerOnly: true, pages: 8, contains: ['Custom external product', 'Custom internal product', 'Panacur'], absent: ['NexGard Cat Combo'],
+  })
   assert.equal(JSON.stringify(cats), before, 'PDF generation mutated source data')
   for (const destination of ['뉴질랜드', '뉴질랜드(구)']) {
     const entries = getEffectiveVaccineEntries(destination, undefined, null)
@@ -97,6 +143,7 @@ for s in specs:
  assert not any(list(x.widgets() or []) for x in p),'Dangling form widgets'
  for value in s.get('contains',[]): assert value in text,(s['file'],value)
  for value in s.get('absent',[]): assert value not in text,(s['file'],value)
+ for value,count in s.get('counts',{}).items(): assert text.count(value)==count,(s['file'],value,text.count(value),count)
  if s.get('headerOnly'):
   assert not any(w[4].strip()=='Age' for w in p[0].get_text('words')),(s['file'],'Old Age heading remains')
   continue
