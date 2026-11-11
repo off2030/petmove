@@ -4144,35 +4144,35 @@
       },
       "text_67okkk": {
         "source": "birth_date",
-        "transform": "age_years",
-        "note": "p1 Row1 — Age (years)"
+        "transform": "date_dmy",
+        "note": "p1 Row1 — DOB (dd/mm/yyyy)"
       },
       "Text16": { "source": null, "transform": "multi:animal[1].species", "note": "p1 Row2 — Species" },
       "Text17": { "source": null, "transform": "multi:animal[1].breed",   "note": "p1 Row2 — Breed" },
       "Text18": { "source": null, "transform": "multi:animal[1].microchip","note": "p1 Row2 — Microchip" },
       "Text19": { "source": null, "transform": "multi:animal[1].name",    "note": "p1 Row2 — Name" },
-      "text_66mklc": { "source": null, "transform": "multi:animal[1].age",     "note": "p1 Row2 — Age" },
+      "text_66mklc": { "source": null, "transform": "multi:animal[1].dob",     "note": "p1 Row2 — DOB (dd/mm/yyyy)" },
       "text_75pjuu": { "source": null, "transform": "multi:animal[1].sex_mf_only",         "note": "p1 Row2 — Sex" },
       "text_70amej": { "source": null, "transform": "multi:animal[1].sex_neutered_status", "note": "p1 Row2 — Neutered" },
       "Text23": { "source": null, "transform": "multi:animal[2].species", "note": "p1 Row3 — Species" },
       "Text24": { "source": null, "transform": "multi:animal[2].breed",   "note": "p1 Row3 — Breed" },
       "Text25": { "source": null, "transform": "multi:animal[2].microchip","note": "p1 Row3 — Microchip" },
       "Text26": { "source": null, "transform": "multi:animal[2].name",    "note": "p1 Row3 — Name" },
-      "Text30": { "source": null, "transform": "multi:animal[2].age",     "note": "p1 Row3 — Age" },
+      "Text30": { "source": null, "transform": "multi:animal[2].dob",     "note": "p1 Row3 — DOB (dd/mm/yyyy)" },
       "text_76ssll": { "source": null, "transform": "multi:animal[2].sex_mf_only",         "note": "p1 Row3 — Sex" },
       "text_71yolw": { "source": null, "transform": "multi:animal[2].sex_neutered_status", "note": "p1 Row3 — Neutered" },
       "Text31": { "source": null, "transform": "multi:animal[3].species", "note": "p1 Row4 — Species" },
       "Text32": { "source": null, "transform": "multi:animal[3].breed",   "note": "p1 Row4 — Breed" },
       "Text33": { "source": null, "transform": "multi:animal[3].microchip","note": "p1 Row4 — Microchip" },
       "Text34": { "source": null, "transform": "multi:animal[3].name",    "note": "p1 Row4 — Name" },
-      "Text38": { "source": null, "transform": "multi:animal[3].age",     "note": "p1 Row4 — Age" },
+      "Text38": { "source": null, "transform": "multi:animal[3].dob",     "note": "p1 Row4 — DOB (dd/mm/yyyy)" },
       "text_77ygby": { "source": null, "transform": "multi:animal[3].sex_mf_only",         "note": "p1 Row4 — Sex" },
       "text_72okko": { "source": null, "transform": "multi:animal[3].sex_neutered_status", "note": "p1 Row4 — Neutered" },
       "Text39": { "source": null, "transform": "multi:animal[4].species", "note": "p1 Row5 — Species" },
       "Text40": { "source": null, "transform": "multi:animal[4].breed",   "note": "p1 Row5 — Breed" },
       "Text42": { "source": null, "transform": "multi:animal[4].microchip","note": "p1 Row5 — Microchip" },
       "Text43": { "source": null, "transform": "multi:animal[4].name",    "note": "p1 Row5 — Name" },
-      "Text46": { "source": null, "transform": "multi:animal[4].age",     "note": "p1 Row5 — Age" },
+      "Text46": { "source": null, "transform": "multi:animal[4].dob",     "note": "p1 Row5 — DOB (dd/mm/yyyy)" },
       "text_78msym": { "source": null, "transform": "multi:animal[4].sex_mf_only",         "note": "p1 Row5 — Sex" },
       "text_73sehu": { "source": null, "transform": "multi:animal[4].sex_neutered_status", "note": "p1 Row5 — Neutered" },
       "Text48": {
@@ -4333,7 +4333,7 @@
       },
       "Text54": {
         "source": "nz_arrival_port",
-        "note": "p1 (6) Port of arrival — 실제 도착공항, 주소로 추정하지 않음"
+        "note": "p1 (6) Port of arrival — 기본 AKL Airport, 명시된 다른 도착공항 우선"
       },
       "Text47": {
         "source": "document_owner_names_en",
@@ -4378,35 +4378,35 @@
       },
       "Text15": {
         "source": "birth_date",
-        "transform": "age_years",
-        "note": "p1 Row1 — Age (years)"
+        "transform": "date_dmy",
+        "note": "p1 Row1 — DOB (dd/mm/yyyy)"
       },
       "Text16": { "source": null, "transform": "multi:animal[1].species", "note": "p1 Row2 — Species" },
       "Text17": { "source": null, "transform": "multi:animal[1].breed",   "note": "p1 Row2 — Breed" },
       "Text18": { "source": null, "transform": "multi:animal[1].microchip","note": "p1 Row2 — Microchip" },
       "Text19": { "source": null, "transform": "multi:animal[1].name",    "note": "p1 Row2 — Name" },
-      "Text22": { "source": null, "transform": "multi:animal[1].age",     "note": "p1 Row2 — Age" },
+      "Text22": { "source": null, "transform": "multi:animal[1].dob",     "note": "p1 Row2 — DOB (dd/mm/yyyy)" },
       "Dropdown20": { "source": null, "transform": "multi:animal[1].sex_mf_only",         "note": "p1 Row2 — Sex" },
       "Dropdown21": { "source": null, "transform": "multi:animal[1].sex_neutered_status", "note": "p1 Row2 — Neutered" },
       "Text23": { "source": null, "transform": "multi:animal[2].species", "note": "p1 Row3 — Species" },
       "Text24": { "source": null, "transform": "multi:animal[2].breed",   "note": "p1 Row3 — Breed" },
       "Text25": { "source": null, "transform": "multi:animal[2].microchip","note": "p1 Row3 — Microchip" },
       "Text26": { "source": null, "transform": "multi:animal[2].name",    "note": "p1 Row3 — Name" },
-      "Text30": { "source": null, "transform": "multi:animal[2].age",     "note": "p1 Row3 — Age" },
+      "Text30": { "source": null, "transform": "multi:animal[2].dob",     "note": "p1 Row3 — DOB (dd/mm/yyyy)" },
       "Dropdown28": { "source": null, "transform": "multi:animal[2].sex_mf_only",         "note": "p1 Row3 — Sex" },
       "Dropdown29": { "source": null, "transform": "multi:animal[2].sex_neutered_status", "note": "p1 Row3 — Neutered" },
       "Text31": { "source": null, "transform": "multi:animal[3].species", "note": "p1 Row4 — Species" },
       "Text32": { "source": null, "transform": "multi:animal[3].breed",   "note": "p1 Row4 — Breed" },
       "Text33": { "source": null, "transform": "multi:animal[3].microchip","note": "p1 Row4 — Microchip" },
       "Text34": { "source": null, "transform": "multi:animal[3].name",    "note": "p1 Row4 — Name" },
-      "Text38": { "source": null, "transform": "multi:animal[3].age",     "note": "p1 Row4 — Age" },
+      "Text38": { "source": null, "transform": "multi:animal[3].dob",     "note": "p1 Row4 — DOB (dd/mm/yyyy)" },
       "Dropdown35": { "source": null, "transform": "multi:animal[3].sex_mf_only",         "note": "p1 Row4 — Sex" },
       "Dropdown37": { "source": null, "transform": "multi:animal[3].sex_neutered_status", "note": "p1 Row4 — Neutered" },
       "Text39": { "source": null, "transform": "multi:animal[4].species", "note": "p1 Row5 — Species" },
       "Text40": { "source": null, "transform": "multi:animal[4].breed",   "note": "p1 Row5 — Breed" },
       "Text42": { "source": null, "transform": "multi:animal[4].microchip","note": "p1 Row5 — Microchip" },
       "Text43": { "source": null, "transform": "multi:animal[4].name",    "note": "p1 Row5 — Name" },
-      "Text46": { "source": null, "transform": "multi:animal[4].age",     "note": "p1 Row5 — Age" },
+      "Text46": { "source": null, "transform": "multi:animal[4].dob",     "note": "p1 Row5 — DOB (dd/mm/yyyy)" },
       "Dropdown44": { "source": null, "transform": "multi:animal[4].sex_mf_only",         "note": "p1 Row5 — Sex" },
       "Dropdown45": { "source": null, "transform": "multi:animal[4].sex_neutered_status", "note": "p1 Row5 — Neutered" },
       "Text48": {
@@ -4582,7 +4582,7 @@
       },
       "Text54": {
         "source": "nz_arrival_port",
-        "note": "p1 (6) Port of arrival — 실제 도착공항, 주소로 추정하지 않음"
+        "note": "p1 (6) Port of arrival — 기본 AKL Airport, 명시된 다른 도착공항 우선"
       },
       "Text47": {
         "source": "document_owner_names_en",
@@ -6063,7 +6063,7 @@
       },
       "nz26_port_arrival": {
         "source": "nz_arrival_port",
-        "note": "p1 (11) Port of arrival — 추가정보 도착 공항(AKL/CHC)"
+        "note": "p1 (11) Port of arrival — 기본 AKL Airport, 명시된 다른 도착공항 우선"
       },
       "nz26_permit_no": {
         "source": "new_zealand_extra",
@@ -6099,8 +6099,9 @@
       },
       "nz26_animal_row1_age": {
         "source": "birth_date",
+        "transform": "date_dmy",
         "animalSlot": 0,
-        "note": "Age or Date of birth — 생년월일"
+        "note": "DOB (dd/mm/yyyy) — 생년월일"
       },
       "nz26_animal_row1_sex": {
         "source": "sex",
@@ -6132,8 +6133,9 @@
       },
       "nz26_animal_row2_age": {
         "source": "birth_date",
+        "transform": "date_dmy",
         "animalSlot": 1,
-        "note": "Age or Date of birth — 생년월일"
+        "note": "DOB (dd/mm/yyyy) — 생년월일"
       },
       "nz26_animal_row2_sex": {
         "source": "sex",
@@ -6165,8 +6167,9 @@
       },
       "nz26_animal_row3_age": {
         "source": "birth_date",
+        "transform": "date_dmy",
         "animalSlot": 2,
-        "note": "Age or Date of birth — 생년월일"
+        "note": "DOB (dd/mm/yyyy) — 생년월일"
       },
       "nz26_animal_row3_sex": {
         "source": "sex",
@@ -6198,8 +6201,9 @@
       },
       "nz26_animal_row4_age": {
         "source": "birth_date",
+        "transform": "date_dmy",
         "animalSlot": 3,
-        "note": "Age or Date of birth — 생년월일"
+        "note": "DOB (dd/mm/yyyy) — 생년월일"
       },
       "nz26_animal_row4_sex": {
         "source": "sex",
@@ -6231,8 +6235,9 @@
       },
       "nz26_animal_row5_age": {
         "source": "birth_date",
+        "transform": "date_dmy",
         "animalSlot": 4,
-        "note": "Age or Date of birth — 생년월일"
+        "note": "DOB (dd/mm/yyyy) — 생년월일"
       },
       "nz26_animal_row5_sex": {
         "source": "sex",

@@ -7,12 +7,12 @@ export function nzImporterName(row: CaseRow, data: Record<string, unknown>): str
   return explicit || documentOwnerNames(row, data, 'en')
 }
 
-/** An address is not evidence of the airport of entry. Missing airport stays blank. */
+/** Default NZ printing port; an explicitly entered different airport takes precedence. */
 export function nzArrivalPort(value: unknown): string {
-  if (typeof value !== 'string') return ''
+  if (typeof value !== 'string' || !value.trim()) return 'AKL Airport'
   const airport = value.trim()
-  if (/^(AKL|Auckland(?:\s+(?:International\s+)?Airport)?|오클랜드)(?:\s*\(AKL\))?$/i.test(airport)) {
-    return 'Auckland Airport (AKL)'
+  if (/^(AKL(?:\s+Airport)?|Auckland(?:\s+(?:International\s+)?Airport)?|오클랜드)(?:\s*\(AKL\))?$/i.test(airport)) {
+    return 'AKL Airport'
   }
   if (/^(CHC|Christchurch(?:\s+(?:International\s+)?Airport)?|크라이스트처치)(?:\s*\(CHC\))?$/i.test(airport)) {
     return 'Christchurch Airport (CHC)'

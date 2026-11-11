@@ -53,10 +53,12 @@ try {
     row.data.by_dest[row.destination] = { nz_importer_name: null, address_overseas: null, entry_airport: null }
     const fallback = await inspect()
     assert(!fallback.includes(labels[0]), 'The existing owner-as-importer fallback is printed')
-    for (const label of labels.slice(1)) assert(fallback.includes(label), `${form}: a cleared trip value must be reported`)
+    assert(fallback.includes(labels[1]), `${form}: a cleared address must be reported`)
+    assert(!fallback.includes(labels[2]), `${form}: the default AKL Airport is printed`)
     row.customer_name = ''; row.customer_name_en = ''
     const empty = await inspect()
-    for (const label of labels) assert(empty.includes(label), `${form}: real missing field not reported: ${label}`)
+    for (const label of labels.slice(0, 2)) assert(empty.includes(label), `${form}: real missing field not reported: ${label}`)
+    assert(!empty.includes(labels[2]), `${form}: the default arrival port must not be marked missing`)
   }
   console.log('✓ NZ/NZ_2/NZ26 pre-issue checks: filled trip fields, owner fallback, cleared values and readable labels')
 } finally {

@@ -47,6 +47,11 @@ try {
     assert.equal(result.ok, true, result.error)
     const file = path.join(temp, `${name}.pdf`)
     await writeFile(file, Buffer.from(result.pdf, 'base64'))
+    if (process.env.NZ_PDF_PROOF_DIR && name.endsWith('-dob-and-port')) {
+      const proofDir = path.resolve(process.env.NZ_PDF_PROOF_DIR)
+      await mkdir(proofDir, { recursive: true })
+      await writeFile(path.join(proofDir, `${name}.pdf`), Buffer.from(result.pdf, 'base64'))
+    }
     specs.push({ file, ...assertions })
   }
   for (const form of ['NZ', 'NZ_2']) {
@@ -60,6 +65,22 @@ try {
     await save(`${form}-missing-result`, (await fillPdfMulti(form, [cats[0], makeCase('Missing', null, 'cat', '2026-05-01')]))[0], { cat: true, contains: ['Missing: [not recorded]', 'Alpha: 27/Apr/2026', 'Missing: 01/May/2026'] })
     await save(`${form}-five-cats`, (await fillPdfMulti(form, [...cats, makeCase('Fourth', '8.76'), makeCase('Fifth', '5.43')]))[0], { cat: true, contains: ['Alpha: 23.93', 'Beta: 125.59', 'Gamma: 23.93', 'Fourth: 8.76', 'Fifth: 5.43'] })
   }
+  // Both certificate generations must print the DOB of each animal, including
+  // non-primary rows, and use the requested default arrival port without DB writes.
+  for (const form of ['NZ', 'NZ_2', 'NZ26']) {
+    const births = ['2024-01-12', '2023-02-23', '2022-03-04', '2021-04-15', '2020-05-26']
+    const animals = [...cats, makeCase('Fourth', '8.76'), makeCase('Fifth', '5.43')].map((animal, index) => ({
+      ...animal, destination: form === 'NZ26' ? '뉴질랜드' : '뉴질랜드(구)',
+      data: { ...animal.data, birth_date: births[index] },
+    }))
+    await save(`${form}-dob-and-port`, (await fillPdfMulti(form, animals))[0], {
+      headerOnly: true, pages: form === 'NZ26' ? 8 : 5,
+      contains: ['DOB', 'AKL Airport', '12/01/2024', '23/02/2023', '04/03/2022', '15/04/2021', '26/05/2020'],
+    })
+    await save(`${form}-explicit-port`, await fillPdf(form, {
+      ...animals[0], data: { ...animals[0].data, entry_airport: 'CHC' },
+    }), { headerOnly: true, pages: form === 'NZ26' ? 8 : 5, contains: ['Christchurch Airport (CHC)', 'DOB', '12/01/2024'] })
+  }
   assert.equal(JSON.stringify(cats), before, 'PDF generation mutated source data')
   for (const destination of ['뉴질랜드', '뉴질랜드(구)']) {
     const entries = getEffectiveVaccineEntries(destination, undefined, null)
@@ -72,10 +93,13 @@ import fitz,json,sys
 specs=json.load(open(sys.argv[1],encoding='utf8'))
 for s in specs:
  p=fitz.open(s['file']);text='\n'.join(x.get_text() for x in p)
- assert len(p)==5
+ assert len(p)==s.get('pages',5)
  assert not any(list(x.widgets() or []) for x in p),'Dangling form widgets'
  for value in s.get('contains',[]): assert value in text,(s['file'],value)
  for value in s.get('absent',[]): assert value not in text,(s['file'],value)
+ if s.get('headerOnly'):
+  assert not any(w[4].strip()=='Age' for w in p[0].get_text('words')),(s['file'],'Old Age heading remains')
+  continue
  def struck(page,phrase):
   rects=page.search_for(phrase);assert rects,phrase
   rect=rects[0]

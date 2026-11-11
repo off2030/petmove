@@ -3078,7 +3078,7 @@ function resolveMultiTransform(transform: string | undefined, doc: PackedDoc): s
   // NZ p1 Animal table — Row 2~5 의 7개 셀(species/breed/microchip/name/sex/neutered/age)
   // 을 doc.cases[idx] 로부터 채운다. Row 1 은 mapping 그대로(primary case) 사용.
   // 형식: multi:animal[idx].slot
-  // slot ∈ { species, breed, microchip, name, age, sex_simple, sex_neutered_status }
+  // slot ∈ { species, breed, microchip, name, age, dob, sex_simple, sex_neutered_status }
   const animalMatch = transform.match(/^multi:animal\[(\d+)\]\.(.+)$/)
   if (animalMatch) {
     const idx = Number(animalMatch[1])
@@ -3091,6 +3091,7 @@ function resolveMultiTransform(transform: string | undefined, doc: PackedDoc): s
       microchip: { source: 'microchip' },
       name: { source: 'pet_name_en' },
       age: { source: 'birth_date', transform: 'age_years' },
+      dob: { source: 'birth_date', transform: 'date_dmy' },
       sex_simple: { source: 'sex', transform: 'sex_simple' },
       sex_mf_only: { source: 'sex', transform: 'sex_mf_only' },
       sex_neutered_status: { source: 'sex', transform: 'sex_neutered_status' },

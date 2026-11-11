@@ -11,6 +11,7 @@
 // 실행: apps/admin 에서. 기존 출력은 덮어쓴다(원본에서 다시 만들기 때문에 안전하다).
 import { PDFDocument } from 'pdf-lib'
 import { readFile, writeFile } from 'node:fs/promises'
+import { execFileSync } from 'node:child_process'
 
 const SRC = 'data/pdf-templates/src/'
 const OUT = 'data/pdf-templates/'
@@ -40,3 +41,6 @@ for (const [key, lay] of Object.entries(layouts)) {
   await writeFile(OUT + lay.out, await pdf.save())
   console.log(`${key}: ${lay.base} → ${lay.out} (입력칸 ${n}개)`)
 }
+
+// Keep the printed DOB heading when rebuilding from the untouched original.
+execFileSync('python', ['scripts/replace-nz-age-heading.py', 'NZ26'], { stdio: 'inherit' })

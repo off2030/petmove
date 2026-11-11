@@ -31,7 +31,7 @@ const row = {
 } as unknown as CaseRow
 const before = structuredClone(row)
 for (const [destination, name, port] of [
-  ['뉴질랜드', 'FIRST IMPORTER', 'Auckland Airport (AKL)'],
+  ['뉴질랜드', 'FIRST IMPORTER', 'AKL Airport'],
   ['뉴질랜드 (2차)', 'SECOND IMPORTER', 'Christchurch Airport (CHC)'],
 ]) {
   const flat = flattenCaseForDestination(row, destination)
@@ -44,11 +44,13 @@ row.data!.by_dest = { '뉴질랜드 (2차)': { nz_importer_name: null, address_o
 const blank = flattenCaseForDestination(row, '뉴질랜드 (2차)')
 assert.equal(nzImporterName(blank, blank.data!), 'ALICE KIM / CHARLES LEE', 'Preserve the previous owner fallback')
 assert.equal(blank.data!.address_overseas, undefined)
-assert.equal(nzArrivalPort(blank.data!.entry_airport), '')
-assert.equal(nzArrivalPort('Auckland International Airport'), 'Auckland Airport (AKL)')
+assert.equal(nzArrivalPort(blank.data!.entry_airport), 'AKL Airport')
+assert.equal(nzArrivalPort('Auckland International Airport'), 'AKL Airport')
 assert.equal(nzArrivalPort('CHC'), 'Christchurch Airport (CHC)')
-assert.equal(nzArrivalPort(' 오클랜드 '), 'Auckland Airport (AKL)')
+assert.equal(nzArrivalPort(' 오클랜드 '), 'AKL Airport')
 assert.equal(nzArrivalPort('Christchurch Airport (CHC)'), 'Christchurch Airport (CHC)')
-assert.equal(nzArrivalPort(undefined), '')
+assert.equal(nzArrivalPort(undefined), 'AKL Airport')
+assert.equal(nzArrivalPort(''), 'AKL Airport')
+assert.equal(nzArrivalPort('AKL Airport'), 'AKL Airport')
 assert.equal(nzArrivalPort('Custom arrival port'), 'Custom arrival port')
 console.log('✓ NZ fields, per-trip importer/address, owner fallback, airport formatting and missing values')
