@@ -41,7 +41,9 @@ for name in sys.argv[1:] or ['NZ', 'NZ_2', 'NZ26']:
     if name == 'NZ26':
         # The original table heading occupies two lines: "Age or" / "Date of birth".
         rect = fitz.Rect(369.5, 533.5, 439, 569)
-    page.add_redact_annot(rect, fill=(1, 1, 1))
+    # Remove only the old text. Its font bounding box overlaps the table's top
+    # border in NZ/NZ_2; an opaque fill would paint over that border.
+    page.add_redact_annot(rect, fill=None)
     page.apply_redactions(images=0, graphics=0)
     page.insert_text(heading['origin'], 'DOB', fontsize=heading['size'],
                      fontname='hebo' if 'Bold' in heading['font'] else 'helv', color=(0, 0, 0))

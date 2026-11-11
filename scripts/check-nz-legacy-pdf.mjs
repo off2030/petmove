@@ -144,6 +144,11 @@ for s in specs:
  for value in s.get('contains',[]): assert value in text,(s['file'],value)
  for value in s.get('absent',[]): assert value not in text,(s['file'],value)
  for value,count in s.get('counts',{}).items(): assert text.count(value)==count,(s['file'],value,text.count(value),count)
+ if len(p)==5:
+  # The old Age text bbox crosses this border. A white redaction fill can
+  # hide the line even though the drawing still exists in the PDF stream.
+  border=p[0].get_pixmap(matrix=fitz.Matrix(4,4),clip=fitz.Rect(486,233.8,520,234.4))
+  assert any(all(max(border.pixel(x,y)[:3])<100 for x in range(border.width)) for y in range(border.height)),(s['file'],'DOB top border is obscured')
  if s.get('headerOnly'):
   assert not any(w[4].strip()=='Age' for w in p[0].get_text('words')),(s['file'],'Old Age heading remains')
   continue
