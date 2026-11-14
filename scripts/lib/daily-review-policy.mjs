@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {reviewScope,sourceAreas,REVIEW_LABELS,reportWorkArea} from './daily-review-areas.mjs';
-export const POLICY_VERSION = 4;
+export const POLICY_VERSION = 5;
 export const digest = value => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex');
 export function kstDay(value = new Date()) { return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value)); }
 export function dayDistance(a,b) {
@@ -34,10 +34,9 @@ export function collectObligations(snapshot) {
     for (const slot of ['import','export']) {
       const status=r[slot+'Status'];
       const philippineImport=area==='philippines'&&slot==='import';
-      const departureIn=dayDistance(snapshot.today,r.departure);
-      // Track all unresolved applications, even after departure. Recheck approved
-      // current/future trips daily; a completed past trip is not an endless task.
-      if(status==='na'||(status==='done'&&(!philippineImport||(departureIn!==null&&departureIn<0))))continue;
+      // Keep unresolved applications after departure. Completed imports leave
+      // routine monitoring; explicit unresolved findings remain independent.
+      if(status==='na'||status==='done')continue;
       add('report',r,slot,`${slot==='import'?'수입':'수출'} ${status}; 출국 ${r.departure||'미정'}, 귀국 ${r.return||'미정'}${philippineImport?'; 신청 요건·기관 승인 여부 일일 확인':''}`,philippineImport,area==='philippines'&&slot==='export'?'documents':area);
     }
     const until=dayDistance(snapshot.today,r.deadline);

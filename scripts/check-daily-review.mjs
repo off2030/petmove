@@ -142,7 +142,7 @@ assert.equal(reportWorkArea('필리핀'),'philippines');
 assert.equal(reportWorkArea('대만'),'documents');
 
 // Philippine application status must be reported every day, including pending
-// applications after departure and approvals still covering an upcoming trip.
+// applications after departure. Completed imports leave routine monitoring.
 const phi={...base(),scope:'philippines'};
 const phiRow={...ident,destination:'필리핀',departure:'2026-11-10',importStatus:'in_progress',exportStatus:'na',deadline:''};
 phi.reports=[phiRow];
@@ -159,7 +159,7 @@ for(const disposition of ['unchanged','monitored']) {
 for(const source of sourceAreas('philippines')) {
   const missing=structuredClone(phiDecision);delete missing.reviews[source];assert.equal(checkPhi(missing).ok,false);
 }
-for(const [status,departure,count] of [['in_progress','2026-01-01',1],['done','2026-11-02',1],['done','2026-11-03',1],['done','2026-11-01',0],['done','',1],['done','2026-09-31',1],['na','2026-11-10',0]]) {
+for(const [status,departure,count] of [['in_progress','2026-01-01',1],['done','2026-11-02',0],['done','2026-11-03',0],['done','2026-11-01',0],['done','',0],['done','2026-09-31',0],['na','2026-11-10',0]]) {
   const items=collectObligations({...phi,reports:[{...phiRow,importStatus:status,departure}]});
   assert.equal(items.length,count,status+' '+departure);assert.ok(items.every(i=>i.mustReport));
 }
@@ -168,6 +168,7 @@ assert.equal(collectObligations({...phi,reports:[phiExport]}).filter(i=>i.slot==
 assert.equal(collectObligations({...phi,scope:'documents',reports:[phiExport]}).filter(i=>i.slot==='export').length,1);
 const afterSubmission={...phi,reports:[{...phiRow,importStatus:'done'}]};
 assert.equal(reconcile(phi,afterSubmission).length,1,'Approval on the same run must still be reported');
+assert.equal(collectObligations({...afterSubmission,findings:[{...phiRow,key:'explicit-open-followup',reason:'승인 원본 저장 불일치 확인'}]}).length,1,'Completed status must not hide an explicit unresolved finding');
 
 // Compile the live UI selectors; exercise destination scoping and repeated tests.
 fs.mkdirSync(path.join(ROOT,'work/naver-inquiries'),{recursive:true});
