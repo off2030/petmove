@@ -53,6 +53,9 @@ export function philippinesPolicy(row: Pick<CaseRow, 'data' | 'destination' | 'd
   if (done) return 'review'
   if (filed) return today < PH_RULES_START ? 'legacy' : 'review'
   const travel = phDate(data.entry_date) || phDate(data.departure_date) || ((row.destination ?? '').includes(',') ? '' : phDate(row.departure_date))
+  // A January trip can still receive a grandfathered permit in December.
+  // Show the new preparation requirements provisionally until application/approval is known.
+  if (travel >= PH_RULES_START && today < PH_RULES_START) return 'review'
   return travel >= PH_RULES_START || today >= PH_RULES_START ? '2027' : 'legacy'
 }
 export function usesPh2027(row: Pick<CaseRow, 'data' | 'destination' | 'departure_date' | 'updated_at'>, destination?: string | null): boolean {

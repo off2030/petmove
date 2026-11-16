@@ -13,7 +13,7 @@ function rule(spec: Pick<ProcedureCheck, 'id' | 'category' | 'title'> & { run: (
 }
 export const PH_2027_CHECKS: ProcedureCheck[] = [
   rule({ id: 'ph.new-regime-confirmation', category: '수입허가', title: 'SPSIC 승인일·적용 규정 확인', run: ctx => {
-    return philippinesPolicy(ctx.caseRow, ctx.destination) === 'review' ? fail('기존 SPSIC 승인일을 입력해 신·구 규정을 확인하세요.', 'ph_spsic_approved_date') : SKIP
+    return philippinesPolicy(ctx.caseRow, ctx.destination) === 'review' ? fail('SPSIC 신청·승인일을 확인해 적용 규정을 확정하세요. 확인 전에는 신규 요건을 준비하세요.', 'ph_spsic_approved_date', 'import_permit_application_date') : SKIP
   } }),
   rule({ id: 'ph.new-minimum-age', category: '일정', title: 'SPSIC 신청일에 생후 18주 이상', run: ctx => {
     const { data, filed } = state(ctx); const birth = phDate(data.birth_date)
