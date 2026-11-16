@@ -1,4 +1,5 @@
 export * from './types'
+export * from './philippines-policy'
 export * from './dates'
 export * from './destination-config'
 export * from './destination-names'

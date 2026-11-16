@@ -7,6 +7,8 @@ import {
   validatePhInternalParasiteWindow,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
+import { philippinesPolicy, phScopedData, phDate } from '../philippines-policy'
+import { PH_2027_CHECKS } from './ph-2027'
 import {
   daysBetween,
   findSameGuardianCases,
@@ -50,7 +52,7 @@ import { msgMicrochipBeforeGeneralVaccine, msgMicrochipBeforeRabies, msgRabiesPr
 
 const COUNTRY = 'philippines'
 
-export const PH_CHECKS: ProcedureCheck[] = [
+const LEGACY_PH_CHECKS: ProcedureCheck[] = [
   {
     id: 'ph.rabies-booster-within-prime-validity',
     country: COUNTRY,
@@ -383,7 +385,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     addedAt: '2026-07-25',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const filed = readScopedImportPermitFiled(data, destination)
+      const filed = phDate(phScopedData(caseRow, destination).ph_spsic_approved_date) || readScopedImportPermitFiled(data, destination)
       if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
       const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
       if (!dep) return SKIP
@@ -516,4 +518,13 @@ export const PH_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `필리핀 수입검역일(${raw}) 입국 이후.` }
     },
   },
+]
+
+const SHARED_CHECKS = new Set(['ph.import-permit-within-60days', 'ph.import-permit-not-after-departure', 'ph.import-quarantine-date-valid', 'ph.kr-export-quarantine-within-10days'])
+export const PH_CHECKS: ProcedureCheck[] = [
+  ...LEGACY_PH_CHECKS.map(check => ({ ...check, run: check.run ? ((ctx) => {
+    if (!SHARED_CHECKS.has(check.id) && philippinesPolicy(ctx.caseRow, ctx.destination) !== 'legacy') return SKIP
+    return check.run!(ctx)
+  }) : undefined } satisfies ProcedureCheck)),
+  ...PH_2027_CHECKS,
 ]

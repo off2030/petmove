@@ -132,8 +132,8 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     [destination, extraFields],
   )
   const vaccineEntries = useMemo(
-    () => getEffectiveVaccineEntries(destination, extraFields, destOverridesConfig),
-    [destination, extraFields, destOverridesConfig],
+    () => getEffectiveVaccineEntries(destination, extraFields, destOverridesConfig, caseRow),
+    [destination, extraFields, destOverridesConfig, caseRow],
   )
   const extraFieldEntries = useMemo(
     () => getEffectiveExtraFieldEntries(destination, destOverridesConfig),

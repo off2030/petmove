@@ -1,3 +1,4 @@
+import { usesPh2027 } from '../philippines-policy'
 import {
   DESTINATION_OVERRIDES,
   destinationsWithVaccine,
@@ -327,7 +328,8 @@ function buildVaccineValidityRule(opts: {
     allowDate: true,
     severity: 'warning',
     addedAt: '2026-07-25',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
+      if (usesPh2027(caseRow, destination)) return SKIP
       const entries = opts.reader(caseRow)
       if (entries.length === 0) return SKIP
       // reader 는 날짜순 정렬을 보장.

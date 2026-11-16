@@ -100,6 +100,16 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 수입 허가 신청 → 허가증 2단계 (import-permit step, 태국·호주 등 허가 필요국 공용) —
   // 목적지마다 허가를 따로 받으므로 신청일·완료(skip) 플래그도 by_dest 분리.
   'import_permit_application_date',
+  'ph_spsic_approved_date',
+  'ph_legacy_spsic',
+  'ph_form1_endorsed_date',
+  'ph_form1_issue_date',
+  'ph_importer_name',
+  'ph_importer_address',
+  'ph_pregnant',
+  'ph_last_birth_date',
+  'ph_government_vet_name',
+  'ph_government_office',
   // 허가를 확인한 날 — 신청일 칸이 없는 카드(뉴질랜드)의 완료일 표시용. 신청일이 있으면 그쪽이
   //   우선이고 이 값은 폴백이다(2026-07-29 — 신청일을 없앤 뒤 완료일이 비어 보였다).
   'import_permit_recorded_at',

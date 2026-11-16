@@ -63,7 +63,7 @@ async function generate(
   // 토글)과 동일한 필터 — 별지25/AuNz 도 예외 없이. 추가 백신 기록을 PDF 에 노출
   // 하려면 케이스 상세 "절차정보 → 항목 추가" 로 해당 vaccine 토글 ON.
   const destForRules = options?.destination ?? caseRow.destination
-  const allowedVaccines = getEffectiveVaccineEntries(destForRules, extraFields, null)
+  const allowedVaccines = getEffectiveVaccineEntries(destForRules, extraFields, null, caseRow)
     .filter(entry => vaccineMatchesSpecies(entry, String(data.species ?? '')))
     .map(entry => entry.key)
   // 다중 여행지 케이스: 활성 여행지의 by_dest 값을 top-level 로 평탄화한 caseRow 로 채움.
@@ -827,4 +827,9 @@ export async function generateAnnexIII(caseId: string) {
 
 export async function generateUK(caseId: string) {
   return generate('UK', caseId)
+}
+
+/** BAI Form 1: one animal per certificate. */
+export async function generatePHForm1(caseId: string, opts?: GenerateOpts) {
+  return generate('PH_Form1', caseId, opts)
 }

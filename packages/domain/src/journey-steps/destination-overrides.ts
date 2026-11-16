@@ -2883,6 +2883,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: [
         'ph.import-permit-14days-after-vaccines',
         // SPSIC 60일 유효 — 너무 이른 신청(출국 전 만료). 입력 차단과 같은 함수(2026-07-25).
+        'ph.new-regime-confirmation',
+        'ph.new-minimum-age',
+        'ph.new-rabies',
+        'ph.new-rnatt',
+        'ph.new-parasites',
+        'ph.new-form1',
+        'ph.new-pregnancy',
         'ph.import-permit-within-60days',
         // 출국일 이후 신청 불가 — 저장 거부(validateImportPermitNotAfterDeparture)의 짝 주의.
         //   within-60days 는 too-early 만 봐서 출국 후 신청을 놓쳤다(태국·말레이·인니·싱가포르는

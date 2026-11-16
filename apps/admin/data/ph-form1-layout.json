@@ -1,0 +1,415 @@
+{
+  "ph1_importer": {
+    "x": 41,
+    "top": 161,
+    "width": 214,
+    "height": 12,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:importer"
+    }
+  },
+  "ph1_address": {
+    "x": 267,
+    "top": 160,
+    "width": 294,
+    "height": 14,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:address"
+    }
+  },
+  "ph1_contact": {
+    "x": 41,
+    "top": 193,
+    "width": 214,
+    "height": 12,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:contact"
+    }
+  },
+  "ph1_origin": {
+    "x": 267,
+    "top": 193,
+    "width": 294,
+    "height": 12,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:origin"
+    }
+  },
+  "ph1_pet": {
+    "x": 41,
+    "top": 255,
+    "width": 118,
+    "height": 12,
+    "mapping": {
+      "source": "pet_name_en"
+    }
+  },
+  "ph1_species": {
+    "x": 170,
+    "top": 255,
+    "width": 85,
+    "height": 12,
+    "mapping": {
+      "source": "species",
+      "transform": "species_english"
+    }
+  },
+  "ph1_sex": {
+    "x": 267,
+    "top": 255,
+    "width": 99,
+    "height": 12,
+    "mapping": {
+      "source": "sex",
+      "transform": "ph1:sex"
+    }
+  },
+  "ph1_chip": {
+    "x": 376,
+    "top": 255,
+    "width": 185,
+    "height": 12,
+    "mapping": {
+      "source": "microchip"
+    }
+  },
+  "ph1_age": {
+    "x": 41,
+    "top": 287,
+    "width": 118,
+    "height": 12,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:age"
+    }
+  },
+  "ph1_breed": {
+    "x": 170,
+    "top": 287,
+    "width": 85,
+    "height": 12,
+    "mapping": {
+      "source": "breed_en"
+    }
+  },
+  "ph1_weight": {
+    "x": 267,
+    "top": 287,
+    "width": 99,
+    "height": 12,
+    "mapping": {
+      "source": "weight"
+    }
+  },
+  "ph1_color": {
+    "x": 376,
+    "top": 287,
+    "width": 185,
+    "height": 12,
+    "mapping": {
+      "source": "color_en"
+    }
+  },
+  "ph1_titer_sample": {
+    "x": 41,
+    "top": 581,
+    "width": 118,
+    "height": 17,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:titer:date"
+    }
+  },
+  "ph1_titer_tested": {
+    "x": 170,
+    "top": 581,
+    "width": 85,
+    "height": 17,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:titer:test_date"
+    }
+  },
+  "ph1_titer_lab": {
+    "x": 267,
+    "top": 581,
+    "width": 99,
+    "height": 17,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:titer:lab"
+    }
+  },
+  "ph1_titer_result": {
+    "x": 376,
+    "top": 581,
+    "width": 185,
+    "height": 17,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:titer:value"
+    }
+  },
+  "vet_ph1_name": {
+    "x": 41,
+    "top": 694,
+    "width": 124,
+    "height": 14,
+    "mapping": {
+      "source": null,
+      "transform": "vet:name_en"
+    }
+  },
+  "vet_ph1_license": {
+    "x": 281,
+    "top": 694,
+    "width": 75,
+    "height": 14,
+    "mapping": {
+      "source": null,
+      "transform": "vet:license_no"
+    }
+  },
+  "vet_ph1_issue_date": {
+    "x": 393,
+    "top": 694,
+    "width": 167,
+    "height": 14,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:issue_date"
+    }
+  },
+  "ph1_gov_name": {
+    "x": 78,
+    "top": 772,
+    "width": 280,
+    "height": 13,
+    "mapping": {
+      "source": "ph_government_vet_name"
+    }
+  },
+  "ph1_gov_office": {
+    "x": 376,
+    "top": 783,
+    "width": 185,
+    "height": 9,
+    "mapping": {
+      "source": "ph_government_office"
+    }
+  },
+  "ph1_gov_date": {
+    "x": 505,
+    "top": 809,
+    "width": 56,
+    "height": 13,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:endorsement_date"
+    }
+  },
+  "ph1_vacc_0_name": {
+    "x": 41,
+    "top": 362,
+    "width": 118,
+    "height": 19,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:vacc:0:name"
+    }
+  },
+  "ph1_vacc_0_manufacturer": {
+    "x": 170,
+    "top": 362,
+    "width": 85,
+    "height": 19,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:vacc:0:manufacturer"
+    }
+  },
+  "ph1_vacc_0_serial": {
+    "x": 267,
+    "top": 362,
+    "width": 99,
+    "height": 19,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:vacc:0:serial"
+    }
+  },
+  "ph1_vacc_0_date": {
+    "x": 376,
+    "top": 362,
+    "width": 105,
+    "height": 19,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:vacc:0:date"
+    }
+  },
+  "ph1_vacc_0_valid_until": {
+    "x": 492,
+    "top": 362,
+    "width": 69,
+    "height": 19,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:vacc:0:valid_until"
+    }
+  },
+  "ph1_vacc_1_name": {
+    "x": 41,
+    "top": 384,
+    "width": 118,
+    "height": 19,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:vacc:1:name"
+    }
+  },
+  "ph1_vacc_1_manufacturer": {
+    "x": 170,
+    "top": 384,
+    "width": 85,
+    "height": 19,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:vacc:1:manufacturer"
+    }
+  },
+  "ph1_vacc_1_serial": {
+    "x": 267,
+    "top": 384,
+    "width": 99,
+    "height": 19,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:vacc:1:serial"
+    }
+  },
+  "ph1_vacc_1_date": {
+    "x": 376,
+    "top": 384,
+    "width": 105,
+    "height": 19,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:vacc:1:date"
+    }
+  },
+  "ph1_vacc_1_valid_until": {
+    "x": 492,
+    "top": 384,
+    "width": 69,
+    "height": 19,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:vacc:1:valid_until"
+    }
+  },
+  "ph1_parasite_0_name": {
+    "x": 41,
+    "top": 463,
+    "width": 118,
+    "height": 25,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:parasite:0:name"
+    }
+  },
+  "ph1_parasite_0_manufacturer": {
+    "x": 170,
+    "top": 463,
+    "width": 85,
+    "height": 25,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:parasite:0:manufacturer"
+    }
+  },
+  "ph1_parasite_0_serial": {
+    "x": 267,
+    "top": 463,
+    "width": 99,
+    "height": 25,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:parasite:0:serial"
+    }
+  },
+  "ph1_parasite_0_date": {
+    "x": 376,
+    "top": 463,
+    "width": 105,
+    "height": 25,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:parasite:0:date"
+    }
+  },
+  "ph1_parasite_0_valid_until": {
+    "x": 492,
+    "top": 463,
+    "width": 69,
+    "height": 25,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:parasite:0:valid_until"
+    }
+  },
+  "ph1_parasite_1_name": {
+    "x": 41,
+    "top": 491,
+    "width": 118,
+    "height": 25,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:parasite:1:name"
+    }
+  },
+  "ph1_parasite_1_manufacturer": {
+    "x": 170,
+    "top": 491,
+    "width": 85,
+    "height": 25,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:parasite:1:manufacturer"
+    }
+  },
+  "ph1_parasite_1_serial": {
+    "x": 267,
+    "top": 491,
+    "width": 99,
+    "height": 25,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:parasite:1:serial"
+    }
+  },
+  "ph1_parasite_1_date": {
+    "x": 376,
+    "top": 491,
+    "width": 105,
+    "height": 25,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:parasite:1:date"
+    }
+  },
+  "ph1_parasite_1_valid_until": {
+    "x": 492,
+    "top": 491,
+    "width": 69,
+    "height": 25,
+    "mapping": {
+      "source": null,
+      "transform": "ph1:parasite:1:valid_until"
+    }
+  }
+}

@@ -7,6 +7,7 @@ import {
   isDestinationScopedKey,
   destinationsWithReportBinding,
   parseDestinations,
+  preservePhLegacyApprovals,
   planReportSlotWrite,
   REPORT_LEGACY_STATUS_KEY,
   reportSlotSignalKeys,
@@ -438,6 +439,8 @@ export async function updateCaseField(
     if (pendingRow.data?.import_report_dismissed === true && reopenedData !== pendingRow.data) updateObj.data = reopenedData
     if (autoFilled) autoFilled.data = updateObj.data as Record<string, unknown>
 
+    updateObj.data = preservePhLegacyApprovals(row as CaseRow, (updateObj.data as Record<string, unknown> | undefined) ?? (row as CaseRow).data)
+    if (autoFilled) autoFilled.data = updateObj.data as Record<string, unknown>
     const { error: updErr } = await supabase
       .from('cases')
       .update(updateObj)
@@ -636,6 +639,8 @@ export async function updateCaseField(
   const reopenedData = reopenReportForNewSchedule(row as CaseRow, pendingRow)
   if (pendingRow.data?.import_report_dismissed === true && reopenedData !== pendingRow.data) updateObj.data = reopenedData
   if (autoFilled) autoFilled.data = (updateObj.data as Record<string, unknown> | undefined) ?? stampedData
+  updateObj.data = preservePhLegacyApprovals(row as CaseRow, (updateObj.data as Record<string, unknown> | undefined) ?? (row as CaseRow).data)
+  if (autoFilled) autoFilled.data = updateObj.data as Record<string, unknown>
   const { error: updErr } = await supabase
     .from('cases')
     .update(updateObj)
@@ -702,7 +707,7 @@ export async function updateCaseDataBulk(
   const supabase = await createClient()
   const { data: row, error: fetchErr } = await supabase
     .from('cases')
-    .select('id, org_id, destination, departure_date, data')
+    .select('id, org_id, destination, departure_date, updated_at, data')
     .eq('id', caseId)
     .single()
   if (fetchErr) return { ok: false, error: await explainCaseFetchError(supabase, fetchErr) }
@@ -710,7 +715,7 @@ export async function updateCaseDataBulk(
   const destinationRaw = (row as { destination: string | null }).destination
   const currentData = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<string, unknown>
 
-  let nextData: Record<string, unknown> = { ...currentData }
+  let nextData: Record<string, unknown> = preservePhLegacyApprovals(row as CaseRow, { ...currentData })
   const historyRows: {
     case_id: string
     org_id: string

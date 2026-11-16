@@ -1,3 +1,5 @@
+import type { CaseRow } from './types'
+import { usesPh2027 } from './philippines-policy'
 /**
  * 목적지별 상세페이지 필드 설정.
  *
@@ -2353,7 +2355,13 @@ export function getEffectiveVaccineEntries(
   destination: string | null | undefined,
   extraFields: string[] | undefined,
   customConfig: DestinationOverridesConfig | null | undefined,
+  caseRow?: CaseRow,
 ): DestinationVaccineEntry[] {
+  if (caseRow && usesPh2027(caseRow, destination)) {
+    const result: DestinationVaccineEntry[] = ['rabies', 'rabies_titer', 'internal_parasite', 'external_parasite'].map(key => ({ key }))
+    appendToggleVaccines(result, extraFields)
+    return result
+  }
   // 1) 커스텀 목적지 우선.
   const custom = findCustomDestination(destination, customConfig)
   if (custom) {

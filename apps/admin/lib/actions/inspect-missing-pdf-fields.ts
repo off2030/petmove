@@ -5,6 +5,7 @@ import type { CaseRow } from '@petmove/domain'
 import { findDestinationToken, flattenCaseForDestination, getEffectiveVaccineEntries, vaccineMatchesSpecies } from '@petmove/domain'
 import mappingsRaw from '@/data/pdf-field-mappings.json'
 import { readSource } from '@/lib/pdf-fill'
+import { phForm1MissingLabels } from '@/lib/pdf-ph-form1'
 import {
   groupSourceKey,
   labelForSource,
@@ -310,12 +311,13 @@ export async function inspectMissingPdfFields(
     // 공유 다이얼로그)와 동일하게 vaccineMatchesSpecies 로 걸러낸다. (org 커스텀
     // 여행지 config 는 기존 getEffectiveVaccineList 도 안 봤으므로 null 유지.)
     const allowedVaccines = new Set(
-      getEffectiveVaccineEntries(destination ?? caseRow.destination, extraFields, null)
+      getEffectiveVaccineEntries(destination ?? caseRow.destination, extraFields, null, caseRow)
         .filter((e) => vaccineMatchesSpecies(e, species))
         .map((e) => e.key),
     )
 
     const missingLabels = new Set<string>()
+    if (formKey === 'PH_Form1') for (const label of phForm1MissingLabels(caseRow)) missingLabels.add(label)
 
     // 항체검사 기록은 배열 전체 유무가 아니라 폼이 출력하는 검사일·검사기관 칸 기준으로
     // 레코드별 누락까지 본다 (값만 입력하고 검사일·기관을 비운 레코드 포함).

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
+  generatePHForm1,
   generateAQS,
   generateAnnexIIIMulti,
   generateApqaHq,
@@ -52,6 +53,7 @@ export const dynamic = 'force-dynamic'
 type SinglePdfBody = {
   kind: 'single'
   formKey:
+    | 'PH_Form1'
     | 'Form25'
     | 'Form25AuNz'
     | 'FormRE'
@@ -133,6 +135,7 @@ type ShipmentPackBody = {
 type PdfRequestBody = SinglePdfBody | MultiPdfBody | ShipmentPdfBody | BundlePdfBody | ShipmentPackBody
 
 const SINGLE_GENERATORS = {
+  PH_Form1: generatePHForm1,
   Form25: generateForm25,
   Form25AuNz: generateForm25AuNz,
   FormRE: generateFormRE,

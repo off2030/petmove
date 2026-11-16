@@ -1,3 +1,4 @@
+import { usesPh2027, validPhTiter, phDate } from '../philippines-policy'
 import type { CaseRow } from '../types'
 import {
   addDays,
@@ -150,6 +151,7 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return true
     }
     case 'has-titer-entry': {
+      if (usesPh2027(caseRow)) return !!validPhTiter(data, phDate(data.entry_date) || phDate(caseRow.departure_date) || todayKst())
       if (buildCaseJourneyContext(caseRow).destinationKey === 'japan') {
         return readJapanTiterEntries(data, true).length > 0
       }
@@ -169,6 +171,7 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return typeof primary.value === 'string' && (primary.value as string).trim().length > 0
     }
     case 'has-extra-titer': {
+      if (usesPh2027(caseRow)) return !!validPhTiter(data, phDate(data.entry_date) || phDate(caseRow.departure_date) || todayKst())
       // 추가 항체 검사(2회+) 는 (a) 2개 이상 입력되고, (b) 가장 최근 채혈일이 도래했고,
       // (c) 그 검사의 결과가 확인됐고, (d) 입국일이 입력된 경우 어떤 titer 의 2년 유효기간이
       // 입국일을 커버해야 완료. 못 만족하면 추가 검사가 더 필요한 상태.

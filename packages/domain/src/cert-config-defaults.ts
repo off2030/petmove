@@ -1,3 +1,5 @@
+import type { CaseRow } from './types'
+import { usesPh2027 } from './philippines-policy'
 /**
  * 목적지별 증명서(서류) 설정. client-safe 상수/타입.
  * 실제 load/save 는 @/lib/cert-config 에서 (서버 전용).
@@ -30,6 +32,7 @@ export interface CertConfig {
 
 /** 시스템이 지원하는 모든 증명서 유형. UI 선택 풀. */
 export const ALL_CERTS: CertDefinition[] = [
+  { key: 'phForm1', label: 'PH Form 1', type: 'single' },
   { key: 'form25', label: '별지25', type: 'single' },
   { key: 'form25AuNz', label: '별지25 EX', type: 'single' },
   { key: 'formAC', label: 'Form AC', type: 'single' },
@@ -92,6 +95,7 @@ export function resolveCerts(
   destination: string | null | undefined,
   config: CertConfig,
   species?: string | null,
+  caseRow?: CaseRow,
 ): CertDefinition[] {
   const keys: string[] = []
   for (const k of config.defaultCerts) if (!keys.includes(k)) keys.push(k)
@@ -105,6 +109,7 @@ export function resolveCerts(
       }
     }
   }
+  if (caseRow && usesPh2027(caseRow, destination) && !keys.includes('phForm1')) keys.push('phForm1')
   const all = keys
     .map(k => ALL_CERTS.find(c => c.key === k))
     .filter((c): c is CertDefinition => !!c)

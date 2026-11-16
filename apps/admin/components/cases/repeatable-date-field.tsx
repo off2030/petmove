@@ -40,6 +40,7 @@ interface Props {
   label: string
   dataKey: string
   legacyKey?: string
+  showTreatmentValidity?: boolean
   hideValidUntil?: boolean // 구충 등 유효기간 불필요한 항목
   /** 광견병 외 접종은 1년 고정. 셀렉터 비활성, 표시만 "1년". */
   lockOneYearValidity?: boolean
@@ -179,7 +180,7 @@ function parasiteKindFromLabel(label: string): 'external' | 'internal' | 'heartw
   return null
 }
 
-export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey, hideValidUntil, lockOneYearValidity }: Props) {
+export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey, hideValidUntil, lockOneYearValidity, showTreatmentValidity }: Props) {
   const { updateLocalCaseField, replaceLocalCaseData } = useCases()
   const editMode = useSectionEditMode()
   const confirm = useConfirm()
@@ -635,6 +636,12 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                         />
                       )}
 
+                      {showTreatmentValidity && (
+                        <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                          효력 종료일
+                          <DateTextField value={rec.valid_until ?? ''} onChange={v => updateRecordField(oi, 'valid_until', v || null)} className="w-32" />
+                        </label>
+                      )}
                       {!hideValidUntil && (
                         <ValidUntilSelector
                           value={rec.valid_until}

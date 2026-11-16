@@ -1,5 +1,7 @@
 'use client'
 
+import { usesPh2027 } from '@petmove/domain'
+
 import type { CaseRow } from '@petmove/domain'
 import type { FieldSpec } from '@petmove/domain'
 import {
@@ -102,13 +104,14 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
   // 활성 여행지 단일 토큰 — trip_type map 키 + 광견병항체 필터 게이트 기준.
   const activeDestToken = resolveActiveDestination(caseRow.destination, activeDestination)
   const tripType = getTripType(caseRow.data, activeDestToken)
-  const hideRabiesTiterOneWay = tripType === 'one_way' && isRabiesTiterHiddenForOneWay(activeDestToken)
+  const phNew = usesPh2027(caseRow, activeDestToken)
+  const hideRabiesTiterOneWay = !phNew && tripType === 'one_way' && isRabiesTiterHiddenForOneWay(activeDestToken)
 
   // 신고(수입·수출) 행 — 신고 대상 여행지에서만. 설정(신고 국가) + 목적지 프로파일이 판정.
   const showReportRow = reportRowApplies(caseRow, activeDestToken, importReportCountries)
 
   const allowedFields = getAllowedFields(viewDestination, extraFields)
-  const vaccineEntries = getEffectiveVaccineEntries(viewDestination, extraFields, destOverridesConfig)
+  const vaccineEntries = getEffectiveVaccineEntries(viewDestination, extraFields, destOverridesConfig, caseRow)
   // 커스텀 여행지가 매칭되면 baseVaccines = 커스텀의 entries — 토글 메뉴는 이미 들어간 키 제외하고 노출.
   const customDest = findCustomDestination(viewDestination, destOverridesConfig)
   const baseVaccineKeys = customDest
@@ -299,8 +302,8 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                     {showVaccine('kennel') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="켄넬코프" dataKey="kennel_cough_dates" lockOneYearValidity />}
                     {showVaccine('covid') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="코로나" dataKey="covid_dates" lockOneYearValidity />}
                     {showVaccine('infectious_disease') && <InfectiousDiseaseField caseId={caseRow.id} caseRow={caseRow} destination={viewDestination} />}
-                    {showVaccine('external_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" hideValidUntil />}
-                    {showVaccine('internal_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" hideValidUntil />}
+                    {showVaccine('external_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" hideValidUntil showTreatmentValidity={phNew} />}
+                    {showVaccine('internal_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" hideValidUntil showTreatmentValidity={phNew} />}
                     {showVaccine('heartworm') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="심장사상충" dataKey="heartworm_dates" hideValidUntil />}
                     {/* 폐충(Angiostrongylus vasorum) — 신 IHS 2026 뉴질랜드 항목(출국 5일 이내). 카탈로그가 없어 제품명은 직접 입력. */}
                     {showVaccine('lungworm') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="폐충" dataKey="lungworm_dates" hideValidUntil />}

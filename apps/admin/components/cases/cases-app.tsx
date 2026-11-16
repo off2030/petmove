@@ -10,7 +10,7 @@ import { CaseHistory } from './case-history'
 import { createCase } from '@/lib/actions/create-case'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { undoLastChange, updateCaseField } from '@/lib/actions/cases'
-import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAUCat, generateNZ, generateNZId, generateOVD, generateRCF, generateVBC, generateSGP, generateTW, generateTK, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti, recommendForm25RabiesSelection } from '@/lib/actions/generate-pdf'
+import { generatePHForm1, generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAUCat, generateNZ, generateNZId, generateOVD, generateRCF, generateVBC, generateSGP, generateTW, generateTK, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti, recommendForm25RabiesSelection } from '@/lib/actions/generate-pdf'
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import type { MultiFormKey } from '@/lib/pdf-multi-forms'
 import { MultiFormDialog } from './multi-form-dialog'
@@ -43,6 +43,7 @@ type CertAction = (
 ) => Promise<{ ok: true; pdf: string; filename: string } | { ok: false; error: string }>
 
 const CERT_ACTIONS: Record<string, CertAction> = {
+  phForm1: generatePHForm1,
   form25: generateForm25,
   form25AuNz: generateForm25AuNz,
   formRE: generateFormRE,
@@ -65,6 +66,7 @@ const CERT_ACTIONS: Record<string, CertAction> = {
 }
 
 const CERT_FORM_KEYS: Record<string, string> = {
+  phForm1: 'PH_Form1',
   form25: 'Form25',
   form25AuNz: 'Form25AuNz',
   formRE: 'FormRE',
@@ -628,7 +630,7 @@ function Inner({ moveTargetName = null }: { moveTargetName?: string | null }) {
                       </label>
                       {(() => {
                         const focusDest = activeDestination ?? firstDestination(selectedCase)
-                        return resolveCerts(focusDest, certConfig, (selectedCase.data as Record<string, unknown>)?.species as string | undefined).map((btn) =>
+                        return resolveCerts(focusDest, certConfig, (selectedCase.data as Record<string, unknown>)?.species as string | undefined, selectedCase).map((btn) =>
                           btn.type === 'multi' ? (
                             <button
                               key={btn.key}

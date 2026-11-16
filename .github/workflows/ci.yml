@@ -50,6 +50,9 @@ jobs:
       - name: Check co-owner names and certificate mappings
         run: pnpm tsx scripts/check-co-owner.ts
 
+      - name: Check Philippines 2027 rules and legacy approvals
+        run: pnpm tsx scripts/check-ph-2027.ts
+
       - name: Check NZ importer and arrival port
         run: pnpm tsx scripts/check-nz-consignment.ts
 

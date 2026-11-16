@@ -31,6 +31,7 @@ import { resolveNzIdTransform, nz26StrikeFlags } from '@/lib/pdf-nz2026'
 import { mergeParasiticideDoses } from '@/lib/pdf-other-slots'
 import { nzImporterName, nzArrivalPort } from '@/lib/pdf-nz-consignment'
 import { nzCatParasiteDefaults } from '@/lib/pdf-nz-parasite'
+import { resolvePhForm1, appendPhForm1Continuation } from '@/lib/pdf-ph-form1'
 import type { CaseRow } from '@petmove/domain'
 import { documentOwnerNames } from '@petmove/domain'
 
@@ -1275,6 +1276,7 @@ function resolveField(
     if (sp !== speciesOnly) return mapping.default ?? ''
   }
   const raw = source ? readSource(source, caseRow, data) : null
+  if (transform?.startsWith('ph1:')) return resolvePhForm1(transform, data, caseRow)
 
   // APHIA Form 002: the second vaccine is the dose on the import permit,
   // not simply the second-most-recent dose. Never infer it from array order.
@@ -3930,6 +3932,7 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
   // 적용 form 은 pdf-field-mappings.json 의 form 별 "flatten": true 로 결정.
   // 전체 무력화하려면 이 if 블록만 비활성화. 개별 form 만 끄려면 JSON 에서
   // 해당 키 제거.
+  if (formKey === 'PH_Form1') appendPhForm1Continuation(pdf, data, caseRow, customFont, !noVet)
   if (form.flatten) {
     forceRegenerateButtonAppearances(pdfForm)
     sanitizeMalformedWidgets(pdf, pdfForm)

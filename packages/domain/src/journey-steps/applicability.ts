@@ -1,3 +1,4 @@
+import { usesPh2027, validPhTiter } from '../philippines-policy'
 import type { CaseRow } from '../types'
 import {
   destinationKeysWhere,
@@ -333,10 +334,28 @@ export function getStepsForCase(
   caseRow: CaseRow,
 ): StepDefinition[] {
   const ctx = buildCaseJourneyContext(caseRow)
+  const phNew = usesPh2027(caseRow)
   return catalog
-    .filter((s) => isStepApplicable(s.applicability, ctx))
-    .filter((s) => appliesWhenMatches(s.appliesWhen, caseRow))
+    .filter((s) => {
+      if (phNew && s.id === 'general-vaccine') return false
+      if (phNew && ['rabies-titer', 'rabies-titer-extra', 'external-parasite'].includes(s.id)) return true
+      return isStepApplicable(s.applicability, ctx)
+    })
+    .filter((s) => phNew && s.id === 'rabies-titer-extra' ? readTiterEntries(caseRow).length > 0 && !validPhTiter(caseRow.data) : appliesWhenMatches(s.appliesWhen, caseRow))
     .map((s) => resolveStepForDestination(s, ctx.destinationKey, ctx.destinationToken))
+    .map((s) => {
+      if (!phNew) return s
+      const overrides: Record<string, Partial<StepDefinition>> = {
+        'rabies-vaccine-1': { earliest: { anchor: 'birth', daysAfter: 84 }, description: '생후 12주 이후 광견병 백신을 접종하세요. 필리핀 도착일까지 백신이 유효해야 해요. 유효기간 내 추가 접종을 이어가면 항체검사 결과를 계속 사용할 수 있어요.', descriptionBySpecies: undefined, validationIds: ['ph.new-rabies'] },
+        'rabies-titer': { description: 'SPSIC 신청 전에 인정기관에서 광견병 항체검사(FAVN/RFFIT)를 받아야 해요. 0.5 IU/mL 이상이어야 해요. 최초·유효기간 만료 후 재접종은 접종 30일 이후에 채혈하세요. 마이크로칩은 채혈 전에 삽입해야 해요.', validationIds: ['ph.new-rnatt'] },
+        'rabies-titer-extra': { description: '유효한 결과와 백신 접종 연속성을 확인하세요. 접종 유효기간이 하루라도 끊기면 재접종·항체검사를 다시 받아야 해요.', validationIds: ['ph.new-rnatt'] },
+        'internal-parasite': { description: '내부구충을 하세요. SPSIC 신청 시 유효하고 필리핀 도착일까지 약효가 유지되어야 해요. 처치일과 효력 종료일을 기록하세요.', validationIds: ['ph.new-parasites'] },
+        'external-parasite': { description: '외부구충을 하세요. SPSIC 신청 시 유효하고 필리핀 도착일까지 약효가 유지되어야 해요. 처치일과 효력 종료일을 기록하세요.', validationIds: ['ph.new-parasites'], order: 53 },
+        'import-permit': { earliest: { anchor: 'birth', daysAfter: 126 }, description: 'SPSIC 신청일에 생후 18주 이상이어야 해요. 항체검사 결과와 동물 사진, 정부 확인을 받은 동물별 Form 1을 준비해 신청하세요. 처리 기간은 최대 11일, 허가 유효기간은 60일이에요.', validationIds: ['ph.new-regime-confirmation', 'ph.new-minimum-age', 'ph.new-form1', 'ph.new-rnatt', 'ph.new-parasites', 'ph.new-pregnancy', 'ph.import-permit-within-60days', 'ph.import-permit-not-after-departure'] },
+        'flight-purchase': { description: 'SPSIC 승인과 Form 1·항체검사 결과를 준비하고 항공사 동반 조건을 확인하세요.', validationIds: ['ph.new-rabies', 'ph.new-rnatt', 'ph.new-pregnancy'] },
+      }
+      return overrides[s.id] ? { ...s, earliest: undefined, deadline: undefined, ...overrides[s.id] } : s
+    })
     .map((s) => resolveStepForSpecies(s, ctx.species))
     .sort((a, b) => a.order - b.order)
 }

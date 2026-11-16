@@ -1,3 +1,4 @@
+import { usesPh2027, isPhForm1Endorsed, phScopedData } from './philippines-policy'
 import { attachmentInDestinationScope } from './attachment-scope'
 export { attachmentInDestinationScope, SHARED_ATTACH_STEPS } from './attachment-scope'
 import type { CaseRow } from './types'
@@ -1992,7 +1993,11 @@ export function resolveRequiredDocs(
   const keyForDocs = findDestinationKeyForDocs(destination)
   // 큐레이션 spec(일본·태국·필리핀·EU 패밀리)이 없으면 기본 [별지25] 로 폴백 — 모든 목적지가
   // 최소 1건의 필수 서류를 갖는다('서류 목록 없음' 케이스 제거).
-  const allSpecs = SPECS[destination] ?? (keyForDocs ? SPECS_BY_KEY[keyForDocs] : undefined) ?? DEFAULT_SPECS
+  let allSpecs = SPECS[destination] ?? (keyForDocs ? SPECS_BY_KEY[keyForDocs] : undefined) ?? DEFAULT_SPECS
+  if (usesPh2027(caseRow, destination)) {
+    allSpecs = allSpecs.map(spec => spec.id === 'ph-rabies-titer-result' ? { ...spec, roundTripOnly: false, description: 'SPSIC 신청과 필리핀 입국에 필요한 인정기관 RNATT 결과지예요. 0.5 IU/mL 이상이어야 해요.' } : spec)
+    allSpecs = [...allSpecs, { id: 'ph-form1', name: 'Form 1 (접종·항체검사·구충 증명서)', source: '담당 수의사 및 정부 확인', kind: 'manual', group: 'quarantine', description: '동물마다 한 장씩 작성하고 정부 확인을 받은 뒤 SPSIC 신청 시 제출하세요. 정부 검역증명서는 별도로 필요해요.' }]
+  }
   // 왕복 전용 서류(예: 한국 귀국용 항체 검사 결과지)는 편도 케이스에서 제외 —
   // 목록·vet-visit 완료 게이트 양쪽에서 빠진다.
   const tripType = getTripType((caseRow.data ?? {}) as Record<string, unknown>, destination)
@@ -2056,7 +2061,7 @@ export function resolveRequiredDocs(
     const issuanceStarted = !isIssuanceNotStarted(issuanceStepId, caseRow)
     const verified =
       !na &&
-      (spec.kind === 'manual'
+      (spec.id === 'ph-form1' ? isPhForm1Endorsed(phScopedData(caseRow, destination)) : spec.kind === 'manual'
         ? // 운영자 서류탭 '완료' OR (발급 step 시작됨 AND (수기 발급완료 플래그 OR 사본 첨부)) → '보유'.
           exportDocDone ||
           (issuanceStarted && (flags[spec.id] === true || hasAttachmentForStep(caseRow, attachStepId)))

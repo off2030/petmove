@@ -1,3 +1,4 @@
+import { usesPh2027, philippinesPolicy } from '../philippines-policy'
 import type { CaseRow } from '../types'
 import {
   DESTINATION_OVERRIDES,
@@ -608,6 +609,7 @@ export function validateImportPermitNotAfterDeparture(
 export function validatePhEntryDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   if (!matchesDestinationKey(ctx.destination, 'philippines')) return null
+  if (usesPh2027({ data: ctx.data, destination: ctx.destination, departure_date: ctx.departureDate, updated_at: '' })) return null
   const birth = readDate(ctx.data, 'birth_date')
   if (!birth) return null
   const earliest = addDays(birth, 120)
@@ -1270,6 +1272,7 @@ export function validateThImportPermitVaccineGap(
   data: Record<string, unknown>,
 ): string | null {
   if (!filedDate) return null
+  if (philippinesPolicy({ data: { ...data, import_permit_application_date: filedDate }, destination: '필리핀', departure_date: null, updated_at: '' }) !== 'legacy') return null
   for (const [key, label] of [
     ['rabies_dates', '광견병 백신'],
     ['general_vaccine_dates', '종합백신'],
@@ -1325,6 +1328,7 @@ export function validatePhInternalParasiteWindow(
   filedDate: string,
 ): string | null {
   if (!treatmentDate || !filedDate) return null
+  if (filedDate >= '2027-01-01') return null
   const gap = daysBetween(treatmentDate, filedDate)
   if (!Number.isFinite(gap)) return null
   if (gap < 0) {

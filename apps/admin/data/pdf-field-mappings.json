@@ -7118,5 +7118,176 @@
         "note": "항체검사 기관명 — 최근 검사 기록"
       }
     }
+  },
+  "PH_Form1": {
+    "template": "PH_Form1.pdf",
+    "description": "BAI Form 1 (2027 SPSIC) — one animal per certificate; official endorsement is never fabricated.",
+    "filename": "PH_Form1_{pet_name}.pdf",
+    "flatten": true,
+    "preserveTemplateText": true,
+    "signatures": [{ "image": "lausanne.png", "page": 0, "x": 177, "y": 230, "w": 88, "h": 24 }],
+    "fields": {
+      "ph1_importer": {
+        "source": null,
+        "transform": "ph1:importer"
+      },
+      "ph1_address": {
+        "source": null,
+        "transform": "ph1:address"
+      },
+      "ph1_contact": {
+        "source": null,
+        "transform": "ph1:contact"
+      },
+      "ph1_origin": {
+        "source": null,
+        "transform": "ph1:origin"
+      },
+      "ph1_pet": {
+        "source": "pet_name_en"
+      },
+      "ph1_species": {
+        "source": "species",
+        "transform": "en"
+      },
+      "ph1_sex": {
+        "source": "sex",
+        "transform": "ph1:sex"
+      },
+      "ph1_chip": {
+        "source": "microchip"
+      },
+      "ph1_age": {
+        "source": null,
+        "transform": "ph1:age"
+      },
+      "ph1_breed": {
+        "source": "breed_en"
+      },
+      "ph1_weight": {
+        "source": "weight"
+      },
+      "ph1_color": {
+        "source": "color_en"
+      },
+      "ph1_titer_sample": {
+        "source": null,
+        "transform": "ph1:titer:date"
+      },
+      "ph1_titer_tested": {
+        "source": null,
+        "transform": "ph1:titer:test_date"
+      },
+      "ph1_titer_lab": {
+        "source": null,
+        "transform": "ph1:titer:lab"
+      },
+      "ph1_titer_result": {
+        "source": null,
+        "transform": "ph1:titer:value"
+      },
+      "vet_ph1_name": {
+        "source": null,
+        "transform": "vet:name_en"
+      },
+      "vet_ph1_license": {
+        "source": null,
+        "transform": "vet:license_no"
+      },
+      "vet_ph1_issue_date": {
+        "source": null,
+        "transform": "ph1:issue_date"
+      },
+      "ph1_gov_name": {
+        "source": "ph_government_vet_name"
+      },
+      "ph1_gov_office": {
+        "source": "ph_government_office"
+      },
+      "ph1_gov_date": {
+        "source": null,
+        "transform": "ph1:endorsement_date"
+      },
+      "ph1_vacc_0_name": {
+        "source": null,
+        "transform": "ph1:vacc:0:name"
+      },
+      "ph1_vacc_0_manufacturer": {
+        "source": null,
+        "transform": "ph1:vacc:0:manufacturer"
+      },
+      "ph1_vacc_0_serial": {
+        "source": null,
+        "transform": "ph1:vacc:0:serial"
+      },
+      "ph1_vacc_0_date": {
+        "source": null,
+        "transform": "ph1:vacc:0:date"
+      },
+      "ph1_vacc_0_valid_until": {
+        "source": null,
+        "transform": "ph1:vacc:0:valid_until"
+      },
+      "ph1_vacc_1_name": {
+        "source": null,
+        "transform": "ph1:vacc:1:name"
+      },
+      "ph1_vacc_1_manufacturer": {
+        "source": null,
+        "transform": "ph1:vacc:1:manufacturer"
+      },
+      "ph1_vacc_1_serial": {
+        "source": null,
+        "transform": "ph1:vacc:1:serial"
+      },
+      "ph1_vacc_1_date": {
+        "source": null,
+        "transform": "ph1:vacc:1:date"
+      },
+      "ph1_vacc_1_valid_until": {
+        "source": null,
+        "transform": "ph1:vacc:1:valid_until"
+      },
+      "ph1_parasite_0_name": {
+        "source": null,
+        "transform": "ph1:parasite:0:name"
+      },
+      "ph1_parasite_0_manufacturer": {
+        "source": null,
+        "transform": "ph1:parasite:0:manufacturer"
+      },
+      "ph1_parasite_0_serial": {
+        "source": null,
+        "transform": "ph1:parasite:0:serial"
+      },
+      "ph1_parasite_0_date": {
+        "source": null,
+        "transform": "ph1:parasite:0:date"
+      },
+      "ph1_parasite_0_valid_until": {
+        "source": null,
+        "transform": "ph1:parasite:0:valid_until"
+      },
+      "ph1_parasite_1_name": {
+        "source": null,
+        "transform": "ph1:parasite:1:name"
+      },
+      "ph1_parasite_1_manufacturer": {
+        "source": null,
+        "transform": "ph1:parasite:1:manufacturer"
+      },
+      "ph1_parasite_1_serial": {
+        "source": null,
+        "transform": "ph1:parasite:1:serial"
+      },
+      "ph1_parasite_1_date": {
+        "source": null,
+        "transform": "ph1:parasite:1:date"
+      },
+      "ph1_parasite_1_valid_until": {
+        "source": null,
+        "transform": "ph1:parasite:1:valid_until"
+      }
+    }
   }
 }

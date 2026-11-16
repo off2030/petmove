@@ -6,3 +6,5 @@ scripts/journey-copy.snapshot.txt text eol=lf
 scripts/destinations.snapshot.txt text eol=lf
 scripts/behavior.snapshot.txt text eol=lf
 scripts/checks-copy.snapshot.txt text eol=lf
+# PDF templates must retain their binary streams and original line endings.
+*.pdf binary

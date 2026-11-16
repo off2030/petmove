@@ -15,7 +15,7 @@ import { labColor } from '@/lib/lab-color'
 import { extractTiterInfo } from '@/lib/actions/extract-titer'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
-import { addDays, allLabOptions, effectiveTiterLabs, formatKoreanDate, resolveActiveDestination, resolveTiterLab, type InspectionLabRule } from '@petmove/domain'
+import { usesPh2027, addDays, allLabOptions, effectiveTiterLabs, formatKoreanDate, resolveActiveDestination, resolveTiterLab, type InspectionLabRule } from '@petmove/domain'
 import { stampInspectionActiveDest } from '@/lib/inspection-active-dest'
 import { titerStatusShiftOnDelete } from '@/lib/inspection-status'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
@@ -29,6 +29,9 @@ interface TiterRecord {
   value: string | null
   lab: string | null
   /** 검사소 샘플 수령일 — AU/HI/GU 의 N일 대기 카운트다운 기준. 미입력 시 채혈일 fallback. */
+  test_date?: string | null
+  method?: string | null
+  government_approved?: boolean
   received_date?: string | null
 }
 
@@ -114,7 +117,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 
   const [saving] = useTransition()
   const [editIdx, setEditIdx] = useState<number | null>(null)
-  const [editField, setEditField] = useState<'date' | 'value' | 'lab' | 'received_date' | null>(null)
+  const [editField, setEditField] = useState<'date' | 'value' | 'lab' | 'received_date' | 'test_date' | null>(null)
   const [addingNew, setAddingNew] = useState(false)
   const [extracting, setExtracting] = useState(false)
   const [extractMsg, setExtractMsg] = useState<string | null>(null)
@@ -493,6 +496,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
                       onAttachFile={(f) => handleFile(f, oi)}
                       saving={saving}
                       extracting={extracting}
+                      showPhDetails={usesPh2027(caseRow, destination)}
                       showReceivedDate={showReceivedDate}
                       entryTooltip={japanEntryTooltip(rec.date, destination)}
                     />
@@ -584,20 +588,21 @@ function InlineDateChip({ path, date, separator, onClick, extraTitle, status }: 
 /* ── 모달 안의 단일 record row: date | lab | value | attach | delete ── */
 
 function TiterRecordRow({
-  caseId, caseRow, record, recordIdx, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, onAttachFile, saving, extracting, showReceivedDate, entryTooltip,
+  caseId, caseRow, record, recordIdx, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, onAttachFile, saving, extracting, showReceivedDate, showPhDetails, entryTooltip,
 }: {
   caseId: string
   caseRow: CaseRow
   record: TiterRecord
   recordIdx: number
-  isEditing: 'date' | 'value' | 'lab' | 'received_date' | null
-  onStartEdit: (f: 'date' | 'value' | 'lab' | 'received_date') => void
+  isEditing: 'date' | 'value' | 'lab' | 'received_date' | 'test_date' | null
+  onStartEdit: (f: 'date' | 'value' | 'lab' | 'received_date' | 'test_date') => void
   onStopEdit: () => void
   onUpdateField: (f: keyof TiterRecord, v: unknown) => void
   onDelete: () => void
   onAttachFile: (file: File) => void
   saving: boolean
   extracting: boolean
+  showPhDetails: boolean
   showReceivedDate: boolean
   entryTooltip?: string
 }) {
@@ -681,6 +686,14 @@ function TiterRecordRow({
       )}
 
       {/* 검사소 샘플 수령일 — AU/HI/GU 케이스에만 노출 (검증 룰이 사용하는 N일 대기 카운트다운 기준). */}
+      {showPhDetails && <>
+        <span className="text-xs text-muted-foreground">검사일</span>
+        <DateTextField value={record.test_date ?? ''} onChange={v => onUpdateField('test_date', v || null)} className="w-32" />
+        <select aria-label="항체검사 방법" value={record.method ?? ''} onChange={e => onUpdateField('method', e.target.value || null)} className="bg-background border rounded px-2 py-1 text-xs">
+          <option value="">기관 기본 검사법</option><option value="FAVN">FAVN</option><option value="RFFIT">RFFIT</option><option value="ELISA">ELISA</option>
+        </select>
+        <label className="text-xs inline-flex gap-1"><input type="checkbox" checked={record.government_approved === true} onChange={e => onUpdateField('government_approved', e.target.checked)} />기타 기관 정부 인정 확인</label>
+      </>}
       {showReceivedDate && (
         <>
           <span className="text-muted-foreground/30 select-none">|</span>
