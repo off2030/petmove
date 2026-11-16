@@ -1,5 +1,7 @@
 # User's Chrome on Windows
 
+**Philippine SPSIC work uses browser-only control.** Follow the [Philippine control boundary](../../../../docs/work-management/operations.md#필리핀-담당-상시-업무); the Windows Computer Use fallback below does not apply to that work. Missing browser tools are a connection blocker, not permission to control the whole desktop.
+
 Use an existing authenticated Chrome session for inspection-provider checks. Browser inventory and Windows app inventory are separate: `cua_repl` may list only the in-app browser and MCP Apps, or return `Browser is not available: chrome`, while the desktop Chrome remains accessible.
 
 Prefer the Chrome extension connection and the returned `profileName: 펫무브`. A Chrome profile choice is not a provider login and does not require a password. Do not launch a new generic Chrome/profile-picker window when the required authenticated profile is already connected. If the extension is not connected, explain the missing connection and ask for `@Chrome` rather than repeatedly trying the same failing Windows capture.
