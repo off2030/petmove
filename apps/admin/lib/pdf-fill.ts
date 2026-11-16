@@ -31,7 +31,7 @@ import { resolveNzIdTransform, nz26StrikeFlags } from '@/lib/pdf-nz2026'
 import { mergeParasiticideDoses } from '@/lib/pdf-other-slots'
 import { nzImporterName, nzArrivalPort } from '@/lib/pdf-nz-consignment'
 import { nzCatParasiteDefaults } from '@/lib/pdf-nz-parasite'
-import { resolvePhForm1, appendPhForm1Continuation } from '@/lib/pdf-ph-form1'
+import { resolvePhForm1, appendPhForm1Continuation, collectPhForm1LongFields } from '@/lib/pdf-ph-form1'
 import type { CaseRow } from '@petmove/domain'
 import { documentOwnerNames } from '@petmove/domain'
 
@@ -3830,6 +3830,7 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
     }
   }
 
+  const phLongFields = formKey === 'PH_Form1' ? collectPhForm1LongFields(pdfForm, customFont) : []
   await applyFontFixes(pdf, pdfForm, customFont, form.preserveTemplateText ? touchedFields : undefined)
 
   if (options?.includeSignature && form.signatures?.length) {
@@ -3932,7 +3933,7 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
   // 적용 form 은 pdf-field-mappings.json 의 form 별 "flatten": true 로 결정.
   // 전체 무력화하려면 이 if 블록만 비활성화. 개별 form 만 끄려면 JSON 에서
   // 해당 키 제거.
-  if (formKey === 'PH_Form1') appendPhForm1Continuation(pdf, data, caseRow, customFont, !noVet)
+  if (formKey === 'PH_Form1') appendPhForm1Continuation(pdf, data, caseRow, customFont, !noVet, phLongFields)
   if (form.flatten) {
     forceRegenerateButtonAppearances(pdfForm)
     sanitizeMalformedWidgets(pdf, pdfForm)

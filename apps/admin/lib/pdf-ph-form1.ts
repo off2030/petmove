@@ -1,9 +1,10 @@
 import { phDate, phRecords, phToday, phVaccineUntil, validPhTiter, isPhForm1Endorsed, type VaccineProduct, type CaseRow } from '@petmove/domain'
 import { lookupRabies, lookupComprehensive, lookupCiv, lookupKennelCough, lookupExternalParasite, lookupInternalParasite, lookupParasiteById } from './vaccine-lookups-scoped'
 import { VET_INFO } from './vet-info'
-import type { PDFDocument, PDFFont } from 'pdf-lib'
+import { PDFTextField, type PDFDocument, type PDFFont, type PDFForm } from 'pdf-lib'
 
 type PrintedRecord = { name: string; manufacturer: string; serial: string; date: string; valid_until: string }
+type ContinuationField = { label: string; value: string }
 const mdy = (value: unknown) => phDate(value).replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$2/$3/$1')
 function treatment(row: Record<string, unknown>, fallback: VaccineProduct | null, kind: string): PrintedRecord {
   const catalog = row.other_hospital ? null : fallback
@@ -82,8 +83,48 @@ export function phForm1MissingLabels(row: CaseRow): string[] {
   if (!phDate(data.ph_form1_endorsed_date)) labels.push('Form 1 정부 확인일 (확인 전 출력본은 초안)')
   return labels
 }
+/** A long address must remain legible; do not clip it or shrink below 5pt. */
+export function collectPhForm1LongFields(form: PDFForm, font: PDFFont): ContinuationField[] {
+  const fields: ContinuationField[] = []
+  const labels: Record<string, string> = { ph1_importer: 'Importer name', ph1_address: 'Importer address', ph1_contact: 'Importer contact', ph1_gov_name: 'Government veterinarian name', ph1_gov_office: 'Government veterinary office name and address', ph1_pet: 'Animal name', ph1_breed: 'Breed', ph1_color: 'Colour / marks' }
+  for (const field of form.getFields()) {
+    if (!(field instanceof PDFTextField)) continue
+    const value = field.getText() || ''
+    const rect = field.acroField.getWidgets()[0]?.getRectangle()
+    if (!rect || !value || font.widthOfTextAtSize(value, 5) <= rect.width - 4) continue
+    const name = field.getName()
+    const record = name.match(/^ph1_(vacc|parasite)_(\d+)_(.+)$/)
+    const label = record ? `${record[1] === 'vacc' ? 'Vaccination' : 'Parasite treatment'} row ${Number(record[2]) + 1}: ${record[3]}` : labels[name] || 'Additional Form 1 information'
+    fields.push({ label, value })
+    field.setText('See continuation')
+  }
+  return fields
+}
 /** Preserve all supplied treatments beyond the official form's two rows. */
-export function appendPhForm1Continuation(pdf: PDFDocument, data: Record<string, unknown>, row: CaseRow, font: PDFFont, includeVet: boolean): void {
+export function appendPhForm1Continuation(pdf: PDFDocument, data: Record<string, unknown>, row: CaseRow, font: PDFFont, includeVet: boolean, longFields: ContinuationField[] = []): void {
+  if (longFields.length) {
+    let page = pdf.addPage([612, 936]); let y = 850
+    const header = () => {
+      page.drawText('FORM 1 - CONTINUATION OF DETAILS', { x: 40, y: 890, size: 12, font })
+      page.drawText(`Animal: ${row.pet_name_en || row.pet_name || ''} / Chip: ${row.microchip || ''}`, { x: 40, y: 870, size: 8, font })
+      page.drawText('Official veterinarian signature / seal: __________________  Date: ______________', { x: 40, y: 80, size: 9, font })
+    }
+    header()
+    for (const field of longFields) {
+      let line = ''
+      const lines: string[] = []
+      for (const char of `${field.label}: ${field.value.replace(/\s+/g, ' ')}`) {
+        if (font.widthOfTextAtSize(line + char, 9) > 530) { lines.push(line); line = '' }
+        line += char
+      }
+      if (line) lines.push(line)
+      for (const text of lines) {
+        if (y < 125) { page = pdf.addPage([612, 936]); y = 850; header() }
+        page.drawText(text, { x: 40, y, size: 9, font }); y -= 14
+      }
+      y -= 10
+    }
+  }
   const records = phForm1Records(data)
   const extra = [...records.vacc.slice(2), ...records.parasite.slice(2)]
   for (let offset = 0; offset < extra.length; offset += 16) {

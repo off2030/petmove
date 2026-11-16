@@ -47,6 +47,7 @@ await save('low-result', { ...row, data: { ...row.data, rabies_titer_records: [r
 await save('endorsed', { ...row, data: { ...row.data, ph_form1_endorsed_date: '2026-11-11', ph_government_vet_name: 'Test Official Vet', ph_government_office: 'Test Government Office' } }, {}, { pages: 1, contains: ['Test Official Vet', 'Test Government Office', '11/11/2026'] })
 const overflow = { ...row, data: { ...row.data, general_vaccine_dates: Array.from({ length: 19 }, (_, i) => ({ date: '2026-10-01', product: `ExtraVaccine${i}`, manufacturer: 'Manufacturer', lot: `EXTRA-${i}` })) } }
 await save('overflow', overflow, {}, { pages: 3, contains: ['ExtraVaccine0', 'ExtraVaccine18', 'CONTINUATION SHEET', 'Official veterinarian endorsement'] })
+await save('long-address', { ...row, data: { ...row.data, address_overseas: 'Long importer address '.repeat(18) + 'IMPORTER-END', ph_government_office: 'Long government office address '.repeat(18) + 'OFFICE-END' } }, {}, { pages: 2, contains: ['See continuation', 'CONTINUATION OF DETAILS', 'IMPORTER-END', 'OFFICE-END'] })
 assert.equal(JSON.stringify(row), before, 'Source records mutated')
 await writeFile(path.join(dir, 'specs.json'), JSON.stringify(specs))
 execFileSync('python', ['-c', String.raw`
@@ -64,6 +65,6 @@ for s in specs:
   assert d[0].search_for('Test Government Office')[0].y1 < 794,'Government office text overlaps the table border'
  if s['file'].endswith('cat.pdf'):
   d[0].get_pixmap(matrix=fitz.Matrix(1.5,1.5)).save(s['file']+'.png')
-print('PASS: 6 actual Form 1 PDFs; species, report selection, missing/low results, actual endorsement, all overflow records, no mutation/widgets')
+print('PASS: 7 actual Form 1 PDFs; species, report selection, missing/low results, actual endorsement, all overflow records, complete long addresses, no mutation/widgets')
 `, path.join(dir, 'specs.json')], { stdio: 'inherit' })
 process.chdir(root)
