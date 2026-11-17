@@ -14,7 +14,7 @@ import { deriveAdvanceNotificationStatus } from '../journey-steps/report-status'
 import type { ProcedureCheck } from './types'
 import { flattenCaseForDestination } from '../destination-scoped-fields'
 import { resolveActiveDestination } from '../destination-config'
-import { isJapanTiterLabApproved, readJapanTiterEntries } from '../journey-steps/japan-titer'
+import { getJapanTiterLabStatus, readJapanTiterEntries } from '../journey-steps/japan-titer'
 import {
   addDays,
   addYears,
@@ -54,15 +54,18 @@ export const JP_CHECKS: ProcedureCheck[] = [
     run: ({ caseRow }) => {
       const data = caseRow.data ?? {}
       const entries = readTiterEntries(caseRow)
-      if (entries.length === 0) return SKIP
+      const labStatus = getJapanTiterLabStatus(data)
+      if (entries.length === 0 || labStatus === 'missing') return SKIP
       const raw = data.rabies_titer_records as Array<Record<string, unknown>>
-      if (entries.some((entry) => isJapanTiterLabApproved(raw[entry.originalIndex]?.lab))) {
+      if (labStatus === 'approved') {
         return { ok: true, message: '일본 지정기관 검사 기록이 있어요.' }
       }
       return {
         ok: false,
-        message: '일본 지정기관의 항체검사가 필요해요. APQA Seoul·KSVDL-R·RIAS 등 지정기관을 확인하세요. 기존 기록의 기관명만 바꾸면 안 돼요.',
-        offendingPaths: entries.map((entry) => `rabies_titer_records[${entry.originalIndex}].lab`),
+        message: '입력된 검사기관이 일본 지정기관으로 확인되지 않아요. 검사 결과지의 기관명과 입력값을 대조해 주세요.',
+        offendingPaths: entries
+          .filter((entry) => typeof raw[entry.originalIndex]?.lab === 'string' && String(raw[entry.originalIndex].lab).trim())
+          .map((entry) => `rabies_titer_records[${entry.originalIndex}].lab`),
       }
     },
   },

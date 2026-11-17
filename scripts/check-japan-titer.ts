@@ -8,6 +8,9 @@ import {
   resolveCompletedDate,
   resolveDone,
   validateJpEntryDate,
+  JAPAN_TITER_LAB_WARNING,
+  isJapanTiterLabNotification,
+  resolveJapanTiterLabNotification,
   type CaseRow,
 } from '../packages/domain/src'
 import { JP_CHECKS } from '../packages/domain/src/procedure-checks/jp'
@@ -54,8 +57,41 @@ assert.equal(readJapanTiterEntries(invalid.data!).length, 0)
 assert.equal(resolveDone('has-titer-entry', invalid), false)
 assert.equal(resolveCompletedDate('has-titer-entry', invalid), null)
 assert.equal(run('jp.titer-designated-lab', invalid).ok, false)
+assert.equal(run('jp.titer-designated-lab', invalid).message, JAPAN_TITER_LAB_WARNING)
 assert(!buildJourney(invalid).trip.prep?.label.includes('입국 가능'))
 assert.equal(findStepForCheck('jp.titer-designated-lab'), 'rabies-titer')
+
+// Saving a result before choosing its lab must not create an unapproved-lab alert.
+for (const lab of [null, undefined, '', '  ']) {
+  assert.equal(run('jp.titer-designated-lab', fixture([{ ...approved, lab }])).ok, true)
+}
+assert.equal(run('jp.titer-designated-lab', fixture([])).ok, true)
+assert.equal(run('jp.titer-designated-lab', fixture([{ ...approved, date: '' }])).ok, true)
+assert.equal(run('jp.titer-designated-lab', fixture([{ ...approved, lab: 'unverified laboratory' }])).ok, false)
+assert.deepEqual(run('jp.titer-designated-lab', fixture([{ ...approved, lab: null }, krsl])).offendingPaths, ['rabies_titer_records[1].lab'])
+
+const legacyWarning = '일본 지정기관의 항체검사가 필요해요. APQA Seoul·KSVDL-R·RIAS 등 지정기관을 확인하세요. 기존 기록의 기관명만 바꾸면 안 돼요.'
+const alert = (warning: string, rest = '') => `검증 실패 알림\n\n고객 · 테스트\n동물 · 테스트\n국가 · 일본\n\n• ${warning}${rest}`
+for (const warning of [legacyWarning, JAPAN_TITER_LAB_WARNING]) {
+  const content = alert(warning)
+  assert.equal(isJapanTiterLabNotification(content), true)
+  for (const lab of ['apqa_seoul', 'ksvdl_r', 'rias']) {
+    assert.deepEqual(resolveJapanTiterLabNotification(content, fixture([{ ...approved, lab }]).data), {
+      resolved: true, resolvedBulletIndexes: [0],
+    })
+  }
+  for (const data of [undefined, {}, fixture([{ ...approved, lab: null }]).data, invalid.data]) {
+    assert.equal(resolveJapanTiterLabNotification(content, data), undefined)
+  }
+  assert.deepEqual(resolveJapanTiterLabNotification(alert(warning, '\n• 다른 경고'), fixture([approved]).data), {
+    resolved: false, resolvedBulletIndexes: [0],
+  })
+  assert.deepEqual(resolveJapanTiterLabNotification(alert(warning, '\n외 2건…'), fixture([approved]).data), {
+    resolved: false, resolvedBulletIndexes: [0],
+  })
+  assert.equal(resolveJapanTiterLabNotification(content.replace('검증 실패 알림', '신규 신청'), fixture([approved]).data), undefined)
+}
+assert.equal(resolveJapanTiterLabNotification(alert('관계없는 경고'), fixture([approved]).data), undefined)
 
 // An older pending result must not borrow the newer record's passing value/flag.
 const pending = fixture([krsl, { ...approved, value: '' }], { rabies_titer_result_confirmed: true })

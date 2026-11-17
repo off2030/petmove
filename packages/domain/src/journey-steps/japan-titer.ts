@@ -21,6 +21,16 @@ export function isJapanTiterLabApproved(lab: unknown): boolean {
   return typeof lab === 'string' && approvedLabNames.has(labKey(lab))
 }
 
+/** Missing input is not evidence of testing at an unapproved laboratory. */
+export function getJapanTiterLabStatus(data: Record<string, unknown>): 'missing' | 'approved' | 'unapproved' {
+  const raw = Array.isArray(data.rabies_titer_records) ? data.rabies_titer_records : []
+  const labs = readTiterEntries({ data } as Parameters<typeof readTiterEntries>[0])
+    .map((entry) => raw[entry.originalIndex]?.lab)
+    .filter((lab): lab is string => typeof lab === 'string' && lab.trim().length > 0)
+  if (labs.some(isJapanTiterLabApproved)) return 'approved'
+  return labs.length > 0 ? 'unapproved' : 'missing'
+}
+
 function numericResult(value: unknown): number | null {
   const text = typeof value === 'number' ? String(value) : typeof value === 'string' ? value.trim() : ''
   if (!text) return null

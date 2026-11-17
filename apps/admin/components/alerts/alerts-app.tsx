@@ -348,7 +348,9 @@ function AlertRow({
   const { title, meta, bullets, notes } = useMemo(() => parseAlert(item.content), [item.content])
   // 다른 조직 알림은 전환 권한이 있을 때만 열 수 있다.
   const clickable = !!onOpen && (!foreign || canSwitchOrg)
-  const isWarning = /검증|실패|만료|주의/.test(title)
+  const resolved = item.resolution?.resolved === true
+  const resolvedBulletIndexes = item.resolution?.resolvedBulletIndexes ?? []
+  const isWarning = !resolved && /검증|실패|만료|주의/.test(title)
   const dotColor = isWarning ? 'var(--pmw-amber)' : 'var(--pmw-sage)'
 
   // 팝업은 좁으니 불릿 3개까지, 노트는 숨김.
@@ -391,7 +393,8 @@ function AlertRow({
                 unread ? 'font-semibold text-foreground' : 'font-normal text-foreground/85',
               )}
             >
-              {title}
+              {resolved ? '검증 알림' : title}
+              {resolved && <span className="ml-2 text-[12px] font-normal" style={{ color: 'var(--pmw-sage)' }}>해결됨</span>}
             </span>
             <span className="shrink-0 flex items-baseline gap-1.5">
               {/* 조직 칩 — 어느 조직의 알림인지. 활성 조직이 아니면 점선으로 한 단계 흐리게. */}
@@ -427,7 +430,10 @@ function AlertRow({
                   <span className="shrink-0" style={{ color: dotColor }}>
                     •
                   </span>
-                  <span className="min-w-0">{b}</span>
+                  <span className="min-w-0">
+                    {resolvedBulletIndexes.includes(i) ? '일본 지정기관 검사 기록을 확인했습니다.' : b}
+                    {!resolved && resolvedBulletIndexes.includes(i) && <span className="ml-1.5 text-[12px]" style={{ color: 'var(--pmw-sage)' }}>해결됨</span>}
+                  </span>
                 </span>
               ))}
               {moreCount > 0 && (

@@ -109,7 +109,7 @@
 [il.banned-breeds]
   견종 "${breed.ko || breed.en}"은(는) 이스라엘 수입 금지 견종이에요 (매치: ${match}).
 [jp.titer-designated-lab]
-  일본 지정기관의 항체검사가 필요해요. APQA Seoul·KSVDL-R·RIAS 등 지정기관을 확인하세요. 기존 기록의 기관명만 바꾸면 안 돼요.
+  입력된 검사기관이 일본 지정기관으로 확인되지 않아요. 검사 결과지의 기관명과 입력값을 대조해 주세요.
 [jp.rabies-titer-chain-consistent]
   ${missing} 정보가 없어요. 입력하세요.
 [jp.rabies-booster-within-prime-validity]

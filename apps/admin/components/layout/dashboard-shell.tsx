@@ -15,6 +15,7 @@ import { listMyNotifications, type NotificationRow } from '@/lib/actions/notific
 import { subscribeRealtime } from '@/lib/realtime/resilient-channel'
 import type { SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import type { OrgSummary, SuperAdminEntry } from '@/lib/actions/super-admin'
+import { isJapanTiterLabNotification } from '@petmove/domain'
 
 const MemoizedCases = memo(CasesApp)
 const MemoizedSettings = memo(SettingsApp)
@@ -91,13 +92,19 @@ export function DashboardShell({
     return () => { alive = false }
   }, [userAvatarUrl])
 
-  // Realtime — notifications 테이블만 구독. RLS 가 postgres_changes 에 적용되므로
-  // 본인 앞 알림 이벤트만 도달한다.
+  const labNotificationCaseIds = useMemo(() => [...new Set(notifications
+    .filter((n) => n.case_id && isJapanTiterLabNotification(n.content))
+    .map((n) => n.case_id as string))].sort().join(','), [notifications])
+
+  // Saved case updates also refresh resolution; optimistic form input never resolves an alert.
   useEffect(() => {
     let alive = true
+    let request = 0
+    const caseIds = new Set(labNotificationCaseIds.split(',').filter(Boolean))
     const refetch = async () => {
+      const currentRequest = ++request
       const r = await listMyNotifications()
-      if (!alive || !r.ok) return
+      if (!alive || currentRequest !== request || !r.ok) return
       setNotifications(r.value)
     }
 
@@ -110,6 +117,10 @@ export function DashboardShell({
           'postgres_changes',
           { event: '*', schema: 'public', table: 'notifications' },
           refetch,
+        ).on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'cases' },
+          (payload) => { if (caseIds.has(String(payload.new.id))) void refetch() },
         ),
       () => {
         void refetch()
@@ -119,7 +130,7 @@ export function DashboardShell({
       alive = false
       unsubscribe()
     }
-  }, [])
+  }, [labNotificationCaseIds])
 
   const messagesUnread = useMemo(
     () => notifications.reduce((s, n) => s + (n.read_at ? 0 : 1), 0),

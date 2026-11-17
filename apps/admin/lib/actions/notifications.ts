@@ -7,6 +7,7 @@
 // 읽는 쪽: dashboard-shell(뱃지·realtime refetch) + alerts-app(탭/팝업).
 
 import { createClient } from '@petmove/auth/server'
+import { isJapanTiterLabNotification, resolveJapanTiterLabNotification, type NotificationResolution } from '@petmove/domain'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
@@ -20,6 +21,8 @@ export interface NotificationRow {
   org_id: string | null
   /** 표시용 조직 이름(예: '펫무브', '로잔동물의료센터'). 조회 불가면 null. */
   org_name: string | null
+  /** Computed from current saved case data. Read/unread is a separate state. */
+  resolution?: NotificationResolution
 }
 
 // 알림 탭이 한 번에 보여줄 최대 개수. 넘는 과거분은 조용히 잘린다 —
@@ -50,6 +53,25 @@ function normalize(rows: RawRow[]): NotificationRow[] {
   })
 }
 
+async function withResolution(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  rows: NotificationRow[],
+): Promise<NotificationRow[]> {
+  const caseIds = [...new Set(rows.filter((row) => row.case_id && isJapanTiterLabNotification(row.content)).map((row) => row.case_id as string))]
+  if (!caseIds.length) return rows
+  // Use the authenticated client/RLS; never widen access to resolve another organization's alert.
+  const { data, error } = await supabase.from('cases')
+    .select('id, org_id, rabies_titer_records:data->rabies_titer_records')
+    .in('id', caseIds).is('deleted_at', null)
+  if (error) return rows // Unavailable data cannot be presented as resolved.
+  const cases = new Map((data ?? []).map((row) => [row.id, row]))
+  return rows.map((row) => {
+    const caseRow = row.case_id ? cases.get(row.case_id) : undefined
+    if (!caseRow || (row.org_id && row.org_id !== caseRow.org_id)) return row
+    return { ...row, resolution: resolveJapanTiterLabNotification(row.content, { rabies_titer_records: caseRow.rabies_titer_records }) }
+  })
+}
+
 export async function listMyNotifications(): Promise<Result<NotificationRow[]>> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -59,7 +81,7 @@ export async function listMyNotifications(): Promise<Result<NotificationRow[]>> 
     .select(SELECT_WITH_ORG)
     .order('created_at', { ascending: false })
     .limit(LIST_LIMIT)
-  if (!error) return { ok: true, value: normalize((data ?? []) as unknown as RawRow[]) }
+  if (!error) return { ok: true, value: await withResolution(supabase, normalize((data ?? []) as unknown as RawRow[])) }
 
   // org_id 마이그레이션(20260923000001) 적용 전 배포에서도 알림이 통째로 비지 않도록
   // 한 번만 구 스키마로 재시도. 마이그레이션 적용 후엔 도달하지 않는 경로.
@@ -69,7 +91,7 @@ export async function listMyNotifications(): Promise<Result<NotificationRow[]>> 
     .order('created_at', { ascending: false })
     .limit(LIST_LIMIT)
   if (legacy.error) return { ok: false, error: legacy.error.message }
-  return { ok: true, value: normalize((legacy.data ?? []) as unknown as RawRow[]) }
+  return { ok: true, value: await withResolution(supabase, normalize((legacy.data ?? []) as unknown as RawRow[])) }
 }
 
 /** 안 읽은 알림 전부 읽음 처리 — 알림 화면이 보이는 동안 호출. */
