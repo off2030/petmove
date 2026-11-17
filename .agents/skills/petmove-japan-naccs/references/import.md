@@ -27,7 +27,7 @@ NACCS 메뉴 `Dogs, Cats, Foxes, Raccoons, Skunks` → Import → **Make a new n
 직접 별지25 생성 시 기존 함수의 `rabiesIndices` 옵션으로 선택할 수 있다. 인덱스는 날짜 오름차순 기준이며 별지25는 타 병원 기록이 먼저 제외되므로, 필터 후 목록을 확인해 해당 접종을 선택하고 PDF에 들어간 날짜를 다시 검증한다.
 
 - 칩번호·삽입일과 공통 기본값을 입력.
-- 접종 최신 먼저. 필요하면 vaccination 2 등을 펼친다.
+- 접종 최신 먼저. 필요하면 vaccination 2 등을 펼친다. 본원 접종의 개별 제품·제조사 공란은 [공통 입력 관례](../SKILL.md#자료와-입력-관례)의 조직 기본값으로 진행하며, 별도 제품 증명서 요청이나 신고 보류 사유로 삼지 않는다. 타 병원·해외 접종 회차는 해당 원래 기록과 분리한다.
 - 항체결과지 기반 채혈일/결과범주/기관 입력. 한국에서 채혈한 경우 Japan sampling No.
 - 5 Other vaccination은 이 업무 관례상 건너뛴다.
 - 6 Destination에서 `Please check here if the consignee is identical with the consignee.` 체크(수하인 정보 재사용).
