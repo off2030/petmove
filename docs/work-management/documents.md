@@ -8,6 +8,7 @@
 | 일반 증명서·서류 준비·출력 | 현재 Work·첨부 원본과 저장소의 기존 서식·PDF 생성 함수를 대조 |
 | 내원 예약 필요·서류 준비 미완료, 지시받은 고객 안내 | [예약 요청 안내](../../.agents/skills/petmove-daily-review/references/visit-booking.md)와 공통 권한 |
 | 일본 외 국가의 서류·기관 요청 | 국가·기관·작업을 확정하고 현재 공식 절차를 확인. 필리핀 SPSIC 신청·승인 확인은 [필리핀 담당](philippines.md)으로 연결 |
+| 태국 수입허가 이메일 신청 | [태국 절차](../../.agents/skills/petmove-documents/references/thailand-import.md): 서류 대조·중요 순서 통합 PDF·승인된 기관 발송·실제 SENT 확인 후 해당 여행 수입 진행 반영·재조회 |
 
 검사 의뢰·진행·검사결과 판정 및 결과 안내는 [검사](inspection.md), 일본 검역소 회신·Form AC 제출·일본 수입/수출 신청은 [일본 수입신고](japan.md)가 맡는다. 일반 자료 보관을 검사·신고 완료로 처리하지 않는다.
 
